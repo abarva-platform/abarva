@@ -41,6 +41,7 @@ import {
 } from "../../src/lib/governance/agent-context-bundle";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
+type VerifiedEnterpriseThesisResult = Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>;
 type JsonRecord = Record<string, unknown>;
 
 const HOME_SURFACE_KEY = "home_enterprise_landscape";
@@ -70,7 +71,30 @@ const CXO_FORBIDDEN_VISIBLE_PATTERNS: Array<{ label: string; pattern: RegExp }> 
   { label: "bland_empty_headline", pattern: /\bnot enough verified evidence yet\b/i },
   { label: "routed_empty_claim", pattern: /\bNo verified claims were routed\b/i },
   { label: "build_gap", pattern: /\bcoverage gap in the build\b/i },
+  { label: "raw_object_id", pattern: /\b(?:APP|PLAT|CTR|VEN|FLOW|DOC|INV|SLA|PO|RISK|CTRL|PROG|MEAS|MET|OBJ)-[A-Z0-9][A-Z0-9_-]*\b/i },
 ];
+
+const RAW_VISIBLE_ID_PATTERN = /\b(?:APP|PLAT|CTR|VEN|FLOW|DOC|INV|SLA|PO|RISK|CTRL|PROG|MEAS|MET|OBJ)-[A-Z0-9][A-Z0-9_-]*\b/g;
+
+const MACHINE_REFERENCE_KEYS = new Set([
+  "id",
+  "ids",
+  "evidence_id",
+  "evidence_ids",
+  "evidenceIds",
+  "evidenceRefs",
+  "source_ref",
+  "source_refs",
+  "sourceRefs",
+  "source_record_id",
+  "sourceRecordId",
+  "source_file_id",
+  "sourceFileId",
+  "row_key",
+  "rowKey",
+  "dataset_ref",
+  "datasetRef",
+]);
 
 const CHAPTER_IDS: ChapterId[] = [
   "executive_brief",
@@ -404,45 +428,155 @@ function proofFromBundle(
   };
 }
 
-function rowStatement(row: HomeProjectionWriteRow): string {
+function rowStatement(row: HomeProjectionWriteRow, labelByIdentifier: Map<string, string> = new Map()): string {
   const data = payload(row);
+  const visible = (value: unknown) => visibleText(value, labelByIdentifier);
   switch (row.page_key) {
     case "applications_systems":
       return [
-        `${text(data.application_name) ?? row.title} is recorded as an application`,
-        text(data.business_function) ? `for ${text(data.business_function)}` : null,
-        text(data.vendor_name) ? `supplied by ${text(data.vendor_name)}` : null,
-        text(data.criticality_tier) ? `with ${text(data.criticality_tier)} criticality` : null,
+        `${visible(data.application_name) ?? visible(row.title) ?? row.title} is recorded as an application`,
+        visible(data.business_function) ? `for ${visible(data.business_function)}` : null,
+        visible(data.vendor_name) ? `supplied by ${visible(data.vendor_name)}` : null,
+        visible(data.criticality_tier) ? `with ${visible(data.criticality_tier)} criticality` : null,
         numberValue(data.annual_cost_usd) > 0 ? `and $${(numberValue(data.annual_cost_usd) / 1_000_000).toFixed(1)}M annual cost` : null,
       ].filter(Boolean).join(" ") + ".";
     case "vendor_contracts":
       return [
-        `${text(data.contract_name) ?? row.title} is recorded as a contract`,
-        payloadText(data, "supplier_name", "vendor_name") ? `with ${payloadText(data, "supplier_name", "vendor_name")}` : null,
-        text(data.service_category) ? `for ${text(data.service_category)}` : null,
+        `${visible(data.contract_name) ?? visible(row.title) ?? row.title} is recorded as a contract`,
+        payloadText(data, "supplier_name", "vendor_name") ? `with ${visible(payloadText(data, "supplier_name", "vendor_name"))}` : null,
+        visible(data.service_category) ? `for ${visible(data.service_category)}` : null,
         payloadNumber(data, "annualized_value_usd", "annual_spend_usd") > 0 ? `with $${(payloadNumber(data, "annualized_value_usd", "annual_spend_usd") / 1_000_000).toFixed(1)}M annualized value` : null,
         payloadNumber(data, "notice_window_days", "notice_period_days") > 0 ? `and ${payloadNumber(data, "notice_window_days", "notice_period_days")} days notice` : null,
       ].filter(Boolean).join(" ") + ".";
     case "infrastructure_platforms":
       return [
-        `${text(data.platform_name) ?? row.title} is recorded as an infrastructure or platform record`,
-        text(data.platform_type) ? `of type ${text(data.platform_type)}` : null,
-        text(data.hosting_model) ? `on ${text(data.hosting_model)}` : null,
-        text(data.criticality_tier) ? `with ${text(data.criticality_tier)} criticality` : null,
-        text(data.support_end_date) ? `with support ending ${text(data.support_end_date)}` : null,
+        `${visible(data.platform_name) ?? visible(row.title) ?? row.title} is recorded as an infrastructure or platform record`,
+        visible(data.platform_type) ? `of type ${visible(data.platform_type)}` : null,
+        visible(data.hosting_model) ? `on ${visible(data.hosting_model)}` : null,
+        visible(data.criticality_tier) ? `with ${visible(data.criticality_tier)} criticality` : null,
+        visible(data.support_end_date) ? `with support ending ${visible(data.support_end_date)}` : null,
       ].filter(Boolean).join(" ") + ".";
     case "current_state_data_flow":
     case "data_assets_integrations":
       return [
-        `${text(data.data_asset_name) ?? row.title} is recorded as a data movement`,
-        text(data.source_system) ? `from ${text(data.source_system)}` : null,
-        text(data.target_system) ? `to ${text(data.target_system)}` : null,
-        text(data.integration_type) ? `using ${text(data.integration_type)}` : null,
-        text(data.consumption_layer) ? `serving ${text(data.consumption_layer)}` : null,
+        `${visible(data.data_asset_name) ?? visible(row.title) ?? row.title} is recorded as a data movement`,
+        visible(data.source_system) ? `from ${visible(data.source_system)}` : null,
+        visible(data.target_system) ? `to ${visible(data.target_system)}` : null,
+        visible(data.integration_type) ? `using ${visible(data.integration_type)}` : null,
+        visible(data.consumption_layer) ? `serving ${visible(data.consumption_layer)}` : null,
       ].filter(Boolean).join(" ") + ".";
     default:
-      return row.summary ?? row.title;
+      return visible(row.summary) ?? visible(row.title) ?? row.title;
   }
+}
+
+function visibleText(value: unknown, labelByIdentifier: Map<string, string>): string | null {
+  const raw = text(value);
+  return raw ? scrubRawVisibleIds(raw, labelByIdentifier) : null;
+}
+
+function rawIdentifierFallback(id: string): string {
+  if (id.startsWith("APP-")) return "a named application";
+  if (id.startsWith("PLAT-")) return "a named platform";
+  if (id.startsWith("CTR-")) return "a named contract";
+  if (id.startsWith("VEN-")) return "a named supplier";
+  if (id.startsWith("FLOW-")) return "a governed data movement";
+  if (id.startsWith("DOC-")) return "a governed evidence document";
+  if (id.startsWith("INV-")) return "a governed invoice record";
+  if (id.startsWith("SLA-")) return "a governed service-level record";
+  if (id.startsWith("PO-")) return "a governed purchase order";
+  if (id.startsWith("RISK-")) return "a governed risk item";
+  if (id.startsWith("CTRL-")) return "a governed control item";
+  if (id.startsWith("PROG-")) return "a governed program";
+  if (id.startsWith("MEAS-") || id.startsWith("MET-")) return "a governed metric";
+  return "a governed record";
+}
+
+function scrubRawVisibleIds(value: string, labelByIdentifier: Map<string, string>): string {
+  return value.replace(RAW_VISIBLE_ID_PATTERN, (match) => labelByIdentifier.get(match) ?? rawIdentifierFallback(match));
+}
+
+function preferredDisplayLabel(row: HomeProjectionWriteRow): string | null {
+  const data = payload(row);
+  return (
+    text(data.application_name) ??
+    text(data.system_name) ??
+    text(data.platform_name) ??
+    text(data.contract_name) ??
+    text(data.supplier_name) ??
+    text(data.vendor_name) ??
+    text(data.data_asset_name) ??
+    text(data.metric_name) ??
+    text(data.measure_name) ??
+    text(data.name) ??
+    text(row.title)
+  );
+}
+
+function addIdentifierLabel(labelByIdentifier: Map<string, string>, id: unknown, label: string | null) {
+  const key = text(id);
+  const safeLabel = text(label);
+  RAW_VISIBLE_ID_PATTERN.lastIndex = 0;
+  if (!key || !safeLabel || !RAW_VISIBLE_ID_PATTERN.test(key) || key === safeLabel) return;
+  RAW_VISIBLE_ID_PATTERN.lastIndex = 0;
+  labelByIdentifier.set(key, safeLabel);
+}
+
+function buildVisibleIdentifierLabels(rows: HomeProjectionWriteRow[]): Map<string, string> {
+  const labelByIdentifier = new Map<string, string>();
+  const idKeys = [
+    "application_id",
+    "system_id",
+    "app_id",
+    "platform_id",
+    "infrastructure_id",
+    "contract_id",
+    "supplier_id",
+    "vendor_id",
+    "data_flow_id",
+    "flow_id",
+    "document_id",
+    "invoice_id",
+    "sla_id",
+    "purchase_order_id",
+    "risk_id",
+    "control_id",
+    "program_id",
+    "metric_id",
+    "measure_id",
+  ];
+  for (const row of rows) {
+    const label = preferredDisplayLabel(row);
+    addIdentifierLabel(labelByIdentifier, row.primary_object_id, label);
+    addIdentifierLabel(labelByIdentifier, row.row_key, label);
+    const data = payload(row);
+    for (const key of idKeys) addIdentifierLabel(labelByIdentifier, data[key], label);
+  }
+  return labelByIdentifier;
+}
+
+function scrubVisibleIdsInValue(value: unknown, labelByIdentifier: Map<string, string>, parentKey?: string): unknown {
+  if (parentKey && MACHINE_REFERENCE_KEYS.has(parentKey)) return value;
+  if (typeof value === "string") return scrubRawVisibleIds(value, labelByIdentifier);
+  if (Array.isArray(value)) return value.map((item) => scrubVisibleIdsInValue(item, labelByIdentifier, parentKey));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as JsonRecord).map(([key, item]) => [key, scrubVisibleIdsInValue(item, labelByIdentifier, key)]),
+    );
+  }
+  return value;
+}
+
+function scrubThesisResultVisibleIds(
+  thesisResult: VerifiedEnterpriseThesisResult,
+  labelByIdentifier: Map<string, string>,
+): VerifiedEnterpriseThesisResult {
+  return {
+    ...thesisResult,
+    publishedGeneration: thesisResult.publishedGeneration
+      ? scrubVisibleIdsInValue(thesisResult.publishedGeneration, labelByIdentifier) as EnterpriseThesis
+      : thesisResult.publishedGeneration,
+  } as VerifiedEnterpriseThesisResult;
 }
 
 function makeClaim(statement: string, evidenceIds: string[], claimType: GroundedClaim["claim_type"] = "FACT", confidence: GroundedClaim["confidence"] = "high"): GroundedClaim {
@@ -465,13 +599,14 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
   const renderedAt = new Date().toISOString();
   const rowContentByCandidateId = new Map<string, ExecutiveSignalContent>();
   const rowCandidates: GovernedCandidate[] = [];
+  const labelByIdentifier = buildVisibleIdentifierLabels(rows);
 
   for (const row of rows.filter((item) => item.row_type !== "summary" && item.row_type !== "chapter_claim")) {
     const candidate = governedCandidateForRow(row, tenantKey, renderedAt);
     rowCandidates.push(candidate);
     rowContentByCandidateId.set(candidate.id, {
       row,
-      statement: rowStatement(row),
+      statement: rowStatement(row, labelByIdentifier),
       domains: rowDomains(row),
     });
   }
@@ -1081,7 +1216,9 @@ async function main() {
       );
     }
 
-    const thesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic);
+    const labelByIdentifier = buildVisibleIdentifierLabels(rows);
+    const rawThesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic);
+    const thesisResult = scrubThesisResultVisibleIds(rawThesisResult, labelByIdentifier);
     if (!thesisResult.publishedGeneration) throw new Error("Home ECL narrative writer produced no publishable thesis.");
     const publicationIssues = publicationGateIssues(thesisResult, signalPacket);
     if (publicationIssues.length) {
@@ -1094,7 +1231,7 @@ async function main() {
       anthropic,
       options.chapterIds,
     );
-    const chapters = normalizeChapterTerminalStates(generatedChapters);
+    const chapters = normalizeChapterTerminalStates(scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[]);
     const visibleQualityIssues = visibleNarrativeQualityIssues(thesisResult, chapters);
     if (visibleQualityIssues.length) {
       throw new Error(`Home ECL narrative visible-quality gate failed: ${visibleQualityIssues.join("; ")}`);

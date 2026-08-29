@@ -146,11 +146,15 @@ assert(
 assert(
   script.includes("CXO_FORBIDDEN_VISIBLE_PATTERNS") &&
     script.includes("visibleNarrativeQualityIssues") &&
+    script.includes("raw_object_id") &&
+    script.includes("scrubRawVisibleIds") &&
+    script.includes("buildVisibleIdentifierLabels") &&
+    script.includes("MACHINE_REFERENCE_KEYS") &&
     script.includes("normalizeChapterTerminalStates") &&
     script.includes("forbidden_visible_term") &&
     script.includes("Home ECL narrative visible-quality gate failed") &&
     script.includes("not enough verified evidence yet"),
-  "ECL narrative job repairs terminal chapter language and refuses remaining visible implementation vocabulary or bland empty-state prose",
+  "ECL narrative job scrubs raw object IDs, repairs terminal chapter language, and refuses remaining visible implementation vocabulary or bland empty-state prose",
 );
 assert(
   thesis.includes("action: \"dropped_structural\"") &&
