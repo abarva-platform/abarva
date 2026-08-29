@@ -137,7 +137,11 @@ describe("TowerCommandCenter", () => {
       valueClaimCount: 230,
       unknownValueClaimCount: 969,
       financeAttestedClaimCount: 0,
-      outcomeMeasuredClaimCount: 230,
+      // 160 of 230 measured, matching the real tenant shape. This previously read 230, which made
+      // the outcome gap exactly zero and let the assertion below pass on the string "the 0 claims"
+      // — an action targeting nothing. The point of this test is that claim arithmetic uses 230 and
+      // not 969, so it should assert a real gap derived from 230.
+      outcomeMeasuredClaimCount: 160,
       economicReviewQueueCount: 969,
       claimableUsd: 0,
       usageSupportedUsd: 0,
@@ -154,7 +158,7 @@ describe("TowerCommandCenter", () => {
       screen.getByText(/0 of 230 claims attested by Finance/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Backfill measured outcome on the 0 claims/),
+      screen.getByText(/Backfill measured outcome on the 70 claims/),
     ).toBeInTheDocument();
     expect(
       screen.getByText("Close usage-to-value gaps on 230 claims"),
@@ -241,7 +245,16 @@ describe("TowerCommandCenter", () => {
   });
 
   it("routes executive review buttons to distinct review surfaces", () => {
-    renderPage();
+    // The base fixture carries no value claims, so the review decisions - and therefore the Review
+    // buttons this test drives - are correctly suppressed. Give it a claim set with a real gap at
+    // every gate so all three decisions render.
+    renderWithSummary({
+      valueClaimCount: 230,
+      knownValueClaimCount: 230,
+      usageSupportedClaimCount: 40,
+      outcomeMeasuredClaimCount: 160,
+      financeAttestedClaimCount: 0,
+    });
 
     const reviewButtons = screen.getAllByRole("button", { name: /Review/ });
     fireEvent.click(reviewButtons[0]);

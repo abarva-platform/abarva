@@ -109,10 +109,18 @@ function absentCount(view: TowerCommandCenterView): number {
 
 function executiveHeadline(view: TowerCommandCenterView): string {
   const s = view.summary;
+  const claims = valueClaimCount(view);
+  // "0 of 0 claims still need proof" reads as a finished portfolio. An empty claim set means the
+  // question has not been asked yet, which is the opposite reading and the one an executive needs.
+  if (claims === 0) {
+    return `${formatLoadedUsdM(
+      s.approvedInvestmentUsd,
+    )} approved. No value claims are loaded, so nothing can be proven or disproven yet.`;
+  }
   return `${formatLoadedUsdM(s.approvedInvestmentUsd)} approved. ${formatUsdM(
     s.claimableUsd,
   )} board-claimable. ${formatCount(openClaimCount(view))} of ${formatCount(
-    valueClaimCount(view),
+    claims,
   )} claims still need proof.`;
 }
 
@@ -176,17 +184,29 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
     },
     {
       label: "Usage evidence mapped",
-      badge: s.usageSupportedClaimCount === claims ? "COMPLETE" : "PARTIAL",
-      value: `${formatCount(s.usageSupportedClaimCount)} of ${formatCount(
-        claims,
-      )}`,
+      // A zero denominator is "nothing to evaluate", never "everything is done". `0 === 0` used to
+      // satisfy the COMPLETE branch and render a green badge reading "Every value claim has
+      // usage-to-value support" over an empty claim set — a vacuous truth on the one gate this
+      // surface exists to prove is unmet.
+      badge:
+        claims === 0
+          ? "NO CLAIMS"
+          : s.usageSupportedClaimCount === claims
+            ? "COMPLETE"
+            : "PARTIAL",
+      value:
+        claims === 0
+          ? "Not loaded"
+          : `${formatCount(s.usageSupportedClaimCount)} of ${formatCount(claims)}`,
       note:
-        s.usageSupportedClaimCount === claims
-          ? "Every value claim has usage-to-value support"
-          : `${formatCount(
-              Math.max(0, claims - s.usageSupportedClaimCount),
-            )} claims still need usage-to-value mapping`,
-      tone: s.usageSupportedClaimCount > 0 ? "amber" : "red",
+        claims === 0
+          ? "No value claims in this read — the usage gate has nothing to evaluate"
+          : s.usageSupportedClaimCount === claims
+            ? "Every value claim has usage-to-value support"
+            : `${formatCount(
+                Math.max(0, claims - s.usageSupportedClaimCount),
+              )} claims still need usage-to-value mapping`,
+      tone: claims === 0 || s.usageSupportedClaimCount === 0 ? "red" : "amber",
     },
   ];
 }
@@ -199,7 +219,13 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
   const claimsMissingActual = Math.max(0, claims - s.outcomeMeasuredClaimCount);
   const claimsMissingFinance = Math.max(0, claims - s.financeAttestedClaimCount);
 
-  return [
+  // With no claims loaded, every gap count below is trivially zero and each decision renders as an
+  // instruction to act on nothing ("Backfill measured outcome on the 0 claims that carry no
+  // actual"). Three executive actions targeting zero items is worse than no action list: it reads
+  // as a reviewed, settled portfolio. Say there is nothing to decide instead.
+  if (claims === 0) return [];
+
+  const list: ExecutiveDecision[] = [
     {
       order: "1",
       kicker: "Map · do this first",
@@ -251,6 +277,15 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
       reviewTarget: "actions",
     },
   ];
+
+  // Decisions 2 and 3 name their own target count in the title, so a count of zero makes the
+  // sentence false rather than merely empty. Decision 1 keeps a legitimate maintenance reading
+  // when everything is already mapped, so it is only dropped with the whole list above.
+  const actionable: Record<string, number> = {
+    "2": claimsMissingActual,
+    "3": claimsMissingFinance,
+  };
+  return list.filter((decision) => (actionable[decision.order] ?? 1) > 0);
 }
 
 function evidenceFooterCount(view: TowerCommandCenterView): number {
@@ -462,7 +497,11 @@ export function CommandCenterView({
         <div className={styles.sectionTitle}>
           <h2>Decisions for this review</h2>
           <span>{executiveDecisions.length}</span>
-          <p>Each is a precondition for the next</p>
+          <p>
+            {executiveDecisions.length > 0
+              ? "Each is a precondition for the next"
+              : "No claim set is loaded, so there is nothing to decide yet"}
+          </p>
         </div>
         <div className={styles.decisionStack}>
           {executiveDecisions.map((decision) => (
