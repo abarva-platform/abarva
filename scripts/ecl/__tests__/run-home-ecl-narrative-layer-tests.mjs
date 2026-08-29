@@ -47,6 +47,8 @@ assert(
 );
 assert(
   script.includes("candidateIsReady") &&
+    script.includes("sourceRefIds") &&
+    script.includes("source_record_id") &&
     script.includes("row.quality_state === \"passed\"") &&
     script.includes("\"warning\"") &&
     script.includes("confidenceForRow") &&
@@ -54,6 +56,14 @@ assert(
     script.includes("row.admission_status === \"admitted\"") &&
     script.includes("sourceRefs.length > 0"),
   "ECL narrative job requires usable quality, value, admission, source refs, and source hash before a row can enter the packet",
+);
+assert(
+  script.includes("text(ref.source_record_id)") &&
+    script.includes("text(ref.sourceRecordId)") &&
+    script.includes("text(ref.record_id)") &&
+    script.includes("text(ref.source_file_id)") &&
+    script.includes("return [...new Set(ids)]"),
+  "ECL narrative job normalizes structured source_refs_json objects into citation IDs instead of treating them as missing",
 );
 assert(
   script.includes("The executive packet policy withheld") &&

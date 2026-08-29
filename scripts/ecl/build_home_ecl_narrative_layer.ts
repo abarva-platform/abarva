@@ -184,6 +184,20 @@ function stringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
 
+function sourceRefIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const ids = value
+    .map((item) => {
+      if (typeof item === "string") return item;
+      if (!item || typeof item !== "object") return null;
+      const ref = item as Record<string, unknown>;
+      return text(ref.source_record_id) ?? text(ref.sourceRecordId) ?? text(ref.record_id) ?? text(ref.source_file_id) ?? text(ref.id);
+    })
+    .filter((item): item is string => Boolean(item && item.trim().length > 0))
+    .map((item) => item.trim());
+  return [...new Set(ids)];
+}
+
 function incrementCount(counts: Map<string, number>, key: string) {
   counts.set(key, (counts.get(key) ?? 0) + 1);
 }
@@ -235,7 +249,7 @@ function contextId(row: HomeProjectionWriteRow): string {
 }
 
 function candidateIsReady(row: HomeProjectionWriteRow): boolean {
-  const sourceRefs = stringArray(row.source_refs_json);
+  const sourceRefs = sourceRefIds(row.source_refs_json);
   const admitted = row.admission_status === "admitted" || row.admission_status === "not_applicable";
   const usableQuality = ["passed", "warning", "accepted", "usable"].includes(row.quality_state);
   return (
@@ -256,7 +270,7 @@ function confidenceForRow(row: HomeProjectionWriteRow): GovernedCandidate["confi
 function rowReadinessCounts(rows: HomeProjectionWriteRow[]): Record<string, number> {
   const counts = new Map<string, number>();
   for (const row of rows) {
-    const sourceRefs = stringArray(row.source_refs_json);
+    const sourceRefs = sourceRefIds(row.source_refs_json);
     const admitted = row.admission_status === "admitted" || row.admission_status === "not_applicable";
     const usableQuality = ["passed", "warning", "accepted", "usable"].includes(row.quality_state);
     if (candidateIsReady(row)) {
@@ -293,7 +307,7 @@ function governedCandidateForRow(row: HomeProjectionWriteRow, tenantKey: string,
     confidence_level: confidenceForRow(row),
     cited_render_verified_at: candidateIsReady(row) ? renderedAt : null,
     title: row.title,
-    citations: stringArray(row.source_refs_json),
+    citations: sourceRefIds(row.source_refs_json),
   };
 }
 
