@@ -34,6 +34,11 @@ import {
   type ChapterView,
 } from "../data-build/build-home-chapters";
 import type { ContextItem, Signal, buildEnterpriseSignalPacket } from "../data-build/enterprise-signal-packet";
+import {
+  buildValidatedAgentContextBundle,
+  type GovernedCandidate,
+  type ValidatedAgentContextBundle,
+} from "../../src/lib/governance/agent-context-bundle";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 type JsonRecord = Record<string, unknown>;
@@ -90,6 +95,29 @@ interface HomeProjectionWriteRow {
   gap_flags_json: unknown;
   display_payload_json: JsonRecord | null;
   source_hash: string;
+}
+
+interface ExecutiveSignalContent {
+  row?: HomeProjectionWriteRow;
+  statement: string;
+  domains: string[];
+}
+
+interface ContextPolicyProof {
+  policy_version: string;
+  candidate_count: number;
+  usable_count: number;
+  agent_ready_count: number;
+  blocked_count: number;
+  blocked_count_by_reason: Record<string, number>;
+  usable_candidate_ids: string[];
+  context_bundle_hash: string;
+  source_hashes: string[];
+}
+
+interface GovernedSignalPacketBuild {
+  signalPacket: EnterpriseSignalPacket;
+  contextPolicyProof: ContextPolicyProof;
 }
 
 function cliValue(flag: string): string | null {
@@ -150,6 +178,11 @@ function payload(row: HomeProjectionWriteRow): JsonRecord {
   return row.display_payload_json && typeof row.display_payload_json === "object" ? row.display_payload_json : {};
 }
 
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
 function rowsOf(rows: HomeProjectionWriteRow[], pageKey: string, rowType: string): HomeProjectionWriteRow[] {
   return rows.filter((row) => row.page_key === pageKey && row.row_type === rowType);
 }
@@ -196,6 +229,61 @@ function contextId(row: HomeProjectionWriteRow): string {
   return `ctx_ecl_${row.page_key}_${row.row_type}_${row.row_key}`.replace(/[^a-zA-Z0-9_]/g, "_");
 }
 
+function candidateIsReady(row: HomeProjectionWriteRow): boolean {
+  const sourceRefs = stringArray(row.source_refs_json);
+  const admitted = row.admission_status === "admitted" || row.admission_status === "not_applicable";
+  return (
+    admitted &&
+    row.value_state === "known" &&
+    row.quality_state === "passed" &&
+    Boolean(row.basis_summary) &&
+    sourceRefs.length > 0 &&
+    Boolean(row.source_hash)
+  );
+}
+
+function readinessStatus(row: HomeProjectionWriteRow): GovernedCandidate["agent_readiness_status"] {
+  if (candidateIsReady(row)) return "agent_ready";
+  if (row.admission_status === "refused" || row.quality_state === "blocked") return "blocked";
+  return "not_reviewed";
+}
+
+function governedCandidateForRow(row: HomeProjectionWriteRow, tenantKey: string, renderedAt: string): GovernedCandidate {
+  return {
+    id: contextId(row),
+    client_key: tenantKey,
+    tenant_id: tenantKey,
+    source_layer: "signal",
+    source_basis: row.basis_summary,
+    classification: "internal",
+    retrievability: candidateIsReady(row) ? "fts_indexed" : "not_indexed",
+    agent_readiness_status: readinessStatus(row),
+    confidence_level: candidateIsReady(row) ? "high" : "unverified",
+    cited_render_verified_at: candidateIsReady(row) ? renderedAt : null,
+    title: row.title,
+    citations: stringArray(row.source_refs_json),
+  };
+}
+
+function governedCandidateForSignal(signal: Signal, tenantKey: string, renderedAt: string): GovernedCandidate {
+  const citations = stringArray(signal.evidenceRefs);
+  const ready = citations.length > 0;
+  return {
+    id: signal.id,
+    client_key: tenantKey,
+    tenant_id: tenantKey,
+    source_layer: "signal",
+    source_basis: "deterministic_home_signal_packet_v2",
+    classification: "internal",
+    retrievability: ready ? "fts_indexed" : "not_indexed",
+    agent_readiness_status: ready ? "agent_ready" : "not_reviewed",
+    confidence_level: ready ? "high" : "unverified",
+    cited_render_verified_at: ready ? renderedAt : null,
+    title: signal.kind,
+    citations,
+  };
+}
+
 function rowDomains(row: HomeProjectionWriteRow): string[] {
   switch (row.page_key) {
     case "applications_systems":
@@ -212,12 +300,46 @@ function rowDomains(row: HomeProjectionWriteRow): string[] {
   }
 }
 
+function proofFromBundle(
+  bundle: ValidatedAgentContextBundle,
+  candidates: GovernedCandidate[],
+  sourceHashes: string[],
+): ContextPolicyProof {
+  const blockedCountByReason = new Map<string, number>();
+  for (const blocked of bundle.blocked) {
+    const firstReason = blocked.errors[0] ?? "unknown_policy_block";
+    const reasonCode = firstReason
+      .replace(/["']/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .toLowerCase()
+      .slice(0, 120) || "unknown_policy_block";
+    blockedCountByReason.set(reasonCode, (blockedCountByReason.get(reasonCode) ?? 0) + 1);
+  }
+  return {
+    policy_version: bundle.policy_version,
+    candidate_count: candidates.length,
+    usable_count: bundle.usable.length,
+    agent_ready_count: bundle.agentReadyCount,
+    blocked_count: bundle.blocked.length,
+    blocked_count_by_reason: Object.fromEntries(blockedCountByReason),
+    usable_candidate_ids: bundle.usable.map((candidate) => candidate.id),
+    context_bundle_hash: hashJson({
+      policy_version: bundle.policy_version,
+      usable_candidate_ids: bundle.usable.map((candidate) => candidate.id),
+      blocked_candidate_ids: bundle.blocked.map((blocked) => blocked.candidate.id),
+      citations: bundle.citations,
+    }),
+    source_hashes: [...new Set(sourceHashes.filter(Boolean))].sort(),
+  };
+}
+
 function rowStatement(row: HomeProjectionWriteRow): string {
   const data = payload(row);
   switch (row.page_key) {
     case "applications_systems":
       return [
-        `${text(data.application_name) ?? row.title} is loaded as an application`,
+        `${text(data.application_name) ?? row.title} is recorded as an application`,
         text(data.business_function) ? `for ${text(data.business_function)}` : null,
         text(data.vendor_name) ? `supplied by ${text(data.vendor_name)}` : null,
         text(data.criticality_tier) ? `with ${text(data.criticality_tier)} criticality` : null,
@@ -225,7 +347,7 @@ function rowStatement(row: HomeProjectionWriteRow): string {
       ].filter(Boolean).join(" ") + ".";
     case "vendor_contracts":
       return [
-        `${text(data.contract_name) ?? row.title} is loaded as a contract`,
+        `${text(data.contract_name) ?? row.title} is recorded as a contract`,
         payloadText(data, "supplier_name", "vendor_name") ? `with ${payloadText(data, "supplier_name", "vendor_name")}` : null,
         text(data.service_category) ? `for ${text(data.service_category)}` : null,
         payloadNumber(data, "annualized_value_usd", "annual_spend_usd") > 0 ? `with $${(payloadNumber(data, "annualized_value_usd", "annual_spend_usd") / 1_000_000).toFixed(1)}M annualized value` : null,
@@ -233,7 +355,7 @@ function rowStatement(row: HomeProjectionWriteRow): string {
       ].filter(Boolean).join(" ") + ".";
     case "infrastructure_platforms":
       return [
-        `${text(data.platform_name) ?? row.title} is loaded as an infrastructure or platform record`,
+        `${text(data.platform_name) ?? row.title} is recorded as an infrastructure or platform record`,
         text(data.platform_type) ? `of type ${text(data.platform_type)}` : null,
         text(data.hosting_model) ? `on ${text(data.hosting_model)}` : null,
         text(data.criticality_tier) ? `with ${text(data.criticality_tier)} criticality` : null,
@@ -242,7 +364,7 @@ function rowStatement(row: HomeProjectionWriteRow): string {
     case "current_state_data_flow":
     case "data_assets_integrations":
       return [
-        `${text(data.data_asset_name) ?? row.title} is loaded as a data movement`,
+        `${text(data.data_asset_name) ?? row.title} is recorded as a data movement`,
         text(data.source_system) ? `from ${text(data.source_system)}` : null,
         text(data.target_system) ? `to ${text(data.target_system)}` : null,
         text(data.integration_type) ? `using ${text(data.integration_type)}` : null,
@@ -269,7 +391,25 @@ function makeVisual(datasetRef: string, title: string, keyMessage: string, evide
   };
 }
 
-function buildSignalPacket(rows: HomeProjectionWriteRow[], assessmentId: string): EnterpriseSignalPacket {
+function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: string, assessmentId: string): GovernedSignalPacketBuild {
+  const renderedAt = new Date().toISOString();
+  const rowContentByCandidateId = new Map<string, ExecutiveSignalContent>();
+  const rowCandidates: GovernedCandidate[] = [];
+
+  for (const row of rows.filter((item) => item.row_type !== "summary" && item.row_type !== "chapter_claim")) {
+    const candidate = governedCandidateForRow(row, tenantKey, renderedAt);
+    rowCandidates.push(candidate);
+    rowContentByCandidateId.set(candidate.id, {
+      row,
+      statement: rowStatement(row),
+      domains: rowDomains(row),
+    });
+  }
+
+  const validatedRows = buildValidatedAgentContextBundle(rowCandidates, { requireAgentReady: true });
+  const permittedRowIds = new Set(validatedRows.usable.map((candidate) => candidate.id));
+  const permittedRows = rows.filter((row) => permittedRowIds.has(contextId(row)));
+
   const applications = rowsOf(rows, "applications_systems", "application");
   const contracts = rowsOf(rows, "vendor_contracts", "contract");
   const infrastructure = rowsOf(rows, "infrastructure_platforms", "infrastructure");
@@ -277,58 +417,90 @@ function buildSignalPacket(rows: HomeProjectionWriteRow[], assessmentId: string)
     ...rowsOf(rows, "current_state_data_flow", "data_flow"),
     ...rowsOf(rows, "data_assets_integrations", "data_flow"),
   ];
-  const contractSpend = contracts.reduce((sum, row) => sum + payloadNumber(payload(row), "annualized_value_usd", "annual_spend_usd"), 0);
-  const vendorRows = topSpendShareRows(contracts, "supplier_name", "annualized_value_usd", 8);
+  const permittedApplications = rowsOf(permittedRows, "applications_systems", "application");
+  const permittedContracts = rowsOf(permittedRows, "vendor_contracts", "contract");
+  const permittedInfrastructure = rowsOf(permittedRows, "infrastructure_platforms", "infrastructure");
+  const permittedDataFlows = [
+    ...rowsOf(permittedRows, "current_state_data_flow", "data_flow"),
+    ...rowsOf(permittedRows, "data_assets_integrations", "data_flow"),
+  ];
+  const contractSpend = permittedContracts.reduce((sum, row) => sum + payloadNumber(payload(row), "annualized_value_usd", "annual_spend_usd"), 0);
+  const vendorRows = topSpendShareRows(permittedContracts, "supplier_name", "annualized_value_usd", 8);
   const topVendor = vendorRows[0];
+  const allUsableRowIds = validatedRows.usable.map((candidate) => candidate.id);
+  const rowIdsFor = (needle: string) => allUsableRowIds.filter((id) => id.includes(needle)).slice(0, 20);
 
-  const signals: Signal[] = [
+  const rawSignals: Signal[] = [
     {
       id: "sig_ecl_estate_001",
       kind: "portfolio",
-      statement: `The ECL Home projection contains ${applications.length.toLocaleString()} applications, ${contracts.length.toLocaleString()} contracts, ${infrastructure.length.toLocaleString()} infrastructure/platform records, and ${dataFlows.length.toLocaleString()} data-flow rows.`,
+      statement: `The governed Home record contains ${permittedApplications.length.toLocaleString()} applications, ${permittedContracts.length.toLocaleString()} contracts, ${permittedInfrastructure.length.toLocaleString()} infrastructure/platform records, and ${permittedDataFlows.length.toLocaleString()} data-flow rows that passed the executive packet readiness policy.`,
       domains: ["application_system", "vendor_contract", "infrastructure_platform", "data_asset_or_integration"],
-      evidenceRefs: ["ecl_projection.home_enterprise_landscape"],
+      evidenceRefs: allUsableRowIds.slice(0, 20),
     },
     {
       id: "sig_ecl_vendor_002",
       kind: "concentration",
       statement: topVendor
-        ? `The ECL contract view shows ${contracts.length.toLocaleString()} contracts with $${(contractSpend / 1_000_000).toFixed(1)}M annualized value; ${String(topVendor.label)} is the largest visible supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of loaded contract value.`
-        : "The ECL contract view has no supplier spend rows loaded.",
+        ? `The governed contract view shows ${permittedContracts.length.toLocaleString()} contracts with $${(contractSpend / 1_000_000).toFixed(1)}M annualized value; ${String(topVendor.label)} is the largest visible supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of ready contract value.`
+        : "The governed contract view has no agent-ready supplier spend rows.",
       domains: ["vendor_contract", "spend_value_fact"],
-      evidenceRefs: ["ecl_projection.home_enterprise_landscape"],
+      evidenceRefs: rowIdsFor("_vendor_contracts_"),
     },
     {
       id: "sig_ecl_data_flow_003",
       kind: "complexity",
-      statement: `The ECL data-flow view carries ${dataFlows.length.toLocaleString()} source-target movement rows, so architecture and data-flow pages should render from topology evidence rather than from static snapshot counts.`,
+      statement: `The governed data-flow view carries ${permittedDataFlows.length.toLocaleString()} source-target movement rows that passed executive-packet readiness, so architecture and data-flow pages should render from topology evidence rather than from static snapshot counts.`,
       domains: ["data_asset_or_integration", "application_system"],
-      evidenceRefs: ["ecl_projection.home_enterprise_landscape"],
+      evidenceRefs: rowIdsFor("_data_flow_"),
     },
     {
       id: "sig_ecl_writer_004",
       kind: "operational",
-      statement: "Home narrative prose is generated from ECL projection rows through the verified EnterpriseThesis writer, while factual counts remain deterministic projection facts.",
+      statement: "Home narrative prose is generated only after the executive packet governance policy permits the candidate facts, while factual counts remain deterministic record facts.",
       domains: ["evidence_sources", "application_system", "vendor_contract"],
-      evidenceRefs: ["ecl_projection.home_enterprise_landscape"],
+      evidenceRefs: allUsableRowIds.slice(0, 20),
     },
   ];
+  const signalCandidates = rawSignals.map((signal) => governedCandidateForSignal(signal, tenantKey, renderedAt));
+  const validatedSignals = buildValidatedAgentContextBundle(signalCandidates, { requireAgentReady: true });
+  const usableSignalIds = new Set(validatedSignals.usable.map((candidate) => candidate.id));
+  const signals = rawSignals.filter((signal) => usableSignalIds.has(signal.id));
 
   const contextItems: ContextItem[] = [
     {
       id: "ctx_ecl_assessment_001",
-      statement: `This Home narrative build is based on ECL assessment ${assessmentId}; the fixture is synthetic and not client-attested.`,
+      statement: `This Home narrative build is based on assessment ${assessmentId}; the fixture is synthetic and not client-attested.`,
       domains: ["enterprise_profile", "evidence_sources"],
     },
-    ...rows
-      .filter((row) => row.row_type !== "summary" && row.row_type !== "chapter_claim")
-      .slice(0, 900)
-      .map((row) => ({
-        id: contextId(row),
-        statement: rowStatement(row),
-        domains: rowDomains(row),
-      })),
+    ...validatedRows.usable
+      .map((candidate) => {
+        const content = rowContentByCandidateId.get(candidate.id);
+        return content ? { id: candidate.id, statement: content.statement, domains: content.domains } : null;
+      })
+      .filter((item): item is ContextItem => Boolean(item))
+      .slice(0, 900),
   ];
+  if (validatedRows.blocked.length > 0) {
+    contextItems.push({
+      id: "ctx_ecl_context_policy_summary_001",
+      statement: `The executive packet policy withheld ${validatedRows.blocked.length.toLocaleString()} candidate facts from narrative input; withheld payloads are not included, and the affected areas should be treated as readiness gaps until source, review, retrievability, or admission status is corrected.`,
+      domains: ["evidence_sources"],
+    });
+  }
+
+  const mergedBundle: ValidatedAgentContextBundle = {
+    ...validatedRows,
+    usable: [...validatedRows.usable, ...validatedSignals.usable],
+    blocked: [...validatedRows.blocked, ...validatedSignals.blocked],
+    agentReadyCount: validatedRows.agentReadyCount + validatedSignals.agentReadyCount,
+    citations: [...new Set([...validatedRows.citations, ...validatedSignals.citations])],
+  };
+  const contextPolicyProof = proofFromBundle(
+    mergedBundle,
+    [...rowCandidates, ...signalCandidates],
+    rows.map((row) => row.source_hash),
+  );
 
   const packet = {
     enterpriseIdentity: {
@@ -340,14 +512,14 @@ function buildSignalPacket(rows: HomeProjectionWriteRow[], assessmentId: string)
     businessEconomics: {
       operatingSegments: [],
       customerSegments: [],
-      technologyBudget: sumPayload(applications, "annual_cost_usd"),
+      technologyBudget: sumPayload(permittedApplications, "annual_cost_usd"),
       technologyBudgetShareOfRevenue: null,
     },
     strategicPriorities: [],
     signals,
     contextItems,
     visualDatasets: {
-      application_landscape_by_function: dimensionShareRows(applications, "business_function", 8),
+      application_landscape_by_function: dimensionShareRows(permittedApplications, "business_function", 8),
       vendor_spend_concentration: vendorRows,
     },
     analyticalLenses: [],
@@ -357,6 +529,10 @@ function buildSignalPacket(rows: HomeProjectionWriteRow[], assessmentId: string)
         { key: "home_vendor_contracts", recordCount: contracts.length, evidencedShare: contracts.length ? 1 : 0 },
         { key: "home_infrastructure_platforms", recordCount: infrastructure.length, evidencedShare: infrastructure.length ? 1 : 0 },
         { key: "home_data_flows", recordCount: dataFlows.length, evidencedShare: dataFlows.length ? 1 : 0 },
+        { key: "home_agent_ready_applications_systems", recordCount: permittedApplications.length, evidencedShare: applications.length ? permittedApplications.length / applications.length : 0 },
+        { key: "home_agent_ready_vendor_contracts", recordCount: permittedContracts.length, evidencedShare: contracts.length ? permittedContracts.length / contracts.length : 0 },
+        { key: "home_agent_ready_infrastructure_platforms", recordCount: permittedInfrastructure.length, evidencedShare: infrastructure.length ? permittedInfrastructure.length / infrastructure.length : 0 },
+        { key: "home_agent_ready_data_flows", recordCount: permittedDataFlows.length, evidencedShare: dataFlows.length ? permittedDataFlows.length / dataFlows.length : 0 },
       ],
       leadershipToPortfolioLinkage: {
         resolvableRows: 0,
@@ -381,7 +557,7 @@ function buildSignalPacket(rows: HomeProjectionWriteRow[], assessmentId: string)
       ],
     },
   };
-  return packet;
+  return { signalPacket: packet, contextPolicyProof };
 }
 
 async function readHomeProjectionRows(db: Client, tenantKey: string, assessmentId: string): Promise<HomeProjectionWriteRow[]> {
@@ -470,6 +646,7 @@ async function writeNarrativeRows(
   chapters: ChapterView[],
   thesisResult: Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>,
   signalPacket: EnterpriseSignalPacket,
+  contextPolicyProof: ContextPolicyProof,
 ) {
   const generatedAt = new Date().toISOString();
   const provenance = buildHomeChapterProvenance(signalPacket, THESIS_PROMPT_VERSION, generatedAt);
@@ -519,6 +696,8 @@ async function writeNarrativeRows(
             accepted: true,
             issues: [],
           },
+          context_policy: contextPolicyProof,
+          signal_packet_hash: hashJson(signalPacket),
           claim_rows_written: claimRowsForChapter(chapter).length,
         },
         writer_headline: chapter.headline,
@@ -698,10 +877,11 @@ async function main() {
     const rows = await readHomeProjectionRows(db, options.tenantKey, options.assessmentId);
     if (rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
 
-    const signalPacket = buildSignalPacket(rows, options.assessmentId);
+    const { signalPacket, contextPolicyProof } = buildGovernedSignalPacket(rows, options.tenantKey, options.assessmentId);
     console.log(
       `${options.tenantKey}/${options.assessmentId}: ${rows.length} Home projection rows -> ` +
-        `${signalPacket.signals.length} signals, ${signalPacket.contextItems.length} context items`,
+        `${signalPacket.signals.length} signals, ${signalPacket.contextItems.length} context items; ` +
+        `${contextPolicyProof.usable_count}/${contextPolicyProof.candidate_count} governed candidates usable`,
     );
 
     const thesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic);
@@ -723,6 +903,7 @@ async function main() {
       writeApplied: WRITE,
       chapters,
       signalPacket,
+      contextPolicyProof,
       thesisResult,
     };
     const outFile = path.join(options.outDir, `${options.tenantKey}-home-ecl-narrative-layer.json`);
@@ -730,7 +911,7 @@ async function main() {
     console.log(`-> ${outFile}`);
 
     if (WRITE) {
-      await writeNarrativeRows(db, options, rows, chapters, thesisResult, signalPacket);
+      await writeNarrativeRows(db, options, rows, chapters, thesisResult, signalPacket, contextPolicyProof);
       console.log(`✓ wrote ${chapters.length} chapter summaries and ${chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0)} chapter claim rows`);
     } else {
       console.log("Plan-only complete. Set HOME_ECL_NARRATIVE_WRITE=true and HOME_ECL_NARRATIVE_WRITE_APPROVED=true to write ECL projection narrative rows.");
@@ -758,6 +939,8 @@ async function main() {
       chapter_count: chapters.length,
       chapter_claim_rows: chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0),
       thesis_prompt_version: THESIS_PROMPT_VERSION,
+      context_policy: contextPolicyProof,
+      signal_packet_hash: hashJson(signalPacket),
       verification: verificationSummary,
       out_file: outFile,
     }));

@@ -39,6 +39,27 @@ assert(
   "ECL narrative job reuses the existing verified writer path",
 );
 assert(
+  script.includes("buildValidatedAgentContextBundle") &&
+    script.includes("{ requireAgentReady: true }") &&
+    script.includes("GovernedCandidate") &&
+    script.includes("contextPolicyProof"),
+  "ECL narrative job builds the executive packet through the governed agent-ready context seam",
+);
+assert(
+  script.includes("candidateIsReady") &&
+    script.includes("row.quality_state === \"passed\"") &&
+    script.includes("row.value_state === \"known\"") &&
+    script.includes("row.admission_status === \"admitted\"") &&
+    script.includes("sourceRefs.length > 0"),
+  "ECL narrative job requires quality, value, admission, source refs, and source hash before a row can enter the packet",
+);
+assert(
+  script.includes("The executive packet policy withheld") &&
+    script.includes("withheld payloads are not included") &&
+    script.includes("blocked_count_by_reason"),
+  "ECL narrative job emits safe policy-gap metadata without copying blocked payloads into model context",
+);
+assert(
   script.includes("HOME_ECL_NARRATIVE_WRITE === \"true\"") &&
     script.includes("HOME_ECL_NARRATIVE_WRITE_APPROVED === \"true\""),
   "ECL narrative write path is explicitly gated",
@@ -54,12 +75,19 @@ assert(
 );
 assert(
   script.includes('payloadNumber(data, "annualized_value_usd", "annual_spend_usd")') &&
-    script.includes('topSpendShareRows(contracts, "supplier_name", "annualized_value_usd", 8)'),
-  "ECL narrative job reads contract spend and supplier concentration from Home projection field names",
+    script.includes('topSpendShareRows(permittedContracts, "supplier_name", "annualized_value_usd", 8)'),
+  "ECL narrative job reads permitted contract spend and supplier concentration from Home projection field names",
 );
 assert(
   script.includes("structured_event: \"home_ecl_narrative_layer_summary\""),
   "ECL narrative job emits structured proof for the ACA operator wrapper",
+);
+assert(
+  script.includes("signal_packet_hash") &&
+    script.includes("context_bundle_hash") &&
+    script.includes("source_hashes") &&
+    script.includes("usable_candidate_ids"),
+  "ECL narrative job persists signal-packet, context-bundle, source-hash, and usable-candidate proof",
 );
 assert(
   script.includes("ecl_projection.home_enterprise_landscape") &&
