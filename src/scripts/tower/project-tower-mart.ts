@@ -367,7 +367,10 @@ export async function readSourceContractDepthFacts(
   try {
     input.contracts = (await q(
       `SELECT contract_id, contract_name, vendor_name, annual_value AS annual_contract_value,
-              actual_annual_spend, authority_state, quality_state, knowledge_baseline_ref
+              actual_annual_spend,
+              NULL::text AS authority_state,
+              NULL::text AS quality_state,
+              NULL::text AS knowledge_baseline_ref
          FROM source.contract_360
         WHERE tenant_key = $1
         ORDER BY annual_value DESC NULLS LAST, contract_id`,

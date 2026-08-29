@@ -165,7 +165,7 @@ export function projectSourceContractDepthToFacts(
           view: "vendor_contract",
           valueNumeric: annualValue,
           basis: "committed",
-          sourceKey: "consumption.sourcing_contract_v1",
+          sourceKey: "source.contract_360",
           sourceRow: contract.contract_id,
           canonical: contractCanonical(
             contract,
