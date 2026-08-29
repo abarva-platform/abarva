@@ -19,6 +19,7 @@ import {
   isEclProductProvider,
   resolveEclProductProvider,
 } from "@/lib/ecl/product-provider";
+import { loadTowerMartCommandView } from "@/lib/cio-tower/tower-mart-view-model";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 import {
@@ -98,17 +99,22 @@ export async function renderTowerPage({
     trustedTenant?.displayName ??
     client?.name ??
     "AbarVa Client";
+  const tenantKeyCandidates = [
+    trustedTenant?.clientKey,
+    effectiveClientKey,
+    requestedClient,
+    client?.id,
+  ];
 
   const martView = await withTowerReadTimeout(
-    readTowerCommandCenter({
-      tenantKeyCandidates: [
-        trustedTenant?.clientKey,
-        effectiveClientKey,
-        requestedClient,
-        client?.id,
-      ],
-      tenantDisplayName: tenantName,
-    }),
+    loadTowerMartCommandView({ tenantKeyCandidates }).then(
+      (mart) =>
+        mart ??
+        readTowerCommandCenter({
+          tenantKeyCandidates,
+          tenantDisplayName: tenantName,
+        }),
+    ),
     null,
   );
   const commandCenterView = buildTowerCommandCenterView(martView, {

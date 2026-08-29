@@ -41,6 +41,11 @@ nullable governance metadata explicitly. This keeps Tower from depending on
 optional Source projection metadata columns while preserving finance and
 evidence states on the opportunity/performance reads.
 
+Follow-up product-path hardening makes the Tower route read the physical
+`cio_tower.mart_*` command mart first, falling back to the legacy serving reader
+only when no mart rows exist for a tenant. This aligns the shipped Tower page
+with the governed mart refresh that the operator job writes.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -69,6 +74,10 @@ Source projection fields for contract identity, vendor display, annual value,
 and actual spend; optional authority/quality/baseline metadata is not queried
 from the header projection.
 
+Layer 4 - Tower product reader. The primary Tower route now prefers the
+physical `cio_tower.mart_*` read model before using legacy serving projections,
+so refreshed mart rows are the product path for cut-over tenants.
+
 ## Client Applicability
 
 - All clients: The projection code path is available but has no effect until a
@@ -91,6 +100,8 @@ from the header projection.
 - `src/scripts/tower/project-tower-mart-write.ts`
 - `src/scripts/tower/__tests__/project-tower-mart-write.test.ts`
 - `src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts`
+- `src/app/(maestro)/tower/page.tsx`
+- `src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts`
 
 ## QA / Validation
 
@@ -122,13 +133,21 @@ from the header projection.
   alias and then stopped on optional Source Contract 360 metadata not present
   in the deployed projection. The bridge now provides null metadata rather than
   querying those optional columns.
+- PASS: Tower mart write succeeded with Source contract-depth facts included.
+  The proof bundle reported 101 legacy template facts, 171 Source contract
+  facts, 271 merged facts, and refreshed mart counts of 1 command-center row, 7
+  value-funnel rows, 96 decision lanes, 96 portfolio rows, 96 action rows, 192
+  evidence-lineage rows, and 160 required-field gaps.
+- PASS: `npx jest src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts src/lib/cio-tower/__tests__/tower-mart-view-model.test.ts src/lib/tower/command-center/__tests__/view-model.test.ts --runInBand`
+- PASS: `npx eslint src/app/(maestro)/tower/page.tsx src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts src/lib/cio-tower/tower-mart-view-model.ts`
+- PASS: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`
 
 ## Rollout Plan
 
 Merge through PR-only governance, deploy through the repo-owned Azure Container
-Apps main workflow, then rerun the governed Source Layer 4 apply/verify job.
-After Source Layer 4 passes, run the governed Tower mart write job for the same
-tenant and capture readback proof from `cio_tower.mart_*`.
+Apps main workflow, then prove the Tower route renders from the refreshed
+physical mart. If a tenant has no physical mart rows, the route may still use
+the legacy serving fallback until that tenant is cut over.
 
 ## Deployment Authority
 
@@ -163,10 +182,11 @@ to restore the prior mart contents.
   `/tmp/tower-mart-projection-meridian-health-20260829T0327Z/04-logs.txt`.
 - Tower mart failed write before stable contract-header metadata read:
   `/tmp/tower-mart-projection-meridian-health-20260829T0350Z/04-logs.txt`.
-- Future evidence after rollout: Source Layer 4 apply/verify summaries, Tower
-  mart write proof bundle, and signed-in Tower page proof.
+- Tower mart successful write with Source contract-depth facts:
+  `/tmp/tower-mart-projection-meridian-health-20260829T0411Z/proof/tower-mart-projection-meridian-health/projection-summary.json`.
+- Future evidence after rollout: signed-in Tower page proof.
 
 ## Known Gaps
 
-Final Tower mart write/readback and signed-in Tower UI proof still need to run
-after this release is merged and deployed.
+Signed-in Tower UI proof still needs to run after the product read-path release
+is merged and deployed.

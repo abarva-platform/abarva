@@ -34,4 +34,15 @@ describe("tenant Tower route scope", () => {
       expect(source).not.toContain("new URLSearchParams");
     }
   });
+
+  it("reads the physical Tower mart before falling back to legacy serving views", () => {
+    const source = readRepoFile("src/app/(maestro)/tower/page.tsx");
+    const martReader = source.indexOf("loadTowerMartCommandView");
+    const servingReader = source.indexOf("readTowerCommandCenter");
+
+    expect(martReader).toBeGreaterThan(-1);
+    expect(servingReader).toBeGreaterThan(-1);
+    expect(martReader).toBeLessThan(servingReader);
+    expect(source).toContain("mart ??");
+  });
 });
