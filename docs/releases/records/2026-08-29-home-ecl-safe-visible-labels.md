@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-This change tightens the Home ECL narrative scrubber so a replacement display label cannot reintroduce an internal object identifier into CXO-visible prose.
+This change tightens Home ECL visible-language handling so replacement display labels cannot reintroduce internal object identifiers, and unresolved evidence references use reader-safe wording on the CXO surface.
 
 ## Layer Impact
 
 Lane: `global-control-lane`
 
-Layer 4 Products: Home narrative generation now sanitizes visible display labels before using them as replacements for governed object IDs.
+Layer 4 Products: Home narrative generation now sanitizes visible display labels before using them as replacements for governed object IDs. Home evidence labels now describe unresolved citations in reader-safe language.
 
 ## Client Applicability
 
@@ -30,6 +30,7 @@ Layer 4 Products: Home narrative generation now sanitizes visible display labels
 
 - `scripts/ecl/build_home_ecl_narrative_layer.ts`
 - `scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs`
+- `src/components/home/v4/source-label.ts`
 
 ## QA / Validation
 
