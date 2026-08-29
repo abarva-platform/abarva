@@ -26,6 +26,8 @@ The fifth follow-up preserves the established precision for contract-consumption
 
 The sixth follow-up preserves the mixed money-column contract already present in the live consumption projection: annual display and total committed fields keep `numeric(18,2)`, while actual and committed annual spend fields remain unconstrained `numeric`.
 
+The seventh follow-up preserves the established vendor-consumption rank flags so replacing the vendor projection does not drop `top_5_flag` or `top_10_flag`.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -51,6 +53,7 @@ Layer 4 - Products/projections operator path. The change affects only the readin
 - Guarded confidence conversion for the Source contract consumption projection.
 - Money-field precision preservation for the Source contract consumption projection.
 - Mixed money-column type preservation for the Source contract consumption projection.
+- Vendor rank-flag preservation for the Source vendor consumption projection.
 
 ## QA / Validation
 
@@ -65,6 +68,7 @@ Layer 4 - Products/projections operator path. The change affects only the readin
 - Follow-up validation after the confidence conversion correction repeated the focused Jest, ESLint, TypeScript, and release-control checks successfully.
 - Follow-up validation after the money precision correction repeated the focused Jest, ESLint, TypeScript, and release-control checks successfully.
 - Follow-up validation after the mixed money-column correction repeated the focused Jest, ESLint, TypeScript, and release-control checks successfully.
+- Follow-up validation after the vendor rank-flag correction repeated the focused Jest, ESLint, TypeScript, and release-control checks successfully.
 
 ## Rollout Plan
 
@@ -96,6 +100,7 @@ Revert this PR and rerun the Source Layer 4 plan gate with the previous deployed
 - ACA operator failure evidence for the confidence type apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2305Z/summary.json`.
 - ACA operator failure evidence for the money precision apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2325Z/summary.json`.
 - ACA operator failure evidence for the mixed money-column apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260828T2352Z/summary.json`.
+- ACA operator failure evidence for the vendor rank-flag apply attempt: `/tmp/source-contract-depth-package-layer4-apply-20260829T0022Z/summary.json`.
 
 ## Known Gaps
 
