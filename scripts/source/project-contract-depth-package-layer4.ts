@@ -1345,7 +1345,7 @@ async function rebuildViews(client: Client): Promise<void> {
       o.opportunity_id,
       o.contract_id,
       o.vendor_ref,
-      o.vendor_name,
+      COALESCE(cov.vendor_name, o.vendor_ref, 'Unknown vendor') AS vendor_name,
       o.title,
       o.action_type,
       o.opportunity_type,
