@@ -230,6 +230,46 @@ The browser should answer:
 - "Which business group/function/vendor/hosting model owns the concentration?"
 - "Can I open the source row and see the original workbook values?"
 
+### Counting Rule
+
+Every count, facet total, dimension total, and summary denominator in the browser must be computed
+through typed views, never directly from raw `ecl_context.object` rows. The authoritative counting
+surfaces are:
+
+- `application_v`
+- `application_deployment_v`
+- `business_object_v`
+- `technical_component_v`
+
+`object_type_catalog.grain` and `object_type_catalog.counting_class` are the authority for whether
+something counts as an application, deployment, business object, technical component, or supporting
+record. Every visible count must carry a named denominator such as `applications`, `deployments`,
+`contracts`, `reports`, `interfaces`, `platforms`, or `reviewed rows`.
+
+Reason: the canonical object table intentionally stores applications and deployments as peer
+objects. A browser that slices raw objects can count applications and deployments together and show
+an estate number several times too large. That error is especially dangerous in a CXO-facing browse
+surface because the table appears factual even when the grain is wrong.
+
+### Admission Rule
+
+The architecture browser inherits the existing admission gates. It does not replace them with a
+clean diagram.
+
+`current_state_architecture` and `current_state_data_flow` must run their declared admission gates
+before rendering conceptual, logical, or physical drilldowns. If the record cannot answer the
+landing clause, consumption clause, topology fitness question, or required evidence basis, the page
+renders the refusal payload at the level where the failure occurs:
+
+- failed rule.
+- measurement.
+- evidence needed.
+- supported alternative.
+
+A conceptual map is not allowed to render as a substitute for a refused logical or data-flow view.
+Finding F10 exists to protect this behavior: a correct refusal is a product feature, not an empty
+state.
+
 It should not answer executive strategy questions by itself. It is the inspection surface behind
 Home, Source, Tower, Moves, and Intelligence.
 
@@ -387,6 +427,9 @@ The Home V2 page set is acceptable only when:
 - each conceptual block drills to logical systems and physical/platform details.
 - data architecture shows source -> ingestion -> platform -> mart/product -> consumption.
 - browser uses dimension and measure selectors rather than all-column sprawl.
+- browser counts through typed views and shows named denominators, never raw object totals.
+- architecture and data-flow drilldowns honor admission gates and render refusals when the record
+  cannot support the requested view.
 - org chart and interviews are first-class evidence surfaces.
 - every number and relationship reconciles to source truth.
 - unknowns are explicit and never shown as zero.

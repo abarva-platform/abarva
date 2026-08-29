@@ -15,6 +15,11 @@ present current-state systems, organization, interviews, technology/vendor data,
 for a new business or technology executive: conceptual blocks first, then logical system maps, then
 physical drilldown and evidence.
 
+Follow-up update: tightens the contract so browse counts must come from typed counting views with
+named denominators, architecture/data-flow drilldowns must honor admission refusals, and Home
+briefing chapters must render as published, refused, or deferred rather than disappearing from the
+page.
+
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
@@ -38,6 +43,9 @@ physical drilldown and evidence.
 
 - `docs/architecture/home-ecl-page-prompts-and-architecture-experience-2026-08-28.md`
 - `docs/architecture/home-ecl-executive-narrative-v2-design-2026-08-28.md`
+- Tightens the workbook browser counting rule to require typed views and named denominators.
+- Tightens architecture/data-flow browsing to preserve admission refusals.
+- Tightens the Home V2 Definition of Done so absent chapters fail the gate.
 
 ## QA / Validation
 
