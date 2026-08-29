@@ -1112,12 +1112,20 @@ function detailStateLabel(state: SourceWorkspaceVM["detailState"]) {
   return "Header only";
 }
 
-function performanceActual(
-  actualValue: string | null,
-  valueNum: number | null,
+export function performanceActual(
+  actualValue: unknown,
+  valueNum: unknown,
 ) {
-  if (actualValue?.trim()) return actualValue;
+  const formatActual = (actual: number) =>
+    actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
+  if (typeof actualValue === "number" && Number.isFinite(actualValue)) {
+    return formatActual(actualValue);
+  }
+  if (actualValue != null) {
+    const actualText = String(actualValue).trim();
+    if (actualText) return actualText;
+  }
   const actual = numberFromDb(valueNum);
   if (actual == null) return "Not established";
-  return actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
+  return formatActual(actual);
 }
