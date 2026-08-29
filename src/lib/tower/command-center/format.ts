@@ -66,3 +66,28 @@ export function formatRatioPct(value: number | null | undefined): string {
     return "—";
   return `${Math.round(value * 100)}%`;
 }
+
+/**
+ * Three states, not two: a named blocker, a reviewed rollout with nothing found, and a rollout
+ * nobody has recorded. Only the first is red.
+ *
+ * `control_blocker` carries `none` as a real value, so a truthy check painted a cleared rollout in
+ * alarm red and counted it as blocked.
+ */
+export function controlBlockerCell(item: {
+  controlBlocker: string | null;
+  controlBlockerReviewed: boolean;
+}): { text: string; tone: "blocked" | "clear" | "absent" } {
+  if (item.controlBlocker !== null) {
+    return { text: item.controlBlocker, tone: "blocked" };
+  }
+  return item.controlBlockerReviewed
+    ? { text: "None found", tone: "clear" }
+    : { text: "Not loaded", tone: "absent" };
+}
+
+export const BLOCKER_TONE: Record<"blocked" | "clear" | "absent", string> = {
+  blocked: "var(--canon-red)",
+  clear: "var(--canon-teal-dark)",
+  absent: "var(--canon-gray-500)",
+};

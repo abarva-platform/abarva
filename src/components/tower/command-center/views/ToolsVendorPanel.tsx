@@ -3,8 +3,12 @@
 /**
  * Tools -> vendor.
  *
- * The approved design says "licensed users by vendor"; this view model carries active usage, not
- * license entitlements. The panel names that boundary and only groups loaded active-user evidence.
+ * The approved design says "licensed users by vendor"; this view carries active usage, not license
+ * entitlements, so the panel groups loaded active-user evidence and says so in the reader's own
+ * words rather than naming an internal type.
+ *
+ * `none` is a value the source asserts for `control_blocker`, so a truthy check counted a cleared
+ * rollout as blocked. The count now asks whether a blocker was actually named.
  */
 
 import {
@@ -58,7 +62,7 @@ export function buildToolVendorRows(view: TowerCommandCenterView): readonly Vend
     map.set(vendor, {
       vendor,
       activeUsers: users === null ? current.activeUsers : (current.activeUsers ?? 0) + users,
-      blockerCount: current.blockerCount + (item.controlBlocker ? 1 : 0),
+      blockerCount: current.blockerCount + (item.controlBlocker !== null ? 1 : 0),
       toolCount: current.toolCount + 1,
     });
   }
@@ -75,13 +79,16 @@ function VendorChart({ rows }: { rows: readonly VendorRow[] }) {
       fill: "#b4b2a9",
     }));
   if (data.length === 0) return <p style={{ margin: 0 }}>Not loaded</p>;
+  // Recharts drops colliding category ticks by default, which left the largest vendor's bar with
+  // no label at all. Every tick renders, and the frame grows with the row count to fit them.
+  const height = Math.max(300, data.length * 34 + 40);
   return (
-    <div style={{ height: 300, width: "100%" }}>
+    <div style={{ height, width: "100%" }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 78, left: 0, bottom: 18 }}>
           <CartesianGrid horizontal={false} stroke="rgba(10,10,11,0.10)" />
           <XAxis type="number" tick={{ fontFamily: "var(--abarva-mono)", fontSize: 11, fill: "#5f5e5a" }} axisLine={false} tickLine={false} />
-          <YAxis type="category" dataKey="name" width={168} tick={{ fontFamily: "var(--abarva-sans)", fontSize: 13, fill: "#2c2c2a" }} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="name" width={168} interval={0} tick={{ fontFamily: "var(--abarva-sans)", fontSize: 12, fill: "#2c2c2a" }} axisLine={false} tickLine={false} />
           <Tooltip
             cursor={{ fill: "rgba(10,10,11,0.05)" }}
             contentStyle={{ fontFamily: "var(--abarva-sans)", fontSize: 13, border: "1px solid var(--canon-border)", borderRadius: 0, background: "#fff" }}
@@ -164,8 +171,8 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
         </div>
       </div>
       <p style={{ margin: 0, fontSize: 14, color: "var(--canon-gray-500)" }}>
-        Licensed-user counts are not loaded in `TowerAiView`; this panel therefore shows active usage
-        only.
+        Seats purchased are not loaded, so this counts people actually using each vendor&rsquo;s tools
+        — not what the contract entitles you to.
       </p>
     </section>
   );

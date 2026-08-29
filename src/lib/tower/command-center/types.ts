@@ -299,6 +299,8 @@ export interface TowerAiView {
   costToBuildLowUsd: number | null;
   costToBuildHighUsd: number | null;
   controlBlocker: string | null;
+  /** True when the source asserted a blocker or explicitly asserted `none`. */
+  controlBlockerReviewed: boolean;
   sponsorRole: string | null;
   /** 0–100, mart `risk_score`. Candidate pipeline diagnostic. */
   riskScore: number;

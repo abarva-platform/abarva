@@ -188,6 +188,8 @@ export interface TowerMartAiPortfolioItem {
   costToBuildLowUsd?: number | null;
   costToBuildHighUsd?: number | null;
   controlBlocker?: string | null;
+  /** Whether the source asserted anything for the blocker — `none` included. */
+  controlBlockerReviewed?: boolean;
   sponsorRole?: string | null;
   duplicateRisk: string | null;
   valueClaimStatus: string;

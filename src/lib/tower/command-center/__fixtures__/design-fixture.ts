@@ -353,17 +353,27 @@ const CANDIDATE_SEEDS: ReadonlyArray<{ name: string; reason: string }> = [
  * and only the second branch could ever render, whatever the data held.
  */
 const ROLLOUT_ASSERTIONS: Readonly<
-  Record<string, { target: number | null; cases: number | null }>
+  Record<
+    string,
+    {
+      target: number | null;
+      cases: number | null;
+      /** `null` with `reviewed: true` is a rollout checked and found clear. */
+      blocker?: string | null;
+      reviewed?: boolean;
+    }
+  >
 > = {
-  "Fraud Graph Analytics v2": { target: 90, cases: 4 },
-  "Workplace Copilot": { target: 75, cases: 6 },
-  "Developer Copilot": { target: 85, cases: 2 },
-  "ITSM AI Agents": { target: 70, cases: 3 },
-  "HCM / ERP Assist": { target: 60, cases: null },
-  "AML Case Triage": { target: 80, cases: 1 },
-  // Asserts no target — the honest-absence path on the bar and the label.
-  "Data Lineage & Governance": { target: null, cases: null },
-  "Cloud AI Services": { target: null, cases: 2 },
+  "Fraud Graph Analytics v2": { target: 90, cases: 4, blocker: "SOX evidence", reviewed: true },
+  "Workplace Copilot": { target: 75, cases: 6, blocker: "DLP policy", reviewed: true },
+  // Reviewed and clear — must render as clear, never as red and never as unknown.
+  "Developer Copilot": { target: 85, cases: 2, blocker: null, reviewed: true },
+  "ITSM AI Agents": { target: 70, cases: 3, blocker: "workflow telemetry", reviewed: true },
+  "HCM / ERP Assist": { target: 60, cases: null, blocker: null, reviewed: true },
+  "AML Case Triage": { target: 80, cases: 1, blocker: "clinical safety review", reviewed: true },
+  // Asserts no target and was never reviewed — the two honest-absence paths.
+  "Data Lineage & Governance": { target: null, cases: null, blocker: null, reviewed: false },
+  "Cloud AI Services": { target: null, cases: 2, blocker: null, reviewed: false },
 };
 
 function aiItems(): TowerMartAiPortfolioItem[] {
@@ -385,6 +395,8 @@ function aiItems(): TowerMartAiPortfolioItem[] {
     usageActual: seed.usageActual,
     adoptionRatePct: seed.adoption,
     adoptionTargetPct: ROLLOUT_ASSERTIONS[seed.name]?.target ?? null,
+    controlBlocker: ROLLOUT_ASSERTIONS[seed.name]?.blocker ?? null,
+    controlBlockerReviewed: ROLLOUT_ASSERTIONS[seed.name]?.reviewed ?? false,
     linkedBusinessCaseCount: ROLLOUT_ASSERTIONS[seed.name]?.cases ?? null,
     valueScore: seed.value,
     readinessScore: seed.readiness,
@@ -417,6 +429,8 @@ function aiItems(): TowerMartAiPortfolioItem[] {
       // otherwise hand it that rollout's target and case count.
       adoptionTargetPct: null,
       linkedBusinessCaseCount: null,
+      controlBlocker: null,
+      controlBlockerReviewed: false,
       caveat: seed.reason,
     }),
   );

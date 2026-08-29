@@ -10,7 +10,13 @@
 import type React from "react";
 
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
-import { formatCount, formatPct, formatUsdM } from "@/lib/tower/command-center/format";
+import {
+  BLOCKER_TONE,
+  controlBlockerCell,
+  formatCount,
+  formatPct,
+  formatUsdM,
+} from "@/lib/tower/command-center/format";
 
 type FoundationRow = {
   readonly item: TowerAiView;
@@ -159,8 +165,8 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
               <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
                 {costRange(item)}
               </span>
-              <span style={{ color: item.controlBlocker ? "var(--canon-red)" : "var(--canon-gray-500)" }}>
-                {item.controlBlocker ?? "Not loaded"}
+              <span style={{ color: BLOCKER_TONE[controlBlockerCell(item).tone] }}>
+                {controlBlockerCell(item).text}
               </span>
             </div>
           ))

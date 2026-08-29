@@ -524,6 +524,26 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
   };
 }
 
+/**
+ * `control_blocker` carries `none` as a real value: the rollout was reviewed and nothing was
+ * found. That is not the same as the field being absent, and it is the opposite of a blocker —
+ * but every truthy check reads the string `none` as one, which put two cleared rollouts in alarm
+ * red and overstated the blocked count in the vendor headline.
+ *
+ * So the name drops to null when nothing is named, which makes the common `blocker ? ... : ...`
+ * check correct by default, and `controlBlockerReviewed` carries whether the source said anything
+ * at all — the difference between "clear" and "never looked".
+ */
+function controlBlockerFields(row: TowerServingRow): {
+  controlBlocker: string | null;
+  controlBlockerReviewed: boolean;
+} {
+  const raw = payloadTextFrom(row, ["control_blocker"]);
+  if (raw === null) return { controlBlocker: null, controlBlockerReviewed: false };
+  const named = raw.trim().toLowerCase() === "none" ? null : raw;
+  return { controlBlocker: named, controlBlockerReviewed: true };
+}
+
 function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const refs = sourceRefs(row);
   const licensedUsersRaw = payloadNullableNumberFrom(row, [
@@ -613,7 +633,7 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     businessValueType: payloadTextFrom(row, ["business_value_type"]),
     costToBuildLowUsd: payloadNullableNumberFrom(row, ["cost_to_build_low_usd"]),
     costToBuildHighUsd: payloadNullableNumberFrom(row, ["cost_to_build_high_usd"]),
-    controlBlocker: payloadTextFrom(row, ["control_blocker"]),
+    ...controlBlockerFields(row),
     sponsorRole: payloadTextFrom(row, [
       "business_sponsor_role",
       "business_owner_role",
