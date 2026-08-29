@@ -41,6 +41,8 @@ describe("project-tower-mart Source contract bridge", () => {
     });
     expect(client.queries.some((query) => query.sql.includes("source.contract_360"))).toBe(true);
     expect(client.queries.some((query) => query.sql.includes("annual_value AS annual_contract_value"))).toBe(true);
+    expect(client.queries.some((query) => query.sql.includes("'accepted'::text AS authority_state"))).toBe(true);
+    expect(client.queries.some((query) => query.sql.includes("load_run_id AS knowledge_baseline_ref"))).toBe(true);
     expect(client.queries.some((query) => query.sql.includes("consumption.sourcing_opportunity_v1"))).toBe(true);
     expect(client.queries.at(-1)).toEqual({
       sql: "SELECT set_config('app.tenant_key', '', false)",
