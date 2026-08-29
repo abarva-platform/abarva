@@ -63,7 +63,7 @@ export function sourceForIds(evidenceIds: string[], signalPacket: EnterpriseSign
     // annotates; beyond that the count is more honest than a truncated list.
     label:
       labels.length === 0
-        ? "Source not resolved"
+        ? "Evidence reference needs resolution"
         : labels.length <= 2
           ? labels.join(" · ")
           : `${labels[0]} · ${labels[1]} + ${labels.length - 2} more`,
