@@ -453,31 +453,60 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const activeUsers =
     payloadNullableNumberFrom(row, ["active_users", "monthly_active_users"]) ??
     0;
+  const approvedFundingUsd =
+    payloadNullableNumberFrom(row, [
+      "approved_funding_usd",
+      "approved_investment_usd",
+      "funded_amount_usd",
+    ]) ?? payloadNumber(row, "monthly_cost_usd") * 12;
+  const promisedValueUsd = payloadNullableNumberFrom(row, [
+    "promised_value_usd",
+    "projected_annual_value_low_usd",
+  ]);
+  const adoptionRatePct =
+    payloadNullableNumberFrom(row, [
+      "adoption_rate_percent",
+      "adoption_actual_pct",
+    ]) ?? (licensedUsers > 0 ? (activeUsers / licensedUsers) * 100 : null);
   return {
     aiPortfolioKey: row.row_key,
     itemName: payloadText(row, "use_case_name", row.title) ?? row.row_key,
-    itemKind: "usage_benefit",
+    itemKind:
+      payloadTextFrom(row, ["item_kind", "itemKind"]) ?? "usage_benefit",
     vendorName: payloadText(row, "tool_name", row.summary),
     systemName: payloadText(row, "tool_name", row.summary),
-    aiSpendType: "usage",
-    aiSpendCategory: "tool",
-    fundingStatus: row.review_state,
-    decisionLane: "fix",
-    approvedFundingUsd: payloadNumber(row, "monthly_cost_usd") * 12,
-    aiTaggedSpendUsd: payloadNumber(row, "monthly_cost_usd") * 12,
-    promisedValueUsd: null,
-    financeValidatedValueUsd: 0,
-    usageMetric: "active users",
+    aiSpendType: payloadTextFrom(row, ["ai_spend_type"]) ?? "usage",
+    aiSpendCategory:
+      payloadTextFrom(row, ["ai_spend_category", "business_value_type"]) ??
+      "tool",
+    fundingStatus:
+      payloadTextFrom(row, ["funding_status", "finance_status"]) ??
+      row.review_state,
+    decisionLane: decisionLane(payloadTextFrom(row, ["decision_lane"])),
+    approvedFundingUsd,
+    aiTaggedSpendUsd: approvedFundingUsd,
+    promisedValueUsd,
+    financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
+    usageMetric:
+      payloadTextFrom(row, ["usage_metric", "success_metric"]) ??
+      "active users",
     usageActual: activeUsers,
-    adoptionRatePct:
+    adoptionRatePct,
+    valueScore:
+      promisedValueUsd !== null && promisedValueUsd > 0
+        ? 70
+        : payloadNumber(row, "usage_events") > 0
+          ? 55
+          : 20,
+    readinessScore:
       payloadNullableNumberFrom(row, [
+        "readiness_score",
         "adoption_rate_percent",
         "adoption_actual_pct",
-      ]) ??
-      (licensedUsers > 0 ? (activeUsers / licensedUsers) * 100 : null),
-    valueScore: payloadNumber(row, "usage_events") > 0 ? 55 : 20,
-    readinessScore: payloadNullableNumber(row, "adoption_rate_percent") ?? 25,
-    riskScore: 40,
+      ]) ?? 25,
+    riskScore:
+      payloadNullableNumberFrom(row, ["risk_score", "risk_pressure_score"]) ??
+      40,
     duplicateRisk: null,
     valueClaimStatus: "usage_supported",
     towerClaimAllowed: "blocked",
