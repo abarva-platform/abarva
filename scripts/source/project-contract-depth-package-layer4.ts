@@ -749,6 +749,8 @@ async function rebuildViews(client: Client): Promise<void> {
       p.vendor_rank,
       p.portfolio_share_pct,
       p.cumulative_portfolio_share_pct,
+      p.vendor_rank <= 5 AS top_5_flag,
+      p.vendor_rank <= 10 AS top_10_flag,
       COALESCE(scope.critical_application_count, 0)::bigint AS critical_application_count,
       0::bigint AS lock_in_signal_count,
       DATE '${AS_OF_DATE}' AS as_of_date,
