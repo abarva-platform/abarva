@@ -51,6 +51,10 @@ the Tower Evidence & Actions view. The page shows a capped action slice from the
 physical mart and keeps the finance-confirmation caveat visible, rather than
 burying contract opportunities behind the full action queue.
 
+Follow-up CXO-readiness hardening hides ECL proof panels from the default Tower
+route. The governed ECL/mart data path remains active, while diagnostic panels
+render only when an operator explicitly requests ECL diagnostics.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -87,6 +91,10 @@ Layer 4 - Tower product presentation. The Evidence & Actions tab now renders
 the Source-routed contract actions already present in the mart, without changing
 the underlying calculations or promoting unconfirmed opportunity values.
 
+Layer 4 - Tower product diagnostics. ECL proof panels are now operator-only on
+Tower, so the default executive route shows product content instead of internal
+serving-surface scaffolding.
+
 ## Client Applicability
 
 - All clients: The projection code path is available but has no effect until a
@@ -113,6 +121,7 @@ the underlying calculations or promoting unconfirmed opportunity values.
 - `src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts`
 - `src/components/tower/command-center/views/ContractTabs.tsx`
 - `src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx`
+- `src/lib/tower/__tests__/tower-freshness-provenance.test.ts`
 
 ## QA / Validation
 
@@ -154,6 +163,8 @@ the underlying calculations or promoting unconfirmed opportunity values.
 - PASS: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`
 - PASS: `npx jest src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/lib/tower/command-center/__tests__/view-model.test.ts --runInBand`
 - PASS: `npx eslint src/components/tower/command-center/views/ContractTabs.tsx src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx`
+- PASS: `npx jest src/lib/tower/__tests__/tower-freshness-provenance.test.ts src/lib/tower/__tests__/ecl-projection-preview-degrades.test.ts 'src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts' --runInBand`
+- PASS: `npx eslint 'src/app/(maestro)/tower/page.tsx' src/lib/tower/__tests__/tower-freshness-provenance.test.ts`
 
 ## Rollout Plan
 
