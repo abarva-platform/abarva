@@ -43,6 +43,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function isEclDiagnosticsRequest(value: string | null | undefined): boolean {
+  return value?.trim().toLowerCase() === "ecl";
+}
+
 async function hasHomeEclPrivateProofSession(
   tenantKey: string,
 ): Promise<boolean> {
@@ -67,14 +71,17 @@ async function hasHomeEclPrivateProofSession(
 export default async function HomePreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tenant?: string; provider?: string }>;
+  searchParams: Promise<{ tenant?: string; provider?: string; diagnostics?: string; debug?: string }>;
 }) {
   await connection();
 
-  const { tenant, provider } = await searchParams;
+  const { tenant, provider, diagnostics, debug } = await searchParams;
   const tenantKey = tenant && isHomePreviewTenantKey(tenant) ? tenant : HOME_PREVIEW_TENANT_KEYS[0];
   const productProvider = resolveEclProductProvider(provider);
   const isEclProvider = isEclProductProvider(productProvider);
+  const showEclDiagnostics =
+    isEclDiagnosticsRequest(diagnostics) ||
+    isEclDiagnosticsRequest(debug);
 
   const hasPlatformAdmin = await isPlatformAdminSession();
   const hasFoundationOperator = await isFoundationPreviewOperatorSession();
@@ -100,7 +107,7 @@ export default async function HomePreviewPage({
 
   return (
     <AppShell surface="home" topBarProps={{ context: "Home preview — candidate, not yet reviewed" }}>
-      {isEclProvider ? <EclDemoFindingsPanel product="home" /> : null}
+      {isEclProvider && showEclDiagnostics ? <EclDemoFindingsPanel product="home" /> : null}
       <HomePreviewAppRoot bundle={bundle} tenantKey={tenantKey} />
     </AppShell>
   );

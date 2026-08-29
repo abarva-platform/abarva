@@ -32,4 +32,13 @@ describe("Home Layer 4 boundary contract", () => {
       ),
     ).toBe(false);
   });
+
+  it("keeps ECL demo-finding proof UI behind an explicit Home diagnostics flag", () => {
+    const source = readRepoFile("src/app/(maestro)/home/preview/page.tsx");
+
+    expect(source).toContain("function isEclDiagnosticsRequest");
+    expect(source).toContain("const showEclDiagnostics");
+    expect(source).toContain("isEclProvider && showEclDiagnostics");
+    expect(source).not.toContain("isEclProvider ? <EclDemoFindingsPanel product=\"home\" /> : null");
+  });
 });
