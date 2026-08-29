@@ -788,6 +788,47 @@ function visibleNarrativeQualityIssues(
   return issues;
 }
 
+function hasForbiddenVisibleLanguage(text: string): boolean {
+  return CXO_FORBIDDEN_VISIBLE_PATTERNS.some((forbidden) => forbidden.pattern.test(text));
+}
+
+function chapterHasSubstantiveContent(chapter: ChapterView): boolean {
+  return (
+    chapter.key_insights.length > 0 ||
+    chapter.tensions.length > 0 ||
+    chapter.what_to_watch.length > 0 ||
+    chapter.questions_to_ask.length > 0 ||
+    chapter.visual_opportunities.length > 0
+  );
+}
+
+function normalizeChapterTerminalStates(chapters: ChapterView[]): ChapterView[] {
+  return chapters.map((chapter) => {
+    const terminalText = [
+      chapter.headline,
+      chapter.executive_synthesis,
+      ...chapter.limitations,
+    ].some((textValue) => hasForbiddenVisibleLanguage(textValue));
+
+    if (!terminalText) return chapter;
+
+    const hasContent = chapterHasSubstantiveContent(chapter);
+    return {
+      ...chapter,
+      headline: `${chapter.title}: evidence needs resolution before executive use`,
+      executive_synthesis: `The current governed record does not yet support a board-ready answer to "${chapter.guidingQuestion}". Keep this chapter in review until named sources establish the operating facts, decision stakes, and accountable owner.`,
+      key_insights: hasContent ? chapter.key_insights : [],
+      tensions: hasContent ? chapter.tensions : [],
+      what_to_watch: hasContent ? chapter.what_to_watch : [],
+      questions_to_ask: hasContent ? chapter.questions_to_ask : [],
+      visual_opportunities: hasContent ? chapter.visual_opportunities : [],
+      limitations: [
+        "Deferred for executive use because the published evidence is not yet strong enough to support the chapter answer.",
+      ],
+    };
+  });
+}
+
 async function writeNarrativeRows(
   db: Client,
   options: CliOptions,
@@ -1047,12 +1088,13 @@ async function main() {
       throw new Error(`Home ECL narrative publication gate failed: ${publicationIssues.join("; ")}`);
     }
 
-    const chapters = await buildChapterViewsFromVerifiedThesis(
+    const generatedChapters = await buildChapterViewsFromVerifiedThesis(
       signalPacket,
       thesisResult.publishedGeneration as EnterpriseThesis,
       anthropic,
       options.chapterIds,
     );
+    const chapters = normalizeChapterTerminalStates(generatedChapters);
     const visibleQualityIssues = visibleNarrativeQualityIssues(thesisResult, chapters);
     if (visibleQualityIssues.length) {
       throw new Error(`Home ECL narrative visible-quality gate failed: ${visibleQualityIssues.join("; ")}`);

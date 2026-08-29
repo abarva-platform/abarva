@@ -38,6 +38,6 @@ export function resolveEvidence(evidenceIds: string[], signalPacket: EnterpriseS
     if (context) {
       return { id, statement: context.statement, origin: "context", domains: context.domains };
     }
-    return { id, statement: `Evidence id "${id}" does not resolve to a signal or context item.`, origin: "signal", domains: [], unresolved: true };
+    return { id, statement: "This evidence reference needs resolution before it can support the claim.", origin: "signal", domains: [], unresolved: true };
   });
 }

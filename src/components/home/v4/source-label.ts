@@ -37,7 +37,7 @@ const DOMAIN_LABEL: Record<string, string> = {
 export interface ClaimSource {
   /** Human-readable register names, joined with the design's separator. */
   label: string;
-  /** The evidence ids themselves, shown beneath the label in mono. */
+  /** Reader-safe evidence summary. Raw internal ids do not appear on the CXO surface. */
   ids: string;
   /** True when any cited id failed to resolve. The sidenote must say so rather than omit it. */
   hasUnresolved: boolean;
@@ -67,7 +67,15 @@ export function sourceForIds(evidenceIds: string[], signalPacket: EnterpriseSign
         : labels.length <= 2
           ? labels.join(" · ")
           : `${labels[0]} · ${labels[1]} + ${labels.length - 2} more`,
-    ids: evidenceIds.join(" · "),
+    ids: evidenceReferenceSummary(evidenceIds.length, resolved.filter((item) => item.unresolved).length),
     hasUnresolved: resolved.some((r) => r.unresolved),
   };
+}
+
+function evidenceReferenceSummary(total: number, unresolved: number): string {
+  if (total === 0) return "No cited evidence references";
+  if (unresolved > 0) {
+    return `${total.toLocaleString()} cited ${total === 1 ? "reference" : "references"}, ${unresolved.toLocaleString()} unresolved`;
+  }
+  return `${total.toLocaleString()} governed ${total === 1 ? "reference" : "references"}`;
 }
