@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -101,6 +102,33 @@ function databaseUrl(): string {
 function writeJson(filePath: string, value: unknown): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function shouldEmitProofBundle(): boolean {
+  return (
+    process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_L4_EMIT_PROOF_BUNDLE === "true" ||
+    process.env.EMIT_ACA_PROOF_BUNDLE === "true" ||
+    process.argv.includes("--emit-proof-bundle")
+  );
+}
+
+function emitProofBundle(proofDir: string): void {
+  const parent = path.dirname(proofDir);
+  const base = path.basename(proofDir);
+  const tarPath = path.join(parent, `${base}.tgz`);
+  const tar = spawnSync("tar", ["-czf", tarPath, "-C", parent, base], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (tar.status !== 0) {
+    throw new Error(tar.stderr || tar.stdout || "Failed to build proof bundle");
+  }
+  const encoded = fs.readFileSync(tarPath).toString("base64");
+  console.log("__SEMANTIC2_PROOF_TGZ_BEGIN__");
+  for (let index = 0; index < encoded.length; index += 7600) {
+    console.log(encoded.slice(index, index + 7600));
+  }
+  console.log("__SEMANTIC2_PROOF_TGZ_END__");
 }
 
 function num(value: unknown): number {
@@ -1101,6 +1129,10 @@ async function main(): Promise<void> {
     const layer3 = await layer3Readback(client, args);
     const kinds = await objectKinds(client);
     let layer4: Record<string, number> | null = null;
+    const qualityGate = {
+      status: layer4 ? "PASS" : "PLAN",
+      failures: [] as string[],
+    };
     if (args.mode === "apply") {
       if (!args.applyApproved) {
         throw new Error("Refusing to mutate Azure without SOURCE_CONTRACT_DEPTH_PACKAGE_L4_APPLY_APPROVED=true.");
@@ -1128,13 +1160,13 @@ async function main(): Promise<void> {
       target_object_kinds: kinds,
       layer3_readback: layer3,
       layer4_readback: layer4,
-      quality_gate: {
-        status: layer4 ? "PASS" : "PLAN",
-        failures: [],
-      },
+      quality_gate: layer4 ? { ...qualityGate, status: "PASS" } : qualityGate,
     };
     writeJson(path.join(args.proofDir, "summary.json"), event);
     console.log(JSON.stringify(event, null, 2));
+    if (shouldEmitProofBundle()) {
+      emitProofBundle(args.proofDir);
+    }
   } finally {
     await client.end();
   }

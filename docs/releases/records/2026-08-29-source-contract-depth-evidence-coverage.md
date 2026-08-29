@@ -42,6 +42,7 @@ Layer 4 - Products: Extends the Source overlay projection with additive `source.
 - Updated `scripts/source/project-contract-depth-package.ts`.
 - Updated `scripts/source/load-contract-depth-package.ts`.
 - Updated `scripts/source/project-contract-depth-package-layer4.ts`.
+- Added ACA operator npm entrypoints and extractable proof-bundle emission for Layer 2, Layer 3, Layer 2/3 verify, Layer 4 apply, and Layer 4 verify jobs.
 - Updated focused Source package and loader tests.
 
 ## QA / Validation
@@ -49,6 +50,8 @@ Layer 4 - Products: Extends the Source overlay projection with additive `source.
 - `tsx scripts/source/project-contract-depth-package.ts --package-dir=datasets/source/contract-depth/meridian-contract-depth-v1-20260828 --out-dir=/tmp/source-depth-doc-gap-projection --adapter-out-dir=/tmp/source-depth-doc-gap-adapter` - PASS.
 - Projection preview expected 342 Layer 2 adapter rows, 30 evidence documents, 30 page-text rows, 8 change-order rows, and 6 opportunities - PASS.
 - `tsx scripts/source/load-contract-depth-package.ts --mode=plan --package-dir=datasets/source/contract-depth/meridian-contract-depth-v1-20260828 --proof-dir=/tmp/source-depth-doc-gap-layer23-plan` - PASS.
+- `SOURCE_CONTRACT_DEPTH_PACKAGE_EMIT_PROOF_BUNDLE=true tsx scripts/source/load-contract-depth-package.ts --mode=plan` - PASS, including ACA proof-bundle markers.
+- `npm run ops:aca-job -- --plan-only --image acrabarvalab001.azurecr.io/abarva/web@sha256:<test-digest> --script <new source:contract-depth-package:*:job script>` - PASS for all five new job entrypoints.
 - `jest src/lib/source/contract-depth-package/__tests__/adapter.test.ts src/lib/source/contract-depth-package/__tests__/projection.test.ts --runInBand` - PASS.
 - `jest scripts/source/__tests__/load-contract-depth-package.test.ts scripts/source/__tests__/project-contract-depth-package-layer4.test.ts --runInBand` - PASS.
 
