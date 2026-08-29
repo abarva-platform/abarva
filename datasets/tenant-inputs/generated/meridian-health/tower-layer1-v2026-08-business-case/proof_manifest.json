@@ -124,12 +124,12 @@
     {
       "file": "layer_3_canonical/canonical_ai_use_cases.csv",
       "rows": 42,
-      "sha256": "395861086e215bdfeb82e590e55eaf63ebd5fbc7011422562826ed7aa0c6dd2f"
+      "sha256": "8c8ae1c2a50c1a42cee7afe9c4bd346e23117b5eb5b187b6b38dfeeec49b7558"
     },
     {
       "file": "layer_3_canonical/canonical_tools.csv",
       "rows": 13,
-      "sha256": "837f0534e3d4fb09f45d51e075263e127697eefa5736df2d658298505c2743aa"
+      "sha256": "3f9791ef9a9b97c631934387c85d497a96d1530f353bea90680781328056e67c"
     },
     {
       "file": "layer_3_canonical/canonical_monthly_value_observations.csv",
