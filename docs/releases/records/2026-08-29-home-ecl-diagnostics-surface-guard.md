@@ -29,6 +29,7 @@ The Home preview no longer renders ECL proof-only demo findings on the default e
 
 - `src/app/(maestro)/home/preview/page.tsx`
 - `src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts`
+- `scripts/data-build/build-enterprise-thesis.ts`
 - `scripts/ecl/build_home_ecl_narrative_layer.ts`
 - `scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs`
 

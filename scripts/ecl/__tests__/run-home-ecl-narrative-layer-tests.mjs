@@ -30,6 +30,14 @@ assert(
   "EnterpriseThesis writer exposes an ECL-fed signal-packet seam",
 );
 assert(
+  thesis.includes("enterprise-thesis/v1.1-cxo-visible-language") &&
+    thesis.includes("CXO-VISIBLE LANGUAGE") &&
+    thesis.includes("Do not expose implementation") &&
+    thesis.includes("Do not say ECL") &&
+    thesis.includes("not enough verified evidence yet"),
+  "EnterpriseThesis prompt forbids implementation vocabulary in CXO-visible language",
+);
+assert(
   chapters.includes("export async function buildChapterViewsFromVerifiedThesis"),
   "Home chapter writer exposes reusable chapter assembly",
 );
@@ -134,6 +142,14 @@ assert(
     script.includes("Home ECL narrative publication gate failed") &&
     script.includes("thesisResult.publicationIssues"),
   "ECL narrative job refuses to write when published publication-gate issues remain",
+);
+assert(
+  script.includes("CXO_FORBIDDEN_VISIBLE_PATTERNS") &&
+    script.includes("visibleNarrativeQualityIssues") &&
+    script.includes("forbidden_visible_term") &&
+    script.includes("Home ECL narrative visible-quality gate failed") &&
+    script.includes("not enough verified evidence yet"),
+  "ECL narrative job refuses to publish visible implementation vocabulary or bland empty-state prose",
 );
 assert(
   thesis.includes("action: \"dropped_structural\"") &&
