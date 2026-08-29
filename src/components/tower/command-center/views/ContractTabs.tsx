@@ -1161,6 +1161,16 @@ function evidenceQueue(view: TowerCommandCenterView): TowerEvidenceGapView[] {
     .slice(0, 5);
 }
 
+function sourceContractActions(view: TowerCommandCenterView) {
+  return view.actions
+    .filter((action) => action.moduleHandoff?.toLowerCase() === "source")
+    .sort(
+      (a, b) =>
+        b.amountExposedUsd - a.amountExposedUsd || a.title.localeCompare(b.title),
+    )
+    .slice(0, 5);
+}
+
 function reconciliationRows(view: TowerCommandCenterView) {
   const ai = view.summary.aiInitiativeCount || view.allInitiatives.length;
   const tasks = view.actions.length;
@@ -1187,6 +1197,7 @@ export function EvidenceActionsContractView({
   const economicRows =
     s.economicReviewQueueCount || view.gaps.length + view.pipelineGaps.length;
   const campaigns = campaignRows(view);
+  const sourceActions = sourceContractActions(view);
   const rowsByPage = reconciliationRows(view);
   const rowsTotal = rowsByPage.reduce((sum, [, count]) => sum + count, 0);
   const gated =
@@ -1259,6 +1270,30 @@ export function EvidenceActionsContractView({
           ))}
         </div>
       </section>
+
+      {sourceActions.length > 0 ? (
+        <section>
+          <SectionTitle
+            title="Source contract actions"
+            subtitle={`${formatCount(sourceActions.length)} shown · finance confirmation remains required`}
+          />
+          <div className={styles.ownerQueue}>
+            {sourceActions.map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                onClick={() => onOpenAction(action.id)}
+              >
+                <span>
+                  <strong>{action.title.replace(/^FIX PROOF:\s*/i, "")}</strong>
+                  <i>{action.why}</i>
+                </span>
+                <b>{formatUsdM(action.amountExposedUsd)}</b>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className={styles.evidenceReconcileGrid}>
         <div>
