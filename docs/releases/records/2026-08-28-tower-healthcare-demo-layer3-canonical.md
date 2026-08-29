@@ -72,6 +72,15 @@ Completed Azure validation:
 
 Follow-up Azure finding during the 2026-08-28 rerun: the first canonical write reached readback and failed because the target database had not yet applied `20260828211000_ecl_object_semantic_type_identity.sql`. After that forced migration was applied, the next attempt exposed the old object upsert key. This update aligns the loader with the semantic uniqueness key so budget and value-observation rows cannot share only physical `metric` identity.
 
+Follow-up proof-harness finding during the 2026-08-29 rerun: the canonical write and readback passed, but the validator's SQL-inspection gate looked for the container path recorded in `summary.load_sql` after the proof bundle had been extracted locally. The validator now resolves that path to the SQL file beside the extracted summary, so archived ACA proof bundles can be validated without editing the proof.
+
+2026-08-29 Azure rerun evidence:
+
+- Pass: main ACA deploy run `33222619284` for SHA `e6a8c6bbe52158a96928eea67d1e895fd22c560c`.
+- Pass: ACA runtime invariant showed template, 100% traffic revision, and worker jobs using `acrabarvalab001.azurecr.io/abarva/web@sha256:0e7a779c4e4937f3a20f37130a0e36d329b43b150bd58937699444584247fd14`.
+- Pass: ACA operator execution `job-abarva-private-operator-eus-wco1ibe` completed successfully.
+- Pass: extracted Azure proof validation using `npm run tower:healthcare-demo-layer3-canonical:validate -- --summary /tmp/tower-layer3-aca-load-20260829T0024Z/proof/meridian-tower-layer3-canonical/tower_layer3_ecl_context_load_summary.json --readback /tmp/tower-layer3-aca-load-20260829T0024Z/proof/meridian-tower-layer3-canonical/03-readback.json`.
+
 Expected Layer 3 load counts:
 
 - Canonical objects: 987
@@ -154,6 +163,12 @@ Rerun the previous approved canonical load for the same tenant/assessment. If de
 - Azure proof bundle: `/tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical`
 - Azure write summary: `/tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical/tower_layer3_ecl_context_load_summary.json`
 - Azure readback: `/tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical/03-readback.json`
+- Follow-up main ACA deploy run: `33222619284`
+- Follow-up runtime invariant proof: `/tmp/aca-main-deploy-33222619284-evidence/runtime-invariant/runtime-invariant-proof.json`
+- Follow-up Azure operator execution: `job-abarva-private-operator-eus-wco1ibe`
+- Follow-up Azure proof bundle: `/tmp/tower-layer3-aca-load-20260829T0024Z/proof/meridian-tower-layer3-canonical`
+- Follow-up Azure write summary: `/tmp/tower-layer3-aca-load-20260829T0024Z/proof/meridian-tower-layer3-canonical/tower_layer3_ecl_context_load_summary.json`
+- Follow-up Azure readback: `/tmp/tower-layer3-aca-load-20260829T0024Z/proof/meridian-tower-layer3-canonical/03-readback.json`
 - Layer 3 signoff: generated synthetic healthcare fixture package, Layer 3 signoff file
 
 ## Known Gaps
