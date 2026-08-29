@@ -75,6 +75,47 @@ npm run ops:semantic2:l3-dossiers:proof -- \
   --out-dir /tmp/abarva-l3-proof-$(date -u +%Y%m%dT%H%M%SZ)
 ```
 
+## Tower Layer 3 reload order
+
+`ecl_projection.tower_value_chain` carries `tower_value_chain_measure_fk` onto
+`ecl_context.measure` — a Layer 4 row referencing a Layer 3 one. So once Layer 4 has been built,
+a Layer 3 reload fails on that constraint:
+
+```
+ERROR: update or delete on table "measure" violates foreign key constraint
+       "tower_value_chain_measure_fk" on table "tower_value_chain"
+```
+
+This is structural, not a fault in any particular change. The dependency resolves in one direction
+only, so Layer 4 must release its references before Layer 3 can be replaced. Run three jobs, in
+this order, all digest-pinned and all passing `--secret-env DATABASE_URL=azure-postgres-control-database-url`:
+
+```bash
+npm run ops:aca-job -- --image <digest> \
+  --script tower:healthcare-demo-layer4-products:purge-job \
+  --secret-env DATABASE_URL=azure-postgres-control-database-url --out-dir <out>
+
+npm run ops:aca-job -- --image <digest> \
+  --script tower:healthcare-demo-layer3-canonical:write-job \
+  --secret-env DATABASE_URL=azure-postgres-control-database-url --out-dir <out>
+
+npm run ops:aca-job -- --image <digest> \
+  --script tower:healthcare-demo-layer4-products:write-job \
+  --secret-env DATABASE_URL=azure-postgres-control-database-url --out-dir <out>
+```
+
+Layer 4 is deliberately empty between the first and last step, and Tower surfaces will read no
+projection during that window. That is the honest state: a projection derived from canonical data
+is not valid while that data is being replaced.
+
+Two things that are easy to get wrong:
+
+- **The wrapper does not default `DATABASE_URL`.** Omit `--secret-env` and the job fails inside the
+  container with `DATABASE_URL is required`, after the image has already been pulled.
+- **Read the wrapper's saved `04-logs.txt`, not `az containerapp job logs show`.** The `az` query
+  truncates long Postgres errors — including the table names in a foreign-key violation, which are
+  the only part that identifies the problem.
+
 ## Forbidden Paths
 
 - Mutating DB writes from a Next.js route handler for operator builds.

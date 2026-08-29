@@ -96,6 +96,7 @@ function parseArgs(argv) {
     outDir: path.resolve(argValue(argv, "--out-dir") ?? DEFAULT_OUT_DIR),
     write: argv.includes("--write") || envFlag("TOWER_LAYER4_WRITE"),
     readbackOnly: argv.includes("--readback-only"),
+    purgeOnly: argv.includes("--purge-only") || envFlag("TOWER_LAYER4_PURGE_ONLY"),
     emitProofBundle:
       argv.includes("--emit-proof-bundle") ||
       envFlag("TOWER_LAYER4_EMIT_PROOF_BUNDLE"),
@@ -1158,11 +1159,27 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
   }
 }
 
-function writeLoadSql(outPath, options, rows) {
+/**
+ * Every projection row this loader owns, in an order that satisfies the foreign keys.
+ *
+ * Extracted so it can run on its own. `ecl_projection.tower_value_chain` carries
+ * `tower_value_chain_measure_fk` onto `ecl_context.measure` — a Layer 4 row referencing a Layer 3
+ * one — so Layer 3 cannot be reloaded while these rows exist. That makes any Layer 3 reload fail
+ * once Layer 4 has been built: structural, not incidental, and not specific to any one change.
+ *
+ * The dependency resolves in one direction only, so the teardown belongs on this side of the layer
+ * boundary rather than having the canonical loader reach across it. Documented sequence:
+ *
+ *     layer4 --purge-only  ->  layer3 load  ->  layer4 load
+ *
+ * Layer 4 is deliberately empty between the first and last step. A projection derived from
+ * canonical data is not valid while that data is being replaced, and pretending otherwise is what
+ * would let a stale projection outlive the rows it was built from.
+ */
+function projectionDeletes(options) {
   const tenant = sqlText(options.tenantKey);
   const assessment = sqlText(options.assessmentId);
-  const sql = [
-    "begin;",
+  return [
     `delete from ecl_projection.cube_slice_measure where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_slice_id in (select id from ecl_projection.cube_slice where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_key in ('tower_spend_value_cube','tower_evidence_cube','ai_portfolio_cube'));`,
     `delete from ecl_projection.cube_slice_metric where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_slice_id in (select id from ecl_projection.cube_slice where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_key in ('tower_spend_value_cube','tower_evidence_cube','ai_portfolio_cube'));`,
     `delete from ecl_projection.cube_slice where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_key in ('tower_spend_value_cube','tower_evidence_cube','ai_portfolio_cube');`,
@@ -1178,6 +1195,19 @@ function writeLoadSql(outPath, options, rows) {
     `delete from ecl_projection.projection_entry where tenant_key = ${tenant} and assessment_id = ${assessment} and surface_key in ('tower_command_center','tower_value_chain','tower_evidence_queue','tower_ai_portfolio');`,
     `delete from ecl_projection.projection_manifest where tenant_key = ${tenant} and assessment_id = ${assessment} and projection_key in ('tower_command_center','tower_decision_lanes','tower_recommended_actions','tower_value_proof','tower_cost_lens','tower_evidence','tower_risk_lens','tower_ai_portfolio','tower_adoption_lens');`,
     `delete from ecl_context.snapshot where tenant_key = ${tenant} and assessment_id = ${assessment} and snapshot_key = ${sqlText(options.buildVersion)};`,
+  ];
+}
+
+/** The deletes alone, so Layer 3 can be replaced. Carries the same approval gate as a write. */
+function writePurgeSql(outPath, options) {
+  const sql = ["begin;", ...projectionDeletes(options), "commit;"].join("\n");
+  fs.writeFileSync(outPath, sql, "utf8");
+}
+
+function writeLoadSql(outPath, options, rows) {
+  const sql = [
+    "begin;",
+    ...projectionDeletes(options),
     insertSql("ecl_context.snapshot", ["id", "tenant_key", "assessment_id", "snapshot_key", "snapshot_type", "source_hash", "context_hash", "created_by_job", "quality_state", "proof_uri"], [rows.snapshot]),
     insertSql("ecl_projection.projection_manifest", ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_key", "projection_version", "rebuild_command", "source_hash", "projection_hash", "row_count", "quality_state", "admission_status", "admission_gate_results_json", "gated_claim_count", "proof_uri"], rows.projectionManifests),
     insertSql("ecl_projection.projection_entry", ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_manifest_id", "projection_version", "surface_key", "row_key", "row_type", "source_hash", "refs_content_hash", "refs_cache_json", "display_cache_json"], rows.projectionEntries),
@@ -1389,8 +1419,28 @@ function main() {
     issues: [],
   };
 
-  if (options.write || options.readbackOnly) {
-    if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required for --write or --readback-only");
+  if (options.write || options.readbackOnly || options.purgeOnly) {
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL is required for --write, --readback-only or --purge-only");
+    }
+  }
+  if (options.purgeOnly) {
+    // Purging mutates, so it carries the same approval gate as a write. It exists to unblock a
+    // Layer 3 reload; see projectionDeletes() for why the teardown has to happen here first.
+    if (!envFlag("TOWER_LAYER4_AZURE_WRITE_APPROVED")) {
+      throw new Error("Refusing Azure purge without TOWER_LAYER4_AZURE_WRITE_APPROVED=true");
+    }
+    const purgeSqlPath = path.join(options.outDir, "tower_layer4_product_cube_purge.sql");
+    writePurgeSql(purgeSqlPath, options);
+    summary.purge_sql = purgeSqlPath;
+    summary.boundary.product_projection_written = false;
+    summary.boundary.cube_layer_written = false;
+    runPsqlFile(process.env.DATABASE_URL, purgeSqlPath, options.outDir, "02-purge");
+    summary.status = "purge_applied";
+    writeJson(path.join(options.outDir, "tower_layer4_product_cube_load_summary.json"), summary);
+    console.log(JSON.stringify(summary, null, 2));
+    if (options.emitProofBundle) emitProofBundle(options.outDir);
+    return;
   }
   if (options.write) {
     if (!envFlag("TOWER_LAYER4_AZURE_WRITE_APPROVED")) {
