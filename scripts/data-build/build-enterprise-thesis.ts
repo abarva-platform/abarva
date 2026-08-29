@@ -59,7 +59,7 @@ const CLAUDE_MODEL = "claude-sonnet-5";
 const ARTIFACT_TYPE = "NexusEnterpriseThesisV1";
 /** Shared with build-home-chapters.ts's provenance stamp -- one source of truth for what prompt
  * version produced a given thesis, rather than the same string hardcoded in two files. */
-export const THESIS_PROMPT_VERSION = "enterprise-thesis/v1";
+export const THESIS_PROMPT_VERSION = "enterprise-thesis/v1.1-cxo-visible-language";
 
 /**
  * Contracts with document-level extraction, per tenant. Not derivable from canonical -- that
@@ -258,6 +258,15 @@ leadership disagreement, execution risk, evidence gaps, and emerging opportunity
 Each major thesis statement should connect at least two domains from the list above; the strongest
 connect three or more. Write like an adviser who has studied this enterprise closely — not like a
 reporting engine describing a database.
+
+CXO-VISIBLE LANGUAGE
+Your output may be rendered directly in an executive surface. Do not expose implementation,
+pipeline, database, route, or proof-harness vocabulary in any visible field. Do not say ECL,
+projection, serving view, loaded row, canonical entity, row count, payload, schema, source room,
+writer, provider flag, context_policy, source_refs_json, projection_entry, usable_count, row
+readiness, or "not enough verified evidence yet". If the supplied packet is too thin to answer a
+chapter's business question, write a precise limitation as an evidence gap; do not manufacture a
+chapter headline from missing evidence or from technical counts.
 
 INFERENCE, NOT JUST RESTATEMENT
 You are not limited to sentences a signal already states verbatim. A reasonable synthesis across
