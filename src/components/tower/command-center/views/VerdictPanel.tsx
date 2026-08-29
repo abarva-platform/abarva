@@ -33,6 +33,7 @@ import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 const AMBER = "#ba7517";
 const AMBER_LIGHT = "#e8c98f";
 const TEAL = "#0f6e56";
+const GREY = "#b4b2a9";
 
 const MONO = {
   fontFamily: "var(--abarva-mono)",
@@ -231,21 +232,29 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   const s = view.summary;
 
   const asserted = M(s.promisedUsd);
-  const validated = M(s.financeValidatedUsd);
   const claimable = M(s.claimableUsd);
 
+  // Cases that have reached Finance validation, and the asserted value sitting on them. This is
+  // not the same as `financeValidatedUsd`: the design's middle bar is how much *asserted* value is
+  // attached to a validated case, which is a larger and more useful number than the validated
+  // amount itself. Both come from `financeStatus`, so when no case carries one the bar is absent
+  // rather than silently equal to the claimable figure below it.
+  const cases = view.allInitiatives.filter((i) => i.financeStatus !== null);
+  const validatedCases = cases.filter(
+    (i) => i.financeStatus === "finance_validated_actual",
+  );
+  const assertedOnValidated =
+    cases.length === 0
+      ? null
+      : M(validatedCases.reduce((sum, i) => sum + i.promisedUsd, 0));
+
   const gate: readonly BarDatum[] = [
-    {
-      name: "Asserted",
-      value: asserted,
-      label: money(asserted),
-      fill: AMBER,
-    },
+    { name: "Asserted", value: asserted, label: money(asserted), fill: AMBER },
     {
       name: "On a validated case",
-      value: validated,
-      label: money(validated),
-      fill: AMBER_LIGHT,
+      value: assertedOnValidated ?? 0,
+      label: assertedOnValidated === null ? "Not recorded" : money(assertedOnValidated),
+      fill: assertedOnValidated === null ? GREY : AMBER_LIGHT,
     },
     {
       name: "Board claimable",
@@ -255,10 +264,11 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
     },
   ];
 
-  // Case counts by finance status. The design orders these as a pipeline rather than by size,
-  // because the order is the argument: work moves left to right and stops somewhere.
+  // Business cases only. `allInitiatives` also carries tool rollouts, and counting both conflates
+  // two populations — 55 rows where the portfolio has 42 cases. Only a case has a finance status,
+  // so filtering on it is also what separates them.
   const byStatus = new Map<string, number>();
-  for (const item of view.allInitiatives) {
+  for (const item of cases) {
     const key = item.financeStatus ?? "not_submitted";
     byStatus.set(key, (byStatus.get(key) ?? 0) + 1);
   }
@@ -353,7 +363,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
 
         <div style={{ ...PANEL, flex: "1 1 340px" }}>
           <h3 style={{ margin: "0 0 22px", fontSize: 15, fontWeight: 600 }}>
-            Where the {view.allInitiatives.length} cases stand
+            Where the {cases.length} cases stand
           </h3>
           <HBar
             data={statusData}
@@ -364,6 +374,9 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
             axisFmt={(v) => String(v)}
           />
           <p style={{ ...NOTE, margin: "14px 0 0" }}>
+            {cases.length === 0
+              ? "No case carries a finance status in this read, so there is nothing to place in the pipeline. This is a gap in the projection, not a portfolio without cases."
+              : null}{" "}
             Validation and value are not the same gate: a case can be Finance
             validated and still assert nothing, because foundations carry no
             direct value.
