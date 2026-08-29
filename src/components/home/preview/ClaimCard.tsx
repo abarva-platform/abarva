@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 
 import { HOME_HEX } from "./visuals/home-chart-kit";
 import { resolveEvidence } from "./evidence-resolver";
+import type { ResolvedEvidence } from "./evidence-resolver";
 import type { EnterpriseSignalPacket, GroundedClaim } from "@/lib/home/preview/types";
 
 /** Reader-facing wording, not the internal taxonomy. A CXO does not need to know a claim is a
@@ -90,7 +91,7 @@ export function ClaimCard({
                     flexShrink: 0,
                   }}
                 >
-                  {item.id}
+                  {evidenceLabel(item)}
                 </span>
                 {item.signalKind === "testimony" ? (
                   <span style={{ fontSize: 10, color: HOME_HEX.indigo, fontWeight: 600 }}>From leadership interviews</span>
@@ -103,7 +104,7 @@ export function ClaimCard({
               </p>
               {item.evidenceRefs && item.evidenceRefs.length > 0 ? (
                 <p style={{ margin: "2px 0 0", color: HOME_HEX.textDisabled, fontSize: 11 }}>
-                  Records: {item.evidenceRefs.join(", ")}
+                  Records: {evidenceReferenceSummary(item.evidenceRefs)}
                 </p>
               ) : null}
             </li>
@@ -112,4 +113,14 @@ export function ClaimCard({
       ) : null}
     </div>
   );
+}
+
+function evidenceLabel(item: ResolvedEvidence): string {
+  if (item.unresolved) return "Evidence reference needs resolution";
+  if (item.origin === "signal") return item.signalKind === "testimony" ? "Leadership testimony" : "Derived evidence signal";
+  return "Governed record";
+}
+
+function evidenceReferenceSummary(evidenceRefs: string[]): string {
+  return `${evidenceRefs.length.toLocaleString()} ${evidenceRefs.length === 1 ? "source record" : "source records"}`;
 }

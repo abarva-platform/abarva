@@ -41,4 +41,16 @@ describe("Home Layer 4 boundary contract", () => {
     expect(source).toContain("isEclProvider && showEclDiagnostics");
     expect(source).not.toContain("isEclProvider ? <EclDemoFindingsPanel product=\"home\" /> : null");
   });
+
+  it("keeps raw evidence identifiers off the executive Home surface", () => {
+    const sourceLabel = readRepoFile("src/components/home/v4/source-label.ts");
+    const claimCard = readRepoFile("src/components/home/preview/ClaimCard.tsx");
+    const resolver = readRepoFile("src/components/home/preview/evidence-resolver.ts");
+
+    expect(sourceLabel).toContain("Raw internal ids do not appear on the CXO surface");
+    expect(sourceLabel).not.toContain("ids: evidenceIds.join");
+    expect(claimCard).toContain("evidenceLabel(item)");
+    expect(claimCard).not.toContain(">{item.id}");
+    expect(resolver).not.toContain("Evidence id \"");
+  });
 });

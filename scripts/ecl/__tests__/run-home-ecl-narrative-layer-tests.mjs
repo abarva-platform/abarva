@@ -146,10 +146,11 @@ assert(
 assert(
   script.includes("CXO_FORBIDDEN_VISIBLE_PATTERNS") &&
     script.includes("visibleNarrativeQualityIssues") &&
+    script.includes("normalizeChapterTerminalStates") &&
     script.includes("forbidden_visible_term") &&
     script.includes("Home ECL narrative visible-quality gate failed") &&
     script.includes("not enough verified evidence yet"),
-  "ECL narrative job refuses to publish visible implementation vocabulary or bland empty-state prose",
+  "ECL narrative job repairs terminal chapter language and refuses remaining visible implementation vocabulary or bland empty-state prose",
 );
 assert(
   thesis.includes("action: \"dropped_structural\"") &&

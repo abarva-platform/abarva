@@ -27,13 +27,14 @@ describe("ClaimCard", () => {
   it("reveals resolved evidence statements on click", () => {
     render(<ClaimCard claim={claim} signalPacket={bundle.thesis.signalPacket} />);
     fireEvent.click(screen.getByRole("button", { name: /why do we believe this/i }));
-    expect(screen.getByText(claim.evidence_ids[0])).toBeInTheDocument();
+    expect(screen.queryByText(claim.evidence_ids[0])).not.toBeInTheDocument();
     const firstEvidenceId = claim.evidence_ids[0];
     const resolvedStatement =
       bundle.thesis.signalPacket.signals.find((s) => s.id === firstEvidenceId)?.statement ??
       bundle.thesis.signalPacket.contextItems.find((c) => c.id === firstEvidenceId)?.statement;
     expect(resolvedStatement).toBeTruthy();
     expect(screen.getByText(resolvedStatement!)).toBeInTheDocument();
+    expect(screen.getAllByText(/Derived evidence signal|Governed record|Leadership testimony/).length).toBeGreaterThan(0);
   });
 
   it("toggles back to hidden on a second click", () => {
