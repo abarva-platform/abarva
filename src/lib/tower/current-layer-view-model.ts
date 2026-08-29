@@ -174,6 +174,9 @@ export interface TowerMartAiPortfolioItem {
   readinessScore: number | null;
   /** Written upstream as (100 - readinessScore); carries no independent signal. */
   riskScore: number | null;
+  /** Finance pipeline stage. Written on case payloads only, so it is also what separates a
+   *  business case from a tool rollout. Distinct from `fundingStatus`, which is a fallback chain. */
+  financeStatus?: string | null;
   /** The named obstacle. Across the portfolio this, not readiness, separates validated from blocked. */
   gatingConstraint?: string | null;
   confidenceLevel?: string | null;

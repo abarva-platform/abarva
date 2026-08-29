@@ -239,6 +239,11 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   // attached to a validated case, which is a larger and more useful number than the validated
   // amount itself. Both come from `financeStatus`, so when no case carries one the bar is absent
   // rather than silently equal to the claimable figure below it.
+  // Business cases only. `allInitiatives` also carries tool rollouts, and counting both conflates
+  // two populations. `financeStatus` is written on case payloads only, so its presence is the
+  // separator — but only now that it reads its own key: it used to resolve through `fundingStatus`,
+  // which is non-null for every row (committee decision on a case, rollout stage on a tool) and so
+  // separated nothing. That is why this counted 55 where the portfolio has 42.
   const cases = view.allInitiatives.filter((i) => i.financeStatus !== null);
   const validatedCases = cases.filter(
     (i) => i.financeStatus === "finance_validated_actual",

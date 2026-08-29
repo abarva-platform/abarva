@@ -78,3 +78,36 @@ describe("readiness and risk are no longer substituted or invented", () => {
     expect(TYPES).toMatch(/readinessScoreLoaded: boolean;/);
   });
 });
+
+/**
+ * `financeStatus` must read its own key, never the funding-status chain.
+ *
+ * `fundingStatus` resolves `funding_status ?? finance_status ?? review_state` — three different
+ * things behind one name. On a case `funding_status` is the committee decision (fund / challenge /
+ * defer); on a tool rollout it is the rollout stage (pilot / scale). So that chain never yields a
+ * finance status for a case, and yields a non-null value for every row.
+ *
+ * That mattered twice on live data: the Verdict pipeline bucketed committee decisions against
+ * finance statuses and rendered five empty rows, and a population filter built on "only cases carry
+ * a status" counted 55 rows where the portfolio has 42.
+ */
+describe("financeStatus is not the funding-status chain", () => {
+  it("reads finance_status directly in the reader", () => {
+    expect(READER).toMatch(
+      /financeStatus: payloadTextFrom\(row, \["finance_status"\]\)/,
+    );
+  });
+
+  it("does not source it from fundingStatus in the view model", () => {
+    expect(VIEW).not.toMatch(/financeStatus: item\.fundingStatus/);
+    expect(VIEW).toMatch(/financeStatus: item\.financeStatus \?\? null/);
+  });
+
+  it("keeps fundingStatus separate rather than merging the two", () => {
+    // fundingStatus still exists and still has its fallback chain; the point is that
+    // financeStatus no longer borrows from it.
+    expect(READER).toMatch(/fundingStatus:/);
+    const site = READER.slice(READER.indexOf("financeStatus: payloadTextFrom"));
+    expect(site.slice(0, 120)).not.toMatch(/funding_status|review_state/);
+  });
+});

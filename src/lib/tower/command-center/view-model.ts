@@ -422,7 +422,7 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     riskScore: Math.max(0, Math.min(100, num(item.riskScore))),
     riskScoreLoaded: item.riskScore !== null,
     gatingConstraint: item.gatingConstraint ?? null,
-    financeStatus: item.fundingStatus ?? null,
+    financeStatus: item.financeStatus ?? null,
     confidenceLevel: item.confidenceLevel ?? null,
     businessValueType: item.businessValueType ?? null,
     costToBuildLowUsd: item.costToBuildLowUsd ?? null,
