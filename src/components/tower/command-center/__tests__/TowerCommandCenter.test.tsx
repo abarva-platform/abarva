@@ -65,6 +65,25 @@ function tab(name: RegExp) {
   return screen.getByRole("tab", { name });
 }
 
+/**
+ * The shell now carries the design's six tabs, several with sub-tabs. These helpers keep the
+ * behavioural assertions below anchored to *what* is being tested rather than to where it happens
+ * to sit, so a future move of a panel breaks one helper instead of a dozen tests.
+ */
+const TAB = {
+  verdict: /Today's verdict/,
+  budget: /Where the money goes/,
+  initiatives: /AI bets/,
+  tools: /Tools/,
+  decisions: /What must happen next/,
+  foundations: /Foundations/,
+} as const;
+
+function goTo(name: RegExp, sub?: RegExp) {
+  fireEvent.click(screen.getByRole("tab", { name }));
+  if (sub) fireEvent.click(screen.getByRole("tab", { name: sub }));
+}
+
 function clickFirstButtonContaining(text: string) {
   const button = screen
     .getAllByRole("button")
@@ -79,7 +98,7 @@ describe("TowerCommandCenter", () => {
     mockedSearchParams = new URLSearchParams();
   });
 
-  it("renders the four attached-contract tabs as a real tablist", () => {
+  it("renders the six designed tabs as a real tablist", () => {
     renderPage();
     const labels = screen.getAllByRole("tab").map((node) =>
       (node.textContent ?? "")
@@ -88,20 +107,33 @@ describe("TowerCommandCenter", () => {
         .trim(),
     );
     expect(labels).toEqual([
-      "Executive View",
-      "Value Proof",
-      "AI Portfolio",
-      "Evidence & Actions",
+      "Today's verdict",
+      "Where the money goes",
+      "AI bets",
+      "Tools",
+      "What must happen next",
+      "Foundations",
     ]);
-    expect(tab(/Executive View/)).toHaveAttribute("aria-selected", "true");
+    expect(tab(TAB.verdict)).toHaveAttribute("aria-selected", "true");
   });
 
-  it("opens on the attached-design Executive View", () => {
+  it("opens on the designed Verdict panel", () => {
     renderPage();
+    expect(screen.getByText("Total IT budget")).toBeInTheDocument();
+    expect(screen.getByText("Board claimable YTD")).toBeInTheDocument();
     expect(
-      screen.getByText("IT Investment Tower · FY26 · Today's verdict"),
+      screen.getByText("The three rules behind every number on this page"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Decisions for this review")).toBeInTheDocument();
+    expect(
+      screen.getByText("Asserted value, and what survives each gate"),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the decision rail and the value-loss waterfall reachable", () => {
+    // The design puts decisions under their own tab rather than on the verdict. The content is
+    // unchanged; only its home moved, and it must stay reachable.
+    renderPage();
+    goTo(TAB.decisions, /Decisions for this review/);
     expect(screen.getByText("Where the value is lost")).toBeInTheDocument();
     expect(screen.getByText("The drop is the finding")).toBeInTheDocument();
     expect(
@@ -121,10 +153,14 @@ describe("TowerCommandCenter", () => {
       unknownValueClaimCount: 969,
     });
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "not loaded approved",
-    );
-    expect(screen.queryByText(/\$492\.5M approved/)).not.toBeInTheDocument();
+    // The guarantee is unchanged: an absent budget must never borrow the benefit figure. It is
+    // now asserted on the Verdict panel's cards rather than the old headline.
+    const budget = screen.getByText("Total IT budget").parentElement;
+    expect(budget?.textContent).toContain("Not loaded");
+    expect(budget?.textContent).not.toContain("$492.5M");
+
+    // The claim population is stated on the decision rail, which is where it now lives.
+    goTo(TAB.decisions, /Decisions for this review/);
     expect(screen.queryByText(/969 claims/)).not.toBeInTheDocument();
     expect(screen.getAllByText(/230 claims/).length).toBeGreaterThan(0);
   });
@@ -143,34 +179,31 @@ describe("TowerCommandCenter", () => {
       usageSupportedUsd: 0,
     });
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "$703.1M approved. $0 board-claimable",
-    );
-    expect(screen.getByRole("heading", { level: 1 })).not.toHaveTextContent(
-      "gate",
-    );
-    expect(screen.queryByText(/\$492\.5M approved/)).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/0 of 230 claims attested by Finance/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Backfill measured outcome on the 0 claims/),
-    ).toBeInTheDocument();
+    // The populations must stay distinct: 230 value claims, never the 969-row economic queue.
+    // budgetUsd is null here, so the Verdict panel's budget card must say so rather than borrow
+    // the approved-investment figure.
+    const budget = screen.getByText("Total IT budget").parentElement;
+    expect(budget?.textContent).toContain("Not loaded");
+
+    // The populations must stay distinct on the rail: 230 value claims, never the 969-row queue.
+    goTo(TAB.decisions, /Decisions for this review/);
+    expect(screen.getAllByText(/230 claims/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/969 claims/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/1,619 open tasks/)).not.toBeInTheDocument();
     expect(
       screen.getByText("Close usage-to-value gaps on 230 claims"),
     ).toBeInTheDocument();
     expect(screen.getAllByText("$210.6M").length).toBeGreaterThan(0);
     expect(container).toHaveTextContent(/open evidence actions/);
-    expect(screen.queryByText(/1,619 open tasks/)).not.toBeInTheDocument();
   });
 
   it("moves between tabs with arrow keys and reflects the tab in the URL", () => {
     renderPage();
-    const first = tab(/Executive View/);
+    const first = tab(TAB.verdict);
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowRight" });
-    expect(tab(/Value Proof/)).toHaveAttribute("aria-selected", "true");
-    expect(replace).toHaveBeenCalledWith("/tower/command?tab=funnel", {
+    expect(tab(TAB.budget)).toHaveAttribute("aria-selected", "true");
+    expect(replace).toHaveBeenCalledWith("/tower/command?tab=budget", {
       scroll: false,
     });
   });
@@ -179,29 +212,29 @@ describe("TowerCommandCenter", () => {
     mockedSearchParams = new URLSearchParams("tab=executive&proof=stale");
     renderPage();
 
-    fireEvent.click(tab(/Value Proof/));
+    goTo(TAB.initiatives, /Value proof/);
 
-    expect(tab(/Value Proof/)).toHaveAttribute("aria-selected", "true");
+    expect(tab(TAB.initiatives)).toHaveAttribute("aria-selected", "true");
     expect(replace).toHaveBeenCalledWith(
-      "/tower/command?tab=funnel&proof=stale",
+      "/tower/command?tab=initiatives&proof=stale",
       { scroll: false },
     );
   });
 
-  it("normalizes stale tab URLs into the new four-tab contract", () => {
+  it("normalizes stale tab URLs into the six-tab contract", () => {
     mockedSearchParams = new URLSearchParams("tab=evidence&client=demo");
     renderPage();
-    expect(tab(/Evidence & Actions/)).toHaveAttribute("aria-selected", "true");
+    expect(tab(TAB.decisions)).toHaveAttribute("aria-selected", "true");
     expect(replace).toHaveBeenCalledWith(
-      "/tower/command?tab=actions&client=demo",
+      "/tower/command?tab=decisions&client=demo",
       { scroll: false },
     );
   });
 
   it("renders the Value Proof tab-specific contract layout", () => {
     renderPage();
-    fireEvent.click(tab(/Value Proof/));
-    expect(screen.getByText("Value proof")).toBeInTheDocument();
+    goTo(TAB.initiatives, /Value proof/);
+    expect(screen.getAllByText("Value proof").length).toBeGreaterThan(0);
     expect(
       screen.getByText("Investment to value conversion"),
     ).toBeInTheDocument();
@@ -215,7 +248,7 @@ describe("TowerCommandCenter", () => {
 
   it("renders the AI Portfolio tab-specific contract layout", () => {
     renderPage();
-    fireEvent.click(tab(/AI Portfolio/));
+    goTo(TAB.tools, /AI portfolio/);
     expect(screen.getByText("AI initiatives and tool rollouts")).toBeInTheDocument();
     expect(screen.getByText("All AI initiatives and tools")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /All initiatives\/tools/ })).toHaveAttribute(
@@ -241,27 +274,29 @@ describe("TowerCommandCenter", () => {
   });
 
   it("routes executive review buttons to distinct review surfaces", () => {
+    // The review buttons belong to the decision rail, which now sits under the decisions tab.
     renderPage();
 
-    const reviewButtons = screen.getAllByRole("button", { name: /Review/ });
-    fireEvent.click(reviewButtons[0]);
-    expect(tab(/AI Portfolio/)).toHaveAttribute("aria-selected", "true");
+    // Each review button routes to a different surface, and none of them opens a drawer.
+    goTo(TAB.decisions, /Decisions for this review/);
+    fireEvent.click(screen.getAllByRole("button", { name: /Review/ })[0]);
+    expect(tab(TAB.tools)).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    fireEvent.click(tab(/Executive View/));
+    goTo(TAB.decisions, /Decisions for this review/);
     fireEvent.click(screen.getAllByRole("button", { name: /Review/ })[1]);
-    expect(tab(/Value Proof/)).toHaveAttribute("aria-selected", "true");
+    expect(tab(TAB.initiatives)).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    fireEvent.click(tab(/Executive View/));
+    goTo(TAB.decisions, /Decisions for this review/);
     fireEvent.click(screen.getAllByRole("button", { name: /Review/ })[2]);
-    expect(tab(/Evidence & Actions/)).toHaveAttribute("aria-selected", "true");
+    expect(tab(TAB.decisions)).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("renders the Evidence & Actions tab-specific contract layout", () => {
     const { container } = renderPage();
-    fireEvent.click(tab(/Evidence & Actions/));
+    goTo(TAB.decisions, /Evidence queue/);
     expect(
       screen.getByText("Three populations, three names"),
     ).toBeInTheDocument();
@@ -294,7 +329,7 @@ describe("TowerCommandCenter", () => {
         },
       ],
     });
-    fireEvent.click(tab(/Evidence & Actions/));
+    goTo(TAB.decisions, /Evidence queue/);
 
     expect(screen.getByText("Source contract actions")).toBeInTheDocument();
     expect(
@@ -305,7 +340,7 @@ describe("TowerCommandCenter", () => {
 
   it("opens the program drawer from Value Proof decision lanes", () => {
     renderPage();
-    fireEvent.click(tab(/Value Proof/));
+    goTo(TAB.initiatives, /Value proof/);
     const firstProgram = [...view.programs].sort(
       (a, b) => b.blockedUsd - a.blockedUsd,
     )[0]!;
@@ -318,7 +353,7 @@ describe("TowerCommandCenter", () => {
 
   it("opens the AI initiative drawer from the portfolio table", () => {
     renderPage();
-    fireEvent.click(tab(/AI Portfolio/));
+    goTo(TAB.tools, /AI portfolio/);
     const firstAi = [...view.allInitiatives].sort(
       (a, b) => b.aiSpendUsd - a.aiSpendUsd || b.riskScore - a.riskScore,
     )[0]!;
@@ -331,7 +366,7 @@ describe("TowerCommandCenter", () => {
 
   it("opens the evidence gap drawer from the owner queue", () => {
     renderPage();
-    fireEvent.click(tab(/Evidence & Actions/));
+    goTo(TAB.decisions, /Evidence queue/);
     const firstGap = [...view.gaps].sort(
       (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
     )[0]!;
@@ -344,7 +379,7 @@ describe("TowerCommandCenter", () => {
 
   it("opens the action drawer from an action campaign and keeps routing disabled", () => {
     renderPage();
-    fireEvent.click(tab(/Evidence & Actions/));
+    goTo(TAB.decisions, /Evidence queue/);
     fireEvent.click(
       screen.getByRole("button", { name: /Usage telemetry connection/ }),
     );
@@ -367,6 +402,6 @@ describe("TowerCommandCenter — empty tenant", () => {
       screen.getByText("No governed Tower data for this tenant"),
     ).toBeInTheDocument();
     expect(screen.getByText(/a zero would be a claim/)).toBeInTheDocument();
-    expect(screen.getAllByRole("tab")).toHaveLength(4);
+    expect(screen.getAllByRole("tab")).toHaveLength(6);
   });
 });

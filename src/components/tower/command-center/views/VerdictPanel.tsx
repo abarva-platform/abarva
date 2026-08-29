@@ -310,7 +310,10 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         />
         <MetricCard
           label="AI-related investment"
-          value={bigMoney(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)}
+          // One metric, declared. This read `aiAttributedInitiativeSpendUsd || aiTaggedUsd`,
+          // carried over from the panel it replaces — but those are different measures, and the
+          // `||` fires on a legitimate 0, hiding "no AI spend attributed" behind a tagged total.
+          value={bigMoney(s.aiAttributedInitiativeSpendUsd)}
           caption="IT Finance · annual · by classification"
         />
         <MetricCard
