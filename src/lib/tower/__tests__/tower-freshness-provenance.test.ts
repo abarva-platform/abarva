@@ -68,8 +68,12 @@ describe("Command Center owns the first viewport", () => {
     expect(projection).toBeGreaterThan(commandCenter);
   });
 
-  it("keeps the supporting panels on the page", () => {
+  it("gates the supporting panels behind explicit ECL diagnostics", () => {
     const route = read("app/(maestro)/tower/page.tsx");
+    expect(route).toMatch(/function isEclDiagnosticsRequest/);
+    expect(route).toMatch(/firstSearchValue\(resolved\?\.diagnostics\)/);
+    expect(route).toMatch(/firstSearchValue\(resolved\?\.debug\)/);
+    expect(route).toMatch(/showEclDiagnostics \?/);
     expect(route).toMatch(
       /<TowerEclProjectionPanel preview=\{towerEclPreview\} \/>/,
     );

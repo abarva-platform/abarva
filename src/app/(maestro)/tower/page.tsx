@@ -58,6 +58,10 @@ function firstSearchValue(value: string | string[] | undefined): string | null {
   return value ?? null;
 }
 
+function isEclDiagnosticsRequest(value: string | null): boolean {
+  return value?.trim().toLowerCase() === "ecl";
+}
+
 async function withTowerReadTimeout<T>(
   read: Promise<T>,
   fallback: T,
@@ -84,6 +88,9 @@ export async function renderTowerPage({
   const resolved = await searchParams;
   const requestedProvider = firstSearchValue(resolved?.provider);
   const productProvider = resolveEclProductProvider(requestedProvider);
+  const showEclDiagnostics =
+    isEclDiagnosticsRequest(firstSearchValue(resolved?.diagnostics)) ||
+    isEclDiagnosticsRequest(firstSearchValue(resolved?.debug));
   const rawRequestedClient = firstSearchValue(resolved?.client);
   const requestedClient =
     trustedTenant?.clientKey ??
@@ -120,7 +127,8 @@ export async function renderTowerPage({
   const commandCenterView = buildTowerCommandCenterView(martView, {
     tenantName,
   });
-  const towerEclPreview = isEclProductProvider(productProvider)
+  const towerEclPreview =
+    showEclDiagnostics && isEclProductProvider(productProvider)
     ? await readTowerEclProjectionPreview(
         canonicalTenantKey(effectiveClientKey),
       ).catch(() => null)
@@ -145,11 +153,15 @@ export async function renderTowerPage({
           clientId={towerChatClientId}
         />
       </Suspense>
-      <TowerEclProjectionPanel preview={towerEclPreview} />
-      {isEclProductProvider(productProvider) ? (
-        <EclDemoFindingsPanel product="tower" />
+      {showEclDiagnostics ? (
+        <>
+          <TowerEclProjectionPanel preview={towerEclPreview} />
+          {isEclProductProvider(productProvider) ? (
+            <EclDemoFindingsPanel product="tower" />
+          ) : null}
+          <EclServingSurfaceCoverage product="tower" />
+        </>
       ) : null}
-      <EclServingSurfaceCoverage product="tower" />
     </AppShell>
   );
 }
