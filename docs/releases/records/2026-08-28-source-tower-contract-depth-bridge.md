@@ -28,6 +28,11 @@ Tower reads guarded Source consumption views. Source read failures now stop the
 operator job with the underlying database error instead of silently projecting
 zero Source contract facts.
 
+Follow-up view-shape hardening reads contract display headers from the governed
+Source Contract 360 projection and keeps opportunity/performance facts on their
+consumption views. This avoids depending on an older consumption contract view
+shape that may omit display columns in deployed databases.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -46,6 +51,10 @@ for Postgres JSONB columns during the tracked Tower mart write.
 Layer 4 - Source-to-Tower tenant context. The Tower mart projection sets and
 clears the Source tenant session selector around guarded Source consumption
 reads so the bridge reads the same tenant-scoped views proven by Source Layer 4.
+
+Layer 4 - Source-to-Tower view shape. Contract header facts are read from the
+Source Contract 360 projection, while opportunity and performance facts continue
+to read from governed consumption projections.
 
 ## Client Applicability
 
@@ -86,6 +95,10 @@ reads so the bridge reads the same tenant-scoped views proven by Source Layer 4.
   hardening. A Tower mart write on the JSONB fix image succeeded but reported
   zero Source contract facts, proving the need for the tenant-context bridge
   hardening before final Tower readback.
+- FAIL BEFORE FIX: Tower mart write after tenant-context hardening stopped on a
+  deployed Source view-shape mismatch (`vendor_name` missing from the older
+  consumption contract view), proving the bridge now fails loud instead of
+  silently projecting partial Source contract facts.
 
 ## Rollout Plan
 
@@ -121,6 +134,8 @@ to restore the prior mart contents.
 - Tower mart successful write with zero Source contract facts before
   tenant-context hardening:
   `/tmp/tower-mart-projection-meridian-health-20260829T0245Z/proof/tower-mart-projection-meridian-health/projection-summary.json`.
+- Tower mart failed write before view-shape hardening:
+  `/tmp/tower-mart-projection-meridian-health-20260829T0306Z/04-logs.txt`.
 - Future evidence after rollout: Source Layer 4 apply/verify summaries, Tower
   mart write proof bundle, and signed-in Tower page proof.
 

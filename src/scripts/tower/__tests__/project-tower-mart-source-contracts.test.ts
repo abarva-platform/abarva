@@ -5,7 +5,7 @@ class FakeClient {
 
   async query(sql: string, values?: unknown[]) {
     this.queries.push({ sql, values });
-    if (sql.includes("FROM consumption.sourcing_contract_v1")) {
+    if (sql.includes("FROM source.contract_360")) {
       return {
         rows: [
           {
@@ -39,7 +39,8 @@ describe("project-tower-mart Source contract bridge", () => {
       sql: "SELECT set_config('app.tenant_key', $1, false)",
       values: ["meridian-health"],
     });
-    expect(client.queries.some((query) => query.sql.includes("consumption.sourcing_contract_v1"))).toBe(true);
+    expect(client.queries.some((query) => query.sql.includes("source.contract_360"))).toBe(true);
+    expect(client.queries.some((query) => query.sql.includes("consumption.sourcing_opportunity_v1"))).toBe(true);
     expect(client.queries.at(-1)).toEqual({
       sql: "SELECT set_config('app.tenant_key', '', false)",
       values: undefined,
@@ -53,7 +54,7 @@ describe("project-tower-mart Source contract bridge", () => {
   it("fails loudly when a Source consumption view cannot be read", async () => {
     const client = {
       async query(sql: string) {
-        if (sql.includes("consumption.sourcing_contract_v1")) {
+        if (sql.includes("source.contract_360")) {
           throw new Error("relation does not exist");
         }
         return { rows: [] };
