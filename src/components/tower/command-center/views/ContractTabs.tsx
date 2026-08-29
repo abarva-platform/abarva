@@ -42,14 +42,6 @@ const AI_KIND_LABEL: Record<TowerAiKind, string> = {
   platform: "platform",
 };
 
-function proofBreakGate(view: TowerCommandCenterView): number {
-  const s = view.summary;
-  if ((s.usageSupportedUsd ?? 0) <= 0) return 2;
-  if ((s.financeValidatedUsd ?? 0) <= 0) return 6;
-  if ((s.claimableUsd ?? 0) <= 0) return 7;
-  return 7;
-}
-
 function measuredUsd(view: TowerCommandCenterView): number {
   return Math.max(
     view.summary.financeValidatedUsd ?? 0,
@@ -68,6 +60,11 @@ function valueClaimCount(view: TowerCommandCenterView): number {
   return view.summary.valueClaimCount;
 }
 
+function openClaimCount(view: TowerCommandCenterView): number {
+  const s = view.summary;
+  return Math.max(0, valueClaimCount(view) - s.claimableClaimCount);
+}
+
 function emittingAiCount(view: TowerCommandCenterView): number {
   return view.allInitiatives.filter(
     (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
@@ -79,8 +76,9 @@ function contractSummaryLine(view: TowerCommandCenterView) {
   return (
     <>
       {formatLoadedUsdM(s.approvedInvestmentUsd)} approved ·{" "}
-      <strong>{formatUsdM(s.claimableUsd)} provable</strong> · chain breaks at
-      gate {proofBreakGate(view)} of 7
+      <strong>{formatUsdM(s.claimableUsd)} board-claimable</strong> ·{" "}
+      {formatCount(openClaimCount(view))} of {formatCount(valueClaimCount(view))}{" "}
+      claims still need proof
     </>
   );
 }
@@ -98,11 +96,11 @@ function ContractMasthead({ view }: { view: TowerCommandCenterView }) {
       <div className={styles.contractLead}>{contractSummaryLine(view)}</div>
       <div className={styles.contractStatus}>
         <span>
-          <b>{formatCount(emittingAiCount(view))}</b>/
-          {formatCount(s.aiInitiativeCount || view.allInitiatives.length)}{" "}
-          emitting
+          <b>{formatCount(s.usageSupportedClaimCount)}</b>/
+          {formatCount(valueClaimCount(view))} usage-supported
         </span>
         <span>{formatUsdM(measuredUsd(view))} ceiling</span>
+        <span>{formatCount(emittingAiCount(view))} tracked assets emitting</span>
         <span>
           {s.asOfPeriod ? `As of ${s.asOfPeriod}` : "As-of date not recorded"}
         </span>
@@ -158,28 +156,36 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
   const s = view.summary;
   const rows = [
     {
-      gate: "Investment",
+      gate: "Reviewed investment",
       valueUsd: s.approvedInvestmentUsd,
       fill: HEX.tealDark,
     },
     {
-      gate: "Usage-to-value support",
-      valueUsd: s.usageSupportedUsd,
+      gate: "AI spend tracked",
+      valueUsd: s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
+      fill: HEX.tealDark,
+    },
+    {
+      gate: "Promised value",
+      valueUsd: s.promisedUsd,
+      fill: HEX.amber,
+    },
+    {
+      gate: "Usage supported",
+      valueUsd: Math.min(s.usageSupportedUsd, s.promisedUsd),
       fill: HEX.red,
     },
     {
-      gate: "Workflow change",
-      valueUsd: Math.min(s.usageSupportedUsd, s.promisedUsd),
+      gate: "Measured outcome",
+      valueUsd: Math.min(measuredUsd(view), s.promisedUsd),
       fill: HEX.amber,
     },
-    { gate: "Operating outcome", valueUsd: measuredUsd(view), fill: HEX.amber },
-    { gate: "Economic conversion", valueUsd: s.promisedUsd, fill: HEX.amber },
     {
-      gate: "Finance validation",
+      gate: "Finance approved",
       valueUsd: s.financeValidatedUsd,
       fill: HEX.red,
     },
-    { gate: "Realized", valueUsd: s.claimableUsd, fill: HEX.red },
+    { gate: "Board-claimable", valueUsd: s.claimableUsd, fill: HEX.red },
   ];
   const axisMax = Math.max(...rows.map((row) => toM(row.valueUsd ?? 0)), 1);
   const data = rows.map((row) => ({
@@ -426,7 +432,7 @@ export function ValueProofContractView({
       <div className={styles.contractModeRow}>
         <SectionTitle
           title="Value proof"
-          subtitle={`${valueClaimCount(view)} claims · seven gates`}
+          subtitle={`${valueClaimCount(view)} claims · proof funnel`}
         />
         <div
           className={styles.contractSegments}
@@ -441,13 +447,14 @@ export function ValueProofContractView({
         <article className={styles.contractCard}>
           {cardTitle(
             "Investment to value conversion",
-            "Seven evidence states",
+            "No substitution between states",
           )}
           <div className={styles.gateChart}>
             <ValueGateChart view={view} />
           </div>
           <p className={styles.contractCallout}>
-            Adoption, outcome measurement and Finance validation stay separate.
+            Promised value, measured value, Finance approval and board-claimable
+            value stay separate.
           </p>
         </article>
 
@@ -798,8 +805,13 @@ export function AiPortfolioContractView({
 }) {
   const s = view.summary;
   const aiRows = topAiRows(view);
-  const [lens, setLens] = useState<AiLens>("cost");
+  const [lens, setLens] = useState<AiLens>("table");
   const lensOptions = [
+    {
+      key: "table" as const,
+      label: "All initiatives/tools",
+      detail: `${formatCount(view.allInitiatives.length)} rows`,
+    },
     {
       key: "cost" as const,
       label: "Cost lens",
@@ -815,18 +827,13 @@ export function AiPortfolioContractView({
       label: "Adoption lens",
       detail: `${formatCount(s.aiInitiativeCount || view.allInitiatives.length)} assets`,
     },
-    {
-      key: "table" as const,
-      label: "All tools",
-      detail: `${formatCount(view.allInitiatives.length)} rows`,
-    },
   ];
   return (
     <div className={styles.contractView}>
       <ContractMasthead view={view} />
       <div className={styles.contractModeRow}>
         <SectionTitle
-          title="AI portfolio"
+          title="AI initiatives and tool rollouts"
           subtitle={`${formatCount(s.aiInitiativeCount || view.allInitiatives.length)} assets · ${formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)} attributed`}
         />
         <div
@@ -853,7 +860,7 @@ export function AiPortfolioContractView({
         <section className={styles.aiPortfolioGrid}>
           <div className={styles.aiPortfolioLeft}>
             <div className={styles.contractMiniKicker}>
-              Attributed spend by vendor
+              Attributed spend by category
             </div>
             <article className={styles.contractCard}>
               <div className={styles.aiSpendChart}>
@@ -951,7 +958,7 @@ export function AiPortfolioContractView({
         <article className={cx(styles.contractCard, styles.contractFullCard)}>
           {cardTitle(
             "Adoption lens",
-            "AI and BI assets ranked by recorded usage evidence",
+            "AI initiatives and tools ranked by recorded usage evidence",
           )}
           <div className={styles.decisionLaneTableWrap}>
             <table className={styles.contractTable}>

@@ -245,7 +245,7 @@ export function TowerCommandCenter({
                       view?.ai.length ??
                       null)
                     : t.id === "actions"
-                      ? (view?.summary.economicReviewQueueCount ?? null)
+                      ? (view?.actions.length ?? null)
                       : null;
               const attn =
                 (t.id === "funnel" && attention.funnel) ||

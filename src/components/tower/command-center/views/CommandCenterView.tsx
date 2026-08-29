@@ -75,12 +75,13 @@ function valueClaimCount(view: TowerCommandCenterView): number {
   return view.summary.valueClaimCount;
 }
 
-function proofBreakGate(view: TowerCommandCenterView): number {
+function openClaimCount(view: TowerCommandCenterView): number {
   const s = view.summary;
-  if ((s.usageSupportedUsd ?? 0) <= 0) return 2;
-  if ((s.financeValidatedUsd ?? 0) <= 0) return 6;
-  if ((s.claimableUsd ?? 0) <= 0) return 7;
-  return 7;
+  return Math.max(0, valueClaimCount(view) - s.claimableClaimCount);
+}
+
+function aiToolRolloutCount(view: TowerCommandCenterView): number {
+  return Math.max(0, view.allInitiatives.length - view.programs.length);
 }
 
 function commandFreshnessLine(view: TowerCommandCenterView): string {
@@ -110,26 +111,25 @@ function executiveHeadline(view: TowerCommandCenterView): string {
   const s = view.summary;
   return `${formatLoadedUsdM(s.approvedInvestmentUsd)} approved. ${formatUsdM(
     s.claimableUsd,
-  )} provable. The chain breaks at gate ${proofBreakGate(view)} of 7.`;
+  )} board-claimable. ${formatCount(openClaimCount(view))} of ${formatCount(
+    valueClaimCount(view),
+  )} claims still need proof.`;
 }
 
 function executiveSummary(view: TowerCommandCenterView): string {
   const s = view.summary;
-  if (s.executiveSummary) return s.executiveSummary;
   const claims = valueClaimCount(view);
-  const emitting = view.ai.filter(
-    (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
-  ).length;
-  if (s.usageSupportedUsd <= 0) {
-    if (emitting > 0) {
-      return `${formatCount(emitting)} AI and BI assets emit usage signals, but none has been reconciled to the ${formatCount(claims)} value claims. The separate economic review queue has ${formatCount(s.economicReviewQueueCount)} rows.`;
-    }
-    return `${formatCount(claims)} value claims are loaded, but no governed usage-to-value support is visible yet. Instrument, measure, then attest, in that order.`;
-  }
-  if (s.financeValidatedUsd <= 0) {
-    return "Usage evidence exists, but the finance-validation gate has not released board-claimable value. Measure the outcomes, then staff validation.";
-  }
-  return "Tower shows measured value in the portfolio, but the claim gate still determines what can be represented as board-claimable.";
+  return `${view.summary.tenantName} has ${formatLoadedUsdM(
+    s.approvedInvestmentUsd,
+  )} in the reviewed project portfolio, including ${formatUsdM(
+    s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
+  )} tied to AI initiatives and tool rollouts. Business cases project ${formatUsdM(
+    s.promisedUsd,
+  )} of annual value; ${formatUsdM(
+    s.claimableUsd,
+  )} is board-claimable today, and ${formatCount(
+    Math.max(0, claims - s.claimableClaimCount),
+  )} claims still need usage, outcome, or Finance proof.`;
 }
 
 function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
@@ -140,9 +140,11 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
   ).length;
   return [
     {
-      label: "Approved investment",
+      label: "Approved IT project portfolio",
       value: formatLoadedUsdM(s.approvedInvestmentUsd),
-      note: `${formatCount(s.programCount || view.programs.length)} programs · approved capital only`,
+      note: `${formatCount(
+        s.totalProgramSubjectCount || s.programCount || view.programs.length,
+      )} projects · approved capital only`,
       tone: "teal",
     },
     {
@@ -162,18 +164,29 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
       tone: s.claimableUsd > 0 ? "teal" : "red",
     },
     {
-      label: "AI & BI assets emitting usage",
+      label: "AI initiatives and tools tracked",
       badge: emitting > 0 ? "VISIBLE" : "DARK",
-      value: `${formatCount(emitting)} of ${formatCount(
-        s.aiInitiativeCount || view.ai.length,
+      value: `${formatCount(s.aiInitiativeCount || view.allInitiatives.length)}`,
+      note: `${formatCount(view.programs.length)} AI business cases + ${formatCount(
+        aiToolRolloutCount(view),
+      )} tool rollouts · ${formatUsdM(
+        s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
+      )} attributed`,
+      tone: emitting > 0 ? "teal" : "red",
+    },
+    {
+      label: "Usage evidence mapped",
+      badge: s.usageSupportedClaimCount === claims ? "COMPLETE" : "PARTIAL",
+      value: `${formatCount(s.usageSupportedClaimCount)} of ${formatCount(
+        claims,
       )}`,
       note:
-        emitting > 0 && s.usageSupportedUsd <= 0
-          ? `${formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)} attributed; usage signals visible, gate 2 value not cleared`
-          : `${formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)} attributed, ${
-              emitting > 0 ? "instrumented" : "none instrumented"
-            }`,
-      tone: emitting > 0 ? "teal" : "red",
+        s.usageSupportedClaimCount === claims
+          ? "Every value claim has usage-to-value support"
+          : `${formatCount(
+              Math.max(0, claims - s.usageSupportedClaimCount),
+            )} claims still need usage-to-value mapping`,
+      tone: s.usageSupportedClaimCount > 0 ? "amber" : "red",
     },
   ];
 }
@@ -182,49 +195,28 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
   const s = view.summary;
   const claims = valueClaimCount(view);
   const measured = measuredUsd(view);
-  const proofClearedClaims =
-    s.claimableUsd > 0 ? s.outcomeMeasuredClaimCount : 0;
-  const claimsMissingActual = claims - Math.min(claims, proofClearedClaims);
-  const emitting = view.ai.filter(
-    (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
-  ).length;
-  const totalAi = s.aiInitiativeCount || view.ai.length;
-  const breakGate = proofBreakGate(view);
-  const firstDecision =
-    breakGate === 2 && emitting > 0
-      ? {
-          title: "Reconcile usage signals to value claims",
-          detail: `${formatCount(emitting)} of ${formatCount(
-            totalAi,
-          )} AI and BI assets show usage signals, but ${formatUsdM(
-            s.usageSupportedUsd,
-          )} usage-supported value has cleared gate 2. Map usage to claim-level evidence before measurement or attestation.`,
-          metricLabel: "Gate 2 value",
-          metricValue: formatUsdM(s.usageSupportedUsd),
-        }
-      : breakGate === 2
-        ? {
-            title: "Connect usage telemetry on the attributed domains",
-            detail:
-              "Gate 2 has no governed usage evidence, so downstream gates cannot be measured, validated or attested.",
-            metricLabel: "Spend unmeasurable",
-            metricValue: formatUsdM(
-              s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
-            ),
-          }
-        : {
-            title: "Complete the next proof gate before attestation",
-            detail:
-              "Usage evidence exists. Move only the measured and validated value through the remaining proof gates.",
-            metricLabel: `Gate ${breakGate} ceiling`,
-            metricValue: formatUsdM(measured),
-          };
+  const claimsMissingUsage = Math.max(0, claims - s.usageSupportedClaimCount);
+  const claimsMissingActual = Math.max(0, claims - s.outcomeMeasuredClaimCount);
+  const claimsMissingFinance = Math.max(0, claims - s.financeAttestedClaimCount);
 
   return [
     {
       order: "1",
-      kicker: "Instrument · do this first",
-      ...firstDecision,
+      kicker: "Map · do this first",
+      title:
+        claimsMissingUsage > 0
+          ? `Close usage-to-value gaps on ${formatCount(claimsMissingUsage)} claims`
+          : "Keep usage mapped as actuals refresh",
+      detail:
+        claimsMissingUsage > 0
+          ? `${formatCount(s.usageSupportedClaimCount)} of ${formatCount(
+              claims,
+            )} claims have usage support. The remaining claims need tool, workflow, or adoption evidence before the value can advance.`
+          : "Usage-to-value support is loaded for the current claim set. Keep it current as monthly actuals are refreshed.",
+      metricLabel: "Usage-supported claims",
+      metricValue: `${formatCount(s.usageSupportedClaimCount)}/${formatCount(
+        claims,
+      )}`,
       due: "Next review",
       tone: "red",
       reviewTarget: "ai",
@@ -246,11 +238,14 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
     {
       order: "3",
       kicker: "Assign · only then",
-      title: "Name a finance validator so the claim gate has an owner",
-      detail:
-        "Worth doing now, but it releases nothing on its own. The current sign-off ceiling is the measured amount in the portfolio.",
-      metricLabel: "Ceiling today",
-      metricValue: formatUsdM(measured),
+      title: `Finance-attest the ${formatCount(claimsMissingFinance)} claims still outside the board number`,
+      detail: `${formatUsdM(
+        measured,
+      )} is the current evidence-backed ceiling. Only ${formatUsdM(
+        s.claimableUsd,
+      )} is board-claimable until Finance signs the method and amount.`,
+      metricLabel: "Claimable / ceiling",
+      metricValue: `${formatUsdM(s.claimableUsd)} / ${formatUsdM(measured)}`,
       due: "Following review",
       tone: "gray",
       reviewTarget: "actions",
@@ -259,10 +254,7 @@ function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
 }
 
 function evidenceFooterCount(view: TowerCommandCenterView): number {
-  return (
-    view.summary.economicReviewQueueCount ||
-    view.actions.length + view.gaps.length + view.pipelineGaps.length
-  );
+  return view.actions.length;
 }
 
 function evidenceQueue(gaps: readonly TowerEvidenceGapView[]) {
@@ -560,12 +552,11 @@ export function CommandCenterView({
           holds them →
         </button>
         <button type="button" onClick={onGoToAi}>
-          {formatCount(s.aiInitiativeCount || view.ai.length)} AI and BI assets
-          by cost, risk and adoption →
+          {formatCount(s.aiInitiativeCount || view.ai.length)} AI initiatives
+          and tool rollouts by cost, risk and adoption →
         </button>
         <button type="button" onClick={onGoToActions}>
-          {formatCount(evidenceFooterCount(view))} review rows in the evidence
-          queue →
+          {formatCount(evidenceFooterCount(view))} open evidence actions →
         </button>
       </section>
 
