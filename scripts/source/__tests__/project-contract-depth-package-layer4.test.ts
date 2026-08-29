@@ -31,6 +31,13 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("consumption.sourcing_spend_monthly_v1");
     expect(source).toContain("consumption.sourcing_performance_v1");
     expect(source).toContain("finance_confirmation_required");
+    expect(source).toContain("document_page_text_count");
+    expect(source).toContain("change_order_count");
+    expect(source).toContain("annual_change_order_spend");
+    expect(source).toContain("recurring_change_order_exposure_usd");
+    expect(source).toContain("source_contract_360_page_text_rows_package: 30");
+    expect(source).toContain("source_contract_360_change_order_rows_package: 8");
+    expect(source).toContain("source_optimization_opportunity: 6");
     expect(source).toContain(`SELECT * FROM sourcing
     WHERE source.can_read_sourcing_tenant(tenant_key)
     UNION ALL

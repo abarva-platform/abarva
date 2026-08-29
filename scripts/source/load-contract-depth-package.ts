@@ -58,6 +58,18 @@ const ADAPTER_SPECS = Object.freeze([
     rowIdField: "extraction_id",
   },
   {
+    key: "changeOrderAdapter",
+    adapterName: "change_order_adapter",
+    sourceFileName: "change_orders.csv",
+    rowIdField: "source_row_id",
+  },
+  {
+    key: "contractPageTextAdapter",
+    adapterName: "contract_page_text_adapter",
+    sourceFileName: "contract_page_text.csv",
+    rowIdField: "source_row_id",
+  },
+  {
     key: "cmdbApplicationAdapter",
     adapterName: "cmdb_application_adapter",
     sourceFileName: "cmdb_applications.csv",
@@ -263,6 +275,8 @@ function readSourceFiles(packageDir: string): ContractDepthSourceFileInput {
     contracts: readCsv(path.join(sourceDir, "contracts.csv")),
     applications: readCsv(path.join(sourceDir, "cmdb_applications.csv")),
     applicationScope: readCsv(path.join(sourceDir, "cmdb_application_scope.csv")),
+    changeOrders: readCsv(path.join(sourceDir, "change_orders.csv")),
+    contractPageText: readCsv(path.join(sourceDir, "contract_page_text.csv")),
     monthlySpend: readCsv(path.join(sourceDir, "monthly_spend.csv")),
     saasUsage: readCsv(path.join(sourceDir, "saas_usage.csv")),
     slaPerformance: readCsv(path.join(sourceDir, "sla_performance.csv")),
@@ -948,6 +962,185 @@ async function upsertUsageFacts(client: Client, args: Args, usageRows: readonly 
   }
 }
 
+async function insertCanonicalFact(
+  client: Client,
+  args: Args,
+  fact: {
+    readonly assertionId: string;
+    readonly contractId: string;
+    readonly vendorId: string;
+    readonly factKey: string;
+    readonly numeric: number;
+    readonly currency?: string | null;
+    readonly unit?: string | null;
+    readonly sourceRecordId: string;
+    readonly sourceDocumentId?: string | null;
+    readonly assertionBasis: string;
+    readonly sourceRefs: readonly string[];
+    readonly payload: CsvRecord | Record<string, unknown>;
+  },
+): Promise<void> {
+  await client.query(
+    `INSERT INTO source.canonical_fact_assertion (
+       tenant_key, dataset_version, assertion_id, entity_kind, entity_id,
+       contract_id, vendor_id, fact_key, value_numeric, currency, unit,
+       source_system, source_table, source_record_id, source_document_id,
+       assertion_basis, confidence, review_state, source_refs, payload
+     )
+     VALUES (
+       $1, $2, $3, 'contract', $4, $4, $5, $6, $7, $8, $9, $10,
+       'source.contract_depth_adapter_row', $11, $12, $13, 0.86,
+       'system_extracted', $14::jsonb, $15::jsonb
+     )
+     ON CONFLICT (tenant_key, dataset_version, assertion_id)
+     DO UPDATE SET value_numeric = EXCLUDED.value_numeric,
+                   currency = EXCLUDED.currency,
+                   unit = EXCLUDED.unit,
+                   source_record_id = EXCLUDED.source_record_id,
+                   source_document_id = EXCLUDED.source_document_id,
+                   assertion_basis = EXCLUDED.assertion_basis,
+                   source_refs = EXCLUDED.source_refs,
+                   payload = EXCLUDED.payload`,
+    [
+      args.tenantKey,
+      args.datasetVersion,
+      fact.assertionId,
+      fact.contractId,
+      fact.vendorId,
+      fact.factKey,
+      fact.numeric,
+      fact.currency ?? null,
+      fact.unit ?? null,
+      SOURCE_SYSTEM,
+      fact.sourceRecordId,
+      fact.sourceDocumentId ?? null,
+      fact.assertionBasis,
+      JSON.stringify(fact.sourceRefs),
+      JSON.stringify(fact.payload),
+    ],
+  );
+}
+
+async function upsertChangeOrderFacts(client: Client, args: Args, changeRows: readonly CsvRecord[]): Promise<void> {
+  const byContract = groupBy(changeRows, "contract_id");
+  for (const row of changeRows) {
+    const annualized = numberValue(row, "annualized_spend_usd") ?? 0;
+    const oneTime = numberValue(row, "one_time_spend_usd") ?? 0;
+    await insertCanonicalFact(client, args, {
+      assertionId: `${stringValue(row, "source_row_id")}:annualized_spend_usd`,
+      contractId: stringValue(row, "contract_id"),
+      vendorId: stringValue(row, "vendor_ref"),
+      factKey: "change_order.annualized_spend_usd",
+      numeric: annualized,
+      currency: "USD",
+      sourceRecordId: stringValue(row, "source_row_id"),
+      sourceDocumentId: stringValue(row, "source_file_id"),
+      assertionBasis: "Annualized spend from synthetic change-order ledger row.",
+      sourceRefs: [stringValue(row, "source_row_id"), stringValue(row, "source_file_id")],
+      payload: row,
+    });
+    await insertCanonicalFact(client, args, {
+      assertionId: `${stringValue(row, "source_row_id")}:one_time_spend_usd`,
+      contractId: stringValue(row, "contract_id"),
+      vendorId: stringValue(row, "vendor_ref"),
+      factKey: "change_order.one_time_spend_usd",
+      numeric: oneTime,
+      currency: "USD",
+      sourceRecordId: stringValue(row, "source_row_id"),
+      sourceDocumentId: stringValue(row, "source_file_id"),
+      assertionBasis: "One-time spend from synthetic change-order ledger row.",
+      sourceRefs: [stringValue(row, "source_row_id"), stringValue(row, "source_file_id")],
+      payload: row,
+    });
+  }
+
+  for (const [contractId, rows] of byContract.entries()) {
+    const vendorId = stringValue(rows[0], "vendor_ref");
+    const recurring = rows.filter((row) => boolValue(row, "recurring"));
+    const annualizedTotal = rows.reduce((total, row) => total + (numberValue(row, "annualized_spend_usd") ?? 0), 0);
+    const recurringAnnualized = recurring.reduce((total, row) => total + (numberValue(row, "annualized_spend_usd") ?? 0), 0);
+    const sourceRefs = rows.map((row) => stringValue(row, "source_row_id"));
+    const docRefs = [...new Set(rows.map((row) => stringValue(row, "source_file_id")).filter(Boolean))];
+    await insertCanonicalFact(client, args, {
+      assertionId: `change_order:${contractId}:annual_change_order_spend`,
+      contractId,
+      vendorId,
+      factKey: "annual_change_order_spend",
+      numeric: annualizedTotal,
+      currency: "USD",
+      sourceRecordId: sourceRefs[0],
+      sourceDocumentId: docRefs[0] ?? null,
+      assertionBasis: "Sum of annualized change-order spend for this contract.",
+      sourceRefs: [...sourceRefs, ...docRefs],
+      payload: { contract_id: contractId, row_count: rows.length, synthetic_policy: "synthetic_demo_only_not_client_truth" },
+    });
+    await insertCanonicalFact(client, args, {
+      assertionId: `change_order:${contractId}:recurring_change_order_spend`,
+      contractId,
+      vendorId,
+      factKey: "recurring_change_order_spend",
+      numeric: recurringAnnualized,
+      currency: "USD",
+      sourceRecordId: sourceRefs[0],
+      sourceDocumentId: docRefs[0] ?? null,
+      assertionBasis: "Sum of recurring annualized change-order spend for this contract.",
+      sourceRefs: [...recurring.map((row) => stringValue(row, "source_row_id")), ...docRefs],
+      payload: { contract_id: contractId, recurring_row_count: recurring.length, synthetic_policy: "synthetic_demo_only_not_client_truth" },
+    });
+    await insertCanonicalFact(client, args, {
+      assertionId: `change_order:${contractId}:change_order_count`,
+      contractId,
+      vendorId,
+      factKey: "change_order_count",
+      numeric: rows.length,
+      unit: "row",
+      sourceRecordId: sourceRefs[0],
+      sourceDocumentId: docRefs[0] ?? null,
+      assertionBasis: "Count of change-order ledger rows linked to this contract.",
+      sourceRefs: [...sourceRefs, ...docRefs],
+      payload: { contract_id: contractId, synthetic_policy: "synthetic_demo_only_not_client_truth" },
+    });
+    if (recurringAnnualized > 0) {
+      await insertCanonicalFact(client, args, {
+        assertionId: `change_order:${contractId}:recurring_avoidable_pct`,
+        contractId,
+        vendorId,
+        factKey: "recurring_avoidable_pct",
+        numeric: 30,
+        unit: "%",
+        sourceRecordId: sourceRefs[0],
+        sourceDocumentId: docRefs[0] ?? null,
+        assertionBasis: "Conservative synthetic demo assumption for recurring change-order leakage candidate value; finance confirmation remains required.",
+        sourceRefs: [...recurring.map((row) => stringValue(row, "source_row_id")), ...docRefs],
+        payload: { contract_id: contractId, synthetic_policy: "synthetic_demo_only_not_client_truth" },
+      });
+    }
+  }
+}
+
+async function upsertPageTextFacts(client: Client, args: Args, pageRows: readonly CsvRecord[]): Promise<void> {
+  for (const row of pageRows) {
+    await insertCanonicalFact(client, args, {
+      assertionId: `${stringValue(row, "source_row_id")}:page_text_char_count`,
+      contractId: stringValue(row, "contract_id"),
+      vendorId: stringValue(row, "vendor_ref"),
+      factKey: "document.page_text_char_count",
+      numeric: stringValue(row, "page_text").length,
+      unit: "character",
+      sourceRecordId: stringValue(row, "source_row_id"),
+      sourceDocumentId: stringValue(row, "source_file_id"),
+      assertionBasis: "Searchable page text is present for this synthetic contract evidence document.",
+      sourceRefs: [stringValue(row, "source_row_id"), stringValue(row, "source_file_id")],
+      payload: {
+        source_file_id: stringValue(row, "source_file_id"),
+        source_page: stringValue(row, "source_page"),
+        page_text_sha256: stringValue(row, "page_text_sha256"),
+        synthetic_policy: "synthetic_demo_only_not_client_truth",
+      },
+    });
+  }
+}
+
 async function upsertOptimizationSpine(
   client: Client,
   args: Args,
@@ -956,7 +1149,50 @@ async function upsertOptimizationSpine(
   const contractsById = new Map(sourceFiles.contracts.map((contract) => [stringValue(contract, "contract_id"), contract]));
   const opportunityIds = sourceFiles.optimizationOpportunities.map((row) => stringValue(row, "opportunity_id"));
   const contractIds = sourceFiles.contracts.map((row) => stringValue(row, "contract_id"));
+  const calculationRunIds = opportunityIds.map((opportunityId) => `contract-depth:${opportunityId}:calculation`);
+  const requirementIds = opportunityIds.map((opportunityId) => `contract-depth:${opportunityId}:finance-review`);
+  const caseIds = contractIds.map((contractId) => `contract-depth:${contractId}:case`);
 
+  await client.query(
+    `DELETE FROM source.calculation_output
+      WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, calculationRunIds],
+  );
+  await client.query(
+    `DELETE FROM source.calculation_input
+      WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, calculationRunIds],
+  );
+  await client.query(
+    `DELETE FROM source.calculation_run
+      WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, calculationRunIds],
+  );
+  await client.query(
+    `DELETE FROM source.opportunity_valuation
+      WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, opportunityIds],
+  );
+  await client.query(
+    `DELETE FROM source.opportunity_evidence
+      WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, opportunityIds],
+  );
+  await client.query(
+    `DELETE FROM source.opportunity_requirement_status
+      WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, opportunityIds],
+  );
+  await client.query(
+    `DELETE FROM source.evidence_request
+      WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, opportunityIds],
+  );
+  await client.query(
+    `DELETE FROM source.case_opportunity
+      WHERE tenant_key = $1 AND dataset_version = $2 AND optimization_case_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, caseIds],
+  );
   await client.query(
     `DELETE FROM source.optimization_case
       WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])`,
@@ -969,8 +1205,8 @@ async function upsertOptimizationSpine(
   );
   await client.query(
     `DELETE FROM source.evidence_requirement
-      WHERE tenant_key = $1 AND dataset_version = $2 AND requirement_id LIKE 'contract-depth:%'`,
-    [args.tenantKey, args.datasetVersion],
+      WHERE tenant_key = $1 AND dataset_version = $2 AND requirement_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, requirementIds],
   );
   await client.query(
     `DELETE FROM source.optimization_opportunity
@@ -1085,7 +1321,14 @@ async function upsertOptimizationSpine(
        )
        VALUES (
          $1, $2, $3, $4, $5, $6, 'evidence_review', $7, $8, $9::jsonb
-       )`,
+       )
+       ON CONFLICT (tenant_key, dataset_version, optimization_case_id)
+       DO UPDATE SET vendor_id = EXCLUDED.vendor_id,
+                     baseline_id = EXCLUDED.baseline_id,
+                     case_state = EXCLUDED.case_state,
+                     owner = EXCLUDED.owner,
+                     next_action = EXCLUDED.next_action,
+                     payload = EXCLUDED.payload`,
       [
         args.tenantKey,
         args.datasetVersion,
@@ -1104,7 +1347,11 @@ async function upsertOptimizationSpine(
          tenant_key, dataset_version, optimization_case_id, opportunity_id,
          selected_for_action, sequence, payload
        )
-       VALUES ($1, $2, $3, $4, false, 1, '{}'::jsonb)`,
+       VALUES ($1, $2, $3, $4, false, 1, '{}'::jsonb)
+       ON CONFLICT (tenant_key, dataset_version, optimization_case_id, opportunity_id)
+       DO UPDATE SET selected_for_action = EXCLUDED.selected_for_action,
+                     sequence = EXCLUDED.sequence,
+                     payload = EXCLUDED.payload`,
       [args.tenantKey, args.datasetVersion, caseId, opportunityId],
     );
 
@@ -1273,6 +1520,8 @@ async function applyLayer3(
   await upsertSpend(client, args, sourceFiles.monthlySpend);
   await upsertPerformance(client, args, sourceFiles.slaPerformance);
   await upsertUsageFacts(client, args, sourceFiles.saasUsage);
+  await upsertChangeOrderFacts(client, args, sourceFiles.changeOrders);
+  await upsertPageTextFacts(client, args, sourceFiles.contractPageText);
   await upsertOptimizationSpine(client, args, sourceFiles);
 
   return layer3Readback(client, args, sourceFiles);
@@ -1298,14 +1547,26 @@ async function layer3Readback(
        (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS optimization_opportunity,
        (SELECT count(*)::text FROM source.optimization_baseline WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])) AS optimization_baseline,
        (SELECT count(*)::text FROM source.optimization_case WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])) AS optimization_case,
+       (SELECT count(*)::text FROM source.case_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS case_opportunity,
        (SELECT count(*)::text FROM source.opportunity_evidence WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS opportunity_evidence,
        (SELECT count(*)::text FROM source.calculation_run WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS calculation_run,
+       (SELECT count(*)::text FROM source.calculation_input WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($6::text[])) AS calculation_input,
+       (SELECT count(*)::text FROM source.calculation_output WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($6::text[])) AS calculation_output,
        (SELECT count(*)::text FROM source.opportunity_valuation WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS opportunity_valuation,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])) AS canonical_fact_assertion,
+       (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND fact_key = 'document.page_text_char_count' AND contract_id = ANY($3::text[])) AS page_text_fact_assertion,
+       (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[]) AND (fact_key LIKE 'change_order%' OR fact_key IN ('annual_change_order_spend', 'recurring_change_order_spend', 'recurring_avoidable_pct'))) AS change_order_fact_assertion,
        (SELECT coalesce(sum(amount_usd), 0)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS opportunity_amount_usd,
        (SELECT count(*)::text FROM source.contract WHERE tenant_key = $1 AND contract_id = ANY($3::text[]) AND load_run_id = $5 AND coalesce(raw_payload->>'alternatives_available', '') <> '') AS contracts_with_assessed_alternatives,
        (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[]) AND payload->>'finance_confirmation_state' = 'not_confirmed') AS opportunities_not_finance_confirmed`,
-    [args.tenantKey, args.datasetVersion, contractIds, opportunityIds, args.loadRunId],
+    [
+      args.tenantKey,
+      args.datasetVersion,
+      contractIds,
+      opportunityIds,
+      args.loadRunId,
+      opportunityIds.map((opportunityId) => `contract-depth:${opportunityId}:calculation`),
+    ],
   );
   const row = result.rows[0] ?? {};
   return Object.fromEntries(
@@ -1317,6 +1578,31 @@ async function layer3Readback(
 }
 
 function expectedLayer3(sourceFiles: ContractDepthSourceFileInput, rows: readonly Layer2Row[]): Record<string, number> {
+  const opportunityEvidenceRows = sourceFiles.optimizationOpportunities.reduce(
+    (total, row) => total + stringValue(row, "evidence_rows").split(";").map((value) => value.trim()).filter(Boolean).length,
+    0,
+  );
+  const contractsWithChangeOrders = new Set(sourceFiles.changeOrders.map((row) => stringValue(row, "contract_id")).filter(Boolean));
+  const contractsWithRecurringChangeOrders = new Set(
+    sourceFiles.changeOrders
+      .filter((row) => boolValue(row, "recurring"))
+      .map((row) => stringValue(row, "contract_id"))
+      .filter(Boolean),
+  );
+  const usageFactCount = sourceFiles.saasUsage.reduce((total, row) => {
+    return total + [
+      numberValue(row, "entitled_quantity"),
+      numberValue(row, "active_quantity"),
+      numberValue(row, "unused_quantity"),
+      pctValue(row, "utilization_pct"),
+      numberValue(row, "annual_opportunity_usd"),
+    ].filter((value) => value !== null).length;
+  }, 0);
+  const changeOrderFactCount =
+    sourceFiles.changeOrders.length * 2 +
+    contractsWithChangeOrders.size * 3 +
+    contractsWithRecurringChangeOrders.size;
+  const pageTextFactCount = sourceFiles.contractPageText.length;
   return {
     layer2_adapter_rows: rows.length,
     source_record_snapshot: rows.length,
@@ -1328,9 +1614,16 @@ function expectedLayer3(sourceFiles: ContractDepthSourceFileInput, rows: readonl
     source_contract_service_credit: sourceFiles.slaPerformance.filter((row) => (numberValue(row, "credit_owed_usd") ?? 0) > 0).length,
     optimization_opportunity: sourceFiles.optimizationOpportunities.length,
     optimization_baseline: sourceFiles.contracts.length,
-    optimization_case: sourceFiles.optimizationOpportunities.length,
+    optimization_case: new Set(sourceFiles.optimizationOpportunities.map((row) => stringValue(row, "contract_id"))).size,
+    case_opportunity: sourceFiles.optimizationOpportunities.length,
+    opportunity_evidence: opportunityEvidenceRows,
     calculation_run: sourceFiles.optimizationOpportunities.length,
+    calculation_input: opportunityEvidenceRows,
+    calculation_output: sourceFiles.optimizationOpportunities.length * 2,
     opportunity_valuation: sourceFiles.optimizationOpportunities.length,
+    canonical_fact_assertion: usageFactCount + changeOrderFactCount + pageTextFactCount,
+    page_text_fact_assertion: pageTextFactCount,
+    change_order_fact_assertion: changeOrderFactCount,
     opportunities_not_finance_confirmed: sourceFiles.optimizationOpportunities.length,
     contracts_with_assessed_alternatives: 0,
   };

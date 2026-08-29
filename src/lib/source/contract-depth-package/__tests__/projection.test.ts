@@ -40,6 +40,41 @@ describe('projectContractDepthPackage', () => {
           relationship_confidence: '0.94',
         },
       ],
+      changeOrders: [
+        {
+          tenant_key: 'meridian-health',
+          dataset_version: 'contract-depth-v1',
+          source_row_id: 'change:MER-TECH-AMS-001:01',
+          contract_id: 'MER-TECH-AMS-001',
+          vendor_ref: 'VEN-AMS',
+          vendor_name: 'Managed Services Vendor',
+          change_order_id: 'CO-AMS-001',
+          recurring: 'true',
+          annualized_spend_usd: '288000',
+          one_time_spend_usd: '0',
+          linked_application_ref: 'APP-001',
+          source_file_id: 'DOC-AMS-SLA',
+          source_page: '1',
+          synthetic_policy: 'synthetic_demo_only_not_client_truth',
+        },
+      ],
+      contractPageText: [
+        {
+          tenant_key: 'meridian-health',
+          dataset_version: 'contract-depth-v1',
+          source_row_id: 'page:DOC-AMS-SLA:p1',
+          source_file_id: 'DOC-AMS-SLA',
+          contract_id: 'MER-TECH-AMS-001',
+          vendor_ref: 'VEN-AMS',
+          vendor_name: 'Managed Services Vendor',
+          source_page: '1',
+          page_text: 'Synthetic page text for the AMS SLA.',
+          page_text_sha256: 'hash',
+          mapping_status: 'mapped_to_register_contract',
+          parser_version: 'synthetic-contract-depth-page-text-v1',
+          synthetic_policy: 'synthetic_demo_only_not_client_truth',
+        },
+      ],
       monthlySpend: [
         {
           tenant_key: 'meridian-health',
@@ -131,6 +166,9 @@ describe('projectContractDepthPackage', () => {
         contractOperationalPerformance: 1,
         contractPdfDocumentInventory: 1,
         contractPdfClauseExtractions: 1,
+        contractPdfPageText: 1,
+        contractChangeOrders: 1,
+        contractEvidenceCoverage: 1,
         optimizationOpportunities: 1,
       },
     });
@@ -140,6 +178,9 @@ describe('projectContractDepthPackage', () => {
       actual_annual_spend: '650000',
       service_credits_earned: '12333.33',
       service_credits_claimed: '0',
+      document_page_text_count: '1',
+      change_order_count: '1',
+      recurring_change_order_exposure_usd: '288000',
       operational_evidence_gap: 'false',
     });
     expect(projection.contractVendor360[0]).toMatchObject({
@@ -153,6 +194,12 @@ describe('projectContractDepthPackage', () => {
     expect(projection.contractPdfDocumentInventory[0]).toMatchObject({
       loaded_policy: 'synthetic_demo_only_not_client_truth',
       mapping_status: 'mapped_to_register_contract',
+      page_count: '1',
+    });
+    expect(projection.contractEvidenceCoverage[0]).toMatchObject({
+      coverage_state: 'partial',
+      page_text_rows: '1',
+      change_order_rows: '1',
     });
   });
 
@@ -160,6 +207,8 @@ describe('projectContractDepthPackage', () => {
     const projection = projectContractDepthPackage({
       contracts: [],
       applicationScope: [],
+      changeOrders: [],
+      contractPageText: [],
       monthlySpend: [],
       slaPerformance: [],
       ticketVolumetrics: [],

@@ -41,6 +41,34 @@ function validPackage(): ContractDepthSourceFileInput {
         application_name: 'Clinical Integration Hub',
       },
     ],
+    changeOrders: [
+      {
+        tenant_key: 'meridian-health',
+        dataset_version: 'meridian-contract-depth-v1-20260828',
+        source_row_id: 'change:MER-TECH-AMS-001:01',
+        contract_id: 'MER-TECH-AMS-001',
+        vendor_ref: 'VEN-AMS',
+        source_file_id: 'DOC-AMS-1',
+        approval_owner: 'VP Clinical Applications',
+        linked_application_ref: 'APP-001',
+        recurring: 'true',
+        annualized_spend_usd: '288000',
+        one_time_spend_usd: '0',
+        synthetic_policy: 'synthetic_demo_only_not_client_truth',
+      },
+    ],
+    contractPageText: Array.from({ length: 5 }, (_, index) => ({
+      tenant_key: 'meridian-health',
+      dataset_version: 'meridian-contract-depth-v1-20260828',
+      source_row_id: `page:DOC-AMS-${index + 1}:p1`,
+      source_file_id: `DOC-AMS-${index + 1}`,
+      contract_id: 'MER-TECH-AMS-001',
+      vendor_ref: 'VEN-AMS',
+      vendor_name: 'Managed Services Vendor',
+      source_page: '1',
+      page_text: `Synthetic page text for evidence document ${index + 1}.`,
+      synthetic_policy: 'synthetic_demo_only_not_client_truth',
+    })),
     monthlySpend: Array.from({ length: 12 }, (_, index) => ({
       tenant_key: 'meridian-health',
       dataset_version: 'meridian-contract-depth-v1-20260828',
@@ -115,6 +143,8 @@ describe('adaptContractDepthPackage', () => {
     expect(adapted.qualityGate.rowCounts).toMatchObject({
       contractRegisterAdapter: 1,
       contractClauseAdapter: 1,
+      changeOrderAdapter: 1,
+      contractPageTextAdapter: 5,
       cmdbApplicationAdapter: 1,
       contractScopeAdapter: 1,
       spendAdapter: 12,
@@ -132,6 +162,9 @@ describe('adaptContractDepthPackage', () => {
       contractsWithDocuments: 1,
       contractsWithScope: 1,
       contractsWithOpportunities: 1,
+      contractsWithChangeOrders: 1,
+      contractsWithPageText: 1,
+      contractsWithRecurringChangeOrders: 1,
       managedServiceContractsWithSlaEvidence: 1,
     });
   });
@@ -142,6 +175,7 @@ describe('adaptContractDepthPackage', () => {
       ...thin,
       monthlySpend: thin.monthlySpend.slice(0, 11),
       evidenceManifest: thin.evidenceManifest.slice(0, 4),
+      contractPageText: thin.contractPageText.slice(0, 4),
       optimizationOpportunities: [
         {
           ...thin.optimizationOpportunities[0],

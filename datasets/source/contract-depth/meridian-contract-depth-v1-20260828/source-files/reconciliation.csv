@@ -7,3 +7,5 @@ Contract clauses,35,PASS,Every clause row matches a contract
 Ticket volumetrics,96,PASS,Every ticket row matches a managed-services contract
 SLA performance,36,PASS,Every SLA row matches a contract
 Optimization opportunities,5,PASS,Every opportunity cites real evidence row IDs
+Change orders,8,PASS,"Each change-order row maps to a contract, approval owner, source document, recurring classification, and application reference"
+Contract page text,30,PASS,Every evidence document has searchable page text and a matching SHA-256 hash
