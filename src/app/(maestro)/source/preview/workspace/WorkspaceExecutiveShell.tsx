@@ -63,7 +63,18 @@ export function WorkspaceExecutiveShell({
   const decisionSupport = supportByLabel(portfolio, "Exposed annual value");
   const windowSupport = supportByLabel(portfolio, "Decision window");
   const confidenceSupport = supportByLabel(portfolio, "Mean confidence");
-  const creditFinding = portfolio.v4Snapshot.performanceCredits.unclaimedCredit;
+  const impactUnclaimedCredit = portfolio.impact.evidenceCoverage.reduce(
+    (sum, row) => sum + (numberFromDb(row.unclaimed_credit_usd) ?? 0),
+    0,
+  );
+  const impactCandidateAmount = portfolio.impact.actionCandidates.reduce(
+    (sum, row) => sum + (numberFromDb(row.candidate_amount_usd) ?? 0),
+    0,
+  );
+  const creditFinding = Math.max(
+    portfolio.v4Snapshot.performanceCredits.unclaimedCredit,
+    impactUnclaimedCredit,
+  );
   const performanceRows = portfolio.v4Snapshot.performanceCredits.rowCount;
   const spendRows = portfolio.v4Snapshot.spendConsumption.rowCount;
   const findingContract =
@@ -218,6 +229,7 @@ export function WorkspaceExecutiveShell({
             findingContract={findingContract}
             performanceRows={performanceRows}
             spendRows={spendRows}
+            impactCandidateAmount={impactCandidateAmount}
             onOpenContract={openContract}
             onOpenVendors={() => logic.select("vendorList", null)}
           />
@@ -237,6 +249,7 @@ export function WorkspaceExecutiveShell({
           <ContractPage
             vm={vm}
             logic={logic}
+            portfolio={portfolio}
             contract={selectedContract}
             onOpenTab={(tab) => logic.setTab("contract", tab)}
           />
@@ -250,6 +263,7 @@ export function WorkspaceExecutiveShell({
             findingContract={findingContract}
             performanceRows={performanceRows}
             spendRows={spendRows}
+            portfolio={portfolio}
             onOpenContract={openContract}
           />
         ) : null}
@@ -264,6 +278,7 @@ function PortfolioPage({
   findingContract,
   performanceRows,
   spendRows,
+  impactCandidateAmount,
   onOpenContract,
   onOpenVendors,
 }: {
@@ -276,44 +291,90 @@ function PortfolioPage({
   } | null;
   performanceRows: number;
   spendRows: number;
+  impactCandidateAmount: number;
   onOpenContract: (contractId: string, tab?: string) => void;
   onOpenVendors: () => void;
 }) {
+  const claimCards = portfolio.impact.claimCards.slice(0, 3);
+  const storyline = storylineBySurface(portfolio, "overview");
+
   return (
     <div className="sw-v2-grid">
       <section className="sw-v2-panel sw-v2-span-2">
         <PanelHead
           eyebrow="Executive position"
-          title={portfolio.cockpit.verdict.headline}
+          title={storyline?.headline ?? portfolio.cockpit.verdict.headline}
         />
-        <p className="sw-v2-lede">{portfolio.cockpit.verdict.decidingAxis}</p>
+        <p className="sw-v2-lede">
+          {storyline?.allowed_executive_statement ??
+            portfolio.cockpit.verdict.decidingAxis}
+        </p>
         <div className="sw-v2-decision-list">
-          {portfolio.cockpit.actionQueue.slice(0, 3).map((row) => (
-            <button
-              key={row.contractId}
-              type="button"
-              className="sw-v2-decision-row"
-              onClick={() => onOpenContract(row.contractId)}
-            >
-              <span>
-                <b>{row.actionVerb}</b>
-                <small>
-                  {row.counterparty} / {row.contractId}
-                </small>
-              </span>
-              <span>{row.annualValueLabel}</span>
-              <span>{row.deadlineLabel}</span>
-            </button>
-          ))}
+          {claimCards.length
+            ? claimCards.map((row) => (
+                <button
+                  key={row.opportunity_id}
+                  type="button"
+                  className="sw-v2-decision-row"
+                  onClick={() => onOpenContract(row.contract_id, "Optimize")}
+                >
+                  <span>
+                    <b>{row.claim_title ?? "Review candidate action"}</b>
+                    <small>
+                      {row.vendor_name} / {row.contract_id}
+                    </small>
+                  </span>
+                  <span>{money(numberFromDb(row.candidate_amount_usd))}</span>
+                  <span>{row.readiness_state ?? row.evidence_state}</span>
+                </button>
+              ))
+            : portfolio.cockpit.actionQueue.slice(0, 3).map((row) => (
+                <button
+                  key={row.contractId}
+                  type="button"
+                  className="sw-v2-decision-row"
+                  onClick={() => onOpenContract(row.contractId)}
+                >
+                  <span>
+                    <b>{row.actionVerb}</b>
+                    <small>
+                      {row.counterparty} / {row.contractId}
+                    </small>
+                  </span>
+                  <span>{row.annualValueLabel}</span>
+                  <span>{row.deadlineLabel}</span>
+                </button>
+              ))}
         </div>
       </section>
 
       <section className="sw-v2-panel">
         <PanelHead
-          eyebrow="Verified opportunity"
-          title="Do not generalize beyond loaded rows"
+          eyebrow="Candidate opportunity"
+          title="Finance confirmation remains separate"
         />
-        {creditFinding > 0 && findingContract ? (
+        {impactCandidateAmount > 0 ? (
+          <>
+            <div className="sw-v2-finding-value">
+              {money(impactCandidateAmount)}
+            </div>
+            <p className="sw-v2-muted">
+              Sum of deterministic action candidates in the loaded
+              contract-depth package. Do not present as realized savings.
+            </p>
+            {claimCards[0] ? (
+              <button
+                type="button"
+                className="sw-v2-primary"
+                onClick={() =>
+                  onOpenContract(claimCards[0].contract_id, "Optimize")
+                }
+              >
+                Open top candidate
+              </button>
+            ) : null}
+          </>
+        ) : creditFinding > 0 && findingContract ? (
           <>
             <div className="sw-v2-finding-value">{money(creditFinding)}</div>
             <p className="sw-v2-muted">
@@ -333,7 +394,7 @@ function PortfolioPage({
           </>
         ) : (
           <p className="sw-v2-muted">
-            No quantified opportunity is loaded in the current performance
+            No quantified opportunity is loaded in the current deterministic
             slice.
           </p>
         )}
@@ -373,6 +434,14 @@ function PortfolioPage({
         <div className="sw-v2-fact-stack">
           <Fact label="Spend rows" value={String(spendRows)} />
           <Fact label="Performance rows" value={String(performanceRows)} />
+          <Fact
+            label="Claim cards"
+            value={String(portfolio.impact.claimCards.length)}
+          />
+          <Fact
+            label="aVa bundles"
+            value={String(portfolio.impact.avaGroundingBundles.length)}
+          />
           <Fact label="Finance confirmed" value="Not established" />
           <Fact label="Unsupported dashboard claims" value="Hidden" />
         </div>
@@ -400,6 +469,11 @@ function VendorsPage({
         (contract) => contract.vendor_ref === selectedVendor.vendor_ref,
       )
     : [];
+  const selectedVendorPosition = selectedVendor
+    ? portfolio.impact.vendorPositions.find(
+        (vendor) => vendor.vendor_ref === selectedVendor.vendor_ref,
+      )
+    : null;
 
   return (
     <div className="sw-v2-grid">
@@ -460,6 +534,24 @@ function VendorsPage({
                 label="Auto-renewing"
                 value={String(selectedVendor.auto_renew_contracts)}
               />
+              <Fact
+                label="Action candidates"
+                value={String(
+                  selectedVendorPosition?.action_candidate_count ?? 0,
+                )}
+              />
+              <Fact
+                label="Candidate exposure"
+                value={money(
+                  numberFromDb(selectedVendorPosition?.candidate_amount_usd),
+                )}
+              />
+              <Fact
+                label="Unclaimed credits"
+                value={money(
+                  numberFromDb(selectedVendorPosition?.unclaimed_credit_usd),
+                )}
+              />
             </div>
             <div className="sw-v2-mini-list">
               {selectedContracts.slice(0, 6).map((contract) => (
@@ -493,16 +585,22 @@ function VendorsPage({
 function ContractPage({
   vm,
   logic,
+  portfolio,
   contract,
   onOpenTab,
 }: {
   vm: SourceWorkspaceVM;
   logic: WorkspaceViewModel;
+  portfolio: SourceWorkspacePortfolioData;
   contract: SourceContract360Row;
   onOpenTab: (tab: string) => void;
 }) {
   const tab = logic.state.tabs.contract ?? "Story";
   const detailReady = vm.detailState === "ready";
+  const coverage = coverageForContract(portfolio, contract.contract_id);
+  const contractClaimCards = portfolio.impact.claimCards.filter(
+    (row) => row.contract_id === contract.contract_id,
+  );
 
   return (
     <div className="sw-v2-grid">
@@ -523,7 +621,9 @@ function ContractPage({
           eyebrow={`Contract 360 / ${tab}`}
           title={contract.contract_name}
         />
-        <p className="sw-v2-lede">{contractStory(tab, vm, contract)}</p>
+        <p className="sw-v2-lede">
+          {contractStory(tab, vm, contract, coverage, contractClaimCards[0])}
+        </p>
         {tab === "Performance" &&
         detailReady &&
         vm.detail?.performancePeriods?.length ? (
@@ -611,12 +711,34 @@ function ContractPage({
               label="Finance confirmed"
               value={vm.opportunityView.financeConfirmed}
             />
+            <Fact
+              label="Deterministic cards"
+              value={String(contractClaimCards.length)}
+            />
           </div>
         ) : (
-          <p className="sw-v2-muted">
-            Contract-specific optimization evidence is not loaded for this
-            selection. The UI keeps that absence visible.
-          </p>
+          <div className="sw-v2-fact-stack">
+            <Fact
+              label="Coverage state"
+              value={coverage?.coverage_state ?? "Header only"}
+            />
+            <Fact
+              label="Spend rows"
+              value={formatCount(coverage?.spend_rows)}
+            />
+            <Fact
+              label="Performance rows"
+              value={formatCount(coverage?.performance_rows)}
+            />
+            <Fact
+              label="Document pages"
+              value={formatCount(coverage?.document_page_text_rows)}
+            />
+            <p className="sw-v2-muted">
+              {coverage?.blocker_if_missing ??
+                "Contract-specific optimization evidence is not loaded for this selection."}
+            </p>
+          </div>
         )}
       </section>
     </div>
@@ -630,6 +752,7 @@ function OptimizePage({
   findingContract,
   performanceRows,
   spendRows,
+  portfolio,
   onOpenContract,
 }: {
   vm: SourceWorkspaceVM;
@@ -638,8 +761,23 @@ function OptimizePage({
   findingContract: { contractId: string; counterparty: string } | null;
   performanceRows: number;
   spendRows: number;
+  portfolio: SourceWorkspacePortfolioData;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
+  const contractCandidates = portfolio.impact.actionCandidates.filter(
+    (row) => row.contract_id === contract.contract_id,
+  );
+  const topCandidate = contractCandidates[0] ?? null;
+  const candidateAmount = contractCandidates.reduce(
+    (sum, row) => sum + (numberFromDb(row.candidate_amount_usd) ?? 0),
+    0,
+  );
+  const claimCard = topCandidate
+    ? portfolio.impact.claimCards.find(
+        (row) => row.opportunity_id === topCandidate.opportunity_id,
+      )
+    : null;
+
   return (
     <div className="sw-v2-grid">
       <section className="sw-v2-panel sw-v2-span-2">
@@ -657,8 +795,15 @@ function OptimizePage({
           />
           <ValueLane
             title="Avoid future spend"
-            value="Not established"
-            note="Requires usage, renewal, rate-card, or entitlement evidence before sizing."
+            value={
+              candidateAmount > 0 ? money(candidateAmount) : "Not established"
+            }
+            note={
+              topCandidate
+                ? `${topCandidate.opportunity_type}: ${topCandidate.deterministic_basis}`
+                : "Requires usage, renewal, rate-card, or entitlement evidence before sizing."
+            }
+            active={candidateAmount > 0}
           />
           <ValueLane
             title="Improve the deal"
@@ -686,16 +831,34 @@ function OptimizePage({
           <Fact label="Spend rows" value={String(spendRows)} />
           <Fact label="Performance rows" value={String(performanceRows)} />
           <Fact
+            label="Action candidates"
+            value={String(contractCandidates.length)}
+          />
+          <Fact
+            label="Candidate amount"
+            value={
+              candidateAmount > 0 ? money(candidateAmount) : "Not established"
+            }
+          />
+          <Fact
             label="Selected opportunity"
             value={
+              topCandidate?.next_action ??
               vm.opportunityView?.selectedOpportunity?.label ??
               "Not established"
             }
           />
           <Fact
             label="Finance confirmed"
-            value={vm.opportunityView?.financeConfirmed ?? "Not established"}
+            value={
+              topCandidate?.finance_confirmation_state ??
+              vm.opportunityView?.financeConfirmed ??
+              "Not established"
+            }
           />
+          {claimCard ? (
+            <p className="sw-v2-muted">{claimCard.blocker_if_missing}</p>
+          ) : null}
         </div>
       </section>
     </div>
@@ -801,6 +964,32 @@ function supportByLabel(
   );
 }
 
+function coverageForContract(
+  portfolio: SourceWorkspacePortfolioData,
+  contractId: string,
+) {
+  return (
+    portfolio.impact.evidenceCoverage.find(
+      (row) => row.contract_id === contractId,
+    ) ?? null
+  );
+}
+
+function storylineBySurface(
+  portfolio: SourceWorkspacePortfolioData,
+  surfaceKey: string,
+) {
+  return (
+    portfolio.impact.storyline.find((row) => row.page_key === surfaceKey) ??
+    portfolio.impact.storyline.find((row) => row.section_key === surfaceKey) ??
+    null
+  );
+}
+
+function formatCount(value: number | null | undefined) {
+  return value == null ? "Not established" : String(value);
+}
+
 function topVendors(portfolio: SourceWorkspacePortfolioData) {
   return portfolio.vendors
     .slice()
@@ -877,10 +1066,17 @@ function contractStory(
   tab: string,
   vm: SourceWorkspaceVM,
   contract: SourceContract360Row,
+  coverage: ReturnType<typeof coverageForContract>,
+  claimCard:
+    | SourceWorkspacePortfolioData["impact"]["claimCards"][number]
+    | undefined,
 ) {
   if (tab === "Performance") {
     if (vm.detailState === "ready" && vm.detail?.performancePeriods?.length) {
       return "Monthly performance rows are loaded for this contract. Misses and service-credit amounts stay visible as evidence, not finance-confirmed value.";
+    }
+    if ((coverage?.performance_rows ?? 0) > 0) {
+      return `${coverage?.performance_rows} governed performance rows are in the Source impact layer for this contract. Open detail proof before using row-level claims.`;
     }
     return "No contract-specific performance periods are loaded for this selection.";
   }
@@ -893,11 +1089,17 @@ function contractStory(
       : "Evidence rows, source documents, and missing inputs are separated from the contract header.";
   }
   if (tab === "Optimize") {
+    if (claimCard) {
+      return claimCard.allowed_executive_statement;
+    }
     return vm.opportunityView
       ? vm.opportunityView.recommendationDetail
       : "No contract-specific opportunity set is loaded for this selection.";
   }
   if (tab === "Economics") {
+    if ((coverage?.spend_rows ?? 0) > 0) {
+      return `${coverage?.spend_rows} monthly spend rows support actual spend. Missing finance confirmation still blocks realized-value language.`;
+    }
     return "Economics shows recorded annual value and actual spend only. Missing spend is not converted to zero.";
   }
   return `${contract.vendor_name} has a governed contract header. Source sizes action only where supporting rows are loaded.`;

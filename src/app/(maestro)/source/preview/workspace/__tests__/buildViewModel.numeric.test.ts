@@ -192,6 +192,15 @@ const READS = {
   initiativeDependencies: "available" as const,
 };
 
+const IMPACT = {
+  evidenceCoverage: [],
+  actionCandidates: [],
+  claimCards: [],
+  vendorPositions: [],
+  storyline: [],
+  avaGroundingBundles: [],
+};
+
 const PORTFOLIO: SourceWorkspacePortfolioData = {
   tenantKey: "skyharbor_global",
   asOfDateIso: "2027-06-30T00:00:00Z",
@@ -213,6 +222,7 @@ const PORTFOLIO: SourceWorkspacePortfolioData = {
   vendors: VENDORS,
   applicationScope: [],
   initiativeDependencies: [],
+  impact: IMPACT,
   isEmpty: false,
   reads: READS,
 };

@@ -49,12 +49,18 @@ import type {
   SourceContractEvidencePerformanceSummary,
   SourceContractEvidencePricingRow,
   SourceContractEvidenceScopeRow,
+  SourceContractActionCandidateRow,
+  SourceContractClaimCardRow,
+  SourceContractEvidenceCoverageRow,
   SourceContractFinancialExposureRow,
   SourceContractInitiativeDependencyRow,
   SourceContractOperationalPerformanceRow,
   SourceContractPerformancePeriodRow,
+  SourceAvaGroundingBundleRow,
+  SourcePageStorylineRow,
   SourceContractSpendMonthlyRow,
   SourceContractVendor360Row,
+  SourceVendorPositionRow,
   SourceVendorContractPortfolioRow,
   TowerMetricObservationRow,
   TowerMetricProvenanceRow,
@@ -169,10 +175,9 @@ async function meridianVendor360CandidateRows<R>(
   );
 }
 
-function mergeByContractId<R extends { readonly contract_id: string | null | undefined }>(
-  legacyRows: readonly R[],
-  governedRows: readonly R[],
-): R[] {
+function mergeByContractId<
+  R extends { readonly contract_id: string | null | undefined },
+>(legacyRows: readonly R[], governedRows: readonly R[]): R[] {
   const merged = new Map<string, R>();
   for (const row of legacyRows) {
     if (row.contract_id) merged.set(row.contract_id, row);
@@ -701,10 +706,11 @@ export async function listContractFinancialExposure(
 export async function listContractOperationalPerformance(
   tenantKey: string,
 ): Promise<SourceContractOperationalPerformanceRow[]> {
-  const governed = await queryForTenant<SourceContractOperationalPerformanceRow>(
-    tenantKey,
-    "SELECT * FROM source.contract_operational_performance WHERE tenant_key = ANY($1::text[])",
-  );
+  const governed =
+    await queryForTenant<SourceContractOperationalPerformanceRow>(
+      tenantKey,
+      "SELECT * FROM source.contract_operational_performance WHERE tenant_key = ANY($1::text[])",
+    );
   if (isMeridianTenantKey(tenantKey)) {
     const candidate =
       await meridianVendor360CandidateRows<SourceContractOperationalPerformanceRow>(
@@ -813,6 +819,84 @@ export async function listContractSpendMonthly(
     [contractId],
   );
   return rows.map(normalizeSpendMonthlyRow);
+}
+
+export async function listSourceContractEvidenceCoverage(
+  tenantKey: string,
+): Promise<SourceContractEvidenceCoverageRow[]> {
+  const rows = await safeQueryForTenant<SourceContractEvidenceCoverageRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.contract_evidence_coverage_v1
+      WHERE tenant_key = ANY($1::text[])
+      ORDER BY candidate_amount_usd DESC NULLS LAST, unclaimed_credit_usd DESC NULLS LAST, contract_id`,
+  );
+  return rows.map(normalizeSourceContractEvidenceCoverageRow);
+}
+
+export async function listSourceContractActionCandidates(
+  tenantKey: string,
+): Promise<SourceContractActionCandidateRow[]> {
+  const rows = await safeQueryForTenant<SourceContractActionCandidateRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.contract_action_candidate_v1
+      WHERE tenant_key = ANY($1::text[])
+      ORDER BY candidate_amount_usd DESC NULLS LAST, action_candidate_id`,
+  );
+  return rows.map(normalizeSourceContractActionCandidateRow);
+}
+
+export async function listSourceContractClaimCards(
+  tenantKey: string,
+): Promise<SourceContractClaimCardRow[]> {
+  const rows = await safeQueryForTenant<SourceContractClaimCardRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.contract_claim_card_v1
+      WHERE tenant_key = ANY($1::text[])
+      ORDER BY candidate_amount_usd DESC NULLS LAST, claim_card_id`,
+  );
+  return rows.map(normalizeSourceContractClaimCardRow);
+}
+
+export async function listSourceVendorPositions(
+  tenantKey: string,
+): Promise<SourceVendorPositionRow[]> {
+  const rows = await safeQueryForTenant<SourceVendorPositionRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.vendor_position_v1
+      WHERE tenant_key = ANY($1::text[])
+      ORDER BY candidate_amount_usd DESC NULLS LAST, annual_value DESC NULLS LAST, vendor_name`,
+  );
+  return rows.map(normalizeSourceVendorPositionRow);
+}
+
+export async function listSourcePageStoryline(
+  tenantKey: string,
+): Promise<SourcePageStorylineRow[]> {
+  const rows = await safeQueryForTenant<SourcePageStorylineRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.source_page_storyline_v1
+      WHERE tenant_key = ANY($1::text[])
+      ORDER BY page_key, sort_order, section_key`,
+  );
+  return rows.map(normalizeSourcePageStorylineRow);
+}
+
+export async function listSourceAvaGroundingBundles(
+  tenantKey: string,
+): Promise<SourceAvaGroundingBundleRow[]> {
+  const rows = await safeQueryForTenant<SourceAvaGroundingBundleRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.ava_grounding_bundle_v1
+      WHERE tenant_key = ANY($1::text[])
+      ORDER BY page_key, section_key, grounding_bundle_id`,
+  );
+  return rows.map(normalizeSourceAvaGroundingBundleRow);
 }
 
 export async function getContractEvidenceOverview(
@@ -999,6 +1083,95 @@ function normalizeSpendMonthlyRow(
     invoice_amount: numberValue(row.invoice_amount),
     paid_amount: numberValue(row.paid_amount),
     actual_spend: numberValue(row.actual_spend),
+  };
+}
+
+function normalizeSourceContractEvidenceCoverageRow(
+  row: SourceContractEvidenceCoverageRow,
+): SourceContractEvidenceCoverageRow {
+  return {
+    ...row,
+    spend_rows: numberValue(row.spend_rows) ?? 0,
+    actual_spend_usd: numberValue(row.actual_spend_usd) ?? 0,
+    committed_spend_usd: numberValue(row.committed_spend_usd) ?? 0,
+    performance_rows: numberValue(row.performance_rows) ?? 0,
+    breach_rows: numberValue(row.breach_rows) ?? 0,
+    credit_calculated_usd: numberValue(row.credit_calculated_usd) ?? 0,
+    credit_claimed_usd: numberValue(row.credit_claimed_usd) ?? 0,
+    credit_recovered_usd: numberValue(row.credit_recovered_usd) ?? 0,
+    unclaimed_credit_usd: numberValue(row.unclaimed_credit_usd) ?? 0,
+    opportunity_rows: numberValue(row.opportunity_rows) ?? 0,
+    candidate_amount_usd: numberValue(row.candidate_amount_usd) ?? 0,
+    finance_confirmation_required_rows:
+      numberValue(row.finance_confirmation_required_rows) ?? 0,
+    opportunities_with_evidence:
+      numberValue(row.opportunities_with_evidence) ?? 0,
+    scope_rows: numberValue(row.scope_rows) ?? 0,
+    critical_scope_rows: numberValue(row.critical_scope_rows) ?? 0,
+    document_page_text_rows: numberValue(row.document_page_text_rows) ?? 0,
+    change_order_rows: numberValue(row.change_order_rows) ?? 0,
+    evidence_basis_json: jsonObject(row.evidence_basis_json),
+  };
+}
+
+function normalizeSourceContractActionCandidateRow(
+  row: SourceContractActionCandidateRow,
+): SourceContractActionCandidateRow {
+  return {
+    ...row,
+    candidate_amount_usd: numberValue(row.candidate_amount_usd),
+    citation_basis_json: jsonObject(row.citation_basis_json),
+  };
+}
+
+function normalizeSourceContractClaimCardRow(
+  row: SourceContractClaimCardRow,
+): SourceContractClaimCardRow {
+  return {
+    ...row,
+    candidate_amount_usd: numberValue(row.candidate_amount_usd),
+    citation_basis_json: jsonObject(row.citation_basis_json),
+  };
+}
+
+function normalizeSourceVendorPositionRow(
+  row: SourceVendorPositionRow,
+): SourceVendorPositionRow {
+  return {
+    ...row,
+    contract_count: numberValue(row.contract_count) ?? 0,
+    annual_value: numberValue(row.annual_value),
+    total_committed_value: numberValue(row.total_committed_value),
+    auto_renew_contracts: numberValue(row.auto_renew_contracts) ?? 0,
+    contract_refs: jsonArray(row.contract_refs),
+    action_candidate_count: numberValue(row.action_candidate_count) ?? 0,
+    candidate_amount_usd: numberValue(row.candidate_amount_usd) ?? 0,
+    not_confirmed_count: numberValue(row.not_confirmed_count) ?? 0,
+    decision_ready_contracts: numberValue(row.decision_ready_contracts) ?? 0,
+    unclaimed_credit_usd: numberValue(row.unclaimed_credit_usd) ?? 0,
+    spend_rows: numberValue(row.spend_rows) ?? 0,
+    performance_rows: numberValue(row.performance_rows) ?? 0,
+  };
+}
+
+function normalizeSourcePageStorylineRow(
+  row: SourcePageStorylineRow,
+): SourcePageStorylineRow {
+  return {
+    ...row,
+    sort_order: numberValue(row.sort_order) ?? 0,
+    citation_basis_json: jsonObject(row.citation_basis_json),
+  };
+}
+
+function normalizeSourceAvaGroundingBundleRow(
+  row: SourceAvaGroundingBundleRow,
+): SourceAvaGroundingBundleRow {
+  return {
+    ...row,
+    allowed_claims_json: jsonRecordArray(row.allowed_claims_json),
+    refusal_rules_json: jsonArray(row.refusal_rules_json),
+    citation_sources_json: jsonObject(row.citation_sources_json),
   };
 }
 
@@ -2040,6 +2213,27 @@ function jsonArray(value: unknown): string[] {
     }
   }
   return [];
+}
+
+function jsonRecordArray(value: unknown): Record<string, unknown>[] {
+  const parsed =
+    typeof value === "string" && value.trim()
+      ? (() => {
+          try {
+            return JSON.parse(value) as unknown;
+          } catch {
+            return [];
+          }
+        })()
+      : value;
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .map((item) =>
+      item && typeof item === "object" && !Array.isArray(item)
+        ? (item as Record<string, unknown>)
+        : null,
+    )
+    .filter((item): item is Record<string, unknown> => item !== null);
 }
 
 function textValue(value: unknown): string | null {
