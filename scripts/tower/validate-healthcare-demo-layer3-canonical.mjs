@@ -168,8 +168,13 @@ function main() {
 
   if (summary) {
     const expected = summary.expected_counts ?? {};
+    const loadSqlPath = summary.load_sql;
+    const loadSql = loadSqlPath && fs.existsSync(loadSqlPath)
+      ? fs.readFileSync(loadSqlPath, "utf8").toLowerCase()
+      : "";
     gate(gates, "summary_status", ["dry_run_ready", "readback_verified", "write_verified"].includes(summary.status), `summary status ${summary.status ?? "missing"}`);
     gate(gates, "summary_boundary", summary.boundary?.layer === "layer_3_canonical" && summary.boundary?.source_layer_written === false && summary.boundary?.product_projection_written === false && summary.boundary?.cube_layer_written === false, "Layer 3 only; no source, projection, or cube writes");
+    gate(gates, "summary_object_upsert_uses_semantic_identity", loadSql.includes("on conflict (tenant_key, assessment_id, object_type, canonical_semantic_type, object_key) do update"), "object upsert uses canonical semantic identity");
     gate(gates, "summary_object_count", Number(expected.object) === 987, `${expected.object ?? "missing"} expected canonical objects`);
     gate(gates, "summary_relationship_count", Number(expected.relationship) === 280, `${expected.relationship ?? "missing"} expected relationships`);
     gate(gates, "summary_metric_definition_count", Number(expected.metric_definition) === 20, `${expected.metric_definition ?? "missing"} expected metric definitions`);
