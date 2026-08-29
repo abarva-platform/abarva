@@ -230,6 +230,28 @@ function towerServingBuildPriority(row: TowerServingRow): number {
   return 0;
 }
 
+/**
+ * Which assessment is current.
+ *
+ * `serving.tower_active_assessment_keys()` already answers this in SQL, and the `serving.tower_*`
+ * views join it — so in a healthy database these rows arrive pre-filtered. This stays as a defence
+ * for the case they do not (an unmigrated database, a view without the join), which is what
+ * `readTowerCommandCenter.test.ts` exercises.
+ *
+ * It must therefore rank **identically** to the SQL, which orders by build priority, then
+ * projection version, then `created_at desc` — newest load wins — with `assessment_id` only as a
+ * last-resort tiebreak. This previously omitted the recency term entirely and fell through to
+ * `assessment_id.localeCompare`, so a superseded assessment could beat a newer one on alphabetical
+ * order alone. `created_at` is not a column on the view, but `payload_json` is `to_jsonb(p)` of the
+ * projection row, so it is carried there.
+ */
+function servingRowCreatedAt(row: TowerServingRow): number {
+  const raw = payload(row).created_at;
+  if (typeof raw !== "string" && typeof raw !== "number") return 0;
+  const ms = new Date(raw).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
 function activeServingIdentity(
   commandRows: readonly TowerServingRow[],
 ): TowerServingIdentity | null {
@@ -238,6 +260,7 @@ function activeServingIdentity(
       assessmentId: row.assessment_id,
       projectionVersion: Number(row.projection_version ?? 0),
       priority: towerServingBuildPriority(row),
+      createdAt: servingRowCreatedAt(row),
     }))
     .filter(
       (candidate) =>
@@ -248,6 +271,7 @@ function activeServingIdentity(
       (a, b) =>
         b.priority - a.priority ||
         b.projectionVersion - a.projectionVersion ||
+        b.createdAt - a.createdAt ||
         b.assessmentId.localeCompare(a.assessmentId),
     );
 
