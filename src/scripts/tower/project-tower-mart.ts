@@ -366,11 +366,11 @@ export async function readSourceContractDepthFacts(
 
   try {
     input.contracts = (await q(
-      `SELECT contract_id, contract_name, vendor_name, annual_contract_value,
+      `SELECT contract_id, contract_name, vendor_name, annual_value AS annual_contract_value,
               actual_annual_spend, authority_state, quality_state, knowledge_baseline_ref
          FROM source.contract_360
         WHERE tenant_key = $1
-        ORDER BY annual_contract_value DESC NULLS LAST, contract_id`,
+        ORDER BY annual_value DESC NULLS LAST, contract_id`,
     )) as unknown as SourceContractDepthInput["contracts"];
 
     input.opportunities = (await q(
