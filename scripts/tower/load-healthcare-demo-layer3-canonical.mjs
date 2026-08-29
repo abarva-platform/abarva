@@ -601,7 +601,7 @@ function writeLoadSql(outPath, options, rows) {
       "ecl_context.object",
       ["id", "tenant_key", "assessment_id", "object_key", "object_type", "display_name", "business_domain", "lifecycle_state", "source_record_id", "basis", "value_state", "review_state", "confidence", "attributes_json"],
       rows.objects,
-      "on conflict (tenant_key, assessment_id, object_type, object_key) do update set display_name = excluded.display_name, business_domain = excluded.business_domain, lifecycle_state = excluded.lifecycle_state, source_record_id = excluded.source_record_id, basis = excluded.basis, value_state = excluded.value_state, review_state = excluded.review_state, confidence = excluded.confidence, attributes_json = excluded.attributes_json, updated_at = now()",
+      "on conflict (tenant_key, assessment_id, object_type, canonical_semantic_type, object_key) do update set display_name = excluded.display_name, business_domain = excluded.business_domain, lifecycle_state = excluded.lifecycle_state, source_record_id = excluded.source_record_id, basis = excluded.basis, value_state = excluded.value_state, review_state = excluded.review_state, confidence = excluded.confidence, attributes_json = excluded.attributes_json, updated_at = now()",
     ),
     metricSql,
     insertSql(

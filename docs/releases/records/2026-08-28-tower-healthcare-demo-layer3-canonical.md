@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a governed Layer 3 load path for the synthetic Tower data package. The loader converts source-adapter records into canonical objects, relationships, metric definitions, and measures so downstream cubes and product pages can read one governed source of truth.
+Adds a governed Layer 3 load path for the synthetic Tower data package. The loader converts source-adapter records into canonical objects, relationships, metric definitions, and measures so downstream cubes and product pages can read one governed source of truth. The object reload path now uses the semantic identity key introduced by the ECL object semantic-type migration.
 
 ## Layer Impact
 
@@ -20,7 +20,7 @@ Layer 1 client intake: Reads the approved synthetic source extracts. It does not
 
 Layer 2 source adapters: Requires the existing source-adapter landing rows in `ecl_source`. It does not rewrite Layer 2.
 
-Layer 3 canonical model: Adds the Azure/Postgres write entrypoint for canonical budgets, projects, AI use cases, AI tools, monthly value observations, finance approval events, evidence items, relationships, metric definitions, and measures. The loader writes only approved physical object families and retains more specific semantic types in object attributes.
+Layer 3 canonical model: Adds the Azure/Postgres write entrypoint for canonical budgets, projects, AI use cases, AI tools, monthly value observations, finance approval events, evidence items, relationships, metric definitions, and measures. The loader writes only approved physical object families and retains more specific semantic types through the canonical semantic identity column and matching object attributes.
 
 Layer 4 products: No Tower, Home, Source, Moves, Intelligence, projection, cube, or UI rows are written by this release.
 
@@ -60,6 +60,7 @@ Completed local validation:
 - Pass: `npm run tower:healthcare-demo-layer2-source-adapters:validate -- --summary /tmp/tower-layer2-local-proof-for-layer3/tower_layer2_ecl_source_load_summary.json --readback /tmp/tower-layer2-local-proof-for-layer3/postgres_readback.json`
 - Pass: `npx tsc --noEmit --pretty false`
 - Pass: `git diff --check`
+- Pass: validator gate `summary_object_upsert_uses_semantic_identity`
 
 Completed Azure validation:
 
@@ -68,6 +69,8 @@ Completed Azure validation:
 - Pass: production health endpoint returned healthy Postgres checks.
 - Pass: ACA operator execution `job-abarva-private-operator-eus-qml12rw` completed successfully.
 - Pass: `npm run tower:healthcare-demo-layer3-canonical:validate -- --summary /tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical/tower_layer3_ecl_context_load_summary.json --readback /tmp/tower-layer3-aca-proof-268aa5b68/proof/meridian-tower-layer3-canonical/03-readback.json`
+
+Follow-up Azure finding during the 2026-08-28 rerun: the first canonical write reached readback and failed because the target database had not yet applied `20260828211000_ecl_object_semantic_type_identity.sql`. After that forced migration was applied, the next attempt exposed the old object upsert key. This update aligns the loader with the semantic uniqueness key so budget and value-observation rows cannot share only physical `metric` identity.
 
 Expected Layer 3 load counts:
 
