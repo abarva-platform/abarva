@@ -24,7 +24,7 @@ The fourth follow-up guards the Contract 360 confidence projection so text confi
 
 The fifth follow-up preserves the established precision for contract-consumption money fields. Annual display values remain `numeric(18,2)` in the consumption projection so the view refresh can replace the existing read model in place.
 
-The sixth follow-up preserves the mixed money-column contract already present in the live consumption projection: annual display fields keep `numeric(18,2)`, while actual, committed, and total committed spend fields remain unconstrained `numeric`.
+The sixth follow-up preserves the mixed money-column contract already present in the live consumption projection: annual display and total committed fields keep `numeric(18,2)`, while actual and committed annual spend fields remain unconstrained `numeric`.
 
 ## Layer Impact
 

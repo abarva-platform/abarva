@@ -643,7 +643,7 @@ async function rebuildViews(client: Client): Promise<void> {
       c.annual_value::numeric(18,2) AS annual_value,
       c.actual_annual_spend::numeric AS actual_annual_spend,
       c.committed_annual_spend::numeric AS committed_annual_spend,
-      c.total_committed_value::numeric AS total_committed_value,
+      c.total_committed_value::numeric(18,2) AS total_committed_value,
       NULL::date AS effective_date,
       c.end_date AS expiration_date,
       CASE WHEN c.end_date IS NULL OR c.notice_period_days IS NULL THEN NULL ELSE c.end_date - c.notice_period_days::int END AS notice_deadline,
