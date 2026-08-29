@@ -774,6 +774,7 @@ function riskRows(view: TowerCommandCenterView): TowerEvidenceGapView[] {
 
 function adoptionRows(view: TowerCommandCenterView): TowerAiView[] {
   return [...view.allInitiatives]
+    .filter((item) => item.usageBars.length > 0 || item.usageHeadline !== null)
     .sort(
       (a, b) =>
         (aiUsageScore(b) ?? -1) - (aiUsageScore(a) ?? -1) ||
@@ -805,6 +806,7 @@ export function AiPortfolioContractView({
 }) {
   const s = view.summary;
   const aiRows = topAiRows(view);
+  const adoptionLensRows = adoptionRows(view);
   const [lens, setLens] = useState<AiLens>("table");
   const lensOptions = [
     {
@@ -825,7 +827,7 @@ export function AiPortfolioContractView({
     {
       key: "adoption" as const,
       label: "Adoption lens",
-      detail: `${formatCount(s.aiInitiativeCount || view.allInitiatives.length)} assets`,
+      detail: `${formatCount(adoptionLensRows.length)} tool rollouts`,
     },
   ];
   return (
@@ -958,7 +960,7 @@ export function AiPortfolioContractView({
         <article className={cx(styles.contractCard, styles.contractFullCard)}>
           {cardTitle(
             "Adoption lens",
-            "AI initiatives and tools ranked by recorded usage evidence",
+            "Tool rollouts ranked by recorded usage evidence",
           )}
           <div className={styles.decisionLaneTableWrap}>
             <table className={styles.contractTable}>
@@ -972,7 +974,7 @@ export function AiPortfolioContractView({
                 </tr>
               </thead>
               <tbody>
-                {adoptionRows(view).map((item, index) => (
+                {adoptionLensRows.map((item, index) => (
                   <tr key={item.id}>
                     <td>{index + 1}</td>
                     <td>
