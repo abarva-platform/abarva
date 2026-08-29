@@ -41,12 +41,17 @@ Feature flag: None.
 - Adds a serving-function migration so Tower AI portfolio rows and adoption-lens rows are filtered by an explicit Layer 4 payload page key.
 - Updates the Tower ECL reader to honor governed display-payload metrics and include adoption-lens tool rows in the AI/tool portfolio view.
 - Adds a focused reader regression test for executive totals, display-payload measures, and adoption tool rows.
+- Follow-up hardening keeps fresh database migration replay tolerant of deployments where the legacy physical AI projection table is absent, while preserving the serving-function replacement when the table is present.
+- Follow-up hardening maps AI business-case investment, category, promised value, finance-validated value, readiness, and risk from governed display payload fields into the Tower AI portfolio read model.
 
 ## QA / Validation
 
 - Pass: `npm run tower:healthcare-demo-layer4-products:load`
 - Pass: `npx jest src/lib/tower/__tests__/readTowerCommandCenter.test.ts --runInBand`
 - Pass: `npx eslint src/lib/tower/readTowerCommandCenter.ts scripts/tower/load-healthcare-demo-layer4-products.mjs`
+- Follow-up pass: `npm run tower:healthcare-demo-layer4-products:load`
+- Follow-up pass: `npx jest src/lib/tower/__tests__/readTowerCommandCenter.test.ts --runInBand`
+- Follow-up pass: `npx eslint src/lib/tower/readTowerCommandCenter.ts scripts/tower/load-healthcare-demo-layer4-products.mjs`
 - Not run yet: ACA operator write job and signed-in Tower proof. These run only after merge and repo-owned ACA deployment.
 
 ## Rollout Plan

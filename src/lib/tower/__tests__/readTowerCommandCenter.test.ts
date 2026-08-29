@@ -257,6 +257,18 @@ describe("readTowerCommandCenter", () => {
           page_key: "ai_portfolio",
           use_case_name: "ServiceNow operations AI rollout",
           tool_name: "ServiceNow Now Assist",
+          monthly_cost_usd: undefined,
+          promised_value_usd: undefined,
+          finance_validated_value_usd: undefined,
+          display_payload_json: {
+            item_kind: "funded_program",
+            ai_spend_category: "Operations automation",
+            approved_funding_usd: "10400000",
+            projected_annual_value_low_usd: "51180318",
+            finance_validated_value_usd: "1200000",
+            readiness_score: "64",
+            risk_score: "38",
+          },
         }),
       ],
       tower_cost_lens: [servingRow({ page_key: "cost_lens" })],
@@ -296,6 +308,15 @@ describe("readTowerCommandCenter", () => {
       mart?.aiPortfolio.find((row) => row.aiPortfolioKey === "TOOL-MER-001")
         ?.usageActual,
     ).toBe(2756);
+    const aiCase = mart?.aiPortfolio.find(
+      (row) => row.aiPortfolioKey === "BC-MER-003",
+    );
+    expect(aiCase?.itemKind).toBe("funded_program");
+    expect(aiCase?.aiSpendCategory).toBe("Operations automation");
+    expect(aiCase?.approvedFundingUsd).toBe(10400000);
+    expect(aiCase?.aiTaggedSpendUsd).toBe(10400000);
+    expect(aiCase?.promisedValueUsd).toBe(51180318);
+    expect(aiCase?.financeValidatedValueUsd).toBe(1200000);
   });
 
   it("maps ECL serving rows with recorded periods into value trajectory points", async () => {
