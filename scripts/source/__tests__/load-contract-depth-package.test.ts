@@ -69,4 +69,16 @@ describe("Source contract depth package loader", () => {
       "ON CONFLICT (tenant_key, dataset_version, optimization_case_id, opportunity_id)",
     );
   });
+
+  it("requires apply approval only for mutating Layer 2 and Layer 3 modes", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain('if (args.mode === "apply-layer2") {\n      requireApplyApproval(args);');
+    expect(loader).toContain('if (args.mode === "apply-layer3") {\n      requireApplyApproval(args);');
+    expect(loader).toContain('event: "source_contract_depth_package_layer23_verified"');
+  });
 });
