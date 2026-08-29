@@ -110,6 +110,7 @@ interface ContextPolicyProof {
   agent_ready_count: number;
   blocked_count: number;
   blocked_count_by_reason: Record<string, number>;
+  row_readiness_counts: Record<string, number>;
   usable_candidate_ids: string[];
   context_bundle_hash: string;
   source_hashes: string[];
@@ -183,6 +184,10 @@ function stringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
 
+function incrementCount(counts: Map<string, number>, key: string) {
+  counts.set(key, (counts.get(key) ?? 0) + 1);
+}
+
 function rowsOf(rows: HomeProjectionWriteRow[], pageKey: string, rowType: string): HomeProjectionWriteRow[] {
   return rows.filter((row) => row.page_key === pageKey && row.row_type === rowType);
 }
@@ -232,14 +237,41 @@ function contextId(row: HomeProjectionWriteRow): string {
 function candidateIsReady(row: HomeProjectionWriteRow): boolean {
   const sourceRefs = stringArray(row.source_refs_json);
   const admitted = row.admission_status === "admitted" || row.admission_status === "not_applicable";
+  const usableQuality = ["passed", "warning", "accepted", "usable"].includes(row.quality_state);
   return (
     admitted &&
     row.value_state === "known" &&
-    row.quality_state === "passed" &&
+    usableQuality &&
     Boolean(row.basis_summary) &&
     sourceRefs.length > 0 &&
     Boolean(row.source_hash)
   );
+}
+
+function confidenceForRow(row: HomeProjectionWriteRow): GovernedCandidate["confidence_level"] {
+  if (!candidateIsReady(row)) return "unverified";
+  return row.quality_state === "passed" || row.quality_state === "accepted" ? "high" : "medium";
+}
+
+function rowReadinessCounts(rows: HomeProjectionWriteRow[]): Record<string, number> {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const sourceRefs = stringArray(row.source_refs_json);
+    const admitted = row.admission_status === "admitted" || row.admission_status === "not_applicable";
+    const usableQuality = ["passed", "warning", "accepted", "usable"].includes(row.quality_state);
+    if (candidateIsReady(row)) {
+      incrementCount(counts, "ready");
+      incrementCount(counts, `ready_quality_${row.quality_state}`);
+      continue;
+    }
+    if (!admitted) incrementCount(counts, `blocked_admission_${row.admission_status || "missing"}`);
+    if (row.value_state !== "known") incrementCount(counts, `blocked_value_${row.value_state || "missing"}`);
+    if (!usableQuality) incrementCount(counts, `blocked_quality_${row.quality_state || "missing"}`);
+    if (!row.basis_summary) incrementCount(counts, "blocked_missing_basis_summary");
+    if (sourceRefs.length === 0) incrementCount(counts, "blocked_missing_source_refs");
+    if (!row.source_hash) incrementCount(counts, "blocked_missing_source_hash");
+  }
+  return Object.fromEntries([...counts.entries()].sort(([a], [b]) => a.localeCompare(b)));
 }
 
 function readinessStatus(row: HomeProjectionWriteRow): GovernedCandidate["agent_readiness_status"] {
@@ -258,7 +290,7 @@ function governedCandidateForRow(row: HomeProjectionWriteRow, tenantKey: string,
     classification: "internal",
     retrievability: candidateIsReady(row) ? "fts_indexed" : "not_indexed",
     agent_readiness_status: readinessStatus(row),
-    confidence_level: candidateIsReady(row) ? "high" : "unverified",
+    confidence_level: confidenceForRow(row),
     cited_render_verified_at: candidateIsReady(row) ? renderedAt : null,
     title: row.title,
     citations: stringArray(row.source_refs_json),
@@ -304,6 +336,7 @@ function proofFromBundle(
   bundle: ValidatedAgentContextBundle,
   candidates: GovernedCandidate[],
   sourceHashes: string[],
+  readinessCounts: Record<string, number>,
 ): ContextPolicyProof {
   const blockedCountByReason = new Map<string, number>();
   for (const blocked of bundle.blocked) {
@@ -323,6 +356,7 @@ function proofFromBundle(
     agent_ready_count: bundle.agentReadyCount,
     blocked_count: bundle.blocked.length,
     blocked_count_by_reason: Object.fromEntries(blockedCountByReason),
+    row_readiness_counts: readinessCounts,
     usable_candidate_ids: bundle.usable.map((candidate) => candidate.id),
     context_bundle_hash: hashJson({
       policy_version: bundle.policy_version,
@@ -407,6 +441,7 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
   }
 
   const validatedRows = buildValidatedAgentContextBundle(rowCandidates, { requireAgentReady: true });
+  const readinessCounts = rowReadinessCounts(rows.filter((item) => item.row_type !== "summary" && item.row_type !== "chapter_claim"));
   const permittedRowIds = new Set(validatedRows.usable.map((candidate) => candidate.id));
   const permittedRows = rows.filter((row) => permittedRowIds.has(contextId(row)));
 
@@ -500,6 +535,7 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
     mergedBundle,
     [...rowCandidates, ...signalCandidates],
     rows.map((row) => row.source_hash),
+    readinessCounts,
   );
 
   const packet = {
@@ -883,6 +919,13 @@ async function main() {
         `${signalPacket.signals.length} signals, ${signalPacket.contextItems.length} context items; ` +
         `${contextPolicyProof.usable_count}/${contextPolicyProof.candidate_count} governed candidates usable`,
     );
+    console.log(`row readiness: ${JSON.stringify(contextPolicyProof.row_readiness_counts)}`);
+    if (contextPolicyProof.usable_count === 0 || signalPacket.signals.length === 0) {
+      throw new Error(
+        `Home ECL narrative refused: no governed usable evidence reached the executive packet. ` +
+          `readiness=${JSON.stringify(contextPolicyProof.row_readiness_counts)}`,
+      );
+    }
 
     const thesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic);
     if (!thesisResult.publishedGeneration) throw new Error("Home ECL narrative writer produced no publishable thesis.");
