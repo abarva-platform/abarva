@@ -368,13 +368,13 @@ export async function readSourceContractDepthFacts(
     input.contracts = (await q(
       `SELECT contract_id, contract_name, vendor_name, annual_contract_value,
               actual_annual_spend, authority_state, quality_state, knowledge_baseline_ref
-         FROM consumption.sourcing_contract_v1
+         FROM source.contract_360
         WHERE tenant_key = $1
         ORDER BY annual_contract_value DESC NULLS LAST, contract_id`,
     )) as unknown as SourceContractDepthInput["contracts"];
 
     input.opportunities = (await q(
-      `SELECT opportunity_id, contract_id, vendor_name, title, annual_value_exposed,
+      `SELECT opportunity_id, contract_id, NULL::text AS vendor_name, title, annual_value_exposed,
               readiness_state, evidence_state, recommended_action, accountable_role,
               knowledge_baseline_ref
          FROM consumption.sourcing_opportunity_v1
