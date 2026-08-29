@@ -254,12 +254,20 @@ describe("TowerCommandCenter", () => {
   });
 
   it("renders the Evidence & Actions tab-specific contract layout", () => {
-    renderPage();
+    const { container } = renderPage();
     fireEvent.click(tab(/Evidence & Actions/));
     expect(
       screen.getByText("Three populations, three names"),
     ).toBeInTheDocument();
     expect(screen.getByText("Action campaigns")).toBeInTheDocument();
+    expect(container).toHaveTextContent(
+      /open tasks · campaigns show affected records/,
+    );
+    expect(container).not.toHaveTextContent(/1–3 sequential/);
+    expect(screen.getByText("Assets")).toBeInTheDocument();
+    expect(screen.getAllByText("Claims").length).toBeGreaterThan(0);
+    expect(screen.getByText("Evidence")).toBeInTheDocument();
+    expect(screen.getByText("Rows")).toBeInTheDocument();
     expect(screen.getByText("Evidence-owner queue")).toBeInTheDocument();
     expect(screen.getByText("Projection reconciliation")).toBeInTheDocument();
   });
