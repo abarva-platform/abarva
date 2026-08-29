@@ -55,10 +55,12 @@ export function pct(v: number): string {
   if (!Number.isFinite(v)) return 'Not established';
   return (v * 100).toFixed(1) + '%';
 }
-export function fmtDate(iso: string | null): string {
+export function fmtDate(iso: unknown): string {
   if (!iso) return 'Not established';
-  if (!/^\d{4}(?:-\d{2}-\d{2}|T|$)/.test(iso.trim())) return 'Not established';
-  const dt = new Date(iso);
+  const text =
+    iso instanceof Date ? iso.toISOString() : String(iso).trim();
+  if (!/^\d{4}(?:-\d{2}-\d{2}|T|$)/.test(text)) return 'Not established';
+  const dt = new Date(text);
   if (Number.isNaN(dt.getTime())) return 'Not established';
   return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }

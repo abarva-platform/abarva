@@ -252,6 +252,10 @@ describe("buildViewModel numeric coercion", () => {
     expect(fmtDate("2027-12-31")).toBe("31 Dec 2027");
   });
 
+  it("formats database date objects without throwing", () => {
+    expect(fmtDate(new Date("2027-06-30T00:00:00Z"))).toBe("30 Jun 2027");
+  });
+
   it("opens the vendor portfolio as a grouped all-vendor list by default", () => {
     const vm = buildVm();
     vm.state.sel = { kind: "vendorList", id: null };
