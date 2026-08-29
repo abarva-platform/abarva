@@ -10,7 +10,12 @@
  */
 
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
-import { formatCount, formatPct } from "@/lib/tower/command-center/format";
+import {
+  BLOCKER_TONE,
+  controlBlockerCell,
+  formatCount,
+  formatPct,
+} from "@/lib/tower/command-center/format";
 import type React from "react";
 
 type ToolRow = {
@@ -179,8 +184,8 @@ export function ToolsTablePanel({ view }: { view: TowerCommandCenterView }) {
                 {targetPct === null ? " · no target set" : ` vs ${formatPct(targetPct)} target`}
               </span>
             </span>
-            <span style={{ fontSize: 14, color: item.controlBlocker ? "var(--canon-red)" : "var(--canon-gray-500)" }}>
-              {item.controlBlocker ?? "Not loaded"}
+            <span style={{ fontSize: 14, color: BLOCKER_TONE[controlBlockerCell(item).tone] }}>
+              {controlBlockerCell(item).text}
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 14, textAlign: "right", color: linkedCases === null ? "var(--canon-gray-500)" : "var(--canon-gray-900)" }}>
               {linkedCases === null ? "Not loaded" : formatCount(linkedCases)}

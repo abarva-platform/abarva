@@ -51,8 +51,42 @@ describe("control_blocker survives every layer", () => {
     expect(LAYER4).toMatch(/control_blocker: tool\.control_blocker \?\? null/);
   });
   it("reaches the view", () => {
-    expect(READER).toMatch(/controlBlocker: payloadTextFrom\(row, \["control_blocker"\]\)/);
+    expect(READER).toMatch(/payloadTextFrom\(row, \["control_blocker"\]\)/);
     expect(TYPES).toMatch(/controlBlocker: string \| null;/);
+  });
+
+  it("does not treat the asserted value `none` as a named blocker", () => {
+    // `none` means the rollout was reviewed and nothing was found. Read as a name it painted a
+    // cleared rollout in alarm red and inflated the vendor panel's blocked count.
+    expect(READER).toMatch(/trim\(\)\.toLowerCase\(\) === "none" \? null : raw/);
+    expect(TYPES).toMatch(/controlBlockerReviewed: boolean;/);
+  });
+
+  it("keeps reviewed-and-clear distinct from never-recorded", () => {
+    const format = read("src/lib/tower/command-center/format.ts");
+    expect(format).toContain("None found");
+    expect(format).toContain("Not loaded");
+    // Only a named blocker is red.
+    expect(format).toMatch(/blocked: "var\(--canon-red\)"/);
+    expect(format).toMatch(/clear: "var\(--canon-teal-dark\)"/);
+  });
+
+  it("counts a vendor's blockers by whether one was named", () => {
+    const vendor = read("src/components/tower/command-center/views/ToolsVendorPanel.tsx");
+    expect(vendor).toContain("item.controlBlocker !== null ? 1 : 0");
+    expect(vendor).not.toContain("item.controlBlocker ? 1 : 0");
+  });
+
+  it("labels every category on the vendor chart", () => {
+    // Recharts drops colliding ticks by default, which left the largest vendor unlabelled.
+    const vendor = read("src/components/tower/command-center/views/ToolsVendorPanel.tsx");
+    expect(vendor).toMatch(/type="category"[^>]*interval=\{0\}/);
+  });
+
+  it("names no internal type on the client surface", () => {
+    const vendor = read("src/components/tower/command-center/views/ToolsVendorPanel.tsx");
+    const rendered = vendor.slice(vendor.indexOf("export function ToolsVendorPanel"));
+    expect(rendered).not.toContain("TowerAiView");
   });
 });
 

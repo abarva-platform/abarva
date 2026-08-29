@@ -98,6 +98,7 @@ function aiItem(
     itemKind: "funded_program",
     adoptionTargetPct: null,
     linkedBusinessCaseCount: null,
+    controlBlockerReviewed: false,
     vendorName: "Microsoft",
     systemName: "M365",
     aiSpendType: "funded",
