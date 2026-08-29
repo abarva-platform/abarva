@@ -294,6 +294,8 @@ export interface TowerAiView {
   gatingConstraint: string | null;
   confidenceLevel: string | null;
   businessValueType: string | null;
+  /** Finance pipeline stage: sponsor_claimed, finance_challenged, cfo_approved_target, ... */
+  financeStatus: string | null;
   costToBuildLowUsd: number | null;
   costToBuildHighUsd: number | null;
   controlBlocker: string | null;
