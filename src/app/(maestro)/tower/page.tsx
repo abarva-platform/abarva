@@ -19,7 +19,6 @@ import {
   isEclProductProvider,
   resolveEclProductProvider,
 } from "@/lib/ecl/product-provider";
-import { loadTowerMartCommandView } from "@/lib/cio-tower/tower-mart-view-model";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 import {
@@ -32,7 +31,7 @@ export const metadata = { title: "Tower · AbarVa" };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-/** Keep the mart read bounded so sparse/private data states still render. */
+/** Keep the Tower read bounded so sparse/private data states still render. */
 const TOWER_READ_TIMEOUT_MS = 8_000;
 
 interface TowerPageProps {
@@ -114,14 +113,10 @@ export async function renderTowerPage({
   ];
 
   const martView = await withTowerReadTimeout(
-    loadTowerMartCommandView({ tenantKeyCandidates }).then(
-      (mart) =>
-        mart ??
-        readTowerCommandCenter({
-          tenantKeyCandidates,
-          tenantDisplayName: tenantName,
-        }),
-    ),
+    readTowerCommandCenter({
+      tenantKeyCandidates,
+      tenantDisplayName: tenantName,
+    }),
     null,
   );
   const commandCenterView = buildTowerCommandCenterView(martView, {

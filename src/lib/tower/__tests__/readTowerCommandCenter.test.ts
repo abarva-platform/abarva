@@ -201,7 +201,15 @@ describe("readTowerCommandCenter", () => {
 
   it("maps ECL serving views into the existing Tower Command Center contract", async () => {
     mockServingRows({
-      tower_command_center: [servingRow()],
+      tower_command_center: [
+        servingRow({
+          row_key: "executive_summary",
+          page_key: "command_center",
+          claim_gate_status: "not_applicable",
+          as_of_period: "2026-08-24",
+          refresh_timestamp: "2026-08-29T19:20:00.000Z",
+        }),
+      ],
       tower_value_proof: [
         servingRow({
           row_key: "value-1",
@@ -278,6 +286,8 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.headline).not.toContain("ECL");
     expect(mart?.command.executiveSummary).toContain("1 value claim");
     expect(mart?.command.executiveSummary).not.toContain("ECL");
+    expect(mart?.command.asOfPeriod).toBe("2026-08-24");
+    expect(mart?.command.refreshTimestamp).toBe("2026-08-29T19:20:00.000Z");
     expect(view?.summary.valueClaimCount).toBeGreaterThan(0);
     expect(view?.summary.valueClaimCount).toBe(1);
     expect(view?.summary.knownValueClaimCount).toBe(1);
@@ -285,6 +295,29 @@ describe("readTowerCommandCenter", () => {
     expect(view?.summary.economicReviewQueueCount).toBeGreaterThan(
       view?.summary.valueClaimCount ?? 0,
     );
+  });
+
+  it("leaves freshness absent when serving rows do not record it", async () => {
+    mockServingRows({
+      tower_command_center: [servingRow()],
+      tower_value_proof: [servingRow({ page_key: "value_proof" })],
+      tower_decision_lanes: [servingRow()],
+      tower_evidence: [servingRow({ page_key: "evidence" })],
+      tower_recommended_actions: [
+        servingRow({ page_key: "recommended_actions" }),
+      ],
+      tower_ai_portfolio: [servingRow({ page_key: "ai_portfolio" })],
+      tower_cost_lens: [servingRow({ page_key: "cost_lens" })],
+      tower_risk_lens: [servingRow({ page_key: "risk_lens" })],
+      tower_adoption_lens: [servingRow({ page_key: "adoption_lens" })],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+
+    expect(mart?.command.asOfPeriod).toBeNull();
+    expect(mart?.command.refreshTimestamp).toBeNull();
   });
 
   it("honors display payload metrics and keeps adoption lens rows as tools", async () => {

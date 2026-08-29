@@ -17,6 +17,8 @@ describe("Tower invariants", () => {
   it("sources its data from the governed ECL Tower serving substrate", () => {
     expect(pageSource).toContain("readTowerCommandCenter");
     expect(pageSource).toContain("buildTowerCommandCenterView");
+    expect(pageSource).not.toContain("loadTowerMartCommandView");
+    expect(pageSource).not.toContain("mart ??");
     const reader = readFileSync("src/lib/tower/readTowerCommandCenter.ts", "utf8");
     expect(reader).toContain("from serving.${viewName}");
     expect(reader).toContain('"tower_command_center"');

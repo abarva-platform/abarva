@@ -35,14 +35,11 @@ describe("tenant Tower route scope", () => {
     }
   });
 
-  it("reads the physical Tower mart before falling back to legacy serving views", () => {
+  it("reads the ECL serving view directly instead of falling back to the legacy mart", () => {
     const source = readRepoFile("src/app/(maestro)/tower/page.tsx");
-    const martReader = source.indexOf("loadTowerMartCommandView");
-    const servingReader = source.indexOf("readTowerCommandCenter");
 
-    expect(martReader).toBeGreaterThan(-1);
-    expect(servingReader).toBeGreaterThan(-1);
-    expect(martReader).toBeLessThan(servingReader);
-    expect(source).toContain("mart ??");
+    expect(source).toContain("readTowerCommandCenter");
+    expect(source).not.toContain("loadTowerMartCommandView");
+    expect(source).not.toContain("mart ??");
   });
 });

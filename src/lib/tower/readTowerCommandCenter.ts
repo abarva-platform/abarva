@@ -998,6 +998,19 @@ export async function readTowerCommandCenter(args: {
               "board_claimable_ytd_usd",
               "claimable_value_usd",
             ]);
+      const asOfPeriod =
+        summaryRow === undefined
+          ? null
+          : payloadTextFrom(summaryRow, ["as_of_period", "asOfPeriod"]);
+      const refreshTimestamp =
+        summaryRow === undefined
+          ? null
+          : payloadTextFrom(summaryRow, [
+              "refresh_timestamp",
+              "refreshTimestamp",
+              "build_timestamp",
+              "built_at",
+            ]);
       const gatedRows = allRows.filter((row) =>
         ["gated", "blocked"].includes(
           payloadText(row, "claim_gate_status") ?? "",
@@ -1048,8 +1061,8 @@ export async function readTowerCommandCenter(args: {
           sourceStandard:
             "Governed Tower read from finance, program, contract, and control evidence",
           formulaVersion: "tower_ecl_serving_reader_v1",
-          asOfPeriod: "2026-08-24",
-          refreshTimestamp: null,
+          asOfPeriod,
+          refreshTimestamp,
           totalItBudgetFy26: executiveTotalIt,
           runBudgetFy26: null,
           changeBudgetFy26: null,
