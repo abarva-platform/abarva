@@ -19,6 +19,10 @@ Also fixes a Source Layer 4 operator readback query that passed an unused SQL
 parameter and caused Postgres to reject the apply run before readback could
 finish.
 
+Follow-up hardening fixes the Tower mart writer so JSONB evidence-lineage
+columns are serialized before insert. This keeps the governed Tower refresh
+from failing when outcome-proof lineage arrays are present.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -30,6 +34,9 @@ projection after the governed Source Layer 4 and Tower mart jobs are run.
 Layer 4 - Operator readback. The Source Layer 4 job now reads package contract
 IDs using the same parameter shape as the query, avoiding an operator-only
 readback failure.
+
+Layer 4 - Tower mart persistence. Evidence-lineage JSON arrays are now encoded
+for Postgres JSONB columns during the tracked Tower mart write.
 
 ## Client Applicability
 
@@ -50,12 +57,16 @@ readback failure.
 - `src/lib/cio-tower/mart-projection/__tests__/facts-from-source-contracts.test.ts`
 - `src/lib/cio-tower/mart-projection/assemble-mart.ts`
 - `src/scripts/tower/project-tower-mart.ts`
+- `src/scripts/tower/project-tower-mart-write.ts`
+- `src/scripts/tower/__tests__/project-tower-mart-write.test.ts`
 
 ## QA / Validation
 
 - PASS: `npx jest scripts/source/__tests__/project-contract-depth-package-layer4.test.ts src/lib/cio-tower/mart-projection/__tests__/facts-from-source-contracts.test.ts src/lib/cio-tower/mart-projection/__tests__/assemble-mart.test.ts src/scripts/tower/__tests__/project-tower-mart-client-resolver.test.ts --runInBand`
 - PASS: `npx eslint scripts/source/project-contract-depth-package-layer4.ts scripts/source/__tests__/project-contract-depth-package-layer4.test.ts src/lib/cio-tower/mart-projection/facts-from-source-contracts.ts src/lib/cio-tower/mart-projection/__tests__/facts-from-source-contracts.test.ts src/lib/cio-tower/mart-projection/assemble-mart.ts src/scripts/tower/project-tower-mart.ts`
 - PASS: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`
+- PASS: `npx jest src/scripts/tower/__tests__/project-tower-mart-write.test.ts src/lib/cio-tower/mart-projection/__tests__/facts-from-source-contracts.test.ts src/lib/cio-tower/mart-projection/__tests__/assemble-mart.test.ts --runInBand`
+- PASS: `npx eslint src/scripts/tower/project-tower-mart-write.ts src/scripts/tower/__tests__/project-tower-mart-write.test.ts`
 - BLOCKED until rerun after this release: Source Layer 4 ACA apply/verify and
   Tower mart write/readback.
 
@@ -88,6 +99,8 @@ to restore the prior mart contents.
 - Local focused Jest, ESLint, TypeScript, and release-control output.
 - Source Layer 4 failed apply evidence showing the readback parameter error:
   `/tmp/source-contract-depth-package-layer4-apply-20260829T0134Z/04-logs.txt`.
+- Tower mart failed write evidence showing the JSONB serialization error:
+  `/tmp/tower-mart-projection-meridian-health-20260829T0221Z/04-logs.txt`.
 - Future evidence after rollout: Source Layer 4 apply/verify summaries, Tower
   mart write proof bundle, and signed-in Tower page proof.
 
