@@ -346,8 +346,12 @@ async function l4Readback(
     ),
     source_ava_grounding_bundle_v1_rows: await tableScalar(
       client,
-      `SELECT count(*) AS value FROM source.ava_grounding_bundle_v1 WHERE tenant_key = $1`,
-      [args.tenantKey],
+      `SELECT count(*) AS value
+         FROM source.ava_grounding_bundle_v1
+        WHERE tenant_key = $1
+          AND page_key = 'contract_action'
+          AND load_run_id = $3`,
+      [args.tenantKey, contractIds, args.loadRunId],
     ),
     deterministic_layer_unclaimed_credit_usd: await tableScalar(
       client,
@@ -1610,36 +1614,40 @@ async function rebuildViews(client: Client): Promise<void> {
     WHERE source.can_read_sourcing_tenant(s.tenant_key)
     UNION ALL
     SELECT
-      c.tenant_key,
-      concat('contract:', c.contract_id) AS grounding_bundle_id,
-      'contract_360'::text AS page_key,
-      c.contract_id AS section_key,
+      a.tenant_key,
+      concat('action:', a.action_candidate_id) AS grounding_bundle_id,
+      'contract_action'::text AS page_key,
+      a.action_candidate_id AS section_key,
       'contract_action_grounding'::text AS question_family,
       jsonb_build_array(
         jsonb_build_object(
-          'contract_id', c.contract_id,
-          'vendor_name', c.vendor_name,
-          'candidate_amount_usd', c.candidate_amount_usd,
-          'unclaimed_credit_usd', c.unclaimed_credit_usd,
-          'coverage_state', c.coverage_state,
-          'blocker', c.blocker_if_missing
+          'contract_id', a.contract_id,
+          'opportunity_id', a.opportunity_id,
+          'vendor_name', a.vendor_name,
+          'candidate_amount_usd', a.candidate_amount_usd,
+          'finance_confirmation_state', a.finance_confirmation_state,
+          'coverage_state', a.coverage_state,
+          'blocker', a.blocker_if_missing
         )
       ) AS allowed_claims_json,
       jsonb_build_array(
         CASE
-          WHEN c.finance_confirmation_required_rows > 0
+          WHEN a.finance_confirmation_state <> 'confirmed'
             THEN 'Finance confirmation is required before claiming realized savings.'
           ELSE 'Stay within loaded contract evidence.'
         END,
         CASE
-          WHEN c.document_page_text_rows = 0 THEN 'Document citation is not available for this contract.'
+          WHEN COALESCE(cov.document_page_text_rows, 0) = 0 THEN 'Document citation is not available for this contract.'
           ELSE 'Cite loaded document page text only.'
         END
       ) AS refusal_rules_json,
-      c.evidence_basis_json AS citation_sources_json,
-      c.load_run_id
-    FROM source.contract_evidence_coverage_v1 c
-    WHERE source.can_read_sourcing_tenant(c.tenant_key)`);
+      a.citation_basis_json AS citation_sources_json,
+      a.load_run_id
+    FROM source.contract_action_candidate_v1 a
+    LEFT JOIN source.contract_evidence_coverage_v1 cov
+      ON cov.tenant_key = a.tenant_key
+     AND cov.contract_id = a.contract_id
+    WHERE source.can_read_sourcing_tenant(a.tenant_key)`);
 
   await client.query(`
     GRANT SELECT ON
