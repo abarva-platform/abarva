@@ -31,7 +31,9 @@ zero Source contract facts.
 Follow-up view-shape hardening reads contract display headers from the governed
 Source Contract 360 projection and keeps opportunity/performance facts on their
 consumption views. This avoids depending on an older consumption contract view
-shape that may omit display columns in deployed databases.
+shape that may omit display columns in deployed databases. The bridge aliases
+`annual_value` into the Tower contract-fact input shape so deployed Source
+projections do not need a duplicate display column.
 
 ## Layer Impact
 
@@ -99,6 +101,9 @@ to read from governed consumption projections.
   deployed Source view-shape mismatch (`vendor_name` missing from the older
   consumption contract view), proving the bridge now fails loud instead of
   silently projecting partial Source contract facts.
+- FAIL BEFORE FIX: A follow-up Tower mart write reached the Source Contract 360
+  projection and stopped on the deployed projection's annual-value column name.
+  The bridge now aliases that governed value into the Tower input shape.
 
 ## Rollout Plan
 
@@ -136,6 +141,8 @@ to restore the prior mart contents.
   `/tmp/tower-mart-projection-meridian-health-20260829T0245Z/proof/tower-mart-projection-meridian-health/projection-summary.json`.
 - Tower mart failed write before view-shape hardening:
   `/tmp/tower-mart-projection-meridian-health-20260829T0306Z/04-logs.txt`.
+- Tower mart failed write before annual-value aliasing:
+  `/tmp/tower-mart-projection-meridian-health-20260829T0327Z/04-logs.txt`.
 - Future evidence after rollout: Source Layer 4 apply/verify summaries, Tower
   mart write proof bundle, and signed-in Tower page proof.
 

@@ -40,6 +40,7 @@ describe("project-tower-mart Source contract bridge", () => {
       values: ["meridian-health"],
     });
     expect(client.queries.some((query) => query.sql.includes("source.contract_360"))).toBe(true);
+    expect(client.queries.some((query) => query.sql.includes("annual_value AS annual_contract_value"))).toBe(true);
     expect(client.queries.some((query) => query.sql.includes("consumption.sourcing_opportunity_v1"))).toBe(true);
     expect(client.queries.at(-1)).toEqual({
       sql: "SELECT set_config('app.tenant_key', '', false)",
