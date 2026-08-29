@@ -43,6 +43,7 @@ Layer 4 - Products: Extends the Source overlay projection with additive `source.
 - Updated `scripts/source/load-contract-depth-package.ts`.
 - Updated `scripts/source/project-contract-depth-package-layer4.ts`.
 - Added ACA operator npm entrypoints and extractable proof-bundle emission for Layer 2, Layer 3, Layer 2/3 verify, Layer 4 apply, and Layer 4 verify jobs.
+- Removed an invalid Layer 3 `case_opportunity` upsert target; package idempotency for that table now relies on the existing scoped pre-delete before insert.
 - Updated focused Source package and loader tests.
 
 ## QA / Validation
@@ -54,6 +55,7 @@ Layer 4 - Products: Extends the Source overlay projection with additive `source.
 - `npm run ops:aca-job -- --plan-only --image acrabarvalab001.azurecr.io/abarva/web@sha256:<test-digest> --script <new source:contract-depth-package:*:job script>` - PASS for all five new job entrypoints.
 - `jest src/lib/source/contract-depth-package/__tests__/adapter.test.ts src/lib/source/contract-depth-package/__tests__/projection.test.ts --runInBand` - PASS.
 - `jest scripts/source/__tests__/load-contract-depth-package.test.ts scripts/source/__tests__/project-contract-depth-package-layer4.test.ts --runInBand` - PASS.
+- First governed Layer 3 ACA execution surfaced an invalid `case_opportunity` upsert conflict target before any Layer 4 refresh. The worker restored idle cleanly; this candidate removes the invalid target and adds a regression test for that loader invariant.
 
 ## Rollout Plan
 

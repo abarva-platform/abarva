@@ -56,4 +56,17 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain("opportunity_evidence: opportunityEvidenceRows");
     expect(loader).toContain("calculation_output: sourceFiles.optimizationOpportunities.length * 2");
   });
+
+  it("does not use an invalid case_opportunity conflict target", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain("DELETE FROM source.case_opportunity");
+    expect(loader).not.toContain(
+      "ON CONFLICT (tenant_key, dataset_version, optimization_case_id, opportunity_id)",
+    );
+  });
 });
