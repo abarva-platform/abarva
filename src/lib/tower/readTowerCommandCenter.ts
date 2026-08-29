@@ -141,14 +141,18 @@ function payloadText(
 }
 
 function payloadNumber(row: TowerServingRow, key: string): number {
-  return num(payload(row)[key] as Numeric);
+  const body = payload(row);
+  const display = displayPayload(row);
+  return num((body[key] ?? display[key]) as Numeric);
 }
 
 function payloadNullableNumber(
   row: TowerServingRow,
   key: string,
 ): number | null {
-  return nullableNum(payload(row)[key] as Numeric);
+  const body = payload(row);
+  const display = displayPayload(row);
+  return nullableNum((body[key] ?? display[key]) as Numeric);
 }
 
 function payloadNullableNumberFrom(
@@ -443,8 +447,12 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
 
 function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const refs = sourceRefs(row);
-  const licensedUsers = payloadNumber(row, "licensed_users");
-  const activeUsers = payloadNumber(row, "active_users");
+  const licensedUsers =
+    payloadNullableNumberFrom(row, ["licensed_users", "rollout_target_users"]) ??
+    0;
+  const activeUsers =
+    payloadNullableNumberFrom(row, ["active_users", "monthly_active_users"]) ??
+    0;
   return {
     aiPortfolioKey: row.row_key,
     itemName: payloadText(row, "use_case_name", row.title) ?? row.row_key,
@@ -462,7 +470,10 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     usageMetric: "active users",
     usageActual: activeUsers,
     adoptionRatePct:
-      payloadNullableNumber(row, "adoption_rate_percent") ??
+      payloadNullableNumberFrom(row, [
+        "adoption_rate_percent",
+        "adoption_actual_pct",
+      ]) ??
       (licensedUsers > 0 ? (activeUsers / licensedUsers) * 100 : null),
     valueScore: payloadNumber(row, "usage_events") > 0 ? 55 : 20,
     readinessScore: payloadNullableNumber(row, "adoption_rate_percent") ?? 25,
@@ -760,6 +771,9 @@ export async function readTowerCommandCenter(args: {
       const valueRowsForTotals = valueRows.filter(
         (row) => !isTrajectoryOnlyRow(row),
       );
+      const summaryRow =
+        commandRows.find((row) => row.row_key === "executive_summary") ??
+        commandRows.find((row) => row.page_key === "command_center");
       const funded =
         sumRows(decisionRows, "funded_amount_usd") +
         sumRows(aiRows, "monthly_cost_usd") * 12;
@@ -772,12 +786,43 @@ export async function readTowerCommandCenter(args: {
       );
       const claimable = sumRows(valueRowsForTotals, "claimable_value_usd");
       const blocked = sumRows(valueRowsForTotals, "blocked_value_usd");
+      const executiveApproved =
+        summaryRow === undefined
+          ? null
+          : payloadNullableNumberFrom(summaryRow, [
+              "reviewed_project_budget_usd",
+              "approved_investment_usd",
+            ]);
+      const executiveTotalIt =
+        summaryRow === undefined
+          ? null
+          : payloadNullableNumber(summaryRow, "total_it_budget_usd");
+      const executiveAiInvestment =
+        summaryRow === undefined
+          ? null
+          : payloadNullableNumber(summaryRow, "ai_related_investment_usd");
+      const executivePromised =
+        summaryRow === undefined
+          ? null
+          : payloadNullableNumberFrom(summaryRow, [
+              "projected_annual_value_low_usd",
+              "promised_value_usd",
+            ]);
+      const executiveClaimable =
+        summaryRow === undefined
+          ? null
+          : payloadNullableNumberFrom(summaryRow, [
+              "board_claimable_ytd_usd",
+              "claimable_value_usd",
+            ]);
       const gatedRows = allRows.filter((row) =>
         ["gated", "blocked"].includes(
           payloadText(row, "claim_gate_status") ?? "",
         ),
       ).length;
-      const aiPortfolio = aiRows.map(mapAiItem);
+      const aiPortfolio = uniqueRows([...aiRows, ...adoptionRows]).map(
+        mapAiItem,
+      );
       const sourceFiles = uniqueSourceFiles(allRows);
       const tenantDisplayName =
         canonicalClientDisplayName({
@@ -819,23 +864,23 @@ export async function readTowerCommandCenter(args: {
           formulaVersion: "tower_ecl_serving_reader_v1",
           asOfPeriod: "2026-08-24",
           refreshTimestamp: null,
-          totalItBudgetFy26: null,
+          totalItBudgetFy26: executiveTotalIt,
           runBudgetFy26: null,
           changeBudgetFy26: null,
-          approvedProgramBudgetFy26: funded || null,
-          aiTaggedSpendFy26NonAdditive: aiPortfolio.reduce(
-            (sum, row) => sum + row.aiTaggedSpendUsd,
-            0,
-          ),
-          promisedValueFy26: promised || null,
+          approvedProgramBudgetFy26: executiveApproved ?? (funded || null),
+          aiTaggedSpendFy26NonAdditive:
+            executiveAiInvestment ??
+            aiPortfolio.reduce((sum, row) => sum + row.aiTaggedSpendUsd, 0),
+          promisedValueFy26: executivePromised ?? (promised || null),
           partialFinanceValidatedValueYtd: financeValidated,
-          realizedValueYtdAllowed: claimable,
-          claimableValue: claimable,
+          realizedValueYtdAllowed: executiveClaimable ?? claimable,
+          claimableValue: executiveClaimable ?? claimable,
           financeValidatedBlockedValue: Math.max(
             0,
             financeValidated - claimable,
           ),
-          promisedValueExposure: promised || blocked || null,
+          promisedValueExposure:
+            executivePromised ?? (promised || blocked || null),
           totalProgramSubjectCount: decisionRows.length,
           activeProgramSubjectCount: decisionRows.length,
           materialProgramCount: decisionRows.length,

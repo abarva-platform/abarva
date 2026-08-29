@@ -218,6 +218,86 @@ describe("readTowerCommandCenter", () => {
     );
   });
 
+  it("honors display payload metrics and keeps adoption lens rows as tools", async () => {
+    mockServingRows({
+      tower_command_center: [
+        servingRow({
+          row_key: "executive_summary",
+          page_key: "command_center",
+          display_payload_json: {
+            reviewed_project_budget_usd: "703100000",
+            ai_related_investment_usd: "211801054",
+            projected_annual_value_low_usd: "677763373",
+            board_claimable_ytd_usd: "13136248",
+          },
+        }),
+      ],
+      tower_value_proof: [
+        servingRow({
+          row_key: "case-1",
+          page_key: "value_proof",
+          baseline_value: "2500000",
+          promised_value_usd: undefined,
+          usage_supported_value_usd: undefined,
+          finance_validated_value_usd: undefined,
+          display_payload_json: {
+            finance_validated_value_usd: "900000",
+            usage_supported_value_usd: "850000",
+          },
+        }),
+      ],
+      tower_decision_lanes: [servingRow({ row_key: "case-1" })],
+      tower_evidence: [servingRow({ page_key: "evidence" })],
+      tower_recommended_actions: [
+        servingRow({ page_key: "recommended_actions" }),
+      ],
+      tower_ai_portfolio: [
+        servingRow({
+          row_key: "BC-MER-003",
+          page_key: "ai_portfolio",
+          use_case_name: "ServiceNow operations AI rollout",
+          tool_name: "ServiceNow Now Assist",
+        }),
+      ],
+      tower_cost_lens: [servingRow({ page_key: "cost_lens" })],
+      tower_risk_lens: [servingRow({ page_key: "risk_lens" })],
+      tower_adoption_lens: [
+        servingRow({
+          row_key: "TOOL-MER-001",
+          page_key: "adoption_lens",
+          use_case_name: "ServiceNow Now Assist",
+          tool_name: "ServiceNow",
+          display_payload_json: {
+            monthly_active_users: "2756",
+            rollout_target_users: "5200",
+            adoption_actual_pct: "53",
+          },
+        }),
+      ],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+
+    expect(mart?.command.approvedProgramBudgetFy26).toBe(703100000);
+    expect(mart?.command.aiTaggedSpendFy26NonAdditive).toBe(211801054);
+    expect(mart?.command.promisedValueFy26).toBe(677763373);
+    expect(mart?.command.claimableValue).toBe(13136248);
+    expect(mart?.command.partialFinanceValidatedValueYtd).toBe(900000);
+    expect(mart?.command.financeValidationRatio).toBeCloseTo(
+      900000 / 2500000,
+    );
+    expect(mart?.aiPortfolio).toHaveLength(2);
+    expect(mart?.aiPortfolio.map((row) => row.aiPortfolioKey)).toContain(
+      "TOOL-MER-001",
+    );
+    expect(
+      mart?.aiPortfolio.find((row) => row.aiPortfolioKey === "TOOL-MER-001")
+        ?.usageActual,
+    ).toBe(2756);
+  });
+
   it("maps ECL serving rows with recorded periods into value trajectory points", async () => {
     mockServingRows({
       tower_command_center: [servingRow()],
