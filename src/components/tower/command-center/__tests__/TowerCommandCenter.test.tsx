@@ -40,6 +40,12 @@ function renderPage() {
   return render(<TowerCommandCenter view={view} tenantName="Fixture Tenant" />);
 }
 
+function renderCustomView(nextView: typeof view): ReturnType<typeof render> {
+  return render(
+    <TowerCommandCenter view={nextView} tenantName="Fixture Tenant" />,
+  );
+}
+
 function renderWithSummary(
   summary: Partial<typeof view.summary>,
 ): ReturnType<typeof render> {
@@ -270,6 +276,31 @@ describe("TowerCommandCenter", () => {
     expect(screen.getByText("Rows")).toBeInTheDocument();
     expect(screen.getByText("Evidence-owner queue")).toBeInTheDocument();
     expect(screen.getByText("Projection reconciliation")).toBeInTheDocument();
+  });
+
+  it("surfaces Source contract actions without dumping the full action queue", () => {
+    renderCustomView({
+      ...view,
+      actions: [
+        ...view.actions,
+        {
+          ...view.actions[0]!,
+          id: "fixture::action::source-contract",
+          sequence: 99,
+          title: "FIX PROOF: Archive dormant source licenses before true-up",
+          why: "Microsoft contract has a sourced optimization opportunity, but finance confirmation and evidence review must close before Tower treats it as realized value.",
+          amountExposedUsd: 99_000_000,
+          moduleHandoff: "Source",
+        },
+      ],
+    });
+    fireEvent.click(tab(/Evidence & Actions/));
+
+    expect(screen.getByText("Source contract actions")).toBeInTheDocument();
+    expect(
+      screen.getByText("Archive dormant source licenses before true-up"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("$99M")).toBeInTheDocument();
   });
 
   it("opens the program drawer from Value Proof decision lanes", () => {

@@ -46,6 +46,11 @@ Follow-up product-path hardening makes the Tower route read the physical
 only when no mart rows exist for a tenant. This aligns the shipped Tower page
 with the governed mart refresh that the operator job writes.
 
+Follow-up presentation hardening surfaces Source-handoff contract actions inside
+the Tower Evidence & Actions view. The page shows a capped action slice from the
+physical mart and keeps the finance-confirmation caveat visible, rather than
+burying contract opportunities behind the full action queue.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -78,6 +83,10 @@ Layer 4 - Tower product reader. The primary Tower route now prefers the
 physical `cio_tower.mart_*` read model before using legacy serving projections,
 so refreshed mart rows are the product path for cut-over tenants.
 
+Layer 4 - Tower product presentation. The Evidence & Actions tab now renders
+the Source-routed contract actions already present in the mart, without changing
+the underlying calculations or promoting unconfirmed opportunity values.
+
 ## Client Applicability
 
 - All clients: The projection code path is available but has no effect until a
@@ -102,6 +111,8 @@ so refreshed mart rows are the product path for cut-over tenants.
 - `src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts`
 - `src/app/(maestro)/tower/page.tsx`
 - `src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts`
+- `src/components/tower/command-center/views/ContractTabs.tsx`
+- `src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx`
 
 ## QA / Validation
 
@@ -141,6 +152,8 @@ so refreshed mart rows are the product path for cut-over tenants.
 - PASS: `npx jest src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts src/lib/cio-tower/__tests__/tower-mart-view-model.test.ts src/lib/tower/command-center/__tests__/view-model.test.ts --runInBand`
 - PASS: `npx eslint src/app/(maestro)/tower/page.tsx src/app/(maestro)/tower/__tests__/tenant-tower-route-scope.test.ts src/lib/cio-tower/tower-mart-view-model.ts`
 - PASS: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`
+- PASS: `npx jest src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx src/lib/tower/command-center/__tests__/view-model.test.ts --runInBand`
+- PASS: `npx eslint src/components/tower/command-center/views/ContractTabs.tsx src/components/tower/command-center/__tests__/TowerCommandCenter.test.tsx`
 
 ## Rollout Plan
 
@@ -188,5 +201,5 @@ to restore the prior mart contents.
 
 ## Known Gaps
 
-Signed-in Tower UI proof still needs to run after the product read-path release
-is merged and deployed.
+Signed-in Tower UI proof still needs to run after the product presentation
+release is merged and deployed.
