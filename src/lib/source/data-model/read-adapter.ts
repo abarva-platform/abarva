@@ -155,6 +155,32 @@ async function safeQueryForTenant<R>(
   }
 }
 
+async function safeCanonicalSourceQueryForTenant<R>(
+  tenantKey: string,
+  sql: string,
+  params: readonly unknown[] = [],
+): Promise<R[]> {
+  try {
+    return await queryCanonicalSourceForTenant<R>(tenantKey, sql, params);
+  } catch {
+    return [];
+  }
+}
+
+async function queryCanonicalSourceWithFallback<R>(
+  tenantKey: string,
+  sql: string,
+  params: readonly unknown[] = [],
+): Promise<R[]> {
+  const canonicalRows = await safeCanonicalSourceQueryForTenant<R>(
+    tenantKey,
+    sql,
+    params,
+  );
+  if (canonicalRows.length > 0) return canonicalRows;
+  return safeQueryForTenant<R>(tenantKey, sql, params);
+}
+
 async function meridianCanaryRows<R>(
   sql: string,
   params: readonly unknown[] = [],
@@ -739,12 +765,13 @@ export async function listContractPerformancePeriods(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractPerformancePeriodRow[]> {
-  const rows = await safeQueryForTenant<SourceContractPerformancePeriodRow>(
-    tenantKey,
-    `SELECT
-       tenant_key,
-       observation_id,
-       contract_id,
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractPerformancePeriodRow>(
+      tenantKey,
+      `SELECT
+	     tenant_key,
+	     observation_id,
+	     contract_id,
        service_id,
        metric_name,
        period_start,
@@ -777,11 +804,11 @@ export async function listContractPerformancePeriods(
        evidence_reference,
        load_run_id
      FROM source.contract_performance_observation
-     WHERE tenant_key = ANY($1::text[])
-       AND contract_id = $2
-     ORDER BY period_start, observation_id`,
-    [contractId],
-  );
+	   WHERE tenant_key = ANY($1::text[])
+	     AND contract_id = $2
+	   ORDER BY period_start, observation_id`,
+      [contractId],
+    );
   return rows.map(normalizePerformancePeriodRow);
 }
 
@@ -789,11 +816,12 @@ export async function listContractSpendMonthly(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractSpendMonthlyRow[]> {
-  const rows = await safeQueryForTenant<SourceContractSpendMonthlyRow>(
-    tenantKey,
-    `SELECT
-       tenant_key,
-       observation_id,
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractSpendMonthlyRow>(
+      tenantKey,
+      `SELECT
+	     tenant_key,
+	     observation_id,
        contract_id,
        service_id,
        business_unit,
@@ -813,62 +841,65 @@ export async function listContractSpendMonthly(
        evidence_reference,
        load_run_id
      FROM source.contract_consumption_observation
-     WHERE tenant_key = ANY($1::text[])
-       AND contract_id = $2
-     ORDER BY period_start, observation_id`,
-    [contractId],
-  );
+	   WHERE tenant_key = ANY($1::text[])
+	     AND contract_id = $2
+	   ORDER BY period_start, observation_id`,
+      [contractId],
+    );
   return rows.map(normalizeSpendMonthlyRow);
 }
 
 export async function listSourceContractEvidenceCoverage(
   tenantKey: string,
 ): Promise<SourceContractEvidenceCoverageRow[]> {
-  const rows = await safeQueryForTenant<SourceContractEvidenceCoverageRow>(
-    tenantKey,
-    `SELECT *
-       FROM source.contract_evidence_coverage_v1
-      WHERE tenant_key = ANY($1::text[])
-      ORDER BY candidate_amount_usd DESC NULLS LAST, unclaimed_credit_usd DESC NULLS LAST, contract_id`,
-  );
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractEvidenceCoverageRow>(
+      tenantKey,
+      `SELECT *
+	     FROM source.contract_evidence_coverage_v1
+	    WHERE tenant_key = ANY($1::text[])
+	    ORDER BY candidate_amount_usd DESC NULLS LAST, unclaimed_credit_usd DESC NULLS LAST, contract_id`,
+    );
   return rows.map(normalizeSourceContractEvidenceCoverageRow);
 }
 
 export async function listSourceContractActionCandidates(
   tenantKey: string,
 ): Promise<SourceContractActionCandidateRow[]> {
-  const rows = await safeQueryForTenant<SourceContractActionCandidateRow>(
-    tenantKey,
-    `SELECT *
-       FROM source.contract_action_candidate_v1
-      WHERE tenant_key = ANY($1::text[])
-      ORDER BY candidate_amount_usd DESC NULLS LAST, action_candidate_id`,
-  );
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractActionCandidateRow>(
+      tenantKey,
+      `SELECT *
+	     FROM source.contract_action_candidate_v1
+	    WHERE tenant_key = ANY($1::text[])
+	    ORDER BY candidate_amount_usd DESC NULLS LAST, action_candidate_id`,
+    );
   return rows.map(normalizeSourceContractActionCandidateRow);
 }
 
 export async function listSourceContractClaimCards(
   tenantKey: string,
 ): Promise<SourceContractClaimCardRow[]> {
-  const rows = await safeQueryForTenant<SourceContractClaimCardRow>(
-    tenantKey,
-    `SELECT *
-       FROM source.contract_claim_card_v1
-      WHERE tenant_key = ANY($1::text[])
-      ORDER BY candidate_amount_usd DESC NULLS LAST, claim_card_id`,
-  );
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractClaimCardRow>(
+      tenantKey,
+      `SELECT *
+	     FROM source.contract_claim_card_v1
+	    WHERE tenant_key = ANY($1::text[])
+	    ORDER BY candidate_amount_usd DESC NULLS LAST, claim_card_id`,
+    );
   return rows.map(normalizeSourceContractClaimCardRow);
 }
 
 export async function listSourceVendorPositions(
   tenantKey: string,
 ): Promise<SourceVendorPositionRow[]> {
-  const rows = await safeQueryForTenant<SourceVendorPositionRow>(
+  const rows = await queryCanonicalSourceWithFallback<SourceVendorPositionRow>(
     tenantKey,
     `SELECT *
-       FROM source.vendor_position_v1
-      WHERE tenant_key = ANY($1::text[])
-      ORDER BY candidate_amount_usd DESC NULLS LAST, annual_value DESC NULLS LAST, vendor_name`,
+	     FROM source.vendor_position_v1
+	    WHERE tenant_key = ANY($1::text[])
+	    ORDER BY candidate_amount_usd DESC NULLS LAST, annual_value DESC NULLS LAST, vendor_name`,
   );
   return rows.map(normalizeSourceVendorPositionRow);
 }
@@ -876,12 +907,12 @@ export async function listSourceVendorPositions(
 export async function listSourcePageStoryline(
   tenantKey: string,
 ): Promise<SourcePageStorylineRow[]> {
-  const rows = await safeQueryForTenant<SourcePageStorylineRow>(
+  const rows = await queryCanonicalSourceWithFallback<SourcePageStorylineRow>(
     tenantKey,
     `SELECT *
-       FROM source.source_page_storyline_v1
-      WHERE tenant_key = ANY($1::text[])
-      ORDER BY page_key, sort_order, section_key`,
+	     FROM source.source_page_storyline_v1
+	    WHERE tenant_key = ANY($1::text[])
+	    ORDER BY page_key, sort_order, section_key`,
   );
   return rows.map(normalizeSourcePageStorylineRow);
 }
@@ -889,13 +920,14 @@ export async function listSourcePageStoryline(
 export async function listSourceAvaGroundingBundles(
   tenantKey: string,
 ): Promise<SourceAvaGroundingBundleRow[]> {
-  const rows = await safeQueryForTenant<SourceAvaGroundingBundleRow>(
-    tenantKey,
-    `SELECT *
-       FROM source.ava_grounding_bundle_v1
-      WHERE tenant_key = ANY($1::text[])
-      ORDER BY page_key, section_key, grounding_bundle_id`,
-  );
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceAvaGroundingBundleRow>(
+      tenantKey,
+      `SELECT *
+	     FROM source.ava_grounding_bundle_v1
+	    WHERE tenant_key = ANY($1::text[])
+	    ORDER BY page_key, section_key, grounding_bundle_id`,
+    );
   return rows.map(normalizeSourceAvaGroundingBundleRow);
 }
 
