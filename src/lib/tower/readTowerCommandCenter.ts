@@ -23,6 +23,10 @@ type TowerSqlQuery = <R = Record<string, unknown>>(
   params?: readonly unknown[],
   opts?: { missingTable?: "empty" | "throw" },
 ) => Promise<R[]>;
+type TowerServingIdentity = {
+  assessmentId: string;
+  projectionVersion: number;
+};
 
 interface TowerServingRow {
   tenant_key: string;
@@ -214,6 +218,58 @@ function uniqueRows(rows: readonly TowerServingRow[]): TowerServingRow[] {
   return [...out.values()];
 }
 
+function towerServingBuildPriority(row: TowerServingRow): number {
+  if (
+    row.row_key === "executive_summary" &&
+    payloadText(row, "layer4_build_version")
+  ) {
+    return 3;
+  }
+  if (row.row_key === "executive_summary") return 2;
+  if (payloadText(row, "layer4_build_version")) return 1;
+  return 0;
+}
+
+function activeServingIdentity(
+  commandRows: readonly TowerServingRow[],
+): TowerServingIdentity | null {
+  const candidates = commandRows
+    .map((row) => ({
+      assessmentId: row.assessment_id,
+      projectionVersion: Number(row.projection_version ?? 0),
+      priority: towerServingBuildPriority(row),
+    }))
+    .filter(
+      (candidate) =>
+        candidate.assessmentId.trim().length > 0 &&
+        Number.isFinite(candidate.projectionVersion),
+    )
+    .sort(
+      (a, b) =>
+        b.priority - a.priority ||
+        b.projectionVersion - a.projectionVersion ||
+        b.assessmentId.localeCompare(a.assessmentId),
+    );
+
+  const winner = candidates[0];
+  if (!winner) return null;
+  return {
+    assessmentId: winner.assessmentId,
+    projectionVersion: winner.projectionVersion,
+  };
+}
+
+function rowsForActiveServingIdentity(
+  rows: readonly TowerServingRow[],
+  identity: TowerServingIdentity,
+): TowerServingRow[] {
+  return rows.filter(
+    (row) =>
+      row.assessment_id === identity.assessmentId &&
+      Number(row.projection_version ?? 0) === identity.projectionVersion,
+  );
+}
+
 function requireSourceTruth(
   viewName: string,
   rows: readonly TowerServingRow[],
@@ -297,7 +353,6 @@ async function readServingView(
     [tenantKey],
     { missingTable: "empty" },
   );
-  requireSourceTruth(`serving.${viewName}`, rows);
   return rows;
 }
 
@@ -781,31 +836,83 @@ export async function readTowerCommandCenter(args: {
         readServingView(query, "tower_adoption_lens", tenantKey),
       ]);
 
+      const activeIdentity = activeServingIdentity(commandRows);
+      if (!activeIdentity) return null;
+
+      const activeCommandRows = rowsForActiveServingIdentity(
+        commandRows,
+        activeIdentity,
+      );
+      const activeValueRows = rowsForActiveServingIdentity(
+        valueRows,
+        activeIdentity,
+      );
+      const activeDecisionRows = rowsForActiveServingIdentity(
+        decisionRows,
+        activeIdentity,
+      );
+      const activeEvidenceRows = rowsForActiveServingIdentity(
+        evidenceRows,
+        activeIdentity,
+      );
+      const activeActionRows = rowsForActiveServingIdentity(
+        actionRows,
+        activeIdentity,
+      );
+      const activeAiRows = rowsForActiveServingIdentity(aiRows, activeIdentity);
+      const activeCostRows = rowsForActiveServingIdentity(
+        costRows,
+        activeIdentity,
+      );
+      const activeRiskRows = rowsForActiveServingIdentity(
+        riskRows,
+        activeIdentity,
+      );
+      const activeAdoptionRows = rowsForActiveServingIdentity(
+        adoptionRows,
+        activeIdentity,
+      );
+
+      const activeRowsByView = [
+        ["tower_command_center", activeCommandRows],
+        ["tower_value_proof", activeValueRows],
+        ["tower_decision_lanes", activeDecisionRows],
+        ["tower_evidence", activeEvidenceRows],
+        ["tower_recommended_actions", activeActionRows],
+        ["tower_ai_portfolio", activeAiRows],
+        ["tower_cost_lens", activeCostRows],
+        ["tower_risk_lens", activeRiskRows],
+        ["tower_adoption_lens", activeAdoptionRows],
+      ] as const;
+      for (const [activeViewName, activeRows] of activeRowsByView) {
+        requireSourceTruth(`serving.${activeViewName}`, activeRows);
+      }
+
       const allRows = uniqueRows([
-        ...commandRows,
-        ...valueRows,
-        ...decisionRows,
-        ...evidenceRows,
-        ...actionRows,
-        ...aiRows,
-        ...costRows,
-        ...riskRows,
-        ...adoptionRows,
+        ...activeCommandRows,
+        ...activeValueRows,
+        ...activeDecisionRows,
+        ...activeEvidenceRows,
+        ...activeActionRows,
+        ...activeAiRows,
+        ...activeCostRows,
+        ...activeRiskRows,
+        ...activeAdoptionRows,
       ]);
       if (allRows.length === 0) return null;
 
       const projectionVersion = Math.max(
         ...allRows.map((row) => Number(row.projection_version ?? 0)),
       );
-      const valueRowsForTotals = valueRows.filter(
+      const valueRowsForTotals = activeValueRows.filter(
         (row) => !isTrajectoryOnlyRow(row),
       );
       const summaryRow =
-        commandRows.find((row) => row.row_key === "executive_summary") ??
-        commandRows.find((row) => row.page_key === "command_center");
+        activeCommandRows.find((row) => row.row_key === "executive_summary") ??
+        activeCommandRows.find((row) => row.page_key === "command_center");
       const funded =
-        sumRows(decisionRows, "funded_amount_usd") +
-        sumRows(aiRows, "monthly_cost_usd") * 12;
+        sumRows(activeDecisionRows, "funded_amount_usd") +
+        sumRows(activeAiRows, "monthly_cost_usd") * 12;
       const promised =
         sumRows(valueRowsForTotals, "promised_value_usd") +
         sumRows(valueRowsForTotals, "baseline_value");
@@ -849,7 +956,10 @@ export async function readTowerCommandCenter(args: {
           payloadText(row, "claim_gate_status") ?? "",
         ),
       ).length;
-      const aiPortfolio = uniqueRows([...aiRows, ...adoptionRows]).map(
+      const aiPortfolio = uniqueRows([
+        ...activeAiRows,
+        ...activeAdoptionRows,
+      ]).map(
         mapAiItem,
       );
       const sourceFiles = uniqueSourceFiles(allRows);
@@ -910,10 +1020,10 @@ export async function readTowerCommandCenter(args: {
           ),
           promisedValueExposure:
             executivePromised ?? (promised || blocked || null),
-          totalProgramSubjectCount: decisionRows.length,
-          activeProgramSubjectCount: decisionRows.length,
-          materialProgramCount: decisionRows.length,
-          boardScopeProgramCount: decisionRows.length,
+          totalProgramSubjectCount: activeDecisionRows.length,
+          activeProgramSubjectCount: activeDecisionRows.length,
+          materialProgramCount: activeDecisionRows.length,
+          boardScopeProgramCount: activeDecisionRows.length,
           economicReviewQueueCount: gatedRows,
           valueClaimCount: claimRows.length,
           knownValueClaimCount: knownValueClaimRows.length,
@@ -952,16 +1062,16 @@ export async function readTowerCommandCenter(args: {
             (row) => payloadNullableNumber(row, "current_value") !== null,
           ).length,
           claimableProgramCount: 0,
-          blockedProgramCount: decisionRows.filter(
+          blockedProgramCount: activeDecisionRows.filter(
             (row) => payloadText(row, "claim_gate_status") === "blocked",
           ).length,
           conflictedProgramCount: 0,
-          unmeasuredProgramCount: decisionRows.filter(
+          unmeasuredProgramCount: activeDecisionRows.filter(
             (row) => payloadText(row, "claim_gate_status") !== "claimable",
           ).length,
           aiInitiativeCount: aiPortfolio.length,
           candidateAiOpportunities: aiPortfolio.length,
-          watchPressureSignals: riskRows.length + evidenceRows.length,
+          watchPressureSignals: activeRiskRows.length + activeEvidenceRows.length,
           runRatio: null,
           changeRatio: null,
           financeValidationRatio:
@@ -978,8 +1088,8 @@ export async function readTowerCommandCenter(args: {
           sourceFiles,
         },
         valueFunnel: buildFunnel(valueRowsForTotals),
-        valueTrajectory: mapValueTrajectory(valueRows),
-        programLanes: decisionRows.map(mapProgramLane),
+        valueTrajectory: mapValueTrajectory(activeValueRows),
+        programLanes: activeDecisionRows.map(mapProgramLane),
         aiPortfolio,
         aiPortfolioCounts: {
           total: aiPortfolio.length,
@@ -993,16 +1103,20 @@ export async function readTowerCommandCenter(args: {
             0,
           ),
         },
-        cxoActions: actionRows.map(mapAction),
-        evidenceLineage: [...evidenceRows, ...costRows, ...riskRows].map(
+        cxoActions: activeActionRows.map(mapAction),
+        evidenceLineage: [
+          ...activeEvidenceRows,
+          ...activeCostRows,
+          ...activeRiskRows,
+        ].map(
           mapEvidence,
         ),
         requiredFieldGaps: gapsFromRows([
-          ...decisionRows,
-          ...evidenceRows,
-          ...actionRows,
-          ...costRows,
-          ...riskRows,
+          ...activeDecisionRows,
+          ...activeEvidenceRows,
+          ...activeActionRows,
+          ...activeCostRows,
+          ...activeRiskRows,
         ]),
       };
     });
