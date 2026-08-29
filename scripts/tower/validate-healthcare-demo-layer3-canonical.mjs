@@ -98,6 +98,13 @@ function readJsonIfPresent(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
+function resolveProofSiblingPath(summaryPath, loadSqlPath) {
+  if (!loadSqlPath || fs.existsSync(loadSqlPath)) return loadSqlPath;
+  if (!summaryPath) return loadSqlPath;
+  const siblingPath = path.join(path.dirname(summaryPath), path.basename(loadSqlPath));
+  return fs.existsSync(siblingPath) ? siblingPath : loadSqlPath;
+}
+
 function sum(rows, field) {
   return rows.reduce((total, row) => total + Number(row[field] || 0), 0);
 }
@@ -168,7 +175,7 @@ function main() {
 
   if (summary) {
     const expected = summary.expected_counts ?? {};
-    const loadSqlPath = summary.load_sql;
+    const loadSqlPath = resolveProofSiblingPath(summaryPath, summary.load_sql);
     const loadSql = loadSqlPath && fs.existsSync(loadSqlPath)
       ? fs.readFileSync(loadSqlPath, "utf8").toLowerCase()
       : "";
