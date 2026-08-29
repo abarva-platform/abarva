@@ -1065,6 +1065,7 @@ function campaignRows(view: TowerCommandCenterView) {
       title: "Usage telemetry connection",
       owner: "platform_owner",
       tasks: Math.max(1, view.allInitiatives.length),
+      unit: "Assets",
       valueUsd:
         view.summary.aiAttributedInitiativeSpendUsd || view.summary.aiTaggedUsd,
       due: actions[0]?.due ?? "Next review",
@@ -1081,6 +1082,7 @@ function campaignRows(view: TowerCommandCenterView) {
         0,
         valueClaimCount(view) - view.summary.outcomeMeasuredClaimCount,
       ),
+      unit: "Claims",
       valueUsd: measuredUsd(view),
       due: actions[1]?.due ?? "Next month",
       tone: "amber" as Tone,
@@ -1093,6 +1095,7 @@ function campaignRows(view: TowerCommandCenterView) {
       title: "Finance validation sign-off",
       owner: "finance_controller",
       tasks: Math.max(1, view.summary.blockedProgramCount),
+      unit: "Claims",
       valueUsd: measuredUsd(view),
       due: actions[2]?.due ?? "Next review",
       tone: "amber" as Tone,
@@ -1105,6 +1108,7 @@ function campaignRows(view: TowerCommandCenterView) {
       title: "Vendor leverage review",
       owner: "sourcing_lead",
       tasks: Math.max(1, Math.ceil(view.actions.length / 2)),
+      unit: "Actions",
       valueUsd: actions[3]?.amountExposedUsd ?? gaps[3]?.valueAtStakeUsd ?? 0,
       due: actions[3]?.due ?? "Parallel",
       tone: "gray" as Tone,
@@ -1117,6 +1121,7 @@ function campaignRows(view: TowerCommandCenterView) {
       title: "Document clause confirmation",
       owner: "sourcing_lead",
       tasks: Math.max(1, Math.ceil(view.evidenceFacts.length / 2)),
+      unit: "Evidence",
       valueUsd: actions[4]?.amountExposedUsd ?? gaps[4]?.valueAtStakeUsd ?? 0,
       due: actions[4]?.due ?? "Parallel",
       tone: "gray" as Tone,
@@ -1129,6 +1134,7 @@ function campaignRows(view: TowerCommandCenterView) {
       title: "Capability attribution",
       owner: "architecture_lead",
       tasks: Math.max(1, view.pipelineGaps.length || view.unknownSlots.length),
+      unit: "Rows",
       valueUsd: view.summary.aiUnallocatedSpendUsd,
       due: actions[5]?.due ?? "Parallel",
       tone: "gray" as Tone,
@@ -1205,7 +1211,7 @@ export function EvidenceActionsContractView({
         <article>
           <strong>{formatCount(view.actions.length)}</strong>
           <span>Open tasks</span>
-          <p>Assignable work items, grouped into the six campaigns below.</p>
+          <p>Assignable work items. Campaigns show affected records.</p>
         </article>
         <article>
           <strong>{formatCount(economicRows)}</strong>
@@ -1217,7 +1223,7 @@ export function EvidenceActionsContractView({
       <section>
         <SectionTitle
           title="Action campaigns"
-          subtitle={`${formatCount(view.actions.length)} tasks · 1–3 sequential, the rest parallel`}
+          subtitle={`${formatCount(view.actions.length)} open tasks · campaigns show affected records`}
         />
         <div className={styles.campaignStack}>
           {campaigns.map((row) => (
@@ -1238,7 +1244,7 @@ export function EvidenceActionsContractView({
                 </i>
               </span>
               <span className={styles.campaignMetric}>
-                <i>Tasks</i>
+                <i>{row.unit}</i>
                 <strong>{formatCount(row.tasks)}</strong>
               </span>
               <span className={styles.campaignMetric}>
