@@ -523,6 +523,15 @@ function buildRows(options) {
       roi_low_multiple: numOrNull(row.roi_low_multiple),
       roi_high_multiple: numOrNull(row.roi_high_multiple),
       finance_status: row.finance_status,
+      // Decision attributes. gating_constraint is the load-bearing one: across the portfolio it is
+      // what separates a validated case from a blocked one, where readiness score does not.
+      gating_constraint: row.gating_constraint ?? null,
+      confidence_level: row.confidence_level ?? null,
+      readiness_score: numOrNull(row.readiness_score),
+      cost_to_build_low_usd: numOrNull(row.cost_to_build_low_usd),
+      cost_to_build_high_usd: numOrNull(row.cost_to_build_high_usd),
+      proof_needed: row.proof_needed ?? null,
+      business_sponsor_role: row.business_sponsor_role ?? null,
       layer4_build_version: options.buildVersion,
     };
     const commandEntry = addProjectionRow(ctx, "decision_lanes", row.business_case_id, "ai_business_case", display, refs);
@@ -819,6 +828,11 @@ function buildRows(options) {
       item_kind: "usage_benefit",
       ai_spend_category: "AI tool rollout",
       funding_status: tool.rollout_stage,
+      // The named obstacle. Without it a rollout reads as merely under-adopted when the real
+      // blocker is a control review or a telemetry gap that nobody has scheduled.
+      control_blocker: tool.control_blocker ?? null,
+      business_owner_role: tool.business_owner_role ?? null,
+      rollout_stage: tool.rollout_stage ?? null,
       layer4_build_version: options.buildVersion,
     };
     const entry = addProjectionRow(ctx, "adoption_lens", tool.tool_rollout_id, "ai_tool_rollout", payload, refs);

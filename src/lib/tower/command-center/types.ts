@@ -287,6 +287,17 @@ export interface TowerAiView {
   valueScore: number;
   /** 0–100, mart `readiness_score`. Bubble X axis. */
   readinessScore: number;
+  /** False when the source recorded no readiness score — render a gap, not the 0. */
+  readinessScoreLoaded: boolean;
+  riskScoreLoaded: boolean;
+  /** The named obstacle; the field that actually separates validated cases from blocked ones. */
+  gatingConstraint: string | null;
+  confidenceLevel: string | null;
+  businessValueType: string | null;
+  costToBuildLowUsd: number | null;
+  costToBuildHighUsd: number | null;
+  controlBlocker: string | null;
+  sponsorRole: string | null;
   /** 0–100, mart `risk_score`. Candidate pipeline diagnostic. */
   riskScore: number;
   /** Bubble size. */

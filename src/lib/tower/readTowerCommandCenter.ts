@@ -561,15 +561,26 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
         : payloadNumber(row, "usage_events") > 0
           ? 55
           : 20,
-    readinessScore:
-      payloadNullableNumberFrom(row, [
-        "readiness_score",
-        "adoption_rate_percent",
-        "adoption_actual_pct",
-      ]) ?? 25,
-    riskScore:
-      payloadNullableNumberFrom(row, ["risk_score", "risk_pressure_score"]) ??
-      40,
+    // Readiness is a declared 0-100 score. It previously fell back to the adoption rate and then
+    // to a literal 25 — substituting a different metric, and then an invented one, for a missing
+    // value. Both are the "missing rendered as a number" failure this product exists to prevent.
+    readinessScore: payloadNullableNumberFrom(row, ["readiness_score"]),
+    // risk_pressure_score is written upstream as (100 - readiness_score), so it carries no
+    // information readiness does not already carry. Kept for compatibility, never defaulted.
+    riskScore: payloadNullableNumberFrom(row, [
+      "risk_score",
+      "risk_pressure_score",
+    ]),
+    gatingConstraint: payloadTextFrom(row, ["gating_constraint"]),
+    confidenceLevel: payloadTextFrom(row, ["confidence_level"]),
+    businessValueType: payloadTextFrom(row, ["business_value_type"]),
+    costToBuildLowUsd: payloadNullableNumberFrom(row, ["cost_to_build_low_usd"]),
+    costToBuildHighUsd: payloadNullableNumberFrom(row, ["cost_to_build_high_usd"]),
+    controlBlocker: payloadTextFrom(row, ["control_blocker"]),
+    sponsorRole: payloadTextFrom(row, [
+      "business_sponsor_role",
+      "business_owner_role",
+    ]),
     duplicateRisk: null,
     valueClaimStatus: "usage_supported",
     towerClaimAllowed: "blocked",
