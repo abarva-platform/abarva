@@ -14,9 +14,9 @@ class FakeClient {
             vendor_name: "Microsoft",
             annual_contract_value: "4200000",
             actual_annual_spend: "4180000",
-            authority_state: "accepted",
-            quality_state: "reviewed",
-            knowledge_baseline_ref: "load-run-1",
+            authority_state: null,
+            quality_state: null,
+            knowledge_baseline_ref: null,
           },
         ],
       };
@@ -41,6 +41,11 @@ describe("project-tower-mart Source contract bridge", () => {
     });
     expect(client.queries.some((query) => query.sql.includes("source.contract_360"))).toBe(true);
     expect(client.queries.some((query) => query.sql.includes("annual_value AS annual_contract_value"))).toBe(true);
+    const contractQuery = client.queries.find((query) => query.sql.includes("FROM source.contract_360"));
+    expect(contractQuery?.sql).toContain("NULL::text AS authority_state");
+    expect(contractQuery?.sql).toContain("NULL::text AS quality_state");
+    expect(contractQuery?.sql).toContain("NULL::text AS knowledge_baseline_ref");
+    expect(contractQuery?.sql).not.toContain("actual_annual_spend, authority_state");
     expect(client.queries.some((query) => query.sql.includes("consumption.sourcing_opportunity_v1"))).toBe(true);
     expect(client.queries.at(-1)).toEqual({
       sql: "SELECT set_config('app.tenant_key', '', false)",

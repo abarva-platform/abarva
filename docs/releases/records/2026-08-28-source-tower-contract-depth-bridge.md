@@ -35,6 +35,12 @@ shape that may omit display columns in deployed databases. The bridge aliases
 `annual_value` into the Tower contract-fact input shape so deployed Source
 projections do not need a duplicate display column.
 
+Follow-up stable-read hardening limits the Source Contract 360 header query to
+fields that are part of the deployed cross-contract projection and supplies
+nullable governance metadata explicitly. This keeps Tower from depending on
+optional Source projection metadata columns while preserving finance and
+evidence states on the opportunity/performance reads.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -57,6 +63,11 @@ reads so the bridge reads the same tenant-scoped views proven by Source Layer 4.
 Layer 4 - Source-to-Tower view shape. Contract header facts are read from the
 Source Contract 360 projection, while opportunity and performance facts continue
 to read from governed consumption projections.
+
+Layer 4 - Source-to-Tower stable read. Contract header reads now use stable
+Source projection fields for contract identity, vendor display, annual value,
+and actual spend; optional authority/quality/baseline metadata is not queried
+from the header projection.
 
 ## Client Applicability
 
@@ -104,6 +115,13 @@ to read from governed consumption projections.
 - FAIL BEFORE FIX: A follow-up Tower mart write reached the Source Contract 360
   projection and stopped on the deployed projection's annual-value column name.
   The bridge now aliases that governed value into the Tower input shape.
+- PASS: `npx jest src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts src/lib/cio-tower/mart-projection/__tests__/facts-from-source-contracts.test.ts --runInBand`
+- PASS: `npx eslint src/scripts/tower/project-tower-mart.ts src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts src/lib/cio-tower/mart-projection/facts-from-source-contracts.ts`
+- PASS: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`
+- FAIL BEFORE FIX: A follow-up Tower mart write reached the annual-value
+  alias and then stopped on optional Source Contract 360 metadata not present
+  in the deployed projection. The bridge now provides null metadata rather than
+  querying those optional columns.
 
 ## Rollout Plan
 
@@ -143,6 +161,8 @@ to restore the prior mart contents.
   `/tmp/tower-mart-projection-meridian-health-20260829T0306Z/04-logs.txt`.
 - Tower mart failed write before annual-value aliasing:
   `/tmp/tower-mart-projection-meridian-health-20260829T0327Z/04-logs.txt`.
+- Tower mart failed write before stable contract-header metadata read:
+  `/tmp/tower-mart-projection-meridian-health-20260829T0350Z/04-logs.txt`.
 - Future evidence after rollout: Source Layer 4 apply/verify summaries, Tower
   mart write proof bundle, and signed-in Tower page proof.
 
