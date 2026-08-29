@@ -148,6 +148,8 @@ assert(
     script.includes("visibleNarrativeQualityIssues") &&
     script.includes("raw_object_id") &&
     script.includes("scrubRawVisibleIds") &&
+    script.includes("safeVisibleIdentifierLabel") &&
+    script.includes("hasRawVisibleId(label)") &&
     script.includes("buildVisibleIdentifierLabels") &&
     script.includes("MACHINE_REFERENCE_KEYS") &&
     script.includes("normalizeChapterTerminalStates") &&
