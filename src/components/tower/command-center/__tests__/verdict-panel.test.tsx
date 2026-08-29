@@ -89,3 +89,74 @@ describe("Verdict panel", () => {
     );
   });
 });
+
+/**
+ * Regressions found only against live Meridian data. The design fixture carries 8 programs, no tool
+ * rollouts and a finance status on every case, so none of these could surface against it.
+ */
+describe("Verdict panel against live-shaped data", () => {
+  function withRows(
+    rows: ReadonlyArray<{ financeStatus: string | null; promisedUsd: number }>,
+  ) {
+    const v = viewWith();
+    return {
+      ...v,
+      allInitiatives: rows.map((r, i) => ({
+        ...(v.allInitiatives[0] ?? {}),
+        n: i + 1,
+        id: `BC-${i}`,
+        name: `Case ${i}`,
+        financeStatus: r.financeStatus,
+        promisedUsd: r.promisedUsd,
+      })),
+    } as typeof v;
+  }
+
+  it("counts business cases only, never cases plus tool rollouts", () => {
+    // Tool rollouts share the collection but carry no finance status.
+    render(
+      <VerdictPanel
+        view={withRows([
+          { financeStatus: "sponsor_claimed", promisedUsd: 1 },
+          { financeStatus: "finance_validated_actual", promisedUsd: 2 },
+          { financeStatus: null, promisedUsd: 0 },
+          { financeStatus: null, promisedUsd: 0 },
+        ])}
+      />,
+    );
+    expect(screen.getByText(/Where the 2 cases stand/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/Where the 4 cases stand/);
+  });
+
+  it("does not repeat the claimable figure when no case carries a status", () => {
+    render(
+      <VerdictPanel
+        view={withRows([
+          { financeStatus: null, promisedUsd: 0 },
+          { financeStatus: null, promisedUsd: 0 },
+        ])}
+      />,
+    );
+    // Recharts omits labels on zero-width bars, so the absence is carried by the note rather than
+    // a chart label. What matters is that the middle bar does not silently repeat the board figure.
+    expect(document.body.textContent).toMatch(
+      /No case carries a finance status in this read/,
+    );
+    // "$0.0M" appears on the board-claimable card and its gate bar; a third occurrence would mean
+    // the middle bar had silently copied it.
+    const repeats = (document.body.textContent ?? "").split("$0.0M").length - 1;
+    expect(repeats).toBeLessThan(3);
+  });
+
+  it("sums asserted value on validated cases, not the validated amount", () => {
+    render(
+      <VerdictPanel
+        view={withRows([
+          { financeStatus: "finance_validated_actual", promisedUsd: 40_000_000 },
+          { financeStatus: "sponsor_claimed", promisedUsd: 90_000_000 },
+        ])}
+      />,
+    );
+    expect(document.body.textContent).toMatch(/\$40\.0M/);
+  });
+});
