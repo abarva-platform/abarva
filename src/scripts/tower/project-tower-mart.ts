@@ -25,6 +25,7 @@ import path from "node:path";
 import fs from "node:fs";
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 import { config as loadEnv } from "dotenv";
 import { Client } from "pg";
 
@@ -342,56 +343,64 @@ async function readTowerFacts(
   return projectTowerOperationalToFacts(input, identity);
 }
 
-async function readSourceContractDepthFacts(
+export async function readSourceContractDepthFacts(
   client: Client | null,
   identity: CioTowerTenantIdentity,
 ): Promise<CioTowerFactRow[]> {
   if (!client) return [];
   const input: SourceContractDepthInput = {};
+  await client.query("SELECT set_config('app.tenant_key', $1, false)", [
+    identity.tenantKey,
+  ]);
   const q = async <T extends Record<string, unknown>>(
     sql: string,
   ): Promise<T[]> => {
     try {
       const r = await client.query<T>(sql, [identity.tenantKey]);
       return r.rows;
-    } catch {
-      return [];
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`source_contract_depth_read_failed: ${message}`);
     }
   };
 
-  input.contracts = (await q(
-    `SELECT contract_id, contract_name, vendor_name, annual_contract_value,
-            actual_annual_spend, authority_state, quality_state, knowledge_baseline_ref
-       FROM consumption.sourcing_contract_v1
-      WHERE tenant_key = $1
-      ORDER BY annual_contract_value DESC NULLS LAST, contract_id`,
-  )) as unknown as SourceContractDepthInput["contracts"];
+  try {
+    input.contracts = (await q(
+      `SELECT contract_id, contract_name, vendor_name, annual_contract_value,
+              actual_annual_spend, authority_state, quality_state, knowledge_baseline_ref
+         FROM consumption.sourcing_contract_v1
+        WHERE tenant_key = $1
+        ORDER BY annual_contract_value DESC NULLS LAST, contract_id`,
+    )) as unknown as SourceContractDepthInput["contracts"];
 
-  input.opportunities = (await q(
-    `SELECT opportunity_id, contract_id, vendor_name, title, annual_value_exposed,
-            readiness_state, evidence_state, recommended_action, accountable_role,
-            knowledge_baseline_ref
-       FROM consumption.sourcing_opportunity_v1
-      WHERE tenant_key = $1
-        AND COALESCE(annual_value_exposed, 0) > 0
-      ORDER BY annual_value_exposed DESC NULLS LAST, opportunity_id`,
-  )) as unknown as SourceContractDepthInput["opportunities"];
+    input.opportunities = (await q(
+      `SELECT opportunity_id, contract_id, vendor_name, title, annual_value_exposed,
+              readiness_state, evidence_state, recommended_action, accountable_role,
+              knowledge_baseline_ref
+         FROM consumption.sourcing_opportunity_v1
+        WHERE tenant_key = $1
+          AND COALESCE(annual_value_exposed, 0) > 0
+        ORDER BY annual_value_exposed DESC NULLS LAST, opportunity_id`,
+    )) as unknown as SourceContractDepthInput["opportunities"];
 
-  input.performance = (await q(
-    `SELECT contract_id,
-            COALESCE(sum(breach_count), 0) AS breached_periods,
-            COALESCE(sum(credit_calculated), 0) AS credit_calculated,
-            COALESCE(sum(credit_claimed), 0) AS credit_claimed,
-            COALESCE(sum(credit_recovered), 0) AS credit_recovered,
-            count(*) FILTER (WHERE evidence_state = 'present') AS evidence_rows,
-            min(knowledge_baseline_ref) AS knowledge_baseline_ref
-       FROM consumption.sourcing_performance_v1
-      WHERE tenant_key = $1
-      GROUP BY contract_id
-      ORDER BY contract_id`,
-  )) as unknown as SourceContractDepthInput["performance"];
+    input.performance = (await q(
+      `SELECT contract_id,
+              COALESCE(sum(breach_count), 0) AS breached_periods,
+              COALESCE(sum(credit_calculated), 0) AS credit_calculated,
+              COALESCE(sum(credit_claimed), 0) AS credit_claimed,
+              COALESCE(sum(credit_recovered), 0) AS credit_recovered,
+              count(*) FILTER (WHERE evidence_state = 'present') AS evidence_rows,
+              min(knowledge_baseline_ref) AS knowledge_baseline_ref
+         FROM consumption.sourcing_performance_v1
+        WHERE tenant_key = $1
+        GROUP BY contract_id
+        ORDER BY contract_id`,
+    )) as unknown as SourceContractDepthInput["performance"];
 
-  return projectSourceContractDepthToFacts(input, identity);
+    return projectSourceContractDepthToFacts(input, identity);
+  } finally {
+    await client.query("SELECT set_config('app.tenant_key', '', false)");
+  }
 }
 
 async function readAliases(
@@ -641,7 +650,13 @@ async function writeMart(
   await runInTransactionWithTracking(client, identity, mart, facts, meta);
 }
 
-main().catch((err) => {
-  console.error(err instanceof Error ? (err.stack ?? err.message) : err);
-  process.exit(1);
-});
+const isDirectRun = process.argv[1]
+  ? import.meta.url === pathToFileURL(process.argv[1]).href
+  : false;
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error(err instanceof Error ? (err.stack ?? err.message) : err);
+    process.exit(1);
+  });
+}

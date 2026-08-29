@@ -23,6 +23,11 @@ Follow-up hardening fixes the Tower mart writer so JSONB evidence-lineage
 columns are serialized before insert. This keeps the governed Tower refresh
 from failing when outcome-proof lineage arrays are present.
 
+Follow-up bridge hardening establishes the Source tenant session context before
+Tower reads guarded Source consumption views. Source read failures now stop the
+operator job with the underlying database error instead of silently projecting
+zero Source contract facts.
+
 ## Layer Impact
 
 Release lane: `client-data-lane`.
@@ -37,6 +42,10 @@ readback failure.
 
 Layer 4 - Tower mart persistence. Evidence-lineage JSON arrays are now encoded
 for Postgres JSONB columns during the tracked Tower mart write.
+
+Layer 4 - Source-to-Tower tenant context. The Tower mart projection sets and
+clears the Source tenant session selector around guarded Source consumption
+reads so the bridge reads the same tenant-scoped views proven by Source Layer 4.
 
 ## Client Applicability
 
@@ -59,6 +68,7 @@ for Postgres JSONB columns during the tracked Tower mart write.
 - `src/scripts/tower/project-tower-mart.ts`
 - `src/scripts/tower/project-tower-mart-write.ts`
 - `src/scripts/tower/__tests__/project-tower-mart-write.test.ts`
+- `src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts`
 
 ## QA / Validation
 
@@ -69,6 +79,13 @@ for Postgres JSONB columns during the tracked Tower mart write.
 - PASS: `npx eslint src/scripts/tower/project-tower-mart-write.ts src/scripts/tower/__tests__/project-tower-mart-write.test.ts`
 - BLOCKED until rerun after this release: Source Layer 4 ACA apply/verify and
   Tower mart write/readback.
+- PASS: `npx jest src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts src/scripts/tower/__tests__/project-tower-mart-write.test.ts src/lib/cio-tower/mart-projection/__tests__/facts-from-source-contracts.test.ts src/lib/cio-tower/mart-projection/__tests__/assemble-mart.test.ts --runInBand`
+- PASS: `npx eslint src/scripts/tower/project-tower-mart.ts src/scripts/tower/__tests__/project-tower-mart-source-contracts.test.ts`
+- PASS: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`
+- PARTIAL: Source Layer 4 ACA apply/verify succeeded before this bridge
+  hardening. A Tower mart write on the JSONB fix image succeeded but reported
+  zero Source contract facts, proving the need for the tenant-context bridge
+  hardening before final Tower readback.
 
 ## Rollout Plan
 
@@ -101,10 +118,13 @@ to restore the prior mart contents.
   `/tmp/source-contract-depth-package-layer4-apply-20260829T0134Z/04-logs.txt`.
 - Tower mart failed write evidence showing the JSONB serialization error:
   `/tmp/tower-mart-projection-meridian-health-20260829T0221Z/04-logs.txt`.
+- Tower mart successful write with zero Source contract facts before
+  tenant-context hardening:
+  `/tmp/tower-mart-projection-meridian-health-20260829T0245Z/proof/tower-mart-projection-meridian-health/projection-summary.json`.
 - Future evidence after rollout: Source Layer 4 apply/verify summaries, Tower
   mart write proof bundle, and signed-in Tower page proof.
 
 ## Known Gaps
 
-Source Layer 4 apply/verify, Tower mart write/readback, and signed-in Tower UI
-proof still need to run after this release is merged and deployed.
+Final Tower mart write/readback and signed-in Tower UI proof still need to run
+after this release is merged and deployed.
