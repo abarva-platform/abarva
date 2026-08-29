@@ -3,6 +3,9 @@
 **Status:** design contract for the next Home narrative rebuild.
 **Scope:** Home preview and Home chapter surfaces served from ECL.
 **Date:** 2026-08-28.
+**Companion:** `docs/architecture/home-ecl-page-prompts-and-architecture-experience-2026-08-28.md`
+defines the page-by-page prompts, architecture drill path, slice/dice browser, org chart, and
+executive interview experience.
 
 This document defines the target Home executive narrative layer after the ECL cutover. It exists
 because the current ECL Home path is grounded, but not executive-ready: the page reads published
