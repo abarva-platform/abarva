@@ -502,12 +502,14 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
 
 function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const refs = sourceRefs(row);
-  const licensedUsers =
-    payloadNullableNumberFrom(row, ["licensed_users", "rollout_target_users"]) ??
-    0;
-  const activeUsers =
-    payloadNullableNumberFrom(row, ["active_users", "monthly_active_users"]) ??
-    0;
+  const licensedUsersRaw = payloadNullableNumberFrom(row, [
+    "licensed_users",
+    "rollout_target_users",
+  ]);
+  const activeUsersRaw = payloadNullableNumberFrom(row, [
+    "active_users",
+    "monthly_active_users",
+  ]);
   const approvedFundingUsd =
     payloadNullableNumberFrom(row, [
       "approved_funding_usd",
@@ -522,7 +524,15 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     payloadNullableNumberFrom(row, [
       "adoption_rate_percent",
       "adoption_actual_pct",
-    ]) ?? (licensedUsers > 0 ? (activeUsers / licensedUsers) * 100 : null);
+    ]) ??
+    (licensedUsersRaw !== null &&
+    activeUsersRaw !== null &&
+    licensedUsersRaw > 0
+      ? (activeUsersRaw / licensedUsersRaw) * 100
+      : null);
+  const usageMetric =
+    payloadTextFrom(row, ["usage_metric", "success_metric"]) ??
+    (activeUsersRaw !== null ? "active users" : null);
   return {
     aiPortfolioKey: row.row_key,
     itemName: payloadText(row, "use_case_name", row.title) ?? row.row_key,
@@ -542,10 +552,8 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     aiTaggedSpendUsd: approvedFundingUsd,
     promisedValueUsd,
     financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
-    usageMetric:
-      payloadTextFrom(row, ["usage_metric", "success_metric"]) ??
-      "active users",
-    usageActual: activeUsers,
+    usageMetric,
+    usageActual: activeUsersRaw,
     adoptionRatePct,
     valueScore:
       promisedValueUsd !== null && promisedValueUsd > 0

@@ -379,6 +379,10 @@ describe("readTowerCommandCenter", () => {
       mart?.aiPortfolio.find((row) => row.aiPortfolioKey === "TOOL-MER-001")
         ?.usageActual,
     ).toBe(2756);
+    expect(
+      mart?.aiPortfolio.find((row) => row.aiPortfolioKey === "TOOL-MER-001")
+        ?.adoptionRatePct,
+    ).toBe(53);
     const aiCase = mart?.aiPortfolio.find(
       (row) => row.aiPortfolioKey === "BC-MER-003",
     );
@@ -388,6 +392,9 @@ describe("readTowerCommandCenter", () => {
     expect(aiCase?.aiTaggedSpendUsd).toBe(10400000);
     expect(aiCase?.promisedValueUsd).toBe(51180318);
     expect(aiCase?.financeValidatedValueUsd).toBe(1200000);
+    expect(aiCase?.usageMetric).toBeNull();
+    expect(aiCase?.usageActual).toBeNull();
+    expect(aiCase?.adoptionRatePct).toBeNull();
   });
 
   it("maps ECL serving rows with recorded periods into value trajectory points", async () => {
