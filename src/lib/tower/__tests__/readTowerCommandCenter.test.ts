@@ -147,6 +147,7 @@ describe("readTowerCommandCenter", () => {
         page_key: "command_center",
         display_payload_json: {
           layer4_build_version: "tower-layer4-products-v2026-08",
+          reviewed_project_count: "140",
           reviewed_project_budget_usd: "703100000",
           ai_related_investment_usd: "211801054",
           projected_annual_value_low_usd: "677763373",
@@ -293,6 +294,7 @@ describe("readTowerCommandCenter", () => {
           row_key: "executive_summary",
           page_key: "command_center",
           display_payload_json: {
+            reviewed_project_count: "140",
             reviewed_project_budget_usd: "703100000",
             ai_related_investment_usd: "211801054",
             projected_annual_value_low_usd: "677763373",
@@ -361,6 +363,7 @@ describe("readTowerCommandCenter", () => {
     });
 
     expect(mart?.command.approvedProgramBudgetFy26).toBe(703100000);
+    expect(mart?.command.totalProgramSubjectCount).toBe(140);
     expect(mart?.command.aiTaggedSpendFy26NonAdditive).toBe(211801054);
     expect(mart?.command.promisedValueFy26).toBe(677763373);
     expect(mart?.command.claimableValue).toBe(13136248);

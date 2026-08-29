@@ -432,13 +432,14 @@ function buildRows(options) {
   const observationsByCase = groupBy(data.valueObservations, "business_case_id");
   const projectsById = new Map(data.projects.map((row) => [row.project_id, row]));
   const caseById = new Map(data.aiUseCases.map((row) => [row.business_case_id, row]));
-  const sourceForSummary = data.aiUseCases[0];
+  const sourceForSummary = data.projects[0] ?? data.aiUseCases[0];
   const summaryRefs = [sourceRef(options, sourceForSummary, { layer: "layer_4_executive_summary" })];
   const summaryPayload = {
     page_key: "command_center",
     layer4_build_version: options.buildVersion,
     input_source_version: options.inputSourceVersion,
     total_it_budget_usd: num(data.summary.total_it_budget_usd),
+    reviewed_project_count: data.projects.length,
     reviewed_project_budget_usd: num(data.summary.reviewed_project_budget_usd),
     ai_related_investment_usd: num(data.summary.ai_related_investment_usd),
     projected_annual_value_low_usd: num(data.summary.projected_annual_value_low_usd),
@@ -903,6 +904,7 @@ function buildRows(options) {
       },
       executive: {
         total_it_budget_usd: num(data.summary.total_it_budget_usd),
+        reviewed_project_count: data.projects.length,
         reviewed_project_budget_usd: num(data.summary.reviewed_project_budget_usd),
         ai_related_investment_usd: num(data.summary.ai_related_investment_usd),
         projected_annual_value_low_usd: num(data.summary.projected_annual_value_low_usd),

@@ -933,6 +933,10 @@ export async function readTowerCommandCenter(args: {
         summaryRow === undefined
           ? null
           : payloadNullableNumber(summaryRow, "total_it_budget_usd");
+      const executiveReviewedProjectCount =
+        summaryRow === undefined
+          ? null
+          : payloadNullableNumber(summaryRow, "reviewed_project_count");
       const executiveAiInvestment =
         summaryRow === undefined
           ? null
@@ -1020,7 +1024,8 @@ export async function readTowerCommandCenter(args: {
           ),
           promisedValueExposure:
             executivePromised ?? (promised || blocked || null),
-          totalProgramSubjectCount: activeDecisionRows.length,
+          totalProgramSubjectCount:
+            executiveReviewedProjectCount ?? activeDecisionRows.length,
           activeProgramSubjectCount: activeDecisionRows.length,
           materialProgramCount: activeDecisionRows.length,
           boardScopeProgramCount: activeDecisionRows.length,
