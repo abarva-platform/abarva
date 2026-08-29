@@ -579,6 +579,10 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     usageMetric,
     usageActual: activeUsersRaw,
     adoptionRatePct,
+    adoptionTargetPct: payloadNullableNumberFrom(row, ["adoption_target_pct"]),
+    linkedBusinessCaseCount: payloadNullableNumberFrom(row, [
+      "linked_business_case_count",
+    ]),
     valueScore:
       promisedValueUsd !== null && promisedValueUsd > 0
         ? 70
