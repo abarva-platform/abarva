@@ -996,7 +996,7 @@ async function rebuildViews(client: Client): Promise<void> {
 
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_context_coverage_v1 AS
-    SELECT tenant_key, 'vendors'::text AS context_area, count(*)::bigint AS rows_total, count(*)::bigint AS rows_available
+    SELECT tenant_key, 'vendors'::text AS context_area, count(*)::bigint AS row_count, count(*)::bigint AS populated_count
     FROM consumption.sourcing_vendor_v1
     GROUP BY tenant_key
     UNION ALL
