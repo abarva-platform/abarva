@@ -63,4 +63,14 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).not.toContain("AS rows_total");
     expect(source).not.toContain("AS rows_available");
   });
+
+  it("uses typed parameters in Layer 4 readback queries", () => {
+    expect(source).toContain(
+      "SELECT contract_id FROM source.contract WHERE tenant_key = $1 AND load_run_id = $2 ORDER BY contract_id",
+    );
+    expect(source).toContain("[args.tenantKey, args.loadRunId]");
+    expect(source).not.toContain(
+      "SELECT contract_id FROM source.contract WHERE tenant_key = $1 AND load_run_id = $3 ORDER BY contract_id",
+    );
+  });
 });

@@ -302,6 +302,8 @@ interface ProgramAggregate {
     system: string | null;
   }>;
   anyTenantFile: boolean;
+  sourceContractId: string | null;
+  sourceOpportunityId: string | null;
 }
 
 function attr(fact: CioTowerFactRow): Record<string, unknown> {
@@ -385,6 +387,8 @@ function aggregatePrograms(
         factKeys: [],
         sourceRefs: [],
         anyTenantFile: false,
+        sourceContractId: null,
+        sourceOpportunityId: null,
       };
       groups.set(key, agg);
     }
@@ -396,6 +400,8 @@ function aggregatePrograms(
     const financeOwner = textAttr(a, "finance_owner");
     const vendorName = textAttr(a, "vendor_name");
     const toolName = textAttr(a, "tool_name");
+    const sourceContractId = textAttr(a, "contract_id");
+    const sourceOpportunityId = textAttr(a, "opportunity_id");
 
     if (!agg.ownerRole) agg.ownerRole = evidenceOwner ?? executiveOwner;
     if (!agg.financeOwnerRole) {
@@ -409,6 +415,8 @@ function aggregatePrograms(
     if (!agg.systemName || agg.systemName === agg.programName) {
       agg.systemName = toolName ?? agg.systemName;
     }
+    if (!agg.sourceContractId) agg.sourceContractId = sourceContractId;
+    if (!agg.sourceOpportunityId) agg.sourceOpportunityId = sourceOpportunityId;
 
     // A program fact is authoritative for the display name/code/vendor of the
     // group — a tool that rolled up should not rename the funded program.
@@ -495,6 +503,19 @@ function decisionLane(
 }
 
 function decisionRationale(agg: ProgramAggregate, lane: DecisionLane): string {
+  if (agg.sourceContractId) {
+    const vendor = agg.vendorName ? `${agg.vendorName} ` : "";
+    switch (lane) {
+      case "fix":
+        return `${vendor}${agg.sourceContractId} has a sourced optimization opportunity, but finance confirmation and evidence review must close before Tower treats it as realized value.`;
+      case "freeze":
+        return `${vendor}${agg.sourceContractId} should stay in review until the contract evidence chain and value basis are complete.`;
+      case "stop":
+        return `${vendor}${agg.sourceContractId} is showing spend without a complete contract-value chain and should be remediated in Source before action.`;
+      default:
+        return `${vendor}${agg.sourceContractId} has value evidence in Source, but Tower still treats the value as partial until finance confirmation is complete.`;
+    }
+  }
   switch (lane) {
     case "fund":
       return `${agg.programName} has usage and partial finance validation, but Tower still treats the value as partial, not realized.`;
@@ -1307,9 +1328,14 @@ function buildCxoActions(
       (lane.decision_reason_code === "SCALE"
         ? "Maintain claim-gate evidence package"
         : "Complete the next proof gate");
+    const isSourceContractLane = lane.source_fact_keys.some((key) =>
+      key.includes("source-contract"),
+    );
     const handoffModule =
       lane.decision_reason_code === "FIX_PROOF"
-        ? "Moves"
+        ? isSourceContractLane
+          ? "Source"
+          : "Moves"
         : lane.decision_reason_code === "STOP_REDESIGN" ||
             lane.decision_reason_code === "FREEZE"
           ? "Source"

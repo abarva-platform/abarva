@@ -37,6 +37,10 @@ import {
   projectTowerOperationalToFacts,
   type TowerOperationalInput,
 } from "../../lib/cio-tower/mart-projection/facts-from-tower";
+import {
+  projectSourceContractDepthToFacts,
+  type SourceContractDepthInput,
+} from "../../lib/cio-tower/mart-projection/facts-from-source-contracts";
 import { mergeFactsByCanonicalIdentity } from "../../lib/cio-tower/mart-projection/merge-facts";
 import { assembleMartFromFacts } from "../../lib/cio-tower/mart-projection/assemble-mart";
 import {
@@ -338,6 +342,58 @@ async function readTowerFacts(
   return projectTowerOperationalToFacts(input, identity);
 }
 
+async function readSourceContractDepthFacts(
+  client: Client | null,
+  identity: CioTowerTenantIdentity,
+): Promise<CioTowerFactRow[]> {
+  if (!client) return [];
+  const input: SourceContractDepthInput = {};
+  const q = async <T extends Record<string, unknown>>(
+    sql: string,
+  ): Promise<T[]> => {
+    try {
+      const r = await client.query<T>(sql, [identity.tenantKey]);
+      return r.rows;
+    } catch {
+      return [];
+    }
+  };
+
+  input.contracts = (await q(
+    `SELECT contract_id, contract_name, vendor_name, annual_contract_value,
+            actual_annual_spend, authority_state, quality_state, knowledge_baseline_ref
+       FROM consumption.sourcing_contract_v1
+      WHERE tenant_key = $1
+      ORDER BY annual_contract_value DESC NULLS LAST, contract_id`,
+  )) as unknown as SourceContractDepthInput["contracts"];
+
+  input.opportunities = (await q(
+    `SELECT opportunity_id, contract_id, vendor_name, title, annual_value_exposed,
+            readiness_state, evidence_state, recommended_action, accountable_role,
+            knowledge_baseline_ref
+       FROM consumption.sourcing_opportunity_v1
+      WHERE tenant_key = $1
+        AND COALESCE(annual_value_exposed, 0) > 0
+      ORDER BY annual_value_exposed DESC NULLS LAST, opportunity_id`,
+  )) as unknown as SourceContractDepthInput["opportunities"];
+
+  input.performance = (await q(
+    `SELECT contract_id,
+            COALESCE(sum(breach_count), 0) AS breached_periods,
+            COALESCE(sum(credit_calculated), 0) AS credit_calculated,
+            COALESCE(sum(credit_claimed), 0) AS credit_claimed,
+            COALESCE(sum(credit_recovered), 0) AS credit_recovered,
+            count(*) FILTER (WHERE evidence_state = 'present') AS evidence_rows,
+            min(knowledge_baseline_ref) AS knowledge_baseline_ref
+       FROM consumption.sourcing_performance_v1
+      WHERE tenant_key = $1
+      GROUP BY contract_id
+      ORDER BY contract_id`,
+  )) as unknown as SourceContractDepthInput["performance"];
+
+  return projectSourceContractDepthToFacts(input, identity);
+}
+
 async function readAliases(
   client: Client | null,
   tenantKey: string,
@@ -420,16 +476,25 @@ async function main(): Promise<void> {
     );
     // 2. tower_* operational facts (DB)
     const towerFacts = await readTowerFacts(client, identity);
-    // 3. crosswalk (DB)
+    // 3. Source contract-depth facts (DB)
+    const sourceContractFacts = await readSourceContractDepthFacts(
+      client,
+      identity,
+    );
+    // 4. crosswalk (DB)
     const aliases = await readAliases(client, args.tenant);
     const { crosswalk, conflicts } = buildToolProgramCrosswalk(
       aliases,
       args.tenant,
     );
 
-    // 4. merge
-    const merged = mergeFactsByCanonicalIdentity([...v3Facts, ...towerFacts]);
-    // 5. assemble
+    // 5. merge
+    const merged = mergeFactsByCanonicalIdentity([
+      ...v3Facts,
+      ...towerFacts,
+      ...sourceContractFacts,
+    ]);
+    // 6. assemble
     const mart = assembleMartFromFacts(merged.facts, {
       tenantKey: identity.tenantKey,
       tenantName: identity.tenantName,
@@ -457,6 +522,7 @@ async function main(): Promise<void> {
       idempotency_key: idemKey,
       v3_facts: v3Facts.length,
       tower_facts: towerFacts.length,
+      source_contract_facts: sourceContractFacts.length,
       merged_facts: merged.facts.length,
       suppressed_facts: merged.suppressed.length,
       crosswalk_size: crosswalk.size,
