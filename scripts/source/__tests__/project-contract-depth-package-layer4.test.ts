@@ -81,6 +81,10 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain(
       "Do not answer cross-tenant vendor pricing prompts.",
     );
+    expect(source).toContain(
+      "COALESCE(cov.vendor_name, o.vendor_ref, 'Unknown vendor') AS vendor_name",
+    );
+    expect(source).not.toContain("o.vendor_name,");
   });
 
   it("grants the deterministic Source impact layer to product readers", () => {
