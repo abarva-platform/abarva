@@ -1709,10 +1709,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  requireApplyApproval(args);
-
   const result = await withClient(async (client) => {
     if (args.mode === "apply-layer2") {
+      requireApplyApproval(args);
       await client.query("BEGIN");
       try {
         await applyLayer2(client, args, rows, packageHash, adapted.qualityGate);
@@ -1736,6 +1735,7 @@ async function main(): Promise<void> {
     }
 
     if (args.mode === "apply-layer3") {
+      requireApplyApproval(args);
       await client.query("BEGIN");
       let readback: Record<string, number | string>;
       try {

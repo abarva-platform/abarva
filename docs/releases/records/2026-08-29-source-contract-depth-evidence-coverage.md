@@ -44,6 +44,7 @@ Layer 4 - Products: Extends the Source overlay projection with additive `source.
 - Updated `scripts/source/project-contract-depth-package-layer4.ts`.
 - Added ACA operator npm entrypoints and extractable proof-bundle emission for Layer 2, Layer 3, Layer 2/3 verify, Layer 4 apply, and Layer 4 verify jobs.
 - Removed an invalid Layer 3 `case_opportunity` upsert target; package idempotency for that table now relies on the existing scoped pre-delete before insert.
+- Scoped the Layer 2/3 approval guard to mutating apply modes so the read-only verification job can run after the load.
 - Updated focused Source package and loader tests.
 
 ## QA / Validation
@@ -56,6 +57,7 @@ Layer 4 - Products: Extends the Source overlay projection with additive `source.
 - `jest src/lib/source/contract-depth-package/__tests__/adapter.test.ts src/lib/source/contract-depth-package/__tests__/projection.test.ts --runInBand` - PASS.
 - `jest scripts/source/__tests__/load-contract-depth-package.test.ts scripts/source/__tests__/project-contract-depth-package-layer4.test.ts --runInBand` - PASS.
 - First governed Layer 3 ACA execution surfaced an invalid `case_opportunity` upsert conflict target before any Layer 4 refresh. The worker restored idle cleanly; this candidate removes the invalid target and adds a regression test for that loader invariant.
+- The first read-only Layer 2/3 verify execution exposed that the mutation approval guard also blocked verify mode. This candidate scopes that guard to apply modes and adds a regression test.
 
 ## Rollout Plan
 
