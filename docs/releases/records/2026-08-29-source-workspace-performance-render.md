@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Source workspace now renders governed performance observations when the data adapter returns numeric values instead of pre-formatted text. This prevents a client-side surface crash and keeps percentage-style service performance rows legible.
+The Source workspace now renders governed performance observations and dates when the data adapter returns database-native values instead of pre-formatted text. This prevents client-side surface crashes and keeps service performance rows legible.
 
 ## Layer Impact
 
@@ -28,6 +28,8 @@ Layer 4 Products: updates the Source workspace presentation layer only. No schem
 
 - `src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx`
 - `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts`
+- `src/app/(maestro)/source/preview/workspace/viewModel.tsx`
+- `src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts`
 
 ## QA / Validation
 
