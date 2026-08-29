@@ -88,6 +88,8 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("page_key = 'contract_action'");
     expect(source).toContain("FROM source.contract_action_candidate_v1 a");
     expect(source).toContain("concat('action:', a.action_candidate_id)");
+    expect(source).toContain("AND load_run_id = $2");
+    expect(source).toContain("[args.tenantKey, args.loadRunId]");
   });
 
   it("grants the deterministic Source impact layer to product readers", () => {

@@ -350,8 +350,8 @@ async function l4Readback(
          FROM source.ava_grounding_bundle_v1
         WHERE tenant_key = $1
           AND page_key = 'contract_action'
-          AND load_run_id = $3`,
-      [args.tenantKey, contractIds, args.loadRunId],
+          AND load_run_id = $2`,
+      [args.tenantKey, args.loadRunId],
     ),
     deterministic_layer_unclaimed_credit_usd: await tableScalar(
       client,

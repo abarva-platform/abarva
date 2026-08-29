@@ -14,6 +14,8 @@ Fixes the Source contract-depth Layer 4 projection so action-candidate rows deri
 
 It also scopes aVa grounding bundles to deterministic Source-page story rows plus package action-candidate rows, preventing broad tenant contract coverage rows from inflating the action-candidate proof count.
 
+It also fixes the scoped aVa grounding readback SQL parameter binding so the governed Layer 4 apply job can assert the package action-bundle count without PostgreSQL type-inference failures.
+
 ## Layer Impact
 
 - `client-data-lane`: updates the governed ACA data-build projection script for Source contract-depth Layer 4 views.
@@ -28,6 +30,7 @@ All clients using the Source contract-depth Layer 4 projection path. Current dat
 - `scripts/source/project-contract-depth-package-layer4.ts`
 - `scripts/source/__tests__/project-contract-depth-package-layer4.test.ts`
 - Follow-up: scope `source.ava_grounding_bundle_v1` action grounding to deterministic action candidates and assert the package action-bundle count.
+- Follow-up: bind the action-grounding readback to the load-run parameter directly and assert that no unused ambiguous parameter remains.
 
 ## QA / Validation
 
