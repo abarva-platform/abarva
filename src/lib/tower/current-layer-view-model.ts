@@ -131,6 +131,8 @@ export interface TowerMartProgramLane {
   approvedFundingUsd: number;
   fundedAmount?: number;
   aiTaggedSpendUsd: number;
+  /** Whether any spend was recorded. The value above is coerced to 0 when nothing was. */
+  aiSpendLoaded?: boolean;
   promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   knownSupportedValue?: number | null;
@@ -164,6 +166,8 @@ export interface TowerMartAiPortfolioItem {
   decisionLane: "fund" | "fix" | "freeze" | "stop";
   approvedFundingUsd: number;
   aiTaggedSpendUsd: number;
+  /** Whether any spend was recorded. The value above is coerced to 0 when nothing was. */
+  aiSpendLoaded?: boolean;
   promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   usageMetric: string | null;
