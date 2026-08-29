@@ -595,6 +595,15 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
       "risk_score",
       "risk_pressure_score",
     ]),
+    // The Finance pipeline stage, read from its own key only.
+    //
+    // This must not come through `fundingStatus`, which resolves
+    // `funding_status ?? finance_status ?? review_state` — three different things behind one name.
+    // On a case `funding_status` is the committee decision (fund / challenge / defer); on a tool
+    // rollout it is the rollout stage (pilot / scale). So that chain never yields a finance status
+    // for a case, and yields a non-null value for every row, which also makes it useless for
+    // telling cases and tools apart. `finance_status` is written on case payloads only.
+    financeStatus: payloadTextFrom(row, ["finance_status"]),
     gatingConstraint: payloadTextFrom(row, ["gating_constraint"]),
     confidenceLevel: payloadTextFrom(row, ["confidence_level"]),
     businessValueType: payloadTextFrom(row, ["business_value_type"]),
