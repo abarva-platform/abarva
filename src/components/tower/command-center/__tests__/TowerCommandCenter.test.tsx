@@ -203,9 +203,10 @@ describe("TowerCommandCenter", () => {
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowRight" });
     expect(tab(TAB.budget)).toHaveAttribute("aria-selected", "true");
-    expect(replace).toHaveBeenCalledWith("/tower/command?tab=budget", {
-      scroll: false,
-    });
+    expect(replace).toHaveBeenCalledWith(
+      "/tower/command?tab=budget&view=shape",
+      { scroll: false },
+    );
   });
 
   it("does not let a stale URL tab value undo a local tab click", () => {
@@ -216,7 +217,7 @@ describe("TowerCommandCenter", () => {
 
     expect(tab(TAB.initiatives)).toHaveAttribute("aria-selected", "true");
     expect(replace).toHaveBeenCalledWith(
-      "/tower/command?tab=initiatives&proof=stale",
+      "/tower/command?tab=initiatives&proof=stale&view=constraint",
       { scroll: false },
     );
   });

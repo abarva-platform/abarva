@@ -147,11 +147,16 @@ export function TowerCommandCenter({
   const searchParams = useSearchParams();
 
   const urlTab = searchParams?.get("tab");
+  const urlSubTab = searchParams?.get("view");
   const [tab, setTab] = useState<TowerTab>(normalizeTowerTab(urlTab));
   // Sub-tab is per-tab and resets on tab change, so a tab never opens on a panel from another one.
-  const [subTab, setSubTab] = useState<string>(() =>
-    defaultSubTab(normalizeTowerTab(urlTab)),
-  );
+  const [subTab, setSubTab] = useState<string>(() => {
+    // A sub-tab from the URL only counts if it belongs to the tab that URL names; otherwise a
+    // stale `view` from another tab would silently select nothing and render the default anyway.
+    const t = normalizeTowerTab(urlTab);
+    const valid = SUB_TABS[t].some((st) => st.id === urlSubTab);
+    return valid && urlSubTab ? urlSubTab : defaultSubTab(t);
+  });
   const [drawer, setDrawer] = useState<DrawerState>(null);
 
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -165,9 +170,12 @@ export function TowerCommandCenter({
   const goToTab = useCallback(
     (next: TowerTab) => {
       setTab(next);
-      setSubTab(defaultSubTab(next));
+      const nextSub = defaultSubTab(next);
+      setSubTab(nextSub);
       const params = new URLSearchParams(searchParams?.toString() ?? "");
       params.set("tab", next);
+      if (nextSub) params.set("view", nextSub);
+      else params.delete("view");
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [pathname, router, searchParams],
@@ -403,7 +411,17 @@ export function TowerCommandCenter({
                         role="tab"
                         aria-selected={on}
                         className={cx(on && styles.segmentOn)}
-                        onClick={() => setSubTab(st.id)}
+                        onClick={() => {
+                          setSubTab(st.id);
+                          const params = new URLSearchParams(
+                            searchParams?.toString() ?? "",
+                          );
+                          params.set("tab", tab);
+                          params.set("view", st.id);
+                          router.replace(`${pathname}?${params.toString()}`, {
+                            scroll: false,
+                          });
+                        }}
                       >
                         {st.label}
                       </button>
