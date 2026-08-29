@@ -85,6 +85,9 @@ describe("contract depth package Layer 4 overlay job", () => {
       "COALESCE(cov.vendor_name, o.vendor_ref, 'Unknown vendor') AS vendor_name",
     );
     expect(source).not.toContain("o.vendor_name,");
+    expect(source).toContain("page_key = 'contract_action'");
+    expect(source).toContain("FROM source.contract_action_candidate_v1 a");
+    expect(source).toContain("concat('action:', a.action_candidate_id)");
   });
 
   it("grants the deterministic Source impact layer to product readers", () => {

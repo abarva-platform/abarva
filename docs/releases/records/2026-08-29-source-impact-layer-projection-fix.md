@@ -12,6 +12,8 @@
 
 Fixes the Source contract-depth Layer 4 projection so action-candidate rows derive vendor display names from the contract evidence coverage view instead of a non-existent opportunity-view column.
 
+It also scopes aVa grounding bundles to deterministic Source-page story rows plus package action-candidate rows, preventing broad tenant contract coverage rows from inflating the action-candidate proof count.
+
 ## Layer Impact
 
 - `client-data-lane`: updates the governed ACA data-build projection script for Source contract-depth Layer 4 views.
@@ -25,6 +27,7 @@ All clients using the Source contract-depth Layer 4 projection path. Current dat
 
 - `scripts/source/project-contract-depth-package-layer4.ts`
 - `scripts/source/__tests__/project-contract-depth-package-layer4.test.ts`
+- Follow-up: scope `source.ava_grounding_bundle_v1` action grounding to deterministic action candidates and assert the package action-bundle count.
 
 ## QA / Validation
 
@@ -52,7 +55,7 @@ Revert the PR and redeploy the prior digest if the projection fix regresses runt
 
 ## Audit Evidence
 
-Inspect the PR, deploy run, ACA operator job logs, Layer 4 proof bundle, and signed-in Source page proof.
+Inspect the PRs, deploy runs, ACA operator job logs, Layer 4 proof bundle, and signed-in Source page proof.
 
 ## Known Gaps
 
