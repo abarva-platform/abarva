@@ -18,9 +18,13 @@ function read(rel: string): string {
 describe("Tower freshness is provenance-derived", () => {
   it("carries as_of_period and refresh_timestamp from the ECL serving model", () => {
     const reader = read("lib/tower/readTowerCommandCenter.ts");
-    expect(reader).toMatch(/asOfPeriod: "2026-08-24"/);
-    expect(reader).toMatch(/refreshTimestamp: null/);
+    expect(reader).toMatch(
+      /payloadTextFrom\(summaryRow, \["as_of_period", "asOfPeriod"\]\)/,
+    );
+    expect(reader).toMatch(/"refresh_timestamp"/);
+    expect(reader).toMatch(/"refreshTimestamp"/);
     expect(reader).toMatch(/sourceFiles/);
+    expect(reader).not.toMatch(/asOfPeriod: "2026-08-24"/);
   });
 
   it("exposes both fields on the command-center summary", () => {
