@@ -66,8 +66,8 @@ assert(
   "ECL narrative job normalizes structured source_refs_json objects into citation IDs instead of treating them as missing",
 );
 assert(
-  script.includes("The executive packet policy withheld") &&
-    script.includes("withheld payloads are not included") &&
+  script.includes("Some candidate facts were withheld from executive use") &&
+    script.includes("withheld from executive use") &&
     script.includes("blocked_count_by_reason") &&
     script.includes("row_readiness_counts"),
   "ECL narrative job emits safe policy-gap and readiness metadata without copying blocked payloads into model context",

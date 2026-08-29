@@ -10,12 +10,12 @@
 
 ## Plain-English Summary
 
-The Home preview no longer renders ECL proof-only demo findings on the default executive surface. The proof panel remains available only when an operator requests ECL diagnostics explicitly.
+The Home preview no longer renders ECL proof-only demo findings on the default executive surface. The proof panel remains available only when an operator requests ECL diagnostics explicitly. The Home narrative generator also now refuses publication when CXO-visible text contains implementation vocabulary or bland empty-state phrasing.
 
 ## Layer Impact
 
 - Lane: `global-control-lane`
-- Layer 4 Products: Home preview rendering is narrowed so default ECL pages stay executive-facing while diagnostics remain available for operator proof runs.
+- Layer 4 Products: Home preview rendering is narrowed so default ECL pages stay executive-facing while diagnostics remain available for operator proof runs. Home narrative publication now checks visible text before writing new generated chapter rows.
 
 ## Client Applicability
 
@@ -29,12 +29,15 @@ The Home preview no longer renders ECL proof-only demo findings on the default e
 
 - `src/app/(maestro)/home/preview/page.tsx`
 - `src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts`
+- `scripts/ecl/build_home_ecl_narrative_layer.ts`
+- `scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs`
 
 ## QA / Validation
 
 - `npm run test:ecl-home-narrative-layer` passed.
+- `/Users/anand/Projects/nexus/node_modules/.bin/jest --runTestsByPath 'src/app/(maestro)/home/__tests__/home-layer-boundary-contract.test.ts' 'src/lib/home/preview/__tests__/ecl-projection-bundle.test.ts' --runInBand` passed.
 - `git diff --check` passed.
-- Initial Jest path run could not execute in the temporary worktree because local Jest dependencies were not installed there; the node-based Home ECL narrative gate passed.
+- `npm run release:check` passed.
 
 ## Rollout Plan
 

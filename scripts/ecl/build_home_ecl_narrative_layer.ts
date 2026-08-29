@@ -50,6 +50,28 @@ const DEFAULT_OUT_DIR = "/tmp/home-ecl-narrative-layer";
 const PROJECTION_VERSION = 1;
 const WRITE = process.env.HOME_ECL_NARRATIVE_WRITE === "true" && process.env.HOME_ECL_NARRATIVE_WRITE_APPROVED === "true";
 
+const CXO_FORBIDDEN_VISIBLE_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
+  { label: "ecl", pattern: /\bECL\b/i },
+  { label: "projection", pattern: /\bprojections?\b/i },
+  { label: "serving_view", pattern: /\bserving views?\b/i },
+  { label: "loaded_row", pattern: /\bloaded rows?\b/i },
+  { label: "canonical_entity", pattern: /\bcanonical entit(?:y|ies)\b/i },
+  { label: "row_count", pattern: /\brow counts?\b/i },
+  { label: "payload", pattern: /\bpayload\b/i },
+  { label: "schema", pattern: /\bschemas?\b/i },
+  { label: "source_room", pattern: /\bsource rooms?\b/i },
+  { label: "writer", pattern: /\bwriter\b/i },
+  { label: "provider_flag", pattern: /\bprovider flag\b/i },
+  { label: "projection_entry", pattern: /\bprojection_entry\b/i },
+  { label: "source_refs_json", pattern: /\bsource_refs_json\b/i },
+  { label: "context_policy", pattern: /\bcontext_policy\b/i },
+  { label: "usable_count", pattern: /\busable_count\b/i },
+  { label: "row_readiness", pattern: /\brow readiness\b/i },
+  { label: "bland_empty_headline", pattern: /\bnot enough verified evidence yet\b/i },
+  { label: "routed_empty_claim", pattern: /\bNo verified claims were routed\b/i },
+  { label: "build_gap", pattern: /\bcoverage gap in the build\b/i },
+];
+
 const CHAPTER_IDS: ChapterId[] = [
   "executive_brief",
   "our_business",
@@ -483,7 +505,7 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
     {
       id: "sig_ecl_estate_001",
       kind: "portfolio",
-      statement: `The governed Home record contains ${permittedApplications.length.toLocaleString()} applications, ${permittedContracts.length.toLocaleString()} contracts, ${permittedInfrastructure.length.toLocaleString()} infrastructure/platform records, and ${permittedDataFlows.length.toLocaleString()} data-flow rows that passed the executive packet readiness policy.`,
+      statement: `The governed record contains ${permittedApplications.length.toLocaleString()} applications, ${permittedContracts.length.toLocaleString()} contracts, ${permittedInfrastructure.length.toLocaleString()} infrastructure/platform records, and ${permittedDataFlows.length.toLocaleString()} data-flow movements eligible for executive use.`,
       domains: ["application_system", "vendor_contract", "infrastructure_platform", "data_asset_or_integration"],
       evidenceRefs: allUsableRowIds.slice(0, 20),
     },
@@ -491,22 +513,22 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
       id: "sig_ecl_vendor_002",
       kind: "concentration",
       statement: topVendor
-        ? `The governed contract view shows ${permittedContracts.length.toLocaleString()} contracts with $${(contractSpend / 1_000_000).toFixed(1)}M annualized value; ${String(topVendor.label)} is the largest visible supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of ready contract value.`
-        : "The governed contract view has no agent-ready supplier spend rows.",
+        ? `The governed contract record contains ${permittedContracts.length.toLocaleString()} contracts with $${(contractSpend / 1_000_000).toFixed(1)}M annualized value; ${String(topVendor.label)} is the largest visible supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of ready contract value.`
+        : "The governed contract record has no supplier spend facts eligible for executive use.",
       domains: ["vendor_contract", "spend_value_fact"],
       evidenceRefs: rowIdsFor("_vendor_contracts_"),
     },
     {
       id: "sig_ecl_data_flow_003",
       kind: "complexity",
-      statement: `The governed data-flow view carries ${permittedDataFlows.length.toLocaleString()} source-target movement rows that passed executive-packet readiness, so architecture and data-flow pages should render from topology evidence rather than from static snapshot counts.`,
+      statement: `The governed data-flow record contains ${permittedDataFlows.length.toLocaleString()} source-target movements eligible for executive use, giving the architecture and data-flow pages topology evidence rather than a fixed inventory list.`,
       domains: ["data_asset_or_integration", "application_system"],
       evidenceRefs: rowIdsFor("_data_flow_"),
     },
     {
       id: "sig_ecl_writer_004",
       kind: "operational",
-      statement: "Home narrative prose is generated only after the executive packet governance policy permits the candidate facts, while factual counts remain deterministic record facts.",
+      statement: "Home narrative prose is allowed to use only governed facts with citations, while factual counts remain deterministic record facts.",
       domains: ["evidence_sources", "application_system", "vendor_contract"],
       evidenceRefs: allUsableRowIds.slice(0, 20),
     },
@@ -519,7 +541,7 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
   const contextItems: ContextItem[] = [
     {
       id: "ctx_ecl_assessment_001",
-      statement: `This Home narrative build is based on assessment ${assessmentId}; the fixture is synthetic and not client-attested.`,
+      statement: `The current evidence package is synthetic and not client-attested; executive conclusions must preserve that limitation.`,
       domains: ["enterprise_profile", "evidence_sources"],
     },
     ...validatedRows.usable
@@ -533,7 +555,7 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
   if (validatedRows.blocked.length > 0) {
     contextItems.push({
       id: "ctx_ecl_context_policy_summary_001",
-      statement: `The executive packet policy withheld ${validatedRows.blocked.length.toLocaleString()} candidate facts from narrative input; withheld payloads are not included, and the affected areas should be treated as readiness gaps until source, review, retrievability, or admission status is corrected.`,
+      statement: `Some candidate facts were withheld from executive use; the affected areas should be treated as evidence-readiness gaps until source, review, retrievability, or admission status is corrected.`,
       domains: ["evidence_sources"],
     });
   }
@@ -684,6 +706,83 @@ function publicationGateIssues(
     }
     if (row.verdict === "OVERSTATED" && !row.action.startsWith("repaired") && !row.action.startsWith("dropped")) {
       issues.push(`overstated_claim_not_repaired_or_dropped:${row.path}:${row.action}`);
+    }
+  }
+  return issues;
+}
+
+function visibleClaimTexts(claims: GroundedClaim[] | null | undefined): string[] {
+  return (claims ?? []).filter(Boolean).map((claim) => claim.statement);
+}
+
+function visibleNarrativeText(
+  thesisResult: Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>,
+  chapters: ChapterView[],
+): Array<{ path: string; text: string }> {
+  const out: Array<{ path: string; text: string }> = [];
+  const thesis = thesisResult.publishedGeneration as EnterpriseThesis | null;
+  if (thesis) {
+    out.push({ path: "thesis.enterprise_story", text: thesis.enterprise_story });
+    out.push({ path: "thesis.value_creation_model.summary", text: thesis.value_creation_model.summary });
+    for (const [section, claims] of Object.entries({
+      enterprise_story_claims: thesis.enterprise_story_claims,
+      primary_value_drivers: thesis.value_creation_model.primary_value_drivers,
+      economic_dependencies: thesis.value_creation_model.economic_dependencies,
+      strategic_bets: thesis.strategic_bets,
+      structural_constraints: thesis.structural_constraints,
+      operating_tensions: thesis.operating_tensions,
+      leadership_consensus: thesis.leadership_consensus,
+      leadership_disagreements: thesis.leadership_disagreements,
+      where_improving: thesis.performance_story.where_improving,
+      where_off_track: thesis.performance_story.where_off_track,
+      where_unknown: thesis.performance_story.where_unknown,
+      technology_and_data_implications: thesis.technology_and_data_implications,
+      material_risks: thesis.material_risks,
+      value_realization_tensions: thesis.value_realization_tensions,
+      what_needs_attention: thesis.what_needs_attention,
+      things_a_new_cxo_should_know: thesis.things_a_new_cxo_should_know,
+      questions_for_management: thesis.questions_for_management,
+    })) {
+      visibleClaimTexts(claims as GroundedClaim[]).forEach((text, index) => {
+        out.push({ path: `thesis.${section}[${index}]`, text });
+      });
+    }
+    for (const [index, visual] of (thesis.visual_opportunities ?? []).entries()) {
+      out.push({ path: `thesis.visual_opportunities[${index}].title`, text: visual.title });
+      out.push({ path: `thesis.visual_opportunities[${index}].key_message`, text: visual.key_message });
+    }
+  }
+  for (const chapter of chapters) {
+    out.push({ path: `chapter.${chapter.chapterId}.headline`, text: chapter.headline });
+    out.push({ path: `chapter.${chapter.chapterId}.executive_synthesis`, text: chapter.executive_synthesis });
+    [
+      ...chapter.key_insights,
+      ...chapter.tensions,
+      ...chapter.what_to_watch,
+    ].forEach((claim, index) => {
+      out.push({ path: `chapter.${chapter.chapterId}.claim[${index}]`, text: claim.statement });
+    });
+    chapter.questions_to_ask.forEach((question, index) => {
+      out.push({ path: `chapter.${chapter.chapterId}.question[${index}]`, text: question });
+    });
+    for (const [index, visual] of (chapter.visual_opportunities ?? []).entries()) {
+      out.push({ path: `chapter.${chapter.chapterId}.visual[${index}].title`, text: visual.title });
+      out.push({ path: `chapter.${chapter.chapterId}.visual[${index}].key_message`, text: visual.key_message });
+    }
+  }
+  return out;
+}
+
+function visibleNarrativeQualityIssues(
+  thesisResult: Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>,
+  chapters: ChapterView[],
+): string[] {
+  const issues: string[] = [];
+  for (const item of visibleNarrativeText(thesisResult, chapters)) {
+    for (const forbidden of CXO_FORBIDDEN_VISIBLE_PATTERNS) {
+      if (forbidden.pattern.test(item.text)) {
+        issues.push(`forbidden_visible_term:${forbidden.label}:${item.path}`);
+      }
     }
   }
   return issues;
@@ -954,6 +1053,10 @@ async function main() {
       anthropic,
       options.chapterIds,
     );
+    const visibleQualityIssues = visibleNarrativeQualityIssues(thesisResult, chapters);
+    if (visibleQualityIssues.length) {
+      throw new Error(`Home ECL narrative visible-quality gate failed: ${visibleQualityIssues.join("; ")}`);
+    }
     const result = {
       tenantKey: options.tenantKey,
       assessmentId: options.assessmentId,
