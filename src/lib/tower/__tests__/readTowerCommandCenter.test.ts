@@ -130,6 +130,74 @@ describe("readTowerCommandCenter", () => {
     ).rejects.toThrow("tower_ecl_serving_source_refs_missing");
   });
 
+  it("serves only the active Layer 4 assessment when older serving rows remain", async () => {
+    const oldAssessmentRow = {
+      ...servingRow({
+        row_key: "old-row",
+        page_key: "command_center",
+        promised_value_usd: "999999999",
+      }),
+      assessment_id: "old-assessment",
+      projection_version: 1,
+      source_refs_json: [],
+    };
+    const activeSummaryRow = {
+      ...servingRow({
+        row_key: "executive_summary",
+        page_key: "command_center",
+        display_payload_json: {
+          layer4_build_version: "tower-layer4-products-v2026-08",
+          reviewed_project_budget_usd: "703100000",
+          ai_related_investment_usd: "211801054",
+          projected_annual_value_low_usd: "677763373",
+          board_claimable_ytd_usd: "13136248",
+        },
+      }),
+      assessment_id: "active-assessment",
+      projection_version: 2,
+    };
+    const activeValueRow = {
+      ...servingRow({
+        row_key: "active-value",
+        page_key: "value_proof",
+        promised_value_usd: "4000000",
+        baseline_value: undefined,
+      }),
+      assessment_id: "active-assessment",
+      projection_version: 2,
+    };
+
+    mockServingRows({
+      tower_command_center: [oldAssessmentRow, activeSummaryRow],
+      tower_value_proof: [
+        {
+          ...oldAssessmentRow,
+          page_key: "value_proof",
+          row_key: "old-value",
+        },
+        activeValueRow,
+      ],
+      tower_decision_lanes: [],
+      tower_evidence: [],
+      tower_recommended_actions: [],
+      tower_ai_portfolio: [],
+      tower_cost_lens: [],
+      tower_risk_lens: [],
+      tower_adoption_lens: [],
+    });
+
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["meridian-health"],
+    });
+
+    expect(mart?.command.martVersion).toBe("ecl-serving-v2");
+    expect(mart?.command.approvedProgramBudgetFy26).toBe(703100000);
+    expect(mart?.command.aiTaggedSpendFy26NonAdditive).toBe(211801054);
+    expect(mart?.command.promisedValueFy26).toBe(677763373);
+    expect(mart?.command.claimableValue).toBe(13136248);
+    expect(mart?.command.knownValueAmountUsd).toBe(4000000);
+  });
+
   it("maps ECL serving views into the existing Tower Command Center contract", async () => {
     mockServingRows({
       tower_command_center: [servingRow()],
