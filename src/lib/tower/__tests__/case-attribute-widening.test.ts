@@ -111,3 +111,31 @@ describe("financeStatus is not the funding-status chain", () => {
     expect(site.slice(0, 120)).not.toMatch(/funding_status|review_state/);
   });
 });
+
+describe("tool rollout adoption target and supported-case count", () => {
+  const panel = read("src/components/tower/command-center/views/ToolsTablePanel.tsx");
+
+  it("reads the adoption target and case count from the source row", () => {
+    const reader = read("src/lib/tower/readTowerCommandCenter.ts");
+    expect(reader).toContain('payloadNullableNumberFrom(row, ["adoption_target_pct"])');
+    expect(reader).toContain('"linked_business_case_count"');
+  });
+
+  it("does not infer a supported-case count from a shared vendor or system name", () => {
+    // The count is asserted on the row. A vendor-name match counts every other row from the
+    // same vendor, which is not a relationship — and reads as one on a CXO surface.
+    expect(panel).not.toContain("other.vendor === item.vendor");
+    expect(panel).not.toContain("other.system === item.system");
+  });
+
+  it("derives the below-target headline instead of hardcoding its inputs", () => {
+    // `const loadedTargets = 0` made the "below their own target" branch unreachable, so the
+    // panel claimed targets were absent whatever the data held.
+    expect(panel).not.toMatch(/const\s+(loadedTargets|belowTarget)\s*=\s*0\s*;/);
+    expect(panel).toContain("row.targetPct !== null");
+  });
+
+  it("never labels an adoption reading as measured against an unloaded target", () => {
+    expect(panel).not.toContain("vs Not loaded");
+  });
+});

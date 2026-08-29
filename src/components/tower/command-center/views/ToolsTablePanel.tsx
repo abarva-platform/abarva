@@ -3,9 +3,10 @@
 /**
  * Tools -> table.
  *
- * Tool rollouts are the AI rows with usage evidence. Licensed seats and adoption targets are not
- * first-class fields in `TowerAiView` yet, so those cells render as absent instead of borrowing
- * readiness or risk.
+ * Tool rollouts are the AI rows with usage evidence. The adoption target and the supported-case
+ * count are both asserted on the source row (`adoption_target_pct`, `linked_business_case_count`);
+ * this panel reads them directly. Neither is inferred, and a row that asserts neither renders as
+ * absent rather than borrowing readiness, risk, or a shared vendor name.
  */
 
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
@@ -16,7 +17,8 @@ type ToolRow = {
   readonly item: TowerAiView;
   readonly activeUsers: string;
   readonly adoptionPct: number | null;
-  readonly linkedCases: number;
+  readonly targetPct: number | null;
+  readonly linkedCases: number | null;
 };
 
 const GRID: React.CSSProperties = {
@@ -24,6 +26,10 @@ const GRID: React.CSSProperties = {
   gridTemplateColumns: "minmax(0,2.2fr) minmax(0,1.5fr) 82px minmax(0,1.8fr) minmax(0,1.5fr) 64px",
   gap: 14,
 };
+
+function clampPct(pct: number): number {
+  return Math.max(0, Math.min(100, pct));
+}
 
 function usageMetric(item: TowerAiView) {
   return item.usageBars.find((bar) => bar.label !== "Adoption") ?? null;
@@ -43,23 +49,32 @@ function toolRows(view: TowerCommandCenterView): readonly ToolRow[] {
         item,
         activeUsers: usage?.valueText ?? "Not loaded",
         adoptionPct: adoptionMetric(item),
-        linkedCases: view.allInitiatives.filter(
-          (other) =>
-            other.id !== item.id &&
-            other.promisedBenefitLoaded &&
-            other.promisedUsd > 0 &&
-            ((item.system && other.system === item.system) ||
-              (item.vendor && other.vendor === item.vendor)),
-        ).length,
+        targetPct: item.adoptionTargetPct,
+        linkedCases: item.linkedBusinessCaseCount,
       };
     })
-    .sort((a, b) => (b.adoptionPct ?? -1) - (a.adoptionPct ?? -1));
+    .sort((a, b) => shortfall(b) - shortfall(a));
+}
+
+/**
+ * Sort by how far a rollout sits below its own target, worst first — the column's actual
+ * question. A rollout with no target cannot be short of one, so it sorts below every row that
+ * can be, ahead of rows carrying no adoption reading at all.
+ */
+function shortfall(row: ToolRow): number {
+  if (row.adoptionPct === null) return -2;
+  if (row.targetPct === null) return -1;
+  return row.targetPct - row.adoptionPct;
 }
 
 export function ToolsTablePanel({ view }: { view: TowerCommandCenterView }) {
   const rows = toolRows(view);
-  const loadedTargets = 0;
-  const belowTarget = 0;
+  const withTarget = rows.filter(
+    (row) => row.targetPct !== null && row.adoptionPct !== null,
+  );
+  const belowTarget = withTarget.filter(
+    (row) => (row.adoptionPct as number) < (row.targetPct as number),
+  ).length;
 
   if (rows.length === 0) {
     return (
@@ -85,9 +100,9 @@ export function ToolsTablePanel({ view }: { view: TowerCommandCenterView }) {
           letterSpacing: "-0.02em",
         }}
       >
-        {loadedTargets > 0
-          ? `${belowTarget} of ${loadedTargets} rollouts sit below their own adoption target.`
-          : `${formatCount(rows.length)} tool rollouts have usage; adoption targets are not loaded.`}
+        {withTarget.length === 0
+          ? `${formatCount(rows.length)} tool rollouts have usage; adoption targets are not loaded.`
+          : `${formatCount(belowTarget)} of ${formatCount(withTarget.length)} rollouts sit below their own adoption target.`}
       </h2>
       <div style={{ background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)" }}>
         <div
@@ -109,7 +124,7 @@ export function ToolsTablePanel({ view }: { view: TowerCommandCenterView }) {
           <span>Control blocker</span>
           <span style={{ textAlign: "right" }}>Cases</span>
         </div>
-        {rows.map(({ item, activeUsers, adoptionPct, linkedCases }) => (
+        {rows.map(({ item, activeUsers, adoptionPct, targetPct, linkedCases }) => (
           <div
             key={item.id}
             style={{
@@ -136,21 +151,39 @@ export function ToolsTablePanel({ view }: { view: TowerCommandCenterView }) {
                       left: 0,
                       top: 0,
                       height: 12,
-                      width: `${Math.max(0, Math.min(100, adoptionPct))}%`,
-                      background: "var(--canon-amber)",
+                      width: `${clampPct(adoptionPct)}%`,
+                      background:
+                        targetPct !== null && adoptionPct >= targetPct
+                          ? "var(--canon-teal-dark)"
+                          : "var(--canon-amber)",
+                    }}
+                  />
+                )}
+                {targetPct === null ? null : (
+                  // The target sits where it actually falls, so the gap is the thing you read.
+                  <span
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      left: `${clampPct(targetPct)}%`,
+                      top: -2,
+                      height: 16,
+                      width: 2,
+                      background: "var(--canon-gray-900)",
                     }}
                   />
                 )}
               </span>
               <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 11, color: "var(--canon-gray-500)" }}>
-                {adoptionPct === null ? "Not loaded" : formatPct(adoptionPct)} vs Not loaded
+                {adoptionPct === null ? "Not loaded" : formatPct(adoptionPct)}
+                {targetPct === null ? " · no target set" : ` vs ${formatPct(targetPct)} target`}
               </span>
             </span>
             <span style={{ fontSize: 14, color: item.controlBlocker ? "var(--canon-red)" : "var(--canon-gray-500)" }}>
               {item.controlBlocker ?? "Not loaded"}
             </span>
-            <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 14, textAlign: "right", color: linkedCases > 0 ? "var(--canon-gray-900)" : "var(--canon-gray-500)" }}>
-              {linkedCases > 0 ? formatCount(linkedCases) : "Not loaded"}
+            <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 14, textAlign: "right", color: linkedCases === null ? "var(--canon-gray-500)" : "var(--canon-gray-900)" }}>
+              {linkedCases === null ? "Not loaded" : formatCount(linkedCases)}
             </span>
           </div>
         ))}

@@ -169,6 +169,10 @@ export interface TowerMartAiPortfolioItem {
   usageMetric: string | null;
   usageActual: number | null;
   adoptionRatePct: number | null;
+  /** The rollout's own adoption target. Written by the loader as `adoption_target_pct`. */
+  adoptionTargetPct: number | null;
+  /** Cases this rollout supports, asserted by the source row — not inferred from a shared vendor. */
+  linkedBusinessCaseCount: number | null;
   valueScore: number;
   /** Declared 0-100 score. Null when the source did not record one — never substituted. */
   readinessScore: number | null;

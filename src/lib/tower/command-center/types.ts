@@ -311,6 +311,10 @@ export interface TowerAiView {
   posture: string;
   usageHeadline: string | null;
   usageBars: readonly TowerUsageBar[];
+  /** The rollout's own adoption target, 0-100. Null when the source row asserts none. */
+  adoptionTargetPct: number | null;
+  /** Cases the source row says this rollout supports. Null when not asserted. */
+  linkedBusinessCaseCount: number | null;
   note: string | null;
   sourceFile: string | null;
 }

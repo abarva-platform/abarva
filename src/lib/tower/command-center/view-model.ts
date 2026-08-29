@@ -438,6 +438,8 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
       ? `${humanize(item.usageMetric)} · ${formatCount(item.usageActual)}`
       : null,
     usageBars: usageBarsFor(item),
+    adoptionTargetPct: item.adoptionTargetPct,
+    linkedBusinessCaseCount: item.linkedBusinessCaseCount,
     note: trimOrNull(item.caveat),
     sourceFile: trimOrNull(item.sourceFile),
   };

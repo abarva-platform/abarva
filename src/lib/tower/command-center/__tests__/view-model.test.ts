@@ -96,6 +96,8 @@ function aiItem(
     aiPortfolioKey: "tenant::ai::1",
     itemName: "Copilot",
     itemKind: "funded_program",
+    adoptionTargetPct: null,
+    linkedBusinessCaseCount: null,
     vendorName: "Microsoft",
     systemName: "M365",
     aiSpendType: "funded",

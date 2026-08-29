@@ -346,6 +346,26 @@ const CANDIDATE_SEEDS: ReadonlyArray<{ name: string; reason: string }> = [
   },
 ];
 
+/**
+ * Adoption targets and supported-case counts, by seed name. Deliberately partial: two rollouts
+ * assert no target, so the fixture exercises both the "below their own target" headline and the
+ * "targets are not loaded" one. Before these fields existed the panel hardcoded the count to zero
+ * and only the second branch could ever render, whatever the data held.
+ */
+const ROLLOUT_ASSERTIONS: Readonly<
+  Record<string, { target: number | null; cases: number | null }>
+> = {
+  "Fraud Graph Analytics v2": { target: 90, cases: 4 },
+  "Workplace Copilot": { target: 75, cases: 6 },
+  "Developer Copilot": { target: 85, cases: 2 },
+  "ITSM AI Agents": { target: 70, cases: 3 },
+  "HCM / ERP Assist": { target: 60, cases: null },
+  "AML Case Triage": { target: 80, cases: 1 },
+  // Asserts no target — the honest-absence path on the bar and the label.
+  "Data Lineage & Governance": { target: null, cases: null },
+  "Cloud AI Services": { target: null, cases: 2 },
+};
+
 function aiItems(): TowerMartAiPortfolioItem[] {
   const funded: TowerMartAiPortfolioItem[] = AI_SEEDS.map((seed, i) => ({
     aiPortfolioKey: `fixture::ai::${i + 1}`,
@@ -364,6 +384,8 @@ function aiItems(): TowerMartAiPortfolioItem[] {
     usageMetric: seed.usageMetric,
     usageActual: seed.usageActual,
     adoptionRatePct: seed.adoption,
+    adoptionTargetPct: ROLLOUT_ASSERTIONS[seed.name]?.target ?? null,
+    linkedBusinessCaseCount: ROLLOUT_ASSERTIONS[seed.name]?.cases ?? null,
     valueScore: seed.value,
     readinessScore: seed.readiness,
     riskScore: 100 - seed.readiness,
@@ -391,6 +413,10 @@ function aiItems(): TowerMartAiPortfolioItem[] {
       usageMetric: null,
       usageActual: null,
       adoptionRatePct: null,
+      // A candidate has no rollout, so it asserts neither. The spread from funded[0] would
+      // otherwise hand it that rollout's target and case count.
+      adoptionTargetPct: null,
+      linkedBusinessCaseCount: null,
       caveat: seed.reason,
     }),
   );
