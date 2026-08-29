@@ -1375,11 +1375,7 @@ async function upsertOptimizationSpine(
          tenant_key, dataset_version, optimization_case_id, opportunity_id,
          selected_for_action, sequence, payload
        )
-       VALUES ($1, $2, $3, $4, false, 1, '{}'::jsonb)
-       ON CONFLICT (tenant_key, dataset_version, optimization_case_id, opportunity_id)
-       DO UPDATE SET selected_for_action = EXCLUDED.selected_for_action,
-                     sequence = EXCLUDED.sequence,
-                     payload = EXCLUDED.payload`,
+       VALUES ($1, $2, $3, $4, false, 1, '{}'::jsonb)`,
       [args.tenantKey, args.datasetVersion, caseId, opportunityId],
     );
 
