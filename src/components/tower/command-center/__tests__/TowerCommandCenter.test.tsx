@@ -138,22 +138,23 @@ describe("TowerCommandCenter", () => {
     });
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "$703.1M approved. $0 provable",
+      "$703.1M approved. $0 board-claimable",
+    );
+    expect(screen.getByRole("heading", { level: 1 })).not.toHaveTextContent(
+      "gate",
     );
     expect(screen.queryByText(/\$492\.5M approved/)).not.toBeInTheDocument();
     expect(
       screen.getByText(/0 of 230 claims attested by Finance/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Backfill measured outcome on the 230 claims/),
+      screen.getByText(/Backfill measured outcome on the 0 claims/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Reconcile usage signals to value claims"),
+      screen.getByText("Close usage-to-value gaps on 230 claims"),
     ).toBeInTheDocument();
     expect(screen.getAllByText("$210.6M").length).toBeGreaterThan(0);
-    expect(container).toHaveTextContent(
-      /969 review rows in the evidence queue/,
-    );
+    expect(container).toHaveTextContent(/open evidence actions/);
     expect(screen.queryByText(/1,619 open tasks/)).not.toBeInTheDocument();
   });
 
@@ -198,7 +199,7 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Investment to value conversion"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Seven evidence states")).toBeInTheDocument();
+    expect(screen.getByText("No substitution between states")).toBeInTheDocument();
     expect(screen.queryByText("Seven gates · in order")).not.toBeInTheDocument();
     expect(screen.getByText("Eight-quarter trajectory")).toBeInTheDocument();
     expect(screen.getByText("Claim ledger")).toBeInTheDocument();
@@ -209,22 +210,24 @@ describe("TowerCommandCenter", () => {
   it("renders the AI Portfolio tab-specific contract layout", () => {
     renderPage();
     fireEvent.click(tab(/AI Portfolio/));
-    expect(screen.getByText("AI portfolio")).toBeInTheDocument();
-    expect(screen.getByText("Attributed spend by vendor")).toBeInTheDocument();
-    expect(screen.getByText("Cost findings · evidenced")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Cost lens/ })).toHaveAttribute(
+    expect(screen.getByText("AI initiatives and tool rollouts")).toBeInTheDocument();
+    expect(screen.getByText("All AI initiatives and tools")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /All initiatives\/tools/ })).toHaveAttribute(
       "aria-selected",
       "true",
     );
+    fireEvent.click(screen.getByRole("tab", { name: /Cost lens/ }));
+    expect(screen.getByText("Attributed spend by category")).toBeInTheDocument();
+    expect(screen.getByText("Cost findings · evidenced")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Risk lens/ }));
     expect(
       screen.getByText("Top value evidence gaps by amount at stake"),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/ }));
     expect(
-      screen.getByText("AI and BI assets ranked by recorded usage evidence"),
+      screen.getByText("AI initiatives and tools ranked by recorded usage evidence"),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: /All tools/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /All initiatives\/tools/ }));
     expect(
       screen.getByText("All AI initiatives and tools"),
     ).toBeInTheDocument();
@@ -274,13 +277,13 @@ describe("TowerCommandCenter", () => {
     expect(within(drawer).getByText("Value proof chain")).toBeInTheDocument();
   });
 
-  it("opens the AI initiative drawer from the portfolio spend list", () => {
+  it("opens the AI initiative drawer from the portfolio table", () => {
     renderPage();
     fireEvent.click(tab(/AI Portfolio/));
     const firstAi = [...view.allInitiatives].sort(
       (a, b) => b.aiSpendUsd - a.aiSpendUsd || b.riskScore - a.riskScore,
     )[0]!;
-    clickFirstButtonContaining(firstAi.vendor ?? firstAi.name);
+    clickFirstButtonContaining(firstAi.name);
 
     const drawer = screen.getByRole("dialog");
     expect(within(drawer).getByText("Value potential")).toBeInTheDocument();
