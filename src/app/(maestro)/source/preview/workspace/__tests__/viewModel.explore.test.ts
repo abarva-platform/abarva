@@ -83,19 +83,54 @@ function vendorRow(
 // Salesforce selection should leave exactly one live bucket (Salesforce)
 // and mark CloudPeak / Microsoft excluded.
 const CONTRACTS: SourceContract360Row[] = [
-  contractRow({ contract_id: "c1", vendor_ref: "vendor-salesforce", vendor_name: "Salesforce", annual_value: 40_000_000 }),
-  contractRow({ contract_id: "c2", vendor_ref: "vendor-salesforce", vendor_name: "Salesforce", annual_value: 3_500_000 }),
-  contractRow({ contract_id: "c3", vendor_ref: "vendor-cloudpeak", vendor_name: "CloudPeak", annual_value: 30_000_000 }),
-  contractRow({ contract_id: "c4", vendor_ref: "vendor-microsoft", vendor_name: "Microsoft", annual_value: 25_000_000 }),
+  contractRow({
+    contract_id: "c1",
+    vendor_ref: "vendor-salesforce",
+    vendor_name: "Salesforce",
+    annual_value: 40_000_000,
+  }),
+  contractRow({
+    contract_id: "c2",
+    vendor_ref: "vendor-salesforce",
+    vendor_name: "Salesforce",
+    annual_value: 3_500_000,
+  }),
+  contractRow({
+    contract_id: "c3",
+    vendor_ref: "vendor-cloudpeak",
+    vendor_name: "CloudPeak",
+    annual_value: 30_000_000,
+  }),
+  contractRow({
+    contract_id: "c4",
+    vendor_ref: "vendor-microsoft",
+    vendor_name: "Microsoft",
+    annual_value: 25_000_000,
+  }),
 ];
 
 const VENDORS: SourceVendorContractPortfolioRow[] = [
-  vendorRow({ vendor_ref: "vendor-salesforce", vendor_name: "Salesforce", annual_value: 43_500_000, contract_count: 2 }),
-  vendorRow({ vendor_ref: "vendor-cloudpeak", vendor_name: "CloudPeak", annual_value: 30_000_000 }),
-  vendorRow({ vendor_ref: "vendor-microsoft", vendor_name: "Microsoft", annual_value: 25_000_000 }),
+  vendorRow({
+    vendor_ref: "vendor-salesforce",
+    vendor_name: "Salesforce",
+    annual_value: 43_500_000,
+    contract_count: 2,
+  }),
+  vendorRow({
+    vendor_ref: "vendor-cloudpeak",
+    vendor_name: "CloudPeak",
+    annual_value: 30_000_000,
+  }),
+  vendorRow({
+    vendor_ref: "vendor-microsoft",
+    vendor_name: "Microsoft",
+    annual_value: 25_000_000,
+  }),
 ];
 
-const EMPTY_V4_SNAPSHOT = createEmptySourceV4WorkspaceSnapshot("2027-06-30T00:00:00Z");
+const EMPTY_V4_SNAPSHOT = createEmptySourceV4WorkspaceSnapshot(
+  "2027-06-30T00:00:00Z",
+);
 
 const WORKSPACE_DIAGNOSTICS = {
   datasetLabel: "SkyHarbor Source v4",
@@ -121,6 +156,15 @@ const READS = {
   initiativeDependencies: "available" as const,
 };
 
+const IMPACT = {
+  evidenceCoverage: [],
+  actionCandidates: [],
+  claimCards: [],
+  vendorPositions: [],
+  storyline: [],
+  avaGroundingBundles: [],
+};
+
 const PORTFOLIO: SourceWorkspacePortfolioData = {
   tenantKey: "skyharbor_global",
   asOfDateIso: "2027-06-30T00:00:00Z",
@@ -142,6 +186,7 @@ const PORTFOLIO: SourceWorkspacePortfolioData = {
   vendors: VENDORS,
   applicationScope: [],
   initiativeDependencies: [],
+  impact: IMPACT,
   isEmpty: false,
   reads: READS,
 };
@@ -236,7 +281,12 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
       "weak",
     ]);
     expect(ex.boxes.map((box) => box.id)).not.toContain("category");
-    expect(ex.selectedContracts.map((contract) => contract.id)).toEqual(["c1", "c3", "c4", "c2"]);
+    expect(ex.selectedContracts.map((contract) => contract.id)).toEqual([
+      "c1",
+      "c3",
+      "c4",
+      "c2",
+    ]);
   });
 
   it("selecting Vendor = Salesforce shows only the Salesforce bucket by default", () => {
@@ -246,7 +296,10 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     expect(ex.groups.map((g) => g.key)).toEqual(["Salesforce"]);
     expect(ex.groups[0]?.labelColor).toBe("#0a0a0b");
     expect(ex.groups[0]?.value).toBe("$43.5M");
-    expect(ex.selectedContracts.map((contract) => contract.id)).toEqual(["c1", "c2"]);
+    expect(ex.selectedContracts.map((contract) => contract.id)).toEqual([
+      "c1",
+      "c2",
+    ]);
     expect(ex.selectedContracts[0]).toMatchObject({
       vendor: "Salesforce",
       value: "$40.0M",
@@ -260,9 +313,17 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     vm.state.compareExcluded = true;
     const ex = vm.explore(vm.enrich());
 
-    expect(ex.groups.map((g) => g.key)).toEqual(["Salesforce", "CloudPeak", "Microsoft"]);
-    expect(ex.groups.find((g) => g.key === "CloudPeak")?.labelColor).toBe("#b4b2a9");
-    expect(ex.groups.find((g) => g.key === "Microsoft")?.share).toBe("excluded");
+    expect(ex.groups.map((g) => g.key)).toEqual([
+      "Salesforce",
+      "CloudPeak",
+      "Microsoft",
+    ]);
+    expect(ex.groups.find((g) => g.key === "CloudPeak")?.labelColor).toBe(
+      "#b4b2a9",
+    );
+    expect(ex.groups.find((g) => g.key === "Microsoft")?.share).toBe(
+      "excluded",
+    );
   });
 
   it("cross-dimension grouping still respects an active filter on a different dimension", () => {

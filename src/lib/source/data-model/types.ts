@@ -350,6 +350,142 @@ export interface SourceContractSpendMonthlyRow {
 }
 
 // ---------------------------------------------------------------------------
+// Deterministic Source impact layer
+//
+// These are Layer 4 product-substrate views generated from canonical Source
+// facts and consumption views. They are not model output. They tell Source,
+// Optimize, and aVa exactly which executive claims are allowed, which actions
+// are only candidates, and which missing evidence blocks stronger language.
+// ---------------------------------------------------------------------------
+
+export interface SourceContractEvidenceCoverageRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly contract_name: string;
+  readonly spend_rows: number;
+  readonly actual_spend_usd: number;
+  readonly committed_spend_usd: number;
+  readonly performance_rows: number;
+  readonly breach_rows: number;
+  readonly credit_calculated_usd: number;
+  readonly credit_claimed_usd: number;
+  readonly credit_recovered_usd: number;
+  readonly unclaimed_credit_usd: number;
+  readonly opportunity_rows: number;
+  readonly candidate_amount_usd: number;
+  readonly finance_confirmation_required_rows: number;
+  readonly opportunities_with_evidence: number;
+  readonly scope_rows: number;
+  readonly critical_scope_rows: number;
+  readonly document_page_text_rows: number;
+  readonly change_order_rows: number;
+  readonly coverage_state:
+    | "decision_ready"
+    | "partial"
+    | "blocked"
+    | "not_loaded"
+    | string;
+  readonly blocker_if_missing: string | null;
+  readonly evidence_basis_json: Record<string, unknown> | null;
+  readonly load_run_id: string | null;
+}
+
+export interface SourceContractActionCandidateRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly action_candidate_id: string;
+  readonly opportunity_id: string;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly title: string | null;
+  readonly action_type: string | null;
+  readonly opportunity_type: string | null;
+  readonly finding_summary: string | null;
+  readonly deterministic_basis: string | null;
+  readonly candidate_amount_usd: number | null;
+  readonly priority: string | null;
+  readonly readiness_state: string | null;
+  readonly evidence_state: string | null;
+  readonly authority_state: string | null;
+  readonly finance_confirmation_state: "confirmed" | "not_confirmed" | string;
+  readonly next_action: string | null;
+  readonly accountable_role: string | null;
+  readonly decision_due_date: string | null;
+  readonly coverage_state: string | null;
+  readonly blocker_if_missing: string | null;
+  readonly citation_basis_json: Record<string, unknown> | null;
+  readonly load_run_id: string | null;
+}
+
+export interface SourceContractClaimCardRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly claim_card_id: string;
+  readonly action_candidate_id: string;
+  readonly opportunity_id: string;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly claim_title: string | null;
+  readonly allowed_executive_statement: string;
+  readonly blocker_if_missing: string | null;
+  readonly candidate_amount_usd: number | null;
+  readonly finance_confirmation_state: string;
+  readonly readiness_state: string | null;
+  readonly evidence_state: string | null;
+  readonly citation_basis_json: Record<string, unknown> | null;
+  readonly load_run_id: string | null;
+}
+
+export interface SourceVendorPositionRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly vendor_category: string | null;
+  readonly contract_count: number;
+  readonly annual_value: number | null;
+  readonly total_committed_value: number | null;
+  readonly auto_renew_contracts: number;
+  readonly next_end_date: string | null;
+  readonly contract_refs: readonly string[];
+  readonly action_candidate_count: number;
+  readonly candidate_amount_usd: number;
+  readonly not_confirmed_count: number;
+  readonly decision_ready_contracts: number;
+  readonly unclaimed_credit_usd: number;
+  readonly spend_rows: number;
+  readonly performance_rows: number;
+  readonly vendor_position_state: string;
+  readonly load_run_id: string | null;
+}
+
+export interface SourcePageStorylineRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly page_key: string;
+  readonly section_key: string;
+  readonly sort_order: number;
+  readonly headline: string;
+  readonly allowed_executive_statement: string;
+  readonly primary_metric_label: string;
+  readonly primary_metric_value: string;
+  readonly blocker_if_missing: string | null;
+  readonly citation_basis_json: Record<string, unknown> | null;
+}
+
+export interface SourceAvaGroundingBundleRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly grounding_bundle_id: string;
+  readonly page_key: string;
+  readonly section_key: string;
+  readonly question_family: string;
+  readonly allowed_claims_json: readonly Record<string, unknown>[];
+  readonly refusal_rules_json: readonly string[];
+  readonly citation_sources_json: Record<string, unknown> | null;
+  readonly load_run_id: string | null;
+}
+
+// ---------------------------------------------------------------------------
 // source.contract_initiative_dependency
 // ---------------------------------------------------------------------------
 

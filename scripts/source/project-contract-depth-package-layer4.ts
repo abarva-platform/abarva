@@ -25,7 +25,8 @@ interface Args {
 
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_DATASET_VERSION = "meridian-contract-depth-v1-20260828";
-const DEFAULT_LOAD_RUN_ID = "source-contract-depth-package-meridian-contract-depth-v1-20260828-a7061fcf";
+const DEFAULT_LOAD_RUN_ID =
+  "source-contract-depth-package-meridian-contract-depth-v1-20260828-a7061fcf";
 const AS_OF_DATE = "2027-06-30";
 
 const TARGET_VIEWS = [
@@ -35,6 +36,12 @@ const TARGET_VIEWS = [
   ["source", "contract_vendor_360"],
   ["source", "vendor_contract_portfolio"],
   ["source", "contract_360"],
+  ["source", "contract_evidence_coverage_v1"],
+  ["source", "contract_action_candidate_v1"],
+  ["source", "contract_claim_card_v1"],
+  ["source", "vendor_position_v1"],
+  ["source", "source_page_storyline_v1"],
+  ["source", "ava_grounding_bundle_v1"],
   ["consumption", "sourcing_vendor_v1"],
   ["consumption", "sourcing_vendor_semantic_v1"],
   ["consumption", "sourcing_contract_v1"],
@@ -47,23 +54,36 @@ const TARGET_VIEWS = [
 
 function argValue(name: string): string | undefined {
   const prefix = `--${name}=`;
-  return process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length);
+  return process.argv
+    .find((arg) => arg.startsWith(prefix))
+    ?.slice(prefix.length);
 }
 
 function parseArgs(): Args {
-  const mode = (argValue("mode") ?? process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_L4_MODE ?? "plan") as Mode;
+  const mode = (argValue("mode") ??
+    process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_L4_MODE ??
+    "plan") as Mode;
   if (!["plan", "apply", "verify"].includes(mode)) {
-    throw new Error(`Unsupported SOURCE_CONTRACT_DEPTH_PACKAGE_L4_MODE: ${mode}`);
+    throw new Error(
+      `Unsupported SOURCE_CONTRACT_DEPTH_PACKAGE_L4_MODE: ${mode}`,
+    );
   }
-  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
   const tenantKey =
-    argValue("tenant-key") ?? process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_TENANT_KEY ?? DEFAULT_TENANT_KEY;
+    argValue("tenant-key") ??
+    process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_TENANT_KEY ??
+    DEFAULT_TENANT_KEY;
   const datasetVersion =
     argValue("dataset-version") ??
     process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_DATASET_VERSION ??
     DEFAULT_DATASET_VERSION;
   const loadRunId =
-    argValue("load-run-id") ?? process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_LOAD_RUN_ID ?? DEFAULT_LOAD_RUN_ID;
+    argValue("load-run-id") ??
+    process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_LOAD_RUN_ID ??
+    DEFAULT_LOAD_RUN_ID;
   return {
     mode,
     tenantKey,
@@ -137,16 +157,26 @@ function num(value: unknown): number {
 }
 
 async function setTenant(client: Client, tenantKey: string): Promise<void> {
-  await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
+  await client.query("SELECT set_config('app.tenant_key', $1, false)", [
+    tenantKey,
+  ]);
 }
 
-async function tableScalar(client: Client, sql: string, params: unknown[]): Promise<number> {
+async function tableScalar(
+  client: Client,
+  sql: string,
+  params: unknown[],
+): Promise<number> {
   const result = await client.query(sql, params);
   return num(result.rows[0]?.value);
 }
 
 async function objectKinds(client: Client) {
-  const result = await client.query<{ schema_name: string; relation_name: string; relkind: string }>(
+  const result = await client.query<{
+    schema_name: string;
+    relation_name: string;
+    relkind: string;
+  }>(
     `SELECT n.nspname AS schema_name, c.relname AS relation_name, c.relkind
        FROM pg_class c
        JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -158,7 +188,9 @@ async function objectKinds(client: Client) {
 }
 
 async function assertReplaceableViews(client: Client): Promise<void> {
-  const nonViews = (await objectKinds(client)).filter((row) => row.relkind !== "v");
+  const nonViews = (await objectKinds(client)).filter(
+    (row) => row.relkind !== "v",
+  );
   if (nonViews.length > 0) {
     throw new Error(
       `schema_change_required: L4 projection targets must be views before replacement: ${nonViews
@@ -168,7 +200,10 @@ async function assertReplaceableViews(client: Client): Promise<void> {
   }
 }
 
-async function layer3Readback(client: Client, args: Args): Promise<Record<string, number>> {
+async function layer3Readback(
+  client: Client,
+  args: Args,
+): Promise<Record<string, number>> {
   const result = await client.query<Record<string, string>>(
     `SELECT
        (SELECT count(*)::text FROM source.contract WHERE tenant_key = $1 AND load_run_id = $3) AS source_contract,
@@ -184,10 +219,19 @@ async function layer3Readback(client: Client, args: Args): Promise<Record<string
        (SELECT count(*)::text FROM source.contract WHERE tenant_key = $1 AND load_run_id = $3 AND COALESCE(raw_payload->>'alternatives_available', '') <> '') AS contracts_with_assessed_alternatives`,
     [args.tenantKey, args.datasetVersion, args.loadRunId],
   );
-  return Object.fromEntries(Object.entries(result.rows[0] ?? {}).map(([key, value]) => [key, num(value)]));
+  return Object.fromEntries(
+    Object.entries(result.rows[0] ?? {}).map(([key, value]) => [
+      key,
+      num(value),
+    ]),
+  );
 }
 
-async function l4Readback(client: Client, args: Args, beforeContractCount = 0): Promise<Record<string, number>> {
+async function l4Readback(
+  client: Client,
+  args: Args,
+  beforeContractCount = 0,
+): Promise<Record<string, number>> {
   await setTenant(client, args.tenantKey);
   const contractIdsResult = await client.query<{ contract_id: string }>(
     `SELECT contract_id FROM source.contract WHERE tenant_key = $1 AND load_run_id = $2 ORDER BY contract_id`,
@@ -270,6 +314,55 @@ async function l4Readback(client: Client, args: Args, beforeContractCount = 0): 
         WHERE tenant_key = $1 AND contract_id = ANY($2::text[]) AND COALESCE(alternatives_available, '') <> ''`,
       [args.tenantKey, contractIds],
     ),
+    source_contract_evidence_coverage_v1_package: await tableScalar(
+      client,
+      `SELECT count(*) AS value FROM source.contract_evidence_coverage_v1 WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
+    source_contract_action_candidate_v1_package: await tableScalar(
+      client,
+      `SELECT count(*) AS value FROM source.contract_action_candidate_v1 WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
+    source_contract_claim_card_v1_package: await tableScalar(
+      client,
+      `SELECT count(*) AS value FROM source.contract_claim_card_v1 WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
+    source_vendor_position_v1_package: await tableScalar(
+      client,
+      `SELECT count(DISTINCT vp.vendor_ref) AS value
+         FROM source.vendor_position_v1 vp
+         JOIN source.contract c
+           ON c.tenant_key = vp.tenant_key
+          AND c.vendor_id = vp.vendor_ref
+        WHERE vp.tenant_key = $1 AND c.contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
+    source_page_storyline_v1_rows: await tableScalar(
+      client,
+      `SELECT count(*) AS value FROM source.source_page_storyline_v1 WHERE tenant_key = $1`,
+      [args.tenantKey],
+    ),
+    source_ava_grounding_bundle_v1_rows: await tableScalar(
+      client,
+      `SELECT count(*) AS value FROM source.ava_grounding_bundle_v1 WHERE tenant_key = $1`,
+      [args.tenantKey],
+    ),
+    deterministic_layer_unclaimed_credit_usd: await tableScalar(
+      client,
+      `SELECT COALESCE(SUM(unclaimed_credit_usd), 0) AS value
+         FROM source.contract_evidence_coverage_v1
+        WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
+    deterministic_layer_candidate_amount_usd: await tableScalar(
+      client,
+      `SELECT COALESCE(SUM(candidate_amount_usd), 0) AS value
+         FROM source.contract_action_candidate_v1
+        WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
     skyharbor_strings_in_scope: await tableScalar(
       client,
       `SELECT count(*) AS value
@@ -306,13 +399,21 @@ function assertLayer3Ready(rows: Record<string, number>): void {
   };
   const failures = Object.entries(expected)
     .filter(([key, expectedValue]) => rows[key] !== expectedValue)
-    .map(([key, expectedValue]) => `${key} expected ${expectedValue}, got ${rows[key] ?? "<missing>"}`);
+    .map(
+      ([key, expectedValue]) =>
+        `${key} expected ${expectedValue}, got ${rows[key] ?? "<missing>"}`,
+    );
   if (failures.length > 0) {
-    throw new Error(`Layer 3 is not ready for Layer 4 projection: ${failures.join("; ")}`);
+    throw new Error(
+      `Layer 3 is not ready for Layer 4 projection: ${failures.join("; ")}`,
+    );
   }
 }
 
-function assertL4Ready(rows: Record<string, number>, beforeContractCount: number): void {
+function assertL4Ready(
+  rows: Record<string, number>,
+  beforeContractCount: number,
+): void {
   const expected: Record<string, number> = {
     source_contract_360_package: 5,
     source_contract_financial_exposure_package: 5,
@@ -321,6 +422,12 @@ function assertL4Ready(rows: Record<string, number>, beforeContractCount: number
     consumption_sourcing_spend_monthly_v1_package: 60,
     consumption_sourcing_performance_v1_package: 36,
     consumption_sourcing_opportunity_v1_package: 6,
+    source_contract_evidence_coverage_v1_package: 5,
+    source_contract_action_candidate_v1_package: 6,
+    source_contract_claim_card_v1_package: 6,
+    source_vendor_position_v1_package: 5,
+    source_page_storyline_v1_rows: 5,
+    source_ava_grounding_bundle_v1_rows: 6,
     source_contract_360_page_text_rows_package: 30,
     source_contract_360_change_order_rows_package: 8,
     package_contracts_with_assessed_alternatives: 0,
@@ -328,8 +435,14 @@ function assertL4Ready(rows: Record<string, number>, beforeContractCount: number
   };
   const failures = Object.entries(expected)
     .filter(([key, expectedValue]) => rows[key] !== expectedValue)
-    .map(([key, expectedValue]) => `${key} expected ${expectedValue}, got ${rows[key] ?? "<missing>"}`);
-  if (beforeContractCount > 0 && rows.source_contract_360_total < beforeContractCount) {
+    .map(
+      ([key, expectedValue]) =>
+        `${key} expected ${expectedValue}, got ${rows[key] ?? "<missing>"}`,
+    );
+  if (
+    beforeContractCount > 0 &&
+    rows.source_contract_360_total < beforeContractCount
+  ) {
     failures.push(
       `source_contract_360_total regressed from ${beforeContractCount} to ${rows.source_contract_360_total}`,
     );
@@ -340,12 +453,21 @@ function assertL4Ready(rows: Record<string, number>, beforeContractCount: number
   if (rows.package_opportunity_amount_usd <= 0) {
     failures.push("package_opportunity_amount_usd expected > 0");
   }
+  if (rows.deterministic_layer_unclaimed_credit_usd <= 0) {
+    failures.push("deterministic_layer_unclaimed_credit_usd expected > 0");
+  }
+  if (rows.deterministic_layer_candidate_amount_usd <= 0) {
+    failures.push("deterministic_layer_candidate_amount_usd expected > 0");
+  }
   if (failures.length > 0) {
     throw new Error(`Layer 4 readback failed: ${failures.join("; ")}`);
   }
 }
 
-async function applyLayer4(client: Client, args: Args): Promise<Record<string, number>> {
+async function applyLayer4(
+  client: Client,
+  args: Args,
+): Promise<Record<string, number>> {
   await assertReplaceableViews(client);
   const layer3 = await layer3Readback(client, args);
   assertLayer3Ready(layer3);
@@ -1097,13 +1219,442 @@ async function rebuildViews(client: Client): Promise<void> {
     GROUP BY tenant_key`);
 
   await client.query(`
+    CREATE OR REPLACE VIEW source.contract_evidence_coverage_v1 AS
+    WITH spend AS (
+      SELECT
+        tenant_key,
+        contract_id,
+        count(*)::bigint AS spend_rows,
+        COALESCE(sum(actual_spend), 0)::numeric AS actual_spend_usd,
+        COALESCE(sum(committed_amount), 0)::numeric AS committed_spend_usd
+      FROM consumption.sourcing_spend_monthly_v1
+      GROUP BY tenant_key, contract_id
+    ),
+    performance AS (
+      SELECT
+        tenant_key,
+        contract_id,
+        count(*)::bigint AS performance_rows,
+        count(*) FILTER (WHERE performance_state = 'breached')::bigint AS breach_rows,
+        COALESCE(sum(credit_calculated), 0)::numeric AS credit_calculated_usd,
+        COALESCE(sum(credit_claimed), 0)::numeric AS credit_claimed_usd,
+        COALESCE(sum(credit_recovered), 0)::numeric AS credit_recovered_usd
+      FROM consumption.sourcing_performance_v1
+      GROUP BY tenant_key, contract_id
+    ),
+    opportunities AS (
+      SELECT
+        tenant_key,
+        contract_id,
+        count(*)::bigint AS opportunity_rows,
+        COALESCE(sum(annual_value_exposed), 0)::numeric AS candidate_amount_usd,
+        count(*) FILTER (WHERE readiness_state = 'finance_confirmation_required')::bigint AS finance_confirmation_required_rows,
+        count(*) FILTER (WHERE evidence_state = 'present')::bigint AS opportunities_with_evidence
+      FROM consumption.sourcing_opportunity_v1
+      GROUP BY tenant_key, contract_id
+    ),
+    scope AS (
+      SELECT
+        tenant_key,
+        contract_id,
+        count(*)::bigint AS scope_rows,
+        count(*) FILTER (WHERE critical_application_flag)::bigint AS critical_scope_rows
+      FROM consumption.sourcing_contract_scope_v1
+      GROUP BY tenant_key, contract_id
+    )
+    SELECT
+      c.tenant_key,
+      c.contract_id,
+      c.vendor_ref,
+      c.vendor_name,
+      c.contract_name,
+      COALESCE(spend.spend_rows, 0)::bigint AS spend_rows,
+      COALESCE(spend.actual_spend_usd, 0)::numeric AS actual_spend_usd,
+      COALESCE(spend.committed_spend_usd, 0)::numeric AS committed_spend_usd,
+      COALESCE(performance.performance_rows, 0)::bigint AS performance_rows,
+      COALESCE(performance.breach_rows, 0)::bigint AS breach_rows,
+      COALESCE(performance.credit_calculated_usd, 0)::numeric AS credit_calculated_usd,
+      COALESCE(performance.credit_claimed_usd, 0)::numeric AS credit_claimed_usd,
+      COALESCE(performance.credit_recovered_usd, 0)::numeric AS credit_recovered_usd,
+      GREATEST(
+        COALESCE(performance.credit_calculated_usd, 0)
+          - COALESCE(performance.credit_claimed_usd, 0),
+        0
+      )::numeric AS unclaimed_credit_usd,
+      COALESCE(opportunities.opportunity_rows, 0)::bigint AS opportunity_rows,
+      COALESCE(opportunities.candidate_amount_usd, 0)::numeric AS candidate_amount_usd,
+      COALESCE(opportunities.finance_confirmation_required_rows, 0)::bigint AS finance_confirmation_required_rows,
+      COALESCE(opportunities.opportunities_with_evidence, 0)::bigint AS opportunities_with_evidence,
+      COALESCE(scope.scope_rows, 0)::bigint AS scope_rows,
+      COALESCE(scope.critical_scope_rows, 0)::bigint AS critical_scope_rows,
+      COALESCE(c.document_page_text_count, 0)::bigint AS document_page_text_rows,
+      COALESCE(c.change_order_count, 0)::bigint AS change_order_rows,
+      CASE
+        WHEN COALESCE(opportunities.opportunity_rows, 0) > 0
+         AND COALESCE(opportunities.opportunities_with_evidence, 0) = 0 THEN 'blocked'
+        WHEN COALESCE(spend.spend_rows, 0) > 0
+         AND COALESCE(performance.performance_rows, 0) > 0
+         AND COALESCE(c.document_page_text_count, 0) > 0 THEN 'decision_ready'
+        WHEN COALESCE(spend.spend_rows, 0) > 0
+          OR COALESCE(performance.performance_rows, 0) > 0
+          OR COALESCE(c.document_page_text_count, 0) > 0 THEN 'partial'
+        ELSE 'not_loaded'
+      END AS coverage_state,
+      concat_ws(
+        '; ',
+        CASE WHEN COALESCE(spend.spend_rows, 0) = 0 THEN 'monthly spend missing' END,
+        CASE WHEN COALESCE(performance.performance_rows, 0) = 0 THEN 'performance rows missing' END,
+        CASE WHEN COALESCE(c.document_page_text_count, 0) = 0 THEN 'document page text missing' END,
+        CASE
+          WHEN COALESCE(opportunities.opportunity_rows, 0) > 0
+           AND COALESCE(opportunities.finance_confirmation_required_rows, 0) > 0
+            THEN 'finance confirmation required before realized-value claim'
+        END
+      ) AS blocker_if_missing,
+      jsonb_build_object(
+        'source.contract_360', jsonb_build_object(
+          'document_page_text_rows', COALESCE(c.document_page_text_count, 0),
+          'change_order_rows', COALESCE(c.change_order_count, 0)
+        ),
+        'consumption.sourcing_spend_monthly_v1', COALESCE(spend.spend_rows, 0),
+        'consumption.sourcing_performance_v1', COALESCE(performance.performance_rows, 0),
+        'consumption.sourcing_opportunity_v1', COALESCE(opportunities.opportunity_rows, 0),
+        'consumption.sourcing_contract_scope_v1', COALESCE(scope.scope_rows, 0)
+      ) AS evidence_basis_json,
+      c.load_run_id
+    FROM source.contract_360 c
+    LEFT JOIN spend
+      ON spend.tenant_key = c.tenant_key
+     AND spend.contract_id = c.contract_id
+    LEFT JOIN performance
+      ON performance.tenant_key = c.tenant_key
+     AND performance.contract_id = c.contract_id
+    LEFT JOIN opportunities
+      ON opportunities.tenant_key = c.tenant_key
+     AND opportunities.contract_id = c.contract_id
+    LEFT JOIN scope
+      ON scope.tenant_key = c.tenant_key
+     AND scope.contract_id = c.contract_id
+    WHERE source.can_read_sourcing_tenant(c.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW source.contract_action_candidate_v1 AS
+    SELECT
+      o.tenant_key,
+      o.opportunity_id AS action_candidate_id,
+      o.opportunity_id,
+      o.contract_id,
+      o.vendor_ref,
+      o.vendor_name,
+      o.title,
+      o.action_type,
+      o.opportunity_type,
+      o.finding_summary,
+      o.deterministic_basis,
+      o.annual_value_exposed::numeric AS candidate_amount_usd,
+      o.priority,
+      o.readiness_state,
+      o.evidence_state,
+      o.authority_state,
+      CASE
+        WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+        WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+        ELSE 'not_confirmed'
+      END AS finance_confirmation_state,
+      o.recommended_action AS next_action,
+      o.accountable_role,
+      o.decision_due_date,
+      cov.coverage_state,
+      cov.blocker_if_missing,
+      jsonb_build_object(
+        'opportunity_ref', o.opportunity_id,
+        'contract_ref', o.contract_id,
+        'contract_360', o.contract_id,
+        'evidence_coverage', cov.evidence_basis_json,
+        'finance_confirmation_state',
+          CASE
+            WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+            WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+            ELSE 'not_confirmed'
+          END
+      ) AS citation_basis_json,
+      o.load_run_id
+    FROM consumption.sourcing_opportunity_v1 o
+    LEFT JOIN source.contract_evidence_coverage_v1 cov
+      ON cov.tenant_key = o.tenant_key
+     AND cov.contract_id = o.contract_id
+    WHERE source.can_read_sourcing_tenant(o.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW source.contract_claim_card_v1 AS
+    SELECT
+      a.tenant_key,
+      concat(a.action_candidate_id, ':claim-card') AS claim_card_id,
+      a.action_candidate_id,
+      a.opportunity_id,
+      a.contract_id,
+      a.vendor_ref,
+      a.vendor_name,
+      a.title AS claim_title,
+      CASE
+        WHEN a.finance_confirmation_state = 'confirmed'
+          THEN concat(a.vendor_name, ' has a finance-confirmed opportunity backed by Source evidence.')
+        ELSE concat(a.vendor_name, ' has a candidate opportunity backed by Source evidence; do not label it realized value.')
+      END AS allowed_executive_statement,
+      CASE
+        WHEN a.finance_confirmation_state <> 'confirmed'
+          THEN 'Never present this candidate as realized savings until finance confirms it.'
+        WHEN a.evidence_state <> 'present'
+          THEN 'Do not present without evidence rows.'
+        ELSE NULL::text
+      END AS blocker_if_missing,
+      a.candidate_amount_usd,
+      a.finance_confirmation_state,
+      a.readiness_state,
+      a.evidence_state,
+      a.citation_basis_json,
+      a.load_run_id
+    FROM source.contract_action_candidate_v1 a
+    WHERE source.can_read_sourcing_tenant(a.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW source.vendor_position_v1 AS
+    WITH opportunity AS (
+      SELECT
+        tenant_key,
+        vendor_ref,
+        count(*)::bigint AS action_candidate_count,
+        COALESCE(sum(candidate_amount_usd), 0)::numeric AS candidate_amount_usd,
+        count(*) FILTER (WHERE finance_confirmation_state = 'not_confirmed')::bigint AS not_confirmed_count
+      FROM source.contract_action_candidate_v1
+      GROUP BY tenant_key, vendor_ref
+    ),
+    coverage AS (
+      SELECT
+        tenant_key,
+        vendor_ref,
+        count(*) FILTER (WHERE coverage_state = 'decision_ready')::bigint AS decision_ready_contracts,
+        COALESCE(sum(unclaimed_credit_usd), 0)::numeric AS unclaimed_credit_usd,
+        COALESCE(sum(spend_rows), 0)::bigint AS spend_rows,
+        COALESCE(sum(performance_rows), 0)::bigint AS performance_rows
+      FROM source.contract_evidence_coverage_v1
+      GROUP BY tenant_key, vendor_ref
+    )
+    SELECT
+      v.tenant_key,
+      v.vendor_ref,
+      v.vendor_name,
+      v.vendor_category,
+      v.contract_count,
+      v.annual_value,
+      v.total_committed_value,
+      v.auto_renew_contracts,
+      v.next_end_date,
+      v.contract_refs,
+      COALESCE(opportunity.action_candidate_count, 0)::bigint AS action_candidate_count,
+      COALESCE(opportunity.candidate_amount_usd, 0)::numeric AS candidate_amount_usd,
+      COALESCE(opportunity.not_confirmed_count, 0)::bigint AS not_confirmed_count,
+      COALESCE(coverage.decision_ready_contracts, 0)::bigint AS decision_ready_contracts,
+      COALESCE(coverage.unclaimed_credit_usd, 0)::numeric AS unclaimed_credit_usd,
+      COALESCE(coverage.spend_rows, 0)::bigint AS spend_rows,
+      COALESCE(coverage.performance_rows, 0)::bigint AS performance_rows,
+      CASE
+        WHEN COALESCE(opportunity.action_candidate_count, 0) > 0 THEN 'act_on_evidence'
+        WHEN COALESCE(coverage.decision_ready_contracts, 0) > 0 THEN 'monitor_evidence'
+        ELSE 'header_only'
+      END AS vendor_position_state,
+      v.load_run_id
+    FROM source.vendor_contract_portfolio v
+    LEFT JOIN opportunity
+      ON opportunity.tenant_key = v.tenant_key
+     AND opportunity.vendor_ref = v.vendor_ref
+    LEFT JOIN coverage
+      ON coverage.tenant_key = v.tenant_key
+     AND coverage.vendor_ref = v.vendor_ref
+    WHERE source.can_read_sourcing_tenant(v.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW source.source_page_storyline_v1 AS
+    WITH totals AS (
+      SELECT
+        c.tenant_key,
+        count(*)::bigint AS contract_count,
+        count(DISTINCT c.vendor_ref)::bigint AS vendor_count,
+        COALESCE(sum(c.annual_value), 0)::numeric AS annual_value_usd,
+        COALESCE(sum(c.actual_annual_spend), 0)::numeric AS actual_annual_spend_usd
+      FROM source.contract_360 c
+      GROUP BY c.tenant_key
+    ),
+    opportunity AS (
+      SELECT
+        tenant_key,
+        count(*)::bigint AS candidate_count,
+        COALESCE(sum(candidate_amount_usd), 0)::numeric AS candidate_amount_usd,
+        COALESCE(sum(candidate_amount_usd) FILTER (WHERE finance_confirmation_state = 'confirmed'), 0)::numeric AS confirmed_amount_usd
+      FROM source.contract_action_candidate_v1
+      GROUP BY tenant_key
+    ),
+    coverage AS (
+      SELECT
+        tenant_key,
+        COALESCE(sum(spend_rows), 0)::bigint AS spend_rows,
+        COALESCE(sum(performance_rows), 0)::bigint AS performance_rows,
+        COALESCE(sum(unclaimed_credit_usd), 0)::numeric AS unclaimed_credit_usd,
+        count(*) FILTER (WHERE coverage_state = 'decision_ready')::bigint AS decision_ready_contracts
+      FROM source.contract_evidence_coverage_v1
+      GROUP BY tenant_key
+    )
+    SELECT
+      totals.tenant_key,
+      story.page_key,
+      story.section_key,
+      story.sort_order,
+      story.headline,
+      story.allowed_executive_statement,
+      story.primary_metric_label,
+      story.primary_metric_value,
+      story.blocker_if_missing,
+      story.citation_basis_json
+    FROM totals
+    LEFT JOIN opportunity ON opportunity.tenant_key = totals.tenant_key
+    LEFT JOIN coverage ON coverage.tenant_key = totals.tenant_key
+    CROSS JOIN LATERAL (
+      VALUES
+        (
+          'overview'::text,
+          'portfolio_posture'::text,
+          10::int,
+          'Governed contract book'::text,
+          concat(totals.contract_count, ' contracts and ', totals.vendor_count, ' vendors are loaded. Claims stay limited to populated evidence rows.')::text,
+          'Contracts'::text,
+          totals.contract_count::text,
+          NULL::text,
+          jsonb_build_object('source.contract_360', totals.contract_count, 'source.vendor_contract_portfolio', totals.vendor_count)
+        ),
+        (
+          'overview',
+          'actual_spend',
+          20,
+          'Spend evidence',
+          'Actual spend is shown only where monthly spend rows are loaded.',
+          'Monthly spend rows',
+          COALESCE(coverage.spend_rows, 0)::text,
+          CASE WHEN COALESCE(coverage.spend_rows, 0) = 0 THEN 'Do not show actual annual spend trend.' ELSE NULL END,
+          jsonb_build_object('consumption.sourcing_spend_monthly_v1', COALESCE(coverage.spend_rows, 0))
+        ),
+        (
+          'overview',
+          'performance_credits',
+          30,
+          'Performance-credit recovery',
+          'Unclaimed credits are candidate recovery only; they are not finance-confirmed savings.',
+          'Unclaimed credits',
+          round(COALESCE(coverage.unclaimed_credit_usd, 0), 2)::text,
+          CASE WHEN COALESCE(coverage.performance_rows, 0) = 0 THEN 'No performance rows loaded.' ELSE 'Finance confirmation required before savings claim.' END,
+          jsonb_build_object('consumption.sourcing_performance_v1', COALESCE(coverage.performance_rows, 0))
+        ),
+        (
+          'optimize',
+          'candidate_actions',
+          40,
+          'Action queue',
+          'Optimize shows candidate actions with evidence and explicit blockers.',
+          'Candidate amount',
+          round(COALESCE(opportunity.candidate_amount_usd, 0), 2)::text,
+          CASE WHEN COALESCE(opportunity.confirmed_amount_usd, 0) = 0 THEN 'Do not call candidate amount realized savings.' ELSE NULL END,
+          jsonb_build_object('source.contract_action_candidate_v1', COALESCE(opportunity.candidate_count, 0))
+        ),
+        (
+          'ava',
+          'grounding',
+          50,
+          'aVa grounding',
+          'aVa may answer with these deterministic facts and must refuse unsupported value claims.',
+          'Grounding bundles',
+          'portfolio, contract, opportunity',
+          'Reject raw savings, vendor pricing, or unsupported cross-tenant prompts.',
+          jsonb_build_object('source.ava_grounding_bundle_v1', 1)
+        )
+    ) AS story(page_key, section_key, sort_order, headline, allowed_executive_statement, primary_metric_label, primary_metric_value, blocker_if_missing, citation_basis_json)
+    WHERE source.can_read_sourcing_tenant(totals.tenant_key)`);
+
+  await client.query(`
+    CREATE OR REPLACE VIEW source.ava_grounding_bundle_v1 AS
+    SELECT
+      s.tenant_key,
+      concat(s.page_key, ':', s.section_key) AS grounding_bundle_id,
+      s.page_key,
+      s.section_key,
+      CASE
+        WHEN s.page_key = 'ava' THEN 'refusal_and_citation_policy'
+        WHEN s.section_key = 'performance_credits' THEN 'value_claim_guardrail'
+        ELSE 'source_workspace_claim'
+      END AS question_family,
+      jsonb_build_array(
+        jsonb_build_object(
+          'claim', s.allowed_executive_statement,
+          'metric_label', s.primary_metric_label,
+          'metric_value', s.primary_metric_value,
+          'basis', s.citation_basis_json
+        )
+      ) AS allowed_claims_json,
+      jsonb_build_array(
+        'Do not present candidate opportunity as realized value unless finance_confirmation_state is confirmed.',
+        'Do not answer cross-tenant vendor pricing prompts.',
+        'Do not cite a document unless source rows or document page text exist.',
+        'When evidence is missing, name the missing substrate instead of guessing.'
+      ) AS refusal_rules_json,
+      s.citation_basis_json AS citation_sources_json,
+      NULL::text AS load_run_id
+    FROM source.source_page_storyline_v1 s
+    WHERE source.can_read_sourcing_tenant(s.tenant_key)
+    UNION ALL
+    SELECT
+      c.tenant_key,
+      concat('contract:', c.contract_id) AS grounding_bundle_id,
+      'contract_360'::text AS page_key,
+      c.contract_id AS section_key,
+      'contract_action_grounding'::text AS question_family,
+      jsonb_build_array(
+        jsonb_build_object(
+          'contract_id', c.contract_id,
+          'vendor_name', c.vendor_name,
+          'candidate_amount_usd', c.candidate_amount_usd,
+          'unclaimed_credit_usd', c.unclaimed_credit_usd,
+          'coverage_state', c.coverage_state,
+          'blocker', c.blocker_if_missing
+        )
+      ) AS allowed_claims_json,
+      jsonb_build_array(
+        CASE
+          WHEN c.finance_confirmation_required_rows > 0
+            THEN 'Finance confirmation is required before claiming realized savings.'
+          ELSE 'Stay within loaded contract evidence.'
+        END,
+        CASE
+          WHEN c.document_page_text_rows = 0 THEN 'Document citation is not available for this contract.'
+          ELSE 'Cite loaded document page text only.'
+        END
+      ) AS refusal_rules_json,
+      c.evidence_basis_json AS citation_sources_json,
+      c.load_run_id
+    FROM source.contract_evidence_coverage_v1 c
+    WHERE source.can_read_sourcing_tenant(c.tenant_key)`);
+
+  await client.query(`
     GRANT SELECT ON
       source.contract_application_scope,
       source.contract_financial_exposure,
       source.contract_operational_performance,
       source.contract_vendor_360,
       source.vendor_contract_portfolio,
-      source.contract_360
+      source.contract_360,
+      source.contract_evidence_coverage_v1,
+      source.contract_action_candidate_v1,
+      source.contract_claim_card_v1,
+      source.vendor_position_v1,
+      source.source_page_storyline_v1,
+      source.ava_grounding_bundle_v1
     TO authenticated, service_role`);
 
   await client.query(`
@@ -1123,7 +1674,12 @@ async function main(): Promise<void> {
   const args = parseArgs();
   fs.mkdirSync(args.proofDir, { recursive: true });
 
-  const client = new Client(postgresClientOptions(databaseUrl(), "source-contract-depth-package-layer4"));
+  const client = new Client(
+    postgresClientOptions(
+      databaseUrl(),
+      "source-contract-depth-package-layer4",
+    ),
+  );
   await client.connect();
   try {
     const layer3 = await layer3Readback(client, args);
@@ -1135,7 +1691,9 @@ async function main(): Promise<void> {
     };
     if (args.mode === "apply") {
       if (!args.applyApproved) {
-        throw new Error("Refusing to mutate Azure without SOURCE_CONTRACT_DEPTH_PACKAGE_L4_APPLY_APPROVED=true.");
+        throw new Error(
+          "Refusing to mutate Azure without SOURCE_CONTRACT_DEPTH_PACKAGE_L4_APPLY_APPROVED=true.",
+        );
       }
       layer4 = await applyLayer4(client, args);
     } else if (args.mode === "verify") {

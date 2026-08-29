@@ -18,8 +18,7 @@ import {
 
 const ORIGINAL_PROVIDER = process.env.SOURCE_WORKSPACE_PROVIDER;
 const ORIGINAL_PROJECTION_DIR = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
-const ORIGINAL_ECL_PRODUCT_DEFAULT =
-  process.env.ECL_PRODUCT_DEFAULT_PROVIDER;
+const ORIGINAL_ECL_PRODUCT_DEFAULT = process.env.ECL_PRODUCT_DEFAULT_PROVIDER;
 const mockWithSession = azureRead.withSession as jest.MockedFunction<
   typeof azureRead.withSession
 >;
@@ -93,7 +92,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
               basis: "synthetic_directional_market_benchmark",
             },
           }),
-          gap_flags_json: JSON.stringify(["requires_owner_finance_legal_review"]),
+          gap_flags_json: JSON.stringify([
+            "requires_owner_finance_legal_review",
+          ]),
         },
       ]),
       "utf-8",
@@ -137,9 +138,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBe(1);
     expect(portfolio.contracts).toHaveLength(1);
     expect(portfolio.vendors).toHaveLength(1);
-    expect(portfolio.applicationScope.map((row) => row.application_name)).toEqual(
-      ["Workday Finance", "BlackLine Account Reconciliations"],
-    );
+    expect(
+      portfolio.applicationScope.map((row) => row.application_name),
+    ).toEqual(["Workday Finance", "BlackLine Account Reconciliations"]);
     expect(portfolio.contracts[0]).toMatchObject({
       contract_id: "MER-CTR-SSO-BPO-001",
       vendor_ref: "vendor-object-1",
@@ -161,7 +162,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     delete process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
     const runCalls: { sql: string; params: readonly unknown[] }[] = [];
     mockWithSession.mockImplementation(async (fn) => {
-      const run = async <R,>(
+      const run = async <R>(
         sql: string,
         params: readonly unknown[] = [],
       ): Promise<R[]> => {
@@ -258,6 +259,210 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
+        if (sql.includes("FROM source.contract_360")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              vendor_category: "Technology / SaaS",
+              contract_name: "Microsoft 365 Enterprise Agreement",
+              scope_summary: "Enterprise productivity suite.",
+              annual_value: 1480000,
+              total_committed_value: 4440000,
+              committed_annual_spend: 1480000,
+              actual_annual_spend: 1452000,
+              end_date: "2027-06-30",
+              notice_period_days: 90,
+              auto_renew: true,
+              renewal_decision_state: "notice_window_open",
+              renewal_owner_ref: "Technology sourcing",
+              benchmarking_clause: "present",
+              exit_rights_summary: "Termination assistance applies.",
+              alternatives_available: null,
+              concentration_note: "Loaded contract-depth package row.",
+              source_confidence: 0.92,
+              resolved_annual_value: 1480000,
+              resolved_total_committed_value: 4440000,
+              annual_value_conflict_flag: false,
+              total_committed_value_conflict_flag: false,
+              scoped_application_count: 2,
+              critical_application_count: 1,
+              linked_budget_amount: 1452000,
+              linked_actual_amount: 1452000,
+              linked_budget_lines: 12,
+              cloud_sev1_sev2_incidents: 0,
+              operational_evidence_gap: false,
+              initiative_dependency_count: 0,
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.vendor_contract_portfolio")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              vendor_category: "Technology / SaaS",
+              contract_count: 1,
+              annual_value: 1480000,
+              total_committed_value: 4440000,
+              auto_renew_contracts: 1,
+              next_end_date: "2027-06-30",
+              contract_refs: ["MER-TECH-M365-001"],
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.contract_evidence_coverage_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              contract_name: "Microsoft 365 Enterprise Agreement",
+              spend_rows: 12,
+              actual_spend_usd: 1452000,
+              committed_spend_usd: 1480000,
+              performance_rows: 0,
+              breach_rows: 0,
+              credit_calculated_usd: 0,
+              credit_claimed_usd: 0,
+              credit_recovered_usd: 0,
+              unclaimed_credit_usd: 0,
+              opportunity_rows: 1,
+              candidate_amount_usd: 1960000,
+              finance_confirmation_required_rows: 1,
+              opportunities_with_evidence: 1,
+              scope_rows: 2,
+              critical_scope_rows: 1,
+              document_page_text_rows: 6,
+              change_order_rows: 1,
+              coverage_state: "partial",
+              blocker_if_missing:
+                "Never present the candidate as realized savings before finance confirmation.",
+              evidence_basis_json: { sources: ["synthetic evidence pack"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.contract_action_candidate_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              action_candidate_id: "ACT-M365-SHELFWARE-001",
+              opportunity_id: "OPT-M365-SHELFWARE-001",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              title: "Unused license reduction candidate",
+              action_type: "optimize",
+              opportunity_type: "shelfware",
+              finding_summary:
+                "Unused entitled seats create an avoidable-cost candidate.",
+              deterministic_basis: "usage and spend evidence rows",
+              candidate_amount_usd: 1960000,
+              priority: "high",
+              readiness_state: "ready_for_review",
+              evidence_state: "evidence_available",
+              authority_state: "owner_review_required",
+              finance_confirmation_state: "not_confirmed",
+              next_action:
+                "Validate reclaim eligibility with application owner.",
+              accountable_role: "Technology sourcing",
+              decision_due_date: "2027-03-31",
+              coverage_state: "partial",
+              blocker_if_missing:
+                "Needs finance confirmation before realized-value language.",
+              citation_basis_json: { rows: ["USAGE-001"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.contract_claim_card_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              claim_card_id: "CLAIM-M365-SHELFWARE-001",
+              action_candidate_id: "ACT-M365-SHELFWARE-001",
+              opportunity_id: "OPT-M365-SHELFWARE-001",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              claim_title: "Unused license reduction candidate",
+              allowed_executive_statement:
+                "This contract has an evidence-backed candidate action; finance confirmation is not complete.",
+              blocker_if_missing:
+                "Never present this candidate as realized savings until finance confirms it.",
+              candidate_amount_usd: 1960000,
+              finance_confirmation_state: "not_confirmed",
+              readiness_state: "ready_for_review",
+              evidence_state: "evidence_available",
+              citation_basis_json: { rows: ["USAGE-001"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.vendor_position_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              vendor_category: "Technology / SaaS",
+              contract_count: 1,
+              annual_value: 1480000,
+              total_committed_value: 4440000,
+              auto_renew_contracts: 1,
+              next_end_date: "2027-06-30",
+              contract_refs: ["MER-TECH-M365-001"],
+              action_candidate_count: 1,
+              candidate_amount_usd: 1960000,
+              not_confirmed_count: 1,
+              decision_ready_contracts: 0,
+              unclaimed_credit_usd: 0,
+              spend_rows: 12,
+              performance_rows: 0,
+              vendor_position_state: "candidate_action",
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.source_page_storyline_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              page_key: "workspace",
+              section_key: "overview",
+              sort_order: 10,
+              headline: "Governed contract action candidates",
+              allowed_executive_statement:
+                "The workspace can show candidate action, evidence coverage, and blockers.",
+              primary_metric_label: "Claim cards",
+              primary_metric_value: "1",
+              blocker_if_missing: null,
+              citation_basis_json: { rows: ["CLAIM-M365-SHELFWARE-001"] },
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.ava_grounding_bundle_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              grounding_bundle_id: "AVA-M365-SHELFWARE-001",
+              page_key: "workspace",
+              section_key: "overview",
+              question_family: "value_claim",
+              allowed_claims_json: [{ claim: "candidate action exists" }],
+              refusal_rules_json: [
+                "Refuse realized savings without finance confirmation.",
+              ],
+              citation_sources_json: { rows: ["CLAIM-M365-SHELFWARE-001"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
         if (sql.includes("consumption.sourcing_spend_monthly_v1")) {
           return [
             {
@@ -288,14 +493,33 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     );
     expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBe(1);
     expect(portfolio.workspaceDiagnostics.eclProjectionDir).toBeNull();
-    expect(portfolio.contracts).toHaveLength(1);
-    expect(portfolio.vendors).toHaveLength(1);
-    expect(portfolio.contracts[0]).toMatchObject({
-      contract_id: "MER-CTR-SSO-BPO-001",
+    expect(portfolio.contracts).toHaveLength(2);
+    expect(portfolio.vendors).toHaveLength(2);
+    expect(portfolio.impact.evidenceCoverage).toHaveLength(1);
+    expect(portfolio.impact.actionCandidates).toHaveLength(1);
+    expect(portfolio.impact.claimCards).toHaveLength(1);
+    expect(portfolio.impact.vendorPositions).toHaveLength(1);
+    expect(portfolio.impact.storyline).toHaveLength(1);
+    expect(portfolio.impact.avaGroundingBundles).toHaveLength(1);
+    expect(
+      portfolio.contracts.find(
+        (row) => row.contract_id === "MER-TECH-M365-001",
+      ),
+    ).toMatchObject({
+      contract_id: "MER-TECH-M365-001",
+      annual_value: 1480000,
+      actual_annual_spend: 1452000,
+      operational_evidence_gap: false,
+      scoped_application_count: 2,
+    });
+    expect(
+      portfolio.contracts.find(
+        (row) => row.contract_id === "MER-CTR-SSO-BPO-001",
+      ),
+    ).toMatchObject({
       annual_value: 7200000,
       actual_annual_spend: 5100000,
       operational_evidence_gap: true,
-      scoped_application_count: 2,
     });
     expect(portfolio.v4Snapshot.availability).toEqual(
       expect.arrayContaining([
@@ -316,9 +540,20 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       sql: "SELECT set_config('app.tenant_key', $1, false)",
       params: ["meridian-health"],
     });
-    expect(runCalls.some((call) => call.sql.includes("serving.source_events"))).toBe(true);
-    expect(runCalls.some((call) => call.sql.includes("serving.source_compare"))).toBe(true);
-    expect(runCalls.some((call) => call.sql.includes("serving.source_approvals"))).toBe(true);
+    expect(
+      runCalls.some((call) => call.sql.includes("serving.source_events")),
+    ).toBe(true);
+    expect(
+      runCalls.some((call) => call.sql.includes("serving.source_compare")),
+    ).toBe(true);
+    expect(
+      runCalls.some((call) => call.sql.includes("serving.source_approvals")),
+    ).toBe(true);
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("source.contract_claim_card_v1"),
+      ),
+    ).toBe(true);
     expect(
       runCalls.find((call) =>
         call.sql.includes("consumption.sourcing_spend_monthly_v1"),
@@ -339,8 +574,8 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       rowCount: 1,
       state: "available",
     });
-    expect(portfolio.applicationScope.map((row) => row.application_name)).toEqual(
-      ["Workday Finance", "BlackLine Account Reconciliations"],
-    );
+    expect(
+      portfolio.applicationScope.map((row) => row.application_name),
+    ).toEqual(["Workday Finance", "BlackLine Account Reconciliations"]);
   });
 });

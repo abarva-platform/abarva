@@ -34,12 +34,24 @@ import {
   listContract360,
   listContractApplicationScope,
   listContractInitiativeDependency,
+  listSourceAvaGroundingBundles,
+  listSourceContractActionCandidates,
+  listSourceContractClaimCards,
+  listSourceContractEvidenceCoverage,
+  listSourcePageStoryline,
+  listSourceVendorPositions,
   listVendorContractPortfolio,
 } from "@/lib/source/data-model/read-adapter";
 import type {
+  SourceAvaGroundingBundleRow,
   SourceContract360Row,
+  SourceContractActionCandidateRow,
   SourceContractApplicationScopeRow,
+  SourceContractClaimCardRow,
+  SourceContractEvidenceCoverageRow,
   SourceContractInitiativeDependencyRow,
+  SourcePageStorylineRow,
+  SourceVendorPositionRow,
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
 
@@ -108,6 +120,7 @@ export interface SourceWorkspacePortfolioData {
     readonly eclCompareResponseCount?: number;
   };
   readonly cockpit: SourceVendor360CockpitData;
+  readonly impact: SourceWorkspaceImpactLayer;
   readonly contracts: readonly SourceContract360Row[];
   readonly vendors: readonly SourceVendorContractPortfolioRow[];
   readonly applicationScope: readonly SourceContractApplicationScopeRow[];
@@ -119,6 +132,15 @@ export interface SourceWorkspacePortfolioData {
     readonly applicationScope: "available" | "missing";
     readonly initiativeDependencies: "available" | "missing";
   };
+}
+
+export interface SourceWorkspaceImpactLayer {
+  readonly evidenceCoverage: readonly SourceContractEvidenceCoverageRow[];
+  readonly actionCandidates: readonly SourceContractActionCandidateRow[];
+  readonly claimCards: readonly SourceContractClaimCardRow[];
+  readonly vendorPositions: readonly SourceVendorPositionRow[];
+  readonly storyline: readonly SourcePageStorylineRow[];
+  readonly avaGroundingBundles: readonly SourceAvaGroundingBundleRow[];
 }
 
 export type CockpitGateState = "pass" | "warn" | "fail";
@@ -237,12 +259,14 @@ export async function loadSourceWorkspacePortfolio(
     applicationScope,
     initiativeDependencies,
     v4Snapshot,
+    impact,
   ] = await Promise.all([
     listContract360(tenantKey).catch(() => []),
     listVendorContractPortfolio(tenantKey).catch(() => []),
     listContractApplicationScope(tenantKey).catch(() => []),
     listContractInitiativeDependency(tenantKey).catch(() => []),
     loadSourceV4WorkspaceSnapshot(tenantKey, asOfDateIso),
+    loadSourceWorkspaceImpactLayer(tenantKey),
   ]);
 
   const contracts = excludeSupplementalContracts(contractsRaw);
@@ -306,6 +330,7 @@ export async function loadSourceWorkspacePortfolio(
       reads,
       asOfDateIso,
     }),
+    impact,
     contracts,
     vendors,
     applicationScope,
@@ -348,54 +373,87 @@ async function loadEclProjectionWorkspacePortfolio(
     );
   }
 
-  const [contractRows, vendorRows, eventRows, cubeSliceRows, runtimeEvidence] =
-    await Promise.all([
-      provider === "ecl_projection_db"
-        ? readProjectionTable(tenantKey, "source_contract_360")
-        : readProjectionCsv(
-            path.join(
-              projectionDir ?? "",
-              "source_contract_360_projection.csv",
-            ),
+  const [
+    contractRows,
+    vendorRows,
+    eventRows,
+    cubeSliceRows,
+    runtimeEvidence,
+    sourceOverlayContracts,
+    sourceOverlayVendors,
+    impact,
+  ] = await Promise.all([
+    provider === "ecl_projection_db"
+      ? readProjectionTable(tenantKey, "source_contract_360")
+      : readProjectionCsv(
+          path.join(projectionDir ?? "", "source_contract_360_projection.csv"),
+        ),
+    provider === "ecl_projection_db"
+      ? readProjectionView(tenantKey, "source_vendor_portfolio")
+      : readProjectionCsv(
+          path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
+        ),
+    provider === "ecl_projection_db"
+      ? readProjectionViews(tenantKey, [
+          "source_events",
+          "source_compare",
+          "source_approvals",
+        ])
+      : readProjectionCsv(
+          path.join(
+            projectionDir ?? "",
+            "source_event_workspace_projection.csv",
           ),
-      provider === "ecl_projection_db"
-        ? readProjectionView(tenantKey, "source_vendor_portfolio")
-        : readProjectionCsv(
-            path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
-          ),
-      provider === "ecl_projection_db"
-        ? readProjectionViews(tenantKey, [
-            "source_events",
-            "source_compare",
-            "source_approvals",
-          ])
-        : readProjectionCsv(
-            path.join(
-              projectionDir ?? "",
-              "source_event_workspace_projection.csv",
-            ),
-          ),
-      provider === "ecl_projection_db"
-        ? readEclCubeSlices(tenantKey)
-        : Promise.resolve([]),
-      provider === "ecl_projection_db"
-        ? readEclRuntimeEvidenceSummary(tenantKey).catch(() =>
-            emptyEclRuntimeEvidenceSummary(),
-          )
-        : Promise.resolve(emptyEclRuntimeEvidenceSummary()),
-    ]);
+        ),
+    provider === "ecl_projection_db"
+      ? readEclCubeSlices(tenantKey)
+      : Promise.resolve([]),
+    provider === "ecl_projection_db"
+      ? readEclRuntimeEvidenceSummary(tenantKey).catch(() =>
+          emptyEclRuntimeEvidenceSummary(),
+        )
+      : Promise.resolve(emptyEclRuntimeEvidenceSummary()),
+    listContract360(tenantKey).catch(() => []),
+    listVendorContractPortfolio(tenantKey).catch(() => []),
+    loadSourceWorkspaceImpactLayer(tenantKey),
+  ]);
   const acceptedTenantKeys = new Set(
     [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
   );
   const tenantMatches = (row: EclProjectionRow) =>
     acceptedTenantKeys.has(textValue(row.tenant_key).trim());
 
-  const contracts = contractRows
+  const eclContracts = contractRows
     .filter(tenantMatches)
     .map(contractFromEclProjectionRow);
-  const vendors = vendorRows
+  const overlayContractIds = new Set(
+    impact.evidenceCoverage
+      .filter(
+        (row) =>
+          row.document_page_text_rows > 0 ||
+          row.spend_rows > 0 ||
+          row.performance_rows > 0 ||
+          row.opportunity_rows > 0,
+      )
+      .map((row) => row.contract_id),
+  );
+  const contracts = mergeContractsById(
+    eclContracts,
+    sourceOverlayContracts.filter((row) =>
+      overlayContractIds.has(row.contract_id),
+    ),
+  );
+  const eclVendors = vendorRows
     .filter(tenantMatches)
     .map(vendorFromEclProjectionRow);
+  const vendors = mergeVendorsByRef(
+    eclVendors,
+    sourceOverlayVendors.filter((row) =>
+      row.contract_refs.some((contractId) =>
+        overlayContractIds.has(contractId),
+      ),
+    ),
+  );
   const applicationScope = contractRows
     .filter(tenantMatches)
     .flatMap(scopeFromEclProjectionRow);
@@ -468,6 +526,7 @@ async function loadEclProjectionWorkspacePortfolio(
       reads,
       asOfDateIso,
     }),
+    impact,
     contracts,
     vendors,
     applicationScope,
@@ -475,6 +534,85 @@ async function loadEclProjectionWorkspacePortfolio(
     isEmpty: contracts.length === 0,
     reads,
   };
+}
+
+async function loadSourceWorkspaceImpactLayer(
+  tenantKey: string,
+): Promise<SourceWorkspaceImpactLayer> {
+  const [
+    evidenceCoverage,
+    actionCandidates,
+    claimCards,
+    vendorPositions,
+    storyline,
+    avaGroundingBundles,
+  ] = await Promise.all([
+    listSourceContractEvidenceCoverage(tenantKey).catch(() => []),
+    listSourceContractActionCandidates(tenantKey).catch(() => []),
+    listSourceContractClaimCards(tenantKey).catch(() => []),
+    listSourceVendorPositions(tenantKey).catch(() => []),
+    listSourcePageStoryline(tenantKey).catch(() => []),
+    listSourceAvaGroundingBundles(tenantKey).catch(() => []),
+  ]);
+  return {
+    evidenceCoverage,
+    actionCandidates,
+    claimCards,
+    vendorPositions,
+    storyline,
+    avaGroundingBundles,
+  };
+}
+
+function mergeContractsById(
+  base: readonly SourceContract360Row[],
+  overlay: readonly SourceContract360Row[],
+): SourceContract360Row[] {
+  const merged = new Map<string, SourceContract360Row>();
+  for (const row of base) merged.set(row.contract_id, row);
+  for (const row of overlay) merged.set(row.contract_id, row);
+  return [...merged.values()].sort(
+    (left, right) =>
+      valueOf(right.annual_value) - valueOf(left.annual_value) ||
+      left.contract_id.localeCompare(right.contract_id),
+  );
+}
+
+function mergeVendorsByRef(
+  base: readonly SourceVendorContractPortfolioRow[],
+  overlay: readonly SourceVendorContractPortfolioRow[],
+): SourceVendorContractPortfolioRow[] {
+  const merged = new Map<string, SourceVendorContractPortfolioRow>();
+  for (const row of base) merged.set(row.vendor_ref, row);
+  for (const row of overlay) {
+    const existing = merged.get(row.vendor_ref);
+    if (!existing) {
+      merged.set(row.vendor_ref, row);
+      continue;
+    }
+    const existingContracts = new Set(existing.contract_refs);
+    const addedContracts = row.contract_refs.filter(
+      (contractId) => !existingContracts.has(contractId),
+    );
+    merged.set(row.vendor_ref, {
+      ...existing,
+      contract_count: existing.contract_count + addedContracts.length,
+      annual_value:
+        (numberFromDb(existing.annual_value) ?? 0) +
+        (numberFromDb(row.annual_value) ?? 0),
+      total_committed_value:
+        (numberFromDb(existing.total_committed_value) ?? 0) +
+        (numberFromDb(row.total_committed_value) ?? 0),
+      auto_renew_contracts:
+        existing.auto_renew_contracts + row.auto_renew_contracts,
+      contract_refs: [...existing.contract_refs, ...addedContracts].sort(),
+    });
+  }
+  return [...merged.values()].sort(
+    (left, right) =>
+      valueOf(right.annual_value) - valueOf(left.annual_value) ||
+      left.vendor_name.localeCompare(right.vendor_name),
+  );
 }
 
 async function readProjectionCsv(
