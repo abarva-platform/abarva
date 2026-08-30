@@ -16,6 +16,7 @@ import type {
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
 import { DataFlowPage } from "./DataFlowPage";
+import { ExecutiveStoryPage } from "./ExecutiveStoryPage";
 import { NotDraftedPage } from "./NotDraftedPage";
 import { Rail, type RailGroup, type RailItem } from "./Rail";
 import { SANS, V4 } from "./tokens";
@@ -35,6 +36,7 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
 };
 
 type ActiveView =
+  | "executive-story"
   | ChapterId
   | "architecture"
   | "data-flow"
@@ -49,6 +51,10 @@ function resolveHashView(
   const requested = decodeURIComponent(hash.replace(/^#/, "")).trim();
   if (!requested) {
     return null;
+  }
+
+  if (requested === "executive-story" || requested === "story") {
+    return "executive-story";
   }
 
   if (bundle.chapters.some((chapter) => chapter.chapterId === requested)) {
@@ -92,7 +98,7 @@ export function HomeV4App({
   bundle: HomeReviewBundle;
   tenantKey: HomePreviewTenantKey;
 }) {
-  const [activeView, setActiveView] = useState<ActiveView>("executive_brief");
+  const [activeView, setActiveView] = useState<ActiveView>("executive-story");
 
   const chapters = bundle.chapters;
   const activeChapter = chapters.find((c) => c.chapterId === activeView);
@@ -227,6 +233,19 @@ export function HomeV4App({
     `from ${signalPacket.signals.length} signals`,
     `and ${signalPacket.contextItems.length} governed facts`,
   ];
+
+  if (activeView === "executive-story") {
+    return (
+      <HomeAvaChat key={tenantKey} tenantKey={tenantKey}>
+        <ExecutiveStoryPage
+          bundle={bundle}
+          tenantKey={tenantKey}
+          onOpenView={selectActiveView}
+          compiledLine={compiledLine}
+        />
+      </HomeAvaChat>
+    );
+  }
 
   return (
     <HomeAvaChat

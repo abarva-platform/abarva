@@ -76,6 +76,7 @@ const packet = {
   ],
   contextItems: [] as Array<{ id: string; statement: string; domains: string[] }>,
   visualDatasets: {} as Record<string, Array<Record<string, unknown>>>,
+  sourceSummaries: [],
   analyticalLenses: [] as Array<{ kind: "industry_pattern" | "expert_lens"; label: string }>,
 };
 

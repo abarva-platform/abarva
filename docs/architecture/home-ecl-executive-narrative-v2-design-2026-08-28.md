@@ -141,6 +141,7 @@ executive packet with these sections:
 | `risk_and_controls` | control exceptions, risks, audit findings, resilience and support exposures |
 | `leadership_voice` | interview excerpts, themes, contradictions, decision questions, owner perspectives |
 | `known_gaps` | missing source files, missing owners, unreviewed claims, non-attested synthetic fields |
+| `source_summaries` | compact file/family summaries: owner or source, grain, domain, object types, record count, material fields, examples, quality state, and coverage gaps |
 | `visual_datasets` | only precomputed datasets that the UI can actually render |
 
 Each section must carry:
@@ -149,6 +150,52 @@ Each section must carry:
 - `signals`: computed observations with source refs.
 - `limits`: what cannot be inferred.
 - `candidate_chapters`: where this material is allowed to appear.
+- `visual_intent`: optional exhibit type, never raw chart data invented by Claude.
+
+### Packet Breadth Contract
+
+Home must not ask Claude to infer an executive story from a few hand-picked arrays. The packet
+must preserve the breadth of the intake without handing raw source rows to the model.
+
+| Packet part | Role in prompt | Citable as evidence? |
+| --- | --- | --- |
+| `signals` | Material deterministic observations, computed before the model call | Yes, `sig_*` |
+| `contextItems` | Plain governed facts such as industry, revenue, segments, priorities | Yes, `ctx_*` |
+| `sourceSummaries` | File/family coverage context across the intake: what exists, what is thin, what is missing | No |
+| `visualDatasets` | Server-computed rows that a registered renderer can draw | No, unless cited by linked signal/context ids |
+| `analyticalLenses` | Industry or expert framing used to recognize patterns | No |
+
+`sourceSummaries` are the answer to the 145-file context problem: every source file should have a
+compact record in the packet, but the model may not turn a source-summary count into an executive
+claim unless a `sig_*` or `ctx_*` item supports that claim. This gives Claude enough context to
+reason like an adviser while preserving the evidence boundary.
+
+### Packet Limits
+
+Limits must be named in code and visible in review output. Hidden `.slice(0, N)` calls are not
+allowed on material prompt context.
+
+| Packet item | Default |
+| --- | ---: |
+| source summaries | 180 files/families |
+| vendors by share | 25 |
+| programs by value | all |
+| contradiction interview quotes | all consented |
+| risk/system concentration rows | 25 |
+| high-severity risk signals | 12 |
+| stalled-program signals | 20 |
+| workforce, infrastructure, AI-tool, risk-program, managed-service, process, maturity signals | 12 each |
+
+If token usage grows too high, the fix is a staged summarization pass with recorded input/output
+hashes, not silently dropping whole source families from the context.
+
+### Visual Intent Contract
+
+Claude may choose a `visual_type`, a `dataset_ref`, a title, and a key message. It may not supply
+plotted values, pixels, colors, or layout. Renderers map the selected intent to precomputed
+datasets and registered visual components. Conceptual architecture, data-flow, organization,
+dependency, risk-chain, value-chain, and timeline visuals are structural renderers over governed
+rows, not generative illustrations.
 
 ## Chapter Contract
 
