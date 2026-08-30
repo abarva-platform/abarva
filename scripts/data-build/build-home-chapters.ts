@@ -469,8 +469,8 @@ async function synthesizeChapterNarrative(
 ): Promise<ChapterSynthesisResult | null> {
   if (claims.length === 0) {
     return {
-      headline: `${def.title}: not enough verified evidence yet`,
-      executive_synthesis: `The current context does not yet establish enough verified, cross-domain material to answer "${def.guidingQuestion}" for this chapter. This is a coverage gap, not a finding -- do not infer content here.`,
+      headline: `${def.title} is deferred pending stronger evidence`,
+      executive_synthesis: `This chapter is not ready for executive review. The current record does not yet connect enough verified statements to answer "${def.guidingQuestion}" with confidence, so the page preserves the gap rather than turning thin evidence into a conclusion.`,
       inputTokens: 0,
       outputTokens: 0,
       stopReason: null,
@@ -529,7 +529,7 @@ export async function buildChapterViewsFromVerifiedThesis(
     });
     const limitations: string[] = [...gaps[def.id]];
     if (allClaims.length === 0) {
-      limitations.push("No verified claims were routed to this chapter from the current thesis -- treat as a coverage gap.");
+      limitations.push("No verified statements are linked to this chapter yet; review the source coverage before using it in an executive readout.");
     }
     if (def.id === "our_business" && signalPacket.contextItems.filter((c) => c.id.startsWith("ctx_segment")).length === 0) {
       limitations.push("Segment-level revenue economics are not represented in the current governed context; this chapter describes what is available, not a complete value-creation model.");

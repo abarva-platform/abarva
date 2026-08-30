@@ -85,6 +85,34 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(visibleText).not.toMatch(/coverage gap in the build/i);
   });
 
+  it("renders empty chapter evidence as an executive terminal state, not a build apology", () => {
+    const bundle = JSON.parse(JSON.stringify(loadMeridianBundle())) as HomeReviewBundle;
+    const chapter = bundle.chapters.find((item) => item.chapterId === "strategy_value_creation");
+    expect(chapter).toBeTruthy();
+    chapter!.headline = "Strategy & Value Creation is deferred pending stronger evidence";
+    chapter!.executive_synthesis =
+      "This chapter is not ready for executive review. The current record does not yet connect enough verified statements to answer the leadership question with confidence.";
+    chapter!.key_insights = [];
+    chapter!.tensions = [];
+    chapter!.what_to_watch = [];
+    chapter!.questions_to_ask = [];
+    chapter!.visual_opportunities = [];
+    chapter!.limitations = [
+      "No verified statements are linked to this chapter yet; review the source coverage before using it in an executive readout.",
+    ];
+    window.history.replaceState(null, "", "/home/preview#strategy_value_creation");
+
+    render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
+
+    const visibleText = document.body.textContent ?? "";
+    expect(screen.getByText("Decision this page supports")).toBeInTheDocument();
+    expect(screen.getByText("Record signal")).toBeInTheDocument();
+    expect(visibleText).toMatch(/not ready for executive review/i);
+    expect(visibleText).not.toMatch(/not enough verified evidence yet/i);
+    expect(visibleText).not.toMatch(/coverage gap in the build/i);
+    expect(visibleText).not.toMatch(/No verified claims were routed/i);
+  });
+
   it("keeps implementation vocabulary out of the raw Tier 1 claim inputs before render cleanup", () => {
     const rawClaimStatements = collectTier1ExecutiveStoryRawClaimStatements(loadMeridianBundle().chapters);
     const launderedInputs = rawClaimStatements.filter((statement) => cxoText(statement) !== statement);
