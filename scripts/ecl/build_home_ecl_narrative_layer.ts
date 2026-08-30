@@ -1744,7 +1744,9 @@ async function main() {
     }
 
     const labelByIdentifier = buildVisibleIdentifierLabels(rows);
-    const rawThesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic);
+    const rawThesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic, {
+      deterministicClaimPlan: true,
+    });
     const thesisResult = scrubThesisResultVisibleIds(rawThesisResult, labelByIdentifier);
     if (!thesisResult.publishedGeneration) throw new Error("Home ECL narrative writer produced no publishable thesis.");
     const publicationIssues = publicationGateIssues(thesisResult, signalPacket);

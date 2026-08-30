@@ -44,7 +44,7 @@ assert(
   "EnterpriseThesis writer exposes an ECL-fed signal-packet seam",
 );
 assert(
-  thesis.includes("enterprise-thesis/v1.2-source-breadth") &&
+  thesis.includes("enterprise-thesis/v1.3-deterministic-claim-plan") &&
     thesis.includes("CXO-VISIBLE LANGUAGE") &&
     thesis.includes("Do not expose implementation") &&
     thesis.includes("Do not say ECL") &&
@@ -312,6 +312,18 @@ assert(
     thesis.includes("forced_empty_sections_for_this_packet") &&
     thesis.includes("If a forced-empty section conflicts with the generic schema below, the forced-empty instruction wins"),
   "EnterpriseThesis prompt includes a deterministic evidence-scope contract before the generic output schema",
+);
+assert(
+  thesis.includes("export function buildDeterministicEnterpriseThesisFromSignalPacket") &&
+    thesis.includes("storyFromClaims(storyClaims)") &&
+    thesis.includes("signalClaim(signal)") &&
+    thesis.includes("Strategy, leadership, and outcome sections remain deferred unless a cited source supplies those facts"),
+  "EnterpriseThesis exposes a deterministic claim planner that selects governed signal statements before prose",
+);
+assert(
+  script.includes("buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic, {") &&
+    script.includes("deterministicClaimPlan: true"),
+  "ECL Home narrative job uses deterministic claim planning before model prose synthesis",
 );
 assert(
   thesis.includes("value_creation_model.summary must lead with a limitation; primary_value_drivers must be []") &&

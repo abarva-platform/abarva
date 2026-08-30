@@ -60,7 +60,7 @@ const CLAUDE_MODEL = "claude-sonnet-5";
 const ARTIFACT_TYPE = "NexusEnterpriseThesisV1";
 /** Shared with build-home-chapters.ts's provenance stamp -- one source of truth for what prompt
  * version produced a given thesis, rather than the same string hardcoded in two files. */
-export const THESIS_PROMPT_VERSION = "enterprise-thesis/v1.2-source-breadth";
+export const THESIS_PROMPT_VERSION = "enterprise-thesis/v1.3-deterministic-claim-plan";
 export const THESIS_OUTPUT_TOKEN_BUDGET = 28000;
 
 /**
@@ -294,6 +294,15 @@ export interface EnterpriseThesis {
   /** Optional by nature -- a visualization is proposed only where it strengthens the story, not
    * for every section. See VisualOpportunity for the grammar and dataset_ref constraint. */
   visual_opportunities: VisualOpportunity[];
+}
+
+export interface EnterpriseThesisBuildOptions {
+  /**
+   * Build the auditable claim ledger deterministically from signal/context statements before any
+   * prose call. This is the ECL Home path: the model may polish prose from approved claims, but it
+   * does not decide which factual claims exist.
+   */
+  deterministicClaimPlan?: boolean;
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -684,6 +693,196 @@ function buildEvidenceScopeInstructions(signalPacket: ReturnType<typeof buildEnt
     "- For remaining sections, prefer FACT or OBSERVATION unless the cited evidence truly spans multiple domains and the statement needs the stronger claim_type.",
   );
   return lines.join("\n");
+}
+
+function signalClaim(signal: Signal, claimType: ClaimType = "FACT", confidence: GroundedClaim["confidence"] = "high"): GroundedClaim {
+  return {
+    statement: signal.statement,
+    evidence_ids: [signal.id],
+    confidence,
+    claim_type: claimType,
+  };
+}
+
+function contextClaim(item: ContextItem, claimType: ClaimType = "FACT", confidence: GroundedClaim["confidence"] = "high"): GroundedClaim {
+  return {
+    statement: item.statement,
+    evidence_ids: [item.id],
+    confidence,
+    claim_type: claimType,
+  };
+}
+
+function firstSignals(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>, ids: string[]): Signal[] {
+  const byId = new Map(signalPacket.signals.map((signal): [string, Signal] => [signal.id, signal]));
+  return ids.map((id) => byId.get(id)).filter((signal): signal is Signal => Boolean(signal));
+}
+
+function firstSignalByKind(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>, kinds: Signal["kind"][], limit: number): Signal[] {
+  const wanted = new Set(kinds);
+  return signalPacket.signals.filter((signal) => wanted.has(signal.kind)).slice(0, limit);
+}
+
+function firstContextByDomain(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>, domains: string[], limit: number): ContextItem[] {
+  const wanted = new Set(domains);
+  return signalPacket.contextItems.filter((item) => item.domains.some((domain) => wanted.has(domain))).slice(0, limit);
+}
+
+function visualForDataset(
+  signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
+  datasetRef: string,
+  title: string,
+  keyMessage: string,
+  evidenceIds: string[],
+  visualType: VisualType,
+): VisualOpportunity | null {
+  if (!(datasetRef in signalPacket.visualDatasets)) return null;
+  return {
+    visual_type: visualType,
+    title,
+    purpose: keyMessage,
+    dataset_ref: datasetRef,
+    key_message: keyMessage,
+    evidence_ids: evidenceIds,
+    priority: "high",
+  };
+}
+
+function limitationSummary(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>): string {
+  const sourceCount = signalPacket.sourceSummaries?.length ?? 0;
+  if (sourceCount > 0) {
+    return `The current thesis is bounded by ${sourceCount.toLocaleString()} source-family summaries and the cited governed signals; sections with no cited claim remain deferred rather than inferred.`;
+  }
+  return "The current thesis is bounded by the cited governed signals; sections with no cited claim remain deferred rather than inferred.";
+}
+
+function storyFromClaims(claims: GroundedClaim[]): string {
+  if (claims.length === 0) {
+    return "The current governed context does not yet contain enough verified evidence to publish an enterprise story.";
+  }
+  return claims.map((claim) => claim.statement).join(" ");
+}
+
+export function buildDeterministicEnterpriseThesisFromSignalPacket(
+  signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
+): EnterpriseThesis {
+  const storySignals = firstSignals(signalPacket, [
+    "sig_ecl_estate_001",
+    "sig_ecl_application_function_002",
+    "sig_ecl_vendor_concentration_004",
+    "sig_ecl_contract_flexibility_006",
+    "sig_ecl_data_flow_total_014",
+  ]);
+  const technologySignals = firstSignals(signalPacket, [
+    "sig_ecl_estate_001",
+    "sig_ecl_application_function_002",
+    "sig_ecl_application_function_ranking_012",
+    "sig_ecl_application_cost_013",
+    "sig_ecl_application_named_examples_015",
+    "sig_ecl_application_criticality_003",
+    "sig_ecl_hosting_mix_007",
+    "sig_ecl_platform_resilience_008",
+    "sig_ecl_platform_named_resilience_016",
+    "sig_ecl_data_flow_convergence_009",
+    "sig_ecl_data_flow_total_014",
+    "sig_ecl_integration_pattern_010",
+    "sig_ecl_data_consumption_011",
+  ]);
+  const commercialSignals = firstSignals(signalPacket, [
+    "sig_ecl_vendor_concentration_004",
+    "sig_ecl_contract_value_005",
+    "sig_ecl_contract_flexibility_006",
+  ]);
+  const riskSignals = firstSignals(signalPacket, [
+    "sig_ecl_application_criticality_003",
+    "sig_ecl_contract_flexibility_006",
+    "sig_ecl_platform_resilience_008",
+    "sig_ecl_platform_named_resilience_016",
+  ]);
+  const fallbackPortfolioSignals = firstSignalByKind(signalPacket, ["portfolio", "concentration", "risk", "dependency", "data_quality"], 6);
+  const storyClaims = (storySignals.length ? storySignals : fallbackPortfolioSignals).slice(0, 5).map((signal) => signalClaim(signal));
+  const valueDrivers = firstContextByDomain(signalPacket, ["enterprise_profile", "business_model"], 3).map((item) => contextClaim(item));
+  const valueDependencies = commercialSignals.slice(0, 4).map((signal) => signalClaim(signal));
+  const unknownPerformance = firstSignals(signalPacket, [
+    "sig_ecl_source_breadth_guardrail_019",
+  ]).map((signal) => signalClaim(signal));
+  const sourceBreadth = signalPacket.signals.find((signal) => signal.id === "sig_ecl_source_breadth_guardrail_019");
+
+  const visualOpportunities = [
+    visualForDataset(
+      signalPacket,
+      "application_landscape_by_function",
+      "Application footprint by business function",
+      "Use the function view to see where the application estate is concentrated.",
+      ["sig_ecl_application_function_002"],
+      "horizontal_bar",
+    ),
+    visualForDataset(
+      signalPacket,
+      "vendor_spend_concentration",
+      "Supplier concentration in the ready contract base",
+      "Use the vendor view to see which supplier groups carry the largest ready contract value.",
+      ["sig_ecl_vendor_concentration_004"],
+      "bar",
+    ),
+    visualForDataset(
+      signalPacket,
+      "technology_spend_mix",
+      "Recorded application annual cost by technology segment",
+      "Use the cost view to separate recorded application cost from broader budget or contract value.",
+      ["sig_ecl_application_cost_013"],
+      "stacked_bar",
+    ),
+    visualForDataset(
+      signalPacket,
+      "risk_system_concentration",
+      "Risk and lifecycle attention by named technology object",
+      "Use the risk view to inspect where attention is concentrated before treating the estate as uniformly mature.",
+      ["sig_ecl_application_criticality_003", "sig_ecl_platform_resilience_008"],
+      "bar",
+    ),
+  ].filter((visual): visual is VisualOpportunity => Boolean(visual));
+
+  return {
+    enterprise_story: storyFromClaims(storyClaims),
+    enterprise_story_claims: storyClaims,
+    value_creation_model: {
+      summary: valueDrivers.length
+        ? storyFromClaims(valueDrivers)
+        : "The current evidence does not establish the enterprise's value-creation model beyond the cited technology and commercial operating facts.",
+      primary_value_drivers: valueDrivers,
+      economic_dependencies: valueDependencies,
+    },
+    strategic_bets: [],
+    structural_constraints: riskSignals.slice(0, 5).map((signal) => signalClaim(signal)),
+    operating_tensions: commercialSignals.slice(0, 3).map((signal) => signalClaim(signal, "OBSERVATION")),
+    leadership_consensus: [],
+    leadership_disagreements: [],
+    performance_story: {
+      where_improving: [],
+      where_off_track: [],
+      where_unknown: unknownPerformance,
+    },
+    technology_and_data_implications: technologySignals.slice(0, 5).map((signal) => signalClaim(signal)),
+    material_risks: riskSignals.slice(0, 5).map((signal) => signalClaim(signal)),
+    value_realization_tensions: commercialSignals.slice(0, 3).map((signal) => signalClaim(signal, "OBSERVATION")),
+    what_needs_attention: [
+      ...riskSignals.slice(0, 3),
+      ...commercialSignals.slice(0, 2),
+    ].slice(0, 5).map((signal) => signalClaim(signal)),
+    evidence_gaps: [
+      "Strategy, leadership, and outcome sections remain deferred unless a cited source supplies those facts.",
+      limitationSummary(signalPacket),
+      ...(sourceBreadth ? [] : ["Source-family breadth context was not available in the current packet."]),
+    ],
+    things_a_new_cxo_should_know: [
+      ...storySignals,
+      ...commercialSignals,
+      ...riskSignals,
+    ].slice(0, 6).map((signal) => signalClaim(signal)),
+    questions_for_management: [],
+    visual_opportunities: visualOpportunities,
+  };
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -1191,6 +1390,7 @@ export function dropClaim(thesis: EnterpriseThesis, path: string) {
 export async function buildVerifiedEnterpriseThesisFromSignalPacket(
   signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
   client: Parameters<typeof callClaude>[0],
+  options: EnterpriseThesisBuildOptions = {},
 ) {
   const usage = { input: 0, output: 0 };
 
@@ -1205,47 +1405,53 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
     };
   }
 
-  const userPrompt = buildUserPrompt(signalPacket);
-  // The schema's array bounds are stated explicitly in SYSTEM_PROMPT (a spine, not a report -- 3-5
-  // items per array, 250-400 words for enterprise_story) and haven't grown; what changed in the
-  // hardening pass is real required structure per item: claim_type on every GroundedClaim,
-  // enterprise_story_claims (3-5 more claims), value_creation_model's drivers/dependencies going
-  // from bare strings to full claims, and up to 6 visual_opportunities. A live run at 10000 hit the
-  // ceiling on both tenants with content still incomplete; 16000 fixed that run, but a later live
-  // run truncated again on both tenants (stop_reason=max_tokens, unterminated JSON string) --
-  // confirmation that 16000 is marginal, not safely clear, for this schema's real output length,
-  // since the model's own response length varies run to run for the same input. 28000 gives
-  // meaningfully more headroom above the observed failure point while staying well under the
-  // 34000 this codebase already runs in production for a comparably large structured generation
-  // (src/lib/deliverables/strategic-moves-artifact-standard.ts). "medium" effort is unchanged --
-  // proportionate to genuine cross-domain synthesis across a 40+ signal packet.
-  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, THESIS_OUTPUT_TOKEN_BUDGET, "medium");
-  if (!generation) {
-    console.log("  ! thesis generation returned no text");
-    return {
-      rawGeneration: null,
-      publishedGeneration: null,
-      structuralIssues: [],
-      verificationLedger: [],
-      publicationIssues: [],
-      usage,
-    };
-  }
-  usage.input += generation.inputTokens;
-  usage.output += generation.outputTokens;
+  let rawGeneration: EnterpriseThesis | null = null;
+  if (options.deterministicClaimPlan) {
+    rawGeneration = buildDeterministicEnterpriseThesisFromSignalPacket(signalPacket);
+    console.log("  deterministic claim plan: built raw thesis from governed signal/context statements");
+  } else {
+    const userPrompt = buildUserPrompt(signalPacket);
+    // The schema's array bounds are stated explicitly in SYSTEM_PROMPT (a spine, not a report -- 3-5
+    // items per array, 250-400 words for enterprise_story) and haven't grown; what changed in the
+    // hardening pass is real required structure per item: claim_type on every GroundedClaim,
+    // enterprise_story_claims (3-5 more claims), value_creation_model's drivers/dependencies going
+    // from bare strings to full claims, and up to 6 visual_opportunities. A live run at 10000 hit the
+    // ceiling on both tenants with content still incomplete; 16000 fixed that run, but a later live
+    // run truncated again on both tenants (stop_reason=max_tokens, unterminated JSON string) --
+    // confirmation that 16000 is marginal, not safely clear, for this schema's real output length,
+    // since the model's own response length varies run to run for the same input. 28000 gives
+    // meaningfully more headroom above the observed failure point while staying well under the
+    // 34000 this codebase already runs in production for a comparably large structured generation
+    // (src/lib/deliverables/strategic-moves-artifact-standard.ts). "medium" effort is unchanged --
+    // proportionate to genuine cross-domain synthesis across a 40+ signal packet.
+    const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, THESIS_OUTPUT_TOKEN_BUDGET, "medium");
+    if (!generation) {
+      console.log("  ! thesis generation returned no text");
+      return {
+        rawGeneration: null,
+        publishedGeneration: null,
+        structuralIssues: [],
+        verificationLedger: [],
+        publicationIssues: [],
+        usage,
+      };
+    }
+    usage.input += generation.inputTokens;
+    usage.output += generation.outputTokens;
 
-  const rawGeneration = parseThesisJson(generation.text);
-  if (!rawGeneration) {
-    console.log("  ! thesis did not parse as JSON -- first 300 chars:");
-    console.log("   ", generation.text.slice(0, 300));
-    return {
-      rawGeneration: null,
-      publishedGeneration: null,
-      structuralIssues: [],
-      verificationLedger: [],
-      publicationIssues: [],
-      usage,
-    };
+    rawGeneration = parseThesisJson(generation.text);
+    if (!rawGeneration) {
+      console.log("  ! thesis did not parse as JSON -- first 300 chars:");
+      console.log("   ", generation.text.slice(0, 300));
+      return {
+        rawGeneration: null,
+        publishedGeneration: null,
+        structuralIssues: [],
+        verificationLedger: [],
+        publicationIssues: [],
+        usage,
+      };
+    }
   }
 
   const structuralIssues = validateStructure(rawGeneration, signalPacket);
