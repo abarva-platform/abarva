@@ -149,7 +149,7 @@ export function WorkspaceExecutiveShell({
           ))}
         </nav>
         <div className="sw-v2-rail-foot">
-          <span>{portfolio.workspaceDiagnostics.exploreProvider}</span>
+          <span>Data as of</span>
           <b>{fmtDate(portfolio.asOfDateIso)}</b>
         </div>
       </aside>
@@ -208,17 +208,17 @@ export function WorkspaceExecutiveShell({
           <Metric
             label="Contracts"
             value={String(portfolio.contracts.length)}
-            note="source.contract_360"
+            note="Loaded contract records"
           />
           <Metric
             label="Vendors"
             value={String(portfolio.vendors.length)}
-            note="source.vendor_contract_portfolio"
+            note="Vendor rollups"
           />
           <Metric
             label="Annual value"
             value={money(totalAnnualValue)}
-            note="sum of recorded annual_value"
+            note="Sum of recorded annual value"
           />
           <Metric
             label={decisionSupport?.label ?? "Decision set"}

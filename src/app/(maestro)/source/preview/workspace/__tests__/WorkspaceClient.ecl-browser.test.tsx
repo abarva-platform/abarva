@@ -317,6 +317,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText(/Serving Surfaces/i)).toBeNull();
     expect(screen.queryByText(/Proof Layers/i)).toBeNull();
     expect(screen.queryByText(/ECL Source/i)).toBeNull();
+    expect(screen.queryByText(/EclProjectionDbProvider/i)).toBeNull();
+    expect(screen.queryByText(/source\.contract_360/i)).toBeNull();
+    expect(screen.queryByText(/source\.vendor_contract_portfolio/i)).toBeNull();
     expect(screen.queryByText(/load run/i)).toBeNull();
     expect(screen.queryByText(/computeRenewalExposure/i)).toBeNull();
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
