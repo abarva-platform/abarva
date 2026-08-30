@@ -117,6 +117,8 @@ clean-keep-rate measurements instead of a softer nested model field.
 - `PASS` — the ECL seam test now asserts ready-contract and platform denominators are part of the
   cited signals, that empty arrays are acceptable for unsupported chapter sections, and that the
   structured result includes the script-level publication gate.
+- `PASS` — the ECL seam test now asserts thesis section counts are ceilings, not minimums, so
+  unsupported optional sections can remain empty instead of forcing one-domain advisory claims.
 - `PASS` — dense source-room generator proof showed `application_product_vendor_mismatches = 0`
   with all application and contract realism gates still passing.
 - `PASS` — dense source-room validator accepted the regenerated source room.

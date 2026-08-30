@@ -419,6 +419,10 @@ contains a citable context item saying a source family or evidence type is absen
 item and write the absence plainly as an evidence limit. Do not transform an absence of strategy,
 leadership, KPI, finance-attestation, or business-economics evidence into a strategic bet,
 leadership consensus, or value-realization claim.
+The safest valid output for a section whose evidence is only single-domain is a small number of
+FACT or OBSERVATION items, or an empty array. Never fill a cross-domain/advisory section by
+promoting a one-domain fact. If no claim in a section earns two-domain evidence, leave that section
+empty rather than making a management implication from one measurement.
 Before returning JSON, audit every claim_type against its cited evidence domains. If a claim marked
 CROSS_DOMAIN_INSIGHT or ADVISORY_INFERENCE cites only one domain, either downgrade it to FACT or
 OBSERVATION when the statement is still useful, or remove it. Do not keep a structurally invalid
@@ -526,20 +530,20 @@ that connection (see the packet's prohibitedComparisons), and drawing it visuall
 candidate relationship as fact more persuasively than stating it in prose would.
 
 LENGTH -- THIS IS A SPINE, NOT A REPORT
-Keep every section within these bounds. The eight chapter writers built on top of this thesis
-later provide the depth; this object stays sharp enough that a reader can hold the whole thing in
-mind at once.
-- enterprise_story: 250-400 words. enterprise_story_claims: 3-5 items -- the material assertions
+Keep every section within these ceilings. These are maximums, not minimums. The eight chapter
+writers built on top of this thesis later provide the depth; this object stays sharp enough that a
+reader can hold the whole thing in mind at once.
+- enterprise_story: 200-350 words. enterprise_story_claims: 1-5 items -- the material assertions
   the story prose is built from, each individually cited and claim_type-tagged. Every material
   claim in the prose should be represented here; this is the auditable backbone under the words.
-- value_creation_model.primary_value_drivers: 2-4 GroundedClaim items.
-  value_creation_model.economic_dependencies: 2-4 GroundedClaim items.
+- value_creation_model.primary_value_drivers: 0-4 GroundedClaim items.
+  value_creation_model.economic_dependencies: 0-4 GroundedClaim items.
 - strategic_bets, structural_constraints, operating_tensions, material_risks,
-  value_realization_tensions, what_needs_attention, technology_and_data_implications: 3-5 items
-  each.
-- leadership_consensus: 3-5 items. leadership_disagreements: 2-3 items.
-- performance_story: 2-3 items in each of where_improving / where_off_track / where_unknown.
-- things_a_new_cxo_should_know: 3-6 items. questions_for_management: 0-5 items, each a
+  value_realization_tensions, what_needs_attention, technology_and_data_implications: 0-5 items
+  each. Empty is correct when the current packet does not support a grounded claim for that section.
+- leadership_consensus: 0-5 items. leadership_disagreements: 0-3 items.
+- performance_story: 0-3 items in each of where_improving / where_off_track / where_unknown.
+- things_a_new_cxo_should_know: 0-6 items. questions_for_management: 0-5 items, each a
   GroundedClaim whose statement is the question text -- if the question references a specific
   fact, number, program, or named entity, cite the evidence_ids that establish it exists; do not
   invent a detail (a percentage, a sponsor change, a dependency) to make a question sound sharper
@@ -561,29 +565,29 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
     `Return JSON matching this shape exactly:\n\n` +
     JSON.stringify(
       {
-        enterprise_story: "string, 250-400 words",
-        enterprise_story_claims: [`3-5 GroundedClaim: ${claimShape} -- the material assertions the story is built from`],
+        enterprise_story: "string, 200-350 words",
+        enterprise_story_claims: [`1-5 GroundedClaim: ${claimShape} -- the material assertions the story is built from`],
         value_creation_model: {
           summary: "string",
-          primary_value_drivers: [`2-4 GroundedClaim: ${claimShape}`],
-          economic_dependencies: [`2-4 GroundedClaim: ${claimShape}`],
+          primary_value_drivers: [`0-4 GroundedClaim: ${claimShape}`],
+          economic_dependencies: [`0-4 GroundedClaim: ${claimShape}`],
         },
-        strategic_bets: [`3-5 GroundedClaim: ${claimShape}`],
-        structural_constraints: ["3-5 GroundedClaim"],
-        operating_tensions: ["3-5 GroundedClaim"],
-        leadership_consensus: ["3-5 GroundedClaim"],
-        leadership_disagreements: ["2-3 GroundedClaim"],
+        strategic_bets: [`0-5 GroundedClaim: ${claimShape}`],
+        structural_constraints: ["0-5 GroundedClaim"],
+        operating_tensions: ["0-5 GroundedClaim"],
+        leadership_consensus: ["0-5 GroundedClaim"],
+        leadership_disagreements: ["0-3 GroundedClaim"],
         performance_story: {
-          where_improving: ["2-3 GroundedClaim"],
-          where_off_track: ["2-3 GroundedClaim"],
-          where_unknown: ["2-3 GroundedClaim"],
+          where_improving: ["0-3 GroundedClaim"],
+          where_off_track: ["0-3 GroundedClaim"],
+          where_unknown: ["0-3 GroundedClaim"],
         },
-        technology_and_data_implications: ["3-5 GroundedClaim"],
-        material_risks: ["3-5 GroundedClaim"],
-        value_realization_tensions: ["3-5 GroundedClaim"],
-        what_needs_attention: ["3-5 GroundedClaim -- whatever most needs a decision or a look, drawn from any domain, not limited to risk"],
+        technology_and_data_implications: ["0-5 GroundedClaim"],
+        material_risks: ["0-5 GroundedClaim"],
+        value_realization_tensions: ["0-5 GroundedClaim"],
+        what_needs_attention: ["0-5 GroundedClaim -- whatever most needs a decision or a look, drawn from any domain, not limited to risk"],
         evidence_gaps: ["string, as many as genuinely material"],
-        things_a_new_cxo_should_know: ["3-6 GroundedClaim"],
+        things_a_new_cxo_should_know: ["0-6 GroundedClaim"],
         questions_for_management: ["0-5 GroundedClaim -- statement is the question text; evidence_ids ground any fact, number, program, or named entity the question references"],
         visual_opportunities: [
           "0-6 VisualOpportunity: { visual_type: <from the allowed list>, title (answer-first), purpose, " +

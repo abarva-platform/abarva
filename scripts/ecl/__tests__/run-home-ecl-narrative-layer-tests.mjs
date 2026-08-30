@@ -51,7 +51,9 @@ assert(
     thesis.includes("not enough verified evidence yet") &&
     thesis.includes("CLAIM TYPE DISCIPLINE") &&
     thesis.includes("Use FACT or OBSERVATION for a claim that rests on one domain") &&
-    thesis.includes("Do not transform an absence of strategy"),
+    thesis.includes("Do not transform an absence of strategy") &&
+    thesis.includes("These are maximums, not minimums") &&
+    thesis.includes("Empty is correct when the current packet does not support a grounded claim"),
   "EnterpriseThesis prompt forbids implementation vocabulary in CXO-visible language",
 );
 assert(
