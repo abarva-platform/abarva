@@ -833,7 +833,7 @@ function publishedThesisFromRows(rows: HomeProjectionRow[]): EnterpriseThesis {
   const claims = chapterClaimsByPage(rows);
   const claimCount = Array.from(claims.values()).reduce((sum, pageClaims) => sum + pageClaims.length, 0);
   if (claimCount === 0) {
-    throw new Error("Home ECL preview: no published chapter_claim rows; refusing to synthesize fallback narrative.");
+    return deferredThesis();
   }
   const executive = claims.get("executive_brief") ?? [];
   const business = claims.get("our_business") ?? [];
@@ -870,6 +870,57 @@ function publishedThesisFromRows(rows: HomeProjectionRow[]): EnterpriseThesis {
       visual("vendor_spend_concentration", "Supplier concentration in loaded contract value", "Commercial concentration is now visible in the ECL contract projection.", ["sig_ecl_vendor_002"]),
     ],
   };
+}
+
+function deferredThesis(): EnterpriseThesis {
+  return {
+    enterprise_story: "The Home narrative is deferred until verified chapter claims are available.",
+    enterprise_story_claims: [],
+    value_creation_model: {
+      summary: "The value-creation narrative is deferred until verified chapter claims are available.",
+      primary_value_drivers: [],
+      economic_dependencies: [],
+    },
+    strategic_bets: [],
+    structural_constraints: [],
+    operating_tensions: [],
+    leadership_consensus: [],
+    leadership_disagreements: [],
+    performance_story: { where_improving: [], where_off_track: [], where_unknown: [] },
+    technology_and_data_implications: [],
+    material_risks: [],
+    value_realization_tensions: [],
+    what_needs_attention: [],
+    evidence_gaps: [],
+    things_a_new_cxo_should_know: [],
+    questions_for_management: [],
+    visual_opportunities: [],
+  };
+}
+
+function hasPublishedChapterClaims(claims: Map<ChapterId, GroundedClaim[]>): boolean {
+  return Array.from(claims.values()).some((pageClaims) => pageClaims.length > 0);
+}
+
+function buildDeferredChapters(): ChapterView[] {
+  return CHAPTER_DEFS.map((definition) => ({
+    chapterId: definition.id,
+    title: definition.title,
+    guidingQuestion: definition.guidingQuestion,
+    headline: `${definition.title} is deferred pending verified claims`,
+    executive_synthesis:
+      "This chapter is not ready for executive review. Verified chapter claims have not been published for this tenant.",
+    key_insights: [],
+    tensions: [],
+    what_to_watch: [],
+    questions_to_ask: [
+      "Which verified source records and interviews should support this chapter before executive use?",
+    ],
+    visual_opportunities: [],
+    limitations: [
+      "Do not infer executive narrative from projection counts alone; publish verified chapter claims before using this chapter in a CXO readout.",
+    ],
+  }));
 }
 
 function buildPublishedChapters(rows: HomeProjectionRow[], claims: Map<ChapterId, GroundedClaim[]>): ChapterView[] {
@@ -911,7 +962,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
   const signalPacket = buildEclSignalPacket(rows, technologyEstate, assessmentId);
   const claims = chapterClaimsByPage(rows);
   const thesis = publishedThesisFromRows(rows);
-  const chapters = buildPublishedChapters(rows, claims);
+  const chapters = hasPublishedChapterClaims(claims) ? buildPublishedChapters(rows, claims) : buildDeferredChapters();
   return {
     tenantKey: base.tenantKey,
     provenance: {

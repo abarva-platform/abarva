@@ -368,21 +368,32 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     );
   });
 
-  it("refuses to synthesize a Home ECL narrative when no published chapter claims exist", () => {
+  it("renders a deferred Home ECL narrative instead of throwing when no published chapter claims exist", () => {
     const base = getHomeReviewBundle("meridian-health");
     expect(base).toBeTruthy();
 
-    expect(() =>
-      buildHomeReviewBundleFromEclProjectionRows(base!, [
-        row({
-          page_key: "executive_brief",
-          row_key: "executive_brief_summary",
-          row_type: "summary",
-          title: "Dense ECL estate loaded",
-          summary: "750 applications and 230 contracts are available from the ECL projection.",
-        }),
-      ]),
-    ).toThrow("no published chapter_claim rows");
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base!, [
+      row({
+        page_key: "executive_brief",
+        row_key: "executive_brief_summary",
+        row_type: "summary",
+        title: "Dense ECL estate loaded",
+        summary: "750 applications and 230 contracts are available from the ECL projection.",
+      }),
+    ]);
+
+    expect(bundle.thesis.publishedGeneration.enterprise_story).toBe(
+      "The Home narrative is deferred until verified chapter claims are available.",
+    );
+    expect(bundle.thesis.publishedGeneration.things_a_new_cxo_should_know).toEqual([]);
+    expect(bundle.chapters).toHaveLength(8);
+    expect(bundle.chapters[0]).toMatchObject({
+      headline: "Executive Brief is deferred pending verified claims",
+      key_insights: [],
+      tensions: [],
+      what_to_watch: [],
+    });
+    expect(bundle.chapters[0]?.limitations[0]).toContain("Do not infer executive narrative from projection counts alone");
   });
 
   it("resolves deterministic writer evidence ids on the Home runtime signal packet", () => {
