@@ -11,7 +11,7 @@ const result = spawnSync(
       "import sys",
       "sys.path.insert(0, 'scripts/ecl')",
       "import execute_dense_all_layer_load as load",
-      "print(load.readback_sql())",
+      "print(load.readback_sql(['contract_annualized_value_usd', 'sla_credit_owed_usd']))",
     ].join("; "),
   ],
   { encoding: "utf8" },
@@ -20,6 +20,16 @@ const result = spawnSync(
 assert.equal(result.status, 0, result.stderr || result.stdout);
 
 const sql = result.stdout;
+assert.match(
+  sql,
+  /'metric_definition'\s*,\s*\(select count\(\*\) from ecl_context\.metric_definition where tenant_key = 'meridian-health' and metric_key in \('contract_annualized_value_usd', 'sla_credit_owed_usd'\)\)/,
+  "metric_definition readback must count only this load's declared metric keys",
+);
+assert.match(
+  sql,
+  /'metric_definition_tenant_total'\s*,\s*\(select count\(\*\) from ecl_context\.metric_definition where tenant_key = 'meridian-health'\)/,
+  "readback must preserve a tenant-level diagnostic metric count without using it as the row contract",
+);
 const calls = [];
 const marker = "jsonb_build_object(";
 let cursor = 0;
@@ -109,6 +119,9 @@ assert.ok(uniqueKeys.has("serving_contract_rows"), "readback must include servin
 assert.ok(uniqueKeys.has("serving_views_declared"), "readback must include declared serving view count");
 assert.ok(uniqueKeys.has("serving_views_populated"), "readback must include populated serving view count");
 assert.ok(uniqueKeys.has("serving_views_empty"), "readback must include empty serving view count");
+assert.ok(uniqueKeys.has("serving_required_views_declared"), "readback must include required serving view count");
+assert.ok(uniqueKeys.has("serving_required_views_populated"), "readback must include populated required serving view count");
+assert.ok(uniqueKeys.has("serving_required_views_empty"), "readback must include empty required serving view count");
 assert.equal(uniqueKeys.size, keys.length, "readback keys must be unique");
 
 const servingViewCountQueries = Array.from(sql.matchAll(/count\(\*\)\s+as\s+row_count\s+from\s+serving\.([a-z0-9_]+)/gi)).map(
@@ -122,8 +135,8 @@ assert.equal(
 );
 assert.equal(
   servingViewCountQueries.length,
-  80,
-  "readback should count the 40 serving views once for populated and once for empty",
+  156,
+  "readback should count 40 total serving views and 38 required serving views once for populated and once for empty",
 );
 
 const extractKeyBlock = (key, nextKey) => {

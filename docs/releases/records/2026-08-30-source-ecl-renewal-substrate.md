@@ -20,6 +20,8 @@ This release makes the synthetic Source-room contract fixture carry an explicit 
 
 The release also hardens the ECL schema replay path for an already-existing database: older physical tables receive the current object semantic-identity contract and renewal columns before the governed data-build job attempts a refresh, and older context convenience views are recreated after object-table shape upgrades. Job diagnostics now preserve the failing Postgres error tail so future schema failures identify the actual table or constraint.
 
+The release also corrects the all-layer readback gate so it validates the current load's metric keys instead of treating the whole tenant-level metric dictionary as an exact row contract, and so clean empty operational queues do not fail required serving-view population checks.
+
 The change prepares Source 360 to state only what the refreshed substrate proves. It does not create finance-confirmed realized value and does not promote synthetic evidence as live-client truth.
 
 ## Layer Impact
@@ -30,6 +32,7 @@ The change prepares Source 360 to state only what the refreshed substrate proves
 - Layer 3: Commercial contract records store renewal notice dates and carry auto-renew, notice-window, benchmarking, and termination metadata in attributes.
 - Layer 4: Source projection rows write non-null renewal notice dates and expose auto-renew metadata in the payload consumed by Source 360.
 - Schema replay: Existing ECL physical schemas are upgraded for object semantic identity and renewal-date columns before all-layer refresh, including replay-safe context views whose `o.*` shape changes after table upgrades.
+- Data-build readback: The governed all-layer job validates only the metric definitions declared by the current package while retaining tenant-level metric dictionary totals as diagnostics, and it requires populated serving views only for surfaces whose queues are expected to have rows.
 - Products: Source 360 can compute renewal posture from served data. The renewal serving view is narrowed to decision-relevant rows.
 
 ## Client Applicability
@@ -50,6 +53,7 @@ The change prepares Source 360 to state only what the refreshed substrate proves
 - `scripts/ecl/__tests__/run-ecl-object-type-catalog-tests.mjs`
 - `scripts/ecl/__tests__/run-ecl-projection-schema-reconciliation-tests.mjs`
 - `scripts/ecl/execute_dense_all_layer_load.py`
+- `scripts/ecl/export_dense_all_layer_readback.py`
 - `docs/architecture/ecl-dense-all-layer-count-contract.json`
 - `docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql`
 - `docs/architecture/sql-drafts/ecl_product_projection_tables_v1_draft.sql`
@@ -67,6 +71,7 @@ QA status: `pass` for scoped validation, with one broader base-branch gate still
 - `npm run test:ecl-source-file-origin-upgrade` passed.
 - `npm run test:ecl-object-type-catalog` passed.
 - `npm run test:ecl-projection-schema-reconciliation` passed.
+- `npm run test:ecl-dense-readback-query` passed.
 - `npm run test:ecl-object-semantic-type` passed.
 - `python3 -m py_compile scripts/ecl/execute_dense_all_layer_load.py` passed.
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts' --runInBand` passed.
