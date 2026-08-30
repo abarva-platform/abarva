@@ -29,6 +29,26 @@ const KIND_LABEL: Record<TowerAiView["kind"], string> = {
  * claim about this tenant.
  */
 /**
+ * The most recent month that actually recorded a reading, with the month it belongs to. Months
+ * are carried in order, so the last one carrying a value is the latest reading. A case whose
+ * observations all record nothing says so rather than showing the baseline as though it were
+ * current.
+ */
+function latestReading(a: TowerAiView): string {
+  const withValue = [...a.valueObservationMonths]
+    .reverse()
+    .find((m) => m.actualValue !== null);
+  if (withValue === undefined) {
+    return a.valueObservationMonths.length === 0
+      ? "Not recorded"
+      : "No month records a reading";
+  }
+  return `${withValue.actualValue}${
+    a.metricUnit === null ? "" : ` ${a.metricUnit}`
+  } · ${withValue.month}`;
+}
+
+/**
  * Canonical event and basis keys are snake_case identifiers. They are readable as words and are
  * shown as words; nothing is renamed, only spaced.
  */
@@ -180,6 +200,74 @@ export function AiInitiativeDrawer({
             total; the trail is what turns it into "no validator has been named", which is the
             actionable version and the design's whole point.
           */}
+          {/*
+            Approved, spent, forecast. A budget on its own says what was allowed; it takes the
+            other two to say whether the project is on plan, and the design leads with all three
+            for that reason. Each renders absence as absence — a project that has spent nothing
+            records 0, which is not the same as a project whose spend was never recorded.
+          */}
+          <DrawerSection>Money</DrawerSection>
+          <DrawerRow
+            label="Approved budget"
+            value={a.aiSpendLoaded ? formatUsdM(a.aiSpendUsd) : "Not loaded"}
+          />
+          <DrawerRow
+            label="Spent to date"
+            value={
+              a.actualSpendYtdUsd === null
+                ? "Not recorded"
+                : formatUsdM(a.actualSpendYtdUsd)
+            }
+          />
+          <DrawerRow
+            label="Forecast"
+            value={
+              a.forecastSpendUsd === null
+                ? "Not recorded"
+                : formatUsdM(a.forecastSpendUsd)
+            }
+          />
+
+          {/*
+            The operating metric with its own numbers. Carried by name since the previous slice;
+            without a baseline and a target the name is a label with nothing behind it, and a
+            reader can see what a case is measured on but not whether it has moved.
+          */}
+          <DrawerSection>Operating metric</DrawerSection>
+          <DrawerRow label="Metric" value={a.successMetric ?? "Not recorded"} />
+          <DrawerRow
+            label="Baseline → target"
+            value={
+              a.metricBaselineValue === null || a.metricTargetValue === null
+                ? "Not recorded"
+                : `${a.metricBaselineValue} → ${a.metricTargetValue}${
+                    a.metricUnit === null ? "" : ` ${a.metricUnit}`
+                  }`
+            }
+          />
+          <DrawerRow label="Latest reading" value={latestReading(a)} />
+
+          <DrawerSection>Timing</DrawerSection>
+          <DrawerRow
+            label="Technology owner"
+            value={a.technologyOwnerRole ?? "Not recorded"}
+          />
+          <DrawerRow
+            label="Target go-live"
+            value={a.targetGoLiveDate ?? "Not recorded"}
+          />
+          <DrawerRow
+            label="Realization starts"
+            value={
+              a.realizationStartMonth ??
+              (a.benefitRealizationLagMonths === null
+                ? "Not recorded"
+                : `Not dated · ${formatCount(
+                    a.benefitRealizationLagMonths,
+                  )}-month lag recorded`)
+            }
+          />
+
           <DrawerSection>Finance trail</DrawerSection>
           {a.financeApprovalEvents.length === 0 ? (
             <div className={styles.urow}>

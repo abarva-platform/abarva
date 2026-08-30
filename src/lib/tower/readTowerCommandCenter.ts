@@ -634,6 +634,8 @@ function valueObservationMonths(
         financeValidatedUsd: nullableNum(o.finance_validated_usd as Numeric) ?? 0,
         boardClaimableUsd: nullableNum(o.board_claimable_usd as Numeric) ?? 0,
         validationState: nullableText(o.validation_state),
+        actualValue: nullableNum(o.actual_value as Numeric),
+        reviewerRole: nullableText(o.reviewer_role),
       };
     })
     .filter((entry): entry is TowerMartValueObservationMonth => entry !== null);
@@ -711,6 +713,17 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     successMetric: payloadTextFrom(row, ["success_metric"]),
     paybackMonthsTarget: payloadNullableNumberFrom(row, ["payback_months_target"]),
     valueObservationMonths: valueObservationMonths(row),
+    actualSpendYtdUsd: payloadNullableNumberFrom(row, ["actual_spend_ytd_usd"]),
+    forecastSpendUsd: payloadNullableNumberFrom(row, ["forecast_spend_usd"]),
+    technologyOwnerRole: payloadTextFrom(row, ["technology_owner_role"]),
+    targetGoLiveDate: payloadTextFrom(row, ["target_go_live_date"]),
+    realizationStartMonth: payloadTextFrom(row, ["realization_start_month"]),
+    metricBaselineValue: payloadNullableNumberFrom(row, ["metric_baseline_value"]),
+    metricTargetValue: payloadNullableNumberFrom(row, ["metric_target_value"]),
+    metricUnit: payloadTextFrom(row, ["metric_unit"]),
+    benefitRealizationLagMonths: payloadNullableNumberFrom(row, [
+      "benefit_realization_lag_months",
+    ]),
     financeApprovalEvents: financeApprovalEvents(row),
     evidenceItems: evidenceItems(row),
     promisedValueUsd,

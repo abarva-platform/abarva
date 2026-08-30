@@ -177,6 +177,11 @@ function num(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/**
+ * A number when the source recorded one, null when it recorded nothing, and 0 when it recorded 0.
+ * `num(x) || null` collapses the last two, which turns a baseline of 0 — or a project that has
+ * genuinely spent nothing yet — into a gap. Each of those is a stated fact.
+ */
 function numOrNull(value) {
   if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
@@ -567,7 +572,20 @@ function buildRows(options) {
       lifecycle_stage: project?.lifecycle_stage ?? null,
       finance_partner_role: project?.finance_partner_role ?? null,
       success_metric: row.success_metric ?? null,
-      payback_months_target: num(row.payback_months_target) || null,
+      payback_months_target: numOrNull(row.payback_months_target),
+      // The money row. Approved budget alone says what was allowed, not what has been spent or
+      // what the project now expects to spend.
+      actual_spend_ytd_usd: numOrNull(project?.actual_spend_ytd_usd),
+      forecast_spend_usd: numOrNull(project?.forecast_spend_usd),
+      technology_owner_role: project?.technology_owner_role ?? null,
+      target_go_live_date: project?.target_go_live_date ?? null,
+      realization_start_month: project?.realization_start_month ?? null,
+      // The operating metric's own numbers. Carried by name already; without these the name is a
+      // label with nothing behind it.
+      metric_baseline_value: numOrNull(row.baseline_value),
+      metric_target_value: numOrNull(row.target_value),
+      metric_unit: row.metric_unit ?? null,
+      benefit_realization_lag_months: numOrNull(row.benefit_realization_lag_months),
       // The observation series behind the value waterfall, so the drawer can show when each step
       // happened rather than only its total.
       value_observation_months: observations
@@ -578,6 +596,8 @@ function buildRows(options) {
           finance_validated_usd: num(o.finance_validated_value_usd),
           board_claimable_usd: num(o.board_claimable_value_usd),
           validation_state: o.validation_state ?? null,
+          actual_value: numOrNull(o.actual_value),
+          reviewer_role: o.reviewer_role ?? null,
         }))
         .filter((o) => o.month !== null)
         .sort((a, b) => String(a.month).localeCompare(String(b.month))),

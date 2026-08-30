@@ -291,6 +291,8 @@ export interface TowerEvidenceItem {
 /** One month of the value waterfall, as the source recorded it. */
 export interface TowerValueObservationMonth {
   month: string;
+  actualValue: number | null;
+  reviewerRole: string | null;
   sponsorClaimedUsd: number;
   financeReviewedUsd: number;
   financeValidatedUsd: number;
@@ -346,6 +348,15 @@ export interface TowerAiView {
   successMetric: string | null;
   paybackMonthsTarget: number | null;
   valueObservationMonths: readonly TowerValueObservationMonth[];
+  actualSpendYtdUsd: number | null;
+  forecastSpendUsd: number | null;
+  technologyOwnerRole: string | null;
+  targetGoLiveDate: string | null;
+  realizationStartMonth: string | null;
+  metricBaselineValue: number | null;
+  metricTargetValue: number | null;
+  metricUnit: string | null;
+  benefitRealizationLagMonths: number | null;
   financeApprovalEvents: readonly TowerFinanceApprovalEvent[];
   evidenceItems: readonly TowerEvidenceItem[];
   promisedUsd: number;

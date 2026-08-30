@@ -572,3 +572,41 @@ describe("the finance trail and evidence reach the drill-down", () => {
     expect(drawer).toContain('value.replace(/_/g, " ")');
   });
 });
+
+describe("the outcome fields survive the canonical layer", () => {
+  const generator = read("scripts/tower/generate-meridian-layer1-source.mjs");
+  const drawer = read(
+    "src/components/tower/command-center/drawers/AiInitiativeDrawer.tsx",
+  );
+
+  it("carries the money row and the operating metric into canonical", () => {
+    // These were in Layer 1 and dropped when canonical was built, so the value story survived the
+    // adapter boundary and the operational one did not.
+    for (const field of [
+      "actual_spend_ytd_usd: row.actual_spend_ytd_usd",
+      "forecast_spend_usd: row.forecast_spend_usd",
+      "technology_owner_role: row.technology_owner_role",
+      "baseline_value: row.baseline_value",
+      "target_value: row.target_value",
+      "actual_value: row.actual_value",
+    ]) {
+      expect([field, generator.includes(field)]).toEqual([field, true]);
+    }
+  });
+
+  it("keeps a recorded zero out of the null bucket", () => {
+    // `num(x) || null` turns a baseline of 0, or a project that has genuinely spent nothing, into
+    // a gap. Both are stated facts.
+    expect(LAYER4).not.toMatch(/num\((?:row|project\?)\.[a-z_]+\) \|\| null/);
+    expect(LAYER4).toContain("metric_baseline_value: numOrNull(row.baseline_value)");
+  });
+
+  it("does not show the baseline as though it were the latest reading", () => {
+    expect(drawer).toContain("No month records a reading");
+    expect(drawer).toContain(".find((m) => m.actualValue !== null)");
+  });
+
+  it("distinguishes a project that spent nothing from one never recorded", () => {
+    expect(drawer).toContain('a.actualSpendYtdUsd === null\n                ? "Not recorded"');
+  });
+});
