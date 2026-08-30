@@ -3113,6 +3113,39 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               sourceConfidence: c.source_confidence,
             }
           : null,
+      contractDirectory: vm.portfolio.contracts.map((contractRow) => ({
+        contractId: contractRow.contract_id,
+        vendorId: contractRow.vendor_ref,
+        vendorName: contractRow.vendor_name,
+        contractName: contractRow.contract_name,
+        category: contractRow.vendor_category,
+        annualValueUsd: numberFromDb(contractRow.annual_value),
+        actualAnnualSpendUsd: numberFromDb(contractRow.actual_annual_spend),
+        totalCommittedValueUsd: numberFromDb(contractRow.total_committed_value),
+        endDate: fmtDate(contractRow.end_date),
+        noticePeriodDays: contractRow.notice_period_days,
+        autoRenew: contractRow.auto_renew,
+        renewalOwnerRef: contractRow.renewal_owner_ref,
+        sourceConfidence: contractRow.source_confidence,
+      })),
+      contractOpportunityDirectory: vm.portfolio.impact.actionCandidates.map(
+        (candidate) => ({
+          id: candidate.action_candidate_id,
+          opportunityId: candidate.opportunity_id,
+          contractId: candidate.contract_id,
+          vendorName: candidate.vendor_name,
+          label: candidate.title ?? "Review candidate action",
+          amountUsd: numberFromDb(candidate.candidate_amount_usd),
+          state: candidate.readiness_state,
+          evidenceClass: candidate.evidence_state,
+          nextAction:
+            candidate.next_action ??
+            "Confirm evidence owner and decision path before claiming value.",
+          sourceRefs: splitList(
+            JSON.stringify(candidate.citation_basis_json ?? {}),
+          ),
+        }),
+      ),
       optimizationOpportunities: opportunityView
         ? {
             recommendation: opportunityView.recommendation,

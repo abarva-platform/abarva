@@ -261,4 +261,77 @@ describe("Source Workspace visual aVa answer", () => {
       answer?.citations.some((citation) => citation.recordId === "CTR-090"),
     ).toBe(true);
   });
+
+  it("binds a named contract question to the contract directory instead of the visible portfolio selection", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.selectedContract = null;
+    context.sourceV4.contractDirectory = [
+      {
+        contractId: "CTR-0002",
+        vendorName: "Optum Rx",
+        contractName: "Pharmacy Benefits Services Agreement",
+        annualValueUsd: 8_600_000,
+        actualAnnualSpendUsd: 8_587_900,
+        totalCommittedValueUsd: 34_400_000,
+        endDate: "31 Dec 2027",
+        autoRenew: true,
+        renewalOwnerRef: "Procurement",
+        scopeSummary: "Pharmacy benefits and claims processing services.",
+        scopeRowCount: 4,
+      },
+      {
+        contractId: "CTR-0006",
+        vendorName: "Epic Systems Corporation",
+        contractName: "Epic Systems Corporation Rate Card Agreement",
+        annualValueUsd: 86_200_000,
+        actualAnnualSpendUsd: null,
+        totalCommittedValueUsd: null,
+        endDate: "31 Dec 2030",
+        autoRenew: false,
+        renewalOwnerRef: "Clinical IT",
+        scopeSummary: "EHR platform scope.",
+        scopeRowCount: 0,
+      },
+    ];
+    context.sourceV4.contractOpportunityDirectory = [
+      {
+        id: "epic-candidate",
+        contractId: "CTR-0006",
+        vendorName: "Epic Systems Corporation",
+        label: "Review EHR consolidation posture",
+        amountUsd: 4_100_000,
+        state: "workflow_required",
+        evidenceClass: "not_finance_confirmed",
+        nextAction: "Confirm module evidence.",
+        sourceRefs: ["source.contract_action_candidate_v1"],
+      },
+    ];
+
+    expect(
+      canBuildSourceWorkspaceVisualAnswer({
+        query:
+          "For CTR-0002, why is this contract actionable and what is missing before I claim value?",
+        surfaceContext: context,
+      }),
+    ).toBe(true);
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query:
+        "For CTR-0002, why is this contract actionable and what is missing before I claim value?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("CTR-0002");
+    expect(answer?.directAnswer).toContain("Optum Rx");
+    expect(answer?.directAnswer).toContain(
+      "No governed opportunity row is tied to this contract",
+    );
+    expect(answer?.directAnswer).not.toContain("Epic Systems");
+    expect(answer?.directAnswer).not.toContain("$4.1M");
+    expect(
+      answer?.citations.some((citation) => citation.recordId === "CTR-0002"),
+    ).toBe(true);
+  });
 });

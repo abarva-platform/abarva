@@ -964,6 +964,7 @@ describe("buildViewModel numeric coercion", () => {
       avaSurfaceContext: {
         sourceV4: {
           executivePortfolio: { contracts: number; annualValue: string };
+          contractDirectory: Array<{ contractId: string }>;
           valueProof: {
             assignedSeats: number;
             actualCost: string;
@@ -990,6 +991,11 @@ describe("buildViewModel numeric coercion", () => {
     expect(built.avaSurfaceContext.sourceV4.valueProof.rule).toMatch(
       /do not prove a finance-confirmed outcome/i,
     );
+    expect(
+      built.avaSurfaceContext.sourceV4.contractDirectory.map(
+        (contract) => contract.contractId,
+      ),
+    ).toContain(PORTFOLIO.contracts[0].contract_id);
   });
 
   it("exposes Source v4 proof cards with governed period and exposure labels", () => {
