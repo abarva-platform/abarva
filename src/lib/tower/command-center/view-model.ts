@@ -435,7 +435,10 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     controlBlockerReviewed: item.controlBlockerReviewed ?? false,
     sponsorRole: item.sponsorRole ?? null,
     aiSpendUsd: num(item.aiTaggedSpendUsd),
-    aiSpendLoaded: item.aiTaggedSpendUsd !== null,
+    // `aiTaggedSpendUsd` is typed `number`, so `!== null` was always true and this discarded
+    // whatever the reader derived. The flag has to come from the reader, which is the only place
+    // that can still see whether the source recorded a cost at all.
+    aiSpendLoaded: item.aiSpendLoaded ?? false,
     promisedUsd: num(item.promisedValueUsd),
     promisedBenefitLoaded: item.promisedValueUsd !== null,
     financeValidatedUsd: num(item.financeValidatedValueUsd),
