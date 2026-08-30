@@ -13,6 +13,7 @@ const pagePromptContractPath = path.join(
   repoRoot,
   "docs/architecture/home-v2-page-prompt-contracts-2026-08-30.json",
 );
+const runtimePagePromptContractPath = path.join(repoRoot, "scripts/ecl/home_page_prompt_contracts.ts");
 
 function assert(condition, message) {
   if (!condition) {
@@ -29,6 +30,13 @@ const thesis = fs.readFileSync(thesisPath, "utf8");
 const chapters = fs.readFileSync(chaptersPath, "utf8");
 const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
 const pagePromptContract = JSON.parse(fs.readFileSync(pagePromptContractPath, "utf8"));
+const runtimePagePromptContractSource = fs.readFileSync(runtimePagePromptContractPath, "utf8");
+const runtimePagePromptContractMatch = runtimePagePromptContractSource.match(
+  /export const HOME_PAGE_PROMPT_CONTRACT = (?<json>[\s\S]+) as const;\s*$/,
+);
+const runtimePagePromptContract = runtimePagePromptContractMatch?.groups?.json
+  ? JSON.parse(runtimePagePromptContractMatch.groups.json)
+  : null;
 
 function promptPage(pageKey) {
   return pagePromptContract.pages.find((page) => page.page_key === pageKey);
@@ -70,6 +78,10 @@ const expectedHomeSurfaceKeys = [
 assert(
   pagePromptContract.contract_id === "home-v2-page-prompt-contracts-2026-08-30",
   "Home V2 page prompt contract is the expected dated contract",
+);
+assert(
+  JSON.stringify(runtimePagePromptContract) === JSON.stringify(pagePromptContract),
+  "Runtime Home page prompt contract copy matches the docs contract exactly",
 );
 assert(
   pagePromptContract.source_family_summaries_required === true &&
@@ -313,6 +325,8 @@ assert(
 );
 assert(
   script.includes("HOME_PAGE_PROMPT_CONTRACT_PATH") &&
+    script.includes("HOME_PAGE_PROMPT_CONTRACT") &&
+    script.includes("fs.existsSync(contractPath)") &&
     script.includes("function readHomePagePromptContracts") &&
     script.includes("pagePromptContracts: readHomePagePromptContracts()") &&
     script.includes("lens_contracts") &&
