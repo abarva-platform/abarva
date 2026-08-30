@@ -329,6 +329,54 @@ describe("computeRenewalExposure", () => {
     );
   });
 
+  it("uses explicit notice_deadline with expiration_date before deriving deadline math", () => {
+    const rows = [
+      row({
+        contract_id: "raw-explicit-notice-lapsed",
+        annual_value: 140_300_000,
+        end_date: null,
+        expiration_date: "2027-12-31",
+        notice_deadline: "2027-06-01",
+        notice_period_days: 90,
+        auto_renew: false,
+        auto_renew_flag: "true",
+      } as Partial<SourceContractVendor360Row> & Record<string, unknown>),
+      row({
+        contract_id: "raw-explicit-notice-open",
+        annual_value: 214_600_000,
+        end_date: null,
+        expiration_date: "2028-06-30",
+        notice_deadline: "2028-03-31",
+        notice_period_days: 90,
+        auto_renew: false,
+        auto_renew_flag: "true",
+      } as Partial<SourceContractVendor360Row> & Record<string, unknown>),
+      row({
+        contract_id: "raw-explicit-notice-expired",
+        annual_value: 194_100_000,
+        end_date: null,
+        expiration_date: "2027-01-01",
+        notice_deadline: "2026-10-03",
+        notice_period_days: 90,
+        auto_renew: false,
+        auto_renew_flag: "true",
+      } as Partial<SourceContractVendor360Row> & Record<string, unknown>),
+    ];
+
+    const result = computeRenewalExposure(rows, asOf, 180);
+
+    expect(result.expiredAsOfDate.map((r) => r.contract_id)).toEqual([
+      "raw-explicit-notice-expired",
+    ]);
+    expect(
+      result.noticeDeadlinePassedAutoRenew.map((r) => r.contract_id),
+    ).toEqual(["raw-explicit-notice-lapsed"]);
+    expect(result.noticeDeadlinePassedAutoRenewAnnualValue).toBe(140_300_000);
+    expect(result.noticeDeadlinePassedAutoRenew).not.toContainEqual(
+      expect.objectContaining({ contract_id: "raw-explicit-notice-expired" }),
+    );
+  });
+
   it("throws on an invalid as-of date rather than silently falling back to the real clock", () => {
     expect(() => computeRenewalExposure([], "not-a-date")).toThrow(
       /compute_renewal_exposure_invalid_as_of_date/,
