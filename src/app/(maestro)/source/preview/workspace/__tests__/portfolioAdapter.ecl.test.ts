@@ -1009,7 +1009,10 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       "$214.6M still cancellable",
     );
     expect(cockpit.proofLayers.evidenceBehindVerdict[0].value).toContain(
-      "1 stale-date exclusions",
+      "1 expired contract exclusions",
+    );
+    expect(cockpit.proofLayers.evidenceBehindVerdict[0].value).toContain(
+      "0 past renewal/notice rows",
     );
     expect(cockpit.actionQueue.map((row) => row.contractId)).not.toContain(
       "expired-auto-renew",

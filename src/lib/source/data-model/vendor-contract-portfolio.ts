@@ -166,6 +166,9 @@ export interface RenewalExposureResult {
   /** Contracts whose end_date is already before the as-of date. These are data-freshness exclusions, not live commercial deadlines. */
   readonly expiredAsOfDate: readonly SourceContractVendor360Row[];
   readonly expiredAsOfDateAnnualValue: number;
+  /** Contracts whose explicit renewal/notice date is before the as-of date. This is disclosed separately from inferred end-date math. */
+  readonly pastRenewalNoticeDate: readonly SourceContractVendor360Row[];
+  readonly pastRenewalNoticeDateAnnualValue: number;
   /** Contracts whose end_date falls within windowDays of asOfDateIso, not yet past it. */
   readonly expiringWithinWindow: readonly SourceContractVendor360Row[];
   readonly expiringWithinWindowAnnualValue: number;
@@ -183,6 +186,36 @@ export interface RenewalExposureResult {
 
 function daysBetween(a: Date, b: Date): number {
   return (b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24);
+}
+
+function stringValue(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text.length > 0 ? text : null;
+}
+
+function renewalNoticeDateValue(
+  row: SourceContractVendor360Row,
+): string | null {
+  const dynamic = row as unknown as Record<string, unknown>;
+  const explicit =
+    stringValue(row.renewal_notice_date) ??
+    stringValue(row.notice_deadline) ??
+    stringValue(dynamic.renewal_date);
+  if (explicit) return explicit;
+  const state = stringValue(row.renewal_decision_state);
+  const match = state?.match(/^notice_deadline_(\d{4}-\d{2}-\d{2})$/);
+  return match?.[1] ?? null;
+}
+
+function dateFromValue(value: string | null): Date | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export function computeRenewalExposure(
@@ -205,6 +238,11 @@ export function computeRenewalExposure(
   const expiredAsOfDate = withEndDate.filter((r) => {
     const end = new Date(r.end_date);
     return end.getTime() < asOf.getTime();
+  });
+
+  const pastRenewalNoticeDate = rows.filter((r) => {
+    const noticeDate = dateFromValue(renewalNoticeDateValue(r));
+    return noticeDate != null && noticeDate.getTime() < asOf.getTime();
   });
 
   const expiringWithinWindow = withEndDate.filter((r) => {
@@ -235,6 +273,8 @@ export function computeRenewalExposure(
     asOfDateIso,
     expiredAsOfDate,
     expiredAsOfDateAnnualValue: sumAnnual(expiredAsOfDate),
+    pastRenewalNoticeDate,
+    pastRenewalNoticeDateAnnualValue: sumAnnual(pastRenewalNoticeDate),
     expiringWithinWindow,
     expiringWithinWindowAnnualValue: sumAnnual(expiringWithinWindow),
     noticeDeadlinePassed,

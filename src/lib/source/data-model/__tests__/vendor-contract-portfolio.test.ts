@@ -203,6 +203,34 @@ describe("computeRenewalExposure", () => {
     expect(result.noticeDeadlinePassedAutoRenewAnnualValue).toBeCloseTo(52.2);
   });
 
+  it("preserves explicit renewal notice dates as a separate data-quality signal", () => {
+    const rows = [
+      row({
+        contract_id: "past-notice",
+        annual_value: 11_000_000,
+        renewal_notice_date: "2027-01-15",
+        end_date: "2027-12-31",
+        notice_period_days: 350,
+        auto_renew: true,
+      }),
+      row({
+        contract_id: "future-notice",
+        annual_value: 22_000_000,
+        renewal_notice_date: "2028-01-15",
+        end_date: "2028-06-30",
+        notice_period_days: 167,
+        auto_renew: true,
+      }),
+    ];
+
+    const result = computeRenewalExposure(rows, asOf, 180);
+
+    expect(result.pastRenewalNoticeDate.map((r) => r.contract_id)).toEqual([
+      "past-notice",
+    ]);
+    expect(result.pastRenewalNoticeDateAnnualValue).toBe(11_000_000);
+  });
+
   it('does not treat an already-expired contract as "notice deadline passed"', () => {
     const rows = [
       row({

@@ -54,6 +54,8 @@ export interface SourceContractVendor360Row extends ConflictFlagged {
   readonly total_committed_value: number | null;
   readonly committed_annual_spend: number | null;
   readonly actual_annual_spend: number | null;
+  readonly renewal_notice_date?: string | null;
+  readonly notice_deadline?: string | null;
   readonly end_date: string | null;
   readonly notice_period_days: number | null;
   readonly auto_renew: boolean;
