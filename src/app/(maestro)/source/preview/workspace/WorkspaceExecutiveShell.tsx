@@ -676,20 +676,17 @@ function VendorsPage({
           title={selectedVendor?.vendor_name ?? "Select a vendor"}
         />
         {selectedVendor ? (
-          <>
-            <div className="sw-v2-fact-stack">
-              <Fact
-                label="Contracts"
-                value={String(selectedVendor.contract_count)}
-              />
-              <Fact
-                label="Annual value"
-                value={money(numberFromDb(selectedVendor.annual_value))}
-              />
-              <Fact
-                label="Share"
-                value={formatShare(selectedVendor, totalAnnualValue)}
-              />
+          <div className="sw-v2-vendor-summary">
+            <div className="sw-v2-vendor-summary-hero">
+              <span>{selectedVendor.vendor_category ?? "Category not established"}</span>
+              <b>{money(numberFromDb(selectedVendor.annual_value))}</b>
+              <small>
+                {selectedVendor.contract_count} contracts /{" "}
+                {formatShare(selectedVendor, totalAnnualValue)} of recorded
+                annual value
+              </small>
+            </div>
+            <div className="sw-v2-vendor-metric-grid">
               <Fact
                 label="Auto-renewing"
                 value={String(selectedVendor.auto_renew_contracts)}
@@ -713,27 +710,34 @@ function VendorsPage({
                 )}
               />
               <Fact
-                label="Spend / performance rows"
-                value={`${formatCount(selectedVendorCoverage?.spendRows)} / ${formatCount(selectedVendorCoverage?.performanceRows)}`}
+                label="Spend rows"
+                value={formatCount(selectedVendorCoverage?.spendRows)}
+              />
+              <Fact
+                label="Performance rows"
+                value={formatCount(selectedVendorCoverage?.performanceRows)}
               />
             </div>
-            <div className="sw-v2-mini-list">
-              {selectedContracts.slice(0, 6).map((contract) => (
-                <button
-                  key={contract.contract_id}
-                  type="button"
-                  onClick={() => onOpenContract(contract.contract_id)}
-                >
-                  <b>{contract.contract_id}</b>
-                  <span>{money(numberFromDb(contract.annual_value))}</span>
-                </button>
-              ))}
-              {selectedContracts.length === 0 ? (
+            <div className="sw-v2-vendor-contracts">
+              <span>Grouped contracts</span>
+              {selectedContracts.length > 0 ? (
+                selectedContracts.slice(0, 6).map((contract) => (
+                  <button
+                    key={contract.contract_id}
+                    type="button"
+                    onClick={() => onOpenContract(contract.contract_id)}
+                  >
+                    <b>{contract.contract_id}</b>
+                    <small>{contract.contract_name || contract.vendor_name}</small>
+                    <strong>{money(numberFromDb(contract.annual_value))}</strong>
+                  </button>
+                ))
+              ) : (
                 <p className="sw-v2-muted">
                   Contract-level rows are not materialized for this vendor
                   selection.
                 </p>
-              ) : null}
+              )}
               {selectedContracts.length > 6 ? (
                 <p className="sw-v2-muted">
                   {selectedContracts.length - 6} more contract headers stay in
@@ -741,7 +745,7 @@ function VendorsPage({
                 </p>
               ) : null}
             </div>
-          </>
+          </div>
         ) : (
           <p className="sw-v2-muted">
             Choose a row to see grouped contract headers.
