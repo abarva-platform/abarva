@@ -81,6 +81,25 @@ async function main() {
       console.log(`active\t${r.tenant_key}\t${r.assessment_id}\tv${r.projection_version}`);
     }
 
+    console.log("=== 5. the deployed bodies, verbatim ===");
+    // The repo's migration defines these functions with the join and that migration is applied,
+    // yet the deployed bodies do not contain it. Something replaced them since. Re-creating from
+    // the repo would therefore change more than the join, so the deployed text is the only safe
+    // basis for a minimal fix.
+    for (const name of ["tower_ai_rows", "tower_command_rows"]) {
+      const r = await client.query(
+        `select pg_get_functiondef(p.oid) as body
+           from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname = 'serving' and p.proname = $1
+          limit 1`,
+        [name],
+      );
+      const body = String(r.rows[0]?.body ?? "MISSING");
+      console.log(`BODY_BEGIN\t${name}`);
+      for (const l of body.split("\n")) console.log(`BODY\t${l}`);
+      console.log(`BODY_END\t${name}`);
+    }
+
     console.log("PROBE_OK");
   } finally {
     await client.end();
