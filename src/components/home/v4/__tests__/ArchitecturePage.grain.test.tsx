@@ -48,12 +48,16 @@ describe("Home v4 architecture grain", () => {
     expect(screen.getByText("Teradata Enterprise Warehouse Appliance")).toBeInTheDocument();
     const runMap = within(screen.getByLabelText("Enterprise run map"));
     expect(runMap.getByText("Enterprise run map")).toBeInTheDocument();
-    expect(runMap.getByText("Health Plan / Payer")).toBeInTheDocument();
+    expect(runMap.getAllByText("Health Plan / Payer").length).toBeGreaterThan(0);
     expect(runMap.getByText("Provider / Delivery")).toBeInTheDocument();
     expect(runMap.getByText("Back Office")).toBeInTheDocument();
     expect(runMap.getByText("Data, Analytics & AI")).toBeInTheDocument();
     expect(runMap.getByText("Infrastructure & Hosting")).toBeInTheDocument();
     expect(runMap.getByText("Vendor & Commercial Spine")).toBeInTheDocument();
+    expect(runMap.getByText("System passport")).toBeInTheDocument();
+    expect(runMap.getByText("Top systems in this block")).toBeInTheDocument();
+    expect(runMap.getByText("Decision context")).toBeInTheDocument();
+    expect(runMap.getByText("annual cost where recorded")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Finance & Accounting/i }));
 
