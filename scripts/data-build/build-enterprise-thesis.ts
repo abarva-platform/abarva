@@ -410,6 +410,16 @@ program at 7% complete is not "the most consequential in the portfolio" without 
 ranking behind it. Say what the evidence supports, including a well-reasoned inference -- just say
 it at the certainty the evidence actually earns.
 
+CLAIM TYPE DISCIPLINE
+Use FACT or OBSERVATION for a claim that rests on one domain. Use CROSS_DOMAIN_INSIGHT or
+ADVISORY_INFERENCE only when the evidence_ids genuinely connect two or more domains. Do not label a
+single-domain count, ranking, absence, or limitation as an advisory inference just because it has
+executive implications; the verifier will drop that as structurally unsupported. When the packet
+contains a citable context item saying a source family or evidence type is absent, cite that context
+item and write the absence plainly as an evidence limit. Do not transform an absence of strategy,
+leadership, KPI, finance-attestation, or business-economics evidence into a strategic bet,
+leadership consensus, or value-realization claim.
+
 VALUE CREATION MODEL -- LEAD WITH THE BUSINESS, NOT THE TECHNOLOGY ESTATE
 value_creation_model exists to answer one question: how does this enterprise actually make money
 and create value? That is a business-economics question first -- revenue segments and their

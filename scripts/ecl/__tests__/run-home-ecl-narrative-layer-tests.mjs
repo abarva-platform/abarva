@@ -48,7 +48,10 @@ assert(
     thesis.includes("CXO-VISIBLE LANGUAGE") &&
     thesis.includes("Do not expose implementation") &&
     thesis.includes("Do not say ECL") &&
-    thesis.includes("not enough verified evidence yet"),
+    thesis.includes("not enough verified evidence yet") &&
+    thesis.includes("CLAIM TYPE DISCIPLINE") &&
+    thesis.includes("Use FACT or OBSERVATION for a claim that rests on one domain") &&
+    thesis.includes("Do not transform an absence of strategy"),
   "EnterpriseThesis prompt forbids implementation vocabulary in CXO-visible language",
 );
 assert(
@@ -142,6 +145,15 @@ assert(
     !script.includes("Home narrative prose is allowed to use only governed facts") &&
     !script.includes("Render a precomputed ECL projection dataset"),
   "ECL narrative citable signals avoid implementation vocabulary and explicitly bound source-summary use",
+);
+assert(
+  script.includes("function buildScopeContextItems") &&
+    script.includes("ctx_ecl_scope_business_economics_001") &&
+    script.includes("ctx_ecl_scope_strategy_programs_001") &&
+    script.includes("ctx_ecl_scope_leadership_001") &&
+    script.includes("ctx_ecl_scope_value_linkage_001") &&
+    script.includes("ctx_ecl_scope_source_breadth_001"),
+  "ECL narrative job supplies citable scope context for missing business, strategy, leadership, value, and source-breadth evidence",
 );
 assert(
   script.includes("structured_event: \"home_ecl_narrative_layer_summary\""),

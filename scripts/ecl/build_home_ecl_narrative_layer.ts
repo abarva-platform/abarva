@@ -682,6 +682,58 @@ function makeVisual(datasetRef: string, title: string, keyMessage: string, evide
   };
 }
 
+function buildScopeContextItems(args: {
+  rows: HomeProjectionWriteRow[];
+  sourceSummaries: SourceSummary[];
+}): ContextItem[] {
+  const { rows, sourceSummaries } = args;
+  const readyRowsForPage = (pageKey: string) =>
+    rows.filter((row) => row.page_key === pageKey && row.row_type !== "summary" && row.row_type !== "chapter_claim" && candidateIsReady(row));
+  const sourceRows = sourceSummaries.reduce((sum, item) => sum + (item.rawRowCount ?? item.recordCount), 0);
+  const sourceFamilies = [...new Set(sourceSummaries.map((item) => item.domain).filter(Boolean))].length;
+  const leadershipRows = readyRowsForPage("leadership_perspective");
+  const strategyRows = readyRowsForPage("strategy_value_creation");
+  const performanceRows = readyRowsForPage("performance_value");
+
+  return [
+    {
+      id: "ctx_ecl_scope_business_economics_001",
+      statement:
+        "Segment revenue, customer/channel economics, and formal enterprise identity attributes are not supplied by the current Home narrative input; business-model conclusions should therefore be limited to the cited technology, commercial, infrastructure, and data-movement facts.",
+      domains: ["enterprise_profile", "spend_value_fact", "application_system", "vendor_contract"],
+    },
+    {
+      id: "ctx_ecl_scope_strategy_programs_001",
+      statement: strategyRows.length
+        ? `The strategy and value chapter has ${strategyRows.length.toLocaleString()} ready evidence items, but the Home narrative input does not supply a full program-to-outcome ledger; strategic claims must cite the named evidence and avoid implying a complete transformation roadmap.`
+        : "Declared strategic priorities, funded programs, and program-to-outcome linkage are not supplied by the current Home narrative input; the chapter should treat strategy as an evidence gap rather than infer a transformation agenda.",
+      domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
+    },
+    {
+      id: "ctx_ecl_scope_leadership_001",
+      statement: leadershipRows.length
+        ? `The leadership perspective chapter has ${leadershipRows.length.toLocaleString()} ready evidence items; leadership consensus or disagreement claims must cite those items and should not be generalized beyond them.`
+        : "Leadership interview quotes, leadership sentiment, and named consensus or disagreement evidence are not supplied by the current Home narrative input; do not infer executive priorities or leadership alignment.",
+      domains: ["evidence_sources"],
+    },
+    {
+      id: "ctx_ecl_scope_value_linkage_001",
+      statement: performanceRows.length
+        ? `The performance and value chapter has ${performanceRows.length.toLocaleString()} ready evidence items, but the Home narrative input does not establish a complete value chain from spend to programs, KPIs, finance attestation, and realized benefit.`
+        : "Contract values and application costs are present, but program, KPI, finance-attestation, and realized-benefit mappings are not supplied by the current Home narrative input; value claims should name that limitation instead of implying measured outcomes.",
+      domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
+    },
+    {
+      id: "ctx_ecl_scope_source_breadth_001",
+      statement:
+        sourceSummaries.length > 0
+          ? `The source ledger contributes ${sourceSummaries.length.toLocaleString()} source-family summaries across ${sourceFamilies.toLocaleString()} source families and ${sourceRows.toLocaleString()} raw source rows; those summaries describe coverage breadth, not proof for a tenant-specific business claim.`
+          : "No source-family summary ledger is present in the current Home narrative input; coverage breadth cannot be used to support business claims.",
+      domains: ["evidence_sources"],
+    },
+  ];
+}
+
 function buildDeterministicHomeSignals(args: {
   permittedApplications: HomeProjectionWriteRow[];
   permittedContracts: HomeProjectionWriteRow[];
@@ -922,6 +974,7 @@ function buildGovernedSignalPacket(
       statement: `The current evidence package is synthetic and not client-attested; executive conclusions must preserve that limitation.`,
       domains: ["enterprise_profile", "evidence_sources"],
     },
+    ...buildScopeContextItems({ rows, sourceSummaries }),
     ...validatedRows.usable
       .map((candidate) => {
         const content = rowContentByCandidateId.get(candidate.id);
