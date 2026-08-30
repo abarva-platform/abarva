@@ -702,7 +702,7 @@ function ContractPage({
             />
             <Fact
               label="Benchmarking"
-              value={contract.benchmarking_clause ?? "Not established"}
+              value={displayBenchmarkingClause(contract.benchmarking_clause)}
             />
             <Fact
               label="Source confidence"
@@ -1338,6 +1338,21 @@ export function topVendors(
         (numberFromDb(b.annual_value) ?? 0) -
         (numberFromDb(a.annual_value) ?? 0),
     );
+}
+
+export function displayBenchmarkingClause(value: string | null | undefined) {
+  const clause = value?.trim();
+  if (!clause || isActionNarrative(clause)) return "Not established";
+  return clause;
+}
+
+function isActionNarrative(value: string) {
+  return (
+    /^\(\d+\)/.test(value.trim()) ||
+    /\b(unused entitlements|right-size|potential savings|approximately \$|current unit pricing|convert the|consolidate overlapping|recommend|candidate opportunity)\b/i.test(
+      value,
+    )
+  );
 }
 
 function withContractBackedVendorMetrics(
