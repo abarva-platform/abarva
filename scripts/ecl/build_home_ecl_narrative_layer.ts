@@ -373,6 +373,12 @@ function rowsForRankedFieldValues(
   return selected;
 }
 
+function topRowsByPayloadNumber(rows: HomeProjectionWriteRow[], field: string, limit: number): HomeProjectionWriteRow[] {
+  return [...rows]
+    .sort((a, b) => payloadNumber(payload(b), field) - payloadNumber(payload(a), field))
+    .slice(0, limit);
+}
+
 function evidenceRefsForRows(rows: HomeProjectionWriteRow[], limit = 20): string[] {
   return rows.map(contextId).slice(0, limit);
 }
@@ -849,6 +855,25 @@ function buildDeterministicHomeSignals(args: {
       applicationCost,
     );
   }
+  const namedApplicationExamples = topRowsByPayloadNumber(applicationsWithCost, "annual_cost_usd", 8)
+    .map((row) => {
+      const data = payload(row);
+      const name = payloadText(data, "application_name", "system_name") ?? row.title;
+      const vendor = payloadText(data, "vendor_name", "supplier_name");
+      const functionName = payloadText(data, "business_function");
+      const cost = payloadNumber(data, "annual_cost_usd");
+      return `${name}${vendor ? ` from ${vendor}` : ""}${functionName ? ` in ${functionName}` : ""}${cost > 0 ? ` at $${(cost / 1_000_000).toFixed(1)}M annual cost` : ""}`;
+    })
+    .filter(Boolean);
+  if (namedApplicationExamples.length) {
+    add(
+      "sig_ecl_application_named_examples_015",
+      "portfolio",
+      `Named high-cost application examples in the record include ${compactList(namedApplicationExamples, 8)}. Use these names only when citing this signal or the matching application context rows.`,
+      ["application_system", "spend_value_fact"],
+      topRowsByPayloadNumber(applicationsWithCost, "annual_cost_usd", 8),
+    );
+  }
   add(
     "sig_ecl_application_criticality_003",
     "risk",
@@ -900,6 +925,33 @@ function buildDeterministicHomeSignals(args: {
     ["infrastructure_platform"],
     [...supportDatedPlatforms, ...criticalPlatforms],
   );
+  const namedPlatformExamples = topRowsByPayloadNumber(
+    rowsWherePayload(permittedInfrastructure, (data) => Boolean(text(data.support_end_date)) || /tier[-_\s]?1|critical/i.test(text(data.criticality_tier) ?? "")),
+    "annual_cost_usd",
+    8,
+  )
+    .map((row) => {
+      const data = payload(row);
+      const name = payloadText(data, "platform_name", "infrastructure_name", "application_name") ?? row.title;
+      const hosting = payloadText(data, "hosting_model");
+      const supportEnd = payloadText(data, "support_end_date");
+      const criticality = payloadText(data, "criticality_tier");
+      return `${name}${hosting ? ` on ${hosting}` : ""}${criticality ? ` with ${criticality} criticality` : ""}${supportEnd ? ` and support ending ${supportEnd}` : ""}`;
+    })
+    .filter(Boolean);
+  if (namedPlatformExamples.length) {
+    add(
+      "sig_ecl_platform_named_resilience_016",
+      "risk",
+      `Named infrastructure or platform examples with resilience evidence include ${compactList(namedPlatformExamples, 8)}. Use these names only when citing this signal or the matching platform context rows.`,
+      ["infrastructure_platform"],
+      topRowsByPayloadNumber(
+        rowsWherePayload(permittedInfrastructure, (data) => Boolean(text(data.support_end_date)) || /tier[-_\s]?1|critical/i.test(text(data.criticality_tier) ?? "")),
+        "annual_cost_usd",
+        8,
+      ),
+    );
+  }
   if (topFlowTarget) {
     add(
       "sig_ecl_data_flow_convergence_009",
@@ -1068,7 +1120,7 @@ function buildGovernedSignalPacket(
     businessEconomics: {
       operatingSegments: [],
       customerSegments: [],
-      technologyBudget: sumPayload(permittedApplications, "annual_cost_usd"),
+      technologyBudget: 0,
       technologyBudgetShareOfRevenue: null,
     },
     strategicPriorities: [],

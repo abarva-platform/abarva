@@ -79,6 +79,15 @@ business value creation. Application counts, contract values, and data movement 
 technology/commercial dependency claims, but they cannot be described as how the enterprise creates
 value unless cited business-economics evidence establishes that claim.
 
+Follow-up: the Home narrative packet no longer exposes application annual cost as a structured
+technology-budget field. Application annual cost remains available only through the citable signal
+that labels it as application cost, not complete enterprise budget or finance-attested spend.
+
+Follow-up: the Home narrative packet now emits citable named examples for high-cost applications
+and resilience-relevant platforms. The thesis prompt requires any named system, platform, supplier,
+tool, report, or function in a claim to appear in that claim's cited signal or context statement,
+preventing an aggregate count from being decorated with uncited names.
+
 ## QA / Validation
 
 - `PASS` — `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts --runInBand`
@@ -95,6 +104,10 @@ value unless cited business-economics evidence establishes that claim.
   enforced before approved writes.
 - `PASS` — the ECL seam test now asserts that technology footprint cannot be used as a substitute
   for business value creation evidence.
+- `PASS` — the ECL seam test now asserts that application annual cost is not surfaced as a
+  structured technology-budget value in the Home ECL narrative packet.
+- `PASS` — the ECL seam test now asserts named application and platform example signals exist, and
+  that named entities must be present in a claim's cited evidence.
 - `PASS` — dense source-room generator proof showed `application_product_vendor_mismatches = 0`
   with all application and contract realism gates still passing.
 - `PASS` — dense source-room validator accepted the regenerated source room.

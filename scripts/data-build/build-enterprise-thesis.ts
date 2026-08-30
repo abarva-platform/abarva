@@ -431,6 +431,15 @@ not rename it as a total technology budget, finance-attested spend, enterprise r
 pool. If a cited item says a movement count is an integration-record count, do not convert it into
 data volume, transaction volume, or proof of analytics consumption.
 
+Named entity language follows the same rule. If a claim names a specific application, product,
+supplier, platform, program, tool, report, business function, or technology, at least one cited
+sig_* or ctx_* statement for that same claim must contain that exact name. Do not lift named
+entities from sourceSummaries, uncited contextItems, visual dataset labels, or background knowledge
+and attach them to a nearby aggregate signal. If the only cited support is an aggregate such as
+"750 applications" or "top five suppliers", speak at that aggregate level and do not add example
+names. Questions for management obey this rule too: a question may ask what evidence is missing,
+but it must not smuggle in an uncited named system, owner, program, platform, or governance process.
+
 Ranking language must also be grounded. You may say "largest", "top five", "second", or name a
 function as prominent only when a cited signal gives that ranking or the comparison set. Do not
 single out a function, supplier, program, or platform because it sounds strategically important
