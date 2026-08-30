@@ -196,6 +196,13 @@ assert(
   "ECL narrative job emits structured proof for the ACA operator wrapper",
 );
 assert(
+  script.includes("structured_event: \"home_ecl_narrative_publication_gate\"") &&
+    script.includes("failed_ledger_sample") &&
+    script.includes("compactFailedLedger") &&
+    script.includes("clean_keep_rate"),
+  "ECL narrative job emits a compact publication-gate ledger before the full payload",
+);
+assert(
   script.includes("signal_packet_hash") &&
     script.includes("context_bundle_hash") &&
     script.includes("source_hashes") &&
@@ -256,6 +263,12 @@ assert(
     thesis.includes("structural issue: ${issue.reason}") &&
     thesis.includes("claimsRequiringVerification(publishedGeneration)"),
   "EnterpriseThesis drops structurally invalid claims before semantic verification",
+);
+assert(
+  thesis.includes("recovered explicit verdict from response") &&
+    thesis.includes("verifier returned non-JSON with no recoverable verdict") &&
+    thesis.includes("SUPPORTED_INFERENCE|SUPPORTED|OVERSTATED|UNSUPPORTED"),
+  "EnterpriseThesis verifier recovers explicit verdicts from malformed JSON without weakening semantic gates",
 );
 assert(
   thesis.includes("Do not write \"the enterprise creates value through <function>\"") &&

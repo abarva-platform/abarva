@@ -797,7 +797,18 @@ async function verifyClaim(
   const result = await callClaude(client, VERIFIER_SYSTEM_PROMPT, userPrompt, 4096, "low");
   if (!result) return { verdict: "UNSUPPORTED", reasoning: "verifier call failed" };
   const parsed = parseJsonLoose<{ verdict: Verdict; reasoning: string }>(result.text, "claim verifier");
-  return parsed ?? { verdict: "UNSUPPORTED", reasoning: "verifier returned non-JSON" };
+  if (parsed) return parsed;
+
+  const fallbackVerdict = result.text.match(/\b(SUPPORTED_INFERENCE|SUPPORTED|OVERSTATED|UNSUPPORTED)\b/)?.[1] as Verdict | undefined;
+  if (fallbackVerdict) {
+    return {
+      verdict: fallbackVerdict,
+      reasoning: `verifier returned malformed JSON; recovered explicit verdict from response: ${result.text
+        .replace(/\s+/g, " ")
+        .slice(0, 240)}`,
+    };
+  }
+  return { verdict: "UNSUPPORTED", reasoning: "verifier returned non-JSON with no recoverable verdict" };
 }
 
 /**
@@ -1147,7 +1158,7 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
   // the working copy, so it survives independently of what verification decides to do with it.
   const publishedGeneration: EnterpriseThesis = JSON.parse(JSON.stringify(rawGeneration));
 
-  const verificationLedger: Array<{ path: string; verdict: Verdict; reasoning: string; action: string }> = [];
+  const verificationLedger: Array<{ path: string; verdict: Verdict; reasoning: string; action: string; claim_statement?: string }> = [];
   for (const issue of structuralIssues) {
     dropClaim(publishedGeneration, issue.path);
     verificationLedger.push({
@@ -1164,23 +1175,23 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
     const result = await verifyClaim(client, claim, signalPacket);
     if (result.verdict === "UNSUPPORTED") {
       dropClaim(publishedGeneration, claimPath);
-      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped" });
+      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped", claim_statement: claim.statement });
     } else if (result.verdict === "OVERSTATED") {
       const repaired = await repairClaim(client, claim, result.reasoning, signalPacket);
       if (repaired) {
         claim.statement = repaired;
-        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "repaired" });
+        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "repaired", claim_statement: claim.statement });
       } else {
         // Repair itself failed (no client response, or bad JSON back) -- an overstated claim that
         // can't be corrected is worse than no claim, so this is the one place drop still applies
         // to an OVERSTATED verdict.
         dropClaim(publishedGeneration, claimPath);
-        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped (repair failed)" });
+        verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "dropped (repair failed)", claim_statement: claim.statement });
       }
     } else {
       // SUPPORTED and SUPPORTED_INFERENCE are both publishable as-is -- SUPPORTED_INFERENCE is
       // reasonable, appropriately-hedged synthesis, not a defect to correct.
-      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "kept" });
+      verificationLedger.push({ path: claimPath, verdict: result.verdict, reasoning: result.reasoning, action: "kept", claim_statement: claim.statement });
     }
   }
   const tally: Record<string, number> = {};
