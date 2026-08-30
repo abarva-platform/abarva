@@ -264,3 +264,22 @@ describe("one metric, declared", () => {
     expect(files["ContractTabs.tsx"]).not.toContain("blockedUsd || program.valueAtStakeUsd");
   });
 });
+
+describe("a domain is not a sponsor", () => {
+  it("reads the domain column from the loader's domain_name", () => {
+    // The column headed DOMAIN listed people — "Chief Data and AI Officer", "CMIO",
+    // "VP Controller" — because `functionLabel` was mapped from `ownerRole`, while the loader
+    // was writing a real `domain_name` onto the same display payload.
+    expect(READER).toContain('domainName: nullableText(display.domain_name)');
+    expect(VIEW).toContain("functionLabel: trimOrNull(row.domainName ?? null)");
+  });
+
+  it("does not fall back to the sponsor when the domain is absent", () => {
+    // The panel already renders "Domain not loaded"; substituting the sponsor is the defect.
+    expect(VIEW).not.toMatch(/functionLabel:[^\n]*ownerRole/);
+  });
+
+  it("still carries the domain the loader writes onto the case display payload", () => {
+    expect(LAYER4).toContain("domain_name: project?.domain_name ?? row.domain_key");
+  });
+});

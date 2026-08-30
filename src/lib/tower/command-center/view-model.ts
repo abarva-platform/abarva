@@ -360,7 +360,11 @@ function toProgramView(
     financeOwnerRole: trimOrNull(row.financeOwnerRole),
     // The mart has no separate business-function column; the owning role is the
     // closest governed proxy and is labelled as such in the drawer.
-    functionLabel: trimOrNull(row.ownerRole),
+    // The domain, not the sponsor. This read `ownerRole`, so a column headed DOMAIN listed
+    // people — "Chief Data and AI Officer", "CMIO", "VP Controller" — while the loader was
+    // writing a real `domain_name` onto the same row. No fallback to the owner: if the domain is
+    // absent the panel already says so, and substituting the sponsor is what produced the defect.
+    functionLabel: trimOrNull(row.domainName ?? null),
     lane: derived.lane,
 
     fundedUsd: num(row.approvedFundingUsd),
