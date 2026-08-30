@@ -544,7 +544,7 @@ async function loadSourceWorkspaceImpactLayer(
     storyline,
     avaGroundingBundles,
   };
-  if (hasExecutiveImpactRows(viewImpact)) return viewImpact;
+  if (!shouldCompleteImpactLayer(viewImpact)) return viewImpact;
   const derivedImpact = await loadDerivedSourceWorkspaceImpactLayer(tenantKey);
   if (derivedImpact && hasImpactLayerRows(derivedImpact)) {
     return mergeSourceWorkspaceImpactLayer(viewImpact, derivedImpact);
@@ -569,6 +569,22 @@ function hasExecutiveImpactRows(impact: SourceWorkspaceImpactLayer): boolean {
     impact.claimCards.length > 0 ||
     impact.storyline.length > 0 ||
     impact.avaGroundingBundles.length > 0
+  );
+}
+
+function shouldCompleteImpactLayer(impact: SourceWorkspaceImpactLayer): boolean {
+  if (!hasExecutiveImpactRows(impact)) return true;
+  const actionGroundingBundleCount = impact.avaGroundingBundles.filter(
+    (row) => row.page_key === "contract_action",
+  ).length;
+  return (
+    impact.evidenceCoverage.length === 0 ||
+    impact.vendorPositions.length === 0 ||
+    impact.storyline.length === 0 ||
+    (impact.actionCandidates.length > 0 &&
+      impact.claimCards.length < impact.actionCandidates.length) ||
+    (impact.actionCandidates.length > 0 &&
+      actionGroundingBundleCount < impact.actionCandidates.length)
   );
 }
 
