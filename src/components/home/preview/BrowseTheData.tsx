@@ -2,197 +2,297 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 
-import { DOMAIN_ORDER, domainLabel } from "./domain-labels";
 import type { ContextItem, EnterpriseSignalPacket, Signal } from "@/lib/home/preview/types";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "../v4/tokens";
+import { DOMAIN_ORDER, domainLabel } from "./domain-labels";
 
-type Row = (Signal & { origin: "signal" }) | (ContextItem & { origin: "context"; kind?: undefined });
+type Row =
+  | (Signal & { origin: "signal" })
+  | (ContextItem & {
+      evidenceRefs?: undefined;
+      kind?: undefined;
+      origin: "context";
+      value?: undefined;
+    });
 type IndexedRow = Row & { key: string };
+type DimensionField = "domain" | "origin" | "kind" | "evidence_state" | "value_state";
+
+interface BrowserDimension {
+  field: DimensionField;
+  label: string;
+  values: Array<[string, number]>;
+}
+
+const COLUMNS = [
+  { key: "id", label: "Fact ID", width: 170, priority: "core" },
+  { key: "statement", label: "Statement", width: 520, priority: "core" },
+  { key: "domain", label: "Domain", width: 190 },
+  { key: "kind", label: "Type", width: 130 },
+  { key: "evidence_state", label: "Evidence", width: 124 },
+] satisfies ReadonlyArray<{
+  key: string;
+  label: string;
+  priority?: "core";
+  width: number;
+}>;
 
 export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignalPacket }) {
   const [query, setQuery] = useState("");
-  const [domainFilter, setDomainFilter] = useState("all");
-  const [originFilter, setOriginFilter] = useState<"all" | "signal" | "context">("all");
+  const [sliceField, setSliceField] = useState<DimensionField>("domain");
+  const [sliceValue, setSliceValue] = useState("all");
+  const [diceField, setDiceField] = useState<DimensionField | "none">("kind");
+  const [diceValue, setDiceValue] = useState("all");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const rows: IndexedRow[] = useMemo(
     () => [
-      ...signalPacket.signals.map((signal): IndexedRow => ({ ...signal, origin: "signal", key: `signal:${signal.id}` })),
-      ...signalPacket.contextItems.map((context): IndexedRow => ({ ...context, origin: "context", key: `context:${context.id}` })),
+      ...signalPacket.signals.map((signal): IndexedRow => ({
+        ...signal,
+        key: `signal:${signal.id}`,
+        origin: "signal",
+      })),
+      ...signalPacket.contextItems.map((context): IndexedRow => ({
+        ...context,
+        key: `context:${context.id}`,
+        origin: "context",
+      })),
     ],
     [signalPacket],
   );
 
-  const domainCounts = useMemo(() => buildDomainCounts(rows), [rows]);
+  const dimensions = useMemo(() => buildDimensions(rows), [rows]);
+  const activeSlice = dimensions.find((dimension) => dimension.field === sliceField) ?? dimensions[0];
+  const diceOptions = dimensions.filter((dimension) => dimension.field !== activeSlice?.field);
+  const activeDice = diceField === "none" ? undefined : dimensions.find((dimension) => dimension.field === diceField);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((row) => {
-      if (domainFilter !== "all" && !row.domains.includes(domainFilter)) return false;
-      if (originFilter !== "all" && row.origin !== originFilter) return false;
+      if (activeSlice && sliceValue !== "all" && !valuesFor(row, activeSlice.field).includes(sliceValue)) {
+        return false;
+      }
+      if (activeDice && diceValue !== "all" && !valuesFor(row, activeDice.field).includes(diceValue)) {
+        return false;
+      }
       if (!q) return true;
-      return (
-        row.statement.toLowerCase().includes(q) ||
-        row.id.toLowerCase().includes(q) ||
-        row.domains.some((domain) => domainLabel(domain).toLowerCase().includes(q))
-      );
+      return searchableText(row).includes(q);
     });
-  }, [domainFilter, originFilter, query, rows]);
+  }, [activeDice, activeSlice, diceValue, query, rows, sliceValue]);
 
   const selected = filtered.find((row) => row.key === selectedKey) ?? filtered[0] ?? rows[0];
+  const visibleRows = filtered.slice(0, 120);
   const signalCount = rows.filter((row) => row.origin === "signal").length;
   const contextCount = rows.length - signalCount;
-  const topDomains = domainCounts.slice(0, 6);
-  const maxDomainCount = Math.max(1, ...topDomains.map((domain) => domain.count));
+  const evidenceBacked = rows.filter((row) => evidenceState(row) === "Referenced").length;
+  const valuedFacts = rows.filter((row) => valueState(row) === "Quantified").length;
+  const sourceCoverage =
+    evidenceBacked > 0
+      ? `${evidenceBacked.toLocaleString()} facts carry evidence refs`
+      : "Source-file rollup not supplied in this packet";
+
+  function clearFilters() {
+    setQuery("");
+    setSliceValue("all");
+    setDiceValue("all");
+  }
 
   return (
     <section style={{ padding: `46px ${PAGE_X}px 72px` }}>
       <style>{`
-        @media (max-width: 1160px) {
-          [data-fact-layout] { grid-template-columns: 1fr !important; }
-          [data-fact-detail] { position: static !important; }
-          [data-fact-command] { grid-template-columns: 1fr !important; }
+        @media (max-width: 1180px) {
+          [data-browser-layout] { grid-template-columns: 1fr !important; }
+          [data-browser-detail] { position: static !important; }
+          [data-browser-command], [data-browser-controls], [data-browser-table-head] { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 760px) {
-          [data-fact-metrics], [data-fact-controls] { grid-template-columns: 1fr !important; }
+          [data-browser-metrics] { grid-template-columns: 1fr !important; }
+          table[data-fact-table] { min-width: 0 !important; }
+          table[data-fact-table] th:not([data-priority="core"]),
+          table[data-fact-table] td:not([data-priority="core"]) { display: none; }
         }
       `}</style>
 
-      <header style={{ maxWidth: 980 }}>
+      <header style={{ maxWidth: 1040 }}>
         <span style={eyebrow(V4.blue)}>Browse the record</span>
-        <h1 style={titleStyle}>Fact-level evidence behind the Home narrative</h1>
+        <h1 style={titleStyle}>Slice the governed facts behind the Home narrative</h1>
         <p style={ledeStyle}>
-          Search the packet, filter by domain, and inspect the selected fact without leaving the
-          page. This is the evidence layer behind the chapters, not another chapter.
+          Start with dimensions, then inspect rows. This is intentionally a compact browser, not an
+          all-column dump: every visible count has a denominator and the selected row keeps its
+          evidence references visible.
         </p>
       </header>
 
-      <section data-fact-metrics style={metricGridStyle}>
+      <section data-browser-metrics style={metricGridStyle}>
         <Metric value={rows.length.toLocaleString()} label="facts in packet" />
         <Metric value={signalCount.toLocaleString()} label="deterministic signals" />
-        <Metric value={contextCount.toLocaleString()} label="governed context facts" />
-        <Metric value={domainCounts.length.toLocaleString()} label="domains represented" />
+        <Metric value={contextCount.toLocaleString()} label="context facts" />
+        <Metric value={evidenceBacked.toLocaleString()} label="evidence referenced" tone={evidenceBacked ? V4.green : V4.amber} />
+        <Metric value={valuedFacts.toLocaleString()} label="quantified facts" />
       </section>
 
-      <section data-fact-command style={commandStripStyle}>
+      <section data-browser-command style={commandStripStyle}>
         <div>
-          <span style={eyebrow(V4.green)}>Domain signal map</span>
-          <p style={{ margin: "8px 0 0", fontFamily: SANS, fontSize: 13.5, lineHeight: 1.5, color: V4.slate }}>
-            The largest evidence families stay visible while search and filters narrow the fact list.
+          <span style={eyebrow(V4.green)}>Slice / dice viewer</span>
+          <h2 style={commandTitleStyle}>Pick a lens before reading rows.</h2>
+          <p style={commandTextStyle}>
+            Domains, fact type, evidence state, and value state are derived from the packet. Workbook
+            source-family rollups are shown only when the producer supplies them.
           </p>
         </div>
-        <div style={domainSparkGridStyle}>
-          {topDomains.map(({ domain, count }) => (
-            <button
-              key={domain}
-              type="button"
-              onClick={() => setDomainFilter(domainFilter === domain ? "all" : domain)}
-              style={{
-                ...domainSparkStyle,
-                borderColor: domainFilter === domain ? "rgba(0,102,204,0.45)" : V4.rule,
-                background: domainFilter === domain ? "rgba(0,102,204,0.055)" : V4.surface,
-              }}
-            >
-              <span style={domainSparkLabelStyle}>{domainLabel(domain)}</span>
-              <span style={domainSparkTrackStyle}>
-                <span style={{ ...domainSparkFillStyle, width: `${Math.max(7, (count / maxDomainCount) * 100)}%` }} />
-              </span>
-              <span style={domainSparkCountStyle}>{count.toLocaleString()}</span>
-            </button>
-          ))}
+        <div data-browser-controls style={controlsGridStyle}>
+          <DimensionSelect
+            label="Slice by"
+            value={activeSlice?.field ?? "domain"}
+            options={dimensions}
+            onChange={(next) => {
+              if (next === "none") return;
+              setSliceField(next);
+              setSliceValue("all");
+              if (diceField === next) {
+                setDiceField("none");
+                setDiceValue("all");
+              }
+            }}
+          />
+          <ValueSelect label="Slice value" value={sliceValue} values={activeSlice?.values ?? []} onChange={setSliceValue} />
+          <DimensionSelect
+            includeNone
+            label="Dice by"
+            value={diceField}
+            options={diceOptions}
+            onChange={(next) => {
+              setDiceField(next);
+              setDiceValue("all");
+            }}
+          />
+          <ValueSelect
+            disabled={diceField === "none"}
+            label="Dice value"
+            value={diceValue}
+            values={activeDice?.values ?? []}
+            onChange={setDiceValue}
+          />
         </div>
+        {activeSlice ? (
+          <DistributionStrip
+            activeValue={sliceValue}
+            title={activeSlice.label}
+            values={activeSlice.values}
+            onSelect={setSliceValue}
+          />
+        ) : null}
       </section>
 
-      <div data-fact-controls style={controlsStyle}>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search facts, IDs, or domains"
-          aria-label="Search facts"
-          style={searchStyle}
-        />
-        <select value={domainFilter} onChange={(event) => setDomainFilter(event.target.value)} aria-label="Filter by domain" style={selectStyle}>
-          <option value="all">All domains</option>
-          {domainCounts.map(({ domain }) => (
-            <option key={domain} value={domain}>
-              {domainLabel(domain)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={originFilter}
-          onChange={(event) => setOriginFilter(event.target.value as "all" | "signal" | "context")}
-          aria-label="Filter by fact type"
-          style={selectStyle}
-        >
-          <option value="all">All fact types</option>
-          <option value="signal">Signals</option>
-          <option value="context">Governed facts</option>
-        </select>
-      </div>
-
-      <div data-fact-layout style={layoutStyle}>
-        <aside style={{ minWidth: 0 }}>
-          <div style={sectionHeaderStyle}>
-            <span style={eyebrow(V4.slate)}>Domains</span>
-            <span style={monoStyle}>{filtered.length.toLocaleString()} shown</span>
-          </div>
-          <div style={domainRailStyle}>
-            <FilterButton label="All domains" count={rows.length} active={domainFilter === "all"} onClick={() => setDomainFilter("all")} />
-            {domainCounts.map(({ domain, count }) => (
-              <FilterButton
-                key={domain}
-                label={domainLabel(domain)}
-                count={count}
-                active={domainFilter === domain}
-                onClick={() => setDomainFilter(domainFilter === domain ? "all" : domain)}
-              />
-            ))}
-          </div>
-        </aside>
-
+      <div data-browser-layout style={layoutStyle}>
         <section style={{ minWidth: 0 }}>
-          <div style={sectionHeaderStyle}>
-            <span style={eyebrow(V4.slate)}>Matched facts</span>
-            <span style={monoStyle}>{filtered.length.toLocaleString()} of {rows.length.toLocaleString()}</span>
+          <div data-browser-table-head style={tableHeaderStyle}>
+            <div>
+              <span style={eyebrow(V4.slate)}>Matched rows</span>
+              <div style={tableSubheadStyle}>
+                {filtered.length.toLocaleString()} of {rows.length.toLocaleString()} facts shown
+              </div>
+            </div>
+            <div style={searchWrapStyle}>
+              <input
+                aria-label="Search facts"
+                placeholder="Search facts, IDs, domains, or evidence refs"
+                style={searchStyle}
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+              {query || sliceValue !== "all" || diceValue !== "all" ? (
+                <button type="button" onClick={clearFilters} style={clearButtonStyle}>
+                  Clear
+                </button>
+              ) : null}
+            </div>
           </div>
-          <div style={listStyle}>
-            {filtered.slice(0, 80).map((row) => (
-              <button
-                key={row.key}
-                type="button"
-                onClick={() => setSelectedKey(row.key)}
-                style={{
-                  ...factButtonStyle,
-                  background: selected?.key === row.key ? "rgba(0,102,204,0.055)" : V4.surface,
-                  borderLeftColor: selected?.key === row.key ? V4.blue : "transparent",
-                }}
-              >
-                <span style={factMetaStyle}>
-                  <span>{row.id}</span>
-                  <span>{row.origin === "signal" ? row.kind : "governed fact"}</span>
-                  <span>{row.domains.map(domainLabel).slice(0, 2).join(" / ")}</span>
-                </span>
-                <span style={factTextStyle}>{row.statement}</span>
-              </button>
-            ))}
+
+          <div style={tableShellStyle}>
+            <table data-fact-table style={tableStyle}>
+              <thead>
+                <tr>
+                  {COLUMNS.map((column) => (
+                    <th key={column.key} data-priority={column.priority} style={{ ...headerCellStyle, width: column.width }}>
+                      {column.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {visibleRows.map((row) => (
+                  <tr
+                    key={row.key}
+                    onClick={() => setSelectedKey(row.key)}
+                    style={{
+                      background: selected?.key === row.key ? "rgba(0,102,204,0.055)" : V4.surface,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <td data-priority="core" style={{ ...bodyCellStyle, color: V4.blue, fontFamily: MONO }}>
+                      {row.id}
+                    </td>
+                    <td data-priority="core" style={bodyCellStyle}>
+                      {row.statement}
+                    </td>
+                    <td style={bodyCellStyle}>{valuesFor(row, "domain").map(domainLabel).join(", ")}</td>
+                    <td style={bodyCellStyle}>{humanise(valuesFor(row, "kind")[0])}</td>
+                    <td style={bodyCellStyle}>
+                      <StatusPill value={evidenceState(row)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             {filtered.length === 0 ? <p style={emptyStyle}>No facts match the current filters.</p> : null}
           </div>
+          <p style={footnoteStyle}>
+            Showing {visibleRows.length.toLocaleString()} of {filtered.length.toLocaleString()} matched rows
+            {filtered.length > visibleRows.length ? " - first page only" : ""}.
+          </p>
         </section>
 
-        <aside data-fact-detail style={detailStyle}>
+        <aside data-browser-detail style={detailPaneStyle}>
+          <section style={sliceSummaryStyle}>
+            <span style={eyebrow(V4.green)}>Current slice</span>
+            <strong style={sliceSummaryValueStyle}>{filtered.length.toLocaleString()}</strong>
+            <span style={sliceSummaryLabelStyle}>of {rows.length.toLocaleString()} facts</span>
+            <div style={sliceRuleStyle} />
+            <SummaryRow label={activeSlice?.label ?? "Slice"} value={sliceValue === "all" ? "All values" : displayValue(sliceValue, activeSlice?.field)} />
+            <SummaryRow label={activeDice?.label ?? "Dice"} value={!activeDice || diceValue === "all" ? "All values" : displayValue(diceValue, activeDice.field)} />
+            <SummaryRow label="Source rollup" value={sourceCoverage} />
+          </section>
+
           {selected ? (
-            <>
+            <section style={detailStyle}>
               <span style={eyebrow(selected.origin === "signal" ? V4.blue : V4.green)}>
-                {selected.origin === "signal" ? "Selected signal" : "Selected governed fact"}
+                {selected.origin === "signal" ? "Selected signal" : "Selected context fact"}
               </span>
               <h2 style={detailTitleStyle}>{selected.id}</h2>
               <p style={detailStatementStyle}>{selected.statement}</p>
               <div style={detailMetaGridStyle}>
-                <Detail label="Type" value={selected.origin === "signal" ? selected.kind : "governed fact"} />
+                <Detail label="Type" value={selected.origin === "signal" ? humanise(selected.kind) : "Context fact"} />
                 <Detail label="Domains" value={selected.domains.map(domainLabel).join(", ")} />
+                <Detail label="Evidence" value={evidenceState(selected)} />
+                <Detail label="Value state" value={valueState(selected)} />
               </div>
-            </>
+              <div style={sourceBoxStyle}>
+                <span style={eyebrow(V4.slate)}>Evidence references</span>
+                {selected.evidenceRefs?.length ? (
+                  <ul style={evidenceListStyle}>
+                    {selected.evidenceRefs.slice(0, 8).map((ref) => (
+                      <li key={ref}>{ref}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p style={missingSourceStyle}>
+                    No row-level evidence reference was supplied in this packet. Do not treat this
+                    as source-file proof.
+                  </p>
+                )}
+              </div>
+            </section>
           ) : null}
         </aside>
       </div>
@@ -200,41 +300,188 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
   );
 }
 
-function buildDomainCounts(rows: IndexedRow[]) {
-  const counts = new Map<string, number>();
-  for (const row of rows) {
-    for (const domain of row.domains) counts.set(domain, (counts.get(domain) ?? 0) + 1);
-  }
-  const ordered = [
-    ...DOMAIN_ORDER.filter((domain) => counts.has(domain)),
-    ...Array.from(counts.keys()).filter((domain) => !DOMAIN_ORDER.includes(domain)).sort(),
+function buildDimensions(rows: IndexedRow[]): BrowserDimension[] {
+  const fields: Array<{ field: DimensionField; label: string }> = [
+    { field: "domain", label: "Domain" },
+    { field: "origin", label: "Fact family" },
+    { field: "kind", label: "Signal type" },
+    { field: "evidence_state", label: "Evidence state" },
+    { field: "value_state", label: "Value state" },
   ];
-  return ordered.map((domain) => ({ domain, count: counts.get(domain) ?? 0 }));
+  return fields
+    .map((field) => ({ ...field, values: countsFor(rows, field.field) }))
+    .filter((dimension) => dimension.values.length > 1);
 }
 
-function Metric({ value, label }: { value: string; label: string }) {
+function countsFor(rows: IndexedRow[], field: DimensionField): Array<[string, number]> {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    for (const value of valuesFor(row, field)) {
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()].sort(
+    (a, b) => b[1] - a[1] || displayValue(a[0], field).localeCompare(displayValue(b[0], field)),
+  );
+}
+
+function valuesFor(row: IndexedRow, field: DimensionField): string[] {
+  if (field === "domain") return row.domains.length ? row.domains : ["not_specified"];
+  if (field === "origin") return [row.origin === "signal" ? "deterministic_signal" : "governed_context"];
+  if (field === "kind") return [row.origin === "signal" ? row.kind : "context_fact"];
+  if (field === "evidence_state") return [evidenceState(row).toLowerCase().replace(/\s+/g, "_")];
+  return [valueState(row).toLowerCase().replace(/\s+/g, "_")];
+}
+
+function searchableText(row: IndexedRow): string {
+  return [
+    row.id,
+    row.statement,
+    row.origin,
+    row.origin === "signal" ? row.kind : "context fact",
+    ...row.domains.map(domainLabel),
+    ...(row.evidenceRefs ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function evidenceState(row: IndexedRow): "Referenced" | "Not referenced" {
+  return row.evidenceRefs?.length ? "Referenced" : "Not referenced";
+}
+
+function valueState(row: IndexedRow): "Quantified" | "Text only" {
+  return typeof row.value === "number" && Number.isFinite(row.value) ? "Quantified" : "Text only";
+}
+
+function displayValue(value: string, field?: DimensionField): string {
+  if (field === "domain") return domainLabel(value);
+  return humanise(value);
+}
+
+function humanise(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "-";
+  return String(value).replace(/_/g, " ");
+}
+
+function DimensionSelect({
+  label,
+  value,
+  options,
+  includeNone,
+  onChange,
+}: {
+  includeNone?: boolean;
+  label: string;
+  value: DimensionField | "none";
+  options: BrowserDimension[];
+  onChange: (value: DimensionField | "none") => void;
+}) {
+  return (
+    <label style={selectLabelStyle}>
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value as DimensionField | "none")} style={selectStyle}>
+        {includeNone ? <option value="none">No second dimension</option> : null}
+        {options.map((option) => (
+          <option key={option.field} value={option.field}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ValueSelect({
+  label,
+  value,
+  values,
+  disabled,
+  onChange,
+}: {
+  disabled?: boolean;
+  label: string;
+  value: string;
+  values: Array<[string, number]>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label style={selectLabelStyle}>
+      <span>{label}</span>
+      <select value={disabled ? "all" : value} disabled={disabled} onChange={(event) => onChange(event.target.value)} style={selectStyle}>
+        <option value="all">All values</option>
+        {values.map(([option, count]) => (
+          <option key={option} value={option}>
+            {humanise(option)} ({count.toLocaleString()})
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function DistributionStrip({
+  title,
+  values,
+  activeValue,
+  onSelect,
+}: {
+  activeValue: string;
+  title: string;
+  values: Array<[string, number]>;
+  onSelect: (value: string) => void;
+}) {
+  const shown = values.slice(0, 8);
+  const max = Math.max(1, ...shown.map(([, count]) => count));
+  return (
+    <div style={distributionStyle}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+        <span style={eyebrow(V4.slate)}>{title} distribution</span>
+        <span style={{ color: V4.slate, fontFamily: MONO, fontSize: 11 }}>
+          {values.length.toLocaleString()} values
+        </span>
+      </div>
+      <div style={distributionGridStyle}>
+        <button type="button" onClick={() => onSelect("all")} style={{ ...distributionButtonStyle, borderColor: activeValue === "all" ? V4.blue : V4.rule }}>
+          <span style={distributionLabelStyle}>All values</span>
+          <span style={distributionTrackStyle}>
+            <span style={{ ...distributionFillStyle, width: "100%" }} />
+          </span>
+        </button>
+        {shown.map(([label, count]) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => onSelect(activeValue === label ? "all" : label)}
+            style={{ ...distributionButtonStyle, borderColor: activeValue === label ? V4.blue : V4.rule }}
+          >
+            <span style={distributionLabelStyle} title={label}>{humanise(label)}</span>
+            <span style={distributionTrackStyle}>
+              <span style={{ ...distributionFillStyle, width: `${Math.max(7, (count / max) * 100)}%` }} />
+            </span>
+            <span style={distributionCountStyle}>{count.toLocaleString()}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Metric({ value, label, tone = V4.ink }: { label: string; value: string; tone?: string }) {
   return (
     <div style={metricStyle}>
-      <span style={metricValueStyle}>{value}</span>
+      <span style={{ ...metricValueStyle, color: tone }}>{value}</span>
       <span style={metricLabelStyle}>{label}</span>
     </div>
   );
 }
 
-function FilterButton({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        ...filterButtonStyle,
-        background: active ? "rgba(0,102,204,0.055)" : V4.surface,
-        borderColor: active ? "rgba(0,102,204,0.42)" : V4.rule,
-      }}
-    >
-      <span style={filterLabelStyle}>{label}</span>
-      <span style={filterCountStyle}>{count.toLocaleString()}</span>
-    </button>
+    <div style={summaryRowStyle}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
@@ -247,38 +494,56 @@ function Detail({ label, value }: { label: string; value: string }) {
   );
 }
 
-const titleStyle = { margin: "14px 0 0", fontFamily: SERIF, fontSize: "clamp(30px,2.8vw,44px)", fontWeight: 500, letterSpacing: "-0.03em", lineHeight: 1.1, color: V4.ink, textWrap: "balance" } satisfies CSSProperties;
-const ledeStyle = { margin: "18px 0 0", maxWidth: "62ch", fontFamily: SANS, fontSize: 16, lineHeight: 1.62, color: V4.slate } satisfies CSSProperties;
-const metricGridStyle = { display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 1, marginTop: 26, border: `1px solid ${V4.rule}`, background: V4.rule } satisfies CSSProperties;
-const metricStyle = { padding: "15px 16px", background: V4.surface } satisfies CSSProperties;
-const metricValueStyle = { display: "block", fontFamily: SERIF, fontSize: 27, lineHeight: 1, color: V4.ink } satisfies CSSProperties;
-const metricLabelStyle = { display: "block", marginTop: 7, fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: V4.slate } satisfies CSSProperties;
-const commandStripStyle = { display: "grid", gridTemplateColumns: "minmax(220px,0.72fr) minmax(0,1fr)", gap: 18, alignItems: "start", marginTop: 24, padding: 16, border: `1px solid ${V4.rule}`, borderRadius: 10, background: "rgba(255,255,255,0.72)" } satisfies CSSProperties;
-const domainSparkGridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,150px),1fr))", gap: 8 } satisfies CSSProperties;
-const domainSparkStyle = { minWidth: 0, border: "1px solid", borderRadius: 8, padding: "10px 11px", textAlign: "left", cursor: "pointer" } satisfies CSSProperties;
-const domainSparkLabelStyle = { display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: SANS, fontSize: 12.5, color: V4.ink } satisfies CSSProperties;
-const domainSparkTrackStyle = { display: "block", height: 5, borderRadius: 99, background: V4.cream, overflow: "hidden", marginTop: 8 } satisfies CSSProperties;
-const domainSparkFillStyle = { display: "block", height: "100%", borderRadius: 99, background: V4.blue } satisfies CSSProperties;
-const domainSparkCountStyle = { display: "block", marginTop: 7, fontFamily: MONO, fontSize: 11, color: V4.slate } satisfies CSSProperties;
-const controlsStyle = { display: "grid", gridTemplateColumns: "minmax(260px,1fr) 250px 190px", gap: 10, marginTop: 22 } satisfies CSSProperties;
-const searchStyle = { minWidth: 0, padding: "10px 12px", border: `1px solid ${V4.ruleStrong}`, borderRadius: 7, background: V4.surface, fontFamily: SANS, fontSize: 13.5, color: V4.ink } satisfies CSSProperties;
-const selectStyle = { padding: "10px 12px", border: `1px solid ${V4.ruleStrong}`, borderRadius: 7, background: V4.surface, fontFamily: SANS, fontSize: 13.5, color: V4.ink } satisfies CSSProperties;
-const layoutStyle = { display: "grid", gridTemplateColumns: "260px minmax(0,1fr) 360px", gap: 24, alignItems: "start", marginTop: 24 } satisfies CSSProperties;
-const sectionHeaderStyle = { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, marginBottom: 10 } satisfies CSSProperties;
-const monoStyle = { fontFamily: MONO, fontSize: 11, color: V4.slate } satisfies CSSProperties;
-const domainRailStyle = { display: "grid", gap: 7 } satisfies CSSProperties;
-const filterButtonStyle = { display: "grid", gridTemplateColumns: "minmax(0,1fr) 42px", gap: 10, alignItems: "center", width: "100%", border: "1px solid", borderRadius: 7, padding: "9px 10px", textAlign: "left", cursor: "pointer" } satisfies CSSProperties;
-const filterLabelStyle = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft } satisfies CSSProperties;
-const filterCountStyle = { fontFamily: MONO, fontSize: 11, color: V4.blue, textAlign: "right" } satisfies CSSProperties;
-const listStyle = { border: `1px solid ${V4.rule}`, borderRadius: 8, overflow: "hidden", background: V4.surface } satisfies CSSProperties;
-const factButtonStyle = { display: "block", width: "100%", border: "none", borderLeft: "3px solid transparent", borderBottom: `1px solid ${V4.rule}`, padding: "11px 13px", textAlign: "left", cursor: "pointer" } satisfies CSSProperties;
-const factMetaStyle = { display: "flex", gap: 10, flexWrap: "wrap", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: V4.slate } satisfies CSSProperties;
-const factTextStyle = { display: "block", marginTop: 4, fontFamily: SANS, fontSize: 13.5, lineHeight: 1.45, color: V4.inkSoft } satisfies CSSProperties;
-const emptyStyle = { margin: 0, padding: 18, fontFamily: SANS, fontSize: 13.5, color: V4.slate } satisfies CSSProperties;
-const detailStyle = { position: "sticky", top: 24, borderLeft: `1px solid ${V4.rule}`, paddingLeft: 22, minWidth: 0 } satisfies CSSProperties;
-const detailTitleStyle = { margin: "10px 0 0", fontFamily: SERIF, fontSize: 28, fontWeight: 500, letterSpacing: "-0.026em", color: V4.ink } satisfies CSSProperties;
-const detailStatementStyle = { margin: "14px 0 0", fontFamily: SANS, fontSize: 16, lineHeight: 1.55, color: V4.inkSoft } satisfies CSSProperties;
-const detailMetaGridStyle = { display: "grid", gap: 10, marginTop: 20, paddingTop: 16, borderTop: `1px solid ${V4.rule}` } satisfies CSSProperties;
-const detailItemStyle = { display: "grid", gap: 3 } satisfies CSSProperties;
-const detailLabelStyle = { fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: V4.slate } satisfies CSSProperties;
-const detailValueStyle = { fontFamily: SANS, fontSize: 13.5, lineHeight: 1.45, color: V4.inkSoft } satisfies CSSProperties;
+function StatusPill({ value }: { value: string }) {
+  const tone = value === "Referenced" ? { bg: "#e1f5ee", fg: "#0f6e56" } : { bg: "#faeeda", fg: V4.amber };
+  return <span style={{ ...pillStyle, background: tone.bg, color: tone.fg }}>{value}</span>;
+}
+
+const titleStyle = { color: V4.ink, fontFamily: SERIF, fontSize: "clamp(30px,2.8vw,44px)", fontWeight: 500, letterSpacing: "-0.03em", lineHeight: 1.1, margin: "14px 0 0", maxWidth: "34ch", textWrap: "balance" } satisfies CSSProperties;
+const ledeStyle = { color: V4.slate, fontFamily: SANS, fontSize: 16, lineHeight: 1.62, margin: "18px 0 0", maxWidth: "68ch" } satisfies CSSProperties;
+const metricGridStyle = { background: V4.rule, border: `1px solid ${V4.rule}`, display: "grid", gap: 1, gridTemplateColumns: "repeat(5,minmax(0,1fr))", marginTop: 26 } satisfies CSSProperties;
+const metricStyle = { background: V4.surface, minWidth: 0, padding: "15px 16px" } satisfies CSSProperties;
+const metricValueStyle = { color: V4.ink, display: "block", fontFamily: SERIF, fontSize: 27, fontVariantNumeric: "tabular-nums", lineHeight: 1 } satisfies CSSProperties;
+const metricLabelStyle = { color: V4.slate, display: "block", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", marginTop: 7, textTransform: "uppercase" } satisfies CSSProperties;
+const commandStripStyle = { alignItems: "start", background: "linear-gradient(120deg,rgba(255,255,255,0.95),rgba(245,241,235,0.72))", border: `1px solid ${V4.rule}`, borderRadius: 10, borderTop: `5px solid ${V4.green}`, display: "grid", gap: 18, gridTemplateColumns: "minmax(240px,0.42fr) minmax(0,0.58fr)", marginTop: 24, padding: 18 } satisfies CSSProperties;
+const commandTitleStyle = { color: V4.ink, fontFamily: SERIF, fontSize: "clamp(21px,1.8vw,28px)", fontWeight: 500, letterSpacing: "-0.026em", lineHeight: 1.15, margin: "8px 0 0" } satisfies CSSProperties;
+const commandTextStyle = { color: V4.slate, fontFamily: SANS, fontSize: 13.8, lineHeight: 1.55, margin: "10px 0 0", maxWidth: "56ch" } satisfies CSSProperties;
+const controlsGridStyle = { display: "grid", gap: 10, gridTemplateColumns: "repeat(2,minmax(0,1fr))", minWidth: 0 } satisfies CSSProperties;
+const selectLabelStyle = { color: V4.slate, display: "grid", fontFamily: MONO, fontSize: 10.5, gap: 6, letterSpacing: "0.08em", minWidth: 0, textTransform: "uppercase" } satisfies CSSProperties;
+const selectStyle = { background: V4.surface, border: `1px solid ${V4.ruleStrong}`, borderRadius: 7, color: V4.ink, fontFamily: SANS, fontSize: 13, letterSpacing: 0, minWidth: 0, padding: "9px 10px", textTransform: "none", width: "100%" } satisfies CSSProperties;
+const distributionStyle = { borderTop: `1px solid ${V4.rule}`, gridColumn: "1 / -1", paddingTop: 14 } satisfies CSSProperties;
+const distributionGridStyle = { display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,150px),1fr))", marginTop: 10 } satisfies CSSProperties;
+const distributionButtonStyle = { background: V4.surface, border: "1px solid", borderRadius: 8, cursor: "pointer", minWidth: 0, padding: "9px 10px", textAlign: "left" } satisfies CSSProperties;
+const distributionLabelStyle = { color: V4.inkSoft, display: "block", fontFamily: SANS, fontSize: 12.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } satisfies CSSProperties;
+const distributionTrackStyle = { background: V4.cream, borderRadius: 99, display: "block", height: 4, marginTop: 7, overflow: "hidden" } satisfies CSSProperties;
+const distributionFillStyle = { background: V4.blue, borderRadius: 99, display: "block", height: "100%" } satisfies CSSProperties;
+const distributionCountStyle = { color: V4.slate, display: "block", fontFamily: MONO, fontSize: 11, marginTop: 6 } satisfies CSSProperties;
+const layoutStyle = { alignItems: "start", display: "grid", gap: "clamp(24px,3vw,42px)", gridTemplateColumns: "minmax(0,1fr) minmax(310px,380px)", marginTop: 28 } satisfies CSSProperties;
+const tableHeaderStyle = { alignItems: "end", display: "grid", gap: 16, gridTemplateColumns: "minmax(0,1fr) minmax(280px,520px)", marginBottom: 12 } satisfies CSSProperties;
+const tableSubheadStyle = { color: V4.slate, fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", marginTop: 7, textTransform: "uppercase" } satisfies CSSProperties;
+const searchWrapStyle = { alignItems: "center", display: "flex", gap: 8, minWidth: 0 } satisfies CSSProperties;
+const searchStyle = { background: V4.surface, border: `1px solid ${V4.ruleStrong}`, borderRadius: 7, color: V4.ink, fontFamily: SANS, fontSize: 14, padding: "10px 12px", width: "100%" } satisfies CSSProperties;
+const clearButtonStyle = { background: "transparent", border: "none", color: V4.blue, cursor: "pointer", fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" } satisfies CSSProperties;
+const tableShellStyle = { background: V4.surface, border: `1px solid ${V4.rule}`, borderRadius: 10, boxShadow: "0 14px 32px rgba(12,26,58,0.055)", overflowX: "auto" } satisfies CSSProperties;
+const tableStyle = { borderCollapse: "collapse", minWidth: 1120, tableLayout: "fixed", width: "100%" } satisfies CSSProperties;
+const headerCellStyle = { background: V4.cream, borderBottom: `1px solid ${V4.rule}`, color: V4.slate, fontFamily: MONO, fontSize: 10.5, fontWeight: 600, letterSpacing: "0.08em", padding: "11px 12px", position: "sticky", textAlign: "left", textTransform: "uppercase", top: 0, zIndex: 1 } satisfies CSSProperties;
+const bodyCellStyle = { borderBottom: `1px solid ${V4.rule}`, color: V4.inkSoft, fontFamily: SANS, fontSize: 12.5, lineHeight: 1.35, overflow: "hidden", padding: "10px 12px", textOverflow: "ellipsis", verticalAlign: "top", whiteSpace: "nowrap" } satisfies CSSProperties;
+const footnoteStyle = { color: V4.slate, fontFamily: MONO, fontSize: 11, letterSpacing: "0.05em", margin: "12px 0 0" } satisfies CSSProperties;
+const emptyStyle = { color: V4.slate, fontFamily: SANS, fontSize: 13, margin: 0, padding: 18 } satisfies CSSProperties;
+const detailPaneStyle = { display: "grid", gap: 18, minWidth: 0, position: "sticky", top: 26 } satisfies CSSProperties;
+const sliceSummaryStyle = { background: V4.surface, border: `1px solid ${V4.rule}`, borderRadius: 10, borderTop: `4px solid ${V4.green}`, boxShadow: "0 14px 32px rgba(12,26,58,0.045)", padding: "15px 17px 17px" } satisfies CSSProperties;
+const sliceSummaryValueStyle = { color: V4.ink, display: "block", fontFamily: SERIF, fontSize: 34, letterSpacing: "-0.035em", lineHeight: 1, marginTop: 10 } satisfies CSSProperties;
+const sliceSummaryLabelStyle = { color: V4.slate, display: "block", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.07em", marginTop: 5, textTransform: "uppercase" } satisfies CSSProperties;
+const sliceRuleStyle = { background: V4.rule, height: 1, margin: "14px 0" } satisfies CSSProperties;
+const summaryRowStyle = { borderBottom: `1px solid ${V4.ruleSoft}`, color: V4.slate, display: "grid", fontFamily: SANS, fontSize: 12.5, gap: 10, gridTemplateColumns: "minmax(0,0.42fr) minmax(0,0.58fr)", lineHeight: 1.35, padding: "7px 0" } satisfies CSSProperties;
+const detailStyle = { background: V4.surface, border: `1px solid ${V4.rule}`, borderRadius: 10, borderTop: `4px solid ${V4.blue}`, boxShadow: "0 14px 32px rgba(12,26,58,0.055)", padding: "16px 17px 18px" } satisfies CSSProperties;
+const detailTitleStyle = { color: V4.ink, fontFamily: SERIF, fontSize: 24, fontWeight: 500, letterSpacing: "-0.024em", lineHeight: 1.15, margin: "10px 0 0" } satisfies CSSProperties;
+const detailStatementStyle = { color: V4.inkSoft, fontFamily: SANS, fontSize: 14, lineHeight: 1.54, margin: "12px 0 0" } satisfies CSSProperties;
+const detailMetaGridStyle = { display: "grid", gap: 10, gridTemplateColumns: "repeat(2,minmax(0,1fr))", marginTop: 16 } satisfies CSSProperties;
+const detailItemStyle = { borderTop: `1px solid ${V4.rule}`, minWidth: 0, paddingTop: 8 } satisfies CSSProperties;
+const detailLabelStyle = { color: V4.slate, display: "block", fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" } satisfies CSSProperties;
+const detailValueStyle = { color: V4.inkSoft, display: "block", fontFamily: SANS, fontSize: 12.8, lineHeight: 1.38, marginTop: 4, overflowWrap: "anywhere" } satisfies CSSProperties;
+const sourceBoxStyle = { borderTop: `1px solid ${V4.rule}`, marginTop: 18, paddingTop: 14 } satisfies CSSProperties;
+const evidenceListStyle = { color: V4.inkSoft, fontFamily: SANS, fontSize: 12.8, lineHeight: 1.5, margin: "10px 0 0", paddingLeft: 18 } satisfies CSSProperties;
+const missingSourceStyle = { color: V4.slate, fontFamily: SANS, fontSize: 12.8, lineHeight: 1.5, margin: "10px 0 0" } satisfies CSSProperties;
+const pillStyle = { borderRadius: 3, display: "inline-block", fontFamily: MONO, fontSize: 10.8, fontWeight: 600, letterSpacing: "0.06em", maxWidth: "100%", overflow: "hidden", padding: "3px 7px", textOverflow: "ellipsis", textTransform: "uppercase", whiteSpace: "nowrap" } satisfies CSSProperties;
