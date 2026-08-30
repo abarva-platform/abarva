@@ -61,6 +61,7 @@ The change prepares Source 360 to state only what the refreshed substrate proves
 - `docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql`
 - `docs/architecture/sql-drafts/ecl_product_projection_tables_v1_draft.sql`
 - `src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts`
+- `src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx`
 - `src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts`
 - `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx`
 - `docs/architecture/sql-drafts/ecl_serving_views_v1_draft.sql`
