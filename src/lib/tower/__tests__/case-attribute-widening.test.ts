@@ -283,3 +283,22 @@ describe("a domain is not a sponsor", () => {
     expect(LAYER4).toContain("domain_name: project?.domain_name ?? row.domain_key");
   });
 });
+
+describe("the spend flag survives the view model", () => {
+  it("carries the reader's flag instead of recomputing it from a non-nullable field", () => {
+    // `aiTaggedSpendUsd` is typed `number`. `item.aiTaggedSpendUsd !== null` is therefore always
+    // true, and TypeScript does not object — so the view model silently discarded the reader's
+    // derivation and every row rendered as funded. Two fixes to the reader had no effect because
+    // both were downstream of this line.
+    expect(VIEW).toContain("aiSpendLoaded: item.aiSpendLoaded ?? false");
+    expect(VIEW).not.toContain("aiSpendLoaded: item.aiTaggedSpendUsd !== null");
+  });
+
+  it("does not derive any loaded-flag from a non-nullable number", () => {
+    // The whole class: a `!== null` test on a field the type says is never null.
+    const nonNullable = ["aiTaggedSpendUsd", "aiSpendUsd", "financeValidatedValueUsd"];
+    for (const field of nonNullable) {
+      expect([field, VIEW.includes(`Loaded: item.${field} !== null`)]).toEqual([field, false]);
+    }
+  });
+});
