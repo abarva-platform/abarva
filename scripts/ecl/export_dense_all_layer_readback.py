@@ -134,6 +134,9 @@ def layer_counts(flat: dict[str, int]) -> dict[str, dict[str, int]]:
             "serving_views_declared": flat.get("serving_views_declared", 0),
             "serving_views_populated": flat.get("serving_views_populated", 0),
             "serving_views_empty": flat.get("serving_views_empty", 0),
+            "serving_required_views_declared": flat.get("serving_required_views_declared", 0),
+            "serving_required_views_populated": flat.get("serving_required_views_populated", 0),
+            "serving_required_views_empty": flat.get("serving_required_views_empty", 0),
             "source_value_claimable_rows": flat.get("source_value_claimable_rows", 0),
             "source_value_gated_rows": flat.get("source_value_gated_rows", 0),
             "event_rows_without_evidence_payload": flat.get("event_rows_without_evidence_payload", 0),
@@ -313,8 +316,14 @@ def export_readback(args: argparse.Namespace) -> dict[str, Any]:
 
     sql_summaries = execute_load.build_layer_sql(dense_out_dir, out_dir)
     expected = execute_load.expected_counts(sql_summaries)
+    metric_keys = execute_load.metric_keys_for_purge(dense_out_dir)
     target_db_url = args.target_db_url or os.environ["DATABASE_URL"]
-    readback_result = execute_load.run_psql_query(target_db_url, execute_load.readback_sql(), out_dir, "read_only_readback")
+    readback_result = execute_load.run_psql_query(
+        target_db_url,
+        execute_load.readback_sql(metric_keys),
+        out_dir,
+        "read_only_readback",
+    )
     readback = execute_load.parse_json_from_psql(readback_result["stdout"])
     validation_issues = execute_load.validate_readback(readback, expected, [])
 

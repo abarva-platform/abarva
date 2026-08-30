@@ -88,6 +88,10 @@ SERVING_VIEW_NAMES = (
     "intelligence_pattern_detail",
     "intelligence_context_summary",
 )
+OPTIONAL_EMPTY_SERVING_VIEW_NAMES = frozenset({"source_compare", "source_approvals"})
+REQUIRED_SERVING_VIEW_NAMES = tuple(
+    view_name for view_name in SERVING_VIEW_NAMES if view_name not in OPTIONAL_EMPTY_SERVING_VIEW_NAMES
+)
 
 
 class Refusal(RuntimeError):
@@ -119,19 +123,29 @@ def command_env() -> dict[str, str]:
     return env
 
 
-def serving_view_count_union_sql() -> str:
+def serving_view_count_union_sql(view_names: tuple[str, ...] = SERVING_VIEW_NAMES) -> str:
     lines: list[str] = []
-    for index, view_name in enumerate(SERVING_VIEW_NAMES):
+    for index, view_name in enumerate(view_names):
         prefix = "      select" if index == 0 else "      union all select"
         lines.append(f"{prefix} '{view_name}' as view_key, count(*) as row_count from serving.{view_name}")
     return "\n".join(lines)
 
 
+def metric_key_filter(metric_keys: list[str] | None) -> str:
+    if not metric_keys:
+        return "true"
+    key_values = ", ".join(sql_text(key) for key in sorted(set(metric_keys)))
+    return f"metric_key in ({key_values})"
+
+
 def serving_readback_sql() -> str:
     serving_counts = serving_view_count_union_sql()
+    required_serving_counts = serving_view_count_union_sql(REQUIRED_SERVING_VIEW_NAMES)
     declared_count = len(SERVING_VIEW_NAMES)
+    required_declared_count = len(REQUIRED_SERVING_VIEW_NAMES)
     return f"""  'serving_contract_rows', (select count(*) from serving.serving_contract),
   'serving_views_declared', {declared_count},
+  'serving_required_views_declared', {required_declared_count},
   'serving_views_populated', (
     select count(*) from (
 {serving_counts}
@@ -141,6 +155,18 @@ def serving_readback_sql() -> str:
   'serving_views_empty', (
     select count(*) from (
 {serving_counts}
+    ) serving_counts
+    where row_count = 0
+  ),
+  'serving_required_views_populated', (
+    select count(*) from (
+{required_serving_counts}
+    ) serving_counts
+    where row_count > 0
+  ),
+  'serving_required_views_empty', (
+    select count(*) from (
+{required_serving_counts}
     ) serving_counts
     where row_count = 0
   )"""
@@ -269,9 +295,10 @@ commit;
     )
 
 
-def readback_sql() -> str:
+def readback_sql(metric_keys: list[str] | None = None) -> str:
     tenant = sql_text(TENANT_KEY)
     assessment = sql_text(ASSESSMENT_ID)
+    metric_filter = metric_key_filter(metric_keys)
     return f"""
 select jsonb_pretty(jsonb_build_object(
   'source_file', (select count(*) from ecl_source.source_file where tenant_key = {tenant} and assessment_id = {assessment}),
@@ -292,7 +319,8 @@ select jsonb_pretty(jsonb_build_object(
   'deployment_of', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment} and relationship_type = 'DEPLOYMENT_OF'),
   'hosted_on', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment} and relationship_type = 'HOSTED_ON'),
   'integrates_with', (select count(*) from ecl_context.relationship where tenant_key = {tenant} and assessment_id = {assessment} and relationship_type = 'INTEGRATES_WITH'),
-  'metric_definition', (select count(*) from ecl_context.metric_definition where tenant_key = {tenant}),
+  'metric_definition', (select count(*) from ecl_context.metric_definition where tenant_key = {tenant} and {metric_filter}),
+  'metric_definition_tenant_total', (select count(*) from ecl_context.metric_definition where tenant_key = {tenant}),
   'measure', (select count(*) from ecl_context.measure where tenant_key = {tenant} and assessment_id = {assessment}),
   'measure_metric_drift', (
     select count(*) from ecl_context.measure m
@@ -655,17 +683,20 @@ def validate_readback(readback: dict[str, Any], expected: dict[str, int], plante
         "intelligence_primary_object_drift",
         "intelligence_pattern_primary_object_drift",
         "intelligence_question_context_pack_drift",
-        "serving_views_empty",
+        "serving_required_views_empty",
     ]:
         if int(readback.get(drift_key, 1)) != 0:
             issues.append(drift_key)
     expected_serving_views = len(SERVING_VIEW_NAMES)
+    expected_required_serving_views = len(REQUIRED_SERVING_VIEW_NAMES)
     if int(readback.get("serving_contract_rows", -1)) != expected_serving_views:
         issues.append(f"serving_contract_rows_expected_{expected_serving_views}")
     if int(readback.get("serving_views_declared", -1)) != expected_serving_views:
         issues.append(f"serving_views_declared_expected_{expected_serving_views}")
-    if int(readback.get("serving_views_populated", -1)) != expected_serving_views:
-        issues.append(f"serving_views_populated_expected_{expected_serving_views}")
+    if int(readback.get("serving_required_views_declared", -1)) != expected_required_serving_views:
+        issues.append(f"serving_required_views_declared_expected_{expected_required_serving_views}")
+    if int(readback.get("serving_required_views_populated", -1)) != expected_required_serving_views:
+        issues.append(f"serving_required_views_populated_expected_{expected_required_serving_views}")
     if int(readback.get("source_value_claimable_rows", 1)) != 0:
         issues.append("source_value_claimable_rows_should_be_zero_before_review")
     if any(not item.get("rejected") for item in planted):
@@ -789,7 +820,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         commands.append(run_psql_file(target_db_url, sql_path, out_dir, f"load_{sql_path.stem}"))
 
     planted = planted_failure_probes(target_db_url, out_dir)
-    readback_result = run_psql_query(target_db_url, readback_sql(), out_dir, "independent_readback")
+    readback_result = run_psql_query(target_db_url, readback_sql(metric_keys), out_dir, "independent_readback")
     readback = parse_json_from_psql(readback_result["stdout"])
     expected = expected_counts(sql_summaries)
     validation_issues = validate_readback(readback, expected, planted)
