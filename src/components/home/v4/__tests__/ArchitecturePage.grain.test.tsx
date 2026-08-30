@@ -51,7 +51,10 @@ describe("Home v4 architecture grain", () => {
     const wheel = within(screen.getByLabelText("Architecture wheel"));
     expect(wheel.getByText("Architecture wheel")).toBeInTheDocument();
     expect(wheel.getByText("Where the enterprise runs, and who answers for it.")).toBeInTheDocument();
-    expect(wheel.getByText(/typed ECL views/i)).toBeInTheDocument();
+    expect(wheel.getByText(/business blocks/i)).toBeInTheDocument();
+    expect(wheel.getByText(/applications ·/i)).toBeInTheDocument();
+    expect(wheel.queryByText(/counted records/i)).not.toBeInTheDocument();
+    expect(wheel.queryByText(/\b\d{3,4} records\b/i)).not.toBeInTheDocument();
     expect(wheel.getByText("Selected business block")).toBeInTheDocument();
     expect(wheel.getByText("Open logical view")).toBeInTheDocument();
     expect(runMap.getAllByText("Health Plan / Payer").length).toBeGreaterThan(0);
