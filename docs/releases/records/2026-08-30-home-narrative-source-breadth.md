@@ -49,6 +49,11 @@ contract, infrastructure, data-flow, chapter-coverage, and source-breadth guardr
 of compressing the tenant into four broad signals. Source summaries remain coverage context only and
 are not citable business evidence.
 
+Follow-up: the packet now includes citable scope context for missing business-economics,
+strategy/program, leadership-interview, and KPI/value-linkage evidence, and the thesis prompt
+requires single-domain facts to stay labeled as facts or observations rather than unsupported
+cross-domain inferences.
+
 ## QA / Validation
 
 - `PASS` — `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts --runInBand`
@@ -57,6 +62,8 @@ are not citable business evidence.
 - `PASS` — the ECL seam test now asserts that writer and readback default assessment ids match.
 - `PASS` — the ECL seam test now asserts deterministic signal breadth across application,
   contract, infrastructure, data-flow, and source-breadth domains.
+- `PASS` — the ECL seam test now asserts citable scope context for missing evidence and
+  claim-type discipline in the thesis prompt.
 - `PASS` — `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`
 - `PASS` — local no-key deterministic packet proof for one synthetic tenant showed active intake-file summaries included with separate raw-row and canonical-record counts.
 - `PENDING` — ACA operator measurement after merge/deploy, if this script is needed in the running operator image immediately.
