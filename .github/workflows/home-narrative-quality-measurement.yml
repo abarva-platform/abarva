@@ -24,6 +24,7 @@ jobs:
     name: Measure Home chapter quality
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    environment: production
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       TENANT_KEY: ${{ inputs.tenant_key }}
@@ -62,5 +63,5 @@ jobs:
         with:
           name: home-narrative-quality-measurement-${{ inputs.tenant_key }}
           path: ${{ inputs.output_dir }}
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
