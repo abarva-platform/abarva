@@ -1821,11 +1821,16 @@ export function buildSourceVendor360Cockpit(input: {
   const headlineAnchor = upcomingNotice[0] ?? null;
   const expiryAnchor = exposureRows.length === 0 ? fallbackExpiryRows[0] : null;
   const exposedAnnualValue = sumAnnual(verdictRows);
-  const headline = headlineAnchor
-    ? `Decide ${moneyLabel(exposedAnnualValue)} of annual value before ${formatDayMonth(headlineAnchor.noticeDeadline.toISOString())}.`
-    : expiryAnchor
-      ? `No notice deadline is open; next expiry is ${formatDayMonth(expiryAnchor.end_date)}.`
-      : "No renewal or notice exposure is established in this as-of cut.";
+  const lapsedAutoRenewValue =
+    renewal180.noticeDeadlinePassedAutoRenewAnnualValue;
+  const headline =
+    renewal180.noticeDeadlinePassedAutoRenew.length > 0
+      ? `${moneyLabel(lapsedAutoRenewValue)} auto-renews with the notice window already passed.`
+      : headlineAnchor
+        ? `Decide ${moneyLabel(exposedAnnualValue)} of annual value before ${formatDayMonth(headlineAnchor.noticeDeadline.toISOString())}.`
+        : expiryAnchor
+          ? `No notice deadline is open; next expiry is ${formatDayMonth(expiryAnchor.end_date)}.`
+          : "No renewal or notice exposure is established in this as-of cut.";
   const meanConfidence = mean(
     verdictRows
       .map((contract) => numberFromDb(contract.source_confidence))
@@ -1843,46 +1848,71 @@ export function buildSourceVendor360Cockpit(input: {
       eyebrow: `Position as of ${formatDate(asOfDateIso)}`,
       headline,
       decidingAxis:
-        verdictRows.length > 0
-          ? `${verdictRows.length} active contract${
-              verdictRows.length === 1 ? "" : "s"
-            } ${verdictRows.length === 1 ? "sits" : "sit"} inside the governed decision set; treat the date first, then the leverage flag.`
-          : renewal180.expiredAsOfDate.length > 0
-            ? `${renewal180.expiredAsOfDate.length} rows are expired as of the cut and are excluded from commercial-deadline exposure.`
-            : "No qualifying row is rendered as exposure; missing timing stays not established.",
+        renewal180.noticeDeadlinePassedAutoRenew.length > 0
+          ? `${renewal180.noticeDeadlinePassedAutoRenew.length} auto-renewing contract${
+              renewal180.noticeDeadlinePassedAutoRenew.length === 1 ? "" : "s"
+            } crossed the notice deadline; ${moneyLabel(cancellableAnnualValue)} remains cancellable in this as-of cut.`
+          : verdictRows.length > 0
+            ? `${verdictRows.length} active contract${
+                verdictRows.length === 1 ? "" : "s"
+              } ${verdictRows.length === 1 ? "sits" : "sit"} inside the governed decision set; treat the date first, then the leverage flag.`
+            : renewal180.expiredAsOfDate.length > 0
+              ? `${renewal180.expiredAsOfDate.length} rows are expired as of the cut and are excluded from commercial-deadline exposure.`
+              : "No qualifying row is rendered as exposure; missing timing stays not established.",
       bindingChip:
-        exposureRows.length > 0
-          ? "computeRenewalExposure(source.contract_360, as_of_date)"
-          : "computeRenewalExposure(source.contract_360, as_of_date).expiringWithinWindow",
+        renewal180.noticeDeadlinePassedAutoRenew.length > 0
+          ? "computeRenewalExposure(source.contract_360, as_of_date).noticeDeadlinePassedAutoRenew"
+          : exposureRows.length > 0
+            ? "computeRenewalExposure(source.contract_360, as_of_date)"
+            : "computeRenewalExposure(source.contract_360, as_of_date).expiringWithinWindow",
       supports: [
-        {
-          label: "Exposed annual value",
-          value:
-            verdictRows.length > 0
-              ? moneyLabel(exposedAnnualValue)
-              : "not established",
-          note:
-            verdictRows.length > 0
-              ? `${verdictRows.length} rows inside ${moneyLabel(summary.totalAnnualValue)} portfolio annual value.`
-              : "Needs at least one active contract with notice or expiry inside the governed window.",
-          tone: verdictRows.length > 0 ? "warn" : "pass",
-        },
-        {
-          label: "Decision window",
-          value:
-            minDeadlineDays == null
-              ? "not established"
-              : `${minDeadlineDays} days`,
-          note: minDeadlineContract
-            ? `${minDeadlineContract.vendor_name} · ${minDeadlineContract.contract_id} sets the minimum.`
-            : "Needs notice_deadline or end_date.",
-          tone:
-            minDeadlineDays == null
-              ? "pass"
-              : minDeadlineDays < 0
-                ? "fail"
-                : "warn",
-        },
+        renewal180.noticeDeadlinePassedAutoRenew.length > 0
+          ? {
+              label: "Auto-renew notice passed",
+              value: moneyLabel(lapsedAutoRenewValue),
+              note: `${renewal180.noticeDeadlinePassedAutoRenew.length} active auto-renew row${
+                renewal180.noticeDeadlinePassedAutoRenew.length === 1 ? "" : "s"
+              } crossed the contractual notice deadline.`,
+              tone: "fail" as const,
+            }
+          : {
+              label: "Exposed annual value",
+              value:
+                verdictRows.length > 0
+                  ? moneyLabel(exposedAnnualValue)
+                  : "not established",
+              note:
+                verdictRows.length > 0
+                  ? `${verdictRows.length} rows inside ${moneyLabel(summary.totalAnnualValue)} portfolio annual value.`
+                  : "Needs at least one active contract with notice or expiry inside the governed window.",
+              tone: verdictRows.length > 0 ? "warn" : "pass",
+            },
+        renewal180.noticeDeadlinePassedAutoRenew.length > 0
+          ? {
+              label: "Still cancellable",
+              value: moneyLabel(cancellableAnnualValue),
+              note: "Excludes expired rows and active auto-renew rows whose notice deadline has passed.",
+              tone:
+                cancellableAnnualValue > 0
+                  ? ("pass" as const)
+                  : ("warn" as const),
+            }
+          : {
+              label: "Decision window",
+              value:
+                minDeadlineDays == null
+                  ? "not established"
+                  : `${minDeadlineDays} days`,
+              note: minDeadlineContract
+                ? `${minDeadlineContract.vendor_name} · ${minDeadlineContract.contract_id} sets the minimum.`
+                : "Needs notice_deadline or end_date.",
+              tone:
+                minDeadlineDays == null
+                  ? "pass"
+                  : minDeadlineDays < 0
+                    ? "fail"
+                    : "warn",
+            },
         {
           label: "Mean confidence",
           value:
