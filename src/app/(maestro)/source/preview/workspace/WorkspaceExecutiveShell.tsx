@@ -8,6 +8,7 @@ import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio"
 import type {
   SourceContractApplicationScopeRow,
   SourceContract360Row,
+  SourceContractEvidenceCoverageRow,
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
 
@@ -36,6 +37,20 @@ const GRAPH_SUBTABS = ["Flow", "Volume", "Spine"] as const;
 type PageLabel = (typeof PAGE_LABELS)[number];
 type ExecutiveVendorRow = SourceVendorContractPortfolioRow & {
   readonly vendor_refs: readonly string[];
+};
+type FocusedContractRow = {
+  readonly contract: SourceContract360Row;
+  readonly coverage: SourceContractEvidenceCoverageRow | null;
+  readonly actionRows: number;
+  readonly claimRows: number;
+  readonly depthScore: number;
+  readonly reason: string;
+};
+type FocusedContractSet = {
+  readonly rows: readonly FocusedContractRow[];
+  readonly remainderCount: number;
+  readonly remainderAnnualValue: number;
+  readonly depthReadyCount: number;
 };
 
 export function WorkspaceExecutiveShell({
@@ -859,17 +874,17 @@ function ContractListTable({
   portfolio: SourceWorkspacePortfolioData;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
-  const contracts = contractsByAnnualValue(portfolio.contracts);
+  const focus = focusedContractSet(portfolio);
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-contract-row">
         <span>Contract</span>
         <span>Vendor</span>
-        <span>Category</span>
+        <span>Why listed</span>
         <span>Annual value</span>
-        <span>End date</span>
+        <span>Next action</span>
       </div>
-      {contracts.slice(0, 14).map((contract) => (
+      {focus.rows.map(({ contract, reason, actionRows }) => (
         <button
           key={contract.contract_id}
           type="button"
@@ -881,14 +896,20 @@ function ContractListTable({
             <small>{contract.contract_id}</small>
           </span>
           <span>{contract.vendor_name}</span>
-          <span>{contract.vendor_category ?? "Not established"}</span>
+          <span>{reason}</span>
           <span>{money(numberFromDb(contract.annual_value))}</span>
-          <span>{fmtDate(contract.end_date)}</span>
+          <span>
+            {actionRows > 0 ? "Open Optimize" : "Review Contract 360"}
+          </span>
         </button>
       ))}
-      {contracts.length > 14 ? (
+      {focus.remainderCount > 0 ? (
         <div className="sw-v2-table-foot">
-          Showing 14 of {contracts.length} contract rows.
+          <b>{focus.remainderCount} further registry contracts</b>
+          <span>
+            {money(focus.remainderAnnualValue)} stays summarized until spend,
+            performance, document, or action evidence is loaded.
+          </span>
         </div>
       ) : null}
     </div>
@@ -902,10 +923,7 @@ function ContractEvidenceDepthTable({
   portfolio: SourceWorkspacePortfolioData;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
-  const coverageByContract = new Map(
-    portfolio.impact.evidenceCoverage.map((row) => [row.contract_id, row]),
-  );
-  const contracts = contractsByAnnualValue(portfolio.contracts);
+  const focus = focusedContractSet(portfolio);
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-contract-depth-row">
@@ -913,28 +931,36 @@ function ContractEvidenceDepthTable({
         <span>Spend</span>
         <span>Performance</span>
         <span>Docs</span>
+        <span>Actions</span>
         <span>Coverage</span>
       </div>
-      {contracts.slice(0, 14).map((contract) => {
-        const coverage = coverageByContract.get(contract.contract_id);
-        return (
-          <button
-            key={contract.contract_id}
-            type="button"
-            className="sw-v2-table-row sw-v2-contract-depth-row"
-            onClick={() => onOpenContract(contract.contract_id, "Evidence")}
-          >
-            <span>
-              <b>{contract.contract_name}</b>
-              <small>{contract.contract_id}</small>
-            </span>
-            <span>{formatCount(coverage?.spend_rows)}</span>
-            <span>{formatCount(coverage?.performance_rows)}</span>
-            <span>{formatCount(coverage?.document_page_text_rows)}</span>
-            <span>{coverage?.coverage_state ?? "Header only"}</span>
-          </button>
-        );
-      })}
+      {focus.rows.map(({ contract, coverage, actionRows }) => (
+        <button
+          key={contract.contract_id}
+          type="button"
+          className="sw-v2-table-row sw-v2-contract-depth-row"
+          onClick={() => onOpenContract(contract.contract_id, "Evidence")}
+        >
+          <span>
+            <b>{contract.contract_name}</b>
+            <small>{contract.contract_id}</small>
+          </span>
+          <span>{formatCount(coverage?.spend_rows)}</span>
+          <span>{formatCount(coverage?.performance_rows)}</span>
+          <span>{formatCount(coverage?.document_page_text_rows)}</span>
+          <span>{formatCount(actionRows)}</span>
+          <span>{coverage?.coverage_state ?? "Header only"}</span>
+        </button>
+      ))}
+      {focus.remainderCount > 0 ? (
+        <div className="sw-v2-table-foot">
+          <b>{focus.depthReadyCount} contracts have loaded detail rows.</b>
+          <span>
+            The remaining {focus.remainderCount} are held as portfolio registry
+            rows until their evidence lanes are populated.
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -946,7 +972,7 @@ function ContractFinancialPostureTable({
   portfolio: SourceWorkspacePortfolioData;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
-  const contracts = contractsByAnnualValue(portfolio.contracts);
+  const focus = focusedContractSet(portfolio);
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-financial-row">
@@ -956,7 +982,7 @@ function ContractFinancialPostureTable({
         <span>Committed value</span>
         <span>Posture</span>
       </div>
-      {contracts.slice(0, 14).map((contract) => (
+      {focus.rows.map(({ contract }) => (
         <button
           key={contract.contract_id}
           type="button"
@@ -973,6 +999,15 @@ function ContractFinancialPostureTable({
           <span>{financialPosture(contract)}</span>
         </button>
       ))}
+      {focus.remainderCount > 0 ? (
+        <div className="sw-v2-table-foot">
+          <b>{focus.remainderCount} registry-only financial rows summarized.</b>
+          <span>
+            Actual spend is only shown when monthly spend or consumption rows
+            exist for the contract.
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -2226,6 +2261,111 @@ function contractsByAnnualValue(
     );
 }
 
+function focusedContractSet(
+  portfolio: SourceWorkspacePortfolioData,
+  limit = 7,
+): FocusedContractSet {
+  const coverageByContract = new Map(
+    portfolio.impact.evidenceCoverage.map((row) => [row.contract_id, row]),
+  );
+  const actionRowsByContract = countByContract(
+    portfolio.impact.actionCandidates.map((row) => row.contract_id),
+  );
+  const claimRowsByContract = countByContract(
+    portfolio.impact.claimCards.map((row) => row.contract_id),
+  );
+  const ranked = contractsByAnnualValue(portfolio.contracts)
+    .map((contract): FocusedContractRow => {
+      const coverage = coverageByContract.get(contract.contract_id) ?? null;
+      const actionRows = actionRowsByContract.get(contract.contract_id) ?? 0;
+      const claimRows = claimRowsByContract.get(contract.contract_id) ?? 0;
+      const depthScore = contractDepthScore(contract, coverage, actionRows, claimRows);
+      return {
+        contract,
+        coverage,
+        actionRows,
+        claimRows,
+        depthScore,
+        reason: contractFocusReason(contract, coverage, actionRows, claimRows),
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.depthScore - a.depthScore ||
+        (numberFromDb(b.contract.annual_value) ?? 0) -
+          (numberFromDb(a.contract.annual_value) ?? 0),
+    );
+  const rows = ranked
+    .filter((row) => row.depthScore > 0)
+    .slice(0, limit);
+  if (rows.length < Math.min(limit, 3)) {
+    const selected = new Set(rows.map((row) => row.contract.contract_id));
+    for (const row of ranked) {
+      if (rows.length >= Math.min(limit, 3)) break;
+      if (selected.has(row.contract.contract_id)) continue;
+      rows.push(row);
+      selected.add(row.contract.contract_id);
+    }
+  }
+  const selectedIds = new Set(rows.map((row) => row.contract.contract_id));
+  const remainder = portfolio.contracts.filter(
+    (contract) => !selectedIds.has(contract.contract_id),
+  );
+  return {
+    rows,
+    remainderCount: remainder.length,
+    remainderAnnualValue: remainder.reduce(
+      (sum, contract) => sum + (numberFromDb(contract.annual_value) ?? 0),
+      0,
+    ),
+    depthReadyCount: ranked.filter((row) => row.depthScore > 0).length,
+  };
+}
+
+function countByContract(contractIds: readonly string[]) {
+  const counts = new Map<string, number>();
+  for (const contractId of contractIds) {
+    counts.set(contractId, (counts.get(contractId) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function contractDepthScore(
+  contract: SourceContract360Row,
+  coverage: SourceContractEvidenceCoverageRow | null,
+  actionRows: number,
+  claimRows: number,
+) {
+  return (
+    actionRows * 100 +
+    claimRows * 90 +
+    (coverage?.opportunity_rows ?? 0) * 80 +
+    (coverage?.performance_rows ?? 0) * 8 +
+    (coverage?.spend_rows ?? 0) * 6 +
+    (coverage?.document_page_text_rows ?? 0) * 3 +
+    (coverage?.scope_rows ?? 0) * 2 +
+    (numberFromDb(coverage?.unclaimed_credit_usd) ?? 0) / 10000 +
+    (numberFromDb(contract.actual_annual_spend) == null ? 0 : 5)
+  );
+}
+
+function contractFocusReason(
+  contract: SourceContract360Row,
+  coverage: SourceContractEvidenceCoverageRow | null,
+  actionRows: number,
+  claimRows: number,
+) {
+  if (claimRows > 0) return `${claimRows} executive claim card${claimRows === 1 ? "" : "s"}`;
+  if (actionRows > 0) return `${actionRows} action row${actionRows === 1 ? "" : "s"}`;
+  if ((coverage?.unclaimed_credit_usd ?? 0) > 0) return "Unclaimed credit evidence";
+  if ((coverage?.performance_rows ?? 0) > 0) return "Performance evidence loaded";
+  if ((coverage?.spend_rows ?? 0) > 0) return "Monthly spend loaded";
+  if ((coverage?.document_page_text_rows ?? 0) > 0) return "Document text loaded";
+  if ((coverage?.scope_rows ?? 0) > 0) return "Application scope mapped";
+  if (numberFromDb(contract.actual_annual_spend) != null) return "Actual spend loaded";
+  return "Header-only portfolio signal";
+}
+
 function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
   const rows = new Map<
     string,
@@ -2358,7 +2498,7 @@ function vendorSubtabTitle(subtab: string) {
 function contractListSubtabTitle(subtab: string) {
   if (subtab === "Evidence depth") return "Which contracts can support detail";
   if (subtab === "Financial posture") return "Annual, actual, and committed values";
-  return "Contract table";
+  return "Focused contract set";
 }
 
 function optimizeSubtabTitle(subtab: string) {

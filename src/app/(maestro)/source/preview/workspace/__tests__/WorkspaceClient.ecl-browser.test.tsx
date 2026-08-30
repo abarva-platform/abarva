@@ -336,6 +336,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByRole("tab", { name: "Financial posture" })).toBeTruthy();
     expect(screen.getByText("Contract list guardrail")).toBeTruthy();
     expect(screen.getByText("Rows before story")).toBeTruthy();
+    expect(screen.getByText("Focused contract set")).toBeTruthy();
+    expect(screen.queryByText(/Showing 14 of/i)).toBeNull();
 
     fireEvent.click(
       screen.getByRole("button", {
