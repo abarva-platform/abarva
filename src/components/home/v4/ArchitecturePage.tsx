@@ -274,6 +274,13 @@ function L0Landscape({
         <ArchitectureMetric value={moneyShort(wholeEstate.spend)} label="annual cost" />
       </div>
 
+      <ExecutiveRunMap
+        applications={rows}
+        integrations={integrationRows}
+        infrastructure={infrastructureRows}
+        onDrill={onDrill}
+      />
+
       <div
         data-arch-layout
         style={{
@@ -303,6 +310,196 @@ function L0Landscape({
           <ArchitectureMap slice={selected} onDrill={onDrill} />
         ) : null}
       </div>
+    </div>
+  );
+}
+
+interface RunMapBlock {
+  key: string;
+  title: string;
+  subtitle: string;
+  count: number;
+  denominator: string;
+  anchors: string[];
+  ownerSignal: string;
+  hostingSignal: string;
+  dependencySignal: string;
+  gapSignal: string;
+  tone: string;
+  drillTarget?: string;
+}
+
+function ExecutiveRunMap({
+  applications,
+  integrations,
+  infrastructure,
+  onDrill,
+}: {
+  applications: ApplicationRecord[];
+  integrations: IntegrationRecord[];
+  infrastructure: InfrastructureRecord[];
+  onDrill: (capability: string) => void;
+}) {
+  const blocks = useMemo(
+    () => buildRunMapBlocks(applications, integrations, infrastructure),
+    [applications, integrations, infrastructure],
+  );
+
+  return (
+    <section
+      aria-label="Enterprise run map"
+      style={{
+        marginTop: 28,
+        borderTop: `1px solid ${V4.rule}`,
+        paddingTop: 22,
+      }}
+    >
+      <style>{`
+        @media (max-width: 1080px) {
+          [data-run-map] { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+        }
+        @media (max-width: 760px) {
+          [data-run-map] { grid-template-columns: 1fr !important; }
+          [data-run-map-head] { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+      <div
+        data-run-map-head
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0,1.1fr) minmax(280px,0.9fr)",
+          gap: "clamp(18px,3vw,42px)",
+          alignItems: "end",
+          marginBottom: 16,
+        }}
+      >
+        <div>
+          <span style={eyebrow(V4.green)}>Enterprise run map</span>
+          <h2
+            style={{
+              margin: "9px 0 0",
+              fontFamily: SERIF,
+              fontSize: "clamp(24px,2.1vw,34px)",
+              fontWeight: 500,
+              lineHeight: 1.12,
+              color: V4.ink,
+              textWrap: "balance",
+            }}
+          >
+            Start with the business blocks, then drill into systems and platforms.
+          </h2>
+        </div>
+        <p style={{ margin: 0, fontFamily: SANS, fontSize: 14, lineHeight: 1.58, color: V4.slate }}>
+          This is the conceptual view for a new executive: what runs the plan, what runs delivery,
+          what runs back office, where data and platforms concentrate, and where vendor dependency
+          sits. Detailed system rows remain below.
+        </p>
+      </div>
+
+      <div data-run-map style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 12 }}>
+        {blocks.map((block) => (
+          <article
+            key={block.key}
+            style={{
+              minWidth: 0,
+              minHeight: 260,
+              border: `1px solid ${V4.ruleStrong}`,
+              borderTop: `5px solid ${block.tone}`,
+              borderRadius: 8,
+              background: V4.surface,
+              padding: "16px 17px",
+              display: "grid",
+              gridTemplateRows: "auto auto 1fr auto",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+              <span style={eyebrow(block.tone)}>{block.denominator}</span>
+              <span style={{ fontFamily: MONO, fontSize: 18, color: V4.ink, fontVariantNumeric: "tabular-nums" }}>
+                {block.count.toLocaleString()}
+              </span>
+            </div>
+            <div>
+              <h3
+                style={{
+                  margin: 0,
+                  fontFamily: SERIF,
+                  fontSize: 24,
+                  fontWeight: 500,
+                  lineHeight: 1.08,
+                  color: V4.ink,
+                }}
+              >
+                {block.title}
+              </h3>
+              <p style={{ margin: "7px 0 0", fontFamily: SANS, fontSize: 13, lineHeight: 1.45, color: V4.slate }}>
+                {block.subtitle}
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gap: 11 }}>
+              <RunMapLine label="anchors" value={block.anchors.length ? block.anchors.join(" · ") : "No named anchors in this slice"} />
+              <RunMapLine label="owner" value={block.ownerSignal} />
+              <RunMapLine label="hosting" value={block.hostingSignal} />
+              <RunMapLine label="dependency" value={block.dependencySignal} />
+              <RunMapLine label="gap" value={block.gapSignal} tone={V4.amber} />
+            </div>
+
+            {block.drillTarget ? (
+              <button
+                type="button"
+                onClick={() => onDrill(block.drillTarget!)}
+                style={{
+                  justifySelf: "start",
+                  border: `1px solid rgba(0,102,204,0.38)`,
+                  borderRadius: 7,
+                  background: "transparent",
+                  color: V4.blue,
+                  padding: "8px 10px",
+                  fontFamily: MONO,
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                Open logical view
+              </button>
+            ) : (
+              <span style={{ fontFamily: MONO, fontSize: 10.5, color: V4.slate }}>
+                Detail opens from the related evidence tab
+              </span>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RunMapLine({ label, value, tone = V4.slate }: { label: string; value: string; tone?: string }) {
+  return (
+    <div style={{ minWidth: 0, borderTop: `1px solid ${V4.rule}`, paddingTop: 8 }}>
+      <span style={{ display: "block", fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: tone }}>
+        {label}
+      </span>
+      <span
+        title={value}
+        style={{
+          display: "block",
+          marginTop: 4,
+          fontFamily: SANS,
+          fontSize: 12.5,
+          lineHeight: 1.35,
+          color: V4.inkSoft,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -1021,6 +1218,241 @@ function buildArchitectureSlices(
     .map(([name, groupRows]) => buildSlice(name, groupRows, integrationsForApps(integrations, groupRows), [], total))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   return [buildSlice("Whole estate", rows, integrations, infrastructure, total), ...slices];
+}
+
+function buildRunMapBlocks(
+  applications: ApplicationRecord[],
+  integrations: IntegrationRecord[],
+  infrastructure: InfrastructureRecord[],
+): RunMapBlock[] {
+  const payerApps = matchingApps(applications, [
+    "payer",
+    "health plan",
+    "claims",
+    "membership",
+    "enrollment",
+    "provider network",
+    "care management",
+    "risk adjustment",
+    "raf",
+    "stars",
+    "hedis",
+    "actuarial",
+    "pharmacy benefit",
+  ]);
+  const providerApps = matchingApps(applications, [
+    "clinical",
+    "acute",
+    "ambulatory",
+    "nursing",
+    "lab",
+    "imaging",
+    "pharmacy",
+    "patient",
+    "revenue cycle",
+    "hospital",
+    "provider delivery",
+  ]);
+  const backOfficeApps = matchingApps(applications, [
+    "finance",
+    "accounting",
+    "human resources",
+    "hr",
+    "workforce",
+    "supply chain",
+    "procurement",
+    "legal",
+    "facilities",
+    "payroll",
+    "expense",
+  ]);
+  const dataApps = matchingApps(applications, [
+    "data",
+    "analytics",
+    "ai",
+    "report",
+    "business intelligence",
+    "bi",
+    "warehouse",
+    "mart",
+    "sas",
+    "tableau",
+    "power bi",
+  ]);
+  const infrastructureApps = matchingApps(applications, [
+    "infrastructure",
+    "hosting",
+    "cloud",
+    "security",
+    "identity",
+    "network",
+    "storage",
+    "integration",
+    "middleware",
+    "mft",
+  ]);
+  const vendorRows = applications.filter((row) => Boolean(text(row, "vendor")));
+
+  return [
+    runMapBlock({
+      key: "payer",
+      title: "Health Plan / Payer",
+      subtitle: "Enrollment, claims, provider network, care management, RAF, Stars, pharmacy, and actuarial operations.",
+      rows: payerApps,
+      integrations,
+      denominator: "applications",
+      tone: V4.blue,
+    }),
+    runMapBlock({
+      key: "provider",
+      title: "Provider / Delivery",
+      subtitle: "Clinical, acute, ambulatory, patient access, revenue cycle, pharmacy, lab, and imaging operations.",
+      rows: providerApps,
+      integrations,
+      denominator: "applications",
+      tone: V4.green,
+    }),
+    runMapBlock({
+      key: "back-office",
+      title: "Back Office",
+      subtitle: "Finance, HR, supply chain, procurement, legal, facilities, workforce, and shared-services backbone.",
+      rows: backOfficeApps,
+      integrations,
+      denominator: "applications",
+      tone: V4.navy,
+    }),
+    runMapBlock({
+      key: "data-ai",
+      title: "Data, Analytics & AI",
+      subtitle: "Operational sources, ingestion, marts, reporting, advanced analytics, AI tooling, and data governance.",
+      rows: dataApps,
+      integrations,
+      denominator: "applications",
+      tone: V4.amber,
+      gapOverride: dataFlowGap(integrations),
+    }),
+    {
+      key: "infrastructure",
+      title: "Infrastructure & Hosting",
+      subtitle: "SaaS, public cloud, private cloud, data centers, integration engines, identity, network, and storage.",
+      count: infrastructure.length,
+      denominator: "platforms",
+      anchors: namedAnchors(infrastructure, "platformName", "platformType"),
+      ownerSignal: ownerSignal(infrastructure, "operationalOwner"),
+      hostingSignal: formatTopLabels(topCounts(infrastructure, "hostingModel").slice(0, 3)),
+      dependencySignal:
+        infrastructureApps.length > 0
+          ? `${infrastructureApps.length.toLocaleString()} application records also carry infrastructure or hosting signals`
+          : "Application-to-platform hosting joins remain evidence-limited",
+      gapSignal: "Confirm app-to-platform hosting, environment, capacity, and resilience relationships",
+      tone: V4.stone,
+    },
+    {
+      key: "commercial",
+      title: "Vendor & Commercial Spine",
+      subtitle: "Strategic suppliers, contracts, managed services, renewal exposure, and commercial leverage.",
+      count: new Set(vendorRows.map((row) => text(row, "vendor")).filter(Boolean)).size,
+      denominator: "vendors named on apps",
+      anchors: topCounts(vendorRows, "vendor").slice(0, 3).map(([name, count]) => `${name} (${count})`),
+      ownerSignal: ownerSignal(vendorRows, "businessOwner"),
+      hostingSignal: formatTopLabels(topCounts(vendorRows, "deploymentModel").slice(0, 3)),
+      dependencySignal: `${vendorRows.length.toLocaleString()} application records name a vendor`,
+      gapSignal: "Use Vendor Contracts for contract terms, spend, renewal, and document proof",
+      tone: V4.red,
+    },
+  ];
+}
+
+function runMapBlock({
+  key,
+  title,
+  subtitle,
+  rows,
+  integrations,
+  denominator,
+  tone,
+  gapOverride,
+}: {
+  key: string;
+  title: string;
+  subtitle: string;
+  rows: ApplicationRecord[];
+  integrations: IntegrationRecord[];
+  denominator: string;
+  tone: string;
+  gapOverride?: string;
+}): RunMapBlock {
+  const linkedIntegrations = integrationsForApps(integrations, rows);
+  return {
+    key,
+    title,
+    subtitle,
+    count: rows.length,
+    denominator,
+    anchors: namedAnchors(rows, "systemName", "systemCategory"),
+    ownerSignal: ownerSignal(rows, "businessOwner"),
+    hostingSignal: formatTopLabels(topCounts(rows, "deploymentModel").slice(0, 3)),
+    dependencySignal: `${linkedIntegrations.length.toLocaleString()} recorded data movements touch this block`,
+    gapSignal: gapOverride ?? gapSignalForBlock(rows, linkedIntegrations),
+    tone,
+    drillTarget: bestDrillTarget(rows),
+  };
+}
+
+function matchingApps(rows: ApplicationRecord[], keywords: string[]): ApplicationRecord[] {
+  return rows.filter((row) => {
+    const haystack = [
+      text(row, "businessFunction"),
+      text(row, "systemCategory"),
+      text(row, "systemName"),
+      text(row, "dataDomains"),
+      text(row, "vendor"),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return keywords.some((keyword) => haystack.includes(keyword));
+  });
+}
+
+function namedAnchors(rows: ApplicationRecord[], nameField: string, fallbackField: string): string[] {
+  return [...rows]
+    .sort((a, b) => numeric(b.annualCostUsd) - numeric(a.annualCostUsd) || text(a, nameField).localeCompare(text(b, nameField)))
+    .slice(0, 3)
+    .map((row) => text(row, nameField) || text(row, fallbackField))
+    .filter(Boolean);
+}
+
+function ownerSignal(rows: ApplicationRecord[], ownerField: string): string {
+  const topOwners = topCounts(rows, ownerField)
+    .filter(([name]) => name !== "Not specified")
+    .slice(0, 2);
+  if (!rows.length) return "No owned records in this slice";
+  if (!topOwners.length) return "Owner not recorded";
+  return topOwners.map(([name, count]) => `${name} (${count})`).join(" · ");
+}
+
+function bestDrillTarget(rows: ApplicationRecord[]): string | undefined {
+  const topFunction = topCounts(rows, "businessFunction").find(([name]) => name !== "Not specified");
+  return topFunction?.[0];
+}
+
+function gapSignalForBlock(rows: ApplicationRecord[], integrations: IntegrationRecord[]): string {
+  if (!rows.length) return "No mapped systems yet; source or adapter coverage is missing";
+  const missingOwner = rows.filter((row) => !text(row, "businessOwner")).length;
+  const missingHosting = rows.filter((row) => !text(row, "deploymentModel")).length;
+  const missingFlow = integrations.length === 0;
+  if (missingOwner > 0) return `${missingOwner.toLocaleString()} system records need business-owner evidence`;
+  if (missingHosting > 0) return `${missingHosting.toLocaleString()} system records need hosting evidence`;
+  if (missingFlow) return "No recorded data movements touch this block";
+  return "Gaps move to logical and physical drilldown";
+}
+
+function dataFlowGap(integrations: IntegrationRecord[]): string {
+  const missingConsumption = integrations.filter((row) => !text(row, "consumptionLayer")).length;
+  if (missingConsumption > 0) {
+    return `${missingConsumption.toLocaleString()} movements need consumption/reporting-layer evidence`;
+  }
+  return "Confirm reports, ETL jobs, users, scripts, and platform volumes by function";
 }
 
 function buildSlice(
