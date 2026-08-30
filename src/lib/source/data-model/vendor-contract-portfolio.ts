@@ -163,6 +163,9 @@ export function computeVendorConcentration(
 
 export interface RenewalExposureResult {
   readonly asOfDateIso: string;
+  /** Contracts whose end_date is already before the as-of date. These are data-freshness exclusions, not live commercial deadlines. */
+  readonly expiredAsOfDate: readonly SourceContractVendor360Row[];
+  readonly expiredAsOfDateAnnualValue: number;
   /** Contracts whose end_date falls within windowDays of asOfDateIso, not yet past it. */
   readonly expiringWithinWindow: readonly SourceContractVendor360Row[];
   readonly expiringWithinWindowAnnualValue: number;
@@ -199,6 +202,11 @@ export function computeRenewalExposure(
       typeof r.end_date === "string" && r.end_date.length > 0,
   );
 
+  const expiredAsOfDate = withEndDate.filter((r) => {
+    const end = new Date(r.end_date);
+    return end.getTime() < asOf.getTime();
+  });
+
   const expiringWithinWindow = withEndDate.filter((r) => {
     const end = new Date(r.end_date);
     const days = daysBetween(asOf, end);
@@ -225,6 +233,8 @@ export function computeRenewalExposure(
 
   return {
     asOfDateIso,
+    expiredAsOfDate,
+    expiredAsOfDateAnnualValue: sumAnnual(expiredAsOfDate),
     expiringWithinWindow,
     expiringWithinWindowAnnualValue: sumAnnual(expiringWithinWindow),
     noticeDeadlinePassed,

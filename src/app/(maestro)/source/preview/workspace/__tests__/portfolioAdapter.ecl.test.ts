@@ -11,7 +11,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import {
+  buildSourceVendor360Cockpit,
   loadSourceWorkspacePortfolio,
   sourceWorkspaceProvider,
 } from "../live/portfolioAdapter";
@@ -583,7 +585,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
     const runCalls: Array<{ sql: string; params: readonly unknown[] }> = [];
     mockWithSession.mockImplementation(async (fn) => {
-      const run = async <R,>(sql: string, params: readonly unknown[]) => {
+      const run = async <R>(sql: string, params: readonly unknown[]) => {
         runCalls.push({ sql, params });
         if (sql.includes("set_config")) return [] as R[];
         if (sql.includes("serving.source_contract_360")) {
@@ -748,7 +750,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
               coverage_state: null,
               blocker_if_missing:
                 "Never present this candidate as realized savings until finance confirms it.",
-              citation_basis_json: { opportunity_ref: "OPT-M365-SHELFWARE-001" },
+              citation_basis_json: {
+                opportunity_ref: "OPT-M365-SHELFWARE-001",
+              },
               load_run_id: "test-run",
             },
           ] as R[];
@@ -846,5 +850,160 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
       ),
     ).toBe(true);
+  });
+
+  it("separates stale renewal dates from lapsed auto-renew exposure in cockpit proof", () => {
+    const contracts = [
+      {
+        tenant_key: "meridian-health",
+        contract_id: "expired-auto-renew",
+        vendor_ref: "vendor-expired",
+        vendor_name: "Expired Vendor",
+        vendor_category: "Technology",
+        contract_name: "Expired contract",
+        scope_summary: null,
+        annual_value: 194_100_000,
+        total_committed_value: 194_100_000,
+        committed_annual_spend: 194_100_000,
+        actual_annual_spend: null,
+        end_date: "2027-01-01",
+        notice_period_days: 90,
+        auto_renew: true,
+        renewal_decision_state: null,
+        renewal_owner_ref: null,
+        benchmarking_clause: null,
+        exit_rights_summary: null,
+        alternatives_available: null,
+        concentration_note: null,
+        source_confidence: 0.9,
+        resolved_annual_value: null,
+        resolved_total_committed_value: null,
+        annual_value_conflict_flag: false,
+        total_committed_value_conflict_flag: false,
+        scoped_application_count: null,
+        critical_application_count: null,
+        linked_budget_amount: null,
+        linked_actual_amount: null,
+        linked_budget_lines: null,
+        cloud_sev1_sev2_incidents: null,
+        operational_evidence_gap: null,
+        initiative_dependency_count: null,
+      },
+      {
+        tenant_key: "meridian-health",
+        contract_id: "lapsed-auto-renew",
+        vendor_ref: "vendor-lapsed",
+        vendor_name: "Lapsed Vendor",
+        vendor_category: "Technology",
+        contract_name: "Lapsed notice contract",
+        scope_summary: null,
+        annual_value: 140_300_000,
+        total_committed_value: 140_300_000,
+        committed_annual_spend: 140_300_000,
+        actual_annual_spend: null,
+        end_date: "2027-12-31",
+        notice_period_days: 365,
+        auto_renew: true,
+        renewal_decision_state: null,
+        renewal_owner_ref: null,
+        benchmarking_clause: null,
+        exit_rights_summary: null,
+        alternatives_available: null,
+        concentration_note: null,
+        source_confidence: 0.9,
+        resolved_annual_value: null,
+        resolved_total_committed_value: null,
+        annual_value_conflict_flag: false,
+        total_committed_value_conflict_flag: false,
+        scoped_application_count: null,
+        critical_application_count: null,
+        linked_budget_amount: null,
+        linked_actual_amount: null,
+        linked_budget_lines: null,
+        cloud_sev1_sev2_incidents: null,
+        operational_evidence_gap: null,
+        initiative_dependency_count: null,
+      },
+      {
+        tenant_key: "meridian-health",
+        contract_id: "still-cancellable",
+        vendor_ref: "vendor-open",
+        vendor_name: "Open Vendor",
+        vendor_category: "Technology",
+        contract_name: "Open notice contract",
+        scope_summary: null,
+        annual_value: 214_600_000,
+        total_committed_value: 214_600_000,
+        committed_annual_spend: 214_600_000,
+        actual_annual_spend: null,
+        end_date: "2028-06-30",
+        notice_period_days: 90,
+        auto_renew: true,
+        renewal_decision_state: null,
+        renewal_owner_ref: null,
+        benchmarking_clause: null,
+        exit_rights_summary: null,
+        alternatives_available: null,
+        concentration_note: null,
+        source_confidence: 0.9,
+        resolved_annual_value: null,
+        resolved_total_committed_value: null,
+        annual_value_conflict_flag: false,
+        total_committed_value_conflict_flag: false,
+        scoped_application_count: null,
+        critical_application_count: null,
+        linked_budget_amount: null,
+        linked_actual_amount: null,
+        linked_budget_lines: null,
+        cloud_sev1_sev2_incidents: null,
+        operational_evidence_gap: null,
+        initiative_dependency_count: null,
+      },
+    ];
+    const cockpit = buildSourceVendor360Cockpit({
+      contracts,
+      vendors: [],
+      applicationScope: [],
+      initiativeDependencies: [],
+      v4Snapshot: createEmptySourceV4WorkspaceSnapshot("2027-06-30T00:00:00Z"),
+      workspaceDiagnostics: {
+        datasetLabel: "test dataset",
+        datasetId: "test",
+        datasetVersion: "test",
+        analyticsProvider: "test",
+        activeLoadRunId: null,
+        asOfDateIso: "2027-06-30T00:00:00Z",
+        v4ContractCount: 3,
+        v4VendorCount: 3,
+        legacyContractCount: 3,
+        legacyVendorCount: 3,
+        exploreProvider: "EclProjectionDbProvider",
+        exploreMatchesV4: true,
+        mismatchWarning: null,
+      },
+      reads: {
+        contracts: "available",
+        vendors: "missing",
+        applicationScope: "missing",
+        initiativeDependencies: "missing",
+      },
+      asOfDateIso: "2027-06-30T00:00:00Z",
+    });
+
+    expect(cockpit.proofLayers.evidenceBehindVerdict[0].value).toContain(
+      "1 auto-renew lapsed notice rows",
+    );
+    expect(cockpit.proofLayers.evidenceBehindVerdict[0].value).toContain(
+      "$140.3M exposed",
+    );
+    expect(cockpit.proofLayers.evidenceBehindVerdict[0].value).toContain(
+      "$214.6M still cancellable",
+    );
+    expect(cockpit.proofLayers.evidenceBehindVerdict[0].value).toContain(
+      "1 stale-date exclusions",
+    );
+    expect(cockpit.actionQueue.map((row) => row.contractId)).not.toContain(
+      "expired-auto-renew",
+    );
   });
 });
