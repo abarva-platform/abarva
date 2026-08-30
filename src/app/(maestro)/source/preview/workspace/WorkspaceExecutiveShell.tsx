@@ -6,6 +6,10 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -19,6 +23,7 @@ import type {
   SourceContract360Row,
   SourceContractActionCandidateRow,
   SourceContractEvidenceCoverageRow,
+  SourceContractPerformancePeriodRow,
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
 
@@ -109,18 +114,20 @@ export function WorkspaceExecutiveShell({
     portfolio.contracts[0] ??
     null;
   const executiveVendors = topVendors(portfolio);
+  const currentPage = activePage(logic, vm);
   const selectedVendorRef =
     logic.state.sel.kind === "vendor"
       ? logic.state.sel.id
-      : (selectedContract?.vendor_ref ??
-        executiveVendors[0]?.vendor_ref ??
-        null);
+      : currentPage === "Vendors"
+        ? (executiveVendors[0]?.vendor_ref ?? selectedContract?.vendor_ref ?? null)
+        : (selectedContract?.vendor_ref ??
+          executiveVendors[0]?.vendor_ref ??
+          null);
   const selectedVendor = selectedVendorRef
     ? (executiveVendors.find((vendor) =>
         vendor.vendor_refs.includes(selectedVendorRef),
       ) ?? null)
     : null;
-  const currentPage = activePage(logic, vm);
   const headerContract = vm.isContract ? selectedContract : null;
   const totalAnnualValue = portfolioAnnualValue(portfolio);
   const lapsedAutoRenewSupport = supportByLabel(
@@ -853,6 +860,168 @@ function VendorConcentrationChart({
   );
 }
 
+function ContractPerformanceTrendChart({
+  periods,
+}: {
+  periods: readonly SourceContractPerformancePeriodRow[];
+}) {
+  const data = periods.slice(0, 12).map((row) => ({
+    period: shortMonth(row.period_start),
+    actual: numberFromDb(row.value_num),
+    credit: numberFromDb(row.credit_calculated) ?? 0,
+  }));
+
+  if (data.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className="sw-v2-recharts-card sw-v2-recharts-card-compact"
+      aria-label="Contract performance trend chart"
+    >
+      <LineChart
+        width={620}
+        height={218}
+        data={data}
+        margin={{ top: 12, right: 24, bottom: 8, left: 4 }}
+      >
+        <CartesianGrid
+          vertical={false}
+          stroke="rgba(10,10,11,0.12)"
+          strokeDasharray="3 4"
+        />
+        <XAxis
+          dataKey="period"
+          tickLine={false}
+          axisLine={false}
+          tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
+        />
+        <YAxis
+          yAxisId="actual"
+          domain={[80, 100]}
+          width={38}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
+        />
+        <YAxis yAxisId="credit" orientation="right" hide />
+        <Tooltip
+          cursor={{ stroke: "rgba(186,117,23,0.28)", strokeWidth: 1 }}
+          contentStyle={{
+            border: "1px solid #d3d1c7",
+            borderRadius: 6,
+            boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+            color: "#2c2c2a",
+          }}
+          formatter={(value, name) => {
+            if (name === "credit") {
+              return [
+                money(typeof value === "number" ? value : Number(value)),
+                "Credit calculated",
+              ];
+            }
+            return [`${Number(value).toFixed(1)}%`, "Actual"];
+          }}
+        />
+        <Line
+          yAxisId="actual"
+          type="monotone"
+          dataKey="actual"
+          stroke="#0a0a0b"
+          strokeWidth={2.5}
+          dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
+          activeDot={{ r: 5, stroke: "#ba7517", strokeWidth: 2 }}
+          connectNulls
+        />
+        <Line
+          yAxisId="credit"
+          type="monotone"
+          dataKey="credit"
+          stroke="#ba7517"
+          strokeWidth={2}
+          strokeDasharray="5 5"
+          dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
+        />
+      </LineChart>
+      <div className="sw-v2-recharts-legend">
+        <span>
+          <b>black</b> actual SLA %
+        </span>
+        <span>
+          <b>amber</b> calculated credits
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function OptimizeTypeMixChart({
+  rows,
+}: {
+  rows: readonly ReturnType<typeof optimizeTypeRows>[number][];
+}) {
+  const data = rows
+    .filter((row) => row.amount > 0)
+    .slice(0, 5)
+    .map((row) => ({
+      name: row.type,
+      value: row.amount,
+    }));
+
+  if (data.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className="sw-v2-recharts-card sw-v2-recharts-card-compact"
+      aria-label="Optimize action mix chart"
+    >
+      <PieChart width={620} height={224}>
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          innerRadius={52}
+          outerRadius={82}
+          paddingAngle={3}
+        >
+          {data.map((row, index) => (
+            <Cell
+              key={row.name}
+              fill={index === 0 ? "#0a0a0b" : index === 1 ? "#1d9e75" : "#ba7517"}
+              opacity={Math.max(0.52, 1 - index * 0.13)}
+            />
+          ))}
+        </Pie>
+        <Tooltip
+          contentStyle={{
+            border: "1px solid #d3d1c7",
+            borderRadius: 6,
+            boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+            color: "#2c2c2a",
+          }}
+          formatter={(value) => [
+            money(typeof value === "number" ? value : Number(value)),
+            "Candidate amount",
+          ]}
+        />
+      </PieChart>
+      <div className="sw-v2-recharts-legend">
+        {data.map((row) => (
+          <span key={row.name}>
+            <b>{row.name}</b>
+            {money(row.value)}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function VendorConcentrationTable({
   portfolio,
   vendors,
@@ -1270,27 +1439,32 @@ function ContractPage({
         ) : tab === "Performance" &&
         detailReady &&
         vm.detail?.performancePeriods?.length ? (
-          <div className="sw-v2-table">
-            <div className="sw-v2-table-head sw-v2-performance-row">
-              <span>Period</span>
-              <span>Metric</span>
-              <span>Actual</span>
-              <span>Credit</span>
-            </div>
-            {vm.detail.performancePeriods.slice(0, 12).map((row) => (
-              <div
-                key={row.observation_id}
-                className="sw-v2-table-row sw-v2-performance-row"
-              >
-                <span>{fmtDate(row.period_start)}</span>
-                <span>{row.metric_name}</span>
-                <span>
-                  {performanceActual(row.actual_value, row.value_num)}
-                </span>
-                <span>{money(numberFromDb(row.credit_calculated))}</span>
+          <>
+            <ContractPerformanceTrendChart
+              periods={vm.detail.performancePeriods}
+            />
+            <div className="sw-v2-table">
+              <div className="sw-v2-table-head sw-v2-performance-row">
+                <span>Period</span>
+                <span>Metric</span>
+                <span>Actual</span>
+                <span>Credit</span>
               </div>
-            ))}
-          </div>
+              {vm.detail.performancePeriods.slice(0, 12).map((row) => (
+                <div
+                  key={row.observation_id}
+                  className="sw-v2-table-row sw-v2-performance-row"
+                >
+                  <span>{fmtDate(row.period_start)}</span>
+                  <span>{row.metric_name}</span>
+                  <span>
+                    {performanceActual(row.actual_value, row.value_num)}
+                  </span>
+                  <span>{money(numberFromDb(row.credit_calculated))}</span>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="sw-v2-fact-grid">
             <Fact label="Vendor" value={contract.vendor_name} />
@@ -1560,25 +1734,28 @@ function OptimizeByTypeTable({
     );
   }
   return (
-    <div className="sw-v2-table">
-      <div className="sw-v2-table-head sw-v2-opt-type-row">
-        <span>Action type</span>
-        <span>Rows</span>
-        <span>Action amount</span>
-        <span>Finance state</span>
-      </div>
-      {rows.map((row) => (
-        <div key={row.type} className="sw-v2-table-row sw-v2-opt-type-row">
-          <span>
-            <b>{row.type}</b>
-            <small>Derived from loaded action rows.</small>
-          </span>
-          <span>{row.count}</span>
-          <span>{money(row.amount)}</span>
-          <span>{row.financeState}</span>
+    <>
+      <OptimizeTypeMixChart rows={rows} />
+      <div className="sw-v2-table">
+        <div className="sw-v2-table-head sw-v2-opt-type-row">
+          <span>Action type</span>
+          <span>Rows</span>
+          <span>Action amount</span>
+          <span>Finance state</span>
         </div>
-      ))}
-    </div>
+        {rows.map((row) => (
+          <div key={row.type} className="sw-v2-table-row sw-v2-opt-type-row">
+            <span>
+              <b>{row.type}</b>
+              <small>Derived from loaded action rows.</small>
+            </span>
+            <span>{row.count}</span>
+            <span>{money(row.amount)}</span>
+            <span>{row.financeState}</span>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -3100,6 +3277,16 @@ function formatShare(
   const value = numberFromDb(vendor.annual_value) ?? 0;
   if (!totalAnnualValue || totalAnnualValue <= 0) return "Not established";
   return `${((value / totalAnnualValue) * 100).toFixed(1)}%`;
+}
+
+function shortMonth(value: string | null | undefined) {
+  if (!value) return "n/a";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value.slice(0, 7);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    timeZone: "UTC",
+  });
 }
 
 function headlineFor(
