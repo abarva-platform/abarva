@@ -464,3 +464,37 @@ describe("the rules hold across every panel, not just the ones already fixed", (
     }
   });
 });
+
+describe("the loader declares the generation it just wrote", () => {
+  it("retires the prior generation before activating this one", () => {
+    // A partial unique index permits one active generation per tenant. Activating before retiring
+    // would be rejected — so the order is load-bearing, not stylistic.
+    const retire = LAYER4.indexOf("set state = 'retired'");
+    const activate = LAYER4.indexOf("insert into ecl_projection.tower_assessment_lifecycle");
+    expect(retire).toBeGreaterThan(-1);
+    expect(activate).toBeGreaterThan(retire);
+  });
+
+  it("does not retire the generation it is about to activate", () => {
+    // Without this the reload of an existing generation would retire and then re-activate itself,
+    // losing its original activation date for no reason.
+    expect(LAYER4).toContain(
+      "and not (assessment_id = ${assessment} and projection_version = ${PROJECTION_VERSION})",
+    );
+  });
+
+  it("declares inside the same transaction as the rows it describes", () => {
+    // A generation that fails to load must never be declared active. The declaration sits between
+    // the last insert and the commit.
+    const declare = LAYER4.indexOf("lifecycleDeclarationSql(options),");
+    const commit = LAYER4.indexOf('"commit;",');
+    expect(declare).toBeGreaterThan(-1);
+    expect(commit).toBeGreaterThan(declare);
+  });
+
+  it("loads unchanged where the lifecycle table does not exist", () => {
+    expect(LAYER4).toContain(
+      "if to_regclass('ecl_projection.tower_assessment_lifecycle') is null then",
+    );
+  });
+});
