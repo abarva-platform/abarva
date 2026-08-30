@@ -6,6 +6,7 @@ import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
 import type {
+  SourceContractApplicationScopeRow,
   SourceContract360Row,
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
@@ -20,6 +21,7 @@ const PAGE_LABELS = [
 ] as const;
 const CONTRACT_TABS = [
   "Story",
+  "Scope",
   "Economics",
   "Performance",
   "Relationship",
@@ -645,8 +647,19 @@ function ContractPage({
   const tab = logic.state.tabs.contract ?? "Story";
   const detailReady = vm.detailState === "ready";
   const coverage = coverageForContract(portfolio, contract.contract_id);
+  const scopeRows = portfolio.applicationScope.filter(
+    (row) => row.contract_id === contract.contract_id,
+  );
   const contractClaimCards = portfolio.impact.claimCards.filter(
     (row) => row.contract_id === contract.contract_id,
+  );
+  const tabNarrative = contractTabNarrative(
+    tab,
+    vm,
+    contract,
+    coverage,
+    scopeRows,
+    contractClaimCards[0],
   );
 
   return (
@@ -669,9 +682,16 @@ function ContractPage({
           title={contract.contract_name}
         />
         <p className="sw-v2-lede">
-          {contractStory(tab, vm, contract, coverage, contractClaimCards[0])}
+          {tabNarrative.body}
         </p>
-        {tab === "Performance" &&
+        <div className="sw-v2-tab-claim">
+          <span>{tabNarrative.provenance}</span>
+          <b>{tabNarrative.headline}</b>
+          <small>{tabNarrative.blocker}</small>
+        </div>
+        {tab === "Scope" ? (
+          <ContractScopeTable scopeRows={scopeRows} />
+        ) : tab === "Performance" &&
         detailReady &&
         vm.detail?.performancePeriods?.length ? (
           <div className="sw-v2-table">
@@ -737,8 +757,12 @@ function ContractPage({
 
       <section className="sw-v2-panel">
         <PanelHead
-          eyebrow="Evidence state"
-          title={detailStateLabel(vm.detailState)}
+          eyebrow={tab === "Scope" ? "Scope coverage" : "Evidence state"}
+          title={
+            tab === "Scope"
+              ? `${scopeRows.length} scoped rows`
+              : detailStateLabel(vm.detailState)
+          }
         />
         {vm.opportunityView ? (
           <div className="sw-v2-fact-stack">
@@ -769,6 +793,7 @@ function ContractPage({
               label="Coverage state"
               value={coverage?.coverage_state ?? "Header only"}
             />
+            <Fact label="Scope rows" value={String(scopeRows.length)} />
             <Fact
               label="Spend rows"
               value={formatCount(coverage?.spend_rows)}
@@ -921,37 +946,43 @@ function EvidencePage({
   const sourceRows = [
     {
       name: "Contract headers",
-      binding: "source.contract_360",
+      support: "Contract count, dates, values, renewal posture",
+      lineage: "source.contract_360",
       count: portfolio.contracts.length,
       state: portfolio.reads.contracts,
     },
     {
       name: "Vendor rollups",
-      binding: "source.vendor_contract_portfolio",
+      support: "Vendor count, concentration, grouped contracts",
+      lineage: "source.vendor_contract_portfolio",
       count: portfolio.vendors.length,
       state: portfolio.reads.vendors,
     },
     {
       name: "Application scope",
-      binding: "source.contract_application_scope",
+      support: "Contract-to-application rows and named scope",
+      lineage: "source.contract_application_scope",
       count: portfolio.applicationScope.length,
       state: portfolio.reads.applicationScope,
     },
     {
       name: "Action candidates",
-      binding: "source.contract_action_candidate_v1",
+      support: "Optimize-ready candidate actions",
+      lineage: "source.contract_action_candidate_v1",
       count: portfolio.impact.actionCandidates.length,
       state: portfolio.impact.actionCandidates.length ? "available" : "missing",
     },
     {
       name: "Claim cards",
-      binding: "source.contract_claim_card_v1",
+      support: "Allowed executive statements and blockers",
+      lineage: "source.contract_claim_card_v1",
       count: portfolio.impact.claimCards.length,
       state: portfolio.impact.claimCards.length ? "available" : "missing",
     },
     {
       name: "aVa grounding",
-      binding: "source.ava_grounding_bundle_v1",
+      support: "Citations, refusals, and safe-answer bundles",
+      lineage: "source.ava_grounding_bundle_v1",
       count: portfolio.impact.avaGroundingBundles.length,
       state: portfolio.impact.avaGroundingBundles.length
         ? "available"
@@ -969,19 +1000,20 @@ function EvidencePage({
         <div className="sw-v2-table">
           <div className="sw-v2-table-head sw-v2-evidence-row">
             <span>Evidence lane</span>
-            <span>Binding</span>
+            <span>Supports</span>
             <span>Rows</span>
             <span>Status</span>
           </div>
           {sourceRows.map((row) => (
             <div
-              key={row.binding}
+              key={row.lineage}
               className="sw-v2-table-row sw-v2-evidence-row"
             >
               <span>
                 <b>{row.name}</b>
+                <small>{row.lineage}</small>
               </span>
-              <span>{row.binding}</span>
+              <span>{row.support}</span>
               <span>{row.count}</span>
               <span>{row.state}</span>
             </div>
@@ -1242,6 +1274,56 @@ function ValueLane({
       <span>{title}</span>
       <b>{value}</b>
       <p>{note}</p>
+    </div>
+  );
+}
+
+function ContractScopeTable({
+  scopeRows,
+}: {
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+}) {
+  if (scopeRows.length === 0) {
+    return (
+      <div className="sw-v2-empty-state">
+        <b>No scoped applications loaded for this contract.</b>
+        <p>
+          Source can show the contract header, but it will not infer which
+          applications, services, or business functions are covered.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-scope-row">
+        <span>Application / service</span>
+        <span>Business function</span>
+        <span>Criticality</span>
+        <span>Hosting</span>
+        <span>Run cost</span>
+      </div>
+      {scopeRows.slice(0, 12).map((row) => (
+        <div
+          key={`${row.contract_id}:${row.application_ref}`}
+          className="sw-v2-table-row sw-v2-scope-row"
+        >
+          <span>
+            <b>{row.application_name}</b>
+            <small>{row.application_ref}</small>
+          </span>
+          <span>{row.business_function ?? "Not established"}</span>
+          <span>{row.criticality ?? "Not established"}</span>
+          <span>{row.hosting_model ?? "Not established"}</span>
+          <span>{money(numberFromDb(row.annual_run_cost))}</span>
+        </div>
+      ))}
+      {scopeRows.length > 12 ? (
+        <div className="sw-v2-table-foot">
+          Showing 12 of {scopeRows.length} scoped rows.
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1517,47 +1599,141 @@ function subheadFor(
   return `${portfolio.contracts.length} contracts / ${portfolio.vendors.length} vendors. Unsupported dashboard claims are hidden.`;
 }
 
-function contractStory(
+function contractTabNarrative(
   tab: string,
   vm: SourceWorkspaceVM,
   contract: SourceContract360Row,
   coverage: ReturnType<typeof coverageForContract>,
+  scopeRows: readonly SourceContractApplicationScopeRow[],
   claimCard:
     | SourceWorkspacePortfolioData["impact"]["claimCards"][number]
     | undefined,
 ) {
+  if (tab === "Scope") {
+    if (scopeRows.length > 0) {
+      const namedRows = scopeRows.filter(
+        (row) =>
+          row.application_name &&
+          !/^scoped application \d+$/i.test(row.application_name),
+      ).length;
+      return {
+        headline: `${scopeRows.length} scoped application rows loaded.`,
+        body: `${namedRows} of ${scopeRows.length} rows carry named application or service scope. Criticality, hosting, and run-cost fields remain visible only where Source has them.`,
+        provenance: "Scope basis",
+        blocker:
+          namedRows === scopeRows.length
+            ? "Do not infer unsupported tower, module, or CMDB relationships beyond these rows."
+            : "Generic scope labels block a stronger executive claim until CMDB/SOW names are loaded.",
+      };
+    }
+    return {
+      headline: "No application or service scope rows loaded.",
+      body: "The contract exists in the governed book, but Source does not yet know what applications, services, or functions it covers.",
+      provenance: "Scope gap",
+      blocker:
+        "No scope rationalization, app risk, or tower handoff claim is allowed without scoped rows.",
+    };
+  }
   if (tab === "Performance") {
     if (vm.detailState === "ready" && vm.detail?.performancePeriods?.length) {
-      return "Monthly performance rows are loaded for this contract. Misses and service-credit amounts stay visible as evidence, not finance-confirmed value.";
+      return {
+        headline: `${vm.detail.performancePeriods.length} performance periods loaded.`,
+        body: "Monthly performance rows are loaded for this contract. Misses and service-credit amounts stay visible as evidence, not finance-confirmed value.",
+        provenance: "Performance basis",
+        blocker:
+          "Credit rows do not become realized value until finance confirmation is loaded.",
+      };
     }
     if ((coverage?.performance_rows ?? 0) > 0) {
-      return `${coverage?.performance_rows} governed performance rows are in the Source impact layer for this contract. Open detail proof before using row-level claims.`;
+      return {
+        headline: `${coverage?.performance_rows} governed performance rows loaded.`,
+        body: `${coverage?.performance_rows} governed performance rows are in the Source impact layer for this contract. Open detail proof before using row-level claims.`,
+        provenance: "Performance basis",
+        blocker:
+          "Withhold period-by-period conclusions until the detail rows render in this tab.",
+      };
     }
-    return "No contract-specific performance periods are loaded for this selection.";
+    return {
+      headline: "No performance periods loaded.",
+      body: "No contract-specific performance periods are loaded for this selection.",
+      provenance: "Performance gap",
+      blocker:
+        "No SLA quality, credit, or performance trend claim is allowed for this contract.",
+    };
   }
   if (tab === "Relationship") {
-    return "Relationship facts are limited to the vendor rollup and contract headers unless dependency rows are loaded.";
+    return {
+      headline: "Relationship is limited to loaded rollups and headers.",
+      body: "Relationship facts are limited to the vendor rollup and contract headers unless dependency rows are loaded.",
+      provenance: "Relationship basis",
+      blocker:
+        "Do not claim business-unit, application, or tower dependency coverage without matching rows.",
+    };
   }
   if (tab === "Evidence") {
-    return vm.detailState === "error"
-      ? "Per-contract detail could not load. The workspace is withholding evidence claims for this contract."
-      : "Evidence rows, source documents, and missing inputs are separated from the contract header.";
+    if (vm.detailState === "error") {
+      return {
+        headline: "Per-contract detail is unavailable.",
+        body: "Per-contract detail could not load. The workspace is withholding evidence claims for this contract.",
+        provenance: "Evidence guard",
+        blocker:
+          "Do not use document, clause, or row-level claims from this contract until detail proof loads.",
+      };
+    }
+    return {
+      headline: "Evidence rows and missing inputs stay separate.",
+      body: "Evidence rows, source documents, and missing inputs are separated from the contract header.",
+      provenance: "Evidence basis",
+      blocker:
+        "No document page-span claim is allowed unless page text and source document IDs are loaded.",
+    };
   }
   if (tab === "Optimize") {
     if (claimCard) {
-      return claimCard.allowed_executive_statement;
+      return {
+        headline: claimCard.claim_title ?? "Evidence-backed action candidate",
+        body: claimCard.allowed_executive_statement,
+        provenance: "Action basis",
+        blocker:
+          claimCard.blocker_if_missing ??
+          "Finance confirmation remains separate from candidate opportunity.",
+      };
     }
-    return vm.opportunityView
-      ? vm.opportunityView.recommendationDetail
-      : "No contract-specific opportunity set is loaded for this selection.";
+    return {
+      headline: "No contract-specific opportunity loaded.",
+      body: vm.opportunityView
+        ? vm.opportunityView.recommendationDetail
+        : "No contract-specific opportunity set is loaded for this selection.",
+      provenance: "Optimize gap",
+      blocker:
+        "Do not manufacture savings or recommend action without a candidate and evidence rows.",
+    };
   }
   if (tab === "Economics") {
     if ((coverage?.spend_rows ?? 0) > 0) {
-      return `${coverage?.spend_rows} monthly spend rows support actual spend. Missing finance confirmation still blocks realized-value language.`;
+      return {
+        headline: `${coverage?.spend_rows} monthly spend rows loaded.`,
+        body: `${coverage?.spend_rows} monthly spend rows support actual spend. Missing finance confirmation still blocks realized-value language.`,
+        provenance: "Economics basis",
+        blocker:
+          "Actual spend is evidence, not realized savings or budget approval.",
+      };
     }
-    return "Economics shows recorded annual value and actual spend only. Missing spend is not converted to zero.";
+    return {
+      headline: "Actual spend is not established.",
+      body: "Economics shows recorded annual value and actual spend only. Missing spend is not converted to zero.",
+      provenance: "Economics gap",
+      blocker:
+        "No variance, consumption, or run-rate story without monthly spend rows.",
+    };
   }
-  return `${contract.vendor_name} has a governed contract header. Source sizes action only where supporting rows are loaded.`;
+  return {
+    headline: "Contract header loaded; actions require evidence.",
+    body: `${contract.vendor_name} has a governed contract header. Source sizes action only where supporting rows are loaded.`,
+    provenance: "Story basis",
+    blocker:
+      "No opportunity narrative unless the tab can point to scope, spend, performance, or claim rows.",
+  };
 }
 
 function detailStateLabel(state: SourceWorkspaceVM["detailState"]) {

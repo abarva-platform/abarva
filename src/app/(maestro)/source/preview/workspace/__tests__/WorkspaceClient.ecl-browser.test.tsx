@@ -252,6 +252,9 @@ describe("Source workspace ECL browser-surface proof", () => {
         measureText: (value: string) => ({ width: value.length * 7 }),
       })),
     });
+    global.fetch = jest.fn(
+      () => new Promise<Response>(() => undefined),
+    );
     await writeEclProjectionFixture(dir);
   });
 
@@ -325,6 +328,23 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
     expect(screen.queryByText(/Risk score/i)).toBeNull();
     expect(screen.queryByText(/Spend by category/i)).toBeNull();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Contracts" })[0]);
+
+    expect(screen.getByRole("button", { name: "Scope" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Economics" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
+
+    expect(screen.getByText("Contract 360 / Scope")).toBeTruthy();
+    expect(screen.getByText("Scope basis")).toBeTruthy();
+    expect(screen.getAllByText("Workday Finance").length).toBeGreaterThan(0);
+    expect(screen.getByText("Business function")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Do not infer unsupported tower, module, or CMDB relationships beyond these rows.",
+      ),
+    ).toBeTruthy();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
 
