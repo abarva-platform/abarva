@@ -143,6 +143,8 @@ describe("Home v4 architecture grain", () => {
       wheel.getByText(new RegExp(`${movementCount.toLocaleString()} movements · 2 workload segments`, "i")),
     ).toBeInTheDocument();
     expect(wheel.queryByText(new RegExp(`${combinedCount.toLocaleString()} movements`, "i"))).not.toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(`${combinedCount.toLocaleString()} recorded data movements touch this block`, "i"))).not.toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(`${combinedCount.toLocaleString()} touching data movements`, "i"))).not.toBeInTheDocument();
 
     const workloadPanel = screen.getByText("Data/BI/ETL evidence loaded").closest("article");
     expect(workloadPanel).toBeTruthy();
