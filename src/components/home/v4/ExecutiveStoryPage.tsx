@@ -321,7 +321,7 @@ function Hero({
           <span style={eyebrow(V4.green)}>Open on the number</span>
           <div style={heroNumberStyle}>{leadNumber?.value ?? "Deferred"}</div>
           <p style={heroMetricTextStyle}>
-            {leadNumber?.label ?? "No published numbered claim is available for the opening readout."}
+            {leadNumber?.label ?? "No reviewed numbered claim is available for the opening readout."}
           </p>
         </div>
         <div style={heroProofStyle}>
@@ -368,7 +368,7 @@ function StorySectionBlock({
       <div data-home-tier1-section-header style={sectionHeaderStyle}>
         <div>
           <span style={eyebrow(section.state === "published" ? V4.green : section.state === "refused" ? V4.amber : V4.slate)}>
-            {String(index).padStart(2, "0")} · {section.state}
+            {String(index).padStart(2, "0")} · {terminalStateLabel(section.state)}
           </span>
           <h2 style={sectionTitleStyle}>{section.spec.title}</h2>
           <p style={sectionQuestionStyle}>{section.spec.readerQuestion}</p>
