@@ -268,6 +268,16 @@ export interface TowerUsageBar {
   tone: "teal" | "amber" | "red";
 }
 
+/** One month of the value waterfall, as the source recorded it. */
+export interface TowerValueObservationMonth {
+  month: string;
+  sponsorClaimedUsd: number;
+  financeReviewedUsd: number;
+  financeValidatedUsd: number;
+  boardClaimableUsd: number;
+  validationState: string | null;
+}
+
 /** One AI portfolio item — bubble point, table row and drawer. */
 export interface TowerAiView {
   /** 1-based ordinal shown inside the bubble and in the legend list. */
@@ -309,6 +319,13 @@ export interface TowerAiView {
   aiSpendUsd: number;
   /** False when no spend was recorded — a tool rollout carries none. $0 is a different claim. */
   aiSpendLoaded: boolean;
+  /** Initiative-detail fields for the drill-down. Null where the source recorded nothing. */
+  projectName: string | null;
+  lifecycleStage: string | null;
+  financePartnerRole: string | null;
+  successMetric: string | null;
+  paybackMonthsTarget: number | null;
+  valueObservationMonths: readonly TowerValueObservationMonth[];
   promisedUsd: number;
   promisedBenefitLoaded: boolean;
   financeValidatedUsd: number;

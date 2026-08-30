@@ -543,6 +543,26 @@ function buildRows(options) {
       cost_to_build_high_usd: numOrNull(row.cost_to_build_high_usd),
       proof_needed: row.proof_needed ?? null,
       business_sponsor_role: row.business_sponsor_role ?? null,
+      // Initiative-detail fields the canonical layer already carries and the payload dropped.
+      // The approved design's drill-down needs each of these; none is derived or inferred.
+      project_name: project?.project_name ?? null,
+      lifecycle_stage: project?.lifecycle_stage ?? null,
+      finance_partner_role: project?.finance_partner_role ?? null,
+      success_metric: row.success_metric ?? null,
+      payback_months_target: num(row.payback_months_target) || null,
+      // The observation series behind the value waterfall, so the drawer can show when each step
+      // happened rather than only its total.
+      value_observation_months: observations
+        .map((o) => ({
+          month: o.reporting_month ?? null,
+          sponsor_claimed_usd: num(o.sponsor_claimed_value_usd),
+          finance_reviewed_usd: num(o.finance_reviewed_value_usd),
+          finance_validated_usd: num(o.finance_validated_value_usd),
+          board_claimable_usd: num(o.board_claimable_value_usd),
+          validation_state: o.validation_state ?? null,
+        }))
+        .filter((o) => o.month !== null)
+        .sort((a, b) => String(a.month).localeCompare(String(b.month))),
       layer4_build_version: options.buildVersion,
     };
     const commandEntry = addProjectionRow(ctx, "decision_lanes", row.business_case_id, "ai_business_case", display, refs);

@@ -3,7 +3,7 @@
 // The AI capability drawer — opened from a bubble point or inventory row.
 // Transcribed from `aiDrawer()` (design line ~1139).
 
-import { formatUsdM } from "@/lib/tower/command-center/format";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
 import type { TowerAiView } from "@/lib/tower/command-center/types";
 
 import { AI_KIND_WORD, Dot, cx } from "../primitives";
@@ -98,6 +98,73 @@ export function AiInitiativeDrawer({
             <div className={styles.pk}>In plain terms</div>
             <p className={styles.pt}>{plainAi(a)}</p>
           </div>
+
+          {/*
+            Where the case sits, and what stopped it. The approved design leads its drill-down
+            with these before any money, because a reader's first question about a case is not how
+            large it is but why it has not moved.
+          */}
+          <DrawerSection>Where this sits</DrawerSection>
+          <DrawerRow label="Project" value={a.projectName ?? "Not recorded"} />
+          <DrawerRow
+            label="Lifecycle stage"
+            value={a.lifecycleStage ?? "Not recorded"}
+          />
+          <DrawerRow
+            label="Stopped at"
+            value={a.gatingConstraint ?? "Not recorded"}
+          />
+          <DrawerRow
+            label="Operating metric"
+            value={a.successMetric ?? "Not recorded"}
+          />
+          <DrawerRow
+            label="Payback target"
+            value={
+              a.paybackMonthsTarget === null
+                ? "Not recorded"
+                : `${formatCount(a.paybackMonthsTarget)} months`
+            }
+          />
+
+          <DrawerSection>Who answers for it</DrawerSection>
+          <DrawerRow label="Sponsor" value={a.sponsorRole ?? "Not recorded"} />
+          <DrawerRow
+            label="Finance partner"
+            value={a.financePartnerRole ?? "Not recorded"}
+          />
+
+          {/*
+            The waterfall by month, not just its total. A single "finance validated $0" says the
+            claim has not landed; the sequence says whether it is moving. Months are rendered as
+            the source recorded them, and a case with no observations says so rather than
+            drawing an empty chart frame.
+          */}
+          <DrawerSection>What the claim did, month by month</DrawerSection>
+          {a.valueObservationMonths.length === 0 ? (
+            <div className={styles.urow}>
+              No monthly value observations are recorded for this case. That is a
+              measurement gap, not evidence that the claim did not move.
+            </div>
+          ) : (
+            <>
+              {a.valueObservationMonths.slice(-4).map((m) => (
+                <DrawerRow
+                  key={m.month}
+                  label={m.month}
+                  value={`${formatUsdM(m.sponsorClaimedUsd)} claimed · ${formatUsdM(
+                    m.financeReviewedUsd,
+                  )} reviewed · ${formatUsdM(m.financeValidatedUsd)} validated${
+                    m.validationState === null ? "" : ` · ${m.validationState}`
+                  }`}
+                />
+              ))}
+              <DrawerRow
+                label="Observations on file"
+                value={`${formatCount(a.valueObservationMonths.length)} months`}
+              />
+            </>
+          )}
 
           <DrawerSection>Vendor &amp; system</DrawerSection>
           <DrawerRow label="Vendor" value={a.vendor ?? "Not recorded"} />
