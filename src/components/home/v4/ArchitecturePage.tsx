@@ -351,6 +351,11 @@ function ExecutiveRunMap({
   );
   const [selectedKey, setSelectedKey] = useState(blocks[0]?.key ?? "");
   const selectedBlock = blocks.find((block) => block.key === selectedKey) ?? blocks[0];
+  const totals = {
+    applications: applications.length,
+    integrations: integrations.length,
+    infrastructure: infrastructure.length,
+  };
 
   return (
     <section
@@ -405,6 +410,7 @@ function ExecutiveRunMap({
 
       <ArchitectureWheel
         blocks={blocks}
+        totals={totals}
         selectedKey={selectedBlock?.key ?? ""}
         onSelect={setSelectedKey}
         onDrill={onDrill}
@@ -483,17 +489,18 @@ function ExecutiveRunMap({
 
 function ArchitectureWheel({
   blocks,
+  totals,
   selectedKey,
   onSelect,
   onDrill,
 }: {
   blocks: RunMapBlock[];
+  totals: { applications: number; integrations: number; infrastructure: number };
   selectedKey: string;
   onSelect: (key: string) => void;
   onDrill: (capability: string) => void;
 }) {
   const selectedBlock = blocks.find((block) => block.key === selectedKey) ?? blocks[0];
-  const total = blocks.reduce((sum, block) => sum + block.count, 0);
   const nodes = blocks.map((block, index) => {
     const angle = -90 + (360 / Math.max(1, blocks.length)) * index;
     const radius = 43;
@@ -513,7 +520,8 @@ function ArchitectureWheel({
             <h3 style={wheelTitleStyle}>Where the enterprise runs, and who answers for it.</h3>
           </div>
           <span data-wheel-basis style={wheelBasisStyle}>
-            {total.toLocaleString()} counted records · typed ECL views · no raw object totals
+            {blocks.length.toLocaleString()} business blocks · {totals.applications.toLocaleString()} applications ·{" "}
+            {totals.infrastructure.toLocaleString()} platforms · {totals.integrations.toLocaleString()} movements
           </span>
         </div>
 
@@ -523,8 +531,8 @@ function ArchitectureWheel({
           <div aria-hidden="true" style={{ ...wheelRingStyle, width: "32%", height: "32%" }} />
           <div style={wheelCenterStyle}>
             <span style={wheelCenterNameStyle}>Meridian</span>
-            <span style={wheelCenterMetaStyle}>{total.toLocaleString()} records</span>
             <span style={wheelCenterMetaStyle}>conceptual view</span>
+            <span style={wheelCenterMetaStyle}>typed views only</span>
           </div>
           {nodes.map(({ block, x, y }) => {
             const active = block.key === selectedBlock.key;
@@ -1586,15 +1594,26 @@ function matchingApps(rows: ApplicationRecord[], keywords: string[]): Applicatio
 }
 
 function namedAnchors(rows: ApplicationRecord[], nameField: string, fallbackField: string): string[] {
-  return [...rows]
+  const anchors: string[] = [];
+  for (const name of [...rows]
     .sort((a, b) => numeric(b.annualCostUsd) - numeric(a.annualCostUsd) || text(a, nameField).localeCompare(text(b, nameField)))
-    .slice(0, 3)
-    .map((row) => text(row, nameField) || text(row, fallbackField))
-    .filter(Boolean);
+    .map((row) => displayName(text(row, nameField) || text(row, fallbackField)))
+    .filter(Boolean)) {
+    if (!anchors.includes(name)) anchors.push(name);
+    if (anchors.length === 3) break;
+  }
+  return anchors;
 }
 
 function recordName(row: ApplicationRecord): string {
-  return text(row, "systemName") || text(row, "platformName") || text(row, "dataAssetName") || text(row, "originalRowId") || "Unnamed record";
+  return displayName(text(row, "systemName") || text(row, "platformName") || text(row, "dataAssetName") || text(row, "originalRowId")) || "Unnamed record";
+}
+
+function displayName(value: string): string {
+  return value
+    .replace(/\s+\d{2,4}$/u, "")
+    .replace(/\s+[-–—]\s+(?:Production|Prod|Test|Training|Dev|QA|UAT)$/iu, "")
+    .trim();
 }
 
 function recordCategory(row: ApplicationRecord): string {
