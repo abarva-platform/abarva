@@ -577,7 +577,13 @@ function ArchitectureWheel({
         <p style={wheelDetailTextStyle}>{selectedBlock.subtitle}</p>
         <div style={wheelDetailMetricGridStyle}>
           <ArchitectureMetric value={selectedBlock.count.toLocaleString()} label={selectedBlock.denominator} />
-          <ArchitectureMetric value={selectedBlock.relatedIntegrations.length.toLocaleString()} label="data movements" />
+          <ArchitectureMetric value={dataMovementRows(selectedBlock.relatedIntegrations).length.toLocaleString()} label="data movements" />
+          {dataWorkloadRows(selectedBlock.relatedIntegrations).length > 0 ? (
+            <ArchitectureMetric
+              value={dataWorkloadRows(selectedBlock.relatedIntegrations).length.toLocaleString()}
+              label="workload segments"
+            />
+          ) : null}
         </div>
         <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
           <RunMapLine label="anchor systems" value={selectedBlock.anchors.length ? selectedBlock.anchors.join(" · ") : "No named anchors in this block"} />
@@ -608,6 +614,8 @@ function RunMapPassport({ block }: { block: RunMapBlock }) {
   const tierOne = block.records.filter((row) => isTierOne(text(row, "criticality"))).length;
   const vendors = topCounts(block.records, "vendor").filter(([name]) => name !== "Not specified").slice(0, 3);
   const hosting = topCounts(block.records, "deploymentModel").filter(([name]) => name !== "Not specified").slice(0, 3);
+  const movements = dataMovementRows(block.relatedIntegrations);
+  const workloads = dataWorkloadRows(block.relatedIntegrations);
 
   return (
     <section aria-label={`${block.title} system passport`} style={passportStyle}>
@@ -620,7 +628,8 @@ function RunMapPassport({ block }: { block: RunMapBlock }) {
         <ArchitectureMetric value={block.count.toLocaleString()} label={block.denominator} />
         <ArchitectureMetric value={moneyShort(totalCost)} label="annual cost where recorded" />
         <ArchitectureMetric value={tierOne.toLocaleString()} label="tier-1 records" />
-        <ArchitectureMetric value={block.relatedIntegrations.length.toLocaleString()} label="touching data movements" />
+        <ArchitectureMetric value={movements.length.toLocaleString()} label="touching data movements" />
+        {workloads.length > 0 ? <ArchitectureMetric value={workloads.length.toLocaleString()} label="workload segments" /> : null}
       </div>
       <div style={passportBodyStyle}>
         <section style={{ minWidth: 0 }}>
@@ -1615,6 +1624,8 @@ function runMapBlock({
   gapOverride?: string;
 }): RunMapBlock {
   const linkedIntegrations = integrationsForApps(integrations, rows);
+  const movements = dataMovementRows(linkedIntegrations);
+  const workloads = dataWorkloadRows(linkedIntegrations);
   return {
     key,
     title,
@@ -1626,7 +1637,10 @@ function runMapBlock({
     anchors: namedAnchors(rows, "systemName", "systemCategory"),
     ownerSignal: ownerSignal(rows, "businessOwner"),
     hostingSignal: formatTopLabels(topCounts(rows, "deploymentModel").slice(0, 3)),
-    dependencySignal: `${linkedIntegrations.length.toLocaleString()} recorded data movements touch this block`,
+    dependencySignal:
+      workloads.length > 0
+        ? `${movements.length.toLocaleString()} recorded data movements and ${workloads.length.toLocaleString()} workload segments touch this block`
+        : `${movements.length.toLocaleString()} recorded data movements touch this block`,
     gapSignal: gapOverride ?? gapSignalForBlock(rows, linkedIntegrations),
     tone,
     drillTarget: bestDrillTarget(rows),
