@@ -767,64 +767,96 @@ def applications(rng: Random, count: int) -> list[dict[str, Any]]:
 
 
 def plant_demo_application_findings(rows: list[dict[str, Any]]) -> None:
-    if is_skyharbor_profile():
-        f4_vendors = [
-            "Sabre Corporation",
-            "Amadeus IT Group",
-            "SITA",
-            "PROS Holdings Inc.",
-            "IBM Corporation",
-        ]
-        for offset, row in enumerate(rows[:5]):
-            row.update(
-                {
-                    "application_domain": "airline_operations",
-                    "application_subdomain": "passenger_service",
-                    "business_function": "Airport and Ground Operations",
-                    "vendor_name": f4_vendors[offset],
-                    "lifecycle_state": "current",
-                }
-            )
-
-        for row in rows[5:10]:
-            row.update(
-                {
-                    "application_domain": "core_platform",
-                    "application_subdomain": "mainframe",
-                    "business_function": "Flight Operations",
-                    "vendor_name": "IBM Corporation",
-                    "lifecycle_state": "current",
-                }
-            )
-        return
-
-    f4_vendors = [
-        "Epic Systems Corporation",
-        "Oracle Corporation",
-        "Microsoft Corporation",
-        "HealthEdge Software",
-        "Cognizant Technology Solutions",
-    ]
-    for offset, row in enumerate(rows[:5]):
+    def set_application(
+        row: dict[str, Any],
+        *,
+        product: str,
+        vendor: str,
+        domain: str,
+        subdomain: str,
+        function: str,
+        lifecycle_state: str = "current",
+    ) -> None:
         row.update(
             {
-                "application_domain": "health_plan",
-                "application_subdomain": "claims",
-                "business_function": "Health Plan Operations",
-                "vendor_name": f4_vendors[offset],
-                "lifecycle_state": "current",
+                "application_name": product,
+                "base_product_name": product,
+                "vendor_name": vendor,
+                "application_domain": domain,
+                "application_subdomain": subdomain,
+                "business_function": function,
+                "lifecycle_state": lifecycle_state,
             }
         )
 
-    for row in rows[5:10]:
-        row.update(
-            {
-                "application_domain": "clinical",
-                "application_subdomain": "ehr",
-                "business_function": "Clinical Operations",
-                "vendor_name": "Epic Systems Corporation",
-                "lifecycle_state": "current",
-            }
+    if is_skyharbor_profile():
+        f4_products = [
+            ("SabreSonic Passenger Service System", "Sabre Corporation"),
+            ("Amadeus Altéa Inventory", "Amadeus IT Group"),
+            ("SITA AirportConnect", "SITA"),
+            ("PROS Revenue Management", "PROS Holdings Inc."),
+            ("IBM z/OS Airline Host", "IBM Corporation"),
+        ]
+        for row, (product, vendor) in zip(rows[:5], f4_products):
+            set_application(
+                row,
+                product=product,
+                vendor=vendor,
+                domain="airline_operations",
+                subdomain="passenger_service",
+                function="Airport and Ground Operations",
+            )
+
+        mainframe_products = [
+            "IBM z/OS Crew Operations Host",
+            "IBM CICS Flight Operations Core",
+            "IBM IMS Passenger Record Store",
+            "IBM MQ Operational Backbone",
+            "IBM Db2 Airline Operations Core",
+        ]
+        for row, product in zip(rows[5:10], mainframe_products):
+            set_application(
+                row,
+                product=product,
+                vendor="IBM Corporation",
+                domain="core_platform",
+                subdomain="mainframe",
+                function="Flight Operations",
+            )
+        return
+
+    f4_products = [
+        ("Epic Tapestry", "Epic Systems Corporation"),
+        ("Facets", "TriZetto Corporation"),
+        ("HealthRules Payor", "HealthEdge Software"),
+        ("QNXT", "Cognizant Technology Solutions"),
+        ("TruCare", "Casenet LLC"),
+    ]
+    for row, (product, vendor) in zip(rows[:5], f4_products):
+        set_application(
+            row,
+            product=product,
+            vendor=vendor,
+            domain="health_plan",
+            subdomain="claims",
+            function="Health Plan Operations",
+        )
+
+    clinical_products = [
+        "Epic Hyperspace",
+        "Epic Beaker",
+        "Epic Radiant",
+        "Epic Willow",
+        "Epic Cupid",
+    ]
+    for row, product in zip(rows[5:10], clinical_products):
+        set_application(
+            row,
+            product=product,
+            vendor="Epic Systems Corporation",
+            domain="clinical",
+            subdomain="ehr",
+            function="Clinical Operations",
         )
 
 
@@ -1432,6 +1464,13 @@ def application_realism_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     top_decile_share = round(sum(costs[:top_decile_count]) / max(sum(costs), 1), 4)
     tier_1_ratio = round(sum(1 for row in rows if row["criticality_tier"] == "tier_1") / len(rows), 4)
     environment_values = sorted({int(row["environment_count"]) for row in rows})
+    product_vendor_pairs = {product: vendor for product, vendor, _domain, _subdomain in APP_PRODUCTS}
+    product_vendor_mismatches = sum(
+        1
+        for row in rows
+        if row.get("base_product_name") in product_vendor_pairs
+        and row.get("vendor_name") != product_vendor_pairs[row["base_product_name"]]
+    )
     failures = 0
     if abs(cost_total - APPLICATION_COST_TOTAL_USD) / APPLICATION_COST_TOTAL_USD > 0.005:
         failures += 1
@@ -1443,12 +1482,15 @@ def application_realism_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         failures += 1
     if not 0.10 <= tier_1_ratio <= 0.15:
         failures += 1
+    if product_vendor_mismatches:
+        failures += 1
     return {
         "application_annual_cost_total_usd": cost_total,
         "application_top_decile_cost_share": top_decile_share,
         "distinct_application_annual_costs": len({row["annual_cost_usd"] for row in rows}),
         "application_environment_count_values": environment_values,
         "application_tier_1_ratio": tier_1_ratio,
+        "application_product_vendor_mismatches": product_vendor_mismatches,
         "application_realism_gate_failures": failures,
     }
 

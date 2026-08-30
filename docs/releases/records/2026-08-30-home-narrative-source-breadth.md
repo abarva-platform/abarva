@@ -38,7 +38,10 @@ Release lane: `global-control-lane` for shared generation behavior and `client-d
 - `scripts/data-build/__tests__/enterprise-signal-packet.test.ts`
 - `tests/behaviors/enterprise-thesis-validation.test.ts`
 - `scripts/ecl/build_home_ecl_narrative_layer.ts`
+- `scripts/ecl/generate_dense_source_room_extracts.py`
+- `scripts/ecl/validate_dense_source_room_extracts.py`
 - `scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs`
+- `scripts/ecl/__tests__/run-ecl-dense-source-room-stride-gate-tests.mjs`
 
 Follow-up: the Home ECL narrative writer default assessment id was aligned with the readback job
 default so plan-only operator runs target the same loaded assessment unless an operator explicitly
@@ -61,6 +64,21 @@ signal or context item. This prevents application annual cost from being renamed
 attested technology budget and prevents integration-record counts from being described as volume
 or business consumption.
 
+Follow-up: the dense source-room generator now preserves known product-to-vendor pairings when
+planting demo findings, and the dense source-room validator rejects known product/vendor drift.
+This prevents planted findings from corrupting source truth before Home, Tower, Source, or
+Intelligence consume the generated estate.
+
+Follow-up: the Home narrative publication gate now records raw writer quality as a first-class
+gate. Plan-only runs continue to emit measurement artifacts when the writer needs repairs, but
+approved writes are refused when unsupported, overstated, or low-clean-rate output indicates the
+raw generation is not publication quality.
+
+Follow-up: the thesis prompt now explicitly prevents substituting technology footprint for
+business value creation. Application counts, contract values, and data movement counts may support
+technology/commercial dependency claims, but they cannot be described as how the enterprise creates
+value unless cited business-economics evidence establishes that claim.
+
 ## QA / Validation
 
 - `PASS` — `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts --runInBand`
@@ -73,6 +91,15 @@ or business consumption.
   claim-type discipline in the thesis prompt.
 - `PASS` — the ECL seam test now asserts exact citable support for numeric, ranking,
   comparative, and management-question claims.
+- `PASS` — the ECL seam test now asserts that raw publication quality gates are tracked and
+  enforced before approved writes.
+- `PASS` — the ECL seam test now asserts that technology footprint cannot be used as a substitute
+  for business value creation evidence.
+- `PASS` — dense source-room generator proof showed `application_product_vendor_mismatches = 0`
+  with all application and contract realism gates still passing.
+- `PASS` — dense source-room validator accepted the regenerated source room.
+- `PASS` — dense source-room plausibility test planted a known product/vendor mismatch and observed
+  validator rejection before restoring the positive source room.
 - `PASS` — `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`
 - `PASS` — local no-key deterministic packet proof for one synthetic tenant showed active intake-file summaries included with separate raw-row and canonical-record counts.
 - `PENDING` — ACA operator measurement after merge/deploy, if this script is needed in the running operator image immediately.

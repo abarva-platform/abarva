@@ -200,11 +200,16 @@ assert(
   script.includes("publicationGateIssues") &&
     script.includes("validateStructure") &&
     script.includes("thesisResult.publishedGeneration") &&
+    script.includes("RAW_PUBLICATION_MAX_UNSUPPORTED") &&
+    script.includes("RAW_PUBLICATION_MAX_OVERSTATED") &&
+    script.includes("RAW_PUBLICATION_MIN_CLEAN_KEEP_RATE") &&
+    script.includes("raw_clean_keep_rate_") &&
     script.includes("published_structural_issues_") &&
     script.includes("!row.action.startsWith(\"dropped\")") &&
+    script.includes("publicationIssues.length && WRITE") &&
     script.includes("Home ECL narrative publication gate failed") &&
     script.includes("thesisResult.publicationIssues"),
-  "ECL narrative job refuses to write when published publication-gate issues remain",
+  "ECL narrative job refuses writes when raw generation or published publication-gate issues remain",
 );
 assert(
   script.includes("CXO_FORBIDDEN_VISIBLE_PATTERNS") &&
@@ -226,6 +231,15 @@ assert(
     thesis.includes("structural issue: ${issue.reason}") &&
     thesis.includes("claimsRequiringVerification(publishedGeneration)"),
   "EnterpriseThesis drops structurally invalid claims before semantic verification",
+);
+assert(
+  thesis.includes("Do not write \"the enterprise creates value through <function>\"") &&
+    thesis.includes("value is primarily created by") &&
+    thesis.includes("Application count,") &&
+    thesis.includes("they cannot support") &&
+    thesis.includes("business value creation") &&
+    thesis.includes("The current evidence does not establish the enterprise's value-creation model."),
+  "EnterpriseThesis prompt blocks substituting technology footprint for business value creation",
 );
 assert(
   script.includes("basis_summary = 'model_generated_from_ecl_projection'"),

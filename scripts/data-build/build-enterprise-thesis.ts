@@ -459,6 +459,15 @@ understand how the company works.
   the current context; what follows describes technology dependency, not business value creation")
   rather than silently substituting technology cost as if it answered the value-creation question.
   An honest gap is better than a confident answer to the wrong question.
+- Do not write "the enterprise creates value through <function>", "value is primarily created by
+  <function>", or similar wording unless a cited revenue, customer, product-line, margin, or
+  operating-model fact establishes that function's role in value creation. Application count,
+  contract value, data-flow count, or vendor concentration can support "this function carries a
+  large technology/commercial footprint"; they cannot support "this function creates value."
+- If the only cited facts for value_creation_model are technology, application, contract, vendor,
+  infrastructure, or data-movement facts, the summary's first sentence must be a refusal/limitation:
+  "The current evidence does not establish the enterprise's value-creation model." Then explain the
+  technology/commercial dependency that is visible, without pretending it is the business model.
 
 CLAIM TYPE -- TAG WHAT KIND OF CLAIM THIS IS
 Every GroundedClaim carries a claim_type, and the two-domain bar below only applies to two of the
