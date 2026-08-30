@@ -205,14 +205,62 @@
   max-width: 78ch;
 }
 
-.sw-v2-actions {
+.sw-v2-actions,
+.sw-v2-controls {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
 }
 
+.sw-v2-controls {
+  align-items: stretch;
+  min-width: min(100%, 520px);
+}
+
+.sw-v2-control {
+  min-height: 48px;
+  min-width: 148px;
+  border: 1px solid #d7deea;
+  border-radius: 6px;
+  background: #fff;
+  padding: 8px 12px;
+  box-shadow: 0 6px 16px rgba(16, 33, 63, 0.04);
+}
+
+.sw-v2-control span {
+  display: block;
+  color: #60708d;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  font-weight: 820;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.sw-v2-control b {
+  display: block;
+  margin-top: 5px;
+  color: #10213f;
+  font-size: 12px;
+  font-weight: 780;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.sw-v2-control-actions {
+  min-width: 168px;
+}
+
+.sw-v2-control-actions div {
+  display: flex;
+  gap: 6px;
+  margin-top: 5px;
+}
+
 .sw-v2-actions button,
+.sw-v2-control-actions button,
 .sw-v2-primary,
 .sw-v2-tabbar button,
 .sw-v2-subtabbar button,
@@ -226,6 +274,13 @@
   font-size: 12px;
   font-weight: 760;
   cursor: pointer;
+}
+
+.sw-v2-control-actions button {
+  min-height: 24px;
+  flex: 1 1 0;
+  padding: 0 9px;
+  font-size: 11px;
 }
 
 .sw-v2-primary {

@@ -231,28 +231,32 @@ export function WorkspaceExecutiveShell({
               )}
             </p>
           </div>
-          <div className="sw-v2-actions">
-            <button
-              type="button"
-              onClick={() => logic.select("vendorList", null)}
-            >
-              Vendors
-            </button>
-            <button
-              type="button"
-              onClick={() => logic.select("contractList", null)}
-            >
-              Contracts
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (selectedContract)
-                  openContract(selectedContract.contract_id, "Optimize");
-              }}
-            >
-              Optimize
-            </button>
+          <div className="sw-v2-controls" aria-label="Workspace controls">
+            <div className="sw-v2-control" aria-label="Scope filter">
+              <span>Scope</span>
+              <b>All loaded contracts</b>
+            </div>
+            <div className="sw-v2-control" aria-label="Data as of">
+              <span>As of</span>
+              <b>{fmtDate(portfolio.asOfDateIso)}</b>
+            </div>
+            <div className="sw-v2-control sw-v2-control-actions">
+              <span>Actions</span>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => logic.select("evidence", null, "Coverage")}
+                >
+                  Evidence
+                </button>
+                <button
+                  type="button"
+                  onClick={() => logic.select("graph", null, "Flow")}
+                >
+                  Graph
+                </button>
+              </div>
+            </div>
           </div>
         </header>
 
