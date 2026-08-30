@@ -447,7 +447,7 @@ function buildMetrics(rows: RecordRow[], objectType: TechObjectType, primaryDime
     ),
   ).length;
   const replacement = rows.filter((row) => String(row.replacementCandidate ?? "").toLowerCase() === "yes").length;
-  const tier1 = rows.filter((row) => String(row.criticality ?? "").toLowerCase() === "tier1").length;
+  const tier1 = rows.filter((row) => isTierOne(row.criticality)).length;
   const spendField = rows.some((row) => row.annualSpendUsd !== undefined) ? "annualSpendUsd" : "annualCostUsd";
   const spend = rows.reduce((sum, row) => sum + numeric(row[spendField]), 0);
   const dimensions = primaryDimension ? new Set(rows.map((row) => bucket(row[primaryDimension])).filter((v) => v !== "(not specified)")).size : 0;
@@ -864,6 +864,11 @@ function numeric(value: unknown): number {
 
 function isTruthy(value: unknown): boolean {
   return ["true", "yes", "1"].includes(String(value ?? "").toLowerCase());
+}
+
+function isTierOne(value: unknown): boolean {
+  const normalized = String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return ["p0", "critical", "missioncritical", "tier1", "tier01"].includes(normalized);
 }
 
 function moneyShort(value: number): string {
