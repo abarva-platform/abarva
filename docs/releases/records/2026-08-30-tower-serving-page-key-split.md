@@ -12,14 +12,14 @@
 
 `serving.tower_ai_portfolio` and `serving.tower_adoption_lens` both call `serving.tower_ai_rows`,
 passing `'ai_portfolio'` and `'adoption_lens'` respectively. The deployed function ignores that
-argument, so **both views return the same rows** — 55 for Meridian, being 42 business cases plus 13
-tool rollouts. A lens that returns everything is not a lens.
+argument, so **both views return the same active-generation rows** instead of lens-specific rows. A
+lens that returns everything is not a lens.
 
 The loader writes the page key explicitly on both row kinds, `ai_portfolio` on a case and
-`adoption_lens` on a rollout, so the predicate splits them exactly: 42 and 13.
+`adoption_lens` on a rollout, so the predicate splits them by declared lens.
 
-This is the last piece of the Layer 4 readback mismatch. That check expects 42 for this view and
-has been reporting 55 — after the active-generation join brought it down from 415.
+This is the last piece of the Layer 4 readback mismatch: after the active-generation join, the view
+still returned the whole active AI/adoption population rather than the portfolio lens only.
 
 ## Layer Impact
 
@@ -69,9 +69,10 @@ Through `npm run ops:aca-job`, digest-pinned, with
 3. `tower:migrate:page-key:apply`.
 4. `ops:probe-tower-serving-views` — after.
 
-Expected: `tower_ai_portfolio` for `meridian-health` moves **55 → 42**, and `skyharbor-air` splits
-correspondingly rather than changing in total. Any movement in a tenant's combined count across the
-two lenses means rows are being dropped rather than routed, and the change should be reverted.
+Expected: the portfolio view moves from the whole active AI/adoption population to the portfolio
+case population, and the adoption view returns the rollout population. Any movement in a tenant's
+combined count across the two lenses means rows are being dropped rather than routed, and the
+change should be reverted.
 
 ## Deployment Authority
 
@@ -97,5 +98,5 @@ and in the probe output that produced it.
 Deployed body captured by `ops:probe-tower-serving-views` on 2026-08-30, ending
 `and active.projection_version = p.projection_version;` with no `where` clause. Loader writes
 `page_key: "ai_portfolio"` at line 762 and `page_key: "adoption_lens"` at line 909. Layer 4 rebuild
-on the same day reported `serving_tower_ai_portfolio_expected_42_got_415`; the join reduced that to
-55 and this reduces it to 42.
+on the same day reported a portfolio-view readback mismatch; the active-generation join reduced the
+scope to active rows, and this predicate reduces the scope to the requested lens.
