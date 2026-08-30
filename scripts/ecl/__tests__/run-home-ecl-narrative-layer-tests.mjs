@@ -86,6 +86,47 @@ assert(
     expectedHomeSurfaceKeys.every((pageKey) => Boolean(promptPage(pageKey))),
   "Home V2 page prompt contract enumerates all 16 Home surfaces exactly once",
 );
+const lensContracts = pagePromptContract.lens_contracts ?? {};
+const requiredLensKeys = [
+  "ceo_board_strategy_adviser",
+  "business_strategy_partner",
+  "corporate_strategy_value_creation_partner",
+  "operating_model_adviser",
+  "expert_cto_enterprise_architect",
+  "data_analytics_architect",
+  "cfo_value_governance_partner",
+  "interview_synthesis_lead",
+  "transformation_office_risk_committee_lead",
+  "commercial_sourcing_cxo_partner",
+  "data_steward_source_reviewer",
+];
+assert(
+  requiredLensKeys.every((lensKey) => {
+    const contract = lensContracts[lensKey];
+    return (
+      contract &&
+      typeof contract.hat === "string" &&
+      typeof contract.primary_audience === "string" &&
+      typeof contract.prompt_instruction === "string" &&
+      Array.isArray(contract.evidence_priority) &&
+      contract.evidence_priority.length > 0 &&
+      typeof contract.style === "string" &&
+      Array.isArray(contract.must_not_do) &&
+      contract.must_not_do.length > 0
+    );
+  }),
+  "Home V2 page prompt contract declares complete Claude role contracts for each writer lens",
+);
+assert(
+  lensContracts.ceo_board_strategy_adviser?.prompt_instruction.includes("Lead with business consequence") &&
+    lensContracts.ceo_board_strategy_adviser?.must_not_do.includes("start with a technology inventory") &&
+    lensContracts.expert_cto_enterprise_architect?.prompt_instruction.includes("Start conceptual, then logical, then physical") &&
+    lensContracts.expert_cto_enterprise_architect?.must_not_do.includes("count deployments as applications") &&
+    lensContracts.data_analytics_architect?.prompt_instruction.includes("Keep movements, reports, jobs, scripts, users, and TB as separate denominators") &&
+    lensContracts.interview_synthesis_lead?.prompt_instruction.includes("Summarize C-suite strategic themes") &&
+    lensContracts.data_steward_source_reviewer?.prompt_instruction.includes("Lead with dimensions and grain before showing rows"),
+  "Claude role contracts keep board, technology, data, interview, and source-review lenses distinct",
+);
 assert(
   promptPage("executive_brief")?.writer_lens === "ceo_board_strategy_adviser" &&
     promptPage("executive_brief")?.voice.includes("business strategy led"),
