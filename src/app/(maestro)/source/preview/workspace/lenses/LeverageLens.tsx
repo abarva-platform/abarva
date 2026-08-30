@@ -41,7 +41,7 @@ export function LeverageLens({ vm }: { vm: SourceWorkspaceVM }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               {vm.signalDefs.map((s) => (
                 <div key={s.id} style={{ display: 'flex', gap: 12, alignItems: 'baseline', fontSize: 12.5 }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#0066CC', minWidth: 250 }}>{s.id}</span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#0f6e56', minWidth: 250 }}>{s.id}</span>
                   <span style={{ color: '#2c2c2a' }}>{s.label}</span>
                   <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#5f5e5a' }}>{s.count}</span>
                 </div>

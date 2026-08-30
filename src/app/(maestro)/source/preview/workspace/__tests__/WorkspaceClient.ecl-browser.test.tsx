@@ -111,7 +111,7 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
 }));
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { ReactNode } from "react";
@@ -121,6 +121,38 @@ import { loadSourceWorkspacePortfolio } from "../live/portfolioAdapter";
 
 const ORIGINAL_PROVIDER = process.env.SOURCE_WORKSPACE_PROVIDER;
 const ORIGINAL_PROJECTION_DIR = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
+const WORKSPACE_ROUTE_DIR = path.join(
+  process.cwd(),
+  "src/app/(maestro)/source/preview/workspace",
+);
+const LEGACY_COOL_TOKENS = [
+  "#0066CC",
+  "rgba(0,102,204",
+  "#0f7cf6",
+  "#12b5cb",
+  "#66758c",
+  "#0a3d70",
+  "#3d6ea8",
+  "#a9bdd6",
+] as const;
+
+async function readWorkspaceSourceFiles(dir = WORKSPACE_ROUTE_DIR): Promise<
+  Array<{ file: string; text: string }>
+> {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const files = await Promise.all(
+    entries.flatMap((entry) => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.name === "__tests__") return [];
+      if (entry.isDirectory()) return readWorkspaceSourceFiles(fullPath);
+      if (!/\.(css|ts|tsx)$/.test(entry.name)) return [];
+      return readFile(fullPath, "utf-8").then((text) => [
+        { file: path.relative(WORKSPACE_ROUTE_DIR, fullPath), text },
+      ]);
+    }),
+  );
+  return files.flat();
+}
 
 function csv(rows: readonly Record<string, string>[]): string {
   const headers = Object.keys(rows[0] ?? {});
@@ -463,5 +495,16 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Show lineage" }));
     expect(screen.getByText("contract_register_adapter")).toBeTruthy();
+  });
+
+  it("keeps the Source workspace free of legacy cool-blue design tokens", async () => {
+    const files = await readWorkspaceSourceFiles();
+    const violations = files.flatMap(({ file, text }) =>
+      LEGACY_COOL_TOKENS.flatMap((token) =>
+        text.includes(token) ? [`${file}: ${token}`] : [],
+      ),
+    );
+
+    expect(violations).toEqual([]);
   });
 });

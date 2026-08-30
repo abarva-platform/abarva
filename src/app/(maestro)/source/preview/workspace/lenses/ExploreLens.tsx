@@ -120,7 +120,7 @@ export function ExploreLens({ vm }: { vm: SourceWorkspaceVM }) {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: '10px 14px', borderBottom: '1px solid rgba(10,10,11,.1)', flex: '0 0 auto' }}>
             <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0a0a0b' }}>Value by {ex.dimLabel}</div>
             <div style={{ fontSize: 11.5, color: '#5f5e5a' }}>{ex.chartSubtitle}</div>
-            <div style={{ marginLeft: 'auto', fontSize: 11.5, color: '#0066CC', fontWeight: 700, whiteSpace: 'nowrap' }}>{ex.chartInstruction}</div>
+            <div style={{ marginLeft: 'auto', fontSize: 11.5, color: '#0f6e56', fontWeight: 700, whiteSpace: 'nowrap' }}>{ex.chartInstruction}</div>
           </div>
           <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
             {ex.groups.map((g) => (

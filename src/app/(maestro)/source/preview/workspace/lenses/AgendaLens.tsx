@@ -7,7 +7,7 @@ export function AgendaLens({ vm }: { vm: SourceWorkspaceVM }) {
     <>
       <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, overflow: 'hidden' }}>
         <div style={{ padding: '20px 26px 16px', borderBottom: '1px solid rgba(10,10,11,.12)' }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 9 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: '#0f6e56', marginBottom: 9 }}>
             What the governed data says
           </div>
           <div style={{ fontSize: 15, lineHeight: 1.6, color: '#2c2c2a', maxWidth: '100ch' }}>
@@ -44,7 +44,7 @@ export function AgendaLens({ vm }: { vm: SourceWorkspaceVM }) {
       {vm.journeys.map((j) => (
         <div key={j.id} style={{ background: '#fff', border: '1px solid rgba(10,10,11,.14)', borderRadius: 8, padding: '26px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 11 }}>{j.eyebrow}</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: '#0f6e56', marginBottom: 11 }}>{j.eyebrow}</div>
             <h3 style={{ fontFamily: 'Fraunces,Georgia,serif', fontWeight: 500, fontSize: 24, lineHeight: 1.2, letterSpacing: '-0.02em', color: '#0a0a0b', margin: '0 0 10px', maxWidth: '26ch' }}>{j.title}</h3>
             <p style={{ fontSize: 14, lineHeight: 1.6, color: '#5f5e5a', margin: 0, maxWidth: '56ch' }}>{j.narrative}</p>
           </div>
