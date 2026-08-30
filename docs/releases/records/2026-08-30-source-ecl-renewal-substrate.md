@@ -24,6 +24,8 @@ The release also corrects the all-layer readback gate so it validates the curren
 
 The release also scopes Source 360 live reads to the active dense assessment and stops merging separate Source impact sidecar rows into the portfolio headline denominator. Impact rows remain available for evidence, action, and aVa grounding, but contract and vendor counts now come from the governed ECL serving views only.
 
+The release also completes partial Source impact read states by deriving missing claim cards, vendor positions, storyline rows, and aVa grounding bundles from the already-loaded deterministic Source and consumption rows. A partial prebuilt view can no longer show candidate opportunity value while leaving the evidence package counters empty.
+
 The change prepares Source 360 to state only what the refreshed substrate proves. It does not create finance-confirmed realized value and does not promote synthetic evidence as live-client truth.
 
 ## Layer Impact
@@ -37,6 +39,7 @@ The change prepares Source 360 to state only what the refreshed substrate proves
 - Data-build readback: The governed all-layer job validates only the metric definitions declared by the current package while retaining tenant-level metric dictionary totals as diagnostics, and it requires populated serving views only for surfaces whose queues are expected to have rows.
 - Products: Source 360 can compute renewal posture from served data. The renewal serving view is narrowed to decision-relevant rows.
 - Source 360 reader: The live ECL reader filters serving rows and cube slices by the canonical dense assessment ID and keeps Source impact sidecar rows out of portfolio and vendor-count totals until those records are loaded through the same governed projection.
+- Source 360 impact layer: The workspace reader merges partial prebuilt impact views with deterministic derived impact rows so action candidates, claim cards, vendor positions, storyline, and aVa grounding stay consistent.
 
 ## Client Applicability
 
@@ -82,6 +85,7 @@ QA status: `pass` for scoped validation, with one broader base-branch gate still
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts' --runInBand` passed.
 - `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts' --runInBand` passed, with pre-existing duplicate manual mock warnings.
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts'` passed.
+- `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts' --runInBand` passed, including partial impact-view completion coverage.
 - `npx eslint scripts/ecl/__tests__/run-ecl-physical-schema-upgrade-tests.mjs` passed.
 - `npm run ecl:dense-all-layer:validate-counts` passed.
 - `npm run release:check` passed.
