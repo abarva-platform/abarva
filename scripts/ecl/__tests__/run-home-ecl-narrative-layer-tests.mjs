@@ -129,6 +129,21 @@ assert(
   "ECL narrative job reads permitted contract spend and supplier concentration from Home projection field names",
 );
 assert(
+  script.includes("function buildDeterministicHomeSignals") &&
+    script.includes("sig_ecl_application_function_002") &&
+    script.includes("sig_ecl_contract_flexibility_006") &&
+    script.includes("sig_ecl_platform_resilience_008") &&
+    script.includes("sig_ecl_data_flow_convergence_009") &&
+    script.includes("sig_ecl_source_breadth_guardrail_019"),
+  "ECL narrative job expands deterministic signals across application, contract, infrastructure, data-flow, and source-breadth domains",
+);
+assert(
+  script.includes("source-family summaries describe intake breadth but are not evidence for a business claim by themselves") &&
+    !script.includes("Home narrative prose is allowed to use only governed facts") &&
+    !script.includes("Render a precomputed ECL projection dataset"),
+  "ECL narrative citable signals avoid implementation vocabulary and explicitly bound source-summary use",
+);
+assert(
   script.includes("structured_event: \"home_ecl_narrative_layer_summary\""),
   "ECL narrative job emits structured proof for the ACA operator wrapper",
 );

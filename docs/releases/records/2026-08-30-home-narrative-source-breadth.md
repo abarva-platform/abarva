@@ -44,12 +44,19 @@ Follow-up: the Home ECL narrative writer default assessment id was aligned with 
 default so plan-only operator runs target the same loaded assessment unless an operator explicitly
 overrides `ECL_DENSE_ASSESSMENT_ID`.
 
+Follow-up: the ECL narrative packet now expands deterministic citable signals across application,
+contract, infrastructure, data-flow, chapter-coverage, and source-breadth guardrail domains instead
+of compressing the tenant into four broad signals. Source summaries remain coverage context only and
+are not citable business evidence.
+
 ## QA / Validation
 
 - `PASS` — `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts --runInBand`
 - `PASS` — `npx jest tests/behaviors/enterprise-thesis-validation.test.ts scripts/data-build/__tests__/enterprise-signal-packet.test.ts --runInBand`
 - `PASS` — `node scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs`
 - `PASS` — the ECL seam test now asserts that writer and readback default assessment ids match.
+- `PASS` — the ECL seam test now asserts deterministic signal breadth across application,
+  contract, infrastructure, data-flow, and source-breadth domains.
 - `PASS` — `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`
 - `PASS` — local no-key deterministic packet proof for one synthetic tenant showed active intake-file summaries included with separate raw-row and canonical-record counts.
 - `PENDING` — ACA operator measurement after merge/deploy, if this script is needed in the running operator image immediately.
