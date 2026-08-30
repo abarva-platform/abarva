@@ -378,7 +378,11 @@ assert(
 );
 assert(
   script.includes("CXO_FORBIDDEN_VISIBLE_PATTERNS") &&
+    script.includes("FAKE_DATA_WORKLOAD_GAP_PATTERN") &&
     script.includes("visibleNarrativeQualityIssues") &&
+    script.includes("dataWorkloadContextLoaded") &&
+    script.includes("fake_data_workload_gap_when_loaded") &&
+    script.includes("visibleNarrativeQualityIssues(thesisResult, chapters, signalPacket)") &&
     script.includes("raw_object_id") &&
     script.includes("scrubRawVisibleIds") &&
     script.includes("safeVisibleIdentifierLabel") &&

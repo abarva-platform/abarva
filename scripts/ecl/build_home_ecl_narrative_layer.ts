@@ -96,6 +96,8 @@ const CXO_FORBIDDEN_VISIBLE_PATTERNS: Array<{ label: string; pattern: RegExp }> 
   { label: "build_gap", pattern: /\bcoverage gap in the build\b/i },
   { label: "raw_object_id", pattern: /\b(?:APP|PLAT|CTR|VEN|FLOW|DOC|INV|SLA|PO|RISK|CTRL|PROG|MEAS|MET|OBJ)-[A-Z0-9][A-Z0-9_-]*\b/i },
 ];
+const FAKE_DATA_WORKLOAD_GAP_PATTERN =
+  /\b(?:confirm|validate|collect|provide|supply|obtain)\b[\s\S]{0,100}\b(?:reports?|ETL|jobs?|scripts?|users?|data[-\s]?volume|TB)\b/i;
 
 const RAW_VISIBLE_ID_PATTERN = /\b(?:APP|PLAT|CTR|VEN|FLOW|DOC|INV|SLA|PO|RISK|CTRL|PROG|MEAS|MET|OBJ)-[A-Z0-9][A-Z0-9_-]*\b/g;
 
@@ -1656,16 +1658,36 @@ function visibleNarrativeText(
 function visibleNarrativeQualityIssues(
   thesisResult: Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>,
   chapters: ChapterView[],
+  signalPacket: EnterpriseSignalPacket,
 ): string[] {
   const issues: string[] = [];
+  const workloadContextLoaded = dataWorkloadContextLoaded(signalPacket);
   for (const item of visibleNarrativeText(thesisResult, chapters)) {
     for (const forbidden of CXO_FORBIDDEN_VISIBLE_PATTERNS) {
       if (forbidden.pattern.test(item.text)) {
         issues.push(`forbidden_visible_term:${forbidden.label}:${item.path}`);
       }
     }
+    if (workloadContextLoaded && FAKE_DATA_WORKLOAD_GAP_PATTERN.test(item.text)) {
+      issues.push(`fake_data_workload_gap_when_loaded:${item.path}`);
+    }
   }
   return issues;
+}
+
+function dataWorkloadContextLoaded(signalPacket: EnterpriseSignalPacket): boolean {
+  const packet = signalPacket as unknown as {
+    visualDatasets?: Record<string, unknown>;
+    categorySummaries?: Array<{ key?: string; recordCount?: number }>;
+  };
+  const byFunction = packet.visualDatasets?.data_workload_by_function;
+  const byTechnology = packet.visualDatasets?.data_workload_by_technology;
+  const category = packet.categorySummaries?.find((item) => item.key === "data_bi_etl_workloads_by_function_and_technology");
+  return (
+    (Array.isArray(byFunction) && byFunction.length > 0) ||
+    (Array.isArray(byTechnology) && byTechnology.length > 0) ||
+    Number(category?.recordCount ?? 0) > 0
+  );
 }
 
 function hasForbiddenVisibleLanguage(text: string): boolean {
@@ -1990,7 +2012,7 @@ async function main() {
       options.chapterIds,
     );
     const chapters = normalizeChapterTerminalStates(scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[]);
-    const visibleQualityIssues = visibleNarrativeQualityIssues(thesisResult, chapters);
+    const visibleQualityIssues = visibleNarrativeQualityIssues(thesisResult, chapters, signalPacket);
     if (visibleQualityIssues.length) {
       throw new Error(`Home ECL narrative visible-quality gate failed: ${visibleQualityIssues.join("; ")}`);
     }
