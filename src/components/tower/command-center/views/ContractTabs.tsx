@@ -500,6 +500,15 @@ export function ValueProofContractView({
           <ClaimLedgerChart view={view} />
         </article>
 
+        {/*
+          Readiness only. The adjacent "Risk" column was `risk_pressure_score`, which Layer 4
+          writes as `100 - readiness_score` — so the two always summed to 100 and the second
+          carried no information the first did not. Side by side under separate headings they read
+          as two independent assessments of a case. They were one number, printed twice.
+
+          The AI portfolio table below keeps its Risk column: there the value is genuinely absent
+          and renders "Not scored", which names a gap rather than inventing a dimension.
+        */}
         <article className={styles.contractCard}>
           {cardTitle(
             "Value case lanes",
@@ -513,7 +522,6 @@ export function ValueProofContractView({
                   <th>Case</th>
                   <th>At stake</th>
                   <th>Readiness</th>
-                  <th>Risk</th>
                 </tr>
               </thead>
               <tbody>
@@ -533,7 +541,6 @@ export function ValueProofContractView({
                       {formatUsdM(program.blockedUsd)}
                     </td>
                     <td>{formatPct(program.proofMaturityScore)}</td>
-                    <td>{formatPct(program.riskPressureScore)}</td>
                   </tr>
                 ))}
               </tbody>
