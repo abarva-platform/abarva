@@ -579,9 +579,13 @@ Output strict JSON matching the schema you are given. No prose outside the JSON.
 function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>): string {
   const claimShape = "{ statement, evidence_ids: [sig_xxx or ctx_xxx], confidence: low|medium|high, claim_type: FACT|OBSERVATION|CROSS_DOMAIN_INSIGHT|ADVISORY_INFERENCE }";
   const datasetNames = Object.keys(signalPacket.visualDatasets);
+  const evidenceScopeInstructions = buildEvidenceScopeInstructions(signalPacket);
   return (
     `Build the EnterpriseThesis for this enterprise from the governed context packet below. ` +
     `Every claim needs evidence_ids from the signals or context items list, and a claim_type. ` +
+    `Apply this deterministic evidence-scope contract before deciding which sections to fill:\n\n` +
+    evidenceScopeInstructions +
+    `\n\n` +
     `Return JSON matching this shape exactly:\n\n` +
     JSON.stringify(
       {
@@ -624,6 +628,47 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
     `for a claim about this specific enterprise):\n` +
     JSON.stringify(signalPacket, null, 2)
   );
+}
+
+function buildEvidenceScopeInstructions(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>): string {
+  const signalDomains = new Set(signalPacket.signals.flatMap((signal) => signal.domains));
+  const hasBusinessEconomics =
+    signalPacket.businessEconomics.operatingSegments.length > 0 ||
+    signalPacket.businessEconomics.customerSegments.length > 0 ||
+    Boolean(signalPacket.enterpriseIdentity.revenue);
+  const hasStrategyEvidence = signalPacket.strategicPriorities.length > 0 || signalDomains.has("program_initiative");
+  const hasLeadershipEvidence = signalDomains.has("ai_value_interview_evidence");
+  const hasOutcomeLinkage = signalDomains.has("metric_outcome") || signalDomains.has("ai_value_realization_signal");
+  const hasProcessOwnerEvidence =
+    signalDomains.has("operational_process_evidence") ||
+    signalPacket.contextItems.some((item) => /\b(owner|accountable|process|governance)\b/i.test(item.statement));
+
+  const forcedEmpty: string[] = [];
+  if (!hasStrategyEvidence) forcedEmpty.push("strategic_bets");
+  if (!hasLeadershipEvidence) forcedEmpty.push("leadership_consensus", "leadership_disagreements");
+  if (!hasBusinessEconomics) forcedEmpty.push("value_creation_model.primary_value_drivers");
+  if (!hasOutcomeLinkage) forcedEmpty.push("performance_story.where_improving", "performance_story.where_off_track");
+  if (!hasLeadershipEvidence && !hasStrategyEvidence && !hasProcessOwnerEvidence) {
+    forcedEmpty.push("questions_for_management");
+  }
+
+  const lines = [
+    `- business_economics_evidence: ${hasBusinessEconomics ? "present" : "absent"} -- ${hasBusinessEconomics ? "value_creation_model may describe business value drivers if cited" : "value_creation_model.summary must lead with a limitation; primary_value_drivers must be []"}.`,
+    `- strategy_program_evidence: ${hasStrategyEvidence ? "present" : "absent"} -- ${hasStrategyEvidence ? "strategic_bets may be populated only with cited priorities/programs" : "strategic_bets must be []"}.`,
+    `- leadership_voice_evidence: ${hasLeadershipEvidence ? "present" : "absent"} -- ${hasLeadershipEvidence ? "leadership sections may cite testimony/consensus signals" : "leadership_consensus and leadership_disagreements must be []"}.`,
+    `- outcome_linkage_evidence: ${hasOutcomeLinkage ? "present" : "absent"} -- ${hasOutcomeLinkage ? "performance_story may distinguish improving/off-track/unknown from cited metrics" : "where_improving and where_off_track must be []; use where_unknown for missing KPI or finance-attestation linkage"}.`,
+    `- management_process_evidence: ${hasProcessOwnerEvidence ? "present" : "absent"} -- ${hasProcessOwnerEvidence ? "questions may reference only cited owners/processes/governance" : "do not ask process/owner/governance questions"}.`,
+  ];
+  if (forcedEmpty.length) {
+    lines.push(`- forced_empty_sections_for_this_packet: ${forcedEmpty.join(", ")}.`);
+  } else {
+    lines.push("- forced_empty_sections_for_this_packet: none.");
+  }
+  lines.push(
+    "- If a forced-empty section conflicts with the generic schema below, the forced-empty instruction wins.",
+    "- For remaining sections, prefer FACT or OBSERVATION unless the cited evidence truly spans multiple domains and the statement needs the stronger claim_type.",
+  );
+  return lines.join("\n");
 }
 
 /* ------------------------------------------------------------------------------------------------
