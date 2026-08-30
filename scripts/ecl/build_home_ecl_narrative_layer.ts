@@ -61,6 +61,15 @@ type HomePagePromptContract = {
   sourceLayerReads: string[];
   mustShow: string[];
   forbidden: string[];
+  lensContract?: HomeLensContract;
+};
+type HomeLensContract = {
+  hat: string;
+  primaryAudience: string;
+  promptInstruction: string;
+  evidencePriority: string[];
+  style: string;
+  mustNotDo: string[];
 };
 
 const HOME_SURFACE_KEY = "home_enterprise_landscape";
@@ -231,19 +240,37 @@ function hashJson(value: unknown): string {
 
 function readHomePagePromptContracts(): HomePagePromptContract[] {
   const contractPath = path.join(process.cwd(), HOME_PAGE_PROMPT_CONTRACT_PATH);
-  const parsed = JSON.parse(fs.readFileSync(contractPath, "utf8")) as { pages?: Array<Record<string, unknown>> };
+  const parsed = JSON.parse(fs.readFileSync(contractPath, "utf8")) as {
+    pages?: Array<Record<string, unknown>>;
+    lens_contracts?: Record<string, Record<string, unknown>>;
+  };
+  const lensContracts = parsed.lens_contracts ?? {};
   return (parsed.pages ?? [])
-    .map((page) => ({
-      pageKey: text(page.page_key) ?? "",
-      label: text(page.label) ?? "",
-      writerLens: text(page.writer_lens) ?? "",
-      voice: text(page.voice) ?? "",
-      decisionQuestion: text(page.decision_question) ?? "",
-      requiredContext: stringArray(page.required_context),
-      sourceLayerReads: stringArray(page.source_layer_reads),
-      mustShow: stringArray(page.must_show),
-      forbidden: stringArray(page.forbidden),
-    }))
+    .map((page) => {
+      const writerLens = text(page.writer_lens) ?? "";
+      const lens = lensContracts[writerLens];
+      return {
+        pageKey: text(page.page_key) ?? "",
+        label: text(page.label) ?? "",
+        writerLens,
+        voice: text(page.voice) ?? "",
+        decisionQuestion: text(page.decision_question) ?? "",
+        requiredContext: stringArray(page.required_context),
+        sourceLayerReads: stringArray(page.source_layer_reads),
+        mustShow: stringArray(page.must_show),
+        forbidden: stringArray(page.forbidden),
+        lensContract: lens
+          ? {
+              hat: text(lens.hat) ?? "",
+              primaryAudience: text(lens.primary_audience) ?? "",
+              promptInstruction: text(lens.prompt_instruction) ?? "",
+              evidencePriority: stringArray(lens.evidence_priority),
+              style: text(lens.style) ?? "",
+              mustNotDo: stringArray(lens.must_not_do),
+            }
+          : undefined,
+      };
+    })
     .filter((page) => page.pageKey && page.writerLens);
 }
 

@@ -274,11 +274,24 @@ assert(
   script.includes("HOME_PAGE_PROMPT_CONTRACT_PATH") &&
     script.includes("function readHomePagePromptContracts") &&
     script.includes("pagePromptContracts: readHomePagePromptContracts()") &&
+    script.includes("lens_contracts") &&
+    script.includes("lensContract") &&
+    script.includes("promptInstruction") &&
     thesis.includes("The packet may include pagePromptContracts") &&
     thesis.includes("page-level writer lenses") &&
     thesis.includes("must-show obligations") &&
     thesis.includes("Never cite pagePromptContracts as"),
   "ECL narrative job passes page prompt contracts into the Claude packet as page instructions, not citable evidence",
+);
+assert(
+  chapters.includes("function chapterDefinitionForPacket") &&
+    chapters.includes("pagePromptContracts") &&
+    chapters.includes("Primary audience:") &&
+    chapters.includes("Evidence priority:") &&
+    chapters.includes("Must not do:") &&
+    chapters.includes("synthesizeChapterNarrative(client, effectiveDef") &&
+    chapters.includes("contract?.decisionQuestion ?? def.guidingQuestion"),
+  "Home chapter writer uses the packet's page and lens contracts when building Claude prompts",
 );
 assert(
   script.includes("ready contracts are in the current ready contract base") &&
