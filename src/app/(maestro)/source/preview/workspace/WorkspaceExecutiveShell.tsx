@@ -622,9 +622,7 @@ function VendorsPage({
 }) {
   const vendors = topVendors(portfolio);
   const selectedContracts = selectedVendor
-    ? portfolio.contracts.filter((contract) =>
-        selectedVendor.contract_refs.includes(contract.contract_id),
-      )
+    ? vendorLinkedContracts(portfolio.contracts, selectedVendor)
     : [];
   const selectedVendorPosition = selectedVendor
     ? portfolio.impact.vendorPositions.find(
@@ -2811,9 +2809,6 @@ function graphSubtabTitle(subtab: string) {
 export function topVendors(
   portfolio: SourceWorkspacePortfolioData,
 ): ExecutiveVendorRow[] {
-  const contractsById = new Map(
-    portfolio.contracts.map((contract) => [contract.contract_id, contract]),
-  );
   const byVendorName = new Map<string, ExecutiveVendorRow>();
   for (const vendor of portfolio.vendors) {
     const key = normalizedVendorName(vendor.vendor_name);
@@ -2843,7 +2838,7 @@ export function topVendors(
     });
   }
   return [...byVendorName.values()]
-    .map((vendor) => withContractBackedVendorMetrics(vendor, contractsById))
+    .map((vendor) => withContractBackedVendorMetrics(vendor, portfolio.contracts))
     .slice()
     .sort(
       (a, b) =>
@@ -2869,12 +2864,13 @@ function isActionNarrative(value: string) {
 
 function withContractBackedVendorMetrics(
   vendor: ExecutiveVendorRow,
-  contractsById: ReadonlyMap<string, SourceContract360Row>,
+  contracts: readonly SourceContract360Row[],
 ): ExecutiveVendorRow {
   const contractRefs = uniqueRefs(vendor.contract_refs);
-  const linkedContracts = contractRefs
-    .map((contractId) => contractsById.get(contractId))
-    .filter((contract): contract is SourceContract360Row => Boolean(contract));
+  const linkedContracts = vendorLinkedContracts(contracts, {
+    ...vendor,
+    contract_refs: contractRefs,
+  });
   if (linkedContracts.length === 0) {
     return {
       ...vendor,
@@ -2915,8 +2911,39 @@ function withContractBackedVendorMetrics(
       (contract) => contract.auto_renew,
     ).length,
     next_end_date: nextEndDate ?? vendor.next_end_date,
-    contract_refs: contractRefs,
+    contract_refs: uniqueRefs(
+      linkedContracts.map((contract) => contract.contract_id),
+    ),
   };
+}
+
+function vendorLinkedContracts(
+  contracts: readonly SourceContract360Row[],
+  vendor: ExecutiveVendorRow,
+) {
+  const explicitRefs = new Set(uniqueRefs(vendor.contract_refs));
+  const vendorRefs = new Set(uniqueRefs([vendor.vendor_ref, ...vendor.vendor_refs]));
+  const normalizedName = normalizedVendorName(vendor.vendor_name);
+  const rows = new Map<string, SourceContract360Row>();
+  for (const contract of contracts) {
+    const hasExplicitRef = explicitRefs.has(contract.contract_id);
+    const hasVendorRef = vendorRefs.has(contract.vendor_ref);
+    const hasVendorName =
+      normalizedName.length > 0 &&
+      normalizedVendorName(contract.vendor_name) === normalizedName;
+    if (hasExplicitRef || hasVendorRef || hasVendorName) {
+      rows.set(contract.contract_id, contract);
+    }
+  }
+  return [...rows.values()].sort(
+    (a, b) =>
+      (numberFromDb(b.resolved_annual_value) ??
+        numberFromDb(b.annual_value) ??
+        0) -
+      (numberFromDb(a.resolved_annual_value) ??
+        numberFromDb(a.annual_value) ??
+        0),
+  );
 }
 
 function normalizedVendorName(name: string) {

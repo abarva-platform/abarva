@@ -216,7 +216,7 @@ async function writeEclProjectionFixture(dir: string) {
         vendor_name: "Epic Systems Corporation",
         contract_count: "1",
         annualized_spend_usd: "500000",
-        contract_ids_json: JSON.stringify(["MER-CTR-EPIC-001"]),
+        contract_ids_json: JSON.stringify([]),
       },
     ]),
     "utf-8",
