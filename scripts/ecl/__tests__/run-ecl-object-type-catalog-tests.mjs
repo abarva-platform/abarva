@@ -169,7 +169,7 @@ try {
     { allowFailure: true },
   );
   assert.notEqual(badType.status, 0, "unknown object_type must be refused by the catalog FK");
-  assert.match(badType.stderr, /object_type_catalog_fk|foreign key/i);
+  assert.match(badType.stderr, /object_type_catalog_fk|object_type_check|foreign key|check constraint/i);
 
   const readbackSql = run(
     "python3",

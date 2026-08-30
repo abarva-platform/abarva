@@ -293,6 +293,9 @@ create table if not exists ecl_projection.source_contract_360 (
   )
 );
 
+alter table if exists ecl_projection.source_contract_360
+  add column if not exists renewal_notice_date date;
+
 create table if not exists ecl_projection.source_vendor_360 (
   id uuid primary key default gen_random_uuid(),
   tenant_key text not null,

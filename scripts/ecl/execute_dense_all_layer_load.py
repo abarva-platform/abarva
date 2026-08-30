@@ -163,7 +163,9 @@ def run(command: list[str], *, out_dir: Path, label: str, sensitive: bool = Fals
         "stdout_log": stdout_path.as_posix(),
     }
     if result.returncode != 0:
-        raise Refusal([f"{label}_failed:{(result.stderr or result.stdout).strip()[:800]}"])
+        output = (result.stderr or result.stdout).strip()
+        diagnostic = output[-4000:] if len(output) > 4000 else output
+        raise Refusal([f"{label}_failed:{diagnostic}"])
     return record
 
 
@@ -179,7 +181,9 @@ def run_psql_query(target_db_url: str, sql: str, out_dir: Path, label: str, *, e
     if expect_failure:
         return {"label": label, "rejected": result.returncode != 0, "stderr": result.stderr[:800]}
     if result.returncode != 0:
-        raise Refusal([f"{label}_failed:{(result.stderr or result.stdout).strip()[:800]}"])
+        output = (result.stderr or result.stdout).strip()
+        diagnostic = output[-4000:] if len(output) > 4000 else output
+        raise Refusal([f"{label}_failed:{diagnostic}"])
     return {"label": label, "returncode": result.returncode, "stdout": result.stdout}
 
 

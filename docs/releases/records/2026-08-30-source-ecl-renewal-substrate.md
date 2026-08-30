@@ -18,6 +18,8 @@ summary: Preserve renewal-choice evidence through the ECL Source-room generator,
 
 This release makes the synthetic Source-room contract fixture carry an explicit renewal posture instead of leaving product pages to infer it from incomplete fields. The generated package now includes planted renewal cohorts, renewal notice dates, and auto-renew metadata; the loaders preserve those fields through the commercial and Source projection layers; and the serving view keeps renewal work as a focused decision subset instead of mirroring the full contract book.
 
+The release also hardens the ECL schema replay path for an already-existing database: older physical tables receive the current object semantic-identity contract and renewal columns before the governed data-build job attempts a refresh. Job diagnostics now preserve the failing Postgres error tail so future schema failures identify the actual table or constraint.
+
 The change prepares Source 360 to state only what the refreshed substrate proves. It does not create finance-confirmed realized value and does not promote synthetic evidence as live-client truth.
 
 ## Layer Impact
@@ -27,6 +29,7 @@ The change prepares Source 360 to state only what the refreshed substrate proves
 - Layer 2: Source-room adapter output preserves the contract metadata needed by downstream layers, with hashes and row-level quality state intact.
 - Layer 3: Commercial contract records store renewal notice dates and carry auto-renew, notice-window, benchmarking, and termination metadata in attributes.
 - Layer 4: Source projection rows write non-null renewal notice dates and expose auto-renew metadata in the payload consumed by Source 360.
+- Schema replay: Existing ECL physical schemas are upgraded for object semantic identity and renewal-date columns before all-layer refresh.
 - Products: Source 360 can compute renewal posture from served data. The renewal serving view is narrowed to decision-relevant rows.
 
 ## Client Applicability
@@ -43,7 +46,13 @@ The change prepares Source 360 to state only what the refreshed substrate proves
 - `scripts/ecl/load_dense_source_room_commercial_layer.py`
 - `scripts/ecl/load_dense_source_room_source_projection_layer.py`
 - `scripts/ecl/__tests__/run-ecl-demo-findings-source-contract-tests.mjs`
+- `scripts/ecl/__tests__/run-ecl-physical-schema-upgrade-tests.mjs`
+- `scripts/ecl/__tests__/run-ecl-object-type-catalog-tests.mjs`
+- `scripts/ecl/__tests__/run-ecl-projection-schema-reconciliation-tests.mjs`
+- `scripts/ecl/execute_dense_all_layer_load.py`
 - `docs/architecture/ecl-dense-all-layer-count-contract.json`
+- `docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql`
+- `docs/architecture/sql-drafts/ecl_product_projection_tables_v1_draft.sql`
 - `src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts`
 - `src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts`
 - `docs/architecture/sql-drafts/ecl_serving_views_v1_draft.sql`
@@ -53,8 +62,17 @@ The change prepares Source 360 to state only what the refreshed substrate proves
 QA status: `pass` for scoped validation, with one broader base-branch gate still outside this release.
 
 - `node scripts/ecl/__tests__/run-ecl-demo-findings-source-contract-tests.mjs` passed.
+- `npm run test:ecl-physical-schema-upgrade` passed.
+- `npm run test:ecl-source-file-origin-upgrade` passed.
+- `npm run test:ecl-object-type-catalog` passed.
+- `npm run test:ecl-projection-schema-reconciliation` passed.
+- `npm run test:ecl-object-semantic-type` passed.
+- `python3 -m py_compile scripts/ecl/execute_dense_all_layer_load.py` passed.
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts' --runInBand` passed.
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts'` passed.
+- `npx eslint scripts/ecl/__tests__/run-ecl-physical-schema-upgrade-tests.mjs` passed.
+- `npm run ecl:dense-all-layer:validate-counts` passed.
+- `npm run release:check` passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` passed.
 - A disposable local Source projection build passed readback with no duplicate Source serving row-key sets and rejected planted FK/gate failures.
 

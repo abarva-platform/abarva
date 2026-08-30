@@ -897,6 +897,7 @@
     "test:ecl-client-intake-source-family-adapter": "node scripts/ecl/__tests__/run-ecl-client-intake-source-family-adapter-tests.mjs",
     "test:ecl-client-intake-vendor-contract-adapter": "node scripts/ecl/__tests__/run-ecl-client-intake-vendor-contract-adapter-tests.mjs",
     "test:ecl-source-file-origin-upgrade": "node scripts/ecl/__tests__/run-ecl-source-file-origin-upgrade-tests.mjs",
+    "test:ecl-physical-schema-upgrade": "node scripts/ecl/__tests__/run-ecl-physical-schema-upgrade-tests.mjs",
     "test:ecl-dense-source-room-stride-gate": "node scripts/ecl/__tests__/run-ecl-dense-source-room-stride-gate-tests.mjs",
     "test:ecl-dense-cross-tenant-id-namespace": "node scripts/ecl/__tests__/run-ecl-dense-cross-tenant-id-namespace-tests.mjs",
     "test:ecl-optional-scope-counts": "node scripts/ecl/__tests__/run-ecl-optional-scope-count-tests.mjs",
