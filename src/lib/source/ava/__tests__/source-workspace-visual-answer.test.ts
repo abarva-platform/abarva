@@ -334,4 +334,80 @@ describe("Source Workspace visual aVa answer", () => {
       answer?.citations.some((citation) => citation.recordId === "CTR-0002"),
     ).toBe(true);
   });
+
+  it("renders source references as client-facing evidence basis labels", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.selectedContract = null;
+    context.sourceV4.contractDirectory = [
+      {
+        contractId: "CTR-0002",
+        vendorName: "Optum Rx",
+        contractName: "Pharmacy Benefits Services Agreement",
+        annualValueUsd: 8_600_000,
+        actualAnnualSpendUsd: 8_587_900,
+        totalCommittedValueUsd: 34_400_000,
+        endDate: "31 Dec 2027",
+        autoRenew: true,
+        renewalOwnerRef: "Procurement",
+        scopeSummary: "Pharmacy benefits and claims processing services.",
+        scopeRowCount: 4,
+      },
+    ];
+    context.sourceV4.contractOpportunityDirectory = [
+      {
+        id: "ctr-0002-sla-credit",
+        contractId: "CTR-0002",
+        vendorName: "Optum Rx",
+        label: "Unclaimed service credits",
+        amountUsd: 43_000,
+        state: "workflow_required",
+        evidenceClass: "not_finance_confirmed",
+        nextAction: "Prepare service-credit claim.",
+        sourceRefs: [
+          JSON.stringify({
+            "Contract Ref": "CTR-0002",
+            "Opportunity Ref": "CTR-0002:sla-credit-recovery",
+            "Finance Confirmation State": "Not Confirmed",
+            "Evidence Coverage": {
+              "source.Contract 360": {
+                "Change Order Rows": 0,
+                "Document Page Text Rows": 0,
+              },
+              "consumption.Sourcing Opportunity V1": 2,
+              "consumption.Sourcing Performance V1": 24,
+              "consumption.Sourcing Spend Monthly V1": 24,
+              "consumption.Sourcing Contract Scope V1": 0,
+            },
+          }),
+        ],
+      },
+    ];
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query:
+        "For CTR-0002, why is this contract actionable and what is missing before I claim value?",
+      surfaceContext: context,
+    });
+
+    const table = answer?.artifacts.find(
+      (artifact) => artifact.id === "source-contract-opportunity-table",
+    );
+    const rows = table?.artifact === "table" ? table.rows : [];
+    const evidenceBasis =
+      typeof rows?.[0]?.sourceRefs === "string" ? rows[0].sourceRefs : "";
+    const tableText = JSON.stringify(table);
+
+    expect(tableText).toContain("Evidence basis");
+    expect(evidenceBasis).toContain("Contract record");
+    expect(evidenceBasis).toContain("Opportunity record");
+    expect(evidenceBasis).toContain("Finance confirmation not complete");
+    expect(evidenceBasis).toContain("SLA performance history: 24 rows");
+    expect(evidenceBasis).toContain("Monthly spend history: 24 rows");
+    expect(evidenceBasis).not.toContain("source.Contract 360");
+    expect(evidenceBasis).not.toContain("consumption.Sourcing");
+    expect(evidenceBasis).not.toContain("Finance Confirmation State");
+    expect(evidenceBasis).not.toContain("{");
+  });
 });
