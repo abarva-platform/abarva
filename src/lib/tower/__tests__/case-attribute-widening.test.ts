@@ -383,3 +383,24 @@ describe("the active assessment is declared, not inferred", () => {
     }
   });
 });
+
+describe("risk is not readiness printed twice", () => {
+  const contract = read("src/components/tower/command-center/views/ContractTabs.tsx");
+
+  it("does not render risk pressure beside readiness", () => {
+    // Layer 4 writes `risk_pressure_score` as `100 - readiness_score`. Rendered next to readiness
+    // under its own heading, every pair on the live page summed to exactly 100 — two columns
+    // presenting one number as two independent assessments of a case.
+    expect(contract).not.toContain("formatPct(program.riskPressureScore)");
+  });
+
+  it("fails if the upstream ever makes risk a real measurement", () => {
+    // The day `risk_pressure_score` stops being the complement of readiness it becomes worth
+    // showing again, and this guard is how that gets noticed rather than staying hidden.
+    expect(LAYER4).toContain("risk_pressure_score: sqlNum(100 - num(row.readiness_score))");
+  });
+
+  it("still writes no risk_score anywhere", () => {
+    expect(LAYER4).not.toMatch(/\brisk_score\b/);
+  });
+});
