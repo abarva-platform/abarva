@@ -76,6 +76,40 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(hero?.textContent ?? "").not.toMatch(/\b(?:vendor|supplier|contract|commercial exposure)\b/i);
   });
 
+  it("does not let supplier concentration lead the enterprise identity section", () => {
+    const bundle = JSON.parse(JSON.stringify(loadMeridianBundle())) as HomeReviewBundle;
+    const executive = bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief");
+    const business = bundle.chapters.find((chapter) => chapter.chapterId === "our_business");
+    expect(executive).toBeTruthy();
+    expect(business).toBeTruthy();
+    executive!.key_insights = [
+      {
+        statement:
+          "The largest application functions by recorded application count are Clinical Operations (167 of 750, 22.3%) and Health Plan Operations (122 of 750, 16.3%).",
+        evidence_ids: ["sig_ecl_application_function_ranking_012"],
+        claim_type: "FACT",
+        confidence: "high",
+      },
+    ];
+    business!.key_insights = [
+      {
+        statement:
+          "IBM Corporation is the largest supplier group at 12.2% of reviewed contract value; the top five supplier groups account for 47.1%.",
+        evidence_ids: ["sig_ecl_vendor_concentration_004"],
+        claim_type: "FACT",
+        confidence: "high",
+      },
+    ];
+
+    const { container } = render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
+
+    const enterpriseSection = container.querySelector('[data-home-tier1-section="enterprise"]');
+    const lead = enterpriseSection?.querySelector("[data-home-tier1-section-body] p");
+    expect(lead?.textContent ?? "").toMatch(/application functions/i);
+    expect(lead?.textContent ?? "").not.toMatch(/IBM Corporation|largest supplier group|contract value/i);
+    expect(enterpriseSection?.textContent ?? "").not.toMatch(/IBM Corporation|largest supplier group/i);
+  });
+
   it("keeps implementation vocabulary off the CXO opening path", () => {
     render(<HomeV4App bundle={loadMeridianBundle()} tenantKey="meridian-health" />);
 

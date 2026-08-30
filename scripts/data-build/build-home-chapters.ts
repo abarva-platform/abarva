@@ -390,6 +390,23 @@ function takeLimit<T>(items: T[], limit: number): T[] {
   return Number.isFinite(limit) ? items.slice(0, limit) : items;
 }
 
+const ENTERPRISE_OPENING_RE =
+  /\b(?:enterprise|estate|application|system|source-target|data movement|flow|workload|analytics|reporting|ETL|script|business function|provider|payer|operating model)\b/i;
+const COMMERCIAL_OPENING_RE =
+  /\b(?:vendor|supplier|supplier group|top five supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
+
+function enterpriseOpeningClaims(claims: GroundedClaim[]): GroundedClaim[] {
+  const nonCommercial = claims.filter((claim) => !COMMERCIAL_OPENING_RE.test(claim.statement));
+  if (nonCommercial.length === 0) return claims;
+  const enterpriseShape = nonCommercial.filter((claim) => ENTERPRISE_OPENING_RE.test(claim.statement));
+  return enterpriseShape.length
+    ? [
+        ...enterpriseShape,
+        ...nonCommercial.filter((claim) => !enterpriseShape.includes(claim)),
+      ]
+    : nonCommercial;
+}
+
 export function assignQuestions(
   thesis: EnterpriseThesis,
   limits: HomeChapterAssemblyLimits = HOME_CHAPTER_ASSEMBLY_LIMITS,
@@ -438,7 +455,7 @@ export function assembleChapterSlices(
 
   return {
     executive_brief: {
-      key_insights: takeLimit(alive(thesis.things_a_new_cxo_should_know), limits.executiveBriefKeyInsights),
+      key_insights: takeLimit(enterpriseOpeningClaims(alive(thesis.things_a_new_cxo_should_know)), limits.executiveBriefKeyInsights),
       tensions: takeLimit(alive(thesis.what_needs_attention), limits.executiveBriefTensions),
       what_to_watch: takeLimit(alive(thesis.material_risks), limits.executiveBriefWatch),
     },
