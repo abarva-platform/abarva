@@ -59,7 +59,8 @@ const CLAUDE_MODEL = "claude-sonnet-5";
 const ARTIFACT_TYPE = "NexusEnterpriseThesisV1";
 /** Shared with build-home-chapters.ts's provenance stamp -- one source of truth for what prompt
  * version produced a given thesis, rather than the same string hardcoded in two files. */
-export const THESIS_PROMPT_VERSION = "enterprise-thesis/v1.1-cxo-visible-language";
+export const THESIS_PROMPT_VERSION = "enterprise-thesis/v1.2-source-breadth";
+export const THESIS_OUTPUT_TOKEN_BUDGET = 28000;
 
 /**
  * Contracts with document-level extraction, per tenant. Not derivable from canonical -- that
@@ -223,6 +224,10 @@ EVIDENCE DISCIPLINE
   framing material, not facts about this enterprise. Never cite an analyticalLenses entry as
   evidence_ids for a claim about this specific enterprise -- they exist to help you recognize a
   pattern worth investigating, not to be quoted as something true of this tenant.
+- The packet includes sourceSummaries: file-level breadth context across the intake. Use these to
+  understand which source families are present, thin, or absent before deciding what the enterprise
+  story can responsibly say. Never cite sourceSummaries as evidence_ids; they are coverage context,
+  not standalone proof for a business claim.
 - The signals and facts in the packet are authoritative. Never recompute a number that appears
   there; quote it exactly.
 - Every claim you make must carry evidence_ids citing the specific signals or context items it
@@ -410,8 +415,9 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
       null,
       2,
     ) +
-    `\n\nGoverned context packet (signals are sig_*, context facts are ctx_*, plottable datasets ` +
-    `are under visualDatasets; analyticalLenses are framing material, never citable as evidence_ids ` +
+    `\n\nGoverned context packet (signals are sig_*, context facts are ctx_*, sourceSummaries ` +
+    `describe file-level breadth and gaps but are not citable evidence, plottable datasets are ` +
+    `under visualDatasets; analyticalLenses are framing material, never citable as evidence_ids ` +
     `for a claim about this specific enterprise):\n` +
     JSON.stringify(signalPacket, null, 2)
   );
@@ -907,7 +913,7 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
   // 34000 this codebase already runs in production for a comparably large structured generation
   // (src/lib/deliverables/strategic-moves-artifact-standard.ts). "medium" effort is unchanged --
   // proportionate to genuine cross-domain synthesis across a 40+ signal packet.
-  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, 28000, "medium");
+  const generation = await callClaude(client, SYSTEM_PROMPT, userPrompt, THESIS_OUTPUT_TOKEN_BUDGET, "medium");
   if (!generation) {
     console.log("  ! thesis generation returned no text");
     return {

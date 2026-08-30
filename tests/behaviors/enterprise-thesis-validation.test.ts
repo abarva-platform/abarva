@@ -67,6 +67,7 @@ const packet = {
   ],
   contextItems: [{ id: "ctx_identity_001", statement: "Revenue is $1B.", domains: ["tenant_profile"] }],
   visualDatasets: { technology_spend_mix: [{ category: "Third party", amount: 100 }] } as Record<string, Array<Record<string, unknown>>>,
+  sourceSummaries: [],
   analyticalLenses: [] as Array<{ kind: "industry_pattern" | "expert_lens"; label: string }>,
 };
 

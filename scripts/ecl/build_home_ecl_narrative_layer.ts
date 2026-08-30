@@ -750,6 +750,7 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
       application_landscape_by_function: dimensionShareRows(permittedApplications, "business_function", 8),
       vendor_spend_concentration: vendorRows,
     },
+    sourceSummaries: [],
     analyticalLenses: [],
     coverageManifest: {
       dimensionCoverage: [

@@ -57,8 +57,11 @@ const usd = (n: number): string =>
   n >= 1e9 ? `$${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : `$${n.toLocaleString()}`;
 
 interface Record_ {
+  domain?: string;
   objectType: string;
   attributes: Record<string, Value>;
+  sourceAuthority?: { authority?: string; basis?: string; sourceSystem?: string; sourceType?: string };
+  qualityStatus?: string;
 }
 
 /** A single citable unit of derived reasoning. This is the atom the whole packet is built from. */
@@ -218,6 +221,20 @@ export interface DecisionContext {
    * structurally separate from signals/context items so a claim can never accidentally cite one
    * as evidence about this specific enterprise. */
   analyticalLenses: Array<{ kind: "industry_pattern" | "expert_lens"; label: string }>;
+  /** File-level breadth context. This is not citable evidence for claims; it tells the thesis
+   * writer what the packet did and did not inspect so source families do not disappear just
+   * because their rows were not in a top-N material-signal list. */
+  sourceSummaries: Array<{
+    sourcePath: string;
+    domain: string;
+    objectTypes: string[];
+    recordCount: number;
+    basis: string[];
+    authority: string[];
+    qualityStates: string[];
+    materialFields: string[];
+    exampleRecords: string[];
+  }>;
 }
 
 export interface ContextQualityManifest {
@@ -271,6 +288,27 @@ const THRESHOLDS = {
   /** A target-minus-current maturity gap this large or more is material. */
   materialMaturityGap: 1,
 };
+
+export const ENTERPRISE_SIGNAL_PACKET_LIMITS = {
+  topProgramsByValue: Number.POSITIVE_INFINITY,
+  topVendorsByShare: 25,
+  riskSystemConcentration: 25,
+  contradictingInterviewQuotes: Number.POSITIVE_INFINITY,
+  sourceSummaries: 180,
+  highSeverityRiskSignals: 12,
+  stalledProgramSignals: 20,
+  workforceSignals: 12,
+  infrastructureRiskSignals: 12,
+  aiToolGapSignals: 12,
+  riskToProgramSignals: 12,
+  managedServiceSignals: 12,
+  operationalProcessSignals: 12,
+  platformMaturitySignals: 12,
+};
+
+function takeLimit<T>(rows: T[], limit: number): T[] {
+  return Number.isFinite(limit) ? rows.slice(0, limit) : rows;
+}
 
 /* ------------------------------------------------------------------------------------------------
  * Decision context
@@ -348,8 +386,7 @@ export function buildDecisionContext(records: Record_[], relationshipRows: Relat
   const topByValue = programs
     .map((p) => ({ name: str(p.attributes.programName) ?? "(unnamed)", expectedValue: num(p.attributes.expectedValueUsd) ?? 0 }))
     .filter((p) => p.expectedValue > 0)
-    .sort((a, b) => b.expectedValue - a.expectedValue)
-    .slice(0, 5);
+    .sort((a, b) => b.expectedValue - a.expectedValue);
 
   // ---- technology ----
   const spendFacts = of("spend_value_fact");
@@ -388,7 +425,7 @@ export function buildDecisionContext(records: Record_[], relationshipRows: Relat
       supportedFunctions: list(v.attributes.supportedFunctions),
     }))
     .sort((a, b) => b.spend - a.spend)
-    .slice(0, 8);
+    .slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.topVendorsByShare);
 
   // ---- organization ----
   const organization = {
@@ -444,7 +481,7 @@ export function buildDecisionContext(records: Record_[], relationshipRows: Relat
   const bySystemConcentration = [...systemRiskCounts.entries()]
     .map(([system, riskCount]) => ({ system, riskCount }))
     .sort((a, b) => b.riskCount - a.riskCount)
-    .slice(0, 5);
+    .slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.riskSystemConcentration);
   const highSeverity = risks
     .filter((r) => (str(r.attributes.severity) ?? "").toLowerCase() === "high" || (num(r.attributes.inherentRiskScore) ?? 0) >= 9)
     .map((r) => ({
@@ -495,7 +532,10 @@ export function buildDecisionContext(records: Record_[], relationshipRows: Relat
       tag,
     });
   }
-  for (const row of consented.filter((i) => (str(i.attributes.contradictsRecord) ?? "").startsWith("yes")).slice(0, 2)) {
+  for (const row of takeLimit(
+    consented.filter((i) => (str(i.attributes.contradictsRecord) ?? "").startsWith("yes")),
+    ENTERPRISE_SIGNAL_PACKET_LIMITS.contradictingInterviewQuotes,
+  )) {
     testimony.push({
       quote: str(row.attributes.verbatimQuote)!,
       role: str(row.attributes.stakeholderRole) ?? "unspecified",
@@ -598,8 +638,7 @@ export function buildDecisionContext(records: Record_[], relationshipRows: Relat
   const hubSystems = [...integrationCounts.entries()]
     .map(([system, integrationCount]) => ({ system, integrationCount }))
     .filter((s) => s.integrationCount >= THRESHOLDS.hubIntegrationCount)
-    .sort((a, b) => b.integrationCount - a.integrationCount)
-    .slice(0, 5);
+    .sort((a, b) => b.integrationCount - a.integrationCount);
   const riskToProgramImpacts = declaredRels
     .filter((r) => r.sourceObjectType === "risk_or_control" && r.targetObjectType === "program" && r.relationshipType === "impacts")
     .map((r) => ({ risk: r.sourceObjectName, program: r.targetObjectName }));
@@ -628,7 +667,7 @@ export function buildDecisionContext(records: Record_[], relationshipRows: Relat
         runCost: num(r.attributes.runCostUsd) ?? 0,
       }))
       .sort((a, b) => b.runCost - a.runCost)
-      .slice(0, 5),
+      .slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.managedServiceSignals),
   };
 
   // ---- operational process evidence ----
@@ -668,6 +707,7 @@ export function buildDecisionContext(records: Record_[], relationshipRows: Relat
     ...industryPatterns.map((p) => ({ kind: "industry_pattern" as const, label: str(p.attributes.patternName) ?? "(unnamed pattern)" })),
     ...expertLenses.map((l) => ({ kind: "expert_lens" as const, label: str(l.attributes.lensName) ?? "(unnamed lens)" })),
   ];
+  const sourceSummaries = buildSourceSummaries(records);
 
   return {
     business, strategy,
@@ -675,8 +715,91 @@ export function buildDecisionContext(records: Record_[], relationshipRows: Relat
     technology, vendors: { vendorCount: vendors.length, totalSpend: totalVendorSpend, topByShare },
     organization, performance, risk, leadershipVoice,
     workforce, infrastructure, dataEstate, aiPortfolio, relationships, evidenceGovernance,
-    managedServices, operationalProcesses, platformMaturity, analyticalLenses,
+    managedServices, operationalProcesses, platformMaturity, analyticalLenses, sourceSummaries,
   };
+}
+
+function recordSourcePath(record: Record_): string {
+  return str(record.attributes.sourcePath) ?? str(record.attributes.sourceFile) ?? "(source path not declared)";
+}
+
+function displayNameForRecord(record: Record_): string | null {
+  const candidateKeys = [
+    "applicationName",
+    "systemName",
+    "contractName",
+    "vendorName",
+    "programName",
+    "riskOrControlName",
+    "platformName",
+    "dataAssetName",
+    "processName",
+    "metricName",
+    "stakeholderRole",
+    "businessFunction",
+    "functionName",
+    "serviceName",
+  ];
+  for (const key of candidateKeys) {
+    const value = str(record.attributes[key]);
+    if (value) return value;
+  }
+  return null;
+}
+
+function materialFieldsFor(records: Record_[]): string[] {
+  const ignored = new Set([
+    "sourcePath",
+    "sourceFile",
+    "sourceRowNumber",
+    "sourceObjectId",
+    "sourceSystem",
+    "tenantKey",
+  ]);
+  const counts = new Map<string, number>();
+  for (const record of records) {
+    for (const [key, value] of Object.entries(record.attributes)) {
+      if (ignored.has(key) || str(value) === null) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 12)
+    .map(([key]) => key);
+}
+
+function buildSourceSummaries(records: Record_[]): DecisionContext["sourceSummaries"] {
+  const byPath = new Map<string, Record_[]>();
+  for (const record of records) {
+    const sourcePath = recordSourcePath(record);
+    const rows = byPath.get(sourcePath) ?? [];
+    rows.push(record);
+    byPath.set(sourcePath, rows);
+  }
+
+  return [...byPath.entries()]
+    .map(([sourcePath, rows]) => {
+      const objectTypes = [...new Set(rows.map((row) => row.objectType))].sort();
+      const domains = [...new Set(rows.map((row) => row.domain).filter((domain): domain is string => Boolean(domain)))].sort();
+      const basis = [...new Set(rows.map((row) => row.sourceAuthority?.basis).filter((value): value is string => Boolean(value)))].sort();
+      const authority = [...new Set(rows.map((row) => row.sourceAuthority?.authority).filter((value): value is string => Boolean(value)))].sort();
+      const qualityStates = [...new Set(rows.map((row) => row.qualityStatus).filter((value): value is string => Boolean(value)))].sort();
+      return {
+        sourcePath,
+        domain: domains.join(", ") || "domain not declared",
+        objectTypes,
+        recordCount: rows.length,
+        basis: basis.length ? basis : ["basis not declared"],
+        authority: authority.length ? authority : ["authority not declared"],
+        qualityStates: qualityStates.length ? qualityStates : ["quality not declared"],
+        materialFields: materialFieldsFor(rows),
+        exampleRecords: [...new Set(rows.map(displayNameForRecord).filter((value): value is string => Boolean(value)))]
+          .slice(0, 5),
+      };
+    })
+    .sort((a, b) => b.recordCount - a.recordCount || a.sourcePath.localeCompare(b.sourcePath))
+    .slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.sourceSummaries);
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -993,7 +1116,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
   });
 
   // ---- risks ----
-  for (const r of dc.risk.highSeverity.slice(0, 6)) {
+  for (const r of dc.risk.highSeverity.slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.highSeverityRiskSignals)) {
     signals.push({
       id: id("risk"),
       kind: "risk",
@@ -1058,7 +1181,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
 
   // ---- portfolio signals ----
   if (dc.portfolio.stalledPrograms.length > 0) {
-    for (const p of dc.portfolio.stalledPrograms.slice(0, 5)) {
+    for (const p of dc.portfolio.stalledPrograms.slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.stalledProgramSignals)) {
       signals.push({
         id: id("portfolio"),
         kind: "portfolio",
@@ -1122,7 +1245,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
   }
 
   // ---- workforce ----
-  for (const r of dc.workforce.automationOpportunityRoles.slice(0, 5)) {
+  for (const r of dc.workforce.automationOpportunityRoles.slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.workforceSignals)) {
     signals.push({
       id: id("workforce"),
       kind: "workforce",
@@ -1133,7 +1256,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
   }
 
   // ---- infrastructure risk ----
-  for (const p of dc.infrastructure.atRiskPlatforms.slice(0, 5)) {
+  for (const p of dc.infrastructure.atRiskPlatforms.slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.infrastructureRiskSignals)) {
     signals.push({
       id: id("infra"),
       kind: "risk",
@@ -1181,7 +1304,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
       evidenceRefs: [],
     });
   }
-  for (const t of dc.aiPortfolio.toolAdoptionGaps.slice(0, 3)) {
+  for (const t of dc.aiPortfolio.toolAdoptionGaps.slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.aiToolGapSignals)) {
     signals.push({
       id: id("ai_value"),
       kind: "ai_value",
@@ -1202,7 +1325,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
       evidenceRefs: [h.system],
     });
   }
-  for (const r of dc.relationships.riskToProgramImpacts.slice(0, 5)) {
+  for (const r of dc.relationships.riskToProgramImpacts.slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.riskToProgramSignals)) {
     signals.push({
       id: id("risk"),
       kind: "risk",
@@ -1224,7 +1347,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
   }
 
   // ---- managed services ----
-  for (const s of dc.managedServices.services.slice(0, 3)) {
+  for (const s of dc.managedServices.services.slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.managedServiceSignals)) {
     signals.push({
       id: id("complexity"),
       kind: "complexity",
@@ -1235,7 +1358,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
   }
 
   // ---- operational process friction ----
-  for (const p of dc.operationalProcesses.highFrictionProcesses.slice(0, 5)) {
+  for (const p of dc.operationalProcesses.highFrictionProcesses.slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.operationalProcessSignals)) {
     signals.push({
       id: id("operational"),
       kind: "operational",
@@ -1247,7 +1370,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
   }
 
   // ---- platform / data-analytics maturity gaps ----
-  for (const g of dc.platformMaturity.gaps.slice(0, 5)) {
+  for (const g of dc.platformMaturity.gaps.slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.platformMaturitySignals)) {
     signals.push({
       id: id("gap"),
       kind: "gap",
@@ -1274,6 +1397,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
     strategicPriorities: dc.strategy.statedPriorities,
     signals,
     contextItems: buildContextItems(dc),
+    sourceSummaries: dc.sourceSummaries,
     visualDatasets: buildVisualDatasets(dc),
     /** Framing material, not evidence -- kept structurally separate from signals/contextItems so
      * a claim can never cite an industry pattern or named expert lens as if it were a fact about
