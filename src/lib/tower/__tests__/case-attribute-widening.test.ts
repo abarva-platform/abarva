@@ -683,3 +683,30 @@ describe("tenant isolation is a property of the data", () => {
     expect(rls).toContain("if not exists (");
   });
 });
+
+describe("a lens returns its own rows", () => {
+  const mig = read(
+    "supabase/migrations/20260830230000_tower_serving_page_key_split.sql",
+  );
+
+  it("honours the page_key argument the views already pass", () => {
+    // Both views call tower_ai_rows with different page keys and the deployed function ignored the
+    // argument, so both returned the same 55 rows — 42 cases plus 13 rollouts. A lens that returns
+    // everything is not a lens.
+    expect(mig).toContain(
+      "where coalesce(p.display_payload_json ->> 'page_key', 'ai_portfolio') = page_key_arg",
+    );
+  });
+
+  it("keeps the active-generation join it is patched on top of", () => {
+    // The patch is applied to the body deployed after the join landed. Losing the join here would
+    // silently reintroduce retired generations while appearing to fix the lens.
+    expect(mig).toContain("join serving.tower_active_assessment_keys() active");
+    expect(mig).toContain("and active.projection_version = p.projection_version");
+  });
+
+  it("defaults to the case page key, which is what the loader writes", () => {
+    expect(LAYER4).toContain('page_key: "ai_portfolio"');
+    expect(LAYER4).toContain('page_key: "adoption_lens"');
+  });
+});
