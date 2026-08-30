@@ -28,7 +28,7 @@ Layer 4 Products: updates Source workspace presentation only. No data model, loa
 
 ## Changes Included
 
-- PR: TBD.
+- PR: https://github.com/abarva-platform/abarva/pull/7155
 - Routes: `src/app/(maestro)/source/preview/workspace`.
 - Tests: Source workspace design-token scan and Vendor Canvas cockpit coverage.
 
@@ -58,7 +58,7 @@ Revert the PR and redeploy through the same repo-owned Azure Container Apps work
 
 ## Audit Evidence
 
-- PR: TBD.
+- PR: https://github.com/abarva-platform/abarva/pull/7155
 - CI and deployment evidence: to be attached by GitHub Actions after merge.
 - Live proof: to be captured after deploy.
 
