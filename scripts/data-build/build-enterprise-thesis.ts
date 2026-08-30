@@ -419,6 +419,12 @@ contains a citable context item saying a source family or evidence type is absen
 item and write the absence plainly as an evidence limit. Do not transform an absence of strategy,
 leadership, KPI, finance-attestation, or business-economics evidence into a strategic bet,
 leadership consensus, or value-realization claim.
+Before returning JSON, audit every claim_type against its cited evidence domains. If a claim marked
+CROSS_DOMAIN_INSIGHT or ADVISORY_INFERENCE cites only one domain, either downgrade it to FACT or
+OBSERVATION when the statement is still useful, or remove it. Do not keep a structurally invalid
+claim because it sounds executive. Empty arrays are acceptable for questions, tensions, watch items,
+and visual opportunities when the packet does not support them; filling the shape with unsupported
+management questions is worse than leaving the shape sparse.
 
 NUMERIC AND COMPARATIVE EVIDENCE
 Every number, rank, percentage, date, supplier share, application count, cost total, movement count,
@@ -426,7 +432,10 @@ or named-function comparison in a claim must appear exactly in one of that claim
 context statements. Do not use packet metadata, source summaries, visual dataset rows, analytical
 lenses, or general background knowledge to support a number unless the same number is repeated in a
 cited sig_* or ctx_* item. A broad scope or coverage item can support a limitation, but it cannot
-support a precise figure. If a cited item says a value is only an application annual-cost total, do
+support a precise figure or a completeness claim. Row counts, source-file counts, source-family
+summaries, or the presence of a source file do not prove "full coverage", "complete evidence",
+"estate visibility", or "systematic classification" unless a cited signal says exactly that. If a
+cited item says a value is only an application annual-cost total, do
 not rename it as a total technology budget, finance-attested spend, enterprise run-rate, or value
 pool. If a cited item says a movement count is an integration-record count, do not convert it into
 data volume, transaction volume, or proof of analytics consumption.

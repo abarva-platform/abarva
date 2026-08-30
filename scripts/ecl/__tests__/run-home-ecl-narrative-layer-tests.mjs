@@ -146,6 +146,14 @@ assert(
   "ECL narrative job expands deterministic signals across application, contract, infrastructure, data-flow, and source-breadth domains",
 );
 assert(
+  script.includes("ready contracts are in the current ready contract base") &&
+    script.includes("of ${permittedContracts.length.toLocaleString()} are marked auto-renewal") &&
+    script.includes("of ${permittedContracts.length.toLocaleString()} require at least 180 days notice") &&
+    script.includes("infrastructure or platform records are in the current platform base") &&
+    script.includes("of ${permittedInfrastructure.length.toLocaleString()} carry support-end dates"),
+  "ECL narrative deterministic signals state ready-contract and platform denominators explicitly",
+);
+assert(
   thesis.includes("NUMERIC AND COMPARATIVE EVIDENCE") &&
     thesis.includes("must appear exactly in one of that claim's cited signal") &&
     thesis.includes("context statements") &&
@@ -155,6 +163,9 @@ assert(
     thesis.includes("not rename it as a total technology budget") &&
     thesis.includes("If a cited item says a movement count is an integration-record count") &&
     thesis.includes("data volume, transaction volume, or proof of analytics consumption") &&
+    thesis.includes("Before returning JSON, audit every claim_type") &&
+    thesis.includes("Empty arrays are acceptable for questions, tensions, watch items") &&
+    thesis.includes("do not prove \"full coverage\", \"complete evidence\"") &&
     thesis.includes("Prefer fewer claims and questions"),
   "EnterpriseThesis prompt requires exact citable support for numbers, rankings, and management questions",
 );
@@ -218,7 +229,9 @@ assert(
     script.includes("!row.action.startsWith(\"dropped\")") &&
     script.includes("publicationIssues.length && WRITE") &&
     script.includes("Home ECL narrative publication gate failed") &&
-    script.includes("thesisResult.publicationIssues"),
+    script.includes("thesisResult.publicationIssues") &&
+    script.includes("publicationGate: verificationSummary.publication_gate") &&
+    script.includes("verificationSummary"),
   "ECL narrative job refuses writes when raw generation or published publication-gate issues remain",
 );
 assert(

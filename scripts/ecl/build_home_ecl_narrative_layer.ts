@@ -904,7 +904,7 @@ function buildDeterministicHomeSignals(args: {
   add(
     "sig_ecl_contract_flexibility_006",
     "risk",
-    `${autoRenewContracts.length.toLocaleString()} ready contracts are marked auto-renewal and ${longNoticeContracts.length.toLocaleString()} require at least 180 days notice, making renewal timing a commercial control to inspect before asserting savings or flexibility.`,
+    `${permittedContracts.length.toLocaleString()} ready contracts are in the current ready contract base; ${autoRenewContracts.length.toLocaleString()} of ${permittedContracts.length.toLocaleString()} are marked auto-renewal and ${longNoticeContracts.length.toLocaleString()} of ${permittedContracts.length.toLocaleString()} require at least 180 days notice, making renewal timing a commercial control to inspect before asserting savings or flexibility.`,
     ["vendor_contract", "spend_value_fact"],
     [...autoRenewContracts, ...longNoticeContracts],
   );
@@ -921,7 +921,7 @@ function buildDeterministicHomeSignals(args: {
   add(
     "sig_ecl_platform_resilience_008",
     "risk",
-    `${supportDatedPlatforms.length.toLocaleString()} infrastructure or platform records carry support-end dates, and ${criticalPlatforms.length.toLocaleString()} carry tier-1 or criticality evidence.`,
+    `${permittedInfrastructure.length.toLocaleString()} infrastructure or platform records are in the current platform base; ${supportDatedPlatforms.length.toLocaleString()} of ${permittedInfrastructure.length.toLocaleString()} carry support-end dates, and ${criticalPlatforms.length.toLocaleString()} of ${permittedInfrastructure.length.toLocaleString()} carry tier-1 or criticality evidence.`,
     ["infrastructure_platform"],
     [...supportDatedPlatforms, ...criticalPlatforms],
   );
@@ -1721,6 +1721,16 @@ async function main() {
     if (visibleQualityIssues.length) {
       throw new Error(`Home ECL narrative visible-quality gate failed: ${visibleQualityIssues.join("; ")}`);
     }
+    const verificationSummary = {
+      structural_issue_count: thesisResult.structuralIssues.length,
+      verdict_tally: verdictTally(thesisResult.verificationLedger),
+      action_tally: actionTally(thesisResult.verificationLedger),
+      publication_gate: {
+        accepted: publicationIssues.length === 0,
+        issues: publicationIssues,
+      },
+      ledger_rows: thesisResult.verificationLedger.length,
+    };
     const result = {
       tenantKey: options.tenantKey,
       assessmentId: options.assessmentId,
@@ -1729,6 +1739,8 @@ async function main() {
       signalPacket,
       contextPolicyProof,
       thesisResult,
+      publicationGate: verificationSummary.publication_gate,
+      verificationSummary,
     };
     const outFile = path.join(options.outDir, `${options.tenantKey}-home-ecl-narrative-layer.json`);
     fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
@@ -1740,17 +1752,6 @@ async function main() {
     } else {
       console.log("Plan-only complete. Set HOME_ECL_NARRATIVE_WRITE=true and HOME_ECL_NARRATIVE_WRITE_APPROVED=true to write ECL projection narrative rows.");
     }
-
-    const verificationSummary = {
-      structural_issue_count: thesisResult.structuralIssues.length,
-      verdict_tally: verdictTally(thesisResult.verificationLedger),
-      action_tally: actionTally(thesisResult.verificationLedger),
-      publication_gate: {
-        accepted: publicationIssues.length === 0,
-        issues: publicationIssues,
-      },
-      ledger_rows: thesisResult.verificationLedger.length,
-    };
 
     console.log(JSON.stringify({
       structured_event: "home_ecl_narrative_layer_summary",
