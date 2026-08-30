@@ -462,6 +462,26 @@ process, contingency process, framework, or leadership priority already exists u
 establishes it. Prefer fewer claims and questions over filling the shape with unsupported
 specificity.
 
+MANAGEMENT QUESTIONS ARE OPTIONAL AND RARE
+questions_for_management is not a required executive flourish. It is only for questions whose
+premise is itself fully grounded in cited evidence. A count, percentage, notice window, supplier
+share, or missing field can support a fact or observation; it does not by itself support asking
+"what is the current process", "who owns", "what is the plan", "how are leaders tracking", or
+"what governance exists" unless a cited signal or context item actually establishes that such a
+process, owner, plan, governance mechanism, or leadership decision exists or is explicitly absent.
+If the evidence only says a control-relevant fact exists -- for example many contracts have long
+notice periods -- write the control-relevant fact as what_needs_attention or evidence_gaps. Do not
+invent a management-process premise around it. When no question earns this bar, return
+questions_for_management: [].
+
+CONTRACT FLEXIBILITY AND EXIT LANGUAGE
+Renewal notice days, auto-renewal counts, and supplier concentration are commercial facts. They may
+support "renewal timing should be reviewed" or "contract calendar discipline matters." They do not
+by themselves prove constrained renegotiation, constrained exit, lost leverage, switching cost, or
+commercial inflexibility unless cited evidence also includes termination rights, transition cost,
+benchmarking rights, volume commitments, shortfall penalties, or comparable exit mechanics. Say
+"review before asserting savings or flexibility" when that is all the evidence supports.
+
 VALUE CREATION MODEL -- LEAD WITH THE BUSINESS, NOT THE TECHNOLOGY ESTATE
 value_creation_model exists to answer one question: how does this enterprise actually make money
 and create value? That is a business-economics question first -- revenue segments and their

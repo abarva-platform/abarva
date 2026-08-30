@@ -280,6 +280,21 @@ assert(
   "EnterpriseThesis prompt blocks substituting technology footprint for business value creation",
 );
 assert(
+  thesis.includes("MANAGEMENT QUESTIONS ARE OPTIONAL AND RARE") &&
+    thesis.includes("questions_for_management is not a required executive flourish") &&
+    thesis.includes("When no question earns this bar, return") &&
+    thesis.includes("questions_for_management: []"),
+  "EnterpriseThesis prompt treats management questions as optional and refuses unsupported process premises",
+);
+assert(
+  thesis.includes("CONTRACT FLEXIBILITY AND EXIT LANGUAGE") &&
+    thesis.includes("constrained renegotiation") &&
+    thesis.includes("constrained exit") &&
+    thesis.includes("termination rights, transition cost") &&
+    thesis.includes("review before asserting savings or flexibility"),
+  "EnterpriseThesis prompt prevents renewal timing facts from overstating exit or negotiation leverage",
+);
+assert(
   script.includes("basis_summary = 'model_generated_from_ecl_projection'"),
   "Generated narrative rows carry an explicit ECL model-generated basis",
 );
