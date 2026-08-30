@@ -7,7 +7,7 @@ import "@testing-library/jest-dom";
 import fs from "node:fs";
 import path from "node:path";
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import type { TechRecordType } from "@/lib/home/preview/types";
 import { ArchitecturePage } from "../ArchitecturePage";
@@ -46,6 +46,14 @@ describe("Home v4 architecture grain", () => {
 
     expect(screen.getByText("IBM z16 Mainframe LPAR — PROD1")).toBeInTheDocument();
     expect(screen.getByText("Teradata Enterprise Warehouse Appliance")).toBeInTheDocument();
+    const runMap = within(screen.getByLabelText("Enterprise run map"));
+    expect(runMap.getByText("Enterprise run map")).toBeInTheDocument();
+    expect(runMap.getByText("Health Plan / Payer")).toBeInTheDocument();
+    expect(runMap.getByText("Provider / Delivery")).toBeInTheDocument();
+    expect(runMap.getByText("Back Office")).toBeInTheDocument();
+    expect(runMap.getByText("Data, Analytics & AI")).toBeInTheDocument();
+    expect(runMap.getByText("Infrastructure & Hosting")).toBeInTheDocument();
+    expect(runMap.getByText("Vendor & Commercial Spine")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Finance & Accounting/i }));
 
