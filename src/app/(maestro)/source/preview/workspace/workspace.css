@@ -215,7 +215,8 @@
 .sw-v2-actions button,
 .sw-v2-primary,
 .sw-v2-tabbar button,
-.sw-v2-subtabbar button {
+.sw-v2-subtabbar button,
+.sw-v2-lineage-toggle button {
   min-height: 36px;
   border-radius: 6px;
   border: 1px solid #d7deea;
@@ -232,6 +233,32 @@
   border-color: #081936;
   color: #fff;
   margin-top: 14px;
+}
+
+.sw-v2-lineage-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #e1e7f0;
+  border-radius: 8px;
+  background: #f7f9fc;
+}
+
+.sw-v2-lineage-toggle p {
+  margin: 0;
+  color: #52627c;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.sw-v2-lineage-toggle button {
+  flex: 0 0 auto;
+  min-height: 30px;
+  background: #fff;
+  padding: 0 11px;
 }
 
 .sw-v2-metrics {

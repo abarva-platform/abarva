@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
@@ -49,6 +49,7 @@ export function WorkspaceExecutiveShell({
   portfolio: SourceWorkspacePortfolioData;
   tenantName: string;
 }) {
+  const [showLineage, setShowLineage] = useState(false);
   const selectedContract =
     (vm.c?.id
       ? portfolio.contracts.find(
@@ -317,7 +318,11 @@ export function WorkspaceExecutiveShell({
         ) : null}
 
         {currentPage === "Evidence" ? (
-          <EvidencePage portfolio={portfolio} />
+          <EvidencePage
+            portfolio={portfolio}
+            showLineage={showLineage}
+            onToggleLineage={() => setShowLineage((current) => !current)}
+          />
         ) : null}
 
         {currentPage === "Contract graph" ? (
@@ -325,6 +330,8 @@ export function WorkspaceExecutiveShell({
             portfolio={portfolio}
             subtab={logic.state.tabs.graph ?? "Flow"}
             onOpenSubtab={(tab) => logic.setTab("graph", tab)}
+            showLineage={showLineage}
+            onToggleLineage={() => setShowLineage((current) => !current)}
           />
         ) : null}
       </section>
@@ -1389,8 +1396,12 @@ function OptimizeByContractTable({
 
 function EvidencePage({
   portfolio,
+  showLineage,
+  onToggleLineage,
 }: {
   portfolio: SourceWorkspacePortfolioData;
+  showLineage: boolean;
+  onToggleLineage: () => void;
 }) {
   const coverage = portfolio.impact.evidenceCoverage;
   const sourceRows = [
@@ -1447,6 +1458,10 @@ function EvidencePage({
           eyebrow="Evidence"
           title="Loaded rows, missing lanes, and claim eligibility"
         />
+        <LineageToggle
+          showLineage={showLineage}
+          onToggleLineage={onToggleLineage}
+        />
         <div className="sw-v2-table">
           <div className="sw-v2-table-head sw-v2-evidence-row">
             <span>Evidence lane</span>
@@ -1461,7 +1476,7 @@ function EvidencePage({
             >
               <span>
                 <b>{row.name}</b>
-                <small>{row.lineage}</small>
+                {showLineage ? <small>{row.lineage}</small> : null}
               </span>
               <span>{row.support}</span>
               <span>{row.count}</span>
@@ -1517,53 +1532,126 @@ function ContractGraphPage({
   portfolio,
   subtab,
   onOpenSubtab,
+  showLineage,
+  onToggleLineage,
 }: {
   portfolio: SourceWorkspacePortfolioData;
   subtab: string;
   onOpenSubtab: (tab: string) => void;
+  showLineage: boolean;
+  onToggleLineage: () => void;
 }) {
   const lanes = [
     {
-      title: "Layer 1 / source systems",
+      title: "Source systems and files",
       nodes: [
-        "CLM / contract repository",
-        "AP / ERP invoices",
-        "CMDB / service catalog",
-        "ITSM / monitoring",
-        "SaaS and cloud consoles",
+        {
+          label: "Contract repository",
+          lineage: "CLM agreements, SOWs, pricing schedules, amendments",
+        },
+        {
+          label: "Finance and invoices",
+          lineage: "AP / ERP paid amount, invoice amount, cost center",
+        },
+        {
+          label: "Service catalog",
+          lineage: "CMDB applications, service towers, hosting model",
+        },
+        {
+          label: "Service performance",
+          lineage: "ITSM tickets, incidents, SLA periods, service credits",
+        },
+        {
+          label: "Usage consoles",
+          lineage: "SaaS seats, cloud usage, reserved commitments",
+        },
       ],
     },
     {
-      title: "Layer 2 / adapters",
+      title: "Adapters",
       nodes: [
-        "contract_register_adapter",
-        "contract_clause_adapter",
-        "contract_consumption_adapter",
-        "contract_performance_adapter",
-        "contract_scope_adapter",
-        "optimization_opportunity_adapter",
+        {
+          label: "Register adapter",
+          lineage: "contract_register_adapter",
+        },
+        {
+          label: "Clause adapter",
+          lineage: "contract_clause_adapter",
+        },
+        {
+          label: "Spend adapter",
+          lineage: "contract_consumption_adapter",
+        },
+        {
+          label: "Performance adapter",
+          lineage: "contract_performance_adapter",
+        },
+        {
+          label: "Scope adapter",
+          lineage: "contract_scope_adapter",
+        },
+        {
+          label: "Opportunity adapter",
+          lineage: "optimization_opportunity_adapter",
+        },
       ],
     },
     {
-      title: "Layer 3 / canonical truth",
+      title: "Canonical facts",
       nodes: [
-        "source.contract",
-        "source.contract_term",
-        "source.contract_scope",
-        "source.contract_consumption_observation",
-        "source.contract_performance_observation",
-        "source.optimization_opportunity",
+        {
+          label: "Contract",
+          lineage: "source.contract",
+        },
+        {
+          label: "Commercial terms",
+          lineage: "source.contract_term",
+        },
+        {
+          label: "Scope and applications",
+          lineage: "source.contract_scope",
+        },
+        {
+          label: "Monthly spend observations",
+          lineage: "source.contract_consumption_observation",
+        },
+        {
+          label: "Performance observations",
+          lineage: "source.contract_performance_observation",
+        },
+        {
+          label: "Optimization opportunities",
+          lineage: "source.optimization_opportunity",
+        },
       ],
     },
     {
-      title: "Layer 4 / product substrate",
+      title: "Source page substrate",
       nodes: [
-        "source.contract_360",
-        "source.contract_claim_card_v1",
-        "source.contract_action_candidate_v1",
-        "source.vendor_position_v1",
-        "source.source_page_storyline_v1",
-        "source.ava_grounding_bundle_v1",
+        {
+          label: "Source 360",
+          lineage: "source.contract_360",
+        },
+        {
+          label: "Claim cards",
+          lineage: "source.contract_claim_card_v1",
+        },
+        {
+          label: "Action queue",
+          lineage: "source.contract_action_candidate_v1",
+        },
+        {
+          label: "Vendor position",
+          lineage: "source.vendor_position_v1",
+        },
+        {
+          label: "Page storyline",
+          lineage: "source.source_page_storyline_v1",
+        },
+        {
+          label: "aVa grounding bundle",
+          lineage: "source.ava_grounding_bundle_v1",
+        },
       ],
     },
   ];
@@ -1580,18 +1668,23 @@ function ContractGraphPage({
           eyebrow="Contract graph"
           title={graphSubtabTitle(subtab)}
         />
+        <LineageToggle
+          showLineage={showLineage}
+          onToggleLineage={onToggleLineage}
+        />
         {subtab === "Volume" ? (
-          <GraphVolumeTable portfolio={portfolio} />
+          <GraphVolumeTable portfolio={portfolio} showLineage={showLineage} />
         ) : subtab === "Spine" ? (
-          <GraphSpineTable portfolio={portfolio} />
+          <GraphSpineTable portfolio={portfolio} showLineage={showLineage} />
         ) : (
           <div className="sw-v2-graph">
             {lanes.map((lane) => (
               <div key={lane.title} className="sw-v2-graph-lane">
                 <h3>{lane.title}</h3>
                 {lane.nodes.map((node) => (
-                  <div key={node} className="sw-v2-graph-node">
-                    {node}
+                  <div key={node.lineage} className="sw-v2-graph-node">
+                    <b>{node.label}</b>
+                    {showLineage ? <small>{node.lineage}</small> : null}
                   </div>
                 ))}
               </div>
@@ -1625,8 +1718,10 @@ function ContractGraphPage({
 
 function GraphVolumeTable({
   portfolio,
+  showLineage,
 }: {
   portfolio: SourceWorkspacePortfolioData;
+  showLineage: boolean;
 }) {
   const coverage = portfolio.impact.evidenceCoverage;
   const rows = [
@@ -1677,7 +1772,7 @@ function GraphVolumeTable({
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-graph-volume-row">
         <span>Layer</span>
-        <span>Read object</span>
+        <span>{showLineage ? "Read object" : "Substrate"}</span>
         <span>Rows</span>
         <span>Allowed claim</span>
       </div>
@@ -1686,7 +1781,7 @@ function GraphVolumeTable({
           <span>
             <b>{row.layer}</b>
           </span>
-          <span>{row.object}</span>
+          <span>{showLineage ? row.object : plainSubstrateLabel(row.object)}</span>
           <span>{row.count}</span>
           <span>{row.claim}</span>
         </div>
@@ -1697,77 +1792,95 @@ function GraphVolumeTable({
 
 function GraphSpineTable({
   portfolio,
+  showLineage,
 }: {
   portfolio: SourceWorkspacePortfolioData;
+  showLineage: boolean;
 }) {
-  const rows = [
-    [
-      "Contract register",
-      "CLM / contract repository",
-      "contract_register_adapter",
-      "source.contract, source.vendor",
-      "source.contract_360",
-      portfolio.contracts.length,
-    ],
-    [
-      "Vendor rollup",
-      "Vendor master and contract refs",
-      "vendor_portfolio_adapter",
-      "source.vendor",
-      "source.vendor_contract_portfolio",
-      portfolio.vendors.length,
-    ],
-    [
-      "Scope to applications",
-      "CMDB / service catalog",
-      "contract_scope_adapter",
-      "source.contract_scope",
-      "source.contract_application_scope",
-      portfolio.applicationScope.length,
-    ],
-    [
-      "Spend consumption",
-      "AP / ERP invoices",
-      "contract_consumption_adapter",
-      "source.contract_consumption_observation",
-      "consumption.sourcing_spend_monthly_v1",
-      portfolio.v4Snapshot.spendConsumption.rowCount,
-    ],
-    [
-      "SLA performance",
-      "ITSM / SLA history",
-      "contract_performance_adapter",
-      "source.contract_performance_observation",
-      "consumption.sourcing_performance_v1",
-      portfolio.v4Snapshot.performanceCredits.rowCount,
-    ],
-    [
-      "Optimization action",
-      "Deterministic impact layer",
-      "optimization_opportunity_adapter",
-      "source.optimization_opportunity",
-      "source.contract_action_candidate_v1",
-      portfolio.impact.actionCandidates.length,
-    ],
+  const rows: Array<{
+    family: string;
+    sourceSystem: string;
+    adapter: string;
+    canonical: string;
+    substrate: string;
+    rows: number;
+  }> = [
+    {
+      family: "Contract register",
+      sourceSystem: "CLM / contract repository",
+      adapter: "contract_register_adapter",
+      canonical: "source.contract, source.vendor",
+      substrate: "source.contract_360",
+      rows: portfolio.contracts.length,
+    },
+    {
+      family: "Vendor rollup",
+      sourceSystem: "Vendor master and contract refs",
+      adapter: "vendor_portfolio_adapter",
+      canonical: "source.vendor",
+      substrate: "source.vendor_contract_portfolio",
+      rows: portfolio.vendors.length,
+    },
+    {
+      family: "Scope to applications",
+      sourceSystem: "CMDB / service catalog",
+      adapter: "contract_scope_adapter",
+      canonical: "source.contract_scope",
+      substrate: "source.contract_application_scope",
+      rows: portfolio.applicationScope.length,
+    },
+    {
+      family: "Spend consumption",
+      sourceSystem: "AP / ERP invoices",
+      adapter: "contract_consumption_adapter",
+      canonical: "source.contract_consumption_observation",
+      substrate: "consumption.sourcing_spend_monthly_v1",
+      rows: portfolio.v4Snapshot.spendConsumption.rowCount,
+    },
+    {
+      family: "SLA performance",
+      sourceSystem: "ITSM / SLA history",
+      adapter: "contract_performance_adapter",
+      canonical: "source.contract_performance_observation",
+      substrate: "consumption.sourcing_performance_v1",
+      rows: portfolio.v4Snapshot.performanceCredits.rowCount,
+    },
+    {
+      family: "Optimization action",
+      sourceSystem: "Deterministic impact layer",
+      adapter: "optimization_opportunity_adapter",
+      canonical: "source.optimization_opportunity",
+      substrate: "source.contract_action_candidate_v1",
+      rows: portfolio.impact.actionCandidates.length,
+    },
   ];
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-graph-spine-row">
         <span>Evidence family</span>
         <span>Source system</span>
-        <span>Adapter</span>
-        <span>Canonical</span>
-        <span>Product substrate</span>
+        <span>{showLineage ? "Adapter" : "Intake path"}</span>
+        <span>{showLineage ? "Canonical" : "Facts created"}</span>
+        <span>{showLineage ? "Product substrate" : "Source view"}</span>
         <span>Rows</span>
       </div>
       {rows.map((row) => (
-        <div key={row[0]} className="sw-v2-table-row sw-v2-graph-spine-row">
-          <span>{row[0]}</span>
-          <span>{row[1]}</span>
-          <span>{row[2]}</span>
-          <span>{row[3]}</span>
-          <span>{row[4]}</span>
-          <span>{row[5]}</span>
+        <div
+          key={row.family}
+          className="sw-v2-table-row sw-v2-graph-spine-row"
+        >
+          <span>{row.family}</span>
+          <span>{row.sourceSystem}</span>
+          <span>
+            {showLineage ? row.adapter : plainAdapterLabel(row.adapter)}
+          </span>
+          <span>
+            {showLineage ? row.canonical : plainCanonicalLabel(row.canonical)}
+          </span>
+          <span>
+            {showLineage ? row.substrate : plainSubstrateLabel(row.substrate)}
+          </span>
+          <span>{row.rows}</span>
         </div>
       ))}
     </div>
@@ -1821,6 +1934,27 @@ function SubtabBar<T extends readonly string[]>({
   );
 }
 
+function LineageToggle({
+  showLineage,
+  onToggleLineage,
+}: {
+  showLineage: boolean;
+  onToggleLineage: () => void;
+}) {
+  return (
+    <div className="sw-v2-lineage-toggle">
+      <p>
+        {showLineage
+          ? "Canonical object names, adapters, and read-model paths are visible for audit."
+          : "Executive view hides raw substrate names; open lineage when auditing the evidence path."}
+      </p>
+      <button type="button" onClick={onToggleLineage}>
+        {showLineage ? "Hide lineage" : "Show lineage"}
+      </button>
+    </div>
+  );
+}
+
 function PanelHead({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div className="sw-v2-panel-head">
@@ -1828,6 +1962,45 @@ function PanelHead({ eyebrow, title }: { eyebrow: string; title: string }) {
       <h2>{title}</h2>
     </div>
   );
+}
+
+function plainAdapterLabel(adapter: string) {
+  if (adapter.includes("contract_register")) return "Contract register";
+  if (adapter.includes("vendor_portfolio")) return "Vendor rollup";
+  if (adapter.includes("scope")) return "Scope mapping";
+  if (adapter.includes("consumption")) return "Spend consumption";
+  if (adapter.includes("performance")) return "SLA performance";
+  if (adapter.includes("optimization")) return "Action calculation";
+  return "Mapped intake";
+}
+
+function plainCanonicalLabel(canonical: string) {
+  if (canonical.includes("contract, source.vendor")) {
+    return "Contracts and vendors";
+  }
+  if (canonical.includes("source.vendor")) return "Vendor facts";
+  if (canonical.includes("contract_scope")) return "Scope facts";
+  if (canonical.includes("contract_consumption")) return "Monthly spend facts";
+  if (canonical.includes("contract_performance")) {
+    return "Performance and credit facts";
+  }
+  if (canonical.includes("optimization")) return "Opportunity facts";
+  if (canonical.includes("contract_term")) return "Commercial term facts";
+  return "Canonical facts";
+}
+
+function plainSubstrateLabel(substrate: string) {
+  if (substrate.includes("contract_360")) return "Contract detail";
+  if (substrate.includes("vendor_contract_portfolio")) return "Vendor portfolio";
+  if (substrate.includes("application_scope")) return "Application scope";
+  if (substrate.includes("spend_monthly")) return "Spend trend";
+  if (substrate.includes("performance")) return "Performance view";
+  if (substrate.includes("action_candidate")) return "Optimize action queue";
+  if (substrate.includes("claim_card")) return "Executive claim cards";
+  if (substrate.includes("vendor_position")) return "Vendor position";
+  if (substrate.includes("source_page_storyline")) return "Page storyline";
+  if (substrate.includes("ava_grounding")) return "aVa grounding";
+  return "Source view";
 }
 
 function ClaimContract({
