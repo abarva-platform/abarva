@@ -101,6 +101,12 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listContract360: jest.fn(),
   listContractApplicationScope: jest.fn(),
   listContractInitiativeDependency: jest.fn(),
+  listSourceAvaGroundingBundles: jest.fn(() => Promise.resolve([])),
+  listSourceContractActionCandidates: jest.fn(() => Promise.resolve([])),
+  listSourceContractClaimCards: jest.fn(() => Promise.resolve([])),
+  listSourceContractEvidenceCoverage: jest.fn(() => Promise.resolve([])),
+  listSourcePageStoryline: jest.fn(() => Promise.resolve([])),
+  listSourceVendorPositions: jest.fn(() => Promise.resolve([])),
   listVendorContractPortfolio: jest.fn(),
 }));
 
@@ -294,7 +300,12 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByLabelText("Portfolio facts")).toBeTruthy();
     expect(screen.getByText("Helix Shared Services Group")).toBeTruthy();
     expect(screen.getByText("Executive position")).toBeTruthy();
-    expect(screen.getByText("Verified opportunity")).toBeTruthy();
+    expect(screen.getByText("Finance confirmation remains separate")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "No quantified opportunity is loaded in the current deterministic slice.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByText("Vendor concentration")).toBeTruthy();
     expect(screen.getByText("Evidence posture")).toBeTruthy();
     expect(screen.getByText("Unsupported dashboard claims")).toBeTruthy();

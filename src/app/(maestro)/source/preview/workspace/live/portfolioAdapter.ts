@@ -16,6 +16,7 @@ import {
   type ContractLeverageEntry,
 } from "@/lib/source/data-model/vendor-contract-portfolio";
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 import { resolveEclProductProvider } from "@/lib/ecl/product-provider";
 import { computeSourcingOpportunities } from "@/lib/source/data-model/sourcing-opportunities";
 import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
@@ -387,8 +388,6 @@ async function loadEclProjectionWorkspacePortfolio(
     eventRows,
     cubeSliceRows,
     runtimeEvidence,
-    sourceOverlayContracts,
-    sourceOverlayVendors,
     impact,
   ] = await Promise.all([
     provider === "ecl_projection_db"
@@ -421,8 +420,6 @@ async function loadEclProjectionWorkspacePortfolio(
           emptyEclRuntimeEvidenceSummary(),
         )
       : Promise.resolve(emptyEclRuntimeEvidenceSummary()),
-    listContract360(tenantKey).catch(() => []),
-    listVendorContractPortfolio(tenantKey).catch(() => []),
     loadSourceWorkspaceImpactLayer(tenantKey),
   ]);
   const acceptedTenantKeys = new Set(
@@ -434,34 +431,11 @@ async function loadEclProjectionWorkspacePortfolio(
   const eclContracts = contractRows
     .filter(tenantMatches)
     .map(contractFromEclProjectionRow);
-  const overlayContractIds = new Set(
-    impact.evidenceCoverage
-      .filter(
-        (row) =>
-          row.document_page_text_rows > 0 ||
-          row.spend_rows > 0 ||
-          row.performance_rows > 0 ||
-          row.opportunity_rows > 0,
-      )
-      .map((row) => row.contract_id),
-  );
-  const contracts = mergeContractsById(
-    eclContracts,
-    sourceOverlayContracts.filter((row) =>
-      overlayContractIds.has(row.contract_id),
-    ),
-  );
+  const contracts = eclContracts;
   const eclVendors = vendorRows
     .filter(tenantMatches)
     .map(vendorFromEclProjectionRow);
-  const vendors = mergeVendorsByRef(
-    eclVendors,
-    sourceOverlayVendors.filter((row) =>
-      row.contract_refs.some((contractId) =>
-        overlayContractIds.has(contractId),
-      ),
-    ),
-  );
+  const vendors = eclVendors;
   const applicationScope = contractRows
     .filter(tenantMatches)
     .flatMap(scopeFromEclProjectionRow);
@@ -1232,57 +1206,6 @@ function normalizeContractRefs(value: unknown): string[] {
   return parseJsonArray(value).map(String).filter(Boolean);
 }
 
-function mergeContractsById(
-  base: readonly SourceContract360Row[],
-  overlay: readonly SourceContract360Row[],
-): SourceContract360Row[] {
-  const merged = new Map<string, SourceContract360Row>();
-  for (const row of base) merged.set(row.contract_id, row);
-  for (const row of overlay) merged.set(row.contract_id, row);
-  return [...merged.values()].sort(
-    (left, right) =>
-      valueOf(right.annual_value) - valueOf(left.annual_value) ||
-      left.contract_id.localeCompare(right.contract_id),
-  );
-}
-
-function mergeVendorsByRef(
-  base: readonly SourceVendorContractPortfolioRow[],
-  overlay: readonly SourceVendorContractPortfolioRow[],
-): SourceVendorContractPortfolioRow[] {
-  const merged = new Map<string, SourceVendorContractPortfolioRow>();
-  for (const row of base) merged.set(row.vendor_ref, row);
-  for (const row of overlay) {
-    const existing = merged.get(row.vendor_ref);
-    if (!existing) {
-      merged.set(row.vendor_ref, row);
-      continue;
-    }
-    const existingContracts = new Set(existing.contract_refs);
-    const addedContracts = row.contract_refs.filter(
-      (contractId) => !existingContracts.has(contractId),
-    );
-    merged.set(row.vendor_ref, {
-      ...existing,
-      contract_count: existing.contract_count + addedContracts.length,
-      annual_value:
-        (numberFromDb(existing.annual_value) ?? 0) +
-        (numberFromDb(row.annual_value) ?? 0),
-      total_committed_value:
-        (numberFromDb(existing.total_committed_value) ?? 0) +
-        (numberFromDb(row.total_committed_value) ?? 0),
-      auto_renew_contracts:
-        existing.auto_renew_contracts + row.auto_renew_contracts,
-      contract_refs: [...existing.contract_refs, ...addedContracts].sort(),
-    });
-  }
-  return [...merged.values()].sort(
-    (left, right) =>
-      valueOf(right.annual_value) - valueOf(left.annual_value) ||
-      left.vendor_name.localeCompare(right.vendor_name),
-  );
-}
-
 async function readProjectionCsv(
   filePath: string,
 ): Promise<EclProjectionRow[]> {
@@ -1340,9 +1263,14 @@ async function readProjectionView(
     await run("SELECT set_config('app.tenant_key', $1, false)", [
       acceptedTenantKeys[0] ?? tenantKey,
     ]);
+    const assessmentId = denseAssessmentIdForTenant(tenantKey);
     const rows = await run<{ payload_json: EclProjectionRow }>(
-      `SELECT payload_json FROM serving.${servingView} WHERE tenant_key = ANY($1::text[]) ORDER BY row_key`,
-      [acceptedTenantKeys],
+      `SELECT payload_json
+         FROM serving.${servingView}
+        WHERE tenant_key = ANY($1::text[])
+          AND assessment_id = $2
+        ORDER BY row_key`,
+      [acceptedTenantKeys, assessmentId],
     );
     return rows.map((row) => row.payload_json);
   });
@@ -1360,13 +1288,19 @@ async function readEclCubeSlices(
     await run("SELECT set_config('app.tenant_key', $1, false)", [
       acceptedTenantKeys[0] ?? tenantKey,
     ]);
+    const assessmentId = denseAssessmentIdForTenant(tenantKey);
     return run(
       `SELECT cube_key, slice_key, primary_metric_key, quality_state
          FROM ecl_projection.cube_slice
         WHERE tenant_key = ANY($1::text[])
-          AND cube_key = ANY($2::text[])
+          AND assessment_id = $2
+          AND cube_key = ANY($3::text[])
         ORDER BY cube_key, slice_key`,
-      [acceptedTenantKeys, ["source_contract_cube", "source_vendor_cube"]],
+      [
+        acceptedTenantKeys,
+        assessmentId,
+        ["source_contract_cube", "source_vendor_cube"],
+      ],
     );
   });
 }

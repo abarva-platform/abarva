@@ -622,8 +622,8 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     );
     expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBe(1);
     expect(portfolio.workspaceDiagnostics.eclProjectionDir).toBeNull();
-    expect(portfolio.contracts).toHaveLength(2);
-    expect(portfolio.vendors).toHaveLength(2);
+    expect(portfolio.contracts).toHaveLength(1);
+    expect(portfolio.vendors).toHaveLength(1);
     expect(portfolio.impact.evidenceCoverage).toHaveLength(1);
     expect(portfolio.impact.actionCandidates).toHaveLength(1);
     expect(portfolio.impact.claimCards).toHaveLength(1);
@@ -634,13 +634,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       portfolio.contracts.find(
         (row) => row.contract_id === "MER-TECH-M365-001",
       ),
-    ).toMatchObject({
-      contract_id: "MER-TECH-M365-001",
-      annual_value: 1480000,
-      actual_annual_spend: 1452000,
-      operational_evidence_gap: false,
-      scoped_application_count: 2,
-    });
+    ).toBeUndefined();
     expect(
       portfolio.contracts.find(
         (row) => row.contract_id === "MER-CTR-SSO-BPO-001",
@@ -672,6 +666,31 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_events")),
     ).toBe(true);
+    expect(
+      runCalls
+        .filter((call) => call.sql.includes("FROM serving."))
+        .every((call) =>
+          call.sql.includes("AND assessment_id = $2"),
+        ),
+    ).toBe(true);
+    expect(
+      runCalls
+        .filter((call) => call.sql.includes("FROM serving."))
+        .every((call) =>
+          call.params.includes("assessment-dense-source-room-20260823"),
+        ),
+    ).toBe(true);
+    expect(
+      runCalls.find((call) =>
+        call.sql.includes("ecl_projection.cube_slice"),
+      ),
+    ).toMatchObject({
+      params: [
+        expect.arrayContaining(["meridian-health"]),
+        "assessment-dense-source-room-20260823",
+        ["source_contract_cube", "source_vendor_cube"],
+      ],
+    });
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_compare")),
     ).toBe(true);
