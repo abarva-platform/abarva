@@ -12,6 +12,8 @@
 
 Source renewal exposure now treats `renewal_date`, `term_end_date`, and `expiration_date` as equivalent term triggers when a contract row does not carry `end_date`. It also respects a raw `auto_renew_flag` before falling back to the canonical `auto_renew` boolean. This keeps the executive cockpit from dropping valid notice-window exposure when upstream rows are still in raw contract-register shape.
 
+Follow-up: explicit `notice_deadline` fields now take precedence for missed-notice detection when a still-active row carries both an expiration/term date and a separate notice deadline.
+
 ## Layer Impact
 
 Release lane: `global-control-lane`.
