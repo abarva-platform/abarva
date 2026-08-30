@@ -286,7 +286,7 @@ describe("Source workspace ECL browser-surface proof", () => {
       },
     };
 
-    render(
+    const { container } = render(
       <WorkspaceClient
         portfolio={dbPortfolio}
         tenantName="Meridian Health"
@@ -335,6 +335,10 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(screen.getByText("Vendor concentration")).toBeTruthy();
     expect(screen.getByText("Evidence posture")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-verdict-grid")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-verdict-position")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-verdict-action")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-verdict-evidence")).toBeTruthy();
     expect(screen.getByText("Unsupported dashboard claims")).toBeTruthy();
     expect(screen.getByText("Hidden")).toBeTruthy();
     expect(screen.queryByText("Contract register")).toBeNull();

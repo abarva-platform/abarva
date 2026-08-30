@@ -440,8 +440,8 @@ function PortfolioPage({
   const storyline = storylineBySurface(portfolio, "overview");
 
   return (
-    <div className="sw-v2-grid">
-      <section className="sw-v2-panel sw-v2-span-2">
+    <div className="sw-v2-grid sw-v2-verdict-grid">
+      <section className="sw-v2-panel sw-v2-verdict-position">
         <PanelHead
           eyebrow="Executive position"
           title={storyline?.headline ?? portfolio.cockpit.verdict.headline}
@@ -489,7 +489,7 @@ function PortfolioPage({
         </div>
       </section>
 
-      <section className="sw-v2-panel">
+      <section className="sw-v2-panel sw-v2-verdict-action">
         <PanelHead
           eyebrow="Action opportunity"
           title="Finance confirmation remains separate"
@@ -541,7 +541,7 @@ function PortfolioPage({
         )}
       </section>
 
-      <section className="sw-v2-panel sw-v2-span-2">
+      <section className="sw-v2-panel sw-v2-verdict-vendors">
         <PanelHead
           eyebrow="Vendor concentration"
           title="Largest relationships by recorded annual value"
@@ -570,7 +570,7 @@ function PortfolioPage({
         </div>
       </section>
 
-      <section className="sw-v2-panel">
+      <section className="sw-v2-panel sw-v2-verdict-evidence">
         <PanelHead eyebrow="Evidence posture" title="Loaded rows only" />
         <div className="sw-v2-fact-stack">
           <Fact label="Spend rows" value={String(spendRows)} />
@@ -588,7 +588,7 @@ function PortfolioPage({
         </div>
       </section>
 
-      <section className="sw-v2-panel">
+      <section className="sw-v2-panel sw-v2-verdict-quality">
         <PanelHead
           eyebrow="Claim quality controls"
           title="Computed, excluded, or withheld"
