@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-08-30T12:19:52.669Z",
+  "status": "dry_run_ready",
+  "boundary": {
+    "layer": "layer_4_products_and_cubes",
+    "azure_write_requested": false,
+    "source_layer_written": false,
+    "canonical_layer_written": false,
+    "product_projection_written": false,
+    "cube_layer_written": false
+  },
+  "job_contract": {
+    "job_name": "job-abarva-private-operator-eus",
+    "tenant_scope": "meridian-health",
+    "assessment_id": "meridian-tower-layer2-source-adapters-v2026-08",
+    "build_version": "tower-layer4-products-v2026-08",
+    "input_source_version": "tower-layer3-canonical-v2026-08",
+    "idempotency_key": "tower-layer4-products-v2026-08:fd4803bbb982b8b4827bd8b874d20c49e13eb1f5",
+    "operator_identity": "anand",
+    "git_sha": "fd4803bbb982b8b4827bd8b874d20c49e13eb1f5",
+    "image_digest": null
+  },
+  "package_dir": "/Users/anand/Projects/nexus-worktrees/tower-case-attrs-20260829/datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-08-business-case",
+  "out_dir": "/Users/anand/Projects/nexus-worktrees/tower-case-attrs-20260829/reports/meridian-tower-layer4-products",
+  "expected_counts": {
+    "projection_manifest": 9,
+    "projection_entry": 284,
+    "projection_entry_source_record_ref": 452,
+    "tower_command_center": 77,
+    "tower_value_chain": 84,
+    "tower_evidence_queue": 68,
+    "tower_ai_portfolio": 55,
+    "cube_manifest": 3,
+    "cube_slice": 110,
+    "cube_slice_metric": 283,
+    "cube_slice_measure": 136,
+    "serving": {
+      "tower_command_center": 77,
+      "tower_value_proof": 84,
+      "tower_decision_lanes": 42,
+      "tower_evidence": 34,
+      "tower_recommended_actions": 34,
+      "tower_ai_portfolio": 42,
+      "tower_cost_lens": 42,
+      "tower_risk_lens": 34,
+      "tower_adoption_lens": 13
+    },
+    "executive": {
+      "total_it_budget_usd": 1050000000,
+      "reviewed_project_count": 140,
+      "reviewed_project_budget_usd": 703100000,
+      "ai_related_investment_usd": 211801054,
+      "projected_annual_value_low_usd": 677763373,
+      "board_claimable_ytd_usd": 13136248
+    }
+  },
+  "load_sql": "/Users/anand/Projects/nexus-worktrees/tower-case-attrs-20260829/reports/meridian-tower-layer4-products/tower_layer4_product_cube_load.sql",
+  "readback_sql": "/Users/anand/Projects/nexus-worktrees/tower-case-attrs-20260829/reports/meridian-tower-layer4-products/tower_layer4_product_cube_readback.sql",
+  "readback": null,
+  "issues": []
+}

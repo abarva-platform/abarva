@@ -1214,6 +1214,53 @@ function writePurgeSql(outPath, options) {
   fs.writeFileSync(outPath, sql, "utf8");
 }
 
+/**
+ * Declare this generation active, and retire whatever was active before it.
+ *
+ * The active generation used to be inferred — `serving.tower_active_assessment_keys()` ranked on
+ * payload shape, projection version, created_at and finally assessment id. A tenant once saw
+ * $492.5M instead of $677.8M because that ranking picked a retired generation. `AGENTS.md`:
+ * identity is declared, never inferred.
+ *
+ * Retire first, then activate. A partial unique index permits one active generation per tenant, so
+ * activating before retiring would be rejected — which is the index doing its job.
+ *
+ * Guarded on the table existing, so a database that has not taken the lifecycle migration yet
+ * loads exactly as it did before instead of failing.
+ */
+function lifecycleDeclarationSql(options) {
+  const tenant = sqlText(options.tenantKey);
+  const assessment = sqlText(options.assessmentId);
+  const build = sqlText(options.buildVersion);
+  return `do $lifecycle$
+begin
+  if to_regclass('ecl_projection.tower_assessment_lifecycle') is null then
+    raise notice 'tower_assessment_lifecycle absent; generation not declared';
+    return;
+  end if;
+
+  update ecl_projection.tower_assessment_lifecycle
+     set state = 'retired',
+         retired_at = now()
+   where tenant_key = ${tenant}
+     and state = 'active'
+     and not (assessment_id = ${assessment} and projection_version = ${PROJECTION_VERSION});
+
+  insert into ecl_projection.tower_assessment_lifecycle
+    (tenant_key, assessment_id, projection_version, state, activated_at, retired_at, build_version, note)
+  values
+    (${tenant}, ${assessment}, ${PROJECTION_VERSION}, 'active', now(), null, ${build},
+     'Declared by the Layer 4 product load.')
+  on conflict (tenant_key, assessment_id, projection_version)
+  do update set
+    state = 'active',
+    activated_at = now(),
+    retired_at = null,
+    build_version = excluded.build_version;
+end
+$lifecycle$;`;
+}
+
 function writeLoadSql(outPath, options, rows) {
   const sql = [
     "begin;",
@@ -1230,6 +1277,9 @@ function writeLoadSql(outPath, options, rows) {
     insertSql("ecl_projection.cube_slice", ["id", "tenant_key", "assessment_id", "snapshot_id", "cube_manifest_id", "cube_key", "cube_version", "slice_key", "grain_key", "primary_object_id", "dimensions_json", "measures_json", "primary_metric_key", "metric_keys_json", "source_refs_json", "basis_summary", "value_state", "quality_state", "gap_flags_json", "source_hash"], rows.cubeSlices),
     insertSql("ecl_projection.cube_slice_metric", ["tenant_key", "assessment_id", "cube_slice_id", "metric_key", "metric_role", "unit", "sort_order", "source_hash"], rows.cubeSliceMetrics),
     insertSql("ecl_projection.cube_slice_measure", ["tenant_key", "assessment_id", "cube_slice_id", "measure_id", "metric_key", "measure_role", "source_hash"], rows.cubeSliceMeasures),
+    // Last, inside the same transaction as the rows it describes. A generation that fails to load
+    // is never declared active, and the prior one keeps serving.
+    lifecycleDeclarationSql(options),
     "commit;",
   ].join("\n");
   fs.writeFileSync(outPath, sql, "utf8");
