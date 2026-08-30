@@ -557,6 +557,14 @@ assert(
   "EnterpriseThesis keeps vendor concentration out of the opening story claim order and routes it to commercial sections",
 );
 assert(
+  chapters.includes("function enterpriseOpeningClaims") &&
+    chapters.includes("COMMERCIAL_OPENING_RE") &&
+    chapters.includes("supplier group") &&
+    chapters.includes("ENTERPRISE_OPENING_RE") &&
+    chapters.includes("key_insights: takeLimit(enterpriseOpeningClaims(alive(thesis.things_a_new_cxo_should_know))"),
+  "Home chapter assembly keeps supplier concentration out of the executive opening slice when enterprise-shape claims exist",
+);
+assert(
   script.includes("Report, job, user, script, and data-volume counts are unavailable from this source family.") &&
     !script.includes("pages should show those workload summaries") &&
     !script.includes("must not ask leaders to confirm those counts") &&

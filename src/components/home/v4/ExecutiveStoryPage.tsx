@@ -256,19 +256,37 @@ function buildStorySections(chapters: ChapterView[]): StorySection[] {
         ...chapter.what_to_watch,
       ]),
     );
+    const sectionClaims = claimsForStorySection(spec, claims);
     const limitations = Array.from(
       new Set(sectionChapters.flatMap((chapter) => chapter.limitations).filter(Boolean)),
     );
-    const leadClaim = chooseSectionLeadClaim(claims);
+    const leadClaim = spec.id === "enterprise" ? sectionClaims[0] ?? null : chooseSectionLeadClaim(sectionClaims);
     return {
       spec,
-      state: claims.length > 0 ? "published" : limitations.length > 0 ? "refused" : "deferred",
+      state: sectionClaims.length > 0 ? "published" : limitations.length > 0 ? "refused" : "deferred",
       leadClaim,
-      supportingClaims: claims.filter((claim) => claim.statement !== leadClaim?.statement).slice(0, 3),
+      supportingClaims: sectionClaims.filter((claim) => claim.statement !== leadClaim?.statement).slice(0, 3),
       limitations,
       chapters: sectionChapters,
     };
   });
+}
+
+function claimsForStorySection(spec: StorySectionSpec, claims: GroundedClaim[]): GroundedClaim[] {
+  if (spec.id !== "enterprise") return claims;
+  const nonCommercial = claims.filter((claim) => !isCommercialOpeningClaim(claim.statement));
+  if (nonCommercial.length === 0) return claims;
+  const enterpriseShape = nonCommercial.filter((claim) => ENTERPRISE_OPENING_RE.test(claim.statement));
+  return enterpriseShape.length
+    ? [
+        ...enterpriseShape,
+        ...nonCommercial.filter((claim) => !enterpriseShape.includes(claim)),
+      ]
+    : nonCommercial;
+}
+
+function isCommercialOpeningClaim(statement: string): boolean {
+  return COMMERCIAL_OPENING_RE.test(statement) || /\b(?:supplier group|top five supplier|reviewed contract value|ready contract value)\b/i.test(statement);
 }
 
 function uniqueClaims(claims: GroundedClaim[]): GroundedClaim[] {
