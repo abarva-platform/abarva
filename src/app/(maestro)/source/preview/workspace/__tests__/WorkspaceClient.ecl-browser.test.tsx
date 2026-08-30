@@ -331,6 +331,18 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Contracts" })[0]);
 
+    expect(screen.getByRole("tab", { name: "Contract table" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Evidence depth" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Financial posture" })).toBeTruthy();
+    expect(screen.getByText("Contract list guardrail")).toBeTruthy();
+    expect(screen.getByText("Rows before story")).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Enterprise Shared Services BPO/,
+      }),
+    );
+
     expect(screen.getByRole("button", { name: "Scope" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Economics" })).toBeTruthy();
 
@@ -348,8 +360,14 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
 
+    expect(screen.getByRole("tab", { name: "Concentration" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Evidence depth" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Archetype mix" })).toBeTruthy();
     expect(screen.getByText("Vendor 360")).toBeTruthy();
     expect(screen.getByText("One row per supplier relationship")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Evidence depth" }));
+    expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
 
     fireEvent.click(
       screen.getByRole("button", { name: /Epic Systems Corporation/ }),
@@ -359,5 +377,17 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("MER-CTR-EPIC-001")).toBeTruthy();
     expect(screen.queryByText("Portfolio position")).toBeNull();
     expect(screen.queryByText("Material contracts")).toBeNull();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[0]);
+    expect(screen.getByRole("tab", { name: "Action queue" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "By type" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "By contract" })).toBeTruthy();
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Contract graph" })[0],
+    );
+    expect(screen.getByRole("tab", { name: "Flow" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Volume" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Spine" })).toBeTruthy();
   });
 });
