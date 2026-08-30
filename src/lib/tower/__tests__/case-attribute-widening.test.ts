@@ -334,3 +334,52 @@ describe("the projection schema reference does not silently rot", () => {
     expect([creates, doc.includes("not yet a migration")]).toEqual([creates, !creates]);
   });
 });
+
+describe("the active assessment is declared, not inferred", () => {
+  const migration = read(
+    "supabase/migrations/20260830050000_tower_assessment_lifecycle.sql",
+  );
+
+  it("declares at most one active generation per tenant, in the database", () => {
+    // Nothing previously prevented two active generations; the ranking silently picked one.
+    expect(migration).toMatch(
+      /create unique index if not exists tower_assessment_lifecycle_one_active[\s\S]*?where state = 'active'/,
+    );
+  });
+
+  it("keeps retired distinct from active, and dated", () => {
+    expect(migration).toContain("check (state in ('active', 'retired'))");
+    expect(migration).toContain("check ((state = 'retired') = (retired_at is not null))");
+  });
+
+  it("lets a declaration beat the ranking", () => {
+    // The declared branch is unconditional; the inferred branch is gated on the absence of a
+    // declaration. If that `not exists` were ever dropped, both branches would return rows and
+    // a retired generation would reappear alongside the active one.
+    expect(migration).toContain("where l.state = 'active'");
+    expect(migration).toMatch(
+      /and not exists \([\s\S]*?tower_assessment_lifecycle declared[\s\S]*?state = 'active'/,
+    );
+  });
+
+  it("carries a real tenant policy rather than RLS with no policy", () => {
+    // The four sibling projection tables have RLS on and zero policies, which denies reads to any
+    // role that does not bypass RLS and leaves isolation resting on the reader's where-clause.
+    expect(migration).toContain("enable row level security");
+    expect(migration).toContain("create policy tower_assessment_lifecycle_tenant_select");
+    expect(migration).toContain("current_setting('app.tenant_key', true)");
+  });
+
+  it("does not move any tenant's reads on the day it lands", () => {
+    // The fallback must be the prior ranking verbatim, or this migration is a behaviour change
+    // disguised as a structural one.
+    for (const signal of [
+      "candidates.priority desc",
+      "candidates.projection_version desc",
+      "candidates.created_at desc",
+      "candidates.assessment_id desc",
+    ]) {
+      expect([signal, migration.includes(signal)]).toEqual([signal, true]);
+    }
+  });
+});
