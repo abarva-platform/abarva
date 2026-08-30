@@ -3,6 +3,7 @@ import {
   buildTechnologyEstateFromHomeProjectionRows,
   type HomeProjectionRow,
 } from "../ecl-projection-bundle";
+import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { getHomeReviewBundle } from "../golden-snapshot";
 
 function row(input: Partial<HomeProjectionRow> & Pick<HomeProjectionRow, "page_key" | "row_key" | "row_type" | "title">): HomeProjectionRow {
@@ -365,5 +366,47 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ]),
     ).toThrow("no published chapter_claim rows");
+  });
+
+  it("resolves deterministic writer evidence ids on the Home runtime signal packet", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    expect(base).toBeTruthy();
+
+    const bundle = buildHomeReviewBundleFromEclProjectionRows(base!, [
+      ...chapterSummaryFixtures(),
+      row({
+        page_key: "our_business",
+        row_key: "our_business_writer_claim_001",
+        row_type: "chapter_claim",
+        title: "Published commercial basis claim",
+        summary: "The published business claim cites writer signal and scope context ids.",
+        display_payload_json: {
+          evidence_ids: ["sig_ecl_contract_value_005", "ctx_ecl_scope_business_economics_001"],
+          claim_type: "FACT",
+          confidence: "high",
+        },
+      }),
+      row({
+        page_key: "vendor_contracts",
+        row_key: "CTR-001",
+        row_type: "contract",
+        title: "Epic Systems Corporation · Core platform",
+        display_payload_json: {
+          contract_id: "CTR-001",
+          supplier_name: "Epic Systems Corporation",
+          contract_name: "Core platform agreement",
+          annualized_value_usd: "9600000",
+        },
+      }),
+    ]);
+
+    const resolved = resolveEvidence(["sig_ecl_contract_value_005", "ctx_ecl_scope_business_economics_001"], bundle.thesis.signalPacket);
+    expect(resolved).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "sig_ecl_contract_value_005" }),
+        expect.objectContaining({ id: "ctx_ecl_scope_business_economics_001" }),
+      ]),
+    );
+    expect(resolved.some((item) => item.unresolved)).toBe(false);
   });
 });
