@@ -601,6 +601,15 @@ function summarizeVerificationLedger(ledger: Array<{ action: string; verdict: st
   };
 }
 
+function summarizeSourceSummaryKinds(sourceSummaries: EnterpriseSignalPacket["sourceSummaries"]) {
+  const counts: Record<string, number> = {};
+  for (const summary of sourceSummaries) {
+    const key = summary.sourceKind ?? "unspecified";
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  return counts;
+}
+
 async function measureChapterQualityForTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
   const built = await buildTenant(tenantKey, client);
   const generatedAt = new Date().toISOString();
@@ -612,6 +621,8 @@ async function measureChapterQualityForTenant(tenantKey: string, client: Paramet
       signals: built.signalPacket.signals.length,
       contextItems: built.signalPacket.contextItems.length,
       sourceSummaries: built.signalPacket.sourceSummaries.length,
+      sourceSummaryKinds: summarizeSourceSummaryKinds(built.signalPacket.sourceSummaries),
+      rawIntakeFiles: built.signalPacket.sourceSummaries.filter((summary) => summary.rawRowCount !== undefined).length,
       visualDatasets: Object.keys(built.signalPacket.visualDatasets ?? {}).length,
     },
     verification: summarizeVerificationLedger(built.verificationLedger),

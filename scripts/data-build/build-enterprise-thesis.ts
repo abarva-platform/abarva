@@ -44,6 +44,7 @@ import {
   type Signal,
   type ContextItem,
   type RelationshipRow,
+  type SourceSummary,
 } from "./enterprise-signal-packet";
 
 const TENANTS = (() => {
@@ -71,6 +72,127 @@ const GOLDEN_EVIDENCE_CONTRACTS: Record<string, string[]> = {
   "skyharbor-air": ["Vantage", "Northgate"],
   "meridian-health": [],
 };
+
+const INTAKE_FILE_EXTENSIONS = new Set([".csv", ".tsv", ".json"]);
+
+function walkIntakeFiles(dir: string): string[] {
+  if (!fs.existsSync(dir)) return [];
+  const files: string[] = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...walkIntakeFiles(fullPath));
+    } else if (entry.isFile() && INTAKE_FILE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+      files.push(fullPath);
+    }
+  }
+  return files.sort();
+}
+
+function sourceDomainForFile(relativePath: string): string {
+  const name = path.basename(relativePath).toLowerCase();
+  if (name.startsWith("00_guide")) return "intake_guidance";
+  if (name.startsWith("00_")) return "enterprise_structure";
+  if (name.startsWith("01")) return "business_model";
+  if (name.startsWith("02")) return "organization";
+  if (name.startsWith("03")) return "workforce";
+  if (name.startsWith("04")) return "technology_estate";
+  if (name.startsWith("05")) return "data_estate";
+  if (name.startsWith("06")) return "infrastructure";
+  if (name.startsWith("07")) return "vendor_commercial_estate";
+  if (name.startsWith("08")) return "spend_value";
+  if (name.startsWith("09")) return "transformation_portfolio";
+  if (name.startsWith("10") || name.startsWith("sa08") || name.startsWith("sa09")) return "ai_portfolio";
+  if (name.startsWith("11")) return "risk_controls";
+  if (name.startsWith("12")) return "relationships";
+  if (name.startsWith("13")) return "evidence";
+  if (name.startsWith("14")) return "metrics_outcomes";
+  if (name.startsWith("15") || name.startsWith("16")) return "analytical_framing";
+  if (name.startsWith("17")) return "managed_services";
+  if (name.startsWith("18")) return "operations";
+  if (name.startsWith("19")) return "data_platform_maturity";
+  if (name.startsWith("sa10")) return "leadership_voice";
+  if (name.startsWith("sa11")) return "operational_outcomes";
+  return "client_intake";
+}
+
+function summarizeRecord(row: Record<string, unknown>, fields: string[]): string | null {
+  const values = fields.map((field) => String(row[field] ?? "").trim()).filter(Boolean).slice(0, 3);
+  return values.length ? values.join(" · ") : null;
+}
+
+function summarizeCsvFile(fullPath: string, relativePath: string): SourceSummary {
+  const text = fs.readFileSync(fullPath, "utf8");
+  const parsed = Papa.parse<Record<string, unknown>>(text, { header: true, skipEmptyLines: true });
+  const rows = Array.isArray(parsed.data) ? parsed.data : [];
+  const fields = (parsed.meta.fields ?? []).filter(Boolean);
+  const nonEmptyByField = new Map<string, number>();
+  for (const row of rows) {
+    for (const field of fields) {
+      if (String(row[field] ?? "").trim()) nonEmptyByField.set(field, (nonEmptyByField.get(field) ?? 0) + 1);
+    }
+  }
+  const materialFields = [...nonEmptyByField.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([field]) => field)
+    .slice(0, 12);
+  const exampleFields = materialFields.length ? materialFields : fields.slice(0, 5);
+  return {
+    sourcePath: relativePath,
+    domain: sourceDomainForFile(relativePath),
+    objectTypes: ["client_intake_file"],
+    recordCount: 0,
+    rawRowCount: rows.length,
+    canonicalRecordCount: 0,
+    sourceKind: relativePath.toLowerCase().startsWith("00_guide") ? "intake_guidance" : "client_intake_file",
+    basis: ["coverage_context_not_citable"],
+    authority: ["client_intake_inventory"],
+    qualityStates: parsed.errors.length ? ["parse_warnings"] : ["raw_intake_file"],
+    materialFields,
+    exampleRecords: rows.map((row) => summarizeRecord(row, exampleFields)).filter((value): value is string => Boolean(value)).slice(0, 5),
+  };
+}
+
+function summarizeJsonFile(fullPath: string, relativePath: string): SourceSummary {
+  const text = fs.readFileSync(fullPath, "utf8");
+  let rawRowCount = 1;
+  let materialFields: string[] = [];
+  let qualityState = "raw_intake_file";
+  try {
+    const parsed = JSON.parse(text);
+    const rows = Array.isArray(parsed) ? parsed : [parsed];
+    rawRowCount = rows.length;
+    const firstObject = rows.find((row) => row && typeof row === "object" && !Array.isArray(row)) as Record<string, unknown> | undefined;
+    materialFields = firstObject ? Object.keys(firstObject).slice(0, 12) : [];
+  } catch {
+    qualityState = "parse_warnings";
+  }
+  return {
+    sourcePath: relativePath,
+    domain: sourceDomainForFile(relativePath),
+    objectTypes: ["client_intake_file"],
+    recordCount: 0,
+    rawRowCount,
+    canonicalRecordCount: 0,
+    sourceKind: "client_intake_file",
+    basis: ["coverage_context_not_citable"],
+    authority: ["client_intake_inventory"],
+    qualityStates: [qualityState],
+    materialFields,
+    exampleRecords: [],
+  };
+}
+
+function buildIntakeSourceInventorySummaries(repoRoot: string, tenantKey: string): SourceSummary[] {
+  const currentRoot = path.join(repoRoot, "datasets", "tenant-inputs", "active", tenantKey, "current");
+  return walkIntakeFiles(currentRoot).map((fullPath) => {
+    const relativePath = path.relative(currentRoot, fullPath).split(path.sep).join("/");
+    const ext = path.extname(fullPath).toLowerCase();
+    return ext === ".csv" || ext === ".tsv"
+      ? summarizeCsvFile(fullPath, relativePath)
+      : summarizeJsonFile(fullPath, relativePath);
+  });
+}
 
 /* ------------------------------------------------------------------------------------------------
  * Thesis shape
@@ -451,12 +573,13 @@ export function validateStructure(thesis: EnterpriseThesis, signalPacket: Return
   const domainRequiringTypes: ClaimType[] = ["CROSS_DOMAIN_INSIGHT", "ADVISORY_INFERENCE"];
 
   function checkClaim(path: string, claim: GroundedClaim) {
-    if (claim.evidence_ids.length === 0) {
+    const evidenceIds = claimEvidenceIds(claim);
+    if (evidenceIds.length === 0) {
       issues.push({ path, reason: "no evidence_ids cited" });
       return;
     }
     const domains = new Set<string>();
-    for (const evId of claim.evidence_ids) {
+    for (const evId of evidenceIds) {
       const item = byId.get(evId);
       if (!item) {
         issues.push({ path, reason: `cites unknown evidence id: ${evId}` });
@@ -591,13 +714,17 @@ function evidenceLookup(signalPacket: ReturnType<typeof buildEnterpriseSignalPac
   ]);
 }
 
+function claimEvidenceIds(claim: GroundedClaim): string[] {
+  return Array.isArray(claim.evidence_ids) ? claim.evidence_ids : [];
+}
+
 async function verifyClaim(
   client: Parameters<typeof callClaude>[0],
   claim: GroundedClaim,
   signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
 ): Promise<{ verdict: Verdict; reasoning: string }> {
   const byId = evidenceLookup(signalPacket);
-  const facts = claim.evidence_ids.map((id) => byId.get(id)?.statement).filter(Boolean);
+  const facts = claimEvidenceIds(claim).map((id) => byId.get(id)?.statement).filter(Boolean);
   if (facts.length === 0) return { verdict: "UNSUPPORTED", reasoning: "no resolvable evidence ids" };
 
   const userPrompt =
@@ -643,7 +770,7 @@ async function repairClaim(
   signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
 ): Promise<string | null> {
   const byId = evidenceLookup(signalPacket);
-  const facts = claim.evidence_ids.map((id) => byId.get(id)?.statement).filter(Boolean);
+  const facts = claimEvidenceIds(claim).map((id) => byId.get(id)?.statement).filter(Boolean);
   const userPrompt =
     `Original claim:\n${claim.statement}\n\n` +
     `Facts it was allowed to use:\n${facts.map((f, i) => `${i + 1}. ${f}`).join("\n")}\n\n` +
@@ -1067,7 +1194,8 @@ export async function buildTenant(tenantKey: string, client: Parameters<typeof c
       sourcePath: relationshipsPath,
     }));
   }
-  const dc = buildDecisionContext(records, relationshipRows);
+  const intakeSourceSummaries = buildIntakeSourceInventorySummaries(process.cwd(), tenantKey);
+  const dc = buildDecisionContext(records, relationshipRows, intakeSourceSummaries);
   const quality = buildContextQualityManifest(records, crosswalkRows, GOLDEN_EVIDENCE_CONTRACTS[tenantKey] ?? []);
   const signalPacket = buildEnterpriseSignalPacket(dc, quality);
 

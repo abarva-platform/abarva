@@ -106,6 +106,24 @@ export interface CandidateRelationship {
   supportingEvidenceIds: string[];
 }
 
+export interface SourceSummary {
+  sourcePath: string;
+  domain: string;
+  objectTypes: string[];
+  /** Historical meaning for canonical summaries: canonical records represented by this source. */
+  recordCount: number;
+  /** Raw Layer-1 rows when a source file inventory was supplied. Coverage context, not evidence. */
+  rawRowCount?: number;
+  /** Canonical records emitted downstream from this file, when known. */
+  canonicalRecordCount?: number;
+  sourceKind?: "canonical_record_summary" | "client_intake_file" | "intake_guidance" | "source_layer_file";
+  basis: string[];
+  authority: string[];
+  qualityStates: string[];
+  materialFields: string[];
+  exampleRecords: string[];
+}
+
 export interface DecisionContext {
   business: {
     revenue: number | null;
@@ -224,17 +242,7 @@ export interface DecisionContext {
   /** File-level breadth context. This is not citable evidence for claims; it tells the thesis
    * writer what the packet did and did not inspect so source families do not disappear just
    * because their rows were not in a top-N material-signal list. */
-  sourceSummaries: Array<{
-    sourcePath: string;
-    domain: string;
-    objectTypes: string[];
-    recordCount: number;
-    basis: string[];
-    authority: string[];
-    qualityStates: string[];
-    materialFields: string[];
-    exampleRecords: string[];
-  }>;
+  sourceSummaries: SourceSummary[];
 }
 
 export interface ContextQualityManifest {
@@ -336,7 +344,11 @@ export interface RelationshipRow {
   resolutionStatus?: "resolved" | "unresolved";
 }
 
-export function buildDecisionContext(records: Record_[], relationshipRows: RelationshipRow[] = []): DecisionContext {
+export function buildDecisionContext(
+  records: Record_[],
+  relationshipRows: RelationshipRow[] = [],
+  intakeSourceSummaries: SourceSummary[] = [],
+): DecisionContext {
   const of = (t: string) => records.filter((r) => r.objectType === t);
 
   const profile = of("tenant_profile")[0]?.attributes ?? {};
@@ -707,7 +719,7 @@ export function buildDecisionContext(records: Record_[], relationshipRows: Relat
     ...industryPatterns.map((p) => ({ kind: "industry_pattern" as const, label: str(p.attributes.patternName) ?? "(unnamed pattern)" })),
     ...expertLenses.map((l) => ({ kind: "expert_lens" as const, label: str(l.attributes.lensName) ?? "(unnamed lens)" })),
   ];
-  const sourceSummaries = buildSourceSummaries(records);
+  const sourceSummaries = mergeSourceSummaries(buildSourceSummaries(records), intakeSourceSummaries);
 
   return {
     business, strategy,
@@ -769,7 +781,7 @@ function materialFieldsFor(records: Record_[]): string[] {
     .map(([key]) => key);
 }
 
-function buildSourceSummaries(records: Record_[]): DecisionContext["sourceSummaries"] {
+function buildSourceSummaries(records: Record_[]): SourceSummary[] {
   const byPath = new Map<string, Record_[]>();
   for (const record of records) {
     const sourcePath = recordSourcePath(record);
@@ -790,6 +802,8 @@ function buildSourceSummaries(records: Record_[]): DecisionContext["sourceSummar
         domain: domains.join(", ") || "domain not declared",
         objectTypes,
         recordCount: rows.length,
+        canonicalRecordCount: rows.length,
+        sourceKind: "canonical_record_summary" as const,
         basis: basis.length ? basis : ["basis not declared"],
         authority: authority.length ? authority : ["authority not declared"],
         qualityStates: qualityStates.length ? qualityStates : ["quality not declared"],
@@ -799,6 +813,51 @@ function buildSourceSummaries(records: Record_[]): DecisionContext["sourceSummar
       };
     })
     .sort((a, b) => b.recordCount - a.recordCount || a.sourcePath.localeCompare(b.sourcePath))
+    .slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.sourceSummaries);
+}
+
+function sourceSummaryKey(sourcePath: string): string {
+  return sourcePath
+    .replace(/\\/g, "/")
+    .replace(/^.*?datasets\/tenant-inputs\/active\/[^/]+\/current\//, "")
+    .replace(/^\.\//, "");
+}
+
+function mergeSourceSummaries(canonical: SourceSummary[], intake: SourceSummary[]): SourceSummary[] {
+  if (!intake.length) return canonical;
+  const byPath = new Map<string, SourceSummary>();
+
+  for (const summary of intake) {
+    byPath.set(sourceSummaryKey(summary.sourcePath), summary);
+  }
+
+  for (const summary of canonical) {
+    const key = sourceSummaryKey(summary.sourcePath);
+    const existing = byPath.get(key);
+    if (!existing) {
+      byPath.set(key, summary);
+      continue;
+    }
+    byPath.set(key, {
+      ...existing,
+      ...summary,
+      sourcePath: existing.sourcePath,
+      rawRowCount: existing.rawRowCount,
+      canonicalRecordCount: summary.canonicalRecordCount ?? summary.recordCount,
+      materialFields: Array.from(new Set([...summary.materialFields, ...existing.materialFields])).slice(0, 12),
+      exampleRecords: Array.from(new Set([...summary.exampleRecords, ...existing.exampleRecords])).slice(0, 5),
+      basis: Array.from(new Set([...summary.basis, ...existing.basis])),
+      authority: Array.from(new Set([...summary.authority, ...existing.authority])),
+      qualityStates: Array.from(new Set([...summary.qualityStates, ...existing.qualityStates])),
+    });
+  }
+
+  return [...byPath.values()]
+    .sort((a, b) => {
+      const rawA = a.rawRowCount ?? 0;
+      const rawB = b.rawRowCount ?? 0;
+      return (b.recordCount + rawB) - (a.recordCount + rawA) || a.sourcePath.localeCompare(b.sourcePath);
+    })
     .slice(0, ENTERPRISE_SIGNAL_PACKET_LIMITS.sourceSummaries);
 }
 

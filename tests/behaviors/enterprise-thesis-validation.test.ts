@@ -85,6 +85,14 @@ describe("validateStructure", () => {
     expect(issues[0].reason).toContain("no evidence_ids");
   });
 
+  it("flags a malformed claim missing evidence_ids instead of throwing", () => {
+    const malformed = { statement: "unsupported claim", confidence: "medium", claim_type: "FACT" } as GroundedClaim;
+    const thesis = minimalThesis({ strategic_bets: [malformed] });
+    const issues = validateStructure(thesis, packet);
+    expect(issues).toHaveLength(1);
+    expect(issues[0].reason).toContain("no evidence_ids");
+  });
+
   it("flags a claim whose evidence spans only one domain, even with multiple ids", () => {
     // Two ids, same domain -- restating one signal twice is not a cross-domain connection.
     const thesis = minimalThesis({ strategic_bets: [claim("single-domain claim", ["sig_a", "sig_c"])] });
