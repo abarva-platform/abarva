@@ -486,6 +486,16 @@
     minmax(190px, 0.95fr) minmax(250px, 1.5fr) 120px minmax(170px, 1fr);
 }
 
+.sw-v2-action-queue {
+  margin-top: 18px;
+}
+
+.sw-v2-action-row {
+  grid-template-columns:
+    minmax(230px, 1.35fr) minmax(180px, 0.9fr) 110px 130px
+    minmax(150px, 0.85fr);
+}
+
 .sw-v2-evidence-row {
   grid-template-columns: minmax(160px, 0.8fr) minmax(230px, 1.2fr) 70px 110px;
 }
@@ -788,6 +798,7 @@
   .sw-v2-performance-row,
   .sw-v2-opt-type-row,
   .sw-v2-opt-contract-row,
+  .sw-v2-action-row,
   .sw-v2-evidence-row,
   .sw-v2-graph-volume-row,
   .sw-v2-graph-spine-row,

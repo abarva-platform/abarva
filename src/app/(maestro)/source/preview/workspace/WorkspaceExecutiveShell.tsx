@@ -8,6 +8,7 @@ import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio"
 import type {
   SourceContractApplicationScopeRow,
   SourceContract360Row,
+  SourceContractActionCandidateRow,
   SourceContractEvidenceCoverageRow,
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
@@ -68,6 +69,13 @@ type FocusedVendorSet = {
   readonly remainderCount: number;
   readonly remainderAnnualValue: number;
   readonly depthReadyCount: number;
+};
+type FocusedActionSet = {
+  readonly rows: readonly SourceContractActionCandidateRow[];
+  readonly remainderCount: number;
+  readonly remainderAmount: number;
+  readonly totalRows: number;
+  readonly totalAmount: number;
 };
 
 export function WorkspaceExecutiveShell({
@@ -449,7 +457,7 @@ function PortfolioPage({
 
       <section className="sw-v2-panel">
         <PanelHead
-          eyebrow="Candidate opportunity"
+          eyebrow="Action opportunity"
           title="Finance confirmation remains separate"
         />
         {impactCandidateAmount > 0 ? (
@@ -458,7 +466,7 @@ function PortfolioPage({
               {money(impactCandidateAmount)}
             </div>
             <p className="sw-v2-muted">
-              Sum of deterministic action candidates in the loaded
+              Sum of deterministic action rows in the loaded
               contract-depth package. Do not present as realized savings.
             </p>
             {claimCards[0] ? (
@@ -469,7 +477,7 @@ function PortfolioPage({
                   onOpenContract(claimCards[0].contract_id, "Optimize")
                 }
               >
-                Open top candidate
+                Open top action
               </button>
             ) : null}
           </>
@@ -908,7 +916,7 @@ function ContractsPage({
             value={String(portfolio.impact.evidenceCoverage.length)}
           />
           <Fact
-            label="Action candidates"
+            label="Action rows"
             value={String(portfolio.impact.actionCandidates.length)}
           />
           <Fact label="Finance confirmed" value="Not established" />
@@ -1289,6 +1297,7 @@ function OptimizePage({
         (row) => row.opportunity_id === topCandidate.opportunity_id,
       )
     : null;
+  const actionSet = focusedActionSet(portfolio);
 
   return (
     <div className="sw-v2-grid">
@@ -1352,6 +1361,10 @@ function OptimizePage({
                 Review performance evidence
               </button>
             ) : null}
+            <OptimizeActionQueue
+              actionSet={actionSet}
+              onOpenContract={onOpenContract}
+            />
           </>
         )}
       </section>
@@ -1363,11 +1376,11 @@ function OptimizePage({
           <Fact label="Spend rows" value={String(spendRows)} />
           <Fact label="Performance rows" value={String(performanceRows)} />
           <Fact
-            label="Action candidates"
+            label="Action rows"
             value={String(contractCandidates.length)}
           />
           <Fact
-            label="Candidate amount"
+            label="Action amount"
             value={
               candidateAmount > 0 ? money(candidateAmount) : "Not established"
             }
@@ -1406,10 +1419,10 @@ function OptimizeByTypeTable({
   if (rows.length === 0) {
     return (
       <div className="sw-v2-empty-state">
-        <b>No typed optimization candidates loaded.</b>
+        <b>No typed action rows loaded.</b>
         <p>
           Source will not summarize recoverable, avoidable, or negotiable value
-          by type until candidate rows exist.
+          by type until action rows exist.
         </p>
       </div>
     );
@@ -1417,16 +1430,16 @@ function OptimizeByTypeTable({
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-opt-type-row">
-        <span>Opportunity type</span>
-        <span>Candidates</span>
-        <span>Candidate amount</span>
+        <span>Action type</span>
+        <span>Rows</span>
+        <span>Action amount</span>
         <span>Finance state</span>
       </div>
       {rows.map((row) => (
         <div key={row.type} className="sw-v2-table-row sw-v2-opt-type-row">
           <span>
             <b>{row.type}</b>
-            <small>Derived from loaded action candidates.</small>
+            <small>Derived from loaded action rows.</small>
           </span>
           <span>{row.count}</span>
           <span>{money(row.amount)}</span>
@@ -1444,14 +1457,14 @@ function OptimizeByContractTable({
   portfolio: SourceWorkspacePortfolioData;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
-  const rows = portfolio.impact.actionCandidates.slice(0, 14);
-  if (rows.length === 0) {
+  const actionSet = focusedActionSet(portfolio);
+  if (actionSet.rows.length === 0) {
     return (
       <div className="sw-v2-empty-state">
-        <b>No contract-level action candidates loaded.</b>
+        <b>No contract-level action rows loaded.</b>
         <p>
           Contract headers can still be inspected, but Source will not invent an
-          optimization action without candidate and evidence rows.
+          optimization action without evidence-backed action rows.
         </p>
       </div>
     );
@@ -1464,7 +1477,7 @@ function OptimizeByContractTable({
         <span>Amount</span>
         <span>Next action</span>
       </div>
-      {rows.map((row) => (
+      {actionSet.rows.map((row) => (
         <button
           key={row.action_candidate_id}
           type="button"
@@ -1480,6 +1493,80 @@ function OptimizeByContractTable({
           <span>{row.next_action ?? row.readiness_state ?? "Not established"}</span>
         </button>
       ))}
+      {actionSet.remainderCount > 0 ? (
+        <div className="sw-v2-table-row sw-v2-opt-contract-row sw-v2-rollup-row">
+          <span>
+            <b>{actionSet.remainderCount} further action rows</b>
+            <small>Summarized so the operator sees the ranked queue first.</small>
+          </span>
+          <span>Open By type or Evidence for full lineage before action.</span>
+          <span>{money(actionSet.remainderAmount)}</span>
+          <span>Keep behind rollup until selected.</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function OptimizeActionQueue({
+  actionSet,
+  onOpenContract,
+}: {
+  actionSet: FocusedActionSet;
+  onOpenContract: (contractId: string, tab?: string) => void;
+}) {
+  if (actionSet.rows.length === 0) {
+    return (
+      <div className="sw-v2-empty-state">
+        <b>No optimize-ready action rows loaded.</b>
+        <p>
+          Source can describe the contract book, but it will not recommend a
+          move until an evidence-backed action row exists.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="sw-v2-table sw-v2-action-queue">
+      <div className="sw-v2-table-head sw-v2-action-row">
+        <span>Action</span>
+        <span>Contract</span>
+        <span>Amount</span>
+        <span>Finance state</span>
+        <span>Next</span>
+      </div>
+      {actionSet.rows.map((row) => (
+        <button
+          key={row.action_candidate_id}
+          type="button"
+          className="sw-v2-table-row sw-v2-action-row"
+          onClick={() => onOpenContract(row.contract_id, "Optimize")}
+        >
+          <span>
+            <b>{row.title ?? row.finding_summary ?? "Review loaded action"}</b>
+            <small>{row.deterministic_basis ?? "Evidence basis loaded."}</small>
+          </span>
+          <span>
+            <b>{row.vendor_name}</b>
+            <small>{row.contract_id}</small>
+          </span>
+          <span>{money(numberFromDb(row.candidate_amount_usd))}</span>
+          <span>{formatFinanceState(row.finance_confirmation_state)}</span>
+          <span>{row.next_action ?? row.readiness_state ?? "Review evidence"}</span>
+        </button>
+      ))}
+      {actionSet.remainderCount > 0 ? (
+        <div className="sw-v2-table-row sw-v2-action-row sw-v2-rollup-row">
+          <span>
+            <b>{actionSet.remainderCount} further action rows</b>
+            <small>Kept in the rollup until an operator selects the next move.</small>
+          </span>
+          <span>Portfolio rollup</span>
+          <span>{money(actionSet.remainderAmount)}</span>
+          <span>Mixed states</span>
+          <span>Review by type</span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1517,8 +1604,8 @@ function EvidencePage({
       state: portfolio.reads.applicationScope,
     },
     {
-      name: "Action candidates",
-      support: "Optimize-ready candidate actions",
+      name: "Action rows",
+      support: "Optimize-ready actions",
       lineage: "source.contract_action_candidate_v1",
       count: portfolio.impact.actionCandidates.length,
       state: portfolio.impact.actionCandidates.length ? "available" : "missing",
@@ -1793,7 +1880,7 @@ function ContractGraphPage({
             value={String(portfolio.impact.claimCards.length)}
           />
           <Fact
-            label="Action candidates"
+            label="Action rows"
             value={String(portfolio.impact.actionCandidates.length)}
           />
           <Fact
@@ -1852,10 +1939,10 @@ function GraphVolumeTable({
       claim: "SLA and credit posture only where periods exist",
     },
     {
-      layer: "Action candidates",
+      layer: "Action rows",
       object: "source.contract_action_candidate_v1",
       count: portfolio.impact.actionCandidates.length,
-      claim: "Optimize queue candidates; not finance-confirmed value",
+      claim: "Optimize queue rows; not finance-confirmed value",
     },
   ];
   return (
@@ -2128,7 +2215,7 @@ function claimContractForPage(page: PageLabel) {
   }
   if (page === "Optimize") {
     return {
-      allowed: "Candidate opportunity, not finance-confirmed realized value.",
+      allowed: "Action opportunity, not finance-confirmed realized value.",
       blocker:
         "Never label an amount as realized savings before finance state changes.",
     };
@@ -2610,6 +2697,36 @@ function optimizeTypeRows(portfolio: SourceWorkspacePortfolioData) {
     .sort((a, b) => b.amount - a.amount);
 }
 
+function focusedActionSet(
+  portfolio: SourceWorkspacePortfolioData,
+): FocusedActionSet {
+  const rows = [...portfolio.impact.actionCandidates].sort((left, right) => {
+    const rightAmount = numberFromDb(right.candidate_amount_usd) ?? 0;
+    const leftAmount = numberFromDb(left.candidate_amount_usd) ?? 0;
+    return rightAmount - leftAmount || left.contract_id.localeCompare(right.contract_id);
+  });
+  const visibleRows = rows.slice(0, 5);
+  const remainderRows = rows.slice(5);
+  return {
+    rows: visibleRows,
+    remainderCount: remainderRows.length,
+    remainderAmount: remainderRows.reduce(
+      (sum, row) => sum + (numberFromDb(row.candidate_amount_usd) ?? 0),
+      0,
+    ),
+    totalRows: rows.length,
+    totalAmount: rows.reduce(
+      (sum, row) => sum + (numberFromDb(row.candidate_amount_usd) ?? 0),
+      0,
+    ),
+  };
+}
+
+function formatFinanceState(state: string | null | undefined) {
+  if (!state) return "Not established";
+  return state.replace(/_/g, " ");
+}
+
 function financialPosture(contract: SourceContract360Row) {
   const actual = numberFromDb(contract.actual_annual_spend);
   const annual = numberFromDb(contract.annual_value);
@@ -2635,8 +2752,8 @@ function contractListSubtabTitle(subtab: string) {
 }
 
 function optimizeSubtabTitle(subtab: string) {
-  if (subtab === "By type") return "Candidate actions grouped by type";
-  if (subtab === "By contract") return "Contract-level action candidates";
+  if (subtab === "By type") return "Action rows grouped by type";
+  if (subtab === "By contract") return "Contract-level action rows";
   return "Evidence-backed action queue";
 }
 
@@ -2940,12 +3057,12 @@ function contractTabNarrative(
   if (tab === "Optimize") {
     if (claimCard) {
       return {
-        headline: claimCard.claim_title ?? "Evidence-backed action candidate",
+        headline: claimCard.claim_title ?? "Evidence-backed action row",
         body: claimCard.allowed_executive_statement,
         provenance: "Action basis",
         blocker:
           claimCard.blocker_if_missing ??
-          "Finance confirmation remains separate from candidate opportunity.",
+          "Finance confirmation remains separate from action opportunity.",
       };
     }
     return {
