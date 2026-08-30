@@ -193,11 +193,23 @@ describe("an unrecorded number is not zero", () => {
     expect(contract).toContain('item.aiSpendLoaded ? formatUsdM(item.aiSpendUsd) : "Not loaded"');
   });
 
-  it("derives the spend flag where the null still exists", () => {
-    // The value stays coerced because portfolio totals sum it, so the flag cannot be recovered
-    // downstream — it has to be captured in the reader.
+  it("derives the spend flag from what Layer 4 asserted, not from the row's columns", () => {
+    // `payload_json` is `to_jsonb(p)`, so it carries the projection table's own
+    // `monthly_cost_usd` column for every row. Reading through it made every tool rollout look
+    // funded and render "$0". `display_payload_json` carries only what the loader wrote: a case
+    // payload has `approved_funding_usd`, a rollout payload has no cost key at all.
     expect(READER).toContain("const aiSpendLoaded =");
-    expect(READER).toContain("approvedFundingRaw !== null || monthlyCostRaw !== null");
+    expect(READER).toMatch(/aiSpendLoaded =\s*\n?\s*displayNullableNumberFrom\(row, \[/);
+    expect(READER).not.toContain("approvedFundingRaw !== null || monthlyCostRaw !== null");
+  });
+
+  it("keeps the display-only reader from falling back to the row body", () => {
+    const body = READER.slice(
+      READER.indexOf("function displayNullableNumberFrom"),
+      READER.indexOf("function payloadNullableNumberFrom"),
+    );
+    expect(body).toContain("displayPayload(row)");
+    expect(body).not.toContain("payload(row)");
   });
 });
 

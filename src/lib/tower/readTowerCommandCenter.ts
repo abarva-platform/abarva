@@ -159,6 +159,26 @@ function payloadNullableNumber(
   return nullableNum((body[key] ?? display[key]) as Numeric);
 }
 
+/**
+ * Reads only what Layer 4 asserted, ignoring the projection row's own columns.
+ *
+ * `payload_json` is `to_jsonb(p)` over the projection table, so it carries every column whether or
+ * not the loader meant anything by it. `display_payload_json` carries only what the loader chose
+ * to write. For "did this row record a value at all", the second is the only honest source: a
+ * column can be present-and-zero for reasons that have nothing to do with the row.
+ */
+function displayNullableNumberFrom(
+  row: TowerServingRow,
+  keys: readonly string[],
+): number | null {
+  const display = displayPayload(row);
+  for (const key of keys) {
+    const value = nullableNum(display[key] as Numeric);
+    if (value !== null) return value;
+  }
+  return null;
+}
+
 function payloadNullableNumberFrom(
   row: TowerServingRow,
   keys: readonly string[],
@@ -563,10 +583,19 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     "funded_amount_usd",
   ]);
   const monthlyCostRaw = payloadNullableNumberFrom(row, ["monthly_cost_usd"]);
-  // The value stays coerced — portfolio totals sum it — but whether anything was recorded is
-  // captured here, where the null still exists. A tool rollout carries no cost at all, and "$0"
-  // is a different claim from "not loaded".
-  const aiSpendLoaded = approvedFundingRaw !== null || monthlyCostRaw !== null;
+  // The value stays coerced — portfolio totals sum it — but whether anything was *recorded* comes
+  // from the display payload, not from the row's columns. A business case's payload carries
+  // `approved_funding_usd`; a tool rollout's carries no cost key at all. Reading the row instead
+  // picked up the projection table's own `monthly_cost_usd` column, which every row has, so every
+  // rollout looked funded and rendered "$0" — a claim about price, where the truth is that
+  // nothing was loaded.
+  const aiSpendLoaded =
+    displayNullableNumberFrom(row, [
+      "approved_funding_usd",
+      "approved_investment_usd",
+      "funded_amount_usd",
+      "monthly_cost_usd",
+    ]) !== null;
   const approvedFundingUsd = approvedFundingRaw ?? (monthlyCostRaw ?? 0) * 12;
   const promisedValueUsd = payloadNullableNumberFrom(row, [
     "promised_value_usd",
