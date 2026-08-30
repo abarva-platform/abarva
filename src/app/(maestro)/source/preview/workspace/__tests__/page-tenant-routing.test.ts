@@ -29,7 +29,8 @@ describe("Source workspace requested-client routing", () => {
   it("does not fall back to the session tenant when an explicit client cannot resolve", () => {
     expect(pageSource).toContain('from "next/navigation"');
     expect(pageSource).toContain("notFound();");
-    expect(pageSource).toContain("forbidden();");
+    expect(pageSource).toContain("<SourceWorkspaceTenantAccessDenied />");
+    expect(pageSource).toContain("No Source contracts");
     expect(pageSource).not.toContain(
       '(!requestedClient ? tenancy.clientKey : "")',
     );

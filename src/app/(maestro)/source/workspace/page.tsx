@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { forbidden, notFound, redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { WorkspaceClient } from "../preview/workspace/WorkspaceClient";
 import { getActiveClientRow } from "@/lib/active-client";
 import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
@@ -84,7 +84,10 @@ export default async function SourceWorkspacePage({
       if (access.reason === "tenant_not_found") {
         notFound();
       }
-      forbidden();
+      if (access.reason === "unauthenticated") {
+        redirect("/sign-in");
+      }
+      return <SourceWorkspaceTenantAccessDenied />;
     }
   }
 
@@ -207,6 +210,69 @@ export default async function SourceWorkspacePage({
         initialContractId={requestedContractId}
         initialContractTab={requestedContractTab}
       />
+    </div>
+  );
+}
+
+function SourceWorkspaceTenantAccessDenied() {
+  return (
+    <div
+      style={{
+        minHeight: "100%",
+        display: "grid",
+        placeItems: "center",
+        padding: "48px 24px",
+        background: "#f5f7fb",
+      }}
+    >
+      <section
+        role="status"
+        aria-live="polite"
+        style={{
+          width: "min(560px, 100%)",
+          border: "1px solid #d7deea",
+          borderRadius: 12,
+          background: "#ffffff",
+          boxShadow: "0 18px 48px rgba(15, 23, 42, 0.08)",
+          padding: 28,
+        }}
+      >
+        <p
+          style={{
+            margin: "0 0 10px",
+            color: "#5d6b82",
+            fontSize: 12,
+            fontWeight: 800,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          Source workspace blocked
+        </p>
+        <h1
+          style={{
+            margin: 0,
+            color: "#0f1f3d",
+            fontSize: 28,
+            lineHeight: 1.12,
+            letterSpacing: 0,
+          }}
+        >
+          This session cannot open the requested tenant.
+        </h1>
+        <p
+          style={{
+            margin: "14px 0 0",
+            color: "#475569",
+            fontSize: 15,
+            lineHeight: 1.6,
+          }}
+        >
+          No Source contracts, vendor rollups, claim cards, evidence, or aVa
+          grounding bundles were loaded. Switch to an authorized tenant session
+          before using this workspace.
+        </p>
+      </section>
     </div>
   );
 }
