@@ -65,6 +65,19 @@ export function shouldBlanketStripClientParamFromProtectedTree(args: {
   );
 }
 
+export function shouldPreserveClientParamForSourceWorkspaceGuard(
+  pathname: string,
+): boolean {
+  return (
+    pathname === "/source/workspace" ||
+    pathname.startsWith("/source/workspace/") ||
+    pathname === "/source/360" ||
+    pathname.startsWith("/source/360/") ||
+    pathname === "/source/preview/workspace" ||
+    pathname.startsWith("/source/preview/workspace/")
+  );
+}
+
 export const PUBLIC_ROUTE_PATTERNS = [
   "/sign-in(.*)",
   "/signed-out(.*)",
@@ -715,8 +728,13 @@ const clerkProtectedProxy = clerkMiddleware(
       );
     }
 
+    const preserveSourceWorkspaceClientParam =
+      shouldPreserveClientParamForSourceWorkspaceGuard(
+        request.nextUrl.pathname,
+      );
     if (
       requiresAuth &&
+      !preserveSourceWorkspaceClientParam &&
       shouldStripUnauthorizedClientParam(
         role,
         {
@@ -744,10 +762,10 @@ const clerkProtectedProxy = clerkMiddleware(
     // For every non-admin role on these route trees, an inbound ?client=
     // param is treated as injection (the canonical tenant binding lives in
     // Clerk metadata + the ACTIVE_CLIENT_COOKIE, not the query string).
-    // Source is intentionally not included here: the access-routing predicate
-    // above strips foreign Source client params for locked sessions while
-    // allowing same-tenant Source deep links and per-tenant proof sessions to
-    // keep their explicit route context.
+    // Source is intentionally not included here. Workspace-style Source routes
+    // preserve their explicit tenant request so the page can render an
+    // access-gated blocked state without loading fallback tenant data; other
+    // Source routes keep the access-routing predicate above.
     if (requestedClientId && role !== "admin") {
       const pathname = request.nextUrl.pathname;
       if (shouldBlanketStripClientParamFromProtectedTree({ pathname, role })) {
@@ -864,7 +882,9 @@ const clerkProtectedProxy = clerkMiddleware(
       // error *format* trades away its auth gate; returning a correct 401
       // removes that pressure. Page routes still redirect, which is right —
       // a human hitting a page should land on sign-in.
-      if (shouldAnswerUnauthenticatedApiWithJson(request.nextUrl.pathname, userId)) {
+      if (
+        shouldAnswerUnauthenticatedApiWithJson(request.nextUrl.pathname, userId)
+      ) {
         return NextResponse.json(
           {
             error: "unauthenticated",
