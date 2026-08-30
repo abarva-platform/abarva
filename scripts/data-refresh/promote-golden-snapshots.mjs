@@ -20,6 +20,27 @@ const planDir = process.argv[process.argv.indexOf("--plan-dir") + 1];
 const SNAPSHOT_DIR = path.join(ROOT, "src/lib/home/preview/golden-snapshots");
 const EXPECTED_CHAPTERS = 8;
 
+/**
+ * Builder vocabulary, checked on the RAW statements a snapshot carries -- deliberately not on the
+ * rendered page. The renderer launders these strings on their way to the screen, so a scan of
+ * rendered output can only ever prove the laundering covered today's phrases. Checking here, at the
+ * moment a snapshot becomes what readers are shown, is what makes the gate cover what ships:
+ * regenerating prose without re-checking would otherwise leave the gate green against stale text.
+ * Terms with no laundering rule (adapter, upsert, hydration step) are the ones that would reach a
+ * reader untouched, which is why they belong in this list rather than in the renderer's.
+ */
+const BUILDER_VOCABULARY_RE = /\b(?:ECL|projection|serving view|loaded rows?|canonical entit(?:y|ies)|payload|schema|source room|provider flag|adapter|upsert|hydration step|row type|generator|manifest)\b/i;
+
+function rawStatementsOf(chapters) {
+  return chapters.flatMap((chapter) => [
+    chapter.headline,
+    chapter.executive_synthesis,
+    ...(chapter.key_insights ?? []).map((claim) => claim.statement),
+    ...(chapter.tensions ?? []).map((claim) => claim.statement),
+    ...(chapter.what_to_watch ?? []).map((claim) => claim.statement),
+  ]).filter(Boolean);
+}
+
 const registry = JSON.parse(fs.readFileSync(path.join(ROOT, "datasets/tenant-inputs/tenant-input-registry.json"), "utf8"));
 const activeKeys = (registry.activeTenants ?? []).map((t) => t.tenantKey);
 
@@ -74,6 +95,15 @@ for (const tenantKey of activeKeys) {
   const emptyHeadline = plan.chapters.filter((c) => !String(c.headline ?? "").trim());
   if (emptyHeadline.length) { fail(`${emptyHeadline.length} chapters have no headline`); continue; }
 
+  const builderLanguage = rawStatementsOf(plan.chapters).filter((statement) => BUILDER_VOCABULARY_RE.test(statement));
+  if (builderLanguage.length) {
+    fail(
+      `${builderLanguage.length} raw statement(s) carry builder vocabulary; the renderer would hide ` +
+      `some of these but not all. First: ${JSON.stringify(builderLanguage[0].slice(0, 160))}`,
+    );
+    continue;
+  }
+
   const bundle = {
     tenantKey: plan.tenantKey,
     provenance: plan.provenance,
@@ -97,6 +127,7 @@ for (const tenantKey of activeKeys) {
     chapters: bundle.chapters.length,
     emptyLimitationChapters: emptyNow,
     totalLimitations: totalNow,
+    rawStatements: rawStatementsOf(plan.chapters).length,
     estateRecordTypes: (bundle.technologyEstate?.recordTypes ?? []).length,
     estateRecords: recordCount,
   });
@@ -114,6 +145,7 @@ for (const s of summary) {
   console.log(`   canonical hash  ${s.priorHash} -> ${s.newHash}`);
   console.log(`   generated       ${s.priorGenerated} -> ${s.newGenerated}`);
   console.log(`   chapters ${s.chapters} | limitations ${s.totalLimitations} across ${s.chapters - s.emptyLimitationChapters}/${s.chapters} chapters`);
+  console.log(`   raw statements ${s.rawStatements} | builder vocabulary 0 (gate passed)`);
   console.log(`   estate record types ${s.estateRecordTypes} | estate records ${s.estateRecords}`);
 }
 console.log(`\n${promoted} to promote, ${refused} refused.`);

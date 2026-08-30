@@ -42,6 +42,16 @@ import {
 } from "./build-enterprise-thesis";
 import type { Signal, ContextItem, buildEnterpriseSignalPacket } from "./enterprise-signal-packet";
 import { buildTechnologyEstateBundle } from "./technology-estate";
+import {
+  scoreLensDivergence,
+  findInventedNumbers,
+  findApplicationCountErrors,
+  findInventoryOpening,
+  JUDGMENT_CLASS_RULES_UNCHECKED,
+  type LensTermClass,
+  type ScorableChapter,
+  type MustNotDoViolation,
+} from "./home-lens-quality";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 type HomeLensContract = {
@@ -76,6 +86,22 @@ type EnterpriseSignalPacketWithPromptContracts = EnterpriseSignalPacket & {
  * verification/repair architecture itself changes (e.g. this session's targeted-repair-v2, which
  * extended entailment verification to performance_story and questions_for_management).
  * ---------------------------------------------------------------------------------------------- */
+
+/**
+ * Which term class each chapter's hat is supposed to over-index on. Two pairs deliberately share a
+ * class (executive_brief/what_needs_attention, our_business/strategy_value_creation) because those
+ * hats genuinely are adjacent -- a low separation there is interpretable, not a defect by itself.
+ */
+const CHAPTER_EXPECTED_LENS_CLASS: Record<ChapterId, LensTermClass> = {
+  executive_brief: "money_decision",
+  our_business: "strategy_bets",
+  strategy_value_creation: "strategy_bets",
+  how_we_operate: "operating_accountability",
+  technology_data: "architecture_dependency",
+  performance_value: "value_governance",
+  leadership_perspective: "testimony_attribution",
+  what_needs_attention: "money_decision",
+};
 
 const HOME_SYNTHESIS_CONTRACT_VERSION = "home-chapters-v1";
 const CHAPTER_PROMPT_VERSION = "home-chapters/v1.1-page-lenses";
@@ -511,6 +537,11 @@ interface ChapterBuildTelemetry {
   assignedClaims: number;
   outputTokens: number;
   stopReason: string | null;
+  /** Which branch of chapterDefinitionForPacket resolved. See LensSource for why this is recorded. */
+  lensSource: LensSource;
+  /** The Claude-generated prose and the claims it was allowed to draw on, for output-level scoring. */
+  prose: string;
+  claimStatements: string[];
 }
 
 const GENERATION_LANGUAGE_RE = /\b(?:ECL|projection|serving view|loaded rows?|canonical entit(?:y|ies)|payload|schema|source room|provider flag|not enough verified evidence yet|coverage gap in the build|adapter|upsert|hydration step|row type|generator|manifest)\b/i;
@@ -568,10 +599,18 @@ function pagePromptContract(
   return signalPacket.pagePromptContracts?.find((contract) => contract.pageKey === chapterId) ?? null;
 }
 
+/**
+ * `full_contract` means the packet's page lens contract reached the prompt. `fallback` means it did
+ * not and the thin CHAPTER_DEFS writerLens string was used instead -- which used to happen silently,
+ * so a whole run could be written on the old lenses while every contract test stayed green (they
+ * assert the contract JSON, never the resolved prompt). Recorded so the measurement run can refuse.
+ */
+export type LensSource = "full_contract" | "fallback";
+
 function chapterDefinitionForPacket(
   def: { id: ChapterId; title: string; guidingQuestion: string; writerLens: string },
   signalPacket: EnterpriseSignalPacketWithPromptContracts,
-) {
+): { title: string; guidingQuestion: string; writerLens: string; lensSource: LensSource } {
   const contract = pagePromptContract(signalPacket, def.id);
   const lens = contract?.lensContract;
   const writerLens = lens?.promptInstruction
@@ -594,6 +633,7 @@ function chapterDefinitionForPacket(
     title: contract?.label ?? def.title,
     guidingQuestion: contract?.decisionQuestion ?? def.guidingQuestion,
     writerLens,
+    lensSource: lens?.promptInstruction ? "full_contract" : "fallback",
   };
 }
 
@@ -632,6 +672,9 @@ export async function buildChapterViewsFromVerifiedThesis(
       assignedClaims: allClaims.length,
       outputTokens: synthesis?.outputTokens ?? 0,
       stopReason: synthesis?.stopReason ?? null,
+      lensSource: effectiveDef.lensSource,
+      prose: [synthesis?.headline, synthesis?.executive_synthesis].filter(Boolean).join(" "),
+      claimStatements: allClaims.map((claim) => claim.statement),
     });
     const limitations: string[] = [...gaps[def.id]];
     if (allClaims.length === 0) {
@@ -716,9 +759,60 @@ function summarizeSourceSummaryKinds(sourceSummaries: EnterpriseSignalPacket["so
   return counts;
 }
 
+
+/* ------------------------------------------------------------------------------------------------
+ * Output-level lens quality -- see scripts/data-build/home-lens-quality.ts for why these score
+ * generated prose rather than the contract JSON.
+ * ---------------------------------------------------------------------------------------------- */
+
+const MUST_NOT_DO_CHECKED_RULES = [
+  "quote a number that is not in the packet",
+  "count deployments as applications",
+  "start with a technology inventory",
+] as const;
+
+/**
+ * The application/deployment split is the oracle for the CTO lens's "count deployments as
+ * applications" rule -- the same double-count that has shipped before. Derived from the canonical
+ * records rather than the estate bundle because the bundle does not carry deployments as their own
+ * object type; a tenant with no deployment records reports 0 and the check degrades to "any stated
+ * application count must equal the canonical one", which is still the half that matters.
+ */
+function estateCountsFromRecords(records: Array<{ objectType: string }>): { applications: number; deployments: number } {
+  return {
+    applications: records.filter((record) => record.objectType === "application_system").length,
+    deployments: records.filter((record) => record.objectType.includes("deployment")).length,
+  };
+}
+
+/** Tenant proper nouns are excluded from lens scoring -- every chapter repeats them, so they carry
+ * no signal about which hat wrote the prose. */
+function tenantNounsFor(tenantKey: string): string[] {
+  return tenantKey.split(/[-_]/).filter((part) => part.length > 2);
+}
+
+function collectMustNotDoViolations(
+  chapters: ScorableChapter[],
+  counts: { applications: number; deployments: number },
+): MustNotDoViolation[] {
+  const violations: MustNotDoViolation[] = [];
+  for (const chapter of chapters) {
+    violations.push(...findInventedNumbers(chapter));
+    if (chapter.chapterId === "technology_data") {
+      violations.push(...findApplicationCountErrors(chapter, counts));
+    }
+    if (chapter.chapterId === "executive_brief") {
+      violations.push(...findInventoryOpening(chapter));
+    }
+  }
+  return violations;
+}
+
 async function measureChapterQualityForTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
   const built = await buildTenant(tenantKey, client);
   const generatedAt = new Date().toISOString();
+  const tenantNouns = tenantNounsFor(tenantKey);
+  const estateCounts = estateCountsFromRecords(built.canonicalRecords);
   const report = {
     tenantKey,
     generatedAt,
@@ -731,6 +825,7 @@ async function measureChapterQualityForTenant(tenantKey: string, client: Paramet
       rawIntakeFiles: built.signalPacket.sourceSummaries.filter((summary) => summary.rawRowCount !== undefined).length,
       visualDatasets: Object.keys(built.signalPacket.visualDatasets ?? {}).length,
     },
+    estateCounts,
     verification: summarizeVerificationLedger(built.verificationLedger),
     variants: [] as Array<{
       key: string;
@@ -743,6 +838,14 @@ async function measureChapterQualityForTenant(tenantKey: string, client: Paramet
       maxTokenStops: number;
       rawStatementCount: number;
       generationLanguageCount: number;
+      lensSources: Record<string, string>;
+      lensFallbacks: string[];
+      divergence: ReturnType<typeof scoreLensDivergence>;
+      mustNotDo: {
+        checkedRules: string[];
+        uncheckedJudgmentRules: string[];
+        violations: MustNotDoViolation[];
+      };
     }>,
   };
 
@@ -770,6 +873,12 @@ async function measureChapterQualityForTenant(tenantKey: string, client: Paramet
       ]),
     );
     const rawStatements = collectChapterRawStatements(chapters);
+    const scorable: ScorableChapter[] = telemetry.map((item) => ({
+      chapterId: item.chapterId,
+      prose: item.prose,
+      claimStatements: item.claimStatements,
+      expectedClass: CHAPTER_EXPECTED_LENS_CLASS[item.chapterId],
+    }));
     report.variants.push({
       key: variant.key,
       description: variant.description,
@@ -781,7 +890,27 @@ async function measureChapterQualityForTenant(tenantKey: string, client: Paramet
       maxTokenStops: telemetry.filter((item) => item.stopReason === "max_tokens").length,
       rawStatementCount: rawStatements.length,
       generationLanguageCount: countGenerationLanguage(rawStatements),
+      lensSources: Object.fromEntries(telemetry.map((item) => [item.chapterId, item.lensSource])),
+      lensFallbacks: telemetry.filter((item) => item.lensSource === "fallback").map((item) => item.chapterId),
+      divergence: scoreLensDivergence(scorable, tenantNouns),
+      mustNotDo: {
+        checkedRules: [...MUST_NOT_DO_CHECKED_RULES],
+        uncheckedJudgmentRules: [...JUDGMENT_CLASS_RULES_UNCHECKED],
+        violations: collectMustNotDoViolations(scorable, estateCounts),
+      },
     });
+  }
+
+  const fallbacks = report.variants.flatMap((variant) =>
+    variant.lensFallbacks.map((chapterId) => `${variant.key}:${chapterId}`),
+  );
+  if (fallbacks.length > 0) {
+    // Divergence scored while the writer silently used the thin CHAPTER_DEFS lens is a measurement
+    // of the wrong prompt, so this refuses rather than reporting a number that cannot be acted on.
+    throw new Error(
+      `lens contract did not reach the prompt for ${fallbacks.length} chapter build(s): ${fallbacks.join(", ")}. ` +
+        `Check that the signal packet carries pagePromptContracts with a lensContract.promptInstruction for every chapter.`,
+    );
   }
 
   return report;
@@ -819,6 +948,21 @@ async function main() {
               `${String(variant.rawStatementCount).padStart(14)}  ${String(variant.generationLanguageCount).padStart(19)}`,
           );
         }
+        console.log("");
+        console.log("  variant        mean_sep  weakest_lens                     sep  most_similar_pair                 cos  must_not_do");
+        for (const variant of measurement.variants) {
+          const weakest = variant.divergence.weakestLens;
+          const pair = variant.divergence.mostSimilarPair;
+          console.log(
+            `  ${variant.key.padEnd(13)} ${String(variant.divergence.meanSeparation).padStart(8)}  ` +
+              `${(weakest?.chapterId ?? "-").padEnd(30)} ${String(weakest?.separation ?? "-").padStart(5)}  ` +
+              `${(pair ? `${pair.a}/${pair.b}` : "-").padEnd(32)} ${String(pair?.cosine ?? "-").padStart(4)}  ` +
+              `${String(variant.mustNotDo.violations.length).padStart(11)}`,
+          );
+        }
+        console.log(`  lens sources: ${measurement.variants.every((v) => v.lensFallbacks.length === 0) ? "full_contract for every chapter" : "FALLBACK PRESENT"}`);
+        console.log(`  must_not_do judgment-class rules NOT checked: ${JUDGMENT_CLASS_RULES_UNCHECKED.length}`);
+        console.log(`  estate: applications=${measurement.estateCounts.applications} deployments=${measurement.estateCounts.deployments}`);
         console.log(`  verifier: generated=${measurement.verification.generated} drops=${measurement.verification.semanticDrops} repairs=${measurement.verification.repairs} kept=${measurement.verification.keptClean}`);
         console.log(`  packet: signals=${measurement.packet.signals} context=${measurement.packet.contextItems} source_summaries=${measurement.packet.sourceSummaries}`);
         console.log(`  -> ${outFile}`);
