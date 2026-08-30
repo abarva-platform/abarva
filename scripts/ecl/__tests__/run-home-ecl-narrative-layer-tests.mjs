@@ -280,6 +280,18 @@ assert(
   "EnterpriseThesis prompt blocks substituting technology footprint for business value creation",
 );
 assert(
+  thesis.includes("material_risks and what_needs_attention do not require CROSS_DOMAIN_INSIGHT or ADVISORY_INFERENCE") &&
+    thesis.includes("Never return null array entries") &&
+    thesis.includes("return only") &&
+    thesis.includes("return []") &&
+    thesis.includes("Do not explain a difference between two totals unless a cited reconciliation signal explains it") &&
+    thesis.includes("Record counts can establish size and scope") &&
+    thesis.includes("do not establish that the organization lacks a") &&
+    thesis.includes("claimAtPath(rawGeneration, issue.path)") &&
+    thesis.includes("claim_statement: claim?.statement"),
+  "EnterpriseThesis narrows single-domain action sections and records structural-drop statements",
+);
+assert(
   thesis.includes("MANAGEMENT QUESTIONS ARE OPTIONAL AND RARE") &&
     thesis.includes("questions_for_management is not a required executive flourish") &&
     thesis.includes("When no question earns this bar, return") &&

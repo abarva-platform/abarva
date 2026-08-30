@@ -423,6 +423,12 @@ The safest valid output for a section whose evidence is only single-domain is a 
 FACT or OBSERVATION items, or an empty array. Never fill a cross-domain/advisory section by
 promoting a one-domain fact. If no claim in a section earns two-domain evidence, leave that section
 empty rather than making a management implication from one measurement.
+material_risks and what_needs_attention do not require CROSS_DOMAIN_INSIGHT or ADVISORY_INFERENCE.
+They may contain direct FACT or OBSERVATION rows. A single-domain risk, notice-period fact,
+criticality gap, or lifecycle-tagging absence should stay FACT/OBSERVATION or be omitted; do not
+promote it into an executive recommendation because the section name sounds action-oriented.
+Never return null array entries. If a section has fewer valid claims than its maximum, return only
+the valid claims. If it has none, return [].
 Before returning JSON, audit every claim_type against its cited evidence domains. If a claim marked
 CROSS_DOMAIN_INSIGHT or ADVISORY_INFERENCE cites only one domain, either downgrade it to FACT or
 OBSERVATION when the statement is still useful, or remove it. Do not keep a structurally invalid
@@ -443,6 +449,15 @@ cited item says a value is only an application annual-cost total, do
 not rename it as a total technology budget, finance-attested spend, enterprise run-rate, or value
 pool. If a cited item says a movement count is an integration-record count, do not convert it into
 data volume, transaction volume, or proof of analytics consumption.
+Do not explain a difference between two totals unless a cited reconciliation signal explains it.
+For example, separate application-cost and contract-value totals may be reported side by side, but
+their gap must not be attributed to unmapped applications, uncaptured commitments, or scope
+difference unless a cited fact says that is the cause. Similarly, a large data-movement count and a
+separate list of high-cost applications do not prove that those movements run through those
+applications unless the same cited evidence explicitly links the flows to the named systems.
+Record counts can establish size and scope; they do not establish that the organization lacks a
+single connected view, has difficulty maintaining visibility, or needs a new integrated view unless
+the cited facts say that directly.
 
 Named entity language follows the same rule. If a claim names a specific application, product,
 supplier, platform, program, tool, report, business function, or technology, at least one cited
@@ -767,6 +782,24 @@ export function validateStructure(thesis: EnterpriseThesis, signalPacket: Return
   });
 
   return issues;
+}
+
+function claimAtPath(thesis: EnterpriseThesis, path: string): GroundedClaim | null {
+  const m = path.match(/^([a-zA-Z_.]+)\[(\d+)\]$/);
+  if (!m) return null;
+  const [, arrayPath, idxStr] = m;
+  const segments = arrayPath.split(".");
+  let target: unknown = thesis;
+  for (const seg of segments.slice(0, -1)) {
+    if (!target || typeof target !== "object") return null;
+    target = (target as Record<string, unknown>)[seg];
+  }
+  const key = segments[segments.length - 1];
+  if (!target || typeof target !== "object") return null;
+  const arr = (target as Record<string, unknown>)[key];
+  if (!Array.isArray(arr)) return null;
+  const claim = arr[Number(idxStr)];
+  return claim && typeof claim === "object" ? (claim as GroundedClaim) : null;
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -1225,12 +1258,14 @@ export async function buildVerifiedEnterpriseThesisFromSignalPacket(
 
   const verificationLedger: Array<{ path: string; verdict: Verdict; reasoning: string; action: string; claim_statement?: string }> = [];
   for (const issue of structuralIssues) {
+    const claim = claimAtPath(rawGeneration, issue.path);
     dropClaim(publishedGeneration, issue.path);
     verificationLedger.push({
       path: issue.path,
       verdict: "UNSUPPORTED",
       reasoning: `structural issue: ${issue.reason}`,
       action: "dropped_structural",
+      claim_statement: claim?.statement,
     });
   }
 
