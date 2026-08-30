@@ -117,6 +117,16 @@ export function HomeV4App({
   const integrations = techRecordTypes.find(
     (r) => r.objectType === "data_asset_or_integration",
   );
+  const dataMovementRecordType = useMemo(
+    () =>
+      integrations
+        ? {
+            ...integrations,
+            rows: integrations.rows.filter((row) => row.recordKind !== "data_analytics_workload"),
+          }
+        : undefined,
+    [integrations],
+  );
   const infrastructure = techRecordTypes.find(
     (r) => r.objectType === "infrastructure_platform",
   );
@@ -211,8 +221,8 @@ export function HomeV4App({
       {
         id: "data-flow",
         label: "Current-state data flow",
-        drafted: Boolean(integrations),
-        count: integrations?.rows.length,
+        drafted: Boolean(dataMovementRecordType),
+        count: dataMovementRecordType?.rows.length,
       },
       // Renamed from "Current-state data flow", which promised a data flow and delivered a
       // per-domain fact inventory. A nav label that oversells its page is worse than a plain one.
@@ -305,11 +315,11 @@ export function HomeV4App({
             />
           ) : null}
 
-          {activeView === "data-flow" && integrations ? (
+          {activeView === "data-flow" && dataMovementRecordType ? (
             <DataFlowPage
               tenantKey={tenantKey}
               tenantDisplayName={TENANT_LABEL[tenantKey]}
-              integrations={integrations}
+              integrations={dataMovementRecordType}
               applications={applications}
               canonicalBuild={bundle.provenance.canonical_snapshot_hash}
             />

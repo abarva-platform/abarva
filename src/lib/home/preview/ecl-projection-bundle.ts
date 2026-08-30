@@ -21,6 +21,16 @@ import type {
 
 type JsonRecord = Record<string, unknown>;
 type SourceSummary = EnterpriseSignalPacket["sourceSummaries"][number];
+type DeterministicCategorySummary = {
+  key: string;
+  label: string;
+  sourcePaths: string[];
+  recordCount: number;
+  denominator: string;
+  topDimensions: Array<{ field: string; values: Array<{ label: string; count: number; sharePct: number }> }>;
+  measures: Record<string, number>;
+  gaps: string[];
+};
 
 export interface HomeProjectionRow {
   page_key: string;
@@ -79,11 +89,19 @@ const COLUMN_ORDER: Record<TechObjectType, string[]> = {
     "endOfLifeDate",
   ],
   data_asset_or_integration: [
+    "recordKind",
     "dataAssetName",
     "dataDomain",
     "sourceSystem",
     "targetSystem",
     "integrationType",
+    "workloadType",
+    "platformName",
+    "technologyName",
+    "workloadCount",
+    "activeUserCount",
+    "dataVolumeTb",
+    "governanceState",
     "platformOrDatabase",
     "refreshFrequency",
     "qualityStatus",
@@ -109,7 +127,7 @@ const PRIMARY_DIMENSION: Record<TechObjectType, string> = {
   data_asset_or_integration: "dataDomain",
 };
 
-const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<TechObjectType, { domain: string; sourcePath: string }> = {
+const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<TechObjectType, { domain: string; sourcePath: string; authority?: string[] }> = {
   application_system: {
     domain: "application_system",
     sourcePath: "serving.home_applications_systems",
@@ -124,7 +142,8 @@ const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<TechObjectType, { domain: string; so
   },
   data_asset_or_integration: {
     domain: "data_asset_or_integration",
-    sourcePath: "serving.home_current_state_data_flow",
+    sourcePath: "serving.home_current_state_data_flow + serving.home_data_assets_integrations",
+    authority: ["serving.home_current_state_data_flow", "serving.home_data_assets_integrations"],
   },
 };
 
@@ -257,6 +276,7 @@ function dataFlowRow(row: HomeProjectionRow, labelsByRef: Map<string, string> = 
   const sourceRef = text(payload.source_object_ref ?? payload.source_system_ref_id ?? payload.source_system_id);
   const targetRef = text(payload.target_object_ref ?? payload.target_system_ref_id ?? payload.target_system_id);
   return {
+    recordKind: "data_movement",
     dataAssetName: text(payload.data_asset_name ?? payload.flow_name) ?? row.title,
     dataDomain: text(payload.data_domain ?? payload.data_domain_name ?? payload.target_function ?? payload.source_function ?? payload.owner_function ?? payload.function),
     sourceSystem: endpointLabel(sourceRef, labelsByRef) ?? text(payload.source_system_name ?? payload.source_system),
@@ -271,6 +291,34 @@ function dataFlowRow(row: HomeProjectionRow, labelsByRef: Map<string, string> = 
     cadence: text(payload.cadence),
     ownerFunction: text(payload.owner_function ?? payload.function),
     originalRowId: text(payload.flow_id ?? payload.source_row_id ?? row.row_key),
+  };
+}
+
+function dataAnalyticsWorkloadRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  return {
+    recordKind: "data_analytics_workload",
+    dataAssetName: text(payload.workload_name ?? payload.platform_name ?? row.title) ?? row.title,
+    dataDomain: text(payload.data_domain ?? payload.domain ?? payload.function),
+    sourceSystem: text(payload.source_system_name ?? payload.source_system),
+    targetSystem: text(payload.platform_name),
+    integrationType: text(payload.workload_type),
+    workloadType: text(payload.workload_type),
+    platformName: text(payload.platform_name),
+    technologyName: text(payload.technology_name),
+    workloadCount: numberValue(payload.workload_count),
+    activeUserCount: numberValue(payload.active_user_count),
+    dataVolumeTb: numberValue(payload.data_volume_tb),
+    governanceState: text(payload.governance_state),
+    platformOrDatabase: text(payload.platform_name),
+    refreshFrequency: text(payload.refresh_frequency ?? payload.cadence),
+    qualityStatus: text(payload.quality_status ?? payload.quality_state ?? payload.governance_state),
+    regulatedDataFlag: boolish(payload.regulated_data_flag),
+    landingLayer: text(payload.landing_layer),
+    consumptionLayer: text(payload.consumption_layer),
+    cadence: text(payload.cadence ?? payload.refresh_frequency),
+    ownerFunction: text(payload.owner_function ?? payload.function),
+    originalRowId: text(payload.source_row_id ?? payload.workload_id ?? row.row_key),
   };
 }
 
@@ -295,6 +343,128 @@ function dimensionCounts(rows: Array<Record<string, string | number | boolean | 
     counts.set(value, (counts.get(value) ?? 0) + 1);
   }
   return Array.from(counts, ([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count);
+}
+
+function topDimension(rows: Array<Record<string, string | number | boolean | null>>, field: string, limit: number) {
+  return dimensionCounts(rows, field)
+    .slice(0, limit)
+    .map((item) => ({
+      label: item.value,
+      count: item.count,
+      sharePct: rows.length ? Number(((item.count / rows.length) * 100).toFixed(1)) : 0,
+    }));
+}
+
+function workloadSummaryRows(rows: Array<Record<string, string | number | boolean | null>>, field: string, limit: number): Array<Record<string, unknown>> {
+  const groups = new Map<string, { rows: number; workloadItems: number; activeUsers: number; dataVolumeTb: number; technologies: Map<string, number> }>();
+  for (const row of rows) {
+    const label = text(row[field]) ?? text(row.ownerFunction) ?? text(row.dataDomain) ?? "(not specified)";
+    const group = groups.get(label) ?? { rows: 0, workloadItems: 0, activeUsers: 0, dataVolumeTb: 0, technologies: new Map<string, number>() };
+    group.rows += 1;
+    group.workloadItems += numberValue(row.workloadCount) ?? 0;
+    group.activeUsers += numberValue(row.activeUserCount) ?? 0;
+    group.dataVolumeTb += numberValue(row.dataVolumeTb) ?? 0;
+    const technology = text(row.technologyName);
+    if (technology) group.technologies.set(technology, (group.technologies.get(technology) ?? 0) + 1);
+    groups.set(label, group);
+  }
+  return Array.from(groups, ([label, group]) => ({
+    label,
+    segments: group.rows,
+    workloadItems: Math.round(group.workloadItems),
+    activeUsers: Math.round(group.activeUsers),
+    dataVolumeTb: Number(group.dataVolumeTb.toFixed(1)),
+    topTechnologies: Array.from(group.technologies, ([technology, count]) => ({ technology, count }))
+      .sort((a, b) => b.count - a.count || a.technology.localeCompare(b.technology))
+      .slice(0, 5),
+  }))
+    .sort((a, b) => Number(b.workloadItems) - Number(a.workloadItems) || String(a.label).localeCompare(String(b.label)))
+    .slice(0, limit);
+}
+
+function buildCategorySummaries(args: {
+  applications: Array<Record<string, string | number | boolean | null>>;
+  contracts: Array<Record<string, string | number | boolean | null>>;
+  infrastructure: Array<Record<string, string | number | boolean | null>>;
+  dataFlows: Array<Record<string, string | number | boolean | null>>;
+  dataWorkloads: Array<Record<string, string | number | boolean | null>>;
+}): DeterministicCategorySummary[] {
+  const { applications, contracts, infrastructure, dataFlows, dataWorkloads } = args;
+  const workloadItems = sumNumeric(dataWorkloads, "workloadCount");
+  const activeUsers = sumNumeric(dataWorkloads, "activeUserCount");
+  const dataVolumeTb = sumNumeric(dataWorkloads, "dataVolumeTb");
+  return [
+    {
+      key: "applications_by_business_function",
+      label: "Applications by business function",
+      sourcePaths: ["serving.home_applications_systems"],
+      recordCount: applications.length,
+      denominator: "application_v rows, not deployments or raw canonical objects",
+      topDimensions: [{ field: "businessFunction", values: topDimension(applications, "businessFunction", 8) }],
+      measures: { applications: applications.length, annualCostUsd: sumNumeric(applications, "annualCostUsd") },
+      gaps: applications.length ? [] : ["No governed application rows reached the Home packet."],
+    },
+    {
+      key: "contracts_by_supplier_and_service",
+      label: "Contracts by supplier and service",
+      sourcePaths: ["serving.home_vendor_contracts"],
+      recordCount: contracts.length,
+      denominator: "contract rows with known value state",
+      topDimensions: [
+        { field: "vendorName", values: topDimension(contracts, "vendorName", 8) },
+        { field: "serviceCategory", values: topDimension(contracts, "serviceCategory", 8) },
+      ],
+      measures: { contracts: contracts.length, annualizedValueUsd: sumNumeric(contracts, "annualSpendUsd") },
+      gaps: contracts.length ? [] : ["No governed contract rows reached the Home packet."],
+    },
+    {
+      key: "infrastructure_by_hosting_and_lifecycle",
+      label: "Infrastructure by hosting and lifecycle",
+      sourcePaths: ["serving.home_infrastructure_platforms"],
+      recordCount: infrastructure.length,
+      denominator: "platform and infrastructure records, not confirmed app-hosting joins",
+      topDimensions: [
+        { field: "hostingModel", values: topDimension(infrastructure, "hostingModel", 8) },
+        { field: "platformType", values: topDimension(infrastructure, "platformType", 8) },
+      ],
+      measures: { platforms: infrastructure.length },
+      gaps: infrastructure.length ? [] : ["No governed infrastructure/platform rows reached the Home packet."],
+    },
+    {
+      key: "data_movements_by_domain_and_mechanism",
+      label: "Data movements by domain and mechanism",
+      sourcePaths: ["serving.home_current_state_data_flow"],
+      recordCount: dataFlows.length,
+      denominator: "source-to-target movement rows, not reports, users, jobs, or data volume",
+      topDimensions: [
+        { field: "dataDomain", values: topDimension(dataFlows, "dataDomain", 8) },
+        { field: "integrationType", values: topDimension(dataFlows, "integrationType", 8) },
+      ],
+      measures: { dataMovements: dataFlows.length },
+      gaps: dataFlows.length ? [] : ["No governed source-to-target data movement rows reached the Home packet."],
+    },
+    {
+      key: "data_bi_etl_workloads_by_function_and_technology",
+      label: "Data, BI, ETL, report, script, and analytics workloads",
+      sourcePaths: ["serving.home_data_assets_integrations"],
+      recordCount: dataWorkloads.length,
+      denominator: "segment-level workload rows; not one row per report, job, script, or user",
+      topDimensions: [
+        { field: "ownerFunction", values: topDimension(dataWorkloads, "ownerFunction", 8) },
+        { field: "technologyName", values: topDimension(dataWorkloads, "technologyName", 8) },
+        { field: "workloadType", values: topDimension(dataWorkloads, "workloadType", 8) },
+      ],
+      measures: {
+        workloadSegments: dataWorkloads.length,
+        workloadItems: Math.round(workloadItems),
+        activeUsers: Math.round(activeUsers),
+        dataVolumeTb: Number(dataVolumeTb.toFixed(1)),
+      },
+      gaps: dataWorkloads.length
+        ? []
+        : ["No segment-level data/BI/ETL workload rows reached the Home packet; pages must not infer report, job, user, script, or data-volume counts from movement rows."],
+    },
+  ];
 }
 
 function recordType(objectType: TechObjectType, rows: Array<Record<string, string | number | boolean | null>>): TechRecordType | null {
@@ -339,13 +509,16 @@ export function buildTechnologyEstateFromHomeProjectionRows(rows: HomeProjection
   const dataFlows = rows
     .filter((row) => row.page_key === "current_state_data_flow" && row.row_type === "data_flow")
     .map((row) => stripEmpty(dataFlowRow(row, labelsByRef)));
+  const dataWorkloads = rows
+    .filter((row) => row.page_key === "data_assets_integrations" && row.row_type === "data_analytics_workload")
+    .map((row) => stripEmpty(dataAnalyticsWorkloadRow(row)));
 
   return {
     recordTypes: [
       recordType("application_system", applications),
       recordType("vendor_contract", contracts),
       recordType("infrastructure_platform", infrastructure),
-      recordType("data_asset_or_integration", dataFlows),
+      recordType("data_asset_or_integration", [...dataFlows, ...dataWorkloads]),
     ].filter((row): row is TechRecordType => Boolean(row)),
   };
 }
@@ -439,6 +612,8 @@ function rowDomains(row: HomeProjectionRow): string[] {
       return ["infrastructure_platform"];
     case "current_state_data_flow":
       return ["data_asset_or_integration", "application_system"];
+    case "data_assets_integrations":
+      return ["data_asset_or_integration", "infrastructure_platform"];
     default:
       return ["evidence_sources"];
   }
@@ -491,6 +666,18 @@ function rowContextStatement(row: HomeProjectionRow, labelsByRef: Map<string, st
       ].filter(Boolean);
       return `${parts.join(" ")}.`;
     }
+    case "data_assets_integrations": {
+      const workload = dataAnalyticsWorkloadRow(row);
+      const parts = [
+        `${text(workload.dataAssetName) ?? row.title} is loaded as a data, BI, ETL, or analytics workload segment`,
+        text(workload.ownerFunction) ? `for ${text(workload.ownerFunction)}` : null,
+        text(workload.technologyName) ? `using ${text(workload.technologyName)}` : null,
+        numberValue(workload.workloadCount) !== null ? `with ${numberValue(workload.workloadCount)?.toLocaleString()} workload items` : null,
+        numberValue(workload.activeUserCount) !== null ? `${numberValue(workload.activeUserCount)?.toLocaleString()} active users` : null,
+        numberValue(workload.dataVolumeTb) !== null ? `${numberValue(workload.dataVolumeTb)?.toLocaleString()} TB` : null,
+      ].filter(Boolean);
+      return `${parts.join(" ")}.`;
+    }
     default:
       return row.summary ?? row.title;
   }
@@ -515,7 +702,9 @@ function buildEclSignalPacket(
   const applications = rowsForType(estate, "application_system");
   const contracts = rowsForType(estate, "vendor_contract");
   const infrastructure = rowsForType(estate, "infrastructure_platform");
-  const dataFlows = rowsForType(estate, "data_asset_or_integration");
+  const dataRecords = rowsForType(estate, "data_asset_or_integration");
+  const dataFlows = dataRecords.filter((row) => row.recordKind !== "data_analytics_workload");
+  const dataWorkloads = dataRecords.filter((row) => row.recordKind === "data_analytics_workload");
   const applicationRecordType = estate.recordTypes.find((recordType) => recordType.objectType === "application_system");
   const contractSpend = sumNumeric(contracts, "annualSpendUsd");
   const vendorRows = topShareRows(contracts, "vendorName", "annualSpendUsd", 8);
@@ -543,7 +732,7 @@ function buildEclSignalPacket(
     {
       id: "sig_ecl_estate_001",
       kind: "portfolio",
-      statement: `The ECL projection contains ${applications.length.toLocaleString()} applications, ${contracts.length.toLocaleString()} contracts, ${infrastructure.length.toLocaleString()} infrastructure/platform records, and ${dataFlows.length.toLocaleString()} data-flow rows.`,
+      statement: `The ECL projection contains ${applications.length.toLocaleString()} applications, ${contracts.length.toLocaleString()} contracts, ${infrastructure.length.toLocaleString()} infrastructure/platform records, ${dataFlows.length.toLocaleString()} data-flow rows, and ${dataWorkloads.length.toLocaleString()} data/BI/ETL workload segments.`,
       domains: ["application_system", "vendor_contract", "infrastructure_platform", "data_asset_or_integration"],
       evidenceRefs: ["serving.home_executive_brief"],
     },
@@ -655,6 +844,17 @@ function buildEclSignalPacket(
       domains: ["data_asset_or_integration"],
       evidenceRefs: ["serving.home_current_state_data_flow"],
     },
+    ...(dataWorkloads.length
+      ? [
+          {
+            id: "sig_ecl_data_workload_segments_017",
+            kind: "portfolio" as const,
+            statement: `The data, BI, ETL, and analytics inventory contains ${dataWorkloads.length.toLocaleString()} workload segments with summarized workload, active-user, and data-volume measures; it is a segment-level inventory, not a row-per-report dump.`,
+            domains: ["data_asset_or_integration", "infrastructure_platform"],
+            evidenceRefs: ["serving.home_data_assets_integrations"],
+          },
+        ]
+      : []),
     {
       id: "sig_ecl_application_named_examples_015",
       kind: "portfolio",
@@ -737,7 +937,16 @@ function buildEclSignalPacket(
     visualDatasets: {
       application_landscape_by_function: dimensionShareRows(applicationRecordType, 8),
       vendor_spend_concentration: vendorRows,
+      data_workload_by_function: workloadSummaryRows(dataWorkloads, "ownerFunction", 12),
+      data_workload_by_technology: workloadSummaryRows(dataWorkloads, "technologyName", 12),
     },
+    categorySummaries: buildCategorySummaries({
+      applications,
+      contracts,
+      infrastructure,
+      dataFlows,
+      dataWorkloads,
+    }),
   } as unknown as EnterpriseSignalPacket;
 }
 
@@ -769,7 +978,7 @@ function buildEclSourceSummaries(estate: TechnologyEstateBundle): SourceSummary[
         canonicalRecordCount: recordType.rows.length,
         sourceKind: "serving_projection",
         basis: ["deterministic_ecl_projection"],
-        authority: [config.sourcePath],
+        authority: config.authority ?? [config.sourcePath],
         qualityStates: ["projection_row_read"],
         materialFields: dimensionContext.length
           ? [...materialFields, `top_${primaryDimension}: ${dimensionContext.join(", ")}`].slice(0, 12)

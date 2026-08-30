@@ -6,6 +6,15 @@ import {
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { getHomeReviewBundle } from "../golden-snapshot";
 
+type PacketWithCategorySummaries = ReturnType<typeof buildHomeReviewBundleFromEclProjectionRows>["thesis"]["signalPacket"] & {
+  categorySummaries?: Array<{
+    key: string;
+    recordCount: number;
+    denominator: string;
+    measures: Record<string, number>;
+  }>;
+};
+
 function row(input: Partial<HomeProjectionRow> & Pick<HomeProjectionRow, "page_key" | "row_key" | "row_type" | "title">): HomeProjectionRow {
   return {
     summary: null,
@@ -108,13 +117,30 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           capacity_headroom_percent: "28",
         },
       }),
+      row({
+        page_key: "data_assets_integrations",
+        row_key: "SP04-001",
+        row_type: "data_analytics_workload",
+        title: "Finance · Power BI · report",
+        display_payload_json: {
+          source_row_id: "SP04-001",
+          function: "Finance & Accounting",
+          platform_name: "Enterprise Power BI Tenant",
+          technology_name: "Power BI",
+          workload_type: "report",
+          workload_count: "420",
+          active_user_count: "1800",
+          data_volume_tb: "18.5",
+          governance_state: "developing",
+        },
+      }),
     ]);
 
     expect(estate.recordTypes.map((recordType) => [recordType.objectType, recordType.rows.length])).toEqual([
       ["application_system", 1],
       ["vendor_contract", 1],
       ["infrastructure_platform", 1],
-      ["data_asset_or_integration", 1],
+      ["data_asset_or_integration", 2],
     ]);
 
     const applications = estate.recordTypes.find((recordType) => recordType.objectType === "application_system");
@@ -130,12 +156,25 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
 
     const flows = estate.recordTypes.find((recordType) => recordType.objectType === "data_asset_or_integration");
     expect(flows?.rows[0]).toMatchObject({
+      recordKind: "data_movement",
       sourceSystem: "Epic Tapestry",
       targetSystem: "AWS Epic Hosting Estate",
       dataDomain: "Revenue Cycle",
       landingLayer: "raw",
       consumptionLayer: "mart",
       regulatedDataFlag: true,
+    });
+    expect(flows?.rows[1]).toMatchObject({
+      recordKind: "data_analytics_workload",
+      dataAssetName: "Enterprise Power BI Tenant",
+      dataDomain: "Finance & Accounting",
+      workloadType: "report",
+      platformName: "Enterprise Power BI Tenant",
+      technologyName: "Power BI",
+      workloadCount: 420,
+      activeUserCount: 1800,
+      dataVolumeTb: 18.5,
+      governanceState: "developing",
     });
   });
 
@@ -216,9 +255,26 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           target_object_ref: "PLAT-DATA-HUB-001",
         },
       }),
+      row({
+        page_key: "data_assets_integrations",
+        row_key: "SP04-001",
+        row_type: "data_analytics_workload",
+        title: "Finance · Power BI · report",
+        display_payload_json: {
+          source_row_id: "SP04-001",
+          function: "Finance & Accounting",
+          platform_name: "Enterprise Power BI Tenant",
+          technology_name: "Power BI",
+          workload_type: "report",
+          workload_count: "420",
+          active_user_count: "1800",
+          data_volume_tb: "18.5",
+          governance_state: "developing",
+        },
+      }),
     ]);
 
-    expect(bundle.provenance.canonical_snapshot_hash).toBe("ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:13");
+    expect(bundle.provenance.canonical_snapshot_hash).toBe("ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:14");
     expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
     expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).toBe("Dense ECL estate loaded");
     expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).not.toBe(
@@ -241,6 +297,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       },
     ]);
     expect(bundle.thesis.signalPacket.signals[0]?.statement).toContain("1 applications");
+    expect(bundle.thesis.signalPacket.signals[0]?.statement).toContain("1 data/BI/ETL workload segments");
     expect(bundle.thesis.signalPacket.contextItems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -272,10 +329,36 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           authority: ["serving.home_applications_systems"],
         }),
         expect.objectContaining({
-          sourcePath: "serving.home_current_state_data_flow",
+          sourcePath: "serving.home_current_state_data_flow + serving.home_data_assets_integrations",
           sourceKind: "serving_projection",
+          recordCount: 2,
+          authority: ["serving.home_current_state_data_flow", "serving.home_data_assets_integrations"],
+        }),
+      ]),
+    );
+    const packet = bundle.thesis.signalPacket as PacketWithCategorySummaries;
+    expect(packet.categorySummaries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "data_bi_etl_workloads_by_function_and_technology",
           recordCount: 1,
-          authority: ["serving.home_current_state_data_flow"],
+          denominator: "segment-level workload rows; not one row per report, job, script, or user",
+          measures: expect.objectContaining({
+            workloadSegments: 1,
+            workloadItems: 420,
+            activeUsers: 1800,
+            dataVolumeTb: 18.5,
+          }),
+        }),
+      ]),
+    );
+    expect(bundle.thesis.signalPacket.visualDatasets.data_workload_by_function).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Finance & Accounting",
+          workloadItems: 420,
+          activeUsers: 1800,
+          dataVolumeTb: 18.5,
         }),
       ]),
     );

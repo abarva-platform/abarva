@@ -55,7 +55,7 @@ type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
  * ---------------------------------------------------------------------------------------------- */
 
 const HOME_SYNTHESIS_CONTRACT_VERSION = "home-chapters-v1";
-const CHAPTER_PROMPT_VERSION = "home-chapters/v1";
+const CHAPTER_PROMPT_VERSION = "home-chapters/v1.1-page-lenses";
 const VERIFICATION_VERSION = "targeted-repair-v2";
 
 export interface HomeChapterAssemblyLimits {
@@ -157,15 +157,55 @@ export interface ChapterView {
   limitations: string[];
 }
 
-const CHAPTER_DEFS: Array<{ id: ChapterId; title: string; guidingQuestion: string }> = [
-  { id: "executive_brief", title: "Executive Brief", guidingQuestion: "What should I understand in my first ten minutes?" },
-  { id: "our_business", title: "Our Business", guidingQuestion: "How does this enterprise work and create value?" },
-  { id: "strategy_value_creation", title: "Strategy & Value Creation", guidingQuestion: "Where are we trying to go, and what bets are we making?" },
-  { id: "how_we_operate", title: "How We Operate", guidingQuestion: "How is the enterprise organized and how does work get done?" },
-  { id: "technology_data", title: "Technology & Data", guidingQuestion: "What enables the business, and where is complexity or dependency concentrated?" },
-  { id: "performance_value", title: "Performance & Value", guidingQuestion: "Are we moving toward outcomes, and can we prove the value?" },
-  { id: "leadership_perspective", title: "Leadership Perspective", guidingQuestion: "What do leaders agree on, disagree on, and worry about?" },
-  { id: "what_needs_attention", title: "What Needs Attention", guidingQuestion: "What tensions, risks, dependencies and decisions deserve executive attention?" },
+const CHAPTER_DEFS: Array<{ id: ChapterId; title: string; guidingQuestion: string; writerLens: string }> = [
+  {
+    id: "executive_brief",
+    title: "Executive Brief",
+    guidingQuestion: "What should I understand in my first ten minutes?",
+    writerLens: "Wear the CEO/board-adviser hat. Lead with business consequence, decision urgency, money, risk, and what a new executive should do next.",
+  },
+  {
+    id: "our_business",
+    title: "Our Business",
+    guidingQuestion: "How does this enterprise work and create value?",
+    writerLens: "Wear the business-strategy consultant hat. Explain the operating model, value pools, customer or member economics, and where technology or vendors constrain the model.",
+  },
+  {
+    id: "strategy_value_creation",
+    title: "Strategy & Value Creation",
+    guidingQuestion: "Where are we trying to go, and what bets are we making?",
+    writerLens: "Wear the corporate-strategy and value-creation hat. Tie priorities, programs, funding, KPIs, and value proof together only where cited evidence exists.",
+  },
+  {
+    id: "how_we_operate",
+    title: "How We Operate",
+    guidingQuestion: "How is the enterprise organized and how does work get done?",
+    writerLens: "Wear the operating-model adviser hat. Explain organization, ownership, process evidence, workforce constraints, and decision accountability.",
+  },
+  {
+    id: "technology_data",
+    title: "Technology & Data",
+    guidingQuestion: "What enables the business, and where is complexity or dependency concentrated?",
+    writerLens: "Wear the expert CTO, enterprise architect, and data-platform leader hat. Explain system blocks, hosting, integrations, data/BI/ETL workloads, platform risk, and architecture consequences in technology-native language that a business executive can still follow.",
+  },
+  {
+    id: "performance_value",
+    title: "Performance & Value",
+    guidingQuestion: "Are we moving toward outcomes, and can we prove the value?",
+    writerLens: "Wear the CFO/value-governance hat. Separate investment, committed value, measured value, blocked value, attestation, and evidence gaps.",
+  },
+  {
+    id: "leadership_perspective",
+    title: "Leadership Perspective",
+    guidingQuestion: "What do leaders agree on, disagree on, and worry about?",
+    writerLens: "Wear the executive-interview synthesis hat. Summarize quoted themes, priorities, disagreements, operating pain, and AI ambition by role and function without converting opinions into facts.",
+  },
+  {
+    id: "what_needs_attention",
+    title: "What Needs Attention",
+    guidingQuestion: "What tensions, risks, dependencies and decisions deserve executive attention?",
+    writerLens: "Wear the transformation-office and risk-committee hat. Name the few decisions, dependencies, owners, evidence gaps, and next actions that merit executive attention.",
+  },
 ];
 
 /* ------------------------------------------------------------------------------------------------
@@ -422,6 +462,12 @@ Do not use implementation vocabulary such as ECL, projection, serving view, load
 entity, payload, schema, source room, provider flag, adapter, upsert, hydration step, row type, writer,
 generator, pipeline, or manifest. Use plain business language for the surface a leader would see.
 
+Use the chapter-specific writer lens supplied in the user prompt. The lens changes the posture, not
+the evidence boundary: the Executive Brief should read like business-strategy advice, Technology &
+Data should read like an expert technologist and enterprise architect explaining consequences,
+Performance & Value should read like CFO value governance, and Leadership Perspective should read
+like interview synthesis. Never let the lens introduce facts not present in the assigned claims.
+
 Respond with strict JSON: { "headline": "...", "executive_synthesis": "..." }`;
 
 interface ChapterSynthesisOptions {
@@ -463,7 +509,7 @@ function collectChapterRawStatements(chapters: ChapterView[]): string[] {
 
 async function synthesizeChapterNarrative(
   client: Parameters<typeof callClaude>[0],
-  def: { title: string; guidingQuestion: string },
+  def: { title: string; guidingQuestion: string; writerLens: string },
   claims: GroundedClaim[],
   options: ChapterSynthesisOptions = HOME_CHAPTER_SYNTHESIS_OPTIONS,
 ): Promise<ChapterSynthesisResult | null> {
@@ -477,7 +523,7 @@ async function synthesizeChapterNarrative(
     };
   }
   const userPrompt =
-    `Chapter: ${def.title}\nGuiding question: ${def.guidingQuestion}\n\n` +
+    `Chapter: ${def.title}\nGuiding question: ${def.guidingQuestion}\nWriter lens: ${def.writerLens}\n\n` +
     `Assigned claims (the ONLY source of content for this chapter):\n` +
     claims.map((c, i) => `${i + 1}. [${c.claim_type}] ${c.statement}`).join("\n");
   const result = await callClaude(client, CHAPTER_SYNTHESIS_SYSTEM_PROMPT, userPrompt, options.maxTokens, options.effort);
