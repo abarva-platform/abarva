@@ -221,7 +221,7 @@ export function WorkspaceExecutiveShell({
             note="sum of recorded annual_value"
           />
           <Metric
-            label="Decision set"
+            label={decisionSupport?.label ?? "Decision set"}
             value={decisionSupport?.value ?? "Not established"}
             note={
               decisionSupport?.note ??
@@ -229,13 +229,13 @@ export function WorkspaceExecutiveShell({
             }
           />
           <Metric
-            label="Nearest deadline"
+            label={windowSupport?.label ?? "Nearest deadline"}
             value={windowSupport?.value ?? "Not established"}
             note={windowSupport?.note ?? "Needs notice_deadline or end_date"}
             tone="warn"
           />
           <Metric
-            label="Mean confidence"
+            label={confidenceSupport?.label ?? "Mean confidence"}
             value={confidenceSupport?.value ?? "Not established"}
             note={confidenceSupport?.note ?? "Numeric source_confidence only"}
           />

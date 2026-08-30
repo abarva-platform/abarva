@@ -999,6 +999,25 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       asOfDateIso: "2027-06-30T00:00:00Z",
     });
 
+    expect(cockpit.verdict.headline).toBe(
+      "$140.3M auto-renews with the notice window already passed.",
+    );
+    expect(cockpit.verdict.decidingAxis).toContain(
+      "$214.6M remains cancellable",
+    );
+    expect(cockpit.verdict.bindingChip).toContain(
+      "noticeDeadlinePassedAutoRenew",
+    );
+    expect(cockpit.verdict.supports[0]).toMatchObject({
+      label: "Auto-renew notice passed",
+      value: "$140.3M",
+      tone: "fail",
+    });
+    expect(cockpit.verdict.supports[1]).toMatchObject({
+      label: "Still cancellable",
+      value: "$214.6M",
+      tone: "pass",
+    });
     expect(cockpit.proofLayers.evidenceBehindVerdict[0].value).toContain(
       "1 auto-renew lapsed notice rows",
     );
