@@ -116,7 +116,7 @@ export interface SourceSummary {
   rawRowCount?: number;
   /** Canonical records emitted downstream from this file, when known. */
   canonicalRecordCount?: number;
-  sourceKind?: "canonical_record_summary" | "client_intake_file" | "intake_guidance" | "source_layer_file";
+  sourceKind?: "canonical_record_summary" | "client_intake_file" | "intake_guidance" | "source_layer_file" | "serving_projection";
   basis: string[];
   authority: string[];
   qualityStates: string[];

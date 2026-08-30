@@ -262,6 +262,23 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ]),
     );
+    expect(bundle.thesis.signalPacket.sourceSummaries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourcePath: "serving.home_applications_systems",
+          sourceKind: "serving_projection",
+          recordCount: 1,
+          canonicalRecordCount: 1,
+          authority: ["serving.home_applications_systems"],
+        }),
+        expect.objectContaining({
+          sourcePath: "serving.home_current_state_data_flow",
+          sourceKind: "serving_projection",
+          recordCount: 1,
+          authority: ["serving.home_current_state_data_flow"],
+        }),
+      ]),
+    );
     expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "application_system")?.rows).toHaveLength(1);
   });
 

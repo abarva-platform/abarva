@@ -85,9 +85,13 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
   const contextCount = rows.length - signalCount;
   const evidenceBacked = rows.filter((row) => evidenceState(row) === "Referenced").length;
   const valuedFacts = rows.filter((row) => valueState(row) === "Quantified").length;
+  const sourceSummaries = signalPacket.sourceSummaries ?? [];
+  const sourceRecords = sourceSummaries.reduce((sum, summary) => sum + summary.recordCount, 0);
   const sourceCoverage =
-    evidenceBacked > 0
-      ? `${evidenceBacked.toLocaleString()} facts carry evidence refs`
+    sourceSummaries.length > 0
+      ? `${sourceSummaries.length.toLocaleString()} source families · ${sourceRecords.toLocaleString()} records summarized`
+      : evidenceBacked > 0
+        ? `${evidenceBacked.toLocaleString()} facts carry evidence refs`
       : "Source-file rollup not supplied in this packet";
 
   function clearFilters() {
@@ -181,6 +185,7 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
             onSelect={setSliceValue}
           />
         ) : null}
+        {sourceSummaries.length > 0 ? <SourceFamilyStrip sourceSummaries={sourceSummaries} /> : null}
       </section>
 
       <div data-browser-layout style={layoutStyle}>
@@ -295,6 +300,31 @@ export function BrowseTheData({ signalPacket }: { signalPacket: EnterpriseSignal
             </section>
           ) : null}
         </aside>
+      </div>
+    </section>
+  );
+}
+
+function SourceFamilyStrip({ sourceSummaries }: { sourceSummaries: EnterpriseSignalPacket["sourceSummaries"] }) {
+  const shown = sourceSummaries.slice(0, 6);
+  const totalRecords = sourceSummaries.reduce((sum, summary) => sum + summary.recordCount, 0);
+  return (
+    <section style={sourceFamilyStyle} aria-label="Source family coverage">
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+        <span style={eyebrow(V4.green)}>Source family coverage</span>
+        <span style={{ color: V4.slate, fontFamily: MONO, fontSize: 11 }}>
+          {sourceSummaries.length.toLocaleString()} families · {totalRecords.toLocaleString()} records
+        </span>
+      </div>
+      <div style={sourceFamilyGridStyle}>
+        {shown.map((summary) => (
+          <article key={summary.sourcePath} style={sourceFamilyCardStyle}>
+            <span style={sourceFamilyPathStyle}>{summary.sourcePath}</span>
+            <strong style={sourceFamilyCountStyle}>{summary.recordCount.toLocaleString()}</strong>
+            <span style={sourceFamilyLabelStyle}>{summary.objectTypes.map(humanise).join(", ")}</span>
+            <span style={sourceFamilyBasisStyle}>{summary.sourceKind ? humanise(summary.sourceKind) : "source context"}</span>
+          </article>
+        ))}
       </div>
     </section>
   );
@@ -518,6 +548,13 @@ const distributionLabelStyle = { color: V4.inkSoft, display: "block", fontFamily
 const distributionTrackStyle = { background: V4.cream, borderRadius: 99, display: "block", height: 4, marginTop: 7, overflow: "hidden" } satisfies CSSProperties;
 const distributionFillStyle = { background: V4.blue, borderRadius: 99, display: "block", height: "100%" } satisfies CSSProperties;
 const distributionCountStyle = { color: V4.slate, display: "block", fontFamily: MONO, fontSize: 11, marginTop: 6 } satisfies CSSProperties;
+const sourceFamilyStyle = { borderTop: `1px solid ${V4.rule}`, gridColumn: "1 / -1", paddingTop: 14 } satisfies CSSProperties;
+const sourceFamilyGridStyle = { display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))", marginTop: 10 } satisfies CSSProperties;
+const sourceFamilyCardStyle = { background: V4.surface, border: `1px solid ${V4.rule}`, borderRadius: 8, minWidth: 0, padding: "10px 11px" } satisfies CSSProperties;
+const sourceFamilyPathStyle = { color: V4.blue, display: "block", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.04em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } satisfies CSSProperties;
+const sourceFamilyCountStyle = { color: V4.ink, display: "block", fontFamily: SERIF, fontSize: 25, fontWeight: 500, letterSpacing: "-0.026em", lineHeight: 1, marginTop: 8 } satisfies CSSProperties;
+const sourceFamilyLabelStyle = { color: V4.inkSoft, display: "block", fontFamily: SANS, fontSize: 12.2, lineHeight: 1.35, marginTop: 5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } satisfies CSSProperties;
+const sourceFamilyBasisStyle = { color: V4.slate, display: "block", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.06em", marginTop: 7, textTransform: "uppercase" } satisfies CSSProperties;
 const layoutStyle = { alignItems: "start", display: "grid", gap: "clamp(24px,3vw,42px)", gridTemplateColumns: "minmax(0,1fr) minmax(310px,380px)", marginTop: 28 } satisfies CSSProperties;
 const tableHeaderStyle = { alignItems: "end", display: "grid", gap: 16, gridTemplateColumns: "minmax(0,1fr) minmax(280px,520px)", marginBottom: 12 } satisfies CSSProperties;
 const tableSubheadStyle = { color: V4.slate, fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", marginTop: 7, textTransform: "uppercase" } satisfies CSSProperties;

@@ -47,4 +47,47 @@ describe("BrowseTheData", () => {
     fireEvent.change(screen.getByLabelText("Slice value"), { target: { value: "vendor_contract" } });
     expect(screen.getByText((_, element) => element?.textContent === "4 of 114 facts shown")).toBeInTheDocument();
   });
+
+  it("shows source-family coverage when the producer supplies source summaries", () => {
+    render(
+      <BrowseTheData
+        signalPacket={{
+          ...bundle.thesis.signalPacket,
+          sourceSummaries: [
+            {
+              sourcePath: "serving.home_applications_systems",
+              domain: "application_system",
+              objectTypes: ["application_system"],
+              recordCount: 750,
+              canonicalRecordCount: 750,
+              sourceKind: "serving_projection",
+              basis: ["deterministic_ecl_projection"],
+              authority: ["serving.home_applications_systems"],
+              qualityStates: ["projection_row_read"],
+              materialFields: ["systemName", "businessFunction", "annualCostUsd"],
+              exampleRecords: ["Epic Tapestry"],
+            },
+            {
+              sourcePath: "serving.home_vendor_contracts",
+              domain: "vendor_contract",
+              objectTypes: ["vendor_contract"],
+              recordCount: 230,
+              canonicalRecordCount: 230,
+              sourceKind: "serving_projection",
+              basis: ["deterministic_ecl_projection"],
+              authority: ["serving.home_vendor_contracts"],
+              qualityStates: ["projection_row_read"],
+              materialFields: ["vendorName", "annualSpendUsd"],
+              exampleRecords: ["Epic Systems Corporation"],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText("Source family coverage")).toBeInTheDocument();
+    expect(screen.getByText("serving.home_applications_systems")).toBeInTheDocument();
+    expect(screen.getByText("2 source families · 980 records summarized")).toBeInTheDocument();
+    expect(screen.queryByText("Source-file rollup not supplied in this packet")).not.toBeInTheDocument();
+  });
 });
