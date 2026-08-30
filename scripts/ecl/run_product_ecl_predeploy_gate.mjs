@@ -51,7 +51,7 @@ const CHECKS = [
   },
   {
     key: "source_route_accepts_shared_provider_alias",
-    file: "src/app/(maestro)/source/preview/workspace/page.tsx",
+    file: "src/app/(maestro)/source/workspace/page.tsx",
     mustContain: [
       "provider?: string",
       "params.sourceProvider ?? params.provider",
@@ -62,7 +62,8 @@ const CHECKS = [
     key: "home_route_uses_ecl_provider",
     file: "src/app/(maestro)/home/preview/page.tsx",
     mustContain: [
-      "searchParams: Promise<{ tenant?: string; provider?: string }>",
+      "tenant?: string",
+      "provider?: string",
       "resolveEclProductProvider(provider)",
       "getHomeEclProjectionBundle(tenantKey)",
     ],

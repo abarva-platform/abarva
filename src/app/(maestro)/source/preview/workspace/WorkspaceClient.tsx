@@ -20,6 +20,7 @@ import {
 } from "@/components/agent/AgentDock";
 import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import { Tooltip } from "./Tooltip";
@@ -547,12 +548,17 @@ export function WorkspaceClient({
           suggestedActions={vm.avaSuggestedActions}
           surfaceContext={vm.avaSurfaceContext}
           workspace={
-            <WorkspaceExecutiveShell
-              vm={vm}
-              logic={logic}
-              portfolio={portfolio}
-              tenantName={tenantName}
-            />
+            <>
+              {sourceProviderKey === "ecl_projection_db" ? (
+                <EclServingSurfaceCoverage product="source" />
+              ) : null}
+              <WorkspaceExecutiveShell
+                vm={vm}
+                logic={logic}
+                portfolio={portfolio}
+                tenantName={tenantName}
+              />
+            </>
           }
         />
       </div>
