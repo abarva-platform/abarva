@@ -444,7 +444,8 @@
 }
 
 .sw-v2-vendor-row {
-  grid-template-columns: minmax(220px, 1fr) 90px 140px 90px;
+  grid-template-columns:
+    minmax(220px, 1fr) 90px 140px 90px minmax(150px, 0.8fr);
 }
 
 .sw-v2-vendor-depth-row {

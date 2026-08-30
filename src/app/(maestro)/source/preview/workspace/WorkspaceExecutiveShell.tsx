@@ -52,6 +52,23 @@ type FocusedContractSet = {
   readonly remainderAnnualValue: number;
   readonly depthReadyCount: number;
 };
+type VendorCoverageSummary = {
+  spendRows: number;
+  performanceRows: number;
+  actionRows: number;
+  unclaimedCredit: number;
+};
+type FocusedVendorRow = {
+  readonly vendor: ExecutiveVendorRow;
+  readonly coverage: VendorCoverageSummary | null;
+  readonly reason: string;
+};
+type FocusedVendorSet = {
+  readonly rows: readonly FocusedVendorRow[];
+  readonly remainderCount: number;
+  readonly remainderAnnualValue: number;
+  readonly depthReadyCount: number;
+};
 
 export function WorkspaceExecutiveShell({
   vm,
@@ -575,6 +592,9 @@ function VendorsPage({
         (vendor) => vendor.vendor_ref === selectedVendor.vendor_ref,
       )
     : null;
+  const selectedVendorCoverage = selectedVendor
+    ? (vendorCoverageRows(portfolio).get(selectedVendor.vendor_ref) ?? null)
+    : null;
 
   return (
     <div className="sw-v2-grid">
@@ -602,6 +622,7 @@ function VendorsPage({
           />
         ) : (
           <VendorConcentrationTable
+            portfolio={portfolio}
             vendors={vendors}
             selectedVendor={selectedVendor}
             totalAnnualValue={totalAnnualValue}
@@ -635,13 +656,13 @@ function VendorsPage({
                 value={String(selectedVendor.auto_renew_contracts)}
               />
               <Fact
-                label="Action candidates"
+                label="Action rows"
                 value={String(
                   selectedVendorPosition?.action_candidate_count ?? 0,
                 )}
               />
               <Fact
-                label="Candidate exposure"
+                label="Unconfirmed action value"
                 value={money(
                   numberFromDb(selectedVendorPosition?.candidate_amount_usd),
                 )}
@@ -651,6 +672,10 @@ function VendorsPage({
                 value={money(
                   numberFromDb(selectedVendorPosition?.unclaimed_credit_usd),
                 )}
+              />
+              <Fact
+                label="Spend / performance rows"
+                value={`${formatCount(selectedVendorCoverage?.spendRows)} / ${formatCount(selectedVendorCoverage?.performanceRows)}`}
               />
             </div>
             <div className="sw-v2-mini-list">
@@ -670,6 +695,12 @@ function VendorsPage({
                   selection.
                 </p>
               ) : null}
+              {selectedContracts.length > 6 ? (
+                <p className="sw-v2-muted">
+                  {selectedContracts.length - 6} more contract headers stay in
+                  the grouped vendor rollup.
+                </p>
+              ) : null}
             </div>
           </>
         ) : (
@@ -683,16 +714,19 @@ function VendorsPage({
 }
 
 function VendorConcentrationTable({
+  portfolio,
   vendors,
   selectedVendor,
   totalAnnualValue,
   onOpenVendor,
 }: {
+  portfolio: SourceWorkspacePortfolioData;
   vendors: readonly ExecutiveVendorRow[];
   selectedVendor: ExecutiveVendorRow | null;
   totalAnnualValue: number | null;
   onOpenVendor: (vendorRef: string) => void;
 }) {
+  const focus = focusedVendorSet(portfolio, vendors, "concentration");
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-vendor-row">
@@ -700,8 +734,9 @@ function VendorConcentrationTable({
         <span>Contracts</span>
         <span>Annual value</span>
         <span>Share</span>
+        <span>Why listed</span>
       </div>
-      {vendors.slice(0, 12).map((vendor) => (
+      {focus.rows.map(({ vendor, reason }) => (
         <button
           key={vendor.vendor_ref}
           type="button"
@@ -715,8 +750,18 @@ function VendorConcentrationTable({
           <span>{vendor.contract_count}</span>
           <span>{money(numberFromDb(vendor.annual_value))}</span>
           <span>{formatShare(vendor, totalAnnualValue)}</span>
+          <span>{reason}</span>
         </button>
       ))}
+      {focus.remainderCount > 0 ? (
+        <div className="sw-v2-table-foot">
+          <b>{focus.remainderCount} further vendor relationships</b>
+          <span>
+            {money(focus.remainderAnnualValue)} remains summarized in the
+            portfolio rollup.
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -733,16 +778,17 @@ function VendorEvidenceDepthTable({
   onOpenVendor: (vendorRef: string) => void;
 }) {
   const coverageByVendor = vendorCoverageRows(portfolio);
+  const focus = focusedVendorSet(portfolio, vendors, "evidence");
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-vendor-depth-row">
         <span>Vendor</span>
         <span>Spend rows</span>
         <span>Performance rows</span>
-        <span>Action candidates</span>
+        <span>Action rows</span>
         <span>Unclaimed credits</span>
       </div>
-      {vendors.slice(0, 12).map((vendor) => {
+      {focus.rows.map(({ vendor }) => {
         const coverage = coverageByVendor.get(vendor.vendor_ref);
         return (
           <button
@@ -757,11 +803,20 @@ function VendorEvidenceDepthTable({
             </span>
             <span>{formatCount(coverage?.spendRows)}</span>
             <span>{formatCount(coverage?.performanceRows)}</span>
-            <span>{formatCount(coverage?.actionCandidates)}</span>
+            <span>{formatCount(coverage?.actionRows)}</span>
             <span>{money(coverage?.unclaimedCredit ?? null)}</span>
           </button>
         );
       })}
+      {focus.remainderCount > 0 ? (
+        <div className="sw-v2-table-foot">
+          <b>{focus.depthReadyCount} vendor relationships have loaded depth.</b>
+          <span>
+            The remaining {focus.remainderCount} stay summarized until contract
+            evidence rows are loaded beneath them.
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -2366,16 +2421,94 @@ function contractFocusReason(
   return "Header-only portfolio signal";
 }
 
-function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
-  const rows = new Map<
-    string,
-    {
-      spendRows: number;
-      performanceRows: number;
-      actionCandidates: number;
-      unclaimedCredit: number;
+function focusedVendorSet(
+  portfolio: SourceWorkspacePortfolioData,
+  vendors: readonly ExecutiveVendorRow[],
+  mode: "concentration" | "evidence",
+  limit = 7,
+): FocusedVendorSet {
+  const coverageByVendor = vendorCoverageRows(portfolio);
+  const ranked = vendors
+    .map((vendor): FocusedVendorRow => {
+      const coverage = coverageByVendor.get(vendor.vendor_ref) ?? null;
+      return {
+        vendor,
+        coverage,
+        reason:
+          mode === "evidence"
+            ? vendorEvidenceReason(coverage)
+            : vendorConcentrationReason(vendor),
+      };
+    })
+    .sort((a, b) => {
+      if (mode === "evidence") {
+        return (
+          vendorDepthScore(b.coverage) - vendorDepthScore(a.coverage) ||
+          (numberFromDb(b.vendor.annual_value) ?? 0) -
+            (numberFromDb(a.vendor.annual_value) ?? 0)
+        );
+      }
+      return (
+        (numberFromDb(b.vendor.annual_value) ?? 0) -
+        (numberFromDb(a.vendor.annual_value) ?? 0)
+      );
+    });
+  const rows =
+    mode === "evidence"
+      ? ranked.filter((row) => vendorDepthScore(row.coverage) > 0).slice(0, limit)
+      : ranked.slice(0, limit);
+  if (mode === "evidence" && rows.length < Math.min(limit, 3)) {
+    const selected = new Set(rows.map((row) => row.vendor.vendor_ref));
+    for (const row of ranked) {
+      if (rows.length >= Math.min(limit, 3)) break;
+      if (selected.has(row.vendor.vendor_ref)) continue;
+      rows.push(row);
+      selected.add(row.vendor.vendor_ref);
     }
-  >();
+  }
+  const selectedRefs = new Set(rows.map((row) => row.vendor.vendor_ref));
+  const remainder = vendors.filter(
+    (vendor) => !selectedRefs.has(vendor.vendor_ref),
+  );
+  return {
+    rows,
+    remainderCount: remainder.length,
+    remainderAnnualValue: remainder.reduce(
+      (sum, vendor) => sum + (numberFromDb(vendor.annual_value) ?? 0),
+      0,
+    ),
+    depthReadyCount: ranked.filter((row) => vendorDepthScore(row.coverage) > 0)
+      .length,
+  };
+}
+
+function vendorDepthScore(coverage: VendorCoverageSummary | null) {
+  if (!coverage) return 0;
+  return (
+    coverage.actionRows * 100 +
+    coverage.performanceRows * 8 +
+    coverage.spendRows * 6 +
+    coverage.unclaimedCredit / 10000
+  );
+}
+
+function vendorEvidenceReason(coverage: VendorCoverageSummary | null) {
+  if (!coverage) return "Rollup only";
+  if (coverage.unclaimedCredit > 0) return "Unclaimed credit evidence";
+  if (coverage.actionRows > 0) return "Action rows loaded";
+  if (coverage.performanceRows > 0) return "Performance rows loaded";
+  if (coverage.spendRows > 0) return "Spend rows loaded";
+  return "Rollup only";
+}
+
+function vendorConcentrationReason(vendor: ExecutiveVendorRow) {
+  if (vendor.contract_count > 1) return "Multi-contract relationship";
+  if (vendor.auto_renew_contracts > 0) return "Auto-renew exposure";
+  return "Largest recorded relationships";
+}
+
+function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
+  const rows = new Map<string, VendorCoverageSummary>();
   const vendorRefsByContract = new Map(
     portfolio.contracts.map((contract) => [
       contract.contract_id,
@@ -2389,12 +2522,12 @@ function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
     const current = rows.get(vendorRef) ?? {
       spendRows: 0,
       performanceRows: 0,
-      actionCandidates: 0,
+      actionRows: 0,
       unclaimedCredit: 0,
     };
     current.spendRows += numberFromDb(coverage.spend_rows) ?? 0;
     current.performanceRows += numberFromDb(coverage.performance_rows) ?? 0;
-    current.actionCandidates += numberFromDb(coverage.opportunity_rows) ?? 0;
+    current.actionRows += numberFromDb(coverage.opportunity_rows) ?? 0;
     current.unclaimedCredit += numberFromDb(coverage.unclaimed_credit_usd) ?? 0;
     rows.set(vendorRef, current);
   }
