@@ -629,8 +629,39 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ) {
           return [] as R[];
         }
+        if (sql.includes("FROM source.contract_evidence_coverage_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              contract_name: "Microsoft 365 Enterprise Agreement",
+              spend_rows: "0",
+              actual_spend_usd: "0",
+              committed_spend_usd: "0",
+              performance_rows: "0",
+              breach_rows: "0",
+              credit_calculated_usd: "0",
+              credit_claimed_usd: "0",
+              credit_recovered_usd: "0",
+              unclaimed_credit_usd: "0",
+              opportunity_rows: "0",
+              candidate_amount_usd: "0",
+              finance_confirmation_required_rows: "0",
+              opportunities_with_evidence: "0",
+              scope_rows: "0",
+              critical_scope_rows: "0",
+              document_page_text_rows: "0",
+              change_order_rows: "0",
+              coverage_state: "not_loaded",
+              blocker_if_missing: "legacy coverage row only",
+              evidence_basis_json: {},
+              load_run_id: "legacy-impact-view",
+            },
+          ] as R[];
+        }
         if (
-          sql.includes("FROM source.contract_evidence_coverage_v1") ||
           sql.includes("FROM source.contract_action_candidate_v1") ||
           sql.includes("FROM source.contract_claim_card_v1") ||
           sql.includes("FROM source.vendor_position_v1") ||
@@ -641,7 +672,8 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         }
         if (
           sql.includes("consumption.sourcing_spend_monthly_v1") &&
-          sql.includes("performance AS")
+          sql.includes("performance AS") &&
+          sql.includes("spend_row_count")
         ) {
           return [
             {
@@ -788,6 +820,12 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     );
 
     expect(portfolio.impact.evidenceCoverage).toHaveLength(1);
+    expect(portfolio.impact.evidenceCoverage[0]).toMatchObject({
+      contract_id: "MER-TECH-M365-001",
+      spend_rows: 12,
+      coverage_state: "decision_ready",
+      load_run_id: "test-run",
+    });
     expect(portfolio.impact.actionCandidates).toHaveLength(1);
     expect(portfolio.impact.claimCards).toHaveLength(1);
     expect(portfolio.impact.vendorPositions).toHaveLength(1);
