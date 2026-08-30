@@ -71,8 +71,8 @@ export function ChapterPage({
       {bands.filledBandCount === 0 ? (
         <div style={{ padding: `44px ${PAGE_X}px 0` }}>
           <p style={{ margin: 0, fontFamily: SANS, fontSize: 16, lineHeight: 1.6, color: V4.slate, maxWidth: "60ch" }}>
-            No verified claims were routed to this chapter from the current record. That is a coverage gap in the
-            build, not a statement that nothing is happening here.
+            This chapter is not ready for executive review. The current record does not yet connect enough
+            verified statements to support this page&apos;s leadership question.
           </p>
         </div>
       ) : null}
@@ -103,8 +103,10 @@ function ChapterExecutiveReadout({
         <div style={readoutLeadStyle}>
           <div>
             <span style={eyebrow(V4.green)}>CXO readout</span>
-            <h2 style={readoutTitleStyle}>What this tab should help a leader decide</h2>
-            <p style={readoutTextStyle}>{primaryInference ?? primaryRecord ?? chapter.headline}</p>
+            <h2 style={readoutTitleStyle}>Decision this page supports</h2>
+            <p style={readoutTextStyle}>
+              {primaryInference ?? primaryRecord ?? "No executive decision should be taken from this chapter yet."}
+            </p>
           </div>
           <div style={readoutMetaStyle}>
             <span>{proofCount.toLocaleString()} grounded statements</span>
@@ -114,9 +116,9 @@ function ChapterExecutiveReadout({
           </div>
         </div>
         <div style={readoutCardGridStyle}>
-          <ReadoutCard label="Evidence signal" tone={V4.navy} value={primaryRecord ?? "No counted evidence statement was routed to this chapter."} />
-          <ReadoutCard label="Exposure to watch" tone={primaryExposure ? V4.red : V4.amber} value={primaryExposure ?? primaryGap ?? "No open exposure was routed to this chapter."} />
-          <ReadoutCard label="Question for the room" tone={V4.blue} value={primaryQuestion ?? "No leadership question was generated for this chapter."} />
+          <ReadoutCard label="Record signal" tone={V4.navy} value={primaryRecord ?? "No evidence-backed statement is available for this chapter."} />
+          <ReadoutCard label="Exposure to watch" tone={primaryExposure ? V4.red : V4.amber} value={primaryExposure ?? primaryGap ?? "No exposure has been established for this chapter."} />
+          <ReadoutCard label="Question for the room" tone={V4.blue} value={primaryQuestion ?? "No leadership question is ready for this chapter."} />
         </div>
         {leadershipSignals.length > 0 ? <LeadershipVoiceStrip signals={leadershipSignals} /> : null}
       </div>
