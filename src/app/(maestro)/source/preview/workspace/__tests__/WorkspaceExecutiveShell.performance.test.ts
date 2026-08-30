@@ -28,12 +28,19 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
           vendor_ref: "vendor-modules",
           vendor_name: "Epic Systems Corp.",
           vendor_category: "EHR",
-          contract_count: 5,
+          contract_count: 14,
           annual_value: 50_900_000,
           total_committed_value: 50_900_000,
           auto_renew_contracts: 2,
           next_end_date: "2027-12-31",
-          contract_refs: ["CTR-0005", "CTR-0006"],
+          contract_refs: [
+            "CTR-0005",
+            "CTR-0006",
+            "CTR-0007",
+            "CTR-0008",
+            "CTR-0009",
+            "CTR-0005",
+          ],
         },
         {
           tenant_key: "meridian-health",
@@ -48,6 +55,43 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
           contract_refs: ["CTR-AWS"],
         },
       ],
+      contracts: [
+        {
+          contract_id: "CTR-PLATFORM",
+          vendor_ref: "vendor-platform",
+          vendor_name: "Epic Systems Corporation",
+          annual_value: 86_200_000,
+          resolved_annual_value: null,
+          total_committed_value: 86_200_000,
+          resolved_total_committed_value: null,
+          end_date: "2028-12-31",
+          auto_renew: true,
+        },
+        ...["CTR-0005", "CTR-0006", "CTR-0007", "CTR-0008", "CTR-0009"].map(
+          (contract_id) => ({
+            contract_id,
+            vendor_ref: "vendor-modules",
+            vendor_name: "Epic Systems Corp.",
+            annual_value: 10_180_000,
+            resolved_annual_value: null,
+            total_committed_value: 10_180_000,
+            resolved_total_committed_value: null,
+            end_date: "2027-12-31",
+            auto_renew: false,
+          }),
+        ),
+        {
+          contract_id: "CTR-AWS",
+          vendor_ref: "vendor-cloud",
+          vendor_name: "Amazon Web Services",
+          annual_value: 55_200_000,
+          resolved_annual_value: null,
+          total_committed_value: 55_200_000,
+          resolved_total_committed_value: null,
+          end_date: "2029-12-31",
+          auto_renew: false,
+        },
+      ],
     } as unknown as Parameters<typeof topVendors>[0]);
 
     expect(vendors).toHaveLength(2);
@@ -58,6 +102,9 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       "CTR-PLATFORM",
       "CTR-0005",
       "CTR-0006",
+      "CTR-0007",
+      "CTR-0008",
+      "CTR-0009",
     ]);
     expect(vendors[1]?.vendor_name).toBe("Amazon Web Services");
   });

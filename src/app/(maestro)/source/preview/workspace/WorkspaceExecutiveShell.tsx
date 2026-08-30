@@ -52,15 +52,16 @@ export function WorkspaceExecutiveShell({
     preferredContract(portfolio) ??
     portfolio.contracts[0] ??
     null;
+  const executiveVendors = topVendors(portfolio);
   const selectedVendorRef =
     logic.state.sel.kind === "vendor"
       ? logic.state.sel.id
       : (selectedContract?.vendor_ref ??
-        topVendors(portfolio)[0]?.vendor_ref ??
+        executiveVendors[0]?.vendor_ref ??
         null);
   const selectedVendor = selectedVendorRef
-    ? (portfolio.vendors.find(
-        (vendor) => vendor.vendor_ref === selectedVendorRef,
+    ? (executiveVendors.find((vendor) =>
+        vendor.vendor_refs.includes(selectedVendorRef),
       ) ?? null)
     : null;
   const currentPage = activePage(logic, vm);
@@ -485,7 +486,7 @@ function VendorsPage({
   onOpenContract,
 }: {
   portfolio: SourceWorkspacePortfolioData;
-  selectedVendor: SourceVendorContractPortfolioRow | null;
+  selectedVendor: ExecutiveVendorRow | null;
   totalAnnualValue: number | null;
   onOpenVendor: (vendorRef: string) => void;
   onOpenContract: (contractId: string, tab?: string) => void;
@@ -1298,6 +1299,9 @@ function formatCount(value: number | null | undefined) {
 export function topVendors(
   portfolio: SourceWorkspacePortfolioData,
 ): ExecutiveVendorRow[] {
+  const contractsById = new Map(
+    portfolio.contracts.map((contract) => [contract.contract_id, contract]),
+  );
   const byVendorName = new Map<string, ExecutiveVendorRow>();
   for (const vendor of portfolio.vendors) {
     const key = normalizedVendorName(vendor.vendor_name);
@@ -1327,12 +1331,65 @@ export function topVendors(
     });
   }
   return [...byVendorName.values()]
+    .map((vendor) => withContractBackedVendorMetrics(vendor, contractsById))
     .slice()
     .sort(
       (a, b) =>
         (numberFromDb(b.annual_value) ?? 0) -
         (numberFromDb(a.annual_value) ?? 0),
     );
+}
+
+function withContractBackedVendorMetrics(
+  vendor: ExecutiveVendorRow,
+  contractsById: ReadonlyMap<string, SourceContract360Row>,
+): ExecutiveVendorRow {
+  const contractRefs = uniqueRefs(vendor.contract_refs);
+  const linkedContracts = contractRefs
+    .map((contractId) => contractsById.get(contractId))
+    .filter((contract): contract is SourceContract360Row => Boolean(contract));
+  if (linkedContracts.length === 0) {
+    return {
+      ...vendor,
+      contract_refs: contractRefs,
+      contract_count: contractRefs.length || vendor.contract_count,
+    };
+  }
+  const annualValue = linkedContracts.reduce(
+    (sum, contract) =>
+      sum +
+      (numberFromDb(contract.resolved_annual_value) ??
+        numberFromDb(contract.annual_value) ??
+        0),
+    0,
+  );
+  const totalCommittedValue = linkedContracts.reduce(
+    (sum, contract) =>
+      sum +
+      (numberFromDb(contract.resolved_total_committed_value) ??
+        numberFromDb(contract.total_committed_value) ??
+        0),
+    0,
+  );
+  const nextEndDate = linkedContracts.reduce<string | null>(
+    (next, contract) => earlierDate(next, contract.end_date),
+    null,
+  );
+
+  return {
+    ...vendor,
+    contract_count: linkedContracts.length,
+    annual_value: annualValue > 0 ? annualValue : vendor.annual_value,
+    total_committed_value:
+      totalCommittedValue > 0
+        ? totalCommittedValue
+        : vendor.total_committed_value,
+    auto_renew_contracts: linkedContracts.filter(
+      (contract) => contract.auto_renew,
+    ).length,
+    next_end_date: nextEndDate ?? vendor.next_end_date,
+    contract_refs: contractRefs,
+  };
 }
 
 function normalizedVendorName(name: string) {
