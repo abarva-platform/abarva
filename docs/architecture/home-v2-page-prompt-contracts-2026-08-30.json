@@ -132,6 +132,50 @@
       "forbidden": ["confident map when topology gate refuses", "mixing movements with report/job/user/TB denominators"]
     },
     {
+      "page_key": "applications_systems",
+      "label": "Applications & Systems",
+      "writer_lens": "expert_cto_enterprise_architect",
+      "voice": "systems portfolio and ownership; technology-native, business-readable",
+      "decision_question": "Which systems run each business block, who owns them, and what condition are they in?",
+      "required_context": ["technology_estate", "operating_model", "commercial_exposure", "risk_and_controls", "known_gaps"],
+      "source_layer_reads": ["serving.home_applications_systems", "application_v", "application_deployment_v", "ecl_context.relationship", "ecl_context.measure"],
+      "must_show": ["business block and function grouping", "application count through application_v", "owner and support model", "vendor and contract touchpoints", "hosting and lifecycle state", "named unresolved gaps"],
+      "forbidden": ["counting deployments as applications", "raw ecl_context.object totals", "system cards without owner or source basis"]
+    },
+    {
+      "page_key": "vendor_contracts",
+      "label": "Vendor Contracts",
+      "writer_lens": "commercial_sourcing_cxo_partner",
+      "voice": "commercial spine; contract economics, leverage, obligations, and proof",
+      "decision_question": "Which vendor relationships create concentration, leverage, exposure, or evidence gaps?",
+      "required_context": ["commercial_exposure", "value_and_performance", "technology_estate", "known_gaps"],
+      "source_layer_reads": ["serving.source_vendor_360", "serving.source_contract_360", "serving.source_value_levers", "ecl_commercial.contract", "ecl_commercial.service_line", "ecl_source.document_extraction"],
+      "must_show": ["supplier concentration", "contract value and renewal posture", "scope to applications/functions where known", "leverage and exit terms", "document evidence state"],
+      "forbidden": ["market claims without benchmark basis", "unverified clause language as fact", "contract count used as vendor count"]
+    },
+    {
+      "page_key": "infrastructure_platforms",
+      "label": "Infrastructure & Platforms",
+      "writer_lens": "expert_cto_enterprise_architect",
+      "voice": "platform reliability, hosting, resilience, lifecycle, and dependency risk",
+      "decision_question": "Which hosting and platform foundations carry material business dependency?",
+      "required_context": ["technology_estate", "data_and_analytics", "risk_and_controls", "commercial_exposure", "known_gaps"],
+      "source_layer_reads": ["serving.home_infrastructure_platforms", "technical_component_v", "application_deployment_v", "ecl_context.relationship", "ecl_context.measure"],
+      "must_show": ["hosting mix", "critical platforms", "support/end-of-life dates", "dependent applications", "capacity or resilience facts where loaded", "unknown telemetry explicitly labelled"],
+      "forbidden": ["confirming support/end dates when loaded", "platform list without dependency context", "mixing SaaS applications and hosting platforms without grain label"]
+    },
+    {
+      "page_key": "data_assets_integrations",
+      "label": "Data Assets & Integrations",
+      "writer_lens": "data_analytics_architect",
+      "voice": "data estate, BI/reporting, analytics workload, integration, lineage, and consumption",
+      "decision_question": "What data, integration, BI, ETL, analytics, and user workload exists by function and technology?",
+      "required_context": ["data_and_analytics", "technology_estate", "source_family_summaries", "category_summaries", "known_gaps"],
+      "source_layer_reads": ["serving.home_data_assets_integrations", "serving.home_current_state_data_flow", "ecl_context.relationship", "ecl_context.measure", "ecl_source.source_record"],
+      "must_show": ["source/integration/platform/consumption zones", "BI/report counts by tool and function", "ETL/job/script counts by tool and function", "analytics/SAS workload where loaded", "users and data volume where loaded", "lineage and telemetry gaps"],
+      "forbidden": ["asking to confirm ETL/jobs/reports/users/TB when workload summaries are loaded", "using data movement rows as report or job counts", "generic lakehouse diagram without tenant facts"]
+    },
+    {
       "page_key": "what_has_been_loaded",
       "label": "What Has Been Loaded",
       "writer_lens": "data_steward_source_reviewer",
