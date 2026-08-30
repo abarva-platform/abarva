@@ -774,10 +774,10 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
   const storySignals = firstSignals(signalPacket, [
     "sig_ecl_estate_001",
     "sig_ecl_application_function_002",
-    "sig_ecl_vendor_concentration_004",
-    "sig_ecl_contract_flexibility_006",
     "sig_ecl_data_workload_segments_017",
     "sig_ecl_data_flow_total_014",
+    "sig_ecl_application_cost_013",
+    "sig_ecl_contract_value_005",
   ]);
   const technologySignals = firstSignals(signalPacket, [
     "sig_ecl_application_function_ranking_012",

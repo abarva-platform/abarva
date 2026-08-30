@@ -93,8 +93,13 @@ const STORY_SECTIONS: StorySectionSpec[] = [
   },
 ];
 
-const NUMBER_RE = /(?:\$[\d,.]+(?:[KMB])?|\b\d+(?:\.\d+)?%)/;
-const PREFERRED_LEAD_RE = /\b(?:finance|validated|proven|claimable|promised|value|spend|cost|contracts|risk|complete|blocked)\b/i;
+const NUMBER_RE = /(?:\$[\d,.]+(?:[KMB])?|\b\d+(?:,\d{3})*(?:\.\d+)?%)/;
+const OPENING_SCALE_NUMBER_RE =
+  /\b\d+(?:,\d{3})*(?:\.\d+)?\b(?=\s+(?:applications|systems|source-target|data movements|flows|workload items|active users|TB|segments|business functions))/i;
+const PREFERRED_LEAD_RE = /\b(?:finance|validated|proven|claimable|promised|value|spend|cost|risk|complete|blocked|applications|systems|flows|workload)\b/i;
+const ENTERPRISE_OPENING_RE =
+  /\b(?:enterprise|estate|application|system|source-target|data movement|flow|workload|analytics|reporting|ETL|script|business function|provider|payer|operating model)\b/i;
+const COMMERCIAL_OPENING_RE = /\b(?:vendor|supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
 export const HOME_TIER1_GENERATION_FORBIDDEN_TERMS = [
   "ECL",
   "projection",
@@ -287,10 +292,12 @@ function chooseLeadNumber(sections: StorySection[]): LeadNumber | null {
     (claim): claim is GroundedClaim => Boolean(claim),
   );
   const numbered = claims
-    .map((claim) => ({ claim, match: claim.statement.match(NUMBER_RE)?.[0] ?? null }))
+    .map((claim) => ({ claim, match: openingNumberForStatement(claim.statement) }))
     .filter((item): item is { claim: GroundedClaim; match: string } => Boolean(item.match));
   if (numbered.length === 0) return null;
   const chosen =
+    numbered.find((item) => ENTERPRISE_OPENING_RE.test(item.claim.statement) && !COMMERCIAL_OPENING_RE.test(item.claim.statement)) ??
+    numbered.find((item) => !COMMERCIAL_OPENING_RE.test(item.claim.statement)) ??
     numbered.find((item) => /validated|proven|claimable|promised|value/i.test(item.claim.statement)) ??
     numbered[0];
   return {
@@ -298,6 +305,10 @@ function chooseLeadNumber(sections: StorySection[]): LeadNumber | null {
     label: labelForNumber(chosen.claim.statement, chosen.match),
     claim: chosen.claim,
   };
+}
+
+function openingNumberForStatement(statement: string): string | null {
+  return statement.match(OPENING_SCALE_NUMBER_RE)?.[0] ?? statement.match(NUMBER_RE)?.[0] ?? null;
 }
 
 function scoreClaim(claim: GroundedClaim): number {
@@ -316,6 +327,11 @@ function labelForNumber(statement: string, value: string): string {
   if (/\bfinance-validated\b/i.test(statement)) return "finance-validated value in the current evidence";
   if (/\bpromised\b/i.test(statement)) return "promised value in the current evidence";
   if (/\bcomplete\b/i.test(statement)) return "execution progress cited by the record";
+  if (/\bapplications?\b/i.test(statement)) return "applications in the governed current-state estate";
+  if (/\b(?:data movement|source-target|flows?)\b/i.test(statement)) return "data movements in the governed current-state view";
+  if (/\b(?:workload items|active users|TB|segments|reporting|ETL|script|analytics)\b/i.test(statement)) {
+    return "data, reporting, ETL, script, and analytics workload evidence";
+  }
   if (/\bvendor|supplier|contract\b/i.test(statement)) return "commercial exposure cited by the record";
   return withoutValue.length > 90 ? `${withoutValue.slice(0, 90).trim()}...` : withoutValue;
 }

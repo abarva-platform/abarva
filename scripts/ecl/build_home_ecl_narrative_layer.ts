@@ -521,7 +521,7 @@ function buildCategorySummaries(args: {
       },
       gaps: dataWorkloads.length
         ? []
-        : ["No segment-level data/BI/ETL workload rows reached the Home packet; pages must not infer report, job, user, script, or data-volume counts from movement rows."],
+        : ["No segment-level data/BI/ETL workload rows reached the Home packet. Report, job, user, script, and data-volume counts are unavailable from this source family."],
     },
   ];
 }
@@ -980,8 +980,8 @@ function buildScopeContextItems(args: {
     {
       id: "ctx_ecl_scope_data_workload_001",
       statement: workloadRows.length
-        ? `The data, reporting, ETL, script, and analytics workload context includes ${workloadRows.length.toLocaleString()} ready segment-level evidence rows from ${Math.max(1, workloadSourceSummaries.length).toLocaleString()} source-family summaries; pages should show those workload summaries and must not ask leaders to confirm those counts as though the source family is absent.`
-        : "No ready segment-level data, reporting, ETL, script, or analytics workload rows reached the Home narrative packet; pages may name that specific gap but must not infer workload counts from data-movement rows.",
+        ? `The data, reporting, ETL, script, and analytics workload context includes ${workloadRows.length.toLocaleString()} ready segment-level evidence rows from ${Math.max(1, workloadSourceSummaries.length).toLocaleString()} source-family summaries.`
+        : "No ready segment-level data, reporting, ETL, script, or analytics workload rows reached the Home narrative packet.",
       domains: ["data_asset_or_integration", "infrastructure_platform", "evidence_sources"],
     },
     {
@@ -1081,7 +1081,7 @@ function buildDeterministicHomeSignals(args: {
       `The largest application functions by recorded application count are ${compactList(
         topFunctions.map((item) => `${item.label} (${item.count.toLocaleString()} of ${permittedApplications.length.toLocaleString()}, ${item.sharePct.toFixed(1)}%)`),
         8,
-      )}. Do not name another function as strategically prominent unless a cited fact states that prominence.`,
+      )}.`,
       ["application_system"],
       rowsForRankedFieldValues(permittedApplications, "business_function", topFunctions),
     );
@@ -1110,7 +1110,7 @@ function buildDeterministicHomeSignals(args: {
     add(
       "sig_ecl_application_named_examples_015",
       "portfolio",
-      `Named high-cost application examples in the record include ${compactList(namedApplicationExamples, 8)}. Use these names only when citing this signal or the matching application context rows.`,
+      `Named high-cost application examples in the record include ${compactList(namedApplicationExamples, 8)}.`,
       ["application_system", "spend_value_fact"],
       topRowsByPayloadNumber(applicationsWithCost, "annual_cost_usd", 8),
     );
@@ -1184,7 +1184,7 @@ function buildDeterministicHomeSignals(args: {
     add(
       "sig_ecl_platform_named_resilience_016",
       "risk",
-      `Named infrastructure or platform examples with resilience evidence include ${compactList(namedPlatformExamples, 8)}. Use these names only when citing this signal or the matching platform context rows.`,
+      `Named infrastructure or platform examples with resilience evidence include ${compactList(namedPlatformExamples, 8)}.`,
       ["infrastructure_platform"],
       topRowsByPayloadNumber(
         rowsWherePayload(permittedInfrastructure, (data) => Boolean(text(data.support_end_date)) || /tier[-_\s]?1|critical/i.test(text(data.criticality_tier) ?? "")),
