@@ -212,6 +212,34 @@ function renewalNoticeDateValue(
   return match?.[1] ?? null;
 }
 
+function contractEndDateValue(row: SourceContractVendor360Row): string | null {
+  const dynamic = row as unknown as Record<string, unknown>;
+  return (
+    stringValue(row.end_date) ??
+    stringValue(dynamic.renewal_date) ??
+    stringValue(dynamic.term_end_date) ??
+    stringValue(dynamic.expiration_date)
+  );
+}
+
+function booleanValue(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  const text = stringValue(value)?.toLowerCase();
+  if (!text) return null;
+  if (["true", "yes", "y", "1"].includes(text)) return true;
+  if (["false", "no", "n", "0"].includes(text)) return false;
+  return null;
+}
+
+function autoRenewValue(row: SourceContractVendor360Row): boolean {
+  const dynamic = row as unknown as Record<string, unknown>;
+  return (
+    booleanValue(dynamic.auto_renew_flag) ??
+    booleanValue(row.auto_renew) ??
+    false
+  );
+}
+
 function dateFromValue(value: string | null): Date | null {
   if (!value) return null;
   const parsed = new Date(value);
@@ -230,14 +258,13 @@ export function computeRenewalExposure(
     );
   }
 
-  const withEndDate = rows.filter(
-    (r): r is SourceContractVendor360Row & { end_date: string } =>
-      typeof r.end_date === "string" && r.end_date.length > 0,
+  const withTermTrigger = rows.filter(
+    (r) => dateFromValue(contractEndDateValue(r)) != null,
   );
 
-  const expiredAsOfDate = withEndDate.filter((r) => {
-    const end = new Date(r.end_date);
-    return end.getTime() < asOf.getTime();
+  const expiredAsOfDate = withTermTrigger.filter((r) => {
+    const end = dateFromValue(contractEndDateValue(r));
+    return end != null && end.getTime() < asOf.getTime();
   });
 
   const pastRenewalNoticeDate = rows.filter((r) => {
@@ -245,14 +272,16 @@ export function computeRenewalExposure(
     return noticeDate != null && noticeDate.getTime() < asOf.getTime();
   });
 
-  const expiringWithinWindow = withEndDate.filter((r) => {
-    const end = new Date(r.end_date);
+  const expiringWithinWindow = withTermTrigger.filter((r) => {
+    const end = dateFromValue(contractEndDateValue(r));
+    if (end == null) return false;
     const days = daysBetween(asOf, end);
     return days >= 0 && days <= windowDays;
   });
 
-  const noticeDeadlinePassed = withEndDate.filter((r) => {
-    const end = new Date(r.end_date);
+  const noticeDeadlinePassed = withTermTrigger.filter((r) => {
+    const end = dateFromValue(contractEndDateValue(r));
+    if (end == null) return false;
     if (end.getTime() <= asOf.getTime()) return false; // already expired, not "still active"
     const noticePeriodDays = numberFromDb(r.notice_period_days);
     if (noticePeriodDays == null) return false; // no notice term to have missed
@@ -262,8 +291,8 @@ export function computeRenewalExposure(
     return noticeDeadline.getTime() < asOf.getTime();
   });
 
-  const noticeDeadlinePassedAutoRenew = noticeDeadlinePassed.filter(
-    (r) => r.auto_renew,
+  const noticeDeadlinePassedAutoRenew = noticeDeadlinePassed.filter((r) =>
+    autoRenewValue(r),
   );
 
   const sumAnnual = (list: readonly SourceContractVendor360Row[]) =>

@@ -283,6 +283,52 @@ describe("computeRenewalExposure", () => {
     );
   });
 
+  it("uses renewal_date and auto_renew_flag when source rows have not been canonicalized", () => {
+    const rows = [
+      row({
+        contract_id: "raw-expired-renewal",
+        annual_value: 194_100_000,
+        end_date: null,
+        renewal_date: "2027-01-01",
+        notice_period_days: 90,
+        auto_renew: false,
+        auto_renew_flag: "true",
+      } as Partial<SourceContractVendor360Row> & Record<string, unknown>),
+      row({
+        contract_id: "raw-live-auto-renew-lapsed",
+        annual_value: 140_300_000,
+        end_date: null,
+        renewal_date: "2027-12-31",
+        notice_period_days: 365,
+        auto_renew: false,
+        auto_renew_flag: "true",
+      } as Partial<SourceContractVendor360Row> & Record<string, unknown>),
+      row({
+        contract_id: "raw-still-cancellable",
+        annual_value: 214_600_000,
+        end_date: null,
+        renewal_date: "2028-06-30",
+        notice_period_days: 90,
+        auto_renew: false,
+        auto_renew_flag: "true",
+      } as Partial<SourceContractVendor360Row> & Record<string, unknown>),
+    ];
+
+    const result = computeRenewalExposure(rows, asOf, 180);
+
+    expect(result.expiredAsOfDate.map((r) => r.contract_id)).toEqual([
+      "raw-expired-renewal",
+    ]);
+    expect(result.expiredAsOfDateAnnualValue).toBe(194_100_000);
+    expect(
+      result.noticeDeadlinePassedAutoRenew.map((r) => r.contract_id),
+    ).toEqual(["raw-live-auto-renew-lapsed"]);
+    expect(result.noticeDeadlinePassedAutoRenewAnnualValue).toBe(140_300_000);
+    expect(result.noticeDeadlinePassedAutoRenew).not.toContainEqual(
+      expect.objectContaining({ contract_id: "raw-expired-renewal" }),
+    );
+  });
+
   it("throws on an invalid as-of date rather than silently falling back to the real clock", () => {
     expect(() => computeRenewalExposure([], "not-a-date")).toThrow(
       /compute_renewal_exposure_invalid_as_of_date/,
