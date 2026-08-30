@@ -1,0 +1,759 @@
+// Generated runtime copy of docs/architecture/home-v2-page-prompt-contracts-2026-08-30.json.
+// Keep this file byte-derived from the docs contract; the Home ECL narrative test fails on drift.
+
+export const HOME_PAGE_PROMPT_CONTRACT = {
+  "contract_id": "home-v2-page-prompt-contracts-2026-08-30",
+  "tenant_scope": "meridian-first",
+  "model_boundary": "Claude writes narrative from validated page packets only; deterministic facts remain in ECL.",
+  "shared_packet_sections": [
+    "enterprise_profile",
+    "business_value_model",
+    "strategic_bets",
+    "operating_model",
+    "technology_estate",
+    "data_and_analytics",
+    "commercial_exposure",
+    "value_and_performance",
+    "risk_and_controls",
+    "leadership_voice",
+    "known_gaps",
+    "source_family_summaries",
+    "category_summaries",
+    "visual_datasets"
+  ],
+  "source_family_summaries_required": true,
+  "terminal_states": [
+    "published",
+    "refused",
+    "deferred"
+  ],
+  "lens_contracts": {
+    "ceo_board_strategy_adviser": {
+      "hat": "CEO and board strategy adviser",
+      "primary_audience": "new CEO, CFO, COO, CIO, board member, or sponsor who needs the answer in the first ten minutes",
+      "prompt_instruction": "Wear the CEO and board-adviser hat. Lead with business consequence, decision urgency, money, risk, and the next executive decision. Use technology only when it explains value, risk, operating constraint, or investment consequence.",
+      "evidence_priority": [
+        "enterprise profile",
+        "corporate priorities",
+        "top KPIs",
+        "value and performance",
+        "material risk",
+        "leadership themes",
+        "module handoffs"
+      ],
+      "style": "business strategy led; boardroom crisp; McKinsey-grade synthesis without jargon",
+      "must_not_do": [
+        "start with a technology inventory",
+        "turn record counts into strategy",
+        "quote a number that is not in the packet",
+        "use schema, provider, build, or model-operation vocabulary"
+      ]
+    },
+    "business_strategy_partner": {
+      "hat": "business strategy and operating-model partner",
+      "primary_audience": "business executive learning how the enterprise creates value and where the operating model constrains it",
+      "prompt_instruction": "Wear the business-strategy partner hat. Explain the book-of-business model, value pools, member/patient/customer economics, corporate priorities, and operating constraints. Technology appears only as an enabler, dependency, or constraint.",
+      "evidence_priority": [
+        "business segments",
+        "corporate priorities",
+        "KPIs",
+        "programs",
+        "commercial exposure",
+        "interview themes"
+      ],
+      "style": "business-model first; plainspoken; specific about priorities and constraints",
+      "must_not_do": [
+        "infer the business model from application counts",
+        "promote interview testimony to fact without corroboration",
+        "fill strategic gaps with generic healthcare or airline strategy"
+      ]
+    },
+    "corporate_strategy_value_creation_partner": {
+      "hat": "corporate strategy and value-creation partner",
+      "primary_audience": "strategy, transformation, finance, and value creation leaders",
+      "prompt_instruction": "Wear the corporate-strategy and value-creation hat. Separate funded bets, measured value, blocked value, aspirational benefits, and missing proof. State which priorities have money, owners, KPIs, and evidence.",
+      "evidence_priority": [
+        "strategic priorities",
+        "programs",
+        "budgets",
+        "measured value",
+        "blocked value",
+        "interview alignment",
+        "evidence gaps"
+      ],
+      "style": "strategy tree and value thesis; concise, decision-oriented",
+      "must_not_do": [
+        "treat expected value as realized value",
+        "calculate ROI in prose",
+        "turn missing proof into a negative conclusion"
+      ]
+    },
+    "operating_model_adviser": {
+      "hat": "operating model and accountability adviser",
+      "primary_audience": "COO, business-unit leader, transformation office, or new operating executive",
+      "prompt_instruction": "Wear the operating-model adviser hat. Explain functions, owners, process responsibilities, workforce constraints, handoffs, and the systems supporting work. Name unresolved ownership explicitly.",
+      "evidence_priority": [
+        "organization ownership",
+        "business functions",
+        "process evidence",
+        "workforce roles",
+        "applications by function",
+        "director-level interviews"
+      ],
+      "style": "accountability-led; practical; shows who owns what and where work breaks",
+      "must_not_do": [
+        "show a decorative org chart",
+        "collapse business and IT ownership",
+        "hide unknown owners inside totals"
+      ]
+    },
+    "expert_cto_enterprise_architect": {
+      "hat": "expert CTO, enterprise architect, and data-platform leader",
+      "primary_audience": "CIO, CTO, chief architect, technology executive, or business executive reviewing technology dependency",
+      "prompt_instruction": "Wear the expert technologist hat. Start conceptual, then logical, then physical. Show business system blocks first, then named systems, owners, vendors, hosting, lifecycle, integrations, data workloads, and platform risks. Stay technology-native but business-readable.",
+      "evidence_priority": [
+        "application_v",
+        "application_deployment_v",
+        "technical_component_v",
+        "business function mapping",
+        "hosting",
+        "lifecycle",
+        "integration",
+        "data workload",
+        "support end",
+        "vendor scope"
+      ],
+      "style": "architecture-grade; accurate before attractive; named systems and dependency logic",
+      "must_not_do": [
+        "draw a diagram that bypasses an admission refusal",
+        "count deployments as applications",
+        "ask to confirm ETL/jobs/reports/users/TB when the packet already carries workload summaries",
+        "write generic consulting prose without system names"
+      ]
+    },
+    "data_analytics_architect": {
+      "hat": "data, analytics, BI, ETL, and AI platform architect",
+      "primary_audience": "CDAO, data platform leader, BI leader, analytics executive, or technology executive",
+      "prompt_instruction": "Wear the data and analytics architect hat. Explain source systems, ingestion, integration, warehouses, marts, BI/reporting, ETL/jobs/scripts, SAS/analytics workloads, users, data volumes, governance, and lineage by function and technology. Keep movements, reports, jobs, scripts, users, and TB as separate denominators.",
+      "evidence_priority": [
+        "data assets and integrations",
+        "data workload summaries",
+        "report counts by tool/function",
+        "ETL/job/script counts by tool/function",
+        "analytics users",
+        "data volume",
+        "topology/admission result"
+      ],
+      "style": "data-architecture precise; source-to-consumption; no fake completeness",
+      "must_not_do": [
+        "use data movement rows as report counts",
+        "show a generic lakehouse diagram without tenant facts",
+        "replace a refused topology view with a clean map"
+      ]
+    },
+    "cfo_value_governance_partner": {
+      "hat": "CFO and value-governance partner",
+      "primary_audience": "CFO, finance transformation leader, investment committee, or value office",
+      "prompt_instruction": "Wear the CFO/value-governance hat. Separate spend, budget, committed value, measured value, blocked value, finance attestation, and evidence gaps. Every dollar must trace to a governed measure, contract, budget row, invoice, or explicitly model-inferred estimate.",
+      "evidence_priority": [
+        "budget",
+        "spend",
+        "contract value",
+        "measured outcomes",
+        "blocked claims",
+        "attestation",
+        "metric definition",
+        "source evidence"
+      ],
+      "style": "financially disciplined; no fake precision; distinguishes claimability",
+      "must_not_do": [
+        "render unknown as zero",
+        "state model-calculated ROI as fact",
+        "let an unverified extraction back a claimable dollar"
+      ]
+    },
+    "interview_synthesis_lead": {
+      "hat": "executive and director interview synthesis lead",
+      "primary_audience": "CXO team, transformation leader, HR/people leader, and functional executives",
+      "prompt_instruction": "Wear the interview synthesis hat. Summarize C-suite strategic themes, director-level tactical themes, direct excerpts, points of alignment, disagreements, operating pain, governance maturity, and AI ambition by function. Mark testimony as perspective unless corroborated.",
+      "evidence_priority": [
+        "interview excerpts",
+        "speaker role",
+        "function",
+        "theme",
+        "priority",
+        "pain point",
+        "AI ambition",
+        "corroborating source records"
+      ],
+      "style": "human voice, evidence-labelled, candid about disagreement",
+      "must_not_do": [
+        "turn opinion into deterministic fact",
+        "hide who said what by role/function",
+        "omit direct excerpts when attribution allows"
+      ]
+    },
+    "transformation_office_risk_committee_lead": {
+      "hat": "transformation office and risk committee lead",
+      "primary_audience": "executive steering committee, risk committee, transformation office, and module owners",
+      "prompt_instruction": "Wear the transformation/risk committee hat. Convert evidence into a small number of owner-bound decisions, dependencies, evidence gaps, and next actions. Name the module handoff when Source, Tower, Moves, or Intelligence owns the next step.",
+      "evidence_priority": [
+        "risk",
+        "controls",
+        "support end",
+        "renewal exposure",
+        "blocked value",
+        "unresolved lineage",
+        "owner role",
+        "due date"
+      ],
+      "style": "decision queue; ranked; accountable",
+      "must_not_do": [
+        "output generic action lists",
+        "invent owners or dates",
+        "hide the evidence needed for the next gate"
+      ]
+    },
+    "commercial_sourcing_cxo_partner": {
+      "hat": "commercial sourcing CXO partner",
+      "primary_audience": "sourcing CXO, CFO, procurement leader, vendor-management leader, and service owner",
+      "prompt_instruction": "Wear the commercial sourcing partner hat. Explain supplier concentration, contract economics, renewal posture, scope to systems/functions, leverage and exit terms, benchmark basis, document evidence state, and next sourcing action.",
+      "evidence_priority": [
+        "vendor 360",
+        "contract 360",
+        "value levers",
+        "service lines",
+        "renewal dates",
+        "termination rights",
+        "benchmark basis",
+        "document extraction"
+      ],
+      "style": "commercially sharp; evidence-backed; action-oriented",
+      "must_not_do": [
+        "make market claims without benchmark basis",
+        "treat unverified clause language as fact",
+        "use contract count as vendor count"
+      ]
+    },
+    "data_steward_source_reviewer": {
+      "hat": "data steward and source reviewer",
+      "primary_audience": "client data owner, analyst, operator, reviewer, or implementation lead",
+      "prompt_instruction": "Wear the data steward hat. Explain what source material exists, what was mapped, what remains unknown, what conflicts, which product surfaces use it, and how to slice or inspect the record. Lead with dimensions and grain before showing rows.",
+      "evidence_priority": [
+        "source files",
+        "source records",
+        "workbook sheet and row lineage",
+        "mapping state",
+        "review events",
+        "quality state",
+        "product impact"
+      ],
+      "style": "source-readiness and slice/dice; precise and inspectable",
+      "must_not_do": [
+        "show all columns by default",
+        "draw executive conclusions from browse rows",
+        "hide mapping gaps"
+      ]
+    }
+  },
+  "pages": [
+    {
+      "page_key": "executive_brief",
+      "label": "Executive Brief",
+      "writer_lens": "ceo_board_strategy_adviser",
+      "voice": "business strategy led; boardroom crisp; McKinsey-grade synthesis without jargon",
+      "decision_question": "What should I understand in my first ten minutes?",
+      "required_context": [
+        "enterprise_profile",
+        "business_value_model",
+        "strategic_bets",
+        "value_and_performance",
+        "risk_and_controls",
+        "leadership_voice",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.home_executive_brief",
+        "serving.tower_command_center",
+        "serving.source_value_levers",
+        "ecl_review.review_event"
+      ],
+      "must_show": [
+        "boardroom verdict",
+        "three reasons",
+        "trust/proof boundary",
+        "top decisions"
+      ],
+      "forbidden": [
+        "technology-first inventory lead",
+        "schema/provider/build vocabulary",
+        "unsupported numbers"
+      ]
+    },
+    {
+      "page_key": "our_business",
+      "label": "Our Business",
+      "writer_lens": "business_strategy_partner",
+      "voice": "business-model first; technology only as constraint or enabler",
+      "decision_question": "How does this enterprise work and create value?",
+      "required_context": [
+        "enterprise_profile",
+        "business_value_model",
+        "operating_model",
+        "commercial_exposure",
+        "leadership_voice"
+      ],
+      "source_layer_reads": [
+        "serving.home_our_business",
+        "ecl_context.measure",
+        "ecl_context.relationship",
+        "ecl_commercial.contract"
+      ],
+      "must_show": [
+        "book-of-business model",
+        "value drivers",
+        "operating constraints",
+        "missing economics"
+      ],
+      "forbidden": [
+        "substituting app counts for business model evidence"
+      ]
+    },
+    {
+      "page_key": "strategy_value_creation",
+      "label": "Strategy & Value Creation",
+      "writer_lens": "corporate_strategy_value_creation_partner",
+      "voice": "strategy and value creation; separate funded, measured, blocked, and aspirational",
+      "decision_question": "Where are we trying to go, and what bets are we making?",
+      "required_context": [
+        "strategic_bets",
+        "value_and_performance",
+        "leadership_voice",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.home_strategy_value_creation",
+        "serving.tower_value_chain",
+        "ecl_context.measure"
+      ],
+      "must_show": [
+        "funded bets",
+        "measured value",
+        "evidence still needed",
+        "leadership alignment"
+      ],
+      "forbidden": [
+        "inferring priorities from technology inventory alone"
+      ]
+    },
+    {
+      "page_key": "how_we_operate",
+      "label": "How We Operate",
+      "writer_lens": "operating_model_adviser",
+      "voice": "operating-model and accountability led",
+      "decision_question": "How is the enterprise organized and how does work get done?",
+      "required_context": [
+        "operating_model",
+        "technology_estate",
+        "leadership_voice",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.home_how_we_operate",
+        "ecl_context.relationship",
+        "ecl_context.object"
+      ],
+      "must_show": [
+        "organization to function to process chain",
+        "owners",
+        "supporting systems",
+        "process pain"
+      ],
+      "forbidden": [
+        "decorative org chart without accountability or systems"
+      ]
+    },
+    {
+      "page_key": "technology_data",
+      "label": "Technology & Data",
+      "writer_lens": "expert_cto_enterprise_architect",
+      "voice": "expert technologist; technology-native, business-readable",
+      "decision_question": "What enables the business, and where is complexity or dependency concentrated?",
+      "required_context": [
+        "technology_estate",
+        "data_and_analytics",
+        "commercial_exposure",
+        "risk_and_controls",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.home_applications_systems",
+        "serving.home_infrastructure_platforms",
+        "serving.home_data_assets_integrations",
+        "application_v",
+        "application_deployment_v",
+        "technical_component_v"
+      ],
+      "must_show": [
+        "conceptual system blocks",
+        "logical system families",
+        "physical hosting/platform facts",
+        "D&A workload evidence"
+      ],
+      "forbidden": [
+        "generic consulting prose",
+        "raw object totals",
+        "asking to confirm ETL/jobs/users when workload summaries are loaded"
+      ]
+    },
+    {
+      "page_key": "performance_value",
+      "label": "Performance & Value",
+      "writer_lens": "cfo_value_governance_partner",
+      "voice": "finance and value proof; measured versus blocked",
+      "decision_question": "Are we moving toward outcomes, and can we prove the value?",
+      "required_context": [
+        "value_and_performance",
+        "commercial_exposure",
+        "risk_and_controls",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.home_performance_value",
+        "serving.tower_value_chain",
+        "ecl_context.metric_definition",
+        "ecl_context.measure"
+      ],
+      "must_show": [
+        "spend",
+        "budget",
+        "measured value",
+        "blocked value",
+        "attestation state"
+      ],
+      "forbidden": [
+        "model-calculated ROI",
+        "unknown value rendered as zero"
+      ]
+    },
+    {
+      "page_key": "leadership_perspective",
+      "label": "Leadership Perspective",
+      "writer_lens": "interview_synthesis_lead",
+      "voice": "leadership testimony as evidence; strategic and tactical voices separated",
+      "decision_question": "What do leaders agree on, disagree on, and worry about?",
+      "required_context": [
+        "leadership_voice",
+        "known_gaps",
+        "strategic_bets",
+        "operating_model"
+      ],
+      "source_layer_reads": [
+        "serving.home_leadership_perspective",
+        "ecl_source.document_extraction",
+        "ecl_review.review_event"
+      ],
+      "must_show": [
+        "C-suite themes",
+        "director-level tactical themes",
+        "direct excerpts",
+        "alignment and disagreement",
+        "AI ambition"
+      ],
+      "forbidden": [
+        "treating interview testimony as deterministic fact without corroboration"
+      ]
+    },
+    {
+      "page_key": "what_needs_attention",
+      "label": "What Needs Attention",
+      "writer_lens": "transformation_office_risk_committee_lead",
+      "voice": "decision queue; crisp, owner-bound, evidence-led",
+      "decision_question": "What tensions, risks, dependencies and decisions deserve executive attention?",
+      "required_context": [
+        "known_gaps",
+        "risk_and_controls",
+        "commercial_exposure",
+        "value_and_performance",
+        "leadership_voice"
+      ],
+      "source_layer_reads": [
+        "serving.home_what_needs_attention",
+        "serving.tower_evidence_queue",
+        "serving.source_event_workspace"
+      ],
+      "must_show": [
+        "ranked decisions",
+        "owner role",
+        "evidence needed",
+        "module handoff"
+      ],
+      "forbidden": [
+        "generic action lists"
+      ]
+    },
+    {
+      "page_key": "current_state_architecture",
+      "label": "Current-State Architecture",
+      "writer_lens": "expert_cto_enterprise_architect",
+      "voice": "architecture: conceptual first, logical second, physical third",
+      "decision_question": "What systems are in place to run each business block?",
+      "required_context": [
+        "technology_estate",
+        "operating_model",
+        "commercial_exposure",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "application_v",
+        "application_deployment_v",
+        "technical_component_v",
+        "serving.home_current_state_architecture"
+      ],
+      "must_show": [
+        "six conceptual blocks",
+        "top anchors",
+        "owner/function",
+        "hosting mix",
+        "logical drill",
+        "physical passport"
+      ],
+      "forbidden": [
+        "diagram that bypasses admission refusal",
+        "string-matched relationships"
+      ]
+    },
+    {
+      "page_key": "current_state_data_flow",
+      "label": "Current-State Data Flow",
+      "writer_lens": "data_analytics_architect",
+      "voice": "data architecture and lineage; source-to-consumption zones",
+      "decision_question": "How does information move from source to consumption?",
+      "required_context": [
+        "data_and_analytics",
+        "technology_estate",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.home_current_state_data_flow",
+        "serving.home_data_assets_integrations",
+        "ecl_context.relationship"
+      ],
+      "must_show": [
+        "sources",
+        "ingestion",
+        "platforms/marts",
+        "engineering/transformation",
+        "analytics/consumption",
+        "governance/risk"
+      ],
+      "forbidden": [
+        "confident map when topology gate refuses",
+        "mixing movements with report/job/user/TB denominators"
+      ]
+    },
+    {
+      "page_key": "applications_systems",
+      "label": "Applications & Systems",
+      "writer_lens": "expert_cto_enterprise_architect",
+      "voice": "systems portfolio and ownership; technology-native, business-readable",
+      "decision_question": "Which systems run each business block, who owns them, and what condition are they in?",
+      "required_context": [
+        "technology_estate",
+        "operating_model",
+        "commercial_exposure",
+        "risk_and_controls",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.home_applications_systems",
+        "application_v",
+        "application_deployment_v",
+        "ecl_context.relationship",
+        "ecl_context.measure"
+      ],
+      "must_show": [
+        "business block and function grouping",
+        "application count through application_v",
+        "owner and support model",
+        "vendor and contract touchpoints",
+        "hosting and lifecycle state",
+        "named unresolved gaps"
+      ],
+      "forbidden": [
+        "counting deployments as applications",
+        "raw ecl_context.object totals",
+        "system cards without owner or source basis"
+      ]
+    },
+    {
+      "page_key": "vendor_contracts",
+      "label": "Vendor Contracts",
+      "writer_lens": "commercial_sourcing_cxo_partner",
+      "voice": "commercial spine; contract economics, leverage, obligations, and proof",
+      "decision_question": "Which vendor relationships create concentration, leverage, exposure, or evidence gaps?",
+      "required_context": [
+        "commercial_exposure",
+        "value_and_performance",
+        "technology_estate",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.source_vendor_360",
+        "serving.source_contract_360",
+        "serving.source_value_levers",
+        "ecl_commercial.contract",
+        "ecl_commercial.service_line",
+        "ecl_source.document_extraction"
+      ],
+      "must_show": [
+        "supplier concentration",
+        "contract value and renewal posture",
+        "scope to applications/functions where known",
+        "leverage and exit terms",
+        "document evidence state"
+      ],
+      "forbidden": [
+        "market claims without benchmark basis",
+        "unverified clause language as fact",
+        "contract count used as vendor count"
+      ]
+    },
+    {
+      "page_key": "infrastructure_platforms",
+      "label": "Infrastructure & Platforms",
+      "writer_lens": "expert_cto_enterprise_architect",
+      "voice": "platform reliability, hosting, resilience, lifecycle, and dependency risk",
+      "decision_question": "Which hosting and platform foundations carry material business dependency?",
+      "required_context": [
+        "technology_estate",
+        "data_and_analytics",
+        "risk_and_controls",
+        "commercial_exposure",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.home_infrastructure_platforms",
+        "technical_component_v",
+        "application_deployment_v",
+        "ecl_context.relationship",
+        "ecl_context.measure"
+      ],
+      "must_show": [
+        "hosting mix",
+        "critical platforms",
+        "support/end-of-life dates",
+        "dependent applications",
+        "capacity or resilience facts where loaded",
+        "unknown telemetry explicitly labelled"
+      ],
+      "forbidden": [
+        "confirming support/end dates when loaded",
+        "platform list without dependency context",
+        "mixing SaaS applications and hosting platforms without grain label"
+      ]
+    },
+    {
+      "page_key": "data_assets_integrations",
+      "label": "Data Assets & Integrations",
+      "writer_lens": "data_analytics_architect",
+      "voice": "data estate, BI/reporting, analytics workload, integration, lineage, and consumption",
+      "decision_question": "What data, integration, BI, ETL, analytics, and user workload exists by function and technology?",
+      "required_context": [
+        "data_and_analytics",
+        "technology_estate",
+        "source_family_summaries",
+        "category_summaries",
+        "known_gaps"
+      ],
+      "source_layer_reads": [
+        "serving.home_data_assets_integrations",
+        "serving.home_current_state_data_flow",
+        "ecl_context.relationship",
+        "ecl_context.measure",
+        "ecl_source.source_record"
+      ],
+      "must_show": [
+        "source/integration/platform/consumption zones",
+        "BI/report counts by tool and function",
+        "ETL/job/script counts by tool and function",
+        "analytics/SAS workload where loaded",
+        "users and data volume where loaded",
+        "lineage and telemetry gaps"
+      ],
+      "forbidden": [
+        "asking to confirm ETL/jobs/reports/users/TB when workload summaries are loaded",
+        "using data movement rows as report or job counts",
+        "generic lakehouse diagram without tenant facts"
+      ]
+    },
+    {
+      "page_key": "what_has_been_loaded",
+      "label": "What Has Been Loaded",
+      "writer_lens": "data_steward_source_reviewer",
+      "voice": "source readiness and product impact",
+      "decision_question": "What materials are available and what is missing?",
+      "required_context": [
+        "source_family_summaries",
+        "known_gaps",
+        "category_summaries"
+      ],
+      "source_layer_reads": [
+        "ecl_source.source_file",
+        "ecl_source.source_record",
+        "ecl_review.review_event",
+        "ecl_projection.projection_manifest"
+      ],
+      "must_show": [
+        "source families",
+        "usable rows",
+        "unknowns/conflicts",
+        "product impact"
+      ],
+      "forbidden": [
+        "executive conclusions without cited claims"
+      ]
+    },
+    {
+      "page_key": "browse_the_record",
+      "label": "Browse The Record",
+      "writer_lens": "data_steward_source_reviewer",
+      "voice": "slice/dice first; table second",
+      "decision_question": "Can I inspect workbook and canonical data by dimension and grain?",
+      "required_context": [
+        "source_family_summaries",
+        "category_summaries",
+        "technology_estate",
+        "commercial_exposure"
+      ],
+      "source_layer_reads": [
+        "serving.workbook_slice_browser",
+        "application_v",
+        "application_deployment_v",
+        "technical_component_v",
+        "ecl_source.source_record"
+      ],
+      "must_show": [
+        "dataset selector",
+        "lens selector",
+        "dimensions",
+        "measures",
+        "column presets",
+        "row lineage drawer"
+      ],
+      "forbidden": [
+        "all columns by default",
+        "raw object counts"
+      ]
+    }
+  ],
+  "global_gates": [
+    "all_pages_have_source_family_summaries",
+    "rendered_claims_resolve_to_published_claim_rows",
+    "published_refused_deferred_terminal_state_required",
+    "architecture_and_data_flow_admission_above_diagrams",
+    "workload_denominators_separate",
+    "no_builder_vocabulary_on_cxo_surface",
+    "interview_testimony_marked_as_perspective_unless_corroborated"
+  ]
+} as const;

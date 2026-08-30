@@ -37,6 +37,7 @@ import {
   type GovernedCandidate,
   type ValidatedAgentContextBundle,
 } from "../../src/lib/governance/agent-context-bundle";
+import { HOME_PAGE_PROMPT_CONTRACT } from "./home_page_prompt_contracts";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 type VerifiedEnterpriseThesisResult = Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>;
@@ -240,10 +241,15 @@ function hashJson(value: unknown): string {
 
 function readHomePagePromptContracts(): HomePagePromptContract[] {
   const contractPath = path.join(process.cwd(), HOME_PAGE_PROMPT_CONTRACT_PATH);
-  const parsed = JSON.parse(fs.readFileSync(contractPath, "utf8")) as {
-    pages?: Array<Record<string, unknown>>;
-    lens_contracts?: Record<string, Record<string, unknown>>;
-  };
+  const parsed = fs.existsSync(contractPath)
+    ? (JSON.parse(fs.readFileSync(contractPath, "utf8")) as {
+        pages?: Array<Record<string, unknown>>;
+        lens_contracts?: Record<string, Record<string, unknown>>;
+      })
+    : (HOME_PAGE_PROMPT_CONTRACT as unknown as {
+        pages?: Array<Record<string, unknown>>;
+        lens_contracts?: Record<string, Record<string, unknown>>;
+      });
   const lensContracts = parsed.lens_contracts ?? {};
   return (parsed.pages ?? [])
     .map((page) => {
