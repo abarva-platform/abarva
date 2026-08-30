@@ -268,6 +268,26 @@ export interface TowerUsageBar {
   tone: "teal" | "amber" | "red";
 }
 
+/** One dated finance event on a case. */
+export interface TowerFinanceApprovalEvent {
+  eventDate: string | null;
+  eventType: string | null;
+  approvalState: string | null;
+  approverRole: string | null;
+  amountUsd: number;
+  amountBasis: string | null;
+  note: string | null;
+}
+
+/** One evidence item on file against a case. */
+export interface TowerEvidenceItem {
+  evidenceName: string | null;
+  evidenceType: string | null;
+  ownerRole: string | null;
+  freshnessState: string | null;
+  confidence: string | null;
+}
+
 /** One month of the value waterfall, as the source recorded it. */
 export interface TowerValueObservationMonth {
   month: string;
@@ -326,6 +346,8 @@ export interface TowerAiView {
   successMetric: string | null;
   paybackMonthsTarget: number | null;
   valueObservationMonths: readonly TowerValueObservationMonth[];
+  financeApprovalEvents: readonly TowerFinanceApprovalEvent[];
+  evidenceItems: readonly TowerEvidenceItem[];
   promisedUsd: number;
   promisedBenefitLoaded: boolean;
   financeValidatedUsd: number;

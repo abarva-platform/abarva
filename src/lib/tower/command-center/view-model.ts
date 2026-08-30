@@ -445,6 +445,8 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     successMetric: item.successMetric ?? null,
     paybackMonthsTarget: item.paybackMonthsTarget ?? null,
     valueObservationMonths: item.valueObservationMonths ?? [],
+    financeApprovalEvents: item.financeApprovalEvents ?? [],
+    evidenceItems: item.evidenceItems ?? [],
     promisedUsd: num(item.promisedValueUsd),
     promisedBenefitLoaded: item.promisedValueUsd !== null,
     financeValidatedUsd: num(item.financeValidatedValueUsd),

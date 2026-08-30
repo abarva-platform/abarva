@@ -6,6 +6,8 @@ import {
 } from "@/lib/tower/metric-packet";
 import type {
   TowerMartAiPortfolioItem,
+  TowerMartEvidenceItem,
+  TowerMartFinanceApprovalEvent,
   TowerMartValueObservationMonth,
   TowerMartCommandViewModel,
   TowerMartCxoAction,
@@ -572,6 +574,45 @@ function controlBlockerFields(row: TowerServingRow): {
 }
 
 /**
+ * The dated finance trail on a case. Amounts are carried as recorded: 28 of the 84 events in the
+ * canonical file record a literal 0, which is a stated amount and not a missing one.
+ */
+function financeApprovalEvents(
+  row: TowerServingRow,
+): TowerMartFinanceApprovalEvent[] {
+  const raw = displayPayload(row).finance_approval_events;
+  if (!Array.isArray(raw)) return [];
+  return raw.map((entry) => {
+    const e = asRecord(entry);
+    return {
+      eventDate: nullableText(e.event_date),
+      eventType: nullableText(e.event_type),
+      approvalState: nullableText(e.approval_state),
+      approverRole: nullableText(e.approver_role),
+      amountUsd: nullableNum(e.amount_usd as Numeric) ?? 0,
+      amountBasis: nullableText(e.amount_basis),
+      note: nullableText(e.note),
+    };
+  });
+}
+
+/** The evidence on file against a case, with its freshness and stated confidence. */
+function evidenceItems(row: TowerServingRow): TowerMartEvidenceItem[] {
+  const raw = displayPayload(row).evidence_items;
+  if (!Array.isArray(raw)) return [];
+  return raw.map((entry) => {
+    const e = asRecord(entry);
+    return {
+      evidenceName: nullableText(e.evidence_name),
+      evidenceType: nullableText(e.evidence_type),
+      ownerRole: nullableText(e.owner_role),
+      freshnessState: nullableText(e.freshness_state),
+      confidence: nullableText(e.confidence),
+    };
+  });
+}
+
+/**
  * The monthly value observations behind the waterfall, so a drawer can show when each step
  * happened rather than only its total. Rows without a month are dropped: an observation that
  * cannot be placed in time cannot be read as a sequence.
@@ -670,6 +711,8 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     successMetric: payloadTextFrom(row, ["success_metric"]),
     paybackMonthsTarget: payloadNullableNumberFrom(row, ["payback_months_target"]),
     valueObservationMonths: valueObservationMonths(row),
+    financeApprovalEvents: financeApprovalEvents(row),
+    evidenceItems: evidenceItems(row),
     promisedValueUsd,
     financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
     usageMetric,

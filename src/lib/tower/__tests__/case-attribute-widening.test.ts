@@ -541,3 +541,34 @@ describe("the initiative drill-down carries what the canonical layer already had
     }
   });
 });
+
+describe("the finance trail and evidence reach the drill-down", () => {
+  const drawer = read(
+    "src/components/tower/command-center/drawers/AiInitiativeDrawer.tsx",
+  );
+
+  it("reads two canonical files the Layer 4 build had never opened", () => {
+    expect(LAYER4).toContain("canonical_finance_approval_events.csv");
+    expect(LAYER4).toContain("canonical_evidence_items.csv");
+  });
+
+  it("puts only business-case evidence on a business case", () => {
+    // The evidence file points at projects and monthly observations too — 154 of its 196 rows.
+    // Joining without the type filter would hang a project's evidence off a case.
+    expect(LAYER4).toContain('row.related_object_type === "business_case"');
+  });
+
+  it("carries a recorded zero as a recorded zero", () => {
+    // 28 of the 84 events record a literal 0 and none is empty. That is a stated amount, so
+    // rendering it as absent would be inventing a gap the source does not have.
+    expect(READER).toContain("nullableNum(e.amount_usd as Numeric) ?? 0");
+  });
+
+  it("says so when a case has no finance event, rather than implying none was needed", () => {
+    expect(drawer).toContain("No finance events are recorded against this case");
+  });
+
+  it("does not rename canonical event types, only spaces them", () => {
+    expect(drawer).toContain('value.replace(/_/g, " ")');
+  });
+});
