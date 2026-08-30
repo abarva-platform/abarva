@@ -18,7 +18,7 @@ summary: Preserve renewal-choice evidence through the ECL Source-room generator,
 
 This release makes the synthetic Source-room contract fixture carry an explicit renewal posture instead of leaving product pages to infer it from incomplete fields. The generated package now includes planted renewal cohorts, renewal notice dates, and auto-renew metadata; the loaders preserve those fields through the commercial and Source projection layers; and the serving view keeps renewal work as a focused decision subset instead of mirroring the full contract book.
 
-The release also hardens the ECL schema replay path for an already-existing database: older physical tables receive the current object semantic-identity contract and renewal columns before the governed data-build job attempts a refresh. Job diagnostics now preserve the failing Postgres error tail so future schema failures identify the actual table or constraint.
+The release also hardens the ECL schema replay path for an already-existing database: older physical tables receive the current object semantic-identity contract and renewal columns before the governed data-build job attempts a refresh, and older context convenience views are recreated after object-table shape upgrades. Job diagnostics now preserve the failing Postgres error tail so future schema failures identify the actual table or constraint.
 
 The change prepares Source 360 to state only what the refreshed substrate proves. It does not create finance-confirmed realized value and does not promote synthetic evidence as live-client truth.
 
@@ -29,7 +29,7 @@ The change prepares Source 360 to state only what the refreshed substrate proves
 - Layer 2: Source-room adapter output preserves the contract metadata needed by downstream layers, with hashes and row-level quality state intact.
 - Layer 3: Commercial contract records store renewal notice dates and carry auto-renew, notice-window, benchmarking, and termination metadata in attributes.
 - Layer 4: Source projection rows write non-null renewal notice dates and expose auto-renew metadata in the payload consumed by Source 360.
-- Schema replay: Existing ECL physical schemas are upgraded for object semantic identity and renewal-date columns before all-layer refresh.
+- Schema replay: Existing ECL physical schemas are upgraded for object semantic identity and renewal-date columns before all-layer refresh, including replay-safe context views whose `o.*` shape changes after table upgrades.
 - Products: Source 360 can compute renewal posture from served data. The renewal serving view is narrowed to decision-relevant rows.
 
 ## Client Applicability
@@ -63,6 +63,7 @@ QA status: `pass` for scoped validation, with one broader base-branch gate still
 
 - `node scripts/ecl/__tests__/run-ecl-demo-findings-source-contract-tests.mjs` passed.
 - `npm run test:ecl-physical-schema-upgrade` passed.
+  - Covers older object catalog constraints, legacy object semantic keys, missing renewal columns, and pre-existing context views with the older object-table shape.
 - `npm run test:ecl-source-file-origin-upgrade` passed.
 - `npm run test:ecl-object-type-catalog` passed.
 - `npm run test:ecl-projection-schema-reconciliation` passed.

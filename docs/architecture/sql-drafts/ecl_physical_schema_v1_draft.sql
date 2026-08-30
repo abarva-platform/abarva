@@ -935,6 +935,12 @@ create index if not exists idx_review_event_subject
 create index if not exists idx_projection_manifest_key_version
   on ecl_projection.projection_manifest (tenant_key, assessment_id, projection_key, projection_version desc);
 
+drop view if exists
+  ecl_context.application_v,
+  ecl_context.application_deployment_v,
+  ecl_context.business_object_v,
+  ecl_context.technical_component_v;
+
 create or replace view ecl_context.application_v as
 select
   o.*,
