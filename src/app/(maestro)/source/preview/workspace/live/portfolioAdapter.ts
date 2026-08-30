@@ -839,7 +839,8 @@ async function loadDerivedSourceWorkspaceImpactLayer(
           const coverage = coverageByContract.get(row.contract_id);
           return {
             ...row,
-            coverage_state: row.coverage_state ?? coverage?.coverage_state ?? null,
+            coverage_state:
+              row.coverage_state ?? coverage?.coverage_state ?? null,
             blocker_if_missing:
               row.blocker_if_missing ?? coverage?.blocker_if_missing ?? null,
             citation_basis_json: {
@@ -978,8 +979,7 @@ function vendorPositionsFromImpact(
     (row) => ({
       actionCandidateCount: 1,
       candidateAmountUsd: valueOf(row.candidate_amount_usd),
-      notConfirmedCount:
-        row.finance_confirmation_state === "confirmed" ? 0 : 1,
+      notConfirmedCount: row.finance_confirmation_state === "confirmed" ? 0 : 1,
     }),
   );
   return vendors
@@ -1771,6 +1771,16 @@ export function buildSourceVendor360Cockpit(input: {
   const asOf = validDate(asOfDateIso);
   const summary = summarizePortfolio(contracts);
   const renewal180 = computeRenewalExposure(contracts, asOfDateIso, 180);
+  const cancellableRows = contracts.filter(
+    (contract) =>
+      !renewal180.noticeDeadlinePassedAutoRenew.some(
+        (row) => row.contract_id === contract.contract_id,
+      ) &&
+      !renewal180.expiredAsOfDate.some(
+        (row) => row.contract_id === contract.contract_id,
+      ),
+  );
+  const cancellableAnnualValue = sumAnnual(cancellableRows);
   const contractById = new Map(
     contracts.map((contract) => [contract.contract_id, contract]),
   );
@@ -1827,7 +1837,9 @@ export function buildSourceVendor360Cockpit(input: {
           ? `${verdictRows.length} active contract${
               verdictRows.length === 1 ? "" : "s"
             } ${verdictRows.length === 1 ? "sits" : "sit"} inside the governed decision set; treat the date first, then the leverage flag.`
-          : "No qualifying row is rendered as exposure; missing timing stays not established.",
+          : renewal180.expiredAsOfDate.length > 0
+            ? `${renewal180.expiredAsOfDate.length} rows are expired as of the cut and are excluded from commercial-deadline exposure.`
+            : "No qualifying row is rendered as exposure; missing timing stays not established.",
       bindingChip:
         exposureRows.length > 0
           ? "computeRenewalExposure(source.contract_360, as_of_date)"
@@ -1911,7 +1923,7 @@ export function buildSourceVendor360Cockpit(input: {
           label: "Renewal decision set",
           binding: "computeRenewalExposure",
           grain: "active contract",
-          value: `${renewal180.expiringWithinWindow.length} expiry rows · ${renewal180.noticeDeadlinePassed.length} lapsed notice rows`,
+          value: `${renewal180.noticeDeadlinePassedAutoRenew.length} auto-renew lapsed notice rows · ${moneyLabel(renewal180.noticeDeadlinePassedAutoRenewAnnualValue)} exposed · ${moneyLabel(cancellableAnnualValue)} still cancellable · ${renewal180.expiredAsOfDate.length} stale-date exclusions`,
         },
         {
           label: "Spend consumption",
@@ -2007,7 +2019,10 @@ export function buildSourceVendor360Cockpit(input: {
       lineageRail: [
         "CLM / ERP / AP / ITSM extracts -> source.* governed views -> Source workspace measures",
         "source.contract_360 -> computeRenewalExposure -> verdict and action queue",
+        "Expired end_date rows are stale-date exclusions, not live commercial deadlines",
         "source.contract_360 -> computeContractLeverageSignals -> gate and action verb",
+        "Vendor concentration is recomputed from annual_value; asserted risk labels are not trusted",
+        "Repeated utilization prose is not evidence unless entitlement rows and source references exist",
         "consumption.* -> Source governed cube slices -> evidence controls",
       ],
     },
@@ -2031,7 +2046,11 @@ function buildActionQueue(input: {
       (contract) => contract.contract_id,
     ),
   );
+  const expiredAsOfDate = new Set(
+    input.renewal180.expiredAsOfDate.map((contract) => contract.contract_id),
+  );
   return input.contracts
+    .filter((contract) => !expiredAsOfDate.has(contract.contract_id))
     .map((contract) => {
       const deadline = deadlineFor(contract, input.asOf);
       const leverage = input.leverageByContract.get(contract.contract_id);

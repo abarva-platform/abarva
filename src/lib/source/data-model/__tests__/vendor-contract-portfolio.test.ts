@@ -215,6 +215,46 @@ describe("computeRenewalExposure", () => {
     expect(result.noticeDeadlinePassed).toHaveLength(0);
   });
 
+  it("separates expired rows as stale-date exclusions instead of deadline exposure", () => {
+    const rows = [
+      row({
+        contract_id: "expired-auto-renew",
+        annual_value: 194_100_000,
+        end_date: "2027-01-01",
+        notice_period_days: 90,
+        auto_renew: true,
+      }),
+      row({
+        contract_id: "live-auto-renew-lapsed",
+        annual_value: 140_300_000,
+        end_date: "2027-12-31",
+        notice_period_days: 365,
+        auto_renew: true,
+      }),
+      row({
+        contract_id: "still-cancellable",
+        annual_value: 214_600_000,
+        end_date: "2028-06-30",
+        notice_period_days: 90,
+        auto_renew: true,
+      }),
+    ];
+
+    const result = computeRenewalExposure(rows, asOf, 180);
+
+    expect(result.expiredAsOfDate.map((r) => r.contract_id)).toEqual([
+      "expired-auto-renew",
+    ]);
+    expect(result.expiredAsOfDateAnnualValue).toBe(194_100_000);
+    expect(
+      result.noticeDeadlinePassedAutoRenew.map((r) => r.contract_id),
+    ).toEqual(["live-auto-renew-lapsed"]);
+    expect(result.noticeDeadlinePassedAutoRenewAnnualValue).toBe(140_300_000);
+    expect(result.noticeDeadlinePassedAutoRenew).not.toContainEqual(
+      expect.objectContaining({ contract_id: "expired-auto-renew" }),
+    );
+  });
+
   it("throws on an invalid as-of date rather than silently falling back to the real clock", () => {
     expect(() => computeRenewalExposure([], "not-a-date")).toThrow(
       /compute_renewal_exposure_invalid_as_of_date/,
