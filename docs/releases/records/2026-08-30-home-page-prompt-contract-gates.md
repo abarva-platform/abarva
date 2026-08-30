@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release tightens the Home V2 prompt contract so every Home surface has a named page prompt, writer lens, required context, source-layer reads, required visible content, and forbidden failure modes. It also passes those page prompt contracts into the Home narrative packet as model instructions, and adds tests that fail when the contract omits a Home surface or lets data/architecture pages ask for evidence that is already loaded in the governed packet.
+This release tightens the Home V2 prompt contract so every Home surface has a named page prompt, writer lens, required context, source-layer reads, required visible content, and forbidden failure modes. It also passes those page prompt contracts into the Home narrative packet as model instructions, and adds tests/gates that fail when the contract omits a Home surface or lets data/architecture pages ask for evidence that is already loaded in the governed packet.
 
 ## Layer Impact
 
@@ -32,6 +32,7 @@ Layer 3, Canonical model: No canonical data changes.
 - Adds prompt contracts for Applications & Systems, Vendor Contracts, Infrastructure & Platforms, and Data Assets & Integrations.
 - Passes the prompt contract into the Home narrative packet so Claude receives page-specific writer lenses, required context, source-layer reads, must-show obligations, and forbidden failure modes.
 - Updates the thesis prompt to treat page prompt contracts as page instructions, not citable tenant evidence.
+- Adds a visible-quality gate that blocks generated Home narrative from asking leaders to confirm data/BI/ETL/report/job/script/user/data-volume counts when workload context is already loaded in the packet.
 - Replaces the narrative quality wording that allowed a chapter to disappear with a strict published/refused/deferred terminal-state rule.
 - Extends the Home ECL narrative test to parse the prompt contract and assert the required writer lenses, shared packet sections, source-family gates, D&A workload gates, interview surface, and browse/slice-dice contract.
 
