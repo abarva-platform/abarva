@@ -295,6 +295,21 @@ assert(
   "EnterpriseThesis prompt prevents renewal timing facts from overstating exit or negotiation leverage",
 );
 assert(
+  thesis.includes("buildEvidenceScopeInstructions") &&
+    thesis.includes("Apply this deterministic evidence-scope contract before deciding which sections to fill") &&
+    thesis.includes("forced_empty_sections_for_this_packet") &&
+    thesis.includes("If a forced-empty section conflicts with the generic schema below, the forced-empty instruction wins"),
+  "EnterpriseThesis prompt includes a deterministic evidence-scope contract before the generic output schema",
+);
+assert(
+  thesis.includes("value_creation_model.summary must lead with a limitation; primary_value_drivers must be []") &&
+    thesis.includes("strategic_bets must be []") &&
+    thesis.includes("leadership_consensus and leadership_disagreements must be []") &&
+    thesis.includes("where_improving and where_off_track must be []") &&
+    thesis.includes("do not ask process/owner/governance questions"),
+  "EnterpriseThesis evidence-scope contract forces unsupported sections empty for sparse packets",
+);
+assert(
   script.includes("basis_summary = 'model_generated_from_ecl_projection'"),
   "Generated narrative rows carry an explicit ECL model-generated basis",
 );
