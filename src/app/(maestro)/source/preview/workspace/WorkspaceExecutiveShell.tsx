@@ -158,6 +158,10 @@ export function WorkspaceExecutiveShell({
         <header className="sw-v2-topbar">
           <div>
             <div className="sw-v2-breadcrumb">Vendor 360 / {currentPage}</div>
+            <div className="sw-v2-context">
+              Source 360 · {tenantName || "Current workspace"} · governed
+              contract book
+            </div>
             <h1>
               {headlineFor(
                 currentPage,

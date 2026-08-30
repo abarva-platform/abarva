@@ -56,5 +56,8 @@ describe("Source tenant identity binding", () => {
     expect(source).toContain("ClaimContract");
     expect(source).toContain("EvidencePage");
     expect(source).toContain("ContractGraphPage");
+    expect(source).toContain("Source 360 · {tenantName");
+    expect(source).toContain("governed");
+    expect(source).toContain("contract book");
   });
 });
