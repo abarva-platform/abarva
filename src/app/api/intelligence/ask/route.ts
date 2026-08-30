@@ -498,6 +498,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 surface: "source",
                 groundingParts: [surfaceContext, sourceVisualAnswer],
               }),
+              { preserveModelOutput: true },
             );
             if (
               blockRetiredFacts({

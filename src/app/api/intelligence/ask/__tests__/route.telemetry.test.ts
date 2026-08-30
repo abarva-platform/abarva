@@ -228,7 +228,8 @@ describe("POST /api/intelligence/ask telemetry", () => {
             optimizationLedger: {
               lines: [
                 {
-                  id: "recoverable",
+                  id: "CTR-090:recoverable",
+                  contractId: "CTR-090",
                   kind: "recoverable_leakage",
                   label: "SLA credits earned but not claimed",
                   amount: "$1.3M",
@@ -240,7 +241,8 @@ describe("POST /api/intelligence/ask telemetry", () => {
                   sourceRefs: ["sla_incident_service_credit_monthly"],
                 },
                 {
-                  id: "realized",
+                  id: "CTR-090:realized",
+                  contractId: "CTR-090",
                   kind: "realized_value",
                   label: "Finance-confirmed realized value",
                   amount: "$940K",
@@ -280,6 +282,62 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain("Contract Commercial Opportunities");
     expect(text).toContain("Commercial Opportunities With Quantified Evidence");
     expect(text).toContain("Contract Evidence Relationship");
+  });
+
+  it("does not append a generic Moves phase plan to deterministic Source contract answers", async () => {
+    (askIntelligence as jest.Mock).mockClear();
+
+    const response = await POST(
+      makeRequest({
+        query:
+          "For CTR-090, what would the plan look like by phases if this contract is actionable?",
+        client: "apexretail",
+        richText: true,
+        answerOnlyStreaming: true,
+        surfaceContext: {
+          module: "Source",
+          activeClient: "Apex Retail Group",
+          clientKey: "apexretail",
+          sourceV4: {
+            selectedContract: {
+              contractId: "CTR-090",
+              vendorName: "Salesforce",
+              contractName: "Salesforce Data Platform Agreement 3",
+              annualValueUsd: 43_500_000,
+              actualAnnualSpendUsd: 37_400_000,
+              totalCommittedValueUsd: 173_900_000,
+              scopeSummary:
+                "Enterprise data platform subscription and support.",
+              scopeRowCount: 8,
+            },
+            contractOpportunityDirectory: [
+              {
+                id: "CTR-090:recoverable",
+                contractId: "CTR-090",
+                kind: "recoverable_leakage",
+                label: "SLA credits earned but not claimed",
+                amount: "$1.3M",
+                amountUsd: 1_300_000,
+                state: "Quantified",
+                evidenceClass: "system evidenced",
+                evidence: "Monthly SLA and AP evidence are matched.",
+                nextAction: "Review with contract owner.",
+                sourceRefs: ["sla_incident_service_credit_monthly"],
+              },
+            ],
+          },
+        },
+      }) as never,
+    );
+
+    const text = await readResponseText(response);
+
+    expect(askIntelligence).not.toHaveBeenCalled();
+    expect(text).toContain("source_contract_visual");
+    expect(text).toContain("CTR-090");
+    expect(text).toContain("SLA credits earned but not claimed");
+    expect(text).not.toContain("Moves phase plan");
+    expect(text).not.toContain("P0 Originate");
   });
 
   it("does not expose raw advisory trace events while preserving the model-authored delta", async () => {
