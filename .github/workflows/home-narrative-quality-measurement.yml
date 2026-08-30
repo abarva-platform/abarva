@@ -1,0 +1,66 @@
+name: Home narrative quality measurement
+
+on:
+  workflow_dispatch:
+    inputs:
+      tenant_key:
+        description: Canonical tenant key to measure.
+        required: true
+        default: meridian-health
+      output_dir:
+        description: Runner-local output directory for measurement artifacts.
+        required: true
+        default: /tmp/home-narrative-quality-measurement
+
+permissions:
+  contents: read
+
+concurrency:
+  group: home-narrative-quality-measurement-${{ inputs.tenant_key }}
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    name: Measure Home chapter quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      TENANT_KEY: ${{ inputs.tenant_key }}
+      OUTPUT_DIR: ${{ inputs.output_dir }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Guard required model secret
+        shell: bash
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error title=Missing ANTHROPIC_API_KEY::Home narrative measurement requires the repository ANTHROPIC_API_KEY secret."
+            exit 1
+          fi
+
+      - name: Run three-variant measurement
+        run: |
+          npm run data-build:home-chapters:measure -- \
+            --tenant "$TENANT_KEY" \
+            --out-dir "$OUTPUT_DIR"
+
+      - name: Upload measurement artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: home-narrative-quality-measurement-${{ inputs.tenant_key }}
+          path: ${{ inputs.output_dir }}
+          if-no-files-found: error
+          retention-days: 14
