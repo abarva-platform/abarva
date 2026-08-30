@@ -7,6 +7,8 @@
 
 - `docs/architecture/home-ecl-executive-narrative-v2-design-2026-08-28.md`
 - `docs/architecture/home-ecl-page-prompts-and-architecture-experience-2026-08-28.md`
+- `docs/architecture/home-v2-multi-lens-deterministic-content-contract-2026-08-30.md`
+- `docs/architecture/home-v2-page-prompt-contracts-2026-08-30.json`
 - `docs/architecture/ECL_PRODUCT_DETERMINISTIC_NEEDS_2026_08_22.md`
 
 This pack exists so Home is no longer redesigned from screenshots or loose narrative preference.
@@ -31,6 +33,10 @@ visual contract, and proof bar.
 9. Every page receives deterministic source-family and category summaries before prose generation.
    A page may not hardcode "missing source" language for a family that has a governed summary or
    product projection row.
+10. Claude receives a page-specific writer lens. Executive pages use a business-strategy lens,
+    technology and architecture pages use an expert technologist lens, value pages use a CFO/value
+    governance lens, and interview pages use an interview-synthesis lens. The lens changes voice
+    and prioritization only; facts still come from the validated packet.
 
 ## Completed Versus Not Done
 
