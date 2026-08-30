@@ -1,6 +1,15 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
@@ -183,41 +192,26 @@ export function WorkspaceExecutiveShell({
 
   return (
     <main className="sw-v2-shell" aria-label="Source workspace">
-      <aside className="sw-v2-rail" aria-label="Source workspace sidebar">
-        <div>
-          <div className="sw-v2-mark">Nexus Source</div>
-          <p className="sw-v2-rail-note">
-            Governed contract book. Cross-contract facts only.
-          </p>
+      <header className="sw-v2-frame-bar" aria-label="Source workspace header">
+        <div className="sw-v2-frame-brand">
+          <span>
+            Abar<i>Va</i>
+          </span>
+          <b>Source 360</b>
         </div>
-        <nav
-          className="sw-v2-rail-nav"
-          aria-label="Source workspace navigation"
-        >
-          {PAGE_LABELS.map((label) => (
-            <button
-              key={label}
-              type="button"
-              className={label === currentPage ? "is-active" : ""}
-              onClick={() => selectPage(label)}
-            >
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sw-v2-rail-foot">
-          <span>Data as of</span>
-          <b>{fmtDate(portfolio.asOfDateIso)}</b>
+        <div className="sw-v2-frame-meta">
+          {(tenantName || "Current workspace").toUpperCase()} ·{" "}
+          {portfolio.contracts.length} contracts · {portfolio.vendors.length}{" "}
+          vendors · data as of {fmtDate(portfolio.asOfDateIso)}
         </div>
-      </aside>
+      </header>
 
       <section className="sw-v2-main">
         <header className="sw-v2-topbar">
           <div>
-            <div className="sw-v2-breadcrumb">Vendor 360 / {currentPage}</div>
+            <div className="sw-v2-breadcrumb">Source 360 / {currentPage}</div>
             <div className="sw-v2-context">
-              Source 360 · {tenantName || "Current workspace"} · governed
-              contract book
+              {tenantName || "Current workspace"} · governed contract book
             </div>
             <h1>
               {headlineFor(
@@ -264,6 +258,22 @@ export function WorkspaceExecutiveShell({
             </div>
           </div>
         </header>
+
+        <nav
+          className="sw-v2-horizontal-tabs"
+          aria-label="Source workspace navigation"
+        >
+          {PAGE_LABELS.map((label) => (
+            <button
+              key={label}
+              type="button"
+              className={label === currentPage ? "is-active" : ""}
+              onClick={() => selectPage(label)}
+            >
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
 
         <section className="sw-v2-metrics" aria-label="Portfolio facts">
           <Metric
@@ -543,6 +553,10 @@ function PortfolioPage({
           eyebrow="Vendor concentration"
           title="Largest relationships by recorded annual value"
         />
+        <VendorConcentrationChart
+          vendors={topVendors(portfolio).slice(0, 5)}
+          totalAnnualValue={portfolioAnnualValue(portfolio)}
+        />
         <div className="sw-v2-vendor-strip">
           {topVendors(portfolio)
             .slice(0, 5)
@@ -750,6 +764,91 @@ function VendorsPage({
           </p>
         )}
       </section>
+    </div>
+  );
+}
+
+function VendorConcentrationChart({
+  vendors,
+  totalAnnualValue,
+}: {
+  vendors: readonly ExecutiveVendorRow[];
+  totalAnnualValue: number | null;
+}) {
+  const data = vendors.map((vendor) => {
+    const annualValue = numberFromDb(vendor.annual_value) ?? 0;
+    return {
+      name: vendor.vendor_name,
+      shortName: compactVendorName(vendor.vendor_name),
+      annualValue,
+      share: vendorShare(vendor, totalAnnualValue),
+    };
+  });
+
+  if (data.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="sw-v2-recharts-card" aria-label="Vendor concentration chart">
+      <BarChart
+        width={620}
+        height={238}
+        data={data}
+        layout="vertical"
+        margin={{ top: 8, right: 24, bottom: 8, left: 4 }}
+        barCategoryGap={14}
+      >
+        <CartesianGrid
+          horizontal={false}
+          stroke="rgba(10,10,11,0.12)"
+          strokeDasharray="3 4"
+        />
+        <XAxis
+          type="number"
+          hide
+          domain={[0, "dataMax"]}
+        />
+        <YAxis
+          type="category"
+          dataKey="shortName"
+          width={142}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fill: "#5f5e5a", fontSize: 11, fontWeight: 700 }}
+        />
+        <Tooltip
+          cursor={{ fill: "rgba(186,117,23,0.08)" }}
+          contentStyle={{
+            border: "1px solid #d3d1c7",
+            borderRadius: 6,
+            boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+            color: "#2c2c2a",
+          }}
+          formatter={(value) => [
+            money(typeof value === "number" ? value : Number(value)),
+            "Annual value",
+          ]}
+          labelFormatter={(_, rows) => rows[0]?.payload?.name ?? ""}
+        />
+        <Bar dataKey="annualValue" radius={[0, 5, 5, 0]}>
+          {data.map((row, index) => (
+            <Cell
+              key={row.name}
+              fill={index === 0 ? "#0a0a0b" : index === 1 ? "#1d9e75" : "#ba7517"}
+              opacity={Math.max(0.45, 1 - index * 0.12)}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+      <div className="sw-v2-recharts-legend">
+        {data.map((row) => (
+          <span key={row.name}>
+            <b>{row.shortName}</b>
+            {row.share > 0 ? ` ${row.share.toFixed(1)}%` : " share unavailable"}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -2955,6 +3054,12 @@ function normalizedVendorName(name: string) {
     )
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function compactVendorName(name: string) {
+  const trimmed = name.trim();
+  if (trimmed.length <= 18) return trimmed;
+  return `${trimmed.slice(0, 16).trim()}...`;
 }
 
 function earlierDate(a: string | null, b: string | null) {

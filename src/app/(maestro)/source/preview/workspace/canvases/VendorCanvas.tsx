@@ -212,10 +212,10 @@ function Pill({
     <span
       style={{
         ...PILL,
-        background: tone === "green" ? "rgba(29,158,117,.10)" : "#f4f7fb",
+        background: tone === "green" ? "rgba(29,158,117,.10)" : "#faf7f1",
         borderColor:
-          tone === "green" ? "rgba(29,158,117,.28)" : "rgba(10,31,68,.14)",
-        color: tone === "green" ? "#176d52" : "#23395d",
+          tone === "green" ? "rgba(29,158,117,.28)" : "rgba(10,10,11,.14)",
+        color: tone === "green" ? "#0f6e56" : "#5f5e5a",
       }}
     >
       {children}
@@ -592,8 +592,8 @@ function DepChip({
       className={onClick ? "sw-hover-cream" : undefined}
       style={{
         ...DEP_CHIP,
-        borderColor: tone ?? "rgba(10,31,68,.14)",
-        color: tone ?? "#23395d",
+        borderColor: tone ?? "rgba(10,10,11,.14)",
+        color: tone ?? "#5f5e5a",
         cursor: onClick ? "pointer" : "default",
       }}
     >
@@ -614,7 +614,7 @@ const HEADER: CSSProperties = {
   justifyContent: "space-between",
   gap: 24,
   background: "#fff",
-  border: "1px solid rgba(10,31,68,.12)",
+  border: "1px solid rgba(10,10,11,.12)",
   borderRadius: 8,
   padding: "20px 22px",
 };
@@ -660,7 +660,7 @@ const META: CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
   gap: 9,
-  color: "#53657f",
+  color: "#5f5e5a",
   fontSize: 12.5,
   marginTop: 7,
 };
@@ -695,9 +695,9 @@ const SCOPE_BADGE: CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   minHeight: 38,
-  border: "1px solid rgba(10,31,68,.16)",
+  border: "1px solid rgba(10,10,11,.16)",
   borderRadius: 6,
-  background: "#f7f9fc",
+  background: "#faf7f1",
   color: "#0a0a0b",
   padding: "0 12px",
   fontSize: 12.5,
@@ -714,7 +714,7 @@ const METRIC_STRIP: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
   background: "#fff",
-  border: "1px solid rgba(10,31,68,.12)",
+  border: "1px solid rgba(10,10,11,.12)",
   borderRadius: 8,
   overflow: "hidden",
 };
@@ -722,7 +722,7 @@ const METRIC_STRIP: CSSProperties = {
 const METRIC_CARD: CSSProperties = {
   minHeight: 82,
   padding: "14px 15px",
-  borderRight: "1px solid rgba(10,31,68,.10)",
+  borderRight: "1px solid rgba(10,10,11,.10)",
 };
 
 const METRIC_LABEL: CSSProperties = {
@@ -741,7 +741,7 @@ const METRIC_VALUE: CSSProperties = {
 };
 
 const METRIC_SUB: CSSProperties = {
-  color: "#53657f",
+  color: "#5f5e5a",
   fontSize: 11.5,
   lineHeight: 1.35,
   marginTop: 5,
@@ -756,7 +756,7 @@ const EMPTY_METRIC: CSSProperties = {
 
 const QUICK_ACTIONS: CSSProperties = {
   background: "#fff",
-  border: "1px solid rgba(10,31,68,.12)",
+  border: "1px solid rgba(10,10,11,.12)",
   borderRadius: 8,
   padding: "15px 16px",
 };
@@ -773,9 +773,9 @@ const QUICK_BUTTON: CSSProperties = {
   justifyItems: "center",
   alignContent: "center",
   gap: 7,
-  border: "1px solid rgba(10,31,68,.12)",
+  border: "1px solid rgba(10,10,11,.12)",
   borderRadius: 7,
-  background: "#f7f9fc",
+  background: "#faf7f1",
   color: "#0a0a0b",
   minHeight: 42,
   padding: "0 10px",
@@ -789,7 +789,7 @@ const TAB_ROW: CSSProperties = {
   gap: 2,
   overflowX: "auto",
   background: "#fff",
-  border: "1px solid rgba(10,31,68,.10)",
+  border: "1px solid rgba(10,10,11,.10)",
   borderRadius: 8,
   padding: "0 12px",
 };
@@ -798,7 +798,7 @@ const TAB_BUTTON: CSSProperties = {
   border: "none",
   borderBottom: "2px solid transparent",
   background: "transparent",
-  color: "#53657f",
+  color: "#5f5e5a",
   cursor: "pointer",
   fontSize: 12.5,
   minHeight: 42,
@@ -834,7 +834,7 @@ const RIGHT_STACK: CSSProperties = {
 
 const PANEL: CSSProperties = {
   background: "#fff",
-  border: "1px solid rgba(10,31,68,.12)",
+  border: "1px solid rgba(10,10,11,.12)",
   borderRadius: 8,
   overflow: "hidden",
 };
@@ -868,7 +868,7 @@ const VALUE_SUMMARY: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
   background: "#fff",
-  border: "1px solid rgba(10,31,68,.12)",
+  border: "1px solid rgba(10,10,11,.12)",
   borderRadius: 8,
   padding: "13px 16px",
 };
@@ -876,9 +876,9 @@ const VALUE_SUMMARY: CSSProperties = {
 const MINI_STAT: CSSProperties = {
   display: "grid",
   gap: 4,
-  color: "#53657f",
+  color: "#5f5e5a",
   fontSize: 11.5,
-  borderRight: "1px solid rgba(10,31,68,.10)",
+  borderRight: "1px solid rgba(10,10,11,.10)",
 };
 
 const ALERT_LIST: CSSProperties = {
@@ -892,7 +892,7 @@ const ALERT_ROW: CSSProperties = {
   alignItems: "start",
   gap: 10,
   border: "none",
-  borderTop: "1px solid rgba(10,31,68,.09)",
+  borderTop: "1px solid rgba(10,10,11,.09)",
   background: "transparent",
   color: "#0a0a0b",
   cursor: "pointer",
@@ -920,7 +920,7 @@ const ALERT_TITLE: CSSProperties = {
 
 const ALERT_BODY: CSSProperties = {
   display: "block",
-  color: "#53657f",
+  color: "#5f5e5a",
   fontSize: 11.5,
   lineHeight: 1.4,
   marginTop: 3,
@@ -942,7 +942,7 @@ const ASSISTANT_CARD: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "24px minmax(0,1fr)",
   gap: 10,
-  border: "1px solid rgba(10,31,68,.10)",
+  border: "1px solid rgba(10,10,11,.10)",
   borderRadius: 8,
   background: "#fff",
   color: "#0a0a0b",
@@ -994,7 +994,7 @@ const DEP_STACK: CSSProperties = {
 };
 
 const DEP_CHIP: CSSProperties = {
-  border: "1px solid rgba(10,31,68,.14)",
+  border: "1px solid rgba(10,10,11,.14)",
   borderRadius: 7,
   background: "#fff",
   padding: "8px 10px",
@@ -1013,7 +1013,7 @@ const OPPORTUNITY_ROW: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(0,1fr) auto",
   gap: 14,
-  border: "1px solid rgba(10,31,68,.10)",
+  border: "1px solid rgba(10,10,11,.10)",
   borderRadius: 8,
   background: "#fff",
   padding: "13px 14px",

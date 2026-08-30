@@ -139,6 +139,12 @@ const LEGACY_COOL_TOKENS = [
   "#0a3d70",
   "#3d6ea8",
   "#a9bdd6",
+  "#23395d",
+  "#53657f",
+  "#176d52",
+  "#f4f7fb",
+  "#f7f9fc",
+  "rgba(10,31,68",
 ] as const;
 
 async function readWorkspaceSourceFiles(dir = WORKSPACE_ROUTE_DIR): Promise<
@@ -338,7 +344,9 @@ describe("Source workspace ECL browser-surface proof", () => {
         }),
       ).toBeTruthy();
     });
-    expect(screen.getByText("Nexus Source")).toBeTruthy();
+    expect(screen.getByLabelText("Source workspace header")).toBeTruthy();
+    expect(screen.queryByLabelText("Source workspace sidebar")).toBeNull();
+    expect(screen.queryByText("Nexus Source")).toBeNull();
     expect(screen.getByLabelText("Workspace controls")).toBeTruthy();
     expect(screen.getByLabelText("Scope filter").textContent).toContain(
       "All loaded contracts",
