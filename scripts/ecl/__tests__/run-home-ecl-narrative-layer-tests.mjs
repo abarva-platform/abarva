@@ -140,6 +140,8 @@ assert(
     script.includes("sig_ecl_application_function_ranking_012") &&
     script.includes("sig_ecl_application_cost_013") &&
     script.includes("sig_ecl_data_flow_total_014") &&
+    script.includes("sig_ecl_application_named_examples_015") &&
+    script.includes("sig_ecl_platform_named_resilience_016") &&
     script.includes("sig_ecl_source_breadth_guardrail_019"),
   "ECL narrative job expands deterministic signals across application, contract, infrastructure, data-flow, and source-breadth domains",
 );
@@ -147,11 +149,19 @@ assert(
   thesis.includes("NUMERIC AND COMPARATIVE EVIDENCE") &&
     thesis.includes("must appear exactly in one of that claim's cited signal") &&
     thesis.includes("context statements") &&
+    thesis.includes("Named entity language follows the same rule") &&
+    thesis.includes("statement for that same claim must contain that exact name") &&
+    thesis.includes("Do not lift named") &&
     thesis.includes("not rename it as a total technology budget") &&
     thesis.includes("If a cited item says a movement count is an integration-record count") &&
     thesis.includes("data volume, transaction volume, or proof of analytics consumption") &&
     thesis.includes("Prefer fewer claims and questions"),
   "EnterpriseThesis prompt requires exact citable support for numbers, rankings, and management questions",
+);
+assert(
+  script.includes("technologyBudget: 0") &&
+    script.includes("This is recorded application annual cost, not a complete enterprise technology budget"),
+  "ECL narrative packet does not expose application annual cost as a structured technology budget",
 );
 assert(
   script.includes("source-family summaries describe intake breadth but are not evidence for a business claim by themselves") &&
