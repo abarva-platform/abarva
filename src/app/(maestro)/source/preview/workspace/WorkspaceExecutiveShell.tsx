@@ -11,10 +11,12 @@ import type {
 } from "@/lib/source/data-model/types";
 
 const PAGE_LABELS = [
-  "Portfolio",
+  "Verdict",
   "Vendors",
-  "Contract 360",
+  "Contracts",
   "Optimize",
+  "Evidence",
+  "Contract graph",
 ] as const;
 const CONTRACT_TABS = [
   "Story",
@@ -85,14 +87,23 @@ export function WorkspaceExecutiveShell({
         portfolio.cockpit.actionQueue[0] ??
         null)
       : null;
+  const claimContract = claimContractForPage(currentPage);
 
   const selectPage = (page: PageLabel) => {
-    if (page === "Portfolio") {
+    if (page === "Verdict") {
       logic.select("portfolio", null, "Portfolio");
       return;
     }
     if (page === "Vendors") {
       logic.select("vendorList", null);
+      return;
+    }
+    if (page === "Evidence") {
+      logic.select("evidence", null, "Coverage");
+      return;
+    }
+    if (page === "Contract graph") {
+      logic.select("graph", null);
       return;
     }
     const contract = selectedContract ?? portfolio.contracts[0] ?? null;
@@ -222,7 +233,12 @@ export function WorkspaceExecutiveShell({
           />
         </section>
 
-        {currentPage === "Portfolio" ? (
+        <ClaimContract
+          allowed={claimContract.allowed}
+          blocker={claimContract.blocker}
+        />
+
+        {currentPage === "Verdict" ? (
           <PortfolioPage
             portfolio={portfolio}
             creditFinding={creditFinding}
@@ -245,7 +261,7 @@ export function WorkspaceExecutiveShell({
           />
         ) : null}
 
-        {currentPage === "Contract 360" && selectedContract ? (
+        {currentPage === "Contracts" && selectedContract ? (
           <ContractPage
             vm={vm}
             logic={logic}
@@ -266,6 +282,14 @@ export function WorkspaceExecutiveShell({
             portfolio={portfolio}
             onOpenContract={openContract}
           />
+        ) : null}
+
+        {currentPage === "Evidence" ? (
+          <EvidencePage portfolio={portfolio} />
+        ) : null}
+
+        {currentPage === "Contract graph" ? (
+          <ContractGraphPage portfolio={portfolio} />
         ) : null}
       </section>
     </main>
@@ -865,6 +889,220 @@ function OptimizePage({
   );
 }
 
+function EvidencePage({
+  portfolio,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+}) {
+  const coverage = portfolio.impact.evidenceCoverage;
+  const sourceRows = [
+    {
+      name: "Contract headers",
+      binding: "source.contract_360",
+      count: portfolio.contracts.length,
+      state: portfolio.reads.contracts,
+    },
+    {
+      name: "Vendor rollups",
+      binding: "source.vendor_contract_portfolio",
+      count: portfolio.vendors.length,
+      state: portfolio.reads.vendors,
+    },
+    {
+      name: "Application scope",
+      binding: "source.contract_application_scope",
+      count: portfolio.applicationScope.length,
+      state: portfolio.reads.applicationScope,
+    },
+    {
+      name: "Action candidates",
+      binding: "source.contract_action_candidate_v1",
+      count: portfolio.impact.actionCandidates.length,
+      state: portfolio.impact.actionCandidates.length ? "available" : "missing",
+    },
+    {
+      name: "Claim cards",
+      binding: "source.contract_claim_card_v1",
+      count: portfolio.impact.claimCards.length,
+      state: portfolio.impact.claimCards.length ? "available" : "missing",
+    },
+    {
+      name: "aVa grounding",
+      binding: "source.ava_grounding_bundle_v1",
+      count: portfolio.impact.avaGroundingBundles.length,
+      state: portfolio.impact.avaGroundingBundles.length
+        ? "available"
+        : "missing",
+    },
+  ];
+
+  return (
+    <div className="sw-v2-grid">
+      <section className="sw-v2-panel sw-v2-span-2">
+        <PanelHead
+          eyebrow="Evidence"
+          title="Loaded rows, missing lanes, and claim eligibility"
+        />
+        <div className="sw-v2-table">
+          <div className="sw-v2-table-head sw-v2-evidence-row">
+            <span>Evidence lane</span>
+            <span>Binding</span>
+            <span>Rows</span>
+            <span>Status</span>
+          </div>
+          {sourceRows.map((row) => (
+            <div
+              key={row.binding}
+              className="sw-v2-table-row sw-v2-evidence-row"
+            >
+              <span>
+                <b>{row.name}</b>
+              </span>
+              <span>{row.binding}</span>
+              <span>{row.count}</span>
+              <span>{row.state}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="sw-v2-panel">
+        <PanelHead eyebrow="Coverage" title="Contract-depth posture" />
+        <div className="sw-v2-fact-stack">
+          <Fact
+            label="Evidence coverage rows"
+            value={String(coverage.length)}
+          />
+          <Fact
+            label="Spend rows"
+            value={String(
+              coverage.reduce(
+                (sum, row) => sum + (numberFromDb(row.spend_rows) ?? 0),
+                0,
+              ),
+            )}
+          />
+          <Fact
+            label="Performance rows"
+            value={String(
+              coverage.reduce(
+                (sum, row) => sum + (numberFromDb(row.performance_rows) ?? 0),
+                0,
+              ),
+            )}
+          />
+          <Fact
+            label="Document page text"
+            value={String(
+              coverage.reduce(
+                (sum, row) =>
+                  sum + (numberFromDb(row.document_page_text_rows) ?? 0),
+                0,
+              ),
+            )}
+          />
+          <Fact label="Finance confirmed" value="Not established" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ContractGraphPage({
+  portfolio,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+}) {
+  const lanes = [
+    {
+      title: "Layer 1 / source systems",
+      nodes: [
+        "CLM / contract repository",
+        "AP / ERP invoices",
+        "CMDB / service catalog",
+        "ITSM / monitoring",
+        "SaaS and cloud consoles",
+      ],
+    },
+    {
+      title: "Layer 2 / adapters",
+      nodes: [
+        "contract_register_adapter",
+        "contract_clause_adapter",
+        "contract_consumption_adapter",
+        "contract_performance_adapter",
+        "contract_scope_adapter",
+        "optimization_opportunity_adapter",
+      ],
+    },
+    {
+      title: "Layer 3 / canonical truth",
+      nodes: [
+        "source.contract",
+        "source.contract_term",
+        "source.contract_scope",
+        "source.contract_consumption_observation",
+        "source.contract_performance_observation",
+        "source.optimization_opportunity",
+      ],
+    },
+    {
+      title: "Layer 4 / product substrate",
+      nodes: [
+        "source.contract_360",
+        "source.contract_claim_card_v1",
+        "source.contract_action_candidate_v1",
+        "source.vendor_position_v1",
+        "source.source_page_storyline_v1",
+        "source.ava_grounding_bundle_v1",
+      ],
+    },
+  ];
+
+  return (
+    <div className="sw-v2-grid">
+      <section className="sw-v2-panel sw-v2-span-2">
+        <PanelHead
+          eyebrow="Contract graph"
+          title="Contract at the center; systems, facts, and actions around it"
+        />
+        <div className="sw-v2-graph">
+          {lanes.map((lane) => (
+            <div key={lane.title} className="sw-v2-graph-lane">
+              <h3>{lane.title}</h3>
+              {lane.nodes.map((node) => (
+                <div key={node} className="sw-v2-graph-node">
+                  {node}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="sw-v2-panel">
+        <PanelHead eyebrow="Live substrate" title="What Source can use now" />
+        <div className="sw-v2-fact-stack">
+          <Fact label="Contracts" value={String(portfolio.contracts.length)} />
+          <Fact label="Vendors" value={String(portfolio.vendors.length)} />
+          <Fact
+            label="Claim cards"
+            value={String(portfolio.impact.claimCards.length)}
+          />
+          <Fact
+            label="Action candidates"
+            value={String(portfolio.impact.actionCandidates.length)}
+          />
+          <Fact
+            label="aVa bundles"
+            value={String(portfolio.impact.avaGroundingBundles.length)}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function Metric({
   label,
   value,
@@ -892,6 +1130,68 @@ function PanelHead({ eyebrow, title }: { eyebrow: string; title: string }) {
       <h2>{title}</h2>
     </div>
   );
+}
+
+function ClaimContract({
+  allowed,
+  blocker,
+}: {
+  allowed: string;
+  blocker: string;
+}) {
+  return (
+    <div className="sw-v2-claim-contract">
+      <span>Claim contract</span>
+      <b>{allowed}</b>
+      <small>{blocker}</small>
+    </div>
+  );
+}
+
+function claimContractForPage(page: PageLabel) {
+  if (page === "Vendors") {
+    return {
+      allowed:
+        "This vendor has N contracts and recorded annual value in the active set.",
+      blocker:
+        "No vendor-wide SLA, risk score, or realized savings unless broad rows exist.",
+    };
+  }
+  if (page === "Contracts") {
+    return {
+      allowed:
+        "This contract is actionable only when evidence-backed conditions exist.",
+      blocker:
+        "No narrative-only opportunity and no zero-fill for missing rows.",
+    };
+  }
+  if (page === "Optimize") {
+    return {
+      allowed: "Candidate opportunity, not finance-confirmed realized value.",
+      blocker:
+        "Never label an amount as realized savings before finance state changes.",
+    };
+  }
+  if (page === "Evidence") {
+    return {
+      allowed: "Open the exact evidence family behind every claim.",
+      blocker:
+        "Do not render page-span document claims or portfolio SLA without required rows.",
+    };
+  }
+  if (page === "Contract graph") {
+    return {
+      allowed:
+        "Every figure traces to a source file, adapter, canonical object, and read model.",
+      blocker:
+        "No lineage claim for change-order timelines or page-span retrieval until proven.",
+    };
+  }
+  return {
+    allowed:
+      "Here is the governed contract decision set and its evidence coverage.",
+    blocker: "No portfolio-wide claims without a coverage denominator.",
+  };
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -927,11 +1227,13 @@ function activePage(
   logic: WorkspaceViewModel,
   vm: SourceWorkspaceVM,
 ): PageLabel {
+  if (logic.state.sel.kind === "evidence") return "Evidence";
+  if (logic.state.sel.kind === "graph") return "Contract graph";
   if (logic.state.sel.kind === "vendor" || vm.isVendorList) return "Vendors";
   if (vm.isContract && logic.state.tabs.contract === "Optimize")
     return "Optimize";
-  if (vm.isContract) return "Contract 360";
-  return "Portfolio";
+  if (vm.isContract) return "Contracts";
+  return "Verdict";
 }
 
 function preferredContract(portfolio: SourceWorkspacePortfolioData) {
@@ -1037,8 +1339,10 @@ function headlineFor(
   contract: SourceContract360Row | null,
 ) {
   if (page === "Vendors") return vendor?.vendor_name ?? "Vendor portfolio";
-  if (page === "Contract 360") return contract?.vendor_name ?? "Contract 360";
+  if (page === "Contracts") return contract?.vendor_name ?? "Contract 360";
   if (page === "Optimize") return "Optimize evidenced opportunities";
+  if (page === "Evidence") return "Evidence and proof";
+  if (page === "Contract graph") return "Source contract graph";
   return tenantName;
 }
 
@@ -1053,11 +1357,17 @@ function subheadFor(
       ? `${vendor.contract_count} contracts / ${money(numberFromDb(vendor.annual_value))} recorded annual value.`
       : `${portfolio.vendors.length} supplier relationships with recorded contract count and annual value.`;
   }
-  if (page === "Contract 360" && contract) {
+  if (page === "Contracts" && contract) {
     return `${contract.contract_id} / ${money(numberFromDb(contract.annual_value))} annual value / expiry ${fmtDate(contract.end_date)}.`;
   }
   if (page === "Optimize") {
     return "Only quantified findings with loaded evidence are shown. Finance confirmation remains separate.";
+  }
+  if (page === "Evidence") {
+    return "Evidence lanes, row counts, and blockers are visible without exposing raw diagnostics by default.";
+  }
+  if (page === "Contract graph") {
+    return "A governed lineage map from source systems through adapters, canonical facts, cubes, Source, Tower, and aVa.";
   }
   return `${portfolio.contracts.length} contracts / ${portfolio.vendors.length} vendors. Unsupported dashboard claims are hidden.`;
 }
@@ -1112,10 +1422,7 @@ function detailStateLabel(state: SourceWorkspaceVM["detailState"]) {
   return "Header only";
 }
 
-export function performanceActual(
-  actualValue: unknown,
-  valueNum: unknown,
-) {
+export function performanceActual(actualValue: unknown, valueNum: unknown) {
   const formatActual = (actual: number) =>
     actual <= 1 ? pct(actual) : `${actual.toFixed(1)}%`;
   if (typeof actualValue === "number" && Number.isFinite(actualValue)) {
