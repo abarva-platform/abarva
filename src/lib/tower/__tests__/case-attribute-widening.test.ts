@@ -302,3 +302,35 @@ describe("the spend flag survives the view model", () => {
     }
   });
 });
+
+describe("the projection schema reference does not silently rot", () => {
+  const doc = read("docs/architecture/TOWER_PROJECTION_SCHEMA_REFERENCE.md");
+  const TOWER_TABLES = [
+    "tower_ai_portfolio",
+    "tower_command_center",
+    "tower_value_chain",
+    "tower_evidence_queue",
+  ];
+
+  it("still describes every table Tower reads", () => {
+    for (const t of TOWER_TABLES) {
+      expect([t, doc.includes(t)]).toEqual([t, true]);
+    }
+  });
+
+  it("stops claiming no migration exists once one does", () => {
+    // The document's central claim is that these tables are unversioned. The day a migration
+    // lands, that claim becomes false and the document has to be revisited rather than left
+    // asserting something the repository contradicts.
+    const migrations = fs.existsSync(path.resolve(ROOT, "supabase/migrations"))
+      ? fs.readdirSync(path.resolve(ROOT, "supabase/migrations"))
+      : [];
+    const creates = migrations.some((file) => {
+      const sql = read(`supabase/migrations/${file}`);
+      return TOWER_TABLES.some((t) =>
+        sql.includes(`create table if not exists ecl_projection.${t}`),
+      );
+    });
+    expect([creates, doc.includes("not yet a migration")]).toEqual([creates, !creates]);
+  });
+});
