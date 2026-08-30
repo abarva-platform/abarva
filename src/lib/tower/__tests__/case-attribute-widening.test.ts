@@ -645,3 +645,41 @@ describe("the active generation is enforced by the data, not by one reader", () 
     expect(migration).toContain("page_key");
   });
 });
+
+describe("tenant isolation is a property of the data", () => {
+  const rls = read(
+    "supabase/migrations/20260830210000_tower_projection_tenant_policies.sql",
+  );
+
+  it("covers every projection table Tower reads", () => {
+    for (const t of [
+      "tower_ai_portfolio",
+      "tower_command_center",
+      "tower_value_chain",
+      "tower_evidence_queue",
+    ]) {
+      expect([t, rls.includes(t)]).toEqual([t, true]);
+    }
+  });
+
+  it("uses the tenant GUC the reader actually sets", () => {
+    // readTowerCommandCenter calls set_config('app.tenant_key', ...) before every query. A policy
+    // keyed on anything else would evaluate false and return zero rows, which presents as
+    // "not seeded" rather than as an error.
+    // Doubled quotes: the predicate is built through `format()`, so it lives inside a SQL string
+    // literal. Checking for the unescaped spelling would pass on a migration that never runs.
+    expect(rls).toContain("current_setting(''app.tenant_key'', true)");
+    expect(READER).toContain("SELECT set_config('app.tenant_key', $1, false)");
+  });
+
+  it("adds policies without forcing RLS on the owner", () => {
+    // A table with RLS on and no policies already denies everything to a non-bypassing role, so a
+    // permissive policy can only grant. Forcing RLS would change that and could remove access
+    // from the very role the product reads with.
+    expect(rls).not.toMatch(/force\s+row\s+level\s+security/i);
+  });
+
+  it("is idempotent", () => {
+    expect(rls).toContain("if not exists (");
+  });
+});
