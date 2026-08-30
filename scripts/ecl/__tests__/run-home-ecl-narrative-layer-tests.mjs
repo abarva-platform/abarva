@@ -336,7 +336,7 @@ assert(
     script.includes("data_workload_by_function") &&
     script.includes("data_workload_by_technology") &&
     script.includes("ctx_ecl_scope_data_workload_001") &&
-    script.includes("must not ask leaders to confirm those counts as though the source family is absent"),
+    script.includes("The data, reporting, ETL, script, and analytics workload context includes"),
   "ECL narrative job passes deterministic category summaries and data-workload visual datasets into the Claude packet",
 );
 assert(
@@ -548,6 +548,21 @@ assert(
     thesis.includes("signalClaim(signal)") &&
     thesis.includes("Strategy, leadership, and outcome sections remain deferred unless a cited source supplies those facts"),
   "EnterpriseThesis exposes a deterministic claim planner that selects governed signal statements before prose",
+);
+assert(
+  thesis.includes('"sig_ecl_estate_001"') &&
+    thesis.includes('"sig_ecl_data_workload_segments_017"') &&
+    thesis.includes('"sig_ecl_data_flow_total_014"') &&
+    thesis.indexOf('"sig_ecl_vendor_concentration_004"') > thesis.indexOf("const commercialSignals"),
+  "EnterpriseThesis keeps vendor concentration out of the opening story claim order and routes it to commercial sections",
+);
+assert(
+  script.includes("Report, job, user, script, and data-volume counts are unavailable from this source family.") &&
+    !script.includes("pages should show those workload summaries") &&
+    !script.includes("must not ask leaders to confirm those counts") &&
+    !script.includes("Do not name another function as strategically prominent") &&
+    !script.includes("Use these names only when citing this signal"),
+  "ECL narrative job keeps builder instructions out of generated visible signal language",
 );
 assert(
   script.includes("buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic, {") &&

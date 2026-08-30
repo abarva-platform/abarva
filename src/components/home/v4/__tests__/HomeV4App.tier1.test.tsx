@@ -68,6 +68,14 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(document.body.textContent ?? "").toMatch(new RegExp(`${appCount}\\s+applications`, "i"));
   });
 
+  it("opens the executive story on enterprise shape, not supplier concentration", () => {
+    render(<HomeV4App bundle={loadMeridianBundle()} tenantKey="meridian-health" />);
+
+    const hero = document.querySelector("[data-home-tier1-hero-metric]");
+    expect(hero?.textContent ?? "").toMatch(/\b(?:provider|health plan|applications|systems|estate|workload|flows)\b/i);
+    expect(hero?.textContent ?? "").not.toMatch(/\b(?:vendor|supplier|contract|commercial exposure)\b/i);
+  });
+
   it("keeps implementation vocabulary off the CXO opening path", () => {
     render(<HomeV4App bundle={loadMeridianBundle()} tenantKey="meridian-health" />);
 
