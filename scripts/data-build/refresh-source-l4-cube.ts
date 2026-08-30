@@ -524,6 +524,7 @@ async function refreshViews(client: Client, args: Args): Promise<void> {
       c.total_committed_value::numeric AS total_committed_value,
       COALESCE(consumption.committed_annual_spend, c.annual_value) AS committed_annual_spend,
       COALESCE(consumption.actual_annual_spend, c.annual_value) AS actual_annual_spend,
+      c.notice_deadline AS renewal_notice_date,
       c.expiration_date AS end_date,
       CASE
         WHEN c.expiration_date IS NOT NULL AND c.notice_deadline IS NOT NULL

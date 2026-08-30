@@ -49,6 +49,13 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).toContain("requestedSourceProvider");
   });
 
+  it("uses the governed Source cube as-of date unless the operator overrides it", () => {
+    expect(pageSource).toContain("SOURCE_V4_CUBE_AS_OF_DATE");
+    expect(pageSource).toContain("SOURCE_WORKSPACE_DEFAULT_AS_OF");
+    expect(pageSource).toContain("params.asOf?.trim() || defaultAsOf");
+    expect(pageSource).not.toContain("new Date().toISOString()");
+  });
+
   it("keeps the historical preview route as a query-preserving redirect only", () => {
     expect(previewPageSource).toContain("SourceWorkspacePreviewRedirect");
     expect(previewPageSource).toContain(

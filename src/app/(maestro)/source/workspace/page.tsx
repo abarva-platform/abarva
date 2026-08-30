@@ -4,7 +4,10 @@ import { WorkspaceClient } from "../preview/workspace/WorkspaceClient";
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { sourceV4CubeUiCatalogForAgent } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
+import {
+  SOURCE_V4_CUBE_AS_OF_DATE,
+  sourceV4CubeUiCatalogForAgent,
+} from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import { evaluateContractCategoryQuality } from "@/lib/source/data-model/contract-category-quality";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
@@ -21,12 +24,10 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-// SkyHarbor's demo dataset runs on a synthetic "current" date (2027-06-30),
-// documented in src/lib/source/data-model/types.ts — the real-world clock
-// would put every renewal/notice calculation on the wrong side of "today."
-// Every other tenant defaults to the real current date. `?asOf=` overrides
-// either, preserving the legacy Vendor 360 as-of convention.
-const SKYHARBOR_SYNTHETIC_AS_OF = "2027-06-30T00:00:00Z";
+// Source V4 and the contract-depth Source package carry a governed as-of date.
+// Renewal and notice math must use that stable cut by default; `?asOf=`
+// remains the operator override for explicit live-date comparisons.
+const SOURCE_WORKSPACE_DEFAULT_AS_OF = `${SOURCE_V4_CUBE_AS_OF_DATE}T00:00:00Z`;
 
 /**
  * /source/workspace — product Source workspace: native analytical canvas +
@@ -81,9 +82,7 @@ export default async function SourceWorkspacePage({
     tenant?.appClientKey ??
     (!requestedClient ? tenancy.clientKey : "") ??
     "";
-  const defaultAsOf = tenantKey.includes("skyharbor")
-    ? SKYHARBOR_SYNTHETIC_AS_OF
-    : new Date().toISOString();
+  const defaultAsOf = SOURCE_WORKSPACE_DEFAULT_AS_OF;
   const asOfDateIso = params.asOf?.trim() || defaultAsOf;
   const emptyV4Snapshot = createEmptySourceV4WorkspaceSnapshot(
     asOfDateIso,

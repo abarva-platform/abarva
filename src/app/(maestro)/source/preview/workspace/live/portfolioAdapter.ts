@@ -1613,9 +1613,10 @@ function contractFromEclProjectionRow(
     total_committed_value: numberFromCsv(row.total_contract_value_usd),
     committed_annual_spend: numberFromCsv(row.annualized_value_usd),
     actual_annual_spend: numberFromValue(spendSummary.ap_actual_total_usd),
+    renewal_notice_date: stringOrNull(row.renewal_notice_date),
     end_date: stringOrNull(row.end_date),
     notice_period_days: noticePeriodDays(row.renewal_notice_date, row.end_date),
-    auto_renew: false,
+    auto_renew: eclProjectionAutoRenew(row, gapFlags),
     renewal_decision_state: "review_required",
     renewal_owner_ref: null,
     benchmarking_clause: stringOrNull(
@@ -1937,7 +1938,7 @@ export function buildSourceVendor360Cockpit(input: {
           label: "Renewal decision set",
           binding: "computeRenewalExposure",
           grain: "active contract",
-          value: `${renewal180.noticeDeadlinePassedAutoRenew.length} auto-renew lapsed notice rows · ${moneyLabel(renewal180.noticeDeadlinePassedAutoRenewAnnualValue)} exposed · ${moneyLabel(cancellableAnnualValue)} still cancellable · ${renewal180.expiredAsOfDate.length} stale-date exclusions`,
+          value: `${renewal180.noticeDeadlinePassedAutoRenew.length} auto-renew lapsed notice rows · ${moneyLabel(renewal180.noticeDeadlinePassedAutoRenewAnnualValue)} exposed · ${moneyLabel(cancellableAnnualValue)} still cancellable · ${renewal180.expiredAsOfDate.length} expired contract exclusions · ${renewal180.pastRenewalNoticeDate.length} past renewal/notice rows`,
         },
         {
           label: "Spend consumption",
@@ -2063,14 +2064,21 @@ function buildClaimQualityControls(input: {
     {
       label: "Stale renewal dates",
       value:
-        input.renewal180.expiredAsOfDate.length > 0
-          ? `${input.renewal180.expiredAsOfDate.length} excluded`
+        input.renewal180.expiredAsOfDate.length > 0 ||
+        input.renewal180.pastRenewalNoticeDate.length > 0
+          ? `${Math.max(input.renewal180.expiredAsOfDate.length, input.renewal180.pastRenewalNoticeDate.length)} excluded`
           : "None excluded",
       note:
-        input.renewal180.expiredAsOfDate.length > 0
-          ? `${moneyLabel(input.renewal180.expiredAsOfDateAnnualValue)} has end dates before the as-of cut and is not shown as a live deadline.`
-          : "No past end_date rows were found in this as-of cut.",
-      tone: input.renewal180.expiredAsOfDate.length > 0 ? "warn" : "pass",
+        input.renewal180.pastRenewalNoticeDate.length > 0
+          ? `${moneyLabel(input.renewal180.pastRenewalNoticeDateAnnualValue)} has renewal/notice dates before the as-of cut and is not shown as a fresh future runway claim.`
+          : input.renewal180.expiredAsOfDate.length > 0
+            ? `${moneyLabel(input.renewal180.expiredAsOfDateAnnualValue)} has end dates before the as-of cut and is not shown as a live deadline.`
+            : "No past renewal, notice, or end-date rows were found in this as-of cut.",
+      tone:
+        input.renewal180.expiredAsOfDate.length > 0 ||
+        input.renewal180.pastRenewalNoticeDate.length > 0
+          ? "warn"
+          : "pass",
     },
     {
       label: "Concentration risk",
@@ -2124,6 +2132,28 @@ function repeatedTextQuality<T>(
     .filter((count) => count >= 3)
     .reduce((sum, count) => sum + count, 0);
   return { totalRows, repeatedRows };
+}
+
+function eclProjectionAutoRenew(
+  row: EclProjectionRow,
+  gapFlags: readonly unknown[],
+): boolean {
+  const explicit =
+    booleanFromUnknown(row.auto_renew) ??
+    booleanFromUnknown(row.auto_renew_flag);
+  if (explicit != null) return explicit;
+  return gapFlags.some((flag) =>
+    JSON.stringify(flag).toLowerCase().includes("auto_renew"),
+  );
+}
+
+function booleanFromUnknown(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  const text = stringOrNull(value)?.toLowerCase();
+  if (!text) return null;
+  if (["true", "yes", "y", "1"].includes(text)) return true;
+  if (["false", "no", "n", "0"].includes(text)) return false;
+  return null;
 }
 
 interface ContractWithDeadline {

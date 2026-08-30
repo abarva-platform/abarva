@@ -432,6 +432,7 @@ function listGoldenContract360Overlay(
        NULLIF(overview.total_committed_value_usd::text, '')::numeric AS total_committed_value,
        NULLIF(overview.annual_value_usd::text, '')::numeric AS committed_annual_spend,
        NULLIF(overview.actual_annual_spend_usd::text, '')::numeric AS actual_annual_spend,
+       NULLIF(overview.notice_deadline::text, '')::date AS renewal_notice_date,
        NULLIF(overview.end_date::text, '')::date AS end_date,
        NULLIF(overview.notice_period_days::text, '')::int AS notice_period_days,
        lower(coalesce(overview.auto_renew::text, '')) IN ('yes', 'true', '1') AS auto_renew,
