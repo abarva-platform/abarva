@@ -323,8 +323,9 @@ Quality thresholds:
 - semantic drops must be below 10 percent before publish.
 - kept-clean claims must be at least 70 percent before publish.
 - repairs must be reviewed when they exceed 20 percent.
-- any chapter with `publishable=false` stays out of the CXO reading path and appears only in
-  readiness/proof output.
+- every Home chapter resolves to one rendered terminal state: `published`, `refused`, or
+  `deferred`. A chapter absent from the page is a gate failure, even when its source evidence is
+  incomplete.
 
 The current quality record, with 22 semantic drops out of 60 generated claims, fails this V2 bar.
 

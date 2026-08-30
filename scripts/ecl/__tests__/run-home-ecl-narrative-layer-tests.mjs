@@ -9,6 +9,10 @@ const readbackPath = path.join(repoRoot, "scripts/ecl/readback_home_ecl_narrativ
 const thesisPath = path.join(repoRoot, "scripts/data-build/build-enterprise-thesis.ts");
 const chaptersPath = path.join(repoRoot, "scripts/data-build/build-home-chapters.ts");
 const packagePath = path.join(repoRoot, "package.json");
+const pagePromptContractPath = path.join(
+  repoRoot,
+  "docs/architecture/home-v2-page-prompt-contracts-2026-08-30.json",
+);
 
 function assert(condition, message) {
   if (!condition) {
@@ -24,6 +28,16 @@ const readback = fs.readFileSync(readbackPath, "utf8");
 const thesis = fs.readFileSync(thesisPath, "utf8");
 const chapters = fs.readFileSync(chaptersPath, "utf8");
 const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+const pagePromptContract = JSON.parse(fs.readFileSync(pagePromptContractPath, "utf8"));
+
+function promptPage(pageKey) {
+  return pagePromptContract.pages.find((page) => page.page_key === pageKey);
+}
+
+function pageValues(pageKey, field) {
+  const page = promptPage(pageKey);
+  return Array.isArray(page?.[field]) ? page[field] : [];
+}
 
 function extractDefaultAssessmentId(source, label) {
   const match = source.match(/const DEFAULT_ASSESSMENT_ID = "([^"]+)";/);
@@ -33,6 +47,98 @@ function extractDefaultAssessmentId(source, label) {
 
 const buildDefaultAssessmentId = extractDefaultAssessmentId(script, "Home ECL narrative build job");
 const readbackDefaultAssessmentId = extractDefaultAssessmentId(readback, "Home ECL narrative readback job");
+
+const expectedHomeSurfaceKeys = [
+  "executive_brief",
+  "our_business",
+  "strategy_value_creation",
+  "how_we_operate",
+  "technology_data",
+  "performance_value",
+  "leadership_perspective",
+  "what_needs_attention",
+  "current_state_architecture",
+  "current_state_data_flow",
+  "applications_systems",
+  "vendor_contracts",
+  "infrastructure_platforms",
+  "data_assets_integrations",
+  "what_has_been_loaded",
+  "browse_the_record",
+];
+
+assert(
+  pagePromptContract.contract_id === "home-v2-page-prompt-contracts-2026-08-30",
+  "Home V2 page prompt contract is the expected dated contract",
+);
+assert(
+  pagePromptContract.source_family_summaries_required === true &&
+    pagePromptContract.shared_packet_sections.includes("source_family_summaries") &&
+    pagePromptContract.shared_packet_sections.includes("category_summaries") &&
+    pagePromptContract.shared_packet_sections.includes("leadership_voice") &&
+    pagePromptContract.shared_packet_sections.includes("data_and_analytics") &&
+    pagePromptContract.shared_packet_sections.includes("visual_datasets"),
+  "Home V2 page prompt contract requires rich shared source, category, interview, data, and visual context",
+);
+assert(
+  pagePromptContract.pages.length === expectedHomeSurfaceKeys.length &&
+    new Set(pagePromptContract.pages.map((page) => page.page_key)).size === expectedHomeSurfaceKeys.length &&
+    expectedHomeSurfaceKeys.every((pageKey) => Boolean(promptPage(pageKey))),
+  "Home V2 page prompt contract enumerates all 16 Home surfaces exactly once",
+);
+assert(
+  promptPage("executive_brief")?.writer_lens === "ceo_board_strategy_adviser" &&
+    promptPage("executive_brief")?.voice.includes("business strategy led"),
+  "Executive Brief uses a business-strategy-led CXO writer lens",
+);
+assert(
+  promptPage("technology_data")?.writer_lens === "expert_cto_enterprise_architect" &&
+    promptPage("current_state_architecture")?.writer_lens === "expert_cto_enterprise_architect" &&
+    promptPage("applications_systems")?.writer_lens === "expert_cto_enterprise_architect" &&
+    promptPage("infrastructure_platforms")?.writer_lens === "expert_cto_enterprise_architect",
+  "Technology and architecture surfaces use the expert technologist lens",
+);
+assert(
+  promptPage("current_state_data_flow")?.writer_lens === "data_analytics_architect" &&
+    promptPage("data_assets_integrations")?.writer_lens === "data_analytics_architect",
+  "Data-flow and data-asset surfaces use the data and analytics architect lens",
+);
+assert(
+  promptPage("leadership_perspective")?.writer_lens === "interview_synthesis_lead" &&
+    pageValues("leadership_perspective", "must_show").includes("C-suite themes") &&
+    pageValues("leadership_perspective", "must_show").includes("director-level tactical themes") &&
+    pageValues("leadership_perspective", "must_show").includes("direct excerpts") &&
+    pageValues("leadership_perspective", "must_show").includes("AI ambition"),
+  "Leadership Perspective is a first-class interview evidence surface",
+);
+assert(
+  pageValues("technology_data", "forbidden").some((item) =>
+    item.includes("asking to confirm ETL/jobs/users when workload summaries are loaded"),
+  ) &&
+    pageValues("data_assets_integrations", "forbidden").some((item) =>
+      item.includes("asking to confirm ETL/jobs/reports/users/TB when workload summaries are loaded"),
+    ) &&
+    pageValues("data_assets_integrations", "must_show").includes("BI/report counts by tool and function") &&
+    pageValues("data_assets_integrations", "must_show").includes("ETL/job/script counts by tool and function"),
+  "Home prompt contract forbids fake D&A gaps when workload summaries already carry BI, ETL, user, and volume context",
+);
+assert(
+  pageValues("browse_the_record", "must_show").includes("dataset selector") &&
+    pageValues("browse_the_record", "must_show").includes("dimensions") &&
+    pageValues("browse_the_record", "must_show").includes("column presets") &&
+    pageValues("browse_the_record", "must_show").includes("row lineage drawer") &&
+    pageValues("browse_the_record", "forbidden").includes("all columns by default"),
+  "Browse The Record is specified as slice/dice first and table second",
+);
+assert(
+  pagePromptContract.global_gates.includes("all_pages_have_source_family_summaries") &&
+    pagePromptContract.global_gates.includes("rendered_claims_resolve_to_published_claim_rows") &&
+    pagePromptContract.global_gates.includes("published_refused_deferred_terminal_state_required") &&
+    pagePromptContract.global_gates.includes("architecture_and_data_flow_admission_above_diagrams") &&
+    pagePromptContract.global_gates.includes("workload_denominators_separate") &&
+    pagePromptContract.global_gates.includes("no_builder_vocabulary_on_cxo_surface"),
+  "Home V2 page prompt contract records the terminal-state, source-family, admission, denominator, and vocabulary gates",
+);
 
 assert(
   buildDefaultAssessmentId === readbackDefaultAssessmentId,
