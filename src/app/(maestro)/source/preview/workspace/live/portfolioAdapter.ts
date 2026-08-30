@@ -2044,26 +2044,29 @@ function buildClaimQualityControls(input: {
     input.contracts,
     "utilization_evidence",
   );
+  const lapsedNoticeIds = new Set(
+    input.renewal180.noticeDeadlinePassed.map((contract) => contract.contract_id),
+  );
+  const staleRenewalRows = uniqueContracts([
+    ...input.renewal180.expiredAsOfDate,
+    ...input.renewal180.pastRenewalNoticeDate.filter(
+      (contract) => !lapsedNoticeIds.has(contract.contract_id),
+    ),
+  ]);
+  const staleRenewalAnnualValue = sumAnnual(staleRenewalRows);
 
   return [
     {
       label: "Stale renewal dates",
       value:
-        input.renewal180.expiredAsOfDate.length > 0 ||
-        input.renewal180.pastRenewalNoticeDate.length > 0
-          ? `${Math.max(input.renewal180.expiredAsOfDate.length, input.renewal180.pastRenewalNoticeDate.length)} excluded`
+        staleRenewalRows.length > 0
+          ? `${staleRenewalRows.length} excluded`
           : "None excluded",
       note:
-        input.renewal180.pastRenewalNoticeDate.length > 0
-          ? `${moneyLabel(input.renewal180.pastRenewalNoticeDateAnnualValue)} has renewal/notice dates before the as-of cut and is not shown as a fresh future runway claim.`
-          : input.renewal180.expiredAsOfDate.length > 0
-            ? `${moneyLabel(input.renewal180.expiredAsOfDateAnnualValue)} has end dates before the as-of cut and is not shown as a live deadline.`
-            : "No past renewal, notice, or end-date rows were found in this as-of cut.",
-      tone:
-        input.renewal180.expiredAsOfDate.length > 0 ||
-        input.renewal180.pastRenewalNoticeDate.length > 0
-          ? "warn"
-          : "pass",
+        staleRenewalRows.length > 0
+          ? `${moneyLabel(staleRenewalAnnualValue)} has expired or non-active past renewal dates and is not shown as a fresh future runway claim.`
+          : "No expired or non-active past renewal rows were found in this as-of cut.",
+      tone: staleRenewalRows.length > 0 ? "warn" : "pass",
     },
     {
       label: "Concentration risk",
@@ -2381,8 +2384,21 @@ function daysBetween(a: Date, b: Date): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000);
 }
 
-function sumAnnual(rows: readonly SourceContract360Row[]): number {
+function sumAnnual(rows: readonly { readonly annual_value: unknown }[]): number {
   return rows.reduce((total, row) => total + valueOf(row.annual_value), 0);
+}
+
+function uniqueContracts<T extends { readonly contract_id: string }>(
+  rows: readonly T[],
+): T[] {
+  const seen = new Set<string>();
+  const uniqueRows: T[] = [];
+  for (const row of rows) {
+    if (seen.has(row.contract_id)) continue;
+    seen.add(row.contract_id);
+    uniqueRows.push(row);
+  }
+  return uniqueRows;
 }
 
 function valueOf(value: unknown): number {

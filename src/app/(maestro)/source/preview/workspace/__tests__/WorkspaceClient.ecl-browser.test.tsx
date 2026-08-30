@@ -146,7 +146,8 @@ async function writeEclProjectionFixture(dir: string) {
         vendor_object_id: "MER-VEN-HELIX-SSO",
         vendor_name: "Helix Shared Services Group",
         contract_name: "Enterprise Shared Services BPO",
-        renewal_notice_date: "2027-06-30",
+        auto_renew_flag: "true",
+        renewal_notice_date: "2027-01-01",
         end_date: "2027-12-31",
         annualized_value_usd: "10710000",
         total_contract_value_usd: "32130000",
@@ -175,8 +176,9 @@ async function writeEclProjectionFixture(dir: string) {
         vendor_object_id: "MER-VEN-EPIC",
         vendor_name: "Epic Systems Corporation",
         contract_name: "Clinical Applications Agreement",
+        auto_renew_flag: "true",
         renewal_notice_date: "2027-06-30",
-        end_date: "2027-12-31",
+        end_date: "2027-01-01",
         annualized_value_usd: "500000",
         total_contract_value_usd: "1500000",
         value_state: "known",
@@ -315,6 +317,14 @@ describe("Source workspace ECL browser-surface proof", () => {
       1,
     );
     expect(screen.getByLabelText("Portfolio facts")).toBeTruthy();
+    expect(screen.getByText("Auto-renew notice passed")).toBeTruthy();
+    expect(screen.getAllByText("$10.7M").length).toBeGreaterThan(0);
+    expect(screen.getByText("Still cancellable")).toBeTruthy();
+    expect(screen.getAllByText("Stale renewal dates").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText("1 excluded").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Decision window")).toBeNull();
     expect(screen.getByText("Helix Shared Services Group")).toBeTruthy();
     expect(screen.getByText("Executive position")).toBeTruthy();
     expect(screen.getByText("Finance confirmation remains separate")).toBeTruthy();

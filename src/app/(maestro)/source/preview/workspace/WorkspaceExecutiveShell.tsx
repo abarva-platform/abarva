@@ -114,9 +114,17 @@ export function WorkspaceExecutiveShell({
   const currentPage = activePage(logic, vm);
   const headerContract = vm.isContract ? selectedContract : null;
   const totalAnnualValue = portfolioAnnualValue(portfolio);
+  const lapsedAutoRenewSupport = supportByLabel(
+    portfolio,
+    "Auto-renew notice passed",
+  );
   const decisionSupport = supportByLabel(portfolio, "Exposed annual value");
+  const cancellableSupport = supportByLabel(portfolio, "Still cancellable");
   const windowSupport = supportByLabel(portfolio, "Decision window");
-  const confidenceSupport = supportByLabel(portfolio, "Mean confidence");
+  const staleRenewalControl = claimQualityByLabel(
+    portfolio,
+    "Stale renewal dates",
+  );
   const impactUnclaimedCredit = portfolio.impact.evidenceCoverage.reduce(
     (sum, row) => sum + (numberFromDb(row.unclaimed_credit_usd) ?? 0),
     0,
@@ -277,23 +285,45 @@ export function WorkspaceExecutiveShell({
             note="Sum of recorded annual value"
           />
           <Metric
-            label={decisionSupport?.label ?? "Decision set"}
-            value={decisionSupport?.value ?? "Not established"}
-            note={
-              decisionSupport?.note ??
-              "No qualifying rows in the governed window"
+            label={lapsedAutoRenewSupport?.label ?? "Active renewal exposure"}
+            value={
+              lapsedAutoRenewSupport?.value ??
+              decisionSupport?.value ??
+              "Not established"
             }
+            note={
+              lapsedAutoRenewSupport?.note ??
+              decisionSupport?.note ??
+              "No active auto-renew or decision-window rows are established."
+            }
+            tone={lapsedAutoRenewSupport ? "warn" : undefined}
           />
           <Metric
-            label={windowSupport?.label ?? "Nearest deadline"}
-            value={windowSupport?.value ?? "Not established"}
-            note={windowSupport?.note ?? "Needs notice_deadline or end_date"}
-            tone="warn"
+            label={cancellableSupport?.label ?? "Open timing signal"}
+            value={
+              cancellableSupport?.value ??
+              windowSupport?.value ??
+              "Not established"
+            }
+            note={
+              cancellableSupport?.note ??
+              windowSupport?.note ??
+              "Needs active notice_deadline or end_date rows."
+            }
+            tone={cancellableSupport || windowSupport ? "warn" : undefined}
           />
           <Metric
-            label={confidenceSupport?.label ?? "Mean confidence"}
-            value={confidenceSupport?.value ?? "Not established"}
-            note={confidenceSupport?.note ?? "Numeric source_confidence only"}
+            label={staleRenewalControl?.label ?? "Stale renewal dates"}
+            value={staleRenewalControl?.value ?? "Not established"}
+            note={
+              staleRenewalControl?.note ??
+              "Expired or past-date rows are excluded from deadline claims."
+            }
+            tone={
+              staleRenewalControl && staleRenewalControl.tone !== "pass"
+                ? "warn"
+                : undefined
+            }
           />
         </section>
 
@@ -2365,6 +2395,17 @@ function supportByLabel(
   return (
     portfolio.cockpit.verdict.supports.find(
       (support) => support.label === label,
+    ) ?? null
+  );
+}
+
+function claimQualityByLabel(
+  portfolio: SourceWorkspacePortfolioData,
+  label: string,
+) {
+  return (
+    portfolio.cockpit.claimQualityControls.find(
+      (control) => control.label === label,
     ) ?? null
   );
 }
