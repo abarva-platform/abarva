@@ -97,6 +97,109 @@ function stringArray(value: unknown): string[] {
     .filter((item): item is string => Boolean(item));
 }
 
+function publicEvidenceLabel(value: string | null | undefined): string | null {
+  const text = stringValue(value);
+  if (!text) return null;
+  const normalized = text.toLowerCase().replace(/[_-]+/g, " ");
+  if (normalized.includes("performance") || normalized.includes("sla")) {
+    return "SLA performance history";
+  }
+  if (normalized.includes("spend monthly") || normalized.includes("spend")) {
+    return "Monthly spend history";
+  }
+  if (normalized.includes("opportunity")) return "Opportunity evidence";
+  if (normalized.includes("contract scope")) return "Contract scope evidence";
+  if (normalized.includes("contract 360")) return "Contract record evidence";
+  if (normalized.includes("invoice")) return "Invoice detail";
+  if (normalized.includes("usage") || normalized.includes("entitlement")) {
+    return "Usage and entitlement evidence";
+  }
+  if (normalized.includes("clause")) return "Contract clause evidence";
+  if (normalized.includes("pricing") || normalized.includes("rate card")) {
+    return "Pricing schedule evidence";
+  }
+  if (normalized.includes("finance")) return "Finance confirmation evidence";
+  if (normalized.includes("reconciliation")) return "Reconciliation evidence";
+  if (/^(source|consumption)\./i.test(text) || /_v\d+\b/i.test(text)) {
+    return null;
+  }
+  return text
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function countNestedRows(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+    return Number(value.trim());
+  }
+  if (!isRecord(value)) return null;
+  const nested = Object.values(value)
+    .map(countNestedRows)
+    .filter((count): count is number => count != null);
+  if (nested.length === 0) return null;
+  return nested.reduce((total, count) => total + count, 0);
+}
+
+function publicEvidenceRefs(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(value.flatMap((item) => publicEvidenceRefs(item))),
+    );
+  }
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return [];
+    if (text.startsWith("{") || text.startsWith("[")) {
+      try {
+        return publicEvidenceRefs(JSON.parse(text));
+      } catch {
+        return [];
+      }
+    }
+    const label = publicEvidenceLabel(text);
+    return label ? [label] : [];
+  }
+  if (!isRecord(value)) return [];
+
+  const refs: string[] = [];
+  if (stringValue(value.contract_ref) ?? stringValue(value["Contract Ref"])) {
+    refs.push("Contract record");
+  }
+  if (
+    stringValue(value.opportunity_ref) ??
+    stringValue(value["Opportunity Ref"])
+  ) {
+    refs.push("Opportunity record");
+  }
+  const financeState =
+    stringValue(value.finance_confirmation_state) ??
+    stringValue(value["Finance Confirmation State"]);
+  if (financeState) {
+    refs.push(
+      financeState.toLowerCase().includes("confirmed") &&
+        !financeState.toLowerCase().includes("not")
+        ? "Finance confirmation complete"
+        : "Finance confirmation not complete",
+    );
+  }
+  const coverage = isRecord(value.evidence_coverage)
+    ? value.evidence_coverage
+    : isRecord(value["Evidence Coverage"])
+      ? value["Evidence Coverage"]
+      : null;
+  if (coverage) {
+    for (const [key, rawCount] of Object.entries(coverage)) {
+      const label = publicEvidenceLabel(key);
+      const rowCount = countNestedRows(rawCount);
+      if (label && rowCount != null && rowCount > 0) {
+        refs.push(`${label}: ${rowCount} rows`);
+      }
+    }
+  }
+  return Array.from(new Set(refs));
+}
+
 function sourceV4(context: AskSurfaceContext): Record<string, unknown> | null {
   const raw = (context as { sourceV4?: unknown }).sourceV4;
   return isRecord(raw) ? raw : null;
@@ -421,7 +524,8 @@ function buildOpportunityRows(lines: SourceOpportunityLine[]) {
     state: line.state,
     evidence: line.evidenceClass,
     owner: line.owner ?? "Not established",
-    sourceRefs: line.sourceRefs.join(", ") || "Not established",
+    sourceRefs:
+      publicEvidenceRefs(line.sourceRefs).join(", ") || "Not established",
     nextAction: line.nextAction,
   }));
 }
@@ -508,7 +612,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         { key: "state", label: "State" },
         { key: "evidence", label: "Evidence" },
         { key: "owner", label: "Owner" },
-        { key: "sourceRefs", label: "Source refs" },
+        { key: "sourceRefs", label: "Evidence basis" },
         { key: "nextAction", label: "Next action" },
       ],
       rows: opportunityRows.map((row) => ({

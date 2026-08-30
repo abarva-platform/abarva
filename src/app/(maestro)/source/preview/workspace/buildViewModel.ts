@@ -50,6 +50,105 @@ const splitList = (value: string | null | undefined): string[] =>
     .split(/[;|]/)
     .map((item) => item.trim())
     .filter(Boolean);
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+const publicEvidenceLabel = (
+  value: string | null | undefined,
+): string | null => {
+  const text = textOrNull(value);
+  if (!text) return null;
+  const normalized = text.toLowerCase().replace(/[_-]+/g, " ");
+  if (normalized.includes("performance")) return "SLA performance history";
+  if (normalized.includes("spend monthly") || normalized.includes("spend"))
+    return "Monthly spend history";
+  if (normalized.includes("opportunity")) return "Opportunity evidence";
+  if (normalized.includes("contract scope")) return "Contract scope evidence";
+  if (normalized.includes("contract 360")) return "Contract record evidence";
+  if (normalized.includes("invoice") || normalized.includes("ap "))
+    return "Invoice detail";
+  if (normalized.includes("usage") || normalized.includes("entitlement"))
+    return "Usage and entitlement evidence";
+  if (normalized.includes("clause")) return "Contract clause evidence";
+  if (normalized.includes("pricing")) return "Pricing schedule evidence";
+  if (normalized.includes("finance")) return "Finance confirmation evidence";
+  if (normalized.includes("record snapshot")) return "Source record snapshot";
+  if (/^(source|consumption)\./i.test(text) || /_v\d+\b/i.test(text)) {
+    return null;
+  }
+  return text
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+const countNestedRows = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+    return Number(value.trim());
+  }
+  if (!isPlainRecord(value)) return null;
+  const nested = Object.values(value)
+    .map(countNestedRows)
+    .filter((count): count is number => count != null);
+  if (nested.length === 0) return null;
+  return nested.reduce((total, count) => total + count, 0);
+};
+const clientFacingSourceRefs = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(value.flatMap((item) => clientFacingSourceRefs(item))),
+    );
+  }
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return [];
+    if (text.startsWith("{") || text.startsWith("[")) {
+      try {
+        return clientFacingSourceRefs(JSON.parse(text));
+      } catch {
+        return [];
+      }
+    }
+    const label = publicEvidenceLabel(text);
+    return label ? [label] : [];
+  }
+  if (!isPlainRecord(value)) return [];
+
+  const refs: string[] = [];
+  if (textOrNull(value.contract_ref) ?? textOrNull(value["Contract Ref"])) {
+    refs.push("Contract record");
+  }
+  if (
+    textOrNull(value.opportunity_ref) ??
+    textOrNull(value["Opportunity Ref"])
+  ) {
+    refs.push("Opportunity record");
+  }
+  const financeState =
+    textOrNull(value.finance_confirmation_state) ??
+    textOrNull(value["Finance Confirmation State"]);
+  if (financeState) {
+    refs.push(
+      financeState.toLowerCase().includes("confirmed") &&
+        !financeState.toLowerCase().includes("not")
+        ? "Finance confirmation complete"
+        : "Finance confirmation not complete",
+    );
+  }
+  const coverage = isPlainRecord(value.evidence_coverage)
+    ? value.evidence_coverage
+    : isPlainRecord(value["Evidence Coverage"])
+      ? value["Evidence Coverage"]
+      : null;
+  if (coverage) {
+    for (const [key, rawCount] of Object.entries(coverage)) {
+      const label = publicEvidenceLabel(key);
+      const rowCount = countNestedRows(rawCount);
+      if (label && rowCount != null && rowCount > 0) {
+        refs.push(`${label}: ${whole(rowCount)} rows`);
+      }
+    }
+  }
+  return Array.from(new Set(refs));
+};
 const contractOptimizationIntakeHref = (
   contract: EnrichedContract,
   opportunityId?: string | null,
@@ -2447,15 +2546,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             : "Not established";
         const sourceRefs =
           selected?.evidenceRefs
-            .map((ref) =>
-              [
+            .flatMap((ref) =>
+              clientFacingSourceRefs([
                 ref.tableName,
-                ref.sourceRecordId,
                 ref.sourceFileReport,
                 ref.pageSpan,
-              ]
-                .filter(Boolean)
-                .join(" · "),
+              ]),
             )
             .filter(Boolean) ?? [];
         const selectedLines = selected?.calculation?.lines ?? [];
@@ -3141,9 +3237,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           nextAction:
             candidate.next_action ??
             "Confirm evidence owner and decision path before claiming value.",
-          sourceRefs: splitList(
-            JSON.stringify(candidate.citation_basis_json ?? {}),
-          ),
+          sourceRefs: clientFacingSourceRefs(candidate.citation_basis_json),
         }),
       ),
       optimizationOpportunities: opportunityView

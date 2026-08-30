@@ -998,6 +998,76 @@ describe("buildViewModel numeric coercion", () => {
     ).toContain(PORTFOLIO.contracts[0].contract_id);
   });
 
+  it("exposes action-candidate citation basis as readable aVa evidence labels", () => {
+    const vm = buildVm({
+      impact: {
+        ...IMPACT,
+        actionCandidates: [
+          {
+            tenant_key: "skyharbor_global",
+            action_candidate_id: "act-1",
+            opportunity_id: "c1:sla-credit-recovery",
+            contract_id: "c1",
+            vendor_ref: "vendor-one",
+            vendor_name: "Vendor One",
+            title: "Unclaimed service credits",
+            action_type: "prepare_claim",
+            opportunity_type: "recoverable_opportunity",
+            finding_summary: "Credits were earned and not claimed.",
+            deterministic_basis: "SLA miss rows with unclaimed credits.",
+            candidate_amount_usd: 43_000,
+            priority: "high",
+            readiness_state: "workflow_required",
+            evidence_state: "not_finance_confirmed",
+            authority_state: "needs_approval",
+            finance_confirmation_state: "not_confirmed",
+            next_action: "Prepare service-credit claim.",
+            accountable_role: "Sourcing lead",
+            decision_due_date: null,
+            coverage_state: "partial",
+            blocker_if_missing: null,
+            citation_basis_json: {
+              contract_ref: "c1",
+              opportunity_ref: "c1:sla-credit-recovery",
+              finance_confirmation_state: "not_confirmed",
+              evidence_coverage: {
+                "source.Contract 360": {
+                  "Change Order Rows": 0,
+                  "Document Page Text Rows": 0,
+                },
+                "consumption.Sourcing Opportunity V1": 2,
+                "consumption.Sourcing Performance V1": 24,
+                "consumption.Sourcing Spend Monthly V1": 24,
+                "consumption.Sourcing Contract Scope V1": 0,
+              },
+            },
+            load_run_id: "test",
+          },
+        ],
+      },
+    });
+    const built = buildViewModel(vm) as {
+      avaSurfaceContext: {
+        sourceV4: {
+          contractOpportunityDirectory: Array<{ sourceRefs: string[] }>;
+        };
+      };
+    };
+    const refs =
+      built.avaSurfaceContext.sourceV4.contractOpportunityDirectory[0]
+        .sourceRefs;
+    const refsText = refs.join(" | ");
+
+    expect(refsText).toContain("Contract record");
+    expect(refsText).toContain("Opportunity record");
+    expect(refsText).toContain("Finance confirmation not complete");
+    expect(refsText).toContain("SLA performance history: 24 rows");
+    expect(refsText).toContain("Monthly spend history: 24 rows");
+    expect(refsText).not.toContain("source.Contract 360");
+    expect(refsText).not.toContain("consumption.Sourcing");
+    expect(refsText).not.toContain("finance_confirmation_state");
+  });
+
   it("exposes Source v4 proof cards with governed period and exposure labels", () => {
     const vm = buildVm();
     const built = buildViewModel(vm) as {
