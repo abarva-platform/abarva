@@ -44,6 +44,29 @@ import type { Signal, ContextItem, buildEnterpriseSignalPacket } from "./enterpr
 import { buildTechnologyEstateBundle } from "./technology-estate";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
+type HomeLensContract = {
+  hat?: string;
+  primaryAudience?: string;
+  promptInstruction?: string;
+  evidencePriority?: string[];
+  style?: string;
+  mustNotDo?: string[];
+};
+type HomePagePromptContract = {
+  pageKey?: string;
+  label?: string;
+  writerLens?: string;
+  voice?: string;
+  decisionQuestion?: string;
+  requiredContext?: string[];
+  sourceLayerReads?: string[];
+  mustShow?: string[];
+  forbidden?: string[];
+  lensContract?: HomeLensContract;
+};
+type EnterpriseSignalPacketWithPromptContracts = EnterpriseSignalPacket & {
+  pagePromptContracts?: HomePagePromptContract[];
+};
 
 /* ------------------------------------------------------------------------------------------------
  * Provenance -- the generated institutional narrative needs lineage the same way any other
@@ -538,6 +561,42 @@ async function synthesizeChapterNarrative(
   };
 }
 
+function pagePromptContract(
+  signalPacket: EnterpriseSignalPacketWithPromptContracts,
+  chapterId: ChapterId,
+): HomePagePromptContract | null {
+  return signalPacket.pagePromptContracts?.find((contract) => contract.pageKey === chapterId) ?? null;
+}
+
+function chapterDefinitionForPacket(
+  def: { id: ChapterId; title: string; guidingQuestion: string; writerLens: string },
+  signalPacket: EnterpriseSignalPacketWithPromptContracts,
+) {
+  const contract = pagePromptContract(signalPacket, def.id);
+  const lens = contract?.lensContract;
+  const writerLens = lens?.promptInstruction
+    ? [
+        `Hat: ${lens.hat ?? contract?.writerLens ?? def.writerLens}`,
+        `Primary audience: ${lens.primaryAudience ?? "Home executive reviewer"}`,
+        `Instruction: ${lens.promptInstruction}`,
+        `Evidence priority: ${(lens.evidencePriority ?? contract?.requiredContext ?? []).join("; ")}`,
+        `Style: ${lens.style ?? contract?.voice ?? "concise and evidence-bound"}`,
+        `Must not do: ${(lens.mustNotDo ?? contract?.forbidden ?? []).join("; ")}`,
+      ].join("\n")
+    : [
+        def.writerLens,
+        contract?.voice ? `Voice: ${contract.voice}` : null,
+        contract?.requiredContext?.length ? `Required context: ${contract.requiredContext.join("; ")}` : null,
+        contract?.mustShow?.length ? `Must show: ${contract.mustShow.join("; ")}` : null,
+        contract?.forbidden?.length ? `Forbidden: ${contract.forbidden.join("; ")}` : null,
+      ].filter(Boolean).join("\n");
+  return {
+    title: contract?.label ?? def.title,
+    guidingQuestion: contract?.decisionQuestion ?? def.guidingQuestion,
+    writerLens,
+  };
+}
+
 /* ------------------------------------------------------------------------------------------------
  * Build
  * ---------------------------------------------------------------------------------------------- */
@@ -564,9 +623,10 @@ export async function buildChapterViewsFromVerifiedThesis(
   const chapters: ChapterView[] = [];
   for (const def of CHAPTER_DEFS) {
     if (wanted && !wanted.has(def.id)) continue;
+    const effectiveDef = chapterDefinitionForPacket(def, signalPacket as EnterpriseSignalPacketWithPromptContracts);
     const slice = slices[def.id];
     const allClaims = [...slice.key_insights, ...slice.tensions, ...slice.what_to_watch];
-    const synthesis = await synthesizeChapterNarrative(client, def, allClaims, synthesisOptions);
+    const synthesis = await synthesizeChapterNarrative(client, effectiveDef, allClaims, synthesisOptions);
     options?.telemetry?.push({
       chapterId: def.id,
       assignedClaims: allClaims.length,
@@ -582,8 +642,8 @@ export async function buildChapterViewsFromVerifiedThesis(
     }
     chapters.push({
       chapterId: def.id,
-      title: def.title,
-      guidingQuestion: def.guidingQuestion,
+      title: effectiveDef.title,
+      guidingQuestion: effectiveDef.guidingQuestion,
       headline: synthesis?.headline ?? `${def.title}: synthesis unavailable`,
       executive_synthesis: synthesis?.executive_synthesis ?? "Chapter synthesis call failed; assigned claims are listed below for manual review.",
       key_insights: slice.key_insights,

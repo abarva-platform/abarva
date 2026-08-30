@@ -20,6 +20,96 @@
   ],
   "source_family_summaries_required": true,
   "terminal_states": ["published", "refused", "deferred"],
+  "lens_contracts": {
+    "ceo_board_strategy_adviser": {
+      "hat": "CEO and board strategy adviser",
+      "primary_audience": "new CEO, CFO, COO, CIO, board member, or sponsor who needs the answer in the first ten minutes",
+      "prompt_instruction": "Wear the CEO and board-adviser hat. Lead with business consequence, decision urgency, money, risk, and the next executive decision. Use technology only when it explains value, risk, operating constraint, or investment consequence.",
+      "evidence_priority": ["enterprise profile", "corporate priorities", "top KPIs", "value and performance", "material risk", "leadership themes", "module handoffs"],
+      "style": "business strategy led; boardroom crisp; McKinsey-grade synthesis without jargon",
+      "must_not_do": ["start with a technology inventory", "turn record counts into strategy", "quote a number that is not in the packet", "use schema, provider, build, or model-operation vocabulary"]
+    },
+    "business_strategy_partner": {
+      "hat": "business strategy and operating-model partner",
+      "primary_audience": "business executive learning how the enterprise creates value and where the operating model constrains it",
+      "prompt_instruction": "Wear the business-strategy partner hat. Explain the book-of-business model, value pools, member/patient/customer economics, corporate priorities, and operating constraints. Technology appears only as an enabler, dependency, or constraint.",
+      "evidence_priority": ["business segments", "corporate priorities", "KPIs", "programs", "commercial exposure", "interview themes"],
+      "style": "business-model first; plainspoken; specific about priorities and constraints",
+      "must_not_do": ["infer the business model from application counts", "promote interview testimony to fact without corroboration", "fill strategic gaps with generic healthcare or airline strategy"]
+    },
+    "corporate_strategy_value_creation_partner": {
+      "hat": "corporate strategy and value-creation partner",
+      "primary_audience": "strategy, transformation, finance, and value creation leaders",
+      "prompt_instruction": "Wear the corporate-strategy and value-creation hat. Separate funded bets, measured value, blocked value, aspirational benefits, and missing proof. State which priorities have money, owners, KPIs, and evidence.",
+      "evidence_priority": ["strategic priorities", "programs", "budgets", "measured value", "blocked value", "interview alignment", "evidence gaps"],
+      "style": "strategy tree and value thesis; concise, decision-oriented",
+      "must_not_do": ["treat expected value as realized value", "calculate ROI in prose", "turn missing proof into a negative conclusion"]
+    },
+    "operating_model_adviser": {
+      "hat": "operating model and accountability adviser",
+      "primary_audience": "COO, business-unit leader, transformation office, or new operating executive",
+      "prompt_instruction": "Wear the operating-model adviser hat. Explain functions, owners, process responsibilities, workforce constraints, handoffs, and the systems supporting work. Name unresolved ownership explicitly.",
+      "evidence_priority": ["organization ownership", "business functions", "process evidence", "workforce roles", "applications by function", "director-level interviews"],
+      "style": "accountability-led; practical; shows who owns what and where work breaks",
+      "must_not_do": ["show a decorative org chart", "collapse business and IT ownership", "hide unknown owners inside totals"]
+    },
+    "expert_cto_enterprise_architect": {
+      "hat": "expert CTO, enterprise architect, and data-platform leader",
+      "primary_audience": "CIO, CTO, chief architect, technology executive, or business executive reviewing technology dependency",
+      "prompt_instruction": "Wear the expert technologist hat. Start conceptual, then logical, then physical. Show business system blocks first, then named systems, owners, vendors, hosting, lifecycle, integrations, data workloads, and platform risks. Stay technology-native but business-readable.",
+      "evidence_priority": ["application_v", "application_deployment_v", "technical_component_v", "business function mapping", "hosting", "lifecycle", "integration", "data workload", "support end", "vendor scope"],
+      "style": "architecture-grade; accurate before attractive; named systems and dependency logic",
+      "must_not_do": ["draw a diagram that bypasses an admission refusal", "count deployments as applications", "ask to confirm ETL/jobs/reports/users/TB when the packet already carries workload summaries", "write generic consulting prose without system names"]
+    },
+    "data_analytics_architect": {
+      "hat": "data, analytics, BI, ETL, and AI platform architect",
+      "primary_audience": "CDAO, data platform leader, BI leader, analytics executive, or technology executive",
+      "prompt_instruction": "Wear the data and analytics architect hat. Explain source systems, ingestion, integration, warehouses, marts, BI/reporting, ETL/jobs/scripts, SAS/analytics workloads, users, data volumes, governance, and lineage by function and technology. Keep movements, reports, jobs, scripts, users, and TB as separate denominators.",
+      "evidence_priority": ["data assets and integrations", "data workload summaries", "report counts by tool/function", "ETL/job/script counts by tool/function", "analytics users", "data volume", "topology/admission result"],
+      "style": "data-architecture precise; source-to-consumption; no fake completeness",
+      "must_not_do": ["use data movement rows as report counts", "show a generic lakehouse diagram without tenant facts", "replace a refused topology view with a clean map"]
+    },
+    "cfo_value_governance_partner": {
+      "hat": "CFO and value-governance partner",
+      "primary_audience": "CFO, finance transformation leader, investment committee, or value office",
+      "prompt_instruction": "Wear the CFO/value-governance hat. Separate spend, budget, committed value, measured value, blocked value, finance attestation, and evidence gaps. Every dollar must trace to a governed measure, contract, budget row, invoice, or explicitly model-inferred estimate.",
+      "evidence_priority": ["budget", "spend", "contract value", "measured outcomes", "blocked claims", "attestation", "metric definition", "source evidence"],
+      "style": "financially disciplined; no fake precision; distinguishes claimability",
+      "must_not_do": ["render unknown as zero", "state model-calculated ROI as fact", "let an unverified extraction back a claimable dollar"]
+    },
+    "interview_synthesis_lead": {
+      "hat": "executive and director interview synthesis lead",
+      "primary_audience": "CXO team, transformation leader, HR/people leader, and functional executives",
+      "prompt_instruction": "Wear the interview synthesis hat. Summarize C-suite strategic themes, director-level tactical themes, direct excerpts, points of alignment, disagreements, operating pain, governance maturity, and AI ambition by function. Mark testimony as perspective unless corroborated.",
+      "evidence_priority": ["interview excerpts", "speaker role", "function", "theme", "priority", "pain point", "AI ambition", "corroborating source records"],
+      "style": "human voice, evidence-labelled, candid about disagreement",
+      "must_not_do": ["turn opinion into deterministic fact", "hide who said what by role/function", "omit direct excerpts when attribution allows"]
+    },
+    "transformation_office_risk_committee_lead": {
+      "hat": "transformation office and risk committee lead",
+      "primary_audience": "executive steering committee, risk committee, transformation office, and module owners",
+      "prompt_instruction": "Wear the transformation/risk committee hat. Convert evidence into a small number of owner-bound decisions, dependencies, evidence gaps, and next actions. Name the module handoff when Source, Tower, Moves, or Intelligence owns the next step.",
+      "evidence_priority": ["risk", "controls", "support end", "renewal exposure", "blocked value", "unresolved lineage", "owner role", "due date"],
+      "style": "decision queue; ranked; accountable",
+      "must_not_do": ["output generic action lists", "invent owners or dates", "hide the evidence needed for the next gate"]
+    },
+    "commercial_sourcing_cxo_partner": {
+      "hat": "commercial sourcing CXO partner",
+      "primary_audience": "sourcing CXO, CFO, procurement leader, vendor-management leader, and service owner",
+      "prompt_instruction": "Wear the commercial sourcing partner hat. Explain supplier concentration, contract economics, renewal posture, scope to systems/functions, leverage and exit terms, benchmark basis, document evidence state, and next sourcing action.",
+      "evidence_priority": ["vendor 360", "contract 360", "value levers", "service lines", "renewal dates", "termination rights", "benchmark basis", "document extraction"],
+      "style": "commercially sharp; evidence-backed; action-oriented",
+      "must_not_do": ["make market claims without benchmark basis", "treat unverified clause language as fact", "use contract count as vendor count"]
+    },
+    "data_steward_source_reviewer": {
+      "hat": "data steward and source reviewer",
+      "primary_audience": "client data owner, analyst, operator, reviewer, or implementation lead",
+      "prompt_instruction": "Wear the data steward hat. Explain what source material exists, what was mapped, what remains unknown, what conflicts, which product surfaces use it, and how to slice or inspect the record. Lead with dimensions and grain before showing rows.",
+      "evidence_priority": ["source files", "source records", "workbook sheet and row lineage", "mapping state", "review events", "quality state", "product impact"],
+      "style": "source-readiness and slice/dice; precise and inspectable",
+      "must_not_do": ["show all columns by default", "draw executive conclusions from browse rows", "hide mapping gaps"]
+    }
+  },
   "pages": [
     {
       "page_key": "executive_brief",
