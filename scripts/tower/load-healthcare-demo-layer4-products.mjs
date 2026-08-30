@@ -272,6 +272,18 @@ function loadPackage(options) {
     aiUseCases: ensureTenant(readCsv(path.join(layer3, "canonical_ai_use_cases.csv")), "ai cases"),
     projects: ensureTenant(readCsv(path.join(layer3, "canonical_projects.csv")), "projects"),
     tools: ensureTenant(readCsv(path.join(layer3, "canonical_tools.csv")), "tools"),
+    // Two canonical files the Layer 4 build never read. The approved design's drill-down needs
+    // both: the finance trail is what turns "nothing validated" into "nobody has been named to
+    // validate it", and the evidence card is what shows the file describes the plan rather than
+    // the result.
+    financeApprovalEvents: ensureTenant(
+      readCsv(path.join(layer3, "canonical_finance_approval_events.csv")),
+      "finance approval events",
+    ),
+    evidenceItems: ensureTenant(
+      readCsv(path.join(layer3, "canonical_evidence_items.csv")),
+      "evidence items",
+    ),
     valueObservations: ensureTenant(
       readCsv(path.join(layer3, "canonical_monthly_value_observations.csv")),
       "value observations",
@@ -435,6 +447,12 @@ function buildRows(options) {
   const evidenceRows = [];
   const aiRows = [];
   const observationsByCase = groupBy(data.valueObservations, "business_case_id");
+  const approvalsByCase = groupBy(data.financeApprovalEvents, "business_case_id");
+  // Evidence rows point at several object types; only the business-case ones belong on a case.
+  const evidenceByCase = groupBy(
+    data.evidenceItems.filter((row) => row.related_object_type === "business_case"),
+    "related_object_id",
+  );
   const projectsById = new Map(data.projects.map((row) => [row.project_id, row]));
   const caseById = new Map(data.aiUseCases.map((row) => [row.business_case_id, row]));
   const sourceForSummary = data.projects[0] ?? data.aiUseCases[0];
@@ -563,6 +581,26 @@ function buildRows(options) {
         }))
         .filter((o) => o.month !== null)
         .sort((a, b) => String(a.month).localeCompare(String(b.month))),
+      // The dated finance trail. Amounts are carried as recorded — 28 of the 84 events record a
+      // literal 0, which is a stated amount and not a missing one.
+      finance_approval_events: (approvalsByCase.get(row.business_case_id) ?? [])
+        .map((e) => ({
+          event_date: e.event_date ?? null,
+          event_type: e.event_type ?? null,
+          approval_state: e.approval_state ?? null,
+          approver_role: e.approver_role ?? null,
+          amount_usd: num(e.amount_usd),
+          amount_basis: e.amount_basis ?? null,
+          note: e.notes ?? null,
+        }))
+        .sort((a, b) => String(a.event_date ?? "").localeCompare(String(b.event_date ?? ""))),
+      evidence_items: (evidenceByCase.get(row.business_case_id) ?? []).map((e) => ({
+        evidence_name: e.evidence_name ?? null,
+        evidence_type: e.evidence_type ?? null,
+        owner_role: e.owner_role ?? null,
+        freshness_state: e.freshness_state ?? null,
+        confidence: e.confidence ?? null,
+      })),
       layer4_build_version: options.buildVersion,
     };
     const commandEntry = addProjectionRow(ctx, "decision_lanes", row.business_case_id, "ai_business_case", display, refs);

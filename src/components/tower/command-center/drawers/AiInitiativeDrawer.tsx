@@ -28,6 +28,15 @@ const KIND_LABEL: Record<TowerAiView["kind"], string> = {
  * type — they explain the *category*, which is a stable product concept, not a
  * claim about this tenant.
  */
+/**
+ * Canonical event and basis keys are snake_case identifiers. They are readable as words and are
+ * shown as words; nothing is renamed, only spaced.
+ */
+function humanizeEvent(value: string | null): string {
+  if (value === null) return "Not recorded";
+  return value.replace(/_/g, " ");
+}
+
 export function plainAi(a: TowerAiView): string {
   const definition: Record<TowerAiView["kind"], string> = {
     funded: "a real, funded program with its own budget and approvals",
@@ -164,6 +173,57 @@ export function AiInitiativeDrawer({
                 value={`${formatCount(a.valueObservationMonths.length)} months`}
               />
             </>
+          )}
+
+          {/*
+            The dated finance trail. A case showing "nothing validated" is a statement about the
+            total; the trail is what turns it into "no validator has been named", which is the
+            actionable version and the design's whole point.
+          */}
+          <DrawerSection>Finance trail</DrawerSection>
+          {a.financeApprovalEvents.length === 0 ? (
+            <div className={styles.urow}>
+              No finance events are recorded against this case. Nothing has been
+              claimed, reviewed or validated on the record.
+            </div>
+          ) : (
+            a.financeApprovalEvents.map((e, i) => (
+              <DrawerRow
+                key={`${e.eventDate ?? "undated"}-${e.eventType ?? i}`}
+                label={e.eventDate ?? "Not dated"}
+                value={`${humanizeEvent(e.eventType)} · ${formatUsdM(
+                  e.amountUsd,
+                )}${e.amountBasis === null ? "" : ` (${humanizeEvent(e.amountBasis)})`} · ${
+                  e.approverRole ?? "No role recorded"
+                }`}
+              />
+            ))
+          )}
+
+          {/*
+            What is on file, and what it measures. The design's reading is that a case can hold
+            current, high-confidence evidence and still prove nothing, because the evidence
+            describes the plan rather than the result.
+          */}
+          <DrawerSection>Evidence on file</DrawerSection>
+          {a.evidenceItems.length === 0 ? (
+            <div className={styles.urow}>
+              No evidence item is recorded against this case.
+            </div>
+          ) : (
+            a.evidenceItems.map((e, i) => (
+              <DrawerRow
+                key={`${e.evidenceName ?? "unnamed"}-${i}`}
+                label={e.evidenceName ?? "Unnamed item"}
+                value={`${e.freshnessState ?? "freshness not recorded"} · ${
+                  e.ownerRole ?? "no owner recorded"
+                } · ${
+                  e.confidence === null
+                    ? "confidence not recorded"
+                    : `${e.confidence} confidence`
+                }`}
+              />
+            ))
           )}
 
           <DrawerSection>Vendor &amp; system</DrawerSection>

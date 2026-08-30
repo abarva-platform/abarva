@@ -156,6 +156,26 @@ export interface TowerMartProgramLane {
   sourceRow: string | null;
 }
 
+/** One dated finance event on a case, as the source recorded it. */
+export interface TowerMartFinanceApprovalEvent {
+  eventDate: string | null;
+  eventType: string | null;
+  approvalState: string | null;
+  approverRole: string | null;
+  amountUsd: number;
+  amountBasis: string | null;
+  note: string | null;
+}
+
+/** One evidence item on file against a case. */
+export interface TowerMartEvidenceItem {
+  evidenceName: string | null;
+  evidenceType: string | null;
+  ownerRole: string | null;
+  freshnessState: string | null;
+  confidence: string | null;
+}
+
 /** One month of the value waterfall, as the source recorded it. */
 export interface TowerMartValueObservationMonth {
   month: string;
@@ -187,6 +207,8 @@ export interface TowerMartAiPortfolioItem {
   successMetric?: string | null;
   paybackMonthsTarget?: number | null;
   valueObservationMonths?: TowerMartValueObservationMonth[];
+  financeApprovalEvents?: TowerMartFinanceApprovalEvent[];
+  evidenceItems?: TowerMartEvidenceItem[];
   promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   usageMetric: string | null;
