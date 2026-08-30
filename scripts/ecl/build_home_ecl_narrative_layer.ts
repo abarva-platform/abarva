@@ -1283,6 +1283,51 @@ function actionTally(ledger: Array<{ action: string }>): Record<string, number> 
   }, {});
 }
 
+function compactFailedLedger(
+  ledger: Array<{ path: string; verdict: string; action: string; reasoning: string; claim_statement?: string }>,
+  limit = 20,
+): Array<{ path: string; verdict: string; action: string; reasoning: string; claim_statement?: string }> {
+  return ledger
+    .filter((row) => !row.action.startsWith("kept"))
+    .slice(0, limit)
+    .map((row) => ({
+      path: row.path,
+      verdict: row.verdict,
+      action: row.action,
+      reasoning: row.reasoning.slice(0, 360),
+      claim_statement: row.claim_statement?.slice(0, 360),
+    }));
+}
+
+function logPublicationGateEvent(
+  options: CliOptions,
+  thesisResult: Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>,
+  signalPacket: EnterpriseSignalPacket,
+  publicationIssues: string[],
+): void {
+  const ledger = thesisResult.verificationLedger;
+  const actionTallyRows = actionTally(ledger);
+  const cleanKept = actionTallyRows.kept ?? 0;
+  console.log(
+    JSON.stringify({
+      structured_event: "home_ecl_narrative_publication_gate",
+      tenant_key: options.tenantKey,
+      assessment_id: options.assessmentId,
+      accepted: publicationIssues.length === 0,
+      issues: publicationIssues,
+      ledger_rows: ledger.length,
+      clean_keep_rate: ledger.length ? Number((cleanKept / ledger.length).toFixed(4)) : 0,
+      verdict_tally: verdictTally(ledger),
+      action_tally: actionTallyRows,
+      structural_issue_count: thesisResult.structuralIssues.length,
+      signal_count: signalPacket.signals.length,
+      context_item_count: signalPacket.contextItems.length,
+      source_summary_count: signalPacket.sourceSummaries.length,
+      failed_ledger_sample: compactFailedLedger(ledger),
+    }),
+  );
+}
+
 function publicationGateIssues(
   thesisResult: Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>,
   signalPacket: EnterpriseSignalPacket,
@@ -1703,6 +1748,7 @@ async function main() {
     const thesisResult = scrubThesisResultVisibleIds(rawThesisResult, labelByIdentifier);
     if (!thesisResult.publishedGeneration) throw new Error("Home ECL narrative writer produced no publishable thesis.");
     const publicationIssues = publicationGateIssues(thesisResult, signalPacket);
+    logPublicationGateEvent(options, thesisResult, signalPacket, publicationIssues);
     if (publicationIssues.length && WRITE) {
       throw new Error(`Home ECL narrative publication gate failed: ${publicationIssues.join("; ")}`);
     }
