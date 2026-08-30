@@ -128,6 +128,41 @@ function boolish(value: unknown): boolean | string | null {
   return String(value);
 }
 
+function criticalityValue(value: unknown): string | null {
+  const raw = text(value);
+  if (!raw) return null;
+  const normalized = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (["p0", "critical", "missioncritical", "tier1", "tier01"].includes(normalized)) return "tier1";
+  if (["high", "tier2", "tier02"].includes(normalized)) return normalized === "high" ? "high" : "tier2";
+  if (["medium", "tier3", "tier03"].includes(normalized)) return normalized === "medium" ? "medium" : "tier3";
+  return raw;
+}
+
+function endpointLabel(ref: unknown, labelsByRef: Map<string, string>): string | null {
+  const raw = text(ref);
+  if (!raw) return null;
+  return labelsByRef.get(raw) ?? raw;
+}
+
+function endpointLabelsFromRows(rows: HomeProjectionRow[]): Map<string, string> {
+  const labelsByRef = new Map<string, string>();
+  for (const row of rows) {
+    if (row.page_key === "applications_systems" && row.row_type === "application") {
+      const mapped = applicationRow(row);
+      const ref = text(mapped.originalRowId);
+      const label = text(mapped.systemName);
+      if (ref && label) labelsByRef.set(ref, label);
+    }
+    if (row.page_key === "infrastructure_platforms" && row.row_type === "infrastructure") {
+      const mapped = infrastructureRow(row);
+      const ref = text(mapped.originalRowId);
+      const label = text(mapped.platformName);
+      if (ref && label) labelsByRef.set(ref, label);
+    }
+  }
+  return labelsByRef;
+}
+
 function rowPayload(row: HomeProjectionRow): JsonRecord {
   if (!row.display_payload_json || typeof row.display_payload_json !== "object") return {};
   const payload = row.display_payload_json;
@@ -142,7 +177,7 @@ function applicationRow(row: HomeProjectionRow): JsonRecord {
     systemName: text(payload.application_name) ?? row.title,
     businessFunction: text(payload.business_function),
     systemCategory: text(payload.application_category),
-    criticality: text(payload.criticality_tier),
+    criticality: criticalityValue(payload.criticality_tier),
     lifecycleState: text(payload.lifecycle_state),
     vendor: text(payload.vendor_name),
     interfacesCount: numberValue(payload.interface_count),
@@ -187,7 +222,7 @@ function infrastructureRow(row: HomeProjectionRow): JsonRecord {
     dataCenterOrRegion: text(payload.hosting_location ?? payload.data_center_or_region),
     technologyStack: text(payload.technology_stack),
     operationalOwner: text(payload.operational_owner),
-    criticality: text(payload.criticality_tier),
+    criticality: criticalityValue(payload.criticality_tier),
     lifecycleState: text(payload.lifecycle_state),
     utilizationPct: numberValue(payload.utilization_percent),
     capacityHeadroomPct: numberValue(payload.capacity_headroom_percent),
@@ -197,13 +232,15 @@ function infrastructureRow(row: HomeProjectionRow): JsonRecord {
   };
 }
 
-function dataFlowRow(row: HomeProjectionRow): JsonRecord {
+function dataFlowRow(row: HomeProjectionRow, labelsByRef: Map<string, string> = new Map()): JsonRecord {
   const payload = rowPayload(row);
+  const sourceRef = text(payload.source_object_ref ?? payload.source_system_ref_id ?? payload.source_system_id);
+  const targetRef = text(payload.target_object_ref ?? payload.target_system_ref_id ?? payload.target_system_id);
   return {
     dataAssetName: text(payload.data_asset_name ?? payload.flow_name) ?? row.title,
-    dataDomain: text(payload.data_domain ?? payload.function),
-    sourceSystem: text(payload.source_system ?? payload.source_object_ref),
-    targetSystem: text(payload.target_system ?? payload.target_object_ref),
+    dataDomain: text(payload.data_domain ?? payload.data_domain_name ?? payload.target_function ?? payload.source_function ?? payload.owner_function ?? payload.function),
+    sourceSystem: endpointLabel(sourceRef, labelsByRef) ?? text(payload.source_system_name ?? payload.source_system),
+    targetSystem: endpointLabel(targetRef, labelsByRef) ?? text(payload.target_system_name ?? payload.target_system),
     integrationType: text(payload.integration_type ?? payload.integration_pattern),
     platformOrDatabase: text(payload.platform_or_database ?? payload.landing_platform),
     refreshFrequency: text(payload.refresh_frequency ?? payload.cadence),
@@ -257,18 +294,31 @@ function recordType(objectType: TechObjectType, rows: Array<Record<string, strin
 }
 
 export function buildTechnologyEstateFromHomeProjectionRows(rows: HomeProjectionRow[]): TechnologyEstateBundle {
+  const applicationRows = rows.filter((row) => row.page_key === "applications_systems" && row.row_type === "application");
+  const infrastructureRows = rows.filter((row) => row.page_key === "infrastructure_platforms" && row.row_type === "infrastructure");
   const applications = rows
     .filter((row) => row.page_key === "applications_systems" && row.row_type === "application")
     .map((row) => stripEmpty(applicationRow(row)));
   const contracts = rows
     .filter((row) => row.page_key === "vendor_contracts" && row.row_type === "contract")
     .map((row) => stripEmpty(contractRow(row)));
-  const infrastructure = rows
-    .filter((row) => row.page_key === "infrastructure_platforms" && row.row_type === "infrastructure")
-    .map((row) => stripEmpty(infrastructureRow(row)));
+  const infrastructure = infrastructureRows.map((row) => stripEmpty(infrastructureRow(row)));
+  const labelsByRef = new Map<string, string>();
+  for (const row of applicationRows) {
+    const mapped = applicationRow(row);
+    const ref = text(mapped.originalRowId);
+    const label = text(mapped.systemName);
+    if (ref && label) labelsByRef.set(ref, label);
+  }
+  for (const row of infrastructureRows) {
+    const mapped = infrastructureRow(row);
+    const ref = text(mapped.originalRowId);
+    const label = text(mapped.platformName);
+    if (ref && label) labelsByRef.set(ref, label);
+  }
   const dataFlows = rows
     .filter((row) => row.page_key === "current_state_data_flow" && row.row_type === "data_flow")
-    .map((row) => stripEmpty(dataFlowRow(row)));
+    .map((row) => stripEmpty(dataFlowRow(row, labelsByRef)));
 
   return {
     recordTypes: [
@@ -374,7 +424,7 @@ function rowDomains(row: HomeProjectionRow): string[] {
   }
 }
 
-function rowContextStatement(row: HomeProjectionRow): string {
+function rowContextStatement(row: HomeProjectionRow, labelsByRef: Map<string, string> = new Map()): string {
   switch (row.page_key) {
     case "applications_systems": {
       const app = applicationRow(row);
@@ -410,7 +460,7 @@ function rowContextStatement(row: HomeProjectionRow): string {
       return `${parts.join(" ")}.`;
     }
     case "current_state_data_flow": {
-      const flow = dataFlowRow(row);
+      const flow = dataFlowRow(row, labelsByRef);
       const source = text(flow.sourceSystem) ?? "an unspecified source";
       const target = text(flow.targetSystem) ?? "an unspecified target";
       const parts = [
@@ -427,11 +477,12 @@ function rowContextStatement(row: HomeProjectionRow): string {
 }
 
 function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
+  const labelsByRef = endpointLabelsFromRows(rows);
   return rows
     .filter((row) => row.row_type !== "summary" && row.row_type !== "chapter_claim")
     .map((row) => ({
       id: contextIdForRow(row),
-      statement: rowContextStatement(row),
+      statement: rowContextStatement(row, labelsByRef),
       domains: rowDomains(row),
     }));
 }

@@ -1045,7 +1045,7 @@ function buildSlice(
     infrastructure,
     count: appRows.length,
     share: name === "Whole estate" ? 100 : (appRows.length / Math.max(1, estateTotal)) * 100,
-    tier1: appRows.filter((row) => text(row, "criticality").toLowerCase() === "tier1").length,
+    tier1: appRows.filter((row) => isTierOne(text(row, "criticality"))).length,
     watch: aging + replace,
     replace,
     aging,
@@ -1190,6 +1190,11 @@ function text(row: ApplicationRecord, field: string): string {
 function numeric(value: unknown): number {
   const next = Number(value);
   return Number.isFinite(next) ? next : 0;
+}
+
+function isTierOne(value: unknown): boolean {
+  const normalized = String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return ["p0", "critical", "missioncritical", "tier1", "tier01"].includes(normalized);
 }
 
 function moneyShort(value: number): string {
