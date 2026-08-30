@@ -450,7 +450,7 @@ function PortfolioPage({
           {storyline?.allowed_executive_statement ??
             portfolio.cockpit.verdict.decidingAxis}
         </p>
-        <div className="sw-v2-decision-list">
+        <div className="sw-v2-decision-list sw-v2-compact-decisions">
           {claimCards.length
             ? claimCards.map((row) => (
                 <button
@@ -572,7 +572,7 @@ function PortfolioPage({
 
       <section className="sw-v2-panel sw-v2-verdict-evidence">
         <PanelHead eyebrow="Evidence posture" title="Loaded rows only" />
-        <div className="sw-v2-fact-stack">
+        <div className="sw-v2-fact-stack sw-v2-compact-facts">
           <Fact label="Spend rows" value={String(spendRows)} />
           <Fact label="Performance rows" value={String(performanceRows)} />
           <Fact
@@ -593,7 +593,7 @@ function PortfolioPage({
           eyebrow="Claim quality controls"
           title="Computed, excluded, or withheld"
         />
-        <div className="sw-v2-fact-stack">
+        <div className="sw-v2-fact-stack sw-v2-compact-facts sw-v2-control-facts">
           {portfolio.cockpit.claimQualityControls.map((control) => (
             <div key={control.label}>
               <Fact label={control.label} value={control.value} />

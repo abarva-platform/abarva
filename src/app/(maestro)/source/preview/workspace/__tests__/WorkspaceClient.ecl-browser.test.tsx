@@ -339,6 +339,10 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(container.querySelector(".sw-v2-verdict-position")).toBeTruthy();
     expect(container.querySelector(".sw-v2-verdict-action")).toBeTruthy();
     expect(container.querySelector(".sw-v2-verdict-evidence")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-compact-decisions")).toBeTruthy();
+    expect(container.querySelectorAll(".sw-v2-compact-facts").length).toBeGreaterThan(
+      1,
+    );
     expect(screen.getByText("Unsupported dashboard claims")).toBeTruthy();
     expect(screen.getByText("Hidden")).toBeTruthy();
     expect(screen.queryByText("Contract register")).toBeNull();
