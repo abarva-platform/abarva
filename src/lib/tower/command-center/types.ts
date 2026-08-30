@@ -289,6 +289,7 @@ export interface TowerAiView {
   readinessScore: number;
   /** False when the source recorded no readiness score — render a gap, not the 0. */
   readinessScoreLoaded: boolean;
+  /** False when the source recorded no risk score. Layer 4 writes none today, for any row. */
   riskScoreLoaded: boolean;
   /** The named obstacle; the field that actually separates validated cases from blocked ones. */
   gatingConstraint: string | null;
@@ -306,6 +307,8 @@ export interface TowerAiView {
   riskScore: number;
   /** Bubble size. */
   aiSpendUsd: number;
+  /** False when no spend was recorded — a tool rollout carries none. $0 is a different claim. */
+  aiSpendLoaded: boolean;
   promisedUsd: number;
   promisedBenefitLoaded: boolean;
   financeValidatedUsd: number;

@@ -494,6 +494,9 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
       row.page_key === "ai_portfolio"
         ? payloadNumber(row, "funded_amount_usd")
         : 0,
+    aiSpendLoaded:
+      row.page_key === "ai_portfolio" &&
+      payloadNullableNumber(row, "funded_amount_usd") !== null,
     promisedValueUsd: payloadNullableNumber(row, "promised_value_usd"),
     financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
     knownSupportedValue: payloadNullableNumber(
@@ -554,12 +557,17 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     "active_users",
     "monthly_active_users",
   ]);
-  const approvedFundingUsd =
-    payloadNullableNumberFrom(row, [
-      "approved_funding_usd",
-      "approved_investment_usd",
-      "funded_amount_usd",
-    ]) ?? payloadNumber(row, "monthly_cost_usd") * 12;
+  const approvedFundingRaw = payloadNullableNumberFrom(row, [
+    "approved_funding_usd",
+    "approved_investment_usd",
+    "funded_amount_usd",
+  ]);
+  const monthlyCostRaw = payloadNullableNumberFrom(row, ["monthly_cost_usd"]);
+  // The value stays coerced — portfolio totals sum it — but whether anything was recorded is
+  // captured here, where the null still exists. A tool rollout carries no cost at all, and "$0"
+  // is a different claim from "not loaded".
+  const aiSpendLoaded = approvedFundingRaw !== null || monthlyCostRaw !== null;
+  const approvedFundingUsd = approvedFundingRaw ?? (monthlyCostRaw ?? 0) * 12;
   const promisedValueUsd = payloadNullableNumberFrom(row, [
     "promised_value_usd",
     "projected_annual_value_low_usd",
@@ -594,6 +602,7 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     decisionLane: decisionLane(payloadTextFrom(row, ["decision_lane"])),
     approvedFundingUsd,
     aiTaggedSpendUsd: approvedFundingUsd,
+    aiSpendLoaded,
     promisedValueUsd,
     financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
     usageMetric,

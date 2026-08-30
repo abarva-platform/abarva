@@ -1034,10 +1034,16 @@ export function AiPortfolioContractView({
                     <td>
                       {item.category ?? AI_KIND_LABEL[item.displayBucket]}
                     </td>
-                    <td>{formatUsdM(item.aiSpendUsd)}</td>
+                    <td>{item.aiSpendLoaded ? formatUsdM(item.aiSpendUsd) : "Not loaded"}</td>
                     <td>{aiBenefitLabel(item)}</td>
-                    <td>{formatPct(item.readinessScore)}</td>
-                    <td>{formatPct(item.riskScore)}</td>
+                    <td>
+                      {item.readinessScoreLoaded
+                        ? formatPct(item.readinessScore)
+                        : "Not scored"}
+                    </td>
+                    <td>
+                      {item.riskScoreLoaded ? formatPct(item.riskScore) : "Not scored"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -173,3 +173,30 @@ describe("tool rollout adoption target and supported-case count", () => {
     expect(panel).not.toContain("vs Not loaded");
   });
 });
+
+describe("an unrecorded number is not zero", () => {
+  const contract = read("src/components/tower/command-center/views/ContractTabs.tsx");
+
+  it("does not print a risk score the source never wrote", () => {
+    // Layer 4 writes no `risk_score` for any row, so `num(null)` made every one of the governed
+    // rows read `0%` — the safest-looking value in the table, on every line of it.
+    expect(LAYER4).not.toMatch(/\brisk_score\b/);
+    expect(contract).toContain('item.riskScoreLoaded ? formatPct(item.riskScore) : "Not scored"');
+  });
+
+  it("does not print a readiness score the source never wrote", () => {
+    expect(contract).toMatch(/item\.readinessScoreLoaded\s*\n?\s*\?\s*formatPct\(item\.readinessScore\)/);
+  });
+
+  it("does not print $0 for spend that was never recorded", () => {
+    // A tool rollout carries no cost at all. `$0` is a claim about price; this is a gap.
+    expect(contract).toContain('item.aiSpendLoaded ? formatUsdM(item.aiSpendUsd) : "Not loaded"');
+  });
+
+  it("derives the spend flag where the null still exists", () => {
+    // The value stays coerced because portfolio totals sum it, so the flag cannot be recovered
+    // downstream — it has to be captured in the reader.
+    expect(READER).toContain("const aiSpendLoaded =");
+    expect(READER).toContain("approvedFundingRaw !== null || monthlyCostRaw !== null");
+  });
+});

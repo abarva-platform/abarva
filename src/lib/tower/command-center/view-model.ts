@@ -431,6 +431,7 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     controlBlockerReviewed: item.controlBlockerReviewed ?? false,
     sponsorRole: item.sponsorRole ?? null,
     aiSpendUsd: num(item.aiTaggedSpendUsd),
+    aiSpendLoaded: item.aiTaggedSpendUsd !== null,
     promisedUsd: num(item.promisedValueUsd),
     promisedBenefitLoaded: item.promisedValueUsd !== null,
     financeValidatedUsd: num(item.financeValidatedValueUsd),
