@@ -170,13 +170,10 @@ export function WorkspaceExecutiveShell({
       logic.select("graph", null);
       return;
     }
-    const contract = selectedContract ?? portfolio.contracts[0] ?? null;
-    if (!contract) return;
-    logic.select(
-      "contract",
-      contract.contract_id,
-      page === "Optimize" ? "Optimize" : "Story",
-    );
+    if (page === "Optimize") {
+      logic.select("optimize", null, logic.state.tabs.optimize ?? "Action queue");
+      return;
+    }
   };
 
   const openContract = (contractId: string, tab: string = "Story") =>
@@ -2363,8 +2360,7 @@ function activePage(
   if (logic.state.sel.kind === "graph") return "Contract graph";
   if (logic.state.sel.kind === "vendor" || vm.isVendorList) return "Vendors";
   if (vm.isContractList) return "Contracts";
-  if (vm.isContract && logic.state.tabs.contract === "Optimize")
-    return "Optimize";
+  if (logic.state.sel.kind === "optimize") return "Optimize";
   if (vm.isContract) return "Contracts";
   return "Verdict";
 }
