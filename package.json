@@ -785,6 +785,7 @@
     "tower:healthcare-demo-layer4-products:validate": "node scripts/tower/load-healthcare-demo-layer4-products.mjs --readback-only",
     "tower:healthcare-demo-layer4-products:write-job": "TOWER_LAYER4_WRITE=true TOWER_LAYER4_AZURE_WRITE_APPROVED=true TOWER_LAYER4_EMIT_PROOF_BUNDLE=true node scripts/tower/load-healthcare-demo-layer4-products.mjs",
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
+    "ops:probe-tower-serving-shape": "node scripts/ops/probe-tower-serving-shape.mjs",
     "ops:skyharbor-client-registry:repair": "node scripts/ops/repair-skyharbor-client-registry.mjs",
     "ops:skyharbor-client-registry:repair:apply": "node scripts/ops/repair-skyharbor-client-registry.mjs --apply",
     "ops:skyharbor-source-event-title:repair": "node scripts/ops/repair-skyharbor-source-event-titles.mjs",
