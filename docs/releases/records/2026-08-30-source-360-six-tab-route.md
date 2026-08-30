@@ -32,6 +32,7 @@ Layers 1-3: No change. No intake files, adapters, canonical tables, loaders, or 
 - Expands the Source executive shell to six top-level tabs.
 - Adds Evidence and Contract graph product panels backed by existing Source workspace data.
 - Adds a claim-contract guard strip tied to the active tab.
+- Keeps the Source 360 tenant/workspace identity visible across every tab so drill-down pages stay anchored to the same governed contract book.
 - Adds focused route/design-contract tests.
 
 ## QA / Validation
@@ -40,6 +41,7 @@ Layers 1-3: No change. No intake files, adapters, canonical tables, loaders, or 
 - PASS: `npx eslint src/app/(maestro)/source/360/page.tsx src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.ts`
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false`
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 npm run build` confirmed `/source/360` is registered as a dynamic app route.
+- PASS: Focused follow-up test confirms the Source 360 shell keeps the tenant/workspace identity label in the executive shell.
 
 Signed-in browser proof will be attached after ACA deploy.
 
