@@ -54,6 +54,13 @@ strategy/program, leadership-interview, and KPI/value-linkage evidence, and the 
 requires single-domain facts to stay labeled as facts or observations rather than unsupported
 cross-domain inferences.
 
+Follow-up: the packet now promotes exact application-cost, application-function ranking, and
+data-movement totals into citable deterministic signals, and the thesis prompt requires every
+number, ranking, percentage, date, and management-question premise to appear exactly in a cited
+signal or context item. This prevents application annual cost from being renamed as a finance-
+attested technology budget and prevents integration-record counts from being described as volume
+or business consumption.
+
 ## QA / Validation
 
 - `PASS` — `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts --runInBand`
@@ -64,6 +71,8 @@ cross-domain inferences.
   contract, infrastructure, data-flow, and source-breadth domains.
 - `PASS` — the ECL seam test now asserts citable scope context for missing evidence and
   claim-type discipline in the thesis prompt.
+- `PASS` — the ECL seam test now asserts exact citable support for numeric, ranking,
+  comparative, and management-question claims.
 - `PASS` — `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`
 - `PASS` — local no-key deterministic packet proof for one synthetic tenant showed active intake-file summaries included with separate raw-row and canonical-record counts.
 - `PENDING` — ACA operator measurement after merge/deploy, if this script is needed in the running operator image immediately.

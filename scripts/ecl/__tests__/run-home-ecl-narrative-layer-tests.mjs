@@ -137,8 +137,21 @@ assert(
     script.includes("sig_ecl_contract_flexibility_006") &&
     script.includes("sig_ecl_platform_resilience_008") &&
     script.includes("sig_ecl_data_flow_convergence_009") &&
+    script.includes("sig_ecl_application_function_ranking_012") &&
+    script.includes("sig_ecl_application_cost_013") &&
+    script.includes("sig_ecl_data_flow_total_014") &&
     script.includes("sig_ecl_source_breadth_guardrail_019"),
   "ECL narrative job expands deterministic signals across application, contract, infrastructure, data-flow, and source-breadth domains",
+);
+assert(
+  thesis.includes("NUMERIC AND COMPARATIVE EVIDENCE") &&
+    thesis.includes("must appear exactly in one of that claim's cited signal") &&
+    thesis.includes("context statements") &&
+    thesis.includes("not rename it as a total technology budget") &&
+    thesis.includes("If a cited item says a movement count is an integration-record count") &&
+    thesis.includes("data volume, transaction volume, or proof of analytics consumption") &&
+    thesis.includes("Prefer fewer claims and questions"),
+  "EnterpriseThesis prompt requires exact citable support for numbers, rankings, and management questions",
 );
 assert(
   script.includes("source-family summaries describe intake breadth but are not evidence for a business claim by themselves") &&
