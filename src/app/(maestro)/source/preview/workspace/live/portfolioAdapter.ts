@@ -554,6 +554,19 @@ async function loadSourceWorkspaceImpactLayer(
     listSourcePageStoryline(tenantKey).catch(() => []),
     listSourceAvaGroundingBundles(tenantKey).catch(() => []),
   ]);
+  const viewImpact = {
+    evidenceCoverage,
+    actionCandidates,
+    claimCards,
+    vendorPositions,
+    storyline,
+    avaGroundingBundles,
+  };
+  if (hasImpactLayerRows(viewImpact)) return viewImpact;
+  const derivedImpact = await loadDerivedSourceWorkspaceImpactLayer(tenantKey);
+  if (derivedImpact && hasImpactLayerRows(derivedImpact)) {
+    return derivedImpact;
+  }
   return {
     evidenceCoverage,
     actionCandidates,
@@ -562,6 +575,602 @@ async function loadSourceWorkspaceImpactLayer(
     storyline,
     avaGroundingBundles,
   };
+}
+
+function hasImpactLayerRows(impact: SourceWorkspaceImpactLayer): boolean {
+  return (
+    impact.evidenceCoverage.length > 0 ||
+    impact.actionCandidates.length > 0 ||
+    impact.claimCards.length > 0 ||
+    impact.vendorPositions.length > 0 ||
+    impact.storyline.length > 0 ||
+    impact.avaGroundingBundles.length > 0
+  );
+}
+
+async function loadDerivedSourceWorkspaceImpactLayer(
+  tenantKey: string,
+): Promise<SourceWorkspaceImpactLayer> {
+  const acceptedTenantKeys = Array.from(
+    new Set(
+      [
+        canonicalTenantKey(tenantKey),
+        tenantKey,
+        ...tenantAliasesFor(tenantKey),
+      ].map((value) => value.trim()),
+    ),
+  );
+  try {
+    return await azureRead.withSession(async (run) => {
+      await run("SELECT set_config('app.tenant_key', $1, false)", [
+        canonicalTenantKey(tenantKey),
+      ]);
+      const evidenceCoverage = await run<SourceContractEvidenceCoverageRow>(
+        `WITH spend AS (
+           SELECT
+             tenant_key,
+             contract_id,
+             count(*)::bigint AS spend_rows,
+             COALESCE(sum(actual_spend), 0)::numeric AS actual_spend_usd,
+             COALESCE(sum(committed_amount), 0)::numeric AS committed_spend_usd
+            FROM consumption.sourcing_spend_monthly_v1
+           WHERE tenant_key = ANY($1::text[])
+           GROUP BY tenant_key, contract_id
+         ),
+         performance AS (
+           SELECT
+             tenant_key,
+             contract_id,
+             count(*)::bigint AS performance_rows,
+             count(*) FILTER (WHERE performance_state = 'breached')::bigint AS breach_rows,
+             COALESCE(sum(credit_calculated), 0)::numeric AS credit_calculated_usd,
+             COALESCE(sum(credit_claimed), 0)::numeric AS credit_claimed_usd,
+             COALESCE(sum(credit_recovered), 0)::numeric AS credit_recovered_usd
+            FROM consumption.sourcing_performance_v1
+           WHERE tenant_key = ANY($1::text[])
+           GROUP BY tenant_key, contract_id
+         ),
+         opportunities AS (
+           SELECT
+             tenant_key,
+             contract_id,
+             count(*)::bigint AS opportunity_rows,
+             COALESCE(sum(annual_value_exposed), 0)::numeric AS candidate_amount_usd,
+             count(*) FILTER (WHERE readiness_state = 'finance_confirmation_required')::bigint AS finance_confirmation_required_rows,
+             count(*) FILTER (WHERE evidence_state = 'present')::bigint AS opportunities_with_evidence
+            FROM consumption.sourcing_opportunity_v1
+           WHERE tenant_key = ANY($1::text[])
+           GROUP BY tenant_key, contract_id
+         ),
+         scope AS (
+           SELECT
+             tenant_key,
+             contract_id,
+             count(*)::bigint AS scope_rows,
+             count(*) FILTER (WHERE critical_application_flag)::bigint AS critical_scope_rows
+            FROM consumption.sourcing_contract_scope_v1
+           WHERE tenant_key = ANY($1::text[])
+           GROUP BY tenant_key, contract_id
+         )
+         SELECT
+           c.tenant_key,
+           c.contract_id,
+           c.vendor_ref,
+           c.vendor_name,
+           c.contract_name,
+           COALESCE(spend.spend_rows, 0)::bigint AS spend_rows,
+           COALESCE(spend.actual_spend_usd, 0)::numeric AS actual_spend_usd,
+           COALESCE(spend.committed_spend_usd, 0)::numeric AS committed_spend_usd,
+           COALESCE(performance.performance_rows, 0)::bigint AS performance_rows,
+           COALESCE(performance.breach_rows, 0)::bigint AS breach_rows,
+           COALESCE(performance.credit_calculated_usd, 0)::numeric AS credit_calculated_usd,
+           COALESCE(performance.credit_claimed_usd, 0)::numeric AS credit_claimed_usd,
+           COALESCE(performance.credit_recovered_usd, 0)::numeric AS credit_recovered_usd,
+           GREATEST(COALESCE(performance.credit_calculated_usd, 0) - COALESCE(performance.credit_claimed_usd, 0), 0)::numeric AS unclaimed_credit_usd,
+           COALESCE(opportunities.opportunity_rows, 0)::bigint AS opportunity_rows,
+           COALESCE(opportunities.candidate_amount_usd, 0)::numeric AS candidate_amount_usd,
+           COALESCE(opportunities.finance_confirmation_required_rows, 0)::bigint AS finance_confirmation_required_rows,
+           COALESCE(opportunities.opportunities_with_evidence, 0)::bigint AS opportunities_with_evidence,
+           COALESCE(scope.scope_rows, 0)::bigint AS scope_rows,
+           COALESCE(scope.critical_scope_rows, 0)::bigint AS critical_scope_rows,
+           COALESCE(c.document_page_text_count, 0)::bigint AS document_page_text_rows,
+           COALESCE(c.change_order_count, 0)::bigint AS change_order_rows,
+           CASE
+             WHEN COALESCE(opportunities.opportunity_rows, 0) > 0
+              AND COALESCE(opportunities.opportunities_with_evidence, 0) = 0 THEN 'blocked'
+             WHEN COALESCE(spend.spend_rows, 0) > 0
+              AND COALESCE(performance.performance_rows, 0) > 0
+              AND COALESCE(c.document_page_text_count, 0) > 0 THEN 'decision_ready'
+             WHEN COALESCE(spend.spend_rows, 0) > 0
+               OR COALESCE(performance.performance_rows, 0) > 0
+               OR COALESCE(c.document_page_text_count, 0) > 0
+               OR COALESCE(opportunities.opportunity_rows, 0) > 0 THEN 'partial'
+             ELSE 'not_loaded'
+           END AS coverage_state,
+           concat_ws(
+             '; ',
+             CASE WHEN COALESCE(spend.spend_rows, 0) = 0 THEN 'monthly spend missing' END,
+             CASE WHEN COALESCE(performance.performance_rows, 0) = 0 THEN 'performance rows missing' END,
+             CASE WHEN COALESCE(c.document_page_text_count, 0) = 0 THEN 'document page text missing' END,
+             CASE
+               WHEN COALESCE(opportunities.finance_confirmation_required_rows, 0) > 0
+                 THEN 'finance confirmation required before realized-value claim'
+             END
+           ) AS blocker_if_missing,
+           jsonb_build_object(
+             'source.contract_360', jsonb_build_object(
+               'document_page_text_rows', COALESCE(c.document_page_text_count, 0),
+               'change_order_rows', COALESCE(c.change_order_count, 0)
+             ),
+             'consumption.sourcing_spend_monthly_v1', COALESCE(spend.spend_rows, 0),
+             'consumption.sourcing_performance_v1', COALESCE(performance.performance_rows, 0),
+             'consumption.sourcing_opportunity_v1', COALESCE(opportunities.opportunity_rows, 0),
+             'consumption.sourcing_contract_scope_v1', COALESCE(scope.scope_rows, 0)
+           ) AS evidence_basis_json,
+           c.load_run_id
+          FROM source.contract_360 c
+          LEFT JOIN spend ON spend.tenant_key = c.tenant_key AND spend.contract_id = c.contract_id
+          LEFT JOIN performance ON performance.tenant_key = c.tenant_key AND performance.contract_id = c.contract_id
+          LEFT JOIN opportunities ON opportunities.tenant_key = c.tenant_key AND opportunities.contract_id = c.contract_id
+          LEFT JOIN scope ON scope.tenant_key = c.tenant_key AND scope.contract_id = c.contract_id
+         WHERE c.tenant_key = ANY($1::text[])
+           AND (
+             COALESCE(spend.spend_rows, 0) > 0
+             OR COALESCE(performance.performance_rows, 0) > 0
+             OR COALESCE(opportunities.opportunity_rows, 0) > 0
+             OR COALESCE(c.document_page_text_count, 0) > 0
+           )
+         ORDER BY COALESCE(opportunities.candidate_amount_usd, 0) DESC NULLS LAST,
+                  GREATEST(COALESCE(performance.credit_calculated_usd, 0) - COALESCE(performance.credit_claimed_usd, 0), 0) DESC NULLS LAST,
+                  c.contract_id`,
+        [acceptedTenantKeys],
+      );
+      const actionCandidates = await run<SourceContractActionCandidateRow>(
+        `SELECT
+           o.tenant_key,
+           o.opportunity_id AS action_candidate_id,
+           o.opportunity_id,
+           o.contract_id,
+           o.vendor_ref,
+           COALESCE(c.vendor_name, o.vendor_ref, 'Unknown vendor') AS vendor_name,
+           o.title,
+           o.action_type,
+           o.opportunity_type,
+           o.finding_summary,
+           o.deterministic_basis,
+           o.annual_value_exposed::numeric AS candidate_amount_usd,
+           o.priority,
+           o.readiness_state,
+           o.evidence_state,
+           o.authority_state,
+           CASE
+             WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+             WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+           ELSE 'not_confirmed'
+         END AS finance_confirmation_state,
+           o.recommended_action AS next_action,
+           o.accountable_role,
+           o.decision_due_date,
+           NULL::text AS coverage_state,
+           CASE
+             WHEN o.readiness_state = 'finance_confirmation_required'
+               THEN 'Never present this candidate as realized savings until finance confirms it.'
+             ELSE NULL::text
+           END AS blocker_if_missing,
+           jsonb_build_object(
+             'opportunity_ref', o.opportunity_id,
+             'contract_ref', o.contract_id,
+             'finance_confirmation_state',
+               CASE
+                 WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+                 WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+                 ELSE 'not_confirmed'
+               END
+           ) AS citation_basis_json,
+           o.load_run_id
+          FROM consumption.sourcing_opportunity_v1 o
+          LEFT JOIN source.contract_360 c
+            ON c.tenant_key = o.tenant_key
+           AND c.contract_id = o.contract_id
+         WHERE o.tenant_key = ANY($1::text[])
+         ORDER BY o.annual_value_exposed DESC NULLS LAST, o.opportunity_id`,
+        [acceptedTenantKeys],
+      );
+      const normalizedEvidence = evidenceCoverage.map(
+        normalizeDerivedEvidenceCoverageRow,
+      );
+      const coverageByContract = new Map(
+        normalizedEvidence.map((row) => [row.contract_id, row]),
+      );
+      const normalizedActions = actionCandidates
+        .map(normalizeDerivedActionCandidateRow)
+        .map((row) => {
+          const coverage = coverageByContract.get(row.contract_id);
+          return {
+            ...row,
+            coverage_state: row.coverage_state ?? coverage?.coverage_state ?? null,
+            blocker_if_missing:
+              row.blocker_if_missing ?? coverage?.blocker_if_missing ?? null,
+            citation_basis_json: {
+              ...(row.citation_basis_json ?? {}),
+              evidence_coverage: coverage?.evidence_basis_json ?? null,
+            },
+          };
+        });
+      const claimCards = normalizedActions.map(claimCardFromActionCandidate);
+      const vendorPositions = vendorPositionsFromImpact(
+        await run<SourceVendorContractPortfolioRow>(
+          `SELECT *
+             FROM source.vendor_contract_portfolio
+            WHERE tenant_key = ANY($1::text[])
+            ORDER BY annual_value DESC NULLS LAST, vendor_name`,
+          [acceptedTenantKeys],
+        ),
+        normalizedEvidence,
+        normalizedActions,
+      );
+      const storyline = storylineFromDerivedImpact(
+        normalizedEvidence,
+        normalizedActions,
+      );
+      const avaGroundingBundles = avaBundlesFromDerivedImpact(
+        storyline,
+        normalizedActions,
+      );
+      return {
+        evidenceCoverage: normalizedEvidence,
+        actionCandidates: normalizedActions,
+        claimCards,
+        vendorPositions,
+        storyline,
+        avaGroundingBundles,
+      };
+    });
+  } catch {
+    return {
+      evidenceCoverage: [],
+      actionCandidates: [],
+      claimCards: [],
+      vendorPositions: [],
+      storyline: [],
+      avaGroundingBundles: [],
+    };
+  }
+}
+
+function normalizeDerivedEvidenceCoverageRow(
+  row: SourceContractEvidenceCoverageRow,
+): SourceContractEvidenceCoverageRow {
+  return {
+    ...row,
+    spend_rows: valueOf(row.spend_rows),
+    actual_spend_usd: valueOf(row.actual_spend_usd),
+    committed_spend_usd: valueOf(row.committed_spend_usd),
+    performance_rows: valueOf(row.performance_rows),
+    breach_rows: valueOf(row.breach_rows),
+    credit_calculated_usd: valueOf(row.credit_calculated_usd),
+    credit_claimed_usd: valueOf(row.credit_claimed_usd),
+    credit_recovered_usd: valueOf(row.credit_recovered_usd),
+    unclaimed_credit_usd: valueOf(row.unclaimed_credit_usd),
+    opportunity_rows: valueOf(row.opportunity_rows),
+    candidate_amount_usd: valueOf(row.candidate_amount_usd),
+    finance_confirmation_required_rows: valueOf(
+      row.finance_confirmation_required_rows,
+    ),
+    opportunities_with_evidence: valueOf(row.opportunities_with_evidence),
+    scope_rows: valueOf(row.scope_rows),
+    critical_scope_rows: valueOf(row.critical_scope_rows),
+    document_page_text_rows: valueOf(row.document_page_text_rows),
+    change_order_rows: valueOf(row.change_order_rows),
+    evidence_basis_json: parseJsonObject(row.evidence_basis_json),
+  };
+}
+
+function normalizeDerivedActionCandidateRow(
+  row: SourceContractActionCandidateRow,
+): SourceContractActionCandidateRow {
+  return {
+    ...row,
+    candidate_amount_usd: numberFromValue(row.candidate_amount_usd),
+    citation_basis_json: parseJsonObject(row.citation_basis_json),
+  };
+}
+
+function claimCardFromActionCandidate(
+  row: SourceContractActionCandidateRow,
+): SourceContractClaimCardRow {
+  const financeState = row.finance_confirmation_state || "not_confirmed";
+  return {
+    tenant_key: row.tenant_key,
+    claim_card_id: `${row.action_candidate_id}:claim-card`,
+    action_candidate_id: row.action_candidate_id,
+    opportunity_id: row.opportunity_id,
+    contract_id: row.contract_id,
+    vendor_ref: row.vendor_ref,
+    vendor_name: row.vendor_name,
+    claim_title: row.title,
+    allowed_executive_statement:
+      financeState === "confirmed"
+        ? `${row.vendor_name} has a finance-confirmed opportunity backed by Source evidence.`
+        : `${row.vendor_name} has a candidate opportunity backed by Source evidence; do not label it realized value.`,
+    blocker_if_missing:
+      financeState === "confirmed"
+        ? row.blocker_if_missing
+        : "Never present this candidate as realized savings until finance confirms it.",
+    candidate_amount_usd: row.candidate_amount_usd,
+    finance_confirmation_state: financeState,
+    readiness_state: row.readiness_state,
+    evidence_state: row.evidence_state,
+    citation_basis_json: row.citation_basis_json,
+    load_run_id: row.load_run_id,
+  };
+}
+
+function vendorPositionsFromImpact(
+  vendors: readonly SourceVendorContractPortfolioRow[],
+  coverageRows: readonly SourceContractEvidenceCoverageRow[],
+  actionRows: readonly SourceContractActionCandidateRow[],
+): SourceVendorPositionRow[] {
+  const coverageByVendor = groupNumbersBy(
+    coverageRows,
+    (row) => row.vendor_ref,
+    (row) => ({
+      decisionReadyContracts: row.coverage_state === "decision_ready" ? 1 : 0,
+      unclaimedCreditUsd: valueOf(row.unclaimed_credit_usd),
+      spendRows: valueOf(row.spend_rows),
+      performanceRows: valueOf(row.performance_rows),
+    }),
+  );
+  const actionsByVendor = groupNumbersBy(
+    actionRows,
+    (row) => row.vendor_ref,
+    (row) => ({
+      actionCandidateCount: 1,
+      candidateAmountUsd: valueOf(row.candidate_amount_usd),
+      notConfirmedCount:
+        row.finance_confirmation_state === "confirmed" ? 0 : 1,
+    }),
+  );
+  return vendors
+    .map((vendor) => {
+      const coverage = coverageByVendor.get(vendor.vendor_ref);
+      const actions = actionsByVendor.get(vendor.vendor_ref);
+      return {
+        tenant_key: vendor.tenant_key,
+        vendor_ref: vendor.vendor_ref,
+        vendor_name: vendor.vendor_name,
+        vendor_category: vendor.vendor_category,
+        contract_count: valueOf(vendor.contract_count),
+        annual_value: numberFromValue(vendor.annual_value),
+        total_committed_value: numberFromValue(vendor.total_committed_value),
+        auto_renew_contracts: valueOf(vendor.auto_renew_contracts),
+        next_end_date: vendor.next_end_date,
+        contract_refs: normalizeContractRefs(vendor.contract_refs),
+        action_candidate_count: valueOf(actions?.actionCandidateCount),
+        candidate_amount_usd: valueOf(actions?.candidateAmountUsd),
+        not_confirmed_count: valueOf(actions?.notConfirmedCount),
+        decision_ready_contracts: valueOf(coverage?.decisionReadyContracts),
+        unclaimed_credit_usd: valueOf(coverage?.unclaimedCreditUsd),
+        spend_rows: valueOf(coverage?.spendRows),
+        performance_rows: valueOf(coverage?.performanceRows),
+        vendor_position_state: actions?.actionCandidateCount
+          ? "act_on_evidence"
+          : coverage?.decisionReadyContracts
+            ? "monitor_evidence"
+            : "header_only",
+        load_run_id: null,
+      };
+    })
+    .filter(
+      (row) =>
+        row.action_candidate_count > 0 ||
+        row.unclaimed_credit_usd > 0 ||
+        row.spend_rows > 0 ||
+        row.performance_rows > 0,
+    )
+    .sort(
+      (left, right) =>
+        valueOf(right.candidate_amount_usd) -
+          valueOf(left.candidate_amount_usd) ||
+        valueOf(right.annual_value) - valueOf(left.annual_value) ||
+        left.vendor_name.localeCompare(right.vendor_name),
+    );
+}
+
+function storylineFromDerivedImpact(
+  coverageRows: readonly SourceContractEvidenceCoverageRow[],
+  actionRows: readonly SourceContractActionCandidateRow[],
+): SourcePageStorylineRow[] {
+  const tenantKey =
+    coverageRows[0]?.tenant_key ?? actionRows[0]?.tenant_key ?? "";
+  if (!tenantKey) return [];
+  const contractCount = new Set([
+    ...coverageRows.map((row) => row.contract_id),
+    ...actionRows.map((row) => row.contract_id),
+  ]).size;
+  const spendRows = sumBy(coverageRows, (row) => row.spend_rows);
+  const performanceRows = sumBy(coverageRows, (row) => row.performance_rows);
+  const unclaimedCreditUsd = sumBy(
+    coverageRows,
+    (row) => row.unclaimed_credit_usd,
+  );
+  const candidateAmountUsd = sumBy(
+    actionRows,
+    (row) => row.candidate_amount_usd,
+  );
+  return [
+    {
+      tenant_key: tenantKey,
+      page_key: "overview",
+      section_key: "portfolio_posture",
+      sort_order: 10,
+      headline: "Governed contract action candidates",
+      allowed_executive_statement: `${contractCount} contracts have populated evidence or candidate actions. Claims stay limited to populated evidence rows.`,
+      primary_metric_label: "Contracts with depth",
+      primary_metric_value: String(contractCount),
+      blocker_if_missing: null,
+      citation_basis_json: {
+        "source.contract_evidence_coverage_v1": coverageRows.length,
+      },
+    },
+    {
+      tenant_key: tenantKey,
+      page_key: "overview",
+      section_key: "actual_spend",
+      sort_order: 20,
+      headline: "Spend evidence",
+      allowed_executive_statement:
+        "Actual spend is shown only where monthly spend rows are loaded.",
+      primary_metric_label: "Monthly spend rows",
+      primary_metric_value: String(spendRows),
+      blocker_if_missing:
+        spendRows > 0 ? null : "Do not show actual annual spend trend.",
+      citation_basis_json: {
+        "consumption.sourcing_spend_monthly_v1": spendRows,
+      },
+    },
+    {
+      tenant_key: tenantKey,
+      page_key: "overview",
+      section_key: "performance_credits",
+      sort_order: 30,
+      headline: "Performance-credit recovery",
+      allowed_executive_statement:
+        "Unclaimed credits are candidate recovery only; they are not finance-confirmed savings.",
+      primary_metric_label: "Unclaimed credits",
+      primary_metric_value: unclaimedCreditUsd.toFixed(2),
+      blocker_if_missing:
+        performanceRows > 0
+          ? "Finance confirmation required before savings claim."
+          : "No performance rows loaded.",
+      citation_basis_json: {
+        "consumption.sourcing_performance_v1": performanceRows,
+      },
+    },
+    {
+      tenant_key: tenantKey,
+      page_key: "optimize",
+      section_key: "candidate_actions",
+      sort_order: 40,
+      headline: "Action queue",
+      allowed_executive_statement:
+        "Optimize shows candidate actions with evidence and explicit blockers.",
+      primary_metric_label: "Candidate amount",
+      primary_metric_value: candidateAmountUsd.toFixed(2),
+      blocker_if_missing:
+        actionRows.length > 0
+          ? "Do not call candidate amount realized savings."
+          : "No candidate actions loaded.",
+      citation_basis_json: {
+        "source.contract_action_candidate_v1": actionRows.length,
+      },
+    },
+    {
+      tenant_key: tenantKey,
+      page_key: "ava",
+      section_key: "grounding",
+      sort_order: 50,
+      headline: "aVa grounding",
+      allowed_executive_statement:
+        "aVa may answer with deterministic facts and must refuse unsupported value claims.",
+      primary_metric_label: "Grounding bundles",
+      primary_metric_value: "portfolio, contract, opportunity",
+      blocker_if_missing:
+        "Reject raw savings, vendor pricing, or unsupported cross-tenant prompts.",
+      citation_basis_json: {
+        "source.ava_grounding_bundle_v1": 1,
+      },
+    },
+  ];
+}
+
+function avaBundlesFromDerivedImpact(
+  storyline: readonly SourcePageStorylineRow[],
+  actionRows: readonly SourceContractActionCandidateRow[],
+): SourceAvaGroundingBundleRow[] {
+  return [
+    ...storyline.map((row) => ({
+      tenant_key: row.tenant_key,
+      grounding_bundle_id: `${row.page_key}:${row.section_key}`,
+      page_key: row.page_key,
+      section_key: row.section_key,
+      question_family:
+        row.page_key === "ava"
+          ? "refusal_and_citation_policy"
+          : row.section_key === "performance_credits"
+            ? "value_claim_guardrail"
+            : "source_workspace_claim",
+      allowed_claims_json: [
+        {
+          claim: row.allowed_executive_statement,
+          metric_label: row.primary_metric_label,
+          metric_value: row.primary_metric_value,
+          basis: row.citation_basis_json,
+        },
+      ],
+      refusal_rules_json: [
+        "Do not present candidate opportunity as realized value unless finance_confirmation_state is confirmed.",
+        "Do not answer cross-tenant vendor pricing prompts.",
+        "When evidence is missing, name the missing substrate instead of guessing.",
+      ],
+      citation_sources_json: row.citation_basis_json,
+      load_run_id: null,
+    })),
+    ...actionRows.map((row) => ({
+      tenant_key: row.tenant_key,
+      grounding_bundle_id: `action:${row.action_candidate_id}`,
+      page_key: "contract_action",
+      section_key: row.action_candidate_id,
+      question_family: "contract_action_grounding",
+      allowed_claims_json: [
+        {
+          contract_id: row.contract_id,
+          opportunity_id: row.opportunity_id,
+          vendor_name: row.vendor_name,
+          candidate_amount_usd: row.candidate_amount_usd,
+          finance_confirmation_state: row.finance_confirmation_state,
+          coverage_state: row.coverage_state,
+          blocker: row.blocker_if_missing,
+        },
+      ],
+      refusal_rules_json: [
+        "Finance confirmation is required before claiming realized savings.",
+        "Stay within loaded contract evidence.",
+      ],
+      citation_sources_json: row.citation_basis_json,
+      load_run_id: row.load_run_id,
+    })),
+  ];
+}
+
+function groupNumbersBy<T>(
+  rows: readonly T[],
+  keyForRow: (row: T) => string,
+  numbersForRow: (row: T) => Record<string, number>,
+): Map<string, Record<string, number>> {
+  const grouped = new Map<string, Record<string, number>>();
+  for (const row of rows) {
+    const key = keyForRow(row);
+    const current = grouped.get(key) ?? {};
+    const next = numbersForRow(row);
+    for (const [name, value] of Object.entries(next)) {
+      current[name] = valueOf(current[name]) + valueOf(value);
+    }
+    grouped.set(key, current);
+  }
+  return grouped;
+}
+
+function sumBy<T>(
+  rows: readonly T[],
+  valueForRow: (row: T) => unknown,
+): number {
+  return rows.reduce((sum, row) => sum + valueOf(valueForRow(row)), 0);
+}
+
+function normalizeContractRefs(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  return parseJsonArray(value).map(String).filter(Boolean);
 }
 
 function mergeContractsById(
