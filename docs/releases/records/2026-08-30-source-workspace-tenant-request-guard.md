@@ -10,9 +10,11 @@
 
 ## Plain-English Summary
 
-The Source workspace now treats a `client` query parameter as an access-gated tenant request. If the requested tenant is unknown, the page returns not found. If the signed-in user cannot access the requested tenant, the page returns forbidden. The page no longer falls back to the session tenant while preserving a mismatched tenant key in the URL.
+The Source workspace now treats a `client` query parameter as an access-gated tenant request. If the requested tenant is unknown, the page returns not found. If the signed-in user cannot access the requested tenant, the page renders an access-blocked state before loading Source rows. The page no longer falls back to the session tenant while preserving a mismatched tenant key in the URL.
 
 Follow-up hardening adds a visible blocked-workspace state for inaccessible requested tenants so operators see that no Source rows were loaded.
+
+A routing follow-up preserves `client` query parameters on Source workspace-style paths until the page-level tenant guard runs. This prevents the proxy from stripping the request first and silently rendering fallback tenant data.
 
 ## Layer Impact
 
@@ -38,6 +40,8 @@ Layer 1 Client Intake: no intake changes.
 
 - `src/app/(maestro)/source/workspace/page.tsx`
 - `src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts`
+- `src/proxy.ts`
+- `src/__tests__/unit/proxy-public-routes.test.ts`
 
 ## QA / Validation
 
@@ -45,6 +49,8 @@ Layer 1 Client Intake: no intake changes.
 - `npx eslint 'src/app/(maestro)/source/workspace/page.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/page-tenant-routing.test.ts'` passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` passed.
 - `npm run release:check` passed.
+- `npx jest --runTestsByPath src/__tests__/unit/proxy-public-routes.test.ts --runInBand` passed for the proxy preservation follow-up.
+- `npx eslint src/proxy.ts src/__tests__/unit/proxy-public-routes.test.ts` passed for the proxy preservation follow-up.
 
 ## Rollout Plan
 
