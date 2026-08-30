@@ -11,6 +11,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 import { HomeV4App } from "../HomeV4App";
+import {
+  collectTier1ExecutiveStoryRawClaimStatements,
+  cxoText,
+  findHomeTier1GenerationLanguage,
+} from "../ExecutiveStoryPage";
 
 jest.mock("@/components/home/preview/HomeAvaChat", () => ({
   HomeAvaChat: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -78,5 +83,38 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(visibleText).not.toMatch(/\bprovider flag\b/i);
     expect(visibleText).not.toMatch(/not enough verified evidence yet/i);
     expect(visibleText).not.toMatch(/coverage gap in the build/i);
+  });
+
+  it("keeps implementation vocabulary out of the raw Tier 1 claim inputs before render cleanup", () => {
+    const rawClaimStatements = collectTier1ExecutiveStoryRawClaimStatements(loadMeridianBundle().chapters);
+    const launderedInputs = rawClaimStatements.filter((statement) => cxoText(statement) !== statement);
+    const generationLanguage = findHomeTier1GenerationLanguage(rawClaimStatements);
+
+    expect({
+      rawClaimStatements: rawClaimStatements.length,
+      unlaunderedClaimCount: launderedInputs.length,
+      generationLanguage,
+    }).toEqual({
+      rawClaimStatements: 21,
+      unlaunderedClaimCount: 0,
+      generationLanguage: [],
+    });
+  });
+
+  it("proves the raw-language gate catches a builder term that the renderer does not launder", () => {
+    const findings = findHomeTier1GenerationLanguage([
+      "The adapter hydration step completed after the executive claim was drafted.",
+    ]);
+
+    expect(findings).toEqual([
+      {
+        term: "adapter",
+        statement: "The adapter hydration step completed after the executive claim was drafted.",
+      },
+      {
+        term: "hydration step",
+        statement: "The adapter hydration step completed after the executive claim was drafted.",
+      },
+    ]);
   });
 });

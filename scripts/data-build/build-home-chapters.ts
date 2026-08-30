@@ -34,6 +34,7 @@ import {
   buildTenant,
   callClaude,
   parseJsonLoose,
+  type ReasoningEffort,
   THESIS_PROMPT_VERSION,
   type EnterpriseThesis,
   type GroundedClaim,
@@ -56,6 +57,37 @@ type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 const HOME_SYNTHESIS_CONTRACT_VERSION = "home-chapters-v1";
 const CHAPTER_PROMPT_VERSION = "home-chapters/v1";
 const VERIFICATION_VERSION = "targeted-repair-v2";
+
+export interface HomeChapterAssemblyLimits {
+  executiveBriefQuestions: number;
+  executiveBriefKeyInsights: number;
+  executiveBriefTensions: number;
+  executiveBriefWatch: number;
+}
+
+export const HOME_CHAPTER_ASSEMBLY_LIMITS: HomeChapterAssemblyLimits = {
+  executiveBriefQuestions: 5,
+  executiveBriefKeyInsights: 5,
+  executiveBriefTensions: 3,
+  executiveBriefWatch: 2,
+};
+
+export const HOME_CHAPTER_WIDE_ASSEMBLY_LIMITS: HomeChapterAssemblyLimits = {
+  executiveBriefQuestions: Number.POSITIVE_INFINITY,
+  executiveBriefKeyInsights: Number.POSITIVE_INFINITY,
+  executiveBriefTensions: Number.POSITIVE_INFINITY,
+  executiveBriefWatch: Number.POSITIVE_INFINITY,
+};
+
+export const HOME_CHAPTER_SYNTHESIS_OPTIONS = {
+  maxTokens: 3072,
+  effort: "low" as ReasoningEffort,
+};
+
+export const HOME_CHAPTER_WIDE_BUDGET_SYNTHESIS_OPTIONS = {
+  maxTokens: 8192,
+  effort: "medium" as ReasoningEffort,
+};
 
 export interface HomeReviewBundleProvenance {
   home_synthesis_contract_version: string;
@@ -101,6 +133,7 @@ const OUT_DIR = (() => {
   const i = process.argv.indexOf("--out-dir");
   return i > -1 ? process.argv[i + 1] : "/tmp/home-chapters";
 })();
+const MEASURE_QUALITY = process.argv.includes("--measure-quality");
 
 /* ------------------------------------------------------------------------------------------------
  * Chapter shape and definitions
@@ -262,10 +295,17 @@ const CHAPTER_QUESTION_KEYWORDS: Partial<Record<ChapterId, string[]>> = {
  * not exempt from the evidence rule just because it's phrased as a question) -- so this, like
  * assembleChapterSlices, must drop verifier-rejected (null) entries before routing, and route by
  * the question's own statement text rather than a raw string. */
-export function assignQuestions(thesis: EnterpriseThesis): Record<ChapterId, string[]> {
+function takeLimit<T>(items: T[], limit: number): T[] {
+  return Number.isFinite(limit) ? items.slice(0, limit) : items;
+}
+
+export function assignQuestions(
+  thesis: EnterpriseThesis,
+  limits: HomeChapterAssemblyLimits = HOME_CHAPTER_ASSEMBLY_LIMITS,
+): Record<ChapterId, string[]> {
   const questions = alive(thesis.questions_for_management);
   const byChapter: Record<ChapterId, string[]> = {
-    executive_brief: questions.slice(0, 5).map((q) => q.statement),
+    executive_brief: takeLimit(questions, limits.executiveBriefQuestions).map((q) => q.statement),
     our_business: [], strategy_value_creation: [], how_we_operate: [],
     technology_data: [], performance_value: [], leadership_perspective: [], what_needs_attention: [],
   };
@@ -290,6 +330,7 @@ export function assignQuestions(thesis: EnterpriseThesis): Record<ChapterId, str
 export function assembleChapterSlices(
   thesis: EnterpriseThesis,
   signalPacket: ReturnType<typeof import("./enterprise-signal-packet").buildEnterpriseSignalPacket>,
+  limits: HomeChapterAssemblyLimits = HOME_CHAPTER_ASSEMBLY_LIMITS,
 ): Record<ChapterId, { key_insights: GroundedClaim[]; tensions: GroundedClaim[]; what_to_watch: GroundedClaim[] }> {
   const structural = alive(thesis.structural_constraints);
   const operating = alive(thesis.operating_tensions);
@@ -306,9 +347,9 @@ export function assembleChapterSlices(
 
   return {
     executive_brief: {
-      key_insights: alive(thesis.things_a_new_cxo_should_know).slice(0, 5),
-      tensions: alive(thesis.what_needs_attention).slice(0, 3),
-      what_to_watch: alive(thesis.material_risks).slice(0, 2),
+      key_insights: takeLimit(alive(thesis.things_a_new_cxo_should_know), limits.executiveBriefKeyInsights),
+      tensions: takeLimit(alive(thesis.what_needs_attention), limits.executiveBriefTensions),
+      what_to_watch: takeLimit(alive(thesis.material_risks), limits.executiveBriefWatch),
     },
     our_business: {
       key_insights: [...alive(thesis.value_creation_model.primary_value_drivers), ...alive(thesis.value_creation_model.economic_dependencies)],
@@ -376,26 +417,79 @@ are thin or don't fully answer the guiding question, say so honestly in the synt
 inventing material to fill the gap -- an honest "the current evidence does not yet establish X" is
 correct output, not a failure.
 
+Write for a CXO or newly hired business/technology executive, not for the builder of this system.
+Do not use implementation vocabulary such as ECL, projection, serving view, loaded rows, canonical
+entity, payload, schema, source room, provider flag, adapter, upsert, hydration step, row type, writer,
+generator, pipeline, or manifest. Use plain business language for the surface a leader would see.
+
 Respond with strict JSON: { "headline": "...", "executive_synthesis": "..." }`;
+
+interface ChapterSynthesisOptions {
+  maxTokens: number;
+  effort: ReasoningEffort;
+}
+
+interface ChapterSynthesisResult {
+  headline: string;
+  executive_synthesis: string;
+  inputTokens: number;
+  outputTokens: number;
+  stopReason: string | null;
+}
+
+interface ChapterBuildTelemetry {
+  chapterId: ChapterId;
+  assignedClaims: number;
+  outputTokens: number;
+  stopReason: string | null;
+}
+
+const GENERATION_LANGUAGE_RE = /\b(?:ECL|projection|serving view|loaded rows?|canonical entit(?:y|ies)|payload|schema|source room|provider flag|not enough verified evidence yet|coverage gap in the build|adapter|upsert|hydration step|row type|generator|manifest)\b/i;
+
+function countGenerationLanguage(statements: string[]): number {
+  return statements.filter((statement) => GENERATION_LANGUAGE_RE.test(statement)).length;
+}
+
+function collectChapterRawStatements(chapters: ChapterView[]): string[] {
+  const statements = chapters.flatMap((chapter) => [
+    chapter.headline,
+    chapter.executive_synthesis,
+    ...chapter.key_insights.map((claim) => claim.statement),
+    ...chapter.tensions.map((claim) => claim.statement),
+    ...chapter.what_to_watch.map((claim) => claim.statement),
+  ]).filter(Boolean);
+  return Array.from(new Set(statements));
+}
 
 async function synthesizeChapterNarrative(
   client: Parameters<typeof callClaude>[0],
   def: { title: string; guidingQuestion: string },
   claims: GroundedClaim[],
-): Promise<{ headline: string; executive_synthesis: string } | null> {
+  options: ChapterSynthesisOptions = HOME_CHAPTER_SYNTHESIS_OPTIONS,
+): Promise<ChapterSynthesisResult | null> {
   if (claims.length === 0) {
     return {
       headline: `${def.title}: not enough verified evidence yet`,
       executive_synthesis: `The current context does not yet establish enough verified, cross-domain material to answer "${def.guidingQuestion}" for this chapter. This is a coverage gap, not a finding -- do not infer content here.`,
+      inputTokens: 0,
+      outputTokens: 0,
+      stopReason: null,
     };
   }
   const userPrompt =
     `Chapter: ${def.title}\nGuiding question: ${def.guidingQuestion}\n\n` +
     `Assigned claims (the ONLY source of content for this chapter):\n` +
     claims.map((c, i) => `${i + 1}. [${c.claim_type}] ${c.statement}`).join("\n");
-  const result = await callClaude(client, CHAPTER_SYNTHESIS_SYSTEM_PROMPT, userPrompt, 3072, "low");
+  const result = await callClaude(client, CHAPTER_SYNTHESIS_SYSTEM_PROMPT, userPrompt, options.maxTokens, options.effort);
   if (!result) return null;
-  return parseJsonLoose<{ headline: string; executive_synthesis: string }>(result.text, `chapter synthesis (${def.title})`);
+  const parsed = parseJsonLoose<{ headline: string; executive_synthesis: string }>(result.text, `chapter synthesis (${def.title})`);
+  if (!parsed) return null;
+  return {
+    ...parsed,
+    inputTokens: result.inputTokens,
+    outputTokens: result.outputTokens,
+    stopReason: result.stopReason,
+  };
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -407,11 +501,18 @@ export async function buildChapterViewsFromVerifiedThesis(
   thesis: EnterpriseThesis,
   client: Parameters<typeof callClaude>[0],
   chapterIds?: ChapterId[],
+  options?: {
+    assemblyLimits?: HomeChapterAssemblyLimits;
+    synthesis?: ChapterSynthesisOptions;
+    telemetry?: ChapterBuildTelemetry[];
+  },
 ): Promise<ChapterView[]> {
   const wanted = chapterIds?.length ? new Set(chapterIds) : null;
-  const slices = assembleChapterSlices(thesis, signalPacket);
+  const assemblyLimits = options?.assemblyLimits ?? HOME_CHAPTER_ASSEMBLY_LIMITS;
+  const synthesisOptions = options?.synthesis ?? HOME_CHAPTER_SYNTHESIS_OPTIONS;
+  const slices = assembleChapterSlices(thesis, signalPacket, assemblyLimits);
   const visuals = assignVisuals(thesis);
-  const questions = assignQuestions(thesis);
+  const questions = assignQuestions(thesis, assemblyLimits);
   const gaps = assignEvidenceGaps(thesis);
 
   const chapters: ChapterView[] = [];
@@ -419,7 +520,13 @@ export async function buildChapterViewsFromVerifiedThesis(
     if (wanted && !wanted.has(def.id)) continue;
     const slice = slices[def.id];
     const allClaims = [...slice.key_insights, ...slice.tensions, ...slice.what_to_watch];
-    const synthesis = await synthesizeChapterNarrative(client, def, allClaims);
+    const synthesis = await synthesizeChapterNarrative(client, def, allClaims, synthesisOptions);
+    options?.telemetry?.push({
+      chapterId: def.id,
+      assignedClaims: allClaims.length,
+      outputTokens: synthesis?.outputTokens ?? 0,
+      stopReason: synthesis?.stopReason ?? null,
+    });
     const limitations: string[] = [...gaps[def.id]];
     if (allClaims.length === 0) {
       limitations.push("No verified claims were routed to this chapter from the current thesis -- treat as a coverage gap.");
@@ -462,6 +569,107 @@ async function buildChaptersForTenant(tenantKey: string, client: Parameters<type
   return { tenantKey, chapters, thesisResult: built, provenance, technologyEstate };
 }
 
+const MEASUREMENT_VARIANTS = [
+  {
+    key: "baseline",
+    description: "current assembly limits and current chapter token budget",
+    assemblyLimits: HOME_CHAPTER_ASSEMBLY_LIMITS,
+    synthesis: HOME_CHAPTER_SYNTHESIS_OPTIONS,
+  },
+  {
+    key: "width",
+    description: "wide assembly limits with current chapter token budget",
+    assemblyLimits: HOME_CHAPTER_WIDE_ASSEMBLY_LIMITS,
+    synthesis: HOME_CHAPTER_SYNTHESIS_OPTIONS,
+  },
+  {
+    key: "width_budget",
+    description: "wide assembly limits with 8192 token / medium effort chapter budget",
+    assemblyLimits: HOME_CHAPTER_WIDE_ASSEMBLY_LIMITS,
+    synthesis: HOME_CHAPTER_WIDE_BUDGET_SYNTHESIS_OPTIONS,
+  },
+] as const;
+
+function summarizeVerificationLedger(ledger: Array<{ action: string; verdict: string }>) {
+  return {
+    generated: ledger.length,
+    semanticDrops: ledger.filter((entry) => entry.action.startsWith("dropped")).length,
+    repairs: ledger.filter((entry) => entry.action === "repaired").length,
+    keptClean: ledger.filter((entry) => entry.action === "kept").length,
+    overstated: ledger.filter((entry) => entry.verdict === "OVERSTATED").length,
+    unsupported: ledger.filter((entry) => entry.verdict === "UNSUPPORTED").length,
+  };
+}
+
+async function measureChapterQualityForTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
+  const built = await buildTenant(tenantKey, client);
+  const generatedAt = new Date().toISOString();
+  const report = {
+    tenantKey,
+    generatedAt,
+    defaultsChanged: false,
+    packet: {
+      signals: built.signalPacket.signals.length,
+      contextItems: built.signalPacket.contextItems.length,
+      sourceSummaries: built.signalPacket.sourceSummaries.length,
+      visualDatasets: Object.keys(built.signalPacket.visualDatasets ?? {}).length,
+    },
+    verification: summarizeVerificationLedger(built.verificationLedger),
+    variants: [] as Array<{
+      key: string;
+      description: string;
+      assemblyLimits: HomeChapterAssemblyLimits;
+      synthesis: ChapterSynthesisOptions;
+      chapters: number;
+      claimsPerChapter: Record<string, number>;
+      totalOutputTokens: number;
+      maxTokenStops: number;
+      rawStatementCount: number;
+      generationLanguageCount: number;
+    }>,
+  };
+
+  if (!built.publishedGeneration) {
+    throw new Error(`no published thesis available for ${tenantKey}; cannot measure chapter quality`);
+  }
+
+  for (const variant of MEASUREMENT_VARIANTS) {
+    const telemetry: ChapterBuildTelemetry[] = [];
+    const chapters = await buildChapterViewsFromVerifiedThesis(
+      built.signalPacket,
+      built.publishedGeneration,
+      client,
+      undefined,
+      {
+        assemblyLimits: variant.assemblyLimits,
+        synthesis: variant.synthesis,
+        telemetry,
+      },
+    );
+    const claimsPerChapter = Object.fromEntries(
+      chapters.map((chapter) => [
+        chapter.chapterId,
+        chapter.key_insights.length + chapter.tensions.length + chapter.what_to_watch.length,
+      ]),
+    );
+    const rawStatements = collectChapterRawStatements(chapters);
+    report.variants.push({
+      key: variant.key,
+      description: variant.description,
+      assemblyLimits: variant.assemblyLimits,
+      synthesis: variant.synthesis,
+      chapters: chapters.length,
+      claimsPerChapter,
+      totalOutputTokens: telemetry.reduce((sum, item) => sum + item.outputTokens, 0),
+      maxTokenStops: telemetry.filter((item) => item.stopReason === "max_tokens").length,
+      rawStatementCount: rawStatements.length,
+      generationLanguageCount: countGenerationLanguage(rawStatements),
+    });
+  }
+
+  return report;
+}
+
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const hasKey = Boolean(process.env.ANTHROPIC_API_KEY);
@@ -482,6 +690,24 @@ async function main() {
     // crashed the whole process before the second tenant was even attempted, and before the first
     // tenant's partial signal-packet work could be written anywhere.
     try {
+      if (MEASURE_QUALITY) {
+        const measurement = await measureChapterQualityForTenant(tenantKey, client);
+        const outFile = path.join(OUT_DIR, `${tenantKey}-home-chapter-quality-measurement.json`);
+        fs.writeFileSync(outFile, JSON.stringify(measurement, null, 2));
+        console.log("  variant        chapters  output_tokens  max_token_stops  raw_statements  generation_language");
+        for (const variant of measurement.variants) {
+          console.log(
+            `  ${variant.key.padEnd(13)} ${String(variant.chapters).padStart(8)}  ` +
+              `${String(variant.totalOutputTokens).padStart(13)}  ${String(variant.maxTokenStops).padStart(15)}  ` +
+              `${String(variant.rawStatementCount).padStart(14)}  ${String(variant.generationLanguageCount).padStart(19)}`,
+          );
+        }
+        console.log(`  verifier: generated=${measurement.verification.generated} drops=${measurement.verification.semanticDrops} repairs=${measurement.verification.repairs} kept=${measurement.verification.keptClean}`);
+        console.log(`  packet: signals=${measurement.packet.signals} context=${measurement.packet.contextItems} source_summaries=${measurement.packet.sourceSummaries}`);
+        console.log(`  -> ${outFile}`);
+        console.log(`__HOME_CHAPTER_QUALITY_MEASUREMENT_BEGIN__${JSON.stringify(measurement)}__HOME_CHAPTER_QUALITY_MEASUREMENT_END__`);
+        continue;
+      }
       const result = await buildChaptersForTenant(tenantKey, client);
       if (!result.chapters) {
         console.log("  ! no published thesis available -- see thesisResult for the underlying failure");
