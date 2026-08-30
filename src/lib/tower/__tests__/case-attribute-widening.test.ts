@@ -610,3 +610,38 @@ describe("the outcome fields survive the canonical layer", () => {
     expect(drawer).toContain('a.actualSpendYtdUsd === null\n                ? "Not recorded"');
   });
 });
+
+describe("the active generation is enforced by the data, not by one reader", () => {
+  const migration = read(
+    "supabase/migrations/20260830190000_tower_serving_active_generation_join.sql",
+  );
+
+  it("joins the active-keys function in both serving functions", () => {
+    const joins = migration.match(
+      /join serving\.tower_active_assessment_keys\(\) active/g,
+    );
+    expect(joins?.length).toBe(2);
+  });
+
+  it("matches on all three identity columns", () => {
+    // Tenant alone is not an identity. Two generations of the same tenant differ by assessment
+    // and version, and matching on fewer columns lets a retired generation through.
+    for (const col of [
+      "active.tenant_key = p.tenant_key",
+      "active.assessment_id = p.assessment_id",
+      "active.projection_version = p.projection_version",
+    ]) {
+      expect([col, (migration.match(new RegExp(col.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) ?? []).length]).toEqual([col, 2]);
+    }
+  });
+
+  it("keeps the page predicate the deployed command function already had", () => {
+    expect(migration).toContain("where page_key_arg = 'all' or p.page_key = page_key_arg;");
+  });
+
+  it("records that the ai function's missing page predicate is out of scope", () => {
+    // Widening a live read-path fix past one clause is how a reporting bug becomes a data bug.
+    expect(migration).toContain("Deliberately not fixed here");
+    expect(migration).toContain("page_key");
+  });
+});
