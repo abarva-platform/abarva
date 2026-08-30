@@ -300,6 +300,20 @@ describe("Source workspace ECL browser-surface proof", () => {
       ).toBeTruthy();
     });
     expect(screen.getByText("Nexus Source")).toBeTruthy();
+    expect(screen.getByLabelText("Workspace controls")).toBeTruthy();
+    expect(screen.getByLabelText("Scope filter").textContent).toContain(
+      "All loaded contracts",
+    );
+    expect(screen.getByLabelText("Data as of").textContent).toContain(
+      "30 Jun 2027",
+    );
+    expect(screen.getAllByRole("button", { name: "Vendors" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Contracts" })).toHaveLength(
+      1,
+    );
+    expect(screen.getAllByRole("button", { name: "Optimize" })).toHaveLength(
+      1,
+    );
     expect(screen.getByLabelText("Portfolio facts")).toBeTruthy();
     expect(screen.getByText("Helix Shared Services Group")).toBeTruthy();
     expect(screen.getByText("Executive position")).toBeTruthy();
