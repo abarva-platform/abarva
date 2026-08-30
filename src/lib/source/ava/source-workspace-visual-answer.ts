@@ -102,14 +102,28 @@ function sourceV4(context: AskSurfaceContext): Record<string, unknown> | null {
   return isRecord(raw) ? raw : null;
 }
 
-function selectedContractFrom(
-  context: AskSurfaceContext,
+function lineMatchesContract(
+  line: Record<string, unknown>,
+  contractId: string | null | undefined,
+): boolean {
+  if (!contractId) return true;
+  const expected = contractId.toUpperCase();
+  const explicit = stringValue(line.contractId)?.toUpperCase();
+  if (explicit) return explicit === expected;
+  return Boolean(
+    stringValue(line.id)?.toUpperCase().startsWith(`${expected}:`) ||
+    stringValue(line.opportunityId)?.toUpperCase().startsWith(`${expected}:`),
+  );
+}
+
+function contractIdFromQuery(query: string): string | null {
+  const match = query.match(/\b(?:CTR|MER)(?:-[A-Z0-9]+)+\b/i);
+  return match ? match[0].toUpperCase() : null;
+}
+
+function contractContextFromRecord(
+  raw: Record<string, unknown>,
 ): SourceContractContext | null {
-  const source = sourceV4(context);
-  const raw = isRecord(source?.selectedContract)
-    ? source.selectedContract
-    : null;
-  if (!raw) return null;
   const contractId = stringValue(raw.contractId);
   const vendorName = stringValue(raw.vendorName);
   const contractName = stringValue(raw.contractName);
@@ -130,6 +144,84 @@ function selectedContractFrom(
     renewalOwnerRef: stringValue(raw.renewalOwnerRef),
     scopeSummary: stringValue(raw.scopeSummary),
     scopeRowCount: numberValue(raw.scopeRowCount),
+  };
+}
+
+function selectedContractFrom(
+  context: AskSurfaceContext,
+  query?: string,
+): SourceContractContext | null {
+  const source = sourceV4(context);
+  const requestedContractId = query ? contractIdFromQuery(query) : null;
+  const raw = isRecord(source?.selectedContract)
+    ? source.selectedContract
+    : null;
+  const selected = raw ? contractContextFromRecord(raw) : null;
+  if (
+    selected &&
+    (!requestedContractId ||
+      selected.contractId.toUpperCase() === requestedContractId)
+  ) {
+    return selected;
+  }
+  const directory = Array.isArray(source?.contractDirectory)
+    ? source.contractDirectory
+    : [];
+  const directoryMatch = directory.find(
+    (item) =>
+      isRecord(item) &&
+      stringValue(item.contractId)?.toUpperCase() === requestedContractId,
+  );
+  if (isRecord(directoryMatch))
+    return contractContextFromRecord(directoryMatch);
+  if (requestedContractId) return null;
+  return selected;
+}
+
+function buildMissingContractAnswer(
+  contractId: string,
+): SourceWorkspaceVisualAnswer {
+  return {
+    directAnswer: `${contractId} is not present in the current Source aVa contract packet, so I cannot answer it with another contract's facts. Open that Contract 360 record or refresh the governed Source context before making an actionability, value, pricing, SLA, or renewal claim for this contract.`,
+    artifacts: [],
+    citations: [
+      {
+        id: "source-contract-not-in-packet",
+        label: "Current Source aVa contract packet",
+        sourceClass: "tenant-fact",
+        recordId: contractId,
+        excerpt:
+          "The named contract ID was requested but was not available in the current Source aVa context.",
+        confidence: "high",
+      },
+    ],
+    factsUsed: [
+      {
+        id: "requested-contract",
+        label: "Requested contract",
+        value: contractId,
+        citationIds: ["source-contract-not-in-packet"],
+      },
+    ],
+    metricsUsed: [],
+    relationshipsUsed: [],
+    caveats: [
+      {
+        id: "no-substitute-contract",
+        label: "No substitute contract",
+        detail:
+          "Source aVa must not answer a named-contract question from a different selected or higher-ranked contract.",
+      },
+    ],
+    nextSteps: [
+      {
+        id: "open-contract",
+        label: "Open the named Contract 360 record",
+        rationale:
+          "Refreshing the Source context around the requested contract is required before citing contract-specific facts.",
+        targetSurface: "source",
+      },
+    ],
   };
 }
 
@@ -166,6 +258,7 @@ function ledgerLinesFrom(context: AskSurfaceContext): SourceLedgerLine[] {
 
 function opportunityLinesFrom(
   context: AskSurfaceContext,
+  contractId?: string | null,
 ): SourceOpportunityLine[] {
   const source = sourceV4(context);
   const opportunities = isRecord(source?.optimizationOpportunities)
@@ -177,6 +270,9 @@ function opportunityLinesFrom(
   const mapped = rawOpportunities.flatMap(
     (opportunity): SourceOpportunityLine[] => {
       if (!isRecord(opportunity)) return [];
+      if (!lineMatchesContract(opportunity, contractId)) {
+        return [];
+      }
       const id = stringValue(opportunity.id);
       const label = stringValue(opportunity.label);
       if (!id || !label) return [];
@@ -204,11 +300,50 @@ function opportunityLinesFrom(
       ];
     },
   );
+  const directory = Array.isArray(source?.contractOpportunityDirectory)
+    ? source.contractOpportunityDirectory
+    : [];
+  const directoryLines = directory.flatMap((line): SourceOpportunityLine[] => {
+    if (!isRecord(line)) return [];
+    if (!lineMatchesContract(line, contractId)) {
+      return [];
+    }
+    const id = stringValue(line.id);
+    const label = stringValue(line.label);
+    if (!id || !label) return [];
+    return [
+      {
+        id,
+        kind: "commercial_opportunity",
+        label,
+        amount:
+          numberValue(line.amountUsd) == null
+            ? "Not established"
+            : currencyLabel(numberValue(line.amountUsd)),
+        amountUsd: numberValue(line.amountUsd),
+        state: stringValue(line.state) ?? "Not established",
+        evidenceClass: stringValue(line.evidenceClass) ?? "Not established",
+        evidence:
+          "Governed Source action-candidate row tied to the named contract.",
+        nextAction:
+          stringValue(line.nextAction) ??
+          "Confirm evidence owner and decision path.",
+        owner: null,
+        sourceRefs: stringArray(line.sourceRefs),
+      },
+    ];
+  });
+  if (directoryLines.length > 0) return directoryLines.slice(0, 8);
   if (mapped.length > 0) return mapped.slice(0, 8);
-  return ledgerLinesFrom(context).map((line) => ({
-    ...line,
-    owner: null,
-  }));
+  return ledgerLinesFrom(context)
+    .filter(
+      (line) =>
+        !contractId || line.id.toUpperCase().includes(contractId.toUpperCase()),
+    )
+    .map((line) => ({
+      ...line,
+      owner: null,
+    }));
 }
 
 function connectionsFrom(context: AskSurfaceContext): SourceConnection[] {
@@ -251,11 +386,12 @@ export function canBuildSourceWorkspaceVisualAnswer(input: {
   surfaceContext?: AskSurfaceContext | null;
 }): boolean {
   const context = input.surfaceContext;
+  const requestedContractId = contractIdFromQuery(input.query);
   return Boolean(
     context &&
     stringValue(context.module)?.toLowerCase() === "source" &&
     wantsSourceVisualAnswer(input.query) &&
-    selectedContractFrom(context),
+    (selectedContractFrom(context, input.query) || requestedContractId),
   );
 }
 
@@ -294,11 +430,18 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   query: string;
   surfaceContext: AskSurfaceContext;
 }): SourceWorkspaceVisualAnswer | null {
-  const contract = selectedContractFrom(input.surfaceContext);
-  if (!contract) return null;
-  const lines = opportunityLinesFrom(input.surfaceContext);
+  const requestedContractId = contractIdFromQuery(input.query);
+  const contract = selectedContractFrom(input.surfaceContext, input.query);
+  if (!contract) {
+    return requestedContractId
+      ? buildMissingContractAnswer(requestedContractId)
+      : null;
+  }
+  const lines = opportunityLinesFrom(input.surfaceContext, contract.contractId);
   const connections = connectionsFrom(input.surfaceContext);
-  if (lines.length === 0 && connections.length === 0) return null;
+  const contractMismatch =
+    requestedContractId &&
+    contract.contractId.toUpperCase() !== requestedContractId;
 
   const contractCitationId = "source-contract-context";
   const opportunityCitationId = "source-opportunity-context";
@@ -466,11 +609,11 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       : currencyLabel(topOpportunity.amountUsd);
   const topOpportunitySummary = topOpportunity
     ? ` The top governed opportunity is ${topOpportunity.label} (${topOpportunityValue}), with evidence state ${topOpportunity.evidenceClass} and next action: ${topOpportunity.nextAction}.`
-    : "";
+    : " No governed opportunity row is tied to this contract in the current Source aVa packet; treat actionability and value as not established until the contract-specific evidence is loaded or opened.";
 
   return {
     directAnswer:
-      `${contract.vendorName} ${contract.contractName} (${contract.contractId}) is ready for an evidence-led optimization conversation when the opportunity rows below are visible: ${quantified} commercial opportunity line(s) carry governed numeric values, ${evidenceReadyCount} line(s) are evidence-ready, and ${gapCount} line(s) still require explicit workflow, review, or evidence if shown. ` +
+      `${contract.vendorName} ${contract.contractName} (${contract.contractId}) ${contractMismatch ? "is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "is bound from the governed Source contract context. "}There are ${quantified} contract-specific commercial opportunity line(s) with governed numeric values, ${evidenceReadyCount} line(s) marked evidence-ready, and ${gapCount} line(s) that still require explicit workflow, review, or evidence. ` +
       `${topOpportunitySummary} The outside-in pattern is advisory only: for large enterprise software and managed-service renewals, the strongest negotiation story usually combines contract terms, AP/ERP invoice proof, SLA/service-credit proof, usage or entitlement data, and a finance-confirmed value gate. It should guide the ask, not replace Source/Tower evidence.`,
     artifacts,
     citations,
