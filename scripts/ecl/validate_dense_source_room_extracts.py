@@ -18,6 +18,28 @@ DEFAULT_OUT_DIR = Path("outputs/source-room-depth-catchup-2026-08-23")
 EXPECTED_EXTRACTS = 14
 EXPECTED_MIN_ROWS = 7000
 APP_REF_RE = re.compile(r"APP-(\d{4})")
+KNOWN_PRODUCT_VENDOR_PAIRS = {
+    "Epic Tapestry": "Epic Systems Corporation",
+    "Facets": "TriZetto Corporation",
+    "HealthRules Payor": "HealthEdge Software",
+    "QNXT": "Cognizant Technology Solutions",
+    "Jiva": "ZeOmega",
+    "TruCare": "Casenet LLC",
+    "Epic Hyperspace": "Epic Systems Corporation",
+    "Epic Beaker": "Epic Systems Corporation",
+    "Epic Radiant": "Epic Systems Corporation",
+    "Oracle Health Millennium": "Oracle Corporation",
+    "Meditech Expanse": "Medical Information Technology Inc.",
+    "Workday Financial Management": "Workday Inc.",
+    "Workday HCM": "Workday Inc.",
+    "Infor Lawson ERP": "Infor Inc.",
+    "ServiceNow ITSM": "ServiceNow Inc.",
+    "Tableau Server": "Salesforce Inc.",
+    "Power BI Premium": "Microsoft Corporation",
+    "Informatica PowerCenter": "Informatica LLC",
+    "Netezza Warehouse": "IBM Corporation",
+    "Snowflake Enterprise": "Snowflake Inc.",
+}
 
 MIN_ROWS_BY_FAMILY = {
     "SP01_Documents_Interviews": 220,
@@ -146,6 +168,15 @@ def require_distinct(rows: list[dict[str, str]], column: str, minimum: int, labe
 
 def validate_family_realism(family: str, rows: list[dict[str, str]], issues: list[str]) -> None:
     if family == "SP03_CMDB":
+        product_vendor_mismatches = [
+            f"{row.get('application_id')} {row.get('base_product_name')} -> {row.get('vendor_name')} expected {KNOWN_PRODUCT_VENDOR_PAIRS[row.get('base_product_name', '')]}"
+            for row in rows
+            if row.get("base_product_name") in KNOWN_PRODUCT_VENDOR_PAIRS
+            and row.get("vendor_name") != KNOWN_PRODUCT_VENDOR_PAIRS[row.get("base_product_name", "")]
+        ]
+        if product_vendor_mismatches:
+            sample = "; ".join(product_vendor_mismatches[:5])
+            issues.append(f"{family} has {len(product_vendor_mismatches)} known product/vendor mismatches: {sample}")
         validate_categorical_shape(
             f"{family}.business_function",
             [row.get("business_function", "").strip() for row in rows],

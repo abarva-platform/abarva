@@ -50,6 +50,9 @@ const DEFAULT_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
 const DEFAULT_OUT_DIR = "/tmp/home-ecl-narrative-layer";
 const PROJECTION_VERSION = 1;
 const WRITE = process.env.HOME_ECL_NARRATIVE_WRITE === "true" && process.env.HOME_ECL_NARRATIVE_WRITE_APPROVED === "true";
+const RAW_PUBLICATION_MAX_UNSUPPORTED = 0;
+const RAW_PUBLICATION_MAX_OVERSTATED = 3;
+const RAW_PUBLICATION_MIN_CLEAN_KEEP_RATE = 0.85;
 
 const CXO_FORBIDDEN_VISIBLE_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
   { label: "ecl", pattern: /\bECL\b/i },
@@ -1233,6 +1236,22 @@ function publicationGateIssues(
   signalPacket: EnterpriseSignalPacket,
 ): string[] {
   const issues = [...(thesisResult.publicationIssues ?? [])];
+  const ledgerRows = thesisResult.verificationLedger.length;
+  const actionTallyRows = actionTally(thesisResult.verificationLedger);
+  const verdictTallyRows = verdictTally(thesisResult.verificationLedger);
+  const cleanKept = actionTallyRows.kept ?? 0;
+  const cleanKeepRate = ledgerRows ? cleanKept / ledgerRows : 0;
+  const unsupported = verdictTallyRows.UNSUPPORTED ?? 0;
+  const overstated = verdictTallyRows.OVERSTATED ?? 0;
+  if (unsupported > RAW_PUBLICATION_MAX_UNSUPPORTED) {
+    issues.push(`raw_unsupported_claims_${unsupported}_gt_${RAW_PUBLICATION_MAX_UNSUPPORTED}`);
+  }
+  if (overstated > RAW_PUBLICATION_MAX_OVERSTATED) {
+    issues.push(`raw_overstated_claims_${overstated}_gt_${RAW_PUBLICATION_MAX_OVERSTATED}`);
+  }
+  if (cleanKeepRate < RAW_PUBLICATION_MIN_CLEAN_KEEP_RATE) {
+    issues.push(`raw_clean_keep_rate_${cleanKept}_of_${ledgerRows}_lt_${Math.round(RAW_PUBLICATION_MIN_CLEAN_KEEP_RATE * 100)}pct`);
+  }
   if (thesisResult.publishedGeneration) {
     const publishedStructuralIssues = validateStructure(thesisResult.publishedGeneration, signalPacket);
     if (publishedStructuralIssues.length) {
@@ -1632,8 +1651,11 @@ async function main() {
     const thesisResult = scrubThesisResultVisibleIds(rawThesisResult, labelByIdentifier);
     if (!thesisResult.publishedGeneration) throw new Error("Home ECL narrative writer produced no publishable thesis.");
     const publicationIssues = publicationGateIssues(thesisResult, signalPacket);
-    if (publicationIssues.length) {
+    if (publicationIssues.length && WRITE) {
       throw new Error(`Home ECL narrative publication gate failed: ${publicationIssues.join("; ")}`);
+    }
+    if (publicationIssues.length) {
+      console.log(`  ! Home ECL narrative publication gate would fail on write: ${publicationIssues.join("; ")}`);
     }
 
     const generatedChapters = await buildChapterViewsFromVerifiedThesis(
@@ -1672,8 +1694,8 @@ async function main() {
       verdict_tally: verdictTally(thesisResult.verificationLedger),
       action_tally: actionTally(thesisResult.verificationLedger),
       publication_gate: {
-        accepted: true,
-        issues: [],
+        accepted: publicationIssues.length === 0,
+        issues: publicationIssues,
       },
       ledger_rows: thesisResult.verificationLedger.length,
     };
