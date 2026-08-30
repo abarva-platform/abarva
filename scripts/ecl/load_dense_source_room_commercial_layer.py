@@ -14,7 +14,7 @@ import csv
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +54,20 @@ def as_num(value: str | None) -> float | None:
 
 def sql_date(value: str | None) -> str:
     return source_layer.sql_text(value) if value else "null"
+
+
+def derived_renewal_notice_date(row: dict[str, str]) -> str | None:
+    explicit = (row.get("renewal_notice_date") or row.get("notice_deadline") or "").strip()
+    if explicit:
+        return explicit
+    end_date = (row.get("end_date") or row.get("expiration_date") or "").strip()
+    if not end_date:
+        return None
+    try:
+        notice_days = int(float((row.get("notice_window_days") or row.get("notice_period_days") or "0").strip() or "0"))
+        return (date.fromisoformat(end_date) - timedelta(days=notice_days)).isoformat()
+    except ValueError:
+        return None
 
 
 def insert_sql(table: str, columns: list[str], rows: list[dict[str, str]], batch_size: int = 500) -> str:
@@ -112,7 +126,7 @@ def build_commercial_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
                 "contract_type": source_layer.sql_text("master_service_agreement"),
                 "start_date": sql_date(row.get("start_date")),
                 "end_date": sql_date(row.get("end_date")),
-                "renewal_notice_date": "null",
+                "renewal_notice_date": sql_date(derived_renewal_notice_date(row)),
                 "annualized_value_usd": source_layer.sql_num(annual_value),
                 "total_contract_value_usd": source_layer.sql_num(annual_value * 5 if annual_value is not None else None),
                 "currency": source_layer.sql_text("USD"),
@@ -125,7 +139,10 @@ def build_commercial_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
                     {
                         "service_tower": row.get("service_tower"),
                         "notice_window_days": row.get("notice_window_days"),
+                        "renewal_notice_date": derived_renewal_notice_date(row),
                         "benchmarking_right": row.get("benchmarking_right"),
+                        "auto_renew": row.get("auto_renew"),
+                        "termination_for_convenience": row.get("termination_for_convenience"),
                         "synthetic_dataset_id": row.get("synthetic_dataset_id"),
                     }
                 ),

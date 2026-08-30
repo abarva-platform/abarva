@@ -73,6 +73,12 @@ function daysBetween(startIso, endIso) {
   return Math.round((end - start) / 86_400_000);
 }
 
+function addDays(isoDate, days) {
+  const next = new Date(`${isoDate}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next.toISOString().slice(0, 10);
+}
+
 const spec = JSON.parse(fs.readFileSync(SPEC_PATH, "utf8"));
 const plan = fs.readFileSync(PLAN_PATH, "utf8");
 const fourLaneStatus = JSON.parse(fs.readFileSync(FOUR_LANE_STATUS_PATH, "utf8"));
@@ -106,6 +112,9 @@ const contracts = readRows(outDir, "SP08_Vendor_Contract", "Contract_Register_SY
 const grc = readRows(outDir, "SP09_GRC", "GRC_Risk_Control_Exceptions_SYNTHETIC.csv");
 
 for (const field of ["termination_for_convenience", "auto_renew", "demo_as_of_date"]) {
+  assert(Object.hasOwn(contracts[0], field), `contracts must include ${field}`);
+}
+for (const field of ["renewal_notice_date", "notice_window_days", "end_date"]) {
   assert(Object.hasOwn(contracts[0], field), `contracts must include ${field}`);
 }
 for (const field of ["support_end_date", "demo_as_of_date"]) {
@@ -143,6 +152,35 @@ const autoRenewInsideWindow = contracts.filter((row) => {
   );
 });
 assert(autoRenewInsideWindow.length >= 1, "F2 must have an auto-renewal row inside its notice window");
+
+const activeRows = contracts.filter((row) => row.end_date >= spec.demo_as_of_date);
+const staleRows = contracts.filter((row) => row.end_date < spec.demo_as_of_date);
+const lapsedAutoRenewRows = activeRows.filter((row) => row.auto_renew === "true" && row.renewal_notice_date < spec.demo_as_of_date);
+const cancellableRows = activeRows.filter((row) => row.auto_renew !== "true" || row.renewal_notice_date >= spec.demo_as_of_date);
+assert.equal(lapsedAutoRenewRows.length, 24, "renewal-choice source package must plant exactly 24 active auto-renew rows with passed notice");
+assert.equal(
+  lapsedAutoRenewRows.reduce((sum, row) => sum + Number(row.annualized_value_usd), 0),
+  140_300_000,
+  "renewal-choice source package must plant $140.3M active auto-renew exposure with passed notice",
+);
+assert.equal(staleRows.length, 34, "renewal-choice source package must plant exactly 34 stale end-date rows");
+assert.equal(
+  staleRows.reduce((sum, row) => sum + Number(row.annualized_value_usd), 0),
+  194_100_000,
+  "renewal-choice source package must plant $194.1M stale renewal rows for exclusion",
+);
+assert.equal(
+  cancellableRows.reduce((sum, row) => sum + Number(row.annualized_value_usd), 0),
+  214_600_000,
+  "renewal-choice source package must plant $214.6M still-cancellable active value",
+);
+for (const row of contracts) {
+  assert.equal(
+    row.renewal_notice_date,
+    addDays(row.end_date, -Number(row.notice_window_days)),
+    `renewal_notice_date must equal end_date minus notice_window_days for ${row.contract_id}`,
+  );
+}
 
 const vendorProtectiveContracts = contracts.filter((row) =>
   row.benchmarking_right === "absent"
