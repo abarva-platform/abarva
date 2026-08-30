@@ -7,6 +7,9 @@ import type {
   ChapterView,
   EnterpriseSignalPacket,
   GroundedClaim,
+  HomeExecutiveStoryPlanV1,
+  HomeExecutiveStorySectionId,
+  HomeExecutiveStoryTerminalState,
   HomeReviewBundle,
 } from "@/lib/home/preview/types";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
@@ -14,10 +17,10 @@ import { demoSafeClientText } from "@/lib/client-config";
 import { sourceForIds } from "./source-label";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
-type TerminalState = "published" | "refused" | "deferred";
+type TerminalState = HomeExecutiveStoryTerminalState;
 
 interface StorySectionSpec {
-  id: string;
+  id: HomeExecutiveStorySectionId;
   title: string;
   readerQuestion: string;
   chapterIds: ChapterId[];
@@ -29,6 +32,7 @@ interface StorySectionSpec {
 interface StorySection {
   spec: StorySectionSpec;
   state: TerminalState;
+  reasonCode: string | null;
   leadClaim: GroundedClaim | null;
   supportingClaims: GroundedClaim[];
   limitations: string[];
@@ -96,10 +100,9 @@ const STORY_SECTIONS: StorySectionSpec[] = [
 const NUMBER_RE = /(?:\$[\d,.]+(?:[KMB])?|\b\d+(?:,\d{3})*(?:\.\d+)?%)/;
 const OPENING_SCALE_NUMBER_RE =
   /\b\d+(?:,\d{3})*(?:\.\d+)?\b(?=\s+(?:applications|systems|source-target|data movements|flows|workload items|active users|TB|segments|business functions))/i;
-const PREFERRED_LEAD_RE = /\b(?:finance|validated|proven|claimable|promised|value|spend|cost|risk|complete|blocked|applications|systems|flows|workload)\b/i;
-const ENTERPRISE_OPENING_RE =
-  /\b(?:enterprise|estate|application|system|source-target|data movement|flow|workload|analytics|reporting|ETL|script|business function|provider|payer|operating model)\b/i;
 const COMMERCIAL_OPENING_RE = /\b(?:vendor|supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
+const INVENTORY_OPENING_RE =
+  /\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:applications|systems|source-target|data movements|flows|workload items|reports|ETL jobs|scripts|platforms|vendors|suppliers|contracts)\b/i;
 export const HOME_TIER1_GENERATION_FORBIDDEN_TERMS = [
   "ECL",
   "projection",
@@ -136,14 +139,12 @@ export function findHomeTier1GenerationLanguage(statements: string[]): Array<{ t
 }
 
 export function collectTier1ExecutiveStoryRawClaimStatements(chapters: ChapterView[]): string[] {
-  const sections = buildStorySections(chapters);
-  const leadNumber = chooseLeadNumber(sections);
   const statements = [
-    leadNumber?.claim.statement,
-    ...sections.flatMap((section) => [
-      section.leadClaim?.statement,
-      ...section.supportingClaims.map((claim) => claim.statement),
-    ]),
+    ...chapters.flatMap((chapter) => [
+      ...chapter.key_insights,
+      ...chapter.tensions,
+      ...chapter.what_to_watch,
+    ]).map((claim) => claim.statement),
   ].filter((statement): statement is string => Boolean(statement));
   return Array.from(new Set(statements));
 }
@@ -160,9 +161,14 @@ export function ExecutiveStoryPage({
   compiledLine: string[];
 }) {
   const signalPacket = bundle.thesis.signalPacket;
+  const storyPlan = bundle.executiveStoryPlan ?? missingStoryPlan(bundle.chapters);
   const clientLabel = demoSafeClientText(labelFromTenantKey(tenantKey));
-  const sections = buildStorySections(bundle.chapters);
-  const leadNumber = chooseLeadNumber(sections);
+  const sections = buildStorySections(bundle.chapters, storyPlan);
+  const leadNumber = chooseLeadNumber(sections, storyPlan);
+  const openingClaim = storyPlan.openingThesisClaimRef ? claimByRef(bundle.chapters).get(storyPlan.openingThesisClaimRef) ?? null : null;
+  const supportingOpeningClaims = storyPlan.openingSupportingClaimRefs
+    .map((ref) => claimByRef(bundle.chapters).get(ref))
+    .filter((claim): claim is GroundedClaim => Boolean(claim));
   const terminalCount = sections.filter((section) => section.state).length;
 
   return (
@@ -216,6 +222,9 @@ export function ExecutiveStoryPage({
       <main data-home-tier1-main style={{ minWidth: 0, paddingBottom: 120 }}>
         <Hero
           leadNumber={leadNumber}
+          openingClaim={openingClaim}
+          supportingOpeningClaims={supportingOpeningClaims}
+          storyPlan={storyPlan}
           tenantLabel={clientLabel}
           signalPacket={signalPacket}
           terminalCount={terminalCount}
@@ -243,50 +252,84 @@ function labelFromTenantKey(tenantKey: HomePreviewTenantKey): string {
     .join(" ");
 }
 
-function buildStorySections(chapters: ChapterView[]): StorySection[] {
+function buildStorySections(chapters: ChapterView[], storyPlan: HomeExecutiveStoryPlanV1): StorySection[] {
   const byId = new Map(chapters.map((chapter) => [chapter.chapterId, chapter]));
-  return STORY_SECTIONS.map((spec) => {
+  const claims = claimByRef(chapters);
+  const specs = storyPlan.sectionOrder
+    .map((sectionId) => STORY_SECTIONS.find((spec) => spec.id === sectionId))
+    .filter((spec): spec is StorySectionSpec => Boolean(spec));
+  return specs.map((spec) => {
     const sectionChapters = spec.chapterIds
       .map((id) => byId.get(id))
       .filter((chapter): chapter is ChapterView => Boolean(chapter));
-    const claims = uniqueClaims(
-      sectionChapters.flatMap((chapter) => [
-        ...chapter.key_insights,
-        ...chapter.tensions,
-        ...chapter.what_to_watch,
-      ]),
-    );
-    const sectionClaims = claimsForStorySection(spec, claims);
+    const planned = storyPlan.sections.find((section) => section.sectionId === spec.id);
+    const leadClaim = planned?.leadClaimRef ? claims.get(planned.leadClaimRef) ?? null : null;
+    const supportingClaims = (planned?.supportingClaimRefs ?? [])
+      .map((ref) => claims.get(ref))
+      .filter((claim): claim is GroundedClaim => Boolean(claim))
+      .filter((claim) => claim.statement !== leadClaim?.statement)
+      .slice(0, 3);
     const limitations = Array.from(
       new Set(sectionChapters.flatMap((chapter) => chapter.limitations).filter(Boolean)),
     );
-    const leadClaim = spec.id === "enterprise" ? sectionClaims[0] ?? null : chooseSectionLeadClaim(sectionClaims);
     return {
       spec,
-      state: sectionClaims.length > 0 ? "published" : limitations.length > 0 ? "refused" : "deferred",
+      state: planned?.state ?? "deferred",
+      reasonCode: planned?.reasonCode ?? null,
       leadClaim,
-      supportingClaims: sectionClaims.filter((claim) => claim.statement !== leadClaim?.statement).slice(0, 3),
+      supportingClaims,
       limitations,
       chapters: sectionChapters,
     };
   });
 }
 
-function claimsForStorySection(spec: StorySectionSpec, claims: GroundedClaim[]): GroundedClaim[] {
-  if (spec.id !== "enterprise") return claims;
-  const nonCommercial = claims.filter((claim) => !isCommercialOpeningClaim(claim.statement));
-  if (nonCommercial.length === 0) return claims;
-  const enterpriseShape = nonCommercial.filter((claim) => ENTERPRISE_OPENING_RE.test(claim.statement));
-  return enterpriseShape.length
-    ? [
-        ...enterpriseShape,
-        ...nonCommercial.filter((claim) => !enterpriseShape.includes(claim)),
-      ]
-    : nonCommercial;
+function claimByRef(chapters: ChapterView[]): Map<string, GroundedClaim> {
+  const byRef = new Map<string, GroundedClaim>();
+  for (const claim of uniqueClaims(
+    chapters.flatMap((chapter) => [
+      ...chapter.key_insights,
+      ...chapter.tensions,
+      ...chapter.what_to_watch,
+    ]),
+  )) {
+    const ref = claim.claim_ref ?? claim.statement;
+    byRef.set(ref, claim);
+  }
+  return byRef;
 }
 
-function isCommercialOpeningClaim(statement: string): boolean {
-  return COMMERCIAL_OPENING_RE.test(statement) || /\b(?:supplier group|top five supplier|reviewed contract value|ready contract value)\b/i.test(statement);
+function missingStoryPlan(chapters: ChapterView[]): HomeExecutiveStoryPlanV1 {
+  const chapterStates = Object.fromEntries(
+    chapters.map((chapter) => [
+      chapter.chapterId,
+      { state: "deferred" as const, reasonCode: "story_plan_not_published" },
+    ]),
+  ) as HomeExecutiveStoryPlanV1["chapterStates"];
+  return {
+    contractVersion: "home-executive-story-plan/v1",
+    tenantKey: "unknown",
+    assessmentId: "unknown",
+    snapshotId: null,
+    openingThesisClaimRef: null,
+    openingSupportingClaimRefs: [],
+    scaleFactRef: null,
+    decisions: [],
+    sectionOrder: STORY_SECTIONS.map((section) => section.id),
+    sections: STORY_SECTIONS.map((section) => ({
+      sectionId: section.id,
+      state: "deferred",
+      leadClaimRef: null,
+      supportingClaimRefs: [],
+      reasonCode: "story_plan_not_published",
+    })),
+    chapterStates,
+    heroVisualDatasetRef: null,
+    overallEvidenceBoundary:
+      "The executive storyline is deferred because a verified story plan has not been published for this tenant.",
+    sourceClaimRefs: [],
+    storyPlanHash: "story_plan_not_published",
+  };
 }
 
 function uniqueClaims(claims: GroundedClaim[]): GroundedClaim[] {
@@ -300,12 +343,18 @@ function uniqueClaims(claims: GroundedClaim[]): GroundedClaim[] {
   return unique;
 }
 
-function chooseSectionLeadClaim(claims: GroundedClaim[]): GroundedClaim | null {
-  if (claims.length === 0) return null;
-  return [...claims].sort((a, b) => scoreClaim(b) - scoreClaim(a))[0] ?? claims[0];
-}
-
-function chooseLeadNumber(sections: StorySection[]): LeadNumber | null {
+function chooseLeadNumber(sections: StorySection[], storyPlan: HomeExecutiveStoryPlanV1): LeadNumber | null {
+  const byRef = new Map<string, GroundedClaim>();
+  for (const claim of sections.flatMap((section) => [section.leadClaim, ...section.supportingClaims]).filter(
+    (claim): claim is GroundedClaim => Boolean(claim),
+  )) {
+    byRef.set(claim.claim_ref ?? claim.statement, claim);
+  }
+  const plannedScale = storyPlan.scaleFactRef ? byRef.get(storyPlan.scaleFactRef) ?? null : null;
+  if (plannedScale) {
+    const match = openingNumberForStatement(plannedScale.statement);
+    if (match) return { value: match, label: labelForNumber(plannedScale.statement, match), claim: plannedScale };
+  }
   const claims = sections.flatMap((section) => [section.leadClaim, ...section.supportingClaims]).filter(
     (claim): claim is GroundedClaim => Boolean(claim),
   );
@@ -314,9 +363,8 @@ function chooseLeadNumber(sections: StorySection[]): LeadNumber | null {
     .filter((item): item is { claim: GroundedClaim; match: string } => Boolean(item.match));
   if (numbered.length === 0) return null;
   const chosen =
-    numbered.find((item) => ENTERPRISE_OPENING_RE.test(item.claim.statement) && !COMMERCIAL_OPENING_RE.test(item.claim.statement)) ??
+    numbered.find((item) => !isStandaloneInventoryClaim(item.claim.statement) && !COMMERCIAL_OPENING_RE.test(item.claim.statement)) ??
     numbered.find((item) => !COMMERCIAL_OPENING_RE.test(item.claim.statement)) ??
-    numbered.find((item) => /validated|proven|claimable|promised|value/i.test(item.claim.statement)) ??
     numbered[0];
   return {
     value: chosen.match,
@@ -325,19 +373,12 @@ function chooseLeadNumber(sections: StorySection[]): LeadNumber | null {
   };
 }
 
-function openingNumberForStatement(statement: string): string | null {
-  return statement.match(OPENING_SCALE_NUMBER_RE)?.[0] ?? statement.match(NUMBER_RE)?.[0] ?? null;
+function isStandaloneInventoryClaim(statement: string): boolean {
+  return INVENTORY_OPENING_RE.test(statement) && !/\b(?:because|therefore|so that|risk|value|margin|revenue|decision|priority|accountability|outcome)\b/i.test(statement);
 }
 
-function scoreClaim(claim: GroundedClaim): number {
-  const text = claim.statement;
-  return (
-    (NUMBER_RE.test(text) ? 4 : 0) +
-    (PREFERRED_LEAD_RE.test(text) ? 4 : 0) +
-    (claim.claim_type === "CROSS_DOMAIN_INSIGHT" ? 2 : 0) +
-    (claim.claim_type === "ADVISORY_INFERENCE" ? 1 : 0) +
-    (claim.confidence === "high" ? 1 : 0)
-  );
+function openingNumberForStatement(statement: string): string | null {
+  return statement.match(OPENING_SCALE_NUMBER_RE)?.[0] ?? statement.match(NUMBER_RE)?.[0] ?? null;
 }
 
 function labelForNumber(statement: string, value: string): string {
@@ -383,16 +424,23 @@ export function cxoText(text: string): string {
 
 function Hero({
   leadNumber,
+  openingClaim,
+  supportingOpeningClaims,
+  storyPlan,
   tenantLabel,
   signalPacket,
   terminalCount,
 }: {
   leadNumber: LeadNumber | null;
+  openingClaim: GroundedClaim | null;
+  supportingOpeningClaims: GroundedClaim[];
+  storyPlan: HomeExecutiveStoryPlanV1;
   tenantLabel: string;
   signalPacket: EnterpriseSignalPacket;
   terminalCount: number;
 }) {
-  const source = leadNumber ? sourceForIds(leadNumber.claim.evidence_ids, signalPacket) : null;
+  const source = openingClaim ? sourceForIds(openingClaim.evidence_ids, signalPacket) : null;
+  const scaleSource = leadNumber ? sourceForIds(leadNumber.claim.evidence_ids, signalPacket) : null;
   return (
     <header style={{ padding: `56px ${PAGE_X}px 40px` }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
@@ -404,11 +452,22 @@ function Hero({
 
       <div data-home-tier1-hero-metric style={heroMetricStyle}>
         <div>
-          <span style={eyebrow(V4.green)}>Open on the number</span>
-          <div style={heroNumberStyle}>{leadNumber?.value ?? "Deferred"}</div>
-          <p style={heroMetricTextStyle}>
-            {leadNumber?.label ?? "No reviewed numbered claim is available for the opening readout."}
+          <span style={eyebrow(V4.green)}>Open on the thesis</span>
+          <p style={heroThesisStyle}>
+            {openingClaim ? cxoText(openingClaim.statement) : "The executive storyline is not yet published for this tenant."}
           </p>
+          {supportingOpeningClaims.length > 0 ? (
+            <div style={heroReasonGridStyle}>
+              {supportingOpeningClaims.slice(0, 3).map((claim) => (
+                <p key={claim.claim_ref ?? claim.statement} style={heroReasonStyle}>{cxoText(claim.statement)}</p>
+              ))}
+            </div>
+          ) : null}
+          {leadNumber ? (
+            <p style={heroMetricTextStyle}>
+              <strong style={{ color: V4.ink }}>{leadNumber.value}</strong> {leadNumber.label}
+            </p>
+          ) : null}
         </div>
         <div style={heroProofStyle}>
           <span style={eyebrow(V4.slate)}>Trace</span>
@@ -418,12 +477,16 @@ function Hero({
           <p style={{ margin: "12px 0 0", fontFamily: MONO, fontSize: 12, color: V4.green }}>
             Six-section executive story: {terminalCount} of 6 sections present
           </p>
+          {scaleSource ? (
+            <p style={{ margin: "8px 0 0", fontFamily: MONO, fontSize: 11, color: V4.slate, lineHeight: 1.6 }}>
+              Scale fact: {scaleSource.label} · {scaleSource.ids}
+            </p>
+          ) : null}
+          <p style={{ margin: "10px 0 0", fontFamily: MONO, fontSize: 11, color: V4.slate, lineHeight: 1.6 }}>
+            {storyPlan.overallEvidenceBoundary}
+          </p>
         </div>
       </div>
-
-      {leadNumber ? (
-        <p style={heroClaimStyle}>{cxoText(leadNumber.claim.statement)}</p>
-      ) : null}
     </header>
   );
 }
@@ -780,17 +843,37 @@ const heroMetricStyle: CSSProperties = {
   padding: "30px 34px",
 };
 
-const heroNumberStyle: CSSProperties = {
-  marginTop: 10,
+const heroThesisStyle: CSSProperties = {
+  margin: "20px 0 0",
   fontFamily: SERIF,
-  fontSize: 78,
-  lineHeight: 0.95,
+  fontSize: 40,
+  lineHeight: 1.12,
   letterSpacing: 0,
   fontWeight: 500,
+  color: V4.ink,
+  maxWidth: "27ch",
+  textWrap: "balance",
+};
+
+const heroReasonGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))",
+  gap: 12,
+  marginTop: 22,
+};
+
+const heroReasonStyle: CSSProperties = {
+  margin: 0,
+  borderTop: `2px solid ${V4.green}`,
+  paddingTop: 10,
+  fontFamily: SANS,
+  fontSize: 14,
+  lineHeight: 1.45,
+  color: V4.inkSoft,
 };
 
 const heroMetricTextStyle: CSSProperties = {
-  margin: "12px 0 0",
+  margin: "22px 0 0",
   fontFamily: SANS,
   fontSize: 18,
   lineHeight: 1.45,
@@ -802,17 +885,6 @@ const heroProofStyle: CSSProperties = {
   borderLeft: `1px solid ${V4.rule}`,
   paddingLeft: 24,
   alignSelf: "stretch",
-};
-
-const heroClaimStyle: CSSProperties = {
-  margin: "30px 0 0",
-  fontFamily: SERIF,
-  fontSize: 42,
-  lineHeight: 1.08,
-  letterSpacing: 0,
-  fontWeight: 500,
-  maxWidth: "28ch",
-  textWrap: "balance",
 };
 
 const sectionShellStyle: CSSProperties = {

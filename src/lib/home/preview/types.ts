@@ -44,6 +44,55 @@ export type {
 
 export type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 
+export type HomeExecutiveStoryTerminalState = "published" | "refused" | "deferred";
+
+export type HomeExecutiveStorySectionId =
+  | "enterprise"
+  | "bets"
+  | "runs-on"
+  | "costs-returns"
+  | "exposed"
+  | "attention";
+
+export interface HomeExecutiveStorySectionPlan {
+  sectionId: HomeExecutiveStorySectionId;
+  state: HomeExecutiveStoryTerminalState;
+  leadClaimRef: string | null;
+  supportingClaimRefs: string[];
+  reasonCode: string | null;
+}
+
+export interface HomeExecutiveStoryPlanV1 {
+  contractVersion: "home-executive-story-plan/v1";
+  tenantKey: string;
+  assessmentId: string;
+  snapshotId: string | null;
+  openingThesisClaimRef: string | null;
+  openingSupportingClaimRefs: string[];
+  scaleFactRef: string | null;
+  decisions: Array<{
+    decisionId: string;
+    question: string;
+    whyNowClaimRefs: string[];
+    ownerRef: string | null;
+    handoffModule: "moves" | "source" | "tower" | "intelligence" | null;
+    evidenceNeeded: string[];
+  }>;
+  sectionOrder: HomeExecutiveStorySectionId[];
+  sections: HomeExecutiveStorySectionPlan[];
+  chapterStates: Record<
+    ChapterId,
+    {
+      state: HomeExecutiveStoryTerminalState;
+      reasonCode: string | null;
+    }
+  >;
+  heroVisualDatasetRef: string | null;
+  overallEvidenceBoundary: string;
+  sourceClaimRefs: string[];
+  storyPlanHash: string;
+}
+
 /** One tenant's persisted golden snapshot -- the full review bundle described in the workstream's
  * spec: thesis, all eight chapter payloads, published claims, verification ledger, visual specs,
  * and visual datasets, plus generation lineage. This is what a JSON file under
@@ -51,6 +100,7 @@ export type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPack
 export interface HomeReviewBundle {
   tenantKey: string;
   provenance: HomeReviewBundleProvenance;
+  executiveStoryPlan?: HomeExecutiveStoryPlanV1;
   chapters: ChapterView[];
   thesis: {
     signalPacket: EnterpriseSignalPacket;

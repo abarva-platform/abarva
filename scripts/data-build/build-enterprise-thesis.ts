@@ -211,6 +211,10 @@ export type ClaimType = "FACT" | "OBSERVATION" | "CROSS_DOMAIN_INSIGHT" | "ADVIS
 
 /** Every substantive claim in the thesis takes this shape. Nothing floats free of its evidence. */
 export interface GroundedClaim {
+  /** Optional stable publication reference. Narrative generation does not need it, but product
+   * renderers use it to prove they are ordering already-published claims rather than selecting
+   * facts heuristically at render time. */
+  claim_ref?: string;
   statement: string;
   evidence_ids: string[];
   confidence: "low" | "medium" | "high";
