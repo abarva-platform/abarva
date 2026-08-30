@@ -605,7 +605,7 @@ function DepChip({
 const SHELL: CSSProperties = {
   display: "grid",
   gap: 14,
-  color: "#06172f",
+  color: "#0a0a0b",
 };
 
 const HEADER: CSSProperties = {
@@ -649,7 +649,7 @@ const CRUMBS: CSSProperties = {
 
 const TITLE: CSSProperties = {
   margin: 0,
-  color: "#06172f",
+  color: "#0a0a0b",
   fontSize: 28,
   fontWeight: 800,
   letterSpacing: 0,
@@ -698,7 +698,7 @@ const SCOPE_BADGE: CSSProperties = {
   border: "1px solid rgba(10,31,68,.16)",
   borderRadius: 6,
   background: "#f7f9fc",
-  color: "#06172f",
+  color: "#0a0a0b",
   padding: "0 12px",
   fontSize: 12.5,
   fontWeight: 650,
@@ -726,14 +726,14 @@ const METRIC_CARD: CSSProperties = {
 };
 
 const METRIC_LABEL: CSSProperties = {
-  color: "#06172f",
+  color: "#0a0a0b",
   fontSize: 11.5,
   fontWeight: 750,
   lineHeight: 1.25,
 };
 
 const METRIC_VALUE: CSSProperties = {
-  color: "#06172f",
+  color: "#0a0a0b",
   fontSize: 22,
   fontWeight: 850,
   lineHeight: 1.05,
@@ -748,7 +748,7 @@ const METRIC_SUB: CSSProperties = {
 };
 
 const EMPTY_METRIC: CSSProperties = {
-  color: "#7a8799",
+  color: "#888780",
   fontSize: 12.5,
   lineHeight: 1.45,
   padding: 16,
@@ -776,7 +776,7 @@ const QUICK_BUTTON: CSSProperties = {
   border: "1px solid rgba(10,31,68,.12)",
   borderRadius: 7,
   background: "#f7f9fc",
-  color: "#06172f",
+  color: "#0a0a0b",
   minHeight: 42,
   padding: "0 10px",
   fontSize: 11.5,
@@ -853,13 +853,13 @@ const PANEL_HEADER: CSSProperties = {
 
 const PANEL_TITLE: CSSProperties = {
   margin: 0,
-  color: "#06172f",
+  color: "#0a0a0b",
   fontSize: 13.5,
   fontWeight: 850,
 };
 
 const PANEL_ACTION: CSSProperties = {
-  color: "#005bd3",
+  color: "#0f6e56",
   fontSize: 11.5,
   fontWeight: 750,
 };
@@ -894,7 +894,7 @@ const ALERT_ROW: CSSProperties = {
   border: "none",
   borderTop: "1px solid rgba(10,31,68,.09)",
   background: "transparent",
-  color: "#06172f",
+  color: "#0a0a0b",
   cursor: "pointer",
   padding: "12px 0",
   textAlign: "left",
@@ -913,7 +913,7 @@ const ALERT_DOT: CSSProperties = {
 
 const ALERT_TITLE: CSSProperties = {
   display: "block",
-  color: "#06172f",
+  color: "#0a0a0b",
   fontSize: 12.5,
   lineHeight: 1.35,
 };
@@ -927,7 +927,7 @@ const ALERT_BODY: CSSProperties = {
 };
 
 const ALERT_LINK: CSSProperties = {
-  color: "#005bd3",
+  color: "#0f6e56",
   fontSize: 11.5,
   fontWeight: 750,
 };
@@ -945,28 +945,28 @@ const ASSISTANT_CARD: CSSProperties = {
   border: "1px solid rgba(10,31,68,.10)",
   borderRadius: 8,
   background: "#fff",
-  color: "#06172f",
+  color: "#0a0a0b",
   cursor: "pointer",
   padding: "12px",
   textAlign: "left",
 };
 
 const SPARK: CSSProperties = {
-  color: "#0066cc",
+  color: "#0f6e56",
   fontSize: 18,
   lineHeight: 1,
 };
 
 const ASSISTANT_CTA: CSSProperties = {
   display: "block",
-  color: "#005bd3",
+  color: "#0f6e56",
   fontSize: 11.5,
   fontWeight: 750,
   marginTop: 8,
 };
 
 const EMPTY_SIDE_COPY: CSSProperties = {
-  color: "#7a8799",
+  color: "#888780",
   fontSize: 12.5,
   lineHeight: 1.45,
   padding: "12px 0",
@@ -1022,7 +1022,7 @@ const OPPORTUNITY_ROW: CSSProperties = {
 };
 
 const OPPORTUNITY_VALUE: CSSProperties = {
-  color: "#06172f",
+  color: "#0a0a0b",
   fontFamily: "'JetBrains Mono', monospace",
   fontSize: 12,
   fontWeight: 850,

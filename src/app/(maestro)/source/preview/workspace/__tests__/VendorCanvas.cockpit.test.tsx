@@ -41,8 +41,8 @@ function testVm(): SourceWorkspaceVM {
       {
         label: "Overview",
         onClick: noop,
-        line: "#005bd3",
-        fg: "#06172f",
+        line: "#0f6e56",
+        fg: "#0a0a0b",
         weight: 800,
       },
       {
