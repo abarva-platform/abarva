@@ -352,6 +352,24 @@ function rowsForFieldValue(rows: HomeProjectionWriteRow[], field: string, value:
   return rows.filter((row) => text(payload(row)[field]) === value).slice(0, limit);
 }
 
+function rowsForRankedFieldValues(
+  rows: HomeProjectionWriteRow[],
+  field: string,
+  items: Array<{ label: string }>,
+  rowsPerItem = 4,
+): HomeProjectionWriteRow[] {
+  const selected: HomeProjectionWriteRow[] = [];
+  const seen = new Set<string>();
+  for (const item of items) {
+    for (const row of rowsForFieldValue(rows, field, item.label, rowsPerItem)) {
+      if (seen.has(row.projection_entry_id)) continue;
+      seen.add(row.projection_entry_id);
+      selected.push(row);
+    }
+  }
+  return selected;
+}
+
 function evidenceRefsForRows(rows: HomeProjectionWriteRow[], limit = 20): string[] {
   return rows.map(contextId).slice(0, limit);
 }
@@ -766,7 +784,10 @@ function buildDeterministicHomeSignals(args: {
     signals.push({ id, kind, statement, domains, evidenceRefs, ...(value === undefined ? {} : { value }) });
   };
 
-  const topFunction = topCountShareRows(permittedApplications, "business_function", 5)[0];
+  const topFunctions = topCountShareRows(permittedApplications, "business_function", 8);
+  const topFunction = topFunctions[0];
+  const applicationCost = sumPayload(permittedApplications, "annual_cost_usd");
+  const applicationsWithCost = rowsWherePayload(permittedApplications, (data) => numberValue(data.annual_cost_usd) > 0);
   const tierOneApplications = rowsWherePayload(permittedApplications, (data) => /tier[-_\s]?1/i.test(text(data.criticality_tier) ?? ""));
   const lifecycleWatch = rowsWherePayload(permittedApplications, (data) => {
     const lifecycle = `${text(data.lifecycle_status) ?? ""} ${text(data.disposition) ?? ""} ${text(data.watch_status) ?? ""}`;
@@ -801,6 +822,28 @@ function buildDeterministicHomeSignals(args: {
       ["application_system"],
       rowsForFieldValue(permittedApplications, "business_function", topFunction.label),
       topFunction.sharePct,
+    );
+  }
+  if (topFunctions.length) {
+    add(
+      "sig_ecl_application_function_ranking_012",
+      "portfolio",
+      `The largest application functions by recorded application count are ${compactList(
+        topFunctions.map((item) => `${item.label} (${item.count.toLocaleString()} of ${permittedApplications.length.toLocaleString()}, ${item.sharePct.toFixed(1)}%)`),
+        8,
+      )}. Do not name another function as strategically prominent unless a cited fact states that prominence.`,
+      ["application_system"],
+      rowsForRankedFieldValues(permittedApplications, "business_function", topFunctions),
+    );
+  }
+  if (applicationCost > 0) {
+    add(
+      "sig_ecl_application_cost_013",
+      "portfolio",
+      `${applicationsWithCost.length.toLocaleString()} applications carry annual-cost evidence totaling $${(applicationCost / 1_000_000).toFixed(1)}M. This is recorded application annual cost, not a complete enterprise technology budget or finance-attested spend total unless another cited fact says so.`,
+      ["application_system", "spend_value_fact"],
+      applicationsWithCost,
+      applicationCost,
     );
   }
   add(
@@ -864,6 +907,13 @@ function buildDeterministicHomeSignals(args: {
       topFlowTarget.sharePct,
     );
   }
+  add(
+    "sig_ecl_data_flow_total_014",
+    "portfolio",
+    `The data-movement inventory contains ${permittedDataFlows.length.toLocaleString()} recorded source-to-target movement rows. This is an integration-record count, not transaction volume, data volume, business usage, or proof of analytics consumption.`,
+    ["data_asset_or_integration"],
+    permittedDataFlows,
+  );
   if (topFlowType) {
     add(
       "sig_ecl_integration_pattern_010",

@@ -420,6 +420,26 @@ item and write the absence plainly as an evidence limit. Do not transform an abs
 leadership, KPI, finance-attestation, or business-economics evidence into a strategic bet,
 leadership consensus, or value-realization claim.
 
+NUMERIC AND COMPARATIVE EVIDENCE
+Every number, rank, percentage, date, supplier share, application count, cost total, movement count,
+or named-function comparison in a claim must appear exactly in one of that claim's cited signal or
+context statements. Do not use packet metadata, source summaries, visual dataset rows, analytical
+lenses, or general background knowledge to support a number unless the same number is repeated in a
+cited sig_* or ctx_* item. A broad scope or coverage item can support a limitation, but it cannot
+support a precise figure. If a cited item says a value is only an application annual-cost total, do
+not rename it as a total technology budget, finance-attested spend, enterprise run-rate, or value
+pool. If a cited item says a movement count is an integration-record count, do not convert it into
+data volume, transaction volume, or proof of analytics consumption.
+
+Ranking language must also be grounded. You may say "largest", "top five", "second", or name a
+function as prominent only when a cited signal gives that ranking or the comparison set. Do not
+single out a function, supplier, program, or platform because it sounds strategically important
+unless the cited evidence states the count, share, or reason. Questions for management follow the
+same rule: they may ask what evidence is needed, but they must not imply that a plan, governance
+process, contingency process, framework, or leadership priority already exists unless a cited fact
+establishes it. Prefer fewer claims and questions over filling the shape with unsupported
+specificity.
+
 VALUE CREATION MODEL -- LEAD WITH THE BUSINESS, NOT THE TECHNOLOGY ESTATE
 value_creation_model exists to answer one question: how does this enterprise actually make money
 and create value? That is a business-economics question first -- revenue segments and their
@@ -492,7 +512,7 @@ mind at once.
   each.
 - leadership_consensus: 3-5 items. leadership_disagreements: 2-3 items.
 - performance_story: 2-3 items in each of where_improving / where_off_track / where_unknown.
-- things_a_new_cxo_should_know: 5-7 items. questions_for_management: 5-7 items, each a
+- things_a_new_cxo_should_know: 3-6 items. questions_for_management: 0-5 items, each a
   GroundedClaim whose statement is the question text -- if the question references a specific
   fact, number, program, or named entity, cite the evidence_ids that establish it exists; do not
   invent a detail (a percentage, a sponsor change, a dependency) to make a question sound sharper
@@ -536,8 +556,8 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
         value_realization_tensions: ["3-5 GroundedClaim"],
         what_needs_attention: ["3-5 GroundedClaim -- whatever most needs a decision or a look, drawn from any domain, not limited to risk"],
         evidence_gaps: ["string, as many as genuinely material"],
-        things_a_new_cxo_should_know: ["5-7 GroundedClaim"],
-        questions_for_management: ["5-7 GroundedClaim -- statement is the question text; evidence_ids ground any fact, number, program, or named entity the question references"],
+        things_a_new_cxo_should_know: ["3-6 GroundedClaim"],
+        questions_for_management: ["0-5 GroundedClaim -- statement is the question text; evidence_ids ground any fact, number, program, or named entity the question references"],
         visual_opportunities: [
           "0-6 VisualOpportunity: { visual_type: <from the allowed list>, title (answer-first), purpose, " +
             `dataset_ref (must be exactly one of: ${datasetNames.join(", ") || "(none available)"}), ` +
