@@ -36,7 +36,7 @@ Release lane: `global-control-lane`.
 ## Client Applicability
 
 - All clients: no
-- Specific clients: Meridian and SkyHarbor measurement runs only (plan-only, no writes)
+- Specific clients: none. Current use is limited to synthetic demo measurement runs (plan-only, no writes)
 - Internal only: yes — build tooling and gates
 - Public/demo only: no
 - Feature flag: none
