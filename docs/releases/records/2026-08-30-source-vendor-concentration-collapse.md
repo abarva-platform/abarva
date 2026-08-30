@@ -11,10 +11,11 @@
 ## Plain-English Summary
 
 The Source 360 executive vendor concentration summary now collapses duplicate
-supplier display names before ranking the largest relationships. Contract-level
-vendor references remain intact for drill-down, but executive rollups no longer
-show the same supplier as separate top-concentration rows when source rows carry
-legal-name variants.
+supplier display names before ranking the largest relationships, then derives
+the visible count and value metrics from unique contract IDs where contract rows
+are present. Contract-level vendor references remain intact for drill-down, but
+executive rollups no longer show the same supplier as separate top-concentration
+rows or overstate contract counts when source rows carry legal-name variants.
 
 ## Layer Impact
 
@@ -35,10 +36,13 @@ tenant rows are changed.
 ## Changes Included
 
 - Aggregates Source 360 vendor summary rows by normalized supplier display name.
-- Combines annual value, contract count, auto-renew counts, next end date, and
-  contract refs for duplicate display-name variants.
+- Combines duplicate supplier display-name variants into one executive row.
+- Uses unique contract IDs to derive visible contract count, annual value,
+  committed value, auto-renew count, and next end date when contract rows are
+  present.
 - Keeps contract-level vendor refs intact for drill-down behavior.
-- Adds a focused regression test for duplicate supplier display-name collapse.
+- Adds a focused regression test for duplicate supplier display-name collapse
+  and duplicate contract-reference count protection.
 
 ## QA / Validation
 
@@ -77,4 +81,5 @@ Source 360 vendor concentration summary.
 ## Known Gaps
 
 This release does not rewrite upstream vendor identity data. It only prevents
-display-name variants from appearing as separate executive summary rows.
+display-name variants and duplicate vendor assertions from distorting the
+executive summary.
