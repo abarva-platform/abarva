@@ -16,6 +16,8 @@ the visible count and value metrics from unique contract IDs where contract rows
 are present. Contract-level vendor references remain intact for drill-down, but
 executive rollups no longer show the same supplier as separate top-concentration
 rows or overstate contract counts when source rows carry legal-name variants.
+The same release also guards the Contract 360 benchmarking field so action
+narrative is not displayed as a clause fact.
 
 ## Layer Impact
 
@@ -41,8 +43,12 @@ tenant rows are changed.
   committed value, auto-renew count, and next end date when contract rows are
   present.
 - Keeps contract-level vendor refs intact for drill-down behavior.
+- Hides benchmarking-clause text when the source field contains action
+  narrative instead of a contract term.
 - Adds a focused regression test for duplicate supplier display-name collapse
   and duplicate contract-reference count protection.
+- Adds a focused regression test for action narrative withheld from the
+  benchmarking-clause field.
 
 ## QA / Validation
 
@@ -82,4 +88,5 @@ Source 360 vendor concentration summary.
 
 This release does not rewrite upstream vendor identity data. It only prevents
 display-name variants and duplicate vendor assertions from distorting the
-executive summary.
+executive summary, and prevents action narrative from being rendered as a
+contract clause.

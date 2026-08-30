@@ -1,4 +1,8 @@
-import { performanceActual, topVendors } from "../WorkspaceExecutiveShell";
+import {
+  displayBenchmarkingClause,
+  performanceActual,
+  topVendors,
+} from "../WorkspaceExecutiveShell";
 
 describe("WorkspaceExecutiveShell performance formatting", () => {
   it("renders numeric performance actuals from governed rows without throwing", () => {
@@ -107,5 +111,17 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       "CTR-0009",
     ]);
     expect(vendors[1]?.vendor_name).toBe("Amazon Web Services");
+  });
+
+  it("does not render action narrative as a benchmarking clause", () => {
+    expect(displayBenchmarkingClause("benchmarking clause present")).toBe(
+      "benchmarking clause present",
+    );
+    expect(
+      displayBenchmarkingClause(
+        "(1) Right-size the 8% unused entitlements at renewal -- approximately $4.14M annually at current unit pricing.",
+      ),
+    ).toBe("Not established");
+    expect(displayBenchmarkingClause(null)).toBe("Not established");
   });
 });
