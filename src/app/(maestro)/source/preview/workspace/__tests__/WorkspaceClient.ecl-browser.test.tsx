@@ -126,8 +126,13 @@ const WORKSPACE_ROUTE_DIR = path.join(
   "src/app/(maestro)/source/preview/workspace",
 );
 const LEGACY_COOL_TOKENS = [
+  "#0066cc",
   "#0066CC",
+  "#0052a3",
+  "#005bd3",
   "rgba(0,102,204",
+  "#06172f",
+  "#7a8799",
   "#0f7cf6",
   "#12b5cb",
   "#66758c",

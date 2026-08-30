@@ -12,11 +12,11 @@
   -webkit-font-smoothing: antialiased;
 }
 .sw-root a {
-  color: #0066cc;
+  color: #0f6e56;
   text-decoration: none;
 }
 .sw-root a:hover {
-  color: #0052a3;
+  color: #0a0a0b;
 }
 .sw-root button {
   font-family: inherit;
