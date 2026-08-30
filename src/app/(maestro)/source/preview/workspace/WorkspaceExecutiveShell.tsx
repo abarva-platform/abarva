@@ -32,7 +32,7 @@ const CONTRACT_TABS = [
 ] as const;
 const VENDOR_SUBTABS = ["Concentration", "Evidence depth", "Archetype mix"] as const;
 const CONTRACT_LIST_SUBTABS = ["Contract table", "Evidence depth", "Financial posture"] as const;
-const OPTIMIZE_SUBTABS = ["Action queue", "By type", "By contract"] as const;
+const OPTIMIZE_SUBTABS = ["Action queue", "Type mix", "Contract readiness"] as const;
 const GRAPH_SUBTABS = ["Flow", "Volume", "Spine"] as const;
 
 type PageLabel = (typeof PAGE_LABELS)[number];
@@ -1339,9 +1339,9 @@ function OptimizePage({
           onSelect={onOpenSubtab}
         />
         <PanelHead eyebrow="Optimize" title={optimizeSubtabTitle(subtab)} />
-        {subtab === "By type" ? (
+        {subtab === "Type mix" ? (
           <OptimizeByTypeTable portfolio={portfolio} />
-        ) : subtab === "By contract" ? (
+        ) : subtab === "Contract readiness" ? (
           <OptimizeByContractTable
             portfolio={portfolio}
             onOpenContract={onOpenContract}
@@ -1530,7 +1530,7 @@ function OptimizeByContractTable({
             <b>{actionSet.remainderCount} further action rows</b>
             <small>Summarized so the operator sees the ranked queue first.</small>
           </span>
-          <span>Open By type or Evidence for full lineage before action.</span>
+          <span>Open Type mix or Evidence for full lineage before action.</span>
           <span>{money(actionSet.remainderAmount)}</span>
           <span>Keep behind rollup until selected.</span>
         </div>
@@ -2793,8 +2793,8 @@ function contractListSubtabTitle(subtab: string) {
 }
 
 function optimizeSubtabTitle(subtab: string) {
-  if (subtab === "By type") return "Action rows grouped by type";
-  if (subtab === "By contract") return "Contract-level action rows";
+  if (subtab === "Type mix") return "Action rows grouped by type";
+  if (subtab === "Contract readiness") return "Contract-level action rows";
   return "Evidence-backed action queue";
 }
 

@@ -422,8 +422,8 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[0]);
     expect(screen.getByRole("tab", { name: "Action queue" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "By type" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "By contract" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Type mix" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Contract readiness" })).toBeTruthy();
     expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
     expect(screen.getByText("No optimize-ready action rows loaded.")).toBeTruthy();
     expect(screen.getByText("Evidence basis")).toBeTruthy();
@@ -432,7 +432,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText(/Proof Layers/i)).toBeNull();
     expect(screen.queryByText(/Action candidates/i)).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "By contract" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Contract readiness" }));
     expect(screen.getByText("Contract-level action rows")).toBeTruthy();
     expect(screen.getByText("No contract-level action rows loaded.")).toBeTruthy();
 
