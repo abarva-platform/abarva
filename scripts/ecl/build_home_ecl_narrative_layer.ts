@@ -323,6 +323,39 @@ function topSpendShareRows(
     .slice(0, limit);
 }
 
+function topCountShareRows(rows: HomeProjectionWriteRow[], labelField: string, limit: number): Array<{ label: string; count: number; sharePct: number }> {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    const label = text(payload(row)[labelField]) ?? "(not specified)";
+    totals.set(label, (totals.get(label) ?? 0) + 1);
+  }
+  return Array.from(totals, ([label, count]) => ({
+    label,
+    count,
+    sharePct: rows.length ? Number(((count / rows.length) * 100).toFixed(1)) : 0,
+  }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
+
+function rowsWherePayload(rows: HomeProjectionWriteRow[], predicate: (data: JsonRecord) => boolean): HomeProjectionWriteRow[] {
+  return rows.filter((row) => predicate(payload(row)));
+}
+
+function compactList(values: string[], limit = 3): string {
+  const visible = values.slice(0, limit);
+  const remainder = values.length - visible.length;
+  return remainder > 0 ? `${visible.join(", ")} and ${remainder.toLocaleString()} more` : visible.join(", ");
+}
+
+function rowsForFieldValue(rows: HomeProjectionWriteRow[], field: string, value: string, limit = 20): HomeProjectionWriteRow[] {
+  return rows.filter((row) => text(payload(row)[field]) === value).slice(0, limit);
+}
+
+function evidenceRefsForRows(rows: HomeProjectionWriteRow[], limit = 20): string[] {
+  return rows.map(contextId).slice(0, limit);
+}
+
 function contextId(row: HomeProjectionWriteRow): string {
   return `ctx_ecl_${row.page_key}_${row.row_type}_${row.row_key}`.replace(/[^a-zA-Z0-9_]/g, "_");
 }
@@ -641,12 +674,190 @@ function makeVisual(datasetRef: string, title: string, keyMessage: string, evide
   return {
     visual_type: "horizontal_bar",
     title,
-    purpose: "Render a precomputed ECL projection dataset without generating values.",
+    purpose: "Render a precomputed governed dataset without generating values.",
     dataset_ref: datasetRef,
     key_message: keyMessage,
     evidence_ids: evidenceIds,
     priority: "high",
   };
+}
+
+function buildDeterministicHomeSignals(args: {
+  permittedApplications: HomeProjectionWriteRow[];
+  permittedContracts: HomeProjectionWriteRow[];
+  permittedInfrastructure: HomeProjectionWriteRow[];
+  permittedDataFlows: HomeProjectionWriteRow[];
+  permittedRows: HomeProjectionWriteRow[];
+  contractSpend: number;
+  vendorRows: Array<Record<string, unknown>>;
+}): Signal[] {
+  const {
+    permittedApplications,
+    permittedContracts,
+    permittedInfrastructure,
+    permittedDataFlows,
+    permittedRows,
+    contractSpend,
+    vendorRows,
+  } = args;
+  const signals: Signal[] = [];
+  const add = (
+    id: string,
+    kind: Signal["kind"],
+    statement: string,
+    domains: string[],
+    evidenceRows: HomeProjectionWriteRow[],
+    value?: number,
+  ) => {
+    const evidenceRefs = evidenceRefsForRows(evidenceRows);
+    if (evidenceRefs.length === 0) return;
+    signals.push({ id, kind, statement, domains, evidenceRefs, ...(value === undefined ? {} : { value }) });
+  };
+
+  const topFunction = topCountShareRows(permittedApplications, "business_function", 5)[0];
+  const tierOneApplications = rowsWherePayload(permittedApplications, (data) => /tier[-_\s]?1/i.test(text(data.criticality_tier) ?? ""));
+  const lifecycleWatch = rowsWherePayload(permittedApplications, (data) => {
+    const lifecycle = `${text(data.lifecycle_status) ?? ""} ${text(data.disposition) ?? ""} ${text(data.watch_status) ?? ""}`;
+    return /watch|aging|replace|legacy|retir/i.test(lifecycle);
+  });
+  const topVendor = vendorRows[0];
+  const autoRenewContracts = rowsWherePayload(permittedContracts, (data) => /^true$/i.test(text(data.auto_renew) ?? ""));
+  const longNoticeContracts = rowsWherePayload(permittedContracts, (data) => payloadNumber(data, "notice_window_days", "notice_period_days") >= 180);
+  const contractsWithValue = rowsWherePayload(permittedContracts, (data) => payloadNumber(data, "annualized_value_usd", "annual_spend_usd") > 0);
+  const topHosting = topCountShareRows(permittedInfrastructure, "hosting_model", 5)[0];
+  const supportDatedPlatforms = rowsWherePayload(permittedInfrastructure, (data) => Boolean(text(data.support_end_date)));
+  const criticalPlatforms = rowsWherePayload(permittedInfrastructure, (data) => /tier[-_\s]?1|critical/i.test(text(data.criticality_tier) ?? ""));
+  const topFlowTarget = topCountShareRows(permittedDataFlows, "target_system", 5)[0];
+  const topFlowType = topCountShareRows(permittedDataFlows, "integration_type", 5)[0];
+  const consumptionLayers = topCountShareRows(permittedDataFlows, "consumption_layer", 4)
+    .filter((item) => item.label !== "(not specified)")
+    .map((item) => `${item.label} (${item.count.toLocaleString()})`);
+  const chapterEvidenceRows = (pageKey: string) => permittedRows.filter((row) => row.page_key === pageKey).slice(0, 20);
+
+  add(
+    "sig_ecl_estate_001",
+    "portfolio",
+    `The executive-ready record contains ${permittedApplications.length.toLocaleString()} applications, ${permittedContracts.length.toLocaleString()} contracts, ${permittedInfrastructure.length.toLocaleString()} infrastructure and platform records, and ${permittedDataFlows.length.toLocaleString()} data movements.`,
+    ["application_system", "vendor_contract", "infrastructure_platform", "data_asset_or_integration"],
+    [...permittedApplications, ...permittedContracts, ...permittedInfrastructure, ...permittedDataFlows],
+  );
+  if (topFunction) {
+    add(
+      "sig_ecl_application_function_002",
+      "concentration",
+      `${topFunction.label} is the largest application function in the current estate at ${topFunction.count.toLocaleString()} of ${permittedApplications.length.toLocaleString()} applications (${topFunction.sharePct.toFixed(1)}%).`,
+      ["application_system"],
+      rowsForFieldValue(permittedApplications, "business_function", topFunction.label),
+      topFunction.sharePct,
+    );
+  }
+  add(
+    "sig_ecl_application_criticality_003",
+    "risk",
+    `${tierOneApplications.length.toLocaleString()} of ${permittedApplications.length.toLocaleString()} applications are marked tier-1, while ${lifecycleWatch.length.toLocaleString()} carry lifecycle or replacement-watch evidence.`,
+    ["application_system"],
+    [...tierOneApplications, ...lifecycleWatch],
+  );
+  if (topVendor) {
+    const topVendorLabel = String(topVendor.label);
+    const topFiveShare = vendorRows.slice(0, 5).reduce((sum, item) => sum + numberValue(item.sharePct), 0);
+    add(
+      "sig_ecl_vendor_concentration_004",
+      "concentration",
+      `${topVendorLabel} is the largest supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of ready contract value; the top five supplier groups account for ${topFiveShare.toFixed(1)}%.`,
+      ["vendor_contract", "spend_value_fact"],
+      rowsForFieldValue(permittedContracts, "supplier_name", topVendorLabel),
+      Number(topVendor.sharePct),
+    );
+  }
+  add(
+    "sig_ecl_contract_value_005",
+    "portfolio",
+    `${contractsWithValue.length.toLocaleString()} contracts carry annualized-value evidence totaling $${(contractSpend / 1_000_000).toFixed(1)}M across the ready contract base.`,
+    ["vendor_contract", "spend_value_fact"],
+    contractsWithValue,
+    contractSpend,
+  );
+  add(
+    "sig_ecl_contract_flexibility_006",
+    "risk",
+    `${autoRenewContracts.length.toLocaleString()} ready contracts are marked auto-renewal and ${longNoticeContracts.length.toLocaleString()} require at least 180 days notice, making renewal timing a commercial control to inspect before asserting savings or flexibility.`,
+    ["vendor_contract", "spend_value_fact"],
+    [...autoRenewContracts, ...longNoticeContracts],
+  );
+  if (topHosting) {
+    add(
+      "sig_ecl_hosting_mix_007",
+      "complexity",
+      `${topHosting.label} is the largest hosting model among infrastructure and platform records at ${topHosting.count.toLocaleString()} of ${permittedInfrastructure.length.toLocaleString()} records (${topHosting.sharePct.toFixed(1)}%).`,
+      ["infrastructure_platform", "application_system"],
+      rowsForFieldValue(permittedInfrastructure, "hosting_model", topHosting.label),
+      topHosting.sharePct,
+    );
+  }
+  add(
+    "sig_ecl_platform_resilience_008",
+    "risk",
+    `${supportDatedPlatforms.length.toLocaleString()} infrastructure or platform records carry support-end dates, and ${criticalPlatforms.length.toLocaleString()} carry tier-1 or criticality evidence.`,
+    ["infrastructure_platform"],
+    [...supportDatedPlatforms, ...criticalPlatforms],
+  );
+  if (topFlowTarget) {
+    add(
+      "sig_ecl_data_flow_convergence_009",
+      "dependency",
+      `${topFlowTarget.label} is the most frequent recorded data-movement destination at ${topFlowTarget.count.toLocaleString()} of ${permittedDataFlows.length.toLocaleString()} movements (${topFlowTarget.sharePct.toFixed(1)}%).`,
+      ["data_asset_or_integration", "application_system"],
+      rowsForFieldValue(permittedDataFlows, "target_system", topFlowTarget.label),
+      topFlowTarget.sharePct,
+    );
+  }
+  if (topFlowType) {
+    add(
+      "sig_ecl_integration_pattern_010",
+      "complexity",
+      `${topFlowType.label} is the most common recorded integration pattern at ${topFlowType.count.toLocaleString()} of ${permittedDataFlows.length.toLocaleString()} movements (${topFlowType.sharePct.toFixed(1)}%).`,
+      ["data_asset_or_integration"],
+      rowsForFieldValue(permittedDataFlows, "integration_type", topFlowType.label),
+      topFlowType.sharePct,
+    );
+  }
+  if (consumptionLayers.length) {
+    add(
+      "sig_ecl_data_consumption_011",
+      "portfolio",
+      `The data-movement record names consumption layers including ${compactList(consumptionLayers)}, so the analytics story should distinguish source movement from business consumption.`,
+      ["data_asset_or_integration"],
+      permittedDataFlows,
+    );
+  }
+  for (const [pageKey, label, domains] of [
+    ["our_business", "business model", ["enterprise_profile", "application_system"]],
+    ["strategy_value_creation", "strategy and value", ["spend_value_fact", "vendor_contract"]],
+    ["how_we_operate", "operating model", ["application_system", "data_asset_or_integration"]],
+    ["technology_data", "technology and data", ["application_system", "infrastructure_platform", "data_asset_or_integration"]],
+    ["performance_value", "performance and value", ["spend_value_fact", "vendor_contract"]],
+    ["leadership_perspective", "leadership perspective", ["evidence_sources"]],
+    ["what_needs_attention", "executive attention", ["risk_control", "vendor_contract", "infrastructure_platform"]],
+  ] as Array<[string, string, string[]]>) {
+    const evidenceRows = chapterEvidenceRows(pageKey);
+    if (evidenceRows.length === 0) continue;
+    add(
+      `sig_ecl_${pageKey}_coverage`,
+      "operational",
+      `The ${label} chapter has ${evidenceRows.length.toLocaleString()} ready evidence items available; its conclusions should stay within those named items and their cited source records.`,
+      domains,
+      evidenceRows,
+    );
+  }
+  add(
+    "sig_ecl_source_breadth_guardrail_019",
+    "data_quality",
+    `This narrative packet is built from ${permittedRows.length.toLocaleString()} ready governed facts; source-family summaries describe intake breadth but are not evidence for a business claim by themselves.`,
+    ["evidence_sources"],
+    permittedRows,
+  );
+  return signals;
 }
 
 function buildGovernedSignalPacket(
@@ -691,42 +902,15 @@ function buildGovernedSignalPacket(
   ];
   const contractSpend = permittedContracts.reduce((sum, row) => sum + payloadNumber(payload(row), "annualized_value_usd", "annual_spend_usd"), 0);
   const vendorRows = topSpendShareRows(permittedContracts, "supplier_name", "annualized_value_usd", 8);
-  const topVendor = vendorRows[0];
-  const allUsableRowIds = validatedRows.usable.map((candidate) => candidate.id);
-  const rowIdsFor = (needle: string) => allUsableRowIds.filter((id) => id.includes(needle)).slice(0, 20);
-
-  const rawSignals: Signal[] = [
-    {
-      id: "sig_ecl_estate_001",
-      kind: "portfolio",
-      statement: `The governed record contains ${permittedApplications.length.toLocaleString()} applications, ${permittedContracts.length.toLocaleString()} contracts, ${permittedInfrastructure.length.toLocaleString()} infrastructure/platform records, and ${permittedDataFlows.length.toLocaleString()} data-flow movements eligible for executive use.`,
-      domains: ["application_system", "vendor_contract", "infrastructure_platform", "data_asset_or_integration"],
-      evidenceRefs: allUsableRowIds.slice(0, 20),
-    },
-    {
-      id: "sig_ecl_vendor_002",
-      kind: "concentration",
-      statement: topVendor
-        ? `The governed contract record contains ${permittedContracts.length.toLocaleString()} contracts with $${(contractSpend / 1_000_000).toFixed(1)}M annualized value; ${String(topVendor.label)} is the largest visible supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of ready contract value.`
-        : "The governed contract record has no supplier spend facts eligible for executive use.",
-      domains: ["vendor_contract", "spend_value_fact"],
-      evidenceRefs: rowIdsFor("_vendor_contracts_"),
-    },
-    {
-      id: "sig_ecl_data_flow_003",
-      kind: "complexity",
-      statement: `The governed data-flow record contains ${permittedDataFlows.length.toLocaleString()} source-target movements eligible for executive use, giving the architecture and data-flow pages topology evidence rather than a fixed inventory list.`,
-      domains: ["data_asset_or_integration", "application_system"],
-      evidenceRefs: rowIdsFor("_data_flow_"),
-    },
-    {
-      id: "sig_ecl_writer_004",
-      kind: "operational",
-      statement: "Home narrative prose is allowed to use only governed facts with citations, while factual counts remain deterministic record facts.",
-      domains: ["evidence_sources", "application_system", "vendor_contract"],
-      evidenceRefs: allUsableRowIds.slice(0, 20),
-    },
-  ];
+  const rawSignals = buildDeterministicHomeSignals({
+    permittedApplications,
+    permittedContracts,
+    permittedInfrastructure,
+    permittedDataFlows,
+    permittedRows,
+    contractSpend,
+    vendorRows,
+  });
   const signalCandidates = rawSignals.map((signal) => governedCandidateForSignal(signal, tenantKey, renderedAt));
   const validatedSignals = buildValidatedAgentContextBundle(signalCandidates, { requireAgentReady: true });
   const usableSignalIds = new Set(validatedSignals.usable.map((candidate) => candidate.id));
