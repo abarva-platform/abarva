@@ -1,17 +1,5 @@
 /**
- * Read-only dump of how the deployed serving views actually resolve a generation.
- *
- * `serving.tower_ai_portfolio` returns 415 rows for a tenant whose active generation holds 55.
- * 415 is 360 retired plus 55 current, so the view is returning every generation. The migration
- * that defines `serving.tower_ai_rows` joins `serving.tower_active_assessment_keys()`, which
- * should make that impossible — so either the deployed view is not the one in that migration, or
- * the join is not doing what it reads as doing.
- *
- * The app compensates by filtering in TypeScript (`rowsForActiveServingIdentity`), which is why
- * the page is correct while the view is not. Any other consumer of these views sees every
- * generation.
- *
- * Strictly read-only.
+ * Read-only dump of how the deployed Tower serving views resolve active generations and page keys.
  */
 
 import process from "node:process";
@@ -21,6 +9,16 @@ const VIEWS = [
   "tower_adoption_lens",
   "tower_command_center",
   "tower_value_proof",
+  "tower_evidence",
+  "tower_cost_lens",
+  "tower_risk_lens",
+];
+
+const FUNCTIONS = [
+  "tower_ai_rows",
+  "tower_command_rows",
+  "tower_value_rows",
+  "tower_evidence_rows",
 ];
 
 async function main() {
@@ -49,26 +47,36 @@ async function main() {
     const fn = await client.query(
       `select p.proname, pg_get_functiondef(p.oid) as body
          from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-        where n.nspname = 'serving' and p.proname in ('tower_ai_rows','tower_command_rows')`,
+        where n.nspname = 'serving' and p.proname = any($1::text[])
+        order by p.proname`,
+      [FUNCTIONS],
     );
     for (const r of fn.rows) {
       const body = String(r.body ?? "");
       console.log(
-        `function\t${r.proname}\tjoins_active_keys=${body.includes("tower_active_assessment_keys")}\tlen=${body.length}`,
+        [
+          "function",
+          r.proname,
+          `joins_active_keys=${body.includes("tower_active_assessment_keys")}`,
+          `uses_page_key_arg=${body.includes("page_key_arg")}`,
+          `len=${body.length}`,
+        ].join("\t"),
       );
     }
 
     console.log("=== 3. rows the view returns, per generation ===");
-    const perGen = await client.query(
-      `select tenant_key, assessment_id, projection_version, count(*)::int as rows
-         from serving.tower_ai_portfolio
-        group by tenant_key, assessment_id, projection_version
-        order by tenant_key, projection_version desc`,
-    );
-    for (const r of perGen.rows) {
-      console.log(
-        `view_rows\ttower_ai_portfolio\t${r.tenant_key}\t${r.assessment_id}\tv${r.projection_version}\t${r.rows}`,
+    for (const v of VIEWS) {
+      const perGen = await client.query(
+        `select tenant_key, assessment_id, projection_version, count(*)::int as rows
+           from serving.${v}
+          group by tenant_key, assessment_id, projection_version
+          order by tenant_key, projection_version desc`,
       );
+      for (const r of perGen.rows) {
+        console.log(
+          `view_rows\t${v}\t${r.tenant_key}\t${r.assessment_id}\tv${r.projection_version}\t${r.rows}`,
+        );
+      }
     }
 
     console.log("=== 4. what the active-keys function says right now ===");
@@ -82,11 +90,7 @@ async function main() {
     }
 
     console.log("=== 5. the deployed bodies, verbatim ===");
-    // The repo's migration defines these functions with the join and that migration is applied,
-    // yet the deployed bodies do not contain it. Something replaced them since. Re-creating from
-    // the repo would therefore change more than the join, so the deployed text is the only safe
-    // basis for a minimal fix.
-    for (const name of ["tower_ai_rows", "tower_command_rows"]) {
+    for (const name of FUNCTIONS) {
       const r = await client.query(
         `select pg_get_functiondef(p.oid) as body
            from pg_proc p join pg_namespace n on n.oid = p.pronamespace
