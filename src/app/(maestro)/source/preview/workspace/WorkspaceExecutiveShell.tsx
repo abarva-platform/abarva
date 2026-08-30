@@ -28,6 +28,10 @@ const CONTRACT_TABS = [
   "Evidence",
   "Optimize",
 ] as const;
+const VENDOR_SUBTABS = ["Concentration", "Evidence depth", "Archetype mix"] as const;
+const CONTRACT_LIST_SUBTABS = ["Contract table", "Evidence depth", "Financial posture"] as const;
+const OPTIMIZE_SUBTABS = ["Action queue", "By type", "By contract"] as const;
+const GRAPH_SUBTABS = ["Flow", "Volume", "Spine"] as const;
 
 type PageLabel = (typeof PAGE_LABELS)[number];
 type ExecutiveVendorRow = SourceVendorContractPortfolioRow & {
@@ -67,6 +71,7 @@ export function WorkspaceExecutiveShell({
       ) ?? null)
     : null;
   const currentPage = activePage(logic, vm);
+  const headerContract = vm.isContract ? selectedContract : null;
   const totalAnnualValue = portfolioAnnualValue(portfolio);
   const decisionSupport = supportByLabel(portfolio, "Exposed annual value");
   const windowSupport = supportByLabel(portfolio, "Decision window");
@@ -102,6 +107,10 @@ export function WorkspaceExecutiveShell({
     }
     if (page === "Vendors") {
       logic.select("vendorList", null);
+      return;
+    }
+    if (page === "Contracts") {
+      logic.select("contractList", null);
       return;
     }
     if (page === "Evidence") {
@@ -169,7 +178,7 @@ export function WorkspaceExecutiveShell({
                 currentPage,
                 tenantName,
                 selectedVendor,
-                selectedContract,
+                headerContract,
               )}
             </h1>
             <p>
@@ -177,7 +186,7 @@ export function WorkspaceExecutiveShell({
                 currentPage,
                 portfolio,
                 selectedVendor,
-                selectedContract,
+                headerContract,
               )}
             </p>
           </div>
@@ -266,19 +275,30 @@ export function WorkspaceExecutiveShell({
             portfolio={portfolio}
             selectedVendor={selectedVendor}
             totalAnnualValue={totalAnnualValue}
+            subtab={logic.state.tabs.vendorList ?? "Concentration"}
+            onOpenSubtab={(tab) => logic.setTab("vendorList", tab)}
             onOpenVendor={openVendor}
             onOpenContract={openContract}
           />
         ) : null}
 
-        {currentPage === "Contracts" && selectedContract ? (
-          <ContractPage
-            vm={vm}
-            logic={logic}
-            portfolio={portfolio}
-            contract={selectedContract}
-            onOpenTab={(tab) => logic.setTab("contract", tab)}
-          />
+        {currentPage === "Contracts" ? (
+          vm.isContract && selectedContract ? (
+            <ContractPage
+              vm={vm}
+              logic={logic}
+              portfolio={portfolio}
+              contract={selectedContract}
+              onOpenTab={(tab) => logic.setTab("contract", tab)}
+            />
+          ) : (
+            <ContractsPage
+              portfolio={portfolio}
+              subtab={logic.state.tabs.contractList ?? "Contract table"}
+              onOpenSubtab={(tab) => logic.setTab("contractList", tab)}
+              onOpenContract={openContract}
+            />
+          )
         ) : null}
 
         {currentPage === "Optimize" && selectedContract ? (
@@ -290,6 +310,8 @@ export function WorkspaceExecutiveShell({
             performanceRows={performanceRows}
             spendRows={spendRows}
             portfolio={portfolio}
+            subtab={logic.state.tabs.optimize ?? "Action queue"}
+            onOpenSubtab={(tab) => logic.setTab("optimize", tab)}
             onOpenContract={openContract}
           />
         ) : null}
@@ -299,7 +321,11 @@ export function WorkspaceExecutiveShell({
         ) : null}
 
         {currentPage === "Contract graph" ? (
-          <ContractGraphPage portfolio={portfolio} />
+          <ContractGraphPage
+            portfolio={portfolio}
+            subtab={logic.state.tabs.graph ?? "Flow"}
+            onOpenSubtab={(tab) => logic.setTab("graph", tab)}
+          />
         ) : null}
       </section>
     </main>
@@ -503,12 +529,16 @@ function VendorsPage({
   portfolio,
   selectedVendor,
   totalAnnualValue,
+  subtab,
+  onOpenSubtab,
   onOpenVendor,
   onOpenContract,
 }: {
   portfolio: SourceWorkspacePortfolioData;
   selectedVendor: ExecutiveVendorRow | null;
   totalAnnualValue: number | null;
+  subtab: string;
+  onOpenSubtab: (tab: string) => void;
   onOpenVendor: (vendorRef: string) => void;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
@@ -527,36 +557,35 @@ function VendorsPage({
   return (
     <div className="sw-v2-grid">
       <section className="sw-v2-panel sw-v2-span-2">
+        <SubtabBar
+          tabs={VENDOR_SUBTABS}
+          active={subtab}
+          onSelect={onOpenSubtab}
+        />
         <PanelHead
           eyebrow="Vendor 360"
-          title="One row per supplier relationship"
+          title={vendorSubtabTitle(subtab)}
         />
-        <div className="sw-v2-table">
-          <div className="sw-v2-table-head sw-v2-vendor-row">
-            <span>Vendor</span>
-            <span>Contracts</span>
-            <span>Annual value</span>
-            <span>Share</span>
-          </div>
-          {vendors.slice(0, 12).map((vendor) => (
-            <button
-              key={vendor.vendor_ref}
-              type="button"
-              className={`sw-v2-table-row sw-v2-vendor-row ${selectedVendor?.vendor_ref === vendor.vendor_ref ? "is-selected" : ""}`}
-              onClick={() => onOpenVendor(vendor.vendor_ref)}
-            >
-              <span>
-                <b>{vendor.vendor_name}</b>
-                <small>
-                  {vendor.vendor_category ?? "Category not established"}
-                </small>
-              </span>
-              <span>{vendor.contract_count}</span>
-              <span>{money(numberFromDb(vendor.annual_value))}</span>
-              <span>{formatShare(vendor, totalAnnualValue)}</span>
-            </button>
-          ))}
-        </div>
+        {subtab === "Evidence depth" ? (
+          <VendorEvidenceDepthTable
+            portfolio={portfolio}
+            vendors={vendors}
+            selectedVendor={selectedVendor}
+            onOpenVendor={onOpenVendor}
+          />
+        ) : subtab === "Archetype mix" ? (
+          <VendorArchetypeTable
+            portfolio={portfolio}
+            onOpenVendor={onOpenVendor}
+          />
+        ) : (
+          <VendorConcentrationTable
+            vendors={vendors}
+            selectedVendor={selectedVendor}
+            totalAnnualValue={totalAnnualValue}
+            onOpenVendor={onOpenVendor}
+          />
+        )}
       </section>
 
       <section className="sw-v2-panel">
@@ -627,6 +656,316 @@ function VendorsPage({
           </p>
         )}
       </section>
+    </div>
+  );
+}
+
+function VendorConcentrationTable({
+  vendors,
+  selectedVendor,
+  totalAnnualValue,
+  onOpenVendor,
+}: {
+  vendors: readonly ExecutiveVendorRow[];
+  selectedVendor: ExecutiveVendorRow | null;
+  totalAnnualValue: number | null;
+  onOpenVendor: (vendorRef: string) => void;
+}) {
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-vendor-row">
+        <span>Vendor</span>
+        <span>Contracts</span>
+        <span>Annual value</span>
+        <span>Share</span>
+      </div>
+      {vendors.slice(0, 12).map((vendor) => (
+        <button
+          key={vendor.vendor_ref}
+          type="button"
+          className={`sw-v2-table-row sw-v2-vendor-row ${selectedVendor?.vendor_ref === vendor.vendor_ref ? "is-selected" : ""}`}
+          onClick={() => onOpenVendor(vendor.vendor_ref)}
+        >
+          <span>
+            <b>{vendor.vendor_name}</b>
+            <small>{vendor.vendor_category ?? "Category not established"}</small>
+          </span>
+          <span>{vendor.contract_count}</span>
+          <span>{money(numberFromDb(vendor.annual_value))}</span>
+          <span>{formatShare(vendor, totalAnnualValue)}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function VendorEvidenceDepthTable({
+  portfolio,
+  vendors,
+  selectedVendor,
+  onOpenVendor,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+  vendors: readonly ExecutiveVendorRow[];
+  selectedVendor: ExecutiveVendorRow | null;
+  onOpenVendor: (vendorRef: string) => void;
+}) {
+  const coverageByVendor = vendorCoverageRows(portfolio);
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-vendor-depth-row">
+        <span>Vendor</span>
+        <span>Spend rows</span>
+        <span>Performance rows</span>
+        <span>Action candidates</span>
+        <span>Unclaimed credits</span>
+      </div>
+      {vendors.slice(0, 12).map((vendor) => {
+        const coverage = coverageByVendor.get(vendor.vendor_ref);
+        return (
+          <button
+            key={vendor.vendor_ref}
+            type="button"
+            className={`sw-v2-table-row sw-v2-vendor-depth-row ${selectedVendor?.vendor_ref === vendor.vendor_ref ? "is-selected" : ""}`}
+            onClick={() => onOpenVendor(vendor.vendor_ref)}
+          >
+            <span>
+              <b>{vendor.vendor_name}</b>
+              <small>{vendor.contract_count} contracts</small>
+            </span>
+            <span>{formatCount(coverage?.spendRows)}</span>
+            <span>{formatCount(coverage?.performanceRows)}</span>
+            <span>{formatCount(coverage?.actionCandidates)}</span>
+            <span>{money(coverage?.unclaimedCredit ?? null)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function VendorArchetypeTable({
+  portfolio,
+  onOpenVendor,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+  onOpenVendor: (vendorRef: string) => void;
+}) {
+  const rows = vendorArchetypeRows(portfolio);
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-archetype-row">
+        <span>Archetype</span>
+        <span>Vendors</span>
+        <span>Contracts</span>
+        <span>Annual value</span>
+        <span>Representative vendor</span>
+      </div>
+      {rows.map((row) => (
+        <button
+          key={row.category}
+          type="button"
+          className="sw-v2-table-row sw-v2-archetype-row"
+          onClick={() => {
+            if (row.vendorRef) onOpenVendor(row.vendorRef);
+          }}
+        >
+          <span>
+            <b>{row.category}</b>
+            <small>Declared category; no inferred taxonomy override.</small>
+          </span>
+          <span>{row.vendorCount}</span>
+          <span>{row.contractCount}</span>
+          <span>{money(row.annualValue)}</span>
+          <span>{row.vendorName ?? "Not established"}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ContractsPage({
+  portfolio,
+  subtab,
+  onOpenSubtab,
+  onOpenContract,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+  subtab: string;
+  onOpenSubtab: (tab: string) => void;
+  onOpenContract: (contractId: string, tab?: string) => void;
+}) {
+  return (
+    <div className="sw-v2-grid">
+      <section className="sw-v2-panel sw-v2-span-2">
+        <SubtabBar
+          tabs={CONTRACT_LIST_SUBTABS}
+          active={subtab}
+          onSelect={onOpenSubtab}
+        />
+        <PanelHead eyebrow="Contracts" title={contractListSubtabTitle(subtab)} />
+        {subtab === "Evidence depth" ? (
+          <ContractEvidenceDepthTable
+            portfolio={portfolio}
+            onOpenContract={onOpenContract}
+          />
+        ) : subtab === "Financial posture" ? (
+          <ContractFinancialPostureTable
+            portfolio={portfolio}
+            onOpenContract={onOpenContract}
+          />
+        ) : (
+          <ContractListTable
+            portfolio={portfolio}
+            onOpenContract={onOpenContract}
+          />
+        )}
+      </section>
+
+      <section className="sw-v2-panel">
+        <PanelHead eyebrow="Contract list guardrail" title="Rows before story" />
+        <div className="sw-v2-fact-stack">
+          <Fact label="Contracts" value={String(portfolio.contracts.length)} />
+          <Fact
+            label="Evidence coverage rows"
+            value={String(portfolio.impact.evidenceCoverage.length)}
+          />
+          <Fact
+            label="Action candidates"
+            value={String(portfolio.impact.actionCandidates.length)}
+          />
+          <Fact label="Finance confirmed" value="Not established" />
+          <p className="sw-v2-muted">
+            Open a contract row for Story, Scope, Economics, Performance,
+            Relationship, Evidence, and Optimize detail.
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ContractListTable({
+  portfolio,
+  onOpenContract,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+  onOpenContract: (contractId: string, tab?: string) => void;
+}) {
+  const contracts = contractsByAnnualValue(portfolio.contracts);
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-contract-row">
+        <span>Contract</span>
+        <span>Vendor</span>
+        <span>Category</span>
+        <span>Annual value</span>
+        <span>End date</span>
+      </div>
+      {contracts.slice(0, 14).map((contract) => (
+        <button
+          key={contract.contract_id}
+          type="button"
+          className="sw-v2-table-row sw-v2-contract-row"
+          onClick={() => onOpenContract(contract.contract_id)}
+        >
+          <span>
+            <b>{contract.contract_name}</b>
+            <small>{contract.contract_id}</small>
+          </span>
+          <span>{contract.vendor_name}</span>
+          <span>{contract.vendor_category ?? "Not established"}</span>
+          <span>{money(numberFromDb(contract.annual_value))}</span>
+          <span>{fmtDate(contract.end_date)}</span>
+        </button>
+      ))}
+      {contracts.length > 14 ? (
+        <div className="sw-v2-table-foot">
+          Showing 14 of {contracts.length} contract rows.
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ContractEvidenceDepthTable({
+  portfolio,
+  onOpenContract,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+  onOpenContract: (contractId: string, tab?: string) => void;
+}) {
+  const coverageByContract = new Map(
+    portfolio.impact.evidenceCoverage.map((row) => [row.contract_id, row]),
+  );
+  const contracts = contractsByAnnualValue(portfolio.contracts);
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-contract-depth-row">
+        <span>Contract</span>
+        <span>Spend</span>
+        <span>Performance</span>
+        <span>Docs</span>
+        <span>Coverage</span>
+      </div>
+      {contracts.slice(0, 14).map((contract) => {
+        const coverage = coverageByContract.get(contract.contract_id);
+        return (
+          <button
+            key={contract.contract_id}
+            type="button"
+            className="sw-v2-table-row sw-v2-contract-depth-row"
+            onClick={() => onOpenContract(contract.contract_id, "Evidence")}
+          >
+            <span>
+              <b>{contract.contract_name}</b>
+              <small>{contract.contract_id}</small>
+            </span>
+            <span>{formatCount(coverage?.spend_rows)}</span>
+            <span>{formatCount(coverage?.performance_rows)}</span>
+            <span>{formatCount(coverage?.document_page_text_rows)}</span>
+            <span>{coverage?.coverage_state ?? "Header only"}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ContractFinancialPostureTable({
+  portfolio,
+  onOpenContract,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+  onOpenContract: (contractId: string, tab?: string) => void;
+}) {
+  const contracts = contractsByAnnualValue(portfolio.contracts);
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-financial-row">
+        <span>Contract</span>
+        <span>Annual value</span>
+        <span>Actual spend</span>
+        <span>Committed value</span>
+        <span>Posture</span>
+      </div>
+      {contracts.slice(0, 14).map((contract) => (
+        <button
+          key={contract.contract_id}
+          type="button"
+          className="sw-v2-table-row sw-v2-financial-row"
+          onClick={() => onOpenContract(contract.contract_id, "Economics")}
+        >
+          <span>
+            <b>{contract.contract_name}</b>
+            <small>{contract.vendor_name}</small>
+          </span>
+          <span>{money(numberFromDb(contract.annual_value))}</span>
+          <span>{money(numberFromDb(contract.actual_annual_spend))}</span>
+          <span>{money(numberFromDb(contract.total_committed_value))}</span>
+          <span>{financialPosture(contract)}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -825,6 +1164,8 @@ function OptimizePage({
   performanceRows,
   spendRows,
   portfolio,
+  subtab,
+  onOpenSubtab,
   onOpenContract,
 }: {
   vm: SourceWorkspaceVM;
@@ -834,6 +1175,8 @@ function OptimizePage({
   performanceRows: number;
   spendRows: number;
   portfolio: SourceWorkspacePortfolioData;
+  subtab: string;
+  onOpenSubtab: (tab: string) => void;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   const contractCandidates = portfolio.impact.actionCandidates.filter(
@@ -853,47 +1196,67 @@ function OptimizePage({
   return (
     <div className="sw-v2-grid">
       <section className="sw-v2-panel sw-v2-span-2">
-        <PanelHead eyebrow="Optimize" title="Evidence-backed action only" />
-        <div className="sw-v2-lanes">
-          <ValueLane
-            title="Recover money"
-            value={creditFinding > 0 ? money(creditFinding) : "Not established"}
-            note={
-              creditFinding > 0 && findingContract
-                ? `${findingContract.contractId} / ${findingContract.counterparty}. Loaded service-credit rows show calculated credits above claimed credits.`
-                : "No recoverable opportunity is quantified in loaded rows."
-            }
-            active={creditFinding > 0}
+        <SubtabBar
+          tabs={OPTIMIZE_SUBTABS}
+          active={subtab}
+          onSelect={onOpenSubtab}
+        />
+        <PanelHead eyebrow="Optimize" title={optimizeSubtabTitle(subtab)} />
+        {subtab === "By type" ? (
+          <OptimizeByTypeTable portfolio={portfolio} />
+        ) : subtab === "By contract" ? (
+          <OptimizeByContractTable
+            portfolio={portfolio}
+            onOpenContract={onOpenContract}
           />
-          <ValueLane
-            title="Avoid future spend"
-            value={
-              candidateAmount > 0 ? money(candidateAmount) : "Not established"
-            }
-            note={
-              topCandidate
-                ? `${topCandidate.opportunity_type}: ${topCandidate.deterministic_basis}`
-                : "Requires usage, renewal, rate-card, or entitlement evidence before sizing."
-            }
-            active={candidateAmount > 0}
-          />
-          <ValueLane
-            title="Improve the deal"
-            value="Not established"
-            note="Requires terms extraction or benchmark evidence before a negotiation value is shown."
-          />
-        </div>
-        {findingContract ? (
-          <button
-            type="button"
-            className="sw-v2-primary"
-            onClick={() =>
-              onOpenContract(findingContract.contractId, "Performance")
-            }
-          >
-            Review performance evidence
-          </button>
-        ) : null}
+        ) : (
+          <>
+            <div className="sw-v2-lanes">
+              <ValueLane
+                title="Recover money"
+                value={
+                  creditFinding > 0 ? money(creditFinding) : "Not established"
+                }
+                note={
+                  creditFinding > 0 && findingContract
+                    ? `${findingContract.contractId} / ${findingContract.counterparty}. Loaded service-credit rows show calculated credits above claimed credits.`
+                    : "No recoverable opportunity is quantified in loaded rows."
+                }
+                active={creditFinding > 0}
+              />
+              <ValueLane
+                title="Avoid future spend"
+                value={
+                  candidateAmount > 0
+                    ? money(candidateAmount)
+                    : "Not established"
+                }
+                note={
+                  topCandidate
+                    ? `${topCandidate.opportunity_type}: ${topCandidate.deterministic_basis}`
+                    : "Requires usage, renewal, rate-card, or entitlement evidence before sizing."
+                }
+                active={candidateAmount > 0}
+              />
+              <ValueLane
+                title="Improve the deal"
+                value="Not established"
+                note="Requires terms extraction or benchmark evidence before a negotiation value is shown."
+              />
+            </div>
+            {findingContract ? (
+              <button
+                type="button"
+                className="sw-v2-primary"
+                onClick={() =>
+                  onOpenContract(findingContract.contractId, "Performance")
+                }
+              >
+                Review performance evidence
+              </button>
+            ) : null}
+          </>
+        )}
       </section>
 
       <section className="sw-v2-panel">
@@ -933,6 +1296,93 @@ function OptimizePage({
           ) : null}
         </div>
       </section>
+    </div>
+  );
+}
+
+function OptimizeByTypeTable({
+  portfolio,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+}) {
+  const rows = optimizeTypeRows(portfolio);
+  if (rows.length === 0) {
+    return (
+      <div className="sw-v2-empty-state">
+        <b>No typed optimization candidates loaded.</b>
+        <p>
+          Source will not summarize recoverable, avoidable, or negotiable value
+          by type until candidate rows exist.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-opt-type-row">
+        <span>Opportunity type</span>
+        <span>Candidates</span>
+        <span>Candidate amount</span>
+        <span>Finance state</span>
+      </div>
+      {rows.map((row) => (
+        <div key={row.type} className="sw-v2-table-row sw-v2-opt-type-row">
+          <span>
+            <b>{row.type}</b>
+            <small>Derived from loaded action candidates.</small>
+          </span>
+          <span>{row.count}</span>
+          <span>{money(row.amount)}</span>
+          <span>{row.financeState}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function OptimizeByContractTable({
+  portfolio,
+  onOpenContract,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+  onOpenContract: (contractId: string, tab?: string) => void;
+}) {
+  const rows = portfolio.impact.actionCandidates.slice(0, 14);
+  if (rows.length === 0) {
+    return (
+      <div className="sw-v2-empty-state">
+        <b>No contract-level action candidates loaded.</b>
+        <p>
+          Contract headers can still be inspected, but Source will not invent an
+          optimization action without candidate and evidence rows.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-opt-contract-row">
+        <span>Contract</span>
+        <span>Finding</span>
+        <span>Amount</span>
+        <span>Next action</span>
+      </div>
+      {rows.map((row) => (
+        <button
+          key={row.action_candidate_id}
+          type="button"
+          className="sw-v2-table-row sw-v2-opt-contract-row"
+          onClick={() => onOpenContract(row.contract_id, "Optimize")}
+        >
+          <span>
+            <b>{row.vendor_name}</b>
+            <small>{row.contract_id}</small>
+          </span>
+          <span>{row.finding_summary ?? row.title ?? "Review candidate"}</span>
+          <span>{money(numberFromDb(row.candidate_amount_usd))}</span>
+          <span>{row.next_action ?? row.readiness_state ?? "Not established"}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -1065,8 +1515,12 @@ function EvidencePage({
 
 function ContractGraphPage({
   portfolio,
+  subtab,
+  onOpenSubtab,
 }: {
   portfolio: SourceWorkspacePortfolioData;
+  subtab: string;
+  onOpenSubtab: (tab: string) => void;
 }) {
   const lanes = [
     {
@@ -1117,22 +1571,33 @@ function ContractGraphPage({
   return (
     <div className="sw-v2-grid">
       <section className="sw-v2-panel sw-v2-span-2">
+        <SubtabBar
+          tabs={GRAPH_SUBTABS}
+          active={subtab}
+          onSelect={onOpenSubtab}
+        />
         <PanelHead
           eyebrow="Contract graph"
-          title="Contract at the center; systems, facts, and actions around it"
+          title={graphSubtabTitle(subtab)}
         />
-        <div className="sw-v2-graph">
-          {lanes.map((lane) => (
-            <div key={lane.title} className="sw-v2-graph-lane">
-              <h3>{lane.title}</h3>
-              {lane.nodes.map((node) => (
-                <div key={node} className="sw-v2-graph-node">
-                  {node}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+        {subtab === "Volume" ? (
+          <GraphVolumeTable portfolio={portfolio} />
+        ) : subtab === "Spine" ? (
+          <GraphSpineTable portfolio={portfolio} />
+        ) : (
+          <div className="sw-v2-graph">
+            {lanes.map((lane) => (
+              <div key={lane.title} className="sw-v2-graph-lane">
+                <h3>{lane.title}</h3>
+                {lane.nodes.map((node) => (
+                  <div key={node} className="sw-v2-graph-node">
+                    {node}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="sw-v2-panel">
@@ -1158,6 +1623,157 @@ function ContractGraphPage({
   );
 }
 
+function GraphVolumeTable({
+  portfolio,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+}) {
+  const coverage = portfolio.impact.evidenceCoverage;
+  const rows = [
+    {
+      layer: "Contract headers",
+      object: "source.contract_360",
+      count: portfolio.contracts.length,
+      claim: "Contract count, vendor, dates, values, renewal posture",
+    },
+    {
+      layer: "Vendor rollups",
+      object: "source.vendor_contract_portfolio",
+      count: portfolio.vendors.length,
+      claim: "Vendor count, concentration, grouped contract list",
+    },
+    {
+      layer: "Application scope",
+      object: "source.contract_application_scope",
+      count: portfolio.applicationScope.length,
+      claim: "Contract-to-application rows only where loaded",
+    },
+    {
+      layer: "Spend rows",
+      object: "consumption.sourcing_spend_monthly_v1",
+      count: coverage.reduce(
+        (sum, row) => sum + (numberFromDb(row.spend_rows) ?? 0),
+        0,
+      ),
+      claim: "Actual spend trend only where monthly rows exist",
+    },
+    {
+      layer: "Performance rows",
+      object: "consumption.sourcing_performance_v1",
+      count: coverage.reduce(
+        (sum, row) => sum + (numberFromDb(row.performance_rows) ?? 0),
+        0,
+      ),
+      claim: "SLA and credit posture only where periods exist",
+    },
+    {
+      layer: "Action candidates",
+      object: "source.contract_action_candidate_v1",
+      count: portfolio.impact.actionCandidates.length,
+      claim: "Optimize queue candidates; not finance-confirmed value",
+    },
+  ];
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-graph-volume-row">
+        <span>Layer</span>
+        <span>Read object</span>
+        <span>Rows</span>
+        <span>Allowed claim</span>
+      </div>
+      {rows.map((row) => (
+        <div key={row.object} className="sw-v2-table-row sw-v2-graph-volume-row">
+          <span>
+            <b>{row.layer}</b>
+          </span>
+          <span>{row.object}</span>
+          <span>{row.count}</span>
+          <span>{row.claim}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GraphSpineTable({
+  portfolio,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+}) {
+  const rows = [
+    [
+      "Contract register",
+      "CLM / contract repository",
+      "contract_register_adapter",
+      "source.contract, source.vendor",
+      "source.contract_360",
+      portfolio.contracts.length,
+    ],
+    [
+      "Vendor rollup",
+      "Vendor master and contract refs",
+      "vendor_portfolio_adapter",
+      "source.vendor",
+      "source.vendor_contract_portfolio",
+      portfolio.vendors.length,
+    ],
+    [
+      "Scope to applications",
+      "CMDB / service catalog",
+      "contract_scope_adapter",
+      "source.contract_scope",
+      "source.contract_application_scope",
+      portfolio.applicationScope.length,
+    ],
+    [
+      "Spend consumption",
+      "AP / ERP invoices",
+      "contract_consumption_adapter",
+      "source.contract_consumption_observation",
+      "consumption.sourcing_spend_monthly_v1",
+      portfolio.v4Snapshot.spendConsumption.rowCount,
+    ],
+    [
+      "SLA performance",
+      "ITSM / SLA history",
+      "contract_performance_adapter",
+      "source.contract_performance_observation",
+      "consumption.sourcing_performance_v1",
+      portfolio.v4Snapshot.performanceCredits.rowCount,
+    ],
+    [
+      "Optimization action",
+      "Deterministic impact layer",
+      "optimization_opportunity_adapter",
+      "source.optimization_opportunity",
+      "source.contract_action_candidate_v1",
+      portfolio.impact.actionCandidates.length,
+    ],
+  ];
+  return (
+    <div className="sw-v2-table">
+      <div className="sw-v2-table-head sw-v2-graph-spine-row">
+        <span>Evidence family</span>
+        <span>Source system</span>
+        <span>Adapter</span>
+        <span>Canonical</span>
+        <span>Product substrate</span>
+        <span>Rows</span>
+      </div>
+      {rows.map((row) => (
+        <div key={row[0]} className="sw-v2-table-row sw-v2-graph-spine-row">
+          <span>{row[0]}</span>
+          <span>{row[1]}</span>
+          <span>{row[2]}</span>
+          <span>{row[3]}</span>
+          <span>{row[4]}</span>
+          <span>{row[5]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Metric({
   label,
   value,
@@ -1174,6 +1790,33 @@ function Metric({
       <span>{label}</span>
       <b>{value}</b>
       <small>{note}</small>
+    </div>
+  );
+}
+
+function SubtabBar<T extends readonly string[]>({
+  tabs,
+  active,
+  onSelect,
+}: {
+  tabs: T;
+  active: string;
+  onSelect: (tab: T[number]) => void;
+}) {
+  return (
+    <div className="sw-v2-subtabbar" role="tablist">
+      {tabs.map((tab) => (
+        <button
+          key={tab}
+          type="button"
+          role="tab"
+          aria-selected={active === tab}
+          className={active === tab ? "is-active" : ""}
+          onClick={() => onSelect(tab)}
+        >
+          {tab}
+        </button>
+      ))}
     </div>
   );
 }
@@ -1335,6 +1978,7 @@ function activePage(
   if (logic.state.sel.kind === "evidence") return "Evidence";
   if (logic.state.sel.kind === "graph") return "Contract graph";
   if (logic.state.sel.kind === "vendor" || vm.isVendorList) return "Vendors";
+  if (vm.isContractList) return "Contracts";
   if (vm.isContract && logic.state.tabs.contract === "Optimize")
     return "Optimize";
   if (vm.isContract) return "Contracts";
@@ -1395,6 +2039,165 @@ function storylineBySurface(
 
 function formatCount(value: number | null | undefined) {
   return value == null ? "Not established" : String(value);
+}
+
+function contractsByAnnualValue(
+  contracts: readonly SourceContract360Row[],
+) {
+  return contracts
+    .slice()
+    .sort(
+      (a, b) =>
+        (numberFromDb(b.annual_value) ?? 0) -
+        (numberFromDb(a.annual_value) ?? 0),
+    );
+}
+
+function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
+  const rows = new Map<
+    string,
+    {
+      spendRows: number;
+      performanceRows: number;
+      actionCandidates: number;
+      unclaimedCredit: number;
+    }
+  >();
+  const vendorRefsByContract = new Map(
+    portfolio.contracts.map((contract) => [
+      contract.contract_id,
+      contract.vendor_ref,
+    ]),
+  );
+  for (const coverage of portfolio.impact.evidenceCoverage) {
+    const vendorRef =
+      coverage.vendor_ref || vendorRefsByContract.get(coverage.contract_id);
+    if (!vendorRef) continue;
+    const current = rows.get(vendorRef) ?? {
+      spendRows: 0,
+      performanceRows: 0,
+      actionCandidates: 0,
+      unclaimedCredit: 0,
+    };
+    current.spendRows += numberFromDb(coverage.spend_rows) ?? 0;
+    current.performanceRows += numberFromDb(coverage.performance_rows) ?? 0;
+    current.actionCandidates += numberFromDb(coverage.opportunity_rows) ?? 0;
+    current.unclaimedCredit += numberFromDb(coverage.unclaimed_credit_usd) ?? 0;
+    rows.set(vendorRef, current);
+  }
+  return rows;
+}
+
+function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
+  const groups = new Map<
+    string,
+    {
+      category: string;
+      vendorRefs: Set<string>;
+      contractCount: number;
+      annualValue: number;
+      vendorRef: string | null;
+      vendorName: string | null;
+    }
+  >();
+  for (const contract of portfolio.contracts) {
+    const category = contract.vendor_category ?? "Not established";
+    const current =
+      groups.get(category) ??
+      {
+        category,
+        vendorRefs: new Set<string>(),
+        contractCount: 0,
+        annualValue: 0,
+        vendorRef: null,
+        vendorName: null,
+      };
+    current.vendorRefs.add(contract.vendor_ref);
+    current.contractCount += 1;
+    current.annualValue += numberFromDb(contract.annual_value) ?? 0;
+    if (!current.vendorRef) {
+      current.vendorRef = contract.vendor_ref;
+      current.vendorName = contract.vendor_name;
+    }
+    groups.set(category, current);
+  }
+  return [...groups.values()]
+    .map((row) => ({
+      category: row.category,
+      vendorCount: row.vendorRefs.size,
+      contractCount: row.contractCount,
+      annualValue: row.annualValue,
+      vendorRef: row.vendorRef,
+      vendorName: row.vendorName,
+    }))
+    .sort((a, b) => b.annualValue - a.annualValue);
+}
+
+function optimizeTypeRows(portfolio: SourceWorkspacePortfolioData) {
+  const groups = new Map<
+    string,
+    {
+      type: string;
+      count: number;
+      amount: number;
+      financeStates: Set<string>;
+    }
+  >();
+  for (const candidate of portfolio.impact.actionCandidates) {
+    const type =
+      candidate.opportunity_type ?? candidate.action_type ?? "Not established";
+    const current =
+      groups.get(type) ??
+      { type, count: 0, amount: 0, financeStates: new Set<string>() };
+    current.count += 1;
+    current.amount += numberFromDb(candidate.candidate_amount_usd) ?? 0;
+    current.financeStates.add(candidate.finance_confirmation_state);
+    groups.set(type, current);
+  }
+  return [...groups.values()]
+    .map((row) => ({
+      type: row.type.replace(/_/g, " "),
+      count: row.count,
+      amount: row.amount,
+      financeState: [...row.financeStates].join(", "),
+    }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+function financialPosture(contract: SourceContract360Row) {
+  const actual = numberFromDb(contract.actual_annual_spend);
+  const annual = numberFromDb(contract.annual_value);
+  if (actual == null) return "Actual spend not established";
+  if (annual == null) return "Annual value not established";
+  const variance = actual - annual;
+  if (Math.abs(variance) < 1) return "Actual matches annual value";
+  return variance > 0
+    ? `${money(variance)} above annual value`
+    : `${money(Math.abs(variance))} below annual value`;
+}
+
+function vendorSubtabTitle(subtab: string) {
+  if (subtab === "Evidence depth") return "Which vendors have usable depth";
+  if (subtab === "Archetype mix") return "Declared contract archetypes";
+  return "One row per supplier relationship";
+}
+
+function contractListSubtabTitle(subtab: string) {
+  if (subtab === "Evidence depth") return "Which contracts can support detail";
+  if (subtab === "Financial posture") return "Annual, actual, and committed values";
+  return "Contract table";
+}
+
+function optimizeSubtabTitle(subtab: string) {
+  if (subtab === "By type") return "Candidate actions grouped by type";
+  if (subtab === "By contract") return "Contract-level action candidates";
+  return "Evidence-backed action queue";
+}
+
+function graphSubtabTitle(subtab: string) {
+  if (subtab === "Volume") return "Loaded row volume by substrate";
+  if (subtab === "Spine") return "Source system to product mapping";
+  return "Contract at the center; systems, facts, and actions around it";
 }
 
 export function topVendors(
