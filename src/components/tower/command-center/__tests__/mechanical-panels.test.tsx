@@ -203,7 +203,9 @@ describe("mechanical Tower Command Center panels", () => {
     const text = document.body.textContent ?? "";
     expect(text).toContain("Not loaded");
     expect(text).toContain("attributed AI investment or change budget is not loaded");
-    expect(text).toContain("1 of 1 initiatives have no sponsor loaded");
+    // "cases", not "initiatives": the queue counts business cases, and a tool rollout carries a
+    // business owner without being one.
+    expect(text).toContain("1 of 1 cases have no sponsor loaded");
     expect(text).not.toContain("0 of 0");
     expect(text).not.toContain("0% vs");
   });

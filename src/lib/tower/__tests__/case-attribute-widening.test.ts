@@ -200,3 +200,20 @@ describe("an unrecorded number is not zero", () => {
     expect(READER).toContain("approvedFundingRaw !== null || monthlyCostRaw !== null");
   });
 });
+
+describe("the owner queue counts cases, not rollouts", () => {
+  const panel = read("src/components/tower/command-center/views/QueueOwnerPanel.tsx");
+
+  it("excludes rows that carry no finance status", () => {
+    // A tool rollout has a business owner but no investment, no sponsor-stated value and no
+    // finance status. Under a column headed CASES it added a row contributing only the count,
+    // and hasOpenProof returned true for every one because a rollout never carries a benefit
+    // claim — turning 42 cases into 55 and the queue into 47.
+    expect(panel).toContain("if (item.financeStatus === null) continue;");
+  });
+
+  it("takes its denominator from the same population as its rows", () => {
+    expect(panel).not.toContain("const total = view.allInitiatives.length;");
+    expect(panel).toContain("rows.reduce((sum, row) => sum + row.count, 0)");
+  });
+});
