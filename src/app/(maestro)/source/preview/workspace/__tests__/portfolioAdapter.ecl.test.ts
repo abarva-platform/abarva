@@ -159,6 +159,133 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     });
   });
 
+  it("preserves ECL renewal trigger fields for the Source 360 renewal headline", async () => {
+    await writeFile(
+      path.join(dir, "source_contract_360_projection.csv"),
+      csv([
+        {
+          tenant_key: "meridian-health",
+          row_key: "lapsed-auto-renew",
+          contract_id: "lapsed-auto-renew",
+          vendor_object_id: "vendor-lapsed",
+          vendor_name: "Lapsed Vendor",
+          contract_name: "Lapsed notice contract",
+          notice_deadline: "2027-06-01",
+          expiration_date: "2027-12-31",
+          auto_renew_flag: "true",
+          annualized_value_usd: "140300000",
+          total_contract_value_usd: "140300000",
+          value_state: "known",
+          scope_json: "[]",
+          spend_summary_json: "{}",
+          gap_flags_json: "[]",
+        },
+        {
+          tenant_key: "meridian-health",
+          row_key: "still-cancellable",
+          contract_id: "still-cancellable",
+          vendor_object_id: "vendor-open",
+          vendor_name: "Open Vendor",
+          contract_name: "Open notice contract",
+          notice_deadline: "2028-03-31",
+          expiration_date: "2028-06-30",
+          auto_renew_flag: "true",
+          annualized_value_usd: "214600000",
+          total_contract_value_usd: "214600000",
+          value_state: "known",
+          scope_json: "[]",
+          spend_summary_json: "{}",
+          gap_flags_json: "[]",
+        },
+        {
+          tenant_key: "meridian-health",
+          row_key: "expired-auto-renew",
+          contract_id: "expired-auto-renew",
+          vendor_object_id: "vendor-expired",
+          vendor_name: "Expired Vendor",
+          contract_name: "Expired contract",
+          notice_deadline: "2026-10-03",
+          expiration_date: "2027-01-01",
+          auto_renew_flag: "true",
+          annualized_value_usd: "194100000",
+          total_contract_value_usd: "194100000",
+          value_state: "known",
+          scope_json: "[]",
+          spend_summary_json: "{}",
+          gap_flags_json: "[]",
+        },
+      ]),
+      "utf-8",
+    );
+    await writeFile(
+      path.join(dir, "source_vendor_360_projection.csv"),
+      csv([
+        {
+          tenant_key: "meridian-health",
+          row_key: "vendor-lapsed",
+          vendor_object_id: "vendor-lapsed",
+          vendor_name: "Lapsed Vendor",
+          contract_count: "1",
+          annualized_spend_usd: "140300000",
+          contract_ids_json: JSON.stringify(["lapsed-auto-renew"]),
+        },
+        {
+          tenant_key: "meridian-health",
+          row_key: "vendor-open",
+          vendor_object_id: "vendor-open",
+          vendor_name: "Open Vendor",
+          contract_count: "1",
+          annualized_spend_usd: "214600000",
+          contract_ids_json: JSON.stringify(["still-cancellable"]),
+        },
+        {
+          tenant_key: "meridian-health",
+          row_key: "vendor-expired",
+          vendor_object_id: "vendor-expired",
+          vendor_name: "Expired Vendor",
+          contract_count: "1",
+          annualized_spend_usd: "194100000",
+          contract_ids_json: JSON.stringify(["expired-auto-renew"]),
+        },
+      ]),
+      "utf-8",
+    );
+    await writeFile(
+      path.join(dir, "source_event_workspace_projection.csv"),
+      csv([
+        {
+          tenant_key: "meridian-health",
+          row_key: "no-events",
+          workspace_tab: "events",
+          row_type: "empty",
+        },
+      ]),
+      "utf-8",
+    );
+
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+
+    expect(portfolio.cockpit.verdict.headline).toBe(
+      "$140.3M auto-renews with the notice window already passed.",
+    );
+    expect(portfolio.cockpit.verdict.supports[0]).toMatchObject({
+      label: "Auto-renew notice passed",
+      value: "$140.3M",
+      tone: "fail",
+    });
+    expect(portfolio.cockpit.verdict.supports[1]).toMatchObject({
+      label: "Still cancellable",
+      value: "$214.6M",
+      tone: "pass",
+    });
+    expect(
+      portfolio.cockpit.actionQueue.map((row) => row.contractId),
+    ).not.toContain("expired-auto-renew");
+  });
+
   it("loads Source 360 portfolio data from flagged Azure ECL serving views", async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "legacy";
     delete process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;

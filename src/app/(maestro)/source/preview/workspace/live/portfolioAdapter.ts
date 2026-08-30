@@ -1598,6 +1598,10 @@ function contractFromEclProjectionRow(
   const scope = parseJsonArray(row.scope_json);
   const spendSummary = parseJsonObject(row.spend_summary_json);
   const gapFlags = parseJsonArray(row.gap_flags_json);
+  const renewalNoticeDate = stringOrNull(
+    row.renewal_notice_date ?? row.notice_deadline,
+  );
+  const endDate = stringOrNull(row.end_date ?? row.expiration_date);
   return {
     tenant_key: textValue(row.tenant_key),
     contract_id: textValue(row.row_key || row.contract_id),
@@ -1613,9 +1617,9 @@ function contractFromEclProjectionRow(
     total_committed_value: numberFromCsv(row.total_contract_value_usd),
     committed_annual_spend: numberFromCsv(row.annualized_value_usd),
     actual_annual_spend: numberFromValue(spendSummary.ap_actual_total_usd),
-    renewal_notice_date: stringOrNull(row.renewal_notice_date),
-    end_date: stringOrNull(row.end_date),
-    notice_period_days: noticePeriodDays(row.renewal_notice_date, row.end_date),
+    renewal_notice_date: renewalNoticeDate,
+    end_date: endDate,
+    notice_period_days: noticePeriodDays(renewalNoticeDate, endDate),
     auto_renew: eclProjectionAutoRenew(row, gapFlags),
     renewal_decision_state: "review_required",
     renewal_owner_ref: null,
@@ -2365,9 +2369,15 @@ function withNoticeDeadline(
   contract: SourceContract360Row,
   asOf: Date,
 ): ContractWithDeadline | null {
-  if (!contract.end_date) return null;
-  const endDate = validDate(contract.end_date);
-  if (endDate.getTime() <= asOf.getTime()) return null;
+  const endDate = contract.end_date ? validDate(contract.end_date) : null;
+  if (endDate && endDate.getTime() <= asOf.getTime()) return null;
+  if (contract.renewal_notice_date) {
+    const explicitDeadline = validDate(contract.renewal_notice_date);
+    if (explicitDeadline.getTime() > 0) {
+      return { contract, noticeDeadline: explicitDeadline };
+    }
+  }
+  if (!endDate) return null;
   const noticePeriodDays = numberFromDb(contract.notice_period_days);
   if (noticePeriodDays == null) return null;
   return {
