@@ -386,11 +386,30 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("Why this is shown")).toBeTruthy();
     expect(screen.queryByText(/Proof Layers/i)).toBeNull();
 
+    fireEvent.click(screen.getAllByRole("button", { name: "Evidence" })[0]);
+    expect(screen.getByText("Loaded rows, missing lanes, and claim eligibility")).toBeTruthy();
+    expect(screen.getByText("Show lineage")).toBeTruthy();
+    expect(screen.queryByText("source.contract_360")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show lineage" }));
+    expect(screen.getByText("source.contract_360")).toBeTruthy();
+    expect(screen.getByText("Hide lineage")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide lineage" }));
+    expect(screen.queryByText("source.contract_360")).toBeNull();
+
     fireEvent.click(
       screen.getAllByRole("button", { name: "Contract graph" })[0],
     );
     expect(screen.getByRole("tab", { name: "Flow" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Volume" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Spine" })).toBeTruthy();
+    expect(screen.getByText("Source systems and files")).toBeTruthy();
+    expect(screen.getByText("Source page substrate")).toBeTruthy();
+    expect(screen.getByText("Show lineage")).toBeTruthy();
+    expect(screen.queryByText("contract_register_adapter")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show lineage" }));
+    expect(screen.getByText("contract_register_adapter")).toBeTruthy();
   });
 });
