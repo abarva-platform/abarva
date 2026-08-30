@@ -40,6 +40,9 @@ execution.
 - `.github/workflows/home-narrative-quality-measurement.yml`: manual workflow that runs
   `npm run data-build:home-chapters:measure` with the selected tenant and uploads the
   measurement output directory as an artifact.
+- `.github/workflows/home-narrative-quality-measurement.yml`: follow-up workflow fix to run
+  under the `production` environment so environment-scoped model secrets are available, and
+  to avoid a secondary artifact-upload failure when the secret guard stops the job early.
 - This release record.
 
 ## QA / Validation
@@ -48,6 +51,9 @@ execution.
 - PASS: `git diff --check`.
 - PASS: workflow includes an explicit required-secret guard for `ANTHROPIC_API_KEY` before
   the measurement command runs.
+- PASS: first manual dispatch proved the guard path; repository-scope secret access was
+  absent, so the workflow now uses the `production` environment where the operator proof
+  workflows read environment-scoped secrets.
 - NOT RUN: live measurement workflow, because this PR only adds the manual entry point.
 
 ## Rollout Plan
