@@ -346,9 +346,7 @@ export function TowerCommandCenter({
                 t.id === "initiatives"
                   ? (view?.summary.valueClaimCount ?? null)
                   : t.id === "tools"
-                    ? (view?.summary.aiInitiativeCount ??
-                      view?.ai.length ??
-                      null)
+                    ? (view?.summary.aiInitiativeCount ?? null)
                     : t.id === "decisions"
                       ? (view?.actions.length ?? null)
                       : null;

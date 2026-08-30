@@ -122,7 +122,7 @@ function executiveSummary(view: TowerCommandCenterView): string {
   return `${view.summary.tenantName} has ${formatLoadedUsdM(
     s.approvedInvestmentUsd,
   )} in the reviewed project portfolio, including ${formatUsdM(
-    s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
+    s.aiAttributedInitiativeSpendUsd,
   )} tied to AI initiatives and tool rollouts. Business cases project ${formatUsdM(
     s.promisedUsd,
   )} of annual value; ${formatUsdM(
@@ -166,11 +166,11 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
     {
       label: "AI initiatives and tools tracked",
       badge: emitting > 0 ? "VISIBLE" : "DARK",
-      value: `${formatCount(s.aiInitiativeCount || view.allInitiatives.length)}`,
+      value: `${formatCount(s.aiInitiativeCount)}`,
       note: `${formatCount(view.programs.length)} AI business cases + ${formatCount(
         aiToolRolloutCount(view),
       )} tool rollouts · ${formatUsdM(
-        s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
+        s.aiAttributedInitiativeSpendUsd,
       )} attributed`,
       tone: emitting > 0 ? "teal" : "red",
     },
@@ -552,7 +552,7 @@ export function CommandCenterView({
           holds them →
         </button>
         <button type="button" onClick={onGoToAi}>
-          {formatCount(s.aiInitiativeCount || view.ai.length)} AI initiatives
+          {formatCount(s.aiInitiativeCount)} AI initiatives
           and tool rollouts by cost, risk and adoption →
         </button>
         <button type="button" onClick={onGoToActions}>
