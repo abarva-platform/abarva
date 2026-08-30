@@ -175,6 +175,42 @@ create table if not exists ecl_context.object_type_catalog (
   )
 );
 
+do $$
+begin
+  if to_regclass('ecl_context.object_type_catalog') is not null then
+    alter table ecl_context.object_type_catalog
+      drop constraint if exists object_type_catalog_grain_check;
+
+    alter table ecl_context.object_type_catalog
+      add constraint object_type_catalog_grain_check check (
+        grain in (
+          'enterprise', 'business_segment', 'business_function', 'organization',
+          'process', 'application', 'application_deployment', 'data_platform', 'data_product',
+          'infrastructure', 'vendor', 'contract', 'program', 'metric',
+          'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona'
+        )
+      );
+
+    alter table ecl_context.object_type_catalog
+      drop constraint if exists object_type_catalog_counting_class_check;
+
+    alter table ecl_context.object_type_catalog
+      add constraint object_type_catalog_counting_class_check check (
+        counting_class in (
+          'enterprise_scope',
+          'business_entity',
+          'deployment_instance',
+          'technical_component',
+          'commercial_entity',
+          'initiative',
+          'risk_control',
+          'metric_definition',
+          'persona'
+        )
+      );
+  end if;
+end $$;
+
 insert into ecl_context.object_type_catalog (
   object_type,
   display_label,
@@ -255,6 +291,95 @@ create table if not exists ecl_context.object (
   ),
   constraint object_tenant_assessment_id_unique unique (tenant_key, assessment_id, id)
 );
+
+do $$
+declare
+  old_constraint_name text;
+begin
+  if to_regclass('ecl_context.object') is not null then
+    alter table ecl_context.object
+      add column if not exists canonical_semantic_type text
+      generated always as (
+        coalesce(nullif(attributes_json ->> 'canonical_semantic_type', ''), object_type)
+      ) stored;
+
+    alter table ecl_context.object
+      drop constraint if exists object_type_check;
+
+    alter table ecl_context.object
+      add constraint object_type_check check (
+        object_type in (
+          'enterprise', 'business_segment', 'business_function', 'organization',
+          'process', 'application', 'application_deployment', 'data_platform', 'data_product',
+          'infrastructure', 'vendor', 'contract', 'program', 'metric',
+          'risk', 'control', 'ai_program', 'ai_use_case', 'ai_tool', 'persona'
+        )
+      );
+
+    for old_constraint_name in
+      select c.conname
+        from pg_constraint c
+        join lateral (
+          select array_agg(a.attname order by keys.ord) as key_columns
+            from unnest(c.conkey) with ordinality as keys(attnum, ord)
+            join pg_attribute a
+              on a.attrelid = c.conrelid
+             and a.attnum = keys.attnum
+        ) columns on true
+       where c.conrelid = 'ecl_context.object'::regclass
+         and c.contype = 'u'
+         and columns.key_columns = array[
+           'tenant_key',
+           'assessment_id',
+           'object_type',
+           'object_key'
+         ]::name[]
+    loop
+      execute format('alter table ecl_context.object drop constraint %I', old_constraint_name);
+    end loop;
+
+    if not exists (
+      select 1
+      from pg_constraint
+      where conrelid = 'ecl_context.object'::regclass
+        and conname = 'object_canonical_semantic_type_check'
+    ) then
+      alter table ecl_context.object
+        add constraint object_canonical_semantic_type_check
+        check (canonical_semantic_type <> '');
+    end if;
+
+    if not exists (
+      select 1
+      from pg_constraint
+      where conrelid = 'ecl_context.object'::regclass
+        and conname = 'object_type_catalog_fk'
+    ) then
+      alter table ecl_context.object
+        add constraint object_type_catalog_fk
+        foreign key (object_type)
+        references ecl_context.object_type_catalog (object_type)
+        not valid;
+    end if;
+
+    if not exists (
+      select 1
+      from pg_constraint
+      where conrelid = 'ecl_context.object'::regclass
+        and conname = 'object_semantic_key_unique'
+    ) then
+      alter table ecl_context.object
+        add constraint object_semantic_key_unique
+        unique (
+          tenant_key,
+          assessment_id,
+          object_type,
+          canonical_semantic_type,
+          object_key
+        );
+    end if;
+  end if;
+end $$;
 
 create table if not exists ecl_context.relationship (
   id uuid primary key default gen_random_uuid(),
@@ -464,6 +589,9 @@ create table if not exists ecl_commercial.contract (
   ),
   constraint contract_tenant_assessment_id_unique unique (tenant_key, assessment_id, id)
 );
+
+alter table if exists ecl_commercial.contract
+  add column if not exists renewal_notice_date date;
 
 create table if not exists ecl_commercial.contract_service_line (
   id uuid primary key default gen_random_uuid(),

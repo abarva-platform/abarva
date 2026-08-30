@@ -111,7 +111,7 @@ function incomingFkCount(sql, table) {
 
 function upgradeColumnCount(sql, table) {
   const re = new RegExp(
-    `alter\\s+table\\s+if\\s+exists\\s+ecl_projection\\.${table}[\\s\\S]+?add\\s+column\\s+if\\s+not\\s+exists\\s+projection_entry_id\\s+uuid`,
+    `alter\\s+table\\s+if\\s+exists\\s+ecl_projection\\.${table}[^;]*?add\\s+column\\s+if\\s+not\\s+exists\\s+projection_entry_id\\s+uuid`,
     "gi",
   );
   return [...sql.matchAll(re)].length;
