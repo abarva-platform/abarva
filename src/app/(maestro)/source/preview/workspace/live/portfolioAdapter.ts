@@ -562,19 +562,12 @@ async function loadSourceWorkspaceImpactLayer(
     storyline,
     avaGroundingBundles,
   };
-  if (hasImpactLayerRows(viewImpact)) return viewImpact;
+  if (hasExecutiveImpactRows(viewImpact)) return viewImpact;
   const derivedImpact = await loadDerivedSourceWorkspaceImpactLayer(tenantKey);
   if (derivedImpact && hasImpactLayerRows(derivedImpact)) {
-    return derivedImpact;
+    return mergeSourceWorkspaceImpactLayer(viewImpact, derivedImpact);
   }
-  return {
-    evidenceCoverage,
-    actionCandidates,
-    claimCards,
-    vendorPositions,
-    storyline,
-    avaGroundingBundles,
-  };
+  return viewImpact;
 }
 
 function hasImpactLayerRows(impact: SourceWorkspaceImpactLayer): boolean {
@@ -586,6 +579,64 @@ function hasImpactLayerRows(impact: SourceWorkspaceImpactLayer): boolean {
     impact.storyline.length > 0 ||
     impact.avaGroundingBundles.length > 0
   );
+}
+
+function hasExecutiveImpactRows(impact: SourceWorkspaceImpactLayer): boolean {
+  return (
+    impact.actionCandidates.length > 0 ||
+    impact.claimCards.length > 0 ||
+    impact.storyline.length > 0 ||
+    impact.avaGroundingBundles.length > 0
+  );
+}
+
+function mergeSourceWorkspaceImpactLayer(
+  base: SourceWorkspaceImpactLayer,
+  overlay: SourceWorkspaceImpactLayer,
+): SourceWorkspaceImpactLayer {
+  return {
+    evidenceCoverage: mergeRowsByKey(
+      base.evidenceCoverage,
+      overlay.evidenceCoverage,
+      (row) => row.contract_id,
+    ),
+    actionCandidates: mergeRowsByKey(
+      base.actionCandidates,
+      overlay.actionCandidates,
+      (row) => row.action_candidate_id,
+    ),
+    claimCards: mergeRowsByKey(
+      base.claimCards,
+      overlay.claimCards,
+      (row) => row.claim_card_id,
+    ),
+    vendorPositions: mergeRowsByKey(
+      base.vendorPositions,
+      overlay.vendorPositions,
+      (row) => row.vendor_ref,
+    ),
+    storyline: mergeRowsByKey(
+      base.storyline,
+      overlay.storyline,
+      (row) => `${row.page_key}:${row.section_key}`,
+    ),
+    avaGroundingBundles: mergeRowsByKey(
+      base.avaGroundingBundles,
+      overlay.avaGroundingBundles,
+      (row) => row.grounding_bundle_id,
+    ),
+  };
+}
+
+function mergeRowsByKey<Row>(
+  base: readonly Row[],
+  overlay: readonly Row[],
+  keyOf: (row: Row) => string,
+): Row[] {
+  const rows = new Map<string, Row>();
+  for (const row of base) rows.set(keyOf(row), row);
+  for (const row of overlay) rows.set(keyOf(row), row);
+  return Array.from(rows.values());
 }
 
 async function loadDerivedSourceWorkspaceImpactLayer(
