@@ -168,6 +168,7 @@ export interface SourceVendor360CockpitData {
   };
   readonly actionQueue: readonly CockpitActionRow[];
   readonly topContracts: readonly CockpitTopContractRow[];
+  readonly claimQualityControls: readonly CockpitClaimQualityControl[];
   readonly proofLayers: {
     readonly evidenceBehindVerdict: readonly CockpitProofEntry[];
     readonly sourceSystems: readonly CockpitSourceSystemRow[];
@@ -221,6 +222,13 @@ interface CockpitProofEntry {
   readonly binding: string;
   readonly grain: string;
   readonly value: string;
+}
+
+interface CockpitClaimQualityControl {
+  readonly label: string;
+  readonly value: string;
+  readonly note: string;
+  readonly tone: CockpitGateState;
 }
 
 interface CockpitSourceSystemRow {
@@ -1771,6 +1779,7 @@ export function buildSourceVendor360Cockpit(input: {
   const asOf = validDate(asOfDateIso);
   const summary = summarizePortfolio(contracts);
   const renewal180 = computeRenewalExposure(contracts, asOfDateIso, 180);
+  const concentration = computeVendorConcentration(contracts);
   const cancellableRows = contracts.filter(
     (contract) =>
       !renewal180.noticeDeadlinePassedAutoRenew.some(
@@ -1917,6 +1926,11 @@ export function buildSourceVendor360Cockpit(input: {
           asOf,
         ),
       ),
+    claimQualityControls: buildClaimQualityControls({
+      contracts,
+      renewal180,
+      concentration,
+    }),
     proofLayers: {
       evidenceBehindVerdict: [
         {
@@ -2027,6 +2041,89 @@ export function buildSourceVendor360Cockpit(input: {
       ],
     },
   };
+}
+
+function buildClaimQualityControls(input: {
+  readonly contracts: readonly SourceContract360Row[];
+  readonly renewal180: ReturnType<typeof computeRenewalExposure>;
+  readonly concentration: ReturnType<typeof computeVendorConcentration>;
+}): readonly CockpitClaimQualityControl[] {
+  const topVendor = input.concentration.byVendor[0] ?? null;
+  const assertedConcentrationRows = input.contracts.filter((contract) =>
+    stringOrNull(
+      (contract as unknown as Record<string, unknown>).concentration_risk,
+    ),
+  );
+  const repeatedUtilization = repeatedTextQuality(
+    input.contracts,
+    "utilization_evidence",
+  );
+
+  return [
+    {
+      label: "Stale renewal dates",
+      value:
+        input.renewal180.expiredAsOfDate.length > 0
+          ? `${input.renewal180.expiredAsOfDate.length} excluded`
+          : "None excluded",
+      note:
+        input.renewal180.expiredAsOfDate.length > 0
+          ? `${moneyLabel(input.renewal180.expiredAsOfDateAnnualValue)} has end dates before the as-of cut and is not shown as a live deadline.`
+          : "No past end_date rows were found in this as-of cut.",
+      tone: input.renewal180.expiredAsOfDate.length > 0 ? "warn" : "pass",
+    },
+    {
+      label: "Concentration risk",
+      value: topVendor
+        ? `${topVendor.vendorName} ${pctLabel(topVendor.shareOfTotal)}`
+        : "Not established",
+      note:
+        assertedConcentrationRows.length > 0
+          ? `${assertedConcentrationRows.length} asserted concentration labels are treated as data assertions; the cockpit ranks suppliers from annual value instead.`
+          : "No asserted concentration-risk label is trusted for the executive view; supplier rank is computed from annual value.",
+      tone: topVendor ? "pass" : "warn",
+    },
+    {
+      label: "Utilization evidence",
+      value:
+        repeatedUtilization.repeatedRows > 0
+          ? `${repeatedUtilization.repeatedRows} template rows blocked`
+          : repeatedUtilization.totalRows > 0
+            ? "Row-specific"
+            : "Not loaded",
+      note:
+        repeatedUtilization.repeatedRows > 0
+          ? "Repeated utilization prose is withheld from evidence language until entitlement rows and source references are loaded."
+          : repeatedUtilization.totalRows > 0
+            ? "Utilization text is present without repeated-template collision in the loaded rows."
+            : "No cross-contract utilization-evidence text is rendered as proof on this page.",
+      tone:
+        repeatedUtilization.repeatedRows > 0
+          ? "fail"
+          : repeatedUtilization.totalRows > 0
+            ? "pass"
+            : "warn",
+    },
+  ];
+}
+
+function repeatedTextQuality<T>(
+  rows: readonly T[],
+  field: string,
+): { readonly totalRows: number; readonly repeatedRows: number } {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const text = stringOrNull((row as Record<string, unknown>)[field]);
+    if (!text) continue;
+    const normalized = text.toLowerCase().replace(/\s+/g, " ").trim();
+    if (!normalized) continue;
+    counts.set(normalized, (counts.get(normalized) ?? 0) + 1);
+  }
+  const totalRows = [...counts.values()].reduce((sum, count) => sum + count, 0);
+  const repeatedRows = [...counts.values()]
+    .filter((count) => count >= 3)
+    .reduce((sum, count) => sum + count, 0);
+  return { totalRows, repeatedRows };
 }
 
 interface ContractWithDeadline {

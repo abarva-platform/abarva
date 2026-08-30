@@ -478,6 +478,21 @@ function PortfolioPage({
           <Fact label="Unsupported dashboard claims" value="Hidden" />
         </div>
       </section>
+
+      <section className="sw-v2-panel">
+        <PanelHead
+          eyebrow="Claim quality controls"
+          title="Computed, excluded, or withheld"
+        />
+        <div className="sw-v2-fact-stack">
+          {portfolio.cockpit.claimQualityControls.map((control) => (
+            <div key={control.label}>
+              <Fact label={control.label} value={control.value} />
+              <p className="sw-v2-muted">{control.note}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

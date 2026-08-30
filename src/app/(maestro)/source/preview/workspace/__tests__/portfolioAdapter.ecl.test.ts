@@ -888,6 +888,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         cloud_sev1_sev2_incidents: null,
         operational_evidence_gap: null,
         initiative_dependency_count: null,
+        concentration_risk: "low",
+        utilization_evidence:
+          "8% of provisioned entitlements show no recorded activity in the trailing 90 days",
       },
       {
         tenant_key: "meridian-health",
@@ -923,6 +926,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         cloud_sev1_sev2_incidents: null,
         operational_evidence_gap: null,
         initiative_dependency_count: null,
+        concentration_risk: "low",
+        utilization_evidence:
+          "8% of provisioned entitlements show no recorded activity in the trailing 90 days",
       },
       {
         tenant_key: "meridian-health",
@@ -958,6 +964,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         cloud_sev1_sev2_incidents: null,
         operational_evidence_gap: null,
         initiative_dependency_count: null,
+        concentration_risk: "low",
+        utilization_evidence:
+          "8% of provisioned entitlements show no recorded activity in the trailing 90 days",
       },
     ];
     const cockpit = buildSourceVendor360Cockpit({
@@ -1005,5 +1014,29 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(cockpit.actionQueue.map((row) => row.contractId)).not.toContain(
       "expired-auto-renew",
     );
+    expect(cockpit.claimQualityControls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Stale renewal dates",
+          value: "1 excluded",
+          tone: "warn",
+        }),
+        expect.objectContaining({
+          label: "Concentration risk",
+          value: "Open Vendor 39.1%",
+          tone: "pass",
+        }),
+        expect.objectContaining({
+          label: "Utilization evidence",
+          value: "3 template rows blocked",
+          tone: "fail",
+        }),
+      ]),
+    );
+    expect(
+      cockpit.claimQualityControls.find(
+        (control) => control.label === "Concentration risk",
+      )?.note,
+    ).toMatch(/asserted concentration labels are treated as data assertions/i);
   });
 });
