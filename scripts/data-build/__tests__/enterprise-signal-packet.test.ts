@@ -50,7 +50,22 @@ describe("enterprise signal packet breadth", () => {
       ),
     ];
 
-    const dc = buildDecisionContext(records);
+    const dc = buildDecisionContext(records, [], [
+      {
+        sourcePath: "07_contract_terms.csv",
+        domain: "vendor_commercial_estate",
+        objectTypes: ["client_intake_file"],
+        recordCount: 0,
+        rawRowCount: 12,
+        canonicalRecordCount: 0,
+        sourceKind: "client_intake_file",
+        basis: ["coverage_context_not_citable"],
+        authority: ["client_intake_inventory"],
+        qualityStates: ["raw_intake_file"],
+        materialFields: ["contract_id", "vendor_name", "renewal_notice_days"],
+        exampleRecords: ["CTR-001 · Example Vendor"],
+      },
+    ]);
     const quality = buildContextQualityManifest(records, []);
     const packet = buildEnterpriseSignalPacket(dc, quality);
 
@@ -61,6 +76,12 @@ describe("enterprise signal packet breadth", () => {
       domain: "vendor_commercial_estate",
       objectTypes: ["vendor_contract"],
       recordCount: ENTERPRISE_SIGNAL_PACKET_LIMITS.topVendorsByShare + 3,
+    });
+    expect(packet.sourceSummaries.find((summary) => summary.sourcePath === "07_contract_terms.csv")).toMatchObject({
+      recordCount: 0,
+      rawRowCount: 12,
+      sourceKind: "client_intake_file",
+      basis: ["coverage_context_not_citable"],
     });
     expect(packet.visualDatasets.program_investment_distribution).toHaveLength(7);
     expect(packet.visualDatasets.vendor_spend_concentration).toHaveLength(

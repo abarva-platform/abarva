@@ -30,7 +30,7 @@ assert(
   "EnterpriseThesis writer exposes an ECL-fed signal-packet seam",
 );
 assert(
-  thesis.includes("enterprise-thesis/v1.1-cxo-visible-language") &&
+  thesis.includes("enterprise-thesis/v1.2-source-breadth") &&
     thesis.includes("CXO-VISIBLE LANGUAGE") &&
     thesis.includes("Do not expose implementation") &&
     thesis.includes("Do not say ECL") &&
@@ -79,6 +79,15 @@ assert(
     script.includes("blocked_count_by_reason") &&
     script.includes("row_readiness_counts"),
   "ECL narrative job emits safe policy-gap and readiness metadata without copying blocked payloads into model context",
+);
+assert(
+  script.includes("readEclSourceSummaries") &&
+    script.includes("ecl_source.source_file") &&
+    script.includes("ecl_source.source_record") &&
+    script.includes("sourceSummaries") &&
+    script.includes("source_summary_count") &&
+    script.includes("coverage_context_not_citable"),
+  "ECL narrative job passes source-ledger breadth summaries as non-citable packet context",
 );
 assert(
   script.includes("Home ECL narrative refused: no governed usable evidence reached the executive packet") &&

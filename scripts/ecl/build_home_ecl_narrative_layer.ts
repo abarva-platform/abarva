@@ -33,7 +33,7 @@ import {
   type ChapterId,
   type ChapterView,
 } from "../data-build/build-home-chapters";
-import type { ContextItem, Signal, buildEnterpriseSignalPacket } from "../data-build/enterprise-signal-packet";
+import type { ContextItem, Signal, SourceSummary, buildEnterpriseSignalPacket } from "../data-build/enterprise-signal-packet";
 import {
   buildValidatedAgentContextBundle,
   type GovernedCandidate,
@@ -167,6 +167,17 @@ interface GovernedSignalPacketBuild {
   contextPolicyProof: ContextPolicyProof;
 }
 
+interface EclSourceRecordSummaryRow {
+  file_name: string;
+  source_type: string;
+  origin: string;
+  source_owner: string | null;
+  quality_state: string;
+  record_type: string | null;
+  row_number: number | null;
+  payload_json: JsonRecord | null;
+}
+
 function cliValue(flag: string): string | null {
   const index = process.argv.indexOf(flag);
   return index >= 0 ? process.argv[index + 1] ?? null : null;
@@ -228,6 +239,28 @@ function payload(row: HomeProjectionWriteRow): JsonRecord {
 function stringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
+function materialPayloadFields(rows: EclSourceRecordSummaryRow[]): string[] {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const payload = row.payload_json && typeof row.payload_json === "object" ? row.payload_json : {};
+    for (const [key, value] of Object.entries(payload)) {
+      if (MACHINE_REFERENCE_KEYS.has(key)) continue;
+      if (value === null || value === undefined || value === "") continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([key]) => key)
+    .slice(0, 12);
+}
+
+function sourceSummaryExample(row: EclSourceRecordSummaryRow, fields: string[]): string | null {
+  const payload = row.payload_json && typeof row.payload_json === "object" ? row.payload_json : {};
+  const values = fields.map((field) => text(payload[field])).filter((value): value is string => Boolean(value)).slice(0, 3);
+  return values.length ? values.join(" · ") : text(row.record_type);
 }
 
 function sourceRefIds(value: unknown): string[] {
@@ -616,7 +649,12 @@ function makeVisual(datasetRef: string, title: string, keyMessage: string, evide
   };
 }
 
-function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: string, assessmentId: string): GovernedSignalPacketBuild {
+function buildGovernedSignalPacket(
+  rows: HomeProjectionWriteRow[],
+  tenantKey: string,
+  assessmentId: string,
+  sourceSummaries: SourceSummary[] = [],
+): GovernedSignalPacketBuild {
   const renderedAt = new Date().toISOString();
   const rowContentByCandidateId = new Map<string, ExecutiveSignalContent>();
   const rowCandidates: GovernedCandidate[] = [];
@@ -750,7 +788,7 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
       application_landscape_by_function: dimensionShareRows(permittedApplications, "business_function", 8),
       vendor_spend_concentration: vendorRows,
     },
-    sourceSummaries: [],
+    sourceSummaries,
     analyticalLenses: [],
     coverageManifest: {
       dimensionCoverage: [
@@ -787,6 +825,63 @@ function buildGovernedSignalPacket(rows: HomeProjectionWriteRow[], tenantKey: st
     },
   };
   return { signalPacket: packet, contextPolicyProof };
+}
+
+async function readEclSourceSummaries(db: Client, tenantKey: string, assessmentId: string): Promise<SourceSummary[]> {
+  const result = await db.query<EclSourceRecordSummaryRow>(
+    `
+      select
+        f.file_name,
+        f.source_type,
+        f.origin,
+        f.source_owner,
+        f.quality_state,
+        r.record_type,
+        r.row_number,
+        r.payload_json
+      from ecl_source.source_file f
+      left join ecl_source.source_record r
+        on r.tenant_key = f.tenant_key
+       and r.assessment_id = f.assessment_id
+       and r.source_file_id = f.id
+      where f.tenant_key = $1
+        and f.assessment_id = $2
+      order by f.file_name, r.row_number nulls last
+    `,
+    [tenantKey, assessmentId],
+  );
+
+  const byFile = new Map<string, EclSourceRecordSummaryRow[]>();
+  for (const row of result.rows) {
+    const rows = byFile.get(row.file_name) ?? [];
+    rows.push(row);
+    byFile.set(row.file_name, rows);
+  }
+
+  return [...byFile.entries()]
+    .map(([fileName, rows]) => {
+      const first = rows[0];
+      const recordRows = rows.filter((row) => row.record_type);
+      const materialFields = materialPayloadFields(recordRows);
+      return {
+        sourcePath: fileName,
+        domain: first.source_type,
+        objectTypes: [...new Set(recordRows.map((row) => row.record_type).filter((value): value is string => Boolean(value)))].sort(),
+        recordCount: 0,
+        rawRowCount: recordRows.length,
+        canonicalRecordCount: 0,
+        sourceKind: first.origin === "client_intake" ? "client_intake_file" : "source_layer_file",
+        basis: ["coverage_context_not_citable"],
+        authority: [first.source_owner ?? first.origin],
+        qualityStates: [first.quality_state],
+        materialFields,
+        exampleRecords: recordRows
+          .map((row) => sourceSummaryExample(row, materialFields))
+          .filter((value): value is string => Boolean(value))
+          .slice(0, 5),
+      } satisfies SourceSummary;
+    })
+    .sort((a, b) => (b.rawRowCount ?? 0) - (a.rawRowCount ?? 0) || a.sourcePath.localeCompare(b.sourcePath));
 }
 
 async function readHomeProjectionRows(db: Client, tenantKey: string, assessmentId: string): Promise<HomeProjectionWriteRow[]> {
@@ -1224,10 +1319,17 @@ async function main() {
     const rows = await readHomeProjectionRows(db, options.tenantKey, options.assessmentId);
     if (rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
 
-    const { signalPacket, contextPolicyProof } = buildGovernedSignalPacket(rows, options.tenantKey, options.assessmentId);
+    const sourceSummaries = await readEclSourceSummaries(db, options.tenantKey, options.assessmentId);
+    const { signalPacket, contextPolicyProof } = buildGovernedSignalPacket(
+      rows,
+      options.tenantKey,
+      options.assessmentId,
+      sourceSummaries,
+    );
     console.log(
       `${options.tenantKey}/${options.assessmentId}: ${rows.length} Home projection rows -> ` +
-        `${signalPacket.signals.length} signals, ${signalPacket.contextItems.length} context items; ` +
+        `${signalPacket.signals.length} signals, ${signalPacket.contextItems.length} context items, ` +
+        `${signalPacket.sourceSummaries.length} source summaries; ` +
         `${contextPolicyProof.usable_count}/${contextPolicyProof.candidate_count} governed candidates usable`,
     );
     console.log(`row readiness: ${JSON.stringify(contextPolicyProof.row_readiness_counts)}`);
@@ -1297,6 +1399,8 @@ async function main() {
       source_projection_rows: rows.length,
       signal_count: signalPacket.signals.length,
       context_item_count: signalPacket.contextItems.length,
+      source_summary_count: signalPacket.sourceSummaries.length,
+      source_summary_rows: signalPacket.sourceSummaries.reduce((sum, item) => sum + (item.rawRowCount ?? item.recordCount), 0),
       chapter_count: chapters.length,
       chapter_claim_rows: chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0),
       thesis_prompt_version: THESIS_PROMPT_VERSION,
