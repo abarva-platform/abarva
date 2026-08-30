@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 
 import type { ArchitectureView, ArchitectureViewNode } from "@/lib/visual-system/architecture-view-contract";
 import { resolveArchitectureView } from "@/lib/visual-system/resolveArchitectureView";
@@ -320,6 +320,8 @@ interface RunMapBlock {
   subtitle: string;
   count: number;
   denominator: string;
+  records: ApplicationRecord[];
+  relatedIntegrations: IntegrationRecord[];
   anchors: string[];
   ownerSignal: string;
   hostingSignal: string;
@@ -344,6 +346,8 @@ function ExecutiveRunMap({
     () => buildRunMapBlocks(applications, integrations, infrastructure),
     [applications, integrations, infrastructure],
   );
+  const [selectedKey, setSelectedKey] = useState(blocks[0]?.key ?? "");
+  const selectedBlock = blocks.find((block) => block.key === selectedKey) ?? blocks[0];
 
   return (
     <section
@@ -403,10 +407,10 @@ function ExecutiveRunMap({
             style={{
               minWidth: 0,
               minHeight: 260,
-              border: `1px solid ${V4.ruleStrong}`,
+              border: `1px solid ${selectedBlock?.key === block.key ? block.tone : V4.ruleStrong}`,
               borderTop: `5px solid ${block.tone}`,
               borderRadius: 8,
-              background: V4.surface,
+              background: selectedBlock?.key === block.key ? "rgba(0,102,204,0.035)" : V4.surface,
               padding: "16px 17px",
               display: "grid",
               gridTemplateRows: "auto auto 1fr auto",
@@ -446,33 +450,79 @@ function ExecutiveRunMap({
             </div>
 
             {block.drillTarget ? (
-              <button
-                type="button"
-                onClick={() => onDrill(block.drillTarget!)}
-                style={{
-                  justifySelf: "start",
-                  border: `1px solid rgba(0,102,204,0.38)`,
-                  borderRadius: 7,
-                  background: "transparent",
-                  color: V4.blue,
-                  padding: "8px 10px",
-                  fontFamily: MONO,
-                  fontSize: 10.5,
-                  fontWeight: 700,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                }}
-              >
-                Open logical view
-              </button>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <button type="button" onClick={() => setSelectedKey(block.key)} style={runMapButtonStyle}>
+                  Review passport
+                </button>
+                <button type="button" onClick={() => onDrill(block.drillTarget!)} style={runMapButtonStyle}>
+                  Open logical view
+                </button>
+              </div>
             ) : (
-              <span style={{ fontFamily: MONO, fontSize: 10.5, color: V4.slate }}>
-                Detail opens from the related evidence tab
-              </span>
+              <button type="button" onClick={() => setSelectedKey(block.key)} style={runMapButtonStyle}>
+                Review passport
+              </button>
             )}
           </article>
         ))}
+      </div>
+      {selectedBlock ? <RunMapPassport block={selectedBlock} /> : null}
+    </section>
+  );
+}
+
+function RunMapPassport({ block }: { block: RunMapBlock }) {
+  const topRecords = [...block.records]
+    .sort((a, b) => numeric(recordCost(b)) - numeric(recordCost(a)) || recordName(a).localeCompare(recordName(b)))
+    .slice(0, 6);
+  const totalCost = block.records.reduce((sum, row) => sum + numeric(recordCost(row)), 0);
+  const tierOne = block.records.filter((row) => isTierOne(text(row, "criticality"))).length;
+  const vendors = topCounts(block.records, "vendor").filter(([name]) => name !== "Not specified").slice(0, 3);
+  const hosting = topCounts(block.records, "deploymentModel").filter(([name]) => name !== "Not specified").slice(0, 3);
+
+  return (
+    <section aria-label={`${block.title} system passport`} style={passportStyle}>
+      <div style={{ minWidth: 0 }}>
+        <span style={eyebrow(block.tone)}>System passport</span>
+        <h3 style={passportTitleStyle}>{block.title}</h3>
+        <p style={passportTextStyle}>{block.subtitle}</p>
+      </div>
+      <div style={passportMetricGridStyle}>
+        <ArchitectureMetric value={block.count.toLocaleString()} label={block.denominator} />
+        <ArchitectureMetric value={moneyShort(totalCost)} label="annual cost where recorded" />
+        <ArchitectureMetric value={tierOne.toLocaleString()} label="tier-1 records" />
+        <ArchitectureMetric value={block.relatedIntegrations.length.toLocaleString()} label="touching data movements" />
+      </div>
+      <div style={passportBodyStyle}>
+        <section style={{ minWidth: 0 }}>
+          <span style={eyebrow(V4.slate)}>Top systems in this block</span>
+          <div style={passportListStyle}>
+            {topRecords.length ? (
+              topRecords.map((record) => (
+                <article key={`${block.key}:${recordName(record)}:${text(record, "originalRowId")}`} style={passportRecordStyle}>
+                  <strong style={passportRecordNameStyle}>{recordName(record)}</strong>
+                  <span style={passportRecordMetaStyle}>
+                    {[recordCategory(record), text(record, "vendor"), text(record, "deploymentModel"), moneyShort(numeric(recordCost(record)))]
+                      .filter((item) => item && item !== "—")
+                      .join(" · ")}
+                  </span>
+                </article>
+              ))
+            ) : (
+              <p style={passportTextStyle}>No named systems or platforms are mapped to this block yet.</p>
+            )}
+          </div>
+        </section>
+        <section style={{ minWidth: 0 }}>
+          <span style={eyebrow(V4.slate)}>Decision context</span>
+          <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+            <RunMapLine label="owners" value={block.ownerSignal} />
+            <RunMapLine label="hosting" value={hosting.length ? formatTopLabels(hosting) : block.hostingSignal} />
+            <RunMapLine label="vendors" value={vendors.length ? formatTopLabels(vendors) : "Vendor evidence not recorded in this block"} />
+            <RunMapLine label="dependency" value={block.dependencySignal} />
+            <RunMapLine label="evidence gap" value={block.gapSignal} tone={V4.amber} />
+          </div>
+        </section>
       </div>
     </section>
   );
@@ -1337,6 +1387,13 @@ function buildRunMapBlocks(
       subtitle: "SaaS, public cloud, private cloud, data centers, integration engines, identity, network, and storage.",
       count: infrastructure.length,
       denominator: "platforms",
+      records: infrastructure,
+      relatedIntegrations: integrations.filter((row) =>
+        infrastructure.some((platform) => {
+          const name = text(platform, "platformName");
+          return name && (text(row, "targetSystem") === name || text(row, "platformOrDatabase") === name);
+        }),
+      ),
       anchors: namedAnchors(infrastructure, "platformName", "platformType"),
       ownerSignal: ownerSignal(infrastructure, "operationalOwner"),
       hostingSignal: formatTopLabels(topCounts(infrastructure, "hostingModel").slice(0, 3)),
@@ -1353,6 +1410,8 @@ function buildRunMapBlocks(
       subtitle: "Strategic suppliers, contracts, managed services, renewal exposure, and commercial leverage.",
       count: new Set(vendorRows.map((row) => text(row, "vendor")).filter(Boolean)).size,
       denominator: "vendors named on apps",
+      records: vendorRows,
+      relatedIntegrations: integrationsForApps(integrations, vendorRows),
       anchors: topCounts(vendorRows, "vendor").slice(0, 3).map(([name, count]) => `${name} (${count})`),
       ownerSignal: ownerSignal(vendorRows, "businessOwner"),
       hostingSignal: formatTopLabels(topCounts(vendorRows, "deploymentModel").slice(0, 3)),
@@ -1389,6 +1448,8 @@ function runMapBlock({
     subtitle,
     count: rows.length,
     denominator,
+    records: rows,
+    relatedIntegrations: linkedIntegrations,
     anchors: namedAnchors(rows, "systemName", "systemCategory"),
     ownerSignal: ownerSignal(rows, "businessOwner"),
     hostingSignal: formatTopLabels(topCounts(rows, "deploymentModel").slice(0, 3)),
@@ -1420,6 +1481,18 @@ function namedAnchors(rows: ApplicationRecord[], nameField: string, fallbackFiel
     .slice(0, 3)
     .map((row) => text(row, nameField) || text(row, fallbackField))
     .filter(Boolean);
+}
+
+function recordName(row: ApplicationRecord): string {
+  return text(row, "systemName") || text(row, "platformName") || text(row, "dataAssetName") || text(row, "originalRowId") || "Unnamed record";
+}
+
+function recordCategory(row: ApplicationRecord): string {
+  return text(row, "systemCategory") || text(row, "platformType") || text(row, "dataDomain");
+}
+
+function recordCost(row: ApplicationRecord): unknown {
+  return row.annualCostUsd ?? row.annualSpendUsd;
 }
 
 function ownerSignal(rows: ApplicationRecord[], ownerField: string): string {
@@ -1636,6 +1709,102 @@ function moneyShort(value: number): string {
   if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
   return `$${value.toLocaleString()}`;
 }
+
+const runMapButtonStyle = {
+  justifySelf: "start",
+  border: `1px solid rgba(0,102,204,0.38)`,
+  borderRadius: 7,
+  background: "transparent",
+  color: V4.blue,
+  padding: "8px 10px",
+  fontFamily: MONO,
+  fontSize: 10.5,
+  fontWeight: 700,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+} satisfies CSSProperties;
+
+const passportStyle = {
+  background: V4.surface,
+  border: `1px solid ${V4.ruleStrong}`,
+  borderRadius: 10,
+  boxShadow: "0 16px 34px rgba(12,26,58,0.055)",
+  display: "grid",
+  gap: 16,
+  marginTop: 14,
+  padding: "17px 18px 18px",
+} satisfies CSSProperties;
+
+const passportTitleStyle = {
+  color: V4.ink,
+  fontFamily: SERIF,
+  fontSize: "clamp(23px,2vw,32px)",
+  fontWeight: 500,
+  letterSpacing: "-0.03em",
+  lineHeight: 1.08,
+  margin: "8px 0 0",
+} satisfies CSSProperties;
+
+const passportTextStyle = {
+  color: V4.slate,
+  fontFamily: SANS,
+  fontSize: 13.5,
+  lineHeight: 1.5,
+  margin: "8px 0 0",
+} satisfies CSSProperties;
+
+const passportMetricGridStyle = {
+  background: V4.rule,
+  border: `1px solid ${V4.rule}`,
+  display: "grid",
+  gap: 1,
+  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,145px),1fr))",
+} satisfies CSSProperties;
+
+const passportBodyStyle = {
+  display: "grid",
+  gap: 18,
+  gridTemplateColumns: "minmax(0,1fr) minmax(260px,0.75fr)",
+} satisfies CSSProperties;
+
+const passportListStyle = {
+  display: "grid",
+  gap: 8,
+  marginTop: 10,
+} satisfies CSSProperties;
+
+const passportRecordStyle = {
+  border: `1px solid ${V4.rule}`,
+  borderRadius: 8,
+  minWidth: 0,
+  padding: "10px 11px",
+} satisfies CSSProperties;
+
+const passportRecordNameStyle = {
+  color: V4.ink,
+  display: "block",
+  fontFamily: SANS,
+  fontSize: 13.5,
+  lineHeight: 1.25,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+} satisfies CSSProperties;
+
+const passportRecordMetaStyle = {
+  color: V4.slate,
+  display: "block",
+  fontFamily: MONO,
+  fontSize: 10.8,
+  letterSpacing: "0.04em",
+  lineHeight: 1.35,
+  marginTop: 6,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+} satisfies CSSProperties;
 
 function ArchitectureMetric({ value, label }: { value: string; label: string }) {
   return (
