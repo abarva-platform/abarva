@@ -119,12 +119,12 @@
     {
       "file": "layer_3_canonical/canonical_projects.csv",
       "rows": 140,
-      "sha256": "27d9b98e0941185c210f2f7a954d7ae30bf17209aa8f8976e0ab552e476d625a"
+      "sha256": "2c0641f1abe57bb3fbb08e5b5c2a748871e42f5992c1f02feacf8eb14f3172ff"
     },
     {
       "file": "layer_3_canonical/canonical_ai_use_cases.csv",
       "rows": 42,
-      "sha256": "8c8ae1c2a50c1a42cee7afe9c4bd346e23117b5eb5b187b6b38dfeeec49b7558"
+      "sha256": "561d90314f2e1b109ff83d62ae53c5f5afb6f399b228de773ec4b264fe3d40f6"
     },
     {
       "file": "layer_3_canonical/canonical_tools.csv",
@@ -134,7 +134,7 @@
     {
       "file": "layer_3_canonical/canonical_monthly_value_observations.csv",
       "rows": 504,
-      "sha256": "12af5b14ef3526dbf3b11fb19d272b1d8da29eb1f2b1ee486ee6412aadf6ca65"
+      "sha256": "4315afc932b6c1854e08fdc383d82af518e78700cdd97369e9b2177cad164c64"
     },
     {
       "file": "layer_3_canonical/canonical_finance_approval_events.csv",

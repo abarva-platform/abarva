@@ -179,6 +179,8 @@ export interface TowerMartEvidenceItem {
 /** One month of the value waterfall, as the source recorded it. */
 export interface TowerMartValueObservationMonth {
   month: string;
+  actualValue: number | null;
+  reviewerRole: string | null;
   sponsorClaimedUsd: number;
   financeReviewedUsd: number;
   financeValidatedUsd: number;
@@ -207,6 +209,15 @@ export interface TowerMartAiPortfolioItem {
   successMetric?: string | null;
   paybackMonthsTarget?: number | null;
   valueObservationMonths?: TowerMartValueObservationMonth[];
+  actualSpendYtdUsd?: number | null;
+  forecastSpendUsd?: number | null;
+  technologyOwnerRole?: string | null;
+  targetGoLiveDate?: string | null;
+  realizationStartMonth?: string | null;
+  metricBaselineValue?: number | null;
+  metricTargetValue?: number | null;
+  metricUnit?: string | null;
+  benefitRealizationLagMonths?: number | null;
   financeApprovalEvents?: TowerMartFinanceApprovalEvent[];
   evidenceItems?: TowerMartEvidenceItem[];
   promisedValueUsd: number | null;

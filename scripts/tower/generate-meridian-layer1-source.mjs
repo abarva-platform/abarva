@@ -1488,6 +1488,15 @@ function buildCanonicalArtifacts(sources) {
     committee_decision: row.committee_decision,
     sponsor_role: row.sponsor_role,
     finance_partner_role: row.finance_partner_role,
+    // Carried because a drill-down cannot answer "is this on plan" without them. Approved budget
+    // alone says what was allowed, not what has been spent or what the project now expects to
+    // spend, and a reader comparing a claim against a budget is comparing the wrong two numbers.
+    technology_owner_role: row.technology_owner_role,
+    actual_spend_ytd_usd: row.actual_spend_ytd_usd,
+    forecast_spend_usd: row.forecast_spend_usd,
+    start_date: row.start_date,
+    target_go_live_date: row.target_go_live_date,
+    realization_start_month: row.realization_start_month,
     source_file: "21_it_project_portfolio.csv",
     source_row: index + 2,
     source_system: row.source_system,
@@ -1520,6 +1529,14 @@ function buildCanonicalArtifacts(sources) {
     cost_to_build_low_usd: row.cost_to_build_low_usd,
     cost_to_build_high_usd: row.cost_to_build_high_usd,
     business_sponsor_role: row.business_sponsor_role,
+    // The operating metric is already carried by name. Without its baseline and target the name
+    // is a label with nothing behind it: a reader can see which metric a case is measured on but
+    // not whether it has moved, which is the question the metric exists to answer.
+    baseline_value: row.baseline_value,
+    target_value: row.target_value,
+    metric_unit: row.metric_unit,
+    benefit_realization_lag_months: row.benefit_realization_lag_months,
+    finance_partner_role: row.finance_partner_role,
     source_file: "22_ai_business_cases.csv",
     source_row: index + 2,
     source_system: row.source_system,
@@ -1566,6 +1583,14 @@ function buildCanonicalArtifacts(sources) {
     finance_validated_value_usd: row.finance_validated_value_usd,
     board_claimable_value_usd: row.board_claimable_value_usd,
     validation_state: row.validation_state,
+    // The observed value for the month, with the baseline and target it is measured against.
+    // Money observations were carried and the operating metric was not, so the value story
+    // survived the canonical layer and the operational one did not.
+    baseline_value: row.baseline_value,
+    target_value: row.target_value,
+    actual_value: row.actual_value,
+    metric_unit: row.metric_unit,
+    reviewer_role: row.reviewer_role,
     source_file: "24_monthly_value_tracking.csv",
     source_row: index + 2,
     source_system: row.source_system,
