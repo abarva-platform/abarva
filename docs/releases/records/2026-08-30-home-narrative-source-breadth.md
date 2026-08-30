@@ -88,6 +88,12 @@ and resilience-relevant platforms. The thesis prompt requires any named system, 
 tool, report, or function in a claim to appear in that claim's cited signal or context statement,
 preventing an aggregate count from being decorated with uncited names.
 
+Follow-up: the Home narrative packet now states ready-contract and platform denominators directly
+inside the citable signals, the thesis prompt requires a final claim-type self-audit before
+returning JSON, and the structured plan-only result carries the script-level publication gate next
+to the generated content. This keeps publication readiness tied to raw unsupported, overstated, and
+clean-keep-rate measurements instead of a softer nested model field.
+
 ## QA / Validation
 
 - `PASS` — `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts --runInBand`
@@ -108,6 +114,9 @@ preventing an aggregate count from being decorated with uncited names.
   structured technology-budget value in the Home ECL narrative packet.
 - `PASS` — the ECL seam test now asserts named application and platform example signals exist, and
   that named entities must be present in a claim's cited evidence.
+- `PASS` — the ECL seam test now asserts ready-contract and platform denominators are part of the
+  cited signals, that empty arrays are acceptable for unsupported chapter sections, and that the
+  structured result includes the script-level publication gate.
 - `PASS` — dense source-room generator proof showed `application_product_vendor_mismatches = 0`
   with all application and contract realism gates still passing.
 - `PASS` — dense source-room validator accepted the regenerated source room.
