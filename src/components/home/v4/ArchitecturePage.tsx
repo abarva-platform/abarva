@@ -227,15 +227,18 @@ function L0Landscape({
         @media (max-width: 1180px) {
           [data-arch-layout] { grid-template-columns: 1fr !important; }
           [data-arch-side] { position: static !important; }
+          [aria-label="Architecture wheel"] { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 980px) {
           [data-arch-map] { grid-template-columns: 1fr !important; }
           [data-arch-flow] { display: none !important; }
           [data-arch-core-nodes] { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+          [aria-label="Architecture wheel"] [data-wheel-basis] { text-align: left !important; }
         }
         @media (max-width: 760px) {
           [data-arch-metrics] { grid-template-columns: 1fr !important; }
           [data-arch-axis-label] { width: 100% !important; white-space: normal !important; overflow-wrap: anywhere !important; }
+          [data-wheel-canvas] { min-height: 520px !important; }
         }
       `}</style>
       <div
@@ -400,6 +403,13 @@ function ExecutiveRunMap({
         </p>
       </div>
 
+      <ArchitectureWheel
+        blocks={blocks}
+        selectedKey={selectedBlock?.key ?? ""}
+        onSelect={setSelectedKey}
+        onDrill={onDrill}
+      />
+
       <div data-run-map style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 12 }}>
         {blocks.map((block) => (
           <article
@@ -467,6 +477,106 @@ function ExecutiveRunMap({
         ))}
       </div>
       {selectedBlock ? <RunMapPassport block={selectedBlock} /> : null}
+    </section>
+  );
+}
+
+function ArchitectureWheel({
+  blocks,
+  selectedKey,
+  onSelect,
+  onDrill,
+}: {
+  blocks: RunMapBlock[];
+  selectedKey: string;
+  onSelect: (key: string) => void;
+  onDrill: (capability: string) => void;
+}) {
+  const selectedBlock = blocks.find((block) => block.key === selectedKey) ?? blocks[0];
+  const total = blocks.reduce((sum, block) => sum + block.count, 0);
+  const nodes = blocks.map((block, index) => {
+    const angle = -90 + (360 / Math.max(1, blocks.length)) * index;
+    const radius = 43;
+    const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
+    const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
+    return { block, x, y };
+  });
+
+  if (!selectedBlock) return null;
+
+  return (
+    <section aria-label="Architecture wheel" style={wheelShellStyle}>
+      <div style={{ minWidth: 0 }}>
+        <div style={wheelHeaderStyle}>
+          <div>
+            <span style={eyebrow(V4.green)}>Architecture wheel</span>
+            <h3 style={wheelTitleStyle}>Where the enterprise runs, and who answers for it.</h3>
+          </div>
+          <span data-wheel-basis style={wheelBasisStyle}>
+            {total.toLocaleString()} counted records · typed ECL views · no raw object totals
+          </span>
+        </div>
+
+        <div data-wheel-canvas style={wheelCanvasStyle}>
+          <div aria-hidden="true" style={{ ...wheelRingStyle, width: "76%", height: "76%" }} />
+          <div aria-hidden="true" style={{ ...wheelRingStyle, width: "54%", height: "54%" }} />
+          <div aria-hidden="true" style={{ ...wheelRingStyle, width: "32%", height: "32%" }} />
+          <div style={wheelCenterStyle}>
+            <span style={wheelCenterNameStyle}>Meridian</span>
+            <span style={wheelCenterMetaStyle}>{total.toLocaleString()} records</span>
+            <span style={wheelCenterMetaStyle}>conceptual view</span>
+          </div>
+          {nodes.map(({ block, x, y }) => {
+            const active = block.key === selectedBlock.key;
+            return (
+              <button
+                key={block.key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => onSelect(block.key)}
+                style={{
+                  ...wheelNodeStyle,
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  borderColor: active ? block.tone : "rgba(12,26,58,0.2)",
+                  background: active ? "rgba(255,255,255,0.98)" : V4.surface,
+                  boxShadow: active ? `0 0 0 3px ${block.tone}22, 0 14px 30px rgba(12,26,58,0.12)` : "0 9px 20px rgba(12,26,58,0.08)",
+                }}
+              >
+                <span style={{ ...wheelNodeCountStyle, color: block.tone }}>{block.count.toLocaleString()}</span>
+                <span style={wheelNodeLabelStyle}>{block.title}</span>
+                <span style={wheelNodeMetaStyle}>{block.denominator}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <aside style={wheelDetailStyle}>
+        <span style={eyebrow(selectedBlock.tone)}>Selected business block</span>
+        <h3 style={wheelDetailTitleStyle}>{selectedBlock.title}</h3>
+        <p style={wheelDetailTextStyle}>{selectedBlock.subtitle}</p>
+        <div style={wheelDetailMetricGridStyle}>
+          <ArchitectureMetric value={selectedBlock.count.toLocaleString()} label={selectedBlock.denominator} />
+          <ArchitectureMetric value={selectedBlock.relatedIntegrations.length.toLocaleString()} label="data movements" />
+        </div>
+        <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+          <RunMapLine label="anchor systems" value={selectedBlock.anchors.length ? selectedBlock.anchors.join(" · ") : "No named anchors in this block"} />
+          <RunMapLine label="accountability" value={selectedBlock.ownerSignal} />
+          <RunMapLine label="hosting posture" value={selectedBlock.hostingSignal} />
+          <RunMapLine label="open evidence" value={selectedBlock.gapSignal} tone={V4.amber} />
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+          {selectedBlock.drillTarget ? (
+            <button type="button" onClick={() => onDrill(selectedBlock.drillTarget!)} style={runMapButtonStyle}>
+              Open logical view
+            </button>
+          ) : null}
+          <button type="button" onClick={() => onSelect(selectedBlock.key)} style={runMapButtonStyle}>
+            Keep selected
+          </button>
+        </div>
+      </aside>
     </section>
   );
 }
@@ -1804,6 +1914,176 @@ const passportRecordMetaStyle = {
   textOverflow: "ellipsis",
   textTransform: "uppercase",
   whiteSpace: "nowrap",
+} satisfies CSSProperties;
+
+const wheelShellStyle = {
+  alignItems: "stretch",
+  background: V4.surface,
+  border: `1px solid ${V4.ruleStrong}`,
+  borderRadius: 10,
+  boxShadow: "0 18px 42px rgba(12,26,58,0.07)",
+  display: "grid",
+  gap: 20,
+  gridTemplateColumns: "minmax(0,1fr) minmax(280px,340px)",
+  marginTop: 18,
+  padding: "18px 18px 18px 20px",
+} satisfies CSSProperties;
+
+const wheelHeaderStyle = {
+  alignItems: "end",
+  display: "flex",
+  gap: 18,
+  justifyContent: "space-between",
+  marginBottom: 12,
+} satisfies CSSProperties;
+
+const wheelTitleStyle = {
+  color: V4.ink,
+  fontFamily: SERIF,
+  fontSize: "clamp(24px,2.2vw,34px)",
+  fontWeight: 500,
+  lineHeight: 1.08,
+  margin: "8px 0 0",
+  textWrap: "balance",
+} satisfies CSSProperties;
+
+const wheelBasisStyle = {
+  color: V4.slate,
+  fontFamily: MONO,
+  fontSize: 10.5,
+  letterSpacing: "0.06em",
+  lineHeight: 1.45,
+  maxWidth: 260,
+  textAlign: "right",
+  textTransform: "uppercase",
+} satisfies CSSProperties;
+
+const wheelCanvasStyle = {
+  aspectRatio: "1.62 / 1",
+  background:
+    "radial-gradient(circle at center, rgba(29,158,117,0.08) 0 13%, transparent 13.4%), linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,246,241,0.7))",
+  border: `1px solid ${V4.rule}`,
+  borderRadius: 10,
+  minHeight: 430,
+  overflow: "hidden",
+  position: "relative",
+} satisfies CSSProperties;
+
+const wheelRingStyle = {
+  border: `1px dashed rgba(12,26,58,0.18)`,
+  borderRadius: 999,
+  left: "50%",
+  position: "absolute",
+  top: "50%",
+  transform: "translate(-50%, -50%)",
+} satisfies CSSProperties;
+
+const wheelCenterStyle = {
+  alignItems: "center",
+  background: V4.surface,
+  border: `1px solid ${V4.ruleStrong}`,
+  borderRadius: 999,
+  boxShadow: "0 10px 28px rgba(12,26,58,0.12)",
+  display: "grid",
+  height: 116,
+  justifyItems: "center",
+  left: "50%",
+  padding: 12,
+  position: "absolute",
+  textAlign: "center",
+  top: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 116,
+} satisfies CSSProperties;
+
+const wheelCenterNameStyle = {
+  color: V4.ink,
+  fontFamily: SERIF,
+  fontSize: 19,
+  fontWeight: 600,
+  lineHeight: 1.05,
+} satisfies CSSProperties;
+
+const wheelCenterMetaStyle = {
+  color: V4.slate,
+  fontFamily: MONO,
+  fontSize: 9.5,
+  letterSpacing: "0.05em",
+  textTransform: "uppercase",
+} satisfies CSSProperties;
+
+const wheelNodeStyle = {
+  border: `1px solid ${V4.ruleStrong}`,
+  borderRadius: 8,
+  cursor: "pointer",
+  display: "grid",
+  gap: 3,
+  minHeight: 82,
+  padding: "9px 10px",
+  position: "absolute",
+  textAlign: "left",
+  transform: "translate(-50%, -50%)",
+  width: 154,
+} satisfies CSSProperties;
+
+const wheelNodeCountStyle = {
+  display: "block",
+  fontFamily: SERIF,
+  fontSize: 22,
+  fontWeight: 500,
+  lineHeight: 1,
+} satisfies CSSProperties;
+
+const wheelNodeLabelStyle = {
+  color: V4.ink,
+  display: "block",
+  fontFamily: SANS,
+  fontSize: 12.5,
+  fontWeight: 700,
+  lineHeight: 1.16,
+} satisfies CSSProperties;
+
+const wheelNodeMetaStyle = {
+  color: V4.slate,
+  display: "block",
+  fontFamily: MONO,
+  fontSize: 9.5,
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+} satisfies CSSProperties;
+
+const wheelDetailStyle = {
+  background: V4.cream,
+  border: `1px solid ${V4.rule}`,
+  borderRadius: 10,
+  minWidth: 0,
+  padding: "16px 16px 18px",
+} satisfies CSSProperties;
+
+const wheelDetailTitleStyle = {
+  color: V4.ink,
+  fontFamily: SERIF,
+  fontSize: "clamp(22px,1.8vw,30px)",
+  fontWeight: 500,
+  lineHeight: 1.08,
+  margin: "9px 0 0",
+} satisfies CSSProperties;
+
+const wheelDetailTextStyle = {
+  color: V4.slate,
+  fontFamily: SANS,
+  fontSize: 13.5,
+  lineHeight: 1.52,
+  margin: "9px 0 0",
+} satisfies CSSProperties;
+
+const wheelDetailMetricGridStyle = {
+  background: V4.rule,
+  border: `1px solid ${V4.rule}`,
+  display: "grid",
+  gap: 1,
+  gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+  marginTop: 14,
 } satisfies CSSProperties;
 
 function ArchitectureMetric({ value, label }: { value: string; label: string }) {
