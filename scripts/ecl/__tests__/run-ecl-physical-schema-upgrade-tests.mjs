@@ -143,6 +143,16 @@ try {
       'known',
       'not_reviewed'
     );
+
+    create view ecl_context.application_v as
+    select
+      o.*,
+      otc.grain,
+      otc.counting_class
+    from ecl_context.object o
+    join ecl_context.object_type_catalog otc on otc.object_type = o.object_type
+    where otc.grain = 'application'
+      and otc.counting_class = 'business_entity';
   `);
 
   run("psql", [
@@ -192,6 +202,12 @@ try {
           from pg_constraint
           where conrelid = 'ecl_context.object'::regclass
             and conname = 'object_type_catalog_fk'
+        ),
+        'application_view_column_order', (
+          select jsonb_agg(column_name order by ordinal_position)
+          from information_schema.columns
+          where table_schema = 'ecl_context'
+            and table_name = 'application_v'
         )
       )::text;
     `).stdout.trim(),
@@ -203,6 +219,11 @@ try {
   assert.equal(counts.semantic_key_constraint_count, 1, "older object table must receive semantic uniqueness");
   assert.equal(counts.legacy_key_constraint_count, 0, "legacy object_key_unique must be replaced");
   assert.equal(counts.catalog_fk_constraint_count, 1, "older object table must receive catalog FK");
+  assert.ok(
+    counts.application_view_column_order.includes("canonical_semantic_type"),
+    "older application_v must be recreated with canonical_semantic_type from upgraded object table",
+  );
+  assert.ok(counts.application_view_column_order.includes("grain"), "application_v must preserve catalog grain");
 
   console.log(JSON.stringify({ accepted: true, counts }, null, 2));
 } finally {
