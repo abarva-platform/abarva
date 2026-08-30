@@ -28,6 +28,9 @@ const CONTRACT_TABS = [
 ] as const;
 
 type PageLabel = (typeof PAGE_LABELS)[number];
+type ExecutiveVendorRow = SourceVendorContractPortfolioRow & {
+  readonly vendor_refs: readonly string[];
+};
 
 export function WorkspaceExecutiveShell({
   vm,
@@ -489,8 +492,8 @@ function VendorsPage({
 }) {
   const vendors = topVendors(portfolio);
   const selectedContracts = selectedVendor
-    ? portfolio.contracts.filter(
-        (contract) => contract.vendor_ref === selectedVendor.vendor_ref,
+    ? portfolio.contracts.filter((contract) =>
+        selectedVendor.contract_refs.includes(contract.contract_id),
       )
     : [];
   const selectedVendorPosition = selectedVendor
@@ -1292,14 +1295,65 @@ function formatCount(value: number | null | undefined) {
   return value == null ? "Not established" : String(value);
 }
 
-function topVendors(portfolio: SourceWorkspacePortfolioData) {
-  return portfolio.vendors
+export function topVendors(
+  portfolio: SourceWorkspacePortfolioData,
+): ExecutiveVendorRow[] {
+  const byVendorName = new Map<string, ExecutiveVendorRow>();
+  for (const vendor of portfolio.vendors) {
+    const key = normalizedVendorName(vendor.vendor_name);
+    const existing = byVendorName.get(key);
+    if (!existing) {
+      byVendorName.set(key, { ...vendor, vendor_refs: [vendor.vendor_ref] });
+      continue;
+    }
+    byVendorName.set(key, {
+      ...existing,
+      vendor_category: existing.vendor_category ?? vendor.vendor_category,
+      contract_count: existing.contract_count + vendor.contract_count,
+      annual_value:
+        (numberFromDb(existing.annual_value) ?? 0) +
+        (numberFromDb(vendor.annual_value) ?? 0),
+      total_committed_value:
+        (numberFromDb(existing.total_committed_value) ?? 0) +
+        (numberFromDb(vendor.total_committed_value) ?? 0),
+      auto_renew_contracts:
+        existing.auto_renew_contracts + vendor.auto_renew_contracts,
+      next_end_date: earlierDate(existing.next_end_date, vendor.next_end_date),
+      contract_refs: uniqueRefs([
+        ...existing.contract_refs,
+        ...vendor.contract_refs,
+      ]),
+      vendor_refs: uniqueRefs([...existing.vendor_refs, vendor.vendor_ref]),
+    });
+  }
+  return [...byVendorName.values()]
     .slice()
     .sort(
       (a, b) =>
         (numberFromDb(b.annual_value) ?? 0) -
         (numberFromDb(a.annual_value) ?? 0),
     );
+}
+
+function normalizedVendorName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(
+      /\b(incorporated|inc|corporation|corp|llc|ltd|limited|company|co)\b/g,
+      "",
+    )
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function earlierDate(a: string | null, b: string | null) {
+  if (!a) return b;
+  if (!b) return a;
+  return a < b ? a : b;
+}
+
+function uniqueRefs(refs: readonly string[]) {
+  return [...new Set(refs.filter(Boolean))];
 }
 
 function portfolioAnnualValue(portfolio: SourceWorkspacePortfolioData) {

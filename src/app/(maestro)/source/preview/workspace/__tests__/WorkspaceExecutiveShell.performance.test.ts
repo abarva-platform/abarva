@@ -1,4 +1,4 @@
-import { performanceActual } from "../WorkspaceExecutiveShell";
+import { performanceActual, topVendors } from "../WorkspaceExecutiveShell";
 
 describe("WorkspaceExecutiveShell performance formatting", () => {
   it("renders numeric performance actuals from governed rows without throwing", () => {
@@ -6,5 +6,59 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(performanceActual(null, 0.91)).toBe("91.0%");
     expect(performanceActual(null, 96)).toBe("96.0%");
     expect(performanceActual("89%", null)).toBe("89%");
+  });
+
+  it("collapses duplicate supplier display names before ranking concentration", () => {
+    const vendors = topVendors({
+      vendors: [
+        {
+          tenant_key: "meridian-health",
+          vendor_ref: "vendor-platform",
+          vendor_name: "Epic Systems Corporation",
+          vendor_category: "EHR",
+          contract_count: 1,
+          annual_value: 86_200_000,
+          total_committed_value: 86_200_000,
+          auto_renew_contracts: 1,
+          next_end_date: "2028-12-31",
+          contract_refs: ["CTR-PLATFORM"],
+        },
+        {
+          tenant_key: "meridian-health",
+          vendor_ref: "vendor-modules",
+          vendor_name: "Epic Systems Corp.",
+          vendor_category: "EHR",
+          contract_count: 5,
+          annual_value: 50_900_000,
+          total_committed_value: 50_900_000,
+          auto_renew_contracts: 2,
+          next_end_date: "2027-12-31",
+          contract_refs: ["CTR-0005", "CTR-0006"],
+        },
+        {
+          tenant_key: "meridian-health",
+          vendor_ref: "vendor-cloud",
+          vendor_name: "Amazon Web Services",
+          vendor_category: "Cloud",
+          contract_count: 7,
+          annual_value: 55_200_000,
+          total_committed_value: 55_200_000,
+          auto_renew_contracts: 0,
+          next_end_date: "2029-12-31",
+          contract_refs: ["CTR-AWS"],
+        },
+      ],
+    } as unknown as Parameters<typeof topVendors>[0]);
+
+    expect(vendors).toHaveLength(2);
+    expect(vendors[0]?.vendor_name).toBe("Epic Systems Corporation");
+    expect(vendors[0]?.annual_value).toBe(137_100_000);
+    expect(vendors[0]?.contract_count).toBe(6);
+    expect(vendors[0]?.contract_refs).toEqual([
+      "CTR-PLATFORM",
+      "CTR-0005",
+      "CTR-0006",
+    ]);
+    expect(vendors[1]?.vendor_name).toBe("Amazon Web Services");
   });
 });
