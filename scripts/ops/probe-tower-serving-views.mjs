@@ -71,6 +71,18 @@ async function main() {
       );
     }
 
+    console.log("=== 3b. both lenses, so a routed row is distinguishable from a dropped one ===");
+    // Splitting by page key can fail in a way the generation join cannot: it can drop rows rather
+    // than route them. A row whose page key matches neither lens disappears from the serving layer
+    // entirely, and a check that only looked at tower_ai_portfolio would read that as success.
+    for (const v of ["tower_ai_portfolio", "tower_adoption_lens"]) {
+      const c = await client.query(
+        `select tenant_key, count(*)::int as rows from serving.${v}
+          group by tenant_key order by tenant_key`,
+      );
+      for (const r of c.rows) console.log(`lens\t${v}\t${r.tenant_key}\t${r.rows}`);
+    }
+
     console.log("=== 4. what the active-keys function says right now ===");
     const keys = await client.query(
       `select tenant_key, assessment_id, projection_version
