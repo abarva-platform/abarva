@@ -69,13 +69,35 @@ async function main() {
     line("cost", cost.rows[0]);
 
     console.log("=== 3. display_payload_json keys on a rollout ===");
+    // Ordered by projection_version, then created_at. An unordered `limit 1` here returned a row
+    // from a retired assessment whose payload holds only `page_key`, which reads as a catastrophic
+    // data loss and is simply an old row the active-assessment view already filters out.
     const keys = await client.query(
       `select jsonb_object_keys(display_payload_json) as k
-         from ecl_projection.tower_ai_portfolio
-        where display_payload_json ->> 'page_key' = 'adoption_lens'
-        limit 1`,
+         from (
+           select display_payload_json
+             from ecl_projection.tower_ai_portfolio
+            where display_payload_json ->> 'page_key' = 'adoption_lens'
+            order by projection_version desc, created_at desc
+            limit 1
+         ) newest`,
     );
-    line("rollout_display_keys", keys.rows.map((r) => r.k).sort());
+    line("newest_rollout_display_keys", keys.rows.map((r) => r.k).sort());
+
+    console.log("=== 3b. retired rows still sitting in the projection table ===");
+    const stale = await client.query(
+      `select p.projection_version,
+              count(*)::int as rows,
+              count(*) filter (where a.assessment_id is null)::int as not_in_active_view
+         from ecl_projection.tower_ai_portfolio p
+         left join serving.tower_active_assessment_keys() a
+           on a.tenant_key = p.tenant_key
+          and a.assessment_id = p.assessment_id
+          and a.projection_version = p.projection_version
+        group by p.projection_version
+        order by p.projection_version desc`,
+    );
+    line("rows_by_projection_version", stale.rows);
 
     console.log("=== 4. does a rollout carry any funding key, anywhere in its row jsonb? ===");
     const funding = await client.query(
@@ -110,6 +132,58 @@ async function main() {
         group by 1 order by 2 desc`,
     );
     line("monthly_cost_jsonb_type", jtype.rows);
+
+    console.log("=== 7. constraints (a migration cannot be written without these) ===");
+    const cons = await client.query(
+      `select rel.relname as table_name,
+              con.conname as constraint_name,
+              case con.contype
+                when 'p' then 'primary key'
+                when 'u' then 'unique'
+                when 'f' then 'foreign key'
+                when 'c' then 'check'
+                else con.contype::text
+              end as kind,
+              pg_get_constraintdef(con.oid) as definition
+         from pg_constraint con
+         join pg_class rel on rel.oid = con.conrelid
+         join pg_namespace ns on ns.oid = rel.relnamespace
+        where ns.nspname = 'ecl_projection' and rel.relname = any($1)
+        order by rel.relname, con.contype, con.conname`,
+      [TABLES],
+    );
+    if (cons.rows.length === 0) line("constraints", "NONE — not even a primary key");
+    for (const r of cons.rows) {
+      console.log(`constraint\t${r.table_name}\t${r.kind}\t${r.constraint_name}\t${r.definition}`);
+    }
+
+    console.log("=== 8. indexes ===");
+    const idx = await client.query(
+      `select tablename, indexname, indexdef
+         from pg_indexes
+        where schemaname = 'ecl_projection' and tablename = any($1)
+        order by tablename, indexname`,
+      [TABLES],
+    );
+    if (idx.rows.length === 0) line("indexes", "NONE");
+    for (const r of idx.rows) {
+      console.log(`index\t${r.tablename}\t${r.indexname}\t${r.indexdef}`);
+    }
+
+    console.log("=== 9. row-level security ===");
+    const rls = await client.query(
+      `select rel.relname as table_name, rel.relrowsecurity as rls_enabled,
+              (select count(*)::int from pg_policies pol
+                where pol.schemaname = 'ecl_projection' and pol.tablename = rel.relname) as policies
+         from pg_class rel
+         join pg_namespace ns on ns.oid = rel.relnamespace
+        where ns.nspname = 'ecl_projection' and rel.relname = any($1)
+        order by rel.relname`,
+      [TABLES],
+    );
+    for (const r of rls.rows) {
+      console.log(`rls\t${r.table_name}\trls_enabled=${r.rls_enabled}\tpolicies=${r.policies}`);
+    }
 
     console.log("PROBE_OK");
   } finally {
