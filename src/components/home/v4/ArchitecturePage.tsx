@@ -358,9 +358,12 @@ function ExecutiveRunMap({
   );
   const [selectedKey, setSelectedKey] = useState(blocks[0]?.key ?? "");
   const selectedBlock = blocks.find((block) => block.key === selectedKey) ?? blocks[0];
+  const dataMovements = dataMovementRows(integrations);
+  const dataWorkloads = dataWorkloadRows(integrations);
   const totals = {
     applications: applications.length,
-    integrations: integrations.length,
+    dataMovements: dataMovements.length,
+    dataWorkloadSegments: dataWorkloads.length,
     infrastructure: infrastructure.length,
   };
 
@@ -502,7 +505,7 @@ function ArchitectureWheel({
   onDrill,
 }: {
   blocks: RunMapBlock[];
-  totals: { applications: number; integrations: number; infrastructure: number };
+  totals: { applications: number; dataMovements: number; dataWorkloadSegments: number; infrastructure: number };
   selectedKey: string;
   onSelect: (key: string) => void;
   onDrill: (capability: string) => void;
@@ -528,7 +531,8 @@ function ArchitectureWheel({
           </div>
           <span data-wheel-basis style={wheelBasisStyle}>
             {blocks.length.toLocaleString()} business blocks · {totals.applications.toLocaleString()} applications ·{" "}
-            {totals.infrastructure.toLocaleString()} platforms · {totals.integrations.toLocaleString()} movements
+            {totals.infrastructure.toLocaleString()} platforms · {totals.dataMovements.toLocaleString()} movements ·{" "}
+            {totals.dataWorkloadSegments.toLocaleString()} workload segments
           </span>
         </div>
 

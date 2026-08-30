@@ -53,6 +53,7 @@ describe("Home v4 architecture grain", () => {
     expect(wheel.getByText("Where the enterprise runs, and who answers for it.")).toBeInTheDocument();
     expect(wheel.getByText(/business blocks/i)).toBeInTheDocument();
     expect(wheel.getByText(/applications ·/i)).toBeInTheDocument();
+    expect(wheel.getByText(/movements · 0 workload segments/i)).toBeInTheDocument();
     expect(wheel.queryByText(/counted records/i)).not.toBeInTheDocument();
     expect(wheel.queryByText(/\b\d{3,4} records\b/i)).not.toBeInTheDocument();
     expect(wheel.getByText("Selected business block")).toBeInTheDocument();
@@ -134,6 +135,14 @@ describe("Home v4 architecture grain", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /Finance & Accounting/i }));
+
+    const wheel = within(screen.getByLabelText("Architecture wheel"));
+    const movementCount = recordTypes.integrations.rows.length;
+    const combinedCount = movementCount + 2;
+    expect(
+      wheel.getByText(new RegExp(`${movementCount.toLocaleString()} movements · 2 workload segments`, "i")),
+    ).toBeInTheDocument();
+    expect(wheel.queryByText(new RegExp(`${combinedCount.toLocaleString()} movements`, "i"))).not.toBeInTheDocument();
 
     const workloadPanel = screen.getByText("Data/BI/ETL evidence loaded").closest("article");
     expect(workloadPanel).toBeTruthy();
