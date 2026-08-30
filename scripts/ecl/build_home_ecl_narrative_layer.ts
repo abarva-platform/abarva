@@ -46,7 +46,7 @@ type JsonRecord = Record<string, unknown>;
 
 const HOME_SURFACE_KEY = "home_enterprise_landscape";
 const DEFAULT_TENANT_KEY = "meridian-health";
-const DEFAULT_ASSESSMENT_ID = "ecl-dense-meridian-2026-08-23";
+const DEFAULT_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
 const DEFAULT_OUT_DIR = "/tmp/home-ecl-narrative-layer";
 const PROJECTION_VERSION = 1;
 const WRITE = process.env.HOME_ECL_NARRATIVE_WRITE === "true" && process.env.HOME_ECL_NARRATIVE_WRITE_APPROVED === "true";
