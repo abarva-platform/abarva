@@ -142,9 +142,10 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
     {
       label: "Approved IT project portfolio",
       value: formatLoadedUsdM(s.approvedInvestmentUsd),
-      note: `${formatCount(
-        s.totalProgramSubjectCount || s.programCount || view.programs.length,
-      )} projects · approved capital only`,
+      // The count of subjects, not the board-scope count and not however many rows loaded.
+      // The view model already resolves absence; a second fallback here silently swapped in a
+      // different metric whenever the first was zero.
+      note: `${formatCount(s.totalProgramSubjectCount)} projects · approved capital only`,
       tone: "teal",
     },
     {

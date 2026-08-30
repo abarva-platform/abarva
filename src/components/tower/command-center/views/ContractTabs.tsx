@@ -1204,8 +1204,10 @@ export function EvidenceActionsContractView({
   onOpenGap: (id: string) => void;
 }) {
   const s = view.summary;
-  const economicRows =
-    s.economicReviewQueueCount || view.gaps.length + view.pipelineGaps.length;
+  // The review-queue count, and only that. This fell back to `gaps.length + pipelineGaps.length`
+  // — the size of two unrelated collections — whenever the queue count was zero, so a label
+  // reading "N in the economic review queue" could be counting something else entirely.
+  const economicRows = s.economicReviewQueueCount;
   const campaigns = campaignRows(view);
   const sourceActions = sourceContractActions(view);
   const rowsByPage = reconciliationRows(view);

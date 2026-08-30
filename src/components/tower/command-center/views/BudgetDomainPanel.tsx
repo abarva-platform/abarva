@@ -66,7 +66,10 @@ export function buildBudgetDomainRows(
   const rows = new Map<string, DomainRow>();
   for (const program of view.programs) {
     const domain = program.functionLabel ?? "Domain not loaded";
-    const budgetUsd = program.fundedAmountUsd || program.fundedUsd;
+    // One field. `fundedAmountUsd` already resolves `fundedAmount ?? approvedFundingUsd`, and
+    // `fundedUsd` is that same `approvedFundingUsd` — so the old `||` could never change the
+    // value. It read as a substitution between two funding measures and was neither.
+    const budgetUsd = program.fundedAmountUsd;
     const hasValue = program.promisedBenefitLoaded && program.promisedUsd > 0;
     const hasUsage = program.usageSupportedUsd > 0 || program.usageStatus !== "none";
     const current = rows.get(domain) ?? {

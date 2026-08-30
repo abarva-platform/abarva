@@ -59,7 +59,13 @@ function costRange(item: TowerAiView): string {
     if (item.costToBuildLowUsd === item.costToBuildHighUsd) return formatUsdM(item.costToBuildLowUsd);
     return `${formatUsdM(item.costToBuildLowUsd)}–${formatUsdM(item.costToBuildHighUsd)}`;
   }
-  return formatUsdM(item.costToBuildLowUsd ?? item.costToBuildHighUsd);
+  // Exactly one bound is known. Rendering it bare made an upper bound indistinguishable from a
+  // point estimate: "$20.2M" reads as what the build costs, when it means at most that. Naming
+  // the bound keeps the one thing the source actually recorded.
+  if (item.costToBuildLowUsd !== null) {
+    return `from ${formatUsdM(item.costToBuildLowUsd)}`;
+  }
+  return `up to ${formatUsdM(item.costToBuildHighUsd as number)}`;
 }
 
 export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
