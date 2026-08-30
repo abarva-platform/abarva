@@ -404,3 +404,63 @@ describe("risk is not readiness printed twice", () => {
     expect(LAYER4).not.toMatch(/\brisk_score\b/);
   });
 });
+
+describe("the rules hold across every panel, not just the ones already fixed", () => {
+  const VIEW_DIR = "src/components/tower/command-center/views";
+  const panels = fs
+    .readdirSync(path.resolve(ROOT, VIEW_DIR))
+    .filter((f) => f.endsWith(".tsx"))
+    .map((f) => [f, read(`${VIEW_DIR}/${f}`)] as const);
+
+  it("has panels to check", () => {
+    expect(panels.length).toBeGreaterThan(8);
+  });
+
+  it("never substitutes one metric for another with || or ??", () => {
+    // Named-field guards only catch the fields you thought of. Three substitutions survived an
+    // earlier sweep because they used different field names: fundedAmountUsd || fundedUsd,
+    // totalProgramSubjectCount || programCount, and a queue count falling back to the combined
+    // length of two unrelated arrays. This matches the shape instead.
+    //
+    // A sort comparator (`a.x - b.x || a.y - b.y`) is the standard tiebreak idiom and is excluded.
+    // The rule is about substituting one *metric* for another. A literal fallback is a different
+    // thing: `|| 1` guards a denominator, `?? null` and `|| 0` state absence. Only a fallback to
+    // another field is a substitution.
+    // Matched positively: the right-hand side must itself be a field reference. A negative
+    // lookahead does not work here — `\s*` backtracks to zero width and tests the space rather
+    // than the token after it, so `|| 1` reads as a substitution when it is a denominator guard.
+    const SUBSTITUTION =
+      /\b(?:s|item|row|view|program|summary)\.[a-zA-Z]+(?:Usd|Count|Score|Pct)\s*(?:\|\||\?\?)\s*[a-zA-Z_$][\w$]*\.[a-zA-Z]/;
+    for (const [name, source] of panels) {
+      const offending = source
+        .split("\n")
+        .filter((line) => !/[-+]\s*[a-z]|=>|\.sort\(|localeCompare/.test(line))
+        .filter((line) => SUBSTITUTION.test(line));
+      expect([name, offending]).toEqual([name, []]);
+    }
+  });
+
+  it("names no internal type or layer on a client surface", () => {
+    // "view model", "payload", a Tower* type name — vocabulary from the build, where a CXO reads.
+    const BUILDER = /(view model|viewModel|payload_json|display_payload|mart row|projection row)/i;
+    for (const [name, source] of panels) {
+      const rendered = source
+        .split("\n")
+        .filter((line) => !line.trim().startsWith("*") && !line.trim().startsWith("//"))
+        .filter((line) => BUILDER.test(line));
+      expect([name, rendered]).toEqual([name, []]);
+    }
+  });
+
+  it("gates no headline on a hardcoded constant", () => {
+    // `const loadedTargets = 0` made a headline branch unreachable, so the panel could only ever
+    // state one of its two conclusions whatever the data held.
+    for (const [name, source] of panels) {
+      // The name must be captured to be back-referenced. Without the group the `\1` never
+      // matches anything and the guard silently always passes — the same defect it exists to
+      // catch, one level up.
+      const DEAD_GATE = /const\s+([a-zA-Z]+)\s*=\s*0;[\s\S]{0,400}?\b\1\s*[><]/;
+      expect([name, DEAD_GATE.test(source)]).toEqual([name, false]);
+    }
+  });
+});

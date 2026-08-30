@@ -205,8 +205,8 @@ export function BudgetShapePanel({ view }: { view: TowerCommandCenterView }) {
             ))}
           </div>
           <p style={{ margin: "20px 0 0", paddingTop: 16, borderTop: "1px solid var(--canon-border)", fontSize: 15, lineHeight: 1.6, color: "var(--canon-gray-700)" }}>
-            Capex/opex is not present in this view model. It must arrive as a governed field before
-            this panel can split the budget.
+            The capital and operating split is not loaded. It has to arrive as a governed field
+            before this panel can divide the budget.
           </p>
         </div>
       </div>
