@@ -95,6 +95,53 @@ const STORY_SECTIONS: StorySectionSpec[] = [
 
 const NUMBER_RE = /(?:\$[\d,.]+(?:[KMB])?|\b\d+(?:\.\d+)?%)/;
 const PREFERRED_LEAD_RE = /\b(?:finance|validated|proven|claimable|promised|value|spend|cost|contracts|risk|complete|blocked)\b/i;
+export const HOME_TIER1_GENERATION_FORBIDDEN_TERMS = [
+  "ECL",
+  "projection",
+  "serving view",
+  "loaded row",
+  "loaded rows",
+  "canonical entity",
+  "canonical entities",
+  "payload",
+  "schema",
+  "source room",
+  "provider flag",
+  "not enough verified evidence yet",
+  "coverage gap in the build",
+  "adapter",
+  "upsert",
+  "hydration step",
+  "row type",
+  "generator",
+  "manifest",
+] as const;
+
+export function findHomeTier1GenerationLanguage(statements: string[]): Array<{ term: string; statement: string }> {
+  const findings: Array<{ term: string; statement: string }> = [];
+  for (const statement of statements) {
+    for (const term of HOME_TIER1_GENERATION_FORBIDDEN_TERMS) {
+      const pattern = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}s?\\b`, "i");
+      if (pattern.test(statement)) {
+        findings.push({ term, statement });
+      }
+    }
+  }
+  return findings;
+}
+
+export function collectTier1ExecutiveStoryRawClaimStatements(chapters: ChapterView[]): string[] {
+  const sections = buildStorySections(chapters);
+  const leadNumber = chooseLeadNumber(sections);
+  const statements = [
+    leadNumber?.claim.statement,
+    ...sections.flatMap((section) => [
+      section.leadClaim?.statement,
+      ...section.supportingClaims.map((claim) => claim.statement),
+    ]),
+  ].filter((statement): statement is string => Boolean(statement));
+  return Array.from(new Set(statements));
+}
 
 export function ExecutiveStoryPage({
   bundle,
@@ -273,7 +320,7 @@ function labelForNumber(statement: string, value: string): string {
   return withoutValue.length > 90 ? `${withoutValue.slice(0, 90).trim()}...` : withoutValue;
 }
 
-function cxoText(text: string): string {
+export function cxoText(text: string): string {
   return text
     .replace(/\btier[_-](\d+)\b/gi, "tier $1")
     .replace(/\bThis packet contains\b/gi, "The current evidence shows")
@@ -286,10 +333,15 @@ function cxoText(text: string): string {
     .replace(/\bserving view\b/gi, "readout")
     .replace(/\bloaded rows?\b/gi, "records")
     .replace(/\bcanonical entit(?:y|ies)\b/gi, "governed record")
-    .replace(/\bpayload\b/gi, "evidence packet")
-    .replace(/\bschema\b/gi, "model")
+    .replace(/\bECL payload\b/gi, "governed evidence packet")
+    .replace(/\bprojection payload\b/gi, "view evidence packet")
+    .replace(/\bserving payload\b/gi, "readout evidence packet")
+    .replace(/\bECL schema\b/gi, "governed model")
+    .replace(/\bprojection schema\b/gi, "view model")
+    .replace(/\bserving schema\b/gi, "readout model")
     .replace(/\bsource room\b/gi, "source evidence")
-    .replace(/\bwriter\b/gi, "narrative process")
+    .replace(/\bchapter writer\b/gi, "chapter narrative process")
+    .replace(/\bHome writer\b/gi, "Home narrative process")
     .replace(/\bprovider flag\b/gi, "configuration")
     .replace(/\bnot enough verified evidence yet\b/gi, "not yet supported by verified evidence")
     .replace(/\bcoverage gap in the build\b/gi, "coverage gap in the evidence");

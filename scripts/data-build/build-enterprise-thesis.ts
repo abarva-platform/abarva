@@ -768,7 +768,14 @@ export async function callClaude(
   userPrompt: string,
   maxTokens: number,
   effort: ReasoningEffort,
-): Promise<{ text: string; inputTokens: number; outputTokens: number; model: string } | null> {
+): Promise<{
+  text: string;
+  inputTokens: number;
+  outputTokens: number;
+  thinkingTokens: number;
+  stopReason: string | null;
+  model: string;
+} | null> {
   if (!client) return null;
   // A live run against this model rejected `thinking: {type: "enabled", budget_tokens}` outright --
   // 400 "\"thinking.type.enabled\" is not supported for this model. Use \"thinking.type.adaptive\"
@@ -834,6 +841,8 @@ export async function callClaude(
     text,
     inputTokens: response.usage?.input_tokens ?? 0,
     outputTokens: response.usage?.output_tokens ?? 0,
+    thinkingTokens: response.usage?.output_tokens_details?.thinking_tokens ?? 0,
+    stopReason: response.stop_reason ?? null,
     model: response.model,
   };
 }
