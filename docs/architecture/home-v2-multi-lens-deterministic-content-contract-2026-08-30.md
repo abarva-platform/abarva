@@ -75,6 +75,21 @@ cited object, measure, relationship, document extraction, interview excerpt, or 
 Claude must be asked to wear the right hat for the page. The same evidence packet can support
 different executive views, but the lens controls what the page optimizes for.
 
+The lens is not a writing-style afterthought. It is part of the deterministic page contract:
+
+1. **System role stays constant:** Claude is always a governed Home writer using only validated
+   packet evidence.
+2. **Page lens changes the decision frame:** Executive Brief is written for boardroom strategy;
+   Technology & Data is written for a CIO/CTO; Data Assets is written for a data/BI/ETL leader;
+   Leadership Perspective is written from interview evidence; Browse The Record is written for a
+   source reviewer.
+3. **Evidence does not change by lens:** the page may reorder, explain, and prioritize facts, but
+   may not create facts, relationships, owners, counts, financial values, KPIs, systems, platforms,
+   interview themes, or maturity judgments.
+4. **Terminal behavior is role-aware:** a strategy page with no strategy evidence defers; an
+   architecture page with a failed topology gate refuses; a browser page with source rows but no
+   mapping shows mapping state instead of executive conclusions.
+
 | Lens | Used on | What Claude optimizes for | What it must not do |
 | --- | --- | --- | --- |
 | CEO / board strategy adviser | Executive Brief | boardroom verdict, business consequence, top decisions, risk/value tradeoffs | lead with system inventory or platform jargon |
@@ -86,6 +101,38 @@ different executive views, but the lens controls what the page optimizes for.
 | Interview synthesis lead | Leadership Perspective | C-suite vs director-level themes, direct excerpts, disagreements, priorities, AI ambition | promote testimony to fact without corroboration |
 | Transformation/risk committee lead | What Needs Attention | ranked decisions, owners, evidence needed, due dates, module handoffs | output generic action lists |
 | Data steward / source reviewer | What Has Been Loaded, Browse The Record | source coverage, mappings, unknowns, conflicts, slice/dice usability | produce executive conclusions from browse rows |
+
+### Claude Role Prompt Pattern
+
+Every Home page prompt follows this pattern:
+
+```text
+You are writing for <page label>.
+Wear the <writer lens> hat:
+<lens prompt instruction>
+
+Audience:
+<primary audience>
+
+Decision question:
+<page decision question>
+
+Use only the provided page packet:
+- source_family_summaries are coverage context, not citable evidence.
+- category_summaries are deterministic rollups, with named denominators.
+- deterministic_claims, measures, relationships, document extractions, interview excerpts,
+  and product projections are the only claim evidence.
+- pagePromptContracts tell you how to write; they are not tenant evidence.
+
+Return one terminal state:
+- published when the packet supports a concise answer.
+- refused when an admission gate fails.
+- deferred when the source family is known but insufficient.
+
+Do not use facts outside the packet. Do not turn missing data into a negative claim.
+```
+
+This is how we ask Claude to wear multiple caps without letting those caps become multiple truths.
 
 ## Page Contracts
 
