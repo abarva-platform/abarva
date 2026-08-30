@@ -25,6 +25,20 @@ const thesis = fs.readFileSync(thesisPath, "utf8");
 const chapters = fs.readFileSync(chaptersPath, "utf8");
 const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
 
+function extractDefaultAssessmentId(source, label) {
+  const match = source.match(/const DEFAULT_ASSESSMENT_ID = "([^"]+)";/);
+  assert(Boolean(match), `${label} declares DEFAULT_ASSESSMENT_ID`);
+  return match?.[1] ?? "";
+}
+
+const buildDefaultAssessmentId = extractDefaultAssessmentId(script, "Home ECL narrative build job");
+const readbackDefaultAssessmentId = extractDefaultAssessmentId(readback, "Home ECL narrative readback job");
+
+assert(
+  buildDefaultAssessmentId === readbackDefaultAssessmentId,
+  "Home ECL narrative build/readback default assessment ids match",
+);
+
 assert(
   thesis.includes("export async function buildVerifiedEnterpriseThesisFromSignalPacket"),
   "EnterpriseThesis writer exposes an ECL-fed signal-packet seam",
