@@ -505,8 +505,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     (n) =>
       Object.assign({}, n, {
         pad: "6px 8px 6px " + (8 + n.depth * 14) + "px",
-        bg: n.active ? "rgba(0,102,204,.09)" : "transparent",
-        fg: n.active ? "#0a3d70" : n.fg,
+        bg: n.active ? "rgba(29,158,117,.10)" : "transparent",
+        fg: n.active ? "#0f6e56" : n.fg,
         weight: n.active ? 600 : n.weight,
       }),
   );
@@ -2073,7 +2073,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           pct: c.annual_value
             ? ((effectiveActualAnnualSpend ?? 0) / c.annual_value) * 100
             : 0,
-          color: "#3d6ea8",
+          color: "#0f6e56",
         },
         {
           label: "Contracted-to-actual variance",
@@ -2381,7 +2381,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           evidenceTone: (
             {
               system_evidenced: COL.teal,
-              document_evidenced: "#3d6ea8",
+              document_evidenced: "#0f6e56",
               human_validated: "#246b45",
               inferred: COL.amber,
               missing: COL.red,
@@ -2497,7 +2497,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
                   stage === "target_position" ||
                   stage === "workflow_required"
                 ? COL.amber
-                : "#3d6ea8";
+                : "#0f6e56";
         const amount = (value: number | null | undefined) =>
           value == null ? "Not sized" : money(value);
         const opportunityMoney = (

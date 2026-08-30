@@ -26,9 +26,9 @@ export function ConcentrationLens({ vm }: { vm: SourceWorkspaceVM }) {
                 <rect x={b.x} y={b.y} width={b.w} height={b.h} fill={b.fill} rx={2} />
               </g>
             ))}
-            <polyline points={p.line} fill="none" stroke="#0066CC" strokeWidth={1.6} />
+            <polyline points={p.line} fill="none" stroke="#0f6e56" strokeWidth={1.6} />
             {p.bars.map((b, i) => (
-              <circle key={i} cx={b.cx} cy={b.cy} r={2.6} fill="#0066CC" />
+              <circle key={i} cx={b.cx} cy={b.cy} r={2.6} fill="#0f6e56" />
             ))}
             <line x1={p.left} x2={p.right} y1={p.axisY} y2={p.axisY} stroke="rgba(10,10,11,.25)" />
             <g>{p.labels}</g>
@@ -36,8 +36,8 @@ export function ConcentrationLens({ vm }: { vm: SourceWorkspaceVM }) {
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22, alignItems: 'center', padding: '6px 24px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#5f5e5a' }}><span style={{ width: 11, height: 11, background: '#0a0a0b', borderRadius: 2 }} />Top five · {vm.top5Pct}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#5f5e5a' }}><span style={{ width: 11, height: 11, background: '#3d6ea8', borderRadius: 2 }} />Ranks six to ten · cumulative {vm.top10Pct}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#5f5e5a' }}><span style={{ width: 16, height: 2, background: '#0066CC' }} />Cumulative portfolio share</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#5f5e5a' }}><span style={{ width: 11, height: 11, background: '#1d9e75', borderRadius: 2 }} />Ranks six to ten · cumulative {vm.top10Pct}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#5f5e5a' }}><span style={{ width: 16, height: 2, background: '#0f6e56' }} />Cumulative portfolio share</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#5f5e5a' }}><span style={{ width: 11, height: 11, background: '#d3d1c7', borderRadius: 2 }} />Remaining vendors, aggregated</div>
         </div>
         <div style={{ borderTop: '1px solid rgba(10,10,11,.12)', background: '#fbfaf7', padding: '16px 24px', display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'flex-start' }}>

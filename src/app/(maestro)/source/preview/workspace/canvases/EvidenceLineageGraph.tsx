@@ -62,7 +62,7 @@ export function EvidenceLineageGraph({ vm }: { vm: SourceWorkspaceVM }) {
 
   return (
     <div style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '20px 22px' }}>
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 6 }}>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0f6e56', marginBottom: 6 }}>
         Why we believe this
       </div>
       <div style={{ fontSize: 12.5, color: '#5f5e5a', lineHeight: 1.5, marginBottom: 16, maxWidth: 640 }}>

@@ -360,7 +360,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                     fontWeight: 800,
                     letterSpacing: ".1em",
                     textTransform: "uppercase",
-                    color: "#0066CC",
+                    color: "#0f6e56",
                     marginBottom: 8,
                   }}
                 >
@@ -928,7 +928,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                       fontWeight: 600,
                       letterSpacing: ".1em",
                       textTransform: "uppercase",
-                      color: "#0066CC",
+                      color: "#0f6e56",
                       marginBottom: 7,
                     }}
                   >
@@ -1248,7 +1248,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
                       fontWeight: 600,
                       letterSpacing: ".1em",
                       textTransform: "uppercase",
-                      color: "#0066CC",
+                      color: "#0f6e56",
                       marginBottom: 10,
                     }}
                   >
@@ -1433,7 +1433,7 @@ function OpportunityCockpit({ vm }: { vm: SourceWorkspaceVM }) {
               fontWeight: 850,
               letterSpacing: ".08em",
               textTransform: "uppercase",
-              color: "#0066CC",
+              color: "#0f6e56",
               marginBottom: 7,
             }}
           >
@@ -1900,7 +1900,7 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
             fontWeight: 700,
             letterSpacing: ".1em",
             textTransform: "uppercase",
-            color: "#0066CC",
+            color: "#0f6e56",
             marginBottom: 8,
           }}
         >
@@ -2030,7 +2030,7 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
               fontWeight: 700,
               letterSpacing: ".1em",
               textTransform: "uppercase",
-              color: "#0066CC",
+              color: "#0f6e56",
               marginBottom: 8,
             }}
           >
@@ -2157,7 +2157,7 @@ function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
                 fontWeight: 700,
                 letterSpacing: ".1em",
                 textTransform: "uppercase",
-                color: "#0066CC",
+                color: "#0f6e56",
                 marginBottom: 8,
               }}
             >
@@ -2253,7 +2253,7 @@ function StoryTile({
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: 9.5,
             fontWeight: 800,
-            color: "#0066CC",
+            color: "#0f6e56",
           }}
         >
           {index}
@@ -2395,7 +2395,7 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
             style={{
               fontSize: 10,
               fontWeight: 800,
-              color: conflict ? "#a32d2d" : "#0066CC",
+              color: conflict ? "#a32d2d" : "#0f6e56",
               letterSpacing: ".08em",
               textTransform: "uppercase",
               marginBottom: 7,
@@ -3580,7 +3580,7 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
             </text>
 
             {line(172, 88, 285, 116, "#0a0a0b")}
-            {line(172, 162, 285, 132, scopeCount ? "#3d6ea8" : "#ba7517")}
+            {line(172, 162, 285, 132, scopeCount ? "#0f6e56" : "#ba7517")}
             {line(172, 226, 285, 152, "#ba7517")}
             {line(425, 138, 520, 138, "#0a0a0b")}
             {line(658, 138, 735, 138, gapLines.length ? "#ba7517" : "#1d9e75")}
@@ -3593,7 +3593,7 @@ function ContractJourneyGraph({ vm }: { vm: SourceWorkspaceVM }) {
               58,
               "Scope facts",
               `${scopeCount} apps / services`,
-              scopeCount ? "#3d6ea8" : "#ba7517",
+              scopeCount ? "#0f6e56" : "#ba7517",
             )}
             {node(
               38,
@@ -3905,7 +3905,7 @@ function SourceSystemEvidenceMap({ vm }: { vm: SourceWorkspaceVM }) {
               fontWeight: 700,
               letterSpacing: ".1em",
               textTransform: "uppercase",
-              color: "#0066CC",
+              color: "#0f6e56",
               marginBottom: 6,
             }}
           >

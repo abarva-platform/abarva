@@ -633,7 +633,7 @@ const MARK: CSSProperties = {
   display: "grid",
   placeItems: "center",
   flex: "0 0 auto",
-  background: "linear-gradient(135deg,#0f7cf6,#12b5cb)",
+  background: "linear-gradient(135deg,#0a0a0b,#2c2c2a)",
   color: "#fff",
   fontSize: 24,
   fontWeight: 850,
@@ -641,7 +641,7 @@ const MARK: CSSProperties = {
 };
 
 const CRUMBS: CSSProperties = {
-  color: "#66758c",
+  color: "#5f5e5a",
   fontSize: 12,
   fontWeight: 650,
   marginBottom: 6,
@@ -980,7 +980,7 @@ const DEPENDENCY_GRID: CSSProperties = {
 };
 
 const DEP_LABEL: CSSProperties = {
-  color: "#66758c",
+  color: "#5f5e5a",
   fontSize: 10,
   fontWeight: 850,
   letterSpacing: ".08em",

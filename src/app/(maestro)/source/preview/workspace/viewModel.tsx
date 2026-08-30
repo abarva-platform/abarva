@@ -36,7 +36,7 @@ import type { DataTableCell, DataTableRow } from './DataTable';
 export const COL = {
   red: '#a32d2d',
   amber: '#ba7517',
-  blue: '#0066CC',
+  blue: '#0f6e56',
   teal: '#1d9e75',
   gray: '#b4b2a9',
   ink: '#0a0a0b',
@@ -388,7 +388,7 @@ export class WorkspaceViewModel {
         const h = Math.max(2, (b.val / maxV) * ih);
         return {
           key: b.vendorRef, x: L + i * bw + bw * 0.15, y: T + ih - h, w: bw * 0.7, h,
-          fill: b.tail ? '#d3d1c7' : i < 5 ? '#0a0a0b' : i < 10 ? '#3d6ea8' : '#a9bdd6',
+          fill: b.tail ? '#d3d1c7' : i < 5 ? '#0a0a0b' : i < 10 ? '#1d9e75' : '#b4b2a9',
           cx: L + i * bw + bw / 2, cy: T + ih - (b.cumPct / 100) * ih,
           onEnter: (e: { currentTarget: Element }) =>
             this.showTip(e, b.vendorName, [[money(b.val), 'Annual contract value'], ['Portfolio share', b.share.toFixed(1) + '%'], ['Cumulative share', b.cumPct.toFixed(1) + '%']]),
@@ -469,13 +469,13 @@ export class WorkspaceViewModel {
     return {
       w: W, h: H, left: L, bottom: T + ih, right: W - R, top: T, qx, qy,
       quads: quads.map((q) => Object.assign({}, q, {
-        fill: sel === q.id ? 'rgba(0,102,204,0.07)' : 'transparent', stroke: sel === q.id ? '#0066CC' : 'transparent',
+        fill: sel === q.id ? 'rgba(29,158,117,0.10)' : 'transparent', stroke: sel === q.id ? '#1d9e75' : 'transparent',
         onClick: () => this.setState({ quadrant: sel === q.id ? null : q.id, actionFilter: sel === q.id ? 'all' : q.id }),
       })),
       labels: ([] as ReactElement[])
         .concat([0, 0.33, 0.66, 1].map((f, i) => SVGT('y' + i, L - 8, y(YMAX * f) + 3, '$' + Math.round(YMAX * f) + 'M', { fontSize: 10, fill: '#888780', textAnchor: 'end' })))
         .concat([0, 1, 2, 3, 4].map((n, i) => SVGT('x' + i, x(n), T + ih + 16, String(n), { fontSize: 10, fill: '#888780', textAnchor: 'middle' })))
-        .concat(quads.map((q, i) => SVGT('q' + i, q.tx, q.ty, q.action, { fontSize: 10.5, fontWeight: 600, fill: sel === q.id ? '#0a3d70' : '#888780', textAnchor: q.anchor })))
+        .concat(quads.map((q, i) => SVGT('q' + i, q.tx, q.ty, q.action, { fontSize: 10.5, fontWeight: 600, fill: sel === q.id ? '#0f6e56' : '#888780', textAnchor: q.anchor })))
         .concat([
           SVGT('cap1', L, H - 14, 'Stronger leverage', { fontSize: 10.5, fill: '#5f5e5a' }),
           SVGT('cap2', W - R, H - 14, 'Weaker leverage · more signals', { fontSize: 10.5, fill: '#5f5e5a', textAnchor: 'end' }),
@@ -621,7 +621,7 @@ export class WorkspaceViewModel {
         },
         labelColor: g.live ? '#0a0a0b' : '#b4b2a9', subColor: g.live ? '#888780' : '#c9c6bd',
         valueColor: g.live ? '#0a0a0b' : '#b4b2a9', track: g.live ? '#f1efe8' : '#f7f5f0', rowBg: g.isSel ? 'rgba(10,10,11,.05)' : 'transparent',
-        fill: !g.live ? '#e4e1d8' : g.list.some((c) => c.noticePassed) ? COL.red : g.list.every((c) => c.leverage.weakSignalCount === 0) ? COL.teal : '#3d6ea8',
+        fill: !g.live ? '#e4e1d8' : g.list.some((c) => c.noticePassed) ? COL.red : g.list.every((c) => c.leverage.weakSignalCount === 0) ? COL.teal : '#0f6e56',
         onClick: () => this.toggleValue(S.groupBy, g.key),
         onEnter: (e: { currentTarget: Element }) => this.showTip(e, g.key, [[money(g.val), 'value'], ['Contracts', String(g.list.length)]]),
         onLeave: this.hideTip,

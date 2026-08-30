@@ -13,7 +13,7 @@ export function OpportunityCanvas({ vm }: { vm: SourceWorkspaceVM }) {
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
           {o.reasons.map((r, i) => (
-            <span key={i} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#0066CC', border: '1px solid rgba(0,102,204,.3)', borderRadius: 3, padding: '2px 7px' }}>{r}</span>
+            <span key={i} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#0f6e56', border: '1px solid rgba(15,110,86,.28)', borderRadius: 3, padding: '2px 7px' }}>{r}</span>
           ))}
         </div>
         <div style={{ fontSize: 14.5, lineHeight: 1.65, color: '#2c2c2a', maxWidth: '88ch' }}>{o.why}</div>
@@ -28,7 +28,7 @@ export function OpportunityCanvas({ vm }: { vm: SourceWorkspaceVM }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 14 }}>
           {vm.oppLevers.map((l, i) => (
             <div key={i} style={{ background: '#fff', border: '1px solid rgba(10,10,11,.12)', borderRadius: 8, padding: '18px 22px' }}>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0066CC', marginBottom: 12 }}>{l.label} levers</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0f6e56', marginBottom: 12 }}>{l.label} levers</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                 {l.items.map((it, j) => (
                   <div key={j} style={{ fontSize: 13, color: '#2c2c2a', lineHeight: 1.55, paddingLeft: 14, borderLeft: '2px solid rgba(10,10,11,.12)' }}>{it}</div>
