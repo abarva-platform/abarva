@@ -1596,6 +1596,7 @@ function contractFromEclProjectionRow(
   row: EclProjectionRow,
 ): SourceContract360Row {
   const scope = parseJsonArray(row.scope_json);
+  const serviceLines = parseJsonArray(row.service_lines_json);
   const spendSummary = parseJsonObject(row.spend_summary_json);
   const gapFlags = parseJsonArray(row.gap_flags_json);
   const renewalNoticeDate = stringOrNull(
@@ -1620,7 +1621,7 @@ function contractFromEclProjectionRow(
     renewal_notice_date: renewalNoticeDate,
     end_date: endDate,
     notice_period_days: noticePeriodDays(renewalNoticeDate, endDate),
-    auto_renew: eclProjectionAutoRenew(row, gapFlags),
+    auto_renew: eclProjectionAutoRenew(row, serviceLines, gapFlags),
     renewal_decision_state: "review_required",
     renewal_owner_ref: null,
     benchmarking_clause: stringOrNull(
@@ -2170,12 +2171,20 @@ function repeatedTextQuality<T>(
 
 function eclProjectionAutoRenew(
   row: EclProjectionRow,
+  serviceLines: readonly unknown[],
   gapFlags: readonly unknown[],
 ): boolean {
   const explicit =
     booleanFromUnknown(row.auto_renew) ??
     booleanFromUnknown(row.auto_renew_flag);
   if (explicit != null) return explicit;
+  for (const serviceLine of serviceLines) {
+    const serviceLineRecord = parseJsonObject(serviceLine);
+    const nested =
+      booleanFromUnknown(serviceLineRecord.auto_renew) ??
+      booleanFromUnknown(serviceLineRecord.auto_renew_flag);
+    if (nested != null) return nested;
+  }
   return gapFlags.some((flag) =>
     JSON.stringify(flag).toLowerCase().includes("auto_renew"),
   );

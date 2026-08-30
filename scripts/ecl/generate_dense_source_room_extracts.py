@@ -15,7 +15,7 @@ import csv
 import hashlib
 import json
 from collections import Counter
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from random import Random
 from typing import Any
@@ -1163,6 +1163,20 @@ def contracts(count: int) -> list[dict[str, Any]]:
     return rows
 
 
+def allocate_contract_values(total: int, count: int, *, skew: float = 1.0) -> list[float]:
+    weights = [float((count - index) ** skew) for index in range(count)]
+    weight_total = sum(weights)
+    raw_values = [int((total * weight) // weight_total) for weight in weights]
+    remainder = total - sum(raw_values)
+    for index in range(remainder):
+        raw_values[index % count] += 1
+    return [float(value) for value in raw_values]
+
+
+def iso_add_days(value: str, days: int) -> str:
+    return (date.fromisoformat(value) + timedelta(days=days)).isoformat()
+
+
 def plant_demo_contract_findings(rows: list[dict[str, Any]]) -> None:
     if is_skyharbor_profile():
         suppliers = ["Sabre Corporation", "Amadeus IT Group", "Teradata Corporation"]
@@ -1186,6 +1200,47 @@ def plant_demo_contract_findings(rows: list[dict[str, Any]]) -> None:
                 }
             )
 
+    lapsed_auto_renew_values = allocate_contract_values(140_300_000, 24, skew=1.15)
+    stale_renewal_values = allocate_contract_values(194_100_000, 34, skew=2.35)
+    still_cancellable_values = allocate_contract_values(214_600_000, max(len(rows) - 58, 1), skew=1.1)
+
+    for offset, row in enumerate(rows[:24]):
+        notice_window_days = 90 if offset == 1 else 365
+        end_date = "2026-10-15" if offset == 1 else "2027-06-30"
+        row.update(
+            {
+                "annualized_value_usd": lapsed_auto_renew_values[offset],
+                "end_date": end_date,
+                "notice_window_days": notice_window_days,
+                "renewal_notice_date": iso_add_days(end_date, -notice_window_days),
+                "auto_renew": "true",
+            }
+        )
+
+    for offset, row in enumerate(rows[24:58]):
+        row.update(
+            {
+                "annualized_value_usd": stale_renewal_values[offset],
+                "end_date": "2026-06-30",
+                "notice_window_days": max(int(row["notice_window_days"]), 90),
+                "renewal_notice_date": iso_add_days("2026-06-30", -max(int(row["notice_window_days"]), 90)),
+                "auto_renew": "false",
+            }
+        )
+
+    for offset, row in enumerate(rows[58:]):
+        notice_window_days = int(row["notice_window_days"])
+        end_date = "2028-09-30" if offset % 3 else "2028-12-31"
+        row.update(
+            {
+                "annualized_value_usd": still_cancellable_values[offset],
+                "end_date": end_date,
+                "notice_window_days": notice_window_days,
+                "renewal_notice_date": iso_add_days(end_date, -notice_window_days),
+                "auto_renew": "false" if offset % 4 else "true",
+            }
+        )
+
     for row in rows[:34]:
         row.update(
             {
@@ -1195,17 +1250,10 @@ def plant_demo_contract_findings(rows: list[dict[str, Any]]) -> None:
                 "termination_for_convenience": "false",
             }
         )
+        row["renewal_notice_date"] = iso_add_days(row["end_date"], -int(row["notice_window_days"]))
 
     if len(rows) >= 2:
-        rows[1].update(
-            {
-                "end_date": "2026-10-15",
-                "notice_window_days": 90,
-                "benchmarking_right": "absent",
-                "minimum_commitment_usd": 1_250_000,
-                "auto_renew": "true",
-            }
-        )
+        rows[1]["minimum_commitment_usd"] = 1_250_000
 
 
 def grc(count: int) -> list[dict[str, Any]]:

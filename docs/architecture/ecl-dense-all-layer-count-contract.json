@@ -35,6 +35,14 @@
       "key": "dense.field_dictionary_rows"
     },
     {
+      "after": 237,
+      "before": 236,
+      "classification": "expected_increase",
+      "delta": 1,
+      "explanation": "Renewal notice date is now a first-class contract-register field so renewal posture can be preserved through adapters and projections instead of inferred at render time.",
+      "key": "dense.field_dictionary_rows"
+    },
+    {
       "after": 3828,
       "before": 3825,
       "classification": "expected_increase",
@@ -99,11 +107,27 @@
       "key": "review.review_event"
     },
     {
+      "after": 756,
+      "before": 744,
+      "classification": "expected_increase",
+      "delta": 12,
+      "explanation": "Renewal notice dates create additional contract-subject review events for notice posture where the refreshed contract register now supplies the field explicitly.",
+      "key": "review.review_event"
+    },
+    {
       "after": 320,
       "before": 277,
       "classification": "expected_increase",
       "delta": 43,
       "explanation": "F2 and commercial-protection findings add contract-subject review events for benchmarking, notice-window, and minimum-commitment gates.",
+      "key": "review.review_contract_subjects"
+    },
+    {
+      "after": 332,
+      "before": 320,
+      "classification": "expected_increase",
+      "delta": 12,
+      "explanation": "The explicit renewal notice field adds contract-subject review events for contracts whose notice posture is now carried through the source-room register.",
       "key": "review.review_contract_subjects"
     },
     {
@@ -168,6 +192,14 @@
       "classification": "expected_increase",
       "delta": 480,
       "explanation": "Each Tower period-trajectory row carries a metric reference to the existing actual spend metric definition.",
+      "key": "projection.projection_entry_metric_ref"
+    },
+    {
+      "after": 11182,
+      "before": 11170,
+      "classification": "expected_increase",
+      "delta": 12,
+      "explanation": "The refreshed renewal notice field adds metric references for the additional contract review events generated from explicit notice posture.",
       "key": "projection.projection_entry_metric_ref"
     },
     {
@@ -260,7 +292,7 @@
     },
     "dense": {
       "extract_count": 14,
-      "field_dictionary_rows": 236,
+      "field_dictionary_rows": 237,
       "row_count": 7080
     },
     "execution": {
@@ -301,7 +333,7 @@
       "projection_entry_count_drift": 0,
       "projection_entry_document_extraction_ref": 0,
       "projection_entry_measure_ref": 1079,
-      "projection_entry_metric_ref": 11170,
+      "projection_entry_metric_ref": 11182,
       "projection_entry_metric_ref_drift": 0,
       "projection_entry_object_ref": 7464,
       "projection_entry_object_ref_drift": 0,
@@ -346,8 +378,8 @@
     "review": {
       "review_context_pack_subjects": 1,
       "review_contract_drift": 0,
-      "review_contract_subjects": 320,
-      "review_event": 744,
+      "review_contract_subjects": 332,
+      "review_event": 756,
       "review_invoice_drift": 0,
       "review_invoice_subjects": 163,
       "review_sla_drift": 0,
@@ -364,7 +396,7 @@
     }
   },
   "purpose": "Single expected-count contract for the dense local ECL proof. Count changes from planted demo findings are classified here before CI expectations move.",
-  "release_record": "docs/releases/records/2026-08-24-ecl-count-delta-classification.md",
+  "release_record": "docs/releases/records/2026-08-30-source-ecl-renewal-substrate.md",
   "rules": [
     "A planted-data change may raise an expected count when the additional rows are traced to a named finding or producer.",
     "A count decrease requires a written explanation and release record reference before the expected value may be updated.",

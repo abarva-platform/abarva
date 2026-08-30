@@ -550,7 +550,13 @@ as $$
     to_jsonb(p)
   from ecl_projection.source_contract_360 p
   where not renewal_only_arg
-    or p.renewal_notice_date is not null;
+    or (
+      p.renewal_notice_date is not null
+      and (
+        p.renewal_notice_date <= current_date + interval '180 days'
+        or p.gap_flags_json <> '[]'::jsonb
+      )
+    );
 $$;
 
 create or replace function serving.source_event_rows(surface_key_arg text, page_key_arg text, workspace_tab_arg text)

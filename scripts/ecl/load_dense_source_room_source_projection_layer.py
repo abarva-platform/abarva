@@ -16,7 +16,7 @@ import json
 import os
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -118,6 +118,20 @@ def fiscal_quarter(period: str | None) -> str | None:
     if month < 1 or month > 12:
         return None
     return f"{period[:4]}-Q{((month - 1) // 3) + 1}"
+
+
+def derived_renewal_notice_date(row: dict[str, str]) -> str | None:
+    explicit = (row.get("renewal_notice_date") or row.get("notice_deadline") or "").strip()
+    if explicit:
+        return explicit
+    end_date = (row.get("end_date") or row.get("expiration_date") or "").strip()
+    if not end_date:
+        return None
+    try:
+        notice_days = int(float((row.get("notice_window_days") or row.get("notice_period_days") or "0").strip() or "0"))
+        return (date.fromisoformat(end_date) - timedelta(days=notice_days)).isoformat()
+    except ValueError:
+        return None
 
 
 def source_ref_for_family(family: str, row: dict[str, str], index: int) -> list[dict[str, Any]]:
@@ -869,6 +883,11 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             "service_tower": row.get("service_tower"),
             "annualized_value_usd": as_num(row.get("annualized_value_usd")),
             "service_category": commercial_layer.service_category(row.get("service_tower")),
+            "auto_renew": row.get("auto_renew"),
+            "renewal_notice_date": derived_renewal_notice_date(row),
+            "notice_window_days": row.get("notice_window_days"),
+            "benchmarking_right": row.get("benchmarking_right"),
+            "termination_for_convenience": row.get("termination_for_convenience"),
         }
         scope_json = [
             {
@@ -917,7 +936,7 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
                 "vendor_object_id": source_layer.sql_text(vendor_obj),
                 "contract_name": source_layer.sql_text(f"{row['supplier_name']} {row['service_tower']} agreement"),
                 "vendor_name": source_layer.sql_text(row["supplier_name"]),
-                "renewal_notice_date": "null",
+                "renewal_notice_date": source_layer.sql_text(derived_renewal_notice_date(row)),
                 "end_date": source_layer.sql_text(row.get("end_date")),
                 "annualized_value_usd": source_layer.sql_num(as_num(row.get("annualized_value_usd"))),
                 "total_contract_value_usd": source_layer.sql_num(as_num(row.get("annualized_value_usd")) * 5),
@@ -925,7 +944,14 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
                 "quality_state": source_layer.sql_text("warning" if gap_flags else "passed"),
                 "service_lines_json": source_layer.sql_json([service_line]),
                 "scope_json": source_layer.sql_json(scope_json),
-                "spend_summary_json": source_layer.sql_json({"invoice_line_count": len(spend_rows), "invoice_actuals_usd": round(invoice_total, 2), "basis": "source_recorded_partial"}),
+                "spend_summary_json": source_layer.sql_json(
+                    {
+                        "invoice_line_count": len(spend_rows),
+                        "invoice_actuals_usd": round(invoice_total, 2),
+                        "basis": "source_recorded_partial",
+                        "market_benchmark": {"basis": row.get("benchmarking_right")},
+                    }
+                ),
                 "sla_summary_json": source_layer.sql_json({"candidate_sla_observation_count": len(sla_candidates), "basis": "source_recorded_candidate"}),
                 "document_proof_json": source_layer.sql_json([]),
                 "gap_flags_json": source_layer.sql_json(gap_flags),
