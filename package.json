@@ -788,6 +788,7 @@
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
     "ops:probe-tower-serving-shape": "node scripts/ops/probe-tower-serving-shape.mjs",
     "ops:probe-tower-active-keys": "node scripts/ops/probe-tower-active-keys.mjs",
+    "ops:report-retired-tower-generations": "node scripts/ops/report-retired-tower-generations.mjs",
     "tower:migrate:lifecycle:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260830050000_tower_assessment_lifecycle.sql",
     "tower:migrate:lifecycle:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260830050000_tower_assessment_lifecycle.sql",
     "ops:skyharbor-client-registry:repair": "node scripts/ops/repair-skyharbor-client-registry.mjs",
