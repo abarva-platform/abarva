@@ -382,6 +382,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByRole("tab", { name: "Action queue" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By type" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By contract" })).toBeTruthy();
+    expect(screen.getByText("Evidence basis")).toBeTruthy();
+    expect(screen.getByText("Why this is shown")).toBeTruthy();
+    expect(screen.queryByText(/Proof Layers/i)).toBeNull();
 
     fireEvent.click(
       screen.getAllByRole("button", { name: "Contract graph" })[0],

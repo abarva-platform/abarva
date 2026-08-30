@@ -1260,9 +1260,9 @@ function OptimizePage({
       </section>
 
       <section className="sw-v2-panel">
-        <PanelHead eyebrow="Proof layers" title="What is loaded" />
+        <PanelHead eyebrow="Evidence basis" title="Why this is shown" />
         <div className="sw-v2-fact-stack">
-          <Fact label="Selected contract" value={contract.contract_id} />
+          <Fact label="Contract in view" value={contract.contract_id} />
           <Fact label="Spend rows" value={String(spendRows)} />
           <Fact label="Performance rows" value={String(performanceRows)} />
           <Fact
