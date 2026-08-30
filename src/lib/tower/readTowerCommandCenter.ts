@@ -499,6 +499,9 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
     programName: title,
     ownerRole:
       payloadText(row, "owner_role") ?? nullableText(display.owner_role),
+    // The business domain the program sits in. Distinct from who sponsors it: a domain groups
+    // work by where it happens, an owner groups it by who answers for it.
+    domainName: nullableText(display.domain_name),
     financeOwnerRole: nullableText(display.finance_owner_role),
     decisionLane: decisionLane(
       gateStatus === "blocked"

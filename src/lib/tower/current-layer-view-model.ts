@@ -125,6 +125,8 @@ export interface TowerMartProgramLane {
   programCode: string | null;
   programName: string;
   ownerRole: string | null;
+  /** The business domain, from the loader's `domain_name`. Not the sponsor. */
+  domainName?: string | null;
   financeOwnerRole: string | null;
   decisionLane: "fund" | "fix" | "freeze" | "stop";
   decisionRationale: string;
