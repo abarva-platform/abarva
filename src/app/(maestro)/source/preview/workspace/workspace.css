@@ -78,9 +78,11 @@
 
 .sw-v2-claim-contract {
   display: grid;
-  gap: 5px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: center;
   margin-bottom: 15px;
-  padding: 12px 14px;
+  padding: 10px 13px;
   border: 1px solid #e1d2ba;
   border-left: 3px solid #ba7517;
   border-radius: 7px;
@@ -103,6 +105,7 @@
 }
 
 .sw-v2-claim-contract small {
+  grid-column: 2;
   color: #6b5c47;
   font-size: 12px;
   line-height: 1.4;
@@ -371,6 +374,34 @@
   grid-template-columns: minmax(0, 2fr) minmax(300px, 0.92fr);
   gap: 16px;
   align-items: start;
+}
+
+.sw-v2-verdict-grid {
+  grid-template-columns:
+    minmax(0, 1.35fr) minmax(255px, 0.74fr) minmax(255px, 0.74fr);
+  grid-template-areas:
+    "position action evidence"
+    "vendors vendors quality";
+}
+
+.sw-v2-verdict-position {
+  grid-area: position;
+}
+
+.sw-v2-verdict-action {
+  grid-area: action;
+}
+
+.sw-v2-verdict-evidence {
+  grid-area: evidence;
+}
+
+.sw-v2-verdict-vendors {
+  grid-area: vendors;
+}
+
+.sw-v2-verdict-quality {
+  grid-area: quality;
 }
 
 .sw-v2-panel {
@@ -821,6 +852,15 @@
   .sw-v2-grid {
     grid-template-columns: 1fr;
   }
+
+  .sw-v2-verdict-grid {
+    grid-template-areas:
+      "position"
+      "action"
+      "evidence"
+      "vendors"
+      "quality";
+  }
 }
 
 @media (max-width: 760px) {
@@ -859,6 +899,14 @@
   .sw-v2-graph-spine-row,
   .sw-v2-decision-row {
     grid-template-columns: 1fr;
+  }
+
+  .sw-v2-claim-contract {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-v2-claim-contract small {
+    grid-column: auto;
   }
 }
 
