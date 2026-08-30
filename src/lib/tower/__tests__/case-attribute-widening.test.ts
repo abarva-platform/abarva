@@ -691,8 +691,8 @@ describe("a lens returns its own rows", () => {
 
   it("honours the page_key argument the views already pass", () => {
     // Both views call tower_ai_rows with different page keys and the deployed function ignored the
-    // argument, so both returned the same 55 rows — 42 cases plus 13 rollouts. A lens that returns
-    // everything is not a lens.
+    // argument, so both returned the same active-generation rows. A lens that returns everything is
+    // not a lens.
     expect(mig).toContain(
       "where coalesce(p.display_payload_json ->> 'page_key', 'ai_portfolio') = page_key_arg",
     );
@@ -708,5 +708,31 @@ describe("a lens returns its own rows", () => {
   it("defaults to the case page key, which is what the loader writes", () => {
     expect(LAYER4).toContain('page_key: "ai_portfolio"');
     expect(LAYER4).toContain('page_key: "adoption_lens"');
+  });
+});
+
+describe("the remaining Tower lenses stay scoped", () => {
+  const mig = read(
+    "supabase/migrations/20260830234500_tower_serving_remaining_lens_scope.sql",
+  );
+
+  it("keeps value-proof and cost-lens rows on the active generation", () => {
+    expect(mig).toContain("create or replace function serving.tower_value_rows");
+    expect(mig).toContain("from ecl_projection.tower_value_chain p");
+    expect(mig).toContain("join serving.tower_active_assessment_keys() active");
+    expect(mig).toContain("and active.assessment_id = p.assessment_id");
+    expect(mig).toContain("and active.projection_version = p.projection_version");
+  });
+
+  it("keeps evidence and risk-lens rows on the active generation", () => {
+    expect(mig).toContain("create or replace function serving.tower_evidence_rows");
+    expect(mig).toContain("from ecl_projection.tower_evidence_queue p");
+    const joins = mig.match(/join serving\.tower_active_assessment_keys\(\) active/g);
+    expect(joins?.length).toBe(2);
+  });
+
+  it("honours the requested page key for every lens function it rewrites", () => {
+    expect(mig).toContain("where page_key_arg = 'all' or p.page_key = page_key_arg;");
+    expect(mig).toContain("where p.page_key = page_key_arg;");
   });
 });

@@ -5,6 +5,7 @@ import {
 } from "../ecl-projection-bundle";
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { getHomeReviewBundle } from "../golden-snapshot";
+import type { HomeReviewBundle } from "../types";
 
 type PacketWithCategorySummaries = ReturnType<typeof buildHomeReviewBundleFromEclProjectionRows>["thesis"]["signalPacket"] & {
   categorySummaries?: Array<{

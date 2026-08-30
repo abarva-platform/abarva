@@ -799,6 +799,8 @@
     "tower:migrate:rls:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260830210000_tower_projection_tenant_policies.sql",
     "tower:migrate:page-key:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260830230000_tower_serving_page_key_split.sql",
     "tower:migrate:page-key:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260830230000_tower_serving_page_key_split.sql",
+    "tower:migrate:serving-lens-scope:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260830234500_tower_serving_remaining_lens_scope.sql",
+    "tower:migrate:serving-lens-scope:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260830234500_tower_serving_remaining_lens_scope.sql",
     "ops:skyharbor-client-registry:repair": "node scripts/ops/repair-skyharbor-client-registry.mjs",
     "ops:skyharbor-client-registry:repair:apply": "node scripts/ops/repair-skyharbor-client-registry.mjs --apply",
     "ops:skyharbor-source-event-title:repair": "node scripts/ops/repair-skyharbor-source-event-titles.mjs",
