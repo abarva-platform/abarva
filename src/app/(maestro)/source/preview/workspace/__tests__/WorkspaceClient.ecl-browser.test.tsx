@@ -417,6 +417,8 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     expect(screen.getByText("Selected vendor")).toBeTruthy();
     expect(screen.getByText("MER-CTR-EPIC-001")).toBeTruthy();
+    expect(screen.getByText("Grouped contracts")).toBeTruthy();
+    expect(screen.getAllByText("Performance rows").length).toBeGreaterThan(0);
     expect(screen.queryByText("Portfolio position")).toBeNull();
     expect(screen.queryByText("Material contracts")).toBeNull();
 

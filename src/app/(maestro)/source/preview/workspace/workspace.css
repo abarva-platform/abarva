@@ -562,6 +562,94 @@
   font-size: 12px;
 }
 
+.sw-v2-vendor-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.sw-v2-vendor-summary-hero {
+  border: 1px solid #dfe5ee;
+  border-radius: 8px;
+  background: #f8fbff;
+  padding: 14px;
+}
+
+.sw-v2-vendor-summary-hero span,
+.sw-v2-vendor-contracts > span {
+  display: block;
+  color: #60708d;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sw-v2-vendor-summary-hero b {
+  display: block;
+  margin-top: 7px;
+  color: #081936;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.sw-v2-vendor-summary-hero small {
+  display: block;
+  margin-top: 7px;
+  color: #52627c;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.sw-v2-vendor-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sw-v2-vendor-contracts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sw-v2-vendor-contracts button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e4e9f1;
+  border-radius: 7px;
+  background: #fff;
+  padding: 10px 11px;
+  color: #10213f;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sw-v2-vendor-contracts button:hover {
+  background: #f8fbff;
+  border-color: #b8c7dd;
+}
+
+.sw-v2-vendor-contracts b,
+.sw-v2-vendor-contracts strong {
+  color: #081936;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.sw-v2-vendor-contracts small {
+  min-width: 0;
+  color: #60708d;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
 .sw-v2-table {
   margin-top: 14px;
   border: 1px solid #e4e9f1;
