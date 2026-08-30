@@ -379,6 +379,14 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     expect(screen.getByRole("button", { name: "Scope" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Economics" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Optimize" })).toHaveLength(
+      2,
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[1]);
+
+    expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Story" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Scope" }));
 
