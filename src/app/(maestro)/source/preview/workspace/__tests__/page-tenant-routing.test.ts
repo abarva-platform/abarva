@@ -17,16 +17,24 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).toContain(
       "const requestedClient = params.client?.trim() || null;",
     );
-    expect(pageSource).toContain("requestedClient,");
-    expect(pageSource).toContain("allowFallback: !requestedClient");
-    expect(pageSource).toContain("getActiveClientRow(tenant.appClientKey)");
     expect(pageSource).toContain(
-      "sourceClientKey={tenant?.appClientKey ?? activeClient?.key ?? tenantKey}",
+      "const requestedClientKey = appClientKeyForTenant(requestedClient);",
     );
+    expect(pageSource).toContain("if (requestedClient && !requestedClientKey)");
+    expect(pageSource).toContain("checkTenantAccessByKey(requestedClientKey)");
+    expect(pageSource).toContain("requestedClientKey ??");
+    expect(pageSource).toContain("sourceClientKey={tenantKey}");
   });
 
   it("does not fall back to the session tenant when an explicit client cannot resolve", () => {
-    expect(pageSource).toContain('(!requestedClient ? tenancy.clientKey : "")');
+    expect(pageSource).toContain('from "next/navigation"');
+    expect(pageSource).toContain("notFound();");
+    expect(pageSource).toContain("forbidden();");
+    expect(pageSource).not.toContain(
+      '(!requestedClient ? tenancy.clientKey : "")',
+    );
+    expect(pageSource).not.toContain("requestedClient,");
+    expect(pageSource).not.toContain("allowFallback: !requestedClient");
   });
 
   it("threads contract deep links into the workspace client", () => {
