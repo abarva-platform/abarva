@@ -2,8 +2,8 @@
 --
 -- `serving.tower_ai_portfolio` and `serving.tower_adoption_lens` both call `tower_ai_rows`,
 -- passing 'ai_portfolio' and 'adoption_lens' respectively. The deployed function ignores that
--- argument, so both views return the same rows: 55 for Meridian, being 42 business cases plus
--- 13 tool rollouts. A lens that returns everything is not a lens.
+-- argument, so both views return the same active-generation rows. A lens that returns everything
+-- is not a lens.
 --
 -- The loader writes the page key explicitly on both row kinds — 'ai_portfolio' on a case,
 -- 'adoption_lens' on a rollout — so the predicate splits them exactly. The coalesce default
@@ -14,7 +14,7 @@
 -- definition: those diverged once already and re-creating from source would revert whatever
 -- else changed. Diff against the deployed text is one line gaining a where clause.
 --
--- Layer 4 readback expects 42 for this view and has been reporting 55.
+-- Layer 4 readback expects the portfolio view to return portfolio rows only.
 
 do $migration$
 begin
