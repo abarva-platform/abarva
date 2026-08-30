@@ -275,6 +275,8 @@ const VISUAL_PREFERRED_CHAPTER: Record<string, ChapterId> = {
   vendor_spend_concentration: "technology_data",
   technology_spend_mix: "technology_data",
   application_landscape_by_function: "technology_data",
+  data_workload_by_function: "technology_data",
+  data_workload_by_technology: "technology_data",
   program_investment_distribution: "strategy_value_creation",
   stalled_programs: "strategy_value_creation",
   metric_target_attainment: "performance_value",

@@ -776,21 +776,23 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
     "sig_ecl_application_function_002",
     "sig_ecl_vendor_concentration_004",
     "sig_ecl_contract_flexibility_006",
+    "sig_ecl_data_workload_segments_017",
     "sig_ecl_data_flow_total_014",
   ]);
   const technologySignals = firstSignals(signalPacket, [
+    "sig_ecl_application_function_ranking_012",
+    "sig_ecl_data_workload_segments_017",
+    "sig_ecl_platform_named_resilience_016",
+    "sig_ecl_data_flow_total_014",
+    "sig_ecl_integration_pattern_010",
     "sig_ecl_estate_001",
     "sig_ecl_application_function_002",
-    "sig_ecl_application_function_ranking_012",
     "sig_ecl_application_cost_013",
     "sig_ecl_application_named_examples_015",
     "sig_ecl_application_criticality_003",
     "sig_ecl_hosting_mix_007",
     "sig_ecl_platform_resilience_008",
-    "sig_ecl_platform_named_resilience_016",
     "sig_ecl_data_flow_convergence_009",
-    "sig_ecl_data_flow_total_014",
-    "sig_ecl_integration_pattern_010",
     "sig_ecl_data_consumption_011",
   ]);
   const commercialSignals = firstSignals(signalPacket, [
@@ -829,6 +831,14 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
       "Use the vendor view to see which supplier groups carry the largest ready contract value.",
       ["sig_ecl_vendor_concentration_004"],
       "bar",
+    ),
+    visualForDataset(
+      signalPacket,
+      "data_workload_by_function",
+      "Analytics work is concentrated by function before it is a technology question",
+      "Use the workload view to separate BI reports, ETL jobs, scripts, users, and data volume from movement counts.",
+      ["sig_ecl_data_workload_segments_017"],
+      "horizontal_bar",
     ),
     visualForDataset(
       signalPacket,

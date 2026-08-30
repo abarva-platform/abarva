@@ -315,6 +315,22 @@ assert(
     script.includes("sig_ecl_source_breadth_guardrail_019"),
   "ECL narrative job expands deterministic signals across application, contract, infrastructure, data-flow, data-workload, and source-breadth domains",
 );
+{
+  const technologySignalsIndex = thesis.indexOf("const technologySignals = firstSignals(signalPacket");
+  const workloadSignalIndex = thesis.indexOf("\"sig_ecl_data_workload_segments_017\"", technologySignalsIndex);
+  const platformSignalIndex = thesis.indexOf("\"sig_ecl_platform_named_resilience_016\"", technologySignalsIndex);
+  const costSignalIndex = thesis.indexOf("\"sig_ecl_application_cost_013\"", technologySignalsIndex);
+  assert(
+    technologySignalsIndex >= 0 &&
+      workloadSignalIndex > technologySignalsIndex &&
+      platformSignalIndex > technologySignalsIndex &&
+      costSignalIndex > technologySignalsIndex &&
+      workloadSignalIndex < costSignalIndex &&
+      platformSignalIndex < costSignalIndex &&
+      thesis.includes("technology_and_data_implications: technologySignals.slice(0, 5)"),
+    "EnterpriseThesis visible Technology & Data claim slots prioritize D&A workload and platform context before generic application cost",
+  );
+}
 assert(
   script.includes("categorySummaries: buildCategorySummaries") &&
     script.includes("data_workload_by_function") &&
@@ -322,6 +338,14 @@ assert(
     script.includes("ctx_ecl_scope_data_workload_001") &&
     script.includes("must not ask leaders to confirm those counts as though the source family is absent"),
   "ECL narrative job passes deterministic category summaries and data-workload visual datasets into the Claude packet",
+);
+assert(
+  thesis.includes("\"data_workload_by_function\"") &&
+    thesis.includes("Analytics work is concentrated by function before it is a technology question") &&
+    thesis.includes("separate BI reports, ETL jobs, scripts, users, and data volume from movement counts") &&
+    chapters.includes("data_workload_by_function: \"technology_data\"") &&
+    chapters.includes("data_workload_by_technology: \"technology_data\""),
+  "Home Technology & Data visuals explicitly route workload-by-function and workload-by-technology views to the chapter",
 );
 assert(
   script.includes("HOME_PAGE_PROMPT_CONTRACT_PATH") &&
