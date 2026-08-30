@@ -10,12 +10,12 @@
 
 ## Plain-English Summary
 
-Home's ECL-backed record browser, architecture map, and data-flow view now normalize source values before they reach visible executive surfaces. Criticality variants such as `tier-1` and `tier 1` compute as tier-one, and data-flow endpoints prefer governed application/platform refs instead of source-extract provenance labels.
+Home's ECL-backed record browser, architecture map, data-flow view, and evidence labels now normalize source values before they reach visible executive surfaces. Criticality variants such as `tier-1` and `tier 1` compute as tier-one, data-flow endpoints prefer governed application/platform refs instead of source-extract provenance labels, and runtime evidence resolution recognizes the deterministic writer's signal/context ids.
 
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
-- Layer 4 Products: Home display logic now uses normalized criticality values for record-browser metrics and architecture-slice metrics, and resolves data-flow endpoints through the Home technology-estate projection before rendering them.
+- Layer 4 Products: Home display logic now uses normalized criticality values for record-browser metrics and architecture-slice metrics, resolves data-flow endpoints through the Home technology-estate projection before rendering them, and reconstructs the deterministic writer's evidence ids for visible chapter claims.
 - Layer 3 Canonical Model: No canonical schema, data, or serving-view mutation.
 
 ## Client Applicability
@@ -31,7 +31,8 @@ Home's ECL-backed record browser, architecture map, and data-flow view now norma
 - Normalizes criticality values in the Home ECL projection bundle before creating Home technology-estate rows.
 - Normalizes visible tier-one metrics in the Home record browser and architecture map.
 - Resolves data-flow source and target endpoints from application/platform references before falling back to raw payload labels.
-- Adds regression coverage for ECL payload normalization, visible record-browser tier-one metrics, and data-flow endpoint provenance handling.
+- Adds runtime evidence labels for deterministic writer signal/context domains used by Home chapter claims.
+- Adds regression coverage for ECL payload normalization, visible record-browser tier-one metrics, data-flow endpoint provenance handling, and runtime evidence-id resolution.
 
 ## QA / Validation
 
@@ -50,7 +51,7 @@ Merge through pull request, then deploy through the repo-owned Azure Container A
 - ACA runtime invariant: Required before claiming live.
 - Worker image invariant: Required by the deploy workflow.
 - Feature/env flag update path: Not applicable.
-- Live signed-in proof required: Yes, Home Application Register and Architecture Map should show non-zero tier-one counts when source rows contain tier-one values; the Home data-flow view should not collapse source systems to a single source-extract label.
+- Live signed-in proof required: Yes, Home Application Register and Architecture Map should show non-zero tier-one counts when source rows contain tier-one values; the Home data-flow view should not collapse source systems to a single source-extract label; Home chapter source labels should not show unresolved evidence for deterministic writer ids that exist in the published packet.
 
 ## Rollback Plan
 
@@ -62,4 +63,4 @@ Revert the pull request and redeploy the previous digest-pinned image through th
 
 ## Known Gaps
 
-This change fixes criticality count normalization and data-flow endpoint resolution only. It does not redesign the Home executive story, architecture attribution, full data-flow domain enrichment, or source-evidence depth.
+This change fixes criticality count normalization, data-flow endpoint resolution, and runtime evidence-id resolution only. It does not redesign the Home executive story, architecture wheel/run-map, full data-flow domain enrichment, or source-evidence depth.

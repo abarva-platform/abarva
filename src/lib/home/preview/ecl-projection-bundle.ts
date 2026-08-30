@@ -202,7 +202,7 @@ function contractRow(row: HomeProjectionRow): JsonRecord {
     annualSpendUsd: numberValue(payload.annualized_value_usd),
     renewalDate: text(payload.renewal_notice_date ?? payload.end_date),
     riskRating: text(payload.risk_rating),
-    autoRenewFlag: boolish(payload.auto_renew_flag),
+    autoRenewFlag: boolish(payload.auto_renew ?? payload.auto_renew_flag),
     noticePeriodDays: numberValue(payload.notice_window_days),
     benchmarkClause: text(payload.benchmarking_right),
     minimumCommitmentUsd: numberValue(payload.minimum_commitment_usd),
@@ -227,7 +227,7 @@ function infrastructureRow(row: HomeProjectionRow): JsonRecord {
     utilizationPct: numberValue(payload.utilization_percent),
     capacityHeadroomPct: numberValue(payload.capacity_headroom_percent),
     drTier: text(payload.dr_tier),
-    endOfLifeDate: text(payload.end_of_life_date),
+    endOfLifeDate: text(payload.support_end_date ?? payload.end_of_life_date),
     originalRowId: text(payload.platform_id ?? row.row_key),
   };
 }
@@ -500,6 +500,24 @@ function buildEclSignalPacket(
   const contractSpend = sumNumeric(contracts, "annualSpendUsd");
   const vendorRows = topShareRows(contracts, "vendorName", "annualSpendUsd", 8);
   const topVendor = vendorRows[0];
+  const topFunctions = dimensionShareRows(applicationRecordType, 8);
+  const topFunction = topFunctions[0];
+  const applicationCost = sumNumeric(applications, "annualCostUsd");
+  const tierOneApplications = applications.filter((row) => criticalityValue(row.criticality) === "tier1");
+  const lifecycleWatch = applications.filter((row) =>
+    /watch|aging|replace|legacy|retir/i.test(`${text(row.lifecycleState) ?? ""} ${text(row.replacementCandidate) ?? ""}`),
+  );
+  const autoRenewContracts = contracts.filter((row) => row.autoRenewFlag === true);
+  const longNoticeContracts = contracts.filter((row) => numberValue(row.noticePeriodDays) !== null && numberValue(row.noticePeriodDays)! >= 180);
+  const supportDatedPlatforms = infrastructure.filter((row) => Boolean(text(row.endOfLifeDate)));
+  const criticalPlatforms = infrastructure.filter((row) => criticalityValue(row.criticality) === "tier1" || /critical/i.test(text(row.criticality) ?? ""));
+  const topFlowTarget = dimensionCounts(dataFlows, "targetSystem")[0];
+  const integrationPatterns = dimensionCounts(dataFlows, "integrationType");
+  const topIntegrationPattern = integrationPatterns[0];
+  const consumptionLayers = dimensionCounts(dataFlows, "consumptionLayer")
+    .filter((item) => item.value !== "(not specified)")
+    .slice(0, 4)
+    .map((item) => `${item.value} (${item.count.toLocaleString()})`);
 
   const signals: Signal[] = [
     {
@@ -507,6 +525,135 @@ function buildEclSignalPacket(
       kind: "portfolio",
       statement: `The ECL projection contains ${applications.length.toLocaleString()} applications, ${contracts.length.toLocaleString()} contracts, ${infrastructure.length.toLocaleString()} infrastructure/platform records, and ${dataFlows.length.toLocaleString()} data-flow rows.`,
       domains: ["application_system", "vendor_contract", "infrastructure_platform", "data_asset_or_integration"],
+      evidenceRefs: ["serving.home_executive_brief"],
+    },
+    ...(topFunction
+      ? [
+          {
+            id: "sig_ecl_application_function_002",
+            kind: "concentration" as const,
+            statement: `${String(topFunction.label)} is the largest application function in the current estate at ${Number(topFunction.sharePct).toFixed(1)}% of applications.`,
+            domains: ["application_system"],
+            evidenceRefs: ["serving.home_applications_systems"],
+          },
+        ]
+      : []),
+    {
+      id: "sig_ecl_application_criticality_003",
+      kind: "risk",
+      statement: `${tierOneApplications.length.toLocaleString()} of ${applications.length.toLocaleString()} applications are marked tier-one; ${lifecycleWatch.length.toLocaleString()} carry lifecycle or replacement-watch evidence.`,
+      domains: ["application_system"],
+      evidenceRefs: ["serving.home_applications_systems"],
+    },
+    {
+      id: "sig_ecl_vendor_concentration_004",
+      kind: "concentration",
+      statement: topVendor
+        ? `${String(topVendor.label)} is the largest visible supplier group at ${Number(topVendor.sharePct).toFixed(1)}% of the loaded contract value.`
+        : "No supplier group carries annualized contract value in the loaded Home contract view.",
+      domains: ["vendor_contract"],
+      evidenceRefs: ["serving.home_vendor_contracts"],
+    },
+    {
+      id: "sig_ecl_contract_value_005",
+      kind: "portfolio",
+      statement: `${contracts.length.toLocaleString()} contracts carry annualized-value evidence totaling ${formatUsd(contractSpend) ?? "$0"} across the visible contract base.`,
+      domains: ["vendor_contract"],
+      evidenceRefs: ["serving.home_vendor_contracts"],
+    },
+    {
+      id: "sig_ecl_contract_flexibility_006",
+      kind: "risk",
+      statement: `${autoRenewContracts.length.toLocaleString()} of ${contracts.length.toLocaleString()} contracts are marked auto-renewal and ${longNoticeContracts.length.toLocaleString()} require at least 180 days notice.`,
+      domains: ["vendor_contract"],
+      evidenceRefs: ["serving.home_vendor_contracts"],
+    },
+    {
+      id: "sig_ecl_platform_resilience_008",
+      kind: "risk",
+      statement: `${infrastructure.length.toLocaleString()} infrastructure or platform records are visible; ${supportDatedPlatforms.length.toLocaleString()} carry support-end dates and ${criticalPlatforms.length.toLocaleString()} carry tier-one or criticality evidence.`,
+      domains: ["infrastructure_platform"],
+      evidenceRefs: ["serving.home_infrastructure_platforms"],
+    },
+    ...(topFlowTarget
+      ? [
+          {
+            id: "sig_ecl_data_flow_convergence_009",
+            kind: "dependency" as const,
+            statement: `${topFlowTarget.value} is the most frequent recorded data-movement destination at ${topFlowTarget.count.toLocaleString()} of ${dataFlows.length.toLocaleString()} visible movements (${((topFlowTarget.count / Math.max(1, dataFlows.length)) * 100).toFixed(1)}%).`,
+            domains: ["data_asset_or_integration", "application_system"],
+            evidenceRefs: ["serving.home_current_state_data_flow"],
+          },
+        ]
+      : []),
+    ...(topIntegrationPattern
+      ? [
+          {
+            id: "sig_ecl_integration_pattern_010",
+            kind: "complexity" as const,
+            statement: `${topIntegrationPattern.value} is the most common recorded integration pattern at ${topIntegrationPattern.count.toLocaleString()} of ${dataFlows.length.toLocaleString()} movements.`,
+            domains: ["data_asset_or_integration"],
+            evidenceRefs: ["serving.home_current_state_data_flow"],
+          },
+        ]
+      : []),
+    ...(consumptionLayers.length
+      ? [
+          {
+            id: "sig_ecl_data_consumption_011",
+            kind: "portfolio" as const,
+            statement: `The data-movement record names consumption layers including ${consumptionLayers.join(", ")}.`,
+            domains: ["data_asset_or_integration"],
+            evidenceRefs: ["serving.home_current_state_data_flow"],
+          },
+        ]
+      : []),
+    ...(topFunctions.length
+      ? [
+          {
+            id: "sig_ecl_application_function_ranking_012",
+            kind: "portfolio" as const,
+            statement: `The largest application functions by recorded application count are ${topFunctions
+              .map((item) => `${item.label} (${Number(item.sharePct).toFixed(1)}%)`)
+              .join(", ")}.`,
+            domains: ["application_system"],
+            evidenceRefs: ["serving.home_applications_systems"],
+          },
+        ]
+      : []),
+    {
+      id: "sig_ecl_application_cost_013",
+      kind: "portfolio",
+      statement: `${applications.length.toLocaleString()} applications carry annual-cost evidence totaling ${formatUsd(applicationCost) ?? "$0"}.`,
+      domains: ["application_system"],
+      evidenceRefs: ["serving.home_applications_systems"],
+    },
+    {
+      id: "sig_ecl_data_flow_total_014",
+      kind: "portfolio",
+      statement: `The data-movement inventory contains ${dataFlows.length.toLocaleString()} recorded source-to-target movement rows; this is not transaction volume, data volume, business usage, or proof of analytics consumption.`,
+      domains: ["data_asset_or_integration"],
+      evidenceRefs: ["serving.home_current_state_data_flow"],
+    },
+    {
+      id: "sig_ecl_application_named_examples_015",
+      kind: "portfolio",
+      statement: "Named high-cost application examples are available in the application register.",
+      domains: ["application_system"],
+      evidenceRefs: ["serving.home_applications_systems"],
+    },
+    {
+      id: "sig_ecl_platform_named_resilience_016",
+      kind: "risk",
+      statement: "Named infrastructure or platform examples with resilience evidence are available in the infrastructure register.",
+      domains: ["infrastructure_platform"],
+      evidenceRefs: ["serving.home_infrastructure_platforms"],
+    },
+    {
+      id: "sig_ecl_source_breadth_guardrail_019",
+      kind: "data_quality",
+      statement: `This narrative packet is built from ${rows.filter((row) => row.row_type !== "summary" && row.row_type !== "chapter_claim").length.toLocaleString()} governed projection rows; source-family summaries describe intake breadth but are not evidence for a business claim by themselves.`,
+      domains: ["evidence_sources"],
       evidenceRefs: ["serving.home_executive_brief"],
     },
     {
@@ -539,6 +686,24 @@ function buildEclSignalPacket(
       id: "ctx_ecl_assessment_001",
       statement: `This Home preview is based on ECL assessment ${assessmentId}; it is synthetic, not client-attested.`,
       domains: ["enterprise_profile", "evidence_sources"],
+    },
+    {
+      id: "ctx_ecl_scope_business_economics_001",
+      statement:
+        "Segment revenue, customer/channel economics, and formal enterprise identity attributes are not supplied by the current Home narrative input; business-model conclusions should therefore be limited to cited technology, commercial, infrastructure, and data-movement facts.",
+      domains: ["enterprise_profile", "spend_value_fact", "application_system", "vendor_contract"],
+    },
+    {
+      id: "ctx_ecl_scope_strategy_programs_001",
+      statement:
+        "Declared strategic priorities, funded programs, and program-to-outcome linkage are not supplied by the current Home narrative input; strategy chapters should treat strategy as an evidence gap rather than infer a transformation agenda.",
+      domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
+    },
+    {
+      id: "ctx_ecl_scope_leadership_001",
+      statement:
+        "Leadership interview excerpts are not supplied by the current Home narrative input; leadership perspective should remain deferred until cited interview evidence is loaded.",
+      domains: ["evidence_sources"],
     },
     ...projectionContextItems(rows),
   ];
