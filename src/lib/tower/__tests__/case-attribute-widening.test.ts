@@ -217,3 +217,38 @@ describe("the owner queue counts cases, not rollouts", () => {
     expect(panel).toContain("rows.reduce((sum, row) => sum + row.count, 0)");
   });
 });
+
+describe("one metric, declared", () => {
+  const files = {
+    "CommandCenterView.tsx": read(
+      "src/components/tower/command-center/views/CommandCenterView.tsx",
+    ),
+    "ContractTabs.tsx": read(
+      "src/components/tower/command-center/views/ContractTabs.tsx",
+    ),
+    "TowerCommandCenter.tsx": read(
+      "src/components/tower/command-center/TowerCommandCenter.tsx",
+    ),
+  };
+
+  it("never falls back from attributed AI spend to AI-tagged spend", () => {
+    // Different measures. `||` also swaps on a legitimate zero, so the figure a reader sees is
+    // not the one the label names, and nothing on the page says which one it got.
+    for (const [name, source] of Object.entries(files)) {
+      expect([name, source.includes("aiAttributedInitiativeSpendUsd || ")]).toEqual([name, false]);
+      // `?? null` is honest absence; `?? someOtherMetric` is a substitution.
+      expect([name, /aiAttributedInitiativeSpendUsd \?\? (?!null)/.test(source)]).toEqual([name, false]);
+    }
+  });
+
+  it("never falls back from the tracked asset count to the row count", () => {
+    for (const [name, source] of Object.entries(files)) {
+      expect([name, source.includes("aiInitiativeCount || ")]).toEqual([name, false]);
+      expect([name, /aiInitiativeCount \?\? (?!null)/.test(source)]).toEqual([name, false]);
+    }
+  });
+
+  it("never falls back from blocked value to value at stake", () => {
+    expect(files["ContractTabs.tsx"]).not.toContain("blockedUsd || program.valueAtStakeUsd");
+  });
+});

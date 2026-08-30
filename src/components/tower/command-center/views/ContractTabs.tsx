@@ -162,7 +162,7 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
     },
     {
       gate: "AI spend tracked",
-      valueUsd: s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd,
+      valueUsd: s.aiAttributedInitiativeSpendUsd,
       fill: HEX.tealDark,
     },
     {
@@ -530,9 +530,7 @@ export function ValueProofContractView({
                       <span>{program.ownerRole ?? "Unassigned owner"}</span>
                     </td>
                     <td>
-                      {formatUsdM(
-                        program.blockedUsd || program.valueAtStakeUsd,
-                      )}
+                      {formatUsdM(program.blockedUsd)}
                     </td>
                     <td>{formatPct(program.proofMaturityScore)}</td>
                     <td>{formatPct(program.riskPressureScore)}</td>
@@ -836,7 +834,7 @@ export function AiPortfolioContractView({
       <div className={styles.contractModeRow}>
         <SectionTitle
           title="AI initiatives and tool rollouts"
-          subtitle={`${formatCount(s.aiInitiativeCount || view.allInitiatives.length)} assets · ${formatUsdM(s.aiAttributedInitiativeSpendUsd || s.aiTaggedUsd)} attributed`}
+          subtitle={`${formatCount(s.aiInitiativeCount)} assets · ${formatUsdM(s.aiAttributedInitiativeSpendUsd)} attributed`}
         />
         <div
           className={styles.contractSegments}
@@ -1072,8 +1070,7 @@ function campaignRows(view: TowerCommandCenterView) {
       owner: "platform_owner",
       tasks: Math.max(1, view.allInitiatives.length),
       unit: "Assets",
-      valueUsd:
-        view.summary.aiAttributedInitiativeSpendUsd || view.summary.aiTaggedUsd,
+      valueUsd: view.summary.aiAttributedInitiativeSpendUsd,
       due: actions[0]?.due ?? "Next review",
       tone: "red" as Tone,
       action: actions[0],
@@ -1178,7 +1175,7 @@ function sourceContractActions(view: TowerCommandCenterView) {
 }
 
 function reconciliationRows(view: TowerCommandCenterView) {
-  const ai = view.summary.aiInitiativeCount || view.allInitiatives.length;
+  const ai = view.summary.aiInitiativeCount;
   const tasks = view.actions.length;
   const risk = Math.max(view.gaps.length + view.pipelineGaps.length, 0);
   const claims = valueClaimCount(view);
