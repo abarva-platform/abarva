@@ -19,13 +19,11 @@ import { Client } from "pg";
 
 import {
   buildVerifiedEnterpriseThesisFromSignalPacket,
-  callClaude,
   THESIS_PROMPT_VERSION,
   validateStructure,
   type AnthropicLikeClient,
   type EnterpriseThesis,
   type GroundedClaim,
-  type VisualOpportunity,
 } from "../data-build/build-enterprise-thesis";
 import {
   buildChapterViewsFromVerifiedThesis,
@@ -43,6 +41,16 @@ import {
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 type VerifiedEnterpriseThesisResult = Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>;
 type JsonRecord = Record<string, unknown>;
+type DeterministicCategorySummary = {
+  key: string;
+  label: string;
+  sourcePaths: string[];
+  recordCount: number;
+  denominator: string;
+  topDimensions: Array<{ field: string; values: Array<{ label: string; count: number; sharePct: number }> }>;
+  measures: Record<string, number>;
+  gaps: string[];
+};
 
 const HOME_SURFACE_KEY = "home_enterprise_landscape";
 const DEFAULT_TENANT_KEY = "meridian-health";
@@ -288,6 +296,17 @@ function rowsOf(rows: HomeProjectionWriteRow[], pageKey: string, rowType: string
   return rows.filter((row) => row.page_key === pageKey && row.row_type === rowType);
 }
 
+function dataWorkloadRows(rows: HomeProjectionWriteRow[]): HomeProjectionWriteRow[] {
+  return rowsOf(rows, "data_assets_integrations", "data_analytics_workload");
+}
+
+function dataMovementRows(rows: HomeProjectionWriteRow[]): HomeProjectionWriteRow[] {
+  return [
+    ...rowsOf(rows, "current_state_data_flow", "data_flow"),
+    ...rowsOf(rows, "data_assets_integrations", "data_flow"),
+  ];
+}
+
 function sumPayload(rows: HomeProjectionWriteRow[], field: string): number {
   return rows.reduce((sum, row) => sum + numberValue(payload(row)[field]), 0);
 }
@@ -304,6 +323,142 @@ function dimensionShareRows(rows: HomeProjectionWriteRow[], field: string, limit
   }))
     .sort((a, b) => Number(b.sharePct) - Number(a.sharePct))
     .slice(0, limit);
+}
+
+function workloadSummaryRows(rows: HomeProjectionWriteRow[], field: string, limit: number): Array<Record<string, unknown>> {
+  const groups = new Map<string, { rows: number; workloadItems: number; activeUsers: number; dataVolumeTb: number; technologies: Map<string, number> }>();
+  for (const row of rows) {
+    const data = payload(row);
+    const label = text(data[field]) ?? text(data.function) ?? "(not specified)";
+    const group = groups.get(label) ?? { rows: 0, workloadItems: 0, activeUsers: 0, dataVolumeTb: 0, technologies: new Map<string, number>() };
+    group.rows += 1;
+    group.workloadItems += payloadNumber(data, "workload_count");
+    group.activeUsers += payloadNumber(data, "active_user_count");
+    group.dataVolumeTb += payloadNumber(data, "data_volume_tb");
+    const technology = text(data.technology_name);
+    if (technology) group.technologies.set(technology, (group.technologies.get(technology) ?? 0) + 1);
+    groups.set(label, group);
+  }
+  return Array.from(groups, ([label, group]) => ({
+    label,
+    segments: group.rows,
+    workloadItems: Math.round(group.workloadItems),
+    activeUsers: Math.round(group.activeUsers),
+    dataVolumeTb: Number(group.dataVolumeTb.toFixed(1)),
+    topTechnologies: Array.from(group.technologies, ([technology, count]) => ({ technology, count }))
+      .sort((a, b) => b.count - a.count || a.technology.localeCompare(b.technology))
+      .slice(0, 5),
+  }))
+    .sort((a, b) => Number(b.workloadItems) - Number(a.workloadItems) || String(a.label).localeCompare(String(b.label)))
+    .slice(0, limit);
+}
+
+function topDimension(rows: HomeProjectionWriteRow[], field: string, limit: number) {
+  return topCountShareRows(rows, field, limit).map((item) => ({
+    label: item.label,
+    count: item.count,
+    sharePct: item.sharePct,
+  }));
+}
+
+function buildCategorySummaries(args: {
+  applications: HomeProjectionWriteRow[];
+  contracts: HomeProjectionWriteRow[];
+  infrastructure: HomeProjectionWriteRow[];
+  dataFlows: HomeProjectionWriteRow[];
+  dataWorkloads: HomeProjectionWriteRow[];
+  sourceSummaries: SourceSummary[];
+}): DeterministicCategorySummary[] {
+  const { applications, contracts, infrastructure, dataFlows, dataWorkloads, sourceSummaries } = args;
+  const sourcePaths = (pattern: RegExp, fallback: string[]) => {
+    const matched = sourceSummaries.map((summary) => summary.sourcePath).filter((sourcePath) => pattern.test(sourcePath));
+    return matched.length ? matched.slice(0, 12) : fallback;
+  };
+  const workloadItems = dataWorkloads.reduce((sum, row) => sum + payloadNumber(payload(row), "workload_count"), 0);
+  const activeUsers = dataWorkloads.reduce((sum, row) => sum + payloadNumber(payload(row), "active_user_count"), 0);
+  const dataVolumeTb = dataWorkloads.reduce((sum, row) => sum + payloadNumber(payload(row), "data_volume_tb"), 0);
+  return [
+    {
+      key: "applications_by_business_function",
+      label: "Applications by business function",
+      sourcePaths: ["serving.home_applications_systems"],
+      recordCount: applications.length,
+      denominator: "application_v rows, not deployments or raw canonical objects",
+      topDimensions: [{ field: "business_function", values: topDimension(applications, "business_function", 8) }],
+      measures: {
+        applications: applications.length,
+        annualCostUsd: sumPayload(applications, "annual_cost_usd"),
+      },
+      gaps: applications.length ? [] : ["No governed application rows reached the Home packet."],
+    },
+    {
+      key: "contracts_by_supplier_and_service",
+      label: "Contracts by supplier and service",
+      sourcePaths: ["serving.home_vendor_contracts"],
+      recordCount: contracts.length,
+      denominator: "contract rows with known value state",
+      topDimensions: [
+        { field: "supplier_name", values: topDimension(contracts, "supplier_name", 8) },
+        { field: "service_category", values: topDimension(contracts, "service_category", 8) },
+      ],
+      measures: {
+        contracts: contracts.length,
+        annualizedValueUsd: contracts.reduce((sum, row) => sum + payloadNumber(payload(row), "annualized_value_usd", "annual_spend_usd"), 0),
+      },
+      gaps: contracts.length ? [] : ["No governed contract rows reached the Home packet."],
+    },
+    {
+      key: "infrastructure_by_hosting_and_lifecycle",
+      label: "Infrastructure by hosting and lifecycle",
+      sourcePaths: ["serving.home_infrastructure_platforms"],
+      recordCount: infrastructure.length,
+      denominator: "platform and infrastructure records, not confirmed app-hosting joins",
+      topDimensions: [
+        { field: "hosting_model", values: topDimension(infrastructure, "hosting_model", 8) },
+        { field: "platform_type", values: topDimension(infrastructure, "platform_type", 8) },
+      ],
+      measures: {
+        platforms: infrastructure.length,
+      },
+      gaps: infrastructure.length ? [] : ["No governed infrastructure/platform rows reached the Home packet."],
+    },
+    {
+      key: "data_movements_by_domain_and_mechanism",
+      label: "Data movements by domain and mechanism",
+      sourcePaths: ["serving.home_current_state_data_flow", "serving.home_data_assets_integrations"],
+      recordCount: dataFlows.length,
+      denominator: "source-to-target movement rows, not reports, users, jobs, or data volume",
+      topDimensions: [
+        { field: "data_domain", values: topDimension(dataFlows, "data_domain", 8) },
+        { field: "integration_type", values: topDimension(dataFlows, "integration_type", 8) },
+      ],
+      measures: {
+        dataMovements: dataFlows.length,
+      },
+      gaps: dataFlows.length ? [] : ["No governed source-to-target data movement rows reached the Home packet."],
+    },
+    {
+      key: "data_bi_etl_workloads_by_function_and_technology",
+      label: "Data, BI, ETL, report, script, and analytics workloads",
+      sourcePaths: sourcePaths(/SP04|Data_BI_ETL|data.*bi|etl|analytics/i, ["serving.home_data_assets_integrations"]),
+      recordCount: dataWorkloads.length,
+      denominator: "segment-level workload rows; not one row per report, job, script, or user",
+      topDimensions: [
+        { field: "function", values: topDimension(dataWorkloads, "function", 8) },
+        { field: "technology_name", values: topDimension(dataWorkloads, "technology_name", 8) },
+        { field: "workload_type", values: topDimension(dataWorkloads, "workload_type", 8) },
+      ],
+      measures: {
+        workloadSegments: dataWorkloads.length,
+        workloadItems: Math.round(workloadItems),
+        activeUsers: Math.round(activeUsers),
+        dataVolumeTb: Number(dataVolumeTb.toFixed(1)),
+      },
+      gaps: dataWorkloads.length
+        ? []
+        : ["No segment-level data/BI/ETL workload rows reached the Home packet; pages must not infer report, job, user, script, or data-volume counts from movement rows."],
+    },
+  ];
 }
 
 function topSpendShareRows(
@@ -550,7 +705,25 @@ function rowStatement(row: HomeProjectionWriteRow, labelByIdentifier: Map<string
         visible(data.support_end_date) ? `with support ending ${visible(data.support_end_date)}` : null,
       ].filter(Boolean).join(" ") + ".";
     case "current_state_data_flow":
+      return [
+        `${visible(data.data_asset_name) ?? visible(row.title) ?? row.title} is recorded as a data movement`,
+        visible(data.source_system) ? `from ${visible(data.source_system)}` : null,
+        visible(data.target_system) ? `to ${visible(data.target_system)}` : null,
+        visible(data.integration_type) ? `using ${visible(data.integration_type)}` : null,
+        visible(data.consumption_layer) ? `serving ${visible(data.consumption_layer)}` : null,
+      ].filter(Boolean).join(" ") + ".";
     case "data_assets_integrations":
+      if (row.row_type === "data_analytics_workload") {
+        return [
+          `${visible(data.workload_name) ?? visible(data.platform_name) ?? visible(row.title) ?? row.title} is recorded as a data, reporting, ETL, script, or analytics workload segment`,
+          visible(data.function) ? `for ${visible(data.function)}` : null,
+          visible(data.technology_name) ? `using ${visible(data.technology_name)}` : null,
+          visible(data.workload_type) ? `as ${visible(data.workload_type)}` : null,
+          payloadNumber(data, "workload_count") > 0 ? `with ${payloadNumber(data, "workload_count").toLocaleString()} workload items` : null,
+          payloadNumber(data, "active_user_count") > 0 ? `${payloadNumber(data, "active_user_count").toLocaleString()} active users` : null,
+          payloadNumber(data, "data_volume_tb") > 0 ? `${payloadNumber(data, "data_volume_tb").toLocaleString()} TB` : null,
+        ].filter(Boolean).join(" ") + ".";
+      }
       return [
         `${visible(data.data_asset_name) ?? visible(row.title) ?? row.title} is recorded as a data movement`,
         visible(data.source_system) ? `from ${visible(data.source_system)}` : null,
@@ -693,22 +866,6 @@ function scrubThesisResultVisibleIds(
   } as VerifiedEnterpriseThesisResult;
 }
 
-function makeClaim(statement: string, evidenceIds: string[], claimType: GroundedClaim["claim_type"] = "FACT", confidence: GroundedClaim["confidence"] = "high"): GroundedClaim {
-  return { statement, evidence_ids: evidenceIds, confidence, claim_type: claimType };
-}
-
-function makeVisual(datasetRef: string, title: string, keyMessage: string, evidenceIds: string[]): VisualOpportunity {
-  return {
-    visual_type: "horizontal_bar",
-    title,
-    purpose: "Render a precomputed governed dataset without generating values.",
-    dataset_ref: datasetRef,
-    key_message: keyMessage,
-    evidence_ids: evidenceIds,
-    priority: "high",
-  };
-}
-
 function buildScopeContextItems(args: {
   rows: HomeProjectionWriteRow[];
   sourceSummaries: SourceSummary[];
@@ -721,6 +878,11 @@ function buildScopeContextItems(args: {
   const leadershipRows = readyRowsForPage("leadership_perspective");
   const strategyRows = readyRowsForPage("strategy_value_creation");
   const performanceRows = readyRowsForPage("performance_value");
+  const workloadRows = readyRowsForPage("data_assets_integrations").filter((row) => row.row_type === "data_analytics_workload");
+  const workloadSourceSummaries = sourceSummaries.filter((summary) =>
+    /SP04|Data_BI_ETL|data.*bi|etl|analytics/i.test(summary.sourcePath) ||
+    summary.materialFields.some((field) => /workload_count|active_user_count|data_volume_tb|technology_name/i.test(field)),
+  );
 
   return [
     {
@@ -751,6 +913,13 @@ function buildScopeContextItems(args: {
       domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
     },
     {
+      id: "ctx_ecl_scope_data_workload_001",
+      statement: workloadRows.length
+        ? `The data, reporting, ETL, script, and analytics workload context includes ${workloadRows.length.toLocaleString()} ready segment-level evidence rows from ${Math.max(1, workloadSourceSummaries.length).toLocaleString()} source-family summaries; pages should show those workload summaries and must not ask leaders to confirm those counts as though the source family is absent.`
+        : "No ready segment-level data, reporting, ETL, script, or analytics workload rows reached the Home narrative packet; pages may name that specific gap but must not infer workload counts from data-movement rows.",
+      domains: ["data_asset_or_integration", "infrastructure_platform", "evidence_sources"],
+    },
+    {
       id: "ctx_ecl_scope_source_breadth_001",
       statement:
         sourceSummaries.length > 0
@@ -766,6 +935,7 @@ function buildDeterministicHomeSignals(args: {
   permittedContracts: HomeProjectionWriteRow[];
   permittedInfrastructure: HomeProjectionWriteRow[];
   permittedDataFlows: HomeProjectionWriteRow[];
+  permittedDataWorkloads: HomeProjectionWriteRow[];
   permittedRows: HomeProjectionWriteRow[];
   contractSpend: number;
   vendorRows: Array<Record<string, unknown>>;
@@ -775,6 +945,7 @@ function buildDeterministicHomeSignals(args: {
     permittedContracts,
     permittedInfrastructure,
     permittedDataFlows,
+    permittedDataWorkloads,
     permittedRows,
     contractSpend,
     vendorRows,
@@ -811,6 +982,11 @@ function buildDeterministicHomeSignals(args: {
   const criticalPlatforms = rowsWherePayload(permittedInfrastructure, (data) => /tier[-_\s]?1|critical/i.test(text(data.criticality_tier) ?? ""));
   const topFlowTarget = topCountShareRows(permittedDataFlows, "target_system", 5)[0];
   const topFlowType = topCountShareRows(permittedDataFlows, "integration_type", 5)[0];
+  const topWorkloadFunction = topCountShareRows(permittedDataWorkloads, "function", 5)[0];
+  const topWorkloadTechnology = topCountShareRows(permittedDataWorkloads, "technology_name", 5)[0];
+  const workloadItems = permittedDataWorkloads.reduce((sum, row) => sum + payloadNumber(payload(row), "workload_count"), 0);
+  const workloadUsers = permittedDataWorkloads.reduce((sum, row) => sum + payloadNumber(payload(row), "active_user_count"), 0);
+  const workloadVolumeTb = permittedDataWorkloads.reduce((sum, row) => sum + payloadNumber(payload(row), "data_volume_tb"), 0);
   const consumptionLayers = topCountShareRows(permittedDataFlows, "consumption_layer", 4)
     .filter((item) => item.label !== "(not specified)")
     .map((item) => `${item.label} (${item.count.toLocaleString()})`);
@@ -969,6 +1145,15 @@ function buildDeterministicHomeSignals(args: {
     ["data_asset_or_integration"],
     permittedDataFlows,
   );
+  if (permittedDataWorkloads.length) {
+    add(
+      "sig_ecl_data_workload_segments_017",
+      "portfolio",
+      `The data, reporting, ETL, script, and analytics workload inventory contains ${permittedDataWorkloads.length.toLocaleString()} segment-level rows totaling ${Math.round(workloadItems).toLocaleString()} workload items, ${Math.round(workloadUsers).toLocaleString()} active users, and ${Number(workloadVolumeTb.toFixed(1)).toLocaleString()} TB; ${topWorkloadFunction ? `${topWorkloadFunction.label} is the largest function by segment count at ${topWorkloadFunction.count.toLocaleString()} segments` : "no function ranking is available"}${topWorkloadTechnology ? `, and ${topWorkloadTechnology.label} is the most frequent named technology at ${topWorkloadTechnology.count.toLocaleString()} segments` : ""}.`,
+      ["data_asset_or_integration", "infrastructure_platform"],
+      permittedDataWorkloads,
+    );
+  }
   if (topFlowType) {
     add(
       "sig_ecl_integration_pattern_010",
@@ -1046,17 +1231,13 @@ function buildGovernedSignalPacket(
   const applications = rowsOf(rows, "applications_systems", "application");
   const contracts = rowsOf(rows, "vendor_contracts", "contract");
   const infrastructure = rowsOf(rows, "infrastructure_platforms", "infrastructure");
-  const dataFlows = [
-    ...rowsOf(rows, "current_state_data_flow", "data_flow"),
-    ...rowsOf(rows, "data_assets_integrations", "data_flow"),
-  ];
+  const dataFlows = dataMovementRows(rows);
+  const dataWorkloads = dataWorkloadRows(rows);
   const permittedApplications = rowsOf(permittedRows, "applications_systems", "application");
   const permittedContracts = rowsOf(permittedRows, "vendor_contracts", "contract");
   const permittedInfrastructure = rowsOf(permittedRows, "infrastructure_platforms", "infrastructure");
-  const permittedDataFlows = [
-    ...rowsOf(permittedRows, "current_state_data_flow", "data_flow"),
-    ...rowsOf(permittedRows, "data_assets_integrations", "data_flow"),
-  ];
+  const permittedDataFlows = dataMovementRows(permittedRows);
+  const permittedDataWorkloads = dataWorkloadRows(permittedRows);
   const contractSpend = permittedContracts.reduce((sum, row) => sum + payloadNumber(payload(row), "annualized_value_usd", "annual_spend_usd"), 0);
   const vendorRows = topSpendShareRows(permittedContracts, "supplier_name", "annualized_value_usd", 8);
   const rawSignals = buildDeterministicHomeSignals({
@@ -1064,6 +1245,7 @@ function buildGovernedSignalPacket(
     permittedContracts,
     permittedInfrastructure,
     permittedDataFlows,
+    permittedDataWorkloads,
     permittedRows,
     contractSpend,
     vendorRows,
@@ -1129,7 +1311,17 @@ function buildGovernedSignalPacket(
     visualDatasets: {
       application_landscape_by_function: dimensionShareRows(permittedApplications, "business_function", 8),
       vendor_spend_concentration: vendorRows,
+      data_workload_by_function: workloadSummaryRows(permittedDataWorkloads, "function", 12),
+      data_workload_by_technology: workloadSummaryRows(permittedDataWorkloads, "technology_name", 12),
     },
+    categorySummaries: buildCategorySummaries({
+      applications: permittedApplications,
+      contracts: permittedContracts,
+      infrastructure: permittedInfrastructure,
+      dataFlows: permittedDataFlows,
+      dataWorkloads: permittedDataWorkloads,
+      sourceSummaries,
+    }),
     sourceSummaries,
     analyticalLenses: [],
     coverageManifest: {
@@ -1138,10 +1330,12 @@ function buildGovernedSignalPacket(
         { key: "home_vendor_contracts", recordCount: contracts.length, evidencedShare: contracts.length ? 1 : 0 },
         { key: "home_infrastructure_platforms", recordCount: infrastructure.length, evidencedShare: infrastructure.length ? 1 : 0 },
         { key: "home_data_flows", recordCount: dataFlows.length, evidencedShare: dataFlows.length ? 1 : 0 },
+        { key: "home_data_workload_segments", recordCount: dataWorkloads.length, evidencedShare: dataWorkloads.length ? 1 : 0 },
         { key: "home_agent_ready_applications_systems", recordCount: permittedApplications.length, evidencedShare: applications.length ? permittedApplications.length / applications.length : 0 },
         { key: "home_agent_ready_vendor_contracts", recordCount: permittedContracts.length, evidencedShare: contracts.length ? permittedContracts.length / contracts.length : 0 },
         { key: "home_agent_ready_infrastructure_platforms", recordCount: permittedInfrastructure.length, evidencedShare: infrastructure.length ? permittedInfrastructure.length / infrastructure.length : 0 },
         { key: "home_agent_ready_data_flows", recordCount: permittedDataFlows.length, evidencedShare: dataFlows.length ? permittedDataFlows.length / dataFlows.length : 0 },
+        { key: "home_agent_ready_data_workload_segments", recordCount: permittedDataWorkloads.length, evidencedShare: dataWorkloads.length ? permittedDataWorkloads.length / dataWorkloads.length : 0 },
       ],
       leadershipToPortfolioLinkage: {
         resolvableRows: 0,

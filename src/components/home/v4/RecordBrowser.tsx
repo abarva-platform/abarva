@@ -59,11 +59,17 @@ const COLUMN_PRESETS: Record<TechObjectType, Column[]> = {
     { key: "annualCostUsd", label: "Annual cost", width: 126, priority: "wide", align: "right", kind: "money" },
   ],
   data_asset_or_integration: [
+    { key: "recordKind", label: "Record kind", width: 142, priority: "wide", kind: "pill" },
     { key: "dataAssetName", label: "Asset", width: 250, priority: "core" },
     { key: "dataDomain", label: "Domain", width: 170 },
     { key: "sourceSystem", label: "Source", width: 210 },
     { key: "targetSystem", label: "Target", width: 230 },
     { key: "integrationType", label: "Mechanism", width: 170, kind: "muted" },
+    { key: "workloadType", label: "Workload", width: 118, priority: "wide", kind: "pill" },
+    { key: "technologyName", label: "Technology", width: 160, priority: "wide" },
+    { key: "workloadCount", label: "Items", width: 86, priority: "wide", align: "right", kind: "mono" },
+    { key: "activeUserCount", label: "Users", width: 92, priority: "wide", align: "right", kind: "mono" },
+    { key: "dataVolumeTb", label: "TB", width: 78, priority: "wide", align: "right", kind: "mono" },
     { key: "refreshFrequency", label: "Refresh", width: 106, priority: "wide", kind: "mono" },
     { key: "qualityStatus", label: "Quality", width: 154, priority: "wide", kind: "pill" },
     { key: "regulatedDataFlag", label: "Reg.", width: 72, priority: "wide", align: "right", kind: "mono" },
@@ -132,10 +138,19 @@ const DETAIL_FIELDS: Partial<Record<TechObjectType, string[]>> = {
   ],
   data_asset_or_integration: [
     "dataAssetName",
+    "recordKind",
     "dataDomain",
+    "ownerFunction",
     "sourceSystem",
     "targetSystem",
     "integrationType",
+    "workloadType",
+    "platformName",
+    "technologyName",
+    "workloadCount",
+    "activeUserCount",
+    "dataVolumeTb",
+    "governanceState",
     "platformOrDatabase",
     "refreshFrequency",
     "dataOwner",
@@ -465,12 +480,18 @@ function buildMetrics(rows: RecordRow[], objectType: TechObjectType, primaryDime
   }
 
   if (objectType === "data_asset_or_integration") {
+    const movements = rows.filter((row) => row.recordKind !== "data_analytics_workload");
+    const workloads = rows.filter((row) => row.recordKind === "data_analytics_workload");
+    const workloadItems = workloads.reduce((sum, row) => sum + numeric(row.workloadCount), 0);
+    const activeUsers = workloads.reduce((sum, row) => sum + numeric(row.activeUserCount), 0);
+    const dataVolume = workloads.reduce((sum, row) => sum + numeric(row.dataVolumeTb), 0);
     return [
-      { label: "flows and assets", value: rows.length.toLocaleString() },
+      { label: "movements", value: movements.length.toLocaleString() },
+      { label: "workload segments", value: workloads.length.toLocaleString(), tone: workloads.length ? V4.green : undefined },
+      { label: "workload items", value: workloadItems.toLocaleString(), tone: workloadItems ? V4.blue : undefined },
+      { label: "active users", value: activeUsers.toLocaleString(), tone: activeUsers ? V4.blue : undefined },
+      { label: "data volume", value: `${Number(dataVolume.toFixed(1)).toLocaleString()} TB`, tone: dataVolume ? V4.blue : undefined },
       { label: "regulated", value: regulated.toLocaleString(), tone: regulated ? V4.amber : undefined },
-      { label: "real-time", value: rows.filter((row) => /real.?time/i.test(String(row.refreshFrequency ?? ""))).length.toLocaleString() },
-      { label: "domains", value: dimensions.toLocaleString() },
-      { label: "quality watch", value: rows.filter((row) => /ungoverned|developing|review/i.test(String(row.qualityStatus ?? ""))).length.toLocaleString(), tone: V4.amber },
     ];
   }
 
@@ -498,7 +519,7 @@ function buildDimensions(rows: RecordRow[], objectType: TechObjectType, primaryD
     application_system: ["lifecycleState", "criticality", "deploymentModel", "vendor"],
     vendor_contract: ["riskRating", "commercialModel", "autoRenewFlag", "contractOwner"],
     infrastructure_platform: ["platformType", "hostingModel", "criticality", "lifecycleState"],
-    data_asset_or_integration: ["integrationType", "refreshFrequency", "qualityStatus", "regulatedDataFlag"],
+    data_asset_or_integration: ["recordKind", "workloadType", "technologyName", "integrationType", "refreshFrequency", "qualityStatus", "regulatedDataFlag"],
   };
   const fields = unique([primaryDimension, ...(preferred[objectType] ?? [])].filter(Boolean) as string[]);
   return fields
@@ -729,6 +750,9 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
       { key: "domain-function", title: "Data domains mapped to functions", caption: "How data domains cluster around business capabilities.", left: "dataDomains", right: "businessFunction" },
     ],
     data_asset_or_integration: [
+      { key: "kind-mechanism", title: "Record kinds mapped to mechanisms", caption: "Separates movement rows from data, BI, ETL, report, script, and analytics workload segments.", left: "recordKind", right: "integrationType" },
+      { key: "function-workload", title: "Functions mapped to workload types", caption: "Which business functions carry report, ETL, script, and analytics volume.", left: "ownerFunction", right: "workloadType" },
+      { key: "technology-workload", title: "Technologies mapped to workloads", caption: "Which reporting, analytics, and ETL tools carry each workload type.", left: "technologyName", right: "workloadType" },
       { key: "source-target", title: "Sources mapped to targets", caption: "The recorded system-to-system movement shape.", left: "sourceSystem", right: "targetSystem" },
       { key: "domain-mechanism", title: "Domains mapped to mechanisms", caption: "Which integration patterns carry each data domain.", left: "dataDomain", right: "integrationType" },
       { key: "owner-quality", title: "Data owners mapped to quality", caption: "Where stewardship intersects with quality posture.", left: "dataOwner", right: "qualityStatus" },
@@ -822,7 +846,7 @@ function headlineFor(objectType: TechObjectType, count: number): string {
   if (objectType === "application_system") return `${count.toLocaleString()} applications, grouped by the way the estate actually runs.`;
   if (objectType === "vendor_contract") return `${count.toLocaleString()} contracts, with spend, renewal and risk visible together.`;
   if (objectType === "infrastructure_platform") return `${count.toLocaleString()} platforms, from data centers to managed services.`;
-  if (objectType === "data_asset_or_integration") return `${count.toLocaleString()} data movements and assets, source to target.`;
+  if (objectType === "data_asset_or_integration") return `${count.toLocaleString()} data movements, assets, and data/BI/ETL workload segments.`;
   return `${count.toLocaleString()} records.`;
 }
 

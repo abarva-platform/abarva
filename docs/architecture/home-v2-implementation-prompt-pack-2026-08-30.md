@@ -28,6 +28,9 @@ visual contract, and proof bar.
    replace a refusal.
 8. Unknown, missing, unreviewed, synthetic, and conflicting states are visible states. They never
    become zero.
+9. Every page receives deterministic source-family and category summaries before prose generation.
+   A page may not hardcode "missing source" language for a family that has a governed summary or
+   product projection row.
 
 ## Completed Versus Not Done
 
@@ -90,7 +93,51 @@ The packet passed to Claude must be assembled by code and validated before the m
 `source_summaries` answer the "145+ files" problem: the model receives breadth, but it cannot turn
 a source-summary count into a business claim unless a deterministic `sig_*` or `ctx_*` supports it.
 
+## Deterministic Source And Category Summaries
+
+Each workbook tab, source-room family, and product-serving category must emit a compact summary row
+before any Home page prompt runs. This is how broad intake context reaches Claude without asking the
+model to reason over raw spreadsheets or thousands of arbitrary rows.
+
+| Summary level | Required content | Source/layer read | Product use |
+| --- | --- | --- | --- |
+| Source family | file/workbook name, row grain, row count, populated critical fields, blank/unknown fields, source basis, review state | `ecl_source.source_file`, `ecl_source.source_record`, adapter readback | What Has Been Loaded, missing-data language, packet breadth |
+| Canonical category | entity type, typed-view denominator, distinct objects, relationships, measures, evidence states, conflicts | typed ECL views and metric dictionary | page-level counts, data browser facets, architecture blocks |
+| Product surface | serving view, row count, row types, admission status, gaps, source refs, evidence refs | `serving.home_*`, `ecl_projection.*` | CXO page copy, cards, diagrams, refusal/deferred states |
+| Data/analytics workload | function, platform, technology, workload type, workload count, active users, data volume, governance state | `SP04_Data_BI_ETL` adapter through ECL context/projection | architecture D&A block, Data Assets & Integrations browser, data-flow boundaries |
+
+The page packet must carry both:
+
+- `source_summaries`: what arrived, what was usable, and what remains unknown.
+- `category_summaries`: what the governed model can answer by business category, system category,
+  technology, owner, vendor, risk, and product surface.
+
+Missing-source copy is computed from those summaries. If `SP04_Data_BI_ETL` has segment-level
+report/ETL/script/user/volume measures, Home must say that evidence is loaded and show the summary.
+It may still state narrower gaps such as missing query telemetry or unresolved hosting lineage, but
+it must not ask the CXO to "confirm ETL/jobs/users" as though no D&A volumetric evidence exists.
+
+The Claude-facing packet must include these summaries as structured context before any page writer
+runs. The summary row is not itself citable evidence for a business claim; it is the map that tells
+the writer which source families exist, which category denominators are safe, which visual datasets
+are available, and which gaps are real. Every generated claim still needs cited `sig_*` or `ctx_*`
+evidence. This prevents both failure modes: starving the model of broad context and letting a broad
+file summary become a made-up business assertion.
+
 ## Home Surface Prompt Inventory
+
+Every Home page uses the same governed packet, but not the same writing posture. Claude receives a
+page-specific writer lens with the page question and assigned claims. The lens changes voice and
+judgment frame; it does not change what facts are allowed.
+
+| Page family | Claude lens | What must be in context |
+| --- | --- | --- |
+| Executive Brief, Our Business, Strategy & Value Creation | CEO / business-strategy adviser | business model, priorities, programs, value pools, material risks, top decisions |
+| How We Operate | operating-model adviser | org ownership, process evidence, workforce, accountability, operating pain |
+| Technology & Data, Architecture | CTO / enterprise architect / data-platform leader | system blocks, application families, hosting, integrations, D&A workloads, tech debt, platform risk |
+| Performance & Value | CFO / value-governance leader | spend, budget, contract value, measured benefit, blocked value, attestation and gaps |
+| Leadership Perspective | interview synthesis lead | CXO/director excerpts, themes, dissent, function-level priorities, AI ambition |
+| What Needs Attention | transformation-office / risk-committee lead | decisions, owners, dependencies, evidence needed, next actions |
 
 | Surface | Prompt intent | Required packet sections | Source/layer reads | Deterministic visual or table |
 | --- | --- | --- | --- | --- |

@@ -61,6 +61,14 @@ assert(
   "Home chapter writer exposes reusable chapter assembly",
 );
 assert(
+  chapters.includes("Writer lens: ${def.writerLens}") &&
+    chapters.includes("expert CTO, enterprise architect, and data-platform leader") &&
+    chapters.includes("business-strategy consultant") &&
+    chapters.includes("executive-interview synthesis") &&
+    chapters.includes("the lens introduce facts not present in the assigned claims"),
+  "Home chapter writer passes page-specific executive lenses without weakening the evidence boundary",
+);
+assert(
   script.includes("buildVerifiedEnterpriseThesisFromSignalPacket") &&
     script.includes("buildChapterViewsFromVerifiedThesis"),
   "ECL narrative job reuses the existing verified writer path",
@@ -142,10 +150,19 @@ assert(
     script.includes("sig_ecl_application_function_ranking_012") &&
     script.includes("sig_ecl_application_cost_013") &&
     script.includes("sig_ecl_data_flow_total_014") &&
+    script.includes("sig_ecl_data_workload_segments_017") &&
     script.includes("sig_ecl_application_named_examples_015") &&
     script.includes("sig_ecl_platform_named_resilience_016") &&
     script.includes("sig_ecl_source_breadth_guardrail_019"),
-  "ECL narrative job expands deterministic signals across application, contract, infrastructure, data-flow, and source-breadth domains",
+  "ECL narrative job expands deterministic signals across application, contract, infrastructure, data-flow, data-workload, and source-breadth domains",
+);
+assert(
+  script.includes("categorySummaries: buildCategorySummaries") &&
+    script.includes("data_workload_by_function") &&
+    script.includes("data_workload_by_technology") &&
+    script.includes("ctx_ecl_scope_data_workload_001") &&
+    script.includes("must not ask leaders to confirm those counts as though the source family is absent"),
+  "ECL narrative job passes deterministic category summaries and data-workload visual datasets into the Claude packet",
 );
 assert(
   script.includes("ready contracts are in the current ready contract base") &&

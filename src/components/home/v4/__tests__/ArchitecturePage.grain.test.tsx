@@ -76,13 +76,76 @@ describe("Home v4 architecture grain", () => {
     expect(screen.getByText("Serving targets")).toBeInTheDocument();
     expect(screen.getByText("not report count")).toBeInTheDocument();
     expect(screen.getAllByText("Teradata Enterprise Warehouse — Finance Subject Area").length).toBeGreaterThan(0);
-    expect(screen.getByText("Missing source needed")).toBeInTheDocument();
-    expect(screen.getByText("Report/catalog inventory by function")).toBeInTheDocument();
-    expect(screen.getByText("BI platform, mart, and semantic-model usage by report")).toBeInTheDocument();
-    expect(screen.getByText(/report\/catalog extract/i)).toBeInTheDocument();
+    expect(screen.getByText("Workload evidence not loaded")).toBeInTheDocument();
+    expect(screen.getByText("Report, ETL, script, and analytics workload counts by function")).toBeInTheDocument();
+    expect(screen.getByText("BI platform, mart, and semantic-model usage by segment")).toBeInTheDocument();
+    expect(screen.queryByText("Missing source needed")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Confirm reports, ETL jobs, users, scripts/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/report\/catalog extract/i)).not.toBeInTheDocument();
 
     expect(screen.queryByText(/0 platforms/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Datamarts")).not.toBeInTheDocument();
     expect(screen.queryByText(/dashboard facts/i)).not.toBeInTheDocument();
+  });
+
+  it("shows loaded data, BI, and ETL workload context when the deterministic layer provides it", () => {
+    const recordTypes = loadSkyHarborRecordTypes();
+    const integrationsWithWorkloads: TechRecordType = {
+      ...recordTypes.integrations,
+      rows: [
+        ...recordTypes.integrations.rows,
+        {
+          recordKind: "data_analytics_workload",
+          dataAssetName: "Enterprise Power BI Tenant",
+          dataDomain: "Finance & Accounting",
+          workloadType: "report",
+          platformName: "Enterprise Power BI Tenant",
+          technologyName: "Power BI",
+          workloadCount: 420,
+          activeUserCount: 1800,
+          dataVolumeTb: 18.5,
+          governanceState: "developing",
+          ownerFunction: "Finance & Accounting",
+        },
+        {
+          recordKind: "data_analytics_workload",
+          dataAssetName: "Informatica Finance ETL",
+          dataDomain: "Finance & Accounting",
+          workloadType: "etl_job",
+          platformName: "Informatica PowerCenter",
+          technologyName: "Informatica",
+          workloadCount: 95,
+          activeUserCount: 42,
+          dataVolumeTb: 11.2,
+          governanceState: "governed",
+          ownerFunction: "Finance & Accounting",
+        },
+      ],
+    };
+
+    render(
+      <ArchitecturePage
+        tenantKey="skyharbor-air"
+        tenantDisplayName="SkyHarbor Global"
+        applications={recordTypes.applications}
+        integrations={integrationsWithWorkloads}
+        infrastructure={recordTypes.infrastructure}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Finance & Accounting/i }));
+
+    const workloadPanel = screen.getByText("Data/BI/ETL evidence loaded").closest("article");
+    expect(workloadPanel).toBeTruthy();
+    expect(within(workloadPanel!).getByText("workload segments")).toBeInTheDocument();
+    expect(within(workloadPanel!).getByText("2")).toBeInTheDocument();
+    expect(within(workloadPanel!).getByText("workload items")).toBeInTheDocument();
+    expect(within(workloadPanel!).getByText("515")).toBeInTheDocument();
+    expect(within(workloadPanel!).getByText("active users")).toBeInTheDocument();
+    expect(within(workloadPanel!).getByText("1,842")).toBeInTheDocument();
+    expect(within(workloadPanel!).getByText("data volume TB")).toBeInTheDocument();
+    expect(within(workloadPanel!).getByText("29.7")).toBeInTheDocument();
+    expect(screen.queryByText("Workload evidence not loaded")).not.toBeInTheDocument();
+    expect(screen.queryByText("Missing source needed")).not.toBeInTheDocument();
   });
 });

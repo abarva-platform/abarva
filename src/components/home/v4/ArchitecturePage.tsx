@@ -179,6 +179,7 @@ interface ArchitectureSlice {
   name: string;
   applications: ApplicationRecord[];
   integrations: IntegrationRecord[];
+  dataWorkloads: IntegrationRecord[];
   infrastructure: InfrastructureRecord[];
   count: number;
   share: number;
@@ -195,6 +196,12 @@ interface ArchitectureSlice {
   dataDomains: Array<[string, number]>;
   dataPlatforms: Array<[string, number]>;
   destinations: Array<[string, number]>;
+  workloadTypes: Array<[string, number]>;
+  workloadTechnologies: Array<[string, number]>;
+  workloadPlatforms: Array<[string, number]>;
+  workloadTotal: number;
+  workloadUsers: number;
+  workloadDataVolumeTb: number;
   hostingModels: Array<[string, number]>;
   infrastructureTypes: Array<[string, number]>;
 }
@@ -725,6 +732,7 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
   const streamingFlows = keywordCount(slice.integrations, "integrationType", ["stream", "event", "real-time", "realtime"]);
   const unstructuredFlows = keywordCount(slice.integrations, "dataDomain", ["document", "image", "note", "unstructured"]);
   const servingCount = slice.destinations.length;
+  const hasWorkloadEvidence = slice.dataWorkloads.length > 0;
   const platformSignals = platformSignalCounts(slice, isWholeEstate);
   const platformAttribution = isWholeEstate
     ? `${slice.infrastructure.length.toLocaleString()} platform records · ${formatTopLabels(slice.hostingModels)}`
@@ -744,8 +752,8 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
         <span style={eyebrow(V4.amber)}>Counting basis</span>
         <p style={{ margin: "7px 0 0", fontFamily: SANS, fontSize: 13, lineHeight: 1.52, color: V4.inkSoft }}>
           Counts here are recorded systems, movements, platform records, and product-facing evidence slices.
-          They are not report/dashboard volumes, user query volumes, batch-job counts, or confirmed hosting
-          dependencies unless those objects are present in the record.
+          Movement counts are source-to-target rows. Data, BI, ETL, report, script, and analytics volumes
+          are shown only when segment-level workload evidence is present in the governed projection.
         </p>
       </div>
 
@@ -918,16 +926,19 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
           detail={isWholeEstate ? "Recorded platform object types" : "Hosting and integration-platform mentions, not confirmed hosting joins"}
           items={platformSignals.slice(0, 5)}
         />
-        <SourceGapPanel
-          title="Missing source needed"
-          detail="Not collected in this packet; do not infer from app or flow counts"
-          items={[
-            "Report/catalog inventory by function",
-            "BI platform, mart, and semantic-model usage by report",
-            "Active users, query volume, and refresh/job telemetry",
-            "Confirmed app-to-platform hosting and cluster lineage",
-          ]}
-        />
+        {hasWorkloadEvidence ? (
+          <DataWorkloadEvidencePanel slice={slice} />
+        ) : (
+          <SourceGapPanel
+            title="Workload evidence not loaded"
+            detail="This scope has movements but no segment-level data/BI/ETL workload rows in the governed projection"
+            items={[
+              "Report, ETL, script, and analytics workload counts by function",
+              "BI platform, mart, and semantic-model usage by segment",
+              "Active users and data-volume measures by technology",
+            ]}
+          />
+        )}
         <EvidencePanel
           title="Architecture constraints"
           detail="What needs attention inside this scope"
@@ -975,11 +986,10 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
       >
         <span style={eyebrow(V4.amber)}>Architecture evidence boundary</span>
         <p style={{ margin: "8px 0 0", fontFamily: SANS, fontSize: 13.5, lineHeight: 1.55, color: V4.inkSoft }}>
-          This map uses recorded application, integration, and infrastructure fields. It does not claim
+          This map uses recorded application, integration, infrastructure, and data/BI/ETL workload fields. It does not claim
           confirmed runtime dependency direction, deployment topology, network zones, or system-to-platform
-          hosting joins where those relationships are not recorded. It also does not count report inventory:
-          if Finance owns hundreds of Power BI, Tableau, Excel, or regulatory reports, those belong in a
-          separate report/catalog extract and are not implied by the serving-target counts shown here.
+          hosting joins where those relationships are not recorded. Report, ETL, script, user, and data-volume
+          counts come from segment-level workload rows; they are not inferred from source-to-target movements.
         </p>
       </div>
     </section>
@@ -1345,6 +1355,47 @@ function EvidencePanel({ title, detail, items }: { title: string; detail: string
   );
 }
 
+function DataWorkloadEvidencePanel({ slice }: { slice: ArchitectureSlice }) {
+  const items: Array<[string, number]> = [
+    ["workload segments", slice.dataWorkloads.length],
+    ["workload items", Math.round(slice.workloadTotal)],
+    ["active users", Math.round(slice.workloadUsers)],
+    ["data volume TB", Number(slice.workloadDataVolumeTb.toFixed(1))],
+  ];
+  const technologySummary = slice.workloadTechnologies
+    .filter(([, count]) => count > 0)
+    .slice(0, 2)
+    .map(([name, count]) => `${name} ${count}`)
+    .join(" · ");
+  return (
+    <article
+      style={{
+        minWidth: 0,
+        border: `1px solid rgba(29,158,117,0.35)`,
+        borderRadius: 8,
+        background: "rgba(29,158,117,0.045)",
+        padding: "14px 15px",
+      }}
+    >
+      <span style={eyebrow(V4.green)}>Data/BI/ETL evidence loaded</span>
+      <p style={{ margin: "7px 0 12px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.slate }}>
+        Segment-level workload counts, users, and data volumes are present in the governed projection
+        {technologySummary ? ` across ${technologySummary}.` : "."}
+      </p>
+      <div style={{ display: "grid", gap: 7 }}>
+        {items.filter(([, count]) => count > 0).map(([name, count]) => (
+          <div key={name} style={{ minWidth: 0, display: "flex", justifyContent: "space-between", gap: 12, borderTop: `1px solid rgba(29,158,117,0.18)`, paddingTop: 7 }}>
+            <span style={{ flex: "1 1 auto", fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={name}>
+              {name}
+            </span>
+            <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 11, color: V4.ink }}>{count.toLocaleString()}</span>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
 function SourceGapPanel({ title, detail, items }: { title: string; detail: string; items: string[] }) {
   return (
     <article
@@ -1650,20 +1701,29 @@ function gapSignalForBlock(rows: ApplicationRecord[], integrations: IntegrationR
 }
 
 function dataFlowGap(integrations: IntegrationRecord[]): string {
+  const workloads = dataWorkloadRows(integrations);
+  if (workloads.length > 0) {
+    const workloadTotal = workloads.reduce((sum, row) => sum + numeric(row.workloadCount), 0);
+    const activeUsers = workloads.reduce((sum, row) => sum + numeric(row.activeUserCount), 0);
+    const dataVolume = workloads.reduce((sum, row) => sum + numeric(row.dataVolumeTb), 0);
+    return `${workloads.length.toLocaleString()} workload segments carry ${Math.round(workloadTotal).toLocaleString()} report/ETL/script items, ${Math.round(activeUsers).toLocaleString()} active users, and ${Number(dataVolume.toFixed(1)).toLocaleString()} TB`;
+  }
   const missingConsumption = integrations.filter((row) => !text(row, "consumptionLayer")).length;
   if (missingConsumption > 0) {
     return `${missingConsumption.toLocaleString()} movements need consumption/reporting-layer evidence`;
   }
-  return "Confirm reports, ETL jobs, users, scripts, and platform volumes by function";
+  return "No segment-level workload evidence is present for reports, ETL jobs, users, scripts, or platform volumes";
 }
 
 function buildSlice(
   name: string,
   appRows: ApplicationRecord[],
-  integrations: IntegrationRecord[],
+  integrationsAndWorkloads: IntegrationRecord[],
   infrastructure: InfrastructureRecord[],
   estateTotal: number,
 ): ArchitectureSlice {
+  const integrations = dataMovementRows(integrationsAndWorkloads);
+  const dataWorkloads = dataWorkloadRows(integrationsAndWorkloads);
   const aging = appRows.filter((row) =>
     ["legacy_stable", "sunset_planned", "deprecated"].includes(text(row, "lifecycleState")),
   ).length;
@@ -1676,6 +1736,7 @@ function buildSlice(
     name,
     applications: appRows,
     integrations,
+    dataWorkloads,
     infrastructure,
     count: appRows.length,
     share: name === "Whole estate" ? 100 : (appRows.length / Math.max(1, estateTotal)) * 100,
@@ -1692,6 +1753,12 @@ function buildSlice(
     dataDomains: topCounts(integrations, "dataDomain").slice(0, 8),
     dataPlatforms: topCounts(integrations, "platformOrDatabase").slice(0, 8),
     destinations: topCounts(integrations, "targetSystem").slice(0, 8),
+    workloadTypes: topCounts(dataWorkloads, "workloadType").slice(0, 8),
+    workloadTechnologies: topCounts(dataWorkloads, "technologyName").slice(0, 8),
+    workloadPlatforms: topCounts(dataWorkloads, "platformName").slice(0, 8),
+    workloadTotal: dataWorkloads.reduce((sum, row) => sum + numeric(row.workloadCount), 0),
+    workloadUsers: dataWorkloads.reduce((sum, row) => sum + numeric(row.activeUserCount), 0),
+    workloadDataVolumeTb: dataWorkloads.reduce((sum, row) => sum + numeric(row.dataVolumeTb), 0),
     hostingModels: topCounts(infrastructure, "hostingModel").slice(0, 8),
     infrastructureTypes: topCounts(infrastructure, "platformType").slice(0, 8),
   };
@@ -1699,10 +1766,22 @@ function buildSlice(
 
 function integrationsForApps(integrations: IntegrationRecord[], appRows: ApplicationRecord[]): IntegrationRecord[] {
   const systems = new Set(appRows.flatMap((row) => [text(row, "systemName")]).filter(Boolean));
-  if (!systems.size) {
+  const functions = new Set(appRows.flatMap((row) => [text(row, "businessFunction")]).filter(Boolean));
+  if (!systems.size && !functions.size) {
     return [];
   }
-  return integrations.filter((row) => systems.has(text(row, "sourceSystem")) || systems.has(text(row, "targetSystem")));
+  return integrations.filter((row) => {
+    if (systems.has(text(row, "sourceSystem")) || systems.has(text(row, "targetSystem"))) return true;
+    return functions.has(text(row, "ownerFunction")) || functions.has(text(row, "dataDomain"));
+  });
+}
+
+function dataWorkloadRows(rows: IntegrationRecord[]): IntegrationRecord[] {
+  return rows.filter((row) => text(row, "recordKind") === "data_analytics_workload");
+}
+
+function dataMovementRows(rows: IntegrationRecord[]): IntegrationRecord[] {
+  return rows.filter((row) => text(row, "recordKind") !== "data_analytics_workload");
 }
 
 function keywordCount(rows: Array<Record<string, unknown>>, field: string, keywords: string[]): number {
