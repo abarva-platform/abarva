@@ -942,11 +942,11 @@ function claimCardFromActionCandidate(
     allowed_executive_statement:
       financeState === "confirmed"
         ? `${row.vendor_name} has a finance-confirmed opportunity backed by Source evidence.`
-        : `${row.vendor_name} has a candidate opportunity backed by Source evidence; do not label it realized value.`,
+        : `${row.vendor_name} has an evidence-backed action opportunity; do not label it realized value.`,
     blocker_if_missing:
       financeState === "confirmed"
         ? row.blocker_if_missing
-        : "Never present this candidate as realized savings until finance confirms it.",
+        : "Never present this action row as realized savings until finance confirms it.",
     candidate_amount_usd: row.candidate_amount_usd,
     finance_confirmation_state: financeState,
     readiness_state: row.readiness_state,
@@ -1053,8 +1053,8 @@ function storylineFromDerivedImpact(
       page_key: "overview",
       section_key: "portfolio_posture",
       sort_order: 10,
-      headline: "Governed contract action candidates",
-      allowed_executive_statement: `${contractCount} contracts have populated evidence or candidate actions. Claims stay limited to populated evidence rows.`,
+      headline: "Governed contract action rows",
+      allowed_executive_statement: `${contractCount} contracts have populated evidence or action rows. Claims stay limited to populated evidence rows.`,
       primary_metric_label: "Contracts with depth",
       primary_metric_value: String(contractCount),
       blocker_if_missing: null,
@@ -1103,13 +1103,13 @@ function storylineFromDerivedImpact(
       sort_order: 40,
       headline: "Action queue",
       allowed_executive_statement:
-        "Optimize shows candidate actions with evidence and explicit blockers.",
-      primary_metric_label: "Candidate amount",
+        "Optimize shows action rows with evidence and explicit blockers.",
+      primary_metric_label: "Action amount",
       primary_metric_value: candidateAmountUsd.toFixed(2),
       blocker_if_missing:
         actionRows.length > 0
-          ? "Do not call candidate amount realized savings."
-          : "No candidate actions loaded.",
+          ? "Do not call action amount realized savings."
+          : "No action rows loaded.",
       citation_basis_json: {
         "source.contract_action_candidate_v1": actionRows.length,
       },

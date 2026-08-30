@@ -565,9 +565,9 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
               page_key: "workspace",
               section_key: "overview",
               sort_order: 10,
-              headline: "Governed contract action candidates",
+              headline: "Governed contract action rows",
               allowed_executive_statement:
-                "The workspace can show candidate action, evidence coverage, and blockers.",
+                "The workspace can show action rows, evidence coverage, and blockers.",
               primary_metric_label: "Claim cards",
               primary_metric_value: "1",
               blocker_if_missing: null,
