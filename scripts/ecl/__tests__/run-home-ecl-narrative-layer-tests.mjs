@@ -578,6 +578,13 @@ assert(
   "ECL Home narrative job uses deterministic claim planning before model prose synthesis",
 );
 assert(
+  script.includes("home-executive-story-plan/v1") &&
+    script.includes("buildHomeExecutiveStoryPlan") &&
+    script.includes("row_type = 'story_plan'") &&
+    script.includes("'executive_story_plan_v1','story_plan'"),
+  "ECL narrative job writes an explicit Home executive story plan from verified claim refs",
+);
+assert(
   thesis.includes("value_creation_model.summary must lead with a limitation; primary_value_drivers must be []") &&
     thesis.includes("strategic_bets must be []") &&
     thesis.includes("leadership_consensus and leadership_disagreements must be []") &&
@@ -600,6 +607,8 @@ assert(
 );
 assert(
     readback.includes("chapter_claim_entry_drift") &&
+    readback.includes("story_plan_rows") &&
+    readback.includes("story_plan_missing_claim_refs") &&
     readback.includes("refusal_payload_drift") &&
     readback.includes("writer_publication_gate_drift") &&
     readback.includes("writer_zero_usable_context_rows") &&

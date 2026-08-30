@@ -47,6 +47,60 @@ function chapterSummaryFixtures(overrides: Partial<Record<(typeof CHAPTER_IDS)[n
   );
 }
 
+function storyPlanFixture(
+  overrides: Partial<NonNullable<HomeReviewBundle["executiveStoryPlan"]>> = {},
+): HomeProjectionRow {
+  const storyPlan: NonNullable<HomeReviewBundle["executiveStoryPlan"]> = {
+    contractVersion: "home-executive-story-plan/v1",
+    tenantKey: "meridian-health",
+    assessmentId: "assessment-dense-source-room-20260823",
+    snapshotId: null,
+    openingThesisClaimRef: "executive_brief_writer_claim_001",
+    openingSupportingClaimRefs: [],
+    scaleFactRef: null,
+    decisions: [],
+    sectionOrder: ["enterprise", "bets", "runs-on", "costs-returns", "exposed", "attention"],
+    sections: [
+      {
+        sectionId: "enterprise",
+        state: "published",
+        leadClaimRef: "executive_brief_writer_claim_001",
+        supportingClaimRefs: [],
+        reasonCode: null,
+      },
+      ...(["bets", "runs-on", "costs-returns", "exposed", "attention"] as const).map((sectionId) => ({
+        sectionId,
+        state: "deferred" as const,
+        leadClaimRef: null,
+        supportingClaimRefs: [],
+        reasonCode: "no_verified_claim_for_section",
+      })),
+    ],
+    chapterStates: Object.fromEntries(
+      CHAPTER_IDS.map((chapterId) => [
+        chapterId,
+        {
+          state: chapterId === "executive_brief" ? "published" : "deferred",
+          reasonCode: chapterId === "executive_brief" ? null : "no_verified_claims",
+        },
+      ]),
+    ) as NonNullable<HomeReviewBundle["executiveStoryPlan"]>["chapterStates"],
+    heroVisualDatasetRef: null,
+    overallEvidenceBoundary: "Fixture story plan uses only published claim refs.",
+    sourceClaimRefs: ["executive_brief_writer_claim_001"],
+    storyPlanHash: "fixture-story-plan",
+    ...overrides,
+  };
+  return row({
+    page_key: "executive_story",
+    row_key: "executive_story_plan_v1",
+    row_type: "story_plan",
+    title: "Home executive story plan",
+    summary: storyPlan.overallEvidenceBoundary,
+    display_payload_json: { story_plan: storyPlan },
+  });
+}
+
 describe("buildTechnologyEstateFromHomeProjectionRows", () => {
   it("maps ECL Home projection rows into the Home v4 technology estate contract", () => {
     const estate = buildTechnologyEstateFromHomeProjectionRows([
@@ -211,6 +265,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           confidence: "high",
         },
       }),
+      storyPlanFixture(),
       row({
         page_key: "applications_systems",
         row_key: "APP-001",
@@ -274,7 +329,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ]);
 
-    expect(bundle.provenance.canonical_snapshot_hash).toBe("ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:14");
+    expect(bundle.provenance.canonical_snapshot_hash).toBe("ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:15");
     expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
     expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).toBe("Dense ECL estate loaded");
     expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).not.toBe(
@@ -282,6 +337,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     );
     expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.key_insights).toEqual([
       {
+        claim_ref: "executive_brief_writer_claim_001",
         statement: "The published writer claim is rendered from a chapter_claim row.",
         evidence_ids: ["sig_ecl_estate_001"],
         claim_type: "FACT",
@@ -290,6 +346,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     ]);
     expect(bundle.thesis.publishedGeneration.things_a_new_cxo_should_know).toEqual([
       {
+        claim_ref: "executive_brief_writer_claim_001",
         statement: "The published writer claim is rendered from a chapter_claim row.",
         evidence_ids: ["sig_ecl_estate_001"],
         claim_type: "FACT",
@@ -363,6 +420,40 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       ]),
     );
     expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "application_system")?.rows).toHaveLength(1);
+    expect(bundle.executiveStoryPlan).toMatchObject({
+      contractVersion: "home-executive-story-plan/v1",
+      openingThesisClaimRef: "executive_brief_writer_claim_001",
+      sections: expect.arrayContaining([
+        expect.objectContaining({
+          sectionId: "enterprise",
+          leadClaimRef: "executive_brief_writer_claim_001",
+        }),
+      ]),
+    });
+  });
+
+  it("rejects a story plan that references a dropped or missing chapter claim", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    expect(base).toBeTruthy();
+
+    expect(() =>
+      buildHomeReviewBundleFromEclProjectionRows(base!, [
+        ...chapterSummaryFixtures(),
+        row({
+          page_key: "executive_brief",
+          row_key: "executive_brief_writer_claim_001",
+          row_type: "chapter_claim",
+          title: "Published claim",
+          summary: "The published claim exists.",
+          display_payload_json: {
+            evidence_ids: ["sig_ecl_estate_001"],
+            claim_type: "FACT",
+            confidence: "high",
+          },
+        }),
+        storyPlanFixture({ openingThesisClaimRef: "executive_brief_writer_claim_999" }),
+      ]),
+    ).toThrow(/references missing chapter_claim executive_brief_writer_claim_999/);
   });
 
   it("unwraps serving-view payloads before computing Home contract value signals", () => {
@@ -441,10 +532,15 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           confidence: "high",
         },
       }),
+      storyPlanFixture({
+        tenantKey: "skyharbor-air",
+        assessmentId: "assessment-dense-skyharbor-20260827",
+        overallEvidenceBoundary: "SkyHarbor fixture story plan uses published claim refs.",
+      }),
     ]);
 
     expect(bundle.provenance.canonical_snapshot_hash).toBe(
-      "ecl:assessment-dense-skyharbor-20260827:home_enterprise_landscape:9",
+      "ecl:assessment-dense-skyharbor-20260827:home_enterprise_landscape:10",
     );
     expect(bundle.thesis.signalPacket.contextItems[0]?.statement).toContain(
       "assessment-dense-skyharbor-20260827",

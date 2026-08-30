@@ -40,6 +40,10 @@ interface ReadbackRows {
   chapter_claim_rows: string;
   chapter_claim_pages: string;
   chapter_claim_entry_drift: string;
+  story_plan_rows: string;
+  story_plan_entry_drift: string;
+  story_plan_missing_claim_refs: string;
+  story_plan_opening_refs: string;
   writer_basis_drift: string;
   refusal_payload_drift: string;
   writer_publication_gate_drift: string;
@@ -82,6 +86,14 @@ function issuesFor(readback: Record<keyof ReadbackRows, number>): string[] {
   if (readback.chapter_claim_rows <= 0) issues.push("chapter_claim_rows_missing");
   if (readback.chapter_claim_entry_drift !== 0) {
     issues.push(`chapter_claim_entry_drift_${readback.chapter_claim_entry_drift}`);
+  }
+  if (readback.story_plan_rows !== 1) issues.push(`story_plan_rows_expected_1_actual_${readback.story_plan_rows}`);
+  if (readback.story_plan_entry_drift !== 0) issues.push(`story_plan_entry_drift_${readback.story_plan_entry_drift}`);
+  if (readback.story_plan_missing_claim_refs !== 0) {
+    issues.push(`story_plan_missing_claim_refs_${readback.story_plan_missing_claim_refs}`);
+  }
+  if (readback.story_plan_opening_refs !== 1) {
+    issues.push(`story_plan_opening_refs_expected_1_actual_${readback.story_plan_opening_refs}`);
   }
   if (readback.writer_basis_drift !== 0) issues.push(`writer_basis_drift_${readback.writer_basis_drift}`);
   if (readback.refusal_payload_drift !== 0) issues.push(`refusal_payload_drift_${readback.refusal_payload_drift}`);
@@ -164,6 +176,47 @@ async function main() {
             where h.row_type = 'chapter_claim'
               and e.id is null
           )::text as chapter_claim_entry_drift,
+          (
+            select count(*)
+            from home_rows h
+            where h.row_type = 'story_plan'
+              and h.display_payload_json ? 'story_plan'
+          )::text as story_plan_rows,
+          (
+            select count(*)
+            from home_rows h
+            left join ecl_projection.projection_entry e
+              on e.tenant_key = h.tenant_key
+             and e.assessment_id = h.assessment_id
+             and e.id = h.projection_entry_id
+             and e.row_type = 'story_plan'
+            where h.row_type = 'story_plan'
+              and e.id is null
+          )::text as story_plan_entry_drift,
+          (
+            with story_refs as (
+              select jsonb_array_elements_text(
+                coalesce(h.display_payload_json->'story_plan'->'sourceClaimRefs', '[]'::jsonb)
+              ) as claim_ref
+              from home_rows h
+              where h.row_type = 'story_plan'
+            ),
+            claim_refs as (
+              select h.row_key as claim_ref
+              from home_rows h
+              where h.row_type = 'chapter_claim'
+            )
+            select count(*)
+            from story_refs s
+            left join claim_refs c on c.claim_ref = s.claim_ref
+            where c.claim_ref is null
+          )::text as story_plan_missing_claim_refs,
+          (
+            select count(*)
+            from home_rows h
+            where h.row_type = 'story_plan'
+              and coalesce(h.display_payload_json->'story_plan'->>'openingThesisClaimRef', '') <> ''
+          )::text as story_plan_opening_refs,
           (
             select count(*)
             from home_rows h

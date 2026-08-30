@@ -42,6 +42,38 @@ import { HOME_PAGE_PROMPT_CONTRACT } from "./home_page_prompt_contracts";
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 type VerifiedEnterpriseThesisResult = Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>;
 type JsonRecord = Record<string, unknown>;
+type HomeExecutiveStoryTerminalState = "published" | "refused" | "deferred";
+type HomeExecutiveStorySectionId = "enterprise" | "bets" | "runs-on" | "costs-returns" | "exposed" | "attention";
+type HomeExecutiveStoryPlanV1 = {
+  contractVersion: "home-executive-story-plan/v1";
+  tenantKey: string;
+  assessmentId: string;
+  snapshotId: string | null;
+  openingThesisClaimRef: string | null;
+  openingSupportingClaimRefs: string[];
+  scaleFactRef: string | null;
+  decisions: Array<{
+    decisionId: string;
+    question: string;
+    whyNowClaimRefs: string[];
+    ownerRef: string | null;
+    handoffModule: "moves" | "source" | "tower" | "intelligence" | null;
+    evidenceNeeded: string[];
+  }>;
+  sectionOrder: HomeExecutiveStorySectionId[];
+  sections: Array<{
+    sectionId: HomeExecutiveStorySectionId;
+    state: HomeExecutiveStoryTerminalState;
+    leadClaimRef: string | null;
+    supportingClaimRefs: string[];
+    reasonCode: string | null;
+  }>;
+  chapterStates: Record<ChapterId, { state: HomeExecutiveStoryTerminalState; reasonCode: string | null }>;
+  heroVisualDatasetRef: string | null;
+  overallEvidenceBoundary: string;
+  sourceClaimRefs: string[];
+  storyPlanHash: string;
+};
 type DeterministicCategorySummary = {
   key: string;
   label: string;
@@ -79,6 +111,7 @@ const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
 const DEFAULT_OUT_DIR = "/tmp/home-ecl-narrative-layer";
 const PROJECTION_VERSION = 1;
+const STORY_PLAN_CONTRACT_VERSION = "home-executive-story-plan/v1" as const;
 const WRITE = process.env.HOME_ECL_NARRATIVE_WRITE === "true" && process.env.HOME_ECL_NARRATIVE_WRITE_APPROVED === "true";
 const RAW_PUBLICATION_MAX_UNSUPPORTED = 0;
 const RAW_PUBLICATION_MAX_OVERSTATED = 3;
@@ -108,6 +141,12 @@ const CXO_FORBIDDEN_VISIBLE_PATTERNS: Array<{ label: string; pattern: RegExp }> 
 ];
 const FAKE_DATA_WORKLOAD_GAP_PATTERN =
   /\b(?:confirm|validate|collect|provide|supply|obtain)\b[\s\S]{0,100}\b(?:reports?|ETL|jobs?|scripts?|users?|data[-\s]?volume|TB)\b/i;
+const INVENTORY_OPENING_PATTERN =
+  /\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:applications|systems|source-target|data movements|flows|workload items|reports|ETL jobs|scripts|platforms|vendors|suppliers|contracts)\b/i;
+const COMMERCIAL_OPENING_PATTERN =
+  /\b(?:vendor|supplier|supplier group|top five supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
+const BUSINESS_CONSEQUENCE_PATTERN =
+  /\b(?:value|revenue|margin|patient|member|provider|payer|care|operating model|priority|outcome|finance|risk|accountability|decision|capacity|service|access|performance|modernization|transformation)\b/i;
 
 const RAW_VISIBLE_ID_PATTERN = /\b(?:APP|PLAT|CTR|VEN|FLOW|DOC|INV|SLA|PO|RISK|CTRL|PROG|MEAS|MET|OBJ)-[A-Z0-9][A-Z0-9_-]*\b/g;
 
@@ -1529,6 +1568,141 @@ function claimRowsForChapter(chapter: ChapterView): GroundedClaim[] {
   return [...chapter.key_insights, ...chapter.tensions, ...chapter.what_to_watch].filter(Boolean);
 }
 
+function claimRef(chapterId: ChapterId, index: number): string {
+  return `${chapterId}_writer_claim_${String(index + 1).padStart(3, "0")}`;
+}
+
+function claimRowsWithRefs(chapters: ChapterView[]): Array<GroundedClaim & { claim_ref: string; chapter_id: ChapterId }> {
+  return chapters.flatMap((chapter) =>
+    claimRowsForChapter(chapter).map((claim, index) => ({
+      ...claim,
+      claim_ref: claim.claim_ref ?? claimRef(chapter.chapterId, index),
+      chapter_id: chapter.chapterId,
+    })),
+  );
+}
+
+function standaloneInventoryClaim(statement: string): boolean {
+  return (
+    INVENTORY_OPENING_PATTERN.test(statement) &&
+    !/\b(?:because|therefore|so that|risk|value|margin|revenue|decision|priority|accountability|outcome|constraint|blocked)\b/i.test(statement)
+  );
+}
+
+function businessFirstOpeningClaim(claims: Array<GroundedClaim & { claim_ref: string; chapter_id: ChapterId }>) {
+  return (
+    claims.find((claim) =>
+      claim.chapter_id === "executive_brief" &&
+      BUSINESS_CONSEQUENCE_PATTERN.test(claim.statement) &&
+      !COMMERCIAL_OPENING_PATTERN.test(claim.statement) &&
+      !standaloneInventoryClaim(claim.statement),
+    ) ??
+    claims.find((claim) =>
+      BUSINESS_CONSEQUENCE_PATTERN.test(claim.statement) &&
+      !COMMERCIAL_OPENING_PATTERN.test(claim.statement) &&
+      !standaloneInventoryClaim(claim.statement),
+    ) ??
+    null
+  );
+}
+
+function scaleFactClaim(claims: Array<GroundedClaim & { claim_ref: string }>, openingRef: string | null) {
+  return claims.find((claim) => claim.claim_ref !== openingRef && INVENTORY_OPENING_PATTERN.test(claim.statement)) ?? null;
+}
+
+const SECTION_CHAPTERS: Record<HomeExecutiveStorySectionId, ChapterId[]> = {
+  enterprise: ["our_business", "executive_brief"],
+  bets: ["strategy_value_creation"],
+  "runs-on": ["how_we_operate", "technology_data"],
+  "costs-returns": ["performance_value"],
+  exposed: ["technology_data", "what_needs_attention"],
+  attention: ["what_needs_attention", "leadership_perspective"],
+};
+
+function chapterTerminalState(chapter: ChapterView): { state: HomeExecutiveStoryTerminalState; reasonCode: string | null } {
+  const hasClaims = claimRowsForChapter(chapter).length > 0;
+  if (hasClaims) return { state: "published", reasonCode: null };
+  return {
+    state: chapter.limitations.length > 0 ? "refused" : "deferred",
+    reasonCode: chapter.limitations.length > 0 ? "evidence_not_sufficient" : "no_verified_claims",
+  };
+}
+
+function sectionPlan(
+  sectionId: HomeExecutiveStorySectionId,
+  claims: Array<GroundedClaim & { claim_ref: string; chapter_id: ChapterId }>,
+  openingRef: string | null,
+): HomeExecutiveStoryPlanV1["sections"][number] {
+  const sectionClaims = claims.filter((claim) => SECTION_CHAPTERS[sectionId].includes(claim.chapter_id));
+  const lead =
+    sectionId === "enterprise" && openingRef
+      ? sectionClaims.find((claim) => claim.claim_ref === openingRef) ?? null
+      : sectionClaims.find((claim) => !standaloneInventoryClaim(claim.statement) && !COMMERCIAL_OPENING_PATTERN.test(claim.statement)) ??
+        sectionClaims[0] ??
+        null;
+  const supporting = sectionClaims
+    .filter((claim) => claim.claim_ref !== lead?.claim_ref)
+    .slice(0, 3)
+    .map((claim) => claim.claim_ref);
+  return {
+    sectionId,
+    state: lead ? "published" : "deferred",
+    leadClaimRef: lead?.claim_ref ?? null,
+    supportingClaimRefs: supporting,
+    reasonCode: lead ? null : "no_verified_claim_for_section",
+  };
+}
+
+function buildHomeExecutiveStoryPlan(
+  options: CliOptions,
+  rows: HomeProjectionWriteRow[],
+  chapters: ChapterView[],
+  signalPacket: EnterpriseSignalPacket,
+): HomeExecutiveStoryPlanV1 {
+  const allClaims = claimRowsWithRefs(chapters);
+  const opening = businessFirstOpeningClaim(allClaims);
+  const scale = scaleFactClaim(allClaims, opening?.claim_ref ?? null);
+  const sourceClaimRefs = allClaims.map((claim) => claim.claim_ref);
+  const planWithoutHash: Omit<HomeExecutiveStoryPlanV1, "storyPlanHash"> = {
+    contractVersion: STORY_PLAN_CONTRACT_VERSION,
+    tenantKey: options.tenantKey,
+    assessmentId: options.assessmentId,
+    snapshotId: rows[0]?.snapshot_id ?? null,
+    openingThesisClaimRef: opening?.claim_ref ?? null,
+    openingSupportingClaimRefs: allClaims
+      .filter((claim) => claim.claim_ref !== opening?.claim_ref)
+      .filter((claim) => !COMMERCIAL_OPENING_PATTERN.test(claim.statement))
+      .slice(0, 3)
+      .map((claim) => claim.claim_ref),
+    scaleFactRef: scale?.claim_ref ?? null,
+    decisions: [
+      {
+        decisionId: "home-exec-decision-001",
+        question: "Which business consequence should leadership act on before reviewing lower-level evidence?",
+        whyNowClaimRefs: opening ? [opening.claim_ref] : [],
+        ownerRef: null,
+        handoffModule: null,
+        evidenceNeeded: opening ? [] : ["Publish a verified business-consequence thesis before executive use."],
+      },
+    ],
+    sectionOrder: ["enterprise", "bets", "runs-on", "costs-returns", "exposed", "attention"],
+    sections: ["enterprise", "bets", "runs-on", "costs-returns", "exposed", "attention"].map((sectionId) =>
+      sectionPlan(sectionId as HomeExecutiveStorySectionId, allClaims, opening?.claim_ref ?? null),
+    ),
+    chapterStates: Object.fromEntries(
+      chapters.map((chapter) => [chapter.chapterId, chapterTerminalState(chapter)]),
+    ) as HomeExecutiveStoryPlanV1["chapterStates"],
+    heroVisualDatasetRef: signalPacket.visualDatasets?.application_landscape_by_function ? "application_landscape_by_function" : null,
+    overallEvidenceBoundary:
+      "The executive story uses only verified Home chapter claims; counts are shown as scale facts, not as the thesis.",
+    sourceClaimRefs,
+  };
+  return {
+    ...planWithoutHash,
+    storyPlanHash: hashJson(planWithoutHash),
+  };
+}
+
 function verdictTally(ledger: Array<{ verdict: string }>): Record<string, number> {
   return ledger.reduce<Record<string, number>>((acc, row) => {
     acc[row.verdict] = (acc[row.verdict] ?? 0) + 1;
@@ -1777,6 +1951,9 @@ async function writeNarrativeRows(
   const provenance = buildHomeChapterProvenance(signalPacket, THESIS_PROMPT_VERSION, generatedAt);
   const summaryRowsByPage = new Map(rows.filter((row) => row.row_type === "summary").map((row) => [row.page_key, row]));
   const selectedIds = new Set(chapters.map((chapter) => chapter.chapterId));
+  const storyPlan = buildHomeExecutiveStoryPlan(options, rows, chapters, signalPacket);
+  const storyPlanAnchor = summaryRowsByPage.get("executive_brief") ?? rows.find((row) => row.row_type === "summary");
+  if (!storyPlanAnchor) throw new Error("No summary row exists to anchor the Home executive story plan");
 
   await db.query("BEGIN");
   try {
@@ -1802,6 +1979,27 @@ async function writeNarrativeRows(
           and split_part(row_key, '_writer_claim_', 1) = any($5::text[])
       `,
       [options.tenantKey, options.assessmentId, PROJECTION_VERSION, HOME_SURFACE_KEY, Array.from(selectedIds)],
+    );
+    await db.query(
+      `
+        delete from ecl_projection.home_enterprise_landscape
+        where tenant_key = $1
+          and assessment_id = $2
+          and projection_version = $3
+          and row_type = 'story_plan'
+      `,
+      [options.tenantKey, options.assessmentId, PROJECTION_VERSION],
+    );
+    await db.query(
+      `
+        delete from ecl_projection.projection_entry
+        where tenant_key = $1
+          and assessment_id = $2
+          and projection_version = $3
+          and surface_key = $4
+          and row_type = 'story_plan'
+      `,
+      [options.tenantKey, options.assessmentId, PROJECTION_VERSION, HOME_SURFACE_KEY],
     );
 
     for (const chapter of chapters) {
@@ -1890,6 +2088,7 @@ async function writeNarrativeRows(
             provenance,
             claim_path: rowKey,
           },
+          claim_ref: rowKey,
           chapter_id: chapter.chapterId,
           claim_type: claim.claim_type,
           evidence_ids: claim.evidence_ids,
@@ -1979,6 +2178,93 @@ async function writeNarrativeRows(
       }
     }
 
+    const storyPlanPayload = {
+      writer: {
+        source: "ecl_projection.home_enterprise_landscape",
+        generated_at: generatedAt,
+        provenance,
+        contract_version: STORY_PLAN_CONTRACT_VERSION,
+      },
+      story_plan: storyPlan,
+    };
+    const storyPlanEntry = await db.query<{ id: string }>(
+      `
+        insert into ecl_projection.projection_entry (
+          tenant_key,
+          assessment_id,
+          snapshot_id,
+          projection_manifest_id,
+          projection_version,
+          surface_key,
+          row_key,
+          row_type,
+          source_hash,
+          refs_content_hash,
+          refs_cache_json,
+          display_cache_json
+        )
+        values ($1,$2,$3,$4,$5,$6,'executive_story_plan_v1','story_plan',$7,$8,$9::jsonb,$10::jsonb)
+        returning id
+      `,
+      [
+        options.tenantKey,
+        options.assessmentId,
+        storyPlanAnchor.snapshot_id,
+        storyPlanAnchor.projection_manifest_id,
+        PROJECTION_VERSION,
+        HOME_SURFACE_KEY,
+        storyPlan.storyPlanHash,
+        hashJson({ sourceClaimRefs: storyPlan.sourceClaimRefs }),
+        JSON.stringify({ objects: [], metrics: [], measures: [], relationships: [], source_records: [], document_extractions: [] }),
+        JSON.stringify({ page_key: "executive_story", section_key: "story_plan", title: "Home executive story plan" }),
+      ],
+    );
+    await db.query(
+      `
+        insert into ecl_projection.home_enterprise_landscape (
+          tenant_key,
+          assessment_id,
+          snapshot_id,
+          projection_manifest_id,
+          projection_entry_id,
+          projection_version,
+          page_key,
+          row_key,
+          section_key,
+          row_type,
+          title,
+          summary,
+          primary_object_id,
+          metric_keys_json,
+          relationship_ids_json,
+          source_refs_json,
+          basis_summary,
+          value_state,
+          quality_state,
+          admission_status,
+          admission_gate_key,
+          admission_result_json,
+          gap_flags_json,
+          display_payload_json,
+          source_hash
+        )
+        values ($1,$2,$3,$4,$5,$6,'executive_story','executive_story_plan_v1','story_plan','story_plan',
+          'Home executive story plan',$7,null,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
+          'deterministic_story_plan_from_verified_claims','known','passed','not_applicable',null,'{}'::jsonb,'[]'::jsonb,$8::jsonb,$9)
+      `,
+      [
+        options.tenantKey,
+        options.assessmentId,
+        storyPlanAnchor.snapshot_id,
+        storyPlanAnchor.projection_manifest_id,
+        storyPlanEntry.rows[0].id,
+        PROJECTION_VERSION,
+        storyPlan.overallEvidenceBoundary,
+        JSON.stringify(storyPlanPayload),
+        storyPlan.storyPlanHash,
+      ],
+    );
+
     await db.query("COMMIT");
   } catch (error) {
     await db.query("ROLLBACK").catch(() => {});
@@ -2064,6 +2350,7 @@ async function main() {
       assessmentId: options.assessmentId,
       writeApplied: WRITE,
       chapters,
+      storyPlan: buildHomeExecutiveStoryPlan(options, rows, chapters, signalPacket),
       signalPacket,
       contextPolicyProof,
       thesisResult,
@@ -2096,6 +2383,7 @@ async function main() {
       thesis_prompt_version: THESIS_PROMPT_VERSION,
       context_policy: contextPolicyProof,
       signal_packet_hash: hashJson(signalPacket),
+      story_plan_hash: buildHomeExecutiveStoryPlan(options, rows, chapters, signalPacket).storyPlanHash,
       verification: verificationSummary,
       out_file: outFile,
     }));

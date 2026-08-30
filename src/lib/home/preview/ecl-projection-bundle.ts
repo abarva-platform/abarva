@@ -10,6 +10,9 @@ import type {
   ContextItem,
   EnterpriseSignalPacket,
   EnterpriseThesis,
+  HomeExecutiveStoryPlanV1,
+  HomeExecutiveStorySectionId,
+  HomeExecutiveStoryTerminalState,
   GroundedClaim,
   HomeReviewBundle,
   Signal,
@@ -991,9 +994,31 @@ function buildEclSourceSummaries(estate: TechnologyEstateBundle): SourceSummary[
 }
 
 const CHAPTER_ID_SET = new Set<ChapterId>(CHAPTER_DEFS.map((definition) => definition.id));
+const STORY_PLAN_CONTRACT_VERSION = "home-executive-story-plan/v1" as const;
+const STORY_SECTION_IDS: HomeExecutiveStorySectionId[] = [
+  "enterprise",
+  "bets",
+  "runs-on",
+  "costs-returns",
+  "exposed",
+  "attention",
+];
+const STORY_PLAN_ROW_TYPE = "story_plan";
 
 function isChapterId(value: string): value is ChapterId {
   return CHAPTER_ID_SET.has(value as ChapterId);
+}
+
+function isStorySectionId(value: unknown): value is HomeExecutiveStorySectionId {
+  return STORY_SECTION_IDS.includes(value as HomeExecutiveStorySectionId);
+}
+
+function isTerminalState(value: unknown): value is HomeExecutiveStoryTerminalState {
+  return value === "published" || value === "refused" || value === "deferred";
+}
+
+function terminalStateForChapter(chapterId: ChapterId, claims: Map<ChapterId, GroundedClaim[]>): HomeExecutiveStoryTerminalState {
+  return (claims.get(chapterId) ?? []).length > 0 ? "published" : "deferred";
 }
 
 function stringArray(value: unknown): string[] {
@@ -1021,6 +1046,7 @@ function chapterClaimsByPage(rows: HomeProjectionRow[]): Map<ChapterId, Grounded
     const statement = text(row.summary) ?? text(row.title);
     if (!statement) continue;
     const claim: GroundedClaim = {
+      claim_ref: row.row_key,
       statement,
       evidence_ids: stringArray(payload.evidence_ids),
       confidence: confidence(payload.confidence),
@@ -1029,6 +1055,162 @@ function chapterClaimsByPage(rows: HomeProjectionRow[]): Map<ChapterId, Grounded
     claims.set(row.page_key, [...(claims.get(row.page_key) ?? []), claim]);
   }
   return claims;
+}
+
+function claimRefs(claims: Map<ChapterId, GroundedClaim[]>): Set<string> {
+  return new Set(
+    Array.from(claims.values())
+      .flat()
+      .map((claim) => claim.claim_ref)
+      .filter((ref): ref is string => Boolean(ref)),
+  );
+}
+
+function requireKnownClaimRef(refs: Set<string>, ref: unknown, field: string): string | null {
+  const value = text(ref);
+  if (!value) return null;
+  if (!refs.has(value)) {
+    throw new Error(`Home ECL preview: story_plan ${field} references missing chapter_claim ${value}.`);
+  }
+  return value;
+}
+
+function requireKnownClaimRefs(refs: Set<string>, value: unknown, field: string): string[] {
+  const values = stringArray(value);
+  const unknown = values.find((ref) => !refs.has(ref));
+  if (unknown) {
+    throw new Error(`Home ECL preview: story_plan ${field} references missing chapter_claim ${unknown}.`);
+  }
+  return values;
+}
+
+function storyPlanRow(rows: HomeProjectionRow[]): HomeProjectionRow | null {
+  return rows.find((row) => row.row_type === STORY_PLAN_ROW_TYPE) ?? null;
+}
+
+function storyPlanFromRows(
+  tenantKey: string,
+  assessmentId: string,
+  rows: HomeProjectionRow[],
+  claims: Map<ChapterId, GroundedClaim[]>,
+): HomeExecutiveStoryPlanV1 {
+  const row = storyPlanRow(rows);
+  if (!row) return blockedStoryPlan(tenantKey, assessmentId);
+
+  const payload = rowPayload(row);
+  const planPayload = payload.story_plan && typeof payload.story_plan === "object"
+    ? (payload.story_plan as JsonRecord)
+    : payload;
+  const refs = claimRefs(claims);
+  const rawChapterStates =
+    planPayload.chapterStates && typeof planPayload.chapterStates === "object"
+      ? (planPayload.chapterStates as JsonRecord)
+      : {};
+  const chapterStates = Object.fromEntries(
+    CHAPTER_DEFS.map((definition) => {
+      const raw = rawChapterStates[definition.id];
+      const statePayload = raw && typeof raw === "object" ? (raw as JsonRecord) : {};
+      const state = isTerminalState(statePayload.state)
+        ? statePayload.state
+        : terminalStateForChapter(definition.id, claims);
+      return [
+        definition.id,
+        {
+          state,
+          reasonCode: text(statePayload.reasonCode ?? statePayload.reason_code),
+        },
+      ];
+    }),
+  ) as HomeExecutiveStoryPlanV1["chapterStates"];
+  const sectionsInput = Array.isArray(planPayload.sections) ? planPayload.sections : [];
+  const requestedSectionOrder = stringArray(planPayload.sectionOrder ?? planPayload.section_order);
+  const sectionOrder = requestedSectionOrder.length > 0
+    ? requestedSectionOrder.filter(isStorySectionId)
+    : STORY_SECTION_IDS;
+  if (sectionOrder.length !== STORY_SECTION_IDS.length || new Set(sectionOrder).size !== STORY_SECTION_IDS.length) {
+    throw new Error("Home ECL preview: story_plan sectionOrder must contain each executive story section exactly once.");
+  }
+  const sections = STORY_SECTION_IDS.map((sectionId) => {
+    const raw = sectionsInput.find((item) => item && typeof item === "object" && (item as JsonRecord).sectionId === sectionId) as JsonRecord | undefined;
+    const state = isTerminalState(raw?.state) ? raw.state : "deferred";
+    return {
+      sectionId,
+      state,
+      leadClaimRef: requireKnownClaimRef(refs, raw?.leadClaimRef ?? raw?.lead_claim_ref, `sections.${sectionId}.leadClaimRef`),
+      supportingClaimRefs: requireKnownClaimRefs(refs, raw?.supportingClaimRefs ?? raw?.supporting_claim_refs, `sections.${sectionId}.supportingClaimRefs`),
+      reasonCode: text(raw?.reasonCode ?? raw?.reason_code),
+    };
+  });
+  const decisions = (Array.isArray(planPayload.decisions) ? planPayload.decisions : [])
+    .filter((item): item is JsonRecord => Boolean(item) && typeof item === "object")
+    .slice(0, 3)
+    .map((item, index) => ({
+      decisionId: text(item.decisionId ?? item.decision_id) ?? `decision-${index + 1}`,
+      question: text(item.question) ?? "What decision should the executive team make next?",
+      whyNowClaimRefs: requireKnownClaimRefs(refs, item.whyNowClaimRefs ?? item.why_now_claim_refs, `decisions.${index}.whyNowClaimRefs`),
+      ownerRef: text(item.ownerRef ?? item.owner_ref),
+      handoffModule: ["moves", "source", "tower", "intelligence"].includes(String(item.handoffModule ?? item.handoff_module))
+        ? (String(item.handoffModule ?? item.handoff_module) as "moves" | "source" | "tower" | "intelligence")
+        : null,
+      evidenceNeeded: stringArray(item.evidenceNeeded ?? item.evidence_needed),
+    }));
+
+  return {
+    contractVersion: STORY_PLAN_CONTRACT_VERSION,
+    tenantKey,
+    assessmentId,
+    snapshotId: text(planPayload.snapshotId ?? planPayload.snapshot_id),
+    openingThesisClaimRef: requireKnownClaimRef(refs, planPayload.openingThesisClaimRef ?? planPayload.opening_thesis_claim_ref, "openingThesisClaimRef"),
+    openingSupportingClaimRefs: requireKnownClaimRefs(refs, planPayload.openingSupportingClaimRefs ?? planPayload.opening_supporting_claim_refs, "openingSupportingClaimRefs"),
+    scaleFactRef: requireKnownClaimRef(refs, planPayload.scaleFactRef ?? planPayload.scale_fact_ref, "scaleFactRef"),
+    decisions,
+    sectionOrder,
+    sections,
+    chapterStates,
+    heroVisualDatasetRef: text(planPayload.heroVisualDatasetRef ?? planPayload.hero_visual_dataset_ref),
+    overallEvidenceBoundary: text(planPayload.overallEvidenceBoundary ?? planPayload.overall_evidence_boundary) ?? "Story plan row is present, but no evidence boundary was supplied.",
+    sourceClaimRefs: requireKnownClaimRefs(refs, planPayload.sourceClaimRefs ?? planPayload.source_claim_refs, "sourceClaimRefs"),
+    storyPlanHash: text(planPayload.storyPlanHash ?? planPayload.story_plan_hash) ?? "missing-story-plan-hash",
+  };
+}
+
+function blockedStoryPlan(
+  tenantKey: string,
+  assessmentId: string,
+): HomeExecutiveStoryPlanV1 {
+  const chapterStates = Object.fromEntries(
+    CHAPTER_DEFS.map((definition) => [
+      definition.id,
+      {
+        state: "deferred" as const,
+        reasonCode: "story_plan_not_published",
+      },
+    ]),
+  ) as HomeExecutiveStoryPlanV1["chapterStates"];
+  return {
+    contractVersion: STORY_PLAN_CONTRACT_VERSION,
+    tenantKey,
+    assessmentId,
+    snapshotId: null,
+    openingThesisClaimRef: null,
+    openingSupportingClaimRefs: [],
+    scaleFactRef: null,
+    decisions: [],
+    sectionOrder: STORY_SECTION_IDS,
+    sections: STORY_SECTION_IDS.map((sectionId) => ({
+      sectionId,
+      state: "deferred",
+      leadClaimRef: null,
+      supportingClaimRefs: [],
+      reasonCode: "story_plan_not_published",
+    })),
+    chapterStates,
+    heroVisualDatasetRef: null,
+    overallEvidenceBoundary:
+      "The executive storyline is deferred because a verified story plan has not been published for this tenant.",
+    sourceClaimRefs: [],
+    storyPlanHash: "story_plan_not_published",
+  };
 }
 
 function summaryText(summaries: Map<string, HomeProjectionRow>, chapterId: ChapterId): string {
@@ -1172,6 +1354,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
   const claims = chapterClaimsByPage(rows);
   const thesis = publishedThesisFromRows(rows);
   const chapters = hasPublishedChapterClaims(claims) ? buildPublishedChapters(rows, claims) : buildDeferredChapters();
+  const executiveStoryPlan = storyPlanFromRows(base.tenantKey, assessmentId, rows, claims);
   return {
     tenantKey: base.tenantKey,
     provenance: {
@@ -1181,6 +1364,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
       canonical_snapshot_hash: `ecl:${assessmentId}:home_enterprise_landscape:${rows.length}`,
     },
     chapters,
+    executiveStoryPlan,
     thesis: {
       signalPacket,
       publishedGeneration: thesis,

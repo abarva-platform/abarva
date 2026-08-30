@@ -24,9 +24,80 @@ jest.mock("@/components/home/preview/HomeAvaChat", () => ({
 const REPO_ROOT = process.cwd();
 
 function loadMeridianBundle(): HomeReviewBundle {
-  return JSON.parse(
+  return attachStoryPlan(JSON.parse(
     fs.readFileSync(path.join(REPO_ROOT, "src/lib/home/preview/golden-snapshots/meridian-health.json"), "utf8"),
-  ) as HomeReviewBundle;
+  ) as HomeReviewBundle);
+}
+
+function chapterClaims(chapter: HomeReviewBundle["chapters"][number]) {
+  return [...chapter.key_insights, ...chapter.tensions, ...chapter.what_to_watch];
+}
+
+function attachStoryPlan(bundle: HomeReviewBundle): HomeReviewBundle {
+  const allClaims = bundle.chapters.flatMap((chapter) =>
+    chapterClaims(chapter).map((claim, index) => {
+      claim.claim_ref = claim.claim_ref ?? `${chapter.chapterId}_fixture_claim_${String(index + 1).padStart(3, "0")}`;
+      return { ...claim, chapterId: chapter.chapterId, claimRef: claim.claim_ref };
+    }),
+  );
+  const commercialPattern = /IBM Corporation|largest supplier group|contract value|vendor|supplier|contract|commercial exposure/i;
+  const opening =
+    allClaims.find((claim) => claim.chapterId === "executive_brief" && !commercialPattern.test(claim.statement)) ??
+    allClaims.find((claim) => !commercialPattern.test(claim.statement)) ??
+    null;
+  const scale = allClaims.find((claim) => claim.claimRef !== opening?.claimRef && /\d/.test(claim.statement)) ?? null;
+  const sectionClaims = (chapterIds: string[]) => allClaims.filter((claim) => chapterIds.includes(claim.chapterId));
+  const section = (
+    sectionId: "enterprise" | "bets" | "runs-on" | "costs-returns" | "exposed" | "attention",
+    chapterIds: string[],
+  ) => {
+    const claims = sectionId === "enterprise" && opening ? [opening, ...sectionClaims(chapterIds)] : sectionClaims(chapterIds);
+    const unique = Array.from(new Map(claims.map((claim) => [claim.claimRef, claim])).values());
+    return {
+      sectionId,
+      state: unique.length ? "published" as const : "deferred" as const,
+      leadClaimRef: unique[0]?.claimRef ?? null,
+      supportingClaimRefs: unique.slice(1, 4).map((claim) => claim.claimRef),
+      reasonCode: unique.length ? null : "no_verified_claim_for_section",
+    };
+  };
+  bundle.executiveStoryPlan = {
+    contractVersion: "home-executive-story-plan/v1",
+    tenantKey: bundle.tenantKey,
+    assessmentId: "fixture",
+    snapshotId: null,
+    openingThesisClaimRef: opening?.claimRef ?? null,
+    openingSupportingClaimRefs: allClaims
+      .filter((claim) => claim.claimRef !== opening?.claimRef)
+      .filter((claim) => !commercialPattern.test(claim.statement))
+      .slice(0, 3)
+      .map((claim) => claim.claimRef),
+    scaleFactRef: scale?.claimRef ?? null,
+    decisions: [],
+    sectionOrder: ["enterprise", "bets", "runs-on", "costs-returns", "exposed", "attention"],
+    sections: [
+      section("enterprise", ["our_business", "executive_brief"]),
+      section("bets", ["strategy_value_creation"]),
+      section("runs-on", ["how_we_operate", "technology_data"]),
+      section("costs-returns", ["performance_value"]),
+      section("exposed", ["technology_data", "what_needs_attention"]),
+      section("attention", ["what_needs_attention", "leadership_perspective"]),
+    ],
+    chapterStates: Object.fromEntries(
+      bundle.chapters.map((chapter) => [
+        chapter.chapterId,
+        {
+          state: chapterClaims(chapter).length ? "published" : "deferred",
+          reasonCode: chapterClaims(chapter).length ? null : "no_verified_claims",
+        },
+      ]),
+    ) as NonNullable<HomeReviewBundle["executiveStoryPlan"]>["chapterStates"],
+    heroVisualDatasetRef: "application_landscape_by_function",
+    overallEvidenceBoundary: "Fixture story plan uses published claim refs.",
+    sourceClaimRefs: allClaims.map((claim) => claim.claimRef),
+    storyPlanHash: "fixture-story-plan",
+  };
+  return bundle;
 }
 
 describe("Home v4 Tier 1 executive story", () => {
@@ -38,7 +109,7 @@ describe("Home v4 Tier 1 executive story", () => {
     const { container } = render(<HomeV4App bundle={loadMeridianBundle()} tenantKey="meridian-health" />);
 
     expect(screen.getAllByText("Executive story").length).toBeGreaterThan(0);
-    expect(screen.getByText("Open on the number")).toBeInTheDocument();
+    expect(screen.getByText("Open on the thesis")).toBeInTheDocument();
     expect(screen.getByText(/Six-section executive story: 6 of 6 sections present/i)).toBeInTheDocument();
     expect(screen.queryByText("The briefing")).not.toBeInTheDocument();
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
@@ -72,7 +143,7 @@ describe("Home v4 Tier 1 executive story", () => {
     render(<HomeV4App bundle={loadMeridianBundle()} tenantKey="meridian-health" />);
 
     const hero = document.querySelector("[data-home-tier1-hero-metric]");
-    expect(hero?.textContent ?? "").toMatch(/\b(?:provider|health plan|applications|systems|estate|workload|flows)\b/i);
+    expect(hero?.textContent ?? "").toMatch(/\b(?:provider|health plan|estate|workload|risk|value|operating model|priority)\b/i);
     expect(hero?.textContent ?? "").not.toMatch(/\b(?:vendor|supplier|contract|commercial exposure)\b/i);
   });
 
@@ -100,6 +171,7 @@ describe("Home v4 Tier 1 executive story", () => {
         confidence: "high",
       },
     ];
+    attachStoryPlan(bundle);
 
     const { container } = render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
 
@@ -165,7 +237,7 @@ describe("Home v4 Tier 1 executive story", () => {
       unlaunderedClaimCount: launderedInputs.length,
       generationLanguage,
     }).toEqual({
-      rawClaimStatements: 21,
+      rawClaimStatements: 46,
       unlaunderedClaimCount: 0,
       generationLanguage: [],
     });
