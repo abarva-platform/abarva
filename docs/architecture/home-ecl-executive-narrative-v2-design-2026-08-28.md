@@ -6,6 +6,9 @@
 **Companion:** `docs/architecture/home-ecl-page-prompts-and-architecture-experience-2026-08-28.md`
 defines the page-by-page prompts, architecture drill path, slice/dice browser, org chart, and
 executive interview experience.
+**Implementation prompt pack:** `docs/architecture/home-v2-implementation-prompt-pack-2026-08-30.md`
+turns the design into build slices, source/layer inputs, packet sections, visual dataset refs, and
+acceptance tests.
 
 This document defines the target Home executive narrative layer after the ECL cutover. It exists
 because the current ECL Home path is grounded, but not executive-ready: the page reads published

@@ -3,6 +3,7 @@
 **Status:** design contract for Home V2 page prompts and executive architecture experience.
 **Date:** 2026-08-28.
 **Depends on:** `docs/architecture/home-ecl-executive-narrative-v2-design-2026-08-28.md`.
+**Implementation prompt pack:** `docs/architecture/home-v2-implementation-prompt-pack-2026-08-30.md`.
 
 This document defines what each Home page is trying to answer, what data it may use, and how
 architecture, systems, organization, interviews, vendor, technology, and data views should be
@@ -11,6 +12,10 @@ presented to a newly hired business or technology executive.
 The core shift: Home must not begin with tables. It begins with a clear executive map of the
 enterprise, then lets the reader drill from conceptual blocks to logical systems to physical detail.
 Accuracy and relevant detail matter more than visual flourish.
+
+The implementation prompt pack is the operational contract for build agents. This document defines
+the design intent; the prompt pack enumerates page prompts, source/layer inputs, packet sections,
+visual dataset refs, and the first build slice.
 
 ## Audience Modes
 
