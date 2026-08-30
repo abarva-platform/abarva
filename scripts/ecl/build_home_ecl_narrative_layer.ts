@@ -51,8 +51,20 @@ type DeterministicCategorySummary = {
   measures: Record<string, number>;
   gaps: string[];
 };
+type HomePagePromptContract = {
+  pageKey: string;
+  label: string;
+  writerLens: string;
+  voice: string;
+  decisionQuestion: string;
+  requiredContext: string[];
+  sourceLayerReads: string[];
+  mustShow: string[];
+  forbidden: string[];
+};
 
 const HOME_SURFACE_KEY = "home_enterprise_landscape";
+const HOME_PAGE_PROMPT_CONTRACT_PATH = "docs/architecture/home-v2-page-prompt-contracts-2026-08-30.json";
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
 const DEFAULT_OUT_DIR = "/tmp/home-ecl-narrative-layer";
@@ -213,6 +225,24 @@ function parseCli(): CliOptions {
 
 function hashJson(value: unknown): string {
   return crypto.createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+function readHomePagePromptContracts(): HomePagePromptContract[] {
+  const contractPath = path.join(process.cwd(), HOME_PAGE_PROMPT_CONTRACT_PATH);
+  const parsed = JSON.parse(fs.readFileSync(contractPath, "utf8")) as { pages?: Array<Record<string, unknown>> };
+  return (parsed.pages ?? [])
+    .map((page) => ({
+      pageKey: text(page.page_key) ?? "",
+      label: text(page.label) ?? "",
+      writerLens: text(page.writer_lens) ?? "",
+      voice: text(page.voice) ?? "",
+      decisionQuestion: text(page.decision_question) ?? "",
+      requiredContext: stringArray(page.required_context),
+      sourceLayerReads: stringArray(page.source_layer_reads),
+      mustShow: stringArray(page.must_show),
+      forbidden: stringArray(page.forbidden),
+    }))
+    .filter((page) => page.pageKey && page.writerLens);
 }
 
 function text(value: unknown): string | null {
@@ -1322,6 +1352,7 @@ function buildGovernedSignalPacket(
       dataWorkloads: permittedDataWorkloads,
       sourceSummaries,
     }),
+    pagePromptContracts: readHomePagePromptContracts(),
     sourceSummaries,
     analyticalLenses: [],
     coverageManifest: {

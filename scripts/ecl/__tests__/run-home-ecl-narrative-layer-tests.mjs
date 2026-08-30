@@ -271,6 +271,16 @@ assert(
   "ECL narrative job passes deterministic category summaries and data-workload visual datasets into the Claude packet",
 );
 assert(
+  script.includes("HOME_PAGE_PROMPT_CONTRACT_PATH") &&
+    script.includes("function readHomePagePromptContracts") &&
+    script.includes("pagePromptContracts: readHomePagePromptContracts()") &&
+    thesis.includes("The packet may include pagePromptContracts") &&
+    thesis.includes("page-level writer lenses") &&
+    thesis.includes("must-show obligations") &&
+    thesis.includes("Never cite pagePromptContracts as"),
+  "ECL narrative job passes page prompt contracts into the Claude packet as page instructions, not citable evidence",
+);
+assert(
   script.includes("ready contracts are in the current ready contract base") &&
     script.includes("of ${permittedContracts.length.toLocaleString()} are marked auto-renewal") &&
     script.includes("of ${permittedContracts.length.toLocaleString()} require at least 180 days notice") &&

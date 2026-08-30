@@ -359,6 +359,10 @@ EVIDENCE DISCIPLINE
   understand which source families are present, thin, or absent before deciding what the enterprise
   story can responsibly say. Never cite sourceSummaries as evidence_ids; they are coverage context,
   not standalone proof for a business claim.
+- The packet may include pagePromptContracts: page-level writer lenses, required-context sections,
+  source-layer reads, must-show obligations, and forbidden failure modes. Use these to decide what
+  each Home page is allowed and expected to emphasize. Never cite pagePromptContracts as
+  evidence_ids; they are instructions about the page, not facts about the tenant.
 - The signals and facts in the packet are authoritative. Never recompute a number that appears
   there; quote it exactly.
 - Every claim you make must carry evidence_ids citing the specific signals or context items it
@@ -647,8 +651,9 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
       2,
     ) +
     `\n\nGoverned context packet (signals are sig_*, context facts are ctx_*, sourceSummaries ` +
-    `describe file-level breadth and gaps but are not citable evidence, plottable datasets are ` +
-    `under visualDatasets; analyticalLenses are framing material, never citable as evidence_ids ` +
+    `describe file-level breadth and gaps but are not citable evidence, pagePromptContracts ` +
+    `describe page-level writer lenses and must-show/forbidden obligations but are not citable ` +
+    `evidence, plottable datasets are under visualDatasets; analyticalLenses are framing material, never citable as evidence_ids ` +
     `for a claim about this specific enterprise):\n` +
     JSON.stringify(signalPacket, null, 2)
   );
