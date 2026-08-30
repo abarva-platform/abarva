@@ -156,6 +156,16 @@ export interface TowerMartProgramLane {
   sourceRow: string | null;
 }
 
+/** One month of the value waterfall, as the source recorded it. */
+export interface TowerMartValueObservationMonth {
+  month: string;
+  sponsorClaimedUsd: number;
+  financeReviewedUsd: number;
+  financeValidatedUsd: number;
+  boardClaimableUsd: number;
+  validationState: string | null;
+}
+
 export interface TowerMartAiPortfolioItem {
   aiPortfolioKey: string;
   itemName: string;
@@ -170,6 +180,13 @@ export interface TowerMartAiPortfolioItem {
   aiTaggedSpendUsd: number;
   /** Whether any spend was recorded. The value above is coerced to 0 when nothing was. */
   aiSpendLoaded?: boolean;
+  /** Initiative-detail fields, each carried from its own canonical column. */
+  projectName?: string | null;
+  lifecycleStage?: string | null;
+  financePartnerRole?: string | null;
+  successMetric?: string | null;
+  paybackMonthsTarget?: number | null;
+  valueObservationMonths?: TowerMartValueObservationMonth[];
   promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   usageMetric: string | null;

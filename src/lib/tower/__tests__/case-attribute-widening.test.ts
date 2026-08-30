@@ -498,3 +498,46 @@ describe("the loader declares the generation it just wrote", () => {
     );
   });
 });
+
+describe("the initiative drill-down carries what the canonical layer already had", () => {
+  const drawer = read(
+    "src/components/tower/command-center/drawers/AiInitiativeDrawer.tsx",
+  );
+
+  it("carries each detail field from its own canonical column", () => {
+    // canonical_projects and canonical_ai_use_cases held all five of these before the payload
+    // dropped them. Each reads its own key; none falls back to another.
+    for (const field of [
+      "project_name",
+      "lifecycle_stage",
+      "finance_partner_role",
+      "success_metric",
+      "payback_months_target",
+    ]) {
+      expect([field, LAYER4.includes(field)]).toEqual([field, true]);
+      expect([field, READER.includes(`"${field}"`)]).toEqual([field, true]);
+    }
+  });
+
+  it("drops an observation that cannot be placed in time", () => {
+    // A month-less observation cannot be read as part of a sequence, and a sequence is the
+    // entire point of showing the waterfall by month.
+    expect(READER).toContain("if (month === null) return null;");
+  });
+
+  it("says so when no observation is recorded, instead of drawing an empty frame", () => {
+    expect(drawer).toContain("No monthly value observations are recorded");
+    expect(drawer).toContain("measurement gap, not evidence");
+  });
+
+  it("renders absence as absence in every new detail row", () => {
+    for (const field of [
+      "a.projectName ?? \"Not recorded\"",
+      "a.lifecycleStage ?? \"Not recorded\"",
+      "a.financePartnerRole ?? \"Not recorded\"",
+      "a.successMetric ?? \"Not recorded\"",
+    ]) {
+      expect([field, drawer.includes(field)]).toEqual([field, true]);
+    }
+  });
+});

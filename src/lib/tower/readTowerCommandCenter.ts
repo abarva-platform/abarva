@@ -6,6 +6,7 @@ import {
 } from "@/lib/tower/metric-packet";
 import type {
   TowerMartAiPortfolioItem,
+  TowerMartValueObservationMonth,
   TowerMartCommandViewModel,
   TowerMartCxoAction,
   TowerMartEvidenceLineage,
@@ -570,6 +571,33 @@ function controlBlockerFields(row: TowerServingRow): {
   return { controlBlocker: named, controlBlockerReviewed: true };
 }
 
+/**
+ * The monthly value observations behind the waterfall, so a drawer can show when each step
+ * happened rather than only its total. Rows without a month are dropped: an observation that
+ * cannot be placed in time cannot be read as a sequence.
+ */
+function valueObservationMonths(
+  row: TowerServingRow,
+): TowerMartValueObservationMonth[] {
+  const raw = displayPayload(row).value_observation_months;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((entry) => {
+      const o = asRecord(entry);
+      const month = nullableText(o.month);
+      if (month === null) return null;
+      return {
+        month,
+        sponsorClaimedUsd: nullableNum(o.sponsor_claimed_usd as Numeric) ?? 0,
+        financeReviewedUsd: nullableNum(o.finance_reviewed_usd as Numeric) ?? 0,
+        financeValidatedUsd: nullableNum(o.finance_validated_usd as Numeric) ?? 0,
+        boardClaimableUsd: nullableNum(o.board_claimable_usd as Numeric) ?? 0,
+        validationState: nullableText(o.validation_state),
+      };
+    })
+    .filter((entry): entry is TowerMartValueObservationMonth => entry !== null);
+}
+
 function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const refs = sourceRefs(row);
   const licensedUsersRaw = payloadNullableNumberFrom(row, [
@@ -635,6 +663,13 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     approvedFundingUsd,
     aiTaggedSpendUsd: approvedFundingUsd,
     aiSpendLoaded,
+    // Initiative-detail fields. Each reads its own key; none falls back to another.
+    projectName: payloadTextFrom(row, ["project_name"]),
+    lifecycleStage: payloadTextFrom(row, ["lifecycle_stage"]),
+    financePartnerRole: payloadTextFrom(row, ["finance_partner_role"]),
+    successMetric: payloadTextFrom(row, ["success_metric"]),
+    paybackMonthsTarget: payloadNullableNumberFrom(row, ["payback_months_target"]),
+    valueObservationMonths: valueObservationMonths(row),
     promisedValueUsd,
     financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
     usageMetric,
