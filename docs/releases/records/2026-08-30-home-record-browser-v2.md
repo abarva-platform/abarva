@@ -13,14 +13,17 @@
 Changes the Home Browse-the-Record surface from a simple fact list into a compact slice/dice
 browser. The page now opens with packet-level denominators, dimension controls, a distribution
 strip, a compact table, and a selected-row evidence drawer. It keeps unknown source-file rollups
-explicit instead of inventing workbook lineage that is not present in the current packet.
+explicit instead of inventing workbook lineage that is not present in the current packet. When the
+ECL runtime packet supplies source-family summaries, the browser renders those as serving-projection
+coverage so leaders can see which governed Home source families contributed rows.
 
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
 - Layer 4 Products: Home Browse-the-Record presentation changes.
 - Layer 3 Canonical Model: No schema, source, serving-view, or data mutation.
-- Runtime: Client-rendered Home component update only.
+- Runtime: Home ECL packet assembly now includes source-family summaries for the serving
+  projections it actually reads.
 
 ## Client Applicability
 
@@ -38,12 +41,16 @@ explicit instead of inventing workbook lineage that is not present in the curren
 - Adds a selected-row drawer with fact type, domains, evidence state, value state, and evidence
   references.
 - Preserves honest coverage language when source-file/workbook rollups are absent from the packet.
+- Adds source-family coverage cards when the ECL runtime packet supplies serving-projection
+  summaries.
 - Updates Browse-the-Record regression tests to assert the slice/dice browser, table columns,
   denominator, search, empty state, and dimension filtering.
+- Updates ECL bundle tests to assert that runtime packets carry source-family summaries for the
+  serving projections being read.
 
 ## QA / Validation
 
-- `npx jest src/components/home/preview/__tests__/BrowseTheData.test.tsx src/components/home/v4/__tests__/ArchitecturePage.grain.test.tsx --runInBand`: pass.
+- `npx jest src/lib/home/preview/__tests__/ecl-projection-bundle.test.ts src/components/home/preview/__tests__/BrowseTheData.test.tsx --runInBand`: pass.
 - `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false --skipLibCheck --project tsconfig.json`: pass.
 - `git diff --check`: pass.
 - `npm run release:check -- --base origin/main --head HEAD`: pass.
@@ -77,6 +84,7 @@ workflow.
 
 ## Known Gaps
 
-This slice does not create new source summaries or workbook lineage fields. The current packet does
-not include a source-summary object, so the browser reports that source-file rollups are not supplied
-rather than fabricating them.
+This slice does not create raw Layer-1 workbook lineage or raw-row source-file summaries. The new
+runtime summaries are explicitly marked as `serving_projection` coverage from governed Home serving
+views. Offline packet generation continues to own true client-intake/source-file summary context when
+that source inventory is supplied.

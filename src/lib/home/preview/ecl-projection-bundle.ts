@@ -20,6 +20,7 @@ import type {
 } from "./types";
 
 type JsonRecord = Record<string, unknown>;
+type SourceSummary = EnterpriseSignalPacket["sourceSummaries"][number];
 
 export interface HomeProjectionRow {
   page_key: string;
@@ -106,6 +107,25 @@ const PRIMARY_DIMENSION: Record<TechObjectType, string> = {
   vendor_contract: "serviceCategory",
   infrastructure_platform: "platformType",
   data_asset_or_integration: "dataDomain",
+};
+
+const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<TechObjectType, { domain: string; sourcePath: string }> = {
+  application_system: {
+    domain: "application_system",
+    sourcePath: "serving.home_applications_systems",
+  },
+  vendor_contract: {
+    domain: "vendor_contract",
+    sourcePath: "serving.home_vendor_contracts",
+  },
+  infrastructure_platform: {
+    domain: "infrastructure_platform",
+    sourcePath: "serving.home_infrastructure_platforms",
+  },
+  data_asset_or_integration: {
+    domain: "data_asset_or_integration",
+    sourcePath: "serving.home_current_state_data_flow",
+  },
 };
 
 function text(value: unknown): string | null {
@@ -707,16 +727,58 @@ function buildEclSignalPacket(
     },
     ...projectionContextItems(rows),
   ];
+  const sourceSummaries = buildEclSourceSummaries(estate);
 
   return {
     signals,
     contextItems,
     candidateRelationships: [],
+    sourceSummaries,
     visualDatasets: {
       application_landscape_by_function: dimensionShareRows(applicationRecordType, 8),
       vendor_spend_concentration: vendorRows,
     },
   } as unknown as EnterpriseSignalPacket;
+}
+
+function buildEclSourceSummaries(estate: TechnologyEstateBundle): SourceSummary[] {
+  return estate.recordTypes
+    .map((recordType): SourceSummary | null => {
+      const config = SOURCE_SUMMARY_BY_OBJECT_TYPE[recordType.objectType];
+      if (!config || recordType.rows.length === 0) return null;
+      const materialFields = recordType.columns.slice(0, 12);
+      const exampleRecords = recordType.rows
+        .map((row) =>
+          text(row.systemName) ??
+          text(row.vendorName) ??
+          text(row.platformName) ??
+          text(row.dataAssetName) ??
+          text(row.originalRowId),
+        )
+        .filter((value): value is string => Boolean(value))
+        .slice(0, 5);
+      const primaryDimension = recordType.primaryDimension;
+      const dimensionContext = primaryDimension
+        ? recordType.dimensionCounts.slice(0, 3).map((item) => `${item.value} (${item.count})`)
+        : [];
+      return {
+        sourcePath: config.sourcePath,
+        domain: config.domain,
+        objectTypes: [recordType.objectType],
+        recordCount: recordType.rows.length,
+        canonicalRecordCount: recordType.rows.length,
+        sourceKind: "serving_projection",
+        basis: ["deterministic_ecl_projection"],
+        authority: [config.sourcePath],
+        qualityStates: ["projection_row_read"],
+        materialFields: dimensionContext.length
+          ? [...materialFields, `top_${primaryDimension}: ${dimensionContext.join(", ")}`].slice(0, 12)
+          : materialFields,
+        exampleRecords,
+      };
+    })
+    .filter((summary): summary is SourceSummary => Boolean(summary))
+    .sort((a, b) => b.recordCount - a.recordCount || a.sourcePath.localeCompare(b.sourcePath));
 }
 
 const CHAPTER_ID_SET = new Set<ChapterId>(CHAPTER_DEFS.map((definition) => definition.id));
