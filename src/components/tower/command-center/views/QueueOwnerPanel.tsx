@@ -3,8 +3,17 @@
 /**
  * Decisions -> owner.
  *
- * Groups the uncapped initiative portfolio by loaded sponsor role. Open proof items are derived
- * from finance status and value-loading state, not from the design's static counts.
+ * Groups business cases by loaded sponsor role. Open proof items are derived from finance status
+ * and value-loading state, not from the design's static counts.
+ *
+ * Cases only. A tool rollout carries a business owner too, but it has no investment, no
+ * sponsor-stated value, and no finance status — so under a column headed CASES it added a row
+ * that contributed nothing but the count, and `hasOpenProof` returned true for every one of them
+ * because a rollout never carries a benefit claim. Thirteen rollouts turned a 42-case portfolio
+ * into 55 and a 34-item queue into 47.
+ *
+ * `financeStatus` is written on case payloads only, so its presence is what separates the two
+ * populations.
  */
 
 import type React from "react";
@@ -41,6 +50,7 @@ function hasOpenProof(item: TowerAiView): boolean {
 export function buildQueueOwnerRows(view: TowerCommandCenterView): readonly OwnerRow[] {
   const rows = new Map<string, OwnerRow>();
   for (const item of view.allInitiatives) {
+    if (item.financeStatus === null) continue;
     const owner = item.sponsorRole ?? "Sponsor not loaded";
     const current = rows.get(owner) ?? {
       owner,
@@ -68,7 +78,8 @@ function valueLabel(row: OwnerRow): string {
 
 export function QueueOwnerPanel({ view }: { view: TowerCommandCenterView }) {
   const rows = buildQueueOwnerRows(view);
-  const total = view.allInitiatives.length;
+  // The denominator has to be the same population the rows are built from.
+  const total = rows.reduce((sum, row) => sum + row.count, 0);
   const missingOwners = rows.find((row) => row.owner === "Sponsor not loaded")?.count ?? 0;
   const top = rows[0];
   const totalOpen = rows.reduce((sum, row) => sum + row.openProofItems, 0);
@@ -80,7 +91,7 @@ export function QueueOwnerPanel({ view }: { view: TowerCommandCenterView }) {
           Decisions by owner
         </h3>
         <p style={{ margin: 0, fontSize: 15, color: "var(--canon-gray-700)" }}>
-          No initiative rows are loaded, so Tower cannot assign a decision queue.
+          No business cases are loaded, so Tower cannot assign a decision queue.
         </p>
       </section>
     );
@@ -99,7 +110,7 @@ export function QueueOwnerPanel({ view }: { view: TowerCommandCenterView }) {
         }}
       >
         {missingOwners > 0
-          ? `${formatCount(missingOwners)} of ${formatCount(total)} initiatives have no sponsor loaded.`
+          ? `${formatCount(missingOwners)} of ${formatCount(total)} cases have no sponsor loaded.`
           : totalOpen > 0
             ? `${top.owner} owns the largest open proof queue.`
             : "No open proof queue is derived from the loaded owner view."}
