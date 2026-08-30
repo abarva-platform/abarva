@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { forbidden, notFound, redirect } from "next/navigation";
 import { WorkspaceClient } from "../preview/workspace/WorkspaceClient";
 import { getActiveClientRow } from "@/lib/active-client";
+import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
 import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
@@ -10,6 +11,10 @@ import {
 } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/source-v4-workspace-snapshot";
 import { evaluateContractCategoryQuality } from "@/lib/source/data-model/contract-category-quality";
+import {
+  appClientKeyForTenant,
+  tenantProfileForClientKey,
+} from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import {
   buildSourceVendor360Cockpit,
@@ -69,18 +74,37 @@ export default async function SourceWorkspacePage({
   const requestedSourceProvider = sourceProviderOverrideFromRequest(
     params.sourceProvider ?? params.provider,
   );
-  const tenant = await resolveTenant({
-    requestedClient,
-    allowFallback: !requestedClient,
-  }).catch(() => null);
-  const activeClient = tenant
-    ? await getActiveClientRow(tenant.appClientKey).catch(() => null)
+  const requestedClientKey = appClientKeyForTenant(requestedClient);
+  if (requestedClient && !requestedClientKey) {
+    notFound();
+  }
+  if (requestedClientKey && requestedClientKey !== tenancy.clientKey) {
+    const access = await checkTenantAccessByKey(requestedClientKey);
+    if (!access.ok) {
+      if (access.reason === "tenant_not_found") {
+        notFound();
+      }
+      forbidden();
+    }
+  }
+
+  const tenant = requestedClientKey
+    ? null
+    : await resolveTenant({ allowFallback: true }).catch(() => null);
+  const activeClient = requestedClientKey
+    ? null
+    : tenant
+      ? await getActiveClientRow(tenant.appClientKey).catch(() => null)
+      : null;
+  const requestedTenantProfile = requestedClientKey
+    ? tenantProfileForClientKey(requestedClientKey)
     : null;
 
   const tenantKey =
+    requestedClientKey ??
     activeClient?.key ??
     tenant?.appClientKey ??
-    (!requestedClient ? tenancy.clientKey : "") ??
+    tenancy.clientKey ??
     "";
   const defaultAsOf = SOURCE_WORKSPACE_DEFAULT_AS_OF;
   const asOfDateIso = params.asOf?.trim() || defaultAsOf;
@@ -157,8 +181,12 @@ export default async function SourceWorkspacePage({
   const tenantName =
     canonicalClientDisplayName({
       key: tenantKey,
-      name: activeClient?.name ?? tenant?.displayName,
+      name:
+        activeClient?.name ??
+        requestedTenantProfile?.displayName ??
+        tenant?.displayName,
     }) ??
+    requestedTenantProfile?.displayName ??
     tenant?.displayName ??
     "AbarVa Client";
 
@@ -174,7 +202,7 @@ export default async function SourceWorkspacePage({
       <WorkspaceClient
         portfolio={portfolio}
         tenantName={tenantName}
-        sourceClientKey={tenant?.appClientKey ?? activeClient?.key ?? tenantKey}
+        sourceClientKey={tenantKey}
         sourceProviderKey={sourceProviderModeFromPortfolio(portfolio)}
         initialContractId={requestedContractId}
         initialContractTab={requestedContractTab}
