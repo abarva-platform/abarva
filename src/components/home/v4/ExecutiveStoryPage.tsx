@@ -275,6 +275,12 @@ function labelForNumber(statement: string, value: string): string {
 
 function cxoText(text: string): string {
   return text
+    .replace(/\btier[_-](\d+)\b/gi, "tier $1")
+    .replace(/\bThis packet contains\b/gi, "The current evidence shows")
+    .replace(/\bevidence package\b/gi, "evidence set")
+    .replace(/\bgoverned contract record\b/gi, "contract evidence")
+    .replace(/\bgoverned contract set\b/gi, "contract set")
+    .replace(/\bready contract value\b/gi, "reviewed contract value")
     .replace(/\bECL\b/g, "governed")
     .replace(/\bprojection\b/gi, "view")
     .replace(/\bserving view\b/gi, "readout")
@@ -544,7 +550,9 @@ function StoryRail({
           {sections.map((section) => (
             <a key={section.spec.id} href={`#${section.spec.id}`} style={railAnchorStyle}>
               <span>{section.spec.title}</span>
-              <span style={{ color: section.state === "published" ? V4.green : V4.amber }}>{section.state}</span>
+              <span style={{ color: section.state === "published" ? V4.green : V4.amber }}>
+                {terminalStateLabel(section.state)}
+              </span>
             </a>
           ))}
         </nav>
@@ -565,7 +573,7 @@ function StoryRail({
       </div>
 
       <div style={{ marginTop: "auto", borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}>
-        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Compiled</div>
+        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Evidence base</div>
         <p style={{ margin: 0, fontFamily: MONO, fontSize: 11, lineHeight: 1.75, color: V4.slate }}>
           {compiledLine.map((line, i) => (
             <span key={line}>
@@ -577,6 +585,12 @@ function StoryRail({
       </div>
     </aside>
   );
+}
+
+function terminalStateLabel(state: TerminalState): string {
+  if (state === "published") return "ready";
+  if (state === "refused") return "held";
+  return "deferred";
 }
 
 function EvidenceEntryPoints({ onOpenView }: { onOpenView: (id: string) => void }) {
