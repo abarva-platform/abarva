@@ -55,6 +55,8 @@ Release lane: `global-control-lane`.
   contradiction counts, quotes attributed by role, the industry patterns recorded as applying here,
   and the questions this record cannot answer.
 - `src/components/home/v4/ChapterPage.tsx` — renders the depth after the readout.
+- `src/components/home/v4/RecordBrowser.tsx` — reports columns whose value never varies. The same
+  detector the digest reduction uses: one observation, two uses.
 - `src/components/home/v4/NotDraftedPage.tsx` — renders the same depth, and says the narrative is
   missing rather than implying the record is.
 - `src/components/home/v4/HomeV4App.tsx` — passes estate rows to both.
@@ -69,7 +71,7 @@ component — a chapter whose rows produce nothing renders no block at all.
 
 ## QA / Validation
 
-- PASS `npx jest src/components/home/v4/__tests__` — 62/62, nine suites, no regression
+- PASS `npx jest src/components/home/v4/__tests__` — 65/65, ten suites, no regression
 - PASS `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts` — no regression
 - PASS `npx eslint` on all eight changed or added files
 - PASS `tsc --noEmit -p tsconfig.json` (full project)
@@ -116,6 +118,21 @@ two true ones.
 
 An unexplained disagreement is treated as a defect rather than a nuance: the figure is marked not
 quotable and both numbers render, rather than one quietly winning.
+
+### What the constant-column check found in the live record
+
+Run against the current snapshot it names four columns on the application estate and one on the data
+estate. Two of them change how every cost figure on Home should be read:
+
+```
+annualCostBasis      reads "synthetic_modeled" on all 306 rows
+annualCostGenerator  reads "system-cost-model/v1" on all 306 rows
+```
+
+Every annual cost the product renders is modelled rather than actual, and no surface said so. That is
+the class of defect this check exists for: a column filled on every row reads as a clean result and
+is a form nobody completed. The same shape as a succession risk of "low" across 225 org units, and
+the same shape as a cost column that is constant per tier.
 
 ## Rollout Plan
 
