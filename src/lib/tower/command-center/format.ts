@@ -91,3 +91,58 @@ export const BLOCKER_TONE: Record<"blocked" | "clear" | "absent", string> = {
   clear: "var(--canon-teal-dark)",
   absent: "var(--canon-gray-500)",
 };
+
+const CONTROL_BLOCKER_EXPLANATIONS: Record<string, string> = {
+  "clinical safety review":
+    "Clinical governance has to confirm the use is safe for care teams or patients before value can move forward.",
+  "dlp policy":
+    "Data-loss-prevention approval is needed for the data this tool handles.",
+  "sox evidence":
+    "Finance-control evidence is needed when the tool or workflow can affect financial reporting.",
+  "workflow telemetry":
+    "The workflow must emit evidence that people are using the AI-supported process, not just that the tool was deployed.",
+};
+
+const GATING_CONSTRAINT_EXPLANATIONS: Record<string, string> = {
+  "usage-to-value support":
+    "Usage exists, but it is not yet mapped to the value claim it is supposed to prove.",
+  "measured outcome":
+    "The business result has to be measured before Finance can validate it.",
+  "finance value treatment":
+    "Finance has not approved how the value should be recognized.",
+  "finance attestation":
+    "Finance has not signed the measured value as claimable.",
+  "business attestation":
+    "The business owner has not signed the outcome as delivered.",
+};
+
+function normalizedDictionaryKey(value: string): string {
+  return value.replace(/_/g, " ").trim().toLowerCase();
+}
+
+export function controlBlockerExplanation(item: {
+  controlBlocker: string | null;
+  controlBlockerReviewed: boolean;
+}): string {
+  const cell = controlBlockerCell(item);
+  if (cell.tone === "clear") {
+    return "This row was reviewed and no control blocker was recorded.";
+  }
+  if (cell.tone === "absent") {
+    return "No reviewed blocker field is loaded; absence is not clearance.";
+  }
+  return (
+    CONTROL_BLOCKER_EXPLANATIONS[normalizedDictionaryKey(cell.text)] ??
+    "A named control blocker is loaded for this row; open details for the source context."
+  );
+}
+
+export function gatingConstraintExplanation(value: string | null): string {
+  if (value === null) {
+    return "No gating constraint is loaded for this row.";
+  }
+  return (
+    GATING_CONSTRAINT_EXPLANATIONS[normalizedDictionaryKey(value)] ??
+    "This is the loaded gate holding the row before it can move to the next value-proof state."
+  );
+}

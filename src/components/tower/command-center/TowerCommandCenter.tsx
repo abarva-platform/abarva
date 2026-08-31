@@ -117,7 +117,15 @@ const SUB_TABS: Readonly<Record<TowerTab, readonly SubTab[]>> = {
   foundations: [],
 };
 
+const DEFAULT_SUB_TABS: Partial<Record<TowerTab, string>> = {
+  initiatives: "proof",
+};
+
 function defaultSubTab(tab: TowerTab): string {
+  const explicitDefault = DEFAULT_SUB_TABS[tab];
+  if (explicitDefault && SUB_TABS[tab].some((st) => st.id === explicitDefault)) {
+    return explicitDefault;
+  }
   return SUB_TABS[tab][0]?.id ?? "";
 }
 
@@ -289,7 +297,13 @@ export function TowerCommandCenter({
           <BudgetShapePanel view={view} />
         );
       case "initiatives":
-        if (sub === "table") return <InitiativesTablePanel view={view} />;
+        if (sub === "table")
+          return (
+            <InitiativesTablePanel
+              view={view}
+              onOpenAi={(n) => setDrawer({ kind: "ai", n })}
+            />
+          );
         if (sub === "distribution")
           return <InitiativesDistributionPanel view={view} />;
         if (sub === "proof")
@@ -311,7 +325,12 @@ export function TowerCommandCenter({
               onOpenGap={(id) => setDrawer({ kind: "gap", id })}
             />
           );
-        return <ToolsTablePanel view={view} />;
+        return (
+          <ToolsTablePanel
+            view={view}
+            onOpenAi={(n) => setDrawer({ kind: "ai", n })}
+          />
+        );
       case "decisions":
         if (sub === "owner") return <QueueOwnerPanel view={view} />;
         if (sub === "review")

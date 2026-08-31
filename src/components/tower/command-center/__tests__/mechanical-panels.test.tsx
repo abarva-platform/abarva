@@ -262,6 +262,34 @@ describe("mechanical Tower Command Center panels", () => {
     expect(screen.queryByText("Funded case")).not.toBeInTheDocument();
   });
 
+  it("surfaces case tags and opens initiative details from the simple table", () => {
+    const onOpenAi = jest.fn();
+    render(
+      <InitiativesTablePanel
+        view={viewWith({
+          allInitiatives: [
+            initiative({
+              businessValueType: "Cost reduction",
+              category: "Clinical / Epic",
+              gatingConstraint: "Usage-to-value support",
+            }),
+          ],
+        })}
+        onOpenAi={onOpenAi}
+      />,
+    );
+
+    expect(screen.getByText("Cost reduction")).toBeInTheDocument();
+    expect(screen.getByText("Clinical / Epic")).toBeInTheDocument();
+    expect(screen.getByText("Usage-to-value support")).toHaveAttribute(
+      "title",
+      expect.stringContaining("mapped to the value claim"),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Claims cycle automation" }));
+    expect(onOpenAi).toHaveBeenCalledWith(1);
+  });
+
   it("withdraws distribution claims when classifications are missing", () => {
     render(
       <InitiativesDistributionPanel
@@ -338,6 +366,39 @@ describe("mechanical Tower Command Center panels", () => {
     expect(text).not.toContain("Business case with usage");
   });
 
+  it("opens tool rollout details and explains control blockers in place", () => {
+    const onOpenAi = jest.fn();
+    render(
+      <ToolsTablePanel
+        view={viewWith({
+          allInitiatives: [
+            initiative({
+              n: 7,
+              id: "TOOL-SOX",
+              name: "Power BI Copilot",
+              sourceFile: "23_ai_tool_rollout.csv",
+              usageHeadline: "Usage evidence exists",
+              usageBars: [
+                { label: "Adoption", valueText: "30%", pct: 30, tone: "amber" },
+              ],
+              adoptionTargetPct: 46,
+              controlBlocker: "SOX evidence",
+              controlBlockerReviewed: true,
+            }),
+          ],
+        })}
+        onOpenAi={onOpenAi}
+      />,
+    );
+
+    expect(screen.getByText("SOX evidence")).toHaveAttribute(
+      "title",
+      expect.stringContaining("financial reporting"),
+    );
+    fireEvent.doubleClick(screen.getByTitle("Double-click to open tool details"));
+    expect(onOpenAi).toHaveBeenCalledWith(7);
+  });
+
   it("does not call foundations no-value when sponsor-stated value is loaded", () => {
     render(
       <FoundationsPanel
@@ -409,7 +470,7 @@ describe("mechanical Tower Command Center panels", () => {
       />,
     );
 
-    expect(screen.getByText("Control blocker")).toBeInTheDocument();
+    expect(screen.getByText("Control / gate")).toBeInTheDocument();
     expect(screen.queryByText("Risk")).not.toBeInTheDocument();
     expect(document.body.textContent).toContain("No benefit claim loaded");
     expect(document.body.textContent).toContain("Not loaded");
