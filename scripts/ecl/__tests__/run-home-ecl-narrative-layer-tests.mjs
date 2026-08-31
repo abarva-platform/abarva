@@ -8,6 +8,7 @@ const scriptPath = path.join(repoRoot, "scripts/ecl/build_home_ecl_narrative_lay
 const readbackPath = path.join(repoRoot, "scripts/ecl/readback_home_ecl_narrative_layer.ts");
 const thesisPath = path.join(repoRoot, "scripts/data-build/build-enterprise-thesis.ts");
 const chaptersPath = path.join(repoRoot, "scripts/data-build/build-home-chapters.ts");
+const operatorJobPath = path.join(repoRoot, "scripts/ops/submit-aca-operator-job.mjs");
 const packagePath = path.join(repoRoot, "package.json");
 const pagePromptContractPath = path.join(
   repoRoot,
@@ -28,6 +29,7 @@ const script = fs.readFileSync(scriptPath, "utf8");
 const readback = fs.readFileSync(readbackPath, "utf8");
 const thesis = fs.readFileSync(thesisPath, "utf8");
 const chapters = fs.readFileSync(chaptersPath, "utf8");
+const operatorJob = fs.readFileSync(operatorJobPath, "utf8");
 const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
 const pagePromptContract = JSON.parse(fs.readFileSync(pagePromptContractPath, "utf8"));
 const runtimePagePromptContractSource = fs.readFileSync(runtimePagePromptContractPath, "utf8");
@@ -268,6 +270,10 @@ assert(
 );
 assert(
   script.includes("readEclSourceRecordRows") &&
+    script.includes("readActiveTenantSourceRows") &&
+    script.includes("client_intake_repo_package") &&
+    script.includes("__source_file_hash") &&
+    script.includes("active_source_file_rows") &&
     script.includes("buildEclSourceSummaries") &&
     script.includes("ecl_source.source_file") &&
     script.includes("ecl_source.source_record") &&
@@ -282,8 +288,13 @@ assert(
     script.includes("ctx_ecl_source_business_segments_001") &&
     script.includes("ctx_ecl_source_strategic_priorities_001") &&
     script.includes("ctx_ecl_source_leadership_excerpts_001") &&
+    script.includes("ctx_ecl_source_org_accountability_001") &&
+    script.includes("ctx_ecl_source_spend_value_001") &&
+    script.includes("ctx_ecl_source_metrics_outcomes_001") &&
+    script.includes("ctx_ecl_source_ai_value_001") &&
+    script.includes("ctx_ecl_source_risks_controls_001") &&
     script.includes("SA10_AI_Value_Interview_Evidence"),
-  "ECL narrative job promotes source-backed profile, segment, strategy, and interview records into citable ctx_* context",
+  "ECL narrative job promotes source-backed profile, segment, strategy, org, value, risk, AI, and interview records into citable ctx_* context",
 );
 assert(
   script.includes("Home ECL narrative refused: no governed usable evidence reached the executive packet") &&
@@ -322,8 +333,33 @@ assert(
     script.includes("sig_ecl_data_workload_segments_017") &&
     script.includes("sig_ecl_application_named_examples_015") &&
     script.includes("sig_ecl_platform_named_resilience_016") &&
+    script.includes("sig_ecl_source_enterprise_identity_020") &&
+    script.includes("sig_ecl_source_strategy_priorities_021") &&
+    script.includes("sig_ecl_source_program_portfolio_022") &&
+    script.includes("sig_ecl_source_spend_value_023") &&
+    script.includes("sig_ecl_source_metrics_readiness_024") &&
+    script.includes("sig_ecl_source_org_accountability_025") &&
+    script.includes("sig_ecl_source_leadership_voice_026") &&
+    script.includes("sig_ecl_source_risk_control_027") &&
+    script.includes("sig_ecl_source_ai_value_028") &&
+    script.includes("sig_ecl_source_operating_model_029") &&
+    script.includes("sig_ecl_source_data_analytics_maturity_030") &&
     script.includes("sig_ecl_source_breadth_guardrail_019"),
-  "ECL narrative job expands deterministic signals across application, contract, infrastructure, data-flow, data-workload, and source-breadth domains",
+  "ECL narrative job expands deterministic signals across source files, application, contract, infrastructure, data-flow, data-workload, and source-breadth domains",
+);
+assert(
+  thesis.includes('"sig_ecl_source_enterprise_identity_020"') &&
+    thesis.includes('"sig_ecl_source_strategy_priorities_021"') &&
+    thesis.includes('"sig_ecl_source_spend_value_023"') &&
+    thesis.includes('"sig_ecl_source_metrics_readiness_024"') &&
+    thesis.indexOf('"sig_ecl_source_enterprise_identity_020"') < thesis.indexOf('"sig_ecl_estate_001"') &&
+    thesis.includes("const strategySignals = firstSignals(signalPacket") &&
+    thesis.includes("const leadershipSignals = firstSignals(signalPacket") &&
+    thesis.includes("const performanceSignals = firstSignals(signalPacket") &&
+    thesis.includes("strategic_bets: strategySignals.slice") &&
+    thesis.includes("leadership_consensus: [") &&
+    thesis.includes("where_improving: performanceSignals.slice"),
+  "EnterpriseThesis deterministic planner uses source-file business, strategy, leadership, and value signals before inventory/vendor signals",
 );
 {
   const technologySignalsIndex = thesis.indexOf("const technologySignals = firstSignals(signalPacket");
@@ -668,6 +704,13 @@ assert(
 assert(
   packageJson.scripts["ecl:home-narrative:readback"]?.includes("readback_home_ecl_narrative_layer.ts"),
   "Home ECL narrative readback has an npm operator script",
+);
+assert(
+  operatorJob.includes("__HOME_ECL_NARRATIVE_PROOF_TGZ_BEGIN__") &&
+    operatorJob.includes("__HOME_ECL_NARRATIVE_PROOF_TGZ_END__") &&
+    operatorJob.includes('marker: "home_ecl_narrative"') &&
+    operatorJob.includes("Home ECL narrative proof extraction self-test failed"),
+  "ACA operator wrapper extracts Home ECL narrative proof bundles instead of depending on oversized stdout JSON",
 );
 assert(
   readback.includes("structured_event: \"home_ecl_narrative_readback_summary\"") &&

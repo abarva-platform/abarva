@@ -795,6 +795,12 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
   signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>,
 ): EnterpriseThesis {
   const storySignals = firstSignals(signalPacket, [
+    "sig_ecl_source_enterprise_identity_020",
+    "sig_ecl_source_strategy_priorities_021",
+    "sig_ecl_source_spend_value_023",
+    "sig_ecl_source_metrics_readiness_024",
+    "sig_ecl_source_org_accountability_025",
+    "sig_ecl_source_program_portfolio_022",
     "sig_ecl_estate_001",
     "sig_ecl_application_function_002",
     "sig_ecl_data_workload_segments_017",
@@ -803,6 +809,8 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
     "sig_ecl_contract_value_005",
   ]);
   const technologySignals = firstSignals(signalPacket, [
+    "sig_ecl_source_data_analytics_maturity_030",
+    "sig_ecl_source_ai_value_028",
     "sig_ecl_application_function_ranking_012",
     "sig_ecl_data_workload_segments_017",
     "sig_ecl_platform_named_resilience_016",
@@ -819,11 +827,29 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
     "sig_ecl_data_consumption_011",
   ]);
   const commercialSignals = firstSignals(signalPacket, [
+    "sig_ecl_source_spend_value_023",
+    "sig_ecl_source_metrics_readiness_024",
     "sig_ecl_vendor_concentration_004",
     "sig_ecl_contract_value_005",
     "sig_ecl_contract_flexibility_006",
   ]);
+  const strategySignals = firstSignals(signalPacket, [
+    "sig_ecl_source_strategy_priorities_021",
+    "sig_ecl_source_program_portfolio_022",
+    "sig_ecl_source_ai_value_028",
+  ]);
+  const leadershipSignals = firstSignals(signalPacket, [
+    "sig_ecl_source_org_accountability_025",
+    "sig_ecl_source_leadership_voice_026",
+  ]);
+  const performanceSignals = firstSignals(signalPacket, [
+    "sig_ecl_source_metrics_readiness_024",
+    "sig_ecl_source_spend_value_023",
+    "sig_ecl_source_ai_value_028",
+  ]);
   const riskSignals = firstSignals(signalPacket, [
+    "sig_ecl_source_risk_control_027",
+    "sig_ecl_source_operating_model_029",
     "sig_ecl_application_criticality_003",
     "sig_ecl_contract_flexibility_006",
     "sig_ecl_platform_resilience_008",
@@ -836,8 +862,11 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
     .slice(0, 5)
     .map((signal) => signalClaim(signal));
   const storyClaims = [...enterpriseContextClaims, ...storySignalClaims].slice(0, 5);
-  const valueDrivers = firstContextByDomain(signalPacket, ["enterprise_profile", "business_model"], 6).map((item) => contextClaim(item));
-  const valueDependencies = commercialSignals.slice(0, 4).map((signal) => signalClaim(signal));
+  const valueDrivers = [
+    ...firstContextByDomain(signalPacket, ["enterprise_profile", "business_model"], 6).map((item) => contextClaim(item)),
+    ...performanceSignals.slice(0, 3).map((signal) => signalClaim(signal)),
+  ].slice(0, 6);
+  const valueDependencies = [...commercialSignals, ...performanceSignals].slice(0, 4).map((signal) => signalClaim(signal));
   const unknownPerformance = firstSignals(signalPacket, [
     "sig_ecl_source_breadth_guardrail_019",
   ]).map((signal) => signalClaim(signal));
@@ -896,13 +925,16 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
       primary_value_drivers: valueDrivers,
       economic_dependencies: valueDependencies,
     },
-    strategic_bets: [],
+    strategic_bets: strategySignals.slice(0, 5).map((signal) => signalClaim(signal)),
     structural_constraints: riskSignals.slice(0, 5).map((signal) => signalClaim(signal)),
     operating_tensions: commercialSignals.slice(0, 3).map((signal) => signalClaim(signal, "OBSERVATION")),
-    leadership_consensus: [],
+    leadership_consensus: [
+      ...firstContextByDomain(signalPacket, ["leadership_voice", "organization"], 5).map((item) => contextClaim(item)),
+      ...leadershipSignals.slice(0, 3).map((signal) => signalClaim(signal)),
+    ].slice(0, 5),
     leadership_disagreements: [],
     performance_story: {
-      where_improving: [],
+      where_improving: performanceSignals.slice(0, 3).map((signal) => signalClaim(signal)),
       where_off_track: [],
       where_unknown: unknownPerformance,
     },
@@ -920,6 +952,9 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
     ],
     things_a_new_cxo_should_know: [
       ...storySignals,
+      ...strategySignals,
+      ...leadershipSignals,
+      ...performanceSignals,
       ...commercialSignals,
       ...riskSignals,
     ].slice(0, 6).map((signal) => signalClaim(signal)),

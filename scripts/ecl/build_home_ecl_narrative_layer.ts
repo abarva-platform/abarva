@@ -14,7 +14,9 @@
 
 import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { Client } from "pg";
 
 import {
@@ -110,6 +112,7 @@ const HOME_PAGE_PROMPT_CONTRACT_PATH = "docs/architecture/home-v2-page-prompt-co
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
 const DEFAULT_OUT_DIR = "/tmp/home-ecl-narrative-layer";
+const DEFAULT_ACTIVE_SOURCE_ROOT = "datasets/tenant-inputs/active";
 const PROJECTION_VERSION = 1;
 const STORY_PLAN_CONTRACT_VERSION = "home-executive-story-plan/v1" as const;
 const WRITE = process.env.HOME_ECL_NARRATIVE_WRITE === "true" && process.env.HOME_ECL_NARRATIVE_WRITE_APPROVED === "true";
@@ -250,6 +253,7 @@ interface GovernedSignalPacketBuild {
 }
 
 interface EclSourceRecordSummaryRow {
+  source_record_id?: string | null;
   file_name: string;
   source_type: string;
   origin: string;
@@ -259,6 +263,11 @@ interface EclSourceRecordSummaryRow {
   row_number: number | null;
   payload_json: JsonRecord | null;
 }
+
+type SourceTableSummary = {
+  rows: EclSourceRecordSummaryRow[];
+  recordCount: number;
+};
 
 function cliValue(flag: string): string | null {
   const index = process.argv.indexOf(flag);
@@ -411,12 +420,218 @@ function formatUsd(value: string | null): string | null {
   return `$${numeric.toLocaleString()}`;
 }
 
+function formatUsdNumber(value: number): string {
+  if (!Number.isFinite(value)) return "$0";
+  if (Math.abs(value) >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(1)}B`;
+  if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  return `$${Math.round(value).toLocaleString()}`;
+}
+
+function rawNumber(value: unknown): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  const raw = text(value);
+  if (!raw) return 0;
+  const cleaned = raw.replace(/[$,%\s,]/g, "");
+  if (!/^-?\d+(\.\d+)?$/.test(cleaned)) return 0;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function sourceRowsMatching(rows: EclSourceRecordSummaryRow[], pattern: RegExp): EclSourceRecordSummaryRow[] {
   return rows.filter((row) => pattern.test(row.file_name) && row.payload_json && typeof row.payload_json === "object");
 }
 
 function rowPayload(row: EclSourceRecordSummaryRow): JsonRecord {
   return row.payload_json && typeof row.payload_json === "object" ? row.payload_json : {};
+}
+
+function sanitizeIdPart(value: string): string {
+  return value
+    .replace(/\.csv$/i, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+}
+
+function sourceRecordContextId(row: EclSourceRecordSummaryRow): string {
+  if (row.source_record_id) return `ctx_ecl_source_record_${sanitizeIdPart(row.source_record_id)}`;
+  return `ctx_ecl_source_row_${sanitizeIdPart(row.file_name)}_${String(row.row_number ?? 0).padStart(5, "0")}`;
+}
+
+function sourceRowsByFile(rows: EclSourceRecordSummaryRow[]): Map<string, SourceTableSummary> {
+  const byFile = new Map<string, SourceTableSummary>();
+  for (const row of rows.filter((item) => item.payload_json && item.record_type)) {
+    const current = byFile.get(row.file_name) ?? { rows: [], recordCount: 0 };
+    current.rows.push(row);
+    current.recordCount += 1;
+    byFile.set(row.file_name, current);
+  }
+  return byFile;
+}
+
+function sumSourceNumber(rows: EclSourceRecordSummaryRow[], ...fields: string[]): number {
+  return rows.reduce((sum, row) => {
+    const data = rowPayload(row);
+    for (const field of fields) {
+      const value = rawNumber(data[field]);
+      if (value !== 0) return sum + value;
+    }
+    return sum;
+  }, 0);
+}
+
+function topSourceCountRows(
+  rows: EclSourceRecordSummaryRow[],
+  field: string,
+  limit: number,
+): Array<{ label: string; count: number; sharePct: number }> {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    const label = payloadField(rowPayload(row), field) ?? "(not specified)";
+    totals.set(label, (totals.get(label) ?? 0) + 1);
+  }
+  return [...totals.entries()]
+    .map(([label, count]) => ({ label, count, sharePct: rows.length ? Number(((count / rows.length) * 100).toFixed(1)) : 0 }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
+
+function topSourceNumberRows(
+  rows: EclSourceRecordSummaryRow[],
+  labelField: string,
+  valueField: string,
+  limit: number,
+): Array<{ label: string; value: number; sharePct: number }> {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    const data = rowPayload(row);
+    const label = payloadField(data, labelField) ?? "(not specified)";
+    totals.set(label, (totals.get(label) ?? 0) + rawNumber(data[valueField]));
+  }
+  const total = [...totals.values()].reduce((sum, value) => sum + value, 0);
+  return [...totals.entries()]
+    .map(([label, value]) => ({ label, value, sharePct: total > 0 ? Number(((value / total) * 100).toFixed(1)) : 0 }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
+
+function countSourceRows(rows: EclSourceRecordSummaryRow[], field: string, pattern: RegExp): number {
+  return rows.filter((row) => pattern.test(payloadField(rowPayload(row), field) ?? "")).length;
+}
+
+function sourceFileRows(rows: EclSourceRecordSummaryRow[], filePattern: RegExp): EclSourceRecordSummaryRow[] {
+  return sourceRowsMatching(rows, filePattern).filter((row) => row.record_type);
+}
+
+function sourceTypeForFile(fileName: string): string {
+  const stem = sanitizeIdPart(fileName);
+  if (/enterprise_profile|business_segments/.test(stem)) return "enterprise_profile";
+  if (/business_functions|org_ownership|workforce_roles/.test(stem)) return "organization_operating_model";
+  if (/applications_systems/.test(stem)) return "application_system";
+  if (/data_assets_integrations|data_analytics/.test(stem)) return "data_asset_or_integration";
+  if (/infrastructure_platforms/.test(stem)) return "infrastructure_platform";
+  if (/vendors_contracts|service_scope/.test(stem)) return "vendor_contract";
+  if (/spend_value|metrics_outcomes|kpi/.test(stem)) return "spend_value_fact";
+  if (/programs_initiatives/.test(stem)) return "program_initiative";
+  if (/ai_/.test(stem)) return "ai_value";
+  if (/risks_controls/.test(stem)) return "risk_control";
+  if (/relationships/.test(stem)) return "relationship";
+  if (/evidence_sources|industry_context|expert_lenses/.test(stem)) return "evidence_sources";
+  return "client_intake";
+}
+
+function parseCsvRecords(csvText: string): JsonRecord[] {
+  const rows: string[][] = [];
+  let field = "";
+  let row: string[] = [];
+  let inQuotes = false;
+  for (let i = 0; i < csvText.length; i += 1) {
+    const char = csvText[i];
+    const next = csvText[i + 1];
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        field += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (char === "," && !inQuotes) {
+      row.push(field);
+      field = "";
+      continue;
+    }
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") i += 1;
+      row.push(field);
+      field = "";
+      if (row.some((value) => value.trim().length > 0)) rows.push(row);
+      row = [];
+      continue;
+    }
+    field += char;
+  }
+  row.push(field);
+  if (row.some((value) => value.trim().length > 0)) rows.push(row);
+  if (rows.length === 0) return [];
+  const headers = rows[0].map((header) => header.trim());
+  return rows.slice(1).map((values) => {
+    const record: JsonRecord = {};
+    headers.forEach((header, index) => {
+      record[header] = (values[index] ?? "").trim();
+    });
+    return record;
+  });
+}
+
+function activeSourceRootForTenant(tenantKey: string): string {
+  const configured = process.env.HOME_ECL_ACTIVE_SOURCE_ROOT;
+  if (configured) return path.resolve(configured);
+  return path.join(process.cwd(), DEFAULT_ACTIVE_SOURCE_ROOT, tenantKey, "current");
+}
+
+function readActiveTenantSourceRows(tenantKey: string): EclSourceRecordSummaryRow[] {
+  const root = activeSourceRootForTenant(tenantKey);
+  if (!fs.existsSync(root)) return [];
+  const files = fs.readdirSync(root)
+    .filter((fileName) => fileName.endsWith(".csv") && !/^00_GUIDE/i.test(fileName))
+    .sort();
+  const rows: EclSourceRecordSummaryRow[] = [];
+  for (const fileName of files) {
+    const filePath = path.join(root, fileName);
+    const content = fs.readFileSync(filePath, "utf8");
+    const fileHash = crypto.createHash("sha256").update(content).digest("hex");
+    parseCsvRecords(content).forEach((record, index) => {
+      rows.push({
+        source_record_id: `active:${tenantKey}:${fileName}:${index + 1}`,
+        file_name: fileName,
+        source_type: sourceTypeForFile(fileName),
+        origin: "client_intake_repo_package",
+        source_owner: payloadField(record, "source_owner", "likely_owner") ?? "active tenant source package",
+        quality_state: "passed",
+        record_type: sanitizeIdPart(fileName),
+        row_number: index + 1,
+        payload_json: { ...record, __source_file_hash: fileHash },
+      });
+    });
+  }
+  return rows;
+}
+
+function mergeSourceRows(
+  dbRows: EclSourceRecordSummaryRow[],
+  activeRows: EclSourceRecordSummaryRow[],
+): EclSourceRecordSummaryRow[] {
+  const seen = new Set<string>();
+  const merged: EclSourceRecordSummaryRow[] = [];
+  for (const row of [...dbRows, ...activeRows]) {
+    const key = row.source_record_id ?? `${row.origin}:${row.file_name}:${row.row_number ?? "file"}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(row);
+  }
+  return merged;
 }
 
 function buildSourceRecordContextItems(sourceRows: EclSourceRecordSummaryRow[]): ContextItem[] {
@@ -532,6 +747,137 @@ function buildSourceRecordContextItems(sourceRows: EclSourceRecordSummaryRow[]):
     "ctx_ecl_source_leadership_excerpts_001",
     interviewQuotes.length ? `Leadership interview excerpts from source evidence: ${interviewQuotes.join(" | ")}.` : null,
     ["leadership_voice", "ai_value_interview_evidence", "tenant_profile"],
+  );
+
+  const functionRows = sourceFileRows(sourceRows, /01_business_functions/i);
+  const functionBudget = sumSourceNumber(functionRows, "annual_budget_usd");
+  const functionFte = sumSourceNumber(functionRows, "fte_count");
+  const topFunctionOwners = topSourceCountRows(functionRows, "executive_owner", 5)
+    .filter((item) => item.label !== "(not specified)")
+    .map((item) => `${item.label} (${item.count.toLocaleString()} functions)`);
+  add(
+    "ctx_ecl_source_business_functions_001",
+    functionRows.length
+      ? `Business-function source contains ${functionRows.length.toLocaleString()} functions, ${formatUsdNumber(functionBudget)} of function budget authority, and ${Math.round(functionFte).toLocaleString()} FTE; named executive-owner concentrations include ${compactList(topFunctionOwners, 5)}.`
+      : null,
+    ["business_function", "organization", "spend_value_fact"],
+  );
+
+  const orgRows = sourceFileRows(sourceRows, /02_org_ownership/i);
+  const orgBudget = sumSourceNumber(orgRows, "budget_authority_usd");
+  const orgHeadcount = sumSourceNumber(orgRows, "headcount");
+  const decisionRights = topSourceCountRows(orgRows, "decision_rights", 6)
+    .filter((item) => item.label !== "(not specified)")
+    .map((item) => `${item.label} (${item.count.toLocaleString()})`);
+  const successionValues = topSourceCountRows(orgRows, "succession_risk", 4)
+    .filter((item) => item.label !== "(not specified)")
+    .map((item) => `${item.label} (${item.count.toLocaleString()})`);
+  add(
+    "ctx_ecl_source_org_accountability_001",
+    orgRows.length
+      ? `Organization ownership source contains ${orgRows.length.toLocaleString()} ownership rows, ${Math.round(orgHeadcount).toLocaleString()} headcount, and ${formatUsdNumber(orgBudget)} budget authority; decision-rights groups include ${compactList(decisionRights, 6)}. Succession-risk values are ${compactList(successionValues, 4)}, so constant succession-risk data should be treated as a quality caveat if it does not vary.`
+      : null,
+    ["organization", "business_function", "spend_value_fact"],
+  );
+
+  const workforceRows = sourceFileRows(sourceRows, /03_workforce_roles/i);
+  const workforceRoles = sumSourceNumber(workforceRows, "role_count");
+  const automationRoles = countSourceRows(workforceRows, "automation_opportunity", /yes|high|candidate|autom/i);
+  add(
+    "ctx_ecl_source_workforce_roles_001",
+    workforceRows.length
+      ? `Workforce-role source contains ${workforceRows.length.toLocaleString()} role/persona rows covering about ${Math.round(workforceRoles).toLocaleString()} roles; ${automationRoles.toLocaleString()} rows name an automation opportunity.`
+      : null,
+    ["workforce", "business_function", "ai_value"],
+  );
+
+  const spendRows = sourceFileRows(sourceRows, /08_spend_value/i);
+  const annualSpend = sumSourceNumber(spendRows, "annual_spend_usd");
+  const savingsOpportunity = sumSourceNumber(spendRows, "savings_opportunity_usd");
+  const spendOwners = topSourceNumberRows(spendRows, "cost_center_or_owner", "annual_spend_usd", 5)
+    .filter((item) => item.value > 0)
+    .map((item) => `${item.label} ${formatUsdNumber(item.value)} (${item.sharePct.toFixed(1)}%)`);
+  add(
+    "ctx_ecl_source_spend_value_001",
+    spendRows.length
+      ? `Spend and value source contains ${spendRows.length.toLocaleString()} spend categories totaling ${formatUsdNumber(annualSpend)} and ${formatUsdNumber(savingsOpportunity)} in declared savings opportunity; largest recorded owners/categories include ${compactList(spendOwners, 5)}.`
+      : null,
+    ["spend_value_fact", "business_function", "performance_metric"],
+  );
+
+  const metricRows = sourceFileRows(sourceRows, /14_metrics_outcomes/i);
+  const claimableMetrics = countSourceRows(metricRows, "claim_readiness", /claimable|ready/i);
+  const financeAttestedValue = sumSourceNumber(metricRows, "finance_attested_value_usd");
+  const blockedMetrics = metricRows.filter((row) => payloadField(rowPayload(row), "claim_blocked_reason", "blocked_reason"));
+  const blockedReasons = topSourceCountRows(metricRows, "claim_blocked_reason", 5)
+    .filter((item) => item.label !== "(not specified)")
+    .map((item) => `${item.label} (${item.count.toLocaleString()})`);
+  add(
+    "ctx_ecl_source_metrics_outcomes_001",
+    metricRows.length
+      ? `Metrics and outcomes source contains ${metricRows.length.toLocaleString()} metrics; ${claimableMetrics.toLocaleString()} are claimable or ready, ${blockedMetrics.length.toLocaleString()} carry a blocked reason, and ${formatUsdNumber(financeAttestedValue)} is finance-attested value. Blocked reasons include ${compactList(blockedReasons, 5)}.`
+      : null,
+    ["performance_metric", "spend_value_fact", "risk_control"],
+  );
+
+  const riskRows = sourceFileRows(sourceRows, /11_risks_controls/i);
+  const highSeverityRisks = countSourceRows(riskRows, "severity", /high|critical/i);
+  const openControls = countSourceRows(riskRows, "control_status", /open|gap|partial|not/i);
+  const riskDomains = topSourceCountRows(riskRows, "risk_domain", 5)
+    .filter((item) => item.label !== "(not specified)")
+    .map((item) => `${item.label} (${item.count.toLocaleString()})`);
+  add(
+    "ctx_ecl_source_risks_controls_001",
+    riskRows.length
+      ? `Risk and control source contains ${riskRows.length.toLocaleString()} rows; ${highSeverityRisks.toLocaleString()} are high or critical severity and ${openControls.toLocaleString()} have open or partial control status. Risk domains include ${compactList(riskDomains, 5)}.`
+      : null,
+    ["risk_control", "business_function", "application_system"],
+  );
+
+  const aiUseCaseRows = sourceFileRows(sourceRows, /10_ai_automation_use_cases/i);
+  const aiBenefitRows = sourceFileRows(sourceRows, /SA08_AI_Benefits_Realization_Usage_Ledger/i);
+  const aiToolRows = sourceFileRows(sourceRows, /SA09_AI_Tool_Usage_Feed/i);
+  const aiKpiRows = sourceFileRows(sourceRows, /SA11_AI_KPI_Operational_Outcome_Feed/i);
+  const promisedAiValue = sumSourceNumber(aiBenefitRows, "promised_value_usd");
+  const actualAiSpend = sumSourceNumber(aiBenefitRows, "actual_spend_ytd_usd", "funded_spend_usd");
+  const activeUsers = sumSourceNumber(aiToolRows, "active_users");
+  add(
+    "ctx_ecl_source_ai_value_001",
+    aiUseCaseRows.length || aiBenefitRows.length || aiToolRows.length || aiKpiRows.length
+      ? `AI source package contains ${aiUseCaseRows.length.toLocaleString()} use cases, ${aiBenefitRows.length.toLocaleString()} benefit-ledger rows, ${aiToolRows.length.toLocaleString()} tool-usage rows, and ${aiKpiRows.length.toLocaleString()} KPI outcome rows; promised value totals ${formatUsdNumber(promisedAiValue)}, actual or funded spend totals ${formatUsdNumber(actualAiSpend)}, and tool feed records ${Math.round(activeUsers).toLocaleString()} active users.`
+      : null,
+    ["ai_value", "performance_metric", "workforce", "business_function"],
+  );
+
+  const serviceRows = sourceFileRows(sourceRows, /17_service_scope_managed_services/i);
+  const runCost = sumSourceNumber(serviceRows, "run_cost_usd");
+  add(
+    "ctx_ecl_source_managed_services_001",
+    serviceRows.length
+      ? `Managed-services scope source contains ${serviceRows.length.toLocaleString()} service rows with ${formatUsdNumber(runCost)} recorded run cost and named in-scope functions/systems.`
+      : null,
+    ["vendor_contract", "business_function", "spend_value_fact"],
+  );
+
+  const processRows = sourceFileRows(sourceRows, /18_operational_process_evidence/i);
+  const transactionVolume = sumSourceNumber(processRows, "transaction_volume");
+  const automationCandidates = countSourceRows(processRows, "automation_candidate", /yes|high|candidate|autom/i);
+  add(
+    "ctx_ecl_source_operational_process_001",
+    processRows.length
+      ? `Operational-process evidence contains ${processRows.length.toLocaleString()} process rows, ${Math.round(transactionVolume).toLocaleString()} recorded transaction volume where supplied, and ${automationCandidates.toLocaleString()} automation candidates.`
+      : null,
+    ["operational_process", "business_function", "ai_value"],
+  );
+
+  const dataMaturityRows = sourceFileRows(sourceRows, /19_data_analytics_platform_maturity/i);
+  const maturityGaps = countSourceRows(dataMaturityRows, "gaps", /\w/);
+  add(
+    "ctx_ecl_source_data_analytics_maturity_001",
+    dataMaturityRows.length
+      ? `Data and analytics maturity source contains ${dataMaturityRows.length.toLocaleString()} platform/capability assessments, with ${maturityGaps.toLocaleString()} rows naming gaps between current and target maturity.`
+      : null,
+    ["data_asset_or_integration", "infrastructure_platform", "performance_metric"],
   );
 
   return items;
@@ -1132,11 +1478,12 @@ function scrubThesisResultVisibleIds(
 function buildScopeContextItems(args: {
   rows: HomeProjectionWriteRow[];
   sourceSummaries: SourceSummary[];
+  sourceRows: EclSourceRecordSummaryRow[];
 }): ContextItem[] {
-  const { rows, sourceSummaries } = args;
+  const { rows, sourceSummaries, sourceRows } = args;
   const readyRowsForPage = (pageKey: string) =>
     rows.filter((row) => row.page_key === pageKey && row.row_type !== "summary" && row.row_type !== "chapter_claim" && candidateIsReady(row));
-  const sourceRows = sourceSummaries.reduce((sum, item) => sum + (item.rawRowCount ?? item.recordCount), 0);
+  const rawSourceRowCount = sourceSummaries.reduce((sum, item) => sum + (item.rawRowCount ?? item.recordCount), 0);
   const sourceFamilies = [...new Set(sourceSummaries.map((item) => item.domain).filter(Boolean))].length;
   const leadershipRows = readyRowsForPage("leadership_perspective");
   const strategyRows = readyRowsForPage("strategy_value_creation");
@@ -1146,31 +1493,50 @@ function buildScopeContextItems(args: {
     /SP04|Data_BI_ETL|data.*bi|etl|analytics/i.test(summary.sourcePath) ||
     summary.materialFields.some((field) => /workload_count|active_user_count|data_volume_tb|technology_name/i.test(field)),
   );
+  const profileRows = sourceFileRows(sourceRows, /00_enterprise_profile/i);
+  const segmentRows = sourceFileRows(sourceRows, /01b_business_segments/i);
+  const programRows = sourceFileRows(sourceRows, /09_programs_initiatives/i);
+  const interviewRows = sourceFileRows(sourceRows, /SA10_AI_Value_Interview_Evidence/i);
+  const spendRows = sourceFileRows(sourceRows, /08_spend_value/i);
+  const metricRows = sourceFileRows(sourceRows, /14_metrics_outcomes/i);
+  const aiRows = [
+    ...sourceFileRows(sourceRows, /10_ai_automation_use_cases/i),
+    ...sourceFileRows(sourceRows, /SA08_AI_Benefits_Realization_Usage_Ledger/i),
+    ...sourceFileRows(sourceRows, /SA09_AI_Tool_Usage_Feed/i),
+    ...sourceFileRows(sourceRows, /SA11_AI_KPI_Operational_Outcome_Feed/i),
+  ];
 
   return [
     {
       id: "ctx_ecl_scope_business_economics_001",
-      statement:
-        "Segment revenue, customer/channel economics, and formal enterprise identity attributes are not supplied by the current Home narrative input; business-model conclusions should therefore be limited to the cited technology, commercial, infrastructure, and data-movement facts.",
+      statement: profileRows.length || segmentRows.length
+        ? `Enterprise profile and segment evidence is supplied by ${profileRows.length.toLocaleString()} enterprise-profile row and ${segmentRows.length.toLocaleString()} business-segment rows; business-model conclusions may use those cited rows while keeping synthetic/non-client-attested limits explicit.`
+        : "Segment revenue, customer/channel economics, and formal enterprise identity attributes are not supplied by the current Home narrative input; business-model conclusions should therefore be limited to the cited technology, commercial, infrastructure, and data-movement facts.",
       domains: ["enterprise_profile", "spend_value_fact", "application_system", "vendor_contract"],
     },
     {
       id: "ctx_ecl_scope_strategy_programs_001",
-      statement: strategyRows.length
+      statement: programRows.length
+        ? `Declared strategic priorities and ${programRows.length.toLocaleString()} program/initiative rows are supplied; strategic claims must cite profile or program evidence and distinguish funded programs from achieved outcomes.`
+        : strategyRows.length
         ? `The strategy and value chapter has ${strategyRows.length.toLocaleString()} ready evidence items, but the Home narrative input does not supply a full program-to-outcome ledger; strategic claims must cite the named evidence and avoid implying a complete transformation roadmap.`
         : "Declared strategic priorities, funded programs, and program-to-outcome linkage are not supplied by the current Home narrative input; the chapter should treat strategy as an evidence gap rather than infer a transformation agenda.",
       domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
     },
     {
       id: "ctx_ecl_scope_leadership_001",
-      statement: leadershipRows.length
+      statement: interviewRows.length
+        ? `${interviewRows.length.toLocaleString()} leadership or operator interview evidence rows are supplied; leadership claims must cite interview evidence and should not generalize beyond the roles, tracks, and questions represented.`
+        : leadershipRows.length
         ? `The leadership perspective chapter has ${leadershipRows.length.toLocaleString()} ready evidence items; leadership consensus or disagreement claims must cite those items and should not be generalized beyond them.`
         : "Leadership interview quotes, leadership sentiment, and named consensus or disagreement evidence are not supplied by the current Home narrative input; do not infer executive priorities or leadership alignment.",
       domains: ["evidence_sources"],
     },
     {
       id: "ctx_ecl_scope_value_linkage_001",
-      statement: performanceRows.length
+      statement: spendRows.length || metricRows.length || aiRows.length
+        ? `Spend, metric, and AI value evidence is supplied by ${spendRows.length.toLocaleString()} spend rows, ${metricRows.length.toLocaleString()} metric rows, and ${aiRows.length.toLocaleString()} AI value/usage/KPI rows; value claims must separate source-recorded opportunity, finance-attested value, and blocked/unverified claims.`
+        : performanceRows.length
         ? `The performance and value chapter has ${performanceRows.length.toLocaleString()} ready evidence items, but the Home narrative input does not establish a complete value chain from spend to programs, KPIs, finance attestation, and realized benefit.`
         : "Contract values and application costs are present, but program, KPI, finance-attestation, and realized-benefit mappings are not supplied by the current Home narrative input; value claims should name that limitation instead of implying measured outcomes.",
       domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
@@ -1186,7 +1552,7 @@ function buildScopeContextItems(args: {
       id: "ctx_ecl_scope_source_breadth_001",
       statement:
         sourceSummaries.length > 0
-          ? `The source ledger contributes ${sourceSummaries.length.toLocaleString()} source-family summaries across ${sourceFamilies.toLocaleString()} source families and ${sourceRows.toLocaleString()} raw source rows; those summaries describe coverage breadth, not proof for a tenant-specific business claim.`
+          ? `The source ledger contributes ${sourceSummaries.length.toLocaleString()} source-family summaries across ${sourceFamilies.toLocaleString()} source families and ${rawSourceRowCount.toLocaleString()} raw source rows; those summaries describe coverage breadth, not proof for a tenant-specific business claim.`
           : "No source-family summary ledger is present in the current Home narrative input; coverage breadth cannot be used to support business claims.",
       domains: ["evidence_sources"],
     },
@@ -1465,6 +1831,217 @@ function buildDeterministicHomeSignals(args: {
   return signals;
 }
 
+function buildSourceFamilyHomeSignals(sourceRows: EclSourceRecordSummaryRow[], sourceContextItems: ContextItem[]): Signal[] {
+  const contextIds = new Set(sourceContextItems.map((item) => item.id));
+  const signals: Signal[] = [];
+  const add = (
+    id: string,
+    kind: Signal["kind"],
+    statement: string | null,
+    domains: string[],
+    evidenceRefs: string[],
+    value?: number,
+  ) => {
+    const refs = evidenceRefs.filter((ref) => contextIds.has(ref));
+    if (!statement || refs.length === 0) return;
+    signals.push({ id, kind, statement, domains, evidenceRefs: refs, ...(value === undefined ? {} : { value }) });
+  };
+
+  const profileRows = sourceFileRows(sourceRows, /00_enterprise_profile/i);
+  const profile = profileRows[0] ? rowPayload(profileRows[0]) : {};
+  const segmentRows = sourceFileRows(sourceRows, /01b_business_segments/i);
+  const revenue = rawNumber(payloadField(profile, "revenue_usd", "revenueUsd", "revenue"));
+  const employeeCount = rawNumber(payloadField(profile, "employee_count", "employeeCount"));
+  const industry = payloadField(profile, "industry");
+  const subIndustry = payloadField(profile, "sub_industry", "subIndustry");
+  const businessModel = payloadField(profile, "business_model", "businessModel");
+  const priorities = splitSourceList(payloadField(profile, "strategic_priorities", "strategicPriorities"));
+  const segmentNames = segmentRows
+    .map((row) => {
+      const data = rowPayload(row);
+      const name = payloadField(data, "segment_name", "segmentName");
+      const share = payloadField(data, "revenue_share_pct", "revenueSharePct");
+      return name ? `${name}${share ? ` (${share}%)` : ""}` : null;
+    })
+    .filter((value): value is string => Boolean(value));
+  add(
+    "sig_ecl_source_enterprise_identity_020",
+    "portfolio",
+    profileRows.length
+      ? `Enterprise profile identifies the organization as ${industry ?? "a healthcare enterprise"}${subIndustry ? ` in ${subIndustry}` : ""}${revenue ? ` with ${formatUsdNumber(revenue)} revenue` : ""}${employeeCount ? ` and ${Math.round(employeeCount).toLocaleString()} employees` : ""}; its business model is ${businessModel ?? "not separately stated"}, and declared operating segments include ${compactList(segmentNames, 6)}.`
+      : null,
+    ["tenant_profile", "business_model", "business_function"],
+    ["ctx_ecl_source_enterprise_profile_001", "ctx_ecl_source_business_segments_001", "ctx_ecl_source_customer_segments_001"],
+    revenue,
+  );
+  add(
+    "sig_ecl_source_strategy_priorities_021",
+    "portfolio",
+    priorities.length
+      ? `The enterprise profile declares strategic priorities: ${compactList(priorities, 8)}. These priorities are source-recorded context for the Home strategy story; they are not to be replaced by application or vendor trivia.`
+      : null,
+    ["tenant_profile", "program_initiative", "business_model"],
+    ["ctx_ecl_source_strategic_priorities_001", "ctx_ecl_source_enterprise_mission_001", "ctx_ecl_source_enterprise_vision_001"],
+  );
+
+  const programRows = sourceFileRows(sourceRows, /09_programs_initiatives/i);
+  const programBudget = sumSourceNumber(programRows, "budget_usd");
+  const expectedValue = sumSourceNumber(programRows, "expected_value_usd");
+  const blockedPrograms = programRows.filter((row) => payloadField(rowPayload(row), "blocked_reason", "known_gaps", "risks"));
+  add(
+    "sig_ecl_source_program_portfolio_022",
+    "change",
+    programRows.length
+      ? `The program portfolio source records ${programRows.length.toLocaleString()} programs with ${formatUsdNumber(programBudget)} budget and ${formatUsdNumber(expectedValue)} expected value; ${blockedPrograms.length.toLocaleString()} rows carry a blocker, risk, or known gap.`
+      : null,
+    ["program_initiative", "spend_value_fact", "risk_control"],
+    ["ctx_ecl_source_program_portfolio_001"],
+    expectedValue,
+  );
+
+  const spendRows = sourceFileRows(sourceRows, /08_spend_value/i);
+  const spend = sumSourceNumber(spendRows, "annual_spend_usd");
+  const opportunity = sumSourceNumber(spendRows, "savings_opportunity_usd");
+  add(
+    "sig_ecl_source_spend_value_023",
+    "portfolio",
+    spendRows.length
+      ? `Spend and value source records ${formatUsdNumber(spend)} annual spend and ${formatUsdNumber(opportunity)} declared savings opportunity across ${spendRows.length.toLocaleString()} categories; this is the spend/value denominator for Home, separate from application annual cost and contract annualized value.`
+      : null,
+    ["spend_value_fact", "performance_metric", "business_function"],
+    ["ctx_ecl_source_spend_value_001"],
+    spend,
+  );
+
+  const metricRows = sourceFileRows(sourceRows, /14_metrics_outcomes/i);
+  const readyMetrics = countSourceRows(metricRows, "claim_readiness", /claimable|ready/i);
+  const blockedMetrics = metricRows.filter((row) => payloadField(rowPayload(row), "claim_blocked_reason", "blocked_reason")).length;
+  const financeAttested = sumSourceNumber(metricRows, "finance_attested_value_usd");
+  add(
+    "sig_ecl_source_metrics_readiness_024",
+    "data_quality",
+    metricRows.length
+      ? `Metrics and outcomes source records ${metricRows.length.toLocaleString()} metrics: ${readyMetrics.toLocaleString()} claimable or ready, ${blockedMetrics.toLocaleString()} carrying blocker evidence, and ${formatUsdNumber(financeAttested)} finance-attested value.`
+      : null,
+    ["performance_metric", "spend_value_fact", "risk_control"],
+    ["ctx_ecl_source_metrics_outcomes_001"],
+    financeAttested,
+  );
+
+  const orgRows = sourceFileRows(sourceRows, /02_org_ownership/i);
+  const orgBudget = sumSourceNumber(orgRows, "budget_authority_usd");
+  const orgHeadcount = sumSourceNumber(orgRows, "headcount");
+  add(
+    "sig_ecl_source_org_accountability_025",
+    "workforce",
+    orgRows.length
+      ? `Organization ownership source records ${orgRows.length.toLocaleString()} accountability rows, ${Math.round(orgHeadcount).toLocaleString()} headcount, and ${formatUsdNumber(orgBudget)} budget authority, giving Home a leadership-accountability substrate beyond application ownership.`
+      : null,
+    ["organization", "workforce", "spend_value_fact"],
+    ["ctx_ecl_source_org_accountability_001", "ctx_ecl_source_business_functions_001"],
+    orgBudget,
+  );
+
+  const interviewRows = sourceFileRows(sourceRows, /SA10_AI_Value_Interview_Evidence/i);
+  add(
+    "sig_ecl_source_leadership_voice_026",
+    "testimony",
+    interviewRows.length
+      ? `Leadership and operator interview evidence contributes ${interviewRows.length.toLocaleString()} source rows; Home may use it for leadership themes only when the visible claim cites the interview evidence, not as free-form sentiment.`
+      : null,
+    ["leadership_voice", "ai_value_interview_evidence", "tenant_profile"],
+    ["ctx_ecl_source_leadership_excerpts_001"],
+    interviewRows.length,
+  );
+
+  const riskRows = sourceFileRows(sourceRows, /11_risks_controls/i);
+  const highSeverity = countSourceRows(riskRows, "severity", /high|critical/i);
+  add(
+    "sig_ecl_source_risk_control_027",
+    "risk",
+    riskRows.length
+      ? `Risk and controls source records ${riskRows.length.toLocaleString()} risks or controls, including ${highSeverity.toLocaleString()} high or critical severity rows, so executive risk must be grounded in the named risk/control register rather than inferred from system age alone.`
+      : null,
+    ["risk_control", "business_function", "application_system"],
+    ["ctx_ecl_source_risks_controls_001"],
+    highSeverity,
+  );
+
+  const aiUseCases = sourceFileRows(sourceRows, /10_ai_automation_use_cases/i);
+  const aiBenefits = sourceFileRows(sourceRows, /SA08_AI_Benefits_Realization_Usage_Ledger/i);
+  const aiTools = sourceFileRows(sourceRows, /SA09_AI_Tool_Usage_Feed/i);
+  const aiKpis = sourceFileRows(sourceRows, /SA11_AI_KPI_Operational_Outcome_Feed/i);
+  add(
+    "sig_ecl_source_ai_value_028",
+    "ai_value",
+    aiUseCases.length || aiBenefits.length || aiTools.length || aiKpis.length
+      ? `AI evidence spans ${aiUseCases.length.toLocaleString()} use cases, ${aiBenefits.length.toLocaleString()} benefit rows, ${aiTools.length.toLocaleString()} tool-usage rows, and ${aiKpis.length.toLocaleString()} KPI rows, allowing Home to distinguish AI ambition, usage, and measured outcome instead of collapsing them into one adoption story.`
+      : null,
+    ["ai_value", "performance_metric", "workforce", "business_function"],
+    ["ctx_ecl_source_ai_value_001", "ctx_ecl_source_workforce_roles_001"],
+  );
+
+  const serviceRows = sourceFileRows(sourceRows, /17_service_scope_managed_services/i);
+  const processRows = sourceFileRows(sourceRows, /18_operational_process_evidence/i);
+  add(
+    "sig_ecl_source_operating_model_029",
+    "operational",
+    serviceRows.length || processRows.length
+      ? `Operating-model evidence includes ${serviceRows.length.toLocaleString()} managed-services scope rows and ${processRows.length.toLocaleString()} operational-process rows, giving Home a process and service-delivery view in addition to system inventory.`
+      : null,
+    ["operational_process", "vendor_contract", "business_function"],
+    ["ctx_ecl_source_managed_services_001", "ctx_ecl_source_operational_process_001"],
+  );
+
+  const maturityRows = sourceFileRows(sourceRows, /19_data_analytics_platform_maturity/i);
+  add(
+    "sig_ecl_source_data_analytics_maturity_030",
+    "data_quality",
+    maturityRows.length
+      ? `Data and analytics maturity source contributes ${maturityRows.length.toLocaleString()} assessments; Home should use these maturity rows when explaining analytics capability, not ask leaders to reconfirm ETL, report, or job counts already present in the record.`
+      : null,
+    ["data_asset_or_integration", "infrastructure_platform", "performance_metric"],
+    ["ctx_ecl_source_data_analytics_maturity_001"],
+  );
+
+  return signals;
+}
+
+function emitHomeNarrativeProofBundle(outFile: string, result: unknown, options: CliOptions) {
+  const proofRoot = fs.mkdtempSync(path.join(os.tmpdir(), "home-ecl-narrative-proof-"));
+  const proofDir = path.join(proofRoot, "home-ecl-narrative-proof");
+  fs.mkdirSync(proofDir, { recursive: true });
+  const resultPath = path.join(proofDir, path.basename(outFile));
+  fs.copyFileSync(outFile, resultPath);
+  const summaryPath = path.join(proofDir, "summary.json");
+  fs.writeFileSync(
+    summaryPath,
+    `${JSON.stringify({
+      tenantKey: options.tenantKey,
+      assessmentId: options.assessmentId,
+      writeApplied: WRITE,
+      resultFile: path.basename(outFile),
+      proofGeneratedAt: new Date().toISOString(),
+      resultHash: hashJson(result),
+    }, null, 2)}\n`,
+  );
+  const tarPath = path.join(proofRoot, "home-ecl-narrative-proof.tgz");
+  const tar = spawnSync("tar", ["-czf", tarPath, "-C", proofRoot, "home-ecl-narrative-proof"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (tar.status !== 0) {
+    console.log(`! Home narrative proof bundle could not be archived: ${tar.stderr || tar.stdout || "tar failed"}`);
+    return;
+  }
+  const encoded = fs.readFileSync(tarPath).toString("base64");
+  console.log("__HOME_ECL_NARRATIVE_PROOF_TGZ_BEGIN__");
+  for (let index = 0; index < encoded.length; index += 7600) {
+    console.log(encoded.slice(index, index + 7600));
+  }
+  console.log("__HOME_ECL_NARRATIVE_PROOF_TGZ_END__");
+}
+
 function buildGovernedSignalPacket(
   rows: HomeProjectionWriteRow[],
   tenantKey: string,
@@ -1504,6 +2081,7 @@ function buildGovernedSignalPacket(
   const permittedDataWorkloads = dataWorkloadRows(permittedRows);
   const contractSpend = permittedContracts.reduce((sum, row) => sum + payloadNumber(payload(row), "annualized_value_usd", "annual_spend_usd"), 0);
   const vendorRows = topSpendShareRows(permittedContracts, "supplier_name", "annualized_value_usd", 8);
+  const sourceContextItems = buildSourceRecordContextItems(sourceRows);
   const rawSignals = buildDeterministicHomeSignals({
     permittedApplications,
     permittedContracts,
@@ -1514,6 +2092,7 @@ function buildGovernedSignalPacket(
     contractSpend,
     vendorRows,
   });
+  rawSignals.unshift(...buildSourceFamilyHomeSignals(sourceRows, sourceContextItems));
   const signalCandidates = rawSignals.map((signal) => governedCandidateForSignal(signal, tenantKey, renderedAt));
   const validatedSignals = buildValidatedAgentContextBundle(signalCandidates, { requireAgentReady: true });
   const usableSignalIds = new Set(validatedSignals.usable.map((candidate) => candidate.id));
@@ -1525,8 +2104,8 @@ function buildGovernedSignalPacket(
       statement: `The current evidence package is synthetic and not client-attested; executive conclusions must preserve that limitation.`,
       domains: ["enterprise_profile", "evidence_sources"],
     },
-    ...buildSourceRecordContextItems(sourceRows),
-    ...buildScopeContextItems({ rows, sourceSummaries }),
+    ...sourceContextItems,
+    ...buildScopeContextItems({ rows, sourceSummaries, sourceRows }),
     ...validatedRows.usable
       .map((candidate) => {
         const content = rowContentByCandidateId.get(candidate.id);
@@ -1643,6 +2222,7 @@ async function readEclSourceRecordRows(db: Client, tenantKey: string, assessment
   const result = await db.query<EclSourceRecordSummaryRow>(
     `
       select
+        r.id::text as source_record_id,
         f.file_name,
         f.source_type,
         f.origin,
@@ -2486,7 +3066,9 @@ async function main() {
     const rows = await readHomeProjectionRows(db, options.tenantKey, options.assessmentId);
     if (rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
 
-    const sourceRows = await readEclSourceRecordRows(db, options.tenantKey, options.assessmentId);
+    const dbSourceRows = await readEclSourceRecordRows(db, options.tenantKey, options.assessmentId);
+    const activeSourceRows = readActiveTenantSourceRows(options.tenantKey);
+    const sourceRows = mergeSourceRows(dbSourceRows, activeSourceRows);
     const sourceSummaries = buildEclSourceSummaries(sourceRows);
     const { signalPacket, contextPolicyProof } = buildGovernedSignalPacket(
       rows,
@@ -2499,6 +3081,7 @@ async function main() {
       `${options.tenantKey}/${options.assessmentId}: ${rows.length} Home projection rows -> ` +
         `${signalPacket.signals.length} signals, ${signalPacket.contextItems.length} context items, ` +
         `${signalPacket.sourceSummaries.length} source summaries; ` +
+        `${activeSourceRows.length.toLocaleString()} active intake source rows; ` +
         `${contextPolicyProof.usable_count}/${contextPolicyProof.candidate_count} governed candidates usable`,
     );
     console.log(`row readiness: ${JSON.stringify(contextPolicyProof.row_readiness_counts)}`);
@@ -2580,6 +3163,7 @@ async function main() {
       context_item_count: signalPacket.contextItems.length,
       source_summary_count: signalPacket.sourceSummaries.length,
       source_summary_rows: signalPacket.sourceSummaries.reduce((sum, item) => sum + (item.rawRowCount ?? item.recordCount), 0),
+      active_source_file_rows: activeSourceRows.length,
       chapter_count: chapters.length,
       chapter_claim_rows: chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0),
       thesis_prompt_version: THESIS_PROMPT_VERSION,
@@ -2589,8 +3173,7 @@ async function main() {
       verification: verificationSummary,
       out_file: outFile,
     }));
-
-    console.log(`__HOME_ECL_NARRATIVE_RESULT_BEGIN__${JSON.stringify(result)}__HOME_ECL_NARRATIVE_RESULT_END__`);
+    emitHomeNarrativeProofBundle(outFile, result, options);
   } finally {
     await db.end();
   }

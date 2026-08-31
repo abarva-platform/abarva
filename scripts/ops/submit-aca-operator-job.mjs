@@ -451,6 +451,11 @@ function extractProofBundle(logText, outDir) {
       end: "__ECL_SUBSTRATE_BASELINE_TGZ_END__",
       marker: "ecl_substrate_baseline",
     },
+    {
+      begin: "__HOME_ECL_NARRATIVE_PROOF_TGZ_BEGIN__",
+      end: "__HOME_ECL_NARRATIVE_PROOF_TGZ_END__",
+      marker: "home_ecl_narrative",
+    },
   ];
   const lines = logText.split(/\r?\n/);
   const payload = [];
@@ -856,6 +861,16 @@ function selfTest() {
   const baselineMarkerResult = extractProofBundle(baselineMarkerLogText, baselineMarkerDir);
   if (!baselineMarkerResult.extracted || baselineMarkerResult.marker !== "ecl_substrate_baseline") {
     throw new Error(`ECL baseline proof extraction self-test failed: ${JSON.stringify(baselineMarkerResult)}`);
+  }
+  const homeMarkerDir = fs.mkdtempSync(path.join(os.tmpdir(), "aca-operator-home-ecl-narrative-proof-self-test-"));
+  const homeMarkerLogText = [
+    "2026-01-01 stdout F __HOME_ECL_NARRATIVE_PROOF_TGZ_BEGIN__",
+    `2026-01-01 stdout F ${encoded}`,
+    "2026-01-01 stdout F __HOME_ECL_NARRATIVE_PROOF_TGZ_END__",
+  ].join("\n");
+  const homeMarkerResult = extractProofBundle(homeMarkerLogText, homeMarkerDir);
+  if (!homeMarkerResult.extracted || homeMarkerResult.marker !== "home_ecl_narrative") {
+    throw new Error(`Home ECL narrative proof extraction self-test failed: ${JSON.stringify(homeMarkerResult)}`);
   }
   const eventDir = fs.mkdtempSync(path.join(os.tmpdir(), "aca-operator-json-event-self-test-"));
   const eventLogText = [
