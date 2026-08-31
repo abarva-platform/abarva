@@ -16,6 +16,8 @@ import type {
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
 import { chapterDepth } from "./chapter-page-content";
+import { buildBusinessBriefing } from "./business-briefing";
+import { BusinessBriefingSections } from "./BusinessBriefing";
 import { DataFlowPage } from "./DataFlowPage";
 import { ExecutiveStoryPage } from "./ExecutiveStoryPage";
 import { NotDraftedPage } from "./NotDraftedPage";
@@ -318,6 +320,10 @@ export function HomeV4App({
                 })}
               />
             )
+          ) : null}
+
+          {activeChapter && (activeChapter.chapterId === "executive_brief" || activeChapter.chapterId === "our_business") ? (
+            <BusinessBriefingSections briefing={buildBusinessBriefing(signalPacket)} />
           ) : null}
 
           {activeView === "architecture" && applications ? (

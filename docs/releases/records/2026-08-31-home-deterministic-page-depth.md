@@ -43,6 +43,11 @@ Release lane: `global-control-lane`.
   number in the locked v4 system.
 - `src/components/home/v4/chapter-page-content.ts` (new) — which estate families each chapter draws
   on, and de-duplication when two families produce the same finding.
+- `src/components/home/v4/business-briefing.ts` + `BusinessBriefing.tsx` (new) — the
+  day-one briefing for the two chapters that answer "what is this company": how the money
+  is made, the declared priorities verbatim, the leadership position as consensus/dissent/
+  contradiction counts, quotes attributed by role, the industry patterns recorded as applying here,
+  and the questions this record cannot answer.
 - `src/components/home/v4/ChapterPage.tsx` — renders the depth after the readout.
 - `src/components/home/v4/NotDraftedPage.tsx` — renders the same depth, and says the narrative is
   missing rather than implying the record is.
@@ -58,7 +63,7 @@ component — a chapter whose rows produce nothing renders no block at all.
 
 ## QA / Validation
 
-- PASS `npx jest src/components/home/v4/__tests__` — 39/39, six suites, no regression
+- PASS `npx jest src/components/home/v4/__tests__` — 47/47, seven suites, no regression
 - PASS `npx eslint` on all eight changed or added files
 - PASS `tsc --noEmit -p tsconfig.json` (full project)
 
@@ -101,11 +106,28 @@ return to their prior render.
 - Test output for both new suites, including the three planted failures.
 - The rendered table and finding text captured from the jsdom render of the current snapshot.
 
+### What the briefing renders
+
+Against the current snapshot: the business model and revenue split as declared, five corporate
+priorities verbatim, four consensus themes each raised by 44 of 44 interviewed leaders, two minority
+views, the 127-of-996 contradiction between testimony and system record, five attributed quotes, and
+twelve industry patterns the record states apply here.
+
+Three questions are named as unanswerable from this intake — competitors and market share, external
+benchmarks, and why each industry pattern applies. The last one is a packet gap rather than an
+intake gap: the recorded business context, applicability and caveats exist in the intake and are not
+carried into the packet, which reaches the page as titles only.
+
 ## Known Gaps
 
 - **Verified by render, not by browser.** The jsdom harness the repo already uses for Home proof
   confirms the content; a signed-in browser check is still owed before this is called live-proven.
 - **Five chapters are mapped to estate families; three are not.** Chapters answering questions the
   estate files do not carry render no table set, deliberately.
-- **The interpretive layer is untouched.** This adds what can be counted. What a pattern means still
-  comes from the narrative path, which remains the open problem.
+- **The interpretive layer is untouched.** This adds what can be counted and what was declared. What
+  a pattern *means* still comes from the narrative path, which remains the open problem.
+- **Industry patterns reach the page as titles.** Their recorded business context and applicability
+  are in the intake and are dropped by the packet builder. One packet change would make the richest
+  strategic content in the intake citable.
+- **No competitor or benchmark data exists anywhere in the intake.** Named on the page rather than
+  left silent.
