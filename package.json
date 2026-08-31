@@ -956,7 +956,8 @@
     "test:ecl-four-lane-status": "node scripts/ecl/__tests__/run-ecl-four-lane-status-tests.mjs",
     "tower:healthcare-demo-layer4-products:purge-job": "TOWER_LAYER4_PURGE_ONLY=true TOWER_LAYER4_AZURE_WRITE_APPROVED=true TOWER_LAYER4_EMIT_PROOF_BUNDLE=true node scripts/tower/load-healthcare-demo-layer4-products.mjs",
     "test:layer4-purge-mode": "node scripts/tower/__tests__/run-layer4-purge-mode-tests.mjs",
-    "test:layer4-freshness-stamp": "node scripts/tower/__tests__/run-layer4-freshness-stamp-tests.mjs"
+    "test:layer4-freshness-stamp": "node scripts/tower/__tests__/run-layer4-freshness-stamp-tests.mjs",
+    "check:intake-family-coverage": "tsx scripts/data-build/check-intake-family-coverage.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
