@@ -2647,6 +2647,13 @@ function visibleNarrativeQualityIssues(
 ): string[] {
   const issues: string[] = [];
   const workloadContextLoaded = dataWorkloadContextLoaded(signalPacket);
+  const refusalLikePublishedText =
+    /\b(?:deferred pending stronger evidence|does not yet support a board-ready answer|does not yet connect enough verified statements|evidence needs resolution before executive use|not ready for executive review)\b/i;
+  for (const chapter of chapters) {
+    if (chapterHasSubstantiveContent(chapter) && refusalLikePublishedText.test(`${chapter.headline} ${chapter.executive_synthesis}`)) {
+      issues.push(`published_chapter_contains_refusal_language:${chapter.chapterId}`);
+    }
+  }
   for (const item of visibleNarrativeText(thesisResult, chapters)) {
     for (const forbidden of CXO_FORBIDDEN_VISIBLE_PATTERNS) {
       if (forbidden.pattern.test(item.text)) {

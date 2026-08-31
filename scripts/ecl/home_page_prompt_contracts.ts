@@ -332,6 +332,10 @@ export const HOME_PAGE_PROMPT_CONTRACT = {
         "known_gaps"
       ],
       "source_layer_reads": [
+        "datasets/tenant-inputs/active/<tenant>/current/00_enterprise_profile.csv",
+        "datasets/tenant-inputs/active/<tenant>/current/09_programs_initiatives.csv",
+        "datasets/tenant-inputs/active/<tenant>/current/14_metrics_outcomes.csv",
+        "datasets/tenant-inputs/active/<tenant>/current/SA10_AI_Value_Interview_Evidence.csv",
         "serving.home_strategy_value_creation",
         "serving.tower_value_chain",
         "ecl_context.measure"
@@ -359,6 +363,11 @@ export const HOME_PAGE_PROMPT_CONTRACT = {
         "known_gaps"
       ],
       "source_layer_reads": [
+        "datasets/tenant-inputs/active/<tenant>/current/01_business_functions.csv",
+        "datasets/tenant-inputs/active/<tenant>/current/02_org_ownership.csv",
+        "datasets/tenant-inputs/active/<tenant>/current/03_workforce_roles.csv",
+        "datasets/tenant-inputs/active/<tenant>/current/17_service_scope_managed_services.csv",
+        "datasets/tenant-inputs/active/<tenant>/current/18_operational_process_evidence.csv",
         "serving.home_how_we_operate",
         "ecl_context.relationship",
         "ecl_context.object"
