@@ -266,20 +266,25 @@ export function WorkspaceExecutiveShell({
               <span>As of</span>
               <b>{fmtDate(portfolio.asOfDateIso)}</b>
             </div>
-            <div className="sw-v2-control sw-v2-control-actions">
+            <div
+              className="sw-v2-control sw-v2-control-actions"
+              aria-label="Workspace action toolbar"
+            >
               <span>Actions</span>
-              <div>
+              <div className="sw-v2-action-toolbar-buttons">
                 <button
                   type="button"
+                  className="sw-v2-action-button"
                   onClick={() => logic.select("evidence", null, "Coverage")}
                 >
-                  Evidence
+                  <span>Evidence</span>
                 </button>
                 <button
                   type="button"
+                  className="sw-v2-action-button"
                   onClick={() => logic.select("graph", null, "Flow")}
                 >
-                  Graph
+                  <span>Graph</span>
                 </button>
               </div>
             </div>
