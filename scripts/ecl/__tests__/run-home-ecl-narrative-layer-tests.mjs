@@ -644,8 +644,18 @@ assert(
     chapters.includes("operatingAccountability") &&
     chapters.includes("leadershipClaims") &&
     chapters.includes("PUBLISHED_REFUSAL_LANGUAGE_RE") &&
+    chapters.includes("GENERIC_ATTENTION_HEADLINE_RE") &&
+    chapters.includes("function claimBackedNarrativeNeedsFallback") &&
+    chapters.includes("post_synthesis_refusal_language_fallback") &&
     chapters.includes("deterministicClaimBasedChapterNarrative"),
   "Home chapter assembly routes organization/workforce/process evidence to How We Operate and prevents claim-backed chapters from rendering as generic refusals",
+);
+assert(
+  chapters.includes("current governed record does not yet support") &&
+    chapters.includes("keep this chapter in review until") &&
+    chapters.includes("The executive attention agenda is grounded in") &&
+    chapters.includes("Use this page to assign owners, evidence, and next decisions for the named blockers"),
+  "Home chapter assembly has an attention-specific deterministic fallback for claim-backed refusal-like prose",
 );
 assert(
   script.includes("published_chapter_contains_refusal_language") &&
