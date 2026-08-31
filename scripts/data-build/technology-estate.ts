@@ -11,11 +11,26 @@
 
 import type { CanonicalIngestionRecord } from "../../src/lib/enterprise-data/contracts/canonical-ingestion";
 
+/**
+ * The record types a product surface can browse.
+ *
+ * The first four are the technology estate this file was named for. The rest are the intake
+ * families the Home projection now carries -- metrics, risks, programs, org ownership and AI use
+ * cases -- which are browsable records in exactly the same sense even though "technology estate" is
+ * no longer the right name for the set. Renaming the bundle field would ripple through the checked-in
+ * snapshots and every type that reads them; adding the types is additive and safe, so the name is
+ * left alone deliberately rather than by oversight.
+ */
 export const TECH_OBJECT_TYPES = [
   "application_system",
   "vendor_contract",
   "infrastructure_platform",
   "data_asset_or_integration",
+  "metric_outcome",
+  "risk_control",
+  "program_initiative",
+  "organization_ownership",
+  "ai_use_case",
 ] as const;
 export type TechObjectType = (typeof TECH_OBJECT_TYPES)[number];
 
@@ -24,6 +39,11 @@ const TECH_OBJECT_TYPE_LABELS: Record<TechObjectType, string> = {
   vendor_contract: "Vendor Contracts",
   infrastructure_platform: "Infrastructure & Platforms",
   data_asset_or_integration: "Data Assets & Integrations",
+  metric_outcome: "Metrics & Outcomes",
+  risk_control: "Risks & Controls",
+  program_initiative: "Programs & Initiatives",
+  organization_ownership: "Organization & Ownership",
+  ai_use_case: "AI & Automation Use Cases",
 };
 
 /** The one attribute per object type that answers "which business need does this serve" --
@@ -39,6 +59,11 @@ const PRIMARY_DIMENSION_KEY: Record<TechObjectType, string> = {
   vendor_contract: "serviceCategory",
   infrastructure_platform: "platformType",
   data_asset_or_integration: "dataDomain",
+  metric_outcome: "metricDomain",
+  risk_control: "riskDomain",
+  program_initiative: "status",
+  organization_ownership: "roleLevel",
+  ai_use_case: "currentStatus",
 };
 
 /** Fields every canonical record carries that describe the record's own provenance/ingestion

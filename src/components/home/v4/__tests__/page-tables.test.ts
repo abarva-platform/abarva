@@ -9,6 +9,10 @@ import {
   infrastructureFindings,
   dataTables,
   dataFindings,
+  riskFindings,
+  riskTables,
+  metricFindings,
+  metricTables,
   unsupportedApplicationViews,
   constantColumns,
   costBasis,
@@ -351,5 +355,68 @@ describe("commercial and platform depth", () => {
       /data assets sit on/.test(f.claim),
     );
     expect(finding?.claim).toMatch(/of them regulated/);
+  });
+});
+
+describe("the intake families the projection now carries", () => {
+  const metrics: EstateRow[] = [
+    { metricName: "A", claimReadiness: "claimable" },
+    {
+      metricName: "B",
+      claimReadiness: "pending_attestation",
+      claimBlockedReason: "cohort disputed",
+      unblockAction: "agree the cohort",
+      unblockTargetPeriod: "FY2027 Q2",
+    },
+    {
+      metricName: "C",
+      claimReadiness: "not_ready",
+      claimBlockedReason: "not separable",
+      unblockAction: "agree attribution",
+    },
+  ];
+  const riskRows: EstateRow[] = [
+    { riskOrControlName: "R1", severity: "high", controlStatus: "open", riskDomain: "data_privacy", remediationCostUsd: "500000", regulatoryDriver: "yes" },
+    { riskOrControlName: "R2", severity: "high", controlStatus: "operating", riskDomain: "operational", remediationCostUsd: "250000" },
+    { riskOrControlName: "R3", severity: "low", controlStatus: "operating", riskDomain: "operational" },
+  ];
+
+  // The unblock list is the agenda. A count of blocked claims is not actionable; a named action
+  // against a named period is, and every blocked claim in the record carries both.
+  it("renders the unblock action beside the reason, not just a count", () => {
+    const table = metricTables(metrics).find(
+      (t) => t.caption === "What would unblock each claim",
+    );
+    expect(table?.wide).toBe(true);
+    expect(table?.columns).toEqual(["Metric", "Blocked because", "Unblock action", "By"]);
+    expect(table?.rows[0]).toContain("agree the cohort");
+  });
+
+  it("says when an unblock action carries no period, because an action with no date is an intention", () => {
+    const finding = metricFindings(metrics).find((f) =>
+      /carry no target period/.test(f.claim),
+    );
+    expect(finding?.claim).toMatch(/^1 unblock action/);
+  });
+
+  it("reads the register's own severity against its own control state", () => {
+    const finding = riskFindings(riskRows).find((f) =>
+      /no operating control/.test(f.claim),
+    );
+    expect(finding?.claim).toBe("One high-severity risk has no operating control: R1.");
+    expect(finding?.kind).toBe("exposure");
+  });
+
+  it("sums remediation from the rows rather than asserting a total", () => {
+    expect(
+      riskFindings(riskRows).find((f) => /remediate the whole register/.test(f.claim))?.claim,
+    ).toMatch(/\$750k/);
+  });
+
+  it("builds nothing at all from a family the projection has not loaded", () => {
+    expect(metricTables([])).toEqual([]);
+    expect(metricFindings([])).toEqual([]);
+    expect(riskTables([])).toEqual([]);
+    expect(riskFindings([])).toEqual([]);
   });
 });

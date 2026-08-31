@@ -51,6 +51,67 @@ export interface HomeProjectionRow {
 }
 
 const COLUMN_ORDER: Record<TechObjectType, string[]> = {
+  metric_outcome: [
+    "metricName",
+    "metricDomain",
+    "businessFunction",
+    "baselineValue",
+    "targetValue",
+    "actualValue",
+    "claimReadiness",
+    "valueClaimStatus",
+    "claimBlockedReason",
+    "unblockAction",
+    "unblockTargetPeriod",
+    "owner",
+  ],
+  risk_control: [
+    "riskOrControlName",
+    "riskDomain",
+    "businessFunction",
+    "severity",
+    "likelihood",
+    "controlStatus",
+    "systemsImpacted",
+    "remediationCostUsd",
+    "regulatoryDriver",
+    "controlOwner",
+  ],
+  program_initiative: [
+    "programName",
+    "status",
+    "phase",
+    "pctComplete",
+    "budgetUsd",
+    "expectedValueUsd",
+    "stageGate",
+    "blockedReason",
+    "businessSponsor",
+    "technologyOwner",
+  ],
+  organization_ownership: [
+    "orgUnit",
+    "leaderNameOrRole",
+    "roleLevel",
+    "decisionRights",
+    "budgetAuthorityUsd",
+    "ownedFunctions",
+    "ownedSystems",
+    "ownedDataDomains",
+    "headcount",
+  ],
+  ai_use_case: [
+    "useCaseName",
+    "businessSegment",
+    "businessFunction",
+    "currentStatus",
+    "aiPattern",
+    "functionType",
+    "officeLensAbarva",
+    "valueClaimStatus",
+    "financeValidatedValueUsd",
+    "realizedValueAllowed",
+  ],
   application_system: [
     "systemName",
     "businessFunction",
@@ -127,6 +188,11 @@ const LABELS: Record<TechObjectType, string> = {
   vendor_contract: "Vendor Contracts",
   infrastructure_platform: "Infrastructure & Platforms",
   data_asset_or_integration: "Data Assets & Integrations",
+  metric_outcome: "Metrics & Outcomes",
+  risk_control: "Risks & Controls",
+  program_initiative: "Programs & Initiatives",
+  organization_ownership: "Organization & Ownership",
+  ai_use_case: "AI & Automation Use Cases",
 };
 
 const PRIMARY_DIMENSION: Record<TechObjectType, string> = {
@@ -134,12 +200,37 @@ const PRIMARY_DIMENSION: Record<TechObjectType, string> = {
   vendor_contract: "serviceCategory",
   infrastructure_platform: "platformType",
   data_asset_or_integration: "dataDomain",
+  metric_outcome: "metricDomain",
+  risk_control: "riskDomain",
+  program_initiative: "status",
+  organization_ownership: "roleLevel",
+  ai_use_case: "currentStatus",
 };
 
 const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<
   TechObjectType,
   { domain: string; sourcePath: string; authority?: string[] }
 > = {
+  metric_outcome: {
+    domain: "metric_outcome",
+    sourcePath: "serving.home_metrics_outcomes",
+  },
+  risk_control: {
+    domain: "risk_control",
+    sourcePath: "serving.home_risks_controls",
+  },
+  program_initiative: {
+    domain: "program_initiative",
+    sourcePath: "serving.home_programs_initiatives",
+  },
+  organization_ownership: {
+    domain: "organization_ownership",
+    sourcePath: "serving.home_org_ownership",
+  },
+  ai_use_case: {
+    domain: "ai_use_case",
+    sourcePath: "serving.home_ai_use_cases",
+  },
   application_system: {
     domain: "application_system",
     sourcePath: "serving.home_applications_systems",
@@ -248,6 +339,129 @@ function rowPayload(row: HomeProjectionRow): JsonRecord {
   )
     return payload;
   return { ...payload, ...(nestedPayload as JsonRecord) };
+}
+
+/**
+ * The five intake families the projection now carries.
+ *
+ * The loader puts the whole intake row into the payload, so the keys here are the CSV's own column
+ * names. Each mapper renames to camelCase and does nothing else: no defaulting, no deriving, no
+ * filling. A field the intake did not record stays undefined, which is what lets a surface say the
+ * view cannot be built rather than showing a zero that reads as an assessment.
+ */
+function metricOutcomeRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  return {
+    metricName: text(payload.metric_name) ?? row.title,
+    metricDomain: text(payload.metric_domain),
+    businessFunction: text(payload.business_function),
+    definition: text(payload.definition),
+    baselineValue: text(payload.baseline_value),
+    baselinePeriod: text(payload.baseline_period),
+    targetValue: text(payload.target_value),
+    actualValue: text(payload.actual_value),
+    owner: text(payload.owner),
+    dataSource: text(payload.data_source),
+    financeAttestedValueUsd: numberValue(payload.finance_attested_value_usd),
+    valueClaimStatus: text(payload.value_claim_status),
+    claimReadiness: text(payload.claim_readiness),
+    claimBlockedReason: text(payload.claim_blocked_reason),
+    unblockAction: text(payload.unblock_action),
+    unblockTargetPeriod: text(payload.unblock_target_period),
+    attestationOwner: text(payload.attestation_owner),
+    originalRowId: text(payload.metric_id ?? row.row_key),
+  };
+}
+
+function riskControlRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  return {
+    riskOrControlName:
+      text(
+        payload.risk_or_control_name ??
+          payload.risk_name ??
+          payload.control_name,
+      ) ?? row.title,
+    riskDomain: text(payload.risk_domain),
+    businessFunction: text(payload.business_function),
+    systemsImpacted: text(payload.systems_impacted),
+    severity: text(payload.severity),
+    likelihood: text(payload.likelihood),
+    controlOwner: text(payload.control_owner),
+    controlStatus: text(payload.control_status ?? payload.control_state),
+    inherentRiskScore: numberValue(payload.inherent_risk_score),
+    residualRiskScore: numberValue(payload.residual_risk_score),
+    remediationCostUsd: numberValue(payload.remediation_cost_usd),
+    regulatoryDriver: text(payload.regulatory_driver),
+    lastTestedDate: text(payload.last_tested_date),
+    originalRowId: text(payload.risk_id ?? row.row_key),
+  };
+}
+
+function programInitiativeRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  return {
+    programName:
+      text(payload.program_name ?? payload.initiative_name) ?? row.title,
+    businessSponsor: text(payload.business_sponsor ?? payload.sponsor_function),
+    technologyOwner: text(payload.technology_owner),
+    objective: text(payload.objective),
+    status: text(payload.status),
+    phase: text(payload.phase),
+    stageGate: text(payload.stage_gate),
+    pctComplete: numberValue(payload.pct_complete),
+    budgetUsd: numberValue(payload.budget_usd ?? payload.approved_budget_usd),
+    expectedValueUsd: numberValue(
+      payload.expected_value_usd ?? payload.target_value_usd,
+    ),
+    blockedReason: text(payload.blocked_reason),
+    startDate: text(payload.start_date),
+    endDate: text(payload.end_date),
+    originalRowId: text(payload.program_id ?? row.row_key),
+  };
+}
+
+function organizationOwnershipRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  return {
+    orgUnit: text(payload.org_unit) ?? row.title,
+    parentOrgUnit: text(payload.parent_org_unit),
+    leaderNameOrRole: text(payload.leader_name_or_role),
+    roleLevel: text(payload.role_level),
+    decisionRights: text(payload.decision_rights),
+    ownedFunctions: text(payload.owned_functions),
+    ownedSystems: text(payload.owned_systems),
+    ownedDataDomains: text(payload.owned_data_domains),
+    headcount: numberValue(payload.headcount),
+    budgetAuthorityUsd: numberValue(payload.budget_authority_usd),
+    spanOfControl: numberValue(payload.span_of_control),
+    successionRisk: text(payload.succession_risk),
+    costCenterName: text(payload.cost_center_name),
+    originalRowId: text(payload.org_unit_id ?? row.row_key),
+  };
+}
+
+function aiUseCaseRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  return {
+    useCaseName: text(payload.use_case_name) ?? row.title,
+    businessSegment: text(payload.business_segment),
+    businessFunction: text(payload.business_function),
+    processArea: text(payload.process_area),
+    functionType: text(payload.function_type),
+    officeLensAbarva: text(payload.office_lens_abarva),
+    aiPattern: text(payload.ai_pattern),
+    currentStatus: text(payload.current_status),
+    valueHypothesis: text(payload.value_hypothesis),
+    expectedValueArchetype: text(payload.expected_value_archetype),
+    sponsorRole: text(payload.sponsor_role),
+    governanceCouncil: text(payload.governance_council),
+    toolName: text(payload.tool_name),
+    valueClaimStatus: text(payload.value_claim_status),
+    financeValidatedValueUsd: numberValue(payload.finance_validated_value_usd),
+    realizedValueAllowed: text(payload.realized_value_allowed),
+    originalRowId: text(payload.use_case_id ?? row.row_key),
+  };
 }
 
 function applicationRow(row: HomeProjectionRow): JsonRecord {
@@ -752,12 +966,34 @@ export function buildTechnologyEstateFromHomeProjectionRows(
     )
     .map((row) => stripEmpty(dataAnalyticsWorkloadRow(row)));
 
+  // The five intake families the projection carries as of the active-intake page-key slice. Each
+  // builds only when its page key has rows: a family the projection has not loaded yet produces no
+  // record type at all, which is what lets a surface report the absence rather than an empty table.
+  const intakeFamily = (
+    pageKey: string,
+    map: (row: HomeProjectionRow) => JsonRecord,
+  ) =>
+    rows
+      .filter((row) => row.page_key === pageKey)
+      .map((row) => stripEmpty(map(row)));
+
+  const metrics = intakeFamily("metrics_outcomes", metricOutcomeRow);
+  const risks = intakeFamily("risks_controls", riskControlRow);
+  const programs = intakeFamily("programs_initiatives", programInitiativeRow);
+  const orgUnits = intakeFamily("org_ownership", organizationOwnershipRow);
+  const aiUseCases = intakeFamily("ai_use_cases", aiUseCaseRow);
+
   return {
     recordTypes: [
       recordType("application_system", applications),
       recordType("vendor_contract", contracts),
       recordType("infrastructure_platform", infrastructure),
       recordType("data_asset_or_integration", [...dataFlows, ...dataWorkloads]),
+      recordType("metric_outcome", metrics),
+      recordType("risk_control", risks),
+      recordType("program_initiative", programs),
+      recordType("organization_ownership", orgUnits),
+      recordType("ai_use_case", aiUseCases),
     ].filter((row): row is TechRecordType => Boolean(row)),
   };
 }
