@@ -2138,7 +2138,7 @@ async function writeNarrativeRows(
 
       const claims = claimRowsForChapter(chapter);
       for (const [index, claim] of claims.entries()) {
-        const rowKey = `${chapter.chapterId}_writer_claim_${String(index + 1).padStart(3, "0")}`;
+        const rowKey = claim.claim_ref ?? `${chapter.chapterId}_writer_claim_${String(index + 1).padStart(3, "0")}`;
         const displayPayload = {
           writer: {
             source: "ecl_projection.home_enterprise_landscape",
