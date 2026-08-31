@@ -119,7 +119,7 @@ describe("Home v4 Tier 1 executive story", () => {
     window.history.replaceState(null, "", "/home/preview");
   });
 
-  it("opens on a single executive story instead of the old chapter tabs", () => {
+  it("opens on a single executive story canvas instead of the old chapter tabs or a long story scroll", () => {
     const { container } = render(<HomeV4App bundle={loadMeridianBundle()} tenantKey="meridian-health" />);
 
     expect(screen.getAllByText("Executive story").length).toBeGreaterThan(0);
@@ -130,16 +130,23 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
 
     const sections = Array.from(container.querySelectorAll("[data-home-tier1-section]"));
-    expect(sections).toHaveLength(6);
+    expect(sections).toHaveLength(1);
     expect(sections.map((section) => section.getAttribute("data-home-tier1-terminal-state"))).toEqual(
-      Array(6).fill("published"),
+      ["published"],
     );
-    expect(screen.getByRole("heading", { name: "What this enterprise is" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "What it is betting on" })).toBeInTheDocument();
+    expect(sections[0]).toHaveAttribute("data-home-tier1-section", "enterprise");
+    expect(screen.getByRole("button", { name: /What this enterprise is/i })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: /What it is betting on/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /What it runs on/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "What it runs on" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /What it runs on/i }));
+
+    const selectedSections = Array.from(container.querySelectorAll("[data-home-tier1-section]"));
+    expect(selectedSections).toHaveLength(1);
+    expect(selectedSections[0]).toHaveAttribute("data-home-tier1-section", "runs-on");
     expect(screen.getByRole("heading", { name: "What it runs on" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "What it costs and returns" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "What is exposed" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "What needs attention" })).toBeInTheDocument();
+    expect(screen.queryByText("Boardroom thesis")).not.toBeInTheDocument();
   });
 
   it("keeps evidence drilldowns available without making them the opening experience", () => {
@@ -148,6 +155,7 @@ describe("Home v4 Tier 1 executive story", () => {
       bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "application_system")?.rows.length ?? 0;
     render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
 
+    fireEvent.click(screen.getByRole("button", { name: /What it runs on/i }));
     fireEvent.click(screen.getByRole("button", { name: /Open architecture map/i }));
 
     expect(screen.getByRole("heading", { name: /Current-state architecture map/i })).toBeInTheDocument();
@@ -203,13 +211,11 @@ describe("Home v4 Tier 1 executive story", () => {
     ];
     attachStoryPlan(bundle);
 
-    const { container } = render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
+    render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
 
-    const enterpriseSection = container.querySelector('[data-home-tier1-section="enterprise"]');
-    const lead = enterpriseSection?.querySelector("[data-home-tier1-section-body] p");
-    expect(lead?.textContent ?? "").not.toMatch(/largest application functions|recorded application count/i);
-    expect(lead?.textContent ?? "").not.toMatch(/IBM Corporation|largest supplier group|contract value/i);
-    expect(enterpriseSection?.textContent ?? "").not.toMatch(/IBM Corporation|largest supplier group/i);
+    const hero = document.querySelector("[data-home-tier1-hero-metric]");
+    expect(hero?.textContent ?? "").not.toMatch(/largest application functions|recorded application count/i);
+    expect(hero?.textContent ?? "").not.toMatch(/IBM Corporation|largest supplier group|contract value/i);
   });
 
   it("does not let a standalone application-count inventory become the opening thesis", () => {
@@ -238,12 +244,11 @@ describe("Home v4 Tier 1 executive story", () => {
     ];
     attachStoryPlan(bundle);
 
-    const { container } = render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
+    render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
 
-    const enterpriseSection = container.querySelector('[data-home-tier1-section="enterprise"]');
-    const lead = enterpriseSection?.querySelector("[data-home-tier1-section-body] p");
-    expect(lead?.textContent ?? "").toMatch(/operating-model risk/i);
-    expect(lead?.textContent ?? "").not.toMatch(/largest application functions by recorded application count/i);
+    const hero = document.querySelector("[data-home-tier1-hero-metric]");
+    expect(hero?.textContent ?? "").toMatch(/operating-model risk/i);
+    expect(hero?.textContent ?? "").not.toMatch(/largest application functions by recorded application count/i);
   });
 
   it("does not let evidence-boundary caveats become the opening thesis", () => {

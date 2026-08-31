@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type {
   ChapterId,
@@ -172,12 +173,36 @@ export function ExecutiveStoryPage({
   const storyPlan = bundle.executiveStoryPlan ?? missingStoryPlan(bundle.chapters);
   const clientLabel = demoSafeClientText(labelFromTenantKey(tenantKey));
   const sections = buildStorySections(bundle.chapters, storyPlan);
+  const sectionIds = useMemo(() => new Set(sections.map((section) => section.spec.id)), [sections]);
+  const [activeSectionId, setActiveSectionId] = useState<HomeExecutiveStorySectionId>(sections[0]?.spec.id ?? "enterprise");
+  const activeSection = sections.find((section) => section.spec.id === activeSectionId) ?? sections[0];
+  const activeSectionIndex = Math.max(0, sections.findIndex((section) => section.spec.id === activeSection?.spec.id));
   const leadNumber = chooseLeadNumber(sections, storyPlan);
   const openingClaim = storyPlan.openingThesisClaimRef ? claimByRef(bundle.chapters).get(storyPlan.openingThesisClaimRef) ?? null : null;
   const supportingOpeningClaims = storyPlan.openingSupportingClaimRefs
     .map((ref) => claimByRef(bundle.chapters).get(ref))
     .filter((claim): claim is GroundedClaim => Boolean(claim));
   const readiness = storyReadiness(sections);
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      const requested = decodeURIComponent(window.location.hash.replace(/^#/, "")).trim();
+      if (sectionIds.has(requested as HomeExecutiveStorySectionId)) {
+        setActiveSectionId(requested as HomeExecutiveStorySectionId);
+      }
+    };
+
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, [sectionIds]);
+
+  const selectSection = (id: HomeExecutiveStorySectionId) => {
+    setActiveSectionId(id);
+    if (typeof window !== "undefined" && window.location.hash !== `#${id}`) {
+      window.history.replaceState(null, "", `#${id}`);
+    }
+  };
 
   return (
     <div
@@ -223,30 +248,34 @@ export function ExecutiveStoryPage({
       <StoryRail
         clientLabel={clientLabel}
         sections={sections}
+        activeSectionId={activeSection?.spec.id ?? activeSectionId}
+        onSelectSection={selectSection}
         readiness={readiness}
         compiledLine={compiledLine}
         onOpenView={onOpenView}
       />
       <main data-home-tier1-main style={{ minWidth: 0, paddingBottom: 120 }}>
-        <Hero
-          leadNumber={leadNumber}
-          openingClaim={openingClaim}
-          supportingOpeningClaims={supportingOpeningClaims}
-          storyPlan={storyPlan}
-          tenantLabel={clientLabel}
-          signalPacket={signalPacket}
-          readiness={readiness}
-        />
-        {sections.map((section, index) => (
+        {activeSection?.spec.id === "enterprise" ? (
+          <Hero
+            leadNumber={leadNumber}
+            openingClaim={openingClaim}
+            supportingOpeningClaims={supportingOpeningClaims}
+            storyPlan={storyPlan}
+            tenantLabel={clientLabel}
+            signalPacket={signalPacket}
+            readiness={readiness}
+            state={activeSection.state}
+          />
+        ) : activeSection ? (
           <StorySectionBlock
-            key={section.spec.id}
-            index={index + 1}
-            section={section}
+            key={activeSection.spec.id}
+            index={activeSectionIndex + 1}
+            section={activeSection}
             signalPacket={signalPacket}
             visualDatasets={signalPacket.visualDatasets ?? {}}
             onOpenView={onOpenView}
           />
-        ))}
+        ) : null}
         <EvidenceEntryPoints onOpenView={onOpenView} />
       </main>
     </div>
@@ -457,6 +486,7 @@ function Hero({
   tenantLabel,
   signalPacket,
   readiness,
+  state,
 }: {
   leadNumber: LeadNumber | null;
   openingClaim: GroundedClaim | null;
@@ -465,11 +495,16 @@ function Hero({
   tenantLabel: string;
   signalPacket: EnterpriseSignalPacket;
   readiness: StoryReadiness;
+  state: TerminalState;
 }) {
   const source = openingClaim ? sourceForIds(openingClaim.evidence_ids, signalPacket) : null;
   const scaleSource = leadNumber ? sourceForIds(leadNumber.claim.evidence_ids, signalPacket) : null;
   return (
-    <header style={{ padding: `42px ${PAGE_X}px 34px` }}>
+    <header
+      data-home-tier1-section="enterprise"
+      data-home-tier1-terminal-state={state}
+      style={{ padding: `42px ${PAGE_X}px 34px` }}
+    >
       <div style={heroIntroRowStyle}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
           <span style={eyebrow(V4.blue)}>Executive story</span>
@@ -697,12 +732,16 @@ function formatVisualValue(valueKey: string | undefined, value: number): string 
 function StoryRail({
   clientLabel,
   sections,
+  activeSectionId,
+  onSelectSection,
   readiness,
   compiledLine,
   onOpenView,
 }: {
   clientLabel: string;
   sections: StorySection[];
+  activeSectionId: HomeExecutiveStorySectionId;
+  onSelectSection: (id: HomeExecutiveStorySectionId) => void;
   readiness: StoryReadiness;
   compiledLine: string[];
   onOpenView: (id: string) => void;
@@ -729,12 +768,18 @@ function StoryRail({
         </div>
         <nav aria-label="Executive story sections" style={{ display: "grid", gap: 2 }}>
           {sections.map((section) => (
-            <a key={section.spec.id} href={`#${section.spec.id}`} style={railAnchorStyle}>
+            <button
+              key={section.spec.id}
+              type="button"
+              aria-current={section.spec.id === activeSectionId ? "page" : undefined}
+              onClick={() => onSelectSection(section.spec.id)}
+              style={railSectionButtonStyle(section.spec.id === activeSectionId)}
+            >
               <span>{section.spec.title}</span>
               <span style={{ color: section.state === "published" ? V4.green : V4.amber }}>
                 {terminalStateLabel(section.state)}
               </span>
-            </a>
+            </button>
           ))}
         </nav>
       </div>
@@ -835,18 +880,26 @@ const railProgressStyle: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-const railAnchorStyle: CSSProperties = {
+const railSectionButtonStyle = (active: boolean): CSSProperties => ({
   display: "flex",
   justifyContent: "space-between",
+  alignItems: "center",
   gap: 8,
-  padding: "8px 2px",
-  borderTop: `1px solid ${V4.ruleSoft}`,
+  width: "100%",
+  minHeight: 42,
+  border: active ? `1px solid rgba(0,102,204,0.32)` : "1px solid transparent",
+  borderTop: `1px solid ${active ? "rgba(0,102,204,0.32)" : V4.ruleSoft}`,
+  borderRadius: active ? 7 : 0,
+  background: active ? V4.surface : "transparent",
+  boxShadow: active ? "inset 3px 0 0 #1d9e75, 0 8px 18px rgba(12,26,58,0.05)" : "none",
+  padding: active ? "8px 10px" : "8px 2px",
   color: V4.ink,
   fontFamily: SANS,
   fontSize: 13,
   lineHeight: 1.35,
-  textDecoration: "none",
-};
+  textAlign: "left",
+  cursor: "pointer",
+});
 
 const railButtonStyle: CSSProperties = {
   display: "block",
