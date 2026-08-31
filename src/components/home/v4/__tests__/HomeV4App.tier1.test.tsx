@@ -162,6 +162,21 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(hero?.textContent ?? "").not.toMatch(/\b(?:vendor|supplier|contract|commercial exposure|largest application functions|recorded application count)\b/i);
   });
 
+  it("reports section readiness from published states instead of counting every terminal state as ready", () => {
+    const bundle = loadMeridianBundle();
+    expect(bundle.executiveStoryPlan).toBeTruthy();
+    bundle.executiveStoryPlan!.sections = bundle.executiveStoryPlan!.sections.map((section, index) => {
+      if (index < 2) return { ...section, state: "published" as const };
+      if (index === 2) return { ...section, state: "refused" as const, reasonCode: "insufficient_evidence" };
+      return { ...section, state: "deferred" as const, reasonCode: "not_ready_for_executive_story" };
+    });
+
+    render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
+
+    expect(screen.getByText("2 of 6 sections ready · 1 held · 3 deferred")).toBeInTheDocument();
+    expect(screen.queryByText("6 of 6 sections ready")).not.toBeInTheDocument();
+  });
+
   it("does not let supplier concentration lead the enterprise identity section", () => {
     const bundle = JSON.parse(JSON.stringify(loadMeridianBundle())) as HomeReviewBundle;
     const executive = bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief");

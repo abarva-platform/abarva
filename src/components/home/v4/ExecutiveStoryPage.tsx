@@ -45,6 +45,14 @@ interface LeadNumber {
   claim: GroundedClaim;
 }
 
+interface StoryReadiness {
+  ready: number;
+  refused: number;
+  deferred: number;
+  total: number;
+  label: string;
+}
+
 const STORY_SECTIONS: StorySectionSpec[] = [
   {
     id: "enterprise",
@@ -169,7 +177,7 @@ export function ExecutiveStoryPage({
   const supportingOpeningClaims = storyPlan.openingSupportingClaimRefs
     .map((ref) => claimByRef(bundle.chapters).get(ref))
     .filter((claim): claim is GroundedClaim => Boolean(claim));
-  const terminalCount = sections.filter((section) => section.state).length;
+  const readiness = storyReadiness(sections);
 
   return (
     <div
@@ -215,7 +223,7 @@ export function ExecutiveStoryPage({
       <StoryRail
         clientLabel={clientLabel}
         sections={sections}
-        terminalCount={terminalCount}
+        readiness={readiness}
         compiledLine={compiledLine}
         onOpenView={onOpenView}
       />
@@ -227,7 +235,7 @@ export function ExecutiveStoryPage({
           storyPlan={storyPlan}
           tenantLabel={clientLabel}
           signalPacket={signalPacket}
-          terminalCount={terminalCount}
+          readiness={readiness}
         />
         {sections.map((section, index) => (
           <StorySectionBlock
@@ -343,6 +351,25 @@ function uniqueClaims(claims: GroundedClaim[]): GroundedClaim[] {
   return unique;
 }
 
+function storyReadiness(sections: StorySection[]): StoryReadiness {
+  const ready = sections.filter((section) => section.state === "published").length;
+  const refused = sections.filter((section) => section.state === "refused").length;
+  const deferred = sections.filter((section) => section.state === "deferred").length;
+  const total = sections.length;
+  const parts = [
+    `${ready} of ${total} sections ready`,
+    refused ? `${refused} held` : null,
+    deferred ? `${deferred} deferred` : null,
+  ].filter(Boolean);
+  return {
+    ready,
+    refused,
+    deferred,
+    total,
+    label: parts.join(" · "),
+  };
+}
+
 function chooseLeadNumber(sections: StorySection[], storyPlan: HomeExecutiveStoryPlanV1): LeadNumber | null {
   const byRef = new Map<string, GroundedClaim>();
   for (const claim of sections.flatMap((section) => [section.leadClaim, ...section.supportingClaims]).filter(
@@ -429,7 +456,7 @@ function Hero({
   storyPlan,
   tenantLabel,
   signalPacket,
-  terminalCount,
+  readiness,
 }: {
   leadNumber: LeadNumber | null;
   openingClaim: GroundedClaim | null;
@@ -437,7 +464,7 @@ function Hero({
   storyPlan: HomeExecutiveStoryPlanV1;
   tenantLabel: string;
   signalPacket: EnterpriseSignalPacket;
-  terminalCount: number;
+  readiness: StoryReadiness;
 }) {
   const source = openingClaim ? sourceForIds(openingClaim.evidence_ids, signalPacket) : null;
   const scaleSource = leadNumber ? sourceForIds(leadNumber.claim.evidence_ids, signalPacket) : null;
@@ -450,7 +477,7 @@ function Hero({
             A first-meeting readout for {tenantLabel}
           </span>
         </div>
-        <span style={heroStatePillStyle}>{terminalCount} of 6 sections ready</span>
+        <span style={heroStatePillStyle}>{readiness.label}</span>
       </div>
 
       <div data-home-tier1-hero-metric style={heroMetricStyle}>
@@ -670,13 +697,13 @@ function formatVisualValue(valueKey: string | undefined, value: number): string 
 function StoryRail({
   clientLabel,
   sections,
-  terminalCount,
+  readiness,
   compiledLine,
   onOpenView,
 }: {
   clientLabel: string;
   sections: StorySection[];
-  terminalCount: number;
+  readiness: StoryReadiness;
   compiledLine: string[];
   onOpenView: (id: string) => void;
 }) {
@@ -696,7 +723,9 @@ function StoryRail({
       <div>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
           <span style={eyebrow(V4.slate)}>Executive story</span>
-          <span style={railProgressStyle}>{terminalCount} of 6</span>
+          <span style={railProgressStyle}>
+            {readiness.ready} of {readiness.total}
+          </span>
         </div>
         <nav aria-label="Executive story sections" style={{ display: "grid", gap: 2 }}>
           {sections.map((section) => (
