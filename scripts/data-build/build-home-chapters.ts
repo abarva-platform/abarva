@@ -294,6 +294,8 @@ const OPERATING_MODEL_LANGUAGE_RE =
   /\b(?:accountability|business[-\s]?function|budget authority|decision[-\s]?rights|function|headcount|managed[-\s]?service|operating[-\s]?model|organization|owner|ownership|process|role|service[-\s]?delivery|workforce)\b/i;
 const PUBLISHED_REFUSAL_LANGUAGE_RE =
   /\b(?:deferred pending stronger evidence|does not yet support a board-ready answer|does not yet connect enough verified statements|evidence needs resolution before executive use|not ready for executive review)\b/i;
+const EVIDENCE_BOUNDARY_CLAIM_RE =
+  /\b(?:bounded by|candidate facts were withheld|sections with no cited claim|coverage breadth|not evidence for a business claim|synthetic|not client-attested|source-family summaries)\b/i;
 
 function claimDomains(claim: GroundedClaim, signalPacket: ReturnType<typeof import("./enterprise-signal-packet").buildEnterpriseSignalPacket>): Set<string> {
   const byId = new Map<string, Signal | ContextItem>([
@@ -319,6 +321,14 @@ function operatingModelClaim(
 ): boolean {
   return touchesAny(claimDomains(claim, signalPacket), OPERATING_MODEL_DOMAINS) &&
     OPERATING_MODEL_LANGUAGE_RE.test(claim.statement);
+}
+
+function concreteAttentionClaims(claims: GroundedClaim[]): GroundedClaim[] {
+  const concrete = claims.filter((claim) =>
+    !PUBLISHED_REFUSAL_LANGUAGE_RE.test(claim.statement) &&
+    !EVIDENCE_BOUNDARY_CLAIM_RE.test(claim.statement)
+  );
+  return concrete.length ? concrete : claims.filter((claim) => !PUBLISHED_REFUSAL_LANGUAGE_RE.test(claim.statement));
 }
 
 /** Verifier-rejected claims survive as `null` in place (see dropClaim) rather than being spliced
@@ -555,8 +565,8 @@ export function assembleChapterSlices(
       what_to_watch: [],
     },
     what_needs_attention: {
-      key_insights: alive(thesis.what_needs_attention),
-      tensions: alive(thesis.material_risks),
+      key_insights: concreteAttentionClaims(alive(thesis.what_needs_attention)),
+      tensions: concreteAttentionClaims(alive(thesis.material_risks)),
       what_to_watch: [],
     },
   };
@@ -845,10 +855,15 @@ function deterministicClaimBasedChapterNarrative(
       .replace(/\bsource contains\b/gi, "record contains")
       .replace(/\bHome may use it\b/gi, "leaders may use it")
       .replace(/\bHome\b/g, "the executive view")
+      .replace(/\b[Ee]vidence needs resolution before executive use\b/g, "leaders should review the named evidence before acting")
+      .replace(/\bnot ready for executive review\b/gi, "bounded for executive review")
+      .replace(/\bdeferred pending stronger evidence\b/gi, "bounded by the available evidence")
       .replace(/\s+/g, " ")
       .trim();
-  const headline = clean(claims[0]?.statement ?? `${def.title} has verified evidence for review`);
-  const support = claims.slice(0, 4).map((claim) => clean(claim.statement));
+  const publishableClaims = concreteAttentionClaims(claims);
+  const headlineClaim = publishableClaims.find((claim) => !EVIDENCE_BOUNDARY_CLAIM_RE.test(claim.statement)) ?? publishableClaims[0] ?? claims[0];
+  const headline = clean(headlineClaim?.statement ?? `${def.title} has verified evidence for review`);
+  const support = publishableClaims.slice(0, 4).map((claim) => clean(claim.statement));
   return {
     headline: headline.length > 260 ? `${headline.slice(0, 257).trim()}...` : headline,
     executive_synthesis: [
