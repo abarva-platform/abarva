@@ -1,6 +1,7 @@
 import {
   displayBenchmarkingClause,
   performanceActual,
+  source360RecoverableCreditFinding,
   topVendors,
 } from "../WorkspaceExecutiveShell";
 
@@ -123,5 +124,58 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       ),
     ).toBe("Not established");
     expect(displayBenchmarkingClause(null)).toBe("Not established");
+  });
+
+  it("prefers deterministic impact-layer credits over broader snapshot credits", () => {
+    const portfolio = {
+      impact: {
+        evidenceCoverage: [
+          {
+            unclaimed_credit_usd: 102_666.65,
+          },
+          {
+            unclaimed_credit_usd: 0,
+          },
+        ],
+      },
+      v4Snapshot: {
+        performanceCredits: {
+          unclaimedCredit: 189_000,
+        },
+      },
+    };
+
+    expect(
+      source360RecoverableCreditFinding(
+        portfolio as unknown as Parameters<
+          typeof source360RecoverableCreditFinding
+        >[0],
+      ),
+    ).toBe(102_666.65);
+  });
+
+  it("falls back to snapshot credits when no deterministic impact credit is loaded", () => {
+    const portfolio = {
+      impact: {
+        evidenceCoverage: [
+          {
+            unclaimed_credit_usd: 0,
+          },
+        ],
+      },
+      v4Snapshot: {
+        performanceCredits: {
+          unclaimedCredit: 43_000.02,
+        },
+      },
+    };
+
+    expect(
+      source360RecoverableCreditFinding(
+        portfolio as unknown as Parameters<
+          typeof source360RecoverableCreditFinding
+        >[0],
+      ),
+    ).toBe(43_000.02);
   });
 });

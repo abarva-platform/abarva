@@ -17,6 +17,45 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 
 ---
 
+## Active Source 360 execution
+
+### SOURCE-360-CXO-001 — Source 360 chart, cube, and evidence-depth proof
+
+- **Problem statement**: Source 360 needs to render the governed contract-depth package
+  as an executive-ready cockpit without debug scaffolding, blank charts, legacy explorer
+  chrome, or unsupported value claims.
+- **User/business impact**: executive narration depends on the page showing only
+  deterministic, evidence-backed claims: what is in the governed contract book, what is
+  supplemental depth, what is actionable now, and what evidence blocks stronger language.
+- **Severity**: P1 (executive demo readiness and evidence-integrity).
+- **Workstream**: Source workspace UX / governed Source data projection.
+- **Status**: `In Progress` — chart fixes are merged; the governed contract-depth
+  package is physically loaded and reconciled through Layer 2, Layer 3, and Layer 4 via
+  operator jobs; one product-surface patch is being added so the recoverable-credit lane
+  uses deterministic impact coverage before older snapshot rollups.
+- **Layer proof**: Layer 2 has 342 adapter rows, including 8 change-order rows and 30
+  page-text rows. Layer 3 has 30 page-text fact assertions and 36 change-order fact
+  assertions. Layer 4 has 78 contract-360 rows, 5 package contract rows, 6 action
+  candidates, 6 claim cards, 5 vendor positions, 30 package page-text rows, 8 package
+  change-order rows, $4.16M candidate amount, and $102.7K deterministic unclaimed
+  service-credit exposure.
+- **Current UI proof**: signed-in Source 360 crawl clicked 14 views with no tab failures,
+  no tenant bleed-through, no load errors, no debug scaffolding, no legacy left explorer,
+  and chart/graph surfaces rendering.
+- **Open gap**: the product surface must not blend deterministic service-credit coverage
+  with a broader legacy performance-credit snapshot. If deterministic impact coverage is
+  loaded, that amount is the executive claim; the older snapshot is fallback-only.
+- **Acceptance criteria**: Source 360 shows the verified deterministic credit amount in
+  Optimize/Evidence basis; all top-level tabs and subtabs render without blank charts;
+  contract graph renders an actual lineage visualization; live proof captures no
+  unsupported dashboard language; aVa answers cite/refuse against the same governed
+  bundle.
+- **Required tests**:
+  `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts`;
+  signed-in Source 360 visual crawl after deploy.
+- **Discovered from**: the Source 360 data-depth and chart audit attached to the
+  2026-08-31 execution loop.
+
 ## Completed and closed
 
 ### SOURCE-GUIDEBOOK-001 — Stage guidebooks foundation + read-only workspace tab
