@@ -79,6 +79,26 @@ type VendorCoverageSummary = {
   actionRows: number;
   unclaimedCredit: number;
 };
+
+type RecoverableCreditInput = Pick<
+  SourceWorkspacePortfolioData,
+  "impact" | "v4Snapshot"
+>;
+
+export function source360RecoverableCreditFinding(
+  portfolio: RecoverableCreditInput,
+): number {
+  const deterministicCredit = portfolio.impact.evidenceCoverage.reduce(
+    (sum, row) => sum + (numberFromDb(row.unclaimed_credit_usd) ?? 0),
+    0,
+  );
+
+  if (deterministicCredit > 0) {
+    return deterministicCredit;
+  }
+
+  return portfolio.v4Snapshot.performanceCredits.unclaimedCredit;
+}
 type FocusedVendorRow = {
   readonly vendor: ExecutiveVendorRow;
   readonly coverage: VendorCoverageSummary | null;
@@ -147,18 +167,11 @@ export function WorkspaceExecutiveShell({
     portfolio,
     "Stale renewal dates",
   );
-  const impactUnclaimedCredit = portfolio.impact.evidenceCoverage.reduce(
-    (sum, row) => sum + (numberFromDb(row.unclaimed_credit_usd) ?? 0),
-    0,
-  );
   const impactCandidateAmount = portfolio.impact.actionCandidates.reduce(
     (sum, row) => sum + (numberFromDb(row.candidate_amount_usd) ?? 0),
     0,
   );
-  const creditFinding = Math.max(
-    portfolio.v4Snapshot.performanceCredits.unclaimedCredit,
-    impactUnclaimedCredit,
-  );
+  const creditFinding = source360RecoverableCreditFinding(portfolio);
   const performanceRows = portfolio.v4Snapshot.performanceCredits.rowCount;
   const spendRows = portfolio.v4Snapshot.spendConsumption.rowCount;
   const performanceCreditContract = [...portfolio.impact.evidenceCoverage]
@@ -175,12 +188,24 @@ export function WorkspaceExecutiveShell({
           (numberFromDb(left.performance_rows) ?? 0) ||
         left.contract_id.localeCompare(right.contract_id),
     )[0];
+  const performanceCreditContract360 = performanceCreditContract
+    ? portfolio.contracts.find(
+        (contract) =>
+          contract.contract_id === performanceCreditContract.contract_id,
+      )
+    : null;
+  const performanceCreditCounterparty =
+    performanceCreditContract360?.vendor_name ||
+    performanceCreditContract?.vendor_name ||
+    performanceCreditContract?.vendor_ref ||
+    performanceCreditContract?.contract_id ||
+    "Selected contract";
   const findingContract =
     creditFinding > 0
       ? (performanceCreditContract
         ? {
             contractId: performanceCreditContract.contract_id,
-            counterparty: performanceCreditContract.vendor_name,
+            counterparty: performanceCreditCounterparty,
             deadlineLabel: "Not established",
           }
         : (portfolio.cockpit.actionQueue.find((row) =>
@@ -1814,6 +1839,12 @@ function OptimizePage({
             label="Action amount"
             value={
               candidateAmount > 0 ? money(candidateAmount) : "Not established"
+            }
+          />
+          <Fact
+            label="Credit finding"
+            value={
+              creditFinding > 0 ? money(creditFinding) : "Not established"
             }
           />
           <Fact
