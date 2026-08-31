@@ -7,6 +7,7 @@ import path from "node:path";
 const CONTRACT_VERSION = "source-intelligence-home-page-packets/v1";
 const DEFAULT_SOURCE_DIR = path.join("outputs", "source-intelligence", "meridian-health", "model-pass");
 const DEFAULT_OUT_DIR = path.join("outputs", "source-intelligence", "meridian-health", "home-page-packets");
+const DEFAULT_INVENTORY_DIR = "";
 const PAGE_DEFS = [
   {
     page_key: "executive_brief",
@@ -208,6 +209,7 @@ const PAGE_DEFS = [
 function parseArgs(argv) {
   const args = {
     sourceDir: DEFAULT_SOURCE_DIR,
+    inventoryDir: DEFAULT_INVENTORY_DIR,
     outDir: DEFAULT_OUT_DIR,
     maxArtifactsPerPage: 12,
   };
@@ -219,6 +221,7 @@ function parseArgs(argv) {
       return argv[i];
     };
     if (arg === "--source-dir") args.sourceDir = next();
+    else if (arg === "--inventory-dir") args.inventoryDir = next();
     else if (arg === "--out-dir") args.outDir = next();
     else if (arg === "--max-artifacts-per-page") args.maxArtifactsPerPage = Number(next());
     else if (arg === "--help") {
@@ -226,6 +229,7 @@ function parseArgs(argv) {
 
 Options:
   --source-dir <dir>              Model-pass output directory containing accepted/*.json.
+  --inventory-dir <dir>           Optional inventory output directory containing prompts/*.json with source_content.
   --out-dir <dir>                 Output directory for Home page packets and prompts.
   --max-artifacts-per-page <n>    Safety bound per page unless include_all is true. Default: 12.`);
       process.exit(0);
@@ -260,6 +264,34 @@ function listAcceptedArtifacts(sourceDir) {
     .filter((file) => file.endsWith(".source-intelligence.json"))
     .sort()
     .map((file) => readJson(path.join(acceptedDir, file)));
+}
+
+function loadSourceContentIndex(inventoryDir) {
+  if (!inventoryDir) return new Map();
+  const promptDir = path.join(inventoryDir, "prompts");
+  if (!fs.existsSync(promptDir)) {
+    throw new Error(`Inventory prompt directory not found: ${promptDir}`);
+  }
+  const index = new Map();
+  for (const file of fs.readdirSync(promptDir).filter((item) => item.endsWith(".prompt.json")).sort()) {
+    const prompt = readJson(path.join(promptDir, file));
+    const sourceFile = prompt.source_file;
+    const sourceContent = prompt.user?.source_content;
+    if (!sourceFile?.path || typeof sourceContent !== "string") continue;
+    index.set(sourceFile.path, {
+      source_family: sourceFile.source_family,
+      source_file: sourceFile.path,
+      source_hash: sourceFile.sha256,
+      schema_fingerprint: sourceFile.schema_fingerprint,
+      row_count: sourceFile.row_count,
+      column_count: sourceFile.column_count,
+      prompt_version: prompt.prompt_version,
+      source_inventory: prompt.user?.source_inventory ?? null,
+      source_content: sourceContent,
+      source_content_hash: sha256(sourceContent),
+    });
+  }
+  return index;
 }
 
 function textOf(entry) {
@@ -313,6 +345,12 @@ function selectArtifactsForPage(artifacts, page, maxArtifactsPerPage) {
   return scored.slice(0, maxArtifactsPerPage).map((entry) => entry.artifact);
 }
 
+function sourceContentForPage(selected, sourceContentIndex) {
+  return selected
+    .map((artifact) => sourceContentIndex.get(artifact.source_file.path))
+    .filter(Boolean);
+}
+
 function buildPrompt(page, packet) {
   return {
     prompt_version: "home-page-source-intelligence-writer/v1",
@@ -325,6 +363,7 @@ function buildPrompt(page, packet) {
       "Do not invent counts, money, dates, owners, vendors, systems, relationships, or readiness states.",
       "If context is insufficient, render a clear deferred/refused page state with evidence needed.",
       "Use executive language for executive pages and expert technologist language for architecture/data pages.",
+      "Use source_content_context when present for detail; do not rely only on compact summaries.",
     ].join(" "),
     user: {
       page_question: page.question,
@@ -343,6 +382,12 @@ function buildPrompt(page, packet) {
         evidence_basis: ["file/family/source refs"],
         gaps_or_refusals: ["explicit unknowns and evidence needed"],
       },
+      context_depth: {
+        source_intelligence_mode: "accepted source-intelligence artifacts",
+        source_content_mode: packet.source_content_context.length > 0
+          ? "full selected source files included"
+          : "not included in this packet; use accepted artifacts only",
+      },
       packet,
     },
   };
@@ -352,6 +397,7 @@ function main() {
   const options = parseArgs(process.argv.slice(2));
   const runManifest = readJson(path.join(options.sourceDir, "run-manifest.json"));
   const artifacts = listAcceptedArtifacts(options.sourceDir);
+  const sourceContentIndex = loadSourceContentIndex(options.inventoryDir);
   if (artifacts.length === 0) throw new Error("No accepted source-intelligence artifacts found");
 
   fs.mkdirSync(options.outDir, { recursive: true });
@@ -362,6 +408,7 @@ function main() {
   for (const page of PAGE_DEFS) {
     const selected = selectArtifactsForPage(artifacts, page, options.maxArtifactsPerPage);
     const compact = selected.map(compactArtifact);
+    const sourceContentContext = sourceContentForPage(selected, sourceContentIndex);
     const packet = {
       contract_version: CONTRACT_VERSION,
       tenant_key: runManifest.tenant_key,
@@ -393,6 +440,7 @@ function main() {
         max_artifacts_per_page: page.include_all ? null : options.maxArtifactsPerPage,
       },
       source_intelligence: compact,
+      source_content_context: sourceContentContext,
       evidence_basis: compact.map((artifact) => ({
         source_family: artifact.source_family,
         source_file: artifact.source_file,
@@ -417,6 +465,7 @@ function main() {
       writer_lens: page.writer_lens,
       included_source_count: selected.length,
       included_source_families: packet.included_source_families,
+      source_content_context_count: sourceContentContext.length,
       packet_hash: packetHash,
       prompt_hash: promptHash,
     });
@@ -428,8 +477,10 @@ function main() {
     assessment_id: runManifest.assessment_id,
     source_ref: runManifest.source_ref,
     source_model_pass_dir: options.sourceDir,
+    source_inventory_dir: options.inventoryDir || null,
     page_count: pages.length,
     total_source_artifact_count: artifacts.length,
+    source_content_context_count: pages.reduce((sum, page) => sum + page.source_content_context_count, 0),
     pages,
     generated_at: new Date().toISOString(),
   };
@@ -441,6 +492,7 @@ function main() {
     assessment_id: manifest.assessment_id,
     page_count: manifest.page_count,
     total_source_artifact_count: manifest.total_source_artifact_count,
+    source_content_context_count: manifest.source_content_context_count,
     out_dir: options.outDir,
   }, null, 2));
 }

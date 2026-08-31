@@ -78,6 +78,8 @@ const output = JSON.parse(
       "scripts/ecl/build_source_intelligence_home_packets.mjs",
       "--source-dir",
       modelPass,
+      "--inventory-dir",
+      inventory,
       "--out-dir",
       packets,
       "--max-artifacts-per-page",
@@ -104,6 +106,8 @@ assert.equal(executive.table_candidates.includes("leadership_theme_extracts"), t
 assert.equal(executive.chart_candidates.includes("business_model_mix"), true);
 assert.equal(executive.drilldown_candidates.includes("interview excerpts"), true);
 assert.equal(executive.available_source_index.length, 3);
+assert.equal(executive.source_content_context.length, executive.included_source_count);
+assert.equal(executive.source_content_context.some((source) => source.source_content.includes("Integrated provider and health plan")), true);
 assert.match(executive.packet_hash, /^[a-f0-9]{64}$/);
 assert.match(executive.prompt_hash, /^[a-f0-9]{64}$/);
 
@@ -124,6 +128,7 @@ const prompt = JSON.parse(fs.readFileSync(path.join(packets, "prompts", "current
 assert.match(prompt.system, /data architecture, BI, ETL, and AI platform architect/);
 assert.equal(prompt.user.packet.page_key, "current_state_data_flow");
 assert.equal(Array.isArray(prompt.user.packet.source_intelligence), true);
+assert.equal(prompt.user.context_depth.source_content_mode, "full selected source files included");
 assert.equal(prompt.user.expected_output.canvas_sections.length, 4);
 assert.equal(prompt.user.expected_output.drilldowns_to_enable.includes("reporting surface"), true);
 
