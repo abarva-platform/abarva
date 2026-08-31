@@ -1,0 +1,6 @@
+extension,phase,required,allowed_role,notes
+pgcrypto,phase2_postgres_bootstrap,yes,operations_admin,required for generated identifiers and hashes
+uuid-ossp,phase2_postgres_bootstrap,yes,operations_admin,required if existing migrations depend on uuid_generate_v4
+vector,phase2_postgres_bootstrap,yes,operations_admin,pgvector for Azure-native retrieval support
+btree_gin,phase2_postgres_bootstrap,conditional,operations_admin,index support only after schema review
+pg_trgm,phase2_postgres_bootstrap,yes,operations_admin,fuzzy search and entity-matching support for the relational consumption path

@@ -1,0 +1,5 @@
+resource,private_dns_zone,required_link,validation_command,required_status
+storage_blob,privatelink.blob.core.windows.net,vnet-abarva-hcdn-lab-eus-001,"az network private-dns link vnet list -g rg-abarva-hcdn-lab-eus-001 -z privatelink.blob.core.windows.net -o table",linked
+key_vault,privatelink.vaultcore.azure.net,vnet-abarva-hcdn-lab-eus-001,"az network private-dns link vnet list -g rg-abarva-hcdn-lab-eus-001 -z privatelink.vaultcore.azure.net -o table",linked
+postgres,privatelink.postgres.database.azure.com,vnet-abarva-hcdn-lab-eus-001,"az network private-dns link vnet list -g rg-abarva-hcdn-lab-eus-001 -z privatelink.postgres.database.azure.com -o table",linked
+container_apps,privatelink.eastus.azurecontainerapps.io,vnet-abarva-hcdn-lab-eus-001,"az network private-dns link vnet list -g rg-abarva-hcdn-lab-eus-001 -z privatelink.eastus.azurecontainerapps.io -o table",linked_or_documented_exception
