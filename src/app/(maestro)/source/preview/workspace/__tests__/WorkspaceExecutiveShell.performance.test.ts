@@ -423,11 +423,102 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
 
     const recoverableType = optimizeTypeRows(
       portfolio as unknown as Parameters<typeof optimizeTypeRows>[0],
-    ).find((row) => row.type === "service credit");
+    ).find((row) => row.type === "recoverable leakage");
 
     expect(recoverableType).toMatchObject({
       count: 3,
       amount: 102_666.65,
     });
+  });
+
+  it("keeps recoverable leakage type mix aligned to credit coverage when an action card is missing", () => {
+    const portfolio = {
+      contracts: [],
+      vendors: [],
+      v4Snapshot: {
+        performanceCredits: {
+          unclaimedCredit: 189_000,
+        },
+      },
+      workspaceDiagnostics: {
+        activeLoadRunId: "ecl-dense-source-room-projection",
+      },
+      impact: {
+        actionCandidates: [
+          {
+            contract_id: "MER-TECH-AMS-001",
+            action_type: "avoid_future_spend",
+            opportunity_type: "change_order_control",
+            title: "Convert recurring AMS change orders into base service catalog",
+            finding_summary: "Recurring change orders should be moved into run catalog.",
+            deterministic_basis: "change order rows",
+            candidate_amount_usd: 151_000,
+            finance_confirmation_state: "not_confirmed",
+          },
+          {
+            contract_id: "MER-TECH-SD-001",
+            action_type: "recoverable_leakage",
+            opportunity_type: "service_credit",
+            title: "Claim unclaimed SLA service credits",
+            finding_summary: "Calculated credits exceed claimed credits.",
+            deterministic_basis: "service credit rows",
+            candidate_amount_usd: 50_499.99,
+            finance_confirmation_state: "not_confirmed",
+          },
+        ],
+        evidenceCoverage: [
+          {
+            contract_id: "MER-TECH-SFDC-001",
+            load_run_id: "source-contract-depth-doc-gap-20260831T0645Z",
+            unclaimed_credit_usd: 15_166.67,
+            document_page_text_rows: 6,
+            change_order_rows: 1,
+            opportunity_rows: 1,
+            scope_rows: 3,
+            spend_rows: 12,
+            performance_rows: 12,
+          },
+          {
+            contract_id: "MER-TECH-AMS-001",
+            load_run_id: "source-contract-depth-doc-gap-20260831T0645Z",
+            unclaimed_credit_usd: 36_999.99,
+            document_page_text_rows: 6,
+            change_order_rows: 2,
+            opportunity_rows: 2,
+            scope_rows: 4,
+            spend_rows: 12,
+            performance_rows: 12,
+          },
+          {
+            contract_id: "MER-TECH-SD-001",
+            load_run_id: "source-contract-depth-doc-gap-20260831T0645Z",
+            unclaimed_credit_usd: 50_499.99,
+            document_page_text_rows: 6,
+            change_order_rows: 2,
+            opportunity_rows: 1,
+            scope_rows: 4,
+            spend_rows: 12,
+            performance_rows: 12,
+          },
+        ],
+      },
+    };
+
+    const rows = optimizeTypeRows(
+      portfolio as unknown as Parameters<typeof optimizeTypeRows>[0],
+    );
+
+    expect(rows.find((row) => row.type === "recoverable leakage")).toMatchObject(
+      {
+        count: 3,
+        amount: 102_666.65,
+      },
+    );
+    expect(rows.find((row) => row.type === "change order control")).toMatchObject(
+      {
+        count: 1,
+        amount: 151_000,
+      },
+    );
   });
 });
