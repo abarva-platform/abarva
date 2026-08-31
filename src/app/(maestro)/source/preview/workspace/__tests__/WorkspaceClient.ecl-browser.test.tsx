@@ -544,7 +544,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByRole("tab", { name: "Volume" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Mapping spine" })).toBeTruthy();
     expect(container.querySelector(".sw-v2-graph-hero-panel")).toBeTruthy();
-    expect(container.querySelector(".sw-v2-graph")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-graph-panel")).toBeTruthy();
+    expect(screen.getByLabelText("Source contract graph flow")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-graph-links path")).toBeTruthy();
     expect(screen.getByText("Source systems and files")).toBeTruthy();
     expect(screen.getByText("Source page substrate")).toBeTruthy();
     expect(screen.getByText("Show lineage")).toBeTruthy();
@@ -729,7 +731,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
 
     expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
-    const optimizeChart = screen.getByLabelText("Optimize action mix chart");
+    const optimizeChart = screen.getByLabelText("Optimize action type mix chart");
     expect(optimizeChart).toBeTruthy();
     expectMeasuredRechartsCard(optimizeChart);
     expect(screen.getByText("Right-size loaded application support tier")).toBeTruthy();

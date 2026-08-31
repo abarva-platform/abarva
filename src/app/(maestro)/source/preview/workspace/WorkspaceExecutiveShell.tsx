@@ -1047,7 +1047,7 @@ function OptimizeTypeMixChart({
   return (
     <div
       className="sw-v2-recharts-card sw-v2-recharts-card-compact"
-      aria-label="Optimize action mix chart"
+      aria-label="Optimize action type mix chart"
     >
       <MeasuredChartFrame className="sw-v2-chart-frame-donut" height={224}>
         {(chartWidth, chartHeight) => (
@@ -2269,7 +2269,7 @@ function ContractGraphPage({
 
   return (
     <div className="sw-v2-grid sw-v2-graph-layout">
-      <section className="sw-v2-panel sw-v2-span-2 sw-v2-graph-hero-panel">
+      <section className="sw-v2-panel sw-v2-span-2 sw-v2-graph-hero-panel sw-v2-graph-panel">
         <SubtabBar
           tabs={GRAPH_SUBTABS}
           active={subtab}
@@ -2284,7 +2284,18 @@ function ContractGraphPage({
         ) : subtab === "Mapping spine" ? (
           <GraphSpineTable portfolio={portfolio} showLineage={showLineage} />
         ) : (
-          <div className="sw-v2-graph">
+          <div className="sw-v2-graph" aria-label="Source contract graph flow">
+            <svg
+              className="sw-v2-graph-links"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M24 50 C32 50 34 50 40 50" />
+              <path d="M49 50 C57 50 59 50 65 50" />
+              <path d="M74 50 C82 50 84 50 90 50" />
+            </svg>
             {lanes.map((lane) => (
               <div key={lane.title} className="sw-v2-graph-lane">
                 <h3>{lane.title}</h3>
