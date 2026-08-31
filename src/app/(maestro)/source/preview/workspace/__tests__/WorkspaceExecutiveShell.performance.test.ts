@@ -29,6 +29,18 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).not.toContain('? "#0a0a0b"');
   });
 
+  it("does not print raw vendor names in the evidence-depth executive table", () => {
+    const source = readFileSync(
+      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
+      "utf8",
+    );
+
+    expect(source).not.toContain("<b>{vendor.vendor_name}</b>");
+    expect(source).toContain(
+      "<b>{safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref)}</b>",
+    );
+  });
+
   it("renders numeric performance actuals from governed rows without throwing", () => {
     expect(performanceActual(89, null)).toBe("89.0%");
     expect(performanceActual(null, 0.91)).toBe("91.0%");

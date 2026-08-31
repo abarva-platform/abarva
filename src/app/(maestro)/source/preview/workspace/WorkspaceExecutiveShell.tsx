@@ -868,7 +868,7 @@ function PortfolioPage({
                   } as CSSProperties
                 }
               >
-                <b>{vendor.vendor_name}</b>
+                <b>{safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref)}</b>
                 <span>
                   {money(numberFromDb(vendor.annual_value))} /{" "}
                   {vendor.contract_count} contracts
@@ -1087,8 +1087,10 @@ function VendorEvidenceDepthChart({
     .map(({ vendor }) => {
       const coverage = coverageForVendor(vendor, coverageByVendor);
       return {
-        name: vendor.vendor_name,
-        shortName: compactVendorName(vendor.vendor_name),
+        name: safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref),
+        shortName: compactVendorName(
+          safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref),
+        ),
         spendRows: coverage?.spendRows ?? 0,
         performanceRows: coverage?.performanceRows ?? 0,
         actionRows: coverage?.actionRows ?? 0,
@@ -1299,8 +1301,10 @@ function VendorConcentrationChart({
   const data = vendors.map((vendor) => {
     const annualValue = numberFromDb(vendor.annual_value) ?? 0;
     return {
-      name: vendor.vendor_name,
-      shortName: compactVendorName(vendor.vendor_name),
+      name: safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref),
+      shortName: compactVendorName(
+        safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref),
+      ),
       annualValue,
       share: vendorShare(vendor, totalAnnualValue),
     };
@@ -1673,7 +1677,7 @@ function VendorConcentrationTable({
           onClick={() => onOpenVendor(vendor.vendor_ref)}
         >
           <span>
-            <b>{vendor.vendor_name}</b>
+            <b>{safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref)}</b>
             <small>{vendor.vendor_category ?? "Category not established"}</small>
           </span>
           <span>{vendor.contract_count}</span>
@@ -1727,7 +1731,7 @@ function VendorEvidenceDepthTable({
             onClick={() => onOpenVendor(vendor.vendor_ref)}
           >
             <span>
-              <b>{vendor.vendor_name}</b>
+              <b>{safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref)}</b>
               <small>{vendor.contract_count} contracts</small>
             </span>
             <span>{formatCount(coverage?.spendRows)}</span>
