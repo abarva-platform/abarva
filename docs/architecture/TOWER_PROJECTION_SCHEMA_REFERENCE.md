@@ -1,57 +1,41 @@
-# Tower projection tables — deployed schema reference
+# Tower projection tables — schema reference
 
-> **This is a reference, not a migration.** It records the schema as deployed in the lab
-> data plane on 2026-08-30, read by `npm run ops:probe-tower-serving-shape`. It is not
-> authoritative for production, which has not been read, and it is deliberately not a
-> `create table` script — see "Why this is not yet a migration" below.
+> **This is a reference for the four Tower projection tables.** The governed substrate baseline
+> now lives in `supabase/migrations/20260831031000_ecl_substrate_baseline.sql`, generated from
+> the lab data plane by `npm run ops:emit-ecl-substrate-baseline`.
 
 ## Why this document exists
 
-No migration in this repository creates any of the four tables Tower reads on every page
-load. The only prior DDL was a draft under `docs/architecture/sql-drafts/`. The absence was
-found while chasing a one-column defect that could not be diagnosed from source, because the
-deployed column constraints were unknowable.
+The Tower projection tables carry foreign keys into shared ECL substrate tables, so the durable
+unit of version control is the substrate, not just the four product tables. The baseline migration
+therefore includes the referenced schemas, tables, constraints, indexes, functions, views, RLS
+state and policies needed for replay.
 
-## Why this is not yet a migration
+The direct dependencies that made a four-table-only baseline insufficient are:
 
-These four tables carry foreign keys into eight tables across four other schemas, and
-**none of those eight has a migration either**:
-
-| Referenced table | Migration in repo |
+| Referenced table | Baseline coverage |
 | --- | --- |
-| `ecl_projection.projection_entry` | none |
-| `ecl_projection.projection_manifest` | none |
-| `ecl_context.measure` | none |
-| `ecl_context.metric_definition` | none |
-| `ecl_context.object` | none |
-| `ecl_context.snapshot` | none |
-| `ecl_review.review_event` | none |
-| `ecl_source.source_record` | none |
-
-A baseline covering only the four Tower tables would therefore **fail on a fresh database** — its
-foreign keys point at tables nothing creates. Baselining the substrate is the real unit of work,
-and its size is not yet known: these eight are the tables Tower happens to reference, not an
-inventory of what exists.
+| `ecl_projection.projection_entry` | `20260831031000_ecl_substrate_baseline.sql` |
+| `ecl_projection.projection_manifest` | `20260831031000_ecl_substrate_baseline.sql` |
+| `ecl_context.measure` | `20260831031000_ecl_substrate_baseline.sql` |
+| `ecl_context.metric_definition` | `20260831031000_ecl_substrate_baseline.sql` |
+| `ecl_context.object` | `20260831031000_ecl_substrate_baseline.sql` |
+| `ecl_context.snapshot` | `20260831031000_ecl_substrate_baseline.sql` |
+| `ecl_review.review_event` | `20260831031000_ecl_substrate_baseline.sql` |
+| `ecl_source.source_record` | `20260831031000_ecl_substrate_baseline.sql` |
 
 ## Row-level security
 
 | Table | RLS enabled | Policies |
 | --- | --- | --- |
-| `tower_ai_portfolio` | true | **0** |
-| `tower_command_center` | true | **0** |
-| `tower_evidence_queue` | true | **0** |
-| `tower_value_chain` | true | **0** |
+| `tower_ai_portfolio` | true | **1** |
+| `tower_command_center` | true | **1** |
+| `tower_evidence_queue` | true | **1** |
+| `tower_value_chain` | true | **1** |
 
-RLS is enabled on all four tables with **zero policies**. In Postgres that denies every read to
-any role which does not bypass RLS. The application reads these tables successfully, so its role
-must be bypassing it — which means tenant isolation on this substrate rests entirely on the
-`where tenant_key = $1` in the reader, not on the database.
-
-Two consequences worth weighing before a pilot:
-
-1. A query that omits the tenant predicate is not stopped by anything.
-2. If the connection role ever changes to one that respects RLS, every read returns zero rows —
-   which presents as "not seeded" rather than as an error.
+RLS is enabled on all four tables and each table has a tenant-scoped select policy in the
+baseline. The application still sets the tenant context before reads; the database policy now
+records the same boundary in the substrate.
 
 
 ## `ecl_projection.tower_ai_portfolio`

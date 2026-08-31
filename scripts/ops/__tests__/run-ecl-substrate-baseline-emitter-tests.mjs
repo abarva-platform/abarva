@@ -159,6 +159,12 @@ test("emitted SQL keeps foreign keys after all table definitions and non-FK cons
   assert.ok(fkAt > pkAt && fkAt > checkAt, "foreign keys must be emitted after non-FK constraints");
 });
 
+test("emitted SQL leaves transaction ownership to the migration runner", () => {
+  const sql = renderBaselineSql(fixtureCatalog());
+  assert.doesNotMatch(sql, /^begin;$/im);
+  assert.doesNotMatch(sql, /^commit;$/im);
+});
+
 test("views are ordered by dependency depth", () => {
   const ordered = orderViewsByDependency(fixtureCatalog().views, fixtureCatalog().viewDependencies);
   assert.deepEqual(

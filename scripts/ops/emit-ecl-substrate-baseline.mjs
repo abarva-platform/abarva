@@ -272,8 +272,6 @@ export function renderBaselineSql(catalog) {
     "-- Generated from the lab Postgres catalog by scripts/ops/emit-ecl-substrate-baseline.mjs.",
     "-- Definitions use Postgres catalog renderers where available; table columns are assembled from pg_attribute.",
     "",
-    "begin;",
-    "",
     section("1. schemas", catalog.schemas.map(createSchemaSql)),
     "",
     section(
@@ -295,8 +293,6 @@ export function renderBaselineSql(catalog) {
       ...catalog.tables.map(renderRls),
       ...catalog.policies.map(renderPolicy),
     ]),
-    "",
-    "commit;",
     "",
   ];
   for (const table of catalog.tables) {
