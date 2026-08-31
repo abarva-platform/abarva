@@ -162,6 +162,28 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(document.body.textContent ?? "").toMatch(new RegExp(`${appCount}\\s+applications`, "i"));
   });
 
+  it("renders next-level entry cards as professional title and body text, never concatenated labels", () => {
+    render(<HomeV4App bundle={loadMeridianBundle()} tenantKey="meridian-health" />);
+
+    const architectureCard = screen.getByRole("button", {
+      name: "Architecture: Conceptual blocks first, then logical and physical drilldown.",
+    });
+    expect(
+      screen.getByRole("button", {
+        name: "Data flow: Sources, integration, landing, analysis, and consumption layers.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Data browser: Slice and inspect the governed records behind the story.",
+      }),
+    ).toBeInTheDocument();
+
+    expect(architectureCard.children).toHaveLength(2);
+    expect(architectureCard.children[0]).toHaveTextContent("Architecture");
+    expect(architectureCard.children[1]).toHaveTextContent("Conceptual blocks first, then logical and physical drilldown.");
+  });
+
   it("opens the executive story on enterprise shape, not supplier concentration", () => {
     render(<HomeV4App bundle={loadMeridianBundle()} tenantKey="meridian-health" />);
 
