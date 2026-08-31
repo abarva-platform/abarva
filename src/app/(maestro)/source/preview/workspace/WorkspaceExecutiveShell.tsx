@@ -479,18 +479,35 @@ function PortfolioPage({
 }) {
   const claimCards = portfolio.impact.claimCards.slice(0, 3);
   const storyline = storylineBySurface(portfolio, "overview");
+  const portfolioContractIds = new Set(
+    portfolio.contracts.map((contract) => contract.contract_id),
+  );
+  const depthContractIds = new Set([
+    ...portfolio.impact.evidenceCoverage.map((row) => row.contract_id),
+    ...portfolio.impact.actionCandidates.map((row) => row.contract_id),
+  ]);
+  const supplementalActionContractCount =
+    portfolio.impact.actionCandidates.filter(
+      (row) => !portfolioContractIds.has(row.contract_id),
+    ).length;
+  const executiveStatement =
+    portfolio.impact.actionCandidates.length > 0
+      ? `${portfolio.contracts.length} contracts are in the portfolio register. ${depthContractIds.size} contracts have canonical depth rows and ${portfolio.impact.actionCandidates.length} action candidates are in the action layer${supplementalActionContractCount > 0 ? "; supplemental candidates do not change the register count until matched into the governed contract book" : ""}. Claims stay limited to cited evidence rows.`
+      : (storyline?.allowed_executive_statement ??
+        portfolio.cockpit.verdict.decidingAxis);
 
   return (
     <div className="sw-v2-grid sw-v2-verdict-grid">
       <section className="sw-v2-panel sw-v2-verdict-position">
         <PanelHead
           eyebrow="Executive position"
-          title={storyline?.headline ?? portfolio.cockpit.verdict.headline}
+          title={
+            portfolio.impact.actionCandidates.length > 0
+              ? "Governed contract book + action layer"
+              : (storyline?.headline ?? portfolio.cockpit.verdict.headline)
+          }
         />
-        <p className="sw-v2-lede">
-          {storyline?.allowed_executive_statement ??
-            portfolio.cockpit.verdict.decidingAxis}
-        </p>
+        <p className="sw-v2-lede">{executiveStatement}</p>
         <div className="sw-v2-decision-list sw-v2-compact-decisions">
           {claimCards.length
             ? claimCards.map((row) => (
@@ -541,8 +558,9 @@ function PortfolioPage({
               {money(impactCandidateAmount)}
             </div>
             <p className="sw-v2-muted">
-              Sum of deterministic action rows in the loaded
-              contract-depth package. Do not present as realized savings.
+              Sum of deterministic action candidates in the contract-depth
+              layer. This is a review queue, not realized savings or a change
+              to the portfolio denominator.
             </p>
             {claimCards[0] ? (
               <button

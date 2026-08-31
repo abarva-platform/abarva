@@ -554,7 +554,7 @@ describe("Source workspace ECL browser-surface proof", () => {
       tenant_key: "meridian-health",
       action_candidate_id: "OPT-TEST-001",
       opportunity_id: "OPT-TEST-001",
-      contract_id: "MER-CTR-SSO-BPO-001",
+      contract_id: "MER-TECH-M365-001",
       vendor_ref: "MER-VEN-HELIX-SSO",
       vendor_name: "Helix Shared Services Group",
       title: "Right-size loaded application support tier",
@@ -634,6 +634,18 @@ describe("Source workspace ECL browser-surface proof", () => {
         }),
       ).toBeTruthy();
     });
+
+    expect(screen.getByText("Governed contract book + action layer")).toBeTruthy();
+    expect(
+      screen.getByText(/contracts are in the portfolio register/i),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/action candidates are in the action layer/i),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/do not change the register count/i),
+    ).toBeTruthy();
+    expect(screen.queryByText(/vendors are loaded/i)).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
 

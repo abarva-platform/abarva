@@ -1053,13 +1053,14 @@ function storylineFromDerivedImpact(
       page_key: "overview",
       section_key: "portfolio_posture",
       sort_order: 10,
-      headline: "Governed contract action rows",
-      allowed_executive_statement: `${contractCount} contracts have populated evidence or action rows. Claims stay limited to populated evidence rows.`,
-      primary_metric_label: "Contracts with depth",
+      headline: "Governed contract depth layer",
+      allowed_executive_statement: `${contractCount} contracts have canonical depth or action rows. Keep this separate from the portfolio-register contract count until each action contract is matched into that register.`,
+      primary_metric_label: "Depth contracts",
       primary_metric_value: String(contractCount),
       blocker_if_missing: null,
       citation_basis_json: {
         "source.contract_evidence_coverage_v1": coverageRows.length,
+        "source.contract_action_candidate_v1": actionRows.length,
       },
     },
     {
