@@ -82,13 +82,36 @@ type VendorCoverageSummary = {
 
 type RecoverableCreditInput = Pick<
   SourceWorkspacePortfolioData,
-  "impact" | "v4Snapshot"
+  "impact" | "v4Snapshot" | "workspaceDiagnostics"
 >;
+
+export function source360RecoverableCreditCoverageRows(
+  portfolio: RecoverableCreditInput,
+): readonly SourceContractEvidenceCoverageRow[] {
+  const rowsWithCredits = portfolio.impact.evidenceCoverage.filter(
+    (row) => (numberFromDb(row.unclaimed_credit_usd) ?? 0) > 0,
+  );
+  const activeLoadRunId =
+    portfolio.workspaceDiagnostics.activeLoadRunId?.trim() ?? "";
+
+  if (activeLoadRunId) {
+    const activeRows = rowsWithCredits.filter(
+      (row) => row.load_run_id === activeLoadRunId,
+    );
+    if (activeRows.length > 0) {
+      return activeRows;
+    }
+  }
+
+  return rowsWithCredits;
+}
 
 export function source360RecoverableCreditFinding(
   portfolio: RecoverableCreditInput,
 ): number {
-  const deterministicCredit = portfolio.impact.evidenceCoverage.reduce(
+  const deterministicCredit = source360RecoverableCreditCoverageRows(
+    portfolio,
+  ).reduce(
     (sum, row) => sum + (numberFromDb(row.unclaimed_credit_usd) ?? 0),
     0,
   );
@@ -174,12 +197,8 @@ export function WorkspaceExecutiveShell({
   const creditFinding = source360RecoverableCreditFinding(portfolio);
   const performanceRows = portfolio.v4Snapshot.performanceCredits.rowCount;
   const spendRows = portfolio.v4Snapshot.spendConsumption.rowCount;
-  const performanceCreditContract = [...portfolio.impact.evidenceCoverage]
-    .filter(
-      (row) =>
-        (numberFromDb(row.performance_rows) ?? 0) > 0 &&
-        (numberFromDb(row.unclaimed_credit_usd) ?? 0) > 0,
-    )
+  const recoverableCreditRows = source360RecoverableCreditCoverageRows(portfolio);
+  const performanceCreditContract = [...recoverableCreditRows]
     .sort(
       (left, right) =>
         (numberFromDb(right.unclaimed_credit_usd) ?? 0) -

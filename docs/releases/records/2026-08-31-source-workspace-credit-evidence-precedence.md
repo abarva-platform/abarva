@@ -16,6 +16,10 @@ fallback only when the deterministic impact slice has no credit value. This keep
 executive view from promoting a larger legacy rollup over the amount that can be traced
 through the current Source impact read models.
 
+The follow-up correction also scopes the recoverable-credit headline to the active
+contract-depth load run when one is declared. That prevents older coverage rows from
+being combined into a single current-package claim.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`.
@@ -41,7 +45,7 @@ through the current Source impact read models.
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts'`
   passed.
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts' --runInBand`
-  passed.
+  passed, including active-load-run credit precedence.
 
 ## Rollout Plan
 
