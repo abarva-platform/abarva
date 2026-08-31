@@ -626,6 +626,19 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(violations).toEqual([]);
   });
 
+  it("keeps the Recharts-heavy executive shell behind a lazy load boundary", async () => {
+    const source = await readFile(
+      path.join(WORKSPACE_ROUTE_DIR, "WorkspaceClient.tsx"),
+      "utf-8",
+    );
+
+    expect(source).toContain('import dynamic from "next/dynamic"');
+    expect(source).toContain('import("./WorkspaceExecutiveShell")');
+    expect(source).not.toContain(
+      'import { WorkspaceExecutiveShell } from "./WorkspaceExecutiveShell"',
+    );
+  });
+
   it("renders a Recharts action mix on the default Optimize page when action rows exist", async () => {
     const portfolio = await loadSourceWorkspacePortfolio(
       "meridian",
