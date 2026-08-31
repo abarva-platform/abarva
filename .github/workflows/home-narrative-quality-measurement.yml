@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 45
     environment: production
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || secrets.ANTHROPIC_ADMIN_KEY }}
       TENANT_KEY: ${{ inputs.tenant_key }}
       OUTPUT_DIR: ${{ inputs.output_dir }}
 
