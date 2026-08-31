@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -249,6 +250,7 @@ export function WorkspaceExecutiveShell({
   tenantName: string;
 }) {
   const [showLineage, setShowLineage] = useState(false);
+  const mainRef = useRef<HTMLElement | null>(null);
   const selectedContract =
     (vm.c?.id
       ? portfolio.contracts.find(
@@ -333,38 +335,65 @@ export function WorkspaceExecutiveShell({
       : null;
   const claimContract = claimContractForPage(currentPage);
 
+  const resetMainScroll = useCallback(() => {
+    const schedule =
+      typeof requestAnimationFrame === "function"
+        ? requestAnimationFrame
+        : (callback: FrameRequestCallback) => {
+            window.setTimeout(() => callback(Date.now()), 0);
+            return 0;
+          };
+    schedule(() => {
+      mainRef.current?.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
+    });
+  }, []);
+
   const selectPage = (page: PageLabel) => {
     if (page === "Verdict") {
       logic.select("portfolio", null, "Portfolio");
+      resetMainScroll();
       return;
     }
     if (page === "Vendors") {
       logic.select("vendorList", null);
+      resetMainScroll();
       return;
     }
     if (page === "Contracts") {
       logic.select("contractList", null);
+      resetMainScroll();
       return;
     }
     if (page === "Evidence") {
       logic.select("evidence", null, "Coverage");
+      resetMainScroll();
       return;
     }
     if (page === "Contract graph") {
       logic.select("graph", null);
+      resetMainScroll();
       return;
     }
     if (page === "Optimize") {
       logic.select("optimize", null, logic.state.tabs.optimize ?? "Action queue");
+      resetMainScroll();
       return;
     }
   };
 
-  const openContract = (contractId: string, tab: string = "Story") =>
+  const openContract = (contractId: string, tab: string = "Story") => {
     logic.select("contract", contractId, tab);
+    resetMainScroll();
+  };
 
-  const openVendor = (vendorRef: string) => logic.select("vendor", vendorRef);
-  const returnToSource360 = () => logic.select("portfolio", null, "Portfolio");
+  const openVendor = (vendorRef: string) => {
+    logic.select("vendor", vendorRef);
+    resetMainScroll();
+  };
+  const returnToSource360 = () => {
+    logic.select("portfolio", null, "Portfolio");
+    resetMainScroll();
+  };
 
   return (
     <main className="sw-v2-shell" aria-label="Source workspace">
@@ -382,7 +411,7 @@ export function WorkspaceExecutiveShell({
         </div>
       </header>
 
-      <section className="sw-v2-main">
+      <section ref={mainRef} className="sw-v2-main">
         <header className="sw-v2-topbar">
           <div>
             <div className="sw-v2-breadcrumb">
@@ -466,6 +495,38 @@ export function WorkspaceExecutiveShell({
             </button>
           ))}
         </nav>
+
+        <div
+          className="sw-v2-sticky-context"
+          aria-label="Persistent Source workspace toolbar"
+        >
+          <div className="sw-v2-sticky-context-copy">
+            <span>Source 360 / {currentPage}</span>
+            <b>
+              {headerContract
+                ? headerContract.contract_id
+                : selectedVendor
+                  ? selectedVendor.vendor_name
+                  : tenantName || "Current workspace"}
+            </b>
+          </div>
+          <div className="sw-v2-sticky-context-actions">
+            <button
+              type="button"
+              className="sw-v2-compact-action-button"
+              onClick={() => selectPage("Contracts")}
+            >
+              View contracts
+            </button>
+            <button
+              type="button"
+              className="sw-v2-compact-action-button is-primary"
+              onClick={() => selectPage("Optimize")}
+            >
+              Run optimize
+            </button>
+          </div>
+        </div>
 
         <section className="sw-v2-metrics" aria-label="Portfolio facts">
           <Metric

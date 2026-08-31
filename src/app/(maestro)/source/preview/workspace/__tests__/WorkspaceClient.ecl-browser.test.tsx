@@ -306,16 +306,22 @@ async function writeEclProjectionFixture(dir: string) {
 
 describe("Source workspace ECL browser-surface proof", () => {
   let dir: string;
+  let scrollToMock: jest.Mock;
 
   beforeEach(async () => {
     dir = await mkdtemp(path.join(tmpdir(), "source-ecl-browser-"));
     process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection";
     process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR = dir;
+    scrollToMock = jest.fn();
     Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
       configurable: true,
       value: jest.fn(() => ({
         measureText: (value: string) => ({ width: value.length * 7 }),
       })),
+    });
+    Object.defineProperty(HTMLElement.prototype, "scrollTo", {
+      configurable: true,
+      value: scrollToMock,
     });
     global.fetch = jest.fn(
       () => new Promise<Response>(() => undefined),
@@ -372,6 +378,12 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(screen.getByLabelText("Workspace controls")).toBeTruthy();
     expect(screen.getByLabelText("Workspace action toolbar")).toBeTruthy();
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar"),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
+    ).toContain("Source 360 / Verdict");
     expect(container.querySelector(".sw-v2-action-toolbar-buttons")).toBeTruthy();
     expect(container.querySelectorAll(".sw-v2-action-button")).toHaveLength(2);
     expect(screen.getByLabelText("Scope filter").textContent).toContain(
@@ -396,7 +408,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
     expect(screen.getAllByText("1 excluded").length).toBeGreaterThan(0);
     expect(screen.queryByText("Decision window")).toBeNull();
-    expect(screen.getByText("Helix Shared Services Group")).toBeTruthy();
+    expect(
+      screen.getAllByText("Helix Shared Services Group").length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText("Executive position")).toBeTruthy();
     expect(screen.getByText("Finance confirmation remains separate")).toBeTruthy();
     expect(
@@ -440,6 +454,13 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Contracts" })[0]);
 
+    await waitFor(() => expect(scrollToMock).toHaveBeenCalled());
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar"),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
+    ).toContain("Source 360 / Contracts");
     expect(screen.getByRole("tab", { name: "Contract table" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Evidence depth" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Financial posture" })).toBeTruthy();
@@ -459,6 +480,12 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getAllByRole("button", { name: "Optimize" })).toHaveLength(
       2,
     );
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar"),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
+    ).toContain("Source 360 / Contracts");
 
     fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[1]);
 
@@ -479,6 +506,12 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
 
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar"),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
+    ).toContain("Source 360 / Vendors");
     expect(screen.getByRole("tab", { name: "Concentration" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Evidence depth" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Archetype mix" })).toBeTruthy();
@@ -504,6 +537,12 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
 
     expect(screen.getByText("Selected vendor")).toBeTruthy();
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar"),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
+    ).toContain("Epic Systems Corporation");
     expect(screen.getByText("MER-CTR-EPIC-001")).toBeTruthy();
     expect(screen.getByText("Grouped contracts")).toBeTruthy();
     expect(screen.getAllByText("Performance rows").length).toBeGreaterThan(0);
@@ -812,8 +851,12 @@ describe("Source workspace ECL browser-surface proof", () => {
     });
 
     expect(screen.getByText("Governed contract book + action layer")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "View contracts" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Run optimize" })).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", { name: "View contracts" }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("button", { name: "Run optimize" }).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText(/contracts are in the portfolio register/i),
     ).toBeTruthy();
@@ -846,7 +889,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     fireEvent.click(screen.getByRole("button", { name: "Review performance evidence" }));
 
     expect(screen.getByText("Service Desk Managed Services")).toBeTruthy();
-    expect(screen.getByText(/MER-TECH-SD-001/)).toBeTruthy();
+    expect(screen.getAllByText(/MER-TECH-SD-001/).length).toBeGreaterThan(0);
     expect(screen.getByText("Contract 360 / Performance")).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText("12 performance periods loaded.")).toBeTruthy();

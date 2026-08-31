@@ -75,6 +75,8 @@ describe("MaestroChrome canonical shell", () => {
     "/strategic-moves",
     "/source",
     "/source/events",
+    "/source/workspace",
+    "/source/preview/workspace",
     "/tower",
     "/tenant/example-tenant/tower",
   ])("mounts exactly one Nexus toolbar for %s", (pathname) => {
@@ -87,17 +89,6 @@ describe("MaestroChrome canonical shell", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Route body")).toBeInTheDocument();
   });
-
-  it.each(["/source/workspace", "/source/preview/workspace"])(
-    "renders %s as an immersive workspace without duplicate product toolbar",
-    (pathname) => {
-      renderChrome(pathname);
-
-      expect(screen.queryByTestId("nexus-top-nav")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("nexus-primary-nav")).not.toBeInTheDocument();
-      expect(screen.getByText("Route body")).toBeInTheDocument();
-    },
-  );
 
   it("marks Tower active on tenant-scoped Tower routes", () => {
     renderChrome("/tenant/example-tenant/tower");
