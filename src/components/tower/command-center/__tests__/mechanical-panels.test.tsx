@@ -388,6 +388,7 @@ describe("mechanical Tower Command Center panels", () => {
             initiative({
               id: "TOOL-HEADLINE",
               name: "Coder rollout",
+              sourceFile: "23_ai_tool_rollout.csv",
               usageHeadline: "Usage evidence exists",
               usageBars: [],
               readinessScore: 88,
@@ -408,6 +409,48 @@ describe("mechanical Tower Command Center panels", () => {
 
     expect(document.body.textContent).toContain("Unknown");
     expect(document.body.textContent).not.toContain("88%");
+  });
+
+  it("keeps business cases out of the tool-rollout adoption lens", () => {
+    render(
+      <AiPortfolioContractView
+        view={viewWith({
+          allInitiatives: [
+            initiative({
+              id: "BC-USES-TOOL",
+              name: "Service case automation",
+              sourceFile: "22_ai_business_cases.csv",
+              usageHeadline: "Usage evidence exists",
+              usageBars: [
+                { label: "Active users", valueText: "75%", pct: 75, tone: "teal" },
+              ],
+            }),
+            initiative({
+              id: "TOOL-REAL",
+              name: "ServiceNow rollout",
+              sourceFile: "23_ai_tool_rollout.csv",
+              usageHeadline: "Active usage captured",
+              usageBars: [
+                { label: "Active users", valueText: "55%", pct: 55, tone: "amber" },
+              ],
+            }),
+          ],
+          actions: [],
+          gaps: [],
+          pipelineGaps: [],
+        })}
+        onOpenAi={jest.fn()}
+        onOpenAction={jest.fn()}
+        onOpenGap={jest.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/i }));
+
+    const text = document.body.textContent ?? "";
+    expect(screen.getByRole("tab", { name: /Adoption lens 1 tool rollout/i })).toBeInTheDocument();
+    expect(text).toContain("ServiceNow rollout");
+    expect(text).not.toContain("Service case automation");
   });
 
   it("withdraws cost findings when no actions or gaps support them", () => {

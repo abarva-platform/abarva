@@ -793,9 +793,17 @@ function riskRows(view: TowerCommandCenterView): TowerEvidenceGapView[] {
     .slice(0, 20);
 }
 
+function isToolRolloutRow(item: TowerAiView): boolean {
+  return item.sourceFile === "23_ai_tool_rollout.csv";
+}
+
 function adoptionRows(view: TowerCommandCenterView): TowerAiView[] {
   return [...view.allInitiatives]
-    .filter((item) => item.usageBars.length > 0 || item.usageHeadline !== null)
+    .filter(
+      (item) =>
+        isToolRolloutRow(item) &&
+        (item.usageBars.length > 0 || item.usageHeadline !== null),
+    )
     .sort(
       (a, b) =>
         (aiUsageScore(b) ?? -1) - (aiUsageScore(a) ?? -1) ||
