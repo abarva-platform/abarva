@@ -5,6 +5,8 @@ import {
   source360RecoverableCreditCoverageRows,
   source360RecoverableCreditFinding,
   topVendors,
+  vendorArchetypeRows,
+  vendorCoverageRows,
 } from "../WorkspaceExecutiveShell";
 
 describe("WorkspaceExecutiveShell performance formatting", () => {
@@ -520,5 +522,104 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
         amount: 151_000,
       },
     );
+  });
+
+  it("aggregates vendor evidence depth rows for charting without inventing coverage", () => {
+    const portfolio = {
+      contracts: [
+        {
+          contract_id: "MER-TECH-AMS-001",
+          vendor_ref: "vendor-cognizant",
+          vendor_name: "Cognizant Technology Solutions",
+        },
+        {
+          contract_id: "MER-TECH-SD-001",
+          vendor_ref: "vendor-kyndryl",
+          vendor_name: "Kyndryl, Inc.",
+        },
+      ],
+      impact: {
+        evidenceCoverage: [
+          {
+            contract_id: "MER-TECH-AMS-001",
+            vendor_ref: "vendor-cognizant",
+            spend_rows: 12,
+            performance_rows: 12,
+            opportunity_rows: 2,
+            unclaimed_credit_usd: 36_999.99,
+          },
+          {
+            contract_id: "MER-TECH-SD-001",
+            vendor_ref: null,
+            spend_rows: 12,
+            performance_rows: 12,
+            opportunity_rows: 1,
+            unclaimed_credit_usd: 50_499.99,
+          },
+        ],
+      },
+    };
+
+    const rows = vendorCoverageRows(
+      portfolio as unknown as Parameters<typeof vendorCoverageRows>[0],
+    );
+
+    expect(rows.get("vendor-cognizant")).toMatchObject({
+      spendRows: 12,
+      performanceRows: 12,
+      actionRows: 2,
+      unclaimedCredit: 36_999.99,
+    });
+    expect(rows.get("vendor-kyndryl")).toMatchObject({
+      spendRows: 12,
+      performanceRows: 12,
+      actionRows: 1,
+      unclaimedCredit: 50_499.99,
+    });
+  });
+
+  it("rolls vendor archetype charts from declared contract categories", () => {
+    const rows = vendorArchetypeRows({
+      contracts: [
+        {
+          contract_id: "MER-TECH-M365-001",
+          vendor_ref: "vendor-msft",
+          vendor_name: "Microsoft Corporation",
+          vendor_category: "SaaS",
+          annual_value: 14_800_000,
+        },
+        {
+          contract_id: "MER-TECH-SFDC-001",
+          vendor_ref: "vendor-sfdc",
+          vendor_name: "Salesforce, Inc.",
+          vendor_category: "SaaS",
+          annual_value: 9_200_000,
+        },
+        {
+          contract_id: "MER-TECH-AWS-001",
+          vendor_ref: "vendor-aws",
+          vendor_name: "Amazon Web Services, Inc.",
+          vendor_category: "Cloud",
+          annual_value: 11_800_000,
+        },
+      ],
+    } as unknown as Parameters<typeof vendorArchetypeRows>[0]);
+
+    expect(rows[0]).toMatchObject({
+      category: "SaaS",
+      vendorCount: 2,
+      contractCount: 2,
+      annualValue: 24_000_000,
+      vendorRef: "vendor-msft",
+      vendorName: "Microsoft Corporation",
+    });
+    expect(rows[1]).toMatchObject({
+      category: "Cloud",
+      vendorCount: 1,
+      contractCount: 1,
+      annualValue: 11_800_000,
+      vendorRef: "vendor-aws",
+      vendorName: "Amazon Web Services, Inc.",
+    });
   });
 });
