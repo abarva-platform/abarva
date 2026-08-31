@@ -1078,7 +1078,13 @@ function VendorEvidenceDepthChart({
     );
 
   if (data.length === 0) {
-    return null;
+    return (
+      <ChartEmptyState
+        label="Vendor evidence depth chart"
+        title="No vendor evidence depth chart available."
+        body="Source has no supplier-level spend, performance, or action rows for this view yet, so it keeps the chart empty rather than implying coverage."
+      />
+    );
   }
 
   return (
@@ -1119,13 +1125,24 @@ function VendorEvidenceDepthChart({
                 color: "#2c2c2a",
               }}
             />
-            <Bar dataKey="spendRows" stackId="depth" fill="#0a0a0b" />
-            <Bar dataKey="performanceRows" stackId="depth" fill="#1d9e75" />
+            <Bar
+              dataKey="spendRows"
+              stackId="depth"
+              fill="#0a0a0b"
+              maxBarSize={38}
+            />
+            <Bar
+              dataKey="performanceRows"
+              stackId="depth"
+              fill="#1d9e75"
+              maxBarSize={38}
+            />
             <Bar
               dataKey="actionRows"
               stackId="depth"
               fill="#ba7517"
               radius={[0, 5, 5, 0]}
+              maxBarSize={38}
             />
           </BarChart>
         )}
@@ -1162,96 +1179,97 @@ function VendorArchetypeMixChart({
 
   const coverage = vendorArchetypeCoverage(portfolio);
 
+  if (data.length === 0) {
+    return (
+      <ChartEmptyState
+        label="Vendor archetype annual value chart"
+        title="Archetype data not charted."
+        body={`${coverage.totalContracts} contract headers stay in the register, but Source will not draw a concentration chart from an unmapped placeholder bucket.`}
+      />
+    );
+  }
+
   return (
     <div
       className="sw-v2-recharts-card"
       aria-label="Vendor archetype annual value chart"
     >
-      {data.length > 0 ? (
-        <>
-          <MeasuredChartFrame className="sw-v2-chart-frame-bar" height={238}>
-            {(chartWidth, chartHeight) => (
-              <BarChart
-                data={data}
-                width={chartWidth}
-                height={chartHeight}
-                margin={{ top: 12, right: 24, bottom: 8, left: 4 }}
-                barCategoryGap={16}
-              >
-                <CartesianGrid
-                  vertical={false}
-                  stroke="rgba(10,10,11,0.12)"
-                  strokeDasharray="3 4"
+      <MeasuredChartFrame className="sw-v2-chart-frame-bar" height={238}>
+        {(chartWidth, chartHeight) => (
+          <BarChart
+            data={data}
+            width={chartWidth}
+            height={chartHeight}
+            margin={{ top: 12, right: 24, bottom: 8, left: 4 }}
+            barCategoryGap={16}
+          >
+            <CartesianGrid
+              vertical={false}
+              stroke="rgba(10,10,11,0.12)"
+              strokeDasharray="3 4"
+            />
+            <XAxis
+              dataKey="shortName"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
+            />
+            <YAxis hide domain={[0, "dataMax"]} />
+            <Tooltip
+              cursor={{ fill: "rgba(186,117,23,0.08)" }}
+              contentStyle={{
+                border: "1px solid #d3d1c7",
+                borderRadius: 6,
+                boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+                color: "#2c2c2a",
+              }}
+              formatter={(value, name) => {
+                if (name === "contracts") {
+                  return [String(value), "Contracts"];
+                }
+                return [
+                  money(typeof value === "number" ? value : Number(value)),
+                  "Annual value",
+                ];
+              }}
+            />
+            <Bar
+              dataKey="annualValue"
+              fill="#0a0a0b"
+              radius={[5, 5, 0, 0]}
+              maxBarSize={46}
+            >
+              {data.map((row, index) => (
+                <Cell
+                  key={row.name}
+                  fill={
+                    index % 3 === 0
+                      ? "#0a0a0b"
+                      : index % 3 === 1
+                        ? "#1d9e75"
+                        : "#ba7517"
+                  }
+                  opacity={Math.max(0.5, 1 - index * 0.08)}
                 />
-                <XAxis
-                  dataKey="shortName"
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
-                />
-                <YAxis hide domain={[0, "dataMax"]} />
-                <Tooltip
-                  cursor={{ fill: "rgba(186,117,23,0.08)" }}
-                  contentStyle={{
-                    border: "1px solid #d3d1c7",
-                    borderRadius: 6,
-                    boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
-                    color: "#2c2c2a",
-                  }}
-                  formatter={(value, name) => {
-                    if (name === "contracts") {
-                      return [String(value), "Contracts"];
-                    }
-                    return [
-                      money(typeof value === "number" ? value : Number(value)),
-                      "Annual value",
-                    ];
-                  }}
-                />
-                <Bar dataKey="annualValue" fill="#0a0a0b" radius={[5, 5, 0, 0]}>
-                  {data.map((row, index) => (
-                    <Cell
-                      key={row.name}
-                      fill={
-                        index % 3 === 0
-                          ? "#0a0a0b"
-                          : index % 3 === 1
-                            ? "#1d9e75"
-                            : "#ba7517"
-                      }
-                      opacity={Math.max(0.5, 1 - index * 0.08)}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            )}
-          </MeasuredChartFrame>
-          <div className="sw-v2-recharts-legend">
-            {data.slice(0, 4).map((row) => (
-              <span key={row.name}>
-                <b>{row.shortName}</b>
-                {row.contracts} contracts
-              </span>
-            ))}
-            {coverage.unmappedCount > 0 ? (
-              <span>
-                <b>{coverage.unmappedCount}</b>
-                unmapped contracts excluded
-              </span>
-            ) : null}
-          </div>
-        </>
-      ) : (
-        <div className="sw-v2-empty-state">
-          <span>Archetype data not charted</span>
-          <b>No declared archetype rows are loaded for this portfolio view.</b>
-          <p>
-            {coverage.totalContracts} contract headers stay in the register,
-            but Source will not draw a concentration chart from an unmapped
-            placeholder bucket.
-          </p>
-        </div>
-      )}
+              ))}
+            </Bar>
+          </BarChart>
+        )}
+      </MeasuredChartFrame>
+      <div className="sw-v2-recharts-legend">
+        {data.slice(0, 4).map((row) => (
+          <span key={row.name}>
+            <b>{row.shortName}</b>
+            {row.contracts} contracts
+          </span>
+        ))}
+        {coverage.unmappedCount > 0 ? (
+          <span>
+            <b>{coverage.unmappedCount}</b>
+            unmapped contracts excluded
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -1274,7 +1292,13 @@ function VendorConcentrationChart({
   });
 
   if (data.length === 0) {
-    return null;
+    return (
+      <ChartEmptyState
+        label="Vendor concentration chart"
+        title="No vendor concentration chart available."
+        body="No supplier rows with recorded annual value are loaded for this view, so Source withholds the chart and table ranking."
+      />
+    );
   }
 
   return (
@@ -1321,7 +1345,7 @@ function VendorConcentrationChart({
               ]}
               labelFormatter={(_, rows) => rows[0]?.payload?.name ?? ""}
             />
-            <Bar dataKey="annualValue" radius={[0, 5, 5, 0]}>
+            <Bar dataKey="annualValue" radius={[0, 5, 5, 0]} maxBarSize={34}>
               {data.map((row, index) => (
                 <Cell
                   key={row.name}
@@ -1357,7 +1381,14 @@ function ContractPerformanceTrendChart({
   }));
 
   if (data.length === 0) {
-    return null;
+    return (
+      <ChartEmptyState
+        label="Contract performance trend chart"
+        title="No performance trend chart available."
+        body="This contract has no loaded period-by-period SLA rows, so Source will not draw a performance trend."
+        compact
+      />
+    );
   }
 
   return (
@@ -1459,7 +1490,14 @@ function OptimizeTypeMixChart({
     }));
 
   if (data.length === 0) {
-    return null;
+    return (
+      <ChartEmptyState
+        label="Optimize action type mix chart"
+        title="No optimize type chart available."
+        body="No quantified action rows are loaded for this view. Finance-confirmed value remains separate from this review queue."
+        compact
+      />
+    );
   }
 
   return (
@@ -1510,6 +1548,31 @@ function OptimizeTypeMixChart({
             {money(row.value)}
           </span>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ChartEmptyState({
+  label,
+  title,
+  body,
+  compact,
+}: {
+  label: string;
+  title: string;
+  body: string;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={`sw-v2-recharts-card ${compact ? "sw-v2-recharts-card-compact" : ""}`}
+      aria-label={label}
+      data-chart-empty="true"
+    >
+      <div className="sw-v2-chart-empty">
+        <b>{title}</b>
+        <p>{body}</p>
       </div>
     </div>
   );

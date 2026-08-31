@@ -853,6 +853,11 @@
   min-width: 0;
 }
 
+.sw-v2-chart-stage {
+  width: 100%;
+  min-width: 0;
+}
+
 .sw-v2-chart-frame-bar {
   height: 238px;
 }
@@ -880,6 +885,35 @@
 .sw-v2-recharts-legend b {
   color: #2c2c2a;
   font-weight: 780;
+}
+
+.sw-v2-chart-empty {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px dashed rgba(10, 10, 11, 0.22);
+  border-radius: 7px;
+  background:
+    linear-gradient(90deg, rgba(10, 10, 11, 0.035) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(10, 10, 11, 0.035) 1px, transparent 1px),
+    #faf7f1;
+  background-size: 42px 42px;
+  padding: 22px;
+}
+
+.sw-v2-chart-empty b {
+  color: #0a0a0b;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.sw-v2-chart-empty p {
+  max-width: 560px;
+  margin: 8px 0 0;
+  color: #5f5e5a;
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .sw-v2-vendor-strip button {

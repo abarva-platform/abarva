@@ -156,6 +156,7 @@ function expectMeasuredRechartsCard(card: HTMLElement) {
   const wrapper = card.querySelector(".recharts-wrapper");
   const svg = card.querySelector("svg.recharts-surface");
 
+  expect(card.getAttribute("data-chart-empty")).not.toBe("true");
   expect(frame).toBeTruthy();
   expect(stage).toBeTruthy();
   expect(frame?.getAttribute("data-chart-width")).toBe("620");
@@ -165,6 +166,13 @@ function expectMeasuredRechartsCard(card: HTMLElement) {
   expect(Number(svg?.querySelectorAll("path, rect, circle").length)).toBeGreaterThan(
     0,
   );
+}
+
+function expectChartEmptyState(card: HTMLElement, text: RegExp) {
+  expect(card.getAttribute("data-chart-empty")).toBe("true");
+  expect(card.textContent).toMatch(text);
+  expect(card.querySelector(".sw-v2-chart-empty")).toBeTruthy();
+  expect(card.querySelector(".recharts-wrapper")).toBeNull();
 }
 
 async function readWorkspaceSourceFiles(dir = WORKSPACE_ROUTE_DIR): Promise<
@@ -530,6 +538,17 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Evidence depth" }));
     expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
+    expectChartEmptyState(
+      screen.getByLabelText("Vendor evidence depth chart"),
+      /No vendor evidence depth chart available/i,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "Archetype mix" }));
+    expect(screen.getByText("Declared contract archetypes")).toBeTruthy();
+    expectChartEmptyState(
+      screen.getByLabelText("Vendor archetype annual value chart"),
+      /unmapped placeholder bucket/i,
+    );
 
     fireEvent.click(screen.getByRole("tab", { name: "Concentration" }));
     fireEvent.click(
@@ -875,6 +894,18 @@ describe("Source workspace ECL browser-surface proof", () => {
       screen.getByLabelText("Vendor evidence depth chart"),
     );
     expect(screen.getByRole("button", { name: /Kyndryl, Inc./ })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Archetype mix" }));
+    expect(screen.getByText("Declared contract archetypes")).toBeTruthy();
+    expectMeasuredRechartsCard(
+      screen.getByLabelText("Vendor archetype annual value chart"),
+    );
+    expect(screen.getAllByText(/Managed Services|Technology/).length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      screen.queryByText(/No declared archetype rows are loaded/i),
+    ).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
 
