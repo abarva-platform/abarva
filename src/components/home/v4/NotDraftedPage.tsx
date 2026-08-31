@@ -20,12 +20,15 @@ export function NotDraftedPage({
   title,
   guidingQuestion,
   depth,
+  onOpenRows,
 }: {
   chapterNumber: number;
   title: string;
   guidingQuestion: string;
   /** Tables and findings computed from the bundle's estate rows. Renders nothing when empty. */
   depth?: ChapterDepth;
+  /** Opens the rows behind a finding in the record browser. */
+  onOpenRows?: (objectType: string, filter: string) => void;
 }) {
   return (
     <div style={{ padding: `54px ${PAGE_X}px 0` }}>
@@ -89,7 +92,7 @@ export function NotDraftedPage({
           style={{ margin: "10px -" + PAGE_X + "px 0" }}
         >
           <TableSet tables={depth.tables} />
-          <FindingsBlock findings={depth.findings} />
+          <FindingsBlock findings={depth.findings} onOpenRows={onOpenRows} />
           <UnsupportedViews views={depth.unsupported} />
         </div>
       ) : null}

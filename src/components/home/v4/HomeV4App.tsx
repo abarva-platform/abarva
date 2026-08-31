@@ -102,6 +102,15 @@ export function HomeV4App({
   tenantKey: HomePreviewTenantKey;
 }) {
   const [activeView, setActiveView] = useState<ActiveView>("executive-story");
+  /**
+   * A filter carried from a figure to the rows behind it.
+   *
+   * This is what turns "every number traces to a filter over a named file" from a claim into a
+   * control: a reader who doubts a figure opens its rows in one move, with the filter applied and
+   * stated. Cleared whenever navigation happens any other way, so a stale filter never silently
+   * narrows a view someone arrived at deliberately.
+   */
+  const [recordFilter, setRecordFilter] = useState<string | null>(null);
 
   const chapters = bundle.chapters;
   const activeChapter = chapters.find((c) => c.chapterId === activeView);
@@ -151,16 +160,22 @@ export function HomeV4App({
     return () => window.removeEventListener("hashchange", syncFromHash);
   }, [bundle]);
 
-  const selectActiveView = (id: string) => {
+  const selectActiveView = (id: string, filter?: string) => {
     const nextView = resolveHashView(`#${id}`, bundle);
     if (!nextView) {
       return;
     }
 
+    setRecordFilter(filter ?? null);
     setActiveView(nextView);
     if (typeof window !== "undefined" && window.location.hash !== `#${id}`) {
       window.history.replaceState(null, "", `#${id}`);
     }
+  };
+
+  /** Opens the rows behind a figure: the record browser for that type, filter already applied. */
+  const openRecordRows = (objectType: string, filter: string) => {
+    selectActiveView(`tech:${objectType}`, filter);
   };
 
   /** Exhibit count lines, computed from the estate rather than asserted. An exhibit whose totals
@@ -302,6 +317,7 @@ export function HomeV4App({
                 signalPacket={signalPacket}
                 visualDatasets={visualDatasets}
                 exhibitMeta={exhibitMeta}
+                onOpenRows={openRecordRows}
                 depth={chapterDepth(activeChapter.chapterId, {
                   asOf: bundle.provenance?.generated_at?.slice(0, 10),
                   applications: applications?.rows,
@@ -323,6 +339,9 @@ export function HomeV4App({
                   )?.rows,
                   ai: techRecordTypes.find(
                     (r) => r.objectType === "ai_use_case",
+                  )?.rows,
+                  organization: techRecordTypes.find(
+                    (r) => r.objectType === "organization_ownership",
                   )?.rows,
                 })}
               />
@@ -331,6 +350,7 @@ export function HomeV4App({
                 chapterNumber={activeIndex + 1}
                 title={activeChapter.title}
                 guidingQuestion={activeChapter.guidingQuestion}
+                onOpenRows={openRecordRows}
                 depth={chapterDepth(activeChapter.chapterId, {
                   asOf: bundle.provenance?.generated_at?.slice(0, 10),
                   applications: applications?.rows,
@@ -352,6 +372,9 @@ export function HomeV4App({
                   )?.rows,
                   ai: techRecordTypes.find(
                     (r) => r.objectType === "ai_use_case",
+                  )?.rows,
+                  organization: techRecordTypes.find(
+                    (r) => r.objectType === "organization_ownership",
                   )?.rows,
                 })}
               />
@@ -397,8 +420,9 @@ export function HomeV4App({
 
           {activeTechRecordType ? (
             <RecordBrowser
-              key={activeTechRecordType.objectType}
+              key={`${activeTechRecordType.objectType}:${recordFilter ?? ""}`}
               recordType={activeTechRecordType}
+              initialQuery={recordFilter ?? undefined}
             />
           ) : null}
         </main>

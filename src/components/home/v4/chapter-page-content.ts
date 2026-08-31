@@ -12,6 +12,8 @@ import {
   programFindings,
   aiTables,
   aiFindings,
+  organizationTables,
+  organizationFindings,
   infrastructureTables,
   infrastructureFindings,
   dataTables,
@@ -46,13 +48,14 @@ const CHAPTER_SOURCES: Partial<
       | "risks"
       | "programs"
       | "ai"
+      | "organization"
     >
   >
 > = {
   technology_data: ["applications", "data"],
   // Performance and Value is the metrics surface; What Needs Attention is the register. Both were
   // unreachable until the projection carried these families.
-  how_we_operate: ["infrastructure", "applications"],
+  how_we_operate: ["organization", "infrastructure"],
   what_needs_attention: ["risks", "applications", "infrastructure"],
   performance_value: ["metrics", "vendors"],
   strategy_value_creation: ["programs", "ai", "vendors"],
@@ -65,6 +68,7 @@ export interface EstateRecordTypes {
   risks?: EstateRow[];
   programs?: EstateRow[];
   ai?: EstateRow[];
+  organization?: EstateRow[];
   applications?: EstateRow[];
   vendors?: EstateRow[];
   infrastructure?: EstateRow[];
@@ -90,6 +94,7 @@ const BUILDERS = {
   risks: { tables: riskTables, findings: riskFindings },
   programs: { tables: programTables, findings: programFindings },
   ai: { tables: aiTables, findings: aiFindings },
+  organization: { tables: organizationTables, findings: organizationFindings },
 } as const;
 
 export function chapterDepth(

@@ -28,14 +28,34 @@ const TONE: Record<string, { color: string; word: string }> = {
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div style={{ marginBottom: 10 }}>
-      <div style={{ ...eyebrow(V4.stone), fontSize: 9.5, marginBottom: 3 }}>{label}</div>
-      <div style={{ fontFamily: SANS, fontSize: 12, lineHeight: 1.5, color: V4.inkSoft }}>{children}</div>
+      <div style={{ ...eyebrow(V4.stone), fontSize: 9.5, marginBottom: 3 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: SANS,
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: V4.inkSoft,
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
 
 /** The trailing icon and its panel. Wraps any rendered value. */
-export function LineageMark({ lineage, children }: { lineage: FactLineage; children?: ReactNode }) {
+export function LineageMark({
+  lineage,
+  children,
+  onOpenRows,
+}: {
+  lineage: FactLineage;
+  children?: ReactNode;
+  /** Opens the record browser on the rows behind the figure, with the filter applied and stated. */
+  onOpenRows?: (objectType: string, filter: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
   const standing = quotability(lineage);
@@ -44,7 +64,11 @@ export function LineageMark({ lineage, children }: { lineage: FactLineage; child
   useEffect(() => {
     if (!open) return;
     function onDocClick(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) setOpen(false);
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      )
+        setOpen(false);
     }
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
@@ -61,7 +85,12 @@ export function LineageMark({ lineage, children }: { lineage: FactLineage; child
     <span
       ref={containerRef}
       data-home-lineage={standing.tone}
-      style={{ display: "inline-flex", alignItems: "baseline", gap: 4, position: "relative" }}
+      style={{
+        display: "inline-flex",
+        alignItems: "baseline",
+        gap: 4,
+        position: "relative",
+      }}
     >
       {children}
       <button
@@ -120,12 +149,20 @@ export function LineageMark({ lineage, children }: { lineage: FactLineage; child
             background: V4.surface,
             border: `1px solid ${V4.ruleStrong}`,
             borderRadius: 8,
-            boxShadow: "0 8px 24px rgba(10,12,18,0.12), 0 2px 6px rgba(10,12,18,0.06)",
+            boxShadow:
+              "0 8px 24px rgba(10,12,18,0.12), 0 2px 6px rgba(10,12,18,0.06)",
             padding: 14,
             textAlign: "left",
           }}
         >
-          <div style={{ ...eyebrow(V4.navy), fontSize: 10, letterSpacing: "0.14em", marginBottom: 9 }}>
+          <div
+            style={{
+              ...eyebrow(V4.navy),
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              marginBottom: 9,
+            }}
+          >
             {lineage.label} · where it comes from
           </div>
 
@@ -133,7 +170,9 @@ export function LineageMark({ lineage, children }: { lineage: FactLineage; child
           <Section label="What one row means">{lineage.grain}</Section>
 
           <Section label="Source and rule">
-            <span style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.6 }}>{traceLine(lineage)}</span>
+            <span style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.6 }}>
+              {traceLine(lineage)}
+            </span>
           </Section>
 
           {(lineage.disagreements ?? []).map((other) => (
@@ -145,20 +184,68 @@ export function LineageMark({ lineage, children }: { lineage: FactLineage; child
                 marginBottom: 10,
               }}
             >
-              <div style={{ ...eyebrow(other.reconciled ? V4.amber : V4.red), fontSize: 9.5, marginBottom: 3 }}>
-                {other.reconciled ? "Another surface counts differently" : "Unexplained disagreement"}
+              <div
+                style={{
+                  ...eyebrow(other.reconciled ? V4.amber : V4.red),
+                  fontSize: 9.5,
+                  marginBottom: 3,
+                }}
+              >
+                {other.reconciled
+                  ? "Another surface counts differently"
+                  : "Unexplained disagreement"}
               </div>
-              <div style={{ fontFamily: SANS, fontSize: 12, lineHeight: 1.5, color: V4.inkSoft }}>
+              <div
+                style={{
+                  fontFamily: SANS,
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                  color: V4.inkSoft,
+                }}
+              >
                 <strong style={{ fontWeight: 600, color: V4.ink }}>
-                  {typeof other.value === "number" ? other.value.toLocaleString() : other.value}
+                  {typeof other.value === "number"
+                    ? other.value.toLocaleString()
+                    : other.value}
                 </strong>{" "}
                 from the {other.source}. {other.reason}
               </div>
             </div>
           ))}
 
+          {lineage.openRows && onOpenRows ? (
+            <button
+              type="button"
+              data-home-lineage-open-rows
+              onClick={() => {
+                onOpenRows(
+                  lineage.openRows!.objectType,
+                  lineage.openRows!.filter,
+                );
+                setOpen(false);
+              }}
+              style={{
+                fontFamily: MONO,
+                fontSize: 11,
+                color: V4.blue,
+                background: "transparent",
+                border: `1px solid ${V4.rule}`,
+                padding: "6px 11px",
+                marginBottom: 10,
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              Open these rows
+            </button>
+          ) : null}
+
           <div style={{ borderTop: `1px solid ${V4.ruleSoft}`, paddingTop: 9 }}>
-            <div style={{ ...eyebrow(V4.stone), fontSize: 9.5, marginBottom: 3 }}>Standing</div>
+            <div
+              style={{ ...eyebrow(V4.stone), fontSize: 9.5, marginBottom: 3 }}
+            >
+              Standing
+            </div>
             <div
               style={{
                 fontFamily: SANS,
@@ -177,15 +264,39 @@ export function LineageMark({ lineage, children }: { lineage: FactLineage; child
 }
 
 /** A hero-scale figure with its label and the mark trailing the number. */
-export function LineageFigure({ lineage, size = 38 }: { lineage: FactLineage; size?: number }) {
+export function LineageFigure({
+  lineage,
+  size = 38,
+}: {
+  lineage: FactLineage;
+  size?: number;
+}) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <LineageMark lineage={lineage}>
-        <span style={{ fontFamily: SERIF, fontSize: size, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
-          {typeof lineage.value === "number" ? lineage.value.toLocaleString() : lineage.value}
+        <span
+          style={{
+            fontFamily: SERIF,
+            fontSize: size,
+            lineHeight: 1,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {typeof lineage.value === "number"
+            ? lineage.value.toLocaleString()
+            : lineage.value}
         </span>
       </LineageMark>
-      <span style={{ fontFamily: SANS, fontSize: 13, color: V4.slate, lineHeight: 1.4 }}>{lineage.label}</span>
+      <span
+        style={{
+          fontFamily: SANS,
+          fontSize: 13,
+          color: V4.slate,
+          lineHeight: 1.4,
+        }}
+      >
+        {lineage.label}
+      </span>
     </div>
   );
 }
