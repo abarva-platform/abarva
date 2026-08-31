@@ -392,13 +392,32 @@ function takeLimit<T>(items: T[], limit: number): T[] {
 
 const ENTERPRISE_OPENING_RE =
   /\b(?:enterprise|estate|application|system|source-target|data movement|flow|workload|analytics|reporting|ETL|script|business function|provider|payer|operating model)\b/i;
+const INVENTORY_OPENING_RE =
+  /\b(?:largest application functions|recorded application count|data-movement inventory|recorded source-to-target movement rows|infrastructure or platform records|named infrastructure or platform examples|\d+(?:,\d{3})*(?:\.\d+)?\s+(?:applications|systems|source-target|data movements|flows|workload items|reports|ETL jobs|scripts|platforms|vendors|suppliers|contracts)|\d+(?:,\d{3})*(?:\.\d+)?\s+of\s+\d+(?:,\d{3})*)\b/i;
 const COMMERCIAL_OPENING_RE =
   /\b(?:vendor|supplier|supplier group|top five supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
 const EVIDENCE_BOUNDARY_OPENING_RE =
   /\b(?:not supplied|not yet supplied|not available|does not yet establish|should therefore be limited|do not infer|coverage gap|evidence gap|missing evidence|not enough verified evidence|not client-attested|synthetic)\b/i;
+const NARROW_PROGRAM_OPENING_RE =
+  /\b(?:named strategic priority|named program|named initiative|\d+(?:\.\d+)?%\s+complete|blocked on unconfirmed|single program)\b/i;
+const INDIVIDUAL_ASSET_OPENING_RE =
+  /\b(?:regional server room|server room|appliance|cluster|single system|single platform|named infrastructure|named platform)\b/i;
+
+function standaloneInventoryOpening(statement: string): boolean {
+  return (
+    INVENTORY_OPENING_RE.test(statement) &&
+    !/\b(?:because|therefore|so that|making|means leadership|requires leadership|materially changes|constrains|unlocks)\b/i.test(statement)
+  );
+}
 
 function unsuitableExecutiveOpening(statement: string): boolean {
-  return COMMERCIAL_OPENING_RE.test(statement) || EVIDENCE_BOUNDARY_OPENING_RE.test(statement);
+  return (
+    COMMERCIAL_OPENING_RE.test(statement) ||
+    EVIDENCE_BOUNDARY_OPENING_RE.test(statement) ||
+    NARROW_PROGRAM_OPENING_RE.test(statement) ||
+    INDIVIDUAL_ASSET_OPENING_RE.test(statement) ||
+    standaloneInventoryOpening(statement)
+  );
 }
 
 function enterpriseOpeningClaims(claims: GroundedClaim[]): GroundedClaim[] {

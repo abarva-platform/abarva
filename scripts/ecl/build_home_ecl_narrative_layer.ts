@@ -142,13 +142,19 @@ const CXO_FORBIDDEN_VISIBLE_PATTERNS: Array<{ label: string; pattern: RegExp }> 
 const FAKE_DATA_WORKLOAD_GAP_PATTERN =
   /\b(?:confirm|validate|collect|provide|supply|obtain)\b[\s\S]{0,100}\b(?:reports?|ETL|jobs?|scripts?|users?|data[-\s]?volume|TB)\b/i;
 const INVENTORY_OPENING_PATTERN =
-  /\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:applications|systems|source-target|data movements|flows|workload items|reports|ETL jobs|scripts|platforms|vendors|suppliers|contracts)\b/i;
+  /\b(?:largest application functions|recorded application count|data-movement inventory|recorded source-to-target movement rows|infrastructure or platform records|named infrastructure or platform examples|\d+(?:,\d{3})*(?:\.\d+)?\s+(?:applications|systems|source-target|data movements|flows|workload items|reports|ETL jobs|scripts|platforms|vendors|suppliers|contracts)|\d+(?:,\d{3})*(?:\.\d+)?\s+of\s+\d+(?:,\d{3})*)\b/i;
 const COMMERCIAL_OPENING_PATTERN =
   /\b(?:vendor|supplier|supplier group|top five supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
 const EVIDENCE_BOUNDARY_OPENING_PATTERN =
   /\b(?:not supplied|not yet supplied|not available|does not yet establish|should therefore be limited|do not infer|coverage gap|evidence gap|missing evidence|not enough verified evidence|not client-attested|synthetic)\b/i;
+const NARROW_PROGRAM_OPENING_PATTERN =
+  /\b(?:named strategic priority|named program|named initiative|\d+(?:\.\d+)?%\s+complete|blocked on unconfirmed|single program)\b/i;
 const BUSINESS_CONSEQUENCE_PATTERN =
   /\b(?:value|revenue|margin|patient|member|provider|payer|care|operating model|priority|outcome|finance|risk|accountability|decision|capacity|service|access|performance|modernization|transformation)\b/i;
+const BROAD_ENTERPRISE_THESIS_PATTERN =
+  /\b(?:operating[-\s]model|business[-\s]model|value creation|provider|payer|health plan|member|patient|care delivery|book of business|leadership agenda|executive agenda)\b/i;
+const INDIVIDUAL_ASSET_OPENING_PATTERN =
+  /\b(?:regional server room|server room|appliance|cluster|single system|single platform|named infrastructure|named platform)\b/i;
 
 const RAW_VISIBLE_ID_PATTERN = /\b(?:APP|PLAT|CTR|VEN|FLOW|DOC|INV|SLA|PO|RISK|CTRL|PROG|MEAS|MET|OBJ)-[A-Z0-9][A-Z0-9_-]*\b/g;
 
@@ -1587,7 +1593,7 @@ function claimRowsWithRefs(chapters: ChapterView[]): Array<GroundedClaim & { cla
 function standaloneInventoryClaim(statement: string): boolean {
   return (
     INVENTORY_OPENING_PATTERN.test(statement) &&
-    !/\b(?:because|therefore|so that|risk|value|margin|revenue|decision|priority|accountability|outcome|constraint|blocked)\b/i.test(statement)
+    !/\b(?:because|therefore|so that|making|means leadership|requires leadership|materially changes|constrains|unlocks)\b/i.test(statement)
   );
 }
 
@@ -1595,6 +1601,8 @@ function unsuitableOpeningClaim(statement: string): boolean {
   return (
     COMMERCIAL_OPENING_PATTERN.test(statement) ||
     EVIDENCE_BOUNDARY_OPENING_PATTERN.test(statement) ||
+    NARROW_PROGRAM_OPENING_PATTERN.test(statement) ||
+    INDIVIDUAL_ASSET_OPENING_PATTERN.test(statement) ||
     standaloneInventoryClaim(statement)
   );
 }
@@ -1603,10 +1611,12 @@ function businessFirstOpeningClaim(claims: Array<GroundedClaim & { claim_ref: st
   return (
     claims.find((claim) =>
       claim.chapter_id === "executive_brief" &&
+      BROAD_ENTERPRISE_THESIS_PATTERN.test(claim.statement) &&
       BUSINESS_CONSEQUENCE_PATTERN.test(claim.statement) &&
       !unsuitableOpeningClaim(claim.statement),
     ) ??
     claims.find((claim) =>
+      BROAD_ENTERPRISE_THESIS_PATTERN.test(claim.statement) &&
       BUSINESS_CONSEQUENCE_PATTERN.test(claim.statement) &&
       !unsuitableOpeningClaim(claim.statement),
     ) ??
