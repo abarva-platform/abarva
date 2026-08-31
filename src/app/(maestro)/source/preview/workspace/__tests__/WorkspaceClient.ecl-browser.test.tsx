@@ -698,7 +698,7 @@ describe("Source workspace ECL browser-surface proof", () => {
         {
           ...dbPortfolio.vendors[0],
           tenant_key: "meridian-health",
-          vendor_ref: "MER-VEN-KYNDRYL",
+          vendor_ref: "MER-VEN-KYNDRYL-ROLLUP",
           vendor_name: "Kyndryl, Inc.",
           vendor_category: "Managed Services",
           contract_count: 1,
@@ -707,6 +707,19 @@ describe("Source workspace ECL browser-surface proof", () => {
           auto_renew_contracts: 0,
           next_end_date: "2028-06-30",
           contract_refs: ["MER-TECH-SD-001"],
+        },
+        {
+          ...dbPortfolio.vendors[0],
+          tenant_key: "meridian-health",
+          vendor_ref: "MER-VEN-KYNDRYL",
+          vendor_name: "Kyndryl, Inc.",
+          vendor_category: "Managed Services",
+          contract_count: 0,
+          annual_value: 0,
+          total_committed_value: 0,
+          auto_renew_contracts: 0,
+          next_end_date: null,
+          contract_refs: [],
         },
       ],
       impact: {

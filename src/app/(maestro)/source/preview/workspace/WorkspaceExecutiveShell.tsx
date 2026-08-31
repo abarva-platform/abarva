@@ -993,7 +993,7 @@ function VendorEvidenceDepthChart({
   const coverageByVendor = vendorCoverageRows(portfolio);
   const data = focusedVendorSet(portfolio, vendors, "evidence").rows
     .map(({ vendor }) => {
-      const coverage = coverageByVendor.get(vendor.vendor_ref);
+      const coverage = coverageForVendor(vendor, coverageByVendor);
       return {
         name: vendor.vendor_name,
         shortName: compactVendorName(vendor.vendor_name),
@@ -1545,7 +1545,7 @@ function VendorEvidenceDepthTable({
         <span>Unclaimed credits</span>
       </div>
       {focus.rows.map(({ vendor }) => {
-        const coverage = coverageByVendor.get(vendor.vendor_ref);
+        const coverage = coverageForVendor(vendor, coverageByVendor);
         return (
           <button
             key={vendor.vendor_ref}
