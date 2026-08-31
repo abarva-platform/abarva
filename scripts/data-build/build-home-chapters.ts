@@ -42,6 +42,7 @@ import {
 } from "./build-enterprise-thesis";
 import type { Signal, ContextItem, buildEnterpriseSignalPacket } from "./enterprise-signal-packet";
 import { buildTechnologyEstateBundle } from "./technology-estate";
+import { HOME_PAGE_PROMPT_CONTRACT } from "../ecl/home_page_prompt_contracts";
 import {
   scoreLensDivergence,
   findInventedNumbers,
@@ -118,6 +119,7 @@ const CHAPTER_EXPECTED_LENS_CLASS: Record<ChapterId, LensTermClass> = {
 const HOME_SYNTHESIS_CONTRACT_VERSION = "home-chapters-v1";
 const CHAPTER_PROMPT_VERSION = "home-chapters/v1.1-page-lenses";
 const VERIFICATION_VERSION = "targeted-repair-v2";
+const HOME_PAGE_PROMPT_CONTRACT_PATH = "docs/architecture/home-v2-page-prompt-contracts-2026-08-30.json";
 
 export interface HomeChapterAssemblyLimits {
   executiveBriefQuestions: number;
@@ -803,6 +805,66 @@ function pagePromptContract(
   return signalPacket.pagePromptContracts?.find((contract) => contract.pageKey === chapterId) ?? null;
 }
 
+function text(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+  return String(value);
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+}
+
+function readHomePagePromptContracts(): HomePagePromptContract[] {
+  const contractPath = path.join(process.cwd(), HOME_PAGE_PROMPT_CONTRACT_PATH);
+  const parsed = fs.existsSync(contractPath)
+    ? (JSON.parse(fs.readFileSync(contractPath, "utf8")) as {
+        pages?: Array<Record<string, unknown>>;
+        lens_contracts?: Record<string, Record<string, unknown>>;
+      })
+    : (HOME_PAGE_PROMPT_CONTRACT as unknown as {
+        pages?: Array<Record<string, unknown>>;
+        lens_contracts?: Record<string, Record<string, unknown>>;
+      });
+  const lensContracts = parsed.lens_contracts ?? {};
+  return (parsed.pages ?? [])
+    .map((page) => {
+      const writerLens = text(page.writer_lens) ?? "";
+      const lens = lensContracts[writerLens];
+      return {
+        pageKey: text(page.page_key) ?? "",
+        label: text(page.label) ?? "",
+        writerLens,
+        voice: text(page.voice) ?? "",
+        decisionQuestion: text(page.decision_question) ?? "",
+        requiredContext: stringArray(page.required_context),
+        sourceLayerReads: stringArray(page.source_layer_reads),
+        mustShow: stringArray(page.must_show),
+        forbidden: stringArray(page.forbidden),
+        lensContract: lens
+          ? {
+              hat: text(lens.hat) ?? "",
+              primaryAudience: text(lens.primary_audience) ?? "",
+              promptInstruction: text(lens.prompt_instruction) ?? "",
+              evidencePriority: stringArray(lens.evidence_priority),
+              style: text(lens.style) ?? "",
+              mustNotDo: stringArray(lens.must_not_do),
+            }
+          : undefined,
+      };
+    })
+    .filter((page) => page.pageKey && page.writerLens);
+}
+
+function withHomePagePromptContracts(
+  signalPacket: EnterpriseSignalPacket,
+): EnterpriseSignalPacketWithPromptContracts {
+  return {
+    ...signalPacket,
+    pagePromptContracts: readHomePagePromptContracts(),
+  };
+}
+
 /**
  * `full_contract` means the packet's page lens contract reached the prompt. `fallback` means it did
  * not and the thin CHAPTER_DEFS writerLens string was used instead -- which used to happen silently,
@@ -915,7 +977,7 @@ async function buildChaptersForTenant(tenantKey: string, client: Parameters<type
     return { tenantKey, chapters: null, thesisResult: built, provenance: null, technologyEstate };
   }
   const thesis = built.publishedGeneration;
-  const signalPacket = built.signalPacket;
+  const signalPacket = withHomePagePromptContracts(built.signalPacket);
   const provenance = buildHomeChapterProvenance(signalPacket, THESIS_PROMPT_VERSION, new Date().toISOString());
   const chapters = await buildChapterViewsFromVerifiedThesis(signalPacket, thesis, client);
 
@@ -1016,6 +1078,7 @@ function collectMustNotDoViolations(
 
 async function measureChapterQualityForTenant(tenantKey: string, client: Parameters<typeof callClaude>[0]) {
   const built = await buildTenant(tenantKey, client);
+  const signalPacket = withHomePagePromptContracts(built.signalPacket);
   const generatedAt = new Date().toISOString();
   const tenantNouns = tenantNounsFor(tenantKey);
   const estateCounts = estateCountsFromRecords(built.canonicalRecords);
@@ -1024,12 +1087,13 @@ async function measureChapterQualityForTenant(tenantKey: string, client: Paramet
     generatedAt,
     defaultsChanged: false,
     packet: {
-      signals: built.signalPacket.signals.length,
-      contextItems: built.signalPacket.contextItems.length,
-      sourceSummaries: built.signalPacket.sourceSummaries.length,
-      sourceSummaryKinds: summarizeSourceSummaryKinds(built.signalPacket.sourceSummaries),
-      rawIntakeFiles: built.signalPacket.sourceSummaries.filter((summary) => summary.rawRowCount !== undefined).length,
-      visualDatasets: Object.keys(built.signalPacket.visualDatasets ?? {}).length,
+      signals: signalPacket.signals.length,
+      contextItems: signalPacket.contextItems.length,
+      sourceSummaries: signalPacket.sourceSummaries.length,
+      sourceSummaryKinds: summarizeSourceSummaryKinds(signalPacket.sourceSummaries),
+      rawIntakeFiles: signalPacket.sourceSummaries.filter((summary) => summary.rawRowCount !== undefined).length,
+      visualDatasets: Object.keys(signalPacket.visualDatasets ?? {}).length,
+      pagePromptContracts: signalPacket.pagePromptContracts?.length ?? 0,
     },
     estateCounts,
     verification: summarizeVerificationLedger(built.verificationLedger),
@@ -1062,7 +1126,7 @@ async function measureChapterQualityForTenant(tenantKey: string, client: Paramet
   for (const variant of MEASUREMENT_VARIANTS) {
     const telemetry: ChapterBuildTelemetry[] = [];
     const chapters = await buildChapterViewsFromVerifiedThesis(
-      built.signalPacket,
+      signalPacket,
       built.publishedGeneration,
       client,
       undefined,
