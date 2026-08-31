@@ -330,11 +330,23 @@ describe("the projection schema reference does not silently rot", () => {
       : [];
     const creates = migrations.some((file) => {
       const sql = read(`supabase/migrations/${file}`);
+      // Generated SQL quotes its identifiers: `"ecl_projection"."tower_ai_portfolio"`. Matching
+      // only the unquoted spelling reports that no migration exists while one sits in the same
+      // directory — which is the answer this guard is here to prevent anyone believing.
       return TOWER_TABLES.some((t) =>
-        sql.includes(`create table if not exists ecl_projection.${t}`),
+        new RegExp(
+          `create table if not exists "?ecl_projection"?\\."?${t}"?`,
+          "i",
+        ).test(sql),
       );
     });
-    expect([creates, doc.includes("not yet a migration")]).toEqual([creates, !creates]);
+    // The document's claim has to track the repository. A migration now exists, so the document
+    // must no longer say one does not — and if the migration were ever removed, it must say so
+    // again. Either half drifting is the failure this guards.
+    expect([creates, doc.includes("no migration in this repository")]).toEqual([
+      creates,
+      !creates,
+    ]);
   });
 });
 
@@ -672,7 +684,10 @@ describe("tenant isolation is a property of the data", () => {
     // Doubled quotes: the predicate is built through `format()`, so it lives inside a SQL string
     // literal. Checking for the unescaped spelling would pass on a migration that never runs.
     expect(rls).toContain("current_setting(''app.tenant_key'', true)");
-    expect(READER).toContain("SELECT set_config('app.tenant_key', $1, false)");
+    // `is_local = true`: the key is scoped to the transaction, not the session. With connection
+    // pooling a session-scoped key persists on the connection, and the next request to reuse it
+    // inherits the previous tenant's key — which is precisely the leak the policy exists to stop.
+    expect(READER).toContain("SELECT set_config('app.tenant_key', $1, true)");
   });
 
   it("adds policies without forcing RLS on the owner", () => {
@@ -737,5 +752,43 @@ describe("the remaining Tower lenses stay scoped", () => {
   it("honours the requested page key for every lens function it rewrites", () => {
     expect(mig).toContain("where page_key_arg = 'all' or p.page_key = page_key_arg;");
     expect(mig).toContain("where p.page_key = page_key_arg;");
+  });
+});
+
+describe("aVa suggests what the visible surface can answer", () => {
+  const shell = read(
+    "src/components/tower/command-center/TowerCommandCenterAvaShell.tsx",
+  );
+
+  it("reads the same page context the answer path reads", () => {
+    // The answers were made surface-aware before the prompts were. A prompt drawn from a
+    // different source than the answer can describe a surface the answer would not use.
+    expect(shell).toContain(
+      "buildSuggestions(view, pageContext.activeTab, pageContext.activeView)",
+    );
+  });
+
+  it("offers rollout prompts on the rollouts surface", () => {
+    expect(shell).toContain("rollouts below target should move first");
+    expect(shell).toContain("Which rollouts support no business case?");
+  });
+
+  it("derives counts from the view rather than writing them into the text", () => {
+    // A prompt naming a population the tenant does not have is the same defect as a panel
+    // asserting a finding: it reads as fact and was written, not measured.
+    expect(shell).toContain("belowTarget > 0");
+    expect(shell).toContain("blockedRollouts > 0");
+    expect(shell).toMatch(/\$\{belowTarget\}/);
+  });
+
+  it("falls back to portfolio-wide prompts rather than offering an empty question", () => {
+    expect(shell).toContain("What value is claimable today, and what is blocked?");
+  });
+
+  it("counts a rollout as below target only when both readings exist", () => {
+    // adoption < null is not false in a useful way; a rollout with no target cannot be short of
+    // one, and counting it would inflate the number the prompt states.
+    expect(shell).toContain("item.adoptionTargetPct !== null");
+    expect(shell).toContain("adoption !== undefined");
   });
 });
