@@ -268,6 +268,10 @@ export function findApplicationCountErrors(
 }
 
 const TECHNOLOGY_ENTITY_RE = /\b(application|applications|system|systems|platform|platforms|server|servers|database|databases|vendor|vendors|integration|integrations|instance|instances)\b/gi;
+const VENDOR_ENTITY_OPENING_RE =
+  /\b(?:vendor|vendors|supplier|suppliers|contract|contracts|contracted|commercial exposure|MSA|statement of work|managed service|outsourc(?:e|ed|ing))\b/i;
+const LEGAL_ENTITY_OPENING_RE =
+  /^(?:[A-Z][A-Za-z0-9&'.-]*(?:\s+[A-Z][A-Za-z0-9&'.-]*){0,5}\s+)(?:Corporation|Corp\.?|Incorporated|Inc\.?|LLC|Ltd\.?|Limited|Company|Co\.?|Systems|Services)\b/;
 
 /**
  * Class B, and the definition is stated so the number is interpretable: the Executive Brief's
@@ -286,6 +290,30 @@ export function findInventoryOpening(chapter: ScorableChapter): MustNotDoViolati
     statement: opening.trim(),
     detail: `opening sentence carries ${entityHits} technology-entity reference(s)` +
       (hasRecordCount ? " and a record count" : ""),
+  }];
+}
+
+/**
+ * Executive identity pages must not open by making one supplier the answer to "who is this
+ * enterprise?" Commercial concentration is a valid finding on commercial pages, but it is the
+ * wrong lede for the boardroom overview unless that page's contract explicitly permits it.
+ */
+export function findVendorLedOpening(
+  chapter: ScorableChapter,
+  options: { allowVendorOpening?: boolean } = {},
+): MustNotDoViolation[] {
+  if (options.allowVendorOpening) return [];
+  const [opening] = splitSentences(chapter.prose);
+  if (!opening) return [];
+  const trimmed = opening.trim();
+  const isNamedVendorOpening = LEGAL_ENTITY_OPENING_RE.test(trimmed) && VENDOR_ENTITY_OPENING_RE.test(trimmed);
+  const isSupplierCategoryOpening = /^(?:the\s+)?(?:largest|top|leading|primary|dominant)\s+(?:vendor|supplier|contract)/i.test(trimmed);
+  if (!isNamedVendorOpening && !isSupplierCategoryOpening) return [];
+  return [{
+    chapterId: chapter.chapterId,
+    rule: "open executive identity on a vendor or supplier",
+    statement: trimmed,
+    detail: "opening sentence names commercial concentration before business model, segment economics, accountability, value, or exposure",
   }];
 }
 

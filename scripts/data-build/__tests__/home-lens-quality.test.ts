@@ -3,6 +3,7 @@ import {
   findInventedNumbers,
   findApplicationCountErrors,
   findInventoryOpening,
+  findVendorLedOpening,
   JUDGMENT_CLASS_RULES_UNCHECKED,
   type ScorableChapter,
 } from "../home-lens-quality";
@@ -121,6 +122,54 @@ describe("must_not_do checked against output", () => {
 
   it("accepts an executive brief that opens on business consequence", () => {
     expect(findInventoryOpening(chapter("executive_brief", CEO_PROSE, "money_decision"))).toEqual([]);
+  });
+
+  it("flags an executive identity chapter that opens on a named supplier", () => {
+    const violations = findVendorLedOpening(
+      chapter(
+        "executive_brief",
+        "IBM Corporation is the largest supplier group at 12.2 percent of reviewed contract value. The pattern matters.",
+        "money_decision",
+      ),
+    );
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0].rule).toBe("open executive identity on a vendor or supplier");
+  });
+
+  it("flags an executive identity chapter that opens on supplier concentration", () => {
+    const violations = findVendorLedOpening(
+      chapter(
+        "our_business",
+        "The largest supplier group accounts for nearly half of reviewed contract value. The operating model is concentrated.",
+        "strategy_bets",
+      ),
+    );
+
+    expect(violations).toHaveLength(1);
+  });
+
+  it("accepts business-model openings and commercial pages that are explicitly allowed to open on vendors", () => {
+    expect(
+      findVendorLedOpening(
+        chapter(
+          "executive_brief",
+          "Meridian's provider and health-plan operating model turns resilience and data trust into one leadership agenda.",
+          "money_decision",
+        ),
+      ),
+    ).toEqual([]);
+
+    expect(
+      findVendorLedOpening(
+        chapter(
+          "vendor_contracts",
+          "IBM Corporation is the largest supplier group at 12.2 percent of reviewed contract value.",
+          "money_decision",
+        ),
+        { allowVendorOpening: true },
+      ),
+    ).toEqual([]);
   });
 
   it("declares the judgment-class rules it does not check", () => {
