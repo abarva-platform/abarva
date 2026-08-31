@@ -1623,6 +1623,7 @@ function OptimizePage({
           />
         ) : (
           <>
+            <OptimizeTypeMixChart rows={optimizeTypeRows(portfolio)} />
             <div className="sw-v2-lanes">
               <ValueLane
                 title="Recover money"

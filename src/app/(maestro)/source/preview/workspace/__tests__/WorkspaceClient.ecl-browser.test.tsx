@@ -117,7 +117,10 @@ import path from "node:path";
 import type { ReactNode } from "react";
 
 import { WorkspaceClient } from "../WorkspaceClient";
-import { loadSourceWorkspacePortfolio } from "../live/portfolioAdapter";
+import {
+  loadSourceWorkspacePortfolio,
+  type SourceWorkspacePortfolioData,
+} from "../live/portfolioAdapter";
 
 const ORIGINAL_PROVIDER = process.env.SOURCE_WORKSPACE_PROVIDER;
 const ORIGINAL_PROJECTION_DIR = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
@@ -526,5 +529,75 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
 
     expect(violations).toEqual([]);
+  });
+
+  it("renders a Recharts action mix on the default Optimize page when action rows exist", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const actionCandidate: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number] = {
+      tenant_key: "meridian-health",
+      action_candidate_id: "OPT-TEST-001",
+      opportunity_id: "OPT-TEST-001",
+      contract_id: "MER-CTR-SSO-BPO-001",
+      vendor_ref: "MER-VEN-HELIX-SSO",
+      vendor_name: "Helix Shared Services Group",
+      title: "Right-size loaded application support tier",
+      action_type: "avoid_future_spend",
+      opportunity_type: "avoid_future_spend",
+      finding_summary: "Loaded action row with a candidate amount.",
+      deterministic_basis: "Action row cites loaded contract and spend rows.",
+      candidate_amount_usd: 1250000,
+      priority: "high",
+      readiness_state: "finance_confirmation_required",
+      evidence_state: "loaded",
+      authority_state: "not_confirmed",
+      finance_confirmation_state: "not_confirmed",
+      next_action: "Review evidence trail",
+      accountable_role: "procurement_owner",
+      decision_due_date: "2027-03-31",
+      coverage_state: "partial",
+      blocker_if_missing:
+        "Never present this candidate as realized savings until finance confirms it.",
+      citation_basis_json: { source: "unit-fixture" },
+      load_run_id: "unit-proof",
+    };
+    const dbPortfolio: SourceWorkspacePortfolioData = {
+      ...portfolio,
+      workspaceDiagnostics: {
+        ...portfolio.workspaceDiagnostics,
+        exploreProvider: "EclProjectionDbProvider" as const,
+      },
+      impact: {
+        ...portfolio.impact,
+        actionCandidates: [actionCandidate],
+      },
+    };
+
+    const { container } = render(
+      <WorkspaceClient
+        portfolio={dbPortfolio}
+        tenantName="Meridian Health"
+        sourceClientKey="meridian-health"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("navigation", {
+          name: "Source workspace navigation",
+        }),
+      ).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
+
+    expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
+    expect(screen.getByLabelText("Optimize action mix chart")).toBeTruthy();
+    expect(container.querySelector(".recharts-wrapper")).toBeTruthy();
+    expect(screen.getByText("Right-size loaded application support tier")).toBeTruthy();
+    expect(screen.getAllByText("$1.3M").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Savings realized/i)).toBeNull();
   });
 });
