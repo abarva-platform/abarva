@@ -498,6 +498,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Evidence depth" }));
     expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
 
+    fireEvent.click(screen.getByRole("tab", { name: "Concentration" }));
     fireEvent.click(
       screen.getByRole("button", { name: /Epic Systems Corporation/ }),
     );
@@ -640,12 +641,115 @@ describe("Source workspace ECL browser-surface proof", () => {
         actionCandidates: [actionCandidate],
       },
     };
+    const evidenceDepthPortfolio: SourceWorkspacePortfolioData = {
+      ...dbPortfolio,
+      contracts: [
+        ...dbPortfolio.contracts,
+        ...Array.from({ length: 6 }, (_, index) => {
+          const annualValue = 20_000_000 - index * 1_000_000;
+          return {
+            ...dbPortfolio.contracts[0],
+            contract_id: `MER-CTR-NODEPTH-${index + 1}`,
+            vendor_ref: `MER-VEN-NODEPTH-${index + 1}`,
+            vendor_name: `High Spend Vendor ${index + 1}`,
+            contract_name: `High Spend Agreement ${index + 1}`,
+            annual_value: annualValue,
+            resolved_annual_value: null,
+            total_committed_value: annualValue,
+            resolved_total_committed_value: null,
+            end_date: "2028-12-31",
+            auto_renew: false,
+            vendor_category: "Technology",
+          };
+        }),
+        {
+          ...dbPortfolio.contracts[0],
+          contract_id: "MER-TECH-SD-001",
+          vendor_ref: "MER-VEN-KYNDRYL",
+          vendor_name: "Kyndryl, Inc.",
+          contract_name: "Service Desk Managed Services",
+          annual_value: 5_000_000,
+          resolved_annual_value: null,
+          total_committed_value: 5_000_000,
+          resolved_total_committed_value: null,
+          end_date: "2028-06-30",
+          auto_renew: false,
+          vendor_category: "Managed Services",
+        },
+      ],
+      vendors: [
+        ...dbPortfolio.vendors,
+        ...Array.from({ length: 6 }, (_, index) => {
+          const annualValue = 20_000_000 - index * 1_000_000;
+          return {
+            ...dbPortfolio.vendors[0],
+            tenant_key: "meridian-health",
+            vendor_ref: `MER-VEN-NODEPTH-${index + 1}`,
+            vendor_name: `High Spend Vendor ${index + 1}`,
+            vendor_category: "Technology",
+            contract_count: 1,
+            annual_value: annualValue,
+            total_committed_value: annualValue,
+            auto_renew_contracts: 0,
+            next_end_date: "2028-12-31",
+            contract_refs: [`MER-CTR-NODEPTH-${index + 1}`],
+          };
+        }),
+        {
+          ...dbPortfolio.vendors[0],
+          tenant_key: "meridian-health",
+          vendor_ref: "MER-VEN-KYNDRYL",
+          vendor_name: "Kyndryl, Inc.",
+          vendor_category: "Managed Services",
+          contract_count: 1,
+          annual_value: 5_000_000,
+          total_committed_value: 5_000_000,
+          auto_renew_contracts: 0,
+          next_end_date: "2028-06-30",
+          contract_refs: ["MER-TECH-SD-001"],
+        },
+      ],
+      impact: {
+        ...dbPortfolio.impact,
+        evidenceCoverage: [
+          ...dbPortfolio.impact.evidenceCoverage,
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-SD-001",
+            vendor_ref: "MER-VEN-KYNDRYL",
+            vendor_name: "Kyndryl, Inc.",
+            contract_name: "Service Desk Managed Services",
+            spend_rows: 12,
+            actual_spend_usd: 5_000_000,
+            committed_spend_usd: 5_000_000,
+            performance_rows: 12,
+            breach_rows: 3,
+            credit_calculated_usd: 50_499.99,
+            credit_claimed_usd: 0,
+            credit_recovered_usd: 0,
+            unclaimed_credit_usd: 50_499.99,
+            opportunity_rows: 1,
+            candidate_amount_usd: 50_499.99,
+            finance_confirmation_required_rows: 1,
+            opportunities_with_evidence: 1,
+            scope_rows: 0,
+            critical_scope_rows: 0,
+            document_page_text_rows: 0,
+            change_order_rows: 0,
+            coverage_state: "loaded",
+            blocker_if_missing: null,
+            evidence_basis_json: { source: "unit-fixture" },
+            load_run_id: "unit-depth-run",
+          },
+        ],
+      },
+    };
     const performancePeriods = Array.from({ length: 12 }, (_, index) => ({
       tenant_key: "meridian-health",
       observation_id: `PERF-TEST-${index + 1}`,
-      contract_id: "MER-CTR-EPIC-001",
-      service_id: "claims-platform",
-      metric_name: "Claims processed within 24 hours",
+      contract_id: "MER-TECH-SD-001",
+      service_id: "service-desk",
+      metric_name: "Priority tickets resolved within SLA",
       period_start: `2027-${String(index + 1).padStart(2, "0")}-01`,
       period_end: `2027-${String(index + 1).padStart(2, "0")}-28`,
       contracted_target: "95%",
@@ -669,13 +773,19 @@ describe("Source workspace ECL browser-surface proof", () => {
     }));
     (global.fetch as jest.Mock).mockImplementation((input: RequestInfo | URL) => {
       if (String(input).includes("/api/source/workspace/contract/")) {
+        const requestedContractId =
+          String(input)
+            .split("/api/source/workspace/contract/")[1]
+            ?.split("?")[0] ?? "MER-TECH-SD-001";
+        const requestedContract =
+          evidenceDepthPortfolio.contracts.find(
+            (contract) => contract.contract_id === requestedContractId,
+          ) ?? evidenceDepthPortfolio.contracts[0];
         return Promise.resolve({
           ok: true,
           json: () =>
             Promise.resolve({
-              contract: dbPortfolio.contracts.find(
-                (contract) => contract.contract_id === "MER-CTR-EPIC-001",
-              ) ?? dbPortfolio.contracts[0],
+              contract: requestedContract,
               financialExposure: null,
               operationalPerformance: null,
               initiativeDependencies: [],
@@ -700,7 +810,7 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     render(
       <WorkspaceClient
-        portfolio={dbPortfolio}
+        portfolio={evidenceDepthPortfolio}
         tenantName="Meridian Health"
         sourceClientKey="meridian-health"
       />,
@@ -728,6 +838,14 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(screen.queryByText(/vendors are loaded/i)).toBeNull();
 
+    fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
+    fireEvent.click(screen.getByRole("tab", { name: "Evidence depth" }));
+    expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
+    expectMeasuredRechartsCard(
+      screen.getByLabelText("Vendor evidence depth chart"),
+    );
+    expect(screen.getByRole("button", { name: /Kyndryl, Inc./ })).toBeTruthy();
+
     fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
 
     expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
@@ -740,8 +858,8 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Review performance evidence" }));
 
-    expect(screen.getByText("Clinical Applications Agreement")).toBeTruthy();
-    expect(screen.getByText(/MER-CTR-EPIC-001/)).toBeTruthy();
+    expect(screen.getByText("Service Desk Managed Services")).toBeTruthy();
+    expect(screen.getByText(/MER-TECH-SD-001/)).toBeTruthy();
     expect(screen.getByText("Contract 360 / Performance")).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText("12 performance periods loaded.")).toBeTruthy();

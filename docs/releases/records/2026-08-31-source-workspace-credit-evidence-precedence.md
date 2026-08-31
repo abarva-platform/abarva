@@ -53,6 +53,11 @@ the executive workspace shell. Operator diagnostics remain available through
 their owned routes and tests, while the client-facing Source workspace keeps the
 focus on claims, charts, evidence posture, and graph navigation.
 
+The fifth follow-up makes the Vendor Evidence depth subtab rank against the
+full vendor portfolio instead of only the top concentration vendors. Evidence-rich
+lower-spend relationships now render in the chart and drill-down table when
+their loaded rows support the claim.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`.
@@ -71,6 +76,7 @@ focus on claims, charts, evidence posture, and graph navigation.
 
 - `src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx`
 - `src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx`
+- `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx`
 - `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts`
 
 ## QA / Validation
@@ -91,6 +97,10 @@ focus on claims, charts, evidence posture, and graph navigation.
   charted views stay tied to the same rows as the drill-down tables.
 - Re-ran the workspace browser-surface test that asserts internal diagnostics
   labels are not rendered in the default executive workspace.
+- Added a browser-surface regression where high-spend vendors have no loaded
+  depth while a lower-spend vendor has spend, performance, opportunity, and
+  credit rows. The Evidence depth subtab must render the lower-spend vendor
+  chart and table row instead of using the concentration slice.
 
 ## Rollout Plan
 
@@ -119,6 +129,7 @@ workflow. No data rollback is required because this is presentation logic only.
 - Second follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7214
 - Third follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7215
 - Fourth follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7217
+- Fifth follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7218
 - ACA deploy run: pending.
 - Signed-in Source workspace proof: pending.
 
