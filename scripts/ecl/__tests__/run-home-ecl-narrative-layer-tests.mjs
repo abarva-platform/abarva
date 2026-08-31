@@ -560,6 +560,10 @@ assert(
   chapters.includes("function enterpriseOpeningClaims") &&
     chapters.includes("COMMERCIAL_OPENING_RE") &&
     chapters.includes("EVIDENCE_BOUNDARY_OPENING_RE") &&
+    chapters.includes("INVENTORY_OPENING_RE") &&
+    chapters.includes("NARROW_PROGRAM_OPENING_RE") &&
+    chapters.includes("INDIVIDUAL_ASSET_OPENING_RE") &&
+    chapters.includes("function standaloneInventoryOpening") &&
     chapters.includes("function unsuitableExecutiveOpening") &&
     chapters.includes("supplier group") &&
     chapters.includes("ENTERPRISE_OPENING_RE") &&
@@ -576,7 +580,12 @@ assert(
 );
 assert(
   script.includes("EVIDENCE_BOUNDARY_OPENING_PATTERN") &&
+    script.includes("NARROW_PROGRAM_OPENING_PATTERN") &&
+    script.includes("BROAD_ENTERPRISE_THESIS_PATTERN") &&
+    script.includes("INDIVIDUAL_ASSET_OPENING_PATTERN") &&
+    script.includes("largest application functions") &&
     script.includes("function unsuitableOpeningClaim") &&
+    script.includes("function standaloneInventoryClaim") &&
     script.includes("!unsuitableOpeningClaim(claim.statement)") &&
     !script.includes("sectionClaims[0] ??"),
   "ECL story-plan selector refuses supplier, evidence-boundary, and standalone-inventory openings without falling back to the first claim",

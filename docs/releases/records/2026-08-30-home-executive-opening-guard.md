@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release tightens the Home executive-story generation path so the opening thesis must be a business consequence statement rather than a supplier ranking, contract fact, evidence-boundary caveat, or standalone inventory count. The model prompt asks for that shape up front, and the deterministic story-plan selector refuses unsuitable openings if generation still produces them.
+This release tightens the Home executive-story generation path so the opening thesis must be a broad business consequence statement rather than a supplier ranking, contract fact, evidence-boundary caveat, standalone inventory count, narrow program update, or individual infrastructure-asset fact. The model prompt asks for that shape up front, and the deterministic story-plan selector refuses unsuitable openings if generation still produces them.
 
 ## Layer Impact
 
@@ -32,7 +32,7 @@ This release tightens the Home executive-story generation path so the opening th
 - Updates the shared enterprise thesis prompt with an explicit business-led opening bar.
 - Updates chapter assembly so supplier and evidence-boundary caveats cannot become Executive Brief opening claims.
 - Updates the Home ECL story-plan selector so it does not fall back to the first unsuitable claim.
-- Adds focused render/static tests for supplier, evidence-boundary, and inventory-opening guardrails.
+- Adds focused render/static tests for supplier, evidence-boundary, inventory-opening, narrow-program, and individual-asset guardrails.
 
 ## QA / Validation
 
@@ -60,7 +60,7 @@ Revert the PR, redeploy the prior digest through the repo-owned workflow, and re
 
 ## Audit Evidence
 
-- PR URL: To be filled when opened.
+- PR URL: https://github.com/abarva-platform/abarva/pull/7168
 - CI/local tests: Commands above.
 - ACA deploy run: To be filled after merge.
 - ACA apply/readback runs: To be filled after apply.

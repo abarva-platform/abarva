@@ -43,10 +43,21 @@ function attachStoryPlan(bundle: HomeReviewBundle): HomeReviewBundle {
   const commercialPattern = /IBM Corporation|largest supplier group|contract value|vendor|supplier|contract|commercial exposure/i;
   const evidenceBoundaryPattern =
     /not supplied|not yet supplied|not available|does not yet establish|should therefore be limited|do not infer|coverage gap|evidence gap|missing evidence|not enough verified evidence|not client-attested|synthetic/i;
-  const unsuitableOpening = (statement: string) => commercialPattern.test(statement) || evidenceBoundaryPattern.test(statement);
+  const narrowProgramPattern = /named strategic priority|named program|named initiative|\d+(?:\.\d+)?%\s+complete|blocked on unconfirmed|single program/i;
+  const individualAssetPattern = /regional server room|server room|appliance|cluster|single system|single platform|named infrastructure|named platform/i;
+  const inventoryPattern =
+    /largest application functions|recorded application count|data-movement inventory|recorded source-to-target movement rows|infrastructure or platform records|named infrastructure or platform examples|\d+(?:,\d{3})*(?:\.\d+)?\s+(?:applications|systems|source-target|data movements|flows|workload items|reports|ETL jobs|scripts|platforms|vendors|suppliers|contracts)|\d+(?:,\d{3})*(?:\.\d+)?\s+of\s+\d+(?:,\d{3})*/i;
+  const consequencePattern = /because|therefore|so that|making|means leadership|requires leadership|materially changes|constrains|unlocks/i;
+  const broadEnterprisePattern = /operating[-\s]model|business[-\s]model|value creation|provider|payer|health plan|member|patient|care delivery|book of business|leadership agenda|executive agenda/i;
+  const unsuitableOpening = (statement: string) =>
+    commercialPattern.test(statement) ||
+    evidenceBoundaryPattern.test(statement) ||
+    narrowProgramPattern.test(statement) ||
+    individualAssetPattern.test(statement) ||
+    (inventoryPattern.test(statement) && !consequencePattern.test(statement));
   const opening =
-    allClaims.find((claim) => claim.chapterId === "executive_brief" && !unsuitableOpening(claim.statement)) ??
-    allClaims.find((claim) => !unsuitableOpening(claim.statement)) ??
+    allClaims.find((claim) => claim.chapterId === "executive_brief" && broadEnterprisePattern.test(claim.statement) && !unsuitableOpening(claim.statement)) ??
+    allClaims.find((claim) => broadEnterprisePattern.test(claim.statement) && !unsuitableOpening(claim.statement)) ??
     null;
   const scale = allClaims.find((claim) => claim.claimRef !== opening?.claimRef && /\d/.test(claim.statement)) ?? null;
   const sectionClaims = (chapterIds: string[]) => allClaims.filter((claim) => chapterIds.includes(claim.chapterId));
@@ -147,7 +158,7 @@ describe("Home v4 Tier 1 executive story", () => {
 
     const hero = document.querySelector("[data-home-tier1-hero-metric]");
     expect(hero?.textContent ?? "").toMatch(/\b(?:provider|health plan|estate|workload|risk|value|operating model|priority)\b/i);
-    expect(hero?.textContent ?? "").not.toMatch(/\b(?:vendor|supplier|contract|commercial exposure)\b/i);
+    expect(hero?.textContent ?? "").not.toMatch(/\b(?:vendor|supplier|contract|commercial exposure|largest application functions|recorded application count)\b/i);
   });
 
   it("does not let supplier concentration lead the enterprise identity section", () => {
@@ -180,9 +191,43 @@ describe("Home v4 Tier 1 executive story", () => {
 
     const enterpriseSection = container.querySelector('[data-home-tier1-section="enterprise"]');
     const lead = enterpriseSection?.querySelector("[data-home-tier1-section-body] p");
-    expect(lead?.textContent ?? "").toMatch(/application functions/i);
+    expect(lead?.textContent ?? "").not.toMatch(/largest application functions|recorded application count/i);
     expect(lead?.textContent ?? "").not.toMatch(/IBM Corporation|largest supplier group|contract value/i);
     expect(enterpriseSection?.textContent ?? "").not.toMatch(/IBM Corporation|largest supplier group/i);
+  });
+
+  it("does not let a standalone application-count inventory become the opening thesis", () => {
+    const bundle = JSON.parse(JSON.stringify(loadMeridianBundle())) as HomeReviewBundle;
+    const executive = bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief");
+    const business = bundle.chapters.find((chapter) => chapter.chapterId === "our_business");
+    expect(executive).toBeTruthy();
+    expect(business).toBeTruthy();
+    executive!.key_insights = [
+      {
+        statement:
+          "The largest application functions by recorded application count are Clinical Operations (167 of 750, 22.3%), Health Plan Operations (122 of 750, 16.3%), Data and Analytics (71 of 750, 9.5%), Revenue Cycle (68 of 750, 9.1%), Information Technology (62 of 750, 8.3%), Member Services (56 of 750, 7.5%), Provider Network (50 of 750, 6.7%), Finance (41 of 750, 5.5%).",
+        evidence_ids: ["sig_ecl_application_function_ranking_012"],
+        claim_type: "FACT",
+        confidence: "high",
+      },
+    ];
+    business!.key_insights = [
+      {
+        statement:
+          "Clinical Operations is the largest application function and the primary operating-model risk because it carries 167 of 750 applications, making modernization sequencing a leadership decision rather than a technology cleanup.",
+        evidence_ids: ["sig_ecl_application_function_002", "sig_ecl_application_criticality_003"],
+        claim_type: "CROSS_DOMAIN_INSIGHT",
+        confidence: "high",
+      },
+    ];
+    attachStoryPlan(bundle);
+
+    const { container } = render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
+
+    const enterpriseSection = container.querySelector('[data-home-tier1-section="enterprise"]');
+    const lead = enterpriseSection?.querySelector("[data-home-tier1-section-body] p");
+    expect(lead?.textContent ?? "").toMatch(/operating-model risk/i);
+    expect(lead?.textContent ?? "").not.toMatch(/largest application functions by recorded application count/i);
   });
 
   it("does not let evidence-boundary caveats become the opening thesis", () => {
