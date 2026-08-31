@@ -45,6 +45,71 @@ or aVa Source intelligence changes, use the vendor value excellence program to
 produce the design packet, secure review/signoff, and split implementation into
 independently testable slices.
 
+## Active Source 360 Data-Depth Follow-Ups — 2026-08-31
+
+These items came from the current Source 360 data-depth and chart-readiness
+audit. They are intentionally tracked separately from the broad redesign so the
+executive workspace only speaks from deterministic, loaded, and visually proven
+facts.
+
+1. **SRC49 — Source chart mark and tab visual QA gate**
+   - Priority: P0.
+   - Type: visual QA / regression guard.
+   - Scope: every chart-bearing Source 360 tab and subtab must be visited while
+     mounted, and each expected chart must prove visible SVG/canvas marks rather
+     than title text or legend text alone.
+   - Acceptance: authenticated browser proof covers Verdict, Vendors,
+     Contracts, Optimize, Evidence, Contract graph, and all Vendor subtabs;
+     failing screenshots/DOM where a chart frame is blank are stored as proof;
+     no tab is marked passed from HTTP 200 or text-only checks.
+2. **SRC50 — Governed document and change-order depth load**
+   - Priority: P0.
+   - Type: data-plane / ACA job.
+   - Scope: load and live-prove document page text and change-order rows through
+     the governed Source pipeline before any UI claims page-span retrieval,
+     amendment chronology, or change-order economics.
+   - Acceptance: source files, Layer 2 adapter rows, Layer 3 canonical rows,
+     Layer 4 read models, Source UI, and aVa citation bundles all reconcile; if
+     page text or change orders are generated but not physically loaded, the
+     product must label them unavailable.
+3. **SRC51 — Utilization evidence quality gate**
+   - Priority: P0.
+   - Type: data-quality / claim guard.
+   - Scope: block cross-vendor utilization claims when evidence rows use
+     repeated template language or lack row-level system/source variation.
+   - Acceptance: utilization evidence is either proven row-specific with source
+     system, period, entitlement, active-use, and evidence reference fields, or
+     the UI and aVa render `Not loaded` / `Not assessed` rather than a vendor
+     utilization claim.
+4. **SRC52 — Computed concentration-risk reconciliation**
+   - Priority: P0.
+   - Type: deterministic calculation / data-quality.
+   - Scope: compute concentration risk from recorded annual value and vendor
+     share instead of trusting asserted risk labels when the arithmetic
+     disagrees.
+   - Acceptance: Source displays computed concentration posture with the basis
+     visible to operators; asserted labels are reconciled, downgraded, or
+     quarantined before executive display.
+5. **SRC53 — Renewal freshness and runway guard**
+   - Priority: P0.
+   - Type: deterministic calculation / claim guard.
+   - Scope: past or non-active renewal dates must be excluded from forward
+     runway and deadline claims unless a fresh renewal state is loaded and
+     reconciled.
+   - Acceptance: stale renewal rows remain visible as data-freshness work, not
+     future commercial deadlines; active renewal exposure and expired/stale
+     exposure reconcile separately.
+6. **SRC54 — Legacy/golden evidence render decision**
+   - Priority: P1.
+   - Type: product proof / retirement decision.
+   - Scope: verify whether older contract-evidence loaders are still live,
+     renderable, and mapped to the current Source 360 evidence substrate. If
+     not, archive or label them as historical proof rather than letting them
+     imply current coverage.
+   - Acceptance: each legacy evidence path is either mapped into the current
+     governed layers with signed-in proof, or explicitly removed from demo and
+     default operator narratives.
+
 ## Active Execution Control — 2026-08-15
 
 Canonical execution plan:
