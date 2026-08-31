@@ -455,6 +455,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByRole("tab", { name: "Archetype mix" })).toBeTruthy();
     expect(screen.getByText("Vendor 360")).toBeTruthy();
     expect(screen.getByText("One row per supplier relationship")).toBeTruthy();
+    expect(screen.getByLabelText("Vendor concentration chart")).toBeTruthy();
+    expect(container.querySelector(".recharts-wrapper")).toBeTruthy();
     expect(
       screen.getAllByRole("heading", { name: "Epic Systems Corporation" })
         .length,
