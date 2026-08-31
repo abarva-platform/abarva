@@ -180,6 +180,64 @@ shape, hash chain, missing-source refusal, and verification ledger without calli
 requires `ANTHROPIC_API_KEY` and records the actual model name, raw-response hash, prompt hash,
 source hash, and token usage when the provider returns it.
 
+## Home Page Packets
+
+Accepted source-intelligence artifacts are then assembled into page-specific Home packets.
+
+```bash
+npm run ecl:source-intelligence:home-packets -- \
+  --source-dir /tmp/source-intelligence-model-pass \
+  --out-dir /tmp/source-intelligence-home-packets
+```
+
+The Home packet builder writes one packet and one prompt envelope for each Home page:
+
+```text
+manifest.json
+packets/*.home-page-packet.json
+prompts/*.prompt.json
+```
+
+Each page packet includes:
+
+- the page question;
+- the writer lens;
+- candidate canvases for multi-page rendering;
+- table, chart/diagram, and drilldown candidates;
+- included source families;
+- an available source index for every accepted source-intelligence artifact;
+- compact source-file intelligence;
+- source hashes, row counts, column counts, and evidence basis;
+- packet and prompt hashes.
+
+The writer lens is page-specific. Executive pages use a business-strategy voice, technology and
+architecture pages use an expert technologist voice, commercial pages use a sourcing/commercial
+voice, and leadership pages use an interview-synthesis voice. The lens changes emphasis; it does not
+change facts.
+
+The current Home page set is:
+
+1. Executive Brief
+2. Our Business
+3. Strategy & Value Creation
+4. How We Operate
+5. Technology & Data
+6. Performance & Value
+7. Leadership Perspective
+8. What Needs Attention
+9. Current-State Architecture
+10. Current-State Data Flow
+11. What Has Been Loaded
+12. Browse The Record
+13. Applications & Systems
+14. Vendor Contracts
+15. Infrastructure & Platforms
+16. Data Assets & Integrations
+
+Architecture and data-flow packets are context for a gated renderer. They do not bypass admission
+rules. If a topology or evidence gate refuses, the page must render the refusal payload rather than
+turning a partial packet into a confident diagram.
+
 ## Storage
 
 Current demo path:
