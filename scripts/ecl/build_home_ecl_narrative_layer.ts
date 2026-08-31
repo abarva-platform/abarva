@@ -3123,10 +3123,6 @@ async function main() {
     const chapters = normalizeChapterTerminalStates(
       scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[],
     );
-    const visibleQualityIssues = visibleNarrativeQualityIssues(thesisResult, chapters, signalPacket);
-    if (visibleQualityIssues.length) {
-      throw new Error(`Home ECL narrative visible-quality gate failed: ${visibleQualityIssues.join("; ")}`);
-    }
     const verificationSummary = {
       structural_issue_count: thesisResult.structuralIssues.length,
       verdict_tally: verdictTally(thesisResult.verificationLedger),
@@ -3137,6 +3133,7 @@ async function main() {
       },
       ledger_rows: thesisResult.verificationLedger.length,
     };
+    const visibleQualityIssues = visibleNarrativeQualityIssues(thesisResult, chapters, signalPacket);
     const result = {
       tenantKey: options.tenantKey,
       assessmentId: options.assessmentId,
@@ -3148,10 +3145,18 @@ async function main() {
       thesisResult,
       publicationGate: verificationSummary.publication_gate,
       verificationSummary,
+      visibleQualityGate: {
+        accepted: visibleQualityIssues.length === 0,
+        issues: visibleQualityIssues,
+      },
     };
     const outFile = path.join(options.outDir, `${options.tenantKey}-home-ecl-narrative-layer.json`);
     fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
     console.log(`-> ${outFile}`);
+    if (visibleQualityIssues.length) {
+      emitHomeNarrativeProofBundle(outFile, result, options);
+      throw new Error(`Home ECL narrative visible-quality gate failed: ${visibleQualityIssues.join("; ")}`);
+    }
 
     if (WRITE) {
       await writeNarrativeRows(db, options, rows, chapters, thesisResult, signalPacket, contextPolicyProof);
