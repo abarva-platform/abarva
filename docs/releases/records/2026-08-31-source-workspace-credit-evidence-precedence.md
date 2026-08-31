@@ -64,6 +64,12 @@ multiple physical vendor references; the executive tab now totals coverage
 across those references instead of showing `Not established` for a relationship
 whose underlying contracts have loaded depth rows.
 
+The seventh follow-up lets the Evidence depth subtab seed its supplier list from
+the deterministic impact layer when loaded evidence or action rows are not yet
+matched into the portfolio vendor rollup. This keeps the portfolio denominator
+stable while still showing evidence-rich action-layer relationships in the
+depth-specific view.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`.
@@ -111,6 +117,10 @@ whose underlying contracts have loaded depth rows.
   use a grouped rollup reference while the underlying evidence rows retain their
   physical vendor reference. The chart and table must still render the loaded
   depth.
+- Added a regression where the evidence-rich supplier is absent from the
+  portfolio vendor rollup but present in contract-depth evidence rows. The
+  Evidence depth subtab must still render that supplier because the subtab is
+  explicitly about loaded depth, not concentration rank.
 
 ## Rollout Plan
 
@@ -141,6 +151,7 @@ workflow. No data rollback is required because this is presentation logic only.
 - Fourth follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7217
 - Fifth follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7218
 - Sixth follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7220
+- Seventh follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7223
 - ACA deploy run: pending.
 - Signed-in Source workspace proof: pending.
 
