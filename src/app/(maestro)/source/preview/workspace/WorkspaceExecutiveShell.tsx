@@ -120,10 +120,8 @@ export function source360RecoverableCreditCoverageRows(
       )
       .map((row) => row.contract_id),
   );
-  const actionableCreditRows = rowsWithCredits.filter(
-    (row) =>
-      creditActionContractIds.has(row.contract_id) ||
-      (numberFromDb(row.opportunity_rows) ?? 0) > 0,
+  const actionableCreditRows = rowsWithCredits.filter((row) =>
+    creditActionContractIds.has(row.contract_id),
   );
 
   if (actionableCreditRows.length > 0) {
