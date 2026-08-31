@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import {
   Bar,
   BarChart,
@@ -10,7 +16,6 @@ import {
   LineChart,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -856,15 +861,12 @@ function VendorConcentrationChart({
 
   return (
     <div className="sw-v2-recharts-card" aria-label="Vendor concentration chart">
-      <div className="sw-v2-chart-frame sw-v2-chart-frame-bar">
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-          minWidth={280}
-          initialDimension={{ width: 620, height: 238 }}
-        >
+      <MeasuredChartFrame className="sw-v2-chart-frame-bar" height={238}>
+        {(chartWidth, chartHeight) => (
           <BarChart
             data={data}
+            width={chartWidth}
+            height={chartHeight}
             layout="vertical"
             margin={{ top: 8, right: 24, bottom: 8, left: 4 }}
             barCategoryGap={14}
@@ -911,8 +913,8 @@ function VendorConcentrationChart({
               ))}
             </Bar>
           </BarChart>
-        </ResponsiveContainer>
-      </div>
+        )}
+      </MeasuredChartFrame>
       <div className="sw-v2-recharts-legend">
         {data.map((row) => (
           <span key={row.name}>
@@ -945,15 +947,12 @@ function ContractPerformanceTrendChart({
       className="sw-v2-recharts-card sw-v2-recharts-card-compact"
       aria-label="Contract performance trend chart"
     >
-      <div className="sw-v2-chart-frame sw-v2-chart-frame-line">
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-          minWidth={280}
-          initialDimension={{ width: 620, height: 224 }}
-        >
+      <MeasuredChartFrame className="sw-v2-chart-frame-line" height={224}>
+        {(chartWidth, chartHeight) => (
           <LineChart
             data={data}
+            width={chartWidth}
+            height={chartHeight}
             margin={{ top: 12, right: 24, bottom: 8, left: 4 }}
           >
             <CartesianGrid
@@ -1014,8 +1013,8 @@ function ContractPerformanceTrendChart({
               dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
             />
           </LineChart>
-        </ResponsiveContainer>
-      </div>
+        )}
+      </MeasuredChartFrame>
       <div className="sw-v2-recharts-legend">
         <span>
           <b>black</b> actual SLA %
@@ -1050,14 +1049,9 @@ function OptimizeTypeMixChart({
       className="sw-v2-recharts-card sw-v2-recharts-card-compact"
       aria-label="Optimize action mix chart"
     >
-      <div className="sw-v2-chart-frame sw-v2-chart-frame-donut">
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-          minWidth={280}
-          initialDimension={{ width: 620, height: 224 }}
-        >
-          <PieChart>
+      <MeasuredChartFrame className="sw-v2-chart-frame-donut" height={224}>
+        {(chartWidth, chartHeight) => (
+          <PieChart width={chartWidth} height={chartHeight}>
             <Pie
               data={data}
               dataKey="value"
@@ -1089,8 +1083,8 @@ function OptimizeTypeMixChart({
               ]}
             />
           </PieChart>
-        </ResponsiveContainer>
-      </div>
+        )}
+      </MeasuredChartFrame>
       <div className="sw-v2-recharts-legend">
         {data.map((row) => (
           <span key={row.name}>
@@ -1098,6 +1092,55 @@ function OptimizeTypeMixChart({
             {money(row.value)}
           </span>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function MeasuredChartFrame({
+  className,
+  height,
+  children,
+}: {
+  className: string;
+  height: number;
+  children: (width: number, height: number) => ReactNode;
+}) {
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(620);
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+
+    const syncWidth = () => {
+      const nextWidth = Math.floor(frame.getBoundingClientRect().width);
+      if (nextWidth > 0) {
+        setWidth(nextWidth);
+      }
+    };
+
+    syncWidth();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", syncWidth);
+      return () => window.removeEventListener("resize", syncWidth);
+    }
+
+    const observer = new ResizeObserver(syncWidth);
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
+
+  const chartWidth = Math.max(280, width);
+
+  return (
+    <div
+      ref={frameRef}
+      className={`sw-v2-chart-frame ${className}`}
+      data-chart-width={chartWidth}
+    >
+      <div className="sw-v2-chart-stage" style={{ height }}>
+        {children(chartWidth, height)}
       </div>
     </div>
   );
