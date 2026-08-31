@@ -2216,7 +2216,7 @@ async function writeNarrativeRows(
         storyPlan.storyPlanHash,
         hashJson({ sourceClaimRefs: storyPlan.sourceClaimRefs }),
         JSON.stringify({ objects: [], metrics: [], measures: [], relationships: [], source_records: [], document_extractions: [] }),
-        JSON.stringify({ page_key: "executive_story", section_key: "story_plan", title: "Home executive story plan" }),
+        JSON.stringify({ page_key: "executive_brief", section_key: "story_plan", title: "Home executive story plan" }),
       ],
     );
     await db.query(
@@ -2248,7 +2248,7 @@ async function writeNarrativeRows(
           display_payload_json,
           source_hash
         )
-        values ($1,$2,$3,$4,$5,$6,'executive_story','executive_story_plan_v1','story_plan','story_plan',
+        values ($1,$2,$3,$4,$5,$6,'executive_brief','executive_story_plan_v1','story_plan','story_plan',
           'Home executive story plan',$7,null,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
           'deterministic_story_plan_from_verified_claims','known','passed','not_applicable',null,'{}'::jsonb,'[]'::jsonb,$8::jsonb,$9)
       `,

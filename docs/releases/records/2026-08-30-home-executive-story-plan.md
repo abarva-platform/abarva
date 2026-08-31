@@ -34,6 +34,7 @@ Layer 4 Home rendering now reads the published story plan when available and tre
 
 - Adds `HomeExecutiveStoryPlanV1` type and optional bundle field.
 - Writes `row_type = 'story_plan'` from the Home ECL narrative job.
+- Anchors the `story_plan` control row under the existing Home executive-brief page key so the writer honors the committed projection page contract.
 - Extends Home narrative readback to require exactly one story plan and validate claim references.
 - Renders the Executive Story from the story plan instead of render-time claim ranking.
 - Removes dead ranking helpers from the Home Executive Story renderer.
