@@ -699,13 +699,19 @@ function VendorsPage({
             onOpenVendor={onOpenVendor}
           />
         ) : (
-          <VendorConcentrationTable
-            portfolio={portfolio}
-            vendors={vendors}
-            selectedVendor={selectedVendor}
-            totalAnnualValue={totalAnnualValue}
-            onOpenVendor={onOpenVendor}
-          />
+          <div className="sw-v2-vendor-concentration-view">
+            <VendorConcentrationChart
+              vendors={vendors.slice(0, 5)}
+              totalAnnualValue={totalAnnualValue}
+            />
+            <VendorConcentrationTable
+              portfolio={portfolio}
+              vendors={vendors}
+              selectedVendor={selectedVendor}
+              totalAnnualValue={totalAnnualValue}
+              onOpenVendor={onOpenVendor}
+            />
+          </div>
         )}
       </section>
 
