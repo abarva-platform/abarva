@@ -3308,7 +3308,9 @@ function focusedVendorSet(
   limit = 7,
 ): FocusedVendorSet {
   const coverageByVendor = vendorCoverageRows(portfolio);
-  const ranked = vendors
+  const candidateVendors =
+    mode === "evidence" ? vendorsWithImpactEvidence(portfolio, vendors) : vendors;
+  const ranked = candidateVendors
     .map((vendor): FocusedVendorRow => {
       const coverage = coverageForVendor(vendor, coverageByVendor);
       return {
@@ -3347,7 +3349,7 @@ function focusedVendorSet(
     }
   }
   const selectedRefs = new Set(rows.map((row) => row.vendor.vendor_ref));
-  const remainder = vendors.filter(
+  const remainder = candidateVendors.filter(
     (vendor) => !selectedRefs.has(vendor.vendor_ref),
   );
   return {
@@ -3360,6 +3362,122 @@ function focusedVendorSet(
     depthReadyCount: ranked.filter((row) => vendorDepthScore(row.coverage) > 0)
       .length,
   };
+}
+
+function vendorsWithImpactEvidence(
+  portfolio: SourceWorkspacePortfolioData,
+  vendors: readonly ExecutiveVendorRow[],
+): ExecutiveVendorRow[] {
+  const byName = new Map<string, ExecutiveVendorRow>();
+  for (const vendor of vendors) {
+    byName.set(normalizedVendorName(vendor.vendor_name), {
+      ...vendor,
+      vendor_refs: uniqueRefs([vendor.vendor_ref, ...vendor.vendor_refs]),
+    });
+  }
+
+  const contractsById = new Map(
+    portfolio.contracts.map((contract) => [contract.contract_id, contract]),
+  );
+  const upsert = ({
+    contractId,
+    vendorName,
+    vendorRef,
+    vendorCategory,
+    annualValue,
+  }: {
+    contractId: string;
+    vendorName: string;
+    vendorRef: string;
+    vendorCategory: string | null;
+    annualValue: number | null;
+  }) => {
+    const key = normalizedVendorName(vendorName || vendorRef);
+    if (!key || !vendorRef) return;
+    const existing = byName.get(key);
+    const contractRefs = uniqueRefs([
+      ...(existing?.contract_refs ?? []),
+      contractId,
+    ]);
+    if (existing) {
+      byName.set(key, {
+        ...existing,
+        vendor_category: existing.vendor_category ?? vendorCategory,
+        contract_count: Math.max(existing.contract_count, contractRefs.length),
+        annual_value: numberFromDb(existing.annual_value) ?? annualValue,
+        total_committed_value:
+          numberFromDb(existing.total_committed_value) ?? annualValue,
+        contract_refs: contractRefs,
+        vendor_refs: uniqueRefs([
+          existing.vendor_ref,
+          ...existing.vendor_refs,
+          vendorRef,
+        ]),
+      });
+      return;
+    }
+    byName.set(key, {
+      tenant_key: portfolio.tenantKey,
+      vendor_ref: vendorRef,
+      vendor_name: vendorName || vendorRef,
+      vendor_category: vendorCategory,
+      contract_count: contractRefs.length,
+      annual_value: annualValue,
+      total_committed_value: annualValue,
+      auto_renew_contracts: 0,
+      next_end_date: null,
+      contract_refs: contractRefs,
+      vendor_refs: [vendorRef],
+    });
+  };
+
+  for (const coverage of portfolio.impact.evidenceCoverage) {
+    const contract = contractsById.get(coverage.contract_id);
+    const annualValue =
+      numberFromDb(contract?.resolved_annual_value) ??
+      numberFromDb(contract?.annual_value) ??
+      numberFromDb(coverage.candidate_amount_usd) ??
+      numberFromDb(coverage.actual_spend_usd);
+    upsert({
+      contractId: coverage.contract_id,
+      vendorName: coverage.vendor_name || contract?.vendor_name || coverage.vendor_ref,
+      vendorRef: coverage.vendor_ref || contract?.vendor_ref || coverage.contract_id,
+      vendorCategory: contract?.vendor_category ?? null,
+      annualValue,
+    });
+  }
+
+  for (const action of portfolio.impact.actionCandidates) {
+    const contract = contractsById.get(action.contract_id);
+    const annualValue =
+      numberFromDb(contract?.resolved_annual_value) ??
+      numberFromDb(contract?.annual_value) ??
+      numberFromDb(action.candidate_amount_usd);
+    upsert({
+      contractId: action.contract_id,
+      vendorName: action.vendor_name || contract?.vendor_name || action.vendor_ref,
+      vendorRef: action.vendor_ref || contract?.vendor_ref || action.contract_id,
+      vendorCategory: contract?.vendor_category ?? null,
+      annualValue,
+    });
+  }
+
+  for (const claim of portfolio.impact.claimCards) {
+    const contract = contractsById.get(claim.contract_id);
+    const annualValue =
+      numberFromDb(contract?.resolved_annual_value) ??
+      numberFromDb(contract?.annual_value) ??
+      numberFromDb(claim.candidate_amount_usd);
+    upsert({
+      contractId: claim.contract_id,
+      vendorName: claim.vendor_name || contract?.vendor_name || claim.vendor_ref,
+      vendorRef: claim.vendor_ref || contract?.vendor_ref || claim.contract_id,
+      vendorCategory: contract?.vendor_category ?? null,
+      annualValue,
+    });
+  }
+
+  return Array.from(byName.values());
 }
 
 function coverageForVendor(
