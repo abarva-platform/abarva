@@ -85,6 +85,41 @@ type RecoverableCreditInput = Pick<
   "impact" | "v4Snapshot" | "workspaceDiagnostics"
 >;
 
+function impactLoadRunScore(row: SourceContractEvidenceCoverageRow): number {
+  return (
+    1 +
+    (numberFromDb(row.document_page_text_rows) ?? 0) * 8 +
+    (numberFromDb(row.change_order_rows) ?? 0) * 5 +
+    (numberFromDb(row.opportunity_rows) ?? 0) * 3 +
+    (numberFromDb(row.scope_rows) ?? 0) +
+    Math.min(numberFromDb(row.spend_rows) ?? 0, 12) +
+    Math.min(numberFromDb(row.performance_rows) ?? 0, 12)
+  );
+}
+
+function preferredImpactLoadRunId(
+  rows: readonly SourceContractEvidenceCoverageRow[],
+): string {
+  const scored = new Map<string, { score: number; rows: number }>();
+  for (const row of rows) {
+    const loadRunId = row.load_run_id?.trim() ?? "";
+    if (!loadRunId) continue;
+    const current = scored.get(loadRunId) ?? { score: 0, rows: 0 };
+    current.score += impactLoadRunScore(row);
+    current.rows += 1;
+    scored.set(loadRunId, current);
+  }
+
+  return (
+    [...scored.entries()].sort(
+      ([leftId, left], [rightId, right]) =>
+        right.score - left.score ||
+        right.rows - left.rows ||
+        leftId.localeCompare(rightId),
+    )[0]?.[0] ?? ""
+  );
+}
+
 export function source360RecoverableCreditCoverageRows(
   portfolio: RecoverableCreditInput,
 ): readonly SourceContractEvidenceCoverageRow[] {
@@ -100,6 +135,16 @@ export function source360RecoverableCreditCoverageRows(
     );
     if (activeRows.length > 0) {
       return activeRows;
+    }
+  }
+
+  const preferredLoadRunId = preferredImpactLoadRunId(rowsWithCredits);
+  if (preferredLoadRunId) {
+    const preferredRows = rowsWithCredits.filter(
+      (row) => row.load_run_id === preferredLoadRunId,
+    );
+    if (preferredRows.length > 0) {
+      return preferredRows;
     }
   }
 
@@ -3199,7 +3244,14 @@ function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
     .sort((a, b) => b.annualValue - a.annualValue);
 }
 
-function optimizeTypeRows(portfolio: SourceWorkspacePortfolioData) {
+export function optimizeTypeRows(portfolio: SourceWorkspacePortfolioData) {
+  const recoverableCreditRows = source360RecoverableCreditCoverageRows(portfolio);
+  const recoverableCreditByContract = new Map(
+    recoverableCreditRows.map((row) => [
+      row.contract_id,
+      numberFromDb(row.unclaimed_credit_usd) ?? 0,
+    ]),
+  );
   const groups = new Map<
     string,
     {
@@ -3212,11 +3264,32 @@ function optimizeTypeRows(portfolio: SourceWorkspacePortfolioData) {
   for (const candidate of portfolio.impact.actionCandidates) {
     const type =
       candidate.opportunity_type ?? candidate.action_type ?? "Not established";
+    const isRecoverableCredit = /credit|recover/i.test(
+      [
+        type,
+        candidate.action_type,
+        candidate.title,
+        candidate.finding_summary,
+        candidate.deterministic_basis,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
+    if (
+      isRecoverableCredit &&
+      recoverableCreditByContract.size > 0 &&
+      !recoverableCreditByContract.has(candidate.contract_id)
+    ) {
+      continue;
+    }
     const current =
       groups.get(type) ??
       { type, count: 0, amount: 0, financeStates: new Set<string>() };
     current.count += 1;
-    current.amount += numberFromDb(candidate.candidate_amount_usd) ?? 0;
+    current.amount += isRecoverableCredit
+      ? (recoverableCreditByContract.get(candidate.contract_id) ??
+        (numberFromDb(candidate.candidate_amount_usd) ?? 0))
+      : (numberFromDb(candidate.candidate_amount_usd) ?? 0);
     current.financeStates.add(candidate.finance_confirmation_state);
     groups.set(type, current);
   }

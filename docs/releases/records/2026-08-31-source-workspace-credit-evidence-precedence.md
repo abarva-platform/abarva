@@ -27,6 +27,14 @@ Historical rows with generic opportunity counts are not blended into the current
 credit headline unless the action queue itself identifies that contract as a
 credit/recovery candidate.
 
+This correction also covers workspaces whose diagnostic load-run identifier points
+at a broad projection rather than the current impact package. In that case the
+workspace selects the richest evidence-backed credit slice by loaded page text,
+change orders, action rows, scope, spend, and performance coverage before it
+falls back to older snapshot rows. Recoverable-credit type-mix rollups use the
+same selected credit slice so charts, tables, and headlines tell one consistent
+story.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`.
@@ -53,6 +61,10 @@ credit/recovery candidate.
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts' --runInBand`
   passed, including active-load-run credit precedence and no-active-run historical
   credit isolation when older rows also carry opportunity counts.
+- Added a regression for broad-projection diagnostics with a richer deterministic
+  impact package. It verifies the recoverable-credit headline and action-type
+  mix both stay scoped to the selected impact package instead of blending older
+  recoverable rows.
 
 ## Rollout Plan
 
@@ -77,6 +89,7 @@ workflow. No data rollback is required because this is presentation logic only.
 ## Audit Evidence
 
 - PR URL: https://github.com/abarva-platform/abarva/pull/7211
+- Follow-up PR URL: pending.
 - ACA deploy run: pending.
 - Signed-in Source workspace proof: pending.
 
