@@ -12,11 +12,14 @@
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import {
   BLOCKER_TONE,
+  controlBlockerExplanation,
   controlBlockerCell,
   formatCount,
   formatPct,
 } from "@/lib/tower/command-center/format";
 import type React from "react";
+
+import styles from "../TowerCommandCenter.module.css";
 
 type ToolRow = {
   readonly item: TowerAiView;
@@ -80,7 +83,13 @@ function shortfall(row: ToolRow): number {
   return row.targetPct - row.adoptionPct;
 }
 
-export function ToolsTablePanel({ view }: { view: TowerCommandCenterView }) {
+export function ToolsTablePanel({
+  view,
+  onOpenAi,
+}: {
+  view: TowerCommandCenterView;
+  onOpenAi?: (n: number) => void;
+}) {
   const rows = toolRows(view);
   const withTarget = rows.filter(
     (row) => row.targetPct !== null && row.adoptionPct !== null,
@@ -140,6 +149,7 @@ export function ToolsTablePanel({ view }: { view: TowerCommandCenterView }) {
         {rows.map(({ item, activeUsers, adoptionPct, targetPct, linkedCases }) => (
           <div
             key={item.id}
+            onDoubleClick={() => onOpenAi?.(item.n)}
             style={{
               ...GRID,
               alignItems: "center",
@@ -147,8 +157,17 @@ export function ToolsTablePanel({ view }: { view: TowerCommandCenterView }) {
               borderBottom: "1px solid var(--canon-border)",
               color: "var(--canon-gray-900)",
             }}
+            title="Double-click to open tool details"
           >
-            <span style={{ fontSize: 15, lineHeight: 1.35 }}>{item.name}</span>
+            <button
+              type="button"
+              className={styles.rowOpen}
+              onClick={() => onOpenAi?.(item.n)}
+              disabled={!onOpenAi}
+              style={{ fontSize: 15, lineHeight: 1.35 }}
+            >
+              {item.name}
+            </button>
             <span style={{ fontSize: 14, color: "var(--canon-gray-500)", minWidth: 0 }}>
               {item.vendor ?? "Not loaded"}
             </span>
@@ -192,7 +211,10 @@ export function ToolsTablePanel({ view }: { view: TowerCommandCenterView }) {
                 {targetPct === null ? " · no target set" : ` vs ${formatPct(targetPct)} target`}
               </span>
             </span>
-            <span style={{ fontSize: 14, color: BLOCKER_TONE[controlBlockerCell(item).tone] }}>
+            <span
+              style={{ fontSize: 14, color: BLOCKER_TONE[controlBlockerCell(item).tone] }}
+              title={controlBlockerExplanation(item)}
+            >
               {controlBlockerCell(item).text}
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 14, textAlign: "right", color: linkedCases === null ? "var(--canon-gray-500)" : "var(--canon-gray-900)" }}>

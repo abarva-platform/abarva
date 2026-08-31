@@ -12,6 +12,7 @@ import type React from "react";
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import {
   BLOCKER_TONE,
+  controlBlockerExplanation,
   controlBlockerCell,
   formatCount,
   formatPct,
@@ -68,6 +69,10 @@ function costRange(item: TowerAiView): string {
   return `up to ${formatUsdM(item.costToBuildHighUsd as number)}`;
 }
 
+function hasHave(count: number): string {
+  return count === 1 ? "has" : "have";
+}
+
 export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
   const rows = foundationRows(view);
   const spendUsd = rows.reduce((sum, row) => sum + row.item.aiSpendUsd, 0);
@@ -92,12 +97,18 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
       >
         {noRows
           ? "No foundation rows are loaded in the AI portfolio."
-          : allLoadedValuesAreZero
+          : missingValueRows > 0
+            ? `${formatCount(rows.length)} foundation rows support AI delivery; ${formatCount(missingValueRows)} ${hasHave(missingValueRows)} no sponsor-stated value loaded.`
+            : allLoadedValuesAreZero
             ? `${formatUsdM(spendUsd)} of foundation investment carries no sponsor-stated value.`
-            : missingValueRows > 0
-              ? `${formatCount(missingValueRows)} foundation rows have no sponsor-stated value loaded.`
               : `${formatUsdM(spendUsd)} of foundation investment carries ${formatUsdM(promisedUsd)} sponsor-stated value.`}
       </h2>
+
+      <p style={{ margin: "-10px 0 0", maxWidth: 980, fontSize: 15, lineHeight: 1.55, color: "var(--canon-gray-700)" }}>
+        Foundations are cross-functional AI enablers: platforms, data products, governance controls
+        or reusable services that make multiple business cases and tool rollouts possible. They are
+        tracked as investment, but their benefit should be claimed through the use cases they enable.
+      </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1 }}>
         {[
@@ -171,7 +182,10 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
               <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
                 {costRange(item)}
               </span>
-              <span style={{ color: BLOCKER_TONE[controlBlockerCell(item).tone] }}>
+              <span
+                style={{ color: BLOCKER_TONE[controlBlockerCell(item).tone] }}
+                title={controlBlockerExplanation(item)}
+              >
                 {controlBlockerCell(item).text}
               </span>
             </div>

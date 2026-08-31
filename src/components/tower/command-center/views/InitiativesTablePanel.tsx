@@ -11,10 +11,15 @@ import { useMemo, useState } from "react";
 import type React from "react";
 
 import type { TowerAiKind, TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
-import { formatUsdM } from "@/lib/tower/command-center/format";
+import {
+  formatUsdM,
+  gatingConstraintExplanation,
+} from "@/lib/tower/command-center/format";
+
+import styles from "../TowerCommandCenter.module.css";
 
 type FilterKey = "all" | TowerAiKind;
-type SortKey = "name" | "domain" | "status" | "investment" | "value" | "claimable";
+type SortKey = "name" | "valueType" | "domain" | "constraint" | "investment" | "value" | "claimable";
 
 const KIND_LABEL: Record<TowerAiKind, string> = {
   funded: "Funded",
@@ -36,8 +41,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 const HEADER: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0,3fr) minmax(0,1.45fr) 124px 98px 116px 114px",
-  gap: 14,
+  gridTemplateColumns: "minmax(240px,2.2fr) minmax(128px,0.95fr) minmax(128px,1fr) minmax(150px,1.1fr) 98px 116px 112px",
+  gap: 12,
   padding: "10px 22px",
   borderBottom: "1px solid var(--canon-border-strong)",
 };
@@ -57,9 +62,14 @@ const TH: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
+function humanize(value: string | null | undefined): string {
+  if (!value) return "Not loaded";
+  return value.replace(/_/g, " ");
+}
+
 function statusLabel(item: TowerAiView): string {
   if (!item.financeStatus) return "Not loaded";
-  return STATUS_LABEL[item.financeStatus] ?? item.financeStatus.replace(/_/g, " ");
+  return STATUS_LABEL[item.financeStatus] ?? humanize(item.financeStatus);
 }
 
 function valueLabel(item: TowerAiView): string {
@@ -72,14 +82,21 @@ function claimableProxy(item: TowerAiView): string {
 
 function sortValue(item: TowerAiView, key: SortKey): number | string {
   if (key === "name") return item.name;
+  if (key === "valueType") return item.businessValueType ?? "";
   if (key === "domain") return item.category ?? "";
-  if (key === "status") return statusLabel(item);
+  if (key === "constraint") return item.gatingConstraint ?? "";
   if (key === "investment") return item.aiSpendUsd;
   if (key === "value") return item.promisedBenefitLoaded ? item.promisedUsd : -1;
   return item.financeValidatedUsd || -1;
 }
 
-export function InitiativesTablePanel({ view }: { view: TowerCommandCenterView }) {
+export function InitiativesTablePanel({
+  view,
+  onOpenAi,
+}: {
+  view: TowerCommandCenterView;
+  onOpenAi?: (n: number) => void;
+}) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("investment");
   const [desc, setDesc] = useState(true);
@@ -102,7 +119,9 @@ export function InitiativesTablePanel({ view }: { view: TowerCommandCenterView }
     if (next === sort) setDesc((current) => !current);
     else {
       setSort(next);
-      setDesc(next !== "name" && next !== "domain" && next !== "status");
+      setDesc(
+        next !== "name" && next !== "domain" && next !== "valueType" && next !== "constraint",
+      );
     }
   }
 
@@ -143,8 +162,9 @@ export function InitiativesTablePanel({ view }: { view: TowerCommandCenterView }
         <div style={HEADER}>
           {[
             ["name", "Initiative"],
-            ["domain", "Domain"],
-            ["status", "Status"],
+            ["valueType", "Value type"],
+            ["domain", "Portfolio tag"],
+            ["constraint", "Constraint"],
             ["investment", "Invested"],
             ["value", "Sponsor-stated"],
             ["claimable", "Finance actual"],
@@ -162,6 +182,7 @@ export function InitiativesTablePanel({ view }: { view: TowerCommandCenterView }
         {rows.map((item) => (
           <div
             key={item.id}
+            onDoubleClick={() => onOpenAi?.(item.n)}
             style={{
               ...HEADER,
               alignItems: "center",
@@ -170,16 +191,29 @@ export function InitiativesTablePanel({ view }: { view: TowerCommandCenterView }
               fontFamily: "var(--abarva-sans)",
               fontSize: 14,
             }}
+            title="Double-click to open case details"
           >
             <span style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
-              <span style={{ fontSize: 15, lineHeight: 1.35 }}>{item.name}</span>
+              <button
+                type="button"
+                className={styles.rowOpen}
+                onClick={() => onOpenAi?.(item.n)}
+                disabled={!onOpenAi}
+                style={{ fontSize: 15, lineHeight: 1.35 }}
+              >
+                {item.name}
+              </button>
               <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 10, letterSpacing: "0.06em", color: "var(--canon-gray-500)" }}>
-                {item.id}
+                {item.id} · {statusLabel(item)}
               </span>
             </span>
+            <span style={{ color: "var(--canon-gray-700)", minWidth: 0 }}>{humanize(item.businessValueType)}</span>
             <span style={{ color: "var(--canon-gray-500)", minWidth: 0 }}>{item.category ?? "Not loaded"}</span>
-            <span style={{ color: item.financeStatus === "finance_validated_actual" ? "var(--canon-teal-dark)" : "var(--canon-gray-700)" }}>
-              {statusLabel(item)}
+            <span
+              style={{ color: item.gatingConstraint ? "var(--canon-gray-700)" : "var(--canon-gray-500)", minWidth: 0 }}
+              title={gatingConstraintExplanation(item.gatingConstraint)}
+            >
+              {humanize(item.gatingConstraint)}
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{formatUsdM(item.aiSpendUsd)}</span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{valueLabel(item)}</span>

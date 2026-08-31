@@ -3,7 +3,13 @@
 // The AI capability drawer — opened from a bubble point or inventory row.
 // Transcribed from `aiDrawer()` (design line ~1139).
 
-import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
+import {
+  controlBlockerCell,
+  controlBlockerExplanation,
+  formatCount,
+  formatUsdM,
+  gatingConstraintExplanation,
+} from "@/lib/tower/command-center/format";
 import type { TowerAiView } from "@/lib/tower/command-center/types";
 
 import { AI_KIND_WORD, Dot, cx } from "../primitives";
@@ -57,7 +63,14 @@ function humanizeEvent(value: string | null): string {
   return value.replace(/_/g, " ");
 }
 
+function isToolRollout(a: TowerAiView): boolean {
+  return a.sourceFile === "23_ai_tool_rollout.csv";
+}
+
 export function plainAi(a: TowerAiView): string {
+  if (isToolRollout(a)) {
+    return "This is an AI tool rollout. Its value should be traced through linked business cases, adoption evidence and the controls that govern use.";
+  }
   const definition: Record<TowerAiView["kind"], string> = {
     funded: "a real, funded program with its own budget and approvals",
     embedded:
@@ -95,11 +108,17 @@ export function AiInitiativeDrawer({
       footer={
         <>
           <span className={styles.drTrust}>
-            <Dot tone={a && a.readinessScore >= 60 ? "teal" : "amber"} />
+            <Dot
+              tone={
+                a && a.readinessScoreLoaded && a.readinessScore >= 60
+                  ? "teal"
+                  : "amber"
+              }
+            />
             {a?.posture ?? ""}
           </span>
           <button type="button" className={styles.btn} onClick={onClose}>
-            Close
+            Back to list
           </button>
         </>
       }
@@ -117,9 +136,15 @@ export function AiInitiativeDrawer({
             />
             <DrawerStat
               label="Readiness"
-              value={`${a.readinessScore}/100`}
+              value={
+                a.readinessScoreLoaded ? `${a.readinessScore}/100` : "Not scored"
+              }
               small
-              tone={a.readinessScore >= 60 ? "vTeal" : "vAmber"}
+              tone={
+                a.readinessScoreLoaded && a.readinessScore >= 60
+                  ? "vTeal"
+                  : "vAmber"
+              }
             />
           </div>
 
@@ -140,8 +165,18 @@ export function AiInitiativeDrawer({
             value={a.lifecycleStage ?? "Not recorded"}
           />
           <DrawerRow
+            label="Value type"
+            value={a.businessValueType ?? "Not recorded"}
+          />
+          <DrawerRow
             label="Stopped at"
             value={a.gatingConstraint ?? "Not recorded"}
+            sub={gatingConstraintExplanation(a.gatingConstraint)}
+          />
+          <DrawerRow
+            label="Control blocker"
+            value={controlBlockerCell(a).text}
+            sub={controlBlockerExplanation(a)}
           />
           <DrawerRow
             label="Operating metric"

@@ -217,8 +217,22 @@ describe("TowerCommandCenter", () => {
 
     expect(tab(TAB.initiatives)).toHaveAttribute("aria-selected", "true");
     expect(replace).toHaveBeenCalledWith(
-      "/tower/command?tab=initiatives&proof=stale&view=constraint",
+      "/tower/command?tab=initiatives&proof=stale&view=proof",
       { scroll: false },
+    );
+  });
+
+  it("opens AI Bets on Value proof by default", () => {
+    renderPage();
+    fireEvent.click(tab(TAB.initiatives));
+
+    expect(replace).toHaveBeenCalledWith(
+      "/tower/command?tab=initiatives&view=proof",
+      { scroll: false },
+    );
+    expect(screen.getByRole("tab", { name: /Value proof/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
     );
   });
 
@@ -245,6 +259,16 @@ describe("TowerCommandCenter", () => {
     expect(screen.getByText("Claim ledger")).toBeInTheDocument();
     expect(screen.getByText("Value case lanes")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
+
+    expect(screen.getByRole("tab", { name: "2 × 2" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Stacked" }));
+    expect(screen.getByRole("tab", { name: "Stacked" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 
   it("renders the AI Portfolio tab-specific contract layout", () => {
@@ -341,8 +365,48 @@ describe("TowerCommandCenter", () => {
     expect(screen.getAllByText("Task").length).toBeGreaterThan(0);
     expect(container).not.toHaveTextContent(/Usage telemetry connection/);
     expect(container).not.toHaveTextContent(/Vendor leverage review/);
+    expect(screen.getAllByText("Next step").length).toBeGreaterThan(0);
     expect(screen.getByText("Evidence-owner queue")).toBeInTheDocument();
     expect(screen.getByText("Projection reconciliation")).toBeInTheDocument();
+  });
+
+  it("opens the AI initiative drawer from the all-cases table", () => {
+    renderPage();
+    goTo(TAB.initiatives, /All cases/);
+    const firstAi = [...view.allInitiatives].sort(
+      (a, b) => b.aiSpendUsd - a.aiSpendUsd || a.name.localeCompare(b.name),
+    )[0]!;
+    clickFirstButtonContaining(firstAi.name);
+
+    const drawer = screen.getByRole("dialog");
+    expect(within(drawer).getByText("Value type")).toBeInTheDocument();
+    expect(within(drawer).getByText("Control blocker")).toBeInTheDocument();
+    expect(within(drawer).getByRole("button", { name: /Back to list/ })).toBeInTheDocument();
+  });
+
+  it("opens the AI initiative drawer from the tools rollout table", () => {
+    renderCustomView({
+      ...view,
+      allInitiatives: [
+        {
+          ...view.allInitiatives[0]!,
+          n: 88,
+          id: "TOOL-DETAIL",
+          name: "Power BI Copilot",
+          sourceFile: "23_ai_tool_rollout.csv",
+          usageHeadline: "Usage evidence exists",
+          usageBars: [
+            { label: "Adoption", valueText: "30%", pct: 30, tone: "amber" },
+          ],
+          adoptionTargetPct: 46,
+        },
+      ],
+    });
+    goTo(TAB.tools, /Rollouts/);
+    clickFirstButtonContaining("Power BI Copilot");
+
+    const drawer = screen.getByRole("dialog");
+    expect(within(drawer).getByText(/AI tool rollout/)).toBeInTheDocument();
   });
 
   it("surfaces Source contract actions without dumping the full action queue", () => {

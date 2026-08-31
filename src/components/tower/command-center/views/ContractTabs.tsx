@@ -4,10 +4,12 @@ import { useState } from "react";
 
 import {
   BLOCKER_TONE,
+  controlBlockerExplanation,
   controlBlockerCell,
   formatCount,
   formatPct,
   formatUsdM,
+  gatingConstraintExplanation,
 } from "@/lib/tower/command-center/format";
 import type {
   TowerAiKind,
@@ -36,6 +38,7 @@ import { cx } from "../primitives";
 
 type Tone = "teal" | "amber" | "red" | "gray";
 type AiLens = "cost" | "risk" | "adoption" | "table";
+type ValueProofLayout = "grid" | "stacked";
 type CostFinding = {
   id: string;
   badge: string;
@@ -85,6 +88,11 @@ function formatOptionalUsdM(value: number | null | undefined): string {
   return typeof value === "number" && Number.isFinite(value)
     ? formatUsdM(value)
     : "Not loaded";
+}
+
+function humanizeLabel(value: string | null | undefined): string {
+  if (!value) return "Not loaded";
+  return value.replace(/_/g, " ");
 }
 
 function valueClaimCount(view: TowerCommandCenterView): number {
@@ -465,6 +473,7 @@ export function ValueProofContractView({
   const unproven = unprovenPromisedUsd(view);
   const programs = topPrograms(view, 20);
   const hasTrajectory = view.valueTrajectory.length > 0;
+  const [layout, setLayout] = useState<ValueProofLayout>("grid");
   return (
     <div className={styles.contractView}>
       <ContractMasthead view={view} />
@@ -475,14 +484,36 @@ export function ValueProofContractView({
         />
         <div
           className={styles.contractSegments}
+          role="tablist"
           aria-label="Value proof display mode"
         >
-          <span>Stacked</span>
-          <span>2 × 2</span>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={layout === "stacked"}
+            className={layout === "stacked" ? styles.segmentOn : undefined}
+            onClick={() => setLayout("stacked")}
+          >
+            Stacked
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={layout === "grid"}
+            className={layout === "grid" ? styles.segmentOn : undefined}
+            onClick={() => setLayout("grid")}
+          >
+            2 × 2
+          </button>
         </div>
       </div>
 
-      <section className={styles.valueProofGrid}>
+      <section
+        className={cx(
+          styles.valueProofGrid,
+          layout === "stacked" && styles.valueProofGridStacked,
+        )}
+      >
         <article className={styles.contractCard}>
           {cardTitle(
             "Investment to value conversion",
@@ -740,6 +771,33 @@ function aiUsageScore(item: TowerAiView): number | null {
     .filter((pct) => Number.isFinite(pct));
   if (scoredBars.length > 0) return Math.max(...scoredBars);
   return null;
+}
+
+function controlOrGateCell(item: TowerAiView): {
+  text: string;
+  title: string;
+  color: string;
+} {
+  const blocker = controlBlockerCell(item);
+  if (blocker.tone !== "absent") {
+    return {
+      text: blocker.text,
+      title: controlBlockerExplanation(item),
+      color: BLOCKER_TONE[blocker.tone],
+    };
+  }
+  if (item.gatingConstraint) {
+    return {
+      text: humanizeLabel(item.gatingConstraint),
+      title: gatingConstraintExplanation(item.gatingConstraint),
+      color: "var(--canon-gray-700)",
+    };
+  }
+  return {
+    text: blocker.text,
+    title: controlBlockerExplanation(item),
+    color: BLOCKER_TONE[blocker.tone],
+  };
 }
 
 function costFindings(view: TowerCommandCenterView): CostFinding[] {
@@ -1050,49 +1108,52 @@ export function AiPortfolioContractView({
                   <th>#</th>
                   <th>Initiative / tool</th>
                   <th>Vendor</th>
-                  <th>Type</th>
+                  <th>Value type</th>
                   <th>Spend</th>
                   <th>Benefit</th>
                   <th>Readiness</th>
-                  <th>Control blocker</th>
+                  <th>Control / gate</th>
                 </tr>
               </thead>
               <tbody>
-                {allAiRows(view).map((item, index) => (
-                  <tr key={item.id}>
-                    <td>{index + 1}</td>
-                    <td>
-                      <button type="button" onClick={() => onOpenAi(item.n)}>
-                        {item.name}
-                      </button>
-                      <span>{aiUsageLabel(item)}</span>
-                    </td>
-                    <td>{item.vendor ?? "Unassigned"}</td>
-                    <td>
-                      {item.category ?? AI_KIND_LABEL[item.displayBucket]}
-                    </td>
-                    <td>
-                      {item.aiSpendLoaded
-                        ? formatUsdM(item.aiSpendUsd)
-                        : "Not loaded"}
-                    </td>
-	                    <td>{aiBenefitLabel(item)}</td>
-                    <td>
-                      {item.readinessScoreLoaded
-                        ? formatPct(item.readinessScore)
-                        : "Not scored"}
-                    </td>
-                    <td>
-                      <span
-                        style={{
-                          color: BLOCKER_TONE[controlBlockerCell(item).tone],
-                        }}
-                      >
-                        {controlBlockerCell(item).text}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {allAiRows(view).map((item, index) => {
+                  const gate = controlOrGateCell(item);
+                  return (
+                    <tr key={item.id} onDoubleClick={() => onOpenAi(item.n)}>
+                      <td>{index + 1}</td>
+                      <td>
+                        <button type="button" onClick={() => onOpenAi(item.n)}>
+                          {item.name}
+                        </button>
+                        <span>{aiUsageLabel(item)}</span>
+                      </td>
+                      <td>{item.vendor ?? "Unassigned"}</td>
+                      <td>
+                        {humanizeLabel(
+                          item.businessValueType ??
+                            item.category ??
+                            AI_KIND_LABEL[item.displayBucket],
+                        )}
+                      </td>
+                      <td>
+                        {item.aiSpendLoaded
+                          ? formatUsdM(item.aiSpendUsd)
+                          : "Not loaded"}
+                      </td>
+                      <td>{aiBenefitLabel(item)}</td>
+                      <td>
+                        {item.readinessScoreLoaded
+                          ? formatPct(item.readinessScore)
+                          : "Not scored"}
+                      </td>
+                      <td>
+                        <span title={gate.title} style={{ color: gate.color }}>
+                          {gate.text}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1119,7 +1180,7 @@ function campaignRows(view: TowerCommandCenterView): CampaignRow[] {
     tasks: 1,
     unit: "Task",
     valueUsd: action.amountExposedUsd,
-    due: action.due ?? "Not loaded",
+    due: humanizeLabel(action.due),
     tone:
       action.lane === "fix" || action.lane === "stop"
         ? ("red" as Tone)
@@ -1274,7 +1335,7 @@ export function EvidenceActionsContractView({
                   <strong>{formatOptionalUsdM(row.valueUsd)}</strong>
                 </span>
                 <span className={styles.campaignMetric}>
-                  <i>Due</i>
+                  <i>Next step</i>
                   <strong>{row.due}</strong>
                 </span>
               </button>

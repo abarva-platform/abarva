@@ -1304,6 +1304,9 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   gap: 18px;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
+.valueProofGridStacked {
+  grid-template-columns: minmax(0, 1fr);
+}
 .gateChart {
   height: clamp(300px, 26vw, 430px);
   padding: 16px 16px 4px;
@@ -1589,7 +1592,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   cursor: pointer;
   display: grid;
   gap: 18px;
-  grid-template-columns: 34px minmax(320px, 1fr) 80px 128px 124px;
+  grid-template-columns: 34px minmax(260px, 1fr) minmax(70px, 0.3fr) minmax(112px, 0.42fr) minmax(132px, 0.48fr);
   padding: 14px 20px;
   text-align: left;
   width: 100%;
@@ -1607,6 +1610,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   font-family: var(--abarva-serif);
   font-size: 17px;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 .campaignMain i,
 .campaignMetric i {
@@ -1616,6 +1620,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   font-style: normal;
 }
 .campaignMetric {
+  min-width: 0;
   text-align: right;
 }
 .campaignMetric strong {
@@ -1625,6 +1630,8 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   font-weight: 600;
   line-height: 1.05;
   margin-top: 3px;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 .evidenceReconcileGrid {
   display: grid;
