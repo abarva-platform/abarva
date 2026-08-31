@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import "./workspace.css";
 import {
   buildInitialWorkspaceState,
@@ -23,7 +24,16 @@ import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import { Tooltip } from "./Tooltip";
-import { WorkspaceExecutiveShell } from "./WorkspaceExecutiveShell";
+
+const WorkspaceExecutiveShell = dynamic(
+  () =>
+    import("./WorkspaceExecutiveShell").then(
+      (mod) => mod.WorkspaceExecutiveShell,
+    ),
+  {
+    loading: () => <WorkspaceCanvasLoading />,
+  },
+);
 
 const SOURCE_WORKSPACE_AGENT = {
   initials: "aVa",
@@ -32,6 +42,48 @@ const SOURCE_WORKSPACE_AGENT = {
   role: "Source Workspace advisor",
 };
 const SOURCE_WORKSPACE_AGENT_API_URL = "/api/intelligence/ask";
+
+function WorkspaceCanvasLoading() {
+  return (
+    <main className="sw-v2-shell" aria-label="Loading Source workspace views">
+      <header className="sw-v2-frame-bar" aria-label="Source workspace header">
+        <div className="sw-v2-frame-brand">
+          <span>
+            Abar<i>Va</i>
+          </span>
+          <b>Source 360</b>
+        </div>
+        <div className="sw-v2-frame-meta">Loading workspace views</div>
+      </header>
+      <section className="sw-v2-main">
+        <header className="sw-v2-loading-hero">
+          <span>Source 360</span>
+          <h1>Preparing the contract decision set</h1>
+          <p>
+            Loading Source tabs, charts, evidence coverage, and contract graph
+            views.
+          </p>
+        </header>
+        <div className="sw-v2-loading-grid" aria-hidden="true">
+          {["Verdict", "Vendors", "Contracts", "Evidence", "Graph"].map(
+            (label) => (
+              <div key={label} className="sw-v2-loading-card">
+                <span>{label}</span>
+                <b />
+                <small />
+              </div>
+            ),
+          )}
+        </div>
+        <div className="sw-v2-loading-canvas" aria-hidden="true">
+          <div />
+          <div />
+          <div />
+        </div>
+      </section>
+    </main>
+  );
+}
 
 function buildContractApiUrl(
   contractId: string,
