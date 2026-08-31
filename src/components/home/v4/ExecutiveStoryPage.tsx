@@ -834,9 +834,15 @@ function EvidenceEntryPoints({ onOpenView }: { onOpenView: (id: string) => void 
         </div>
         <div style={entryPointGridStyle}>
           {entries.map(([id, title, text]) => (
-            <button key={id} type="button" onClick={() => onOpenView(id)} style={entryPointCardStyle}>
-              <strong>{title}</strong>
-              <span>{text}</span>
+            <button
+              key={id}
+              type="button"
+              aria-label={`${title}: ${text}`}
+              onClick={() => onOpenView(id)}
+              style={entryPointCardStyle}
+            >
+              <span style={entryPointCardTitleStyle}>{title}</span>
+              <span style={entryPointCardTextStyle}>{text}</span>
             </button>
           ))}
         </div>
@@ -1209,6 +1215,8 @@ const entryPointGridStyle: CSSProperties = {
 };
 
 const entryPointCardStyle: CSSProperties = {
+  display: "grid",
+  gap: 8,
   textAlign: "left",
   border: `1px solid ${V4.rule}`,
   borderRadius: 8,
@@ -1217,4 +1225,20 @@ const entryPointCardStyle: CSSProperties = {
   cursor: "pointer",
   color: V4.ink,
   fontFamily: SANS,
+};
+
+const entryPointCardTitleStyle: CSSProperties = {
+  display: "block",
+  fontSize: 16,
+  lineHeight: 1.2,
+  fontWeight: 700,
+  letterSpacing: 0,
+};
+
+const entryPointCardTextStyle: CSSProperties = {
+  display: "block",
+  fontSize: 15,
+  lineHeight: 1.45,
+  color: V4.slate,
+  letterSpacing: 0,
 };
