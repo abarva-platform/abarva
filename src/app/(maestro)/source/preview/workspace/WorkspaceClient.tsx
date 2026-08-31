@@ -18,6 +18,7 @@ import {
   type AttachmentRef,
   type ChatMessage,
 } from "@/components/agent/AgentDock";
+import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
@@ -555,6 +556,10 @@ export function WorkspaceClient({
             />
           }
         />
+      </div>
+
+      <div style={{ flexShrink: 0, padding: "0 20px 18px" }}>
+        <EclServingSurfaceCoverage product="source" />
       </div>
 
       <Tooltip tip={vm.tip} />
