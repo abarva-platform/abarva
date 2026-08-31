@@ -140,7 +140,7 @@
       "voice": "strategy and value creation; separate funded, measured, blocked, and aspirational",
       "decision_question": "Where are we trying to go, and what bets are we making?",
       "required_context": ["strategic_bets", "value_and_performance", "leadership_voice", "known_gaps"],
-      "source_layer_reads": ["serving.home_strategy_value_creation", "serving.tower_value_chain", "ecl_context.measure"],
+      "source_layer_reads": ["datasets/tenant-inputs/active/<tenant>/current/00_enterprise_profile.csv", "datasets/tenant-inputs/active/<tenant>/current/09_programs_initiatives.csv", "datasets/tenant-inputs/active/<tenant>/current/14_metrics_outcomes.csv", "datasets/tenant-inputs/active/<tenant>/current/SA10_AI_Value_Interview_Evidence.csv", "serving.home_strategy_value_creation", "serving.tower_value_chain", "ecl_context.measure"],
       "must_show": ["funded bets", "measured value", "evidence still needed", "leadership alignment"],
       "forbidden": ["inferring priorities from technology inventory alone"]
     },
@@ -151,7 +151,7 @@
       "voice": "operating-model and accountability led",
       "decision_question": "How is the enterprise organized and how does work get done?",
       "required_context": ["operating_model", "technology_estate", "leadership_voice", "known_gaps"],
-      "source_layer_reads": ["serving.home_how_we_operate", "ecl_context.relationship", "ecl_context.object"],
+      "source_layer_reads": ["datasets/tenant-inputs/active/<tenant>/current/01_business_functions.csv", "datasets/tenant-inputs/active/<tenant>/current/02_org_ownership.csv", "datasets/tenant-inputs/active/<tenant>/current/03_workforce_roles.csv", "datasets/tenant-inputs/active/<tenant>/current/17_service_scope_managed_services.csv", "datasets/tenant-inputs/active/<tenant>/current/18_operational_process_evidence.csv", "serving.home_how_we_operate", "ecl_context.relationship", "ecl_context.object"],
       "must_show": ["organization to function to process chain", "owners", "supporting systems", "process pain"],
       "forbidden": ["decorative org chart without accountability or systems"]
     },

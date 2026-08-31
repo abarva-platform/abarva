@@ -639,6 +639,20 @@ assert(
   "Home chapter assembly keeps supplier concentration and evidence-boundary caveats out of the executive opening slice",
 );
 assert(
+  chapters.includes("OPERATING_MODEL_DOMAINS") &&
+    chapters.includes("function operatingModelClaim") &&
+    chapters.includes("operatingAccountability") &&
+    chapters.includes("leadershipClaims") &&
+    chapters.includes("PUBLISHED_REFUSAL_LANGUAGE_RE") &&
+    chapters.includes("deterministicClaimBasedChapterNarrative"),
+  "Home chapter assembly routes organization/workforce/process evidence to How We Operate and prevents claim-backed chapters from rendering as generic refusals",
+);
+assert(
+  script.includes("published_chapter_contains_refusal_language") &&
+    script.includes("refusalLikePublishedText"),
+  "Home ECL narrative visible-quality gate rejects a published chapter that still renders refusal-like prose",
+);
+assert(
   thesis.includes("OPENING THESIS BAR") &&
     thesis.includes("business-strategy thesis for a new CEO/CXO") &&
     thesis.includes("Do not open with a vendor") &&

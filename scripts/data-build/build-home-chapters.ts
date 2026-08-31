@@ -287,6 +287,13 @@ const TECH_DOMAINS = new Set([
   "application_system", "vendor_contract", "spend_value_fact", "infrastructure_platform",
   "data_asset_or_integration", "platform_maturity_assessment", "managed_service_scope",
 ]);
+const OPERATING_MODEL_DOMAINS = new Set([
+  "organization", "workforce", "operational_process", "business_function", "managed_service_scope",
+]);
+const OPERATING_MODEL_LANGUAGE_RE =
+  /\b(?:accountability|business[-\s]?function|budget authority|decision[-\s]?rights|function|headcount|managed[-\s]?service|operating[-\s]?model|organization|owner|ownership|process|role|service[-\s]?delivery|workforce)\b/i;
+const PUBLISHED_REFUSAL_LANGUAGE_RE =
+  /\b(?:deferred pending stronger evidence|does not yet support a board-ready answer|does not yet connect enough verified statements|evidence needs resolution before executive use|not ready for executive review)\b/i;
 
 function claimDomains(claim: GroundedClaim, signalPacket: ReturnType<typeof import("./enterprise-signal-packet").buildEnterpriseSignalPacket>): Set<string> {
   const byId = new Map<string, Signal | ContextItem>([
@@ -304,6 +311,14 @@ function claimDomains(claim: GroundedClaim, signalPacket: ReturnType<typeof impo
 function touchesAny(domains: Set<string>, target: Set<string>): boolean {
   for (const d of domains) if (target.has(d)) return true;
   return false;
+}
+
+function operatingModelClaim(
+  claim: GroundedClaim,
+  signalPacket: ReturnType<typeof import("./enterprise-signal-packet").buildEnterpriseSignalPacket>,
+): boolean {
+  return touchesAny(claimDomains(claim, signalPacket), OPERATING_MODEL_DOMAINS) &&
+    OPERATING_MODEL_LANGUAGE_RE.test(claim.statement);
 }
 
 /** Verifier-rejected claims survive as `null` in place (see dropClaim) rather than being spliced
@@ -483,10 +498,19 @@ export function assembleChapterSlices(
 ): Record<ChapterId, { key_insights: GroundedClaim[]; tensions: GroundedClaim[]; what_to_watch: GroundedClaim[] }> {
   const structural = alive(thesis.structural_constraints);
   const operating = alive(thesis.operating_tensions);
-  const techStructural = structural.filter((c) => touchesAny(claimDomains(c, signalPacket), TECH_DOMAINS));
-  const opsStructural = structural.filter((c) => !techStructural.includes(c));
-  const techOperating = operating.filter((c) => touchesAny(claimDomains(c, signalPacket), TECH_DOMAINS));
-  const opsOperating = operating.filter((c) => !techOperating.includes(c));
+  const operatingAccountability = [
+    ...structural,
+    ...operating,
+    ...alive(thesis.leadership_consensus),
+  ].filter((claim, index, arr) =>
+    operatingModelClaim(claim, signalPacket) &&
+    arr.findIndex((candidate) => candidate.statement === claim.statement) === index
+  );
+  const techStructural = structural.filter((c) => touchesAny(claimDomains(c, signalPacket), TECH_DOMAINS) && !operatingModelClaim(c, signalPacket));
+  const opsStructural = structural.filter((c) => !techStructural.includes(c) && !operatingModelClaim(c, signalPacket));
+  const techOperating = operating.filter((c) => touchesAny(claimDomains(c, signalPacket), TECH_DOMAINS) && !operatingModelClaim(c, signalPacket));
+  const opsOperating = operating.filter((c) => !techOperating.includes(c) && !operatingModelClaim(c, signalPacket));
+  const leadershipClaims = alive(thesis.leadership_consensus).filter((claim) => !operatingModelClaim(claim, signalPacket));
 
   const performanceAll = [
     ...alive(thesis.performance_story.where_improving),
@@ -511,8 +535,8 @@ export function assembleChapterSlices(
       what_to_watch: [],
     },
     how_we_operate: {
-      key_insights: opsStructural,
-      tensions: [],
+      key_insights: operatingAccountability.length ? operatingAccountability : opsStructural,
+      tensions: opsOperating,
       what_to_watch: [],
     },
     technology_data: {
@@ -526,7 +550,7 @@ export function assembleChapterSlices(
       what_to_watch: [],
     },
     leadership_perspective: {
-      key_insights: alive(thesis.leadership_consensus),
+      key_insights: leadershipClaims,
       tensions: alive(thesis.leadership_disagreements),
       what_to_watch: [],
     },
@@ -569,6 +593,10 @@ matching ctx_* item or assigned claim is listed. If the assigned claims are thin
 answer the guiding question, say so honestly in the synthesis rather than inventing material to fill
 the gap -- an honest "the current evidence does not yet establish X" is correct output, not a
 failure.
+
+If assigned claims are present, do not write a refusal headline or a generic "not enough evidence"
+page. Use the assigned claims to give the best bounded answer, then name the specific limitation in
+the paragraph. Refusal and deferred pages are reserved for chapters with no assigned claims.
 
 For the Executive Brief, the headline must not be a supplier/contract fact, an evidence-boundary
 caveat, or a standalone inventory count. Lead with the business consequence a new executive should
@@ -792,11 +820,44 @@ async function synthesizeChapterNarrative(
   if (!result) return null;
   const parsed = parseJsonLoose<{ headline: string; executive_synthesis: string }>(result.text, `chapter synthesis (${def.title})`);
   if (!parsed) return null;
+  const generatedText = `${parsed.headline} ${parsed.executive_synthesis}`;
+  if (claims.length > 0 && PUBLISHED_REFUSAL_LANGUAGE_RE.test(generatedText)) {
+    return deterministicClaimBasedChapterNarrative(def, claims, result.inputTokens, result.outputTokens, "refusal_language_fallback");
+  }
   return {
     ...parsed,
     inputTokens: result.inputTokens,
     outputTokens: result.outputTokens,
     stopReason: result.stopReason,
+  };
+}
+
+function deterministicClaimBasedChapterNarrative(
+  def: { title: string; guidingQuestion: string },
+  claims: GroundedClaim[],
+  inputTokens: number,
+  outputTokens: number,
+  stopReason: string | null,
+): ChapterSynthesisResult {
+  const clean = (value: string) =>
+    value
+      .replace(/\bsource records?\b/gi, "record shows")
+      .replace(/\bsource contains\b/gi, "record contains")
+      .replace(/\bHome may use it\b/gi, "leaders may use it")
+      .replace(/\bHome\b/g, "the executive view")
+      .replace(/\s+/g, " ")
+      .trim();
+  const headline = clean(claims[0]?.statement ?? `${def.title} has verified evidence for review`);
+  const support = claims.slice(0, 4).map((claim) => clean(claim.statement));
+  return {
+    headline: headline.length > 260 ? `${headline.slice(0, 257).trim()}...` : headline,
+    executive_synthesis: [
+      `The current evidence can answer "${def.guidingQuestion}" with ${claims.length.toLocaleString()} verified statement${claims.length === 1 ? "" : "s"}.`,
+      ...support,
+    ].join(" "),
+    inputTokens,
+    outputTokens,
+    stopReason,
   };
 }
 
