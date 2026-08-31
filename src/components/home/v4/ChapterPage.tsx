@@ -2,6 +2,8 @@ import type { ChapterView, EnterpriseSignalPacket, GroundedClaim, Signal, Visual
 import { ChapterHeader, ExposuresBand, FollowsBand, NotEstablishedBand, QuestionsSection, RecordBand } from "./bands";
 import { Exhibit, ExhibitBars } from "./Exhibit";
 import { splitChapterIntoBands } from "./chapter-bands";
+import { FindingsBlock, TableSet } from "./TableSet";
+import type { ChapterDepth } from "./chapter-page-content";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /**
@@ -19,6 +21,7 @@ export function ChapterPage({
   signalPacket,
   visualDatasets,
   exhibitMeta,
+  depth,
 }: {
   chapter: ChapterView;
   chapterNumber: number;
@@ -26,6 +29,9 @@ export function ChapterPage({
   visualDatasets: Record<string, Array<Record<string, unknown>>>;
   /** Per-dataset counts line, derived by the caller from real records. */
   exhibitMeta?: Record<string, string>;
+  /** Tables and findings computed from the estate rows in the bundle -- no model, no packet claim.
+   * Absent, or empty, renders nothing: a chapter whose rows produce no table has no table set. */
+  depth?: ChapterDepth;
 }) {
   const bands = splitChapterIntoBands(chapter, signalPacket);
   const exhibits = chapter.visual_opportunities.filter((v) => Boolean(visualDatasets[v.dataset_ref]));
@@ -47,6 +53,9 @@ export function ChapterPage({
       />
 
       <ChapterExecutiveReadout chapter={chapter} bands={bands} signalPacket={signalPacket} />
+
+      {depth ? <TableSet tables={depth.tables} /> : null}
+      {depth ? <FindingsBlock findings={depth.findings} /> : null}
 
       {lead ? <ExhibitFor visual={lead} index={1} signalPacket={signalPacket} visualDatasets={visualDatasets} meta={exhibitMeta?.[lead.dataset_ref]} dark /> : null}
 
