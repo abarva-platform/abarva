@@ -361,87 +361,89 @@ export function WorkspaceExecutiveShell({
           />
         </section>
 
-        <ClaimContract
-          allowed={claimContract.allowed}
-          blocker={claimContract.blocker}
-        />
-
-        {currentPage === "Verdict" ? (
-          <PortfolioPage
-            portfolio={portfolio}
-            creditFinding={creditFinding}
-            findingContract={findingContract}
-            performanceRows={performanceRows}
-            spendRows={spendRows}
-            impactCandidateAmount={impactCandidateAmount}
-            onOpenContract={openContract}
-            onOpenVendors={() => logic.select("vendorList", null)}
+        <section className="sw-v2-content-canvas" aria-label="Source 360 canvas">
+          <ClaimContract
+            allowed={claimContract.allowed}
+            blocker={claimContract.blocker}
           />
-        ) : null}
 
-        {currentPage === "Vendors" ? (
-          <VendorsPage
-            portfolio={portfolio}
-            selectedVendor={selectedVendor}
-            totalAnnualValue={totalAnnualValue}
-            subtab={logic.state.tabs.vendorList ?? "Concentration"}
-            onOpenSubtab={(tab) => logic.setTab("vendorList", tab)}
-            onOpenVendor={openVendor}
-            onOpenContract={openContract}
-          />
-        ) : null}
-
-        {currentPage === "Contracts" ? (
-          vm.isContract && selectedContract ? (
-            <ContractPage
-              vm={vm}
-              logic={logic}
+          {currentPage === "Verdict" ? (
+            <PortfolioPage
               portfolio={portfolio}
-              contract={selectedContract}
-              onOpenTab={(tab) => logic.setTab("contract", tab)}
+              creditFinding={creditFinding}
+              findingContract={findingContract}
+              performanceRows={performanceRows}
+              spendRows={spendRows}
+              impactCandidateAmount={impactCandidateAmount}
+              onOpenContract={openContract}
+              onOpenVendors={() => logic.select("vendorList", null)}
             />
-          ) : (
-            <ContractsPage
+          ) : null}
+
+          {currentPage === "Vendors" ? (
+            <VendorsPage
               portfolio={portfolio}
-              subtab={logic.state.tabs.contractList ?? "Contract table"}
-              onOpenSubtab={(tab) => logic.setTab("contractList", tab)}
+              selectedVendor={selectedVendor}
+              totalAnnualValue={totalAnnualValue}
+              subtab={logic.state.tabs.vendorList ?? "Concentration"}
+              onOpenSubtab={(tab) => logic.setTab("vendorList", tab)}
+              onOpenVendor={openVendor}
               onOpenContract={openContract}
             />
-          )
-        ) : null}
+          ) : null}
 
-        {currentPage === "Optimize" && selectedContract ? (
-          <OptimizePage
-            vm={vm}
-            contract={selectedContract}
-            creditFinding={creditFinding}
-            findingContract={findingContract}
-            performanceRows={performanceRows}
-            spendRows={spendRows}
-            portfolio={portfolio}
-            subtab={logic.state.tabs.optimize ?? "Action queue"}
-            onOpenSubtab={(tab) => logic.setTab("optimize", tab)}
-            onOpenContract={openContract}
-          />
-        ) : null}
+          {currentPage === "Contracts" ? (
+            vm.isContract && selectedContract ? (
+              <ContractPage
+                vm={vm}
+                logic={logic}
+                portfolio={portfolio}
+                contract={selectedContract}
+                onOpenTab={(tab) => logic.setTab("contract", tab)}
+              />
+            ) : (
+              <ContractsPage
+                portfolio={portfolio}
+                subtab={logic.state.tabs.contractList ?? "Contract table"}
+                onOpenSubtab={(tab) => logic.setTab("contractList", tab)}
+                onOpenContract={openContract}
+              />
+            )
+          ) : null}
 
-        {currentPage === "Evidence" ? (
-          <EvidencePage
-            portfolio={portfolio}
-            showLineage={showLineage}
-            onToggleLineage={() => setShowLineage((current) => !current)}
-          />
-        ) : null}
+          {currentPage === "Optimize" && selectedContract ? (
+            <OptimizePage
+              vm={vm}
+              contract={selectedContract}
+              creditFinding={creditFinding}
+              findingContract={findingContract}
+              performanceRows={performanceRows}
+              spendRows={spendRows}
+              portfolio={portfolio}
+              subtab={logic.state.tabs.optimize ?? "Action queue"}
+              onOpenSubtab={(tab) => logic.setTab("optimize", tab)}
+              onOpenContract={openContract}
+            />
+          ) : null}
 
-        {currentPage === "Contract graph" ? (
-          <ContractGraphPage
-            portfolio={portfolio}
-            subtab={logic.state.tabs.graph ?? "Flow"}
-            onOpenSubtab={(tab) => logic.setTab("graph", tab)}
-            showLineage={showLineage}
-            onToggleLineage={() => setShowLineage((current) => !current)}
-          />
-        ) : null}
+          {currentPage === "Evidence" ? (
+            <EvidencePage
+              portfolio={portfolio}
+              showLineage={showLineage}
+              onToggleLineage={() => setShowLineage((current) => !current)}
+            />
+          ) : null}
+
+          {currentPage === "Contract graph" ? (
+            <ContractGraphPage
+              portfolio={portfolio}
+              subtab={logic.state.tabs.graph ?? "Flow"}
+              onOpenSubtab={(tab) => logic.setTab("graph", tab)}
+              showLineage={showLineage}
+              onToggleLineage={() => setShowLineage((current) => !current)}
+            />
+          ) : null}
+        </section>
       </section>
     </main>
   );
@@ -2524,10 +2526,15 @@ function ClaimContract({
   blocker: string;
 }) {
   return (
-    <div className="sw-v2-claim-contract">
-      <span>Claim contract</span>
-      <b>{allowed}</b>
-      <small>{blocker}</small>
+    <div className="sw-v2-claim-contract" aria-label="Claim contract">
+      <div className="sw-v2-claim-card is-allowed">
+        <span>What this tab lets you say</span>
+        <b>{allowed}</b>
+      </div>
+      <div className="sw-v2-claim-card is-blocker">
+        <span>Blocked without more evidence</span>
+        <b>{blocker}</b>
+      </div>
     </div>
   );
 }
@@ -3327,7 +3334,7 @@ function headlineFor(
   if (page === "Optimize") return "Optimize evidenced opportunities";
   if (page === "Evidence") return "Evidence and proof";
   if (page === "Contract graph") return "Source contract graph";
-  return tenantName;
+  return "Source 360";
 }
 
 function subheadFor(

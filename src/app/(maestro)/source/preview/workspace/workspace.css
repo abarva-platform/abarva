@@ -107,21 +107,36 @@
   text-transform: uppercase;
 }
 
-.sw-v2-claim-contract {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 4px 12px;
-  align-items: center;
-  margin-bottom: 15px;
-  padding: 10px 13px;
-  border: 1px solid #e1d2ba;
-  border-left: 3px solid #ba7517;
-  border-radius: 7px;
-  background: #faeeda;
+.sw-v2-content-canvas {
+  border: 1px solid #b4b2a9;
+  border-top: 3px solid #0a0a0b;
+  background: #faf7f1;
+  padding: 26px;
 }
 
-.sw-v2-claim-contract span {
-  color: #ba7517;
+.sw-v2-claim-contract {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1px;
+  margin-bottom: 24px;
+}
+
+.sw-v2-claim-card {
+  min-width: 0;
+  background: #fff;
+  outline: 1px solid #d3d1c7;
+  padding: 16px 20px;
+}
+
+.sw-v2-claim-card.is-allowed {
+  border-top: 3px solid #1d9e75;
+}
+
+.sw-v2-claim-card.is-blocker {
+  border-top: 3px solid #a32d2d;
+}
+
+.sw-v2-claim-card span {
   font-family: "JetBrains Mono", monospace;
   font-size: 10px;
   font-weight: 850;
@@ -129,17 +144,21 @@
   text-transform: uppercase;
 }
 
-.sw-v2-claim-contract b {
-  color: #0a0a0b;
-  font-size: 13px;
-  line-height: 1.35;
+.sw-v2-claim-card.is-allowed span {
+  color: #0f6e56;
 }
 
-.sw-v2-claim-contract small {
-  grid-column: 2;
-  color: #5f5e5a;
-  font-size: 12px;
-  line-height: 1.4;
+.sw-v2-claim-card.is-blocker span {
+  color: #a32d2d;
+}
+
+.sw-v2-claim-card b {
+  display: block;
+  margin-top: 6px;
+  color: #0a0a0b;
+  font-size: 15px;
+  font-weight: 520;
+  line-height: 1.55;
 }
 
 .sw-v2-horizontal-tabs {

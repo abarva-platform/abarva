@@ -350,6 +350,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByLabelText("Source workspace header")).toBeTruthy();
     expect(screen.queryByLabelText("Source workspace sidebar")).toBeNull();
     expect(screen.queryByText("Nexus Source")).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Source 360", level: 1 }),
+    ).toBeTruthy();
     expect(screen.getByLabelText("Workspace controls")).toBeTruthy();
     expect(screen.getByLabelText("Scope filter").textContent).toContain(
       "All loaded contracts",
@@ -383,7 +386,13 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(screen.getByText("Vendor concentration")).toBeTruthy();
     expect(screen.getByText("Evidence posture")).toBeTruthy();
+    expect(screen.getByLabelText("Source 360 canvas")).toBeTruthy();
+    expect(screen.getByLabelText("Claim contract")).toBeTruthy();
+    expect(screen.getByText("What this tab lets you say")).toBeTruthy();
+    expect(screen.getByText("Blocked without more evidence")).toBeTruthy();
     expect(container.querySelector(".sw-v2-verdict-grid")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-content-canvas")).toBeTruthy();
+    expect(container.querySelectorAll(".sw-v2-claim-card")).toHaveLength(2);
     expect(container.querySelector(".sw-v2-verdict-position")).toBeTruthy();
     expect(container.querySelector(".sw-v2-verdict-action")).toBeTruthy();
     expect(container.querySelector(".sw-v2-verdict-evidence")).toBeTruthy();
