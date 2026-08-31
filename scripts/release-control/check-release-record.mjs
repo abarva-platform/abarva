@@ -3,6 +3,10 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import {
+  loadTenantNarrativeTerms,
+  validateTenantNarrativeGuard,
+} from './release-record-tenant-narrative-guard.mjs';
 
 const REQUIRED_SECTIONS = [
   'Release ID',
@@ -93,14 +97,14 @@ function sectionBody(markdown, section) {
   return body.join('\n').trim();
 }
 
-function validateRecord(file) {
+function validateRecord(file, tenantNarrativeTerms) {
   const absolute = path.resolve(process.cwd(), file);
   if (!existsSync(absolute)) {
     return [`${file}: release record does not exist on disk.`];
   }
 
   const markdown = readFileSync(absolute, 'utf8');
-  const errors = [];
+  const errors = validateTenantNarrativeGuard(file, markdown, tenantNarrativeTerms);
   for (const section of REQUIRED_SECTIONS) {
     const body = sectionBody(markdown, section);
     if (!body) {
@@ -161,7 +165,8 @@ if (records.length === 0) {
   process.exit(1);
 }
 
-const errors = records.flatMap(validateRecord);
+const tenantNarrativeTerms = loadTenantNarrativeTerms();
+const errors = records.flatMap((file) => validateRecord(file, tenantNarrativeTerms));
 if (errors.length > 0) {
   console.error('Release Control Gate failed.');
   console.error('');
