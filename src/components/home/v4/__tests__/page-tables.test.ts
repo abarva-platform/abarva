@@ -6,6 +6,7 @@ import {
   vendorFindings,
   infrastructureFindings,
   dataFindings,
+  unsupportedApplicationViews,
   constantColumns,
   costBasis,
   usd,
@@ -131,6 +132,7 @@ describe("chapter depth", () => {
     expect(chapterDepth("our_business", { applications: apps })).toEqual({
       tables: [],
       findings: [],
+      unsupported: [],
     });
   });
 
@@ -208,5 +210,57 @@ describe("a wide table does not hide its totals behind a sideways scroll", () =>
     expect(crosstab?.columns.length).toBeGreaterThan(4);
     for (const table of tables.filter((t) => t !== crosstab))
       expect(table.wide).toBeUndefined();
+  });
+});
+
+describe("a view the rows cannot support is named, not dropped", () => {
+  const unsupported = unsupportedApplicationViews;
+
+  it("says nothing when every column the views need is present", () => {
+    expect(unsupported(apps)).toEqual([]);
+  });
+
+  // The defect this exists for: one read path's mapper dropped four columns, so these tables
+  // rendered from the golden snapshot and silently vanished on the live path. Silence read as
+  // "this enterprise has nothing here", which was never true.
+  it("names each missing column and calls it a plumbing gap, not a record gap", () => {
+    const stripped = apps.map((a) => {
+      const {
+        cloudReadiness,
+        authenticationMethod,
+        annualCostBasis,
+        endOfSupportDate,
+        ...rest
+      } = a;
+      return rest;
+    });
+    const views = unsupported(stripped);
+    expect(views).toHaveLength(4);
+    expect(
+      views.map((v: { missingColumn: string }) => v.missingColumn).sort(),
+    ).toEqual([
+      "annualCostBasis",
+      "authenticationMethod",
+      "cloudReadiness",
+      "endOfSupportDate",
+    ]);
+    for (const view of views) {
+      expect(view.why).toMatch(
+        /gap in what reached the page rather than a gap in the record/,
+      );
+    }
+  });
+
+  it("reports nothing for an empty estate — there is no view to miss", () => {
+    expect(unsupported([])).toEqual([]);
+  });
+
+  it("carries the unsupported list through chapter depth", () => {
+    const stripped = apps.map((a) => ({ ...a, authenticationMethod: "" }));
+    const depth = chapterDepth("technology_data", { applications: stripped });
+    expect(
+      depth.unsupported.some((v) => v.missingColumn === "authenticationMethod"),
+    ).toBe(true);
+    expect(depth.tables.length).toBeGreaterThan(0);
   });
 });

@@ -51,6 +51,21 @@ export interface PageContent {
   findings: Finding[];
 }
 
+/**
+ * A view the rows could not support, named rather than left out.
+ *
+ * A table that cannot render because its source column is absent used to disappear silently, which
+ * reads to a reader as "this enterprise has nothing here". That is the difference between a gap in
+ * the record and a gap in the plumbing, and only one of them is the reader's problem. It also hid a
+ * real defect for a while: the same tables rendered from one read path and vanished on another
+ * because that path's mapper dropped four columns.
+ */
+export interface UnsupportedView {
+  caption: string;
+  missingColumn: string;
+  why: string;
+}
+
 /* ---------------------------------------------------------------------------------------------- */
 
 const str = (row: EstateRow, key: string): string =>
@@ -155,6 +170,30 @@ const HOSTING_ORDER = [
   "cloud",
   "on_premise_appliance",
 ];
+
+/** Which application views the rows cannot support, and the column each one needs. */
+export function unsupportedApplicationViews(
+  apps: EstateRow[],
+): UnsupportedView[] {
+  if (apps.length === 0) return [];
+  const out: UnsupportedView[] = [];
+  const has = (field: string) => apps.some((row) => str(row, field));
+  for (const [field, caption] of [
+    ["cloudReadiness", "Cloud readiness"],
+    ["authenticationMethod", "Authentication × data classification"],
+    ["endOfSupportDate", "End-of-support exposure"],
+    ["annualCostBasis", "How each cost was arrived at"],
+  ] as const) {
+    if (!has(field)) {
+      out.push({
+        caption,
+        missingColumn: field,
+        why: `No application record on this read path carries ${field}. The intake declares it, so this is a gap in what reached the page rather than a gap in the record.`,
+      });
+    }
+  }
+  return out;
+}
 
 export function applicationTables(apps: EstateRow[]): TableSpec[] {
   if (apps.length === 0) return [];

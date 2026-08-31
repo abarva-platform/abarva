@@ -1,8 +1,21 @@
-import type { ChapterView, EnterpriseSignalPacket, GroundedClaim, Signal, VisualOpportunity } from "@/lib/home/preview/types";
-import { ChapterHeader, ExposuresBand, FollowsBand, NotEstablishedBand, QuestionsSection, RecordBand } from "./bands";
+import type {
+  ChapterView,
+  EnterpriseSignalPacket,
+  GroundedClaim,
+  Signal,
+  VisualOpportunity,
+} from "@/lib/home/preview/types";
+import {
+  ChapterHeader,
+  ExposuresBand,
+  FollowsBand,
+  NotEstablishedBand,
+  QuestionsSection,
+  RecordBand,
+} from "./bands";
 import { Exhibit, ExhibitBars } from "./Exhibit";
 import { splitChapterIntoBands } from "./chapter-bands";
-import { FindingsBlock, TableSet } from "./TableSet";
+import { FindingsBlock, TableSet, UnsupportedViews } from "./TableSet";
 import type { ChapterDepth } from "./chapter-page-content";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -34,7 +47,9 @@ export function ChapterPage({
   depth?: ChapterDepth;
 }) {
   const bands = splitChapterIntoBands(chapter, signalPacket);
-  const exhibits = chapter.visual_opportunities.filter((v) => Boolean(visualDatasets[v.dataset_ref]));
+  const exhibits = chapter.visual_opportunities.filter((v) =>
+    Boolean(visualDatasets[v.dataset_ref]),
+  );
   const [lead, ...rest] = exhibits;
 
   return (
@@ -52,12 +67,26 @@ export function ChapterPage({
         standfirst={chapter.executive_synthesis}
       />
 
-      <ChapterExecutiveReadout chapter={chapter} bands={bands} signalPacket={signalPacket} />
+      <ChapterExecutiveReadout
+        chapter={chapter}
+        bands={bands}
+        signalPacket={signalPacket}
+      />
 
       {depth ? <TableSet tables={depth.tables} /> : null}
       {depth ? <FindingsBlock findings={depth.findings} /> : null}
+      {depth ? <UnsupportedViews views={depth.unsupported} /> : null}
 
-      {lead ? <ExhibitFor visual={lead} index={1} signalPacket={signalPacket} visualDatasets={visualDatasets} meta={exhibitMeta?.[lead.dataset_ref]} dark /> : null}
+      {lead ? (
+        <ExhibitFor
+          visual={lead}
+          index={1}
+          signalPacket={signalPacket}
+          visualDatasets={visualDatasets}
+          meta={exhibitMeta?.[lead.dataset_ref]}
+          dark
+        />
+      ) : null}
 
       <RecordBand claims={bands.record} signalPacket={signalPacket} />
       <FollowsBand claims={bands.follows} signalPacket={signalPacket} />
@@ -79,9 +108,19 @@ export function ChapterPage({
 
       {bands.filledBandCount === 0 ? (
         <div style={{ padding: `44px ${PAGE_X}px 0` }}>
-          <p style={{ margin: 0, fontFamily: SANS, fontSize: 16, lineHeight: 1.6, color: V4.slate, maxWidth: "60ch" }}>
-            This chapter is not ready for executive review. The current record does not yet connect enough
-            verified statements to support this page&apos;s leadership question.
+          <p
+            style={{
+              margin: 0,
+              fontFamily: SANS,
+              fontSize: 16,
+              lineHeight: 1.6,
+              color: V4.slate,
+              maxWidth: "60ch",
+            }}
+          >
+            This chapter is not ready for executive review. The current record
+            does not yet connect enough verified statements to support this
+            page&apos;s leadership question.
           </p>
         </div>
       ) : null}
@@ -103,7 +142,10 @@ function ChapterExecutiveReadout({
   const primaryExposure = firstStatement(bands.exposures);
   const primaryQuestion = chapter.questions_to_ask[0];
   const primaryGap = chapter.limitations[0];
-  const proofCount = chapter.key_insights.length + chapter.tensions.length + chapter.what_to_watch.length;
+  const proofCount =
+    chapter.key_insights.length +
+    chapter.tensions.length +
+    chapter.what_to_watch.length;
   const leadershipSignals = leadershipSignalsForChapter(chapter, signalPacket);
 
   return (
@@ -114,22 +156,52 @@ function ChapterExecutiveReadout({
             <span style={eyebrow(V4.green)}>CXO readout</span>
             <h2 style={readoutTitleStyle}>Decision this page supports</h2>
             <p style={readoutTextStyle}>
-              {primaryInference ?? primaryRecord ?? "No executive decision should be taken from this chapter yet."}
+              {primaryInference ??
+                primaryRecord ??
+                "No executive decision should be taken from this chapter yet."}
             </p>
           </div>
           <div style={readoutMetaStyle}>
             <span>{proofCount.toLocaleString()} grounded statements</span>
-            <span>{chapter.visual_opportunities.length.toLocaleString()} exhibits</span>
-            <span>{chapter.questions_to_ask.length.toLocaleString()} questions</span>
+            <span>
+              {chapter.visual_opportunities.length.toLocaleString()} exhibits
+            </span>
+            <span>
+              {chapter.questions_to_ask.length.toLocaleString()} questions
+            </span>
             <span>{chapter.limitations.length.toLocaleString()} limits</span>
           </div>
         </div>
         <div style={readoutCardGridStyle}>
-          <ReadoutCard label="Record signal" tone={V4.navy} value={primaryRecord ?? "No evidence-backed statement is available for this chapter."} />
-          <ReadoutCard label="Exposure to watch" tone={primaryExposure ? V4.red : V4.amber} value={primaryExposure ?? primaryGap ?? "No exposure has been established for this chapter."} />
-          <ReadoutCard label="Question for the room" tone={V4.blue} value={primaryQuestion ?? "No leadership question is ready for this chapter."} />
+          <ReadoutCard
+            label="Record signal"
+            tone={V4.navy}
+            value={
+              primaryRecord ??
+              "No evidence-backed statement is available for this chapter."
+            }
+          />
+          <ReadoutCard
+            label="Exposure to watch"
+            tone={primaryExposure ? V4.red : V4.amber}
+            value={
+              primaryExposure ??
+              primaryGap ??
+              "No exposure has been established for this chapter."
+            }
+          />
+          <ReadoutCard
+            label="Question for the room"
+            tone={V4.blue}
+            value={
+              primaryQuestion ??
+              "No leadership question is ready for this chapter."
+            }
+          />
         </div>
-        {leadershipSignals.length > 0 ? <LeadershipVoiceStrip signals={leadershipSignals} /> : null}
+        {leadershipSignals.length > 0 ? (
+          <LeadershipVoiceStrip signals={leadershipSignals} />
+        ) : null}
       </div>
     </section>
   );
@@ -137,9 +209,15 @@ function ChapterExecutiveReadout({
 
 function LeadershipVoiceStrip({ signals }: { signals: Signal[] }) {
   const [lead, ...rest] = signals;
-  const consensus = signals.filter((signal) => signal.kind === "consensus").length;
-  const testimony = signals.filter((signal) => signal.kind === "testimony").length;
-  const contradiction = signals.filter((signal) => signal.kind === "contradiction").length;
+  const consensus = signals.filter(
+    (signal) => signal.kind === "consensus",
+  ).length;
+  const testimony = signals.filter(
+    (signal) => signal.kind === "testimony",
+  ).length;
+  const contradiction = signals.filter(
+    (signal) => signal.kind === "contradiction",
+  ).length;
   return (
     <div data-leadership-strip style={voiceStripStyle}>
       <div style={{ minWidth: 0 }}>
@@ -173,7 +251,15 @@ function VoiceMetric({ value, label }: { value: number; label: string }) {
   );
 }
 
-function ReadoutCard({ label, value, tone }: { label: string; value: string; tone: string }) {
+function ReadoutCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: string;
+}) {
   return (
     <article style={{ ...readoutCardStyle, borderTopColor: tone }}>
       <span style={eyebrow(tone)}>{label}</span>
@@ -188,27 +274,47 @@ function firstStatement(claims: GroundedClaim[]): string | null {
   return claims[0]?.statement ?? null;
 }
 
-function leadershipSignalsForChapter(chapter: ChapterView, signalPacket: EnterpriseSignalPacket): Signal[] {
+function leadershipSignalsForChapter(
+  chapter: ChapterView,
+  signalPacket: EnterpriseSignalPacket,
+): Signal[] {
   const ids = new Set(
     [...chapter.key_insights, ...chapter.tensions, ...chapter.what_to_watch]
       .flatMap((claim) => claim.evidence_ids)
       .filter((id) => id.startsWith("sig_")),
   );
-  const direct = signalPacket.signals.filter((signal) => ids.has(signal.id) && signal.domains.includes("ai_value_interview_evidence"));
+  const direct = signalPacket.signals.filter(
+    (signal) =>
+      ids.has(signal.id) &&
+      signal.domains.includes("ai_value_interview_evidence"),
+  );
   if (direct.length > 0) return rankLeadershipSignals(direct).slice(0, 4);
   if (chapter.chapterId === "leadership_perspective") {
-    return rankLeadershipSignals(signalPacket.signals.filter((signal) => signal.domains.includes("ai_value_interview_evidence"))).slice(0, 5);
+    return rankLeadershipSignals(
+      signalPacket.signals.filter((signal) =>
+        signal.domains.includes("ai_value_interview_evidence"),
+      ),
+    ).slice(0, 5);
   }
   return [];
 }
 
 function rankLeadershipSignals(signals: Signal[]): Signal[] {
-  const rank: Record<string, number> = { testimony: 0, consensus: 1, contradiction: 2, dissent: 3, gap: 4 };
-  return [...signals].sort((a, b) => (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9) || a.id.localeCompare(b.id));
+  const rank: Record<string, number> = {
+    testimony: 0,
+    consensus: 1,
+    contradiction: 2,
+    dissent: 3,
+    gap: 4,
+  };
+  return [...signals].sort(
+    (a, b) =>
+      (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9) || a.id.localeCompare(b.id),
+  );
 }
 
 function stripDoubleQuotes(value: string): string {
-  return value.replace(/\"\"/g, "\"");
+  return value.replace(/\"\"/g, '"');
 }
 
 function compact(value: string, limit: number): string {
@@ -235,7 +341,13 @@ function ExhibitFor({
   const rows = visualDatasets[visual.dataset_ref];
   if (!rows || rows.length === 0) return null;
   return (
-    <Exhibit index={index} visual={visual} signalPacket={signalPacket} meta={meta} dark={dark}>
+    <Exhibit
+      index={index}
+      visual={visual}
+      signalPacket={signalPacket}
+      meta={meta}
+      dark={dark}
+    >
       <ExhibitBars rows={rows} dark={dark} />
     </Exhibit>
   );
@@ -249,7 +361,8 @@ const readoutShellStyle = {
   border: `1px solid ${V4.rule}`,
   borderTop: `5px solid ${V4.green}`,
   borderRadius: 10,
-  background: "linear-gradient(120deg,rgba(255,255,255,0.94),rgba(245,241,235,0.72))",
+  background:
+    "linear-gradient(120deg,rgba(255,255,255,0.94),rgba(245,241,235,0.72))",
   padding: "20px clamp(18px,2vw,26px)",
   boxShadow: "0 16px 36px rgba(12,26,58,0.045)",
 } as const;

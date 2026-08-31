@@ -1,4 +1,4 @@
-import { FindingsBlock, TableSet } from "./TableSet";
+import { FindingsBlock, TableSet, UnsupportedViews } from "./TableSet";
 import type { ChapterDepth } from "./chapter-page-content";
 import { PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -29,11 +29,26 @@ export function NotDraftedPage({
 }) {
   return (
     <div style={{ padding: `54px ${PAGE_X}px 0` }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 18,
+          flexWrap: "wrap",
+        }}
+      >
         <span style={eyebrow(V4.blue)}>
           Chapter {String(chapterNumber).padStart(2, "0")} · {title}
         </span>
-        <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 16, color: V4.slate, letterSpacing: "-0.01em" }}>
+        <span
+          style={{
+            fontFamily: SERIF,
+            fontStyle: "italic",
+            fontSize: 16,
+            color: V4.slate,
+            letterSpacing: "-0.01em",
+          }}
+        >
           {guidingQuestion}
         </span>
       </div>
@@ -63,14 +78,19 @@ export function NotDraftedPage({
           textWrap: "pretty",
         }}
       >
-        The narrative is not written. The record is here, and everything below is computed from it —
-        no prose, no interpretation, every figure a filter over rows you can open.
+        The narrative is not written. The record is here, and everything below
+        is computed from it — no prose, no interpretation, every figure a filter
+        over rows you can open.
       </p>
 
       {depth && (depth.tables.length > 0 || depth.findings.length > 0) ? (
-        <div data-home-undrafted-depth style={{ margin: "10px -" + PAGE_X + "px 0" }}>
+        <div
+          data-home-undrafted-depth
+          style={{ margin: "10px -" + PAGE_X + "px 0" }}
+        >
           <TableSet tables={depth.tables} />
           <FindingsBlock findings={depth.findings} />
+          <UnsupportedViews views={depth.unsupported} />
         </div>
       ) : null}
 
@@ -85,7 +105,9 @@ export function NotDraftedPage({
           padding: "30px 32px 28px",
         }}
       >
-        <div style={{ ...eyebrow(V4.slate), marginBottom: 11 }}>What it will answer</div>
+        <div style={{ ...eyebrow(V4.slate), marginBottom: 11 }}>
+          What it will answer
+        </div>
         <p
           style={{
             margin: 0,

@@ -3,7 +3,10 @@ import "server-only";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
 
-import { getHomeReviewBundle, type HomePreviewTenantKey } from "./golden-snapshot";
+import {
+  getHomeReviewBundle,
+  type HomePreviewTenantKey,
+} from "./golden-snapshot";
 import type {
   ChapterId,
   ChapterView,
@@ -30,7 +33,10 @@ type DeterministicCategorySummary = {
   sourcePaths: string[];
   recordCount: number;
   denominator: string;
-  topDimensions: Array<{ field: string; values: Array<{ label: string; count: number; sharePct: number }> }>;
+  topDimensions: Array<{
+    field: string;
+    values: Array<{ label: string; count: number; sharePct: number }>;
+  }>;
   measures: Record<string, number>;
   gaps: string[];
 };
@@ -130,7 +136,10 @@ const PRIMARY_DIMENSION: Record<TechObjectType, string> = {
   data_asset_or_integration: "dataDomain",
 };
 
-const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<TechObjectType, { domain: string; sourcePath: string; authority?: string[] }> = {
+const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<
+  TechObjectType,
+  { domain: string; sourcePath: string; authority?: string[] }
+> = {
   application_system: {
     domain: "application_system",
     sourcePath: "serving.home_applications_systems",
@@ -145,8 +154,12 @@ const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<TechObjectType, { domain: string; so
   },
   data_asset_or_integration: {
     domain: "data_asset_or_integration",
-    sourcePath: "serving.home_current_state_data_flow + serving.home_data_assets_integrations",
-    authority: ["serving.home_current_state_data_flow", "serving.home_data_assets_integrations"],
+    sourcePath:
+      "serving.home_current_state_data_flow + serving.home_data_assets_integrations",
+    authority: [
+      "serving.home_current_state_data_flow",
+      "serving.home_data_assets_integrations",
+    ],
   },
 };
 
@@ -174,28 +187,46 @@ function criticalityValue(value: unknown): string | null {
   const raw = text(value);
   if (!raw) return null;
   const normalized = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (["p0", "critical", "missioncritical", "tier1", "tier01"].includes(normalized)) return "tier1";
-  if (["high", "tier2", "tier02"].includes(normalized)) return normalized === "high" ? "high" : "tier2";
-  if (["medium", "tier3", "tier03"].includes(normalized)) return normalized === "medium" ? "medium" : "tier3";
+  if (
+    ["p0", "critical", "missioncritical", "tier1", "tier01"].includes(
+      normalized,
+    )
+  )
+    return "tier1";
+  if (["high", "tier2", "tier02"].includes(normalized))
+    return normalized === "high" ? "high" : "tier2";
+  if (["medium", "tier3", "tier03"].includes(normalized))
+    return normalized === "medium" ? "medium" : "tier3";
   return raw;
 }
 
-function endpointLabel(ref: unknown, labelsByRef: Map<string, string>): string | null {
+function endpointLabel(
+  ref: unknown,
+  labelsByRef: Map<string, string>,
+): string | null {
   const raw = text(ref);
   if (!raw) return null;
   return labelsByRef.get(raw) ?? raw;
 }
 
-function endpointLabelsFromRows(rows: HomeProjectionRow[]): Map<string, string> {
+function endpointLabelsFromRows(
+  rows: HomeProjectionRow[],
+): Map<string, string> {
   const labelsByRef = new Map<string, string>();
   for (const row of rows) {
-    if (row.page_key === "applications_systems" && row.row_type === "application") {
+    if (
+      row.page_key === "applications_systems" &&
+      row.row_type === "application"
+    ) {
       const mapped = applicationRow(row);
       const ref = text(mapped.originalRowId);
       const label = text(mapped.systemName);
       if (ref && label) labelsByRef.set(ref, label);
     }
-    if (row.page_key === "infrastructure_platforms" && row.row_type === "infrastructure") {
+    if (
+      row.page_key === "infrastructure_platforms" &&
+      row.row_type === "infrastructure"
+    ) {
       const mapped = infrastructureRow(row);
       const ref = text(mapped.originalRowId);
       const label = text(mapped.platformName);
@@ -206,10 +237,16 @@ function endpointLabelsFromRows(rows: HomeProjectionRow[]): Map<string, string> 
 }
 
 function rowPayload(row: HomeProjectionRow): JsonRecord {
-  if (!row.display_payload_json || typeof row.display_payload_json !== "object") return {};
+  if (!row.display_payload_json || typeof row.display_payload_json !== "object")
+    return {};
   const payload = row.display_payload_json;
   const nestedPayload = payload.display_payload_json;
-  if (!nestedPayload || typeof nestedPayload !== "object" || Array.isArray(nestedPayload)) return payload;
+  if (
+    !nestedPayload ||
+    typeof nestedPayload !== "object" ||
+    Array.isArray(nestedPayload)
+  )
+    return payload;
   return { ...payload, ...(nestedPayload as JsonRecord) };
 }
 
@@ -230,6 +267,15 @@ function applicationRow(row: HomeProjectionRow): JsonRecord {
     userCountEstimate: numberValue(payload.user_count_estimate),
     dataDomains: text(payload.data_domains),
     dataClassification: text(payload.data_classification),
+    // Four columns the intake declares and this mapper used to drop. Home's estate tables read
+    // them -- cloud readiness, lifecycle posture, the authentication-against-classification
+    // crossing, and whether a cost is modelled or booked -- so dropping them here made those
+    // tables silently absent on this path while they rendered from the golden snapshot. Absent in
+    // the payload they resolve undefined, which is exactly what happened before.
+    cloudReadiness: text(payload.cloud_readiness),
+    authenticationMethod: text(payload.authentication_method),
+    annualCostBasis: text(payload.annual_cost_basis),
+    endOfSupportDate: text(payload.end_of_support_date),
     contractRef: text(payload.contract_ids),
     originalRowId: text(payload.application_id ?? row.row_key),
   };
@@ -238,7 +284,8 @@ function applicationRow(row: HomeProjectionRow): JsonRecord {
 function contractRow(row: HomeProjectionRow): JsonRecord {
   const payload = rowPayload(row);
   return {
-    vendorName: text(payload.supplier_name) ?? row.title.split(" · ")[0] ?? row.title,
+    vendorName:
+      text(payload.supplier_name) ?? row.title.split(" · ")[0] ?? row.title,
     contractName: text(payload.contract_name) ?? row.title,
     serviceCategory: text(payload.service_tower ?? payload.commercial_category),
     annualSpendUsd: numberValue(payload.annualized_value_usd),
@@ -249,7 +296,9 @@ function contractRow(row: HomeProjectionRow): JsonRecord {
     benchmarkClause: text(payload.benchmarking_right),
     minimumCommitmentUsd: numberValue(payload.minimum_commitment_usd),
     exitCostUsd: numberValue(payload.estimated_tfc_cost_usd),
-    supportedSystems: text(payload.scoped_application_ids ?? payload.supported_systems),
+    supportedSystems: text(
+      payload.scoped_application_ids ?? payload.supported_systems,
+    ),
     supportedFunctions: text(payload.supported_functions),
     originalRowId: text(payload.contract_id ?? row.row_key),
   };
@@ -261,7 +310,9 @@ function infrastructureRow(row: HomeProjectionRow): JsonRecord {
     platformName: text(payload.platform_name) ?? row.title,
     platformType: text(payload.platform_type),
     hostingModel: text(payload.hosting_model),
-    dataCenterOrRegion: text(payload.hosting_location ?? payload.data_center_or_region),
+    dataCenterOrRegion: text(
+      payload.hosting_location ?? payload.data_center_or_region,
+    ),
     technologyStack: text(payload.technology_stack),
     operationalOwner: text(payload.operational_owner),
     criticality: criticalityValue(payload.criticality_tier),
@@ -274,18 +325,45 @@ function infrastructureRow(row: HomeProjectionRow): JsonRecord {
   };
 }
 
-function dataFlowRow(row: HomeProjectionRow, labelsByRef: Map<string, string> = new Map()): JsonRecord {
+function dataFlowRow(
+  row: HomeProjectionRow,
+  labelsByRef: Map<string, string> = new Map(),
+): JsonRecord {
   const payload = rowPayload(row);
-  const sourceRef = text(payload.source_object_ref ?? payload.source_system_ref_id ?? payload.source_system_id);
-  const targetRef = text(payload.target_object_ref ?? payload.target_system_ref_id ?? payload.target_system_id);
+  const sourceRef = text(
+    payload.source_object_ref ??
+      payload.source_system_ref_id ??
+      payload.source_system_id,
+  );
+  const targetRef = text(
+    payload.target_object_ref ??
+      payload.target_system_ref_id ??
+      payload.target_system_id,
+  );
   return {
     recordKind: "data_movement",
-    dataAssetName: text(payload.data_asset_name ?? payload.flow_name) ?? row.title,
-    dataDomain: text(payload.data_domain ?? payload.data_domain_name ?? payload.target_function ?? payload.source_function ?? payload.owner_function ?? payload.function),
-    sourceSystem: endpointLabel(sourceRef, labelsByRef) ?? text(payload.source_system_name ?? payload.source_system),
-    targetSystem: endpointLabel(targetRef, labelsByRef) ?? text(payload.target_system_name ?? payload.target_system),
-    integrationType: text(payload.integration_type ?? payload.integration_pattern),
-    platformOrDatabase: text(payload.platform_or_database ?? payload.landing_platform),
+    dataAssetName:
+      text(payload.data_asset_name ?? payload.flow_name) ?? row.title,
+    dataDomain: text(
+      payload.data_domain ??
+        payload.data_domain_name ??
+        payload.target_function ??
+        payload.source_function ??
+        payload.owner_function ??
+        payload.function,
+    ),
+    sourceSystem:
+      endpointLabel(sourceRef, labelsByRef) ??
+      text(payload.source_system_name ?? payload.source_system),
+    targetSystem:
+      endpointLabel(targetRef, labelsByRef) ??
+      text(payload.target_system_name ?? payload.target_system),
+    integrationType: text(
+      payload.integration_type ?? payload.integration_pattern,
+    ),
+    platformOrDatabase: text(
+      payload.platform_or_database ?? payload.landing_platform,
+    ),
     refreshFrequency: text(payload.refresh_frequency ?? payload.cadence),
     qualityStatus: text(payload.quality_status ?? payload.quality_state),
     regulatedDataFlag: boolish(payload.regulated_data_flag),
@@ -293,7 +371,9 @@ function dataFlowRow(row: HomeProjectionRow, labelsByRef: Map<string, string> = 
     consumptionLayer: text(payload.consumption_layer),
     cadence: text(payload.cadence),
     ownerFunction: text(payload.owner_function ?? payload.function),
-    originalRowId: text(payload.flow_id ?? payload.source_row_id ?? row.row_key),
+    originalRowId: text(
+      payload.flow_id ?? payload.source_row_id ?? row.row_key,
+    ),
   };
 }
 
@@ -301,7 +381,9 @@ function dataAnalyticsWorkloadRow(row: HomeProjectionRow): JsonRecord {
   const payload = rowPayload(row);
   return {
     recordKind: "data_analytics_workload",
-    dataAssetName: text(payload.workload_name ?? payload.platform_name ?? row.title) ?? row.title,
+    dataAssetName:
+      text(payload.workload_name ?? payload.platform_name ?? row.title) ??
+      row.title,
     dataDomain: text(payload.data_domain ?? payload.domain ?? payload.function),
     sourceSystem: text(payload.source_system_name ?? payload.source_system),
     targetSystem: text(payload.platform_name),
@@ -315,21 +397,34 @@ function dataAnalyticsWorkloadRow(row: HomeProjectionRow): JsonRecord {
     governanceState: text(payload.governance_state),
     platformOrDatabase: text(payload.platform_name),
     refreshFrequency: text(payload.refresh_frequency ?? payload.cadence),
-    qualityStatus: text(payload.quality_status ?? payload.quality_state ?? payload.governance_state),
+    qualityStatus: text(
+      payload.quality_status ??
+        payload.quality_state ??
+        payload.governance_state,
+    ),
     regulatedDataFlag: boolish(payload.regulated_data_flag),
     landingLayer: text(payload.landing_layer),
     consumptionLayer: text(payload.consumption_layer),
     cadence: text(payload.cadence ?? payload.refresh_frequency),
     ownerFunction: text(payload.owner_function ?? payload.function),
-    originalRowId: text(payload.source_row_id ?? payload.workload_id ?? row.row_key),
+    originalRowId: text(
+      payload.source_row_id ?? payload.workload_id ?? row.row_key,
+    ),
   };
 }
 
-function stripEmpty(row: JsonRecord): Record<string, string | number | boolean | null> {
+function stripEmpty(
+  row: JsonRecord,
+): Record<string, string | number | boolean | null> {
   const cleaned: Record<string, string | number | boolean | null> = {};
   for (const [key, value] of Object.entries(row)) {
     if (value === undefined) continue;
-    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean" || value === null) {
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean" ||
+      value === null
+    ) {
       cleaned[key] = value;
     } else {
       cleaned[key] = JSON.stringify(value);
@@ -338,37 +433,78 @@ function stripEmpty(row: JsonRecord): Record<string, string | number | boolean |
   return cleaned;
 }
 
-function dimensionCounts(rows: Array<Record<string, string | number | boolean | null>>, field: string) {
+function dimensionCounts(
+  rows: Array<Record<string, string | number | boolean | null>>,
+  field: string,
+) {
   const counts = new Map<string, number>();
   for (const row of rows) {
     const raw = row[field];
-    const value = raw === null || raw === undefined || raw === "" ? "(not specified)" : String(raw);
+    const value =
+      raw === null || raw === undefined || raw === ""
+        ? "(not specified)"
+        : String(raw);
     counts.set(value, (counts.get(value) ?? 0) + 1);
   }
-  return Array.from(counts, ([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count);
+  return Array.from(counts, ([value, count]) => ({ value, count })).sort(
+    (a, b) => b.count - a.count,
+  );
 }
 
-function topDimension(rows: Array<Record<string, string | number | boolean | null>>, field: string, limit: number) {
+function topDimension(
+  rows: Array<Record<string, string | number | boolean | null>>,
+  field: string,
+  limit: number,
+) {
   return dimensionCounts(rows, field)
     .slice(0, limit)
     .map((item) => ({
       label: item.value,
       count: item.count,
-      sharePct: rows.length ? Number(((item.count / rows.length) * 100).toFixed(1)) : 0,
+      sharePct: rows.length
+        ? Number(((item.count / rows.length) * 100).toFixed(1))
+        : 0,
     }));
 }
 
-function workloadSummaryRows(rows: Array<Record<string, string | number | boolean | null>>, field: string, limit: number): Array<Record<string, unknown>> {
-  const groups = new Map<string, { rows: number; workloadItems: number; activeUsers: number; dataVolumeTb: number; technologies: Map<string, number> }>();
+function workloadSummaryRows(
+  rows: Array<Record<string, string | number | boolean | null>>,
+  field: string,
+  limit: number,
+): Array<Record<string, unknown>> {
+  const groups = new Map<
+    string,
+    {
+      rows: number;
+      workloadItems: number;
+      activeUsers: number;
+      dataVolumeTb: number;
+      technologies: Map<string, number>;
+    }
+  >();
   for (const row of rows) {
-    const label = text(row[field]) ?? text(row.ownerFunction) ?? text(row.dataDomain) ?? "(not specified)";
-    const group = groups.get(label) ?? { rows: 0, workloadItems: 0, activeUsers: 0, dataVolumeTb: 0, technologies: new Map<string, number>() };
+    const label =
+      text(row[field]) ??
+      text(row.ownerFunction) ??
+      text(row.dataDomain) ??
+      "(not specified)";
+    const group = groups.get(label) ?? {
+      rows: 0,
+      workloadItems: 0,
+      activeUsers: 0,
+      dataVolumeTb: 0,
+      technologies: new Map<string, number>(),
+    };
     group.rows += 1;
     group.workloadItems += numberValue(row.workloadCount) ?? 0;
     group.activeUsers += numberValue(row.activeUserCount) ?? 0;
     group.dataVolumeTb += numberValue(row.dataVolumeTb) ?? 0;
     const technology = text(row.technologyName);
-    if (technology) group.technologies.set(technology, (group.technologies.get(technology) ?? 0) + 1);
+    if (technology)
+      group.technologies.set(
+        technology,
+        (group.technologies.get(technology) ?? 0) + 1,
+      );
     groups.set(label, group);
   }
   return Array.from(groups, ([label, group]) => ({
@@ -377,11 +513,20 @@ function workloadSummaryRows(rows: Array<Record<string, string | number | boolea
     workloadItems: Math.round(group.workloadItems),
     activeUsers: Math.round(group.activeUsers),
     dataVolumeTb: Number(group.dataVolumeTb.toFixed(1)),
-    topTechnologies: Array.from(group.technologies, ([technology, count]) => ({ technology, count }))
-      .sort((a, b) => b.count - a.count || a.technology.localeCompare(b.technology))
+    topTechnologies: Array.from(group.technologies, ([technology, count]) => ({
+      technology,
+      count,
+    }))
+      .sort(
+        (a, b) => b.count - a.count || a.technology.localeCompare(b.technology),
+      )
       .slice(0, 5),
   }))
-    .sort((a, b) => Number(b.workloadItems) - Number(a.workloadItems) || String(a.label).localeCompare(String(b.label)))
+    .sort(
+      (a, b) =>
+        Number(b.workloadItems) - Number(a.workloadItems) ||
+        String(a.label).localeCompare(String(b.label)),
+    )
     .slice(0, limit);
 }
 
@@ -392,7 +537,8 @@ function buildCategorySummaries(args: {
   dataFlows: Array<Record<string, string | number | boolean | null>>;
   dataWorkloads: Array<Record<string, string | number | boolean | null>>;
 }): DeterministicCategorySummary[] {
-  const { applications, contracts, infrastructure, dataFlows, dataWorkloads } = args;
+  const { applications, contracts, infrastructure, dataFlows, dataWorkloads } =
+    args;
   const workloadItems = sumNumeric(dataWorkloads, "workloadCount");
   const activeUsers = sumNumeric(dataWorkloads, "activeUserCount");
   const dataVolumeTb = sumNumeric(dataWorkloads, "dataVolumeTb");
@@ -402,10 +548,21 @@ function buildCategorySummaries(args: {
       label: "Applications by business function",
       sourcePaths: ["serving.home_applications_systems"],
       recordCount: applications.length,
-      denominator: "application_v rows, not deployments or raw canonical objects",
-      topDimensions: [{ field: "businessFunction", values: topDimension(applications, "businessFunction", 8) }],
-      measures: { applications: applications.length, annualCostUsd: sumNumeric(applications, "annualCostUsd") },
-      gaps: applications.length ? [] : ["No governed application rows reached the Home packet."],
+      denominator:
+        "application_v rows, not deployments or raw canonical objects",
+      topDimensions: [
+        {
+          field: "businessFunction",
+          values: topDimension(applications, "businessFunction", 8),
+        },
+      ],
+      measures: {
+        applications: applications.length,
+        annualCostUsd: sumNumeric(applications, "annualCostUsd"),
+      },
+      gaps: applications.length
+        ? []
+        : ["No governed application rows reached the Home packet."],
     },
     {
       key: "contracts_by_supplier_and_service",
@@ -414,48 +571,89 @@ function buildCategorySummaries(args: {
       recordCount: contracts.length,
       denominator: "contract rows with known value state",
       topDimensions: [
-        { field: "vendorName", values: topDimension(contracts, "vendorName", 8) },
-        { field: "serviceCategory", values: topDimension(contracts, "serviceCategory", 8) },
+        {
+          field: "vendorName",
+          values: topDimension(contracts, "vendorName", 8),
+        },
+        {
+          field: "serviceCategory",
+          values: topDimension(contracts, "serviceCategory", 8),
+        },
       ],
-      measures: { contracts: contracts.length, annualizedValueUsd: sumNumeric(contracts, "annualSpendUsd") },
-      gaps: contracts.length ? [] : ["No governed contract rows reached the Home packet."],
+      measures: {
+        contracts: contracts.length,
+        annualizedValueUsd: sumNumeric(contracts, "annualSpendUsd"),
+      },
+      gaps: contracts.length
+        ? []
+        : ["No governed contract rows reached the Home packet."],
     },
     {
       key: "infrastructure_by_hosting_and_lifecycle",
       label: "Infrastructure by hosting and lifecycle",
       sourcePaths: ["serving.home_infrastructure_platforms"],
       recordCount: infrastructure.length,
-      denominator: "platform and infrastructure records, not confirmed app-hosting joins",
+      denominator:
+        "platform and infrastructure records, not confirmed app-hosting joins",
       topDimensions: [
-        { field: "hostingModel", values: topDimension(infrastructure, "hostingModel", 8) },
-        { field: "platformType", values: topDimension(infrastructure, "platformType", 8) },
+        {
+          field: "hostingModel",
+          values: topDimension(infrastructure, "hostingModel", 8),
+        },
+        {
+          field: "platformType",
+          values: topDimension(infrastructure, "platformType", 8),
+        },
       ],
       measures: { platforms: infrastructure.length },
-      gaps: infrastructure.length ? [] : ["No governed infrastructure/platform rows reached the Home packet."],
+      gaps: infrastructure.length
+        ? []
+        : ["No governed infrastructure/platform rows reached the Home packet."],
     },
     {
       key: "data_movements_by_domain_and_mechanism",
       label: "Data movements by domain and mechanism",
       sourcePaths: ["serving.home_current_state_data_flow"],
       recordCount: dataFlows.length,
-      denominator: "source-to-target movement rows, not reports, users, jobs, or data volume",
+      denominator:
+        "source-to-target movement rows, not reports, users, jobs, or data volume",
       topDimensions: [
-        { field: "dataDomain", values: topDimension(dataFlows, "dataDomain", 8) },
-        { field: "integrationType", values: topDimension(dataFlows, "integrationType", 8) },
+        {
+          field: "dataDomain",
+          values: topDimension(dataFlows, "dataDomain", 8),
+        },
+        {
+          field: "integrationType",
+          values: topDimension(dataFlows, "integrationType", 8),
+        },
       ],
       measures: { dataMovements: dataFlows.length },
-      gaps: dataFlows.length ? [] : ["No governed source-to-target data movement rows reached the Home packet."],
+      gaps: dataFlows.length
+        ? []
+        : [
+            "No governed source-to-target data movement rows reached the Home packet.",
+          ],
     },
     {
       key: "data_bi_etl_workloads_by_function_and_technology",
       label: "Data, BI, ETL, report, script, and analytics workloads",
       sourcePaths: ["serving.home_data_assets_integrations"],
       recordCount: dataWorkloads.length,
-      denominator: "segment-level workload rows; not one row per report, job, script, or user",
+      denominator:
+        "segment-level workload rows; not one row per report, job, script, or user",
       topDimensions: [
-        { field: "ownerFunction", values: topDimension(dataWorkloads, "ownerFunction", 8) },
-        { field: "technologyName", values: topDimension(dataWorkloads, "technologyName", 8) },
-        { field: "workloadType", values: topDimension(dataWorkloads, "workloadType", 8) },
+        {
+          field: "ownerFunction",
+          values: topDimension(dataWorkloads, "ownerFunction", 8),
+        },
+        {
+          field: "technologyName",
+          values: topDimension(dataWorkloads, "technologyName", 8),
+        },
+        {
+          field: "workloadType",
+          values: topDimension(dataWorkloads, "workloadType", 8),
+        },
       ],
       measures: {
         workloadSegments: dataWorkloads.length,
@@ -465,37 +663,67 @@ function buildCategorySummaries(args: {
       },
       gaps: dataWorkloads.length
         ? []
-        : ["No segment-level data/BI/ETL workload rows reached the Home packet; pages must not infer report, job, user, script, or data-volume counts from movement rows."],
+        : [
+            "No segment-level data/BI/ETL workload rows reached the Home packet; pages must not infer report, job, user, script, or data-volume counts from movement rows.",
+          ],
     },
   ];
 }
 
-function recordType(objectType: TechObjectType, rows: Array<Record<string, string | number | boolean | null>>): TechRecordType | null {
+function recordType(
+  objectType: TechObjectType,
+  rows: Array<Record<string, string | number | boolean | null>>,
+): TechRecordType | null {
   if (rows.length === 0) return null;
   const columns = COLUMN_ORDER[objectType].filter((column) =>
-    rows.some((row) => row[column] !== null && row[column] !== undefined && row[column] !== ""),
+    rows.some(
+      (row) =>
+        row[column] !== null && row[column] !== undefined && row[column] !== "",
+    ),
   );
-  const primaryDimension = columns.includes(PRIMARY_DIMENSION[objectType]) ? PRIMARY_DIMENSION[objectType] : null;
+  const primaryDimension = columns.includes(PRIMARY_DIMENSION[objectType])
+    ? PRIMARY_DIMENSION[objectType]
+    : null;
   return {
     objectType,
     label: LABELS[objectType],
     columns,
     rows,
     primaryDimension,
-    dimensionCounts: primaryDimension ? dimensionCounts(rows, primaryDimension) : [],
+    dimensionCounts: primaryDimension
+      ? dimensionCounts(rows, primaryDimension)
+      : [],
   };
 }
 
-export function buildTechnologyEstateFromHomeProjectionRows(rows: HomeProjectionRow[]): TechnologyEstateBundle {
-  const applicationRows = rows.filter((row) => row.page_key === "applications_systems" && row.row_type === "application");
-  const infrastructureRows = rows.filter((row) => row.page_key === "infrastructure_platforms" && row.row_type === "infrastructure");
+export function buildTechnologyEstateFromHomeProjectionRows(
+  rows: HomeProjectionRow[],
+): TechnologyEstateBundle {
+  const applicationRows = rows.filter(
+    (row) =>
+      row.page_key === "applications_systems" && row.row_type === "application",
+  );
+  const infrastructureRows = rows.filter(
+    (row) =>
+      row.page_key === "infrastructure_platforms" &&
+      row.row_type === "infrastructure",
+  );
   const applications = rows
-    .filter((row) => row.page_key === "applications_systems" && row.row_type === "application")
+    .filter(
+      (row) =>
+        row.page_key === "applications_systems" &&
+        row.row_type === "application",
+    )
     .map((row) => stripEmpty(applicationRow(row)));
   const contracts = rows
-    .filter((row) => row.page_key === "vendor_contracts" && row.row_type === "contract")
+    .filter(
+      (row) =>
+        row.page_key === "vendor_contracts" && row.row_type === "contract",
+    )
     .map((row) => stripEmpty(contractRow(row)));
-  const infrastructure = infrastructureRows.map((row) => stripEmpty(infrastructureRow(row)));
+  const infrastructure = infrastructureRows.map((row) =>
+    stripEmpty(infrastructureRow(row)),
+  );
   const labelsByRef = new Map<string, string>();
   for (const row of applicationRows) {
     const mapped = applicationRow(row);
@@ -510,10 +738,18 @@ export function buildTechnologyEstateFromHomeProjectionRows(rows: HomeProjection
     if (ref && label) labelsByRef.set(ref, label);
   }
   const dataFlows = rows
-    .filter((row) => row.page_key === "current_state_data_flow" && row.row_type === "data_flow")
+    .filter(
+      (row) =>
+        row.page_key === "current_state_data_flow" &&
+        row.row_type === "data_flow",
+    )
     .map((row) => stripEmpty(dataFlowRow(row, labelsByRef)));
   const dataWorkloads = rows
-    .filter((row) => row.page_key === "data_assets_integrations" && row.row_type === "data_analytics_workload")
+    .filter(
+      (row) =>
+        row.page_key === "data_assets_integrations" &&
+        row.row_type === "data_analytics_workload",
+    )
     .map((row) => stripEmpty(dataAnalyticsWorkloadRow(row)));
 
   return {
@@ -526,23 +762,78 @@ export function buildTechnologyEstateFromHomeProjectionRows(rows: HomeProjection
   };
 }
 
-const CHAPTER_DEFS: Array<{ id: ChapterId; title: string; guidingQuestion: string }> = [
-  { id: "executive_brief", title: "Executive Brief", guidingQuestion: "What should I understand in my first ten minutes?" },
-  { id: "our_business", title: "Our Business", guidingQuestion: "How does this enterprise work and create value?" },
-  { id: "strategy_value_creation", title: "Strategy & Value Creation", guidingQuestion: "Where are we trying to go, and what bets are we making?" },
-  { id: "how_we_operate", title: "How We Operate", guidingQuestion: "How is the enterprise organized and how does work get done?" },
-  { id: "technology_data", title: "Technology & Data", guidingQuestion: "What enables the business, and where is complexity or dependency concentrated?" },
-  { id: "performance_value", title: "Performance & Value", guidingQuestion: "Are we moving toward outcomes, and can we prove the value?" },
-  { id: "leadership_perspective", title: "Leadership Perspective", guidingQuestion: "What do leaders agree on, disagree on, and worry about?" },
-  { id: "what_needs_attention", title: "What Needs Attention", guidingQuestion: "What tensions, risks, dependencies and decisions deserve executive attention?" },
+const CHAPTER_DEFS: Array<{
+  id: ChapterId;
+  title: string;
+  guidingQuestion: string;
+}> = [
+  {
+    id: "executive_brief",
+    title: "Executive Brief",
+    guidingQuestion: "What should I understand in my first ten minutes?",
+  },
+  {
+    id: "our_business",
+    title: "Our Business",
+    guidingQuestion: "How does this enterprise work and create value?",
+  },
+  {
+    id: "strategy_value_creation",
+    title: "Strategy & Value Creation",
+    guidingQuestion: "Where are we trying to go, and what bets are we making?",
+  },
+  {
+    id: "how_we_operate",
+    title: "How We Operate",
+    guidingQuestion:
+      "How is the enterprise organized and how does work get done?",
+  },
+  {
+    id: "technology_data",
+    title: "Technology & Data",
+    guidingQuestion:
+      "What enables the business, and where is complexity or dependency concentrated?",
+  },
+  {
+    id: "performance_value",
+    title: "Performance & Value",
+    guidingQuestion:
+      "Are we moving toward outcomes, and can we prove the value?",
+  },
+  {
+    id: "leadership_perspective",
+    title: "Leadership Perspective",
+    guidingQuestion: "What do leaders agree on, disagree on, and worry about?",
+  },
+  {
+    id: "what_needs_attention",
+    title: "What Needs Attention",
+    guidingQuestion:
+      "What tensions, risks, dependencies and decisions deserve executive attention?",
+  },
 ];
 
-function rowsForType(estate: TechnologyEstateBundle, objectType: TechObjectType): Array<Record<string, string | number | boolean | null>> {
-  return estate.recordTypes.find((recordType) => recordType.objectType === objectType)?.rows ?? [];
+function rowsForType(
+  estate: TechnologyEstateBundle,
+  objectType: TechObjectType,
+): Array<Record<string, string | number | boolean | null>> {
+  return (
+    estate.recordTypes.find(
+      (recordType) => recordType.objectType === objectType,
+    )?.rows ?? []
+  );
 }
 
-function sumNumeric(rows: Array<Record<string, string | number | boolean | null>>, field: string): number {
-  return rows.reduce((sum, row) => sum + (typeof row[field] === "number" ? row[field] : Number(row[field]) || 0), 0);
+function sumNumeric(
+  rows: Array<Record<string, string | number | boolean | null>>,
+  field: string,
+): number {
+  return rows.reduce(
+    (sum, row) =>
+      sum +
+      (typeof row[field] === "number" ? row[field] : Number(row[field]) || 0),
+    0,
+  );
 }
 
 function formatUsd(value: number | null): string | null {
@@ -561,25 +852,45 @@ function topShareRows(
   const totals = new Map<string, number>();
   for (const row of rows) {
     const label = text(row[labelField]) ?? "(not specified)";
-    totals.set(label, (totals.get(label) ?? 0) + (typeof row[valueField] === "number" ? row[valueField] : Number(row[valueField]) || 0));
+    totals.set(
+      label,
+      (totals.get(label) ?? 0) +
+        (typeof row[valueField] === "number"
+          ? row[valueField]
+          : Number(row[valueField]) || 0),
+    );
   }
-  const total = Array.from(totals.values()).reduce((sum, value) => sum + value, 0);
-  return Array.from(totals, ([label, value]) => ({ label, sharePct: total > 0 ? Number(((value / total) * 100).toFixed(1)) : 0 }))
+  const total = Array.from(totals.values()).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  return Array.from(totals, ([label, value]) => ({
+    label,
+    sharePct: total > 0 ? Number(((value / total) * 100).toFixed(1)) : 0,
+  }))
     .sort((a, b) => Number(b.sharePct) - Number(a.sharePct))
     .slice(0, limit);
 }
 
-function dimensionShareRows(recordType: TechRecordType | undefined, limit: number): Array<Record<string, unknown>> {
+function dimensionShareRows(
+  recordType: TechRecordType | undefined,
+  limit: number,
+): Array<Record<string, unknown>> {
   const total = recordType?.rows.length ?? 0;
-  return (recordType?.dimensionCounts ?? [])
-    .slice(0, limit)
-    .map((row) => ({ label: row.value, sharePct: total > 0 ? Number(((row.count / total) * 100).toFixed(1)) : 0 }));
+  return (recordType?.dimensionCounts ?? []).slice(0, limit).map((row) => ({
+    label: row.value,
+    sharePct: total > 0 ? Number(((row.count / total) * 100).toFixed(1)) : 0,
+  }));
 }
 
-function chapterSummaryRows(rows: HomeProjectionRow[]): Map<string, HomeProjectionRow> {
+function chapterSummaryRows(
+  rows: HomeProjectionRow[],
+): Map<string, HomeProjectionRow> {
   return new Map(
     rows
-      .filter((row) => row.row_type === "summary" && row.row_key.endsWith("_summary"))
+      .filter(
+        (row) => row.row_type === "summary" && row.row_key.endsWith("_summary"),
+      )
       .map((row) => [row.page_key, row]),
   );
 }
@@ -593,7 +904,8 @@ function visual(
   return {
     visual_type: "horizontal_bar",
     title,
-    purpose: "Render a deterministic ECL projection dataset without generating new values.",
+    purpose:
+      "Render a deterministic ECL projection dataset without generating new values.",
     dataset_ref: datasetRef,
     key_message: keyMessage,
     evidence_ids: evidenceIds,
@@ -602,7 +914,10 @@ function visual(
 }
 
 function contextIdForRow(row: HomeProjectionRow): string {
-  return `ctx_ecl_${row.page_key}_${row.row_type}_${row.row_key}`.replace(/[^a-zA-Z0-9_]/g, "_");
+  return `ctx_ecl_${row.page_key}_${row.row_type}_${row.row_key}`.replace(
+    /[^a-zA-Z0-9_]/g,
+    "_",
+  );
 }
 
 function rowDomains(row: HomeProjectionRow): string[] {
@@ -622,7 +937,10 @@ function rowDomains(row: HomeProjectionRow): string[] {
   }
 }
 
-function rowContextStatement(row: HomeProjectionRow, labelsByRef: Map<string, string> = new Map()): string {
+function rowContextStatement(
+  row: HomeProjectionRow,
+  labelsByRef: Map<string, string> = new Map(),
+): string {
   switch (row.page_key) {
     case "applications_systems": {
       const app = applicationRow(row);
@@ -630,8 +948,12 @@ function rowContextStatement(row: HomeProjectionRow, labelsByRef: Map<string, st
         `${text(app.systemName) ?? row.title} is loaded as an application`,
         text(app.businessFunction) ? `for ${text(app.businessFunction)}` : null,
         text(app.vendor) ? `supplied by ${text(app.vendor)}` : null,
-        text(app.criticality) ? `with ${text(app.criticality)} criticality` : null,
-        formatUsd(numberValue(app.annualCostUsd)) ? `and ${formatUsd(numberValue(app.annualCostUsd))} annual cost` : null,
+        text(app.criticality)
+          ? `with ${text(app.criticality)} criticality`
+          : null,
+        formatUsd(numberValue(app.annualCostUsd))
+          ? `and ${formatUsd(numberValue(app.annualCostUsd))} annual cost`
+          : null,
       ].filter(Boolean);
       return `${parts.join(" ")}.`;
     }
@@ -640,9 +962,15 @@ function rowContextStatement(row: HomeProjectionRow, labelsByRef: Map<string, st
       const parts = [
         `${text(contract.contractName) ?? row.title} is loaded as a contract`,
         text(contract.vendorName) ? `with ${text(contract.vendorName)}` : null,
-        text(contract.serviceCategory) ? `for ${text(contract.serviceCategory)}` : null,
-        formatUsd(numberValue(contract.annualSpendUsd)) ? `with ${formatUsd(numberValue(contract.annualSpendUsd))} annualized value` : null,
-        numberValue(contract.noticePeriodDays) !== null ? `and ${numberValue(contract.noticePeriodDays)} days notice` : null,
+        text(contract.serviceCategory)
+          ? `for ${text(contract.serviceCategory)}`
+          : null,
+        formatUsd(numberValue(contract.annualSpendUsd))
+          ? `with ${formatUsd(numberValue(contract.annualSpendUsd))} annualized value`
+          : null,
+        numberValue(contract.noticePeriodDays) !== null
+          ? `and ${numberValue(contract.noticePeriodDays)} days notice`
+          : null,
       ].filter(Boolean);
       return `${parts.join(" ")}.`;
     }
@@ -650,10 +978,18 @@ function rowContextStatement(row: HomeProjectionRow, labelsByRef: Map<string, st
       const platform = infrastructureRow(row);
       const parts = [
         `${text(platform.platformName) ?? row.title} is loaded as an infrastructure or platform record`,
-        text(platform.platformType) ? `of type ${text(platform.platformType)}` : null,
-        text(platform.hostingModel) ? `on ${text(platform.hostingModel)}` : null,
-        text(platform.criticality) ? `with ${text(platform.criticality)} criticality` : null,
-        numberValue(platform.capacityHeadroomPct) !== null ? `and ${numberValue(platform.capacityHeadroomPct)}% capacity headroom` : null,
+        text(platform.platformType)
+          ? `of type ${text(platform.platformType)}`
+          : null,
+        text(platform.hostingModel)
+          ? `on ${text(platform.hostingModel)}`
+          : null,
+        text(platform.criticality)
+          ? `with ${text(platform.criticality)} criticality`
+          : null,
+        numberValue(platform.capacityHeadroomPct) !== null
+          ? `and ${numberValue(platform.capacityHeadroomPct)}% capacity headroom`
+          : null,
       ].filter(Boolean);
       return `${parts.join(" ")}.`;
     }
@@ -663,9 +999,15 @@ function rowContextStatement(row: HomeProjectionRow, labelsByRef: Map<string, st
       const target = text(flow.targetSystem) ?? "an unspecified target";
       const parts = [
         `${text(flow.dataAssetName) ?? row.title} is loaded as a data movement from ${source} to ${target}`,
-        text(flow.integrationType) ? `using ${text(flow.integrationType)}` : null,
-        text(flow.landingLayer) ? `landing in ${text(flow.landingLayer)}` : null,
-        text(flow.consumptionLayer) ? `and serving ${text(flow.consumptionLayer)}` : null,
+        text(flow.integrationType)
+          ? `using ${text(flow.integrationType)}`
+          : null,
+        text(flow.landingLayer)
+          ? `landing in ${text(flow.landingLayer)}`
+          : null,
+        text(flow.consumptionLayer)
+          ? `and serving ${text(flow.consumptionLayer)}`
+          : null,
       ].filter(Boolean);
       return `${parts.join(" ")}.`;
     }
@@ -673,11 +1015,21 @@ function rowContextStatement(row: HomeProjectionRow, labelsByRef: Map<string, st
       const workload = dataAnalyticsWorkloadRow(row);
       const parts = [
         `${text(workload.dataAssetName) ?? row.title} is loaded as a data, BI, ETL, or analytics workload segment`,
-        text(workload.ownerFunction) ? `for ${text(workload.ownerFunction)}` : null,
-        text(workload.technologyName) ? `using ${text(workload.technologyName)}` : null,
-        numberValue(workload.workloadCount) !== null ? `with ${numberValue(workload.workloadCount)?.toLocaleString()} workload items` : null,
-        numberValue(workload.activeUserCount) !== null ? `${numberValue(workload.activeUserCount)?.toLocaleString()} active users` : null,
-        numberValue(workload.dataVolumeTb) !== null ? `${numberValue(workload.dataVolumeTb)?.toLocaleString()} TB` : null,
+        text(workload.ownerFunction)
+          ? `for ${text(workload.ownerFunction)}`
+          : null,
+        text(workload.technologyName)
+          ? `using ${text(workload.technologyName)}`
+          : null,
+        numberValue(workload.workloadCount) !== null
+          ? `with ${numberValue(workload.workloadCount)?.toLocaleString()} workload items`
+          : null,
+        numberValue(workload.activeUserCount) !== null
+          ? `${numberValue(workload.activeUserCount)?.toLocaleString()} active users`
+          : null,
+        numberValue(workload.dataVolumeTb) !== null
+          ? `${numberValue(workload.dataVolumeTb)?.toLocaleString()} TB`
+          : null,
       ].filter(Boolean);
       return `${parts.join(" ")}.`;
     }
@@ -689,7 +1041,9 @@ function rowContextStatement(row: HomeProjectionRow, labelsByRef: Map<string, st
 function projectionContextItems(rows: HomeProjectionRow[]): ContextItem[] {
   const labelsByRef = endpointLabelsFromRows(rows);
   return rows
-    .filter((row) => row.row_type !== "summary" && row.row_type !== "chapter_claim")
+    .filter(
+      (row) => row.row_type !== "summary" && row.row_type !== "chapter_claim",
+    )
     .map((row) => ({
       id: contextIdForRow(row),
       statement: rowContextStatement(row, labelsByRef),
@@ -706,23 +1060,45 @@ function buildEclSignalPacket(
   const contracts = rowsForType(estate, "vendor_contract");
   const infrastructure = rowsForType(estate, "infrastructure_platform");
   const dataRecords = rowsForType(estate, "data_asset_or_integration");
-  const dataFlows = dataRecords.filter((row) => row.recordKind !== "data_analytics_workload");
-  const dataWorkloads = dataRecords.filter((row) => row.recordKind === "data_analytics_workload");
-  const applicationRecordType = estate.recordTypes.find((recordType) => recordType.objectType === "application_system");
+  const dataFlows = dataRecords.filter(
+    (row) => row.recordKind !== "data_analytics_workload",
+  );
+  const dataWorkloads = dataRecords.filter(
+    (row) => row.recordKind === "data_analytics_workload",
+  );
+  const applicationRecordType = estate.recordTypes.find(
+    (recordType) => recordType.objectType === "application_system",
+  );
   const contractSpend = sumNumeric(contracts, "annualSpendUsd");
   const vendorRows = topShareRows(contracts, "vendorName", "annualSpendUsd", 8);
   const topVendor = vendorRows[0];
   const topFunctions = dimensionShareRows(applicationRecordType, 8);
   const topFunction = topFunctions[0];
   const applicationCost = sumNumeric(applications, "annualCostUsd");
-  const tierOneApplications = applications.filter((row) => criticalityValue(row.criticality) === "tier1");
-  const lifecycleWatch = applications.filter((row) =>
-    /watch|aging|replace|legacy|retir/i.test(`${text(row.lifecycleState) ?? ""} ${text(row.replacementCandidate) ?? ""}`),
+  const tierOneApplications = applications.filter(
+    (row) => criticalityValue(row.criticality) === "tier1",
   );
-  const autoRenewContracts = contracts.filter((row) => row.autoRenewFlag === true);
-  const longNoticeContracts = contracts.filter((row) => numberValue(row.noticePeriodDays) !== null && numberValue(row.noticePeriodDays)! >= 180);
-  const supportDatedPlatforms = infrastructure.filter((row) => Boolean(text(row.endOfLifeDate)));
-  const criticalPlatforms = infrastructure.filter((row) => criticalityValue(row.criticality) === "tier1" || /critical/i.test(text(row.criticality) ?? ""));
+  const lifecycleWatch = applications.filter((row) =>
+    /watch|aging|replace|legacy|retir/i.test(
+      `${text(row.lifecycleState) ?? ""} ${text(row.replacementCandidate) ?? ""}`,
+    ),
+  );
+  const autoRenewContracts = contracts.filter(
+    (row) => row.autoRenewFlag === true,
+  );
+  const longNoticeContracts = contracts.filter(
+    (row) =>
+      numberValue(row.noticePeriodDays) !== null &&
+      numberValue(row.noticePeriodDays)! >= 180,
+  );
+  const supportDatedPlatforms = infrastructure.filter((row) =>
+    Boolean(text(row.endOfLifeDate)),
+  );
+  const criticalPlatforms = infrastructure.filter(
+    (row) =>
+      criticalityValue(row.criticality) === "tier1" ||
+      /critical/i.test(text(row.criticality) ?? ""),
+  );
   const topFlowTarget = dimensionCounts(dataFlows, "targetSystem")[0];
   const integrationPatterns = dimensionCounts(dataFlows, "integrationType");
   const topIntegrationPattern = integrationPatterns[0];
@@ -736,7 +1112,12 @@ function buildEclSignalPacket(
       id: "sig_ecl_estate_001",
       kind: "portfolio",
       statement: `The ECL projection contains ${applications.length.toLocaleString()} applications, ${contracts.length.toLocaleString()} contracts, ${infrastructure.length.toLocaleString()} infrastructure/platform records, ${dataFlows.length.toLocaleString()} data-flow rows, and ${dataWorkloads.length.toLocaleString()} data/BI/ETL workload segments.`,
-      domains: ["application_system", "vendor_contract", "infrastructure_platform", "data_asset_or_integration"],
+      domains: [
+        "application_system",
+        "vendor_contract",
+        "infrastructure_platform",
+        "data_asset_or_integration",
+      ],
       evidenceRefs: ["serving.home_executive_brief"],
     },
     ...(topFunction
@@ -826,7 +1207,10 @@ function buildEclSignalPacket(
             id: "sig_ecl_application_function_ranking_012",
             kind: "portfolio" as const,
             statement: `The largest application functions by recorded application count are ${topFunctions
-              .map((item) => `${item.label} (${Number(item.sharePct).toFixed(1)}%)`)
+              .map(
+                (item) =>
+                  `${item.label} (${Number(item.sharePct).toFixed(1)}%)`,
+              )
               .join(", ")}.`,
             domains: ["application_system"],
             evidenceRefs: ["serving.home_applications_systems"],
@@ -861,14 +1245,16 @@ function buildEclSignalPacket(
     {
       id: "sig_ecl_application_named_examples_015",
       kind: "portfolio",
-      statement: "Named high-cost application examples are available in the application register.",
+      statement:
+        "Named high-cost application examples are available in the application register.",
       domains: ["application_system"],
       evidenceRefs: ["serving.home_applications_systems"],
     },
     {
       id: "sig_ecl_platform_named_resilience_016",
       kind: "risk",
-      statement: "Named infrastructure or platform examples with resilience evidence are available in the infrastructure register.",
+      statement:
+        "Named infrastructure or platform examples with resilience evidence are available in the infrastructure register.",
       domains: ["infrastructure_platform"],
       evidenceRefs: ["serving.home_infrastructure_platforms"],
     },
@@ -898,7 +1284,8 @@ function buildEclSignalPacket(
     {
       id: "sig_ecl_gap_004",
       kind: "gap",
-      statement: "This Home preview is served from governed ECL rows by default; retrieval indexing, client attestation, and narrative-quality review remain separate gates.",
+      statement:
+        "This Home preview is served from governed ECL rows by default; retrieval indexing, client attestation, and narrative-quality review remain separate gates.",
       domains: ["evidence_sources"],
       evidenceRefs: ["serving.home_executive_brief"],
     },
@@ -914,7 +1301,12 @@ function buildEclSignalPacket(
       id: "ctx_ecl_scope_business_economics_001",
       statement:
         "Segment revenue, customer/channel economics, and formal enterprise identity attributes are not supplied by the current Home narrative input; business-model conclusions should therefore be limited to cited technology, commercial, infrastructure, and data-movement facts.",
-      domains: ["enterprise_profile", "spend_value_fact", "application_system", "vendor_contract"],
+      domains: [
+        "enterprise_profile",
+        "spend_value_fact",
+        "application_system",
+        "vendor_contract",
+      ],
     },
     {
       id: "ctx_ecl_scope_strategy_programs_001",
@@ -938,10 +1330,21 @@ function buildEclSignalPacket(
     candidateRelationships: [],
     sourceSummaries,
     visualDatasets: {
-      application_landscape_by_function: dimensionShareRows(applicationRecordType, 8),
+      application_landscape_by_function: dimensionShareRows(
+        applicationRecordType,
+        8,
+      ),
       vendor_spend_concentration: vendorRows,
-      data_workload_by_function: workloadSummaryRows(dataWorkloads, "ownerFunction", 12),
-      data_workload_by_technology: workloadSummaryRows(dataWorkloads, "technologyName", 12),
+      data_workload_by_function: workloadSummaryRows(
+        dataWorkloads,
+        "ownerFunction",
+        12,
+      ),
+      data_workload_by_technology: workloadSummaryRows(
+        dataWorkloads,
+        "technologyName",
+        12,
+      ),
     },
     categorySummaries: buildCategorySummaries({
       applications,
@@ -953,25 +1356,30 @@ function buildEclSignalPacket(
   } as unknown as EnterpriseSignalPacket;
 }
 
-function buildEclSourceSummaries(estate: TechnologyEstateBundle): SourceSummary[] {
+function buildEclSourceSummaries(
+  estate: TechnologyEstateBundle,
+): SourceSummary[] {
   return estate.recordTypes
     .map((recordType): SourceSummary | null => {
       const config = SOURCE_SUMMARY_BY_OBJECT_TYPE[recordType.objectType];
       if (!config || recordType.rows.length === 0) return null;
       const materialFields = recordType.columns.slice(0, 12);
       const exampleRecords = recordType.rows
-        .map((row) =>
-          text(row.systemName) ??
-          text(row.vendorName) ??
-          text(row.platformName) ??
-          text(row.dataAssetName) ??
-          text(row.originalRowId),
+        .map(
+          (row) =>
+            text(row.systemName) ??
+            text(row.vendorName) ??
+            text(row.platformName) ??
+            text(row.dataAssetName) ??
+            text(row.originalRowId),
         )
         .filter((value): value is string => Boolean(value))
         .slice(0, 5);
       const primaryDimension = recordType.primaryDimension;
       const dimensionContext = primaryDimension
-        ? recordType.dimensionCounts.slice(0, 3).map((item) => `${item.value} (${item.count})`)
+        ? recordType.dimensionCounts
+            .slice(0, 3)
+            .map((item) => `${item.value} (${item.count})`)
         : [];
       return {
         sourcePath: config.sourcePath,
@@ -984,16 +1392,25 @@ function buildEclSourceSummaries(estate: TechnologyEstateBundle): SourceSummary[
         authority: config.authority ?? [config.sourcePath],
         qualityStates: ["projection_row_read"],
         materialFields: dimensionContext.length
-          ? [...materialFields, `top_${primaryDimension}: ${dimensionContext.join(", ")}`].slice(0, 12)
+          ? [
+              ...materialFields,
+              `top_${primaryDimension}: ${dimensionContext.join(", ")}`,
+            ].slice(0, 12)
           : materialFields,
         exampleRecords,
       };
     })
     .filter((summary): summary is SourceSummary => Boolean(summary))
-    .sort((a, b) => b.recordCount - a.recordCount || a.sourcePath.localeCompare(b.sourcePath));
+    .sort(
+      (a, b) =>
+        b.recordCount - a.recordCount ||
+        a.sourcePath.localeCompare(b.sourcePath),
+    );
 }
 
-const CHAPTER_ID_SET = new Set<ChapterId>(CHAPTER_DEFS.map((definition) => definition.id));
+const CHAPTER_ID_SET = new Set<ChapterId>(
+  CHAPTER_DEFS.map((definition) => definition.id),
+);
 const STORY_PLAN_CONTRACT_VERSION = "home-executive-story-plan/v1" as const;
 const STORY_SECTION_IDS: HomeExecutiveStorySectionId[] = [
   "enterprise",
@@ -1009,15 +1426,22 @@ function isChapterId(value: string): value is ChapterId {
   return CHAPTER_ID_SET.has(value as ChapterId);
 }
 
-function isStorySectionId(value: unknown): value is HomeExecutiveStorySectionId {
+function isStorySectionId(
+  value: unknown,
+): value is HomeExecutiveStorySectionId {
   return STORY_SECTION_IDS.includes(value as HomeExecutiveStorySectionId);
 }
 
-function isTerminalState(value: unknown): value is HomeExecutiveStoryTerminalState {
+function isTerminalState(
+  value: unknown,
+): value is HomeExecutiveStoryTerminalState {
   return value === "published" || value === "refused" || value === "deferred";
 }
 
-function terminalStateForChapter(chapterId: ChapterId, claims: Map<ChapterId, GroundedClaim[]>): HomeExecutiveStoryTerminalState {
+function terminalStateForChapter(
+  chapterId: ChapterId,
+  claims: Map<ChapterId, GroundedClaim[]>,
+): HomeExecutiveStoryTerminalState {
   return (claims.get(chapterId) ?? []).length > 0 ? "published" : "deferred";
 }
 
@@ -1038,10 +1462,13 @@ function confidence(value: unknown): GroundedClaim["confidence"] {
     : "medium";
 }
 
-function chapterClaimsByPage(rows: HomeProjectionRow[]): Map<ChapterId, GroundedClaim[]> {
+function chapterClaimsByPage(
+  rows: HomeProjectionRow[],
+): Map<ChapterId, GroundedClaim[]> {
   const claims = new Map<ChapterId, GroundedClaim[]>();
   for (const row of rows) {
-    if (row.row_type !== "chapter_claim" || !isChapterId(row.page_key)) continue;
+    if (row.row_type !== "chapter_claim" || !isChapterId(row.page_key))
+      continue;
     const payload = rowPayload(row);
     const statement = text(row.summary) ?? text(row.title);
     if (!statement) continue;
@@ -1066,20 +1493,32 @@ function claimRefs(claims: Map<ChapterId, GroundedClaim[]>): Set<string> {
   );
 }
 
-function requireKnownClaimRef(refs: Set<string>, ref: unknown, field: string): string | null {
+function requireKnownClaimRef(
+  refs: Set<string>,
+  ref: unknown,
+  field: string,
+): string | null {
   const value = text(ref);
   if (!value) return null;
   if (!refs.has(value)) {
-    throw new Error(`Home ECL preview: story_plan ${field} references missing chapter_claim ${value}.`);
+    throw new Error(
+      `Home ECL preview: story_plan ${field} references missing chapter_claim ${value}.`,
+    );
   }
   return value;
 }
 
-function requireKnownClaimRefs(refs: Set<string>, value: unknown, field: string): string[] {
+function requireKnownClaimRefs(
+  refs: Set<string>,
+  value: unknown,
+  field: string,
+): string[] {
   const values = stringArray(value);
   const unknown = values.find((ref) => !refs.has(ref));
   if (unknown) {
-    throw new Error(`Home ECL preview: story_plan ${field} references missing chapter_claim ${unknown}.`);
+    throw new Error(
+      `Home ECL preview: story_plan ${field} references missing chapter_claim ${unknown}.`,
+    );
   }
   return values;
 }
@@ -1098,9 +1537,10 @@ function storyPlanFromRows(
   if (!row) return blockedStoryPlan(tenantKey, assessmentId);
 
   const payload = rowPayload(row);
-  const planPayload = payload.story_plan && typeof payload.story_plan === "object"
-    ? (payload.story_plan as JsonRecord)
-    : payload;
+  const planPayload =
+    payload.story_plan && typeof payload.story_plan === "object"
+      ? (payload.story_plan as JsonRecord)
+      : payload;
   const refs = claimRefs(claims);
   const rawChapterStates =
     planPayload.chapterStates && typeof planPayload.chapterStates === "object"
@@ -1109,7 +1549,8 @@ function storyPlanFromRows(
   const chapterStates = Object.fromEntries(
     CHAPTER_DEFS.map((definition) => {
       const raw = rawChapterStates[definition.id];
-      const statePayload = raw && typeof raw === "object" ? (raw as JsonRecord) : {};
+      const statePayload =
+        raw && typeof raw === "object" ? (raw as JsonRecord) : {};
       const state = isTerminalState(statePayload.state)
         ? statePayload.state
         : terminalStateForChapter(definition.id, claims);
@@ -1122,35 +1563,75 @@ function storyPlanFromRows(
       ];
     }),
   ) as HomeExecutiveStoryPlanV1["chapterStates"];
-  const sectionsInput = Array.isArray(planPayload.sections) ? planPayload.sections : [];
-  const requestedSectionOrder = stringArray(planPayload.sectionOrder ?? planPayload.section_order);
-  const sectionOrder = requestedSectionOrder.length > 0
-    ? requestedSectionOrder.filter(isStorySectionId)
-    : STORY_SECTION_IDS;
-  if (sectionOrder.length !== STORY_SECTION_IDS.length || new Set(sectionOrder).size !== STORY_SECTION_IDS.length) {
-    throw new Error("Home ECL preview: story_plan sectionOrder must contain each executive story section exactly once.");
+  const sectionsInput = Array.isArray(planPayload.sections)
+    ? planPayload.sections
+    : [];
+  const requestedSectionOrder = stringArray(
+    planPayload.sectionOrder ?? planPayload.section_order,
+  );
+  const sectionOrder =
+    requestedSectionOrder.length > 0
+      ? requestedSectionOrder.filter(isStorySectionId)
+      : STORY_SECTION_IDS;
+  if (
+    sectionOrder.length !== STORY_SECTION_IDS.length ||
+    new Set(sectionOrder).size !== STORY_SECTION_IDS.length
+  ) {
+    throw new Error(
+      "Home ECL preview: story_plan sectionOrder must contain each executive story section exactly once.",
+    );
   }
   const sections = STORY_SECTION_IDS.map((sectionId) => {
-    const raw = sectionsInput.find((item) => item && typeof item === "object" && (item as JsonRecord).sectionId === sectionId) as JsonRecord | undefined;
+    const raw = sectionsInput.find(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        (item as JsonRecord).sectionId === sectionId,
+    ) as JsonRecord | undefined;
     const state = isTerminalState(raw?.state) ? raw.state : "deferred";
     return {
       sectionId,
       state,
-      leadClaimRef: requireKnownClaimRef(refs, raw?.leadClaimRef ?? raw?.lead_claim_ref, `sections.${sectionId}.leadClaimRef`),
-      supportingClaimRefs: requireKnownClaimRefs(refs, raw?.supportingClaimRefs ?? raw?.supporting_claim_refs, `sections.${sectionId}.supportingClaimRefs`),
+      leadClaimRef: requireKnownClaimRef(
+        refs,
+        raw?.leadClaimRef ?? raw?.lead_claim_ref,
+        `sections.${sectionId}.leadClaimRef`,
+      ),
+      supportingClaimRefs: requireKnownClaimRefs(
+        refs,
+        raw?.supportingClaimRefs ?? raw?.supporting_claim_refs,
+        `sections.${sectionId}.supportingClaimRefs`,
+      ),
       reasonCode: text(raw?.reasonCode ?? raw?.reason_code),
     };
   });
-  const decisions = (Array.isArray(planPayload.decisions) ? planPayload.decisions : [])
-    .filter((item): item is JsonRecord => Boolean(item) && typeof item === "object")
+  const decisions = (
+    Array.isArray(planPayload.decisions) ? planPayload.decisions : []
+  )
+    .filter(
+      (item): item is JsonRecord => Boolean(item) && typeof item === "object",
+    )
     .slice(0, 3)
     .map((item, index) => ({
-      decisionId: text(item.decisionId ?? item.decision_id) ?? `decision-${index + 1}`,
-      question: text(item.question) ?? "What decision should the executive team make next?",
-      whyNowClaimRefs: requireKnownClaimRefs(refs, item.whyNowClaimRefs ?? item.why_now_claim_refs, `decisions.${index}.whyNowClaimRefs`),
+      decisionId:
+        text(item.decisionId ?? item.decision_id) ?? `decision-${index + 1}`,
+      question:
+        text(item.question) ??
+        "What decision should the executive team make next?",
+      whyNowClaimRefs: requireKnownClaimRefs(
+        refs,
+        item.whyNowClaimRefs ?? item.why_now_claim_refs,
+        `decisions.${index}.whyNowClaimRefs`,
+      ),
       ownerRef: text(item.ownerRef ?? item.owner_ref),
-      handoffModule: ["moves", "source", "tower", "intelligence"].includes(String(item.handoffModule ?? item.handoff_module))
-        ? (String(item.handoffModule ?? item.handoff_module) as "moves" | "source" | "tower" | "intelligence")
+      handoffModule: ["moves", "source", "tower", "intelligence"].includes(
+        String(item.handoffModule ?? item.handoff_module),
+      )
+        ? (String(item.handoffModule ?? item.handoff_module) as
+            | "moves"
+            | "source"
+            | "tower"
+            | "intelligence")
         : null,
       evidenceNeeded: stringArray(item.evidenceNeeded ?? item.evidence_needed),
     }));
@@ -1160,17 +1641,42 @@ function storyPlanFromRows(
     tenantKey,
     assessmentId,
     snapshotId: text(planPayload.snapshotId ?? planPayload.snapshot_id),
-    openingThesisClaimRef: requireKnownClaimRef(refs, planPayload.openingThesisClaimRef ?? planPayload.opening_thesis_claim_ref, "openingThesisClaimRef"),
-    openingSupportingClaimRefs: requireKnownClaimRefs(refs, planPayload.openingSupportingClaimRefs ?? planPayload.opening_supporting_claim_refs, "openingSupportingClaimRefs"),
-    scaleFactRef: requireKnownClaimRef(refs, planPayload.scaleFactRef ?? planPayload.scale_fact_ref, "scaleFactRef"),
+    openingThesisClaimRef: requireKnownClaimRef(
+      refs,
+      planPayload.openingThesisClaimRef ?? planPayload.opening_thesis_claim_ref,
+      "openingThesisClaimRef",
+    ),
+    openingSupportingClaimRefs: requireKnownClaimRefs(
+      refs,
+      planPayload.openingSupportingClaimRefs ??
+        planPayload.opening_supporting_claim_refs,
+      "openingSupportingClaimRefs",
+    ),
+    scaleFactRef: requireKnownClaimRef(
+      refs,
+      planPayload.scaleFactRef ?? planPayload.scale_fact_ref,
+      "scaleFactRef",
+    ),
     decisions,
     sectionOrder,
     sections,
     chapterStates,
-    heroVisualDatasetRef: text(planPayload.heroVisualDatasetRef ?? planPayload.hero_visual_dataset_ref),
-    overallEvidenceBoundary: text(planPayload.overallEvidenceBoundary ?? planPayload.overall_evidence_boundary) ?? "Story plan row is present, but no evidence boundary was supplied.",
-    sourceClaimRefs: requireKnownClaimRefs(refs, planPayload.sourceClaimRefs ?? planPayload.source_claim_refs, "sourceClaimRefs"),
-    storyPlanHash: text(planPayload.storyPlanHash ?? planPayload.story_plan_hash) ?? "missing-story-plan-hash",
+    heroVisualDatasetRef: text(
+      planPayload.heroVisualDatasetRef ?? planPayload.hero_visual_dataset_ref,
+    ),
+    overallEvidenceBoundary:
+      text(
+        planPayload.overallEvidenceBoundary ??
+          planPayload.overall_evidence_boundary,
+      ) ?? "Story plan row is present, but no evidence boundary was supplied.",
+    sourceClaimRefs: requireKnownClaimRefs(
+      refs,
+      planPayload.sourceClaimRefs ?? planPayload.source_claim_refs,
+      "sourceClaimRefs",
+    ),
+    storyPlanHash:
+      text(planPayload.storyPlanHash ?? planPayload.story_plan_hash) ??
+      "missing-story-plan-hash",
   };
 }
 
@@ -1213,16 +1719,25 @@ function blockedStoryPlan(
   };
 }
 
-function summaryText(summaries: Map<string, HomeProjectionRow>, chapterId: ChapterId): string {
+function summaryText(
+  summaries: Map<string, HomeProjectionRow>,
+  chapterId: ChapterId,
+): string {
   const summary = summaries.get(chapterId)?.summary;
-  if (!summary) throw new Error(`Home ECL preview: missing published summary for ${chapterId}.`);
+  if (!summary)
+    throw new Error(
+      `Home ECL preview: missing published summary for ${chapterId}.`,
+    );
   return summary;
 }
 
 function publishedThesisFromRows(rows: HomeProjectionRow[]): EnterpriseThesis {
   const summaries = chapterSummaryRows(rows);
   const claims = chapterClaimsByPage(rows);
-  const claimCount = Array.from(claims.values()).reduce((sum, pageClaims) => sum + pageClaims.length, 0);
+  const claimCount = Array.from(claims.values()).reduce(
+    (sum, pageClaims) => sum + pageClaims.length,
+    0,
+  );
   if (claimCount === 0) {
     return deferredThesis();
   }
@@ -1248,7 +1763,11 @@ function publishedThesisFromRows(rows: HomeProjectionRow[]): EnterpriseThesis {
     operating_tensions: attention,
     leadership_consensus: leadership,
     leadership_disagreements: [],
-    performance_story: { where_improving: [], where_off_track: [], where_unknown: performance },
+    performance_story: {
+      where_improving: [],
+      where_off_track: [],
+      where_unknown: performance,
+    },
     technology_and_data_implications: technology,
     material_risks: attention,
     value_realization_tensions: strategy,
@@ -1257,18 +1776,30 @@ function publishedThesisFromRows(rows: HomeProjectionRow[]): EnterpriseThesis {
     things_a_new_cxo_should_know: executive,
     questions_for_management: [],
     visual_opportunities: [
-      visual("application_landscape_by_function", "Applications grouped by business function", "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.", ["sig_ecl_estate_001"]),
-      visual("vendor_spend_concentration", "Supplier concentration in loaded contract value", "Commercial concentration is now visible in the ECL contract projection.", ["sig_ecl_vendor_002"]),
+      visual(
+        "application_landscape_by_function",
+        "Applications grouped by business function",
+        "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.",
+        ["sig_ecl_estate_001"],
+      ),
+      visual(
+        "vendor_spend_concentration",
+        "Supplier concentration in loaded contract value",
+        "Commercial concentration is now visible in the ECL contract projection.",
+        ["sig_ecl_vendor_002"],
+      ),
     ],
   };
 }
 
 function deferredThesis(): EnterpriseThesis {
   return {
-    enterprise_story: "The Home narrative is deferred until verified chapter claims are available.",
+    enterprise_story:
+      "The Home narrative is deferred until verified chapter claims are available.",
     enterprise_story_claims: [],
     value_creation_model: {
-      summary: "The value-creation narrative is deferred until verified chapter claims are available.",
+      summary:
+        "The value-creation narrative is deferred until verified chapter claims are available.",
       primary_value_drivers: [],
       economic_dependencies: [],
     },
@@ -1277,7 +1808,11 @@ function deferredThesis(): EnterpriseThesis {
     operating_tensions: [],
     leadership_consensus: [],
     leadership_disagreements: [],
-    performance_story: { where_improving: [], where_off_track: [], where_unknown: [] },
+    performance_story: {
+      where_improving: [],
+      where_off_track: [],
+      where_unknown: [],
+    },
     technology_and_data_implications: [],
     material_risks: [],
     value_realization_tensions: [],
@@ -1289,8 +1824,12 @@ function deferredThesis(): EnterpriseThesis {
   };
 }
 
-function hasPublishedChapterClaims(claims: Map<ChapterId, GroundedClaim[]>): boolean {
-  return Array.from(claims.values()).some((pageClaims) => pageClaims.length > 0);
+function hasPublishedChapterClaims(
+  claims: Map<ChapterId, GroundedClaim[]>,
+): boolean {
+  return Array.from(claims.values()).some(
+    (pageClaims) => pageClaims.length > 0,
+  );
 }
 
 function buildDeferredChapters(): ChapterView[] {
@@ -1314,11 +1853,17 @@ function buildDeferredChapters(): ChapterView[] {
   }));
 }
 
-function buildPublishedChapters(rows: HomeProjectionRow[], claims: Map<ChapterId, GroundedClaim[]>): ChapterView[] {
+function buildPublishedChapters(
+  rows: HomeProjectionRow[],
+  claims: Map<ChapterId, GroundedClaim[]>,
+): ChapterView[] {
   const summaries = chapterSummaryRows(rows);
   return CHAPTER_DEFS.map((definition) => {
     const summaryRow = summaries.get(definition.id);
-    if (!summaryRow) throw new Error(`Home ECL preview: missing published summary row for ${definition.id}.`);
+    if (!summaryRow)
+      throw new Error(
+        `Home ECL preview: missing published summary row for ${definition.id}.`,
+      );
     const pageClaims = claims.get(definition.id) ?? [];
     return {
       chapterId: definition.id,
@@ -1333,11 +1878,28 @@ function buildPublishedChapters(rows: HomeProjectionRow[], claims: Map<ChapterId
       visual_opportunities:
         definition.id === "technology_data"
           ? [
-              visual("application_landscape_by_function", "Applications grouped by business function", "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.", ["sig_ecl_estate_001"]),
-              visual("vendor_spend_concentration", "Supplier concentration in loaded contract value", "Commercial concentration is now visible in the ECL contract projection.", ["sig_ecl_vendor_002"]),
+              visual(
+                "application_landscape_by_function",
+                "Applications grouped by business function",
+                "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.",
+                ["sig_ecl_estate_001"],
+              ),
+              visual(
+                "vendor_spend_concentration",
+                "Supplier concentration in loaded contract value",
+                "Commercial concentration is now visible in the ECL contract projection.",
+                ["sig_ecl_vendor_002"],
+              ),
             ]
           : definition.id === "executive_brief"
-            ? [visual("application_landscape_by_function", "Applications grouped by business function", "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.", ["sig_ecl_estate_001"])]
+            ? [
+                visual(
+                  "application_landscape_by_function",
+                  "Applications grouped by business function",
+                  "The loaded ECL estate is function-segmented, not a 306-row legacy snapshot.",
+                  ["sig_ecl_estate_001"],
+                ),
+              ]
             : [],
       limitations: [],
     };
@@ -1350,11 +1912,22 @@ export function buildHomeReviewBundleFromEclProjectionRows(
   assessmentId = denseAssessmentIdForTenant(base.tenantKey),
 ): HomeReviewBundle {
   const technologyEstate = buildTechnologyEstateFromHomeProjectionRows(rows);
-  const signalPacket = buildEclSignalPacket(rows, technologyEstate, assessmentId);
+  const signalPacket = buildEclSignalPacket(
+    rows,
+    technologyEstate,
+    assessmentId,
+  );
   const claims = chapterClaimsByPage(rows);
   const thesis = publishedThesisFromRows(rows);
-  const chapters = hasPublishedChapterClaims(claims) ? buildPublishedChapters(rows, claims) : buildDeferredChapters();
-  const executiveStoryPlan = storyPlanFromRows(base.tenantKey, assessmentId, rows, claims);
+  const chapters = hasPublishedChapterClaims(claims)
+    ? buildPublishedChapters(rows, claims)
+    : buildDeferredChapters();
+  const executiveStoryPlan = storyPlanFromRows(
+    base.tenantKey,
+    assessmentId,
+    rows,
+    claims,
+  );
   return {
     tenantKey: base.tenantKey,
     provenance: {
@@ -1457,16 +2030,22 @@ async function readHomeProjectionRows(
   );
 }
 
-export async function getHomeEclProjectionBundle(tenantKey: HomePreviewTenantKey): Promise<HomeReviewBundle> {
+export async function getHomeEclProjectionBundle(
+  tenantKey: HomePreviewTenantKey,
+): Promise<HomeReviewBundle> {
   const base = getHomeReviewBundle(tenantKey);
   if (!base) {
-    throw new Error(`Home ECL preview: missing base deterministic bundle for ${tenantKey}.`);
+    throw new Error(
+      `Home ECL preview: missing base deterministic bundle for ${tenantKey}.`,
+    );
   }
 
   const assessmentId = denseAssessmentIdForTenant(tenantKey);
   const rows = await readHomeProjectionRows(tenantKey, assessmentId);
   if (rows.length === 0) {
-    throw new Error(`Home ECL preview: no serving Home rows for ${tenantKey}/${assessmentId}.`);
+    throw new Error(
+      `Home ECL preview: no serving Home rows for ${tenantKey}/${assessmentId}.`,
+    );
   }
 
   return {
