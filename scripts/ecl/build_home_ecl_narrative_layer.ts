@@ -386,6 +386,157 @@ function sourceSummaryExample(row: EclSourceRecordSummaryRow, fields: string[]):
   return values.length ? values.join(" · ") : text(row.record_type);
 }
 
+function payloadField(data: JsonRecord, ...fields: string[]): string | null {
+  for (const field of fields) {
+    const value = text(data[field]);
+    if (value) return value;
+  }
+  return null;
+}
+
+function splitSourceList(value: string | null): string[] {
+  if (!value) return [];
+  return value
+    .split(/;|\n|\|/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function formatUsd(value: string | null): string | null {
+  if (!value) return null;
+  const numeric = Number(value.replace(/[$,\s]/g, ""));
+  if (!Number.isFinite(numeric)) return value;
+  if (numeric >= 1_000_000_000) return `$${(numeric / 1_000_000_000).toFixed(1)}B`;
+  if (numeric >= 1_000_000) return `$${(numeric / 1_000_000).toFixed(1)}M`;
+  return `$${numeric.toLocaleString()}`;
+}
+
+function sourceRowsMatching(rows: EclSourceRecordSummaryRow[], pattern: RegExp): EclSourceRecordSummaryRow[] {
+  return rows.filter((row) => pattern.test(row.file_name) && row.payload_json && typeof row.payload_json === "object");
+}
+
+function rowPayload(row: EclSourceRecordSummaryRow): JsonRecord {
+  return row.payload_json && typeof row.payload_json === "object" ? row.payload_json : {};
+}
+
+function buildSourceRecordContextItems(sourceRows: EclSourceRecordSummaryRow[]): ContextItem[] {
+  const items: ContextItem[] = [];
+  const add = (id: string, statement: string | null, domains: string[]) => {
+    if (!statement) return;
+    items.push({ id, statement, domains });
+  };
+
+  const enterpriseProfile = sourceRowsMatching(sourceRows, /00_enterprise_profile/i)[0];
+  if (enterpriseProfile) {
+    const data = rowPayload(enterpriseProfile);
+    const businessModel = payloadField(data, "business_model", "businessModel");
+    const industry = payloadField(data, "industry");
+    const subIndustry = payloadField(data, "sub_industry", "subIndustry");
+    const revenue = formatUsd(payloadField(data, "revenue_usd", "revenueUsd", "revenue"));
+    const employees = payloadField(data, "employee_count", "employeeCount");
+    const employeeNumber = employees ? Number(employees.replace(/,/g, "")) : NaN;
+    const customerSegments = splitSourceList(payloadField(data, "customer_segments", "customerSegments")).slice(0, 8);
+    const mission = payloadField(data, "mission");
+    const vision = payloadField(data, "vision");
+    const priorities = splitSourceList(payloadField(data, "strategic_priorities", "strategicPriorities")).slice(0, 8);
+    const currentState = payloadField(data, "current_state_notes", "currentStateNotes");
+    const targetState = payloadField(data, "target_state_notes", "targetStateNotes");
+    const profileBits = [
+      industry && subIndustry ? `${industry}: ${subIndustry}` : industry ?? subIndustry,
+      revenue ? `${revenue} revenue` : null,
+      employees ? `${Number.isFinite(employeeNumber) ? employeeNumber.toLocaleString() : employees} employees` : null,
+      businessModel,
+    ].filter(Boolean);
+    add(
+      "ctx_ecl_source_enterprise_profile_001",
+      profileBits.length ? `Enterprise profile source record: ${profileBits.join("; ")}.` : null,
+      ["tenant_profile", "enterprise_profile", "business_model"],
+    );
+    add(
+      "ctx_ecl_source_enterprise_mission_001",
+      mission ? `Declared mission from enterprise profile: ${mission}.` : null,
+      ["tenant_profile", "enterprise_profile"],
+    );
+    add(
+      "ctx_ecl_source_enterprise_vision_001",
+      vision ? `Declared vision from enterprise profile: ${vision}.` : null,
+      ["tenant_profile", "enterprise_profile"],
+    );
+    add(
+      "ctx_ecl_source_strategic_priorities_001",
+      priorities.length ? `Declared strategic priorities from enterprise profile: ${priorities.join("; ")}.` : null,
+      ["tenant_profile", "enterprise_profile", "program_initiative"],
+    );
+    add(
+      "ctx_ecl_source_customer_segments_001",
+      customerSegments.length ? `Declared customer and member segments: ${customerSegments.join("; ")}.` : null,
+      ["tenant_profile", "enterprise_profile", "business_model"],
+    );
+    add(
+      "ctx_ecl_source_current_state_001",
+      currentState ? `Enterprise profile current-state notes: ${currentState}` : null,
+      ["tenant_profile", "application_system", "data_asset_or_integration", "infrastructure_platform"],
+    );
+    add(
+      "ctx_ecl_source_target_state_001",
+      targetState ? `Enterprise profile target-state notes: ${targetState}` : null,
+      ["tenant_profile", "program_initiative", "data_asset_or_integration"],
+    );
+  }
+
+  const segmentRows = sourceRowsMatching(sourceRows, /01b_business_segments/i);
+  const segmentStatements = segmentRows
+    .map((row) => {
+      const data = rowPayload(row);
+      const name = payloadField(data, "segment_name", "segmentName");
+      const share = payloadField(data, "revenue_share_pct", "revenueSharePct");
+      const revenue = formatUsd(payloadField(data, "revenue_usd", "revenueUsd"));
+      return name ? `${name}${share ? ` ${share}%` : ""}${revenue ? ` (${revenue})` : ""}` : null;
+    })
+    .filter((value): value is string => Boolean(value))
+    .slice(0, 8);
+  add(
+    "ctx_ecl_source_business_segments_001",
+    segmentStatements.length ? `Operating segments from business-segment source: ${segmentStatements.join("; ")}.` : null,
+    ["tenant_profile", "business_model", "business_function"],
+  );
+
+  const programRows = sourceRowsMatching(sourceRows, /09_programs_initiatives/i);
+  const programs = programRows
+    .map((row) => {
+      const data = rowPayload(row);
+      const name = payloadField(data, "program_name", "programName");
+      const sponsor = payloadField(data, "business_sponsor", "businessSponsor");
+      const budget = formatUsd(payloadField(data, "budget_usd", "budgetUsd"));
+      return name ? `${name}${sponsor ? ` sponsored by ${sponsor}` : ""}${budget ? `, ${budget} budget` : ""}` : null;
+    })
+    .filter((value): value is string => Boolean(value))
+    .slice(0, 8);
+  add(
+    "ctx_ecl_source_program_portfolio_001",
+    programs.length ? `Program and initiative source examples: ${programs.join("; ")}.` : null,
+    ["program_initiative", "spend_value_fact", "tenant_profile"],
+  );
+
+  const interviewRows = sourceRowsMatching(sourceRows, /SA10_AI_Value_Interview_Evidence/i);
+  const interviewQuotes = interviewRows
+    .map((row) => {
+      const data = rowPayload(row);
+      const role = payloadField(data, "stakeholder_role", "stakeholderRole", "named_owner", "namedOwner");
+      const quote = payloadField(data, "verbatim_quote", "answer_summary", "answerSummary");
+      return role && quote ? `${role}: ${quote.replace(/^"+|"+$/g, "")}` : null;
+    })
+    .filter((value): value is string => Boolean(value))
+    .slice(0, 8);
+  add(
+    "ctx_ecl_source_leadership_excerpts_001",
+    interviewQuotes.length ? `Leadership interview excerpts from source evidence: ${interviewQuotes.join(" | ")}.` : null,
+    ["leadership_voice", "ai_value_interview_evidence", "tenant_profile"],
+  );
+
+  return items;
+}
+
 function sourceRefIds(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const ids = value
@@ -1319,6 +1470,7 @@ function buildGovernedSignalPacket(
   tenantKey: string,
   assessmentId: string,
   sourceSummaries: SourceSummary[] = [],
+  sourceRows: EclSourceRecordSummaryRow[] = [],
 ): GovernedSignalPacketBuild {
   const renderedAt = new Date().toISOString();
   const rowContentByCandidateId = new Map<string, ExecutiveSignalContent>();
@@ -1373,6 +1525,7 @@ function buildGovernedSignalPacket(
       statement: `The current evidence package is synthetic and not client-attested; executive conclusions must preserve that limitation.`,
       domains: ["enterprise_profile", "evidence_sources"],
     },
+    ...buildSourceRecordContextItems(sourceRows),
     ...buildScopeContextItems({ rows, sourceSummaries }),
     ...validatedRows.usable
       .map((candidate) => {
@@ -1404,20 +1557,30 @@ function buildGovernedSignalPacket(
     readinessCounts,
   );
 
+  const enterpriseProfile = sourceRowsMatching(sourceRows, /00_enterprise_profile/i)[0];
+  const enterpriseProfilePayload = enterpriseProfile ? rowPayload(enterpriseProfile) : {};
+  const segmentRows = sourceRowsMatching(sourceRows, /01b_business_segments/i);
+  const revenue = Number(payloadField(enterpriseProfilePayload, "revenue_usd", "revenueUsd", "revenue") ?? NaN);
+  const employeeCount = Number(payloadField(enterpriseProfilePayload, "employee_count", "employeeCount") ?? NaN);
+  const businessEconomics = {
+    operatingSegments: segmentRows
+      .map((row) => payloadField(rowPayload(row), "segment_name", "segmentName"))
+      .filter((value): value is string => Boolean(value)),
+    customerSegments: splitSourceList(payloadField(enterpriseProfilePayload, "customer_segments", "customerSegments")),
+    technologyBudget: sumPayload(permittedApplications, "annual_cost_usd"),
+    technologyBudgetShareOfRevenue: Number.isFinite(revenue) && revenue > 0
+      ? sumPayload(permittedApplications, "annual_cost_usd") / revenue
+      : null,
+  };
   const packet = {
     enterpriseIdentity: {
-      businessModel: null,
-      industry: null,
-      revenue: null,
-      employeeCount: null,
+      businessModel: payloadField(enterpriseProfilePayload, "business_model", "businessModel"),
+      industry: payloadField(enterpriseProfilePayload, "industry"),
+      revenue: Number.isFinite(revenue) ? revenue : null,
+      employeeCount: Number.isFinite(employeeCount) ? employeeCount : null,
     },
-    businessEconomics: {
-      operatingSegments: [],
-      customerSegments: [],
-      technologyBudget: 0,
-      technologyBudgetShareOfRevenue: null,
-    },
-    strategicPriorities: [],
+    businessEconomics,
+    strategicPriorities: splitSourceList(payloadField(enterpriseProfilePayload, "strategic_priorities", "strategicPriorities")),
     signals,
     contextItems,
     visualDatasets: {
@@ -1476,7 +1639,7 @@ function buildGovernedSignalPacket(
   return { signalPacket: packet, contextPolicyProof };
 }
 
-async function readEclSourceSummaries(db: Client, tenantKey: string, assessmentId: string): Promise<SourceSummary[]> {
+async function readEclSourceRecordRows(db: Client, tenantKey: string, assessmentId: string): Promise<EclSourceRecordSummaryRow[]> {
   const result = await db.query<EclSourceRecordSummaryRow>(
     `
       select
@@ -1499,9 +1662,12 @@ async function readEclSourceSummaries(db: Client, tenantKey: string, assessmentI
     `,
     [tenantKey, assessmentId],
   );
+  return result.rows;
+}
 
+function buildEclSourceSummaries(rows: EclSourceRecordSummaryRow[]): SourceSummary[] {
   const byFile = new Map<string, EclSourceRecordSummaryRow[]>();
-  for (const row of result.rows) {
+  for (const row of rows) {
     const rows = byFile.get(row.file_name) ?? [];
     rows.push(row);
     byFile.set(row.file_name, rows);
@@ -2346,12 +2512,14 @@ async function main() {
     const rows = await readHomeProjectionRows(db, options.tenantKey, options.assessmentId);
     if (rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
 
-    const sourceSummaries = await readEclSourceSummaries(db, options.tenantKey, options.assessmentId);
+    const sourceRows = await readEclSourceRecordRows(db, options.tenantKey, options.assessmentId);
+    const sourceSummaries = buildEclSourceSummaries(sourceRows);
     const { signalPacket, contextPolicyProof } = buildGovernedSignalPacket(
       rows,
       options.tenantKey,
       options.assessmentId,
       sourceSummaries,
+      sourceRows,
     );
     console.log(
       `${options.tenantKey}/${options.assessmentId}: ${rows.length} Home projection rows -> ` +

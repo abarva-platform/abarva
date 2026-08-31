@@ -267,13 +267,23 @@ assert(
   "ECL narrative job emits safe policy-gap and readiness metadata without copying blocked payloads into model context",
 );
 assert(
-  script.includes("readEclSourceSummaries") &&
+  script.includes("readEclSourceRecordRows") &&
+    script.includes("buildEclSourceSummaries") &&
     script.includes("ecl_source.source_file") &&
     script.includes("ecl_source.source_record") &&
     script.includes("sourceSummaries") &&
     script.includes("source_summary_count") &&
     script.includes("coverage_context_not_citable"),
   "ECL narrative job passes source-ledger breadth summaries as non-citable packet context",
+);
+assert(
+  script.includes("buildSourceRecordContextItems") &&
+    script.includes("ctx_ecl_source_enterprise_profile_001") &&
+    script.includes("ctx_ecl_source_business_segments_001") &&
+    script.includes("ctx_ecl_source_strategic_priorities_001") &&
+    script.includes("ctx_ecl_source_leadership_excerpts_001") &&
+    script.includes("SA10_AI_Value_Interview_Evidence"),
+  "ECL narrative job promotes source-backed profile, segment, strategy, and interview records into citable ctx_* context",
 );
 assert(
   script.includes("Home ECL narrative refused: no governed usable evidence reached the executive packet") &&
@@ -340,6 +350,27 @@ assert(
   "ECL narrative job passes deterministic category summaries and data-workload visual datasets into the Claude packet",
 );
 assert(
+  chapters.includes("buildChapterSynthesisUserPrompt") &&
+    chapters.includes("Source coverage index (all source-family summaries") &&
+    chapters.includes("Page-relevant source examples") &&
+    chapters.includes("Category summaries for this page") &&
+    chapters.includes("Citable context items (ctx_* ids may support visible claims") &&
+    chapters.includes("source coverage index and category summaries are there to prevent false"),
+  "Home chapter writer sends page-specific source summaries, category summaries, visual datasets, and citable ctx context to Claude",
+);
+assert(
+  thesis.includes("const contextDomains = new Set(signalPacket.contextItems.flatMap") &&
+    thesis.includes("const allDomains = new Set([...signalDomains, ...contextDomains])") &&
+    thesis.includes("allDomains.has(\"ai_value_interview_evidence\")") &&
+    thesis.includes("allDomains.has(\"leadership_voice\")"),
+  "EnterpriseThesis evidence-scope rules count citable context domains, not only computed signal domains",
+);
+assert(
+  thesis.includes("const enterpriseContextClaims = firstContextByDomain(signalPacket, [\"tenant_profile\", \"enterprise_profile\", \"business_model\"], 8)") &&
+    thesis.includes("const storyClaims = [...enterpriseContextClaims, ...storySignalClaims].slice(0, 5)"),
+  "EnterpriseThesis deterministic executive story starts with enterprise/profile context before inventory and commercial signals",
+);
+assert(
   thesis.includes("\"data_workload_by_function\"") &&
     thesis.includes("Analytics work is concentrated by function before it is a technology question") &&
     thesis.includes("separate BI reports, ETL jobs, scripts, users, and data volume from movement counts") &&
@@ -397,9 +428,10 @@ assert(
   "EnterpriseThesis prompt requires exact citable support for numbers, rankings, and management questions",
 );
 assert(
-  script.includes("technologyBudget: 0") &&
+  script.includes("technologyBudget: sumPayload(permittedApplications, \"annual_cost_usd\")") &&
+    script.includes("technologyBudgetShareOfRevenue: Number.isFinite(revenue)") &&
     script.includes("This is recorded application annual cost, not a complete enterprise technology budget"),
-  "ECL narrative packet does not expose application annual cost as a structured technology budget",
+  "ECL narrative packet exposes recorded application annual cost as structured budget context with a visible scope caveat",
 );
 assert(
   script.includes("source-family summaries describe intake breadth but are not evidence for a business claim by themselves") &&

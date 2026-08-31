@@ -76,6 +76,17 @@ type HomePagePromptContract = {
 };
 type EnterpriseSignalPacketWithPromptContracts = EnterpriseSignalPacket & {
   pagePromptContracts?: HomePagePromptContract[];
+  categorySummaries?: DeterministicCategorySummary[];
+};
+type DeterministicCategorySummary = {
+  key?: string;
+  label?: string;
+  sourcePaths?: string[];
+  recordCount?: number;
+  denominator?: string;
+  topDimensions?: Array<{ field?: string; values?: Array<{ label?: string; count?: number; sharePct?: number }> }>;
+  measures?: Record<string, number>;
+  gaps?: string[];
 };
 
 /* ------------------------------------------------------------------------------------------------
@@ -531,10 +542,11 @@ export function assembleChapterSlices(
 
 const CHAPTER_SYNTHESIS_SYSTEM_PROMPT = `You are writing one chapter of an executive Home
 narrative. You are given this chapter's title, the question it exists to answer, and the specific
-claims -- already verified, already approved -- this chapter is allowed to draw from. Every other
-chapter in this Home experience is being written the same way, from its own claim slice of the
-same underlying thesis; you are not reasoning about the enterprise from scratch, you are giving
-voice to a section of an already-verified analysis.
+claims -- already verified, already approved -- this chapter is allowed to draw from. You are also
+given the page's source coverage index, page-relevant source examples, category summaries, visual
+datasets, and citable context items. Every other chapter in this Home experience is being written
+the same way, from its own claim slice of the same underlying thesis; you are not reasoning about
+the enterprise from scratch, you are giving voice to a section of an already-verified analysis.
 
 Produce two things:
 1. A headline: one answer-first sentence stating this chapter's most important, defensible
@@ -545,10 +557,13 @@ Produce two things:
    question.
 
 Discipline, same as everywhere else in this pipeline: assert nothing beyond what the assigned
-claims state. Do not introduce a new fact, number, ranking, or causal link. If the assigned claims
-are thin or don't fully answer the guiding question, say so honestly in the synthesis rather than
-inventing material to fill the gap -- an honest "the current evidence does not yet establish X" is
-correct output, not a failure.
+claims and cited ctx_* context items state. Do not introduce a new fact, number, ranking, or causal
+link. The source coverage index and category summaries are there to prevent false "we do not have
+this" gaps and to orient the page; they are not evidence_ids for a visible business claim unless a
+matching ctx_* item or assigned claim is listed. If the assigned claims are thin or don't fully
+answer the guiding question, say so honestly in the synthesis rather than inventing material to fill
+the gap -- an honest "the current evidence does not yet establish X" is correct output, not a
+failure.
 
 For the Executive Brief, the headline must not be a supplier/contract fact, an evidence-boundary
 caveat, or a standalone inventory count. Lead with the business consequence a new executive should
@@ -610,10 +625,152 @@ function collectChapterRawStatements(chapters: ChapterView[]): string[] {
   return Array.from(new Set(statements));
 }
 
+function compactNumber(value: number | undefined): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "0";
+  return value.toLocaleString();
+}
+
+function tokenise(value: string): string[] {
+  return value.toLowerCase().split(/[^a-z0-9]+/).filter((part) => part.length >= 3);
+}
+
+function pageContextTerms(def: { title: string; guidingQuestion: string; writerLens: string }): Set<string> {
+  return new Set(tokenise(`${def.title} ${def.guidingQuestion} ${def.writerLens}`));
+}
+
+function matchesChapterTerms(text: string, terms: Set<string>): boolean {
+  const normalized = text.toLowerCase();
+  for (const term of terms) {
+    if (normalized.includes(term)) return true;
+  }
+  return false;
+}
+
+function sourceSummaryLine(summary: EnterpriseSignalPacket["sourceSummaries"][number], includeExamples: boolean): string {
+  const rowCount = summary.rawRowCount ?? summary.canonicalRecordCount ?? summary.recordCount;
+  const fields = summary.materialFields.slice(0, 8).join(", ") || "fields not declared";
+  const examples = includeExamples && summary.exampleRecords.length
+    ? ` Examples: ${summary.exampleRecords.slice(0, 2).join(" | ")}.`
+    : "";
+  return `- ${summary.sourcePath} (${summary.domain}; ${compactNumber(rowCount)} rows; ${summary.sourceKind ?? "source"}). Fields: ${fields}.${examples}`;
+}
+
+function sourceSummariesForChapter(
+  signalPacket: EnterpriseSignalPacketWithPromptContracts,
+  def: { title: string; guidingQuestion: string; writerLens: string },
+) {
+  const terms = pageContextTerms(def);
+  const summaries = signalPacket.sourceSummaries ?? [];
+  const scored = summaries.map((summary, index) => {
+    const haystack = [
+      summary.sourcePath,
+      summary.domain,
+      ...summary.objectTypes,
+      ...summary.materialFields,
+      ...summary.exampleRecords,
+    ].join(" ");
+    const score = matchesChapterTerms(haystack, terms) ? 2 : 0;
+    const executiveBoost = /00_enterprise_profile|01b_business_segments|09_programs|SA10_AI_Value_Interview/i.test(summary.sourcePath) ? 1 : 0;
+    return { summary, index, score: score + executiveBoost };
+  });
+  const relevant = scored
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((item) => item.summary)
+    .slice(0, 18);
+  return { all: summaries, relevant };
+}
+
+function categorySummariesForChapter(
+  signalPacket: EnterpriseSignalPacketWithPromptContracts,
+  def: { title: string; guidingQuestion: string; writerLens: string },
+): DeterministicCategorySummary[] {
+  const terms = pageContextTerms(def);
+  return (signalPacket.categorySummaries ?? [])
+    .filter((summary) => matchesChapterTerms(`${summary.key ?? ""} ${summary.label ?? ""} ${(summary.sourcePaths ?? []).join(" ")}`, terms))
+    .slice(0, 8);
+}
+
+function contextItemsForChapter(
+  signalPacket: EnterpriseSignalPacketWithPromptContracts,
+  claims: GroundedClaim[],
+  def: { title: string; guidingQuestion: string; writerLens: string },
+): ContextItem[] {
+  const evidenceIds = new Set(claims.flatMap((claim) => claim.evidence_ids));
+  const terms = pageContextTerms(def);
+  const priorityDomains = new Set(["tenant_profile", "enterprise_profile", "business_model", "leadership_voice", "ai_value_interview_evidence"]);
+  return signalPacket.contextItems
+    .filter((item) =>
+      evidenceIds.has(item.id) ||
+      item.domains.some((domain) => priorityDomains.has(domain)) ||
+      matchesChapterTerms(`${item.statement} ${item.domains.join(" ")}`, terms)
+    )
+    .slice(0, 40);
+}
+
+function formatCategorySummary(summary: DeterministicCategorySummary): string {
+  const measures = Object.entries(summary.measures ?? {})
+    .map(([key, value]) => `${key}=${compactNumber(value)}`)
+    .join(", ") || "no measures";
+  const dimensions = (summary.topDimensions ?? [])
+    .map((dimension) => {
+      const values = (dimension.values ?? [])
+        .slice(0, 4)
+        .map((value) => `${value.label ?? "(blank)"} ${compactNumber(value.count)}${typeof value.sharePct === "number" ? `/${value.sharePct}%` : ""}`)
+        .join("; ");
+      return `${dimension.field ?? "dimension"}: ${values}`;
+    })
+    .filter(Boolean)
+    .join(" | ") || "no dimensions";
+  const gaps = summary.gaps ?? [];
+  const gapText = gaps.length ? ` Gaps: ${gaps.join(" | ")}` : "";
+  return `- ${summary.label ?? summary.key ?? "Category"} (${compactNumber(summary.recordCount)}; denominator: ${summary.denominator ?? "not declared"}): ${measures}. ${dimensions}.${gapText}`;
+}
+
+export function buildChapterSynthesisUserPrompt(
+  def: { title: string; guidingQuestion: string; writerLens: string },
+  claims: GroundedClaim[],
+  signalPacket: EnterpriseSignalPacketWithPromptContracts,
+): string {
+  const { all: sourceSummaries, relevant } = sourceSummariesForChapter(signalPacket, def);
+  const categorySummaries = categorySummariesForChapter(signalPacket, def);
+  const contextItems = contextItemsForChapter(signalPacket, claims, def);
+  const visualDatasetNames = Object.keys(signalPacket.visualDatasets ?? {});
+  const sourceCoverageIndex = sourceSummaries.map((summary) => sourceSummaryLine(summary, false)).join("\n") || "- No source-family summaries were supplied.";
+  const relevantSourceExamples = relevant.map((summary) => sourceSummaryLine(summary, true)).join("\n") || "- No page-relevant source examples were identified.";
+  const categorySummaryBlock = categorySummaries.map(formatCategorySummary).join("\n") || "- No category summary matched this chapter.";
+  const contextBlock = contextItems
+    .map((item) => `- ${item.id} [${item.domains.join(", ")}]: ${item.statement}`)
+    .join("\n") || "- No citable context items matched this chapter.";
+  return [
+    `Chapter: ${def.title}`,
+    `Guiding question: ${def.guidingQuestion}`,
+    `Writer lens: ${def.writerLens}`,
+    "",
+    "Assigned claims (the primary source for this chapter's visible claims):",
+    claims.map((c, i) => `${i + 1}. [${c.claim_type}] ${c.statement} Evidence: ${c.evidence_ids.join(", ") || "(none)"}`).join("\n") || "- None.",
+    "",
+    "Citable context items (ctx_* ids may support visible claims when directly relevant):",
+    contextBlock,
+    "",
+    "Source coverage index (all source-family summaries; use for context and to avoid false gaps, not as evidence_ids):",
+    sourceCoverageIndex,
+    "",
+    "Page-relevant source examples (context only unless a matching ctx_* item is cited):",
+    relevantSourceExamples,
+    "",
+    "Category summaries for this page (deterministic aggregates; use to choose emphasis and respect denominators):",
+    categorySummaryBlock,
+    "",
+    `Available visual datasets: ${visualDatasetNames.join(", ") || "(none)"}`,
+  ].join("\n");
+}
+
 async function synthesizeChapterNarrative(
   client: Parameters<typeof callClaude>[0],
   def: { title: string; guidingQuestion: string; writerLens: string },
   claims: GroundedClaim[],
+  signalPacket: EnterpriseSignalPacketWithPromptContracts,
   options: ChapterSynthesisOptions = HOME_CHAPTER_SYNTHESIS_OPTIONS,
 ): Promise<ChapterSynthesisResult | null> {
   if (claims.length === 0) {
@@ -625,10 +782,7 @@ async function synthesizeChapterNarrative(
       stopReason: null,
     };
   }
-  const userPrompt =
-    `Chapter: ${def.title}\nGuiding question: ${def.guidingQuestion}\nWriter lens: ${def.writerLens}\n\n` +
-    `Assigned claims (the ONLY source of content for this chapter):\n` +
-    claims.map((c, i) => `${i + 1}. [${c.claim_type}] ${c.statement}`).join("\n");
+  const userPrompt = buildChapterSynthesisUserPrompt(def, claims, signalPacket);
   const result = await callClaude(client, CHAPTER_SYNTHESIS_SYSTEM_PROMPT, userPrompt, options.maxTokens, options.effort);
   if (!result) return null;
   const parsed = parseJsonLoose<{ headline: string; executive_synthesis: string }>(result.text, `chapter synthesis (${def.title})`);
@@ -715,7 +869,7 @@ export async function buildChapterViewsFromVerifiedThesis(
     const effectiveDef = chapterDefinitionForPacket(def, signalPacket as EnterpriseSignalPacketWithPromptContracts);
     const slice = slices[def.id];
     const allClaims = [...slice.key_insights, ...slice.tensions, ...slice.what_to_watch];
-    const synthesis = await synthesizeChapterNarrative(client, effectiveDef, allClaims, synthesisOptions);
+    const synthesis = await synthesizeChapterNarrative(client, effectiveDef, allClaims, signalPacket as EnterpriseSignalPacketWithPromptContracts, synthesisOptions);
     options?.telemetry?.push({
       chapterId: def.id,
       assignedClaims: allClaims.length,

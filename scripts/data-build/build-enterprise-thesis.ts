@@ -682,15 +682,17 @@ function buildUserPrompt(signalPacket: ReturnType<typeof buildEnterpriseSignalPa
 
 function buildEvidenceScopeInstructions(signalPacket: ReturnType<typeof buildEnterpriseSignalPacket>): string {
   const signalDomains = new Set(signalPacket.signals.flatMap((signal) => signal.domains));
+  const contextDomains = new Set(signalPacket.contextItems.flatMap((item) => item.domains));
+  const allDomains = new Set([...signalDomains, ...contextDomains]);
   const hasBusinessEconomics =
     signalPacket.businessEconomics.operatingSegments.length > 0 ||
     signalPacket.businessEconomics.customerSegments.length > 0 ||
     Boolean(signalPacket.enterpriseIdentity.revenue);
-  const hasStrategyEvidence = signalPacket.strategicPriorities.length > 0 || signalDomains.has("program_initiative");
-  const hasLeadershipEvidence = signalDomains.has("ai_value_interview_evidence");
-  const hasOutcomeLinkage = signalDomains.has("metric_outcome") || signalDomains.has("ai_value_realization_signal");
+  const hasStrategyEvidence = signalPacket.strategicPriorities.length > 0 || allDomains.has("program_initiative");
+  const hasLeadershipEvidence = allDomains.has("ai_value_interview_evidence") || allDomains.has("leadership_voice");
+  const hasOutcomeLinkage = allDomains.has("metric_outcome") || allDomains.has("ai_value_realization_signal");
   const hasProcessOwnerEvidence =
-    signalDomains.has("operational_process_evidence") ||
+    allDomains.has("operational_process_evidence") ||
     signalPacket.contextItems.some((item) => /\b(owner|accountable|process|governance)\b/i.test(item.statement));
 
   const forcedEmpty: string[] = [];
@@ -828,8 +830,13 @@ export function buildDeterministicEnterpriseThesisFromSignalPacket(
     "sig_ecl_platform_named_resilience_016",
   ]);
   const fallbackPortfolioSignals = firstSignalByKind(signalPacket, ["portfolio", "concentration", "risk", "dependency", "data_quality"], 6);
-  const storyClaims = (storySignals.length ? storySignals : fallbackPortfolioSignals).slice(0, 5).map((signal) => signalClaim(signal));
-  const valueDrivers = firstContextByDomain(signalPacket, ["enterprise_profile", "business_model"], 3).map((item) => contextClaim(item));
+  const enterpriseContextClaims = firstContextByDomain(signalPacket, ["tenant_profile", "enterprise_profile", "business_model"], 8)
+    .map((item) => contextClaim(item));
+  const storySignalClaims = (storySignals.length ? storySignals : fallbackPortfolioSignals)
+    .slice(0, 5)
+    .map((signal) => signalClaim(signal));
+  const storyClaims = [...enterpriseContextClaims, ...storySignalClaims].slice(0, 5);
+  const valueDrivers = firstContextByDomain(signalPacket, ["enterprise_profile", "business_model"], 6).map((item) => contextClaim(item));
   const valueDependencies = commercialSignals.slice(0, 4).map((signal) => signalClaim(signal));
   const unknownPerformance = firstSignals(signalPacket, [
     "sig_ecl_source_breadth_guardrail_019",
