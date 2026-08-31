@@ -9,7 +9,10 @@
 
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
-import { canonicalCioTowerTenantKey, canonicalCioTowerTenantDisplayName } from "@/lib/tower/metric-packet";
+import {
+  canonicalCioTowerTenantDisplayName,
+  canonicalCioTowerTenantKey,
+} from "@/lib/tower/metric-packet";
 import type { CioTowerPageContext } from "@/lib/tower/current-layer-answer-contract";
 import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
 import { demoSafeClientText } from "@/lib/client-config";
@@ -62,6 +65,7 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => ({}))) as {
+    clientKey?: unknown;
     question?: unknown;
     pageContext?: CioTowerPageContext;
   };
@@ -77,7 +81,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const activeClient = await getActiveClientRow();
+  const requestedClient =
+    typeof body.clientKey === "string" ? body.clientKey.trim() || null : null;
+  const activeClient = await getActiveClientRow(requestedClient);
   if (!activeClient) {
     return Response.json(
       { error: "no_client", detail: "No active client for AI egress policy." },
@@ -89,6 +95,14 @@ export async function POST(request: Request) {
     const tenantKey = canonicalCioTowerTenantKey(
       tenancy.clientKey ?? activeClient.key ?? tenancy.clientId,
     );
+    const tenantKeyCandidates = [
+      activeClient.key,
+      activeClient.id,
+      activeClient.name,
+      requestedClient && activeClient ? requestedClient : null,
+      tenancy.clientKey,
+      tenancy.clientId,
+    ];
     const tenantName =
       demoSafeClientText(
         canonicalCioTowerTenantDisplayName({
@@ -100,6 +114,7 @@ export async function POST(request: Request) {
       tenantId: tenancy.clientId,
       userId: tenancy.userId,
       tenantKey,
+      tenantKeyCandidates,
       tenantName,
       question,
       pageContext: body.pageContext,

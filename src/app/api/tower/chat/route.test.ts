@@ -95,6 +95,14 @@ describe("POST /api/tower/chat", () => {
       expect.objectContaining({
         tenantId: "selected-client-id",
         tenantKey: "selected-client",
+        tenantKeyCandidates: [
+          "selected-client",
+          "selected-client-id",
+          "Selected Client",
+          "selected-client",
+          "session-client",
+          "session-client-id",
+        ],
         tenantName: "Selected Client",
         question: "What value is claimable?",
         pageContext: {

@@ -156,10 +156,19 @@ describe("answerCurrentTowerQuestion", () => {
     const result = await answerCurrentTowerQuestion({
       tenantId: "client-id",
       tenantKey: "selected-client",
+      tenantKeyCandidates: ["route-client", "selected-client-id"],
       tenantName: "Selected Client",
       question: "Show me the top 10 AI investments and ROI",
     });
 
+    expect(mockReadTowerCommandCenter).toHaveBeenCalledWith({
+      tenantKeyCandidates: [
+        "selected-client",
+        "route-client",
+        "selected-client-id",
+        "Selected Client",
+      ],
+    });
     expect(result.modelOutput.answer).toContain("Sponsor ROI");
     expect(result.modelOutput.tables?.[0]?.title).toBe(
       "Top AI Investments And Sponsor ROI",
