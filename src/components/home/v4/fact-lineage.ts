@@ -96,7 +96,9 @@ export function quotability(lineage: FactLineage): {
 
 /** A one-line trace a reader can act on: the files, the rule, and the grain. */
 export function traceLine(lineage: FactLineage): string {
-  const files = lineage.sources.map((s) => `${s.file} (${s.rows.toLocaleString()} rows)`).join(" + ");
+  const files = lineage.sources
+    .map((s) => (s.rows > 0 ? `${s.file} (${s.rows.toLocaleString()} rows)` : s.file))
+    .join(" + ");
   const filter = lineage.sources.find((s) => s.filter)?.filter;
   return [files, filter ? `filtered to ${filter}` : null, `one row = ${lineage.grain}`]
     .filter(Boolean)

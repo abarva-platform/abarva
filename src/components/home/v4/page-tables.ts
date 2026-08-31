@@ -31,6 +31,9 @@ export interface Finding {
   claim: string;
   owner: string;
   because: string;
+  /** The file, the rule and the grain behind the figure in the claim. A finding a reader cannot
+   * reproduce is an assertion, and an assertion with an owner's name on it is worse than none. */
+  trace?: { file: string; grain: string; rule: string };
 }
 
 export interface PageContent {
@@ -181,6 +184,11 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
       owner: "Chief Information Security Officer",
       because:
         "Not federated and not centrally revocable. Both facts come from the same row, so the population is exactly enumerable — and neither column alone shows it.",
+      trace: {
+        file: "04_applications_systems.csv",
+        grain: "one application record",
+        rule: "authenticationMethod is local_accounts AND dataClassification is phi",
+      },
     });
   }
 
@@ -192,6 +200,7 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
       owner: "Transformation Office",
       because:
         "The record states the dates and the record states the portfolio. Nothing in either connects them, which is a gap in the plan rather than in the evidence.",
+      trace: { file: "04_applications_systems.csv", grain: "one application record", rule: "endOfSupportDate is not empty" },
     });
   }
 
@@ -204,6 +213,11 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
       owner: "Chief Information Officer",
       because:
         "Hosting is the current state rather than a transition in progress. Cloud readiness is scored per application, but the estate underneath has not moved.",
+      trace: {
+        file: "04_applications_systems.csv",
+        grain: "one application record",
+        rule: `deploymentModel starts with on_premise — ${selfHosted} of ${apps.length}`,
+      },
     });
   }
 
@@ -256,6 +270,7 @@ export function vendorFindings(contracts: EstateRow[]): Finding[] {
       owner: "Chief Procurement Officer",
       because:
         "Each carries a declared notice period, and those windows are the only points at which the commercial terms are open.",
+      trace: { file: "07_vendors_contracts.csv", grain: "one contract", rule: "autoRenewFlag is yes" },
     });
   }
   const noSystems = contracts.filter((c) => !str(c, "supportedSystems")).length;
@@ -265,6 +280,7 @@ export function vendorFindings(contracts: EstateRow[]): Finding[] {
       claim: `${noSystems} contracts name no system they support.`,
       owner: "Chief Procurement Officer",
       because: "Without that link the contract cannot be traced to what it pays for, so its renewal cannot be assessed against use.",
+      trace: { file: "07_vendors_contracts.csv", grain: "one contract", rule: "supportedSystems is empty" },
     });
   }
   return findings;
@@ -309,6 +325,7 @@ export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
       owner: "VP Infrastructure",
       because:
         "The recovery posture is declared per platform. Nothing in the record sets it against the criticality of what runs on top of it.",
+      trace: { file: "06_infrastructure_platforms.csv", grain: "one platform", rule: "drTier contains tier1 versus tier3" },
     });
   }
   const eol = platforms.filter((p) => str(p, "endOfLifeDate")).length;
@@ -318,6 +335,7 @@ export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
       claim: `${eol} platforms carry a declared end-of-life date.`,
       owner: "VP Infrastructure",
       because: "Declared in the record and absent from the portfolio. That is a gap in the plan, not in the evidence.",
+      trace: { file: "06_infrastructure_platforms.csv", grain: "one platform", rule: "endOfLifeDate is not empty" },
     });
   }
   return findings;
@@ -363,6 +381,11 @@ export function dataFindings(assets: EstateRow[]): Finding[] {
       owner: "Chief Data Officer",
       because:
         "Both the regulation flag and the governance state come from the same row, so the population is exactly enumerable rather than estimated.",
+      trace: {
+        file: "05_data_assets_integrations.csv",
+        grain: "one data asset or integration",
+        rule: "regulatedDataFlag is true AND qualityStatus is not governed_production_grade",
+      },
     });
   }
   const top = countBy(assets, "integrationType")[0];
@@ -372,6 +395,7 @@ export function dataFindings(assets: EstateRow[]): Finding[] {
       claim: `${top.value} is the largest single integration pattern, at ${top.count} of ${assets.length} assets.`,
       owner: "VP Data & AI Platforms",
       because: "A modernization sequence that starts anywhere else leaves the largest population untouched.",
+      trace: { file: "05_data_assets_integrations.csv", grain: "one data asset or integration", rule: "grouped by integrationType" },
     });
   }
   return findings;

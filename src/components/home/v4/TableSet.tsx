@@ -1,4 +1,6 @@
 import type { Finding, FindingKind, TableSpec } from "./page-tables";
+import { LineageMark } from "./FactLineage";
+import type { FactLineage } from "./fact-lineage";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /**
@@ -18,6 +20,18 @@ const STRIPE: Record<FindingKind, string> = {
 };
 
 const COUNT_WORD = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+
+/** A finding's trace, in the shape the provenance mark reads. Same contract as Tower's. */
+function lineageForFinding(finding: Finding): FactLineage | null {
+  if (!finding.trace) return null;
+  return {
+    value: finding.claim,
+    label: "this finding",
+    grain: finding.trace.grain,
+    sources: [{ file: finding.trace.file, rows: 0, filter: finding.trace.rule }],
+    agreement: "single_source",
+  };
+}
 
 export function TableSet({ tables }: { tables: TableSpec[] }) {
   if (tables.length === 0) return null;
@@ -138,7 +152,14 @@ export function FindingsBlock({ findings }: { findings: Finding[] }) {
               alignItems: "start",
             }}
           >
-            <p style={{ margin: 0, fontFamily: SANS, fontSize: 15, lineHeight: 1.5, maxWidth: "68ch" }}>{finding.claim}</p>
+            <p style={{ margin: 0, fontFamily: SANS, fontSize: 15, lineHeight: 1.5, maxWidth: "68ch" }}>
+              {(() => {
+                const lineage = lineageForFinding(finding);
+                // A finding a reader cannot reproduce is an assertion, and an assertion carrying an
+                // owner's name is worse than none -- so the rule that produced it travels with it.
+                return lineage ? <LineageMark lineage={lineage}>{finding.claim}</LineageMark> : finding.claim;
+              })()}
+            </p>
             <span style={{ fontFamily: MONO, fontSize: 10.5, color: V4.slate, textAlign: "right", whiteSpace: "nowrap", paddingTop: 3 }}>
               {finding.owner}
             </span>
