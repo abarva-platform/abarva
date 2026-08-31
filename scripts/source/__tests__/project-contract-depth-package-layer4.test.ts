@@ -44,6 +44,9 @@ describe("contract depth package Layer 4 overlay job", () => {
       "source_contract_360_change_order_rows_package: 8",
     );
     expect(source).toContain("source_optimization_opportunity: 6");
+    expect(source).toContain(
+      "COALESCE(NULLIF(c.raw_payload ->> 'archetype', ''), v.supplier_category) AS vendor_category",
+    );
     expect(source).toContain(`SELECT * FROM sourcing
     WHERE source.can_read_sourcing_tenant(tenant_key)
     UNION ALL
@@ -82,8 +85,9 @@ describe("contract depth package Layer 4 overlay job", () => {
       "Do not answer cross-tenant vendor pricing prompts.",
     );
     expect(source).toContain(
-      "COALESCE(cov.vendor_name, o.vendor_ref, 'Unknown vendor') AS vendor_name",
+      "COALESCE(NULLIF(cov.vendor_name, ''), 'Vendor name not resolved') AS vendor_name",
     );
+    expect(source).not.toContain("o.vendor_ref, 'Unknown vendor') AS vendor_name");
     expect(source).not.toContain("o.vendor_name,");
     expect(source).toContain("page_key = 'contract_action'");
     expect(source).toContain("FROM source.contract_action_candidate_v1 a");

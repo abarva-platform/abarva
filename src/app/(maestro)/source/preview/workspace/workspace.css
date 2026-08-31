@@ -163,10 +163,15 @@
 }
 
 .sw-v2-horizontal-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: flex-end;
   gap: 0;
   margin: 18px 0 22px;
+  padding-top: 8px;
+  background: #f5f1eb;
   border-bottom: 4px solid #0a0a0b;
   overflow-x: auto;
 }
@@ -221,6 +226,29 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.sw-v2-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sw-v2-breadcrumb button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.sw-v2-breadcrumb button:hover {
+  color: #0a0a0b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .sw-v2-context {

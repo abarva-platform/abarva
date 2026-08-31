@@ -158,7 +158,7 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
       contract_id: contractId,
       vendor_ref: value(contract, 'vendor_ref'),
       vendor_name: value(contract, 'vendor_name'),
-      vendor_category: value(contract, 'category'),
+      vendor_category: value(contract, 'archetype') || value(contract, 'category'),
       contract_name: value(contract, 'contract_name'),
       scope_summary: `${scope.length} in-scope applications/services; ${criticalApps} critical.`,
       annual_value: value(contract, 'annual_value_usd'),

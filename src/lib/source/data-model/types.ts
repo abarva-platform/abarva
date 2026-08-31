@@ -48,6 +48,7 @@ export interface SourceContractVendor360Row extends ConflictFlagged {
   readonly vendor_ref: string;
   readonly vendor_name: string;
   readonly vendor_category: string | null;
+  readonly contract_archetype?: string | null;
   readonly contract_name: string;
   readonly scope_summary: string | null;
   readonly annual_value: number | null;
@@ -365,6 +366,8 @@ export interface SourceContractEvidenceCoverageRow {
   readonly contract_id: string;
   readonly vendor_ref: string;
   readonly vendor_name: string;
+  readonly vendor_category?: string | null;
+  readonly contract_archetype?: string | null;
   readonly contract_name: string;
   readonly spend_rows: number;
   readonly actual_spend_usd: number;
