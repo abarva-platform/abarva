@@ -112,6 +112,7 @@ function parseNumericCellValue(value: unknown): number | null {
 function inferredCellFormat(
   column: AnswerTableColumn,
 ): "currency" | "percent" | "number" | null {
+  if (column.format === "text") return null;
   if (
     column.format === "currency" ||
     column.format === "percent" ||
