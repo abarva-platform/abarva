@@ -759,6 +759,7 @@
     "ecl:source-room-commercial-layer:load": "python3 scripts/ecl/load_dense_source_room_commercial_layer.py",
     "ecl:source-room-review-layer:load": "python3 scripts/ecl/load_dense_source_room_review_layer.py",
     "ecl:source-room-source-projection:load": "python3 scripts/ecl/load_dense_source_room_source_projection_layer.py",
+    "test:ecl-home-projection-page-keys": "node scripts/ecl/__tests__/run-home-projection-page-key-loader-tests.mjs",
     "ecl:source-room-cube-layer:load": "python3 scripts/ecl/load_dense_source_room_cube_layer.py",
     "ecl:client-intake-documents-interviews:load": "python3 scripts/ecl/load_client_intake_documents_interviews_layer.py",
     "ecl:client-intake-applications:load": "python3 scripts/ecl/load_client_intake_applications_layer.py",

@@ -200,7 +200,12 @@ create table if not exists ecl_projection.home_enterprise_landscape (
       'applications_systems',
       'vendor_contracts',
       'infrastructure_platforms',
-      'data_assets_integrations'
+      'data_assets_integrations',
+      'metrics_outcomes',
+      'risks_controls',
+      'programs_initiatives',
+      'org_ownership',
+      'ai_use_cases'
     )
   ),
   constraint home_enterprise_landscape_value_state_check check (

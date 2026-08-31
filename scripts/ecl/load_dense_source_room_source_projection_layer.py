@@ -34,6 +34,69 @@ ASSESSMENT_ID = os.environ.get("ECL_DENSE_ASSESSMENT_ID", source_layer.ASSESSMEN
 ENTERPRISE_NAME = os.environ.get("ECL_DENSE_ENTERPRISE_NAME", "SkyHarbor Global" if os.environ.get("ECL_DENSE_PROFILE", "").strip().lower().replace("_", "-") in {"skyharbor", "skyharbor-air", "skyharbor-airline", "airline"} else "Meridian Health")
 ENTERPRISE_KEY = os.environ.get("ECL_DENSE_ENTERPRISE_KEY", "SKYHARBOR-GLOBAL" if os.environ.get("ECL_DENSE_PROFILE", "").strip().lower().replace("_", "-") in {"skyharbor", "skyharbor-air", "skyharbor-airline", "airline"} else "MERIDIAN-HEALTH")
 PROJECTION_VERSION = 1
+APPLICATION_PROJECTION_PASSTHROUGH_FIELDS = [
+    "cloud_readiness",
+    "authentication_method",
+    "annual_cost_basis",
+    "end_of_support_date",
+]
+ACTIVE_HOME_INTAKE_PAGE_FILES = [
+    {
+        "page_key": "metrics_outcomes",
+        "file_name": "14_metrics_outcomes.csv",
+        "section_key": "metric_outcome_record",
+        "row_type": "metric_outcome",
+        "row_key_fields": ["metric_id", "metric_name", "source_row_id", "original_row_id"],
+        "title_fields": ["metric_name", "metric_id"],
+        "summary_fields": ["business_function", "value_claim_status", "claim_readiness", "claim_blocked_reason", "unblock_action", "unblock_target_period"],
+        "basis_summary": "source_recorded_active_intake_metrics",
+        "required_fields": ["value_claim_status", "claim_readiness", "claim_blocked_reason", "unblock_action", "unblock_target_period"],
+    },
+    {
+        "page_key": "risks_controls",
+        "file_name": "11_risks_controls.csv",
+        "section_key": "risk_control_record",
+        "row_type": "risk_control",
+        "row_key_fields": ["risk_id", "risk_or_control_id", "control_id", "source_row_id", "original_row_id"],
+        "title_fields": ["risk_name", "control_name", "risk_or_control_id"],
+        "summary_fields": ["business_function", "severity", "control_status", "control_state", "systems_impacted", "remediation_cost_usd", "regulatory_driver"],
+        "basis_summary": "source_recorded_active_intake_risks",
+        "required_fields": [],
+    },
+    {
+        "page_key": "programs_initiatives",
+        "file_name": "09_programs_initiatives.csv",
+        "section_key": "program_initiative_record",
+        "row_type": "program_initiative",
+        "row_key_fields": ["program_id", "initiative_id", "source_row_id", "original_row_id"],
+        "title_fields": ["program_name", "initiative_name", "program_id"],
+        "summary_fields": ["sponsor_function", "business_function", "budget_usd", "approved_budget_usd", "expected_value_usd", "target_value_usd", "pct_complete", "stage_gate", "blocked_reason"],
+        "basis_summary": "source_recorded_active_intake_programs",
+        "required_fields": [],
+    },
+    {
+        "page_key": "org_ownership",
+        "file_name": "02_org_ownership.csv",
+        "section_key": "organization_ownership_record",
+        "row_type": "organization_ownership",
+        "row_key_fields": ["org_unit_id", "organization_id", "source_row_id", "original_row_id", "org_unit"],
+        "title_fields": ["org_unit", "leader_name_or_role", "organization_name"],
+        "summary_fields": ["leader_name_or_role", "decision_rights", "budget_authority_usd", "owned_systems", "owned_data_domains"],
+        "basis_summary": "source_recorded_active_intake_org_ownership",
+        "required_fields": [],
+    },
+    {
+        "page_key": "ai_use_cases",
+        "file_name": "10_ai_automation_use_cases.csv",
+        "section_key": "ai_use_case_record",
+        "row_type": "ai_use_case",
+        "row_key_fields": ["use_case_id", "ai_use_case_id", "source_row_id", "original_row_id", "use_case_name"],
+        "title_fields": ["use_case_name", "use_case_id"],
+        "summary_fields": ["business_segment", "business_function", "function_type", "office_lens_abarva", "tool_name", "value_claim_status", "finance_validated_value_usd", "realized_value_allowed"],
+        "basis_summary": "source_recorded_active_intake_ai_use_cases",
+        "required_fields": [],
+    },
+]
 DDL_FILES = [
     ROOT / "docs/architecture/sql-drafts/ecl_physical_schema_v1_draft.sql",
     ROOT / "docs/architecture/sql-drafts/ecl_product_projection_tables_v1_draft.sql",
@@ -54,6 +117,28 @@ def write_json(path: Path, payload: Any) -> None:
 def source_paths(dense_out_dir: Path) -> dict[str, Path]:
     manifest = read_csv(dense_out_dir / "dense_source_room_manifest.csv")
     return {row["source_room_family"]: dense_out_dir / row["file_path"] for row in manifest}
+
+
+def active_tenant_input_root() -> Path | None:
+    registry_path = ROOT / "datasets/tenant-inputs/tenant-input-registry.json"
+    if not registry_path.exists():
+        return None
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    for tenant in registry.get("activeTenants", []):
+        if tenant.get("tenantKey") == TENANT_KEY:
+            root = tenant.get("canonicalInputRoot")
+            return ROOT / root if root else None
+    return None
+
+
+def read_active_tenant_csv(file_name: str) -> list[dict[str, str]]:
+    root = active_tenant_input_root()
+    if root is None:
+        return []
+    path = root / file_name
+    if not path.exists():
+        return []
+    return read_csv(path)
 
 
 def source_record_id(family: str, row: dict[str, str], index: int) -> str:
@@ -157,6 +242,35 @@ def source_ref(family: str, row: dict[str, str], index: int) -> dict[str, Any]:
         "basis": row.get("source_basis"),
         "review_state": row.get("review_state"),
     }
+
+
+def active_source_ref(page_key: str, file_name: str, row: dict[str, str], index: int) -> dict[str, Any]:
+    return {
+        "source_family": page_key,
+        "source_file": file_name,
+        "source_file_id": f"active:{TENANT_KEY}:{file_name}",
+        "source_row_number": index,
+        "source_row_id": row.get("source_row_id") or row.get("original_row_id"),
+        "basis": row.get("source_basis") or row.get("source_classification") or "active_tenant_intake",
+        "review_state": row.get("review_state") or row.get("confidence") or "not_reviewed",
+    }
+
+
+def first_present(row: dict[str, str], fields: list[str]) -> str | None:
+    for field in fields:
+        value = (row.get(field) or "").strip()
+        if value:
+            return value
+    return None
+
+
+def intake_record_row_key(page_key: str, row: dict[str, str], index: int, fields: list[str]) -> str:
+    return first_present(row, fields) or f"{page_key}-{index:05d}"
+
+
+def intake_record_summary(row: dict[str, str], fields: list[str]) -> str:
+    parts = [f"{field}: {row[field]}" for field in fields if (row.get(field) or "").strip()]
+    return "; ".join(parts) if parts else "Record loaded from active tenant intake."
 
 
 def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
@@ -1398,6 +1512,8 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
         )
 
     for index, row in enumerate(apps, start=1):
+        for field in APPLICATION_PROJECTION_PASSTHROUGH_FIELDS:
+            row.setdefault(field, "")
         add_home_row(
             page_key="applications_systems",
             row_key=row["application_id"],
@@ -1449,6 +1565,34 @@ def build_projection_sql(dense_out_dir: Path, out_dir: Path) -> dict[str, Any]:
             gap_flags=[{"gap": "commercial_terms_need_review"}] if row.get("benchmarking_right") in {"absent", "limited"} else [],
             display_payload=row,
         )
+
+    for spec in ACTIVE_HOME_INTAKE_PAGE_FILES:
+        page_key = spec["page_key"]
+        file_name = spec["file_name"]
+        rows = read_active_tenant_csv(file_name)
+        for index, row in enumerate(rows, start=1):
+            row_key = intake_record_row_key(page_key, row, index, spec["row_key_fields"])
+            missing_required = [
+                field
+                for field in spec["required_fields"]
+                if field not in row
+            ]
+            add_home_row(
+                page_key=page_key,
+                row_key=row_key,
+                section_key=spec["section_key"],
+                row_type=spec["row_type"],
+                title=first_present(row, spec["title_fields"]) or row_key,
+                summary=intake_record_summary(row, spec["summary_fields"]),
+                primary_object_id=None,
+                metric_keys=[],
+                relationship_ids=[],
+                source_refs=[active_source_ref(page_key, file_name, row, index)],
+                basis_summary=spec["basis_summary"],
+                quality_state="warning" if missing_required else "passed",
+                gap_flags=[{"gap": "required_intake_columns_missing", "fields": missing_required}] if missing_required else [],
+                display_payload=row,
+            )
 
     for index, row in enumerate(data_rows, start=1):
         add_home_row(
