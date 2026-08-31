@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  DEFAULT_ECL_SCHEMAS,
   PROOF_BEGIN_MARKER,
   addIfNotExistsToIndexDef,
   orderViewsByDependency,
@@ -208,6 +209,15 @@ test("emitted SQL names the four Tower projection tables that were previously on
   assert.match(emitter, /pg_get_functiondef/);
   assert.match(emitter, /pg_policies/);
   assert.match(sql, /create table if not exists "ecl_projection"\."tower_ai_portfolio"/);
+});
+
+test("default baseline schema scope includes the legacy Tower schema", () => {
+  assert.ok(DEFAULT_ECL_SCHEMAS.includes("tower"), "legacy Tower schema must stay in the default substrate scope");
+
+  const inventoryProbe = fs.readFileSync(path.join(repoRoot, "scripts/ops/probe-ecl-substrate-inventory.mjs"), "utf8");
+  const diffProbe = fs.readFileSync(path.join(repoRoot, "scripts/ops/probe-ecl-substrate-diff.mjs"), "utf8");
+  assert.match(inventoryProbe, /"tower"/);
+  assert.match(diffProbe, /"tower"/);
 });
 
 let failed = 0;

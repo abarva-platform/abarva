@@ -22,6 +22,7 @@ export const DEFAULT_ECL_SCHEMAS = [
   "ecl_review",
   "ecl_projection",
   "serving",
+  "tower",
 ];
 
 export const PROOF_BEGIN_MARKER = "__ECL_SUBSTRATE_BASELINE_TGZ_BEGIN__";
