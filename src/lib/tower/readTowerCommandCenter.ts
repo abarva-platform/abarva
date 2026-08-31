@@ -361,26 +361,50 @@ function isMissingTableError(error: unknown): boolean {
   return code === "42P01" || /relation .* does not exist/i.test(message);
 }
 
+function quoteSqlIdentifier(value: string): string {
+  const clean = value.trim();
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(clean)) {
+    throw new Error(`tower_invalid_runtime_read_role: ${value}`);
+  }
+  return `"${clean}"`;
+}
+
+function towerRuntimeReadRole(): string {
+  return process.env.TOWER_RUNTIME_READ_ROLE?.trim() || "tower_projection_reader";
+}
+
 async function withTowerTenantRead<T>(
   tenantKey: string,
   fn: (query: TowerSqlQuery) => Promise<T>,
 ): Promise<T> {
   return azureRead.withSession(async (run) => {
-    await run("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
-    const query: TowerSqlQuery = async (sql, params = [], opts = {}) => {
-      try {
-        return await run(sql, [...params]);
-      } catch (error) {
-        if (
-          (opts.missingTable ?? "throw") === "empty" &&
-          isMissingTableError(error)
-        ) {
-          return [];
+    let transactionOpen = false;
+    await run("BEGIN READ ONLY", []);
+    transactionOpen = true;
+    try {
+      await run(`SET LOCAL ROLE ${quoteSqlIdentifier(towerRuntimeReadRole())}`, []);
+      await run("SELECT set_config('app.tenant_key', $1, true)", [tenantKey]);
+      const query: TowerSqlQuery = async (sql, params = [], opts = {}) => {
+        try {
+          return await run(sql, [...params]);
+        } catch (error) {
+          if (
+            (opts.missingTable ?? "throw") === "empty" &&
+            isMissingTableError(error)
+          ) {
+            return [];
+          }
+          throw error;
         }
-        throw error;
-      }
-    };
-    return fn(query);
+      };
+      const result = await fn(query);
+      await run("COMMIT", []);
+      transactionOpen = false;
+      return result;
+    } catch (error) {
+      if (transactionOpen) await run("ROLLBACK", []).catch(() => []);
+      throw error;
+    }
   });
 }
 
