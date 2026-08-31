@@ -46,6 +46,9 @@ Release lane: `global-control-lane`.
 - `scripts/data-build/enterprise-signal-packet.ts` — analytical lenses now carry their recorded
   content, not only a title: a pattern's business context, its applicability to this enterprise and
   its caveats; a lens's expert role, the questions it puts, and what an answer would decide.
+- `src/components/home/v4/fact-lineage.ts` + `FactLineage.tsx` (new) — a figure that shows its own
+  working: the grain, the files, the rule, and any other count of the same subject with the reason
+  it differs. The hero figure on the executive story uses it.
 - `src/components/home/v4/business-briefing.ts` + `BusinessBriefing.tsx` (new) — the
   day-one briefing for the two chapters that answer "what is this company": how the money
   is made, the declared priorities verbatim, the leadership position as consensus/dissent/
@@ -66,7 +69,7 @@ component — a chapter whose rows produce nothing renders no block at all.
 
 ## QA / Validation
 
-- PASS `npx jest src/components/home/v4/__tests__` — 48/48, seven suites, no regression
+- PASS `npx jest src/components/home/v4/__tests__` — 56/56, eight suites, no regression
 - PASS `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts` — no regression
 - PASS `npx eslint` on all eight changed or added files
 - PASS `tsc --noEmit -p tsconfig.json` (full project)
@@ -85,6 +88,22 @@ Against the current snapshot, the technology chapter renders six tables — busi
 hosting, cloud readiness, lifecycle state, authentication × data classification, integration
 pattern, governance state — and five findings. The authentication crossing produces a population no
 single column holds: 108 applications carrying PHI authenticate on local accounts.
+
+### Why grain, and not just source
+
+The live product reports 750 applications while the estate file carries 306 rows. Neither is
+labelled, so a reader cannot tell whether that is a contradiction, a different population, or a
+different grain — three different problems with three different fixes. It is the third: one is a
+count of application records, the other a count of deployed instances, where a single application in
+production, test and disaster recovery counts three times.
+
+How a thing is grouped decides the answer before any arithmetic happens, so every rendered figure
+now carries what one row means alongside the number. A count without a grain is not a fact, and
+presenting either of those two figures as "the number of applications" states something false out of
+two true ones.
+
+An unexplained disagreement is treated as a defect rather than a nuance: the figure is marked not
+quotable and both numbers render, rather than one quietly winning.
 
 ## Rollout Plan
 
@@ -140,3 +159,5 @@ view the intake already held and no surface could reach.
   code gap.
 - **No competitor or benchmark data exists anywhere in the intake.** Named on the page rather than
   left silent.
+- **Lineage is on the hero figure only.** Every other figure still renders bare. The model is
+  general and the remaining surfaces are mechanical to convert.
