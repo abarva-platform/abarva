@@ -609,7 +609,8 @@ assert(
   script.includes("home-executive-story-plan/v1") &&
     script.includes("buildHomeExecutiveStoryPlan") &&
     script.includes("row_type = 'story_plan'") &&
-    script.includes("'executive_story_plan_v1','story_plan'"),
+    script.includes("'executive_story_plan_v1','story_plan'") &&
+    script.includes("const rowKey = claim.claim_ref ??"),
   "ECL narrative job writes an explicit Home executive story plan from verified claim refs",
 );
 assert(
