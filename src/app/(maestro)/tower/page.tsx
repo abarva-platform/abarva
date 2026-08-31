@@ -10,10 +10,7 @@ import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
 import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { AppShell } from "@/components/shell/AppShell";
 import { TowerCommandCenterAvaShell } from "@/components/tower/command-center/TowerCommandCenterAvaShell";
-import {
-  getActiveClientRow,
-  hasLockedTenantSession,
-} from "@/lib/active-client";
+import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
   isEclProductProvider,
@@ -93,7 +90,7 @@ export async function renderTowerPage({
   const rawRequestedClient = firstSearchValue(resolved?.client);
   const requestedClient =
     trustedTenant?.clientKey ??
-    ((await hasLockedTenantSession()) ? rawRequestedClient : null);
+    rawRequestedClient;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
   const effectiveClientKey = trustedTenant?.clientKey ?? client?.key ?? null;
 

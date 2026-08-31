@@ -42,4 +42,18 @@ describe("tenant Tower route scope", () => {
     expect(source).not.toContain("loadTowerMartCommandView");
     expect(source).not.toContain("mart ??");
   });
+
+  it("passes the explicit client query into the active-client resolver", () => {
+    const source = readRepoFile("src/app/(maestro)/tower/page.tsx");
+
+    expect(source).toContain(
+      "const requestedClient =\n" +
+        "    trustedTenant?.clientKey ??\n" +
+        "    rawRequestedClient;",
+    );
+    expect(source).toContain("getActiveClientRow(requestedClient)");
+    expect(source).not.toContain(
+      "((await hasLockedTenantSession()) ? rawRequestedClient : null)",
+    );
+  });
 });
