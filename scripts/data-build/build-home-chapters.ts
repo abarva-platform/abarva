@@ -188,14 +188,16 @@ export function buildHomeChapterProvenance(signalPacket: EnterpriseSignalPacket,
   };
 }
 
+export function getHomeChapterCliArg(argv: string[], name: string, fallback?: string): string | undefined {
+  const i = argv.lastIndexOf(name);
+  return i > -1 ? argv[i + 1] : fallback;
+}
+
 const TENANTS = (() => {
-  const i = process.argv.indexOf("--tenant");
-  return i > -1 ? [process.argv[i + 1]] : ["meridian-health", "skyharbor-air"];
+  const tenant = getHomeChapterCliArg(process.argv, "--tenant");
+  return tenant ? [tenant] : ["meridian-health", "skyharbor-air"];
 })();
-const OUT_DIR = (() => {
-  const i = process.argv.indexOf("--out-dir");
-  return i > -1 ? process.argv[i + 1] : "/tmp/home-chapters";
-})();
+const OUT_DIR = getHomeChapterCliArg(process.argv, "--out-dir", "/tmp/home-chapters") ?? "/tmp/home-chapters";
 const MEASURE_QUALITY = process.argv.includes("--measure-quality");
 
 /* ------------------------------------------------------------------------------------------------
