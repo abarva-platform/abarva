@@ -293,7 +293,9 @@ const OPERATING_MODEL_DOMAINS = new Set([
 const OPERATING_MODEL_LANGUAGE_RE =
   /\b(?:accountability|business[-\s]?function|budget authority|decision[-\s]?rights|function|headcount|managed[-\s]?service|operating[-\s]?model|organization|owner|ownership|process|role|service[-\s]?delivery|workforce)\b/i;
 const PUBLISHED_REFUSAL_LANGUAGE_RE =
-  /\b(?:deferred pending stronger evidence|does not yet support a board-ready answer|does not yet connect enough verified statements|evidence needs resolution before executive use|not ready for executive review)\b/i;
+  /\b(?:deferred pending stronger evidence|does not yet support a board[-\s]?ready answer|does not yet connect enough verified statements|evidence needs resolution before executive use|not ready for executive review|current governed record does not yet support|keep this chapter in review until|preserves? the gap rather than)\b/i;
+const GENERIC_ATTENTION_HEADLINE_RE =
+  /^(?:what needs attention\s*:|executive attention\s*:|attention agenda\s*:)?\s*(?:evidence needs resolution|not enough verified evidence|not ready|deferred|coverage gap)\b/i;
 const EVIDENCE_BOUNDARY_CLAIM_RE =
   /\b(?:bounded by|candidate facts were withheld|sections with no cited claim|coverage breadth|not evidence for a business claim|synthetic|not client-attested|source-family summaries)\b/i;
 
@@ -329,6 +331,17 @@ function concreteAttentionClaims(claims: GroundedClaim[]): GroundedClaim[] {
     !EVIDENCE_BOUNDARY_CLAIM_RE.test(claim.statement)
   );
   return concrete.length ? concrete : claims.filter((claim) => !PUBLISHED_REFUSAL_LANGUAGE_RE.test(claim.statement));
+}
+
+function claimBackedNarrativeNeedsFallback(
+  chapterId: ChapterId,
+  synthesis: Pick<ChapterSynthesisResult, "headline" | "executive_synthesis"> | null,
+  claims: GroundedClaim[],
+): boolean {
+  if (!synthesis || claims.length === 0) return false;
+  const generatedText = `${synthesis.headline} ${synthesis.executive_synthesis}`;
+  if (PUBLISHED_REFUSAL_LANGUAGE_RE.test(generatedText)) return true;
+  return chapterId === "what_needs_attention" && GENERIC_ATTENTION_HEADLINE_RE.test(synthesis.headline);
 }
 
 /** Verifier-rejected claims survive as `null` in place (see dropClaim) rather than being spliced
@@ -864,6 +877,19 @@ function deterministicClaimBasedChapterNarrative(
   const headlineClaim = publishableClaims.find((claim) => !EVIDENCE_BOUNDARY_CLAIM_RE.test(claim.statement)) ?? publishableClaims[0] ?? claims[0];
   const headline = clean(headlineClaim?.statement ?? `${def.title} has verified evidence for review`);
   const support = publishableClaims.slice(0, 4).map((claim) => clean(claim.statement));
+  if (def.title === "What Needs Attention") {
+    return {
+      headline: headline.length > 260 ? `${headline.slice(0, 257).trim()}...` : headline,
+      executive_synthesis: [
+        `The executive attention agenda is grounded in ${claims.length.toLocaleString()} verified statement${claims.length === 1 ? "" : "s"}.`,
+        ...support,
+        "Use this page to assign owners, evidence, and next decisions for the named blockers rather than treating absence as resolution.",
+      ].join(" "),
+      inputTokens,
+      outputTokens,
+      stopReason,
+    };
+  }
   return {
     headline: headline.length > 260 ? `${headline.slice(0, 257).trim()}...` : headline,
     executive_synthesis: [
@@ -1010,7 +1036,16 @@ export async function buildChapterViewsFromVerifiedThesis(
     const effectiveDef = chapterDefinitionForPacket(def, signalPacket as EnterpriseSignalPacketWithPromptContracts);
     const slice = slices[def.id];
     const allClaims = [...slice.key_insights, ...slice.tensions, ...slice.what_to_watch];
-    const synthesis = await synthesizeChapterNarrative(client, effectiveDef, allClaims, signalPacket as EnterpriseSignalPacketWithPromptContracts, synthesisOptions);
+    let synthesis = await synthesizeChapterNarrative(client, effectiveDef, allClaims, signalPacket as EnterpriseSignalPacketWithPromptContracts, synthesisOptions);
+    if (claimBackedNarrativeNeedsFallback(def.id, synthesis, allClaims)) {
+      synthesis = deterministicClaimBasedChapterNarrative(
+        effectiveDef,
+        allClaims,
+        synthesis?.inputTokens ?? 0,
+        synthesis?.outputTokens ?? 0,
+        "post_synthesis_refusal_language_fallback",
+      );
+    }
     options?.telemetry?.push({
       chapterId: def.id,
       assignedClaims: allClaims.length,
