@@ -267,7 +267,10 @@ export function HomeV4App({
         style={{
           display: "grid",
           gridTemplateColumns: "250px minmax(min(100%,560px),1fr)",
-          minHeight: "100vh",
+          flex: 1,
+          height: "100%",
+          minHeight: 0,
+          overflow: "hidden",
           background: V4.paper,
           color: V4.ink,
           fontFamily: SANS,
@@ -284,7 +287,7 @@ export function HomeV4App({
           compiledLine={compiledLine}
         />
 
-        <main style={{ minWidth: 0, padding: "0 0 130px" }}>
+        <main style={{ minWidth: 0, overflowY: "auto", padding: "0 0 60px" }}>
           {activeChapter ? (
             isDrafted(activeChapter.chapterId) ? (
               <ChapterPage

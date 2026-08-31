@@ -129,6 +129,10 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(screen.queryByText("The briefing")).not.toBeInTheDocument();
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
 
+    const shell = container.querySelector("[data-home-tier1-shell]");
+    expect(shell).toHaveStyle({ height: "100%", overflow: "hidden" });
+    expect(container.querySelector("[data-home-tier1-main]")).toHaveStyle({ overflowY: "auto" });
+
     const sections = Array.from(container.querySelectorAll("[data-home-tier1-section]"));
     expect(sections).toHaveLength(1);
     expect(sections.map((section) => section.getAttribute("data-home-tier1-terminal-state"))).toEqual(
@@ -182,6 +186,12 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(architectureCard.children).toHaveLength(2);
     expect(architectureCard.children[0]).toHaveTextContent("Architecture");
     expect(architectureCard.children[1]).toHaveTextContent("Conceptual blocks first, then logical and physical drilldown.");
+    expect(architectureCard).toHaveAttribute("data-home-evidence-entry-card");
+    expect(architectureCard).toHaveStyle({ display: "grid", gap: "10px", alignContent: "start" });
+    expect(architectureCard.children[0]).toHaveAttribute("data-home-evidence-entry-title");
+    expect(architectureCard.children[0]).toHaveStyle({ display: "block", margin: "0px" });
+    expect(architectureCard.children[1]).toHaveAttribute("data-home-evidence-entry-body");
+    expect(architectureCard.children[1]).toHaveStyle({ display: "block", margin: "0px" });
   });
 
   it("opens the executive story on enterprise shape, not supplier concentration", () => {
