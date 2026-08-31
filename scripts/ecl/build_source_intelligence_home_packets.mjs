@@ -9,6 +9,7 @@ const DEFAULT_SOURCE_DIR = path.join("outputs", "source-intelligence", "meridian
 const DEFAULT_OUT_DIR = path.join("outputs", "source-intelligence", "meridian-health", "home-page-packets");
 const DEFAULT_INVENTORY_DIR = "";
 const DEFAULT_SEGMENT_SPINE_REPORT = "";
+const DEFAULT_EVIDENCE_LED_CONTRACT = path.join("config", "home", "evidence-led-pages.json");
 const PAGE_DEFS = [
   {
     page_key: "executive_brief",
@@ -212,6 +213,7 @@ function parseArgs(argv) {
     sourceDir: DEFAULT_SOURCE_DIR,
     inventoryDir: DEFAULT_INVENTORY_DIR,
     segmentSpineReport: DEFAULT_SEGMENT_SPINE_REPORT,
+    evidenceLedContract: DEFAULT_EVIDENCE_LED_CONTRACT,
     outDir: DEFAULT_OUT_DIR,
     maxArtifactsPerPage: 12,
   };
@@ -225,6 +227,7 @@ function parseArgs(argv) {
     if (arg === "--source-dir") args.sourceDir = next();
     else if (arg === "--inventory-dir") args.inventoryDir = next();
     else if (arg === "--segment-spine-report") args.segmentSpineReport = next();
+    else if (arg === "--evidence-led-contract") args.evidenceLedContract = next();
     else if (arg === "--out-dir") args.outDir = next();
     else if (arg === "--max-artifacts-per-page") args.maxArtifactsPerPage = Number(next());
     else if (arg === "--help") {
@@ -234,6 +237,8 @@ Options:
   --source-dir <dir>              Model-pass output directory containing accepted/*.json.
   --inventory-dir <dir>           Optional inventory output directory containing prompts/*.json with source_content.
   --segment-spine-report <json>   Optional deterministic segment-spine report from report-segment-spine.ts.
+  --evidence-led-contract <json>
+                                  Page-level evidence-led contract. Default: ${DEFAULT_EVIDENCE_LED_CONTRACT}.
   --out-dir <dir>                 Output directory for Home page packets and prompts.
   --max-artifacts-per-page <n>    Safety bound per page unless include_all is true. Default: 12.`);
       process.exit(0);
@@ -460,6 +465,45 @@ function loadSegmentSpineReport(file) {
   return readJson(file);
 }
 
+function loadEvidenceLedContract(file) {
+  if (!file) return null;
+  if (!fs.existsSync(file)) throw new Error(`Evidence-led contract not found: ${file}`);
+  const contract = readJson(file);
+  const byPage = new Map();
+  for (const page of contract.pages ?? []) {
+    for (const pageKey of page.home_page_keys ?? []) {
+      if (byPage.has(pageKey)) {
+        throw new Error(`Evidence-led contract maps ${pageKey} more than once`);
+      }
+      byPage.set(pageKey, page);
+    }
+  }
+  return {
+    contract_version: contract.contract_version,
+    purpose: contract.purpose,
+    rules: contract.rules ?? [],
+    charts: contract.charts ?? [],
+    pages: contract.pages ?? [],
+    byPage,
+  };
+}
+
+function evidenceLedContractForPage(page, contract) {
+  if (!contract) return null;
+  const pageContract = contract.byPage.get(page.page_key);
+  if (!pageContract) return null;
+  return {
+    contract_version: contract.contract_version,
+    purpose: contract.purpose,
+    global_rules: contract.rules,
+    page_contract: pageContract,
+    allowed_charts: contract.charts.filter((chart) => (chart.page_keys ?? []).includes(page.page_key)),
+    terminal_states: ["published", "refused", "deferred"],
+    usage_rule:
+      "Use this contract to choose the page lead, table, finding blocks, and drill links. Do not invent sections outside this contract.",
+  };
+}
+
 function segmentContextForPage(page, report) {
   if (!report) return null;
   const relevantPages = new Set([
@@ -507,6 +551,8 @@ function buildPrompt(page, packet) {
       "Use executive language for executive pages and expert technologist language for architecture/data pages.",
       "Use source_content_context when present for detail; do not rely only on compact summaries.",
       "Use segment_spine_context and source_evidence_tables as fixed deterministic exhibits; interpret them, do not recalculate them.",
+      "Use evidence_led_contract when present as the page ordering contract: question, lead fact, governing table, findings, then drill links.",
+      "For executive pages, do not open on a vendor, system, or tool unless the evidence_led_contract explicitly names that as the page lead.",
     ].join(" "),
     user: {
       page_question: page.question,
@@ -524,6 +570,11 @@ function buildPrompt(page, packet) {
         deterministic_tables_to_use: [
           "segment_spine_context when present",
           "source_evidence_tables when present",
+          "evidence_led_contract when present",
+        ],
+        terminal_state: "published | refused | deferred",
+        findings: [
+          "each finding names owner_role, because_clause, source_files, evidence_needed when applicable",
         ],
         drilldowns_to_enable: page.drilldowns,
         evidence_basis: ["file/family/source refs"],
@@ -549,6 +600,7 @@ function main() {
   const artifacts = listAcceptedArtifacts(options.sourceDir);
   const sourceContentIndex = loadSourceContentIndex(options.inventoryDir);
   const segmentSpineReport = loadSegmentSpineReport(options.segmentSpineReport);
+  const evidenceLedContract = loadEvidenceLedContract(options.evidenceLedContract);
   if (artifacts.length === 0) throw new Error("No accepted source-intelligence artifacts found");
 
   fs.mkdirSync(options.outDir, { recursive: true });
@@ -562,6 +614,7 @@ function main() {
     const sourceContentContext = sourceContentForPage(selected, sourceContentIndex);
     const sourceEvidenceTables = sourceEvidenceTablesForPage(sourceContentContext);
     const segmentSpineContext = segmentContextForPage(page, segmentSpineReport);
+    const evidenceLedContext = evidenceLedContractForPage(page, evidenceLedContract);
     const packet = {
       contract_version: CONTRACT_VERSION,
       tenant_key: runManifest.tenant_key,
@@ -596,6 +649,7 @@ function main() {
       source_content_context: sourceContentContext,
       source_evidence_tables: sourceEvidenceTables,
       segment_spine_context: segmentSpineContext,
+      evidence_led_contract: evidenceLedContext,
       evidence_basis: compact.map((artifact) => ({
         source_family: artifact.source_family,
         source_file: artifact.source_file,
@@ -623,6 +677,7 @@ function main() {
       source_content_context_count: sourceContentContext.length,
       source_evidence_table_count: sourceEvidenceTables.length,
       segment_spine_context_present: Boolean(segmentSpineContext),
+      evidence_led_contract_present: Boolean(evidenceLedContext),
       packet_hash: packetHash,
       prompt_hash: promptHash,
     });
@@ -636,11 +691,13 @@ function main() {
     source_model_pass_dir: options.sourceDir,
     source_inventory_dir: options.inventoryDir || null,
     segment_spine_report: options.segmentSpineReport || null,
+    evidence_led_contract: options.evidenceLedContract || null,
     page_count: pages.length,
     total_source_artifact_count: artifacts.length,
     source_content_context_count: pages.reduce((sum, page) => sum + page.source_content_context_count, 0),
     source_evidence_table_count: pages.reduce((sum, page) => sum + page.source_evidence_table_count, 0),
     segment_spine_context_page_count: pages.filter((page) => page.segment_spine_context_present).length,
+    evidence_led_contract_page_count: pages.filter((page) => page.evidence_led_contract_present).length,
     pages,
     generated_at: new Date().toISOString(),
   };
@@ -655,6 +712,7 @@ function main() {
     source_content_context_count: manifest.source_content_context_count,
     source_evidence_table_count: manifest.source_evidence_table_count,
     segment_spine_context_page_count: manifest.segment_spine_context_page_count,
+    evidence_led_contract_page_count: manifest.evidence_led_contract_page_count,
     out_dir: options.outDir,
   }, null, 2));
 }
