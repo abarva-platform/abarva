@@ -100,7 +100,7 @@ workflow. No data rollback is required because this is presentation logic only.
 
 - PR URL: https://github.com/abarva-platform/abarva/pull/7211
 - Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7213
-- Second follow-up PR URL: pending.
+- Second follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7214
 - ACA deploy run: pending.
 - Signed-in Source workspace proof: pending.
 
