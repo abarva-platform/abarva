@@ -1,4 +1,9 @@
-import type { Finding, FindingKind, TableSpec } from "./page-tables";
+import type {
+  Finding,
+  FindingKind,
+  TableSpec,
+  UnsupportedView,
+} from "./page-tables";
 import { LineageMark } from "./FactLineage";
 import type { FactLineage } from "./fact-lineage";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
@@ -257,6 +262,67 @@ export function FindingsBlock({ findings }: { findings: Finding[] }) {
             >
               {finding.because}
             </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Views the rows could not support.
+ *
+ * Rendered at the same weight as everything else, because a table that simply vanishes tells a
+ * reader this enterprise has nothing there. Naming the missing column separates a gap in the record
+ * from a gap in what reached the page, and only one of those is theirs to worry about.
+ */
+export function UnsupportedViews({ views }: { views: UnsupportedView[] }) {
+  if (views.length === 0) return null;
+  return (
+    <section
+      data-home-unsupported={views.length}
+      style={{
+        padding: `26px ${PAGE_X}px 0`,
+        display: "flex",
+        flexDirection: "column",
+        gap: 11,
+      }}
+    >
+      <span style={eyebrow(V4.amber)}>
+        {views.length === 1
+          ? "One view this page cannot build"
+          : `${views.length} views this page cannot build`}
+      </span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {views.map((view) => (
+          <div
+            key={view.caption}
+            style={{
+              background: V4.surface,
+              border: `1px solid ${V4.rule}`,
+              boxShadow: `inset 3px 0 0 ${V4.amber}`,
+              padding: "13px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            <span
+              style={{ fontFamily: SANS, fontSize: 14.5, lineHeight: 1.45 }}
+            >
+              {view.caption}
+            </span>
+            <span
+              style={{
+                fontFamily: SANS,
+                fontSize: 12.5,
+                lineHeight: 1.5,
+                color: V4.slate,
+                maxWidth: "78ch",
+              }}
+            >
+              {view.why}
+            </span>
           </div>
         ))}
       </div>
