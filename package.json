@@ -807,6 +807,8 @@
     "tower:migrate:rls:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260830210000_tower_projection_tenant_policies.sql",
     "tower:migrate:runtime-reader:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260831122000_tower_runtime_reader_role.sql",
     "tower:migrate:runtime-reader:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260831122000_tower_runtime_reader_role.sql",
+    "tower:migrate:runtime-reader-context:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260831124000_tower_runtime_reader_context_grants.sql",
+    "tower:migrate:runtime-reader-context:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260831124000_tower_runtime_reader_context_grants.sql",
     "tower:migrate:page-key:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260830230000_tower_serving_page_key_split.sql",
     "tower:migrate:page-key:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260830230000_tower_serving_page_key_split.sql",
     "tower:migrate:serving-lens-scope:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260830234500_tower_serving_remaining_lens_scope.sql",
