@@ -527,7 +527,10 @@ export function WorkspaceExecutiveShell({
               {headerContract
                 ? headerContract.contract_id
                 : selectedVendor
-                  ? selectedVendor.vendor_name
+                  ? safeVendorDisplayName(
+                      selectedVendor.vendor_name,
+                      selectedVendor.vendor_ref,
+                    )
                   : tenantName || "Current workspace"}
             </b>
           </div>
@@ -994,7 +997,14 @@ function VendorsPage({
       <section className="sw-v2-panel">
         <PanelHead
           eyebrow="Selected vendor"
-          title={selectedVendor?.vendor_name ?? "Select a vendor"}
+          title={
+            selectedVendor
+              ? safeVendorDisplayName(
+                  selectedVendor.vendor_name,
+                  selectedVendor.vendor_ref,
+                )
+              : "Select a vendor"
+          }
         />
         {selectedVendor ? (
           <div className="sw-v2-vendor-summary">
@@ -1047,7 +1057,10 @@ function VendorsPage({
                     onClick={() => onOpenContract(contract.contract_id)}
                   >
                     <b>{contract.contract_id}</b>
-                    <small>{contract.contract_name || contract.vendor_name}</small>
+                    <small>
+                      {contract.contract_name ||
+                        safeContractVendorDisplayName(contract)}
+                    </small>
                     <strong>{money(numberFromDb(contract.annual_value))}</strong>
                   </button>
                 ))
@@ -1906,7 +1919,7 @@ function ContractListTable({
             <b>{contract.contract_name}</b>
             <small>{contract.contract_id}</small>
           </span>
-          <span>{contract.vendor_name}</span>
+          <span>{safeContractVendorDisplayName(contract)}</span>
           <span>{reason}</span>
           <span>{money(numberFromDb(contract.annual_value))}</span>
           <span>
@@ -2002,7 +2015,7 @@ function ContractFinancialPostureTable({
         >
           <span>
             <b>{contract.contract_name}</b>
-            <small>{contract.vendor_name}</small>
+            <small>{safeContractVendorDisplayName(contract)}</small>
           </span>
           <span>{money(numberFromDb(contract.annual_value))}</span>
           <span>{money(numberFromDb(contract.actual_annual_spend))}</span>
@@ -2114,7 +2127,7 @@ function ContractPage({
           </>
         ) : (
           <div className="sw-v2-fact-grid">
-            <Fact label="Vendor" value={contract.vendor_name} />
+            <Fact label="Vendor" value={safeContractVendorDisplayName(contract)} />
             <Fact
               label="Annual value"
               value={money(numberFromDb(contract.annual_value))}
@@ -4254,6 +4267,10 @@ function safeVendorDisplayName(
   return "Vendor name not resolved";
 }
 
+function safeContractVendorDisplayName(contract: SourceContract360Row) {
+  return safeVendorDisplayName(contract.vendor_name, contract.vendor_ref);
+}
+
 function preferVendorDisplayName(left: string, right: string) {
   if (left === "Vendor name not resolved") return right;
   if (isOpaqueIdentifier(left)) return right;
@@ -4322,8 +4339,14 @@ function headlineFor(
   vendor: SourceVendorContractPortfolioRow | null,
   contract: SourceContract360Row | null,
 ) {
-  if (page === "Vendors") return vendor?.vendor_name ?? "Vendor portfolio";
-  if (page === "Contracts") return contract?.vendor_name ?? "Contract 360";
+  if (page === "Vendors") {
+    return vendor
+      ? safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref)
+      : "Vendor portfolio";
+  }
+  if (page === "Contracts") {
+    return contract ? safeContractVendorDisplayName(contract) : "Contract 360";
+  }
   if (page === "Optimize") return "Optimize evidenced opportunities";
   if (page === "Evidence") return "Evidence and proof";
   if (page === "Contract graph") return "Source contract graph";
@@ -4486,7 +4509,7 @@ function contractTabNarrative(
   }
   return {
     headline: "Contract header loaded; actions require evidence.",
-    body: `${contract.vendor_name} has a governed contract header. Source sizes action only where supporting rows are loaded.`,
+    body: `${safeContractVendorDisplayName(contract)} has a governed contract header. Source sizes action only where supporting rows are loaded.`,
     provenance: "Story basis",
     blocker:
       "No opportunity narrative unless the tab can point to scope, spend, performance, or claim rows.",

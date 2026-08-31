@@ -29,16 +29,24 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).not.toContain('? "#0a0a0b"');
   });
 
-  it("does not print raw vendor names in the evidence-depth executive table", () => {
+  it("does not print raw vendor names in executive-facing labels", () => {
     const source = readFileSync(
       `${__dirname}/../WorkspaceExecutiveShell.tsx`,
       "utf8",
     );
 
     expect(source).not.toContain("<b>{vendor.vendor_name}</b>");
+    expect(source).not.toContain("<span>{contract.vendor_name}</span>");
+    expect(source).not.toContain("<small>{contract.vendor_name}</small>");
+    expect(source).not.toContain('value={contract.vendor_name}');
+    expect(source).not.toContain("title={selectedVendor?.vendor_name");
+    expect(source).not.toContain("? selectedVendor.vendor_name");
+    expect(source).not.toContain("return vendor?.vendor_name");
+    expect(source).not.toContain("return contract?.vendor_name");
     expect(source).toContain(
       "<b>{safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref)}</b>",
     );
+    expect(source).toContain("safeContractVendorDisplayName(contract)");
   });
 
   it("renders numeric performance actuals from governed rows without throwing", () => {
