@@ -44,6 +44,8 @@ export interface Finding {
   /** The file, the rule and the grain behind the figure in the claim. A finding a reader cannot
    * reproduce is an assertion, and an assertion with an owner's name on it is worse than none. */
   trace?: { file: string; grain: string; rule: string };
+  /** The rows behind the finding, openable in the record browser with a filter already applied. */
+  openRows?: { objectType: string; filter: string };
 }
 
 export interface PageContent {
@@ -356,6 +358,7 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
         grain: "one application record",
         rule: "authenticationMethod is local_accounts AND dataClassification is phi",
       },
+      openRows: { objectType: "application_system", filter: "local_accounts" },
     });
   }
 
@@ -582,6 +585,7 @@ export function vendorFindings(
         grain: "one contract",
         rule: "autoRenewFlag is yes",
       },
+      openRows: { objectType: "vendor_contract", filter: "yes" },
     });
   }
   const noSystems = contracts.filter((c) => !str(c, "supportedSystems")).length;
@@ -1229,6 +1233,7 @@ export function riskFindings(risks: EstateRow[]): Finding[] {
         grain: "one risk or control",
         rule: "severity is high AND controlStatus is open",
       },
+      openRows: { objectType: "risk_control", filter: "high" },
     });
   }
   const cost = risks.reduce((n, r) => n + num(r, "remediationCostUsd"), 0);
@@ -1343,6 +1348,7 @@ export function programFindings(programs: EstateRow[]): Finding[] {
         grain: "one programme",
         rule: "status is on_track AND pctComplete is under 10",
       },
+      openRows: { objectType: "program_initiative", filter: "on_track" },
     });
   }
   const budget = programs.reduce((n, p) => n + num(p, "budgetUsd"), 0);
@@ -1479,6 +1485,144 @@ export function aiFindings(useCases: EstateRow[]): Finding[] {
         file: "10_ai_automation_use_cases.csv",
         grain: "one use case",
         rule: "valueClaimStatus contains disputed",
+      },
+    });
+  }
+  return findings;
+}
+
+export function organizationTables(units: EstateRow[]): TableSpec[] {
+  if (units.length === 0) return [];
+  const byLevel = countBy(
+    units.filter((u) => str(u, "roleLevel")),
+    "roleLevel",
+  );
+  const authority = (rows: EstateRow[]) =>
+    rows.reduce((n, u) => n + num(u, "budgetAuthorityUsd"), 0);
+  const tables: TableSpec[] = [
+    {
+      caption: "Where authority sits",
+      columns: ["Level", "Units", "Budget authority", "Headcount"],
+      rows: byLevel.slice(0, 8).map((l) => {
+        const rows = units.filter((u) => str(u, "roleLevel") === l.value);
+        return [
+          label(l.value),
+          l.count,
+          usd(authority(rows)),
+          rows.reduce((n, u) => n + num(u, "headcount"), 0).toLocaleString(),
+        ];
+      }),
+      total: [
+        "Declared",
+        units.length,
+        usd(authority(units)),
+        units.reduce((n, u) => n + num(u, "headcount"), 0).toLocaleString(),
+      ],
+      note: "Budget authority is what a unit may commit, not what it spends. The two are different numbers and the record carries only the one.",
+    },
+  ];
+  // What a unit is recorded as deciding, and what it owns, is the join that makes any finding
+  // assignable to a person. Reporting how complete that join is matters more than listing units.
+  const completeness = [
+    [
+      "Decision rights declared",
+      units.filter((u) => str(u, "decisionRights")).length,
+    ],
+    [
+      "Owned systems declared",
+      units.filter((u) => str(u, "ownedSystems")).length,
+    ],
+    [
+      "Owned data domains declared",
+      units.filter((u) => str(u, "ownedDataDomains")).length,
+    ],
+    [
+      "Budget authority declared",
+      units.filter((u) => num(u, "budgetAuthorityUsd") > 0).length,
+    ],
+  ] as const;
+  tables.push({
+    caption: "How complete the ownership record is",
+    columns: ["Attribute", "Units", "Share"],
+    rows: completeness.map(([labelText, count]) => [
+      labelText,
+      count,
+      `${Math.round((100 * count) / units.length)}%`,
+    ]),
+    total: ["All units", units.length, "100%"],
+  });
+  return tables;
+}
+
+export function organizationFindings(units: EstateRow[]): Finding[] {
+  if (units.length === 0) return [];
+  const findings: Finding[] = [];
+  // A column with one value across every row is a default, not an assessment. Rendering it as a
+  // clean result is two true facts -- the column exists, the value is low -- making a false one.
+  for (const { field, label: fieldLabel } of [
+    { field: "successionRisk", label: "succession risk" },
+    { field: "spanOfControl", label: "span of control" },
+  ]) {
+    const values = new Set(units.map((u) => str(u, field)).filter(Boolean));
+    if (values.size === 1 && units.every((u) => str(u, field))) {
+      findings.push({
+        kind: "absence",
+        claim: `${fieldLabel} reads "${[...values][0]}" for all ${units.length} org units — that is unassessed, not clean.`,
+        owner: "Chief HR Officer",
+        because:
+          "A value that never varies carries no information. Rendering it as a result would let a reader take a form nobody completed for an assessment that came back well.",
+        trace: {
+          file: "02_org_ownership.csv",
+          grain: "one org unit",
+          rule: `${field} has one distinct value across every row`,
+        },
+      });
+    }
+  }
+  // Decision rights are declared everywhere and system ownership almost nowhere, so the join that
+  // would let a finding about a system reach a person mostly is not there. Declaring authority in
+  // the abstract and declaring what it covers are different completions of the same record.
+  const withSystems = units.filter((u) => str(u, "ownedSystems")).length;
+  if (withSystems > 0 && withSystems < units.length / 2) {
+    findings.push({
+      kind: "absence",
+      claim: `${withSystems} of ${units.length} org units name a system they own.`,
+      owner: "Chief HR Officer",
+      because:
+        "Every unit declares what it decides, but only these say which systems that covers. A finding about a system can only reach a named owner where both halves are present.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: "ownedSystems is not empty",
+      },
+    });
+  }
+
+  const withRights = units.filter((u) => str(u, "decisionRights")).length;
+  if (withRights === units.length) {
+    findings.push({
+      kind: "established",
+      claim: `All ${units.length} org units declare what they decide.`,
+      owner: "Chief HR Officer",
+      because:
+        "Named authority and owned functions on every unit. Whether that reaches a specific system depends on the ownership column above, which is a separate and much thinner record.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: "decisionRights is not empty on every row",
+      },
+    });
+  } else if (withRights > 0) {
+    findings.push({
+      kind: "absence",
+      claim: `${units.length - withRights} org units declare no decision rights.`,
+      owner: "Chief HR Officer",
+      because:
+        "Without them a finding in that part of the business cannot be assigned to anyone from the record alone.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: "decisionRights is empty",
       },
     });
   }

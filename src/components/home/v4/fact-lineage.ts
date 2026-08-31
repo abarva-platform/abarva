@@ -43,6 +43,14 @@ export interface DisagreeingFigure {
 export interface FactLineage {
   value: string | number;
   label: string;
+  /**
+   * The rows behind the figure, openable.
+   *
+   * Without this the trace is a promise a reader has to take on faith. With it, "every figure is a
+   * filter over a named file" becomes a control they can operate: one move to the rows, filtered
+   * and labelled.
+   */
+  openRows?: { objectType: string; filter: string };
   /** What one row means. Never omitted -- a count without a grain is not a fact. */
   grain: string;
   sources: LineageSource[];
@@ -64,7 +72,9 @@ export function quotability(lineage: FactLineage): {
   tone: Agreement;
 } {
   if (lineage.agreement === "conflict") {
-    const unreconciled = (lineage.disagreements ?? []).filter((d) => !d.reconciled);
+    const unreconciled = (lineage.disagreements ?? []).filter(
+      (d) => !d.reconciled,
+    );
     if (unreconciled.length > 0) {
       return {
         quotable: false,
@@ -97,10 +107,16 @@ export function quotability(lineage: FactLineage): {
 /** A one-line trace a reader can act on: the files, the rule, and the grain. */
 export function traceLine(lineage: FactLineage): string {
   const files = lineage.sources
-    .map((s) => (s.rows > 0 ? `${s.file} (${s.rows.toLocaleString()} rows)` : s.file))
+    .map((s) =>
+      s.rows > 0 ? `${s.file} (${s.rows.toLocaleString()} rows)` : s.file,
+    )
     .join(" + ");
   const filter = lineage.sources.find((s) => s.filter)?.filter;
-  return [files, filter ? `filtered to ${filter}` : null, `one row = ${lineage.grain}`]
+  return [
+    files,
+    filter ? `filtered to ${filter}` : null,
+    `one row = ${lineage.grain}`,
+  ]
     .filter(Boolean)
     .join(" · ");
 }
@@ -133,13 +149,17 @@ export function countLineage(
     contradictedBy?: DisagreeingFigure[];
   } = {},
 ): FactLineage {
-  const matched = options.matches ? input.rows.filter(options.matches) : input.rows;
+  const matched = options.matches
+    ? input.rows.filter(options.matches)
+    : input.rows;
   const disagreements = options.contradictedBy ?? [];
   return {
     value: matched.length,
     label,
     grain: input.grain,
-    sources: [{ file: input.file, rows: input.rows.length, filter: options.filter }],
+    sources: [
+      { file: input.file, rows: input.rows.length, filter: options.filter },
+    ],
     agreement: disagreements.length > 0 ? "conflict" : "single_source",
     disagreements: disagreements.length > 0 ? disagreements : undefined,
   };
@@ -159,13 +179,15 @@ export function applicationCountLineage(
 ): FactLineage {
   const disagreements: DisagreeingFigure[] =
     otherReportedCount && otherReportedCount !== rows.length
-      ? [{
-          value: otherReportedCount,
-          source: "configuration-management extract",
-          reason:
-            "That extract is one row per deployed instance, so a single application running in production, test and disaster recovery counts three times. It is a count of deployments, not of applications.",
-          reconciled: true,
-        }]
+      ? [
+          {
+            value: otherReportedCount,
+            source: "configuration-management extract",
+            reason:
+              "That extract is one row per deployed instance, so a single application running in production, test and disaster recovery counts three times. It is a count of deployments, not of applications.",
+            reconciled: true,
+          },
+        ]
       : [];
   return {
     value: rows.length,

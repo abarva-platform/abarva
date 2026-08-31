@@ -35,6 +35,7 @@ export function ChapterPage({
   visualDatasets,
   exhibitMeta,
   depth,
+  onOpenRows,
 }: {
   chapter: ChapterView;
   chapterNumber: number;
@@ -45,6 +46,8 @@ export function ChapterPage({
   /** Tables and findings computed from the estate rows in the bundle -- no model, no packet claim.
    * Absent, or empty, renders nothing: a chapter whose rows produce no table has no table set. */
   depth?: ChapterDepth;
+  /** Opens the rows behind a finding in the record browser. */
+  onOpenRows?: (objectType: string, filter: string) => void;
 }) {
   const bands = splitChapterIntoBands(chapter, signalPacket);
   const exhibits = chapter.visual_opportunities.filter((v) =>
@@ -74,7 +77,9 @@ export function ChapterPage({
       />
 
       {depth ? <TableSet tables={depth.tables} /> : null}
-      {depth ? <FindingsBlock findings={depth.findings} /> : null}
+      {depth ? (
+        <FindingsBlock findings={depth.findings} onOpenRows={onOpenRows} />
+      ) : null}
       {depth ? <UnsupportedViews views={depth.unsupported} /> : null}
 
       {lead ? (

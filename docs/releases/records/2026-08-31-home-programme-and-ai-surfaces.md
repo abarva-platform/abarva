@@ -1,4 +1,4 @@
-# 2026-08-31-home-programme-and-ai-surfaces — Programmes and AI, and a claim that would have been false
+# 2026-08-31-home-programme-and-ai-surfaces — Programmes, AI, ownership, and rows a reader can open
 
 ## Release ID
 
@@ -60,7 +60,7 @@ existing at all.
 
 ## QA / Validation
 
-- PASS `npx jest src/components/home/v4/__tests__` — 91/91, ten suites
+- PASS `npx jest src/components/home/v4/__tests__` — 95/95, eleven suites
 - PASS `tsc --noEmit -p tsconfig.json` · `npx eslint` (0 errors)
 
 ### Gate observed failing
@@ -103,9 +103,34 @@ Revert the commit. The two surfaces lose their tables and findings; nothing else
 
 - Test output including both halves of the booking-gate case.
 
+### Organisation ownership, and a correction
+
+The ownership surface reports where authority sits and how complete the ownership record is. That
+second table corrects something asserted earlier in this programme: **every one of the 225 org units
+declares what it decides, and only 20 of them — 9% — name a system they own.** Authority in the
+abstract is complete; what it covers is almost entirely absent, so a finding about a system can only
+reach a named owner in a small minority of cases.
+
+Succession risk reads the same value on all 225 rows and is reported as unassessed rather than
+clean, by the same rule the record browser uses.
+
+### Cell provenance
+
+A figure's provenance panel now carries a control that opens the rows behind it. The record browser
+arrives with the filter applied and a banner saying so, plus a way back to every row. Without the
+banner a reader could be looking at a narrowed table nobody told them about, which is the same
+silence problem in a new place.
+
+This is what turns "every figure is a filter over a named file" from a promise into something a
+reader can operate.
+
+### A React error the tests caught
+
+The provenance panel is a block element and the finding claim rendered it inside a `<p>`. A `<div>`
+inside a paragraph is invalid HTML and React refuses it outright, so the panel never opened. Found
+by writing the end-to-end test rather than by reading the code.
+
 ## Known Gaps
 
-- **Organisation ownership is readable but has no surface.** It builds as a record type and is
-  browsable; tables and findings for it are not written.
 - **The AI value story stays incomplete until the benefits ledger is a page key of its own.** The
   surface now says so rather than implying the answer is no.

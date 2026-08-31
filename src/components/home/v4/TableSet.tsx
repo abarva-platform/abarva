@@ -49,6 +49,7 @@ function lineageForFinding(finding: Finding): FactLineage | null {
       { file: finding.trace.file, rows: 0, filter: finding.trace.rule },
     ],
     agreement: "single_source",
+    openRows: finding.openRows,
   };
 }
 
@@ -180,7 +181,14 @@ export function TableSet({ tables }: { tables: TableSpec[] }) {
   );
 }
 
-export function FindingsBlock({ findings }: { findings: Finding[] }) {
+export function FindingsBlock({
+  findings,
+  onOpenRows,
+}: {
+  findings: Finding[];
+  /** Opens the rows behind a finding. Absent, the mark still explains; it just cannot navigate. */
+  onOpenRows?: (objectType: string, filter: string) => void;
+}) {
   // No findings, no block. The alternative -- a heading over an apology -- is the failure this
   // design exists to remove, and an empty state is how it creeps back in.
   if (findings.length === 0) return null;
@@ -217,9 +225,8 @@ export function FindingsBlock({ findings }: { findings: Finding[] }) {
               alignItems: "start",
             }}
           >
-            <p
+            <div
               style={{
-                margin: 0,
                 fontFamily: SANS,
                 fontSize: 15,
                 lineHeight: 1.5,
@@ -231,12 +238,14 @@ export function FindingsBlock({ findings }: { findings: Finding[] }) {
                 // A finding a reader cannot reproduce is an assertion, and an assertion carrying an
                 // owner's name is worse than none -- so the rule that produced it travels with it.
                 return lineage ? (
-                  <LineageMark lineage={lineage}>{finding.claim}</LineageMark>
+                  <LineageMark lineage={lineage} onOpenRows={onOpenRows}>
+                    {finding.claim}
+                  </LineageMark>
                 ) : (
                   finding.claim
                 );
               })()}
-            </p>
+            </div>
             <span
               style={{
                 fontFamily: MONO,

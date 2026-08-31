@@ -419,8 +419,22 @@ function constantColumnsOf(
   return out;
 }
 
-export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
-  const [query, setQuery] = useState("");
+export function RecordBrowser({
+  recordType,
+  initialQuery,
+}: {
+  recordType: TechRecordType;
+  /**
+   * A search the browser opens already applied.
+   *
+   * This is what a figure's "open these rows" control passes: a reader who doubts a number lands on
+   * the rows behind it rather than on the whole record type with the filtering left to them. The
+   * banner above the table says what was applied, so an arriving reader is never looking at a
+   * filtered view without being told.
+   */
+  initialQuery?: string;
+}) {
+  const [query, setQuery] = useState(initialQuery ?? "");
   const [sliceField, setSliceField] = useState<string | null>(null);
   const [sliceValue, setSliceValue] = useState("all");
   const [diceField, setDiceField] = useState("none");
@@ -655,6 +669,44 @@ export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
           ) : null}
         </div>
       </div>
+
+      {initialQuery && query === initialQuery ? (
+        <div
+          data-record-arrived-filtered
+          style={{
+            margin: "0 0 14px",
+            background: V4.surface,
+            border: `1px solid ${V4.rule}`,
+            borderLeft: `3px solid ${V4.blue}`,
+            padding: "12px 16px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 18,
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ fontFamily: SANS, fontSize: 13.5, lineHeight: 1.45 }}>
+            Showing the rows behind a figure you came from — filtered to{" "}
+            <strong style={{ fontWeight: 600 }}>{initialQuery}</strong>.
+          </span>
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              background: "transparent",
+              border: `1px solid ${V4.rule}`,
+              padding: "5px 11px",
+              cursor: "pointer",
+              color: V4.inkSoft,
+            }}
+          >
+            Show all {rows.length.toLocaleString()}
+          </button>
+        </div>
+      ) : null}
 
       {(() => {
         const constants = constantColumnsOf(rows, recordType.columns);
