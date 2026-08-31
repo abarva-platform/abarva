@@ -5,6 +5,7 @@ import {
   isLockedTenantRole,
   resolveSessionRole,
 } from "@/lib/auth/access-routing";
+import { getStaticLaunchAccessProfile } from "@/lib/auth/launch-access";
 import {
   PRIVATE_BROWSER_PROOF_SESSION_COOKIE,
   readPrivateBrowserProofSessionValue,
@@ -212,6 +213,8 @@ export async function resolveTenant(
   const role = resolveSessionRole(session.role, session.email);
   const inferredFromEmail = inferClientKeyFromEmail(session.email);
   const explicitTenantEmail = hasExplicitTenantAlias(session.email);
+  const launchClientKey =
+    getStaticLaunchAccessProfile(session.email)?.clientKey ?? null;
   const cookieClientKey = await getCookieClientKey();
   const isLockedRole = isLockedTenantRole(role, session.email);
 
@@ -233,11 +236,13 @@ export async function resolveTenant(
         { value: cookieClientKey, source: "cookie" },
       ])
     : firstResolvedCandidate([
+        { value: requested, source: "body" },
+        { value: launchClientKey, source: "email" },
         {
-          value: explicitTenantEmail ? inferredFromEmail : null,
+          value:
+            explicitTenantEmail && !launchClientKey ? inferredFromEmail : null,
           source: "email",
         },
-        { value: requested, source: "body" },
         { value: cookieClientKey, source: "cookie" },
         { value: session.clientId, source: "session" },
         { value: session.defaultClientId, source: "session" },
