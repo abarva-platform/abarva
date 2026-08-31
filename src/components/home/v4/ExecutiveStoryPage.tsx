@@ -16,6 +16,8 @@ import type {
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import { demoSafeClientText } from "@/lib/client-config";
 import { sourceForIds } from "./source-label";
+import { LineageFigure } from "./FactLineage";
+import { applicationCountLineage } from "./fact-lineage";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 type TerminalState = HomeExecutiveStoryTerminalState;
@@ -170,6 +172,11 @@ export function ExecutiveStoryPage({
   compiledLine: string[];
 }) {
   const signalPacket = bundle.thesis.signalPacket;
+  // The estate rows travel in the same bundle, so the hero figure can show its own working without
+  // a second read path or a prop threaded from the app shell.
+  const applicationRows = bundle.technologyEstate?.recordTypes.find(
+    (recordType) => recordType.objectType === "application_system",
+  )?.rows as Array<Record<string, unknown>> | undefined;
   const storyPlan = bundle.executiveStoryPlan ?? missingStoryPlan(bundle.chapters);
   const clientLabel = demoSafeClientText(labelFromTenantKey(tenantKey));
   const sections = buildStorySections(bundle.chapters, storyPlan);
@@ -261,6 +268,7 @@ export function ExecutiveStoryPage({
         {activeSection?.spec.id === "enterprise" ? (
           <Hero
             leadNumber={leadNumber}
+            applicationRows={applicationRows}
             openingClaim={openingClaim}
             supportingOpeningClaims={supportingOpeningClaims}
             storyPlan={storyPlan}
@@ -483,6 +491,7 @@ export function cxoText(text: string): string {
 
 function Hero({
   leadNumber,
+  applicationRows,
   openingClaim,
   supportingOpeningClaims,
   storyPlan,
@@ -492,6 +501,8 @@ function Hero({
   state,
 }: {
   leadNumber: LeadNumber | null;
+  /** Estate rows from the bundle. Present, the hero figure shows its own working. */
+  applicationRows?: Array<Record<string, unknown>>;
   openingClaim: GroundedClaim | null;
   supportingOpeningClaims: GroundedClaim[];
   storyPlan: HomeExecutiveStoryPlanV1;
@@ -533,7 +544,18 @@ function Hero({
           ) : null}
         </div>
         <aside style={heroProofStyle}>
-          {leadNumber ? (
+          {leadNumber && applicationRows ? (
+            // The estate rows are the authority for an application count. When another surface
+            // reports a different figure for the same subject, the reason renders beside it rather
+            // than one number quietly winning.
+            <LineageFigure
+              lineage={applicationCountLineage(
+                applicationRows,
+                Number(String(leadNumber.value).replace(/[^0-9]/g, "")) || undefined,
+              )}
+              size={34}
+            />
+          ) : leadNumber ? (
             <div style={heroMetricTextStyle}>
               <strong style={heroMetricTextStyleStrong}>{leadNumber.value}</strong>
               <span>{leadNumber.label}</span>

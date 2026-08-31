@@ -1,3 +1,5 @@
+import { FindingsBlock, TableSet } from "./TableSet";
+import type { ChapterDepth } from "./chapter-page-content";
 import { PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /**
@@ -7,15 +9,23 @@ import { PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
  * lie in the same direction: they let a reader believe they have seen everything the record has to
  * say. Saying "not drafted yet" out loud is the same discipline as the Not established band, one
  * level up.
+ *
+ * What is missing here is the PROSE, not the record. The estate rows ship in the same bundle, so a
+ * chapter with no drafted narrative still shows the tables and findings its own rows produce. That
+ * is the difference between "we have not written this yet" -- true, and worth saying -- and "we
+ * have nothing for you", which was never true and is what the page used to imply.
  */
 export function NotDraftedPage({
   chapterNumber,
   title,
   guidingQuestion,
+  depth,
 }: {
   chapterNumber: number;
   title: string;
   guidingQuestion: string;
+  /** Tables and findings computed from the bundle's estate rows. Renders nothing when empty. */
+  depth?: ChapterDepth;
 }) {
   return (
     <div style={{ padding: `54px ${PAGE_X}px 0` }}>
@@ -53,9 +63,16 @@ export function NotDraftedPage({
           textWrap: "pretty",
         }}
       >
-        Nothing is hidden here. When this chapter is drafted it will answer the question below from the same record
-        the other chapters are written from.
+        The narrative is not written. The record is here, and everything below is computed from it —
+        no prose, no interpretation, every figure a filter over rows you can open.
       </p>
+
+      {depth && (depth.tables.length > 0 || depth.findings.length > 0) ? (
+        <div data-home-undrafted-depth style={{ margin: "10px -" + PAGE_X + "px 0" }}>
+          <TableSet tables={depth.tables} />
+          <FindingsBlock findings={depth.findings} />
+        </div>
+      ) : null}
 
       <div
         style={{

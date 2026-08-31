@@ -238,7 +238,28 @@ export interface DecisionContext {
   /** Not tenant facts -- industry patterns and named expert lenses are analytical framing, kept
    * structurally separate from signals/context items so a claim can never accidentally cite one
    * as evidence about this specific enterprise. */
-  analyticalLenses: Array<{ kind: "industry_pattern" | "expert_lens"; label: string }>;
+  /**
+   * Framing material, never tenant fact -- but framing a reader can evaluate. Carrying only the
+   * title made the richest strategic content in the intake unusable: a pattern's whole value is the
+   * recorded reason it applies HERE, and a lens's whole value is the question it puts and what the
+   * answer would decide. Both were held in the intake and dropped at this boundary.
+   */
+  analyticalLenses: Array<{
+    kind: "industry_pattern" | "expert_lens";
+    label: string;
+    /** industry_pattern: why the pattern holds across the industry. */
+    context?: string;
+    /** industry_pattern: the recorded reason it applies to THIS enterprise. */
+    appliesHere?: string;
+    /** expert_lens: the questions the named expert role would put. */
+    questions?: string;
+    /** expert_lens: what an answer would inform. */
+    decisionUse?: string;
+    /** expert_lens: the role whose perspective this is. */
+    expertRole?: string;
+    /** Both: the stated limits on using it. Rendered, never dropped. */
+    caveats?: string;
+  }>;
   /** File-level breadth context. This is not citable evidence for claims; it tells the thesis
    * writer what the packet did and did not inspect so source families do not disappear just
    * because their rows were not in a top-N material-signal list. */
@@ -716,8 +737,21 @@ export function buildDecisionContext(
   const industryPatterns = of("industry_context_pattern");
   const expertLenses = of("expert_lens");
   const analyticalLenses: DecisionContext["analyticalLenses"] = [
-    ...industryPatterns.map((p) => ({ kind: "industry_pattern" as const, label: str(p.attributes.patternName) ?? "(unnamed pattern)" })),
-    ...expertLenses.map((l) => ({ kind: "expert_lens" as const, label: str(l.attributes.lensName) ?? "(unnamed lens)" })),
+    ...industryPatterns.map((p) => ({
+      kind: "industry_pattern" as const,
+      label: str(p.attributes.patternName) ?? "(unnamed pattern)",
+      context: str(p.attributes.businessContext) ?? undefined,
+      appliesHere: str(p.attributes.applicability) ?? undefined,
+      caveats: str(p.attributes.caveats) ?? undefined,
+    })),
+    ...expertLenses.map((l) => ({
+      kind: "expert_lens" as const,
+      label: str(l.attributes.lensName) ?? "(unnamed lens)",
+      expertRole: str(l.attributes.expertRole) ?? undefined,
+      questions: str(l.attributes.questionsToAnswer) ?? undefined,
+      decisionUse: str(l.attributes.decisionUse) ?? undefined,
+      caveats: str(l.attributes.limitations) ?? undefined,
+    })),
   ];
   const sourceSummaries = mergeSourceSummaries(buildSourceSummaries(records), intakeSourceSummaries);
 

@@ -15,6 +15,9 @@ import type {
 } from "@/lib/home/preview/types";
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
+import { chapterDepth } from "./chapter-page-content";
+import { buildBusinessBriefing } from "./business-briefing";
+import { BusinessBriefingSections } from "./BusinessBriefing";
 import { DataFlowPage } from "./DataFlowPage";
 import { ExecutiveStoryPage } from "./ExecutiveStoryPage";
 import { NotDraftedPage } from "./NotDraftedPage";
@@ -297,14 +300,30 @@ export function HomeV4App({
                 signalPacket={signalPacket}
                 visualDatasets={visualDatasets}
                 exhibitMeta={exhibitMeta}
+                depth={chapterDepth(activeChapter.chapterId, {
+                  applications: applications?.rows,
+                  vendors: techRecordTypes.find((r) => r.objectType === "vendor_contract")?.rows,
+                  infrastructure: infrastructure?.rows,
+                  data: techRecordTypes.find((r) => r.objectType === "data_asset_or_integration")?.rows,
+                })}
               />
             ) : (
               <NotDraftedPage
                 chapterNumber={activeIndex + 1}
                 title={activeChapter.title}
                 guidingQuestion={activeChapter.guidingQuestion}
+                depth={chapterDepth(activeChapter.chapterId, {
+                  applications: applications?.rows,
+                  vendors: techRecordTypes.find((r) => r.objectType === "vendor_contract")?.rows,
+                  infrastructure: infrastructure?.rows,
+                  data: techRecordTypes.find((r) => r.objectType === "data_asset_or_integration")?.rows,
+                })}
               />
             )
+          ) : null}
+
+          {activeChapter && (activeChapter.chapterId === "executive_brief" || activeChapter.chapterId === "our_business") ? (
+            <BusinessBriefingSections briefing={buildBusinessBriefing(signalPacket)} />
           ) : null}
 
           {activeView === "architecture" && applications ? (

@@ -179,6 +179,31 @@ const PILL_TONE: Record<string, { bg: string; fg: string }> = {
   tier1: { bg: "#e8f0fa", fg: V4.blue },
 };
 
+/**
+ * Columns whose value never varies across the whole record type.
+ *
+ * A column reading the same value on every row carries no information: it is a default that was
+ * never filled in, not an assessment that came back clean. Rendering 225 green rows for a succession
+ * risk nobody assessed is two true facts -- the column exists, the value is low -- combining into a
+ * false statement, and it is the same defect as a cost column that is constant per tier.
+ *
+ * This is the same detector the source-intelligence digests use to collapse a repeated column before
+ * a file reaches a model. One detector, two uses: it compresses the prompt and it reports the
+ * quality problem, because they are the same observation.
+ */
+function constantColumnsOf(rows: RecordRow[], columns: string[]): Array<{ column: string; value: string }> {
+  if (rows.length < 2) return [];
+  const out: Array<{ column: string; value: string }> = [];
+  for (const column of columns) {
+    const values = new Set(rows.map((row) => String(row[column] ?? "").trim()));
+    values.delete("");
+    if (values.size === 1 && rows.every((row) => String(row[column] ?? "").trim())) {
+      out.push({ column, value: [...values][0] });
+    }
+  }
+  return out;
+}
+
 export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
   const [query, setQuery] = useState("");
   const [sliceField, setSliceField] = useState<string | null>(null);
@@ -354,6 +379,34 @@ export function RecordBrowser({ recordType }: { recordType: TechRecordType }) {
           ) : null}
         </div>
       </div>
+
+      {(() => {
+        const constants = constantColumnsOf(rows, recordType.columns);
+        if (constants.length === 0) return null;
+        return (
+          <div
+            data-record-constant-columns={constants.length}
+            style={{
+              margin: "0 0 16px",
+              background: V4.surface,
+              border: `1px solid ${V4.rule}`,
+              borderLeft: `3px solid ${V4.amber}`,
+              padding: "13px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 5,
+            }}
+          >
+            <span style={eyebrow(V4.amber)}>
+              {constants.length === 1 ? "One column carries no information" : `${constants.length} columns carry no information`}
+            </span>
+            <p style={{ margin: 0, fontFamily: SANS, fontSize: 13.5, lineHeight: 1.5, color: V4.inkSoft, maxWidth: "82ch" }}>
+              {constants.map((c) => `${c.column} reads "${c.value}" on all ${rows.length.toLocaleString()} rows`).join("; ")}
+              . A value that never varies is a default rather than an assessment, so nothing here should be read as a clean result.
+            </p>
+          </div>
+        );
+      })()}
 
       <div data-record-layout style={layoutStyle}>
         <section style={{ minWidth: 0 }}>
