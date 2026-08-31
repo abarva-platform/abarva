@@ -44,14 +44,38 @@ describe("the first-ten-minutes briefing", () => {
 
   // The section that matters most on a briefing: what it cannot tell you.
   it("names the questions the record cannot answer rather than omitting them", () => {
-    expect(briefing.notInTheRecord.length).toBeGreaterThanOrEqual(3);
+    expect(briefing.notInTheRecord.length).toBeGreaterThanOrEqual(2);
     expect(briefing.notInTheRecord[0].question).toMatch(/competitors/i);
     expect(briefing.notInTheRecord[0].why).toMatch(/collection gap, not a finding/);
     for (const gap of briefing.notInTheRecord) expect(gap.why.length).toBeGreaterThan(60);
   });
 
-  it("says the industry patterns arrive as titles only, because they do", () => {
-    expect(briefing.notInTheRecord.some((g) => /why does each industry pattern apply/i.test(g.question))).toBe(true);
+  // A pattern without its applicability is a generality about the industry; with it, it is a claim
+  // about this enterprise. The packet now carries both, and the page falls back to the title when a
+  // record predates that -- so this asserts the shape rather than the current snapshot's content.
+  it("carries a pattern's recorded applicability when the packet has it", () => {
+    const withContext = {
+      signals: [],
+      analyticalLenses: [
+        { kind: "industry_pattern", label: "P", appliesHere: "It applies here because X.", caveats: "Limited by Y." },
+        { kind: "expert_lens", label: "L", expertRole: "Former Payer VP", questions: "Is the RAF closure rate defensible?", decisionUse: "coding investment", caveats: "Needs RADV data." },
+      ],
+    } as unknown as EnterpriseSignalPacket;
+    const built = buildBusinessBriefing(withContext);
+    const pattern = built.sections.find((x) => /Industry patterns/.test(x.heading))?.items[0];
+    expect(pattern?.detail).toBe("It applies here because X.");
+    expect(pattern?.caveat).toBe("Limited by Y.");
+    const lens = built.sections.find((x) => /expert would ask/.test(x.heading))?.items[0];
+    expect(lens?.text).toBe("Is the RAF closure rate defensible?");
+    expect(lens?.attribution).toBe("Former Payer VP");
+    expect(lens?.detail).toMatch(/^Informs: coding investment/);
+  });
+
+  it("falls back to the title on a record that predates the widened packet", () => {
+    const thin = { signals: [], analyticalLenses: [{ kind: "expert_lens", label: "Legacy lens" }] } as unknown as EnterpriseSignalPacket;
+    const lens = buildBusinessBriefing(thin).sections.find((x) => /expert would ask/.test(x.heading))?.items[0];
+    expect(lens?.text).toBe("Legacy lens");
+    expect(lens?.caveat).toBeUndefined();
   });
 
   // Planted failure: an empty packet must produce no sections, never headings over nothing.

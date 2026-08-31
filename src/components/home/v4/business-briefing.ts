@@ -19,7 +19,18 @@ export interface BriefingSection {
   heading: string;
   /** One line of orientation. Never a claim -- the claims are the items. */
   standfirst?: string;
-  items: Array<{ text: string; detail?: string; attribution?: string }>;
+  items: Array<{ text: string; detail?: string; attribution?: string; caveat?: string }>;
+}
+
+interface AnalyticalLens {
+  kind: string;
+  label: string;
+  context?: string;
+  appliesHere?: string;
+  questions?: string;
+  decisionUse?: string;
+  expertRole?: string;
+  caveats?: string;
 }
 
 export interface BusinessBriefing {
@@ -111,32 +122,42 @@ export function buildBusinessBriefing(packet: EnterpriseSignalPacket): BusinessB
   }
 
   // 5. Industry patterns the record says apply here. Labels only -- see notInTheRecord.
-  const lenses = ((packet as { analyticalLenses?: Array<{ kind: string; label: string }> }).analyticalLenses ?? []);
+  const lenses = ((packet as { analyticalLenses?: AnalyticalLens[] }).analyticalLenses ?? []);
   const patterns = lenses.filter((l) => l.kind === "industry_pattern");
   const expert = lenses.filter((l) => l.kind !== "industry_pattern");
   if (patterns.length) {
     sections.push({
       heading: "Industry patterns the record says apply here",
-      standfirst: `${patterns.length} patterns, each recorded as applying to this enterprise specifically.`,
-      items: patterns.slice(0, 6).map((p) => ({ text: p.label })),
+      standfirst: `${patterns.length} patterns. Each carries the recorded reason it applies to this enterprise, not just the pattern.`,
+      items: patterns.slice(0, 6).map((p) => ({
+        text: p.label,
+        // The applicability is the point: a pattern without it is a generality about the industry.
+        detail: p.appliesHere ?? p.context,
+        caveat: p.caveats,
+      })),
     });
   }
   if (expert.length) {
     sections.push({
       heading: "What an expert would ask next",
-      standfirst: `${expert.length} lenses, each naming the question and what the answer would decide.`,
-      items: expert.slice(0, 5).map((l) => ({ text: l.label, detail: l.kind.replace(/_/g, " ") })),
+      standfirst: `${expert.length} lenses, each written from a named operating role, with what an answer would decide.`,
+      items: expert.slice(0, 5).map((l) => ({
+        text: l.questions ?? l.label,
+        attribution: l.expertRole,
+        detail: l.decisionUse ? `Informs: ${l.decisionUse}` : undefined,
+        caveat: l.caveats,
+      })),
     });
   }
 
-  return { sections, notInTheRecord: notInTheRecord(packet, patterns.length > 0) };
+  return { sections, notInTheRecord: notInTheRecord() };
 }
 
 /**
  * The blind spots, named. A new executive asks these on day one, and three of them this intake does
  * not answer at all -- so the page says which, rather than letting silence read as "no issue here".
  */
-function notInTheRecord(packet: EnterpriseSignalPacket, hasPatterns: boolean): BusinessBriefing["notInTheRecord"] {
+function notInTheRecord(): BusinessBriefing["notInTheRecord"] {
   const out: BusinessBriefing["notInTheRecord"] = [
     {
       question: "Who are the competitors, and where is share being won or lost?",
@@ -147,11 +168,5 @@ function notInTheRecord(packet: EnterpriseSignalPacket, hasPatterns: boolean): B
       why: "Targets are declared against the enterprise's own baselines. Nothing external benchmarks them, so a target being met says nothing about being ahead.",
     },
   ];
-  if (hasPatterns) {
-    out.push({
-      question: "Why does each industry pattern apply to this enterprise?",
-      why: "The patterns reach the page as titles. The recorded business context, the applicability to this enterprise, and the stated caveats are held in the intake and are not carried into the packet.",
-    });
-  }
   return out;
 }

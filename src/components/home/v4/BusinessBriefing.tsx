@@ -41,7 +41,13 @@ export function BusinessBriefingSections({ briefing }: { briefing: BusinessBrief
                   {item.text}
                 </p>
                 {item.detail && !item.attribution ? (
-                  <span style={{ ...eyebrow(V4.stone), fontSize: 10, whiteSpace: "nowrap", paddingTop: 4 }}>{item.detail}</span>
+                  item.detail.length <= 24 ? (
+                    <span style={{ ...eyebrow(V4.stone), fontSize: 10, whiteSpace: "nowrap", paddingTop: 4 }}>{item.detail}</span>
+                  ) : (
+                    <p style={{ margin: 0, gridColumn: "1 / -1", fontFamily: SANS, fontSize: 13, color: V4.slate, lineHeight: 1.5, maxWidth: "80ch" }}>
+                      {item.detail}
+                    </p>
+                  )
                 ) : null}
                 {item.attribution ? (
                   <span style={{ fontFamily: MONO, fontSize: 10.5, color: V4.slate, textAlign: "right", whiteSpace: "nowrap", paddingTop: 3 }}>
@@ -49,8 +55,26 @@ export function BusinessBriefingSections({ briefing }: { briefing: BusinessBrief
                   </span>
                 ) : null}
                 {item.detail && item.attribution ? (
-                  <p style={{ margin: 0, gridColumn: "1 / -1", fontFamily: SANS, fontSize: 13, color: V4.slate, lineHeight: 1.5 }}>
+                  <p style={{ margin: 0, gridColumn: "1 / -1", fontFamily: SANS, fontSize: 13, color: V4.slate, lineHeight: 1.5, maxWidth: "80ch" }}>
                     {item.detail}
+                  </p>
+                ) : null}
+                {item.caveat ? (
+                  <p
+                    data-home-briefing-caveat
+                    style={{
+                      margin: 0,
+                      gridColumn: "1 / -1",
+                      fontFamily: SANS,
+                      fontSize: 12.5,
+                      lineHeight: 1.5,
+                      color: V4.slate,
+                      maxWidth: "80ch",
+                      borderLeft: `2px solid ${V4.amber}`,
+                      paddingLeft: 11,
+                    }}
+                  >
+                    {item.caveat}
                   </p>
                 ) : null}
               </div>

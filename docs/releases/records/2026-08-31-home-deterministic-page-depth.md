@@ -43,6 +43,9 @@ Release lane: `global-control-lane`.
   number in the locked v4 system.
 - `src/components/home/v4/chapter-page-content.ts` (new) — which estate families each chapter draws
   on, and de-duplication when two families produce the same finding.
+- `scripts/data-build/enterprise-signal-packet.ts` — analytical lenses now carry their recorded
+  content, not only a title: a pattern's business context, its applicability to this enterprise and
+  its caveats; a lens's expert role, the questions it puts, and what an answer would decide.
 - `src/components/home/v4/business-briefing.ts` + `BusinessBriefing.tsx` (new) — the
   day-one briefing for the two chapters that answer "what is this company": how the money
   is made, the declared priorities verbatim, the leadership position as consensus/dissent/
@@ -63,7 +66,8 @@ component — a chapter whose rows produce nothing renders no block at all.
 
 ## QA / Validation
 
-- PASS `npx jest src/components/home/v4/__tests__` — 47/47, seven suites, no regression
+- PASS `npx jest src/components/home/v4/__tests__` — 48/48, seven suites, no regression
+- PASS `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts` — no regression
 - PASS `npx eslint` on all eight changed or added files
 - PASS `tsc --noEmit -p tsconfig.json` (full project)
 
@@ -113,10 +117,14 @@ priorities verbatim, four consensus themes each raised by 44 of 44 interviewed l
 views, the 127-of-996 contradiction between testimony and system record, five attributed quotes, and
 twelve industry patterns the record states apply here.
 
-Three questions are named as unanswerable from this intake — competitors and market share, external
-benchmarks, and why each industry pattern applies. The last one is a packet gap rather than an
-intake gap: the recorded business context, applicability and caveats exist in the intake and are not
-carried into the packet, which reaches the page as titles only.
+Two questions are named as unanswerable from this intake: competitors and market share, and external
+benchmarks. Neither has a source anywhere in the nineteen families, so the page states them rather
+than letting silence read as "no issue here".
+
+An expert lens now renders as the question a named operating role would put — "Is the RAF capture
+program closing suspect conditions at a defensible rate?", from a former payer VP of risk adjustment
+-- together with what an answer would decide and the stated limits on using it. That is the outside
+view the intake already held and no surface could reach.
 
 ## Known Gaps
 
@@ -126,8 +134,9 @@ carried into the packet, which reaches the page as titles only.
   estate files do not carry render no table set, deliberately.
 - **The interpretive layer is untouched.** This adds what can be counted and what was declared. What
   a pattern *means* still comes from the narrative path, which remains the open problem.
-- **Industry patterns reach the page as titles.** Their recorded business context and applicability
-  are in the intake and are dropped by the packet builder. One packet change would make the richest
-  strategic content in the intake citable.
+- **The widened lens content needs a packet rebuild to appear.** The builder now carries it and the
+  page renders it, with a fallback to the title for any record written before this change — so the
+  current snapshot still shows titles until it is regenerated. That is a data-refresh step, not a
+  code gap.
 - **No competitor or benchmark data exists anywhere in the intake.** Named on the page rather than
   left silent.
