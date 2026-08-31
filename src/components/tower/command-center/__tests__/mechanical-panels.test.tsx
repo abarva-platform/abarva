@@ -13,14 +13,20 @@ import { fireEvent, render, screen } from "@testing-library/react";
 
 import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/design-fixture";
 import type {
+  TowerActionView,
   TowerAiView,
   TowerCommandCenterView,
+  TowerEvidenceGapView,
   TowerProgramView,
 } from "@/lib/tower/command-center/types";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 
 import { BudgetDomainPanel } from "../views/BudgetDomainPanel";
 import { BudgetShapePanel } from "../views/BudgetShapePanel";
+import {
+  AiPortfolioContractView,
+  EvidenceActionsContractView,
+} from "../views/ContractTabs";
 import { FoundationsPanel } from "../views/FoundationsPanel";
 import { InitiativesDistributionPanel } from "../views/InitiativesDistributionPanel";
 import { InitiativesTablePanel } from "../views/InitiativesTablePanel";
@@ -106,10 +112,18 @@ function program(overrides: Partial<TowerProgramView> = {}): TowerProgramView {
 function viewWith({
   allInitiatives = [initiative()],
   programs = [program()],
+  actions,
+  gaps,
+  pipelineGaps,
+  evidenceFacts,
   summary = {},
 }: {
   allInitiatives?: readonly TowerAiView[];
   programs?: readonly TowerProgramView[];
+  actions?: readonly TowerActionView[];
+  gaps?: readonly TowerEvidenceGapView[];
+  pipelineGaps?: readonly TowerEvidenceGapView[];
+  evidenceFacts?: TowerCommandCenterView["evidenceFacts"];
   summary?: Partial<TowerCommandCenterView["summary"]>;
 } = {}): TowerCommandCenterView {
   const view = base();
@@ -119,6 +133,10 @@ function viewWith({
     ai: allInitiatives.slice(0, 10),
     candidates: [],
     programs,
+    actions: actions ?? view.actions,
+    gaps: gaps ?? view.gaps,
+    pipelineGaps: pipelineGaps ?? view.pipelineGaps,
+    evidenceFacts: evidenceFacts ?? view.evidenceFacts,
     summary: {
       ...view.summary,
       budgetUsd: 80 * M,
@@ -324,5 +342,130 @@ describe("mechanical Tower Command Center panels", () => {
 
     expect(document.body.textContent).toContain("No open proof queue is derived");
     expect(document.body.textContent).not.toContain("largest open proof queue");
+  });
+
+  it("keeps the portfolio table from rendering risk as an independent score", () => {
+    render(
+      <AiPortfolioContractView
+        view={viewWith({
+          allInitiatives: [
+            initiative({
+              id: "TOOL-GAP",
+              name: "Coder rollout",
+              usageHeadline: "Usage evidence exists",
+              usageBars: [],
+              promisedBenefitLoaded: false,
+              promisedUsd: 0,
+              financeValidatedUsd: 9 * M,
+              readinessScore: 88,
+              riskScore: 12,
+              controlBlocker: null,
+              controlBlockerReviewed: false,
+            }),
+          ],
+          actions: [],
+          gaps: [],
+          pipelineGaps: [],
+        })}
+        onOpenAi={jest.fn()}
+        onOpenAction={jest.fn()}
+        onOpenGap={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Control blocker")).toBeInTheDocument();
+    expect(screen.queryByText("Risk")).not.toBeInTheDocument();
+    expect(document.body.textContent).toContain("No benefit claim loaded");
+    expect(document.body.textContent).toContain("Not loaded");
+    expect(document.body.textContent).not.toContain("$9M finance-validated");
+  });
+
+  it("does not use readiness as a fallback adoption score", () => {
+    render(
+      <AiPortfolioContractView
+        view={viewWith({
+          allInitiatives: [
+            initiative({
+              id: "TOOL-HEADLINE",
+              name: "Coder rollout",
+              usageHeadline: "Usage evidence exists",
+              usageBars: [],
+              readinessScore: 88,
+              readinessScoreLoaded: true,
+            }),
+          ],
+          actions: [],
+          gaps: [],
+          pipelineGaps: [],
+        })}
+        onOpenAi={jest.fn()}
+        onOpenAction={jest.fn()}
+        onOpenGap={jest.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/i }));
+
+    expect(document.body.textContent).toContain("Unknown");
+    expect(document.body.textContent).not.toContain("88%");
+  });
+
+  it("withdraws cost findings when no actions or gaps support them", () => {
+    render(
+      <AiPortfolioContractView
+        view={viewWith({
+          actions: [],
+          gaps: [],
+          pipelineGaps: [],
+          summary: { aiUnallocatedSpendUsd: 0 },
+        })}
+        onOpenAi={jest.fn()}
+        onOpenAction={jest.fn()}
+        onOpenGap={jest.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Cost lens/i }));
+
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("No cost findings are loaded for this portfolio.");
+    expect(text).not.toContain("Three suppliers deliver the same capability");
+    expect(text).not.toContain("A cohort of contracts protects the vendor");
+  });
+
+  it("does not fabricate action campaigns or 0-of-0 claim ratios", () => {
+    render(
+      <EvidenceActionsContractView
+        view={viewWith({
+          allInitiatives: [],
+          programs: [],
+          actions: [],
+          gaps: [],
+          pipelineGaps: [],
+          evidenceFacts: [],
+          summary: {
+            valueClaimCount: 0,
+            claimableClaimCount: 0,
+            usageSupportedClaimCount: 0,
+            aiInitiativeCount: 0,
+            economicReviewQueueCount: 0,
+            blockedProgramCount: 0,
+            claimableProgramCount: 0,
+          },
+        })}
+        onOpenAction={jest.fn()}
+        onOpenGap={jest.fn()}
+      />,
+    );
+
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("Value claims not loaded");
+    expect(text).toContain("Usage support not loaded");
+    expect(text).toContain("No action campaigns are loaded for this review.");
+    expect(text).toContain("No evidence-owner queue rows are loaded for this review.");
+    expect(text).not.toContain("0 of 0");
+    expect(text).not.toContain("Usage telemetry connection");
+    expect(text).not.toContain("Vendor leverage review");
+    expect(text).not.toContain("1Assets");
   });
 });

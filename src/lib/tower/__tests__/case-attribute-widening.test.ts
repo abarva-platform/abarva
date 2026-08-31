@@ -177,11 +177,12 @@ describe("tool rollout adoption target and supported-case count", () => {
 describe("an unrecorded number is not zero", () => {
   const contract = read("src/components/tower/command-center/views/ContractTabs.tsx");
 
-  it("does not print a risk score the source never wrote", () => {
+  it("does not print risk as an independent portfolio score", () => {
     // Layer 4 writes no `risk_score` for any row, so `num(null)` made every one of the governed
     // rows read `0%` — the safest-looking value in the table, on every line of it.
     expect(LAYER4).not.toMatch(/\brisk_score\b/);
-    expect(contract).toContain('item.riskScoreLoaded ? formatPct(item.riskScore) : "Not scored"');
+    expect(contract).not.toContain("formatPct(item.riskScore)");
+    expect(contract).toContain("controlBlockerCell(item)");
   });
 
   it("does not print a readiness score the source never wrote", () => {
@@ -190,7 +191,9 @@ describe("an unrecorded number is not zero", () => {
 
   it("does not print $0 for spend that was never recorded", () => {
     // A tool rollout carries no cost at all. `$0` is a claim about price; this is a gap.
-    expect(contract).toContain('item.aiSpendLoaded ? formatUsdM(item.aiSpendUsd) : "Not loaded"');
+    expect(contract).toMatch(
+      /item\.aiSpendLoaded\s*\?\s*formatUsdM\(item\.aiSpendUsd\)\s*:\s*"Not loaded"/,
+    );
   });
 
   it("derives the spend flag from what Layer 4 asserted, not from the row's columns", () => {
