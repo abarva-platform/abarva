@@ -420,15 +420,20 @@ function compactArtifact(artifact) {
     calculated_observations: artifact.classification.calculated_observations.slice(0, 6).map(textOf),
     model_derived_observations: artifact.classification.model_derived_observations.slice(0, 4).map(textOf),
     advisory_inferences: artifact.classification.advisory_inferences.slice(0, 3).map(textOf),
+    facts: (artifact.facts ?? artifact.classification.facts ?? []).slice(0, 8).map(textOf),
+    reading: (artifact.reading ?? artifact.classification.reading ?? []).slice(0, 8).map(textOf),
     gaps: artifact.summary.gaps.slice(0, 5),
     contradictions: artifact.summary.contradictions.slice(0, 5),
     do_not_claim: artifact.classification.do_not_claim.slice(0, 5).map(textOf),
+    page_mapping: artifact.page_mapping ?? artifact.source_file.page_mapping ?? [],
     citations: artifact.citations.slice(0, 8),
   };
 }
 
 function scoreForPage(artifact, page) {
   if (page.include_all) return 100;
+  const mappedPages = artifact.page_mapping ?? artifact.source_file.page_mapping ?? [];
+  if (mappedPages.includes(page.page_key)) return 120;
   const family = artifact.source_file.source_family;
   const familyIndex = page.priority_families.indexOf(family);
   let score = familyIndex >= 0 ? 80 - familyIndex : 0;
@@ -441,11 +446,13 @@ function scoreForPage(artifact, page) {
 }
 
 function selectArtifactsForPage(artifacts, page, maxArtifactsPerPage) {
-  const scored = artifacts
+  if (page.include_all) return artifacts;
+  const mapped = artifacts.filter((artifact) => (artifact.page_mapping ?? artifact.source_file.page_mapping ?? []).includes(page.page_key));
+  const candidates = mapped.length > 0 ? mapped : artifacts;
+  const scored = candidates
     .map((artifact) => ({ artifact, score: scoreForPage(artifact, page) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score || b.artifact.source_file.row_count - a.artifact.source_file.row_count);
-  if (page.include_all) return scored.map((entry) => entry.artifact);
   return scored.slice(0, maxArtifactsPerPage).map((entry) => entry.artifact);
 }
 
@@ -642,7 +649,7 @@ function main() {
       context_bounds: {
         selection_rule: page.include_all
           ? "include all accepted source-intelligence artifacts"
-          : "priority families plus explicit page relevance, ordered by relevance score",
+          : "source artifact page_mapping first; priority families are fallback only",
         max_artifacts_per_page: page.include_all ? null : options.maxArtifactsPerPage,
       },
       source_intelligence: compact,

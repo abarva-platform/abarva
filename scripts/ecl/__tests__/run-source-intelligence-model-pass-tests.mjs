@@ -12,6 +12,7 @@ const input = path.join(tmp, "input");
 const inventory = path.join(tmp, "inventory");
 const passOut = path.join(tmp, "model-pass");
 const thinOut = path.join(tmp, "thin-model-pass");
+const plantedOut = path.join(tmp, "planted-model-pass");
 fs.mkdirSync(input, { recursive: true });
 
 fs.writeFileSync(
@@ -85,6 +86,12 @@ assert.equal(accepted.tenant_key, "synthetic-demo");
 assert.equal(accepted.model_input.source_content_state, "included");
 assert.match(accepted.model_input.prompt_hash, /^[a-f0-9]{64}$/);
 assert.match(accepted.model_input.raw_response_hash, /^[a-f0-9]{64}$/);
+assert.equal(accepted.source_file.rows_read, accepted.source_file.row_count);
+assert.equal(accepted.deterministic_inventory.read.rows_read, accepted.deterministic_inventory.read.source_rows);
+assert.equal(Array.isArray(accepted.facts), true);
+assert.equal(Array.isArray(accepted.reading), true);
+assert.equal(accepted.facts.length > 0, true);
+assert.equal(accepted.page_mapping.includes("applications_systems"), true);
 assert.equal(Array.isArray(accepted.home_relevance.executive_brief), true);
 assert.equal(accepted.classification.observed_facts.length > 0, true);
 assert.equal(accepted.classification.calculated_observations.length > 0, true);
@@ -139,4 +146,39 @@ assert.equal(thinManifest.rejected_count, 2);
 assert.equal(thinManifest.all_source_content_included, false);
 assert.equal(thinManifest.issues.every((issue) => issue.issues.includes("source_content_missing")), true);
 
-console.log(JSON.stringify({ accepted: true, prompts: modelPass.prompt_count, thin_refused: thinManifest.rejected_count }, null, 2));
+const plantedResult = spawnSync(
+  "node",
+  [
+    "scripts/ecl/run_source_intelligence_model_pass.mjs",
+    "--inventory-dir",
+    inventory,
+    "--out-dir",
+    plantedOut,
+    "--mock",
+    "--plant-unsupported-fact",
+  ],
+  { cwd: repoRoot, encoding: "utf8" },
+);
+assert.notEqual(plantedResult.status, 0);
+const plantedManifest = JSON.parse(fs.readFileSync(path.join(plantedOut, "run-manifest.json"), "utf8"));
+assert.equal(plantedManifest.accepted_count, 0);
+assert.equal(plantedManifest.rejected_count, 2);
+assert.equal(
+  plantedManifest.issues.every((issue) =>
+    issue.issues.some((inner) => inner.startsWith("fact_number_not_supported:987654321")),
+  ),
+  true,
+);
+
+console.log(
+  JSON.stringify(
+    {
+      accepted: true,
+      prompts: modelPass.prompt_count,
+      thin_refused: thinManifest.rejected_count,
+      planted_refused: plantedManifest.rejected_count,
+    },
+    null,
+    2,
+  ),
+);
