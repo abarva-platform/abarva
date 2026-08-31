@@ -145,6 +145,8 @@ const INVENTORY_OPENING_PATTERN =
   /\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:applications|systems|source-target|data movements|flows|workload items|reports|ETL jobs|scripts|platforms|vendors|suppliers|contracts)\b/i;
 const COMMERCIAL_OPENING_PATTERN =
   /\b(?:vendor|supplier|supplier group|top five supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
+const EVIDENCE_BOUNDARY_OPENING_PATTERN =
+  /\b(?:not supplied|not yet supplied|not available|does not yet establish|should therefore be limited|do not infer|coverage gap|evidence gap|missing evidence|not enough verified evidence|not client-attested|synthetic)\b/i;
 const BUSINESS_CONSEQUENCE_PATTERN =
   /\b(?:value|revenue|margin|patient|member|provider|payer|care|operating model|priority|outcome|finance|risk|accountability|decision|capacity|service|access|performance|modernization|transformation)\b/i;
 
@@ -1589,18 +1591,24 @@ function standaloneInventoryClaim(statement: string): boolean {
   );
 }
 
+function unsuitableOpeningClaim(statement: string): boolean {
+  return (
+    COMMERCIAL_OPENING_PATTERN.test(statement) ||
+    EVIDENCE_BOUNDARY_OPENING_PATTERN.test(statement) ||
+    standaloneInventoryClaim(statement)
+  );
+}
+
 function businessFirstOpeningClaim(claims: Array<GroundedClaim & { claim_ref: string; chapter_id: ChapterId }>) {
   return (
     claims.find((claim) =>
       claim.chapter_id === "executive_brief" &&
       BUSINESS_CONSEQUENCE_PATTERN.test(claim.statement) &&
-      !COMMERCIAL_OPENING_PATTERN.test(claim.statement) &&
-      !standaloneInventoryClaim(claim.statement),
+      !unsuitableOpeningClaim(claim.statement),
     ) ??
     claims.find((claim) =>
       BUSINESS_CONSEQUENCE_PATTERN.test(claim.statement) &&
-      !COMMERCIAL_OPENING_PATTERN.test(claim.statement) &&
-      !standaloneInventoryClaim(claim.statement),
+      !unsuitableOpeningClaim(claim.statement),
     ) ??
     null
   );
@@ -1637,9 +1645,7 @@ function sectionPlan(
   const lead =
     sectionId === "enterprise" && openingRef
       ? sectionClaims.find((claim) => claim.claim_ref === openingRef) ?? null
-      : sectionClaims.find((claim) => !standaloneInventoryClaim(claim.statement) && !COMMERCIAL_OPENING_PATTERN.test(claim.statement)) ??
-        sectionClaims[0] ??
-        null;
+      : sectionClaims.find((claim) => !unsuitableOpeningClaim(claim.statement)) ?? null;
   const supporting = sectionClaims
     .filter((claim) => claim.claim_ref !== lead?.claim_ref)
     .slice(0, 3)
@@ -1671,7 +1677,7 @@ function buildHomeExecutiveStoryPlan(
     openingThesisClaimRef: opening?.claim_ref ?? null,
     openingSupportingClaimRefs: allClaims
       .filter((claim) => claim.claim_ref !== opening?.claim_ref)
-      .filter((claim) => !COMMERCIAL_OPENING_PATTERN.test(claim.statement))
+      .filter((claim) => !unsuitableOpeningClaim(claim.statement))
       .slice(0, 3)
       .map((claim) => claim.claim_ref),
     scaleFactRef: scale?.claim_ref ?? null,

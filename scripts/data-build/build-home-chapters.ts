@@ -394,17 +394,23 @@ const ENTERPRISE_OPENING_RE =
   /\b(?:enterprise|estate|application|system|source-target|data movement|flow|workload|analytics|reporting|ETL|script|business function|provider|payer|operating model)\b/i;
 const COMMERCIAL_OPENING_RE =
   /\b(?:vendor|supplier|supplier group|top five supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
+const EVIDENCE_BOUNDARY_OPENING_RE =
+  /\b(?:not supplied|not yet supplied|not available|does not yet establish|should therefore be limited|do not infer|coverage gap|evidence gap|missing evidence|not enough verified evidence|not client-attested|synthetic)\b/i;
+
+function unsuitableExecutiveOpening(statement: string): boolean {
+  return COMMERCIAL_OPENING_RE.test(statement) || EVIDENCE_BOUNDARY_OPENING_RE.test(statement);
+}
 
 function enterpriseOpeningClaims(claims: GroundedClaim[]): GroundedClaim[] {
-  const nonCommercial = claims.filter((claim) => !COMMERCIAL_OPENING_RE.test(claim.statement));
-  if (nonCommercial.length === 0) return claims;
-  const enterpriseShape = nonCommercial.filter((claim) => ENTERPRISE_OPENING_RE.test(claim.statement));
+  const suitable = claims.filter((claim) => !unsuitableExecutiveOpening(claim.statement));
+  if (suitable.length === 0) return [];
+  const enterpriseShape = suitable.filter((claim) => ENTERPRISE_OPENING_RE.test(claim.statement));
   return enterpriseShape.length
     ? [
         ...enterpriseShape,
-        ...nonCommercial.filter((claim) => !enterpriseShape.includes(claim)),
+        ...suitable.filter((claim) => !enterpriseShape.includes(claim)),
       ]
-    : nonCommercial;
+    : suitable;
 }
 
 export function assignQuestions(
@@ -524,6 +530,11 @@ claims state. Do not introduce a new fact, number, ranking, or causal link. If t
 are thin or don't fully answer the guiding question, say so honestly in the synthesis rather than
 inventing material to fill the gap -- an honest "the current evidence does not yet establish X" is
 correct output, not a failure.
+
+For the Executive Brief, the headline must not be a supplier/contract fact, an evidence-boundary
+caveat, or a standalone inventory count. Lead with the business consequence a new executive should
+understand first. If no assigned claim supports that, return an executive-use limitation instead of
+turning a caveat into the headline.
 
 Write for a CXO or newly hired business/technology executive, not for the builder of this system.
 Do not use implementation vocabulary such as ECL, projection, serving view, loaded rows, canonical

@@ -332,6 +332,23 @@ attention.
 Do not summarize datasets or dimensions individually. Build a single coherent theory of the
 enterprise.
 
+OPENING THESIS BAR
+The first executive idea must read like a business-strategy thesis for a new CEO/CXO, not like a
+data-quality caveat, supplier ranking, contract summary, or inventory count. It should answer:
+"what is the enterprise pattern a leader should understand first, and why does it matter?" It may
+use technology, commercial, data, or risk facts as support, but those facts must not become the
+opening idea by themselves.
+- Do not open with a vendor, supplier, supplier group, contract, contracted value, commercial
+  exposure, or top-five concentration fact.
+- Do not open with "not supplied", "not yet supplied", "not available", "does not yet establish",
+  "coverage gap", "evidence gap", "missing evidence", "not client-attested", or similar evidence
+  boundary language.
+- Do not open with a standalone count such as applications, systems, reports, ETL jobs, scripts,
+  platforms, vendors, suppliers, contracts, flows, or data movements unless the same sentence names
+  the business consequence, risk, decision, value, priority, outcome, or accountability implication.
+- If the packet cannot support an executive opening thesis, leave the corresponding claim array
+  sparse or empty. Do not promote a caveat or inventory fact into the first idea.
+
 A strong thesis connects multiple domains. Seek connections such as:
 strategy <-> economics <-> portfolio
 operating model <-> performance <-> technology
