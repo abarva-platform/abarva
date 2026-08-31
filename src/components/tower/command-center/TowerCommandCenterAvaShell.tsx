@@ -101,17 +101,122 @@ function towerSummaryPrompt(view: TowerCommandCenterView | null): string {
   return `Which ${blockedPrograms || "open"} Tower proof gaps should I close first?`;
 }
 
+/**
+ * Suggestions for the surface the reader is actually on.
+ *
+ * The answers were made page-aware before these were: aVa would open on Tools / Rollouts, answer
+ * from the rollout table, and offer four prompts about claimable value and portfolio posture —
+ * none of which the visible table can answer. The prompts are what a reader clicks, so a generic
+ * prompt on a specific surface sends them somewhere the page did not.
+ *
+ * Counts are derived from the loaded view rather than written into the text, so a prompt never
+ * promises a population the tenant does not have. A surface with nothing to say about falls back
+ * to the portfolio-wide set instead of offering an empty question.
+ */
+function surfaceSuggestions(
+  view: TowerCommandCenterView,
+  tab: string | null | undefined,
+  subTab: string | null | undefined,
+): string[] {
+  const rollouts = view.allInitiatives.filter(
+    (item) => item.usageHeadline !== null || item.usageBars.length > 0,
+  );
+  const belowTarget = rollouts.filter((item) => {
+    const adoption = item.usageBars.find((bar) => bar.label === "Adoption");
+    return (
+      adoption !== undefined &&
+      item.adoptionTargetPct !== null &&
+      adoption.pct < item.adoptionTargetPct
+    );
+  }).length;
+  const blockedRollouts = rollouts.filter(
+    (item) => item.controlBlocker !== null,
+  ).length;
+  const cases = view.allInitiatives.filter((item) => item.financeStatus !== null);
+  const unvalidated = cases.filter(
+    (item) => item.financeStatus !== "finance_validated_actual",
+  ).length;
+  const noBenefit = cases.filter((item) => !item.promisedBenefitLoaded).length;
+
+  if (tab === "tools" && subTab === "vendor") {
+    return [
+      "Which vendors carry the most active users, and which of them are blocked?",
+      "Where is tool spend concentrated across vendors?",
+    ];
+  }
+  if (tab === "tools" && subTab === "portfolio") {
+    return [
+      "Which initiatives carry spend but no benefit claim?",
+      "What separates a funded programme here from a candidate?",
+    ];
+  }
+  if (tab === "tools") {
+    return [
+      belowTarget > 0
+        ? `Which of the ${belowTarget} rollouts below target should move first?`
+        : "How does adoption compare with target across the rollouts?",
+      blockedRollouts > 0
+        ? `Which ${blockedRollouts} rollouts carry a named control blocker?`
+        : "Which rollouts have no control blocker recorded?",
+      "Which rollouts support no business case?",
+    ];
+  }
+  if (tab === "initiatives" && subTab === "proof") {
+    return [
+      "Which cases have readiness but no validated value?",
+      "What is at stake behind the least ready cases?",
+    ];
+  }
+  if (tab === "initiatives") {
+    return [
+      "Which constraint blocks the most value?",
+      unvalidated > 0
+        ? `What would it take to validate the ${unvalidated} cases that are not yet finance-validated?`
+        : "What is the finance status spread across the cases?",
+      noBenefit > 0
+        ? `Why do ${noBenefit} cases carry no benefit claim?`
+        : "Which cases assert the largest benefit?",
+    ];
+  }
+  if (tab === "budget") {
+    return [
+      "Which domains hold the most Tower-reviewed budget?",
+      "What part of the budget shape is not loaded, and why does that matter?",
+    ];
+  }
+  if (tab === "decisions" && subTab === "owner") {
+    return [
+      "Which owner carries the largest open proof queue?",
+      "Where is proof work concentrated by sponsor?",
+    ];
+  }
+  if (tab === "decisions") {
+    return [
+      "What must happen first, and what depends on it?",
+      "Which claims are still outside the board number?",
+    ];
+  }
+  if (tab === "foundations") {
+    return [
+      "What do the foundation rows enable that they do not claim themselves?",
+      "Which foundations carry investment but no direct value?",
+    ];
+  }
+  return [
+    "What value is claimable today, and what is blocked?",
+    "Explain the finance-validated value that is still held.",
+    "Which owner has the next Tower action?",
+    "What does the AI portfolio prove versus only suggest?",
+  ];
+}
+
 function buildSuggestions(
   view: TowerCommandCenterView | null,
+  tab: string | null | undefined,
+  subTab: string | null | undefined,
 ): AtlasSuggestion[] {
   const labels = view
-    ? [
-        "What value is claimable today, and what is blocked?",
-        "Explain the finance-validated value that is still held.",
-        "Which owner has the next Tower action?",
-        "What does the AI portfolio prove versus only suggest?",
-        towerSummaryPrompt(view),
-      ]
+    ? [...surfaceSuggestions(view, tab, subTab), towerSummaryPrompt(view)]
     : [
         "What Tower evidence is loaded for this tenant?",
         "Which Tower metrics are missing source evidence?",
@@ -159,7 +264,13 @@ export function TowerCommandCenterAvaShell({
     visibleRows: [],
     filters: {},
   });
-  const suggestions = useMemo(() => buildSuggestions(view), [view]);
+  // Follows the surface the reader is on. `pageContext` is already maintained for the answer
+  // path; the prompts read the same source, so a prompt can never describe a different surface
+  // from the one an answer would use.
+  const suggestions = useMemo(
+    () => buildSuggestions(view, pageContext.activeTab, pageContext.activeView),
+    [view, pageContext.activeTab, pageContext.activeView],
+  );
 
   const sendToAva = useCallback(
     async (text: string, attachments: AttachmentRef[]) => {
