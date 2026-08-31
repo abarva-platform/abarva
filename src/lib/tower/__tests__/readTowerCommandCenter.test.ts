@@ -5,9 +5,15 @@ import { readTowerCommandCenter } from "../readTowerCommandCenter";
 
 jest.mock("@/lib/data-plane/azureRead", () => {
   const query = jest.fn();
+  const controls = jest.fn();
   const withSession = jest.fn(async (fn) =>
     fn((sql: string, params: unknown[]) => {
-      if (/set_config\('app\.tenant_key'/i.test(sql)) {
+      if (
+        /^(BEGIN READ ONLY|COMMIT|ROLLBACK)$/i.test(sql) ||
+        /^SET LOCAL ROLE /i.test(sql) ||
+        /set_config\('app\.tenant_key'/i.test(sql)
+      ) {
+        controls(sql, params);
         return Promise.resolve([]);
       }
       return query(sql, params);
@@ -17,12 +23,16 @@ jest.mock("@/lib/data-plane/azureRead", () => {
   return {
     azureRead: {
       query,
+      controls,
       withSession,
     },
   };
 });
 
 const query = azureRead.query as jest.MockedFunction<typeof azureRead.query>;
+const controls = (
+  azureRead as unknown as { controls: jest.MockedFunction<(sql: string, params: unknown[]) => void> }
+).controls;
 const withSession = azureRead.withSession as jest.MockedFunction<
   typeof azureRead.withSession
 >;
@@ -98,7 +108,9 @@ function mockServingRows(rowsByView: Record<string, unknown[]>) {
 describe("readTowerCommandCenter", () => {
   beforeEach(() => {
     query.mockReset();
+    controls.mockClear();
     withSession.mockClear();
+    delete process.env.TOWER_RUNTIME_READ_ROLE;
   });
 
   it("fails closed when ECL serving rows are not loaded for a tenant", async () => {
@@ -113,6 +125,40 @@ describe("readTowerCommandCenter", () => {
     expect(
       query.mock.calls.map((call) => String(call[0])).join("\n"),
     ).toContain("serving.tower_command_center");
+  });
+
+  it("sets a non-bypass runtime role and tenant GUC locally for Tower serving reads", async () => {
+    query.mockResolvedValue([]);
+
+    await readTowerCommandCenter({
+      tenantKeyCandidates: ["apex-retail"],
+    });
+
+    expect(controls.mock.calls.map((call) => call[0])).toEqual([
+      "BEGIN READ ONLY",
+      'SET LOCAL ROLE "tower_projection_reader"',
+      "SELECT set_config('app.tenant_key', $1, true)",
+      "COMMIT",
+    ]);
+    expect(controls.mock.calls[2]?.[1]).toEqual(["apex-retail"]);
+  });
+
+  it("rejects unsafe runtime role names before any serving read", async () => {
+    process.env.TOWER_RUNTIME_READ_ROLE = "tower_projection_reader; reset role";
+    query.mockResolvedValue([]);
+
+    await expect(
+      readTowerCommandCenter({
+        tenantKeyCandidates: ["apex-retail"],
+      }),
+    ).rejects.toThrow("tower_invalid_runtime_read_role");
+
+    expect(
+      query.mock.calls.some((call) =>
+        String(call[0]).includes("serving.tower_command_center"),
+      ),
+    ).toBe(false);
+    expect(controls.mock.calls.map((call) => call[0])).toContain("ROLLBACK");
   });
 
   it("rejects ECL serving rows that do not carry source-record truth refs", async () => {
