@@ -469,9 +469,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.getByLabelText("Persistent Source workspace toolbar").textContent,
     ).toContain("Source 360 / Contracts");
-    expect(screen.getByRole("tab", { name: "Contract table" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Evidence depth" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Financial posture" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Table" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "By evidence depth" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "By finance status" })).toBeTruthy();
     expect(screen.getByText("Contract list guardrail")).toBeTruthy();
     expect(screen.getByText("Rows before story")).toBeTruthy();
     expect(screen.getByText("Focused contract set")).toBeTruthy();
@@ -493,7 +493,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeTruthy();
     expect(
       screen.getByLabelText("Persistent Source workspace toolbar").textContent,
-    ).toContain("Source 360 / Contracts");
+    ).toContain("Source 360 / MER-CTR-SSO-BPO-001");
 
     fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[1]);
 
@@ -521,8 +521,8 @@ describe("Source workspace ECL browser-surface proof", () => {
       screen.getByLabelText("Persistent Source workspace toolbar").textContent,
     ).toContain("Source 360 / Vendors");
     expect(screen.getByRole("tab", { name: "Concentration" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Evidence depth" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Archetype mix" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "By evidence depth" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "By archetype" })).toBeTruthy();
     expect(screen.getByText("Vendor 360")).toBeTruthy();
     expect(screen.getByText("One row per supplier relationship")).toBeTruthy();
     const vendorChart = screen.getByLabelText("Vendor concentration chart");
@@ -536,14 +536,14 @@ describe("Source workspace ECL browser-surface proof", () => {
       screen.queryByRole("heading", { name: "Helix Shared Services Group" }),
     ).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Evidence depth" }));
+    fireEvent.click(screen.getByRole("tab", { name: "By evidence depth" }));
     expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
     expectChartEmptyState(
       screen.getByLabelText("Vendor evidence depth chart"),
       /No vendor evidence depth chart available/i,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: "Archetype mix" }));
+    fireEvent.click(screen.getByRole("tab", { name: "By archetype" }));
     expect(screen.getByText("Declared contract archetypes")).toBeTruthy();
     expectChartEmptyState(
       screen.getByLabelText("Vendor archetype annual value chart"),
@@ -569,9 +569,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText("Material contracts")).toBeNull();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[0]);
-    expect(screen.getByRole("tab", { name: "Action queue" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Type mix" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Contract readiness" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Queue" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "By type" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "By contract" })).toBeTruthy();
     expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
     expect(screen.getByText("No optimize-ready action rows loaded.")).toBeTruthy();
     expect(screen.getByText("Evidence basis")).toBeTruthy();
@@ -580,7 +580,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText(/Proof Layers/i)).toBeNull();
     expect(screen.queryByText(/Action candidates/i)).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Contract readiness" }));
+    fireEvent.click(screen.getByRole("tab", { name: "By contract" }));
     expect(screen.getByText("Contract-level action rows")).toBeTruthy();
     expect(screen.getByText("No contract-level action rows loaded.")).toBeTruthy();
 
@@ -901,14 +901,14 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText(/vendors are loaded/i)).toBeNull();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
-    fireEvent.click(screen.getByRole("tab", { name: "Evidence depth" }));
+    fireEvent.click(screen.getByRole("tab", { name: "By evidence depth" }));
     expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
     expectMeasuredRechartsCard(
       screen.getByLabelText("Vendor evidence depth chart"),
     );
     expect(screen.getByRole("button", { name: /Kyndryl, Inc./ })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Archetype mix" }));
+    fireEvent.click(screen.getByRole("tab", { name: "By archetype" }));
     expect(screen.getByText("Declared contract archetypes")).toBeTruthy();
     expectMeasuredRechartsCard(
       screen.getByLabelText("Vendor archetype annual value chart"),

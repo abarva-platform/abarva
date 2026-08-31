@@ -51,9 +51,9 @@ const CONTRACT_TABS = [
   "Evidence",
   "Optimize",
 ] as const;
-const VENDOR_SUBTABS = ["Concentration", "Evidence depth", "Archetype mix"] as const;
-const CONTRACT_LIST_SUBTABS = ["Contract table", "Evidence depth", "Financial posture"] as const;
-const OPTIMIZE_SUBTABS = ["Action queue", "Type mix", "Contract readiness"] as const;
+const VENDOR_SUBTABS = ["Concentration", "By evidence depth", "By archetype"] as const;
+const CONTRACT_LIST_SUBTABS = ["Table", "By evidence depth", "By finance status"] as const;
+const OPTIMIZE_SUBTABS = ["Queue", "By type", "By contract"] as const;
 const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"] as const;
 
 export const SOURCE_CHART_PALETTE = {
@@ -355,6 +355,10 @@ export function WorkspaceExecutiveShell({
           null))
       : null;
   const claimContract = claimContractForPage(currentPage);
+  const sourceContextLabel =
+    headerContract && currentPage === "Contracts"
+      ? headerContract.contract_id
+      : currentPage;
 
   const resetMainScroll = useCallback(() => {
     const schedule =
@@ -396,7 +400,7 @@ export function WorkspaceExecutiveShell({
       return;
     }
     if (page === "Optimize") {
-      logic.select("optimize", null, logic.state.tabs.optimize ?? "Action queue");
+      logic.select("optimize", null, logic.state.tabs.optimize ?? "Queue");
       resetMainScroll();
       return;
     }
@@ -439,7 +443,7 @@ export function WorkspaceExecutiveShell({
               <button type="button" onClick={returnToSource360}>
                 Source 360
               </button>
-              <span>/ {currentPage}</span>
+              <span>/ {sourceContextLabel}</span>
             </div>
             <div className="sw-v2-context">
               {tenantName || "Current workspace"} · governed contract book
@@ -490,7 +494,7 @@ export function WorkspaceExecutiveShell({
                     logic.select(
                       "optimize",
                       null,
-                      logic.state.tabs.optimize ?? "Action queue",
+                      logic.state.tabs.optimize ?? "Queue",
                     )
                   }
                 >
@@ -522,7 +526,7 @@ export function WorkspaceExecutiveShell({
           aria-label="Persistent Source workspace toolbar"
         >
           <div className="sw-v2-sticky-context-copy">
-            <span>Source 360 / {currentPage}</span>
+            <span>Source 360 / {sourceContextLabel}</span>
             <b>
               {headerContract
                 ? headerContract.contract_id
@@ -654,7 +658,7 @@ export function WorkspaceExecutiveShell({
             ) : (
               <ContractsPage
                 portfolio={portfolio}
-                subtab={logic.state.tabs.contractList ?? "Contract table"}
+                subtab={logic.state.tabs.contractList ?? "Table"}
                 onOpenSubtab={(tab) => logic.setTab("contractList", tab)}
                 onOpenContract={openContract}
               />
@@ -670,7 +674,7 @@ export function WorkspaceExecutiveShell({
               performanceRows={performanceRows}
               spendRows={spendRows}
               portfolio={portfolio}
-              subtab={logic.state.tabs.optimize ?? "Action queue"}
+              subtab={logic.state.tabs.optimize ?? "Queue"}
               onOpenSubtab={(tab) => logic.setTab("optimize", tab)}
               onOpenContract={openContract}
             />
@@ -959,7 +963,7 @@ function VendorsPage({
           eyebrow="Vendor 360"
           title={vendorSubtabTitle(subtab)}
         />
-        {subtab === "Evidence depth" ? (
+        {subtab === "By evidence depth" ? (
           <div className="sw-v2-vendor-evidence-view">
             <VendorEvidenceDepthChart portfolio={portfolio} vendors={vendors} />
             <VendorEvidenceDepthTable
@@ -969,7 +973,7 @@ function VendorsPage({
               onOpenVendor={onOpenVendor}
             />
           </div>
-        ) : subtab === "Archetype mix" ? (
+        ) : subtab === "By archetype" ? (
           <div className="sw-v2-vendor-archetype-view">
             <VendorArchetypeMixChart portfolio={portfolio} />
             <VendorArchetypeTable
@@ -1850,12 +1854,12 @@ function ContractsPage({
           onSelect={onOpenSubtab}
         />
         <PanelHead eyebrow="Contracts" title={contractListSubtabTitle(subtab)} />
-        {subtab === "Evidence depth" ? (
+        {subtab === "By evidence depth" ? (
           <ContractEvidenceDepthTable
             portfolio={portfolio}
             onOpenContract={onOpenContract}
           />
-        ) : subtab === "Financial posture" ? (
+        ) : subtab === "By finance status" ? (
           <ContractFinancialPostureTable
             portfolio={portfolio}
             onOpenContract={onOpenContract}
@@ -2274,9 +2278,9 @@ function OptimizePage({
           onSelect={onOpenSubtab}
         />
         <PanelHead eyebrow="Optimize" title={optimizeSubtabTitle(subtab)} />
-        {subtab === "Type mix" ? (
+        {subtab === "By type" ? (
           <OptimizeByTypeTable portfolio={portfolio} />
-        ) : subtab === "Contract readiness" ? (
+        ) : subtab === "By contract" ? (
           <OptimizeByContractTable
             portfolio={portfolio}
             onOpenContract={onOpenContract}
@@ -2479,7 +2483,7 @@ function OptimizeByContractTable({
             <b>{actionSet.remainderCount} further action rows</b>
             <small>Summarized so the operator sees the ranked queue first.</small>
           </span>
-          <span>Open Type mix or Evidence for full lineage before action.</span>
+          <span>Open By type or Evidence for full lineage before action.</span>
           <span>{money(actionSet.remainderAmount)}</span>
           <span>Keep behind rollup until selected.</span>
         </div>
@@ -4043,20 +4047,20 @@ function financialPosture(contract: SourceContract360Row) {
 }
 
 function vendorSubtabTitle(subtab: string) {
-  if (subtab === "Evidence depth") return "Which vendors have usable depth";
-  if (subtab === "Archetype mix") return "Declared contract archetypes";
+  if (subtab === "By evidence depth") return "Which vendors have usable depth";
+  if (subtab === "By archetype") return "Declared contract archetypes";
   return "One row per supplier relationship";
 }
 
 function contractListSubtabTitle(subtab: string) {
-  if (subtab === "Evidence depth") return "Which contracts can support detail";
-  if (subtab === "Financial posture") return "Annual, actual, and committed values";
+  if (subtab === "By evidence depth") return "Which contracts can support detail";
+  if (subtab === "By finance status") return "Annual, actual, and committed values";
   return "Focused contract set";
 }
 
 function optimizeSubtabTitle(subtab: string) {
-  if (subtab === "Type mix") return "Action rows grouped by type";
-  if (subtab === "Contract readiness") return "Contract-level action rows";
+  if (subtab === "By type") return "Action rows grouped by type";
+  if (subtab === "By contract") return "Contract-level action rows";
   return "Evidence-backed action queue";
 }
 
