@@ -1860,10 +1860,7 @@ function sectionPlan(
   openingRef: string | null,
 ): HomeExecutiveStoryPlanV1["sections"][number] {
   const sectionClaims = claims.filter((claim) => SECTION_CHAPTERS[sectionId].includes(claim.chapter_id));
-  const lead =
-    sectionId === "enterprise" && openingRef
-      ? sectionClaims.find((claim) => claim.claim_ref === openingRef) ?? null
-      : sectionClaims.find((claim) => !unsuitableOpeningClaim(claim.statement)) ?? null;
+  const lead = sectionLeadClaim(sectionId, sectionClaims, openingRef);
   const supporting = sectionClaims
     .filter((claim) => claim.claim_ref !== lead?.claim_ref)
     .slice(0, 3)
@@ -1875,6 +1872,25 @@ function sectionPlan(
     supportingClaimRefs: supporting,
     reasonCode: lead ? null : "no_verified_claim_for_section",
   };
+}
+
+function sectionLeadClaim(
+  sectionId: HomeExecutiveStorySectionId,
+  sectionClaims: Array<GroundedClaim & { claim_ref: string; chapter_id: ChapterId }>,
+  openingRef: string | null,
+): (GroundedClaim & { claim_ref: string; chapter_id: ChapterId }) | null {
+  if (sectionId === "enterprise" && openingRef) {
+    return sectionClaims.find((claim) => claim.claim_ref === openingRef) ?? null;
+  }
+
+  const evidenceLedCandidate =
+    sectionClaims.find((claim) => !EVIDENCE_BOUNDARY_OPENING_PATTERN.test(claim.statement)) ?? null;
+
+  if (sectionId === "runs-on" || sectionId === "exposed") {
+    return evidenceLedCandidate;
+  }
+
+  return sectionClaims.find((claim) => !unsuitableOpeningClaim(claim.statement)) ?? null;
 }
 
 function buildHomeExecutiveStoryPlan(
