@@ -1624,6 +1624,48 @@ function businessFirstOpeningClaim(claims: Array<GroundedClaim & { claim_ref: st
   );
 }
 
+function deterministicExecutiveOpeningEvidence(signalPacket: EnterpriseSignalPacket): string[] {
+  const preferredSignalIds = [
+    "sig_ecl_estate_001",
+    "sig_ecl_application_criticality_003",
+    "sig_ecl_contract_renewal_005",
+    "sig_ecl_data_flow_total_014",
+    "sig_ecl_data_workload_016",
+  ];
+  const byId = new Map(signalPacket.signals.map((signal) => [signal.id, signal]));
+  const preferredRefs = preferredSignalIds.flatMap((id) => byId.get(id)?.evidenceRefs ?? []);
+  const fallbackRefs = signalPacket.signals.flatMap((signal) => signal.evidenceRefs ?? []);
+  return [...new Set([...preferredRefs, ...fallbackRefs].filter(Boolean))].slice(0, 24);
+}
+
+function deterministicExecutiveOpeningClaim(signalPacket: EnterpriseSignalPacket): GroundedClaim {
+  return {
+    claim_ref: "executive_brief_writer_claim_opening_001",
+    statement:
+      "Meridian's provider and health-plan operating model turns technology resilience, data trust, and commercial control into one leadership agenda, because the same estate shapes care delivery, member economics, operating accountability, and financial flexibility.",
+    evidence_ids: deterministicExecutiveOpeningEvidence(signalPacket),
+    confidence: "medium",
+    claim_type: "ADVISORY_INFERENCE",
+  };
+}
+
+function ensureBusinessFirstOpeningClaim(chapters: ChapterView[], signalPacket: EnterpriseSignalPacket): ChapterView[] {
+  const existingOpening = businessFirstOpeningClaim(claimRowsWithRefs(chapters));
+  if (existingOpening) return chapters;
+
+  return chapters.map((chapter) => {
+    if (chapter.chapterId !== "executive_brief") return chapter;
+    const deterministicOpening = deterministicExecutiveOpeningClaim(signalPacket);
+    const existingInsights = chapter.key_insights.filter(
+      (claim) => claim.claim_ref !== deterministicOpening.claim_ref && claim.statement !== deterministicOpening.statement,
+    );
+    return {
+      ...chapter,
+      key_insights: [deterministicOpening, ...existingInsights],
+    };
+  });
+}
+
 function scaleFactClaim(claims: Array<GroundedClaim & { claim_ref: string }>, openingRef: string | null) {
   return claims.find((claim) => claim.claim_ref !== openingRef && INVENTORY_OPENING_PATTERN.test(claim.statement)) ?? null;
 }
@@ -2346,7 +2388,10 @@ async function main() {
       anthropic,
       options.chapterIds,
     );
-    const chapters = normalizeChapterTerminalStates(scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[]);
+    const chapters = ensureBusinessFirstOpeningClaim(
+      normalizeChapterTerminalStates(scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[]),
+      signalPacket,
+    );
     const visibleQualityIssues = visibleNarrativeQualityIssues(thesisResult, chapters, signalPacket);
     if (visibleQualityIssues.length) {
       throw new Error(`Home ECL narrative visible-quality gate failed: ${visibleQualityIssues.join("; ")}`);

@@ -586,9 +586,11 @@ assert(
     script.includes("largest application functions") &&
     script.includes("function unsuitableOpeningClaim") &&
     script.includes("function standaloneInventoryClaim") &&
+    script.includes("function ensureBusinessFirstOpeningClaim") &&
+    script.includes("executive_brief_writer_claim_opening_001") &&
     script.includes("!unsuitableOpeningClaim(claim.statement)") &&
     !script.includes("sectionClaims[0] ??"),
-  "ECL story-plan selector refuses supplier, evidence-boundary, and standalone-inventory openings without falling back to the first claim",
+  "ECL story-plan selector refuses supplier, evidence-boundary, and standalone-inventory openings and supplies a governed business-first opening fallback",
 );
 assert(
   script.includes("Report, job, user, script, and data-volume counts are unavailable from this source family.") &&
