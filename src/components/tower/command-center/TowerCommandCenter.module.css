@@ -41,6 +41,7 @@
    * Fill the space the parent gives instead. */
   flex: 1;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: auto;
@@ -74,12 +75,12 @@
 .scroll::-webkit-scrollbar-thumb { background: var(--canon-gray-300); border-radius: 8px; }
 
 /* ── Stage ──────────────────────────────────────────────────────────────── */
-.stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.wrap { width: 100%; max-width: none; margin: 0; padding: 0 34px; }
+.stage { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.wrap { width: 100%; max-width: none; min-width: 0; margin: 0; padding: 0 34px; }
 
 /* Standing header — compact */
 .dash { flex: none; padding: 16px 0 0; }
-.dashTop { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+.dashTop { display: flex; align-items: center; justify-content: space-between; gap: 28px; min-width: 0; }
 .dashId .eyebrow { font-family: var(--abarva-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--canon-teal-dark); margin-bottom: 5px; }
 .dashId h1 { font-family: var(--abarva-serif); font-weight: 500; font-size: 26px; line-height: 1; letter-spacing: -0.028em; margin: 0; }
 .dashId h1 .thin { color: var(--canon-gray-500); }
@@ -88,7 +89,7 @@
 .flag { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--canon-red); background: var(--canon-red-light); padding: 6px 12px; border-radius: 999px; }
 
 /* Tabs */
-.tabs { flex: none; display: flex; gap: 2px; border-bottom: 1px solid var(--canon-border-strong); margin-top: 14px; }
+.tabs { flex: none; display: flex; gap: 2px; border-bottom: 1px solid var(--canon-border-strong); margin-top: 14px; overflow-x: auto; }
 .tab { font-family: var(--abarva-sans); font-size: 14px; font-weight: 600; color: var(--canon-gray-500); background: none; border: 0; padding: 12px 16px; cursor: pointer; position: relative; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; }
 .tab:hover { color: var(--canon-gray-900); }
 .tab.on { color: var(--canon-gray-900); }
@@ -98,9 +99,9 @@
 .tab .adot { width: 6px; height: 6px; border-radius: 50%; background: var(--canon-red); }
 
 /* Body region — fills remaining height */
-.bodyregion { flex: 1; min-height: 0; }
+.bodyregion { flex: 1; min-height: 0; min-width: 0; }
 .bodyregion .wrap { height: 100%; padding-top: 18px; padding-bottom: 16px; }
-.view { height: 100%; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.view { height: 100%; display: flex; flex-direction: column; gap: 14px; min-height: 0; min-width: 0; }
 .viewScroll { height: 100%; overflow-y: auto; padding-right: 6px; }
 
 .vhead { flex: none; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
@@ -109,7 +110,7 @@
 .vhead .vspace { flex: 1; }
 .vhint { font-size: 11.5px; color: var(--canon-gray-500); display: inline-flex; align-items: center; gap: 6px; }
 
-.card { background: var(--canon-bg-surface); border: 1px solid var(--canon-border); border-radius: 13px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; min-height: 0; }
+.card { background: var(--canon-bg-surface); border: 1px solid var(--canon-border); border-radius: 13px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .cardH { flex: none; padding: 14px 18px 12px; border-bottom: 1px solid var(--canon-border); display: flex; align-items: center; gap: 10px; }
 .cardH .chK { font-family: var(--abarva-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--canon-gray-500); }
 .cardH .chT { font-family: var(--abarva-serif); font-size: 16px; font-weight: 500; letter-spacing: -0.015em; }
@@ -904,6 +905,10 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   font-size: 13px;
   margin: 0 0 0 6px;
 }
+.reviewDecisions,
+.valueLoss {
+  min-width: 0;
+}
 .decisionStack {
   display: flex;
   flex-direction: column;
@@ -1428,6 +1433,12 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   display: grid;
   gap: 24px;
   grid-template-columns: minmax(0, 1fr) minmax(430px, 0.98fr);
+}
+.aiPortfolioLeft,
+.aiPortfolioRight {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 .aiSpendChart {
   height: clamp(300px, 24vw, 420px);
