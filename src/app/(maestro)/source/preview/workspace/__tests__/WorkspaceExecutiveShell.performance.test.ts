@@ -1,5 +1,6 @@
 import {
   displayBenchmarkingClause,
+  focusedVendorSet,
   optimizeTypeRows,
   performanceActual,
   source360RecoverableCreditCoverageRows,
@@ -139,6 +140,78 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     } as unknown as Parameters<typeof topVendors>[0]);
 
     expect(vendors[0]?.vendor_name).toBe("Vendor name not resolved");
+  });
+
+  it("withholds unresolved supplier rows from evidence-focused vendor lists", () => {
+    const portfolio = {
+      vendors: [
+        {
+          tenant_key: "meridian-health",
+          vendor_ref: "24fc65af-8223-4884-9241-ef5736960a1b",
+          vendor_name: "24fc65af-8223-4884-9241-ef5736960a1b",
+          vendor_category: null,
+          contract_count: 1,
+          annual_value: 86_000,
+          total_committed_value: 86_000,
+          auto_renew_contracts: 0,
+          next_end_date: null,
+          contract_refs: ["CTR-0002"],
+        },
+        {
+          tenant_key: "meridian-health",
+          vendor_ref: "vendor-salesforce",
+          vendor_name: "Salesforce, Inc.",
+          vendor_category: "crm_saas",
+          contract_count: 1,
+          annual_value: 9_200_000,
+          total_committed_value: 9_200_000,
+          auto_renew_contracts: 0,
+          next_end_date: null,
+          contract_refs: ["MER-TECH-SFDC-001"],
+        },
+      ],
+      contracts: [],
+      impact: {
+        evidenceCoverage: [
+          {
+            contract_id: "CTR-0002",
+            vendor_ref: "24fc65af-8223-4884-9241-ef5736960a1b",
+            vendor_name: "24fc65af-8223-4884-9241-ef5736960a1b",
+            spend_rows: 24,
+            performance_rows: 24,
+            opportunity_rows: 2,
+            unclaimed_credit_usd: 86_000,
+          },
+          {
+            contract_id: "MER-TECH-SFDC-001",
+            vendor_ref: "vendor-salesforce",
+            vendor_name: "Salesforce, Inc.",
+            spend_rows: 12,
+            performance_rows: 0,
+            opportunity_rows: 1,
+            unclaimed_credit_usd: 0,
+          },
+        ],
+      },
+    } as unknown as Parameters<typeof topVendors>[0];
+
+    const vendors = topVendors(portfolio);
+    const focus = focusedVendorSet(
+      portfolio as Parameters<typeof focusedVendorSet>[0],
+      vendors,
+      "evidence",
+      7,
+    );
+
+    expect(focus.rows.map(({ vendor }) => vendor.vendor_name)).toEqual([
+      "Salesforce, Inc.",
+    ]);
+    expect(focus.unresolvedCount).toBe(1);
+    expect(
+      focus.rows.some(
+        ({ vendor }) => vendor.vendor_name === "Vendor name not resolved",
+      ),
+    ).toBe(false);
   });
 
   it("does not render action narrative as a benchmarking clause", () => {
