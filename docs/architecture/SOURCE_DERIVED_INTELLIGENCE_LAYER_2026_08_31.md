@@ -139,6 +139,47 @@ For every file, the source-intelligence pass must produce:
 - source citations down to file, row, and column where possible;
 - `do_not_claim` warnings.
 
+## Executable Model Pass
+
+The inventory builder creates prompt envelopes. The model-pass runner executes them and records the
+whole provenance chain.
+
+```bash
+npm run ecl:source-intelligence:inventory -- \
+  --ref origin/main \
+  --tenant meridian-health \
+  --assessment assessment-dense-source-room-20260823 \
+  --out-dir /tmp/source-intelligence-inventory \
+  --include-source-content
+
+npm run ecl:source-intelligence:model-pass -- \
+  --inventory-dir /tmp/source-intelligence-inventory \
+  --out-dir /tmp/source-intelligence-model-pass
+```
+
+The model pass refuses prompt envelopes that do not include `source_content` unless
+`--allow-omitted-source-content` is explicitly supplied. This keeps a column/profile summary from
+being mistaken for a full-file reading.
+
+Each run emits:
+
+```text
+run-manifest.json
+raw-responses/*.raw-response.json
+accepted/*.source-intelligence.json
+verification/*.verification-ledger.json
+rejected/*.rejected.json
+```
+
+The raw response is retained for model-quality review and prompt tuning. Products never consume raw
+responses. Products consume only accepted artifacts after verification and downstream ECL/projection
+publication.
+
+The runner has a deterministic `--mock` mode for CI and local proof. Mock mode proves the artifact
+shape, hash chain, missing-source refusal, and verification ledger without calling Claude. Real mode
+requires `ANTHROPIC_API_KEY` and records the actual model name, raw-response hash, prompt hash,
+source hash, and token usage when the provider returns it.
+
 ## Storage
 
 Current demo path:
