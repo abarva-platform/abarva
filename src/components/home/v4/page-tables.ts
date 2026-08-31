@@ -437,10 +437,114 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
       total: ["Total", contracts.length, "100%"],
       note: `Declared exit cost across the base: ${usd(contracts.reduce((n, c) => n + num(c, "exitCostUsd"), 0))}.`,
     },
+    // Renewal is a calendar, and a calendar is the only form that shows the wall. A table of
+    // contracts sorted by risk tells a reader nothing about when they lose the right to renegotiate.
+    (() => {
+      const byYear = new Map<
+        string,
+        { count: number; spend: number; auto: number }
+      >();
+      for (const contract of contracts) {
+        const year = yearOf(str(contract, "termEnd")) ?? "not declared";
+        const entry = byYear.get(year) ?? { count: 0, spend: 0, auto: 0 };
+        entry.count += 1;
+        entry.spend += num(contract, "annualSpendUsd");
+        if (/^(yes|true|y)$/i.test(str(contract, "autoRenewFlag")))
+          entry.auto += 1;
+        byYear.set(year, entry);
+      }
+      const years = [...byYear.entries()].sort((a, b) =>
+        a[0].localeCompare(b[0]),
+      );
+      return {
+        caption: "When the contracts end",
+        columns: ["Term ends", "Contracts", "Annual spend", "Auto-renewing"],
+        rows: years.map(([year, e]) => [year, e.count, usd(e.spend), e.auto]),
+        total: [
+          "Total",
+          contracts.length,
+          usd(spend(contracts)),
+          contracts.filter((c) =>
+            /^(yes|true|y)$/i.test(str(c, "autoRenewFlag")),
+          ).length,
+        ],
+        note: "An auto-renewing contract passes its term end without a decision unless notice is served inside its declared window.",
+      };
+    })(),
+    (() => {
+      const models = countBy(
+        contracts.filter((c) => str(c, "commercialModel")),
+        "commercialModel",
+      );
+      return {
+        caption: "Commercial model",
+        columns: ["Model", "Contracts", "Annual spend"],
+        rows: models.map((m) => [
+          label(m.value),
+          m.count,
+          usd(
+            spend(
+              contracts.filter((c) => str(c, "commercialModel") === m.value),
+            ),
+          ),
+        ]),
+        total: [
+          "Declared",
+          models.reduce((n, m) => n + m.count, 0),
+          usd(spend(contracts)),
+        ],
+        note: "Each model prices a different thing, so a total across them is a sum of unlike units.",
+      };
+    })(),
+    (() => {
+      const withClause = contracts.filter((c) =>
+        /^yes/i.test(str(c, "benchmarkClause")),
+      );
+      const without = contracts.length - withClause.length;
+      return {
+        caption: "Right to test the price",
+        columns: ["Benchmark clause", "Contracts", "Annual spend"],
+        rows: [
+          ...countBy(withClause, "benchmarkClause").map((b) => [
+            label(b.value),
+            b.count,
+            usd(
+              spend(
+                withClause.filter((c) => str(c, "benchmarkClause") === b.value),
+              ),
+            ),
+          ]),
+          [
+            "No benchmark clause",
+            without,
+            usd(
+              spend(
+                contracts.filter(
+                  (c) => !/^yes/i.test(str(c, "benchmarkClause")),
+                ),
+              ),
+            ),
+          ],
+        ],
+        total: ["Total", contracts.length, usd(spend(contracts))],
+        note: "A benchmark clause is the contractual right to test a price against the market mid-term. Without one, the only leverage point is the renewal date.",
+      };
+    })(),
   ];
 }
 
-export function vendorFindings(contracts: EstateRow[]): Finding[] {
+/** Year a date column falls in, or null when it does not parse. Renewal is a calendar, not a state. */
+function yearOf(value: string): string | null {
+  const match = /^(\d{4})-/.exec(value.trim());
+  return match ? match[1] : null;
+}
+
+export function vendorFindings(
+  contracts: EstateRow[],
+  /** The record's own as-of date, so "already expired" is measured against the record and not the
+   * clock. Omitted, the expiry finding does not fire rather than guessing a reference point. */
+  asOf?: string,
+): Finding[] {
   if (contracts.length === 0) return [];
   const findings: Finding[] = [];
   const auto = contracts.filter((c) =>
@@ -475,6 +579,81 @@ export function vendorFindings(contracts: EstateRow[]): Finding[] {
       },
     });
   }
+
+  const noBenchmark = contracts.filter(
+    (c) => !/^yes/i.test(str(c, "benchmarkClause")),
+  );
+  if (noBenchmark.length > 0) {
+    const spendAtRisk = noBenchmark.reduce(
+      (n, c) => n + num(c, "annualSpendUsd"),
+      0,
+    );
+    findings.push({
+      kind: "absence",
+      claim: `${noBenchmark.length} contracts carry no right to test their price against the market, covering ${usd(spendAtRisk)} a year.`,
+      owner: "Chief Procurement Officer",
+      because:
+        "A benchmark clause is the only mid-term leverage there is. Without one the price stands until the renewal date, whatever the market does in between.",
+      trace: {
+        file: "07_vendors_contracts.csv",
+        grain: "one contract",
+        rule: "benchmarkClause does not start with yes",
+      },
+    });
+  }
+
+  // Contracts whose declared term has already passed against the record's own as-of date. Either
+  // they renewed without a decision or the record is stale, and both are worth knowing -- but the
+  // record cannot tell you which, so the finding says so rather than picking one.
+  const expired = asOf
+    ? contracts.filter((c) => {
+        const end = str(c, "termEnd");
+        return end && end < asOf;
+      })
+    : [];
+  if (expired.length > 0) {
+    const auto = expired.filter((c) =>
+      /^(yes|true|y)$/i.test(str(c, "autoRenewFlag")),
+    ).length;
+    findings.push({
+      kind: "exposure",
+      claim: `${expired.length} contracts show a term end that has already passed, ${auto} of them auto-renewing.`,
+      owner: "Chief Procurement Officer",
+      because:
+        "An auto-renewing contract past its term renewed without anyone deciding. One that is not auto-renewing and still past its term means the record has not been maintained. The dates are declared; which of the two happened is not.",
+      trace: {
+        file: "07_vendors_contracts.csv",
+        grain: "one contract",
+        rule: `termEnd is earlier than ${asOf}`,
+      },
+    });
+  }
+
+  // The nearest cluster of decisions still ahead. A count of contracts says nothing about when.
+  const byTermYear = new Map<string, number>();
+  for (const contract of contracts) {
+    const year = yearOf(str(contract, "termEnd"));
+    if (year && (!asOf || year >= asOf.slice(0, 4)))
+      byTermYear.set(year, (byTermYear.get(year) ?? 0) + 1);
+  }
+  const soonest = [...byTermYear.entries()].sort((a, b) =>
+    a[0].localeCompare(b[0]),
+  )[0];
+  if (soonest && soonest[1] >= 5) {
+    findings.push({
+      kind: "absence",
+      claim: `${soonest[1]} contracts reach their term end in ${soonest[0]} — the nearest cluster of renewal decisions.`,
+      owner: "Chief Procurement Officer",
+      because:
+        "Notice periods are declared per contract and are short. A cluster of term ends in one year is a quarter of work that has to start before the earliest notice window closes.",
+      trace: {
+        file: "07_vendors_contracts.csv",
+        grain: "one contract",
+        rule: `termEnd falls in ${soonest[0]}`,
+      },
+    });
+  }
+
   return findings;
 }
 
@@ -524,7 +703,72 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
         costBasis(platforms),
       ),
     },
+    ...infrastructureCrossings(platforms),
   ];
+}
+
+/** Criticality against recovery tier, and the end-of-life calendar. */
+function infrastructureCrossings(platforms: EstateRow[]): TableSpec[] {
+  const out: TableSpec[] = [];
+  const tiers = countBy(
+    platforms.filter((p) => str(p, "drTier")),
+    "drTier",
+  ).map((d) => d.value);
+  const crits = countBy(
+    platforms.filter((p) => str(p, "criticality")),
+    "criticality",
+  ).map((c) => c.value);
+  if (tiers.length > 1 && crits.length > 1) {
+    out.push({
+      wide: true,
+      // Neither column alone shows the exposure: a tier-1 platform recovering from backup is the
+      // finding, and it exists only where the two are put against each other.
+      caption: "Criticality × recovery tier",
+      columns: ["Criticality", ...tiers.map(label), "Platforms"],
+      rows: crits.map((c) => {
+        const rows = platforms.filter((p) => str(p, "criticality") === c);
+        return [
+          label(c),
+          ...tiers.map(
+            (t) => rows.filter((p) => str(p, "drTier") === t).length,
+          ),
+          rows.length,
+        ];
+      }),
+      total: [
+        "Declared",
+        ...tiers.map(
+          (t) => platforms.filter((p) => str(p, "drTier") === t).length,
+        ),
+        platforms.filter((p) => str(p, "criticality")).length,
+      ],
+    });
+  }
+  const withEol = platforms.filter((p) => str(p, "endOfLifeDate"));
+  if (withEol.length > 0) {
+    const byYear = new Map<string, { count: number; cost: number }>();
+    for (const platform of withEol) {
+      const year = yearOf(str(platform, "endOfLifeDate")) ?? "not declared";
+      const entry = byYear.get(year) ?? { count: 0, cost: 0 };
+      entry.count += 1;
+      entry.cost += num(platform, "annualCostUsd");
+      byYear.set(year, entry);
+    }
+    out.push({
+      caption: "When platforms reach end of life",
+      columns: ["Year", "Platforms", "Annual cost"],
+      rows: [...byYear.entries()]
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([y, e]) => [y, e.count, usd(e.cost)]),
+      total: [
+        "Declared",
+        withEol.length,
+        usd(withEol.reduce((n, p) => n + num(p, "annualCostUsd"), 0)),
+      ],
+      note: `${platforms.length - withEol.length} platforms declare no end-of-life date. That is unassessed, not indefinite.`,
+    });
+  }
+  return out;
 }
 
 export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
@@ -563,6 +807,26 @@ export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
       },
     });
   }
+
+  const criticalOnBackup = platforms.filter(
+    (p) =>
+      /tier1/.test(str(p, "criticality")) && /tier3/.test(str(p, "drTier")),
+  ).length;
+  if (criticalOnBackup > 0) {
+    findings.push({
+      kind: "exposure",
+      claim: `${criticalOnBackup} tier-1 platforms recover from backup alone.`,
+      owner: "VP Infrastructure",
+      because:
+        "Tier 1 is the enterprise's own word for what cannot be down; tier 3 is its own word for hours-to-days recovery. The record states both about the same platform, and neither column alone shows it.",
+      trace: {
+        file: "06_infrastructure_platforms.csv",
+        grain: "one platform",
+        rule: "criticality is tier1 AND drTier is tier3_backup_only",
+      },
+    });
+  }
+
   return findings;
 }
 
@@ -606,7 +870,68 @@ export function dataTables(assets: EstateRow[]): TableSpec[] {
         regulated(assets),
       ],
     },
+    ...dataCrossings(assets),
   ];
+}
+
+function dataCrossings(assets: EstateRow[]): TableSpec[] {
+  const out: TableSpec[] = [];
+  const platforms = countBy(
+    assets.filter((a) => str(a, "platformOrDatabase")),
+    "platformOrDatabase",
+  );
+  if (platforms.length > 1) {
+    out.push({
+      caption: "Where the data actually sits",
+      columns: ["Platform", "Assets", "Regulated"],
+      rows: platforms
+        .slice(0, 7)
+        .map((p) => [
+          p.value,
+          p.count,
+          assets.filter(
+            (a) =>
+              str(a, "platformOrDatabase") === p.value &&
+              /^(true|yes|y)$/i.test(str(a, "regulatedDataFlag")),
+          ).length,
+        ]),
+      total: [
+        "Total",
+        assets.length,
+        assets.filter((a) =>
+          /^(true|yes|y)$/i.test(str(a, "regulatedDataFlag")),
+        ).length,
+      ],
+    });
+  }
+  const refreshes = countBy(
+    assets.filter((a) => str(a, "refreshFrequency")),
+    "refreshFrequency",
+  );
+  if (refreshes.length > 1) {
+    out.push({
+      caption: "How current the data is",
+      columns: ["Refresh", "Assets", "Regulated"],
+      rows: refreshes.map((r) => [
+        label(r.value),
+        r.count,
+        assets.filter(
+          (a) =>
+            str(a, "refreshFrequency") === r.value &&
+            /^(true|yes|y)$/i.test(str(a, "regulatedDataFlag")),
+        ).length,
+      ]),
+      total: [
+        "Declared",
+        refreshes.reduce((n, r) => n + r.count, 0),
+        assets.filter((a) =>
+          /^(true|yes|y)$/i.test(str(a, "regulatedDataFlag")),
+        ).length,
+      ],
+      note: "Refresh frequency is the ceiling on how current any decision made from an asset can be.",
+    });
+  }
+  return out;
 }
 
 export function dataFindings(assets: EstateRow[]): Finding[] {
@@ -646,6 +971,31 @@ export function dataFindings(assets: EstateRow[]): Finding[] {
       },
     });
   }
+
+  const topPlatform = countBy(
+    assets.filter((a) => str(a, "platformOrDatabase")),
+    "platformOrDatabase",
+  )[0];
+  if (topPlatform && topPlatform.count / assets.length >= 0.15) {
+    const regulatedThere = assets.filter(
+      (a) =>
+        str(a, "platformOrDatabase") === topPlatform.value &&
+        /^(true|yes|y)$/i.test(str(a, "regulatedDataFlag")),
+    ).length;
+    findings.push({
+      kind: "exposure",
+      claim: `${topPlatform.count} data assets sit on ${topPlatform.value}, ${regulatedThere} of them regulated.`,
+      owner: "Chief Data Officer",
+      because:
+        "Concentration on one platform is a single point of both dependency and remediation: it is where a migration costs most and where a control change reaches furthest.",
+      trace: {
+        file: "05_data_assets_integrations.csv",
+        grain: "one data asset or integration",
+        rule: `platformOrDatabase is ${topPlatform.value}`,
+      },
+    });
+  }
+
   return findings;
 }
 
