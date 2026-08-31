@@ -91,7 +91,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const investorActive     = pathname.startsWith('/investor') || activePage === 'investor'
 
   const navLink = (label: string, href: string, active: boolean) => (
-    <a href={href} key={label} className={active ? 'abarva-nav-link abarva-nav-link--active' : 'abarva-nav-link'} style={{
+    <Link href={href} prefetch key={label} className={active ? 'abarva-nav-link abarva-nav-link--active' : 'abarva-nav-link'} style={{
       fontSize: '15px',
       fontWeight: active ? 700 : 600,
       letterSpacing: '-0.01em',
@@ -102,7 +102,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
       borderRadius: '6px',
     }}>
       {label}
-    </a>
+    </Link>
   )
 
   // Demo nav item — temporarily disabled while v2 ships.
