@@ -621,12 +621,16 @@ assert(
     script.includes('sectionId === "runs-on" || sectionId === "exposed"') &&
     script.includes("return evidenceLedCandidate") &&
     script.includes("function standaloneInventoryClaim") &&
-    script.includes("function ensureBusinessFirstOpeningClaim") &&
-    script.includes("executive_brief_writer_claim_opening_001") &&
     script.includes("!unsuitableOpeningClaim(claim.statement)") &&
     script.includes("const lead = sectionLeadClaim(sectionId, sectionClaims, openingRef)") &&
     !script.includes("sectionClaims[0] ??"),
   "ECL story-plan selector refuses supplier, evidence-boundary, and standalone-inventory openings for the executive opening without demoting section-specific technology evidence",
+);
+assert(
+  !script.includes("function ensureBusinessFirstOpeningClaim") &&
+    !script.includes("executive_brief_writer_claim_opening_001") &&
+    !script.includes("provider and health-plan operating model turns technology resilience"),
+  "ECL narrative job does not inject a hardcoded executive opening when no generated business-led claim survives verification",
 );
 assert(
   script.includes("Report, job, user, script, and data-volume counts are unavailable from this source family.") &&
