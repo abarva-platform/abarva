@@ -11,6 +11,7 @@ import { buildTowerChatAvaAnswerPacket } from "@/lib/cio-tower/tower-chat-artifa
 import type { TowerChatVisibleAnswer } from "@/lib/cio-tower/tower-chat-artifacts";
 import type { AtlasSuggestion } from "@/lib/atlas/types";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
+import type { CioTowerPageContext } from "@/lib/tower/current-layer-answer-contract";
 
 import { TowerCommandCenter } from "./TowerCommandCenter";
 
@@ -149,6 +150,15 @@ export function TowerCommandCenterAvaShell({
   const [pending, setPending] = useState(false);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [pageContext, setPageContext] = useState<CioTowerPageContext>({
+    activeTab: "verdict",
+    activeTabLabel: "Today's verdict",
+    activeView: null,
+    activeViewLabel: null,
+    selectedEntity: null,
+    visibleRows: [],
+    filters: {},
+  });
   const suggestions = useMemo(() => buildSuggestions(view), [view]);
 
   const sendToAva = useCallback(
@@ -197,6 +207,7 @@ export function TowerCommandCenterAvaShell({
             message: trimmed,
             clientKey,
             stream: true,
+            pageContext,
             visibleContextCriteria: {
               renderingPolicy: "exact-visible-output",
               preferredCharts: [
@@ -274,7 +285,7 @@ export function TowerCommandCenterAvaShell({
         setPendingMessage(null);
       }
     },
-    [clientId, clientKey, tenantName, threadId],
+    [clientId, clientKey, pageContext, tenantName, threadId],
   );
 
   const handleSuggestion = useCallback(
@@ -284,7 +295,13 @@ export function TowerCommandCenterAvaShell({
     [sendToAva],
   );
 
-  const workspace = <TowerCommandCenter view={view} tenantName={tenantName} />;
+  const workspace = (
+    <TowerCommandCenter
+      view={view}
+      tenantName={tenantName}
+      onAvaContextChange={setPageContext}
+    />
+  );
 
   return (
     <AtlasChatPanel
@@ -306,6 +323,7 @@ export function TowerCommandCenterAvaShell({
         context: `Command Center · ${tenantName}`,
         towerExperience: "outcome_proof_cockpit",
         towerContextSource: "cio_tower_mart_command_center",
+        activeTowerContext: pageContext,
         answerRenderingPolicy: {
           visibleOutputOwner: "claude",
           rendererPolicy: "exact_visible_strings",

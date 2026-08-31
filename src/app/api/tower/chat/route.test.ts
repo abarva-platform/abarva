@@ -81,6 +81,10 @@ describe("POST /api/tower/chat", () => {
         body: JSON.stringify({
           message: "What value is claimable?",
           clientKey: "selected-client",
+          pageContext: {
+            activeTab: "tools",
+            activeView: "rollouts",
+          },
         }),
       }),
     );
@@ -93,6 +97,10 @@ describe("POST /api/tower/chat", () => {
         tenantKey: "selected-client",
         tenantName: "Selected Client",
         question: "What value is claimable?",
+        pageContext: {
+          activeTab: "tools",
+          activeView: "rollouts",
+        },
       }),
     );
   });

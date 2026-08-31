@@ -1,6 +1,7 @@
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import type { CioTowerVisibleContextCriteria } from "@/lib/tower/current-layer-answer-contract";
+import type { CioTowerPageContext } from "@/lib/tower/current-layer-answer-contract";
 import { canonicalCioTowerTenantKey } from "@/lib/tower/metric-packet";
 import { towerProgressEventsForQuestion } from "@/lib/tower/visual-contract";
 import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
@@ -87,6 +88,7 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as {
     clientKey?: string;
     message?: string;
+    pageContext?: CioTowerPageContext;
     stream?: boolean;
   };
   const question = body.message?.trim();
@@ -132,6 +134,7 @@ export async function POST(request: Request) {
             tenantKey,
             tenantName,
             question,
+            pageContext: body.pageContext,
             visibleContextCriteria: TOWER_VISIBLE_CONTEXT_CRITERIA,
           });
           emit("status", {
@@ -169,6 +172,7 @@ export async function POST(request: Request) {
       tenantKey,
       tenantName,
       question,
+      pageContext: body.pageContext,
       visibleContextCriteria: TOWER_VISIBLE_CONTEXT_CRITERIA,
     });
     return Response.json(buildTowerChatPayload(result), {

@@ -8,6 +8,25 @@ export interface CioTowerVisibleContextCriteria {
   valueProposition: string;
 }
 
+export interface CioTowerPageContext {
+  activeTab?: string | null;
+  activeTabLabel?: string | null;
+  activeView?: string | null;
+  activeViewLabel?: string | null;
+  selectedEntity?: {
+    kind: "program" | "ai" | "gap" | "action";
+    id: string;
+    label?: string | null;
+    ordinal?: number | null;
+  } | null;
+  visibleRows?: Array<{
+    id: string;
+    label: string;
+    kind: string;
+  }>;
+  filters?: Record<string, string | number | boolean | null>;
+}
+
 export interface CioTowerVisibleTable {
   id: string;
   title: string;

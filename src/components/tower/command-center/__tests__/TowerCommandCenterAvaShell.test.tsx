@@ -123,6 +123,10 @@ describe("TowerCommandCenterAvaShell", () => {
       message: "What value is claimable?",
       clientKey: "selected-client",
       stream: true,
+      pageContext: {
+        activeTab: "verdict",
+        activeTabLabel: "Today's verdict",
+      },
     });
   });
 });

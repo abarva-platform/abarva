@@ -15,6 +15,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { formatCount } from "@/lib/tower/command-center/format";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
+import type { CioTowerPageContext } from "@/lib/tower/current-layer-answer-contract";
 
 import { AiInitiativeDrawer } from "./drawers/AiInitiativeDrawer";
 import { ActionDrawer } from "./drawers/ActionDrawer";
@@ -145,10 +146,12 @@ type DrawerState =
 export function TowerCommandCenter({
   view,
   tenantName,
+  onAvaContextChange,
 }: {
   /** `null` when the tenant has no governed Tower mart rows. */
   view: TowerCommandCenterView | null;
   tenantName: string;
+  onAvaContextChange?: (context: CioTowerPageContext) => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -262,6 +265,73 @@ export function TowerCommandCenter({
         : null,
     [drawer, view],
   );
+
+  useEffect(() => {
+    if (!onAvaContextChange) return;
+    const activeSub = subTab || defaultSubTab(tab);
+    const selectedTab = TABS.find((t) => t.id === tab);
+    const selectedSub = SUB_TABS[tab].find((st) => st.id === activeSub);
+    const selectedEntity =
+      drawer?.kind === "program" && selectedProgram
+        ? {
+            kind: "program" as const,
+            id: selectedProgram.id,
+            label: selectedProgram.name,
+          }
+        : drawer?.kind === "ai" && selectedAi
+          ? {
+              kind: "ai" as const,
+              id: selectedAi.id,
+              label: selectedAi.name,
+              ordinal: selectedAi.n,
+            }
+          : drawer?.kind === "gap" && selectedGap
+            ? {
+                kind: "gap" as const,
+                id: selectedGap.id,
+                label: selectedGap.missing,
+              }
+            : drawer?.kind === "action" && selectedAction
+              ? {
+                  kind: "action" as const,
+                  id: selectedAction.id,
+                  label: selectedAction.title,
+                }
+              : null;
+
+    onAvaContextChange({
+      activeTab: tab,
+      activeTabLabel: selectedTab?.label ?? tab,
+      activeView: activeSub || null,
+      activeViewLabel: selectedSub?.label ?? null,
+      selectedEntity,
+      visibleRows: view
+        ? [
+            ...view.allInitiatives.slice(0, 8).map((item) => ({
+              id: item.id,
+              label: item.name,
+              kind: "ai",
+            })),
+            ...view.actions.slice(0, 6).map((action) => ({
+              id: action.id,
+              label: action.title,
+              kind: "action",
+            })),
+          ]
+        : [],
+      filters: {},
+    });
+  }, [
+    drawer,
+    onAvaContextChange,
+    selectedAction,
+    selectedAi,
+    selectedGap,
+    selectedProgram,
+    subTab,
+    tab,
+    view,
+  ]);
 
   const blockedValue = view ? view.summary.blockedUsd : 0;
   const attention = {
