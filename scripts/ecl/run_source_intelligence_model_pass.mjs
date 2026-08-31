@@ -18,8 +18,19 @@ const REQUIRED_HOME_KEYS = [
   "performance_value",
   "leadership_perspective",
   "what_needs_attention",
+  "current_state_architecture",
+  "current_state_data_flow",
+  "what_has_been_loaded",
+  "browse_the_record",
+  "applications_systems",
+  "vendor_contracts",
+  "infrastructure_platforms",
+  "data_assets_integrations",
+  "ai_value_governance",
 ];
 const ARRAY_FIELDS = [
+  "facts",
+  "reading",
   "observed_facts",
   "calculated_observations",
   "model_derived_observations",
@@ -37,6 +48,7 @@ function parseArgs(argv) {
     limit: null,
     mode: "real",
     requireSourceContent: true,
+    plantUnsupportedFact: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -54,6 +66,7 @@ function parseArgs(argv) {
     else if (arg === "--limit") options.limit = Number(next());
     else if (arg === "--mock") options.mode = "mock";
     else if (arg === "--allow-omitted-source-content") options.requireSourceContent = false;
+    else if (arg === "--plant-unsupported-fact") options.plantUnsupportedFact = true;
     else if (arg === "--help") {
       console.log(`Usage: node scripts/ecl/run_source_intelligence_model_pass.mjs [options]
 
@@ -67,6 +80,7 @@ Options:
   --max-tokens <n>                   Max output tokens per source file. Default: 2400.
   --limit <n>                        Process only the first n prompt files.
   --mock                             Deterministic local proof; no model call and no API key required.
+  --plant-unsupported-fact           Mock-mode planted failure: emit an unsupported fact number.
   --allow-omitted-source-content     Permit prompts that carry inventory only. Default refuses them.`);
       process.exit(0);
     } else {
@@ -213,6 +227,72 @@ function normalizeHomeRelevance(value) {
   return out;
 }
 
+function statementOf(entry) {
+  if (typeof entry === "string") return entry;
+  if (entry && typeof entry.statement === "string") return entry.statement;
+  return "";
+}
+
+function normalizeClaim(entry, basisFallback) {
+  if (typeof entry === "string") return { statement: entry, basis: basisFallback, citations: [] };
+  if (!entry || typeof entry !== "object") return { statement: String(entry ?? ""), basis: basisFallback, citations: [] };
+  return {
+    ...entry,
+    statement: typeof entry.statement === "string" ? entry.statement : JSON.stringify(entry),
+    basis: typeof entry.basis === "string" ? entry.basis : basisFallback,
+    citations: Array.isArray(entry.citations) ? entry.citations : [],
+  };
+}
+
+function extractNumbers(text) {
+  return String(text ?? "").match(/-?\$?\d[\d,]*(?:\.\d+)?%?/g) ?? [];
+}
+
+function normalizeNumber(value) {
+  return String(value).replace(/[$,%]/g, "").replace(/\.0+$/, "");
+}
+
+function addNumbers(target, value) {
+  for (const number of extractNumbers(value)) target.add(normalizeNumber(number));
+}
+
+function addPercent(target, value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return;
+  addNumbers(target, (n * 100).toFixed(1));
+  addNumbers(target, (n * 100).toFixed(2));
+}
+
+function sourceAllowedNumbers(prompt) {
+  const numbers = new Set();
+  addNumbers(numbers, prompt?.user?.source_content ?? "");
+  addNumbers(numbers, prompt?.source_file?.path);
+  addNumbers(numbers, prompt?.source_file?.row_count);
+  addNumbers(numbers, prompt?.source_file?.rows_read);
+  addNumbers(numbers, prompt?.source_file?.column_count);
+  const inventory = prompt?.user?.source_inventory ?? {};
+  addNumbers(numbers, inventory.fill_rate);
+  addPercent(numbers, inventory.fill_rate);
+  for (const dimension of inventory.key_dimensions ?? []) addNumbers(numbers, dimension.distinct_count);
+  for (const profile of inventory.column_profiles ?? []) {
+    addNumbers(numbers, profile.populated_count);
+    addNumbers(numbers, profile.distinct_count);
+    addNumbers(numbers, profile.top_value_count);
+    addNumbers(numbers, profile.top_value_share);
+    addNumbers(numbers, profile.fill_rate);
+    addPercent(numbers, profile.top_value_share);
+    addPercent(numbers, profile.fill_rate);
+  }
+  return numbers;
+}
+
+function numberSupported(number, allowedNumbers) {
+  const normalized = normalizeNumber(number);
+  if (allowedNumbers.has(normalized)) return true;
+  if (/^\d{1,2}$/.test(normalized)) return true;
+  return false;
+}
+
 function normalizeArtifact(parsed, prompt, rawText, options) {
   const source = prompt.source_file;
   const classification = {
@@ -222,6 +302,14 @@ function normalizeArtifact(parsed, prompt, rawText, options) {
     advisory_inferences: normalizeArray(parsed.advisory_inferences),
     do_not_claim: normalizeArray(parsed.do_not_claim),
   };
+  classification.facts = [
+    ...classification.observed_facts.map((entry) => normalizeClaim(entry, "source_recorded")),
+    ...classification.calculated_observations.map((entry) => normalizeClaim(entry, "calculated")),
+  ];
+  classification.reading = [
+    ...classification.model_derived_observations.map((entry) => normalizeClaim(entry, "model_derived_observation")),
+    ...classification.advisory_inferences.map((entry) => normalizeClaim(entry, "advisory_inference")),
+  ];
   const artifact = {
     contract_version: ARTIFACT_VERSION,
     tenant_key: prompt.tenant_key,
@@ -229,17 +317,32 @@ function normalizeArtifact(parsed, prompt, rawText, options) {
     source_file: {
       path: source.path,
       sha256: source.sha256,
+      content_sha256: source.content_sha256 ?? source.sha256,
       schema_fingerprint: source.schema_fingerprint,
       row_count: source.row_count,
+      rows_read: source.rows_read ?? source.row_count,
       column_count: source.column_count,
       grain: typeof parsed.grain === "string" && parsed.grain.trim() ? parsed.grain.trim() : "not_declared",
       source_family: source.source_family,
+      page_mapping: source.page_mapping ?? prompt.user.source_inventory?.page_mapping ?? [],
     },
     deterministic_inventory: {
       fill_rate: prompt.user.source_inventory.fill_rate,
       columns: prompt.user.source_inventory.columns,
+      column_profiles: prompt.user.source_inventory.column_profiles ?? [],
+      constant_columns: prompt.user.source_inventory.constant_columns ?? [],
+      near_constant_columns: prompt.user.source_inventory.near_constant_columns ?? [],
+      columns_collapsed: prompt.user.source_inventory.columns_collapsed ?? [],
+      columns_to_model: prompt.user.source_inventory.columns_to_model ?? [],
+      narrative_columns: prompt.user.source_inventory.narrative_columns ?? [],
+      structured_columns: prompt.user.source_inventory.structured_columns ?? [],
       key_dimensions: prompt.user.source_inventory.key_dimensions,
       sample_entities: prompt.user.source_inventory.sample_entities,
+      read: prompt.user.source_inventory.read ?? {
+        source_rows: source.row_count,
+        rows_read: source.rows_read ?? source.row_count,
+        strategy: "single_pass",
+      },
     },
     model_input: {
       prompt_version: prompt.prompt_version,
@@ -266,6 +369,10 @@ function normalizeArtifact(parsed, prompt, rawText, options) {
     },
     classification,
     home_relevance: normalizeHomeRelevance(parsed.home_relevance),
+    facts: classification.facts,
+    reading: classification.reading,
+    do_not_claim: classification.do_not_claim,
+    page_mapping: source.page_mapping ?? prompt.user.source_inventory?.page_mapping ?? [],
     verification: {
       state: "accepted",
       accepted_count:
@@ -287,6 +394,10 @@ function validateArtifact(artifact, prompt) {
   if (artifact.tenant_key !== prompt.tenant_key) issues.push("tenant_mismatch");
   if (artifact.assessment_id !== prompt.assessment_id) issues.push("assessment_mismatch");
   if (artifact.source_file.sha256 !== prompt.source_file.sha256) issues.push("source_hash_mismatch");
+  if (artifact.source_file.rows_read !== artifact.source_file.row_count) issues.push("rows_read_mismatch");
+  if (artifact.deterministic_inventory.read?.rows_read !== artifact.deterministic_inventory.read?.source_rows) {
+    issues.push("inventory_rows_read_mismatch");
+  }
   if (artifact.model_input.source_content_hash !== prompt.source_file.sha256) {
     issues.push("source_content_hash_mismatch");
   }
@@ -296,6 +407,24 @@ function validateArtifact(artifact, prompt) {
   }
   for (const key of REQUIRED_HOME_KEYS) {
     if (!Array.isArray(artifact.home_relevance[key])) issues.push(`home_relevance_${key}_missing`);
+  }
+  if (!Array.isArray(artifact.facts)) issues.push("facts_not_array");
+  if (!Array.isArray(artifact.reading)) issues.push("reading_not_array");
+  if (!Array.isArray(artifact.page_mapping)) issues.push("page_mapping_not_array");
+  const allowedFactNumbers = sourceAllowedNumbers(prompt);
+  for (const fact of artifact.facts ?? []) {
+    for (const number of extractNumbers(statementOf(fact))) {
+      if (!numberSupported(number, allowedFactNumbers)) issues.push(`fact_number_not_supported:${number}`);
+    }
+  }
+  const factNumbers = new Set();
+  for (const fact of artifact.facts ?? []) {
+    for (const number of extractNumbers(statementOf(fact))) factNumbers.add(normalizeNumber(number));
+  }
+  for (const reading of artifact.reading ?? []) {
+    for (const number of extractNumbers(statementOf(reading))) {
+      if (!numberSupported(number, factNumbers)) issues.push(`reading_number_not_supported_by_fact:${number}`);
+    }
   }
   if (!artifact.summary.what_this_source_represents) issues.push("missing_source_summary");
   return issues;
@@ -308,7 +437,7 @@ function mockResponseForPrompt(prompt) {
     .slice(0, 4)
     .map((dimension) => `${dimension.column} has ${dimension.distinct_count} distinct populated values`);
   const firstColumns = inventory.columns.slice(0, 6).join(", ");
-  return {
+  const response = {
     what_this_source_represents: `${source.source_family} source file with ${source.row_count} rows and ${source.column_count} columns.`,
     grain: `One source row from ${path.basename(source.path)}; exact grain requires the named source columns.`,
     authority: "Synthetic source package record; suitable for demo-source intelligence, not real-client attestation.",
@@ -365,6 +494,14 @@ function mockResponseForPrompt(prompt) {
     do_not_claim: ["Do not treat mock output as Claude-authored source intelligence."],
     citations: [{ file: source.path, row: null, column: "__file" }],
   };
+  if (prompt.__plant_unsupported_fact) {
+    response.observed_facts.push({
+      statement: `${path.basename(source.path)} proves 987654321 unsupported records.`,
+      basis: "source_recorded",
+      citations: [{ file: source.path, row: null, column: "__planted_failure" }],
+    });
+  }
+  return response;
 }
 
 async function callClaude(prompt, options) {
@@ -387,6 +524,7 @@ async function callClaude(prompt, options) {
 
 async function processPromptFile(promptFile, options) {
   const prompt = readJson(promptFile);
+  if (options.plantUnsupportedFact) prompt.__plant_unsupported_fact = true;
   const stem = path.basename(promptFile).replace(/\.prompt\.json$/, "");
   const promptHash = sha256(JSON.stringify(prompt));
   const sourceState = sourceContentState(prompt);

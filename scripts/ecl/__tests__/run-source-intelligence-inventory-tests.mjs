@@ -31,9 +31,9 @@ fs.writeFileSync(
 fs.writeFileSync(
   path.join(input, "04_applications_systems.csv"),
   [
-    "tenant_key,system_name,system_type,business_function,deployment_model",
-    "meridian-health,Epic Hyperspace,EHR,Clinical Operations,on_prem",
-    "meridian-health,Workday HCM,HCM,Human Resources,SaaS",
+    "tenant_key,system_name,system_type,business_function,deployment_model,known_challenges_narrative",
+    "meridian-health,Epic Hyperspace,EHR,Clinical Operations,on_prem,Local access controls require modernization",
+    "meridian-health,Workday HCM,HCM,Human Resources,SaaS,Payroll integration needs release-window coordination",
     "",
   ].join("\n"),
 );
@@ -65,22 +65,37 @@ assert.equal(manifest.entries.length, 3);
 assert.equal(manifest.entries[0].source_family, "enterprise_profile");
 assert.equal(manifest.entries[1].source_family, "applications");
 assert.equal(manifest.entries[1].row_count, 2);
-assert.equal(manifest.entries[1].column_count, 5);
+assert.equal(manifest.entries[1].rows_read, 2);
+assert.equal(manifest.entries[1].column_count, 6);
 assert.equal(manifest.entries[1].fill_rate, 1);
 assert.match(manifest.entries[1].sha256, /^[a-f0-9]{64}$/);
+assert.equal(manifest.entries[1].content_sha256, manifest.entries[1].sha256);
 assert.match(manifest.entries[1].schema_fingerprint, /^[a-f0-9]{64}$/);
+assert.equal(manifest.entries[1].constant_columns.some((column) => column.column === "tenant_key"), true);
+assert.equal(manifest.entries[1].columns_collapsed.includes("tenant_key"), true);
+assert.equal(manifest.entries[1].narrative_columns.includes("known_challenges_narrative"), true);
+assert.equal(manifest.entries[1].columns_to_model.includes("known_challenges_narrative"), true);
+assert.equal(manifest.entries[1].page_mapping.includes("applications_systems"), true);
 assert.equal(manifest.entries[2].source_family, "data_analytics_platform_maturity");
 
 const prompt = JSON.parse(fs.readFileSync(path.join(out, "prompts", "04_applications_systems.prompt.json"), "utf8"));
 assert.equal(prompt.prompt_version, "source-intelligence-file-analyst/v1");
 assert.match(prompt.system, /enterprise application portfolio architect/);
 assert.equal(prompt.user.source_content_omitted_reason.includes("--include-source-content"), true);
+assert.equal(prompt.user.source_inventory.read.rows_read, prompt.user.source_inventory.read.source_rows);
+assert.equal(prompt.user.source_inventory.columns_collapsed.includes("tenant_key"), true);
+assert.equal(prompt.user.source_inventory.columns_to_model.includes("known_challenges_narrative"), true);
 
 const scaffold = JSON.parse(
   fs.readFileSync(path.join(out, "scaffolds", "04_applications_systems.source-intelligence.scaffold.json"), "utf8"),
 );
 assert.equal(scaffold.contract_version, "source-derived-intelligence/v1");
 assert.equal(scaffold.model_input.source_content_hash, manifest.entries[1].sha256);
+assert.deepEqual(scaffold.facts, undefined);
+assert.equal(Array.isArray(scaffold.classification.facts), true);
+assert.equal(Array.isArray(scaffold.classification.reading), true);
+assert.equal(scaffold.deterministic_inventory.read.rows_read, 2);
+assert.equal(scaffold.page_mapping.includes("current_state_architecture"), true);
 assert.equal(scaffold.verification.state, "pending_model_run");
 
 console.log(JSON.stringify({ accepted: true, file_count: event.file_count, total_rows: event.total_rows }, null, 2));
