@@ -39,6 +39,8 @@ const CHAPTER_SOURCES: Partial<
 };
 
 export interface EstateRecordTypes {
+  /** The record's own as-of date, threaded so time-relative findings measure against the record. */
+  asOf?: string;
   applications?: EstateRow[];
   vendors?: EstateRow[];
   infrastructure?: EstateRow[];
@@ -74,7 +76,11 @@ export function chapterDepth(
     const rows = estate[source];
     if (!rows || rows.length === 0) continue;
     tables.push(...BUILDERS[source].tables(rows));
-    findings.push(...BUILDERS[source].findings(rows));
+    findings.push(
+      ...(source === "vendors"
+        ? vendorFindings(rows, estate.asOf)
+        : BUILDERS[source].findings(rows)),
+    );
     if (source === "applications")
       unsupported.push(...unsupportedApplicationViews(rows));
   }

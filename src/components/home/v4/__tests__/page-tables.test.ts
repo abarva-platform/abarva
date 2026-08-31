@@ -3,8 +3,11 @@ import path from "node:path";
 import {
   applicationTables,
   applicationFindings,
+  vendorTables,
   vendorFindings,
+  infrastructureTables,
   infrastructureFindings,
+  dataTables,
   dataFindings,
   unsupportedApplicationViews,
   constantColumns,
@@ -262,5 +265,91 @@ describe("a view the rows cannot support is named, not dropped", () => {
       depth.unsupported.some((v) => v.missingColumn === "authenticationMethod"),
     ).toBe(true);
     expect(depth.tables.length).toBeGreaterThan(0);
+  });
+});
+
+describe("commercial and platform depth", () => {
+  const contracts: EstateRow[] = recordType("vendor_contract").rows;
+  const platforms: EstateRow[] = recordType("infrastructure_platform").rows;
+  const assets: EstateRow[] = recordType("data_asset_or_integration").rows;
+
+  it("puts renewal on a calendar, because a calendar is the only form that shows the wall", () => {
+    const table = vendorTables(contracts).find(
+      (t) => t.caption === "When the contracts end",
+    );
+    expect(table).toBeDefined();
+    expect(table!.columns).toContain("Auto-renewing");
+    expect(Number(table!.total?.[1])).toBe(contracts.length);
+  });
+
+  it("names the contracts with no right to test their price", () => {
+    const finding = vendorFindings(contracts).find((f) =>
+      /test their price/.test(f.claim),
+    );
+    const expected = contracts.filter(
+      (c) => !/^yes/i.test(String(c.benchmarkClause ?? "")),
+    ).length;
+    expect(finding?.claim).toMatch(new RegExp(`^${expected} contracts`));
+    expect(finding?.kind).toBe("absence");
+  });
+
+  // Measured against the record's own as-of date, never the clock — so the finding is reproducible
+  // and cannot change meaning because a test ran on a different day.
+  it("reports contracts already past their term, and says it cannot tell you why", () => {
+    const finding = vendorFindings(contracts, "2026-08-21").find((f) =>
+      /already passed/.test(f.claim),
+    );
+    expect(finding?.claim).toMatch(/auto-renewing/);
+    expect(finding?.because).toMatch(/which of the two happened is not/);
+  });
+
+  it("does not report expiry at all without an as-of date to measure against", () => {
+    expect(
+      vendorFindings(contracts).some((f) => /already passed/.test(f.claim)),
+    ).toBe(false);
+  });
+
+  it("crosses criticality with recovery tier, and stays silent when nothing crosses badly", () => {
+    const table = infrastructureTables(platforms).find(
+      (t) => t.caption === "Criticality × recovery tier",
+    );
+    expect(table?.wide).toBe(true);
+    // In the current record no tier-1 platform recovers from backup alone, so the finding must not
+    // fire. A gate that reports zero is indistinguishable from one that never checked.
+    const worst = platforms.filter(
+      (p) =>
+        /tier1/.test(String(p.criticality ?? "")) &&
+        /tier3/.test(String(p.drTier ?? "")),
+    ).length;
+    const fired = infrastructureFindings(platforms).some((f) =>
+      /tier-1 platforms recover from backup alone/.test(f.claim),
+    );
+    expect(fired).toBe(worst > 0);
+  });
+
+  it("fires the criticality crossing when a tier-1 platform is on backup only", () => {
+    const planted = [
+      ...platforms,
+      {
+        criticality: "tier1",
+        drTier: "tier3_backup_only",
+        platformName: "planted",
+      },
+    ];
+    const finding = infrastructureFindings(planted).find((f) =>
+      /tier-1 platforms recover from backup alone/.test(f.claim),
+    );
+    expect(finding?.kind).toBe("exposure");
+  });
+
+  it("names where the data actually sits, with how much of it is regulated", () => {
+    const table = dataTables(assets).find(
+      (t) => t.caption === "Where the data actually sits",
+    );
+    expect(table?.columns).toEqual(["Platform", "Assets", "Regulated"]);
+    const finding = dataFindings(assets).find((f) =>
+      /data assets sit on/.test(f.claim),
+    );
+    expect(finding?.claim).toMatch(/of them regulated/);
   });
 });

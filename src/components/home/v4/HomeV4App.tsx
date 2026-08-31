@@ -125,7 +125,9 @@ export function HomeV4App({
       integrations
         ? {
             ...integrations,
-            rows: integrations.rows.filter((row) => row.recordKind !== "data_analytics_workload"),
+            rows: integrations.rows.filter(
+              (row) => row.recordKind !== "data_analytics_workload",
+            ),
           }
         : undefined,
     [integrations],
@@ -301,10 +303,15 @@ export function HomeV4App({
                 visualDatasets={visualDatasets}
                 exhibitMeta={exhibitMeta}
                 depth={chapterDepth(activeChapter.chapterId, {
+                  asOf: bundle.provenance?.generated_at?.slice(0, 10),
                   applications: applications?.rows,
-                  vendors: techRecordTypes.find((r) => r.objectType === "vendor_contract")?.rows,
+                  vendors: techRecordTypes.find(
+                    (r) => r.objectType === "vendor_contract",
+                  )?.rows,
                   infrastructure: infrastructure?.rows,
-                  data: techRecordTypes.find((r) => r.objectType === "data_asset_or_integration")?.rows,
+                  data: techRecordTypes.find(
+                    (r) => r.objectType === "data_asset_or_integration",
+                  )?.rows,
                 })}
               />
             ) : (
@@ -313,17 +320,26 @@ export function HomeV4App({
                 title={activeChapter.title}
                 guidingQuestion={activeChapter.guidingQuestion}
                 depth={chapterDepth(activeChapter.chapterId, {
+                  asOf: bundle.provenance?.generated_at?.slice(0, 10),
                   applications: applications?.rows,
-                  vendors: techRecordTypes.find((r) => r.objectType === "vendor_contract")?.rows,
+                  vendors: techRecordTypes.find(
+                    (r) => r.objectType === "vendor_contract",
+                  )?.rows,
                   infrastructure: infrastructure?.rows,
-                  data: techRecordTypes.find((r) => r.objectType === "data_asset_or_integration")?.rows,
+                  data: techRecordTypes.find(
+                    (r) => r.objectType === "data_asset_or_integration",
+                  )?.rows,
                 })}
               />
             )
           ) : null}
 
-          {activeChapter && (activeChapter.chapterId === "executive_brief" || activeChapter.chapterId === "our_business") ? (
-            <BusinessBriefingSections briefing={buildBusinessBriefing(signalPacket)} />
+          {activeChapter &&
+          (activeChapter.chapterId === "executive_brief" ||
+            activeChapter.chapterId === "our_business") ? (
+            <BusinessBriefingSections
+              briefing={buildBusinessBriefing(signalPacket)}
+            />
           ) : null}
 
           {activeView === "architecture" && applications ? (
