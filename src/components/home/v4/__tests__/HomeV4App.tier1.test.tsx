@@ -41,9 +41,12 @@ function attachStoryPlan(bundle: HomeReviewBundle): HomeReviewBundle {
     }),
   );
   const commercialPattern = /IBM Corporation|largest supplier group|contract value|vendor|supplier|contract|commercial exposure/i;
+  const evidenceBoundaryPattern =
+    /not supplied|not yet supplied|not available|does not yet establish|should therefore be limited|do not infer|coverage gap|evidence gap|missing evidence|not enough verified evidence|not client-attested|synthetic/i;
+  const unsuitableOpening = (statement: string) => commercialPattern.test(statement) || evidenceBoundaryPattern.test(statement);
   const opening =
-    allClaims.find((claim) => claim.chapterId === "executive_brief" && !commercialPattern.test(claim.statement)) ??
-    allClaims.find((claim) => !commercialPattern.test(claim.statement)) ??
+    allClaims.find((claim) => claim.chapterId === "executive_brief" && !unsuitableOpening(claim.statement)) ??
+    allClaims.find((claim) => !unsuitableOpening(claim.statement)) ??
     null;
   const scale = allClaims.find((claim) => claim.claimRef !== opening?.claimRef && /\d/.test(claim.statement)) ?? null;
   const sectionClaims = (chapterIds: string[]) => allClaims.filter((claim) => chapterIds.includes(claim.chapterId));
@@ -69,7 +72,7 @@ function attachStoryPlan(bundle: HomeReviewBundle): HomeReviewBundle {
     openingThesisClaimRef: opening?.claimRef ?? null,
     openingSupportingClaimRefs: allClaims
       .filter((claim) => claim.claimRef !== opening?.claimRef)
-      .filter((claim) => !commercialPattern.test(claim.statement))
+      .filter((claim) => !unsuitableOpening(claim.statement))
       .slice(0, 3)
       .map((claim) => claim.claimRef),
     scaleFactRef: scale?.claimRef ?? null,
@@ -180,6 +183,37 @@ describe("Home v4 Tier 1 executive story", () => {
     expect(lead?.textContent ?? "").toMatch(/application functions/i);
     expect(lead?.textContent ?? "").not.toMatch(/IBM Corporation|largest supplier group|contract value/i);
     expect(enterpriseSection?.textContent ?? "").not.toMatch(/IBM Corporation|largest supplier group/i);
+  });
+
+  it("does not let evidence-boundary caveats become the opening thesis", () => {
+    const bundle = JSON.parse(JSON.stringify(loadMeridianBundle())) as HomeReviewBundle;
+    const executive = bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief");
+    expect(executive).toBeTruthy();
+    executive!.key_insights = [
+      {
+        statement:
+          "Segment revenue, customer economics, and formal enterprise identity attributes are not supplied by the current Home narrative input; business-model conclusions should therefore be limited.",
+        evidence_ids: ["ctx_ecl_scope_business_economics_001"],
+        claim_type: "OBSERVATION",
+        confidence: "high",
+      },
+      {
+        statement:
+          "Clinical Operations is the largest application function and the primary operating-model risk because it carries 167 of 750 applications, making modernization sequencing a leadership decision rather than a technology cleanup.",
+        evidence_ids: ["sig_ecl_application_function_002", "sig_ecl_application_criticality_003"],
+        claim_type: "CROSS_DOMAIN_INSIGHT",
+        confidence: "high",
+      },
+    ];
+    executive!.tensions = [];
+    executive!.what_to_watch = [];
+    attachStoryPlan(bundle);
+
+    render(<HomeV4App bundle={bundle} tenantKey="meridian-health" />);
+
+    const hero = document.querySelector("[data-home-tier1-hero-metric]");
+    expect(hero?.textContent ?? "").toMatch(/Clinical Operations|operating-model risk|modernization sequencing/i);
+    expect(hero?.textContent ?? "").not.toMatch(/not supplied|should therefore be limited|business-model conclusions/i);
   });
 
   it("keeps implementation vocabulary off the CXO opening path", () => {

@@ -559,10 +559,27 @@ assert(
 assert(
   chapters.includes("function enterpriseOpeningClaims") &&
     chapters.includes("COMMERCIAL_OPENING_RE") &&
+    chapters.includes("EVIDENCE_BOUNDARY_OPENING_RE") &&
+    chapters.includes("function unsuitableExecutiveOpening") &&
     chapters.includes("supplier group") &&
     chapters.includes("ENTERPRISE_OPENING_RE") &&
     chapters.includes("key_insights: takeLimit(enterpriseOpeningClaims(alive(thesis.things_a_new_cxo_should_know))"),
-  "Home chapter assembly keeps supplier concentration out of the executive opening slice when enterprise-shape claims exist",
+  "Home chapter assembly keeps supplier concentration and evidence-boundary caveats out of the executive opening slice",
+);
+assert(
+  thesis.includes("OPENING THESIS BAR") &&
+    thesis.includes("business-strategy thesis for a new CEO/CXO") &&
+    thesis.includes("Do not open with a vendor") &&
+    thesis.includes("Do not open with \"not supplied\"") &&
+    thesis.includes("Do not open with a standalone count"),
+  "EnterpriseThesis prompt explicitly requires a business-led opening and forbids supplier, caveat, and inventory openings",
+);
+assert(
+  script.includes("EVIDENCE_BOUNDARY_OPENING_PATTERN") &&
+    script.includes("function unsuitableOpeningClaim") &&
+    script.includes("!unsuitableOpeningClaim(claim.statement)") &&
+    !script.includes("sectionClaims[0] ??"),
+  "ECL story-plan selector refuses supplier, evidence-boundary, and standalone-inventory openings without falling back to the first claim",
 );
 assert(
   script.includes("Report, job, user, script, and data-volume counts are unavailable from this source family.") &&
