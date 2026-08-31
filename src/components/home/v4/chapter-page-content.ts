@@ -4,6 +4,10 @@ import {
   applicationFindings,
   vendorTables,
   vendorFindings,
+  metricTables,
+  metricFindings,
+  riskTables,
+  riskFindings,
   infrastructureTables,
   infrastructureFindings,
   dataTables,
@@ -28,19 +32,30 @@ import {
 const CHAPTER_SOURCES: Partial<
   Record<
     ChapterId,
-    Array<"applications" | "vendors" | "infrastructure" | "data">
+    Array<
+      | "applications"
+      | "vendors"
+      | "infrastructure"
+      | "data"
+      | "metrics"
+      | "risks"
+    >
   >
 > = {
   technology_data: ["applications", "data"],
+  // Performance and Value is the metrics surface; What Needs Attention is the register. Both were
+  // unreachable until the projection carried these families.
   how_we_operate: ["infrastructure", "applications"],
-  what_needs_attention: ["applications", "infrastructure"],
-  performance_value: ["vendors"],
+  what_needs_attention: ["risks", "applications", "infrastructure"],
+  performance_value: ["metrics", "vendors"],
   strategy_value_creation: ["vendors", "applications"],
 };
 
 export interface EstateRecordTypes {
   /** The record's own as-of date, threaded so time-relative findings measure against the record. */
   asOf?: string;
+  metrics?: EstateRow[];
+  risks?: EstateRow[];
   applications?: EstateRow[];
   vendors?: EstateRow[];
   infrastructure?: EstateRow[];
@@ -62,6 +77,8 @@ const BUILDERS = {
     findings: infrastructureFindings,
   },
   data: { tables: dataTables, findings: dataFindings },
+  metrics: { tables: metricTables, findings: metricFindings },
+  risks: { tables: riskTables, findings: riskFindings },
 } as const;
 
 export function chapterDepth(

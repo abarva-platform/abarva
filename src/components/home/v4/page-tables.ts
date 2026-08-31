@@ -1018,3 +1018,213 @@ export function constantColumns(
   }
   return out;
 }
+
+/* ------------------------------------------------------------------------------------------------
+ * Metrics, risks, programs, organisation and AI — the intake families the projection now carries
+ * ---------------------------------------------------------------------------------------------- */
+
+export function metricTables(metrics: EstateRow[]): TableSpec[] {
+  if (metrics.length === 0) return [];
+  const byReadiness = countBy(
+    metrics.filter((m) => str(m, "claimReadiness")),
+    "claimReadiness",
+  );
+  const blocked = metrics.filter((m) => str(m, "claimBlockedReason"));
+  const withAction = blocked.filter((m) => str(m, "unblockAction"));
+  const tables: TableSpec[] = [
+    {
+      caption: "Can this value be claimed",
+      columns: ["Readiness", "Metrics", "With a blocked reason"],
+      rows: byReadiness.map((r) => [
+        label(r.value),
+        r.count,
+        metrics.filter(
+          (m) =>
+            str(m, "claimReadiness") === r.value &&
+            str(m, "claimBlockedReason"),
+        ).length,
+      ]),
+      total: [
+        "Declared",
+        byReadiness.reduce((n, r) => n + r.count, 0),
+        blocked.length,
+      ],
+      note: `${withAction.length} of the ${blocked.length} blocked claims already state the action that would unblock them.`,
+    },
+  ];
+  // The unblock list itself, because it is the agenda -- a count of blocked claims is not actionable
+  // and a named action against a named period is.
+  if (withAction.length > 0) {
+    tables.push({
+      wide: true,
+      caption: "What would unblock each claim",
+      columns: ["Metric", "Blocked because", "Unblock action", "By"],
+      rows: withAction
+        .slice(0, 10)
+        .map((m) => [
+          str(m, "metricName"),
+          str(m, "claimBlockedReason"),
+          str(m, "unblockAction"),
+          str(m, "unblockTargetPeriod") || "not stated",
+        ]),
+      note:
+        withAction.length > 10
+          ? `First 10 of ${withAction.length}. Every one names its own action; the full list is in the record browser.`
+          : undefined,
+    });
+  }
+  return tables;
+}
+
+export function metricFindings(metrics: EstateRow[]): Finding[] {
+  if (metrics.length === 0) return [];
+  const findings: Finding[] = [];
+  const claimable = metrics.filter((m) =>
+    /claimable|ready/i.test(str(m, "claimReadiness")),
+  ).length;
+  const blocked = metrics.filter((m) => str(m, "claimBlockedReason"));
+  const withAction = blocked.filter((m) => str(m, "unblockAction")).length;
+  if (blocked.length > claimable) {
+    findings.push({
+      kind: "absence",
+      claim: `${blocked.length} of ${metrics.length} value claims are blocked, and ${withAction} already state what would unblock them.`,
+      owner: "Chief Financial Officer",
+      because:
+        "A finished agenda sitting in the record. Each blocked claim names its own action and target period, so the work is enumerated rather than needing to be scoped.",
+      trace: {
+        file: "14_metrics_outcomes.csv",
+        grain: "one tracked metric",
+        rule: "claimBlockedReason is not empty",
+      },
+    });
+  }
+  const noPeriod = blocked.filter(
+    (m) => str(m, "unblockAction") && !str(m, "unblockTargetPeriod"),
+  ).length;
+  if (noPeriod > 0) {
+    findings.push({
+      kind: "absence",
+      claim: `${noPeriod} unblock actions carry no target period.`,
+      owner: "Chief Financial Officer",
+      because:
+        "An action with no date is a intention. The record distinguishes the two and nothing downstream reads that column.",
+      trace: {
+        file: "14_metrics_outcomes.csv",
+        grain: "one tracked metric",
+        rule: "unblockAction present AND unblockTargetPeriod empty",
+      },
+    });
+  }
+  return findings;
+}
+
+export function riskTables(risks: EstateRow[]): TableSpec[] {
+  if (risks.length === 0) return [];
+  const severities = countBy(
+    risks.filter((r) => str(r, "severity")),
+    "severity",
+  ).map((x) => x.value);
+  const states = countBy(
+    risks.filter((r) => str(r, "controlStatus")),
+    "controlStatus",
+  ).map((x) => x.value);
+  const tables: TableSpec[] = [];
+  if (severities.length > 1 && states.length > 1) {
+    tables.push({
+      wide: true,
+      caption: "Severity against control state",
+      columns: ["Severity", ...states.map(label), "Risks", "Remediation"],
+      rows: severities.map((s) => {
+        const rows = risks.filter((r) => str(r, "severity") === s);
+        return [
+          label(s),
+          ...states.map(
+            (st) => rows.filter((r) => str(r, "controlStatus") === st).length,
+          ),
+          rows.length,
+          usd(rows.reduce((n, r) => n + num(r, "remediationCostUsd"), 0)),
+        ];
+      }),
+      total: [
+        "Declared",
+        ...states.map(
+          (st) => risks.filter((r) => str(r, "controlStatus") === st).length,
+        ),
+        risks.length,
+        usd(risks.reduce((n, r) => n + num(r, "remediationCostUsd"), 0)),
+      ],
+    });
+  }
+  const byDomain = countBy(
+    risks.filter((r) => str(r, "riskDomain")),
+    "riskDomain",
+  );
+  if (byDomain.length > 1) {
+    tables.push({
+      caption: "Risk domain",
+      columns: ["Domain", "Risks", "Regulatory driver"],
+      rows: byDomain.map((d) => [
+        label(d.value),
+        d.count,
+        risks.filter(
+          (r) =>
+            str(r, "riskDomain") === d.value &&
+            /^(yes|true|y)$/i.test(str(r, "regulatoryDriver")),
+        ).length,
+      ]),
+      total: [
+        "Declared",
+        byDomain.reduce((n, d) => n + d.count, 0),
+        risks.filter((r) => /^(yes|true|y)$/i.test(str(r, "regulatoryDriver")))
+          .length,
+      ],
+      note: "A risk without a regulatory driver is the enterprise's own assessment rather than an external requirement.",
+    });
+  }
+  return tables;
+}
+
+export function riskFindings(risks: EstateRow[]): Finding[] {
+  if (risks.length === 0) return [];
+  const findings: Finding[] = [];
+  const highOpen = risks.filter(
+    (r) =>
+      /high/i.test(str(r, "severity")) && /open/i.test(str(r, "controlStatus")),
+  );
+  if (highOpen.length > 0) {
+    findings.push({
+      kind: "exposure",
+      claim:
+        highOpen.length === 1
+          ? `One high-severity risk has no operating control: ${str(highOpen[0], "riskOrControlName")}.`
+          : `${highOpen.length} high-severity risks have no operating control: ${highOpen
+              .slice(0, 2)
+              .map((r) => str(r, "riskOrControlName"))
+              .join("; ")}${highOpen.length > 2 ? "…" : "."}`,
+      owner: "Chief Risk Officer",
+      because:
+        "Severity and control state are declared on the same row, so this is the register's own reading of itself rather than an interpretation of it.",
+      trace: {
+        file: "11_risks_controls.csv",
+        grain: "one risk or control",
+        rule: "severity is high AND controlStatus is open",
+      },
+    });
+  }
+  const cost = risks.reduce((n, r) => n + num(r, "remediationCostUsd"), 0);
+  if (cost > 0) {
+    findings.push({
+      kind: "established",
+      claim: `${usd(cost)} would remediate the whole register.`,
+      owner: "Chief Risk Officer",
+      because:
+        "Declared per risk and summed. The ratio to what the estate costs to run each year is the argument, not the absolute figure.",
+      trace: {
+        file: "11_risks_controls.csv",
+        grain: "one risk or control",
+        rule: "sum of remediationCostUsd",
+      },
+    });
+  }
+  return findings;
+}

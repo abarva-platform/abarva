@@ -312,6 +312,12 @@ export function HomeV4App({
                   data: techRecordTypes.find(
                     (r) => r.objectType === "data_asset_or_integration",
                   )?.rows,
+                  metrics: techRecordTypes.find(
+                    (r) => r.objectType === "metric_outcome",
+                  )?.rows,
+                  risks: techRecordTypes.find(
+                    (r) => r.objectType === "risk_control",
+                  )?.rows,
                 })}
               />
             ) : (
@@ -328,6 +334,12 @@ export function HomeV4App({
                   infrastructure: infrastructure?.rows,
                   data: techRecordTypes.find(
                     (r) => r.objectType === "data_asset_or_integration",
+                  )?.rows,
+                  metrics: techRecordTypes.find(
+                    (r) => r.objectType === "metric_outcome",
+                  )?.rows,
+                  risks: techRecordTypes.find(
+                    (r) => r.objectType === "risk_control",
                   )?.rows,
                 })}
               />
