@@ -25,6 +25,15 @@ export interface TableSpec {
   /** One line under the table. Absence is stated here, never left to the reader. */
   note?: string;
   /**
+   * The column whose numbers should carry a bar behind them.
+   *
+   * A count column read as three figures is three facts; read as three lengths it is one shape, at
+   * no cost to the precision -- the number stays exactly where it was. Only set this where the
+   * column is a count of the same thing down the rows, never where the rows measure different
+   * units, because a bar implies they are comparable.
+   */
+  barColumn?: string;
+  /**
    * Spans the full width of the table set rather than sharing a row.
    *
    * A crosstab put in a half-width cell forces a reader sideways to reach the totals column, and
@@ -35,6 +44,49 @@ export interface TableSpec {
 }
 
 export type FindingKind = "exposure" | "absence" | "established";
+
+/**
+ * Reading order for a findings block.
+ *
+ * A block where every finding looks equally important makes the reader do the triage. Exposure is
+ * something the record says is wrong now; absence is something it cannot tell you; established is
+ * something it confirms. That is descending order of what a reader has to act on, so it is the
+ * order they arrive in.
+ */
+const FINDING_RANK: Record<FindingKind, number> = {
+  exposure: 0,
+  absence: 1,
+  established: 2,
+};
+
+/** Sorts a findings list into reading order, keeping the original order within each kind. */
+export function rankFindings(findings: Finding[]): Finding[] {
+  return findings
+    .map((finding, index) => ({ finding, index }))
+    .sort(
+      (a, b) =>
+        FINDING_RANK[a.finding.kind] - FINDING_RANK[b.finding.kind] ||
+        a.index - b.index,
+    )
+    .map((entry) => entry.finding);
+}
+
+/**
+ * The leading figure in a claim, so it can be set at the weight it deserves.
+ *
+ * A claim's number is the thing a reader takes away, and rendering it at sentence size makes the
+ * most important quantity on the page look like the word next to it. Returns null where the claim
+ * does not open on a figure, in which case the claim reads as an ordinary sentence.
+ */
+export function splitLeadingFigure(
+  claim: string,
+): { figure: string; rest: string } | null {
+  const match = /^(\$?[\d][\d,.]*(?:[MBk%]|\s*of\s*\d[\d,]*)?)\s+(.+)$/.exec(
+    claim,
+  );
+  if (!match) return null;
+  return { figure: match[1], rest: match[2] };
+}
 
 export interface Finding {
   kind: FindingKind;
@@ -273,6 +325,7 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
     const declared = counts.reduce((n, c) => n + c.count, 0);
     tables.push({
       caption,
+      barColumn: "Apps",
       columns: [caption, "Apps", "Annual cost"],
       rows: counts.map((c) => [label(c.value), c.count, usd(c.cost)]),
       total: [
@@ -428,6 +481,7 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
   return [
     {
       caption: "Contract risk rating",
+      barColumn: "Contracts",
       columns: ["Rating", "Contracts", "Annual spend"],
       rows: byRating.map((r) => [
         label(r.value),
@@ -694,6 +748,7 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
   return [
     {
       caption: "Recovery posture",
+      barColumn: "Platforms",
       columns: ["Recovery tier", "Platforms", "Share"],
       rows: byDr.map((d) => [
         label(d.value),
@@ -868,6 +923,7 @@ export function dataTables(assets: EstateRow[]): TableSpec[] {
   return [
     {
       caption: "Integration pattern",
+      barColumn: "Assets",
       columns: ["Pattern", "Assets", "Share"],
       rows: byPattern.map((p) => [
         p.value,
@@ -907,6 +963,7 @@ function dataCrossings(assets: EstateRow[]): TableSpec[] {
   if (platforms.length > 1) {
     out.push({
       caption: "Where the data actually sits",
+      barColumn: "Assets",
       columns: ["Platform", "Assets", "Regulated"],
       rows: platforms
         .slice(0, 7)
@@ -1058,6 +1115,7 @@ export function metricTables(metrics: EstateRow[]): TableSpec[] {
   const tables: TableSpec[] = [
     {
       caption: "Can this value be claimed",
+      barColumn: "Metrics",
       columns: ["Readiness", "Metrics", "With a blocked reason"],
       rows: byReadiness.map((r) => [
         label(r.value),
