@@ -58,6 +58,12 @@ full vendor portfolio instead of only the top concentration vendors. Evidence-ri
 lower-spend relationships now render in the chart and drill-down table when
 their loaded rows support the claim.
 
+The sixth follow-up makes the Evidence depth chart and table use the same
+grouped-vendor coverage lookup as the ranking logic. Supplier rollups can carry
+multiple physical vendor references; the executive tab now totals coverage
+across those references instead of showing `Not established` for a relationship
+whose underlying contracts have loaded depth rows.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`.
@@ -101,6 +107,10 @@ their loaded rows support the claim.
   depth while a lower-spend vendor has spend, performance, opportunity, and
   credit rows. The Evidence depth subtab must render the lower-spend vendor
   chart and table row instead of using the concentration slice.
+- Strengthened the Evidence depth regression so the displayed supplier row can
+  use a grouped rollup reference while the underlying evidence rows retain their
+  physical vendor reference. The chart and table must still render the loaded
+  depth.
 
 ## Rollout Plan
 
@@ -130,6 +140,7 @@ workflow. No data rollback is required because this is presentation logic only.
 - Third follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7215
 - Fourth follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7217
 - Fifth follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7218
+- Sixth follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7220
 - ACA deploy run: pending.
 - Signed-in Source workspace proof: pending.
 
