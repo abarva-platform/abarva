@@ -16,7 +16,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/design-fixture";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
@@ -50,6 +50,27 @@ const view = buildTowerCommandCenterView(designFixtureMart(), {
 
 function renderPage() {
   return render(<TowerCommandCenter view={view} tenantName="Fixture Tenant" />);
+}
+
+function renderPageWithReviewDecisions() {
+  const nextView = {
+    ...view,
+    summary: {
+      ...view.summary,
+      valueClaimCount: 3,
+      usageSupportedClaimCount: 1,
+      outcomeMeasuredClaimCount: 1,
+      financeAttestedClaimCount: 1,
+      claimableClaimCount: 1,
+      promisedUsd: 3_000_000,
+      financeValidatedUsd: 1_000_000,
+      usageSupportedUsd: 1_000_000,
+      claimableUsd: 1_000_000,
+    },
+  };
+  return render(
+    <TowerCommandCenter view={nextView} tenantName="Fixture Tenant" />,
+  );
 }
 
 beforeEach(() => {
@@ -103,6 +124,23 @@ describe("sub-tab URL state", () => {
     fireEvent.click(screen.getByRole("tab", { name: /Today's verdict/ }));
     expect(replace).toHaveBeenCalledWith("/tower/command?tab=verdict", {
       scroll: false,
+    });
+  });
+
+  it("sends decision review links to the evidence sub-view they name", () => {
+    const cases: ReadonlyArray<[number, string]> = [
+      [0, "/tower/command?tab=tools&view=portfolio"],
+      [1, "/tower/command?tab=initiatives&view=proof"],
+      [2, "/tower/command?tab=decisions&view=queue"],
+    ];
+
+    cases.forEach(([index, expected]) => {
+      cleanup();
+      replace.mockClear();
+      mockedSearchParams = new URLSearchParams("tab=decisions&view=review");
+      renderPageWithReviewDecisions();
+      fireEvent.click(screen.getAllByRole("button", { name: /Review/ })[index]);
+      expect(replace).toHaveBeenCalledWith(expected, { scroll: false });
     });
   });
 });

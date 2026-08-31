@@ -167,10 +167,13 @@ export function TowerCommandCenter({
   // Reflect the active tab in `?tab=` so a link can deep-link into a tab and an
   // E2E spec can address one directly. Sub-view / filter / question stay client
   // state, exactly as the design has them.
-  const goToTab = useCallback(
-    (next: TowerTab) => {
+  const goToView = useCallback(
+    (next: TowerTab, requestedSub?: string) => {
       setTab(next);
-      const nextSub = defaultSubTab(next);
+      const nextSub =
+        requestedSub && SUB_TABS[next].some((st) => st.id === requestedSub)
+          ? requestedSub
+          : defaultSubTab(next);
       setSubTab(nextSub);
       const params = new URLSearchParams(searchParams?.toString() ?? "");
       params.set("tab", next);
@@ -179,6 +182,11 @@ export function TowerCommandCenter({
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [pathname, router, searchParams],
+  );
+
+  const goToTab = useCallback(
+    (next: TowerTab) => goToView(next),
+    [goToView],
   );
 
   // A tab landed on from the URL (back/forward, or a pasted link) must win.
@@ -311,9 +319,9 @@ export function TowerCommandCenter({
             <CommandCenterView
               view={view}
               onOpenGap={(id) => setDrawer({ kind: "gap", id })}
-              onGoToFunnel={() => goToTab("initiatives")}
-              onGoToAi={() => goToTab("tools")}
-              onGoToActions={() => goToTab("decisions")}
+              onGoToFunnel={() => goToView("initiatives", "proof")}
+              onGoToAi={() => goToView("tools", "portfolio")}
+              onGoToActions={() => goToView("decisions", "queue")}
             />
           );
         return (
