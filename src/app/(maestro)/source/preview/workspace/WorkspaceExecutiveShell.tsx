@@ -865,17 +865,23 @@ function VendorsPage({
           title={vendorSubtabTitle(subtab)}
         />
         {subtab === "Evidence depth" ? (
-          <VendorEvidenceDepthTable
-            portfolio={portfolio}
-            vendors={vendors}
-            selectedVendor={selectedVendor}
-            onOpenVendor={onOpenVendor}
-          />
+          <div className="sw-v2-vendor-evidence-view">
+            <VendorEvidenceDepthChart portfolio={portfolio} vendors={vendors} />
+            <VendorEvidenceDepthTable
+              portfolio={portfolio}
+              vendors={vendors}
+              selectedVendor={selectedVendor}
+              onOpenVendor={onOpenVendor}
+            />
+          </div>
         ) : subtab === "Archetype mix" ? (
-          <VendorArchetypeTable
-            portfolio={portfolio}
-            onOpenVendor={onOpenVendor}
-          />
+          <div className="sw-v2-vendor-archetype-view">
+            <VendorArchetypeMixChart portfolio={portfolio} />
+            <VendorArchetypeTable
+              portfolio={portfolio}
+              onOpenVendor={onOpenVendor}
+            />
+          </div>
         ) : (
           <div className="sw-v2-vendor-concentration-view">
             <VendorConcentrationChart
@@ -973,6 +979,184 @@ function VendorsPage({
           </p>
         )}
       </section>
+    </div>
+  );
+}
+
+function VendorEvidenceDepthChart({
+  portfolio,
+  vendors,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+  vendors: readonly ExecutiveVendorRow[];
+}) {
+  const coverageByVendor = vendorCoverageRows(portfolio);
+  const data = focusedVendorSet(portfolio, vendors, "evidence").rows
+    .map(({ vendor }) => {
+      const coverage = coverageByVendor.get(vendor.vendor_ref);
+      return {
+        name: vendor.vendor_name,
+        shortName: compactVendorName(vendor.vendor_name),
+        spendRows: coverage?.spendRows ?? 0,
+        performanceRows: coverage?.performanceRows ?? 0,
+        actionRows: coverage?.actionRows ?? 0,
+      };
+    })
+    .filter(
+      (row) => row.spendRows + row.performanceRows + row.actionRows > 0,
+    );
+
+  if (data.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className="sw-v2-recharts-card"
+      aria-label="Vendor evidence depth chart"
+    >
+      <MeasuredChartFrame className="sw-v2-chart-frame-bar" height={238}>
+        {(chartWidth, chartHeight) => (
+          <BarChart
+            data={data}
+            width={chartWidth}
+            height={chartHeight}
+            layout="vertical"
+            margin={{ top: 8, right: 24, bottom: 8, left: 4 }}
+            barCategoryGap={12}
+          >
+            <CartesianGrid
+              horizontal={false}
+              stroke="rgba(10,10,11,0.12)"
+              strokeDasharray="3 4"
+            />
+            <XAxis type="number" hide allowDecimals={false} />
+            <YAxis
+              type="category"
+              dataKey="shortName"
+              width={142}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "#5f5e5a", fontSize: 11, fontWeight: 700 }}
+            />
+            <Tooltip
+              cursor={{ fill: "rgba(29,158,117,0.08)" }}
+              contentStyle={{
+                border: "1px solid #d3d1c7",
+                borderRadius: 6,
+                boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+                color: "#2c2c2a",
+              }}
+            />
+            <Bar dataKey="spendRows" stackId="depth" fill="#0a0a0b" />
+            <Bar dataKey="performanceRows" stackId="depth" fill="#1d9e75" />
+            <Bar
+              dataKey="actionRows"
+              stackId="depth"
+              fill="#ba7517"
+              radius={[0, 5, 5, 0]}
+            />
+          </BarChart>
+        )}
+      </MeasuredChartFrame>
+      <div className="sw-v2-recharts-legend">
+        <span>
+          <b>black</b> spend rows
+        </span>
+        <span>
+          <b>teal</b> performance rows
+        </span>
+        <span>
+          <b>amber</b> action rows
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function VendorArchetypeMixChart({
+  portfolio,
+}: {
+  portfolio: SourceWorkspacePortfolioData;
+}) {
+  const data = vendorArchetypeRows(portfolio)
+    .filter((row) => row.annualValue > 0)
+    .slice(0, 6)
+    .map((row) => ({
+      name: row.category,
+      shortName: compactVendorName(row.category),
+      annualValue: row.annualValue,
+      contracts: row.contractCount,
+    }));
+
+  if (data.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className="sw-v2-recharts-card"
+      aria-label="Vendor archetype annual value chart"
+    >
+      <MeasuredChartFrame className="sw-v2-chart-frame-bar" height={238}>
+        {(chartWidth, chartHeight) => (
+          <BarChart
+            data={data}
+            width={chartWidth}
+            height={chartHeight}
+            margin={{ top: 12, right: 24, bottom: 8, left: 4 }}
+            barCategoryGap={16}
+          >
+            <CartesianGrid
+              vertical={false}
+              stroke="rgba(10,10,11,0.12)"
+              strokeDasharray="3 4"
+            />
+            <XAxis
+              dataKey="shortName"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
+            />
+            <YAxis hide domain={[0, "dataMax"]} />
+            <Tooltip
+              cursor={{ fill: "rgba(186,117,23,0.08)" }}
+              contentStyle={{
+                border: "1px solid #d3d1c7",
+                borderRadius: 6,
+                boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+                color: "#2c2c2a",
+              }}
+              formatter={(value, name) => {
+                if (name === "contracts") {
+                  return [String(value), "Contracts"];
+                }
+                return [
+                  money(typeof value === "number" ? value : Number(value)),
+                  "Annual value",
+                ];
+              }}
+            />
+            <Bar dataKey="annualValue" fill="#0a0a0b" radius={[5, 5, 0, 0]}>
+              {data.map((row, index) => (
+                <Cell
+                  key={row.name}
+                  fill={index % 3 === 0 ? "#0a0a0b" : index % 3 === 1 ? "#1d9e75" : "#ba7517"}
+                  opacity={Math.max(0.5, 1 - index * 0.08)}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        )}
+      </MeasuredChartFrame>
+      <div className="sw-v2-recharts-legend">
+        {data.slice(0, 4).map((row) => (
+          <span key={row.name}>
+            <b>{row.shortName}</b>
+            {row.contracts} contracts
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -3203,7 +3387,7 @@ function vendorConcentrationReason(vendor: ExecutiveVendorRow) {
   return "Largest recorded relationships";
 }
 
-function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
+export function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
   const rows = new Map<string, VendorCoverageSummary>();
   const vendorRefsByContract = new Map(
     portfolio.contracts.map((contract) => [
@@ -3230,7 +3414,7 @@ function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
   return rows;
 }
 
-function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
+export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
   const groups = new Map<
     string,
     {

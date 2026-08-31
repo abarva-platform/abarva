@@ -42,6 +42,12 @@ amounts. Credit-specific display also preserves one decimal in the thousands
 band so the deterministic amount remains legible instead of being rounded into
 a coarser executive shorthand.
 
+The third follow-up adds visual coverage to vendor evidence-depth and archetype
+subtabs using the same governed row builders that feed their tables. This closes
+the remaining page-composition gap where several executive views were accurate
+but table-only, even though the Source workspace design contract expects visual
+summaries above drill-down detail.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`.
@@ -75,6 +81,8 @@ a coarser executive shorthand.
 - Added a regression for the case where a loaded credit row has evidence coverage
   but no matching credit action-card text. The action-type mix still reflects the
   selected credit coverage amount and count.
+- Added regressions for vendor evidence-depth and archetype rollups so the
+  charted views stay tied to the same rows as the drill-down tables.
 
 ## Rollout Plan
 
@@ -101,6 +109,7 @@ workflow. No data rollback is required because this is presentation logic only.
 - PR URL: https://github.com/abarva-platform/abarva/pull/7211
 - Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7213
 - Second follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7214
+- Third follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7215
 - ACA deploy run: pending.
 - Signed-in Source workspace proof: pending.
 
