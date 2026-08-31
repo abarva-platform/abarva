@@ -10,6 +10,7 @@
 import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { canonicalCioTowerTenantKey, canonicalCioTowerTenantDisplayName } from "@/lib/tower/metric-packet";
+import type { CioTowerPageContext } from "@/lib/tower/current-layer-answer-contract";
 import { answerCurrentTowerQuestion } from "@/lib/tower/current-layer-answer";
 import { demoSafeClientText } from "@/lib/client-config";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => ({}))) as {
     question?: unknown;
+    pageContext?: CioTowerPageContext;
   };
   const question =
     typeof body.question === "string" ? body.question.trim() : "";
@@ -100,6 +102,7 @@ export async function POST(request: Request) {
       tenantKey,
       tenantName,
       question,
+      pageContext: body.pageContext,
     });
     return new Response(demoSafeClientText(result.response), {
       headers: {
