@@ -8,11 +8,16 @@ import {
   metricFindings,
   riskTables,
   riskFindings,
+  programTables,
+  programFindings,
+  aiTables,
+  aiFindings,
   infrastructureTables,
   infrastructureFindings,
   dataTables,
   dataFindings,
   unsupportedApplicationViews,
+  unsupportedAiViews,
   type EstateRow,
   type Finding,
   type TableSpec,
@@ -39,6 +44,8 @@ const CHAPTER_SOURCES: Partial<
       | "data"
       | "metrics"
       | "risks"
+      | "programs"
+      | "ai"
     >
   >
 > = {
@@ -48,7 +55,7 @@ const CHAPTER_SOURCES: Partial<
   how_we_operate: ["infrastructure", "applications"],
   what_needs_attention: ["risks", "applications", "infrastructure"],
   performance_value: ["metrics", "vendors"],
-  strategy_value_creation: ["vendors", "applications"],
+  strategy_value_creation: ["programs", "ai", "vendors"],
 };
 
 export interface EstateRecordTypes {
@@ -56,6 +63,8 @@ export interface EstateRecordTypes {
   asOf?: string;
   metrics?: EstateRow[];
   risks?: EstateRow[];
+  programs?: EstateRow[];
+  ai?: EstateRow[];
   applications?: EstateRow[];
   vendors?: EstateRow[];
   infrastructure?: EstateRow[];
@@ -79,6 +88,8 @@ const BUILDERS = {
   data: { tables: dataTables, findings: dataFindings },
   metrics: { tables: metricTables, findings: metricFindings },
   risks: { tables: riskTables, findings: riskFindings },
+  programs: { tables: programTables, findings: programFindings },
+  ai: { tables: aiTables, findings: aiFindings },
 } as const;
 
 export function chapterDepth(

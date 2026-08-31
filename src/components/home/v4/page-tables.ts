@@ -171,6 +171,26 @@ const HOSTING_ORDER = [
   "on_premise_appliance",
 ];
 
+/** Which AI views the rows cannot support. The value fields live in the benefits ledger. */
+export function unsupportedAiViews(useCases: EstateRow[]): UnsupportedView[] {
+  if (useCases.length === 0) return [];
+  const out: UnsupportedView[] = [];
+  const has = (field: string) => useCases.some((row) => str(row, field));
+  for (const [field, caption] of [
+    ["financeValidatedValueUsd", "Validated value against promised"],
+    ["realizedValueAllowed", "Which use cases may book value"],
+  ] as const) {
+    if (!has(field)) {
+      out.push({
+        caption,
+        missingColumn: field,
+        why: `No use-case record carries ${field}. It is declared in the AI benefits ledger, which this surface does not yet read — a gap in what reached the page rather than a gap in the record.`,
+      });
+    }
+  }
+  return out;
+}
+
 /** Which application views the rows cannot support, and the column each one needs. */
 export function unsupportedApplicationViews(
   apps: EstateRow[],
@@ -1223,6 +1243,242 @@ export function riskFindings(risks: EstateRow[]): Finding[] {
         file: "11_risks_controls.csv",
         grain: "one risk or control",
         rule: "sum of remediationCostUsd",
+      },
+    });
+  }
+  return findings;
+}
+
+export function programTables(programs: EstateRow[]): TableSpec[] {
+  if (programs.length === 0) return [];
+  const byStatus = countBy(
+    programs.filter((p) => str(p, "status")),
+    "status",
+  );
+  const budget = (rows: EstateRow[]) =>
+    rows.reduce((n, p) => n + num(p, "budgetUsd"), 0);
+  const value = (rows: EstateRow[]) =>
+    rows.reduce((n, p) => n + num(p, "expectedValueUsd"), 0);
+  const withPct = programs.filter((p) => str(p, "pctComplete"));
+  const tables: TableSpec[] = [
+    {
+      wide: true,
+      caption: "Status against money and progress",
+      columns: [
+        "Status",
+        "Programs",
+        "Budget",
+        "Expected value",
+        "Median complete",
+      ],
+      rows: byStatus.map((s) => {
+        const rows = programs.filter((p) => str(p, "status") === s.value);
+        const pcts = rows
+          .map((p) => num(p, "pctComplete"))
+          .filter((n) => n > 0)
+          .sort((a, b) => a - b);
+        return [
+          label(s.value),
+          s.count,
+          usd(budget(rows)),
+          usd(value(rows)),
+          pcts.length ? `${pcts[Math.floor(pcts.length / 2)]}%` : "—",
+        ];
+      }),
+      total: [
+        "Total",
+        programs.length,
+        usd(budget(programs)),
+        usd(value(programs)),
+        "",
+      ],
+      note: "Reported status and actual progress are declared separately, so the two columns can disagree — and where they do, that is the finding.",
+    },
+  ];
+  const blocked = programs.filter((p) => str(p, "blockedReason"));
+  if (blocked.length > 0) {
+    tables.push({
+      wide: true,
+      caption: "What is holding a programme up",
+      columns: ["Program", "Status", "Complete", "Blocked because"],
+      rows: blocked
+        .slice(0, 8)
+        .map((p) => [
+          str(p, "programName"),
+          label(str(p, "status")),
+          str(p, "pctComplete") ? `${num(p, "pctComplete")}%` : "—",
+          str(p, "blockedReason"),
+        ]),
+      note: blocked.length > 8 ? `First 8 of ${blocked.length}.` : undefined,
+    });
+  }
+  if (withPct.length === 0) {
+    tables[0].note =
+      `${tables[0].note ?? ""} No programme declares a completion percentage.`.trim();
+  }
+  return tables;
+}
+
+export function programFindings(programs: EstateRow[]): Finding[] {
+  if (programs.length === 0) return [];
+  const findings: Finding[] = [];
+  // Reported status against declared progress. A programme calling itself on track at single-digit
+  // completion is not a delivery fact, it is a governance one -- and it is only visible by crossing
+  // two columns the record keeps apart.
+  const onTrackButEarly = programs.filter(
+    (p) =>
+      /on_track|on track/i.test(str(p, "status")) &&
+      str(p, "pctComplete") &&
+      num(p, "pctComplete") < 10,
+  );
+  if (onTrackButEarly.length > 0) {
+    findings.push({
+      kind: "exposure",
+      claim: `${onTrackButEarly.length} programmes report on track at under 10% complete, including ${str(onTrackButEarly[0], "programName")}.`,
+      owner: "Transformation Office",
+      because:
+        "Status and completion are declared on the same row and disagree. Nothing in the record explains how the assessment was reached, so the judgement behind it is not written down anywhere.",
+      trace: {
+        file: "09_programs_initiatives.csv",
+        grain: "one programme",
+        rule: "status is on_track AND pctComplete is under 10",
+      },
+    });
+  }
+  const budget = programs.reduce((n, p) => n + num(p, "budgetUsd"), 0);
+  const value = programs.reduce((n, p) => n + num(p, "expectedValueUsd"), 0);
+  if (budget > 0 && value > 0) {
+    const ratio = value / budget;
+    findings.push({
+      kind: ratio < 1.25 ? "exposure" : "established",
+      claim: `${usd(budget)} of programme budget carries ${usd(value)} of expected value — a ratio of ${ratio.toFixed(2)}.`,
+      owner: "Chief Strategy Officer",
+      because:
+        "Expected value is a forecast and budget is a commitment, so this ratio is not a return. Set against how much value has actually been attested, it is the portfolio's whole case.",
+      trace: {
+        file: "09_programs_initiatives.csv",
+        grain: "one programme",
+        rule: "sum of expectedValueUsd over sum of budgetUsd",
+      },
+    });
+  }
+  const blocked = programs.filter((p) => str(p, "blockedReason")).length;
+  if (blocked > 0) {
+    findings.push({
+      kind: "absence",
+      claim: `${blocked} programmes state a blocking reason in the portfolio.`,
+      owner: "Transformation Office",
+      because:
+        "Each names its own blocker. Whether any of them also appears on the risk register is not something this file records.",
+      trace: {
+        file: "09_programs_initiatives.csv",
+        grain: "one programme",
+        rule: "blockedReason is not empty",
+      },
+    });
+  }
+  return findings;
+}
+
+export function aiTables(useCases: EstateRow[]): TableSpec[] {
+  if (useCases.length === 0) return [];
+  const byStatus = countBy(
+    useCases.filter((u) => str(u, "currentStatus")),
+    "currentStatus",
+  );
+  const validated = (rows: EstateRow[]) =>
+    rows.reduce((n, u) => n + num(u, "financeValidatedValueUsd"), 0);
+  const mayBook = useCases.filter((u) =>
+    /^(true|yes|y)$/i.test(str(u, "realizedValueAllowed")),
+  ).length;
+  return [
+    {
+      caption: "Where each use case has got to",
+      columns: ["Status", "Use cases", "Validated value"],
+      rows: byStatus.map((s) => [
+        label(s.value),
+        s.count,
+        usd(
+          validated(
+            useCases.filter((u) => str(u, "currentStatus") === s.value),
+          ),
+        ),
+      ]),
+      total: [
+        "Declared",
+        byStatus.reduce((n, s) => n + s.count, 0),
+        usd(validated(useCases)),
+      ],
+      note: useCases.some((u) => str(u, "realizedValueAllowed"))
+        ? `${mayBook} of ${useCases.length} are permitted to book realized value at all; the record carries that as an explicit gate.`
+        : "Whether a use case may book realized value is declared in the benefits ledger, which this view does not read.",
+    },
+    {
+      caption: "What each is aimed at",
+      columns: ["Value archetype", "Use cases", "Validated value"],
+      rows: countBy(
+        useCases.filter((u) => str(u, "expectedValueArchetype")),
+        "expectedValueArchetype",
+      ).map((a) => [
+        label(a.value),
+        a.count,
+        usd(
+          validated(
+            useCases.filter(
+              (u) => str(u, "expectedValueArchetype") === a.value,
+            ),
+          ),
+        ),
+      ]),
+      total: [
+        "Declared",
+        useCases.filter((u) => str(u, "expectedValueArchetype")).length,
+        usd(validated(useCases)),
+      ],
+    },
+  ];
+}
+
+export function aiFindings(useCases: EstateRow[]): Finding[] {
+  if (useCases.length === 0) return [];
+  const findings: Finding[] = [];
+  // The booking gate and the validated value live in the benefits ledger, not the use-case file.
+  // Without the column, "none may book value" and "the column is absent" are the same rows and
+  // opposite claims -- so the finding only fires where the gate is actually declared.
+  const gateDeclared = useCases.some((u) => str(u, "realizedValueAllowed"));
+  const blockedFromBooking = gateDeclared
+    ? useCases.filter(
+        (u) => !/^(true|yes|y)$/i.test(str(u, "realizedValueAllowed")),
+      )
+    : [];
+  if (blockedFromBooking.length > 0) {
+    findings.push({
+      kind: "absence",
+      claim: `${blockedFromBooking.length} of ${useCases.length} AI use cases may not book realized value.`,
+      owner: "Chief Financial Officer",
+      because:
+        "The record carries an explicit gate on whether value may be claimed, and it is closed on these. That is a stated position rather than an omission, and nothing downstream reads it.",
+      trace: {
+        file: "10_ai_automation_use_cases.csv",
+        grain: "one use case",
+        rule: "realizedValueAllowed is not true",
+      },
+    });
+  }
+  const disputed = useCases.filter((u) =>
+    /disput/i.test(str(u, "valueClaimStatus")),
+  );
+  if (disputed.length > 0) {
+    findings.push({
+      kind: "exposure",
+      claim: `${disputed.length} use cases carry a disputed value claim.`,
+      owner: "Chief Financial Officer",
+      because:
+        "Disputed is a stronger state than pending: someone looked and disagreed. The record names the dispute and does not name who settles it.",
+      trace: {
+        file: "10_ai_automation_use_cases.csv",
+        grain: "one use case",
+        rule: "valueClaimStatus contains disputed",
       },
     });
   }
