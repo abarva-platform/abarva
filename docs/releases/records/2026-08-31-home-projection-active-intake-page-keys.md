@@ -39,7 +39,9 @@ Layer 1 client intake remains the upstream record shape. Layer 4 projection load
 - `node scripts/ecl/__tests__/run-home-projection-page-key-loader-tests.mjs` passed.
 - `python3 scripts/ecl/load_dense_source_room_source_projection_layer.py --dense-out-dir /tmp/ecl-home-page-keys-dense --out-dir /tmp/ecl-home-page-keys-proof` passed against disposable Postgres.
 - Local readback reported `home_enterprise_landscape=3317`, `home_application_count_basis_drift=0`, `home_refusal_without_payload=0`, `projection_entry_count_drift=0`, required Source serving empties `0`, and all planted failures rejected.
-- `node scripts/release-check.mjs --base origin/main --head HEAD` is required before merge.
+- `python3 scripts/ecl/run_no_stop_execution_queue.py` passed all 12 executable local slices; four later slices remained hard-gated as designed.
+- `npm run ecl:dense-all-layer:validate-counts` passed with 118 compared counts and zero failures after classifying the expected Home projection count increases.
+- `node scripts/release-check.mjs --base origin/main --head HEAD` passed locally.
 
 ## Rollout Plan
 

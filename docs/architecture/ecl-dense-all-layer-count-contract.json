@@ -43,6 +43,14 @@
       "key": "dense.field_dictionary_rows"
     },
     {
+      "after": 241,
+      "before": 237,
+      "classification": "expected_increase",
+      "delta": 4,
+      "explanation": "Home projection now carries four application-register passthrough fields already consumed by the Home read path: cloud readiness, authentication method, annual cost basis, and end-of-support date.",
+      "key": "dense.field_dictionary_rows"
+    },
+    {
       "after": 3828,
       "before": 3825,
       "classification": "expected_increase",
@@ -179,6 +187,14 @@
       "key": "projection.projection_entry"
     },
     {
+      "after": 6474,
+      "before": 6103,
+      "classification": "expected_increase",
+      "delta": 371,
+      "explanation": "Home projection now emits one active-intake record row each for metrics/outcomes, risks/controls, programs/initiatives, org ownership, and AI use cases so those page keys can browse governed source rows without renaming source payloads.",
+      "key": "projection.projection_entry"
+    },
+    {
       "after": 1079,
       "before": 599,
       "classification": "expected_increase",
@@ -249,6 +265,14 @@
       "delta": 6,
       "explanation": "W2 adds deterministic question-context projection rows tied to context packs and source citations.",
       "key": "projection.intelligence_question_context"
+    },
+    {
+      "after": 3317,
+      "before": 2946,
+      "classification": "expected_increase",
+      "delta": 371,
+      "explanation": "Home projection now emits one active-intake record row each for the five added Home page keys; the rows preserve intake column names and carry source-file references rather than pretending to be dense source-record FK rows.",
+      "key": "projection.home_enterprise_landscape"
     }
   ],
   "expected": {
@@ -292,7 +316,7 @@
     },
     "dense": {
       "extract_count": 14,
-      "field_dictionary_rows": 237,
+      "field_dictionary_rows": 241,
       "row_count": 7080
     },
     "execution": {
@@ -319,7 +343,7 @@
       "event_rows_without_evidence_payload": 0,
       "home_application_count_basis_drift": 0,
       "home_application_page_deployment_rows": 0,
-      "home_enterprise_landscape": 2946,
+      "home_enterprise_landscape": 3317,
       "home_primary_object_drift": 0,
       "home_refusal_without_payload": 0,
       "intelligence_context_pack": 9,
@@ -329,7 +353,7 @@
       "intelligence_primary_object_drift": 0,
       "intelligence_question_context": 6,
       "intelligence_question_context_pack_drift": 0,
-      "projection_entry": 6103,
+      "projection_entry": 6474,
       "projection_entry_count_drift": 0,
       "projection_entry_document_extraction_ref": 0,
       "projection_entry_measure_ref": 1079,
