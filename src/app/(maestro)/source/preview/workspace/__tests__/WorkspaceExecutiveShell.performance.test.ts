@@ -1,6 +1,7 @@
 import {
   displayBenchmarkingClause,
   performanceActual,
+  source360RecoverableCreditCoverageRows,
   source360RecoverableCreditFinding,
   topVendors,
 } from "../WorkspaceExecutiveShell";
@@ -131,9 +132,11 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       impact: {
         evidenceCoverage: [
           {
+            load_run_id: "active-load",
             unclaimed_credit_usd: 102_666.65,
           },
           {
+            load_run_id: "active-load",
             unclaimed_credit_usd: 0,
           },
         ],
@@ -142,6 +145,9 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
         performanceCredits: {
           unclaimedCredit: 189_000,
         },
+      },
+      workspaceDiagnostics: {
+        activeLoadRunId: "active-load",
       },
     };
 
@@ -154,11 +160,64 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     ).toBe(102_666.65);
   });
 
+  it("keeps the credit headline scoped to the active deterministic load run", () => {
+    const portfolio = {
+      impact: {
+        evidenceCoverage: [
+          {
+            contract_id: "OLD-001",
+            load_run_id: "older-load",
+            unclaimed_credit_usd: 86_333.35,
+          },
+          {
+            contract_id: "MER-TECH-AMS-001",
+            load_run_id: "active-load",
+            unclaimed_credit_usd: 37_466.66,
+          },
+          {
+            contract_id: "MER-TECH-SD-001",
+            load_run_id: "active-load",
+            unclaimed_credit_usd: 50_866.66,
+          },
+          {
+            contract_id: "CTR-0002",
+            load_run_id: "active-load",
+            unclaimed_credit_usd: 14_333.33,
+          },
+        ],
+      },
+      v4Snapshot: {
+        performanceCredits: {
+          unclaimedCredit: 189_000,
+        },
+      },
+      workspaceDiagnostics: {
+        activeLoadRunId: "active-load",
+      },
+    };
+
+    expect(
+      source360RecoverableCreditCoverageRows(
+        portfolio as unknown as Parameters<
+          typeof source360RecoverableCreditCoverageRows
+        >[0],
+      ).map((row) => row.contract_id),
+    ).toEqual(["MER-TECH-AMS-001", "MER-TECH-SD-001", "CTR-0002"]);
+    expect(
+      source360RecoverableCreditFinding(
+        portfolio as unknown as Parameters<
+          typeof source360RecoverableCreditFinding
+        >[0],
+      ),
+    ).toBeCloseTo(102_666.65, 2);
+  });
+
   it("falls back to snapshot credits when no deterministic impact credit is loaded", () => {
     const portfolio = {
       impact: {
         evidenceCoverage: [
           {
+            load_run_id: "active-load",
             unclaimed_credit_usd: 0,
           },
         ],
@@ -167,6 +226,9 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
         performanceCredits: {
           unclaimedCredit: 43_000.02,
         },
+      },
+      workspaceDiagnostics: {
+        activeLoadRunId: "active-load",
       },
     };
 
