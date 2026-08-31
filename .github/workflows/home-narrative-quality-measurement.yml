@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 45
     environment: production
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || secrets.ANTHROPIC_ADMIN_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_KEY || secrets.ANTHROPIC_API_KEY }}
       TENANT_KEY: ${{ inputs.tenant_key }}
       OUTPUT_DIR: ${{ inputs.output_dir }}
 
@@ -56,6 +56,10 @@ jobs:
           npm run data-build:home-chapters:measure -- \
             --tenant "$TENANT_KEY" \
             --out-dir "$OUTPUT_DIR"
+          if ! find "$OUTPUT_DIR" -type f -print -quit | grep -q .; then
+            echo "::error title=No measurement artifacts::Home narrative measurement produced no files in $OUTPUT_DIR."
+            exit 1
+          fi
 
       - name: Upload measurement artifacts
         if: always()
@@ -63,5 +67,5 @@ jobs:
         with:
           name: home-narrative-quality-measurement-${{ inputs.tenant_key }}
           path: ${{ inputs.output_dir }}
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
