@@ -23,6 +23,9 @@ being combined into a single current-package claim.
 When the active load run is not exposed by the workspace diagnostics, the credit
 headline is now limited to coverage rows tied to explicit credit/recovery action
 candidates before falling back to broader historical performance-credit coverage.
+Historical rows with generic opportunity counts are not blended into the current
+credit headline unless the action queue itself identifies that contract as a
+credit/recovery candidate.
 
 ## Layer Impact
 
@@ -49,7 +52,7 @@ candidates before falling back to broader historical performance-credit coverage
   passed.
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts' --runInBand`
   passed, including active-load-run credit precedence and no-active-run historical
-  credit isolation.
+  credit isolation when older rows also carry opportunity counts.
 
 ## Rollout Plan
 
@@ -73,7 +76,7 @@ workflow. No data rollback is required because this is presentation logic only.
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/7211
 - ACA deploy run: pending.
 - Signed-in Source workspace proof: pending.
 

@@ -261,7 +261,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
             contract_id: "OLD-001",
             load_run_id: "older-load",
             unclaimed_credit_usd: 86_333.35,
-            opportunity_rows: 0,
+            opportunity_rows: 1,
           },
           {
             contract_id: "MER-TECH-SD-001",
