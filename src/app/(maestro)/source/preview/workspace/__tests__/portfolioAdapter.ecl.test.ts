@@ -1208,6 +1208,17 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.impact.claimCards).toHaveLength(1);
     expect(portfolio.impact.vendorPositions).toHaveLength(1);
     expect(portfolio.impact.storyline).toHaveLength(5);
+    expect(portfolio.impact.storyline[0]).toMatchObject({
+      headline: "Governed contract depth layer",
+      primary_metric_label: "Depth contracts",
+      primary_metric_value: "1",
+    });
+    expect(
+      portfolio.impact.storyline[0].allowed_executive_statement,
+    ).toContain("separate from the portfolio-register contract count");
+    expect(portfolio.impact.storyline[0].citation_basis_json).toMatchObject({
+      "source.contract_action_candidate_v1": 1,
+    });
     expect(portfolio.impact.avaGroundingBundles).toHaveLength(6);
     expect(portfolio.impact.claimCards[0]).toMatchObject({
       contract_id: "MER-TECH-M365-001",
