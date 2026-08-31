@@ -53,11 +53,13 @@ interface ExecutiveDecision {
 }
 
 function percent(numerator: number, denominator: number): string {
-  if (denominator <= 0) return "0%";
+  if (denominator <= 0) return "Not loaded";
   return `${Math.round((numerator / denominator) * 1000) / 10}%`;
 }
 
 function measuredUsd(view: TowerCommandCenterView): number {
+  if (valueClaimCount(view) <= 0) return 0;
+
   return Math.max(
     view.summary.financeValidatedUsd ?? 0,
     view.summary.usageSupportedUsd ?? 0,
@@ -109,16 +111,31 @@ function absentCount(view: TowerCommandCenterView): number {
 
 function executiveHeadline(view: TowerCommandCenterView): string {
   const s = view.summary;
+  const claims = valueClaimCount(view);
+  if (claims <= 0) {
+    return `${formatLoadedUsdM(
+      s.approvedInvestmentUsd,
+    )} approved. Board-claimable not loaded. No value claims loaded.`;
+  }
+
   return `${formatLoadedUsdM(s.approvedInvestmentUsd)} approved. ${formatUsdM(
     s.claimableUsd,
   )} board-claimable. ${formatCount(openClaimCount(view))} of ${formatCount(
-    valueClaimCount(view),
+    claims,
   )} claims still need proof.`;
 }
 
 function executiveSummary(view: TowerCommandCenterView): string {
   const s = view.summary;
   const claims = valueClaimCount(view);
+  if (claims <= 0) {
+    return `${view.summary.tenantName} has ${formatLoadedUsdM(
+      s.approvedInvestmentUsd,
+    )} in the reviewed project portfolio, including ${formatUsdM(
+      s.aiAttributedInitiativeSpendUsd,
+    )} tied to AI initiatives and tool rollouts. No value claims are loaded yet, so Tower cannot prove or disprove business-case value.`;
+  }
+
   return `${view.summary.tenantName} has ${formatLoadedUsdM(
     s.approvedInvestmentUsd,
   )} in the reviewed project portfolio, including ${formatUsdM(
@@ -150,19 +167,26 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
     },
     {
       label: "Asserted benefit",
-      badge: s.claimableUsd > 0 ? "PARTIAL" : "UNPROVEN",
-      value: formatUsdM(s.promisedUsd),
-      note: `${formatCount(claims)} claims · planning values, not outcomes`,
-      tone: "amber",
+      badge:
+        claims <= 0 ? "NOT LOADED" : s.claimableUsd > 0 ? "PARTIAL" : "UNPROVEN",
+      value: claims <= 0 ? "Not loaded" : formatUsdM(s.promisedUsd),
+      note:
+        claims <= 0
+          ? "No value claims loaded; no asserted benefit population."
+          : `${formatCount(claims)} claims · planning values, not outcomes`,
+      tone: claims <= 0 ? "gray" : "amber",
     },
     {
       label: "Board-claimable",
-      badge: s.claimableUsd > 0 ? "OPEN" : "BLOCKED",
-      value: formatUsdM(s.claimableUsd),
-      note: `${formatCount(s.financeAttestedClaimCount)} of ${formatCount(
-        claims,
-      )} claims attested by Finance`,
-      tone: s.claimableUsd > 0 ? "teal" : "red",
+      badge: claims <= 0 ? "NOT LOADED" : s.claimableUsd > 0 ? "OPEN" : "BLOCKED",
+      value: claims <= 0 ? "Not loaded" : formatUsdM(s.claimableUsd),
+      note:
+        claims <= 0
+          ? "No value claims loaded for Finance attestation."
+          : `${formatCount(s.financeAttestedClaimCount)} of ${formatCount(
+              claims,
+            )} claims attested by Finance`,
+      tone: claims <= 0 ? "gray" : s.claimableUsd > 0 ? "teal" : "red",
     },
     {
       label: "AI initiatives and tools tracked",
@@ -177,17 +201,27 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
     },
     {
       label: "Usage evidence mapped",
-      badge: s.usageSupportedClaimCount === claims ? "COMPLETE" : "PARTIAL",
-      value: `${formatCount(s.usageSupportedClaimCount)} of ${formatCount(
-        claims,
-      )}`,
+      badge:
+        claims <= 0
+          ? "NOT LOADED"
+          : s.usageSupportedClaimCount === claims
+            ? "COMPLETE"
+            : "PARTIAL",
+      value:
+        claims <= 0
+          ? "Not loaded"
+          : `${formatCount(s.usageSupportedClaimCount)} of ${formatCount(
+              claims,
+            )}`,
       note:
-        s.usageSupportedClaimCount === claims
+        claims <= 0
+          ? "No value claims loaded; usage support cannot be assessed."
+          : s.usageSupportedClaimCount === claims
           ? "Every value claim has usage-to-value support"
           : `${formatCount(
               Math.max(0, claims - s.usageSupportedClaimCount),
             )} claims still need usage-to-value mapping`,
-      tone: s.usageSupportedClaimCount > 0 ? "amber" : "red",
+      tone: claims <= 0 ? "gray" : s.usageSupportedClaimCount > 0 ? "amber" : "red",
     },
   ];
 }
@@ -195,6 +229,8 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
 function decisions(view: TowerCommandCenterView): ExecutiveDecision[] {
   const s = view.summary;
   const claims = valueClaimCount(view);
+  if (claims <= 0) return [];
+
   const measured = measuredUsd(view);
   const claimsMissingUsage = Math.max(0, claims - s.usageSupportedClaimCount);
   const claimsMissingActual = Math.max(0, claims - s.outcomeMeasuredClaimCount);
@@ -402,9 +438,11 @@ export function CommandCenterView({
   onGoToActions: () => void;
 }) {
   const s = view.summary;
+  const claims = valueClaimCount(view);
   const measured = measuredUsd(view);
   const unmeasured = Math.max(0, s.promisedUsd - measured);
   const unmeasuredPct = percent(unmeasured, s.promisedUsd);
+  const measuredLabel = claims > 0 ? formatUsdM(measured) : "Not loaded";
   const executiveMetrics = metrics(view);
   const executiveDecisions = decisions(view);
 
@@ -466,7 +504,8 @@ export function CommandCenterView({
           <p>Each is a precondition for the next</p>
         </div>
         <div className={styles.decisionStack}>
-          {executiveDecisions.map((decision) => (
+          {executiveDecisions.length > 0 ? (
+            executiveDecisions.map((decision) => (
             <article
               key={decision.order}
               className={cx(
@@ -502,7 +541,16 @@ export function CommandCenterView({
                 </button>
               </div>
             </article>
-          ))}
+            ))
+          ) : (
+            <div className={styles.emptyPanel}>
+              <h2>No review decisions loaded</h2>
+              <p>
+                No value claims are loaded, so Tower cannot create claim-proof
+                work or mark usage evidence complete.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -516,9 +564,15 @@ export function CommandCenterView({
             <ExecutiveWaterfallChart view={view} />
           </div>
           <div className={styles.valueChartLegend}>
-            Each drop is a gate, not a loss. Of the {formatUsdM(s.promisedUsd)}{" "}
-            asserted, only {formatUsdM(measured)} has a measured amount behind
-            it — and only {formatUsdM(s.claimableUsd)} is claimable.
+            {claims > 0
+              ? `Each drop is a gate, not a loss. Of the ${formatUsdM(
+                  s.promisedUsd,
+                )} asserted, only ${formatUsdM(
+                  measured,
+                )} has a measured amount behind it — and only ${formatUsdM(
+                  s.claimableUsd,
+                )} is claimable.`
+              : "No value claims are loaded, so Tower cannot calculate a value-loss waterfall yet."}
           </div>
         </div>
       </section>
@@ -528,20 +582,20 @@ export function CommandCenterView({
           <div className={styles.findingKicker}>The drop is the finding</div>
           <strong>{unmeasuredPct}</strong>
           <p>
-            of asserted benefit has no measured amount in the governed Tower
-            read. Nothing here is promoted to claimable value until evidence
-            clears.
+            {claims > 0
+              ? "of asserted benefit has no measured amount in the governed Tower read. Nothing here is promoted to claimable value until evidence clears."
+              : "No asserted-benefit population is loaded yet. Tower cannot mark value as proven or unproven without claims."}
           </p>
         </article>
         <article className={styles.findingTeal}>
           <div className={styles.findingKicker}>
             Ceiling on any sign-off today
           </div>
-          <strong>{formatUsdM(measured)}</strong>
+          <strong>{measuredLabel}</strong>
           <p>
-            {formatUsdM(measured)} is the measured amount currently visible in
-            the portfolio. No attestation can release more than that without new
-            measured evidence.
+            {claims > 0
+              ? `${measuredLabel} is the measured amount currently visible in the portfolio. No attestation can release more than that without new measured evidence.`
+              : "No measured claim ceiling is loaded because no value-claim population is loaded."}
           </p>
         </article>
       </section>
@@ -549,8 +603,9 @@ export function CommandCenterView({
       <section className={styles.executiveLinks}>
         <span>Detail lives where it belongs:</span>
         <button type="button" onClick={onGoToFunnel}>
-          {formatCount(valueClaimCount(view))} value claims and the gate that
-          holds them →
+          {claims > 0
+            ? `${formatCount(claims)} value claims and the gate that holds them →`
+            : "Value claims not loaded →"}
         </button>
         <button type="button" onClick={onGoToAi}>
           {formatCount(s.aiInitiativeCount)} AI initiatives

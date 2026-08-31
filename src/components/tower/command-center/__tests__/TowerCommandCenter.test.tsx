@@ -276,7 +276,14 @@ describe("TowerCommandCenter", () => {
 
   it("routes executive review buttons to distinct review surfaces", () => {
     // The review buttons belong to the decision rail, which now sits under the decisions tab.
-    renderPage();
+    renderWithSummary({
+      valueClaimCount: 230,
+      usageSupportedClaimCount: 0,
+      outcomeMeasuredClaimCount: 160,
+      financeAttestedClaimCount: 0,
+      promisedUsd: 492_500_000,
+      claimableUsd: 0,
+    });
 
     // Each review button routes to a different surface, and none of them opens a drawer.
     goTo(TAB.decisions, /Decisions for this review/);
@@ -293,6 +300,31 @@ describe("TowerCommandCenter", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /Review/ })[2]);
     expect(tab(TAB.decisions)).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("renders a zero claim denominator as a gap, not a complete proof state", () => {
+    renderWithSummary({
+      valueClaimCount: 0,
+      claimableClaimCount: 0,
+      usageSupportedClaimCount: 0,
+      outcomeMeasuredClaimCount: 0,
+      financeAttestedClaimCount: 0,
+      promisedUsd: 0,
+      claimableUsd: 0,
+    });
+
+    goTo(TAB.decisions, /Decisions for this review/);
+    expect(screen.getByRole("heading", { name: /No value claims loaded/ })).toBeInTheDocument();
+    expect(screen.getByText("Usage evidence mapped").parentElement).toHaveTextContent("Not loaded");
+    expect(document.body.textContent).not.toContain("0 of 0");
+    expect(document.body.textContent).not.toContain("$0 board-claimable");
+    expect(document.body.textContent).not.toContain("0 value claims and the gate");
+    expect(document.body.textContent).not.toContain("Every value claim has usage-to-value support");
+    expect(screen.getByText("Value claims not loaded →")).toBeInTheDocument();
+
+    expect(screen.getByText("No review decisions loaded")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Review/ })).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("Backfill measured outcome on the 0 claims");
   });
 
   it("renders the Evidence & Actions tab-specific contract layout", () => {
