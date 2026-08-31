@@ -48,6 +48,11 @@ the remaining page-composition gap where several executive views were accurate
 but table-only, even though the Source workspace design contract expects visual
 summaries above drill-down detail.
 
+The fourth follow-up removes the default serving-surface diagnostics panel from
+the executive workspace shell. Operator diagnostics remain available through
+their owned routes and tests, while the client-facing Source workspace keeps the
+focus on claims, charts, evidence posture, and graph navigation.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`.
@@ -65,6 +70,7 @@ summaries above drill-down detail.
 ## Changes Included
 
 - `src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx`
+- `src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx`
 - `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts`
 
 ## QA / Validation
@@ -83,6 +89,8 @@ summaries above drill-down detail.
   selected credit coverage amount and count.
 - Added regressions for vendor evidence-depth and archetype rollups so the
   charted views stay tied to the same rows as the drill-down tables.
+- Re-ran the workspace browser-surface test that asserts internal diagnostics
+  labels are not rendered in the default executive workspace.
 
 ## Rollout Plan
 
@@ -110,6 +118,7 @@ workflow. No data rollback is required because this is presentation logic only.
 - Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7213
 - Second follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7214
 - Third follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7215
+- Fourth follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7217
 - ACA deploy run: pending.
 - Signed-in Source workspace proof: pending.
 
