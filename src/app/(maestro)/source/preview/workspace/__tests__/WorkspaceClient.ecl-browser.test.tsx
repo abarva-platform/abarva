@@ -521,7 +521,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
     expect(screen.getByRole("tab", { name: "Flow" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Volume" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Spine" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Mapping spine" })).toBeTruthy();
     expect(screen.getByText("Source systems and files")).toBeTruthy();
     expect(screen.getByText("Source page substrate")).toBeTruthy();
     expect(screen.getByText("Show lineage")).toBeTruthy();
