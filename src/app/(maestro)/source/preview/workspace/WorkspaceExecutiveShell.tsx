@@ -227,6 +227,7 @@ type FocusedVendorSet = {
   readonly remainderCount: number;
   readonly remainderAnnualValue: number;
   readonly depthReadyCount: number;
+  readonly unresolvedCount: number;
 };
 type FocusedActionSet = {
   readonly rows: readonly SourceContractActionCandidateRow[];
@@ -1597,12 +1598,15 @@ function VendorEvidenceDepthTable({
           </button>
         );
       })}
-      {focus.remainderCount > 0 ? (
+      {focus.remainderCount > 0 || focus.unresolvedCount > 0 ? (
         <div className="sw-v2-table-foot">
           <b>{focus.depthReadyCount} vendor relationships have loaded depth.</b>
           <span>
             The remaining {focus.remainderCount} stay summarized until contract
             evidence rows are loaded beneath them.
+            {focus.unresolvedCount > 0
+              ? ` ${focus.unresolvedCount} unresolved supplier rows are withheld from the executive chart until their names resolve.`
+              : ""}
           </span>
         </div>
       ) : null}
@@ -3354,7 +3358,7 @@ function contractFocusReason(
   return "Header-only portfolio signal";
 }
 
-function focusedVendorSet(
+export function focusedVendorSet(
   portfolio: SourceWorkspacePortfolioData,
   vendors: readonly ExecutiveVendorRow[],
   mode: "concentration" | "evidence",
@@ -3363,7 +3367,15 @@ function focusedVendorSet(
   const coverageByVendor = vendorCoverageRows(portfolio);
   const candidateVendors =
     mode === "evidence" ? vendorsWithImpactEvidence(portfolio, vendors) : vendors;
-  const ranked = candidateVendors
+  const unresolvedCount =
+    mode === "evidence"
+      ? unresolvedVendorIdentityCount(candidateVendors)
+      : 0;
+  const visibleVendors =
+    mode === "evidence"
+      ? candidateVendors.filter((vendor) => !isUnresolvedVendorDisplay(vendor))
+      : candidateVendors;
+  const ranked = visibleVendors
     .map((vendor): FocusedVendorRow => {
       const coverage = coverageForVendor(vendor, coverageByVendor);
       return {
@@ -3402,7 +3414,7 @@ function focusedVendorSet(
     }
   }
   const selectedRefs = new Set(rows.map((row) => row.vendor.vendor_ref));
-  const remainder = candidateVendors.filter(
+  const remainder = visibleVendors.filter(
     (vendor) => !selectedRefs.has(vendor.vendor_ref),
   );
   return {
@@ -3414,6 +3426,7 @@ function focusedVendorSet(
     ),
     depthReadyCount: ranked.filter((row) => vendorDepthScore(row.coverage) > 0)
       .length,
+    unresolvedCount,
   };
 }
 
@@ -3543,6 +3556,22 @@ function vendorsWithImpactEvidence(
   }
 
   return Array.from(byName.values());
+}
+
+function unresolvedVendorIdentityCount(vendors: readonly ExecutiveVendorRow[]) {
+  const unresolvedRefs = new Set<string>();
+  for (const vendor of vendors) {
+    if (!isUnresolvedVendorDisplay(vendor)) continue;
+    const refs = uniqueRefs([vendor.vendor_ref, ...vendor.vendor_refs]);
+    if (refs.length === 0) {
+      unresolvedRefs.add(vendor.vendor_name);
+      continue;
+    }
+    for (const ref of refs) {
+      unresolvedRefs.add(ref);
+    }
+  }
+  return unresolvedRefs.size;
 }
 
 function coverageForVendor(
@@ -3886,10 +3915,15 @@ export function topVendors(
 ): ExecutiveVendorRow[] {
   const byVendorName = new Map<string, ExecutiveVendorRow>();
   for (const vendor of portfolio.vendors) {
-    const key = normalizedVendorName(vendor.vendor_name);
+    const vendorName = safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref);
+    const key = normalizedVendorName(vendorName);
     const existing = byVendorName.get(key);
     if (!existing) {
-      byVendorName.set(key, { ...vendor, vendor_refs: [vendor.vendor_ref] });
+      byVendorName.set(key, {
+        ...vendor,
+        vendor_name: vendorName,
+        vendor_refs: [vendor.vendor_ref],
+      });
       continue;
     }
     byVendorName.set(key, {
@@ -4056,6 +4090,13 @@ function isOpaqueIdentifier(value: string | null | undefined) {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       normalized,
     ) || /^[0-9a-f]{24,}$/i.test(normalized)
+  );
+}
+
+function isUnresolvedVendorDisplay(vendor: ExecutiveVendorRow) {
+  return (
+    safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref) ===
+    "Vendor name not resolved"
   );
 }
 
