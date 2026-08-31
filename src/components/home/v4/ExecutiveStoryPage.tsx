@@ -442,17 +442,20 @@ function Hero({
   const source = openingClaim ? sourceForIds(openingClaim.evidence_ids, signalPacket) : null;
   const scaleSource = leadNumber ? sourceForIds(leadNumber.claim.evidence_ids, signalPacket) : null;
   return (
-    <header style={{ padding: `56px ${PAGE_X}px 40px` }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
-        <span style={eyebrow(V4.blue)}>Executive story</span>
-        <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 16, color: V4.slate }}>
-          A first-meeting readout for {tenantLabel}
-        </span>
+    <header style={{ padding: `42px ${PAGE_X}px 34px` }}>
+      <div style={heroIntroRowStyle}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
+          <span style={eyebrow(V4.blue)}>Executive story</span>
+          <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 16, color: V4.slate }}>
+            A first-meeting readout for {tenantLabel}
+          </span>
+        </div>
+        <span style={heroStatePillStyle}>{terminalCount} of 6 sections ready</span>
       </div>
 
       <div data-home-tier1-hero-metric style={heroMetricStyle}>
-        <div>
-          <span style={eyebrow(V4.green)}>Open on the thesis</span>
+        <div style={heroCopyStyle}>
+          <span style={eyebrow(V4.green)}>Boardroom thesis</span>
           <p style={heroThesisStyle}>
             {openingClaim ? cxoText(openingClaim.statement) : "The executive storyline is not yet published for this tenant."}
           </p>
@@ -463,29 +466,29 @@ function Hero({
               ))}
             </div>
           ) : null}
-          {leadNumber ? (
-            <p style={heroMetricTextStyle}>
-              <strong style={{ color: V4.ink }}>{leadNumber.value}</strong> {leadNumber.label}
-            </p>
-          ) : null}
         </div>
-        <div style={heroProofStyle}>
-          <span style={eyebrow(V4.slate)}>Trace</span>
-          <p style={{ margin: "8px 0 0", fontFamily: MONO, fontSize: 12, color: V4.slate, lineHeight: 1.7 }}>
-            {source ? `${source.label} · ${source.ids}` : "No cited evidence references"}
-          </p>
-          <p style={{ margin: "12px 0 0", fontFamily: MONO, fontSize: 12, color: V4.green }}>
-            Six-section executive story: {terminalCount} of 6 sections present
-          </p>
+        <aside style={heroProofStyle}>
+          {leadNumber ? (
+            <div style={heroMetricTextStyle}>
+              <strong style={heroMetricTextStyleStrong}>{leadNumber.value}</strong>
+              <span>{leadNumber.label}</span>
+            </div>
+          ) : null}
+          <div style={heroEvidenceRuleStyle}>
+            <span style={eyebrow(V4.slate)}>Evidence basis</span>
+            <p style={{ margin: "9px 0 0", fontFamily: MONO, fontSize: 11.5, color: V4.slate, lineHeight: 1.65 }}>
+              {source ? `${source.label} · ${source.ids}` : "No cited evidence references"}
+            </p>
+          </div>
           {scaleSource ? (
-            <p style={{ margin: "8px 0 0", fontFamily: MONO, fontSize: 11, color: V4.slate, lineHeight: 1.6 }}>
+            <p style={{ margin: "12px 0 0", fontFamily: MONO, fontSize: 11, color: V4.slate, lineHeight: 1.6 }}>
               Scale fact: {scaleSource.label} · {scaleSource.ids}
             </p>
           ) : null}
-          <p style={{ margin: "10px 0 0", fontFamily: MONO, fontSize: 11, color: V4.slate, lineHeight: 1.6 }}>
+          <p style={{ margin: "12px 0 0", fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, lineHeight: 1.55 }}>
             {storyPlan.overallEvidenceBoundary}
           </p>
-        </div>
+        </aside>
       </div>
     </header>
   );
@@ -831,27 +834,51 @@ const railButtonStyle: CSSProperties = {
   cursor: "pointer",
 };
 
+const heroIntroRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "baseline",
+  justifyContent: "space-between",
+  gap: 18,
+  flexWrap: "wrap",
+};
+
+const heroStatePillStyle: CSSProperties = {
+  border: `1px solid ${V4.rule}`,
+  borderRadius: 999,
+  background: "rgba(255,255,255,0.68)",
+  color: V4.green,
+  fontFamily: MONO,
+  fontSize: 11,
+  fontWeight: 650,
+  letterSpacing: 0,
+  padding: "6px 10px",
+};
+
 const heroMetricStyle: CSSProperties = {
-  marginTop: 28,
+  marginTop: 24,
   display: "grid",
-  gridTemplateColumns: "minmax(280px,0.82fr) minmax(240px,0.45fr)",
-  gap: 28,
+  gridTemplateColumns: "minmax(420px,1fr) minmax(260px,0.36fr)",
+  gap: 34,
   alignItems: "stretch",
-  borderTop: `5px solid ${V4.green}`,
+  borderTop: `4px solid ${V4.green}`,
   borderBottom: `1px solid ${V4.rule}`,
-  background: "linear-gradient(120deg,rgba(255,255,255,0.96),rgba(242,238,231,0.76))",
-  padding: "30px 34px",
+  background: "linear-gradient(120deg,rgba(255,255,255,0.98),rgba(246,243,237,0.76))",
+  padding: "32px 38px 34px",
+};
+
+const heroCopyStyle: CSSProperties = {
+  minWidth: 0,
 };
 
 const heroThesisStyle: CSSProperties = {
-  margin: "20px 0 0",
+  margin: "17px 0 0",
   fontFamily: SERIF,
-  fontSize: 40,
-  lineHeight: 1.12,
+  fontSize: 36,
+  lineHeight: 1.13,
   letterSpacing: 0,
   fontWeight: 500,
   color: V4.ink,
-  maxWidth: "27ch",
+  maxWidth: "31ch",
   textWrap: "balance",
 };
 
@@ -859,13 +886,13 @@ const heroReasonGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))",
   gap: 12,
-  marginTop: 22,
+  marginTop: 24,
 };
 
 const heroReasonStyle: CSSProperties = {
   margin: 0,
-  borderTop: `2px solid ${V4.green}`,
-  paddingTop: 10,
+  borderTop: `1px solid ${V4.ruleStrong}`,
+  paddingTop: 11,
   fontFamily: SANS,
   fontSize: 14,
   lineHeight: 1.45,
@@ -873,18 +900,40 @@ const heroReasonStyle: CSSProperties = {
 };
 
 const heroMetricTextStyle: CSSProperties = {
-  margin: "22px 0 0",
+  margin: 0,
+  border: `1px solid ${V4.rule}`,
+  borderRadius: 8,
+  background: V4.surface,
+  padding: "18px 18px 16px",
+  display: "grid",
+  gap: 7,
   fontFamily: SANS,
-  fontSize: 18,
-  lineHeight: 1.45,
   color: V4.inkSoft,
-  maxWidth: "44ch",
+  boxShadow: "0 16px 34px rgba(12,26,58,0.05)",
+};
+
+const heroMetricTextStyleStrong: CSSProperties = {
+  color: V4.ink,
+  fontFamily: SERIF,
+  fontSize: 44,
+  lineHeight: 0.95,
+  fontWeight: 500,
 };
 
 const heroProofStyle: CSSProperties = {
-  borderLeft: `1px solid ${V4.rule}`,
-  paddingLeft: 24,
+  borderLeft: `1px solid ${V4.ruleStrong}`,
+  paddingLeft: 26,
   alignSelf: "stretch",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  minWidth: 0,
+};
+
+const heroEvidenceRuleStyle: CSSProperties = {
+  borderTop: `1px solid ${V4.rule}`,
+  marginTop: 18,
+  paddingTop: 16,
 };
 
 const sectionShellStyle: CSSProperties = {
