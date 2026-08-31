@@ -311,6 +311,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
                 end_date: "2027-12-31",
                 annualized_value_usd: 7200000,
                 total_contract_value_usd: 21600000,
+                category_json: { contract_archetype: "finance_bpo" },
                 value_state: "known",
                 scope_json: [
                   { domain: "Finance", name: "Workday Finance" },
@@ -338,6 +339,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
                 row_key: "MER-VEN-LEDGERWORKS",
                 vendor_object_id: "vendor-object-1",
                 vendor_name: "LedgerWorks Shared Services LLC",
+                category_json: { supplier_category: "finance_bpo" },
                 contract_count: 1,
                 annualized_spend_usd: 7200000,
                 contract_ids_json: ["MER-CTR-SSO-BPO-001"],
@@ -450,16 +452,16 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
               contract_id: "MER-TECH-M365-001",
               vendor_ref: "vendor-microsoft",
               vendor_name: "Microsoft Corporation",
-              contract_name: "Microsoft 365 Enterprise Agreement",
-              spend_rows: 12,
-              actual_spend_usd: 1452000,
-              committed_spend_usd: 1480000,
-              performance_rows: 0,
-              breach_rows: 0,
-              credit_calculated_usd: 0,
-              credit_claimed_usd: 0,
-              credit_recovered_usd: 0,
-              unclaimed_credit_usd: 0,
+	              contract_name: "Microsoft 365 Enterprise Agreement",
+	              spend_rows: 12,
+	              actual_spend_usd: 8587900,
+	              committed_spend_usd: 8600004,
+	              performance_rows: 12,
+	              breach_rows: 3,
+	              credit_calculated_usd: 43000.02,
+	              credit_claimed_usd: 0,
+	              credit_recovered_usd: 0,
+	              unclaimed_credit_usd: 43000.02,
               opportunity_rows: 1,
               candidate_amount_usd: 1960000,
               finance_confirmation_required_rows: 1,
@@ -620,7 +622,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.workspaceDiagnostics.exploreProvider).toBe(
       "EclProjectionDbProvider",
     );
-    expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBe(1);
+    expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBeUndefined();
     expect(portfolio.workspaceDiagnostics.eclProjectionDir).toBeNull();
     expect(portfolio.contracts).toHaveLength(1);
     expect(portfolio.vendors).toHaveLength(1);
@@ -641,6 +643,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       ),
     ).toMatchObject({
       annual_value: 7200000,
+      vendor_category: "finance_bpo",
       actual_annual_spend: 5100000,
       operational_evidence_gap: true,
     });
@@ -665,7 +668,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     });
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_events")),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       runCalls
         .filter((call) => call.sql.includes("FROM serving."))
@@ -693,26 +696,20 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     });
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_compare")),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_approvals")),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       runCalls.some((call) =>
         call.sql.includes("source.contract_claim_card_v1"),
       ),
     ).toBe(true);
     expect(
-      runCalls.find((call) =>
-        call.sql.includes("consumption.sourcing_spend_monthly_v1"),
-      )?.params[0],
-    ).toEqual(
-      expect.arrayContaining([
-        "meridian",
-        "meridian-health",
-        "meridian_health_global",
-      ]),
-    );
+      runCalls.some((call) =>
+        call.sql.includes("FROM consumption.sourcing_spend_monthly_v1"),
+      ),
+    ).toBe(false);
     expect(
       portfolio.cockpit.proofLayers.sourceSystems.find(
         (row) => row.name === "executive_portfolio",

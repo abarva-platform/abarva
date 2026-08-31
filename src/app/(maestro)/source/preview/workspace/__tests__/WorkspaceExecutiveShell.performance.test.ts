@@ -5,6 +5,7 @@ import {
   source360RecoverableCreditCoverageRows,
   source360RecoverableCreditFinding,
   topVendors,
+  vendorArchetypeCoverage,
   vendorArchetypeRows,
   vendorCoverageRows,
 } from "../WorkspaceExecutiveShell";
@@ -116,6 +117,28 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       "CTR-0009",
     ]);
     expect(vendors[1]?.vendor_name).toBe("Amazon Web Services");
+  });
+
+  it("does not render opaque vendor identifiers as supplier names", () => {
+    const vendors = topVendors({
+      vendors: [
+        {
+          tenant_key: "meridian-health",
+          vendor_ref: "24fc65af-8223-4884-9241-ef5736960a1b",
+          vendor_name: "24fc65af-8223-4884-9241-ef5736960a1b",
+          vendor_category: null,
+          contract_count: 1,
+          annual_value: 86_000,
+          total_committed_value: 86_000,
+          auto_renew_contracts: 0,
+          next_end_date: null,
+          contract_refs: ["CTR-0002"],
+        },
+      ],
+      contracts: [],
+    } as unknown as Parameters<typeof topVendors>[0]);
+
+    expect(vendors[0]?.vendor_name).toBe("Vendor name not resolved");
   });
 
   it("does not render action narrative as a benchmarking clause", () => {
@@ -620,6 +643,101 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       annualValue: 11_800_000,
       vendorRef: "vendor-aws",
       vendorName: "Amazon Web Services, Inc.",
+    });
+  });
+
+  it("excludes unmapped contract categories from archetype chart rows", () => {
+    const portfolio = {
+      contracts: [
+        {
+          contract_id: "CTR-0001",
+          vendor_ref: "vendor-register",
+          vendor_name: "Register Vendor",
+          vendor_category: "Not established",
+          annual_value: 549_000_000,
+        },
+        {
+          contract_id: "MER-TECH-M365-001",
+          vendor_ref: "vendor-msft",
+          vendor_name: "Microsoft Corporation",
+          vendor_category: "productivity_platform",
+          annual_value: 14_800_000,
+        },
+      ],
+    } as unknown as Parameters<typeof vendorArchetypeRows>[0];
+
+    expect(vendorArchetypeRows(portfolio)).toEqual([
+      {
+        category: "productivity_platform",
+        vendorCount: 1,
+        contractCount: 1,
+        annualValue: 14_800_000,
+        vendorRef: "vendor-msft",
+        vendorName: "Microsoft Corporation",
+      },
+    ]);
+    expect(vendorArchetypeCoverage(portfolio)).toEqual({
+      totalContracts: 2,
+      declaredContracts: 1,
+      unmappedCount: 1,
+      supplementalDeclaredCount: 0,
+    });
+  });
+
+  it("uses declared archetypes from supplemental impact coverage without charting the unmapped register", () => {
+    const portfolio = {
+      contracts: [
+        {
+          contract_id: "CTR-0001",
+          vendor_ref: "vendor-register",
+          vendor_name: "Register Vendor",
+          vendor_category: "Not established",
+          annual_value: 549_000_000,
+        },
+      ],
+      impact: {
+        evidenceCoverage: [
+          {
+            contract_id: "MER-TECH-M365-001",
+            vendor_ref: "vendor-msft",
+            vendor_name: "Microsoft Corporation",
+            vendor_category: "productivity_platform",
+            committed_spend_usd: 14_800_000,
+          },
+          {
+            contract_id: "MER-TECH-SFDC-001",
+            vendor_ref: "vendor-sfdc",
+            vendor_name: "Salesforce, Inc.",
+            contract_archetype: "crm_saas",
+            actual_spend_usd: 9_200_000,
+          },
+        ],
+      },
+    } as unknown as Parameters<typeof vendorArchetypeRows>[0];
+
+    expect(vendorArchetypeRows(portfolio)).toEqual([
+      {
+        category: "productivity_platform",
+        vendorCount: 1,
+        contractCount: 1,
+        annualValue: 14_800_000,
+        vendorRef: "vendor-msft",
+        vendorName: "Microsoft Corporation",
+      },
+      {
+        category: "crm_saas",
+        vendorCount: 1,
+        contractCount: 1,
+        annualValue: 9_200_000,
+        vendorRef: "vendor-sfdc",
+        vendorName: "Salesforce, Inc.",
+      },
+    ]);
+    expect(vendorArchetypeCoverage(portfolio)).toEqual({
+      totalContracts: 3,
+      declaredContracts: 2,
+      unmappedCount: 1,
+      supplementalDeclaredCount: 2,
     });
   });
 });

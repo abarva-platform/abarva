@@ -309,9 +309,11 @@ export function WorkspaceExecutiveShell({
       )
     : null;
   const performanceCreditCounterparty =
-    performanceCreditContract360?.vendor_name ||
-    performanceCreditContract?.vendor_name ||
-    performanceCreditContract?.vendor_ref ||
+    safeVendorDisplayName(
+      performanceCreditContract360?.vendor_name ??
+        performanceCreditContract?.vendor_name,
+      performanceCreditContract?.vendor_ref,
+    ) ||
     performanceCreditContract?.contract_id ||
     "Selected contract";
   const findingContract =
@@ -361,6 +363,7 @@ export function WorkspaceExecutiveShell({
     logic.select("contract", contractId, tab);
 
   const openVendor = (vendorRef: string) => logic.select("vendor", vendorRef);
+  const returnToSource360 = () => logic.select("portfolio", null, "Portfolio");
 
   return (
     <main className="sw-v2-shell" aria-label="Source workspace">
@@ -381,7 +384,12 @@ export function WorkspaceExecutiveShell({
       <section className="sw-v2-main">
         <header className="sw-v2-topbar">
           <div>
-            <div className="sw-v2-breadcrumb">Source 360 / {currentPage}</div>
+            <div className="sw-v2-breadcrumb">
+              <button type="button" onClick={returnToSource360}>
+                Source 360
+              </button>
+              <span>/ {currentPage}</span>
+            </div>
             <div className="sw-v2-context">
               {tenantName || "Current workspace"} · governed contract book
             </div>
@@ -671,7 +679,8 @@ function PortfolioPage({
                   <span>
                     <b>{row.claim_title ?? "Review candidate action"}</b>
                     <small>
-                      {row.vendor_name} / {row.contract_id}
+                      {safeVendorDisplayName(row.vendor_name, row.vendor_ref)} /{" "}
+                      {row.contract_id}
                     </small>
                   </span>
                   <span>{money(numberFromDb(row.candidate_amount_usd))}</span>
@@ -1089,74 +1098,98 @@ function VendorArchetypeMixChart({
       contracts: row.contractCount,
     }));
 
-  if (data.length === 0) {
-    return null;
-  }
+  const coverage = vendorArchetypeCoverage(portfolio);
 
   return (
     <div
       className="sw-v2-recharts-card"
       aria-label="Vendor archetype annual value chart"
     >
-      <MeasuredChartFrame className="sw-v2-chart-frame-bar" height={238}>
-        {(chartWidth, chartHeight) => (
-          <BarChart
-            data={data}
-            width={chartWidth}
-            height={chartHeight}
-            margin={{ top: 12, right: 24, bottom: 8, left: 4 }}
-            barCategoryGap={16}
-          >
-            <CartesianGrid
-              vertical={false}
-              stroke="rgba(10,10,11,0.12)"
-              strokeDasharray="3 4"
-            />
-            <XAxis
-              dataKey="shortName"
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
-            />
-            <YAxis hide domain={[0, "dataMax"]} />
-            <Tooltip
-              cursor={{ fill: "rgba(186,117,23,0.08)" }}
-              contentStyle={{
-                border: "1px solid #d3d1c7",
-                borderRadius: 6,
-                boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
-                color: "#2c2c2a",
-              }}
-              formatter={(value, name) => {
-                if (name === "contracts") {
-                  return [String(value), "Contracts"];
-                }
-                return [
-                  money(typeof value === "number" ? value : Number(value)),
-                  "Annual value",
-                ];
-              }}
-            />
-            <Bar dataKey="annualValue" fill="#0a0a0b" radius={[5, 5, 0, 0]}>
-              {data.map((row, index) => (
-                <Cell
-                  key={row.name}
-                  fill={index % 3 === 0 ? "#0a0a0b" : index % 3 === 1 ? "#1d9e75" : "#ba7517"}
-                  opacity={Math.max(0.5, 1 - index * 0.08)}
+      {data.length > 0 ? (
+        <>
+          <MeasuredChartFrame className="sw-v2-chart-frame-bar" height={238}>
+            {(chartWidth, chartHeight) => (
+              <BarChart
+                data={data}
+                width={chartWidth}
+                height={chartHeight}
+                margin={{ top: 12, right: 24, bottom: 8, left: 4 }}
+                barCategoryGap={16}
+              >
+                <CartesianGrid
+                  vertical={false}
+                  stroke="rgba(10,10,11,0.12)"
+                  strokeDasharray="3 4"
                 />
-              ))}
-            </Bar>
-          </BarChart>
-        )}
-      </MeasuredChartFrame>
-      <div className="sw-v2-recharts-legend">
-        {data.slice(0, 4).map((row) => (
-          <span key={row.name}>
-            <b>{row.shortName}</b>
-            {row.contracts} contracts
-          </span>
-        ))}
-      </div>
+                <XAxis
+                  dataKey="shortName"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
+                />
+                <YAxis hide domain={[0, "dataMax"]} />
+                <Tooltip
+                  cursor={{ fill: "rgba(186,117,23,0.08)" }}
+                  contentStyle={{
+                    border: "1px solid #d3d1c7",
+                    borderRadius: 6,
+                    boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+                    color: "#2c2c2a",
+                  }}
+                  formatter={(value, name) => {
+                    if (name === "contracts") {
+                      return [String(value), "Contracts"];
+                    }
+                    return [
+                      money(typeof value === "number" ? value : Number(value)),
+                      "Annual value",
+                    ];
+                  }}
+                />
+                <Bar dataKey="annualValue" fill="#0a0a0b" radius={[5, 5, 0, 0]}>
+                  {data.map((row, index) => (
+                    <Cell
+                      key={row.name}
+                      fill={
+                        index % 3 === 0
+                          ? "#0a0a0b"
+                          : index % 3 === 1
+                            ? "#1d9e75"
+                            : "#ba7517"
+                      }
+                      opacity={Math.max(0.5, 1 - index * 0.08)}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            )}
+          </MeasuredChartFrame>
+          <div className="sw-v2-recharts-legend">
+            {data.slice(0, 4).map((row) => (
+              <span key={row.name}>
+                <b>{row.shortName}</b>
+                {row.contracts} contracts
+              </span>
+            ))}
+            {coverage.unmappedCount > 0 ? (
+              <span>
+                <b>{coverage.unmappedCount}</b>
+                unmapped contracts excluded
+              </span>
+            ) : null}
+          </div>
+        </>
+      ) : (
+        <div className="sw-v2-empty-state">
+          <span>Archetype data not charted</span>
+          <b>No declared archetype rows are loaded for this portfolio view.</b>
+          <p>
+            {coverage.totalContracts} contract headers stay in the register,
+            but Source will not draw a concentration chart from an unmapped
+            placeholder bucket.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -1585,6 +1618,7 @@ function VendorArchetypeTable({
   onOpenVendor: (vendorRef: string) => void;
 }) {
   const rows = vendorArchetypeRows(portfolio);
+  const coverage = vendorArchetypeCoverage(portfolio);
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-archetype-row">
@@ -1613,6 +1647,25 @@ function VendorArchetypeTable({
           <span>{row.vendorName ?? "Not established"}</span>
         </button>
       ))}
+      {rows.length === 0 ? (
+        <div className="sw-v2-empty-state">
+          <span>Archetype coverage</span>
+          <b>Declared archetype rows are not loaded yet.</b>
+          <p>
+            {coverage.unmappedCount} contracts remain in the governed register,
+            but the archetype mix view is withheld until their category
+            substrate is populated.
+          </p>
+        </div>
+      ) : coverage.unmappedCount > 0 ? (
+        <div className="sw-v2-table-foot">
+          <b>{coverage.declaredContracts} contracts carry declared archetypes.</b>
+          <span>
+            {coverage.unmappedCount} register contracts are excluded from this
+            chart instead of being collapsed into a placeholder bucket.
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -2252,7 +2305,7 @@ function OptimizeByContractTable({
           onClick={() => onOpenContract(row.contract_id, "Optimize")}
         >
           <span>
-            <b>{row.vendor_name}</b>
+            <b>{safeVendorDisplayName(row.vendor_name, row.vendor_ref)}</b>
             <small>{row.contract_id}</small>
           </span>
           <span>{row.finding_summary ?? row.title ?? "Review candidate"}</span>
@@ -2314,7 +2367,7 @@ function OptimizeActionQueue({
             <small>{row.deterministic_basis ?? "Evidence basis loaded."}</small>
           </span>
           <span>
-            <b>{row.vendor_name}</b>
+            <b>{safeVendorDisplayName(row.vendor_name, row.vendor_ref)}</b>
             <small>{row.contract_id}</small>
           </span>
           <span>{money(numberFromDb(row.candidate_amount_usd))}</span>
@@ -3370,8 +3423,10 @@ function vendorsWithImpactEvidence(
 ): ExecutiveVendorRow[] {
   const byName = new Map<string, ExecutiveVendorRow>();
   for (const vendor of vendors) {
-    byName.set(normalizedVendorName(vendor.vendor_name), {
+    const displayName = safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref);
+    byName.set(normalizedVendorName(displayName), {
       ...vendor,
+      vendor_name: displayName,
       vendor_refs: uniqueRefs([vendor.vendor_ref, ...vendor.vendor_refs]),
     });
   }
@@ -3392,7 +3447,11 @@ function vendorsWithImpactEvidence(
     vendorCategory: string | null;
     annualValue: number | null;
   }) => {
-    const key = normalizedVendorName(vendorName || vendorRef);
+    const displayName = safeVendorDisplayName(vendorName, vendorRef);
+    const key =
+      displayName === "Vendor name not resolved"
+        ? vendorRef || contractId
+        : normalizedVendorName(displayName);
     if (!key || !vendorRef) return;
     const existing = byName.get(key);
     const contractRefs = uniqueRefs([
@@ -3402,6 +3461,7 @@ function vendorsWithImpactEvidence(
     if (existing) {
       byName.set(key, {
         ...existing,
+        vendor_name: preferVendorDisplayName(existing.vendor_name, displayName),
         vendor_category: existing.vendor_category ?? vendorCategory,
         contract_count: Math.max(existing.contract_count, contractRefs.length),
         annual_value: numberFromDb(existing.annual_value) ?? annualValue,
@@ -3419,7 +3479,7 @@ function vendorsWithImpactEvidence(
     byName.set(key, {
       tenant_key: portfolio.tenantKey,
       vendor_ref: vendorRef,
-      vendor_name: vendorName || vendorRef,
+      vendor_name: displayName,
       vendor_category: vendorCategory,
       contract_count: contractRefs.length,
       annual_value: annualValue,
@@ -3431,7 +3491,7 @@ function vendorsWithImpactEvidence(
     });
   };
 
-  for (const coverage of portfolio.impact.evidenceCoverage) {
+  for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
     const contract = contractsById.get(coverage.contract_id);
     const annualValue =
       numberFromDb(contract?.resolved_annual_value) ??
@@ -3440,14 +3500,19 @@ function vendorsWithImpactEvidence(
       numberFromDb(coverage.actual_spend_usd);
     upsert({
       contractId: coverage.contract_id,
-      vendorName: coverage.vendor_name || contract?.vendor_name || coverage.vendor_ref,
+      vendorName: coverage.vendor_name || contract?.vendor_name || "",
       vendorRef: coverage.vendor_ref || contract?.vendor_ref || coverage.contract_id,
-      vendorCategory: contract?.vendor_category ?? null,
+      vendorCategory:
+        contractArchetype(contract) ??
+        contract?.vendor_category ??
+        coverage.contract_archetype ??
+        coverage.vendor_category ??
+        null,
       annualValue,
     });
   }
 
-  for (const action of portfolio.impact.actionCandidates) {
+  for (const action of portfolio.impact?.actionCandidates ?? []) {
     const contract = contractsById.get(action.contract_id);
     const annualValue =
       numberFromDb(contract?.resolved_annual_value) ??
@@ -3455,14 +3520,14 @@ function vendorsWithImpactEvidence(
       numberFromDb(action.candidate_amount_usd);
     upsert({
       contractId: action.contract_id,
-      vendorName: action.vendor_name || contract?.vendor_name || action.vendor_ref,
+      vendorName: action.vendor_name || contract?.vendor_name || "",
       vendorRef: action.vendor_ref || contract?.vendor_ref || action.contract_id,
-      vendorCategory: contract?.vendor_category ?? null,
+      vendorCategory: contractArchetype(contract) ?? contract?.vendor_category ?? null,
       annualValue,
     });
   }
 
-  for (const claim of portfolio.impact.claimCards) {
+  for (const claim of portfolio.impact?.claimCards ?? []) {
     const contract = contractsById.get(claim.contract_id);
     const annualValue =
       numberFromDb(contract?.resolved_annual_value) ??
@@ -3470,9 +3535,9 @@ function vendorsWithImpactEvidence(
       numberFromDb(claim.candidate_amount_usd);
     upsert({
       contractId: claim.contract_id,
-      vendorName: claim.vendor_name || contract?.vendor_name || claim.vendor_ref,
+      vendorName: claim.vendor_name || contract?.vendor_name || "",
       vendorRef: claim.vendor_ref || contract?.vendor_ref || claim.contract_id,
-      vendorCategory: contract?.vendor_category ?? null,
+      vendorCategory: contractArchetype(contract) ?? contract?.vendor_category ?? null,
       annualValue,
     });
   }
@@ -3538,7 +3603,7 @@ export function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
       contract.vendor_ref,
     ]),
   );
-  for (const coverage of portfolio.impact.evidenceCoverage) {
+  for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
     const vendorRef =
       coverage.vendor_ref || vendorRefsByContract.get(coverage.contract_id);
     if (!vendorRef) continue;
@@ -3558,6 +3623,9 @@ export function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
 }
 
 export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
+  const contractsById = new Map(
+    portfolio.contracts.map((contract) => [contract.contract_id, contract]),
+  );
   const groups = new Map<
     string,
     {
@@ -3569,27 +3637,71 @@ export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
       vendorName: string | null;
     }
   >();
-  for (const contract of portfolio.contracts) {
-    const category = contract.vendor_category ?? "Not established";
+
+  const addArchetypeContract = ({
+    category,
+    contractId,
+    vendorRef,
+    vendorName,
+    annualValue,
+  }: {
+    category: string | null | undefined;
+    contractId: string;
+    vendorRef: string | null | undefined;
+    vendorName: string | null | undefined;
+    annualValue: number | null | undefined;
+  }) => {
+    const categoryKey = typeof category === "string" ? category.trim() : "";
+    if (!isDeclaredArchetype(categoryKey)) return;
     const current =
-      groups.get(category) ??
+      groups.get(categoryKey) ??
       {
-        category,
+        category: categoryKey,
         vendorRefs: new Set<string>(),
         contractCount: 0,
         annualValue: 0,
         vendorRef: null,
         vendorName: null,
       };
-    current.vendorRefs.add(contract.vendor_ref);
+    if (vendorRef) current.vendorRefs.add(vendorRef);
     current.contractCount += 1;
-    current.annualValue += numberFromDb(contract.annual_value) ?? 0;
+    current.annualValue += annualValue ?? 0;
     if (!current.vendorRef) {
-      current.vendorRef = contract.vendor_ref;
-      current.vendorName = contract.vendor_name;
+      current.vendorRef = vendorRef ?? contractId;
+      current.vendorName = safeVendorDisplayName(
+        vendorName,
+        vendorRef ?? contractId,
+      );
     }
-    groups.set(category, current);
+    groups.set(categoryKey, current);
+  };
+
+  for (const contract of portfolio.contracts) {
+    addArchetypeContract({
+      category: contractArchetype(contract) ?? contract.vendor_category,
+      contractId: contract.contract_id,
+      vendorRef: contract.vendor_ref,
+      vendorName: contract.vendor_name,
+      annualValue:
+        numberFromDb(contract.resolved_annual_value) ??
+        numberFromDb(contract.annual_value),
+    });
   }
+
+  for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
+    if (contractsById.has(coverage.contract_id)) continue;
+    addArchetypeContract({
+      category: coverage.contract_archetype ?? coverage.vendor_category,
+      contractId: coverage.contract_id,
+      vendorRef: coverage.vendor_ref,
+      vendorName: coverage.vendor_name,
+      annualValue:
+        numberFromDb(coverage.committed_spend_usd) ??
+        numberFromDb(coverage.actual_spend_usd) ??
+        numberFromDb(coverage.candidate_amount_usd),
+    });
+  }
+
   return [...groups.values()]
     .map((row) => ({
       category: row.category,
@@ -3600,6 +3712,40 @@ export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
       vendorName: row.vendorName,
     }))
     .sort((a, b) => b.annualValue - a.annualValue);
+}
+
+export function vendorArchetypeCoverage(
+  portfolio: SourceWorkspacePortfolioData,
+) {
+  const registerIds = new Set(
+    portfolio.contracts.map((contract) => contract.contract_id),
+  );
+  const declaredRegisterIds = new Set<string>();
+  const declaredSupplementalIds = new Set<string>();
+  for (const contract of portfolio.contracts) {
+    if (isDeclaredArchetype(contractArchetype(contract) ?? contract.vendor_category)) {
+      declaredRegisterIds.add(contract.contract_id);
+    }
+  }
+  for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
+    if (!isDeclaredArchetype(coverage.contract_archetype ?? coverage.vendor_category)) {
+      continue;
+    }
+    if (registerIds.has(coverage.contract_id)) {
+      declaredRegisterIds.add(coverage.contract_id);
+    } else {
+      declaredSupplementalIds.add(coverage.contract_id);
+    }
+  }
+  const totalContracts = portfolio.contracts.length + declaredSupplementalIds.size;
+  const declaredContracts =
+    declaredRegisterIds.size + declaredSupplementalIds.size;
+  return {
+    totalContracts,
+    declaredContracts,
+    unmappedCount: Math.max(0, portfolio.contracts.length - declaredRegisterIds.size),
+    supplementalDeclaredCount: declaredSupplementalIds.size,
+  };
 }
 
 export function optimizeTypeRows(portfolio: SourceWorkspacePortfolioData) {
@@ -3796,17 +3942,18 @@ function withContractBackedVendorMetrics(
   contracts: readonly SourceContract360Row[],
 ): ExecutiveVendorRow {
   const contractRefs = uniqueRefs(vendor.contract_refs);
-  const linkedContracts = vendorLinkedContracts(contracts, {
-    ...vendor,
-    contract_refs: contractRefs,
-  });
-  if (linkedContracts.length === 0) {
-    return {
+    const linkedContracts = vendorLinkedContracts(contracts, {
       ...vendor,
       contract_refs: contractRefs,
-      contract_count: contractRefs.length || vendor.contract_count,
-    };
-  }
+    });
+    if (linkedContracts.length === 0) {
+      return {
+        ...vendor,
+        vendor_name: safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref),
+        contract_refs: contractRefs,
+        contract_count: contractRefs.length || vendor.contract_count,
+      };
+    }
   const annualValue = linkedContracts.reduce(
     (sum, contract) =>
       sum +
@@ -3830,6 +3977,7 @@ function withContractBackedVendorMetrics(
 
   return {
     ...vendor,
+    vendor_name: safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref),
     contract_count: linkedContracts.length,
     annual_value: annualValue > 0 ? annualValue : vendor.annual_value,
     total_committed_value:
@@ -3884,6 +4032,48 @@ function normalizedVendorName(name: string) {
     )
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function contractArchetype(contract: SourceContract360Row | undefined) {
+  return (
+    (contract as (SourceContract360Row & { contract_archetype?: string | null }) | undefined)
+      ?.contract_archetype ?? null
+  );
+}
+
+function isDeclaredArchetype(value: string | null | undefined) {
+  const normalized = value?.trim();
+  return Boolean(
+    normalized &&
+      !/^(not established|unknown|unresolved|none|null|n\/a)$/i.test(normalized),
+  );
+}
+
+function isOpaqueIdentifier(value: string | null | undefined) {
+  const normalized = value?.trim();
+  if (!normalized) return false;
+  return (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      normalized,
+    ) || /^[0-9a-f]{24,}$/i.test(normalized)
+  );
+}
+
+function safeVendorDisplayName(
+  vendorName: string | null | undefined,
+  vendorRef: string | null | undefined,
+) {
+  const name = vendorName?.trim();
+  if (name && !isOpaqueIdentifier(name)) return name;
+  const ref = vendorRef?.trim();
+  if (ref && !isOpaqueIdentifier(ref)) return ref;
+  return "Vendor name not resolved";
+}
+
+function preferVendorDisplayName(left: string, right: string) {
+  if (left === "Vendor name not resolved") return right;
+  if (isOpaqueIdentifier(left)) return right;
+  return left;
 }
 
 function compactVendorName(name: string) {

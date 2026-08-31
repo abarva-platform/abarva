@@ -174,6 +174,7 @@ describe('projectContractDepthPackage', () => {
     });
     expect(projection.contract360[0]).toMatchObject({
       contract_id: 'MER-TECH-AMS-001',
+      vendor_category: 'application_managed_services',
       alternatives_available: '',
       actual_annual_spend: '650000',
       service_credits_earned: '12333.33',
@@ -185,6 +186,7 @@ describe('projectContractDepthPackage', () => {
     });
     expect(projection.contractVendor360[0]).toMatchObject({
       contract_id: 'MER-TECH-AMS-001',
+      vendor_category: 'application_managed_services',
       alternatives_available: '',
     });
     expect(projection.contractOperationalPerformance[0]).toMatchObject({
