@@ -47,7 +47,7 @@ const CONTRACT_TABS = [
 const VENDOR_SUBTABS = ["Concentration", "Evidence depth", "Archetype mix"] as const;
 const CONTRACT_LIST_SUBTABS = ["Contract table", "Evidence depth", "Financial posture"] as const;
 const OPTIMIZE_SUBTABS = ["Action queue", "Type mix", "Contract readiness"] as const;
-const GRAPH_SUBTABS = ["Flow", "Volume", "Spine"] as const;
+const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"] as const;
 
 type PageLabel = (typeof PAGE_LABELS)[number];
 type ExecutiveVendorRow = SourceVendorContractPortfolioRow & {
@@ -2189,7 +2189,7 @@ function ContractGraphPage({
         />
         {subtab === "Volume" ? (
           <GraphVolumeTable portfolio={portfolio} showLineage={showLineage} />
-        ) : subtab === "Spine" ? (
+        ) : subtab === "Mapping spine" ? (
           <GraphSpineTable portfolio={portfolio} showLineage={showLineage} />
         ) : (
           <div className="sw-v2-graph">
@@ -3112,7 +3112,7 @@ function optimizeSubtabTitle(subtab: string) {
 
 function graphSubtabTitle(subtab: string) {
   if (subtab === "Volume") return "Loaded row volume by substrate";
-  if (subtab === "Spine") return "Source system to product mapping";
+  if (subtab === "Mapping spine") return "Source system to product mapping";
   return "Contract at the center; systems, facts, and actions around it";
 }
 
