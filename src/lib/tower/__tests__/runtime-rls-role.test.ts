@@ -10,6 +10,9 @@ describe("Tower runtime RLS role", () => {
   const migration = read(
     "supabase/migrations/20260831122000_tower_runtime_reader_role.sql",
   );
+  const contextGrantMigration = read(
+    "supabase/migrations/20260831124000_tower_runtime_reader_context_grants.sql",
+  );
   const reader = read("src/lib/tower/readTowerCommandCenter.ts");
   const probe = read("scripts/ops/probe-tower-rls-enforcement.mjs");
 
@@ -37,6 +40,15 @@ describe("Tower runtime RLS role", () => {
     }
     expect(migration).toContain("ALTER VIEW serving.%I SET (security_invoker = true)");
     expect(migration).toContain("GRANT SELECT ON serving.%I TO tower_projection_reader");
+  });
+
+  it("grants the runtime reader the context measure dependency used by value rows", () => {
+    expect(contextGrantMigration).toContain(
+      "GRANT USAGE ON SCHEMA ecl_context TO tower_projection_reader",
+    );
+    expect(contextGrantMigration).toContain(
+      "GRANT SELECT ON ecl_context.measure TO tower_projection_reader",
+    );
   });
 
   it("runs Tower reads in a local read-only role and tenant scope", () => {
