@@ -3,6 +3,8 @@
 import { useState } from "react";
 
 import {
+  BLOCKER_TONE,
+  controlBlockerCell,
   formatCount,
   formatPct,
   formatUsdM,
@@ -10,6 +12,7 @@ import {
 import type {
   TowerAiKind,
   TowerAiView,
+  TowerActionView,
   TowerCommandCenterView,
   TowerEvidenceGapView,
   TowerProgramView,
@@ -33,6 +36,28 @@ import { cx } from "../primitives";
 
 type Tone = "teal" | "amber" | "red" | "gray";
 type AiLens = "cost" | "risk" | "adoption" | "table";
+type CostFinding = {
+  id: string;
+  badge: string;
+  amountUsd: number | null;
+  title: string;
+  body: string;
+  actionId: string | null;
+  gapId: string | null;
+};
+type CampaignRow = {
+  seq: string;
+  title: string;
+  owner: string;
+  tasks: number;
+  unit: string;
+  valueUsd: number | null;
+  due: string;
+  tone: Tone;
+  action: TowerActionView | null;
+  gap: TowerEvidenceGapView | null;
+  detail: string;
+};
 
 const AI_KIND_LABEL: Record<TowerAiKind, string> = {
   funded: "funded",
@@ -56,6 +81,12 @@ function formatLoadedUsdM(value: number | null | undefined): string {
     : formatUsdM(value);
 }
 
+function formatOptionalUsdM(value: number | null | undefined): string {
+  return typeof value === "number" && Number.isFinite(value)
+    ? formatUsdM(value)
+    : "Not loaded";
+}
+
 function valueClaimCount(view: TowerCommandCenterView): number {
   return view.summary.valueClaimCount;
 }
@@ -73,12 +104,14 @@ function emittingAiCount(view: TowerCommandCenterView): number {
 
 function contractSummaryLine(view: TowerCommandCenterView) {
   const s = view.summary;
+  const claimCount = valueClaimCount(view);
   return (
     <>
       {formatLoadedUsdM(s.approvedInvestmentUsd)} approved ·{" "}
       <strong>{formatUsdM(s.claimableUsd)} board-claimable</strong> ·{" "}
-      {formatCount(openClaimCount(view))} of {formatCount(valueClaimCount(view))}{" "}
-      claims still need proof
+      {claimCount > 0
+        ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} claims still need proof`
+        : "Value claims not loaded"}
     </>
   );
 }
@@ -96,8 +129,14 @@ function ContractMasthead({ view }: { view: TowerCommandCenterView }) {
       <div className={styles.contractLead}>{contractSummaryLine(view)}</div>
       <div className={styles.contractStatus}>
         <span>
-          <b>{formatCount(s.usageSupportedClaimCount)}</b>/
-          {formatCount(valueClaimCount(view))} usage-supported
+          {valueClaimCount(view) > 0 ? (
+            <>
+              <b>{formatCount(s.usageSupportedClaimCount)}</b>/
+              {formatCount(valueClaimCount(view))} usage-supported
+            </>
+          ) : (
+            "Usage support not loaded"
+          )}
         </span>
         <span>{formatUsdM(measuredUsd(view))} ceiling</span>
         <span>{formatCount(emittingAiCount(view))} tracked assets emitting</span>
@@ -506,8 +545,8 @@ export function ValueProofContractView({
           carried no information the first did not. Side by side under separate headings they read
           as two independent assessments of a case. They were one number, printed twice.
 
-          The AI portfolio table below keeps its Risk column: there the value is genuinely absent
-          and renders "Not scored", which names a gap rather than inventing a dimension.
+          The AI portfolio table below renders the named control blocker instead of a derived
+          risk score, so readiness is not printed twice under different labels.
         */}
         <article className={styles.contractCard}>
           {cardTitle(
@@ -675,18 +714,18 @@ function AiSpendChart({ view }: { view: TowerCommandCenterView }) {
 
 function topAiRows(view: TowerCommandCenterView): TowerAiView[] {
   return [...view.allInitiatives]
-    .sort((a, b) => b.aiSpendUsd - a.aiSpendUsd || b.riskScore - a.riskScore)
+    .sort((a, b) => b.aiSpendUsd - a.aiSpendUsd || a.name.localeCompare(b.name))
     .slice(0, 6);
 }
 
 function aiBenefitLabel(item: TowerAiView): string {
+  if (!item.promisedBenefitLoaded) {
+    return "No benefit claim loaded";
+  }
   if (item.promisedUsd > 0) {
-    return `${formatUsdM(item.promisedUsd)} benefit under review`;
+    return `${formatUsdM(item.promisedUsd)} sponsor-stated benefit`;
   }
-  if (item.financeValidatedUsd > 0) {
-    return `${formatUsdM(item.financeValidatedUsd)} finance-validated`;
-  }
-  return "no benefit claim loaded";
+  return "No sponsor-stated benefit";
 }
 
 function aiUsageLabel(item: TowerAiView): string {
@@ -700,75 +739,52 @@ function aiUsageScore(item: TowerAiView): number | null {
     .map((bar) => bar.pct)
     .filter((pct) => Number.isFinite(pct));
   if (scoredBars.length > 0) return Math.max(...scoredBars);
-  return item.usageHeadline ? item.readinessScore : null;
+  return null;
 }
 
-function costFindings(view: TowerCommandCenterView) {
+function costFindings(view: TowerCommandCenterView): CostFinding[] {
   const gaps = [...view.gaps].sort(
     (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
   );
   const actions = [...view.actions].sort(
     (a, b) => b.amountExposedUsd - a.amountExposedUsd,
   );
-  return [
-    {
-      id: "F1",
-      badge: "Consolidate",
-      amountUsd: actions[0]?.amountExposedUsd ?? gaps[0]?.valueAtStakeUsd ?? 0,
-      title:
-        actions[0]?.title ??
-        "Three suppliers deliver the same capability to one business function",
-      body:
-        actions[0]?.why ??
-        "Duplicate capability coverage inside a single function, evidenced from governed records.",
-      actionId: actions[0]?.id ?? null,
-    },
-    {
-      id: "F3",
-      badge: "Renegotiate",
-      amountUsd: actions[1]?.amountExposedUsd ?? gaps[1]?.valueAtStakeUsd ?? 0,
-      title:
-        actions[1]?.title ??
-        "A cohort of contracts protects the vendor, not the client",
-      body:
-        actions[1]?.why ??
-        "Clause asymmetry and renewal terms require owner review before value is claimed.",
-      actionId: actions[1]?.id ?? null,
-    },
-    {
-      id: "F4",
-      badge: "Consolidate",
-      amountUsd: actions[2]?.amountExposedUsd ?? gaps[2]?.valueAtStakeUsd ?? 0,
-      title:
-        actions[2]?.title ??
-        "One function runs overlapping applications in one subdomain",
-      body:
-        actions[2]?.why ??
-        "Application sprawl is named, counted and traceable to the Tower projection.",
-      actionId: actions[2]?.id ?? null,
-    },
-    {
-      id: "F7",
-      badge: view.summary.aiUnallocatedSpendUsd > 0 ? "Attribute" : "Evidence",
-      amountUsd:
-        view.summary.aiUnallocatedSpendUsd > 0
-          ? view.summary.aiUnallocatedSpendUsd
-          : (actions[3]?.amountExposedUsd ?? gaps[3]?.valueAtStakeUsd ?? 0),
-      title:
-        view.summary.aiUnallocatedSpendUsd > 0
-          ? "Unattributed spend is rendered as a named gap, never as zero"
-          : (actions[3]?.title ??
-            gaps[3]?.blockedDecision ??
-            "Review the next value evidence gap"),
-      body:
-        view.summary.aiUnallocatedSpendUsd > 0
-          ? `${formatUsdM(view.summary.aiUnallocatedSpendUsd)} is currently not released as claimable value without attribution evidence.`
-          : (actions[3]?.why ??
-            gaps[3]?.why ??
-            "The amount shown is tied to the next governed evidence gap."),
-      actionId: actions[3]?.id ?? null,
-    },
-  ];
+  const rows: CostFinding[] = actions.slice(0, 4).map((action, index) => ({
+    id: `A${action.sequence || index + 1}`,
+    badge: action.lane,
+    amountUsd: action.amountExposedUsd,
+    title: action.title,
+    body: action.why,
+    actionId: action.id,
+    gapId: null as string | null,
+  }));
+
+  for (const gap of gaps) {
+    if (rows.length >= 4) break;
+    rows.push({
+      id: `G${rows.length + 1}`,
+      badge: gap.priority,
+      amountUsd: gap.valueAtStakeUsd,
+      title: gap.blockedDecision || gap.missing,
+      body: gap.why,
+      actionId: null,
+      gapId: gap.id,
+    });
+  }
+
+  if (view.summary.aiUnallocatedSpendUsd > 0 && rows.length < 4) {
+    rows.push({
+      id: `G${rows.length + 1}`,
+      badge: "attribute",
+      amountUsd: view.summary.aiUnallocatedSpendUsd,
+      title: "Unattributed AI spend",
+      body: "The loaded portfolio names AI spend that is not yet attached to a governed initiative or tool row.",
+      actionId: null,
+      gapId: null,
+    });
+  }
+
+  return rows;
 }
 
 function riskRows(view: TowerCommandCenterView): TowerEvidenceGapView[] {
@@ -783,8 +799,8 @@ function adoptionRows(view: TowerCommandCenterView): TowerAiView[] {
     .sort(
       (a, b) =>
         (aiUsageScore(b) ?? -1) - (aiUsageScore(a) ?? -1) ||
-        b.readinessScore - a.readinessScore ||
-        b.aiSpendUsd - a.aiSpendUsd,
+        b.aiSpendUsd - a.aiSpendUsd ||
+        a.name.localeCompare(b.name),
     )
     .slice(0, 20);
 }
@@ -811,6 +827,7 @@ export function AiPortfolioContractView({
 }) {
   const s = view.summary;
   const aiRows = topAiRows(view);
+  const costLensFindings = costFindings(view);
   const adoptionLensRows = adoptionRows(view);
   const [lens, setLens] = useState<AiLens>("table");
   const lensOptions = [
@@ -822,7 +839,7 @@ export function AiPortfolioContractView({
     {
       key: "cost" as const,
       label: "Cost lens",
-      detail: `${formatCount(costFindings(view).length)} findings`,
+      detail: `${formatCount(costLensFindings.length)} findings`,
     },
     {
       key: "risk" as const,
@@ -899,24 +916,31 @@ export function AiPortfolioContractView({
               Cost findings · evidenced
             </div>
             <div className={styles.findingStack}>
-              {costFindings(view).map((finding) => (
-                <button
-                  key={finding.id}
-                  type="button"
-                  className={styles.costFindingCard}
-                  onClick={() =>
-                    finding.actionId && onOpenAction(finding.actionId)
-                  }
-                >
-                  <div className={styles.findingTop}>
-                    <span>{finding.id}</span>
-                    <b>{finding.badge}</b>
-                    <strong>{formatUsdM(finding.amountUsd)}</strong>
-                  </div>
-                  <h3>{finding.title}</h3>
-                  <p>{finding.body}</p>
-                </button>
-              ))}
+              {costLensFindings.length > 0 ? (
+                costLensFindings.map((finding) => (
+                  <button
+                    key={finding.id}
+                    type="button"
+                    className={styles.costFindingCard}
+                    onClick={() => {
+                      if (finding.actionId) onOpenAction(finding.actionId);
+                      else if (finding.gapId) onOpenGap(finding.gapId);
+                    }}
+                  >
+                    <div className={styles.findingTop}>
+                      <span>{finding.id}</span>
+                      <b>{finding.badge}</b>
+                      <strong>{formatOptionalUsdM(finding.amountUsd)}</strong>
+                    </div>
+                    <h3>{finding.title}</h3>
+                    <p>{finding.body}</p>
+                  </button>
+                ))
+              ) : (
+                <div className={styles.contractEmpty}>
+                  No cost findings are loaded for this portfolio.
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -1022,7 +1046,7 @@ export function AiPortfolioContractView({
                   <th>Spend</th>
                   <th>Benefit</th>
                   <th>Readiness</th>
-                  <th>Risk</th>
+                  <th>Control blocker</th>
                 </tr>
               </thead>
               <tbody>
@@ -1039,15 +1063,25 @@ export function AiPortfolioContractView({
                     <td>
                       {item.category ?? AI_KIND_LABEL[item.displayBucket]}
                     </td>
-                    <td>{item.aiSpendLoaded ? formatUsdM(item.aiSpendUsd) : "Not loaded"}</td>
-                    <td>{aiBenefitLabel(item)}</td>
+                    <td>
+                      {item.aiSpendLoaded
+                        ? formatUsdM(item.aiSpendUsd)
+                        : "Not loaded"}
+                    </td>
+	                    <td>{aiBenefitLabel(item)}</td>
                     <td>
                       {item.readinessScoreLoaded
                         ? formatPct(item.readinessScore)
                         : "Not scored"}
                     </td>
                     <td>
-                      {item.riskScoreLoaded ? formatPct(item.riskScore) : "Not scored"}
+                      <span
+                        style={{
+                          color: BLOCKER_TONE[controlBlockerCell(item).tone],
+                        }}
+                      >
+                        {controlBlockerCell(item).text}
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -1065,95 +1099,51 @@ export function AiPortfolioContractView({
   );
 }
 
-function campaignRows(view: TowerCommandCenterView) {
+function campaignRows(view: TowerCommandCenterView): CampaignRow[] {
   const actions = [...view.actions].sort((a, b) => a.sequence - b.sequence);
   const gaps = [...view.gaps].sort(
     (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0),
   );
-  const base = [
-    {
-      seq: "1",
-      title: "Usage telemetry connection",
-      owner: "platform_owner",
-      tasks: Math.max(1, view.allInitiatives.length),
-      unit: "Assets",
-      valueUsd: view.summary.aiAttributedInitiativeSpendUsd,
-      due: actions[0]?.due ?? "Next review",
-      tone: "red" as Tone,
-      action: actions[0],
-      gap: gaps[0],
-      detail: "blocks gate 2 — and everything after it",
-    },
-    {
-      seq: "2",
-      title: "Outcome measurement backfill",
-      owner: "program_sponsor",
-      tasks: Math.max(
-        0,
-        valueClaimCount(view) - view.summary.outcomeMeasuredClaimCount,
-      ),
-      unit: "Claims",
-      valueUsd: measuredUsd(view),
-      due: actions[1]?.due ?? "Next month",
-      tone: "amber" as Tone,
-      action: actions[1],
-      gap: gaps[1],
-      detail: "blocks gate 4 — claims carry no actual",
-    },
-    {
-      seq: "3",
-      title: "Finance validation sign-off",
-      owner: "finance_controller",
-      tasks: Math.max(1, view.summary.blockedProgramCount),
-      unit: "Claims",
-      valueUsd: measuredUsd(view),
-      due: actions[2]?.due ?? "Next review",
-      tone: "amber" as Tone,
-      action: actions[2],
-      gap: gaps[2],
-      detail: "blocks gate 6 — board-claimable value",
-    },
-    {
+  const rows: CampaignRow[] = actions.map((action) => ({
+    seq: String(action.sequence),
+    title: action.title.replace(/^FIX PROOF:\s*/i, ""),
+    owner: action.ownerRole,
+    tasks: 1,
+    unit: "Task",
+    valueUsd: action.amountExposedUsd,
+    due: action.due ?? "Not loaded",
+    tone:
+      action.lane === "fix" || action.lane === "stop"
+        ? ("red" as Tone)
+        : ("amber" as Tone),
+    action,
+    gap: null as TowerEvidenceGapView | null,
+    detail: action.why,
+  }));
+
+  for (const gap of gaps) {
+    if (rows.length >= 6) break;
+    rows.push({
       seq: "—",
-      title: "Vendor leverage review",
-      owner: "sourcing_lead",
-      tasks: Math.max(1, Math.ceil(view.actions.length / 2)),
-      unit: "Actions",
-      valueUsd: actions[3]?.amountExposedUsd ?? gaps[3]?.valueAtStakeUsd ?? 0,
-      due: actions[3]?.due ?? "Parallel",
-      tone: "gray" as Tone,
-      action: actions[3],
-      gap: gaps[3],
-      detail: "blocks nothing in the proof chain — runs in parallel",
-    },
-    {
-      seq: "—",
-      title: "Document clause confirmation",
-      owner: "sourcing_lead",
-      tasks: Math.max(1, Math.ceil(view.evidenceFacts.length / 2)),
-      unit: "Evidence",
-      valueUsd: actions[4]?.amountExposedUsd ?? gaps[4]?.valueAtStakeUsd ?? 0,
-      due: actions[4]?.due ?? "Parallel",
-      tone: "gray" as Tone,
-      action: actions[4],
-      gap: gaps[4],
-      detail: "blocks nothing in the proof chain — runs in parallel",
-    },
-    {
-      seq: "—",
-      title: "Capability attribution",
-      owner: "architecture_lead",
-      tasks: Math.max(1, view.pipelineGaps.length || view.unknownSlots.length),
-      unit: "Rows",
-      valueUsd: view.summary.aiUnallocatedSpendUsd,
-      due: actions[5]?.due ?? "Parallel",
-      tone: "gray" as Tone,
-      action: actions[5],
-      gap: gaps[5],
-      detail: "blocks nothing in the proof chain — runs in parallel",
-    },
-  ];
-  return base;
+      title: gap.blockedDecision || gap.missing,
+      owner: gap.owner ?? "Owner not loaded",
+      tasks: 1,
+      unit: "Gap",
+      valueUsd: gap.valueAtStakeUsd,
+      due: "Not loaded",
+      tone:
+        gap.priority === "high"
+          ? ("red" as Tone)
+          : gap.priority === "medium"
+            ? ("amber" as Tone)
+            : ("gray" as Tone),
+      action: null,
+      gap,
+      detail: gap.why,
+    });
+  }
+
+  return rows.slice(0, 6);
 }
 
 function openCampaign(
@@ -1249,37 +1239,43 @@ export function EvidenceActionsContractView({
           subtitle={`${formatCount(view.actions.length)} open tasks · campaigns show affected records`}
         />
         <div className={styles.campaignStack}>
-          {campaigns.map((row) => (
-            <button
-              key={`${row.seq}-${row.title}`}
-              type="button"
-              className={cx(
-                styles.campaignRow,
-                toneClass("campaign", row.tone),
-              )}
-              onClick={() => openCampaign(row, onOpenAction, onOpenGap)}
-            >
-              <span className={styles.campaignSeq}>{row.seq}</span>
-              <span className={styles.campaignMain}>
-                <strong>{row.title}</strong>
-                <i>
-                  Owner {row.owner} · {row.detail}
-                </i>
-              </span>
-              <span className={styles.campaignMetric}>
-                <i>{row.unit}</i>
-                <strong>{formatCount(row.tasks)}</strong>
-              </span>
-              <span className={styles.campaignMetric}>
-                <i>Value affected</i>
-                <strong>{formatUsdM(row.valueUsd)}</strong>
-              </span>
-              <span className={styles.campaignMetric}>
-                <i>Due</i>
-                <strong>{row.due}</strong>
-              </span>
-            </button>
-          ))}
+          {campaigns.length > 0 ? (
+            campaigns.map((row) => (
+              <button
+                key={`${row.seq}-${row.title}`}
+                type="button"
+                className={cx(
+                  styles.campaignRow,
+                  toneClass("campaign", row.tone),
+                )}
+                onClick={() => openCampaign(row, onOpenAction, onOpenGap)}
+              >
+                <span className={styles.campaignSeq}>{row.seq}</span>
+                <span className={styles.campaignMain}>
+                  <strong>{row.title}</strong>
+                  <i>
+                    Owner {row.owner} · {row.detail}
+                  </i>
+                </span>
+                <span className={styles.campaignMetric}>
+                  <i>{row.unit}</i>
+                  <strong>{formatCount(row.tasks)}</strong>
+                </span>
+                <span className={styles.campaignMetric}>
+                  <i>Value affected</i>
+                  <strong>{formatOptionalUsdM(row.valueUsd)}</strong>
+                </span>
+                <span className={styles.campaignMetric}>
+                  <i>Due</i>
+                  <strong>{row.due}</strong>
+                </span>
+              </button>
+            ))
+          ) : (
+            <div className={styles.contractEmpty}>
+              No action campaigns are loaded for this review.
+            </div>
+          )}
         </div>
       </section>
 
@@ -1311,26 +1307,36 @@ export function EvidenceActionsContractView({
         <div>
           <SectionTitle
             title="Evidence-owner queue"
-            subtitle="Top 5 · all await owner review, finance validation and clause confirmation"
+            subtitle={
+              evidenceQueue(view).length > 0
+                ? "Top 5 · loaded evidence gaps awaiting owner review"
+                : "No loaded evidence gaps"
+            }
           />
           <div className={styles.ownerQueue}>
-            {evidenceQueue(view).map((gap) => (
-              <button
-                key={gap.id}
-                type="button"
-                onClick={() => onOpenGap(gap.id)}
-              >
-                <span>
-                  <strong>{gap.missing}</strong>
-                  <i>{gap.owner ?? "Unassigned"}</i>
-                </span>
-                <b>
-                  {gap.valueAtStakeUsd === null
-                    ? "Unknown"
-                    : formatUsdM(gap.valueAtStakeUsd)}
-                </b>
-              </button>
-            ))}
+            {evidenceQueue(view).length > 0 ? (
+              evidenceQueue(view).map((gap) => (
+                <button
+                  key={gap.id}
+                  type="button"
+                  onClick={() => onOpenGap(gap.id)}
+                >
+                  <span>
+                    <strong>{gap.missing}</strong>
+                    <i>{gap.owner ?? "Unassigned"}</i>
+                  </span>
+                  <b>
+                    {gap.valueAtStakeUsd === null
+                      ? "Unknown"
+                      : formatUsdM(gap.valueAtStakeUsd)}
+                  </b>
+                </button>
+              ))
+            ) : (
+              <div className={styles.contractEmpty}>
+                No evidence-owner queue rows are loaded for this review.
+              </div>
+            )}
           </div>
         </div>
 

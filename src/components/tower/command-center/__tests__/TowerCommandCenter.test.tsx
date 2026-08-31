@@ -306,10 +306,9 @@ describe("TowerCommandCenter", () => {
       /open tasks · campaigns show affected records/,
     );
     expect(container).not.toHaveTextContent(/1–3 sequential/);
-    expect(screen.getByText("Assets")).toBeInTheDocument();
-    expect(screen.getAllByText("Claims").length).toBeGreaterThan(0);
-    expect(screen.getByText("Evidence")).toBeInTheDocument();
-    expect(screen.getByText("Rows")).toBeInTheDocument();
+    expect(screen.getAllByText("Task").length).toBeGreaterThan(0);
+    expect(container).not.toHaveTextContent(/Usage telemetry connection/);
+    expect(container).not.toHaveTextContent(/Vendor leverage review/);
     expect(screen.getByText("Evidence-owner queue")).toBeInTheDocument();
     expect(screen.getByText("Projection reconciliation")).toBeInTheDocument();
   });
@@ -356,7 +355,7 @@ describe("TowerCommandCenter", () => {
     renderPage();
     goTo(TAB.tools, /AI portfolio/);
     const firstAi = [...view.allInitiatives].sort(
-      (a, b) => b.aiSpendUsd - a.aiSpendUsd || b.riskScore - a.riskScore,
+      (a, b) => b.aiSpendUsd - a.aiSpendUsd || a.name.localeCompare(b.name),
     )[0]!;
     clickFirstButtonContaining(firstAi.name);
 
@@ -381,9 +380,10 @@ describe("TowerCommandCenter", () => {
   it("opens the action drawer from an action campaign and keeps routing disabled", () => {
     renderPage();
     goTo(TAB.decisions, /Evidence queue/);
-    fireEvent.click(
-      screen.getByRole("button", { name: /Usage telemetry connection/ }),
-    );
+    const firstAction = [...view.actions].sort(
+      (a, b) => a.sequence - b.sequence,
+    )[0]!;
+    clickFirstButtonContaining(firstAction.title.replace(/^FIX PROOF:\s*/i, ""));
 
     const drawer = screen.getByRole("dialog");
     const approve = within(drawer).getByRole("button", {

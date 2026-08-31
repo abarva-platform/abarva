@@ -139,10 +139,13 @@ describe("Command Center render harness", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: /Tools/ }));
     fireEvent.click(screen.getByRole("tab", { name: /AI portfolio/ }));
+    const firstAi = [...view.allInitiatives].sort(
+      (a, b) => b.aiSpendUsd - a.aiSpendUsd || a.name.localeCompare(b.name),
+    )[0]!;
     fireEvent.click(
       screen
         .getAllByRole("button")
-        .find((button) => button.textContent?.includes("exposed at review"))!,
+        .find((button) => button.textContent?.includes(firstAi.name))!,
     );
     dump("08-drawer-ai");
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
@@ -160,7 +163,18 @@ describe("Command Center render harness", () => {
     dump("09-drawer-gap");
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
-    fireEvent.click(screen.getByRole("button", { name: /Usage telemetry connection/ }));
+    const firstAction = [...view.actions].sort(
+      (a, b) => a.sequence - b.sequence,
+    )[0]!;
+    fireEvent.click(
+      screen
+        .getAllByRole("button")
+        .find((button) =>
+          button.textContent?.includes(
+            firstAction.title.replace(/^FIX PROOF:\s*/i, ""),
+          ),
+        )!,
+    );
     dump("10-drawer-action");
 
     expect(true).toBe(true);
