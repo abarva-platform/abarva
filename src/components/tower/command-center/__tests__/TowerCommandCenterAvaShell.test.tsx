@@ -37,6 +37,7 @@ const view = buildTowerCommandCenterView(designFixtureMart(), {
 describe("TowerCommandCenterAvaShell", () => {
   beforeEach(() => {
     replace.mockClear();
+    jest.restoreAllMocks();
     window.localStorage.clear();
   });
 
@@ -46,6 +47,7 @@ describe("TowerCommandCenterAvaShell", () => {
         view={view}
         tenantName="Meridian"
         clientId="meridian"
+        clientKey="meridian"
       />,
     );
 
@@ -61,5 +63,66 @@ describe("TowerCommandCenterAvaShell", () => {
     expect(
       screen.getByText(/aVa can explain the visible value proof/i),
     ).toBeInTheDocument();
+  });
+
+  it("posts Tower questions to the current chat route with the selected client key", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      body: null,
+      headers: {
+        get: () => "application/json",
+      },
+      json: async () => ({
+        response: "Answer from Tower.",
+        modelOutput: {
+          version: "cio_tower_visible_answer_v1",
+          answer: "Answer from Tower.",
+          tables: [],
+          tabs: [],
+          followUpQuestion: null,
+        },
+        traceKey: "trace-1",
+        validationStatus: "passed",
+      }),
+    });
+    Object.defineProperty(globalThis, "fetch", {
+      configurable: true,
+      value: fetchMock,
+    });
+
+    render(
+      <TowerCommandCenterAvaShell
+        view={view}
+        tenantName="Meridian"
+        clientId="client-id"
+        clientKey="selected-client"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
+    await waitFor(() =>
+      expect(screen.getByTestId("agent-dock-form")).toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "What value is claimable?" },
+    });
+    fireEvent.submit(screen.getByTestId("agent-dock-form"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/tower/chat",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.any(String),
+      }),
+    );
+    expect(
+      JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)),
+    ).toMatchObject({
+      message: "What value is claimable?",
+      clientKey: "selected-client",
+      stream: true,
+    });
   });
 });

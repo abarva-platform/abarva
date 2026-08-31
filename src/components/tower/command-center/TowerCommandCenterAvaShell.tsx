@@ -128,10 +128,12 @@ export function TowerCommandCenterAvaShell({
   view,
   tenantName,
   clientId,
+  clientKey,
 }: {
   view: TowerCommandCenterView | null;
   tenantName: string;
   clientId: string | null;
+  clientKey?: string | null;
 }) {
   const initialOpener = useMemo<AtlasMessage>(
     () => ({
@@ -185,7 +187,7 @@ export function TowerCommandCenterAvaShell({
       const timeout = window.setTimeout(() => controller.abort(), 90_000);
 
       try {
-        const res = await fetch("/api/tower/cio-chat", {
+        const res = await fetch("/api/tower/chat", {
           method: "POST",
           headers: {
             Accept: "application/x-ndjson",
@@ -193,6 +195,7 @@ export function TowerCommandCenterAvaShell({
           },
           body: JSON.stringify({
             message: trimmed,
+            clientKey,
             stream: true,
             visibleContextCriteria: {
               renderingPolicy: "exact-visible-output",
@@ -271,7 +274,7 @@ export function TowerCommandCenterAvaShell({
         setPendingMessage(null);
       }
     },
-    [clientId, tenantName, threadId],
+    [clientId, clientKey, tenantName, threadId],
   );
 
   const handleSuggestion = useCallback(
@@ -298,6 +301,7 @@ export function TowerCommandCenterAvaShell({
       keepSuggestedActionsVisible
       surfaceContext={{
         clientId,
+        clientKey,
         tenantName,
         context: `Command Center · ${tenantName}`,
         towerExperience: "outcome_proof_cockpit",
