@@ -468,6 +468,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("Vendor 360")).toBeTruthy();
     expect(screen.getByText("One row per supplier relationship")).toBeTruthy();
     expect(screen.getByLabelText("Vendor concentration chart")).toBeTruthy();
+    expect(
+      container.querySelector(".recharts-responsive-container"),
+    ).toBeTruthy();
     expect(container.querySelector(".recharts-wrapper")).toBeTruthy();
     expect(
       screen.getAllByRole("heading", { name: "Epic Systems Corporation" })
@@ -525,6 +528,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByRole("tab", { name: "Flow" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Volume" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Mapping spine" })).toBeTruthy();
+    expect(container.querySelector(".sw-v2-graph-hero-panel")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-graph")).toBeTruthy();
     expect(screen.getByText("Source systems and files")).toBeTruthy();
     expect(screen.getByText("Source page substrate")).toBeTruthy();
     expect(screen.getByText("Show lineage")).toBeTruthy();
@@ -636,6 +641,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     });
 
     expect(screen.getByText("Governed contract book + action layer")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "View contracts" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Run optimize" })).toBeTruthy();
     expect(
       screen.getByText(/contracts are in the portfolio register/i),
     ).toBeTruthy();
@@ -651,6 +658,9 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
     expect(screen.getByLabelText("Optimize action mix chart")).toBeTruthy();
+    expect(
+      container.querySelector(".recharts-responsive-container"),
+    ).toBeTruthy();
     expect(container.querySelector(".recharts-wrapper")).toBeTruthy();
     expect(screen.getByText("Right-size loaded application support tier")).toBeTruthy();
     expect(screen.getAllByText("$1.3M").length).toBeGreaterThan(0);

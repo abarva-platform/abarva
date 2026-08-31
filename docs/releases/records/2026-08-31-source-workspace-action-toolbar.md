@@ -10,9 +10,12 @@
 
 ## Plain-English Summary
 
-This improves the Source workspace header action area so evidence and graph
-navigation reads as a deliberate operator toolbar instead of two small inline
-buttons. The page behavior and data reads do not change.
+This improves the Source workspace header action area, chart panels, and main
+canvas composition so the Source workspace reads as a deliberate executive
+cockpit. The toolbar exposes non-duplicative workflow actions, Recharts visuals
+resize with their panels instead of relying on fixed-width canvases, and
+full-width dashboard panels now honor their intended grid span. The page
+behavior and data reads do not change.
 
 ## Layer Impact
 
@@ -31,15 +34,20 @@ that asserts the toolbar contract.
 ## Changes Included
 
 - Source workspace action control receives an explicit action-toolbar label.
-- Evidence and graph action buttons receive dedicated toolbar styling.
-- Focused Source workspace browser-surface test asserts the toolbar contract.
+- Recharts concentration, performance, and action-mix panels use
+  `ResponsiveContainer` with stable fallback dimensions.
+- Full-width Source dashboard panels define their missing grid-span rule.
+- Contract graph opens with the graph visualization before audit lineage copy.
+- Focused Source workspace browser-surface test asserts the toolbar and
+  responsive-chart contract, graph visibility, and absence of the legacy left
+  explorer.
 
 ## QA / Validation
 
-- pass - Local focused test: `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx'`.
+- pass - Local focused test: `node node_modules/jest/bin/jest.js --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx' --runInBand`.
 - pass - Focused ESLint: `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx'`.
 - pass - TypeScript check: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`.
-- pass - Release control check: `npm run release:check`.
+- pass - Release control check: `npm run release:check -- --changed-only`.
 
 ## Rollout Plan
 
@@ -55,7 +63,8 @@ deploy workflow builds and deploys the approved main commit.
 - Worker image invariant: Required by the deploy workflow.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Yes, Source workspace header should show the
-  updated action toolbar and preserve the horizontal workspace navigation.
+  updated action toolbar, preserve horizontal workspace navigation, render
+  responsive chart panels, and show a visible graph canvas without tenant bleed.
 
 ## Rollback Plan
 
@@ -71,5 +80,5 @@ main workflow.
 
 ## Known Gaps
 
-This is a toolbar-fidelity change only. Full visual parity against every design
-artifact detail remains a separate tab-by-tab QA step.
+This is a Source workspace presentation change only. It does not add icons,
+export actions, or new data coverage.
