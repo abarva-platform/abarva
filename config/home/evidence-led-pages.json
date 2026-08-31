@@ -1,0 +1,253 @@
+{
+  "contract_version": "home-evidence-led-pages/v1",
+  "purpose": "Define Home executive pages by the findings and deterministic evidence they are allowed to render, not by empty slots.",
+  "rules": [
+    "A page exists because deterministic evidence produces a finding, a refusal, or a deferred evidence request.",
+    "Each page must name the question it answers, the lead number it opens on, one governing table, findings with owner and because-clause, and drill links to rows.",
+    "Facts, money, counts, dates, owners, vendors, systems, and relationships are deterministic. Claude may interpret and caption; it may not calculate or invent.",
+    "Executive pages start from business model, segment economics, accountability, value, and exposure before naming individual vendors or tools.",
+    "Technical pages use expert technologist language and may name systems, platforms, ETL, reporting, and architecture once the page contract asks for that lens.",
+    "Published, refused, and deferred are the only terminal states. A missing page or missing section is a gate failure.",
+    "Every displayed count must name its denominator and be computed through the typed view or declared source table identified by the contract.",
+    "Current-state architecture and data-flow pages inherit admission gates. A refused gate renders the refusal payload instead of a clean diagram."
+  ],
+  "charts": [
+    {
+      "chart_key": "segment_gap",
+      "page_keys": ["executive_brief", "our_business"],
+      "chart_type": "diverging_horizontal_bar",
+      "source": "segment_spine_context.share_vs_revenue",
+      "reason": "Shows over-service and under-service against declared revenue share faster than a table."
+    },
+    {
+      "chart_key": "cost_concentration_by_archetype",
+      "page_keys": ["technology_data", "applications_systems"],
+      "chart_type": "horizontal_bar",
+      "source": "application segmentation report",
+      "reason": "Shows magnitude contrast across application archetypes."
+    },
+    {
+      "chart_key": "renewal_timeline",
+      "page_keys": ["vendor_contracts"],
+      "chart_type": "stacked_timeline",
+      "source": "07_vendors_contracts.csv",
+      "reason": "Shows renewal clustering and auto-renew exposure as decision windows."
+    },
+    {
+      "chart_key": "value_bridge",
+      "page_keys": ["performance_value"],
+      "chart_type": "existing_component",
+      "source": "TowerCxoCharts.ValueBridgeChart",
+      "reason": "Reuse the Tower value bridge instead of building a second chart."
+    },
+    {
+      "chart_key": "run_change_transform",
+      "page_keys": ["performance_value"],
+      "chart_type": "existing_component",
+      "source": "TowerCxoCharts.BudgetRunChangeChart",
+      "reason": "Reuse the Tower run/change/transform chart."
+    }
+  ],
+  "pages": [
+    {
+      "contract_key": "what_this_enterprise_is",
+      "home_page_keys": ["executive_brief", "our_business"],
+      "title": "What this enterprise is",
+      "question": "How does the business create value, and which economics matter most?",
+      "lead_fact": {
+        "statement": "40% of revenue runs on 10.8% of applications.",
+        "source_files": ["01b_business_segments.csv", "04_applications_systems.csv"],
+        "source_layers": ["client_intake", "source_intelligence", "segment_spine"],
+        "deterministic_owner": "scripts/data-build/report-segment-spine.ts"
+      },
+      "governing_table": "segment_spine_context.segments plus segment_spine_context.share_vs_revenue",
+      "findings_contract": "Lead with segment economics and operating model. Do not open on a vendor unless the page question is explicitly commercial concentration.",
+      "required_findings": [
+        "segments whose resource share differs materially from declared revenue share",
+        "zero-attribution segment gaps that require owner review",
+        "shared-services concentration that affects accountability"
+      ],
+      "drill_links": ["segment row", "source family", "application rows", "owner rows"]
+    },
+    {
+      "contract_key": "what_it_runs_on",
+      "home_page_keys": ["technology_data", "applications_systems", "current_state_architecture"],
+      "title": "What it runs on",
+      "question": "Which system blocks and archetypes support the operating model?",
+      "lead_fact": {
+        "statement": "Departmental clinical carries far more application cost than the clinical core.",
+        "source_files": ["04_applications_systems.csv"],
+        "source_layers": ["client_intake", "application_segmentation"],
+        "deterministic_owner": "scripts/data-build/report-application-segmentation.ts"
+      },
+      "governing_table": "application archetype x hosting x business segment crosstabs",
+      "findings_contract": "Use expert technologist language. Start conceptual, then logical, then physical system names.",
+      "required_findings": [
+        "system blocks by business segment",
+        "archetype concentration by annual cost",
+        "hosting model divergence across operating segments"
+      ],
+      "drill_links": ["application", "deployment", "owner", "platform", "contract scope"]
+    },
+    {
+      "contract_key": "where_it_is_hosted",
+      "home_page_keys": ["infrastructure_platforms"],
+      "title": "Where it is hosted",
+      "question": "Which hosting, resilience, capacity, and lifecycle facts constrain the estate?",
+      "lead_fact": {
+        "statement": "Hot disaster recovery is limited; backup-only platforms require explicit treatment.",
+        "source_files": ["06_infrastructure_platforms.csv"],
+        "source_layers": ["client_intake", "source_intelligence"],
+        "deterministic_owner": "source_evidence_tables"
+      },
+      "governing_table": "platform inventory by hosting model, DR tier, capacity headroom, support end date",
+      "findings_contract": "Show platform constraints as technology facts, not as executive prose filler.",
+      "required_findings": [
+        "platforms with weak DR tier",
+        "support or lifecycle exposure",
+        "capacity headroom pressure"
+      ],
+      "drill_links": ["platform", "hosted application", "support date", "risk/control"]
+    },
+    {
+      "contract_key": "how_data_moves",
+      "home_page_keys": ["current_state_data_flow", "data_assets_integrations"],
+      "title": "How data moves",
+      "question": "How does data move from sources through integration, platforms, marts, analytics, and consumption?",
+      "lead_fact": {
+        "statement": "Regulated data and non-production-governed assets must be shown as architecture constraints.",
+        "source_files": ["05_data_assets_integrations.csv"],
+        "source_layers": ["client_intake", "source_intelligence", "admission_gate"],
+        "deterministic_owner": "source_evidence_tables"
+      },
+      "governing_table": "data asset and integration register by source, target, governance state, reporting/ETL volume, and users",
+      "findings_contract": "Show sources, integration, warehouses/marts, consumption, and advanced analytics as separate blocks.",
+      "required_findings": [
+        "regulated data exposure",
+        "non-production-governed data assets",
+        "report, ETL, script, and user volume concentrations"
+      ],
+      "drill_links": ["data asset", "source system", "target system", "reporting tool", "ETL/script count"]
+    },
+    {
+      "contract_key": "what_it_buys",
+      "home_page_keys": ["vendor_contracts"],
+      "title": "What it buys",
+      "question": "Which vendors and contracts shape cost, risk, renewal leverage, and sourced value?",
+      "lead_fact": {
+        "statement": "Auto-renewal and exit economics define the commercial clock.",
+        "source_files": ["07_vendors_contracts.csv", "17_service_scope_managed_services.csv"],
+        "source_layers": ["client_intake", "source_360_projection"],
+        "deterministic_owner": "source_evidence_tables"
+      },
+      "governing_table": "contract register by supplier, value, renewal, auto-renew, TFC, scope, and service lines",
+      "findings_contract": "Commercial concentration belongs here, not as the opening executive identity of the enterprise.",
+      "required_findings": [
+        "auto-renew exposure",
+        "termination and exit-cost exposure",
+        "supplier concentration and scope dependency"
+      ],
+      "drill_links": ["vendor", "contract", "clause evidence", "application scope", "Source 360"]
+    },
+    {
+      "contract_key": "what_it_costs_and_returns",
+      "home_page_keys": ["performance_value"],
+      "title": "What it costs and returns",
+      "question": "What performance, spend, value, and outcome signals should leadership act on?",
+      "lead_fact": {
+        "statement": "Ready value claims and finance-attested value must be separated from blocked or pending claims.",
+        "source_files": ["08_spend_value.csv", "14_metrics_outcomes.csv"],
+        "source_layers": ["client_intake", "tower_value_chain"],
+        "deterministic_owner": "Tower value proof projections"
+      },
+      "governing_table": "value claims by readiness, blocked reason, attestation state, and unblock action",
+      "findings_contract": "Use CFO language. Do not turn unverified opportunity into claimable value.",
+      "required_findings": [
+        "claimable value",
+        "blocked value with owner and next evidence",
+        "finance-attested value"
+      ],
+      "drill_links": ["metric", "budget line", "benefit claim", "evidence source", "Tower value proof"]
+    },
+    {
+      "contract_key": "what_it_is_betting_on",
+      "home_page_keys": ["strategy_value_creation"],
+      "title": "What it is betting on",
+      "question": "Where is the enterprise trying to go, what bets are funded, and what value is at stake?",
+      "lead_fact": {
+        "statement": "Funded programs and expected value define the strategy agenda only when tied to stage gates and proof state.",
+        "source_files": ["09_programs_initiatives.csv", "08_spend_value.csv", "14_metrics_outcomes.csv"],
+        "source_layers": ["client_intake", "source_intelligence"],
+        "deterministic_owner": "source_evidence_tables"
+      },
+      "governing_table": "program portfolio by priority, funded amount, expected value, stage gate, blocked reason, and proof state",
+      "findings_contract": "Make the strategy agenda business-led; do not fill the page if program evidence is thin.",
+      "required_findings": [
+        "funded strategic bets",
+        "expected value by stage gate",
+        "programs blocked by evidence or owner action"
+      ],
+      "drill_links": ["program", "initiative", "metric", "owner", "Moves workspace"]
+    },
+    {
+      "contract_key": "what_is_exposed",
+      "home_page_keys": ["what_needs_attention"],
+      "title": "What is exposed",
+      "question": "What needs executive attention now, and what evidence says so?",
+      "lead_fact": {
+        "statement": "Open controls, rated risks, unresolved evidence, and remediation cost define the attention agenda.",
+        "source_files": ["11_risks_controls.csv", "13_evidence_sources.csv", "14_metrics_outcomes.csv"],
+        "source_layers": ["client_intake", "tower_evidence_queue"],
+        "deterministic_owner": "source_evidence_tables"
+      },
+      "governing_table": "risk/control register by severity, control state, owner, remediation, and evidence gap",
+      "findings_contract": "Use red only for rated high severity in the source register; use amber for absence or unresolved evidence.",
+      "required_findings": [
+        "open high-severity controls",
+        "evidence gaps that block a claim",
+        "owner-bound next actions"
+      ],
+      "drill_links": ["risk", "control", "owner", "evidence request", "Tower risk lens"]
+    },
+    {
+      "contract_key": "who_owns_what",
+      "home_page_keys": ["how_we_operate", "leadership_perspective"],
+      "title": "Who owns what",
+      "question": "Who has authority, where are accountabilities clear, and what do leaders say?",
+      "lead_fact": {
+        "statement": "Decision rights, budget authority, workforce roles, and interview excerpts define accountability.",
+        "source_files": ["02_org_ownership.csv", "03_workforce_roles.csv", "SA10_AI_Value_Interviews_SYNTHETIC.csv"],
+        "source_layers": ["client_intake", "source_intelligence"],
+        "deterministic_owner": "source_evidence_tables"
+      },
+      "governing_table": "organization and interview register by segment, function, owner, decision rights, role, theme, and excerpt",
+      "findings_contract": "Separate senior strategic themes from director-level process/tool detail.",
+      "required_findings": [
+        "decision-rights concentration",
+        "ownership gaps",
+        "interview themes by role/function"
+      ],
+      "drill_links": ["org unit", "leader role", "interview excerpt", "business function"]
+    },
+    {
+      "contract_key": "the_record",
+      "home_page_keys": ["what_has_been_loaded", "browse_the_record"],
+      "title": "The record",
+      "question": "What source families, rows, columns, gaps, and provenance can be inspected?",
+      "lead_fact": {
+        "statement": "Citable evidence is the denominator for every page.",
+        "source_files": ["tenant-input-registry.json", "00_GUIDE_sheet_index.csv", "source intelligence manifest"],
+        "source_layers": ["client_intake", "source_intelligence", "home_packet_manifest"],
+        "deterministic_owner": "scripts/ecl/build_source_intelligence_home_packets.mjs"
+      },
+      "governing_table": "source file inventory by family, rows, columns, fill rate, constant columns, source hash, and citable state",
+      "findings_contract": "The record browser must be slice/dice before table browsing, with cell provenance from any figure to filtered rows.",
+      "required_findings": [
+        "families present and citable",
+        "constant columns that are defaults rather than assessments",
+        "columns or families read but not claimable"
+      ],
+      "drill_links": ["source file", "column", "row", "source hash", "filtered CSV export"]
+    }
+  ]
+}

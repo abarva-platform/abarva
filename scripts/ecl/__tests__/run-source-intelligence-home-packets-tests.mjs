@@ -134,6 +134,7 @@ assert.equal(output.total_source_artifact_count, 4);
 const manifest = JSON.parse(fs.readFileSync(path.join(packets, "manifest.json"), "utf8"));
 assert.equal(manifest.contract_version, "source-intelligence-home-page-packets/v1");
 assert.equal(manifest.pages.length, 16);
+assert.equal(manifest.evidence_led_contract_page_count, 16);
 
 const executive = JSON.parse(fs.readFileSync(path.join(packets, "packets", "executive_brief.home-page-packet.json"), "utf8"));
 assert.equal(executive.page_key, "executive_brief");
@@ -149,6 +150,16 @@ assert.equal(executive.source_content_context.some((source) => source.source_con
 assert.equal(executive.source_evidence_tables.length, executive.included_source_count);
 assert.equal(executive.segment_spine_context.segment_source_file, "01b_business_segments.csv");
 assert.equal(executive.segment_spine_context.segments[0].segmentKey, "hospital_delivery");
+assert.equal(executive.evidence_led_contract.contract_version, "home-evidence-led-pages/v1");
+assert.equal(executive.evidence_led_contract.page_contract.contract_key, "what_this_enterprise_is");
+assert.equal(
+  executive.evidence_led_contract.page_contract.lead_fact.source_files.includes("01b_business_segments.csv"),
+  true,
+);
+assert.match(
+  executive.evidence_led_contract.page_contract.findings_contract,
+  /Do not open on a vendor/i,
+);
 assert.equal(
   executive.source_evidence_tables
     .find((table) => table.source_file.endsWith("00_enterprise_profile.csv"))
@@ -184,7 +195,10 @@ assert.equal(Array.isArray(prompt.user.packet.source_intelligence), true);
 assert.equal(prompt.user.context_depth.source_content_mode, "full selected source files included");
 assert.equal(prompt.user.context_depth.segment_spine_mode, "declared segment spine and cross-domain board included");
 assert.equal(prompt.user.expected_output.deterministic_tables_to_use.includes("segment_spine_context when present"), true);
+assert.equal(prompt.user.expected_output.deterministic_tables_to_use.includes("evidence_led_contract when present"), true);
+assert.equal(prompt.user.expected_output.terminal_state, "published | refused | deferred");
 assert.equal(prompt.user.expected_output.canvas_sections.length, 4);
 assert.equal(prompt.user.expected_output.drilldowns_to_enable.includes("reporting surface"), true);
+assert.match(prompt.system, /page ordering contract/);
 
 console.log(JSON.stringify({ accepted: true, pages: manifest.pages.length, artifacts: output.total_source_artifact_count }, null, 2));
