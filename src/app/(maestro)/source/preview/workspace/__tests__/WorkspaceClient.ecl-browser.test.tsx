@@ -150,6 +150,23 @@ const LEGACY_COOL_TOKENS = [
   "rgba(10,31,68",
 ] as const;
 
+function expectMeasuredRechartsCard(card: HTMLElement) {
+  const frame = card.querySelector(".sw-v2-chart-frame");
+  const stage = card.querySelector(".sw-v2-chart-stage");
+  const wrapper = card.querySelector(".recharts-wrapper");
+  const svg = card.querySelector("svg.recharts-surface");
+
+  expect(frame).toBeTruthy();
+  expect(stage).toBeTruthy();
+  expect(frame?.getAttribute("data-chart-width")).toBe("620");
+  expect(wrapper).toBeTruthy();
+  expect(svg).toBeTruthy();
+  expect(svg?.getAttribute("width")).toBe("620");
+  expect(Number(svg?.querySelectorAll("path, rect, circle").length)).toBeGreaterThan(
+    0,
+  );
+}
+
 async function readWorkspaceSourceFiles(dir = WORKSPACE_ROUTE_DIR): Promise<
   Array<{ file: string; text: string }>
 > {
@@ -467,11 +484,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByRole("tab", { name: "Archetype mix" })).toBeTruthy();
     expect(screen.getByText("Vendor 360")).toBeTruthy();
     expect(screen.getByText("One row per supplier relationship")).toBeTruthy();
-    expect(screen.getByLabelText("Vendor concentration chart")).toBeTruthy();
-    expect(
-      container.querySelector(".recharts-responsive-container"),
-    ).toBeTruthy();
-    expect(container.querySelector(".recharts-wrapper")).toBeTruthy();
+    const vendorChart = screen.getByLabelText("Vendor concentration chart");
+    expect(vendorChart).toBeTruthy();
+    expectMeasuredRechartsCard(vendorChart);
     expect(
       screen.getAllByRole("heading", { name: "Epic Systems Corporation" })
         .length,
@@ -623,8 +638,65 @@ describe("Source workspace ECL browser-surface proof", () => {
         actionCandidates: [actionCandidate],
       },
     };
+    const performancePeriods = Array.from({ length: 12 }, (_, index) => ({
+      tenant_key: "meridian-health",
+      observation_id: `PERF-TEST-${index + 1}`,
+      contract_id: "MER-CTR-EPIC-001",
+      service_id: "claims-platform",
+      metric_name: "Claims processed within 24 hours",
+      period_start: `2027-${String(index + 1).padStart(2, "0")}-01`,
+      period_end: `2027-${String(index + 1).padStart(2, "0")}-28`,
+      contracted_target: "95%",
+      actual_value: index % 5 === 0 ? "90%" : "97%",
+      value_num: index % 5 === 0 ? 90 : 97,
+      unit: "percent",
+      performance_state: index % 5 === 0 ? "breach" : "met",
+      credit_state: index % 5 === 0 ? "calculated_not_claimed" : "none",
+      breach_count: index % 5 === 0 ? 1 : 0,
+      credit_eligible: index % 5 === 0,
+      credit_calculated: index % 5 === 0 ? 14333 : 0,
+      credit_claimed: 0,
+      credit_recovered: 0,
+      currency: "USD",
+      source_system: "unit-fixture",
+      source_record_id: `PERF-TEST-${index + 1}`,
+      as_of_date: "2027-06-30",
+      quality_state: "synthetic_demo_only_not_client_truth",
+      evidence_reference: `PERF-TEST-${index + 1}`,
+      load_run_id: "unit-proof",
+    }));
+    (global.fetch as jest.Mock).mockImplementation((input: RequestInfo | URL) => {
+      if (String(input).includes("/api/source/workspace/contract/")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              contract: dbPortfolio.contracts.find(
+                (contract) => contract.contract_id === "MER-CTR-EPIC-001",
+              ) ?? dbPortfolio.contracts[0],
+              financialExposure: null,
+              operationalPerformance: null,
+              initiativeDependencies: [],
+              scopeTiers: { explicit: [], inferred: [], unresolved: [] },
+              towerObservations: [],
+              towerValueClaims: [],
+              hasTowerOverlay: false,
+              docExtractions: [],
+              optimizationEvidence: null,
+              optimizationOpportunitySet: null,
+              evidenceOverview: null,
+              evidenceScope: [],
+              evidencePricing: [],
+              evidencePerformance: null,
+              performancePeriods,
+              spendMonths: [],
+            }),
+        } as Response);
+      }
+      return new Promise<Response>(() => undefined);
+    });
 
-    const { container } = render(
+    render(
       <WorkspaceClient
         portfolio={dbPortfolio}
         tenantName="Meridian Health"
@@ -657,11 +729,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
 
     expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
-    expect(screen.getByLabelText("Optimize action mix chart")).toBeTruthy();
-    expect(
-      container.querySelector(".recharts-responsive-container"),
-    ).toBeTruthy();
-    expect(container.querySelector(".recharts-wrapper")).toBeTruthy();
+    const optimizeChart = screen.getByLabelText("Optimize action mix chart");
+    expect(optimizeChart).toBeTruthy();
+    expectMeasuredRechartsCard(optimizeChart);
     expect(screen.getByText("Right-size loaded application support tier")).toBeTruthy();
     expect(screen.getAllByText("$1.3M").length).toBeGreaterThan(0);
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
@@ -671,5 +741,11 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("Clinical Applications Agreement")).toBeTruthy();
     expect(screen.getByText(/MER-CTR-EPIC-001/)).toBeTruthy();
     expect(screen.getByText("Contract 360 / Performance")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("12 performance periods loaded.")).toBeTruthy();
+    });
+    expectMeasuredRechartsCard(
+      screen.getByLabelText("Contract performance trend chart"),
+    );
   });
 });
