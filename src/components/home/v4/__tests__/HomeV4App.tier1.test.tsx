@@ -123,8 +123,9 @@ describe("Home v4 Tier 1 executive story", () => {
     const { container } = render(<HomeV4App bundle={loadMeridianBundle()} tenantKey="meridian-health" />);
 
     expect(screen.getAllByText("Executive story").length).toBeGreaterThan(0);
-    expect(screen.getByText("Open on the thesis")).toBeInTheDocument();
-    expect(screen.getByText(/Six-section executive story: 6 of 6 sections present/i)).toBeInTheDocument();
+    expect(screen.getByText("Boardroom thesis")).toBeInTheDocument();
+    expect(screen.getByText(/6 of 6 sections ready/i)).toBeInTheDocument();
+    expect(screen.getByText("Evidence basis")).toBeInTheDocument();
     expect(screen.queryByText("The briefing")).not.toBeInTheDocument();
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
 
