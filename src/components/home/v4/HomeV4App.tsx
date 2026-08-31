@@ -318,6 +318,12 @@ export function HomeV4App({
                   risks: techRecordTypes.find(
                     (r) => r.objectType === "risk_control",
                   )?.rows,
+                  programs: techRecordTypes.find(
+                    (r) => r.objectType === "program_initiative",
+                  )?.rows,
+                  ai: techRecordTypes.find(
+                    (r) => r.objectType === "ai_use_case",
+                  )?.rows,
                 })}
               />
             ) : (
@@ -340,6 +346,12 @@ export function HomeV4App({
                   )?.rows,
                   risks: techRecordTypes.find(
                     (r) => r.objectType === "risk_control",
+                  )?.rows,
+                  programs: techRecordTypes.find(
+                    (r) => r.objectType === "program_initiative",
+                  )?.rows,
+                  ai: techRecordTypes.find(
+                    (r) => r.objectType === "ai_use_case",
                   )?.rows,
                 })}
               />

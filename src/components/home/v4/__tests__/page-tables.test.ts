@@ -9,6 +9,11 @@ import {
   infrastructureFindings,
   dataTables,
   dataFindings,
+  unsupportedAiViews,
+  aiFindings,
+  aiTables,
+  programFindings,
+  programTables,
   riskFindings,
   riskTables,
   metricFindings,
@@ -376,9 +381,27 @@ describe("the intake families the projection now carries", () => {
     },
   ];
   const riskRows: EstateRow[] = [
-    { riskOrControlName: "R1", severity: "high", controlStatus: "open", riskDomain: "data_privacy", remediationCostUsd: "500000", regulatoryDriver: "yes" },
-    { riskOrControlName: "R2", severity: "high", controlStatus: "operating", riskDomain: "operational", remediationCostUsd: "250000" },
-    { riskOrControlName: "R3", severity: "low", controlStatus: "operating", riskDomain: "operational" },
+    {
+      riskOrControlName: "R1",
+      severity: "high",
+      controlStatus: "open",
+      riskDomain: "data_privacy",
+      remediationCostUsd: "500000",
+      regulatoryDriver: "yes",
+    },
+    {
+      riskOrControlName: "R2",
+      severity: "high",
+      controlStatus: "operating",
+      riskDomain: "operational",
+      remediationCostUsd: "250000",
+    },
+    {
+      riskOrControlName: "R3",
+      severity: "low",
+      controlStatus: "operating",
+      riskDomain: "operational",
+    },
   ];
 
   // The unblock list is the agenda. A count of blocked claims is not actionable; a named action
@@ -388,7 +411,12 @@ describe("the intake families the projection now carries", () => {
       (t) => t.caption === "What would unblock each claim",
     );
     expect(table?.wide).toBe(true);
-    expect(table?.columns).toEqual(["Metric", "Blocked because", "Unblock action", "By"]);
+    expect(table?.columns).toEqual([
+      "Metric",
+      "Blocked because",
+      "Unblock action",
+      "By",
+    ]);
     expect(table?.rows[0]).toContain("agree the cohort");
   });
 
@@ -403,13 +431,17 @@ describe("the intake families the projection now carries", () => {
     const finding = riskFindings(riskRows).find((f) =>
       /no operating control/.test(f.claim),
     );
-    expect(finding?.claim).toBe("One high-severity risk has no operating control: R1.");
+    expect(finding?.claim).toBe(
+      "One high-severity risk has no operating control: R1.",
+    );
     expect(finding?.kind).toBe("exposure");
   });
 
   it("sums remediation from the rows rather than asserting a total", () => {
     expect(
-      riskFindings(riskRows).find((f) => /remediate the whole register/.test(f.claim))?.claim,
+      riskFindings(riskRows).find((f) =>
+        /remediate the whole register/.test(f.claim),
+      )?.claim,
     ).toMatch(/\$750k/);
   });
 
@@ -418,5 +450,86 @@ describe("the intake families the projection now carries", () => {
     expect(metricFindings([])).toEqual([]);
     expect(riskTables([])).toEqual([]);
     expect(riskFindings([])).toEqual([]);
+  });
+});
+
+describe("programmes and AI", () => {
+  const programs: EstateRow[] = [
+    {
+      programName: "P1",
+      status: "on_track",
+      pctComplete: "3",
+      budgetUsd: "38000000",
+      expectedValueUsd: "40000000",
+    },
+    {
+      programName: "P2",
+      status: "at_risk",
+      pctComplete: "1",
+      budgetUsd: "18000000",
+      expectedValueUsd: "20000000",
+      blockedReason: "funding year one only",
+    },
+    {
+      programName: "P3",
+      status: "active",
+      pctComplete: "65",
+      budgetUsd: "5000000",
+      expectedValueUsd: "9000000",
+    },
+  ];
+
+  // Status and completion are declared separately and can disagree. That disagreement is a
+  // governance fact rather than a delivery one, and it is invisible in either column alone.
+  it("names programmes reporting on track at single-digit completion", () => {
+    const finding = programFindings(programs).find((f) =>
+      /report on track at under 10%/.test(f.claim),
+    );
+    expect(finding?.claim).toMatch(/^1 programmes? report/);
+    expect(finding?.claim).toContain("P1");
+    expect(finding?.because).toMatch(/judgement behind it is not written down/);
+  });
+
+  it("reports the expected-value ratio as a forecast, not a return", () => {
+    const finding = programFindings(programs).find((f) =>
+      /ratio of/.test(f.claim),
+    );
+    expect(finding?.claim).toMatch(/ratio of 1\.\d\d/);
+    expect(finding?.because).toMatch(/not a return/);
+  });
+
+  // A column the source does not carry and a column that is empty are the same rows and opposite
+  // claims. Firing "none may book value" off an absent field states something false.
+  it("does not claim a booking gate is closed when the column is absent", () => {
+    const noGate: EstateRow[] = [{ useCaseName: "U1", currentStatus: "pilot" }];
+    expect(
+      aiFindings(noGate).some((f) =>
+        /may not book realized value/.test(f.claim),
+      ),
+    ).toBe(false);
+    expect(unsupportedAiViews(noGate).map((v) => v.missingColumn)).toContain(
+      "realizedValueAllowed",
+    );
+  });
+
+  it("does claim it when the gate is declared and closed", () => {
+    const withGate: EstateRow[] = [
+      { useCaseName: "U1", realizedValueAllowed: "false" },
+      { useCaseName: "U2", realizedValueAllowed: "true" },
+    ];
+    expect(
+      aiFindings(withGate).find((f) =>
+        /may not book realized value/.test(f.claim),
+      )?.claim,
+    ).toMatch(/^1 of 2/);
+    expect(
+      unsupportedAiViews(withGate).map((v) => v.missingColumn),
+    ).not.toContain("realizedValueAllowed");
+  });
+
+  it("builds nothing from families the projection has not loaded", () => {
+    expect(programTables([])).toEqual([]);
+    expect(aiTables([])).toEqual([]);
+    expect(unsupportedAiViews([])).toEqual([]);
   });
 });
