@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   applicationTables, applicationFindings, vendorFindings, infrastructureFindings,
-  dataFindings, constantColumns, usd, type EstateRow,
+  dataFindings, constantColumns, costBasis, usd, type EstateRow,
 } from "../page-tables";
 import { chapterDepth } from "../chapter-page-content";
 
@@ -116,5 +116,36 @@ describe("chapter depth", () => {
 describe("money formatting", () => {
   it.each([[1.5e9, "$1.5B"], [2.5e8, "$250.0M"], [4000, "$4k"], [0, "—"]])("formats %p as %p", (v, out) => {
     expect(usd(v as number)).toBe(out);
+  });
+});
+
+describe("money figures carry how they were arrived at", () => {
+  const basis = costBasis;
+
+  it("says a cost is modelled when the record declares one modelled basis", () => {
+    const rows: EstateRow[] = [
+      { annualCostBasis: "synthetic_modeled" },
+      { annualCostBasis: "synthetic_modeled" },
+    ];
+    expect(basis(rows)).toMatch(/modelled, not booked/);
+    expect(basis(rows)).toMatch(/all 2 rows/);
+  });
+
+  it("says so when a column sums figures arrived at differently", () => {
+    const rows: EstateRow[] = [{ annualCostBasis: "invoiced_actual" }, { annualCostBasis: "synthetic_modeled" }];
+    expect(basis(rows)).toMatch(/mix 2 declared bases/);
+  });
+
+  it("stays silent when the record declares no basis at all", () => {
+    expect(basis([{ annualCostUsd: "10" }])).toBeNull();
+  });
+
+  // Against the live record this fires, which is the point: every cost Home renders is modelled.
+  it("attaches the basis to the cost tables and raises it as a finding", () => {
+    const readiness = applicationTables(apps).find((t) => t.caption === "Cloud readiness");
+    expect(readiness?.note).toMatch(/modelled, not booked/);
+    const finding = applicationFindings(apps).find((f) => /modelled, not booked/.test(f.claim));
+    expect(finding?.owner).toBe("Chief Financial Officer");
+    expect(finding?.because).toMatch(/relative scale and not for a spend statement/);
   });
 });

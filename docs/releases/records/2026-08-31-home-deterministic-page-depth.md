@@ -71,7 +71,7 @@ component — a chapter whose rows produce nothing renders no block at all.
 
 ## QA / Validation
 
-- PASS `npx jest src/components/home/v4/__tests__` — 65/65, ten suites, no regression
+- PASS `npx jest src/components/home/v4/__tests__` — 69/69, ten suites, no regression
 - PASS `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts` — no regression
 - PASS `npx eslint` on all eight changed or added files
 - PASS `tsc --noEmit -p tsconfig.json` (full project)
@@ -133,6 +133,11 @@ Every annual cost the product renders is modelled rather than actual, and no sur
 the class of defect this check exists for: a column filled on every row reads as a clean result and
 is a form nobody completed. The same shape as a succession risk of "low" across 225 org units, and
 the same shape as a cost column that is constant per tier.
+
+So the basis now travels with the number. Every cost table carries it in its own note, and a
+wholly-modelled estate raises it as a finding owned by the CFO — usable for relative scale, not for a
+spend statement. Where a record declares more than one basis, that is said too: a column summing
+modelled and invoiced figures together is a different kind of number again.
 
 ## Rollout Plan
 

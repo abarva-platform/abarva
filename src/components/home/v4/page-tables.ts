@@ -49,6 +49,32 @@ const num = (row: EstateRow, key: string): number => {
   return Number.isFinite(value) ? value : 0;
 };
 
+/**
+ * How a money column was arrived at, read from the record rather than assumed.
+ *
+ * The application estate declares `annualCostBasis` on every row, and on the current record every
+ * row says `synthetic_modeled` — so every cost figure the product renders is modelled, not booked.
+ * A reader takes an unqualified money figure as actual spend, so the basis travels with the number
+ * wherever it appears. Where a record declares several bases, that is said too: a column summing
+ * modelled and actual figures together is a different kind of number again.
+ */
+export function costBasis(rows: EstateRow[], field = "annualCostBasis"): string | null {
+  const declared = new Set(rows.map((row) => str(row, field)).filter(Boolean));
+  if (declared.size === 0) return null;
+  if (declared.size > 1) {
+    return `Costs mix ${declared.size} declared bases (${[...declared].map(label).join(", ")}); the column sums figures arrived at differently.`;
+  }
+  const only = [...declared][0];
+  if (/synthetic|model/i.test(only)) {
+    return `Every cost here is modelled, not booked: all ${rows.length.toLocaleString()} rows declare a cost basis of "${only}".`;
+  }
+  return `Cost basis declared on all ${rows.length.toLocaleString()} rows: "${only}".`;
+}
+
+function withCostBasis(note: string | undefined, basis: string | null): string | undefined {
+  return [note, basis].filter(Boolean).join(" ") || undefined;
+}
+
 export function usd(value: number): string {
   if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
   if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
@@ -124,6 +150,7 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
       : undefined,
   });
 
+  const basis = costBasis(apps);
   for (const [key, caption] of [
     ["cloudReadiness", "Cloud readiness"],
     ["lifecycleState", "Lifecycle state"],
@@ -136,9 +163,12 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
       columns: [caption, "Apps", "Annual cost"],
       rows: counts.map((c) => [label(c.value), c.count, usd(c.cost)]),
       total: ["Declared", declared, usd(counts.reduce((n, c) => n + c.cost, 0))],
-      note: declared < apps.length
-        ? `${apps.length - declared} applications carry no ${caption.toLowerCase()}. They are counted as unassessed, not as a value.`
-        : undefined,
+      note: withCostBasis(
+        declared < apps.length
+          ? `${apps.length - declared} applications carry no ${caption.toLowerCase()}. They are counted as unassessed, not as a value.`
+          : undefined,
+        basis,
+      ),
     });
   }
 
@@ -204,6 +234,18 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
     });
   }
 
+  const basis = costBasis(apps);
+  if (basis && /modelled, not booked/.test(basis)) {
+    findings.push({
+      kind: "absence",
+      claim: "Every cost figure on this estate is modelled, not booked.",
+      owner: "Chief Financial Officer",
+      because:
+        "The cost basis column declares the same modelled source on every row, so no figure here has been reconciled to the ledger. They are usable for relative scale and not for a spend statement.",
+      trace: { file: "04_applications_systems.csv", grain: "one application record", rule: "annualCostBasis has one declared value across all rows" },
+    });
+  }
+
   const selfHosted = apps.filter((a) => str(a, "deploymentModel").startsWith("on_premise")).length;
   const share = Math.round((100 * selfHosted) / apps.length);
   if (share >= 50) {
@@ -242,6 +284,7 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
         usd(spend(contracts.filter((c) => str(c, "riskRating") === r.value))),
       ]),
       total: ["Total", contracts.length, usd(spend(contracts))],
+      note: costBasis(contracts, "annualSpendBasis") ?? undefined,
     },
     {
       caption: "Renewal exposure",
@@ -308,7 +351,10 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
         usd(platforms.filter((p) => str(p, "hostingModel") === h.value).reduce((n, p) => n + num(p, "annualCostUsd"), 0)),
       ]),
       total: ["Total", platforms.length, usd(platforms.reduce((n, p) => n + num(p, "annualCostUsd"), 0))],
-      note: tight > 0 ? `${tight} platforms run under 20% capacity headroom.` : undefined,
+      note: withCostBasis(
+        tight > 0 ? `${tight} platforms run under 20% capacity headroom.` : undefined,
+        costBasis(platforms),
+      ),
     },
   ];
 }
