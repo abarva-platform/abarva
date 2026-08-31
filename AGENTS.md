@@ -107,6 +107,16 @@ Canonical production/lab release path:
 
 Use [docs/runbooks/azure-container-apps-deploy.md](/Users/anand/Projects/nexus/docs/runbooks/azure-container-apps-deploy.md) as the operator runbook. Vercel files in this repository are legacy sentinels or historical records only; they are not an approved deployment path for `app.abarva.ai`.
 
+## Client data-plane boundary
+
+Repo-baked tenant input files are a synthetic-demo shortcut only. Real client source files must live
+in that client's private Blob/source landing zone, be hashed and manifested inside that private data
+plane, be processed by ACA data-build jobs inside the client VNet, and land in client-scoped
+Postgres/ECL before product projections read them. Do not bake real client source files into a
+shared web image, commit client-derived source-intelligence digests to the public repo, or treat the
+demo path as the production architecture. The controlling architecture statement is
+[docs/architecture/CLIENT_DATA_PLANE_ARCHITECTURE.md](/Users/anand/Projects/nexus/docs/architecture/CLIENT_DATA_PLANE_ARCHITECTURE.md).
+
 ## Release control discipline
 
 Every non-trivial change must be traceable as a controlled release candidate, not just as a PR. Before opening or updating a PR, classify the release lane, explain the layer impact, identify client applicability, record QA/validation, and describe rollout plus rollback.
