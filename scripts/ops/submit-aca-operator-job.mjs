@@ -446,6 +446,11 @@ function extractProofBundle(logText, outDir) {
       end: "__SOURCE_L4_CUBE_PROOF_TGZ_END__",
       marker: "source_l4_cube",
     },
+    {
+      begin: "__ECL_SUBSTRATE_BASELINE_TGZ_BEGIN__",
+      end: "__ECL_SUBSTRATE_BASELINE_TGZ_END__",
+      marker: "ecl_substrate_baseline",
+    },
   ];
   const lines = logText.split(/\r?\n/);
   const payload = [];
@@ -841,6 +846,16 @@ function selfTest() {
   const sourceMarkerResult = extractProofBundle(sourceMarkerLogText, sourceMarkerDir);
   if (!sourceMarkerResult.extracted || sourceMarkerResult.marker !== "source_l4_cube") {
     throw new Error(`Source L4 proof extraction self-test failed: ${JSON.stringify(sourceMarkerResult)}`);
+  }
+  const baselineMarkerDir = fs.mkdtempSync(path.join(os.tmpdir(), "aca-operator-ecl-baseline-proof-self-test-"));
+  const baselineMarkerLogText = [
+    "2026-01-01 stdout F __ECL_SUBSTRATE_BASELINE_TGZ_BEGIN__",
+    `2026-01-01 stdout F ${encoded}`,
+    "2026-01-01 stdout F __ECL_SUBSTRATE_BASELINE_TGZ_END__",
+  ].join("\n");
+  const baselineMarkerResult = extractProofBundle(baselineMarkerLogText, baselineMarkerDir);
+  if (!baselineMarkerResult.extracted || baselineMarkerResult.marker !== "ecl_substrate_baseline") {
+    throw new Error(`ECL baseline proof extraction self-test failed: ${JSON.stringify(baselineMarkerResult)}`);
   }
   const eventDir = fs.mkdtempSync(path.join(os.tmpdir(), "aca-operator-json-event-self-test-"));
   const eventLogText = [
