@@ -71,7 +71,7 @@ component — a chapter whose rows produce nothing renders no block at all.
 
 ## QA / Validation
 
-- PASS `npx jest src/components/home/v4/__tests__` — 69/69, ten suites, no regression
+- PASS `npx jest src/components/home/v4/__tests__` — 70/70, ten suites, no regression
 - PASS `npx jest scripts/data-build/__tests__/enterprise-signal-packet.test.ts` — no regression
 - PASS `npx eslint` on all eight changed or added files
 - PASS `tsc --noEmit -p tsconfig.json` (full project)
@@ -139,6 +139,16 @@ wholly-modelled estate raises it as a finding owned by the CFO — usable for re
 spend statement. Where a record declares more than one basis, that is said too: a column summing
 modelled and invoiced figures together is a different kind of number again.
 
+### One defect the browser found that the tests could not
+
+Measured at 1440: the crosstab rendered 1,290px wide inside a 423px half-width grid cell. The page
+body did not scroll sideways — the container scrolled, correctly — but a reader had to go looking
+for the totals column, which is the column the table reconciles in. The part that makes the table
+trustworthy was the part behind the scroll.
+
+A table can now declare itself wide and span the row. Nothing about the content changed; a
+render-and-measure pass is the only thing that would have caught it.
+
 ## Rollout Plan
 
 Merge to main. No migration, no data-plane mutation, no traffic change. The component reads rows
@@ -181,12 +191,14 @@ view the intake already held and no surface could reach.
 
 ## Known Gaps
 
-- **Verified by render, not by browser.** The jsdom harness the repo already uses for Home proof
-  confirms the content; a signed-in browser check is still owed before this is called live-proven.
+- **Verified by component render in a browser, not by a signed-in product proof.** The components
+  were rendered against the live snapshot, served locally and inspected in a browser at 1440 —
+  which is how the wide-table defect below was found. The signed-in path needs Clerk and the
+  private data plane, so a product proof is still owed before this is called live-proven.
 - **Five chapters are mapped to estate families; three are not.** Chapters answering questions the
   estate files do not carry render no table set, deliberately.
 - **The interpretive layer is untouched.** This adds what can be counted and what was declared. What
-  a pattern *means* still comes from the narrative path, which remains the open problem.
+  a pattern _means_ still comes from the narrative path, which remains the open problem.
 - **The widened lens content needs a packet rebuild to appear.** The builder now carries it and the
   page renders it, with a fallback to the title for any record written before this change — so the
   current snapshot still shows titles until it is regenerated. That is a data-refresh step, not a

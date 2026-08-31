@@ -19,7 +19,19 @@ const STRIPE: Record<FindingKind, string> = {
   established: V4.green,
 };
 
-const COUNT_WORD = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+const COUNT_WORD = [
+  "no",
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+];
 
 /** A finding's trace, in the shape the provenance mark reads. Same contract as Tower's. */
 function lineageForFinding(finding: Finding): FactLineage | null {
@@ -28,7 +40,9 @@ function lineageForFinding(finding: Finding): FactLineage | null {
     value: finding.claim,
     label: "this finding",
     grain: finding.trace.grain,
-    sources: [{ file: finding.trace.file, rows: 0, filter: finding.trace.rule }],
+    sources: [
+      { file: finding.trace.file, rows: 0, filter: finding.trace.rule },
+    ],
     agreement: "single_source",
   };
 }
@@ -41,16 +55,43 @@ export function TableSet({ tables }: { tables: TableSpec[] }) {
       style={{
         padding: `28px ${PAGE_X}px 0`,
         display: "grid",
-        gridTemplateColumns: tables.length === 1 ? "minmax(0, 1fr)" : "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+        gridTemplateColumns:
+          tables.length === 1
+            ? "minmax(0, 1fr)"
+            : "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
         gap: 26,
         alignItems: "start",
       }}
     >
       {tables.map((table) => (
-        <div key={table.caption} style={{ display: "flex", flexDirection: "column", gap: 11, minWidth: 0 }}>
+        <div
+          key={table.caption}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 11,
+            minWidth: 0,
+            // A wide table takes the whole row so its totals column is on screen, not behind a
+            // sideways scroll. The container still scrolls if the viewport is narrower than that.
+            gridColumn: table.wide ? "1 / -1" : undefined,
+          }}
+        >
           <span style={eyebrow(V4.slate)}>{table.caption}</span>
-          <div style={{ background: V4.surface, border: `1px solid ${V4.rule}`, padding: "16px 18px", overflowX: "auto" }}>
-            <table style={{ borderCollapse: "collapse", width: "100%", fontVariantNumeric: "tabular-nums" }}>
+          <div
+            style={{
+              background: V4.surface,
+              border: `1px solid ${V4.rule}`,
+              padding: "16px 18px",
+              overflowX: "auto",
+            }}
+          >
+            <table
+              style={{
+                borderCollapse: "collapse",
+                width: "100%",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
               <thead>
                 <tr>
                   {table.columns.map((column, i) => (
@@ -115,7 +156,15 @@ export function TableSet({ tables }: { tables: TableSpec[] }) {
               </tbody>
             </table>
             {table.note ? (
-              <p style={{ margin: "12px 0 0", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.5, color: V4.slate }}>
+              <p
+                style={{
+                  margin: "12px 0 0",
+                  fontFamily: SANS,
+                  fontSize: 12.5,
+                  lineHeight: 1.5,
+                  color: V4.slate,
+                }}
+              >
                 {table.note}
               </p>
             ) : null}
@@ -132,8 +181,19 @@ export function FindingsBlock({ findings }: { findings: Finding[] }) {
   if (findings.length === 0) return null;
   const count = COUNT_WORD[findings.length] ?? String(findings.length);
   return (
-    <section data-home-findings style={{ padding: `34px ${PAGE_X}px 0`, display: "flex", flexDirection: "column", gap: 12 }}>
-      <span style={eyebrow(V4.slate)} data-home-findings-count={findings.length}>
+    <section
+      data-home-findings
+      style={{
+        padding: `34px ${PAGE_X}px 0`,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
+      <span
+        style={eyebrow(V4.slate)}
+        data-home-findings-count={findings.length}
+      >
         What does not reconcile — {count} today
       </span>
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -152,18 +212,49 @@ export function FindingsBlock({ findings }: { findings: Finding[] }) {
               alignItems: "start",
             }}
           >
-            <p style={{ margin: 0, fontFamily: SANS, fontSize: 15, lineHeight: 1.5, maxWidth: "68ch" }}>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: SANS,
+                fontSize: 15,
+                lineHeight: 1.5,
+                maxWidth: "68ch",
+              }}
+            >
               {(() => {
                 const lineage = lineageForFinding(finding);
                 // A finding a reader cannot reproduce is an assertion, and an assertion carrying an
                 // owner's name is worse than none -- so the rule that produced it travels with it.
-                return lineage ? <LineageMark lineage={lineage}>{finding.claim}</LineageMark> : finding.claim;
+                return lineage ? (
+                  <LineageMark lineage={lineage}>{finding.claim}</LineageMark>
+                ) : (
+                  finding.claim
+                );
               })()}
             </p>
-            <span style={{ fontFamily: MONO, fontSize: 10.5, color: V4.slate, textAlign: "right", whiteSpace: "nowrap", paddingTop: 3 }}>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 10.5,
+                color: V4.slate,
+                textAlign: "right",
+                whiteSpace: "nowrap",
+                paddingTop: 3,
+              }}
+            >
               {finding.owner}
             </span>
-            <p style={{ margin: 0, gridColumn: "1 / -1", fontFamily: SANS, fontSize: 13, lineHeight: 1.5, color: V4.slate, maxWidth: "74ch" }}>
+            <p
+              style={{
+                margin: 0,
+                gridColumn: "1 / -1",
+                fontFamily: SANS,
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: V4.slate,
+                maxWidth: "74ch",
+              }}
+            >
               {finding.because}
             </p>
           </div>
@@ -174,13 +265,48 @@ export function FindingsBlock({ findings }: { findings: Finding[] }) {
 }
 
 /** The lead number a page opens on, with the files it came from named underneath. */
-export function LeadNumber({ statement, sources }: { statement: string; sources: string }) {
+export function LeadNumber({
+  statement,
+  sources,
+}: {
+  statement: string;
+  sources: string;
+}) {
   return (
     <section data-home-lead style={{ padding: `26px ${PAGE_X}px 0` }}>
-      <div style={{ background: V4.surface, border: `1px solid ${V4.rule}`, padding: "24px 26px", display: "flex", flexDirection: "column", gap: 13 }}>
+      <div
+        style={{
+          background: V4.surface,
+          border: `1px solid ${V4.rule}`,
+          padding: "24px 26px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 13,
+        }}
+      >
         <span style={eyebrow(V4.green)}>The number this page opens on</span>
-        <p style={{ margin: 0, fontFamily: SERIF, fontSize: 25, lineHeight: 1.3, textWrap: "balance" }}>{statement}</p>
-        <p style={{ margin: 0, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.7, color: V4.stone }}>{sources}</p>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SERIF,
+            fontSize: 25,
+            lineHeight: 1.3,
+            textWrap: "balance",
+          }}
+        >
+          {statement}
+        </p>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: MONO,
+            fontSize: 10.5,
+            lineHeight: 1.7,
+            color: V4.stone,
+          }}
+        >
+          {sources}
+        </p>
       </div>
     </section>
   );

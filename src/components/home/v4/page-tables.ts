@@ -12,7 +12,9 @@
  * count rather than the design assuming one.
  */
 
-export interface EstateRow { [key: string]: string | number | boolean | null }
+export interface EstateRow {
+  [key: string]: string | number | boolean | null;
+}
 
 export interface TableSpec {
   /** Section label above the table. */
@@ -22,6 +24,14 @@ export interface TableSpec {
   total?: Array<string | number>;
   /** One line under the table. Absence is stated here, never left to the reader. */
   note?: string;
+  /**
+   * Spans the full width of the table set rather than sharing a row.
+   *
+   * A crosstab put in a half-width cell forces a reader sideways to reach the totals column, and
+   * the totals column is where the reconciliation is -- the whole reason the table is trustworthy
+   * sits in the part they have to go looking for.
+   */
+  wide?: boolean;
 }
 
 export type FindingKind = "exposure" | "absence" | "established";
@@ -43,7 +53,8 @@ export interface PageContent {
 
 /* ---------------------------------------------------------------------------------------------- */
 
-const str = (row: EstateRow, key: string): string => String(row[key] ?? "").trim();
+const str = (row: EstateRow, key: string): string =>
+  String(row[key] ?? "").trim();
 const num = (row: EstateRow, key: string): number => {
   const value = Number(String(row[key] ?? "").replace(/[^0-9.-]/g, ""));
   return Number.isFinite(value) ? value : 0;
@@ -58,7 +69,10 @@ const num = (row: EstateRow, key: string): number => {
  * wherever it appears. Where a record declares several bases, that is said too: a column summing
  * modelled and actual figures together is a different kind of number again.
  */
-export function costBasis(rows: EstateRow[], field = "annualCostBasis"): string | null {
+export function costBasis(
+  rows: EstateRow[],
+  field = "annualCostBasis",
+): string | null {
   const declared = new Set(rows.map((row) => str(row, field)).filter(Boolean));
   if (declared.size === 0) return null;
   if (declared.size > 1) {
@@ -71,7 +85,10 @@ export function costBasis(rows: EstateRow[], field = "annualCostBasis"): string 
   return `Cost basis declared on all ${rows.length.toLocaleString()} rows: "${only}".`;
 }
 
-function withCostBasis(note: string | undefined, basis: string | null): string | undefined {
+function withCostBasis(
+  note: string | undefined,
+  basis: string | null,
+): string | undefined {
   return [note, basis].filter(Boolean).join(" ") || undefined;
 }
 
@@ -82,7 +99,10 @@ export function usd(value: number): string {
   return "—";
 }
 
-function countBy(rows: EstateRow[], key: string): Array<{ value: string; count: number; cost: number }> {
+function countBy(
+  rows: EstateRow[],
+  key: string,
+): Array<{ value: string; count: number; cost: number }> {
   const map = new Map<string, { count: number; cost: number }>();
   for (const row of rows) {
     const value = str(row, key) || "not declared";
@@ -96,7 +116,12 @@ function countBy(rows: EstateRow[], key: string): Array<{ value: string; count: 
     .sort((a, b) => b.count - a.count);
 }
 
-function crossTab(rows: EstateRow[], rowKey: string, colKey: string, colOrder: string[]) {
+function crossTab(
+  rows: EstateRow[],
+  rowKey: string,
+  colKey: string,
+  colOrder: string[],
+) {
   const table = new Map<string, Map<string, number>>();
   const rowTotals = new Map<string, number>();
   for (const row of rows) {
@@ -107,23 +132,29 @@ function crossTab(rows: EstateRow[], rowKey: string, colKey: string, colOrder: s
     inner.set(c, (inner.get(c) ?? 0) + 1);
     rowTotals.set(r, (rowTotals.get(r) ?? 0) + 1);
   }
-  const ordered = [...rowTotals.entries()].sort((a, b) => b[1] - a[1]).map(([r]) => r);
+  const ordered = [...rowTotals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([r]) => r);
   return { table, rowTotals, ordered, colOrder };
 }
 
 /** Title-cases a declared enum value for display without inventing a label for it. */
 export function label(value: string): string {
   if (!value) return "not declared";
-  return value
-    .replace(/_/g, " ")
-    .replace(/^\w/, (c) => c.toUpperCase());
+  return value.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }
 
 /* ------------------------------------------------------------------------------------------------
  * Applications — the estate page
  * ---------------------------------------------------------------------------------------------- */
 
-const HOSTING_ORDER = ["on_premise", "hosted_by_vendor", "saas", "cloud", "on_premise_appliance"];
+const HOSTING_ORDER = [
+  "on_premise",
+  "hosted_by_vendor",
+  "saas",
+  "cloud",
+  "on_premise_appliance",
+];
 
 export function applicationTables(apps: EstateRow[]): TableSpec[] {
   if (apps.length === 0) return [];
@@ -131,23 +162,41 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
 
   // Category x hosting. The category column carries 79 free-text values, so this rolls up to the
   // vendor-or-platform family the category names rather than inventing an archetype taxonomy here.
-  const cross = crossTab(apps, "businessFunction", "deploymentModel", HOSTING_ORDER);
-  const present = HOSTING_ORDER.filter((c) => apps.some((a) => str(a, "deploymentModel") === c));
+  const cross = crossTab(
+    apps,
+    "businessFunction",
+    "deploymentModel",
+    HOSTING_ORDER,
+  );
+  const present = HOSTING_ORDER.filter((c) =>
+    apps.some((a) => str(a, "deploymentModel") === c),
+  );
   const topFunctions = cross.ordered.slice(0, 8);
   const rowsOut: Array<Array<string | number>> = topFunctions.map((fn) => [
     fn,
     ...present.map((c) => cross.table.get(fn)?.get(c) ?? 0),
     cross.rowTotals.get(fn) ?? 0,
   ]);
-  const shown = topFunctions.reduce((n, fn) => n + (cross.rowTotals.get(fn) ?? 0), 0);
+  const shown = topFunctions.reduce(
+    (n, fn) => n + (cross.rowTotals.get(fn) ?? 0),
+    0,
+  );
   tables.push({
+    wide: true,
     caption: "Business function × hosting",
     columns: ["Business function", ...present.map(label), "Apps"],
     rows: rowsOut,
-    total: ["All functions", ...present.map((c) => apps.filter((a) => str(a, "deploymentModel") === c).length), apps.length],
-    note: cross.ordered.length > topFunctions.length
-      ? `Top ${topFunctions.length} of ${cross.ordered.length} functions shown — ${shown} of ${apps.length} applications. The total row counts all of them.`
-      : undefined,
+    total: [
+      "All functions",
+      ...present.map(
+        (c) => apps.filter((a) => str(a, "deploymentModel") === c).length,
+      ),
+      apps.length,
+    ],
+    note:
+      cross.ordered.length > topFunctions.length
+        ? `Top ${topFunctions.length} of ${cross.ordered.length} functions shown — ${shown} of ${apps.length} applications. The total row counts all of them.`
+        : undefined,
   });
 
   const basis = costBasis(apps);
@@ -155,14 +204,21 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
     ["cloudReadiness", "Cloud readiness"],
     ["lifecycleState", "Lifecycle state"],
   ] as const) {
-    const counts = countBy(apps.filter((a) => str(a, key)), key);
+    const counts = countBy(
+      apps.filter((a) => str(a, key)),
+      key,
+    );
     if (counts.length < 2) continue;
     const declared = counts.reduce((n, c) => n + c.count, 0);
     tables.push({
       caption,
       columns: [caption, "Apps", "Annual cost"],
       rows: counts.map((c) => [label(c.value), c.count, usd(c.cost)]),
-      total: ["Declared", declared, usd(counts.reduce((n, c) => n + c.cost, 0))],
+      total: [
+        "Declared",
+        declared,
+        usd(counts.reduce((n, c) => n + c.cost, 0)),
+      ],
       note: withCostBasis(
         declared < apps.length
           ? `${apps.length - declared} applications carry no ${caption.toLowerCase()}. They are counted as unassessed, not as a value.`
@@ -177,23 +233,43 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
   const withAuth = apps.filter((a) => str(a, "authenticationMethod"));
   if (withAuth.length > 0) {
     const classes = ["phi", "internal", "pci", "pii"].filter((k) =>
-      withAuth.some((a) => str(a, "dataClassification").toLowerCase() === k));
-    const methods = countBy(withAuth, "authenticationMethod").map((m) => m.value);
+      withAuth.some((a) => str(a, "dataClassification").toLowerCase() === k),
+    );
+    const methods = countBy(withAuth, "authenticationMethod").map(
+      (m) => m.value,
+    );
     tables.push({
       caption: "Authentication × data classification",
       columns: ["Method", ...classes.map((c) => c.toUpperCase()), "Apps"],
       rows: methods.map((m) => {
-        const rows = withAuth.filter((a) => str(a, "authenticationMethod") === m);
+        const rows = withAuth.filter(
+          (a) => str(a, "authenticationMethod") === m,
+        );
         return [
           label(m),
-          ...classes.map((c) => rows.filter((a) => str(a, "dataClassification").toLowerCase() === c).length),
+          ...classes.map(
+            (c) =>
+              rows.filter(
+                (a) => str(a, "dataClassification").toLowerCase() === c,
+              ).length,
+          ),
           rows.length,
         ];
       }),
-      total: ["Declared", ...classes.map((c) => withAuth.filter((a) => str(a, "dataClassification").toLowerCase() === c).length), withAuth.length],
-      note: withAuth.length < apps.length
-        ? `${apps.length - withAuth.length} applications declare no authentication method.`
-        : undefined,
+      total: [
+        "Declared",
+        ...classes.map(
+          (c) =>
+            withAuth.filter(
+              (a) => str(a, "dataClassification").toLowerCase() === c,
+            ).length,
+        ),
+        withAuth.length,
+      ],
+      note:
+        withAuth.length < apps.length
+          ? `${apps.length - withAuth.length} applications declare no authentication method.`
+          : undefined,
     });
   }
 
@@ -205,7 +281,9 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
   if (apps.length === 0) return findings;
 
   const localPhi = apps.filter(
-    (a) => str(a, "authenticationMethod") === "local_accounts" && str(a, "dataClassification").toLowerCase() === "phi",
+    (a) =>
+      str(a, "authenticationMethod") === "local_accounts" &&
+      str(a, "dataClassification").toLowerCase() === "phi",
   ).length;
   if (localPhi > 0) {
     findings.push({
@@ -230,7 +308,11 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
       owner: "Transformation Office",
       because:
         "The record states the dates and the record states the portfolio. Nothing in either connects them, which is a gap in the plan rather than in the evidence.",
-      trace: { file: "04_applications_systems.csv", grain: "one application record", rule: "endOfSupportDate is not empty" },
+      trace: {
+        file: "04_applications_systems.csv",
+        grain: "one application record",
+        rule: "endOfSupportDate is not empty",
+      },
     });
   }
 
@@ -242,11 +324,17 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
       owner: "Chief Financial Officer",
       because:
         "The cost basis column declares the same modelled source on every row, so no figure here has been reconciled to the ledger. They are usable for relative scale and not for a spend statement.",
-      trace: { file: "04_applications_systems.csv", grain: "one application record", rule: "annualCostBasis has one declared value across all rows" },
+      trace: {
+        file: "04_applications_systems.csv",
+        grain: "one application record",
+        rule: "annualCostBasis has one declared value across all rows",
+      },
     });
   }
 
-  const selfHosted = apps.filter((a) => str(a, "deploymentModel").startsWith("on_premise")).length;
+  const selfHosted = apps.filter((a) =>
+    str(a, "deploymentModel").startsWith("on_premise"),
+  ).length;
   const share = Math.round((100 * selfHosted) / apps.length);
   if (share >= 50) {
     findings.push({
@@ -273,7 +361,8 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
 export function vendorTables(contracts: EstateRow[]): TableSpec[] {
   if (contracts.length === 0) return [];
   const byRating = countBy(contracts, "riskRating");
-  const spend = (rows: EstateRow[]) => rows.reduce((n, r) => n + num(r, "annualSpendUsd"), 0);
+  const spend = (rows: EstateRow[]) =>
+    rows.reduce((n, r) => n + num(r, "annualSpendUsd"), 0);
   return [
     {
       caption: "Contract risk rating",
@@ -290,10 +379,20 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
       caption: "Renewal exposure",
       columns: ["Commitment", "Contracts", "Share"],
       rows: (() => {
-        const auto = contracts.filter((c) => /^(yes|true|y)$/i.test(str(c, "autoRenewFlag"))).length;
+        const auto = contracts.filter((c) =>
+          /^(yes|true|y)$/i.test(str(c, "autoRenewFlag")),
+        ).length;
         return [
-          ["Renews automatically", auto, `${Math.round((100 * auto) / contracts.length)}%`],
-          ["Requires a decision", contracts.length - auto, `${Math.round((100 * (contracts.length - auto)) / contracts.length)}%`],
+          [
+            "Renews automatically",
+            auto,
+            `${Math.round((100 * auto) / contracts.length)}%`,
+          ],
+          [
+            "Requires a decision",
+            contracts.length - auto,
+            `${Math.round((100 * (contracts.length - auto)) / contracts.length)}%`,
+          ],
         ];
       })(),
       total: ["Total", contracts.length, "100%"],
@@ -305,7 +404,9 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
 export function vendorFindings(contracts: EstateRow[]): Finding[] {
   if (contracts.length === 0) return [];
   const findings: Finding[] = [];
-  const auto = contracts.filter((c) => /^(yes|true|y)$/i.test(str(c, "autoRenewFlag"))).length;
+  const auto = contracts.filter((c) =>
+    /^(yes|true|y)$/i.test(str(c, "autoRenewFlag")),
+  ).length;
   if (auto > contracts.length / 2) {
     findings.push({
       kind: "exposure",
@@ -313,7 +414,11 @@ export function vendorFindings(contracts: EstateRow[]): Finding[] {
       owner: "Chief Procurement Officer",
       because:
         "Each carries a declared notice period, and those windows are the only points at which the commercial terms are open.",
-      trace: { file: "07_vendors_contracts.csv", grain: "one contract", rule: "autoRenewFlag is yes" },
+      trace: {
+        file: "07_vendors_contracts.csv",
+        grain: "one contract",
+        rule: "autoRenewFlag is yes",
+      },
     });
   }
   const noSystems = contracts.filter((c) => !str(c, "supportedSystems")).length;
@@ -322,8 +427,13 @@ export function vendorFindings(contracts: EstateRow[]): Finding[] {
       kind: "absence",
       claim: `${noSystems} contracts name no system they support.`,
       owner: "Chief Procurement Officer",
-      because: "Without that link the contract cannot be traced to what it pays for, so its renewal cannot be assessed against use.",
-      trace: { file: "07_vendors_contracts.csv", grain: "one contract", rule: "supportedSystems is empty" },
+      because:
+        "Without that link the contract cannot be traced to what it pays for, so its renewal cannot be assessed against use.",
+      trace: {
+        file: "07_vendors_contracts.csv",
+        grain: "one contract",
+        rule: "supportedSystems is empty",
+      },
     });
   }
   return findings;
@@ -331,14 +441,23 @@ export function vendorFindings(contracts: EstateRow[]): Finding[] {
 
 export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
   if (platforms.length === 0) return [];
-  const byDr = countBy(platforms.filter((p) => str(p, "drTier")), "drTier");
+  const byDr = countBy(
+    platforms.filter((p) => str(p, "drTier")),
+    "drTier",
+  );
   const byHosting = countBy(platforms, "hostingModel");
-  const tight = platforms.filter((p) => str(p, "capacityHeadroomPct") && num(p, "capacityHeadroomPct") < 20).length;
+  const tight = platforms.filter(
+    (p) => str(p, "capacityHeadroomPct") && num(p, "capacityHeadroomPct") < 20,
+  ).length;
   return [
     {
       caption: "Recovery posture",
       columns: ["Recovery tier", "Platforms", "Share"],
-      rows: byDr.map((d) => [label(d.value), d.count, `${Math.round((100 * d.count) / platforms.length)}%`]),
+      rows: byDr.map((d) => [
+        label(d.value),
+        d.count,
+        `${Math.round((100 * d.count) / platforms.length)}%`,
+      ]),
       total: ["Declared", byDr.reduce((n, d) => n + d.count, 0), ""],
       note: "Tier 3 means recovery from backup: hours to days, not minutes.",
     },
@@ -348,11 +467,21 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
       rows: byHosting.map((h) => [
         label(h.value),
         h.count,
-        usd(platforms.filter((p) => str(p, "hostingModel") === h.value).reduce((n, p) => n + num(p, "annualCostUsd"), 0)),
+        usd(
+          platforms
+            .filter((p) => str(p, "hostingModel") === h.value)
+            .reduce((n, p) => n + num(p, "annualCostUsd"), 0),
+        ),
       ]),
-      total: ["Total", platforms.length, usd(platforms.reduce((n, p) => n + num(p, "annualCostUsd"), 0))],
+      total: [
+        "Total",
+        platforms.length,
+        usd(platforms.reduce((n, p) => n + num(p, "annualCostUsd"), 0)),
+      ],
       note: withCostBasis(
-        tight > 0 ? `${tight} platforms run under 20% capacity headroom.` : undefined,
+        tight > 0
+          ? `${tight} platforms run under 20% capacity headroom.`
+          : undefined,
         costBasis(platforms),
       ),
     },
@@ -363,7 +492,9 @@ export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
   if (platforms.length === 0) return [];
   const findings: Finding[] = [];
   const hot = platforms.filter((p) => /tier1/.test(str(p, "drTier"))).length;
-  const backupOnly = platforms.filter((p) => /tier3/.test(str(p, "drTier"))).length;
+  const backupOnly = platforms.filter((p) =>
+    /tier3/.test(str(p, "drTier")),
+  ).length;
   if (backupOnly > hot) {
     findings.push({
       kind: "exposure",
@@ -371,7 +502,11 @@ export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
       owner: "VP Infrastructure",
       because:
         "The recovery posture is declared per platform. Nothing in the record sets it against the criticality of what runs on top of it.",
-      trace: { file: "06_infrastructure_platforms.csv", grain: "one platform", rule: "drTier contains tier1 versus tier3" },
+      trace: {
+        file: "06_infrastructure_platforms.csv",
+        grain: "one platform",
+        rule: "drTier contains tier1 versus tier3",
+      },
     });
   }
   const eol = platforms.filter((p) => str(p, "endOfLifeDate")).length;
@@ -380,8 +515,13 @@ export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
       kind: "absence",
       claim: `${eol} platforms carry a declared end-of-life date.`,
       owner: "VP Infrastructure",
-      because: "Declared in the record and absent from the portfolio. That is a gap in the plan, not in the evidence.",
-      trace: { file: "06_infrastructure_platforms.csv", grain: "one platform", rule: "endOfLifeDate is not empty" },
+      because:
+        "Declared in the record and absent from the portfolio. That is a gap in the plan, not in the evidence.",
+      trace: {
+        file: "06_infrastructure_platforms.csv",
+        grain: "one platform",
+        rule: "endOfLifeDate is not empty",
+      },
     });
   }
   return findings;
@@ -391,15 +531,27 @@ export function dataTables(assets: EstateRow[]): TableSpec[] {
   if (assets.length === 0) return [];
   const byPattern = countBy(assets, "integrationType").slice(0, 7);
   const shown = byPattern.reduce((n, p) => n + p.count, 0);
-  const byQuality = countBy(assets.filter((a) => str(a, "qualityStatus")), "qualityStatus");
-  const regulated = (rows: EstateRow[]) => rows.filter((a) => /^(true|yes|y)$/i.test(str(a, "regulatedDataFlag"))).length;
+  const byQuality = countBy(
+    assets.filter((a) => str(a, "qualityStatus")),
+    "qualityStatus",
+  );
+  const regulated = (rows: EstateRow[]) =>
+    rows.filter((a) => /^(true|yes|y)$/i.test(str(a, "regulatedDataFlag")))
+      .length;
   return [
     {
       caption: "Integration pattern",
       columns: ["Pattern", "Assets", "Share"],
-      rows: byPattern.map((p) => [p.value, p.count, `${Math.round((100 * p.count) / assets.length)}%`]),
+      rows: byPattern.map((p) => [
+        p.value,
+        p.count,
+        `${Math.round((100 * p.count) / assets.length)}%`,
+      ]),
       total: ["Total", assets.length, "100%"],
-      note: shown < assets.length ? `Top ${byPattern.length} patterns shown — ${shown} of ${assets.length} assets.` : undefined,
+      note:
+        shown < assets.length
+          ? `Top ${byPattern.length} patterns shown — ${shown} of ${assets.length} assets.`
+          : undefined,
     },
     {
       caption: "Governance state",
@@ -409,7 +561,11 @@ export function dataTables(assets: EstateRow[]): TableSpec[] {
         q.count,
         regulated(assets.filter((a) => str(a, "qualityStatus") === q.value)),
       ]),
-      total: ["Declared", byQuality.reduce((n, q) => n + q.count, 0), regulated(assets)],
+      total: [
+        "Declared",
+        byQuality.reduce((n, q) => n + q.count, 0),
+        regulated(assets),
+      ],
     },
   ];
 }
@@ -418,7 +574,9 @@ export function dataFindings(assets: EstateRow[]): Finding[] {
   if (assets.length === 0) return [];
   const findings: Finding[] = [];
   const regulatedUngoverned = assets.filter(
-    (a) => /^(true|yes|y)$/i.test(str(a, "regulatedDataFlag")) && str(a, "qualityStatus") !== "governed_production_grade",
+    (a) =>
+      /^(true|yes|y)$/i.test(str(a, "regulatedDataFlag")) &&
+      str(a, "qualityStatus") !== "governed_production_grade",
   ).length;
   if (regulatedUngoverned > 0) {
     findings.push({
@@ -440,8 +598,13 @@ export function dataFindings(assets: EstateRow[]): Finding[] {
       kind: "established",
       claim: `${top.value} is the largest single integration pattern, at ${top.count} of ${assets.length} assets.`,
       owner: "VP Data & AI Platforms",
-      because: "A modernization sequence that starts anywhere else leaves the largest population untouched.",
-      trace: { file: "05_data_assets_integrations.csv", grain: "one data asset or integration", rule: "grouped by integrationType" },
+      because:
+        "A modernization sequence that starts anywhere else leaves the largest population untouched.",
+      trace: {
+        file: "05_data_assets_integrations.csv",
+        grain: "one data asset or integration",
+        rule: "grouped by integrationType",
+      },
     });
   }
   return findings;
@@ -451,7 +614,10 @@ export function dataFindings(assets: EstateRow[]): Finding[] {
  * Constant-column detection — a column with one value is a default, never a result
  * ---------------------------------------------------------------------------------------------- */
 
-export function constantColumns(rows: EstateRow[], columns: string[]): Array<{ column: string; value: string }> {
+export function constantColumns(
+  rows: EstateRow[],
+  columns: string[],
+): Array<{ column: string; value: string }> {
   if (rows.length < 2) return [];
   const out: Array<{ column: string; value: string }> = [];
   for (const column of columns) {

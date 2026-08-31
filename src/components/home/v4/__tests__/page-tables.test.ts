@@ -1,17 +1,29 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  applicationTables, applicationFindings, vendorFindings, infrastructureFindings,
-  dataFindings, constantColumns, costBasis, usd, type EstateRow,
+  applicationTables,
+  applicationFindings,
+  vendorFindings,
+  infrastructureFindings,
+  dataFindings,
+  constantColumns,
+  costBasis,
+  usd,
+  type EstateRow,
 } from "../page-tables";
 import { chapterDepth } from "../chapter-page-content";
 
 const ROOT = path.resolve(__dirname, "../../../..");
 const snapshot = JSON.parse(
-  fs.readFileSync(path.join(ROOT, "lib/home/preview/golden-snapshots/meridian-health.json"), "utf8"),
+  fs.readFileSync(
+    path.join(ROOT, "lib/home/preview/golden-snapshots/meridian-health.json"),
+    "utf8",
+  ),
 );
 const recordType = (t: string) =>
-  snapshot.technologyEstate.recordTypes.find((r: { objectType: string }) => r.objectType === t);
+  snapshot.technologyEstate.recordTypes.find(
+    (r: { objectType: string }) => r.objectType === t,
+  );
 const apps: EstateRow[] = recordType("application_system").rows;
 
 describe("tables are computed from the rows that ship in the bundle", () => {
@@ -35,7 +47,9 @@ describe("tables are computed from the rows that ship in the bundle", () => {
   });
 
   it("reports undeclared values as unassessed rather than as a value", () => {
-    const readiness = applicationTables(apps).find((t) => t.caption === "Cloud readiness");
+    const readiness = applicationTables(apps).find(
+      (t) => t.caption === "Cloud readiness",
+    );
     expect(readiness?.note).toMatch(/counted as unassessed, not as a value/);
   });
 
@@ -49,9 +63,13 @@ describe("findings are rules, so their numbers cannot go stale", () => {
   it("crosses authentication with data classification — a population neither column holds", () => {
     const finding = applicationFindings(apps).find((f) => /PHI/.test(f.claim));
     const expected = apps.filter(
-      (a) => a.authenticationMethod === "local_accounts" && String(a.dataClassification).toLowerCase() === "phi",
+      (a) =>
+        a.authenticationMethod === "local_accounts" &&
+        String(a.dataClassification).toLowerCase() === "phi",
     ).length;
-    expect(finding?.claim).toBe(`${expected} applications holding PHI authenticate on local accounts.`);
+    expect(finding?.claim).toBe(
+      `${expected} applications holding PHI authenticate on local accounts.`,
+    );
     expect(finding?.kind).toBe("exposure");
     expect(expected).toBeGreaterThan(0);
   });
@@ -59,7 +77,9 @@ describe("findings are rules, so their numbers cannot go stale", () => {
   // The planted failure: remove the condition and the finding must stop firing, not fire with zero.
   it("stops firing when the condition it reports is absent", () => {
     const clean = apps.map((a) => ({ ...a, authenticationMethod: "sso_saml" }));
-    expect(applicationFindings(clean).some((f) => /PHI/.test(f.claim))).toBe(false);
+    expect(applicationFindings(clean).some((f) => /PHI/.test(f.claim))).toBe(
+      false,
+    );
   });
 
   it("gives every finding an owner and a because-clause", () => {
@@ -85,23 +105,33 @@ describe("constant columns are defaults, not results", () => {
       { risk: "low", name: "b" },
       { risk: "low", name: "c" },
     ];
-    expect(constantColumns(rows, ["risk", "name"])).toEqual([{ column: "risk", value: "low" }]);
+    expect(constantColumns(rows, ["risk", "name"])).toEqual([
+      { column: "risk", value: "low" },
+    ]);
   });
 
   it("does not flag a column that varies", () => {
-    expect(constantColumns([{ risk: "low" }, { risk: "high" }], ["risk"])).toEqual([]);
+    expect(
+      constantColumns([{ risk: "low" }, { risk: "high" }], ["risk"]),
+    ).toEqual([]);
   });
 });
 
 describe("chapter depth", () => {
   it("gives a mapped chapter real tables and findings", () => {
-    const depth = chapterDepth("technology_data", { applications: apps, data: recordType("data_asset_or_integration").rows });
+    const depth = chapterDepth("technology_data", {
+      applications: apps,
+      data: recordType("data_asset_or_integration").rows,
+    });
     expect(depth.tables.length).toBeGreaterThanOrEqual(4);
     expect(depth.findings.length).toBeGreaterThanOrEqual(3);
   });
 
   it("gives an unmapped chapter nothing rather than a placeholder", () => {
-    expect(chapterDepth("our_business", { applications: apps })).toEqual({ tables: [], findings: [] });
+    expect(chapterDepth("our_business", { applications: apps })).toEqual({
+      tables: [],
+      findings: [],
+    });
   });
 
   it("does not repeat a finding that two source families both produce", () => {
@@ -109,12 +139,19 @@ describe("chapter depth", () => {
       applications: apps,
       infrastructure: recordType("infrastructure_platform").rows,
     });
-    expect(new Set(depth.findings.map((f) => f.claim)).size).toBe(depth.findings.length);
+    expect(new Set(depth.findings.map((f) => f.claim)).size).toBe(
+      depth.findings.length,
+    );
   });
 });
 
 describe("money formatting", () => {
-  it.each([[1.5e9, "$1.5B"], [2.5e8, "$250.0M"], [4000, "$4k"], [0, "—"]])("formats %p as %p", (v, out) => {
+  it.each([
+    [1.5e9, "$1.5B"],
+    [2.5e8, "$250.0M"],
+    [4000, "$4k"],
+    [0, "—"],
+  ])("formats %p as %p", (v, out) => {
     expect(usd(v as number)).toBe(out);
   });
 });
@@ -132,7 +169,10 @@ describe("money figures carry how they were arrived at", () => {
   });
 
   it("says so when a column sums figures arrived at differently", () => {
-    const rows: EstateRow[] = [{ annualCostBasis: "invoiced_actual" }, { annualCostBasis: "synthetic_modeled" }];
+    const rows: EstateRow[] = [
+      { annualCostBasis: "invoiced_actual" },
+      { annualCostBasis: "synthetic_modeled" },
+    ];
     expect(basis(rows)).toMatch(/mix 2 declared bases/);
   });
 
@@ -142,10 +182,31 @@ describe("money figures carry how they were arrived at", () => {
 
   // Against the live record this fires, which is the point: every cost Home renders is modelled.
   it("attaches the basis to the cost tables and raises it as a finding", () => {
-    const readiness = applicationTables(apps).find((t) => t.caption === "Cloud readiness");
+    const readiness = applicationTables(apps).find(
+      (t) => t.caption === "Cloud readiness",
+    );
     expect(readiness?.note).toMatch(/modelled, not booked/);
-    const finding = applicationFindings(apps).find((f) => /modelled, not booked/.test(f.claim));
+    const finding = applicationFindings(apps).find((f) =>
+      /modelled, not booked/.test(f.claim),
+    );
     expect(finding?.owner).toBe("Chief Financial Officer");
-    expect(finding?.because).toMatch(/relative scale and not for a spend statement/);
+    expect(finding?.because).toMatch(
+      /relative scale and not for a spend statement/,
+    );
+  });
+});
+
+describe("a wide table does not hide its totals behind a sideways scroll", () => {
+  it("marks the crosstab wide and leaves the narrow tables alone", () => {
+    const tables = applicationTables(apps);
+    const crosstab = tables.find(
+      (t) => t.caption === "Business function × hosting",
+    );
+    expect(crosstab?.wide).toBe(true);
+    // Measured in a browser at 1440: the crosstab is 1290px against a 423px half-width cell, so a
+    // reader had to scroll sideways to reach the column the table reconciles in.
+    expect(crosstab?.columns.length).toBeGreaterThan(4);
+    for (const table of tables.filter((t) => t !== crosstab))
+      expect(table.wide).toBeUndefined();
   });
 });
