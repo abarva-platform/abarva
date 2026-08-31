@@ -7,8 +7,8 @@
  * on a fresh database. The real unit of work is the substrate, and its size is unknown.
  *
  * This reports, per schema: every table, its column count, whether it has a primary key, how many
- * foreign keys leave it and where they go, its RLS state, and — the part that decides the order a
- * baseline must be written in — which schemas depend on which.
+ * foreign keys leave it and where they go, its RLS state, and the part that decides the order a
+ * baseline must be written in: which schemas depend on which.
  *
  * It also flags every object whose name appears in no migration file, since that is the set a
  * baseline has to cover.
@@ -20,7 +20,14 @@ import process from "node:process";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
-const SCHEMAS = ["ecl_projection", "ecl_context", "ecl_review", "ecl_source", "serving"];
+const SCHEMAS = [
+  "ecl_source",
+  "ecl_context",
+  "ecl_commercial",
+  "ecl_review",
+  "ecl_projection",
+  "serving",
+];
 
 async function readMigrationCorpus() {
   const migrationDir = path.join(process.cwd(), "supabase", "migrations");
