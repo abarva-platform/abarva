@@ -85,6 +85,7 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => ({}))) as {
+    clientKey?: string;
     message?: string;
     stream?: boolean;
   };
@@ -96,11 +97,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const activeClient = await getActiveClientRow().catch(() => null);
+  const requestedClient = body.clientKey?.trim() || null;
+  const activeClient = await getActiveClientRow(requestedClient).catch(
+    () => null,
+  );
   const tenantKey = canonicalCioTowerTenantKey(
-    tenancy.clientKey ?? activeClient?.key ?? tenancy.clientId,
+    activeClient?.key ?? tenancy.clientKey ?? tenancy.clientId,
   );
   const tenantName = activeClient?.name ?? tenantKey;
+  const tenantId = activeClient?.id ?? tenancy.clientId;
   const wantsStream =
     request.headers.get("accept")?.includes("application/x-ndjson") ||
     request.headers.get("accept")?.includes("text/event-stream") ||
@@ -122,7 +127,7 @@ export async function POST(request: Request) {
             emit("status", event);
           }
           const result = await answerCurrentTowerQuestion({
-            tenantId: tenancy.clientId,
+            tenantId,
             userId: tenancy.userId,
             tenantKey,
             tenantName,
@@ -139,7 +144,8 @@ export async function POST(request: Request) {
             latencyMs: result.latencyMs,
           });
         } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
+          const message =
+            error instanceof Error ? error.message : String(error);
           emit("error", towerChatFailurePayload(message));
         } finally {
           controller.close();
@@ -158,7 +164,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await answerCurrentTowerQuestion({
-      tenantId: tenancy.clientId,
+      tenantId,
       userId: tenancy.userId,
       tenantKey,
       tenantName,

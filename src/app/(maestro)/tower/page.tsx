@@ -88,9 +88,7 @@ export async function renderTowerPage({
     isEclDiagnosticsRequest(firstSearchValue(resolved?.diagnostics)) ||
     isEclDiagnosticsRequest(firstSearchValue(resolved?.debug));
   const rawRequestedClient = firstSearchValue(resolved?.client);
-  const requestedClient =
-    trustedTenant?.clientKey ??
-    rawRequestedClient;
+  const requestedClient = trustedTenant?.clientKey ?? rawRequestedClient;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
   const effectiveClientKey = trustedTenant?.clientKey ?? client?.key ?? null;
 
@@ -121,12 +119,14 @@ export async function renderTowerPage({
   });
   const towerEclPreview =
     showEclDiagnostics && isEclProductProvider(productProvider)
-    ? await readTowerEclProjectionPreview(
-        canonicalTenantKey(effectiveClientKey),
-      ).catch(() => null)
-    : null;
+      ? await readTowerEclProjectionPreview(
+          canonicalTenantKey(effectiveClientKey),
+        ).catch(() => null)
+      : null;
   const towerChatClientId =
     client?.id ?? client?.key ?? requestedClient ?? null;
+  const towerChatClientKey =
+    effectiveClientKey ?? requestedClient ?? client?.key ?? null;
 
   return (
     <AppShell
@@ -143,6 +143,7 @@ export async function renderTowerPage({
           view={commandCenterView}
           tenantName={tenantName}
           clientId={towerChatClientId}
+          clientKey={towerChatClientKey}
         />
       </Suspense>
       {showEclDiagnostics ? (
