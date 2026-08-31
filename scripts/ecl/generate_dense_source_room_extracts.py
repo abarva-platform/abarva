@@ -738,6 +738,15 @@ def applications(rng: Random, count: int) -> list[dict[str, Any]]:
         function = weighted_function("applications", i)
         environment_count = [1, 1, 1, 2, 2, 3, 3, 4, 5][i % 9]
         annual_cost = round((weights[i - 1] / weight_total) * APPLICATION_COST_TOTAL_USD, 2)
+        hosting_model = ["saas", "on_prem", "aws_hosted", "azure_hosted", "private_cloud"][i % 5]
+        lifecycle_state = "replace_candidate" if i % 13 == 0 else ("watch" if i % 5 == 0 else "current")
+        cloud_readiness = (
+            "already_cloud"
+            if hosting_model in {"saas", "aws_hosted", "azure_hosted"}
+            else ("rehost_candidate" if i % 4 else "retain_on_prem")
+        )
+        authentication_method = ["sso_saml", "oidc", "local_accounts", "ldap", "shared_service_account"][i % 5]
+        end_of_support_date = f"202{6 + (i % 4)}-12-31" if lifecycle_state != "current" or i % 17 == 0 else ""
         rows.append(
             {
                 "source_system": "ServiceNow CMDB synthetic export",
@@ -752,12 +761,16 @@ def applications(rng: Random, count: int) -> list[dict[str, Any]]:
                 "business_owner": f"{function} VP Office",
                 "technical_owner": f"{domain.title()} Platform Team",
                 "criticality_tier": "tier_1" if i % 9 == 0 else ("tier_2" if i % 3 == 0 else "tier_3"),
-                "lifecycle_state": "replace_candidate" if i % 13 == 0 else ("watch" if i % 5 == 0 else "current"),
-                "hosting_model": ["saas", "on_prem", "aws_hosted", "azure_hosted", "private_cloud"][i % 5],
+                "lifecycle_state": lifecycle_state,
+                "hosting_model": hosting_model,
                 "environment_count": environment_count,
                 "interface_count": 2 + (i % 9),
                 "user_count_estimate": 50 + (i * 17) % 9000,
                 "annual_cost_usd": annual_cost,
+                "cloud_readiness": cloud_readiness,
+                "authentication_method": authentication_method,
+                "annual_cost_basis": "synthetic_modeled",
+                "end_of_support_date": end_of_support_date,
                 "source_basis": row_basis(i),
                 "review_state": review_state(i),
             }
