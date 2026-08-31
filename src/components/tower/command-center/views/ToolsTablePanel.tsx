@@ -45,9 +45,17 @@ function adoptionMetric(item: TowerAiView): number | null {
   return bar ? bar.pct : null;
 }
 
+function isToolRolloutRow(item: TowerAiView): boolean {
+  return item.sourceFile === "23_ai_tool_rollout.csv";
+}
+
 function toolRows(view: TowerCommandCenterView): readonly ToolRow[] {
   return view.allInitiatives
-    .filter((item) => item.usageHeadline !== null || item.usageBars.length > 0)
+    .filter(
+      (item) =>
+        isToolRolloutRow(item) &&
+        (item.usageHeadline !== null || item.usageBars.length > 0),
+    )
     .map((item) => {
       const usage = usageMetric(item);
       return {

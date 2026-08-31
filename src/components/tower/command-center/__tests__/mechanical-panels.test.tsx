@@ -302,6 +302,42 @@ describe("mechanical Tower Command Center panels", () => {
     expect(document.body.textContent).toContain("Not loaded");
   });
 
+  it("keeps business cases out of the top-level rollouts table", () => {
+    render(
+      <ToolsTablePanel
+        view={viewWith({
+          allInitiatives: [
+            initiative({
+              id: "BC-USES-TOOL",
+              name: "Business case with usage",
+              sourceFile: "22_ai_business_cases.csv",
+              usageHeadline: "Usage evidence exists",
+              usageBars: [
+                { label: "Adoption", valueText: "75%", pct: 75, tone: "teal" },
+              ],
+              adoptionTargetPct: 80,
+            }),
+            initiative({
+              id: "TOOL-REAL",
+              name: "Actual tool rollout",
+              sourceFile: "23_ai_tool_rollout.csv",
+              usageHeadline: "Usage evidence exists",
+              usageBars: [
+                { label: "Adoption", valueText: "55%", pct: 55, tone: "amber" },
+              ],
+              adoptionTargetPct: 70,
+            }),
+          ],
+        })}
+      />,
+    );
+
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("1 of 1 rollouts sit below their own adoption target.");
+    expect(text).toContain("Actual tool rollout");
+    expect(text).not.toContain("Business case with usage");
+  });
+
   it("does not call foundations no-value when sponsor-stated value is loaded", () => {
     render(
       <FoundationsPanel
