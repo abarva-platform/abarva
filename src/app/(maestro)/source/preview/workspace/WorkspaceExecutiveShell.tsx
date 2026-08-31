@@ -155,13 +155,33 @@ export function WorkspaceExecutiveShell({
   );
   const performanceRows = portfolio.v4Snapshot.performanceCredits.rowCount;
   const spendRows = portfolio.v4Snapshot.spendConsumption.rowCount;
+  const performanceCreditContract = [...portfolio.impact.evidenceCoverage]
+    .filter(
+      (row) =>
+        (numberFromDb(row.performance_rows) ?? 0) > 0 &&
+        (numberFromDb(row.unclaimed_credit_usd) ?? 0) > 0,
+    )
+    .sort(
+      (left, right) =>
+        (numberFromDb(right.unclaimed_credit_usd) ?? 0) -
+          (numberFromDb(left.unclaimed_credit_usd) ?? 0) ||
+        (numberFromDb(right.performance_rows) ?? 0) -
+          (numberFromDb(left.performance_rows) ?? 0) ||
+        left.contract_id.localeCompare(right.contract_id),
+    )[0];
   const findingContract =
     creditFinding > 0
-      ? (portfolio.cockpit.actionQueue.find((row) =>
+      ? (performanceCreditContract
+        ? {
+            contractId: performanceCreditContract.contract_id,
+            counterparty: performanceCreditContract.vendor_name,
+            deadlineLabel: "Not established",
+          }
+        : (portfolio.cockpit.actionQueue.find((row) =>
           /credit/i.test(`${row.actionVerb} ${row.why}`),
         ) ??
-        portfolio.cockpit.actionQueue[0] ??
-        null)
+          portfolio.cockpit.actionQueue[0] ??
+          null))
       : null;
   const claimContract = claimContractForPage(currentPage);
 

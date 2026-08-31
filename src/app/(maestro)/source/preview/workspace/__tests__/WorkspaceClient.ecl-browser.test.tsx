@@ -563,6 +563,35 @@ describe("Source workspace ECL browser-surface proof", () => {
       citation_basis_json: { source: "unit-fixture" },
       load_run_id: "unit-proof",
     };
+    const performanceCoverage: SourceWorkspacePortfolioData["impact"]["evidenceCoverage"][number] = {
+      tenant_key: "meridian-health",
+      contract_id: "MER-CTR-EPIC-001",
+      vendor_ref: "MER-VEN-EPIC",
+      vendor_name: "Epic Systems Corporation",
+      contract_name: "Clinical Applications Agreement",
+      spend_rows: 12,
+      actual_spend_usd: 12000000,
+      committed_spend_usd: 12000000,
+      performance_rows: 12,
+      breach_rows: 3,
+      credit_calculated_usd: 50000,
+      credit_claimed_usd: 0,
+      credit_recovered_usd: 0,
+      unclaimed_credit_usd: 50000,
+      opportunity_rows: 0,
+      candidate_amount_usd: 0,
+      finance_confirmation_required_rows: 0,
+      opportunities_with_evidence: 0,
+      scope_rows: 1,
+      critical_scope_rows: 0,
+      document_page_text_rows: 0,
+      change_order_rows: 0,
+      coverage_state: "partial",
+      blocker_if_missing:
+        "Document page text missing; finance confirmation required before realized-value claim.",
+      evidence_basis_json: { source: "unit-fixture" },
+      load_run_id: "unit-proof",
+    };
     const dbPortfolio: SourceWorkspacePortfolioData = {
       ...portfolio,
       workspaceDiagnostics: {
@@ -571,6 +600,7 @@ describe("Source workspace ECL browser-surface proof", () => {
       },
       impact: {
         ...portfolio.impact,
+        evidenceCoverage: [performanceCoverage],
         actionCandidates: [actionCandidate],
       },
     };
@@ -599,5 +629,11 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("Right-size loaded application support tier")).toBeTruthy();
     expect(screen.getAllByText("$1.3M").length).toBeGreaterThan(0);
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Review performance evidence" }));
+
+    expect(screen.getByText("Clinical Applications Agreement")).toBeTruthy();
+    expect(screen.getByText(/MER-CTR-EPIC-001/)).toBeTruthy();
+    expect(screen.getByText("Contract 360 / Performance")).toBeTruthy();
   });
 });
