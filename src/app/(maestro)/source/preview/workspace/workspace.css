@@ -108,6 +108,7 @@
 }
 
 .sw-v2-content-canvas {
+  min-height: clamp(360px, calc(100vh - 390px), 720px);
   border: 1px solid #b4b2a9;
   border-top: 3px solid #0a0a0b;
   background: #faf7f1;
@@ -298,12 +299,13 @@
 }
 
 .sw-v2-control-actions {
-  min-width: 238px;
+  min-width: min(100%, 430px);
   padding: 8px;
 }
 
 .sw-v2-control-actions .sw-v2-action-toolbar-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 5px;
 }
@@ -327,7 +329,7 @@
 
 .sw-v2-control-actions button {
   min-height: 32px;
-  flex: 1 1 0;
+  flex: 1 1 96px;
   justify-content: center;
   padding: 0 12px;
   font-family: "JetBrains Mono", monospace;
@@ -338,13 +340,15 @@
   text-transform: uppercase;
 }
 
-.sw-v2-control-actions button:first-child {
+.sw-v2-control-actions button:nth-child(1),
+.sw-v2-control-actions button:nth-child(3) {
   border-color: rgba(29, 158, 117, 0.35);
   background: #e1f5ee;
   color: #0f6e56;
 }
 
-.sw-v2-control-actions button:last-child {
+.sw-v2-control-actions button:nth-child(2),
+.sw-v2-control-actions button:nth-child(4) {
   border-color: rgba(10, 10, 11, 0.2);
   background: #0a0a0b;
   color: #fff;
@@ -491,6 +495,10 @@
   min-width: 0;
 }
 
+.sw-v2-span-2 {
+  grid-column: span 2;
+}
+
 .sw-v2-panel-head h2 {
   margin: 5px 0 0;
   color: #0a0a0b;
@@ -612,7 +620,8 @@
 
 .sw-v2-recharts-card {
   width: 100%;
-  overflow-x: auto;
+  min-width: 0;
+  overflow: hidden;
   margin: 2px 0 16px;
   padding: 12px 12px 10px;
   border: 1px solid #d3d1c7;
@@ -620,7 +629,22 @@
   background: #faf7f1;
 }
 
-.sw-v2-recharts-card .recharts-wrapper {
+.sw-v2-chart-frame {
+  width: 100%;
+  min-width: 0;
+}
+
+.sw-v2-chart-frame-bar {
+  height: 238px;
+}
+
+.sw-v2-chart-frame-line,
+.sw-v2-chart-frame-donut {
+  height: 224px;
+}
+
+.sw-v2-chart-frame .recharts-responsive-container,
+.sw-v2-chart-frame .recharts-wrapper {
   max-width: 100%;
 }
 
@@ -1019,21 +1043,42 @@
 }
 
 .sw-v2-graph {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
   margin-top: 16px;
+  padding: 4px;
 }
 
 .sw-v2-graph-lane {
+  position: relative;
   min-width: 0;
   display: grid;
   align-content: start;
   gap: 8px;
-  padding: 12px;
+  padding: 14px;
   border: 1px solid #d3d1c7;
   border-radius: 8px;
   background: #faf7f1;
+}
+
+.sw-v2-graph-lane:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -19px;
+  width: 20px;
+  height: 1px;
+  background: #ba7517;
+}
+
+.sw-v2-graph-layout {
+  grid-template-columns: minmax(0, 2.2fr) minmax(280px, 0.72fr);
+}
+
+.sw-v2-graph-hero-panel {
+  border-top: 3px solid #0a0a0b;
 }
 
 .sw-v2-graph-lane h3 {
@@ -1048,8 +1093,10 @@
 }
 
 .sw-v2-graph-node {
-  min-height: 40px;
+  min-height: 44px;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
   padding: 9px 10px;
   border: 1px solid #d3d1c7;
@@ -1059,6 +1106,15 @@
   font-size: 12px;
   font-weight: 700;
   line-height: 1.3;
+}
+
+.sw-v2-graph-node small {
+  display: block;
+  margin-top: 4px;
+  color: #888780;
+  font-size: 10px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 1180px) {
@@ -1138,6 +1194,10 @@
   .sw-v2-lanes,
   .sw-v2-graph {
     grid-template-columns: 1fr;
+  }
+
+  .sw-v2-span-2 {
+    grid-column: auto;
   }
 
   .sw-v2-vendor-row,

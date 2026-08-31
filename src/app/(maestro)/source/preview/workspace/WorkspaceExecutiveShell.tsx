@@ -10,6 +10,7 @@ import {
   LineChart,
   Pie,
   PieChart,
+  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -275,16 +276,22 @@ export function WorkspaceExecutiveShell({
                 <button
                   type="button"
                   className="sw-v2-action-button"
-                  onClick={() => logic.select("evidence", null, "Coverage")}
+                  onClick={() => logic.select("contractList", null)}
                 >
-                  <span>Evidence</span>
+                  <span>View contracts</span>
                 </button>
                 <button
                   type="button"
                   className="sw-v2-action-button"
-                  onClick={() => logic.select("graph", null, "Flow")}
+                  onClick={() =>
+                    logic.select(
+                      "optimize",
+                      null,
+                      logic.state.tabs.optimize ?? "Action queue",
+                    )
+                  }
                 >
-                  <span>Graph</span>
+                  <span>Run optimize</span>
                 </button>
               </div>
             </div>
@@ -849,56 +856,63 @@ function VendorConcentrationChart({
 
   return (
     <div className="sw-v2-recharts-card" aria-label="Vendor concentration chart">
-      <BarChart
-        width={620}
-        height={238}
-        data={data}
-        layout="vertical"
-        margin={{ top: 8, right: 24, bottom: 8, left: 4 }}
-        barCategoryGap={14}
-      >
-        <CartesianGrid
-          horizontal={false}
-          stroke="rgba(10,10,11,0.12)"
-          strokeDasharray="3 4"
-        />
-        <XAxis
-          type="number"
-          hide
-          domain={[0, "dataMax"]}
-        />
-        <YAxis
-          type="category"
-          dataKey="shortName"
-          width={142}
-          tickLine={false}
-          axisLine={false}
-          tick={{ fill: "#5f5e5a", fontSize: 11, fontWeight: 700 }}
-        />
-        <Tooltip
-          cursor={{ fill: "rgba(186,117,23,0.08)" }}
-          contentStyle={{
-            border: "1px solid #d3d1c7",
-            borderRadius: 6,
-            boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
-            color: "#2c2c2a",
-          }}
-          formatter={(value) => [
-            money(typeof value === "number" ? value : Number(value)),
-            "Annual value",
-          ]}
-          labelFormatter={(_, rows) => rows[0]?.payload?.name ?? ""}
-        />
-        <Bar dataKey="annualValue" radius={[0, 5, 5, 0]}>
-          {data.map((row, index) => (
-            <Cell
-              key={row.name}
-              fill={index === 0 ? "#0a0a0b" : index === 1 ? "#1d9e75" : "#ba7517"}
-              opacity={Math.max(0.45, 1 - index * 0.12)}
+      <div className="sw-v2-chart-frame sw-v2-chart-frame-bar">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={280}
+          initialDimension={{ width: 620, height: 238 }}
+        >
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 8, right: 24, bottom: 8, left: 4 }}
+            barCategoryGap={14}
+          >
+            <CartesianGrid
+              horizontal={false}
+              stroke="rgba(10,10,11,0.12)"
+              strokeDasharray="3 4"
             />
-          ))}
-        </Bar>
-      </BarChart>
+            <XAxis
+              type="number"
+              hide
+              domain={[0, "dataMax"]}
+            />
+            <YAxis
+              type="category"
+              dataKey="shortName"
+              width={142}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "#5f5e5a", fontSize: 11, fontWeight: 700 }}
+            />
+            <Tooltip
+              cursor={{ fill: "rgba(186,117,23,0.08)" }}
+              contentStyle={{
+                border: "1px solid #d3d1c7",
+                borderRadius: 6,
+                boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+                color: "#2c2c2a",
+              }}
+              formatter={(value) => [
+                money(typeof value === "number" ? value : Number(value)),
+                "Annual value",
+              ]}
+              labelFormatter={(_, rows) => rows[0]?.payload?.name ?? ""}
+            />
+            <Bar dataKey="annualValue" radius={[0, 5, 5, 0]}>
+              {data.map((row, index) => (
+                <Cell
+                  key={row.name}
+                  fill={index === 0 ? "#0a0a0b" : index === 1 ? "#1d9e75" : "#ba7517"}
+                  opacity={Math.max(0.45, 1 - index * 0.12)}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
       <div className="sw-v2-recharts-legend">
         {data.map((row) => (
           <span key={row.name}>
@@ -931,70 +945,77 @@ function ContractPerformanceTrendChart({
       className="sw-v2-recharts-card sw-v2-recharts-card-compact"
       aria-label="Contract performance trend chart"
     >
-      <LineChart
-        width={620}
-        height={218}
-        data={data}
-        margin={{ top: 12, right: 24, bottom: 8, left: 4 }}
-      >
-        <CartesianGrid
-          vertical={false}
-          stroke="rgba(10,10,11,0.12)"
-          strokeDasharray="3 4"
-        />
-        <XAxis
-          dataKey="period"
-          tickLine={false}
-          axisLine={false}
-          tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
-        />
-        <YAxis
-          yAxisId="actual"
-          domain={[80, 100]}
-          width={38}
-          tickLine={false}
-          axisLine={false}
-          tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
-        />
-        <YAxis yAxisId="credit" orientation="right" hide />
-        <Tooltip
-          cursor={{ stroke: "rgba(186,117,23,0.28)", strokeWidth: 1 }}
-          contentStyle={{
-            border: "1px solid #d3d1c7",
-            borderRadius: 6,
-            boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
-            color: "#2c2c2a",
-          }}
-          formatter={(value, name) => {
-            if (name === "credit") {
-              return [
-                money(typeof value === "number" ? value : Number(value)),
-                "Credit calculated",
-              ];
-            }
-            return [`${Number(value).toFixed(1)}%`, "Actual"];
-          }}
-        />
-        <Line
-          yAxisId="actual"
-          type="monotone"
-          dataKey="actual"
-          stroke="#0a0a0b"
-          strokeWidth={2.5}
-          dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
-          activeDot={{ r: 5, stroke: "#ba7517", strokeWidth: 2 }}
-          connectNulls
-        />
-        <Line
-          yAxisId="credit"
-          type="monotone"
-          dataKey="credit"
-          stroke="#ba7517"
-          strokeWidth={2}
-          strokeDasharray="5 5"
-          dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
-        />
-      </LineChart>
+      <div className="sw-v2-chart-frame sw-v2-chart-frame-line">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={280}
+          initialDimension={{ width: 620, height: 224 }}
+        >
+          <LineChart
+            data={data}
+            margin={{ top: 12, right: 24, bottom: 8, left: 4 }}
+          >
+            <CartesianGrid
+              vertical={false}
+              stroke="rgba(10,10,11,0.12)"
+              strokeDasharray="3 4"
+            />
+            <XAxis
+              dataKey="period"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
+            />
+            <YAxis
+              yAxisId="actual"
+              domain={[80, 100]}
+              width={38}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "#5f5e5a", fontSize: 10, fontWeight: 700 }}
+            />
+            <YAxis yAxisId="credit" orientation="right" hide />
+            <Tooltip
+              cursor={{ stroke: "rgba(186,117,23,0.28)", strokeWidth: 1 }}
+              contentStyle={{
+                border: "1px solid #d3d1c7",
+                borderRadius: 6,
+                boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+                color: "#2c2c2a",
+              }}
+              formatter={(value, name) => {
+                if (name === "credit") {
+                  return [
+                    money(typeof value === "number" ? value : Number(value)),
+                    "Credit calculated",
+                  ];
+                }
+                return [`${Number(value).toFixed(1)}%`, "Actual"];
+              }}
+            />
+            <Line
+              yAxisId="actual"
+              type="monotone"
+              dataKey="actual"
+              stroke="#0a0a0b"
+              strokeWidth={2.5}
+              dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
+              activeDot={{ r: 5, stroke: "#ba7517", strokeWidth: 2 }}
+              connectNulls
+            />
+            <Line
+              yAxisId="credit"
+              type="monotone"
+              dataKey="credit"
+              stroke="#ba7517"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
       <div className="sw-v2-recharts-legend">
         <span>
           <b>black</b> actual SLA %
@@ -1029,38 +1050,47 @@ function OptimizeTypeMixChart({
       className="sw-v2-recharts-card sw-v2-recharts-card-compact"
       aria-label="Optimize action mix chart"
     >
-      <PieChart width={620} height={224}>
-        <Pie
-          data={data}
-          dataKey="value"
-          nameKey="name"
-          cx="50%"
-          cy="50%"
-          innerRadius={52}
-          outerRadius={82}
-          paddingAngle={3}
+      <div className="sw-v2-chart-frame sw-v2-chart-frame-donut">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={280}
+          initialDimension={{ width: 620, height: 224 }}
         >
-          {data.map((row, index) => (
-            <Cell
-              key={row.name}
-              fill={index === 0 ? "#0a0a0b" : index === 1 ? "#1d9e75" : "#ba7517"}
-              opacity={Math.max(0.52, 1 - index * 0.13)}
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={52}
+              outerRadius={82}
+              paddingAngle={3}
+            >
+              {data.map((row, index) => (
+                <Cell
+                  key={row.name}
+                  fill={index === 0 ? "#0a0a0b" : index === 1 ? "#1d9e75" : "#ba7517"}
+                  opacity={Math.max(0.52, 1 - index * 0.13)}
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                border: "1px solid #d3d1c7",
+                borderRadius: 6,
+                boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
+                color: "#2c2c2a",
+              }}
+              formatter={(value) => [
+                money(typeof value === "number" ? value : Number(value)),
+                "Candidate amount",
+              ]}
             />
-          ))}
-        </Pie>
-        <Tooltip
-          contentStyle={{
-            border: "1px solid #d3d1c7",
-            borderRadius: 6,
-            boxShadow: "0 10px 24px rgba(10,10,11,0.12)",
-            color: "#2c2c2a",
-          }}
-          formatter={(value) => [
-            money(typeof value === "number" ? value : Number(value)),
-            "Candidate amount",
-          ]}
-        />
-      </PieChart>
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
       <div className="sw-v2-recharts-legend">
         {data.map((row) => (
           <span key={row.name}>
@@ -2195,8 +2225,8 @@ function ContractGraphPage({
   ];
 
   return (
-    <div className="sw-v2-grid">
-      <section className="sw-v2-panel sw-v2-span-2">
+    <div className="sw-v2-grid sw-v2-graph-layout">
+      <section className="sw-v2-panel sw-v2-span-2 sw-v2-graph-hero-panel">
         <SubtabBar
           tabs={GRAPH_SUBTABS}
           active={subtab}
@@ -2205,10 +2235,6 @@ function ContractGraphPage({
         <PanelHead
           eyebrow="Contract graph"
           title={graphSubtabTitle(subtab)}
-        />
-        <LineageToggle
-          showLineage={showLineage}
-          onToggleLineage={onToggleLineage}
         />
         {subtab === "Volume" ? (
           <GraphVolumeTable portfolio={portfolio} showLineage={showLineage} />
@@ -2229,6 +2255,10 @@ function ContractGraphPage({
             ))}
           </div>
         )}
+        <LineageToggle
+          showLineage={showLineage}
+          onToggleLineage={onToggleLineage}
+        />
       </section>
 
       <section className="sw-v2-panel">
