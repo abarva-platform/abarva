@@ -47,6 +47,7 @@ import {
   findInventedNumbers,
   findApplicationCountErrors,
   findInventoryOpening,
+  findVendorLedOpening,
   JUDGMENT_CLASS_RULES_UNCHECKED,
   type LensTermClass,
   type ScorableChapter,
@@ -972,6 +973,7 @@ const MUST_NOT_DO_CHECKED_RULES = [
   "quote a number that is not in the packet",
   "count deployments as applications",
   "start with a technology inventory",
+  "open executive identity on a vendor or supplier",
 ] as const;
 
 /**
@@ -1006,6 +1008,7 @@ function collectMustNotDoViolations(
     }
     if (chapter.chapterId === "executive_brief") {
       violations.push(...findInventoryOpening(chapter));
+      violations.push(...findVendorLedOpening(chapter));
     }
   }
   return violations;
