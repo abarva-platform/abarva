@@ -19,6 +19,7 @@ const DEFAULT_SCHEMAS = [
   "ecl_review",
   "ecl_projection",
   "serving",
+  "tower",
 ];
 
 const TABLE_FIELDS = [

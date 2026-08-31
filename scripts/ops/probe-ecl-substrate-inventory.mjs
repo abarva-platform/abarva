@@ -27,6 +27,7 @@ const SCHEMAS = [
   "ecl_review",
   "ecl_projection",
   "serving",
+  "tower",
 ];
 
 async function readMigrationCorpus() {
