@@ -950,6 +950,8 @@
     "ecl:source-intelligence:model-pass": "node scripts/ecl/run_source_intelligence_model_pass.mjs",
     "ecl:source-intelligence:home-packets": "node scripts/ecl/build_source_intelligence_home_packets.mjs",
     "ecl:home-browse-record:contract": "node scripts/ecl/build_home_browse_record_contract.mjs",
+    "data-build:application-segmentation": "npx tsx scripts/data-build/report-application-segmentation.ts",
+    "data-build:segment-spine": "npx tsx scripts/data-build/report-segment-spine.ts",
     "ecl:home-narrative:plan": "npx tsx scripts/ecl/build_home_ecl_narrative_layer.ts --out-dir /tmp/home-ecl-narrative-layer",
     "ecl:home-narrative:apply": "HOME_ECL_NARRATIVE_WRITE=true HOME_ECL_NARRATIVE_WRITE_APPROVED=true npx tsx scripts/ecl/build_home_ecl_narrative_layer.ts --out-dir /tmp/home-ecl-narrative-layer",
     "ecl:home-narrative:readback": "npx tsx scripts/ecl/readback_home_ecl_narrative_layer.ts --out-dir /tmp/home-ecl-narrative-readback",

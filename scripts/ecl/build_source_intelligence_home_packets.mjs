@@ -8,6 +8,7 @@ const CONTRACT_VERSION = "source-intelligence-home-page-packets/v1";
 const DEFAULT_SOURCE_DIR = path.join("outputs", "source-intelligence", "meridian-health", "model-pass");
 const DEFAULT_OUT_DIR = path.join("outputs", "source-intelligence", "meridian-health", "home-page-packets");
 const DEFAULT_INVENTORY_DIR = "";
+const DEFAULT_SEGMENT_SPINE_REPORT = "";
 const PAGE_DEFS = [
   {
     page_key: "executive_brief",
@@ -210,6 +211,7 @@ function parseArgs(argv) {
   const args = {
     sourceDir: DEFAULT_SOURCE_DIR,
     inventoryDir: DEFAULT_INVENTORY_DIR,
+    segmentSpineReport: DEFAULT_SEGMENT_SPINE_REPORT,
     outDir: DEFAULT_OUT_DIR,
     maxArtifactsPerPage: 12,
   };
@@ -222,6 +224,7 @@ function parseArgs(argv) {
     };
     if (arg === "--source-dir") args.sourceDir = next();
     else if (arg === "--inventory-dir") args.inventoryDir = next();
+    else if (arg === "--segment-spine-report") args.segmentSpineReport = next();
     else if (arg === "--out-dir") args.outDir = next();
     else if (arg === "--max-artifacts-per-page") args.maxArtifactsPerPage = Number(next());
     else if (arg === "--help") {
@@ -230,6 +233,7 @@ function parseArgs(argv) {
 Options:
   --source-dir <dir>              Model-pass output directory containing accepted/*.json.
   --inventory-dir <dir>           Optional inventory output directory containing prompts/*.json with source_content.
+  --segment-spine-report <json>   Optional deterministic segment-spine report from report-segment-spine.ts.
   --out-dir <dir>                 Output directory for Home page packets and prompts.
   --max-artifacts-per-page <n>    Safety bound per page unless include_all is true. Default: 12.`);
       process.exit(0);
@@ -294,6 +298,101 @@ function loadSourceContentIndex(inventoryDir) {
   return index;
 }
 
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"' && text[i + 1] === '"') {
+        field += '"';
+        i += 1;
+      } else if (ch === '"') quoted = false;
+      else field += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ",") {
+      row.push(field);
+      field = "";
+    } else if (ch === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else if (ch !== "\r") field += ch;
+  }
+  if (field || row.length) {
+    row.push(field);
+    rows.push(row);
+  }
+  const header = rows.shift() ?? [];
+  return {
+    header,
+    rows: rows
+      .filter((r) => r.some((cell) => cell.trim()))
+      .map((r) => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ""]))),
+  };
+}
+
+function asNumber(value) {
+  const n = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+
+function topValues(rows, column, limit = 8) {
+  const counts = new Map();
+  for (const row of rows) {
+    const value = String(row[column] ?? "").trim();
+    if (!value) continue;
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([value, count]) => ({ value, count }));
+}
+
+function buildSourceEvidenceTable(source) {
+  const parsed = parseCsv(source.source_content);
+  const keyDimensions = source.source_inventory?.key_dimensions ?? [];
+  const dimensionColumns = keyDimensions.filter((column) => parsed.header.includes(column)).slice(0, 8);
+  const numericSummaries = [];
+  for (const column of parsed.header) {
+    let count = 0;
+    let sum = 0;
+    for (const row of parsed.rows) {
+      const n = asNumber(row[column]);
+      if (n === null) continue;
+      count += 1;
+      sum += n;
+    }
+    if (count > 0 && count >= Math.max(1, Math.floor(parsed.rows.length * 0.6))) {
+      numericSummaries.push({
+        column,
+        populated_count: count,
+        sum: Math.round(sum * 100) / 100,
+        average: Math.round((sum / count) * 100) / 100,
+      });
+    }
+  }
+  numericSummaries.sort((a, b) => Math.abs(b.sum) - Math.abs(a.sum));
+  const rowSamples = parsed.rows.slice(0, 2).map((row) => {
+    const entries = parsed.header.slice(0, 14).map((column) => [column, row[column] ?? ""]);
+    return Object.fromEntries(entries);
+  });
+
+  return {
+    source_family: source.source_family,
+    source_file: source.source_file,
+    row_count: parsed.rows.length,
+    column_count: parsed.header.length,
+    dimension_summaries: dimensionColumns.map((column) => ({ column, top_values: topValues(parsed.rows, column) })),
+    numeric_summaries: numericSummaries.slice(0, 12),
+    row_samples: rowSamples,
+  };
+}
+
 function textOf(entry) {
   if (typeof entry === "string") return entry;
   if (entry && typeof entry.statement === "string") return entry.statement;
@@ -351,6 +450,49 @@ function sourceContentForPage(selected, sourceContentIndex) {
     .filter(Boolean);
 }
 
+function sourceEvidenceTablesForPage(sourceContentContext) {
+  return sourceContentContext.map(buildSourceEvidenceTable);
+}
+
+function loadSegmentSpineReport(file) {
+  if (!file) return null;
+  if (!fs.existsSync(file)) throw new Error(`Segment spine report not found: ${file}`);
+  return readJson(file);
+}
+
+function segmentContextForPage(page, report) {
+  if (!report) return null;
+  const relevantPages = new Set([
+    "executive_brief",
+    "our_business",
+    "strategy_value_creation",
+    "how_we_operate",
+    "technology_data",
+    "performance_value",
+    "leadership_perspective",
+    "what_needs_attention",
+    "current_state_architecture",
+    "current_state_data_flow",
+    "what_has_been_loaded",
+    "browse_the_record",
+    "applications_systems",
+    "vendor_contracts",
+    "infrastructure_platforms",
+    "data_assets_integrations",
+  ]);
+  if (!relevantPages.has(page.page_key)) return null;
+  return {
+    source: "deterministic segment spine report",
+    segment_source_file: "01b_business_segments.csv",
+    function_map_source: "config/segmentation/health-system-v1.json",
+    segments: report.segments,
+    unattributed: report.unattributed,
+    unresolved_by_domain: report.unresolvedByDomain ?? {},
+    share_vs_revenue: report.shareVsRevenue,
+    usage_rule: "Use this as fixed arithmetic context. Do not recompute or rename segments.",
+  };
+}
+
 function buildPrompt(page, packet) {
   return {
     prompt_version: "home-page-source-intelligence-writer/v1",
@@ -364,6 +506,7 @@ function buildPrompt(page, packet) {
       "If context is insufficient, render a clear deferred/refused page state with evidence needed.",
       "Use executive language for executive pages and expert technologist language for architecture/data pages.",
       "Use source_content_context when present for detail; do not rely only on compact summaries.",
+      "Use segment_spine_context and source_evidence_tables as fixed deterministic exhibits; interpret them, do not recalculate them.",
     ].join(" "),
     user: {
       page_question: page.question,
@@ -378,6 +521,10 @@ function buildPrompt(page, packet) {
           required_charts_or_diagrams: page.charts,
         })),
         visual_datasets_to_use: ["dataset refs from the packet only"],
+        deterministic_tables_to_use: [
+          "segment_spine_context when present",
+          "source_evidence_tables when present",
+        ],
         drilldowns_to_enable: page.drilldowns,
         evidence_basis: ["file/family/source refs"],
         gaps_or_refusals: ["explicit unknowns and evidence needed"],
@@ -387,6 +534,9 @@ function buildPrompt(page, packet) {
         source_content_mode: packet.source_content_context.length > 0
           ? "full selected source files included"
           : "not included in this packet; use accepted artifacts only",
+        segment_spine_mode: packet.segment_spine_context
+          ? "declared segment spine and cross-domain board included"
+          : "not included",
       },
       packet,
     },
@@ -398,6 +548,7 @@ function main() {
   const runManifest = readJson(path.join(options.sourceDir, "run-manifest.json"));
   const artifacts = listAcceptedArtifacts(options.sourceDir);
   const sourceContentIndex = loadSourceContentIndex(options.inventoryDir);
+  const segmentSpineReport = loadSegmentSpineReport(options.segmentSpineReport);
   if (artifacts.length === 0) throw new Error("No accepted source-intelligence artifacts found");
 
   fs.mkdirSync(options.outDir, { recursive: true });
@@ -409,6 +560,8 @@ function main() {
     const selected = selectArtifactsForPage(artifacts, page, options.maxArtifactsPerPage);
     const compact = selected.map(compactArtifact);
     const sourceContentContext = sourceContentForPage(selected, sourceContentIndex);
+    const sourceEvidenceTables = sourceEvidenceTablesForPage(sourceContentContext);
+    const segmentSpineContext = segmentContextForPage(page, segmentSpineReport);
     const packet = {
       contract_version: CONTRACT_VERSION,
       tenant_key: runManifest.tenant_key,
@@ -441,6 +594,8 @@ function main() {
       },
       source_intelligence: compact,
       source_content_context: sourceContentContext,
+      source_evidence_tables: sourceEvidenceTables,
+      segment_spine_context: segmentSpineContext,
       evidence_basis: compact.map((artifact) => ({
         source_family: artifact.source_family,
         source_file: artifact.source_file,
@@ -466,6 +621,8 @@ function main() {
       included_source_count: selected.length,
       included_source_families: packet.included_source_families,
       source_content_context_count: sourceContentContext.length,
+      source_evidence_table_count: sourceEvidenceTables.length,
+      segment_spine_context_present: Boolean(segmentSpineContext),
       packet_hash: packetHash,
       prompt_hash: promptHash,
     });
@@ -478,9 +635,12 @@ function main() {
     source_ref: runManifest.source_ref,
     source_model_pass_dir: options.sourceDir,
     source_inventory_dir: options.inventoryDir || null,
+    segment_spine_report: options.segmentSpineReport || null,
     page_count: pages.length,
     total_source_artifact_count: artifacts.length,
     source_content_context_count: pages.reduce((sum, page) => sum + page.source_content_context_count, 0),
+    source_evidence_table_count: pages.reduce((sum, page) => sum + page.source_evidence_table_count, 0),
+    segment_spine_context_page_count: pages.filter((page) => page.segment_spine_context_present).length,
     pages,
     generated_at: new Date().toISOString(),
   };
@@ -493,6 +653,8 @@ function main() {
     page_count: manifest.page_count,
     total_source_artifact_count: manifest.total_source_artifact_count,
     source_content_context_count: manifest.source_content_context_count,
+    source_evidence_table_count: manifest.source_evidence_table_count,
+    segment_spine_context_page_count: manifest.segment_spine_context_page_count,
     out_dir: options.outDir,
   }, null, 2));
 }
