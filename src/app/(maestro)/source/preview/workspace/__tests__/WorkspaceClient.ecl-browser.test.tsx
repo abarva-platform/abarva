@@ -222,8 +222,8 @@ async function writeEclProjectionFixture(dir: string) {
         auto_renew_flag: "true",
         renewal_notice_date: "2027-06-30",
         end_date: "2027-01-01",
-        annualized_value_usd: "500000",
-        total_contract_value_usd: "1500000",
+        annualized_value_usd: "12000000",
+        total_contract_value_usd: "36000000",
         value_state: "known",
         scope_json: JSON.stringify([
           { domain: "Clinical", name: "Clinical applications" },
@@ -258,7 +258,7 @@ async function writeEclProjectionFixture(dir: string) {
         vendor_object_id: "MER-VEN-EPIC",
         vendor_name: "Epic Systems Corporation",
         contract_count: "1",
-        annualized_spend_usd: "500000",
+        annualized_spend_usd: "12000000",
         contract_ids_json: JSON.stringify([]),
       },
     ]),
@@ -452,6 +452,13 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByRole("tab", { name: "Archetype mix" })).toBeTruthy();
     expect(screen.getByText("Vendor 360")).toBeTruthy();
     expect(screen.getByText("One row per supplier relationship")).toBeTruthy();
+    expect(
+      screen.getAllByRole("heading", { name: "Epic Systems Corporation" })
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("heading", { name: "Helix Shared Services Group" }),
+    ).toBeNull();
 
     fireEvent.click(screen.getByRole("tab", { name: "Evidence depth" }));
     expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
