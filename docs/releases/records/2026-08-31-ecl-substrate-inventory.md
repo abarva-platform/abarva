@@ -10,11 +10,10 @@
 
 ## Plain-English Summary
 
-Three separate fixes on 2026-08-30 had to read the deployed database to learn what the code
-actually was, because the `ecl_projection` tables Tower reads, the `serving` views over them, and
-the functions those views call have no migration in this repository. Twice the deployed object and
-the repo's version had already diverged. Patching a deployed function body is not a sustainable
-source of truth, and it is the last structural concern left from that sweep.
+Recent Tower serving fixes had to compare deployed database objects directly against repository
+expectations, because the `ecl_projection` tables Tower reads, the `serving` views over them, and
+the functions those views call are not fully represented by migrations in this repository. Patching
+a deployed function body is not a sustainable source of truth.
 
 The obstacle to fixing it has been scope. A baseline covering the four Tower projection tables
 fails on a fresh database, because their foreign keys point at eight tables across four other
@@ -22,9 +21,9 @@ schemas which are equally unversioned. The real unit of work is the substrate, a
 big it is — those eight are what Tower happens to touch, not an inventory.
 
 This measures it. Per schema: every table with its column count, whether it has a primary key, how
-many foreign keys leave it, its RLS state and policy count. Then the part that decides the order a
-baseline must be written in — which schemas' foreign keys point at which. Then the totals a
-baseline would have to reproduce.
+many foreign keys leave it, its RLS state and policy count. It also lists views, materialized views
+and functions with definition hashes, RLS policies with expression hashes, foreign-key edges, which
+objects appear in migrations, and the dependency order a baseline would have to follow.
 
 No baseline is written here. Writing one before knowing whether the answer is forty tables or four
 hundred would be guessing at the shape of the work.
@@ -36,8 +35,8 @@ no schema, code or product change, and nothing calls it.
 
 ## Client Applicability
 
-**Internal only.** The report contains schema and table names, column and constraint counts, and
-dependency directions. No client data and no row values.
+**Internal only.** The report contains schema object names, counts, dependency directions and
+definition hashes. No client data and no row values.
 
 ## Changes Included
 
@@ -51,7 +50,7 @@ dependency directions. No client data and no row values.
 | Check | Result |
 | --- | --- |
 | `node --check` | PASS |
-| Mutating-statement scan | PASS — zero occurrences; every statement is a `SELECT` against `pg_catalog` |
+| Mutating-statement scan | PASS — zero occurrences; database statements are `SELECT` queries against catalog views |
 | `package.json` parse | PASS |
 | Run against the data plane | PENDING — immediately after merge |
 
@@ -75,16 +74,16 @@ Delete the script and the npm entry. Nothing depends on it.
 
 - **This measures; it does not fix.** A baseline of an existing unversioned schema is a decision
   about how to adopt it, not a mechanical transcription, and the decision needs the numbers first.
-- **Lab only.** A production substrate could differ, which is exactly the risk an unversioned
-  schema creates, and a baseline generated from lab and applied to production would encode that
-  risk rather than remove it.
+- **Lab only unless run elsewhere.** A production substrate could differ, which is exactly the risk
+  an unversioned schema creates, and a baseline generated from one environment and applied to
+  another would encode that risk rather than remove it.
 - The inventory covers `ecl_projection`, `ecl_context`, `ecl_review`, `ecl_source` and `serving`.
   If the substrate reaches further, the next run should widen the list rather than assume.
 
 ## Audit Evidence
 
-`grep -rl "create table if not exists ecl_projection.<name>" supabase/migrations/` returns zero for
-`tower_ai_portfolio`, `tower_command_center`, `tower_value_chain` and `tower_evidence_queue`, and
-for the eight tables their foreign keys reference. On 2026-08-30 the deployed `tower_ai_rows` was
-found to lack an active-generation join that migration `20260829113000` defines and that had been
-applied.
+Repository searches for `ecl_projection.tower_ai_portfolio`,
+`ecl_projection.tower_command_center`, `ecl_projection.tower_value_chain`, and
+`ecl_projection.tower_evidence_queue` do not find baseline table definitions in
+`supabase/migrations/`. This probe turns that ad hoc check into a repeatable inventory and reports
+object-level migration coverage markers for follow-up baseline work.

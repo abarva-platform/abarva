@@ -17,12 +17,31 @@
  */
 
 import process from "node:process";
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
 
 const SCHEMAS = ["ecl_projection", "ecl_context", "ecl_review", "ecl_source", "serving"];
+
+async function readMigrationCorpus() {
+  const migrationDir = path.join(process.cwd(), "supabase", "migrations");
+  const files = await readdir(migrationDir);
+  const sqlFiles = files.filter((file) => file.endsWith(".sql")).sort();
+  const contents = await Promise.all(
+    sqlFiles.map(async (file) => readFile(path.join(migrationDir, file), "utf8")),
+  );
+  return contents.join("\n").toLowerCase();
+}
+
+function appearsInMigrations(corpus, schema, name) {
+  const bare = `${schema}.${name}`.toLowerCase();
+  const quoted = `"${schema.toLowerCase()}"."${name.toLowerCase()}"`;
+  return corpus.includes(bare) || corpus.includes(quoted);
+}
 
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is required");
+  const migrationCorpus = await readMigrationCorpus();
   const { default: pg } = await import("pg");
   const client = new pg.Client({
     connectionString: url,
@@ -70,11 +89,123 @@ async function main() {
     );
     for (const r of tables.rows) {
       console.log(
-        `table\t${r.schema}.${r.name}\tcols=${r.cols}\tpk=${r.has_pk}\tfks_out=${r.fks_out}\trls=${r.rls}\tpolicies=${r.policies}`,
+        [
+          "table",
+          `${r.schema}.${r.name}`,
+          `cols=${r.cols}`,
+          `pk=${r.has_pk}`,
+          `fks_out=${r.fks_out}`,
+          `rls=${r.rls}`,
+          `policies=${r.policies}`,
+          `in_migrations=${appearsInMigrations(migrationCorpus, r.schema, r.name)}`,
+        ].join("\t"),
       );
     }
 
-    console.log("=== 3. dependency order: which schema's FKs point where ===");
+    console.log("=== 3. views and materialized views, with definition hashes ===");
+    const views = await client.query(
+      `select n.nspname as schema,
+              c.relname as name,
+              case c.relkind when 'm' then 'matview' else 'view' end as kind,
+              md5(pg_get_viewdef(c.oid, true)) as definition_hash
+         from pg_class c join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = any($1) and c.relkind in ('v', 'm')
+        order by n.nspname, c.relkind, c.relname`,
+      [SCHEMAS],
+    );
+    for (const r of views.rows) {
+      console.log(
+        [
+          r.kind,
+          `${r.schema}.${r.name}`,
+          `definition_hash=${r.definition_hash}`,
+          `in_migrations=${appearsInMigrations(migrationCorpus, r.schema, r.name)}`,
+        ].join("\t"),
+      );
+    }
+
+    console.log("=== 4. functions, with signatures and definition hashes ===");
+    const functions = await client.query(
+      `select n.nspname as schema,
+              p.proname as name,
+              pg_get_function_identity_arguments(p.oid) as args,
+              l.lanname as language,
+              p.provolatile as volatility,
+              md5(pg_get_functiondef(p.oid)) as definition_hash
+         from pg_proc p
+         join pg_namespace n on n.oid = p.pronamespace
+         join pg_language l on l.oid = p.prolang
+        where n.nspname = any($1)
+        order by n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)`,
+      [SCHEMAS],
+    );
+    for (const r of functions.rows) {
+      console.log(
+        [
+          "function",
+          `${r.schema}.${r.name}(${r.args})`,
+          `language=${r.language}`,
+          `volatility=${r.volatility}`,
+          `definition_hash=${r.definition_hash}`,
+          `in_migrations=${appearsInMigrations(migrationCorpus, r.schema, r.name)}`,
+        ].join("\t"),
+      );
+    }
+
+    console.log("=== 5. RLS policies, with expression hashes ===");
+    const policies = await client.query(
+      `select schemaname as schema,
+              tablename,
+              policyname,
+              permissive,
+              roles,
+              cmd,
+              md5(
+                coalesce(qual, '') || chr(10) ||
+                coalesce(with_check, '') || chr(10) ||
+                coalesce(array_to_string(roles, ','), '')
+              ) as policy_hash
+         from pg_policies
+        where schemaname = any($1)
+        order by schemaname, tablename, policyname`,
+      [SCHEMAS],
+    );
+    for (const r of policies.rows) {
+      console.log(
+        [
+          "policy",
+          `${r.schema}.${r.tablename}.${r.policyname}`,
+          `cmd=${r.cmd}`,
+          `permissive=${r.permissive}`,
+          `policy_hash=${r.policy_hash}`,
+          `in_migrations=${appearsInMigrations(migrationCorpus, r.schema, r.policyname)}`,
+        ].join("\t"),
+      );
+    }
+
+    console.log("=== 6. foreign-key edges, table to table ===");
+    const fkEdges = await client.query(
+      `select sn.nspname as from_schema,
+              sc.relname as from_table,
+              k.conname as constraint_name,
+              tn.nspname as to_schema,
+              tc.relname as to_table
+         from pg_constraint k
+         join pg_class sc on sc.oid = k.conrelid
+         join pg_namespace sn on sn.oid = sc.relnamespace
+         join pg_class tc on tc.oid = k.confrelid
+         join pg_namespace tn on tn.oid = tc.relnamespace
+        where k.contype = 'f' and sn.nspname = any($1)
+        order by sn.nspname, sc.relname, k.conname`,
+      [SCHEMAS],
+    );
+    for (const r of fkEdges.rows) {
+      console.log(
+        `fk\t${r.from_schema}.${r.from_table}\t->\t${r.to_schema}.${r.to_table}\tconstraint=${r.constraint_name}`,
+      );
+    }
+
+    console.log("=== 7. dependency order: which schema's FKs point where ===");
     const deps = await client.query(
       `select sn.nspname as from_schema, tn.nspname as to_schema, count(*)::int as fks
          from pg_constraint k
@@ -91,7 +222,7 @@ async function main() {
       console.log(`depends\t${r.from_schema}\t->\t${r.to_schema}\tfks=${r.fks}`);
     }
 
-    console.log("=== 4. total surface a baseline must cover ===");
+    console.log("=== 8. total surface a baseline must cover ===");
     const totals = await client.query(
       `select count(*)::int as tables,
               (select count(*)::int from pg_attribute a
@@ -108,7 +239,9 @@ async function main() {
       [SCHEMAS],
     );
     const t = totals.rows[0];
-    console.log(`total\ttables=${t.tables}\tcolumns=${t.columns}\tconstraints=${t.constraints}\tindexes=${t.indexes}`);
+    console.log(
+      `total\ttables=${t.tables}\tcolumns=${t.columns}\tconstraints=${t.constraints}\tindexes=${t.indexes}\tviews=${views.rowCount}\tfunctions=${functions.rowCount}\tpolicies=${policies.rowCount}`,
+    );
 
     console.log("INVENTORY_OK");
   } finally {
