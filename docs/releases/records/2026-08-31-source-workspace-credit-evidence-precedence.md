@@ -35,6 +35,13 @@ falls back to older snapshot rows. Recoverable-credit type-mix rollups use the
 same selected credit slice so charts, tables, and headlines tell one consistent
 story.
 
+The second follow-up correction makes the action-type mix use that same selected
+credit coverage for recoverable leakage. That keeps the type-mix chart/table,
+credit headline, and evidence-basis panel from presenting different recoverable
+amounts. Credit-specific display also preserves one decimal in the thousands
+band so the deterministic amount remains legible instead of being rounded into
+a coarser executive shorthand.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`.
@@ -65,6 +72,9 @@ story.
   impact package. It verifies the recoverable-credit headline and action-type
   mix both stay scoped to the selected impact package instead of blending older
   recoverable rows.
+- Added a regression for the case where a loaded credit row has evidence coverage
+  but no matching credit action-card text. The action-type mix still reflects the
+  selected credit coverage amount and count.
 
 ## Rollout Plan
 
@@ -90,6 +100,7 @@ workflow. No data rollback is required because this is presentation logic only.
 
 - PR URL: https://github.com/abarva-platform/abarva/pull/7211
 - Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/7213
+- Second follow-up PR URL: pending.
 - ACA deploy run: pending.
 - Signed-in Source workspace proof: pending.
 

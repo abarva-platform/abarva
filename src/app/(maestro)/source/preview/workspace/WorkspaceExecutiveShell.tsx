@@ -120,6 +120,31 @@ function preferredImpactLoadRunId(
   );
 }
 
+function impactCreditMoney(value: number | null | undefined): string {
+  if (value == null) return "Not established";
+  const abs = Math.abs(value);
+  if (abs >= 1_000 && abs < 1_000_000) {
+    return `$${(value / 1_000).toFixed(1)}K`;
+  }
+  return money(value);
+}
+
+function isRecoverableCreditCandidate(
+  candidate: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number],
+): boolean {
+  return /credit|recover/i.test(
+    [
+      candidate.opportunity_type,
+      candidate.action_type,
+      candidate.title,
+      candidate.finding_summary,
+      candidate.deterministic_basis,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+}
+
 export function source360RecoverableCreditCoverageRows(
   portfolio: RecoverableCreditInput,
 ): readonly SourceContractEvidenceCoverageRow[] {
@@ -702,7 +727,9 @@ function PortfolioPage({
           </>
         ) : creditFinding > 0 && findingContract ? (
           <>
-            <div className="sw-v2-finding-value">{money(creditFinding)}</div>
+            <div className="sw-v2-finding-value">
+              {impactCreditMoney(creditFinding)}
+            </div>
             <p className="sw-v2-muted">
               Unclaimed credits in the loaded performance-credit slice. This is
               evidence for {findingContract.contractId}, not a portfolio-wide
@@ -1864,7 +1891,9 @@ function OptimizePage({
               <ValueLane
                 title="Recover money"
                 value={
-                  creditFinding > 0 ? money(creditFinding) : "Not established"
+                  creditFinding > 0
+                    ? impactCreditMoney(creditFinding)
+                    : "Not established"
                 }
                 note={
                   creditFinding > 0 && findingContract
@@ -1931,7 +1960,9 @@ function OptimizePage({
           <Fact
             label="Credit finding"
             value={
-              creditFinding > 0 ? money(creditFinding) : "Not established"
+              creditFinding > 0
+                ? impactCreditMoney(creditFinding)
+                : "Not established"
             }
           />
           <Fact
@@ -3252,6 +3283,20 @@ export function optimizeTypeRows(portfolio: SourceWorkspacePortfolioData) {
       numberFromDb(row.unclaimed_credit_usd) ?? 0,
     ]),
   );
+  const recoverableCreditAmount = recoverableCreditRows.reduce(
+    (sum, row) => sum + (numberFromDb(row.unclaimed_credit_usd) ?? 0),
+    0,
+  );
+  const recoverableCreditFinanceStates = new Set(
+    portfolio.impact.actionCandidates
+      .filter(
+        (candidate) =>
+          isRecoverableCreditCandidate(candidate) &&
+          recoverableCreditByContract.has(candidate.contract_id),
+      )
+      .map((candidate) => candidate.finance_confirmation_state)
+      .filter(Boolean),
+  );
   const groups = new Map<
     string,
     {
@@ -3261,35 +3306,29 @@ export function optimizeTypeRows(portfolio: SourceWorkspacePortfolioData) {
       financeStates: Set<string>;
     }
   >();
+  if (recoverableCreditRows.length > 0 && recoverableCreditAmount > 0) {
+    groups.set("recoverable_leakage", {
+      type: "recoverable_leakage",
+      count: recoverableCreditRows.length,
+      amount: recoverableCreditAmount,
+      financeStates:
+        recoverableCreditFinanceStates.size > 0
+          ? recoverableCreditFinanceStates
+          : new Set(["not_confirmed"]),
+    });
+  }
   for (const candidate of portfolio.impact.actionCandidates) {
     const type =
       candidate.opportunity_type ?? candidate.action_type ?? "Not established";
-    const isRecoverableCredit = /credit|recover/i.test(
-      [
-        type,
-        candidate.action_type,
-        candidate.title,
-        candidate.finding_summary,
-        candidate.deterministic_basis,
-      ]
-        .filter(Boolean)
-        .join(" "),
-    );
-    if (
-      isRecoverableCredit &&
-      recoverableCreditByContract.size > 0 &&
-      !recoverableCreditByContract.has(candidate.contract_id)
-    ) {
+    const isRecoverableCredit = isRecoverableCreditCandidate(candidate);
+    if (isRecoverableCredit && recoverableCreditByContract.size > 0) {
       continue;
     }
     const current =
       groups.get(type) ??
       { type, count: 0, amount: 0, financeStates: new Set<string>() };
     current.count += 1;
-    current.amount += isRecoverableCredit
-      ? (recoverableCreditByContract.get(candidate.contract_id) ??
-        (numberFromDb(candidate.candidate_amount_usd) ?? 0))
-      : (numberFromDb(candidate.candidate_amount_usd) ?? 0);
+    current.amount += numberFromDb(candidate.candidate_amount_usd) ?? 0;
     current.financeStates.add(candidate.finance_confirmation_state);
     groups.set(type, current);
   }
