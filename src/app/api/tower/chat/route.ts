@@ -52,6 +52,28 @@ function buildTowerChatPayload(result: TowerChatResult) {
   };
 }
 
+function towerTenantKeyCandidates(args: {
+  requestedClient?: string | null;
+  activeClient?: {
+    id?: string | null;
+    key?: string | null;
+    name?: string | null;
+  } | null;
+  tenancy: {
+    clientId?: string | null;
+    clientKey?: string | null;
+  };
+}): readonly (string | null | undefined)[] {
+  return [
+    args.activeClient?.key,
+    args.activeClient?.id,
+    args.activeClient?.name,
+    args.requestedClient && args.activeClient ? args.requestedClient : null,
+    args.tenancy.clientKey,
+    args.tenancy.clientId,
+  ];
+}
+
 function towerChatFailurePayload(message: string) {
   return {
     error: "tower_current_chat_failed",
@@ -108,6 +130,11 @@ export async function POST(request: Request) {
   );
   const tenantName = activeClient?.name ?? tenantKey;
   const tenantId = activeClient?.id ?? tenancy.clientId;
+  const tenantKeyCandidates = towerTenantKeyCandidates({
+    requestedClient,
+    activeClient,
+    tenancy,
+  });
   const wantsStream =
     request.headers.get("accept")?.includes("application/x-ndjson") ||
     request.headers.get("accept")?.includes("text/event-stream") ||
@@ -132,6 +159,7 @@ export async function POST(request: Request) {
             tenantId,
             userId: tenancy.userId,
             tenantKey,
+            tenantKeyCandidates,
             tenantName,
             question,
             pageContext: body.pageContext,
@@ -170,6 +198,7 @@ export async function POST(request: Request) {
       tenantId,
       userId: tenancy.userId,
       tenantKey,
+      tenantKeyCandidates,
       tenantName,
       question,
       pageContext: body.pageContext,

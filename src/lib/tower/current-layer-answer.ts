@@ -19,6 +19,7 @@ export interface CurrentTowerAnswerArgs {
   tenantId: string;
   userId?: string | null;
   tenantKey: string;
+  tenantKeyCandidates?: readonly (string | null | undefined)[];
   tenantName: string;
   question: string;
   pageContext?: CioTowerPageContext | null;
@@ -627,7 +628,11 @@ export async function answerCurrentTowerQuestion(
 ): Promise<CioTowerAnswerResult> {
   const startedAt = Date.now();
   const view = await readTowerCommandCenter({
-    tenantKeyCandidates: [args.tenantKey, args.tenantName],
+    tenantKeyCandidates: [
+      args.tenantKey,
+      ...(args.tenantKeyCandidates ?? []),
+      args.tenantName,
+    ],
   });
   const intent = intentFromPageContext(intentFor(args.question), args.pageContext);
   const current = answerFromIntent(args, intent, view);
