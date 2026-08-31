@@ -119,6 +119,23 @@ describe("resolveTenant", () => {
     });
   });
 
+  it("lets elevated users switch tenants even when their email carries a tenant hint", async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: "admin" },
+      primaryEmailAddress: { emailAddress: "ops@skyharbor-air.example.com" },
+      emailAddresses: [],
+    });
+    mockCookie("skyharbor");
+
+    await expect(
+      resolveTenant({ requestedClient: "northstar" }),
+    ).resolves.toMatchObject({
+      appClientKey: "northstar",
+      canonicalKey: "northstar-clinical",
+      source: "body",
+    });
+  });
+
   it("resolves from the active-client cookie when request and session do not name a tenant", async () => {
     currentUserMock.mockResolvedValue({
       publicMetadata: {},
@@ -203,7 +220,7 @@ describe("resolveTenant", () => {
     });
   });
 
-  it("pins anand@abarva.ai to SkyHarbor ahead of stale metadata, request, and cookie tenants", async () => {
+  it("lets elevated launch profiles switch through an explicit request", async () => {
     currentUserMock.mockResolvedValue({
       publicMetadata: { role: "admin", clientId: "meridian" },
       primaryEmailAddress: { emailAddress: "anand@abarva.ai" },
@@ -211,18 +228,18 @@ describe("resolveTenant", () => {
     });
     mockCookie("apexretail");
     mockClientRow({
-      id: "client-skyharbor",
-      name: "SkyHarbor Global",
-      industry_code: "AIRLINE",
+      id: "client-meridian",
+      name: "Meridian Health",
+      industry_code: "HEALTHCARE_IDN",
     });
 
     await expect(
       resolveTenant({ requestedClient: "meridian" }),
     ).resolves.toMatchObject({
-      appClientKey: "skyharbor",
-      canonicalKey: "skyharbor-air",
-      clientId: "client-skyharbor",
-      source: "email",
+      appClientKey: "meridian",
+      canonicalKey: "meridian-health",
+      clientId: "client-meridian",
+      source: "body",
     });
   });
 
