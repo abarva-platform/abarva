@@ -791,6 +791,7 @@
     "ops:probe-tower-serving-views": "node scripts/ops/probe-tower-serving-views.mjs",
     "ops:probe-tower-rls": "node scripts/ops/probe-tower-rls.mjs",
     "ops:probe-ecl-substrate-inventory": "node scripts/ops/probe-ecl-substrate-inventory.mjs",
+    "ops:probe-ecl-substrate-diff": "node scripts/ops/probe-ecl-substrate-diff.mjs",
     "ops:report-retired-tower-generations": "node scripts/ops/report-retired-tower-generations.mjs",
     "tower:migrate:lifecycle:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20260830050000_tower_assessment_lifecycle.sql",
     "tower:migrate:lifecycle:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20260830050000_tower_assessment_lifecycle.sql",
