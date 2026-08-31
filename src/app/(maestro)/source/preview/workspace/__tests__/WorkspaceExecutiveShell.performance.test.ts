@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+
 import {
+  SOURCE_CHART_PALETTE,
   displayBenchmarkingClause,
   focusedVendorSet,
   optimizeTypeRows,
@@ -12,6 +15,20 @@ import {
 } from "../WorkspaceExecutiveShell";
 
 describe("WorkspaceExecutiveShell performance formatting", () => {
+  it("keeps Source charts on semantic palette tokens instead of hard-black slabs", () => {
+    expect(Object.values(SOURCE_CHART_PALETTE)).not.toContain("#0a0a0b");
+
+    const source = readFileSync(
+      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
+      "utf8",
+    );
+
+    expect(source).not.toContain('fill="#0a0a0b"');
+    expect(source).not.toContain('stroke="#0a0a0b"');
+    expect(source).not.toContain('<b>black</b>');
+    expect(source).not.toContain('? "#0a0a0b"');
+  });
+
   it("renders numeric performance actuals from governed rows without throwing", () => {
     expect(performanceActual(89, null)).toBe("89.0%");
     expect(performanceActual(null, 0.91)).toBe("91.0%");

@@ -56,6 +56,27 @@ const CONTRACT_LIST_SUBTABS = ["Contract table", "Evidence depth", "Financial po
 const OPTIMIZE_SUBTABS = ["Action queue", "Type mix", "Contract readiness"] as const;
 const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"] as const;
 
+export const SOURCE_CHART_PALETTE = {
+  ink: "#102033",
+  teal: "#1d9e75",
+  amber: "#ba7517",
+  blue: "#2d6cdf",
+  red: "#ad2d2d",
+  slate: "#6f7480",
+} as const;
+const SOURCE_CHART_SERIES = [
+  SOURCE_CHART_PALETTE.ink,
+  SOURCE_CHART_PALETTE.teal,
+  SOURCE_CHART_PALETTE.amber,
+  SOURCE_CHART_PALETTE.blue,
+  SOURCE_CHART_PALETTE.red,
+  SOURCE_CHART_PALETTE.slate,
+] as const;
+
+function chartSeriesColor(index: number): string {
+  return SOURCE_CHART_SERIES[index % SOURCE_CHART_SERIES.length];
+}
+
 type PageLabel = (typeof PAGE_LABELS)[number];
 type ExecutiveVendorRow = SourceVendorContractPortfolioRow & {
   readonly vendor_refs: readonly string[];
@@ -1128,19 +1149,19 @@ function VendorEvidenceDepthChart({
             <Bar
               dataKey="spendRows"
               stackId="depth"
-              fill="#0a0a0b"
+              fill={SOURCE_CHART_PALETTE.ink}
               maxBarSize={38}
             />
             <Bar
               dataKey="performanceRows"
               stackId="depth"
-              fill="#1d9e75"
+              fill={SOURCE_CHART_PALETTE.teal}
               maxBarSize={38}
             />
             <Bar
               dataKey="actionRows"
               stackId="depth"
-              fill="#ba7517"
+              fill={SOURCE_CHART_PALETTE.amber}
               radius={[0, 5, 5, 0]}
               maxBarSize={38}
             />
@@ -1149,7 +1170,7 @@ function VendorEvidenceDepthChart({
       </MeasuredChartFrame>
       <div className="sw-v2-recharts-legend">
         <span>
-          <b>black</b> spend rows
+          <b>navy</b> spend rows
         </span>
         <span>
           <b>teal</b> performance rows
@@ -1235,20 +1256,14 @@ function VendorArchetypeMixChart({
             />
             <Bar
               dataKey="annualValue"
-              fill="#0a0a0b"
+              fill={SOURCE_CHART_PALETTE.ink}
               radius={[5, 5, 0, 0]}
               maxBarSize={46}
             >
               {data.map((row, index) => (
                 <Cell
                   key={row.name}
-                  fill={
-                    index % 3 === 0
-                      ? "#0a0a0b"
-                      : index % 3 === 1
-                        ? "#1d9e75"
-                        : "#ba7517"
-                  }
+                  fill={chartSeriesColor(index)}
                   opacity={Math.max(0.5, 1 - index * 0.08)}
                 />
               ))}
@@ -1349,7 +1364,7 @@ function VendorConcentrationChart({
               {data.map((row, index) => (
                 <Cell
                   key={row.name}
-                  fill={index === 0 ? "#0a0a0b" : index === 1 ? "#1d9e75" : "#ba7517"}
+                  fill={chartSeriesColor(index)}
                   opacity={Math.max(0.45, 1 - index * 0.12)}
                 />
               ))}
@@ -1446,17 +1461,17 @@ function ContractPerformanceTrendChart({
               yAxisId="actual"
               type="monotone"
               dataKey="actual"
-              stroke="#0a0a0b"
+              stroke={SOURCE_CHART_PALETTE.ink}
               strokeWidth={2.5}
               dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
-              activeDot={{ r: 5, stroke: "#ba7517", strokeWidth: 2 }}
+              activeDot={{ r: 5, stroke: SOURCE_CHART_PALETTE.amber, strokeWidth: 2 }}
               connectNulls
             />
             <Line
               yAxisId="credit"
               type="monotone"
               dataKey="credit"
-              stroke="#ba7517"
+              stroke={SOURCE_CHART_PALETTE.amber}
               strokeWidth={2}
               strokeDasharray="5 5"
               dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
@@ -1466,7 +1481,7 @@ function ContractPerformanceTrendChart({
       </MeasuredChartFrame>
       <div className="sw-v2-recharts-legend">
         <span>
-          <b>black</b> actual SLA %
+          <b>navy</b> actual SLA %
         </span>
         <span>
           <b>amber</b> calculated credits
@@ -1521,7 +1536,7 @@ function OptimizeTypeMixChart({
               {data.map((row, index) => (
                 <Cell
                   key={row.name}
-                  fill={index === 0 ? "#0a0a0b" : index === 1 ? "#1d9e75" : "#ba7517"}
+                  fill={chartSeriesColor(index)}
                   opacity={Math.max(0.52, 1 - index * 0.13)}
                 />
               ))}
