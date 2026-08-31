@@ -163,6 +163,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   it("keeps the credit headline scoped to the active deterministic load run", () => {
     const portfolio = {
       impact: {
+        actionCandidates: [],
         evidenceCoverage: [
           {
             contract_id: "OLD-001",
@@ -215,6 +216,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
   it("falls back to snapshot credits when no deterministic impact credit is loaded", () => {
     const portfolio = {
       impact: {
+        actionCandidates: [],
         evidenceCoverage: [
           {
             load_run_id: "active-load",
@@ -239,5 +241,59 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
         >[0],
       ),
     ).toBe(43_000.02);
+  });
+
+  it("does not blend historical credit coverage into the current action headline", () => {
+    const portfolio = {
+      impact: {
+        actionCandidates: [
+          {
+            contract_id: "MER-TECH-SD-001",
+            action_type: "recoverable_leakage",
+            opportunity_type: "service_credit",
+            title: "Claim unclaimed SLA service credits",
+            finding_summary: "Calculated credits exceed claimed credits.",
+            deterministic_basis: "service credit rows",
+          },
+        ],
+        evidenceCoverage: [
+          {
+            contract_id: "OLD-001",
+            load_run_id: "older-load",
+            unclaimed_credit_usd: 86_333.35,
+            opportunity_rows: 0,
+          },
+          {
+            contract_id: "MER-TECH-SD-001",
+            load_run_id: "current-package",
+            unclaimed_credit_usd: 50_866.66,
+            opportunity_rows: 1,
+          },
+        ],
+      },
+      v4Snapshot: {
+        performanceCredits: {
+          unclaimedCredit: 189_000,
+        },
+      },
+      workspaceDiagnostics: {
+        activeLoadRunId: null,
+      },
+    };
+
+    expect(
+      source360RecoverableCreditCoverageRows(
+        portfolio as unknown as Parameters<
+          typeof source360RecoverableCreditCoverageRows
+        >[0],
+      ).map((row) => row.contract_id),
+    ).toEqual(["MER-TECH-SD-001"]);
+    expect(
+      source360RecoverableCreditFinding(
+        portfolio as unknown as Parameters<
+          typeof source360RecoverableCreditFinding
+        >[0],
+      ),
+    ).toBeCloseTo(50_866.66, 2);
   });
 });

@@ -103,6 +103,33 @@ export function source360RecoverableCreditCoverageRows(
     }
   }
 
+  const creditActionContractIds = new Set(
+    portfolio.impact.actionCandidates
+      .filter((row) =>
+        /credit|recover/i.test(
+          [
+            row.action_type,
+            row.opportunity_type,
+            row.title,
+            row.finding_summary,
+            row.deterministic_basis,
+          ]
+            .filter(Boolean)
+            .join(" "),
+        ),
+      )
+      .map((row) => row.contract_id),
+  );
+  const actionableCreditRows = rowsWithCredits.filter(
+    (row) =>
+      creditActionContractIds.has(row.contract_id) ||
+      (numberFromDb(row.opportunity_rows) ?? 0) > 0,
+  );
+
+  if (actionableCreditRows.length > 0) {
+    return actionableCreditRows;
+  }
+
   return rowsWithCredits;
 }
 
@@ -831,9 +858,7 @@ function VendorsPage({
               />
               <Fact
                 label="Unclaimed credits"
-                value={money(
-                  numberFromDb(selectedVendorPosition?.unclaimed_credit_usd),
-                )}
+                value={money(selectedVendorCoverage?.unclaimedCredit ?? null)}
               />
               <Fact
                 label="Spend rows"

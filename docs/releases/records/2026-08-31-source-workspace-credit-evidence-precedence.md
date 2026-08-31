@@ -20,6 +20,10 @@ The follow-up correction also scopes the recoverable-credit headline to the acti
 contract-depth load run when one is declared. That prevents older coverage rows from
 being combined into a single current-package claim.
 
+When the active load run is not exposed by the workspace diagnostics, the credit
+headline is now limited to coverage rows tied to explicit credit/recovery action
+candidates before falling back to broader historical performance-credit coverage.
+
 ## Layer Impact
 
 - Lane: `global-control-lane`.
@@ -38,14 +42,14 @@ being combined into a single current-package claim.
 
 - `src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx`
 - `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts`
-- `docs/backlog/source-product-backlog.md`
 
 ## QA / Validation
 
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts'`
   passed.
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts' --runInBand`
-  passed, including active-load-run credit precedence.
+  passed, including active-load-run credit precedence and no-active-run historical
+  credit isolation.
 
 ## Rollout Plan
 
