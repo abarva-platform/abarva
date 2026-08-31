@@ -1,8 +1,7 @@
 {
   "map_id": "health-system-v1",
   "applies_to": "integrated delivery network with an owned health plan",
-  "why_this_is_declared_not_inferred": "Whether Population Health is clinical, or whether Patient Access belongs to the provider line, is a business judgement the client owns. A model asked to segment an application estate will answer it silently and differently on every run, and the counts will not reconcile. This file makes the answer reviewable in one sitting and stable across rebuilds. Change it deliberately; every crosstab moves when you do.",
-
+  "why_this_is_declared_not_inferred": "Whether Clinical Informatics belongs to acute delivery or to shared services moves a third of the application estate; whether Population Health sits with the plan or with delivery moves fifteen more. These are business judgements the client owns. A model asked to segment an estate answers them silently and differently on every run, and the counts stop reconciling. This file makes each answer reviewable in one sitting and stable across rebuilds. The contested entries say so in writing. Change them deliberately -- every table moves when you do.",
   "archetypes": [
     "Clinical Core",
     "Departmental Clinical",
@@ -14,7 +13,6 @@
     "Digital & Engagement",
     "Infrastructure & Security"
   ],
-
   "system_category_to_archetype": {
     "Epic clinical & revenue-cycle front end": "Clinical Core",
     "Epic inpatient clinical documentation": "Clinical Core",
@@ -26,7 +24,6 @@
     "Ambient clinical documentation": "Clinical Core",
     "Hospital census and bed-capacity tracking": "Clinical Core",
     "Legacy EHR": "Clinical Core",
-
     "Epic laboratory": "Departmental Clinical",
     "Epic pharmacy": "Departmental Clinical",
     "Epic radiology": "Departmental Clinical",
@@ -45,19 +42,16 @@
     "E-prescribing network": "Departmental Clinical",
     "Diabetes device data integration": "Departmental Clinical",
     "Implantable device data integration": "Departmental Clinical",
-
     "Epic revenue cycle": "Revenue Cycle",
     "Epic registration/ADT": "Revenue Cycle",
     "Epic scheduling": "Revenue Cycle",
     "Revenue cycle clearinghouse": "Revenue Cycle",
     "Identity/eligibility verification": "Revenue Cycle",
     "Patient financial analytics": "Revenue Cycle",
-
     "Epic population health": "Care Management & Population Health",
     "Care/case management": "Care Management & Population Health",
     "Quality measure engine": "Care Management & Population Health",
     "Quality/risk analytics vendor platform": "Care Management & Population Health",
-
     "Epic payer core administration": "Health Plan Core",
     "Payer core administration (legacy)": "Health Plan Core",
     "Payer & Provider Network Platform": "Health Plan Core",
@@ -65,14 +59,12 @@
     "Claims clearinghouse": "Health Plan Core",
     "Member correspondence": "Health Plan Core",
     "Utilization management guidelines": "Health Plan Core",
-
     "Supply chain/finance ERP": "ERP & Corporate",
     "HR/Payroll ERP": "ERP & Corporate",
     "Procurement/sourcing": "ERP & Corporate",
     "Time & attendance": "ERP & Corporate",
     "Managed print/document services": "ERP & Corporate",
     "Asset tracking / RTLS": "ERP & Corporate",
-
     "Epic enterprise data warehouse": "Data & AI",
     "Epic clinical data repository": "Data & AI",
     "Epic operational reporting database": "Data & AI",
@@ -85,7 +77,6 @@
     "SSIS ETL package": "Data & AI",
     "SSRS report subscription set": "Data & AI",
     "Data de-identification/tokenization": "Data & AI",
-
     "Epic patient portal": "Digital & Engagement",
     "Telehealth platform": "Digital & Engagement",
     "RPM / hospital-at-home": "Digital & Engagement",
@@ -93,7 +84,6 @@
     "Member/growth CRM": "Digital & Engagement",
     "Patient experience survey (non-CAHPS)": "Digital & Engagement",
     "Survey administration vendor platform": "Digital & Engagement",
-
     "Epic interfaces": "Infrastructure & Security",
     "Clinical interface engine": "Infrastructure & Security",
     "Clinical interface engine (legacy)": "Infrastructure & Security",
@@ -104,40 +94,146 @@
     "Privileged access management": "Infrastructure & Security",
     "ITSM / CMDB platform": "Infrastructure & Security"
   },
-
   "business_function_map": {
-    "Acute Care Clinical Operations":          { "line": "provider",  "clinical": true,  "office": "front" },
-    "Ambulatory & Physician Network Operations": { "line": "provider", "clinical": true, "office": "front" },
-    "Behavioral Health":                       { "line": "provider",  "clinical": true,  "office": "front" },
-    "Emergency Services":                      { "line": "provider",  "clinical": true,  "office": "front" },
-    "Nursing Operations":                      { "line": "provider",  "clinical": true,  "office": "front" },
-    "Pharmacy Services":                       { "line": "provider",  "clinical": true,  "office": "front" },
-    "Clinical Informatics":                    { "line": "provider",  "clinical": true,  "office": "middle" },
-    "Quality & Regulatory Affairs":            { "line": "provider",  "clinical": true,  "office": "middle" },
-    "Patient Access & Registration":           { "line": "provider",  "clinical": false, "office": "front" },
-    "Revenue Cycle":                           { "line": "provider",  "clinical": false, "office": "middle" },
-
-    "Health Plan & Payer Operations":          { "line": "plan",      "clinical": false, "office": "middle" },
-    "Payer Operations":                        { "line": "plan",      "clinical": false, "office": "middle" },
-    "Provider Network":                        { "line": "plan",      "clinical": false, "office": "middle" },
-    "Member Services & Patient Experience":    { "line": "plan",      "clinical": false, "office": "front" },
-    "Population Health & Care Management":     { "line": "plan",      "clinical": true,  "office": "middle",
-      "contested": "Clinical work funded and directed by the plan. Assigned to plan because the economics sit there, but moving it to provider shifts roughly 15 applications and is a defensible reading. Decide once, deliberately." },
-
-    "Finance & Accounting":                    { "line": "corporate", "clinical": false, "office": "back" },
-    "Human Resources & Workforce":             { "line": "corporate", "clinical": false, "office": "back" },
-    "Supply Chain & Procurement":              { "line": "corporate", "clinical": false, "office": "back" },
-    "Facilities & Real Estate":                { "line": "corporate", "clinical": false, "office": "back" },
-    "Information Technology & Digital":        { "line": "corporate", "clinical": false, "office": "back" },
-    "Cybersecurity & IT Risk":                 { "line": "corporate", "clinical": false, "office": "back" },
-    "Data Analytics & AI":                     { "line": "corporate", "clinical": false, "office": "middle" }
+    "Acute Care Clinical Operations": {
+      "segment_key": "hospital_delivery",
+      "clinical": true,
+      "office": "front"
+    },
+    "Emergency Services": {
+      "segment_key": "hospital_delivery",
+      "clinical": true,
+      "office": "front"
+    },
+    "Nursing Operations": {
+      "segment_key": "hospital_delivery",
+      "clinical": true,
+      "office": "front"
+    },
+    "Behavioral Health": {
+      "segment_key": "hospital_delivery",
+      "clinical": true,
+      "office": "front"
+    },
+    "Pharmacy Services": {
+      "segment_key": "hospital_delivery",
+      "clinical": true,
+      "office": "front"
+    },
+    "Patient Access & Registration": {
+      "segment_key": "hospital_delivery",
+      "clinical": false,
+      "office": "front"
+    },
+    "Revenue Cycle": {
+      "segment_key": "hospital_delivery",
+      "clinical": false,
+      "office": "middle",
+      "contested": "Revenue cycle serves both acute and ambulatory. Assigned to hospital_delivery because the acute book dominates the volume; splitting it would need a declared allocation the intake does not carry."
+    },
+    "Clinical Informatics": {
+      "segment_key": "hospital_delivery",
+      "clinical": true,
+      "office": "middle",
+      "contested": "The largest single assignment -- 99 of 306 applications. The Epic estate serves acute and ambulatory alike. Assigned to hospital_delivery on dominant use; a shared_enterprise assignment is equally defensible and moves roughly a third of the estate. This is the decision that most changes every table below."
+    },
+    "Ambulatory & Physician Network Operations": {
+      "segment_key": "ambulatory",
+      "clinical": true,
+      "office": "front"
+    },
+    "Health Plan & Payer Operations": {
+      "segment_key": "health_plan",
+      "clinical": false,
+      "office": "middle"
+    },
+    "Payer Operations": {
+      "segment_key": "health_plan",
+      "clinical": false,
+      "office": "middle"
+    },
+    "Provider Network": {
+      "segment_key": "health_plan",
+      "clinical": false,
+      "office": "middle"
+    },
+    "Member Services & Patient Experience": {
+      "segment_key": "health_plan",
+      "clinical": false,
+      "office": "front"
+    },
+    "Population Health & Care Management": {
+      "segment_key": "health_plan",
+      "clinical": true,
+      "office": "middle",
+      "contested": "Clinical work funded and directed by the plan. Assigned to health_plan because the economics sit there; moving it to a delivery segment shifts roughly fifteen applications."
+    },
+    "Quality & Regulatory Affairs": {
+      "segment_key": "shared_enterprise",
+      "clinical": true,
+      "office": "middle"
+    },
+    "Finance & Accounting": {
+      "segment_key": "shared_enterprise",
+      "clinical": false,
+      "office": "back"
+    },
+    "Human Resources & Workforce": {
+      "segment_key": "shared_enterprise",
+      "clinical": false,
+      "office": "back"
+    },
+    "Supply Chain & Procurement": {
+      "segment_key": "shared_enterprise",
+      "clinical": false,
+      "office": "back"
+    },
+    "Facilities & Real Estate": {
+      "segment_key": "shared_enterprise",
+      "clinical": false,
+      "office": "back"
+    },
+    "Information Technology & Digital": {
+      "segment_key": "shared_enterprise",
+      "clinical": false,
+      "office": "back"
+    },
+    "Cybersecurity & IT Risk": {
+      "segment_key": "shared_enterprise",
+      "clinical": false,
+      "office": "back"
+    },
+    "Data Analytics & AI": {
+      "segment_key": "shared_enterprise",
+      "clinical": false,
+      "office": "middle"
+    },
+    "Actuarial & Underwriting": {
+      "segment_key": "health_plan",
+      "clinical": false,
+      "office": "middle"
+    },
+    "Legal, Compliance & Privacy": {
+      "segment_key": "shared_enterprise",
+      "clinical": false,
+      "office": "back"
+    },
+    "Marketing & Growth": {
+      "segment_key": "shared_enterprise",
+      "clinical": false,
+      "office": "front"
+    }
   },
-
   "deployment_model_map": {
     "on_premise": "Self-hosted",
     "on_premise_appliance": "Self-hosted",
     "hosted_by_vendor": "Vendor-hosted",
     "saas": "SaaS",
     "cloud": "Cloud"
+  },
+  "segment_spine": {
+    "declared_by": "datasets/tenant-inputs/active/<tenant>/current/01b_business_segments.csv",
+    "why": "The segments, their revenue shares and their P&L owners are declared in the intake, not invented here. 10_ai_automation_use_cases.csv already carries business_segment / function_type / office_lens_abarva in this vocabulary. Every domain must segment onto the same spine or the segmentations cannot be crossed, which is where the whole value is -- one table, one row per segment, revenue beside applications beside spend beside programs beside risk.",
+    "key_column": "segment_key"
   }
 }

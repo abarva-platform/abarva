@@ -48,8 +48,20 @@ describe("declared map", () => {
     expect([...new Set(missing)]).toEqual([]);
   });
 
-  it("records why the contested assignment is contested", () => {
+  it("records why each contested assignment is contested", () => {
     expect(MAP.business_function_map["Population Health & Care Management"].contested).toMatch(/plan/i);
+    // The largest single assignment must say so: it moves roughly a third of the estate.
+    expect(MAP.business_function_map["Clinical Informatics"].contested).toMatch(/99 of 306/);
+  });
+
+  it("assigns every function to a segment the declared spine actually contains", () => {
+    const spine = new Set(
+      fs.readFileSync(path.join(ROOT, "datasets/tenant-inputs/active/meridian-health/current/01b_business_segments.csv"), "utf8")
+        .split("\n").slice(1).filter((l) => l.trim()).map((l) => l.split(",")[1]),
+    );
+    for (const [fn, entry] of Object.entries(MAP.business_function_map)) {
+      expect({ fn, inSpine: spine.has(entry.segment_key) }).toEqual({ fn, inSpine: true });
+    }
   });
 });
 
@@ -59,7 +71,7 @@ describe("segmentation", () => {
     expect(segmented).toMatchObject({
       archetype: "Clinical Core",
       hosting: "Vendor-hosted",
-      line: "provider",
+      segmentKey: "hospital_delivery",
       clinical: "clinical",
       office: "middle",
       annualCostUsd: 1_000_000,
@@ -90,7 +102,7 @@ describe("crosstab", () => {
   );
 
   it("totals reconcile across rows, columns and the grand total", () => {
-    const table = crosstab(rows, "line", "hosting");
+    const table = crosstab(rows, "segmentKey", "hosting");
     expect(table.total.apps).toBe(3);
     expect(Object.values(table.rowTotals).reduce((n, r) => n + r.apps, 0)).toBe(3);
     expect(Object.values(table.colTotals).reduce((n, c) => n + c.apps, 0)).toBe(3);
@@ -115,16 +127,14 @@ describe("estate versus revenue", () => {
       ],
       MAP,
     );
-    const report = estateVersusRevenue(rows, { provider: 60, plan: 40 });
-    expect(report.find((r) => r.line === "plan")).toMatchObject({ costShare: 10, revenueShare: 40, gapVsRevenue: -30 });
+    const report = estateVersusRevenue(rows, { hospital_delivery: 42, health_plan: 40 });
+    expect(report.find((r) => r.segmentKey === "health_plan")).toMatchObject({ costShare: 10, revenueShare: 40, gapVsRevenue: -30 });
   });
 
   it("leaves the gap null for a line with no declared revenue share", () => {
     const rows = segmentApplications([app({ business_function: "Finance & Accounting" })], MAP);
-    expect(report(rows).gapVsRevenue).toBeNull();
-    function report(r: ReturnType<typeof segmentApplications>) {
-      return estateVersusRevenue(r, { provider: 60, plan: 40 }).find((x) => x.line === "corporate")!;
-    }
+    const entry = estateVersusRevenue(rows, { health_plan: 40 }).find((x) => x.segmentKey === "shared_enterprise")!;
+    expect(entry.gapVsRevenue).toBeNull();
   });
 });
 

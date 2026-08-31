@@ -61,17 +61,19 @@ console.log(`\nApplication estate segmentation — ${tenant} — map ${map.map_i
 console.log(`source: ${path.relative(ROOT, csvPath)} (${apps.length} applications)`);
 
 print("ARCHETYPE × HOSTING", crosstab(apps, "archetype", "hosting"));
-print("BUSINESS LINE × HOSTING", crosstab(apps, "line", "hosting"));
-print("BUSINESS LINE × ARCHETYPE", crosstab(apps, "line", "archetype"));
+print("SEGMENT × HOSTING", crosstab(apps, "segmentKey", "hosting"));
+print("SEGMENT × ARCHETYPE", crosstab(apps, "segmentKey", "archetype"));
 print("OFFICE LAYER × CLINICAL", crosstab(apps, "office", "clinical"));
 
-// Revenue shares are declared facts from 00_enterprise_profile, not derived here.
-const revenueShare = { provider: 60, plan: 40 };
+// Revenue shares are read from the declared segment spine, never hardcoded here.
+const spine = parseCsv(fs.readFileSync(path.join(ROOT, `datasets/tenant-inputs/active/${tenant}/current/01b_business_segments.csv`), "utf8"));
+const revenueShare = Object.fromEntries(spine.map((row) => [String(row.segment_key), Number(row.revenue_share_pct || 0)]));
+const segmentNames = Object.fromEntries(spine.map((row) => [String(row.segment_key), String(row.segment_name)]));
 console.log("\nESTATE SHARE vs REVENUE SHARE");
-console.log("  line        apps  app%   cost%   rev%    gap(cost-rev)");
+console.log("  segment                        apps  app%   cost%   rev%    gap(cost-rev)");
 for (const r of estateVersusRevenue(apps, revenueShare)) {
   console.log(
-    `  ${r.line.padEnd(11)} ${String(r.apps).padStart(4)} ${String(r.appShare).padStart(5)} ${String(r.costShare).padStart(7)} ` +
+    `  ${(segmentNames[r.segmentKey] ?? r.segmentKey).slice(0, 29).padEnd(30)} ${String(r.apps).padStart(4)} ${String(r.appShare).padStart(5)} ${String(r.costShare).padStart(7)} ` +
       `${(r.revenueShare ?? "-").toString().padStart(6)} ${(r.gapVsRevenue ?? "-").toString().padStart(15)}`,
   );
 }
@@ -85,8 +87,8 @@ if (out) {
     tenant, mapId: map.map_id, applicationCount: apps.length,
     crosstabs: {
       archetype_by_hosting: crosstab(apps, "archetype", "hosting"),
-      line_by_hosting: crosstab(apps, "line", "hosting"),
-      line_by_archetype: crosstab(apps, "line", "archetype"),
+      line_by_hosting: crosstab(apps, "segmentKey", "hosting"),
+      line_by_archetype: crosstab(apps, "segmentKey", "archetype"),
       office_by_clinical: crosstab(apps, "office", "clinical"),
     },
     estateVersusRevenue: estateVersusRevenue(apps, revenueShare),

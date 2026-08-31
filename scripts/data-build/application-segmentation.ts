@@ -20,7 +20,7 @@ export interface SegmentationMap {
   map_id: string;
   archetypes: string[];
   system_category_to_archetype: Record<string, string>;
-  business_function_map: Record<string, { line: string; clinical: boolean; office: string; contested?: string }>;
+  business_function_map: Record<string, { segment_key: string; clinical: boolean; office: string; contested?: string }>;
   deployment_model_map: Record<string, string>;
 }
 
@@ -39,7 +39,7 @@ export interface SegmentedApplication {
   systemName: string;
   archetype: string;
   hosting: string;
-  line: string;
+  segmentKey: string;
   clinical: "clinical" | "non_clinical";
   office: string;
   annualCostUsd: number;
@@ -64,7 +64,7 @@ export function segmentApplications(rows: ApplicationRow[], map: SegmentationMap
       systemName: (row.system_name ?? "").trim(),
       archetype: map.system_category_to_archetype[category] ?? UNMAPPED,
       hosting: map.deployment_model_map[deployment] ?? UNMAPPED,
-      line: fnEntry?.line ?? UNMAPPED,
+      segmentKey: fnEntry?.segment_key ?? UNMAPPED,
       clinical: fnEntry?.clinical ? "clinical" : "non_clinical",
       office: fnEntry?.office ?? UNMAPPED,
       annualCostUsd: parseCost(row.annual_cost_usd),
@@ -134,25 +134,25 @@ export function crosstab(
  */
 export function estateVersusRevenue(
   apps: SegmentedApplication[],
-  revenueShareByLine: Record<string, number>,
-): Array<{ line: string; apps: number; appShare: number; costShare: number; revenueShare: number | null; gapVsRevenue: number | null }> {
+  revenueShareBySegment: Record<string, number>,
+): Array<{ segmentKey: string; apps: number; appShare: number; costShare: number; revenueShare: number | null; gapVsRevenue: number | null }> {
   const totalApps = apps.length;
   const totalCost = apps.reduce((sum, app) => sum + app.annualCostUsd, 0);
-  const byLine = new Map<string, { apps: number; cost: number }>();
+  const bySegment = new Map<string, { apps: number; cost: number }>();
   for (const app of apps) {
-    const entry = byLine.get(app.line) ?? { apps: 0, cost: 0 };
+    const entry = bySegment.get(app.segmentKey) ?? { apps: 0, cost: 0 };
     entry.apps += 1;
     entry.cost += app.annualCostUsd;
-    byLine.set(app.line, entry);
+    bySegment.set(app.segmentKey, entry);
   }
 
-  return [...byLine.entries()]
-    .map(([line, entry]) => {
+  return [...bySegment.entries()]
+    .map(([segmentKey, entry]) => {
       const appShare = totalApps ? round(100 * entry.apps / totalApps) : 0;
       const costShare = totalCost ? round(100 * entry.cost / totalCost) : 0;
-      const revenueShare = revenueShareByLine[line] ?? null;
+      const revenueShare = revenueShareBySegment[segmentKey] ?? null;
       return {
-        line,
+        segmentKey,
         apps: entry.apps,
         appShare,
         costShare,
