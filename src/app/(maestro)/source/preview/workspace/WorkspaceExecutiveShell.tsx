@@ -3310,7 +3310,7 @@ function focusedVendorSet(
   const coverageByVendor = vendorCoverageRows(portfolio);
   const ranked = vendors
     .map((vendor): FocusedVendorRow => {
-      const coverage = coverageByVendor.get(vendor.vendor_ref) ?? null;
+      const coverage = coverageForVendor(vendor, coverageByVendor);
       return {
         vendor,
         coverage,
@@ -3360,6 +3360,31 @@ function focusedVendorSet(
     depthReadyCount: ranked.filter((row) => vendorDepthScore(row.coverage) > 0)
       .length,
   };
+}
+
+function coverageForVendor(
+  vendor: ExecutiveVendorRow,
+  coverageByVendor: Map<string, VendorCoverageSummary>,
+) {
+  let found = false;
+  const coverage: VendorCoverageSummary = {
+    spendRows: 0,
+    performanceRows: 0,
+    actionRows: 0,
+    unclaimedCredit: 0,
+  };
+
+  for (const vendorRef of uniqueRefs([vendor.vendor_ref, ...vendor.vendor_refs])) {
+    const row = coverageByVendor.get(vendorRef);
+    if (!row) continue;
+    found = true;
+    coverage.spendRows += row.spendRows;
+    coverage.performanceRows += row.performanceRows;
+    coverage.actionRows += row.actionRows;
+    coverage.unclaimedCredit += row.unclaimedCredit;
+  }
+
+  return found ? coverage : null;
 }
 
 function vendorDepthScore(coverage: VendorCoverageSummary | null) {
