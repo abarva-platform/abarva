@@ -210,7 +210,10 @@ export function ExecutiveStoryPage({
       style={{
         display: "grid",
         gridTemplateColumns: "252px minmax(0,1fr)",
-        minHeight: "100vh",
+        flex: 1,
+        height: "100%",
+        minHeight: 0,
+        overflow: "hidden",
         background: V4.paper,
         color: V4.ink,
         fontFamily: SANS,
@@ -254,7 +257,7 @@ export function ExecutiveStoryPage({
         compiledLine={compiledLine}
         onOpenView={onOpenView}
       />
-      <main data-home-tier1-main style={{ minWidth: 0, paddingBottom: 120 }}>
+      <main data-home-tier1-main style={{ minWidth: 0, overflowY: "auto", paddingBottom: 40 }}>
         {activeSection?.spec.id === "enterprise" ? (
           <Hero
             leadNumber={leadNumber}
@@ -503,7 +506,7 @@ function Hero({
     <header
       data-home-tier1-section="enterprise"
       data-home-tier1-terminal-state={state}
-      style={{ padding: `42px ${PAGE_X}px 34px` }}
+      style={{ padding: `30px ${PAGE_X}px 26px` }}
     >
       <div style={heroIntroRowStyle}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
@@ -826,23 +829,24 @@ function EvidenceEntryPoints({ onOpenView }: { onOpenView: (id: string) => void 
     ["browse-the-data", "Data browser", "Slice and inspect the governed records behind the story."],
   ];
   return (
-    <section style={{ padding: `18px ${PAGE_X}px 0` }}>
+    <section style={{ padding: `12px ${PAGE_X}px 34px` }}>
       <div style={entryPointShellStyle}>
         <div>
           <span style={eyebrow(V4.slate)}>Next level</span>
-          <h2 style={entryPointTitleStyle}>Use the explorer when a section needs proof, not as the opening experience.</h2>
+          <h2 style={entryPointTitleStyle}>Explore the evidence behind this story.</h2>
         </div>
         <div style={entryPointGridStyle}>
           {entries.map(([id, title, text]) => (
             <button
               key={id}
               type="button"
+              data-home-evidence-entry-card
               aria-label={`${title}: ${text}`}
               onClick={() => onOpenView(id)}
               style={entryPointCardStyle}
             >
-              <span style={entryPointCardTitleStyle}>{title}</span>
-              <span style={entryPointCardTextStyle}>{text}</span>
+              <span data-home-evidence-entry-title style={entryPointCardTitleStyle}>{title}</span>
+              <span data-home-evidence-entry-body style={entryPointCardTextStyle}>{text}</span>
             </button>
           ))}
         </div>
@@ -855,9 +859,10 @@ const storyRailStyle: CSSProperties = {
   borderRight: `1px solid ${V4.rule}`,
   background: V4.cream,
   padding: "22px 14px 20px",
-  position: "sticky",
+  position: "relative",
   top: 0,
-  height: "100vh",
+  height: "100%",
+  minHeight: 0,
   display: "flex",
   flexDirection: "column",
   gap: 20,
@@ -943,15 +948,15 @@ const heroStatePillStyle: CSSProperties = {
 };
 
 const heroMetricStyle: CSSProperties = {
-  marginTop: 24,
+  marginTop: 20,
   display: "grid",
   gridTemplateColumns: "minmax(420px,1fr) minmax(260px,0.36fr)",
-  gap: 34,
+  gap: 26,
   alignItems: "stretch",
   borderTop: `4px solid ${V4.green}`,
   borderBottom: `1px solid ${V4.rule}`,
   background: "linear-gradient(120deg,rgba(255,255,255,0.98),rgba(246,243,237,0.76))",
-  padding: "32px 38px 34px",
+  padding: "28px 32px 30px",
 };
 
 const heroCopyStyle: CSSProperties = {
@@ -959,9 +964,9 @@ const heroCopyStyle: CSSProperties = {
 };
 
 const heroThesisStyle: CSSProperties = {
-  margin: "17px 0 0",
+  margin: "15px 0 0",
   fontFamily: SERIF,
-  fontSize: 36,
+  fontSize: 32,
   lineHeight: 1.13,
   letterSpacing: 0,
   fontWeight: 500,
@@ -1194,14 +1199,14 @@ const deepLinkButtonStyle: CSSProperties = {
 
 const entryPointShellStyle: CSSProperties = {
   borderTop: `1px solid ${V4.rule}`,
-  paddingTop: 28,
+  paddingTop: 22,
 };
 
 const entryPointTitleStyle: CSSProperties = {
   margin: "8px 0 0",
   fontFamily: SERIF,
-  fontSize: 30,
-  lineHeight: 1.16,
+  fontSize: 24,
+  lineHeight: 1.18,
   letterSpacing: 0,
   fontWeight: 500,
   maxWidth: "34ch",
@@ -1216,7 +1221,8 @@ const entryPointGridStyle: CSSProperties = {
 
 const entryPointCardStyle: CSSProperties = {
   display: "grid",
-  gap: 8,
+  gap: 10,
+  alignContent: "start",
   textAlign: "left",
   border: `1px solid ${V4.rule}`,
   borderRadius: 8,
@@ -1229,6 +1235,7 @@ const entryPointCardStyle: CSSProperties = {
 
 const entryPointCardTitleStyle: CSSProperties = {
   display: "block",
+  margin: 0,
   fontSize: 16,
   lineHeight: 1.2,
   fontWeight: 700,
@@ -1237,6 +1244,7 @@ const entryPointCardTitleStyle: CSSProperties = {
 
 const entryPointCardTextStyle: CSSProperties = {
   display: "block",
+  margin: 0,
   fontSize: 15,
   lineHeight: 1.45,
   color: V4.slate,
