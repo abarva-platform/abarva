@@ -354,6 +354,9 @@ describe("Source workspace ECL browser-surface proof", () => {
       screen.getByRole("heading", { name: "Source 360", level: 1 }),
     ).toBeTruthy();
     expect(screen.getByLabelText("Workspace controls")).toBeTruthy();
+    expect(screen.getByLabelText("Workspace action toolbar")).toBeTruthy();
+    expect(container.querySelector(".sw-v2-action-toolbar-buttons")).toBeTruthy();
+    expect(container.querySelectorAll(".sw-v2-action-button")).toHaveLength(2);
     expect(screen.getByLabelText("Scope filter").textContent).toContain(
       "All loaded contracts",
     );
