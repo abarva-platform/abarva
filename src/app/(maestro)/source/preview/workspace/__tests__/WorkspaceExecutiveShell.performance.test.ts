@@ -1,5 +1,6 @@
 import {
   displayBenchmarkingClause,
+  optimizeTypeRows,
   performanceActual,
   source360RecoverableCreditCoverageRows,
   source360RecoverableCreditFinding,
@@ -295,5 +296,138 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
         >[0],
       ),
     ).toBeCloseTo(50_866.66, 2);
+  });
+
+  it("uses the richest deterministic impact package when workspace diagnostics name a broad projection", () => {
+    const portfolio = {
+      contracts: [],
+      vendors: [],
+      v4Snapshot: {
+        performanceCredits: {
+          unclaimedCredit: 189_000,
+        },
+      },
+      workspaceDiagnostics: {
+        activeLoadRunId: "ecl-dense-source-room-projection",
+      },
+      impact: {
+        actionCandidates: [
+          {
+            contract_id: "OLD-CTR-0002",
+            action_type: "recoverable_leakage",
+            opportunity_type: "service_credit",
+            title: "Claim unclaimed SLA service credits",
+            finding_summary: "Calculated credits exceed claimed credits.",
+            deterministic_basis: "service credit rows",
+            candidate_amount_usd: 72_000,
+            finance_confirmation_state: "not_confirmed",
+          },
+          {
+            contract_id: "MER-TECH-SFDC-001",
+            action_type: "recoverable_leakage",
+            opportunity_type: "service_credit",
+            title: "Claim unclaimed SLA service credits",
+            finding_summary: "Calculated credits exceed claimed credits.",
+            deterministic_basis: "service credit rows",
+            candidate_amount_usd: 15_166.67,
+            finance_confirmation_state: "not_confirmed",
+          },
+          {
+            contract_id: "MER-TECH-AMS-001",
+            action_type: "recoverable_leakage",
+            opportunity_type: "service_credit",
+            title: "Claim unclaimed SLA service credits",
+            finding_summary: "Calculated credits exceed claimed credits.",
+            deterministic_basis: "service credit rows",
+            candidate_amount_usd: 188_199.99,
+            finance_confirmation_state: "not_confirmed",
+          },
+          {
+            contract_id: "MER-TECH-SD-001",
+            action_type: "recoverable_leakage",
+            opportunity_type: "service_credit",
+            title: "Claim unclaimed SLA service credits",
+            finding_summary: "Calculated credits exceed claimed credits.",
+            deterministic_basis: "service credit rows",
+            candidate_amount_usd: 50_499.99,
+            finance_confirmation_state: "not_confirmed",
+          },
+        ],
+        evidenceCoverage: [
+          {
+            contract_id: "OLD-CTR-0002",
+            load_run_id: "recorded-data-refresh-6a94e1cf-runtime-l3",
+            unclaimed_credit_usd: 72_000,
+            document_page_text_rows: 0,
+            change_order_rows: 0,
+            opportunity_rows: 2,
+            scope_rows: 0,
+            spend_rows: 24,
+            performance_rows: 24,
+          },
+          {
+            contract_id: "MER-TECH-SFDC-001",
+            load_run_id: "source-contract-depth-doc-gap-20260831T0645Z",
+            unclaimed_credit_usd: 15_166.67,
+            document_page_text_rows: 6,
+            change_order_rows: 1,
+            opportunity_rows: 1,
+            scope_rows: 3,
+            spend_rows: 12,
+            performance_rows: 12,
+          },
+          {
+            contract_id: "MER-TECH-AMS-001",
+            load_run_id: "source-contract-depth-doc-gap-20260831T0645Z",
+            unclaimed_credit_usd: 36_999.99,
+            document_page_text_rows: 6,
+            change_order_rows: 2,
+            opportunity_rows: 2,
+            scope_rows: 4,
+            spend_rows: 12,
+            performance_rows: 12,
+          },
+          {
+            contract_id: "MER-TECH-SD-001",
+            load_run_id: "source-contract-depth-doc-gap-20260831T0645Z",
+            unclaimed_credit_usd: 50_499.99,
+            document_page_text_rows: 6,
+            change_order_rows: 2,
+            opportunity_rows: 1,
+            scope_rows: 4,
+            spend_rows: 12,
+            performance_rows: 12,
+          },
+        ],
+      },
+    };
+
+    expect(
+      source360RecoverableCreditCoverageRows(
+        portfolio as unknown as Parameters<
+          typeof source360RecoverableCreditCoverageRows
+        >[0],
+      ).map((row) => row.contract_id),
+    ).toEqual([
+      "MER-TECH-SFDC-001",
+      "MER-TECH-AMS-001",
+      "MER-TECH-SD-001",
+    ]);
+    expect(
+      source360RecoverableCreditFinding(
+        portfolio as unknown as Parameters<
+          typeof source360RecoverableCreditFinding
+        >[0],
+      ),
+    ).toBeCloseTo(102_666.65, 2);
+
+    const recoverableType = optimizeTypeRows(
+      portfolio as unknown as Parameters<typeof optimizeTypeRows>[0],
+    ).find((row) => row.type === "service credit");
+
+    expect(recoverableType).toMatchObject({
+      count: 3,
+      amount: 102_666.65,
+    });
   });
 });

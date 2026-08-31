@@ -31,8 +31,9 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 - **Workstream**: Source workspace UX / governed Source data projection.
 - **Status**: `In Progress` — chart fixes are merged; the governed contract-depth
   package is physically loaded and reconciled through Layer 2, Layer 3, and Layer 4 via
-  operator jobs; one product-surface patch is being added so the recoverable-credit lane
-  uses deterministic impact coverage before older snapshot rollups.
+  operator jobs; the recoverable-credit lane patch is merged and awaiting final ACA
+  deploy/live proof so the page cannot blend deterministic impact coverage with older
+  snapshot rollups.
 - **Layer proof**: Layer 2 has 342 adapter rows, including 8 change-order rows and 30
   page-text rows. Layer 3 has 30 page-text fact assertions and 36 change-order fact
   assertions. Layer 4 has 78 contract-360 rows, 5 package contract rows, 6 action
@@ -41,10 +42,13 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   service-credit exposure.
 - **Current UI proof**: signed-in Source 360 crawl clicked 14 views with no tab failures,
   no tenant bleed-through, no load errors, no debug scaffolding, no legacy left explorer,
-  and chart/graph surfaces rendering.
-- **Open gap**: the product surface must not blend deterministic service-credit coverage
-  with a broader legacy performance-credit snapshot. If deterministic impact coverage is
-  loaded, that amount is the executive claim; the older snapshot is fallback-only.
+  and chart/graph surfaces rendering. A follow-up live proof found the page still showed
+  the older `$189K` recovery amount in the Optimize lane; the merged follow-up patch
+  removes that fallback from the current action headline.
+- **Open gaps**: final ACA deploy/live proof must confirm the older `$189K` recovery
+  headline is gone, the deterministic `$102.7K` service-credit exposure is visible where
+  supported, all charts and graph surfaces render non-empty visuals, and aVa answers
+  cite/refuse against the same governed bundle.
 - **Acceptance criteria**: Source 360 shows the verified deterministic credit amount in
   Optimize/Evidence basis; all top-level tabs and subtabs render without blank charts;
   contract graph renders an actual lineage visualization; live proof captures no
@@ -53,6 +57,28 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 - **Required tests**:
   `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts`;
   signed-in Source 360 visual crawl after deploy.
+- **Discovered from**: the Source 360 data-depth and chart audit attached to the
+  2026-08-31 execution loop.
+
+### SOURCE-360-CXO-002 — Source 360 aVa deterministic-bundle proof
+
+- **Problem statement**: Source 360 now has a governed deterministic action bundle, but
+  the aVa dock still needs a focused production proof that it answers from that bundle
+  with citations, refuses unsupported value claims, and preserves tenant isolation.
+- **User/business impact**: a CXO rehearsal can tolerate an honest missing-evidence
+  refusal, but it cannot tolerate a confident answer that blends old snapshot rows,
+  invents finance-confirmed value, or crosses tenants.
+- **Severity**: P1 (executive demo readiness and evidence-integrity).
+- **Workstream**: Source aVa / governed answer quality.
+- **Status**: `Approved` — explicit approval exists to run the small tenant-scoped
+  chat-record proof; schedule after the Source 360 page deploy/live proof so aVa is
+  checked against the same current substrate the page renders.
+- **Acceptance criteria**: signed-in proof asks why the actionable contract is
+  actionable, what is missing before claiming value, requests a chart/table where
+  appropriate, and probes an out-of-tenant vendor. Responses must cite or refuse from
+  the governed Source bundle and must not surface any out-of-tenant data.
+- **Required tests**: signed-in aVa transcript proof plus any focused answer-engine
+  regression if the live proof exposes unsupported claims.
 - **Discovered from**: the Source 360 data-depth and chart audit attached to the
   2026-08-31 execution loop.
 
