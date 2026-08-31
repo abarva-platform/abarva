@@ -351,6 +351,29 @@ describe("AgentAnswerRenderer", () => {
     expect(within(tableNode).queryByText("36500000")).not.toBeInTheDocument();
   });
 
+  it("respects explicit text columns for numeric count-like values", () => {
+    const table: AnswerTable = {
+      id: "table-metrics",
+      title: "Tower metrics referenced",
+      columns: [
+        { key: "metric", label: "Metric", format: "text" },
+        { key: "value", label: "Value", format: "text" },
+      ],
+      rows: [
+        { metric: "Value claims", value: "42" },
+        { metric: "Claimable value", value: "$13.1M" },
+      ],
+      citationIds: [],
+    };
+
+    render(<DataTable table={table} citations={[]} />);
+
+    const tableNode = screen.getByRole("table");
+    expect(within(tableNode).getByText("42")).toBeInTheDocument();
+    expect(within(tableNode).queryByText("$42")).not.toBeInTheDocument();
+    expect(within(tableNode).getByText("$13.1M")).toBeInTheDocument();
+  });
+
   it("renders typed relationship graphs through the canonical answer renderer", () => {
     const graph: AnswerGraph = {
       id: "graph-1",

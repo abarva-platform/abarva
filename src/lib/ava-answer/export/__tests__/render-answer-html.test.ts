@@ -119,6 +119,31 @@ describe("renderAvaAnswerStandaloneHtml", () => {
     expect(html).not.toContain("12500000");
   });
 
+  it("does not infer currency for explicitly text-formatted value columns", () => {
+    const answer = answerFixture();
+    answer.artifacts = [
+      {
+        artifact: "table",
+        id: "metric-reference",
+        title: "Tower metrics referenced",
+        columns: [
+          { key: "metric", label: "Metric", format: "text" },
+          { key: "value", label: "Value", format: "text" },
+        ],
+        rows: [
+          { metric: "Value claims", value: "42" },
+          { metric: "Claimable value", value: "$13.1M" },
+        ],
+      },
+    ];
+
+    const html = renderAvaAnswerStandaloneHtml(answer);
+
+    expect(html).toContain(">42<");
+    expect(html).not.toContain(">$42<");
+    expect(html).toContain("$13.1M");
+  });
+
   it("labels Home answer exports by surface while preserving visual artifacts", () => {
     const answer = { ...answerFixture(), surface: "home" as const };
     const html = renderAvaAnswerStandaloneHtml(answer);
