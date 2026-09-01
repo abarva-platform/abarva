@@ -21,6 +21,7 @@ import { render } from "@testing-library/react";
 
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 import { HomeV4App } from "../HomeV4App";
+import { rankFindings } from "../page-tables";
 
 jest.mock("@/components/home/preview/HomeAvaChat", () => ({
   HomeAvaChat: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -360,6 +361,62 @@ describe("the rail", () => {
     }
     for (const label of ["Current-state architecture", "Browse the record"]) {
       expect(rail.textContent ?? "").toContain(label);
+    }
+  });
+});
+
+describe("the record's own rating", () => {
+  // The queue is ordered by what the record rates, not by how serious a finding sounds to us.
+  it("orders a rated-high finding ahead of an unrated one of the same kind", () => {
+    const ranked = rankFindings([
+      { kind: "exposure", claim: "unrated", owner: "o", because: "b" },
+      {
+        kind: "exposure",
+        claim: "high",
+        owner: "o",
+        because: "b",
+        rated: "high",
+      },
+      {
+        kind: "exposure",
+        claim: "moderate",
+        owner: "o",
+        because: "b",
+        rated: "moderate",
+      },
+    ]);
+    expect(ranked.map((f) => f.claim)).toEqual(["high", "unrated", "moderate"]);
+  });
+
+  it("does not demote an unrated finding below a moderate one", () => {
+    // Absence of a rating is not a low rating. Treating it as one lets a gap in the register
+    // quietly reorder a queue a leader reads top-down.
+    const ranked = rankFindings([
+      {
+        kind: "exposure",
+        claim: "moderate",
+        owner: "o",
+        because: "b",
+        rated: "moderate",
+      },
+      { kind: "exposure", claim: "unrated", owner: "o", because: "b" },
+    ]);
+    expect(ranked[0].claim).toBe("unrated");
+  });
+
+  it("spends red only on a rating the record declares", () => {
+    window.location.hash = "what_needs_attention";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    for (const badge of container.querySelectorAll(
+      "[data-home-finding-rated]",
+    )) {
+      const rated = badge.getAttribute("data-home-finding-rated");
+      const style = badge.getAttribute("style") ?? "";
+      if (rated === "high")
+        expect(style).toMatch(/rgb\(163, 45, 45\)|#a32d2d/i);
+      else expect(style).not.toMatch(/rgb\(163, 45, 45\)|#a32d2d/i);
     }
   });
 });
