@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 import {
   rankFindings,
   splitLeadingFigure,
@@ -56,13 +60,131 @@ function lineageForFinding(finding: Finding): FactLineage | null {
   };
 }
 
+/**
+ * The chapter's tables, grouped into its named sections.
+ *
+ * Eight ungrouped tables measured ten screens with no landmarks: a reader could not say where they
+ * were, what was left, or which table mattered. Grouping does not move a row -- it gives the scroll
+ * a structure, and lets each section open one table at a time so the chapter is scannable before it
+ * is exhaustive.
+ *
+ * A table set whose tables declare no section renders exactly as it did before.
+ */
 export function TableSet({ tables }: { tables: TableSpec[] }) {
+  if (tables.length === 0) return null;
+  // Grouped by name, ordered by where each name first appears. Grouping only adjacent tables would
+  // split one section in two whenever its tables are not contiguous in the builder's output, and a
+  // chapter showing "Where it runs" twice reads as a bug rather than as a structure.
+  const sections: Array<{ name: string | null; tables: TableSpec[] }> = [];
+  for (const table of tables) {
+    const name = table.section ?? null;
+    const existing = sections.find((section) => section.name === name);
+    if (existing) existing.tables.push(table);
+    else sections.push({ name, tables: [table] });
+  }
+  if (sections.length === 1 && sections[0].name === null) {
+    return <TableGrid tables={tables} />;
+  }
+  return (
+    <>
+      {sections.map((section, index) => (
+        <TableSection
+          key={section.name ?? `unnamed-${index}`}
+          name={section.name}
+          index={index + 1}
+          count={sections.length}
+          tables={section.tables}
+        />
+      ))}
+    </>
+  );
+}
+
+/**
+ * One named part of a chapter. The first table is open; the rest state what they hold and open on
+ * request -- a collapsed table still says its own shape, so collapsing hides length, never content.
+ */
+function TableSection({
+  name,
+  index,
+  count,
+  tables,
+}: {
+  name: string | null;
+  index: number;
+  count: number;
+  tables: TableSpec[];
+}) {
+  const [openCaption, setOpenCaption] = useState<string | null>(
+    tables[0]?.caption ?? null,
+  );
+  return (
+    <section
+      data-home-table-section={name ?? undefined}
+      id={name ? sectionId(name) : undefined}
+      style={{ padding: `30px ${PAGE_X}px 0`, scrollMarginTop: 72 }}
+    >
+      {name ? (
+        <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 14 }}>
+          <span style={eyebrow(V4.stone)}>
+            {String(index).padStart(2, "0")} of {String(count).padStart(2, "0")}
+          </span>
+          <h3
+            style={{
+              margin: "7px 0 0",
+              fontFamily: SERIF,
+              fontSize: 23,
+              fontWeight: 500,
+              lineHeight: 1.2,
+            }}
+          >
+            {name}
+          </h3>
+          <p style={sectionCountStyle}>
+            {tables.length === 1 ? "One table" : `${tables.length} tables`}
+          </p>
+        </div>
+      ) : null}
+      {tables.map((table) =>
+        table.caption === openCaption ? (
+          <TableGrid key={table.caption} tables={[table]} />
+        ) : (
+          <button
+            key={table.caption}
+            type="button"
+            data-home-table-collapsed={table.caption}
+            onClick={() => setOpenCaption(table.caption)}
+            style={collapsedRowStyle}
+          >
+            <span style={{ fontFamily: SANS, fontSize: 14.5, color: V4.ink }}>
+              {table.caption}
+            </span>
+            <span style={collapsedMetaStyle}>
+              {table.rows.length} {table.rows.length === 1 ? "row" : "rows"} ·
+              open
+            </span>
+          </button>
+        ),
+      )}
+    </section>
+  );
+}
+
+/** Stable anchor for the chapter spine. */
+export function sectionId(name: string): string {
+  return `section-${name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")}`;
+}
+
+function TableGrid({ tables }: { tables: TableSpec[] }) {
   if (tables.length === 0) return null;
   return (
     <section
       data-home-table-set
       style={{
-        padding: `28px ${PAGE_X}px 0`,
+        padding: "18px 0 0",
         display: "grid",
         gridTemplateColumns:
           tables.length === 1
@@ -217,6 +339,37 @@ export function TableSet({ tables }: { tables: TableSpec[] }) {
     </section>
   );
 }
+
+const sectionCountStyle = {
+  margin: "6px 0 0",
+  fontFamily: MONO,
+  fontSize: 11,
+  letterSpacing: "0.06em",
+  color: V4.slate,
+} as const;
+
+const collapsedRowStyle = {
+  display: "flex",
+  width: "100%",
+  alignItems: "baseline",
+  justifyContent: "space-between",
+  gap: 16,
+  marginTop: 10,
+  padding: "13px 16px",
+  background: V4.surface,
+  border: `1px solid ${V4.rule}`,
+  borderRadius: 3,
+  cursor: "pointer",
+  textAlign: "left" as const,
+};
+
+const collapsedMetaStyle = {
+  fontFamily: MONO,
+  fontSize: 11,
+  letterSpacing: "0.05em",
+  color: V4.slate,
+  whiteSpace: "nowrap" as const,
+} as const;
 
 export function FindingsBlock({
   findings,
