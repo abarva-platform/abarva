@@ -655,6 +655,8 @@ assert(
     chapters.includes("function claimBackedNarrativeNeedsFallback") &&
     chapters.includes("missing_model_response_fallback") &&
     chapters.includes("invalid_json_fallback") &&
+    chapters.includes("deterministicOnly") &&
+    chapters.includes("deterministic_write_fallback") &&
     chapters.includes("post_synthesis_refusal_language_fallback") &&
     chapters.includes("deterministicClaimBasedChapterNarrative"),
   "Home chapter assembly routes organization/workforce/process evidence to How We Operate and prevents claim-backed chapters from rendering unavailable or generic refusal prose",
@@ -668,7 +670,8 @@ assert(
 );
 assert(
   script.includes("published_chapter_contains_refusal_language") &&
-    script.includes("refusalLikePublishedText"),
+    script.includes("refusalLikePublishedText") &&
+    script.includes("deterministicOnly: WRITE"),
   "Home ECL narrative visible-quality gate rejects a published chapter that still renders refusal-like prose",
 );
 assert(
