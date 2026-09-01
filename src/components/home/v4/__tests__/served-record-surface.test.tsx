@@ -153,3 +153,42 @@ describe("the perspective layer on the served path", () => {
     expect(block!.querySelector("[data-home-no-comparison]")).not.toBeNull();
   });
 });
+
+describe("the decision queue on the served path", () => {
+  // The stored copy carries four families; the served path carries nine. The queue reads three of
+  // the five that only exist on the served path, so a fixture-only test would prove nothing about
+  // whether a reader ever sees it -- which is how the perspective section shipped inert.
+  it("populates from the families only the served path carries", () => {
+    const value = servedBundle();
+    const estate = value.technologyEstate!;
+    estate.recordTypes.push(
+      {
+        objectType: "risk_control",
+        label: "Risks & Controls",
+        columns: [],
+        rows: [
+          {
+            riskOrControlName: "Standing privileged credentials",
+            severity: "high",
+            controlStatus: "open",
+          },
+        ],
+      } as never,
+      {
+        objectType: "program_initiative",
+        label: "Programs & Initiatives",
+        columns: [],
+        rows: [{ programName: "RAF Modernisation", status: "at_risk" }],
+      } as never,
+    );
+    window.location.hash = "what_needs_attention";
+    const { container } = render(
+      <HomeV4App bundle={value} tenantKey="meridian-health" />,
+    );
+    const queue = container.querySelector("[data-home-decision-queue]");
+    expect(queue).not.toBeNull();
+    expect(Number(queue!.getAttribute("data-home-decision-queue"))).toBe(2);
+    // What the record rates leads.
+    expect(queue!.querySelector("[data-home-queue-rated]")).not.toBeNull();
+  });
+});

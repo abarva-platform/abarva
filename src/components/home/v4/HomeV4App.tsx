@@ -362,6 +362,15 @@ export function HomeV4App({
                     : undefined
                 }
                 asOf={bundle.provenance?.generated_at?.slice(0, 10)}
+                queue={
+                  activeChapter.chapterId === "what_needs_attention"
+                    ? {
+                        risks: estateForRail.risks,
+                        programs: estateForRail.programs,
+                        contracts: estateForRail.vendors,
+                      }
+                    : undefined
+                }
                 metrics={
                   chapterArguesFrom(activeChapter.chapterId, "metrics")
                     ? (techRecordTypes.find(
