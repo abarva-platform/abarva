@@ -107,3 +107,49 @@ describe("the served path", () => {
     }
   });
 });
+
+describe("the perspective layer on the served path", () => {
+  /**
+   * This pins a gap rather than a behaviour, and it should be deleted when the gap closes.
+   *
+   * Sector patterns and expert lenses reach the stored copy because that packet is built from
+   * intake records. The served packet is built from projection rows, and neither family is in the
+   * serving path -- so the perspective section renders on the fixture and renders nothing live.
+   *
+   * The section whose entire purpose is refusing to imply a comparison is currently not in front of
+   * a reader at all. That is worth a failing signal the day it is fixed, not silence until someone
+   * notices.
+   */
+  it("carries no analytical lenses yet, so the section cannot render", () => {
+    const packet = servedBundle().thesis.signalPacket as {
+      analyticalLenses?: unknown[];
+    };
+    expect(packet.analyticalLenses ?? []).toHaveLength(0);
+  });
+
+  it("renders the section as soon as the packet carries them", () => {
+    const value = servedBundle();
+    (
+      value.thesis.signalPacket as { analyticalLenses?: unknown[] }
+    ).analyticalLenses = [
+      {
+        kind: "industry_pattern",
+        label: "A pattern",
+        appliesHere: "It applies here because the record says so.",
+      },
+      {
+        kind: "expert_lens",
+        label: "A lens",
+        expertRole: "Chief Data Officer",
+        questions: "What would an answer decide?",
+      },
+    ];
+    window.location.hash = "leadership_perspective";
+    const { container } = render(
+      <HomeV4App bundle={value} tenantKey="meridian-health" />,
+    );
+    const block = container.querySelector("[data-home-perspective]");
+    expect(block).not.toBeNull();
+    expect(block!.querySelector("[data-home-no-comparison]")).not.toBeNull();
+  });
+});
