@@ -282,8 +282,11 @@ describe("the perspective layer", () => {
       <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
     );
     const block = container.querySelector("[data-home-perspective]");
-    if (!block) return; // a record with no patterns or lenses renders none
-    const note = block.querySelector("[data-home-no-comparison]");
+    // No early return. A guard that skips when the thing it guards is missing can never fail on the
+    // case that matters -- this one passed while the section rendered nothing at all on the served
+    // path, because the fixture carried lenses and the served packet does not.
+    expect(block).not.toBeNull();
+    const note = block!.querySelector("[data-home-no-comparison]");
     expect(note).not.toBeNull();
     expect(note!.textContent ?? "").toMatch(
       /no competitor position and no peer benchmark/i,
@@ -291,7 +294,7 @@ describe("the perspective layer", () => {
     // It must precede the patterns, not follow them.
     expect(
       note!.compareDocumentPosition(
-        block.querySelector("[data-home-briefing]")!,
+        block!.querySelector("[data-home-briefing]")!,
       ),
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
