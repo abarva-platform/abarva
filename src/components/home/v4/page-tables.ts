@@ -1151,14 +1151,65 @@ export function constantColumns(
 
 export function metricTables(metrics: EstateRow[]): TableSpec[] {
   if (metrics.length === 0) return [];
+  const tables: TableSpec[] = [];
+
+  // What is measured and who answers for it. The chapter's opening question, and the part of it
+  // this record can answer -- a measure set is first a statement about coverage and ownership.
+  const byDomain = countBy(
+    metrics.filter((m) => str(m, "metricDomain")),
+    "metricDomain",
+  );
+  const owners = (rows: EstateRow[]) =>
+    new Set(rows.map((m) => str(m, "owner")).filter(Boolean)).size;
+  if (byDomain.length > 0) {
+    const listed = byDomain.slice(0, 8);
+    tables.push({
+      caption: "What is measured, and who owns it",
+      section: "What is measured",
+      barColumn: "Measures",
+      columns: ["Domain", "Measures", "With a target", "Named owners"],
+      rows: listed.map((d) => {
+        const rows = metrics.filter((m) => str(m, "metricDomain") === d.value);
+        return [
+          label(d.value),
+          d.count,
+          rows.filter((m) => str(m, "targetValue")).length,
+          owners(rows),
+        ];
+      }),
+      total: [
+        "Declared",
+        metrics.length,
+        metrics.filter((m) => str(m, "targetValue")).length,
+        owners(metrics),
+      ],
+      note:
+        [
+          "Measures are counted, never summed: they are declared in different units and an aggregate across them would mean nothing.",
+          byDomain.length > listed.length
+            ? `${byDomain.length - listed.length} further domains are not listed; the total counts every measure.`
+            : null,
+          metrics.length > byDomain.reduce((n, d) => n + d.count, 0)
+            ? `${metrics.length - byDomain.reduce((n, d) => n + d.count, 0)} measures declare no domain and appear only in the total.`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined,
+    });
+  }
+
+  // The claim tables exist only where the record carries a readiness column at all. Rendered
+  // against a record without one they said "0 blocked claims" over an empty body -- which reads as
+  // nothing is blocked when it means nothing is recorded, the most flattering possible misreading
+  // of an absent column.
   const byReadiness = countBy(
     metrics.filter((m) => str(m, "claimReadiness")),
     "claimReadiness",
   );
   const blocked = metrics.filter((m) => str(m, "claimBlockedReason"));
   const withAction = blocked.filter((m) => str(m, "unblockAction"));
-  const tables: TableSpec[] = [
-    {
+  if (byReadiness.length > 0) {
+    tables.push({
       caption: "Can this value be claimed",
       section: "What is measured",
       barColumn: "Metrics",
@@ -1178,8 +1229,8 @@ export function metricTables(metrics: EstateRow[]): TableSpec[] {
         blocked.length,
       ],
       note: `${withAction.length} of the ${blocked.length} blocked claims already state the action that would unblock them.`,
-    },
-  ];
+    });
+  }
   // The unblock list itself, because it is the agenda -- a count of blocked claims is not actionable
   // and a named action against a named period is.
   if (withAction.length > 0) {
@@ -1208,6 +1259,62 @@ export function metricTables(metrics: EstateRow[]): TableSpec[] {
 export function metricFindings(metrics: EstateRow[]): Finding[] {
   if (metrics.length === 0) return [];
   const findings: Finding[] = [];
+
+  // The chapter asks whether the enterprise is moving toward its outcomes. That takes three numbers
+  // per measure and this record carries two. Said plainly, because the distance chart above reads
+  // like progress unless the reader is told what it is measuring.
+  const withActual = metrics.filter((m) => str(m, "actualValue")).length;
+  if (withActual === 0) {
+    findings.push({
+      kind: "absence",
+      claim: `No measure declares a current value, across all ${metrics.length}.`,
+      owner: "Chief Financial Officer",
+      because:
+        "Baseline and target say where a measure started and where it is meant to reach. Whether it has moved needs a third number the record does not carry, so the distance shown on this page is the size of the ambition rather than progress against it.",
+      trace: {
+        file: "14_metrics_outcomes.csv",
+        grain: "one tracked metric",
+        rule: "actualValue is empty on every row",
+      },
+    });
+  } else if (withActual < metrics.length) {
+    findings.push({
+      kind: "absence",
+      claim: `${metrics.length - withActual} of ${metrics.length} measures declare no current value.`,
+      owner: "Chief Financial Officer",
+      because:
+        "Progress can be stated for the rest and not for these, so any figure covering the whole set is covering two different things.",
+      trace: {
+        file: "14_metrics_outcomes.csv",
+        grain: "one tracked metric",
+        rule: "actualValue is empty",
+      },
+    });
+  }
+
+  // The other half of the chapter's question. A record that says nothing about attestation cannot
+  // be read as saying the value is unproven OR proven -- only that it was never asked.
+  const withClaim = metrics.filter(
+    (m) =>
+      str(m, "claimReadiness") ||
+      str(m, "valueClaimStatus") ||
+      num(m, "financeAttestedValueUsd") > 0,
+  ).length;
+  if (withClaim === 0) {
+    findings.push({
+      kind: "absence",
+      claim: `No measure declares whether its value has been attested, across all ${metrics.length}.`,
+      owner: "Chief Financial Officer",
+      because:
+        "Nothing here states a claim readiness, a claim status or a finance-attested amount. Whether these outcomes can be claimed is not answered by this record either way, which is different from the answer being no.",
+      trace: {
+        file: "14_metrics_outcomes.csv",
+        grain: "one tracked metric",
+        rule: "claimReadiness, valueClaimStatus and financeAttestedValueUsd are all empty on every row",
+      },
+    });
+  }
+
   const claimable = metrics.filter((m) =>
     /claimable|ready/i.test(str(m, "claimReadiness")),
   ).length;
