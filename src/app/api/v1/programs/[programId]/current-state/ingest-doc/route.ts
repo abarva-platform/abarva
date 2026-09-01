@@ -16,6 +16,7 @@ import {
   isDocumentFamily,
   QuarantinedDocumentError,
 } from "@/lib/programs/current-state-doc-ingest";
+import { structuredCurrentStateUploadDetail } from "@/lib/programs/current-state-routing";
 import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
@@ -72,11 +73,10 @@ export async function POST(
       );
     }
     if (!isDocumentFamily(family)) {
-      // Structured families have a canonical store — use the CSV ingest route.
       return Response.json(
         {
           error: "structured_family",
-          detail: `'${familyKey}' is backed by ${family.backing?.table}; use /current-state/ingest (CSV).`,
+          detail: structuredCurrentStateUploadDetail(family),
         },
         { status: 400 },
       );

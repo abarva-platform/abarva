@@ -9,6 +9,7 @@ import { extractTextFromSlideXml } from "../evidence-ingestion";
 import { AI_PRODUCT_DEVELOPMENT_LIFECYCLE } from "../archetypes/registry";
 import type { EvidenceFamilySpec } from "../archetypes/types";
 import { evaluateSensitiveUpload } from "@/lib/security/sensitive-upload-guard";
+import { structuredCurrentStateUploadDetail } from "../current-state-routing";
 
 describe("current-state document path — governance helpers", () => {
   it("isDocumentFamily: structured (with backing) is NOT a document family", () => {
@@ -41,6 +42,18 @@ describe("current-state document path — governance helpers", () => {
       ) as EvidenceFamilySpec;
       expect(fam.backing).toBeUndefined();
     }
+  });
+
+  it("explains why canonical-backed families cannot use Upload & Review", () => {
+    const dora = AI_PRODUCT_DEVELOPMENT_LIFECYCLE.evidenceFamilies.find(
+      (f) => f.key === "eng_performance_dora",
+    )!;
+    const detail = structuredCurrentStateUploadDetail(dora);
+    expect(detail).toContain("Engineering delivery baseline (DORA)");
+    expect(detail).toContain("governed data load");
+    expect(detail).toContain("not Upload & Review");
+    expect(detail).toContain("structured current-state CSV path");
+    expect(detail).not.toContain("tower_dora_metrics");
   });
 
   it("validateKpiTable: accepts a header with metric + baseline columns and data rows", () => {

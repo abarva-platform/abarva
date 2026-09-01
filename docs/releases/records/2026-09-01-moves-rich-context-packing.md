@@ -12,6 +12,8 @@
 
 Deliverable generation now retrieves evidence from the artifact's own section, exhibit, and table structure instead of a single generic query. The generation path packs whole governed evidence items into an explicit input-side token budget, reports how much context was available/retrieved/packed/dropped/cited, distinguishes no approved evidence from prompt starvation, and marks the shared prompt context for Anthropic prompt caching.
 
+The Moves current-state Upload & Review surface now rejects canonical-backed evidence families with an actionable governed-load message instead of a generic unmapped-document failure. This is an informative guard only; it does not change auto-commit policy or route those files into canonical loaders.
+
 ## Layer Impact
 
 Layer 4 Products: changes the Moves/Source deliverable-generation projection and run-status telemetry. It does not change canonical enterprise objects or source adapters.
@@ -34,12 +36,16 @@ Control-plane run ledger: adds a nullable JSONB telemetry field to `deliverable_
 - Updates `src/lib/deliverables/orchestrator/generate-service.ts` to resolve the artifact brief before retrieval, derive section/exhibit/table queries, and return coverage.
 - Updates `src/lib/deliverables/orchestrator/model-caller.ts` and prompt types so the shared prompt context can be sent as an Anthropic cache-control breakpoint.
 - Updates the async worker, run repository, and run polling route to persist and return context coverage.
+- Adds a shared current-state routing message for canonical-backed family wrong-path failures, used by the P2 bulk uploader and direct document-ingest route.
+- Updates post-extract document sensitivity assessment to scan decoded extracted text as text, independent of the source archive MIME type.
 - Adds migration `supabase/migrations/20260901190000_deliverable_runs_context_coverage.sql`.
 - Adds live status file `docs/status/moves-rich-context/STATUS.md`.
 
 ## QA / Validation
 
-- PASS: `npx jest src/lib/deliverables/orchestrator/__tests__/context-budget.test.ts src/lib/deliverables/orchestrator/__tests__/surface.test.ts src/lib/deliverables/orchestrator/__tests__/model-caller.test.ts src/lib/deliverables/orchestrator/__tests__/runs-repository.test.ts 'src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts' --runInBand` passed 4 suites / 41 tests.
+- PASS: `npx jest src/lib/deliverables/orchestrator/__tests__/context-budget.test.ts src/lib/deliverables/orchestrator/__tests__/surface.test.ts src/lib/deliverables/orchestrator/__tests__/model-caller.test.ts src/lib/deliverables/orchestrator/__tests__/runs-repository.test.ts 'src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts' --runInBand` passed 5 suites / 42 tests.
+- PASS: `npx jest src/lib/programs/__tests__/current-state-doc-ingest.test.ts --runInBand` passed 1 suite / 16 tests.
+- PASS: `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx --runInBand -t "canonical-backed P2 uploads|routes P2 current-state uploads|routes airline P2 uploads"` passed 3 targeted tests.
 - NOTE: Jest emitted pre-existing duplicate manual mock warnings for markdown parser mocks; the focused suites still passed.
 
 ## Rollout Plan
@@ -68,4 +74,4 @@ Revert the application commit to restore the previous retrieval and prompt paylo
 
 ## Known Gaps
 
-Increment 2 approval-gap behavior is intentionally not implemented because the auto-commit families and gate report/block behavior require a product-owner decision. Digest-layer work is intentionally deferred until Increment 1 has a measured before/after generation readout. This branch has not been deployed or live-proven.
+Increment 0 4a routing to canonical loaders is intentionally not implemented in this follow-up. Increment 2 approval-gap behavior is intentionally not implemented because the auto-commit families and gate report/block behavior require a product-owner decision. Digest-layer work is intentionally deferred until Increment 1 has a measured before/after generation readout. This branch has not been deployed or live-proven.
