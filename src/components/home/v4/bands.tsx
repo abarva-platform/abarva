@@ -1,6 +1,9 @@
 import type { CSSProperties } from "react";
 
-import type { EnterpriseSignalPacket, GroundedClaim } from "@/lib/home/preview/types";
+import type {
+  EnterpriseSignalPacket,
+  GroundedClaim,
+} from "@/lib/home/preview/types";
 import { claimSource } from "./source-label";
 import { MONO, PAGE_X, SANS, SERIF, V4, bandHeading, eyebrow } from "./tokens";
 
@@ -35,7 +38,16 @@ function BandHeading({
         <h2 style={bandHeading(color)}>{title}</h2>
         <span style={{ flex: 1, height: 1, background: ruleColor }} />
       </div>
-      <p style={{ margin: "10px 0 0", fontFamily: SANS, fontSize: 14, lineHeight: 1.55, color: V4.slate, maxWidth: "58ch" }}>
+      <p
+        style={{
+          margin: "10px 0 0",
+          fontFamily: SANS,
+          fontSize: 14,
+          lineHeight: 1.55,
+          color: V4.slate,
+          maxWidth: "58ch",
+        }}
+      >
         {rubric}
       </p>
     </div>
@@ -50,29 +62,89 @@ function ClaimRow({
   signalPacket,
   spine,
   first,
+  index,
   severityLabel,
 }: {
   claim: GroundedClaim;
   signalPacket: EnterpriseSignalPacket;
   spine: string;
   first: boolean;
+  index: number;
   severityLabel?: string;
 }) {
   const source = claimSource(claim, signalPacket);
   const topRule = first ? undefined : `1px solid ${V4.ruleSoft}`;
   return (
     <>
-      <div style={{ padding: "22px 0 22px 20px", borderLeft: `3px solid ${spine}`, borderTop: topRule }}>
-        {severityLabel ? (
-          <div style={{ ...eyebrow(spine), letterSpacing: "0.11em", marginBottom: 10 }}>{severityLabel}</div>
-        ) : null}
-        <p style={{ margin: 0, fontFamily: SANS, fontSize: 17, lineHeight: 1.54, color: V4.ink, maxWidth: "52ch", textWrap: "pretty" }}>
-          {claim.statement}
-        </p>
+      {/*
+        Numbered, not striped. A coloured left border carried no meaning a reader could name -- it
+        read as decoration, and it is the one device the house conventions ban. A number does the
+        work the stripe was standing in for: it says how many findings there are and which one this
+        is, and it survives being read aloud.
+      */}
+      <div
+        style={{
+          padding: "22px 0 22px 0",
+          borderTop: topRule,
+          display: "grid",
+          gridTemplateColumns: "auto minmax(0, 1fr)",
+          gap: 18,
+          alignItems: "start",
+        }}
+      >
+        <span
+          data-home-claim-index
+          style={{
+            fontFamily: MONO,
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            color: V4.stone,
+            paddingTop: 4,
+          }}
+        >
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <div>
+          {severityLabel ? (
+            <div
+              style={{
+                ...eyebrow(spine),
+                letterSpacing: "0.11em",
+                marginBottom: 10,
+              }}
+            >
+              {severityLabel}
+            </div>
+          ) : null}
+          <p
+            style={{
+              margin: 0,
+              fontFamily: SANS,
+              fontSize: 17,
+              lineHeight: 1.54,
+              color: V4.ink,
+              maxWidth: "52ch",
+              textWrap: "pretty",
+            }}
+          >
+            {claim.statement}
+          </p>
+        </div>
       </div>
       <aside style={{ padding: "22px 0", borderTop: topRule, maxWidth: 520 }}>
-        <div style={{ ...eyebrow(V4.navy), letterSpacing: "0.11em" }}>{source.label}</div>
-        <p style={{ margin: "5px 0 0", fontFamily: MONO, fontSize: 11, color: V4.slate, letterSpacing: "0.02em" }}>
+        <div style={{ ...eyebrow(V4.navy), letterSpacing: "0.11em" }}>
+          {source.label}
+        </div>
+        <p
+          style={{
+            margin: "5px 0 0",
+            fontFamily: MONO,
+            fontSize: 11,
+            color: V4.slate,
+            letterSpacing: "0.02em",
+          }}
+        >
           {source.ids}
           {source.hasUnresolved ? " · one citation does not resolve" : ""}
         </p>
@@ -89,7 +161,13 @@ const CLAIM_GRID: CSSProperties = {
 };
 
 /** Band 1 -- counted from the client's own systems and interviews. */
-export function RecordBand({ claims, signalPacket }: { claims: GroundedClaim[]; signalPacket: EnterpriseSignalPacket }) {
+export function RecordBand({
+  claims,
+  signalPacket,
+}: {
+  claims: GroundedClaim[];
+  signalPacket: EnterpriseSignalPacket;
+}) {
   if (claims.length === 0) return null;
   return (
     <div style={{ padding: `0 ${PAGE_X}px` }}>
@@ -98,9 +176,24 @@ export function RecordBand({ claims, signalPacket }: { claims: GroundedClaim[]; 
         rubric="Counted from this enterprise's own systems and interviews. Sources named alongside."
         style={{ margin: "58px 0 0" }}
       />
-      <div style={{ ...CLAIM_GRID, background: V4.surface, border: `1px solid ${V4.rule}`, borderRadius: 10, padding: "0 22px" }}>
+      <div
+        style={{
+          ...CLAIM_GRID,
+          background: V4.surface,
+          border: `1px solid ${V4.rule}`,
+          borderRadius: 10,
+          padding: "0 22px",
+        }}
+      >
         {claims.map((claim, i) => (
-          <ClaimRow key={claim.statement} claim={claim} signalPacket={signalPacket} spine={V4.navy} first={i === 0} />
+          <ClaimRow
+            key={claim.statement}
+            claim={claim}
+            signalPacket={signalPacket}
+            spine={V4.navy}
+            first={i === 0}
+            index={i}
+          />
         ))}
       </div>
     </div>
@@ -110,7 +203,13 @@ export function RecordBand({ claims, signalPacket }: { claims: GroundedClaim[]; 
 /** Band 2 -- readings of band 1, on a white ground so the shift from counted to interpreted is
  * visible before a word is read. Each carries the evidence it follows from, so it stays
  * contestable on the record rather than on authority. */
-export function FollowsBand({ claims, signalPacket }: { claims: GroundedClaim[]; signalPacket: EnterpriseSignalPacket }) {
+export function FollowsBand({
+  claims,
+  signalPacket,
+}: {
+  claims: GroundedClaim[];
+  signalPacket: EnterpriseSignalPacket;
+}) {
   if (claims.length === 0) return null;
   return (
     <section
@@ -135,7 +234,13 @@ export function FollowsBand({ claims, signalPacket }: { claims: GroundedClaim[];
         }}
       >
         {claims.map((claim) => (
-          <div key={claim.statement} style={{ padding: "22px 0", borderTop: `1px solid rgba(136,135,128,0.22)` }}>
+          <div
+            key={claim.statement}
+            style={{
+              padding: "22px 0",
+              borderTop: `1px solid rgba(136,135,128,0.22)`,
+            }}
+          >
             <p
               style={{
                 margin: 0,
@@ -151,7 +256,15 @@ export function FollowsBand({ claims, signalPacket }: { claims: GroundedClaim[];
             >
               {claim.statement}
             </p>
-            <p style={{ margin: "12px 0 0", fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.slate }}>
+            <p
+              style={{
+                margin: "12px 0 0",
+                fontFamily: MONO,
+                fontSize: 11,
+                letterSpacing: "0.06em",
+                color: V4.slate,
+              }}
+            >
               FOLLOWS FROM {claimSource(claim, signalPacket).ids}
             </p>
           </div>
@@ -164,7 +277,13 @@ export function FollowsBand({ claims, signalPacket }: { claims: GroundedClaim[];
 /** Band 3 -- exposures the client's own risk register already rates high. Red is reserved for
  * exactly this and is never used for emphasis; if it appeared decoratively it would stop meaning
  * "your own register says this is severe". */
-export function ExposuresBand({ claims, signalPacket }: { claims: GroundedClaim[]; signalPacket: EnterpriseSignalPacket }) {
+export function ExposuresBand({
+  claims,
+  signalPacket,
+}: {
+  claims: GroundedClaim[];
+  signalPacket: EnterpriseSignalPacket;
+}) {
   if (claims.length === 0) return null;
   return (
     <div style={{ padding: `0 ${PAGE_X}px` }}>
@@ -175,9 +294,24 @@ export function ExposuresBand({ claims, signalPacket }: { claims: GroundedClaim[
         ruleColor="rgba(163,45,45,0.32)"
         style={{ margin: "52px 0 0" }}
       />
-      <div style={{ ...CLAIM_GRID, background: "rgba(163,45,45,0.035)", border: `1px solid rgba(163,45,45,0.22)`, borderRadius: 10, padding: "0 22px" }}>
+      <div
+        style={{
+          ...CLAIM_GRID,
+          background: "rgba(163,45,45,0.035)",
+          border: `1px solid rgba(163,45,45,0.22)`,
+          borderRadius: 10,
+          padding: "0 22px",
+        }}
+      >
         {claims.map((claim, i) => (
-          <ClaimRow key={claim.statement} claim={claim} signalPacket={signalPacket} spine={V4.red} first={i === 0} />
+          <ClaimRow
+            key={claim.statement}
+            claim={claim}
+            signalPacket={signalPacket}
+            spine={V4.red}
+            first={i === 0}
+            index={i}
+          />
         ))}
       </div>
     </div>
@@ -255,7 +389,8 @@ export function NotEstablishedBand({
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,240px),1fr))",
+                  gridTemplateColumns:
+                    "repeat(auto-fit,minmax(min(100%,240px),1fr))",
                   gap: "clamp(18px,2vw,32px)",
                   marginTop: 26,
                   paddingTop: 22,
@@ -264,8 +399,20 @@ export function NotEstablishedBand({
               >
                 {cells.map(([label, value]) => (
                   <div key={label}>
-                    <div style={{ ...eyebrow(V4.slate), marginBottom: 9 }}>{label}</div>
-                    <p style={{ margin: 0, fontFamily: SANS, fontSize: 14.5, lineHeight: 1.58, color: V4.inkSoft }}>{value}</p>
+                    <div style={{ ...eyebrow(V4.slate), marginBottom: 9 }}>
+                      {label}
+                    </div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontFamily: SANS,
+                        fontSize: 14.5,
+                        lineHeight: 1.58,
+                        color: V4.inkSoft,
+                      }}
+                    >
+                      {value}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -340,10 +487,28 @@ export function QuestionsSection({ questions }: { questions: string[] }) {
               borderTop: "1px solid rgba(136,135,128,0.3)",
             }}
           >
-            <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate, paddingTop: 5 }}>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 11,
+                color: V4.slate,
+                paddingTop: 5,
+              }}
+            >
               {String(i + 1).padStart(2, "0")}
             </span>
-            <span style={{ fontFamily: SANS, fontSize: 16, lineHeight: 1.56, color: V4.inkSoft, maxWidth: "52ch", textWrap: "pretty" }}>{q}</span>
+            <span
+              style={{
+                fontFamily: SANS,
+                fontSize: 16,
+                lineHeight: 1.56,
+                color: V4.inkSoft,
+                maxWidth: "52ch",
+                textWrap: "pretty",
+              }}
+            >
+              {q}
+            </span>
           </li>
         ))}
       </ol>
@@ -364,9 +529,24 @@ export function ChapterHeader({
 }) {
   return (
     <header style={{ padding: `46px ${PAGE_X}px 0` }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 18,
+          flexWrap: "wrap",
+        }}
+      >
         <span style={eyebrow(V4.blue)}>{eyebrowText}</span>
-        <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 16, color: V4.slate, letterSpacing: "-0.01em" }}>
+        <span
+          style={{
+            fontFamily: SERIF,
+            fontStyle: "italic",
+            fontSize: 16,
+            color: V4.slate,
+            letterSpacing: "-0.01em",
+          }}
+        >
           {guidingQuestion}
         </span>
       </div>
@@ -380,7 +560,8 @@ export function ChapterHeader({
           padding: "26px clamp(20px,2.2vw,34px)",
           borderTop: `1px solid ${V4.rule}`,
           borderBottom: `1px solid ${V4.rule}`,
-          background: "linear-gradient(90deg,rgba(0,102,204,0.06),rgba(255,255,255,0.72) 42%,rgba(29,158,117,0.06))",
+          background:
+            "linear-gradient(90deg,rgba(0,102,204,0.06),rgba(255,255,255,0.72) 42%,rgba(29,158,117,0.06))",
         }}
       >
         <h1
@@ -397,7 +578,18 @@ export function ChapterHeader({
           {headline}
         </h1>
         {standfirst ? (
-          <p style={{ margin: 0, fontFamily: SANS, fontSize: 16, lineHeight: 1.62, color: V4.inkSoft, maxWidth: "56ch", textWrap: "pretty", alignSelf: "end" }}>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: SANS,
+              fontSize: 16,
+              lineHeight: 1.62,
+              color: V4.inkSoft,
+              maxWidth: "56ch",
+              textWrap: "pretty",
+              alignSelf: "end",
+            }}
+          >
             {standfirst}
           </p>
         ) : null}
