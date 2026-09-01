@@ -514,6 +514,22 @@ export function FindingsBlock({
             >
               {finding.owner}
             </span>
+            {finding.rated ? (
+              <span
+                data-home-finding-rated={finding.rated}
+                style={{
+                  gridColumn: "1 / -1",
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.09em",
+                  textTransform: "uppercase",
+                  color: finding.rated === "high" ? V4.red : V4.amber,
+                }}
+              >
+                {finding.rated} · rated by the record
+              </span>
+            ) : null}
             {KIND_FORM[finding.kind].label ? (
               <span
                 data-home-finding-mark={finding.kind}

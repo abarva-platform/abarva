@@ -70,12 +70,19 @@ const FINDING_RANK: Record<FindingKind, number> = {
 };
 
 /** Sorts a findings list into reading order, keeping the original order within each kind. */
+const RATED_RANK: Record<string, number> = { high: 0, moderate: 1 };
+
 export function rankFindings(findings: Finding[]): Finding[] {
   return findings
     .map((finding, index) => ({ finding, index }))
     .sort(
       (a, b) =>
         FINDING_RANK[a.finding.kind] - FINDING_RANK[b.finding.kind] ||
+        // Within a kind, the record's own rating orders the list. An unrated finding is not
+        // demoted below a moderate one -- absence of a rating is not a low rating, and treating it
+        // as one would let a gap in the register quietly reorder a queue a leader reads top-down.
+        (RATED_RANK[a.finding.rated ?? ""] ?? 0.5) -
+          (RATED_RANK[b.finding.rated ?? ""] ?? 0.5) ||
         a.index - b.index,
     )
     .map((entry) => entry.finding);
@@ -100,6 +107,14 @@ export function splitLeadingFigure(
 
 export interface Finding {
   kind: FindingKind;
+  /**
+   * The severity the record itself rates, where it rates one.
+   *
+   * Only set from a declared severity field, never inferred from how serious a finding sounds. It
+   * is what lets a queue be ordered by the record's own judgement rather than by ours, and it is
+   * the only thing red is spent on.
+   */
+  rated?: "high" | "moderate";
   claim: string;
   owner: string;
   because: string;
@@ -1306,6 +1321,7 @@ export function riskFindings(risks: EstateRow[]): Finding[] {
   if (highOpen.length > 0) {
     findings.push({
       kind: "exposure",
+      rated: "high",
       claim:
         highOpen.length === 1
           ? `One high-severity risk has no operating control: ${str(highOpen[0], "riskOrControlName")}.`
