@@ -221,17 +221,42 @@ describe("the visual grammar", () => {
     expect(marks[0].textContent ?? "").toMatch(/not carried by the record/i);
   });
 
-  it("carries no edge stripe on any finding or absence card", () => {
-    window.location.hash = "technology_data";
+  // Written against the shape, not one expression of it. The original assertion matched only the
+  // box-shadow form, so a `border-left: 3px solid` on every claim row survived it -- the same
+  // mistake as banning a list of words instead of the pattern that produces them.
+  //
+  // Scoped to the elements this rule is actually about: the cards and rows that carry a claim, a
+  // finding or an absence. A left rule on a quotation is a typographic convention with meaning, and
+  // one marking a conflicting source is doing work; a regex over every styled node cannot tell
+  // those from decoration, and a guard that needs an exemption list stops being a guard.
+  it.each([
+    "executive_brief",
+    "our_business",
+    "technology_data",
+    "what_needs_attention",
+    "leadership_perspective",
+  ])("carries no accent stripe on a claim or finding on %s", (chapterId) => {
+    window.location.hash = chapterId;
     const { container } = render(
       <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
     );
-    const striped = [
-      ...container.querySelectorAll<HTMLElement>("[style]"),
-    ].filter((n) =>
-      /inset\s+\d+px\s+0\s+0/.test(n.getAttribute("style") ?? ""),
-    );
-    expect(striped).toHaveLength(0);
+    const carriers = [
+      ...container.querySelectorAll<HTMLElement>(
+        "[data-home-finding], [data-home-claim-index], [data-home-table-collapsed]",
+      ),
+    ];
+    const striped = carriers.filter((node) => {
+      const style = `${node.getAttribute("style") ?? ""} ${node.parentElement?.getAttribute("style") ?? ""}`;
+      return (
+        /inset\s+[2-9]\d*px\s+0\s+0/.test(style) ||
+        /border-(left|right|top|bottom):\s*[2-9]\d*px\s+solid\s+(?!transparent)/.test(
+          style,
+        )
+      );
+    });
+    expect(
+      striped.map((n) => (n.getAttribute("style") ?? "").slice(0, 70)),
+    ).toEqual([]);
   });
 
   it("states what the briefing is built from, ahead of anything it asserts", () => {
