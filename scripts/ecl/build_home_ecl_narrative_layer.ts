@@ -2723,32 +2723,6 @@ function chapterHasSubstantiveContent(chapter: ChapterView): boolean {
   );
 }
 
-function normalizeChapterTerminalStates(chapters: ChapterView[]): ChapterView[] {
-  return chapters.map((chapter) => {
-    const visibleTerminalText = [
-      chapter.headline,
-      chapter.executive_synthesis,
-    ].some((textValue) => hasForbiddenVisibleLanguage(textValue));
-
-    if (!visibleTerminalText) return chapter;
-
-    const hasContent = chapterHasSubstantiveContent(chapter);
-    return {
-      ...chapter,
-      headline: `${chapter.title}: evidence needs resolution before executive use`,
-      executive_synthesis: `The current governed record does not yet support a board-ready answer to "${chapter.guidingQuestion}". Keep this chapter in review until named sources establish the operating facts, decision stakes, and accountable owner.`,
-      key_insights: hasContent ? chapter.key_insights : [],
-      tensions: hasContent ? chapter.tensions : [],
-      what_to_watch: hasContent ? chapter.what_to_watch : [],
-      questions_to_ask: hasContent ? chapter.questions_to_ask : [],
-      visual_opportunities: hasContent ? chapter.visual_opportunities : [],
-      limitations: [
-        "Deferred for executive use because the published evidence is not yet strong enough to support the chapter answer.",
-      ],
-    };
-  });
-}
-
 function readApprovedNarrativePlan(
   options: CliOptions,
   rows: HomeProjectionWriteRow[],
@@ -3229,9 +3203,7 @@ async function main() {
       anthropic,
       options.chapterIds,
     );
-    const chapters = normalizeChapterTerminalStates(
-      scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[],
-    );
+    const chapters = scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[];
     const verificationSummary = {
       structural_issue_count: thesisResult.structuralIssues.length,
       verdict_tally: verdictTally(thesisResult.verificationLedger),
