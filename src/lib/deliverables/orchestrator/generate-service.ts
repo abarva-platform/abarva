@@ -27,8 +27,16 @@ import type { DeliverablePlan } from "@/lib/deliverables/planning/deliverable-pl
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import type { GenerationProgress } from "./progress";
-import type { OutputFormat } from "./types";
+import type { DeliverableArtifactBrief, OutputFormat } from "./types";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
+import { getArtifactBrief } from "./artifact-brief-registry";
+import { adaptArtifactBriefForDepth } from "@/lib/deliverables/adaptive-depth";
+import { buildPassPrompt } from "./prompt-builder";
+import { resolveContextBudget } from "./context-budget";
+import {
+  withCitedEvidence,
+  type ContextCoverage,
+} from "./context-coverage";
 
 export interface GenerateDeliverableServiceInput extends Omit<
   BuildRequestParams,
@@ -69,6 +77,7 @@ export interface GenerateDeliverableServiceResult {
   warnings?: string[];
   sectionCount?: number;
   retrievedEvidence?: number;
+  contextCoverage?: ContextCoverage;
   blockedReason?: string;
 }
 
@@ -90,6 +99,78 @@ export interface GenerateServiceDeps {
   }) => Promise<{ model: ArchitectureModel }>;
 }
 
+function normalizeQuery(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+export function buildSectionDrivenEvidenceQueries(
+  input: Pick<
+    GenerateDeliverableServiceInput,
+    "deliverableType" | "useCaseArchetype" | "evidenceQuery"
+  >,
+  brief: DeliverableArtifactBrief,
+): string[] {
+  if (input.evidenceQuery?.trim()) return [normalizeQuery(input.evidenceQuery)];
+
+  const prefix = `${input.deliverableType} ${input.useCaseArchetype}`;
+  const rawQueries: string[] = brief.recommendedStructure.map((section) =>
+    normalizeQuery(
+      [
+        prefix,
+        section.title,
+        section.intent,
+        section.expectedEvidenceFamilies.join(" "),
+      ]
+        .filter(Boolean)
+        .join(" "),
+    ),
+  );
+
+  for (const exhibit of brief.expectedExhibits) {
+    rawQueries.push(
+      normalizeQuery(
+        [
+          prefix,
+          "expected exhibit",
+          exhibit.title,
+          exhibit.kind,
+          exhibit.purpose,
+          exhibit.requiredElements?.join(" "),
+        ]
+          .filter(Boolean)
+          .join(" "),
+      ),
+    );
+  }
+  for (const table of brief.expectedTables) {
+    rawQueries.push(
+      normalizeQuery(
+        [
+          prefix,
+          "expected table",
+          table.title,
+          table.columns.join(" "),
+          table.groundingMode,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      ),
+    );
+  }
+
+  const seen = new Set<string>();
+  const queries = rawQueries.filter((query) => {
+    if (!query) return false;
+    const key = query.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return queries.length > 0
+    ? queries
+    : [normalizeQuery(`${prefix} current state baseline`)];
+}
+
 export async function runDeliverableForTenant(
   input: GenerateDeliverableServiceInput,
   deps: GenerateServiceDeps = {},
@@ -102,16 +183,54 @@ export async function runDeliverableForTenant(
   const audienceIsVendorFacing =
     input.audience?.includes("vendor_facing") ?? false;
 
+  const preliminaryReq = buildDeliverableRequest(
+    {
+      module: input.module,
+      useCaseArchetype: input.useCaseArchetype,
+      deliverableType: input.deliverableType,
+      audience: input.audience,
+      decisionContext: input.decisionContext,
+      clientDisplayName: input.clientDisplayName,
+      initiativeDisplayName: input.initiativeDisplayName,
+      outputFormats: input.outputFormats,
+      adaptiveDepth: input.adaptiveDepth,
+    },
+    [],
+    [],
+  );
+  const preliminaryBrief = adaptArtifactBriefForDepth(
+    preliminaryReq,
+    getArtifactBrief(preliminaryReq),
+  );
+  const fixedPrompt = buildPassPrompt("architect", {
+    req: preliminaryReq,
+    brief: preliminaryBrief,
+    evidence: [],
+  });
+  const contextBudget = resolveContextBudget({
+    fixedOverheadText: `${fixedPrompt.system}\n\n${fixedPrompt.user}`,
+  });
+  const evidenceQueries = buildSectionDrivenEvidenceQueries(
+    input,
+    preliminaryBrief,
+  );
+
   // 1 · governed evidence (clean, citation-numbered, vendor-facing exclusion applied)
-  const { evidence, sourceRegister, retrievedCount } = await assemble({
+  const { evidence, sourceRegister, retrievedCount, coverage } = await assemble({
     tenantClientKey: input.tenantClientKey,
     clientId: input.clientId,
     sourceArtifactRef: input.sourceArtifactRef,
-    query:
-      input.evidenceQuery ??
-      `${input.deliverableType} ${input.useCaseArchetype} current state baseline`,
+    query: evidenceQueries[0],
+    queries: evidenceQueries,
     audienceIsVendorFacing,
+    contextBudget,
   });
+  const coverageWarnings =
+    coverage.approvedAvailable > 0 && coverage.packed === 0
+      ? [
+          `context_coverage_empty: ${coverage.approvedAvailable} approved evidence item(s) existed for this Move, but 0 were packed into the prompt.`,
+        ]
+      : [];
 
   // 2 · orchestrator request
   const req = buildDeliverableRequest(
@@ -191,6 +310,7 @@ export async function runDeliverableForTenant(
           ],
           blockedReason: `architecture_brief_incomplete: ${err instanceof Error ? err.message : String(err)}`,
           retrievedEvidence: retrievedCount,
+          contextCoverage: coverage,
         };
       }
     }
@@ -251,6 +371,7 @@ export async function runDeliverableForTenant(
         ],
         blockedReason: `architecture_assembly_failed: ${err instanceof Error ? err.message : String(err)}`,
         retrievedEvidence: retrievedCount,
+        contextCoverage: coverage,
       };
     }
   }
@@ -272,6 +393,7 @@ export async function runDeliverableForTenant(
   );
 
   if (!result.ok || !result.document) {
+    const finalCoverage = withCitedEvidence(coverage, result.document);
     return {
       ok: false,
       qualityPass: result.quality?.pass ?? false,
@@ -279,8 +401,11 @@ export async function runDeliverableForTenant(
       blockedReason: result.blockedReason,
       sectionCount: result.document?.generatedSections.length,
       retrievedEvidence: retrievedCount,
+      contextCoverage: finalCoverage,
+      warnings: [...coverageWarnings, ...(result.quality?.warnings ?? [])],
     };
   }
+  const finalCoverage = withCitedEvidence(coverage, result.document);
 
   // 4 · persist through the governed artifacts repository. The persisted artifact's
   // PRIMARY format follows the deliverable's prescribed format (resolved inside
@@ -389,9 +514,10 @@ export async function runDeliverableForTenant(
       qualityPass: false,
       blockers: [record.quarantineReason],
       blockedReason: `quality gate blocked export: ${record.quarantineReason}`,
-      warnings: result.quality?.warnings ?? [],
+      warnings: [...coverageWarnings, ...(result.quality?.warnings ?? [])],
       sectionCount: result.document.generatedSections.length,
       retrievedEvidence: retrievedCount,
+      contextCoverage: finalCoverage,
     };
   }
 
@@ -400,8 +526,9 @@ export async function runDeliverableForTenant(
     artifactId: record.id,
     blobUrl: record.blobUrl,
     qualityPass: true,
-    warnings: result.quality?.warnings ?? [],
+    warnings: [...coverageWarnings, ...(result.quality?.warnings ?? [])],
     sectionCount: result.document.generatedSections.length,
     retrievedEvidence: retrievedCount,
+    contextCoverage: finalCoverage,
   };
 }

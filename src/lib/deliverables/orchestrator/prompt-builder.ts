@@ -579,6 +579,7 @@ export function buildPassPrompt(
     pass,
     system,
     user,
+    ...(user.startsWith(context) ? { cacheableContext: context } : {}),
     maxTokens: resolvePassTokenBudget({
       pass,
       deliverableType: req.deliverableType,

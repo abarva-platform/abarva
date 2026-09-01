@@ -15,6 +15,10 @@ import {
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import type { AdaptiveDepthDecision } from "@/lib/deliverables/adaptive-depth";
+import {
+  buildContextCoverage,
+  type ContextCoverage,
+} from "./context-coverage";
 
 export type DeliverableRunStatus =
   | "queued"
@@ -91,6 +95,7 @@ export interface DeliverableRunRecord {
   artifactId: string | null;
   sectionCount: number | null;
   retrievedEvidence: number | null;
+  contextCoverage: ContextCoverage | null;
   blockers: string[];
   warnings: string[];
   error: string | null;
@@ -126,6 +131,7 @@ export interface CompleteRunInput {
   artifactId?: string | null;
   sectionCount?: number | null;
   retrievedEvidence?: number | null;
+  contextCoverage?: ContextCoverage | null;
   blockers?: string[];
   warnings?: string[];
   error?: string | null;
@@ -160,6 +166,45 @@ function parsePayload(value: unknown): DeliverableRunJobPayload | null {
   return null;
 }
 
+function parseContextCoverage(value: unknown): ContextCoverage | null {
+  if (value === null || value === undefined) return null;
+  const parsed = (() => {
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value) as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    }
+    return value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : null;
+  })();
+  if (!parsed) return null;
+  return buildContextCoverage({
+    approvedAvailable:
+      typeof parsed.approvedAvailable === "number"
+        ? parsed.approvedAvailable
+        : undefined,
+    retrieved:
+      typeof parsed.retrieved === "number" ? parsed.retrieved : undefined,
+    packed: typeof parsed.packed === "number" ? parsed.packed : undefined,
+    droppedForBudget:
+      typeof parsed.droppedForBudget === "number"
+        ? parsed.droppedForBudget
+        : undefined,
+    unreadable:
+      typeof parsed.unreadable === "number" ? parsed.unreadable : undefined,
+    cited: typeof parsed.cited === "number" ? parsed.cited : undefined,
+    usedTokens:
+      typeof parsed.usedTokens === "number" ? parsed.usedTokens : undefined,
+    evidenceTokenBudget:
+      typeof parsed.evidenceTokenBudget === "number"
+        ? parsed.evidenceTokenBudget
+        : undefined,
+  });
+}
+
 function rowToRecord(row: Record<string, unknown>): DeliverableRunRecord {
   const arr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
   return {
@@ -180,6 +225,7 @@ function rowToRecord(row: Record<string, unknown>): DeliverableRunRecord {
       row.retrieved_evidence === null || row.retrieved_evidence === undefined
         ? null
         : Number(row.retrieved_evidence),
+    contextCoverage: parseContextCoverage(row.context_coverage),
     blockers: arr(row.blockers),
     warnings: arr(row.warnings),
     error: typeof row.error === "string" ? row.error : null,
@@ -435,6 +481,9 @@ export async function completeDeliverableRun(
       artifact_id: input.artifactId ?? null,
       section_count: input.sectionCount ?? null,
       retrieved_evidence: input.retrievedEvidence ?? null,
+      context_coverage: input.contextCoverage
+        ? JSON.stringify(input.contextCoverage)
+        : null,
       // blockers/warnings are JSONB columns. The write client binds params raw,
       // so a non-empty JS array reaches Postgres as an array literal ({a,b}) and
       // JSONB rejects it ("invalid input syntax for type json") — empty arrays

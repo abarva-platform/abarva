@@ -49,6 +49,12 @@ function isRetryableStreamError(err: unknown): boolean {
 
 const MAX_STREAM_RETRIES = 2;
 
+type AnthropicUserContentBlock = {
+  type: "text";
+  text: string;
+  cache_control?: { type: "ephemeral" };
+};
+
 async function withStreamRetry<T>(fn: () => Promise<T>): Promise<T> {
   let lastErr: unknown;
   for (let attempt = 0; attempt <= MAX_STREAM_RETRIES; attempt++) {
@@ -103,6 +109,28 @@ function extractResponseText(response: unknown): string {
   return chunks.join("").trim();
 }
 
+function buildUserMessageContent(
+  prompt: PassPrompt,
+): string | AnthropicUserContentBlock[] {
+  const context = prompt.cacheableContext;
+  if (!context || !prompt.user.startsWith(context)) return prompt.user;
+  const remainder = prompt.user.slice(context.length);
+  const blocks: AnthropicUserContentBlock[] = [
+    {
+      type: "text",
+      text: context,
+      cache_control: { type: "ephemeral" },
+    },
+  ];
+  if (remainder.trim()) {
+    blocks.push({
+      type: "text",
+      text: remainder,
+    });
+  }
+  return blocks;
+}
+
 /**
  * Build a ModelCaller bound to one tenant/user. The orchestrator calls it once per
  * pass; this wraps each call in the audited egress with a pass-specific workflow tag.
@@ -151,7 +179,7 @@ export function createAuditedModelCaller(
         .stream({
           model,
           system: prompt.system,
-          messages: [{ role: "user", content: prompt.user }],
+          messages: [{ role: "user", content: buildUserMessageContent(prompt) }],
           max_tokens: prompt.maxTokens,
         })
         .finalMessage(),
