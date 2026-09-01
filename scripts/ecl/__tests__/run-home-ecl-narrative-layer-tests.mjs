@@ -568,6 +568,11 @@ assert(
   "ECL narrative raw object ID detector is case-sensitive so ordinary phrases like risk-and-control are not blocked",
 );
 assert(
+  !script.includes('{ label: "projection", pattern: /\\bprojections?\\b/i },') &&
+    script.includes("projections?\\s+(?:table|row|entry|manifest|layer|substrate|pipeline|surface|schema|artifact|payload|view|cache|read[-\\s]?model)"),
+  "ECL narrative projection detector targets implementation context without blocking ordinary business projection language",
+);
+assert(
   thesis.includes("action: \"dropped_structural\"") &&
     thesis.includes("structural issue: ${issue.reason}") &&
     thesis.includes("claimsRequiringVerification(publishedGeneration)"),

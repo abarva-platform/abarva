@@ -122,7 +122,11 @@ const RAW_PUBLICATION_MIN_CLEAN_KEEP_RATE = 0.85;
 
 const CXO_FORBIDDEN_VISIBLE_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
   { label: "ecl", pattern: /\bECL\b/i },
-  { label: "projection", pattern: /\bprojections?\b/i },
+  {
+    label: "projection",
+    pattern:
+      /\b(?:(?:ECL|Home|serving|canonical|data|row|table|schema|runtime|read[-\s]?model|surface|product)\s+projections?|projections?\s+(?:table|row|entry|manifest|layer|substrate|pipeline|surface|schema|artifact|payload|view|cache|read[-\s]?model))\b/i,
+  },
   { label: "serving_view", pattern: /\bserving views?\b/i },
   { label: "loaded_row", pattern: /\bloaded rows?\b/i },
   { label: "canonical_entity", pattern: /\bcanonical entit(?:y|ies)\b/i },
