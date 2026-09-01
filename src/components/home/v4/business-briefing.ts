@@ -41,6 +41,13 @@ interface AnalyticalLens {
 
 export interface BusinessBriefing {
   sections: BriefingSection[];
+  /**
+   * Sector patterns and expert lenses, kept apart from the business sections.
+   *
+   * They answer a different question -- where is this heading -- and they belong on the chapter
+   * that asks it. Kept separate so that placing them cannot drag the business sections with them.
+   */
+  perspective: BriefingSection[];
   /** Questions a new executive would ask that this record cannot answer. Rendered, not hidden. */
   notInTheRecord: Array<{ question: string; why: string }>;
 }
@@ -168,12 +175,10 @@ export function buildBusinessBriefing(
         ...consensus
           .slice(0, 4)
           .map((s) => ({ text: cxoText(s.statement), detail: "Consensus" })),
-        ...dissent
-          .slice(0, 2)
-          .map((s) => ({
-            text: cxoText(s.statement),
-            detail: "Minority view",
-          })),
+        ...dissent.slice(0, 2).map((s) => ({
+          text: cxoText(s.statement),
+          detail: "Minority view",
+        })),
         ...contradiction.map((s) => ({
           text: s.statement,
           detail: "Conflicts with the record",
@@ -202,11 +207,12 @@ export function buildBusinessBriefing(
     (packet as { analyticalLenses?: AnalyticalLens[] }).analyticalLenses ?? [];
   const patterns = lenses.filter((l) => l.kind === "industry_pattern");
   const expert = lenses.filter((l) => l.kind !== "industry_pattern");
+  const perspective: BriefingSection[] = [];
   if (patterns.length) {
-    sections.push({
+    perspective.push({
       heading: "Industry patterns the record says apply here",
       standfirst: `${patterns.length} patterns. Each carries the recorded reason it applies to this enterprise, not just the pattern.`,
-      items: patterns.slice(0, 6).map((p) => ({
+      items: patterns.map((p) => ({
         text: p.label,
         // The applicability is the point: a pattern without it is a generality about the industry.
         detail: p.appliesHere ?? p.context,
@@ -215,10 +221,10 @@ export function buildBusinessBriefing(
     });
   }
   if (expert.length) {
-    sections.push({
+    perspective.push({
       heading: "What an expert would ask next",
       standfirst: `${expert.length} lenses, each written from a named operating role, with what an answer would decide.`,
-      items: expert.slice(0, 5).map((l) => ({
+      items: expert.map((l) => ({
         text: l.questions ?? l.label,
         attribution: l.expertRole,
         detail: l.decisionUse ? `Informs: ${l.decisionUse}` : undefined,
@@ -227,7 +233,7 @@ export function buildBusinessBriefing(
     });
   }
 
-  return { sections, notInTheRecord: notInTheRecord() };
+  return { sections, perspective, notInTheRecord: notInTheRecord() };
 }
 
 /**

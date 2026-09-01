@@ -16,7 +16,10 @@ import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
 import { chapterArguesFrom, chapterDepth } from "./chapter-page-content";
 import { buildBusinessBriefing } from "./business-briefing";
-import { BusinessBriefingSections } from "./BusinessBriefing";
+import {
+  BusinessBriefingSections,
+  PerspectiveSections,
+} from "./BusinessBriefing";
 import { DataFlowPage } from "./DataFlowPage";
 import { NotDraftedPage } from "./NotDraftedPage";
 import { Rail, type RailGroup, type RailItem } from "./Rail";
@@ -368,6 +371,12 @@ export function HomeV4App({
                 })}
               />
             )
+          ) : null}
+
+          {activeChapter?.chapterId === "leadership_perspective" ? (
+            <PerspectiveSections
+              perspective={buildBusinessBriefing(signalPacket).perspective}
+            />
           ) : null}
 
           {activeChapter &&
