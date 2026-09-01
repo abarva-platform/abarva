@@ -28,6 +28,7 @@ import {
   sectionId,
 } from "./TableSet";
 import type { EstateRow, TableSpec } from "./page-tables";
+import { DecisionQueue } from "./DecisionQueue";
 import { MetricDistance } from "./MetricDistance";
 import { RenewalTimeline } from "./RenewalTimeline";
 import { cxoText, isGeneratorDeferral, launderChapter } from "./cxo-language";
@@ -54,6 +55,7 @@ export function ChapterPage({
   asOf,
   onOpenRows,
   metrics,
+  queue,
 }: {
   chapter: ChapterView;
   chapterNumber: number;
@@ -72,6 +74,12 @@ export function ChapterPage({
   onOpenRows?: (objectType: string, filter: string) => void;
   /** Outcome measures, where this chapter reasons from them. */
   metrics?: EstateRow[];
+  /** The families a decision queue is assembled from, on the chapter that asks for one. */
+  queue?: {
+    risks?: EstateRow[];
+    programs?: EstateRow[];
+    contracts?: EstateRow[];
+  };
 }) {
   // One gate, at the top, before any of this chapter's text is drawn.
   const chapter = launderChapter(rawChapter);
@@ -122,6 +130,15 @@ export function ChapterPage({
           tables={depth.tables}
           findings={depth.findings}
           unsupported={depth.unsupported}
+        />
+      ) : null}
+      {queue ? (
+        <DecisionQueue
+          risks={queue.risks}
+          programs={queue.programs}
+          contracts={queue.contracts}
+          asOf={asOf}
+          onOpenRows={onOpenRows}
         />
       ) : null}
       {depth ? <ChapterSpine tables={depth.tables} /> : null}
