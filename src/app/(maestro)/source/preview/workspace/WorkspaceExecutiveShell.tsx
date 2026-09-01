@@ -102,6 +102,7 @@ type VendorCoverageSummary = {
   actionRows: number;
   unclaimedCredit: number;
 };
+type ImpactLoadState = "loading" | "ready" | "error";
 
 type RecoverableCreditInput = Pick<
   SourceWorkspacePortfolioData,
@@ -265,11 +266,13 @@ export function WorkspaceExecutiveShell({
   logic,
   portfolio,
   tenantName,
+  impactLoadState = "ready",
 }: {
   vm: SourceWorkspaceVM;
   logic: WorkspaceViewModel;
   portfolio: SourceWorkspacePortfolioData;
   tenantName: string;
+  impactLoadState?: ImpactLoadState;
 }) {
   const [showLineage, setShowLineage] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
@@ -548,6 +551,7 @@ export function WorkspaceExecutiveShell({
                   : tenantName || "Current workspace"}
             </b>
           </div>
+          <ImpactLoadBadge state={impactLoadState} />
           <div className="sw-v2-sticky-context-actions">
             <button
               type="button"
@@ -712,6 +716,24 @@ export function WorkspaceExecutiveShell({
         </section>
       </section>
     </main>
+  );
+}
+
+function ImpactLoadBadge({ state }: { state: ImpactLoadState }) {
+  const label =
+    state === "loading"
+      ? "Evidence depth updating"
+      : state === "error"
+        ? "Evidence depth retry needed"
+        : "Evidence depth ready";
+  return (
+    <div
+      className={`sw-v2-impact-load-badge is-${state}`}
+      role="status"
+      aria-live="polite"
+    >
+      {label}
+    </div>
   );
 }
 

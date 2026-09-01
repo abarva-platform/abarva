@@ -223,6 +223,7 @@
 
 .sw-v2-sticky-context-copy {
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .sw-v2-sticky-context-copy span {
@@ -253,6 +254,40 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.sw-v2-impact-load-badge {
+  flex: 0 0 auto;
+  border: 1px solid rgba(10, 10, 11, 0.14);
+  border-radius: 999px;
+  background: #fff;
+  color: #5f5e5a;
+  padding: 6px 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sw-v2-impact-load-badge.is-loading {
+  border-color: rgba(186, 117, 23, 0.34);
+  background: #fff4de;
+  color: #8c5510;
+}
+
+.sw-v2-impact-load-badge.is-ready {
+  border-color: rgba(29, 158, 117, 0.28);
+  background: #e1f5ee;
+  color: #0f6e56;
+}
+
+.sw-v2-impact-load-badge.is-error {
+  border-color: rgba(163, 45, 45, 0.34);
+  background: #fff1ee;
+  color: #a32d2d;
 }
 
 .sw-v2-compact-action-button {
@@ -1458,6 +1493,11 @@
     align-items: flex-start;
     flex-direction: column;
     margin-top: -8px;
+  }
+
+  .sw-v2-impact-load-badge {
+    align-self: stretch;
+    text-align: center;
   }
 
   .sw-v2-sticky-context-actions {

@@ -92,19 +92,17 @@ describe("Source Workspace aVa contract", () => {
     );
   });
 
-  it("keeps the Vendor 360 cockpit navigable without a fixed-width canvas", () => {
-    expect(workspaceClientSource).toContain(
-      'width: isVendor360Cockpit ? "100%" : undefined',
-    );
+  it("keeps Source 360 navigable without the old fixed-width cockpit canvas", () => {
     expect(workspaceClientSource).not.toContain(
       'width: isVendor360Cockpit ? "min(100%, 1280px)"',
     );
-    expect(contextLensSource).toContain("sw-cockpit-tabs");
-    expect(contextLensSource).toContain("Vendor 360 cockpit sections");
-    expect(contextLensSource).toContain("#vendor360-action-queue");
-    expect(contextLensSource).toContain("#vendor360-top-contracts");
-    expect(contextLensSource).toContain("#vendor360-proof-layers");
-    expect(workspaceCssSource).toContain(".sw-cockpit-action-row");
+    expect(workspaceClientSource).toContain("<WorkspaceExecutiveShell");
+    expect(workspaceCssSource).toContain(".sw-v2-root");
+    expect(workspaceCssSource).toContain("height: calc(100dvh - 73px)");
+    expect(workspaceCssSource).toContain(".sw-v2-horizontal-tabs");
+    expect(workspaceCssSource).toContain(".sw-v2-sticky-context");
+    expect(workspaceCssSource).toContain(".sw-v2-content-canvas");
     expect(workspaceCssSource).toContain("@media (max-width: 1180px)");
+    expect(contextLensSource).not.toContain("width: min(100%, 1280px)");
   });
 });

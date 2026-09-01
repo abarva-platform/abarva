@@ -96,6 +96,11 @@ export type SourceWorkspaceProviderMode =
   | "legacy"
   | "ecl_projection"
   | "ecl_projection_db";
+export type SourceWorkspaceImpactMode = "full" | "deferred";
+
+export interface SourceWorkspaceLoadOptions {
+  readonly impactMode?: SourceWorkspaceImpactMode;
+}
 
 export interface SourceWorkspacePortfolioData {
   readonly tenantKey: string;
@@ -252,6 +257,7 @@ export async function loadSourceWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
   providerOverride?: SourceWorkspaceProviderMode | null,
+  options: SourceWorkspaceLoadOptions = {},
 ): Promise<SourceWorkspacePortfolioData> {
   const provider = sourceWorkspaceProvider(providerOverride);
   if (provider !== "legacy") {
@@ -259,6 +265,7 @@ export async function loadSourceWorkspacePortfolio(
       tenantKey,
       asOfDateIso,
       provider,
+      options,
     );
   }
 
@@ -275,7 +282,7 @@ export async function loadSourceWorkspacePortfolio(
     listContractApplicationScope(tenantKey).catch(() => []),
     listContractInitiativeDependency(tenantKey).catch(() => []),
     loadSourceV4WorkspaceSnapshot(tenantKey, asOfDateIso),
-    loadSourceWorkspaceImpactLayer(tenantKey),
+    loadWorkspaceImpactLayerForMode(tenantKey, options.impactMode),
   ]);
 
   const contracts = excludeSupplementalContracts(contractsRaw);
@@ -377,6 +384,7 @@ async function loadEclProjectionWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
   provider: SourceWorkspaceProviderMode,
+  options: SourceWorkspaceLoadOptions = {},
 ): Promise<SourceWorkspacePortfolioData> {
   const projectionDir = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR?.trim();
   if (provider === "ecl_projection" && !projectionDir) {
@@ -413,7 +421,7 @@ async function loadEclProjectionWorkspacePortfolio(
     provider === "ecl_projection_db"
       ? readEclCubeSlices(tenantKey)
       : Promise.resolve([]),
-    loadSourceWorkspaceImpactLayer(tenantKey),
+    loadWorkspaceImpactLayerForMode(tenantKey, options.impactMode),
   ]);
   const acceptedTenantKeys = new Set(
     [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
@@ -515,6 +523,27 @@ async function loadEclProjectionWorkspacePortfolio(
     initiativeDependencies,
     isEmpty: contracts.length === 0,
     reads,
+  };
+}
+
+function loadWorkspaceImpactLayerForMode(
+  tenantKey: string,
+  impactMode: SourceWorkspaceImpactMode = "full",
+): Promise<SourceWorkspaceImpactLayer> {
+  if (impactMode === "deferred") {
+    return Promise.resolve(emptySourceWorkspaceImpactLayer());
+  }
+  return loadSourceWorkspaceImpactLayer(tenantKey);
+}
+
+function emptySourceWorkspaceImpactLayer(): SourceWorkspaceImpactLayer {
+  return {
+    evidenceCoverage: [],
+    actionCandidates: [],
+    claimCards: [],
+    vendorPositions: [],
+    storyline: [],
+    avaGroundingBundles: [],
   };
 }
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { WorkspaceClient } from "../preview/workspace/WorkspaceClient";
 import { SourceWorkspaceLoadingShell } from "./SourceWorkspaceLoadingShell";
 import type {
+  SourceWorkspaceImpactMode,
   SourceWorkspacePortfolioData,
   SourceWorkspaceProviderMode,
 } from "../preview/workspace/live/portfolioAdapter";
@@ -11,12 +12,16 @@ import type {
 interface PortfolioResponse {
   readonly portfolio: SourceWorkspacePortfolioData;
   readonly sourceProviderKey: SourceWorkspaceProviderMode;
+  readonly impactMode?: SourceWorkspaceImpactMode;
 }
+
+type ImpactLoadState = "loading" | "ready" | "error";
 
 function portfolioApiUrl(input: {
   readonly tenantKey: string;
   readonly asOfDateIso: string;
   readonly sourceProviderKey?: SourceWorkspaceProviderMode | null;
+  readonly impactMode?: SourceWorkspaceImpactMode;
 }) {
   const params = new URLSearchParams();
   if (input.tenantKey.trim()) params.set("client", input.tenantKey.trim());
@@ -24,8 +29,22 @@ function portfolioApiUrl(input: {
   if (input.sourceProviderKey?.trim()) {
     params.set("sourceProvider", input.sourceProviderKey.trim());
   }
+  if (input.impactMode) params.set("impact", input.impactMode);
   const query = params.toString();
   return `/api/source/workspace/portfolio${query ? `?${query}` : ""}`;
+}
+
+async function fetchPortfolio(url: string): Promise<PortfolioResponse> {
+  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.portfolio) {
+    throw new Error(
+      payload?.detail ??
+        payload?.error ??
+        `Source workspace returned ${response.status}`,
+    );
+  }
+  return payload as PortfolioResponse;
 }
 
 export function WorkspaceClientLoader({
@@ -47,9 +66,27 @@ export function WorkspaceClientLoader({
     useState<SourceWorkspacePortfolioData | null>(null);
   const [resolvedProvider, setResolvedProvider] =
     useState<SourceWorkspaceProviderMode | null>(sourceProviderKey ?? null);
+  const [impactLoadState, setImpactLoadState] =
+    useState<ImpactLoadState>("loading");
   const [error, setError] = useState<string | null>(null);
-  const url = useMemo(
-    () => portfolioApiUrl({ tenantKey, asOfDateIso, sourceProviderKey }),
+  const deferredUrl = useMemo(
+    () =>
+      portfolioApiUrl({
+        tenantKey,
+        asOfDateIso,
+        sourceProviderKey,
+        impactMode: "deferred",
+      }),
+    [asOfDateIso, sourceProviderKey, tenantKey],
+  );
+  const fullUrl = useMemo(
+    () =>
+      portfolioApiUrl({
+        tenantKey,
+        asOfDateIso,
+        sourceProviderKey,
+        impactMode: "full",
+      }),
     [asOfDateIso, sourceProviderKey, tenantKey],
   );
 
@@ -57,22 +94,24 @@ export function WorkspaceClientLoader({
     let cancelled = false;
     setPortfolio(null);
     setError(null);
-    fetch(url, { headers: { Accept: "application/json" } })
-      .then(async (response) => {
-        const payload = await response.json().catch(() => null);
-        if (!response.ok || !payload?.portfolio) {
-          throw new Error(
-            payload?.detail ??
-              payload?.error ??
-              `Source workspace returned ${response.status}`,
-          );
-        }
-        return payload as PortfolioResponse;
-      })
-      .then((payload) => {
+    setImpactLoadState("loading");
+
+    fetchPortfolio(deferredUrl)
+      .then(async (payload) => {
         if (cancelled) return;
         setPortfolio(payload.portfolio);
         setResolvedProvider(payload.sourceProviderKey);
+
+        try {
+          const fullPayload = await fetchPortfolio(fullUrl);
+          if (cancelled) return;
+          setPortfolio(fullPayload.portfolio);
+          setResolvedProvider(fullPayload.sourceProviderKey);
+          setImpactLoadState("ready");
+        } catch {
+          if (cancelled) return;
+          setImpactLoadState("error");
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -85,7 +124,7 @@ export function WorkspaceClientLoader({
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [deferredUrl, fullUrl]);
 
   if (error) {
     return (
@@ -144,6 +183,7 @@ export function WorkspaceClientLoader({
       tenantName={tenantName}
       sourceClientKey={tenantKey}
       sourceProviderKey={resolvedProvider}
+      impactLoadState={impactLoadState}
       initialContractId={initialContractId}
       initialContractTab={initialContractTab}
     />

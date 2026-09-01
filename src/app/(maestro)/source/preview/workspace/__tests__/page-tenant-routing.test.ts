@@ -86,6 +86,10 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource).toContain("/api/source/workspace/portfolio");
     expect(loaderSource).toContain("SourceWorkspaceLoadingShell");
     expect(loaderSource).toContain("<WorkspaceClient");
+    expect(loaderSource).toContain('impactMode: "deferred"');
+    expect(loaderSource).toContain('impactMode: "full"');
+    expect(loaderSource).toContain('setImpactLoadState("ready")');
+    expect(loaderSource).toContain('setImpactLoadState("error")');
     expect(pageSource).not.toContain(
       "const portfolio = tenantKey\n    ? await loadSourceWorkspacePortfolio(",
     );
@@ -116,8 +120,21 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain("tenantKey,");
     expect(portfolioApiSource).toContain("asOfDateIso,");
     expect(portfolioApiSource).toContain('requestedProvider ?? "default"');
+    expect(portfolioApiSource).toContain("impactMode,");
     expect(portfolioApiSource).toContain("X-Source-Portfolio-Cache");
+    expect(portfolioApiSource).toContain("X-Source-Portfolio-Impact-Mode");
+    expect(portfolioApiSource).toContain("X-Source-Portfolio-Load-Ms");
     expect(portfolioApiSource).toContain('Cache-Control": "private, no-store"');
+  });
+
+  it("allows the first Source 360 paint to defer the heavy impact layer explicitly", () => {
+    expect(portfolioApiSource).toContain("impactModeFromRequest(requestUrl)");
+    expect(portfolioApiSource).toContain('normalized === "deferred"');
+    expect(portfolioApiSource).toContain("impactMode");
+    expect(loaderSource).toContain('params.set("impact", input.impactMode)');
+    expect(loaderSource.indexOf("fetchPortfolio(deferredUrl)")).toBeLessThan(
+      loaderSource.indexOf("const fullPayload = await fetchPortfolio(fullUrl)"),
+    );
   });
 
   it("keeps the historical preview route as a query-preserving redirect only", () => {
