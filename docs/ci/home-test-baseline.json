@@ -14,10 +14,6 @@
       "failing": 2,
       "ran": true
     },
-    "src/app/api/home/know/ask/__tests__/route-visible-contract.test.ts": {
-      "failing": 0,
-      "ran": false
-    },
     "src/components/home/__tests__/HomeOverviewV2.tenant-switcher.test.tsx": {
       "failing": 1,
       "ran": true
@@ -28,10 +24,6 @@
     },
     "src/components/home/know/__tests__/HomeKnowAsk.test.tsx": {
       "failing": 2,
-      "ran": true
-    },
-    "src/components/home/preview/__tests__/evidence-resolver.test.ts": {
-      "failing": 1,
       "ran": true
     },
     "src/lib/home/__tests__/home-data-quality.test.ts": {
@@ -66,10 +58,6 @@
       "failing": 6,
       "ran": true
     },
-    "src/lib/home/know/__tests__/home-demo-safe-response.test.ts": {
-      "failing": 3,
-      "ran": true
-    },
     "src/lib/home/know/__tests__/home-know-engine.test.ts": {
       "failing": 1,
       "ran": true
@@ -84,6 +72,6 @@
     }
   },
   "recordedAt": "2026-09-01",
-  "totalTests": 582,
+  "totalTests": 587,
   "totalSuites": 68
 }
