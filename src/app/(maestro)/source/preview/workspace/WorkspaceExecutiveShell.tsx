@@ -1310,7 +1310,13 @@ function VendorArchetypeMixChart({
         {coverage.unmappedCount > 0 ? (
           <span>
             <b>{coverage.unmappedCount}</b>
-            unmapped contracts excluded
+            register headers unclassified
+          </span>
+        ) : null}
+        {coverage.supplementalDeclaredCount > 0 ? (
+          <span>
+            <b>{coverage.supplementalDeclaredCount}</b>
+            contract-depth rows classified
           </span>
         ) : null}
       </div>
@@ -1835,8 +1841,11 @@ function VendorArchetypeTable({
         <div className="sw-v2-table-foot">
           <b>{coverage.declaredContracts} contracts carry declared archetypes.</b>
           <span>
-            {coverage.unmappedCount} register contracts are excluded from this
-            chart instead of being collapsed into a placeholder bucket.
+            {coverage.unmappedCount} register headers remain unclassified and
+            are not collapsed into a placeholder bucket.
+            {coverage.supplementalDeclaredCount > 0
+              ? ` ${coverage.supplementalDeclaredCount} classified contract-depth rows are shown from the evidence layer.`
+              : ""}
           </span>
         </div>
       ) : null}
