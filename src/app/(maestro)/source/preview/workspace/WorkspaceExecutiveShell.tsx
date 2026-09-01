@@ -629,6 +629,8 @@ export function WorkspaceExecutiveShell({
               performanceRows={performanceRows}
               spendRows={spendRows}
               impactCandidateAmount={impactCandidateAmount}
+              showLineage={showLineage}
+              onToggleLineage={() => setShowLineage((current) => !current)}
               onOpenContract={openContract}
               onOpenVendors={() => logic.select("vendorList", null)}
             />
@@ -710,6 +712,8 @@ function PortfolioPage({
   performanceRows,
   spendRows,
   impactCandidateAmount,
+  showLineage,
+  onToggleLineage,
   onOpenContract,
   onOpenVendors,
 }: {
@@ -723,6 +727,8 @@ function PortfolioPage({
   performanceRows: number;
   spendRows: number;
   impactCandidateAmount: number;
+  showLineage: boolean;
+  onToggleLineage: () => void;
   onOpenContract: (contractId: string, tab?: string) => void;
   onOpenVendors: () => void;
 }) {
@@ -757,6 +763,10 @@ function PortfolioPage({
           }
         />
         <p className="sw-v2-lede">{executiveStatement}</p>
+        <LineageToggle
+          showLineage={showLineage}
+          onToggleLineage={onToggleLineage}
+        />
         <div className="sw-v2-decision-list sw-v2-compact-decisions">
           {claimCards.length
             ? claimCards.map((row) => (
@@ -2565,6 +2575,7 @@ function EvidencePage({
   onToggleLineage: () => void;
 }) {
   const coverage = portfolio.impact.evidenceCoverage;
+  const archetypeRows = evidenceArchetypeRows(portfolio);
   const sourceRows = [
     {
       name: "Contract headers",
@@ -2610,6 +2621,34 @@ function EvidencePage({
         ? "available"
         : "missing",
     },
+    {
+      name: "Document page text",
+      support: "Document citations, page spans, and proof text",
+      lineage: "source.source_page_text_fact_assertion",
+      count: coverage.reduce(
+        (sum, row) => sum + (numberFromDb(row.document_page_text_rows) ?? 0),
+        0,
+      ),
+      state: coverage.some(
+        (row) => (numberFromDb(row.document_page_text_rows) ?? 0) > 0,
+      )
+        ? "available"
+        : "missing",
+    },
+    {
+      name: "Change orders",
+      support: "Scope drift, commercial drift, and amendment posture",
+      lineage: "source.source_change_order_fact_assertion",
+      count: coverage.reduce(
+        (sum, row) => sum + (numberFromDb(row.change_order_rows) ?? 0),
+        0,
+      ),
+      state: coverage.some(
+        (row) => (numberFromDb(row.change_order_rows) ?? 0) > 0,
+      )
+        ? "available"
+        : "missing",
+    },
   ];
 
   return (
@@ -2617,11 +2656,48 @@ function EvidencePage({
       <section className="sw-v2-panel sw-v2-span-2">
         <PanelHead
           eyebrow="Evidence"
-          title="Loaded rows, missing lanes, and claim eligibility"
+          title="Archetype coverage matrix"
         />
         <LineageToggle
           showLineage={showLineage}
           onToggleLineage={onToggleLineage}
+        />
+        <div className="sw-v2-table">
+          <div className="sw-v2-table-head sw-v2-archetype-coverage-row">
+            <span>Archetype</span>
+            <span>Contracts</span>
+            <span>Spend</span>
+            <span>SLA</span>
+            <span>Documents</span>
+            <span>Change orders</span>
+            <span>Actions</span>
+            <span>Live registry</span>
+          </div>
+          {archetypeRows.map((row) => (
+            <div
+              key={row.archetype}
+              className="sw-v2-table-row sw-v2-archetype-coverage-row"
+            >
+              <span>
+                <b>{row.archetype}</b>
+                <small>{row.description}</small>
+              </span>
+              <span>{row.contractCount}</span>
+              <span>{row.spendRows}</span>
+              <span>{row.performanceRows}</span>
+              <span>{row.documentPageTextRows}</span>
+              <span>{row.changeOrderRows}</span>
+              <span>{row.actionRows}</span>
+              <span>{row.registryLabel}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="sw-v2-panel sw-v2-span-2">
+        <PanelHead
+          eyebrow="Evidence lanes"
+          title="Loaded rows, missing lanes, and claim eligibility"
         />
         <div className="sw-v2-table">
           <div className="sw-v2-table-head sw-v2-evidence-row">
@@ -2687,6 +2763,75 @@ function EvidencePage({
       </section>
     </div>
   );
+}
+
+function evidenceArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
+  const coverageByContractId = new Map(
+    portfolio.impact.evidenceCoverage.map((row) => [row.contract_id, row]),
+  );
+  const actionRowsByContractId = new Map<string, number>();
+  for (const row of portfolio.impact.actionCandidates) {
+    actionRowsByContractId.set(
+      row.contract_id,
+      (actionRowsByContractId.get(row.contract_id) ?? 0) + 1,
+    );
+  }
+  const groups = new Map<
+    string,
+    {
+      description: string;
+      contractCount: number;
+      spendRows: number;
+      performanceRows: number;
+      documentPageTextRows: number;
+      changeOrderRows: number;
+      actionRows: number;
+    }
+  >();
+
+  for (const contract of portfolio.contracts) {
+    const rawArchetype = contract.vendor_category?.trim() || "";
+    const archetype = rawArchetype
+      ? titleFromSourceKey(rawArchetype)
+      : "Not established";
+    const current =
+      groups.get(archetype) ??
+      {
+        description: rawArchetype
+          ? "Declared category from the governed contract row."
+          : "No declared category; no inferred taxonomy override.",
+        contractCount: 0,
+        spendRows: 0,
+        performanceRows: 0,
+        documentPageTextRows: 0,
+        changeOrderRows: 0,
+        actionRows: 0,
+      };
+    const coverage = coverageByContractId.get(contract.contract_id);
+    current.contractCount += 1;
+    current.spendRows += numberFromDb(coverage?.spend_rows) ?? 0;
+    current.performanceRows += numberFromDb(coverage?.performance_rows) ?? 0;
+    current.documentPageTextRows +=
+      numberFromDb(coverage?.document_page_text_rows) ?? 0;
+    current.changeOrderRows += numberFromDb(coverage?.change_order_rows) ?? 0;
+    current.actionRows += actionRowsByContractId.get(contract.contract_id) ?? 0;
+    groups.set(archetype, current);
+  }
+
+  return [...groups.entries()]
+    .map(([archetype, row]) => ({
+      archetype,
+      ...row,
+      registryLabel:
+        row.contractCount === portfolio.contracts.length
+          ? "All loaded contracts"
+          : `${row.contractCount} of ${portfolio.contracts.length}`,
+    }))
+    .sort((left, right) => {
+      if (left.archetype === "Not established") return 1;
+      if (right.archetype === "Not established") return -1;
+      return right.contractCount - left.contractCount || left.archetype.localeCompare(right.archetype);
+    });
 }
 
 function ContractGraphPage({
@@ -2939,6 +3084,24 @@ function GraphVolumeTable({
       count: portfolio.impact.actionCandidates.length,
       claim: "Optimize queue rows; not finance-confirmed value",
     },
+    {
+      layer: "Document page text",
+      object: "source.source_page_text_fact_assertion",
+      count: coverage.reduce(
+        (sum, row) => sum + (numberFromDb(row.document_page_text_rows) ?? 0),
+        0,
+      ),
+      claim: "Document statements only where page-text rows exist",
+    },
+    {
+      layer: "Change orders",
+      object: "source.source_change_order_fact_assertion",
+      count: coverage.reduce(
+        (sum, row) => sum + (numberFromDb(row.change_order_rows) ?? 0),
+        0,
+      ),
+      claim: "Scope, price, or term drift only where change-order facts exist",
+    },
   ];
   return (
     <div className="sw-v2-table">
@@ -3024,6 +3187,28 @@ function GraphSpineTable({
       canonical: "source.optimization_opportunity",
       substrate: "source.contract_action_candidate_v1",
       rows: portfolio.impact.actionCandidates.length,
+    },
+    {
+      family: "Document manifest",
+      sourceSystem: "Evidence manifest / document inventory",
+      adapter: "evidence_document_adapter",
+      canonical: "source.source_record_snapshot",
+      substrate: "source.source_page_text_fact_assertion",
+      rows: portfolio.impact.evidenceCoverage.reduce(
+        (sum, row) => sum + (numberFromDb(row.document_page_text_rows) ?? 0),
+        0,
+      ),
+    },
+    {
+      family: "Change orders",
+      sourceSystem: "Amendment and change-order register",
+      adapter: "change_order_adapter",
+      canonical: "source.contract_change_order",
+      substrate: "source.source_change_order_fact_assertion",
+      rows: portfolio.impact.evidenceCoverage.reduce(
+        (sum, row) => sum + (numberFromDb(row.change_order_rows) ?? 0),
+        0,
+      ),
     },
   ];
   return (
@@ -3143,6 +3328,8 @@ function plainAdapterLabel(adapter: string) {
   if (adapter.includes("consumption")) return "Spend consumption";
   if (adapter.includes("performance")) return "SLA performance";
   if (adapter.includes("optimization")) return "Action calculation";
+  if (adapter.includes("evidence_document")) return "Document evidence";
+  if (adapter.includes("change_order")) return "Change-order evidence";
   return "Mapped intake";
 }
 
@@ -3157,6 +3344,9 @@ function plainCanonicalLabel(canonical: string) {
     return "Performance and credit facts";
   }
   if (canonical.includes("optimization")) return "Opportunity facts";
+  if (canonical.includes("source_record_snapshot")) return "Document snapshots";
+  if (canonical.includes("change_order")) return "Change-order facts";
+  if (canonical.includes("page_text")) return "Document page text";
   if (canonical.includes("contract_term")) return "Commercial term facts";
   return "Canonical facts";
 }
@@ -3168,11 +3358,21 @@ function plainSubstrateLabel(substrate: string) {
   if (substrate.includes("spend_monthly")) return "Spend trend";
   if (substrate.includes("performance")) return "Performance view";
   if (substrate.includes("action_candidate")) return "Optimize action queue";
+  if (substrate.includes("page_text")) return "Document page text";
+  if (substrate.includes("change_order")) return "Change-order facts";
   if (substrate.includes("claim_card")) return "Executive claim cards";
   if (substrate.includes("vendor_position")) return "Vendor position";
   if (substrate.includes("source_page_storyline")) return "Page storyline";
   if (substrate.includes("ava_grounding")) return "aVa grounding";
   return "Source view";
+}
+
+function titleFromSourceKey(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function ClaimContract({

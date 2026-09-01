@@ -1063,6 +1063,12 @@
     minmax(180px, 1fr) 80px 90px 130px minmax(170px, 1fr);
 }
 
+.sw-v2-archetype-coverage-row {
+  grid-template-columns:
+    minmax(190px, 1.2fr) 78px 78px 78px 94px 110px 82px
+    minmax(120px, 0.8fr);
+}
+
 .sw-v2-contract-row {
   grid-template-columns:
     minmax(230px, 1.4fr) minmax(170px, 1fr) minmax(120px, 0.8fr) 120px 120px;
@@ -1519,6 +1525,7 @@
   .sw-v2-opt-contract-row,
   .sw-v2-action-row,
   .sw-v2-evidence-row,
+  .sw-v2-archetype-coverage-row,
   .sw-v2-graph-volume-row,
   .sw-v2-graph-spine-row,
   .sw-v2-decision-row {
