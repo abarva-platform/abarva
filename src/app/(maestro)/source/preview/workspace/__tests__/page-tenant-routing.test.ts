@@ -104,6 +104,22 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain("sourceProviderKey");
   });
 
+  it("keeps repeated portfolio reads coalesced behind a tenant-scoped cache", () => {
+    expect(portfolioApiSource).toContain(
+      "SOURCE_WORKSPACE_PORTFOLIO_CACHE_TTL_MS",
+    );
+    expect(portfolioApiSource).toContain("const portfolioCache = new Map");
+    expect(portfolioApiSource).toContain("checkTenantAccessByKey(requestedClientKey)");
+    expect(portfolioApiSource.indexOf("checkTenantAccessByKey(requestedClientKey)")).toBeLessThan(
+      portfolioApiSource.indexOf("loadCachedPortfolio({"),
+    );
+    expect(portfolioApiSource).toContain("tenantKey,");
+    expect(portfolioApiSource).toContain("asOfDateIso,");
+    expect(portfolioApiSource).toContain('requestedProvider ?? "default"');
+    expect(portfolioApiSource).toContain("X-Source-Portfolio-Cache");
+    expect(portfolioApiSource).toContain('Cache-Control": "private, no-store"');
+  });
+
   it("keeps the historical preview route as a query-preserving redirect only", () => {
     expect(previewPageSource).toContain("SourceWorkspacePreviewRedirect");
     expect(previewPageSource).toContain(
