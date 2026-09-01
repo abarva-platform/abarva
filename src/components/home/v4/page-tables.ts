@@ -233,6 +233,10 @@ function crossTab(
 }
 
 /** Title-cases a declared enum value for display without inventing a label for it. */
+/** One or many, said correctly. A count reading "1 units" reads as a machine wrote the sentence. */
+const plural = (count: number, one: string, many: string): string =>
+  count === 1 ? one : many;
+
 export function label(value: string): string {
   if (!value) return "not declared";
   return value.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
@@ -1599,37 +1603,151 @@ export function aiFindings(useCases: EstateRow[]): Finding[] {
   return findings;
 }
 
+/**
+ * Reporting lines counted from the parent named on each unit.
+ *
+ * The record carries no span-of-control field, but it carries a parent on nearly every unit, and a
+ * parent link is a structural fact rather than a reading of one. Counting them is arithmetic on the
+ * record; calling the result a span of control would not be, so nothing here does.
+ */
+function reportingLines(units: EstateRow[]) {
+  const named = new Set(units.map((u) => str(u, "orgUnit")).filter(Boolean));
+  const childrenOf = new Map<string, string[]>();
+  let dangling = 0;
+  let parented = 0;
+  for (const unit of units) {
+    const child = str(unit, "orgUnit");
+    const parent = str(unit, "parentOrgUnit");
+    if (!child || !parent) continue;
+    parented += 1;
+    if (!named.has(parent)) {
+      dangling += 1;
+      continue;
+    }
+    childrenOf.set(parent, [...(childrenOf.get(parent) ?? []), child]);
+  }
+  // A record can name a unit somewhere in its own ancestry, and a walk that trusts it never
+  // returns. Carrying the path taken bounds the walk where the cycle closes instead of hanging the
+  // render; a copy per branch keeps siblings from shortening one another.
+  const depthBelow = (unit: string, path = new Set<string>()): number => {
+    if (path.has(unit)) return 0;
+    const kids = childrenOf.get(unit) ?? [];
+    if (kids.length === 0) return 0;
+    const walked = new Set(path).add(unit);
+    return 1 + Math.max(...kids.map((kid) => depthBelow(kid, walked)));
+  };
+  return { childrenOf, depthBelow, dangling, parented };
+}
+
 export function organizationTables(units: EstateRow[]): TableSpec[] {
   if (units.length === 0) return [];
   const byLevel = countBy(
     units.filter((u) => str(u, "roleLevel")),
     "roleLevel",
   );
-  const authority = (rows: EstateRow[]) =>
-    rows.reduce((n, u) => n + num(u, "budgetAuthorityUsd"), 0);
+
+  // A measure the record does not carry must not be summed. Headcount missing on every unit sums to
+  // zero, and a column printing 0 against every level says the enterprise employs nobody -- two
+  // true facts, that the field is read and that every value is absent, making a false one. So a
+  // measure is drawn only where some unit declares it, and the ones dropped are named underneath.
+  const measures = [
+    {
+      field: "budgetAuthorityUsd",
+      column: "Budget authority",
+      name: "budget authority",
+      cell: (rows: EstateRow[]) =>
+        usd(rows.reduce((n, u) => n + num(u, "budgetAuthorityUsd"), 0)),
+    },
+    {
+      field: "headcount",
+      column: "Headcount",
+      name: "headcount",
+      cell: (rows: EstateRow[]) =>
+        rows.reduce((n, u) => n + num(u, "headcount"), 0).toLocaleString(),
+    },
+  ];
+  const shown = measures.filter((m) => units.some((u) => num(u, m.field) > 0));
+  const dropped = measures.filter((m) => !shown.includes(m)).map((m) => m.name);
+
+  const listedLevels = byLevel.slice(0, 8);
   const tables: TableSpec[] = [
     {
       caption: "Where authority sits",
       section: "Ownership",
-      columns: ["Level", "Units", "Budget authority", "Headcount"],
-      rows: byLevel.slice(0, 8).map((l) => {
+      columns: ["Level", "Units", ...shown.map((m) => m.column)],
+      barColumn: "Units",
+      rows: listedLevels.map((l) => {
         const rows = units.filter((u) => str(u, "roleLevel") === l.value);
-        return [
-          label(l.value),
-          l.count,
-          usd(authority(rows)),
-          rows.reduce((n, u) => n + num(u, "headcount"), 0).toLocaleString(),
-        ];
+        return [label(l.value), l.count, ...shown.map((m) => m.cell(rows))];
       }),
-      total: [
-        "Declared",
-        units.length,
-        usd(authority(units)),
-        units.reduce((n, u) => n + num(u, "headcount"), 0).toLocaleString(),
-      ],
-      note: "Budget authority is what a unit may commit, not what it spends. The two are different numbers and the record carries only the one.",
+      total: ["Declared", units.length, ...shown.map((m) => m.cell(units))],
+      note:
+        [
+          shown.some((m) => m.field === "budgetAuthorityUsd")
+            ? "Budget authority is what a unit may commit, not what it spends. The two are different numbers and the record carries only the one."
+            : null,
+          dropped.length > 0
+            ? `No unit declares ${dropped.join(" or ")}, so ${dropped.length === 1 ? "that column is" : "those columns are"} not drawn: an absent measure summed across levels would print as zero.`
+            : null,
+          byLevel.length > listedLevels.length
+            ? `${byLevel.length - listedLevels.length} further levels are not listed; the total counts every unit.`
+            : null,
+          units.length > byLevel.reduce((n, l) => n + l.count, 0)
+            ? `${units.length - byLevel.reduce((n, l) => n + l.count, 0)} ${plural(units.length - byLevel.reduce((n, l) => n + l.count, 0), "unit declares", "units declare")} no level and appear only in the total.`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined,
     },
   ];
+
+  // How the enterprise is organised is a shape, and where the parent links are populated the shape
+  // is in the record. This is the one table in the chapter that answers its first question rather
+  // than describing how complete the answer is.
+  const lines = reportingLines(units);
+  const parents = [...lines.childrenOf.entries()].sort(
+    (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
+  );
+  if (parents.length > 0) {
+    const levelOf = new Map(
+      units.map((u) => [str(u, "orgUnit"), str(u, "roleLevel")]),
+    );
+    const listed = parents.slice(0, 8);
+    tables.push({
+      caption: "Who reports to whom",
+      section: "Ownership",
+      columns: ["Unit", "Level", "Units reporting", "Levels below"],
+      barColumn: "Units reporting",
+      rows: listed.map(([parent, kids]) => [
+        parent,
+        label(levelOf.get(parent) ?? ""),
+        kids.length,
+        lines.depthBelow(parent),
+      ]),
+      total: [
+        `${parents.length} ${plural(parents.length, "unit has", "units have")} reports`,
+        "\u2014",
+        parents.reduce((n, [, kids]) => n + kids.length, 0),
+        Math.max(...parents.map(([parent]) => lines.depthBelow(parent))),
+      ],
+      note:
+        [
+          "Reporting lines are counted from the parent each unit names. The record carries no span-of-control field, so no figure here is a declared span.",
+          lines.dangling > 0
+            ? `${lines.dangling} ${plural(lines.dangling, "unit names", "units name")} a parent that is not itself a unit in this record.`
+            : "Every parent named resolves to a unit in this record.",
+          units.length - lines.parented > 0
+            ? `${units.length - lines.parented} ${plural(units.length - lines.parented, "unit names", "units name")} no parent.`
+            : null,
+          parents.length > listed.length
+            ? `${parents.length - listed.length} further units have reports and are not listed; the total counts all of them.`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined,
+    });
+  }
+
   // What a unit is recorded as deciding, and what it owns, is the join that makes any finding
   // assignable to a person. Reporting how complete that join is matters more than listing units.
   const completeness = [
@@ -1693,7 +1811,22 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
   // would let a finding about a system reach a person mostly is not there. Declaring authority in
   // the abstract and declaring what it covers are different completions of the same record.
   const withSystems = units.filter((u) => str(u, "ownedSystems")).length;
-  if (withSystems > 0 && withSystems < units.length / 2) {
+  if (withSystems === 0) {
+    // Zero is the loudest reading of this column and it was the one the rule could not reach: the
+    // guard below starts at one, so a record where nobody owns anything said nothing at all.
+    findings.push({
+      kind: "absence",
+      claim: `No org unit names a system it owns, across all ${units.length} units.`,
+      owner: "Chief HR Officer",
+      because:
+        "Every unit declares what it decides and none declares which systems that covers, so no finding about a system reaches a named owner from this record alone. Ownership on this page stops at the function.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: "ownedSystems is empty on every row",
+      },
+    });
+  } else if (withSystems < units.length / 2) {
     findings.push({
       kind: "absence",
       claim: `${withSystems} of ${units.length} org units name a system they own.`,
@@ -1704,6 +1837,66 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
         file: "02_org_ownership.csv",
         grain: "one org unit",
         rule: "ownedSystems is not empty",
+      },
+    });
+  }
+
+  // Authority named but never sized. A level with nine units under it and no headcount or budget
+  // beside it cannot be weighed against any other, which is the comparison an operating model is
+  // read for -- so the missing measure is stated rather than left as a column that is simply absent.
+  const unsized = [
+    { field: "headcount", name: "headcount" },
+    { field: "budgetAuthorityUsd", name: "budget authority" },
+  ]
+    .filter((measure) => !units.some((u) => num(u, measure.field) > 0))
+    .map((measure) => measure.name);
+  if (unsized.length > 0) {
+    findings.push({
+      kind: "absence",
+      claim: `No org unit declares ${unsized.join(" or ")} — authority is named here but never sized.`,
+      owner: "Chief HR Officer",
+      because:
+        "Levels can be counted and compared; what sits under them cannot. Any question about where the organisation is heavy or thin has to be answered somewhere other than this record.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: `${unsized.length === 2 ? "neither field carries" : "the field carries no"} a value above zero on any row`,
+      },
+    });
+  }
+
+  // The reporting structure, checked as a structure. A unit reporting to a parent the record does
+  // not carry is a break in the accountability chain, not a cosmetic gap: nothing above that unit
+  // can be reached by walking the record.
+  const lines = reportingLines(units);
+  if (lines.dangling > 0) {
+    findings.push({
+      kind: "exposure",
+      claim: `${lines.dangling} org ${plural(lines.dangling, "unit reports", "units report")} to a parent this record does not carry.`,
+      owner: "Chief HR Officer",
+      because:
+        "The chain from that unit upward cannot be walked, so a finding there escalates to nobody the record can name.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: "parentOrgUnit names a unit that is not an org_unit on any row",
+      },
+    });
+  } else if (lines.parented > 0) {
+    const deepest = Math.max(
+      0,
+      ...[...lines.childrenOf.keys()].map((unit) => lines.depthBelow(unit)),
+    );
+    findings.push({
+      kind: "established",
+      claim: `All ${lines.parented} reporting lines resolve, ${deepest} levels deep.`,
+      owner: "Chief HR Officer",
+      because:
+        "Every unit that names a parent names one the record also carries, so any unit on this page can be walked upward to whoever it answers to.",
+      trace: {
+        file: "02_org_ownership.csv",
+        grain: "one org unit",
+        rule: "every parentOrgUnit matches an orgUnit; depth is the longest chain of those links",
       },
     });
   }

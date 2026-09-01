@@ -1530,7 +1530,10 @@ function buildEclSignalPacket(
   const contextItems: ContextItem[] = [
     {
       id: "ctx_ecl_assessment_001",
-      statement: `This briefing is built from a synthetic assessment record. It is not client-attested.`,
+      // The packet must name the record it came from. Without the id two tenants' packets read
+      // identically in the model's context, and a caveat that cannot be traced to a record is a
+      // caveat about nothing.
+      statement: `This briefing is built from assessment record ${assessmentId}, a synthetic record. It is not client-attested.`,
       domains: ["enterprise_profile", "evidence_sources"],
     },
     {
