@@ -13,6 +13,17 @@ import {
 export const dynamic = "force-dynamic";
 
 const SOURCE_WORKSPACE_DEFAULT_AS_OF = `${SOURCE_V4_CUBE_AS_OF_DATE}T00:00:00Z`;
+const SOURCE_WORKSPACE_PORTFOLIO_CACHE_TTL_MS = 60_000;
+
+type PortfolioCacheEntry = {
+  readonly expiresAt: number;
+  readonly value: Promise<{
+    readonly portfolio: SourceWorkspacePortfolioData;
+    readonly sourceProviderKey: SourceWorkspaceProviderMode;
+  }>;
+};
+
+const portfolioCache = new Map<string, PortfolioCacheEntry>();
 
 export async function GET(request: Request) {
   let tenancy;
@@ -54,17 +65,66 @@ export async function GET(request: Request) {
   }
 
   const requestedProvider = sourceProviderFromRequest(requestUrl);
-  const portfolio = await loadSourceWorkspacePortfolio(
-    tenantKey,
+  const asOfDateIso =
     requestUrl.searchParams.get("asOf")?.trim() ||
-      SOURCE_WORKSPACE_DEFAULT_AS_OF,
+    SOURCE_WORKSPACE_DEFAULT_AS_OF;
+  const { value, cacheState } = loadCachedPortfolio({
+    tenantKey,
+    asOfDateIso,
     requestedProvider,
-  );
+  });
+  const { portfolio, sourceProviderKey } = await value;
 
   return NextResponse.json({
     portfolio,
-    sourceProviderKey: sourceProviderModeFromPortfolio(portfolio),
+    sourceProviderKey,
+  }, {
+    headers: {
+      "Cache-Control": "private, no-store",
+      "X-Source-Portfolio-Cache": cacheState,
+    },
   });
+}
+
+function loadCachedPortfolio({
+  tenantKey,
+  asOfDateIso,
+  requestedProvider,
+}: {
+  readonly tenantKey: string;
+  readonly asOfDateIso: string;
+  readonly requestedProvider: SourceWorkspaceProviderMode | null;
+}) {
+  const cacheKey = [
+    tenantKey,
+    asOfDateIso,
+    requestedProvider ?? "default",
+  ].join("|");
+  const now = Date.now();
+  const cached = portfolioCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return { value: cached.value, cacheState: "hit" as const };
+  }
+
+  const value = loadSourceWorkspacePortfolio(
+    tenantKey,
+    asOfDateIso,
+    requestedProvider,
+  )
+    .then((portfolio) => ({
+      portfolio,
+      sourceProviderKey: sourceProviderModeFromPortfolio(portfolio),
+    }))
+    .catch((error) => {
+      portfolioCache.delete(cacheKey);
+      throw error;
+    });
+
+  portfolioCache.set(cacheKey, {
+    expiresAt: now + SOURCE_WORKSPACE_PORTFOLIO_CACHE_TTL_MS,
+    value,
+  });
+  return { value, cacheState: "miss" as const };
 }
 
 function sourceProviderFromRequest(
