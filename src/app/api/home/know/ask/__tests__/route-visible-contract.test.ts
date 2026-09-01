@@ -1,4 +1,5 @@
 import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
+import { DEMO_SAFE_CLIENT_NAMES } from "@/lib/client-config";
 import { buildHomeKnowResponse } from "@/lib/home/know/home-know-engine";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 
@@ -7,32 +8,12 @@ import { POST } from "../route";
 jest.mock("@/lib/tenant/resolveTenant", () => ({
   resolveTenant: jest.fn(async () => ({
     canonicalKey: "skyharbor",
-    displayName: "Airline Demo",
+    displayName: DEMO_SAFE_CLIENT_NAMES.skyharbor,
   })),
 }));
 
 jest.mock("@/lib/home/know/home-know-engine", () => ({
   buildHomeKnowResponse: jest.fn(async () => unsafeHomeKnowResponse()),
-}));
-
-jest.mock("@/lib/home/know/v7-home-ask", () => ({
-  answerHomeKnowFromV7: jest.fn(),
-}));
-
-jest.mock("@/lib/home/know/v7-home-know-response", () => ({
-  toHomeKnowResponseFromV7: jest.fn(),
-}));
-
-jest.mock("@/lib/home/know/v6-home-ask", () => ({
-  answerHomeKnowFromV6: jest.fn(),
-}));
-
-jest.mock("@/lib/home/know/v6-home-know-response", () => ({
-  toHomeKnowResponseFromV6: jest.fn(),
-}));
-
-jest.mock("@/lib/home/know/home-v6-executive-synthesis", () => ({
-  applyHomeV6ExecutiveSynthesis: jest.fn(),
 }));
 
 function req(body: unknown): import("next/server").NextRequest {
@@ -44,7 +25,9 @@ function req(body: unknown): import("next/server").NextRequest {
 
 describe("/api/home/know/ask visible contract recovery", () => {
   beforeEach(() => {
-    jest.mocked(buildHomeKnowResponse).mockResolvedValue(unsafeHomeKnowResponse());
+    jest
+      .mocked(buildHomeKnowResponse)
+      .mockResolvedValue(unsafeHomeKnowResponse());
   });
 
   it("returns a safe Home answer when final prose leaks answer-construction language", async () => {
@@ -80,7 +63,8 @@ describe("/api/home/know/ask visible contract recovery", () => {
 
     const res = await POST(
       req({
-        question: "Can you provide a 2x2 explanation for value potential and proof readiness?",
+        question:
+          "Can you provide a 2x2 explanation for value potential and proof readiness?",
         tenantKey: "skyharbor_global",
         stream: true,
       }),
