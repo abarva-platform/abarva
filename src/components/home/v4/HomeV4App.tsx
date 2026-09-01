@@ -318,6 +318,12 @@ export function HomeV4App({
                 visualDatasets={visualDatasets}
                 exhibitMeta={exhibitMeta}
                 onOpenRows={openRecordRows}
+                contracts={
+                  techRecordTypes.find(
+                    (r) => r.objectType === "vendor_contract",
+                  )?.rows
+                }
+                asOf={bundle.provenance?.generated_at?.slice(0, 10)}
                 depth={chapterDepth(activeChapter.chapterId, {
                   asOf: bundle.provenance?.generated_at?.slice(0, 10),
                   applications: applications?.rows,

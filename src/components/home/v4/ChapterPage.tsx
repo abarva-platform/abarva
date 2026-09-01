@@ -21,6 +21,7 @@ import {
   TableSet,
   UnsupportedViews,
 } from "./TableSet";
+import { RenewalTimeline } from "./RenewalTimeline";
 import type { ChapterDepth } from "./chapter-page-content";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -40,6 +41,8 @@ export function ChapterPage({
   visualDatasets,
   exhibitMeta,
   depth,
+  contracts,
+  asOf,
   onOpenRows,
 }: {
   chapter: ChapterView;
@@ -51,6 +54,10 @@ export function ChapterPage({
   /** Tables and findings computed from the estate rows in the bundle -- no model, no packet claim.
    * Absent, or empty, renders nothing: a chapter whose rows produce no table has no table set. */
   depth?: ChapterDepth;
+  /** Vendor rows, where this chapter reads them. The timeline renders only when they are here. */
+  contracts?: Array<Record<string, unknown>>;
+  /** The record's own as-of date, so a past term end means past relative to the record. */
+  asOf?: string;
   /** Opens the rows behind a finding in the record browser. */
   onOpenRows?: (objectType: string, filter: string) => void;
 }) {
@@ -89,6 +96,9 @@ export function ChapterPage({
         />
       ) : null}
       {depth ? <TableSet tables={depth.tables} /> : null}
+      {contracts && contracts.length > 0 ? (
+        <RenewalTimeline contracts={contracts} asOf={asOf} />
+      ) : null}
       {depth ? (
         <FindingsBlock findings={depth.findings} onOpenRows={onOpenRows} />
       ) : null}
