@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Deliverable generation now retrieves evidence from the artifact's own section, exhibit, and table structure instead of a single generic query. The generation path packs whole governed evidence items into an explicit input-side token budget, reports how much context was available/retrieved/packed/dropped/cited, and marks the shared prompt context for Anthropic prompt caching.
+Deliverable generation now retrieves evidence from the artifact's own section, exhibit, and table structure instead of a single generic query. The generation path packs whole governed evidence items into an explicit input-side token budget, reports how much context was available/retrieved/packed/dropped/cited, distinguishes no approved evidence from prompt starvation, and marks the shared prompt context for Anthropic prompt caching.
 
 ## Layer Impact
 
@@ -29,7 +29,7 @@ Control-plane run ledger: adds a nullable JSONB telemetry field to `deliverable_
 ## Changes Included
 
 - Adds `src/lib/deliverables/orchestrator/context-budget.ts` for explicit input-side token budgeting and whole-item evidence packing.
-- Adds `src/lib/deliverables/orchestrator/context-coverage.ts` for available/retrieved/packed/dropped/unreadable/cited coverage readouts.
+- Adds `src/lib/deliverables/orchestrator/context-coverage.ts` for available/retrieved/packed/dropped/unreadable/cited coverage readouts, nullable no-input ratios, and structural coverage-state signaling.
 - Updates `src/lib/deliverables/orchestrator/evidence-assembler.ts` to accept multiple section-derived queries, dedupe tenant-search chunks by `chunkId`, raise Move-scoped retrieval limits, and pack evidence by budget.
 - Updates `src/lib/deliverables/orchestrator/generate-service.ts` to resolve the artifact brief before retrieval, derive section/exhibit/table queries, and return coverage.
 - Updates `src/lib/deliverables/orchestrator/model-caller.ts` and prompt types so the shared prompt context can be sent as an Anthropic cache-control breakpoint.

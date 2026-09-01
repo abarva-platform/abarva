@@ -226,7 +226,7 @@ export async function runDeliverableForTenant(
     contextBudget,
   });
   const coverageWarnings =
-    coverage.approvedAvailable > 0 && coverage.packed === 0
+    coverage.requiresAttention
       ? [
           `context_coverage_empty: ${coverage.approvedAvailable} approved evidence item(s) existed for this Move, but 0 were packed into the prompt.`,
         ]

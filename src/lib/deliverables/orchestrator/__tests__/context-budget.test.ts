@@ -3,6 +3,7 @@ import {
   resolveContextBudget,
   estimateEvidenceItemTokens,
 } from "../context-budget";
+import { buildContextCoverage } from "../context-coverage";
 import type { GovernedEvidenceItem } from "../types";
 
 function evidence(
@@ -74,5 +75,31 @@ describe("context budget", () => {
     expect(packed.packed).toEqual([]);
     expect(packed.droppedCount).toBe(0);
     expect(packed.usedTokens).toBe(0);
+  });
+
+  it("distinguishes no approved evidence from approved evidence that never reached the prompt", () => {
+    expect(
+      buildContextCoverage({
+        approvedAvailable: 0,
+        retrieved: 0,
+        packed: 0,
+      }),
+    ).toMatchObject({
+      coverageRatio: null,
+      coverageState: "no_approved_evidence",
+      requiresAttention: false,
+    });
+
+    expect(
+      buildContextCoverage({
+        approvedAvailable: 10,
+        retrieved: 10,
+        packed: 0,
+      }),
+    ).toMatchObject({
+      coverageRatio: 0,
+      coverageState: "empty_prompt",
+      requiresAttention: true,
+    });
   });
 });

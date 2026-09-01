@@ -12,7 +12,11 @@ export interface ContextCoverage {
   unreadable: number;
   /** Referenced in the finished artifact. */
   cited: number;
-  coverageRatio: number;
+  /** Null when no approved evidence exists, so "no input" is not confused with starvation. */
+  coverageRatio: number | null;
+  /** Structural signal for dashboards and run polling; do not grep warnings for this. */
+  coverageState: "no_approved_evidence" | "packed" | "empty_prompt";
+  requiresAttention: boolean;
   /** Approximate evidence tokens placed in the prompt, using chars / 4. */
   usedTokens: number;
   /** Approximate evidence-token budget available to the prompt. */
@@ -34,6 +38,12 @@ export function buildContextCoverage(input: {
     Math.floor(input.approvedAvailable ?? 0),
   );
   const packed = Math.max(0, Math.floor(input.packed ?? 0));
+  const coverageState =
+    approvedAvailable === 0
+      ? "no_approved_evidence"
+      : packed === 0
+        ? "empty_prompt"
+        : "packed";
   return {
     approvedAvailable,
     retrieved: Math.max(0, Math.floor(input.retrieved ?? 0)),
@@ -41,7 +51,9 @@ export function buildContextCoverage(input: {
     droppedForBudget: Math.max(0, Math.floor(input.droppedForBudget ?? 0)),
     unreadable: Math.max(0, Math.floor(input.unreadable ?? 0)),
     cited: Math.max(0, Math.floor(input.cited ?? 0)),
-    coverageRatio: approvedAvailable > 0 ? packed / approvedAvailable : 0,
+    coverageRatio: approvedAvailable > 0 ? packed / approvedAvailable : null,
+    coverageState,
+    requiresAttention: coverageState === "empty_prompt",
     usedTokens: Math.max(0, Math.floor(input.usedTokens ?? 0)),
     evidenceTokenBudget: Math.max(
       0,

@@ -78,9 +78,11 @@ describe('completeDeliverableRun', () => {
       unreadable: 1,
       cited: 2,
       coverageRatio: 1,
+      coverageState: 'packed',
+      requiresAttention: false,
       usedTokens: 900,
       evidenceTokenBudget: 1200,
-    };
+    } as const;
     await completeDeliverableRun('run-1', { status: 'succeeded', artifactId: 'art-9', sectionCount: 12, retrievedEvidence: 7, contextCoverage, warnings: ['w'] }, db);
     expect(cap.op).toBe('update');
     expect(cap.payload?.status).toBe('succeeded');

@@ -54,7 +54,9 @@ describe("assembleGovernedEvidence", () => {
     expect(out.sourceRegister).toHaveLength(2);
     expect(out.coverage.retrieved).toBe(2);
     expect(out.coverage.packed).toBe(2);
-    expect(out.coverage.coverageRatio).toBe(0);
+    expect(out.coverage.coverageRatio).toBeNull();
+    expect(out.coverage.coverageState).toBe("no_approved_evidence");
+    expect(out.coverage.requiresAttention).toBe(false);
     // internal ids stay in provenanceRef (audit-only); never in the body-facing fields
     for (const e of out.evidence) {
       expect(e.label).not.toMatch(/c1|c2/);
@@ -474,6 +476,9 @@ describe("assembleGovernedEvidence", () => {
     expect(out.retrievedCount).toBe(0);
     expect(out.sourceRegister).toHaveLength(0);
     expect(out.evidence).toHaveLength(0);
+    expect(out.coverage.coverageRatio).toBeNull();
+    expect(out.coverage.coverageState).toBe("no_approved_evidence");
+    expect(out.coverage.requiresAttention).toBe(false);
   });
 });
 
@@ -658,6 +663,8 @@ describe("runDeliverableForTenant", () => {
       unreadable: 0,
       cited: 0,
       coverageRatio: 1,
+      coverageState: "packed",
+      requiresAttention: false,
       usedTokens: 12,
       evidenceTokenBudget: 1000,
     },
