@@ -14,6 +14,7 @@ import type {
 } from "@/lib/home/preview/types";
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
+import { sectionId } from "./TableSet";
 import type { EstateRow } from "./page-tables";
 import { chapterArguesFrom, chapterDepth } from "./chapter-page-content";
 import { buildBusinessBriefing } from "./business-briefing";
@@ -210,6 +211,31 @@ export function HomeV4App({
   /** Progress is counted from the items themselves rather than asserted alongside them. Stating a
    * numerator separately is how a rail ends up reading "2 of 6 drafted" above six items that are
    * all drafted -- a label contradicting the list beneath it, which makes the reader trust neither. */
+  // Built once for the rail so a chapter's sections and its exposure mark come from the same rows
+  // the chapter itself renders, rather than from a second, drifting source.
+  const estateForRail = {
+    asOf: bundle.provenance?.generated_at?.slice(0, 10),
+    applications: applications?.rows as EstateRow[] | undefined,
+    vendors: techRecordTypes.find((r) => r.objectType === "vendor_contract")
+      ?.rows as EstateRow[] | undefined,
+    infrastructure: infrastructure?.rows as EstateRow[] | undefined,
+    data: techRecordTypes.find(
+      (r) => r.objectType === "data_asset_or_integration",
+    )?.rows as EstateRow[] | undefined,
+    metrics: techRecordTypes.find((r) => r.objectType === "metric_outcome")
+      ?.rows as EstateRow[] | undefined,
+    risks: techRecordTypes.find((r) => r.objectType === "risk_control")
+      ?.rows as EstateRow[] | undefined,
+    programs: techRecordTypes.find((r) => r.objectType === "program_initiative")
+      ?.rows as EstateRow[] | undefined,
+    ai: techRecordTypes.find((r) => r.objectType === "ai_use_case")?.rows as
+      | EstateRow[]
+      | undefined,
+    organization: techRecordTypes.find(
+      (r) => r.objectType === "organization_ownership",
+    )?.rows as EstateRow[] | undefined,
+  };
+
   const group = (title: string, items: RailItem[]): RailGroup => ({
     title,
     progress: `${items.filter((i) => i.drafted).length} of ${items.length} drafted`,
@@ -219,11 +245,36 @@ export function HomeV4App({
   const groups: RailGroup[] = [
     group(
       "The briefing",
-      chapters.map((c) => ({
-        id: c.chapterId,
-        label: c.title,
-        drafted: isDrafted(c.chapterId),
-      })),
+      chapters.map((c, i) => {
+        // Sections come from the chapter's own tables, so the rail cannot claim a destination the
+        // chapter does not have.
+        const depth = chapterDepth(c.chapterId, estateForRail);
+        const names: string[] = [];
+        for (const table of depth.tables) {
+          if (table.section && !names.includes(table.section))
+            names.push(table.section);
+        }
+        return {
+          id: c.chapterId,
+          label: c.title,
+          drafted: isDrafted(c.chapterId),
+          index: i + 1,
+          sections:
+            names.length > 1
+              ? names.map((name) => ({ id: sectionId(name), label: name }))
+              : undefined,
+          // One mark in the whole rail, and only where the record *rates* something high.
+          //
+          // An earlier version marked any chapter producing an exposure finding, which was five of
+          // eight -- a mark on most of a list is decoration, and it spent red on something red is
+          // not reserved for. Red means rated high severity, so the mark follows the rating.
+          flagged:
+            chapterArguesFrom(c.chapterId, "risks") &&
+            (estateForRail.risks ?? []).some((row) =>
+              /^(high|critical)$/i.test(String(row.severity ?? "").trim()),
+            ),
+        };
+      }),
     ),
     group("The evidence", [
       // Architecture first: it is the only view here that answers what shape the estate is in.

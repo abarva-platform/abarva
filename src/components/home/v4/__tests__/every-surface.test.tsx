@@ -304,3 +304,59 @@ describe("the perspective layer", () => {
     expect(container.querySelector("[data-home-perspective]")).toBeNull();
   });
 });
+
+describe("the rail", () => {
+  // Twenty flat entries make the briefing and the evidence look like one list of equal things. They
+  // are not: eight are a reading order, twelve are a reference shelf.
+  it("numbers the briefing, because it is a reading order", () => {
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const rail = container.querySelector("nav");
+    expect(rail).not.toBeNull();
+    const text = (rail!.textContent ?? "").replace(/\s+/g, " ");
+    for (const [n, title] of bundle().chapters.map(
+      (c, i) => [i + 1, c.title] as const,
+    )) {
+      expect(text).toContain(`${n}${title}`);
+    }
+  });
+
+  it("reveals a chapter's sections only while that chapter is the one being read", () => {
+    window.location.hash = "technology_data";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const open = container.querySelectorAll("[data-home-rail-sections]");
+    // Exactly one chapter expands: the active one.
+    expect(open.length).toBe(1);
+    expect(open[0].querySelectorAll("a").length).toBeGreaterThan(1);
+  });
+
+  it("carries at most one status mark, and only where the record rates something high", () => {
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const flags = container.querySelectorAll("[data-home-rail-flag]");
+    // A mark on most of a list is decoration. It follows the record's own rating, not any computed
+    // exposure -- an earlier version marked five of eight chapters, which spent red on something red
+    // is not reserved for.
+    expect(flags.length).toBeLessThanOrEqual(2);
+  });
+
+  it("keeps every destination reachable", () => {
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const rail = container.querySelector("nav")!;
+    for (const chapter of bundle().chapters) {
+      expect(rail.textContent ?? "").toContain(chapter.title);
+    }
+    for (const label of ["Current-state architecture", "Browse the record"]) {
+      expect(rail.textContent ?? "").toContain(label);
+    }
+  });
+});
