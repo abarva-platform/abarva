@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This change removes a Home ECL narrative cleanup path that replaced visible chapter text with a generated terminal-state headline. The operator job now keeps generated chapter prose intact after identifier scrubbing and lets the visible-quality gate refuse any remaining unsupported or implementation-facing language.
+This change removes a Home ECL narrative cleanup path that replaced visible chapter text with a generated terminal-state headline. The operator job now keeps generated chapter prose intact after identifier scrubbing, treats raw object IDs as uppercase machine identifiers, and lets the visible-quality gate refuse any remaining unsupported or implementation-facing language.
 
 ## Layer Impact
 
@@ -37,6 +37,7 @@ Source adapters and canonical model: No change.
 
 - PASS: `node scripts/ecl/__tests__/run-home-ecl-narrative-layer-tests.mjs`
 - PASS: `git diff --check`
+- PASS: raw-ID detector smoke confirms ordinary lower-case risk phrases are not blocked while uppercase IDs still are
 
 ## Rollout Plan
 
