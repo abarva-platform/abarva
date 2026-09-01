@@ -26,14 +26,6 @@
       "failing": 2,
       "ran": true
     },
-    "src/lib/home/__tests__/home-data-quality.test.ts": {
-      "failing": 2,
-      "ran": true
-    },
-    "src/lib/home/__tests__/home-english-summary.test.ts": {
-      "failing": 1,
-      "ran": true
-    },
     "src/lib/home/__tests__/home-summary-runtime.test.ts": {
       "failing": 2,
       "ran": true
@@ -72,6 +64,6 @@
     }
   },
   "recordedAt": "2026-09-01",
-  "totalTests": 587,
+  "totalTests": 589,
   "totalSuites": 68
 }
