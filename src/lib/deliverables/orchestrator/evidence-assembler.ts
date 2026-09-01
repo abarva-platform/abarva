@@ -17,25 +17,44 @@ import {
   type GovernedCandidateLike,
 } from "./source-register";
 import type { GovernedEvidenceItem, SourceRegisterEntry } from "./types";
+import {
+  packEvidence,
+  resolveContextBudget,
+  type ContextBudget,
+} from "./context-budget";
+import {
+  buildContextCoverage,
+  type ContextCoverage,
+} from "./context-coverage";
 
 export interface AssembleEvidenceParams {
   tenantClientKey: string;
   clientId?: string;
   sourceArtifactRef?: string;
-  query: string;
+  query?: string;
+  queries?: string[];
   topK?: number;
   audienceIsVendorFacing?: boolean;
   minConfidence?: number;
+  contextBudget?: ContextBudget;
 }
 
 export interface AssembledEvidence {
   evidence: GovernedEvidenceItem[];
   sourceRegister: SourceRegisterEntry[];
   retrievedCount: number;
+  coverage: ContextCoverage;
 }
 
 type QueryFn = typeof defaultQueryTenantContext;
 type FluentDb = ReturnType<typeof getAzureWriteFluentClient>;
+
+const MOVE_PHASE_CAPTURE_LIMIT = 240;
+const MOVE_LEDGER_LIMIT = 240;
+const MOVE_REVIEW_LIMIT = 160;
+const MOVE_GENERATED_ARTIFACT_LIMIT = 80;
+const MOVE_CANDIDATE_LIMIT = 720;
+const TENANT_CONTEXT_TOP_K = 32;
 
 function chunkToCandidate(chunk: TenantContextChunk): GovernedCandidateLike {
   const score = chunk.vectorScore ?? 0;
@@ -282,12 +301,19 @@ async function loadMoveCurrentStateCandidates(
     "tenantClientKey" | "clientId" | "sourceArtifactRef"
   >,
   db: FluentDb = getAzureWriteFluentClient(),
-): Promise<GovernedCandidateLike[]> {
+): Promise<{
+  candidates: GovernedCandidateLike[];
+  approvedAvailable: number;
+  unreadable: number;
+}> {
   const clientId = stringOrNull(params.clientId);
   const moveId = stringOrNull(params.sourceArtifactRef);
-  if (!clientId || !moveId) return [];
+  if (!clientId || !moveId)
+    return { candidates: [], approvedAvailable: 0, unreadable: 0 };
 
   const candidates: GovernedCandidateLike[] = [];
+  let approvedAvailable = 0;
+  let unreadable = 0;
 
   // The operator's phase capture is the Move's own source of truth for the
   // current generation pass. It is not a signable gate artifact by itself, but
@@ -302,7 +328,7 @@ async function loadMoveCurrentStateCandidates(
       .eq("engagement_id", moveId)
       .order("phase_number", { ascending: true })
       .order("module_order", { ascending: true })
-      .limit(80);
+      .limit(MOVE_PHASE_CAPTURE_LIMIT);
     if (Array.isArray(modules)) {
       for (const row of modules as Array<Record<string, unknown>>) {
         const status = stringOrNull(row.status);
@@ -330,7 +356,7 @@ async function loadMoveCurrentStateCandidates(
       .eq("client_id", clientId)
       .eq("surface", "moves")
       .order("created_at", { ascending: false })
-      .limit(80);
+      .limit(MOVE_LEDGER_LIMIT);
     if (Array.isArray(data)) {
       for (const row of data as Array<Record<string, unknown>>) {
         const sourceRef = sourceRefObject(row.source_ref);
@@ -359,14 +385,45 @@ async function loadMoveCurrentStateCandidates(
   // program_evidence_items. Pull approved review rows and their extracted
   // summaries/signals first so explicit human review remains the preferred path.
   try {
+    const { data: reviewSummary } = await db
+      .from("program_evidence_reviews")
+      .select("decision, source_ref")
+      .eq("tenant_key", params.tenantClientKey)
+      .eq("program_id", moveId)
+      .limit(MOVE_REVIEW_LIMIT);
+    if (Array.isArray(reviewSummary)) {
+      for (const review of reviewSummary as Array<Record<string, unknown>>) {
+        if (stringOrNull(review.decision) === "approved")
+          approvedAvailable += 1;
+        const sourceRef = sourceRefObject(review.source_ref);
+        const parsed = sourceRef.parsed;
+        const parseMethod = stringOrNull(sourceRef.parse_method);
+        const parseStatus = stringOrNull(sourceRef.parse_status);
+        if (
+          parsed === false ||
+          parseStatus === "failed" ||
+          parseMethod === "failed" ||
+          parseMethod === "unreadable"
+        ) {
+          unreadable += 1;
+        }
+      }
+    }
+  } catch {
+    // Coverage instrumentation is best-effort on older databases; never fail
+    // generation because the summary columns are not present yet.
+  }
+
+  try {
     const { data: reviews } = await db
       .from("program_evidence_reviews")
       .select("evidence_id, family_key, source_ref, reviewed_at, decision")
       .eq("tenant_key", params.tenantClientKey)
       .eq("program_id", moveId)
       .eq("decision", "approved")
-      .limit(40);
+      .limit(MOVE_REVIEW_LIMIT);
     if (Array.isArray(reviews) && reviews.length > 0) {
+      if (approvedAvailable === 0) approvedAvailable = reviews.length;
       const reviewRows = reviews as Array<Record<string, unknown>>;
       const evidenceIds = reviewRows
         .map((r) => stringOrNull(r.evidence_id))
@@ -433,7 +490,7 @@ async function loadMoveCurrentStateCandidates(
       .is("superseded_by", null)
       .is("quarantine_reason", null)
       .order("rendered_at", { ascending: false })
-      .limit(24);
+      .limit(MOVE_GENERATED_ARTIFACT_LIMIT);
     if (Array.isArray(artifacts)) {
       for (const row of artifacts as Array<Record<string, unknown>>) {
         const candidate = generatedArtifactToCandidate(row);
@@ -446,14 +503,65 @@ async function loadMoveCurrentStateCandidates(
   }
 
   const seen = new Set<string>();
-  return candidates
-    .filter((candidate) => {
-      const key = `${candidate.provenanceRef}:${candidate.statement}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .slice(0, 24);
+  return {
+    candidates: candidates
+      .filter((candidate) => {
+        const key = `${candidate.provenanceRef}:${candidate.statement}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, MOVE_CANDIDATE_LIMIT),
+    approvedAvailable,
+    unreadable,
+  };
+}
+
+function normalizedQueries(params: AssembleEvidenceParams): string[] {
+  const raw =
+    params.queries && params.queries.length > 0
+      ? params.queries
+      : [params.query ?? "current state baseline"];
+  const seen = new Set<string>();
+  const queries: string[] = [];
+  for (const query of raw) {
+    const trimmed = query.trim().replace(/\s+/g, " ");
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    queries.push(trimmed);
+  }
+  return queries.length > 0 ? queries : ["current state baseline"];
+}
+
+async function queryTenantChunks(
+  params: AssembleEvidenceParams,
+  queryTenantContext: QueryFn,
+): Promise<TenantContextChunk[]> {
+  const chunksById = new Map<string, TenantContextChunk>();
+  const queries = normalizedQueries(params);
+  const results = await Promise.all(
+    queries.map((query) =>
+      queryTenantContext({
+        tenantClientKey: params.tenantClientKey,
+        query,
+        topK: params.topK ?? TENANT_CONTEXT_TOP_K,
+        filters: {
+          minConfidence: params.minConfidence ?? 0.5,
+          // vendor-facing generation should never even retrieve restricted/confidential
+          sensitivity: params.audienceIsVendorFacing
+            ? ["public", "internal"]
+            : ["public", "internal", "confidential"],
+        },
+      }),
+    ),
+  );
+  for (const chunk of results.flat()) {
+    const id = chunk.chunkId || chunk.sourceSegmentId || chunk.text;
+    if (!chunksById.has(id)) chunksById.set(id, chunk);
+  }
+  return [...chunksById.values()];
 }
 
 export async function assembleGovernedEvidence(
@@ -461,27 +569,34 @@ export async function assembleGovernedEvidence(
   deps: { queryTenantContext?: QueryFn; db?: FluentDb } = {},
 ): Promise<AssembledEvidence> {
   const query = deps.queryTenantContext ?? defaultQueryTenantContext;
-  const chunks = await query({
-    tenantClientKey: params.tenantClientKey,
-    query: params.query,
-    topK: params.topK ?? 12,
-    filters: {
-      minConfidence: params.minConfidence ?? 0.5,
-      // vendor-facing generation should never even retrieve restricted/confidential
-      sensitivity: params.audienceIsVendorFacing
-        ? ["public", "internal"]
-        : ["public", "internal", "confidential"],
-    },
-  });
-  const moveCandidates = await loadMoveCurrentStateCandidates(params, deps.db);
+  const chunks = await queryTenantChunks(params, query);
+  const moveContext = await loadMoveCurrentStateCandidates(params, deps.db);
+  const moveCandidates = moveContext.candidates;
   const tenantCandidates = chunks.map(chunkToCandidate);
   const candidates = [...moveCandidates, ...tenantCandidates];
   const { evidence, register } = buildSourceRegister(candidates, {
     audienceIsVendorFacing: params.audienceIsVendorFacing,
   });
+  const budget = params.contextBudget ?? resolveContextBudget();
+  const packed = packEvidence(evidence, budget);
+  const packedCitations = new Set(
+    packed.packed.map((item) => item.citationNumber),
+  );
+  const packedRegister = register.filter((entry) =>
+    packedCitations.has(entry.citationNumber),
+  );
   return {
-    evidence,
-    sourceRegister: register,
+    evidence: packed.packed,
+    sourceRegister: packedRegister,
     retrievedCount: candidates.length,
+    coverage: buildContextCoverage({
+      approvedAvailable: moveContext.approvedAvailable,
+      retrieved: candidates.length,
+      packed: packed.packed.length,
+      droppedForBudget: packed.droppedCount,
+      unreadable: moveContext.unreadable,
+      usedTokens: packed.usedTokens,
+      evidenceTokenBudget: budget.evidenceTokens,
+    }),
   };
 }

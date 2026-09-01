@@ -74,7 +74,7 @@ export function assessExtractedTextSensitivity(
 ): UploadProtectionResult {
   return evaluateSensitiveUpload({
     filename: opts.filename,
-    mimeType: opts.mimeType,
+    mimeType: "text/plain",
     bytes: new TextEncoder().encode(text || ""),
     declaredClassification: opts.declaredClassification ?? null,
   });

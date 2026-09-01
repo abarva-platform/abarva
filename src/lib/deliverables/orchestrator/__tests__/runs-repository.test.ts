@@ -44,7 +44,7 @@ const jobPayload: DeliverableRunJobPayload = {
 const dbRow = {
   id: 'run-1', client_id: 'c1', tenant_key: 'skyharbor-air', user_id: 'u1', module: 'source',
   archetype: 'AMS_IT_OUTSOURCING', deliverable_type: 'rfp_package', status: 'queued',
-  artifact_id: null, section_count: null, retrieved_evidence: null, blockers: [], warnings: [], error: null,
+  artifact_id: null, section_count: null, retrieved_evidence: null, context_coverage: null, blockers: [], warnings: [], error: null,
   claimed_at: null, worker_id: null, job_payload: jobPayload,
   created_at: 't0', updated_at: 't0',
 };
@@ -70,10 +70,24 @@ describe('createDeliverableRun', () => {
 describe('completeDeliverableRun', () => {
   it('updates status + result fields by id', async () => {
     const { db, cap } = fakeDb(null);
-    await completeDeliverableRun('run-1', { status: 'succeeded', artifactId: 'art-9', sectionCount: 12, retrievedEvidence: 7, warnings: ['w'] }, db);
+    const contextCoverage = {
+      approvedAvailable: 3,
+      retrieved: 9,
+      packed: 3,
+      droppedForBudget: 6,
+      unreadable: 1,
+      cited: 2,
+      coverageRatio: 1,
+      coverageState: 'packed',
+      requiresAttention: false,
+      usedTokens: 900,
+      evidenceTokenBudget: 1200,
+    } as const;
+    await completeDeliverableRun('run-1', { status: 'succeeded', artifactId: 'art-9', sectionCount: 12, retrievedEvidence: 7, contextCoverage, warnings: ['w'] }, db);
     expect(cap.op).toBe('update');
     expect(cap.payload?.status).toBe('succeeded');
     expect(cap.payload?.artifact_id).toBe('art-9');
+    expect(cap.payload?.context_coverage).toBe(JSON.stringify(contextCoverage));
     expect(cap.filters).toContainEqual(['id', 'run-1']);
   });
 
@@ -90,13 +104,15 @@ describe('completeDeliverableRun', () => {
 
 describe('getDeliverableRun', () => {
   it('reads scoped to id + clientId and maps the row', async () => {
-    const { db, cap } = fakeDb({ ...dbRow, status: 'succeeded', artifact_id: 'art-9', section_count: 12 });
+    const { db, cap } = fakeDb({ ...dbRow, status: 'succeeded', artifact_id: 'art-9', section_count: 12, context_coverage: { approvedAvailable: 4, retrieved: 10, packed: 3, droppedForBudget: 7, unreadable: 1, cited: 2, coverageRatio: 0.75, usedTokens: 600, evidenceTokenBudget: 1000 } });
     const rec = await getDeliverableRun('run-1', 'c1', db);
     expect(cap.filters).toContainEqual(['id', 'run-1']);
     expect(cap.filters).toContainEqual(['client_id', 'c1']);
     expect(rec?.status).toBe('succeeded');
     expect(rec?.artifactId).toBe('art-9');
     expect(rec?.sectionCount).toBe(12);
+    expect(rec?.contextCoverage?.packed).toBe(3);
+    expect(rec?.contextCoverage?.coverageRatio).toBe(0.75);
   });
 
   it('returns null when not found', async () => {

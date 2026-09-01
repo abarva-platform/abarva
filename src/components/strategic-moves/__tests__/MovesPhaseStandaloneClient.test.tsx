@@ -1759,6 +1759,48 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(uploadedEvidenceArtifacts).toHaveLength(0);
   });
 
+  it("rejects canonical-backed P2 uploads informatively from Upload & Review", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="current"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Understand Current State",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByLabelText("Upload P2 current-state evidence files"),
+      {
+        target: {
+          files: [
+            new File(["repo,deploy_frequency"], "dora_delivery_baseline.csv", {
+              type: "text/csv",
+            }),
+          ],
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/not Upload & Review/i),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByText(/governed data load/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/structured current-state CSV path/i),
+    ).toBeInTheDocument();
+    expect(currentStateFamilyIngests).toEqual([]);
+    expect(uploadedEvidenceArtifacts).toHaveLength(0);
+  });
+
   it("routes airline P2 uploads by active readiness family labels", async () => {
     render(
       <MovesPhaseStandaloneClient

@@ -29,13 +29,17 @@ describe('GET /api/v1/deliverables/runs/[runId]', () => {
   });
 
   it('returns succeeded status with a blob url', async () => {
-    runRow = { id: 'run-1', status: 'succeeded', artifactId: 'art-9', sectionCount: 12, retrievedEvidence: 7, blockers: [], warnings: ['minor'], error: null, updatedAt: 't' };
+    runRow = { id: 'run-1', status: 'succeeded', artifactId: 'art-9', sectionCount: 12, retrievedEvidence: 7, contextCoverage: { approvedAvailable: 10, retrieved: 10, packed: 0, droppedForBudget: 10, unreadable: 0, cited: 0, coverageRatio: 0, coverageState: 'empty_prompt', requiresAttention: true, usedTokens: 0, evidenceTokenBudget: 1000 }, blockers: [], warnings: ['minor'], error: null, updatedAt: 't' };
     const res = await GET({} as never, params('run-1'));
     expect(res.status).toBe(200);
     const json = (await res.json()) as Record<string, unknown>;
     expect(json.status).toBe('succeeded');
     expect(json.blobUrl).toBe('/api/v1/artifacts/art-9');
     expect(json.sectionCount).toBe(12);
+    expect(json.contextCoverage).toMatchObject({
+      coverageState: 'empty_prompt',
+      requiresAttention: true,
+    });
   });
 
   it('returns a Move File Cabinet download url for premium Moves artifact runs', async () => {

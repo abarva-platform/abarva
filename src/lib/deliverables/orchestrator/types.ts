@@ -384,6 +384,8 @@ export interface PassPrompt {
   pass: GenerationPass;
   system: string;
   user: string;
+  /** Stable user-message prefix that can be marked as an Anthropic prompt-cache breakpoint. */
+  cacheableContext?: string;
   maxTokens: number;
   /** board-grade artifacts must NOT be capped low; this guards that. */
   highStakes: boolean;

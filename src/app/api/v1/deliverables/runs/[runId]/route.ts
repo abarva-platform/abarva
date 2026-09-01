@@ -68,6 +68,7 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ runId
       },
       sectionCount: run.sectionCount,
       retrievedEvidence: run.retrievedEvidence,
+      contextCoverage: run.contextCoverage,
       packageReadiness,
       blockers: run.blockers,
       warnings: run.warnings,

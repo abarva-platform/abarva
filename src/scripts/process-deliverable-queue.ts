@@ -395,12 +395,14 @@ async function runClaimed(
             artifactId: result.artifactId ?? null,
             sectionCount: result.sectionCount ?? null,
             retrievedEvidence: result.retrievedEvidence ?? null,
+            contextCoverage: result.contextCoverage ?? null,
             warnings: result.warnings ?? [],
           }
         : {
             status: "blocked",
             blockers: result.blockers ?? [],
             retrievedEvidence: result.retrievedEvidence ?? null,
+            contextCoverage: result.contextCoverage ?? null,
             sectionCount: result.sectionCount ?? null,
             error: result.blockedReason ?? null,
           },

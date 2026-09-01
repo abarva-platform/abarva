@@ -43,6 +43,7 @@ import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessmen
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { PhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
+import { structuredCurrentStateUploadDetail } from "@/lib/programs/current-state-routing";
 import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
@@ -5384,7 +5385,7 @@ function CurrentStateFamilyUploadPanel({
   const documentFamilies = readiness.instruments.filter(
     (instrument) => instrument.documentFamily,
   );
-  const openFamilies = documentFamilies.filter(
+  const openFamilies = readiness.instruments.filter(
     (instrument) => instrument.status !== "committed",
   );
   const reviewRequiredCount = documentFamilies.filter(
@@ -5460,8 +5461,7 @@ function CurrentStateFamilyUploadPanel({
             familyLabel: "No open current-state family",
             fileName: file.name,
             status: "error",
-            detail:
-              "No open document evidence family was available for this file.",
+            detail: "No open current-state family matched this file.",
           });
           continue;
         }
@@ -5471,6 +5471,16 @@ function CurrentStateFamilyUploadPanel({
             .join(", ")}...`,
         );
         for (const family of mappedFamilies) {
+          if (!family.documentFamily) {
+            nextResults.push({
+              familyKey: family.key,
+              familyLabel: family.label,
+              fileName: file.name,
+              status: "error",
+              detail: structuredCurrentStateUploadDetail(family),
+            });
+            continue;
+          }
           nextResults.push(await uploadFileForFamily(file, family));
         }
       }
@@ -5552,7 +5562,7 @@ function CurrentStateFamilyUploadPanel({
           <span>Why it matters</span>
           <span>Status</span>
         </div>
-        {documentFamilies.map((instrument) => (
+        {openFamilies.map((instrument) => (
           <div key={instrument.key}>
             <strong>{instrument.label}</strong>
             <p>{instrument.whyNeeded}</p>

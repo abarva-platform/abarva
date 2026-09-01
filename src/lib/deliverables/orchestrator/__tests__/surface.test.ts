@@ -3,7 +3,11 @@
 // gate honored — all without Azure/Claude/DB (collaborators injected).
 import { buildDeliverableRequest } from "../build-request";
 import { assembleGovernedEvidence } from "../evidence-assembler";
-import { runDeliverableForTenant } from "../generate-service";
+import {
+  buildSectionDrivenEvidenceQueries,
+  runDeliverableForTenant,
+} from "../generate-service";
+import { getArtifactBrief } from "../artifact-brief-registry";
 import { FIRST_CAPITAL_ARCHITECTURE } from "@/lib/visual-system/__fixtures__/first-capital-architecture";
 import type { GovernedEvidenceItem, OrchestrationResult } from "../index";
 import type { TenantContextChunk } from "@/lib/azure-search/tenant-context-retriever";
@@ -48,6 +52,11 @@ describe("assembleGovernedEvidence", () => {
     expect(out.evidence[0].confidence).toBe("high"); // 0.95
     expect(out.evidence[1].confidence).toBe("medium"); // 0.6
     expect(out.sourceRegister).toHaveLength(2);
+    expect(out.coverage.retrieved).toBe(2);
+    expect(out.coverage.packed).toBe(2);
+    expect(out.coverage.coverageRatio).toBeNull();
+    expect(out.coverage.coverageState).toBe("no_approved_evidence");
+    expect(out.coverage.requiresAttention).toBe(false);
     // internal ids stay in provenanceRef (audit-only); never in the body-facing fields
     for (const e of out.evidence) {
       expect(e.label).not.toMatch(/c1|c2/);
@@ -55,6 +64,34 @@ describe("assembleGovernedEvidence", () => {
     }
     // the source register the document exposes carries no provenance handle at all
     expect(JSON.stringify(out.sourceRegister)).not.toMatch(/c1|c2/);
+  });
+
+  it("runs section-driven retrieval queries and dedupes chunks by chunkId", async () => {
+    const queries: string[] = [];
+    const fakeQuery = (async (input: { query: string }) => {
+      queries.push(input.query);
+      return [
+        chunk({
+          chunkId: "same",
+          sourceDoc: `Doc for ${input.query}`,
+          text: `Evidence for ${input.query}`,
+        }),
+      ];
+    }) as never;
+    const out = await assembleGovernedEvidence(
+      {
+        tenantClientKey: "skyharbor-air",
+        queries: ["Architecture current state", "Architecture target state"],
+      },
+      { queryTenantContext: fakeQuery },
+    );
+
+    expect(queries).toEqual([
+      "Architecture current state",
+      "Architecture target state",
+    ]);
+    expect(out.retrievedCount).toBe(1);
+    expect(out.evidence).toHaveLength(1);
   });
 
   it("excludes confidential evidence for a vendor-facing audience (no incumbent-spend leak)", async () => {
@@ -89,7 +126,7 @@ describe("assembleGovernedEvidence", () => {
       vendor.evidence.some((e) => e.evidenceFamily === "contract_baseline"),
     ).toBe(false);
     expect(
-      vendor.evidence.some((e) => e.evidenceFamily === "sla_baseline"),
+      vendor.evidence.some((e) => e.evidenceFamily === "Sla Baseline"),
     ).toBe(true);
   });
 
@@ -242,9 +279,9 @@ describe("assembleGovernedEvidence", () => {
     );
 
     expect(out.retrievedCount).toBe(2);
-    expect(out.evidence[0].evidenceFamily).toBe("phase_capture:scope_boundary");
+    expect(out.evidence[0].evidenceFamily).toBe("Scope Boundary");
     expect(out.evidence[0].statement).toMatch(/Commercial loan onboarding/);
-    expect(out.evidence[1].evidenceFamily).toBe("enterprise_ai_portfolio");
+    expect(out.evidence[1].evidenceFamily).toBe("Enterprise Ai Portfolio");
   });
 
   it("uses current generated Move artifacts as internal evidence for later phases", async () => {
@@ -353,9 +390,7 @@ describe("assembleGovernedEvidence", () => {
     );
 
     expect(out.retrievedCount).toBe(1);
-    expect(out.evidence[0].evidenceFamily).toBe(
-      "generated_artifact:business_case",
-    );
+    expect(out.evidence[0].evidenceFamily).toBe("Business Case");
     expect(out.evidence[0].statement).toMatch(/sensitivity-only/);
     expect(out.evidence[0].disclosureTier).toBe("internal_only");
     expect(out.sourceRegister[0].label).toBe("Business Case");
@@ -441,6 +476,9 @@ describe("assembleGovernedEvidence", () => {
     expect(out.retrievedCount).toBe(0);
     expect(out.sourceRegister).toHaveLength(0);
     expect(out.evidence).toHaveLength(0);
+    expect(out.coverage.coverageRatio).toBeNull();
+    expect(out.coverage.coverageState).toBe("no_approved_evidence");
+    expect(out.coverage.requiresAttention).toBe(false);
   });
 });
 
@@ -529,6 +567,60 @@ describe("buildDeliverableRequest", () => {
   });
 });
 
+describe("buildSectionDrivenEvidenceQueries", () => {
+  it("builds distinct searches from artifact sections, expected exhibits, and tables", () => {
+    const req = buildDeliverableRequest(
+      {
+        module: "moves",
+        useCaseArchetype: "AI_PDLC",
+        deliverableType: "target_state_architecture",
+        decisionContext: "approve target state",
+        clientDisplayName: "Client",
+        initiativeDisplayName: "AI platform",
+      },
+      [],
+      [],
+    );
+    const queries = buildSectionDrivenEvidenceQueries(
+      {
+        deliverableType: req.deliverableType,
+        useCaseArchetype: req.useCaseArchetype,
+      },
+      getArtifactBrief(req),
+    );
+
+    expect(queries.length).toBeGreaterThan(1);
+    expect(new Set(queries).size).toBe(queries.length);
+    expect(queries.join("\n")).toMatch(/architecture|target state/i);
+  });
+
+  it("honors an explicit evidenceQuery override", () => {
+    const req = buildDeliverableRequest(
+      {
+        module: "source",
+        useCaseArchetype: "AMS_IT_OUTSOURCING",
+        deliverableType: "rfp_package",
+        decisionContext: "approve issuance",
+        clientDisplayName: "Client",
+        initiativeDisplayName: "AMS",
+      },
+      [],
+      [],
+    );
+
+    expect(
+      buildSectionDrivenEvidenceQueries(
+        {
+          deliverableType: req.deliverableType,
+          useCaseArchetype: req.useCaseArchetype,
+          evidenceQuery: "bespoke retrieval string",
+        },
+        getArtifactBrief(req),
+      ),
+    ).toEqual(["bespoke retrieval string"]);
+  });
+});
+
 describe("runDeliverableForTenant", () => {
   const baseInput = {
     module: "source" as const,
@@ -563,6 +655,19 @@ describe("runDeliverableForTenant", () => {
       },
     ],
     retrievedCount: 1,
+    coverage: {
+      approvedAvailable: 1,
+      retrieved: 1,
+      packed: 1,
+      droppedForBudget: 0,
+      unreadable: 0,
+      cited: 0,
+      coverageRatio: 1,
+      coverageState: "packed",
+      requiresAttention: false,
+      usedTokens: 12,
+      evidenceTokenBudget: 1000,
+    },
   })) as never;
   const loadPolicy = (async () => ({
     tenantId: "skyharbor-air",
@@ -592,6 +697,8 @@ describe("runDeliverableForTenant", () => {
     expect(out.artifactId).toBe("art-9");
     expect(out.sectionCount).toBe(2);
     expect(out.retrievedEvidence).toBe(1);
+    expect(out.contextCoverage?.packed).toBe(1);
+    expect(out.contextCoverage?.cited).toBe(0);
   });
 
   it("returns blocked when persistence quarantines the generated artifact", async () => {

@@ -43,8 +43,7 @@ jest.mock('@/lib/integrations/ai-egress', () => ({
 import { createAuditedModelCaller, generateDeliverable } from '../model-caller';
 import { buildPassPrompt } from '../prompt-builder';
 import { getArtifactBrief } from '../artifact-brief-registry';
-import { GENERATION_PASSES } from '../prompt-builder';
-import { amsRfpRequest, goodPlan, goodDocument } from '../__fixtures__/ams-rfp';
+import { amsRfpRequest, goodPlan } from '../__fixtures__/ams-rfp';
 
 beforeEach(() => {
   auditedCalls.length = 0;
@@ -67,9 +66,15 @@ describe('createAuditedModelCaller', () => {
     // token budget + system instructions are passed to the model call
     expect(createCalls[0].max_tokens).toBe(prompt.maxTokens);
     expect(typeof createCalls[0].system).toBe('string');
-    expect(createCalls[0].messages).toEqual([
-      { role: 'user', content: prompt.user },
-    ]);
+    const message = (createCalls[0].messages as Array<{ content: unknown }>)[0];
+    expect(Array.isArray(message.content)).toBe(true);
+    const blocks = message.content as Array<Record<string, unknown>>;
+    expect(blocks[0]).toMatchObject({
+      type: 'text',
+      text: prompt.cacheableContext,
+      cache_control: { type: 'ephemeral' },
+    });
+    expect(blocks.map((block) => String(block.text ?? '')).join('')).toBe(prompt.user);
   });
 });
 
