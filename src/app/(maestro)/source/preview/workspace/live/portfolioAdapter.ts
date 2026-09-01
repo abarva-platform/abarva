@@ -279,6 +279,7 @@ export async function loadSourceWorkspacePortfolio(
   ]);
 
   const contracts = excludeSupplementalContracts(contractsRaw);
+  const impactResolved = resolveImpactVendorNames(impact, contracts, vendors);
   const categoryQuality = evaluateContractCategoryQuality(contracts);
   const legacyVendorRefs = new Set(
     contracts.map((contract) => contract.vendor_ref),
@@ -325,7 +326,9 @@ export async function loadSourceWorkspacePortfolio(
   return {
     tenantKey,
     asOfDateIso,
-    semanticLayer: sourceV4CubeUiCatalogForAgent(),
+    semanticLayer: sourceV4CubeUiCatalogForAgent({
+      datasetId: v4Snapshot.datasetId,
+    }),
     v4Snapshot,
     categoryQuality,
     workspaceDiagnostics,
@@ -339,7 +342,7 @@ export async function loadSourceWorkspacePortfolio(
       reads,
       asOfDateIso,
     }),
-    impact,
+    impact: impactResolved,
     contracts,
     vendors,
     applicationScope,
@@ -412,7 +415,6 @@ async function loadEclProjectionWorkspacePortfolio(
       : Promise.resolve([]),
     loadSourceWorkspaceImpactLayer(tenantKey),
   ]);
-  const runtimeEvidence = runtimeEvidenceFromImpactLayer(impact);
   const acceptedTenantKeys = new Set(
     [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
   );
@@ -427,6 +429,8 @@ async function loadEclProjectionWorkspacePortfolio(
     .filter(tenantMatches)
     .map(vendorFromEclProjectionRow);
   const vendors = eclVendors;
+  const impactResolved = resolveImpactVendorNames(impact, contracts, vendors);
+  const runtimeEvidence = runtimeEvidenceFromImpactLayer(impactResolved);
   const applicationScope = contractRows
     .filter(tenantMatches)
     .flatMap(scopeFromEclProjectionRow);
@@ -488,7 +492,9 @@ async function loadEclProjectionWorkspacePortfolio(
   return {
     tenantKey,
     asOfDateIso,
-    semanticLayer: sourceV4CubeUiCatalogForAgent(),
+    semanticLayer: sourceV4CubeUiCatalogForAgent({
+      datasetId: v4Snapshot.datasetId,
+    }),
     v4Snapshot,
     categoryQuality,
     workspaceDiagnostics,
@@ -502,7 +508,7 @@ async function loadEclProjectionWorkspacePortfolio(
       reads,
       asOfDateIso,
     }),
-    impact,
+    impact: impactResolved,
     contracts,
     vendors,
     applicationScope,
@@ -618,6 +624,167 @@ function mergeSourceWorkspaceImpactLayer(
       (row) => row.grounding_bundle_id,
     ),
   };
+}
+
+type VendorNamedRow = {
+  readonly contract_id?: string | null;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+};
+
+const UUID_VALUE_PATTERN =
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;
+
+export function resolveImpactVendorNames(
+  impact: SourceWorkspaceImpactLayer,
+  contracts: readonly SourceContract360Row[],
+  vendors: readonly SourceVendorContractPortfolioRow[],
+): SourceWorkspaceImpactLayer {
+  const resolver = buildVendorNameResolver(contracts, vendors);
+  const refNameMap = resolver.refNameMap;
+  const evidenceCoverage = impact.evidenceCoverage.map((row) =>
+    resolveVendorNameField(row, resolver),
+  );
+  const actionCandidates = impact.actionCandidates.map((row) =>
+    resolveVendorNameField(row, resolver),
+  );
+  const claimCards = impact.claimCards.map((row) => {
+    const resolved = resolveVendorNameField(row, resolver);
+    return {
+      ...resolved,
+      allowed_executive_statement: replaceOpaqueVendorText(
+        resolved.allowed_executive_statement,
+        refNameMap,
+      ),
+    };
+  });
+  const vendorPositions = impact.vendorPositions.map((row) =>
+    resolveVendorNameField(row, resolver),
+  );
+  const storyline = impact.storyline.map((row) => ({
+    ...row,
+    allowed_executive_statement: replaceOpaqueVendorText(
+      row.allowed_executive_statement,
+      refNameMap,
+    ),
+    primary_metric_value: replaceOpaqueVendorText(
+      row.primary_metric_value,
+      refNameMap,
+    ),
+  }));
+  const avaGroundingBundles = impact.avaGroundingBundles.map((row) => ({
+    ...row,
+    allowed_claims_json: replaceOpaqueVendorValues(
+      row.allowed_claims_json,
+      refNameMap,
+    ) as readonly Record<string, unknown>[],
+    citation_sources_json: replaceOpaqueVendorValues(
+      row.citation_sources_json,
+      refNameMap,
+    ) as Record<string, unknown> | null,
+  }));
+
+  return {
+    evidenceCoverage,
+    actionCandidates,
+    claimCards,
+    vendorPositions,
+    storyline,
+    avaGroundingBundles,
+  };
+}
+
+function buildVendorNameResolver(
+  contracts: readonly SourceContract360Row[],
+  vendors: readonly SourceVendorContractPortfolioRow[],
+) {
+  const vendorNameByRef = new Map<string, string>();
+  const vendorNameByContract = new Map<string, string>();
+  for (const vendor of vendors) {
+    addVendorName(vendorNameByRef, vendor.vendor_ref, vendor.vendor_name);
+  }
+  for (const contract of contracts) {
+    addVendorName(
+      vendorNameByRef,
+      contract.vendor_ref,
+      contract.vendor_name,
+    );
+    if (isReadableVendorName(contract.vendor_name, contract.vendor_ref)) {
+      vendorNameByContract.set(contract.contract_id, contract.vendor_name);
+    }
+  }
+  return { vendorNameByRef, vendorNameByContract, refNameMap: vendorNameByRef };
+}
+
+function addVendorName(
+  index: Map<string, string>,
+  vendorRef: string | null | undefined,
+  vendorName: string | null | undefined,
+) {
+  if (!vendorRef) return;
+  if (!isReadableVendorName(vendorName, vendorRef)) return;
+  index.set(vendorRef, vendorName.trim());
+}
+
+function resolveVendorNameField<Row extends VendorNamedRow>(
+  row: Row,
+  resolver: ReturnType<typeof buildVendorNameResolver>,
+): Row {
+  if (isReadableVendorName(row.vendor_name, row.vendor_ref)) return row;
+  const resolved =
+    resolver.vendorNameByRef.get(row.vendor_ref) ??
+    (row.contract_id
+      ? resolver.vendorNameByContract.get(row.contract_id)
+      : undefined);
+  if (!resolved) return row;
+  return { ...row, vendor_name: resolved };
+}
+
+function isReadableVendorName(
+  vendorName: string | null | undefined,
+  vendorRef: string | null | undefined,
+): vendorName is string {
+  const normalizedName = vendorName?.trim();
+  if (!normalizedName) return false;
+  if (vendorRef && normalizedName === vendorRef.trim()) return false;
+  return !UUID_VALUE_PATTERN.test(normalizedName);
+}
+
+function replaceOpaqueVendorText(
+  value: string,
+  refNameMap: ReadonlyMap<string, string>,
+): string {
+  let next = value;
+  for (const [vendorRef, vendorName] of refNameMap) {
+    if (!vendorRef || vendorRef === vendorName) continue;
+    next = next.split(vendorRef).join(vendorName);
+  }
+  return next;
+}
+
+function replaceOpaqueVendorValues(
+  value: unknown,
+  refNameMap: ReadonlyMap<string, string>,
+  key = "",
+): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) =>
+      replaceOpaqueVendorValues(item, refNameMap, key),
+    );
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([entryKey, entryValue]) => [
+        entryKey,
+        replaceOpaqueVendorValues(entryValue, refNameMap, entryKey),
+      ]),
+    );
+  }
+  if (typeof value !== "string") return value;
+  if (key.endsWith("_id") || key.endsWith("_ref") || key === "contract_id") {
+    return value;
+  }
+  return replaceOpaqueVendorText(value, refNameMap);
 }
 
 function mergeRowsByKey<Row>(
