@@ -1,16 +1,21 @@
 # Home Surface Guard
 #
-# Purpose: run the Home surface's own tests on every PR and every push to main.
+# Purpose: run every Jest suite on the Home surface on each pull request and each
+# push to `main`, and fail on any movement away from a recorded baseline.
 #
-# Why a dedicated workflow: none of the other gates run them. The Home suites
-# were passing locally and gating nothing, and a red test reached `main` and sat
-# there -- a context item had lost the assessment id naming the record it was
-# built from, so two tenants' packets read identically in the model's context,
-# and every check on that PR still went green.
+# Why a dedicated workflow: none of the other gates ran these. The Home suites
+# passed on the machine of whoever last ran them and gated nothing, and a red
+# test reached `main` while every check on its pull request went green.
+#
+# Why a baseline rather than a plain pass/fail: the surface is already red. 18 of
+# its 68 suites were failing when this landed, most of them on legacy Home paths.
+# A check that is red on the day it arrives teaches everyone to ignore it, so the
+# baseline records what was already broken and the check fails on anything new.
+# It ratchets one way -- see docs/ci/README-test-ratchet.md.
 #
 # There is no path filter on purpose. Most of what has broken this surface was
 # changed somewhere else: the projection builder, the tenant registry, a shared
-# component. A guard that only fires when `src/components/home/**` changes would
+# component. A guard that only fired when `src/components/home/**` changed would
 # not have caught any of them.
 #
 # Runs alongside the other CI checks rather than in front of them.
@@ -48,14 +53,5 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Home surface Jest tests
-        # --json is read by the step below. Jest already fails when a path matches
-        # no test files; the count check is what catches a suite that still runs
-        # but has quietly stopped covering anything.
-        run: |
-          npx jest src/components/home/v4/__tests__ src/lib/home/preview/__tests__ \
-            --silent --json --outputFile=/tmp/home-jest.json
-
-      - name: Assert the guard still covers the surface
-        if: always()
-        run: node scripts/ci/assert-home-test-floor.mjs /tmp/home-jest.json
+      - name: Home surface tests against the baseline
+        run: node scripts/ci/test-ratchet.mjs docs/ci/home-test-baseline.json

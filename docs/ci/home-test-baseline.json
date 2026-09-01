@@ -1,0 +1,89 @@
+{
+  "name": "home",
+  "description": "Every Jest suite on the Home surface, and the ones that were already failing when the ratchet landed. See docs/ci/README-test-ratchet.md.",
+  "paths": [
+    "src/lib/home",
+    "src/components/home",
+    "src/app/api/home",
+    "src/app/(maestro)/home",
+    "src/__tests__/integration/home"
+  ],
+  "floor": 550,
+  "knownFailing": {
+    "src/__tests__/integration/home/home-v2-all-client-binding.test.ts": {
+      "failing": 2,
+      "ran": true
+    },
+    "src/app/api/home/know/ask/__tests__/route-visible-contract.test.ts": {
+      "failing": 0,
+      "ran": false
+    },
+    "src/components/home/__tests__/HomeOverviewV2.tenant-switcher.test.tsx": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/components/home/know/__tests__/HomeKnowAsk.test.tsx": {
+      "failing": 2,
+      "ran": true
+    },
+    "src/components/home/preview/__tests__/evidence-resolver.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/lib/home/__tests__/home-data-quality.test.ts": {
+      "failing": 2,
+      "ran": true
+    },
+    "src/lib/home/__tests__/home-english-summary.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/lib/home/__tests__/home-summary-runtime.test.ts": {
+      "failing": 2,
+      "ran": true
+    },
+    "src/lib/home/__tests__/home-summary-snapshot.test.ts": {
+      "failing": 5,
+      "ran": true
+    },
+    "src/lib/home/__tests__/local-cxo-runtime.test.ts": {
+      "failing": 2,
+      "ran": true
+    },
+    "src/lib/home/__tests__/panel-inventory.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/lib/home/__tests__/v6-context-browser.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts": {
+      "failing": 6,
+      "ran": true
+    },
+    "src/lib/home/know/__tests__/home-demo-safe-response.test.ts": {
+      "failing": 3,
+      "ran": true
+    },
+    "src/lib/home/know/__tests__/home-know-engine.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/lib/home/know/__tests__/home-know-tenant-binding.test.ts": {
+      "failing": 2,
+      "ran": true
+    },
+    "src/lib/home/v6/__tests__/home-v6-context-findings.test.ts": {
+      "failing": 3,
+      "ran": true
+    }
+  },
+  "recordedAt": "2026-09-01",
+  "totalTests": 582,
+  "totalSuites": 68
+}
