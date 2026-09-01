@@ -20,7 +20,9 @@ import {
   PageShape,
   TableSet,
   UnsupportedViews,
+  sectionId,
 } from "./TableSet";
+import type { TableSpec } from "./page-tables";
 import { RenewalTimeline } from "./RenewalTimeline";
 import { cxoText, isGeneratorDeferral, launderChapter } from "./cxo-language";
 import type { ChapterDepth } from "./chapter-page-content";
@@ -112,6 +114,7 @@ export function ChapterPage({
           unsupported={depth.unsupported}
         />
       ) : null}
+      {depth ? <ChapterSpine tables={depth.tables} /> : null}
       {depth ? <TableSet tables={depth.tables} /> : null}
       {contracts && contracts.length > 0 ? (
         <RenewalTimeline contracts={contracts} asOf={asOf} />
@@ -371,6 +374,66 @@ function LeadershipVoiceStrip({ signals }: { signals: Signal[] }) {
     </div>
   );
 }
+
+/**
+ * The chapter's sections, pinned to the top of the scroll.
+ *
+ * The measured defect was not length -- it was that length had no landmarks. This answers "where am
+ * I and how much is left" at any depth, which is the question a ten-screen chapter otherwise leaves
+ * a reader to answer by scrolling.
+ *
+ * Renders nothing on a chapter with fewer than two sections: a spine over one destination is
+ * furniture.
+ */
+function ChapterSpine({ tables }: { tables: TableSpec[] }) {
+  const names: string[] = [];
+  for (const table of tables) {
+    if (table.section && !names.includes(table.section))
+      names.push(table.section);
+  }
+  if (names.length < 2) return null;
+  return (
+    <nav
+      data-home-chapter-spine={names.length}
+      aria-label="Sections in this chapter"
+      style={spineStyle}
+    >
+      {names.map((name, index) => (
+        <a key={name} href={`#${sectionId(name)}`} style={spineLinkStyle}>
+          <span style={{ color: V4.stone }}>
+            {String(index + 1).padStart(2, "0")}
+          </span>{" "}
+          {name}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+const spineStyle = {
+  position: "sticky" as const,
+  top: 0,
+  zIndex: 5,
+  display: "flex",
+  flexWrap: "wrap" as const,
+  gap: "0 22px",
+  alignItems: "baseline",
+  margin: `26px ${PAGE_X}px 0`,
+  padding: "11px 0",
+  borderTop: `1px solid ${V4.rule}`,
+  borderBottom: `1px solid ${V4.rule}`,
+  background: V4.paper,
+};
+
+const spineLinkStyle = {
+  fontFamily: MONO,
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: "0.07em",
+  textTransform: "uppercase" as const,
+  color: V4.inkSoft,
+  textDecoration: "none",
+} as const;
 
 const excerptStyle = {
   margin: 0,

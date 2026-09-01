@@ -42,6 +42,15 @@ export interface TableSpec {
    * sits in the part they have to go looking for.
    */
   wide?: boolean;
+  /**
+   * The named part of the chapter this table belongs to.
+   *
+   * Eight ungrouped tables is ten screens with no landmarks: a reader cannot say where they are or
+   * which table matters. Grouping is declared here, at the table, rather than inferred from the
+   * estate family -- Technology & Data draws from two families and reads as four parts, and the
+   * split that matters to a reader does not follow the split that matters to the loader.
+   */
+  section?: string;
 }
 
 export type FindingKind = "exposure" | "absence" | "established";
@@ -298,6 +307,7 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
   tables.push({
     wide: true,
     caption: "Business function × hosting",
+    section: "The estate",
     columns: ["Business function", ...present.map(label), "Apps"],
     rows: rowsOut,
     total: [
@@ -314,9 +324,9 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
   });
 
   const basis = costBasis(apps);
-  for (const [key, caption] of [
-    ["cloudReadiness", "Cloud readiness"],
-    ["lifecycleState", "Lifecycle state"],
+  for (const [key, caption, section] of [
+    ["cloudReadiness", "Cloud readiness", "The estate"],
+    ["lifecycleState", "Lifecycle state", "Lifecycle & exposure"],
   ] as const) {
     const counts = countBy(
       apps.filter((a) => str(a, key)),
@@ -326,6 +336,7 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
     const declared = counts.reduce((n, c) => n + c.count, 0);
     tables.push({
       caption,
+      section,
       barColumn: "Apps",
       columns: [caption, "Apps", "Annual cost"],
       rows: counts.map((c) => [label(c.value), c.count, usd(c.cost)]),
@@ -355,6 +366,7 @@ export function applicationTables(apps: EstateRow[]): TableSpec[] {
     );
     tables.push({
       caption: "Authentication × data classification",
+      section: "Access & classification",
       columns: ["Method", ...classes.map((c) => c.toUpperCase()), "Apps"],
       rows: methods.map((m) => {
         const rows = withAuth.filter(
@@ -482,6 +494,7 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
   return [
     {
       caption: "Contract risk rating",
+      section: "Commercial exposure",
       barColumn: "Contracts",
       columns: ["Rating", "Contracts", "Annual spend"],
       rows: byRating.map((r) => [
@@ -494,6 +507,7 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
     },
     {
       caption: "Renewal exposure",
+      section: "Commercial exposure",
       columns: ["Commitment", "Contracts", "Share"],
       rows: (() => {
         const auto = contracts.filter((c) =>
@@ -536,6 +550,7 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
       );
       return {
         caption: "When the contracts end",
+        section: "Commercial exposure",
         columns: ["Term ends", "Contracts", "Annual spend", "Auto-renewing"],
         rows: years.map(([year, e]) => [year, e.count, usd(e.spend), e.auto]),
         total: [
@@ -556,6 +571,7 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
       );
       return {
         caption: "Commercial model",
+        section: "Commercial terms",
         columns: ["Model", "Contracts", "Annual spend"],
         rows: models.map((m) => [
           label(m.value),
@@ -581,6 +597,7 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
       const without = contracts.length - withClause.length;
       return {
         caption: "Right to test the price",
+        section: "Commercial terms",
         columns: ["Benchmark clause", "Contracts", "Annual spend"],
         rows: [
           ...countBy(withClause, "benchmarkClause").map((b) => [
@@ -749,6 +766,7 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
   return [
     {
       caption: "Recovery posture",
+      section: "Where it runs",
       barColumn: "Platforms",
       columns: ["Recovery tier", "Platforms", "Share"],
       rows: byDr.map((d) => [
@@ -761,6 +779,7 @@ export function infrastructureTables(platforms: EstateRow[]): TableSpec[] {
     },
     {
       caption: "Hosting and headroom",
+      section: "Where it runs",
       columns: ["Hosting", "Platforms", "Annual cost"],
       rows: byHosting.map((h) => [
         label(h.value),
@@ -804,6 +823,7 @@ function infrastructureCrossings(platforms: EstateRow[]): TableSpec[] {
       // Neither column alone shows the exposure: a tier-1 platform recovering from backup is the
       // finding, and it exists only where the two are put against each other.
       caption: "Criticality × recovery tier",
+      section: "Where it runs",
       columns: ["Criticality", ...tiers.map(label), "Platforms"],
       rows: crits.map((c) => {
         const rows = platforms.filter((p) => str(p, "criticality") === c);
@@ -836,6 +856,7 @@ function infrastructureCrossings(platforms: EstateRow[]): TableSpec[] {
     }
     out.push({
       caption: "When platforms reach end of life",
+      section: "Lifecycle & exposure",
       columns: ["Year", "Platforms", "Annual cost"],
       rows: [...byYear.entries()]
         .sort((a, b) => a[0].localeCompare(b[0]))
@@ -924,6 +945,7 @@ export function dataTables(assets: EstateRow[]): TableSpec[] {
   return [
     {
       caption: "Integration pattern",
+      section: "Data & integration",
       barColumn: "Assets",
       columns: ["Pattern", "Assets", "Share"],
       rows: byPattern.map((p) => [
@@ -939,6 +961,7 @@ export function dataTables(assets: EstateRow[]): TableSpec[] {
     },
     {
       caption: "Governance state",
+      section: "Access & classification",
       columns: ["State", "Assets", "Regulated"],
       rows: byQuality.map((q) => [
         label(q.value),
@@ -964,6 +987,7 @@ function dataCrossings(assets: EstateRow[]): TableSpec[] {
   if (platforms.length > 1) {
     out.push({
       caption: "Where the data actually sits",
+      section: "Data & integration",
       barColumn: "Assets",
       columns: ["Platform", "Assets", "Regulated"],
       rows: platforms
@@ -993,6 +1017,7 @@ function dataCrossings(assets: EstateRow[]): TableSpec[] {
   if (refreshes.length > 1) {
     out.push({
       caption: "How current the data is",
+      section: "Data & integration",
       columns: ["Refresh", "Assets", "Regulated"],
       rows: refreshes.map((r) => [
         label(r.value),
@@ -1116,6 +1141,7 @@ export function metricTables(metrics: EstateRow[]): TableSpec[] {
   const tables: TableSpec[] = [
     {
       caption: "Can this value be claimed",
+      section: "What is measured",
       barColumn: "Metrics",
       columns: ["Readiness", "Metrics", "With a blocked reason"],
       rows: byReadiness.map((r) => [
@@ -1141,6 +1167,7 @@ export function metricTables(metrics: EstateRow[]): TableSpec[] {
     tables.push({
       wide: true,
       caption: "What would unblock each claim",
+      section: "What is measured",
       columns: ["Metric", "Blocked because", "Unblock action", "By"],
       rows: withAction
         .slice(0, 10)
@@ -1216,6 +1243,7 @@ export function riskTables(risks: EstateRow[]): TableSpec[] {
     tables.push({
       wide: true,
       caption: "Severity against control state",
+      section: "The risk register",
       columns: ["Severity", ...states.map(label), "Risks", "Remediation"],
       rows: severities.map((s) => {
         const rows = risks.filter((r) => str(r, "severity") === s);
@@ -1245,6 +1273,7 @@ export function riskTables(risks: EstateRow[]): TableSpec[] {
   if (byDomain.length > 1) {
     tables.push({
       caption: "Risk domain",
+      section: "The risk register",
       columns: ["Domain", "Risks", "Regulatory driver"],
       rows: byDomain.map((d) => [
         label(d.value),
@@ -1328,6 +1357,7 @@ export function programTables(programs: EstateRow[]): TableSpec[] {
     {
       wide: true,
       caption: "Status against money and progress",
+      section: "The portfolio",
       columns: [
         "Status",
         "Programs",
@@ -1364,6 +1394,7 @@ export function programTables(programs: EstateRow[]): TableSpec[] {
     tables.push({
       wide: true,
       caption: "What is holding a programme up",
+      section: "The portfolio",
       columns: ["Program", "Status", "Complete", "Blocked because"],
       rows: blocked
         .slice(0, 8)
@@ -1459,6 +1490,7 @@ export function aiTables(useCases: EstateRow[]): TableSpec[] {
   return [
     {
       caption: "Where each use case has got to",
+      section: "AI use cases",
       columns: ["Status", "Use cases", "Validated value"],
       rows: byStatus.map((s) => [
         label(s.value),
@@ -1480,6 +1512,7 @@ export function aiTables(useCases: EstateRow[]): TableSpec[] {
     },
     {
       caption: "What each is aimed at",
+      section: "AI use cases",
       columns: ["Value archetype", "Use cases", "Validated value"],
       rows: countBy(
         useCases.filter((u) => str(u, "expectedValueArchetype")),
@@ -1561,6 +1594,7 @@ export function organizationTables(units: EstateRow[]): TableSpec[] {
   const tables: TableSpec[] = [
     {
       caption: "Where authority sits",
+      section: "Ownership",
       columns: ["Level", "Units", "Budget authority", "Headcount"],
       rows: byLevel.slice(0, 8).map((l) => {
         const rows = units.filter((u) => str(u, "roleLevel") === l.value);
@@ -1602,6 +1636,7 @@ export function organizationTables(units: EstateRow[]): TableSpec[] {
   ] as const;
   tables.push({
     caption: "How complete the ownership record is",
+    section: "Ownership",
     columns: ["Attribute", "Units", "Share"],
     rows: completeness.map(([labelText, count]) => [
       labelText,
