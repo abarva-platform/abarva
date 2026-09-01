@@ -43,7 +43,6 @@ import { RiskAssessmentPanel } from "@/components/strategic-moves/risk-assessmen
 import { SolutioningPanel } from "@/components/strategic-moves/solutioning";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { PhaseNavigationStatus } from "@/lib/programs/phase-navigation-status";
-import { structuredCurrentStateUploadDetail } from "@/lib/programs/current-state-routing";
 import {
   getPhaseCaptureSections,
   type PhaseCaptureSection,
@@ -5438,6 +5437,72 @@ function CurrentStateFamilyUploadPanel({
     };
   }
 
+  /**
+   * Structured upload for a canonical-backed family.
+   *
+   * These families (DORA, CMDB, workforce) declare a `backing` tower table, so
+   * `isDocumentFamily` is false for them and the document path can never map
+   * them. The parse/commit handlers already exist in current-state-ingest.ts —
+   * this dispatches to them instead of refusing the file.
+   *
+   * Before this, the readiness gap said "Upload CMDB export as CSV" while the
+   * only uploader on the step routed to the document path and rejected it. The
+   * guidance and the mechanism disagreed, and a user following the instruction
+   * exactly could not succeed.
+   *
+   * Provenance is left to the route's default (`representative_synthetic`).
+   * Understating trust is the safe direction: a file is never labelled a real
+   * client export on the strength of where it was dropped.
+   */
+  async function ingestStructuredForFamily(
+    file: File,
+    instrument: CurrentStateInstrument,
+  ): Promise<FamilyUploadResult> {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("family", instrument.key);
+    form.append("archetypeId", readiness.archetypeId);
+    const res = await fetch(`/api/v1/programs/${moveId}/current-state/ingest`, {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+    const payload = (await res.json().catch(() => ({}))) as {
+      parsedRows?: number;
+      committedRows?: number;
+      errors?: string[];
+      error?: string;
+      detail?: string;
+    };
+    const parsed = payload.parsedRows ?? 0;
+    const committed = payload.committedRows ?? 0;
+
+    // Parsed-but-not-committed is its own state, never reported as success.
+    // The two counts are kept separate on purpose — a schema that parses is not
+    // the same fact as rows that landed in the canonical table.
+    if (!res.ok || committed === 0) {
+      const reason =
+        payload.errors?.slice(0, 2).join("; ") ||
+        payload.detail ||
+        payload.error ||
+        `Structured load failed (HTTP ${res.status})`;
+      return {
+        familyKey: instrument.key,
+        familyLabel: instrument.label,
+        fileName: file.name,
+        status: "error",
+        detail: `${reason} (parsed ${parsed} row${parsed === 1 ? "" : "s"}, committed 0)`,
+      };
+    }
+    return {
+      familyKey: instrument.key,
+      familyLabel: instrument.label,
+      fileName: file.name,
+      status: "uploaded",
+      detail: `Committed ${committed} of ${parsed} parsed row${parsed === 1 ? "" : "s"} to readiness`,
+    };
+  }
+
   async function uploadBulk(files: FileList | null | undefined) {
     const selectedFiles = Array.from(files ?? []);
     if (selectedFiles.length === 0 || busy) return;
@@ -5471,17 +5536,15 @@ function CurrentStateFamilyUploadPanel({
             .join(", ")}...`,
         );
         for (const family of mappedFamilies) {
-          if (!family.documentFamily) {
-            nextResults.push({
-              familyKey: family.key,
-              familyLabel: family.label,
-              fileName: file.name,
-              status: "error",
-              detail: structuredCurrentStateUploadDetail(family),
-            });
-            continue;
-          }
-          nextResults.push(await uploadFileForFamily(file, family));
+          // Canonical-backed families go to their tower loader; document
+          // families go through parse → review → commit. Dispatching on
+          // `documentFamily` is what makes the gap card's own instruction
+          // ("Upload CMDB export as CSV") true on this step.
+          nextResults.push(
+            family.documentFamily
+              ? await uploadFileForFamily(file, family)
+              : await ingestStructuredForFamily(file, family),
+          );
         }
       }
       setResults(nextResults);
