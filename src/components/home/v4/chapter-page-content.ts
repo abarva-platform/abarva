@@ -97,11 +97,51 @@ const BUILDERS = {
   organization: { tables: organizationTables, findings: organizationFindings },
 } as const;
 
-export function chapterDepth(
-  chapterId: ChapterId,
+type EstateFamily = NonNullable<(typeof CHAPTER_SOURCES)[ChapterId]>[number];
+
+/**
+ * The projection names an object type; the depth engine names a family. One map, so a family that
+ * arrives in the bundle cannot be silently unreachable to a page that asks for it.
+ */
+const OBJECT_TYPE_FAMILY: Record<string, EstateFamily> = {
+  application_system: "applications",
+  vendor_contract: "vendors",
+  infrastructure_platform: "infrastructure",
+  data_asset_or_integration: "data",
+  metric_outcome: "metrics",
+  risk_control: "risks",
+  program_initiative: "programs",
+  ai_use_case: "ai",
+  organization_ownership: "organization",
+};
+
+/**
+ * Every estate family the bundle carries, keyed for the depth engine.
+ *
+ * Built once from the bundle rather than assembled at each call site: a family added to the
+ * projection reaches every surface at the same moment, instead of reaching whichever call site
+ * someone remembered to update.
+ */
+export function estateFromBundle(bundle: {
+  provenance?: { generated_at?: string } | null;
+  technologyEstate?: {
+    recordTypes: Array<{ objectType: string; rows: unknown[] }>;
+  };
+}): EstateRecordTypes {
+  const estate: EstateRecordTypes = {
+    asOf: bundle.provenance?.generated_at?.slice(0, 10),
+  };
+  for (const recordType of bundle.technologyEstate?.recordTypes ?? []) {
+    const family = OBJECT_TYPE_FAMILY[recordType.objectType];
+    if (family) estate[family] = recordType.rows as EstateRow[];
+  }
+  return estate;
+}
+
+function depthForSources(
+  sources: EstateFamily[],
   estate: EstateRecordTypes,
 ): ChapterDepth {
-  const sources = CHAPTER_SOURCES[chapterId] ?? [];
   const tables: TableSpec[] = [];
   const findings: Finding[] = [];
   const unsupported: UnsupportedView[] = [];
@@ -116,6 +156,7 @@ export function chapterDepth(
     );
     if (source === "applications")
       unsupported.push(...unsupportedApplicationViews(rows));
+    if (source === "ai") unsupported.push(...unsupportedAiViews(rows));
   }
   // A finding repeated across two source families says nothing twice; keep the first.
   const seen = new Set<string>();
@@ -126,4 +167,28 @@ export function chapterDepth(
     ),
     unsupported,
   };
+}
+
+export function chapterDepth(
+  chapterId: ChapterId,
+  estate: EstateRecordTypes,
+): ChapterDepth {
+  return depthForSources(CHAPTER_SOURCES[chapterId] ?? [], estate);
+}
+
+/**
+ * Depth for a story section, which spans more than one chapter.
+ *
+ * A section whose narrative was never planned still has its rows in the bundle. This is what lets
+ * such a section report what the record says instead of reporting that nobody wrote about it.
+ */
+export function sectionDepth(
+  chapterIds: readonly ChapterId[],
+  estate: EstateRecordTypes,
+): ChapterDepth {
+  const sources: EstateFamily[] = [];
+  for (const chapterId of chapterIds)
+    for (const source of CHAPTER_SOURCES[chapterId] ?? [])
+      if (!sources.includes(source)) sources.push(source);
+  return depthForSources(sources, estate);
 }

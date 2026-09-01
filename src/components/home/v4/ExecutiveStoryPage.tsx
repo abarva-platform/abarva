@@ -19,6 +19,13 @@ import { sourceForIds } from "./source-label";
 import { LineageFigure } from "./FactLineage";
 import { applicationCountLineage } from "./fact-lineage";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
+import {
+  estateFromBundle,
+  sectionDepth,
+  type ChapterDepth,
+  type EstateRecordTypes,
+} from "./chapter-page-content";
+import { FindingsBlock, TableSet, UnsupportedViews } from "./TableSet";
 
 type TerminalState = HomeExecutiveStoryTerminalState;
 
@@ -40,6 +47,11 @@ interface StorySection {
   supportingClaims: GroundedClaim[];
   limitations: string[];
   chapters: ChapterView[];
+  /**
+   * What the section's own rows say, computed rather than written. A section the planner never
+   * narrated still has an estate behind it; this is that estate.
+   */
+  depth: ChapterDepth;
 }
 
 interface LeadNumber {
@@ -52,6 +64,8 @@ interface StoryReadiness {
   ready: number;
   refused: number;
   deferred: number;
+  /** Sections with no planned narrative that report their rows instead of an empty state. */
+  computed: number;
   total: number;
   label: string;
 }
@@ -60,13 +74,15 @@ const STORY_SECTIONS: StorySectionSpec[] = [
   {
     id: "enterprise",
     title: "What this enterprise is",
-    readerQuestion: "How does the business create value, and which economics matter first?",
+    readerQuestion:
+      "How does the business create value, and which economics matter first?",
     chapterIds: ["our_business", "executive_brief"],
   },
   {
     id: "bets",
     title: "What it is betting on",
-    readerQuestion: "Which strategic bets are funded, early, blocked, or still aspirational?",
+    readerQuestion:
+      "Which strategic bets are funded, early, blocked, or still aspirational?",
     chapterIds: ["strategy_value_creation"],
     visualDataset: "stalled_programs",
     visualTitle: "Strategic work still early in execution",
@@ -74,7 +90,8 @@ const STORY_SECTIONS: StorySectionSpec[] = [
   {
     id: "runs-on",
     title: "What it runs on",
-    readerQuestion: "Which application, data, and platform blocks carry the operating model?",
+    readerQuestion:
+      "Which application, data, and platform blocks carry the operating model?",
     chapterIds: ["how_we_operate", "technology_data"],
     visualDataset: "application_landscape_by_function",
     visualTitle: "Applications grouped by business function",
@@ -83,7 +100,8 @@ const STORY_SECTIONS: StorySectionSpec[] = [
   {
     id: "costs-returns",
     title: "What it costs and returns",
-    readerQuestion: "What value is claimed, what is proven, and where is measurement weak?",
+    readerQuestion:
+      "What value is claimed, what is proven, and where is measurement weak?",
     chapterIds: ["performance_value"],
     visualDataset: "metric_target_attainment",
     visualTitle: "Outcome measures by target posture",
@@ -91,7 +109,8 @@ const STORY_SECTIONS: StorySectionSpec[] = [
   {
     id: "exposed",
     title: "What is exposed",
-    readerQuestion: "Where do vendor, risk, data, and operational dependencies concentrate?",
+    readerQuestion:
+      "Where do vendor, risk, data, and operational dependencies concentrate?",
     chapterIds: ["technology_data", "what_needs_attention"],
     visualDataset: "risk_system_concentration",
     visualTitle: "Risk concentration by named system",
@@ -100,7 +119,8 @@ const STORY_SECTIONS: StorySectionSpec[] = [
   {
     id: "attention",
     title: "What needs attention",
-    readerQuestion: "Which decisions or investigations should leadership take up next?",
+    readerQuestion:
+      "Which decisions or investigations should leadership take up next?",
     chapterIds: ["what_needs_attention", "leadership_perspective"],
     visualDataset: "leadership_theme_frequency",
     visualTitle: "Leadership themes raised in interviews",
@@ -111,7 +131,8 @@ const STORY_SECTIONS: StorySectionSpec[] = [
 const NUMBER_RE = /(?:\$[\d,.]+(?:[KMB])?|\b\d+(?:,\d{3})*(?:\.\d+)?%)/;
 const OPENING_SCALE_NUMBER_RE =
   /\b\d+(?:,\d{3})*(?:\.\d+)?\b(?=\s+(?:applications|systems|source-target|data movements|flows|workload items|active users|TB|segments|business functions))/i;
-const COMMERCIAL_OPENING_RE = /\b(?:vendor|supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
+const COMMERCIAL_OPENING_RE =
+  /\b(?:vendor|supplier|contract|contracted value|commercial exposure|ready contract value|reviewed contract value)\b/i;
 const INVENTORY_OPENING_RE =
   /\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:applications|systems|source-target|data movements|flows|workload items|reports|ETL jobs|scripts|platforms|vendors|suppliers|contracts)\b/i;
 export const HOME_TIER1_GENERATION_FORBIDDEN_TERMS = [
@@ -136,11 +157,16 @@ export const HOME_TIER1_GENERATION_FORBIDDEN_TERMS = [
   "manifest",
 ] as const;
 
-export function findHomeTier1GenerationLanguage(statements: string[]): Array<{ term: string; statement: string }> {
+export function findHomeTier1GenerationLanguage(
+  statements: string[],
+): Array<{ term: string; statement: string }> {
   const findings: Array<{ term: string; statement: string }> = [];
   for (const statement of statements) {
     for (const term of HOME_TIER1_GENERATION_FORBIDDEN_TERMS) {
-      const pattern = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}s?\\b`, "i");
+      const pattern = new RegExp(
+        `\\b${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}s?\\b`,
+        "i",
+      );
       if (pattern.test(statement)) {
         findings.push({ term, statement });
       }
@@ -149,13 +175,17 @@ export function findHomeTier1GenerationLanguage(statements: string[]): Array<{ t
   return findings;
 }
 
-export function collectTier1ExecutiveStoryRawClaimStatements(chapters: ChapterView[]): string[] {
+export function collectTier1ExecutiveStoryRawClaimStatements(
+  chapters: ChapterView[],
+): string[] {
   const statements = [
-    ...chapters.flatMap((chapter) => [
-      ...chapter.key_insights,
-      ...chapter.tensions,
-      ...chapter.what_to_watch,
-    ]).map((claim) => claim.statement),
+    ...chapters
+      .flatMap((chapter) => [
+        ...chapter.key_insights,
+        ...chapter.tensions,
+        ...chapter.what_to_watch,
+      ])
+      .map((claim) => claim.statement),
   ].filter((statement): statement is string => Boolean(statement));
   return Array.from(new Set(statements));
 }
@@ -177,15 +207,31 @@ export function ExecutiveStoryPage({
   const applicationRows = bundle.technologyEstate?.recordTypes.find(
     (recordType) => recordType.objectType === "application_system",
   )?.rows as Array<Record<string, unknown>> | undefined;
-  const storyPlan = bundle.executiveStoryPlan ?? missingStoryPlan(bundle.chapters);
+  const storyPlan =
+    bundle.executiveStoryPlan ?? missingStoryPlan(bundle.chapters);
   const clientLabel = demoSafeClientText(labelFromTenantKey(tenantKey));
-  const sections = buildStorySections(bundle.chapters, storyPlan);
-  const sectionIds = useMemo(() => new Set(sections.map((section) => section.spec.id)), [sections]);
-  const [activeSectionId, setActiveSectionId] = useState<HomeExecutiveStorySectionId>(sections[0]?.spec.id ?? "enterprise");
-  const activeSection = sections.find((section) => section.spec.id === activeSectionId) ?? sections[0];
-  const activeSectionIndex = Math.max(0, sections.findIndex((section) => section.spec.id === activeSection?.spec.id));
+  const estate = useMemo(() => estateFromBundle(bundle), [bundle]);
+  const sections = useMemo(
+    () => buildStorySections(bundle.chapters, storyPlan, estate),
+    [bundle.chapters, storyPlan, estate],
+  );
+  const sectionIds = useMemo(
+    () => new Set(sections.map((section) => section.spec.id)),
+    [sections],
+  );
+  const [activeSectionId, setActiveSectionId] =
+    useState<HomeExecutiveStorySectionId>(sections[0]?.spec.id ?? "enterprise");
+  const activeSection =
+    sections.find((section) => section.spec.id === activeSectionId) ??
+    sections[0];
+  const activeSectionIndex = Math.max(
+    0,
+    sections.findIndex((section) => section.spec.id === activeSection?.spec.id),
+  );
   const leadNumber = chooseLeadNumber(sections, storyPlan);
-  const openingClaim = storyPlan.openingThesisClaimRef ? claimByRef(bundle.chapters).get(storyPlan.openingThesisClaimRef) ?? null : null;
+  const openingClaim = storyPlan.openingThesisClaimRef
+    ? (claimByRef(bundle.chapters).get(storyPlan.openingThesisClaimRef) ?? null)
+    : null;
   const supportingOpeningClaims = storyPlan.openingSupportingClaimRefs
     .map((ref) => claimByRef(bundle.chapters).get(ref))
     .filter((claim): claim is GroundedClaim => Boolean(claim));
@@ -193,7 +239,9 @@ export function ExecutiveStoryPage({
 
   useEffect(() => {
     const syncFromHash = () => {
-      const requested = decodeURIComponent(window.location.hash.replace(/^#/, "")).trim();
+      const requested = decodeURIComponent(
+        window.location.hash.replace(/^#/, ""),
+      ).trim();
       if (sectionIds.has(requested as HomeExecutiveStorySectionId)) {
         setActiveSectionId(requested as HomeExecutiveStorySectionId);
       }
@@ -264,7 +312,10 @@ export function ExecutiveStoryPage({
         compiledLine={compiledLine}
         onOpenView={onOpenView}
       />
-      <main data-home-tier1-main style={{ minWidth: 0, overflowY: "auto", paddingBottom: 40 }}>
+      <main
+        data-home-tier1-main
+        style={{ minWidth: 0, overflowY: "auto", paddingBottom: 40 }}
+      >
         {activeSection?.spec.id === "enterprise" ? (
           <Hero
             leadNumber={leadNumber}
@@ -300,7 +351,16 @@ function labelFromTenantKey(tenantKey: HomePreviewTenantKey): string {
     .join(" ");
 }
 
-function buildStorySections(chapters: ChapterView[], storyPlan: HomeExecutiveStoryPlanV1): StorySection[] {
+/** True when a section has no narrative but does have rows that answer its question. */
+function readsFromRecord(section: StorySection): boolean {
+  return !section.leadClaim && section.depth.findings.length > 0;
+}
+
+function buildStorySections(
+  chapters: ChapterView[],
+  storyPlan: HomeExecutiveStoryPlanV1,
+  estate: EstateRecordTypes,
+): StorySection[] {
   const byId = new Map(chapters.map((chapter) => [chapter.chapterId, chapter]));
   const claims = claimByRef(chapters);
   const specs = storyPlan.sectionOrder
@@ -310,15 +370,23 @@ function buildStorySections(chapters: ChapterView[], storyPlan: HomeExecutiveSto
     const sectionChapters = spec.chapterIds
       .map((id) => byId.get(id))
       .filter((chapter): chapter is ChapterView => Boolean(chapter));
-    const planned = storyPlan.sections.find((section) => section.sectionId === spec.id);
-    const leadClaim = planned?.leadClaimRef ? claims.get(planned.leadClaimRef) ?? null : null;
+    const planned = storyPlan.sections.find(
+      (section) => section.sectionId === spec.id,
+    );
+    const leadClaim = planned?.leadClaimRef
+      ? (claims.get(planned.leadClaimRef) ?? null)
+      : null;
     const supportingClaims = (planned?.supportingClaimRefs ?? [])
       .map((ref) => claims.get(ref))
       .filter((claim): claim is GroundedClaim => Boolean(claim))
       .filter((claim) => claim.statement !== leadClaim?.statement)
       .slice(0, 3);
     const limitations = Array.from(
-      new Set(sectionChapters.flatMap((chapter) => chapter.limitations).filter(Boolean)),
+      new Set(
+        sectionChapters
+          .flatMap((chapter) => chapter.limitations)
+          .filter(Boolean),
+      ),
     );
     return {
       spec,
@@ -328,6 +396,7 @@ function buildStorySections(chapters: ChapterView[], storyPlan: HomeExecutiveSto
       supportingClaims,
       limitations,
       chapters: sectionChapters,
+      depth: sectionDepth(spec.chapterIds, estate),
     };
   });
 }
@@ -392,12 +461,21 @@ function uniqueClaims(claims: GroundedClaim[]): GroundedClaim[] {
 }
 
 function storyReadiness(sections: StorySection[]): StoryReadiness {
-  const ready = sections.filter((section) => section.state === "published").length;
-  const refused = sections.filter((section) => section.state === "refused").length;
-  const deferred = sections.filter((section) => section.state === "deferred").length;
+  const computedSections = sections.filter(readsFromRecord);
+  const computed = computedSections.length;
+  const ready =
+    sections.filter((section) => section.state === "published").length +
+    computed;
+  const refused = sections.filter(
+    (section) => section.state === "refused" && !readsFromRecord(section),
+  ).length;
+  const deferred = sections.filter(
+    (section) => section.state === "deferred" && !readsFromRecord(section),
+  ).length;
   const total = sections.length;
   const parts = [
     `${ready} of ${total} sections ready`,
+    computed ? `${computed} read from the record` : null,
     refused ? `${refused} held` : null,
     deferred ? `${deferred} deferred` : null,
   ].filter(Boolean);
@@ -405,33 +483,55 @@ function storyReadiness(sections: StorySection[]): StoryReadiness {
     ready,
     refused,
     deferred,
+    computed,
     total,
     label: parts.join(" · "),
   };
 }
 
-function chooseLeadNumber(sections: StorySection[], storyPlan: HomeExecutiveStoryPlanV1): LeadNumber | null {
+function chooseLeadNumber(
+  sections: StorySection[],
+  storyPlan: HomeExecutiveStoryPlanV1,
+): LeadNumber | null {
   const byRef = new Map<string, GroundedClaim>();
-  for (const claim of sections.flatMap((section) => [section.leadClaim, ...section.supportingClaims]).filter(
-    (claim): claim is GroundedClaim => Boolean(claim),
-  )) {
+  for (const claim of sections
+    .flatMap((section) => [section.leadClaim, ...section.supportingClaims])
+    .filter((claim): claim is GroundedClaim => Boolean(claim))) {
     byRef.set(claim.claim_ref ?? claim.statement, claim);
   }
-  const plannedScale = storyPlan.scaleFactRef ? byRef.get(storyPlan.scaleFactRef) ?? null : null;
+  const plannedScale = storyPlan.scaleFactRef
+    ? (byRef.get(storyPlan.scaleFactRef) ?? null)
+    : null;
   if (plannedScale) {
     const match = openingNumberForStatement(plannedScale.statement);
-    if (match) return { value: match, label: labelForNumber(plannedScale.statement, match), claim: plannedScale };
+    if (match)
+      return {
+        value: match,
+        label: labelForNumber(plannedScale.statement, match),
+        claim: plannedScale,
+      };
   }
-  const claims = sections.flatMap((section) => [section.leadClaim, ...section.supportingClaims]).filter(
-    (claim): claim is GroundedClaim => Boolean(claim),
-  );
+  const claims = sections
+    .flatMap((section) => [section.leadClaim, ...section.supportingClaims])
+    .filter((claim): claim is GroundedClaim => Boolean(claim));
   const numbered = claims
-    .map((claim) => ({ claim, match: openingNumberForStatement(claim.statement) }))
-    .filter((item): item is { claim: GroundedClaim; match: string } => Boolean(item.match));
+    .map((claim) => ({
+      claim,
+      match: openingNumberForStatement(claim.statement),
+    }))
+    .filter((item): item is { claim: GroundedClaim; match: string } =>
+      Boolean(item.match),
+    );
   if (numbered.length === 0) return null;
   const chosen =
-    numbered.find((item) => !isStandaloneInventoryClaim(item.claim.statement) && !COMMERCIAL_OPENING_RE.test(item.claim.statement)) ??
-    numbered.find((item) => !COMMERCIAL_OPENING_RE.test(item.claim.statement)) ??
+    numbered.find(
+      (item) =>
+        !isStandaloneInventoryClaim(item.claim.statement) &&
+        !COMMERCIAL_OPENING_RE.test(item.claim.statement),
+    ) ??
+    numbered.find(
+      (item) => !COMMERCIAL_OPENING_RE.test(item.claim.statement),
+    ) ??
     numbered[0];
   return {
     value: chosen.match,
@@ -441,25 +541,49 @@ function chooseLeadNumber(sections: StorySection[], storyPlan: HomeExecutiveStor
 }
 
 function isStandaloneInventoryClaim(statement: string): boolean {
-  return INVENTORY_OPENING_RE.test(statement) && !/\b(?:because|therefore|so that|risk|value|margin|revenue|decision|priority|accountability|outcome)\b/i.test(statement);
+  return (
+    INVENTORY_OPENING_RE.test(statement) &&
+    !/\b(?:because|therefore|so that|risk|value|margin|revenue|decision|priority|accountability|outcome)\b/i.test(
+      statement,
+    )
+  );
 }
 
 function openingNumberForStatement(statement: string): string | null {
-  return statement.match(OPENING_SCALE_NUMBER_RE)?.[0] ?? statement.match(NUMBER_RE)?.[0] ?? null;
+  return (
+    statement.match(OPENING_SCALE_NUMBER_RE)?.[0] ??
+    statement.match(NUMBER_RE)?.[0] ??
+    null
+  );
 }
 
 function labelForNumber(statement: string, value: string): string {
-  const withoutValue = cxoText(statement).replace(value, "").replace(/\s+/g, " ").trim();
-  if (/\bfinance-validated\b/i.test(statement)) return "finance-validated value in the current evidence";
-  if (/\bpromised\b/i.test(statement)) return "promised value in the current evidence";
-  if (/\bcomplete\b/i.test(statement)) return "execution progress cited by the record";
-  if (/\bapplications?\b/i.test(statement)) return "applications in the governed current-state estate";
-  if (/\b(?:data movement|source-target|flows?)\b/i.test(statement)) return "data movements in the governed current-state view";
-  if (/\b(?:workload items|active users|TB|segments|reporting|ETL|script|analytics)\b/i.test(statement)) {
+  const withoutValue = cxoText(statement)
+    .replace(value, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (/\bfinance-validated\b/i.test(statement))
+    return "finance-validated value in the current evidence";
+  if (/\bpromised\b/i.test(statement))
+    return "promised value in the current evidence";
+  if (/\bcomplete\b/i.test(statement))
+    return "execution progress cited by the record";
+  if (/\bapplications?\b/i.test(statement))
+    return "applications in the governed current-state estate";
+  if (/\b(?:data movement|source-target|flows?)\b/i.test(statement))
+    return "data movements in the governed current-state view";
+  if (
+    /\b(?:workload items|active users|TB|segments|reporting|ETL|script|analytics)\b/i.test(
+      statement,
+    )
+  ) {
     return "data, reporting, ETL, script, and analytics workload evidence";
   }
-  if (/\bvendor|supplier|contract\b/i.test(statement)) return "commercial exposure cited by the record";
-  return withoutValue.length > 90 ? `${withoutValue.slice(0, 90).trim()}...` : withoutValue;
+  if (/\bvendor|supplier|contract\b/i.test(statement))
+    return "commercial exposure cited by the record";
+  return withoutValue.length > 90
+    ? `${withoutValue.slice(0, 90).trim()}...`
+    : withoutValue;
 }
 
 export function cxoText(text: string): string {
@@ -485,7 +609,10 @@ export function cxoText(text: string): string {
     .replace(/\bchapter writer\b/gi, "chapter narrative process")
     .replace(/\bHome writer\b/gi, "Home narrative process")
     .replace(/\bprovider flag\b/gi, "configuration")
-    .replace(/\bnot enough verified evidence yet\b/gi, "not yet supported by verified evidence")
+    .replace(
+      /\bnot enough verified evidence yet\b/gi,
+      "not yet supported by verified evidence",
+    )
     .replace(/\bcoverage gap in the build\b/gi, "coverage gap in the evidence");
 }
 
@@ -511,8 +638,12 @@ function Hero({
   readiness: StoryReadiness;
   state: TerminalState;
 }) {
-  const source = openingClaim ? sourceForIds(openingClaim.evidence_ids, signalPacket) : null;
-  const scaleSource = leadNumber ? sourceForIds(leadNumber.claim.evidence_ids, signalPacket) : null;
+  const source = openingClaim
+    ? sourceForIds(openingClaim.evidence_ids, signalPacket)
+    : null;
+  const scaleSource = leadNumber
+    ? sourceForIds(leadNumber.claim.evidence_ids, signalPacket)
+    : null;
   return (
     <header
       data-home-tier1-section="enterprise"
@@ -520,9 +651,23 @@ function Hero({
       style={{ padding: `30px ${PAGE_X}px 26px` }}
     >
       <div style={heroIntroRowStyle}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: 14,
+            flexWrap: "wrap",
+          }}
+        >
           <span style={eyebrow(V4.blue)}>Executive story</span>
-          <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 16, color: V4.slate }}>
+          <span
+            style={{
+              fontFamily: SERIF,
+              fontStyle: "italic",
+              fontSize: 16,
+              color: V4.slate,
+            }}
+          >
             A first-meeting readout for {tenantLabel}
           </span>
         </div>
@@ -533,12 +678,19 @@ function Hero({
         <div style={heroCopyStyle}>
           <span style={eyebrow(V4.green)}>Boardroom thesis</span>
           <p style={heroThesisStyle}>
-            {openingClaim ? cxoText(openingClaim.statement) : "The executive storyline is not yet published for this tenant."}
+            {openingClaim
+              ? cxoText(openingClaim.statement)
+              : "The executive storyline is not yet published for this tenant."}
           </p>
           {supportingOpeningClaims.length > 0 ? (
             <div style={heroReasonGridStyle}>
               {supportingOpeningClaims.slice(0, 3).map((claim) => (
-                <p key={claim.claim_ref ?? claim.statement} style={heroReasonStyle}>{cxoText(claim.statement)}</p>
+                <p
+                  key={claim.claim_ref ?? claim.statement}
+                  style={heroReasonStyle}
+                >
+                  {cxoText(claim.statement)}
+                </p>
               ))}
             </div>
           ) : null}
@@ -551,28 +703,57 @@ function Hero({
             <LineageFigure
               lineage={applicationCountLineage(
                 applicationRows,
-                Number(String(leadNumber.value).replace(/[^0-9]/g, "")) || undefined,
+                Number(String(leadNumber.value).replace(/[^0-9]/g, "")) ||
+                  undefined,
               )}
               size={34}
             />
           ) : leadNumber ? (
             <div style={heroMetricTextStyle}>
-              <strong style={heroMetricTextStyleStrong}>{leadNumber.value}</strong>
+              <strong style={heroMetricTextStyleStrong}>
+                {leadNumber.value}
+              </strong>
               <span>{leadNumber.label}</span>
             </div>
           ) : null}
           <div style={heroEvidenceRuleStyle}>
             <span style={eyebrow(V4.slate)}>Evidence basis</span>
-            <p style={{ margin: "9px 0 0", fontFamily: MONO, fontSize: 11.5, color: V4.slate, lineHeight: 1.65 }}>
-              {source ? `${source.label} · ${source.ids}` : "No cited evidence references"}
+            <p
+              style={{
+                margin: "9px 0 0",
+                fontFamily: MONO,
+                fontSize: 11.5,
+                color: V4.slate,
+                lineHeight: 1.65,
+              }}
+            >
+              {source
+                ? `${source.label} · ${source.ids}`
+                : "No cited evidence references"}
             </p>
           </div>
           {scaleSource ? (
-            <p style={{ margin: "12px 0 0", fontFamily: MONO, fontSize: 11, color: V4.slate, lineHeight: 1.6 }}>
+            <p
+              style={{
+                margin: "12px 0 0",
+                fontFamily: MONO,
+                fontSize: 11,
+                color: V4.slate,
+                lineHeight: 1.6,
+              }}
+            >
               Scale fact: {scaleSource.label} · {scaleSource.ids}
             </p>
           ) : null}
-          <p style={{ margin: "12px 0 0", fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, lineHeight: 1.55 }}>
+          <p
+            style={{
+              margin: "12px 0 0",
+              fontFamily: SANS,
+              fontSize: 12.5,
+              color: V4.inkSoft,
+              lineHeight: 1.55,
+            }}
+          >
             {storyPlan.overallEvidenceBoundary}
           </p>
         </aside>
@@ -594,8 +775,13 @@ function StorySectionBlock({
   visualDatasets: Record<string, Array<Record<string, unknown>>>;
   onOpenView: (id: string) => void;
 }) {
-  const source = section.leadClaim ? sourceForIds(section.leadClaim.evidence_ids, signalPacket) : null;
-  const visualRows = section.spec.visualDataset ? visualDatasets[section.spec.visualDataset] ?? [] : [];
+  const source = section.leadClaim
+    ? sourceForIds(section.leadClaim.evidence_ids, signalPacket)
+    : null;
+  const visualRows = section.spec.visualDataset
+    ? (visualDatasets[section.spec.visualDataset] ?? [])
+    : [];
+  const fromRecord = readsFromRecord(section);
 
   return (
     <section
@@ -606,8 +792,21 @@ function StorySectionBlock({
     >
       <div data-home-tier1-section-header style={sectionHeaderStyle}>
         <div>
-          <span style={eyebrow(section.state === "published" ? V4.green : section.state === "refused" ? V4.amber : V4.slate)}>
-            {String(index).padStart(2, "0")} · {terminalStateLabel(section.state)}
+          <span
+            style={eyebrow(
+              section.state === "published"
+                ? V4.green
+                : fromRecord
+                  ? V4.blue
+                  : section.state === "refused"
+                    ? V4.amber
+                    : V4.slate,
+            )}
+          >
+            {String(index).padStart(2, "0")} ·{" "}
+            {fromRecord
+              ? "read from the record"
+              : terminalStateLabel(section.state)}
           </span>
           <h2 style={sectionTitleStyle}>{section.spec.title}</h2>
           <p style={sectionQuestionStyle}>{section.spec.readerQuestion}</p>
@@ -633,7 +832,9 @@ function StorySectionBlock({
             {source ? (
               <p style={sourceLineStyle}>
                 {source.label} · {source.ids}
-                {source.hasUnresolved ? " · evidence reference needs resolution" : ""}
+                {source.hasUnresolved
+                  ? " · evidence reference needs resolution"
+                  : ""}
               </p>
             ) : null}
           </div>
@@ -644,14 +845,37 @@ function StorySectionBlock({
             />
           ) : null}
         </div>
+      ) : fromRecord ? (
+        <div
+          data-home-tier1-section-body
+          data-home-story-from-record={section.spec.id}
+        >
+          <p style={fromRecordNoteStyle}>
+            No narrative was planned for this question, so it is answered from
+            the rows themselves. Every figure below is a filter over the
+            governed record, not a written claim.
+          </p>
+          <FindingsBlock
+            findings={section.depth.findings}
+            onOpenRows={undefined}
+          />
+          <TableSet tables={section.depth.tables} />
+          <UnsupportedViews views={section.depth.unsupported} />
+        </div>
       ) : (
-        <TerminalEmptyState state={section.state} limitations={section.limitations} />
+        <TerminalEmptyState
+          state={section.state}
+          limitations={section.limitations}
+        />
       )}
 
       {section.supportingClaims.length > 0 ? (
         <div style={supportingGridStyle}>
           {section.supportingClaims.map((claim) => {
-            const claimSourceSummary = sourceForIds(claim.evidence_ids, signalPacket);
+            const claimSourceSummary = sourceForIds(
+              claim.evidence_ids,
+              signalPacket,
+            );
             return (
               <article key={claim.statement} style={supportingCardStyle}>
                 <p style={supportingTextStyle}>{cxoText(claim.statement)}</p>
@@ -678,6 +902,15 @@ function StorySectionBlock({
   );
 }
 
+const fromRecordNoteStyle: CSSProperties = {
+  margin: "0 0 20px",
+  fontFamily: SANS,
+  fontSize: 15,
+  lineHeight: 1.5,
+  color: V4.slate,
+  maxWidth: "68ch",
+};
+
 function TerminalEmptyState({
   state,
   limitations,
@@ -690,12 +923,27 @@ function TerminalEmptyState({
       <span style={eyebrow(state === "refused" ? V4.amber : V4.slate)}>
         {state === "refused" ? "Refused" : "Deferred"}
       </span>
-      <p style={{ margin: "10px 0 0", fontFamily: SERIF, fontSize: 24, lineHeight: 1.28 }}>
+      <p
+        style={{
+          margin: "10px 0 0",
+          fontFamily: SERIF,
+          fontSize: 24,
+          lineHeight: 1.28,
+        }}
+      >
         This section is intentionally held from the executive story.
       </p>
-      <p style={{ margin: "12px 0 0", fontFamily: SANS, fontSize: 15, color: V4.slate, maxWidth: "62ch" }}>
-        The current evidence does not support a publishable claim for this question. It is held here rather
-        than filled with a weak inference.
+      <p
+        style={{
+          margin: "12px 0 0",
+          fontFamily: SANS,
+          fontSize: 15,
+          color: V4.slate,
+          maxWidth: "62ch",
+        }}
+      >
+        The current evidence does not support a publishable claim for this
+        question. It is held here rather than filled with a weak inference.
       </p>
       {limitations.length > 0 ? (
         <ul style={{ ...limitsListStyle, marginTop: 16 }}>
@@ -716,10 +964,23 @@ function MiniEvidenceVisual({
   rows: Array<Record<string, unknown>>;
 }) {
   const normalized = rows.slice(0, 5).map((row) => {
-    const labelKey = ["function", "vendor", "program", "category", "system", "theme"].find((key) => row[key] !== undefined);
-    const valueKey = ["sharePct", "applicationCount", "expectedValue", "pctComplete", "count", "riskCount", "leaderCount"].find(
-      (key) => row[key] !== undefined,
-    );
+    const labelKey = [
+      "function",
+      "vendor",
+      "program",
+      "category",
+      "system",
+      "theme",
+    ].find((key) => row[key] !== undefined);
+    const valueKey = [
+      "sharePct",
+      "applicationCount",
+      "expectedValue",
+      "pctComplete",
+      "count",
+      "riskCount",
+      "leaderCount",
+    ].find((key) => row[key] !== undefined);
     const value = Number(valueKey ? row[valueKey] : 0) || 0;
     return {
       label: String(labelKey ? row[labelKey] : "Evidence"),
@@ -730,14 +991,29 @@ function MiniEvidenceVisual({
   const max = Math.max(1, ...normalized.map((row) => row.value));
   return (
     <figure style={visualStyle}>
-      <figcaption style={{ ...eyebrow(V4.slate), marginBottom: 14 }}>{title}</figcaption>
+      <figcaption style={{ ...eyebrow(V4.slate), marginBottom: 14 }}>
+        {title}
+      </figcaption>
       <div style={{ display: "grid", gap: 10 }}>
         {normalized.map((row) => (
-          <div key={row.label} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 12, alignItems: "center" }}>
+          <div
+            key={row.label}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0,1fr) auto",
+              gap: 12,
+              alignItems: "center",
+            }}
+          >
             <div style={{ minWidth: 0 }}>
               <div style={visualLabelStyle}>{row.label}</div>
               <div style={visualTrackStyle}>
-                <span style={{ ...visualBarStyle, width: `${Math.max(4, (row.value / max) * 100)}%` }} />
+                <span
+                  style={{
+                    ...visualBarStyle,
+                    width: `${Math.max(4, (row.value / max) * 100)}%`,
+                  }}
+                />
               </div>
             </div>
             <span style={visualValueStyle}>{row.display}</span>
@@ -748,9 +1024,14 @@ function MiniEvidenceVisual({
   );
 }
 
-function formatVisualValue(valueKey: string | undefined, value: number): string {
-  if (valueKey === "sharePct" || valueKey === "pctComplete") return `${value.toFixed(value % 1 ? 1 : 0)}%`;
-  if (valueKey === "expectedValue") return `$${(value / 1_000_000).toFixed(1)}M`;
+function formatVisualValue(
+  valueKey: string | undefined,
+  value: number,
+): string {
+  if (valueKey === "sharePct" || valueKey === "pctComplete")
+    return `${value.toFixed(value % 1 ? 1 : 0)}%`;
+  if (valueKey === "expectedValue")
+    return `$${(value / 1_000_000).toFixed(1)}M`;
   return value.toLocaleString();
 }
 
@@ -775,34 +1056,85 @@ function StoryRail({
     <aside data-home-tier1-rail style={storyRailStyle}>
       <div>
         <div style={eyebrow(V4.slate)}>Composite reference tenant</div>
-        <div style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", alignItems: "baseline", gap: 8, marginTop: 7 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto minmax(0,1fr)",
+            alignItems: "baseline",
+            gap: 8,
+            marginTop: 7,
+          }}
+        >
           <span style={demoBadgeStyle}>Demo</span>
-          <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 500, lineHeight: 1.14 }}>{clientLabel}</span>
+          <span
+            style={{
+              fontFamily: SERIF,
+              fontSize: 21,
+              fontWeight: 500,
+              lineHeight: 1.14,
+            }}
+          >
+            {clientLabel}
+          </span>
         </div>
-        <p style={{ margin: "11px 0 0", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.5, color: V4.slate }}>
+        <p
+          style={{
+            margin: "11px 0 0",
+            fontFamily: SANS,
+            fontSize: 12.5,
+            lineHeight: 1.5,
+            color: V4.slate,
+          }}
+        >
           Synthetic portfolio. Not a customer, not a case study.
         </p>
       </div>
 
       <div>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 8,
+            marginBottom: 8,
+          }}
+        >
           <span style={eyebrow(V4.slate)}>Executive story</span>
           <span style={railProgressStyle}>
             {readiness.ready} of {readiness.total}
           </span>
         </div>
-        <nav aria-label="Executive story sections" style={{ display: "grid", gap: 2 }}>
+        <nav
+          aria-label="Executive story sections"
+          style={{ display: "grid", gap: 2 }}
+        >
           {sections.map((section) => (
             <button
               key={section.spec.id}
               type="button"
-              aria-current={section.spec.id === activeSectionId ? "page" : undefined}
+              aria-current={
+                section.spec.id === activeSectionId ? "page" : undefined
+              }
               onClick={() => onSelectSection(section.spec.id)}
-              style={railSectionButtonStyle(section.spec.id === activeSectionId)}
+              style={railSectionButtonStyle(
+                section.spec.id === activeSectionId,
+              )}
             >
               <span>{section.spec.title}</span>
-              <span style={{ color: section.state === "published" ? V4.green : V4.amber }}>
-                {terminalStateLabel(section.state)}
+              <span
+                style={{
+                  color:
+                    section.state === "published"
+                      ? V4.green
+                      : readsFromRecord(section)
+                        ? V4.blue
+                        : V4.amber,
+                }}
+              >
+                {readsFromRecord(section)
+                  ? "from record"
+                  : terminalStateLabel(section.state)}
               </span>
             </button>
           ))}
@@ -810,22 +1142,45 @@ function StoryRail({
       </div>
 
       <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 14 }}>
-        <div style={{ ...eyebrow(V4.slate), marginBottom: 8 }}>Deepen the evidence</div>
+        <div style={{ ...eyebrow(V4.slate), marginBottom: 8 }}>
+          Deepen the evidence
+        </div>
         {[
           ["architecture", "Architecture map"],
           ["data-flow", "Data-flow view"],
           ["browse-the-data", "Evidence browser"],
           ["tech:application_system", "Application register"],
         ].map(([id, label]) => (
-          <button key={id} type="button" onClick={() => onOpenView(id)} style={railButtonStyle}>
+          <button
+            key={id}
+            type="button"
+            onClick={() => onOpenView(id)}
+            style={railButtonStyle}
+          >
             {label}
           </button>
         ))}
       </div>
 
-      <div style={{ marginTop: "auto", borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}>
-        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Evidence base</div>
-        <p style={{ margin: 0, fontFamily: MONO, fontSize: 11, lineHeight: 1.75, color: V4.slate }}>
+      <div
+        style={{
+          marginTop: "auto",
+          borderTop: `1px solid ${V4.rule}`,
+          paddingTop: 13,
+        }}
+      >
+        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>
+          Evidence base
+        </div>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: MONO,
+            fontSize: 11,
+            lineHeight: 1.75,
+            color: V4.slate,
+          }}
+        >
           {compiledLine.map((line, i) => (
             <span key={line}>
               {i > 0 ? <br /> : null}
@@ -844,18 +1199,36 @@ function terminalStateLabel(state: TerminalState): string {
   return "deferred";
 }
 
-function EvidenceEntryPoints({ onOpenView }: { onOpenView: (id: string) => void }) {
+function EvidenceEntryPoints({
+  onOpenView,
+}: {
+  onOpenView: (id: string) => void;
+}) {
   const entries = [
-    ["architecture", "Architecture", "Conceptual blocks first, then logical and physical drilldown."],
-    ["data-flow", "Data flow", "Sources, integration, landing, analysis, and consumption layers."],
-    ["browse-the-data", "Data browser", "Slice and inspect the governed records behind the story."],
+    [
+      "architecture",
+      "Architecture",
+      "Conceptual blocks first, then logical and physical drilldown.",
+    ],
+    [
+      "data-flow",
+      "Data flow",
+      "Sources, integration, landing, analysis, and consumption layers.",
+    ],
+    [
+      "browse-the-data",
+      "Data browser",
+      "Slice and inspect the governed records behind the story.",
+    ],
   ];
   return (
     <section style={{ padding: `12px ${PAGE_X}px 34px` }}>
       <div style={entryPointShellStyle}>
         <div>
           <span style={eyebrow(V4.slate)}>Next level</span>
-          <h2 style={entryPointTitleStyle}>Explore the evidence behind this story.</h2>
+          <h2 style={entryPointTitleStyle}>
+            Explore the evidence behind this story.
+          </h2>
         </div>
         <div style={entryPointGridStyle}>
           {entries.map(([id, title, text]) => (
@@ -867,8 +1240,18 @@ function EvidenceEntryPoints({ onOpenView }: { onOpenView: (id: string) => void 
               onClick={() => onOpenView(id)}
               style={entryPointCardStyle}
             >
-              <span data-home-evidence-entry-title style={entryPointCardTitleStyle}>{title}</span>
-              <span data-home-evidence-entry-body style={entryPointCardTextStyle}>{text}</span>
+              <span
+                data-home-evidence-entry-title
+                style={entryPointCardTitleStyle}
+              >
+                {title}
+              </span>
+              <span
+                data-home-evidence-entry-body
+                style={entryPointCardTextStyle}
+              >
+                {text}
+              </span>
             </button>
           ))}
         </div>
@@ -924,7 +1307,9 @@ const railSectionButtonStyle = (active: boolean): CSSProperties => ({
   borderTop: `1px solid ${active ? "rgba(0,102,204,0.32)" : V4.ruleSoft}`,
   borderRadius: active ? 7 : 0,
   background: active ? V4.surface : "transparent",
-  boxShadow: active ? "inset 3px 0 0 #1d9e75, 0 8px 18px rgba(12,26,58,0.05)" : "none",
+  boxShadow: active
+    ? "inset 3px 0 0 #1d9e75, 0 8px 18px rgba(12,26,58,0.05)"
+    : "none",
   padding: active ? "8px 10px" : "8px 2px",
   color: V4.ink,
   fontFamily: SANS,
@@ -977,7 +1362,8 @@ const heroMetricStyle: CSSProperties = {
   alignItems: "stretch",
   borderTop: `4px solid ${V4.green}`,
   borderBottom: `1px solid ${V4.rule}`,
-  background: "linear-gradient(120deg,rgba(255,255,255,0.98),rgba(246,243,237,0.76))",
+  background:
+    "linear-gradient(120deg,rgba(255,255,255,0.98),rgba(246,243,237,0.76))",
   padding: "28px 32px 30px",
 };
 

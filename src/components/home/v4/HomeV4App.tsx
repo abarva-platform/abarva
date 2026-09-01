@@ -15,7 +15,7 @@ import type {
 } from "@/lib/home/preview/types";
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
-import { chapterDepth } from "./chapter-page-content";
+import { chapterDepth, estateFromBundle } from "./chapter-page-content";
 import { buildBusinessBriefing } from "./business-briefing";
 import { BusinessBriefingSections } from "./BusinessBriefing";
 import { DataFlowPage } from "./DataFlowPage";
@@ -119,6 +119,11 @@ export function HomeV4App({
     () => bundle.technologyEstate?.recordTypes ?? [],
     [bundle.technologyEstate],
   );
+  /**
+   * Every estate family the bundle carries, keyed once. Built here rather than at each call site
+   * so a family the projection starts loading reaches every chapter at the same moment.
+   */
+  const estate = useMemo(() => estateFromBundle(bundle), [bundle]);
   const activeTechRecordType = activeView.startsWith("tech:")
     ? techRecordTypes.find((t) => `tech:${t.objectType}` === activeView)
     : undefined;
@@ -324,32 +329,7 @@ export function HomeV4App({
                   )?.rows
                 }
                 asOf={bundle.provenance?.generated_at?.slice(0, 10)}
-                depth={chapterDepth(activeChapter.chapterId, {
-                  asOf: bundle.provenance?.generated_at?.slice(0, 10),
-                  applications: applications?.rows,
-                  vendors: techRecordTypes.find(
-                    (r) => r.objectType === "vendor_contract",
-                  )?.rows,
-                  infrastructure: infrastructure?.rows,
-                  data: techRecordTypes.find(
-                    (r) => r.objectType === "data_asset_or_integration",
-                  )?.rows,
-                  metrics: techRecordTypes.find(
-                    (r) => r.objectType === "metric_outcome",
-                  )?.rows,
-                  risks: techRecordTypes.find(
-                    (r) => r.objectType === "risk_control",
-                  )?.rows,
-                  programs: techRecordTypes.find(
-                    (r) => r.objectType === "program_initiative",
-                  )?.rows,
-                  ai: techRecordTypes.find(
-                    (r) => r.objectType === "ai_use_case",
-                  )?.rows,
-                  organization: techRecordTypes.find(
-                    (r) => r.objectType === "organization_ownership",
-                  )?.rows,
-                })}
+                depth={chapterDepth(activeChapter.chapterId, estate)}
               />
             ) : (
               <NotDraftedPage
@@ -357,32 +337,7 @@ export function HomeV4App({
                 title={activeChapter.title}
                 guidingQuestion={activeChapter.guidingQuestion}
                 onOpenRows={openRecordRows}
-                depth={chapterDepth(activeChapter.chapterId, {
-                  asOf: bundle.provenance?.generated_at?.slice(0, 10),
-                  applications: applications?.rows,
-                  vendors: techRecordTypes.find(
-                    (r) => r.objectType === "vendor_contract",
-                  )?.rows,
-                  infrastructure: infrastructure?.rows,
-                  data: techRecordTypes.find(
-                    (r) => r.objectType === "data_asset_or_integration",
-                  )?.rows,
-                  metrics: techRecordTypes.find(
-                    (r) => r.objectType === "metric_outcome",
-                  )?.rows,
-                  risks: techRecordTypes.find(
-                    (r) => r.objectType === "risk_control",
-                  )?.rows,
-                  programs: techRecordTypes.find(
-                    (r) => r.objectType === "program_initiative",
-                  )?.rows,
-                  ai: techRecordTypes.find(
-                    (r) => r.objectType === "ai_use_case",
-                  )?.rows,
-                  organization: techRecordTypes.find(
-                    (r) => r.objectType === "organization_ownership",
-                  )?.rows,
-                })}
+                depth={chapterDepth(activeChapter.chapterId, estate)}
               />
             )
           ) : null}
