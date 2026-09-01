@@ -378,7 +378,7 @@ describe("Source workspace ECL browser-surface proof", () => {
         }),
       ).toBeTruthy();
     });
-    expect(screen.getByLabelText("Source workspace header")).toBeTruthy();
+    expect(screen.queryByLabelText("Source workspace header")).toBeNull();
     expect(screen.queryByLabelText("Source workspace sidebar")).toBeNull();
     expect(screen.queryByText("Nexus Source")).toBeNull();
     expect(
@@ -387,11 +387,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByLabelText("Workspace controls")).toBeTruthy();
     expect(screen.getByLabelText("Workspace action toolbar")).toBeTruthy();
     expect(
-      screen.getByLabelText("Persistent Source workspace toolbar"),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
-    ).toContain("Source 360 / Verdict");
+      screen.queryByLabelText("Persistent Source workspace toolbar"),
+    ).toBeNull();
+    expect(screen.getByText("/ Verdict")).toBeTruthy();
     expect(container.querySelector(".sw-v2-action-toolbar-buttons")).toBeTruthy();
     expect(container.querySelectorAll(".sw-v2-action-button")).toHaveLength(2);
     expect(screen.getByLabelText("Scope filter").textContent).toContain(
@@ -464,11 +462,9 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     await waitFor(() => expect(scrollToMock).toHaveBeenCalled());
     expect(
-      screen.getByLabelText("Persistent Source workspace toolbar"),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
-    ).toContain("Source 360 / Contracts");
+      screen.queryByLabelText("Persistent Source workspace toolbar"),
+    ).toBeNull();
+    expect(screen.getByText("/ Contracts")).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Table" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By evidence depth" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By finance status" })).toBeTruthy();
@@ -489,11 +485,9 @@ describe("Source workspace ECL browser-surface proof", () => {
       2,
     );
     expect(
-      screen.getByLabelText("Persistent Source workspace toolbar"),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
-    ).toContain("Source 360 / MER-CTR-SSO-BPO-001");
+      screen.queryByLabelText("Persistent Source workspace toolbar"),
+    ).toBeNull();
+    expect(screen.getByText("/ MER-CTR-SSO-BPO-001")).toBeTruthy();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[1]);
 
@@ -515,11 +509,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
 
     expect(
-      screen.getByLabelText("Persistent Source workspace toolbar"),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
-    ).toContain("Source 360 / Vendors");
+      screen.queryByLabelText("Persistent Source workspace toolbar"),
+    ).toBeNull();
+    expect(screen.getByText("/ Vendors")).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Concentration" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By evidence depth" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By archetype" })).toBeTruthy();
@@ -557,11 +549,14 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     expect(screen.getByText("Selected vendor")).toBeTruthy();
     expect(
-      screen.getByLabelText("Persistent Source workspace toolbar"),
-    ).toBeTruthy();
+      screen.queryByLabelText("Persistent Source workspace toolbar"),
+    ).toBeNull();
     expect(
-      screen.getByLabelText("Persistent Source workspace toolbar").textContent,
-    ).toContain("Epic Systems Corporation");
+      screen.getByRole("heading", {
+        name: "Epic Systems Corporation",
+        level: 1,
+      }),
+    ).toBeTruthy();
     expect(screen.getByText("MER-CTR-EPIC-001")).toBeTruthy();
     expect(screen.getByText("Grouped contracts")).toBeTruthy();
     expect(screen.getAllByText("Performance rows").length).toBeGreaterThan(0);

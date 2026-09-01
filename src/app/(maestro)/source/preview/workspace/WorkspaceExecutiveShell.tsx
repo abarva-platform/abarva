@@ -435,20 +435,6 @@ export function WorkspaceExecutiveShell({
 
   return (
     <main className="sw-v2-shell" aria-label="Source workspace">
-      <header className="sw-v2-frame-bar" aria-label="Source workspace header">
-        <div className="sw-v2-frame-brand">
-          <span>
-            Abar<i>Va</i>
-          </span>
-          <b>Source 360</b>
-        </div>
-        <div className="sw-v2-frame-meta">
-          {(tenantName || "Current workspace").toUpperCase()} ·{" "}
-          {portfolio.contracts.length} contracts · {portfolio.vendors.length}{" "}
-          vendors · data as of {fmtDate(portfolio.asOfDateIso)}
-        </div>
-      </header>
-
       <section ref={mainRef} className="sw-v2-main">
         <header className="sw-v2-topbar">
           <div>
@@ -486,6 +472,10 @@ export function WorkspaceExecutiveShell({
             <div className="sw-v2-control" aria-label="Data as of">
               <span>As of</span>
               <b>{fmtDate(portfolio.asOfDateIso)}</b>
+            </div>
+            <div className="sw-v2-control" aria-label="Evidence depth status">
+              <span>Evidence depth</span>
+              <ImpactLoadBadge state={impactLoadState} />
             </div>
             <div
               className="sw-v2-control sw-v2-control-actions"
@@ -533,42 +523,6 @@ export function WorkspaceExecutiveShell({
             </button>
           ))}
         </nav>
-
-        <div
-          className="sw-v2-sticky-context"
-          aria-label="Persistent Source workspace toolbar"
-        >
-          <div className="sw-v2-sticky-context-copy">
-            <span>Source 360 / {sourceContextLabel}</span>
-            <b>
-              {headerContract
-                ? headerContract.contract_id
-                : selectedVendor
-                  ? safeVendorDisplayName(
-                      selectedVendor.vendor_name,
-                      selectedVendor.vendor_ref,
-                    )
-                  : tenantName || "Current workspace"}
-            </b>
-          </div>
-          <ImpactLoadBadge state={impactLoadState} />
-          <div className="sw-v2-sticky-context-actions">
-            <button
-              type="button"
-              className="sw-v2-compact-action-button"
-              onClick={() => selectPage("Contracts")}
-            >
-              View contracts
-            </button>
-            <button
-              type="button"
-              className="sw-v2-compact-action-button is-primary"
-              onClick={() => selectPage("Optimize")}
-            >
-              Run optimize
-            </button>
-          </div>
-        </div>
 
         <section className="sw-v2-metrics" aria-label="Portfolio facts">
           <Metric

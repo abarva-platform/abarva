@@ -52,61 +52,6 @@
   color: #2c2c2a;
 }
 
-.sw-v2-frame-bar {
-  min-height: 72px;
-  background: #0a0a0b;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 0 40px;
-  flex-shrink: 0;
-}
-
-.sw-v2-frame-brand {
-  display: flex;
-  align-items: baseline;
-  gap: 22px;
-  min-width: 0;
-}
-
-.sw-v2-frame-brand span {
-  color: #fff;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 24px;
-  font-weight: 650;
-  letter-spacing: 0;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.sw-v2-frame-brand span i {
-  color: #1d9e75;
-  font-style: normal;
-}
-
-.sw-v2-frame-brand b {
-  color: rgba(255, 255, 255, 0.82);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.sw-v2-frame-meta {
-  color: rgba(255, 255, 255, 0.62);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  font-weight: 780;
-  letter-spacing: 0.1em;
-  line-height: 1.35;
-  text-align: right;
-  text-transform: uppercase;
-}
-
 .sw-v2-content-canvas {
   min-height: clamp(360px, calc(100vh - 390px), 720px);
   border: 1px solid #b4b2a9;
@@ -203,59 +148,6 @@
   color: #0a0a0b;
 }
 
-.sw-v2-sticky-context {
-  position: sticky;
-  top: 60px;
-  z-index: 19;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 44px;
-  margin: -10px 0 18px;
-  padding: 8px 10px 8px 14px;
-  border: 1px solid #d3d1c7;
-  border-radius: 0 0 7px 7px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 10px 24px rgba(10, 10, 11, 0.08);
-  backdrop-filter: blur(10px);
-}
-
-.sw-v2-sticky-context-copy {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.sw-v2-sticky-context-copy span {
-  display: block;
-  color: #888780;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: 0.1em;
-  line-height: 1.25;
-  text-transform: uppercase;
-}
-
-.sw-v2-sticky-context-copy b {
-  display: block;
-  margin-top: 2px;
-  color: #0a0a0b;
-  font-size: 13px;
-  font-weight: 780;
-  line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sw-v2-sticky-context-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 .sw-v2-impact-load-badge {
   flex: 0 0 auto;
   border: 1px solid rgba(10, 10, 11, 0.14);
@@ -288,34 +180,6 @@
   border-color: rgba(163, 45, 45, 0.34);
   background: #fff1ee;
   color: #a32d2d;
-}
-
-.sw-v2-compact-action-button {
-  min-height: 30px;
-  border: 1px solid rgba(29, 158, 117, 0.35);
-  border-radius: 6px;
-  background: #e1f5ee;
-  color: #0f6e56;
-  padding: 0 14px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: uppercase;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.sw-v2-compact-action-button.is-primary {
-  border-color: rgba(10, 10, 11, 0.2);
-  background: #0a0a0b;
-  color: #fff;
-}
-
-.sw-v2-compact-action-button:hover {
-  box-shadow: inset 0 -3px 0 #ba7517;
-  transform: translateY(-1px);
 }
 
 .sw-v2-main {
@@ -1431,10 +1295,6 @@
 }
 
 @media (max-width: 1180px) {
-  .sw-v2-frame-bar {
-    padding: 0 24px;
-  }
-
   .sw-v2-metrics,
   .sw-v2-loading-grid,
   .sw-v2-vendor-strip,
@@ -1459,23 +1319,6 @@
 }
 
 @media (max-width: 760px) {
-  .sw-v2-frame-bar {
-    align-items: flex-start;
-    flex-direction: column;
-    justify-content: center;
-    gap: 8px;
-    min-height: 92px;
-    padding: 16px 14px;
-  }
-
-  .sw-v2-frame-brand {
-    gap: 14px;
-  }
-
-  .sw-v2-frame-meta {
-    text-align: left;
-  }
-
   .sw-v2-main {
     padding: 16px 14px 44px;
   }
@@ -1488,24 +1331,9 @@
     margin: 14px 0 18px;
   }
 
-  .sw-v2-sticky-context {
-    top: 56px;
-    align-items: flex-start;
-    flex-direction: column;
-    margin-top: -8px;
-  }
-
   .sw-v2-impact-load-badge {
     align-self: stretch;
     text-align: center;
-  }
-
-  .sw-v2-sticky-context-actions {
-    width: 100%;
-  }
-
-  .sw-v2-compact-action-button {
-    flex: 1;
   }
 
   .sw-v2-horizontal-tabs button {
