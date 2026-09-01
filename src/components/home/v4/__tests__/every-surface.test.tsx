@@ -420,3 +420,22 @@ describe("the record's own rating", () => {
     }
   });
 });
+
+describe("the closing blocks on a prose-only chapter", () => {
+  // Executive Brief, Our Business and Leadership Perspective carry no tables. What closes them is
+  // the questions the record raises and the limits of the read -- and a question on a page like
+  // this reads as leading somewhere unless the page says otherwise.
+  it.each(["executive_brief", "our_business", "leadership_perspective"])(
+    "%s says its questions are not answered here",
+    (chapterId) => {
+      window.location.hash = chapterId;
+      const { container } = render(
+        <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+      );
+      const rubric = container.querySelector("[data-home-questions-rubric]");
+      if (!container.textContent?.includes("Take these into the room")) return;
+      expect(rubric).not.toBeNull();
+      expect(rubric!.textContent ?? "").toMatch(/stated, not answered/i);
+    },
+  );
+});

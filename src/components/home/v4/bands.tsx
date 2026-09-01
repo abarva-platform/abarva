@@ -160,6 +160,15 @@ const CLAIM_GRID: CSSProperties = {
   marginTop: 14,
 };
 
+const questionsRubricStyle = {
+  margin: "-18px 0 28px",
+  fontFamily: SANS,
+  fontSize: 13.5,
+  lineHeight: 1.55,
+  color: V4.slate,
+  maxWidth: "62ch",
+} as const;
+
 /** Band 1 -- counted from the client's own systems and interviews. */
 export function RecordBand({
   claims,
@@ -466,6 +475,15 @@ export function QuestionsSection({ questions }: { questions: string[] }) {
       >
         Take these into the room.
       </h2>
+      {/*
+        A reader who meets a question on a page like this reasonably waits for the answer. Saying
+        the page does not hold one stops them looking, and stops the questions reading as a
+        rhetorical device leading somewhere.
+      */}
+      <p data-home-questions-rubric style={questionsRubricStyle}>
+        Stated, not answered. The record does not resolve them, and this chapter
+        does not attempt to.
+      </p>
       <ol
         style={{
           listStyle: "none",
