@@ -549,18 +549,16 @@ assert(
     script.includes("hasRawVisibleId(label)") &&
     script.includes("buildVisibleIdentifierLabels") &&
     script.includes("MACHINE_REFERENCE_KEYS") &&
-    script.includes("normalizeChapterTerminalStates") &&
     script.includes("forbidden_visible_term") &&
     script.includes("Home ECL narrative visible-quality gate failed") &&
     script.includes("not enough verified evidence yet"),
-  "ECL narrative job scrubs raw object IDs, repairs terminal chapter language, and refuses remaining visible implementation vocabulary or bland empty-state prose",
+  "ECL narrative job scrubs raw object IDs and refuses visible implementation vocabulary or bland empty-state prose",
 );
 assert(
-  script.includes("const visibleTerminalText =") &&
-    script.includes("chapter.headline") &&
-    script.includes("chapter.executive_synthesis") &&
-    !script.includes("chapter.executive_synthesis,\n      ...chapter.limitations"),
-  "ECL narrative terminal normalizer only scans visible chapter prose, not non-visible limitations",
+  !script.includes("normalizeChapterTerminalStates") &&
+    !script.includes("headline: `${chapter.title}: evidence needs resolution before executive use`") &&
+    script.includes("published_chapter_contains_refusal_language"),
+  "ECL narrative job does not launder forbidden visible prose into a synthetic terminal-state headline",
 );
 assert(
   thesis.includes("action: \"dropped_structural\"") &&
