@@ -25,10 +25,33 @@ import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /** Stripe colour carries the finding's kind. Both are reserved meanings in the v4 system: amber is
  * absence, red is a rated exposure. Neither may be used for emphasis, or they stop meaning anything. */
-const STRIPE: Record<FindingKind, string> = {
-  exposure: V4.red,
-  absence: V4.amber,
-  established: V4.green,
+/**
+ * How each kind of statement announces itself.
+ *
+ * Six kinds used to render at one weight, distinguished only by a coloured edge stripe -- and an
+ * edge stripe is the one device that reads as generated filler rather than as meaning. Each kind
+ * now takes a form a reader recognises before reading it: a dot and a rated word for something the
+ * record says is wrong, amber and a count for something it cannot tell you, plain weight and a
+ * provenance mark for something it establishes.
+ *
+ * Colour is unchanged and stays reserved: red only for rated severity, amber only for absence.
+ * These are the values Tower's executive action queue and decision row already use.
+ */
+const KIND_FORM: Record<
+  FindingKind,
+  { dot: string | null; label: string | null; labelColor: string }
+> = {
+  exposure: {
+    dot: V4.red,
+    label: "the record says this is wrong now",
+    labelColor: V4.red,
+  },
+  absence: {
+    dot: V4.amber,
+    label: "not carried by the record",
+    labelColor: V4.amber,
+  },
+  established: { dot: null, label: null, labelColor: V4.slate },
 };
 
 const COUNT_WORD = [
@@ -430,7 +453,6 @@ export function FindingsBlock({
             style={{
               background: V4.surface,
               border: `1px solid ${V4.rule}`,
-              boxShadow: `inset 3px 0 0 ${STRIPE[finding.kind]}`,
               padding: "16px 20px",
               display: "grid",
               gridTemplateColumns: "minmax(0, 1fr) auto",
@@ -492,6 +514,35 @@ export function FindingsBlock({
             >
               {finding.owner}
             </span>
+            {KIND_FORM[finding.kind].label ? (
+              <span
+                data-home-finding-mark={finding.kind}
+                style={{
+                  gridColumn: "1 / -1",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.09em",
+                  textTransform: "uppercase",
+                  color: KIND_FORM[finding.kind].labelColor,
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: KIND_FORM[finding.kind].dot ?? "transparent",
+                    flex: "none",
+                  }}
+                />
+                {KIND_FORM[finding.kind].label}
+              </span>
+            ) : null}
             <p
               style={{
                 margin: 0,
@@ -543,13 +594,38 @@ export function UnsupportedViews({ views }: { views: UnsupportedView[] }) {
             style={{
               background: V4.surface,
               border: `1px solid ${V4.rule}`,
-              boxShadow: `inset 3px 0 0 ${V4.amber}`,
               padding: "13px 18px",
               display: "flex",
               flexDirection: "column",
               gap: 4,
             }}
           >
+            <span
+              data-home-absence-mark
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                fontFamily: MONO,
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: "0.09em",
+                textTransform: "uppercase",
+                color: V4.amber,
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: V4.amber,
+                  flex: "none",
+                }}
+              />
+              not carried by the record
+            </span>
             <span
               style={{ fontFamily: SANS, fontSize: 14.5, lineHeight: 1.45 }}
             >

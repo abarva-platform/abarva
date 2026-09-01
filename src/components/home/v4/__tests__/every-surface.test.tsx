@@ -188,3 +188,61 @@ describe("a chapter never shows the generator's status", () => {
     expect(headline.length).toBeGreaterThan(20);
   });
 });
+
+describe("the visual grammar", () => {
+  // Six kinds of statement used to render at one weight, separated only by a coloured edge stripe.
+  // An edge stripe is the one device the house conventions ban outright, and it carries no meaning
+  // a reader can name. Each kind now takes a form.
+  it("marks an exposure as something the record says is wrong now", () => {
+    window.location.hash = "what_needs_attention";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const marks = [
+      ...container.querySelectorAll("[data-home-finding-mark='exposure']"),
+    ];
+    expect(marks.length).toBeGreaterThan(0);
+    expect(marks[0].textContent ?? "").toMatch(
+      /the record says this is wrong now/i,
+    );
+  });
+
+  it("marks an absence as absence, with the view it cannot build", () => {
+    window.location.hash = "technology_data";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const marks = [
+      ...container.querySelectorAll(
+        "[data-home-absence-mark], [data-home-finding-mark='absence']",
+      ),
+    ];
+    expect(marks.length).toBeGreaterThan(0);
+    expect(marks[0].textContent ?? "").toMatch(/not carried by the record/i);
+  });
+
+  it("carries no edge stripe on any finding or absence card", () => {
+    window.location.hash = "technology_data";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const striped = [
+      ...container.querySelectorAll<HTMLElement>("[style]"),
+    ].filter((n) =>
+      /inset\s+\d+px\s+0\s+0/.test(n.getAttribute("style") ?? ""),
+    );
+    expect(striped).toHaveLength(0);
+  });
+
+  it("states what the briefing is built from, ahead of anything it asserts", () => {
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const block = container.querySelector("[data-home-declared-provenance]");
+    if (!block) return; // a record carrying no such declaration renders none
+    expect(block.textContent ?? "").toMatch(/declared provenance/i);
+    // It is a declaration about the record, never one of the client's own findings.
+    expect(block.closest("[data-home-findings]")).toBeNull();
+  });
+});
