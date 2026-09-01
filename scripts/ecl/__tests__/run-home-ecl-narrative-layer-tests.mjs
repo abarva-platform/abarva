@@ -39,6 +39,7 @@ const runtimePagePromptContractMatch = runtimePagePromptContractSource.match(
 const runtimePagePromptContract = runtimePagePromptContractMatch?.groups?.json
   ? JSON.parse(runtimePagePromptContractMatch.groups.json)
   : null;
+const rawObjectIdPatternLine = script.split("\n").find((line) => line.includes('label: "raw_object_id"')) ?? "";
 
 function promptPage(pageKey) {
   return pagePromptContract.pages.find((page) => page.page_key === pageKey);
@@ -559,6 +560,12 @@ assert(
     !script.includes("headline: `${chapter.title}: evidence needs resolution before executive use`") &&
     script.includes("published_chapter_contains_refusal_language"),
   "ECL narrative job does not launder forbidden visible prose into a synthetic terminal-state headline",
+);
+assert(
+  rawObjectIdPatternLine.includes("RISK") &&
+    rawObjectIdPatternLine.includes("[A-Z0-9]") &&
+    !rawObjectIdPatternLine.trim().endsWith("/i },"),
+  "ECL narrative raw object ID detector is case-sensitive so ordinary phrases like risk-and-control are not blocked",
 );
 assert(
   thesis.includes("action: \"dropped_structural\"") &&

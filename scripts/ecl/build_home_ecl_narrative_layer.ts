@@ -140,7 +140,7 @@ const CXO_FORBIDDEN_VISIBLE_PATTERNS: Array<{ label: string; pattern: RegExp }> 
   { label: "bland_empty_headline", pattern: /\bnot enough verified evidence yet\b/i },
   { label: "routed_empty_claim", pattern: /\bNo verified claims were routed\b/i },
   { label: "build_gap", pattern: /\bcoverage gap in the build\b/i },
-  { label: "raw_object_id", pattern: /\b(?:APP|PLAT|CTR|VEN|FLOW|DOC|INV|SLA|PO|RISK|CTRL|PROG|MEAS|MET|OBJ)-[A-Z0-9][A-Z0-9_-]*\b/i },
+  { label: "raw_object_id", pattern: /\b(?:APP|PLAT|CTR|VEN|FLOW|DOC|INV|SLA|PO|RISK|CTRL|PROG|MEAS|MET|OBJ)-[A-Z0-9][A-Z0-9_-]*\b/ },
 ];
 const FAKE_DATA_WORKLOAD_GAP_PATTERN =
   /\b(?:confirm|validate|collect|provide|supply|obtain)\b[\s\S]{0,100}\b(?:reports?|ETL|jobs?|scripts?|users?|data[-\s]?volume|TB)\b/i;
