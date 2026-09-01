@@ -65,6 +65,21 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).not.toContain("new Date().toISOString()");
   });
 
+  it("streams a Source 360 shell before the heavy portfolio read resolves", () => {
+    expect(pageSource).toContain('import { Suspense } from "react";');
+    expect(pageSource).toContain("const portfolioPromise = tenantKey");
+    expect(pageSource).toContain("loadSourceWorkspacePortfolio(");
+    expect(pageSource).toContain(
+      "fallback={<SourceWorkspaceLoadingShell tenantName={tenantName} />}",
+    );
+    expect(pageSource).toContain("<SourceWorkspaceDataBoundary");
+    expect(pageSource).toContain("portfolioPromise={portfolioPromise}");
+    expect(pageSource).toContain("Preparing the governed contract book.");
+    expect(pageSource).not.toContain(
+      "const portfolio = tenantKey\n    ? await loadSourceWorkspacePortfolio(",
+    );
+  });
+
   it("keeps the historical preview route as a query-preserving redirect only", () => {
     expect(previewPageSource).toContain("SourceWorkspacePreviewRedirect");
     expect(previewPageSource).toContain(
