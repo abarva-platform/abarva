@@ -6,6 +6,7 @@ import { SOURCE_V4_CUBE_AS_OF_DATE } from "@/lib/source/data-model/source-v4-cub
 import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 import {
   loadSourceWorkspacePortfolio,
+  type SourceWorkspaceImpactMode,
   type SourceWorkspacePortfolioData,
   type SourceWorkspaceProviderMode,
 } from "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter";
@@ -20,6 +21,7 @@ type PortfolioCacheEntry = {
   readonly value: Promise<{
     readonly portfolio: SourceWorkspacePortfolioData;
     readonly sourceProviderKey: SourceWorkspaceProviderMode;
+    readonly loadMs: number;
   }>;
 };
 
@@ -65,6 +67,7 @@ export async function GET(request: Request) {
   }
 
   const requestedProvider = sourceProviderFromRequest(requestUrl);
+  const impactMode = impactModeFromRequest(requestUrl);
   const asOfDateIso =
     requestUrl.searchParams.get("asOf")?.trim() ||
     SOURCE_WORKSPACE_DEFAULT_AS_OF;
@@ -72,16 +75,20 @@ export async function GET(request: Request) {
     tenantKey,
     asOfDateIso,
     requestedProvider,
+    impactMode,
   });
-  const { portfolio, sourceProviderKey } = await value;
+  const { portfolio, sourceProviderKey, loadMs } = await value;
 
   return NextResponse.json({
     portfolio,
     sourceProviderKey,
+    impactMode,
   }, {
     headers: {
       "Cache-Control": "private, no-store",
       "X-Source-Portfolio-Cache": cacheState,
+      "X-Source-Portfolio-Impact-Mode": impactMode,
+      "X-Source-Portfolio-Load-Ms": String(loadMs),
     },
   });
 }
@@ -90,15 +97,18 @@ function loadCachedPortfolio({
   tenantKey,
   asOfDateIso,
   requestedProvider,
+  impactMode,
 }: {
   readonly tenantKey: string;
   readonly asOfDateIso: string;
   readonly requestedProvider: SourceWorkspaceProviderMode | null;
+  readonly impactMode: SourceWorkspaceImpactMode;
 }) {
   const cacheKey = [
     tenantKey,
     asOfDateIso,
     requestedProvider ?? "default",
+    impactMode,
   ].join("|");
   const now = Date.now();
   const cached = portfolioCache.get(cacheKey);
@@ -106,14 +116,14 @@ function loadCachedPortfolio({
     return { value: cached.value, cacheState: "hit" as const };
   }
 
-  const value = loadSourceWorkspacePortfolio(
-    tenantKey,
-    asOfDateIso,
-    requestedProvider,
-  )
+  const startedAt = Date.now();
+  const value = loadSourceWorkspacePortfolio(tenantKey, asOfDateIso, requestedProvider, {
+    impactMode,
+  })
     .then((portfolio) => ({
       portfolio,
       sourceProviderKey: sourceProviderModeFromPortfolio(portfolio),
+      loadMs: Date.now() - startedAt,
     }))
     .catch((error) => {
       portfolioCache.delete(cacheKey);
@@ -125,6 +135,11 @@ function loadCachedPortfolio({
     value,
   });
   return { value, cacheState: "miss" as const };
+}
+
+function impactModeFromRequest(requestUrl: URL): SourceWorkspaceImpactMode {
+  const normalized = (requestUrl.searchParams.get("impact") ?? "").trim();
+  return normalized === "deferred" ? "deferred" : "full";
 }
 
 function sourceProviderFromRequest(

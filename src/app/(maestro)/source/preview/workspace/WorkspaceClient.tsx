@@ -32,6 +32,7 @@ const SOURCE_WORKSPACE_AGENT = {
   role: "Source Workspace advisor",
 };
 const SOURCE_WORKSPACE_AGENT_API_URL = "/api/intelligence/ask";
+type ImpactLoadState = "loading" | "ready" | "error";
 
 function buildContractApiUrl(
   contractId: string,
@@ -119,6 +120,7 @@ export function WorkspaceClient({
   tenantName,
   sourceClientKey,
   sourceProviderKey,
+  impactLoadState = "ready",
   initialContractId,
   initialContractTab,
 }: {
@@ -126,6 +128,7 @@ export function WorkspaceClient({
   tenantName: string;
   sourceClientKey?: string | null;
   sourceProviderKey?: SourceWorkspaceProviderMode | null;
+  impactLoadState?: ImpactLoadState;
   initialContractId?: string | null;
   initialContractTab?: string | null;
 }) {
@@ -552,6 +555,7 @@ export function WorkspaceClient({
               logic={logic}
               portfolio={portfolio}
               tenantName={tenantName}
+              impactLoadState={impactLoadState}
             />
           }
         />

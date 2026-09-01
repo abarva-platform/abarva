@@ -29,6 +29,39 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).not.toContain('? "#0a0a0b"');
   });
 
+  it("keeps Source navigation persistent and avoids duplicate Evidence or Graph toolbar actions", () => {
+    const source = readFileSync(
+      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
+      "utf8",
+    );
+    const css = readFileSync(`${__dirname}/../workspace.css`, "utf8");
+
+    expect(source).toContain('aria-label="Source workspace navigation"');
+    expect(source).toContain('aria-label="Persistent Source workspace toolbar"');
+    expect(source).toContain("sw-v2-impact-load-badge");
+    expect(css).toContain(".sw-v2-horizontal-tabs");
+    expect(css).toContain("position: sticky");
+    expect(css).toContain(".sw-v2-sticky-context");
+    expect(source).not.toContain("<span>Evidence</span></button>");
+    expect(source).not.toContain("<span>Graph</span></button>");
+  });
+
+  it("keeps the contract graph tab as a real lineage visual with drill-down subtabs", () => {
+    const source = readFileSync(
+      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
+      "utf8",
+    );
+    const css = readFileSync(`${__dirname}/../workspace.css`, "utf8");
+
+    expect(source).toContain('const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"]');
+    expect(source).toContain('aria-label="Source contract graph flow"');
+    expect(source).toContain('className="sw-v2-graph-links"');
+    expect(source).toContain("GraphVolumeTable");
+    expect(source).toContain("GraphSpineTable");
+    expect(css).toContain(".sw-v2-graph");
+    expect(css).toContain(".sw-v2-graph-node");
+  });
+
   it("does not print raw vendor names in executive-facing labels", () => {
     const source = readFileSync(
       `${__dirname}/../WorkspaceExecutiveShell.tsx`,
