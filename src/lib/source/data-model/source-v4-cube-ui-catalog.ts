@@ -592,9 +592,11 @@ export function sourceV4CubeViewsForDomain(
   return sourceV4CubeLensesForDomain(domain).map((lens) => lens.cubeView);
 }
 
-export function sourceV4CubeUiCatalogForAgent() {
+export function sourceV4CubeUiCatalogForAgent(
+  options: { readonly datasetId?: string | null } = {},
+) {
   return {
-    datasetId: SOURCE_V4_CUBE_DATASET_ID,
+    datasetId: options.datasetId?.trim() || "source-v4-cube-ui-catalog",
     asOfDate: SOURCE_V4_CUBE_AS_OF_DATE,
     lenses: SOURCE_V4_CUBE_UI_LENSES.map((lens) => ({
       id: lens.id,

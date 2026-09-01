@@ -15,6 +15,7 @@ import { createEmptySourceV4WorkspaceSnapshot } from "@/lib/source/data-model/so
 import {
   buildSourceVendor360Cockpit,
   loadSourceWorkspacePortfolio,
+  resolveImpactVendorNames,
   sourceWorkspaceProvider,
 } from "../live/portfolioAdapter";
 
@@ -66,6 +67,104 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "legacy";
 
     expect(sourceWorkspaceProvider()).toBe("legacy");
+  });
+
+  it("resolves UUID-like vendor display names before impact rows reach the workspace payload", () => {
+    const vendorRef = "24fc65af-8223-4884-9241-ef5736960a1b";
+    const impact = resolveImpactVendorNames(
+      {
+        evidenceCoverage: [
+          {
+            contract_id: "CTR-0002",
+            vendor_ref: vendorRef,
+            vendor_name: vendorRef,
+            contract_name: "Optum Rx claims administration agreement",
+          },
+        ],
+        actionCandidates: [
+          {
+            action_candidate_id: "CTR-0002:sla-credit-recovery",
+            opportunity_id: "CTR-0002:sla-credit-recovery",
+            contract_id: "CTR-0002",
+            vendor_ref: vendorRef,
+            vendor_name: vendorRef,
+            candidate_amount_usd: 43000.02,
+          },
+        ],
+        claimCards: [
+          {
+            claim_card_id: "CTR-0002:sla-credit-recovery:claim-card",
+            action_candidate_id: "CTR-0002:sla-credit-recovery",
+            opportunity_id: "CTR-0002:sla-credit-recovery",
+            contract_id: "CTR-0002",
+            vendor_ref: vendorRef,
+            vendor_name: vendorRef,
+            allowed_executive_statement: `${vendorRef} has an evidence-backed action opportunity; do not label it realized value.`,
+          },
+        ],
+        vendorPositions: [
+          {
+            vendor_ref: vendorRef,
+            vendor_name: vendorRef,
+            contract_refs: ["CTR-0002"],
+          },
+        ],
+        storyline: [
+          {
+            page_key: "overview",
+            section_key: "performance_credits",
+            sort_order: 1,
+            headline: "Performance-credit recovery",
+            allowed_executive_statement: `${vendorRef} has unclaimed service credits.`,
+            primary_metric_label: "Unclaimed credits",
+            primary_metric_value: "$43K",
+            citation_basis_json: null,
+          },
+        ],
+        avaGroundingBundles: [
+          {
+            grounding_bundle_id: "action:CTR-0002:sla-credit-recovery",
+            page_key: "contract_action",
+            section_key: "CTR-0002:sla-credit-recovery",
+            question_family: "contract_action_grounding",
+            allowed_claims_json: [
+              {
+                vendor_name: vendorRef,
+                claim: `${vendorRef} has an evidence-backed candidate action.`,
+                vendor_ref: vendorRef,
+              },
+            ],
+            refusal_rules_json: [],
+            citation_sources_json: null,
+            load_run_id: null,
+          },
+        ],
+      } as never,
+      [
+        {
+          contract_id: "CTR-0002",
+          vendor_ref: vendorRef,
+          vendor_name: "Optum Rx",
+        },
+      ] as never,
+      [],
+    );
+
+    expect(impact.evidenceCoverage[0].vendor_name).toBe("Optum Rx");
+    expect(impact.actionCandidates[0].vendor_name).toBe("Optum Rx");
+    expect(impact.claimCards[0].vendor_name).toBe("Optum Rx");
+    expect(impact.claimCards[0].allowed_executive_statement).toContain(
+      "Optum Rx has",
+    );
+    expect(impact.vendorPositions[0].vendor_name).toBe("Optum Rx");
+    expect(impact.storyline[0].allowed_executive_statement).toContain(
+      "Optum Rx has",
+    );
+    expect(impact.avaGroundingBundles[0].allowed_claims_json[0]).toMatchObject({
+      vendor_name: "Optum Rx",
+      claim: "Optum Rx has an evidence-backed candidate action.",
+      vendor_ref: vendorRef,
+    });
   });
 
   it("loads Source 360 portfolio data from flagged local ECL projection CSVs", async () => {
