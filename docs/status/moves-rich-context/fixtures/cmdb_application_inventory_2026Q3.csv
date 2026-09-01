@@ -1,0 +1,21 @@
+ci_sys_id,ci_name,ci_type,ci_class,lifecycle_state,owner_team,business_service,criticality,environment,vendor,annual_cost_usd,integration_count,contains_phi
+CI-0000412,Resolute Professional Billing,application,cmdb_ci_appl,production,Revenue Cycle Applications,Professional Claims Billing,tier_1,production,Epic Systems,4200000,17,yes
+CI-0000413,Resolute Hospital Billing,application,cmdb_ci_appl,production,Revenue Cycle Applications,Facility Claims Billing,tier_1,production,Epic Systems,3800000,21,yes
+CI-0000418,Clarity Reporting Warehouse,database,cmdb_ci_db_instance,production,Enterprise Data & Analytics,Reporting Data Warehouse,tier_1,production,Epic Systems,900000,34,yes
+CI-0000419,Caboodle Dimensional Warehouse,database,cmdb_ci_db_instance,production,Enterprise Data & Analytics,Dimensional Data Warehouse,tier_1,production,Epic Systems,1100000,22,yes
+CI-0000521,Claims Scrubbing Service,application,cmdb_ci_appl,production,RCM Integrations,Claims Edits,tier_1,production,Optum,1450000,9,yes
+CI-0000522,Payer Clearinghouse Gateway,application,cmdb_ci_appl,production,RCM Integrations,Payer Clearinghouse,tier_1,production,Availity,680000,12,yes
+CI-0000533,Denial Management Workflow,application,cmdb_ci_appl,production,Denials Management,Denials Workflow,tier_1,production,Waystar,1250000,7,yes
+CI-0000534,Payer Contract Modeling,application,cmdb_ci_appl,production,Managed Care Contracting,Contract Modeling,tier_2,production,nThrive,540000,5,yes
+CI-0000611,Remittance 835 Processor,application,cmdb_ci_appl,production,RCM Integrations,Remittance Processing,tier_1,production,Change Healthcare,720000,8,yes
+CI-0000705,Cloud Data Warehouse,database,cmdb_ci_db_instance,production,Data Platform Engineering,Enterprise Analytics,tier_1,production,Snowflake,2400000,41,yes
+CI-0000706,Lakehouse Platform,application,cmdb_ci_appl,production,Data Platform Engineering,ML and Data Engineering,tier_2,production,Databricks,1900000,19,yes
+CI-0000707,Legacy ETL Server,application,cmdb_ci_appl,retired,Integration Services,Legacy ETL,tier_2,production,Informatica,860000,63,yes
+CI-0000708,HL7 Interface Engine,application,cmdb_ci_appl,production,Interface Engineering,Clinical Interfaces,tier_1,production,NextGen,310000,88,yes
+CI-0000811,Enterprise BI Server,application,cmdb_ci_appl,production,BI Platform Team,Enterprise Reporting,tier_2,production,Salesforce,780000,14,yes
+CI-0000812,Departmental BI Service,application,cmdb_ci_appl,production,BI Platform Team,Departmental Reporting,tier_3,production,Microsoft,240000,6,no
+CI-0000901,Human Capital Management,application,cmdb_ci_appl,production,HRIS Team,Workforce Administration,tier_1,production,Workday,3100000,11,no
+CI-0000902,Financial General Ledger,application,cmdb_ci_appl,production,ERP Team,Finance General Ledger,tier_1,production,Oracle,5600000,16,no
+CI-0001001,IT Service Management,application,cmdb_ci_appl,production,ITSM Team,Incident and Change,tier_2,production,ServiceNow,1150000,23,no
+CI-0001102,Legacy Millennium EHR,application,cmdb_ci_appl,retired,Clinical Applications,Legacy Clinical Records,tier_2,production,Oracle Health,2200000,29,yes
+CI-0001205,Denials Tracking Desktop Database,database,cmdb_ci_db_instance,production,Unassigned,Shadow Denials Tracking,tier_4,production,In-House,0,0,yes

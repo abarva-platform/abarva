@@ -312,6 +312,16 @@ describe("MovesPhaseStandaloneClient", () => {
     createdAt: string;
     downloadUrl: string;
   }>;
+  let structuredFamilyIngests: Array<{
+    family: string;
+    fileName: string;
+  }>;
+  /** Per-test response for the structured loader. */
+  let structuredIngestResponse: {
+    parsedRows: number;
+    committedRows: number;
+    errors?: string[];
+  };
   let currentStateFamilyIngests: Array<{
     family: string;
     fileName: string;
@@ -325,9 +335,29 @@ describe("MovesPhaseStandaloneClient", () => {
     window.open = jest.fn(() => ({}) as Window);
     uploadedEvidenceArtifacts = [];
     currentStateFamilyIngests = [];
+    structuredFamilyIngests = [];
+    structuredIngestResponse = { parsedRows: 10, committedRows: 10 };
     global.fetch = jest.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+
+        if (
+          url.includes("/current-state/ingest") &&
+          !url.includes("/current-state/ingest-doc") &&
+          init?.method === "POST"
+        ) {
+          const form = init.body as FormData;
+          const file = form.get("file") as File;
+          structuredFamilyIngests.push({
+            family: String(form.get("family") ?? ""),
+            fileName: file.name,
+          });
+          return {
+            ok: true,
+            status: 200,
+            json: async () => structuredIngestResponse,
+          } as Response;
+        }
 
         if (
           url.includes("/current-state/ingest-doc") &&
@@ -1759,7 +1789,11 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(uploadedEvidenceArtifacts).toHaveLength(0);
   });
 
-  it("rejects canonical-backed P2 uploads informatively from Upload & Review", async () => {
+  // The gap card says "Upload CMDB export as CSV". Before this dispatch the
+  // only uploader on the step routed canonical-backed families to the document
+  // path, which cannot map them, so a user following that instruction exactly
+  // could not succeed. These pin both halves of the routing decision.
+  it("sends a canonical-backed family to the structured loader, not the document path", async () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -1780,7 +1814,61 @@ describe("MovesPhaseStandaloneClient", () => {
       {
         target: {
           files: [
-            new File(["repo,deploy_frequency"], "dora_delivery_baseline.csv", {
+            new File(["repo,team"], "dora_delivery_baseline.csv", {
+              type: "text/csv",
+            }),
+          ],
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(structuredFamilyIngests).toEqual([
+        { family: "eng_performance_dora", fileName: "dora_delivery_baseline.csv" },
+      ]);
+    });
+    // NEGATIVE: it must not also travel the document path, which would create a
+    // review-required duplicate of a row already committed to the tower table.
+    expect(currentStateFamilyIngests).toEqual([]);
+    // The success row is set after an awaited fetch, so retry until React has
+    // flushed it. Flexible matcher because label and detail are sibling nodes.
+    await waitFor(() => {
+      expect(
+        document.body.textContent?.replace(/\s+/g, " ") ?? "",
+      ).toMatch(/Committed 10 of 10 parsed rows to readiness/i);
+    });
+  });
+
+  it("reports parsed-but-not-committed as a failure, never as an upload", async () => {
+    // Parsing is not committing. A schema that parses while zero rows land in
+    // the canonical table must not read as success.
+    structuredIngestResponse = {
+      parsedRows: 10,
+      committedRows: 0,
+      errors: ["row 4: criticality required"],
+    };
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentStateReadiness={makeCurrentStateReadiness()}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="current"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Understand Current State",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByLabelText("Upload P2 current-state evidence files"),
+      {
+        target: {
+          files: [
+            new File(["repo,team"], "dora_delivery_baseline.csv", {
               type: "text/csv",
             }),
           ],
@@ -1790,15 +1878,9 @@ describe("MovesPhaseStandaloneClient", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/not Upload & Review/i),
-      ).toBeInTheDocument();
+        document.body.textContent?.replace(/\s+/g, " ") ?? "",
+      ).toMatch(/criticality required.*parsed 10 rows, committed 0/i);
     });
-    expect(screen.getByText(/governed data load/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/structured current-state CSV path/i),
-    ).toBeInTheDocument();
-    expect(currentStateFamilyIngests).toEqual([]);
-    expect(uploadedEvidenceArtifacts).toHaveLength(0);
   });
 
   it("routes airline P2 uploads by active readiness family labels", async () => {

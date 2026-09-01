@@ -1,0 +1,25 @@
+employee_id,function,start_date,as_of_date,role_title,job_family,department,reports_to_role,location,employment_type,fte,primary_platform,on_call,vacancy_status
+IT-1001,Technology Leadership,2020-06-15,2026-09-01,Chief Information Officer,Executive,Information Technology,Chief Executive Officer,Metro HQ,full_time,1.0,Enterprise,no,filled
+IT-1014,Data and Analytics,2022-11-07,2026-09-01,VP Enterprise Data and Analytics,Executive,Enterprise Data and Analytics,Chief Information Officer,Metro HQ,full_time,1.0,Data Platform,no,filled
+IT-1015,Revenue Cycle Technology,2022-03-21,2026-09-01,VP Revenue Cycle Technology,Executive,Revenue Cycle Operations,Chief Information Officer,Metro HQ,full_time,1.0,Epic,no,filled
+IT-1102,Data Engineering,2023-10-02,2026-09-01,Director Data Platform Engineering,Management,Enterprise Data and Analytics,VP Enterprise Data and Analytics,Metro HQ,full_time,1.0,Databricks,no,filled
+IT-1103,Integration Engineering,2019-08-12,2026-09-01,Director Integration Services,Management,Integration Services,VP Enterprise Data and Analytics,Metro HQ,full_time,1.0,Interface Engine,yes,filled
+IT-1104,Revenue Cycle Technology,2021-04-19,2026-09-01,Director Revenue Cycle Applications,Management,Revenue Cycle Operations,VP Revenue Cycle Technology,Metro HQ,full_time,1.0,Epic,yes,filled
+IT-1201,Revenue Cycle Technology,2025-01-13,2026-09-01,Manager Denials Technology,Management,Denials Management,Director Revenue Cycle Applications,Regional Office,full_time,1.0,Denials Workflow,yes,filled
+IT-1305,Data Engineering,2023-06-05,2026-09-01,Senior Data Engineer,Individual Contributor,Enterprise Data and Analytics,Director Data Platform Engineering,Metro HQ,full_time,1.0,Databricks,yes,filled
+IT-1306,Data Engineering,2024-08-19,2026-09-01,Senior Data Engineer,Individual Contributor,Enterprise Data and Analytics,Director Data Platform Engineering,Remote,full_time,1.0,Snowflake,yes,filled
+IT-1307,Data Engineering,2025-10-06,2026-09-01,Data Engineer,Individual Contributor,Enterprise Data and Analytics,Director Data Platform Engineering,Metro HQ,full_time,1.0,Databricks,no,filled
+IT-1308,Data Engineering,2026-03-02,2026-09-01,Data Engineer,Individual Contributor,Enterprise Data and Analytics,Director Data Platform Engineering,Remote,contractor,1.0,Snowflake,no,filled
+IT-1309,Analytics Engineering,2025-04-14,2026-09-01,Analytics Engineer,Individual Contributor,Enterprise Data and Analytics,Director Data Platform Engineering,Metro HQ,full_time,1.0,dbt,no,filled
+IT-1310,Data Engineering,2026-09-01,2026-09-01,Senior Data Engineer,Individual Contributor,Enterprise Data and Analytics,Director Data Platform Engineering,Remote,full_time,1.0,Databricks,no,open_requisition
+IT-1311,Machine Learning Engineering,2026-09-01,2026-09-01,Machine Learning Engineer,Individual Contributor,Enterprise Data and Analytics,Director Data Platform Engineering,Remote,full_time,1.0,Databricks,no,open_requisition
+IT-1402,Integration Engineering,2017-05-22,2026-09-01,Senior Integration Engineer,Individual Contributor,Integration Services,Director Integration Services,Metro HQ,full_time,1.0,Interface Engine,yes,filled
+IT-1403,Integration Engineering,2021-11-08,2026-09-01,Integration Engineer,Individual Contributor,Integration Services,Director Integration Services,Metro HQ,full_time,1.0,Interface Engine,yes,filled
+IT-1404,Integration Engineering,2015-01-26,2026-09-01,ETL Developer,Individual Contributor,Integration Services,Director Integration Services,Metro HQ,full_time,1.0,Legacy ETL,yes,filled
+IT-1501,Revenue Cycle Technology,2020-01-06,2026-09-01,Billing Systems Analyst,Individual Contributor,Revenue Cycle Operations,Director Revenue Cycle Applications,Metro HQ,full_time,1.0,Epic,yes,filled
+IT-1502,Revenue Cycle Technology,2021-08-16,2026-09-01,Billing Systems Analyst,Individual Contributor,Revenue Cycle Operations,Director Revenue Cycle Applications,Metro HQ,full_time,1.0,Epic,yes,filled
+IT-1503,Revenue Cycle Technology,2024-06-03,2026-09-01,Denials Data Analyst,Individual Contributor,Denials Management,Manager Denials Technology,Regional Office,full_time,1.0,Denials Workflow,no,filled
+IT-1504,Revenue Cycle Technology,2025-07-28,2026-09-01,Denials Data Analyst,Individual Contributor,Denials Management,Manager Denials Technology,Remote,part_time,0.5,Spreadsheet,no,filled
+IT-1601,Business Intelligence,2023-02-27,2026-09-01,BI Developer,Individual Contributor,Enterprise Data and Analytics,Director Data Platform Engineering,Metro HQ,full_time,1.0,Enterprise BI,no,filled
+IT-1602,Business Intelligence,2024-09-09,2026-09-01,BI Developer,Individual Contributor,Enterprise Data and Analytics,Director Data Platform Engineering,Remote,full_time,1.0,Departmental BI,no,filled
+IT-1701,Data Governance,2026-09-01,2026-09-01,Data Governance Lead,Individual Contributor,Enterprise Data and Analytics,VP Enterprise Data and Analytics,Metro HQ,full_time,1.0,Governance,no,open_requisition
