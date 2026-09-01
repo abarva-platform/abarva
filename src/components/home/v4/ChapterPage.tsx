@@ -94,6 +94,7 @@ export function ChapterPage({
           [data-leadership-metrics] { grid-template-columns: 1fr !important; }
         }
       `}</style>
+      <DeclaredProvenance signalPacket={signalPacket} />
       <ChapterHeader
         eyebrowText={`Chapter ${String(chapterNumber).padStart(2, "0")} · ${chapter.title}`}
         guidingQuestion={chapter.guidingQuestion}
@@ -374,6 +375,56 @@ function LeadershipVoiceStrip({ signals }: { signals: Signal[] }) {
     </div>
   );
 }
+
+/**
+ * What this briefing is built from, said before anything it asserts.
+ *
+ * The synthetic-data disclosure currently travels as a context item -- filed among the client's own
+ * evidence, counted as one of their governed facts, and read at the same weight as a finding about
+ * their enterprise. It is the honest sentence on the page and it is in the wrong place.
+ *
+ * It is a declaration about the record, so it renders as one: at the head, in its own form, and
+ * never counted as a finding.
+ */
+function DeclaredProvenance({
+  signalPacket,
+}: {
+  signalPacket: EnterpriseSignalPacket;
+}) {
+  const items = (signalPacket.contextItems ?? []) as Array<{
+    id?: string;
+    statement?: string;
+  }>;
+  const declared = items.find(
+    (item) =>
+      typeof item.statement === "string" &&
+      /not client-attested|synthetic assessment record/i.test(item.statement),
+  );
+  if (!declared?.statement) return null;
+  return (
+    <aside data-home-declared-provenance style={provenanceStyle}>
+      <span style={{ ...eyebrow(V4.stone), fontSize: 10 }}>
+        Declared provenance
+      </span>
+      <p style={provenanceTextStyle}>{cxoText(declared.statement)}</p>
+    </aside>
+  );
+}
+
+const provenanceStyle = {
+  margin: `18px ${PAGE_X}px 0`,
+  padding: "11px 0 12px",
+  borderBottom: `1px solid ${V4.rule}`,
+} as const;
+
+const provenanceTextStyle = {
+  margin: "5px 0 0",
+  fontFamily: SANS,
+  fontSize: 12.5,
+  lineHeight: 1.5,
+  color: V4.slate,
+  maxWidth: "78ch",
+} as const;
 
 /**
  * The chapter's sections, pinned to the top of the scroll.

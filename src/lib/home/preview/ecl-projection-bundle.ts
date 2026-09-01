@@ -1530,7 +1530,7 @@ function buildEclSignalPacket(
   const contextItems: ContextItem[] = [
     {
       id: "ctx_ecl_assessment_001",
-      statement: `This Home preview is based on ECL assessment ${assessmentId}; it is synthetic, not client-attested.`,
+      statement: `This briefing is built from a synthetic assessment record. It is not client-attested.`,
       domains: ["enterprise_profile", "evidence_sources"],
     },
     {
