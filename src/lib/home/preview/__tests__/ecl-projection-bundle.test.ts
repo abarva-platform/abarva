@@ -7,7 +7,9 @@ import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
 import { getHomeReviewBundle } from "../golden-snapshot";
 import type { HomeReviewBundle } from "../types";
 
-type PacketWithCategorySummaries = ReturnType<typeof buildHomeReviewBundleFromEclProjectionRows>["thesis"]["signalPacket"] & {
+type PacketWithCategorySummaries = ReturnType<
+  typeof buildHomeReviewBundleFromEclProjectionRows
+>["thesis"]["signalPacket"] & {
   categorySummaries?: Array<{
     key: string;
     recordCount: number;
@@ -16,7 +18,10 @@ type PacketWithCategorySummaries = ReturnType<typeof buildHomeReviewBundleFromEc
   }>;
 };
 
-function row(input: Partial<HomeProjectionRow> & Pick<HomeProjectionRow, "page_key" | "row_key" | "row_type" | "title">): HomeProjectionRow {
+function row(
+  input: Partial<HomeProjectionRow> &
+    Pick<HomeProjectionRow, "page_key" | "row_key" | "row_type" | "title">,
+): HomeProjectionRow {
   return {
     summary: null,
     display_payload_json: {},
@@ -35,7 +40,11 @@ const CHAPTER_IDS = [
   "what_needs_attention",
 ] as const;
 
-function chapterSummaryFixtures(overrides: Partial<Record<(typeof CHAPTER_IDS)[number], Partial<HomeProjectionRow>>> = {}): HomeProjectionRow[] {
+function chapterSummaryFixtures(
+  overrides: Partial<
+    Record<(typeof CHAPTER_IDS)[number], Partial<HomeProjectionRow>>
+  > = {},
+): HomeProjectionRow[] {
   return CHAPTER_IDS.map((chapterId) =>
     row({
       page_key: chapterId,
@@ -60,7 +69,14 @@ function storyPlanFixture(
     openingSupportingClaimRefs: [],
     scaleFactRef: null,
     decisions: [],
-    sectionOrder: ["enterprise", "bets", "runs-on", "costs-returns", "exposed", "attention"],
+    sectionOrder: [
+      "enterprise",
+      "bets",
+      "runs-on",
+      "costs-returns",
+      "exposed",
+      "attention",
+    ],
     sections: [
       {
         sectionId: "enterprise",
@@ -69,7 +85,9 @@ function storyPlanFixture(
         supportingClaimRefs: [],
         reasonCode: null,
       },
-      ...(["bets", "runs-on", "costs-returns", "exposed", "attention"] as const).map((sectionId) => ({
+      ...(
+        ["bets", "runs-on", "costs-returns", "exposed", "attention"] as const
+      ).map((sectionId) => ({
         sectionId,
         state: "deferred" as const,
         leadClaimRef: null,
@@ -82,12 +100,14 @@ function storyPlanFixture(
         chapterId,
         {
           state: chapterId === "executive_brief" ? "published" : "deferred",
-          reasonCode: chapterId === "executive_brief" ? null : "no_verified_claims",
+          reasonCode:
+            chapterId === "executive_brief" ? null : "no_verified_claims",
         },
       ]),
     ) as NonNullable<HomeReviewBundle["executiveStoryPlan"]>["chapterStates"],
     heroVisualDatasetRef: null,
-    overallEvidenceBoundary: "Fixture story plan uses only published claim refs.",
+    overallEvidenceBoundary:
+      "Fixture story plan uses only published claim refs.",
     sourceClaimRefs: ["executive_brief_writer_claim_001"],
     storyPlanHash: "fixture-story-plan",
     ...overrides,
@@ -191,14 +211,21 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ]);
 
-    expect(estate.recordTypes.map((recordType) => [recordType.objectType, recordType.rows.length])).toEqual([
+    expect(
+      estate.recordTypes.map((recordType) => [
+        recordType.objectType,
+        recordType.rows.length,
+      ]),
+    ).toEqual([
       ["application_system", 1],
       ["vendor_contract", 1],
       ["infrastructure_platform", 1],
       ["data_asset_or_integration", 2],
     ]);
 
-    const applications = estate.recordTypes.find((recordType) => recordType.objectType === "application_system");
+    const applications = estate.recordTypes.find(
+      (recordType) => recordType.objectType === "application_system",
+    );
     expect(applications?.primaryDimension).toBe("businessFunction");
     expect(applications?.rows[0]).toMatchObject({
       systemName: "Epic Tapestry",
@@ -209,7 +236,9 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       criticality: "tier1",
     });
 
-    const flows = estate.recordTypes.find((recordType) => recordType.objectType === "data_asset_or_integration");
+    const flows = estate.recordTypes.find(
+      (recordType) => recordType.objectType === "data_asset_or_integration",
+    );
     expect(flows?.rows[0]).toMatchObject({
       recordKind: "data_movement",
       sourceSystem: "Epic Tapestry",
@@ -241,7 +270,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       ...chapterSummaryFixtures({
         executive_brief: {
           title: "Dense ECL estate loaded",
-          summary: "750 applications and 230 contracts are available from the ECL projection.",
+          summary:
+            "750 applications and 230 contracts are available from the ECL projection.",
           display_payload_json: {
             applications: 750,
             contracts: 230,
@@ -251,7 +281,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         },
         technology_data: {
           title: "Technology and data estate represented",
-          summary: "750 applications, 220 infrastructure rows, and 1350 data flows are loaded.",
+          summary:
+            "750 applications, 220 infrastructure rows, and 1350 data flows are loaded.",
         },
       }),
       row({
@@ -259,7 +290,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         row_key: "executive_brief_writer_claim_001",
         row_type: "chapter_claim",
         title: "Published ECL writer claim",
-        summary: "The published writer claim is rendered from a chapter_claim row.",
+        summary:
+          "The published writer claim is rendered from a chapter_claim row.",
         display_payload_json: {
           evidence_ids: ["sig_ecl_estate_001"],
           claim_type: "FACT",
@@ -297,7 +329,10 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         row_key: "INF-001",
         row_type: "infrastructure",
         title: "AWS Epic Hosting Estate",
-        display_payload_json: { platform_id: "PLAT-DATA-HUB-001", platform_name: "AWS Epic Hosting Estate" },
+        display_payload_json: {
+          platform_id: "PLAT-DATA-HUB-001",
+          platform_name: "AWS Epic Hosting Estate",
+        },
       }),
       row({
         page_key: "current_state_data_flow",
@@ -330,42 +365,66 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ]);
 
-    expect(bundle.provenance.canonical_snapshot_hash).toBe("ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:15");
-    expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
-    expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).toBe("Dense ECL estate loaded");
-    expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline).not.toBe(
-      base?.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.headline,
+    expect(bundle.provenance.canonical_snapshot_hash).toBe(
+      "ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:15",
     );
-    expect(bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")?.key_insights).toEqual([
+    expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
+    expect(
+      bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")
+        ?.headline,
+    ).toBe("Dense ECL estate loaded");
+    expect(
+      bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")
+        ?.headline,
+    ).not.toBe(
+      base?.chapters.find((chapter) => chapter.chapterId === "executive_brief")
+        ?.headline,
+    );
+    expect(
+      bundle.chapters.find((chapter) => chapter.chapterId === "executive_brief")
+        ?.key_insights,
+    ).toEqual([
       {
         claim_ref: "executive_brief_writer_claim_001",
-        statement: "The published writer claim is rendered from a chapter_claim row.",
+        statement:
+          "The published writer claim is rendered from a chapter_claim row.",
         evidence_ids: ["sig_ecl_estate_001"],
         claim_type: "FACT",
         confidence: "high",
       },
     ]);
-    expect(bundle.thesis.publishedGeneration.things_a_new_cxo_should_know).toEqual([
+    expect(
+      bundle.thesis.publishedGeneration.things_a_new_cxo_should_know,
+    ).toEqual([
       {
         claim_ref: "executive_brief_writer_claim_001",
-        statement: "The published writer claim is rendered from a chapter_claim row.",
+        statement:
+          "The published writer claim is rendered from a chapter_claim row.",
         evidence_ids: ["sig_ecl_estate_001"],
         claim_type: "FACT",
         confidence: "high",
       },
     ]);
-    expect(bundle.thesis.signalPacket.signals[0]?.statement).toContain("1 applications");
-    expect(bundle.thesis.signalPacket.signals[0]?.statement).toContain("1 data/BI/ETL workload segments");
+    expect(bundle.thesis.signalPacket.signals[0]?.statement).toContain(
+      "1 applications",
+    );
+    expect(bundle.thesis.signalPacket.signals[0]?.statement).toContain(
+      "1 data/BI/ETL workload segments",
+    );
     expect(bundle.thesis.signalPacket.contextItems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: "ctx_ecl_applications_systems_application_APP_001",
-          statement: expect.stringContaining("Epic Tapestry is loaded as an application"),
+          statement: expect.stringContaining(
+            "Epic Tapestry is loaded as an application",
+          ),
           domains: ["application_system"],
         }),
         expect.objectContaining({
           id: "ctx_ecl_current_state_data_flow_data_flow_FLOW_001",
-          statement: expect.stringContaining("is loaded as a data movement from Epic Tapestry to AWS Epic Hosting Estate"),
+          statement: expect.stringContaining(
+            "is loaded as a data movement from Epic Tapestry to AWS Epic Hosting Estate",
+          ),
           domains: ["data_asset_or_integration", "application_system"],
         }),
       ]),
@@ -373,7 +432,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     expect(bundle.thesis.signalPacket.contextItems).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          statement: "The published writer claim is rendered from a chapter_claim row.",
+          statement:
+            "The published writer claim is rendered from a chapter_claim row.",
         }),
       ]),
     );
@@ -387,10 +447,14 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           authority: ["serving.home_applications_systems"],
         }),
         expect.objectContaining({
-          sourcePath: "serving.home_current_state_data_flow + serving.home_data_assets_integrations",
+          sourcePath:
+            "serving.home_current_state_data_flow + serving.home_data_assets_integrations",
           sourceKind: "serving_projection",
           recordCount: 2,
-          authority: ["serving.home_current_state_data_flow", "serving.home_data_assets_integrations"],
+          authority: [
+            "serving.home_current_state_data_flow",
+            "serving.home_data_assets_integrations",
+          ],
         }),
       ]),
     );
@@ -400,7 +464,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         expect.objectContaining({
           key: "data_bi_etl_workloads_by_function_and_technology",
           recordCount: 1,
-          denominator: "segment-level workload rows; not one row per report, job, script, or user",
+          denominator:
+            "segment-level workload rows; not one row per report, job, script, or user",
           measures: expect.objectContaining({
             workloadSegments: 1,
             workloadItems: 420,
@@ -410,7 +475,9 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ]),
     );
-    expect(bundle.thesis.signalPacket.visualDatasets.data_workload_by_function).toEqual(
+    expect(
+      bundle.thesis.signalPacket.visualDatasets.data_workload_by_function,
+    ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           label: "Finance & Accounting",
@@ -420,7 +487,11 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         }),
       ]),
     );
-    expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "application_system")?.rows).toHaveLength(1);
+    expect(
+      bundle.technologyEstate?.recordTypes.find(
+        (recordType) => recordType.objectType === "application_system",
+      )?.rows,
+    ).toHaveLength(1);
     expect(bundle.executiveStoryPlan).toMatchObject({
       contractVersion: "home-executive-story-plan/v1",
       openingThesisClaimRef: "executive_brief_writer_claim_001",
@@ -452,9 +523,13 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
             confidence: "high",
           },
         }),
-        storyPlanFixture({ openingThesisClaimRef: "executive_brief_writer_claim_999" }),
+        storyPlanFixture({
+          openingThesisClaimRef: "executive_brief_writer_claim_999",
+        }),
       ]),
-    ).toThrow(/references missing chapter_claim executive_brief_writer_claim_999/);
+    ).toThrow(
+      /references missing chapter_claim executive_brief_writer_claim_999/,
+    );
   });
 
   it("unwraps serving-view payloads before computing Home contract value signals", () => {
@@ -465,7 +540,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       ...chapterSummaryFixtures({
         executive_brief: {
           title: "Dense ECL estate loaded",
-          summary: "750 applications and 230 contracts are available from the ECL projection.",
+          summary:
+            "750 applications and 230 contracts are available from the ECL projection.",
         },
       }),
       row({
@@ -473,7 +549,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         row_key: "executive_brief_writer_claim_001",
         row_type: "chapter_claim",
         title: "Contract value claim",
-        summary: "Contract value remains traceable to published ECL writer claims.",
+        summary:
+          "Contract value remains traceable to published ECL writer claims.",
         display_payload_json: {
           evidence_ids: ["sig_ecl_vendor_002"],
           claim_type: "OBSERVATION",
@@ -500,14 +577,24 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ]);
 
-    expect(bundle.technologyEstate?.recordTypes.find((recordType) => recordType.objectType === "vendor_contract")?.rows[0]).toMatchObject({
+    expect(
+      bundle.technologyEstate?.recordTypes.find(
+        (recordType) => recordType.objectType === "vendor_contract",
+      )?.rows[0],
+    ).toMatchObject({
       vendorName: "Epic Systems Corporation",
       annualSpendUsd: 9600000,
     });
-    expect(bundle.thesis.signalPacket.signals.find((signal) => signal.id === "sig_ecl_vendor_002")?.statement).toContain(
-      "$9.6M annualized value",
-    );
-    expect(bundle.thesis.signalPacket.signals.find((signal) => signal.id === "sig_ecl_vendor_002")?.statement).not.toContain("$0.0M");
+    expect(
+      bundle.thesis.signalPacket.signals.find(
+        (signal) => signal.id === "sig_ecl_vendor_002",
+      )?.statement,
+    ).toContain("$9.6M annualized value");
+    expect(
+      bundle.thesis.signalPacket.signals.find(
+        (signal) => signal.id === "sig_ecl_vendor_002",
+      )?.statement,
+    ).not.toContain("$0.0M");
   });
 
   it("uses the SkyHarbor dense assessment id for SkyHarbor ECL bundles", () => {
@@ -518,7 +605,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       ...chapterSummaryFixtures({
         executive_brief: {
           title: "SkyHarbor ECL estate loaded",
-          summary: "750 applications and 230 contracts are available from the SkyHarbor ECL projection.",
+          summary:
+            "750 applications and 230 contracts are available from the SkyHarbor ECL projection.",
         },
       }),
       row({
@@ -526,7 +614,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         row_key: "executive_brief_writer_claim_001",
         row_type: "chapter_claim",
         title: "SkyHarbor published claim",
-        summary: "SkyHarbor published claims use the SkyHarbor dense assessment id.",
+        summary:
+          "SkyHarbor published claims use the SkyHarbor dense assessment id.",
         display_payload_json: {
           evidence_ids: ["sig_ecl_estate_001"],
           claim_type: "FACT",
@@ -536,7 +625,8 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       storyPlanFixture({
         tenantKey: "skyharbor-air",
         assessmentId: "assessment-dense-skyharbor-20260827",
-        overallEvidenceBoundary: "SkyHarbor fixture story plan uses published claim refs.",
+        overallEvidenceBoundary:
+          "SkyHarbor fixture story plan uses published claim refs.",
       }),
     ]);
 
@@ -558,14 +648,17 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         row_key: "executive_brief_summary",
         row_type: "summary",
         title: "Dense ECL estate loaded",
-        summary: "750 applications and 230 contracts are available from the ECL projection.",
+        summary:
+          "750 applications and 230 contracts are available from the ECL projection.",
       }),
     ]);
 
     expect(bundle.thesis.publishedGeneration.enterprise_story).toBe(
       "The Home narrative is deferred until verified chapter claims are available.",
     );
-    expect(bundle.thesis.publishedGeneration.things_a_new_cxo_should_know).toEqual([]);
+    expect(
+      bundle.thesis.publishedGeneration.things_a_new_cxo_should_know,
+    ).toEqual([]);
     expect(bundle.chapters).toHaveLength(8);
     expect(bundle.chapters[0]).toMatchObject({
       headline: "Executive Brief is deferred pending verified claims",
@@ -573,7 +666,14 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       tensions: [],
       what_to_watch: [],
     });
-    expect(bundle.chapters[0]?.limitations[0]).toContain("Do not infer executive narrative from projection counts alone");
+    // The limitation states what is true of the record. It used to instruct the reader not to draw a
+    // narrative from counts, in our words rather than theirs, and named an internal artefact.
+    expect(bundle.chapters[0]?.limitations[0]).toContain(
+      "Counts alone do not carry a conclusion",
+    );
+    expect(bundle.chapters[0]?.limitations[0]).not.toMatch(
+      /projection|CXO readout/i,
+    );
   });
 
   it("resolves deterministic writer evidence ids on the Home runtime signal packet", () => {
@@ -587,9 +687,13 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         row_key: "our_business_writer_claim_001",
         row_type: "chapter_claim",
         title: "Published commercial basis claim",
-        summary: "The published business claim cites writer signal and scope context ids.",
+        summary:
+          "The published business claim cites writer signal and scope context ids.",
         display_payload_json: {
-          evidence_ids: ["sig_ecl_contract_value_005", "ctx_ecl_scope_business_economics_001"],
+          evidence_ids: [
+            "sig_ecl_contract_value_005",
+            "ctx_ecl_scope_business_economics_001",
+          ],
           claim_type: "FACT",
           confidence: "high",
         },
@@ -608,7 +712,10 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       }),
     ]);
 
-    const resolved = resolveEvidence(["sig_ecl_contract_value_005", "ctx_ecl_scope_business_economics_001"], bundle.thesis.signalPacket);
+    const resolved = resolveEvidence(
+      ["sig_ecl_contract_value_005", "ctx_ecl_scope_business_economics_001"],
+      bundle.thesis.signalPacket,
+    );
     expect(resolved).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "sig_ecl_contract_value_005" }),
