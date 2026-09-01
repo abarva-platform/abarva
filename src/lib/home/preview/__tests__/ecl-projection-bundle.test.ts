@@ -366,7 +366,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     ]);
 
     expect(bundle.provenance.canonical_snapshot_hash).toBe(
-      "ecl:assessment-dense-source-room-20260823:home_enterprise_landscape:15",
+      "ecl:assessment-dense-source-room-20260823:serving.home_*:15",
     );
     expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
     expect(
@@ -631,7 +631,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     ]);
 
     expect(bundle.provenance.canonical_snapshot_hash).toBe(
-      "ecl:assessment-dense-skyharbor-20260827:home_enterprise_landscape:10",
+      "ecl:assessment-dense-skyharbor-20260827:serving.home_*:10",
     );
     expect(bundle.thesis.signalPacket.contextItems[0]?.statement).toContain(
       "assessment-dense-skyharbor-20260827",

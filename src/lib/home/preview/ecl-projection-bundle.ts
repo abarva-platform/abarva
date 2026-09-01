@@ -2170,7 +2170,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
       ...base.provenance,
       home_synthesis_contract_version: `${base.provenance.home_synthesis_contract_version}+ecl-projection-v1`,
       model: "deterministic-ecl-projection",
-      canonical_snapshot_hash: `ecl:${assessmentId}:home_enterprise_landscape:${rows.length}`,
+      canonical_snapshot_hash: `ecl:${assessmentId}:serving.home_*:${rows.length}`,
     },
     chapters,
     executiveStoryPlan,
@@ -2258,6 +2258,38 @@ async function readHomeProjectionRows(
       union all
       select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
       from serving.home_data_assets_integrations
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_metrics_outcomes
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_risks_controls
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_programs_initiatives
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_org_ownership
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_ai_use_cases
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_business_unit_profile
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_data_maturity
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_kpi_register
       where tenant_key = $1 and assessment_id = $2
       order by page_key, row_key
     `,
