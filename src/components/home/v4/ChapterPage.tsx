@@ -1,3 +1,8 @@
+"use client";
+
+import type { CSSProperties } from "react";
+import { useEffect, useState } from "react";
+
 import type {
   ChapterView,
   EnterpriseSignalPacket,
@@ -442,6 +447,38 @@ function ChapterSpine({ tables }: { tables: TableSpec[] }) {
     if (table.section && !names.includes(table.section))
       names.push(table.section);
   }
+  const [active, setActive] = useState<string | null>(names[0] ?? null);
+  const key = names.join("|");
+
+  // Which section the reader is actually in, not the one they last clicked. A spine that goes stale
+  // on scroll answers "where am I" only until they move, which is the moment they ask.
+  useEffect(() => {
+    const sectionNames = key ? key.split("|") : [];
+    if (sectionNames.length < 2) return;
+    // Absent in jsdom and during server render; the spine simply keeps its opening selection.
+    if (typeof IntersectionObserver === "undefined") return;
+    const targets = sectionNames
+      .map((name) => document.getElementById(sectionId(name)))
+      .filter((node): node is HTMLElement => Boolean(node));
+    if (targets.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort(
+            (a, b) => a.boundingClientRect.top - b.boundingClientRect.top,
+          )[0];
+        const id = visible?.target.id;
+        if (!id) return;
+        const match = sectionNames.find((name) => sectionId(name) === id);
+        if (match) setActive(match);
+      },
+      { rootMargin: "-72px 0px -55% 0px", threshold: 0 },
+    );
+    targets.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, [key]);
+
   if (names.length < 2) return null;
   return (
     <nav
@@ -449,14 +486,26 @@ function ChapterSpine({ tables }: { tables: TableSpec[] }) {
       aria-label="Sections in this chapter"
       style={spineStyle}
     >
-      {names.map((name, index) => (
-        <a key={name} href={`#${sectionId(name)}`} style={spineLinkStyle}>
-          <span style={{ color: V4.stone }}>
-            {String(index + 1).padStart(2, "0")}
-          </span>{" "}
-          {name}
-        </a>
-      ))}
+      {names.map((name, index) => {
+        const isActive = name === active;
+        return (
+          <a
+            key={name}
+            href={`#${sectionId(name)}`}
+            aria-current={isActive ? "true" : undefined}
+            data-home-spine-active={isActive ? "true" : undefined}
+            onClick={() => setActive(name)}
+            style={spineChipStyle(isActive)}
+          >
+            <span
+              style={{ color: isActive ? "rgba(255,255,255,0.62)" : V4.stone }}
+            >
+              {String(index + 1).padStart(2, "0")}
+            </span>{" "}
+            {name}
+          </a>
+        );
+      })}
     </nav>
   );
 }
@@ -476,15 +525,29 @@ const spineStyle = {
   background: V4.paper,
 };
 
-const spineLinkStyle = {
-  fontFamily: MONO,
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: "0.07em",
-  textTransform: "uppercase" as const,
-  color: V4.inkSoft,
-  textDecoration: "none",
-} as const;
+/**
+ * The selected section lights up, the way Tower's chips and Source's tabs do.
+ *
+ * Tower fills its active chip with the pressure-card orange; that palette is Tower's own drift and
+ * is not adopted here. The form is Tower's, the colour is this surface's reserved navy -- the same
+ * value Source uses for an active tab.
+ */
+function spineChipStyle(active: boolean): CSSProperties {
+  return {
+    fontFamily: MONO,
+    fontSize: 10.5,
+    fontWeight: 600,
+    letterSpacing: "0.07em",
+    textTransform: "uppercase",
+    textDecoration: "none",
+    padding: "5px 10px",
+    borderRadius: 999,
+    border: `1px solid ${active ? V4.navy : "transparent"}`,
+    background: active ? V4.navy : "transparent",
+    color: active ? "#ffffff" : V4.slate,
+    whiteSpace: "nowrap",
+  };
+}
 
 const excerptStyle = {
   margin: 0,

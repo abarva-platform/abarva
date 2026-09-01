@@ -5,12 +5,16 @@ import { buildBusinessBriefing } from "../business-briefing";
 
 const ROOT = path.resolve(__dirname, "../../../..");
 const packet: EnterpriseSignalPacket = JSON.parse(
-  fs.readFileSync(path.join(ROOT, "lib/home/preview/golden-snapshots/meridian-health.json"), "utf8"),
+  fs.readFileSync(
+    path.join(ROOT, "lib/home/preview/golden-snapshots/meridian-health.json"),
+    "utf8",
+  ),
 ).thesis.signalPacket;
 
 describe("the first-ten-minutes briefing", () => {
   const briefing = buildBusinessBriefing(packet);
-  const heading = (name: string) => briefing.sections.find((s) => s.heading === name);
+  const heading = (name: string) =>
+    briefing.sections.find((s) => s.heading === name);
 
   it("answers how the business makes money before anything about technology", () => {
     expect(briefing.sections[0].heading).toBe("How this business makes money");
@@ -23,14 +27,19 @@ describe("the first-ten-minutes briefing", () => {
     expect(doing?.items[0].text).toMatch(/Star Rating from 3\.5 to 4\.5/);
     expect(doing?.items).toHaveLength(5);
     // The numbering prefix is the record's, not a rank this page invented.
-    for (const item of doing?.items ?? []) expect(item.text).not.toMatch(/^\d\)/);
+    for (const item of doing?.items ?? [])
+      expect(item.text).not.toMatch(/^\d\)/);
   });
 
   it("reports the leadership position as counts, never as characterisation", () => {
     const says = heading("What the leadership says");
-    expect(says?.items.some((i) => /44 of 44 interviewed leaders/.test(i.text))).toBe(true);
+    expect(
+      says?.items.some((i) => /44 of 44 interviewed leaders/.test(i.text)),
+    ).toBe(true);
     expect(says?.items.some((i) => i.detail === "Minority view")).toBe(true);
-    expect(says?.items.some((i) => /contradict the system-of-record/.test(i.text))).toBe(true);
+    expect(
+      says?.items.some((i) => /contradict the system-of-record/.test(i.text)),
+    ).toBe(true);
   });
 
   it("attributes every quote to a role so a reader can weigh it", () => {
@@ -46,8 +55,11 @@ describe("the first-ten-minutes briefing", () => {
   it("names the questions the record cannot answer rather than omitting them", () => {
     expect(briefing.notInTheRecord.length).toBeGreaterThanOrEqual(2);
     expect(briefing.notInTheRecord[0].question).toMatch(/competitors/i);
-    expect(briefing.notInTheRecord[0].why).toMatch(/collection gap, not a finding/);
-    for (const gap of briefing.notInTheRecord) expect(gap.why.length).toBeGreaterThan(60);
+    expect(briefing.notInTheRecord[0].why).toMatch(
+      /collection gap, not a finding/,
+    );
+    for (const gap of briefing.notInTheRecord)
+      expect(gap.why.length).toBeGreaterThan(60);
   });
 
   // A pattern without its applicability is a generality about the industry; with it, it is a claim
@@ -57,30 +69,53 @@ describe("the first-ten-minutes briefing", () => {
     const withContext = {
       signals: [],
       analyticalLenses: [
-        { kind: "industry_pattern", label: "P", appliesHere: "It applies here because X.", caveats: "Limited by Y." },
-        { kind: "expert_lens", label: "L", expertRole: "Former Payer VP", questions: "Is the RAF closure rate defensible?", decisionUse: "coding investment", caveats: "Needs RADV data." },
+        {
+          kind: "industry_pattern",
+          label: "P",
+          appliesHere: "It applies here because X.",
+          caveats: "Limited by Y.",
+        },
+        {
+          kind: "expert_lens",
+          label: "L",
+          expertRole: "Former Payer VP",
+          questions: "Is the RAF closure rate defensible?",
+          decisionUse: "coding investment",
+          caveats: "Needs RADV data.",
+        },
       ],
     } as unknown as EnterpriseSignalPacket;
     const built = buildBusinessBriefing(withContext);
-    const pattern = built.sections.find((x) => /Industry patterns/.test(x.heading))?.items[0];
+    const pattern = built.perspective.find((x) =>
+      /Industry patterns/.test(x.heading),
+    )?.items[0];
     expect(pattern?.detail).toBe("It applies here because X.");
     expect(pattern?.caveat).toBe("Limited by Y.");
-    const lens = built.sections.find((x) => /expert would ask/.test(x.heading))?.items[0];
+    const lens = built.perspective.find((x) =>
+      /expert would ask/.test(x.heading),
+    )?.items[0];
     expect(lens?.text).toBe("Is the RAF closure rate defensible?");
     expect(lens?.attribution).toBe("Former Payer VP");
     expect(lens?.detail).toMatch(/^Informs: coding investment/);
   });
 
   it("falls back to the title on a record that predates the widened packet", () => {
-    const thin = { signals: [], analyticalLenses: [{ kind: "expert_lens", label: "Legacy lens" }] } as unknown as EnterpriseSignalPacket;
-    const lens = buildBusinessBriefing(thin).sections.find((x) => /expert would ask/.test(x.heading))?.items[0];
+    const thin = {
+      signals: [],
+      analyticalLenses: [{ kind: "expert_lens", label: "Legacy lens" }],
+    } as unknown as EnterpriseSignalPacket;
+    const lens = buildBusinessBriefing(thin).perspective.find((x) =>
+      /expert would ask/.test(x.heading),
+    )?.items[0];
     expect(lens?.text).toBe("Legacy lens");
     expect(lens?.caveat).toBeUndefined();
   });
 
   // Planted failure: an empty packet must produce no sections, never headings over nothing.
   it("renders no section it has no evidence for", () => {
-    const empty = buildBusinessBriefing({ signals: [] } as unknown as EnterpriseSignalPacket);
+    const empty = buildBusinessBriefing({
+      signals: [],
+    } as unknown as EnterpriseSignalPacket);
     expect(empty.sections).toEqual([]);
     // The blind spots still stand -- they are true of an empty record too.
     expect(empty.notInTheRecord.length).toBeGreaterThan(0);
@@ -88,8 +123,20 @@ describe("the first-ten-minutes briefing", () => {
 
   it("drops a testimony signal that carries no quotable text", () => {
     const noQuote = {
-      signals: [{ id: "s1", kind: "testimony", statement: "A CFO said something unquoted.", domains: [], evidenceRefs: [] }],
+      signals: [
+        {
+          id: "s1",
+          kind: "testimony",
+          statement: "A CFO said something unquoted.",
+          domains: [],
+          evidenceRefs: [],
+        },
+      ],
     } as unknown as EnterpriseSignalPacket;
-    expect(buildBusinessBriefing(noQuote).sections.find((s) => s.heading === "In their own words")).toBeUndefined();
+    expect(
+      buildBusinessBriefing(noQuote).sections.find(
+        (s) => s.heading === "In their own words",
+      ),
+    ).toBeUndefined();
   });
 });

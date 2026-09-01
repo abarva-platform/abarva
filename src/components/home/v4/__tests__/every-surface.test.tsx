@@ -246,3 +246,36 @@ describe("the visual grammar", () => {
     expect(block.closest("[data-home-findings]")).toBeNull();
   });
 });
+
+describe("the perspective layer", () => {
+  // The one section where layout can assert something the record does not hold: patterns beside an
+  // enterprise's own figures read as a comparison, and no competitor or peer benchmark exists
+  // anywhere in the record. The absence is stated in words, ahead of any pattern.
+  it("states that no comparison is carried, before showing a pattern", () => {
+    window.location.hash = "leadership_perspective";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const block = container.querySelector("[data-home-perspective]");
+    if (!block) return; // a record with no patterns or lenses renders none
+    const note = block.querySelector("[data-home-no-comparison]");
+    expect(note).not.toBeNull();
+    expect(note!.textContent ?? "").toMatch(
+      /no competitor position and no peer benchmark/i,
+    );
+    // It must precede the patterns, not follow them.
+    expect(
+      note!.compareDocumentPosition(
+        block.querySelector("[data-home-briefing]")!,
+      ),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("keeps patterns off the chapters that are not about where this is heading", () => {
+    window.location.hash = "executive_brief";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    expect(container.querySelector("[data-home-perspective]")).toBeNull();
+  });
+});
