@@ -642,15 +642,15 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(violations).toEqual([]);
   });
 
-  it("keeps the Recharts-heavy executive shell behind a lazy load boundary", async () => {
+  it("renders the executive shell without an extra lazy gate for faster first paint", async () => {
     const source = await readFile(
       path.join(WORKSPACE_ROUTE_DIR, "WorkspaceClient.tsx"),
       "utf-8",
     );
 
-    expect(source).toContain('import dynamic from "next/dynamic"');
-    expect(source).toContain('import("./WorkspaceExecutiveShell")');
-    expect(source).not.toContain(
+    expect(source).not.toContain('import dynamic from "next/dynamic"');
+    expect(source).not.toContain('import("./WorkspaceExecutiveShell")');
+    expect(source).toContain(
       'import { WorkspaceExecutiveShell } from "./WorkspaceExecutiveShell"',
     );
   });

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -272,6 +273,15 @@ export function WorkspaceExecutiveShell({
 }) {
   const [showLineage, setShowLineage] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
+  const executiveVendors = useMemo(() => topVendors(portfolio), [portfolio]);
+  const totalAnnualValue = useMemo(
+    () => portfolioAnnualValue(portfolio),
+    [portfolio],
+  );
+  const recoverableCreditRows = useMemo(
+    () => source360RecoverableCreditCoverageRows(portfolio),
+    [portfolio],
+  );
   const selectedContract =
     (vm.c?.id
       ? portfolio.contracts.find(
@@ -281,14 +291,13 @@ export function WorkspaceExecutiveShell({
     preferredContract(portfolio) ??
     portfolio.contracts[0] ??
     null;
-  const executiveVendors = topVendors(portfolio);
   const currentPage = activePage(logic, vm);
   const selectedVendorRef =
     logic.state.sel.kind === "vendor"
       ? logic.state.sel.id
       : currentPage === "Vendors"
         ? (executiveVendors[0]?.vendor_ref ?? selectedContract?.vendor_ref ?? null)
-        : (selectedContract?.vendor_ref ??
+      : (selectedContract?.vendor_ref ??
           executiveVendors[0]?.vendor_ref ??
           null);
   const selectedVendor = selectedVendorRef
@@ -297,7 +306,6 @@ export function WorkspaceExecutiveShell({
       ) ?? null)
     : null;
   const headerContract = vm.isContract ? selectedContract : null;
-  const totalAnnualValue = portfolioAnnualValue(portfolio);
   const lapsedAutoRenewSupport = supportByLabel(
     portfolio,
     "Auto-renew notice passed",
@@ -313,10 +321,12 @@ export function WorkspaceExecutiveShell({
     (sum, row) => sum + (numberFromDb(row.candidate_amount_usd) ?? 0),
     0,
   );
-  const creditFinding = source360RecoverableCreditFinding(portfolio);
+  const creditFinding = useMemo(
+    () => source360RecoverableCreditFinding(portfolio),
+    [portfolio],
+  );
   const performanceRows = portfolio.v4Snapshot.performanceCredits.rowCount;
   const spendRows = portfolio.v4Snapshot.spendConsumption.rowCount;
-  const recoverableCreditRows = source360RecoverableCreditCoverageRows(portfolio);
   const performanceCreditContract = [...recoverableCreditRows]
     .sort(
       (left, right) =>
