@@ -585,12 +585,23 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("No contract-level action rows loaded.")).toBeTruthy();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Evidence" })[0]);
+    expect(screen.getByText("Archetype coverage matrix")).toBeTruthy();
+    expect(screen.getByText("Live registry")).toBeTruthy();
+    expect(screen.getByText("Evidence lanes")).toBeTruthy();
     expect(screen.getByText("Loaded rows, missing lanes, and claim eligibility")).toBeTruthy();
+    expect(screen.getAllByText("Document page text").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Change orders").length).toBeGreaterThan(0);
     expect(screen.getByText("Show lineage")).toBeTruthy();
     expect(screen.queryByText("source.contract_360")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Show lineage" }));
     expect(screen.getByText("source.contract_360")).toBeTruthy();
+    expect(screen.getAllByText("source.source_page_text_fact_assertion").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText("source.source_change_order_fact_assertion").length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getByText("Hide lineage")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Hide lineage" }));
@@ -613,6 +624,11 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Show lineage" }));
     expect(screen.getByText("contract_register_adapter")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Mapping spine" }));
+    expect(screen.getByText("Document manifest")).toBeTruthy();
+    expect(screen.getByText("Change orders")).toBeTruthy();
+    expect(screen.getByText("evidence_document_adapter")).toBeTruthy();
+    expect(screen.getByText("change_order_adapter")).toBeTruthy();
   });
 
   it("keeps the Source workspace free of legacy cool-blue design tokens", async () => {
