@@ -840,9 +840,13 @@ async function synthesizeChapterNarrative(
   }
   const userPrompt = buildChapterSynthesisUserPrompt(def, claims, signalPacket);
   const result = await callClaude(client, CHAPTER_SYNTHESIS_SYSTEM_PROMPT, userPrompt, options.maxTokens, options.effort);
-  if (!result) return null;
+  if (!result) {
+    return deterministicClaimBasedChapterNarrative(def, claims, 0, 0, "missing_model_response_fallback");
+  }
   const parsed = parseJsonLoose<{ headline: string; executive_synthesis: string }>(result.text, `chapter synthesis (${def.title})`);
-  if (!parsed) return null;
+  if (!parsed) {
+    return deterministicClaimBasedChapterNarrative(def, claims, result.inputTokens, result.outputTokens, "invalid_json_fallback");
+  }
   const generatedText = `${parsed.headline} ${parsed.executive_synthesis}`;
   if (claims.length > 0 && PUBLISHED_REFUSAL_LANGUAGE_RE.test(generatedText)) {
     return deterministicClaimBasedChapterNarrative(def, claims, result.inputTokens, result.outputTokens, "refusal_language_fallback");
