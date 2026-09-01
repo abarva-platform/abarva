@@ -71,6 +71,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
 
   it("resolves UUID-like vendor display names before impact rows reach the workspace payload", () => {
     const vendorRef = "24fc65af-8223-4884-9241-ef5736960a1b";
+    const contractVendorRef = "vendor-optum-rx";
     const impact = resolveImpactVendorNames(
       {
         evidenceCoverage: [
@@ -143,7 +144,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       [
         {
           contract_id: "CTR-0002",
-          vendor_ref: vendorRef,
+          vendor_ref: contractVendorRef,
           vendor_name: "Optum Rx",
         },
       ] as never,
@@ -165,6 +166,13 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       claim: "Optum Rx has an evidence-backed candidate action.",
       vendor_ref: vendorRef,
     });
+    expect(impact.claimCards[0].allowed_executive_statement).not.toContain(
+      vendorRef,
+    );
+    expect(impact.vendorPositions[0].vendor_name).not.toContain(vendorRef);
+    expect(
+      String(impact.avaGroundingBundles[0].allowed_claims_json[0].claim),
+    ).not.toContain(vendorRef);
   });
 
   it("loads Source 360 portfolio data from flagged local ECL projection CSVs", async () => {
