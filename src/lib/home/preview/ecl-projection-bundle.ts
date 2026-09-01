@@ -2075,16 +2075,16 @@ function buildDeferredChapters(): ChapterView[] {
     guidingQuestion: definition.guidingQuestion,
     headline: `${definition.title} is deferred pending verified claims`,
     executive_synthesis:
-      "This chapter is not ready for executive review. Verified chapter claims have not been published for this tenant.",
+      "No statements citing this chapter's records have been published, so the chapter asserts nothing.",
     key_insights: [],
     tensions: [],
     what_to_watch: [],
     questions_to_ask: [
-      "Which verified source records and interviews should support this chapter before executive use?",
+      "Which records and interviews should this chapter be built from?",
     ],
     visual_opportunities: [],
     limitations: [
-      "Do not infer executive narrative from projection counts alone; publish verified chapter claims before using this chapter in a CXO readout.",
+      "Counts alone do not carry a conclusion. Nothing is asserted for this chapter until statements citing its own records are published.",
     ],
   }));
 }

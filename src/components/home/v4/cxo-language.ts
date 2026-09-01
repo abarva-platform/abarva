@@ -156,8 +156,20 @@ export function cellText(value: string | number | boolean | null): string {
  * page: "Leadership Perspective is deferred pending stronger evidence" tells them nothing about
  * their enterprise and everything about our pipeline.
  */
+/**
+ * Matched by shape, not by phrase.
+ *
+ * The earlier version listed the exact sentences one generator emitted. A second generator says
+ * "deferred pending verified claims" instead of "deferred pending stronger evidence", and that one
+ * word slipped a build state into the headline position on the live surface. A list of phrases
+ * somebody thought of is the same mistake as a list of forbidden words: it only catches what was
+ * already known.
+ *
+ * So: any "deferred pending <anything>", any "not ready for executive <anything>", and the handful
+ * of stock refusals that do not fit that shape.
+ */
 const DEFERRAL_RE =
-  /\b(?:deferred pending stronger evidence|does not yet support a board[-\s]?ready answer|does not yet connect enough verified statements|evidence needs resolution before executive use|not ready for executive review|current governed record does not yet support|keep this chapter in review until|is not ready for executive|bounded by the available evidence)\b/i;
+  /\bdeferred pending\b|\bnot ready for executive\b|\bdoes not yet (?:support|connect)\b|\bevidence needs resolution before\b|\bkeep this chapter in review\b|\bhave not been published for this tenant\b|\bbounded by the available evidence\b/i;
 
 export function isGeneratorDeferral(text: string | null | undefined): boolean {
   return Boolean(text && DEFERRAL_RE.test(text));
