@@ -11,6 +11,21 @@ const previewPageSource = readFileSync(
   "utf8",
 );
 
+const loadingSource = readFileSync(
+  join(process.cwd(), "src/app/(maestro)/source/workspace/loading.tsx"),
+  "utf8",
+);
+
+const loaderSource = readFileSync(
+  join(process.cwd(), "src/app/(maestro)/source/workspace/WorkspaceClientLoader.tsx"),
+  "utf8",
+);
+
+const portfolioApiSource = readFileSync(
+  join(process.cwd(), "src/app/api/source/workspace/portfolio/route.ts"),
+  "utf8",
+);
+
 describe("Source workspace requested-client routing", () => {
   it("threads the explicit client request through server-side tenant resolution", () => {
     expect(pageSource).toContain("client?: string");
@@ -23,7 +38,7 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).toContain("if (requestedClient && !requestedClientKey)");
     expect(pageSource).toContain("checkTenantAccessByKey(requestedClientKey)");
     expect(pageSource).toContain("requestedClientKey ??");
-    expect(pageSource).toContain("sourceClientKey={tenantKey}");
+    expect(pageSource).toContain("tenantKey={tenantKey}");
   });
 
   it("does not fall back to the session tenant when an explicit client cannot resolve", () => {
@@ -65,19 +80,28 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).not.toContain("new Date().toISOString()");
   });
 
-  it("streams a Source 360 shell before the heavy portfolio read resolves", () => {
-    expect(pageSource).toContain('import { Suspense } from "react";');
-    expect(pageSource).toContain("const portfolioPromise = tenantKey");
-    expect(pageSource).toContain("loadSourceWorkspacePortfolio(");
-    expect(pageSource).toContain(
-      "fallback={<SourceWorkspaceLoadingShell tenantName={tenantName} />}",
-    );
-    expect(pageSource).toContain("<SourceWorkspaceDataBoundary");
-    expect(pageSource).toContain("portfolioPromise={portfolioPromise}");
-    expect(pageSource).toContain("Preparing the governed contract book.");
+  it("renders Source 360 through a client portfolio loader instead of blocking on the heavy read", () => {
+    expect(pageSource).toContain("<WorkspaceClientLoader");
+    expect(pageSource).not.toContain("loadSourceWorkspacePortfolio(");
+    expect(loaderSource).toContain("/api/source/workspace/portfolio");
+    expect(loaderSource).toContain("SourceWorkspaceLoadingShell");
+    expect(loaderSource).toContain("<WorkspaceClient");
     expect(pageSource).not.toContain(
       "const portfolio = tenantKey\n    ? await loadSourceWorkspacePortfolio(",
     );
+  });
+
+  it("renders the Source 360 route loading shell during route transitions", () => {
+    expect(loadingSource).toContain("SourceWorkspaceLoadingShell");
+    expect(loadingSource).toContain("export default function Loading()");
+    expect(loadingSource).not.toContain("loadSourceWorkspacePortfolio");
+  });
+
+  it("keeps portfolio loading tenant-guarded inside the API route", () => {
+    expect(portfolioApiSource).toContain("requireTenancy()");
+    expect(portfolioApiSource).toContain("checkTenantAccessByKey(requestedClientKey)");
+    expect(portfolioApiSource).toContain("loadSourceWorkspacePortfolio(");
+    expect(portfolioApiSource).toContain("sourceProviderKey");
   });
 
   it("keeps the historical preview route as a query-preserving redirect only", () => {
