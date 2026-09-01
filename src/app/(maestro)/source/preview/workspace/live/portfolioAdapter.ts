@@ -641,6 +641,7 @@ export function resolveImpactVendorNames(
   vendors: readonly SourceVendorContractPortfolioRow[],
 ): SourceWorkspaceImpactLayer {
   const resolver = buildVendorNameResolver(contracts, vendors);
+  seedImpactVendorRefs(impact, resolver);
   const refNameMap = resolver.refNameMap;
   const evidenceCoverage = impact.evidenceCoverage.map((row) =>
     resolveVendorNameField(row, resolver),
@@ -714,6 +715,41 @@ function buildVendorNameResolver(
     }
   }
   return { vendorNameByRef, vendorNameByContract, refNameMap: vendorNameByRef };
+}
+
+function seedImpactVendorRefs(
+  impact: SourceWorkspaceImpactLayer,
+  resolver: ReturnType<typeof buildVendorNameResolver>,
+) {
+  for (const row of [
+    ...impact.evidenceCoverage,
+    ...impact.actionCandidates,
+    ...impact.claimCards,
+  ]) {
+    addContractScopedImpactVendorName(row, resolver);
+  }
+}
+
+function addContractScopedImpactVendorName<Row extends VendorNamedRow>(
+  row: Row,
+  resolver: ReturnType<typeof buildVendorNameResolver>,
+) {
+  if (!row.contract_id) return;
+  const resolvedName = resolver.vendorNameByContract.get(row.contract_id);
+  if (!resolvedName) return;
+  addResolvedOpaqueVendorValue(row.vendor_ref, resolvedName, resolver);
+  addResolvedOpaqueVendorValue(row.vendor_name, resolvedName, resolver);
+}
+
+function addResolvedOpaqueVendorValue(
+  opaqueValue: string | null | undefined,
+  resolvedName: string,
+  resolver: ReturnType<typeof buildVendorNameResolver>,
+) {
+  const normalized = opaqueValue?.trim();
+  if (!normalized || normalized === resolvedName) return;
+  if (isReadableVendorName(normalized, undefined)) return;
+  resolver.vendorNameByRef.set(normalized, resolvedName);
 }
 
 function addVendorName(
