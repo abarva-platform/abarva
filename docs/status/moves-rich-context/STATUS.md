@@ -1,17 +1,17 @@
 # Moves Rich-Context Build - Live Status
 
-**Updated:** 2026-09-01T19:06:52Z
+**Updated:** 2026-09-01T19:07:25Z
 **Agent:** codex
 **Branch:** codex/moves-rich-context
-**Head:** 62fc13011
+**Head:** ccb5a7bae
 
 ## Now
-Increment 1 context packing implementation is committed and release-check validation is next.
+Increment 1 context packing implementation is committed and the PR is being prepared.
 
 ## Increments
 | # | Increment | State | Evidence |
 |---|-----------|-------|----------|
-| 1 | Context packing | in_progress | implementation SHA 62fc13011; focused Jest 41/41; targeted ESLint pass; TypeScript pass with larger heap |
+| 1 | Context packing | in_progress | implementation SHA 62fc13011; focused Jest 41/41; targeted ESLint pass; TypeScript pass with larger heap; release:check pass |
 | 2 | Approval gap | not_started | none |
 | 3 | Digest layer | not_started | none |
 | 4 | Digest-aware packing | not_started | none |
@@ -33,4 +33,4 @@ Used an additive nullable run-ledger JSONB column so coverage telemetry does not
 ## Known gaps
 Increment 2 is not started because the auto-commit and gate-blocking behavior requires a product-owner decision.
 Increments 3 and 4 are intentionally deferred until Increment 1 is measured.
-Release record exists as candidate. Release check, PR, deployment, and live proof have not started.
+Release record exists as candidate. PR, deployment, and live proof have not started.
