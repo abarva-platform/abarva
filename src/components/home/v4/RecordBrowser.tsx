@@ -3,6 +3,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
 
 import type { TechObjectType, TechRecordType } from "@/lib/home/preview/types";
+import { cellText } from "./cxo-language";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 type RecordRow = Record<string, string | number | boolean | null | undefined>;
@@ -589,8 +590,8 @@ export function RecordBrowser({
           </h2>
           <p style={cubeTextStyle}>
             Pick dimensions to narrow the estate without losing the underlying
-            rows. The table below remains the full source projection for the
-            current slice.
+            rows. The table below remains the full source record for the current
+            slice.
           </p>
         </div>
         <div data-cube-controls style={cubeControlsStyle}>
@@ -743,7 +744,7 @@ export function RecordBrowser({
               {constants
                 .map(
                   (c) =>
-                    `${c.column} reads "${c.value}" on all ${rows.length.toLocaleString()} rows`,
+                    `${c.column} reads "${cellText(c.value)}" on all ${rows.length.toLocaleString()} rows`,
                 )
                 .join("; ")}
               . A value that never varies is a default rather than an
@@ -1664,7 +1665,7 @@ function SelectedRecord({
       </div>
       <h2 style={selectedTitleStyle}>{title}</h2>
       <div style={selectedMetaStyle}>
-        {fieldCount.toLocaleString()} fields in source projection
+        {fieldCount.toLocaleString()} fields in the source record
       </div>
       <dl style={detailGridStyle}>
         {fields.slice(0, 18).map((field) => (
@@ -1691,7 +1692,9 @@ function CellValue({ value, column }: { value: unknown; column: Column }) {
       </span>
     );
   }
-  return <>{formatByField(column.key, value)}</>;
+  // Column values are stored the way the record stores them; they are read the way a person reads.
+  const formatted = formatByField(column.key, value);
+  return <>{typeof formatted === "string" ? cellText(formatted) : formatted}</>;
 }
 
 function headlineFor(objectType: TechObjectType, count: number): string {

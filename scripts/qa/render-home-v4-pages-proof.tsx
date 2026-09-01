@@ -11,7 +11,6 @@ import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { BrowseTheData } from "../../src/components/home/preview/BrowseTheData";
-import { CurrentState } from "../../src/components/home/preview/CurrentState";
 import { ArchitecturePage } from "../../src/components/home/v4/ArchitecturePage";
 import { ChapterPage } from "../../src/components/home/v4/ChapterPage";
 import { DataFlowPage } from "../../src/components/home/v4/DataFlowPage";
@@ -94,11 +93,6 @@ for (const tenantKey of tenantKeys) {
     );
   }
 
-  writePage(
-    `${tenantKey}-loaded-context`,
-    "Loaded Context",
-    renderToStaticMarkup(<CurrentState signalPacket={signalPacket} />),
-  );
   writePage(
     `${tenantKey}-browse-record`,
     "Browse Record",

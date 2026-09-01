@@ -1,0 +1,151 @@
+/**
+ * @jest-environment jsdom
+ */
+
+/**
+ * Every surface a reader can reach, swept for language that belongs to the build.
+ *
+ * The earlier gate checked the landing page only, and machine identifiers were leaking from five
+ * other render paths: a chapter's table cells, the architecture crosstab, the platform inventory
+ * line, the record browser's constant-column note, and the evidence browser's statement column.
+ * Each had been laundered nowhere because each formatted its own text.
+ *
+ * So the sweep walks every view rather than the one that was wrong last time.
+ */
+import "@testing-library/jest-dom";
+
+import fs from "node:fs";
+import path from "node:path";
+
+import { render } from "@testing-library/react";
+
+import type { HomeReviewBundle } from "@/lib/home/preview/types";
+import { HomeV4App } from "../HomeV4App";
+
+jest.mock("@/components/home/preview/HomeAvaChat", () => ({
+  HomeAvaChat: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+function bundle(): HomeReviewBundle {
+  return JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/lib/home/preview/golden-snapshots/meridian-health.json",
+      ),
+      "utf8",
+    ),
+  ) as HomeReviewBundle;
+}
+
+const SURFACES: string[] = [
+  ...bundle().chapters.map((chapter) => chapter.chapterId),
+  "architecture",
+  "data-flow",
+  "browse-the-data",
+  "tech:application_system",
+  "tech:vendor_contract",
+  "tech:infrastructure_platform",
+  "tech:data_asset_or_integration",
+];
+
+/** Visible text only: a value inside a `title` or a `<style>` block is not what a reader reads. */
+function visibleText(): string {
+  document.querySelectorAll("style").forEach((node) => node.remove());
+  return document.body.textContent ?? "";
+}
+
+function open(surface: string) {
+  window.location.hash = surface;
+  render(<HomeV4App bundle={bundle()} tenantKey="meridian-health" />);
+}
+
+describe.each(SURFACES)("%s", (surface) => {
+  it("shows no machine identifier", () => {
+    open(surface);
+    // Two or more lowercase words joined by underscores. Matched by shape, so a key nobody has
+    // invented yet fails this too. Tokens carrying digits are references and are left alone.
+    expect(visibleText().match(/\b[a-z][a-z]*(?:_[a-z]+)+\b/g) ?? []).toEqual(
+      [],
+    );
+  });
+
+  it("reports no state of the build", () => {
+    open(surface);
+    const text = visibleText();
+    for (const pattern of [
+      /\d+ of \d+ sections/i,
+      /sections ready/i,
+      /\bdeferred\b/i,
+      /grounded statements/i,
+      /CXO readout/i,
+      /has been established for this chapter/i,
+      /is ready for this chapter/i,
+      /\bECL\b/,
+      /\bprojection\b/i,
+      /\bpayload\b/i,
+      /\bschema\b/i,
+    ]) {
+      expect(text).not.toMatch(pattern);
+    }
+  });
+});
+
+describe("a chapter describes what it is for", () => {
+  function tableLabels(chapterId: string): string[] {
+    window.location.hash = chapterId;
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    return [...container.querySelectorAll("table")].map(
+      (t) =>
+        t.previousElementSibling?.textContent ??
+        t.getAttribute("aria-label") ??
+        "",
+    );
+  }
+
+  it("tabulates a family on one chapter, not on two", () => {
+    const tech = new Set(tableLabels("technology_data"));
+    document.body.innerHTML = "";
+    const attention = new Set(tableLabels("what_needs_attention"));
+    const shared = [...tech].filter((label) => label && attention.has(label));
+    expect(shared).toEqual([]);
+  });
+});
+
+describe("the leadership chapter carries the interviews", () => {
+  it("quotes every office on the record, not only the loudest", () => {
+    window.location.hash = "leadership_perspective";
+    const { container } = render(
+      <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+    );
+    const block = container.querySelector("[data-leadership-full]");
+    expect(block).not.toBeNull();
+    const offices = [...block!.querySelectorAll("span")]
+      .map((n) => n.textContent ?? "")
+      .filter((t) => /Officer|President|VP|Chief/.test(t));
+    // Five distinct offices are quoted in the record; the chapter showed one.
+    expect(new Set(offices).size).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe("an exhibit belongs to the argument on the page", () => {
+  it("draws the renewal timeline only where the chapter reasons from contracts", () => {
+    const drawn = bundle()
+      .chapters.map((chapter) => {
+        window.location.hash = chapter.chapterId;
+        const { container, unmount } = render(
+          <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+        );
+        const has = /When the decisions arrive/.test(
+          container.textContent ?? "",
+        );
+        unmount();
+        return has ? chapter.chapterId : null;
+      })
+      .filter(Boolean);
+    // Value and bets. Not "what do leaders agree on", where it answered nothing that was asked.
+    expect(drawn).toEqual(["strategy_value_creation", "performance_value"]);
+  });
+});

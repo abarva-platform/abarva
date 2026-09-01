@@ -6,6 +6,7 @@ import {
   type TableSpec,
   type UnsupportedView,
 } from "./page-tables";
+import { cellText } from "./cxo-language";
 import { LineageMark } from "./FactLineage";
 import type { FactLineage } from "./fact-lineage";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
@@ -166,7 +167,9 @@ export function TableSet({ tables }: { tables: TableSpec[] }) {
                               }}
                             />
                           ) : null}
-                          <span style={{ position: "relative" }}>{cell}</span>
+                          <span style={{ position: "relative" }}>
+                            {cellText(cell)}
+                          </span>
                         </td>
                       ))}
                     </tr>
@@ -187,7 +190,7 @@ export function TableSet({ tables }: { tables: TableSpec[] }) {
                             whiteSpace: "nowrap",
                           }}
                         >
-                          {cell}
+                          {cellText(cell)}
                         </td>
                       ))}
                     </tr>
