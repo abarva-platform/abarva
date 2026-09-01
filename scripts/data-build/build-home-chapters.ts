@@ -642,6 +642,7 @@ Respond with strict JSON: { "headline": "...", "executive_synthesis": "..." }`;
 interface ChapterSynthesisOptions {
   maxTokens: number;
   effort: ReasoningEffort;
+  deterministicOnly?: boolean;
 }
 
 interface ChapterSynthesisResult {
@@ -837,6 +838,9 @@ async function synthesizeChapterNarrative(
       outputTokens: 0,
       stopReason: null,
     };
+  }
+  if (options.deterministicOnly) {
+    return deterministicClaimBasedChapterNarrative(def, claims, 0, 0, "deterministic_write_fallback");
   }
   const userPrompt = buildChapterSynthesisUserPrompt(def, claims, signalPacket);
   const result = await callClaude(client, CHAPTER_SYNTHESIS_SYSTEM_PROMPT, userPrompt, options.maxTokens, options.effort);

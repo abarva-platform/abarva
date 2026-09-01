@@ -29,6 +29,7 @@ import {
 } from "../data-build/build-enterprise-thesis";
 import {
   buildChapterViewsFromVerifiedThesis,
+  HOME_CHAPTER_SYNTHESIS_OPTIONS,
   buildHomeChapterProvenance,
   type ChapterId,
   type ChapterView,
@@ -3118,6 +3119,12 @@ async function main() {
       thesisResult.publishedGeneration as EnterpriseThesis,
       anthropic,
       options.chapterIds,
+      {
+        synthesis: {
+          ...HOME_CHAPTER_SYNTHESIS_OPTIONS,
+          deterministicOnly: WRITE,
+        },
+      },
     );
     const chapters = normalizeChapterTerminalStates(
       scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[],
