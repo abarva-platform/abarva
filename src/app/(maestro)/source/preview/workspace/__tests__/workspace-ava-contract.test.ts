@@ -100,8 +100,9 @@ describe("Source Workspace aVa contract", () => {
     expect(workspaceCssSource).toContain(".sw-v2-root");
     expect(workspaceCssSource).toContain("height: calc(100dvh - 73px)");
     expect(workspaceCssSource).toContain(".sw-v2-horizontal-tabs");
-    expect(workspaceCssSource).toContain(".sw-v2-sticky-context");
     expect(workspaceCssSource).toContain(".sw-v2-content-canvas");
+    expect(workspaceCssSource).not.toContain(".sw-v2-frame-bar");
+    expect(workspaceCssSource).not.toContain(".sw-v2-sticky-context");
     expect(workspaceCssSource).toContain("@media (max-width: 1180px)");
     expect(contextLensSource).not.toContain("width: min(100%, 1280px)");
   });

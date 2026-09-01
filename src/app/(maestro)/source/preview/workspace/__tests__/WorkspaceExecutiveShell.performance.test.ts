@@ -29,7 +29,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).not.toContain('? "#0a0a0b"');
   });
 
-  it("keeps Source navigation persistent and avoids duplicate Evidence or Graph toolbar actions", () => {
+  it("keeps Source navigation singular and avoids duplicate toolbar actions", () => {
     const source = readFileSync(
       `${__dirname}/../WorkspaceExecutiveShell.tsx`,
       "utf8",
@@ -37,11 +37,15 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     const css = readFileSync(`${__dirname}/../workspace.css`, "utf8");
 
     expect(source).toContain('aria-label="Source workspace navigation"');
-    expect(source).toContain('aria-label="Persistent Source workspace toolbar"');
+    expect(source).not.toContain('aria-label="Source workspace header"');
+    expect(source).not.toContain(
+      'aria-label="Persistent Source workspace toolbar"',
+    );
     expect(source).toContain("sw-v2-impact-load-badge");
     expect(css).toContain(".sw-v2-horizontal-tabs");
-    expect(css).toContain("position: sticky");
-    expect(css).toContain(".sw-v2-sticky-context");
+    expect(css).not.toContain(".sw-v2-frame-bar");
+    expect(css).not.toContain(".sw-v2-sticky-context");
+    expect(css).not.toContain(".sw-v2-compact-action-button");
     expect(source).not.toContain("<span>Evidence</span></button>");
     expect(source).not.toContain("<span>Graph</span></button>");
   });
