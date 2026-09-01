@@ -1,0 +1,21 @@
+application_id,application_name,vendor,category,business_capability,environment,hosting,criticality,data_classification,owner_department,technical_owner,users_monthly,annual_cost_usd,integration_count,contains_phi,lifecycle_status,last_major_upgrade
+APP-0412,Epic Resolute Professional Billing,Epic Systems,Revenue Cycle,Professional Claims Billing,Production,On-Prem VMware,Tier 1,PHI,Revenue Cycle Operations,Epic PB Application Team,1840,4200000,17,Yes,Active,2025-04-18
+APP-0413,Epic Resolute Hospital Billing,Epic Systems,Revenue Cycle,Facility Claims Billing,Production,On-Prem VMware,Tier 1,PHI,Revenue Cycle Operations,Epic HB Application Team,1210,3800000,21,Yes,Active,2025-04-18
+APP-0418,Epic Clarity,Epic Systems,Data Platform,Reporting Data Warehouse,Production,On-Prem VMware,Tier 1,PHI,Enterprise Data & Analytics,Clarity ETL Team,340,900000,34,Yes,Active,2024-11-02
+APP-0419,Epic Caboodle,Epic Systems,Data Platform,Dimensional Data Warehouse,Production,On-Prem VMware,Tier 1,PHI,Enterprise Data & Analytics,Caboodle Team,290,1100000,22,Yes,Active,2025-06-14
+APP-0521,Optum Claims Manager,Optum,Revenue Cycle,Claims Scrubbing & Edits,Production,Vendor SaaS,Tier 1,PHI,Revenue Cycle Operations,RCM Integrations,760,1450000,9,Yes,Active,2025-02-09
+APP-0522,Availity Essentials,Availity,Revenue Cycle,Payer Clearinghouse,Production,Vendor SaaS,Tier 1,PHI,Revenue Cycle Operations,RCM Integrations,540,680000,12,Yes,Active,2024-09-30
+APP-0533,Waystar Denial Management,Waystar,Revenue Cycle,Denials Workflow,Production,Vendor SaaS,Tier 1,PHI,Denials Management,RCM Integrations,410,1250000,7,Yes,Active,2025-07-21
+APP-0534,nThrive Contract Management,nThrive,Revenue Cycle,Payer Contract Modeling,Production,Vendor SaaS,Tier 2,PHI,Managed Care Contracting,Contract Analytics,120,540000,5,Yes,Active,2023-10-11
+APP-0611,Change Healthcare Remit Manager,Change Healthcare,Revenue Cycle,835 Remittance Processing,Production,Vendor SaaS,Tier 1,PHI,Revenue Cycle Operations,RCM Integrations,300,720000,8,Yes,Active,2024-06-05
+APP-0705,Snowflake Analytics Platform,Snowflake,Data Platform,Cloud Data Warehouse,Production,Cloud AWS,Tier 1,PHI,Enterprise Data & Analytics,Data Platform Engineering,410,2400000,41,Yes,Active,2026-01-15
+APP-0706,Databricks Lakehouse,Databricks,Data Platform,ML & Data Engineering,Production,Cloud AWS,Tier 2,PHI,Enterprise Data & Analytics,Data Platform Engineering,180,1900000,19,Yes,Active,2026-03-02
+APP-0707,Informatica PowerCenter,Informatica,Integration,Legacy ETL,Production,On-Prem Linux,Tier 2,PHI,Enterprise Data & Analytics,Integration Services,45,860000,63,Yes,Sunset Planned,2021-08-19
+APP-0708,Mirth Connect Interface Engine,NextGen,Integration,HL7 Interface Engine,Production,On-Prem Linux,Tier 1,PHI,Integration Services,Interface Engineering,30,310000,88,Yes,Active,2024-02-27
+APP-0811,Tableau Server,Salesforce,Analytics,Enterprise BI,Production,On-Prem Windows,Tier 2,PHI,Enterprise Data & Analytics,BI Platform Team,2100,780000,14,Yes,Active,2025-05-30
+APP-0812,Power BI Premium,Microsoft,Analytics,Departmental BI,Production,Cloud Azure,Tier 3,Internal,Finance,BI Platform Team,890,240000,6,No,Active,2026-02-11
+APP-0901,Workday HCM,Workday,Corporate,Human Capital Management,Production,Vendor SaaS,Tier 1,PII,Human Resources,HRIS Team,14200,3100000,11,No,Active,2025-11-08
+APP-0902,Oracle Fusion ERP,Oracle,Corporate,Finance General Ledger,Production,Cloud OCI,Tier 1,Internal,Finance,ERP Team,2300,5600000,16,No,Active,2025-09-19
+APP-1001,ServiceNow ITSM,ServiceNow,IT Operations,Incident & Change Management,Production,Vendor SaaS,Tier 2,Internal,IT Operations,ITSM Team,3400,1150000,23,No,Active,2026-01-28
+APP-1102,Legacy Millennium EHR,Oracle Health,Clinical,Legacy EHR - Regional Hospital,Production,On-Prem VMware,Tier 2,PHI,Clinical Applications,Cerner Sunset Team,210,2200000,29,Yes,Decommission In Progress,2019-05-14
+APP-1205,Denials Analytics Access DB,In-House,Revenue Cycle,Shadow Denials Tracking,Production,Desktop,Tier 4,PHI,Denials Management,Unassigned,18,0,0,Yes,Unsupported,2018-03-01
