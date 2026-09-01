@@ -655,10 +655,10 @@ assert(
     chapters.includes("function claimBackedNarrativeNeedsFallback") &&
     chapters.includes("missing_model_response_fallback") &&
     chapters.includes("invalid_json_fallback") &&
-    chapters.includes("deterministicOnly") &&
-    chapters.includes("deterministic_write_fallback") &&
     chapters.includes("post_synthesis_refusal_language_fallback") &&
-    chapters.includes("deterministicClaimBasedChapterNarrative"),
+    chapters.includes("deterministicClaimBasedChapterNarrative") &&
+    !chapters.includes("deterministicOnly") &&
+    !chapters.includes("deterministic_write_fallback"),
   "Home chapter assembly routes organization/workforce/process evidence to How We Operate and prevents claim-backed chapters from rendering unavailable or generic refusal prose",
 );
 assert(
@@ -671,8 +671,23 @@ assert(
 assert(
   script.includes("published_chapter_contains_refusal_language") &&
     script.includes("refusalLikePublishedText") &&
-    script.includes("deterministicOnly: WRITE"),
+    script.includes("visibleNarrativeQualityIssues(thesisResult, chapters, signalPacket)") &&
+    script.includes("visibleNarrativeQualityIssues(plan.thesisResult, plan.chapters, signalPacket)"),
   "Home ECL narrative visible-quality gate rejects a published chapter that still renders refusal-like prose",
+);
+assert(
+  script.includes("--from-plan") &&
+    script.includes("--plan-sha256") &&
+    script.includes("HOME_ECL_NARRATIVE_FROM_PLAN") &&
+    script.includes("HOME_ECL_NARRATIVE_PLAN_SHA256") &&
+    script.includes("function readApprovedNarrativePlan") &&
+    script.includes("Approved plan hash mismatch") &&
+    script.includes("Approved writes require --from-plan") &&
+    script.includes("plan_signal_packet_hash_mismatch") &&
+    script.includes("plan_story_plan_hash_mismatch") &&
+    script.includes("write_from_plan") &&
+    !script.includes("deterministicOnly: WRITE"),
+  "Home ECL narrative approved writes commit a hash-gated plan artifact instead of regenerating chapter prose",
 );
 assert(
   thesis.includes("OPENING THESIS BAR") &&

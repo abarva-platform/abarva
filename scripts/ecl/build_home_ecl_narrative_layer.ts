@@ -29,7 +29,6 @@ import {
 } from "../data-build/build-enterprise-thesis";
 import {
   buildChapterViewsFromVerifiedThesis,
-  HOME_CHAPTER_SYNTHESIS_OPTIONS,
   buildHomeChapterProvenance,
   type ChapterId,
   type ChapterView,
@@ -198,7 +197,28 @@ interface CliOptions {
   assessmentId: string;
   outDir: string;
   chapterIds: ChapterId[];
+  fromPlanPath: string | null;
+  planSha256: string | null;
 }
+
+interface HomeNarrativePlanResult {
+  tenantKey: string;
+  assessmentId: string;
+  writeApplied: boolean;
+  chapters: ChapterView[];
+  storyPlan?: HomeExecutiveStoryPlanV1;
+  signalPacket?: EnterpriseSignalPacket;
+  contextPolicyProof?: ContextPolicyProof;
+  thesisResult?: VerifiedEnterpriseThesisResult;
+  publicationGate?: { accepted?: boolean; issues?: unknown[] };
+  visibleQualityGate?: { accepted?: boolean; issues?: unknown[] };
+  verificationSummary?: unknown;
+}
+
+type ApprovedHomeNarrativePlanResult = HomeNarrativePlanResult & {
+  contextPolicyProof: ContextPolicyProof;
+  thesisResult: VerifiedEnterpriseThesisResult;
+};
 
 interface HomeProjectionWriteRow {
   id: string;
@@ -289,11 +309,17 @@ function parseCli(): CliOptions {
     assessmentId: cliValue("--assessment") ?? process.env.ECL_DENSE_ASSESSMENT_ID ?? DEFAULT_ASSESSMENT_ID,
     outDir: cliValue("--out-dir") ?? DEFAULT_OUT_DIR,
     chapterIds: parseChapterIds(cliValue("--chapter")),
+    fromPlanPath: cliValue("--from-plan") ?? process.env.HOME_ECL_NARRATIVE_FROM_PLAN ?? null,
+    planSha256: cliValue("--plan-sha256") ?? process.env.HOME_ECL_NARRATIVE_PLAN_SHA256 ?? null,
   };
 }
 
 function hashJson(value: unknown): string {
   return crypto.createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+function hashBytes(content: Buffer): string {
+  return crypto.createHash("sha256").update(content).digest("hex");
 }
 
 function readHomePagePromptContracts(): HomePagePromptContract[] {
@@ -2723,6 +2749,46 @@ function normalizeChapterTerminalStates(chapters: ChapterView[]): ChapterView[] 
   });
 }
 
+function readApprovedNarrativePlan(
+  options: CliOptions,
+  rows: HomeProjectionWriteRow[],
+  signalPacket: EnterpriseSignalPacket,
+): { plan: ApprovedHomeNarrativePlanResult; planSha256: string } {
+  if (!options.fromPlanPath) throw new Error("Approved writes require --from-plan <plan-json>.");
+  if (!options.planSha256) throw new Error("Approved writes require --plan-sha256 <sha256>.");
+  const planBytes = fs.readFileSync(options.fromPlanPath);
+  const planSha256 = hashBytes(planBytes);
+  if (planSha256 !== options.planSha256) {
+    throw new Error(`Approved plan hash mismatch: expected ${options.planSha256}, got ${planSha256}.`);
+  }
+  const plan = JSON.parse(planBytes.toString("utf8")) as HomeNarrativePlanResult;
+  const issues: string[] = [];
+  if (plan.tenantKey !== options.tenantKey) issues.push(`tenant_mismatch:${plan.tenantKey}`);
+  if (plan.assessmentId !== options.assessmentId) issues.push(`assessment_mismatch:${plan.assessmentId}`);
+  if (plan.writeApplied !== false) issues.push("plan_was_not_plan_only");
+  if (!Array.isArray(plan.chapters) || plan.chapters.length === 0) issues.push("plan_missing_chapters");
+  if (!plan.thesisResult) issues.push("plan_missing_thesis_result");
+  if (!plan.contextPolicyProof) issues.push("plan_missing_context_policy_proof");
+  if (!plan.publicationGate?.accepted || (plan.publicationGate.issues ?? []).length) issues.push("plan_publication_gate_not_clean");
+  if (!plan.visibleQualityGate?.accepted || (plan.visibleQualityGate.issues ?? []).length) issues.push("plan_visible_quality_gate_not_clean");
+  if (!plan.signalPacket || hashJson(plan.signalPacket) !== hashJson(signalPacket)) issues.push("plan_signal_packet_hash_mismatch");
+  const expectedChapterIds = new Set(options.chapterIds);
+  const planChapterIds = new Set((plan.chapters ?? []).map((chapter) => chapter.chapterId));
+  const missing = [...expectedChapterIds].filter((chapterId) => !planChapterIds.has(chapterId));
+  const extra = [...planChapterIds].filter((chapterId) => !expectedChapterIds.has(chapterId as ChapterId));
+  if (missing.length || extra.length) issues.push(`plan_chapter_set_mismatch:missing=${missing.join(",") || "none"}:extra=${extra.join(",") || "none"}`);
+  const currentStoryPlan = buildHomeExecutiveStoryPlan(options, rows, plan.chapters ?? [], signalPacket);
+  if (plan.storyPlan?.storyPlanHash && plan.storyPlan.storyPlanHash !== currentStoryPlan.storyPlanHash) {
+    issues.push("plan_story_plan_hash_mismatch");
+  }
+  if (plan.thesisResult && Array.isArray(plan.chapters)) {
+    const visibleQualityIssues = visibleNarrativeQualityIssues(plan.thesisResult, plan.chapters, signalPacket);
+    if (visibleQualityIssues.length) issues.push(...visibleQualityIssues.map((issue) => `plan_visible_quality_recheck:${issue}`));
+  }
+  if (issues.length) throw new Error(`Approved Home ECL narrative plan refused: ${issues.join("; ")}`);
+  return { plan: plan as ApprovedHomeNarrativePlanResult, planSha256 };
+}
+
 async function writeNarrativeRows(
   db: Client,
   options: CliOptions,
@@ -3062,10 +3128,10 @@ async function main() {
   fs.mkdirSync(options.outDir, { recursive: true });
 
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required to read ECL Home projection rows.");
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is required to generate Home narrative.");
+  if (options.fromPlanPath && !WRITE) throw new Error("--from-plan is only valid with approved write mode.");
+  if (WRITE && !options.fromPlanPath) throw new Error("Approved writes require --from-plan <plan-json>; rerun plan first and commit that artifact.");
+  if (!options.fromPlanPath && !process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is required to generate Home narrative.");
 
-  const { getAnthropicDirectClient } = await import("../../src/lib/integrations/ai-egress/anthropic-direct");
-  const anthropic = getAnthropicDirectClient({ workload: "home_ecl_narrative" }) as AnthropicLikeClient;
   const db = new Client({ connectionString: process.env.DATABASE_URL });
 
   await db.connect();
@@ -3099,6 +3165,49 @@ async function main() {
       );
     }
 
+    if (options.fromPlanPath) {
+      const { plan, planSha256 } = readApprovedNarrativePlan(options, rows, signalPacket);
+      const result = {
+        ...plan,
+        writeApplied: true,
+        approvedPlan: {
+          path: options.fromPlanPath,
+          sha256: planSha256,
+        },
+      };
+      const outFile = path.join(options.outDir, `${options.tenantKey}-home-ecl-narrative-layer.json`);
+      fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
+      console.log(`-> ${outFile}`);
+      await writeNarrativeRows(db, options, rows, plan.chapters, plan.thesisResult, signalPacket, plan.contextPolicyProof);
+      console.log(`✓ wrote ${plan.chapters.length} approved chapter summaries and ${plan.chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0)} approved chapter claim rows`);
+      console.log(JSON.stringify({
+        structured_event: "home_ecl_narrative_layer_summary",
+        tenant_key: options.tenantKey,
+        assessment_id: options.assessmentId,
+        write_applied: true,
+        write_from_plan: true,
+        approved_plan_sha256: planSha256,
+        source_projection_rows: rows.length,
+        signal_count: signalPacket.signals.length,
+        context_item_count: signalPacket.contextItems.length,
+        source_summary_count: signalPacket.sourceSummaries.length,
+        source_summary_rows: signalPacket.sourceSummaries.reduce((sum, item) => sum + (item.rawRowCount ?? item.recordCount), 0),
+        active_source_file_rows: activeSourceRows.length,
+        chapter_count: plan.chapters.length,
+        chapter_claim_rows: plan.chapters.reduce((sum, chapter) => sum + claimRowsForChapter(chapter).length, 0),
+        thesis_prompt_version: THESIS_PROMPT_VERSION,
+        context_policy: plan.contextPolicyProof,
+        signal_packet_hash: hashJson(signalPacket),
+        story_plan_hash: buildHomeExecutiveStoryPlan(options, rows, plan.chapters, signalPacket).storyPlanHash,
+        verification: plan.verificationSummary,
+        out_file: outFile,
+      }));
+      emitHomeNarrativeProofBundle(outFile, result, options);
+      return;
+    }
+
+    const { getAnthropicDirectClient } = await import("../../src/lib/integrations/ai-egress/anthropic-direct");
+    const anthropic = getAnthropicDirectClient({ workload: "home_ecl_narrative" }) as AnthropicLikeClient;
     const labelByIdentifier = buildVisibleIdentifierLabels(rows);
     const rawThesisResult = await buildVerifiedEnterpriseThesisFromSignalPacket(signalPacket, anthropic, {
       deterministicClaimPlan: true,
@@ -3119,12 +3228,6 @@ async function main() {
       thesisResult.publishedGeneration as EnterpriseThesis,
       anthropic,
       options.chapterIds,
-      {
-        synthesis: {
-          ...HOME_CHAPTER_SYNTHESIS_OPTIONS,
-          deterministicOnly: WRITE,
-        },
-      },
     );
     const chapters = normalizeChapterTerminalStates(
       scrubVisibleIdsInValue(generatedChapters, labelByIdentifier) as ChapterView[],
