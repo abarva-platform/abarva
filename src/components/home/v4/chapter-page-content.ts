@@ -18,6 +18,7 @@ import {
   infrastructureFindings,
   dataTables,
   dataFindings,
+  dropUndeclaredColumns,
   unsupportedApplicationViews,
   unsupportedAiViews,
   type EstateRow,
@@ -138,7 +139,24 @@ function depthForSources(
   for (const source of sources) {
     const rows = estate[source];
     if (!rows || rows.length === 0) continue;
-    tables.push(...BUILDERS[source].tables(rows));
+    // Applied here rather than in each builder, so neither an empty table nor a column of dashes
+    // can reach a reader from a family nobody thought to check.
+    //
+    // A table grouped on a column the record does not carry produces no rows and a total of zero,
+    // and reads as a result: "0 blocked claims", "0 platforms without recovery". That is the most
+    // flattering possible misreading of an absent column. Such a table is not rendered; it is
+    // reported as a view the rows could not support, which is what it is.
+    for (const table of BUILDERS[source].tables(rows)) {
+      if (table.rows.length === 0) {
+        unsupported.push({
+          caption: table.caption,
+          missingColumn: table.columns[0],
+          why: `No row in this family declares ${table.columns[0].toLowerCase()}, so the table has nothing to group. An empty table with a total of zero would read as a result rather than as an absent column.`,
+        });
+        continue;
+      }
+      tables.push(dropUndeclaredColumns(table));
+    }
     findings.push(
       ...(source === "vendors"
         ? vendorFindings(rows, estate.asOf)

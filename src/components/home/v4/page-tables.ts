@@ -567,18 +567,24 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
       const years = [...byYear.entries()].sort((a, b) =>
         a[0].localeCompare(b[0]),
       );
+      const declaresAutoRenew = contracts.some((c) => str(c, "autoRenewFlag"));
       return {
         caption: "When the contracts end",
         section: "Commercial exposure",
         columns: ["Term ends", "Contracts", "Annual spend", "Auto-renewing"],
-        rows: years.map(([year, e]) => [year, e.count, usd(e.spend), e.auto]),
+        rows: years.map(([year, e]) => [
+          year,
+          e.count,
+          usd(e.spend),
+          declaresAutoRenew ? e.auto : ABSENT,
+        ]),
         total: [
           "Total",
           contracts.length,
           usd(spend(contracts)),
-          contracts.filter((c) =>
+          countedWhereDeclared(contracts, "autoRenewFlag", (c) =>
             /^(yes|true|y)$/i.test(str(c, "autoRenewFlag")),
-          ).length,
+          ),
         ],
         note: "An auto-renewing contract passes its term end without a decision unless notice is served inside its declared window.",
       };
@@ -1149,6 +1155,76 @@ export function constantColumns(
  * Metrics, risks, programs, organisation and AI — the intake families the projection now carries
  * ---------------------------------------------------------------------------------------------- */
 
+/* ------------------------------------------------------------------------------------------------
+ * Undeclared columns — a column of dashes is a field the intake never collected
+ * ---------------------------------------------------------------------------------------------- */
+
+/** What every formatter here emits for a value the record does not carry. Never for a zero. */
+const ABSENT = "\u2014";
+
+/**
+ * Drops a data column whose every cell is the absent mark, and says so under the table.
+ *
+ * A money column built from a field no row declares comes out as a dash in every cell and a dash in
+ * the total. That is not a result. It is a column-width advertisement for a field the intake never
+ * collected, and a reader scanning across for the number finds a shape where one should be.
+ *
+ * The dash is what makes this safe to do without the builder's help: the formatters emit it only
+ * for absent, never for zero, so a column made entirely of them is carrying no value by
+ * construction. An all-ZERO column is a different case and deliberately not touched here -- zero
+ * can be a real count, and only the builder knows whether it is.
+ *
+ * The dropped column is named beneath the table. Silently vanishing it would be the same mistake as
+ * printing it: a column the record cannot fill is a fact about the record.
+ */
+/**
+ * A count of matching rows, or the absent mark when no row declares the field at all.
+ *
+ * Zero and absent are different answers and they render identically. Where the field exists and
+ * nothing matches, zero is a result worth showing. Where no row carries the field, zero is a
+ * statement about the intake wearing the clothes of a finding -- and it is always the reassuring
+ * reading: no regulatory drivers, no auto-renewals, nothing to worry about.
+ *
+ * Returning the absent mark hands the column to dropUndeclaredColumns, which removes it and names
+ * it underneath, so the two mechanisms compose into one rule: a column the record cannot fill is
+ * never drawn and never silent.
+ */
+export function countedWhereDeclared(
+  rows: EstateRow[],
+  field: string,
+  matches: (row: EstateRow) => boolean,
+): number | string {
+  if (!rows.some((row) => str(row, field))) return ABSENT;
+  return rows.filter(matches).length;
+}
+
+export function dropUndeclaredColumns(table: TableSpec): TableSpec {
+  if (table.rows.length === 0) return table;
+  const dropped: number[] = [];
+  // Column 0 labels the rows; it is never a measure and never dropped.
+  for (let column = 1; column < table.columns.length; column += 1) {
+    if (table.rows.every((row) => String(row[column] ?? "") === ABSENT)) {
+      dropped.push(column);
+    }
+  }
+  if (dropped.length === 0) return table;
+  const keep = <T>(values: T[]) =>
+    values.filter((_, i) => !dropped.includes(i));
+  const names = dropped.map((i) => table.columns[i]);
+  const droppedNote = `No row declares ${names.map((n) => n.toLowerCase()).join(" or ")}, so ${names.length === 1 ? "that column is" : "those columns are"} not drawn.`;
+  return {
+    ...table,
+    columns: keep(table.columns),
+    rows: table.rows.map((row) => keep(row)),
+    total: table.total ? keep(table.total) : undefined,
+    barColumn:
+      table.barColumn && names.includes(table.barColumn)
+        ? undefined
+        : table.barColumn,
+    note: [table.note, droppedNote].filter(Boolean).join(" "),
+  };
+}
+
 export function metricTables(metrics: EstateRow[]): TableSpec[] {
   if (metrics.length === 0) return [];
   const tables: TableSpec[] = [];
@@ -1404,17 +1480,20 @@ export function riskTables(risks: EstateRow[]): TableSpec[] {
       rows: byDomain.map((d) => [
         label(d.value),
         d.count,
-        risks.filter(
+        countedWhereDeclared(
+          risks,
+          "regulatoryDriver",
           (r) =>
             str(r, "riskDomain") === d.value &&
             /^(yes|true|y)$/i.test(str(r, "regulatoryDriver")),
-        ).length,
+        ),
       ]),
       total: [
         "Declared",
         byDomain.reduce((n, d) => n + d.count, 0),
-        risks.filter((r) => /^(yes|true|y)$/i.test(str(r, "regulatoryDriver")))
-          .length,
+        countedWhereDeclared(risks, "regulatoryDriver", (r) =>
+          /^(yes|true|y)$/i.test(str(r, "regulatoryDriver")),
+        ),
       ],
       note: "A risk without a regulatory driver is the enterprise's own assessment rather than an external requirement.",
     });
