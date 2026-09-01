@@ -2698,13 +2698,12 @@ function chapterHasSubstantiveContent(chapter: ChapterView): boolean {
 
 function normalizeChapterTerminalStates(chapters: ChapterView[]): ChapterView[] {
   return chapters.map((chapter) => {
-    const terminalText = [
+    const visibleTerminalText = [
       chapter.headline,
       chapter.executive_synthesis,
-      ...chapter.limitations,
     ].some((textValue) => hasForbiddenVisibleLanguage(textValue));
 
-    if (!terminalText) return chapter;
+    if (!visibleTerminalText) return chapter;
 
     const hasContent = chapterHasSubstantiveContent(chapter);
     return {

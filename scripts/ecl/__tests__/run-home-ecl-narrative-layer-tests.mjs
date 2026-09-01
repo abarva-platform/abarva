@@ -556,6 +556,13 @@ assert(
   "ECL narrative job scrubs raw object IDs, repairs terminal chapter language, and refuses remaining visible implementation vocabulary or bland empty-state prose",
 );
 assert(
+  script.includes("const visibleTerminalText =") &&
+    script.includes("chapter.headline") &&
+    script.includes("chapter.executive_synthesis") &&
+    !script.includes("chapter.executive_synthesis,\n      ...chapter.limitations"),
+  "ECL narrative terminal normalizer only scans visible chapter prose, not non-visible limitations",
+);
+assert(
   thesis.includes("action: \"dropped_structural\"") &&
     thesis.includes("structural issue: ${issue.reason}") &&
     thesis.includes("claimsRequiringVerification(publishedGeneration)"),
