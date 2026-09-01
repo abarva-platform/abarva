@@ -1,6 +1,6 @@
-import { cellText } from "./cxo-language";
-("use client");
+"use client";
 
+import { cellText } from "./cxo-language";
 import { useMemo, useState, type CSSProperties } from "react";
 
 import type {
