@@ -1,8 +1,10 @@
-import type {
-  Finding,
-  FindingKind,
-  TableSpec,
-  UnsupportedView,
+import {
+  rankFindings,
+  splitLeadingFigure,
+  type Finding,
+  type FindingKind,
+  type TableSpec,
+  type UnsupportedView,
 } from "./page-tables";
 import { LineageMark } from "./FactLineage";
 import type { FactLineage } from "./fact-lineage";
@@ -69,114 +71,146 @@ export function TableSet({ tables }: { tables: TableSpec[] }) {
         alignItems: "start",
       }}
     >
-      {tables.map((table) => (
-        <div
-          key={table.caption}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 11,
-            minWidth: 0,
-            // A wide table takes the whole row so its totals column is on screen, not behind a
-            // sideways scroll. The container still scrolls if the viewport is narrower than that.
-            gridColumn: table.wide ? "1 / -1" : undefined,
-          }}
-        >
-          <span style={eyebrow(V4.slate)}>{table.caption}</span>
+      {tables.map((table) => {
+        // The largest value in the bar column sets the scale, so a bar is a share of the biggest
+        // row rather than of an invented maximum.
+        const barIndex = table.barColumn
+          ? table.columns.indexOf(table.barColumn)
+          : -1;
+        const barMax =
+          barIndex === -1
+            ? 0
+            : Math.max(
+                ...table.rows.map(
+                  (row) =>
+                    Number(String(row[barIndex]).replace(/[^0-9.]/g, "")) || 0,
+                ),
+              );
+        return (
           <div
+            key={table.caption}
             style={{
-              background: V4.surface,
-              border: `1px solid ${V4.rule}`,
-              padding: "16px 18px",
-              overflowX: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: 11,
+              minWidth: 0,
+              // A wide table takes the whole row so its totals column is on screen, not behind a
+              // sideways scroll. The container still scrolls if the viewport is narrower than that.
+              gridColumn: table.wide ? "1 / -1" : undefined,
             }}
           >
-            <table
+            <span style={eyebrow(V4.slate)}>{table.caption}</span>
+            <div
               style={{
-                borderCollapse: "collapse",
-                width: "100%",
-                fontVariantNumeric: "tabular-nums",
+                background: V4.surface,
+                border: `1px solid ${V4.rule}`,
+                padding: "16px 18px",
+                overflowX: "auto",
               }}
             >
-              <thead>
-                <tr>
-                  {table.columns.map((column, i) => (
-                    <th
-                      key={column}
-                      style={{
-                        ...eyebrow(V4.slate),
-                        fontSize: 10,
-                        textAlign: i === 0 ? "left" : "right",
-                        padding: "0 12px 7px",
-                        borderBottom: `1px solid ${V4.ruleStrong}`,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {column}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {table.rows.map((row, r) => (
-                  <tr key={r}>
-                    {row.map((cell, i) => (
-                      <td
-                        key={i}
-                        style={{
-                          fontFamily: i === 0 ? SANS : MONO,
-                          fontSize: i === 0 ? 13.5 : 12.5,
-                          color: i === 0 ? V4.ink : V4.inkSoft,
-                          textAlign: i === 0 ? "left" : "right",
-                          padding: "7px 12px",
-                          borderBottom: `1px solid ${V4.ruleSoft}`,
-                          whiteSpace: i === 0 ? "normal" : "nowrap",
-                        }}
-                      >
-                        {cell}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                {table.total ? (
+              <table
+                style={{
+                  borderCollapse: "collapse",
+                  width: "100%",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                <thead>
                   <tr>
-                    {table.total.map((cell, i) => (
-                      <td
-                        key={i}
+                    {table.columns.map((column, i) => (
+                      <th
+                        key={column}
                         style={{
-                          fontFamily: i === 0 ? SANS : MONO,
-                          fontSize: i === 0 ? 13.5 : 12.5,
-                          fontWeight: 600,
-                          color: V4.ink,
+                          ...eyebrow(V4.slate),
+                          fontSize: 10,
                           textAlign: i === 0 ? "left" : "right",
-                          padding: "7px 12px",
-                          borderTop: `1px solid ${V4.ruleStrong}`,
+                          padding: "0 12px 7px",
+                          borderBottom: `1px solid ${V4.ruleStrong}`,
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {cell}
-                      </td>
+                        {column}
+                      </th>
                     ))}
                   </tr>
-                ) : null}
-              </tbody>
-            </table>
-            {table.note ? (
-              <p
-                style={{
-                  margin: "12px 0 0",
-                  fontFamily: SANS,
-                  fontSize: 12.5,
-                  lineHeight: 1.5,
-                  color: V4.slate,
-                }}
-              >
-                {table.note}
-              </p>
-            ) : null}
+                </thead>
+                <tbody>
+                  {table.rows.map((row, r) => (
+                    <tr key={r}>
+                      {row.map((cell, i) => (
+                        <td
+                          key={i}
+                          style={{
+                            fontFamily: i === 0 ? SANS : MONO,
+                            fontSize: i === 0 ? 13.5 : 12.5,
+                            color: i === 0 ? V4.ink : V4.inkSoft,
+                            textAlign: i === 0 ? "left" : "right",
+                            padding: "7px 12px",
+                            borderBottom: `1px solid ${V4.ruleSoft}`,
+                            whiteSpace: i === 0 ? "normal" : "nowrap",
+                            position: "relative",
+                          }}
+                        >
+                          {i === barIndex && barMax > 0 ? (
+                            <span
+                              aria-hidden="true"
+                              data-home-table-bar
+                              style={{
+                                position: "absolute",
+                                right: 0,
+                                top: 4,
+                                bottom: 4,
+                                width: `${Math.round((100 * (Number(String(cell).replace(/[^0-9.]/g, "")) || 0)) / barMax)}%`,
+                                background: "rgba(12,26,58,0.09)",
+                                pointerEvents: "none",
+                              }}
+                            />
+                          ) : null}
+                          <span style={{ position: "relative" }}>{cell}</span>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                  {table.total ? (
+                    <tr>
+                      {table.total.map((cell, i) => (
+                        <td
+                          key={i}
+                          style={{
+                            fontFamily: i === 0 ? SANS : MONO,
+                            fontSize: i === 0 ? 13.5 : 12.5,
+                            fontWeight: 600,
+                            color: V4.ink,
+                            textAlign: i === 0 ? "left" : "right",
+                            padding: "7px 12px",
+                            borderTop: `1px solid ${V4.ruleStrong}`,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+              {table.note ? (
+                <p
+                  style={{
+                    margin: "12px 0 0",
+                    fontFamily: SANS,
+                    fontSize: 12.5,
+                    lineHeight: 1.5,
+                    color: V4.slate,
+                  }}
+                >
+                  {table.note}
+                </p>
+              ) : null}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </section>
   );
 }
@@ -193,6 +227,11 @@ export function FindingsBlock({
   // design exists to remove, and an empty state is how it creeps back in.
   if (findings.length === 0) return null;
   const count = COUNT_WORD[findings.length] ?? String(findings.length);
+  // Exposure, then absence, then established -- descending order of what a reader has to act on.
+  const ranked = rankFindings(findings);
+  const exposures = ranked.filter(
+    (finding) => finding.kind === "exposure",
+  ).length;
   return (
     <section
       data-home-findings
@@ -203,14 +242,32 @@ export function FindingsBlock({
         gap: 12,
       }}
     >
-      <span
-        style={eyebrow(V4.slate)}
-        data-home-findings-count={findings.length}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 11,
+          flexWrap: "wrap",
+        }}
       >
-        What does not reconcile — {count} today
-      </span>
+        <span
+          style={eyebrow(V4.slate)}
+          data-home-findings-count={findings.length}
+        >
+          What does not reconcile — {count} today
+        </span>
+        {exposures > 0 ? (
+          <span
+            style={{ ...eyebrow(V4.red), fontSize: 10 }}
+            data-home-findings-exposures={exposures}
+          >
+            {exposures} the record says {exposures === 1 ? "is" : "are"} wrong
+            now
+          </span>
+        ) : null}
+      </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {findings.map((finding) => (
+        {ranked.map((finding, position) => (
           <div
             key={finding.claim}
             data-home-finding={finding.kind}
@@ -228,8 +285,10 @@ export function FindingsBlock({
             <div
               style={{
                 fontFamily: SANS,
-                fontSize: 15,
-                lineHeight: 1.5,
+                // The leading finding carries more room: a block sorted by consequence should look
+                // sorted, not merely be sorted.
+                fontSize: position === 0 ? 16.5 : 15,
+                lineHeight: 1.45,
                 maxWidth: "68ch",
               }}
             >
@@ -237,12 +296,31 @@ export function FindingsBlock({
                 const lineage = lineageForFinding(finding);
                 // A finding a reader cannot reproduce is an assertion, and an assertion carrying an
                 // owner's name is worse than none -- so the rule that produced it travels with it.
-                return lineage ? (
-                  <LineageMark lineage={lineage} onOpenRows={onOpenRows}>
-                    {finding.claim}
-                  </LineageMark>
+                const split = splitLeadingFigure(finding.claim);
+                const body = split ? (
+                  <>
+                    <span
+                      style={{
+                        fontFamily: SERIF,
+                        fontSize: position === 0 ? 26 : 21,
+                        lineHeight: 1,
+                        fontVariantNumeric: "tabular-nums",
+                        marginRight: 7,
+                      }}
+                    >
+                      {split.figure}
+                    </span>
+                    {split.rest}
+                  </>
                 ) : (
                   finding.claim
+                );
+                return lineage ? (
+                  <LineageMark lineage={lineage} onOpenRows={onOpenRows}>
+                    {body}
+                  </LineageMark>
+                ) : (
+                  body
                 );
               })()}
             </div>
@@ -336,6 +414,56 @@ export function UnsupportedViews({ views }: { views: UnsupportedView[] }) {
         ))}
       </div>
     </section>
+  );
+}
+
+/**
+ * What this page holds, said before a reader scrolls it.
+ *
+ * Every number here already exists; stating them together is the difference between a reader
+ * discovering the shape of the page by reading all of it and knowing it at the top.
+ */
+export function PageShape({
+  tables,
+  findings,
+  unsupported,
+}: {
+  tables: TableSpec[];
+  findings: Finding[];
+  unsupported: UnsupportedView[];
+}) {
+  const exposures = findings.filter(
+    (finding) => finding.kind === "exposure",
+  ).length;
+  const parts = [
+    tables.length
+      ? `${tables.length} ${tables.length === 1 ? "table" : "tables"}`
+      : null,
+    findings.length
+      ? `${findings.length} ${findings.length === 1 ? "finding" : "findings"}`
+      : null,
+    exposures
+      ? `${exposures} the record says ${exposures === 1 ? "is" : "are"} wrong now`
+      : null,
+    unsupported.length
+      ? `${unsupported.length} ${unsupported.length === 1 ? "view" : "views"} this page cannot build`
+      : null,
+  ].filter(Boolean);
+  if (parts.length === 0) return null;
+  return (
+    <p
+      data-home-page-shape={parts.length}
+      style={{
+        margin: 0,
+        padding: `16px ${PAGE_X}px 0`,
+        fontFamily: MONO,
+        fontSize: 11,
+        letterSpacing: "0.04em",
+        color: V4.slate,
+      }}
+    >
+      {parts.join(" · ")}
+    </p>
   );
 }
 

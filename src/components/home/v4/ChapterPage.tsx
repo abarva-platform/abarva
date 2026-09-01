@@ -15,7 +15,12 @@ import {
 } from "./bands";
 import { Exhibit, ExhibitBars } from "./Exhibit";
 import { splitChapterIntoBands } from "./chapter-bands";
-import { FindingsBlock, TableSet, UnsupportedViews } from "./TableSet";
+import {
+  FindingsBlock,
+  PageShape,
+  TableSet,
+  UnsupportedViews,
+} from "./TableSet";
 import type { ChapterDepth } from "./chapter-page-content";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -76,6 +81,13 @@ export function ChapterPage({
         signalPacket={signalPacket}
       />
 
+      {depth ? (
+        <PageShape
+          tables={depth.tables}
+          findings={depth.findings}
+          unsupported={depth.unsupported}
+        />
+      ) : null}
       {depth ? <TableSet tables={depth.tables} /> : null}
       {depth ? (
         <FindingsBlock findings={depth.findings} onOpenRows={onOpenRows} />

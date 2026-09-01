@@ -1,4 +1,9 @@
-import { FindingsBlock, TableSet, UnsupportedViews } from "./TableSet";
+import {
+  FindingsBlock,
+  PageShape,
+  TableSet,
+  UnsupportedViews,
+} from "./TableSet";
 import type { ChapterDepth } from "./chapter-page-content";
 import { PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -91,6 +96,11 @@ export function NotDraftedPage({
           data-home-undrafted-depth
           style={{ margin: "10px -" + PAGE_X + "px 0" }}
         >
+          <PageShape
+            tables={depth.tables}
+            findings={depth.findings}
+            unsupported={depth.unsupported}
+          />
           <TableSet tables={depth.tables} />
           <FindingsBlock findings={depth.findings} onOpenRows={onOpenRows} />
           <UnsupportedViews views={depth.unsupported} />
