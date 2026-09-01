@@ -653,9 +653,11 @@ assert(
     chapters.includes("PUBLISHED_REFUSAL_LANGUAGE_RE") &&
     chapters.includes("GENERIC_ATTENTION_HEADLINE_RE") &&
     chapters.includes("function claimBackedNarrativeNeedsFallback") &&
+    chapters.includes("missing_model_response_fallback") &&
+    chapters.includes("invalid_json_fallback") &&
     chapters.includes("post_synthesis_refusal_language_fallback") &&
     chapters.includes("deterministicClaimBasedChapterNarrative"),
-  "Home chapter assembly routes organization/workforce/process evidence to How We Operate and prevents claim-backed chapters from rendering as generic refusals",
+  "Home chapter assembly routes organization/workforce/process evidence to How We Operate and prevents claim-backed chapters from rendering unavailable or generic refusal prose",
 );
 assert(
   chapters.includes("current governed record does not yet support") &&
