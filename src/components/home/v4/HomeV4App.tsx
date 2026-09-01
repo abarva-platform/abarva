@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { BrowseTheData } from "@/components/home/preview/BrowseTheData";
-import { CurrentState } from "@/components/home/preview/CurrentState";
 import { HomeAvaChat } from "@/components/home/preview/HomeAvaChat";
 import { RecordBrowser } from "./RecordBrowser";
 import { demoSafeClientText } from "@/lib/client-config";
@@ -15,11 +14,10 @@ import type {
 } from "@/lib/home/preview/types";
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
-import { chapterDepth } from "./chapter-page-content";
+import { chapterArguesFrom, chapterDepth } from "./chapter-page-content";
 import { buildBusinessBriefing } from "./business-briefing";
 import { BusinessBriefingSections } from "./BusinessBriefing";
 import { DataFlowPage } from "./DataFlowPage";
-import { ExecutiveStoryPage } from "./ExecutiveStoryPage";
 import { NotDraftedPage } from "./NotDraftedPage";
 import { Rail, type RailGroup, type RailItem } from "./Rail";
 import { SANS, V4 } from "./tokens";
@@ -39,11 +37,9 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
 };
 
 type ActiveView =
-  | "executive-story"
   | ChapterId
   | "architecture"
   | "data-flow"
-  | "current-state"
   | "browse-the-data"
   | `tech:${TechObjectType}`;
 
@@ -56,10 +52,6 @@ function resolveHashView(
     return null;
   }
 
-  if (requested === "executive-story" || requested === "story") {
-    return "executive-story";
-  }
-
   if (bundle.chapters.some((chapter) => chapter.chapterId === requested)) {
     return requested as ChapterId;
   }
@@ -67,7 +59,6 @@ function resolveHashView(
   if (
     requested === "architecture" ||
     requested === "data-flow" ||
-    requested === "current-state" ||
     requested === "browse-the-data"
   ) {
     return requested;
@@ -101,7 +92,11 @@ export function HomeV4App({
   bundle: HomeReviewBundle;
   tenantKey: HomePreviewTenantKey;
 }) {
-  const [activeView, setActiveView] = useState<ActiveView>("executive-story");
+  // Home opens on the briefing: chapter one, the first question a new executive arrives with.
+  // Nothing stands in front of it.
+  const [activeView, setActiveView] = useState<ActiveView>(
+    () => (bundle.chapters[0]?.chapterId as ActiveView) ?? "browse-the-data",
+  );
   /**
    * A filter carried from a figure to the rows behind it.
    *
@@ -246,7 +241,6 @@ export function HomeV4App({
       },
       // Renamed from "Current-state data flow", which promised a data flow and delivered a
       // per-domain fact inventory. A nav label that oversells its page is worse than a plain one.
-      { id: "current-state", label: "What has been loaded", drafted: true },
       { id: "browse-the-data", label: "Browse the record", drafted: true },
       ...techRecordTypes.map((t) => ({
         id: `tech:${t.objectType}`,
@@ -263,19 +257,6 @@ export function HomeV4App({
     `from ${signalPacket.signals.length} signals`,
     `and ${signalPacket.contextItems.length} governed facts`,
   ];
-
-  if (activeView === "executive-story") {
-    return (
-      <HomeAvaChat key={tenantKey} tenantKey={tenantKey}>
-        <ExecutiveStoryPage
-          bundle={bundle}
-          tenantKey={tenantKey}
-          onOpenView={selectActiveView}
-          compiledLine={compiledLine}
-        />
-      </HomeAvaChat>
-    );
-  }
 
   return (
     <HomeAvaChat
@@ -319,9 +300,11 @@ export function HomeV4App({
                 exhibitMeta={exhibitMeta}
                 onOpenRows={openRecordRows}
                 contracts={
-                  techRecordTypes.find(
-                    (r) => r.objectType === "vendor_contract",
-                  )?.rows
+                  chapterArguesFrom(activeChapter.chapterId, "vendors")
+                    ? techRecordTypes.find(
+                        (r) => r.objectType === "vendor_contract",
+                      )?.rows
+                    : undefined
                 }
                 asOf={bundle.provenance?.generated_at?.slice(0, 10)}
                 depth={chapterDepth(activeChapter.chapterId, {
@@ -414,10 +397,6 @@ export function HomeV4App({
               applications={applications}
               canonicalBuild={bundle.provenance.canonical_snapshot_hash}
             />
-          ) : null}
-
-          {activeView === "current-state" ? (
-            <CurrentState signalPacket={signalPacket} />
           ) : null}
 
           {activeView === "browse-the-data" ? (

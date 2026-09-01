@@ -22,6 +22,7 @@ import {
   UnsupportedViews,
 } from "./TableSet";
 import { RenewalTimeline } from "./RenewalTimeline";
+import { cxoText, launderChapter } from "./cxo-language";
 import type { ChapterDepth } from "./chapter-page-content";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -35,7 +36,7 @@ import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
  * is the opposite of what this design is for.
  */
 export function ChapterPage({
-  chapter,
+  chapter: rawChapter,
   chapterNumber,
   signalPacket,
   visualDatasets,
@@ -61,6 +62,8 @@ export function ChapterPage({
   /** Opens the rows behind a finding in the record browser. */
   onOpenRows?: (objectType: string, filter: string) => void;
 }) {
+  // One gate, at the top, before any of this chapter's text is drawn.
+  const chapter = launderChapter(rawChapter);
   const bands = splitChapterIntoBands(chapter, signalPacket);
   const exhibits = chapter.visual_opportunities.filter((v) =>
     Boolean(visualDatasets[v.dataset_ref]),
@@ -169,18 +172,20 @@ function ChapterExecutiveReadout({
   const primaryExposure = firstStatement(bands.exposures);
   const primaryQuestion = chapter.questions_to_ask[0];
   const primaryGap = chapter.limitations[0];
-  const proofCount =
-    chapter.key_insights.length +
-    chapter.tensions.length +
-    chapter.what_to_watch.length;
-  const leadershipSignals = leadershipSignalsForChapter(chapter, signalPacket);
+  // Signals come from the packet, not the chapter, so they miss the chapter gate above.
+  const leadershipSignals = leadershipSignalsForChapter(
+    chapter,
+    signalPacket,
+  ).map((signal) => ({
+    ...signal,
+    statement: cxoText(signal.statement ?? ""),
+  }));
 
   return (
     <section style={{ padding: `24px ${PAGE_X}px 0` }}>
       <div data-chapter-readout style={readoutShellStyle}>
         <div style={readoutLeadStyle}>
           <div>
-            <span style={eyebrow(V4.green)}>CXO readout</span>
             <h2 style={readoutTitleStyle}>Decision this page supports</h2>
             <p style={readoutTextStyle}>
               {primaryInference ??
@@ -188,49 +193,133 @@ function ChapterExecutiveReadout({
                 "No executive decision should be taken from this chapter yet."}
             </p>
           </div>
-          <div style={readoutMetaStyle}>
-            <span>{proofCount.toLocaleString()} grounded statements</span>
-            <span>
-              {chapter.visual_opportunities.length.toLocaleString()} exhibits
-            </span>
-            <span>
-              {chapter.questions_to_ask.length.toLocaleString()} questions
-            </span>
-            <span>{chapter.limitations.length.toLocaleString()} limits</span>
+        </div>
+        {primaryRecord || primaryExposure || primaryGap || primaryQuestion ? (
+          <div style={readoutCardGridStyle}>
+            {primaryRecord ? (
+              <ReadoutCard
+                label="Record signal"
+                tone={V4.navy}
+                value={primaryRecord}
+              />
+            ) : null}
+            {(primaryExposure ?? primaryGap) ? (
+              <ReadoutCard
+                label="Exposure to watch"
+                tone={primaryExposure ? V4.red : V4.amber}
+                value={(primaryExposure ?? primaryGap) as string}
+              />
+            ) : null}
+            {primaryQuestion ? (
+              <ReadoutCard
+                label="Question for the room"
+                tone={V4.blue}
+                value={primaryQuestion}
+              />
+            ) : null}
           </div>
-        </div>
-        <div style={readoutCardGridStyle}>
-          <ReadoutCard
-            label="Record signal"
-            tone={V4.navy}
-            value={
-              primaryRecord ??
-              "No evidence-backed statement is available for this chapter."
-            }
-          />
-          <ReadoutCard
-            label="Exposure to watch"
-            tone={primaryExposure ? V4.red : V4.amber}
-            value={
-              primaryExposure ??
-              primaryGap ??
-              "No exposure has been established for this chapter."
-            }
-          />
-          <ReadoutCard
-            label="Question for the room"
-            tone={V4.blue}
-            value={
-              primaryQuestion ??
-              "No leadership question is ready for this chapter."
-            }
-          />
-        </div>
+        ) : null}
         {leadershipSignals.length > 0 ? (
-          <LeadershipVoiceStrip signals={leadershipSignals} />
+          chapter.chapterId === "leadership_perspective" ? (
+            <LeadershipVoiceFull signals={leadershipSignals} />
+          ) : (
+            <LeadershipVoiceStrip signals={leadershipSignals.slice(0, 4)} />
+          )
         ) : null}
       </div>
     </section>
+  );
+}
+
+/** The role that said it, taken from the sentence the packet built. */
+function roleOf(signal: Signal): string {
+  return /^A (.+?) said/.exec(signal.statement ?? "")?.[1] ?? "Unattributed";
+}
+
+/**
+ * The words, separated from the sentence built around them.
+ *
+ * Grouped under the speaker's name, "A President & Chief Executive Officer said, on the theme of
+ * X:" repeats what the heading above already says on every line. What is left is the quote and the
+ * subject it was about.
+ */
+function excerptOf(signal: Signal): { quote: string; theme: string | null } {
+  const statement = signal.statement ?? "";
+  const theme = /on the theme of "([^"]+)"/.exec(statement)?.[1] ?? null;
+  const quote = /:\s*"([\s\S]+)"\s*$/.exec(statement)?.[1];
+  // The packet wraps an already-quoted phrase, so the capture can arrive with its own quote marks.
+  const bare = (quote ?? stripDoubleQuotes(statement))
+    .replace(/^"+|"+$/g, "")
+    .trim();
+  return { quote: bare, theme };
+}
+
+/**
+ * Every excerpt on the chapter that exists to carry them, grouped by who spoke.
+ *
+ * The strip below shows a lead quote and two more, which is right on a chapter that mentions
+ * leadership in passing. On this chapter it meant forty-four interviewed leaders were represented
+ * by two quotes from one office.
+ */
+function LeadershipVoiceFull({ signals }: { signals: Signal[] }) {
+  const testimony = signals.filter((signal) => signal.kind === "testimony");
+  const themes = signals.filter(
+    (signal) => signal.kind === "consensus" || signal.kind === "dissent",
+  );
+  const conflicts = signals.filter((signal) => signal.kind === "contradiction");
+  const byRole = new Map<string, Signal[]>();
+  for (const signal of testimony) {
+    const role = roleOf(signal);
+    if (!byRole.has(role)) byRole.set(role, []);
+    byRole.get(role)!.push(signal);
+  }
+  const roles = [...byRole.entries()].sort(
+    (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]),
+  );
+  return (
+    <div
+      data-leadership-full
+      style={{ display: "grid", gap: 22, marginTop: 20 }}
+    >
+      <div data-leadership-metrics style={voiceMetricGridStyle}>
+        <VoiceMetric value={testimony.length} label="excerpts on the record" />
+        <VoiceMetric value={roles.length} label="offices quoted" />
+        <VoiceMetric value={themes.length} label="themes counted" />
+        <VoiceMetric value={conflicts.length} label="record conflicts" />
+      </div>
+      {roles.map(([role, said]) => (
+        <div key={role} style={{ minWidth: 0 }}>
+          <span style={eyebrow(V4.amber)}>{role}</span>
+          <div style={{ display: "grid", gap: 10, marginTop: 9 }}>
+            {said.map((signal) => {
+              const { quote, theme } = excerptOf(signal);
+              return (
+                <blockquote key={signal.id} style={excerptStyle}>
+                  <p style={{ margin: 0 }}>&ldquo;{quote}&rdquo;</p>
+                  {theme ? (
+                    <footer style={excerptThemeStyle}>on {theme}</footer>
+                  ) : null}
+                </blockquote>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      {themes.length > 0 ? (
+        <div style={{ minWidth: 0 }}>
+          <span style={eyebrow(V4.slate)}>
+            Counted across every recorded response
+          </span>
+          <div style={voiceQuoteGridStyle}>
+            {themes.map((signal) => (
+              <p key={signal.id} style={voiceQuoteStyle}>
+                {stripDoubleQuotes(signal.statement)}
+              </p>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -268,6 +357,26 @@ function LeadershipVoiceStrip({ signals }: { signals: Signal[] }) {
     </div>
   );
 }
+
+const excerptStyle = {
+  margin: 0,
+  padding: "0 0 0 14px",
+  borderLeft: `2px solid ${V4.rule}`,
+  fontFamily: SERIF,
+  fontSize: 16.5,
+  lineHeight: 1.42,
+  color: V4.ink,
+  maxWidth: "74ch",
+} as const;
+
+const excerptThemeStyle = {
+  marginTop: 6,
+  fontFamily: MONO,
+  fontSize: 10.5,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: V4.stone,
+} as const;
 
 function VoiceMetric({ value, label }: { value: number; label: string }) {
   return (
@@ -310,19 +419,22 @@ function leadershipSignalsForChapter(
       .flatMap((claim) => claim.evidence_ids)
       .filter((id) => id.startsWith("sig_")),
   );
+  // The leadership chapter is checked first. Reaching the chapter-evidence branch below returned
+  // whichever four signals its own claims happened to cite -- one office, on the chapter whose
+  // whole subject is what forty-four leaders said.
+  if (chapter.chapterId === "leadership_perspective") {
+    return rankLeadershipSignals(
+      signalPacket.signals.filter((signal) =>
+        signal.domains.includes("ai_value_interview_evidence"),
+      ),
+    );
+  }
   const direct = signalPacket.signals.filter(
     (signal) =>
       ids.has(signal.id) &&
       signal.domains.includes("ai_value_interview_evidence"),
   );
   if (direct.length > 0) return rankLeadershipSignals(direct).slice(0, 4);
-  if (chapter.chapterId === "leadership_perspective") {
-    return rankLeadershipSignals(
-      signalPacket.signals.filter((signal) =>
-        signal.domains.includes("ai_value_interview_evidence"),
-      ),
-    ).slice(0, 5);
-  }
   return [];
 }
 
@@ -419,17 +531,6 @@ const readoutTextStyle = {
   lineHeight: 1.58,
   color: V4.inkSoft,
   maxWidth: "62ch",
-} as const;
-
-const readoutMetaStyle = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "7px 14px",
-  fontFamily: MONO,
-  fontSize: 10.5,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
-  color: V4.slate,
 } as const;
 
 const readoutCardGridStyle = {

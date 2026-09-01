@@ -52,14 +52,33 @@ const CHAPTER_SOURCES: Partial<
     >
   >
 > = {
+  // Applications are described here and nowhere else. Two chapters both drawing their tables from
+  // the same family produced five identical tables under two different questions, which reads as a
+  // page that does not know what it is for.
   technology_data: ["applications", "data"],
   // Performance and Value is the metrics surface; What Needs Attention is the register. Both were
   // unreachable until the projection carried these families.
   how_we_operate: ["organization", "infrastructure"],
-  what_needs_attention: ["risks", "applications", "infrastructure"],
+  what_needs_attention: ["risks", "infrastructure"],
   performance_value: ["metrics", "vendors"],
   strategy_value_creation: ["programs", "ai", "vendors"],
 };
+
+type EstateFamily = NonNullable<(typeof CHAPTER_SOURCES)[ChapterId]>[number];
+
+/**
+ * Whether a chapter's argument is built on a given family of rows.
+ *
+ * A chart drawn wherever its data happens to exist is decoration. A renewal timeline under "what do
+ * leaders agree on" answers nothing that chapter asked. This is the test for whether an exhibit
+ * belongs to the argument on the page rather than merely to the bundle behind it.
+ */
+export function chapterArguesFrom(
+  chapterId: ChapterId,
+  family: EstateFamily,
+): boolean {
+  return (CHAPTER_SOURCES[chapterId] ?? []).includes(family);
+}
 
 export interface EstateRecordTypes {
   /** The record's own as-of date, threaded so time-relative findings measure against the record. */
@@ -97,11 +116,22 @@ const BUILDERS = {
   organization: { tables: organizationTables, findings: organizationFindings },
 } as const;
 
-export function chapterDepth(
-  chapterId: ChapterId,
+/**
+ * Families a chapter draws findings from, beyond the ones it tabulates.
+ *
+ * What Needs Attention reasons about applications -- the PHI-on-local-accounts exposure is an
+ * application finding -- without repeating the descriptive application tables that belong to
+ * Technology & Data. A finding is an argument; a table is a description. They do not have to come
+ * from the same family.
+ */
+const EXTRA_FINDING_SOURCES: Partial<Record<ChapterId, EstateFamily[]>> = {
+  what_needs_attention: ["applications"],
+};
+
+function depthForSources(
+  sources: readonly EstateFamily[],
   estate: EstateRecordTypes,
 ): ChapterDepth {
-  const sources = CHAPTER_SOURCES[chapterId] ?? [];
   const tables: TableSpec[] = [];
   const findings: Finding[] = [];
   const unsupported: UnsupportedView[] = [];
@@ -116,6 +146,7 @@ export function chapterDepth(
     );
     if (source === "applications")
       unsupported.push(...unsupportedApplicationViews(rows));
+    if (source === "ai") unsupported.push(...unsupportedAiViews(rows));
   }
   // A finding repeated across two source families says nothing twice; keep the first.
   const seen = new Set<string>();
@@ -125,5 +156,24 @@ export function chapterDepth(
       seen.has(f.claim) ? false : (seen.add(f.claim), true),
     ),
     unsupported,
+  };
+}
+
+export function chapterDepth(
+  chapterId: ChapterId,
+  estate: EstateRecordTypes,
+): ChapterDepth {
+  const depth = depthForSources(CHAPTER_SOURCES[chapterId] ?? [], estate);
+  const extra = EXTRA_FINDING_SOURCES[chapterId];
+  if (!extra) return depth;
+  const seen = new Set(depth.findings.map((f) => f.claim));
+  return {
+    ...depth,
+    findings: [
+      ...depth.findings,
+      ...depthForSources(extra, estate).findings.filter(
+        (f) => !seen.has(f.claim),
+      ),
+    ],
   };
 }

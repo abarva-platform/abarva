@@ -1,8 +1,12 @@
 "use client";
 
+import { cellText } from "./cxo-language";
 import { useMemo, useState, type CSSProperties } from "react";
 
-import type { ArchitectureView, ArchitectureViewNode } from "@/lib/visual-system/architecture-view-contract";
+import type {
+  ArchitectureView,
+  ArchitectureViewNode,
+} from "@/lib/visual-system/architecture-view-contract";
 import { resolveArchitectureView } from "@/lib/visual-system/resolveArchitectureView";
 import type { TechRecordType } from "@/lib/home/preview/types";
 import { ArchitectureRefusal } from "./ArchitectureRefusal";
@@ -15,7 +19,8 @@ import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
  * pane: the same concentration is visible without turning whitespace into the dominant artifact.
  */
 
-const HATCH_SOFT = "repeating-linear-gradient(135deg,rgba(12,26,58,0.09) 0 7px,rgba(12,26,58,0.03) 7px 14px)";
+const HATCH_SOFT =
+  "repeating-linear-gradient(135deg,rgba(12,26,58,0.09) 0 7px,rgba(12,26,58,0.03) 7px 14px)";
 
 const grainNoticeStyle = {
   border: `1px solid rgba(186,117,23,0.34)`,
@@ -69,11 +74,28 @@ export function ArchitecturePage({
   return (
     <div style={{ paddingBottom: 60 }}>
       <header style={{ padding: `46px ${PAGE_X}px 0` }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
           <span style={eyebrow(V4.blue)}>
-            {capability ? "Logical architecture · one capability" : "Current-state architecture · whole estate"}
+            {capability
+              ? "Logical architecture · one capability"
+              : "Current-state architecture · whole estate"}
           </span>
-          <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 15, color: V4.slate, letterSpacing: "-0.01em" }}>
+          <span
+            style={{
+              fontFamily: SERIF,
+              fontStyle: "italic",
+              fontSize: 15,
+              color: V4.slate,
+              letterSpacing: "-0.01em",
+            }}
+          >
             {architectureQuestion}
           </span>
         </div>
@@ -92,7 +114,15 @@ export function ArchitecturePage({
           {architectureTitle}
         </h1>
         {view.contextLine ? (
-          <p style={{ margin: "14px 0 0", fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.slate }}>
+          <p
+            style={{
+              margin: "14px 0 0",
+              fontFamily: MONO,
+              fontSize: 11,
+              letterSpacing: "0.06em",
+              color: V4.slate,
+            }}
+          >
             {view.contextLine}
           </p>
         ) : null}
@@ -146,7 +176,13 @@ export function ArchitecturePage({
             >
               What this drawing does not establish
             </h2>
-            <span style={{ flex: 1, height: 1, background: "rgba(186,117,23,0.35)" }} />
+            <span
+              style={{
+                flex: 1,
+                height: 1,
+                background: "rgba(186,117,23,0.35)",
+              }}
+            />
           </div>
           <ul
             style={{
@@ -217,15 +253,25 @@ function L0Landscape({
   infrastructure?: TechRecordType;
   onDrill: (capability: string) => void;
 }) {
-  const rows = useMemo(() => (applications.rows ?? []) as ApplicationRecord[], [applications.rows]);
-  const integrationRows = useMemo(() => (integrations?.rows ?? []) as IntegrationRecord[], [integrations?.rows]);
-  const infrastructureRows = useMemo(() => (infrastructure?.rows ?? []) as InfrastructureRecord[], [infrastructure?.rows]);
+  const rows = useMemo(
+    () => (applications.rows ?? []) as ApplicationRecord[],
+    [applications.rows],
+  );
+  const integrationRows = useMemo(
+    () => (integrations?.rows ?? []) as IntegrationRecord[],
+    [integrations?.rows],
+  );
+  const infrastructureRows = useMemo(
+    () => (infrastructure?.rows ?? []) as InfrastructureRecord[],
+    [infrastructure?.rows],
+  );
   const slices = useMemo(
     () => buildArchitectureSlices(rows, integrationRows, infrastructureRows),
     [rows, integrationRows, infrastructureRows],
   );
   const [selectedName, setSelectedName] = useState<string>("Whole estate");
-  const selected = slices.find((slice) => slice.name === selectedName) ?? slices[0];
+  const selected =
+    slices.find((slice) => slice.name === selectedName) ?? slices[0];
   const wholeEstate = slices[0];
 
   return (
@@ -261,7 +307,15 @@ function L0Landscape({
       >
         <span style={eyebrow(V4.slate)}>Current-state architecture map</span>
         <span style={{ flex: 1 }} />
-        <span data-arch-axis-label style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.stone }}>
+        <span
+          data-arch-axis-label
+          style={{
+            fontFamily: MONO,
+            fontSize: 11,
+            letterSpacing: "0.06em",
+            color: V4.stone,
+          }}
+        >
           BUSINESS · APPLICATIONS · INTEGRATION · DATA · PLATFORMS
         </span>
       </div>
@@ -277,11 +331,26 @@ function L0Landscape({
           background: V4.rule,
         }}
       >
-        <ArchitectureMetric value={wholeEstate.count.toLocaleString()} label="applications" />
-        <ArchitectureMetric value={(slices.length - 1).toLocaleString()} label="business capabilities" />
-        <ArchitectureMetric value={wholeEstate.integrations.length.toLocaleString()} label="data movements" />
-        <ArchitectureMetric value={wholeEstate.infrastructure.length.toLocaleString()} label="platforms" />
-        <ArchitectureMetric value={moneyShort(wholeEstate.spend)} label="annual cost" />
+        <ArchitectureMetric
+          value={wholeEstate.count.toLocaleString()}
+          label="applications"
+        />
+        <ArchitectureMetric
+          value={(slices.length - 1).toLocaleString()}
+          label="business capabilities"
+        />
+        <ArchitectureMetric
+          value={wholeEstate.integrations.length.toLocaleString()}
+          label="data movements"
+        />
+        <ArchitectureMetric
+          value={wholeEstate.infrastructure.length.toLocaleString()}
+          label="platforms"
+        />
+        <ArchitectureMetric
+          value={moneyShort(wholeEstate.spend)}
+          label="annual cost"
+        />
       </div>
 
       <ExecutiveRunMap
@@ -357,7 +426,8 @@ function ExecutiveRunMap({
     [applications, integrations, infrastructure],
   );
   const [selectedKey, setSelectedKey] = useState(blocks[0]?.key ?? "");
-  const selectedBlock = blocks.find((block) => block.key === selectedKey) ?? blocks[0];
+  const selectedBlock =
+    blocks.find((block) => block.key === selectedKey) ?? blocks[0];
   const dataMovements = dataMovementRows(integrations);
   const dataWorkloads = dataWorkloadRows(integrations);
   const totals = {
@@ -408,13 +478,23 @@ function ExecutiveRunMap({
               textWrap: "balance",
             }}
           >
-            Start with the business blocks, then drill into systems and platforms.
+            Start with the business blocks, then drill into systems and
+            platforms.
           </h2>
         </div>
-        <p style={{ margin: 0, fontFamily: SANS, fontSize: 14, lineHeight: 1.58, color: V4.slate }}>
-          This is the conceptual view for a new executive: what runs the plan, what runs delivery,
-          what runs back office, where data and platforms concentrate, and where vendor dependency
-          sits. Detailed system rows remain below.
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SANS,
+            fontSize: 14,
+            lineHeight: 1.58,
+            color: V4.slate,
+          }}
+        >
+          This is the conceptual view for a new executive: what runs the plan,
+          what runs delivery, what runs back office, where data and platforms
+          concentrate, and where vendor dependency sits. Detailed system rows
+          remain below.
         </p>
       </div>
 
@@ -426,7 +506,14 @@ function ExecutiveRunMap({
         onDrill={onDrill}
       />
 
-      <div data-run-map style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 12 }}>
+      <div
+        data-run-map
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+          gap: 12,
+        }}
+      >
         {blocks.map((block) => (
           <article
             key={block.key}
@@ -436,16 +523,33 @@ function ExecutiveRunMap({
               border: `1px solid ${selectedBlock?.key === block.key ? block.tone : V4.ruleStrong}`,
               borderTop: `5px solid ${block.tone}`,
               borderRadius: 8,
-              background: selectedBlock?.key === block.key ? "rgba(0,102,204,0.035)" : V4.surface,
+              background:
+                selectedBlock?.key === block.key
+                  ? "rgba(0,102,204,0.035)"
+                  : V4.surface,
               padding: "16px 17px",
               display: "grid",
               gridTemplateRows: "auto auto 1fr auto",
               gap: 12,
             }}
           >
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
               <span style={eyebrow(block.tone)}>{block.denominator}</span>
-              <span style={{ fontFamily: MONO, fontSize: 18, color: V4.ink, fontVariantNumeric: "tabular-nums" }}>
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 18,
+                  color: V4.ink,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
                 {block.count.toLocaleString()}
               </span>
             </div>
@@ -462,13 +566,28 @@ function ExecutiveRunMap({
               >
                 {block.title}
               </h3>
-              <p style={{ margin: "7px 0 0", fontFamily: SANS, fontSize: 13, lineHeight: 1.45, color: V4.slate }}>
+              <p
+                style={{
+                  margin: "7px 0 0",
+                  fontFamily: SANS,
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                  color: V4.slate,
+                }}
+              >
                 {block.subtitle}
               </p>
             </div>
 
             <div style={{ display: "grid", gap: 11 }}>
-              <RunMapLine label="anchors" value={block.anchors.length ? block.anchors.join(" · ") : "No named anchors in this slice"} />
+              <RunMapLine
+                label="anchors"
+                value={
+                  block.anchors.length
+                    ? block.anchors.join(" · ")
+                    : "No named anchors in this slice"
+                }
+              />
               <RunMapLine label="owner" value={block.ownerSignal} />
               <RunMapLine label="hosting" value={block.hostingSignal} />
               <RunMapLine label="dependency" value={block.dependencySignal} />
@@ -477,15 +596,27 @@ function ExecutiveRunMap({
 
             {block.drillTarget ? (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                <button type="button" onClick={() => setSelectedKey(block.key)} style={runMapButtonStyle}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedKey(block.key)}
+                  style={runMapButtonStyle}
+                >
                   Review passport
                 </button>
-                <button type="button" onClick={() => onDrill(block.drillTarget!)} style={runMapButtonStyle}>
+                <button
+                  type="button"
+                  onClick={() => onDrill(block.drillTarget!)}
+                  style={runMapButtonStyle}
+                >
                   Open logical view
                 </button>
               </div>
             ) : (
-              <button type="button" onClick={() => setSelectedKey(block.key)} style={runMapButtonStyle}>
+              <button
+                type="button"
+                onClick={() => setSelectedKey(block.key)}
+                style={runMapButtonStyle}
+              >
                 Review passport
               </button>
             )}
@@ -505,12 +636,18 @@ function ArchitectureWheel({
   onDrill,
 }: {
   blocks: RunMapBlock[];
-  totals: { applications: number; dataMovements: number; dataWorkloadSegments: number; infrastructure: number };
+  totals: {
+    applications: number;
+    dataMovements: number;
+    dataWorkloadSegments: number;
+    infrastructure: number;
+  };
   selectedKey: string;
   onSelect: (key: string) => void;
   onDrill: (capability: string) => void;
 }) {
-  const selectedBlock = blocks.find((block) => block.key === selectedKey) ?? blocks[0];
+  const selectedBlock =
+    blocks.find((block) => block.key === selectedKey) ?? blocks[0];
   const nodes = blocks.map((block, index) => {
     const angle = -90 + (360 / Math.max(1, blocks.length)) * index;
     const radius = 43;
@@ -527,19 +664,32 @@ function ArchitectureWheel({
         <div style={wheelHeaderStyle}>
           <div>
             <span style={eyebrow(V4.green)}>Architecture wheel</span>
-            <h3 style={wheelTitleStyle}>Where the enterprise runs, and who answers for it.</h3>
+            <h3 style={wheelTitleStyle}>
+              Where the enterprise runs, and who answers for it.
+            </h3>
           </div>
           <span data-wheel-basis style={wheelBasisStyle}>
-            {blocks.length.toLocaleString()} business blocks · {totals.applications.toLocaleString()} applications ·{" "}
-            {totals.infrastructure.toLocaleString()} platforms · {totals.dataMovements.toLocaleString()} movements ·{" "}
+            {blocks.length.toLocaleString()} business blocks ·{" "}
+            {totals.applications.toLocaleString()} applications ·{" "}
+            {totals.infrastructure.toLocaleString()} platforms ·{" "}
+            {totals.dataMovements.toLocaleString()} movements ·{" "}
             {totals.dataWorkloadSegments.toLocaleString()} workload segments
           </span>
         </div>
 
         <div data-wheel-canvas style={wheelCanvasStyle}>
-          <div aria-hidden="true" style={{ ...wheelRingStyle, width: "76%", height: "76%" }} />
-          <div aria-hidden="true" style={{ ...wheelRingStyle, width: "54%", height: "54%" }} />
-          <div aria-hidden="true" style={{ ...wheelRingStyle, width: "32%", height: "32%" }} />
+          <div
+            aria-hidden="true"
+            style={{ ...wheelRingStyle, width: "76%", height: "76%" }}
+          />
+          <div
+            aria-hidden="true"
+            style={{ ...wheelRingStyle, width: "54%", height: "54%" }}
+          />
+          <div
+            aria-hidden="true"
+            style={{ ...wheelRingStyle, width: "32%", height: "32%" }}
+          />
           <div style={wheelCenterStyle}>
             <span style={wheelCenterNameStyle}>Meridian</span>
             <span style={wheelCenterMetaStyle}>conceptual view</span>
@@ -559,10 +709,14 @@ function ArchitectureWheel({
                   top: `${y}%`,
                   borderColor: active ? block.tone : "rgba(12,26,58,0.2)",
                   background: active ? "rgba(255,255,255,0.98)" : V4.surface,
-                  boxShadow: active ? `0 0 0 3px ${block.tone}22, 0 14px 30px rgba(12,26,58,0.12)` : "0 9px 20px rgba(12,26,58,0.08)",
+                  boxShadow: active
+                    ? `0 0 0 3px ${block.tone}22, 0 14px 30px rgba(12,26,58,0.12)`
+                    : "0 9px 20px rgba(12,26,58,0.08)",
                 }}
               >
-                <span style={{ ...wheelNodeCountStyle, color: block.tone }}>{block.count.toLocaleString()}</span>
+                <span style={{ ...wheelNodeCountStyle, color: block.tone }}>
+                  {block.count.toLocaleString()}
+                </span>
                 <span style={wheelNodeLabelStyle}>{block.title}</span>
                 <span style={wheelNodeMetaStyle}>{block.denominator}</span>
               </button>
@@ -576,28 +730,65 @@ function ArchitectureWheel({
         <h3 style={wheelDetailTitleStyle}>{selectedBlock.title}</h3>
         <p style={wheelDetailTextStyle}>{selectedBlock.subtitle}</p>
         <div style={wheelDetailMetricGridStyle}>
-          <ArchitectureMetric value={selectedBlock.count.toLocaleString()} label={selectedBlock.denominator} />
-          <ArchitectureMetric value={dataMovementRows(selectedBlock.relatedIntegrations).length.toLocaleString()} label="data movements" />
+          <ArchitectureMetric
+            value={selectedBlock.count.toLocaleString()}
+            label={selectedBlock.denominator}
+          />
+          <ArchitectureMetric
+            value={dataMovementRows(
+              selectedBlock.relatedIntegrations,
+            ).length.toLocaleString()}
+            label="data movements"
+          />
           {dataWorkloadRows(selectedBlock.relatedIntegrations).length > 0 ? (
             <ArchitectureMetric
-              value={dataWorkloadRows(selectedBlock.relatedIntegrations).length.toLocaleString()}
+              value={dataWorkloadRows(
+                selectedBlock.relatedIntegrations,
+              ).length.toLocaleString()}
               label="workload segments"
             />
           ) : null}
         </div>
         <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
-          <RunMapLine label="anchor systems" value={selectedBlock.anchors.length ? selectedBlock.anchors.join(" · ") : "No named anchors in this block"} />
-          <RunMapLine label="accountability" value={selectedBlock.ownerSignal} />
-          <RunMapLine label="hosting posture" value={selectedBlock.hostingSignal} />
-          <RunMapLine label="open evidence" value={selectedBlock.gapSignal} tone={V4.amber} />
+          <RunMapLine
+            label="anchor systems"
+            value={
+              selectedBlock.anchors.length
+                ? selectedBlock.anchors.join(" · ")
+                : "No named anchors in this block"
+            }
+          />
+          <RunMapLine
+            label="accountability"
+            value={selectedBlock.ownerSignal}
+          />
+          <RunMapLine
+            label="hosting posture"
+            value={selectedBlock.hostingSignal}
+          />
+          <RunMapLine
+            label="open evidence"
+            value={selectedBlock.gapSignal}
+            tone={V4.amber}
+          />
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+        <div
+          style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}
+        >
           {selectedBlock.drillTarget ? (
-            <button type="button" onClick={() => onDrill(selectedBlock.drillTarget!)} style={runMapButtonStyle}>
+            <button
+              type="button"
+              onClick={() => onDrill(selectedBlock.drillTarget!)}
+              style={runMapButtonStyle}
+            >
               Open logical view
             </button>
           ) : null}
-          <button type="button" onClick={() => onSelect(selectedBlock.key)} style={runMapButtonStyle}>
+          <button
+            type="button"
+            onClick={() => onSelect(selectedBlock.key)}
+            style={runMapButtonStyle}
+          >
             Keep selected
           </button>
         </div>
@@ -608,28 +799,61 @@ function ArchitectureWheel({
 
 function RunMapPassport({ block }: { block: RunMapBlock }) {
   const topRecords = [...block.records]
-    .sort((a, b) => numeric(recordCost(b)) - numeric(recordCost(a)) || recordName(a).localeCompare(recordName(b)))
+    .sort(
+      (a, b) =>
+        numeric(recordCost(b)) - numeric(recordCost(a)) ||
+        recordName(a).localeCompare(recordName(b)),
+    )
     .slice(0, 6);
-  const totalCost = block.records.reduce((sum, row) => sum + numeric(recordCost(row)), 0);
-  const tierOne = block.records.filter((row) => isTierOne(text(row, "criticality"))).length;
-  const vendors = topCounts(block.records, "vendor").filter(([name]) => name !== "Not specified").slice(0, 3);
-  const hosting = topCounts(block.records, "deploymentModel").filter(([name]) => name !== "Not specified").slice(0, 3);
+  const totalCost = block.records.reduce(
+    (sum, row) => sum + numeric(recordCost(row)),
+    0,
+  );
+  const tierOne = block.records.filter((row) =>
+    isTierOne(text(row, "criticality")),
+  ).length;
+  const vendors = topCounts(block.records, "vendor")
+    .filter(([name]) => name !== "Not specified")
+    .slice(0, 3);
+  const hosting = topCounts(block.records, "deploymentModel")
+    .filter(([name]) => name !== "Not specified")
+    .slice(0, 3);
   const movements = dataMovementRows(block.relatedIntegrations);
   const workloads = dataWorkloadRows(block.relatedIntegrations);
 
   return (
-    <section aria-label={`${block.title} system passport`} style={passportStyle}>
+    <section
+      aria-label={`${block.title} system passport`}
+      style={passportStyle}
+    >
       <div style={{ minWidth: 0 }}>
         <span style={eyebrow(block.tone)}>System passport</span>
         <h3 style={passportTitleStyle}>{block.title}</h3>
         <p style={passportTextStyle}>{block.subtitle}</p>
       </div>
       <div style={passportMetricGridStyle}>
-        <ArchitectureMetric value={block.count.toLocaleString()} label={block.denominator} />
-        <ArchitectureMetric value={moneyShort(totalCost)} label="annual cost where recorded" />
-        <ArchitectureMetric value={tierOne.toLocaleString()} label="tier-1 records" />
-        <ArchitectureMetric value={movements.length.toLocaleString()} label="touching data movements" />
-        {workloads.length > 0 ? <ArchitectureMetric value={workloads.length.toLocaleString()} label="workload segments" /> : null}
+        <ArchitectureMetric
+          value={block.count.toLocaleString()}
+          label={block.denominator}
+        />
+        <ArchitectureMetric
+          value={moneyShort(totalCost)}
+          label="annual cost where recorded"
+        />
+        <ArchitectureMetric
+          value={tierOne.toLocaleString()}
+          label="tier-1 records"
+        />
+        <ArchitectureMetric
+          value={movements.length.toLocaleString()}
+          label="touching data movements"
+        />
+        {workloads.length > 0 ? (
+          <ArchitectureMetric
+            value={workloads.length.toLocaleString()}
+            label="workload segments"
+          />
+        ) : null}
       </div>
       <div style={passportBodyStyle}>
         <section style={{ minWidth: 0 }}>
@@ -637,17 +861,30 @@ function RunMapPassport({ block }: { block: RunMapBlock }) {
           <div style={passportListStyle}>
             {topRecords.length ? (
               topRecords.map((record) => (
-                <article key={`${block.key}:${recordName(record)}:${text(record, "originalRowId")}`} style={passportRecordStyle}>
-                  <strong style={passportRecordNameStyle}>{recordName(record)}</strong>
+                <article
+                  key={`${block.key}:${recordName(record)}:${text(record, "originalRowId")}`}
+                  style={passportRecordStyle}
+                >
+                  <strong style={passportRecordNameStyle}>
+                    {recordName(record)}
+                  </strong>
                   <span style={passportRecordMetaStyle}>
-                    {[recordCategory(record), text(record, "vendor"), text(record, "deploymentModel"), moneyShort(numeric(recordCost(record)))]
+                    {[
+                      recordCategory(record),
+                      text(record, "vendor"),
+                      text(record, "deploymentModel"),
+                      moneyShort(numeric(recordCost(record))),
+                    ]
                       .filter((item) => item && item !== "—")
+                      .map((item) => cellText(String(item)))
                       .join(" · ")}
                   </span>
                 </article>
               ))
             ) : (
-              <p style={passportTextStyle}>No named systems or platforms are mapped to this block yet.</p>
+              <p style={passportTextStyle}>
+                No named systems or platforms are mapped to this block yet.
+              </p>
             )}
           </div>
         </section>
@@ -655,10 +892,26 @@ function RunMapPassport({ block }: { block: RunMapBlock }) {
           <span style={eyebrow(V4.slate)}>Decision context</span>
           <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
             <RunMapLine label="owners" value={block.ownerSignal} />
-            <RunMapLine label="hosting" value={hosting.length ? formatTopLabels(hosting) : block.hostingSignal} />
-            <RunMapLine label="vendors" value={vendors.length ? formatTopLabels(vendors) : "Vendor evidence not recorded in this block"} />
+            <RunMapLine
+              label="hosting"
+              value={
+                hosting.length ? formatTopLabels(hosting) : block.hostingSignal
+              }
+            />
+            <RunMapLine
+              label="vendors"
+              value={
+                vendors.length
+                  ? formatTopLabels(vendors)
+                  : "Vendor evidence not recorded in this block"
+              }
+            />
             <RunMapLine label="dependency" value={block.dependencySignal} />
-            <RunMapLine label="evidence gap" value={block.gapSignal} tone={V4.amber} />
+            <RunMapLine
+              label="evidence gap"
+              value={block.gapSignal}
+              tone={V4.amber}
+            />
           </div>
         </section>
       </div>
@@ -666,10 +919,31 @@ function RunMapPassport({ block }: { block: RunMapBlock }) {
   );
 }
 
-function RunMapLine({ label, value, tone = V4.slate }: { label: string; value: string; tone?: string }) {
+function RunMapLine({
+  label,
+  value: rawValue,
+  tone = V4.slate,
+}: {
+  label: string;
+  value: string;
+  tone?: string;
+}) {
+  // These lines summarise column values verbatim -- `on_premise 150 · hosted_by_vendor 77`.
+  const value = cellText(rawValue);
   return (
-    <div style={{ minWidth: 0, borderTop: `1px solid ${V4.rule}`, paddingTop: 8 }}>
-      <span style={{ display: "block", fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: tone }}>
+    <div
+      style={{ minWidth: 0, borderTop: `1px solid ${V4.rule}`, paddingTop: 8 }}
+    >
+      <span
+        style={{
+          display: "block",
+          fontFamily: MONO,
+          fontSize: 10,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: tone,
+        }}
+      >
         {label}
       </span>
       <span
@@ -721,29 +995,85 @@ function ScopeButton({
         cursor: "pointer",
       }}
     >
-      <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>{rank === 0 ? "ALL" : rank}</span>
+      <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>
+        {rank === 0 ? "ALL" : rank}
+      </span>
       <span style={{ minWidth: 0 }}>
-        <span style={{ display: "block", fontFamily: SANS, fontSize: 13, fontWeight: 650, color: V4.ink, lineHeight: 1.24, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span
+          style={{
+            display: "block",
+            fontFamily: SANS,
+            fontSize: 13,
+            fontWeight: 650,
+            color: V4.ink,
+            lineHeight: 1.24,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
           {slice.name}
         </span>
-        <span style={{ display: "block", marginTop: 4, fontFamily: MONO, fontSize: 10.5, color: V4.slate }}>
+        <span
+          style={{
+            display: "block",
+            marginTop: 4,
+            fontFamily: MONO,
+            fontSize: 10.5,
+            color: V4.slate,
+          }}
+        >
           {rank === 0
             ? `${slice.integrations.length} flows · ${slice.infrastructure.length} platforms`
             : `${slice.integrations.length} flows · platform joins unproven`}
         </span>
       </span>
-      <span style={{ fontFamily: MONO, fontSize: 12, color: V4.ink, textAlign: "right" }}>{slice.count}</span>
+      <span
+        style={{
+          fontFamily: MONO,
+          fontSize: 12,
+          color: V4.ink,
+          textAlign: "right",
+        }}
+      >
+        {slice.count}
+      </span>
     </button>
   );
 }
 
-function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill: (capability: string) => void }) {
+function ArchitectureMap({
+  slice,
+  onDrill,
+}: {
+  slice: ArchitectureSlice;
+  onDrill: (capability: string) => void;
+}) {
   const isWholeEstate = slice.name === "Whole estate";
   const isDataPlatformScope = isDataAndAiScope(slice);
-  const batchFlows = keywordCount(slice.integrations, "integrationType", ["batch", "file", "etl"]);
-  const apiFlows = keywordCount(slice.integrations, "integrationType", ["api", "hl7", "fhir", "edi"]);
-  const streamingFlows = keywordCount(slice.integrations, "integrationType", ["stream", "event", "real-time", "realtime"]);
-  const unstructuredFlows = keywordCount(slice.integrations, "dataDomain", ["document", "image", "note", "unstructured"]);
+  const batchFlows = keywordCount(slice.integrations, "integrationType", [
+    "batch",
+    "file",
+    "etl",
+  ]);
+  const apiFlows = keywordCount(slice.integrations, "integrationType", [
+    "api",
+    "hl7",
+    "fhir",
+    "edi",
+  ]);
+  const streamingFlows = keywordCount(slice.integrations, "integrationType", [
+    "stream",
+    "event",
+    "real-time",
+    "realtime",
+  ]);
+  const unstructuredFlows = keywordCount(slice.integrations, "dataDomain", [
+    "document",
+    "image",
+    "note",
+    "unstructured",
+  ]);
   const servingCount = slice.destinations.length;
   const hasWorkloadEvidence = slice.dataWorkloads.length > 0;
   const platformSignals = platformSignalCounts(slice, isWholeEstate);
@@ -753,47 +1083,78 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
 
   return (
     <section style={{ minWidth: 0 }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 18, marginBottom: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 18,
+          marginBottom: 10,
+        }}
+      >
         <span style={eyebrow(V4.blue)}>{slice.name}</span>
         <span style={{ fontFamily: MONO, fontSize: 11, color: V4.slate }}>
           {slice.count} applications · {slice.integrations.length} flows ·{" "}
-          {isWholeEstate ? `${slice.infrastructure.length} platforms` : "platform attribution unproven"}
+          {isWholeEstate
+            ? `${slice.infrastructure.length} platforms`
+            : "platform attribution unproven"}
         </span>
       </div>
 
       <div style={grainNoticeStyle}>
         <span style={eyebrow(V4.amber)}>Counting basis</span>
-        <p style={{ margin: "7px 0 0", fontFamily: SANS, fontSize: 13, lineHeight: 1.52, color: V4.inkSoft }}>
-          Counts here are recorded systems, movements, platform records, and product-facing evidence slices.
-          Movement counts are source-to-target rows. Data, BI, ETL, report, script, and analytics volumes
-          are shown only when segment-level workload evidence is present in the governed projection.
+        <p
+          style={{
+            margin: "7px 0 0",
+            fontFamily: SANS,
+            fontSize: 13,
+            lineHeight: 1.52,
+            color: V4.inkSoft,
+          }}
+        >
+          Counts here are recorded systems, movements, platform records, and
+          product-facing evidence slices. Movement counts are source-to-target
+          rows. Data, BI, ETL, report, script, and analytics volumes are shown
+          only when segment-level workload evidence is present in the governed
+          record.
         </p>
       </div>
 
       <div
-          data-arch-map
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(112px,1fr) 14px minmax(112px,1fr) 14px minmax(188px,1.28fr) 14px minmax(112px,1fr) 14px minmax(112px,1fr)",
-            gap: 5,
-            alignItems: "stretch",
-            border: `2px solid rgba(29,158,117,0.34)`,
-            borderTop: `7px solid ${V4.green}`,
-            borderRadius: 10,
-            background: "rgba(255,255,255,0.55)",
-            padding: 10,
-          }}
-        >
+        data-arch-map
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "minmax(112px,1fr) 14px minmax(112px,1fr) 14px minmax(188px,1.28fr) 14px minmax(112px,1fr) 14px minmax(112px,1fr)",
+          gap: 5,
+          alignItems: "stretch",
+          border: `2px solid rgba(29,158,117,0.34)`,
+          borderTop: `7px solid ${V4.green}`,
+          borderRadius: 10,
+          background: "rgba(255,255,255,0.55)",
+          padding: 10,
+        }}
+      >
         <ArchitectureStage
           index="1"
           zoneLabel="source zone"
           tone={V4.navy}
           title={isDataPlatformScope ? "Data platforms" : "Operational systems"}
-          caption={isDataPlatformScope ? "Recorded data and AI estate" : "Business applications in this scope"}
+          caption={
+            isDataPlatformScope
+              ? "Recorded data and AI estate"
+              : "Business applications in this scope"
+          }
           items={[
-            [isDataPlatformScope ? "data / AI systems" : "application systems", slice.count],
+            [
+              isDataPlatformScope ? "data / AI systems" : "application systems",
+              slice.count,
+            ],
             ["interfaces", slice.integrations.length],
-            [isWholeEstate ? "platform records" : "direct platform joins", slice.infrastructure.length],
+            [
+              isWholeEstate ? "platform records" : "direct platform joins",
+              slice.infrastructure.length,
+            ],
             ["tier-1 systems", slice.tier1],
           ]}
         />
@@ -827,9 +1188,18 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
             gap: 10,
           }}
         >
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
             <span style={eyebrow(V4.green)}>
-              {isWholeEstate || isDataPlatformScope ? "3 · governed lakehouse" : "3 · data / reporting layer"}
+              {isWholeEstate || isDataPlatformScope
+                ? "3 · governed lakehouse"
+                : "3 · data / reporting layer"}
             </span>
             <span style={{ fontFamily: MONO, fontSize: 10, color: V4.slate }}>
               RECORDED FLOWS · CANONICAL · SERVING TARGETS
@@ -844,16 +1214,45 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
               alignItems: "stretch",
             }}
           >
-            <ArchitectureNode label="Recorded flows" value={slice.integrations.length} detail="source movements" tone={V4.red} />
-            <ArchitectureNode label="Compiled records" value={slice.count + slice.integrations.length} detail="apps + movements" tone={V4.stone} />
-            <ArchitectureNode label="Facts + dimensions" value={slice.appCategories.length + slice.dataDomains.length} detail="recorded groupings" tone={V4.amber} />
-            <ArchitectureNode label="Serving targets" value={slice.destinations.length} detail="not report count" tone={V4.green} />
+            <ArchitectureNode
+              label="Recorded flows"
+              value={slice.integrations.length}
+              detail="source movements"
+              tone={V4.red}
+            />
+            <ArchitectureNode
+              label="Compiled records"
+              value={slice.count + slice.integrations.length}
+              detail="apps + movements"
+              tone={V4.stone}
+            />
+            <ArchitectureNode
+              label="Facts + dimensions"
+              value={slice.appCategories.length + slice.dataDomains.length}
+              detail="recorded groupings"
+              tone={V4.amber}
+            />
+            <ArchitectureNode
+              label="Serving targets"
+              value={slice.destinations.length}
+              detail="not report count"
+              tone={V4.green}
+            />
           </div>
           <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 9 }}>
             <span style={eyebrow(V4.slate)}>Canonical context model</span>
-            <p style={{ margin: "6px 0 0", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.inkSoft }}>
-              Business records, application systems, integration rows, and platform records are compiled into
-              governed Home read models. Platform hosting joins remain marked as unproven when absent.
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontFamily: SANS,
+                fontSize: 12.5,
+                lineHeight: 1.45,
+                color: V4.inkSoft,
+              }}
+            >
+              Business records, application systems, integration rows, and
+              platform records are compiled into governed Home read models.
+              Platform hosting joins remain marked as unproven when absent.
             </p>
           </div>
         </section>
@@ -884,7 +1283,10 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
             ["recorded targets", servingCount],
             ["recorded fact groups", slice.appCategories.length],
             ["product surfaces", 4],
-            ["business context", isWholeEstate ? Math.max(1, slice.appCategories.length) : 1],
+            [
+              "business context",
+              isWholeEstate ? Math.max(1, slice.appCategories.length) : 1,
+            ],
           ]}
         />
       </div>
@@ -936,7 +1338,11 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
         />
         <EvidencePanel
           title={isWholeEstate ? "Platform estate" : "Platform signals"}
-          detail={isWholeEstate ? "Recorded platform object types" : "Hosting and integration-platform mentions, not confirmed hosting joins"}
+          detail={
+            isWholeEstate
+              ? "Recorded platform object types"
+              : "Hosting and integration-platform mentions, not confirmed hosting joins"
+          }
           items={platformSignals.slice(0, 5)}
         />
         {hasWorkloadEvidence ? (
@@ -944,7 +1350,7 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
         ) : (
           <SourceGapPanel
             title="Workload evidence not loaded"
-            detail="This scope has movements but no segment-level data/BI/ETL workload rows in the governed projection"
+            detail="This scope has movements but no segment-level data/BI/ETL workload rows in the governed record"
             items={[
               "Report, ETL, script, and analytics workload counts by function",
               "BI platform, mart, and semantic-model usage by segment",
@@ -998,23 +1404,41 @@ function ArchitectureMap({ slice, onDrill }: { slice: ArchitectureSlice; onDrill
         }}
       >
         <span style={eyebrow(V4.amber)}>Architecture evidence boundary</span>
-        <p style={{ margin: "8px 0 0", fontFamily: SANS, fontSize: 13.5, lineHeight: 1.55, color: V4.inkSoft }}>
-          This map uses recorded application, integration, infrastructure, and data/BI/ETL workload fields. It does not claim
-          confirmed runtime dependency direction, deployment topology, network zones, or system-to-platform
-          hosting joins where those relationships are not recorded. Report, ETL, script, user, and data-volume
-          counts come from segment-level workload rows; they are not inferred from source-to-target movements.
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontFamily: SANS,
+            fontSize: 13.5,
+            lineHeight: 1.55,
+            color: V4.inkSoft,
+          }}
+        >
+          This map uses recorded application, integration, infrastructure, and
+          data/BI/ETL workload fields. It does not claim confirmed runtime
+          dependency direction, deployment topology, network zones, or
+          system-to-platform hosting joins where those relationships are not
+          recorded. Report, ETL, script, user, and data-volume counts come from
+          segment-level workload rows; they are not inferred from
+          source-to-target movements.
         </p>
       </div>
     </section>
   );
 }
 
-function ArchitectureRelationshipCrosswalk({ slice }: { slice: ArchitectureSlice }) {
+function ArchitectureRelationshipCrosswalk({
+  slice,
+}: {
+  slice: ArchitectureSlice;
+}) {
   const isWholeEstate = slice.name === "Whole estate";
   const cards = [
     {
-      title: isWholeEstate ? "Functions → cloud / hosting posture" : "System families → cloud / hosting posture",
-      detail: "Applications mapped from business capability to deployment model.",
+      title: isWholeEstate
+        ? "Functions → cloud / hosting posture"
+        : "System families → cloud / hosting posture",
+      detail:
+        "Applications mapped from business capability to deployment model.",
       entries: relationshipMatrix(
         slice.applications,
         isWholeEstate ? "businessFunction" : "systemCategory",
@@ -1022,23 +1446,40 @@ function ArchitectureRelationshipCrosswalk({ slice }: { slice: ArchitectureSlice
       ).slice(0, 4),
     },
     {
-      title: isWholeEstate ? "Functions → vendor concentration" : "Vendors → criticality",
+      title: isWholeEstate
+        ? "Functions → vendor concentration"
+        : "Vendors → criticality",
       detail: isWholeEstate
         ? "Supplier exposure by the business capabilities they support."
         : "Critical-system exposure by supplier inside this capability.",
-      entries: relationshipMatrix(slice.applications, isWholeEstate ? "businessFunction" : "vendor", isWholeEstate ? "vendor" : "criticality").slice(0, 4),
+      entries: relationshipMatrix(
+        slice.applications,
+        isWholeEstate ? "businessFunction" : "vendor",
+        isWholeEstate ? "vendor" : "criticality",
+      ).slice(0, 4),
     },
     {
       title: "Ownership → lifecycle posture",
-      detail: "Where accountable owners intersect with current, legacy, and sunset posture.",
-      entries: relationshipMatrix(slice.applications, "businessOwner", "lifecycleState").slice(0, 4),
+      detail:
+        "Where accountable owners intersect with current, legacy, and sunset posture.",
+      entries: relationshipMatrix(
+        slice.applications,
+        "businessOwner",
+        "lifecycleState",
+      ).slice(0, 4),
     },
     {
-      title: isWholeEstate ? "Data domains → integration patterns" : "Data domains → platforms",
+      title: isWholeEstate
+        ? "Data domains → integration patterns"
+        : "Data domains → platforms",
       detail: isWholeEstate
         ? "How recorded domains move through the estate."
         : "Where this scope's data movements land or run.",
-      entries: relationshipMatrix(slice.integrations, "dataDomain", isWholeEstate ? "integrationType" : "platformOrDatabase").slice(0, 4),
+      entries: relationshipMatrix(
+        slice.integrations,
+        "dataDomain",
+        isWholeEstate ? "integrationType" : "platformOrDatabase",
+      ).slice(0, 4),
     },
   ].filter((card) => card.entries.length > 0);
 
@@ -1055,9 +1496,19 @@ function ArchitectureRelationshipCrosswalk({ slice }: { slice: ArchitectureSlice
         padding: "16px 16px 18px",
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 14,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <span style={eyebrow(V4.blue)}>Enterprise relationship crosswalk</span>
+          <span style={eyebrow(V4.blue)}>
+            Enterprise relationship crosswalk
+          </span>
           <h2
             style={{
               margin: "8px 0 0",
@@ -1068,11 +1519,20 @@ function ArchitectureRelationshipCrosswalk({ slice }: { slice: ArchitectureSlice
               color: V4.ink,
             }}
           >
-            Applications are mapped to owners, vendors, hosting posture, lifecycle, and data movement.
+            Applications are mapped to owners, vendors, hosting posture,
+            lifecycle, and data movement.
           </h2>
         </div>
-        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.07em", color: V4.slate }}>
-          {slice.count.toLocaleString()} APPS · {slice.integrations.length.toLocaleString()} FLOWS
+        <span
+          style={{
+            fontFamily: MONO,
+            fontSize: 11,
+            letterSpacing: "0.07em",
+            color: V4.slate,
+          }}
+        >
+          {slice.count.toLocaleString()} APPS ·{" "}
+          {slice.integrations.length.toLocaleString()} FLOWS
         </span>
       </div>
       <div
@@ -1096,7 +1556,15 @@ function ArchitectureRelationshipCrosswalk({ slice }: { slice: ArchitectureSlice
             }}
           >
             <span style={eyebrow(V4.slate)}>{card.title}</span>
-            <p style={{ margin: "7px 0 12px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.slate }}>
+            <p
+              style={{
+                margin: "7px 0 12px",
+                fontFamily: SANS,
+                fontSize: 12.5,
+                lineHeight: 1.45,
+                color: V4.slate,
+              }}
+            >
               {card.detail}
             </p>
             <div style={{ display: "grid", gap: 9 }}>
@@ -1114,12 +1582,25 @@ function ArchitectureRelationshipCrosswalk({ slice }: { slice: ArchitectureSlice
 function RelationshipMiniCard({
   entry,
 }: {
-  entry: { leftValue: string; count: number; rightCounts: Array<[string, number]> };
+  entry: {
+    leftValue: string;
+    count: number;
+    rightCounts: Array<[string, number]>;
+  };
 }) {
   const max = Math.max(1, ...entry.rightCounts.map(([, count]) => count));
   return (
-    <div style={{ minWidth: 0, borderTop: `1px solid ${V4.rule}`, paddingTop: 9 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 8, alignItems: "baseline" }}>
+    <div
+      style={{ minWidth: 0, borderTop: `1px solid ${V4.rule}`, paddingTop: 9 }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0,1fr) auto",
+          gap: 8,
+          alignItems: "baseline",
+        }}
+      >
         <strong
           title={entry.leftValue}
           style={{
@@ -1134,12 +1615,21 @@ function RelationshipMiniCard({
         >
           {entry.leftValue}
         </strong>
-        <span style={{ fontFamily: MONO, fontSize: 11, color: V4.ink }}>{entry.count.toLocaleString()}</span>
+        <span style={{ fontFamily: MONO, fontSize: 11, color: V4.ink }}>
+          {entry.count.toLocaleString()}
+        </span>
       </div>
       <div style={{ display: "grid", gap: 5, marginTop: 7 }}>
         {entry.rightCounts.slice(0, 3).map(([label, count]) => (
           <div key={label} style={{ minWidth: 0 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 30px", gap: 8, alignItems: "baseline" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0,1fr) 30px",
+                gap: 8,
+                alignItems: "baseline",
+              }}
+            >
               <span
                 title={label}
                 style={{
@@ -1154,10 +1644,35 @@ function RelationshipMiniCard({
               >
                 {label}
               </span>
-              <span style={{ fontFamily: MONO, fontSize: 10.5, color: V4.slate, textAlign: "right" }}>{count}</span>
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10.5,
+                  color: V4.slate,
+                  textAlign: "right",
+                }}
+              >
+                {count}
+              </span>
             </div>
-            <span style={{ display: "block", height: 3, borderRadius: 99, background: "rgba(12,26,58,0.08)", overflow: "hidden", marginTop: 3 }}>
-              <span style={{ display: "block", width: `${Math.max(6, (count / max) * 100)}%`, height: "100%", background: V4.blue }} />
+            <span
+              style={{
+                display: "block",
+                height: 3,
+                borderRadius: 99,
+                background: "rgba(12,26,58,0.08)",
+                overflow: "hidden",
+                marginTop: 3,
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  width: `${Math.max(6, (count / max) * 100)}%`,
+                  height: "100%",
+                  background: V4.blue,
+                }}
+              />
             </span>
           </div>
         ))}
@@ -1215,7 +1730,9 @@ function ArchitectureStage({
       >
         {index}
       </span>
-      <span style={{ ...eyebrow(tone), display: "block", marginLeft: 34 }}>{index} · {zoneLabel}</span>
+      <span style={{ ...eyebrow(tone), display: "block", marginLeft: 34 }}>
+        {index} · {zoneLabel}
+      </span>
       <h2
         style={{
           margin: "14px 0 0",
@@ -1229,23 +1746,75 @@ function ArchitectureStage({
       >
         {title}
       </h2>
-      <p style={{ margin: "8px 0 0", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.04em", color: V4.slate }}>
+      <p
+        style={{
+          margin: "8px 0 0",
+          fontFamily: MONO,
+          fontSize: 10.5,
+          letterSpacing: "0.04em",
+          color: V4.slate,
+        }}
+      >
         {caption}
       </p>
       <div style={{ display: "grid", gap: 8, marginTop: 16 }}>
-        {items.filter(([, count]) => count > 0).slice(0, 6).map(([name, count]) => (
-          <div key={name} style={{ minWidth: 0 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 34px", gap: 10, alignItems: "baseline" }}>
-              <span style={{ fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {name}
+        {items
+          .filter(([, count]) => count > 0)
+          .slice(0, 6)
+          .map(([name, count]) => (
+            <div key={name} style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0,1fr) 34px",
+                  gap: 10,
+                  alignItems: "baseline",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: SANS,
+                    fontSize: 12.5,
+                    color: V4.inkSoft,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {name}
+                </span>
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 11,
+                    color: V4.ink,
+                    textAlign: "right",
+                  }}
+                >
+                  {count}
+                </span>
+              </div>
+              <span
+                style={{
+                  display: "block",
+                  height: 4,
+                  borderRadius: 99,
+                  background: V4.cream,
+                  overflow: "hidden",
+                  marginTop: 4,
+                }}
+              >
+                <span
+                  style={{
+                    display: "block",
+                    width: `${Math.max(5, (count / max) * 100)}%`,
+                    height: "100%",
+                    background: tone,
+                  }}
+                />
               </span>
-              <span style={{ fontFamily: MONO, fontSize: 11, color: V4.ink, textAlign: "right" }}>{count}</span>
             </div>
-            <span style={{ display: "block", height: 4, borderRadius: 99, background: V4.cream, overflow: "hidden", marginTop: 4 }}>
-              <span style={{ display: "block", width: `${Math.max(5, (count / max) * 100)}%`, height: "100%", background: tone }} />
-            </span>
-          </div>
-        ))}
+          ))}
       </div>
     </article>
   );
@@ -1288,7 +1857,17 @@ function FlowArrow({ label }: { label: string }) {
           }}
         />
       </span>
-      <span style={{ marginTop: 8, fontFamily: MONO, fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", writingMode: "vertical-rl", color: V4.slate }}>
+      <span
+        style={{
+          marginTop: 8,
+          fontFamily: MONO,
+          fontSize: 9,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          writingMode: "vertical-rl",
+          color: V4.slate,
+        }}
+      >
         {label}
       </span>
     </div>
@@ -1317,20 +1896,55 @@ function ArchitectureNode({
         textAlign: "center",
       }}
     >
-      <span style={{ display: "block", fontFamily: SERIF, fontSize: 23, lineHeight: 1, color: tone }}>
+      <span
+        style={{
+          display: "block",
+          fontFamily: SERIF,
+          fontSize: 23,
+          lineHeight: 1,
+          color: tone,
+        }}
+      >
         {value.toLocaleString()}
       </span>
-      <span style={{ display: "block", marginTop: 7, fontFamily: SANS, fontSize: 12.5, fontWeight: 700, color: V4.ink, lineHeight: 1.2 }}>
+      <span
+        style={{
+          display: "block",
+          marginTop: 7,
+          fontFamily: SANS,
+          fontSize: 12.5,
+          fontWeight: 700,
+          color: V4.ink,
+          lineHeight: 1.2,
+        }}
+      >
         {label}
       </span>
-      <span style={{ display: "block", marginTop: 4, fontFamily: MONO, fontSize: 10, color: V4.slate, lineHeight: 1.3 }}>
+      <span
+        style={{
+          display: "block",
+          marginTop: 4,
+          fontFamily: MONO,
+          fontSize: 10,
+          color: V4.slate,
+          lineHeight: 1.3,
+        }}
+      >
         {detail}
       </span>
     </div>
   );
 }
 
-function FoundationBand({ title, detail, tone }: { title: string; detail: string; tone: string }) {
+function FoundationBand({
+  title,
+  detail,
+  tone,
+}: {
+  title: string;
+  detail: string;
+  tone: string;
+}) {
   return (
     <article
       style={{
@@ -1342,27 +1956,95 @@ function FoundationBand({ title, detail, tone }: { title: string; detail: string
       }}
     >
       <span style={eyebrow(tone)}>{title}</span>
-      <p style={{ margin: "7px 0 0", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.inkSoft }}>
+      <p
+        style={{
+          margin: "7px 0 0",
+          fontFamily: SANS,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+          color: V4.inkSoft,
+        }}
+      >
         {detail}
       </p>
     </article>
   );
 }
 
-function EvidencePanel({ title, detail, items }: { title: string; detail: string; items: Array<[string, number]> }) {
+function EvidencePanel({
+  title,
+  detail,
+  items,
+}: {
+  title: string;
+  detail: string;
+  items: Array<[string, number]>;
+}) {
   return (
-    <article style={{ minWidth: 0, border: `1px solid ${V4.rule}`, borderRadius: 8, background: V4.surface, padding: "14px 15px" }}>
+    <article
+      style={{
+        minWidth: 0,
+        border: `1px solid ${V4.rule}`,
+        borderRadius: 8,
+        background: V4.surface,
+        padding: "14px 15px",
+      }}
+    >
       <span style={eyebrow(V4.slate)}>{title}</span>
-      <p style={{ margin: "7px 0 12px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.slate }}>{detail}</p>
+      <p
+        style={{
+          margin: "7px 0 12px",
+          fontFamily: SANS,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+          color: V4.slate,
+        }}
+      >
+        {detail}
+      </p>
       <div style={{ display: "grid", gap: 7 }}>
-        {items.filter(([, count]) => count > 0).slice(0, 5).map(([name, count]) => (
-          <div key={name} style={{ minWidth: 0, display: "flex", justifyContent: "space-between", gap: 12, borderTop: `1px solid ${V4.rule}`, paddingTop: 7 }}>
-            <span style={{ flex: "1 1 auto", fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={name}>
-              {name}
-            </span>
-            <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 11, color: V4.ink }}>{count}</span>
-          </div>
-        ))}
+        {items
+          .filter(([, count]) => count > 0)
+          .slice(0, 5)
+          .map(([name, count]) => (
+            <div
+              key={name}
+              style={{
+                minWidth: 0,
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                borderTop: `1px solid ${V4.rule}`,
+                paddingTop: 7,
+              }}
+            >
+              <span
+                style={{
+                  flex: "1 1 auto",
+                  fontFamily: SANS,
+                  fontSize: 12.5,
+                  color: V4.inkSoft,
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={name}
+              >
+                {name}
+              </span>
+              <span
+                style={{
+                  flexShrink: 0,
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  color: V4.ink,
+                }}
+              >
+                {count}
+              </span>
+            </div>
+          ))}
       </div>
     </article>
   );
@@ -1391,25 +2073,75 @@ function DataWorkloadEvidencePanel({ slice }: { slice: ArchitectureSlice }) {
       }}
     >
       <span style={eyebrow(V4.green)}>Data/BI/ETL evidence loaded</span>
-      <p style={{ margin: "7px 0 12px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.slate }}>
-        Segment-level workload counts, users, and data volumes are present in the governed projection
+      <p
+        style={{
+          margin: "7px 0 12px",
+          fontFamily: SANS,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+          color: V4.slate,
+        }}
+      >
+        Segment-level workload counts, users, and data volumes are present in
+        the governed record
         {technologySummary ? ` across ${technologySummary}.` : "."}
       </p>
       <div style={{ display: "grid", gap: 7 }}>
-        {items.filter(([, count]) => count > 0).map(([name, count]) => (
-          <div key={name} style={{ minWidth: 0, display: "flex", justifyContent: "space-between", gap: 12, borderTop: `1px solid rgba(29,158,117,0.18)`, paddingTop: 7 }}>
-            <span style={{ flex: "1 1 auto", fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={name}>
-              {name}
-            </span>
-            <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 11, color: V4.ink }}>{count.toLocaleString()}</span>
-          </div>
-        ))}
+        {items
+          .filter(([, count]) => count > 0)
+          .map(([name, count]) => (
+            <div
+              key={name}
+              style={{
+                minWidth: 0,
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                borderTop: `1px solid rgba(29,158,117,0.18)`,
+                paddingTop: 7,
+              }}
+            >
+              <span
+                style={{
+                  flex: "1 1 auto",
+                  fontFamily: SANS,
+                  fontSize: 12.5,
+                  color: V4.inkSoft,
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={name}
+              >
+                {name}
+              </span>
+              <span
+                style={{
+                  flexShrink: 0,
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  color: V4.ink,
+                }}
+              >
+                {count.toLocaleString()}
+              </span>
+            </div>
+          ))}
       </div>
     </article>
   );
 }
 
-function SourceGapPanel({ title, detail, items }: { title: string; detail: string; items: string[] }) {
+function SourceGapPanel({
+  title,
+  detail,
+  items,
+}: {
+  title: string;
+  detail: string;
+  items: string[];
+}) {
   return (
     <article
       style={{
@@ -1421,12 +2153,48 @@ function SourceGapPanel({ title, detail, items }: { title: string; detail: strin
       }}
     >
       <span style={eyebrow(V4.amber)}>{title}</span>
-      <p style={{ margin: "7px 0 12px", fontFamily: SANS, fontSize: 12.5, lineHeight: 1.45, color: V4.slate }}>{detail}</p>
+      <p
+        style={{
+          margin: "7px 0 12px",
+          fontFamily: SANS,
+          fontSize: 12.5,
+          lineHeight: 1.45,
+          color: V4.slate,
+        }}
+      >
+        {detail}
+      </p>
       <div style={{ display: "grid", gap: 7 }}>
         {items.map((item) => (
-          <div key={item} style={{ display: "grid", gridTemplateColumns: "10px minmax(0,1fr)", gap: 8, alignItems: "baseline", borderTop: `1px solid rgba(186,117,23,0.18)`, paddingTop: 7 }}>
-            <span style={{ width: 5, height: 5, borderRadius: 999, background: V4.amber }} />
-            <span style={{ fontFamily: SANS, fontSize: 12.5, color: V4.inkSoft, lineHeight: 1.35 }}>{item}</span>
+          <div
+            key={item}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "10px minmax(0,1fr)",
+              gap: 8,
+              alignItems: "baseline",
+              borderTop: `1px solid rgba(186,117,23,0.18)`,
+              paddingTop: 7,
+            }}
+          >
+            <span
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 999,
+                background: V4.amber,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: SANS,
+                fontSize: 12.5,
+                color: V4.inkSoft,
+                lineHeight: 1.35,
+              }}
+            >
+              {item}
+            </span>
           </div>
         ))}
       </div>
@@ -1447,9 +2215,20 @@ function buildArchitectureSlices(
   }
   const total = Math.max(1, rows.length);
   const slices = [...groups.entries()]
-    .map(([name, groupRows]) => buildSlice(name, groupRows, integrationsForApps(integrations, groupRows), [], total))
+    .map(([name, groupRows]) =>
+      buildSlice(
+        name,
+        groupRows,
+        integrationsForApps(integrations, groupRows),
+        [],
+        total,
+      ),
+    )
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-  return [buildSlice("Whole estate", rows, integrations, infrastructure, total), ...slices];
+  return [
+    buildSlice("Whole estate", rows, integrations, infrastructure, total),
+    ...slices,
+  ];
 }
 
 function buildRunMapBlocks(
@@ -1529,7 +2308,8 @@ function buildRunMapBlocks(
     runMapBlock({
       key: "payer",
       title: "Health Plan / Payer",
-      subtitle: "Enrollment, claims, provider network, care management, RAF, Stars, pharmacy, and actuarial operations.",
+      subtitle:
+        "Enrollment, claims, provider network, care management, RAF, Stars, pharmacy, and actuarial operations.",
       rows: payerApps,
       integrations,
       denominator: "applications",
@@ -1538,7 +2318,8 @@ function buildRunMapBlocks(
     runMapBlock({
       key: "provider",
       title: "Provider / Delivery",
-      subtitle: "Clinical, acute, ambulatory, patient access, revenue cycle, pharmacy, lab, and imaging operations.",
+      subtitle:
+        "Clinical, acute, ambulatory, patient access, revenue cycle, pharmacy, lab, and imaging operations.",
       rows: providerApps,
       integrations,
       denominator: "applications",
@@ -1547,7 +2328,8 @@ function buildRunMapBlocks(
     runMapBlock({
       key: "back-office",
       title: "Back Office",
-      subtitle: "Finance, HR, supply chain, procurement, legal, facilities, workforce, and shared-services backbone.",
+      subtitle:
+        "Finance, HR, supply chain, procurement, legal, facilities, workforce, and shared-services backbone.",
       rows: backOfficeApps,
       integrations,
       denominator: "applications",
@@ -1556,7 +2338,8 @@ function buildRunMapBlocks(
     runMapBlock({
       key: "data-ai",
       title: "Data, Analytics & AI",
-      subtitle: "Operational sources, ingestion, marts, reporting, advanced analytics, AI tooling, and data governance.",
+      subtitle:
+        "Operational sources, ingestion, marts, reporting, advanced analytics, AI tooling, and data governance.",
       rows: dataApps,
       integrations,
       denominator: "applications",
@@ -1566,39 +2349,55 @@ function buildRunMapBlocks(
     {
       key: "infrastructure",
       title: "Infrastructure & Hosting",
-      subtitle: "SaaS, public cloud, private cloud, data centers, integration engines, identity, network, and storage.",
+      subtitle:
+        "SaaS, public cloud, private cloud, data centers, integration engines, identity, network, and storage.",
       count: infrastructure.length,
       denominator: "platforms",
       records: infrastructure,
       relatedIntegrations: integrations.filter((row) =>
         infrastructure.some((platform) => {
           const name = text(platform, "platformName");
-          return name && (text(row, "targetSystem") === name || text(row, "platformOrDatabase") === name);
+          return (
+            name &&
+            (text(row, "targetSystem") === name ||
+              text(row, "platformOrDatabase") === name)
+          );
         }),
       ),
       anchors: namedAnchors(infrastructure, "platformName", "platformType"),
       ownerSignal: ownerSignal(infrastructure, "operationalOwner"),
-      hostingSignal: formatTopLabels(topCounts(infrastructure, "hostingModel").slice(0, 3)),
+      hostingSignal: formatTopLabels(
+        topCounts(infrastructure, "hostingModel").slice(0, 3),
+      ),
       dependencySignal:
         infrastructureApps.length > 0
           ? `${infrastructureApps.length.toLocaleString()} application records also carry infrastructure or hosting signals`
           : "Application-to-platform hosting joins remain evidence-limited",
-      gapSignal: "Confirm app-to-platform hosting, environment, capacity, and resilience relationships",
+      gapSignal:
+        "Confirm app-to-platform hosting, environment, capacity, and resilience relationships",
       tone: V4.stone,
     },
     {
       key: "commercial",
       title: "Vendor & Commercial Spine",
-      subtitle: "Strategic suppliers, contracts, managed services, renewal exposure, and commercial leverage.",
-      count: new Set(vendorRows.map((row) => text(row, "vendor")).filter(Boolean)).size,
+      subtitle:
+        "Strategic suppliers, contracts, managed services, renewal exposure, and commercial leverage.",
+      count: new Set(
+        vendorRows.map((row) => text(row, "vendor")).filter(Boolean),
+      ).size,
       denominator: "vendors named on apps",
       records: vendorRows,
       relatedIntegrations: integrationsForApps(integrations, vendorRows),
-      anchors: topCounts(vendorRows, "vendor").slice(0, 3).map(([name, count]) => `${name} (${count})`),
+      anchors: topCounts(vendorRows, "vendor")
+        .slice(0, 3)
+        .map(([name, count]) => `${name} (${count})`),
       ownerSignal: ownerSignal(vendorRows, "businessOwner"),
-      hostingSignal: formatTopLabels(topCounts(vendorRows, "deploymentModel").slice(0, 3)),
+      hostingSignal: formatTopLabels(
+        topCounts(vendorRows, "deploymentModel").slice(0, 3),
+      ),
       dependencySignal: `${vendorRows.length.toLocaleString()} application records name a vendor`,
-      gapSignal: "Use Vendor Contracts for contract terms, spend, renewal, and document proof",
+      gapSignal:
+        "Use Vendor Contracts for contract terms, spend, renewal, and document proof",
       tone: V4.red,
     },
   ];
@@ -1636,7 +2435,9 @@ function runMapBlock({
     relatedIntegrations: linkedIntegrations,
     anchors: namedAnchors(rows, "systemName", "systemCategory"),
     ownerSignal: ownerSignal(rows, "businessOwner"),
-    hostingSignal: formatTopLabels(topCounts(rows, "deploymentModel").slice(0, 3)),
+    hostingSignal: formatTopLabels(
+      topCounts(rows, "deploymentModel").slice(0, 3),
+    ),
     dependencySignal:
       workloads.length > 0
         ? `${movements.length.toLocaleString()} recorded data movements and ${workloads.length.toLocaleString()} workload segments touch this block`
@@ -1647,7 +2448,10 @@ function runMapBlock({
   };
 }
 
-function matchingApps(rows: ApplicationRecord[], keywords: string[]): ApplicationRecord[] {
+function matchingApps(
+  rows: ApplicationRecord[],
+  keywords: string[],
+): ApplicationRecord[] {
   return rows.filter((row) => {
     const haystack = [
       text(row, "businessFunction"),
@@ -1662,10 +2466,18 @@ function matchingApps(rows: ApplicationRecord[], keywords: string[]): Applicatio
   });
 }
 
-function namedAnchors(rows: ApplicationRecord[], nameField: string, fallbackField: string): string[] {
+function namedAnchors(
+  rows: ApplicationRecord[],
+  nameField: string,
+  fallbackField: string,
+): string[] {
   const anchors: string[] = [];
   for (const name of [...rows]
-    .sort((a, b) => numeric(b.annualCostUsd) - numeric(a.annualCostUsd) || text(a, nameField).localeCompare(text(b, nameField)))
+    .sort(
+      (a, b) =>
+        numeric(b.annualCostUsd) - numeric(a.annualCostUsd) ||
+        text(a, nameField).localeCompare(text(b, nameField)),
+    )
     .map((row) => displayName(text(row, nameField) || text(row, fallbackField)))
     .filter(Boolean)) {
     if (!anchors.includes(name)) anchors.push(name);
@@ -1675,7 +2487,14 @@ function namedAnchors(rows: ApplicationRecord[], nameField: string, fallbackFiel
 }
 
 function recordName(row: ApplicationRecord): string {
-  return displayName(text(row, "systemName") || text(row, "platformName") || text(row, "dataAssetName") || text(row, "originalRowId")) || "Unnamed record";
+  return (
+    displayName(
+      text(row, "systemName") ||
+        text(row, "platformName") ||
+        text(row, "dataAssetName") ||
+        text(row, "originalRowId"),
+    ) || "Unnamed record"
+  );
 }
 
 function displayName(value: string): string {
@@ -1686,7 +2505,11 @@ function displayName(value: string): string {
 }
 
 function recordCategory(row: ApplicationRecord): string {
-  return text(row, "systemCategory") || text(row, "platformType") || text(row, "dataDomain");
+  return (
+    text(row, "systemCategory") ||
+    text(row, "platformType") ||
+    text(row, "dataDomain")
+  );
 }
 
 function recordCost(row: ApplicationRecord): unknown {
@@ -1703,17 +2526,27 @@ function ownerSignal(rows: ApplicationRecord[], ownerField: string): string {
 }
 
 function bestDrillTarget(rows: ApplicationRecord[]): string | undefined {
-  const topFunction = topCounts(rows, "businessFunction").find(([name]) => name !== "Not specified");
+  const topFunction = topCounts(rows, "businessFunction").find(
+    ([name]) => name !== "Not specified",
+  );
   return topFunction?.[0];
 }
 
-function gapSignalForBlock(rows: ApplicationRecord[], integrations: IntegrationRecord[]): string {
-  if (!rows.length) return "No mapped systems yet; source or adapter coverage is missing";
+function gapSignalForBlock(
+  rows: ApplicationRecord[],
+  integrations: IntegrationRecord[],
+): string {
+  if (!rows.length)
+    return "No mapped systems yet; source or adapter coverage is missing";
   const missingOwner = rows.filter((row) => !text(row, "businessOwner")).length;
-  const missingHosting = rows.filter((row) => !text(row, "deploymentModel")).length;
+  const missingHosting = rows.filter(
+    (row) => !text(row, "deploymentModel"),
+  ).length;
   const missingFlow = integrations.length === 0;
-  if (missingOwner > 0) return `${missingOwner.toLocaleString()} system records need business-owner evidence`;
-  if (missingHosting > 0) return `${missingHosting.toLocaleString()} system records need hosting evidence`;
+  if (missingOwner > 0)
+    return `${missingOwner.toLocaleString()} system records need business-owner evidence`;
+  if (missingHosting > 0)
+    return `${missingHosting.toLocaleString()} system records need hosting evidence`;
   if (missingFlow) return "No recorded data movements touch this block";
   return "Gaps move to logical and physical drilldown";
 }
@@ -1721,12 +2554,23 @@ function gapSignalForBlock(rows: ApplicationRecord[], integrations: IntegrationR
 function dataFlowGap(integrations: IntegrationRecord[]): string {
   const workloads = dataWorkloadRows(integrations);
   if (workloads.length > 0) {
-    const workloadTotal = workloads.reduce((sum, row) => sum + numeric(row.workloadCount), 0);
-    const activeUsers = workloads.reduce((sum, row) => sum + numeric(row.activeUserCount), 0);
-    const dataVolume = workloads.reduce((sum, row) => sum + numeric(row.dataVolumeTb), 0);
+    const workloadTotal = workloads.reduce(
+      (sum, row) => sum + numeric(row.workloadCount),
+      0,
+    );
+    const activeUsers = workloads.reduce(
+      (sum, row) => sum + numeric(row.activeUserCount),
+      0,
+    );
+    const dataVolume = workloads.reduce(
+      (sum, row) => sum + numeric(row.dataVolumeTb),
+      0,
+    );
     return `${workloads.length.toLocaleString()} workload segments carry ${Math.round(workloadTotal).toLocaleString()} report/ETL/script items, ${Math.round(activeUsers).toLocaleString()} active users, and ${Number(dataVolume.toFixed(1)).toLocaleString()} TB`;
   }
-  const missingConsumption = integrations.filter((row) => !text(row, "consumptionLayer")).length;
+  const missingConsumption = integrations.filter(
+    (row) => !text(row, "consumptionLayer"),
+  ).length;
   if (missingConsumption > 0) {
     return `${missingConsumption.toLocaleString()} movements need consumption/reporting-layer evidence`;
   }
@@ -1743,11 +2587,17 @@ function buildSlice(
   const integrations = dataMovementRows(integrationsAndWorkloads);
   const dataWorkloads = dataWorkloadRows(integrationsAndWorkloads);
   const aging = appRows.filter((row) =>
-    ["legacy_stable", "sunset_planned", "deprecated"].includes(text(row, "lifecycleState")),
+    ["legacy_stable", "sunset_planned", "deprecated"].includes(
+      text(row, "lifecycleState"),
+    ),
   ).length;
-  const replace = appRows.filter((row) => text(row, "replacementCandidate").toLowerCase() === "yes").length;
+  const replace = appRows.filter(
+    (row) => text(row, "replacementCandidate").toLowerCase() === "yes",
+  ).length;
   const qualityWatch = integrations.filter((row) =>
-    ["developing_governance", "needs_remediation", "unknown"].includes(text(row, "qualityStatus").toLowerCase()),
+    ["developing_governance", "needs_remediation", "unknown"].includes(
+      text(row, "qualityStatus").toLowerCase(),
+    ),
   ).length;
 
   return {
@@ -1757,13 +2607,18 @@ function buildSlice(
     dataWorkloads,
     infrastructure,
     count: appRows.length,
-    share: name === "Whole estate" ? 100 : (appRows.length / Math.max(1, estateTotal)) * 100,
+    share:
+      name === "Whole estate"
+        ? 100
+        : (appRows.length / Math.max(1, estateTotal)) * 100,
     tier1: appRows.filter((row) => isTierOne(text(row, "criticality"))).length,
     watch: aging + replace,
     replace,
     aging,
     spend: appRows.reduce((sum, row) => sum + numeric(row.annualCostUsd), 0),
-    regulatedFlows: integrations.filter((row) => text(row, "regulatedDataFlag").toLowerCase() === "true").length,
+    regulatedFlows: integrations.filter(
+      (row) => text(row, "regulatedDataFlag").toLowerCase() === "true",
+    ).length,
     qualityWatch,
     appCategories: topCounts(appRows, "systemCategory").slice(0, 8),
     appPlatforms: topCounts(appRows, "deploymentModel").slice(0, 8),
@@ -1772,37 +2627,71 @@ function buildSlice(
     dataPlatforms: topCounts(integrations, "platformOrDatabase").slice(0, 8),
     destinations: topCounts(integrations, "targetSystem").slice(0, 8),
     workloadTypes: topCounts(dataWorkloads, "workloadType").slice(0, 8),
-    workloadTechnologies: topCounts(dataWorkloads, "technologyName").slice(0, 8),
+    workloadTechnologies: topCounts(dataWorkloads, "technologyName").slice(
+      0,
+      8,
+    ),
     workloadPlatforms: topCounts(dataWorkloads, "platformName").slice(0, 8),
-    workloadTotal: dataWorkloads.reduce((sum, row) => sum + numeric(row.workloadCount), 0),
-    workloadUsers: dataWorkloads.reduce((sum, row) => sum + numeric(row.activeUserCount), 0),
-    workloadDataVolumeTb: dataWorkloads.reduce((sum, row) => sum + numeric(row.dataVolumeTb), 0),
+    workloadTotal: dataWorkloads.reduce(
+      (sum, row) => sum + numeric(row.workloadCount),
+      0,
+    ),
+    workloadUsers: dataWorkloads.reduce(
+      (sum, row) => sum + numeric(row.activeUserCount),
+      0,
+    ),
+    workloadDataVolumeTb: dataWorkloads.reduce(
+      (sum, row) => sum + numeric(row.dataVolumeTb),
+      0,
+    ),
     hostingModels: topCounts(infrastructure, "hostingModel").slice(0, 8),
     infrastructureTypes: topCounts(infrastructure, "platformType").slice(0, 8),
   };
 }
 
-function integrationsForApps(integrations: IntegrationRecord[], appRows: ApplicationRecord[]): IntegrationRecord[] {
-  const systems = new Set(appRows.flatMap((row) => [text(row, "systemName")]).filter(Boolean));
-  const functions = new Set(appRows.flatMap((row) => [text(row, "businessFunction")]).filter(Boolean));
+function integrationsForApps(
+  integrations: IntegrationRecord[],
+  appRows: ApplicationRecord[],
+): IntegrationRecord[] {
+  const systems = new Set(
+    appRows.flatMap((row) => [text(row, "systemName")]).filter(Boolean),
+  );
+  const functions = new Set(
+    appRows.flatMap((row) => [text(row, "businessFunction")]).filter(Boolean),
+  );
   if (!systems.size && !functions.size) {
     return [];
   }
   return integrations.filter((row) => {
-    if (systems.has(text(row, "sourceSystem")) || systems.has(text(row, "targetSystem"))) return true;
-    return functions.has(text(row, "ownerFunction")) || functions.has(text(row, "dataDomain"));
+    if (
+      systems.has(text(row, "sourceSystem")) ||
+      systems.has(text(row, "targetSystem"))
+    )
+      return true;
+    return (
+      functions.has(text(row, "ownerFunction")) ||
+      functions.has(text(row, "dataDomain"))
+    );
   });
 }
 
 function dataWorkloadRows(rows: IntegrationRecord[]): IntegrationRecord[] {
-  return rows.filter((row) => text(row, "recordKind") === "data_analytics_workload");
+  return rows.filter(
+    (row) => text(row, "recordKind") === "data_analytics_workload",
+  );
 }
 
 function dataMovementRows(rows: IntegrationRecord[]): IntegrationRecord[] {
-  return rows.filter((row) => text(row, "recordKind") !== "data_analytics_workload");
+  return rows.filter(
+    (row) => text(row, "recordKind") !== "data_analytics_workload",
+  );
 }
 
-function keywordCount(rows: Array<Record<string, unknown>>, field: string, keywords: string[]): number {
+function keywordCount(
+  rows: Array<Record<string, unknown>>,
+  field: string,
+  keywords: string[],
+): number {
   return rows.filter((row) => {
     const value = text(row, field).toLowerCase();
     return keywords.some((keyword) => value.includes(keyword));
@@ -1813,35 +2702,54 @@ function formatTopLabels(items: Array<[string, number]>): string {
   const labels = items
     .filter(([, count]) => count > 0)
     .slice(0, 2)
-    .map(([name, count]) => `${name} ${count}`);
+    .map(([name, count]) => `${cellText(name)} ${count}`);
   return labels.length ? labels.join(" · ") : "hosting model not specified";
 }
 
-function topCounts(rows: ApplicationRecord[], field: string): Array<[string, number]> {
+function topCounts(
+  rows: ApplicationRecord[],
+  field: string,
+): Array<[string, number]> {
   const counts = new Map<string, number>();
   for (const row of rows) {
     const value = text(row, field) || "Not specified";
     counts.set(value, (counts.get(value) ?? 0) + 1);
   }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  return [...counts.entries()].sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+  );
 }
 
-function mergeCounts(...groups: Array<Array<[string, number]>>): Array<[string, number]> {
+function mergeCounts(
+  ...groups: Array<Array<[string, number]>>
+): Array<[string, number]> {
   const counts = new Map<string, number>();
   for (const group of groups) {
     for (const [label, count] of group) {
       counts.set(label, (counts.get(label) ?? 0) + count);
     }
   }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  return [...counts.entries()].sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+  );
 }
 
-function platformSignalCounts(slice: ArchitectureSlice, isWholeEstate: boolean): Array<[string, number]> {
+function platformSignalCounts(
+  slice: ArchitectureSlice,
+  isWholeEstate: boolean,
+): Array<[string, number]> {
   if (isWholeEstate) {
     const anchors = strategicPlatformAnchors(slice.infrastructure);
-    return anchors.length ? anchors : mergeCounts(slice.infrastructureTypes, slice.hostingModels);
+    return anchors.length
+      ? anchors
+      : mergeCounts(slice.infrastructureTypes, slice.hostingModels);
   }
-  return mergeCounts(priorityFlowTargets(slice.integrations), slice.appPlatforms, slice.dataPlatforms, slice.hostingModels);
+  return mergeCounts(
+    priorityFlowTargets(slice.integrations),
+    slice.appPlatforms,
+    slice.dataPlatforms,
+    slice.hostingModels,
+  );
 }
 
 function isDataAndAiScope(slice: ArchitectureSlice): boolean {
@@ -1851,24 +2759,49 @@ function isDataAndAiScope(slice: ArchitectureSlice): boolean {
       `${text(row, "systemCategory")} ${text(row, "systemName")} ${text(row, "hostingLocation")}`,
     ),
   ).length;
-  return dataLikeSystems > 0 && dataLikeSystems / Math.max(1, slice.applications.length) >= 0.55;
+  return (
+    dataLikeSystems > 0 &&
+    dataLikeSystems / Math.max(1, slice.applications.length) >= 0.55
+  );
 }
 
-function strategicPlatformAnchors(rows: InfrastructureRecord[]): Array<[string, number]> {
-  const priorityPattern = /mainframe|teradata|warehouse|snowflake|databricks|data lake|analytics/i;
+function strategicPlatformAnchors(
+  rows: InfrastructureRecord[],
+): Array<[string, number]> {
+  const priorityPattern =
+    /mainframe|teradata|warehouse|snowflake|databricks|data lake|analytics/i;
   return rows
     .filter((row) =>
-      priorityPattern.test(`${text(row, "platformName")} ${text(row, "platformType")} ${text(row, "technologyStack")}`),
+      priorityPattern.test(
+        `${text(row, "platformName")} ${text(row, "platformType")} ${text(row, "technologyStack")}`,
+      ),
     )
-    .map((row) => [text(row, "platformName") || text(row, "platformType") || "Platform record", 1] as [string, number])
-    .sort((a, b) => platformPriority(a[0]) - platformPriority(b[0]) || a[0].localeCompare(b[0]));
+    .map(
+      (row) =>
+        [
+          text(row, "platformName") ||
+            text(row, "platformType") ||
+            "Platform record",
+          1,
+        ] as [string, number],
+    )
+    .sort(
+      (a, b) =>
+        platformPriority(a[0]) - platformPriority(b[0]) ||
+        a[0].localeCompare(b[0]),
+    );
 }
 
-function priorityFlowTargets(rows: IntegrationRecord[]): Array<[string, number]> {
-  const priorityPattern = /mainframe|teradata|warehouse|snowflake|databricks|data lake|mart|report|power bi|tableau/i;
+function priorityFlowTargets(
+  rows: IntegrationRecord[],
+): Array<[string, number]> {
+  const priorityPattern =
+    /mainframe|teradata|warehouse|snowflake|databricks|data lake|mart|report|power bi|tableau/i;
   return topCounts(
     rows.filter((row) =>
-      priorityPattern.test(`${text(row, "targetSystem")} ${text(row, "platformOrDatabase")} ${text(row, "dataAssetName")}`),
+      priorityPattern.test(
+        `${text(row, "targetSystem")} ${text(row, "platformOrDatabase")} ${text(row, "dataAssetName")}`,
+      ),
     ),
     "targetSystem",
   ).slice(0, 8);
@@ -1882,7 +2815,11 @@ function platformPriority(label: string): number {
   return 4;
 }
 
-function relationshipMatrix(rows: ApplicationRecord[], leftField: string, rightField: string) {
+function relationshipMatrix(
+  rows: ApplicationRecord[],
+  leftField: string,
+  rightField: string,
+) {
   const byLeft = new Map<string, Map<string, number>>();
   for (const row of rows) {
     const leftValues = splitValues(row[leftField]);
@@ -1895,13 +2832,19 @@ function relationshipMatrix(rows: ApplicationRecord[], leftField: string, rightF
       }
     }
   }
+  // Grouped on the record's own values; shown in the reader's words. Sorting happens on the stored
+  // value so the order does not shift with the wording.
   return [...byLeft.entries()]
     .map(([leftValue, rightCounts]) => ({
-      leftValue,
+      leftValue: cellText(leftValue),
       count: [...rightCounts.values()].reduce((sum, count) => sum + count, 0),
-      rightCounts: [...rightCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
+      rightCounts: [...rightCounts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .map(([right, count]) => [cellText(right), count] as [string, number]),
     }))
-    .sort((a, b) => b.count - a.count || a.leftValue.localeCompare(b.leftValue));
+    .sort(
+      (a, b) => b.count - a.count || a.leftValue.localeCompare(b.leftValue),
+    );
 }
 
 function splitValues(value: unknown): string[] {
@@ -1924,14 +2867,20 @@ function numeric(value: unknown): number {
 }
 
 function isTierOne(value: unknown): boolean {
-  const normalized = String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  return ["p0", "critical", "missioncritical", "tier1", "tier01"].includes(normalized);
+  const normalized = String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  return ["p0", "critical", "missioncritical", "tier1", "tier01"].includes(
+    normalized,
+  );
 }
 
 function moneyShort(value: number): string {
   if (!value) return "—";
-  if (Math.abs(value) >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(2)}B`;
-  if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000_000_000)
+    return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  if (Math.abs(value) >= 1_000_000)
+    return `$${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
   return `$${value.toLocaleString()}`;
 }
@@ -2202,7 +3151,13 @@ const wheelDetailMetricGridStyle = {
   marginTop: 14,
 } satisfies CSSProperties;
 
-function ArchitectureMetric({ value, label }: { value: string; label: string }) {
+function ArchitectureMetric({
+  value,
+  label,
+}: {
+  value: string;
+  label: string;
+}) {
   return (
     <div style={{ background: V4.surface, padding: "13px 15px", minWidth: 0 }}>
       <span
@@ -2241,8 +3196,16 @@ function ArchitectureMetric({ value, label }: { value: string; label: string }) 
 
 /* ── L2 · one capability, relationship declared once ─────────────────────────────────────── */
 
-function L2Capability({ view, capability }: { view: ArchitectureView; capability: string }) {
-  const capabilityNode = view.nodes.find((n) => n.semanticRole === "business_capability");
+function L2Capability({
+  view,
+  capability,
+}: {
+  view: ArchitectureView;
+  capability: string;
+}) {
+  const capabilityNode = view.nodes.find(
+    (n) => n.semanticRole === "business_capability",
+  );
   const supporting = view.nodes.filter((n) => n.id !== capabilityNode?.id);
   const maxSystems = Math.max(1, ...supporting.map(systemsOf));
 
@@ -2257,14 +3220,38 @@ function L2Capability({ view, capability }: { view: ArchitectureView; capability
           padding: "30px 32px 28px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
-          <span style={eyebrow(V4.blue)}>Logical architecture · one capability</span>
-          <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: V4.slate }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 20,
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={eyebrow(V4.blue)}>
+            Logical architecture · one capability
+          </span>
+          <span
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              color: V4.slate,
+            }}
+          >
             {view.edges.length} RELATIONSHIPS · DECLARED ONCE
           </span>
         </div>
 
-        <div style={{ marginTop: 22, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div
+          style={{
+            marginTop: 22,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
           <div
             style={{
               border: `1px solid ${V4.navy}`,
@@ -2278,26 +3265,69 @@ function L2Capability({ view, capability }: { view: ArchitectureView; capability
             <div style={{ ...eyebrow(V4.slate), letterSpacing: "0.1em" }}>
               Group of {capabilityNode ? systemsOf(capabilityNode) : 0}
             </div>
-            <div style={{ fontFamily: SERIF, fontSize: 24, fontWeight: 500, letterSpacing: "-0.024em", lineHeight: 1.2, marginTop: 7 }}>
+            <div
+              style={{
+                fontFamily: SERIF,
+                fontSize: 24,
+                fontWeight: 500,
+                letterSpacing: "-0.024em",
+                lineHeight: 1.2,
+                marginTop: 7,
+              }}
+            >
               {capability}
             </div>
             {capabilityNode?.note ? (
-              <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: V4.slate, marginTop: 8 }}>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  letterSpacing: "0.06em",
+                  color: V4.slate,
+                  marginTop: 8,
+                }}
+              >
                 {capabilityNode.note}
               </div>
             ) : null}
           </div>
 
           {/* The fan-in rule: one declared relationship, not N identical labels. */}
-          <div style={{ width: 1, height: 20, background: "rgba(12,26,58,0.45)" }} />
-          <div style={{ border: "1px solid rgba(12,26,58,0.45)", borderRadius: 999, padding: "6px 14px", background: V4.paper }}>
-            <span style={{ ...eyebrow(V4.navy), letterSpacing: "0.11em" }}>Supported by {supporting.length} groups</span>
+          <div
+            style={{ width: 1, height: 20, background: "rgba(12,26,58,0.45)" }}
+          />
+          <div
+            style={{
+              border: "1px solid rgba(12,26,58,0.45)",
+              borderRadius: 999,
+              padding: "6px 14px",
+              background: V4.paper,
+            }}
+          >
+            <span style={{ ...eyebrow(V4.navy), letterSpacing: "0.11em" }}>
+              Supported by {supporting.length} groups
+            </span>
           </div>
-          <div style={{ width: 1, height: 20, background: "rgba(12,26,58,0.45)" }} />
-          <div style={{ width: "100%", height: 1, background: "rgba(12,26,58,0.3)" }} />
+          <div
+            style={{ width: 1, height: 20, background: "rgba(12,26,58,0.45)" }}
+          />
+          <div
+            style={{
+              width: "100%",
+              height: 1,
+              background: "rgba(12,26,58,0.3)",
+            }}
+          />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,188px),1fr))", gap: 10, marginTop: 18 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,188px),1fr))",
+            gap: 10,
+            marginTop: 18,
+          }}
+        >
           {supporting.map((node) => {
             const systems = systemsOf(node);
             const isGroup = Boolean(node.aggregation);
@@ -2311,19 +3341,68 @@ function L2Capability({ view, capability }: { view: ArchitectureView; capability
                   padding: "13px 14px",
                 }}
               >
-                <span style={{ display: "block", width: 1, height: 14, background: "rgba(12,26,58,0.3)", margin: "-27px auto 13px" }} />
-                <span style={{ display: "block", fontFamily: SANS, fontSize: 13.5, fontWeight: 500, lineHeight: 1.35, color: V4.ink }}>
+                <span
+                  style={{
+                    display: "block",
+                    width: 1,
+                    height: 14,
+                    background: "rgba(12,26,58,0.3)",
+                    margin: "-27px auto 13px",
+                  }}
+                />
+                <span
+                  style={{
+                    display: "block",
+                    fontFamily: SANS,
+                    fontSize: 13.5,
+                    fontWeight: 500,
+                    lineHeight: 1.35,
+                    color: V4.ink,
+                  }}
+                >
                   {node.label}
                 </span>
-                <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginTop: 9 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: V4.slate }}>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    marginTop: 9,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 11,
+                      letterSpacing: "0.08em",
+                      color: V4.slate,
+                    }}
+                  >
                     {isGroup ? `${systems} systems` : "1 record"}
                   </span>
                   {typeof node.metrics?.distinctVendors === "number" ? (
-                    <span style={{ fontFamily: MONO, fontSize: 11, color: V4.stone }}>{node.metrics.distinctVendors}v</span>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 11,
+                        color: V4.stone,
+                      }}
+                    >
+                      {node.metrics.distinctVendors}v
+                    </span>
                   ) : null}
                 </span>
-                <span style={{ display: "block", marginTop: 9, height: 3, background: V4.cream, borderRadius: 2, overflow: "hidden" }}>
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: 9,
+                    height: 3,
+                    background: V4.cream,
+                    borderRadius: 2,
+                    overflow: "hidden",
+                  }}
+                >
                   <span
                     style={{
                       display: "block",
@@ -2349,11 +3428,24 @@ function L2Capability({ view, capability }: { view: ArchitectureView; capability
           padding: "22px 24px",
         }}
       >
-        <div style={eyebrow(V4.slate)}>Relationships are preserved, not collapsed</div>
-        <p style={{ margin: "10px 0 0", fontFamily: SANS, fontSize: 15, lineHeight: 1.58, color: V4.inkSoft, maxWidth: "88ch", textWrap: "pretty" }}>
-          Every one of the {view.edges.length} relationships stays in the model. The projection declares the verb once
-          instead of printing it {view.edges.length} times, which is what keeps a high fan-in readable without dropping
-          a single edge.
+        <div style={eyebrow(V4.slate)}>
+          Relationships are preserved, not collapsed
+        </div>
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontFamily: SANS,
+            fontSize: 15,
+            lineHeight: 1.58,
+            color: V4.inkSoft,
+            maxWidth: "88ch",
+            textWrap: "pretty",
+          }}
+        >
+          Every one of the {view.edges.length} relationships stays in the model.
+          The record declares the verb once instead of printing it{" "}
+          {view.edges.length} times, which is what keeps a high fan-in readable
+          without dropping a single edge.
         </p>
       </div>
     </div>

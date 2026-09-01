@@ -295,6 +295,15 @@ export interface ContextQualityManifest {
  * mean this week. Used by both buildDecisionContext (which domains count as "at risk" etc.) and
  * buildEnterpriseSignalPacket (which of those become a citeable signal).
  */
+/**
+ * A theme arrives as an intake tag -- `value_realisation`. It is a key, and a key is not a phrase a
+ * person writes about their own company. Humanised here, where the sentence is built, rather than
+ * laundered downstream: a surface that repairs its inputs hides a source still emitting them.
+ */
+function humanTheme(theme: string): string {
+  return theme.replace(/_/g, " ").trim();
+}
+
 const THRESHOLDS = {
   /** A vendor holding this share of total vendor spend or more is a material concentration. */
   vendorConcentrationShare: 0.08,
@@ -1244,7 +1253,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
       signals.push({
         id: id("dissent"),
         kind: "dissent",
-        statement: `"${t.theme}" was raised by exactly one interviewed leader — a minority view with no corroboration elsewhere in the interview set.`,
+        statement: `${humanTheme(t.theme)} was raised by exactly one interviewed leader — a minority view with no corroboration elsewhere in the interview set.`,
         domains: ["ai_value_interview_evidence"],
         evidenceRefs: [],
       });
@@ -1252,7 +1261,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
       signals.push({
         id: id("consensus"),
         kind: "consensus",
-        statement: `"${t.theme}" was raised by ${t.leaderCount} of ${dc.leadershipVoice.leaderCount} interviewed leaders — a consensus view, not an isolated opinion.`,
+        statement: `${humanTheme(t.theme)} was raised by ${t.leaderCount} of ${dc.leadershipVoice.leaderCount} interviewed leaders — a consensus view, not an isolated opinion.`,
         domains: ["ai_value_interview_evidence"],
         value: t.leaderCount,
         evidenceRefs: [],
@@ -1331,7 +1340,7 @@ export function buildEnterpriseSignalPacket(dc: DecisionContext, quality: Contex
     signals.push({
       id: id("testimony"),
       kind: "testimony",
-      statement: `A ${t.role} said, on the theme of "${t.theme}"${t.sentiment ? ` (${t.sentiment} sentiment)` : ""}: "${t.quote}"`,
+      statement: `A ${t.role} said, on the theme of "${humanTheme(t.theme)}"${t.sentiment ? ` (${t.sentiment} sentiment)` : ""}: "${t.quote}"`,
       domains: ["ai_value_interview_evidence"],
       evidenceRefs: [t.role],
     });

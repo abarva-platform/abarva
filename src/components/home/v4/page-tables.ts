@@ -1,3 +1,4 @@
+import { cellText } from "./cxo-language";
 /**
  * Deterministic table sets and findings for the Home surfaces.
  *
@@ -149,7 +150,7 @@ export function costBasis(
   }
   const only = [...declared][0];
   if (/synthetic|model/i.test(only)) {
-    return `Every cost here is modelled, not booked: all ${rows.length.toLocaleString()} rows declare a cost basis of "${only}".`;
+    return `Every cost here is modelled, not booked: all ${rows.length.toLocaleString()} rows declare a cost basis of "${cellText(only)}".`;
   }
   return `Cost basis declared on all ${rows.length.toLocaleString()} rows: "${only}".`;
 }
@@ -1625,7 +1626,7 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
     if (values.size === 1 && units.every((u) => str(u, field))) {
       findings.push({
         kind: "absence",
-        claim: `${fieldLabel} reads "${[...values][0]}" for all ${units.length} org units — that is unassessed, not clean.`,
+        claim: `${fieldLabel} reads "${cellText([...values][0])}" for all ${units.length} org units — that is unassessed, not clean.`,
         owner: "Chief HR Officer",
         because:
           "A value that never varies carries no information. Rendering it as a result would let a reader take a form nobody completed for an assessment that came back well.",

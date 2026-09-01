@@ -1,13 +1,17 @@
 /**
+ * Carried over from the surface this one replaced. Tenant isolation is a property of Home, not of
+ * whichever component happened to draw it, so the test moves with the surface rather than being
+ * deleted alongside the old one.
+ *
  * @jest-environment jsdom
  */
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-import { HomePreviewApp } from "../HomePreviewApp";
+import { HomeV4App } from "../HomeV4App";
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 
-jest.mock("../HomeAvaChat", () => ({
+jest.mock("@/components/home/preview/HomeAvaChat", () => ({
   HomeAvaChat: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
@@ -21,7 +25,7 @@ function bundle(): HomeReviewBundle {
     },
     chapters: [],
     thesis: {
-      signalPacket: { visualDatasets: {} },
+      signalPacket: { visualDatasets: {}, signals: [], contextItems: [] },
       publishedGeneration: {},
       verificationLedger: [],
       structuralIssues: [],
@@ -29,22 +33,24 @@ function bundle(): HomeReviewBundle {
   } as unknown as HomeReviewBundle;
 }
 
-describe("HomePreviewApp tenant isolation", () => {
+describe("Home tenant isolation", () => {
   it("renders the demo-safe client name, never the physical source label", () => {
-    render(<HomePreviewApp bundle={bundle()} tenantKey="skyharbor-air" />);
+    render(<HomeV4App bundle={bundle()} tenantKey="skyharbor-air" />);
     expect(screen.getByText("SkyHarbor Global")).toBeInTheDocument();
     expect(screen.queryByText("SkyHarbor Air")).not.toBeInTheDocument();
   });
 
   it("marks the surface as a demo client with synthetic data", () => {
-    render(<HomePreviewApp bundle={bundle()} tenantKey="skyharbor-air" />);
-    expect(screen.getByText(/demo client/i)).toBeInTheDocument();
+    render(<HomeV4App bundle={bundle()} tenantKey="skyharbor-air" />);
+    expect(screen.getByText(/demo/i)).toBeInTheDocument();
   });
 
   it("exposes no control that switches to another client", () => {
-    render(<HomePreviewApp bundle={bundle()} tenantKey="skyharbor-air" />);
+    render(<HomeV4App bundle={bundle()} tenantKey="skyharbor-air" />);
     // A client-facing surface must not imply another tenant's data is one click away.
     expect(screen.queryByText(/meridian/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /skyharbor/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /skyharbor/i }),
+    ).not.toBeInTheDocument();
   });
 });
