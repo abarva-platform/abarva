@@ -27,7 +27,8 @@ import {
   UnsupportedViews,
   sectionId,
 } from "./TableSet";
-import type { TableSpec } from "./page-tables";
+import type { EstateRow, TableSpec } from "./page-tables";
+import { MetricDistance } from "./MetricDistance";
 import { RenewalTimeline } from "./RenewalTimeline";
 import { cxoText, isGeneratorDeferral, launderChapter } from "./cxo-language";
 import type { ChapterDepth } from "./chapter-page-content";
@@ -52,6 +53,7 @@ export function ChapterPage({
   contracts,
   asOf,
   onOpenRows,
+  metrics,
 }: {
   chapter: ChapterView;
   chapterNumber: number;
@@ -68,6 +70,8 @@ export function ChapterPage({
   asOf?: string;
   /** Opens the rows behind a finding in the record browser. */
   onOpenRows?: (objectType: string, filter: string) => void;
+  /** Outcome measures, where this chapter reasons from them. */
+  metrics?: EstateRow[];
 }) {
   // One gate, at the top, before any of this chapter's text is drawn.
   const chapter = launderChapter(rawChapter);
@@ -125,6 +129,7 @@ export function ChapterPage({
       {contracts && contracts.length > 0 ? (
         <RenewalTimeline contracts={contracts} asOf={asOf} />
       ) : null}
+      <MetricDistance metrics={metrics} />
       {depth ? (
         <FindingsBlock findings={depth.findings} onOpenRows={onOpenRows} />
       ) : null}

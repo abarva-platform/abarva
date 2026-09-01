@@ -14,6 +14,7 @@ import type {
 } from "@/lib/home/preview/types";
 import { ArchitecturePage } from "./ArchitecturePage";
 import { ChapterPage } from "./ChapterPage";
+import type { EstateRow } from "./page-tables";
 import { chapterArguesFrom, chapterDepth } from "./chapter-page-content";
 import { buildBusinessBriefing } from "./business-briefing";
 import {
@@ -310,6 +311,13 @@ export function HomeV4App({
                     : undefined
                 }
                 asOf={bundle.provenance?.generated_at?.slice(0, 10)}
+                metrics={
+                  chapterArguesFrom(activeChapter.chapterId, "metrics")
+                    ? (techRecordTypes.find(
+                        (r) => r.objectType === "metric_outcome",
+                      )?.rows as EstateRow[] | undefined)
+                    : undefined
+                }
                 depth={chapterDepth(activeChapter.chapterId, {
                   asOf: bundle.provenance?.generated_at?.slice(0, 10),
                   applications: applications?.rows,
