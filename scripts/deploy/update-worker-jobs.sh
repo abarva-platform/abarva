@@ -23,6 +23,8 @@ RESOURCE_GROUP="${RESOURCE_GROUP:-rg-abarva-controlplane-lab-eastus}"
 # Space-separated. Cron fallback + KEDA event-triggered worker.
 WORKER_JOB_NAMES="${WORKER_JOB_NAMES:-job-abarva-deliv-worker job-abarva-deliv-worker-event}"
 WORKER_CONTAINER_NAME="${WORKER_CONTAINER_NAME:-worker}"
+ACR_NAME="${ACR_NAME:-acrabarvalab001}"
+REGISTRY_SERVER="${REGISTRY_SERVER:-${ACR_NAME}.azurecr.io}"
 
 if [[ -z "$IMAGE" ]]; then
   echo "ERROR: IMAGE is required (arg 1 or \$IMAGE)." >&2
@@ -38,12 +40,33 @@ fi
 
 echo "Updating worker jobs to image: $IMAGE"
 echo "Resource group: $RESOURCE_GROUP"
+echo "Registry server: $REGISTRY_SERVER"
 
 failed=0
 for job in $WORKER_JOB_NAMES; do
   if ! az containerapp job show --name "$job" --resource-group "$RESOURCE_GROUP" --output none 2>/dev/null; then
     echo "::warning::worker job '$job' not found in '$RESOURCE_GROUP' — skipping."
     continue
+  fi
+  registry_identity="$(az containerapp job show \
+    --name "$job" \
+    --resource-group "$RESOURCE_GROUP" \
+    --query "properties.configuration.registries[?server=='$REGISTRY_SERVER'].identity | [0]" \
+    --output tsv 2>/dev/null || true)"
+  if [[ -n "$registry_identity" && "$registry_identity" != "null" ]]; then
+    echo "  normalizing $job registry identity for $REGISTRY_SERVER"
+    if ! az containerapp job registry set \
+        --name "$job" \
+        --resource-group "$RESOURCE_GROUP" \
+        --server "$REGISTRY_SERVER" \
+        --identity "$registry_identity" \
+        --output none; then
+      echo "::error::failed to normalize registry identity for worker job '$job'" >&2
+      failed=1
+      continue
+    fi
+  else
+    echo "::warning::worker job '$job' has no managed-identity registry entry for '$REGISTRY_SERVER'."
   fi
   echo "→ updating $job"
   if az containerapp job update \
