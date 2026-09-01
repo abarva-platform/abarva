@@ -1,17 +1,17 @@
 # Moves Rich-Context Build - Live Status
 
-**Updated:** 2026-09-01T18:55:07Z
+**Updated:** 2026-09-01T19:03:42Z
 **Agent:** codex
 **Branch:** codex/moves-rich-context
 **Head:** 1e3e81da4
 
 ## Now
-Increment 1 context packing implementation is starting with orchestration and test inspection.
+Increment 1 context packing implementation is under validation after focused orchestrator tests passed locally.
 
 ## Increments
 | # | Increment | State | Evidence |
 |---|-----------|-------|----------|
-| 1 | Context packing | in_progress | status SHA 1e3e81da4 |
+| 1 | Context packing | in_progress | focused Jest: 41/41 passed |
 | 2 | Approval gap | not_started | none |
 | 3 | Digest layer | not_started | none |
 | 4 | Digest-aware packing | not_started | none |
@@ -32,4 +32,4 @@ Isolated work in a clean worktree from origin/main because the primary checkout 
 ## Known gaps
 Increment 2 is not started because the auto-commit and gate-blocking behavior requires Anand's product decision.
 Increments 3 and 4 are intentionally deferred until Increment 1 is measured.
-No PR, deployment, or live proof has started.
+Release record, release check, PR, deployment, and live proof have not started.
