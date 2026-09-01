@@ -1,0 +1,25 @@
+employee_id,name_redacted,role_title,job_family,department,reports_to_role,location,employment_type,fte,tenure_years,primary_platform,on_call,vacancy_status
+IT-1001,[REDACTED],Chief Information Officer,Executive,Information Technology,Chief Executive Officer,Metro HQ,Full-Time,1.0,6.2,Enterprise,No,Filled
+IT-1014,[REDACTED],VP Enterprise Data & Analytics,Executive,Enterprise Data & Analytics,Chief Information Officer,Metro HQ,Full-Time,1.0,3.8,Data Platform,No,Filled
+IT-1015,[REDACTED],VP Revenue Cycle Technology,Executive,Revenue Cycle Operations,Chief Information Officer,Metro HQ,Full-Time,1.0,4.5,Epic,No,Filled
+IT-1102,[REDACTED],Director Data Platform Engineering,Management,Enterprise Data & Analytics,VP Enterprise Data & Analytics,Metro HQ,Full-Time,1.0,2.9,Databricks,No,Filled
+IT-1103,[REDACTED],Director Integration Services,Management,Integration Services,VP Enterprise Data & Analytics,Metro HQ,Full-Time,1.0,7.1,Mirth,Yes,Filled
+IT-1104,[REDACTED],Director Revenue Cycle Applications,Management,Revenue Cycle Operations,VP Revenue Cycle Technology,Metro HQ,Full-Time,1.0,5.4,Epic,Yes,Filled
+IT-1201,[REDACTED],Manager Denials Technology,Management,Denials Management,Director Revenue Cycle Applications,Regional Office,Full-Time,1.0,1.7,Waystar,Yes,Filled
+IT-1305,[REDACTED],Senior Data Engineer,Individual Contributor,Enterprise Data & Analytics,Director Data Platform Engineering,Metro HQ,Full-Time,1.0,3.2,Databricks,Yes,Filled
+IT-1306,[REDACTED],Senior Data Engineer,Individual Contributor,Enterprise Data & Analytics,Director Data Platform Engineering,Remote,Full-Time,1.0,2.1,Snowflake,Yes,Filled
+IT-1307,[REDACTED],Data Engineer,Individual Contributor,Enterprise Data & Analytics,Director Data Platform Engineering,Metro HQ,Full-Time,1.0,0.9,Databricks,No,Filled
+IT-1308,[REDACTED],Data Engineer,Individual Contributor,Enterprise Data & Analytics,Director Data Platform Engineering,Remote,Contractor,1.0,0.5,Snowflake,No,Filled
+IT-1309,[REDACTED],Analytics Engineer,Individual Contributor,Enterprise Data & Analytics,Director Data Platform Engineering,Metro HQ,Full-Time,1.0,1.4,dbt,No,Filled
+IT-1310,[REDACTED],Senior Data Engineer,Individual Contributor,Enterprise Data & Analytics,Director Data Platform Engineering,Remote,Full-Time,1.0,0.0,Databricks,No,Open Requisition
+IT-1311,[REDACTED],Machine Learning Engineer,Individual Contributor,Enterprise Data & Analytics,Director Data Platform Engineering,Remote,Full-Time,1.0,0.0,Databricks,No,Open Requisition
+IT-1402,[REDACTED],Senior Integration Engineer,Individual Contributor,Integration Services,Director Integration Services,Metro HQ,Full-Time,1.0,9.3,Mirth,Yes,Filled
+IT-1403,[REDACTED],Integration Engineer,Individual Contributor,Integration Services,Director Integration Services,Metro HQ,Full-Time,1.0,4.8,Mirth,Yes,Filled
+IT-1404,[REDACTED],ETL Developer,Individual Contributor,Integration Services,Director Integration Services,Metro HQ,Full-Time,1.0,11.6,Informatica,Yes,Filled
+IT-1501,[REDACTED],Epic PB Analyst,Individual Contributor,Revenue Cycle Operations,Director Revenue Cycle Applications,Metro HQ,Full-Time,1.0,6.7,Epic,Yes,Filled
+IT-1502,[REDACTED],Epic HB Analyst,Individual Contributor,Revenue Cycle Operations,Director Revenue Cycle Applications,Metro HQ,Full-Time,1.0,5.1,Epic,Yes,Filled
+IT-1503,[REDACTED],Denials Data Analyst,Individual Contributor,Denials Management,Manager Denials Technology,Regional Office,Full-Time,1.0,2.3,Waystar,No,Filled
+IT-1504,[REDACTED],Denials Data Analyst,Individual Contributor,Denials Management,Manager Denials Technology,Remote,Part-Time,0.5,1.1,Excel,No,Filled
+IT-1601,[REDACTED],BI Developer,Individual Contributor,Enterprise Data & Analytics,Director Data Platform Engineering,Metro HQ,Full-Time,1.0,3.6,Tableau,No,Filled
+IT-1602,[REDACTED],BI Developer,Individual Contributor,Enterprise Data & Analytics,Director Data Platform Engineering,Remote,Full-Time,1.0,2.0,Power BI,No,Filled
+IT-1701,[REDACTED],Data Governance Lead,Individual Contributor,Enterprise Data & Analytics,VP Enterprise Data & Analytics,Metro HQ,Full-Time,1.0,0.0,Collibra,No,Open Requisition
