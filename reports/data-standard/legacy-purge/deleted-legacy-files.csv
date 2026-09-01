@@ -1,10 +1,1 @@
 file
-src/components/home/preview/__tests__/CurrentState.test.tsx
-src/components/home/preview/__tests__/HomePreviewApp.tenant-isolation.test.tsx
-src/components/home/preview/__tests__/TechnologyEstateTable.test.tsx
-src/components/home/preview/ChapterSection.tsx
-src/components/home/preview/CurrentState.tsx
-src/components/home/preview/HomePreviewApp.tsx
-src/components/home/preview/TechnologyEstateTable.tsx
-src/components/home/v4/__tests__/HomeV4App.tier1.test.tsx
-src/components/home/v4/ExecutiveStoryPage.tsx

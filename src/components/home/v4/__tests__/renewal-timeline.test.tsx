@@ -110,3 +110,42 @@ describe("the timeline renders only where there is a shape to see", () => {
     );
   });
 });
+
+describe("the field the live view actually carries", () => {
+  // The golden snapshot names this column termEnd; the projection the product serves names it
+  // renewalDate. Reading one name drew a chart with no bars against real data, and every test
+  // passed because every fixture used the other name.
+  const live = [
+    { renewalDate: "2025-04-01", autoRenewFlag: "false" },
+    { renewalDate: "2026-09-30", autoRenewFlag: "true" },
+    { renewalDate: "2027-01-15", autoRenewFlag: "false" },
+    { renewalDate: "2028-06-02", autoRenewFlag: "true" },
+  ];
+
+  it("buckets rows that name the field renewalDate", () => {
+    render(<RenewalTimeline contracts={live} asOf="2026-08-21" />);
+    expect(
+      document.querySelectorAll(
+        "svg .recharts-rectangle, svg .recharts-bar-rectangle",
+      ).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("still buckets rows that name it termEnd", () => {
+    render(
+      <RenewalTimeline
+        contracts={[
+          { termEnd: "2025-04-01", autoRenewFlag: "false" },
+          { termEnd: "2026-04-01", autoRenewFlag: "false" },
+          { termEnd: "2027-04-01", autoRenewFlag: "true" },
+        ]}
+        asOf="2026-08-21"
+      />,
+    );
+    expect(
+      document.querySelectorAll(
+        "svg .recharts-rectangle, svg .recharts-bar-rectangle",
+      ).length,
+    ).toBeGreaterThan(0);
+  });
+});

@@ -22,7 +22,7 @@ import {
   UnsupportedViews,
 } from "./TableSet";
 import { RenewalTimeline } from "./RenewalTimeline";
-import { cxoText, launderChapter } from "./cxo-language";
+import { cxoText, isGeneratorDeferral, launderChapter } from "./cxo-language";
 import type { ChapterDepth } from "./chapter-page-content";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -70,6 +70,20 @@ export function ChapterPage({
   );
   const [lead, ...rest] = exhibits;
 
+  // When the generator declined to write this chapter, the rows still answer it. Lead with the
+  // strongest thing they say rather than with the generator's status.
+  const deferred = isGeneratorDeferral(chapter.headline);
+  const strongest = depth?.findings?.[0];
+  const headline = deferred
+    ? (strongest?.claim ??
+      `${chapter.title} is not yet answered by this record.`)
+    : chapter.headline;
+  const standfirst = deferred
+    ? strongest
+      ? strongest.because
+      : `Nothing in the loaded record speaks to this question yet. The chapters either side of it draw on families that are present; this one draws on families that are not, and that absence is reported here rather than filled.`
+    : chapter.executive_synthesis;
+
   return (
     <>
       <style>{`
@@ -81,8 +95,8 @@ export function ChapterPage({
       <ChapterHeader
         eyebrowText={`Chapter ${String(chapterNumber).padStart(2, "0")} · ${chapter.title}`}
         guidingQuestion={chapter.guidingQuestion}
-        headline={chapter.headline}
-        standfirst={chapter.executive_synthesis}
+        headline={headline}
+        standfirst={standfirst}
       />
 
       <ChapterExecutiveReadout

@@ -147,3 +147,18 @@ export function cellText(value: string | number | boolean | null): string {
     m.replace(/_/g, " "),
   );
 }
+
+/**
+ * Text the narrative generator emits when it declines to write a chapter.
+ *
+ * The same phrases in both generators, so the shape is matched rather than the source. A reader
+ * opening a chapter must never be handed the generator's own status as the largest words on the
+ * page: "Leadership Perspective is deferred pending stronger evidence" tells them nothing about
+ * their enterprise and everything about our pipeline.
+ */
+const DEFERRAL_RE =
+  /\b(?:deferred pending stronger evidence|does not yet support a board[-\s]?ready answer|does not yet connect enough verified statements|evidence needs resolution before executive use|not ready for executive review|current governed record does not yet support|keep this chapter in review until|is not ready for executive|bounded by the available evidence)\b/i;
+
+export function isGeneratorDeferral(text: string | null | undefined): boolean {
+  return Boolean(text && DEFERRAL_RE.test(text));
+}
