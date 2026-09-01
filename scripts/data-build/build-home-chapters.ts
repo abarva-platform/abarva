@@ -642,7 +642,6 @@ Respond with strict JSON: { "headline": "...", "executive_synthesis": "..." }`;
 interface ChapterSynthesisOptions {
   maxTokens: number;
   effort: ReasoningEffort;
-  deterministicOnly?: boolean;
 }
 
 interface ChapterSynthesisResult {
@@ -839,9 +838,6 @@ async function synthesizeChapterNarrative(
       stopReason: null,
     };
   }
-  if (options.deterministicOnly) {
-    return deterministicClaimBasedChapterNarrative(def, claims, 0, 0, "deterministic_write_fallback");
-  }
   const userPrompt = buildChapterSynthesisUserPrompt(def, claims, signalPacket);
   const result = await callClaude(client, CHAPTER_SYNTHESIS_SYSTEM_PROMPT, userPrompt, options.maxTokens, options.effort);
   if (!result) {
@@ -876,9 +872,6 @@ function deterministicClaimBasedChapterNarrative(
       .replace(/\bsource contains\b/gi, "record contains")
       .replace(/\bHome may use it\b/gi, "leaders may use it")
       .replace(/\bHome\b/g, "the executive view")
-      .replace(/\b[Ee]vidence needs resolution before executive use\b/g, "leaders should review the named evidence before acting")
-      .replace(/\bnot ready for executive review\b/gi, "bounded for executive review")
-      .replace(/\bdeferred pending stronger evidence\b/gi, "bounded by the available evidence")
       .replace(/\s+/g, " ")
       .trim();
   const publishableClaims = concreteAttentionClaims(claims);
