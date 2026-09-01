@@ -63,11 +63,15 @@ export function buildRenewalYears(
     { autoRenewing: number; requiresDecision: number }
   >();
   for (const contract of contracts) {
-    const termEnd = String(contract.termEnd ?? "").trim();
-    const year = /^(\d{4})-/.exec(termEnd)?.[1];
+    // The snapshot calls it termEnd; the live view calls it renewalDate. Reading only the first
+    // drew an empty chart against the record the product actually serves.
+    const termEnd = String(
+      contract.termEnd ?? contract.renewalDate ?? "",
+    ).trim();
+    const year = /^(\d{4})/.exec(termEnd)?.[1];
     if (!year) continue;
     const entry = byYear.get(year) ?? { autoRenewing: 0, requiresDecision: 0 };
-    if (/^(yes|true|y)$/i.test(String(contract.autoRenewFlag ?? "").trim()))
+    if (/^(yes|true|y|1)$/i.test(String(contract.autoRenewFlag ?? "").trim()))
       entry.autoRenewing += 1;
     else entry.requiresDecision += 1;
     byYear.set(year, entry);

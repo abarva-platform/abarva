@@ -149,3 +149,42 @@ describe("an exhibit belongs to the argument on the page", () => {
     expect(drawn).toEqual(["strategy_value_creation", "performance_value"]);
   });
 });
+
+describe("a chapter never shows the generator's status", () => {
+  // Three chapters open live with "X is deferred pending stronger evidence" as the largest words
+  // on the page. That is the narrative generator's state, not a fact about the enterprise.
+  const DEFERRAL =
+    /deferred pending stronger evidence|not ready for executive review|does not yet connect enough verified statements|does not yet support a board-?ready answer/i;
+
+  it.each(bundle().chapters.map((c) => c.chapterId))(
+    "%s leads with something other than a build state",
+    (chapterId) => {
+      window.location.hash = chapterId;
+      const { container } = render(
+        <HomeV4App bundle={bundle()} tenantKey="meridian-health" />,
+      );
+      expect(container.querySelector("h1")?.textContent ?? "").not.toMatch(
+        DEFERRAL,
+      );
+    },
+  );
+
+  it("leads with the strongest finding when the narrative was not written", () => {
+    const value = bundle();
+    const chapter = value.chapters.find(
+      (c) => c.chapterId === "technology_data",
+    )!;
+    chapter.headline =
+      "Technology & Data is deferred pending stronger evidence";
+    chapter.executive_synthesis =
+      "This chapter is not ready for executive review.";
+    window.location.hash = "technology_data";
+    const { container } = render(
+      <HomeV4App bundle={value} tenantKey="meridian-health" />,
+    );
+    const headline = container.querySelector("h1")?.textContent ?? "";
+    expect(headline).not.toMatch(DEFERRAL);
+    // The rows answer it: the strongest finding on this chapter becomes the lead.
+    expect(headline.length).toBeGreaterThan(20);
+  });
+});
