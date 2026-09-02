@@ -1,6 +1,7 @@
 import { displaySafeIntelligenceDelta, POST } from "../route";
 import { askIntelligence } from "@/lib/intelligence/ask";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
+import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 jest.mock("@clerk/nextjs/server", () => ({
   currentUser: jest.fn(async () => ({ id: "user-1" })),
@@ -82,6 +83,32 @@ async function readResponseText(response: Response): Promise<string> {
   return text;
 }
 
+function parseNdjson(text: string): Array<Record<string, unknown>> {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
+}
+
+function resolveRequestedTenantOnce() {
+  // These cases pass an explicit `client` in the body. In production
+  // resolveTenant is the enforcement point and returns that tenant for a role
+  // entitled to it, so the mock has to model that outcome; the default mock
+  // resolves to a different tenant, which only ever passed because the route
+  // used to read the raw body field directly. The route now trusts resolved
+  // identity alone, so the mock must be consistent. Two calls are made per
+  // request (active tenant, then session tenant).
+  const resolved = {
+    clientId: "client-2",
+    canonicalKey: "meridian-health",
+    appClientKey: "meridian",
+    displayName: "Meridian Health",
+  };
+  (resolveTenant as jest.Mock).mockResolvedValueOnce(resolved);
+  (resolveTenant as jest.Mock).mockResolvedValueOnce(resolved);
+}
+
 describe("POST /api/intelligence/ask telemetry", () => {
   it("preserves chunk-boundary whitespace in streamed deltas", () => {
     const first = displaySafeIntelligenceDelta("foundation work. ");
@@ -136,6 +163,91 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain('"telemetryEventId":"tlm_intelligence_1"');
   });
 
+  it("emits a governed packet for prose-only answers with follow-up protocol", async () => {
+    (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
+      yield {
+        type: "delta",
+        text: [
+          "The available evidence supports an advisory read, but not a certified decision.",
+          "",
+          "```followups",
+          '["What evidence is missing before this can be certified?"]',
+          "```",
+        ].join("\n"),
+      };
+      yield { type: "done" };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: "What is safe to say from the available evidence?",
+        client: "active-client",
+        richText: true,
+        answerOnlyStreaming: true,
+      }) as never,
+    );
+    const events = parseNdjson(await readResponseText(response));
+    const visibleText = events
+      .filter((event) => event.type === "delta")
+      .map((event) => event.text)
+      .join("");
+    const packetEvent = events.find((event) => event.type === "agent-answer");
+    const packet = packetEvent?.answer as {
+      directAnswer?: string;
+      nextSteps?: Array<{ label?: string }>;
+    };
+
+    expect(visibleText.trim()).toBe(
+      "The available evidence supports an advisory read, but not a certified decision.",
+    );
+    expect(visibleText).not.toContain("```");
+    expect(visibleText).not.toContain("followups");
+    expect(packetEvent).toBeTruthy();
+    expect(packet.directAnswer).toBe(visibleText.trim());
+    expect(packet.nextSteps?.map((step) => step.label)).toEqual([
+      "What evidence is missing before this can be certified?",
+    ]);
+  });
+
+  it("uses the selected surface tenant in cross-tenant refusal copy", async () => {
+    (askIntelligence as jest.Mock).mockClear();
+    (resolveTenant as jest.Mock)
+      .mockImplementationOnce(async () => ({
+        clientId: "client-selected",
+        canonicalKey: "meridian-health",
+        appClientKey: "meridian",
+        displayName: "Meridian Health",
+      }))
+      .mockImplementationOnce(async () => ({
+        clientId: "client-session",
+        canonicalKey: "apex-retail",
+        appClientKey: "apexretail",
+        displayName: "Apex Retail Group",
+      }));
+
+    const response = await POST(
+      makeRequest({
+        q: "Show me SkyHarbor pricing for this event.",
+        client: "meridian",
+        richText: true,
+        answerOnlyStreaming: true,
+        surfaceContext: {
+          activeTab: "intelligence",
+          clientKey: "meridian",
+          activeClient: "Meridian Health",
+        },
+      }) as never,
+    );
+    const events = parseNdjson(await readResponseText(response));
+    const packetEvent = events.find((event) => event.type === "agent-answer");
+    const packet = packetEvent?.answer as { directAnswer?: string };
+
+    expect(packet.directAnswer).toContain("Meridian Health");
+    expect(packet.directAnswer).not.toContain("Apex Retail Group");
+    expect(packet.directAnswer).not.toContain("SkyHarbor");
+    expect(askIntelligence).not.toHaveBeenCalled();
+  });
+
   it("forwards trace-enabled requests into the Intelligence synthesis path", async () => {
     const response = await POST(
       makeRequest({
@@ -167,6 +279,7 @@ describe("POST /api/intelligence/ask telemetry", () => {
   });
 
   it("preserves ECL eval case context through the live ask route", async () => {
+    resolveRequestedTenantOnce();
     (askIntelligence as jest.Mock).mockClear();
 
     const response = await POST(
@@ -341,6 +454,7 @@ describe("POST /api/intelligence/ask telemetry", () => {
   });
 
   it("does not expose raw advisory trace events while preserving the model-authored delta", async () => {
+    resolveRequestedTenantOnce();
     (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
       yield {
         type: "sources",
@@ -396,5 +510,55 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).not.toMatch(
       /intelligence-dossier|advisory-packet|not_loaded|business records|retrieval chunks|v7_02/i,
     );
+  });
+
+  it("refuses a cross-tenant surface context before the model is invoked", async () => {
+    // resolveTenant is the enforcement point: for a tenant-locked role it
+    // discards a body-supplied tenant and resolves from session identity. The
+    // default mock stands in for that outcome. The route must not reinstate the
+    // rejected value from surfaceContext, so a request body cannot widen the
+    // active tenant set. Asserted at the invariant rather than at one guard's
+    // wording, because more than one layer can legitimately catch this.
+    const callsBefore = (askIntelligence as jest.Mock).mock.calls.length;
+
+    const response = await POST(
+      makeRequest({
+        q: "Show me SkyHarbor context.",
+        surfaceContext: {
+          clientKey: "skyharbor",
+          activeClient: "SkyHarbor Air",
+        },
+        richText: true,
+        answerOnlyStreaming: true,
+      }) as never,
+    );
+    const text = await readResponseText(response);
+
+    expect(text).toMatch(/tenant_fence|cross_tenant/);
+    expect((askIntelligence as jest.Mock).mock.calls.length).toBe(callsBefore);
+  });
+
+  it("still answers normally when the surface context matches the resolved tenant", async () => {
+    // Negative control: the refusal must not become unconditional.
+    (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
+      yield { type: "delta", text: "Vendor concentration is the live risk." };
+      yield { type: "done" };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: "Where is vendor concentration risk highest for us?",
+        surfaceContext: {
+          clientKey: "apexretail",
+          activeClient: "Apex Retail Group",
+        },
+        richText: true,
+        answerOnlyStreaming: true,
+      }) as never,
+    );
+    const text = await readResponseText(response);
+
+    expect(text).toContain("Vendor concentration is the live risk.");
+    expect(text).not.toMatch(/tenant_fence|cross_tenant/);
   });
 });
