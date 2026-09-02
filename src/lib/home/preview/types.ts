@@ -10,7 +10,12 @@ import type {
   ChapterView,
   HomeReviewBundleProvenance,
 } from "../../../../scripts/data-build/build-home-chapters";
-import type { TechnologyEstateBundle, TechRecordType, TechObjectType } from "../../../../scripts/data-build/technology-estate";
+import type {
+  TechnologyEstateBundle,
+  TechRecordType,
+  TechObjectType,
+  ConstantColumn,
+} from "../../../../scripts/data-build/technology-estate";
 import type {
   EnterpriseThesis,
   GroundedClaim,
@@ -40,11 +45,17 @@ export type {
   TechnologyEstateBundle,
   TechRecordType,
   TechObjectType,
+  ConstantColumn,
 };
 
-export type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
+export type EnterpriseSignalPacket = ReturnType<
+  typeof buildEnterpriseSignalPacket
+>;
 
-export type HomeExecutiveStoryTerminalState = "published" | "refused" | "deferred";
+export type HomeExecutiveStoryTerminalState =
+  | "published"
+  | "refused"
+  | "deferred";
 
 export type HomeExecutiveStorySectionId =
   | "enterprise"

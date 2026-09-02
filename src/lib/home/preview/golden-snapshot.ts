@@ -3,6 +3,7 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 
+import { normalizeHomeReviewBundle } from "./bundle-normalization";
 import type { HomeReviewBundle } from "./types";
 
 /**
@@ -10,14 +11,22 @@ import type { HomeReviewBundle } from "./types";
  * hand-maintained list, not a directory scan -- these are the specific, reviewed golden snapshots
  * this route exists to show, not "whatever JSON happens to be in the folder."
  */
-export const HOME_PREVIEW_TENANT_KEYS = ["meridian-health", "skyharbor-air"] as const;
+export const HOME_PREVIEW_TENANT_KEYS = [
+  "meridian-health",
+  "skyharbor-air",
+] as const;
 export type HomePreviewTenantKey = (typeof HOME_PREVIEW_TENANT_KEYS)[number];
 
-export function isHomePreviewTenantKey(key: string): key is HomePreviewTenantKey {
+export function isHomePreviewTenantKey(
+  key: string,
+): key is HomePreviewTenantKey {
   return (HOME_PREVIEW_TENANT_KEYS as readonly string[]).includes(key);
 }
 
-const SNAPSHOT_DIR = path.join(process.cwd(), "src/lib/home/preview/golden-snapshots");
+const SNAPSHOT_DIR = path.join(
+  process.cwd(),
+  "src/lib/home/preview/golden-snapshots",
+);
 
 const cache = new Map<HomePreviewTenantKey, HomeReviewBundle>();
 
@@ -30,13 +39,19 @@ const cache = new Map<HomePreviewTenantKey, HomeReviewBundle>();
  * `golden-snapshots/<tenantKey>.json` once a human has reviewed the new run -- not something this
  * route ever does on its own.
  */
-export function getHomeReviewBundle(tenantKey: string): HomeReviewBundle | null {
+export function getHomeReviewBundle(
+  tenantKey: string,
+): HomeReviewBundle | null {
   if (!isHomePreviewTenantKey(tenantKey)) return null;
   const cached = cache.get(tenantKey);
   if (cached) return cached;
   const filePath = path.join(SNAPSHOT_DIR, `${tenantKey}.json`);
   if (!fs.existsSync(filePath)) return null;
-  const bundle = JSON.parse(fs.readFileSync(filePath, "utf8")) as HomeReviewBundle;
+  // Normalised on the way in, so every surface reading this bundle sees the same answer to "does
+  // this column vary" rather than each working it out separately.
+  const bundle = normalizeHomeReviewBundle(
+    JSON.parse(fs.readFileSync(filePath, "utf8")) as HomeReviewBundle,
+  );
   cache.set(tenantKey, bundle);
   return bundle;
 }

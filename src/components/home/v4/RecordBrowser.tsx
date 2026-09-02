@@ -2,7 +2,12 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 
-import type { TechObjectType, TechRecordType } from "@/lib/home/preview/types";
+import { constantColumnsForRecord } from "@/lib/home/preview/bundle-normalization";
+import type {
+  ConstantColumn,
+  TechObjectType,
+  TechRecordType,
+} from "@/lib/home/preview/types";
 import { cellText } from "./cxo-language";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -401,23 +406,14 @@ const PILL_TONE: Record<string, { bg: string; fg: string }> = {
  * a file reaches a model. One detector, two uses: it compresses the prompt and it reports the
  * quality problem, because they are the same observation.
  */
-function constantColumnsOf(
-  rows: RecordRow[],
-  columns: string[],
-): Array<{ column: string; value: string }> {
-  if (rows.length < 2) return [];
-  const out: Array<{ column: string; value: string }> = [];
-  for (const column of columns) {
-    const values = new Set(rows.map((row) => String(row[column] ?? "").trim()));
-    values.delete("");
-    if (
-      values.size === 1 &&
-      rows.every((row) => String(row[column] ?? "").trim())
-    ) {
-      out.push({ column, value: [...values][0] });
-    }
-  }
-  return out;
+function constantColumnsOf(recordType: TechRecordType): ConstantColumn[] {
+  // Read from the record, not recomputed here. Three surfaces ask this question -- this browser,
+  // the exposure band and the decision queue -- and three independent answers is how one of them
+  // ends up asserting a condition it is not actually applying.
+  //
+  // The loader also examines keys the column declaration omits, which this local version could not:
+  // a field present on every row but missing from `columns` was invisible to it.
+  return recordType.constantColumns ?? constantColumnsForRecord(recordType);
 }
 
 export function RecordBrowser({
@@ -710,7 +706,7 @@ export function RecordBrowser({
       ) : null}
 
       {(() => {
-        const constants = constantColumnsOf(rows, recordType.columns);
+        const constants = constantColumnsOf(recordType);
         if (constants.length === 0) return null;
         return (
           <div
@@ -744,11 +740,12 @@ export function RecordBrowser({
               {constants
                 .map(
                   (c) =>
-                    `${c.column} reads "${cellText(c.value)}" on all ${rows.length.toLocaleString()} rows`,
+                    `${c.label} reads "${cellText(c.value)}" on all ${c.rowCount.toLocaleString()} rows`,
                 )
                 .join("; ")}
               . A value that never varies is a default rather than an
-              assessment, so nothing here should be read as a clean result.
+              assessment, so nothing here should be read as a clean result, and
+              none of these is used as a filter or a decision predicate.
             </p>
           </div>
         );
@@ -853,15 +850,28 @@ function columnsFor(recordType: TechRecordType): Column[] {
   const available = new Set(
     recordType.columns ?? Object.keys(recordType.rows?.[0] ?? {}),
   );
+  // A column with the same value on every row costs a column's width to say one thing, and reads
+  // as an assessment that came back identical every time. It is stated once above the table
+  // instead, where it is a fact about the record rather than a result about each row.
+  // Through the same accessor the notice uses, so the column a reader is told carries no
+  // information is exactly the column that was withheld. Two answers here would be worse than none.
+  const constant = new Set(
+    constantColumnsOf(recordType).map((column) => column.key),
+  );
   const preset = COLUMN_PRESETS[recordType.objectType] ?? FALLBACK_COLUMNS;
-  const columns = preset.filter((column) => available.has(column.key));
+  const columns = preset.filter(
+    (column) => available.has(column.key) && !constant.has(column.key),
+  );
   if (columns.length) return columns;
-  return [...available].slice(0, 8).map((field, index) => ({
-    key: field,
-    label: labelFor(field),
-    width: index === 0 ? 240 : 160,
-    priority: index === 0 ? "core" : undefined,
-  }));
+  return [...available]
+    .filter((field) => !constant.has(field))
+    .slice(0, 8)
+    .map((field, index) => ({
+      key: field,
+      label: labelFor(field),
+      width: index === 0 ? 240 : 160,
+      priority: index === 0 ? "core" : undefined,
+    }));
 }
 
 function buildMetrics(
@@ -1053,6 +1063,8 @@ function buildDimensions(
       counts: countsFor(rows, field),
     }))
     .filter((dimension) => dimension.counts.length > 1);
+  // Note: a constant field already fails this filter -- one distinct value is not more than one.
+  // The hold-out above is about the table's columns, which have no such test of their own.
 }
 
 function countsFor(rows: RecordRow[], field: string): Array<[string, number]> {

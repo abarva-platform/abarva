@@ -95,6 +95,20 @@ function formatAttributeValue(value: unknown): string | number | boolean | null 
   return value as string | number | boolean;
 }
 
+/**
+ * A column carrying the same value on every row of a record type.
+ *
+ * A column that never varies is a field somebody left at its default, not a result. Rendered
+ * alongside columns that do vary it reads as an assessment that came back the same way every time,
+ * and it is silently useless as a filter or a predicate -- narrowing on it returns everything.
+ */
+export interface ConstantColumn {
+  key: string;
+  label: string;
+  value: string;
+  rowCount: number;
+}
+
 export interface TechRecordType {
   objectType: TechObjectType;
   label: string;
@@ -109,6 +123,9 @@ export interface TechRecordType {
   /** Real counts per value of primaryDimension, sorted descending -- "servicing finance needs or
    * clinical needs" as an at-a-glance rollup, not just a filter dropdown with no sense of scale. */
   dimensionCounts: Array<{ value: string; count: number }>;
+  /** Columns whose value is identical on every row -- computed once at load, so every surface that
+   * reads this record type sees the same answer rather than each deciding for itself. */
+  constantColumns?: ConstantColumn[];
 }
 
 export interface TechnologyEstateBundle {

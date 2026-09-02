@@ -142,3 +142,57 @@ describe("what the queue says about itself", () => {
     expect(container.innerHTML).toBe("");
   });
 });
+
+describe("a predicate that has stopped discriminating", () => {
+  /** A register where every control reads the same — the shape the live record actually has. */
+  const constantControl = (severity: string, name: string): EstateRow => ({
+    riskOrControlName: name,
+    severity,
+    controlStatus: "open",
+  });
+
+  it("says the control status selected nothing when it never varies", () => {
+    const { items } = buildDecisionQueue({
+      risks: [
+        constantControl("high", "Standing privileged credentials"),
+        constantControl("medium", "Mainframe skills concentration"),
+        constantControl("low", "Vendor onboarding lag"),
+      ],
+    });
+    expect(items).toHaveLength(1);
+    // The row is still selected -- severity did that. What changes is the sentence beneath it,
+    // which must not claim a second condition that matched every row in the register.
+    expect(items[0].because).toBe(
+      "Rated high severity. Control status reads the same on every risk in the register, so it selected nothing here.",
+    );
+  });
+
+  it("names the collapse in the checked-and-empty list", () => {
+    const { checkedAndEmpty } = buildDecisionQueue({
+      risks: [constantControl("high", "A"), constantControl("medium", "B")],
+    });
+    expect(checkedAndEmpty).toContain(
+      "control status reads the same on every risk, so it narrowed nothing",
+    );
+  });
+
+  it("keeps the two-condition reason when the record actually varies", () => {
+    const { items, checkedAndEmpty } = buildDecisionQueue({
+      risks: [
+        { riskOrControlName: "A", severity: "high", controlStatus: "open" },
+        {
+          riskOrControlName: "B",
+          severity: "high",
+          controlStatus: "mitigated",
+        },
+      ],
+    });
+    expect(items).toHaveLength(1);
+    expect(items[0].because).toBe(
+      "Rated high severity with its control declared open.",
+    );
+    expect(checkedAndEmpty).not.toContain(
+      "control status reads the same on every risk, so it narrowed nothing",
+    );
+  });
+});

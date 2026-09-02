@@ -2,6 +2,7 @@ import "server-only";
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { denseAssessmentIdForTenant } from "@/lib/ecl/denseAssessment";
+import { normalizeHomeReviewBundle } from "./bundle-normalization";
 
 import {
   getHomeReviewBundle,
@@ -2167,7 +2168,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     rows,
     claims,
   );
-  return {
+  return normalizeHomeReviewBundle({
     tenantKey: base.tenantKey,
     provenance: {
       ...base.provenance,
@@ -2184,7 +2185,7 @@ export function buildHomeReviewBundleFromEclProjectionRows(
       structuralIssues: [],
     },
     technologyEstate,
-  };
+  });
 }
 
 async function readHomeProjectionRows(
