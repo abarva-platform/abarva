@@ -141,6 +141,16 @@ const V4_SNAPSHOT: SourceV4WorkspaceSnapshot = {
     autoRenewCount: 12,
     notice90DayCount: 74,
   },
+  contextCoverage: {
+    vendors: 60,
+    contracts: 100,
+    annualValue: 1480500000,
+    scopeRows: 5200,
+    invoiceLines: 175000,
+    saasUsageRows: 24480,
+    cloudRows: 1200,
+    performanceRows: 7200,
+  },
   scopeConfidence: {
     rowCount: 5200,
     explicitScopeCount: 2600,
@@ -960,6 +970,23 @@ describe("buildViewModel numeric coercion", () => {
     const vm = buildVm();
     const built = buildViewModel(vm) as {
       avaSurfaceContext: {
+        claimContract: {
+          forbiddenClaims: string[];
+          requiredEvidenceForClaims: string[];
+          refusalTriggers: string[];
+        };
+        capabilities: {
+          source360: { canAnswer: string[] };
+          optimize: { rule: string };
+          newEvent: { rule: string };
+        };
+        groundingStatus: {
+          contractRows: number;
+          vendorRows: number;
+          actionCandidates: number;
+          claimCards: number;
+          avaGroundingBundles: number;
+        };
         sourceV4: {
           executivePortfolio: { contracts: number; annualValue: string };
           contractDirectory: Array<{ contractId: string }>;
@@ -973,6 +1000,38 @@ describe("buildViewModel numeric coercion", () => {
       };
     };
 
+    expect(built.avaSurfaceContext.groundingStatus.contractRows).toBe(100);
+    expect(built.avaSurfaceContext.groundingStatus.vendorRows).toBe(60);
+    expect(built.avaSurfaceContext.groundingStatus.actionCandidates).toBe(
+      IMPACT.actionCandidates.length,
+    );
+    expect(built.avaSurfaceContext.groundingStatus.claimCards).toBe(
+      IMPACT.claimCards.length,
+    );
+    expect(built.avaSurfaceContext.groundingStatus.avaGroundingBundles).toBe(
+      IMPACT.avaGroundingBundles.length,
+    );
+    expect(
+      built.avaSurfaceContext.claimContract.forbiddenClaims.join(" "),
+    ).toMatch(/realized savings.*finance confirmation/i);
+    expect(
+      built.avaSurfaceContext.claimContract.forbiddenClaims.join(" "),
+    ).toMatch(/another tenant/i);
+    expect(
+      built.avaSurfaceContext.claimContract.requiredEvidenceForClaims.join(" "),
+    ).toMatch(/Service-credit claim: SLA period rows/i);
+    expect(
+      built.avaSurfaceContext.claimContract.refusalTriggers.join(" "),
+    ).toMatch(/Award recommendation requested before the evaluation/i);
+    expect(built.avaSurfaceContext.capabilities.optimize.rule).toMatch(
+      /must not call them realized value/i,
+    );
+    expect(
+      built.avaSurfaceContext.capabilities.source360.canAnswer.join(" "),
+    ).toMatch(/action candidates/i);
+    expect(built.avaSurfaceContext.capabilities.newEvent.rule).toMatch(
+      /portfolio alone is not enough/i,
+    );
     expect(built.avaSurfaceContext.sourceV4.executivePortfolio.contracts).toBe(
       100,
     );

@@ -109,6 +109,20 @@ facts.
    - Acceptance: each legacy evidence path is either mapped into the current
      governed layers with signed-in proof, or explicitly removed from demo and
      default operator narratives.
+7. **SRC55 — Source 360 aVa adversarial proof**
+   - Priority: P0.
+   - Type: agent-runtime / signed-in product proof.
+   - Scope: prove the Source workspace aVa answers from the active Source 360
+     page context, Optimize candidate rows, current contract graph, and
+     governed evidence state without inventing missing finance, event,
+     pricing, or cross-tenant facts.
+   - Acceptance: authenticated proof captures a small adversarial prompt set:
+     actionability, missing evidence before value can be claimed, total savings
+     refusal when finance confirmation is absent, cross-tenant pricing refusal,
+     recommendation refusal when event evaluation evidence is absent, chart or
+     table rendering from loaded rows, and evidence citation back to Source
+     rows. Each prompt is marked pass/fail with transcript and screenshot or
+     DOM proof.
 
 ## Active Execution Control — 2026-08-15
 

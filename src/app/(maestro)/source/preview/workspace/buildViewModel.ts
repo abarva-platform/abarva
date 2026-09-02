@@ -3107,6 +3107,111 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     `Evidence state for current selection: ${kind === "contract" && c?.source_confidence != null && Number.isFinite(c.source_confidence) ? pct(c.source_confidence) + " source confidence" : "portfolio-level evidence"}.`,
     `Missing evidence must be stated as evidence missing or workflow required. Never convert missing value to zero, and never claim a finance-confirmed outcome without Tower or finance confirmation.`,
   ];
+  const sourceWorkspaceGroundingStatus = {
+    contractRows: v4Snapshot.contextCoverage.contracts,
+    vendorRows: v4Snapshot.contextCoverage.vendors,
+    scopeRows: v4Snapshot.contextCoverage.scopeRows,
+    invoiceLines: v4Snapshot.contextCoverage.invoiceLines,
+    performanceRows: v4Snapshot.contextCoverage.performanceRows,
+    usageRows: v4Snapshot.contextCoverage.saasUsageRows,
+    cloudRows: v4Snapshot.contextCoverage.cloudRows,
+    actionCandidates: vm.portfolio.impact.actionCandidates.length,
+    claimCards: vm.portfolio.impact.claimCards.length,
+    avaGroundingBundles: vm.portfolio.impact.avaGroundingBundles.length,
+    availableLenses: availableV4Lenses,
+    unavailableLenses: unavailableV4Lenses,
+  };
+  const sourceWorkspaceClaimContract = {
+    posture:
+      "Answer only from the current Source 360 page context, governed read-model facts, and supplied surfaceContext. If the evidence is absent, say what is missing before making the claim.",
+    allowedClaims: [
+      "Portfolio, vendor, contract, renewal, concentration, evidence-depth, and action-candidate facts that appear in the current Source 360 read model.",
+      "Potential or candidate value only when the action-candidate, claim-card, ledger, or opportunity rows are present.",
+      "Service-credit leakage only when performance rows, calculated credit, claimed state, and evidence references are present.",
+      "Charts, tables, or graph summaries only from rows present in surfaceContext; return structured exhibits when the route supports them.",
+    ],
+    forbiddenClaims: [
+      "Do not claim realized savings, ROI, or total savings unless finance confirmation is explicitly loaded and confirmed.",
+      "Do not recommend a supplier award, shortlist, BAFO position, or final sourcing decision unless selected-event scoring, pricing, trap-log, and approval evidence are loaded.",
+      "Do not disclose or infer another tenant's suppliers, contracts, pricing, events, or benchmarks.",
+      "Do not turn missing spend, SLA, usage, document, or benchmark evidence into zero, normal, or acceptable performance.",
+    ],
+    requiredEvidenceForClaims: [
+      "Savings or ROI: finance confirmation state plus calculation run and evidence rows.",
+      "Pricing comparison: selected sourcing event, supplier response rows, normalized pricing rows, and reconciliation state.",
+      "Recommendation: scorecard, pricing workbook, trap log, BAFO evidence when applicable, and decision approval state.",
+      "Service-credit claim: SLA period rows, committed threshold, actual result, credit formula, credit owed, and credit claimed state.",
+      "Document or clause claim: source document id, page or section reference, extraction confidence, and current evidence state.",
+    ],
+    refusalTriggers: [
+      "Cross-tenant request or supplier from outside the active client context.",
+      "Finance-confirmed value requested when only candidate or not-confirmed rows exist.",
+      "Award recommendation requested before the evaluation or approval evidence is loaded.",
+      "A chart or table requested from a lens with no supporting rows.",
+      "Contract-document quote requested when page text or clause extraction is not loaded.",
+    ],
+    responseShape: [
+      "Start with the direct answer in one or two sentences.",
+      "Name the exact Source basis: tab, selection, as-of date, row family, and evidence state.",
+      "Use a compact table or chart artifact when rows support it; otherwise state the missing rows.",
+      "End with the next operator action only when the current Source state supports one.",
+    ],
+  };
+  const sourceWorkspaceCapabilities = {
+    source360: {
+      canAnswer: [
+        "What is visible in the governed contract book?",
+        "Which vendors or contracts drive concentration?",
+        "Which action candidates are present and what evidence backs them?",
+        "What is missing before a claim can be used externally?",
+        "How do Source facts connect to the contract graph and downstream products?",
+      ],
+      cannotAnswerWithoutMoreEvidence: [
+        "Final supplier recommendation for an event not represented in the current Source read model.",
+        "Supplier pricing from another tenant or from a missing response set.",
+        "Finance-realized savings when rows are still candidate, not confirmed, or approval-pending.",
+        "Document quotations when the current evidence layer lacks source text or page anchors.",
+      ],
+    },
+    optimize: {
+      candidateRows: vm.portfolio.impact.actionCandidates.length,
+      claimCards: vm.portfolio.impact.claimCards.length,
+      financeConfirmedRows: vm.portfolio.impact.claimCards.filter(
+        (row) =>
+          String(row.finance_confirmation_state ?? "")
+            .toLowerCase()
+            .includes("confirm"),
+      ).length,
+      rule:
+        "Optimize can prepare governed actions from candidate rows, but must not call them realized value until finance state is confirmed.",
+    },
+    newEvent: {
+      rule:
+        "New Event questions require selected event stage, evidence, supplier response, evaluation, pricing, BAFO, and approval context; the Source 360 portfolio alone is not enough for an award recommendation.",
+    },
+  };
+  const sourceWorkspaceRefusalExamples = [
+    {
+      userIntent: "total savings",
+      answerDiscipline:
+        "Report candidate amounts and finance-confirmation state; refuse to call them realized savings unless confirmed.",
+    },
+    {
+      userIntent: "other-tenant pricing",
+      answerDiscipline:
+        "Refuse and state that Source is scoped to the active client context only.",
+    },
+    {
+      userIntent: "which vendor should we pick",
+      answerDiscipline:
+        "Name missing scorecard, pricing, trap-log, BAFO, and approval evidence before any recommendation.",
+    },
+    {
+      userIntent: "chart or compare vendors",
+      answerDiscipline:
+        "Render a structured exhibit only from loaded rows; otherwise explain the missing row family.",
+    },
+  ];
   const avaSurfaceContext = {
     tenant: vm.tenantName,
     module: "Source",
@@ -3140,9 +3245,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       ...sourceWorkspaceOpportunityFacts,
       ...sourceWorkspaceLedgerFacts,
       ...sourceWorkspaceQualityFacts,
+      `aVa grounding status: ${sourceWorkspaceGroundingStatus.contractRows} contract rows, ${sourceWorkspaceGroundingStatus.vendorRows} vendor rows, ${sourceWorkspaceGroundingStatus.actionCandidates} action candidates, ${sourceWorkspaceGroundingStatus.claimCards} claim cards, ${sourceWorkspaceGroundingStatus.avaGroundingBundles} aVa grounding bundles.`,
+      sourceWorkspaceClaimContract.posture,
     ],
     graphFacts: sourceWorkspaceGraphFacts,
     qualityFacts: sourceWorkspaceQualityFacts,
+    groundingStatus: sourceWorkspaceGroundingStatus,
+    claimContract: sourceWorkspaceClaimContract,
+    capabilities: sourceWorkspaceCapabilities,
+    refusalExamples: sourceWorkspaceRefusalExamples,
     sourceV4: {
       datasetId: v4Snapshot.datasetId,
       datasetLabel: v4Snapshot.datasetLabel,
