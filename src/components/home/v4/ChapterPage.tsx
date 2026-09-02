@@ -216,6 +216,26 @@ function ChapterExecutiveReadout({
   const primaryInference = firstStatement(bands.follows);
   const primaryExposure = firstStatement(bands.exposures);
   const primaryQuestion = chapter.questions_to_ask[0];
+  // The readout is named after the band its sentence came from.
+  //
+  // The heading was fixed at "Decision this page supports" over `primaryInference ?? primaryRecord`,
+  // and neither of those is a decision. `follows` holds interpretation -- the band beneath it is
+  // titled "What follows from it" -- and `record` holds a counted fact. So on a chapter with an
+  // interpretation the heading over-promised, and on a chapter without one it promised a decision
+  // over an excerpt.
+  //
+  // Nothing in this record declares a decision. Writing one is authored advice about a client's
+  // situation, and inventing a heading for it is how the page ends up asserting judgement it does
+  // not have. Until a decision is declared or authored, the readout says what it is.
+  const readout = primaryInference
+    ? { heading: "What follows from it", statement: primaryInference }
+    : primaryRecord
+      ? { heading: "What the record shows", statement: primaryRecord }
+      : {
+          heading: "Nothing established here yet",
+          statement:
+            "No executive decision should be taken from this chapter yet.",
+        };
   const primaryGap = chapter.limitations[0];
   // Signals come from the packet, not the chapter, so they miss the chapter gate above.
   const leadershipSignals = leadershipSignalsForChapter(
@@ -231,12 +251,19 @@ function ChapterExecutiveReadout({
       <div data-chapter-readout style={readoutShellStyle}>
         <div style={readoutLeadStyle}>
           <div>
-            <h2 style={readoutTitleStyle}>Decision this page supports</h2>
-            <p style={readoutTextStyle}>
-              {primaryInference ??
-                primaryRecord ??
-                "No executive decision should be taken from this chapter yet."}
-            </p>
+            {/* The heading follows the sentence, never the other way round.
+             *
+             * It used to read "Decision this page supports" over `primaryInference ?? primaryRecord`
+             * -- so a chapter with no inference put a plain statement of record under a heading
+             * promising a decision. A reader takes the heading as the claim about what they are
+             * reading, and on most chapters that claim was wrong: the body was an excerpt.
+             *
+             * Naming both cases keeps the decision framing where a decision exists, which a blanket
+             * rename would lose. The sentence is drawn from a band, so the heading is that band's
+             * own name -- a reader who scrolls to it finds the label they were given.
+             */}
+            <h2 style={readoutTitleStyle}>{readout.heading}</h2>
+            <p style={readoutTextStyle}>{readout.statement}</p>
           </div>
         </div>
         {primaryRecord || primaryExposure || primaryGap || primaryQuestion ? (
