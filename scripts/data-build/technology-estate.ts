@@ -31,6 +31,7 @@ export const TECH_OBJECT_TYPES = [
   "program_initiative",
   "organization_ownership",
   "ai_use_case",
+  "executive_interview",
 ] as const;
 export type TechObjectType = (typeof TECH_OBJECT_TYPES)[number];
 
@@ -44,6 +45,7 @@ const TECH_OBJECT_TYPE_LABELS: Record<TechObjectType, string> = {
   program_initiative: "Programs & Initiatives",
   organization_ownership: "Organization & Ownership",
   ai_use_case: "AI & Automation Use Cases",
+  executive_interview: "Leadership Interviews",
 };
 
 /** The one attribute per object type that answers "which business need does this serve" --
@@ -55,6 +57,9 @@ const TECH_OBJECT_TYPE_LABELS: Record<TechObjectType, string> = {
  * are the columns that actually carry that meaning in the source data -- not just any column that
  * happens to have few distinct values. */
 const PRIMARY_DIMENSION_KEY: Record<TechObjectType, string> = {
+  // Executive area, not stakeholder role: 8 areas against 19 roles, and the question the chapter
+  // asks is where the leadership of a function stands, not where one named person does.
+  executive_interview: "executiveArea",
   application_system: "businessFunction",
   vendor_contract: "serviceCategory",
   infrastructure_platform: "platformType",

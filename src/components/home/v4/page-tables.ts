@@ -1225,6 +1225,235 @@ export function dropUndeclaredColumns(table: TableSpec): TableSpec {
   };
 }
 
+/* ------------------------------------------------------------------------------------------------
+ * Leadership interviews — what the people running the enterprise say about it
+ * ---------------------------------------------------------------------------------------------- */
+
+/** Distinct executive areas that raise a given value of a field. Agreement is a count of areas,
+ *  never a count of rows: one area asked eight questions is not eight people agreeing. */
+function areasRaising(
+  rows: EstateRow[],
+  field: string,
+): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const value = str(row, field);
+    const area = str(row, "executiveArea");
+    if (!value || !area) continue;
+    if (!out.has(value)) out.set(value, new Set());
+    out.get(value)!.add(area);
+  }
+  return out;
+}
+
+export function interviewTables(interviews: EstateRow[]): TableSpec[] {
+  if (interviews.length === 0) return [];
+  const areas = new Set(
+    interviews.map((row) => str(row, "executiveArea")).filter(Boolean),
+  );
+  const tables: TableSpec[] = [];
+
+  // The chapter's own question, answered by counting AREAS rather than rows. A theme every area
+  // raises is consensus; a theme one area raises is either a local problem or something only that
+  // area can see -- and those are opposite readings, so the count has to be visible.
+  // Ordered by how FEW areas raise a theme, not how many. Sorted the other way, a record where
+  // most themes are universal shows ten identical rows and the reader never reaches the ones that
+  // differ -- and the divergence is the entire question the chapter asks. The consensus is stated
+  // in a finding, which is one line; the divergence needs the table.
+  const byTheme = [...areasRaising(interviews, "priorityTheme")].sort(
+    (a, b) => a[1].size - b[1].size || a[0].localeCompare(b[0]),
+  );
+  if (byTheme.length > 0 && areas.size > 1) {
+    const listed = byTheme.slice(0, 10);
+    tables.push({
+      caption: "Where leadership diverges",
+      section: "Where leadership stands",
+      barColumn: "Areas raising it",
+      columns: ["Theme", "Areas raising it", "Of", "Mentions"],
+      rows: listed.map(([theme, raisingAreas]) => [
+        label(theme),
+        raisingAreas.size,
+        areas.size,
+        interviews.filter((row) => str(row, "priorityTheme") === theme).length,
+      ]),
+      total: [
+        `${byTheme.length} themes`,
+        "\u2014",
+        areas.size,
+        interviews.length,
+      ],
+      note: [
+        "Counted by executive area, not by answer: one area asked eight questions is not eight people agreeing. Least-shared themes first, because a theme everyone raises is one line and a theme one area raises is a question.",
+        byTheme.length > listed.length
+          ? `${byTheme.length - listed.length} further themes are raised more widely and are not listed; the total counts every answer.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    });
+  }
+
+  // A system several areas name unprompted is a different object from one that merely appears in
+  // the estate. This is the only table on the page where leadership and the estate meet by name.
+  const bySystem = [...areasRaising(interviews, "systemOrVendorMentioned")]
+    .filter(([, raisingAreas]) => raisingAreas.size > 1)
+    .sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0]));
+  if (bySystem.length > 0) {
+    const listed = bySystem.slice(0, 10);
+    tables.push({
+      wide: true,
+      caption: "Systems leadership keeps returning to",
+      section: "Where leadership stands",
+      barColumn: "Areas naming it",
+      columns: ["System named", "Areas naming it", "Mentions", "Themes"],
+      rows: listed.map(([system, raisingAreas]) => {
+        const named = interviews.filter(
+          (row) => str(row, "systemOrVendorMentioned") === system,
+        );
+        return [
+          system,
+          raisingAreas.size,
+          named.length,
+          new Set(named.map((row) => str(row, "priorityTheme")).filter(Boolean))
+            .size,
+        ];
+      }),
+      note: [
+        "Named by the interviewee, not matched from the estate, so a system here is one leadership brought up rather than one we asked about.",
+        bySystem.length > listed.length
+          ? `${bySystem.length - listed.length} further systems are named by more than one area and not listed.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    });
+  }
+  return tables;
+}
+
+export function interviewFindings(interviews: EstateRow[]): Finding[] {
+  if (interviews.length === 0) return [];
+  const findings: Finding[] = [];
+  const areas = new Set(
+    interviews.map((row) => str(row, "executiveArea")).filter(Boolean),
+  );
+
+  // Before anything this record says is read as testimony, what KIND of statement it is. A modelled
+  // answer rendered under a named role is the most damaging thing this page could do: a reader
+  // takes it for something a person said.
+  const modelled = interviews.filter((row) =>
+    /modelled/i.test(str(row, "responseBasis")),
+  ).length;
+  if (modelled === interviews.length) {
+    findings.push({
+      kind: "absence",
+      claim: `All ${interviews.length} interview responses are modelled, not transcribed.`,
+      owner: "Chief Executive Officer",
+      because:
+        "The pattern of what is raised, and by how many parts of the business, is still the record's own. What a named role is quoted as saying is not, and nothing on this page should be read as testimony.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "responseBasis is modelled on every row",
+      },
+    });
+  } else if (modelled > 0) {
+    findings.push({
+      kind: "absence",
+      claim: `${modelled} of ${interviews.length} interview responses are modelled rather than transcribed.`,
+      owner: "Chief Executive Officer",
+      because:
+        "The two kinds of statement sit side by side in this record, so any quotation has to carry which one it is.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "responseBasis is modelled",
+      },
+    });
+  }
+
+  const byTheme = areasRaising(interviews, "priorityTheme");
+  const universal = [...byTheme].filter(
+    ([, raisingAreas]) => raisingAreas.size === areas.size,
+  );
+  if (areas.size > 2 && universal.length > 0) {
+    findings.push({
+      kind: "established",
+      claim: `${universal.length} themes are raised by every one of the ${areas.size} executive areas: ${universal
+        .slice(0, 3)
+        .map(([theme]) => cellText(theme))
+        .join("; ")}${universal.length > 3 ? "…" : "."}`,
+      owner: "Chief Executive Officer",
+      because:
+        "Raised everywhere is enterprise consensus rather than one function's complaint, which is the difference between a priority and a grievance.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "every executive area raises the theme at least once",
+      },
+    });
+  }
+
+  const isolated = [...byTheme].filter(
+    ([, raisingAreas]) => raisingAreas.size === 1,
+  );
+  if (areas.size > 2 && isolated.length > 0) {
+    findings.push({
+      kind: "exposure",
+      claim: `${isolated.length} themes are raised by a single area: ${isolated
+        .slice(0, 3)
+        .map(([theme]) => cellText(theme))
+        .join("; ")}${isolated.length > 3 ? "…" : "."}`,
+      owner: "Chief Executive Officer",
+      because:
+        "One area alone raising something is either a local problem or the only part of the business that can see it, and those readings point opposite ways. The record does not distinguish them.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "exactly one executive area raises the theme",
+      },
+    });
+  }
+
+  const bySystem = [
+    ...areasRaising(interviews, "systemOrVendorMentioned"),
+  ].sort((a, b) => b[1].size - a[1].size);
+  const [mostNamed] = bySystem;
+  if (mostNamed && mostNamed[1].size > 2) {
+    findings.push({
+      kind: "exposure",
+      claim: `${mostNamed[0]} is named by ${mostNamed[1].size} of the ${areas.size} executive areas.`,
+      owner: "Chief Information Officer",
+      because:
+        "A system raised across most of the leadership is carrying more of the business's attention than any single function's roadmap accounts for.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "distinct executiveArea count for systemOrVendorMentioned",
+      },
+    });
+  }
+
+  const namedRisks = new Set(
+    interviews.map((row) => str(row, "riskOrControlMentioned")).filter(Boolean),
+  );
+  if (namedRisks.size > 0) {
+    findings.push({
+      kind: "established",
+      claim: `Leadership names ${namedRisks.size} distinct risks or controls unprompted.`,
+      owner: "Chief Risk Officer",
+      because:
+        "Each is a risk somebody running the business raised on their own, which is a different signal from one that only appears in the register.",
+      trace: {
+        file: "executive_interviews.csv",
+        grain: "one question to one role",
+        rule: "distinct non-empty riskOrControlMentioned",
+      },
+    });
+  }
+  return findings;
+}
+
 export function metricTables(metrics: EstateRow[]): TableSpec[] {
   if (metrics.length === 0) return [];
   const tables: TableSpec[] = [];
