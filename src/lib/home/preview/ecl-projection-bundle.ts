@@ -2331,12 +2331,91 @@ export function buildHomeReviewBundleFromEclProjectionRows(
   });
 }
 
+/**
+ * Every serving view the Home read draws from.
+ *
+ * Held as data rather than as one long SQL literal because the list has to be checked against the
+ * database before it is queried -- see readHomeProjectionRows for why.
+ */
+const HOME_SERVING_VIEWS: readonly string[] = [
+  "serving.home_executive_brief",
+  "serving.home_our_business",
+  "serving.home_strategy_value_creation",
+  "serving.home_how_we_operate",
+  "serving.home_technology_data",
+  "serving.home_performance_value",
+  "serving.home_leadership_perspective",
+  "serving.home_needs_attention",
+  "serving.home_current_state_architecture",
+  "serving.home_current_state_data_flow",
+  "serving.home_loaded_record",
+  "serving.home_browse_record",
+  "serving.home_applications_systems",
+  "serving.home_vendor_contracts",
+  "serving.home_infrastructure_platforms",
+  "serving.home_data_assets_integrations",
+  "serving.home_metrics_outcomes",
+  "serving.home_risks_controls",
+  "serving.home_programs_initiatives",
+  "serving.home_org_ownership",
+  "serving.home_ai_use_cases",
+  "serving.home_executive_interviews",
+  "serving.home_relationships",
+  "serving.home_business_unit_profile",
+  "serving.home_data_maturity",
+  "serving.home_kpi_register",
+] as const;
+
+/** The views that exist in this database, of the ones the reader wants. */
+async function presentServingViews(): Promise<Set<string>> {
+  const rows = await azureRead.query<{ full_name: string }>(
+    `
+      select table_schema || '.' || table_name as full_name
+      from information_schema.views
+      where table_schema = 'serving' and table_name like 'home\\_%'
+    `,
+    [],
+    { missingTable: "empty" },
+  );
+  return new Set(rows.map((row) => row.full_name));
+}
+
+export interface HomeProjectionRead {
+  rows: HomeProjectionRow[];
+  /** Views the reader expects and this database does not have. Named, never swallowed. */
+  absentViews: string[];
+}
+
+/**
+ * Reads the Home projection from every serving view that exists.
+ *
+ * The union used to name all views unconditionally, under `missingTable: "empty"`. Postgres fails
+ * the whole statement when any one relation in a UNION is missing, and that option then turned the
+ * failure into an empty result -- so a single absent view returned zero rows out of thousands, and
+ * the page fell back to the reviewed snapshot with nothing to say why.
+ *
+ * That is exactly what happened: two views were added to this list in the same change as the
+ * migrations that create them, the application deployed before the migrations were applied, and
+ * 3,375 rows read as none. Reader and view have a deployment order just as reader and rows do, and
+ * only one of those two was being observed.
+ *
+ * So the list is checked against the catalogue first and the union is built from what is there. A
+ * view that is missing costs its own family and nothing else, and it is returned by name rather
+ * than absorbed -- a family that cannot be served is a fact about this environment, and the surface
+ * that renders it should be able to say so.
+ */
 async function readHomeProjectionRows(
   tenantKey: string,
   assessmentId: string,
-): Promise<HomeProjectionRow[]> {
-  return azureRead.query<HomeProjectionRow>(
-    `
+): Promise<HomeProjectionRead> {
+  const present = await presentServingViews();
+  const usable = HOME_SERVING_VIEWS.filter((view) => present.has(view));
+  const absentViews = HOME_SERVING_VIEWS.filter((view) => !present.has(view));
+  if (usable.length === 0) return { rows: [], absentViews };
+  const sql =
+    usable
+      .map(
+        (view) => `
       select
         page_key,
         row_key,
@@ -2344,113 +2423,16 @@ async function readHomeProjectionRows(
         title,
         summary,
         payload_json as display_payload_json
-      from serving.home_executive_brief
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_our_business
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_strategy_value_creation
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_how_we_operate
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_technology_data
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_performance_value
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_leadership_perspective
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_needs_attention
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_current_state_architecture
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_current_state_data_flow
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_loaded_record
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_browse_record
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_applications_systems
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_vendor_contracts
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_infrastructure_platforms
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_data_assets_integrations
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_metrics_outcomes
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_risks_controls
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_programs_initiatives
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_org_ownership
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_ai_use_cases
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_executive_interviews
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_relationships
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_business_unit_profile
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_data_maturity
-      where tenant_key = $1 and assessment_id = $2
-      union all
-      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
-      from serving.home_kpi_register
-      where tenant_key = $1 and assessment_id = $2
-      order by page_key, row_key
-    `,
+      from ${view}
+      where tenant_key = $1 and assessment_id = $2`,
+      )
+      .join("\n      union all\n") + "\n      order by page_key, row_key";
+  const rows = await azureRead.query<HomeProjectionRow>(
+    sql,
     [tenantKey, assessmentId],
     { missingTable: "empty" },
   );
+  return { rows, absentViews };
 }
 
 export async function getHomeEclProjectionBundle(
@@ -2464,10 +2446,25 @@ export async function getHomeEclProjectionBundle(
   }
 
   const assessmentId = denseAssessmentIdForTenant(tenantKey);
-  const rows = await readHomeProjectionRows(tenantKey, assessmentId);
+  const { rows, absentViews } = await readHomeProjectionRows(
+    tenantKey,
+    assessmentId,
+  );
   if (rows.length === 0) {
+    // Naming the absent views in the message. The same failure used to read as "no rows", which
+    // sent everyone looking at the data when the answer was that a relation had not been created.
+    const missing = absentViews.length
+      ? ` No serving view for: ${absentViews.join(", ")}.`
+      : "";
     throw new Error(
-      `Home ECL preview: no serving Home rows for ${tenantKey}/${assessmentId}.`,
+      `Home ECL preview: no serving Home rows for ${tenantKey}/${assessmentId}.${missing}`,
+    );
+  }
+  if (absentViews.length > 0) {
+    // Served, but not completely. Recorded rather than swallowed: a family this environment cannot
+    // serve is a fact about the environment, and it belongs where the provenance is read.
+    console.warn(
+      `[home] serving views absent for ${tenantKey}: ${absentViews.join(", ")}`,
     );
   }
 
