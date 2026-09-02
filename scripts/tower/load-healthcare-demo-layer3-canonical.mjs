@@ -458,7 +458,7 @@ function buildCanonicalRows(options) {
     objects.push(objectRow(options, "ai_tool", row.canonical_tool_id, row.tool_name, row, row, row.domain_key, "in_review"));
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "linked_business_case_count", row.linked_business_case_count, row, { scenario: "current" }, "known", "usable", "in_review");
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "rollout_target_users", row.rollout_target_users, row, { scenario: "target" }, "known", "usable", "in_review");
-    addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "enabled_users", row.enabled_users, row, { scenario: "enabled" }, "known", "usable", "in_review");
+    addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "enabled_users", row.enabled_users, row, { scenario: "current" }, "known", "usable", "in_review");
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "monthly_active_users", row.monthly_active_users, row, { scenario: "actual" }, "known", "usable", "in_review");
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "adoption_target_pct", row.adoption_target_pct, row, { scenario: "target" }, "known", "usable", "in_review");
     addNumericMeasure(measures, options, "ai_tool", row.canonical_tool_id, "adoption_actual_pct", row.adoption_actual_pct, row, { scenario: "actual" }, "known", "usable", "in_review");
