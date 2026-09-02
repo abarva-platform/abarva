@@ -547,18 +547,28 @@ function buildRows(options) {
       page_key: "decision_lanes",
       business_case_id: row.business_case_id,
       project_id: row.project_id,
+      initiative_name: row.initiative_name,
+      initiative_classification: row.initiative_classification,
       domain_name: project?.domain_name ?? row.domain_key,
+      domain_key: row.domain_key,
       business_value_type: row.business_value_type,
+      business_value_story: row.business_value_story ?? null,
       primary_tool_or_platform: row.primary_tool_or_platform,
+      vendor_name: row.vendor_name ?? null,
       promised_value_usd: num(row.projected_annual_value_low_usd),
+      projected_annual_value_low_usd: num(row.projected_annual_value_low_usd),
       projected_annual_value_high_usd: num(row.projected_annual_value_high_usd),
       sponsor_claimed_value_usd: actual.sponsorClaimed,
       finance_reviewed_value_usd: actual.financeReviewed,
       finance_validated_value_usd: actual.financeValidated,
       board_claimable_value_usd: actual.boardClaimable,
+      finance_validated_ytd_usd: num(row.finance_validated_ytd_usd),
+      board_claimable_ytd_usd: num(row.board_claimable_ytd_usd),
       roi_low_multiple: numOrNull(row.roi_low_multiple),
       roi_high_multiple: numOrNull(row.roi_high_multiple),
       finance_status: row.finance_status,
+      cfo_approval_date: row.cfo_approval_date || null,
+      committee_decision: row.committee_decision ?? null,
       // Decision attributes. gating_constraint is the load-bearing one: across the portfolio it is
       // what separates a validated case from a blocked one, where readiness score does not.
       gating_constraint: row.gating_constraint ?? null,
@@ -586,8 +596,16 @@ function buildRows(options) {
       // label with nothing behind it.
       metric_baseline_value: numOrNull(row.baseline_value),
       metric_target_value: numOrNull(row.target_value),
+      baseline_value: numOrNull(row.baseline_value),
+      target_value: numOrNull(row.target_value),
       metric_unit: row.metric_unit ?? null,
       benefit_realization_lag_months: numOrNull(row.benefit_realization_lag_months),
+      value_tracking_cadence: row.value_tracking_cadence ?? null,
+      source_system: row.source_system ?? null,
+      source_record_id: row.source_record_id ?? null,
+      extract_date: row.extract_date || null,
+      as_of_date: row.as_of_date || null,
+      source_quality_state: row.quality_state ?? null,
       // The observation series behind the value waterfall, so the drawer can show when each step
       // happened rather than only its total.
       value_observation_months: observations
@@ -1643,7 +1661,7 @@ select jsonb_build_object(
     where tenant_key = ${tenant} and assessment_id = ${assessment}
       and cube_version = ${CUBE_VERSION}
       and cube_key = 'ai_portfolio_cube'
-      and grain_key = 'ai_tool_rollout'
+      and grain_key = 'tool_rollout'
   ),
   'source_ref_missing', (
     select count(*) from (
