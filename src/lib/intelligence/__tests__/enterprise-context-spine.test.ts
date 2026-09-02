@@ -49,9 +49,12 @@ describe("enterprise context spine", () => {
 
   it("respects per-bucket caps and emits no blank or duplicate facts", () => {
     const { spine } = spineFor("skyharbor");
-    for (const [bucket, list] of Object.entries(spine)) {
+    // Object.entries widens to [string, any][] for an interface without an
+    // index signature, so name the value type rather than lean on inference.
+    const buckets = Object.entries(spine) as Array<[string, string[]]>;
+    for (const [bucket, list] of buckets) {
       expect(list.length).toBeLessThanOrEqual(20);
-      expect(list.every((f) => f.trim().length > 0)).toBe(true);
+      expect(list.every((fact) => fact.trim().length > 0)).toBe(true);
       expect([bucket, new Set(list).size]).toEqual([bucket, list.length]);
     }
   });
