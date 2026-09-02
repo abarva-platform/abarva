@@ -136,6 +136,12 @@ COPY --from=build --chown=node:node /app/reports/candidate-invisibility-guard ./
 COPY --from=build --chown=node:node /app/reports/ecl-legacy-table-retirement-map-2026-08-22 ./reports/ecl-legacy-table-retirement-map-2026-08-22
 COPY --from=build --chown=node:node /app/tower-standardized-v1 ./tower-standardized-v1
 COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
+# The RLS regression suite is read-only SQL executed by an operator job, not by
+# the web runtime. Its runner (scripts/run-rls-regression.ts) reads this file at
+# runtime, so it must be present in the image or the tenant-isolation check
+# cannot run at all. Only tests/security is copied — the rest of tests/ has no
+# business in a runtime image.
+COPY --from=build --chown=node:node /app/tests/security ./tests/security
 
 RUN npx playwright install-deps chromium \
  && mkdir -p /app/outputs /app/reports /app/job-output \

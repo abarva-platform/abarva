@@ -5,25 +5,19 @@ name: RLS regression (L4 SQL tenant isolation)
 # HTTP API for cross-tenant leaks; this one probes the database tier directly,
 # under the authenticated role with each tenant's JWT claim.
 #
-# Triggers:
-#   - workflow_dispatch (manual; pick the environment)
-#   - schedule (nightly against production by default)
+# WHY THIS RUNS THROUGH AN ACA JOB RATHER THAN CONNECTING DIRECTLY
 #
-# Required repository secrets (mirrors Codex's
-# scripts/azure/set-postgres-database-url-secrets.mjs pattern):
-#   AZURE_CONTROL_DATABASE_URL   full DSN to abarva_control (Postgres URI)
-#   AZURE_CONTEXT_DATABASE_URL   full DSN to abarva_context
-#   PRODUCTION_DATABASE_URL      optional production DSN override
-#   DATABASE_URL                 production DSN fallback used by existing DB workflows
+# Direct runner-to-database access is not a valid proof path for the private
+# Azure Postgres network. This suite submits the same read-only probe through
+# the private operator job used by db-migration-lab.yml's preflight: same
+# deployed image, same database secret reference, same network path.
 #
-# Exit code:
-#   0 — every tenant × table probe was pass/empty
-#   1 — at least one tenant saw rows that belong to another tenant
-#   2 — connection / config error
+# READ-ONLY. The SQL only creates TEMP tables and runs SELECTs. Safe against a
+# live database. This lane must never acquire the ability to write.
 #
-# Operational note:
-#   Read-only. The SQL only creates TEMP tables and runs SELECTs.
-#   Safe to point at production.
+# Requires tests/security/rls-regression.sql to be present in the runtime image
+# (see Dockerfile). The runner reads it at execution time; without it the check
+# cannot run, and that is reported as NOT CHECKED rather than as a pass.
 
 on:
   workflow_dispatch:
@@ -31,38 +25,63 @@ on:
       environment:
         description: "Database to probe"
         required: true
-        default: "lab-control"
+        default: "control"
         type: choice
         options:
-          - lab-control
-          - lab-context
-          - production
+          - control
+          - context
   schedule:
-    # 03:30 UTC nightly against production — staggered 30 min after
-    # sec-p0-post-deploy so the two layers don't share a green/red window
-    # in the on-call alert path. Lab targets remain manual until lab DSNs
-    # are configured as repository secrets.
+    # 03:30 UTC nightly — staggered 30 min after sec-p0-post-deploy so the two
+    # layers do not share a green/red window in the alert path.
     - cron: "30 3 * * *"
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+  RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+  AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+  AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+  AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
 
 jobs:
   rls-regression:
     name: RLS regression (L4)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Resolve target label
+      # The operator job exposes exactly one database secret today:
+      # azure-postgres-control-database-url. There is no context-database secret
+      # on the job, so the context target cannot be probed. Say that plainly and
+      # stop, rather than silently probing control and labelling it context.
+      - name: Resolve target and secret reference
         id: target
+        shell: bash
         run: |
-          case "${{ inputs.environment || 'production' }}" in
-            production)   echo "label=production" >> "$GITHUB_OUTPUT" ;;
-            lab-context)  echo "label=azure-lab/abarva_context" >> "$GITHUB_OUTPUT" ;;
-            *)            echo "label=azure-lab/abarva_control" >> "$GITHUB_OUTPUT" ;;
+          set -euo pipefail
+          target="${{ inputs.environment || 'control' }}"
+          case "$target" in
+            control)
+              echo "label=azure/abarva_control" >> "$GITHUB_OUTPUT"
+              echo "secret_ref=azure-postgres-control-database-url" >> "$GITHUB_OUTPUT"
+              ;;
+            context)
+              {
+                echo "## Result — NOT CHECKED"
+                echo ""
+                echo "No context-database secret is configured on the operator job,"
+                echo "so the context database cannot be probed. Tenant-isolation"
+                echo "state for that database is **unknown**, not clean."
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo "::error::NOT CHECKED · no context-database secret on the operator job"
+              exit 1
+              ;;
           esac
 
       - name: Setup Node.js
@@ -74,51 +93,147 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Run RLS regression
-        env:
-          # All three candidate DSNs are exported; the bash step picks the
-          # right one based on the resolved environment. GitHub Actions
-          # expressions don't support computed secret lookups, so we route
-          # via shell rather than ${{ ... }}.
-          PROD_DSN: ${{ secrets.PRODUCTION_DATABASE_URL || secrets.DATABASE_URL }}
-          LAB_CONTROL_DSN: ${{ secrets.AZURE_CONTROL_DATABASE_URL }}
-          LAB_CONTEXT_DSN: ${{ secrets.AZURE_CONTEXT_DATABASE_URL }}
-          TARGET: ${{ inputs.environment || 'production' }}
-          TARGET_LABEL: ${{ steps.target.outputs.label }}
-        run: |
-          case "$TARGET" in
-            production)   export DATABASE_URL="$PROD_DSN" ;;
-            lab-context)  export DATABASE_URL="$LAB_CONTEXT_DSN" ;;
-            *)            export DATABASE_URL="$LAB_CONTROL_DSN" ;;
-          esac
-          if [[ -z "${DATABASE_URL:-}" ]]; then
-            echo "::error::DATABASE_URL secret is empty for ${TARGET_LABEL}. Set the corresponding repo secret." >&2
-            exit 2
-          fi
-          echo "::group::Target"
-          echo "  ${TARGET_LABEL}"
-          echo "::endgroup::"
-          npm run test:rls-regression | tee rls-regression.log
+      - name: Verify Azure OIDC configuration
         shell: bash
-
-      - name: Append summary to GitHub job summary
-        if: always()
         run: |
+          set -euo pipefail
+          missing=()
+          if [[ -z "${AZURE_DEPLOY_CLIENT_ID}" ]]; then missing+=("AZURE_CLIENT_ID or AZURE_LAB_CLIENT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_TENANT_ID}" ]]; then missing+=("AZURE_TENANT_ID or AZURE_LAB_TENANT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_SUBSCRIPTION_ID}" ]]; then missing+=("AZURE_SUBSCRIPTION_ID or AZURE_LAB_SUBSCRIPTION_ID"); fi
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing Azure configuration:\n' >&2
+            printf -- '- %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Prepare audit artifacts directory
+        run: mkdir -p audit-artifacts/rls-regression
+
+      - name: Resolve currently-deployed image digest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json)"
+          echo "$app_json" > audit-artifacts/rls-regression/containerapp.json
+          template_image="$(echo "$app_json" | jq -r '.properties.template.containers[0].image // empty')"
+          if [[ -z "$template_image" || "$template_image" != *"@sha256:"* ]]; then
+            echo "Could not resolve a digest-pinned template image from the live container app." >&2
+            exit 1
+          fi
+          echo "image=$template_image" >> "$GITHUB_OUTPUT"
+          echo "$template_image" > audit-artifacts/rls-regression/image.txt
+
+      - name: Run RLS regression through the private operator job
+        id: run
+        shell: bash
+        run: |
+          set +e
+          npm run --silent ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script test:rls-regression \
+            --container db-migrate \
+            --secret-env DATABASE_URL=${{ steps.target.outputs.secret_ref }} \
+            --out-dir audit-artifacts/rls-regression/run \
+            > audit-artifacts/rls-regression/run.log 2>&1
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+          cat audit-artifacts/rls-regression/run.log
+
+      # THREE OUTCOMES, KEPT APART. A cross-tenant leak and a check that never
+      # ran both look like "not green"; this workflow reports them separately.
+      #
+      #   GREEN       → every tenant × table probe passed
+      #   LEAK        → the suite ran and found rows belonging to another tenant
+      #   NOT CHECKED → the suite did not run; isolation state is UNKNOWN
+      #
+      # Classification reads the suite's own markers from the job log, because
+      # the job submitter reports any non-zero container exit as "Failed" and
+      # cannot tell a leak from a connection error.
+      - name: Classify result
+        shell: bash
+        run: |
+          set -uo pipefail
+          logs="audit-artifacts/rls-regression/run/04-logs.txt"
+          rc="${{ steps.run.outputs.rc }}"
+          label="${{ steps.target.outputs.label }}"
+
+          if [[ ! -s "$logs" ]]; then
+            {
+              echo "## Result — NOT CHECKED"
+              echo ""
+              echo "**Target:** $label"
+              echo ""
+              echo "The operator job produced no readable output, so tenant-isolation"
+              echo "state is **unknown**. This is not a pass and must not be read as one."
+              echo ""
+              echo "- submitter exit code: \`${rc}\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::NOT CHECKED · isolation state unknown — no job output"
+            exit 1
+          fi
+
+          if grep -q "rls-regression: GREEN" "$logs"; then
+            {
+              echo "## Result — GREEN"
+              echo ""
+              echo "**Target:** $label"
+              echo ""
+              echo "Every tenant × table probe passed. No cross-tenant rows visible."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if grep -q "rls-regression: FAILED" "$logs"; then
+            {
+              echo "## Result — TENANT ISOLATION FAILURE"
+              echo ""
+              echo "**Target:** $label"
+              echo ""
+              echo "The suite ran and did **not** pass. Treat as a potential"
+              echo "cross-tenant leak until proven otherwise."
+              echo ""
+              echo '```'
+              grep -m1 -A5 "rls-regression: FAILED" "$logs"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::RLS FAILURE · the isolation suite ran and did not pass"
+            exit 1
+          fi
+
+          # Ran, but produced neither marker — connection error, missing SQL
+          # file, or an unexpected crash. Unknown, never clean.
           {
-            echo "## RLS regression (L4)"
+            echo "## Result — NOT CHECKED"
             echo ""
-            echo "**Target:** ${{ steps.target.outputs.label }}"
-            echo "**Trigger:** ${{ github.event_name }}"
+            echo "**Target:** $label"
+            echo ""
+            echo "The suite did not reach a verdict, so tenant-isolation state is"
+            echo "**unknown**. Common causes: the database was unreachable, or"
+            echo "tests/security/rls-regression.sql is missing from the deployed image."
             echo ""
             echo '```'
-            tail -n 80 rls-regression.log 2>/dev/null || echo "(no log captured)"
+            tail -n 20 "$logs"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::NOT CHECKED · isolation state unknown — suite reached no verdict"
+          exit 1
 
-      - name: Upload full log
+      - name: Upload evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          name: rls-regression-log
-          path: rls-regression.log
-          retention-days: 14
+          name: rls-regression-${{ github.run_id }}
+          path: audit-artifacts/rls-regression
+          if-no-files-found: warn
+          retention-days: 30
