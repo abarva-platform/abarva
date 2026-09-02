@@ -1,6 +1,7 @@
 import {
   GENERAL_ADVISORY_CONTRACT,
   INDUSTRY_TREND_TO_AI_BETS_CONTRACT,
+  PORTFOLIO_PRIORITIZATION_CONTRACT,
   STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
   STRATEGY_TO_MOVES_EXECUTION_CONTRACT,
   type AbarvaAnswerMode,
@@ -482,7 +483,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
   },
   portfolio_prioritization: {
     mode: "portfolio_prioritization",
-    active: false,
+    active: true,
     requiredSections: [
       "Portfolio read",
       "Ranking logic",
@@ -495,6 +496,9 @@ export const CXO_ANSWER_MODE_REGISTRY = {
     exportRequired: true,
     liveProofPrompt:
       "Prioritize these AI bets by value, readiness, complexity, and dependency.",
+    systemContract: PORTFOLIO_PRIORITIZATION_CONTRACT,
+    promptDirective:
+      "ACTIVE ANSWER MODE: portfolio_prioritization. The user is ordering a set the enterprise already holds, not discovering industry options. Open with the portfolio read, state the ranking logic before the ranking, and keep value separate from readiness. Name the dependencies that force sequence -- a shared data foundation, a single owner, or one vendor negotiation decides order more than any score. Recommend invest now, validate next, sequence, or hold for each item, and say why. Do not manufacture ROI, savings percentages, or composite scores; where readiness or value is unevidenced, make that the validation gate. Emit the scorecard and value/readiness matrix payload only for an explicit ranking, matrix, or top-N ask.",
   },
   risk_control_plan: {
     mode: "risk_control_plan",
