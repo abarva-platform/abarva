@@ -54,8 +54,11 @@ AGENTS.md
 CYCLE_STATE.md
 WAVE-2-AGENT-COORDINATION.md
 
-# Tests / e2e (not needed for production runtime)
-tests/
+# Tests / e2e (not needed for production runtime), except the read-only SQL
+# fixtures used by operator-job regression checks.
+tests/*
+!tests/security/
+!tests/security/**
 e2e/
 playwright-report/
 test-results/
