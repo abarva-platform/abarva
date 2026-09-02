@@ -148,3 +148,24 @@ describe("facets a reader can slice by", () => {
     expect(facetLabels(flat)).not.toContain("Rto Hours");
   });
 });
+
+describe("the field count counts the same thing twice", () => {
+  it("never shows more fields than it says the record has", () => {
+    // It read "20 of 15 fields" live: the numerator counted the fields shown, from the row, and the
+    // denominator counted the DECLARED columns -- and a row can carry keys the declaration omits.
+    // Two different populations either side of "of" is a bug in front of the reader whether or not
+    // it is one behind the screen.
+    const undeclared: TechRecordType = {
+      ...applications,
+      columns: ["systemName"],
+      rows: applications.rows.slice(0, 3),
+    };
+    render(<RecordBrowser recordType={undeclared} />);
+    const meta = document.body.textContent ?? "";
+    const match = /(\d+) of (\d+) fields on this record/.exec(meta);
+    expect(match).not.toBeNull();
+    const [, shown, carried] = match!.map(Number);
+    expect(shown).toBeLessThanOrEqual(carried);
+    expect(carried).toBe(Object.keys(undeclared.rows[0]).length);
+  });
+});

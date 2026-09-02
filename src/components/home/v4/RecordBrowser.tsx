@@ -925,7 +925,6 @@ export function RecordBrowser({
               recordType={recordType.objectType}
               row={selected.row}
               ordinal={selected.index + 1}
-              fieldCount={fieldCount}
               declaredColumns={recordType.columns}
             />
           ) : null}
@@ -1859,17 +1858,19 @@ function SelectedRecord({
   recordType,
   row,
   ordinal,
-  fieldCount,
   declaredColumns,
 }: {
   recordType: TechObjectType;
   row: RecordRow;
   ordinal: number;
-  fieldCount: number;
   /** The source's own column order, so the detail reads in the shape the file declared. */
   declaredColumns?: string[];
 }) {
   const fields = detailFieldsFor(recordType, row, declaredColumns);
+  // Counted from the row, not from the declared column list. Those differ -- the row can carry keys
+  // the declaration omits -- so measuring the shown fields against the declared count produced
+  // "20 of 15 fields", which reads as a bug in front of the reader whether or not it is one.
+  const carried = Object.keys(row).length;
   const title = titleForSelected(recordType, row);
   return (
     <section style={selectedStyle}>
@@ -1888,8 +1889,8 @@ function SelectedRecord({
       </div>
       <h2 style={selectedTitleStyle}>{title}</h2>
       <div style={selectedMetaStyle}>
-        {fields.length.toLocaleString()} of {fieldCount.toLocaleString()} fields
-        in the source record; the rest record how the row was loaded
+        {fields.length.toLocaleString()} of {carried.toLocaleString()} fields on
+        this record; the rest record how the row was loaded
       </div>
       {/* Every field the row carries that is not bookkeeping. This used to stop at eighteen, and
           the curated list filled all eighteen -- so a dozen fields the record declares and varies
