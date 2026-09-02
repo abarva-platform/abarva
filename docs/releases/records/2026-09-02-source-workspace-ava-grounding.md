@@ -21,7 +21,9 @@ preventing unsupported savings, recommendation, pricing, or cross-tenant claims.
 - Layer 4, Products: Updates the Source workspace assistant context passed to
   the shared aVa route.
 - Layer 4, Agent runtime: Adds a structured claim contract, capability summary,
-  grounding status, and refusal examples to the Source workspace surface context.
+  grounding status, and refusal examples to the Source workspace surface context,
+  then promotes those Source-specific guardrails into the shared retrieval source
+  set before answer synthesis.
 - Lane: `global-control-lane`.
 
 ## Client Applicability
@@ -45,6 +47,13 @@ preventing unsupported savings, recommendation, pricing, or cross-tenant claims.
   Source 360 / Optimize / New Event capability boundaries.
 - `docs/backlog/tracks/04-source-commercial/BACKLOG.md`: tracks the remaining
   signed-in adversarial proof for Source workspace aVa.
+- `src/lib/intelligence/ask/retrievers/surface-context.ts`: promotes Source
+  workspace claim rules, row coverage, capability boundaries, evidence
+  requirements, and refusal examples as a high-confidence surface source.
+- `src/lib/intelligence/ask/types.ts`: documents the optional Source workspace
+  aVa grounding fields carried in `surfaceContext`.
+- `src/lib/intelligence/ask/__tests__/surface-context-domains.test.ts`: verifies
+  the Source-specific claim contract reaches the retrieval source set.
 
 ## QA / Validation
 
@@ -54,6 +63,10 @@ preventing unsupported savings, recommendation, pricing, or cross-tenant claims.
   `npx eslint 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts'`.
 - pass - Release gate: `npm run release:check`.
 - pass - TypeScript: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`.
+- pass - Follow-up focused Jest:
+  `npm test -- --runTestsByPath 'src/lib/intelligence/ask/__tests__/surface-context-domains.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' --runInBand`.
+- pass - Follow-up focused ESLint:
+  `npx eslint 'src/lib/intelligence/ask/retrievers/surface-context.ts' 'src/lib/intelligence/ask/types.ts' 'src/lib/intelligence/ask/__tests__/surface-context-domains.test.ts'`.
 
 ## Rollout Plan
 
@@ -80,8 +93,10 @@ the Source workspace assistant context.
 
 ## Audit Evidence
 
-- Pull request: pending.
-- Deploy workflow: pending.
+- Pull request: PR #7345 merged for the Source workspace context packet; follow-up
+  retriever PR pending.
+- Deploy workflow: PR #7345 deployed through the repo-owned ACA workflow;
+  follow-up retriever deploy pending.
 - Live proof: pending.
 
 ## Known Gaps
