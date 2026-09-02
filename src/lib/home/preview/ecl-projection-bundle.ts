@@ -964,12 +964,27 @@ function recordType(
   rows: Array<Record<string, string | number | boolean | null>>,
 ): TechRecordType | null {
   if (rows.length === 0) return null;
-  const columns = COLUMN_ORDER[objectType].filter((column) =>
+  const populated = (column: string) =>
     rows.some(
       (row) =>
         row[column] !== null && row[column] !== undefined && row[column] !== "",
-    ),
-  );
+    );
+  const declared = COLUMN_ORDER[objectType].filter(populated);
+  // Keys the rows carry that the declared order does not name.
+  //
+  // The order is maintained by hand and the mappers are maintained by hand, and the moment one
+  // changes without the other the difference is silent -- `columns` is what search, the table and
+  // the constant-column detector all read, so a field the mapper emits but the order omits is
+  // carried on every row and reachable from nothing. Seven of the nine families were in that state:
+  // the parent link the reporting structure is built from, the register's own residual score, what
+  // a programme is FOR.
+  //
+  // Appended rather than merged into the order, so the curated sequence still leads and the tail is
+  // whatever the record turned out to have.
+  const undeclared = [
+    ...new Set(rows.flatMap((row) => Object.keys(row))),
+  ].filter((column) => !declared.includes(column) && populated(column));
+  const columns = [...declared, ...undeclared];
   const primaryDimension = columns.includes(PRIMARY_DIMENSION[objectType])
     ? PRIMARY_DIMENSION[objectType]
     : null;
