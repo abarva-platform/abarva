@@ -421,7 +421,58 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
  * role="button" on the <tr> — overriding the row role strips the table
  * semantics that make a dense decision table readable at all. */
 .rowOpen { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; display: block; width: 100%; }
+.rowOpen:hover { color: var(--canon-teal-dark); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .rowOpen:focus-visible { outline: 2px solid var(--abarva-signal-blue); outline-offset: 2px; border-radius: 3px; }
+.detailLink {
+  background: var(--canon-bg-surface);
+  border: 1px solid var(--canon-border);
+  border-radius: 6px;
+  color: var(--canon-gray-700);
+  cursor: pointer;
+  font-family: var(--abarva-sans);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+.detailLink:hover,
+.detailLink:focus-visible {
+  background: var(--canon-teal-light);
+  border-color: var(--canon-teal);
+  color: var(--canon-teal-dark);
+  outline: 0;
+}
+.detailLink:disabled {
+  color: var(--canon-gray-300);
+  cursor: default;
+}
+.fieldWithHelp {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  justify-content: flex-end;
+  overflow-wrap: anywhere;
+}
+.helpBadge {
+  align-items: center;
+  border: 1px solid var(--canon-border);
+  border-radius: 999px;
+  color: var(--canon-gray-500);
+  display: inline-flex;
+  flex: none;
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  font-weight: 700;
+  height: 17px;
+  justify-content: center;
+  width: 17px;
+}
+.helpBadge::before { content: "?"; }
+.fieldWithHelp:hover .helpBadge {
+  border-color: var(--canon-teal);
+  color: var(--canon-teal-dark);
+}
 .tbl td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .pname { font-family: var(--abarva-serif); font-size: 15px; font-weight: 500; letter-spacing: -0.012em; line-height: 1.2; }
 .psub { font-size: 11.5px; color: var(--canon-gray-500); margin-top: 3px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
@@ -610,8 +661,8 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 .drGrid .v.vAmber { color: var(--canon-amber); }
 .drow { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--canon-border); font-size: 13.5px; }
 .drow:last-child { border-bottom: 0; }
-.drow .dk { color: var(--canon-gray-500); }
-.drow .dv { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.drow .dk { color: var(--canon-gray-500); min-width: 0; }
+.drow .dv { font-weight: 600; font-variant-numeric: tabular-nums; max-width: 56%; min-width: 0; overflow-wrap: anywhere; text-align: right; }
 .drow .dsub { font-size: 11px; color: var(--canon-gray-500); margin-top: 2px; font-weight: 400; }
 .drow.stacked { align-items: flex-start; }
 .drow.stacked .dk { display: flex; flex-direction: column; }
@@ -1592,7 +1643,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   cursor: pointer;
   display: grid;
   gap: 18px;
-  grid-template-columns: 34px minmax(260px, 1fr) minmax(70px, 0.3fr) minmax(112px, 0.42fr) minmax(132px, 0.48fr);
+  grid-template-columns: 34px minmax(320px, 1fr) minmax(64px, 80px) minmax(108px, 128px) minmax(108px, 132px);
   padding: 14px 20px;
   text-align: left;
   width: 100%;
@@ -1605,6 +1656,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
   font-family: var(--abarva-serif);
   font-size: 22px;
 }
+.campaignMain { min-width: 0; }
 .campaignMain strong {
   display: block;
   font-family: var(--abarva-serif);
@@ -1626,7 +1678,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 .campaignMetric strong {
   display: block;
   font-family: var(--abarva-serif);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.05;
   margin-top: 3px;

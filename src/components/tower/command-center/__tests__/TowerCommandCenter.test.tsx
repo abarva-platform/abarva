@@ -259,16 +259,8 @@ describe("TowerCommandCenter", () => {
     expect(screen.getByText("Claim ledger")).toBeInTheDocument();
     expect(screen.getByText("Value case lanes")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
-
-    expect(screen.getByRole("tab", { name: "2 × 2" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    fireEvent.click(screen.getByRole("tab", { name: "Stacked" }));
-    expect(screen.getByRole("tab", { name: "Stacked" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    expect(screen.queryByRole("tab", { name: "Stacked" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "2 × 2" })).not.toBeInTheDocument();
   });
 
   it("renders the AI Portfolio tab-specific contract layout", () => {
@@ -370,6 +362,27 @@ describe("TowerCommandCenter", () => {
     expect(screen.getByText("Projection reconciliation")).toBeInTheDocument();
   });
 
+  it("renders evidence campaign due keys as short next-step labels", () => {
+    renderCustomView({
+      ...view,
+      actions: [
+        {
+          ...view.actions[0]!,
+          id: "fixture::action::short-due",
+          sequence: 1,
+          title: "FIX PROOF: Capture monthly actuals",
+          why: "The proof step is loaded as a machine key, but the row must read like a next step.",
+          due: "measured_outcome",
+          amountExposedUsd: 12_000_000,
+        },
+      ],
+    });
+    goTo(TAB.decisions, /Evidence queue/);
+
+    expect(screen.getByText("Capture actuals")).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("measured_outcome");
+  });
+
   it("opens the AI initiative drawer from the all-cases table", () => {
     renderPage();
     goTo(TAB.initiatives, /All cases/);
@@ -420,6 +433,7 @@ describe("TowerCommandCenter", () => {
     const drawer = screen.getByRole("dialog");
     expect(within(drawer).getByText(/AI tool rollout/)).toBeInTheDocument();
     expect(within(drawer).getByText("Tool rollout detail")).toBeInTheDocument();
+    expect(within(drawer).getByText("Tool spend")).toBeInTheDocument();
     expect(within(drawer).getByText("self-service analytics assistance")).toBeInTheDocument();
     expect(within(drawer).getByText("2,300")).toBeInTheDocument();
     expect(within(drawer).getByText("1,035")).toBeInTheDocument();

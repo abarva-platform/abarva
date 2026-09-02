@@ -41,7 +41,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const HEADER: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(240px,2.2fr) minmax(128px,0.95fr) minmax(128px,1fr) minmax(150px,1.1fr) 98px 116px 112px",
+  gridTemplateColumns: "minmax(240px,2.2fr) minmax(128px,0.95fr) minmax(128px,1fr) minmax(150px,1.1fr) 98px 116px 112px 92px",
   gap: 12,
   padding: "10px 22px",
   borderBottom: "1px solid var(--canon-border-strong)",
@@ -168,11 +168,15 @@ export function InitiativesTablePanel({
             ["investment", "Invested"],
             ["value", "Sponsor-stated"],
             ["claimable", "Finance actual"],
+            ["detail", "Detail"],
           ].map(([key, label], i) => (
             <button
               key={key}
               type="button"
-              onClick={() => updateSort(key as SortKey)}
+              onClick={() => {
+                if (key !== "detail") updateSort(key as SortKey);
+              }}
+              disabled={key === "detail"}
               style={{ ...TH, textAlign: i >= 3 ? "right" : "left" }}
             >
               {label}
@@ -210,15 +214,31 @@ export function InitiativesTablePanel({
             <span style={{ color: "var(--canon-gray-700)", minWidth: 0 }}>{humanize(item.businessValueType)}</span>
             <span style={{ color: "var(--canon-gray-500)", minWidth: 0 }}>{item.category ?? "Not loaded"}</span>
             <span
+              className={styles.fieldWithHelp}
               style={{ color: item.gatingConstraint ? "var(--canon-gray-700)" : "var(--canon-gray-500)", minWidth: 0 }}
               title={gatingConstraintExplanation(item.gatingConstraint)}
             >
               {humanize(item.gatingConstraint)}
+              <span
+                className={styles.helpBadge}
+                aria-label={`Constraint help: ${gatingConstraintExplanation(item.gatingConstraint)}`}
+              />
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{formatUsdM(item.aiSpendUsd)}</span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{valueLabel(item)}</span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", color: item.financeValidatedUsd > 0 ? "var(--canon-teal-dark)" : "var(--canon-gray-500)" }}>
               {claimableProxy(item)}
+            </span>
+            <span style={{ textAlign: "right" }}>
+              <button
+                type="button"
+                className={styles.detailLink}
+                onClick={() => onOpenAi?.(item.n)}
+                disabled={!onOpenAi}
+                aria-label={`Open detail for ${item.name}`}
+              >
+                Open
+              </button>
             </span>
           </div>
         ))}
