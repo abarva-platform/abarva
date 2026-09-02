@@ -1,0 +1,63 @@
+{
+  "mode": "dry-run",
+  "generatedAt": "2026-07-30T11:27:17.554Z",
+  "releaseId": "airline-demo-new-source-operational-demo-v1.0.0",
+  "releaseHashSha256": "1d86dc440b8d88e314a1f3d354ecec1c552a400b0585d6bba98c6da4b73d496e",
+  "tenantKey": "airline-demo-new",
+  "eventId": "srcop-airdn-ops-crew-platform-2026",
+  "eventCode": "AIRDN-OPS-CREW-DATA-2026",
+  "provider": {
+    "provider": "SourceOperationalProvider",
+    "mode": "file_release_package",
+    "releaseId": "airline-demo-new-source-operational-demo-v1.0.0",
+    "releaseHashSha256": "1d86dc440b8d88e314a1f3d354ecec1c552a400b0585d6bba98c6da4b73d496e",
+    "tenantKey": "airline-demo-new",
+    "eventId": "srcop-airdn-ops-crew-platform-2026"
+  },
+  "knowledgeContext": {
+    "provider": "KnowledgeConsumptionProvider",
+    "tenantKey": "airline-demo-new",
+    "frozenV1Status": "EXISTING LIVE AIRLINE CORPUS RECONCILED THROUGH CUBE",
+    "baselineRef": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
+    "limitation": "Live Knowledge contains 10 interview rows; leadership/C-suite completeness is not certified."
+  },
+  "objectCounts": {
+    "event": 1,
+    "requirements": 24,
+    "vendors": 4,
+    "proposals": 4,
+    "proposalResponses": 96,
+    "criteria": 5,
+    "evaluations": 4,
+    "pricing": 4,
+    "bafo": 4,
+    "recommendation": 1,
+    "transitionCommitments": 4,
+    "valueScorecard": 1,
+    "decisionBrief": 1
+  },
+  "validationChecks": {
+    "primaryKeys": true,
+    "foreignKeys": true,
+    "criteriaWeights": true,
+    "scoreRecomputation": true,
+    "pricingRecomputation": true,
+    "proposalCoverage": true,
+    "bafoReferences": true,
+    "transitionReferences": true,
+    "syntheticLabels": true
+  },
+  "loadPlan": {
+    "eventRows": 1,
+    "sourceEventFactRows": 135,
+    "pricingSubmissionRows": 4,
+    "sourceArtifactRows": 2,
+    "scaffoldOperation": "source_event_artifact_states/source_event_gate_criterion_states/source_event_evidence_states",
+    "duplicateGuard": "source_event_facts.source_operational_release_id for event + tenant + release"
+  },
+  "limitations": [
+    "Live Knowledge contains 10 interview rows; leadership/C-suite completeness is not certified.",
+    "Synthetic Source operational records are lab-demo workflow state and are not canonical Knowledge.",
+    "Signed-in lab proof and Decision Brief export proof remain separate from this local package proof."
+  ]
+}

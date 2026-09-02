@@ -1,0 +1,2187 @@
+{
+  "event": {
+    "eventId": "srcop-airdn-ops-crew-platform-2026",
+    "eventCode": "AIRDN-OPS-CREW-DATA-2026",
+    "tenantKey": "airline-demo-new",
+    "releaseId": "airline-demo-new-source-operational-demo-v1.0.0",
+    "scenario": "OPERATIONAL RECOVERY AND CREW DATA PLATFORM SELECTION",
+    "name": "Operational Recovery and Crew Data Platform Selection",
+    "currentStage": "executive_decision",
+    "syntheticDataLabel": "synthetic_source_operational_demo",
+    "knowledgeContext": {
+      "provider": "KnowledgeConsumptionProvider",
+      "tenantKey": "airline-demo-new",
+      "frozenV1Status": "EXISTING LIVE AIRLINE CORPUS RECONCILED THROUGH CUBE",
+      "baselineRef": "airline-demo-new-source-corpus-v1.0.0:knowledge-baseline-v1",
+      "limitation": "Live Knowledge contains 10 interview rows; leadership/C-suite completeness is not certified."
+    }
+  },
+  "requirements": [
+    {
+      "id": "REQ-BUS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "business",
+      "statement": "Protect irregular-operations recovery value with auditable decision support.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:business",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-BUS-01"
+      ]
+    },
+    {
+      "id": "REQ-BUS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "business",
+      "statement": "Reduce crew reassignment cycle time during disruption events.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:business",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-BUS-02"
+      ]
+    },
+    {
+      "id": "REQ-BUS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "business",
+      "statement": "Expose finance-ready value and cost attribution by operating lever.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:business",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-BUS-03"
+      ]
+    },
+    {
+      "id": "REQ-OPS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "operational",
+      "statement": "Support crew legality, fatigue, and contract-rule checks in planning workflows.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:operational",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-OPS-01"
+      ]
+    },
+    {
+      "id": "REQ-OPS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "operational",
+      "statement": "Provide station, aircraft, and crew-state synchronization for recovery teams.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:operational",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-OPS-02"
+      ]
+    },
+    {
+      "id": "REQ-OPS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "operational",
+      "statement": "Support playbook execution with role-based action logs.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:operational",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-OPS-03"
+      ]
+    },
+    {
+      "id": "REQ-OPS-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "operational",
+      "statement": "Maintain degraded-mode recovery workflow when an upstream feed is delayed.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:operational",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-OPS-04"
+      ]
+    },
+    {
+      "id": "REQ-ARC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "architecture",
+      "statement": "Integrate with operations control, crew management, data platform, and notification services.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:architecture",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-ARC-01"
+      ]
+    },
+    {
+      "id": "REQ-ARC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "architecture",
+      "statement": "Use tenant-scoped APIs and avoid direct UI access to raw Knowledge tables.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:architecture",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-ARC-02"
+      ]
+    },
+    {
+      "id": "REQ-ARC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "architecture",
+      "statement": "Expose Source workflow state through SourceOperationalProvider.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:architecture",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-ARC-03"
+      ]
+    },
+    {
+      "id": "REQ-ARC-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "architecture",
+      "statement": "Emit deterministic view models through SourceViewModelAssembler.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:architecture",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-ARC-04"
+      ]
+    },
+    {
+      "id": "REQ-DAT-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "data",
+      "statement": "Resolve crew, flight, aircraft, station, and disruption entities with stable IDs.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:data",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-DAT-01"
+      ]
+    },
+    {
+      "id": "REQ-DAT-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "data",
+      "statement": "Carry evidence references and known gaps for every decision-critical claim.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:data",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-DAT-02"
+      ]
+    },
+    {
+      "id": "REQ-DAT-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "data",
+      "statement": "Support lineage from proposal response to evaluation score to recommendation.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:data",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-DAT-03"
+      ]
+    },
+    {
+      "id": "REQ-DAT-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "data",
+      "statement": "Keep Source operational records separate from canonical Knowledge publications.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:data",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-DAT-04"
+      ]
+    },
+    {
+      "id": "REQ-SEC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "security",
+      "statement": "Enforce tenant isolation for records, artifacts, and generated Decision Briefs.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:security",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-SEC-01"
+      ]
+    },
+    {
+      "id": "REQ-SEC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "security",
+      "statement": "Support least-privilege evaluator access and audit logging.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:security",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-SEC-02"
+      ]
+    },
+    {
+      "id": "REQ-SEC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "security",
+      "statement": "Do not weaken storage, database, auth, or provider security controls.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:security",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-SEC-03"
+      ]
+    },
+    {
+      "id": "REQ-IMP-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "implementation",
+      "statement": "Deliver a staged migration with parallel run and rollback checkpoints.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:implementation",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-IMP-01"
+      ]
+    },
+    {
+      "id": "REQ-IMP-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "implementation",
+      "statement": "Provide training, transition commitments, and hypercare measures.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:implementation",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-IMP-02"
+      ]
+    },
+    {
+      "id": "REQ-IMP-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "implementation",
+      "statement": "Demonstrate no SkyHarbor or non-airline tenant fallback in demo paths.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:implementation",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-IMP-03"
+      ]
+    },
+    {
+      "id": "REQ-COM-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "commercial",
+      "statement": "Normalize pricing across platform, implementation, support, and usage lines.",
+      "weight": 5,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:commercial",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-COM-01"
+      ]
+    },
+    {
+      "id": "REQ-COM-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "commercial",
+      "statement": "Tie BAFO changes to score, risk, and transition commitments.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:commercial",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-COM-02"
+      ]
+    },
+    {
+      "id": "REQ-COM-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "category": "commercial",
+      "statement": "Define service credits and value tracking for recovery performance.",
+      "weight": 4,
+      "syntheticDataLabel": "synthetic_source_operational_demo",
+      "evidenceRefs": [
+        "knowledge:airline-demo-new:frozen-v1:commercial",
+        "source:airline-demo-new-source-operational-demo-v1.0.0:requirements:REQ-COM-03"
+      ]
+    }
+  ],
+  "vendors": [
+    {
+      "id": "VEND-AIRDN-ORBIT",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "displayName": "OrbitOps Cloud",
+      "posture": "balanced",
+      "priceIndex": 1.03,
+      "technicalBase": 86,
+      "commercialBase": 82,
+      "transitionBase": 88,
+      "risk": "medium",
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "VEND-AIRDN-CREWLINE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "displayName": "CrewLine Systems",
+      "posture": "operator specialist",
+      "priceIndex": 1.08,
+      "technicalBase": 91,
+      "commercialBase": 79,
+      "transitionBase": 84,
+      "risk": "medium-low",
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "VEND-AIRDN-SKYFORGE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "displayName": "SkyForge Data",
+      "posture": "data platform",
+      "priceIndex": 0.96,
+      "technicalBase": 83,
+      "commercialBase": 88,
+      "transitionBase": 78,
+      "risk": "medium",
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "VEND-AIRDN-GROUNDLOOP",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "displayName": "GroundLoop Services",
+      "posture": "commercial challenger",
+      "priceIndex": 0.91,
+      "technicalBase": 76,
+      "commercialBase": 93,
+      "transitionBase": 72,
+      "risk": "high",
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    }
+  ],
+  "proposals": [
+    {
+      "id": "PROP-VEND-AIRDN-ORBIT",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "summary": "OrbitOps Cloud proposal for operational recovery and crew data platform selection.",
+      "coveragePct": 75,
+      "assumptions": [
+        "Client confirms access to disruption history and crew legality feeds.",
+        "Parallel run uses lab-only Source operational records."
+      ],
+      "risks": ["Transition dependencies require named owner acceptance."],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "PROP-VEND-AIRDN-CREWLINE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "summary": "CrewLine Systems proposal for operational recovery and crew data platform selection.",
+      "coveragePct": 75,
+      "assumptions": [
+        "Client confirms access to disruption history and crew legality feeds.",
+        "Parallel run uses lab-only Source operational records."
+      ],
+      "risks": ["Transition dependencies require named owner acceptance."],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "PROP-VEND-AIRDN-SKYFORGE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "summary": "SkyForge Data proposal for operational recovery and crew data platform selection.",
+      "coveragePct": 75,
+      "assumptions": [
+        "Client confirms access to disruption history and crew legality feeds.",
+        "Parallel run uses lab-only Source operational records."
+      ],
+      "risks": ["Transition dependencies require named owner acceptance."],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "summary": "GroundLoop Services proposal for operational recovery and crew data platform selection.",
+      "coveragePct": 75,
+      "assumptions": [
+        "Client confirms access to disruption history and crew legality feeds.",
+        "Parallel run uses lab-only Source operational records."
+      ],
+      "risks": [
+        "Compressed transition and support assumptions require risk-owner signoff."
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    }
+  ],
+  "proposalResponses": [
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-BUS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-BUS-01",
+      "status": "partial",
+      "score": 79,
+      "response": "OrbitOps Cloud partially addresses REQ-BUS-01; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-BUS-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-BUS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-BUS-02",
+      "status": "addressed",
+      "score": 87,
+      "response": "OrbitOps Cloud addresses REQ-BUS-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-BUS-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-BUS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-BUS-03",
+      "status": "addressed",
+      "score": 86,
+      "response": "OrbitOps Cloud addresses REQ-BUS-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-BUS-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-OPS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-OPS-01",
+      "status": "addressed",
+      "score": 87,
+      "response": "OrbitOps Cloud addresses REQ-OPS-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-OPS-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-OPS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-OPS-02",
+      "status": "partial",
+      "score": 79,
+      "response": "OrbitOps Cloud partially addresses REQ-OPS-02; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-OPS-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-OPS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-OPS-03",
+      "status": "addressed",
+      "score": 86,
+      "response": "OrbitOps Cloud addresses REQ-OPS-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-OPS-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-OPS-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-OPS-04",
+      "status": "addressed",
+      "score": 86,
+      "response": "OrbitOps Cloud addresses REQ-OPS-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-OPS-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-ARC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-ARC-01",
+      "status": "addressed",
+      "score": 87,
+      "response": "OrbitOps Cloud addresses REQ-ARC-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-ARC-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-ARC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-ARC-02",
+      "status": "partial",
+      "score": 79,
+      "response": "OrbitOps Cloud partially addresses REQ-ARC-02; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-ARC-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-ARC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-ARC-03",
+      "status": "addressed",
+      "score": 87,
+      "response": "OrbitOps Cloud addresses REQ-ARC-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-ARC-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-ARC-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-ARC-04",
+      "status": "addressed",
+      "score": 86,
+      "response": "OrbitOps Cloud addresses REQ-ARC-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-ARC-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-DAT-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-DAT-01",
+      "status": "addressed",
+      "score": 87,
+      "response": "OrbitOps Cloud addresses REQ-DAT-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-DAT-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-DAT-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-DAT-02",
+      "status": "partial",
+      "score": 79,
+      "response": "OrbitOps Cloud partially addresses REQ-DAT-02; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-DAT-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-DAT-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-DAT-03",
+      "status": "addressed",
+      "score": 86,
+      "response": "OrbitOps Cloud addresses REQ-DAT-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-DAT-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-DAT-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-DAT-04",
+      "status": "addressed",
+      "score": 87,
+      "response": "OrbitOps Cloud addresses REQ-DAT-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-DAT-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-SEC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-SEC-01",
+      "status": "addressed",
+      "score": 87,
+      "response": "OrbitOps Cloud addresses REQ-SEC-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-SEC-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-SEC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-SEC-02",
+      "status": "partial",
+      "score": 78,
+      "response": "OrbitOps Cloud partially addresses REQ-SEC-02; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-SEC-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-SEC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-SEC-03",
+      "status": "addressed",
+      "score": 87,
+      "response": "OrbitOps Cloud addresses REQ-SEC-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-SEC-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-IMP-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-IMP-01",
+      "status": "addressed",
+      "score": 86,
+      "response": "OrbitOps Cloud addresses REQ-IMP-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-IMP-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-IMP-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-IMP-02",
+      "status": "addressed",
+      "score": 86,
+      "response": "OrbitOps Cloud addresses REQ-IMP-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-IMP-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-IMP-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-IMP-03",
+      "status": "partial",
+      "score": 79,
+      "response": "OrbitOps Cloud partially addresses REQ-IMP-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-IMP-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-COM-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-COM-01",
+      "status": "addressed",
+      "score": 87,
+      "response": "OrbitOps Cloud addresses REQ-COM-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-COM-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-COM-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-COM-02",
+      "status": "addressed",
+      "score": 86,
+      "response": "OrbitOps Cloud addresses REQ-COM-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-COM-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-ORBIT-REQ-COM-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requirementId": "REQ-COM-03",
+      "status": "addressed",
+      "score": 86,
+      "response": "OrbitOps Cloud addresses REQ-COM-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-ORBIT:REQ-COM-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-BUS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-BUS-01",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-BUS-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-BUS-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-BUS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-BUS-02",
+      "status": "partial",
+      "score": 84,
+      "response": "CrewLine Systems partially addresses REQ-BUS-02; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-BUS-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-BUS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-BUS-03",
+      "status": "addressed",
+      "score": 91,
+      "response": "CrewLine Systems addresses REQ-BUS-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-BUS-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-OPS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-OPS-01",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-OPS-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-OPS-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-OPS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-OPS-02",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-OPS-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-OPS-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-OPS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-OPS-03",
+      "status": "partial",
+      "score": 83,
+      "response": "CrewLine Systems partially addresses REQ-OPS-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-OPS-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-OPS-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-OPS-04",
+      "status": "addressed",
+      "score": 91,
+      "response": "CrewLine Systems addresses REQ-OPS-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-OPS-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-ARC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-ARC-01",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-ARC-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-ARC-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-ARC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-ARC-02",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-ARC-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-ARC-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-ARC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-ARC-03",
+      "status": "partial",
+      "score": 84,
+      "response": "CrewLine Systems partially addresses REQ-ARC-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-ARC-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-ARC-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-ARC-04",
+      "status": "addressed",
+      "score": 91,
+      "response": "CrewLine Systems addresses REQ-ARC-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-ARC-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-DAT-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-DAT-01",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-DAT-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-DAT-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-DAT-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-DAT-02",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-DAT-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-DAT-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-DAT-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-DAT-03",
+      "status": "partial",
+      "score": 83,
+      "response": "CrewLine Systems partially addresses REQ-DAT-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-DAT-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-DAT-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-DAT-04",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-DAT-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-DAT-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-SEC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-SEC-01",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-SEC-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-SEC-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-SEC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-SEC-02",
+      "status": "addressed",
+      "score": 91,
+      "response": "CrewLine Systems addresses REQ-SEC-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-SEC-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-SEC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-SEC-03",
+      "status": "partial",
+      "score": 84,
+      "response": "CrewLine Systems partially addresses REQ-SEC-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-SEC-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-IMP-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-IMP-01",
+      "status": "addressed",
+      "score": 91,
+      "response": "CrewLine Systems addresses REQ-IMP-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-IMP-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-IMP-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-IMP-02",
+      "status": "addressed",
+      "score": 91,
+      "response": "CrewLine Systems addresses REQ-IMP-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-IMP-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-IMP-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-IMP-03",
+      "status": "addressed",
+      "score": 92,
+      "response": "CrewLine Systems addresses REQ-IMP-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-IMP-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-COM-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-COM-01",
+      "status": "partial",
+      "score": 84,
+      "response": "CrewLine Systems partially addresses REQ-COM-01; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-COM-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-COM-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-COM-02",
+      "status": "addressed",
+      "score": 91,
+      "response": "CrewLine Systems addresses REQ-COM-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-COM-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-CREWLINE-REQ-COM-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requirementId": "REQ-COM-03",
+      "status": "addressed",
+      "score": 91,
+      "response": "CrewLine Systems addresses REQ-COM-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-CREWLINE:REQ-COM-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-BUS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-BUS-01",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-BUS-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-BUS-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-BUS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-BUS-02",
+      "status": "partial",
+      "score": 76,
+      "response": "SkyForge Data partially addresses REQ-BUS-02; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-BUS-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-BUS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-BUS-03",
+      "status": "addressed",
+      "score": 83,
+      "response": "SkyForge Data addresses REQ-BUS-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-BUS-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-OPS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-OPS-01",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-OPS-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-OPS-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-OPS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-OPS-02",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-OPS-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-OPS-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-OPS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-OPS-03",
+      "status": "partial",
+      "score": 75,
+      "response": "SkyForge Data partially addresses REQ-OPS-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-OPS-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-OPS-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-OPS-04",
+      "status": "addressed",
+      "score": 83,
+      "response": "SkyForge Data addresses REQ-OPS-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-OPS-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-ARC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-ARC-01",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-ARC-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-ARC-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-ARC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-ARC-02",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-ARC-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-ARC-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-ARC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-ARC-03",
+      "status": "partial",
+      "score": 76,
+      "response": "SkyForge Data partially addresses REQ-ARC-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-ARC-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-ARC-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-ARC-04",
+      "status": "addressed",
+      "score": 83,
+      "response": "SkyForge Data addresses REQ-ARC-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-ARC-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-DAT-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-DAT-01",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-DAT-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-DAT-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-DAT-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-DAT-02",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-DAT-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-DAT-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-DAT-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-DAT-03",
+      "status": "partial",
+      "score": 75,
+      "response": "SkyForge Data partially addresses REQ-DAT-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-DAT-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-DAT-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-DAT-04",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-DAT-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-DAT-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-SEC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-SEC-01",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-SEC-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-SEC-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-SEC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-SEC-02",
+      "status": "addressed",
+      "score": 83,
+      "response": "SkyForge Data addresses REQ-SEC-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-SEC-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-SEC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-SEC-03",
+      "status": "partial",
+      "score": 76,
+      "response": "SkyForge Data partially addresses REQ-SEC-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-SEC-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-IMP-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-IMP-01",
+      "status": "addressed",
+      "score": 83,
+      "response": "SkyForge Data addresses REQ-IMP-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-IMP-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-IMP-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-IMP-02",
+      "status": "addressed",
+      "score": 83,
+      "response": "SkyForge Data addresses REQ-IMP-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-IMP-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-IMP-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-IMP-03",
+      "status": "addressed",
+      "score": 84,
+      "response": "SkyForge Data addresses REQ-IMP-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-IMP-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-COM-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-COM-01",
+      "status": "partial",
+      "score": 76,
+      "response": "SkyForge Data partially addresses REQ-COM-01; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-COM-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-COM-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-COM-02",
+      "status": "addressed",
+      "score": 83,
+      "response": "SkyForge Data addresses REQ-COM-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-COM-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-SKYFORGE-REQ-COM-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requirementId": "REQ-COM-03",
+      "status": "addressed",
+      "score": 83,
+      "response": "SkyForge Data addresses REQ-COM-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-SKYFORGE:REQ-COM-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-BUS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-BUS-01",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-BUS-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-BUS-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-BUS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-BUS-02",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-BUS-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-BUS-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-BUS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-BUS-03",
+      "status": "addressed",
+      "score": 76,
+      "response": "GroundLoop Services addresses REQ-BUS-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-BUS-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-OPS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-OPS-01",
+      "status": "partial",
+      "score": 69,
+      "response": "GroundLoop Services partially addresses REQ-OPS-01; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-OPS-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-OPS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-OPS-02",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-OPS-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-OPS-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-OPS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-OPS-03",
+      "status": "addressed",
+      "score": 76,
+      "response": "GroundLoop Services addresses REQ-OPS-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-OPS-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-OPS-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-OPS-04",
+      "status": "addressed",
+      "score": 76,
+      "response": "GroundLoop Services addresses REQ-OPS-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-OPS-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-ARC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-ARC-01",
+      "status": "partial",
+      "score": 69,
+      "response": "GroundLoop Services partially addresses REQ-ARC-01; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-ARC-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-ARC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-ARC-02",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-ARC-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-ARC-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-ARC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-ARC-03",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-ARC-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-ARC-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-ARC-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-ARC-04",
+      "status": "addressed",
+      "score": 76,
+      "response": "GroundLoop Services addresses REQ-ARC-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-ARC-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-DAT-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-DAT-01",
+      "status": "partial",
+      "score": 69,
+      "response": "GroundLoop Services partially addresses REQ-DAT-01; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-DAT-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-DAT-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-DAT-02",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-DAT-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-DAT-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-DAT-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-DAT-03",
+      "status": "addressed",
+      "score": 76,
+      "response": "GroundLoop Services addresses REQ-DAT-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-DAT-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-DAT-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-DAT-04",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-DAT-04 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-DAT-04"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-SEC-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-SEC-01",
+      "status": "partial",
+      "score": 69,
+      "response": "GroundLoop Services partially addresses REQ-SEC-01; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-SEC-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-SEC-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-SEC-02",
+      "status": "addressed",
+      "score": 76,
+      "response": "GroundLoop Services addresses REQ-SEC-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-SEC-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-SEC-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-SEC-03",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-SEC-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-SEC-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-IMP-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-IMP-01",
+      "status": "addressed",
+      "score": 76,
+      "response": "GroundLoop Services addresses REQ-IMP-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-IMP-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-IMP-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-IMP-02",
+      "status": "partial",
+      "score": 68,
+      "response": "GroundLoop Services partially addresses REQ-IMP-02; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-IMP-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-IMP-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-IMP-03",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-IMP-03 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-IMP-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-COM-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-COM-01",
+      "status": "addressed",
+      "score": 77,
+      "response": "GroundLoop Services addresses REQ-COM-01 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-COM-01"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-COM-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-COM-02",
+      "status": "addressed",
+      "score": 76,
+      "response": "GroundLoop Services addresses REQ-COM-02 with named operational controls.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-COM-02"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "RESP-VEND-AIRDN-GROUNDLOOP-REQ-COM-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requirementId": "REQ-COM-03",
+      "status": "partial",
+      "score": 68,
+      "response": "GroundLoop Services partially addresses REQ-COM-03; BAFO clarification required.",
+      "evidenceRefs": [
+        "source:airline-demo-new-source-operational-demo-v1.0.0:proposal:VEND-AIRDN-GROUNDLOOP:REQ-COM-03"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "CRIT-TECH",
+      "label": "Operational and technical fit",
+      "weightPct": 35
+    },
+    {
+      "id": "CRIT-DATA",
+      "label": "Data lineage and integration",
+      "weightPct": 20
+    },
+    {
+      "id": "CRIT-SEC",
+      "label": "Security and tenant isolation",
+      "weightPct": 15
+    },
+    {
+      "id": "CRIT-COMM",
+      "label": "Commercial value and pricing clarity",
+      "weightPct": 20
+    },
+    {
+      "id": "CRIT-TRANS",
+      "label": "Transition risk and commitments",
+      "weightPct": 10
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "EVAL-VEND-AIRDN-ORBIT",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "scores": {
+        "CRIT-TECH": 86,
+        "CRIT-DATA": 87,
+        "CRIT-SEC": 86,
+        "CRIT-COMM": 82,
+        "CRIT-TRANS": 88
+      },
+      "weightedScore": 85.6,
+      "evaluatorComment": "Coherent response with traceable controls and manageable transition risk.",
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "EVAL-VEND-AIRDN-CREWLINE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "scores": {
+        "CRIT-TECH": 91,
+        "CRIT-DATA": 88,
+        "CRIT-SEC": 86,
+        "CRIT-COMM": 79,
+        "CRIT-TRANS": 84
+      },
+      "weightedScore": 86.55,
+      "evaluatorComment": "Coherent response with traceable controls and manageable transition risk.",
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "EVAL-VEND-AIRDN-SKYFORGE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "scores": {
+        "CRIT-TECH": 83,
+        "CRIT-DATA": 81,
+        "CRIT-SEC": 86,
+        "CRIT-COMM": 88,
+        "CRIT-TRANS": 78
+      },
+      "weightedScore": 83.55,
+      "evaluatorComment": "Coherent response with traceable controls and manageable transition risk.",
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "EVAL-VEND-AIRDN-GROUNDLOOP",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "scores": {
+        "CRIT-TECH": 76,
+        "CRIT-DATA": 74,
+        "CRIT-SEC": 74,
+        "CRIT-COMM": 93,
+        "CRIT-TRANS": 72
+      },
+      "weightedScore": 78.3,
+      "evaluatorComment": "Strong price position but transition and support assumptions need BAFO protection.",
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    }
+  ],
+  "pricing": [
+    {
+      "id": "PRICE-VEND-AIRDN-ORBIT",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "currency": "USD",
+      "lines": [
+        {
+          "type": "platform",
+          "amountUsd": 7828000
+        },
+        {
+          "type": "implementation",
+          "amountUsd": 4326000
+        },
+        {
+          "type": "managed_support",
+          "amountUsd": 3193000
+        },
+        {
+          "type": "usage_and_recovery_events",
+          "amountUsd": 1854000
+        }
+      ],
+      "totalYearOneUsd": 17201000,
+      "serviceCreditCapPct": 10,
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "PRICE-VEND-AIRDN-CREWLINE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "currency": "USD",
+      "lines": [
+        {
+          "type": "platform",
+          "amountUsd": 8208000
+        },
+        {
+          "type": "implementation",
+          "amountUsd": 4536000
+        },
+        {
+          "type": "managed_support",
+          "amountUsd": 3348000
+        },
+        {
+          "type": "usage_and_recovery_events",
+          "amountUsd": 1944000
+        }
+      ],
+      "totalYearOneUsd": 18036000,
+      "serviceCreditCapPct": 10,
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "PRICE-VEND-AIRDN-SKYFORGE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "currency": "USD",
+      "lines": [
+        {
+          "type": "platform",
+          "amountUsd": 7296000
+        },
+        {
+          "type": "implementation",
+          "amountUsd": 4032000
+        },
+        {
+          "type": "managed_support",
+          "amountUsd": 2976000
+        },
+        {
+          "type": "usage_and_recovery_events",
+          "amountUsd": 1728000
+        }
+      ],
+      "totalYearOneUsd": 16032000,
+      "serviceCreditCapPct": 10,
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "PRICE-VEND-AIRDN-GROUNDLOOP",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "currency": "USD",
+      "lines": [
+        {
+          "type": "platform",
+          "amountUsd": 6916000
+        },
+        {
+          "type": "implementation",
+          "amountUsd": 3822000
+        },
+        {
+          "type": "managed_support",
+          "amountUsd": 2821000
+        },
+        {
+          "type": "usage_and_recovery_events",
+          "amountUsd": 1638000
+        }
+      ],
+      "totalYearOneUsd": 15197000,
+      "serviceCreditCapPct": 6,
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    }
+  ],
+  "bafo": [
+    {
+      "id": "BAFO-VEND-AIRDN-ORBIT",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-ORBIT",
+      "vendorId": "VEND-AIRDN-ORBIT",
+      "requestedChanges": [
+        "Confirm transition go/no-go dependencies.",
+        "Clarify service credits for recovery-performance misses.",
+        "Confirm data lineage and audit export commitments."
+      ],
+      "revisedTotalYearOneUsd": 16856980,
+      "references": [
+        "PROP-VEND-AIRDN-ORBIT",
+        "EVAL-VEND-AIRDN-ORBIT",
+        "PRICE-VEND-AIRDN-ORBIT"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "BAFO-VEND-AIRDN-CREWLINE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+      "vendorId": "VEND-AIRDN-CREWLINE",
+      "requestedChanges": [
+        "Confirm transition go/no-go dependencies.",
+        "Clarify service credits for recovery-performance misses.",
+        "Confirm data lineage and audit export commitments."
+      ],
+      "revisedTotalYearOneUsd": 17494920,
+      "references": [
+        "PROP-VEND-AIRDN-CREWLINE",
+        "EVAL-VEND-AIRDN-CREWLINE",
+        "PRICE-VEND-AIRDN-CREWLINE"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "BAFO-VEND-AIRDN-SKYFORGE",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "requestedChanges": [
+        "Confirm transition go/no-go dependencies.",
+        "Clarify service credits for recovery-performance misses.",
+        "Confirm data lineage and audit export commitments."
+      ],
+      "revisedTotalYearOneUsd": 15711360,
+      "references": [
+        "PROP-VEND-AIRDN-SKYFORGE",
+        "EVAL-VEND-AIRDN-SKYFORGE",
+        "PRICE-VEND-AIRDN-SKYFORGE"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "BAFO-VEND-AIRDN-GROUNDLOOP",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+      "vendorId": "VEND-AIRDN-GROUNDLOOP",
+      "requestedChanges": [
+        "Confirm transition go/no-go dependencies.",
+        "Clarify service credits for recovery-performance misses.",
+        "Confirm data lineage and audit export commitments."
+      ],
+      "revisedTotalYearOneUsd": 15045030,
+      "references": [
+        "PROP-VEND-AIRDN-GROUNDLOOP",
+        "EVAL-VEND-AIRDN-GROUNDLOOP",
+        "PRICE-VEND-AIRDN-GROUNDLOOP"
+      ],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    }
+  ],
+  "recommendation": {
+    "id": "REC-AIRDN-OPS-CREW-2026",
+    "eventId": "srcop-airdn-ops-crew-platform-2026",
+    "recommendedVendorId": "VEND-AIRDN-SKYFORGE",
+    "decision": "recommend_award_pending_lab_proof",
+    "rationale": "Recommended vendor has the strongest combined operational, data-lineage, transition, and BAFO-adjusted value score.",
+    "finalScores": [
+      {
+        "vendorId": "VEND-AIRDN-ORBIT",
+        "proposalId": "PROP-VEND-AIRDN-ORBIT",
+        "evaluationScore": 85.6,
+        "priceScore": 89.25,
+        "finalScore": 86.51,
+        "yearOneUsd": 17201000,
+        "bafoYearOneUsd": 16856980,
+        "riskPenalty": 0
+      },
+      {
+        "vendorId": "VEND-AIRDN-CREWLINE",
+        "proposalId": "PROP-VEND-AIRDN-CREWLINE",
+        "evaluationScore": 86.55,
+        "priceScore": 86,
+        "finalScore": 86.41,
+        "yearOneUsd": 18036000,
+        "bafoYearOneUsd": 17494920,
+        "riskPenalty": 0
+      },
+      {
+        "vendorId": "VEND-AIRDN-SKYFORGE",
+        "proposalId": "PROP-VEND-AIRDN-SKYFORGE",
+        "evaluationScore": 83.55,
+        "priceScore": 95.76,
+        "finalScore": 86.6,
+        "yearOneUsd": 16032000,
+        "bafoYearOneUsd": 15711360,
+        "riskPenalty": 0
+      },
+      {
+        "vendorId": "VEND-AIRDN-GROUNDLOOP",
+        "proposalId": "PROP-VEND-AIRDN-GROUNDLOOP",
+        "evaluationScore": 78.3,
+        "priceScore": 100,
+        "finalScore": 78.72,
+        "yearOneUsd": 15197000,
+        "bafoYearOneUsd": 15045030,
+        "riskPenalty": 5
+      }
+    ],
+    "evidenceRefs": [
+      "source:airline-demo-new-source-operational-demo-v1.0.0:evaluation",
+      "source:airline-demo-new-source-operational-demo-v1.0.0:pricing",
+      "source:airline-demo-new-source-operational-demo-v1.0.0:bafo",
+      "knowledge:airline-demo-new:frozen-v1:evidence-gaps"
+    ],
+    "syntheticDataLabel": "synthetic_source_operational_demo"
+  },
+  "transitionCommitments": [
+    {
+      "id": "TRANS-01",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "title": "Access and feed readiness",
+      "commitment": "Named data-feed owners confirmed before kickoff",
+      "window": "week 1",
+      "references": ["REC-AIRDN-OPS-CREW-2026", "BAFO-VEND-AIRDN-SKYFORGE"],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "TRANS-02",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "title": "Parallel-run checkpoint",
+      "commitment": "Recovery recommendations compared against current operating process",
+      "window": "weeks 2-4",
+      "references": ["REC-AIRDN-OPS-CREW-2026", "BAFO-VEND-AIRDN-SKYFORGE"],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "TRANS-03",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "title": "Knowledge transfer",
+      "commitment": "Runbooks and escalation playbooks accepted by operations control",
+      "window": "weeks 3-6",
+      "references": ["REC-AIRDN-OPS-CREW-2026", "BAFO-VEND-AIRDN-SKYFORGE"],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    },
+    {
+      "id": "TRANS-04",
+      "eventId": "srcop-airdn-ops-crew-platform-2026",
+      "vendorId": "VEND-AIRDN-SKYFORGE",
+      "title": "Hypercare",
+      "commitment": "Daily recovery-performance review through first disruption simulation",
+      "window": "weeks 6-10",
+      "references": ["REC-AIRDN-OPS-CREW-2026", "BAFO-VEND-AIRDN-SKYFORGE"],
+      "syntheticDataLabel": "synthetic_source_operational_demo"
+    }
+  ],
+  "valueScorecard": {
+    "id": "VALUE-AIRDN-OPS-CREW-2026",
+    "eventId": "srcop-airdn-ops-crew-platform-2026",
+    "metrics": [
+      {
+        "id": "VAL-01",
+        "label": "Recovery-cycle productivity",
+        "annualValueUsd": 6200000,
+        "confidence": "medium"
+      },
+      {
+        "id": "VAL-02",
+        "label": "Avoided disruption support leakage",
+        "annualValueUsd": 4100000,
+        "confidence": "medium"
+      },
+      {
+        "id": "VAL-03",
+        "label": "Crew reassignment delay reduction",
+        "annualValueUsd": 5300000,
+        "confidence": "low"
+      },
+      {
+        "id": "VAL-04",
+        "label": "Service-credit protection",
+        "annualValueUsd": 2100000,
+        "confidence": "medium"
+      }
+    ],
+    "totalAnnualValueUsd": 17700000,
+    "caveat": "Planning-grade synthetic operational value scorecard; not a live client savings claim.",
+    "syntheticDataLabel": "synthetic_source_operational_demo"
+  },
+  "decisionBrief": {
+    "id": "DBRIEF-AIRDN-OPS-CREW-2026",
+    "eventId": "srcop-airdn-ops-crew-platform-2026",
+    "title": "Decision Brief - Operational Recovery and Crew Data Platform Selection",
+    "sections": [
+      "Scenario and governed V1 context",
+      "Requirements and proposal coverage",
+      "Weighted evaluation and pricing parity",
+      "BAFO changes and transition commitments",
+      "Recommendation and remaining limitations"
+    ],
+    "exportProofRequired": true,
+    "syntheticDataLabel": "synthetic_source_operational_demo"
+  }
+}
