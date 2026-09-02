@@ -1,17 +1,16 @@
-# Home Surface Guard
+# Surface Ratchet Guard
 #
-# Purpose: run every Jest suite on the Home surface on each pull request and each
-# push to `main`, and fail on any movement away from a recorded baseline.
+# Purpose: run every Jest suite on ratcheted product surfaces on each pull
+# request and each push to `main`, and fail on any movement away from recorded
+# baselines.
 #
-# Why a dedicated workflow: none of the other gates ran these. The Home suites
-# passed on the machine of whoever last ran them and gated nothing, and a red
-# test reached `main` while every check on its pull request went green.
+# Why a dedicated workflow: none of the other gates ran these suites. They
+# passed or failed on the machine of whoever last ran them and gated nothing.
 #
-# Why a baseline rather than a plain pass/fail: the surface is already red. 18 of
-# its 68 suites were failing when this landed, most of them on legacy Home paths.
-# A check that is red on the day it arrives teaches everyone to ignore it, so the
-# baseline records what was already broken and the check fails on anything new.
-# It ratchets one way -- see docs/ci/README-test-ratchet.md.
+# Why a baseline rather than a plain pass/fail: these surfaces may already be
+# red. A check that is red on the day it arrives teaches everyone to ignore it,
+# so the baseline records what was already broken and the check fails on anything
+# new. It ratchets one way -- see docs/ci/README-test-ratchet.md.
 #
 # There is no path filter on purpose. Most of what has broken this surface was
 # changed somewhere else: the projection builder, the tenant registry, a shared
@@ -20,7 +19,7 @@
 #
 # Runs alongside the other CI checks rather than in front of them.
 
-name: Home Surface Guard
+name: Surface Ratchet Guard
 
 on:
   merge_group:
@@ -31,12 +30,12 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: home-surface-guard-${{ github.ref }}
+  group: surface-ratchet-guard-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  home-guard:
-    name: Home surface tests
+  surface-guard:
+    name: Product surface tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -55,3 +54,6 @@ jobs:
 
       - name: Home surface tests against the baseline
         run: node scripts/ci/test-ratchet.mjs docs/ci/home-test-baseline.json
+
+      - name: Tower surface tests against the baseline
+        run: node scripts/ci/test-ratchet.mjs docs/ci/tower-test-baseline.json
