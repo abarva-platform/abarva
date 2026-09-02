@@ -11,9 +11,9 @@
  *   DATABASE_URL=postgresql://... npm run test:rls-regression
  *
  * Exit codes:
- *   0 — every tenant × table probe was 'pass' or 'empty'.
- *   1 — at least one probe was 'leak' or 'error:*' (the SQL block raised).
- *   2 — connection or runtime error.
+ *   0 - every tenant x table probe was 'pass' or 'empty'.
+ *   1 - at least one probe was 'leak' or 'error:*' (the SQL block raised).
+ *   2 - connection/runtime error, or a suite precondition was not met.
  *
  * Reads-only. Wraps the SQL in a transaction; the SQL itself only creates
  * TEMP tables and runs SELECTs. Safe against any environment including prod.
@@ -32,6 +32,10 @@ const SQL_PATH = path.resolve(process.cwd(), 'tests/security/rls-regression.sql'
 function fail(code: number, msg: string): never {
   process.stderr.write(`${msg}\n`);
   process.exit(code);
+}
+
+function isNotCheckedPrecondition(message: string): boolean {
+  return /Canonical tenant\(s\) .* missing from clients table/.test(message);
 }
 
 /** Redact the password from a Postgres URL for logging. */
@@ -96,6 +100,10 @@ async function main() {
       // ignore — connection may already be in failed state
     }
     const message = (err as Error).message ?? String(err);
+    if (isNotCheckedPrecondition(message)) {
+      process.stderr.write(`\nrls-regression: NOT CHECKED - ${message}\n`);
+      process.exit(2);
+    }
     process.stderr.write(`\nrls-regression: FAILED — ${message}\n`);
     process.exit(1);
   } finally {
