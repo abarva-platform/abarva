@@ -28,15 +28,8 @@ export function retrieveSurfaceContextSources(
     ...pageFacts,
     ...(stageFacts.length === 0 && pageFacts.length === 0 ? allFacts : []),
   ]);
-  const tenantFacts = uniqueFacts([
-    ...sanitizeFacts(context.tenantFacts),
-    ...sanitizeFacts(context.riskFacts),
-    ...sanitizeFacts(context.strategyFacts),
-    ...sanitizeFacts(context.vendorFacts),
-    ...sanitizeFacts(context.useCaseFacts),
-    ...sanitizeFacts(context.sourceFacts),
-    ...sanitizeFacts(context.qualityFacts),
-  ]);
+  const tenantDomains = buildTenantDomains(context);
+  const tenantFacts = tenantDomains.flatMap((domain) => domain.items);
   const graphFacts = uniqueFacts(sanitizeFacts(context.graphFacts));
   if (surfaceFacts.length === 0 && tenantFacts.length === 0 && graphFacts.length === 0) return [];
 
@@ -65,7 +58,9 @@ export function retrieveSurfaceContextSources(
     const detail = [
       `Tenant 360: ${activeClient}.`,
       `Current ${activeModule} surface: ${activeTab}.`,
-      ...tenantFacts.slice(0, 34),
+      ...tenantDomains.flatMap((domain) =>
+        domain.items.length > 0 ? [`${domain.label}:`, ...domain.items] : [],
+      ),
     ].join('\n- ');
 
     sources.push({
@@ -94,6 +89,47 @@ export function retrieveSurfaceContextSources(
   }
 
   return sources;
+}
+
+/**
+ * The tenant substrate is assembled from several typed buckets. It used to be
+ * flattened into one list and cut at 34 items, so whichever bucket came last
+ * in the merge order was silently starved -- a richer page payload could not
+ * reach the model at all. Each domain now carries its own budget and its own
+ * label, so every domain is represented and the model can tell an AI-footprint
+ * fact from a vendor fact.
+ */
+const TENANT_DOMAINS: ReadonlyArray<{
+  key: keyof AskSurfaceContext;
+  label: string;
+  cap: number;
+}> = [
+  { key: 'tenantFacts', label: 'Enterprise and operating context', cap: 14 },
+  { key: 'strategyFacts', label: 'Strategy and priorities', cap: 8 },
+  { key: 'vendorFacts', label: 'Vendors, contracts and spend', cap: 8 },
+  { key: 'useCaseFacts', label: 'AI and automation footprint', cap: 8 },
+  { key: 'riskFacts', label: 'Risk, controls and reliability', cap: 8 },
+  { key: 'qualityFacts', label: 'Evidence quality and maturity', cap: 6 },
+  { key: 'sourceFacts', label: 'Evidence sources', cap: 6 },
+];
+
+function buildTenantDomains(
+  context: AskSurfaceContext,
+): Array<{ label: string; items: string[] }> {
+  // Dedupe across domains, not only within one, so a fact carried in two
+  // buckets appears once, under the domain that claims it first.
+  const seen = new Set<string>();
+  return TENANT_DOMAINS.map((domain) => {
+    const items: string[] = [];
+    for (const fact of sanitizeFacts(context[domain.key])) {
+      if (items.length >= domain.cap) break;
+      const key = fact.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push(fact);
+    }
+    return { label: domain.label, items };
+  });
 }
 
 function tenantMatchesQuery(query: string): boolean {

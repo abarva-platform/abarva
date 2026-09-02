@@ -5,6 +5,7 @@ import type {
   EnterpriseLandscapeViewModel,
   LandscapeSection,
 } from "@/lib/home/enterprise-landscape-view-model";
+import { buildEnterpriseContextSpine } from "@/lib/intelligence/enterprise-context-spine";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import type {
@@ -391,31 +392,11 @@ function buildSurfaceContext(
   viewModel: EnterpriseLandscapeViewModel,
   sectionList: LandscapeSection[],
 ) {
-  const first = sectionList[0];
   return {
     activeTab: "intelligence",
     activeClient: viewModel.tenantName,
     clientKey: viewModel.clientKey,
-    pageFacts: [
-      `${viewModel.tenantName} Intelligence briefing — industry & estate context`,
-      first?.executiveSummary ?? "",
-      first?.leadershipRead ?? "",
-    ],
-    tenantFacts: [
-      ...sectionList
-        .slice(0, 3)
-        .flatMap((s) =>
-          s.currentState.slice(0, 3).map((r) => `${r.area}: ${r.assessment}`),
-        ),
-    ],
-    qualityFacts: sectionList
-      .flatMap((s) => s.maturity)
-      .slice(0, 8)
-      .map((m) => `${m.label}: ${m.score}%`),
-    sourceFacts: sectionList
-      .flatMap((s) => s.sources)
-      .slice(0, 6)
-      .map((s) => `${s.title}: ${s.detail}`),
+    ...buildEnterpriseContextSpine(viewModel, sectionList),
   };
 }
 
