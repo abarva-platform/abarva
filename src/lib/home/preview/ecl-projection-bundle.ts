@@ -2475,3 +2475,24 @@ export async function getHomeEclProjectionBundle(
     ...buildHomeReviewBundleFromEclProjectionRows(base, rows, assessmentId),
   };
 }
+
+export async function getHomeEclProjectionBundleOrReviewedSnapshot(
+  tenantKey: HomePreviewTenantKey,
+): Promise<HomeReviewBundle> {
+  const base = getHomeReviewBundle(tenantKey);
+  if (!base) {
+    throw new Error(
+      `Home ECL preview: missing base deterministic bundle for ${tenantKey}.`,
+    );
+  }
+
+  try {
+    return await getHomeEclProjectionBundle(tenantKey);
+  } catch (error) {
+    console.warn(
+      `[home] ECL projection unavailable for ${tenantKey}; rendering reviewed Home snapshot.`,
+      error,
+    );
+    return base;
+  }
+}

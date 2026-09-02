@@ -1,9 +1,11 @@
 import {
   buildHomeReviewBundleFromEclProjectionRows,
   buildTechnologyEstateFromHomeProjectionRows,
+  getHomeEclProjectionBundleOrReviewedSnapshot,
   type HomeProjectionRow,
 } from "../ecl-projection-bundle";
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
+import { azureRead } from "@/lib/data-plane/azureRead";
 import { getHomeReviewBundle } from "../golden-snapshot";
 import type { HomeReviewBundle } from "../types";
 
@@ -123,6 +125,26 @@ function storyPlanFixture(
 }
 
 describe("buildTechnologyEstateFromHomeProjectionRows", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("falls back to the reviewed Home bundle when the Meridian ECL serving projection is empty", async () => {
+    jest.spyOn(azureRead, "query").mockResolvedValueOnce([]);
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const base = getHomeReviewBundle("meridian-health");
+    const bundle =
+      await getHomeEclProjectionBundleOrReviewedSnapshot("meridian-health");
+
+    expect(bundle).toBe(base);
+    expect(bundle.technologyEstate?.recordTypes[0]?.rows.length).toBe(306);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("ECL projection unavailable for meridian-health"),
+      expect.any(Error),
+    );
+  });
+
   it("maps ECL Home projection rows into the Home v4 technology estate contract", () => {
     const estate = buildTechnologyEstateFromHomeProjectionRows([
       row({
