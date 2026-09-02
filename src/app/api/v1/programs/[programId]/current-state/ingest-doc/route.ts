@@ -11,6 +11,8 @@ import {
   getArchetype,
   resolveProgramArchetype,
 } from "@/lib/programs/archetypes/registry";
+import { getProgramById } from "@/lib/programs/queries";
+import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import {
   ingestCurrentStateDoc,
   isDocumentFamily,
@@ -49,6 +51,9 @@ export async function POST(
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const { supabase } = await getProgramsRouteSupabase("mutation");
+    const program = await getProgramById(ctx, programId, { supabase });
+    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
     const form = await req.formData();
     const file = form.get("file");
