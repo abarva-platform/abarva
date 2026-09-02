@@ -533,10 +533,15 @@ export function RecordBrowser({
       )
         return false;
       if (!q) return true;
-      return (recordType.columns ?? Object.keys(row)).some((field) =>
-        String(row[field] ?? "")
-          .toLowerCase()
-          .includes(q),
+      // Searched over the row's own keys, not the declared column list. A reader who can see a
+      // value in the detail panel and cannot find it by typing it has been told the search is
+      // broken, and they are right. Bookkeeping is excluded for the same reason it is not shown.
+      return Object.keys(row).some(
+        (field) =>
+          !PROVENANCE_FIELDS.has(field) &&
+          String(row[field] ?? "")
+            .toLowerCase()
+            .includes(q),
       );
     });
   }, [
