@@ -1,10 +1,25 @@
 dimension_name,purpose
+business_case_id,business-case identity
+project_id,funded project identity
+initiative_name,AI initiative
 domain_name,IT/business ownership
+domain_key,canonical domain key
 business_value_type,plain value type
+business_value_story,plain-language value thesis
 finance_status,current Finance status
 committee_decision,committee disposition
 primary_tool_or_platform,tool or platform
+vendor_name,vendor or internal provider
+success_metric,operating metric
+proof_needed,evidence required
+business_sponsor_role,business sponsor role
+finance_partner_role,finance partner role
+confidence_level,estimate confidence
+gating_constraint,blocking constraint
+value_tracking_cadence,value refresh cadence
+source_system,upstream source system
+source_record_id,upstream source row
+quality_state,package quality state
 tool_name,AI tool rollout
-vendor_name,tool vendor or internal provider
 rollout_stage,current rollout stage
 control_blocker,control or evidence blocker

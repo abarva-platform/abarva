@@ -3,6 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateAiBusinessCaseFieldSurvival } from "./validate-ai-business-case-field-survival.mjs";
 import { validateToolRolloutFieldSurvival } from "./validate-tool-rollout-field-survival.mjs";
 
 const ROOT = path.resolve(
@@ -306,6 +307,9 @@ async function main() {
     await fs.readFile(path.join(PACKAGE_DIR, "package_manifest.json"), "utf8"),
   );
   const toolRolloutSurvival = await validateToolRolloutFieldSurvival({
+    packageDir: PACKAGE_DIR,
+  });
+  const aiCaseSurvival = await validateAiBusinessCaseFieldSurvival({
     packageDir: PACKAGE_DIR,
   });
 
@@ -626,6 +630,14 @@ async function main() {
         (row) => num(row.rollout_target_users) > 0 || row.rollout_stage,
       ),
     `${rollouts.length} tool rollout rows`,
+  );
+  assertGate(
+    gates,
+    "ai_business_case_field_survival_contract",
+    aiCaseSurvival.status === "PASS",
+    aiCaseSurvival.status === "PASS"
+      ? `${aiCaseSurvival.source_rows} AI business-case rows preserve approved fields through L3, L4 and cube`
+      : aiCaseSurvival.issues.join("; "),
   );
   assertGate(
     gates,

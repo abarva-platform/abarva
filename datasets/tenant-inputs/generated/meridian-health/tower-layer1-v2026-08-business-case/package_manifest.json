@@ -124,7 +124,7 @@
     {
       "file": "layer_3_canonical/canonical_ai_use_cases.csv",
       "rows": 42,
-      "sha256": "561d90314f2e1b109ff83d62ae53c5f5afb6f399b228de773ec4b264fe3d40f6"
+      "sha256": "fed26490c2f6a78fb1270dc6cc924b03f9f355c2c77416660e4412b87d503811"
     },
     {
       "file": "layer_3_canonical/canonical_tools.csv",
@@ -154,7 +154,7 @@
     {
       "file": "cube/tower_ai_case_cube.csv",
       "rows": 42,
-      "sha256": "3e7ce9c864be8a34d7a603f8180287da52f2025d0bc3b6770e463939b29dc1a7"
+      "sha256": "b07afa9400e879e63ec9f2e7c8e4d6515dfa8893cadcb559b34b96ad1b9fcd01"
     },
     {
       "file": "cube/tower_ai_portfolio_cube.csv",
@@ -173,8 +173,8 @@
     },
     {
       "file": "cube/cube_dimensions.csv",
-      "rows": 9,
-      "sha256": "fed2aac5970772e41d2dbc55a2889a4dce34908b84cd26b8b7fc85b5521b858f"
+      "rows": 24,
+      "sha256": "89404eff86438b5f8563c679dff6c2181603f3bd187c9c8b3f008eef962c1438"
     },
     {
       "file": "cube/cube_gate_flags.csv",
@@ -189,7 +189,7 @@
     {
       "file": "layer_4_read_models/tower_ai_initiatives_table.csv",
       "rows": 42,
-      "sha256": "feaeb6c8d46fffc1e960bdec30bd2bf215b89de86097ad742a028f29662c2ee2"
+      "sha256": "fad2b79d25b776c9931063bc8c088fd59a08acf219b24f3ae1323b1f681fa481"
     },
     {
       "file": "layer_4_read_models/tower_tools_table.csv",
