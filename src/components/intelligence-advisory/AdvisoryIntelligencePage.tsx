@@ -378,13 +378,25 @@ export function AdvisoryIntelligencePage({
   );
 }
 
-function buildStarterPrompts(
+/**
+ * Starters are the clearest statement of what this surface is for, so each one
+ * points at a different executive job: understand the enterprise, decide where
+ * to invest, see what is coming, and pressure-test the strategy against it.
+ *
+ * Wording is not cosmetic here. The answer-mode classifier is lexical, so a
+ * starter phrased without an outlook or ranking signal falls through to the
+ * general mode and comes back less specific than the question deserves.
+ * `intelligence-starter-prompts.test.ts` pins the mode each starter reaches --
+ * change the wording there too, or the guard will tell you what you lost.
+ */
+export function buildStarterPrompts(
   viewModel: EnterpriseLandscapeViewModel,
 ): string[] {
   return [
-    `What are the top AI opportunities for ${viewModel.tenantName}, grounded only in the loaded context?`,
-    `Which current-state technology, data, or operating-model gaps should a CXO care about first?`,
-    `What can aVa safely say today, what is inferred, and what still needs evidence?`,
+    `What should the executive team know about ${viewModel.tenantName}'s current state that is most consequential right now?`,
+    `What are the top 5 AI opportunities for ${viewModel.tenantName}, and which should we invest in now versus validate first?`,
+    `Which trends in our industry matter most over the next 12-24 months, and what do they mean for us specifically?`,
+    `Where does our current strategy appear out of step with our capabilities, evidence, or industry direction?`,
   ];
 }
 

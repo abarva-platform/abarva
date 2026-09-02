@@ -3,7 +3,10 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import { AdvisoryIntelligencePage } from "../AdvisoryIntelligencePage";
+import {
+  AdvisoryIntelligencePage,
+  buildStarterPrompts,
+} from "../AdvisoryIntelligencePage";
 import { getEnterpriseLandscapeViewModel } from "@/lib/home/enterprise-landscape-view-model";
 
 describe("AdvisoryIntelligencePage", () => {
@@ -33,15 +36,13 @@ describe("AdvisoryIntelligencePage", () => {
   it("keeps vertical starter questions visible in chat-only mode", () => {
     render(<AdvisoryIntelligencePage viewModel={viewModel} />);
 
-    expect(
-      screen.getByText(
-        "What are the top AI opportunities for SkyHarbor Global, grounded only in the loaded context?",
-      ),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Which current-state technology, data, or operating-model gaps should a CXO care about first?",
-      ),
-    ).toBeTruthy();
+    // Assert against the builder rather than pinned copy: the wording is
+    // covered by intelligence-starter-prompts.test.ts, which checks the answer
+    // mode each starter reaches. What matters here is that they all render.
+    const prompts = buildStarterPrompts(viewModel);
+    expect(prompts.length).toBeGreaterThan(0);
+    for (const prompt of prompts) {
+      expect(screen.getByText(prompt)).toBeTruthy();
+    }
   });
 });
