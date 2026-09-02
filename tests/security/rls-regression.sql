@@ -79,8 +79,8 @@ GRANT INSERT ON rls_regression_findings TO authenticated;
 
 -- ── Canonical tenant list ────────────────────────────────────────────────────
 -- scripts/run-rls-regression.ts supplies rls_regression_expected_tenants from
--- ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS. Keep tenant identity code-derived;
--- do not hand-type tenant keys or aliases here.
+-- CANONICAL_TENANT_KEYS. Keep tenant identity code-derived; do not hand-type
+-- tenant keys or aliases here.
 DO $verify_expected_tenants_source$
 BEGIN
   IF to_regclass('pg_temp.rls_regression_expected_tenants') IS NULL THEN
@@ -89,7 +89,7 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM rls_regression_expected_tenants) THEN
     RAISE EXCEPTION
-      'RLS regression expected tenants were not supplied. ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS resolved to an empty set.';
+      'RLS regression expected tenants were not supplied. CANONICAL_TENANT_KEYS resolved to an empty set.';
   END IF;
 END
 $verify_expected_tenants_source$;
