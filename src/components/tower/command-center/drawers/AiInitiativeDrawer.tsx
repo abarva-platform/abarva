@@ -86,7 +86,7 @@ function adoptionGap(a: TowerAiView): string {
 
 export function plainAi(a: TowerAiView): string {
   if (isToolRollout(a)) {
-    return "This is an AI tool rollout. Its value should be traced through linked business cases, adoption evidence and the controls that govern use.";
+    return "This is an AI tool rollout. Read it through adoption against target, active usage, linked business cases and the controls that govern use.";
   }
   const definition: Record<TowerAiView["kind"], string> = {
     funded: "a real, funded program with its own budget and approvals",
@@ -143,10 +143,13 @@ export function AiInitiativeDrawer({
       {a ? (
         <>
           <div className={styles.drGrid}>
-            <DrawerStat label="AI spend" value={formatUsdM(a.aiSpendUsd)} />
+            <DrawerStat
+              label={isToolRollout(a) ? "Tool spend" : "AI spend"}
+              value={a.aiSpendLoaded ? formatUsdM(a.aiSpendUsd) : "Not loaded"}
+            />
             <DrawerStat label="Recommended posture" value={a.posture} small />
             <DrawerStat
-              label="Value potential"
+              label={isToolRollout(a) ? "Adoption potential" : "Value potential"}
               value={`${a.valueScore}/100`}
               small
               tone="vTeal"
@@ -172,7 +175,9 @@ export function AiInitiativeDrawer({
 
           {isToolRollout(a) ? (
             <>
-              <DrawerSection>Tool rollout detail</DrawerSection>
+              <DrawerSection note="usage, target and controls">
+                Tool rollout detail
+              </DrawerSection>
               <DrawerRow
                 label="Rollout goal"
                 value={a.rolloutGoal ?? "Not recorded"}
@@ -198,11 +203,13 @@ export function AiInitiativeDrawer({
                 value={`${optionalPct(a.adoptionActualPct)} vs ${optionalPct(
                   a.adoptionTargetPct,
                 )} target`}
+                sub="Actual active adoption is compared only with this rollout's own loaded target."
               />
               <DrawerRow label="Adoption gap" value={adoptionGap(a)} />
               <DrawerRow
                 label="Linked business cases"
                 value={optionalCount(a.linkedBusinessCaseCount)}
+                sub="Cases are loaded links from the rollout record, not inferred from vendor name."
               />
             </>
           ) : null}

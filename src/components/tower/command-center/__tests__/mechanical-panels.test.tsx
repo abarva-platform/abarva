@@ -285,8 +285,17 @@ describe("mechanical Tower Command Center panels", () => {
       "title",
       expect.stringContaining("mapped to the value claim"),
     );
+    expect(
+      screen.getByLabelText(/Constraint help: Usage exists/),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Claims cycle automation" }));
+    expect(onOpenAi).toHaveBeenCalledWith(1);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open detail for Claims cycle automation",
+      }),
+    );
     expect(onOpenAi).toHaveBeenCalledWith(1);
   });
 
@@ -395,6 +404,13 @@ describe("mechanical Tower Command Center panels", () => {
       "title",
       expect.stringContaining("financial reporting"),
     );
+    expect(
+      screen.getByLabelText(/Control blocker help: Finance-control evidence/),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open detail for Power BI Copilot" }),
+    );
+    expect(onOpenAi).toHaveBeenCalledWith(7);
     fireEvent.doubleClick(screen.getByTitle("Double-click to open tool details"));
     expect(onOpenAi).toHaveBeenCalledWith(7);
   });

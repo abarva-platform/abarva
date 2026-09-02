@@ -31,7 +31,7 @@ type ToolRow = {
 
 const GRID: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0,2.2fr) minmax(0,1.5fr) 82px minmax(0,1.8fr) minmax(0,1.5fr) 64px",
+  gridTemplateColumns: "minmax(0,2.2fr) minmax(0,1.5fr) 82px minmax(0,1.8fr) minmax(0,1.5fr) 64px 86px",
   gap: 14,
 };
 
@@ -145,6 +145,7 @@ export function ToolsTablePanel({
           <span>Adoption vs target</span>
           <span>Control blocker</span>
           <span style={{ textAlign: "right" }}>Cases</span>
+          <span style={{ textAlign: "right" }}>Detail</span>
         </div>
         {rows.map(({ item, activeUsers, adoptionPct, targetPct, linkedCases }) => (
           <div
@@ -212,13 +213,29 @@ export function ToolsTablePanel({
               </span>
             </span>
             <span
+              className={styles.fieldWithHelp}
               style={{ fontSize: 14, color: BLOCKER_TONE[controlBlockerCell(item).tone] }}
               title={controlBlockerExplanation(item)}
             >
               {controlBlockerCell(item).text}
+              <span
+                className={styles.helpBadge}
+                aria-label={`Control blocker help: ${controlBlockerExplanation(item)}`}
+              />
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 14, textAlign: "right", color: linkedCases === null ? "var(--canon-gray-500)" : "var(--canon-gray-900)" }}>
               {linkedCases === null ? "Not loaded" : formatCount(linkedCases)}
+            </span>
+            <span style={{ textAlign: "right" }}>
+              <button
+                type="button"
+                className={styles.detailLink}
+                onClick={() => onOpenAi?.(item.n)}
+                disabled={!onOpenAi}
+                aria-label={`Open detail for ${item.name}`}
+              >
+                Open
+              </button>
             </span>
           </div>
         ))}
