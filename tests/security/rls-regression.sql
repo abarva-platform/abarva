@@ -8,7 +8,7 @@
 --
 -- What this script asserts:
 --
---   1.  For each canonical tenant (apex-retail, meridian-health, first-capital):
+--   1.  For each canonical tenant supplied by scripts/run-rls-regression.ts:
 --         a. Connect as the authenticated role with the tenant's JWT claim.
 --         b. For every tenant-readable table (discovered dynamically from
 --            information_schema), SELECT count(*) and verify ALL rows belong
@@ -78,8 +78,22 @@ CREATE TEMP TABLE rls_regression_findings (
 GRANT INSERT ON rls_regression_findings TO authenticated;
 
 -- ── Canonical tenant list ────────────────────────────────────────────────────
--- Three tenants seeded in production. Must match the canonical keys produced
--- by migrations/20260515120000_tenant_key_canonicalization.sql.
+-- scripts/run-rls-regression.ts supplies rls_regression_expected_tenants from
+-- ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS. Keep tenant identity code-derived;
+-- do not hand-type tenant keys or aliases here.
+DO $verify_expected_tenants_source$
+BEGIN
+  IF to_regclass('pg_temp.rls_regression_expected_tenants') IS NULL THEN
+    RAISE EXCEPTION
+      'RLS regression expected tenants were not supplied. Run this suite through scripts/run-rls-regression.ts.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM rls_regression_expected_tenants) THEN
+    RAISE EXCEPTION
+      'RLS regression expected tenants were not supplied. ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS resolved to an empty set.';
+  END IF;
+END
+$verify_expected_tenants_source$;
+
 CREATE TEMP TABLE rls_regression_tenants (
   tenant_key TEXT PRIMARY KEY,
   client_id  UUID
@@ -89,11 +103,7 @@ GRANT SELECT ON rls_regression_tenants TO authenticated;
 
 INSERT INTO rls_regression_tenants (tenant_key, client_id)
 SELECT t.tenant_key, c.id
-  FROM (VALUES
-    ('apex-retail'),
-    ('meridian-health'),
-    ('first-capital')
-  ) AS t(tenant_key)
+  FROM rls_regression_expected_tenants t
   LEFT JOIN public.clients c ON c.tenant_key = t.tenant_key;
 
 -- Verify we resolved a client UUID for every canonical key. Without these we
