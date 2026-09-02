@@ -37,6 +37,21 @@ const CHAPTERS: ChapterView[] = [
     visual_opportunities: [],
     limitations: [],
   },
+  {
+    chapterId: "performance_value",
+    title: "Performance & Value",
+    guidingQuestion: "Can we prove the value?",
+    headline: "Value proof is incomplete.",
+    executive_synthesis: "Finance has attested only part of the claimed value.",
+    key_insights: [
+      { statement: "Only 23 of 50 tracked metrics are claimable or ready.", evidence_ids: ["ctx_2"], confidence: "high", claim_type: "FACT" },
+    ],
+    tensions: [],
+    what_to_watch: [],
+    questions_to_ask: [],
+    visual_opportunities: [],
+    limitations: ["Finance attestation does not cover every value claim."],
+  },
 ];
 
 const TECHNOLOGY_ESTATE: TechnologyEstateBundle = {
@@ -81,6 +96,58 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.citations[0].id).toBe("TD-K1");
     expect(answer.citations[0].excerpt).toBe("Epic Hyperspace Production integrates with 80 other systems.");
     expect(answer.artifacts).toHaveLength(0);
+  });
+
+  it("keeps cross-chapter claims citable when the user is focused on one chapter", async () => {
+    mockClaudeJson({
+      status: "answered",
+      direct_answer: "The technology concern is partly a value-proof concern.",
+      prose: "",
+      cited_claim_tags: ["TD-K1", "PV-K1"],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question: "What concerns you about our technology estate?",
+      activeChapterId: "technology_data",
+    });
+
+    expect(answer.citations.map((citation) => citation.id)).toEqual(["TD-K1", "PV-K1"]);
+    expect(answer.citations[1].excerpt).toBe("Only 23 of 50 tracked metrics are claimable or ready.");
+  });
+
+  it("sends an enterprise context spine and active focus hint instead of a chapter-only payload", async () => {
+    mockClaudeJson({
+      status: "answered",
+      direct_answer: "The estate should be read with value proof in mind.",
+      prose: "",
+      cited_claim_tags: ["TD-K1"],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [],
+    });
+
+    await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question: "What concerns you about our data strategy?",
+      activeChapterId: "technology_data",
+    });
+
+    const prompt = mockGetAuditedAnthropicClient.mock.calls[0][0].prompt;
+    expect(prompt).toContain('"enterprise_context_spine"');
+    expect(prompt).toContain('"question_context_plan"');
+    expect(prompt).toContain('"active_chapter_focus": "technology_data"');
+    expect(prompt).toContain('"focus_is_not_a_context_limit": true');
+    expect(prompt).toContain('"chapterId": "performance_value"');
+    expect(prompt).toContain('"data_analytics_ai"');
+    expect(prompt).toContain('"strategy_priorities"');
+    expect(prompt).toContain("enterprise_context_spine and record_summaries are orientation and routing context");
+    expect(prompt).toContain("Tagged chapter claims are factual answer material");
+    expect(prompt).toContain("Deterministic plottable_datasets are quantitative exhibit material");
+    expect(prompt).not.toContain("scoped_to_active_chapter");
   });
 
   it("drops a cited tag the model invented instead of trusting it", async () => {
