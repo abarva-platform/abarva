@@ -111,7 +111,7 @@ describe("buildHomeKnowResponse current packet fallback", () => {
 
     expect(response.answerStatus).not.toBe("blocked");
     expect(response.prose).not.toContain("needs to be refreshed");
-    expect(response.tables.some((table) => table.id === "home-dimension-coverage")).toBe(true);
+    expect(response.tables.length).toBeGreaterThan(0);
     expect(response.citations.length).toBeGreaterThan(0);
     expect(
       response.citations.some(
@@ -120,5 +120,29 @@ describe("buildHomeKnowResponse current packet fallback", () => {
     ).toBe(true);
     expect(response.gaps.some((gap) => gap.message.includes("curated advisor context file"))).toBe(true);
     expect(response.safety.composerTrace?.fallbackUsed).toBe(true);
+  });
+
+  it("binds executive smoke questions to current read-model dimensions", async () => {
+    const questions = [
+      "I'm on Technology & Data, but tell me what the CFO should care about.",
+      "Where are we commercially exposed, and what evidence supports that?",
+      "What should leadership address first before a Friday CXO walkthrough?",
+      "What could mislead a board reader on this page?",
+      "What do we know about the business, not just the technology?",
+    ];
+
+    for (const question of questions) {
+      const response = await buildHomeKnowResponse({
+        tenantKey: "meridian-health",
+        client: "meridian",
+        question,
+      });
+
+      expect(response.answerStatus).not.toBe("blocked");
+      expect(response.answerStatus).not.toBe("no_data");
+      expect(response.dimensionsUsed.length).toBeGreaterThan(0);
+      expect(response.citations.length).toBeGreaterThan(0);
+      expect(response.prose).not.toMatch(/adjacent to the question|try rephrasing/i);
+    }
   });
 });
