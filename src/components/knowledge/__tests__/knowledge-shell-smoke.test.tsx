@@ -14,9 +14,9 @@ import { KnowledgeAppMount } from "../KnowledgeAppMount";
 const TENANT_KEY = "airline-demo-new";
 const BASELINE_REF = "kb-airline-foundation-live";
 
-function envelope(path: string, data: unknown) {
+function envelope(path: string, data: unknown, projectionNameOverride?: string) {
   const projectionName = path.includes("explore")
-    ? "consumption.domain_summary_v1"
+    ? (projectionNameOverride ?? "consumption.application_inventory_v1")
     : path.includes("relationships")
       ? "consumption.relationship_edge_v1"
       : path.includes("evidence-gaps")
@@ -82,9 +82,49 @@ function briefData() {
   };
 }
 
-function exploreData() {
+function exploreData(domainKey = "technology") {
+  if (domainKey === "technology_estate") {
+    return {
+      domainKey,
+      domains: briefData().domains,
+      entities: [
+        {
+          entityRef: "TECH-AIRPORT-CLOUD-001",
+          entityType: "technology_estate",
+          displayName: "Airport cloud platform 001",
+          domainKey,
+          availabilityState: "available",
+          fields: [],
+          evidenceRefs: ["ev-airline-1"],
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 25,
+    };
+  }
+  if (domainKey === "data_products") {
+    return {
+      domainKey,
+      domains: briefData().domains,
+      entities: [
+        {
+          entityRef: "DATA-AIRPORT-OPS-MART-001",
+          entityType: "data_product",
+          displayName: "Airport operations mart 001",
+          domainKey,
+          availabilityState: "available",
+          fields: [],
+          evidenceRefs: ["ev-airline-1"],
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 25,
+    };
+  }
   return {
-    domainKey: "systems_and_technology",
+    domainKey,
     domains: briefData().domains,
     entities: [
       {
@@ -152,11 +192,19 @@ describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
 
   beforeEach(() => {
     requests = [];
-    globalThis.fetch = jest.fn(async (url: string | URL | Request) => {
+    globalThis.fetch = jest.fn(async (
+      url: string | URL | Request,
+      init?: RequestInit,
+    ) => {
       const path = String(url);
       requests.push(path);
+      const body =
+        typeof init?.body === "string"
+          ? (JSON.parse(init.body) as { domainKey?: string | null })
+          : {};
+      const domainKey = body.domainKey ?? "technology";
       const data = path.includes("explore")
-        ? exploreData()
+        ? exploreData(domainKey)
         : path.includes("relationships")
           ? relationshipsData()
           : path.includes("evidence-gaps")
@@ -164,10 +212,17 @@ describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
         : path.includes("suggested-questions")
           ? suggestedQuestionsData()
           : briefData();
+      const exploreProjection =
+        domainKey === "technology_estate"
+          ? "consumption.technology_estate_v1"
+          : domainKey === "data_products"
+            ? "consumption.data_product_inventory_v1"
+            : "consumption.application_inventory_v1";
       return {
         ok: true,
         status: 200,
-        json: async () => envelope(path, data),
+        json: async () =>
+          envelope(path, data, path.includes("explore") ? exploreProjection : undefined),
       };
     }) as unknown as typeof fetch;
   });
@@ -232,6 +287,27 @@ describe("KnowledgeAppMount full-tree smoke render (HTTP provider)", () => {
         path.includes("/api/knowledge/consumption/explore"),
       ),
     ).toBe(true);
+  });
+
+  it("renders projection-backed data products and infrastructure Explore tabs", async () => {
+    render(<KnowledgeAppMount tenantKey={TENANT_KEY} />);
+    fireEvent.click(screen.getByRole("button", { name: "Explore" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Data products" }));
+    await waitFor(() =>
+      expect(screen.getByText("Airport operations mart 001")).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByText(/data_product_inventory_v1 projection is registered/i),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Infrastructure and cloud" }));
+    await waitFor(() =>
+      expect(screen.getByText("Airport cloud platform 001")).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByText(/technology_estate_v1 projection is registered/i),
+    ).not.toBeInTheDocument();
   });
 
   it("switches to every mode without reintroducing fixture fallback", async () => {

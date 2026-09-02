@@ -147,15 +147,22 @@ describe("ConsumptionReader — active baseline with data", () => {
 });
 
 describe("ConsumptionReader — Home Knowledge D0 projection reconciliation", () => {
-  it("normalizes built airline application/vendor projection payloads to the Home Explore domain contract", async () => {
+  it("normalizes built airline inventory projection payloads to the Home Explore domain contract", async () => {
     const reader = new ConsumptionReader(fakeQuery([
       activeBaselineRow,
       { match: /FROM consumption\.domain_summary_v1/, rows: [
         { payload: { domainKey: "application_platform", label: "Application platform", availabilityState: "available", evidenceCoverage: 1, entityCount: null, openGapCount: 0, summary: null } },
+        { payload: { domainKey: "data_product", label: "Data product", availabilityState: "available", evidenceCoverage: 1, entityCount: null, openGapCount: 0, summary: null } },
         { payload: { domainKey: "vendor", label: "Vendor", availabilityState: "available", evidenceCoverage: 1, entityCount: null, openGapCount: 0, summary: null } },
       ]},
       { match: /FROM consumption\.application_inventory_v1/, rows: [
         { payload: { entityRef: "entity:application_platform:airport-001", entityType: "application_platform", displayName: "Airport station gate ramp baggage 001", domainKey: "application_platform", availabilityState: "available", fields: [], evidenceRefs: [] } },
+      ]},
+      { match: /FROM consumption\.technology_estate_v1/, rows: [
+        { payload: { entityRef: "entity:application_platform:airport-platform-001", entityType: "application_platform", displayName: "Airport station cloud platform 001", domainKey: "application_platform", availabilityState: "available", fields: [], evidenceRefs: [] } },
+      ]},
+      { match: /FROM consumption\.data_product_inventory_v1/, rows: [
+        { payload: { entityRef: "entity:data_product:ops-mart-001", entityType: "data_product", displayName: "Operations mart 001", domainKey: "data_product", availabilityState: "available", fields: [], evidenceRefs: [] } },
       ]},
       { match: /FROM consumption\.vendor_contract_inventory_v1/, rows: [
         { payload: { entityRef: "entity:vendor:supplier-001", entityType: "vendor", displayName: "Synthetic Supplier 001", domainKey: "vendor", availabilityState: "available", fields: [], evidenceRefs: [] } },
@@ -172,8 +179,27 @@ describe("ConsumptionReader — Home Knowledge D0 projection reconciliation", ()
     });
     expect(applications.data.domains.map((d) => d.domainKey)).toEqual([
       "technology",
+      "data_product",
       "vendors",
     ]);
+
+    const infrastructure = await reader.exploreEntities({ tenantKey: TENANT, domainKey: "technology_estate" });
+    expect(infrastructure.projectionName).toBe("consumption.technology_estate_v1");
+    expect(infrastructure.availabilityState).toBe("available");
+    expect(infrastructure.data.entities).toHaveLength(1);
+    expect(infrastructure.data.entities[0]).toMatchObject({
+      entityType: "technology_estate",
+      domainKey: "technology_estate",
+    });
+
+    const dataProducts = await reader.exploreEntities({ tenantKey: TENANT, domainKey: "data_products" });
+    expect(dataProducts.projectionName).toBe("consumption.data_product_inventory_v1");
+    expect(dataProducts.availabilityState).toBe("available");
+    expect(dataProducts.data.entities).toHaveLength(1);
+    expect(dataProducts.data.entities[0]).toMatchObject({
+      entityType: "data_product",
+      domainKey: "data_products",
+    });
 
     const vendors = await reader.exploreEntities({ tenantKey: TENANT, domainKey: "vendors" });
     expect(vendors.projectionName).toBe("consumption.vendor_contract_inventory_v1");
@@ -207,6 +233,8 @@ describe("ConsumptionReader — Home Knowledge D0 projection reconciliation", ()
         { payload: { entityRef: "entity:application_platform:airport-001", entityType: "application_platform", displayName: "Airport station gate ramp baggage 001", domainKey: "application_platform", availabilityState: "available", fields: [], evidenceRefs: [] } },
         { payload: { entityRef: "entity:application_platform:airport-002", entityType: "application_platform", displayName: "Airport station gate ramp baggage 002", domainKey: "application_platform", availabilityState: "available", fields: [], evidenceRefs: [] } },
       ]},
+      { match: /FROM consumption\.technology_estate_v1/, rows: [] },
+      { match: /FROM consumption\.data_product_inventory_v1/, rows: [] },
       { match: /FROM consumption\.vendor_contract_inventory_v1/, rows: [] },
     ]));
 
@@ -221,6 +249,8 @@ describe("ConsumptionReader — Home Knowledge D0 projection reconciliation", ()
     const reader = new ConsumptionReader(fakeQuery([
       activeBaselineRow,
       { match: /FROM consumption\.application_inventory_v1/, rows: [] },
+      { match: /FROM consumption\.technology_estate_v1/, rows: [] },
+      { match: /FROM consumption\.data_product_inventory_v1/, rows: [] },
       { match: /FROM consumption\.vendor_contract_inventory_v1/, rows: [
         { payload: { entityRef: "entity:vendor:supplier-001", entityType: "vendor", displayName: "Synthetic Supplier 001", domainKey: "vendor", availabilityState: "available", fields: [], evidenceRefs: ["ev-vendor-001"] } },
       ]},
@@ -249,6 +279,8 @@ describe("ConsumptionReader — Home Knowledge D0 projection reconciliation", ()
       { match: /FROM consumption\.application_inventory_v1/, rows: [
         { payload: { entityRef: "entity:application_platform:airport-001", entityType: "application_platform", displayName: "Airport station gate ramp baggage 001", domainKey: "application_platform", availabilityState: "available", fields: [], evidenceRefs: [] } },
       ]},
+      { match: /FROM consumption\.technology_estate_v1/, rows: [] },
+      { match: /FROM consumption\.data_product_inventory_v1/, rows: [] },
       { match: /FROM consumption\.vendor_contract_inventory_v1/, rows: [] },
     ]));
 
