@@ -41,7 +41,10 @@ import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
-import { createStructuredFenceStreamFilter } from "@/lib/intelligence/answer/structured-fence-stream-filter";
+import {
+  createStructuredFenceStreamFilter,
+  stripGovernedArtifactPayloadsFromText,
+} from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import { parseIntelligenceTabbedResponse } from "@/lib/intelligence/tabbed-response";
 import { applyCxoAnswerModeFallbacks } from "@/lib/intelligence/ask/answer-mode-registry";
 import { classifyAbarvaAnswerMode } from "@/lib/intelligence/ask/response-policy";
@@ -341,16 +344,20 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             ),
           );
         }
-        const activeTenantAliasesForFence =
-          signedInTenantAliases.length > 0
-            ? signedInTenantAliases
-            : [
-                tenantInventoryKey,
-                tenantClientKey,
-                requestedOrSurfaceClient,
-                surfaceContext?.clientKey,
-                surfaceContext?.activeClient,
-              ].filter(Boolean);
+        // Only server-resolved tenant identity may widen the foreign-tenant
+        // fence. resolveTenant already honours a body-supplied tenant for
+        // operator roles, and deliberately discards it for tenant-locked roles
+        // (`client`, `maestro`). Feeding the raw surfaceContext fields in here
+        // would reinstate exactly what that locked branch just refused, letting
+        // a request body switch off the fence for a tenant the caller has no
+        // claim to. The signed-in aliases are merged rather than used as a
+        // fallback, so the authenticated identity is always part of the check.
+        const activeTenantAliasesForFence = [
+          tenantInventoryKey,
+          tenantClientKey,
+          tenant?.displayName,
+          ...signedInTenantAliases,
+        ].filter(Boolean);
         const surfaceModule = readString(surfaceContext?.module)?.toLowerCase();
         const answerSurface =
           surfaceModule === "source"
@@ -373,10 +380,8 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                   ? "SOURCE"
                   : "ANALYZE",
             activeTenantDisplayName:
-              sessionTenant?.displayName ??
               tenant?.displayName ??
-              surfaceContext?.activeClient ??
-              requestedOrSurfaceClient ??
+              sessionTenant?.displayName ??
               "the signed-in tenant",
           });
           answer = applyProductTruthToAvaAnswer(
@@ -542,13 +547,17 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           }
         }
         if (shouldUseHomeKnowAgentAnswer({ query, surfaceContext })) {
-          const homeTenant = sessionTenant ?? tenant;
-          const homeTenantAliases =
-            signedInTenantAliases.length > 0
-              ? signedInTenantAliases
-              : (homeTenant?.aliases ?? []);
+          const homeTenant = tenant ?? sessionTenant;
+          const homeTenantAliases = [
+            homeTenant?.canonicalKey,
+            homeTenant?.appClientKey,
+            homeTenant?.displayName,
+            ...signedInTenantAliases,
+          ].filter(Boolean);
           const requestedHomeAliases = tenantAliasesFor(
-            tenantClientKey ?? requestedOrSurfaceClient,
+            tenantClientKey ??
+              homeTenant?.appClientKey ??
+              homeTenant?.canonicalKey,
           );
           const foreignTenantAliases =
             homeTenantAliases.length > 0
@@ -566,9 +575,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             let answer = buildHomeKnowTenantFenceAnswer({
               activeTenantDisplayName:
                 homeTenant?.displayName ??
-                tenant?.displayName ??
-                surfaceContext?.activeClient ??
-                requestedOrSurfaceClient ??
+                sessionTenant?.displayName ??
                 "the signed-in tenant",
             });
             if (
@@ -1177,6 +1184,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                 tabbedExhibits.prose.trim() || tabbedResponse.mainAnswer,
               artifacts: tabbedArtifacts,
               citations: tabbedExhibits.citations,
+              nextSteps: tabbedExhibits.followups.map((label, index) => ({
+                id: `followup-${index + 1}`,
+                label,
+              })),
               corpusUsed: tabbedResponse.tabs.some(
                 (tab) =>
                   tab.grounding === "industry-context" ||
@@ -1230,6 +1241,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               })
             )
               return;
+            assistantText = guardedAgentAnswer.directAnswer;
             enqueueTiming(
               routeTrace.finish("route.answer_compose.done", composeStartedAt, {
                 artifactCount: tabbedArtifacts.length,
@@ -1286,11 +1298,14 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               },
             ),
           );
-          if (
+          const hasStructuredPayload =
             hasRenderableStructuredExhibits(exhibits) ||
             exhibits.citations.length > 0 ||
-            sourceVisualArtifacts.length > 0
-          ) {
+            exhibits.followups.length > 0 ||
+            sourceVisualArtifacts.length > 0;
+          const cleanDirectAnswer =
+            sourceVisualAnswer?.directAnswer ?? exhibits.prose.trim();
+          if (hasStructuredPayload || cleanDirectAnswer) {
             const agentAnswer = composeAvaAnswer({
               surface: sourceVisualAnswer ? "source" : "intelligence",
               mode: "ANALYZE",
@@ -1302,7 +1317,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               question: query,
               intent: answerRouting.outputShape,
               status: "answered",
-              directAnswer: sourceVisualAnswer?.directAnswer ?? exhibits.prose,
+              directAnswer: cleanDirectAnswer,
               factsUsed: sourceVisualAnswer?.factsUsed,
               metricsUsed: sourceVisualAnswer?.metricsUsed,
               relationshipsUsed: sourceVisualAnswer?.relationshipsUsed,
@@ -1387,6 +1402,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               })
             )
               return;
+            assistantText = guardedAgentAnswer.directAnswer;
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -1500,19 +1516,39 @@ export function displaySafeIntelligenceDelta(text: string): string {
   const protocolStart = text.search(/<<<TAB:/);
   if (protocolStart >= 0) {
     const visiblePrefix = text.slice(0, protocolStart).trimEnd();
-    if (visiblePrefix) return visiblePrefix;
+    if (visiblePrefix) {
+      return maybeStripGovernedArtifactPayloads(visiblePrefix);
+    }
   }
 
+  const artifactSafeText = maybeStripGovernedArtifactPayloads(text);
   if (!text.includes("<<<TAB:") && !text.includes("grounding:")) {
-    return text;
+    return artifactSafeText;
   }
 
-  const parsed = parseIntelligenceTabbedResponse(text);
+  const parsed = parseIntelligenceTabbedResponse(artifactSafeText);
   if (parsed.mainAnswer.trim()) {
     return parsed.mainAnswer;
   }
 
-  return text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd();
+  return artifactSafeText.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd();
+}
+
+function maybeStripGovernedArtifactPayloads(text: string): string {
+  if (
+    !/`{1,3}\s*(?:abarva-canvas|chart|decision-table|followups)\b/i.test(
+      text,
+    ) &&
+    !/\b(?:abarva-canvas|chart|decision-table|followups)\s*[\[{]/i.test(
+      text,
+    ) &&
+    !/"(?:initiative|valueScore|complexityScore|readinessScore|evidenceBasis|nextAction|directional|canvasType|xKey|yKey|sourceNote|records|rows|data)"\s*:/i.test(
+      text,
+    )
+  ) {
+    return text;
+  }
+  return stripGovernedArtifactPayloadsFromText(text);
 }
 
 function numberFromPath(value: unknown, path: readonly string[]): number {
