@@ -122,10 +122,19 @@ Revert. Tables return to drawing absent columns.
 ## Known Gaps
 
 - **A table read from a field the mapper never produces.** `commercialModel` is
-  read by the chapter tables and by the record browser, and no mapper writes it.
-  That table is now reported as unsupported, correctly — but the cause is a
-  mapping gap, and the record browser still offers a column that is always blank.
-  Not fixed here; it belongs to the adapter, not the render.
+  read by the chapter tables, and no loader writes it into the contract payload —
+  the key appears nowhere in the ECL load path. That table is now reported as
+  unsupported, correctly, but the cause is a mapping gap that belongs to the
+  adapter rather than the render, and is not fixed here.
+
+  **Corrected:** an earlier draft of this record said the record browser also offers a
+  permanently blank column for it. It does not. Both places that could show one
+  already filter by presence — the detail panel keeps only fields present on the
+  row, and a dimension is dropped unless it has more than one distinct value. The
+  claim was written from the field appearing in two configuration lists, without
+  reading what consumes them. The mapping gap is real; that second consequence
+  was not.
+
 - **The sweep under-covers the contract family.** The contract mapper reads a
   different vocabulary from the one the intake writes, so feeding intake columns
   straight in cannot see two of its fields. Recorded in the test rather than
