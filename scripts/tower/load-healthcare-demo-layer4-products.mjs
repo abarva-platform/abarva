@@ -40,9 +40,11 @@ const METRIC_UNITS = new Map([
   ["readiness_score", "score_0_100"],
   ["linked_business_case_count", "count"],
   ["rollout_target_users", "users"],
+  ["enabled_users", "users"],
   ["monthly_active_users", "users"],
   ["adoption_target_pct", "percent"],
   ["adoption_actual_pct", "percent"],
+  ["adoption_gap_pct", "percent"],
   ["sponsor_claimed_value_usd", "USD"],
   ["finance_reviewed_value_usd", "USD"],
   ["finance_validated_value_usd", "USD"],
@@ -905,15 +907,27 @@ function buildRows(options) {
   for (const tool of data.tools) {
     const toolObjectId = objectUuid(options, "ai_tool", tool.canonical_tool_id);
     const refs = [sourceRef(options, tool, { tool_rollout_id: tool.tool_rollout_id })];
+    const linkedBusinessCaseCount = numOrNull(tool.linked_business_case_count);
+    const rolloutTargetUsers = numOrNull(tool.rollout_target_users);
+    const enabledUsers = numOrNull(tool.enabled_users);
+    const monthlyActiveUsers = numOrNull(tool.monthly_active_users);
+    const adoptionTargetPct = numOrNull(tool.adoption_target_pct);
+    const adoptionActualPct = numOrNull(tool.adoption_actual_pct);
+    const adoptionGapPct =
+      adoptionTargetPct === null || adoptionActualPct === null
+        ? null
+        : Math.max(0, adoptionTargetPct - adoptionActualPct);
     const payload = {
       page_key: "adoption_lens",
       tool_rollout_id: tool.tool_rollout_id,
       rollout_goal: tool.rollout_goal,
-      linked_business_case_count: num(tool.linked_business_case_count),
-      rollout_target_users: num(tool.rollout_target_users),
-      monthly_active_users: num(tool.monthly_active_users),
-      adoption_target_pct: num(tool.adoption_target_pct),
-      adoption_actual_pct: num(tool.adoption_actual_pct),
+      linked_business_case_count: linkedBusinessCaseCount,
+      rollout_target_users: rolloutTargetUsers,
+      enabled_users: enabledUsers,
+      monthly_active_users: monthlyActiveUsers,
+      adoption_target_pct: adoptionTargetPct,
+      adoption_actual_pct: adoptionActualPct,
+      adoption_gap_pct: adoptionGapPct,
       item_kind: "usage_benefit",
       ai_spend_category: "AI tool rollout",
       funding_status: tool.rollout_stage,
@@ -921,7 +935,14 @@ function buildRows(options) {
       // blocker is a control review or a telemetry gap that nobody has scheduled.
       control_blocker: tool.control_blocker ?? null,
       business_owner_role: tool.business_owner_role ?? null,
+      finance_partner_role: tool.finance_partner_role ?? null,
       rollout_stage: tool.rollout_stage ?? null,
+      source_system: tool.source_system ?? null,
+      source_record_id: tool.source_record_id ?? null,
+      extract_date: tool.extract_date ?? null,
+      as_of_date: tool.as_of_date ?? null,
+      refresh_cadence: tool.refresh_cadence ?? null,
+      source_quality_state: tool.quality_state ?? null,
       layer4_build_version: options.buildVersion,
     };
     const entry = addProjectionRow(ctx, "adoption_lens", tool.tool_rollout_id, "ai_tool_rollout", payload, refs);
@@ -942,13 +963,13 @@ function buildRows(options) {
       business_function: sqlText(tool.domain_key),
       licensed_users: sqlNum(tool.rollout_target_users),
       active_users: sqlNum(tool.monthly_active_users),
-      usage_events: sqlNum(num(tool.monthly_active_users) * 20),
+      usage_events: sqlNum(monthlyActiveUsers === null ? null : monthlyActiveUsers * 20),
       monthly_cost_usd: "null",
       adoption_rate_percent: sqlNum(tool.adoption_actual_pct),
       value_state: sqlText("known"),
       quality_state: sqlText("passed"),
       review_state: sqlText("reviewed"),
-      metric_keys_json: sqlJson(["rollout_target_users", "monthly_active_users", "adoption_actual_pct"]),
+      metric_keys_json: sqlJson(["rollout_target_users", "enabled_users", "monthly_active_users", "adoption_target_pct", "adoption_actual_pct", "adoption_gap_pct"]),
       source_refs_json: sqlJson(refs),
       gap_flags_json: sqlJson([]),
       display_payload_json: sqlJson(payload),
@@ -1184,6 +1205,15 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
   for (const tool of data.tools) {
     const objectId = objectUuid(options, "ai_tool", tool.canonical_tool_id);
     const refs = [sourceRef(options, tool, { tool_rollout_id: tool.tool_rollout_id })];
+    const rolloutTargetUsers = numOrNull(tool.rollout_target_users);
+    const enabledUsers = numOrNull(tool.enabled_users);
+    const monthlyActiveUsers = numOrNull(tool.monthly_active_users);
+    const adoptionTargetPct = numOrNull(tool.adoption_target_pct);
+    const adoptionActualPct = numOrNull(tool.adoption_actual_pct);
+    const adoptionGapPct =
+      adoptionTargetPct === null || adoptionActualPct === null
+        ? null
+        : Math.max(0, adoptionTargetPct - adoptionActualPct);
     const sliceId = addCubeSlice(
       ctx,
       "ai_portfolio_cube",
@@ -1192,21 +1222,38 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
       objectId,
       {
         vendor_name: tool.vendor_name,
+        tool_name: tool.tool_name,
+        domain_key: tool.domain_key,
         rollout_stage: tool.rollout_stage,
         rollout_goal: tool.rollout_goal,
+        control_blocker: tool.control_blocker ?? null,
       },
       {
-        rollout_target_users: num(tool.rollout_target_users),
-        monthly_active_users: num(tool.monthly_active_users),
-        adoption_target_pct: num(tool.adoption_target_pct),
-        adoption_actual_pct: num(tool.adoption_actual_pct),
+        rollout_target_users: rolloutTargetUsers,
+        enabled_users: enabledUsers,
+        monthly_active_users: monthlyActiveUsers,
+        adoption_target_pct: adoptionTargetPct,
+        adoption_actual_pct: adoptionActualPct,
+        adoption_gap_pct: adoptionGapPct,
       },
-      ["rollout_target_users", "monthly_active_users", "adoption_actual_pct"],
+      ["rollout_target_users", "enabled_users", "monthly_active_users", "adoption_target_pct", "adoption_actual_pct", "adoption_gap_pct"],
       refs,
     );
-    addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "rollout_target_users", tool, { scenario: "target" }), "rollout_target_users", "primary");
-    addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "monthly_active_users", tool, { scenario: "actual" }), "monthly_active_users", "display");
-    addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "adoption_actual_pct", tool, { scenario: "actual" }), "adoption_actual_pct", "display");
+    if (rolloutTargetUsers !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "rollout_target_users", tool, { scenario: "target" }), "rollout_target_users", "primary");
+    }
+    if (enabledUsers !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "enabled_users", tool, { scenario: "enabled" }), "enabled_users", "display");
+    }
+    if (monthlyActiveUsers !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "monthly_active_users", tool, { scenario: "actual" }), "monthly_active_users", "display");
+    }
+    if (adoptionTargetPct !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "adoption_target_pct", tool, { scenario: "target" }), "adoption_target_pct", "display");
+    }
+    if (adoptionActualPct !== null) {
+      addCubeMeasure(ctx, sliceId, measureUuid(options, "ai_tool", tool.canonical_tool_id, "adoption_actual_pct", tool, { scenario: "actual" }), "adoption_actual_pct", "display");
+    }
   }
 
   for (const row of data.proofQueue) {

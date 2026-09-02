@@ -4,3 +4,7 @@ business_value_type,plain value type
 finance_status,current Finance status
 committee_decision,committee disposition
 primary_tool_or_platform,tool or platform
+tool_name,AI tool rollout
+vendor_name,tool vendor or internal provider
+rollout_stage,current rollout stage
+control_blocker,control or evidence blocker

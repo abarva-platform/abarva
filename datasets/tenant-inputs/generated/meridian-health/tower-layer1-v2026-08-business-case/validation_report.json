@@ -200,7 +200,7 @@
     {
       "id": "cube_reconciles_to_canonical",
       "status": "PASS",
-      "detail": "42 case cube rows; $211.8M cube AI investment"
+      "detail": "42 case cube rows, 13 tool rollout cube rows; $211.8M cube AI investment"
     },
     {
       "id": "read_models_reconcile_to_cube",
@@ -216,6 +216,11 @@
       "id": "tool_rollout_goals",
       "status": "PASS",
       "detail": "13 tool rollout rows"
+    },
+    {
+      "id": "tool_rollout_field_survival_contract",
+      "status": "PASS",
+      "detail": "13 tool rows preserve approved fields through L3, L4 and cube"
     },
     {
       "id": "monthly_tracking_complete",

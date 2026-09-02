@@ -184,7 +184,7 @@ function main() {
     gate(gates, "summary_object_upsert_uses_semantic_identity", loadSql.includes("on conflict (tenant_key, assessment_id, object_type, canonical_semantic_type, object_key) do update"), "object upsert uses canonical semantic identity");
     gate(gates, "summary_object_count", Number(expected.object) === 987, `${expected.object ?? "missing"} expected canonical objects`);
     gate(gates, "summary_relationship_count", Number(expected.relationship) === 280, `${expected.relationship ?? "missing"} expected relationships`);
-    gate(gates, "summary_metric_definition_count", Number(expected.metric_definition) === 20, `${expected.metric_definition ?? "missing"} expected metric definitions`);
+    gate(gates, "summary_metric_definition_count", Number(expected.metric_definition) === 21, `${expected.metric_definition ?? "missing"} expected metric definitions`);
     gate(gates, "summary_measure_count_present", Number(expected.measure) > 2500, `${expected.measure ?? "missing"} expected measures`);
     gate(gates, "summary_semantic_object_counts", exactCountMatch(expected.objects_by_semantic_type, EXPECTED_OBJECT_SEMANTIC_TYPES), formatCounts(expected.objects_by_semantic_type));
   } else {

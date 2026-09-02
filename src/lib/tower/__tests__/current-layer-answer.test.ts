@@ -108,10 +108,20 @@ function towerView(overrides: Record<string, unknown> = {}) {
         promisedValueUsd: null,
         businessValueType: null,
         sourceFile: "23_ai_tool_rollout.csv",
+        rolloutGoal: "engineering productivity",
+        rolloutStage: "pilot",
+        rolloutTargetUsers: 680,
+        enabledUsers: 306,
+        usageActual: 299,
         linkedBusinessCaseCount: 4,
         adoptionRatePct: 35,
         adoptionTargetPct: 60,
         controlBlocker: "SOX evidence",
+        sourceSystem: "AI Portfolio and Business Case Tracker",
+        sourceRecordId: "TOOL-ROW",
+        sourceAsOfDate: "2026-08-24",
+        refreshCadence: "monthly",
+        sourceQualityState: "synthetic_review_ready",
       }),
       aiItem({
         aiPortfolioKey: "foundation-1",
@@ -199,13 +209,28 @@ describe("answerCurrentTowerQuestion", () => {
     expect(result.modelOutput.tables?.[0]?.columns).toEqual([
       "Tool",
       "Vendor",
-      "Users",
+      "Goal",
+      "Target users",
+      "Enabled users",
+      "Monthly active users",
       "Adoption",
       "Target",
       "Gap to target",
       "Control blocker",
       "Linked cases",
+      "Source system",
+      "As of",
     ]);
+    expect(result.modelOutput.tables?.[0]?.rows.flat()).toEqual(
+      expect.arrayContaining([
+        "engineering productivity",
+        "680",
+        "306",
+        "299 users",
+        "AI Portfolio and Business Case Tracker",
+        "2026-08-24",
+      ]),
+    );
   });
 
   it("answers selected-row drill-downs without treating missing values as zero", async () => {
@@ -229,6 +254,14 @@ describe("answerCurrentTowerQuestion", () => {
     );
     expect(cells).toContain("Sponsor-stated value");
     expect(cells).toContain("Not loaded");
+    expect(cells).toContain("Rollout goal");
+    expect(cells).toContain("engineering productivity");
+    expect(cells).toContain("Enabled users");
+    expect(cells).toContain("306");
+    expect(cells).toContain("Source system");
+    expect(cells).toContain("AI Portfolio and Business Case Tracker");
+    expect(cells).toContain("Refresh cadence");
+    expect(cells).toContain("monthly");
     expect(cells).not.toContain("$0");
   });
 });

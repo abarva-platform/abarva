@@ -675,6 +675,7 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     "active_users",
     "monthly_active_users",
   ]);
+  const enabledUsersRaw = payloadNullableNumberFrom(row, ["enabled_users"]);
   const approvedFundingRaw = payloadNullableNumberFrom(row, [
     "approved_funding_usd",
     "approved_investment_usd",
@@ -712,6 +713,9 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const usageMetric =
     payloadTextFrom(row, ["usage_metric", "success_metric"]) ??
     (activeUsersRaw !== null ? "active users" : null);
+  const rolloutTargetUsersRaw = payloadNullableNumberFrom(row, [
+    "rollout_target_users",
+  ]);
   return {
     aiPortfolioKey: row.row_key,
     itemName: payloadText(row, "use_case_name", row.title) ?? row.row_key,
@@ -753,6 +757,10 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     promisedValueUsd,
     financeValidatedValueUsd: payloadNumber(row, "finance_validated_value_usd"),
     usageMetric,
+    rolloutGoal: payloadTextFrom(row, ["rollout_goal"]),
+    rolloutStage: payloadTextFrom(row, ["rollout_stage", "funding_status"]),
+    rolloutTargetUsers: rolloutTargetUsersRaw,
+    enabledUsers: enabledUsersRaw,
     usageActual: activeUsersRaw,
     adoptionRatePct,
     adoptionTargetPct: payloadNullableNumberFrom(row, ["adoption_target_pct"]),
@@ -801,6 +809,15 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
       "AI usage is source-recorded; value remains blocked until outcome and finance evidence are linked.",
     sourceFile: firstSourceLabel(refs),
     sourceRow: nullableText(refs[0]?.source_record_id),
+    sourceSystem: payloadTextFrom(row, ["source_system"]),
+    sourceRecordId: payloadTextFrom(row, ["source_record_id"]),
+    extractDate: payloadTextFrom(row, ["extract_date"]),
+    sourceAsOfDate: payloadTextFrom(row, ["as_of_date"]),
+    refreshCadence: payloadTextFrom(row, ["refresh_cadence"]),
+    sourceQualityState: payloadTextFrom(row, [
+      "source_quality_state",
+      "quality_state",
+    ]),
   };
 }
 

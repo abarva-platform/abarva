@@ -398,7 +398,19 @@ describe("TowerCommandCenter", () => {
           usageBars: [
             { label: "Adoption", valueText: "30%", pct: 30, tone: "amber" },
           ],
+          rolloutGoal: "self-service analytics assistance",
+          rolloutStage: "pilot",
+          rolloutTargetUsers: 2300,
+          enabledUsers: 1035,
+          monthlyActiveUsers: 690,
+          adoptionActualPct: 30,
           adoptionTargetPct: 46,
+          linkedBusinessCaseCount: 0,
+          sourceSystem: "AI Portfolio and Business Case Tracker",
+          sourceRecordId: "TOOL-MER-007",
+          sourceAsOfDate: "2026-08-24",
+          refreshCadence: "monthly",
+          sourceQualityState: "synthetic_review_ready",
         },
       ],
     });
@@ -407,6 +419,17 @@ describe("TowerCommandCenter", () => {
 
     const drawer = screen.getByRole("dialog");
     expect(within(drawer).getByText(/AI tool rollout/)).toBeInTheDocument();
+    expect(within(drawer).getByText("Tool rollout detail")).toBeInTheDocument();
+    expect(within(drawer).getByText("self-service analytics assistance")).toBeInTheDocument();
+    expect(within(drawer).getByText("2,300")).toBeInTheDocument();
+    expect(within(drawer).getByText("1,035")).toBeInTheDocument();
+    expect(within(drawer).getByText("690")).toBeInTheDocument();
+    expect(within(drawer).getByText("16 pts")).toBeInTheDocument();
+    expect(within(drawer).getByText("AI Portfolio and Business Case Tracker")).toBeInTheDocument();
+    expect(within(drawer).getByText("TOOL-MER-007")).toBeInTheDocument();
+    expect(within(drawer).getByText("2026-08-24")).toBeInTheDocument();
+    expect(within(drawer).getByText("monthly")).toBeInTheDocument();
+    expect(within(drawer).getByText("synthetic_review_ready")).toBeInTheDocument();
   });
 
   it("surfaces Source contract actions without dumping the full action queue", () => {

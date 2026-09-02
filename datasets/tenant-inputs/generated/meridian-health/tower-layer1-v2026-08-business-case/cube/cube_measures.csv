@@ -6,3 +6,10 @@ finance_validated_ytd_usd,yes_by_month,Finance
 board_claimable_ytd_usd,yes_by_month,Finance
 roi_low_multiple,derived_ratio,deterministic cube
 roi_high_multiple,derived_ratio,deterministic cube
+linked_business_case_count,yes,business sponsor
+rollout_target_users,yes,tool owner
+enabled_users,yes,tool owner
+monthly_active_users,yes,tool telemetry owner
+adoption_target_pct,avg,business sponsor
+adoption_actual_pct,avg,tool telemetry owner
+adoption_gap_pct,avg,deterministic cube
