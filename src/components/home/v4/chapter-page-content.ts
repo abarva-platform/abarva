@@ -14,6 +14,8 @@ import {
   aiFindings,
   organizationTables,
   organizationFindings,
+  interviewTables,
+  interviewFindings,
   infrastructureTables,
   infrastructureFindings,
   dataTables,
@@ -50,6 +52,7 @@ const CHAPTER_SOURCES: Partial<
       | "programs"
       | "ai"
       | "organization"
+      | "interviews"
     >
   >
 > = {
@@ -57,6 +60,9 @@ const CHAPTER_SOURCES: Partial<
   // the same family produced five identical tables under two different questions, which reads as a
   // page that does not know what it is for.
   technology_data: ["applications", "data"],
+  // Leadership Perspective asks what leaders agree on, disagree on and worry about, and until the
+  // interview family was served it answered with written insights over nothing openable.
+  leadership_perspective: ["interviews"],
   // Performance and Value is the metrics surface; What Needs Attention is the register. Both were
   // unreachable until the projection carried these families.
   how_we_operate: ["organization", "infrastructure"],
@@ -89,6 +95,7 @@ export interface EstateRecordTypes {
   programs?: EstateRow[];
   ai?: EstateRow[];
   organization?: EstateRow[];
+  interviews?: EstateRow[];
   applications?: EstateRow[];
   vendors?: EstateRow[];
   infrastructure?: EstateRow[];
@@ -115,6 +122,7 @@ const BUILDERS = {
   programs: { tables: programTables, findings: programFindings },
   ai: { tables: aiTables, findings: aiFindings },
   organization: { tables: organizationTables, findings: organizationFindings },
+  interviews: { tables: interviewTables, findings: interviewFindings },
 } as const;
 
 /**

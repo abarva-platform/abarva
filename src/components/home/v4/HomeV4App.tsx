@@ -234,6 +234,9 @@ export function HomeV4App({
     organization: techRecordTypes.find(
       (r) => r.objectType === "organization_ownership",
     )?.rows as EstateRow[] | undefined,
+    interviews: techRecordTypes.find(
+      (r) => r.objectType === "executive_interview",
+    )?.rows as EstateRow[] | undefined,
   };
 
   const group = (title: string, items: RailItem[]): RailGroup => ({
@@ -403,6 +406,9 @@ export function HomeV4App({
                   organization: techRecordTypes.find(
                     (r) => r.objectType === "organization_ownership",
                   )?.rows,
+                  interviews: techRecordTypes.find(
+                    (r) => r.objectType === "executive_interview",
+                  )?.rows,
                 })}
               />
             ) : (
@@ -435,6 +441,9 @@ export function HomeV4App({
                   )?.rows,
                   organization: techRecordTypes.find(
                     (r) => r.objectType === "organization_ownership",
+                  )?.rows,
+                  interviews: techRecordTypes.find(
+                    (r) => r.objectType === "executive_interview",
                   )?.rows,
                 })}
               />

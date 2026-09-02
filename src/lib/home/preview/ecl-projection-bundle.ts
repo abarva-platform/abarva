@@ -52,6 +52,31 @@ export interface HomeProjectionRow {
 }
 
 const COLUMN_ORDER: Record<TechObjectType, string[]> = {
+  // The interview record, in the order the intake declares it: who was asked, what they were
+  // asked, what they said, and then every estate object the answer names -- which is the half that
+  // makes this family joinable to the rest of the record rather than a transcript.
+  executive_interview: [
+    "executiveArea",
+    "stakeholderRole",
+    "interviewGroup",
+    "priorityTheme",
+    "question",
+    "response",
+    "businessPriority",
+    "painPoint",
+    "knownChallenge",
+    "keyInitiative",
+    "systemOrVendorMentioned",
+    "dataDomainMentioned",
+    "metricMentioned",
+    "riskOrControlMentioned",
+    "decisionSupported",
+    "evidenceNeeded",
+    "responseBasis",
+    "interviewDate",
+    "confidence",
+    "originalRowId",
+  ],
   metric_outcome: [
     "metricName",
     "metricDomain",
@@ -194,9 +219,11 @@ const LABELS: Record<TechObjectType, string> = {
   program_initiative: "Programs & Initiatives",
   organization_ownership: "Organization & Ownership",
   ai_use_case: "AI & Automation Use Cases",
+  executive_interview: "Leadership Interviews",
 };
 
 const PRIMARY_DIMENSION: Record<TechObjectType, string> = {
+  executive_interview: "executiveArea",
   application_system: "businessFunction",
   vendor_contract: "serviceCategory",
   infrastructure_platform: "platformType",
@@ -231,6 +258,10 @@ const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<
   ai_use_case: {
     domain: "ai_use_case",
     sourcePath: "serving.home_ai_use_cases",
+  },
+  executive_interview: {
+    domain: "executive_interview",
+    sourcePath: "serving.home_executive_interviews",
   },
   application_system: {
     domain: "application_system",
@@ -439,6 +470,49 @@ function organizationOwnershipRow(row: HomeProjectionRow): JsonRecord {
     successionRisk: text(payload.succession_risk),
     costCenterName: text(payload.cost_center_name),
     originalRowId: text(payload.org_unit_id ?? row.row_key),
+  };
+}
+
+/**
+ * One interview answer, with the basis of the answer carried beside it.
+ *
+ * The intake's response column is named `synthetic_answer`, and on the current records that is
+ * literally what it holds. A modelled answer rendered as leadership testimony is the most
+ * damaging thing this page could do: a reader takes a quotation from a named role as something a
+ * person said. So the response and the basis of the response travel together, and the basis is
+ * read from WHICH column supplied the text rather than assumed -- a record that later carries a
+ * real transcript says so without this needing to change.
+ */
+function executiveInterviewRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  const attributed = text(payload.answer ?? payload.response);
+  const modelled = text(payload.synthetic_answer);
+  return {
+    executiveArea: text(payload.executive_area),
+    stakeholderRole: text(payload.stakeholder_role),
+    interviewGroup: text(payload.interview_group),
+    priorityTheme: text(payload.priority_theme),
+    question: text(payload.question) ?? row.title,
+    response: attributed ?? modelled,
+    responseBasis: attributed
+      ? "attributed"
+      : modelled
+        ? "modelled — not a transcript"
+        : null,
+    businessPriority: text(payload.business_priority),
+    painPoint: text(payload.pain_point),
+    knownChallenge: text(payload.known_challenge),
+    keyInitiative: text(payload.key_initiative),
+    initiativeLink: text(payload.initiative_link),
+    systemOrVendorMentioned: text(payload.system_or_vendor_mentioned),
+    dataDomainMentioned: text(payload.data_domain_mentioned),
+    metricMentioned: text(payload.metric_mentioned),
+    riskOrControlMentioned: text(payload.risk_or_control_mentioned),
+    decisionSupported: text(payload.decision_supported),
+    evidenceNeeded: text(payload.evidence_needed),
+    interviewDate: text(payload.interview_date),
+    confidence: text(payload.confidence),
+    originalRowId: text(payload.interview_id ?? row.row_key),
   };
 }
 
@@ -983,6 +1057,10 @@ export function buildTechnologyEstateFromHomeProjectionRows(
   const programs = intakeFamily("programs_initiatives", programInitiativeRow);
   const orgUnits = intakeFamily("org_ownership", organizationOwnershipRow);
   const aiUseCases = intakeFamily("ai_use_cases", aiUseCaseRow);
+  const interviews = intakeFamily(
+    "executive_interviews",
+    executiveInterviewRow,
+  );
 
   return {
     recordTypes: [
@@ -995,6 +1073,7 @@ export function buildTechnologyEstateFromHomeProjectionRows(
       recordType("program_initiative", programs),
       recordType("organization_ownership", orgUnits),
       recordType("ai_use_case", aiUseCases),
+      recordType("executive_interview", interviews),
     ].filter((row): row is TechRecordType => Boolean(row)),
   };
 }
@@ -2282,6 +2361,10 @@ async function readHomeProjectionRows(
       union all
       select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
       from serving.home_ai_use_cases
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_executive_interviews
       where tenant_key = $1 and assessment_id = $2
       union all
       select page_key, row_key, row_type, title, summary, payload_json as display_payload_json

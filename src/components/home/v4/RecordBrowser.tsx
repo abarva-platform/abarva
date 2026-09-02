@@ -35,6 +35,27 @@ interface Dimension {
 }
 
 const COLUMN_PRESETS: Record<TechObjectType, Column[]> = {
+  // The response itself is the widest column because it is the thing being read. What the response
+  // NAMES -- a system, a risk -- sits beside it, because that is what makes an opinion checkable
+  // against the rest of the record rather than a quotation to be taken on trust.
+  executive_interview: [
+    { key: "executiveArea", label: "Area", width: 210, priority: "core" },
+    { key: "stakeholderRole", label: "Role", width: 190 },
+    { key: "priorityTheme", label: "Theme", width: 130, kind: "pill" },
+    { key: "response", label: "What they said", width: 380, kind: "muted" },
+    {
+      key: "systemOrVendorMentioned",
+      label: "System named",
+      width: 180,
+      priority: "wide",
+    },
+    {
+      key: "riskOrControlMentioned",
+      label: "Risk named",
+      width: 200,
+      priority: "wide",
+    },
+  ],
   metric_outcome: [
     { key: "metricName", label: "Metric", width: 260, priority: "core" },
     { key: "businessFunction", label: "Function", width: 190 },
@@ -298,6 +319,28 @@ const FALLBACK_COLUMNS: Column[] = [
 ];
 
 const DETAIL_FIELDS: Partial<Record<TechObjectType, string[]>> = {
+  executive_interview: [
+    "executiveArea",
+    "stakeholderRole",
+    "interviewGroup",
+    "priorityTheme",
+    "question",
+    "response",
+    "responseBasis",
+    "businessPriority",
+    "painPoint",
+    "knownChallenge",
+    "keyInitiative",
+    "systemOrVendorMentioned",
+    "dataDomainMentioned",
+    "metricMentioned",
+    "riskOrControlMentioned",
+    "decisionSupported",
+    "evidenceNeeded",
+    "interviewDate",
+    "confidence",
+    "originalRowId",
+  ],
   application_system: [
     "systemName",
     "systemCategory",
@@ -1023,6 +1066,12 @@ function buildDimensions(
   primaryDimension?: string,
 ): Dimension[] {
   const preferred: Partial<Record<TechObjectType, string[]>> = {
+    executive_interview: [
+      "priorityTheme",
+      "stakeholderRole",
+      "interviewGroup",
+      "systemOrVendorMentioned",
+    ],
     application_system: [
       "lifecycleState",
       "criticality",
@@ -1388,6 +1437,24 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
   > = {
     // Each pairing is a question someone actually asks of this record type, not every column
     // against every other. A crossing nobody would ask for is noise with a title on it.
+    executive_interview: [
+      {
+        key: "area-theme",
+        title: "Where each function's leadership puts its weight",
+        caption:
+          "Agreement is a theme every area raises; a divide is one only some do.",
+        left: "executiveArea",
+        right: "priorityTheme",
+      },
+      {
+        key: "theme-system",
+        title: "Which systems each theme keeps returning to",
+        caption:
+          "A system named under several themes is carrying more than one argument.",
+        left: "priorityTheme",
+        right: "systemOrVendorMentioned",
+      },
+    ],
     metric_outcome: [
       {
         key: "readiness-function",
