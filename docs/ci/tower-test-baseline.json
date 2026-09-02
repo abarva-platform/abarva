@@ -1,0 +1,63 @@
+{
+  "name": "tower",
+  "description": "Every Jest suite on the Tower surface, and the ones that were already failing when the ratchet landed. See docs/ci/README-test-ratchet.md.",
+  "paths": [
+    "src/lib/tower",
+    "src/lib/cio-tower",
+    "src/lib/ai-control-tower",
+    "src/components/tower",
+    "src/components/admin/tower",
+    "src/app/(maestro)/tower",
+    "src/app/(maestro)/tenant/[tenantSlug]/tower",
+    "src/app/api/tower",
+    "src/app/api/v1/tower",
+    "src/__tests__/integration/tower",
+    "src/__tests__/tower"
+  ],
+  "floor": 1700,
+  "knownFailing": {
+    "src/__tests__/integration/tower/atlas-executive-brief-canvas.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/__tests__/integration/tower/control-tower-lenses.test.ts": {
+      "failing": 2,
+      "ran": true
+    },
+    "src/__tests__/integration/tower/program-pressure-cards.test.ts": {
+      "failing": 2,
+      "ran": true
+    },
+    "src/__tests__/tower/ingest/azure-cost-registry.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/app/api/tower/synthesis/route-fix-c.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/app/api/v1/tower/outcome-report/__tests__/route.test.ts": {
+      "failing": 2,
+      "ran": true
+    },
+    "src/lib/tower/__tests__/tower-cxo-claude-story.test.ts": {
+      "failing": 10,
+      "ran": true
+    },
+    "src/lib/tower/__tests__/tower-l3-dossiers.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/lib/tower/__tests__/tower-materialized-read-model.test.ts": {
+      "failing": 1,
+      "ran": true
+    },
+    "src/lib/tower/__tests__/tower-v3-runtime-view.test.ts": {
+      "failing": 6,
+      "ran": true
+    }
+  },
+  "recordedAt": "2026-09-02",
+  "totalTests": 1772,
+  "totalSuites": 134
+}
