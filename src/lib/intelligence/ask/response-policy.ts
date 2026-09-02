@@ -110,11 +110,15 @@ export type AbarvaAnswerMode =
   | "general"
   | "strategy_to_abarva_solution"
   | "strategy_to_moves_execution"
-  | "industry_trend_to_ai_bets";
+  | "industry_trend_to_ai_bets"
+  | "portfolio_prioritization";
 
 export function classifyAbarvaAnswerMode(query: string): AbarvaAnswerMode {
   if (isStrategyToMovesExecutionAsk(query)) {
     return "strategy_to_moves_execution";
+  }
+  if (isPortfolioPrioritizationAsk(query)) {
+    return "portfolio_prioritization";
   }
   if (isIndustryTrendToAiBetsAsk(query)) {
     return "industry_trend_to_ai_bets";
@@ -174,6 +178,35 @@ export function isIndustryOutlookAsk(query: string): boolean {
   );
 }
 
+const PORTFOLIO_PRIORITIZATION_VERB_RE =
+  /\b(?:prioriti[sz]e|prioriti[sz]ation|re-?rank|stack[-\s]?rank|rank|sequence|sequencing|triage|what should we fund|what to fund|where should we (?:start|begin))\b/i;
+
+const PORTFOLIO_NOUN_RE =
+  /\b(?:portfolio|programme?s?|programs?|initiatives?|projects?|bets?|investments?|backlog|use cases?|opportunities|workstreams?|candidates?)\b/i;
+
+// An existing, known set -- "our initiatives", "these bets", "the current
+// backlog" -- is what separates prioritising a portfolio the tenant already
+// holds from ranking use cases discovered out in the industry. Deliberately
+// excludes bare pronouns like "them", which appear in discovery asks such as
+// "top 5 use cases ... and rank them in a 2x2".
+const PORTFOLIO_OWNERSHIP_RE =
+  /\b(?:our|ours|we|us|my|existing|current|in-?flight|already (?:funded|running|approved|underway)|these|this list|the list|shortlist)\b/i;
+
+/**
+ * Prioritising a portfolio the enterprise already holds is a different job
+ * from discovering what the industry is doing, and it wants a different answer
+ * shape: ranking logic, a value/readiness comparison, a recommended sequence,
+ * and stop/go gates. This mode was declared in the registry but was never
+ * reachable -- the mode union did not carry it and it had no contract text.
+ */
+export function isPortfolioPrioritizationAsk(query: string): boolean {
+  return (
+    PORTFOLIO_PRIORITIZATION_VERB_RE.test(query) &&
+    PORTFOLIO_NOUN_RE.test(query) &&
+    PORTFOLIO_OWNERSHIP_RE.test(query)
+  );
+}
+
 export function isIndustryTrendToAiBetsAsk(query: string): boolean {
   const asksForTopN =
     /\b(?:top\s*)?(?:\d+|three|four|five|six|seven|eight|nine|ten)\s+(?:ai\s+)?(?:use\s+cases?|bets?|investments?|initiatives?|opportunities?)\b/i.test(
@@ -204,6 +237,7 @@ export function isIndustryTrendToAiBetsAsk(query: string): boolean {
 export function needsAbarvaSolutionGuidance(query: string): boolean {
   return (
     isStrategyToMovesExecutionAsk(query) ||
+    isPortfolioPrioritizationAsk(query) ||
     isIndustryTrendToAiBetsAsk(query) ||
     isStrategyToAbarvaSolutionAsk(query)
   );
@@ -262,6 +296,40 @@ When the user asks what is changing and does NOT ask for a ranking, a top-N list
 EVIDENCE CLASS LABELS: external claims must read as external. Attribute them in plain business English as an industry pattern, a benchmark range, a peer example, or a market signal. Never write an industry pattern in a way that implies it was measured inside this tenant, and never present a recommendation as a measured fact.
 
 Do not write a generic market overview. Do not expose internal table names, data-layer versions, raw packet labels, or source IDs.`;
+
+export const PORTFOLIO_PRIORITIZATION_CONTRACT = `PORTFOLIO_PRIORITIZATION ANSWER MODE
+
+This mode is mandatory when the user asks to prioritise, rank, sequence, or triage a set of initiatives, programs, bets, investments, or opportunities the enterprise already holds. The job is not to discover what the industry is doing; it is to decide what THIS enterprise should do next with what it already has on the table.
+
+Product rule:
+- Open with the portfolio read: what the shape of this portfolio actually says. Is it over-committed, unfunded, concentrated in one function, or blocked on a shared dependency?
+- State the ranking logic before the ranking. The executive has to be able to argue with the criteria, not just the order.
+- Weigh: strategic alignment, the business-value mechanism, client pain or opportunity, industry maturity, data readiness, technology readiness, operating-model readiness, accountable ownership, time to value, complexity and dependencies, risk and control posture, and evidence confidence. Use the ones the loaded context can actually speak to, and say which ones it cannot.
+- Separate value from readiness. The most common portfolio error is treating an attractive bet as a ready one.
+- Name the dependencies that force sequence. If two items compete for the same data foundation, the same owner, or the same vendor negotiation, that constraint decides order more than score does.
+
+Recommend one of these for each item, and say why:
+- Invest now: high value, sufficient readiness, a clear owner and path.
+- Validate next: attractive, but one or two material assumptions still need proof.
+- Sequence: valuable, but a dependency has to be addressed before it can start.
+- Hold: weak evidence, low readiness, excessive risk, or unclear economics.
+
+For a portfolio view, distinguish four groups plainly: high value and ready, high value and not ready, lower value but easy, lower value and complex. The second group is where the executive conversation usually belongs.
+
+Evidence discipline:
+- Do not manufacture ROI figures, savings percentages, payback periods, or composite scores such as "83.6/100". Quantify only what the loaded context measures, and rank on stated judgment where it does not.
+- Where an item's readiness or value is not evidenced, say so and make that the validation gate rather than guessing a position for it.
+- Do not present an industry pattern as proof that a specific tenant item is ready.
+
+For an explicit ranking, scorecard, matrix, or top-N ask, emit the chart payload table required by the structured visual contract so the renderer can produce the scorecard and the value/readiness matrix. For a broad "what should we do next" ask, stay in prose and queue the exhibit as a follow-up.
+
+Required answer shape:
+1. Portfolio read: what the shape of the portfolio says.
+2. Ranking logic and the comparison it produces.
+3. Recommended sequence, with the dependencies that force it.
+4. Stop/go gates: what would have to be true to move an item up, and what would take one off the list.
+
+Do not expose internal table names, data-layer versions, raw packet labels, or source IDs.`;
 
 export const STRATEGY_TO_ABARVA_SOLUTION_CONTRACT = `STRATEGY_TO_ABARVA_SOLUTION ANSWER MODE
 
