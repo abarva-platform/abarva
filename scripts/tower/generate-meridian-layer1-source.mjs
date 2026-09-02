@@ -1553,6 +1553,7 @@ function buildCanonicalArtifacts(sources) {
     rollout_goal: row.rollout_goal,
     linked_business_case_count: row.linked_business_case_count,
     rollout_target_users: row.rollout_target_users,
+    enabled_users: row.enabled_users,
     monthly_active_users: row.monthly_active_users,
     adoption_target_pct: row.adoption_target_pct,
     adoption_actual_pct: row.adoption_actual_pct,
@@ -1561,11 +1562,15 @@ function buildCanonicalArtifacts(sources) {
     // when the actual obstacle is a control review nobody has scheduled.
     control_blocker: row.control_blocker,
     business_owner_role: row.business_owner_role,
+    finance_partner_role: row.finance_partner_role,
     source_file: "23_ai_tool_rollout.csv",
     source_row: index + 2,
     source_system: row.source_system,
     source_record_id: row.source_record_id,
+    extract_date: row.extract_date,
     as_of_date: AS_OF_DATE,
+    refresh_cadence: row.refresh_cadence,
+    quality_state: row.quality_state,
   }));
   const canonicalMonthlyValues = sources.monthlyValue.map((row, index) => ({
     tenant_key: TENANT_KEY,
@@ -1786,6 +1791,35 @@ function buildCubeArtifacts(sources) {
           ) / 10
         : "",
   }));
+  const toolRolloutCube = sources.toolRollouts.map((row) => ({
+    tenant_key: TENANT_KEY,
+    as_of_date: AS_OF_DATE,
+    tool_rollout_id: row.tool_rollout_id,
+    tool_name: row.tool_name,
+    vendor_name: row.vendor_name,
+    domain_key: row.domain_key,
+    rollout_goal: row.rollout_goal,
+    linked_business_case_count: row.linked_business_case_count,
+    rollout_target_users: row.rollout_target_users,
+    enabled_users: row.enabled_users,
+    monthly_active_users: row.monthly_active_users,
+    adoption_target_pct: row.adoption_target_pct,
+    adoption_actual_pct: row.adoption_actual_pct,
+    adoption_gap_pct: Math.max(
+      0,
+      Number(row.adoption_target_pct) - Number(row.adoption_actual_pct),
+    ),
+    rollout_stage: row.rollout_stage,
+    control_blocker: row.control_blocker,
+    business_owner_role: row.business_owner_role,
+    finance_partner_role: row.finance_partner_role,
+    source_system: row.source_system,
+    source_record_id: row.source_record_id,
+    extract_date: row.extract_date,
+    refresh_cadence: row.refresh_cadence,
+    quality_state: row.quality_state,
+    source_object_id: `TOOL:${row.tool_rollout_id}`,
+  }));
   const cubeMeasures = [
     ["approved_investment_usd", "yes", "IT Finance"],
     ["projected_annual_value_low_usd", "yes", "business sponsor"],
@@ -1794,6 +1828,13 @@ function buildCubeArtifacts(sources) {
     ["board_claimable_ytd_usd", "yes_by_month", "Finance"],
     ["roi_low_multiple", "derived_ratio", "deterministic cube"],
     ["roi_high_multiple", "derived_ratio", "deterministic cube"],
+    ["linked_business_case_count", "yes", "business sponsor"],
+    ["rollout_target_users", "yes", "tool owner"],
+    ["enabled_users", "yes", "tool owner"],
+    ["monthly_active_users", "yes", "tool telemetry owner"],
+    ["adoption_target_pct", "avg", "business sponsor"],
+    ["adoption_actual_pct", "avg", "tool telemetry owner"],
+    ["adoption_gap_pct", "avg", "deterministic cube"],
   ].map(([measure_name, additive, owner]) => ({
     measure_name,
     additive,
@@ -1805,6 +1846,10 @@ function buildCubeArtifacts(sources) {
     ["finance_status", "current Finance status"],
     ["committee_decision", "committee disposition"],
     ["primary_tool_or_platform", "tool or platform"],
+    ["tool_name", "AI tool rollout"],
+    ["vendor_name", "tool vendor or internal provider"],
+    ["rollout_stage", "current rollout stage"],
+    ["control_blocker", "control or evidence blocker"],
   ].map(([dimension_name, purpose]) => ({ dimension_name, purpose }));
   const cubeGateFlags = [
     [
@@ -1827,6 +1872,7 @@ function buildCubeArtifacts(sources) {
   return {
     caseRows,
     portfolioCube,
+    toolRolloutCube,
     cubeMeasures,
     cubeDimensions,
     cubeGateFlags,
@@ -1885,15 +1931,27 @@ function buildReadModels(sources, cube) {
   }));
   const toolTable = sources.toolRollouts.map((row) => ({
     tenant_key: TENANT_KEY,
+    tool_rollout_id: row.tool_rollout_id,
     tool_name: row.tool_name,
     vendor_name: row.vendor_name,
+    domain_key: row.domain_key,
     rollout_goal: row.rollout_goal,
     linked_business_case_count: row.linked_business_case_count,
     rollout_target_users: row.rollout_target_users,
+    enabled_users: row.enabled_users,
     monthly_active_users: row.monthly_active_users,
     adoption_target_pct: row.adoption_target_pct,
     adoption_actual_pct: row.adoption_actual_pct,
     rollout_stage: row.rollout_stage,
+    control_blocker: row.control_blocker,
+    business_owner_role: row.business_owner_role,
+    finance_partner_role: row.finance_partner_role,
+    source_system: row.source_system,
+    source_record_id: row.source_record_id,
+    extract_date: row.extract_date,
+    as_of_date: row.as_of_date,
+    refresh_cadence: row.refresh_cadence,
+    quality_state: row.quality_state,
   }));
   const proofQueue = sources.aiCases
     .filter((row) => row.finance_status !== "finance_validated_actual")
@@ -2391,6 +2449,7 @@ async function main() {
   const cube = buildCubeArtifacts({
     projectRows,
     aiCases,
+    toolRollouts,
     monthlyValue,
   });
   const readModels = buildReadModels(
@@ -2617,6 +2676,12 @@ async function main() {
     "cube/tower_ai_portfolio_cube.csv",
     Object.keys(cube.portfolioCube[0]),
     cube.portfolioCube,
+    manifestFiles,
+  );
+  await writeFile(
+    "cube/tower_ai_tool_rollout_cube.csv",
+    Object.keys(cube.toolRolloutCube[0]),
+    cube.toolRolloutCube,
     manifestFiles,
   );
   await writeFile(

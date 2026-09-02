@@ -366,12 +366,25 @@ export interface TowerAiView {
   posture: string;
   usageHeadline: string | null;
   usageBars: readonly TowerUsageBar[];
+  rolloutGoal?: string | null;
+  rolloutStage?: string | null;
+  rolloutTargetUsers?: number | null;
+  /** Provisioned or enabled users for a tool rollout. Null when the source did not record it. */
+  enabledUsers?: number | null;
+  monthlyActiveUsers?: number | null;
+  adoptionActualPct?: number | null;
   /** The rollout's own adoption target, 0-100. Null when the source row asserts none. */
   adoptionTargetPct: number | null;
   /** Cases the source row says this rollout supports. Null when not asserted. */
   linkedBusinessCaseCount: number | null;
   note: string | null;
   sourceFile: string | null;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+  extractDate?: string | null;
+  sourceAsOfDate?: string | null;
+  refreshCadence?: string | null;
+  sourceQualityState?: string | null;
 }
 
 /** A not-funded candidate, listed separately from approved spend. */

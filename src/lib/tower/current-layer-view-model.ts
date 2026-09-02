@@ -223,6 +223,11 @@ export interface TowerMartAiPortfolioItem {
   promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
   usageMetric: string | null;
+  rolloutGoal?: string | null;
+  rolloutStage?: string | null;
+  rolloutTargetUsers?: number | null;
+  /** Provisioned or enabled users for a tool rollout. Null when the source did not record it. */
+  enabledUsers?: number | null;
   usageActual: number | null;
   adoptionRatePct: number | null;
   /** The rollout's own adoption target. Written by the loader as `adoption_target_pct`. */
@@ -253,6 +258,12 @@ export interface TowerMartAiPortfolioItem {
   caveat: string;
   sourceFile: string | null;
   sourceRow: string | null;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+  extractDate?: string | null;
+  sourceAsOfDate?: string | null;
+  refreshCadence?: string | null;
+  sourceQualityState?: string | null;
 }
 
 export interface TowerMartCxoAction {

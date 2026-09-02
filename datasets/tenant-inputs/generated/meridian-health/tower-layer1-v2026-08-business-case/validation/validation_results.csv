@@ -26,10 +26,11 @@ approved_and_promised_value_are_separate,PASS,$703.1M approved vs $677.8M projec
 layer_2_adapter_lineage_complete,PASS,987 emitted objects with preserved lineage
 layer_3_canonical_counts_match_source,PASS,"140 projects, 42 AI use cases, 504 value observations"
 layer_3_relationships_present,PASS,280 canonical relationships
-cube_reconciles_to_canonical,PASS,42 case cube rows; $211.8M cube AI investment
+cube_reconciles_to_canonical,PASS,"42 case cube rows, 13 tool rollout cube rows; $211.8M cube AI investment"
 read_models_reconcile_to_cube,PASS,"42 initiative rows, 13 tool rows, 34 proof queue rows"
 foundation_no_direct_roi,PASS,14 foundation/readiness cases carry no direct ROI
 tool_rollout_goals,PASS,13 tool rollout rows
+tool_rollout_field_survival_contract,PASS,"13 tool rows preserve approved fields through L3, L4 and cube"
 monthly_tracking_complete,PASS,504 monthly value observations
 monthly_value_promotion_order,PASS,0 rows violate sponsor -> finance -> claimable order
 finance_state_variety,PASS,"states: cfo_approved_target, finance_challenged, finance_validated_actual, not_submitted, sponsor_claimed"

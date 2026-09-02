@@ -129,7 +129,7 @@
     {
       "file": "layer_3_canonical/canonical_tools.csv",
       "rows": 13,
-      "sha256": "3f9791ef9a9b97c631934387c85d497a96d1530f353bea90680781328056e67c"
+      "sha256": "65673b6a7404f5539d5ec281ac8c43ae605efa75e09f4f458b61bc41afefb8b9"
     },
     {
       "file": "layer_3_canonical/canonical_monthly_value_observations.csv",
@@ -162,14 +162,19 @@
       "sha256": "4ffe5150c6ffbd5a3873e95c5b1710db542e2e307415a90f6f49f365d0bc30e3"
     },
     {
+      "file": "cube/tower_ai_tool_rollout_cube.csv",
+      "rows": 13,
+      "sha256": "642e7c3c94febcae0006c8a7b3c69eb471b1fdac72723be95559e46940a02bee"
+    },
+    {
       "file": "cube/cube_measures.csv",
-      "rows": 7,
-      "sha256": "6553c4763c897e7c24f321e2810d41a9563614d2f1316818d99880cd21d9b25f"
+      "rows": 14,
+      "sha256": "f1b77e151b8df2274c4ae90646a1c45c1abdfab5992b2def3a2ca7307d16233a"
     },
     {
       "file": "cube/cube_dimensions.csv",
-      "rows": 5,
-      "sha256": "826563671dc1def173ee39bf0c373abba87f7ab5a80ae777d45ef3db544decb3"
+      "rows": 9,
+      "sha256": "fed2aac5970772e41d2dbc55a2889a4dce34908b84cd26b8b7fc85b5521b858f"
     },
     {
       "file": "cube/cube_gate_flags.csv",
@@ -189,7 +194,7 @@
     {
       "file": "layer_4_read_models/tower_tools_table.csv",
       "rows": 13,
-      "sha256": "94c6de5cea92127e886354e7c6d273796df119e4d83db7f2b2ec246af8a05425"
+      "sha256": "52e00b5a9688d95c8985641e1d0cd1291b84ecc54b512e0ad83f24a674f2b3c0"
     },
     {
       "file": "layer_4_read_models/tower_value_proof_queue.csv",

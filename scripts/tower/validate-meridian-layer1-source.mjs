@@ -3,6 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateToolRolloutFieldSurvival } from "./validate-tool-rollout-field-survival.mjs";
 
 const ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -55,6 +56,7 @@ const REQUIRED_FILES = [
   "layer_3_canonical/LAYER_3_SIGNOFF.md",
   "cube/tower_ai_case_cube.csv",
   "cube/tower_ai_portfolio_cube.csv",
+  "cube/tower_ai_tool_rollout_cube.csv",
   "cube/cube_measures.csv",
   "cube/cube_dimensions.csv",
   "cube/cube_gate_flags.csv",
@@ -289,6 +291,7 @@ async function main() {
   );
   const caseCube = await readCsv("cube/tower_ai_case_cube.csv");
   const portfolioCube = await readCsv("cube/tower_ai_portfolio_cube.csv");
+  const toolRolloutCube = await readCsv("cube/tower_ai_tool_rollout_cube.csv");
   const executiveSummary = await readCsv(
     "layer_4_read_models/tower_executive_summary.csv",
   );
@@ -302,6 +305,9 @@ async function main() {
   const manifest = JSON.parse(
     await fs.readFile(path.join(PACKAGE_DIR, "package_manifest.json"), "utf8"),
   );
+  const toolRolloutSurvival = await validateToolRolloutFieldSurvival({
+    packageDir: PACKAGE_DIR,
+  });
 
   const gates = [];
   const projectById = new Map(projects.map((row) => [row.project_id, row]));
@@ -587,10 +593,11 @@ async function main() {
     gates,
     "cube_reconciles_to_canonical",
     caseCube.length === canonicalCases.length &&
+      toolRolloutCube.length === canonicalTools.length &&
       cubeAiInvestment === aiProjectBudget &&
       cubeProjectedLow === aiCasePromisedValueLow &&
       cubeProjectedHigh === aiCasePromisedValueHigh,
-    `${caseCube.length} case cube rows; ${money(cubeAiInvestment)} cube AI investment`,
+    `${caseCube.length} case cube rows, ${toolRolloutCube.length} tool rollout cube rows; ${money(cubeAiInvestment)} cube AI investment`,
   );
   assertGate(
     gates,
@@ -619,6 +626,14 @@ async function main() {
         (row) => num(row.rollout_target_users) > 0 || row.rollout_stage,
       ),
     `${rollouts.length} tool rollout rows`,
+  );
+  assertGate(
+    gates,
+    "tool_rollout_field_survival_contract",
+    toolRolloutSurvival.status === "PASS",
+    toolRolloutSurvival.status === "PASS"
+      ? `${toolRolloutSurvival.source_rows} tool rows preserve approved fields through L3, L4 and cube`
+      : toolRolloutSurvival.issues.join("; "),
   );
   assertGate(
     gates,

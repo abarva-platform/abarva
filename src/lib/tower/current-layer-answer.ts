@@ -216,12 +216,17 @@ function toolRows(view: TowerCurrentView): string[][] {
       return [
         item.itemName,
         text(item.vendorName),
+        text(item.rolloutGoal),
+        count(item.rolloutTargetUsers),
+        count(item.enabledUsers),
         item.usageActual === null ? "Not loaded" : `${item.usageActual} ${item.usageMetric ?? ""}`.trim(),
         pct(item.adoptionRatePct),
         pct(item.adoptionTargetPct),
         gap,
         text(item.controlBlocker ?? "None found"),
         count(item.linkedBusinessCaseCount),
+        text(item.sourceSystem),
+        text(item.sourceAsOfDate),
       ];
     });
 }
@@ -324,6 +329,19 @@ function selectedEntityTables(
         ["Gating constraint", text(ai.gatingConstraint)],
         ["Control blocker", text(ai.controlBlocker)],
         ["Finance status", text(ai.financeStatus)],
+        ["Rollout goal", text(ai.rolloutGoal)],
+        ["Rollout stage", text(ai.rolloutStage)],
+        ["Target users", count(ai.rolloutTargetUsers)],
+        ["Enabled users", count(ai.enabledUsers)],
+        ["Monthly active users", count(ai.usageActual)],
+        ["Adoption actual", pct(ai.adoptionRatePct)],
+        ["Adoption target", pct(ai.adoptionTargetPct)],
+        ["Linked business cases", count(ai.linkedBusinessCaseCount)],
+        ["Source system", text(ai.sourceSystem)],
+        ["Source record", text(ai.sourceRecordId ?? ai.sourceRow)],
+        ["Source as of", text(ai.sourceAsOfDate)],
+        ["Refresh cadence", text(ai.refreshCadence)],
+        ["Quality state", text(ai.sourceQualityState)],
         ["Evidence items", String(ai.evidenceItems?.length ?? 0)],
       ]),
     ];
@@ -449,7 +467,21 @@ function answerFromIntent(
     const tools = table(
       "tower_tool_rollouts",
       "AI Tool Rollouts, Adoption Targets, And Blockers",
-      ["Tool", "Vendor", "Users", "Adoption", "Target", "Gap to target", "Control blocker", "Linked cases"],
+      [
+        "Tool",
+        "Vendor",
+        "Goal",
+        "Target users",
+        "Enabled users",
+        "Monthly active users",
+        "Adoption",
+        "Target",
+        "Gap to target",
+        "Control blocker",
+        "Linked cases",
+        "Source system",
+        "As of",
+      ],
       toolRows(view),
     );
     return {
