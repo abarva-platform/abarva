@@ -146,8 +146,13 @@ describe("an exhibit belongs to the argument on the page", () => {
         return has ? chapter.chapterId : null;
       })
       .filter(Boolean);
-    // Value and bets. Not "what do leaders agree on", where it answered nothing that was asked.
-    expect(drawn).toEqual(["strategy_value_creation", "performance_value"]);
+    // One chapter, not two. The exhibit follows the DESCRIPTION of a family, not every argument
+    // that draws on it -- the value chapter still reasons about renewals, as a finding, and the
+    // contract register is described under bets. Drawing the same chart in both places is the
+    // duplication this rule exists to prevent, one visual instead of five tables.
+    //
+    // Still not "what do leaders agree on", where it answered nothing that was asked.
+    expect(drawn).toEqual(["strategy_value_creation"]);
   });
 });
 
