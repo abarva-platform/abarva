@@ -1,0 +1,225 @@
+{
+  "contract_id": "tower_ai_business_case_field_survival_v1",
+  "status": "active",
+  "applies_to": "all_tenants",
+  "object_type": "ai_business_case",
+  "source_file": "22_ai_business_cases.csv",
+  "row_key": "business_case_id",
+  "principle": "Every approved AI business-case field must either survive to a governed consumption layer or be rejected by this contract with an explicit reason.",
+  "layers": {
+    "layer_1_source": "layer_1_client_intake/source_system_extracts/22_ai_business_cases.csv",
+    "layer_2_lineage": "layer_2_source_adapters/adapter_emitted_objects.csv",
+    "layer_3_canonical": "layer_3_canonical/canonical_ai_use_cases.csv",
+    "layer_4_read_model": "layer_4_read_models/tower_ai_initiatives_table.csv",
+    "ai_case_cube": "cube/tower_ai_case_cube.csv"
+  },
+  "required_fields": [
+    {
+      "field": "business_case_id",
+      "meaning": "Stable business-case identity.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "project_id",
+      "meaning": "Funded project linked to the case.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "initiative_name",
+      "meaning": "Plain-language name for the AI initiative.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "initiative_classification",
+      "meaning": "Explicit AI / AI-enabled classification.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "primary_tool_or_platform",
+      "meaning": "Main tool or platform named by the business case.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "vendor_name",
+      "meaning": "Vendor or internal provider named by the case.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "domain_key",
+      "meaning": "Owning IT or business domain.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "business_value_type",
+      "meaning": "Simple value category such as reduce cost, grow revenue, build faster, or foundation.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "business_value_story",
+      "meaning": "Plain-language sponsor value thesis.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "cost_to_build_low_usd",
+      "meaning": "Low end of the one-time build cost estimate.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "cost_to_build_high_usd",
+      "meaning": "High end of the one-time build cost estimate.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "projected_annual_value_low_usd",
+      "meaning": "Low-case annual value promised in the business case.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "projected_annual_value_high_usd",
+      "meaning": "High-case annual value promised in the business case.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "roi_low_multiple",
+      "meaning": "Low-case projected ROI multiple.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "roi_high_multiple",
+      "meaning": "High-case projected ROI multiple.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "payback_months_target",
+      "meaning": "Target months to payback.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "benefit_realization_lag_months",
+      "meaning": "Expected lag before value starts to show.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "success_metric",
+      "meaning": "Operating metric used to prove value.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "baseline_value",
+      "meaning": "Starting value for the operating metric.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "target_value",
+      "meaning": "Target value for the operating metric.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "metric_unit",
+      "meaning": "Unit for the operating metric.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "proof_needed",
+      "meaning": "Evidence needed before the value can move forward.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "business_sponsor_role",
+      "meaning": "Business role accountable for the claim.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "finance_partner_role",
+      "meaning": "Finance role accountable for value review.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "finance_status",
+      "meaning": "Current finance-review state.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "cfo_approval_date",
+      "meaning": "Date of CFO target approval, when loaded.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "committee_decision",
+      "meaning": "Committee disposition for the case.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "readiness_score",
+      "meaning": "Discovery-derived execution readiness score.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "confidence_level",
+      "meaning": "Confidence level assigned to the case estimate.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "gating_constraint",
+      "meaning": "Named constraint blocking progress.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "value_tracking_cadence",
+      "meaning": "Expected cadence for refreshing value evidence.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "source_system",
+      "meaning": "Upstream system or tracker that supplied the row.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "source_record_id",
+      "meaning": "Upstream row identity.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "extract_date",
+      "meaning": "Date the source extract was produced.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "as_of_date",
+      "meaning": "Reporting period covered by the row.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    },
+    {
+      "field": "quality_state",
+      "meaning": "Source quality state earned by the generated package.",
+      "survives_to": ["layer_3_canonical", "layer_4_read_model", "ai_case_cube"]
+    }
+  ],
+  "layer_2_checks": {
+    "adapter_id": "meridian_ai_business_case_adapter",
+    "canonical_object_type": "AIUseCase",
+    "lineage_status": "preserved",
+    "required_columns": [
+      "tenant_key",
+      "adapter_id",
+      "canonical_object_type",
+      "canonical_object_id",
+      "source_file",
+      "source_row",
+      "source_system",
+      "source_record_id",
+      "lineage_status",
+      "extract_date",
+      "as_of_date"
+    ]
+  },
+  "relationship_checks": [
+    {
+      "file": "layer_3_canonical/canonical_relationships.csv",
+      "from_object_type": "Project",
+      "relationship_type": "implements",
+      "to_object_type": "AIUseCase",
+      "expected_per_case": 1
+    }
+  ]
+}

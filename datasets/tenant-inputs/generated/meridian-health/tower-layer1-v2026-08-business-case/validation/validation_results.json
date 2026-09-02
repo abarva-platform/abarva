@@ -218,6 +218,11 @@
       "detail": "13 tool rollout rows"
     },
     {
+      "id": "ai_business_case_field_survival_contract",
+      "status": "PASS",
+      "detail": "42 AI business-case rows preserve approved fields through L3, L4 and cube"
+    },
+    {
       "id": "tool_rollout_field_survival_contract",
       "status": "PASS",
       "detail": "13 tool rows preserve approved fields through L3, L4 and cube"
