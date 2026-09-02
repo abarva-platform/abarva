@@ -3,12 +3,13 @@ import "server-only";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 import type { AvaAnswerPacket, AvaArtifact, AvaCitation } from "@/lib/ava-answer/contract";
-import type { ChapterId, ChapterView, GroundedClaim, HomeReviewBundle } from "@/lib/home/preview/types";
+import type { ChapterId, ChapterView, GroundedClaim, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
 
-/** Only the two fields answerHomeAvaQuestion actually reads -- narrower than HomeReviewBundle so
- * a test fixture doesn't need to fabricate an unused thesis/provenance payload just to satisfy
- * the type. getHomeReviewBundle's return value already structurally satisfies this. */
-type AvaAnswerBundleSlice = Pick<HomeReviewBundle, "chapters" | "technologyEstate">;
+/** Narrower than HomeReviewBundle so tests don't need to fabricate unrelated payload. The route
+ * passes the full bundle, so thesis is available when the serving packet carries it; older fixtures
+ * still degrade to chapter and technology summaries. */
+type AvaAnswerBundleSlice = Pick<HomeReviewBundle, "chapters" | "technologyEstate"> &
+  Partial<Pick<HomeReviewBundle, "thesis">>;
 
 const PROMPT_VERSION = "home-preview-ava-answer-v1";
 const CLAUDE_MODEL = "claude-sonnet-5";
@@ -49,15 +50,12 @@ const TENANT_DISPLAY_NAMES: Record<string, string> = {
   "skyharbor-air": "SkyHarbor Air",
 };
 
-/** Tags every claim across all eight chapters (or just the active one, when supplied) with a
- * short stable reference like "EB-K1" so the model can cite exactly which already-verified
- * statement it drew from, without us trusting it to reproduce the statement text itself. */
-function tagClaims(chapters: ChapterView[], activeChapterId: string | undefined): TaggedClaim[] {
-  const scoped = activeChapterId
-    ? chapters.filter((c) => c.chapterId === activeChapterId)
-    : chapters;
+/** Tags every claim across all eight chapters with a short stable reference like "EB-K1" so the
+ * model can cite exactly which already-verified statement it drew from. The active chapter is a
+ * focus hint, not a context fence; narrowing this list made aVa miss material cross-domain context. */
+function tagClaims(chapters: ChapterView[]): TaggedClaim[] {
   const tagged: TaggedClaim[] = [];
-  for (const chapter of scoped) {
+  for (const chapter of chapters) {
     const abbrev = CHAPTER_ABBREV[chapter.chapterId];
     chapter.key_insights.forEach((claim, i) => tagged.push({ tag: `${abbrev}-K${i + 1}`, claim, chapterId: chapter.chapterId }));
     chapter.tensions.forEach((claim, i) => tagged.push({ tag: `${abbrev}-T${i + 1}`, claim, chapterId: chapter.chapterId }));
@@ -66,8 +64,109 @@ function tagClaims(chapters: ChapterView[], activeChapterId: string | undefined)
   return tagged;
 }
 
-function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, activeChapterId: string | undefined): GroundingContext {
-  const taggedClaims = tagClaims(bundle.chapters, activeChapterId);
+const SPINE_AREAS: Array<{
+  key: string;
+  label: string;
+  chapters: ChapterId[];
+  objectTypes?: TechObjectType[];
+}> = [
+  { key: "enterprise_profile", label: "Enterprise profile", chapters: ["executive_brief", "our_business"] },
+  { key: "business_model", label: "Business model and books of business", chapters: ["our_business"] },
+  { key: "strategy_priorities", label: "Strategy and priorities", chapters: ["strategy_value_creation"] },
+  { key: "operating_model", label: "Operating model, organization and ownership", chapters: ["how_we_operate"], objectTypes: ["organization_ownership"] },
+  { key: "programs_transformation", label: "Major programs and transformation agenda", chapters: ["strategy_value_creation", "performance_value"], objectTypes: ["program_initiative"] },
+  { key: "applications_technology", label: "Applications and technology estate", chapters: ["technology_data"], objectTypes: ["application_system"] },
+  { key: "data_analytics_ai", label: "Data, analytics and AI estate", chapters: ["technology_data"], objectTypes: ["data_asset_or_integration", "ai_use_case"] },
+  { key: "infrastructure_hosting", label: "Infrastructure and hosting", chapters: ["technology_data"], objectTypes: ["infrastructure_platform"] },
+  { key: "vendors_contracts", label: "Vendors, contracts and commercial dependencies", chapters: ["technology_data", "what_needs_attention"], objectTypes: ["vendor_contract"] },
+  { key: "financials_value", label: "Financials, spend, value and outcomes", chapters: ["performance_value"], objectTypes: ["metric_outcome"] },
+  { key: "risks_controls", label: "Risks, controls and resilience", chapters: ["what_needs_attention"], objectTypes: ["risk_control"] },
+  { key: "leadership_themes", label: "Leadership themes and disagreements", chapters: ["leadership_perspective"] },
+  { key: "known_gaps", label: "Known gaps, conflicts and evidence limitations", chapters: ["executive_brief", "our_business", "what_needs_attention"] },
+  { key: "attention_decisions", label: "Current major decisions and attention areas", chapters: ["executive_brief", "what_needs_attention"] },
+];
+
+const QUESTION_DOMAIN_RULES: Array<{ key: string; test: RegExp }> = [
+  { key: "applications_technology", test: /\b(applications?|systems?|technology|moderni[sz]ation|estate|platform)\b/i },
+  { key: "data_analytics_ai", test: /\b(data|analytics|ai|automation|reporting|etl|integration|lineage)\b/i },
+  { key: "vendors_contracts", test: /\b(vendors?|contracts?|commercial|renewal|sourcing|third[- ]party)\b/i },
+  { key: "financials_value", test: /\b(spend|cost|budget|value|savings|outcome|metric|roi|financial)\b/i },
+  { key: "risks_controls", test: /\b(risk|control|resilien|security|privacy|compliance|exposure)\b/i },
+  { key: "operating_model", test: /\b(operating model|ownership|owner|organization|organisation|accountab|decision rights?)\b/i },
+  { key: "programs_transformation", test: /\b(program|initiative|transformation|portfolio|delivery|roadmap)\b/i },
+  { key: "strategy_priorities", test: /\b(strategy|priority|bet|direction|where are we going)\b/i },
+  { key: "leadership_themes", test: /\b(leader|leadership|interview|agree|disagree|concern|worr)\b/i },
+];
+
+function claimTagsForChapter(chapter: ChapterView): string[] {
+  const abbrev = CHAPTER_ABBREV[chapter.chapterId];
+  return [
+    ...chapter.key_insights.map((_claim, i) => `${abbrev}-K${i + 1}`),
+    ...chapter.tensions.map((_claim, i) => `${abbrev}-T${i + 1}`),
+    ...chapter.what_to_watch.map((_claim, i) => `${abbrev}-W${i + 1}`),
+  ];
+}
+
+function buildEnterpriseContextSpine(bundle: AvaAnswerBundleSlice) {
+  const chaptersById = new Map(bundle.chapters.map((chapter) => [chapter.chapterId, chapter]));
+  const recordsByType = new Map((bundle.technologyEstate?.recordTypes ?? []).map((recordType) => [recordType.objectType, recordType]));
+
+  return SPINE_AREAS.map((area) => {
+    const areaChapters = area.chapters.map((id) => chaptersById.get(id)).filter((chapter): chapter is ChapterView => Boolean(chapter));
+    const recordSummaries = (area.objectTypes ?? [])
+      .map((objectType) => recordsByType.get(objectType))
+      .filter((recordType): recordType is NonNullable<ReturnType<typeof recordsByType.get>> => Boolean(recordType))
+      .map((recordType) => ({
+        objectType: recordType.objectType,
+        label: recordType.label,
+        totalRecords: recordType.rows.length,
+        primaryDimension: recordType.primaryDimension ?? null,
+        topSegments: (recordType.dimensionCounts ?? []).slice(0, 5),
+      }));
+
+    return {
+      key: area.key,
+      label: area.label,
+      status: areaChapters.length > 0 || recordSummaries.length > 0 ? "available" : "not_available",
+      chapter_refs: areaChapters.map((chapter) => ({
+        chapterId: chapter.chapterId,
+        title: chapter.title,
+        guidingQuestion: chapter.guidingQuestion,
+        headline: chapter.headline,
+        claim_tags: claimTagsForChapter(chapter).slice(0, 10),
+        limitations: chapter.limitations.slice(0, 3),
+      })),
+      record_summaries: recordSummaries,
+    };
+  });
+}
+
+function buildQuestionContextPlan(question: string, activeChapterId: string | undefined) {
+  const matched = QUESTION_DOMAIN_RULES.filter((rule) => rule.test.test(question)).map((rule) => rule.key);
+  const primaryDomains = matched.length > 0 ? matched.slice(0, 2) : ["enterprise_profile", "attention_decisions"];
+  return {
+    active_chapter_focus: activeChapterId ?? null,
+    focus_is_not_a_context_limit: true,
+    answer_depth: /\b(complete|deep|full|comprehensive|detailed|assessment|recommend)\b/i.test(question)
+      ? "deep_dive"
+      : /\b(why|how|should|concern|risk|compare|implication|means?|recommend)\b/i.test(question)
+        ? "executive"
+        : "quick",
+    primary_domains: primaryDomains,
+    secondary_domains: matched.filter((key) => !primaryDomains.includes(key)).slice(0, 6),
+    always_include: [
+      "enterprise_profile",
+      "business_model",
+      "strategy_priorities",
+      "operating_model",
+      "known_gaps",
+      "attention_decisions",
+    ],
+  };
+}
+
+function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, activeChapterId: string | undefined, question: string): GroundingContext {
+  const taggedClaims = tagClaims(bundle.chapters);
   const citationIndex = new Map(taggedClaims.map((t) => [t.tag, t]));
 
   const plottableDatasets = new Map<string, PlottableDataset>();
@@ -80,20 +179,21 @@ function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, 
     });
   }
 
-  const chaptersForContext = (activeChapterId ? bundle.chapters.filter((c) => c.chapterId === activeChapterId) : bundle.chapters).map(
-    (chapter) => {
-      const abbrev = CHAPTER_ABBREV[chapter.chapterId];
-      return {
-        chapterId: chapter.chapterId,
-        title: chapter.title,
-        headline: chapter.headline,
-        executive_synthesis: chapter.executive_synthesis,
-        key_insights: chapter.key_insights.map((c, i) => ({ tag: `${abbrev}-K${i + 1}`, statement: c.statement, claim_type: c.claim_type, confidence: c.confidence })),
-        tensions: chapter.tensions.map((c, i) => ({ tag: `${abbrev}-T${i + 1}`, statement: c.statement, claim_type: c.claim_type, confidence: c.confidence })),
-        what_to_watch: chapter.what_to_watch.map((c, i) => ({ tag: `${abbrev}-W${i + 1}`, statement: c.statement, claim_type: c.claim_type, confidence: c.confidence })),
-      };
-    },
-  );
+  const chaptersForContext = bundle.chapters.map((chapter) => {
+    const abbrev = CHAPTER_ABBREV[chapter.chapterId];
+    return {
+      chapterId: chapter.chapterId,
+      active_focus: chapter.chapterId === activeChapterId,
+      title: chapter.title,
+      guidingQuestion: chapter.guidingQuestion,
+      headline: chapter.headline,
+      executive_synthesis: chapter.executive_synthesis,
+      key_insights: chapter.key_insights.map((c, i) => ({ tag: `${abbrev}-K${i + 1}`, statement: c.statement, claim_type: c.claim_type, confidence: c.confidence })),
+      tensions: chapter.tensions.map((c, i) => ({ tag: `${abbrev}-T${i + 1}`, statement: c.statement, claim_type: c.claim_type, confidence: c.confidence })),
+      what_to_watch: chapter.what_to_watch.map((c, i) => ({ tag: `${abbrev}-W${i + 1}`, statement: c.statement, claim_type: c.claim_type, confidence: c.confidence })),
+      limitations: chapter.limitations,
+    };
+  });
 
   const technologyEstateSummary = (bundle.technologyEstate?.recordTypes ?? []).map((rt) => ({
     objectType: rt.objectType,
@@ -105,7 +205,8 @@ function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, 
 
   const contextPayload = {
     tenant: TENANT_DISPLAY_NAMES[tenantKey] ?? tenantKey,
-    scoped_to_active_chapter: activeChapterId ?? null,
+    question_context_plan: buildQuestionContextPlan(question, activeChapterId),
+    enterprise_context_spine: buildEnterpriseContextSpine(bundle),
     chapters: chaptersForContext,
     technology_estate_summary: technologyEstateSummary,
     plottable_datasets: Array.from(plottableDatasets.entries()).map(([ref, d]) => ({
@@ -124,13 +225,20 @@ function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, 
   };
 }
 
-const SYSTEM_PROMPT = `You are aVa, AbarVa's advisor for this tenant's Home preview experience. Answer the user's question using ONLY the enterprise context supplied in the user message -- the tenant's verified chapter narratives (Executive Brief, Our Business, Strategy & Value Creation, How We Operate, Technology & Data, Performance & Value, Leadership Perspective, What Needs Attention) and its real Technology Estate segmentation counts. Every claim below carries a citation tag (e.g. "EB-K1"); each of those statements has already passed an entailment-verification pass against underlying evidence before publication.
+const SYSTEM_PROMPT = `You are aVa, AbarVa's enterprise advisor for this tenant's Home preview experience. Answer the user's question using ONLY the enterprise context supplied in the user message: the enterprise context spine, the tenant's verified chapter narratives (Executive Brief, Our Business, Strategy & Value Creation, How We Operate, Technology & Data, Performance & Value, Leadership Perspective, What Needs Attention), and its real Technology Estate segmentation counts. Chapter claims carry citation tags (e.g. "EB-K1"); each tagged statement has already passed an entailment-verification pass against underlying evidence before publication.
+
+The enterprise context spine is always available. Treat the active chapter as the user's current focus, not as a boundary. When the question touches one domain, consider whether another domain materially changes the answer: technology may depend on strategy, ownership, contracts, risk, programs, data, value, or leadership testimony. Do not force cross-domain connections when they are not relevant.
+
+Context-use boundaries:
+- enterprise_context_spine and record_summaries are orientation and routing context unless they point to cited claim tags.
+- Tagged chapter claims are factual answer material and must be cited in cited_claim_tags when used in prose.
+- Deterministic plottable_datasets are quantitative exhibit material. Use their values only through the selected chart/table artifact; do not turn record_summaries, topSegments, or totalRecords into uncited prose claims.
 
 Rules, no exceptions:
 1. Never state a number, date, name, or fact that is not verbatim present in the context. If the question isn't covered, say so plainly and set status to "no_data" (nothing relevant) or "partial" (some but incomplete) -- never guess, estimate, or reason from outside general knowledge.
-2. Every claim you rely on must be cited by its exact tag in cited_claim_tags. Only cite tags that appear in the context.
+2. Every tagged chapter claim you rely on must be cited by its exact tag in cited_claim_tags. Only cite tags that appear in the context.
 3. You may request at most one chart or table, and only by naming a dataset_ref taken EXACTLY from plottable_datasets -- you never invent, adjust, estimate, or fabricate the underlying numbers, you only choose whether a precomputed dataset helps answer the question. If none fits, set visual.type to "none".
-4. Speak in plain business language a newly appointed CXO would use. Do not mention internal pipeline terms (dataset names, schema versions, "context payload", "governed", tag syntax) in direct_answer or prose.
+4. Speak in plain business language a newly appointed CXO would use. Do not mention internal pipeline terms (dataset names, schema versions, "context payload", "governed", tag syntax, ECL, projection, agent-ready state, hashes, source rows) in direct_answer or prose.
 5. Output strict JSON only -- no markdown code fences, no commentary before or after the JSON.
 
 Schema:
@@ -211,7 +319,7 @@ export async function answerHomeAvaQuestion(args: {
   userId?: string | null;
 }): Promise<AvaAnswerPacket> {
   const question = args.question.trim();
-  const context = buildGroundingContext(args.bundle, args.tenantKey, args.activeChapterId);
+  const context = buildGroundingContext(args.bundle, args.tenantKey, args.activeChapterId, question);
 
   const userMessage = `Tenant: ${context.tenantDisplayName}\nQuestion: ${question}\n\nContext (JSON):\n${context.promptContextJson}`;
 
@@ -230,7 +338,12 @@ export async function answerHomeAvaQuestion(args: {
       model: CLAUDE_MODEL,
       dataClass: "confidential",
       prompt: `${SYSTEM_PROMPT}\n\n${userMessage}`,
-      metadata: { promptVersion: PROMPT_VERSION, surface: "home", activeChapterId: args.activeChapterId ?? null },
+      metadata: {
+        promptVersion: PROMPT_VERSION,
+        surface: "home",
+        activeChapterId: args.activeChapterId ?? null,
+        contextScope: "enterprise_spine_plus_focus",
+      },
     });
 
     const message = await withTimeout(client.messages.create(requestPayload), TIMEOUT_MS);
