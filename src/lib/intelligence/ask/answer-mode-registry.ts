@@ -1,4 +1,5 @@
 import {
+  GENERAL_ADVISORY_CONTRACT,
   INDUSTRY_TREND_TO_AI_BETS_CONTRACT,
   STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
   STRATEGY_TO_MOVES_EXECUTION_CONTRACT,
@@ -40,6 +41,13 @@ export interface CxoAnswerModeContract {
   systemContract?: string;
   promptDirective?: string;
   deterministicFallback?: (text: string) => string;
+  /**
+   * The surface-handoff FORMAT OVERRIDE tells the model to explain how AbarVa
+   * would run the work through Moves. That is right for the strategy and
+   * bet-framing modes, but wrong for `general`, which also answers simple
+   * factual lookups where a Moves handoff is noise.
+   */
+  suppressSurfaceHandoffOverride?: boolean;
 }
 
 const ABARVA_SURFACE_PLAN_SENTENCE =
@@ -331,6 +339,10 @@ export const CXO_ANSWER_MODE_REGISTRY = {
     bannedPhrases: COMMON_BANNED_PHRASES,
     exportRequired: false,
     liveProofPrompt: "What is the executive read on the current state?",
+    systemContract: GENERAL_ADVISORY_CONTRACT,
+    promptDirective:
+      "ACTIVE ANSWER MODE: general advisory. Classify the depth of the question before writing. If it is a simple factual lookup, answer it directly in one short paragraph and stop -- no executive framework, no unrequested recommendation, no evidence-boundary lecture, no table. If it is an executive or analytical question, lead with the judgment, support it with the two or three strongest tenant signals, and close on the decision implication. Separate tenant-loaded fact from industry pattern from recommendation. Name missing evidence as missing instead of assuming it.",
+    suppressSurfaceHandoffOverride: true,
   },
   strategy_to_abarva_solution: {
     mode: "strategy_to_abarva_solution",
@@ -513,6 +525,9 @@ export function buildCxoAnswerModeSystemAddendum(
 ): string {
   const contract = getCxoAnswerModeContract(mode);
   if (!contract.systemContract) return "";
+  if (contract.suppressSurfaceHandoffOverride) {
+    return `\n\n${contract.systemContract}`;
+  }
 
   return `\n\n${contract.systemContract}
 

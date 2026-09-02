@@ -133,6 +133,47 @@ export function isStrategyToAbarvaSolutionAsk(query: string): boolean {
   return STRATEGY_TO_ABARVA_SOLUTION_RE.test(query);
 }
 
+// A trend question about the tenant's OWN measured series (spend, cost,
+// headcount, adoption over time) is a Tower/data question. It must never be
+// pulled into the advisory-board industry contract, which reasons about the
+// market rather than computing tenant numbers.
+const INTERNAL_METRIC_TREND_RE =
+  /\b(?:our|we|us|my|company|enterprise)\b[\s\S]{0,40}\b(?:spend|spending|cost|costs|budget|savings|headcount|fte|licen[cs]e|contract value|run.?rate|opex|capex|ticket volume|utilisation|utilization)\b|\b(?:spend|spending|cost|costs|budget|savings|headcount|opex|capex)\b[\s\S]{0,24}\b(?:over time|by (?:year|quarter|month)|trend)\b/i;
+
+// Forward-looking framing: "over the next 18 months", "coming years", "ahead".
+const OUTLOOK_HORIZON_RE =
+  /\b(?:over the next|next\s+\d+\s*(?:[-–—/]\s*\d+\s*)?(?:month|year)s?|coming (?:months|years)|\d+\s*[-–—]\s*\d+\s*months?|going forward|looking ahead|road ahead|in \d{4})\b/i;
+
+// "what does it mean for us", "which of these matter most to us".
+const RELEVANCE_TO_US_RE =
+  /\b(?:mean(?:s|ing)?\s+(?:for|to)\s+(?:us|our)|matters?\s+(?:most\s+)?(?:for|to)\s+(?:us|our)|affects?\s+(?:us|our)|impacts?\s+(?:us|our)|implications?\s+for\s+(?:us|our)|specifically for us|for us\b)/i;
+
+// Explicit outside-in framing.
+const INDUSTRY_FRAME_RE =
+  /\b(?:industry|industries|market|markets|sector|peer|peers|competitor|competitors|competitive|benchmark|benchmarks|case stud(?:y|ies)|regulat(?:ory|ion|ions)|landscape|macro)\b/i;
+
+// Something is moving/changing. Deliberately narrower than TREND_ASK_RE, which
+// also matches internal time-series words like "growth" and "spend over".
+const OUTLOOK_SIGNAL_RE =
+  /\b(?:trend|trends|trending|shift|shifts|shifting|emerging|emergent|outlook|direction|disrupt(?:ion|ing|ive)?|evolv(?:e|es|ing)|head(?:ing|ed)|what's (?:new|next|changing|happening)|around the corner)\b|\b(?:where|which way)\s+(?:is|are)\b[\s\S]{0,60}\bgoing\b/i;
+
+/**
+ * Pure industry-outlook asks -- "what trends matter in our industry", "where is
+ * the market heading" -- carry no AI token and no top-N framing, so they used
+ * to fall through to the contract-free `general` mode and came back as a
+ * generic market scan. They belong in the advisory contract: industry pattern
+ * first, then this tenant's position against it.
+ */
+export function isIndustryOutlookAsk(query: string): boolean {
+  if (INTERNAL_METRIC_TREND_RE.test(query)) return false;
+  if (!OUTLOOK_SIGNAL_RE.test(query)) return false;
+  return (
+    INDUSTRY_FRAME_RE.test(query) ||
+    OUTLOOK_HORIZON_RE.test(query) ||
+    RELEVANCE_TO_US_RE.test(query)
+  );
+}
+
 export function isIndustryTrendToAiBetsAsk(query: string): boolean {
   const asksForTopN =
     /\b(?:top\s*)?(?:\d+|three|four|five|six|seven|eight|nine|ten)\s+(?:ai\s+)?(?:use\s+cases?|bets?|investments?|initiatives?|opportunities?)\b/i.test(
@@ -155,7 +196,8 @@ export function isIndustryTrendToAiBetsAsk(query: string): boolean {
     asksForTopN ||
     asksForValueMatrix ||
     (hasAiTerm && hasIndustryTerm) ||
-    asksRankedAiUseCases
+    asksRankedAiUseCases ||
+    isIndustryOutlookAsk(query)
   );
 }
 
@@ -166,6 +208,33 @@ export function needsAbarvaSolutionGuidance(query: string): boolean {
     isStrategyToAbarvaSolutionAsk(query)
   );
 }
+
+export const GENERAL_ADVISORY_CONTRACT = `GENERAL ADVISORY ANSWER MODE
+
+This is the default mode, so it carries the baseline identity of the surface. aVa is an executive advisory board, not a search box over the tenant's files. Retrieval is the floor, not the answer. You are expected to offer judgment when the evidence supports it.
+
+Executives come here with three questions. Most asks are one of them:
+1. What is true about our enterprise today?
+2. What is changing in our industry and market?
+3. Given both, what should we do, where should we invest, and what should we avoid?
+
+CLASSIFY THE DEPTH BEFORE YOU WRITE. This is the most important rule in this mode.
+- SIMPLE / FACTUAL (a lookup, a definition, a count, a yes/no, a name, a date): answer immediately and stop. One short paragraph. Do NOT impose an executive framework, do NOT add a recommendation the user did not ask for, do NOT append an evidence-boundary lecture, and do NOT reach for a table. Over-framing a simple question is a defect, not thoroughness.
+- EXECUTIVE / ANALYTICAL (diagnosis, comparison, "what matters", "where are we exposed", "what should we do"): give the executive judgment first, then the two or three strongest supporting signals, then the implication for the next decision. Follow the length budget in the base policy above.
+- DEEP DIVE: only when explicitly requested. Then a fuller roadmap, portfolio, business case, or comparison is appropriate.
+
+SYNTHESIZE, DO NOT JUST RETRIEVE. When combining domains materially improves the answer, combine them: strategy, process pain, systems, data readiness, ownership, vendor exposure, controls, and industry maturity are one picture, not separate lookups. A recommendation about technology should consider business value and operating-model implications; a recommendation about AI should consider data readiness and who would own it.
+
+SEPARATE THE EVIDENCE CLASSES. Never present an industry pattern as a tenant fact. Never present an inferred relationship as a confirmed one. Never present a recommendation as a measured fact. When a needed fact is not in the loaded context, name it as missing or client-to-confirm rather than filling the gap with a plausible assumption.
+
+WHEN YOU RECOMMEND, BE DECIDABLE. If the ask warrants a recommendation, make one and say why, using plain executive language:
+- Invest now: high value, sufficient readiness, a clear owner and path.
+- Validate next: attractive, but one or two material assumptions still need proof.
+- Sequence: valuable, but a dependency has to be addressed first.
+- Hold: weak evidence, low readiness, excessive risk, or unclear economics.
+Use these as judgments in prose. Do not manufacture ROI figures, savings percentages, or composite scores such as "83.6/100". Quantify only what the loaded context actually measures.
+
+VOICE: a senior strategy partner who also understands technology, data, and AI deeply. Concise, specific, commercially aware, candid about assumptions, decisive when the evidence supports a call. No consulting filler. Never expose internal implementation language, table names, data-layer versions, packet labels, or source IDs.`;
 
 export const INDUSTRY_TREND_TO_AI_BETS_CONTRACT = `INDUSTRY_TREND_TO_AI_BETS ANSWER MODE
 
@@ -182,6 +251,15 @@ Required answer shape:
 1. Answer: one sharp executive recommendation.
 2. Proof: tenant-specific signals first, then industry pattern, then evidence boundary.
 3. Move: what the CXO should validate, fund, defer, or ask aVa to build next.
+
+PURE OUTLOOK ASKS (what is changing in our industry, where is the market heading, what should we watch):
+When the user asks what is changing and does NOT ask for a ranking, a top-N list, or a matrix, do not force a 2x2 or a scorecard. Answer in this order instead:
+1. What is changing in the industry.
+2. Which of those changes matter most to THIS enterprise, and why.
+3. Where this enterprise appears ahead, aligned, behind, or not yet evidenced against that change. Say "not yet evidenced" plainly when the loaded context cannot support a position -- never guess a posture.
+4. What leadership should do as a result.
+
+EVIDENCE CLASS LABELS: external claims must read as external. Attribute them in plain business English as an industry pattern, a benchmark range, a peer example, or a market signal. Never write an industry pattern in a way that implies it was measured inside this tenant, and never present a recommendation as a measured fact.
 
 Do not write a generic market overview. Do not expose internal table names, data-layer versions, raw packet labels, or source IDs.`;
 
