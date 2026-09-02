@@ -23,11 +23,13 @@ import { Client } from 'pg';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
+import { ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS } from '../src/lib/enterprise-context/schema';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
 
 const SQL_PATH = path.resolve(process.cwd(), 'tests/security/rls-regression.sql');
+const EXPECTED_TENANTS = [...ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS];
 
 function fail(code: number, msg: string): never {
   process.stderr.write(`${msg}\n`);
@@ -35,7 +37,10 @@ function fail(code: number, msg: string): never {
 }
 
 function isNotCheckedPrecondition(message: string): boolean {
-  return /Canonical tenant\(s\) .* missing from clients table/.test(message);
+  return (
+    /Canonical tenant\(s\) .* missing from clients table/.test(message) ||
+    /RLS regression expected tenants were not supplied/.test(message)
+  );
 }
 
 /** Redact the password from a Postgres URL for logging. */
@@ -88,6 +93,18 @@ async function main() {
   try {
     process.stdout.write(`rls-regression: running against ${maskUrl(databaseUrl)}\n`);
     await client.query('BEGIN');
+    await client.query(`
+      CREATE TEMP TABLE rls_regression_expected_tenants (
+        tenant_key TEXT PRIMARY KEY
+      ) ON COMMIT DROP
+    `);
+    await client.query(
+      `
+        INSERT INTO rls_regression_expected_tenants (tenant_key)
+        SELECT unnest($1::text[])
+      `,
+      [EXPECTED_TENANTS],
+    );
     await client.query(sql);
     await client.query('COMMIT');
     const elapsed = Math.round((Date.now() - started) / 100) / 10;
