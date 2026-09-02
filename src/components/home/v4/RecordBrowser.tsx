@@ -881,6 +881,7 @@ export function RecordBrowser({
               row={selected.row}
               ordinal={selected.index + 1}
               fieldCount={fieldCount}
+              declaredColumns={recordType.columns}
             />
           ) : null}
         </aside>
@@ -1072,11 +1073,23 @@ function buildDimensions(
       "interviewGroup",
       "systemOrVendorMentioned",
     ],
+    // Ordered by the question each answers, not by how the intake happens to list them. The
+    // filter below drops any that this record does not vary, so a facet costs nothing where a
+    // tenant has not filled the column in.
+    //
+    // The four added here are ones the chapter findings already talk about -- regulatory exposure,
+    // replacement candidacy, recovery objective, debt -- and which a reader could not filter to.
+    // Naming a concentration in prose while leaving the reader unable to select the rows behind it
+    // is the difference between a claim and evidence.
     application_system: [
       "lifecycleState",
       "criticality",
       "deploymentModel",
       "vendor",
+      "dataClassification",
+      "replacementCandidate",
+      "technicalDebtScore",
+      "rtoHours",
     ],
     vendor_contract: [
       "riskRating",
@@ -1424,6 +1437,67 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+/**
+ * Fields that describe how a row got here, not what it says.
+ *
+ * A reader opening a record wants the business object. Load ids, fingerprints, source paths and
+ * packet names are how the loader tracks its own work -- and one of them on the current snapshot is
+ * an absolute filesystem path carrying a home directory. None belongs in front of an executive.
+ *
+ * Kept as a denylist rather than an allowlist because the allowlist was the problem: the detail
+ * panel enumerated the fields it would show, so every column the intake added afterwards was
+ * invisible until somebody remembered to add it. Twelve fields the record declares, populates and
+ * varies were reachable from no surface at all. A denylist grows only when the loader adds
+ * bookkeeping; an allowlist has to grow every time the business record does.
+ */
+const PROVENANCE_FIELDS = new Set([
+  "originalSourceFile",
+  "originalPacket",
+  "originalRowNumber",
+  "sourceFingerprint",
+  "sourceClassification",
+  "consolidationRuleUsed",
+  "conflictStatus",
+  "loadRunId",
+  "sourceFile",
+  "sourceRowId",
+  "recordId",
+  "entityId",
+  "evidenceId",
+  "systemId",
+  "vendorId",
+  "platformId",
+  "riskId",
+  "metricId",
+  "contractId",
+  "orgUnitId",
+  "useCaseId",
+  "relationshipId",
+]);
+
+/**
+ * The fields a record's detail panel shows: everything the row carries that is not bookkeeping,
+ * in the order the source declared its columns.
+ *
+ * `originalRowId` survives on purpose -- it is the one identifier a reader uses, to take a row back
+ * to the file it came from.
+ */
+function detailFieldsFor(
+  recordType: TechObjectType,
+  row: RecordRow,
+  columns: string[] | undefined,
+): string[] {
+  const declared = (columns ?? []).filter((field) => field in row);
+  const rest = Object.keys(row).filter((field) => !declared.includes(field));
+  const curated = DETAIL_FIELDS[recordType] ?? [];
+  const ordered = [...declared, ...rest];
+  return [
+    // The curated order leads where one exists, so the fields a reader looks for first stay first.
+    ...curated.filter((field) => field in row),
+    ...ordered.filter((field) => !curated.includes(field)),
+  ].filter((field) => !PROVENANCE_FIELDS.has(field));
+}
+
 function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
   const candidates: Record<
     TechObjectType,
@@ -1717,15 +1791,16 @@ function SelectedRecord({
   row,
   ordinal,
   fieldCount,
+  declaredColumns,
 }: {
   recordType: TechObjectType;
   row: RecordRow;
   ordinal: number;
   fieldCount: number;
+  /** The source's own column order, so the detail reads in the shape the file declared. */
+  declaredColumns?: string[];
 }) {
-  const fields = (DETAIL_FIELDS[recordType] ?? Object.keys(row)).filter(
-    (field) => field in row,
-  );
+  const fields = detailFieldsFor(recordType, row, declaredColumns);
   const title = titleForSelected(recordType, row);
   return (
     <section style={selectedStyle}>
@@ -1744,10 +1819,15 @@ function SelectedRecord({
       </div>
       <h2 style={selectedTitleStyle}>{title}</h2>
       <div style={selectedMetaStyle}>
-        {fieldCount.toLocaleString()} fields in the source record
+        {fields.length.toLocaleString()} of {fieldCount.toLocaleString()} fields
+        in the source record; the rest record how the row was loaded
       </div>
+      {/* Every field the row carries that is not bookkeeping. This used to stop at eighteen, and
+          the curated list filled all eighteen -- so a dozen fields the record declares and varies
+          were unreachable from anywhere, the cap silently deciding which. A record with more to say
+          makes a longer panel, which is what a detail panel is for. */}
       <dl style={detailGridStyle}>
-        {fields.slice(0, 18).map((field) => (
+        {fields.map((field) => (
           <div key={field} style={{ display: "grid", gap: 3 }}>
             <dt style={detailLabelStyle}>{labelFor(field)}</dt>
             <dd style={detailValueStyle}>{formatByField(field, row[field])}</dd>
