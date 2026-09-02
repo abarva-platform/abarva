@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -94,10 +95,28 @@ async function expectFailure(name, mutate, expectedPattern) {
   });
 }
 
+async function assertLayer3UsesSupportedMeasureScenarioVocabulary() {
+  const outDir = await fs.mkdtemp(path.join(os.tmpdir(), "tool-rollout-layer3-scenarios-"));
+  try {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(ROOT, "scripts/tower/load-healthcare-demo-layer3-canonical.mjs"), "--out-dir", outDir],
+      { cwd: ROOT, encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const sql = await fs.readFile(path.join(outDir, "tower_layer3_ecl_context_load.sql"), "utf8");
+    assert.match(sql, /'enabled_users'/);
+    assert.doesNotMatch(sql, /'enabled'\s*,\s*'source_recorded'/);
+  } finally {
+    await fs.rm(outDir, { recursive: true, force: true });
+  }
+}
+
 const passing = await validateToolRolloutFieldSurvival();
 assert.equal(passing.status, "PASS");
 assert.equal(passing.source_rows, 13);
 assert.equal(passing.issues.length, 0);
+await assertLayer3UsesSupportedMeasureScenarioVocabulary();
 
 await expectFailure(
   "missing-layer4-column",
