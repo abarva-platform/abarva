@@ -35,6 +35,33 @@ interface Dimension {
 }
 
 const COLUMN_PRESETS: Record<TechObjectType, Column[]> = {
+  // Read as a sentence, left to right: this object, this verb, that object. The verb sits between
+  // its endpoints rather than after them, because a grid that lists both names then the type makes
+  // a reader hold two things in mind before learning what connects them.
+  relationship_edge: [
+    { key: "fromObjectName", label: "From", width: 250, priority: "core" },
+    {
+      key: "relationshipType",
+      label: "Relationship",
+      width: 150,
+      kind: "pill",
+    },
+    { key: "toObjectName", label: "To", width: 250 },
+    { key: "toObjectType", label: "To kind", width: 130, kind: "muted" },
+    {
+      key: "relationshipStrength",
+      label: "Strength",
+      width: 110,
+      kind: "pill",
+    },
+    {
+      key: "evidenceBasis",
+      label: "Basis",
+      width: 190,
+      priority: "wide",
+      kind: "muted",
+    },
+  ],
   // The response itself is the widest column because it is the thing being read. What the response
   // NAMES -- a system, a risk -- sits beside it, because that is what makes an opinion checkable
   // against the rest of the record rather than a quotation to be taken on trust.
@@ -319,6 +346,19 @@ const FALLBACK_COLUMNS: Column[] = [
 ];
 
 const DETAIL_FIELDS: Partial<Record<TechObjectType, string[]>> = {
+  relationship_edge: [
+    "fromObjectName",
+    "fromObjectType",
+    "relationshipType",
+    "toObjectName",
+    "toObjectType",
+    "relationshipStrength",
+    "evidenceBasis",
+    "currentStateOrTargetState",
+    "confidence",
+    "knownGaps",
+    "originalRowId",
+  ],
   executive_interview: [
     "executiveArea",
     "stakeholderRole",
@@ -1072,6 +1112,12 @@ function buildDimensions(
   primaryDimension?: string,
 ): Dimension[] {
   const preferred: Partial<Record<TechObjectType, string[]>> = {
+    relationship_edge: [
+      "relationshipType",
+      "fromObjectType",
+      "toObjectType",
+      "relationshipStrength",
+    ],
     executive_interview: [
       "priorityTheme",
       "stakeholderRole",
@@ -1516,6 +1562,24 @@ function relationshipPairsFor(objectType: TechObjectType, rows: RecordRow[]) {
   > = {
     // Each pairing is a question someone actually asks of this record type, not every column
     // against every other. A crossing nobody would ask for is noise with a title on it.
+    relationship_edge: [
+      {
+        key: "kind-kind",
+        title: "What connects to what",
+        caption:
+          "The shape of the declared graph, before any individual edge is read.",
+        left: "fromObjectType",
+        right: "toObjectType",
+      },
+      {
+        key: "verb-strength",
+        title: "Which kinds of connection the record calls critical",
+        caption:
+          "Strength is declared per edge, so this is the record's own weighting rather than ours.",
+        left: "relationshipType",
+        right: "relationshipStrength",
+      },
+    ],
     executive_interview: [
       {
         key: "area-theme",
