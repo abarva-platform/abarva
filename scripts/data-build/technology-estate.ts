@@ -32,6 +32,7 @@ export const TECH_OBJECT_TYPES = [
   "organization_ownership",
   "ai_use_case",
   "executive_interview",
+  "relationship_edge",
 ] as const;
 export type TechObjectType = (typeof TECH_OBJECT_TYPES)[number];
 
@@ -46,6 +47,7 @@ const TECH_OBJECT_TYPE_LABELS: Record<TechObjectType, string> = {
   organization_ownership: "Organization & Ownership",
   ai_use_case: "AI & Automation Use Cases",
   executive_interview: "Leadership Interviews",
+  relationship_edge: "Declared Relationships",
 };
 
 /** The one attribute per object type that answers "which business need does this serve" --
@@ -60,6 +62,9 @@ const PRIMARY_DIMENSION_KEY: Record<TechObjectType, string> = {
   // Executive area, not stakeholder role: 8 areas against 19 roles, and the question the chapter
   // asks is where the leadership of a function stands, not where one named person does.
   executive_interview: "executiveArea",
+  // The verb, not either endpoint: what a reader wants of an edge set is what KINDS of connection
+  // the record declares, before which objects happen to be at the ends of them.
+  relationship_edge: "relationshipType",
   application_system: "businessFunction",
   vendor_contract: "serviceCategory",
   infrastructure_platform: "platformType",

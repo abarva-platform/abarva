@@ -52,6 +52,22 @@ export interface HomeProjectionRow {
 }
 
 const COLUMN_ORDER: Record<TechObjectType, string[]> = {
+  // An edge reads as a sentence: this object, this verb, that object. The endpoints sit either side
+  // of the verb rather than being grouped as "from" fields and "to" fields, because that is how a
+  // reader parses it.
+  relationship_edge: [
+    "fromObjectName",
+    "fromObjectType",
+    "relationshipType",
+    "toObjectName",
+    "toObjectType",
+    "relationshipStrength",
+    "evidenceBasis",
+    "currentStateOrTargetState",
+    "confidence",
+    "knownGaps",
+    "originalRowId",
+  ],
   // The interview record, in the order the intake declares it: who was asked, what they were
   // asked, what they said, and then every estate object the answer names -- which is the half that
   // makes this family joinable to the rest of the record rather than a transcript.
@@ -220,10 +236,12 @@ const LABELS: Record<TechObjectType, string> = {
   organization_ownership: "Organization & Ownership",
   ai_use_case: "AI & Automation Use Cases",
   executive_interview: "Leadership Interviews",
+  relationship_edge: "Declared Relationships",
 };
 
 const PRIMARY_DIMENSION: Record<TechObjectType, string> = {
   executive_interview: "executiveArea",
+  relationship_edge: "relationshipType",
   application_system: "businessFunction",
   vendor_contract: "serviceCategory",
   infrastructure_platform: "platformType",
@@ -262,6 +280,10 @@ const SOURCE_SUMMARY_BY_OBJECT_TYPE: Record<
   executive_interview: {
     domain: "executive_interview",
     sourcePath: "serving.home_executive_interviews",
+  },
+  relationship_edge: {
+    domain: "relationship_edge",
+    sourcePath: "serving.home_relationships",
   },
   application_system: {
     domain: "application_system",
@@ -513,6 +535,31 @@ function executiveInterviewRow(row: HomeProjectionRow): JsonRecord {
     interviewDate: text(payload.interview_date),
     confidence: text(payload.confidence),
     originalRowId: text(payload.interview_id ?? row.row_key),
+  };
+}
+
+/**
+ * One declared edge between two objects.
+ *
+ * The endpoints are names, not ids -- the intake declares "Epic Clarity" rather than a key -- so a
+ * join to the application estate is a name match and can miss. That is the record's shape, and it
+ * is left as the record has it rather than resolved here, because a silent near-match is worse than
+ * an unresolved name a reader can see.
+ */
+function relationshipEdgeRow(row: HomeProjectionRow): JsonRecord {
+  const payload = rowPayload(row);
+  return {
+    fromObjectName: text(payload.from_object_name) ?? row.title,
+    fromObjectType: text(payload.from_object_type),
+    relationshipType: text(payload.relationship_type),
+    toObjectName: text(payload.to_object_name),
+    toObjectType: text(payload.to_object_type),
+    relationshipStrength: text(payload.relationship_strength),
+    evidenceBasis: text(payload.evidence_basis),
+    currentStateOrTargetState: text(payload.current_state_or_target_state),
+    confidence: text(payload.confidence),
+    knownGaps: text(payload.known_gaps),
+    originalRowId: text(payload.relationship_id ?? row.row_key),
   };
 }
 
@@ -1076,6 +1123,7 @@ export function buildTechnologyEstateFromHomeProjectionRows(
     "executive_interviews",
     executiveInterviewRow,
   );
+  const relationships = intakeFamily("relationships", relationshipEdgeRow);
 
   return {
     recordTypes: [
@@ -1089,6 +1137,7 @@ export function buildTechnologyEstateFromHomeProjectionRows(
       recordType("organization_ownership", orgUnits),
       recordType("ai_use_case", aiUseCases),
       recordType("executive_interview", interviews),
+      recordType("relationship_edge", relationships),
     ].filter((row): row is TechRecordType => Boolean(row)),
   };
 }
@@ -2380,6 +2429,10 @@ async function readHomeProjectionRows(
       union all
       select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
       from serving.home_executive_interviews
+      where tenant_key = $1 and assessment_id = $2
+      union all
+      select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
+      from serving.home_relationships
       where tenant_key = $1 and assessment_id = $2
       union all
       select page_key, row_key, row_type, title, summary, payload_json as display_payload_json
