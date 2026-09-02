@@ -9,6 +9,7 @@ import { demoSafeClientText } from "@/lib/client-config";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type {
   ChapterId,
+  HomeRecordRenderSource,
   HomeReviewBundle,
   TechObjectType,
 } from "@/lib/home/preview/types";
@@ -92,9 +93,11 @@ function formatCompiledDate(value: string): string {
 
 export function HomeV4App({
   bundle,
+  recordSource,
   tenantKey,
 }: {
   bundle: HomeReviewBundle;
+  recordSource?: HomeRecordRenderSource;
   tenantKey: HomePreviewTenantKey;
 }) {
   // Home opens on the briefing: chapter one, the first question a new executive arrives with.
@@ -310,6 +313,16 @@ export function HomeV4App({
   ];
 
   const provenance = bundle.provenance;
+  const canonicalSnapshotHash =
+    provenance.canonical_snapshot_hash ?? "reviewed-snapshot-unhashed";
+  const renderedRecordSource =
+    recordSource ??
+    ({
+      kind: canonicalSnapshotHash.startsWith("ecl:")
+        ? "ecl_serving_projection"
+        : "reviewed_snapshot",
+      canonicalSnapshotHash,
+    } satisfies HomeRecordRenderSource);
   const compiledLine = [
     formatCompiledDate(provenance.generated_at),
     `from ${signalPacket.signals.length} signals`,
@@ -344,6 +357,7 @@ export function HomeV4App({
           activeId={activeView}
           onSelect={selectActiveView}
           compiledLine={compiledLine}
+          recordSource={renderedRecordSource}
         />
 
         <main style={{ minWidth: 0, overflowY: "auto", padding: "0 0 60px" }}>

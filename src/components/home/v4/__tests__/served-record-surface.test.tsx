@@ -17,7 +17,7 @@ import "@testing-library/jest-dom";
 // Must precede the served-path builder import below; see the module for why.
 import "../test-support/text-encoder-polyfill";
 
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 import {
   buildHomeReviewBundleFromEclProjectionRows,
@@ -72,6 +72,51 @@ describe("the served path", () => {
       isGeneratorDeferral(c.headline),
     );
     expect(deferred.length).toBeGreaterThan(0);
+  });
+
+  it("states when the record on screen came from the ECL serving projection", () => {
+    render(<HomeV4App bundle={servedBundle()} tenantKey="meridian-health" />);
+
+    expect(screen.getByText("Record on screen")).toBeInTheDocument();
+    const recordSource = screen
+      .getByText("Live governed record")
+      .closest("[data-home-record-source]");
+    expect(recordSource).toHaveAttribute(
+      "data-home-record-source",
+      "ecl_serving_projection",
+    );
+    expect(recordSource).toHaveAttribute(
+      "data-home-canonical-snapshot-hash",
+      "ecl:assessment-test:serving.home_*:1",
+    );
+  });
+
+  it("states when the record on screen is the reviewed snapshot fallback", () => {
+    const bundle = getHomeReviewBundle("meridian-health");
+    if (!bundle) throw new Error("stored copy missing");
+
+    render(
+      <HomeV4App
+        bundle={bundle}
+        recordSource={{
+          kind: "reviewed_snapshot_fallback",
+          canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+        }}
+        tenantKey="meridian-health"
+      />,
+    );
+
+    const recordSource = screen
+      .getByText("Reviewed stored record fallback")
+      .closest("[data-home-record-source]");
+    expect(recordSource).toHaveAttribute(
+      "data-home-record-source",
+      "reviewed_snapshot_fallback",
+    );
+    expect(recordSource).toHaveAttribute(
+      "data-home-canonical-snapshot-hash",
+      bundle.provenance.canonical_snapshot_hash,
+    );
   });
 
   it.each([

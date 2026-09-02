@@ -18,6 +18,7 @@ import type {
   HomeExecutiveStorySectionId,
   HomeExecutiveStoryTerminalState,
   GroundedClaim,
+  HomeRecordRenderSource,
   HomeReviewBundle,
   Signal,
   TechnologyEstateBundle,
@@ -2476,9 +2477,12 @@ export async function getHomeEclProjectionBundle(
   };
 }
 
-export async function getHomeEclProjectionBundleOrReviewedSnapshot(
+export async function getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
   tenantKey: HomePreviewTenantKey,
-): Promise<HomeReviewBundle> {
+): Promise<{
+  bundle: HomeReviewBundle;
+  recordSource: HomeRecordRenderSource;
+}> {
   const base = getHomeReviewBundle(tenantKey);
   if (!base) {
     throw new Error(
@@ -2487,12 +2491,33 @@ export async function getHomeEclProjectionBundleOrReviewedSnapshot(
   }
 
   try {
-    return await getHomeEclProjectionBundle(tenantKey);
+    const bundle = await getHomeEclProjectionBundle(tenantKey);
+    return {
+      bundle,
+      recordSource: {
+        kind: "ecl_serving_projection",
+        canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+      },
+    };
   } catch (error) {
     console.warn(
       `[home] ECL projection unavailable for ${tenantKey}; rendering reviewed Home snapshot.`,
       error,
     );
-    return base;
+    return {
+      bundle: base,
+      recordSource: {
+        kind: "reviewed_snapshot_fallback",
+        canonicalSnapshotHash: base.provenance.canonical_snapshot_hash,
+      },
+    };
   }
+}
+
+export async function getHomeEclProjectionBundleOrReviewedSnapshot(
+  tenantKey: HomePreviewTenantKey,
+): Promise<HomeReviewBundle> {
+  return (
+    await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
+  ).bundle;
 }

@@ -1,5 +1,9 @@
 import type { CSSProperties } from "react";
 
+import type {
+  HomeRecordRenderSource,
+  HomeRecordSourceKind,
+} from "@/lib/home/preview/types";
 import { MONO, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 /**
@@ -107,18 +111,26 @@ const sectionLinkStyle: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+const RECORD_SOURCE_LABELS: Record<HomeRecordSourceKind, string> = {
+  ecl_serving_projection: "Live governed record",
+  reviewed_snapshot: "Reviewed stored record",
+  reviewed_snapshot_fallback: "Reviewed stored record fallback",
+};
+
 export function Rail({
   clientLabel,
   groups,
   activeId,
   onSelect,
   compiledLine,
+  recordSource,
 }: {
   clientLabel: string;
   groups: RailGroup[];
   activeId: string;
   onSelect: (id: string) => void;
   compiledLine: string[];
+  recordSource: HomeRecordRenderSource;
 }) {
   return (
     <nav
@@ -351,6 +363,26 @@ export function Rail({
           })}
         </div>
       ))}
+
+      <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}>
+        <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>
+          Record on screen
+        </div>
+        <p
+          data-home-record-source={recordSource.kind}
+          data-home-canonical-snapshot-hash={recordSource.canonicalSnapshotHash}
+          title={`canonical_snapshot_hash: ${recordSource.canonicalSnapshotHash}`}
+          style={{
+            margin: 0,
+            fontFamily: MONO,
+            fontSize: 11,
+            lineHeight: 1.75,
+            color: V4.slate,
+          }}
+        >
+          <span>{RECORD_SOURCE_LABELS[recordSource.kind]}</span>
+        </p>
+      </div>
 
       <div style={{ borderTop: `1px solid ${V4.rule}`, paddingTop: 13 }}>
         <div style={{ ...eyebrow(V4.slate), marginBottom: 7 }}>Compiled</div>

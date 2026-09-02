@@ -2,7 +2,10 @@
 
 import { HomeV4App } from "@/components/home/v4/HomeV4App";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
-import type { HomeReviewBundle } from "@/lib/home/preview/types";
+import type {
+  HomeRecordRenderSource,
+  HomeReviewBundle,
+} from "@/lib/home/preview/types";
 
 /** Client boundary for one tenant's preview. Deliberately holds no tenant-switching state and
  * receives only the one bundle it renders: a client-facing surface must not carry a control that
@@ -15,10 +18,18 @@ import type { HomeReviewBundle } from "@/lib/home/preview/types";
  * not the destination. */
 export function HomePreviewAppRoot({
   bundle,
+  recordSource,
   tenantKey,
 }: {
   bundle: HomeReviewBundle;
+  recordSource?: HomeRecordRenderSource;
   tenantKey: HomePreviewTenantKey;
 }) {
-  return <HomeV4App bundle={bundle} tenantKey={tenantKey} />;
+  return (
+    <HomeV4App
+      bundle={bundle}
+      recordSource={recordSource}
+      tenantKey={tenantKey}
+    />
+  );
 }
