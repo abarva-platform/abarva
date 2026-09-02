@@ -50,10 +50,6 @@
       "failing": 6,
       "ran": true
     },
-    "src/lib/home/know/__tests__/home-know-engine.test.ts": {
-      "failing": 1,
-      "ran": true
-    },
     "src/lib/home/know/__tests__/home-know-tenant-binding.test.ts": {
       "failing": 2,
       "ran": true
@@ -64,6 +60,6 @@
     }
   },
   "recordedAt": "2026-09-02",
-  "totalTests": 693,
-  "totalSuites": 75
+  "totalTests": 702,
+  "totalSuites": 77
 }

@@ -41,6 +41,7 @@ interface PlottableDataset {
 interface GroundingContext {
   tenantDisplayName: string;
   promptContextJson: string;
+  taggedClaims: TaggedClaim[];
   citationIndex: Map<string, TaggedClaim>;
   plottableDatasets: Map<string, PlottableDataset>;
 }
@@ -90,12 +91,14 @@ const QUESTION_DOMAIN_RULES: Array<{ key: string; test: RegExp }> = [
   { key: "applications_technology", test: /\b(applications?|systems?|technology|moderni[sz]ation|estate|platform)\b/i },
   { key: "data_analytics_ai", test: /\b(data|analytics|ai|automation|reporting|etl|integration|lineage)\b/i },
   { key: "vendors_contracts", test: /\b(vendors?|contracts?|commercial|renewal|sourcing|third[- ]party)\b/i },
-  { key: "financials_value", test: /\b(spend|cost|budget|value|savings|outcome|metric|roi|financial)\b/i },
+  { key: "financials_value", test: /\b(cfo|finance|financial|commercial|spend|cost|budget|value|savings|outcome|metric|roi|revenue)\b/i },
   { key: "risks_controls", test: /\b(risk|control|resilien|security|privacy|compliance|exposure)\b/i },
   { key: "operating_model", test: /\b(operating model|ownership|owner|organization|organisation|accountab|decision rights?)\b/i },
   { key: "programs_transformation", test: /\b(program|initiative|transformation|portfolio|delivery|roadmap)\b/i },
   { key: "strategy_priorities", test: /\b(strategy|priority|bet|direction|where are we going)\b/i },
   { key: "leadership_themes", test: /\b(leader|leadership|interview|agree|disagree|concern|worr)\b/i },
+  { key: "known_gaps", test: /\b(mislead|caveat|gap|missing|unknown|do not know|don't know|not know|evidence limit|board recommendation)\b/i },
+  { key: "attention_decisions", test: /\b(ceo|board|leadership|decision|friday|first|address|recommendation|attention)\b/i },
 ];
 
 function claimTagsForChapter(chapter: ChapterView): string[] {
@@ -142,7 +145,7 @@ function buildEnterpriseContextSpine(bundle: AvaAnswerBundleSlice) {
 }
 
 function buildQuestionContextPlan(question: string, activeChapterId: string | undefined) {
-  const matched = QUESTION_DOMAIN_RULES.filter((rule) => rule.test.test(question)).map((rule) => rule.key);
+  const matched = matchedQuestionDomains(question);
   const primaryDomains = matched.length > 0 ? matched.slice(0, 2) : ["enterprise_profile", "attention_decisions"];
   return {
     active_chapter_focus: activeChapterId ?? null,
@@ -163,6 +166,10 @@ function buildQuestionContextPlan(question: string, activeChapterId: string | un
       "attention_decisions",
     ],
   };
+}
+
+function matchedQuestionDomains(question: string): string[] {
+  return QUESTION_DOMAIN_RULES.filter((rule) => rule.test.test(question)).map((rule) => rule.key);
 }
 
 function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, activeChapterId: string | undefined, question: string): GroundingContext {
@@ -220,6 +227,7 @@ function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, 
   return {
     tenantDisplayName: TENANT_DISPLAY_NAMES[tenantKey] ?? tenantKey,
     promptContextJson: JSON.stringify(contextPayload, null, 2),
+    taggedClaims,
     citationIndex,
     plottableDatasets,
   };
@@ -228,6 +236,7 @@ function buildGroundingContext(bundle: AvaAnswerBundleSlice, tenantKey: string, 
 const SYSTEM_PROMPT = `You are aVa, AbarVa's enterprise advisor for this tenant's Home preview experience. Answer the user's question using ONLY the enterprise context supplied in the user message: the enterprise context spine, the tenant's verified chapter narratives (Executive Brief, Our Business, Strategy & Value Creation, How We Operate, Technology & Data, Performance & Value, Leadership Perspective, What Needs Attention), and its real Technology Estate segmentation counts. Chapter claims carry citation tags (e.g. "EB-K1"); each tagged statement has already passed an entailment-verification pass against underlying evidence before publication.
 
 The enterprise context spine is always available. Treat the active chapter as the user's current focus, not as a boundary. When the question touches one domain, consider whether another domain materially changes the answer: technology may depend on strategy, ownership, contracts, risk, programs, data, value, or leadership testimony. Do not force cross-domain connections when they are not relevant.
+If the question is broad but relevant cited claims are available, answer directionally with explicit limits instead of returning no_data. Use compact consulting structure: short answer, 3-5 bullets, confidence/evidence, caveat. Avoid long paragraphs.
 
 Context-use boundaries:
 - enterprise_context_spine and record_summaries are orientation and routing context unless they point to cited claim tags.
@@ -429,6 +438,16 @@ function packageModelResponse(
 
   const caveats = Array.isArray(parsed.caveats) ? parsed.caveats.filter((c): c is string => typeof c === "string" && c.trim().length > 0) : [];
 
+  if ((status === "no_data" || citations.length === 0) && shouldRecoverFromRelevantClaims(question)) {
+    const recovered = buildClaimBackedRecoveryAnswer({
+      context,
+      tenantKey,
+      question,
+      modelCaveats: caveats,
+    });
+    if (recovered) return recovered;
+  }
+
   return {
     surface: "home",
     mode: "KNOW",
@@ -459,6 +478,147 @@ function packageModelResponse(
       unsupportedClaimsBlocked: true,
     },
   };
+}
+
+function shouldRecoverFromRelevantClaims(question: string): boolean {
+  return /\b(cfo|ceo|board|commercial|exposed|exposure|mislead|caveat|recommendation|what do we not know|don't know|not know|leadership|technology-value|value risk)\b/i.test(
+    question,
+  );
+}
+
+function buildClaimBackedRecoveryAnswer(input: {
+  context: GroundingContext;
+  tenantKey: string;
+  question: string;
+  modelCaveats: string[];
+}): AvaAnswerPacket | null {
+  const selected = selectRecoveryClaims(input.context, input.question);
+  if (selected.length === 0) return null;
+  const citations: AvaCitation[] = selected.map(({ tag, claim }) => ({
+    id: tag,
+    label: claim.statement.slice(0, 96),
+    sourceClass: "tenant-fact",
+    excerpt: claim.statement,
+    confidence:
+      claim.confidence === "low"
+        ? "low"
+        : claim.confidence === "medium"
+          ? "medium"
+          : "high",
+  }));
+  const caveat = recoveryCaveat(input.question, input.context, input.modelCaveats);
+  const bullets = selected
+    .slice(0, 4)
+    .map(({ claim }) => `- ${compactStatement(claim.statement)}`);
+  const confidence = recoveryConfidence(citations);
+  const prose = [
+    "Short answer: Home has enough evidence to answer directionally, but not enough to turn this into an approval recommendation.",
+    bullets.join("\n\n"),
+    `Confidence / evidence: ${confidence} confidence, based on ${citations.length} cited Home claim${citations.length === 1 ? "" : "s"}.`,
+    `Caveat: ${caveat}`,
+  ].join("\n\n");
+
+  return {
+    surface: "home",
+    mode: "KNOW",
+    tenantKey: input.tenantKey,
+    question: input.question,
+    intent: "home_preview_qa",
+    status: "partial",
+    directAnswer:
+      "Home can answer this directionally from cited enterprise claims, with evidence limits called out.",
+    prose: scrubPublicAvaAnswerText(prose),
+    factsUsed: [],
+    metricsUsed: [],
+    relationshipsUsed: [],
+    artifacts: [],
+    citations,
+    gaps: [],
+    caveats: [{ id: "home-ava-caveat-1", label: "Caveat", detail: caveat }],
+    nextSteps: [],
+    quality: {
+      confidence,
+      evidenceStrength: "partial",
+      tenantGrounding: "complete",
+      answerCompleteness: "partial",
+    },
+    safety: {
+      tenantFencePassed: true,
+      rawIdsSuppressed: true,
+      forbiddenLanguagePassed: true,
+      unsupportedClaimsBlocked: true,
+    },
+  };
+}
+
+function selectRecoveryClaims(context: GroundingContext, question: string): TaggedClaim[] {
+  const domains = matchedQuestionDomains(question);
+  const chapterOrder = new Set<ChapterId>();
+  for (const domain of [
+    ...domains,
+    "attention_decisions",
+    "known_gaps",
+    "enterprise_profile",
+  ]) {
+    const area = SPINE_AREAS.find((candidate) => candidate.key === domain);
+    for (const chapter of area?.chapters ?? []) chapterOrder.add(chapter);
+  }
+  const ordered = context.taggedClaims
+    .filter((entry) => chapterOrder.size === 0 || chapterOrder.has(entry.chapterId))
+    .sort((a, b) => recoveryClaimScore(b, question) - recoveryClaimScore(a, question));
+  return ordered.length > 0 ? ordered.slice(0, 5) : context.taggedClaims.slice(0, 5);
+}
+
+function recoveryClaimScore(entry: TaggedClaim, question: string): number {
+  const normalized = question.toLowerCase();
+  const statement = entry.claim.statement.toLowerCase();
+  let score = 0;
+  for (const token of normalized.split(/[^a-z0-9]+/).filter((part) => part.length > 3)) {
+    if (statement.includes(token)) score += 2;
+  }
+  if (entry.claim.confidence === "high") score += 2;
+  if (/\b(risk|gap|exposure|mislead|caveat|control)\b/.test(statement)) score += 2;
+  if (/\b(cfo|finance|financial|commercial|value|revenue|cost|spend)\b/.test(normalized) && /\b(finance|financial|commercial|value|revenue|cost|spend|budget)\b/.test(statement)) score += 4;
+  if (/\b(ceo|board|leadership|decision)\b/.test(normalized) && /\b(leadership|priority|decision|program|risk|value)\b/.test(statement)) score += 3;
+  return score;
+}
+
+function compactStatement(statement: string): string {
+  const cleaned = statement.replace(/\s+/g, " ").trim();
+  const words = cleaned.split(/\s+/);
+  if (words.length <= 42) return cleaned;
+  return `${words.slice(0, 42).join(" ")}.`;
+}
+
+function recoveryConfidence(citations: AvaCitation[]): "low" | "medium" | "high" {
+  return citations.length >= 4 && citations.every((citation) => citation.confidence === "high")
+    ? "high"
+    : citations.length >= 2
+      ? "medium"
+      : "low";
+}
+
+function recoveryCaveat(
+  question: string,
+  context: GroundingContext,
+  modelCaveats: string[],
+): string {
+  const explicit = modelCaveats.find((item) => item.trim().length > 0);
+  if (explicit) return explicit.trim();
+  const selectedChapters = new Set(
+    selectRecoveryClaims(context, question).map((entry) => entry.chapterId),
+  );
+  const payload = JSON.parse(context.promptContextJson) as {
+    chapters?: Array<{ chapterId?: string; limitations?: string[] }>;
+  };
+  const limitation = payload.chapters
+    ?.filter((chapter) => selectedChapters.has(chapter.chapterId as ChapterId))
+    .flatMap((chapter) => chapter.limitations ?? [])
+    .find((item) => item.trim().length > 0);
+  return (
+    limitation?.trim() ??
+    "This is a Home-level read. It is suitable for walkthrough and triage, not for final approval without source-owner confirmation."
+  );
 }
 
 function buildFallbackPacket(

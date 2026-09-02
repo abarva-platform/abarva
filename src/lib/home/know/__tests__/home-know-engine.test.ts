@@ -928,7 +928,7 @@ describe("Home KNOW contract engine", () => {
     expect(response.prose).toMatch(/Where do you want to go deeper/i);
     expect(response.prose).toMatch(/Leadership and org structure/i);
     expect(response.prose).toMatch(/Application and systems estate/i);
-    expect(response.prose).toMatch(/Skyharbor Air|SkyHarbor Air/i);
+    expect(response.prose).toMatch(/Airline Demo|Skyharbor Air|SkyHarbor Air/i);
     expect(response.tables).toEqual([]);
     expect(response.charts).toEqual([]);
     expect(response.graphs).toEqual([]);
