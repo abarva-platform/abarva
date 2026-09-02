@@ -112,6 +112,19 @@ async function assertLayer3UsesSupportedMeasureScenarioVocabulary() {
   }
 }
 
+async function assertLayer3ReadbackProvesRawAndMeasuredToolFields() {
+  const sql = await generateLoaderSql(
+    path.join(ROOT, "scripts/tower/load-healthcare-demo-layer3-canonical.mjs"),
+    "tower_layer3_ecl_context_readback.sql",
+    "tool-rollout-layer3-readback-",
+  );
+  assert.match(sql, /'ai_tool_field_survival'/);
+  assert.match(sql, /'ai_tool_measure_survival'/);
+  assert.match(sql, /attributes_json \? 'tool_rollout_id'/);
+  assert.match(sql, /m\.metric_key in \('linked_business_case_count','rollout_target_users','enabled_users','monthly_active_users','adoption_target_pct','adoption_actual_pct'\)/);
+  assert.doesNotMatch(sql, /attributes_json \? 'adoption_gap_pct'/);
+}
+
 async function generateLoaderSql(scriptPath, sqlFileName, prefix) {
   const outDir = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
   try {
@@ -124,6 +137,23 @@ async function generateLoaderSql(scriptPath, sqlFileName, prefix) {
   } finally {
     await fs.rm(outDir, { recursive: true, force: true });
   }
+}
+
+async function assertLayer4ReadbackProvesToolPayloadAndCubeFields() {
+  const sql = await generateLoaderSql(
+    path.join(ROOT, "scripts/tower/load-healthcare-demo-layer4-products.mjs"),
+    "tower_layer4_product_cube_readback.sql",
+    "tool-rollout-layer4-readback-",
+  );
+  assert.match(sql, /display_payload_json ->> 'page_key' = 'adoption_lens'/);
+  assert.match(sql, /display_payload_json \? 'tool_name'/);
+  assert.match(sql, /display_payload_json \? 'vendor_name'/);
+  assert.match(sql, /display_payload_json \? 'domain_key'/);
+  assert.match(sql, /display_payload_json \? 'source_record_id'/);
+  assert.match(sql, /dimensions_json \? 'tool_rollout_id'/);
+  assert.match(sql, /dimensions_json \? 'business_owner_role'/);
+  assert.match(sql, /measures_json \? 'linked_business_case_count'/);
+  assert.match(sql, /measures_json \? 'adoption_gap_pct'/);
 }
 
 function insertValuesBlock(sql, tableName) {
@@ -174,6 +204,8 @@ assert.equal(passing.status, "PASS");
 assert.equal(passing.source_rows, 13);
 assert.equal(passing.issues.length, 0);
 await assertLayer3UsesSupportedMeasureScenarioVocabulary();
+await assertLayer3ReadbackProvesRawAndMeasuredToolFields();
+await assertLayer4ReadbackProvesToolPayloadAndCubeFields();
 await assertLayer4CubeMetricsHaveCanonicalDefinitions();
 
 await expectFailure(

@@ -105,10 +105,33 @@ async function assertLayer4CubePayloadCarriesCaseDetail() {
     );
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const sql = await fs.readFile(path.join(outDir, "tower_layer4_product_cube_load.sql"), "utf8");
+    assert.match(sql, /initiative_classification/);
     assert.match(sql, /business_value_story/);
     assert.match(sql, /gating_constraint/);
     assert.match(sql, /cost_to_build_high_usd/);
     assert.match(sql, /benefit_realization_lag_months/);
+  } finally {
+    await fs.rm(outDir, { recursive: true, force: true });
+  }
+}
+
+async function assertLayer4ReadbackProvesCasePayloadAndCubeFields() {
+  const outDir = await fs.mkdtemp(path.join(os.tmpdir(), "ai-case-layer4-readback-"));
+  try {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(ROOT, "scripts/tower/load-healthcare-demo-layer4-products.mjs"), "--out-dir", outDir],
+      { cwd: ROOT, encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const sql = await fs.readFile(path.join(outDir, "tower_layer4_product_cube_readback.sql"), "utf8");
+    assert.match(sql, /display_payload_json ->> 'page_key' = 'ai_portfolio'/);
+    assert.match(sql, /dimensions_json \? 'initiative_classification'/);
+    assert.match(sql, /dimensions_json \? 'source_record_id'/);
+    assert.match(sql, /measures_json \? 'roi_low_multiple'/);
+    assert.match(sql, /measures_json \? 'benefit_realization_lag_months'/);
+    assert.match(sql, /grain_key = 'business_case'/);
+    assert.doesNotMatch(sql, /grain_key = 'ai_business_case'/);
   } finally {
     await fs.rm(outDir, { recursive: true, force: true });
   }
@@ -119,6 +142,7 @@ assert.equal(passing.status, "PASS");
 assert.equal(passing.source_rows, 42);
 assert.equal(passing.issues.length, 0);
 await assertLayer4CubePayloadCarriesCaseDetail();
+await assertLayer4ReadbackProvesCasePayloadAndCubeFields();
 
 await expectFailure(
   "missing-layer4-column",
