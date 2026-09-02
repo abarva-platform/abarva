@@ -84,6 +84,25 @@ describe("Source Workspace aVa contract", () => {
     );
   });
 
+  it("passes a Source-specific claim and refusal contract to aVa", () => {
+    expect(buildViewModelSource).toContain("claimContract: sourceWorkspaceClaimContract");
+    expect(buildViewModelSource).toContain("capabilities: sourceWorkspaceCapabilities");
+    expect(buildViewModelSource).toContain("refusalExamples: sourceWorkspaceRefusalExamples");
+    expect(buildViewModelSource).toContain("groundingStatus: sourceWorkspaceGroundingStatus");
+    expect(buildViewModelSource).toContain(
+      "Do not claim realized savings, ROI, or total savings unless finance confirmation is explicitly loaded and confirmed.",
+    );
+    expect(buildViewModelSource).toContain(
+      "Do not recommend a supplier award, shortlist, BAFO position, or final sourcing decision unless selected-event scoring, pricing, trap-log, and approval evidence are loaded.",
+    );
+    expect(buildViewModelSource).toContain(
+      "Do not disclose or infer another tenant's suppliers, contracts, pricing, events, or benchmarks.",
+    );
+    expect(buildViewModelSource).toContain(
+      "Render a structured exhibit only from loaded rows; otherwise explain the missing row family.",
+    );
+  });
+
   it("labels Source citations as Source instead of hardcoding Intelligence", () => {
     expect(surfaceRetrieverSource).toContain("const activeModule");
     expect(surfaceRetrieverSource).toContain("Active ${activeModule} surface");
