@@ -1,5 +1,6 @@
 "use client";
 
+import { fieldVaries } from "@/lib/home/preview/bundle-normalization";
 import type { EstateRow } from "./page-tables";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
@@ -53,7 +54,15 @@ export function buildDecisionQueue(input: {
 
   // 1. A risk the record rates high whose control it also says is open. Both fields sit on the same
   //    row, so this is the register reading itself.
-  const highOpen = (input.risks ?? []).filter(
+  //
+  //    Unless control status never varies. On a register where every row reads "open", the second
+  //    half of this predicate matches everything and narrows nothing -- the queue applies one
+  //    condition while its own reason line claims two. A predicate that silently stops
+  //    discriminating is worse than one that was never written, because the sentence underneath
+  //    goes on asserting it. So the reason says what actually selected the row.
+  const risks = input.risks ?? [];
+  const controlStatusDiscriminates = fieldVaries(risks, "controlStatus");
+  const highOpen = risks.filter(
     (row) =>
       /^(high|critical)$/.test(lower(row, "severity")) &&
       lower(row, "controlStatus") === "open",
@@ -65,11 +74,18 @@ export function buildDecisionQueue(input: {
       objectType: "risk_control",
       filter: "high",
       rated: "high",
-      because: "Rated high severity with its control declared open.",
+      because: controlStatusDiscriminates
+        ? "Rated high severity with its control declared open."
+        : "Rated high severity. Control status reads the same on every risk in the register, so it selected nothing here.",
     });
   }
-  if ((input.risks?.length ?? 0) > 0 && highOpen.length === 0) {
+  if (risks.length > 0 && highOpen.length === 0) {
     checkedAndEmpty.push("no risk is rated high with an open control");
+  }
+  if (risks.length > 1 && !controlStatusDiscriminates) {
+    checkedAndEmpty.push(
+      "control status reads the same on every risk, so it narrowed nothing",
+    );
   }
 
   // 2. A programme the record itself calls at risk or delayed. Its own status field, not a reading

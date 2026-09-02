@@ -296,9 +296,12 @@ export function ExposuresBand({
   if (claims.length === 0) return null;
   return (
     <div style={{ padding: `0 ${PAGE_X}px` }}>
+      {/* "Open" named a control state the record does not vary: every risk reads open, so the word
+          described the intake rather than the exposure. These are the ones the record RATES, which
+          is what the rows are actually selected on. */}
       <BandHeading
-        title="Open exposures"
-        rubric="Carried here from this enterprise's own risk and dependency records."
+        title="Risk-rated exposures"
+        rubric="Carried here from this enterprise's own risk and dependency records, selected on the severity it rates. Control status is not a predicate unless the source field varies."
         color={V4.red}
         ruleColor="rgba(163,45,45,0.32)"
         style={{ margin: "52px 0 0" }}
