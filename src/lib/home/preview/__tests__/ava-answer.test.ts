@@ -268,6 +268,67 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.quality.confidence).not.toBe("low");
   });
 
+  it("recovers board-reader caveat questions from attention claims", async () => {
+    mockClaudeJson({
+      status: "no_data",
+      direct_answer:
+        "I couldn't produce a grounded answer to that just now -- try rephrasing the question.",
+      prose: "",
+      cited_claim_tags: [],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: [
+          ...CHAPTERS,
+          {
+            chapterId: "what_needs_attention",
+            title: "What Needs Attention",
+            guidingQuestion: "What needs attention?",
+            headline: "Evidence limits need an explicit readout.",
+            executive_synthesis:
+              "Open risks and incomplete evidence should be named before recommendations.",
+            key_insights: [
+              {
+                statement:
+                  "High-severity risks should be handled as open evidence questions until control status is assessed.",
+                evidence_ids: ["ctx_3"],
+                confidence: "high",
+                claim_type: "FACT",
+              },
+            ],
+            tensions: [
+              {
+                statement:
+                  "A board reader could mistake missing control assessment for confirmed uncontrolled risk.",
+                evidence_ids: ["ctx_4"],
+                confidence: "medium",
+                claim_type: "ADVISORY_INFERENCE",
+              },
+            ],
+            what_to_watch: [],
+            questions_to_ask: [],
+            visual_opportunities: [],
+            limitations: ["Control status needs owner confirmation."],
+          },
+        ],
+        technologyEstate: TECHNOLOGY_ESTATE,
+      },
+      tenantKey: "meridian-health",
+      question: "What could mislead a board reader on this page?",
+      activeChapterId: "technology_data",
+    });
+
+    expect(answer.status).toBe("partial");
+    expect(answer.prose).toContain("Confidence / evidence");
+    expect(answer.prose).not.toContain("try rephrasing");
+    expect(answer.citations.map((citation) => citation.id)).toEqual(
+      expect.arrayContaining(["WA-T1"]),
+    );
+  });
+
   it("falls back gracefully when the model returns unparseable JSON", async () => {
     mockGetAuditedAnthropicClient.mockResolvedValue({
       client: {
