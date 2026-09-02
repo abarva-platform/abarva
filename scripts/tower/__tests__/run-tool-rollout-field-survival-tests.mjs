@@ -112,11 +112,69 @@ async function assertLayer3UsesSupportedMeasureScenarioVocabulary() {
   }
 }
 
+async function generateLoaderSql(scriptPath, sqlFileName, prefix) {
+  const outDir = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
+  try {
+    const result = spawnSync(process.execPath, [scriptPath, "--out-dir", outDir], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    return await fs.readFile(path.join(outDir, sqlFileName), "utf8");
+  } finally {
+    await fs.rm(outDir, { recursive: true, force: true });
+  }
+}
+
+function insertValuesBlock(sql, tableName) {
+  const start = sql.indexOf(`insert into ${tableName}`);
+  assert.notEqual(start, -1, `${tableName} insert not found`);
+  const fromInsert = sql.slice(start);
+  const valuesStart = fromInsert.indexOf(" values\n");
+  assert.notEqual(valuesStart, -1, `${tableName} values block not found`);
+  const afterValues = fromInsert.slice(valuesStart + " values\n".length);
+  const end = afterValues.indexOf(";\n");
+  assert.notEqual(end, -1, `${tableName} insert terminator not found`);
+  return afterValues.slice(0, end);
+}
+
+async function assertLayer4CubeMetricsHaveCanonicalDefinitions() {
+  const layer3Sql = await generateLoaderSql(
+    path.join(ROOT, "scripts/tower/load-healthcare-demo-layer3-canonical.mjs"),
+    "tower_layer3_ecl_context_load.sql",
+    "tool-rollout-layer3-metric-definitions-",
+  );
+  const layer4Sql = await generateLoaderSql(
+    path.join(ROOT, "scripts/tower/load-healthcare-demo-layer4-products.mjs"),
+    "tower_layer4_product_cube_load.sql",
+    "tool-rollout-layer4-cube-metrics-",
+  );
+  const definitionKeys = new Set(
+    Array.from(
+      insertValuesBlock(layer3Sql, "ecl_context.metric_definition").matchAll(
+        /\('[^']+',\s*'[^']+',\s*'([^']+)'/g,
+      ),
+      (match) => match[1],
+    ),
+  );
+  const cubeMetricKeys = new Set(
+    Array.from(
+      insertValuesBlock(layer4Sql, "ecl_projection.cube_slice_metric").matchAll(
+        /\('[^']+',\s*'[^']+',\s*'[^']+',\s*'([^']+)'/g,
+      ),
+      (match) => match[1],
+    ),
+  );
+  const missing = Array.from(cubeMetricKeys).filter((key) => !definitionKeys.has(key)).sort();
+  assert.deepEqual(missing, []);
+}
+
 const passing = await validateToolRolloutFieldSurvival();
 assert.equal(passing.status, "PASS");
 assert.equal(passing.source_rows, 13);
 assert.equal(passing.issues.length, 0);
 await assertLayer3UsesSupportedMeasureScenarioVocabulary();
+await assertLayer4CubeMetricsHaveCanonicalDefinitions();
 
 await expectFailure(
   "missing-layer4-column",
