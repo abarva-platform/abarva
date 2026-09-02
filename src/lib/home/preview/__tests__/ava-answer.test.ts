@@ -147,6 +147,7 @@ describe("answerHomeAvaQuestion", () => {
     expect(prompt).toContain("enterprise_context_spine and record_summaries are orientation and routing context");
     expect(prompt).toContain("Tagged chapter claims are factual answer material");
     expect(prompt).toContain("Deterministic plottable_datasets are quantitative exhibit material");
+    expect(prompt).toContain("Use compact consulting structure");
     expect(prompt).not.toContain("scoped_to_active_chapter");
   });
 
@@ -235,6 +236,36 @@ describe("answerHomeAvaQuestion", () => {
 
     expect(answer.status).toBe("no_data");
     expect(answer.quality.answerCompleteness).toBe("blocked");
+  });
+
+  it("recovers broad CXO questions from cited chapter claims instead of returning generic no_data", async () => {
+    mockClaudeJson({
+      status: "no_data",
+      direct_answer: "I couldn't produce a grounded answer to that just now -- try rephrasing the question.",
+      prose: "",
+      cited_claim_tags: [],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question:
+        "I'm on Technology & Data, but tell me what the CFO should care about. Keep it to 5 crisp bullets, with confidence and evidence limits.",
+      activeChapterId: "technology_data",
+    });
+
+    expect(answer.status).toBe("partial");
+    expect(answer.directAnswer).toMatch(/directionally/i);
+    expect(answer.prose).toContain("- ");
+    expect(answer.prose).toContain("Confidence / evidence");
+    expect(answer.prose).toContain("Caveat:");
+    expect(answer.prose).not.toContain("try rephrasing");
+    expect(answer.citations.map((citation) => citation.id)).toEqual(
+      expect.arrayContaining(["TD-K1", "PV-K1"]),
+    );
+    expect(answer.quality.confidence).not.toBe("low");
   });
 
   it("falls back gracefully when the model returns unparseable JSON", async () => {

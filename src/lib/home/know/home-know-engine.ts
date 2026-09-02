@@ -312,6 +312,7 @@ export async function buildHomeKnowResponse(
     tenantKey,
     client: input.client,
   });
+  let currentDossierUnavailableReason: string | null = null;
   try {
     const curated = await loadCuratedSemanticDossier({
       tenantKey: dossierTenantKey,
@@ -379,20 +380,26 @@ export async function buildHomeKnowResponse(
     }
   } catch (error) {
     if (isCuratedDossierNonFallbackError(error)) {
-      return blockedHomeKnowResponse({
-        tenantKey,
-        question: input.question,
-        prose:
-          "I cannot answer this from the current governed context yet. The active context for this tenant or topic needs to be refreshed before Home should use it.",
-      });
+      currentDossierUnavailableReason =
+        error instanceof Error ? error.message : String(error);
+      console.warn(
+        `[home-know.semantic2-dossier] Curated dossier unavailable for ${tenantKey}; using current Home read-model packet: ${currentDossierUnavailableReason}`,
+      );
+    } else {
+      console.warn(
+        `[home-know.semantic2-dossier] Using current read-model packet for ${tenantKey}; retired local dossier fallback disabled: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
-    console.warn(
-      `[home-know.semantic2-dossier] Using current read-model packet for ${tenantKey}; retired local dossier fallback disabled: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
   }
   const packet = await fetchHomeKnowPacket(tenantKey);
+  if (currentDossierUnavailableReason) {
+    packet.readErrors = [
+      ...(packet.readErrors ?? []),
+      "The curated advisor dossier is unavailable; this answer uses the current Home read model instead.",
+    ];
+  }
   const response = buildHomeKnowResponseFromPacket({
     tenantKey,
     question: input.question,
