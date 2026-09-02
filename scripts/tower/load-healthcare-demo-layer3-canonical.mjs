@@ -68,6 +68,7 @@ const METRIC_DEFINITIONS = [
   ["monthly_active_users", "Monthly active users", "Active users observed in the latest tool usage source.", "users", "higher_is_better", "monthly", "sum"],
   ["adoption_target_pct", "Adoption target percent", "Target adoption percent for a tool rollout.", "percent", "higher_is_better", "point_in_time", "avg"],
   ["adoption_actual_pct", "Adoption actual percent", "Observed adoption percent for a tool rollout.", "percent", "higher_is_better", "monthly", "avg"],
+  ["adoption_gap_pct", "Adoption gap percent", "Difference between target and observed adoption for a tool rollout.", "percent", "lower_is_better", "monthly", "avg"],
   ["sponsor_claimed_value_usd", "Sponsor claimed value", "Value claimed by the business sponsor for a reporting month.", "USD", "higher_is_better", "monthly", "sum"],
   ["finance_reviewed_value_usd", "Finance reviewed value", "Value reviewed by Finance for a reporting month.", "USD", "higher_is_better", "monthly", "sum"],
   ["finance_validated_value_usd", "Finance validated value", "Value Finance has validated for a reporting month.", "USD", "higher_is_better", "monthly", "sum"],

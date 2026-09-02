@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-Tower tool rollout measures now use the physical scenario vocabulary accepted by the canonical measure schema. The enabled-users measure remains identifiable by its metric key, while its scenario is recorded as a current-state measurement rather than a separate unsupported scenario value.
+Tower tool rollout measures now use the physical scenario vocabulary accepted by the canonical measure schema. The enabled-users measure remains identifiable by its metric key, while its scenario is recorded as a current-state measurement rather than a separate unsupported scenario value. Cube-only rollout measures also have matching canonical metric definitions before Layer 4 can load them.
 
 ## Layer Impact
 
-`client-data-lane` affects the Layer 3 canonical Tower load path. The generated package is unchanged; the canonical load SQL now emits schema-valid measure rows for tool rollout enabled-user counts.
+`client-data-lane` affects the Layer 3 canonical Tower load path. The generated package is unchanged; the canonical load SQL now emits schema-valid measure rows for tool rollout enabled-user counts and defines the adoption-gap metric consumed by the product cube.
 
-`global-control-lane` affects validation. The tool rollout field-survival regression now dry-runs the Layer 3 SQL and fails if the enabled-users measure emits the unsupported scenario value again.
+`global-control-lane` affects validation. The tool rollout field-survival regression now dry-runs Layer 3 and Layer 4 SQL, fails if the enabled-users measure emits the unsupported scenario value again, and fails if a cube metric lacks a canonical metric definition.
 
 ## Client Applicability
 
@@ -33,13 +33,16 @@ Feature flag: none.
 ## Changes Included
 
 - Updated `scripts/tower/load-healthcare-demo-layer3-canonical.mjs` so `enabled_users` uses the `current` measure scenario.
-- Updated `scripts/tower/__tests__/run-tool-rollout-field-survival-tests.mjs` to dry-run Layer 3 SQL generation and reject the unsupported scenario value.
+- Added the canonical `adoption_gap_pct` metric definition consumed by the Layer 4 AI portfolio cube.
+- Updated `scripts/tower/__tests__/run-tool-rollout-field-survival-tests.mjs` to dry-run Layer 3 and Layer 4 SQL generation, reject the unsupported scenario value, and require cube metrics to have canonical definitions.
 
 ## QA / Validation
 
 Passed: `node scripts/tower/__tests__/run-tool-rollout-field-survival-tests.mjs`.
 
 Passed: `node scripts/tower/load-healthcare-demo-layer3-canonical.mjs --out-dir /tmp/tower-layer3-tool-scenario-dryrun-20260902`.
+
+Passed: `node scripts/tower/load-healthcare-demo-layer3-canonical.mjs --out-dir /tmp/tower-layer3-metric-definition-dryrun-20260902`.
 
 Passed: `npx eslint scripts/tower/load-healthcare-demo-layer3-canonical.mjs scripts/tower/__tests__/run-tool-rollout-field-survival-tests.mjs`.
 
