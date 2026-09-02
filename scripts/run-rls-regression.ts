@@ -23,13 +23,13 @@ import { Client } from 'pg';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
-import { ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS } from '../src/lib/enterprise-context/schema';
+import { CANONICAL_TENANT_KEYS } from '../src/config/tenants/CANONICAL_TENANTS';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
 
 const SQL_PATH = path.resolve(process.cwd(), 'tests/security/rls-regression.sql');
-const EXPECTED_TENANTS = [...ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS];
+const EXPECTED_TENANTS = [...CANONICAL_TENANT_KEYS];
 
 function fail(code: number, msg: string): never {
   process.stderr.write(`${msg}\n`);

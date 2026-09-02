@@ -16,11 +16,11 @@ const workflow = readFileSync(
 
 describe('RLS regression SQL contract', () => {
   it('derives probe tenants from the canonical code constant instead of a SQL alias list', () => {
-    expect(runner).toContain('ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS');
+    expect(runner).toContain('CANONICAL_TENANT_KEYS');
     expect(runner).toContain('CREATE TEMP TABLE rls_regression_expected_tenants');
     expect(runner).toContain('SELECT unnest($1::text[])');
     expect(sql).toContain('rls_regression_expected_tenants');
-    expect(sql).toContain('ENTERPRISE_CONTEXT_CANONICAL_TENANT_KEYS');
+    expect(sql).toContain('CANONICAL_TENANT_KEYS');
     expect(sql).toContain('resolved to an empty set');
     expect(sql).not.toContain("('apex-retail')");
     expect(sql).not.toContain("('meridian-health')");
