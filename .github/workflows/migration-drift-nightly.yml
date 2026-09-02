@@ -1,9 +1,19 @@
 name: Migration drift · nightly prod check
 
-# Tier 3 · Run every night · compare supabase/migrations/*.sql against
-# schema_migrations table on prod. Error if any migration has been
-# committed but not applied. Alerts via GitHub Action failure +
-# notification (follows repo's configured notification path).
+# Tier 3 · Run every night · compare supabase/migrations/*.sql against the
+# schema_migrations table on the live database ledger. Error if any migration
+# has been committed but not applied.
+#
+# WHY THIS RUNS THROUGH AN ACA JOB RATHER THAN CONNECTING DIRECTLY
+#
+# Direct runner-to-database access is not a valid proof path for the private
+# Azure Postgres network. This check submits the same read-only `db:migrate:dry`
+# through the private operator job used by db-migration-lab.yml's preflight:
+# same deployed image, same database secret reference, same network path.
+#
+# This lane remains READ-ONLY. It runs `db:migrate:dry` and nothing else. It
+# must never apply a migration; that is db-migration-lab.yml's job and requires
+# an explicit dispatch with confirmation.
 
 on:
   schedule:
@@ -11,23 +21,25 @@ on:
     - cron: '0 7 * * *'
   workflow_dispatch: # allow manual trigger from Actions tab
 
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+  RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+  AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+  AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+  AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
+
 jobs:
   drift-check:
-    name: Compare migrations dir against prod schema_migrations
+    name: Compare migrations dir against live schema_migrations
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Guard · DATABASE_URL must be set
-        run: |
-          if [ -z "$DATABASE_URL" ]; then
-            echo "::error::DATABASE_URL secret missing. Add it in Settings → Secrets → Actions."
-            exit 1
-          fi
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -38,56 +50,135 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Diagnostic · DB host + migration tracking state
-        continue-on-error: true
+      - name: Verify Azure OIDC configuration
+        shell: bash
         run: |
-          set +e
-          host=$(echo "${DATABASE_URL:-}" | sed -n 's|.*@\([^:/]*\).*|\1|p')
-          files=$(ls supabase/migrations/*.sql 2>/dev/null | grep -v RUN_THIS_ | wc -l | tr -d ' ')
-          {
-            echo "## Pre-check diagnostics"
-            echo ""
-            echo "- Host: \`${host:-unknown}\`"
-            echo "- Migration files in repo: **${files}**"
-            echo ""
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Dry-run migrations · pending means drift
-        id: dry
-        run: |
-          set +e
-          output=$(npm run --silent db:migrate:dry 2>&1)
-          rc=$?
-          echo "$output"
-          {
-            echo "## Runner output"
-            echo ""
-            echo '```'
-            echo "$output"
-            echo '```'
-            echo ""
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ $rc -ne 0 ]; then
-            {
-              echo "## Result"
-              echo ""
-              echo "❌ Runner exited with code $rc"
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit $rc
-          fi
-          if echo "$output" | grep -q "Pending migrations"; then
-            {
-              echo "## Result"
-              echo ""
-              echo "❌ DRIFT · migrations committed but not applied on prod"
-              echo ""
-              echo "**Fix:** backfill schema_migrations, apply missing migration, or verify DATABASE_URL points to the right project."
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::DRIFT · migrations committed but not applied on prod"
+          set -euo pipefail
+          missing=()
+          if [[ -z "${AZURE_DEPLOY_CLIENT_ID}" ]]; then missing+=("AZURE_CLIENT_ID or AZURE_LAB_CLIENT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_TENANT_ID}" ]]; then missing+=("AZURE_TENANT_ID or AZURE_LAB_TENANT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_SUBSCRIPTION_ID}" ]]; then missing+=("AZURE_SUBSCRIPTION_ID or AZURE_LAB_SUBSCRIPTION_ID"); fi
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing Azure configuration:\n' >&2
+            printf -- '- %s\n' "${missing[@]}" >&2
             exit 1
           fi
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Prepare audit artifacts directory
+        run: mkdir -p audit-artifacts/migration-drift
+
+      # Read the image currently serving 100% of traffic. The migrations
+      # directory inside that image is what main actually shipped, so the
+      # running image is the proof of what should be applied.
+      - name: Resolve currently-deployed image digest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json)"
+          echo "$app_json" > audit-artifacts/migration-drift/containerapp.json
+          template_image="$(echo "$app_json" | jq -r '.properties.template.containers[0].image // empty')"
+          if [[ -z "$template_image" || "$template_image" != *"@sha256:"* ]]; then
+            echo "Could not resolve a digest-pinned template image from the live container app." >&2
+            exit 1
+          fi
+          echo "image=$template_image" >> "$GITHUB_OUTPUT"
+          echo "$template_image" > audit-artifacts/migration-drift/image.txt
+
+      # Read-only. Submits db:migrate:dry into the private operator job, which
+      # is the only path with network access to the database.
+      - name: Dry-run migrations through the private operator job
+        id: dry
+        shell: bash
+        run: |
+          set +e
+          npm run --silent ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:migrate:dry \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/migration-drift/dry \
+            > audit-artifacts/migration-drift/dry.log 2>&1
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+          cat audit-artifacts/migration-drift/dry.log
+
+      # THREE OUTCOMES, KEPT APART.
+      #
+      #   checked + clean   → no pending migrations
+      #   checked + drift   → pending migrations exist
+      #   NOT CHECKED       → the job did not run, or produced no readable output
+      #
+      # The third is the one that matters. A monitor that cannot reach the
+      # database has not found "no drift" — it has found nothing, and must say
+      # so rather than exiting quietly or implying a clean result. This is the
+      # same rule the product applies to unreadable documents: not-checked is
+      # never reported as clean.
+      - name: Classify result
+        shell: bash
+        run: |
+          set -uo pipefail
+          logs="audit-artifacts/migration-drift/dry/04-logs.txt"
+          rc="${{ steps.dry.outputs.rc }}"
+
+          if [[ "$rc" != "0" || ! -s "$logs" ]]; then
+            {
+              echo "## Result — NOT CHECKED"
+              echo ""
+              echo "The drift check did not run to completion, so **drift state is unknown**."
+              echo "This is not a clean result and must not be read as one."
+              echo ""
+              echo "- operator job exit code: \`${rc}\`"
+              echo "- job log present: \`$([[ -s "$logs" ]] && echo yes || echo no)\`"
+              echo ""
+              echo "Check Azure login, the operator job, and the"
+              echo "\`azure-postgres-control-database-url\` secret."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::NOT CHECKED · drift state unknown — the check could not run"
+            exit 1
+          fi
+
+          if grep -q "Pending migrations" "$logs"; then
+            pending="$(grep -A200 "Pending migrations" "$logs" | grep -oE '[0-9]{14}_[a-z0-9_]+\.sql' | sort -u)"
+            count="$(echo "$pending" | grep -c . || true)"
+            {
+              echo "## Result — DRIFT"
+              echo ""
+              echo "**${count} migration(s) committed but not applied.**"
+              echo ""
+              echo '```'
+              echo "$pending"
+              echo '```'
+              echo ""
+              echo "Apply via the \`Database migration — lab\` workflow (mode=apply)."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::DRIFT · ${count} migration(s) committed but not applied"
+            exit 1
+          fi
+
           {
-            echo "## Result"
+            echo "## Result — CHECKED, NO DRIFT"
             echo ""
-            echo "✓ No drift. All migrations applied."
+            echo "All migrations in the repository are recorded as applied."
+            echo ""
+            echo "Note: this compares the migrations directory against the"
+            echo "\`schema_migrations\` ledger. A migration recorded as applied"
+            echo "whose objects are absent from the database is NOT detected here."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload drift-check evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-drift-${{ github.run_id }}
+          path: audit-artifacts/migration-drift
+          if-no-files-found: warn
