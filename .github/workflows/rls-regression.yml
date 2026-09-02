@@ -194,6 +194,24 @@ jobs:
             exit 0
           fi
 
+          if grep -q "rls-regression: NOT CHECKED" "$logs" || grep -q "Canonical tenant(s).*missing from clients table" "$logs"; then
+            {
+              echo "## Result — NOT CHECKED"
+              echo ""
+              echo "**Target:** $label"
+              echo ""
+              echo "The suite reached the database, but a required data precondition"
+              echo "was not met. Tenant-isolation state is **unknown**, not clean"
+              echo "and not a confirmed cross-tenant leak."
+              echo ""
+              echo '```'
+              grep -m1 -E "rls-regression: NOT CHECKED|Canonical tenant\\(s\\).*missing from clients table" "$logs"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::NOT CHECKED · isolation state unknown — precondition failed"
+            exit 1
+          fi
+
           if grep -q "rls-regression: FAILED" "$logs"; then
             {
               echo "## Result — TENANT ISOLATION FAILURE"

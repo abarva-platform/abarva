@@ -5,6 +5,14 @@ const sql = readFileSync(
   path.resolve(process.cwd(), 'tests/security/rls-regression.sql'),
   'utf8',
 );
+const runner = readFileSync(
+  path.resolve(process.cwd(), 'scripts/run-rls-regression.ts'),
+  'utf8',
+);
+const workflow = readFileSync(
+  path.resolve(process.cwd(), '.github/workflows/rls-regression.yml'),
+  'utf8',
+);
 
 describe('RLS regression SQL contract', () => {
   it('classifies known service-role-only tables without hiding unexpected permission errors', () => {
@@ -27,6 +35,16 @@ describe('RLS regression SQL contract', () => {
         'tower_cloud_cost',
         'tower_program_financials',
       ]),
+    );
+  });
+
+  it('reports missing canonical tenant setup as not checked instead of as a leak verdict', () => {
+    expect(sql).toContain('Canonical tenant(s) % missing from clients table');
+    expect(runner).toContain('isNotCheckedPrecondition');
+    expect(runner).toContain('rls-regression: NOT CHECKED');
+    expect(workflow).toContain('rls-regression: NOT CHECKED');
+    expect(workflow.indexOf('rls-regression: NOT CHECKED')).toBeLessThan(
+      workflow.indexOf('rls-regression: FAILED'),
     );
   });
 });
