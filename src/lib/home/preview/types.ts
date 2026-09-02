@@ -129,3 +129,13 @@ export interface HomeReviewBundle {
    * at runtime, not just a formality. */
   technologyEstate?: TechnologyEstateBundle;
 }
+
+export type HomeRecordSourceKind =
+  | "ecl_serving_projection"
+  | "reviewed_snapshot"
+  | "reviewed_snapshot_fallback";
+
+export interface HomeRecordRenderSource {
+  kind: HomeRecordSourceKind;
+  canonicalSnapshotHash: string;
+}

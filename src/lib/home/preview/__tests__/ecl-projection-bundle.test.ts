@@ -2,6 +2,7 @@ import {
   buildHomeReviewBundleFromEclProjectionRows,
   buildTechnologyEstateFromHomeProjectionRows,
   getHomeEclProjectionBundleOrReviewedSnapshot,
+  getHomeEclProjectionBundleOrReviewedSnapshotWithSource,
   type HomeProjectionRow,
 } from "../ecl-projection-bundle";
 import { resolveEvidence } from "@/components/home/preview/evidence-resolver";
@@ -143,6 +144,24 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       expect.stringContaining("ECL projection unavailable for meridian-health"),
       expect.any(Error),
     );
+  });
+
+  it("reports fallback provenance when the Meridian ECL serving projection is empty", async () => {
+    jest.spyOn(azureRead, "query").mockResolvedValueOnce([]);
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const result =
+      await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(
+        "meridian-health",
+      );
+
+    expect(result.bundle).toBe(base);
+    expect(result.recordSource).toEqual({
+      kind: "reviewed_snapshot_fallback",
+      canonicalSnapshotHash: base.provenance.canonical_snapshot_hash,
+    });
   });
 
   it("maps ECL Home projection rows into the Home v4 technology estate contract", () => {

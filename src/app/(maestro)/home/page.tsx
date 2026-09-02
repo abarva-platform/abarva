@@ -10,7 +10,7 @@ import {
   isHomePreviewTenantKey,
   type HomePreviewTenantKey,
 } from "@/lib/home/preview/golden-snapshot";
-import { getHomeEclProjectionBundleOrReviewedSnapshot } from "@/lib/home/preview/ecl-projection-bundle";
+import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
@@ -48,14 +48,20 @@ export default async function HomePage({
   const requestedTenantKey = toHomeTenantKey(params.tenant);
   const tenantKey =
     requestedTenantKey ?? activeTenantKey ?? HOME_PREVIEW_TENANT_KEYS[0];
-  const bundle =
+  const served =
     tenantKey === "meridian-health"
-      ? await getHomeEclProjectionBundleOrReviewedSnapshot(tenantKey)
-      : getHomeReviewBundle(tenantKey);
+      ? await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
+      : null;
+  const bundle = served?.bundle ?? getHomeReviewBundle(tenantKey);
 
   if (!bundle) {
     throw new Error(`Home: missing governed Home bundle for ${tenantKey}.`);
   }
+
+  const recordSource = served?.recordSource ?? {
+    kind: "reviewed_snapshot" as const,
+    canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
+  };
 
   const tenantName =
     canonicalClientDisplayName({
@@ -77,7 +83,11 @@ export default async function HomePage({
       }}
       hasTenantKey
     >
-      <HomePreviewAppRoot bundle={bundle} tenantKey={tenantKey} />
+      <HomePreviewAppRoot
+        bundle={bundle}
+        recordSource={recordSource}
+        tenantKey={tenantKey}
+      />
     </AppShell>
   );
 }
