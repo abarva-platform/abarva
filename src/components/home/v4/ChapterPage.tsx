@@ -227,15 +227,29 @@ function ChapterExecutiveReadout({
   // Nothing in this record declares a decision. Writing one is authored advice about a client's
   // situation, and inventing a heading for it is how the page ends up asserting judgement it does
   // not have. Until a decision is declared or authored, the readout says what it is.
-  const readout = primaryInference
-    ? { heading: "What follows from it", statement: primaryInference }
+  // Which band opens the chapter, decided by where the chapter's weight actually is.
+  //
+  // Taking the interpretation whenever one exists skipped past four counted findings on the
+  // leadership chapter -- "all 44 interviewed leaders raised value realisation as a concern" -- to
+  // reach a lone cross-domain remark about the programme portfolio. The chapter's strongest
+  // material was passed over precisely because it was well enough evidenced to be classed as fact.
+  //
+  // So interpretation leads only where it outnumbers the record. On a tie the record leads: a page
+  // whose whole claim is that it does not assert more than its evidence should open with the
+  // evidence when the two are level.
+  const leadWithInference =
+    Boolean(primaryInference) && bands.follows.length > bands.record.length;
+  const readout = leadWithInference
+    ? { heading: "What follows from it", statement: primaryInference! }
     : primaryRecord
       ? { heading: "What the record shows", statement: primaryRecord }
-      : {
-          heading: "Nothing established here yet",
-          statement:
-            "No executive decision should be taken from this chapter yet.",
-        };
+      : primaryInference
+        ? { heading: "What follows from it", statement: primaryInference }
+        : {
+            heading: "Nothing established here yet",
+            statement:
+              "No executive decision should be taken from this chapter yet.",
+          };
   const primaryGap = chapter.limitations[0];
   // Signals come from the packet, not the chapter, so they miss the chapter gate above.
   const leadershipSignals = leadershipSignalsForChapter(
