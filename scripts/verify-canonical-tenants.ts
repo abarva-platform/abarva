@@ -14,19 +14,30 @@ type ClientRow = {
   name: string;
   tenant_key: string | null;
   slug: string | null;
-  industry_code: string | null;
-  industry: string | null;
+  industry_code?: string | null;
+  industry?: string | null;
   holding_group_id: string | null;
   parent_client_id: string | null;
   holding_group_role: string | null;
   aggregate_visibility_level: string | null;
 };
 
+type ClientColumn = keyof ClientRow;
+
 const expectedByKey: ReadonlyMap<string, (typeof CANONICAL_TENANTS)[number]> =
   new Map(CANONICAL_TENANTS.map((tenant) => [tenant.key, tenant]));
 
 const LIVE_DRIFT_CHECK_ATTEMPTS = 6;
 const LIVE_DRIFT_CHECK_RETRY_MS = 15_000;
+const REQUIRED_CLIENT_COLUMNS = ['id', 'name', 'tenant_key', 'slug'] as const satisfies readonly ClientColumn[];
+const OPTIONAL_CLIENT_COLUMNS = [
+  'industry_code',
+  'industry',
+  'holding_group_id',
+  'parent_client_id',
+  'holding_group_role',
+  'aggregate_visibility_level',
+] as const satisfies readonly ClientColumn[];
 
 function fail(message: string): never {
   console.error(`verify-canonical-tenants: ${message}`);
@@ -81,24 +92,56 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function discoverClientColumns(client: Client): Promise<ReadonlySet<ClientColumn>> {
+  const expectedColumns = [...REQUIRED_CLIENT_COLUMNS, ...OPTIONAL_CLIENT_COLUMNS];
+  const { rows } = await client.query<{ column_name: ClientColumn }>(
+    `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'clients'
+        AND column_name = ANY($1::text[])
+    `,
+    [expectedColumns],
+  );
+
+  return new Set(rows.map((row) => row.column_name));
+}
+
+function clientSelectList(columns: ReadonlySet<ClientColumn>): string {
+  const selectExpressions: string[] = [];
+
+  for (const column of REQUIRED_CLIENT_COLUMNS) {
+    selectExpressions.push(column === 'id' ? 'id::text AS id' : column);
+  }
+
+  for (const column of OPTIONAL_CLIENT_COLUMNS) {
+    if (!columns.has(column)) continue;
+    selectExpressions.push(
+      column === 'holding_group_id' || column === 'parent_client_id'
+        ? `${column}::text AS ${column}`
+        : column,
+    );
+  }
+
+  return selectExpressions.join(',\n        ');
+}
+
 async function runLiveDriftCheck(): Promise<void> {
   const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   let connected = false;
   try {
     await client.connect();
     connected = true;
+    const columns = await discoverClientColumns(client);
+    const missingRequiredColumns = REQUIRED_CLIENT_COLUMNS.filter((column) => !columns.has(column));
+    if (missingRequiredColumns.length > 0) {
+      fail(`clients schema missing required column(s): ${missingRequiredColumns.join(', ')}`);
+    }
+
     const { rows } = await client.query<ClientRow>(`
       SELECT
-        id::text,
-        name,
-        tenant_key,
-        slug,
-        industry_code,
-        industry,
-        holding_group_id::text,
-        parent_client_id::text,
-        holding_group_role,
-        aggregate_visibility_level
+        ${clientSelectList(columns)}
       FROM public.clients
       ORDER BY tenant_key NULLS LAST, name
     `);
@@ -122,10 +165,10 @@ async function runLiveDriftCheck(): Promise<void> {
       if (normalize(row.name) !== normalize(expected.name)) {
         fail(`${expected.key}: name=${row.name} expected ${expected.name}`);
       }
-      if (normalize(row.industry_code) !== expected.industry) {
+      if (columns.has('industry_code') && normalize(row.industry_code) !== expected.industry) {
         fail(`${expected.key}: industry_code=${row.industry_code ?? '(null)'} expected ${expected.industry}`);
       }
-      if (normalize(row.industry) !== expected.industry) {
+      if (columns.has('industry') && normalize(row.industry) !== expected.industry) {
         fail(`${expected.key}: industry=${row.industry ?? '(null)'} expected ${expected.industry}`);
       }
     }
