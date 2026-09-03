@@ -3,6 +3,7 @@ import "server-only";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 import type { AvaAnswerPacket, AvaArtifact, AvaCitation } from "@/lib/ava-answer/contract";
+import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacket";
 import type { ChapterId, ChapterView, GroundedClaim, HomeReviewBundle, TechObjectType } from "@/lib/home/preview/types";
 
 /** Narrower than HomeReviewBundle so tests don't need to fabricate unrelated payload. The route
@@ -490,7 +491,7 @@ function packageModelResponse(
     ? scrubPublicAvaAnswerText(compactAnswerText(proseRaw, MAX_PROSE_PARAGRAPH_WORDS))
     : undefined;
 
-  return {
+  const packet: AvaAnswerPacket = {
     surface: "home",
     mode: "KNOW",
     tenantKey,
@@ -520,6 +521,26 @@ function packageModelResponse(
       unsupportedClaimsBlocked: true,
     },
   };
+  const validation = validateAvaAnswerPacket(packet);
+  if (validation.passed) return packet;
+  const recovered = shouldRecoverFromRelevantClaims(question)
+    ? buildClaimBackedRecoveryAnswer({
+        context,
+        tenantKey,
+        question,
+        modelCaveats: [
+          ...caveats,
+          "The advisor answer included material that could not be exported safely, so this answer uses cited Home claims only.",
+        ],
+      })
+    : null;
+  return recovered ?? buildFallbackPacket(
+    tenantKey,
+    question,
+    "no_data",
+    "I could not package that answer safely for display and export.",
+    [],
+  );
 }
 
 function compactAnswerText(text: string, maxWordsPerParagraph: number): string {
@@ -742,7 +763,14 @@ function buildFallbackPacket(
     relationshipsUsed: [],
     artifacts: [],
     citations,
-    gaps: [],
+    gaps: [
+      {
+        id: "home-ava-gap-1",
+        label: "Evidence limit",
+        detail: "The requested answer was not available in a safely exportable form.",
+        severity: "high",
+      },
+    ],
     caveats: errorDetail ? [{ id: "home-ava-error", label: "Advisor error", detail: errorDetail }] : [],
     nextSteps: [],
     quality: { confidence: "low", evidenceStrength: "thin", tenantGrounding: "missing", answerCompleteness: "blocked" },
