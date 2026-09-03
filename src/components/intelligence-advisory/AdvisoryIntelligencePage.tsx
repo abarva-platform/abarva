@@ -88,6 +88,26 @@ function hasPacketArtifacts(answer: AvaAnswerPacket): boolean {
  * native renderer; the visible chat should preserve Claude-authored advisory
  * prose rather than rewrite it after generation.
  */
+/**
+ * Governed artifact payloads are stripped from the visible answer in
+ * `resolveAssistantAnswerText`, which only runs in the `agent-answer` branch.
+ * An answer that completes without a packet keeps the raw streamed
+ * accumulation, which has passed through nothing but label cleanup -- and that
+ * text is the only thing the reader ever sees. Finalising every stream through
+ * the same strip means a governed fence cannot reach the rail on any path.
+ * Stripping already-clean text is a no-op, so the packet branch is unaffected.
+ */
+export function finalizeAssistantMessage<
+  T extends { status: string; answer: string; streamStatus?: string },
+>(message: T): T {
+  return {
+    ...message,
+    status: message.status === "error" ? "error" : "done",
+    answer: stripGovernedArtifactPayloadsFromText(message.answer),
+    streamStatus: undefined,
+  };
+}
+
 export function resolveAssistantAnswerText(
   rawStreamedAnswer: string,
   packetBody: string,
@@ -184,11 +204,7 @@ export function AdvisoryIntelligencePage({
       setMessages((c) =>
         c.map((m) =>
           m.id === assistantId && m.role === "assistant"
-            ? {
-                ...m,
-                status: m.status === "error" ? "error" : "done",
-                streamStatus: undefined,
-              }
+            ? finalizeAssistantMessage(m)
             : m,
         ),
       );
