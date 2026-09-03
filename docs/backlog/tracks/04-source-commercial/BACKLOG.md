@@ -110,6 +110,7 @@ facts.
      governed layers with signed-in proof, or explicitly removed from demo and
      default operator narratives.
 7. **SRC55 — Source 360 aVa adversarial proof**
+   - Status: Closed 2026-09-03.
    - Priority: P0.
    - Type: agent-runtime / signed-in product proof.
    - Scope: prove the Source workspace aVa answers from the active Source 360
@@ -123,6 +124,10 @@ facts.
      table rendering from loaded rows, and evidence citation back to Source
      rows. Each prompt is marked pass/fail with transcript and screenshot or
      DOM proof.
+   - Closure evidence: post-deploy signed-in proof on 2026-09-03 captured the
+     core Source workspace prompt set: grounded current-page context, value
+     refusal without finance confirmation, supplier-selection refusal without
+     evaluation evidence, and cross-tenant pricing refusal.
 
 ## Active Execution Control — 2026-08-15
 

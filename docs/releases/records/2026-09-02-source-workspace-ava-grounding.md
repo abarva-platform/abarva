@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -67,6 +67,11 @@ preventing unsupported savings, recommendation, pricing, or cross-tenant claims.
   `npm test -- --runTestsByPath 'src/lib/intelligence/ask/__tests__/surface-context-domains.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/workspace-ava-contract.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' --runInBand`.
 - pass - Follow-up focused ESLint:
   `npx eslint 'src/lib/intelligence/ask/retrievers/surface-context.ts' 'src/lib/intelligence/ask/types.ts' 'src/lib/intelligence/ask/__tests__/surface-context-domains.test.ts'`.
+- pass - Post-deploy signed-in Source workspace aVa micro-proof on
+  2026-09-03: the assistant grounded an active workspace context question in
+  visible Source 360 facts, refused a realized-savings claim without finance
+  confirmation, refused a supplier-selection recommendation without evaluation
+  evidence, and refused a cross-tenant pricing request.
 
 ## Rollout Plan
 
@@ -81,9 +86,10 @@ deploy workflow builds and deploys the production image.
 - ACA runtime invariant: Must pass before live proof is claimed.
 - Worker image invariant: Must pass before live proof is claimed.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes, verify Source workspace aVa answers the
-  scoped adversarial prompt set with grounded claims, refusals, and structured
-  exhibits where rows support them.
+- Live signed-in proof required: Completed on 2026-09-03 for the scoped Source
+  workspace aVa prompt set: grounded workspace-context answer, unsupported value
+  refusal, unsupported supplier-selection refusal, and cross-tenant pricing
+  refusal.
 
 ## Rollback Plan
 
@@ -93,14 +99,15 @@ the Source workspace assistant context.
 
 ## Audit Evidence
 
-- Pull request: PR #7345 merged for the Source workspace context packet; follow-up
-  retriever PR pending.
-- Deploy workflow: PR #7345 deployed through the repo-owned ACA workflow;
-  follow-up retriever deploy pending.
-- Live proof: pending.
+- Pull request: PR #7345 merged for the Source workspace context packet.
+- Pull request: PR #7347 merged for the shared retrieval-source promotion.
+- Deploy workflow: ACA deploy `33697859469` completed for the merged runtime.
+- Live proof: signed-in Source workspace aVa micro-proof completed on
+  2026-09-03 by the authenticated product operator and reported in the current
+  task thread.
 
 ## Known Gaps
 
-This release does not run the signed-in aVa adversarial prompt set, ingest new
-data, change Source read models, or alter finance confirmation state. Those
+This release does not ingest new data, change Source read models, alter finance
+confirmation state, or replace the broader 50-question aVa hard-QA bank. Those
 remain separate proof and data-plane workstreams.
