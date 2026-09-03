@@ -350,6 +350,30 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.artifacts).toHaveLength(0);
   });
 
+  it("recovers board-reader questions when the model response is unparseable", async () => {
+    mockGetAuditedAnthropicClient.mockResolvedValue({
+      client: {
+        messages: {
+          create: jest.fn().mockResolvedValue({ content: [{ type: "text", text: "not json at all" }] }),
+        },
+      },
+      auditId: "audit-test",
+      dataClass: "confidential",
+    } as never);
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question: "What could mislead a board reader on this page?",
+      activeChapterId: "technology_data",
+    });
+
+    expect(answer.status).toBe("partial");
+    expect(answer.prose).toContain("Confidence / evidence");
+    expect(answer.prose).not.toContain("try rephrasing");
+    expect(answer.citations.length).toBeGreaterThan(0);
+  });
+
   it("falls back gracefully when the audited client call throws", async () => {
     mockGetAuditedAnthropicClient.mockRejectedValue(new Error("no ANTHROPIC_API_KEY"));
 

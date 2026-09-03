@@ -42,14 +42,14 @@ Release lane: `global-control-lane` — shared Home answer behaviour for signed-
 
 - `npx eslint src/lib/home/preview/ava-answer.ts src/lib/home/preview/__tests__/ava-answer.test.ts src/lib/home/know/home-know-engine.ts src/lib/home/know/__tests__/home-know-current-packet-fallback.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts` — clean.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` — clean.
-- `jest` targeted Home and export suites — 68 passed:
+- `jest` targeted Home and export suites — 69 passed:
   - `src/lib/home/preview/__tests__/ava-answer.test.ts`
   - `src/lib/home/know/__tests__/home-know-current-packet-fallback.test.ts`
   - `src/lib/home/know/__tests__/home-know-engine.test.ts`
   - `src/lib/ava-answer/export/__tests__/render-answer-html.test.ts`
   - `src/lib/ava-answer/export/__tests__/render-answer-pdf.test.tsx`
   - `src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx`
-- `node scripts/ci/test-ratchet.mjs docs/ci/home-test-baseline.json` — pass; 676/704 Home tests passing with 12 baselined suites and no movement away from the baseline.
+- `node scripts/ci/test-ratchet.mjs docs/ci/home-test-baseline.json` — pass; 677/705 Home tests passing with 12 baselined suites and no movement away from the baseline.
 
 ## Rollout Plan
 
