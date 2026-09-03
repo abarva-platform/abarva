@@ -253,6 +253,30 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.citations.map((citation) => citation.id)).toEqual(["TD-K1", "PV-K1"]);
   });
 
+  it("recovers broad model answers that would fail export validation", async () => {
+    mockClaudeJson({
+      status: "answered",
+      direct_answer:
+        "Commercial exposure is concentrated where unsupported economics reach 70% of the business.",
+      prose: "Use the cited material for direction, but do not treat this as final approval evidence.",
+      cited_claim_tags: ["TD-K1", "PV-K1"],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed, and what evidence supports that?",
+    });
+
+    expect(answer.status).toBe("partial");
+    expect(answer.directAnswer).not.toContain("70%");
+    expect(answer.gaps).toHaveLength(1);
+    expect(answer.prose).toContain("Support:");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
   it("honors an honest no_data status rather than forcing an answer", async () => {
     mockClaudeJson({
       status: "no_data",

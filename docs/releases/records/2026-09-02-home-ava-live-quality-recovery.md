@@ -18,6 +18,8 @@ The preview packaging path also compacts overlong model paragraphs after citatio
 
 Partial preview answers now carry an explicit evidence-limit gap in the answer packet, keeping on-screen answers and HTML/PDF export validation aligned.
 
+Home preview answers are also checked against the shared export validator before returning to the UI. Broad executive answers that would fail export validation recover to cited Home claims with explicit limits instead of showing one packet and rejecting another at export time.
+
 ## Layer Impact
 
 Release lane: `global-control-lane` — shared Home answer behaviour for signed-in product users.
@@ -39,8 +41,8 @@ Release lane: `global-control-lane` — shared Home answer behaviour for signed-
 - `src/lib/home/know/home-know-engine.ts` — falls through to the current Home read-model packet when the optional curated advisor context file is unavailable, and surfaces that condition as a reader-visible gap.
 - `src/lib/home/know/__tests__/home-know-current-packet-fallback.test.ts` — regression coverage for the current read-model fallback.
 - `src/lib/home/know/__tests__/home-know-engine.test.ts` — keeps the loaded-context overview assertion aligned with the current safe tenant display text.
-- `src/lib/home/preview/ava-answer.ts` — expands broad executive question planning, adds cited-claim recovery for generic no-data model responses, compacts overlong packaged paragraphs, and names evidence-limit gaps on partial answers.
-- `src/lib/home/preview/__tests__/ava-answer.test.ts` — regression coverage for compact consulting structure, cited-claim recovery, server-side paragraph compaction, and export-validator acceptance of recovered partial answers.
+- `src/lib/home/preview/ava-answer.ts` — expands broad executive question planning, adds cited-claim recovery for generic no-data or export-invalid model responses, compacts overlong packaged paragraphs, and names evidence-limit gaps on partial answers.
+- `src/lib/home/preview/__tests__/ava-answer.test.ts` — regression coverage for compact consulting structure, cited-claim recovery, server-side paragraph compaction, and export-validator acceptance before display/export.
 
 ## QA / Validation
 
@@ -53,7 +55,7 @@ Release lane: `global-control-lane` — shared Home answer behaviour for signed-
   - `src/lib/ava-answer/export/__tests__/render-answer-html.test.ts`
   - `src/lib/ava-answer/export/__tests__/render-answer-pdf.test.tsx`
   - `src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx`
-- `node scripts/ci/test-ratchet.mjs docs/ci/home-test-baseline.json` — pass; 677/705 Home tests passing with 12 baselined suites and no movement away from the baseline.
+- `node scripts/ci/test-ratchet.mjs docs/ci/home-test-baseline.json` — pass; 679/707 Home tests passing with 12 baselined suites and no movement away from the baseline.
 
 ## Rollout Plan
 
