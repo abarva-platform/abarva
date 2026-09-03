@@ -70,15 +70,19 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   invents finance-confirmed value, or crosses tenants.
 - **Severity**: P1 (executive demo readiness and evidence-integrity).
 - **Workstream**: Source aVa / governed answer quality.
-- **Status**: `Approved` — explicit approval exists to run the small tenant-scoped
-  chat-record proof; schedule after the Source 360 page deploy/live proof so aVa is
-  checked against the same current substrate the page renders.
+- **Status**: `Closed` — post-deploy signed-in proof completed on 2026-09-03
+  against the current Source 360 substrate.
 - **Acceptance criteria**: signed-in proof asks why the actionable contract is
   actionable, what is missing before claiming value, requests a chart/table where
   appropriate, and probes an out-of-tenant vendor. Responses must cite or refuse from
   the governed Source bundle and must not surface any out-of-tenant data.
 - **Required tests**: signed-in aVa transcript proof plus any focused answer-engine
   regression if the live proof exposes unsupported claims.
+- **Closure evidence**: the proof covered a grounded current-page context answer,
+  refusal to claim realized value without finance confirmation, refusal to make a
+  supplier-selection recommendation without evaluation evidence, and refusal to
+  expose out-of-tenant pricing. No focused regression was required because the live
+  proof matched the expected answer contract.
 - **Discovered from**: the Source 360 data-depth and chart audit attached to the
   2026-08-31 execution loop.
 
