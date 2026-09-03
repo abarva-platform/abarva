@@ -1,6 +1,10 @@
 name: Canonical Tenant Drift
 
-# Required branch-protection context; keep pull_request paths aligned.
+# Required branch-protection context; keep pull_request paths aligned. Pull
+# requests run static contract checks only. Scheduled/manual runs also submit
+# read-only live database checks through the private ACA operator job, because
+# the Azure Postgres data plane is private-VNet scoped and cannot be checked
+# directly from hosted runners.
 on:
   merge_group:
   pull_request:
@@ -22,8 +26,11 @@ on:
   schedule:
     - cron: "17 8 * * *"
 
+permissions:
+  contents: read
+
 jobs:
-  canonical-tenant-drift:
+  canonical-tenant-static:
     name: Verify canonical tenant allowlist
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -54,3 +61,225 @@ jobs:
       # for someone to open a PR.
       - name: Verify tenant input quality, depth, and column contract
         run: npm run audit:tenant-input-quality -- --out-dir /tmp/tenant-input-quality-depth
+
+  canonical-tenant-live:
+    name: Verify live tenant identity drift
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+      RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+      AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+      AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+      AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
+      DATABASE_SECRET_REF: azure-postgres-control-database-url
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify Azure OIDC configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          if [[ -z "${AZURE_DEPLOY_CLIENT_ID}" ]]; then missing+=("AZURE_CLIENT_ID or AZURE_LAB_CLIENT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_TENANT_ID}" ]]; then missing+=("AZURE_TENANT_ID or AZURE_LAB_TENANT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_SUBSCRIPTION_ID}" ]]; then missing+=("AZURE_SUBSCRIPTION_ID or AZURE_LAB_SUBSCRIPTION_ID"); fi
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing Azure configuration:\n' >&2
+            printf -- '- %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Prepare audit artifacts directory
+        run: mkdir -p audit-artifacts/canonical-tenant-drift
+
+      - name: Resolve currently-deployed image digest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json)"
+          echo "$app_json" > audit-artifacts/canonical-tenant-drift/containerapp.json
+          template_image="$(echo "$app_json" | jq -r '.properties.template.containers[0].image // empty')"
+          if [[ -z "$template_image" || "$template_image" != *"@sha256:"* ]]; then
+            echo "Could not resolve a digest-pinned template image from the live container app." >&2
+            exit 1
+          fi
+          echo "image=$template_image" >> "$GITHUB_OUTPUT"
+          echo "$template_image" > audit-artifacts/canonical-tenant-drift/image.txt
+
+      - name: Verify live canonical client rows
+        id: canonical
+        shell: bash
+        run: |
+          set +e
+          npm run --silent ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:canonical-tenants \
+            --container db-migrate \
+            --secret-env DATABASE_URL=${DATABASE_SECRET_REF} \
+            --out-dir audit-artifacts/canonical-tenant-drift/canonical \
+            > audit-artifacts/canonical-tenant-drift/canonical.log 2>&1
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+          cat audit-artifacts/canonical-tenant-drift/canonical.log
+
+      - name: Verify live tenant-key aliases
+        id: aliases
+        shell: bash
+        run: |
+          set +e
+          npm run --silent ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:tenant-keys \
+            --container db-migrate \
+            --secret-env DATABASE_URL=${DATABASE_SECRET_REF} \
+            --out-dir audit-artifacts/canonical-tenant-drift/aliases \
+            > audit-artifacts/canonical-tenant-drift/aliases.log 2>&1
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+          cat audit-artifacts/canonical-tenant-drift/aliases.log
+
+      - name: Classify live tenant drift result
+        shell: bash
+        run: |
+          set -uo pipefail
+          canonical_logs="audit-artifacts/canonical-tenant-drift/canonical/04-logs.txt"
+          alias_logs="audit-artifacts/canonical-tenant-drift/aliases/04-logs.txt"
+          canonical_rc="${{ steps.canonical.outputs.rc }}"
+          alias_rc="${{ steps.aliases.outputs.rc }}"
+          drift=0
+          unknown=0
+
+          {
+            echo "## Live tenant identity drift"
+            echo ""
+            echo "**Database:** azure/abarva_control"
+            echo "**Image:** \`${{ steps.image.outputs.image }}\`"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ ! -s "$canonical_logs" ]]; then
+            unknown=1
+            {
+              echo "### Canonical client rows — NOT CHECKED"
+              echo ""
+              echo "The operator job produced no readable canonical-client output."
+              echo "- submitter exit code: \`${canonical_rc}\`"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif grep -q "verify-canonical-tenants: clean" "$canonical_logs"; then
+            {
+              echo "### Canonical client rows — CLEAN"
+              echo ""
+              grep -m1 "verify-canonical-tenants: clean" "$canonical_logs"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif grep -Eq "verify-canonical-tenants: (expected [0-9]+ canonical client rows|unexpected tenant keys|missing tenant keys|[^:]+: (slug|name|industry|industry_code)=)" "$canonical_logs"; then
+            drift=1
+            {
+              echo "### Canonical client rows — DRIFT"
+              echo ""
+              echo '```'
+              grep -E "verify-canonical-tenants: (expected [0-9]+ canonical client rows|unexpected tenant keys|missing tenant keys|[^:]+: (slug|name|industry|industry_code)=)" "$canonical_logs"
+              echo '```'
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            unknown=1
+            {
+              echo "### Canonical client rows — NOT CHECKED"
+              echo ""
+              echo "The verifier did not reach a clean or drift verdict."
+              echo "- submitter exit code: \`${canonical_rc}\`"
+              echo ""
+              echo '```'
+              tail -n 20 "$canonical_logs"
+              echo '```'
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [[ ! -s "$alias_logs" ]]; then
+            unknown=1
+            {
+              echo "### Tenant-key aliases — NOT CHECKED"
+              echo ""
+              echo "The operator job produced no readable alias-verifier output."
+              echo "- submitter exit code: \`${alias_rc}\`"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif grep -q "verify-tenant-key-canonical: clean" "$alias_logs"; then
+            {
+              echo "### Tenant-key aliases — CLEAN"
+              echo ""
+              grep -m1 "verify-tenant-key-canonical: clean" "$alias_logs"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif grep -q "verify-tenant-key-canonical: FOUND" "$alias_logs"; then
+            drift=1
+            {
+              echo "### Tenant-key aliases — DRIFT"
+              echo ""
+              echo '```'
+              grep -E "verify-tenant-key-canonical: FOUND|  public\\." "$alias_logs"
+              echo '```'
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            unknown=1
+            {
+              echo "### Tenant-key aliases — NOT CHECKED"
+              echo ""
+              echo "The verifier did not reach a clean or drift verdict."
+              echo "- submitter exit code: \`${alias_rc}\`"
+              echo ""
+              echo '```'
+              tail -n 20 "$alias_logs"
+              echo '```'
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if (( drift > 0 )); then
+            echo "::error::TENANT DRIFT · live tenant identity or alias drift detected"
+            exit 1
+          fi
+          if (( unknown > 0 )); then
+            echo "::error::NOT CHECKED · live tenant drift state unknown"
+            exit 1
+          fi
+
+          echo "Live tenant identity drift checks are clean." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload live tenant drift evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-tenant-drift-${{ github.run_id }}
+          path: audit-artifacts/canonical-tenant-drift
+          if-no-files-found: warn
+          retention-days: 30
