@@ -1,4 +1,5 @@
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
+import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacket";
 
 import { answerHomeAvaQuestion } from "../ava-answer";
 import type { ChapterView, TechnologyEstateBundle } from "../types";
@@ -292,13 +293,16 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.status).toBe("partial");
     expect(answer.directAnswer).toMatch(/directionally/i);
     expect(answer.prose).toContain("- ");
-    expect(answer.prose).toContain("Confidence / evidence");
+    expect(answer.prose).toContain("Confidence:");
+    expect(answer.prose).toContain("Support:");
     expect(answer.prose).toContain("Caveat:");
+    expect(answer.gaps).toHaveLength(1);
     expect(answer.prose).not.toContain("try rephrasing");
     expect(answer.citations.map((citation) => citation.id)).toEqual(
       expect.arrayContaining(["TD-K1", "PV-K1"]),
     );
     expect(answer.quality.confidence).not.toBe("low");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
   });
 
   it("recovers board-reader caveat questions from attention claims", async () => {
@@ -355,11 +359,14 @@ describe("answerHomeAvaQuestion", () => {
     });
 
     expect(answer.status).toBe("partial");
-    expect(answer.prose).toContain("Confidence / evidence");
+    expect(answer.prose).toContain("Confidence:");
+    expect(answer.prose).toContain("Support:");
+    expect(answer.gaps).toHaveLength(1);
     expect(answer.prose).not.toContain("try rephrasing");
     expect(answer.citations.map((citation) => citation.id)).toEqual(
       expect.arrayContaining(["WA-T1"]),
     );
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
   });
 
   it("falls back gracefully when the model returns unparseable JSON", async () => {
@@ -402,7 +409,8 @@ describe("answerHomeAvaQuestion", () => {
     });
 
     expect(answer.status).toBe("partial");
-    expect(answer.prose).toContain("Confidence / evidence");
+    expect(answer.prose).toContain("Confidence:");
+    expect(answer.prose).toContain("Support:");
     expect(answer.prose).not.toContain("try rephrasing");
     expect(answer.citations.length).toBeGreaterThan(0);
   });
