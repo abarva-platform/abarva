@@ -609,11 +609,18 @@ export function buildHomeKnowResponseFromPacket(input: {
     citations,
   );
   const facts = buildFacts(input.packet, dimensionsUsed, citations);
+  const hasDirectionalExecutiveEvidence =
+    (COMMERCIAL_EXPOSURE_RE.test(question) ||
+      EXECUTIVE_ATTENTION_RE.test(question) ||
+      BUSINESS_CONTEXT_RE.test(question)) &&
+    citations.length > 0 &&
+    (input.packet.coverage.length > 0 || dimensionsUsed.length > 0);
   const hasData =
     facts.length > 0 ||
     tables.some((table) => table.rows.length > 0) ||
     charts.some((chart) => chart.data.length > 0) ||
-    graphs.some((graph) => graph.nodes.length > 0 && graph.edges.length > 0);
+    graphs.some((graph) => graph.nodes.length > 0 && graph.edges.length > 0) ||
+    hasDirectionalExecutiveEvidence;
   const hasGaps = gaps.length > 0;
   const answerStatus: HomeKnowAnswerStatus = hasData
     ? hasGaps
@@ -2703,6 +2710,9 @@ function homeKnowProse(input: {
           .slice(0, 4),
       );
       return `Short answer: Home can describe the business indirectly through the systems and ownership evidence now loaded${systems ? `, including ${systems}` : ""}. Caveat: named business-model records are not complete in this read-model slice, so do not treat the technology inventory as the whole business story.`;
+    }
+    if (input.packet.coverage.length > 0) {
+      return "Short answer: Home has enough governed context to orient a business conversation, but not enough business-model depth in this read-model slice to replace source-owner narration. Caveat: use this as a walkthrough prompt, not as proof that the business chapter is fully evidenced.";
     }
   }
   if (

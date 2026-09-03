@@ -360,11 +360,33 @@ export async function answerHomeAvaQuestion(args: {
     const parsed = parseJsonLoose<ModelResponseShape>(rawText, "home-preview-ava-answer");
 
     if (!parsed) {
+      const recovered = shouldRecoverFromRelevantClaims(question)
+        ? buildClaimBackedRecoveryAnswer({
+            context,
+            tenantKey: args.tenantKey,
+            question,
+            modelCaveats: [
+              "The advisor model returned an unparseable response, so this answer uses cited Home claims only.",
+            ],
+          })
+        : null;
+      if (recovered) return recovered;
       return buildFallbackPacket(args.tenantKey, question, "no_data", "I couldn't produce a grounded answer to that just now -- try rephrasing the question.", []);
     }
 
     return packageModelResponse(parsed, context, args.tenantKey, question);
   } catch (error) {
+    const recovered = shouldRecoverFromRelevantClaims(question)
+      ? buildClaimBackedRecoveryAnswer({
+          context,
+          tenantKey: args.tenantKey,
+          question,
+          modelCaveats: [
+            "The advisor engine was unavailable, so this answer uses cited Home claims only.",
+          ],
+        })
+      : null;
+    if (recovered) return recovered;
     return buildFallbackPacket(
       args.tenantKey,
       question,
