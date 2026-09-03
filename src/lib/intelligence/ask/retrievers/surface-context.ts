@@ -31,7 +31,14 @@ export function retrieveSurfaceContextSources(
   const tenantDomains = buildTenantDomains(context);
   const tenantFacts = tenantDomains.flatMap((domain) => domain.items);
   const graphFacts = uniqueFacts(sanitizeFacts(context.graphFacts));
-  if (surfaceFacts.length === 0 && tenantFacts.length === 0 && graphFacts.length === 0) return [];
+  const sourceClaimContractFacts = buildSourceClaimContractFacts(context);
+  if (
+    surfaceFacts.length === 0 &&
+    tenantFacts.length === 0 &&
+    graphFacts.length === 0 &&
+    sourceClaimContractFacts.length === 0
+  )
+    return [];
 
   const activeTab = cleanString(context.activeTab) ?? 'current page';
   const activeClient = cleanString(context.activeClient) ?? 'active client';
@@ -72,6 +79,22 @@ export function retrieveSurfaceContextSources(
     });
   }
 
+  if (sourceClaimContractFacts.length > 0) {
+    const detail = [
+      `Active Source aVa contract: ${activeTab}.`,
+      `Active client: ${activeClient}.`,
+      ...sourceClaimContractFacts,
+    ].join('\n- ');
+
+    sources.push({
+      type: 'SURFACE',
+      name: `${activeClient} Source aVa claim contract`,
+      id: 'source-ava-claim-contract',
+      detail,
+      confidence: 0.99,
+    });
+  }
+
   if (graphFacts.length > 0) {
     const detail = [
       `Graph view: ${activeClient}.`,
@@ -89,6 +112,133 @@ export function retrieveSurfaceContextSources(
   }
 
   return sources;
+}
+
+function buildSourceClaimContractFacts(context: AskSurfaceContext): string[] {
+  const moduleName = cleanString(context.module)?.toLowerCase();
+  const claimContract = asRecord(context.claimContract);
+  const capabilities = asRecord(context.capabilities);
+  const groundingStatus = asRecord(context.groundingStatus);
+  const refusalExamples = Array.isArray(context.refusalExamples)
+    ? context.refusalExamples
+    : [];
+
+  if (
+    moduleName !== 'source' &&
+    !claimContract &&
+    !capabilities &&
+    !groundingStatus &&
+    refusalExamples.length === 0
+  )
+    return [];
+
+  const facts: string[] = [];
+  const posture = cleanString(claimContract?.posture);
+  if (posture) facts.push(`Answer posture: ${posture}`);
+
+  const coverage = summarizeGroundingStatus(groundingStatus);
+  if (coverage) facts.push(`Row coverage: ${coverage}.`);
+
+  appendNamedList(facts, 'Allowed Source claims', claimContract?.allowedClaims, 8);
+  appendNamedList(facts, 'Forbidden Source claims', claimContract?.forbiddenClaims, 8);
+  appendNamedList(
+    facts,
+    'Evidence required before Source claims',
+    claimContract?.requiredEvidenceForClaims,
+    8,
+  );
+  appendNamedList(facts, 'Required refusals', claimContract?.refusalTriggers, 8);
+  appendNamedList(facts, 'Response shape', claimContract?.responseShape, 5);
+
+  const source360 = asRecord(capabilities?.source360);
+  appendNamedList(facts, 'Source 360 can answer', source360?.canAnswer, 6);
+  appendNamedList(
+    facts,
+    'Source 360 cannot answer without more evidence',
+    source360?.cannotAnswerWithoutMoreEvidence,
+    6,
+  );
+
+  const optimize = asRecord(capabilities?.optimize);
+  const optimizeRule = cleanString(optimize?.rule);
+  if (optimizeRule) {
+    const candidateRows = cleanNumber(optimize?.candidateRows);
+    const claimCards = cleanNumber(optimize?.claimCards);
+    const financeConfirmedRows = cleanNumber(optimize?.financeConfirmedRows);
+    facts.push(
+      [
+        `Optimize boundary: ${optimizeRule}`,
+        candidateRows == null ? null : `${candidateRows} candidate rows`,
+        claimCards == null ? null : `${claimCards} claim cards`,
+        financeConfirmedRows == null
+          ? null
+          : `${financeConfirmedRows} finance-confirmed rows`,
+      ]
+        .filter(Boolean)
+        .join('; '),
+    );
+  }
+
+  const newEvent = asRecord(capabilities?.newEvent);
+  const newEventRule = cleanString(newEvent?.rule);
+  if (newEventRule) facts.push(`New Event boundary: ${newEventRule}`);
+
+  const refusals = refusalExamples
+    .map((item) => {
+      const row = asRecord(item);
+      const userIntent = cleanString(row?.userIntent);
+      const answerDiscipline = cleanString(row?.answerDiscipline);
+      return userIntent && answerDiscipline
+        ? `${userIntent}: ${answerDiscipline}`
+        : null;
+    })
+    .filter((item): item is string => Boolean(item))
+    .slice(0, 6);
+  if (refusals.length > 0) {
+    facts.push(`Source refusal examples: ${refusals.join(' | ')}`);
+  }
+
+  return facts.slice(0, 34);
+}
+
+function summarizeGroundingStatus(
+  groundingStatus: Record<string, unknown> | null,
+): string | null {
+  if (!groundingStatus) return null;
+  const fields: Array<[string, string]> = [
+    ['contractRows', 'contract rows'],
+    ['vendorRows', 'vendor rows'],
+    ['scopeRows', 'scope rows'],
+    ['invoiceLines', 'invoice lines'],
+    ['performanceRows', 'performance rows'],
+    ['usageRows', 'usage rows'],
+    ['cloudRows', 'cloud rows'],
+    ['actionCandidates', 'action candidates'],
+    ['claimCards', 'claim cards'],
+    ['avaGroundingBundles', 'aVa grounding bundles'],
+  ];
+  const parts = fields
+    .map(([key, label]) => {
+      const count = cleanNumber(groundingStatus[key]);
+      return count == null ? null : `${count} ${label}`;
+    })
+    .filter((item): item is string => Boolean(item));
+  const availableLenses = sanitizeFacts(groundingStatus.availableLenses).slice(0, 10);
+  if (availableLenses.length > 0) {
+    parts.push(`available lenses ${availableLenses.join(', ')}`);
+  }
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
+function appendNamedList(
+  facts: string[],
+  label: string,
+  value: unknown,
+  cap: number,
+): void {
+  const items = sanitizeFacts(value).slice(0, cap);
+  if (items.length === 0) return;
+  facts.push(`${label}: ${items.join(' | ')}`);
 }
 
 /**
@@ -169,4 +319,14 @@ function uniqueFacts(facts: string[]): string[] {
 
 function cleanString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+function cleanNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }

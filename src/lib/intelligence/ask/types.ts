@@ -110,4 +110,8 @@ export interface AskSurfaceContext {
   sourceFacts?: string[];
   qualityFacts?: string[];
   facts?: string[];
+  groundingStatus?: unknown;
+  claimContract?: unknown;
+  capabilities?: unknown;
+  refusalExamples?: unknown;
 }
