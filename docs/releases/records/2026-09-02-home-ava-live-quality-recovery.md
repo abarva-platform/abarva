@@ -16,6 +16,8 @@ The Home preview aVa path also gets a safer recovery path for broad executive qu
 
 The preview packaging path also compacts overlong model paragraphs after citation validation, so a grounded answer stays walkthrough-friendly even when the model returns a dense block of prose.
 
+Partial preview answers now carry an explicit evidence-limit gap in the answer packet, keeping on-screen answers and HTML/PDF export validation aligned.
+
 ## Layer Impact
 
 Release lane: `global-control-lane` — shared Home answer behaviour for signed-in product users.
@@ -37,8 +39,8 @@ Release lane: `global-control-lane` — shared Home answer behaviour for signed-
 - `src/lib/home/know/home-know-engine.ts` — falls through to the current Home read-model packet when the optional curated advisor context file is unavailable, and surfaces that condition as a reader-visible gap.
 - `src/lib/home/know/__tests__/home-know-current-packet-fallback.test.ts` — regression coverage for the current read-model fallback.
 - `src/lib/home/know/__tests__/home-know-engine.test.ts` — keeps the loaded-context overview assertion aligned with the current safe tenant display text.
-- `src/lib/home/preview/ava-answer.ts` — expands broad executive question planning, adds cited-claim recovery for generic no-data model responses, and compacts overlong packaged paragraphs.
-- `src/lib/home/preview/__tests__/ava-answer.test.ts` — regression coverage for compact consulting structure, cited-claim recovery, and server-side paragraph compaction.
+- `src/lib/home/preview/ava-answer.ts` — expands broad executive question planning, adds cited-claim recovery for generic no-data model responses, compacts overlong packaged paragraphs, and names evidence-limit gaps on partial answers.
+- `src/lib/home/preview/__tests__/ava-answer.test.ts` — regression coverage for compact consulting structure, cited-claim recovery, server-side paragraph compaction, and export-validator acceptance of recovered partial answers.
 
 ## QA / Validation
 

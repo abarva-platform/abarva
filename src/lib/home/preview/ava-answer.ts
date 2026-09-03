@@ -461,6 +461,19 @@ function packageModelResponse(
   }
 
   const caveats = Array.isArray(parsed.caveats) ? parsed.caveats.filter((c): c is string => typeof c === "string" && c.trim().length > 0) : [];
+  const gaps =
+    status === "partial" || status === "no_data"
+      ? [
+          {
+            id: "home-ava-gap-1",
+            label: "Evidence limit",
+            detail:
+              caveats[0] ??
+              "This Home answer is directional and needs source-owner confirmation before it is used for approval.",
+            severity: status === "no_data" ? ("high" as const) : ("medium" as const),
+          },
+        ]
+      : [];
 
   if ((status === "no_data" || citations.length === 0) && shouldRecoverFromRelevantClaims(question)) {
     const recovered = buildClaimBackedRecoveryAnswer({
@@ -491,7 +504,7 @@ function packageModelResponse(
     relationshipsUsed: [],
     artifacts,
     citations,
-    gaps: [],
+    gaps,
     caveats: caveats.map((detail, i) => ({ id: `home-ava-caveat-${i + 1}`, label: "Caveat", detail })),
     nextSteps: [],
     quality: {
@@ -593,7 +606,7 @@ function buildClaimBackedRecoveryAnswer(input: {
   const prose = [
     "Short answer: Home has enough evidence to answer directionally, but not enough to turn this into an approval recommendation.",
     bullets.join("\n\n"),
-    `Confidence / evidence: ${confidence} confidence, based on ${citations.length} cited Home claim${citations.length === 1 ? "" : "s"}.`,
+    `Confidence: ${confidence}. Support: ${citations.length} cited Home claim${citations.length === 1 ? "" : "s"}.`,
     `Caveat: ${caveat}`,
   ].join("\n\n");
 
@@ -612,7 +625,15 @@ function buildClaimBackedRecoveryAnswer(input: {
     relationshipsUsed: [],
     artifacts: [],
     citations,
-    gaps: [],
+    gaps: [
+      {
+        id: "home-ava-gap-1",
+        label: "Evidence limit",
+        detail: caveat,
+        severity: "medium",
+        citationIds: citations.map((citation) => citation.id),
+      },
+    ],
     caveats: [{ id: "home-ava-caveat-1", label: "Caveat", detail: caveat }],
     nextSteps: [],
     quality: {
