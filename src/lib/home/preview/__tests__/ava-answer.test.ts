@@ -70,6 +70,15 @@ const TECHNOLOGY_ESTATE: TechnologyEstateBundle = {
   ],
 };
 
+function maxParagraphWords(text: string | undefined): number {
+  return Math.max(
+    0,
+    ...(text ?? "")
+      .split(/\n{2,}/)
+      .map((paragraph) => paragraph.trim().split(/\s+/).filter(Boolean).length),
+  );
+}
+
 describe("answerHomeAvaQuestion", () => {
   beforeEach(() => {
     mockGetAuditedAnthropicClient.mockReset();
@@ -217,6 +226,30 @@ describe("answerHomeAvaQuestion", () => {
     });
 
     expect(answer.artifacts).toHaveLength(0);
+  });
+
+  it("compacts overlong model paragraphs before packaging the preview answer", async () => {
+    const longSentence = Array.from({ length: 145 }, (_value, index) => `word${index + 1}`).join(" ");
+    mockClaudeJson({
+      status: "answered",
+      direct_answer: longSentence,
+      prose: `${longSentence}. Second paragraph stays compact.`,
+      cited_claim_tags: ["TD-K1", "PV-K1"],
+      visual: { type: "none", dataset_ref: null, chart_kind: null },
+      caveats: [],
+    });
+
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "meridian-health",
+      question: "Where are we commercially exposed, and what evidence supports that?",
+    });
+
+    expect(answer.status).toBe("answered");
+    expect(maxParagraphWords(answer.directAnswer)).toBeLessThanOrEqual(55);
+    expect(maxParagraphWords(answer.prose)).toBeLessThanOrEqual(70);
+    expect(answer.prose).toContain("\n\n");
+    expect(answer.citations.map((citation) => citation.id)).toEqual(["TD-K1", "PV-K1"]);
   });
 
   it("honors an honest no_data status rather than forcing an answer", async () => {

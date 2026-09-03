@@ -297,6 +297,8 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
 
 const ALLOWED_STATUS = new Set(["answered", "partial", "no_data"]);
 const ALLOWED_CHART_KIND = new Set(["bar", "horizontal-bar"]);
+const MAX_DIRECT_ANSWER_WORDS = 55;
+const MAX_PROSE_PARAGRAPH_WORDS = 70;
 
 /** Same fence-stripping tolerance as build-enterprise-thesis.ts's parseJsonLoose -- inlined
  * rather than imported so this route doesn't drag the data-build script's pg/papaparse/fs
@@ -470,6 +472,11 @@ function packageModelResponse(
     if (recovered) return recovered;
   }
 
+  const directAnswer = scrubPublicAvaAnswerText(compactAnswerText(directAnswerRaw, MAX_DIRECT_ANSWER_WORDS));
+  const prose = proseRaw
+    ? scrubPublicAvaAnswerText(compactAnswerText(proseRaw, MAX_PROSE_PARAGRAPH_WORDS))
+    : undefined;
+
   return {
     surface: "home",
     mode: "KNOW",
@@ -477,8 +484,8 @@ function packageModelResponse(
     question,
     intent: "home_preview_qa",
     status,
-    directAnswer: scrubPublicAvaAnswerText(directAnswerRaw),
-    prose: proseRaw ? scrubPublicAvaAnswerText(proseRaw) : undefined,
+    directAnswer,
+    prose,
     factsUsed: [],
     metricsUsed: [],
     relationshipsUsed: [],
@@ -500,6 +507,56 @@ function packageModelResponse(
       unsupportedClaimsBlocked: true,
     },
   };
+}
+
+function compactAnswerText(text: string, maxWordsPerParagraph: number): string {
+  return text
+    .split(/\n{2,}/)
+    .flatMap((paragraph) => splitLongParagraph(paragraph, maxWordsPerParagraph))
+    .join("\n\n")
+    .trim();
+}
+
+function splitLongParagraph(paragraph: string, maxWords: number): string[] {
+  const cleaned = paragraph.replace(/[ \t]+/g, " ").trim();
+  if (!cleaned || wordCount(cleaned) <= maxWords) return cleaned ? [cleaned] : [];
+  if (/^\s*[-*]\s+/.test(cleaned)) return chunkWords(cleaned, maxWords);
+
+  const sentences = cleaned.match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g)?.map((part) => part.trim()).filter(Boolean) ?? [cleaned];
+  const chunks: string[] = [];
+  let current = "";
+  for (const sentence of sentences) {
+    if (wordCount(sentence) > maxWords) {
+      if (current) {
+        chunks.push(current);
+        current = "";
+      }
+      chunks.push(...chunkWords(sentence, maxWords));
+      continue;
+    }
+    const candidate = current ? `${current} ${sentence}` : sentence;
+    if (wordCount(candidate) > maxWords && current) {
+      chunks.push(current);
+      current = sentence;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+function chunkWords(text: string, maxWords: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const chunks: string[] = [];
+  for (let i = 0; i < words.length; i += maxWords) {
+    chunks.push(words.slice(i, i + maxWords).join(" "));
+  }
+  return chunks;
+}
+
+function wordCount(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
 }
 
 function shouldRecoverFromRelevantClaims(question: string): boolean {
