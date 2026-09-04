@@ -935,6 +935,7 @@ await test("explicit review decisions promote accepted candidates and projection
     ["domain-publish-v1", "airline-demo-new-domain-publish-v1", "domain-publish-test"],
     ["baseline-publish-v1", "airline-demo-new-baseline-publish-v1", "baseline-publish-test"],
     ["projection-build-v1", "airline-demo-new-projection-build-v1", "projection-build-test"],
+    ["knowledge-narrative-generate-v1", "airline-demo-new-knowledge-narrative-generate-v1", "knowledge-narrative-generate-test"],
     ["home-readmodel-v1", "airline-demo-new-home-readmodel-v1", "home-readmodel-test"],
     ["reconciliation-audit-v1", "airline-demo-new-reconciliation-audit-v1", "reconciliation-test"],
   ]) {
@@ -959,7 +960,31 @@ await test("explicit review decisions promote accepted candidates and projection
     store.projections.some((row) => row.projectionName === "module_knowledge_packet_v1" && row.objectRef === "home:suggested-questions"),
     "projection build must expose the Home module packet as its own data-plane projection",
   );
+  assert.ok(
+    store.projections.some((row) => row.projectionName === "enterprise_brief_v1" && row.objectRef === "enterprise:risk_resilience"),
+    "narrative generation must create lens-specific enterprise brief rows after the deterministic base projection",
+  );
   assert.equal(store.reconciliationLedger.length, 1);
+});
+
+await test("narrative generation blocks when accepted evidence is missing", async () => {
+  const store = new InMemoryKnowledgeExecutionStore({
+    baselines: [{ knowledgeBaselineRef: "baseline:test", releaseId: "airline-demo-new-source-corpus-v1.0.0", isActive: true }],
+    knowledgeFacts: [{ candidateRef: "fact-no-evidence", factType: "operational_observation", evidenceRefs: [] }],
+  });
+  await assert.rejects(
+    () =>
+      runKnowledgeProcess({
+        context: baseContext({
+          canonicalProcess: "knowledge-narrative-generate-v1",
+          processName: "airline-demo-new-knowledge-narrative-generate-v1",
+          idempotencyKey: "knowledge-narrative-missing-evidence-test",
+        }),
+        handler: DEFAULT_PROCESS_HANDLERS["knowledge-narrative-generate-v1"],
+        store,
+      }),
+    (error) => error instanceof KnowledgeProcessError && error.details.blockers.includes("accepted_evidence_missing_for_narrative"),
+  );
 });
 
 await test("review decision guard blocks stale hashes and unauthorized reviewers", async () => {

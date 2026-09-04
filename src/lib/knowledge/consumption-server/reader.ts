@@ -142,10 +142,18 @@ export class ConsumptionReader {
       return this.notLoaded(query.tenantKey, "consumption.enterprise_brief_v1", empty, null,
         "No active Knowledge Baseline for this tenant.");
     }
+    const objectRefs =
+      query.lens && query.lens !== "none"
+        ? [`enterprise:${query.lens}`, "enterprise"]
+        : ["enterprise"];
     const rows = await this.q.rows<{ payload: EnterpriseBriefV1 | null; availability_state: string }>(
       `SELECT payload, availability_state FROM consumption.enterprise_brief_v1
-        WHERE tenant_key = $1 AND knowledge_baseline_ref = $2 LIMIT 1`,
-      [query.tenantKey, baseline.knowledgeBaselineRef],
+        WHERE tenant_key = $1
+          AND knowledge_baseline_ref = $2
+          AND object_ref = ANY($3::text[])
+        ORDER BY array_position($3::text[], object_ref)
+        LIMIT 1`,
+      [query.tenantKey, baseline.knowledgeBaselineRef, objectRefs],
     ).catch(() => []);
     if (!rows[0]?.payload) {
       return this.notLoaded(query.tenantKey, "consumption.enterprise_brief_v1", empty, baseline,

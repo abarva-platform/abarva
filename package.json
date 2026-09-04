@@ -484,6 +484,7 @@
     "generate:knowledge-dimension-narratives": "npx tsx scripts/knowledge/generate-knowledge-dimension-narratives.ts",
     "audit:knowledge-dimension-narratives": "npx tsx scripts/knowledge/audit-knowledge-dimension-narratives.ts",
     "generate:knowledge-home-insights": "npx tsx scripts/knowledge/generate-knowledge-home-insights.ts",
+    "knowledge:generate-narratives": "NODE_OPTIONS=--conditions=react-server npx tsx scripts/knowledge/generate-knowledge-narratives.ts",
     "audit:knowledge-home-insights": "npx tsx scripts/knowledge/audit-knowledge-home-insights.ts",
     "generate:home-knowledge-claude-narratives": "npx tsx scripts/knowledge/generate-home-knowledge-claude-narratives.ts",
     "audit:home-knowledge-story-quality": "npx tsx scripts/knowledge/audit-home-knowledge-story-quality.ts",
