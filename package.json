@@ -179,6 +179,7 @@
     "auth:legacy-tenant-logins:disable:dry-run": "npx tsx scripts/auth/disable-legacy-tenant-logins.ts",
     "auth:legacy-tenant-logins:disable:apply": "npx tsx scripts/auth/disable-legacy-tenant-logins.ts --apply --confirm-disable-legacy-tenant-logins",
     "generate:skyharbor-substrate": "node scripts/skyharbor/generate-skyharbor-substrate.mjs",
+    "generate:skyharbor-substrate:from-enrichment": "node scripts/skyharbor/generate-skyharbor-substrate-from-enrichment.mjs",
     "generate:skyharbor-overlay": "node scripts/skyharbor/generate-airline-pattern-overlay.mjs",
     "corpus:release-manifest": "node scripts/corpus/release-manifest.mjs",
     "corpus:release-manifest:check": "node scripts/corpus/release-manifest.mjs --check",

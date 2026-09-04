@@ -2,6 +2,14 @@
 /**
  * Packet 28 · SkyHarbor Air substrate generator.
  *
+ * Superseded for the datasets/skyharbor-air-synthetic-v1/ path that
+ * scripts/seed/load-tenant-substrate.ts actually loads into Postgres — see
+ * generate-skyharbor-substrate-from-enrichment.mjs, which reads the real
+ * governed skyharbor-air enrichment dataset instead of this file's
+ * self-contained hardcoded content. Left in place for its docs/skyharbor/
+ * output and S01-S15 segment/graph/briefs artifacts, which the enrichment
+ * bridge does not produce.
+ *
  * Purpose:
  *   Build a major-carrier-shaped, de-identified airline modernization substrate that
  *   demonstrates the exact onboarding method a CTO team could reuse: raw
