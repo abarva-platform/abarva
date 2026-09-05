@@ -7,6 +7,10 @@
 // feed back into a targeted re-generation pass. This module never calls an
 // LLM and never edits the text itself — it only judges and advises.
 
+import {
+  textMentionsAny,
+  type AvaModuleQualityGateResult,
+} from "@/lib/agent/module-expert-contract";
 import { checkMovesAvaBannedLanguage } from "./banned-language";
 import type { MovesAvaAnswerMode, MovesAvaChatPacket } from "./types";
 
@@ -20,12 +24,8 @@ export type MovesAvaQualityCheckId =
   | "mentions_source_when_relevant"
   | "mentions_tower_when_relevant";
 
-export interface MovesAvaQualityGateResult {
-  pass: boolean;
-  checks: Record<MovesAvaQualityCheckId, boolean>;
-  failedChecks: MovesAvaQualityCheckId[];
-  repairInstructions: string[];
-}
+export type MovesAvaQualityGateResult =
+  AvaModuleQualityGateResult<MovesAvaQualityCheckId>;
 
 const NEXT_ACTION_HINTS = [
   "next action",
@@ -38,11 +38,6 @@ const NEXT_ACTION_HINTS = [
   "advance",
   "provide",
 ];
-
-function mentionsAny(text: string, needles: readonly string[]): boolean {
-  const lower = text.toLowerCase();
-  return needles.some((needle) => lower.includes(needle));
-}
 
 export function runMovesAvaQualityGate(
   text: string,
@@ -74,9 +69,9 @@ export function runMovesAvaQualityGate(
         : hasDeterministicStateReference,
     includes_caveat_when_incomplete:
       packet.missingInputs.length === 0 ||
-      mentionsAny(trimmed, ["confirm", "missing", "gap", "not yet", "needs confirmation"]),
+      textMentionsAny(trimmed, ["confirm", "missing", "gap", "not yet", "needs confirmation"]),
     includes_next_action:
-      mode === "out_of_scope_redirect" || mentionsAny(trimmed, NEXT_ACTION_HINTS),
+      mode === "out_of_scope_redirect" || textMentionsAny(trimmed, NEXT_ACTION_HINTS),
     no_banned_language: banned.pass,
     mentions_source_when_relevant:
       !packet.sourceImplication.relevant || lower.includes("source"),

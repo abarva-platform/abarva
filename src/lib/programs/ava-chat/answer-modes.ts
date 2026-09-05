@@ -6,10 +6,11 @@
 // keyword/regex classification — deterministic, no LLM call, testable in
 // isolation from the chat route.
 
+import type { AvaModuleAnswerModeClassification } from "@/lib/agent/module-expert-contract";
 import type { MovesAvaAnswerMode } from "./types";
 
-export interface MovesAvaAnswerModeClassification {
-  mode: MovesAvaAnswerMode;
+export interface MovesAvaAnswerModeClassification
+  extends AvaModuleAnswerModeClassification<MovesAvaAnswerMode> {
   isOutOfScope: boolean;
 }
 

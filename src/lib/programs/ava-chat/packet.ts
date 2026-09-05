@@ -7,6 +7,11 @@
 // used throughout the Moves phase-workspace slice.
 
 import {
+  buildAvaModuleCaveats,
+  collectMissingAvaModuleInputs,
+  type AvaModuleOptionalInputField,
+} from "@/lib/agent/module-expert-contract";
+import {
   MOVES_AVA_ALLOWED_ACTIONS,
   MOVES_AVA_DISALLOWED_ACTIONS,
   type MovesAvaChatPacket,
@@ -36,10 +41,9 @@ export interface BuildMovesAvaChatPacketInput {
   approvedInputsPackPresent?: boolean;
 }
 
-const OPTIONAL_FIELD_LABELS: ReadonlyArray<{
-  key: keyof BuildMovesAvaChatPacketInput;
-  label: string;
-}> = [
+const OPTIONAL_FIELD_LABELS: ReadonlyArray<
+  AvaModuleOptionalInputField<BuildMovesAvaChatPacketInput>
+> = [
   { key: "checklistStatus", label: "phase checklist status" },
   { key: "evidenceNeedPackets", label: "evidence-need packets" },
   { key: "currentStateAssessment", label: "current-state assessment" },
@@ -49,25 +53,15 @@ const OPTIONAL_FIELD_LABELS: ReadonlyArray<{
   { key: "nextPhaseFeedForwardPack", label: "next-phase feed-forward pack" },
 ];
 
-function isPresent(value: unknown): boolean {
-  if (value === null || value === undefined) return false;
-  if (Array.isArray(value)) return value.length > 0;
-  return true;
-}
-
 export function buildMovesAvaChatPacket(
   input: BuildMovesAvaChatPacketInput,
   questionText: string,
 ): MovesAvaChatPacket {
-  const missingInputs = OPTIONAL_FIELD_LABELS.filter(
-    ({ key }) => !isPresent(input[key]),
-  ).map(({ label }) => label);
-
-  const caveats = missingInputs.map(
-    (label) => `${label} was not loaded this turn — treat as needs confirmation, do not guess.`,
-  );
+  const missingInputs = collectMissingAvaModuleInputs(input, OPTIONAL_FIELD_LABELS);
+  const caveats = buildAvaModuleCaveats(missingInputs);
 
   return {
+    surface: "moves",
     tenant: input.tenant,
     moveId: input.moveId,
     moveTitle: input.moveTitle,
