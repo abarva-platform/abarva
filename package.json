@@ -442,6 +442,7 @@
     "audit:moves-evidence-lifecycle": "node scripts/audit/moves-evidence-lifecycle.mjs",
     "audit:moves-agent-assist-blueprint": "node scripts/audit/moves-agent-assist-blueprint.mjs",
     "audit:moves-gate-consistency": "node scripts/audit/moves-gate-consistency.mjs",
+    "audit:source-vocabulary-consistency": "npx tsx scripts/audit/source-vocabulary-consistency.ts",
     "audit:tenant-isolation:moves": "node scripts/audit/moves-context-extract.mjs --tenant-isolation",
     "audit:moves-adaptive-depth-proof": "npx tsx scripts/audit/build-moves-adaptive-depth-proof.ts",
     "audit:module-context-serving": "jest src/lib/enterprise-data/module-context-serving/__tests__/module-context-serving.test.ts --runInBand",
