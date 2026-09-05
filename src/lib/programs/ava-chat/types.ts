@@ -5,6 +5,11 @@
 // that bypasses upload/approval/gate/promotion. See docs/build/moves-design/
 // and the phase-workspace slice memory for the product contract this serves.
 
+import type {
+  AvaModulePacketBase,
+  AvaModuleTopicAwareness,
+} from "@/lib/agent/module-expert-contract";
+
 export type MovesAvaAnswerMode =
   | "phase_guidance"
   | "phase_input_draft"
@@ -40,11 +45,7 @@ export interface MovesAvaFeedForwardSummary {
   carriesForward: string[];
 }
 
-export interface MovesAvaTopicAwareness {
-  relevant: boolean;
-  matchedKeywords: string[];
-  suggestion: string | null;
-}
+export type MovesAvaTopicAwareness = AvaModuleTopicAwareness;
 
 /**
  * Deterministic grounding packet built from real Move state before Moves aVa
@@ -52,7 +53,8 @@ export interface MovesAvaTopicAwareness {
  * `missingInputs` rather than omitted silently — the answer engine and the
  * quality gate both use that list to require a caveat instead of a guess.
  */
-export interface MovesAvaChatPacket {
+export interface MovesAvaChatPacket extends AvaModulePacketBase<"moves"> {
+  surface: "moves";
   tenant: string;
   moveId: string;
   moveTitle: string;
@@ -72,10 +74,6 @@ export interface MovesAvaChatPacket {
   approvedInputsPackPresent: boolean;
   sourceImplication: MovesAvaTopicAwareness;
   towerMeasurement: MovesAvaTopicAwareness;
-  missingInputs: string[];
-  caveats: string[];
-  allowedActions: string[];
-  disallowedActions: string[];
 }
 
 export const MOVES_AVA_ALLOWED_ACTIONS: readonly string[] = [
