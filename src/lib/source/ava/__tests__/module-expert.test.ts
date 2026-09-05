@@ -95,7 +95,9 @@ describe("Source module expert eval — blocked event next action", () => {
 
     expect(answer).not.toBeNull();
     expect(answer).toContain("Prior Authorization Automation Sourcing");
-    expect(answer).toContain("RFP");
+    expect(answer).toContain(
+      "blocked at RFP: Security questionnaire evidence is still missing",
+    );
     expect(answer).toContain("Security questionnaire evidence is still missing");
     expect(answer).toContain("Upload the security questionnaire evidence");
     expect(answer).toContain("1 of 2 tasks complete");
