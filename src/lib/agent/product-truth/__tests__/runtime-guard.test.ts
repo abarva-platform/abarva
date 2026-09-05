@@ -66,7 +66,7 @@ describe("applyProductTruthRuntimeGuard", () => {
     );
 
     expect(result.text).toContain("P0 Originate");
-    expect(result.text).toContain("P5 Prepare to Execute");
+    expect(result.text).toContain("P5 Approval & Mobilization");
     expect(result.text).toContain("Tower Track Outcomes");
     expect(result.text).not.toContain("Charter / Diagnose / Decide / Commit");
     expect(result.violations.map((v) => v.category)).toContain(

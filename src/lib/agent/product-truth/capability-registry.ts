@@ -37,7 +37,7 @@ export const PRODUCT_CAPABILITY_REGISTRY: ReadonlyArray<ProductCapabilityEntry> 
     label: "P0-P5 plus Tower Track Outcomes governance model",
     maturity: "shipped",
     claimGuidance:
-      "Moves structures work through P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes.",
+      "Moves structures work through P0 Originate, P1 Charter, P2 Discover & Diagnose, P3 Design Future State, P4 Roadmap & Business Case, P5 Approval & Mobilization, and Tower Track Outcomes.",
     triggerPhrases: [/P0.*P5/i, /Tower Track Outcomes/i],
   },
   {

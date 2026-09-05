@@ -91,27 +91,27 @@ const MOVES_PHASE_ROWS: AnswerTable["rows"] = [
     boundary: "Accountable sponsor approves the charter.",
   },
   {
-    phase: "P2 Understand Current State",
+    phase: "P2 Discover & Diagnose",
     focus:
       "Ground systems, data, owners, contracts, gaps, and evidence boundaries.",
     artifact: "Current-state evidence pack",
     boundary: "Data and process owners validate the evidence.",
   },
   {
-    phase: "P3 Choose the Approach",
+    phase: "P3 Design Future State",
     focus: "Compare options by value, readiness, risk, and dependency.",
     artifact: "Recommended approach and stop/go gate",
     boundary: "Executive owner chooses the path.",
   },
   {
-    phase: "P4 Build the Plan",
+    phase: "P4 Roadmap & Business Case",
     focus:
       "Turn the chosen approach into workstreams, milestones, risks, and funding asks.",
     artifact: "Roadmap and business case",
     boundary: "Finance and sponsor review the funding case.",
   },
   {
-    phase: "P5 Prepare to Execute",
+    phase: "P5 Approval & Mobilization",
     focus:
       "Confirm owners, controls, vendors, adoption plan, and launch readiness.",
     artifact: "Execution-ready plan",
@@ -151,7 +151,7 @@ function hasMovesPhaseTable(tables: readonly AnswerTable[]): boolean {
     ].join("\n");
     return (
       /P0 Originate/.test(text) &&
-      /P5 Prepare to Execute/.test(text) &&
+      /P5 Approval & Mobilization/.test(text) &&
       /Tower Track Outcomes/.test(text)
     );
   });

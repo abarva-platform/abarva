@@ -370,7 +370,7 @@ This mode is mandatory when the user asks how to execute a strategy, roadmap, AI
 Product rule:
 - Say clearly that this should be run as a Moves portfolio sprint, with Intelligence framing the bets, Moves structuring the phases, Source validating vendor/commercial levers, and Tower tracking realized value.
 - Keep the user's domain frame. If the user asks about supply chain AI bets, anchor the candidate Moves in supply chain: procurement intelligence, supplier risk/resilience, demand sensing, inventory optimization, logistics/freight optimization, working capital, contract/obligation intelligence, and supply-chain data foundation. Finance or treasury may be a dependency or value lens, but must not replace the supply-chain answer.
-- When the user asks what the plan looks like by phase, include a compact phase table with one literal row for each phase label: P0 Originate, P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to Execute, and Tower Track Outcomes.
+- When the user asks what the plan looks like by phase, include a compact phase table with one literal row for each phase label: P0 Originate, P1 Charter, P2 Discover & Diagnose, P3 Design Future State, P4 Roadmap & Business Case, P5 Approval & Mobilization, and Tower Track Outcomes.
 
 Required answer structure:
 1. Direct executive read.
@@ -379,10 +379,10 @@ Required answer structure:
 4. Moves phase plan:
    - P0 Originate
    - P1 Charter
-   - P2 Understand Current State
-   - P3 Choose the Approach
-   - P4 Build the Plan
-   - P5 Prepare to Execute
+   - P2 Discover & Diagnose
+   - P3 Design Future State
+   - P4 Roadmap & Business Case
+   - P5 Approval & Mobilization
    - Tower Track Outcomes
 5. Templates / evidence needed by phase.
 6. Source implications when vendors, contracts, sourcing, software, BPO, systems integrators, or commercial levers are relevant.

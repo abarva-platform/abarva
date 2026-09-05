@@ -91,7 +91,7 @@ export function buildFeedForwardPack(
   let carriesForward: string[];
 
   if (fromPhase <= 2) {
-    // P2 → P3 Choose the Approach
+    // P2 → P3 Design Future State
     sections = [
       section('Design inputs', [...gapLabels, ...readinessConstraints, ...controls]),
       section('Evidence gaps', evidenceGaps, 'No evidence gaps recorded'),
@@ -114,7 +114,7 @@ export function buildFeedForwardPack(
       'Open questions for solution design',
     ];
   } else if (fromPhase === 3) {
-    // P3 → P4 Build the Plan
+    // P3 → P4 Roadmap & Business Case
     sections = [
       section('Selected approach', s.selectedApproach ? [s.selectedApproach] : []),
       section('Workstream candidates', s.workstreams?.length ? s.workstreams : gapLabels),
@@ -131,7 +131,7 @@ export function buildFeedForwardPack(
       'Value assumptions to validate',
     ];
   } else if (fromPhase === 4) {
-    // P4 → P5 Prepare to Execute
+    // P4 → P5 Approval & Mobilization
     sections = [
       section('Workstreams & owners', s.workstreams ?? []),
       section('Launch readiness', clean(s.openGateCriteria)),
