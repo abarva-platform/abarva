@@ -44,9 +44,10 @@ export interface AvaModuleExpertContract<
   QualityResult,
   Classification extends AvaModuleAnswerModeClassification<Mode> =
     AvaModuleAnswerModeClassification<Mode>,
+  ClassifyInput = string,
 > {
   surface: Surface;
-  classifyQuestion: (questionText: string) => Classification;
+  classifyQuestion: (input: ClassifyInput) => Classification;
   shouldBuildPacket: (args: { hardeningEnabled: boolean; mode: Mode }) => boolean;
   buildPacket: (input: PacketInput, questionText: string) => Packet;
   formatPrompt: (packet: Packet, mode: Mode) => string;
