@@ -88,6 +88,8 @@ describe("Tower aVa packet carries only what the deterministic layer published",
     expect(PACKET.displayableMetrics.map((m) => m.label)).toEqual([
       "Ticket deflection rate",
     ]);
+    expect(PACKET.displayableMetrics[0].normalizedFigures).toContain("pct:34");
+    expect(PACKET.permittedFigureFingerprints).toContain("pct:34");
     expect(PACKET.withheldMetricLabels).toEqual(["Support cost per ticket"]);
     expect(JSON.stringify(PACKET)).not.toContain("18.40");
   });
@@ -120,6 +122,24 @@ describe("Tower aVa quality gate — explains, never computes", () => {
       "metric_status",
     );
     expect([grounded.failedChecks, grounded.pass]).toEqual([[], true]);
+  });
+
+  it("accepts a normalized restatement of a published figure", () => {
+    const grounded = runTowerAvaQualityGate(
+      "Ticket deflection rate is thirty-four percent. The support-cost metric is tracked but not yet displayable.",
+      PACKET,
+      "metric_status",
+    );
+    expect([grounded.failedChecks, grounded.pass]).toEqual([[], true]);
+  });
+
+  it("rejects a nearby rounded figure that the packet did not publish", () => {
+    const rounded = runTowerAvaQualityGate(
+      "Ticket deflection rate is 35%. The support-cost metric is tracked but not yet displayable.",
+      PACKET,
+      "metric_status",
+    );
+    expect(rounded.checks.no_unsupported_number).toBe(false);
   });
 
   it("rejects realized-value language when no claim permits it", () => {

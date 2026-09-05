@@ -111,6 +111,10 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
     expect(ROUTE_SOURCE).toContain('buildArtifactQualityGovernedAnswer');
     expect(ROUTE_SOURCE).toContain('looksLikeArtifactQualityQuestion');
     expect(ROUTE_SOURCE).toContain('eventId: liveEventDetail?.id ?? eventId');
+    expect(ROUTE_SOURCE).toContain('buildSourceAvaModuleHandoffForRuntime');
+    expect(ROUTE_SOURCE).toContain('"source_analytics"');
+    expect(ROUTE_SOURCE).toContain('"moves_ava_chat_hardening"');
+    expect(ROUTE_SOURCE).toContain('type: "module-handoff"');
     expect(
       ROUTE_SOURCE.indexOf('looksLikeValueLedgerQuestion(normalizedBody.prompt)'),
     ).toBeLessThan(

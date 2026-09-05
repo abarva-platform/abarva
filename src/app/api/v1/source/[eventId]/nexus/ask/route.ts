@@ -6,6 +6,7 @@ import {
   normalizeSourceNexusApiRequestBody,
 } from "@/lib/source/nexus-api";
 import { getActiveClientRow } from "@/lib/active-client";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import {
   APEX_RETAIL_BROKER_TENANT_KEY,
   APEX_RETAIL_CLIENT_KEY,
@@ -48,6 +49,7 @@ import {
   buildValueLedgerGovernedAnswer,
   looksLikeValueLedgerQuestion,
 } from "@/lib/source/ava/value-ledger-governed-answer";
+import { buildSourceAvaModuleHandoffForRuntime } from "@/lib/source/ava/module-handoff-runtime";
 import {
   resolveAuthoritativeArtifactSlots,
   type AuthoritativeArtifactCandidate,
@@ -384,10 +386,35 @@ export async function POST(
             noModel: true,
           }
         : response;
+      const moduleHandoff = buildSourceAvaModuleHandoffForRuntime({
+        sourceAnalyticsEnabled: isFeatureEnabled(
+          {
+            clientKey: activeClientKey,
+            clientId: tenancy.clientId,
+          },
+          "source_analytics",
+        ),
+        movesAvaHardeningEnabled: isFeatureEnabled(
+          {
+            clientKey: activeClientKey,
+            clientId: tenancy.clientId,
+          },
+          "moves_ava_chat_hardening",
+        ),
+        tenant: displayTenantName,
+        event: liveEventDetail ?? null,
+        question: normalizedBody.prompt,
+        surface: eventId ? `/source/events/${eventId}` : "source",
+      });
       const lines = [JSON.stringify({ type: "summary", ...ndjsonSummary })];
       if (agentAnswer) {
         lines.push(
           JSON.stringify({ type: "agent-answer", answer: agentAnswer }),
+        );
+      }
+      if (moduleHandoff) {
+        lines.push(
+          JSON.stringify({ type: "module-handoff", handoff: moduleHandoff }),
         );
       }
       return new Response(lines.join("\n") + "\n", {

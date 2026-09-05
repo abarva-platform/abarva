@@ -9,7 +9,7 @@ import {
   textMentionsAny,
   type AvaModuleQualityGateResult,
 } from "@/lib/agent/module-expert-contract";
-import { permittedFigures } from "./packet";
+import { normalizeTowerAvaFigureFingerprints, permittedFigures } from "./packet";
 import type {
   TowerAvaAnswerMode,
   TowerAvaChatPacket,
@@ -21,6 +21,39 @@ export type TowerAvaQualityGateResult =
 
 /** Money, percentages, and bare figures a reader would take as a measurement. */
 const FIGURE_RE = /\$?\d[\d,]*(?:\.\d+)?\s?(?:%|k|m|bn|b)?/gi;
+const WORD_FIGURE_RE =
+  /\b(?:(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:[-\s](one|two|three|four|five|six|seven|eight|nine))?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)\s+(percent|per cent|dollars?|million|billion|thousand)\b/gi;
+
+const WORD_NUMBER_VALUES: Readonly<Record<string, number>> = {
+  zero: 0,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+  thirteen: 13,
+  fourteen: 14,
+  fifteen: 15,
+  sixteen: 16,
+  seventeen: 17,
+  eighteen: 18,
+  nineteen: 19,
+  twenty: 20,
+  thirty: 30,
+  forty: 40,
+  fifty: 50,
+  sixty: 60,
+  seventy: 70,
+  eighty: 80,
+  ninety: 90,
+};
 
 const REALIZED_VALUE_TERMS = [
   "realized",
@@ -60,8 +93,34 @@ const BANNED_INTERNAL_TERMS = [
   "packet",
 ];
 
-function normalizeFigure(value: string): string {
-  return value.toLowerCase().replace(/[\s,$]/g, "");
+function wordFigureToNumeric(match: string): string | null {
+  const parts = match.toLowerCase().replace(/-/g, " ").split(/\s+/);
+  const unit = parts.at(-1);
+  if (!unit) return null;
+  const numberWords =
+    unit === "cent" && parts.at(-2) === "per" ? parts.slice(0, -2) : parts.slice(0, -1);
+  const value = numberWords.reduce((sum, word) => {
+    const part = WORD_NUMBER_VALUES[word];
+    return part === undefined ? Number.NaN : sum + part;
+  }, 0);
+  if (!Number.isFinite(value)) return null;
+  if (unit === "percent" || unit === "cent") return `${value} percent`;
+  return `${value} ${unit}`;
+}
+
+function statedFigureFingerprintGroups(answerText: string): string[][] {
+  const digitFingerprints = (answerText.match(FIGURE_RE) ?? []).map(
+    normalizeTowerAvaFigureFingerprints,
+  );
+  const wordFingerprints = [...answerText.matchAll(WORD_FIGURE_RE)].map(
+    (match) => {
+      const numeric = wordFigureToNumeric(match[0]);
+      return numeric ? normalizeTowerAvaFigureFingerprints(numeric) : [];
+    },
+  );
+  return [...digitFingerprints, ...wordFingerprints].filter(
+    (fingerprints) => fingerprints.length > 0,
+  );
 }
 
 /**
@@ -73,22 +132,14 @@ function figuresAreSupported(
   answerText: string,
   packet: TowerAvaChatPacket,
 ): boolean {
-  const stated = answerText.match(FIGURE_RE) ?? [];
+  const stated = statedFigureFingerprintGroups(answerText);
   if (stated.length === 0) return true;
 
-  const supportedText = [
-    ...permittedFigures(packet),
-    ...packet.displayableMetrics.map((m) => m.label),
-    ...packet.truthCaveats,
-    ...packet.evidenceGaps,
-    ...packet.valueClaims.map((c) => `${c.label} ${c.reason}`),
-    ...packet.blockedValueClaims.map((c) => `${c.label} ${c.reason}`),
-  ].join(" ");
-  const supportedFigures = new Set(
-    (supportedText.match(FIGURE_RE) ?? []).map(normalizeFigure),
-  );
+  const supportedFigures = new Set(permittedFigures(packet));
 
-  return stated.every((figure) => supportedFigures.has(normalizeFigure(figure)));
+  return stated.every((fingerprints) =>
+    fingerprints.some((figure) => supportedFigures.has(figure)),
+  );
 }
 
 export function runTowerAvaQualityGate(

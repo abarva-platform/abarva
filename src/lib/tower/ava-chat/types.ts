@@ -29,6 +29,8 @@ export interface TowerAvaDisplayableMetric {
   metricId: string;
   label: string;
   displayValue: string;
+  /** Normalized figure fingerprints the answer quality gate may accept. */
+  normalizedFigures: string[];
   basis: string;
 }
 
@@ -47,6 +49,8 @@ export interface TowerAvaChatPacket extends AvaModulePacketBase<"tower"> {
   displayableMetrics: TowerAvaDisplayableMetric[];
   /** Metrics that exist but are withheld, with no value carried. */
   withheldMetricLabels: string[];
+  /** All normalized figure fingerprints aVa may state in this turn. */
+  permittedFigureFingerprints: string[];
   valueClaims: TowerAvaValueClaimSummary[];
   blockedValueClaims: TowerAvaValueClaimSummary[];
   truthCaveats: string[];

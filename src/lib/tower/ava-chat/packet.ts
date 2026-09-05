@@ -59,6 +59,44 @@ function displayValue(value: unknown): string {
   return "";
 }
 
+function normalizedNumber(value: number): string {
+  if (!Number.isFinite(value)) return "";
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(6)));
+}
+
+export function normalizeTowerAvaFigureFingerprints(value: string): string[] {
+  const lower = value.trim().toLowerCase();
+  if (!lower) return [];
+
+  const numericMatch = lower.replace(/,/g, "").match(/\d+(?:\.\d+)?/);
+  if (!numericMatch) return [];
+
+  const base = Number(numericMatch[0]);
+  if (!Number.isFinite(base)) return [];
+
+  const hasPercent = /%|\bpercent\b|\bper cent\b/.test(lower);
+  const hasCurrency = /\$|\busd\b|\bdollars?\b/.test(lower);
+  const multiplier =
+    /\bbn\b|\bbillion\b/.test(lower)
+      ? 1_000_000_000
+      : /\bm\b|\bmillion\b/.test(lower)
+        ? 1_000_000
+        : /\bk\b|\bthousand\b/.test(lower)
+          ? 1_000
+          : 1;
+  const scaled = normalizedNumber(base * multiplier);
+  const compact = lower.replace(/[\s,$-]/g, "");
+
+  return Array.from(
+    new Set([
+      `raw:${compact}`,
+      hasPercent ? `pct:${scaled}` : null,
+      hasCurrency ? `usd:${scaled}` : null,
+      !hasPercent && !hasCurrency ? `num:${scaled}` : null,
+    ].filter((fingerprint): fingerprint is string => Boolean(fingerprint))),
+  );
+}
+
 function summarizeClaim(claim: TowerValueClaim): TowerAvaValueClaimSummary {
   return {
     claimId: claim.claimId,
@@ -89,13 +127,19 @@ export function buildTowerAvaChatPacket(
       withheldMetricLabels.push(metric.label);
       continue;
     }
+    const normalizedFigures = normalizeTowerAvaFigureFingerprints(rendered);
     displayableMetrics.push({
       metricId: metric.metricId,
       label: metric.label,
       displayValue: rendered,
+      normalizedFigures,
       basis: String(metric.projectionStatus),
     });
   }
+
+  const permittedFigureFingerprints = Array.from(
+    new Set(displayableMetrics.flatMap((metric) => metric.normalizedFigures)),
+  );
 
   const missingInputs = collectMissingAvaModuleInputs(input, OPTIONAL_FIELD_LABELS);
 
@@ -104,6 +148,7 @@ export function buildTowerAvaChatPacket(
     tenant: pack.tenantKey,
     displayableMetrics,
     withheldMetricLabels,
+    permittedFigureFingerprints,
     valueClaims: (pack.towerValueClaims ?? []).map(summarizeClaim),
     blockedValueClaims: (pack.blockedValueClaims ?? []).map(summarizeClaim),
     truthCaveats: [...(pack.towerTruthCaveats ?? []), ...(pack.caveats ?? [])],
@@ -120,5 +165,5 @@ export function buildTowerAvaChatPacket(
 
 /** Every figure aVa is permitted to state, for the quality gate to check against. */
 export function permittedFigures(packet: TowerAvaChatPacket): string[] {
-  return packet.displayableMetrics.map((m) => m.displayValue);
+  return packet.permittedFigureFingerprints;
 }
