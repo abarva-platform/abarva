@@ -29,25 +29,12 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       expect(
         isFeatureEnabled({ clientKey: "meridian" }, "moves_phase_workspace_v2"),
       ).toBe(true);
-      expect(
-        isFeatureEnabled(
-          { clientKey: "apexretail" },
-          "moves_ava_chat_hardening",
-        ),
-      ).toBe(true);
-      expect(
-        isFeatureEnabled(
-          { clientKey: "meridian-health" },
-          "moves_ava_chat_hardening",
-        ),
-      ).toBe(true);
     });
 
     it("is on when the context is missing a tenant key", () => {
       // Platform-default flags don't require a tenant; they're for everyone.
       expect(isFeatureEnabled(null, "intelligence_brief_v4")).toBe(true);
       expect(isFeatureEnabled({}, "intelligence_brief_v4")).toBe(true);
-      expect(isFeatureEnabled(null, "moves_ava_chat_hardening")).toBe(true);
     });
   });
 
@@ -57,6 +44,12 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
         isFeatureEnabled(
           { clientKey: "apexretail" },
           "first_capital_substrate_overlay",
+        ),
+      ).toBe(false);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "apexretail" },
+          "moves_ava_chat_hardening",
         ),
       ).toBe(false);
       expect(
@@ -78,6 +71,12 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
         isFeatureEnabled(
           { clientKey: "meridian-health" },
           "tower_cxo_claude_story_blocks",
+        ),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "meridian-health" },
+          "moves_ava_chat_hardening",
         ),
       ).toBe(true);
     });
@@ -126,6 +125,7 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       expect(isFeatureEnabled({}, "first_capital_substrate_overlay")).toBe(
         false,
       );
+      expect(isFeatureEnabled(null, "moves_ava_chat_hardening")).toBe(false);
     });
 
     it("can be enabled per tenant through a lab env override", () => {

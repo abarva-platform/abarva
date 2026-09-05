@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release makes aVa's module handoff map executable and adds the generated Nexus manual/aVa training guide that reads the same execution contracts. The Source NDJSON ask route can now emit a structured Source-to-Moves P0 handoff payload when both governing flags are enabled, Tower figure checks use normalized deterministic fingerprints, and Moves aVa hardening is promoted to platform-default with an exclude-list rollback path.
+This release makes aVa's module handoff map executable and adds the generated Nexus manual/aVa training guide that reads the same execution contracts. The Source NDJSON ask route can now emit a structured Source-to-Moves P0 handoff payload when both governing flags are enabled, and Tower figure checks use normalized deterministic fingerprints. Moves aVa hardening remains tenant-scoped until signed-in tenant proof supports platform promotion.
 
 ## Layer Impact
 
@@ -22,11 +22,11 @@ Canonical Model: No change. The router consumes deterministic packet fields alre
 
 ## Client Applicability
 
-- All clients: Applies after merge/deploy. Moves aVa hardening is platform-default; Source handoff emission is limited to the opt-in NDJSON branch and still requires Source analytics plus Moves hardening.
+- All clients: The manual generator, consistency gate, and route code apply after merge/deploy. Source handoff emission is limited to the opt-in NDJSON branch and still requires Source analytics plus Moves hardening.
 - Specific clients: None.
 - Internal only: No.
 - Public/demo only: No.
-- Feature flag: `moves_ava_chat_hardening` is promoted from tenant-default to platform-default. `source_analytics` remains a platform prerequisite for Source runtime handoff emission.
+- Feature flag: `moves_ava_chat_hardening` remains tenant-default with the existing enrolled tenants. `source_analytics` remains a platform prerequisite for Source runtime handoff emission.
 
 ## Changes Included
 
@@ -37,7 +37,7 @@ Canonical Model: No change. The router consumes deterministic packet fields alre
 - `src/lib/source/ava/module-handoff-runtime.ts` builds a Source-to-Moves runtime handoff from loaded event state behind `source_analytics` and `moves_ava_chat_hardening`.
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` emits `type: "module-handoff"` only in the NDJSON response path.
 - `src/lib/tower/ava-chat/*` normalizes deterministic display figures into fingerprints so Tower can accept equivalent restatements while rejecting unpublished nearby values.
-- `src/lib/features/registry.ts` promotes `moves_ava_chat_hardening` to platform-default with `excludeTenants` rollback.
+- `src/lib/features/registry.ts` keeps `moves_ava_chat_hardening` tenant-scoped and records that platform promotion still requires signed-in tenant proof.
 - `src/lib/agent/__tests__/module-routing.test.ts` proves the Source-to-Moves handoff payload.
 - `src/lib/source/ava/module-expert.ts` tightens the Source packet prompt citation rule for stage/gate answers.
 
@@ -64,12 +64,12 @@ Merge through PR review and deploy through the repo-owned ACA workflow. Runtime 
 - Approved image digest: Not applicable before merge/deploy.
 - ACA runtime invariant: Not applicable before merge/deploy.
 - Worker image invariant: Not applicable.
-- Feature/env flag update path: `moves_ava_chat_hardening` is platform-default in code; emergency rollback uses the registry exclude-list or the matching environment override path if later added.
+- Feature/env flag update path: `moves_ava_chat_hardening` remains tenant-scoped through the existing include-list and environment override path.
 - Live signed-in proof required: Required after merge/deploy before claiming the Source-to-Moves handoff is live-proven in the product UI.
 
 ## Rollback Plan
 
-Revert the PR for full rollback. For a narrower rollback, exclude tenants from `moves_ava_chat_hardening` or disable the NDJSON caller path; there are no migrations or data writes.
+Revert the PR for full rollback. For a narrower rollback, remove tenants from `moves_ava_chat_hardening` or disable the NDJSON caller path; there are no migrations or data writes.
 
 ## Audit Evidence
 
@@ -78,4 +78,4 @@ Revert the PR for full rollback. For a narrower rollback, exclude tenants from `
 
 ## Known Gaps
 
-The generated manual is not promoted to an agent-usable corpus yet. It still requires a governance dataset manifest, policy validation, indexing, retrieval proof, and cite-render proof before aVa can use it as retrieved training context. The Source-to-Moves payload is emitted by the route but no client UI currently consumes it for navigation or prefill.
+The generated manual is not promoted to an agent-usable corpus yet. It still requires a governance dataset manifest, policy validation, indexing, retrieval proof, and cite-render proof before aVa can use it as retrieved training context. The Source-to-Moves payload is emitted by the route but no client UI currently consumes it for navigation or prefill. Moves aVa hardening still needs signed-in proof on its enrolled tenants before a platform-default promotion.
