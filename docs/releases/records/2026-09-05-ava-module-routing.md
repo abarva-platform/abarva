@@ -63,7 +63,7 @@ Revert the PR. Because there are no migrations, data writes, feature flags, or r
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/7366
 - Local focused tests, TypeScript, lint, and mutation check listed above.
 
 ## Known Gaps
