@@ -124,10 +124,10 @@ const PHASE_CODE_BY_NUM: Partial<Record<number, MovePhaseCode>> = {
 
 const NEXT_PHASE_LABEL: Record<number, string> = {
   0: "P1 Charter",
-  1: "P2 Understand Current State",
-  2: "P3 Choose the Approach",
-  3: "P4 Build the Plan",
-  4: "P5 Prepare to Execute",
+  1: "P2 Discover & Diagnose",
+  2: "P3 Design Future State",
+  3: "P4 Roadmap & Business Case",
+  4: "P5 Approval & Mobilization",
   5: "Tower Track Outcomes",
 };
 

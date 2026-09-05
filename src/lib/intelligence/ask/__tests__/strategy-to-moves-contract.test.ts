@@ -48,7 +48,7 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(registryCode).toContain("compact Moves phase plan");
     expect(registryCode).toContain("ensureMovesExecutionPhaseTable");
     expect(registryCode).toContain("P0 Originate");
-    expect(registryCode).toContain("P5 Prepare to Execute");
+    expect(registryCode).toContain("P5 Approval & Mobilization");
     expect(registryCode).toContain("Tower Track Outcomes");
     expect(synthesizerCode).toContain(
       "buildCxoAnswerModeSystemAddendum(answerMode)",
@@ -195,16 +195,16 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
         "|---|---|",
         "| P0 Originate | Frame the bet. |",
         "| P1 Charter | Sign the charter. |",
-        "| P2 Understand Current State | Ground the evidence. |",
-        "| P3 Choose the Approach | Pick the path. |",
-        "| P5 Prepare to Execute | Confirm readiness. |",
+        "| P2 Discover & Diagnose | Ground the evidence. |",
+        "| P3 Design Future State | Pick the path. |",
+        "| P5 Approval & Mobilization | Confirm readiness. |",
         "| Tower Track Outcomes | Track value. |",
       ].join("\n"),
       "strategy_to_moves_execution",
     );
 
     expect(answer).toContain("**Moves phase contract completion**");
-    expect(answer).toContain("P4 Build the Plan");
+    expect(answer).toContain("P4 Roadmap & Business Case");
     expect(
       answer.match(/\| Phase \| What AbarVa does \| Proposed output \|/g),
     ).toBeNull();
@@ -216,10 +216,10 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
         "Moves Phase\tHITL Checkpoint\tDrift Threshold",
         "P0 Originate\tFrame the bet.\tNo model yet.",
         "P1 Charter\tSign the charter.\tDefine MAPE.",
-        "P2 Understand Current State\tGround the evidence.\tBacktest drift.",
-        "P3 Choose the Approach\tPick the path.\tReview options.",
-        "P4 Build the Plan\tBuild milestones.\tSet gates.",
-        "P5 Prepare to Execute\tConfirm readiness.\tRun cutover.",
+        "P2 Discover & Diagnose\tGround the evidence.\tBacktest drift.",
+        "P3 Design Future State\tPick the path.\tReview options.",
+        "P4 Roadmap & Business Case\tBuild milestones.\tSet gates.",
+        "P5 Approval & Mobilization\tConfirm readiness.\tRun cutover.",
         "Tower Track Outcomes\tTrack value.\tReport drift.",
       ].join("\n"),
       "strategy_to_moves_execution",

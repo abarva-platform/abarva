@@ -44,7 +44,7 @@ const DEFAULT_BY_PHASE: Record<number, UploadedMoveEvidenceClassification> = {
     slotIds: ['p2_business_current_state', 'p2_process_pain_points'],
     artifactConsumers: ['p2_discovery', 'discovery_report'],
     whatFound: ['current-state evidence'],
-    whereUsed: ['P2 Understand Current State', 'P3 Choose the Approach'],
+    whereUsed: ['P2 Discover & Diagnose', 'P3 Design Future State'],
   },
   3: {
     evidenceType: 'solution_options_decision',
@@ -52,7 +52,7 @@ const DEFAULT_BY_PHASE: Record<number, UploadedMoveEvidenceClassification> = {
     slotIds: ['p3_options_discovery_findings', 'p3_solution_principles', 'p3_two_options'],
     artifactConsumers: ['p3_solution_options', 'solution_approach_options'],
     whatFound: ['solution approach evidence'],
-    whereUsed: ['P3 Choose the Approach', 'P4 Build the Plan'],
+    whereUsed: ['P3 Design Future State', 'P4 Roadmap & Business Case'],
   },
   4: {
     evidenceType: 'roadmap_estimation',
@@ -60,7 +60,7 @@ const DEFAULT_BY_PHASE: Record<number, UploadedMoveEvidenceClassification> = {
     slotIds: ['p4_roadmap_workstreams', 'p4_roadmap_dependencies', 'p4_roadmap_owners'],
     artifactConsumers: ['p4_roadmap', 'execution_roadmap'],
     whatFound: ['roadmap and planning evidence'],
-    whereUsed: ['P4 Build the Plan', 'P5 Prepare to Execute'],
+    whereUsed: ['P4 Roadmap & Business Case', 'P5 Approval & Mobilization'],
   },
   5: {
     evidenceType: 'adoption_change',
@@ -68,7 +68,7 @@ const DEFAULT_BY_PHASE: Record<number, UploadedMoveEvidenceClassification> = {
     slotIds: ['p5_raci_owner_model', 'p5_30_60_90_actions'],
     artifactConsumers: ['p5_handoff', 'handoff_package'],
     whatFound: ['execution readiness evidence'],
-    whereUsed: ['P5 Prepare to Execute', 'Tower Track Outcomes'],
+    whereUsed: ['P5 Approval & Mobilization', 'Tower Track Outcomes'],
   },
 };
 

@@ -11,10 +11,10 @@ import type {
 const CANONICAL_MOVES_PHASES = [
   "P0 Originate",
   "P1 Charter",
-  "P2 Understand Current State",
-  "P3 Choose the Approach",
-  "P4 Build the Plan",
-  "P5 Prepare to Execute",
+  "P2 Discover & Diagnose",
+  "P3 Design Future State",
+  "P4 Roadmap & Business Case",
+  "P5 Approval & Mobilization",
   "Tower Track Outcomes",
 ] as const;
 
