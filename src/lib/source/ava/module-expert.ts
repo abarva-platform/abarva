@@ -167,7 +167,7 @@ export function formatSourceAvaChatPacketForPrompt(
     packet.groundingBlock ? packet.groundingBlock : "Mode grounding: not available.",
     packet.caveats.length ? `Caveats: ${packet.caveats.join(" | ")}` : "Caveats: none.",
     "Evidence-class rule: Source product stages are the canonical 11-stage event workflow; industry lifecycle corpus stages are pattern context only and must be labelled as such.",
-    "Answer rule: cite packet evidence labels such as [S1] and when answering stage/gate questions.",
+    "Answer rule: cite packet evidence labels such as [S1] and [G1] when answering stage/gate questions.",
   ];
 
   return lines.join("\n");
