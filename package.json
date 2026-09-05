@@ -50,6 +50,8 @@
     "access:check": "node scripts/check-access.mjs",
     "db:assert-azure-target": "node scripts/data-plane/assert-azure-db-target.mjs",
     "access:check:live": "node scripts/check-access.mjs --live",
+    "docs:nexus-manual": "npx tsx scripts/docs/build-nexus-manual.ts",
+    "docs:nexus-manual:check": "npx tsx scripts/docs/build-nexus-manual.ts --check",
     "release:check": "node scripts/release-check.mjs",
     "migration:seals:check": "node scripts/release-control/check-migration-seals.mjs",
     "knowledge:hcdn-job-runner": "node scripts/knowledge/hcdn-job-runner.mjs",

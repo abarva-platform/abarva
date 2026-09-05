@@ -134,7 +134,7 @@ import {
   buildAvaPhaseInputProposals,
   describeAvaPhaseInputDraftRefusal,
 } from "@/lib/programs/phase-input-draft-proposals";
-// Moves aVa chat hardening (flag-gated, default off) — deterministic
+// Moves aVa chat hardening (platform-default flag) — deterministic
 // grounding packet + answer-mode classifier for /strategic-moves/* chat.
 // See src/lib/programs/ava-chat/.
 import {

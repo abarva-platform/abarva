@@ -48,6 +48,12 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       ).toBe(false);
       expect(
         isFeatureEnabled(
+          { clientKey: "apexretail" },
+          "moves_ava_chat_hardening",
+        ),
+      ).toBe(false);
+      expect(
+        isFeatureEnabled(
           { clientKey: "meridian" },
           "first_capital_substrate_overlay",
         ),
@@ -119,6 +125,7 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       expect(isFeatureEnabled({}, "first_capital_substrate_overlay")).toBe(
         false,
       );
+      expect(isFeatureEnabled(null, "moves_ava_chat_hardening")).toBe(false);
     });
 
     it("can be enabled per tenant through a lab env override", () => {

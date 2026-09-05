@@ -4,6 +4,7 @@ import './release-control/check-migration-seals.mjs';
 import './release-control/check-azure-deployment-lane.mjs';
 import './audit/check-no-legacy-tenant-inputs.mjs';
 import './release-control/check-release-record.mjs';
+import './release-control/check-nexus-manual-spine.mjs';
 import './release-control/check-deploy-authority-policy.mjs';
 import './release-control/check-tower-tool-rollout-field-survival.mjs';
 import './release-control/check-tower-ai-business-case-field-survival.mjs';
