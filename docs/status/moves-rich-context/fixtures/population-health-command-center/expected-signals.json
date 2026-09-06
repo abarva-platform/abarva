@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-09-05T00:00:00Z",
+  "must_mention": [
+    "shadow registry",
+    "unversioned interface channels",
+    "weekly legacy-platform feed",
+    "retired 2024 readmission model",
+    "declined 2025 sepsis alert",
+    "vacant VP Application Services",
+    "UNVALIDATED zero-value inputs"
+  ],
+  "must_not_claim": [
+    "loaded into tenant",
+    "live prompt proof",
+    "real patient data",
+    "realized savings"
+  ]
+}

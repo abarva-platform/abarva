@@ -1,0 +1,283 @@
+record_id,record_type,label,owner_role,status,severity,metric_value,source_reference,evidence_note
+OE-0001,site,Care delivery site 001,Chief Quality Officer,validated,medium,13,extract inventory,synthetic operating evidence row
+OE-0002,site,Care delivery site 002,Director Data Platform,partial,high,26,governance log,synthetic operating evidence row
+OE-0003,site,Care delivery site 003,VP Application Services,blocked,low,39,process observation,synthetic operating evidence row
+OE-0004,site,Care delivery site 004,Clinical Operations Lead,design_scope,medium,52,workshop note,synthetic operating evidence row
+OE-0005,site,Care delivery site 005,VP Value Based Care,open,high,65,extract inventory,synthetic operating evidence row
+OE-0006,site,Care delivery site 006,Chief Quality Officer,validated,medium,78,governance log,synthetic operating evidence row
+OE-0007,site,Care delivery site 007,Director Data Platform,partial,medium,91,process observation,synthetic operating evidence row
+OE-0008,site,Care delivery site 008,VP Application Services,blocked,high,3,workshop note,synthetic operating evidence row
+OE-0009,site,Care delivery site 009,Clinical Operations Lead,design_scope,low,16,extract inventory,synthetic operating evidence row
+OE-0010,site,Care delivery site 010,VP Value Based Care,open,medium,29,governance log,synthetic operating evidence row
+OE-0011,site,Care delivery site 011,Chief Quality Officer,validated,medium,42,process observation,synthetic operating evidence row
+OE-0012,site,Care delivery site 012,Director Data Platform,partial,low,55,workshop note,synthetic operating evidence row
+OE-0013,site,Care delivery site 013,VP Application Services,blocked,medium,68,extract inventory,synthetic operating evidence row
+OE-0014,site,Care delivery site 014,Clinical Operations Lead,design_scope,high,81,governance log,synthetic operating evidence row
+OE-0015,site,Care delivery site 015,VP Value Based Care,open,low,94,process observation,synthetic operating evidence row
+OE-0016,site,Care delivery site 016,Chief Quality Officer,validated,medium,6,workshop note,synthetic operating evidence row
+OE-0017,site,Care delivery site 017,Director Data Platform,partial,high,19,extract inventory,synthetic operating evidence row
+OE-0018,site,Care delivery site 018,VP Application Services,blocked,low,32,governance log,synthetic operating evidence row
+OE-0019,site,Care delivery site 019,Clinical Operations Lead,design_scope,medium,45,process observation,synthetic operating evidence row
+OE-0020,site,Care delivery site 020,VP Value Based Care,open,high,58,workshop note,synthetic operating evidence row
+OE-0021,site,Care delivery site 021,Chief Quality Officer,validated,medium,71,extract inventory,synthetic operating evidence row
+OE-0022,site,Care delivery site 022,Director Data Platform,partial,medium,84,governance log,synthetic operating evidence row
+OE-0023,site,Care delivery site 023,VP Application Services,blocked,high,97,process observation,synthetic operating evidence row
+OE-0024,site,Care delivery site 024,Clinical Operations Lead,design_scope,low,9,workshop note,synthetic operating evidence row
+OE-0025,site,Care delivery site 025,VP Value Based Care,open,medium,22,extract inventory,synthetic operating evidence row
+OE-0026,site,Care delivery site 026,Chief Quality Officer,validated,medium,35,governance log,synthetic operating evidence row
+OE-0027,site,Care delivery site 027,Director Data Platform,partial,low,48,process observation,synthetic operating evidence row
+OE-0028,site,Care delivery site 028,VP Application Services,blocked,medium,61,workshop note,synthetic operating evidence row
+OE-0029,site,Care delivery site 029,Clinical Operations Lead,design_scope,high,74,extract inventory,synthetic operating evidence row
+OE-0030,site,Care delivery site 030,VP Value Based Care,open,low,87,governance log,synthetic operating evidence row
+OE-0031,site,Care delivery site 031,Chief Quality Officer,validated,medium,100,process observation,synthetic operating evidence row
+OE-0032,site,Care delivery site 032,Director Data Platform,partial,high,12,workshop note,synthetic operating evidence row
+OE-0033,site,Care delivery site 033,VP Application Services,blocked,low,25,extract inventory,synthetic operating evidence row
+OE-0034,site,Care delivery site 034,Clinical Operations Lead,design_scope,medium,38,governance log,synthetic operating evidence row
+OE-0035,site,Care delivery site 035,VP Value Based Care,open,high,51,process observation,synthetic operating evidence row
+OE-0036,site,Care delivery site 036,Chief Quality Officer,validated,medium,64,workshop note,synthetic operating evidence row
+OE-0037,site,Care delivery site 037,Director Data Platform,partial,medium,77,extract inventory,synthetic operating evidence row
+OE-0038,site,Care delivery site 038,VP Application Services,blocked,high,90,governance log,synthetic operating evidence row
+OE-0039,site,Care delivery site 039,Clinical Operations Lead,design_scope,low,2,process observation,synthetic operating evidence row
+OE-0040,site,Care delivery site 040,VP Value Based Care,open,medium,15,workshop note,synthetic operating evidence row
+OE-0041,site,Care delivery site 041,Chief Quality Officer,validated,medium,28,extract inventory,synthetic operating evidence row
+OE-0042,site,Care delivery site 042,Director Data Platform,partial,low,41,governance log,synthetic operating evidence row
+OE-0043,site,Care delivery site 043,VP Application Services,blocked,medium,54,process observation,synthetic operating evidence row
+OE-0044,site,Care delivery site 044,Clinical Operations Lead,design_scope,high,67,workshop note,synthetic operating evidence row
+OE-0045,site,Care delivery site 045,VP Value Based Care,open,low,80,extract inventory,synthetic operating evidence row
+OE-0046,site,Care delivery site 046,Chief Quality Officer,validated,medium,93,governance log,synthetic operating evidence row
+OE-0047,site,Care delivery site 047,Director Data Platform,partial,high,5,process observation,synthetic operating evidence row
+OE-0048,site,Care delivery site 048,VP Application Services,blocked,low,18,workshop note,synthetic operating evidence row
+OE-0049,stakeholder,Named stakeholder role 001,Clinical Operations Lead,design_scope,medium,31,extract inventory,synthetic operating evidence row
+OE-0050,stakeholder,Named stakeholder role 002,VP Value Based Care,open,high,44,governance log,synthetic operating evidence row
+OE-0051,stakeholder,Named stakeholder role 003,Chief Quality Officer,validated,low,57,process observation,synthetic operating evidence row
+OE-0052,stakeholder,Named stakeholder role 004,Director Data Platform,partial,medium,70,workshop note,synthetic operating evidence row
+OE-0053,stakeholder,Named stakeholder role 005,VP Application Services,blocked,high,83,extract inventory,synthetic operating evidence row
+OE-0054,stakeholder,Named stakeholder role 006,Clinical Operations Lead,design_scope,medium,96,governance log,synthetic operating evidence row
+OE-0055,stakeholder,Named stakeholder role 007,VP Value Based Care,open,medium,8,process observation,synthetic operating evidence row
+OE-0056,stakeholder,Named stakeholder role 008,Chief Quality Officer,validated,high,21,workshop note,synthetic operating evidence row
+OE-0057,stakeholder,Named stakeholder role 009,Director Data Platform,partial,low,34,extract inventory,synthetic operating evidence row
+OE-0058,stakeholder,Named stakeholder role 010,VP Application Services,blocked,medium,47,governance log,synthetic operating evidence row
+OE-0059,stakeholder,Named stakeholder role 011,Clinical Operations Lead,design_scope,medium,60,process observation,synthetic operating evidence row
+OE-0060,stakeholder,Named stakeholder role 012,VP Value Based Care,open,low,73,workshop note,synthetic operating evidence row
+OE-0061,stakeholder,Named stakeholder role 013,Chief Quality Officer,validated,medium,86,extract inventory,synthetic operating evidence row
+OE-0062,stakeholder,Named stakeholder role 014,Director Data Platform,partial,high,99,governance log,synthetic operating evidence row
+OE-0063,stakeholder,Named stakeholder role 015,VP Application Services,blocked,low,11,process observation,synthetic operating evidence row
+OE-0064,stakeholder,Named stakeholder role 016,Clinical Operations Lead,design_scope,medium,24,workshop note,synthetic operating evidence row
+OE-0065,stakeholder,Named stakeholder role 017,VP Value Based Care,open,high,37,extract inventory,synthetic operating evidence row
+OE-0066,stakeholder,Named stakeholder role 018,Chief Quality Officer,validated,low,50,governance log,synthetic operating evidence row
+OE-0067,stakeholder,Named stakeholder role 019,Director Data Platform,partial,medium,63,process observation,synthetic operating evidence row
+OE-0068,stakeholder,Named stakeholder role 020,VP Application Services,blocked,high,76,workshop note,synthetic operating evidence row
+OE-0069,stakeholder,Named stakeholder role 021,Clinical Operations Lead,design_scope,medium,89,extract inventory,synthetic operating evidence row
+OE-0070,stakeholder,Named stakeholder role 022,VP Value Based Care,open,medium,1,governance log,synthetic operating evidence row
+OE-0071,stakeholder,Named stakeholder role 023,Chief Quality Officer,validated,high,14,process observation,synthetic operating evidence row
+OE-0072,stakeholder,Named stakeholder role 024,Director Data Platform,partial,low,27,workshop note,synthetic operating evidence row
+OE-0073,stakeholder,Named stakeholder role 025,VP Application Services,blocked,medium,40,extract inventory,synthetic operating evidence row
+OE-0074,stakeholder,Named stakeholder role 026,Clinical Operations Lead,design_scope,medium,53,governance log,synthetic operating evidence row
+OE-0075,stakeholder,Named stakeholder role 027,VP Value Based Care,open,low,66,process observation,synthetic operating evidence row
+OE-0076,stakeholder,Named stakeholder role 028,Chief Quality Officer,validated,medium,79,workshop note,synthetic operating evidence row
+OE-0077,stakeholder,Named stakeholder role 029,Director Data Platform,partial,high,92,extract inventory,synthetic operating evidence row
+OE-0078,stakeholder,Named stakeholder role 030,VP Application Services,blocked,low,4,governance log,synthetic operating evidence row
+OE-0079,stakeholder,Named stakeholder role 031,Clinical Operations Lead,design_scope,medium,17,process observation,synthetic operating evidence row
+OE-0080,stakeholder,Named stakeholder role 032,VP Value Based Care,open,high,30,workshop note,synthetic operating evidence row
+OE-0081,stakeholder,Named stakeholder role 033,Chief Quality Officer,validated,low,43,extract inventory,synthetic operating evidence row
+OE-0082,stakeholder,Named stakeholder role 034,Director Data Platform,partial,medium,56,governance log,synthetic operating evidence row
+OE-0083,data_quality_finding,Data quality finding 001,VP Application Services,blocked,high,69,process observation,synthetic operating evidence row
+OE-0084,data_quality_finding,Data quality finding 002,Clinical Operations Lead,design_scope,low,82,workshop note,synthetic operating evidence row
+OE-0085,data_quality_finding,Data quality finding 003,VP Value Based Care,open,medium,95,extract inventory,synthetic operating evidence row
+OE-0086,data_quality_finding,Data quality finding 004,Chief Quality Officer,validated,high,7,governance log,synthetic operating evidence row
+OE-0087,data_quality_finding,Data quality finding 005,Director Data Platform,partial,low,20,process observation,synthetic operating evidence row
+OE-0088,data_quality_finding,Data quality finding 006,VP Application Services,blocked,high,33,workshop note,synthetic operating evidence row
+OE-0089,data_quality_finding,Data quality finding 007,Clinical Operations Lead,design_scope,high,46,extract inventory,synthetic operating evidence row
+OE-0090,data_quality_finding,Data quality finding 008,VP Value Based Care,open,low,59,governance log,synthetic operating evidence row
+OE-0091,data_quality_finding,Data quality finding 009,Chief Quality Officer,validated,medium,72,process observation,synthetic operating evidence row
+OE-0092,data_quality_finding,Data quality finding 010,Director Data Platform,partial,high,85,workshop note,synthetic operating evidence row
+OE-0093,data_quality_finding,Data quality finding 011,VP Application Services,blocked,high,98,extract inventory,synthetic operating evidence row
+OE-0094,data_quality_finding,Data quality finding 012,Clinical Operations Lead,design_scope,medium,10,governance log,synthetic operating evidence row
+OE-0095,data_quality_finding,Data quality finding 013,VP Value Based Care,open,high,23,process observation,synthetic operating evidence row
+OE-0096,data_quality_finding,Data quality finding 014,Chief Quality Officer,validated,low,36,workshop note,synthetic operating evidence row
+OE-0097,data_quality_finding,Data quality finding 015,Director Data Platform,partial,medium,49,extract inventory,synthetic operating evidence row
+OE-0098,data_quality_finding,Data quality finding 016,VP Application Services,blocked,high,62,governance log,synthetic operating evidence row
+OE-0099,data_quality_finding,Data quality finding 017,Clinical Operations Lead,design_scope,low,75,process observation,synthetic operating evidence row
+OE-0100,data_quality_finding,Data quality finding 018,VP Value Based Care,open,medium,88,workshop note,synthetic operating evidence row
+OE-0101,data_quality_finding,Data quality finding 019,Chief Quality Officer,validated,high,0,extract inventory,synthetic operating evidence row
+OE-0102,data_quality_finding,Data quality finding 020,Director Data Platform,partial,low,13,governance log,synthetic operating evidence row
+OE-0103,data_quality_finding,Data quality finding 021,VP Application Services,blocked,high,26,process observation,synthetic operating evidence row
+OE-0104,data_quality_finding,Data quality finding 022,Clinical Operations Lead,design_scope,high,39,workshop note,synthetic operating evidence row
+OE-0105,data_quality_finding,Data quality finding 023,VP Value Based Care,open,low,52,extract inventory,synthetic operating evidence row
+OE-0106,data_quality_finding,Data quality finding 024,Chief Quality Officer,validated,medium,65,governance log,synthetic operating evidence row
+OE-0107,data_quality_finding,Data quality finding 025,Director Data Platform,partial,high,78,process observation,synthetic operating evidence row
+OE-0108,data_quality_finding,Data quality finding 026,VP Application Services,blocked,high,91,workshop note,synthetic operating evidence row
+OE-0109,data_quality_finding,Data quality finding 027,Clinical Operations Lead,design_scope,medium,3,extract inventory,synthetic operating evidence row
+OE-0110,data_quality_finding,Data quality finding 028,VP Value Based Care,open,high,16,governance log,synthetic operating evidence row
+OE-0111,data_quality_finding,Data quality finding 029,Chief Quality Officer,validated,low,29,process observation,synthetic operating evidence row
+OE-0112,data_quality_finding,Data quality finding 030,Director Data Platform,partial,medium,42,workshop note,synthetic operating evidence row
+OE-0113,risk,Delivery risk 001,VP Application Services,blocked,high,55,extract inventory,synthetic operating evidence row
+OE-0114,risk,Delivery risk 002,Clinical Operations Lead,design_scope,low,68,governance log,synthetic operating evidence row
+OE-0115,risk,Delivery risk 003,VP Value Based Care,open,medium,81,process observation,synthetic operating evidence row
+OE-0116,risk,Delivery risk 004,Chief Quality Officer,validated,high,94,workshop note,synthetic operating evidence row
+OE-0117,risk,Delivery risk 005,Director Data Platform,partial,low,6,extract inventory,synthetic operating evidence row
+OE-0118,risk,Delivery risk 006,VP Application Services,blocked,high,19,governance log,synthetic operating evidence row
+OE-0119,risk,Delivery risk 007,Clinical Operations Lead,design_scope,high,32,process observation,synthetic operating evidence row
+OE-0120,risk,Delivery risk 008,VP Value Based Care,open,low,45,workshop note,synthetic operating evidence row
+OE-0121,risk,Delivery risk 009,Chief Quality Officer,validated,medium,58,extract inventory,synthetic operating evidence row
+OE-0122,risk,Delivery risk 010,Director Data Platform,partial,high,71,governance log,synthetic operating evidence row
+OE-0123,risk,Delivery risk 011,VP Application Services,blocked,high,84,process observation,synthetic operating evidence row
+OE-0124,risk,Delivery risk 012,Clinical Operations Lead,design_scope,medium,97,workshop note,synthetic operating evidence row
+OE-0125,risk,Delivery risk 013,VP Value Based Care,open,high,9,extract inventory,synthetic operating evidence row
+OE-0126,risk,Delivery risk 014,Chief Quality Officer,validated,low,22,governance log,synthetic operating evidence row
+OE-0127,risk,Delivery risk 015,Director Data Platform,partial,medium,35,process observation,synthetic operating evidence row
+OE-0128,risk,Delivery risk 016,VP Application Services,blocked,high,48,workshop note,synthetic operating evidence row
+OE-0129,risk,Delivery risk 017,Clinical Operations Lead,design_scope,low,61,extract inventory,synthetic operating evidence row
+OE-0130,risk,Delivery risk 018,VP Value Based Care,open,medium,74,governance log,synthetic operating evidence row
+OE-0131,risk,Delivery risk 019,Chief Quality Officer,validated,high,87,process observation,synthetic operating evidence row
+OE-0132,risk,Delivery risk 020,Director Data Platform,partial,low,100,workshop note,synthetic operating evidence row
+OE-0133,risk,Delivery risk 021,VP Application Services,blocked,high,12,extract inventory,synthetic operating evidence row
+OE-0134,risk,Delivery risk 022,Clinical Operations Lead,design_scope,high,25,governance log,synthetic operating evidence row
+OE-0135,risk,Delivery risk 023,VP Value Based Care,open,low,38,process observation,synthetic operating evidence row
+OE-0136,risk,Delivery risk 024,Chief Quality Officer,validated,medium,51,workshop note,synthetic operating evidence row
+OE-0137,risk,Delivery risk 025,Director Data Platform,partial,high,64,extract inventory,synthetic operating evidence row
+OE-0138,risk,Delivery risk 026,VP Application Services,blocked,high,77,governance log,synthetic operating evidence row
+OE-0139,risk,Delivery risk 027,Clinical Operations Lead,design_scope,medium,90,process observation,synthetic operating evidence row
+OE-0140,risk,Delivery risk 028,VP Value Based Care,open,high,2,workshop note,synthetic operating evidence row
+OE-0141,time_motion_minute,Care manager hour minute 01,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0142,time_motion_minute,Care manager hour minute 02,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0143,time_motion_minute,Care manager hour minute 03,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0144,time_motion_minute,Care manager hour minute 04,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0145,time_motion_minute,Care manager hour minute 05,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0146,time_motion_minute,Care manager hour minute 06,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0147,time_motion_minute,Care manager hour minute 07,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0148,time_motion_minute,Care manager hour minute 08,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0149,time_motion_minute,Care manager hour minute 09,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0150,time_motion_minute,Care manager hour minute 10,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0151,time_motion_minute,Care manager hour minute 11,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0152,time_motion_minute,Care manager hour minute 12,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0153,time_motion_minute,Care manager hour minute 13,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0154,time_motion_minute,Care manager hour minute 14,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0155,time_motion_minute,Care manager hour minute 15,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0156,time_motion_minute,Care manager hour minute 16,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0157,time_motion_minute,Care manager hour minute 17,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0158,time_motion_minute,Care manager hour minute 18,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0159,time_motion_minute,Care manager hour minute 19,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0160,time_motion_minute,Care manager hour minute 20,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0161,time_motion_minute,Care manager hour minute 21,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0162,time_motion_minute,Care manager hour minute 22,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0163,time_motion_minute,Care manager hour minute 23,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0164,time_motion_minute,Care manager hour minute 24,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0165,time_motion_minute,Care manager hour minute 25,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0166,time_motion_minute,Care manager hour minute 26,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0167,time_motion_minute,Care manager hour minute 27,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0168,time_motion_minute,Care manager hour minute 28,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0169,time_motion_minute,Care manager hour minute 29,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0170,time_motion_minute,Care manager hour minute 30,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0171,time_motion_minute,Care manager hour minute 31,Care Management Lead,search_or_reconciliation,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0172,time_motion_minute,Care manager hour minute 32,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0173,time_motion_minute,Care manager hour minute 33,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0174,time_motion_minute,Care manager hour minute 34,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0175,time_motion_minute,Care manager hour minute 35,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0176,time_motion_minute,Care manager hour minute 36,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0177,time_motion_minute,Care manager hour minute 37,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0178,time_motion_minute,Care manager hour minute 38,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0179,time_motion_minute,Care manager hour minute 39,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0180,time_motion_minute,Care manager hour minute 40,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0181,time_motion_minute,Care manager hour minute 41,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0182,time_motion_minute,Care manager hour minute 42,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0183,time_motion_minute,Care manager hour minute 43,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0184,time_motion_minute,Care manager hour minute 44,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0185,time_motion_minute,Care manager hour minute 45,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0186,time_motion_minute,Care manager hour minute 46,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0187,time_motion_minute,Care manager hour minute 47,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0188,time_motion_minute,Care manager hour minute 48,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0189,time_motion_minute,Care manager hour minute 49,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0190,time_motion_minute,Care manager hour minute 50,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0191,time_motion_minute,Care manager hour minute 51,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0192,time_motion_minute,Care manager hour minute 52,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0193,time_motion_minute,Care manager hour minute 53,Care Management Lead,clinical_action,medium,1,synthetic time-and-motion table,31 of 53 observed minutes intentionally assigned to search and reconciliation
+OE-0194,evidence_artifact,Uploadable evidence artifact 001,Clinical Operations Lead,design_scope,medium,98,governance log,synthetic operating evidence row
+OE-0195,evidence_artifact,Uploadable evidence artifact 002,VP Value Based Care,open,low,10,process observation,synthetic operating evidence row
+OE-0196,evidence_artifact,Uploadable evidence artifact 003,Chief Quality Officer,validated,medium,23,workshop note,synthetic operating evidence row
+OE-0197,evidence_artifact,Uploadable evidence artifact 004,Director Data Platform,partial,high,36,extract inventory,synthetic operating evidence row
+OE-0198,evidence_artifact,Uploadable evidence artifact 005,VP Application Services,blocked,low,49,governance log,synthetic operating evidence row
+OE-0199,evidence_artifact,Uploadable evidence artifact 006,Clinical Operations Lead,design_scope,medium,62,process observation,synthetic operating evidence row
+OE-0200,evidence_artifact,Uploadable evidence artifact 007,VP Value Based Care,open,high,75,workshop note,synthetic operating evidence row
+OE-0201,evidence_artifact,Uploadable evidence artifact 008,Chief Quality Officer,validated,low,88,extract inventory,synthetic operating evidence row
+OE-0202,evidence_artifact,Uploadable evidence artifact 009,Director Data Platform,partial,medium,0,governance log,synthetic operating evidence row
+OE-0203,evidence_artifact,Uploadable evidence artifact 010,VP Application Services,blocked,high,13,process observation,synthetic operating evidence row
+OE-0204,evidence_artifact,Uploadable evidence artifact 011,Clinical Operations Lead,design_scope,medium,26,workshop note,synthetic operating evidence row
+OE-0205,evidence_artifact,Uploadable evidence artifact 012,VP Value Based Care,open,medium,39,extract inventory,synthetic operating evidence row
+OE-0206,evidence_artifact,Uploadable evidence artifact 013,Chief Quality Officer,validated,high,52,governance log,synthetic operating evidence row
+OE-0207,evidence_artifact,Uploadable evidence artifact 014,Director Data Platform,partial,low,65,process observation,synthetic operating evidence row
+OE-0208,evidence_artifact,Uploadable evidence artifact 015,VP Application Services,blocked,medium,78,workshop note,synthetic operating evidence row
+OE-0209,evidence_artifact,Uploadable evidence artifact 016,Clinical Operations Lead,design_scope,medium,91,extract inventory,synthetic operating evidence row
+OE-0210,evidence_artifact,Uploadable evidence artifact 017,VP Value Based Care,open,low,3,governance log,synthetic operating evidence row
+OE-0211,evidence_artifact,Uploadable evidence artifact 018,Chief Quality Officer,validated,medium,16,process observation,synthetic operating evidence row
+OE-0212,evidence_artifact,Uploadable evidence artifact 019,Director Data Platform,partial,high,29,workshop note,synthetic operating evidence row
+OE-0213,evidence_artifact,Uploadable evidence artifact 020,VP Application Services,blocked,low,42,extract inventory,synthetic operating evidence row
+OE-0214,evidence_artifact,Uploadable evidence artifact 021,Clinical Operations Lead,design_scope,medium,55,governance log,synthetic operating evidence row
+OE-0215,evidence_artifact,Uploadable evidence artifact 022,VP Value Based Care,open,high,68,process observation,synthetic operating evidence row
+OE-0216,constraint,Delivery constraint 001,Chief Quality Officer,validated,medium,81,workshop note,synthetic operating evidence row
+OE-0217,constraint,Delivery constraint 002,Director Data Platform,partial,medium,94,extract inventory,synthetic operating evidence row
+OE-0218,constraint,Delivery constraint 003,VP Application Services,blocked,high,6,governance log,synthetic operating evidence row
+OE-0219,constraint,Delivery constraint 004,Clinical Operations Lead,design_scope,low,19,process observation,synthetic operating evidence row
+OE-0220,constraint,Delivery constraint 005,VP Value Based Care,open,medium,32,workshop note,synthetic operating evidence row
+OE-0221,constraint,Delivery constraint 006,Chief Quality Officer,validated,medium,45,extract inventory,synthetic operating evidence row
+OE-0222,phase_acceptance_check,Phase acceptance check 001,Director Data Platform,partial,medium,58,governance log,synthetic operating evidence row
+OE-0223,phase_acceptance_check,Phase acceptance check 002,VP Application Services,blocked,medium,71,process observation,synthetic operating evidence row
+OE-0224,phase_acceptance_check,Phase acceptance check 003,Clinical Operations Lead,design_scope,high,84,workshop note,synthetic operating evidence row
+OE-0225,phase_acceptance_check,Phase acceptance check 004,VP Value Based Care,open,low,97,extract inventory,synthetic operating evidence row
+OE-0226,phase_acceptance_check,Phase acceptance check 005,Chief Quality Officer,validated,medium,9,governance log,synthetic operating evidence row
+OE-0227,phase_acceptance_check,Phase acceptance check 006,Director Data Platform,partial,medium,22,process observation,synthetic operating evidence row
+OE-0228,phase_acceptance_check,Phase acceptance check 007,VP Application Services,blocked,low,35,workshop note,synthetic operating evidence row
+OE-0229,phase_acceptance_check,Phase acceptance check 008,Clinical Operations Lead,design_scope,medium,48,extract inventory,synthetic operating evidence row
+OE-0230,phase_acceptance_check,Phase acceptance check 009,VP Value Based Care,open,high,61,governance log,synthetic operating evidence row
+OE-0231,phase_acceptance_check,Phase acceptance check 010,Chief Quality Officer,validated,low,74,process observation,synthetic operating evidence row
+OE-0232,phase_acceptance_check,Phase acceptance check 011,Director Data Platform,partial,medium,87,workshop note,synthetic operating evidence row
+OE-0233,phase_acceptance_check,Phase acceptance check 012,VP Application Services,blocked,high,100,extract inventory,synthetic operating evidence row
+OE-0234,phase_acceptance_check,Phase acceptance check 013,Clinical Operations Lead,design_scope,low,12,governance log,synthetic operating evidence row
+OE-0235,phase_acceptance_check,Phase acceptance check 014,VP Value Based Care,open,medium,25,process observation,synthetic operating evidence row
+OE-0236,phase_acceptance_check,Phase acceptance check 015,Chief Quality Officer,validated,high,38,workshop note,synthetic operating evidence row
+OE-0237,phase_acceptance_check,Phase acceptance check 016,Director Data Platform,partial,medium,51,extract inventory,synthetic operating evidence row
+OE-0238,phase_acceptance_check,Phase acceptance check 017,VP Application Services,blocked,medium,64,governance log,synthetic operating evidence row
+OE-0239,phase_acceptance_check,Phase acceptance check 018,Clinical Operations Lead,design_scope,high,77,process observation,synthetic operating evidence row
+OE-0240,phase_acceptance_check,Phase acceptance check 019,VP Value Based Care,open,low,90,workshop note,synthetic operating evidence row
+OE-0241,phase_acceptance_check,Phase acceptance check 020,Chief Quality Officer,validated,medium,2,extract inventory,synthetic operating evidence row
+OE-0242,phase_acceptance_check,Phase acceptance check 021,Director Data Platform,partial,medium,15,governance log,synthetic operating evidence row
+OE-0243,prior_attempt,Prior failed attempt 001,VP Application Services,blocked,high,28,process observation,synthetic operating evidence row
+OE-0244,prior_attempt,Prior failed attempt 002,Clinical Operations Lead,design_scope,medium,41,workshop note,synthetic operating evidence row
+OE-0245,prior_attempt,Prior failed attempt 003,VP Value Based Care,open,high,54,extract inventory,synthetic operating evidence row
+OE-0246,value_input,actuarial shared-savings model,Clinical Operations Lead,UNVALIDATED,high,0,pending finance validation,zero value until owner sign-off; do not use as realized value
+OE-0247,value_input,medical expense attribution,Actuary,UNVALIDATED,high,0,pending finance validation,zero value until owner sign-off; do not use as realized value
+OE-0248,value_input,staff productivity conversion,Chief Financial Officer,UNVALIDATED,high,0,pending finance validation,zero value until owner sign-off; do not use as realized value
+OE-0249,value_exclusion,Named value exclusion 001,Clinical Operations Lead,design_scope,medium,5,extract inventory,synthetic operating evidence row
+OE-0250,value_exclusion,Named value exclusion 002,VP Value Based Care,open,medium,18,governance log,synthetic operating evidence row
+OE-0251,value_exclusion,Named value exclusion 003,Chief Quality Officer,validated,high,31,process observation,synthetic operating evidence row
+OE-0252,upload_block,Upload block 001,Director Data Platform,partial,medium,44,workshop note,synthetic operating evidence row
+OE-0253,upload_block,Upload block 002,VP Application Services,blocked,medium,57,extract inventory,synthetic operating evidence row
+OE-0254,upload_block,Upload block 003,Clinical Operations Lead,design_scope,high,70,governance log,synthetic operating evidence row
+OE-0255,upload_block,Upload block 004,VP Value Based Care,open,low,83,process observation,synthetic operating evidence row
+OE-0256,upload_block,Upload block 005,Chief Quality Officer,validated,medium,96,workshop note,synthetic operating evidence row
+OE-0257,runbook_step,Tester runbook step 001,Director Data Platform,partial,medium,8,extract inventory,synthetic operating evidence row
+OE-0258,runbook_step,Tester runbook step 002,VP Application Services,blocked,low,21,governance log,synthetic operating evidence row
+OE-0259,runbook_step,Tester runbook step 003,Clinical Operations Lead,design_scope,medium,34,process observation,synthetic operating evidence row
+OE-0260,runbook_step,Tester runbook step 004,VP Value Based Care,open,high,47,workshop note,synthetic operating evidence row
+OE-0261,runbook_step,Tester runbook step 005,Chief Quality Officer,validated,low,60,extract inventory,synthetic operating evidence row
+OE-0262,runbook_step,Tester runbook step 006,Director Data Platform,partial,medium,73,governance log,synthetic operating evidence row
+OE-0263,runbook_step,Tester runbook step 007,VP Application Services,blocked,high,86,process observation,synthetic operating evidence row
+OE-0264,runbook_step,Tester runbook step 008,Clinical Operations Lead,design_scope,low,99,workshop note,synthetic operating evidence row
+OE-0265,runbook_step,Tester runbook step 009,VP Value Based Care,open,medium,11,extract inventory,synthetic operating evidence row
+OE-0266,runbook_step,Tester runbook step 010,Chief Quality Officer,validated,high,24,governance log,synthetic operating evidence row
+OE-0267,runbook_step,Tester runbook step 011,Director Data Platform,partial,medium,37,process observation,synthetic operating evidence row
+OE-0268,runbook_step,Tester runbook step 012,VP Application Services,blocked,medium,50,workshop note,synthetic operating evidence row
+OE-0269,runbook_step,Tester runbook step 013,Clinical Operations Lead,design_scope,high,63,extract inventory,synthetic operating evidence row
+OE-0270,runbook_step,Tester runbook step 014,VP Value Based Care,open,low,76,governance log,synthetic operating evidence row
+OE-0271,runbook_step,Tester runbook step 015,Chief Quality Officer,validated,medium,89,process observation,synthetic operating evidence row
+OE-0272,runbook_step,Tester runbook step 016,Director Data Platform,partial,medium,1,workshop note,synthetic operating evidence row
+OE-0273,runbook_step,Tester runbook step 017,VP Application Services,blocked,low,14,extract inventory,synthetic operating evidence row
+OE-0274,runbook_step,Tester runbook step 018,Clinical Operations Lead,design_scope,medium,27,governance log,synthetic operating evidence row
+OE-0275,runbook_step,Tester runbook step 019,VP Value Based Care,open,high,40,process observation,synthetic operating evidence row
+OE-0276,runbook_step,Tester runbook step 020,Chief Quality Officer,validated,low,53,workshop note,synthetic operating evidence row
+OE-0277,runbook_step,Tester runbook step 021,Director Data Platform,partial,medium,66,extract inventory,synthetic operating evidence row
+OE-0278,runbook_step,Tester runbook step 022,VP Application Services,blocked,high,79,governance log,synthetic operating evidence row
+OE-0279,runbook_step,Tester runbook step 023,Clinical Operations Lead,design_scope,low,92,process observation,synthetic operating evidence row
+OE-0280,runbook_step,Tester runbook step 024,VP Value Based Care,open,medium,4,workshop note,synthetic operating evidence row
+OE-0281,runbook_step,Tester runbook step 025,Chief Quality Officer,validated,high,17,extract inventory,synthetic operating evidence row
+OE-0282,runbook_step,Tester runbook step 026,Director Data Platform,partial,medium,30,governance log,synthetic operating evidence row

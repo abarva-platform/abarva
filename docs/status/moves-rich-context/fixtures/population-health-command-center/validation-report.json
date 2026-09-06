@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "failures": [],
+  "summary": {
+    "file_count": 38,
+    "data_rows": 838,
+    "tables": 8,
+    "narratives": 4,
+    "care_gap_cells": 118,
+    "quality_measures": 40,
+    "attributed_lives": 418000,
+    "open_care_gaps": 1142000,
+    "closed_care_gaps": 799847,
+    "weighted_closure_rate_pct": 41.19,
+    "unversioned_interfaces": 41,
+    "unmonitored_interfaces": 33,
+    "open_requisitions": 3,
+    "operating_evidence_counts": {
+      "constraint": 6,
+      "data_quality_finding": 30,
+      "evidence_artifact": 22,
+      "phase_acceptance_check": 21,
+      "prior_attempt": 3,
+      "risk": 28,
+      "runbook_step": 26,
+      "site": 48,
+      "stakeholder": 34,
+      "time_motion_minute": 53,
+      "upload_block": 5,
+      "value_exclusion": 3,
+      "value_input": 3
+    },
+    "cheat_sheet": {
+      "phases": 6,
+      "fields": 21,
+      "upload_blocks": 5,
+      "file_refs": 23,
+      "missing_refs": []
+    },
+    "prohibited_matches": []
+  }
+}
