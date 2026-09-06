@@ -592,16 +592,6 @@ async function smokeRoute(page, route) {
   }
   const demoFindingChecks = routeDemoFindingChecks(route.key, bodyText);
   const surfaceChecks = routeSurfaceChecks(route.key, bodyText);
-  for (const check of demoFindingChecks) {
-    for (const missing of check.missing) {
-      issues.push(`missing_demo_finding_${check.id}_${missing}`);
-    }
-  }
-  for (const check of surfaceChecks) {
-    for (const missing of check.missing) {
-      issues.push(`missing_named_surface_${check.surface_key}_${missing}`);
-    }
-  }
   for (const pattern of BUILDER_VOCABULARY) {
     if (pattern.test(bodyText)) issues.push(`client_visible_builder_vocabulary_${pattern}`);
   }
@@ -736,6 +726,14 @@ async function main() {
   summary.named_surface_contract = surfaceContractValidation;
   summary.findings_demonstrable_on_real_surface = summarizeDemoFindings(results);
   summary.named_surfaces_browser_proven = summarizeNamedSurfaces(results);
+  const proofIssues = [
+    ...(summary.findings_demonstrable_on_real_surface.issues ?? []),
+    ...(summary.named_surfaces_browser_proven.issues ?? []),
+  ];
+  summary.issues = [
+    ...summary.issues,
+    ...proofIssues.map((issue) => `proof: ${issue}`),
+  ];
   summary.accepted = summary.accepted
     && summary.findings_demonstrable_on_real_surface.accepted
     && summary.named_surfaces_browser_proven.accepted;

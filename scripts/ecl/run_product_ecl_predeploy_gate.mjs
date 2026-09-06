@@ -199,11 +199,11 @@ const CHECKS = [
     ],
   },
   {
-    key: "source_tower_intelligence_import_surface_coverage",
+    key: "source_workspace_uses_executive_shell",
     file: "src/app/(maestro)/source/preview/workspace/WorkspaceClient.tsx",
     mustContain: [
-      "EclServingSurfaceCoverage",
-      "product=\"source\"",
+      "WorkspaceExecutiveShell",
+      "<WorkspaceExecutiveShell",
     ],
   },
   {
