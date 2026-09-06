@@ -1,8 +1,10 @@
 #!/usr/bin/env tsx
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { POLICY_VERSION } from "../../src/lib/governance/context-corpus-policy";
 import { AVA_MODULE_EXPERT_CONTRACTS } from "../../src/lib/agent/module-routing";
 import { PRODUCT_CAPABILITY_REGISTRY } from "../../src/lib/agent/product-truth/capability-registry";
 import { SURFACE_SCOPE_REGISTRY } from "../../src/lib/agent/product-truth/surface-scope";
@@ -29,6 +31,10 @@ const outPath = path.join(
   root,
   "docs/product/NEXUS_MANUAL_AND_AVA_TRAINING_GUIDE.md",
 );
+const corpusPath = path.join(
+  root,
+  "docs/product/generated/nexus-product-manual-corpus.jsonl",
+);
 const checkMode = process.argv.includes("--check");
 const CXO_ANSWER_MODE_CONTRACTS = Object.values(
   CXO_ANSWER_MODE_REGISTRY,
@@ -39,6 +45,56 @@ interface RouteRow {
   route: string;
   audience: "admin" | "client" | "public" | "internal";
   product: string;
+}
+
+interface ManualCorpusRecord {
+  id: string;
+  tenant_id: null;
+  client_key: "corpus_global";
+  object_type: "nexus_product_manual_section";
+  source_layer: "product_docs";
+  industry: null;
+  enterprise_area: "cross_enterprise";
+  function: null;
+  process_area: null;
+  use_case_category: "product_training";
+  strategic_move_phase_applicability: string[];
+  applicable_agents: Array<"nexus" | "sentinel" | "source" | "tower">;
+  source_basis: "generated_from_executable_product_contracts";
+  source_references: string[];
+  classification: "internal";
+  compliance_basis: string;
+  agent_readiness_status: "committed_not_indexed";
+  retrievability: "committed_not_indexed";
+  confidence_level: "high";
+  confidence_rationale: string;
+  cited_render_verified_at: null;
+  last_reviewed_at: null;
+  owner: "AbarVa Product Governance";
+  data_domains: string[];
+  required_kpis: [];
+  baseline_requirements: [];
+  measurement_method: null;
+  value_levers: [];
+  known_failure_modes: string[];
+  guardrails: string[];
+  human_in_loop_controls: string[];
+  allowed_agent_actions: string[];
+  blocked_agent_actions: string[];
+  provenance: {
+    source_file: "docs/product/NEXUS_MANUAL_AND_AVA_TRAINING_GUIDE.md";
+    parse_method: "generated_markdown_h2_section_split";
+    committed_at: null;
+    indexed_at: null;
+    index_name: null;
+  };
+  policy_version: string;
+  contract_hash: string;
+  created_at: null;
+  updated_at: null;
+  title: string;
+  body: string;
+  section_anchor: string;
 }
 
 function ascii(input: unknown): string {
@@ -70,6 +126,18 @@ function publicSafe(input: unknown): string {
 
 function cell(input: unknown): string {
   return publicSafe(input).replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+}
+
+function sha256(input: string): string {
+  return crypto.createHash("sha256").update(input).digest("hex");
+}
+
+function slug(input: string): string {
+  return publicSafe(input)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 90);
 }
 
 function list(items: readonly string[], empty = "None declared."): string {
@@ -624,15 +692,112 @@ Learn content teaches the product. It is not product proof. When Learn and execu
 
 const next = `${buildManual().trim()}\n`;
 
+function buildManualCorpus(markdown: string): string {
+  const h2 = /^##\s+(.+)$/gm;
+  const matches = [...markdown.matchAll(h2)];
+  const records: ManualCorpusRecord[] = matches.map((match, index) => {
+    const title = publicSafe(match[1]).trim();
+    const start = match.index ?? 0;
+    const end = matches[index + 1]?.index ?? markdown.length;
+    const section = markdown.slice(start, end).trim();
+    const sectionAnchor = slug(title);
+    return {
+      id: `nexus-product-manual-v1:${sectionAnchor}`,
+      tenant_id: null,
+      client_key: "corpus_global",
+      object_type: "nexus_product_manual_section",
+      source_layer: "product_docs",
+      industry: null,
+      enterprise_area: "cross_enterprise",
+      function: null,
+      process_area: null,
+      use_case_category: "product_training",
+      strategic_move_phase_applicability: [],
+      applicable_agents: ["nexus", "sentinel", "source", "tower"],
+      source_basis: "generated_from_executable_product_contracts",
+      source_references: [
+        `docs/product/NEXUS_MANUAL_AND_AVA_TRAINING_GUIDE.md#${sectionAnchor}`,
+      ],
+      classification: "internal",
+      compliance_basis:
+        "Generated product guidance only; it cannot override runtime state, tenant evidence, feature flags, or human approval boundaries.",
+      agent_readiness_status: "committed_not_indexed",
+      retrievability: "committed_not_indexed",
+      confidence_level: "high",
+      confidence_rationale:
+        "Generated from executable Nexus registries, product contracts, module expert contracts, and manual consistency checks.",
+      cited_render_verified_at: null,
+      last_reviewed_at: null,
+      owner: "AbarVa Product Governance",
+      data_domains: ["nexus_product", "ava_training"],
+      required_kpis: [],
+      baseline_requirements: [],
+      measurement_method: null,
+      value_levers: [],
+      known_failure_modes: [
+        "stale_manual",
+        "product_docs_overriding_runtime_state",
+        "training_prose_presented_as_tenant_fact",
+      ],
+      guardrails: [
+        "Treat as product guidance, not tenant evidence.",
+        "Check feature flags and runtime state before availability claims.",
+        "Require indexing and cite-render proof before agent-visible use.",
+      ],
+      human_in_loop_controls: [
+        "Data-plane loads and agent_ready promotion require explicit operator approval.",
+        "Moves, Source, and Tower approval boundaries remain human-owned.",
+      ],
+      allowed_agent_actions: [
+        "explain_product_workflow",
+        "guide_navigation",
+        "describe_human_approval_boundary",
+      ],
+      blocked_agent_actions: [
+        "claim_live_tenant_state",
+        "override_tenant_evidence",
+        "promote_to_agent_ready_without_index_and_citation_proof",
+      ],
+      provenance: {
+        source_file: "docs/product/NEXUS_MANUAL_AND_AVA_TRAINING_GUIDE.md",
+        parse_method: "generated_markdown_h2_section_split",
+        committed_at: null,
+        indexed_at: null,
+        index_name: null,
+      },
+      policy_version: POLICY_VERSION,
+      contract_hash: sha256(section),
+      created_at: null,
+      updated_at: null,
+      title,
+      body: section,
+      section_anchor: sectionAnchor,
+    };
+  });
+  return `${records.map((record) => JSON.stringify(record)).join("\n")}\n`;
+}
+
+const nextCorpus = buildManualCorpus(next);
+
 if (checkMode) {
   const current = fs.existsSync(outPath) ? fs.readFileSync(outPath, "utf8") : "";
+  const currentCorpus = fs.existsSync(corpusPath)
+    ? fs.readFileSync(corpusPath, "utf8")
+    : "";
   if (current !== next) {
     console.error("Nexus manual is stale. Run `npm run docs:nexus-manual`.");
     process.exit(1);
   }
-  console.log("Nexus manual is current.");
+  if (currentCorpus !== nextCorpus) {
+    console.error("Nexus manual corpus is stale. Run `npm run docs:nexus-manual`.");
+    process.exit(1);
+  }
+  console.log("Nexus manual and corpus candidates are current.");
 } else {
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.mkdirSync(path.dirname(corpusPath), { recursive: true });
   fs.writeFileSync(outPath, next);
+  fs.writeFileSync(corpusPath, nextCorpus);
   console.log(`Wrote ${path.relative(root, outPath)}`);
+  console.log(`Wrote ${path.relative(root, corpusPath)}`);
 }

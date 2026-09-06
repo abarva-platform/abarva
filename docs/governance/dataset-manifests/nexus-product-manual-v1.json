@@ -1,0 +1,17 @@
+{
+  "dataset_id": "nexus-product-manual-v1",
+  "title": "Nexus Product Manual and aVa Training Guide",
+  "client_key": "corpus_global",
+  "source_layer": "product_docs",
+  "classification": "internal",
+  "owner": "AbarVa Product Governance",
+  "source_basis": "generated_from_executable_product_contracts",
+  "ingestion_method": "structured_promotion",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": null,
+  "approved_by": "active-task-operator-approval",
+  "approved_at": "2026-09-06",
+  "notes": "Manifest declares the generated Nexus manual corpus candidate. It does not authorize data-plane mutation, indexing, agent_ready promotion, or live aVa use until object policy validation, retrieval indexing, and cite-render proof pass."
+}
