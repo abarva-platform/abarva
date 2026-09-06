@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Integrated Data Engineering Design</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5d687a;
+      --line: #d9e0ea;
+      --soft: #f5f7fb;
+      --accent: #116466;
+      --accent-2: #7a4e9d;
+      --warn: #8a4b00;
+      --code: #102235;
+      --code-bg: #eef3f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      line-height: 1.55;
+    }
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      border-right: 1px solid var(--line);
+      background: var(--soft);
+      padding: 28px 22px;
+    }
+    aside h2 {
+      margin: 0 0 14px;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    aside a {
+      display: block;
+      text-decoration: none;
+      color: var(--ink);
+      border-left: 2px solid transparent;
+      padding: 5px 0 5px 10px;
+      font-size: 13px;
+    }
+    aside a:hover { border-left-color: var(--accent); color: var(--accent); }
+    .toc-l2 { margin-left: 8px; }
+    .toc-l3 { margin-left: 20px; color: var(--muted); }
+    main {
+      max-width: 1180px;
+      padding: 44px 56px 80px;
+    }
+    .banner {
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      padding: 16px 18px;
+      margin-bottom: 28px;
+    }
+    .banner strong { color: var(--accent); }
+    h1 { font-size: 40px; line-height: 1.1; margin: 0 0 18px; letter-spacing: 0; }
+    h2 { font-size: 28px; margin: 44px 0 14px; padding-top: 8px; border-top: 1px solid var(--line); }
+    h3 { font-size: 21px; margin: 32px 0 10px; }
+    h4, h5, h6 { font-size: 16px; margin: 24px 0 8px; }
+    p { margin: 0 0 14px; }
+    blockquote {
+      margin: 20px 0;
+      padding: 14px 18px;
+      border-left: 4px solid var(--accent);
+      background: #eef8f7;
+      font-weight: 650;
+    }
+    blockquote p { margin: 0; }
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      background: var(--code-bg);
+      color: var(--code);
+      border: 1px solid #dde7f0;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    pre {
+      overflow: auto;
+      background: #0f1f2f;
+      color: #eaf3fb;
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #22374d;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      border: 0;
+      padding: 0;
+      font-size: 13px;
+    }
+    .table-wrap { overflow-x: auto; margin: 16px 0 24px; border: 1px solid var(--line); }
+    table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+    th, td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 10px 12px; vertical-align: top; }
+    th { text-align: left; background: #edf2f7; font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    th:last-child, td:last-child { border-right: 0; }
+    ul, ol { margin: 0 0 16px 24px; padding: 0; }
+    li { margin: 5px 0; }
+    .diagram {
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      padding: 18px;
+      margin: 18px 0 28px;
+      overflow-x: auto;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    @media (max-width: 900px) {
+      .shell { display: block; }
+      aside { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      main { padding: 28px 20px 56px; }
+      h1 { font-size: 32px; }
+      h2 { font-size: 24px; }
+    }
+    @media print {
+      .shell { display: block; }
+      aside { display: none; }
+      main { max-width: none; padding: 0; }
+      .diagram, pre, .table-wrap { break-inside: avoid; }
+      a { color: inherit; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <h2>Contents</h2>
+      <a class="toc-l1" href="#integrated-data-engineering-design">Integrated Data Engineering Design</a>
+<a class="toc-l2" href="#purpose">Purpose</a>
+<a class="toc-l2" href="#executive-summary">Executive Summary</a>
+<a class="toc-l2" href="#claude-code-design-delta">Claude Code Design Delta</a>
+<a class="toc-l3" href="#1-one-dimension-registry-not-one-mart-contract-per-product">1. One dimension registry, not one mart contract per product</a>
+<a class="toc-l3" href="#2-conflict-is-too-blunt-facts-need-a-basis">2. CONFLICT is too blunt — facts need a basis</a>
+<a class="toc-l3" href="#3-readback-must-happen-before-commit-not-after">3. Readback must happen before commit, not after</a>
+<a class="toc-l3" href="#4-counts-alone-are-not-proof-acceptance-must-require-names">4. Counts alone are not proof — acceptance must require names</a>
+<a class="toc-l3" href="#5-record-count-and-distinct-name-count-are-different-numbers">5. Record count and distinct-name count are different numbers</a>
+<a class="toc-l3" href="#6-status-of-slice-s5-and-a-finding-this-document-does-not-contain">6. Status of Slice S5 — and a finding this document does not contain</a>
+<a class="toc-l3" href="#7-design-only-versus-running">7. Design-only versus running</a>
+<a class="toc-l2" href="#design-goals">Design Goals</a>
+<a class="toc-l2" href="#conceptual-architecture">Conceptual Architecture</a>
+<a class="toc-l2" href="#medallion-crosswalk">Medallion Crosswalk</a>
+<a class="toc-l2" href="#layer-contracts">Layer Contracts</a>
+<a class="toc-l3" href="#layer-1-intake-and-raw-evidence">Layer 1: Intake and Raw Evidence</a>
+<a class="toc-l3" href="#layer-2-source-adapters-and-silver-normalization">Layer 2: Source Adapters and Silver Normalization</a>
+<a class="toc-l3" href="#layer-3-canonical-enterprise-model">Layer 3: Canonical Enterprise Model</a>
+<a class="toc-l3" href="#layer-4-product-marts-cubes-and-read-models">Layer 4: Product Marts, Cubes, and Read Models</a>
+<a class="toc-l3" href="#ava-and-rag-plane">aVa and RAG Plane</a>
+<a class="toc-l2" href="#integrated-refresh-flow">Integrated Refresh Flow</a>
+<a class="toc-l2" href="#incremental-refresh-design">Incremental Refresh Design</a>
+<a class="toc-l3" href="#change-detection">Change Detection</a>
+<a class="toc-l3" href="#dependency-graph">Dependency Graph</a>
+<a class="toc-l3" href="#write-phases">Write Phases</a>
+<a class="toc-l2" href="#canonical-entity-resolution">Canonical Entity Resolution</a>
+<a class="toc-l2" href="#reference-resolution">Reference Resolution</a>
+<a class="toc-l2" href="#fact-authority">Fact Authority</a>
+<a class="toc-l2" href="#product-mart-and-cube-design">Product Mart and Cube Design</a>
+<a class="toc-l3" href="#source-example">Source Example</a>
+<a class="toc-l3" href="#home-example">Home Example</a>
+<a class="toc-l3" href="#tower-example">Tower Example</a>
+<a class="toc-l2" href="#operational-application-plane">Operational Application Plane</a>
+<a class="toc-l2" href="#ava-rag-design">aVa / RAG Design</a>
+<a class="toc-l2" href="#build-manifest">Build Manifest</a>
+<a class="toc-l2" href="#proof-and-acceptance-criteria">Proof and Acceptance Criteria</a>
+<a class="toc-l2" href="#commands-and-jobs">Commands and Jobs</a>
+<a class="toc-l2" href="#anti-patterns">Anti-Patterns</a>
+<a class="toc-l2" href="#review-checklist-for-claude-code">Review Checklist for Claude Code</a>
+<a class="toc-l2" href="#implementation-roadmap">Implementation Roadmap</a>
+<a class="toc-l2" href="#non-goals">Non-Goals</a>
+<a class="toc-l2" href="#bottom-line">Bottom Line</a>
+    </aside>
+    <main>
+      <div class="banner"><strong>Review artifact:</strong> generated from <code>docs/architecture/integrated-data-engineering-design.md</code>. Design-only; no data-plane, runtime, registry, graph, or index activation.</div>
+      <h1 id="integrated-data-engineering-design">Integrated Data Engineering Design</h1>
+<p>Status: review candidate, amended by Claude Code. The sections under <strong>Claude Code Design Delta</strong> describe work that is merged and deployed; the rest of this document remains design-only. It does not approve a data-plane load, registry activation, product routing change, graph activation, index refresh, or live-client claim.</p>
+<h2 id="purpose">Purpose</h2>
+<p>This document defines the target data-engineering design for AbarVa's integrated enterprise data stack. It is meant to be reviewed by engineering agents and humans before more implementation work continues.</p>
+<p>The design has one central rule:</p>
+<blockquote>
+<p>Layer 3 integrates enterprise truth. Product marts, workflow stores, cubes, and RAG indexes are</p>
+<p>downstream serving layers. They may denormalize, cache, and operate, but they must not become the</p>
+<p>source of truth.</p>
+</blockquote>
+<p>This document extends, but does not replace, <code>docs/architecture/ENTERPRISE_INFORMATION_ARCHITECTURE.md</code>. If the two disagree, the Enterprise Information Architecture wins until amended.</p>
+<h2 id="executive-summary">Executive Summary</h2>
+<p>AbarVa needs three connected planes:</p>
+<ol>
+<li><strong>Governed medallion plane</strong>: intake files become normalized records, then integrated canonical</li>
+<p>entities, facts, and relationships.</p>
+<li><strong>Operational application plane</strong>: workflows, approvals, events, tasks, module memory, read</li>
+<p>models, and cubes serve the product experience.</p>
+<li><strong>aVa / RAG plane</strong>: governed context, corpus, indexes, retrieval bundles, and citation proof</li>
+<p>serve agent answers.</p>
+</ol>
+<p>The planes are connected by explicit contracts and build manifests. They are not interchangeable. The operational plane cannot repair a weak canonical layer. The RAG plane cannot invent truth when the canonical layer is missing entities or unresolved references. Product-specific read models are allowed, but only as projections from the canonical truth and governed workflow state.</p>
+<h2 id="claude-code-design-delta">Claude Code Design Delta</h2>
+<p>This section reconciles the design above with the design Claude Code has been building and, in two cases, has already shipped. It exists so a reader does not have to hold two documents in their head and guess which one describes reality.</p>
+<p><strong>The two designs agree on the shape.</strong> Four layers, medallion crosswalk, canonical as source of truth, products as projections, deterministic numbers with models explaining rather than calculating. Nothing below disputes that. What differs is the granularity of the product-projection contract, the definition of a conflict, and — most importantly — which parts are written down versus running.</p>
+<h3 id="1-one-dimension-registry-not-one-mart-contract-per-product">1. One dimension registry, not one mart contract per product</h3>
+<p><strong>This document</strong> gives each mart its own grain and drill path: a Source example, a Home example, a Tower example, each declaring <code>projection_name</code>, <code>row_grain</code>, <code>source_domains</code>, and so on.</p>
+<p><strong>Claude Code&#x27;s design</strong> puts a single registry underneath all of them. One list covers all twenty-six canonical object types; each entry declares the attribute that names an instance, the advisory section it answers, and — the load-bearing field — the <code>products[]</code> that consume it. Adding a reader is an entry in a list, not a new pipeline.</p>
+<p>The reason is the failure mode this whole exercise exists to fix. Today there are three parallel supply chains: Source has its adapters, Tower has <code>project-tower-mart.ts</code> plus ten <code>ingest-*.ts</code> adapters feeding <code>consumption.tower_*_v</code> views, and Home had tables with no reader at all. A design where each product declares its own mart contract is one honest step from becoming the fourth.</p>
+<p><strong>These are not exclusive, and the synthesis matters more than either.</strong> The registry is the spine; per-mart grain declarations sit on top of it wherever a genuine drill path is required — Tower spend by cost basis, Source contract portfolio by renewal. But where a product needs counts, named entities, and evidence status (Home, Intelligence), the shared projection <em>is</em> the whole answer, and giving it a bespoke mart would recreate the problem.</p>
+<p>Status: <strong>shipped.</strong> <code>scripts/data-build/refresh-home-landscape.ts</code>, twenty-six dimensions, consumed by Home and Intelligence, with Moves and Tower named as future consumers in the same list.</p>
+<h3 id="2-conflict-is-too-blunt-facts-need-a-basis">2. <code>CONFLICT</code> is too blunt — facts need a basis</h3>
+<p><strong>This document</strong> defines <code>CONFLICT</code> as &quot;sources disagree → do not quote; surface decision needed.&quot;</p>
+<p>That rule discards the most useful thing the data can say. A client workbook declares annual spend of $44M; metered cloud cost reports $51M. Neither is wrong — one is a budget, the other is consumption, and the 16% gap is the finding. Under the rule as written, the metric is marked <code>CONFLICT</code> and never quoted.</p>
+<p><strong>Claude Code&#x27;s amendment:</strong> every canonical fact carries <code>basis</code> — <code>declared</code>, <code>observed</code>, or <code>derived</code>. <code>CONFLICT</code> then means <em>two sources of the same basis disagree</em>, which is a real problem. Two different bases differing is <code>VARIANCE</code>, and it is the answer rather than the error.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Status</th><th>Amended meaning</th></tr></thead><tbody>
+<tr><td><code>AGREE</code></td><td>Multiple sources, same basis, same value</td></tr>
+<tr><td><code>ONE_SOURCE</code></td><td>One source asserts the value</td></tr>
+<tr><td><code>CONFLICT</code></td><td>Same basis, sources disagree — do not quote</td></tr>
+<tr><td><code>VARIANCE</code></td><td>Different bases differ — quote both, and quote the gap</td></tr>
+<tr><td><code>ABSENT</code></td><td>No source asserts the value — show the gap, do not invent</td></tr>
+</tbody></table></div>
+<p>Status: <strong>shipped.</strong> <code>FactBasis</code> on <code>SourceAuthority</code>, gate <code>validate:fact-basis</code>, 5,553 canonical records all currently <code>declared</code>. Nothing carries two bases yet because the ten telemetry collectors still write to <code>public.tower_*</code> rather than canonical; the gate reports that honestly rather than implying the capability is exercised.</p>
+<h3 id="3-readback-must-happen-before-commit-not-after">3. Readback must happen before commit, not after</h3>
+<p><strong>This document</strong> requires <code>readback_assertion</code>: &quot;persisted equals readback, filtered by build.&quot;</p>
+<p><strong>Amendment:</strong> the readback belongs <em>inside the writing transaction, before commit</em>. A readback after commit detects a bad write. It does not prevent one, and by the time it fires the half-written pack is already the newest pack a product will read.</p>
+<p>Status: <strong>shipped</strong> in the landscape projector — a count mismatch throws, the transaction rolls back, and the previous build stays newest.</p>
+<h3 id="4-counts-alone-are-not-proof-acceptance-must-require-names">4. Counts alone are not proof — acceptance must require names</h3>
+<p>The first run of the landscape projector returned <strong>every count correctly and every name empty</strong>. Canonical attributes are <code>CanonicalValue</code> wrappers, so reading <code>attributes[key]</code> yields an object rather than a string, and name extraction silently produced nothing.</p>
+<p>A proof bundle asserting record counts would have passed. The surface would have rendered a fully populated landscape with no content in it.</p>
+<p><strong>Amendment to Proof and Acceptance Criteria:</strong> add a required question — <em>do the counts carry names?</em> — answered by sample entities per dimension. <code>804 applications</code> is an inventory total; <code>804 applications, including Epic Hyperspace and Kronos</code> is a landscape, and only the second can be checked by a human who knows the client.</p>
+<h3 id="5-record-count-and-distinct-name-count-are-different-numbers">5. Record count and distinct-name count are different numbers</h3>
+<p><strong>Amendment:</strong> every projection reports both. On relationship-derived dimensions they differ by nearly threefold — 825 relationship rows naming roughly 300 distinct systems. Publishing 825 as &quot;systems&quot; inflates the estate by a factor of three using a number that came from a real table, which is exactly the kind of error that survives review.</p>
+<p>This is also the honest reading of the entity-resolution numbers: of the reduction from 9,676 raw rows to 5,553 canonical records, only about 196 are genuine entity merges. The rest is relationship rows collapsing by origin name. The mechanism is proven; the capability is not yet delivered.</p>
+<p>Status: <strong>shipped</strong> as a reported field; entity-resolution coverage itself remains open.</p>
+<h3 id="6-status-of-slice-s5-and-a-finding-this-document-does-not-contain">6. Status of Slice S5 — and a finding this document does not contain</h3>
+<p>The roadmap lists <strong>S5: Home/Tower/Moves projection fanout</strong> as a future slice. Current state:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Product</th><th>Reads canonical?</th><th>Detail</th></tr></thead><tbody>
+<tr><td><strong>Source</strong></td><td>Yes</td><td>Pre-existing; the only one that did</td></tr>
+<tr><td><strong>Home</strong></td><td>Yes — shipped</td><td>PR #6462, merged and deployed</td></tr>
+<tr><td><strong>Intelligence</strong></td><td>Yes — shipped</td><td>PR #6464, merged and deploying</td></tr>
+<tr><td><strong>Moves</strong></td><td>No</td><td>Reads <code>program_*</code> operational tables</td></tr>
+<tr><td><strong>Tower</strong></td><td>No</td><td>Reads <code>consumption.tower_*_v</code>, fed by its own ten ingest adapters</td></tr>
+</tbody></table></div>
+<p>The finding this document does not contain, and which is worse than the anti-patterns it does list: <strong>Intelligence rendered no client data at all.</strong> <code>enterprise-landscape-view-model.ts</code> is 661 lines with zero database calls. One tenant received hand-authored sections naming specific platforms and carrying specific maturity scores; every other tenant received <code>buildGenericSections</code>, which emits sentences like <em>&quot;the section is ready for client-specific evidence&quot;</em> — formatted exactly like an assessment, under the heading CURRENT STATE ASSESSMENT.</p>
+<p>The listed anti-patterns cover a product adapter bypassing Layer 3. This was a surface with no data path at all, and it is the more dangerous shape: an empty screen announces itself, while a full one whose content came from a file someone wrote is indistinguishable, to a reader, from a client fact.</p>
+<h3 id="7-design-only-versus-running">7. Design-only versus running</h3>
+<p><strong>This document</strong> states it is design-only and approves no load, routing change, or live claim. That is the right posture for a design document and is not a criticism.</p>
+<p>It does mean the two documents describe different things, and the difference should be stated plainly rather than blurred:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>State</th><th>Meaning</th><th>Home / Intelligence</th></tr></thead><tbody>
+<tr><td>Designed</td><td>Written down and reviewable</td><td>Yes</td></tr>
+<tr><td>Code proven</td><td>Dry-run passes, typecheck and gates clean</td><td>Yes</td></tr>
+<tr><td>Merged and deployed</td><td>Running in the product</td><td>Yes</td></tr>
+<tr><td><strong>Data loaded</strong></td><td><strong>The projector has run in write mode</strong></td><td><strong>No — pending ACA Job</strong></td></tr>
+<tr><td>Live-proven</td><td>Signed-in surface renders it, captured</td><td>No</td></tr>
+</tbody></table></div>
+<p>Until the projector runs as an ACA Job with write approval, Home shows &quot;not available&quot; and Intelligence falls back to the authored view model. <strong>Merged and deployed is not loaded.</strong> The distinction is the same one this document already draws for RAG — loaded, indexed, retrievable, cited — applied to product projections.</p>
+<h2 id="design-goals">Design Goals</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Goal</th><th>Requirement</th></tr></thead>
+<tbody>
+<tr><td>Integrate all client-supplied files</td><td>Every registry-active intake file is classified, mapped, represented, blocked with a reason, or explicitly declared out of scope by contract.</td></tr>
+<tr><td>Collapse mentions into real entities</td><td>Canonical record count should normally be lower than source mention count when duplicate mentions exist.</td></tr>
+<tr><td>Resolve references to IDs</td><td>Cross-file references must resolve to canonical IDs, not remain plain strings in gold-layer truth.</td></tr>
+<tr><td>Preserve lineage</td><td>Every canonical entity, fact, edge, cube row, index chunk, and answer citation must trace to source file, row, field, build, and authority.</td></tr>
+<tr><td>Support product workflows</td><td>Products get marts, cubes, task stores, approval state, event logs, and module memory, but these are downstream operating layers.</td></tr>
+<tr><td>Support aVa agents safely</td><td>Agents consume only governed context bundles with readiness, retrieval, and citation proof.</td></tr>
+<tr><td>Refresh incrementally</td><td>Changed files trigger an impact graph: affected adapters, entities, references, marts, cubes, indexes, and proofs.</td></tr>
+<tr><td>Scale</td><td>The same contracts work for 26 sheets, thousands of rows, or large corporate extracts.</td></tr>
+<tr><td>Avoid rework</td><td>Every build has a manifest, idempotency key, dependency graph, proof bundle, rollback behavior, and review checklist.</td></tr>
+</tbody></table></div>
+<h2 id="conceptual-architecture">Conceptual Architecture</h2>
+<div class="diagram"><div class="mermaid">flowchart TD
+  subgraph INPUT[&quot;Client-owned intake plane&quot;]
+    A[&quot;Native source exports&lt;br/&gt;CSV, XLSX, PDF, DOCX, API extracts&quot;]
+    B[&quot;Validated intake packet&lt;br/&gt;owner, manifest, source profile, quality gate&quot;]
+  end
+
+  subgraph MEDALLION[&quot;Governed medallion plane&quot;]
+    C[&quot;Bronze / L1 raw intake&lt;br/&gt;immutable source files and row fingerprints&quot;]
+    D[&quot;Silver / L2 adapter outputs&lt;br/&gt;normalized source records and findings&quot;]
+    E[&quot;Gold / L3 canonical model&lt;br/&gt;entities, facts, relationships, authority&quot;]
+    F[&quot;Canonical graph substrate&lt;br/&gt;typed nodes, typed edges, quality reports&quot;]
+  end
+
+  subgraph OPS[&quot;Operational application plane&quot;]
+    G[&quot;Workflow state&lt;br/&gt;events, tasks, approvals, module memory&quot;]
+    H[&quot;Product marts and cubes&lt;br/&gt;Home, Source, Tower, Moves, Intelligence&quot;]
+    I[&quot;Read models and view models&lt;br/&gt;serving grain, hierarchy, drill paths&quot;]
+  end
+
+  subgraph AVA[&quot;aVa and RAG plane&quot;]
+    J[&quot;Governed context/corpus objects&lt;br/&gt;readiness and policy&quot;]
+    K[&quot;Search and retrieval indexes&lt;br/&gt;Azure AI Search, Postgres FTS&quot;]
+    L[&quot;Validated context bundle&lt;br/&gt;tenant, purpose, citations, guardrails&quot;]
+    M[&quot;aVa answer&lt;br/&gt;narrative with deterministic facts and citations&quot;]
+  end
+
+  A --&gt; B
+  B --&gt; C
+  C --&gt; D
+  D --&gt; E
+  E --&gt; F
+  E --&gt; H
+  F --&gt; H
+  G --&gt; H
+  E --&gt; J
+  F --&gt; J
+  G --&gt; J
+  J --&gt; K
+  K --&gt; L
+  L --&gt; M
+  H --&gt; I
+  I --&gt; M</div></div>
+<h2 id="medallion-crosswalk">Medallion Crosswalk</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Common medallion name</th><th>AbarVa layer</th><th>Owner</th><th>Stores</th><th>Must not do</th></tr></thead>
+<tbody>
+<tr><td>Raw / Bronze</td><td>Layer 1 client intake</td><td>Data owner and intake registry</td><td>Original files, manifests, hashes, row fingerprints, source owner, as-of date, sensitivity</td><td>Normalize into product shapes or infer identity</td></tr>
+<tr><td>Silver</td><td>Layer 2 source adapters</td><td>Adapter framework</td><td>Parsed rows, typed source records, mapping findings, quarantine reasons, lineage</td><td>Persist final IDs, choose source of record, write product tables</td></tr>
+<tr><td>Gold</td><td>Layer 3 canonical enterprise model</td><td>Canonical build and governance</td><td>Stable entities, facts, declared authority, typed relationships, graph substrate, quality reports</td><td>Read from product state, store product-only presentation fields</td></tr>
+<tr><td>Serving / Platinum</td><td>Layer 4 products</td><td>Product projection builders</td><td>Marts, cubes, read models, workflow summaries, drill paths</td><td>Become source of truth or read L1/L2 directly</td></tr>
+<tr><td>Agent-ready</td><td>aVa / RAG plane</td><td>Context/corpus governance</td><td>Governed objects, chunks, indexes, retrieval bundles, citations</td><td>Feed raw or ungoverned rows to agents</td></tr>
+</tbody></table></div>
+<h2 id="layer-contracts">Layer Contracts</h2>
+<h3 id="layer-1-intake-and-raw-evidence">Layer 1: Intake and Raw Evidence</h3>
+<p>Layer 1 is what the client or demo-data factory supplies. It is organized by data ownership, not by our internal schema.</p>
+<p>Required properties:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Property</th><th>Contract</th></tr></thead>
+<tbody>
+<tr><td>Packet identity</td><td><code>tenant_key</code>, <code>intake_id</code>, <code>packet_id</code>, <code>template_version</code>, <code>source_owner</code>, <code>as_of_date</code></td></tr>
+<tr><td>File identity</td><td>canonical path, original filename, content hash, row count, schema hash</td></tr>
+<tr><td>Template contract</td><td>manifest-declared required files, required columns, column order, optional lineage columns</td></tr>
+<tr><td>Sensitivity</td><td>classification, allowed use, synthetic/real status, public-safe cover-name status</td></tr>
+<tr><td>Quality output</td><td>blockers, warnings, mapped rows, unmapped files, fill rate, hollow-row checks</td></tr>
+</tbody></table></div>
+<p>Rules:</p>
+<ul>
+<li>A raw file is never runtime truth.</li>
+<li>A workbook, packet, or folder does not imply tenancy. Tenancy comes from the tenant input registry.</li>
+<li>Every file is processed through the same inventory pass. Files cannot disappear because a product</li>
+<p>does not care about them yet.</p>
+<li>If a file is not integrated, the build records why: missing adapter, off-contract schema, blocked</li>
+<p>quality, intentionally out of scope, or unsupported source type.</p>
+</ul>
+<h3 id="layer-2-source-adapters-and-silver-normalization">Layer 2: Source Adapters and Silver Normalization</h3>
+<p>Layer 2 is deterministic parsing and mapping. It is disposable and re-runnable.</p>
+<p>Adapter input:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>tenant_key</code></td><td>Registry-declared tenant</td></tr>
+<tr><td><code>packet_id</code></td><td>Input packet version</td></tr>
+<tr><td><code>source_file</code></td><td>Layer 1 file path</td></tr>
+<tr><td><code>source_profile</code></td><td>CSV, XLSX, document, API extract, or known enterprise-system profile</td></tr>
+<tr><td><code>mapping_profile</code></td><td>Source-to-canonical mapping version</td></tr>
+<tr><td><code>parser_version</code></td><td>Code version for parsing</td></tr>
+<tr><td><code>expected_domains</code></td><td>Canonical domains expected from this file</td></tr>
+</tbody></table></div>
+<p>Adapter output:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Output</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>Source records</td><td>Typed row-level records with upstream lineage</td></tr>
+<tr><td>Source facts</td><td>Candidate facts before authority resolution</td></tr>
+<tr><td>Source mentions</td><td>Mentions of entities, not yet canonical entities</td></tr>
+<tr><td>Source references</td><td>Cross-file references requiring ID resolution</td></tr>
+<tr><td>Findings</td><td>Mapping gaps, schema defects, suspicious placeholders, generated-ID-in-name defects</td></tr>
+<tr><td>Quarantine</td><td>Records that cannot proceed without code, mapping, or data remediation</td></tr>
+</tbody></table></div>
+<p>Layer 2 does not own:</p>
+<ul>
+<li>canonical IDs</li>
+<li>deduplication across files</li>
+<li>fact authority</li>
+<li>product table grain</li>
+<li>workflow decisions</li>
+<li>retrieval indexes</li>
+</ul>
+<h3 id="layer-3-canonical-enterprise-model">Layer 3: Canonical Enterprise Model</h3>
+<p>Layer 3 is where integration happens. The canonical layer must not be a 1:1 row copy. A real entity mentioned in many files becomes one canonical entity with many source mentions.</p>
+<p>Canonical object identity:</p>
+<pre><code>canonical_entity_key = tenant_key + object_type + normalized_declared_identity</code></pre>
+<p>Not allowed:</p>
+<pre><code>tenant_key + file_name + source_row_number</code></pre>
+<p>The row number is lineage. It is not identity.</p>
+<p>Layer 3 stores:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Store</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>Canonical entity registry</td><td>One row per distinct entity, with stable typed ID and identity ledger</td></tr>
+<tr><td>Source mention ledger</td><td>Every source-file row or field that mentioned the entity</td></tr>
+<tr><td>Canonical fact store</td><td>Values, source of record, confidence, conflict status, effective dates</td></tr>
+<tr><td>Relationship dictionary</td><td>Allowed verbs, domain/range, required evidence, cardinality</td></tr>
+<tr><td>Relationship edges</td><td>Resolved <code>source_entity_id -&gt; target_entity_id</code> edges</td></tr>
+<tr><td>Graph quality reports</td><td>Orphans, quarantines, ambiguous aliases, wrong-type references</td></tr>
+<tr><td>Authority registry</td><td>Which source owns a metric, money value, status, or classification</td></tr>
+</tbody></table></div>
+<p>Layer 3 success metrics:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Metric</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>source_mentions_represented</code></td><td>Number of source mentions captured from L1/L2</td></tr>
+<tr><td><code>distinct_entities_accepted</code></td><td>Number of canonical entities created or updated</td></tr>
+<tr><td><code>duplicate_mentions_collapsed</code></td><td>Source mentions minus distinct accepted entities</td></tr>
+<tr><td><code>reference_mentions</code></td><td>Cross-file references requiring resolution</td></tr>
+<tr><td><code>references_resolved</code></td><td>References resolved to canonical IDs</td></tr>
+<tr><td><code>reference_resolution_rate</code></td><td><code>references_resolved / reference_mentions</code></td></tr>
+<tr><td><code>facts_with_declared_authority</code></td><td>Facts whose source of record is known</td></tr>
+<tr><td><code>conflicting_facts_blocked</code></td><td>Conflicts that did not flow into products</td></tr>
+<tr><td><code>quarantined_relationships</code></td><td>Relationships withheld from graph or products</td></tr>
+</tbody></table></div>
+<h3 id="layer-4-product-marts-cubes-and-read-models">Layer 4: Product Marts, Cubes, and Read Models</h3>
+<p>Layer 4 is serving, not integration. Each product can have a different grain because workflows need different shapes.</p>
+<p>Allowed Layer 4 stores:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Store</th><th>Examples</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>Product mart</td><td>Source vendor portfolio, Home enterprise summary, Tower budget rollup</td><td>L3 plus governed workflow state</td></tr>
+<tr><td>Cube view</td><td>contract cube, vendor cube, scope cube, spend cube, opportunity cube</td><td>L3 projection build with build provenance</td></tr>
+<tr><td>Workflow state</td><td>sourcing event status, gate approval, task assignment, review comments</td><td>Product workflow tables</td></tr>
+<tr><td>Module memory</td><td>decisions, artifacts, assumptions, learning writebacks</td><td>Governed write-back workflow</td></tr>
+<tr><td>Outcome ledger</td><td>projected, committed, measured, realized, attested value</td><td>Deterministic facts plus approved evidence</td></tr>
+</tbody></table></div>
+<p>Not allowed:</p>
+<ul>
+<li>Product code reading <code>datasets/tenant-inputs</code> directly.</li>
+<li>Product code resolving canonical identity from strings independently.</li>
+<li>Cube rows without <code>build_version</code> or equivalent provenance.</li>
+<li>Readback checks that count stale rows without build scoping.</li>
+<li>Product metrics quoted without the owning lineage report.</li>
+</ul>
+<h3 id="ava-and-rag-plane">aVa and RAG Plane</h3>
+<p>The aVa/RAG plane is a separate readiness pipeline. It does not replace L3 or L4.</p>
+<p>State machine:</p>
+<pre><code>loaded -&gt; committed -&gt; indexed -&gt; retrievable -&gt; cite_render_verified -&gt; agent_ready</code></pre>
+<p>Agent-ready requirements:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Requirement</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>Governed object</td><td>Conforms to context/corpus policy</td></tr>
+<tr><td>Provenance</td><td>Source file, row, chunk, build, and authority are available</td></tr>
+<tr><td>Classification</td><td>Tenant, sensitivity, client-safe cover identity, policy status</td></tr>
+<tr><td>Indexing</td><td>Azure AI Search and/or Postgres FTS index has the object</td></tr>
+<tr><td>Retrieval</td><td>A scoped query can retrieve it for the intended tenant and purpose</td></tr>
+<tr><td>Citation</td><td>The final answer can render a visible citation to the exact source</td></tr>
+<tr><td>Guardrails</td><td>Unsupported claims are blocked or caveated</td></tr>
+</tbody></table></div>
+<p>Agents may explain and synthesize. They may not calculate spend, invent facts, or use non-ready objects.</p>
+<h2 id="integrated-refresh-flow">Integrated Refresh Flow</h2>
+<p>Every refresh should produce one build manifest that spans all planes. A build can be dry-run, write, readback, or rollback, but it should always have the same shape.</p>
+<div class="diagram"><div class="mermaid">sequenceDiagram
+  participant Registry as Tenant Registry
+  participant L1 as L1 Quality Gate
+  participant L2 as L2 Adapters
+  participant L3 as L3 Canonical Build
+  participant Graph as Graph Reconciliation
+  participant L4 as Product Marts/Cubes
+  participant RAG as aVa/RAG Indexing
+  participant Proof as Proof Bundle
+
+  Registry-&gt;&gt;L1: active tenant roots and packet versions
+  L1-&gt;&gt;L1: validate manifest, schema, fill, placeholders
+  L1-&gt;&gt;L2: eligible files plus blocked-file report
+  L2-&gt;&gt;L2: parse all declared and supported files
+  L2-&gt;&gt;L3: source records, mentions, facts, references, findings
+  L3-&gt;&gt;L3: resolve identity, authority, conflicts, references
+  L3-&gt;&gt;Graph: resolved entities and relationship candidates
+  Graph-&gt;&gt;Graph: domain/range, quarantine, quality report
+  L3-&gt;&gt;L4: canonical build version and changed domains
+  L4-&gt;&gt;L4: rebuild impacted marts, cubes, read models
+  L3-&gt;&gt;RAG: governed objects and evidence chunks
+  Graph-&gt;&gt;RAG: graph context eligible for explanation
+  L4-&gt;&gt;RAG: workflow summaries eligible for agent context
+  RAG-&gt;&gt;RAG: index, retrieve, cite-render verify
+  RAG-&gt;&gt;Proof: agent readiness results
+  L4-&gt;&gt;Proof: mart/cube readback and lineage
+  Graph-&gt;&gt;Proof: graph quality and quarantine
+  L3-&gt;&gt;Proof: entity and reference resolution metrics
+  L2-&gt;&gt;Proof: adapter coverage and failures
+  L1-&gt;&gt;Proof: input inventory and quality</div></div>
+<h2 id="incremental-refresh-design">Incremental Refresh Design</h2>
+<p>Incremental does not mean &quot;load one product file.&quot; It means the build only recomputes impacted domains while preserving integrated guarantees.</p>
+<h3 id="change-detection">Change Detection</h3>
+<p>Each build records:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Item</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>input_source_version</code></td><td>Git SHA, packet version, Blob version, or source-system extraction ID</td></tr>
+<tr><td><code>file_fingerprint</code></td><td>Detect changed file content</td></tr>
+<tr><td><code>schema_fingerprint</code></td><td>Detect shape changes separately from row changes</td></tr>
+<tr><td><code>row_fingerprint</code></td><td>Support row-level diff and lineage</td></tr>
+<tr><td><code>mapping_profile_version</code></td><td>Rebuild when mapping logic changes</td></tr>
+<tr><td><code>adapter_version</code></td><td>Rebuild when parser logic changes</td></tr>
+<tr><td><code>canonical_contract_version</code></td><td>Rebuild when object/fact contract changes</td></tr>
+<tr><td><code>projection_contract_version</code></td><td>Rebuild when mart/cube grain changes</td></tr>
+<tr><td><code>rag_policy_version</code></td><td>Recheck agent readiness when governance changes</td></tr>
+</tbody></table></div>
+<h3 id="dependency-graph">Dependency Graph</h3>
+<div class="diagram"><div class="mermaid">flowchart LR
+  F1[&quot;Changed file&quot;] --&gt; D1[&quot;Canonical domain&quot;]
+  D1 --&gt; E1[&quot;Entity type&quot;]
+  E1 --&gt; R1[&quot;Reference resolution&quot;]
+  R1 --&gt; G1[&quot;Graph edges&quot;]
+  E1 --&gt; P1[&quot;Product marts&quot;]
+  G1 --&gt; P1
+  E1 --&gt; X1[&quot;RAG chunks&quot;]
+  G1 --&gt; X1
+  P1 --&gt; X1
+  X1 --&gt; A1[&quot;aVa retrieval proof&quot;]</div></div>
+<p>Examples:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Change</th><th>Minimum impacted rebuild</th></tr></thead>
+<tbody>
+<tr><td>Vendor contract row changes</td><td>Vendor, contract, spend facts, supported applications, Source marts, vendor/contract cubes, related RAG objects</td></tr>
+<tr><td>Application row changes</td><td>Application entity, owner references, vendor references, Home/Tower/Source scope marts, graph edges, RAG context</td></tr>
+<tr><td>Business function name changes</td><td>Function identity ledger, application/function refs, org ownership refs, all dependent drill paths</td></tr>
+<tr><td>Relationship dictionary changes</td><td>Relationship validation, graph quality report, graph substrate, any graph-backed product projection</td></tr>
+<tr><td>Context policy changes</td><td>Agent-ready validation, index eligibility, retrieval and cite-render proof</td></tr>
+</tbody></table></div>
+<h3 id="write-phases">Write Phases</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Phase</th><th>Mode</th><th>Gate</th></tr></thead>
+<tbody>
+<tr><td>Inventory</td><td>Read-only</td><td>No gate beyond repo safety</td></tr>
+<tr><td>Dry-run integration</td><td>Read-only</td><td>Must pass before write</td></tr>
+<tr><td>L3 write</td><td>Mutating ACA Job</td><td>Requires approved data-build scope and idempotency key</td></tr>
+<tr><td>L3 readback</td><td>Read-only ACA Job</td><td>Required before downstream claims</td></tr>
+<tr><td>L4 projection refresh</td><td>Mutating ACA Job</td><td>Requires same build version or explicit dependency reason</td></tr>
+<tr><td>L4 readback</td><td>Read-only ACA Job</td><td>Must assert persisted equals readback by build</td></tr>
+<tr><td>RAG index refresh</td><td>Mutating index job</td><td>Requires governed object eligibility and index scope</td></tr>
+<tr><td>Retrieval/citation proof</td><td>Read-only</td><td>Required before agent-ready claim</td></tr>
+</tbody></table></div>
+<h2 id="canonical-entity-resolution">Canonical Entity Resolution</h2>
+<p>Entity resolution must be deterministic first and reviewable when human judgment is needed.</p>
+<p>Resolution order:</p>
+<ol>
+<li>Existing canonical ID from source.</li>
+<li>Approved identity ledger alias.</li>
+<li>Type-specific normalized natural key.</li>
+<li>Source-system ID scoped by source system and entity type.</li>
+<li>Quarantine as ambiguous or missing identity.</li>
+</ol>
+<p>Wrong fixes:</p>
+<ul>
+<li>Creating hollow entities only to satisfy an edge.</li>
+<li>Treating generated IDs in name columns as meaningful names.</li>
+<li>Retyping by writing the wrong object into the wrong dimension.</li>
+<li>Letting a product surface carry local aliases that L3 does not know.</li>
+</ul>
+<p>Correct fixes:</p>
+<ul>
+<li>Add evidence-backed object rows in the right domain.</li>
+<li>Add approved aliases against existing IDs.</li>
+<li>Retype the relationship when the endpoint type is wrong.</li>
+<li>Quarantine unresolved edges until evidence or approval exists.</li>
+</ul>
+<h2 id="reference-resolution">Reference Resolution</h2>
+<p>Cross-file references must become IDs before they are canonical truth.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Reference form</th><th>Treatment</th></tr></thead>
+<tbody>
+<tr><td>Exact canonical ID</td><td>Resolve directly</td></tr>
+<tr><td>Source-system ID</td><td>Resolve through source-system identity map</td></tr>
+<tr><td>Approved alias</td><td>Resolve through identity ledger</td></tr>
+<tr><td>Name match with one candidate</td><td>Resolve if domain and tenant match</td></tr>
+<tr><td>Name match with multiple candidates</td><td>Quarantine as ambiguous</td></tr>
+<tr><td>Generated ID in name field</td><td>Block as placeholder or source-key leakage</td></tr>
+<tr><td>Endpoint typed to wrong domain</td><td>Quarantine or retype the relationship</td></tr>
+<tr><td>Endpoint genuinely absent</td><td>Catalogue from evidence or keep quarantined; do not invent</td></tr>
+</tbody></table></div>
+<h2 id="fact-authority">Fact Authority</h2>
+<p>Facts are not all equal. A value from a planning workbook and a value from a ledger may both be useful, but only one can be source of record for a given metric.</p>
+<p>Authority output:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Status</th><th>Meaning</th><th>Product behavior</th></tr></thead>
+<tbody>
+<tr><td><code>AGREE</code></td><td>Multiple sources assert same value</td><td>May quote with lineage</td></tr>
+<tr><td><code>ONE_SOURCE</code></td><td>One source asserts value</td><td>May quote only with one-source caveat where required</td></tr>
+<tr><td><code>CONFLICT</code></td><td>Sources disagree</td><td>Do not quote; surface decision needed</td></tr>
+<tr><td><code>ABSENT</code></td><td>No source asserts value</td><td>Do not invent; show gap</td></tr>
+</tbody></table></div>
+<p>Money, counts, dates, performance metrics, and realized value must be deterministic. Models may explain the numbers, but must not calculate them.</p>
+<h2 id="product-mart-and-cube-design">Product Mart and Cube Design</h2>
+<p>Each product projection declares:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Field</th><th>Requirement</th></tr></thead>
+<tbody>
+<tr><td><code>projection_name</code></td><td>Stable mart/cube name</td></tr>
+<tr><td><code>projection_contract_version</code></td><td>Versioned grain and fields</td></tr>
+<tr><td><code>source_build_version</code></td><td>L3 build version used</td></tr>
+<tr><td><code>input_source_version</code></td><td>L1/L2 source version used</td></tr>
+<tr><td><code>tenant_scope</code></td><td>Registry-declared tenants only</td></tr>
+<tr><td><code>row_grain</code></td><td>One row per what</td></tr>
+<tr><td><code>source_domains</code></td><td>Canonical domains consumed</td></tr>
+<tr><td><code>workflow_domains</code></td><td>Operational state consumed</td></tr>
+<tr><td><code>build_run_id</code></td><td>Data-build job run</td></tr>
+<tr><td><code>lineage_basis</code></td><td>Counting basis for quoted metrics</td></tr>
+<tr><td><code>readback_assertion</code></td><td>Persisted equals readback, filtered by build</td></tr>
+</tbody></table></div>
+<h3 id="source-example">Source Example</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Cube or mart</th><th>Grain</th><th>Required drill path</th></tr></thead>
+<tbody>
+<tr><td>Vendor portfolio</td><td>One row per vendor-contract relationship</td><td>vendor -&gt; contract -&gt; service -&gt; application/function -&gt; spend</td></tr>
+<tr><td>Contract portfolio</td><td>One row per contract</td><td>contract -&gt; vendor -&gt; scope -&gt; spend -&gt; renewal/risk</td></tr>
+<tr><td>Contract scope</td><td>One row per contract-scope item</td><td>contract -&gt; system/function/service -&gt; confidence -&gt; source</td></tr>
+<tr><td>Spend observation</td><td>Declared observation grain</td><td>tenant -&gt; vendor -&gt; contract -&gt; period/basis -&gt; amount</td></tr>
+<tr><td>Opportunity pipeline</td><td>One row per sourcing opportunity</td><td>opportunity -&gt; category -&gt; vendor/contract -&gt; value basis -&gt; evidence</td></tr>
+</tbody></table></div>
+<h3 id="home-example">Home Example</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Mart</th><th>Grain</th><th>Required drill path</th></tr></thead>
+<tbody>
+<tr><td>Enterprise summary</td><td>One tenant snapshot per build</td><td>tenant -&gt; function -&gt; capability -&gt; application -&gt; vendor/contract -&gt; risk/value</td></tr>
+<tr><td>Executive insight list</td><td>One insight per deterministic finding</td><td>insight -&gt; source metric/fact -&gt; affected entity -&gt; source evidence</td></tr>
+<tr><td>Data quality panel</td><td>One domain per tenant</td><td>domain -&gt; files -&gt; rows -&gt; mapped fields -&gt; gaps</td></tr>
+</tbody></table></div>
+<h3 id="tower-example">Tower Example</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Mart</th><th>Grain</th><th>Required drill path</th></tr></thead>
+<tbody>
+<tr><td>Spend portfolio</td><td>One cost observation per basis</td><td>function/vendor/application -&gt; cost basis -&gt; source authority</td></tr>
+<tr><td>AI value ledger</td><td>One value hypothesis or realized metric per evidence basis</td><td>use case -&gt; metric -&gt; source -&gt; status</td></tr>
+<tr><td>Technology estate</td><td>One application/system entity</td><td>app -&gt; function -&gt; owner -&gt; vendor -&gt; risk -&gt; spend</td></tr>
+</tbody></table></div>
+<h2 id="operational-application-plane">Operational Application Plane</h2>
+<p>Operational stores are necessary for a full-stack application. They should be treated as workflow state, not enterprise truth.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Store</th><th>Purpose</th><th>Feeds L3?</th></tr></thead>
+<tbody>
+<tr><td>Task queue</td><td>Work assignment and status</td><td>Only through approved write-back</td></tr>
+<tr><td>Approval ledger</td><td>Human decisions, gates, sign-offs</td><td>Yes, as evidence-backed decisions</td></tr>
+<tr><td>Event log</td><td>User and system events</td><td>Yes, if declared as source events</td></tr>
+<tr><td>Module memory</td><td>Product-created observations and assumptions</td><td>Candidate write-back only</td></tr>
+<tr><td>Outcome ledger</td><td>Value lifecycle state</td><td>Yes, when supported by declared evidence</td></tr>
+<tr><td>Artifact store</td><td>Generated docs, packets, exports</td><td>Evidence if governed and cited</td></tr>
+<tr><td>Notification state</td><td>Emails, reminders, workflow nudges</td><td>No, operational only</td></tr>
+</tbody></table></div>
+<p>Write-back path:</p>
+<div class="diagram"><div class="mermaid">flowchart TD
+  A[&quot;Product workflow event&quot;] --&gt; B[&quot;Module memory candidate&quot;]
+  B --&gt; C[&quot;Policy and evidence check&quot;]
+  C --&gt;|pass| D[&quot;Candidate canonical write-back&quot;]
+  C --&gt;|fail| E[&quot;Remain operational memory only&quot;]
+  D --&gt; F[&quot;Human or governed approval&quot;]
+  F --&gt; G[&quot;Layer 1/2 correction or Layer 3 approved fact&quot;]
+  G --&gt; H[&quot;Next integrated refresh&quot;]</div></div>
+<h2 id="ava-rag-design">aVa / RAG Design</h2>
+<p>The RAG layer has its own stores and proofs because an answer needs more than a cube row.</p>
+<div class="diagram"><div class="mermaid">flowchart TD
+  A[&quot;L3 canonical facts/entities&quot;] --&gt; D[&quot;Governed object&quot;]
+  B[&quot;L3 graph context&quot;] --&gt; D
+  C[&quot;Operational workflow summaries&quot;] --&gt; D
+  D --&gt; E[&quot;Policy evaluation&lt;br/&gt;block, review, allow&quot;]
+  E --&gt; F[&quot;Chunking and source locator&quot;]
+  F --&gt; G[&quot;Index write&lt;br/&gt;Azure AI Search / FTS&quot;]
+  G --&gt; H[&quot;Scoped retrieval test&quot;]
+  H --&gt; I[&quot;Context bundle assembly&quot;]
+  I --&gt; J[&quot;Cite-render verification&quot;]
+  J --&gt; K[&quot;agent_ready&quot;]</div></div>
+<p>RAG readiness metrics:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Metric</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>objects_loaded</code></td><td>Governed objects created</td></tr>
+<tr><td><code>objects_policy_allowed</code></td><td>Objects not blocked by policy</td></tr>
+<tr><td><code>objects_indexed</code></td><td>Objects present in search/FTS index</td></tr>
+<tr><td><code>retrieval_queries_passed</code></td><td>Tenant-scoped queries retrieve intended objects</td></tr>
+<tr><td><code>citation_render_passed</code></td><td>Final answer can show exact citation</td></tr>
+<tr><td><code>agent_ready_objects</code></td><td>Objects that passed all states</td></tr>
+</tbody></table></div>
+<p>No product should claim an aVa answer is ready because L3 or L4 refreshed. L3/L4 refresh is input eligibility. Agent readiness requires index and citation proof.</p>
+<h2 id="build-manifest">Build Manifest</h2>
+<p>Every integrated run writes a manifest:</p>
+<pre><code>{
+  &quot;build_version&quot;: &quot;integrated-refresh-&lt;sha&gt;-&lt;timestamp&gt;&quot;,
+  &quot;input_source_version&quot;: &quot;&lt;git-or-packet-version&gt;&quot;,
+  &quot;idempotency_key&quot;: &quot;&lt;stable-key&gt;&quot;,
+  &quot;tenant_scope&quot;: [&quot;registry-active-tenant-keys&quot;],
+  &quot;image_digest&quot;: &quot;acr...@sha256:&lt;digest&gt;&quot;,
+  &quot;phases&quot;: [
+    &quot;l1_quality&quot;,
+    &quot;l2_adapters&quot;,
+    &quot;l3_canonical&quot;,
+    &quot;graph_reconciliation&quot;,
+    &quot;l4_projections&quot;,
+    &quot;rag_indexing&quot;,
+    &quot;readback&quot;,
+    &quot;lineage&quot;
+  ],
+  &quot;outputs&quot;: {
+    &quot;l1_inventory&quot;: &quot;&lt;path-or-blob&gt;&quot;,
+    &quot;adapter_report&quot;: &quot;&lt;path-or-blob&gt;&quot;,
+    &quot;canonical_summary&quot;: &quot;&lt;path-or-blob&gt;&quot;,
+    &quot;graph_quality&quot;: &quot;&lt;path-or-blob&gt;&quot;,
+    &quot;projection_readback&quot;: &quot;&lt;path-or-blob&gt;&quot;,
+    &quot;rag_readiness&quot;: &quot;&lt;path-or-blob&gt;&quot;,
+    &quot;lineage_report&quot;: &quot;&lt;path-or-blob&gt;&quot;
+  }
+}</code></pre>
+<h2 id="proof-and-acceptance-criteria">Proof and Acceptance Criteria</h2>
+<p>The integrated refresh is not complete until the proof bundle answers these questions.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Question</th><th>Required proof</th></tr></thead>
+<tbody>
+<tr><td>Which files were considered?</td><td>L1 inventory from registry-active roots</td></tr>
+<tr><td>Which files were integrated?</td><td>L2 adapter coverage by file and domain</td></tr>
+<tr><td>Which files were blocked?</td><td>Blocked-file report with reason and owner</td></tr>
+<tr><td>Did rows become entities?</td><td>L3 mention/entity collapse metrics</td></tr>
+<tr><td>Did references resolve?</td><td>Reference resolution rate and unresolved breakdown</td></tr>
+<tr><td>Did graph materialize honestly?</td><td>Graph nodes/edges written, quarantine count, no orphan edges beyond expected quarantine</td></tr>
+<tr><td>Did marts/cubes refresh?</td><td>Persisted rows equal build-scoped readback rows</td></tr>
+<tr><td>Do metrics reconcile to sources?</td><td>Source lineage report for quoted metrics</td></tr>
+<tr><td>Did products read current data?</td><td>Product readback or signed-in proof for affected surfaces</td></tr>
+<tr><td>Did RAG refresh?</td><td>Index, retrieval, and cite-render proof</td></tr>
+<tr><td>Is tenant isolation intact?</td><td>RLS/readback proof with zero cross-tenant visibility</td></tr>
+</tbody></table></div>
+<h2 id="commands-and-jobs">Commands and Jobs</h2>
+<p>Local report-only commands:</p>
+<pre><code>npm run audit:canonical-tenant-inputs
+npm run audit:canonical-data-build
+npm run build:candidate-version
+npm run data-build:integrated-layer-refresh -- --tenant &lt;tenant-key&gt; --out-dir &lt;tmp-dir&gt;
+npm run audit:integrated-layer-refresh-inventory -- --out-dir &lt;tmp-dir&gt;
+npm run validate:context-corpus:agent-readiness</code></pre>
+<p>Mutating data-plane commands must run as ACA Jobs:</p>
+<pre><code>npm run ops:aca-job -- \
+  --image acrabarvalab001.azurecr.io/abarva/web@sha256:&lt;digest&gt; \
+  --script data-build:runtime-layer-refresh \
+  --env RUNTIME_LAYER_REFRESH_WRITE=1 \
+  --env RUNTIME_LAYER_REFRESH_WRITE_APPROVED=true \
+  --env RUNTIME_LAYER_REFRESH_BUILD_VERSION=&lt;build-version&gt; \
+  --env RUNTIME_LAYER_REFRESH_INPUT_SOURCE_VERSION=&lt;input-version&gt; \
+  --env RUNTIME_LAYER_REFRESH_IDEMPOTENCY_KEY=&lt;idempotency-key&gt; \
+  --out-dir &lt;proof-dir&gt;</code></pre>
+<p>Product projection refreshes use the same image digest, build version, and idempotency family.</p>
+<h2 id="anti-patterns">Anti-Patterns</h2>
+<p>These are design failures, even when tests pass:</p>
+<ul>
+<li>&quot;Rows integrated&quot; is the main success metric.</li>
+<li>Gold-layer keys end with row ordinals.</li>
+<li>A product adapter bypasses L3 to make one screen look correct.</li>
+<li>A cube readback does not filter by build.</li>
+<li>A RAG answer uses loaded data that was not indexed and cite-render verified.</li>
+<li>A generated placeholder row is created only to make a graph edge resolve.</li>
+<li>A file is ignored because no product currently consumes it.</li>
+<li>A source metric is quoted from a stale canary or legacy table.</li>
+<li>A workflow state table becomes the source of enterprise fact without write-back review.</li>
+</ul>
+<h2 id="review-checklist-for-claude-code">Review Checklist for Claude Code</h2>
+<p>Claude Code should review this design against the repository and answer with specific file and line evidence where possible.</p>
+<ol>
+<li>Does this design preserve the four-layer constitution?</li>
+<li>Does any current product route still read L1 or L2 directly?</li>
+<li>Does the canonical build now represent distinct entities, not row ordinals?</li>
+<li>Are source mentions and canonical entities both retained with lineage?</li>
+<li>Are cross-file references resolved to IDs before becoming canonical truth?</li>
+<li>Are fact-authority conflicts blocked from quoted metrics?</li>
+<li>Are product marts and cubes build-scoped, with stale rows impossible to count as current?</li>
+<li>Are operational workflow stores correctly separated from canonical facts?</li>
+<li>Are aVa/RAG readiness states distinct from L3/L4 refresh states?</li>
+<li>Is there one integrated build manifest that can show what refreshed and what did not?</li>
+<li>Can the design process all registry-active files, including files no product uses today?</li>
+<li>Are mutating steps restricted to ACA Jobs with digest-pinned images and proof bundles?</li>
+<li>Which existing scripts already satisfy this design?</li>
+<li>Which existing scripts violate or only partially satisfy it?</li>
+<li>What is the smallest next PR sequence to make implementation match this design?</li>
+</ol>
+<h2 id="implementation-roadmap">Implementation Roadmap</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Slice</th><th>Outcome</th><th>Acceptance</th></tr></thead>
+<tbody>
+<tr><td>S1: design review</td><td>This document accepted or amended</td><td>Claude Code and Codex review responses reconciled</td></tr>
+<tr><td>S2: build manifest hardening</td><td>One manifest spans L1/L2/L3/L4/RAG states</td><td>Dry-run produces complete manifest and no report churn</td></tr>
+<tr><td>S3: L3 identity/reference completion</td><td>Entity IDs and references are first-class outputs</td><td>Distinct entities lower than mentions where duplicates exist; refs resolved by ID</td></tr>
+<tr><td>S4: product projection registry</td><td>Every mart/cube declares grain, sources, build scope, lineage</td><td>Product readback fails on stale unscoped rows</td></tr>
+<tr><td>S5: Home/Tower/Moves projection fanout</td><td>Non-Source products get governed L4 projections</td><td>Signed-in surfaces read L4/L3, not L1/L2</td></tr>
+<tr><td>S6: RAG/index refresh job</td><td>aVa context objects indexed and cited by same build</td><td>Loaded, indexed, retrievable, cited counts reported separately</td></tr>
+<tr><td>S7: end-to-end proof packet</td><td>One proof answers all acceptance questions</td><td>Review packet can be inspected without chat history</td></tr>
+</tbody></table></div>
+<h2 id="non-goals">Non-Goals</h2>
+<ul>
+<li>This document does not choose a graph database.</li>
+<li>This document does not approve live-client claims.</li>
+<li>This document does not approve registry activation or tenant promotion.</li>
+<li>This document does not require products to share the same serving grain.</li>
+<li>This document does not require agents to read product cubes directly.</li>
+</ul>
+<h2 id="bottom-line">Bottom Line</h2>
+<p>The design is not &quot;load a vendor file, then fix Source, then fix Home.&quot; The design is:</p>
+<ol>
+<li>Inventory every active input.</li>
+<li>Adapt every supported file.</li>
+<li>Integrate every represented mention into Layer 3 entities, facts, authority, and relationships.</li>
+<li>Project product-specific operating views from Layer 3 plus governed workflow state.</li>
+<li>Build agent-ready context from governed objects, indexes, retrieval, and citation proof.</li>
+<li>Prove each state independently.</li>
+</ol>
+<p>That is the line between a scalable data engineering platform and a collection of product adapters.</p>
+      <p class="meta">Generated from Markdown source for review. Mermaid diagrams render client-side when opened in a browser.</p>
+    </main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: 'base' });
+  </script>
+</body>
+</html>
