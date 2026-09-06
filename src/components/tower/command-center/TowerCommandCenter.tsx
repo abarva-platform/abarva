@@ -432,6 +432,10 @@ export function TowerCommandCenter({
     <div className={styles.root} data-testid="tower-command-center">
       <div className={styles.stage}>
         <div className={cx(styles.wrap, styles.executiveTabsShell)}>
+          <div className={styles.tenantIdentity} data-testid="tower-tenant-identity">
+            <span className={styles.tenantIdentityLabel}>Active Tower workspace</span>
+            <span className={styles.tenantIdentityName}>{tenantName}</span>
+          </div>
           <nav
             className={styles.executiveTabs}
             role="tablist"
