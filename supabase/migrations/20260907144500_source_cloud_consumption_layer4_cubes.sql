@@ -7,6 +7,9 @@
 
 BEGIN;
 
+DROP VIEW IF EXISTS consumption.sourcing_context_coverage_v1;
+DROP VIEW IF EXISTS consumption.sourcing_opportunity_v1;
+
 CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
 SELECT
   tenant_key,
@@ -282,8 +285,34 @@ SELECT
 FROM source.cloud_ap_invoice_reconciliation
 WHERE source.can_read_sourcing_tenant(tenant_key);
 
+CREATE OR REPLACE VIEW consumption.sourcing_context_coverage_v1 AS
+SELECT tenant_key, 'contracts' AS context_area, count(*) AS row_count, count(*) FILTER (WHERE annual_contract_value IS NOT NULL) AS populated_count
+FROM consumption.sourcing_contract_v1
+GROUP BY tenant_key
+UNION ALL
+SELECT tenant_key, 'contract_scope', count(*), count(*) FILTER (WHERE relationship_method <> 'unresolved')
+FROM consumption.sourcing_contract_scope_v1
+GROUP BY tenant_key
+UNION ALL
+SELECT tenant_key, 'monthly_spend_consumption', count(*), count(*) FILTER (WHERE actual_spend IS NOT NULL OR invoice_amount IS NOT NULL)
+FROM consumption.sourcing_spend_monthly_v1
+GROUP BY tenant_key
+UNION ALL
+SELECT tenant_key, 'performance_sla', count(*), count(*) FILTER (WHERE performance_state <> 'not_loaded')
+FROM consumption.sourcing_performance_v1
+GROUP BY tenant_key
+UNION ALL
+SELECT tenant_key, 'opportunities', count(*), count(*) FILTER (WHERE evidence_state = 'present')
+FROM consumption.sourcing_opportunity_v1
+GROUP BY tenant_key
+UNION ALL
+SELECT tenant_key, 'sourcing_events', count(*), count(*) FILTER (WHERE status IS NOT NULL)
+FROM consumption.sourcing_event_v1
+GROUP BY tenant_key;
+
 GRANT SELECT ON
   consumption.sourcing_opportunity_v1,
+  consumption.sourcing_context_coverage_v1,
   consumption.sourcing_cloud_usage_monthly_v1,
   consumption.sourcing_cloud_commitment_coverage_v1,
   consumption.sourcing_cloud_resource_inventory_v1,
