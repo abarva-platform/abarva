@@ -1,0 +1,5 @@
+native_tool,what_it_already_does,what_it_cannot_govern,nexus_role
+Cost Explorer / Cost Management,"Shows cloud spend, service mix, coverage, utilization, recommendations.","Does not know contract notice dates, AP payment state, business owner approval, or sourcing action state.","Ingest as source evidence and reconcile with CLM, ERP/AP and CMDB."
+Compute Optimizer / Azure Advisor,Finds rightsizing and idle-resource candidates.,Does not decide whether clinical or production workload owners can accept the change.,"Adds app criticality, owner, scope and approval gates before action."
+Savings Plans / Reservation reports,Shows commitment utilization and uncovered eligible spend.,"Does not prove whether the buyer should negotiate, step up, reduce scope or change contract terms.",Connects coverage to EDP/EA terms and renewal strategy.
+Cloud invoices,Show billed amount.,"Do not prove paid amount, GL allocation, or finance-confirmed value.",Reconciles cloud bill to AP payment before any realized-value claim.

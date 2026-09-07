@@ -1,0 +1,29 @@
+{
+  "dataset_version": "meridian-cloud-consumption-depth-v1-20260907",
+  "tenant_key": "meridian-health",
+  "generated_at": "2026-09-07T13:30:03.988Z",
+  "workbook": "Meridian_Cloud_Consumption_Intake_Workbook_v1.xlsx",
+  "preview": "workbook-start-here-preview.png",
+  "source_directory": "source-files",
+  "document_directory": "synthetic-evidence-documents",
+  "qa_directory": "qa",
+  "synthetic_policy": "synthetic_demo_only_not_client_truth",
+  "workbook_sha256": "84235b6d01b56f99fc4a2e8a485684b8bf360565b0dd53f2349f5e7d835a2cf3",
+  "row_counts": {
+    "contracts": 2,
+    "cloud_accounts": 8,
+    "cmdb_applications": 6,
+    "cmdb_application_scope": 7,
+    "monthly_spend": 24,
+    "cloud_service_usage_monthly": 192,
+    "cloud_commitments": 6,
+    "cloud_commitment_coverage_monthly": 24,
+    "cloud_resource_inventory": 84,
+    "cloud_tag_quality": 24,
+    "cloud_ap_invoice_reconciliation": 24,
+    "contract_clauses": 10,
+    "optimization_opportunities": 8,
+    "evidence_manifest": 10,
+    "synthetic_evidence_documents": 10
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "dataset_id": "meridian-cloud-consumption-depth-v1-20260907",
+  "title": "Meridian Cloud Consumption Depth V1 Demo Evidence Pack",
+  "client_key": "meridian-health",
+  "source_layer": "tenant_context",
+  "classification": "confidential",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "synthetic_demo_cloud_consumption_package",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free, planning-grade cloud consumption and contract evidence package. No patient, member, provider, claim-line, PHI, PII, or real production records are included. Native AWS and Azure tool exports are represented as synthetic evidence inputs, not live-client truth or finance-confirmed realized value.",
+  "expected_object_count": 470,
+  "approved_by": "active-task-operator-approval",
+  "approved_at": "2026-09-07",
+  "notes": "Manifest gates the repo-staged source-file and synthetic-document package at datasets/source/cloud-consumption/meridian-cloud-consumption-depth-v1-20260907. It authorizes only the explicitly approved active-task operator ACA data-build job with row-count reconciliation, quality-gate output, proof bundle, and live retrieval proof before product, Tower, or aVa claims rely on the package. The 470-object count is 460 CSV source rows plus 10 synthetic evidence documents; all opportunity amounts remain candidate/not finance-confirmed."
+}
