@@ -22,6 +22,8 @@ Layer 3 canonical model: after ACA apply, the package will write canonical contr
 
 Layer 4 products: after the existing contract-depth Layer 4 job runs, Source 360, Contract 360, Optimize, and downstream product projections can read the package as governed product substrate. No realized savings are created.
 
+Layer 4 quality gates now use the package version to select exact expected counts, so the existing five-contract depth package and this one-contract managed-services package are both reconciled against their own shapes instead of sharing one hard-coded expectation set.
+
 Release lane: `client-data-lane` for synthetic reference data and Source/Tower projections.
 
 ## Client Applicability
@@ -52,9 +54,9 @@ Candidate validation status: `pass` for local source-shape, arithmetic, and focu
 
 Runtime validation required after deploy:
 
-- Layer 2 ACA apply and readback proof.
-- Layer 3 ACA apply and readback proof.
-- Document-evidence ACA apply proof with non-empty `doc.file`, `doc.page`, `doc.span`, and `doc.extraction` counts for the new contract.
+- `pass` — Layer 2 ACA apply and readback proof: 117 adapter rows across contract, clause, page-text, app-scope, spend, ticket, performance, opportunity, document, and change-order adapters.
+- `pass` — Layer 3 ACA apply and readback proof: 1 contract, 8 terms, 5 scope rows, 12 spend observations, 12 performance observations, 5 service-credit rows, 3 opportunities, 20 opportunity evidence links, 3 calculation runs, and `$490.5K` candidate opportunity amount, all not finance-confirmed.
+- `pass` — Document-evidence ACA apply proof with 6 `doc.file`, 12 `doc.page`, 8 `doc.span`, and 8 `doc.extraction` rows for the new contract.
 - Layer 4 ACA apply and verify proof.
 - Contract API proof showing non-empty evidence facets for the new contract.
 - Signed-in product proof for Source 360, Contract 360, Optimize, and aVa grounded response.

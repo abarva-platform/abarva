@@ -387,8 +387,23 @@ async function l4Readback(
   return result;
 }
 
-function assertLayer3Ready(rows: Record<string, number>): void {
-  const expected: Record<string, number> = {
+function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
+  if (datasetVersion === "meridian-managed-services-depth-v1-20260907") {
+    return {
+      source_contract: 1,
+      source_contract_scope: 5,
+      source_contract_consumption_observation: 12,
+      source_contract_performance_observation: 12,
+      source_contract_service_credit: 5,
+      source_contract_term: 8,
+      source_optimization_opportunity: 3,
+      opportunities_not_finance_confirmed: 3,
+      source_page_text_fact_assertion: 12,
+      source_change_order_fact_assertion: 14,
+      contracts_with_assessed_alternatives: 0,
+    };
+  }
+  return {
     source_contract: 5,
     source_contract_scope: 18,
     source_contract_consumption_observation: 60,
@@ -401,24 +416,31 @@ function assertLayer3Ready(rows: Record<string, number>): void {
     source_change_order_fact_assertion: 36,
     contracts_with_assessed_alternatives: 0,
   };
-  const failures = Object.entries(expected)
-    .filter(([key, expectedValue]) => rows[key] !== expectedValue)
-    .map(
-      ([key, expectedValue]) =>
-        `${key} expected ${expectedValue}, got ${rows[key] ?? "<missing>"}`,
-    );
-  if (failures.length > 0) {
-    throw new Error(
-      `Layer 3 is not ready for Layer 4 projection: ${failures.join("; ")}`,
-    );
-  }
 }
 
-function assertL4Ready(
-  rows: Record<string, number>,
-  beforeContractCount: number,
-): void {
-  const expected: Record<string, number> = {
+function l4ExpectedCounts(datasetVersion: string): Record<string, number> {
+  if (datasetVersion === "meridian-managed-services-depth-v1-20260907") {
+    return {
+      source_contract_360_package: 1,
+      source_contract_financial_exposure_package: 1,
+      source_contract_operational_performance_package: 1,
+      source_contract_application_scope_package: 5,
+      consumption_sourcing_spend_monthly_v1_package: 12,
+      consumption_sourcing_performance_v1_package: 12,
+      consumption_sourcing_opportunity_v1_package: 3,
+      source_contract_evidence_coverage_v1_package: 1,
+      source_contract_action_candidate_v1_package: 3,
+      source_contract_claim_card_v1_package: 3,
+      source_vendor_position_v1_package: 1,
+      source_page_storyline_v1_rows: 5,
+      source_ava_grounding_bundle_v1_rows: 3,
+      source_contract_360_page_text_rows_package: 12,
+      source_contract_360_change_order_rows_package: 5,
+      package_contracts_with_assessed_alternatives: 0,
+      skyharbor_strings_in_scope: 0,
+    };
+  }
+  return {
     source_contract_360_package: 5,
     source_contract_financial_exposure_package: 5,
     source_contract_operational_performance_package: 5,
@@ -437,6 +459,32 @@ function assertL4Ready(
     package_contracts_with_assessed_alternatives: 0,
     skyharbor_strings_in_scope: 0,
   };
+}
+
+function assertLayer3Ready(
+  rows: Record<string, number>,
+  datasetVersion: string,
+): void {
+  const expected = layer3ExpectedCounts(datasetVersion);
+  const failures = Object.entries(expected)
+    .filter(([key, expectedValue]) => rows[key] !== expectedValue)
+    .map(
+      ([key, expectedValue]) =>
+        `${key} expected ${expectedValue}, got ${rows[key] ?? "<missing>"}`,
+    );
+  if (failures.length > 0) {
+    throw new Error(
+      `Layer 3 is not ready for Layer 4 projection: ${failures.join("; ")}`,
+    );
+  }
+}
+
+function assertL4Ready(
+  rows: Record<string, number>,
+  beforeContractCount: number,
+  datasetVersion: string,
+): void {
+  const expected = l4ExpectedCounts(datasetVersion);
   const failures = Object.entries(expected)
     .filter(([key, expectedValue]) => rows[key] !== expectedValue)
     .map(
@@ -474,7 +522,7 @@ async function applyLayer4(
 ): Promise<Record<string, number>> {
   await assertReplaceableViews(client);
   const layer3 = await layer3Readback(client, args);
-  assertLayer3Ready(layer3);
+  assertLayer3Ready(layer3, args.datasetVersion);
   await setTenant(client, args.tenantKey);
   const beforeContractCount = await tableScalar(
     client,
@@ -521,7 +569,7 @@ async function applyLayer4(
 
     await rebuildViews(client);
     const readback = await l4Readback(client, args, beforeContractCount);
-    assertL4Ready(readback, beforeContractCount);
+    assertL4Ready(readback, beforeContractCount, args.datasetVersion);
     await client.query("COMMIT");
     return readback;
   } catch (error) {
@@ -1705,9 +1753,9 @@ async function main(): Promise<void> {
       }
       layer4 = await applyLayer4(client, args);
     } else if (args.mode === "verify") {
-      assertLayer3Ready(layer3);
+      assertLayer3Ready(layer3, args.datasetVersion);
       layer4 = await l4Readback(client, args);
-      assertL4Ready(layer4, 0);
+      assertL4Ready(layer4, 0, args.datasetVersion);
     }
 
     const event = {
