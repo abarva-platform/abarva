@@ -39,6 +39,9 @@ describe("Source cloud to Tower bridge", () => {
     expect(script).toContain("consumption.sourcing_cloud_usage_monthly_v1");
     expect(script).toContain("tower_spend_value_cube");
     expect(script).toContain("tower_evidence_cube");
+    expect(script).toContain("INSERT INTO ecl_context.metric_definition");
+    expect(script).toContain("source_cloud_candidate_value_usd");
+    expect(script).toContain("source_cloud_evidence_gate");
     expect(script).toContain("row_key LIKE 'source_cloud:%'");
     expect(script).toContain("COALESCE(v.legal_name, c.vendor_ref, o.vendor_id) AS vendor_name");
     expect(script).toContain("ELSE c.end_date - c.notice_period_days::int");
