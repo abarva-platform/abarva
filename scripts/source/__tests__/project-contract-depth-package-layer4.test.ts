@@ -44,6 +44,14 @@ describe("contract depth package Layer 4 overlay job", () => {
       "source_contract_360_change_order_rows_package: 8",
     );
     expect(source).toContain("source_optimization_opportunity: 6");
+    expect(source).toContain("meridian-managed-services-depth-v1-20260907");
+    expect(source).toContain("source_contract: 1");
+    expect(source).toContain("source_contract_consumption_observation: 12");
+    expect(source).toContain("source_contract_performance_observation: 12");
+    expect(source).toContain("source_contract_360_page_text_rows_package: 12");
+    expect(source).toContain(
+      "source_contract_360_change_order_rows_package: 5",
+    );
     expect(source).toContain(
       "COALESCE(NULLIF(c.raw_payload ->> 'archetype', ''), v.supplier_category) AS vendor_category",
     );
