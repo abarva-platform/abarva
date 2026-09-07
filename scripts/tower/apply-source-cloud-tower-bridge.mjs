@@ -473,7 +473,7 @@ async function loadOpportunities(client, args, sourceFiles) {
        o.opportunity_id,
        o.contract_id,
        o.vendor_id AS vendor_ref,
-       COALESCE(v.legal_name, c.vendor_id, o.vendor_id) AS vendor_name,
+       COALESCE(v.legal_name, c.vendor_ref, o.vendor_id) AS vendor_name,
        o.action_type,
        o.opportunity_type,
        o.title,
