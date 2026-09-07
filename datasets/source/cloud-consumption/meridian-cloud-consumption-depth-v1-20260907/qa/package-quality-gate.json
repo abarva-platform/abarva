@@ -1,0 +1,91 @@
+{
+  "status": "PASS",
+  "tenant_key": "meridian-health",
+  "dataset_version": "meridian-cloud-consumption-depth-v1-20260907",
+  "generated_at": "2026-09-07T13:30:03.988Z",
+  "row_counts": {
+    "contracts": 2,
+    "cloud_accounts": 8,
+    "cmdb_applications": 6,
+    "cmdb_application_scope": 7,
+    "monthly_spend": 24,
+    "cloud_service_usage_monthly": 192,
+    "cloud_commitments": 6,
+    "cloud_commitment_coverage_monthly": 24,
+    "cloud_resource_inventory": 84,
+    "cloud_tag_quality": 24,
+    "cloud_ap_invoice_reconciliation": 24,
+    "contract_clauses": 10,
+    "optimization_opportunities": 8,
+    "evidence_manifest": 10,
+    "synthetic_evidence_documents": 10
+  },
+  "checks": [
+    {
+      "check": "Cloud contracts",
+      "row_count": 2,
+      "status": "PASS",
+      "plain_english_result": "Two cloud contracts have stable IDs, owners, terms, and annual/actual values."
+    },
+    {
+      "check": "Monthly spend",
+      "row_count": 24,
+      "status": "PASS",
+      "plain_english_result": "Twelve AP-reconciled monthly rows per contract."
+    },
+    {
+      "check": "Service usage",
+      "row_count": 192,
+      "status": "PASS",
+      "plain_english_result": "Monthly service-level usage rows by provider, account, app, service, region, and tags."
+    },
+    {
+      "check": "Commitments",
+      "row_count": 6,
+      "status": "PASS",
+      "plain_english_result": "Commitments include EDP/EA and reservation/Savings Plan records."
+    },
+    {
+      "check": "Coverage months",
+      "row_count": 24,
+      "status": "PASS",
+      "plain_english_result": "Twelve coverage/utilization rows per contract."
+    },
+    {
+      "check": "Resources",
+      "row_count": 84,
+      "status": "PASS",
+      "plain_english_result": "Resources carry utilization, rightsize signal, owner/app tags, and monthly spend."
+    },
+    {
+      "check": "Tag quality",
+      "row_count": 24,
+      "status": "PASS",
+      "plain_english_result": "Monthly tag coverage exposes accountable and blocked spend."
+    },
+    {
+      "check": "AP reconciliation",
+      "row_count": 24,
+      "status": "PASS",
+      "plain_english_result": "Cloud billing export and AP-paid amount reconcile at invoice month grain."
+    },
+    {
+      "check": "Optimization actions",
+      "row_count": 8,
+      "status": "PASS",
+      "plain_english_result": "Actions remain candidate/control states. Finance confirmation is not asserted."
+    },
+    {
+      "check": "Evidence policy",
+      "row_count": 10,
+      "status": "PASS",
+      "plain_english_result": "Every evidence file is marked synthetic demo evidence only."
+    }
+  ],
+  "guardrails": [
+    "All money rows are synthetic demo evidence and must remain candidate/not_confirmed until finance confirmation changes.",
+    "Native cloud tools remain source systems; Nexus is the governed cross-system sourcing layer.",
+    "Cloud billing export is reconciled to AP before paid-spend claims.",
+    "Business-unit savings claims are blocked where owner/application tags are missing."
+  ]
+}

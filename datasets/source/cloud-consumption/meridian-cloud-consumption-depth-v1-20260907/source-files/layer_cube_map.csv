@@ -1,0 +1,10 @@
+source_file_tab,layer_2_adapter_output,layer_3_canonical_object,layer_4_cube_read_model,source_page_use
+Cloud contract register,contract_register_adapter,source.contract; source.vendor; source.contract_term,source.contract_360; source.vendor_contract_portfolio,"Contract headers, vendor rollups, renewal posture"
+Cloud accounts,cloud_account_adapter,source.cloud_account; source.owner_mapping,source.contract_financial_exposure,Account/subscription ownership and scope
+Cloud monthly spend,cloud_consumption_adapter,source.contract_consumption_observation,consumption.sourcing_spend_monthly_v1,Actual spend trend and committed-vs-on-demand split
+Service usage monthly,cloud_service_usage_adapter,source.cloud_service_usage_observation,source.contract_financial_exposure; source.cloud_service_mix_v1,"Service mix, workload spend, egress/support signals"
+Commitments and coverage,cloud_commitment_adapter,source.cloud_commitment; source.cloud_coverage_observation,consumption.sourcing_opportunity_v1,Commitment conversion candidates
+Resource inventory,cloud_resource_adapter,source.cloud_resource_observation,source.contract_operational_performance,Rightsizing candidates with owner/app context
+Tag quality,cloud_tag_quality_adapter,source.data_quality_assertion,source.source_page_storyline_v1,Blocks business-unit savings claims when tags are weak
+AP reconciliation,ap_erp_spend_adapter,source.contract_consumption_observation,source.contract_financial_exposure,Paid-spend proof and billing variance checks
+Optimization actions,optimization_opportunity_adapter,source.optimization_opportunity; source.opportunity_evidence,consumption.sourcing_opportunity_v1; Optimize,"Candidate action queue, not finance-confirmed savings"
