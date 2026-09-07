@@ -535,7 +535,7 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
 
 async function verifyContractsExist(client, args) {
   const result = await client.query(
-    `SELECT contract_id, vendor_name, annual_value FROM source.contract WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+    `SELECT contract_id, vendor_id, annual_value FROM source.contract WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
     [args.tenantKey, args.contractIds],
   );
   const found = new Set(result.rows.map((r) => r.contract_id));

@@ -36,12 +36,14 @@ Release lane: `client-data-lane` — writes governed synthetic evidence for a sp
 
 - `scripts/source/load-contract-depth-document-evidence.mjs` — new. Plan/apply loader; requires explicit `--contract-id` scope (refuses to run unscoped). Plan mode is read-only (parses CSVs, prints intended row counts, no DB connection). Apply mode writes `doc.file`/`doc.page`/`doc.span`/`doc.extraction`/`meta.concept`, scoped to the tenant-key and contract ids passed, deleting only rows under that exact scope before reinserting (idempotent rerun).
 - `package.json` — two new scripts: `source:contract-depth-package:doc-evidence:plan`, `source:contract-depth-package:doc-evidence:apply-job`.
+- Follow-up correction (same file): `verifyContractsExist` selected a `vendor_name` column that does not exist on `source.contract` (that table has `vendor_id`; the name lives on `source.vendor`, joined by id). Fixed to select `vendor_id`. Caught live on the initial real ACA Job run — see QA below.
 
 ## QA / Validation
 
 - `npx eslint scripts/source/load-contract-depth-document-evidence.mjs` — **pass**, clean.
 - Plan mode run locally against the real package for `MER-TECH-AMS-001` (Cognizant Technology Solutions) — **pass**: output matched exact independent verification done earlier by reading the CSVs directly — 6 `contract_page_text` rows, 7 `contract_clauses` rows, 6 distinct source files. No DB write in plan mode.
-- Apply mode against the live tenant — **not run** as of this PR. That is the explicit next step: run as an ACA Job per the ACA Data Build Job Rule (`docs/ops/aca-data-build-job-rule.md`), scoped to `--contract-id MER-TECH-AMS-001` only, once this image is deployed. This PR does not claim that step passed.
+- Initial live ACA Job apply run, scoped to `--contract-id MER-TECH-AMS-001` — **fail**: Postgres error `42703`, `column "vendor_name" does not exist`, raised by `verifyContractsExist` before any `INSERT` runs. No rows written; the job's own idle-restore completed cleanly afterward. Root-caused and fixed same-day (see Changes Included).
+- Second live ACA Job apply run, after the fix — **not run** as of this PR. That is the explicit next step, same job path, same contract scope.
 
 ## Rollout Plan
 
