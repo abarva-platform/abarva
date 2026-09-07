@@ -46,7 +46,7 @@ Release lane: `client-data-lane` for synthetic reference data and Source/Tower p
 
 ## QA / Validation
 
-Candidate validation status: `pass` for local source-shape, arithmetic, focused test validation, Azure Layer 2/3/4 mutation proof, and Source product-substrate readback. Signed-in product proof remains separate.
+Candidate validation status: `pass` for local source-shape, arithmetic, focused test validation, Azure Layer 2/3/4 mutation proof, Source product-substrate readback, and Tower bridge readback. Signed-in product proof remains separate.
 
 - `pass` — `npx tsx scripts/source/load-contract-depth-package.ts --mode=plan --package-dir=datasets/source/contract-depth/meridian-managed-services-depth-v1-20260907 --dataset-version=meridian-managed-services-depth-v1-20260907 --tenant-key=meridian-health`
 - `pass` — `node scripts/source/load-contract-depth-document-evidence.mjs --package-dir=datasets/source/contract-depth/meridian-managed-services-depth-v1-20260907 --dataset-version=meridian-managed-services-depth-v1-20260907 --tenant-key=meridian-health --contract-id=MER-TECH-IMS-001`
@@ -63,6 +63,7 @@ Runtime validation required after deploy:
 - `pass` — Layer 4 ACA apply and verify proof: 1 contract row, 1 financial exposure row, 1 operational performance row, 5 app-scope rows, 12 spend rows, 12 SLA rows, 3 opportunity rows, 3 action candidates, 3 claim cards, 5 storyline rows, and 3 aVa grounding rows, with `$99K` unclaimed credit and `$490.5K` total candidate opportunity amount.
 - `pass` — local Tower bridge plan for the managed-services package proves the package will project 3 opportunities into 15 Tower projection entries, 3 rows per Tower lens, and 6 cube slices before any Azure write.
 - `pass` — Tower bridge readback repair keeps the same expected evidence depth and reconciles ticket volume rows by their physical `ticket_volume:` source-record prefix plus document files by contract and package dataset metadata.
+- `pass` — Tower bridge ACA apply and independent verify proof: source readback reconciles 1 contract, 3 opportunities, 12 spend months, 12 performance rows, 5 service-credit rows, 48 ticket rows, 5 change-order rows, 5 app-scope rows, and 6 evidence documents; Tower readback reconciles 15 projection entries, 3 rows per Tower lens, 6 cube slices, and 0 missing source references.
 - Contract API proof showing non-empty evidence facets for the new contract.
 - Signed-in product proof for Source 360, Contract 360, Optimize, and aVa grounded response.
 
@@ -91,9 +92,10 @@ If the package fails validation before product proof, stop before Layer 4 or rem
 - Document evidence proof: `/tmp/source-managed-services-doc-evidence-20260907T1855Z/summary.json`
 - Source Layer 4 apply proof: `/tmp/source-managed-services-layer4-apply-after-shape-fix-20260907T1918Z/proof/source-contract-depth-package-layer4-apply-20260907T191742Z/summary.json`
 - Source Layer 4 verify proof: `/tmp/source-managed-services-layer4-verify-after-shape-fix-20260907T1920Z/proof/source-contract-depth-package-layer4-verify-20260907T191940Z/summary.json`
-- Tower bridge proof: to be filled after managed-services bridge apply/verify.
+- Tower bridge apply proof: `/tmp/tower-source-contract-depth-bridge-apply-after-readback-fix-20260907T2032Z/proof/tower-source-cloud-bridge-apply-20260907T203059Z/summary.json`
+- Tower bridge verify proof: `/tmp/tower-source-contract-depth-bridge-verify-after-readback-fix-20260907T2035Z/proof/tower-source-cloud-bridge-verify-20260907T203251Z/summary.json`
 - Signed-in product proof screenshots or DOM JSON and aVa proof transcript: to be filled after product proof.
 
 ## Known Gaps
 
-Tower managed-services bridge apply/verify and live signed-in product proof remain open. Values are candidate opportunities only and must not be narrated as realized savings.
+Live signed-in product proof remains open. Values are candidate opportunities only and must not be narrated as realized savings.
