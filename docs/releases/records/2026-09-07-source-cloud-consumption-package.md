@@ -48,13 +48,13 @@ The loader normalizes source-package `governance_action` rows into the canonical
 
 Layer 4 now adds cloud-specific consumption cube views and extends the existing sourcing opportunity cube to include governed optimization-spine rows. The added verify mode reconciles the Source page substrate, opportunity cube, and cloud usage/commitment/resource/tag/AP views against the package's expected contract, opportunity, and telemetry counts.
 
-The Layer 4 cube migration explicitly rebuilds the derived sourcing opportunity view and its dependent context-coverage view before recreating them. This handles deployed databases whose prior view column order cannot be reshaped in place by `CREATE OR REPLACE VIEW`, while preserving the same tenant-scoped projection contract after the rebuild.
+The Layer 4 cube migration preserves the existing derived sourcing opportunity view column contract and appends the new governed optimization-spine rows in place. This avoids dropping downstream product projections while still extending the tenant-scoped cube for cloud-consumption opportunities.
 
 ## QA / Validation
 
 - `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --proof-dir=/tmp/source-cloud-consumption-plan-local` passed with quality gate `PASS`.
 - `npm test -- scripts/source/__tests__/load-cloud-consumption-package.test.ts --runInBand` passed using the existing local dependency tree. Jest emitted pre-existing duplicate manual mock warnings.
-- Azure schema apply initially stopped before recording the Layer 4 migration because the existing deployed view could not be reshaped in place; this amendment rebuilds that derived view and requires a rerun of schema apply plus Layer 4 verify.
+- Azure schema apply initially stopped before recording the Layer 4 migration because the deployed opportunity view has downstream dependencies. The migration now avoids dependency churn by preserving the existing view column order and replacing the view in place; schema apply and Layer 4 verify must be rerun in Azure.
 
 ## Rollout Plan
 
