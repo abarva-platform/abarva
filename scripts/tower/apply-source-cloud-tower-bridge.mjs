@@ -496,7 +496,10 @@ async function loadOpportunities(client, args, sourceFiles) {
        c.actual_annual_spend,
        c.annual_value AS annual_contract_value,
        c.end_date AS expiration_date,
-       c.renewal_notice_date AS notice_deadline,
+       CASE
+         WHEN c.end_date IS NULL OR c.notice_period_days IS NULL THEN NULL
+         ELSE c.end_date - c.notice_period_days::int
+       END AS notice_deadline,
        c.auto_renew,
        c.benchmarking_clause AS benchmark_rights,
        c.exit_rights_summary AS termination_rights

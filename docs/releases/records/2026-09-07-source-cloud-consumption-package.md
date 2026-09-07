@@ -60,6 +60,8 @@ The bridge now derives `snapshot_id` from the active Tower projection and cube m
 
 The bridge now reads the contract vendor fallback from the Source contract read-model's vendor reference projection instead of a non-existent legacy vendor identifier column. This keeps the join aligned with the Source contract read-model schema and still resolves display names through the canonical vendor table before falling back to the source identifier.
 
+The bridge now derives renewal notice deadlines from the Source contract read-model's `end_date` and `notice_period_days` fields instead of expecting a non-existent renewal notice column. This keeps Tower deadline context aligned with the Source consumption projection.
+
 ## QA / Validation
 
 - `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --proof-dir=/tmp/source-cloud-consumption-plan-local` passed with quality gate `PASS`.
@@ -67,7 +69,7 @@ The bridge now reads the contract vendor fallback from the Source contract read-
 - `npm test -- scripts/tower/__tests__/apply-source-cloud-tower-bridge.test.ts --runInBand` verifies the Source-to-Tower bridge plan shape, explicit write gate, active-assessment binding, Source cube dependencies, and Tower cube output.
 - `node scripts/tower/apply-source-cloud-tower-bridge.mjs --mode=plan --proof-dir=/tmp/tower-source-cloud-bridge-plan-snapshot-fix` passed after the Tower snapshot binding repair with quality gate `PASS`.
 - `node scripts/tower/apply-source-cloud-tower-bridge.mjs --mode=plan --proof-dir=/tmp/tower-source-cloud-bridge-plan-contract-vendor-fix` passed after the contract vendor-fallback schema repair with quality gate `PASS`.
-- `npm test -- scripts/tower/__tests__/apply-source-cloud-tower-bridge.test.ts --runInBand` passed after adding a regression assertion that the bridge does not depend on `source.contract_360.vendor_id`.
+- `npm test -- scripts/tower/__tests__/apply-source-cloud-tower-bridge.test.ts --runInBand` passed after adding regression assertions that the bridge does not depend on non-existent `source.contract_360.vendor_id` or renewal notice columns.
 - Azure schema apply initially stopped before recording the Layer 4 migration because the deployed opportunity view has downstream dependencies and an established column order. The migration now avoids dependency churn by preserving the existing view column order and replacing the view in place; schema apply passed in Azure. Layer 4 apply and verify must be rerun in Azure.
 
 ## Rollout Plan

@@ -41,7 +41,9 @@ describe("Source cloud to Tower bridge", () => {
     expect(script).toContain("tower_evidence_cube");
     expect(script).toContain("row_key LIKE 'source_cloud:%'");
     expect(script).toContain("COALESCE(v.legal_name, c.vendor_ref, o.vendor_id) AS vendor_name");
+    expect(script).toContain("ELSE c.end_date - c.notice_period_days::int");
     expect(script).not.toContain("c.vendor_id");
+    expect(script).not.toContain("c.renewal_notice_date");
     expect(script).not.toContain("projection_entry_source_record_ref");
   });
 });
