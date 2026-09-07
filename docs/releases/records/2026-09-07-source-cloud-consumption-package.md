@@ -41,6 +41,10 @@ Layer 4: no product surface cutover is included in this release. Source, Tower, 
 - `scripts/source/__tests__/load-cloud-consumption-package.test.ts`
 - `package.json` Source cloud-consumption operator scripts
 
+## Follow-Up Amendment
+
+The loader normalizes source-package `governance_action` rows into the canonical `control_action` opportunity value type while preserving the source taxonomy in the opportunity payload. This keeps non-monetary control blockers out of realized-savings semantics and allows Layer 3 reconciliation to load the package without widening product claims.
+
 ## QA / Validation
 
 - `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --proof-dir=/tmp/source-cloud-consumption-plan-local` passed with quality gate `PASS`.

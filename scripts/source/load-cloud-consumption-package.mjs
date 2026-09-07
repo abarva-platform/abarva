@@ -272,6 +272,11 @@ function requiredNumber(row, key) {
   return parsed;
 }
 
+function canonicalOpportunityValueType(row) {
+  const sourceType = value(row, "opportunity_type");
+  return sourceType === "governance_action" ? "control_action" : sourceType;
+}
+
 function boolValue(row, key) {
   const raw = value(row, key).trim().toLowerCase();
   if (!raw) return null;
@@ -1274,13 +1279,19 @@ async function upsertOptimizationSpine(client, args, files) {
         opportunityId,
         value(opportunity, "contract_id"),
         value(opportunity, "vendor_ref"),
-        value(opportunity, "opportunity_type"),
+        canonicalOpportunityValueType(opportunity),
         amount,
         numberValue(opportunity, "confidence") ?? 0.8,
         value(contract, "business_owner"),
         value(opportunity, "recommended_action"),
         value(opportunity, "title"),
-        JSON.stringify({ ...opportunity, finance_confirmation_state: "not_confirmed", synthetic_policy: SYNTHETIC_POLICY }),
+        JSON.stringify({
+          ...opportunity,
+          source_opportunity_type: value(opportunity, "opportunity_type"),
+          canonical_value_type: canonicalOpportunityValueType(opportunity),
+          finance_confirmation_state: "not_confirmed",
+          synthetic_policy: SYNTHETIC_POLICY,
+        }),
       ],
     );
     await client.query(
