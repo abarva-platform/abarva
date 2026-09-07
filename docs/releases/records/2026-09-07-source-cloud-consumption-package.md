@@ -48,14 +48,17 @@ The loader normalizes source-package `governance_action` rows into the canonical
 
 Layer 4 now adds cloud-specific consumption cube views and extends the existing sourcing opportunity cube to include governed optimization-spine rows. The added verify mode reconciles the Source page substrate, opportunity cube, and cloud usage/commitment/resource/tag/AP views against the package's expected contract, opportunity, and telemetry counts.
 
+The Layer 4 cube migration explicitly rebuilds the derived sourcing opportunity view and its dependent context-coverage view before recreating them. This handles deployed databases whose prior view column order cannot be reshaped in place by `CREATE OR REPLACE VIEW`, while preserving the same tenant-scoped projection contract after the rebuild.
+
 ## QA / Validation
 
 - `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --proof-dir=/tmp/source-cloud-consumption-plan-local` passed with quality gate `PASS`.
 - `npm test -- scripts/source/__tests__/load-cloud-consumption-package.test.ts --runInBand` passed using the existing local dependency tree. Jest emitted pre-existing duplicate manual mock warnings.
+- Azure schema apply initially stopped before recording the Layer 4 migration because the existing deployed view could not be reshaped in place; this amendment rebuilds that derived view and requires a rerun of schema apply plus Layer 4 verify.
 
 ## Rollout Plan
 
-Merge through PR, let the repo-owned Azure Container Apps deploy workflow publish the new image, then run the private ACA operator job in order: schema apply, Layer 2 apply, Layer 3 apply, and Layer 2/3 verify. Layer 4 projection and product proof are intentionally separate follow-up gates.
+Merge through PR, let the repo-owned Azure Container Apps deploy workflow publish the new image, then run the private ACA operator job in order: schema apply, Layer 2 apply, Layer 3 apply, Layer 2/3 verify, and Layer 4 verify. Product proof remains a separate follow-up gate.
 
 ## Deployment Authority
 
@@ -75,9 +78,9 @@ Product behavior can roll back by deploying the prior web image because this rel
 
 - PR URL
 - ACA deploy workflow run
-- Operator job output folders for schema apply, Layer 2 apply, Layer 3 apply, and Layer 2/3 verify
+- Operator job output folders for schema apply, Layer 2 apply, Layer 3 apply, Layer 2/3 verify, and Layer 4 verify
 - Proof-bundle `summary.json` files with expected vs. readback row counts
 
 ## Known Gaps
 
-Layer 4 Source/Tower projections, aVa retrieval proof, and signed-in product screenshots are not included here.
+Tower projection refresh, aVa retrieval proof, and signed-in product screenshots are not included here.
