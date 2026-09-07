@@ -62,6 +62,7 @@ Runtime validation required after deploy:
 - `pass` — Document-evidence ACA apply proof with 6 `doc.file`, 12 `doc.page`, 8 `doc.span`, and 8 `doc.extraction` rows for the new contract.
 - `pass` — Layer 4 ACA apply and verify proof: 1 contract row, 1 financial exposure row, 1 operational performance row, 5 app-scope rows, 12 spend rows, 12 SLA rows, 3 opportunity rows, 3 action candidates, 3 claim cards, 5 storyline rows, and 3 aVa grounding rows, with `$99K` unclaimed credit and `$490.5K` total candidate opportunity amount.
 - `pass` — local Tower bridge plan for the managed-services package proves the package will project 3 opportunities into 15 Tower projection entries, 3 rows per Tower lens, and 6 cube slices before any Azure write.
+- `pass` — Tower bridge readback repair keeps the same expected evidence depth and reconciles ticket volume rows by their physical `ticket_volume:` source-record prefix plus document files by contract and package dataset metadata.
 - Contract API proof showing non-empty evidence facets for the new contract.
 - Signed-in product proof for Source 360, Contract 360, Optimize, and aVa grounded response.
 
