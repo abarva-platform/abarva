@@ -58,12 +58,16 @@ The Tower bridge job projects the verified Source cloud-consumption opportunitie
 
 The bridge now derives `snapshot_id` from the active Tower projection and cube manifests instead of requiring the active-assessment helper to expose it directly. The job fails closed if active projection and cube manifests do not agree on a single snapshot.
 
+The bridge now reads the contract vendor fallback from the Source contract read-model's vendor reference projection instead of a non-existent legacy vendor identifier column. This keeps the join aligned with the Source contract read-model schema and still resolves display names through the canonical vendor table before falling back to the source identifier.
+
 ## QA / Validation
 
 - `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --proof-dir=/tmp/source-cloud-consumption-plan-local` passed with quality gate `PASS`.
 - `npm test -- scripts/source/__tests__/load-cloud-consumption-package.test.ts --runInBand` passed using the existing local dependency tree. Jest emitted pre-existing duplicate manual mock warnings.
 - `npm test -- scripts/tower/__tests__/apply-source-cloud-tower-bridge.test.ts --runInBand` verifies the Source-to-Tower bridge plan shape, explicit write gate, active-assessment binding, Source cube dependencies, and Tower cube output.
 - `node scripts/tower/apply-source-cloud-tower-bridge.mjs --mode=plan --proof-dir=/tmp/tower-source-cloud-bridge-plan-snapshot-fix` passed after the Tower snapshot binding repair with quality gate `PASS`.
+- `node scripts/tower/apply-source-cloud-tower-bridge.mjs --mode=plan --proof-dir=/tmp/tower-source-cloud-bridge-plan-contract-vendor-fix` passed after the contract vendor-fallback schema repair with quality gate `PASS`.
+- `npm test -- scripts/tower/__tests__/apply-source-cloud-tower-bridge.test.ts --runInBand` passed after adding a regression assertion that the bridge does not depend on `source.contract_360.vendor_id`.
 - Azure schema apply initially stopped before recording the Layer 4 migration because the deployed opportunity view has downstream dependencies and an established column order. The migration now avoids dependency churn by preserving the existing view column order and replacing the view in place; schema apply passed in Azure. Layer 4 apply and verify must be rerun in Azure.
 
 ## Rollout Plan

@@ -40,6 +40,8 @@ describe("Source cloud to Tower bridge", () => {
     expect(script).toContain("tower_spend_value_cube");
     expect(script).toContain("tower_evidence_cube");
     expect(script).toContain("row_key LIKE 'source_cloud:%'");
+    expect(script).toContain("COALESCE(v.legal_name, c.vendor_ref, o.vendor_id) AS vendor_name");
+    expect(script).not.toContain("c.vendor_id");
     expect(script).not.toContain("projection_entry_source_record_ref");
   });
 });
