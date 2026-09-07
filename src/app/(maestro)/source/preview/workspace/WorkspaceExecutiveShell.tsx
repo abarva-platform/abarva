@@ -25,6 +25,7 @@ import {
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
+import type { Contract360Response } from "./live/contractDetail";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
 import type {
   SourceContractApplicationScopeRow,
@@ -285,11 +286,30 @@ export function WorkspaceExecutiveShell({
     () => source360RecoverableCreditCoverageRows(portfolio),
     [portfolio],
   );
+  // Selecting a contract not present in the preloaded portfolio slice (e.g. a
+  // row opened from Optimize's Queue/By contract views, which only summarize
+  // the top N contracts inline -- most of the 230-contract book is not in
+  // `portfolio.contracts`) used to silently fall through to the default
+  // contract below, even though `fetchContractDetail` had already loaded the
+  // right record into `logic.state.contractDetail`. `vm.c` cannot be used to
+  // find that fetched record: `buildViewModel` derives `vm.c` from the same
+  // preloaded slice, so it is also null for these contracts. Read the raw
+  // selected id off `logic.state.sel` instead, and consult the fetched detail
+  // before giving up and defaulting.
+  const selectedContractId =
+    logic.state.sel.kind === "contract" ? logic.state.sel.id : null;
+  const fetchedContractDetail = selectedContractId
+    ? logic.state.contractDetail[selectedContractId]
+    : undefined;
+  const fetchedContract: SourceContract360Row | null =
+    fetchedContractDetail && typeof fetchedContractDetail === "object"
+      ? (fetchedContractDetail as Contract360Response).contract
+      : null;
   const selectedContract =
-    (vm.c?.id
-      ? portfolio.contracts.find(
-          (contract) => contract.contract_id === vm.c?.id,
-        )
+    (selectedContractId
+      ? (portfolio.contracts.find(
+          (contract) => contract.contract_id === selectedContractId,
+        ) ?? fetchedContract)
       : null) ??
     preferredContract(portfolio) ??
     portfolio.contracts[0] ??

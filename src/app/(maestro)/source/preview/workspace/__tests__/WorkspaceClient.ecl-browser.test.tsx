@@ -121,6 +121,7 @@ import {
   loadSourceWorkspacePortfolio,
   type SourceWorkspacePortfolioData,
 } from "../live/portfolioAdapter";
+import type { SourceContract360Row } from "@/lib/source/data-model/types";
 
 const ORIGINAL_PROVIDER = process.env.SOURCE_WORKSPACE_PROVIDER;
 const ORIGINAL_PROJECTION_DIR = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR;
@@ -952,5 +953,156 @@ describe("Source workspace ECL browser-surface proof", () => {
     expectMeasuredRechartsCard(
       screen.getByLabelText("Contract performance trend chart"),
     );
+  });
+
+  it("opens the clicked contract's own Contract 360, not a preloaded default, when the row is outside the preloaded portfolio slice", async () => {
+    // Regression test for a routing bug: Optimize's Queue/By contract rows
+    // are frequently for contracts that are only summarized (not part of
+    // `portfolio.contracts`, which just holds a preloaded top-N slice).
+    // Clicking such a row correctly calls `fetchContractDetail`, which fetches
+    // the right record, but the render previously ignored that fetched detail
+    // and silently fell back to a default contract already in the preloaded
+    // slice -- showing the wrong contract's Contract 360 page.
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const offSliceContractId = "MER-CTR-OFF-SLICE-001";
+
+    expect(
+      portfolio.contracts.some(
+        (contract) => contract.contract_id === offSliceContractId,
+      ),
+    ).toBe(false);
+
+    const actionCandidate: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number] = {
+      tenant_key: "meridian-health",
+      action_candidate_id: "OPT-OFF-SLICE-001",
+      opportunity_id: "OPT-OFF-SLICE-001",
+      contract_id: offSliceContractId,
+      vendor_ref: "MER-VEN-OFF-SLICE",
+      vendor_name: "Off-Slice Vendor Group",
+      title: "Convert recurring change orders into base catalog",
+      action_type: "avoid_future_spend",
+      opportunity_type: "avoid_future_spend",
+      finding_summary: "Loaded action row for a contract outside the preloaded slice.",
+      deterministic_basis: "Action row cites loaded contract and spend rows.",
+      candidate_amount_usd: 151200,
+      priority: "medium",
+      readiness_state: "finance_confirmation_required",
+      evidence_state: "loaded",
+      authority_state: "not_confirmed",
+      finance_confirmation_state: "not_confirmed",
+      next_action: "Review evidence trail",
+      accountable_role: "procurement_owner",
+      decision_due_date: "2027-03-31",
+      coverage_state: "partial",
+      blocker_if_missing:
+        "Never present this candidate as realized savings until finance confirms it.",
+      citation_basis_json: { source: "unit-fixture" },
+      load_run_id: "unit-proof",
+    };
+    const offSliceContract: SourceContract360Row = {
+      ...portfolio.contracts[0],
+      contract_id: offSliceContractId,
+      vendor_ref: "MER-VEN-OFF-SLICE",
+      vendor_name: "Off-Slice Vendor Group",
+      contract_name: "Off-Slice Managed Services SOW",
+      annual_value: 7600000,
+      resolved_annual_value: 7600000,
+      total_committed_value: 7400000,
+      resolved_total_committed_value: 7400000,
+      end_date: "2026-09-30",
+      auto_renew: true,
+      vendor_category: "Managed Services",
+    };
+    const routedPortfolio: SourceWorkspacePortfolioData = {
+      ...portfolio,
+      impact: {
+        ...portfolio.impact,
+        actionCandidates: [actionCandidate],
+      },
+    };
+
+    (global.fetch as jest.Mock).mockImplementation(
+      (input: RequestInfo | URL) => {
+        if (String(input).includes("/api/source/workspace/contract/")) {
+          const requestedContractId =
+            String(input)
+              .split("/api/source/workspace/contract/")[1]
+              ?.split("?")[0] ?? offSliceContractId;
+          const requestedContract =
+            requestedContractId === offSliceContractId
+              ? offSliceContract
+              : (portfolio.contracts.find(
+                  (contract) => contract.contract_id === requestedContractId,
+                ) ?? portfolio.contracts[0]);
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                contract: requestedContract,
+                financialExposure: null,
+                operationalPerformance: null,
+                initiativeDependencies: [],
+                scopeTiers: { explicit: [], inferred: [], unresolved: [] },
+                towerObservations: [],
+                towerValueClaims: [],
+                hasTowerOverlay: false,
+                docExtractions: [],
+                optimizationEvidence: null,
+                optimizationOpportunitySet: null,
+                evidenceOverview: null,
+                evidenceScope: [],
+                evidencePricing: [],
+                evidencePerformance: null,
+                performancePeriods: [],
+                spendMonths: [],
+              }),
+          } as Response);
+        }
+        return new Promise<Response>(() => undefined);
+      },
+    );
+
+    render(
+      <WorkspaceClient
+        portfolio={routedPortfolio}
+        tenantName="Meridian Health"
+        sourceClientKey="meridian-health"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("navigation", {
+          name: "Source workspace navigation",
+        }),
+      ).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
+    fireEvent.click(screen.getByRole("tab", { name: "By contract" }));
+
+    const offSliceRow = screen.getByRole("button", {
+      name: /Off-Slice Vendor Group/,
+    });
+    expect(offSliceRow.textContent).toContain(offSliceContractId);
+    fireEvent.click(offSliceRow);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: /Off-Slice Vendor Group/ }),
+      ).toBeTruthy();
+    });
+    expect(
+      screen.getAllByText(new RegExp(offSliceContractId)).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("heading", { name: "Helix Shared Services Group" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Epic Systems Corporation" }),
+    ).toBeNull();
   });
 });
