@@ -667,6 +667,8 @@
     "source:contract-depth-package:layer23:verify-job": "SOURCE_CONTRACT_DEPTH_PACKAGE_EMIT_PROOF_BUNDLE=true npx tsx scripts/source/load-contract-depth-package.ts --mode=verify",
     "source:contract-depth-package:layer4:apply-job": "SOURCE_CONTRACT_DEPTH_PACKAGE_L4_APPLY_APPROVED=true SOURCE_CONTRACT_DEPTH_PACKAGE_L4_EMIT_PROOF_BUNDLE=true npx tsx scripts/source/project-contract-depth-package-layer4.ts --mode=apply",
     "source:contract-depth-package:layer4:verify-job": "SOURCE_CONTRACT_DEPTH_PACKAGE_L4_EMIT_PROOF_BUNDLE=true npx tsx scripts/source/project-contract-depth-package-layer4.ts --mode=verify",
+    "source:contract-depth-package:doc-evidence:plan": "node scripts/source/load-contract-depth-document-evidence.mjs",
+    "source:contract-depth-package:doc-evidence:apply-job": "node scripts/source/load-contract-depth-document-evidence.mjs --apply",
     "source:cloud-consumption-package:schema:apply-job": "npx tsx src/scripts/run-migrations.ts --ci",
     "source:cloud-consumption-package:plan": "node scripts/source/load-cloud-consumption-package.mjs --mode=plan",
     "source:cloud-consumption-package:layer2:apply-job": "SOURCE_CLOUD_CONSUMPTION_PACKAGE_APPLY_APPROVED=true SOURCE_CLOUD_CONSUMPTION_PACKAGE_EMIT_PROOF_BUNDLE=true node scripts/source/load-cloud-consumption-package.mjs --mode=apply-layer2",
