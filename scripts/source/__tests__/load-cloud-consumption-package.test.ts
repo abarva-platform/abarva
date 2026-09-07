@@ -47,6 +47,10 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("source_opportunity_type");
     expect(loader).toContain("canonical_value_type");
     expect(loader).toContain("Finance confirmation and owner approval are required before realized value can be claimed.");
+    expect(loader).toContain('"apply-layer4"');
+    expect(loader).toContain("source.l4_cube_active_load_run_overlay");
+    expect(loader).toContain("'cloud_consumption_package'");
+    expect(loader).toContain("source_cloud_consumption_package_layer4_applied");
     expect(loader).toContain("source_cloud_consumption_package_layer23_verified");
     expect(loader).toContain("source_cloud_consumption_package_layer4_verified");
     expect(loader).toContain("consumption.sourcing_cloud_usage_monthly_v1");
