@@ -50,11 +50,13 @@ Layer 4 now adds cloud-specific consumption cube views and extends the existing 
 
 The Layer 4 cube migration preserves the existing derived sourcing opportunity view column contract and appends the new governed optimization-spine rows in place. This avoids dropping downstream product projections while still extending the tenant-scoped cube for cloud-consumption opportunities.
 
+The compatibility repair also preserves the existing `timing_window` and `quality_state` column positions in `consumption.sourcing_opportunity_v1`, so the migration can replace the shared view in place against an already-deployed database without renaming columns that Source and Tower consumers depend on.
+
 ## QA / Validation
 
 - `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --proof-dir=/tmp/source-cloud-consumption-plan-local` passed with quality gate `PASS`.
 - `npm test -- scripts/source/__tests__/load-cloud-consumption-package.test.ts --runInBand` passed using the existing local dependency tree. Jest emitted pre-existing duplicate manual mock warnings.
-- Azure schema apply initially stopped before recording the Layer 4 migration because the deployed opportunity view has downstream dependencies. The migration now avoids dependency churn by preserving the existing view column order and replacing the view in place; schema apply and Layer 4 verify must be rerun in Azure.
+- Azure schema apply initially stopped before recording the Layer 4 migration because the deployed opportunity view has downstream dependencies and an established column order. The migration now avoids dependency churn by preserving the existing view column order and replacing the view in place; schema apply and Layer 4 verify must be rerun in Azure.
 
 ## Rollout Plan
 
