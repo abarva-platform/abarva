@@ -37,6 +37,7 @@ Layer 4: no product surface cutover is included in this release. Source, Tower, 
 - `datasets/source/cloud-consumption/meridian-cloud-consumption-depth-v1-20260907/`
 - `docs/governance/dataset-manifests/meridian-cloud-consumption-depth-v1-20260907.json`
 - `supabase/migrations/20260907143000_source_cloud_consumption_package.sql`
+- `supabase/migrations/20260907144500_source_cloud_consumption_layer4_cubes.sql`
 - `scripts/source/load-cloud-consumption-package.mjs`
 - `scripts/source/__tests__/load-cloud-consumption-package.test.ts`
 - `package.json` Source cloud-consumption operator scripts
@@ -44,6 +45,8 @@ Layer 4: no product surface cutover is included in this release. Source, Tower, 
 ## Follow-Up Amendment
 
 The loader normalizes source-package `governance_action` rows into the canonical `control_action` opportunity value type while preserving the source taxonomy in the opportunity payload. This keeps non-monetary control blockers out of realized-savings semantics and allows Layer 3 reconciliation to load the package without widening product claims.
+
+Layer 4 now adds cloud-specific consumption cube views and extends the existing sourcing opportunity cube to include governed optimization-spine rows. The added verify mode reconciles the Source page substrate, opportunity cube, and cloud usage/commitment/resource/tag/AP views against the package's expected contract, opportunity, and telemetry counts.
 
 ## QA / Validation
 

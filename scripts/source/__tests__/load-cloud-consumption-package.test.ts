@@ -25,6 +25,11 @@ describe("Source cloud consumption package loader", () => {
     expect(summary.layer3_expected_readback.source_cloud_resource_inventory).toBe(84);
     expect(summary.layer3_expected_readback.source_optimization_opportunity).toBe(8);
     expect(summary.layer3_expected_readback.source_canonical_fact_assertion).toBe(372);
+    expect(summary.layer4_expected_readback.source_contract_360_cloud_contracts).toBe(2);
+    expect(summary.layer4_expected_readback.source_vendor_contract_portfolio_cloud_vendors).toBe(2);
+    expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_cloud_rows).toBe(8);
+    expect(summary.layer4_expected_readback.consumption_sourcing_cloud_usage_monthly_v1).toBe(192);
+    expect(summary.layer4_expected_readback.consumption_sourcing_cloud_resource_inventory_v1).toBe(84);
   });
 
   it("keeps cloud control actions out of realized savings semantics", () => {
@@ -43,5 +48,7 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("canonical_value_type");
     expect(loader).toContain("Finance confirmation and owner approval are required before realized value can be claimed.");
     expect(loader).toContain("source_cloud_consumption_package_layer23_verified");
+    expect(loader).toContain("source_cloud_consumption_package_layer4_verified");
+    expect(loader).toContain("consumption.sourcing_cloud_usage_monthly_v1");
   });
 });
