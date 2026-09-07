@@ -1,0 +1,9 @@
+Check,Row count,Pass,Plain-English result
+Contracts,1,PASS,One managed-services contract has a stable contract ID and vendor reference
+Documents,6,PASS,Six synthetic evidence documents have page text and manifest rows
+Document pages,12,PASS,Each evidence document has two citable page-text rows
+Monthly spend,12,PASS,Twelve invoices reconcile to USD 12.546M actual annual spend and USD 666K variance to committed base
+SLA periods,12,PASS,Five breached periods calculate USD 99K earned but unclaimed service credits
+Ticket volumetrics,48,PASS,Monthly SLA periods tie to P1-P4 ticket volume and backlog evidence
+Change orders,5,PASS,Three recurring rows total USD 900K annualized exposure; two one-time rows are excluded from recurring avoidable-cost math
+Optimize candidates,3,PASS,USD 490.5K candidate value is evidence-backed but not finance-confirmed realized value

@@ -81,4 +81,17 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain('if (args.mode === "apply-layer3") {\n      requireApplyApproval(args);');
     expect(loader).toContain('event: "source_contract_depth_package_layer23_verified"');
   });
+
+  it("validates the dataset version declared by each package instead of one hard-coded package", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const adapter = fs.readFileSync(
+      path.join(repoRoot, "src/lib/source/contract-depth-package/adapter.ts"),
+      "utf8",
+    );
+
+    expect(adapter).toContain("singleDeclaredValue");
+    expect(adapter).toContain("const datasetVersion = singleDeclaredValue");
+    expect(adapter).toContain("datasetVersion,");
+    expect(adapter).not.toContain("const EXPECTED_DATASET_VERSION");
+  });
 });

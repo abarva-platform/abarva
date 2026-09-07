@@ -39,8 +39,6 @@ export interface ContractDepthAdapterOutput {
   };
 }
 
-const EXPECTED_TENANT_KEY = 'meridian-health';
-const EXPECTED_DATASET_VERSION = 'meridian-contract-depth-v1-20260828';
 const SYNTHETIC_POLICY = 'synthetic_demo_only_not_client_truth';
 
 function value(row: CsvRecord, key: string): string {
@@ -58,6 +56,20 @@ function groupBy(rows: readonly CsvRecord[], key: string): Map<string, CsvRecord
 
 function unique(rows: readonly CsvRecord[], key: string): Set<string> {
   return new Set(rows.map((row) => value(row, key)).filter(Boolean));
+}
+
+function singleDeclaredValue(
+  failures: string[],
+  rows: readonly CsvRecord[],
+  key: string,
+  label: string,
+): string {
+  const values = unique(rows, key);
+  if (values.size !== 1) {
+    failures.push(`${label} must declare exactly one ${key}, found ${values.size}`);
+    return '';
+  }
+  return [...values][0] ?? '';
 }
 
 function withAdapterLineage(rows: readonly CsvRecord[], adapterName: string): CsvRecord[] {
@@ -87,13 +99,13 @@ function requireTenantAndVersion(
   failures: string[],
   rows: readonly CsvRecord[],
   label: string,
-  options: { requireDatasetVersion: boolean },
+  options: { tenantKey: string; datasetVersion: string; requireDatasetVersion: boolean },
 ): void {
   for (const row of rows) {
-    if (value(row, 'tenant_key') !== EXPECTED_TENANT_KEY) {
+    if (value(row, 'tenant_key') !== options.tenantKey) {
       failures.push(`${label} row ${value(row, 'source_row_id') || value(row, 'source_file_id') || '<missing>'} has wrong tenant_key`);
     }
-    if (options.requireDatasetVersion && value(row, 'dataset_version') !== EXPECTED_DATASET_VERSION) {
+    if (options.requireDatasetVersion && value(row, 'dataset_version') !== options.datasetVersion) {
       failures.push(`${label} row ${value(row, 'source_row_id') || value(row, 'source_file_id') || '<missing>'} has wrong dataset_version`);
     }
   }
@@ -103,6 +115,8 @@ export function adaptContractDepthPackage(
   input: ContractDepthSourceFileInput,
 ): ContractDepthAdapterOutput {
   const failures: string[] = [];
+  const tenantKey = singleDeclaredValue(failures, input.contracts, 'tenant_key', 'contracts');
+  const datasetVersion = singleDeclaredValue(failures, input.contracts, 'dataset_version', 'contracts');
   const contractIds = unique(input.contracts, 'contract_id');
   const duplicateContractCount = input.contracts.length - contractIds.size;
   if (duplicateContractCount > 0) failures.push(`${duplicateContractCount} duplicate contract IDs in contract register`);
@@ -118,18 +132,19 @@ export function adaptContractDepthPackage(
   const duplicateSourceRowCount = sourceRowIds.length - new Set(sourceRowIds).size;
   if (duplicateSourceRowCount > 0) failures.push(`${duplicateSourceRowCount} duplicate source_row_id values`);
 
-  requireTenantAndVersion(failures, input.contracts, 'contracts', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.applicationScope, 'application scope', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.monthlySpend, 'monthly spend', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.slaPerformance, 'SLA performance', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.ticketVolumetrics, 'ticket volumetrics', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.contractClauses, 'contract clauses', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.changeOrders, 'change orders', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.contractPageText, 'contract page text', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.evidenceManifest, 'evidence manifest', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.optimizationOpportunities, 'optimization opportunities', { requireDatasetVersion: true });
-  requireTenantAndVersion(failures, input.applications, 'applications', { requireDatasetVersion: false });
-  requireTenantAndVersion(failures, input.saasUsage, 'SaaS usage', { requireDatasetVersion: true });
+  const validationContext = { tenantKey, datasetVersion };
+  requireTenantAndVersion(failures, input.contracts, 'contracts', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.applicationScope, 'application scope', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.monthlySpend, 'monthly spend', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.slaPerformance, 'SLA performance', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.ticketVolumetrics, 'ticket volumetrics', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.contractClauses, 'contract clauses', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.changeOrders, 'change orders', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.contractPageText, 'contract page text', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.evidenceManifest, 'evidence manifest', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.optimizationOpportunities, 'optimization opportunities', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.applications, 'applications', { ...validationContext, requireDatasetVersion: false });
+  requireTenantAndVersion(failures, input.saasUsage, 'SaaS usage', { ...validationContext, requireDatasetVersion: true });
 
   requireKnownContracts(failures, input.applicationScope, contractIds, 'application scope');
   requireKnownContracts(failures, input.monthlySpend, contractIds, 'monthly spend');
@@ -240,8 +255,8 @@ export function adaptContractDepthPackage(
     ...output,
     qualityGate: {
       status: failures.length ? 'FAIL' : 'PASS',
-      tenantKey: EXPECTED_TENANT_KEY,
-      datasetVersion: EXPECTED_DATASET_VERSION,
+      tenantKey,
+      datasetVersion,
       failures,
       rowCounts: {
         contractRegisterAdapter: output.contractRegisterAdapter.length,
