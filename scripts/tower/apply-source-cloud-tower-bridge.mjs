@@ -390,7 +390,7 @@ async function setTenant(client, tenantKey) {
 
 async function readActiveTowerContext(client, tenantKey) {
   const active = await client.query(
-    `SELECT tenant_key, assessment_id, snapshot_id, projection_version
+    `SELECT tenant_key, assessment_id, projection_version
        FROM serving.tower_active_assessment_keys()
       WHERE tenant_key = $1
       ORDER BY projection_version DESC
@@ -413,6 +413,10 @@ async function readActiveTowerContext(client, tenantKey) {
   for (const key of Object.values(PROJECTION_KEYS)) {
     if (!byKey[key]) throw new Error(`Missing active Tower projection manifest ${key}`);
   }
+  const projectionSnapshotIds = new Set(manifests.rows.map((manifest) => String(manifest.snapshot_id)));
+  if (projectionSnapshotIds.size !== 1) {
+    throw new Error(`Active Tower projection manifests have inconsistent snapshot ids for ${tenantKey}`);
+  }
 
   const cubeManifests = await client.query(
     `SELECT cube_key, id, snapshot_id
@@ -427,12 +431,16 @@ async function readActiveTowerContext(client, tenantKey) {
   for (const key of ["tower_spend_value_cube", "tower_evidence_cube"]) {
     if (!cubeByKey[key]) throw new Error(`Missing active Tower cube manifest ${key}`);
   }
+  const cubeSnapshotIds = new Set(cubeManifests.rows.map((manifest) => String(manifest.snapshot_id)));
+  if (cubeSnapshotIds.size !== 1 || !cubeSnapshotIds.has([...projectionSnapshotIds][0])) {
+    throw new Error(`Active Tower cube manifests do not match projection snapshot id for ${tenantKey}`);
+  }
 
   return {
     tenantKey: row.tenant_key,
     assessmentId: row.assessment_id,
     projectionVersion: Number(row.projection_version),
-    snapshotId: String(row.snapshot_id),
+    snapshotId: [...projectionSnapshotIds][0],
     manifests: byKey,
     cubeManifests: cubeByKey,
   };

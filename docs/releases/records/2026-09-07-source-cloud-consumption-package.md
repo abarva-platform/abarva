@@ -56,11 +56,14 @@ The Layer 4 apply job now activates the package through `source.l4_cube_active_l
 
 The Tower bridge job projects the verified Source cloud-consumption opportunities into the active Tower Layer 4 product substrate as gated recommended actions, value/cost-lens rows, evidence/risk backlog rows, and Tower cube slices. It is additive and idempotent: only `source_cloud:` bridge rows are replaced, and existing Tower projection rows remain intact.
 
+The bridge now derives `snapshot_id` from the active Tower projection and cube manifests instead of requiring the active-assessment helper to expose it directly. The job fails closed if active projection and cube manifests do not agree on a single snapshot.
+
 ## QA / Validation
 
 - `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --proof-dir=/tmp/source-cloud-consumption-plan-local` passed with quality gate `PASS`.
 - `npm test -- scripts/source/__tests__/load-cloud-consumption-package.test.ts --runInBand` passed using the existing local dependency tree. Jest emitted pre-existing duplicate manual mock warnings.
 - `npm test -- scripts/tower/__tests__/apply-source-cloud-tower-bridge.test.ts --runInBand` verifies the Source-to-Tower bridge plan shape, explicit write gate, active-assessment binding, Source cube dependencies, and Tower cube output.
+- `node scripts/tower/apply-source-cloud-tower-bridge.mjs --mode=plan --proof-dir=/tmp/tower-source-cloud-bridge-plan-snapshot-fix` passed after the Tower snapshot binding repair with quality gate `PASS`.
 - Azure schema apply initially stopped before recording the Layer 4 migration because the deployed opportunity view has downstream dependencies and an established column order. The migration now avoids dependency churn by preserving the existing view column order and replacing the view in place; schema apply passed in Azure. Layer 4 apply and verify must be rerun in Azure.
 
 ## Rollout Plan
