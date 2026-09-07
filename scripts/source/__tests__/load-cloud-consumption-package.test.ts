@@ -38,6 +38,9 @@ describe("Source cloud consumption package loader", () => {
     );
 
     expect(migration).toContain("'control_action'");
+    expect(loader).toContain('sourceType === "governance_action" ? "control_action" : sourceType');
+    expect(loader).toContain("source_opportunity_type");
+    expect(loader).toContain("canonical_value_type");
     expect(loader).toContain("Finance confirmation and owner approval are required before realized value can be claimed.");
     expect(loader).toContain("source_cloud_consumption_package_layer23_verified");
   });
