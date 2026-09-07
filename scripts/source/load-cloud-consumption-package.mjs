@@ -7,7 +7,7 @@ import path from "node:path";
 loadDotenv(path.resolve(process.cwd(), ".env.local"));
 loadDotenv(path.resolve(process.cwd(), ".env"));
 
-const MODES = new Set(["plan", "apply-layer2", "apply-layer3", "verify", "verify-layer4"]);
+const MODES = new Set(["plan", "apply-layer2", "apply-layer3", "apply-layer4", "verify", "verify-layer4"]);
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_DATASET_VERSION = "meridian-cloud-consumption-depth-v1-20260907";
 const DEFAULT_PACKAGE_DIR =
@@ -1559,6 +1559,44 @@ async function layer4Readback(client, args, files) {
   return Object.fromEntries(Object.entries(result.rows[0] ?? {}).map(([key, count]) => [key, Number(count)]));
 }
 
+async function activateLayer4Overlay(client, args) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS source.l4_cube_active_load_run_overlay (
+      tenant_key TEXT NOT NULL,
+      load_run_id TEXT NOT NULL,
+      dataset_version TEXT NOT NULL,
+      input_source_version TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      overlay_role TEXT NOT NULL,
+      activated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+      PRIMARY KEY (tenant_key, load_run_id)
+    )`);
+
+  await client.query(
+    `INSERT INTO source.l4_cube_active_load_run_overlay
+       (tenant_key, load_run_id, dataset_version, input_source_version, idempotency_key, overlay_role, raw_payload)
+     VALUES ($1, $2, $3, $3, $4, 'cloud_consumption_package', $5::jsonb)
+     ON CONFLICT (tenant_key, load_run_id)
+     DO UPDATE SET dataset_version = EXCLUDED.dataset_version,
+                   input_source_version = EXCLUDED.input_source_version,
+                   idempotency_key = EXCLUDED.idempotency_key,
+                   overlay_role = EXCLUDED.overlay_role,
+                   activated_at = now(),
+                   raw_payload = EXCLUDED.raw_payload`,
+    [
+      args.tenantKey,
+      args.loadRunId,
+      args.datasetVersion,
+      args.idempotencyKey,
+      JSON.stringify({
+        projection: "source-cloud-consumption-layer4-overlay",
+        synthetic_policy: SYNTHETIC_POLICY,
+      }),
+    ],
+  );
+}
+
 async function setTenant(client, tenantKey) {
   await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
 }
@@ -1629,6 +1667,18 @@ async function main() {
       summary.event = "source_cloud_consumption_package_layer23_verified";
       summary.layer2_readback = layer2;
       summary.layer3_readback = layer3;
+    } else if (args.mode === "apply-layer4") {
+      requireApplyApproval(args);
+      const layer3 = await layer3Readback(client, args, sourceFiles, rows);
+      assertCounts(expectedL3, layer3, "Layer 3");
+      await client.query("BEGIN");
+      await activateLayer4Overlay(client, args);
+      const layer4 = await layer4Readback(client, args, sourceFiles);
+      assertCounts(expectedL4, layer4, "Layer 4");
+      await client.query("COMMIT");
+      summary.event = "source_cloud_consumption_package_layer4_applied";
+      summary.layer3_readback = layer3;
+      summary.layer4_readback = layer4;
     } else if (args.mode === "verify-layer4") {
       const layer4 = await layer4Readback(client, args, sourceFiles);
       assertCounts(expectedL4, layer4, "Layer 4");

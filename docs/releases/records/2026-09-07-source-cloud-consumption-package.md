@@ -22,7 +22,7 @@ Layer 2: adds package-run and adapter-row tables for cloud-consumption source ex
 
 Layer 3: adds canonical cloud evidence tables and a loader that writes contract, vendor, spend, scope, term, opportunity, and deterministic fact assertions from the package.
 
-Layer 4: no product surface cutover is included in this release. Source, Tower, and aVa must wait for separate projection and signed-in proof before relying on the new rows.
+Layer 4: adds tenant-scoped cloud-consumption cube projections and a guarded overlay activation job so Source 360 can read the supplemental contract rows without replacing the main contract register run. Tower and aVa still require separate refresh/proof before relying on the new rows.
 
 ## Client Applicability
 
@@ -52,15 +52,17 @@ The Layer 4 cube migration preserves the existing derived sourcing opportunity v
 
 The compatibility repair also preserves the existing `timing_window` and `quality_state` column positions in `consumption.sourcing_opportunity_v1`, so the migration can replace the shared view in place against an already-deployed database without renaming columns that Source and Tower consumers depend on.
 
+The Layer 4 apply job now activates the package through `source.l4_cube_active_load_run_overlay` after Layer 3 reconciliation passes. This keeps supplemental rows visible to overlay-aware product read models while preserving the active base-register load run.
+
 ## QA / Validation
 
 - `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --proof-dir=/tmp/source-cloud-consumption-plan-local` passed with quality gate `PASS`.
 - `npm test -- scripts/source/__tests__/load-cloud-consumption-package.test.ts --runInBand` passed using the existing local dependency tree. Jest emitted pre-existing duplicate manual mock warnings.
-- Azure schema apply initially stopped before recording the Layer 4 migration because the deployed opportunity view has downstream dependencies and an established column order. The migration now avoids dependency churn by preserving the existing view column order and replacing the view in place; schema apply and Layer 4 verify must be rerun in Azure.
+- Azure schema apply initially stopped before recording the Layer 4 migration because the deployed opportunity view has downstream dependencies and an established column order. The migration now avoids dependency churn by preserving the existing view column order and replacing the view in place; schema apply passed in Azure. Layer 4 apply and verify must be rerun in Azure.
 
 ## Rollout Plan
 
-Merge through PR, let the repo-owned Azure Container Apps deploy workflow publish the new image, then run the private ACA operator job in order: schema apply, Layer 2 apply, Layer 3 apply, Layer 2/3 verify, and Layer 4 verify. Product proof remains a separate follow-up gate.
+Merge through PR, let the repo-owned Azure Container Apps deploy workflow publish the new image, then run the private ACA operator job in order: schema apply, Layer 2 apply, Layer 3 apply, Layer 2/3 verify, Layer 4 apply, and Layer 4 verify. Product proof remains a separate follow-up gate.
 
 ## Deployment Authority
 
