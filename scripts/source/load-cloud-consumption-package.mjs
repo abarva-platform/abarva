@@ -7,7 +7,7 @@ import path from "node:path";
 loadDotenv(path.resolve(process.cwd(), ".env.local"));
 loadDotenv(path.resolve(process.cwd(), ".env"));
 
-const MODES = new Set(["plan", "apply-layer2", "apply-layer3", "verify"]);
+const MODES = new Set(["plan", "apply-layer2", "apply-layer3", "verify", "verify-layer4"]);
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_DATASET_VERSION = "meridian-cloud-consumption-depth-v1-20260907";
 const DEFAULT_PACKAGE_DIR =
@@ -1422,6 +1422,28 @@ function expectedLayer3(files, rows) {
   };
 }
 
+function expectedLayer4(files) {
+  const opportunities = files["optimization_opportunities.csv"];
+  return {
+    source_contract_360_cloud_contracts: files["cloud_contract_register.csv"].length,
+    source_contract_360_actual_spend_ready: files["cloud_contract_register.csv"].length,
+    source_vendor_contract_portfolio_cloud_vendors: uniqueRows(files["cloud_contract_register.csv"], "vendor_ref").length,
+    consumption_sourcing_spend_monthly_v1_cloud_rows: files["monthly_spend.csv"].length,
+    consumption_sourcing_opportunity_v1_cloud_rows: opportunities.length,
+    consumption_sourcing_opportunity_v1_finance_required_rows: opportunities.filter(
+      (row) => canonicalOpportunityValueType(row) !== "control_action" && requiredNumber(row, "annual_value_usd") > 0,
+    ).length,
+    consumption_sourcing_opportunity_v1_control_required_rows: opportunities.filter(
+      (row) => canonicalOpportunityValueType(row) === "control_action",
+    ).length,
+    consumption_sourcing_cloud_usage_monthly_v1: files["cloud_service_usage_monthly.csv"].length,
+    consumption_sourcing_cloud_commitment_coverage_v1: files["cloud_commitment_coverage_monthly.csv"].length,
+    consumption_sourcing_cloud_resource_inventory_v1: files["cloud_resource_inventory.csv"].length,
+    consumption_sourcing_cloud_tag_quality_v1: files["cloud_tag_quality.csv"].length,
+    consumption_sourcing_cloud_ap_invoice_reconciliation_v1: files["cloud_ap_invoice_reconciliation.csv"].length,
+  };
+}
+
 async function applyLayer3(client, args, files, rows, expectedL2) {
   await assertTables(client, [...REQUIRED_LAYER2_TABLES, ...REQUIRED_LAYER3_TABLES]);
   assertCounts(expectedL2, await layer2Readback(client, args), "Layer 2");
@@ -1476,6 +1498,67 @@ async function layer3Readback(client, args, files, rows) {
   return Object.fromEntries(Object.entries(result.rows[0] ?? {}).map(([key, count]) => [key, Number(count)]));
 }
 
+async function layer4Readback(client, args, files) {
+  const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
+  const opportunityIds = files["optimization_opportunities.csv"].map((row) => value(row, "opportunity_id"));
+  const result = await client.query(
+    `SELECT
+       (SELECT count(*)::text
+          FROM source.contract_360
+         WHERE tenant_key = $1
+           AND contract_id = ANY($2::text[])) AS source_contract_360_cloud_contracts,
+       (SELECT count(*)::text
+          FROM source.contract_360
+         WHERE tenant_key = $1
+           AND contract_id = ANY($2::text[])
+           AND actual_annual_spend IS NOT NULL) AS source_contract_360_actual_spend_ready,
+       (SELECT count(*)::text
+          FROM source.vendor_contract_portfolio
+         WHERE tenant_key = $1
+           AND contract_refs && $2::text[]) AS source_vendor_contract_portfolio_cloud_vendors,
+       (SELECT count(*)::text
+          FROM consumption.sourcing_spend_monthly_v1
+         WHERE tenant_key = $1
+           AND contract_id = ANY($2::text[])) AS consumption_sourcing_spend_monthly_v1_cloud_rows,
+       (SELECT count(*)::text
+          FROM consumption.sourcing_opportunity_v1
+         WHERE tenant_key = $1
+           AND opportunity_id = ANY($3::text[])) AS consumption_sourcing_opportunity_v1_cloud_rows,
+       (SELECT count(*)::text
+          FROM consumption.sourcing_opportunity_v1
+         WHERE tenant_key = $1
+           AND opportunity_id = ANY($3::text[])
+           AND readiness_state = 'finance_confirmation_required') AS consumption_sourcing_opportunity_v1_finance_required_rows,
+       (SELECT count(*)::text
+          FROM consumption.sourcing_opportunity_v1
+         WHERE tenant_key = $1
+           AND opportunity_id = ANY($3::text[])
+           AND readiness_state = 'control_required') AS consumption_sourcing_opportunity_v1_control_required_rows,
+       (SELECT count(*)::text
+          FROM consumption.sourcing_cloud_usage_monthly_v1
+         WHERE tenant_key = $1
+           AND contract_id = ANY($2::text[])) AS consumption_sourcing_cloud_usage_monthly_v1,
+       (SELECT count(*)::text
+          FROM consumption.sourcing_cloud_commitment_coverage_v1
+         WHERE tenant_key = $1
+           AND contract_id = ANY($2::text[])) AS consumption_sourcing_cloud_commitment_coverage_v1,
+       (SELECT count(*)::text
+          FROM consumption.sourcing_cloud_resource_inventory_v1
+         WHERE tenant_key = $1
+           AND contract_id = ANY($2::text[])) AS consumption_sourcing_cloud_resource_inventory_v1,
+       (SELECT count(*)::text
+          FROM consumption.sourcing_cloud_tag_quality_v1
+         WHERE tenant_key = $1
+           AND contract_id = ANY($2::text[])) AS consumption_sourcing_cloud_tag_quality_v1,
+       (SELECT count(*)::text
+          FROM consumption.sourcing_cloud_ap_invoice_reconciliation_v1
+         WHERE tenant_key = $1
+           AND contract_id = ANY($2::text[])) AS consumption_sourcing_cloud_ap_invoice_reconciliation_v1`,
+    [args.tenantKey, contractIds, opportunityIds],
+  );
+  return Object.fromEntries(Object.entries(result.rows[0] ?? {}).map(([key, count]) => [key, Number(count)]));
+}
+
 async function setTenant(client, tenantKey) {
   await client.query("SELECT set_config('app.tenant_key', $1, false)", [tenantKey]);
 }
@@ -1489,6 +1572,7 @@ async function main() {
   const qualityGate = qualifyPackage(args, sourceFiles, docs);
   const expectedL2 = adapterCountByName(rows);
   const expectedL3 = expectedLayer3(sourceFiles, rows);
+  const expectedL4 = expectedLayer4(sourceFiles);
   const summary = {
     event: "source_cloud_consumption_package_started",
     mode: args.mode,
@@ -1502,6 +1586,7 @@ async function main() {
     layer2_expected_rows: rows.length,
     layer2_expected_by_adapter: expectedL2,
     layer3_expected_readback: expectedL3,
+    layer4_expected_readback: expectedL4,
     quality_gate: qualityGate,
   };
   writeJson(path.join(args.proofDir, "summary.json"), summary);
@@ -1544,6 +1629,11 @@ async function main() {
       summary.event = "source_cloud_consumption_package_layer23_verified";
       summary.layer2_readback = layer2;
       summary.layer3_readback = layer3;
+    } else if (args.mode === "verify-layer4") {
+      const layer4 = await layer4Readback(client, args, sourceFiles);
+      assertCounts(expectedL4, layer4, "Layer 4");
+      summary.event = "source_cloud_consumption_package_layer4_verified";
+      summary.layer4_readback = layer4;
     }
     writeJson(path.join(args.proofDir, "summary.json"), summary);
     console.log(JSON.stringify(summary, null, 2));
