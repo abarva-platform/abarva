@@ -16,34 +16,18 @@ const DEFAULT_PACKAGE_DIR =
 const DEFAULT_BUILD_VERSION = "tower-source-cloud-bridge-v20260907";
 const DEFAULT_LOAD_RUN_ID =
   "source-cloud-consumption-package-meridian-cloud-consumption-depth-v1-20260907-20260907T1415Z";
-const SOURCE_SYSTEM = "source_cloud_consumption_package_loader";
+const DEFAULT_PACKAGE_KIND = "cloud";
+const PACKAGE_KINDS = new Set(["cloud", "contract_depth"]);
+const CONTRACT_DEPTH_DEFAULTS = {
+  datasetVersion: "meridian-managed-services-depth-v1-20260907",
+  packageDir: "datasets/source/contract-depth/meridian-managed-services-depth-v1-20260907",
+  buildVersion: "tower-source-contract-depth-bridge-v20260907",
+  loadRunId: "source-contract-depth-package-meridian-managed-services-depth-v1-20260907-20260907T1835Z",
+};
 const PROOF_BEGIN = "__SEMANTIC2_PROOF_TGZ_BEGIN__";
 const PROOF_END = "__SEMANTIC2_PROOF_TGZ_END__";
 const PROJECTION_VERSION = 2;
 const CUBE_VERSION = 2;
-
-const BRIDGE_METRIC_DEFINITIONS = [
-  {
-    metricKey: "source_cloud_candidate_value_usd",
-    metricName: "Source cloud candidate value",
-    definition:
-      "Candidate annual value from Source cloud-consumption opportunities before finance confirmation.",
-    unit: "USD",
-    directionality: "neutral",
-    cadence: "annual",
-    aggregationRule: "sum",
-  },
-  {
-    metricKey: "source_cloud_evidence_gate",
-    metricName: "Source cloud evidence gate",
-    definition:
-      "Evidence-readiness gate for Source cloud-consumption actions projected into Tower.",
-    unit: "state",
-    directionality: "neutral",
-    cadence: "point_in_time",
-    aggregationRule: "none",
-  },
-];
 
 const PROJECTION_KEYS = {
   recommended_actions: "tower_recommended_actions",
@@ -73,6 +57,14 @@ function stamp() {
 function parseArgs() {
   const mode = argValue("mode") ?? process.env.TOWER_SOURCE_CLOUD_BRIDGE_MODE ?? "plan";
   if (!MODES.has(mode)) throw new Error(`Unsupported TOWER_SOURCE_CLOUD_BRIDGE_MODE: ${mode}`);
+  const packageKind =
+    argValue("package-kind") ??
+    process.env.TOWER_SOURCE_CLOUD_BRIDGE_PACKAGE_KIND ??
+    DEFAULT_PACKAGE_KIND;
+  if (!PACKAGE_KINDS.has(packageKind)) {
+    throw new Error(`Unsupported TOWER_SOURCE_CLOUD_BRIDGE_PACKAGE_KIND: ${packageKind}`);
+  }
+  const kindDefaults = packageKind === "contract_depth" ? CONTRACT_DEPTH_DEFAULTS : {};
   const tenantKey =
     argValue("tenant-key") ??
     process.env.TOWER_SOURCE_CLOUD_BRIDGE_TENANT_KEY ??
@@ -80,18 +72,22 @@ function parseArgs() {
   const datasetVersion =
     argValue("dataset-version") ??
     process.env.TOWER_SOURCE_CLOUD_BRIDGE_DATASET_VERSION ??
+    kindDefaults.datasetVersion ??
     DEFAULT_DATASET_VERSION;
   const buildVersion =
     argValue("build-version") ??
     process.env.TOWER_SOURCE_CLOUD_BRIDGE_BUILD_VERSION ??
+    kindDefaults.buildVersion ??
     DEFAULT_BUILD_VERSION;
   const loadRunId =
     argValue("load-run-id") ??
     process.env.TOWER_SOURCE_CLOUD_BRIDGE_LOAD_RUN_ID ??
+    kindDefaults.loadRunId ??
     DEFAULT_LOAD_RUN_ID;
   const runStamp = stamp();
   return {
     mode,
+    packageKind,
     tenantKey,
     datasetVersion,
     buildVersion,
@@ -104,6 +100,7 @@ function parseArgs() {
       process.cwd(),
       argValue("package-dir") ??
         process.env.TOWER_SOURCE_CLOUD_BRIDGE_PACKAGE_DIR ??
+        kindDefaults.packageDir ??
         DEFAULT_PACKAGE_DIR,
     ),
     proofDir: path.resolve(
@@ -117,6 +114,45 @@ function parseArgs() {
     emitProofBundle:
       process.env.TOWER_SOURCE_CLOUD_BRIDGE_EMIT_PROOF_BUNDLE === "true" ||
       process.argv.includes("--emit-proof-bundle"),
+  };
+}
+
+function sourceBridgeConfig(args) {
+  if (args.packageKind === "contract_depth") {
+    return {
+      bridgePrefix: "source_contract_depth",
+      sourceFamily: "source_contract_depth",
+      sourceSystem: "source_contract_depth_package_loader",
+      sourceTable: "source.contract_depth_adapter_row",
+      rowTypePrefix: "source_contract_depth",
+      metricValueKey: "source_contract_depth_candidate_value_usd",
+      metricGateKey: "source_contract_depth_evidence_gate",
+      metricValueName: "Source contract-depth candidate value",
+      metricGateName: "Source contract-depth evidence gate",
+      metricValueDefinition:
+        "Candidate annual value from Source contract-depth opportunities before finance confirmation.",
+      metricGateDefinition:
+        "Evidence-readiness gate for Source contract-depth actions projected into Tower.",
+      cubeGrainKey: "source_contract_depth_opportunity",
+      cubeDimensionBridge: "source_contract_depth",
+    };
+  }
+  return {
+    bridgePrefix: "source_cloud",
+    sourceFamily: "source_cloud_consumption",
+    sourceSystem: "source_cloud_consumption_package_loader",
+    sourceTable: "source.cloud_consumption_adapter_row",
+    rowTypePrefix: "source_cloud",
+    metricValueKey: "source_cloud_candidate_value_usd",
+    metricGateKey: "source_cloud_evidence_gate",
+    metricValueName: "Source cloud candidate value",
+    metricGateName: "Source cloud evidence gate",
+    metricValueDefinition:
+      "Candidate annual value from Source cloud-consumption opportunities before finance confirmation.",
+    metricGateDefinition:
+      "Evidence-readiness gate for Source cloud-consumption actions projected into Tower.",
+    cubeGrainKey: "source_cloud_opportunity",
+    cubeDimensionBridge: "source_cloud_consumption",
   };
 }
 
@@ -319,14 +355,15 @@ function fiscalQuarter(dateText) {
 }
 
 function sourceRefs(args, opportunity) {
+  const config = sourceBridgeConfig(args);
   return value(opportunity, "evidence_rows")
     .split(";")
     .map((item) => item.trim())
     .filter(Boolean)
     .map((sourceRecordId) => ({
-      source_family: "source_cloud_consumption",
-      source_system: SOURCE_SYSTEM,
-      source_table: "source.cloud_consumption_adapter_row",
+      source_family: config.sourceFamily,
+      source_system: config.sourceSystem,
+      source_table: config.sourceTable,
       source_record_id: sourceRecordId,
       source_file: value(opportunity, "source_file_id"),
       dataset_version: args.datasetVersion,
@@ -337,24 +374,47 @@ function sourceRefs(args, opportunity) {
     }));
 }
 
-function expectedFromPackage(sourceFiles) {
+function contractRowsForPackage(args, sourceFiles) {
+  if (args.packageKind === "contract_depth") return sourceFiles["contracts.csv"] ?? [];
+  return sourceFiles["cloud_contract_register.csv"] ?? [];
+}
+
+function expectedFromPackage(args, sourceFiles) {
   const opportunities = sourceFiles["optimization_opportunities.csv"] ?? [];
-  const contracts = sourceFiles["cloud_contract_register.csv"] ?? [];
+  const contracts = contractRowsForPackage(args, sourceFiles);
   const contractIds = uniqueValues(contracts, "contract_id");
   const opportunityIds = uniqueValues(opportunities, "opportunity_id");
+  const sourceReadback =
+    args.packageKind === "contract_depth"
+      ? {
+          contracts: contractIds.length,
+          opportunities: opportunityIds.length,
+          spend_months: (sourceFiles["monthly_spend.csv"] ?? []).length,
+          performance_rows: (sourceFiles["sla_performance.csv"] ?? []).length,
+          service_credit_rows: (sourceFiles["sla_performance.csv"] ?? []).filter(
+            (row) => numberValue(row, "credit_owed_usd") > 0,
+          ).length,
+          ticket_rows: (sourceFiles["ticket_volumetrics.csv"] ?? []).length,
+          change_order_rows: (sourceFiles["change_orders.csv"] ?? []).length,
+          app_scope_rows: (sourceFiles["cmdb_application_scope.csv"] ?? []).length,
+          evidence_docs: (sourceFiles["evidence_manifest.csv"] ?? []).length,
+          monetary_opportunities: opportunities.filter((row) => numberValue(row, "annual_value_usd") > 0).length,
+          control_opportunities: opportunities.filter((row) => numberValue(row, "annual_value_usd") === 0).length,
+        }
+      : {
+          contracts: contractIds.length,
+          opportunities: opportunityIds.length,
+          spend_months: (sourceFiles["monthly_spend.csv"] ?? []).length,
+          cloud_usage_rows: (sourceFiles["cloud_service_usage_monthly.csv"] ?? []).length,
+          commitment_coverage_rows: (sourceFiles["cloud_commitment_coverage_monthly.csv"] ?? []).length,
+          resource_inventory_rows: (sourceFiles["cloud_resource_inventory.csv"] ?? []).length,
+          tag_quality_rows: (sourceFiles["cloud_tag_quality.csv"] ?? []).length,
+          ap_reconciliation_rows: (sourceFiles["cloud_ap_invoice_reconciliation.csv"] ?? []).length,
+          monetary_opportunities: opportunities.filter((row) => numberValue(row, "annual_value_usd") > 0).length,
+          control_opportunities: opportunities.filter((row) => numberValue(row, "annual_value_usd") === 0).length,
+        };
   return {
-    source_expected_readback: {
-      contracts: contractIds.length,
-      opportunities: opportunityIds.length,
-      spend_months: (sourceFiles["monthly_spend.csv"] ?? []).length,
-      cloud_usage_rows: (sourceFiles["cloud_service_usage_monthly.csv"] ?? []).length,
-      commitment_coverage_rows: (sourceFiles["cloud_commitment_coverage_monthly.csv"] ?? []).length,
-      resource_inventory_rows: (sourceFiles["cloud_resource_inventory.csv"] ?? []).length,
-      tag_quality_rows: (sourceFiles["cloud_tag_quality.csv"] ?? []).length,
-      ap_reconciliation_rows: (sourceFiles["cloud_ap_invoice_reconciliation.csv"] ?? []).length,
-      monetary_opportunities: opportunities.filter((row) => numberValue(row, "annual_value_usd") > 0).length,
-      control_opportunities: opportunities.filter((row) => numberValue(row, "annual_value_usd") === 0).length,
-    },
+    source_expected_readback: sourceReadback,
     tower_expected_delta: {
       projection_entry_rows: opportunities.length * 5,
       tower_recommended_actions_rows: opportunities.length,
@@ -370,7 +430,7 @@ function expectedFromPackage(sourceFiles) {
 function qualityGate(args, sourceFiles) {
   const failures = [];
   const opportunities = sourceFiles["optimization_opportunities.csv"] ?? [];
-  const contracts = sourceFiles["cloud_contract_register.csv"] ?? [];
+  const contracts = contractRowsForPackage(args, sourceFiles);
   const contractIds = new Set(contracts.map((row) => value(row, "contract_id")));
   const rowsWithTenant = Object.entries(sourceFiles).filter(([, rows]) =>
     rows.some((row) => "tenant_key" in row),
@@ -396,8 +456,17 @@ function qualityGate(args, sourceFiles) {
     }
   }
 
-  const hasAws = contracts.some((row) => value(row, "cloud_provider") === "aws" || value(row, "vendor_ref") === "VEN-AWS");
-  if (!hasAws) failures.push("aws_contract_required");
+  if (args.packageKind === "cloud") {
+    const hasAws = contracts.some((row) => value(row, "cloud_provider") === "aws" || value(row, "vendor_ref") === "VEN-AWS");
+    if (!hasAws) failures.push("aws_contract_required");
+  } else {
+    const hasServiceEvidence = (sourceFiles["sla_performance.csv"] ?? []).some(
+      (row) => value(row, "breach_state") === "breached" && numberValue(row, "credit_owed_usd") > 0,
+    );
+    if (!hasServiceEvidence) failures.push("managed_service_credit_evidence_required");
+    if ((sourceFiles["ticket_volumetrics.csv"] ?? []).length === 0) failures.push("ticket_volumetrics_required");
+    if ((sourceFiles["change_orders.csv"] ?? []).length === 0) failures.push("change_order_evidence_required");
+  }
 
   return {
     status: failures.length ? "FAIL" : "PASS",
@@ -470,8 +539,26 @@ async function readActiveTowerContext(client, tenantKey) {
 }
 
 async function sourceReadback(client, args, sourceFiles) {
-  const contracts = uniqueValues(sourceFiles["cloud_contract_register.csv"] ?? [], "contract_id");
+  const contracts = uniqueValues(contractRowsForPackage(args, sourceFiles), "contract_id");
   const opportunities = uniqueValues(sourceFiles["optimization_opportunities.csv"] ?? [], "opportunity_id");
+  if (args.packageKind === "contract_depth") {
+    const result = await client.query(
+      `SELECT
+         (SELECT count(*)::int FROM source.contract_360 WHERE tenant_key = $1 AND contract_id = ANY($2::text[])) AS contracts,
+         (SELECT count(*)::int FROM consumption.sourcing_opportunity_v1 WHERE tenant_key = $1 AND opportunity_id = ANY($3::text[]) AND load_run_id = $4) AS opportunities,
+         (SELECT count(*)::int FROM consumption.sourcing_spend_monthly_v1 WHERE tenant_key = $1 AND contract_id = ANY($2::text[]) AND load_run_id = $4) AS spend_months,
+         (SELECT count(*)::int FROM consumption.sourcing_performance_v1 WHERE tenant_key = $1 AND contract_id = ANY($2::text[]) AND load_run_id = $4) AS performance_rows,
+         (SELECT count(*)::int FROM source.contract_service_credit WHERE tenant_key = $1 AND contract_id = ANY($2::text[]) AND load_run_id = $4) AS service_credit_rows,
+         (SELECT count(*)::int FROM source.source_record_snapshot WHERE tenant_key = $1 AND dataset_version = $5 AND source_record_id LIKE 'ticket:%') AS ticket_rows,
+         (SELECT COALESCE(SUM(COALESCE(change_order_count, 0)), 0)::int FROM source.contract_360 WHERE tenant_key = $1 AND contract_id = ANY($2::text[])) AS change_order_rows,
+         (SELECT count(*)::int FROM source.contract_application_scope WHERE tenant_key = $1 AND contract_id = ANY($2::text[]) AND load_run_id = $4) AS app_scope_rows,
+         (SELECT count(*)::int FROM doc.file WHERE tenant_key = $1 AND load_run_id = $4) AS evidence_docs,
+         (SELECT count(*)::int FROM consumption.sourcing_opportunity_v1 WHERE tenant_key = $1 AND opportunity_id = ANY($3::text[]) AND annual_value_exposed > 0) AS monetary_opportunities,
+         (SELECT count(*)::int FROM consumption.sourcing_opportunity_v1 WHERE tenant_key = $1 AND opportunity_id = ANY($3::text[]) AND annual_value_exposed = 0) AS control_opportunities`,
+      [args.tenantKey, contracts, opportunities, args.loadRunId, args.datasetVersion],
+    );
+    return result.rows[0] ?? {};
+  }
   const result = await client.query(
     `SELECT
        (SELECT count(*)::int FROM source.contract_360 WHERE tenant_key = $1 AND contract_id = ANY($2::text[])) AS contracts,
@@ -576,8 +663,8 @@ function gateForOpportunity(row) {
   };
 }
 
-function bridgeRowKey(opportunityId) {
-  return `source_cloud:${opportunityId}`;
+function bridgeRowKeyFor(args, opportunityId) {
+  return `${sourceBridgeConfig(args).bridgePrefix}:${opportunityId}`;
 }
 
 function projectionEntryId(context, pageKey, rowKey) {
@@ -592,10 +679,11 @@ function projectionEntryId(context, pageKey, rowKey) {
 }
 
 function projectionEntryPayload(args, row, pageKey, refs, gate) {
+  const config = sourceBridgeConfig(args);
   return {
     page_key: pageKey,
     layer4_build_version: args.buildVersion,
-    bridge_source: "source_cloud_consumption_layer4",
+    bridge_source: `${config.cubeDimensionBridge}_layer4`,
     source_dataset_version: args.datasetVersion,
     source_load_run_id: args.loadRunId,
     opportunity_id: row.opportunity_id,
@@ -670,7 +758,8 @@ async function upsertProjectionEntry(client, context, args, pageKey, rowKey, row
 }
 
 async function upsertCommandRow(client, context, args, pageKey, opportunity) {
-  const rowKey = bridgeRowKey(opportunity.opportunity_id);
+  const config = sourceBridgeConfig(args);
+  const rowKey = bridgeRowKeyFor(args, opportunity.opportunity_id);
   const refs = sourceRefs(args, {
     evidence_rows: opportunity.evidence_rows,
     source_file_id: opportunity.source_file_id,
@@ -680,7 +769,8 @@ async function upsertCommandRow(client, context, args, pageKey, opportunity) {
   });
   const gate = gateForOpportunity(opportunity);
   const payload = projectionEntryPayload(args, opportunity, pageKey, refs, gate);
-  const entry = await upsertProjectionEntry(client, context, args, pageKey, rowKey, "source_cloud_optimization_candidate", payload, refs);
+  const rowType = `${config.rowTypePrefix}_optimization_candidate`;
+  const entry = await upsertProjectionEntry(client, context, args, pageKey, rowKey, rowType, payload, refs);
   await client.query(
     `INSERT INTO ecl_projection.tower_command_center (
        id, tenant_key, assessment_id, snapshot_id, projection_manifest_id,
@@ -730,7 +820,7 @@ async function upsertCommandRow(client, context, args, pageKey, opportunity) {
       context.projectionVersion,
       rowKey,
       pageKey,
-      "source_cloud_optimization_candidate",
+      rowType,
       opportunity.opportunity_id,
       gate.status,
       gate.code,
@@ -747,7 +837,7 @@ async function upsertCommandRow(client, context, args, pageKey, opportunity) {
       "Source",
       Number(opportunity.annual_value_exposed ?? 0) > 0 ? "estimated" : "known",
       gate.status === "blocked" ? "warning" : "passed",
-      JSON.stringify(["source_cloud_candidate_value_usd", "source_cloud_evidence_gate"]),
+      JSON.stringify([config.metricValueKey, config.metricGateKey]),
       JSON.stringify(refs),
       JSON.stringify(gate.evidenceNeeded),
       JSON.stringify(payload),
@@ -757,7 +847,8 @@ async function upsertCommandRow(client, context, args, pageKey, opportunity) {
 }
 
 async function upsertValueRow(client, context, args, pageKey, opportunity) {
-  const rowKey = bridgeRowKey(opportunity.opportunity_id);
+  const config = sourceBridgeConfig(args);
+  const rowKey = bridgeRowKeyFor(args, opportunity.opportunity_id);
   const refs = sourceRefs(args, {
     evidence_rows: opportunity.evidence_rows,
     source_file_id: opportunity.source_file_id,
@@ -779,7 +870,8 @@ async function upsertValueRow(client, context, args, pageKey, opportunity) {
     board_scope_state: "not_board_claimable",
     material_scope_state: Number(opportunity.annual_value_exposed ?? 0) > 0 ? "candidate_value" : "control_blocker",
   };
-  const entry = await upsertProjectionEntry(client, context, args, pageKey, rowKey, "source_cloud_value_gate", payload, refs);
+  const rowType = `${config.rowTypePrefix}_value_gate`;
+  const entry = await upsertProjectionEntry(client, context, args, pageKey, rowKey, rowType, payload, refs);
   await client.query(
     `INSERT INTO ecl_projection.tower_value_chain (
        id, tenant_key, assessment_id, snapshot_id, projection_manifest_id,
@@ -823,10 +915,10 @@ async function upsertValueRow(client, context, args, pageKey, opportunity) {
       context.projectionVersion,
       rowKey,
       pageKey,
-      "source_cloud_value_gate",
+      rowType,
       opportunity.opportunity_id,
       `${opportunity.opportunity_id}:${pageKey}`,
-      "source_cloud_candidate_value_usd",
+      config.metricValueKey,
       opportunity.evidence_state === "present" ? "source_recorded" : "blocked",
       gate.status,
       gate.code,
@@ -848,7 +940,8 @@ async function upsertValueRow(client, context, args, pageKey, opportunity) {
 }
 
 async function upsertEvidenceRow(client, context, args, pageKey, opportunity) {
-  const rowKey = bridgeRowKey(opportunity.opportunity_id);
+  const config = sourceBridgeConfig(args);
+  const rowKey = bridgeRowKeyFor(args, opportunity.opportunity_id);
   const refs = sourceRefs(args, {
     evidence_rows: opportunity.evidence_rows,
     source_file_id: opportunity.source_file_id,
@@ -864,7 +957,8 @@ async function upsertEvidenceRow(client, context, args, pageKey, opportunity) {
         ? "Finance confirmation, owner approval, and post-action run-rate proof are required before this can be claimed."
         : "Control owner resolution is required before allocating this spend or action to a business owner.",
   };
-  const entry = await upsertProjectionEntry(client, context, args, pageKey, rowKey, "source_cloud_evidence_gate", payload, refs);
+  const rowType = `${config.rowTypePrefix}_evidence_gate`;
+  const entry = await upsertProjectionEntry(client, context, args, pageKey, rowKey, rowType, payload, refs);
   await client.query(
     `INSERT INTO ecl_projection.tower_evidence_queue (
        id, tenant_key, assessment_id, snapshot_id, projection_manifest_id,
@@ -902,7 +996,7 @@ async function upsertEvidenceRow(client, context, args, pageKey, opportunity) {
       context.projectionVersion,
       rowKey,
       pageKey,
-      "source_cloud_evidence_gate",
+      rowType,
       opportunity.opportunity_id,
       gate.status,
       gate.code,
@@ -921,7 +1015,8 @@ async function upsertEvidenceRow(client, context, args, pageKey, opportunity) {
 }
 
 async function upsertCubeSlice(client, context, args, cubeKey, opportunity) {
-  const rowKey = bridgeRowKey(opportunity.opportunity_id);
+  const config = sourceBridgeConfig(args);
+  const rowKey = bridgeRowKeyFor(args, opportunity.opportunity_id);
   const manifest = context.cubeManifests[cubeKey];
   const refs = sourceRefs(args, {
     evidence_rows: opportunity.evidence_rows,
@@ -932,7 +1027,7 @@ async function upsertCubeSlice(client, context, args, cubeKey, opportunity) {
   });
   const amount = Number(opportunity.annual_value_exposed ?? 0);
   const dimensions = {
-    source_bridge: "source_cloud_consumption",
+    source_bridge: config.cubeDimensionBridge,
     opportunity_id: opportunity.opportunity_id,
     contract_id: opportunity.contract_id,
     contract_name: opportunity.contract_name,
@@ -959,7 +1054,7 @@ async function upsertCubeSlice(client, context, args, cubeKey, opportunity) {
        source_refs_json, basis_summary, value_state, quality_state,
        gap_flags_json, source_hash
      )
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'source_cloud_opportunity',NULL,$9::jsonb,$10::jsonb,'source_cloud_candidate_value_usd',$11::jsonb,$12::jsonb,$13,$14,$15,$16::jsonb,$17)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$18,NULL,$9::jsonb,$10::jsonb,$19,$11::jsonb,$12::jsonb,$13,$14,$15,$16::jsonb,$17)
      ON CONFLICT (tenant_key, assessment_id, cube_key, cube_version, slice_key)
      DO UPDATE SET snapshot_id = EXCLUDED.snapshot_id,
                    cube_manifest_id = EXCLUDED.cube_manifest_id,
@@ -984,54 +1079,78 @@ async function upsertCubeSlice(client, context, args, cubeKey, opportunity) {
       rowKey,
       JSON.stringify(dimensions),
       JSON.stringify(measures),
-      JSON.stringify(["source_cloud_candidate_value_usd", "source_cloud_evidence_gate"]),
+      JSON.stringify([config.metricValueKey, config.metricGateKey]),
       JSON.stringify(refs),
-      opportunity.deterministic_basis ?? "Source cloud opportunity is projected into Tower as gated candidate value.",
+      opportunity.deterministic_basis ?? "Source opportunity is projected into Tower as gated candidate value.",
       amount > 0 ? "estimated" : "known",
       amount > 0 ? "warning" : "passed",
       JSON.stringify(amount > 0 ? ["finance_confirmation_required"] : ["control_action_required"]),
       sha256(stableJson([dimensions, measures, refs])),
+      config.cubeGrainKey,
+      config.metricValueKey,
     ],
   );
 }
 
-async function deleteBridgeRows(client, context) {
+async function deleteBridgeRows(client, context, args) {
+  const prefix = sourceBridgeConfig(args).bridgePrefix;
   await client.query(
     `DELETE FROM ecl_projection.tower_command_center
       WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
-        AND page_key = 'recommended_actions' AND row_key LIKE 'source_cloud:%'`,
-    [context.tenantKey, context.assessmentId, context.projectionVersion],
+        AND page_key = 'recommended_actions' AND row_key LIKE $4`,
+    [context.tenantKey, context.assessmentId, context.projectionVersion, `${prefix}:%`],
   );
   await client.query(
     `DELETE FROM ecl_projection.tower_value_chain
       WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
-        AND page_key IN ('value_proof','cost_lens') AND row_key LIKE 'source_cloud:%'`,
-    [context.tenantKey, context.assessmentId, context.projectionVersion],
+        AND page_key IN ('value_proof','cost_lens') AND row_key LIKE $4`,
+    [context.tenantKey, context.assessmentId, context.projectionVersion, `${prefix}:%`],
   );
   await client.query(
     `DELETE FROM ecl_projection.tower_evidence_queue
       WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
-        AND page_key IN ('evidence','risk_lens') AND row_key LIKE 'source_cloud:%'`,
-    [context.tenantKey, context.assessmentId, context.projectionVersion],
+        AND page_key IN ('evidence','risk_lens') AND row_key LIKE $4`,
+    [context.tenantKey, context.assessmentId, context.projectionVersion, `${prefix}:%`],
   );
   await client.query(
     `DELETE FROM ecl_projection.projection_entry
       WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
         AND surface_key IN ('tower_command_center','tower_value_chain','tower_evidence_queue')
-        AND row_key LIKE '%source_cloud:%'`,
-    [context.tenantKey, context.assessmentId, context.projectionVersion],
+        AND row_key LIKE $4`,
+    [context.tenantKey, context.assessmentId, context.projectionVersion, `%${prefix}:%`],
   );
   await client.query(
     `DELETE FROM ecl_projection.cube_slice
       WHERE tenant_key = $1 AND assessment_id = $2 AND cube_version = $3
         AND cube_key IN ('tower_spend_value_cube','tower_evidence_cube')
-        AND slice_key LIKE 'source_cloud:%'`,
-    [context.tenantKey, context.assessmentId, CUBE_VERSION],
+        AND slice_key LIKE $4`,
+    [context.tenantKey, context.assessmentId, CUBE_VERSION, `${prefix}:%`],
   );
 }
 
-async function ensureBridgeMetricDefinitions(client, context) {
-  for (const metric of BRIDGE_METRIC_DEFINITIONS) {
+async function ensureBridgeMetricDefinitions(client, context, args) {
+  const config = sourceBridgeConfig(args);
+  const metrics = [
+    {
+      metricKey: config.metricValueKey,
+      metricName: config.metricValueName,
+      definition: config.metricValueDefinition,
+      unit: "USD",
+      directionality: "neutral",
+      cadence: "annual",
+      aggregationRule: "sum",
+    },
+    {
+      metricKey: config.metricGateKey,
+      metricName: config.metricGateName,
+      definition: config.metricGateDefinition,
+      unit: "state",
+      directionality: "neutral",
+      cadence: "point_in_time",
+      aggregationRule: "none",
+    },
+  ];
+  for (const metric of metrics) {
     await client.query(
       `INSERT INTO ecl_context.metric_definition (
          id, tenant_key, metric_key, metric_name, definition,
@@ -1072,8 +1191,8 @@ async function applyBridge(client, context, args, sourceFiles) {
     ...(byId.get(row.opportunity_id) ?? {}),
   }));
 
-  await ensureBridgeMetricDefinitions(client, context);
-  await deleteBridgeRows(client, context);
+  await ensureBridgeMetricDefinitions(client, context, args);
+  await deleteBridgeRows(client, context, args);
   for (const opportunity of opportunities) {
     await upsertCommandRow(client, context, args, "recommended_actions", opportunity);
     await upsertValueRow(client, context, args, "value_proof", opportunity);
@@ -1105,53 +1224,62 @@ async function applyBridge(client, context, args, sourceFiles) {
   }
 }
 
-async function towerBridgeReadback(client, context) {
+async function towerBridgeReadback(client, context, args) {
+  const prefixPattern = `${sourceBridgeConfig(args).bridgePrefix}:%`;
+  const projectionPrefixPattern = `%${sourceBridgeConfig(args).bridgePrefix}:%`;
   const result = await client.query(
     `SELECT
        (SELECT count(*)::int FROM ecl_projection.projection_entry
          WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
            AND surface_key IN ('tower_command_center','tower_value_chain','tower_evidence_queue')
-           AND row_key LIKE '%source_cloud:%') AS projection_entry_rows,
+           AND row_key LIKE $5) AS projection_entry_rows,
        (SELECT count(*)::int FROM ecl_projection.tower_command_center
          WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
-           AND page_key = 'recommended_actions' AND row_key LIKE 'source_cloud:%') AS tower_recommended_actions_rows,
+           AND page_key = 'recommended_actions' AND row_key LIKE $6) AS tower_recommended_actions_rows,
        (SELECT count(*)::int FROM ecl_projection.tower_value_chain
          WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
-           AND page_key = 'value_proof' AND row_key LIKE 'source_cloud:%') AS tower_value_proof_rows,
+           AND page_key = 'value_proof' AND row_key LIKE $6) AS tower_value_proof_rows,
        (SELECT count(*)::int FROM ecl_projection.tower_value_chain
          WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
-           AND page_key = 'cost_lens' AND row_key LIKE 'source_cloud:%') AS tower_cost_lens_rows,
+           AND page_key = 'cost_lens' AND row_key LIKE $6) AS tower_cost_lens_rows,
        (SELECT count(*)::int FROM ecl_projection.tower_evidence_queue
          WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
-           AND page_key = 'evidence' AND row_key LIKE 'source_cloud:%') AS tower_evidence_rows,
+           AND page_key = 'evidence' AND row_key LIKE $6) AS tower_evidence_rows,
        (SELECT count(*)::int FROM ecl_projection.tower_evidence_queue
          WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3
-           AND page_key = 'risk_lens' AND row_key LIKE 'source_cloud:%') AS tower_risk_lens_rows,
+           AND page_key = 'risk_lens' AND row_key LIKE $6) AS tower_risk_lens_rows,
        (SELECT count(*)::int FROM ecl_projection.cube_slice
          WHERE tenant_key = $1 AND assessment_id = $2 AND cube_version = $4
            AND cube_key IN ('tower_spend_value_cube','tower_evidence_cube')
-           AND slice_key LIKE 'source_cloud:%') AS cube_slice_rows,
+           AND slice_key LIKE $6) AS cube_slice_rows,
        (SELECT count(*)::int FROM serving.tower_recommended_actions
-         WHERE tenant_key = $1 AND row_key LIKE 'source_cloud:%') AS serving_recommended_actions_rows,
+         WHERE tenant_key = $1 AND row_key LIKE $6) AS serving_recommended_actions_rows,
        (SELECT count(*)::int FROM serving.tower_value_proof
-         WHERE tenant_key = $1 AND row_key LIKE 'source_cloud:%') AS serving_value_proof_rows,
+         WHERE tenant_key = $1 AND row_key LIKE $6) AS serving_value_proof_rows,
        (SELECT count(*)::int FROM serving.tower_cost_lens
-         WHERE tenant_key = $1 AND row_key LIKE 'source_cloud:%') AS serving_cost_lens_rows,
+         WHERE tenant_key = $1 AND row_key LIKE $6) AS serving_cost_lens_rows,
        (SELECT count(*)::int FROM serving.tower_evidence
-         WHERE tenant_key = $1 AND row_key LIKE 'source_cloud:%') AS serving_evidence_rows,
+         WHERE tenant_key = $1 AND row_key LIKE $6) AS serving_evidence_rows,
        (SELECT count(*)::int FROM serving.tower_risk_lens
-         WHERE tenant_key = $1 AND row_key LIKE 'source_cloud:%') AS serving_risk_lens_rows,
+         WHERE tenant_key = $1 AND row_key LIKE $6) AS serving_risk_lens_rows,
        (SELECT count(*)::int FROM (
           SELECT source_refs_json FROM ecl_projection.tower_command_center
-           WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3 AND row_key LIKE 'source_cloud:%'
+           WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3 AND row_key LIKE $6
           UNION ALL
           SELECT source_refs_json FROM ecl_projection.tower_value_chain
-           WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3 AND row_key LIKE 'source_cloud:%'
+           WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3 AND row_key LIKE $6
           UNION ALL
           SELECT source_refs_json FROM ecl_projection.tower_evidence_queue
-           WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3 AND row_key LIKE 'source_cloud:%'
+           WHERE tenant_key = $1 AND assessment_id = $2 AND projection_version = $3 AND row_key LIKE $6
         ) rows WHERE COALESCE(jsonb_array_length(source_refs_json), 0) = 0) AS source_ref_missing_rows`,
-    [context.tenantKey, context.assessmentId, context.projectionVersion, CUBE_VERSION],
+    [
+      context.tenantKey,
+      context.assessmentId,
+      context.projectionVersion,
+      CUBE_VERSION,
+      projectionPrefixPattern,
+      prefixPattern,
+    ],
   );
   return result.rows[0] ?? {};
 }
@@ -1166,11 +1294,12 @@ function assertCounts(expected, actual, label) {
 async function main() {
   const args = parseArgs();
   const sourceFiles = readSourceFiles(args.packageDir);
-  const expected = expectedFromPackage(sourceFiles);
+  const expected = expectedFromPackage(args, sourceFiles);
   const gate = qualityGate(args, sourceFiles);
   const summary = {
     event: "tower_source_cloud_bridge_started",
     mode: args.mode,
+    package_kind: args.packageKind,
     tenant_key: args.tenantKey,
     dataset_version: args.datasetVersion,
     load_run_id: args.loadRunId,
@@ -1201,7 +1330,7 @@ async function main() {
     summary.active_tower_context = context;
     const sourceRows = await sourceReadback(client, args, sourceFiles);
     summary.source_readback = sourceRows;
-    assertCounts(expected.source_expected_readback, sourceRows, "Source cloud readback");
+    assertCounts(expected.source_expected_readback, sourceRows, "Source bridge readback");
 
     if (args.mode === "apply") {
       requireApplyApproval(args);
@@ -1213,7 +1342,7 @@ async function main() {
       summary.event = "tower_source_cloud_bridge_verified";
     }
 
-    const towerRows = await towerBridgeReadback(client, context);
+    const towerRows = await towerBridgeReadback(client, context, args);
     summary.tower_bridge_readback = towerRows;
     assertCounts(expected.tower_expected_delta, towerRows, "Tower bridge readback");
     if (Number(towerRows.source_ref_missing_rows ?? 0) !== 0) {
