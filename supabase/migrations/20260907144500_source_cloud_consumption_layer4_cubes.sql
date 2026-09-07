@@ -7,9 +7,6 @@
 
 BEGIN;
 
-DROP VIEW IF EXISTS consumption.sourcing_context_coverage_v1;
-DROP VIEW IF EXISTS consumption.sourcing_opportunity_v1;
-
 CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
 SELECT
   tenant_key,
