@@ -7,118 +7,259 @@
 
 BEGIN;
 
-CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
-SELECT
-  tenant_key,
-  opportunity_id AS opportunity_ref,
-  opportunity_id,
-  vendor_id AS vendor_ref,
-  vendor_id,
-  contract_id AS contract_ref,
-  contract_id,
-  event_id AS event_ref,
-  event_id,
-  opportunity_type AS action_type,
-  opportunity_type,
-  title,
-  finding_summary,
-  deterministic_basis,
-  value_low,
-  value_high,
-  COALESCE(value_high, value_low) AS annual_value_exposed,
-  COALESCE(value_low, 0) AS addressable_spend,
-  CASE
-    WHEN COALESCE(value_high, value_low, 0) >= 10000000 THEN 'high'
-    WHEN COALESCE(value_high, value_low, 0) >= 1000000 THEN 'medium'
-    ELSE 'low'
-  END AS priority,
-  confidence,
-  CASE
-    WHEN quality_state = 'accepted' AND confidence >= 0.75 THEN 'ready_to_act'
-    WHEN quality_state IN ('missing_evidence', 'blocked') THEN 'evidence_blocked'
-    ELSE 'review_required'
-  END AS readiness_state,
-  CASE WHEN evidence_reference IS NULL OR evidence_reference = '' THEN 'missing' ELSE 'present' END AS evidence_state,
-  recommended_action,
-  accountable_role,
-  NULL::date AS decision_due_date,
-  opportunity_type AS finding_rule_ref,
-  as_of_date,
-  'skyharbor-v3-live-load-20260803'::text AS knowledge_baseline_ref,
-  'sourcing-consumption-v1'::text AS projection_contract_version,
-  quality_state AS authority_state,
-  'current'::text AS freshness_state,
-  'available'::text AS availability_state,
-  load_run_id,
-  timing_window,
-  quality_state
-FROM source.sourcing_opportunity
-WHERE source.can_read_sourcing_tenant(tenant_key)
+DO $$
+DECLARE
+  annual_value_position integer;
+  timing_window_position integer;
+BEGIN
+  SELECT ordinal_position
+    INTO annual_value_position
+    FROM information_schema.columns
+   WHERE table_schema = 'consumption'
+     AND table_name = 'sourcing_opportunity_v1'
+     AND column_name = 'annual_value_exposed';
 
-UNION ALL
+  SELECT ordinal_position
+    INTO timing_window_position
+    FROM information_schema.columns
+   WHERE table_schema = 'consumption'
+     AND table_name = 'sourcing_opportunity_v1'
+     AND column_name = 'timing_window';
 
-SELECT
-  o.tenant_key,
-  o.opportunity_id AS opportunity_ref,
-  o.opportunity_id,
-  o.vendor_id AS vendor_ref,
-  o.vendor_id,
-  o.contract_id AS contract_ref,
-  o.contract_id,
-  NULL::text AS event_ref,
-  NULL::text AS event_id,
-  o.value_type AS action_type,
-  o.value_type AS opportunity_type,
-  COALESCE(o.payload ->> 'title', o.narrative) AS title,
-  COALESCE(o.payload ->> 'finding_summary', o.narrative) AS finding_summary,
-  COALESCE(o.payload ->> 'deterministic_basis', o.payload ->> 'native_vs_nexus_note', o.blocking_gap, o.narrative) AS deterministic_basis,
-  o.amount_usd AS value_low,
-  o.amount_usd AS value_high,
-  o.amount_usd AS annual_value_exposed,
-  o.amount_usd AS addressable_spend,
-  CASE
-    WHEN o.value_type = 'control_action' THEN 'control'
-    WHEN COALESCE(o.amount_usd, 0) >= 10000000 THEN 'high'
-    WHEN COALESCE(o.amount_usd, 0) >= 1000000 THEN 'medium'
-    ELSE 'low'
-  END AS priority,
-  o.confidence,
-  CASE
-    WHEN o.value_type = 'control_action' THEN 'control_required'
-    WHEN o.stage = 'finance_confirmed' THEN 'ready_to_act'
-    WHEN o.approval_state = 'requires_review' THEN 'finance_confirmation_required'
-    WHEN o.stage IN ('evidence_required', 'baseline_conflict') THEN 'evidence_blocked'
-    ELSE 'review_required'
-  END AS readiness_state,
-  CASE
-    WHEN EXISTS (
-      SELECT 1
-      FROM source.opportunity_evidence e
-      WHERE e.tenant_key = o.tenant_key
-        AND e.dataset_version = o.dataset_version
-        AND e.opportunity_id = o.opportunity_id
-        AND e.evidence_status = 'EVIDENCE_AVAILABLE'
-    ) THEN 'present'
-    ELSE 'missing'
-  END AS evidence_state,
-  o.next_action AS recommended_action,
-  o.owner AS accountable_role,
-  o.deadline AS decision_due_date,
-  o.value_type AS finding_rule_ref,
-  o.created_at::date AS as_of_date,
-  o.dataset_version AS knowledge_baseline_ref,
-  'source-optimization-opportunity-v1'::text AS projection_contract_version,
-  o.approval_state AS authority_state,
-  'current'::text AS freshness_state,
-  'available'::text AS availability_state,
-  c.load_run_id,
-  COALESCE(o.payload ->> 'timing_window', o.deadline::text) AS timing_window,
-  o.evidence_grade AS quality_state
-FROM source.optimization_opportunity o
-JOIN source.contract c
-  ON c.tenant_key = o.tenant_key
- AND c.contract_id = o.contract_id
-WHERE source.can_read_sourcing_tenant(o.tenant_key);
+  IF timing_window_position IS NOT NULL
+     AND annual_value_position IS NOT NULL
+     AND timing_window_position < annual_value_position THEN
+    EXECUTE $view$
+      CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
+      SELECT
+        tenant_key,
+        opportunity_id AS opportunity_ref,
+        opportunity_id,
+        vendor_id AS vendor_ref,
+        vendor_id,
+        contract_id AS contract_ref,
+        contract_id,
+        event_id AS event_ref,
+        event_id,
+        opportunity_type AS action_type,
+        opportunity_type,
+        title,
+        finding_summary,
+        deterministic_basis,
+        value_low,
+        value_high,
+        timing_window,
+        COALESCE(value_high, value_low) AS annual_value_exposed,
+        COALESCE(value_low, 0) AS addressable_spend,
+        CASE
+          WHEN COALESCE(value_high, value_low, 0) >= 10000000 THEN 'high'
+          WHEN COALESCE(value_high, value_low, 0) >= 1000000 THEN 'medium'
+          ELSE 'low'
+        END AS priority,
+        confidence,
+        CASE
+          WHEN quality_state = 'accepted' AND confidence >= 0.75 THEN 'ready_to_act'
+          WHEN quality_state IN ('missing_evidence', 'blocked') THEN 'evidence_blocked'
+          ELSE 'review_required'
+        END AS readiness_state,
+        CASE WHEN evidence_reference IS NULL OR evidence_reference = '' THEN 'missing' ELSE 'present' END AS evidence_state,
+        recommended_action,
+        accountable_role,
+        quality_state,
+        NULL::date AS decision_due_date,
+        opportunity_type AS finding_rule_ref,
+        as_of_date,
+        'skyharbor-v3-live-load-20260803'::text AS knowledge_baseline_ref,
+        'sourcing-consumption-v1'::text AS projection_contract_version,
+        quality_state AS authority_state,
+        'current'::text AS freshness_state,
+        'available'::text AS availability_state,
+        load_run_id
+      FROM source.sourcing_opportunity
+      WHERE source.can_read_sourcing_tenant(tenant_key)
+
+      UNION ALL
+
+      SELECT
+        o.tenant_key,
+        o.opportunity_id AS opportunity_ref,
+        o.opportunity_id,
+        o.vendor_id AS vendor_ref,
+        o.vendor_id,
+        o.contract_id AS contract_ref,
+        o.contract_id,
+        NULL::text AS event_ref,
+        NULL::text AS event_id,
+        o.value_type AS action_type,
+        o.value_type AS opportunity_type,
+        COALESCE(o.payload ->> 'title', o.narrative) AS title,
+        COALESCE(o.payload ->> 'finding_summary', o.narrative) AS finding_summary,
+        COALESCE(o.payload ->> 'deterministic_basis', o.payload ->> 'native_vs_nexus_note', o.blocking_gap, o.narrative) AS deterministic_basis,
+        o.amount_usd AS value_low,
+        o.amount_usd AS value_high,
+        COALESCE(o.payload ->> 'timing_window', o.deadline::text) AS timing_window,
+        o.amount_usd AS annual_value_exposed,
+        o.amount_usd AS addressable_spend,
+        CASE
+          WHEN o.value_type = 'control_action' THEN 'control'
+          WHEN COALESCE(o.amount_usd, 0) >= 10000000 THEN 'high'
+          WHEN COALESCE(o.amount_usd, 0) >= 1000000 THEN 'medium'
+          ELSE 'low'
+        END AS priority,
+        o.confidence,
+        CASE
+          WHEN o.value_type = 'control_action' THEN 'control_required'
+          WHEN o.stage = 'finance_confirmed' THEN 'ready_to_act'
+          WHEN o.approval_state = 'requires_review' THEN 'finance_confirmation_required'
+          WHEN o.stage IN ('evidence_required', 'baseline_conflict') THEN 'evidence_blocked'
+          ELSE 'review_required'
+        END AS readiness_state,
+        CASE
+          WHEN EXISTS (
+            SELECT 1
+            FROM source.opportunity_evidence e
+            WHERE e.tenant_key = o.tenant_key
+              AND e.dataset_version = o.dataset_version
+              AND e.opportunity_id = o.opportunity_id
+              AND e.evidence_status = 'EVIDENCE_AVAILABLE'
+          ) THEN 'present'
+          ELSE 'missing'
+        END AS evidence_state,
+        o.next_action AS recommended_action,
+        o.owner AS accountable_role,
+        o.evidence_grade AS quality_state,
+        o.deadline AS decision_due_date,
+        o.value_type AS finding_rule_ref,
+        o.created_at::date AS as_of_date,
+        o.dataset_version AS knowledge_baseline_ref,
+        'source-optimization-opportunity-v1'::text AS projection_contract_version,
+        o.approval_state AS authority_state,
+        'current'::text AS freshness_state,
+        'available'::text AS availability_state,
+        c.load_run_id
+      FROM source.optimization_opportunity o
+      JOIN source.contract c
+        ON c.tenant_key = o.tenant_key
+       AND c.contract_id = o.contract_id
+      WHERE source.can_read_sourcing_tenant(o.tenant_key)
+    $view$;
+  ELSE
+    EXECUTE $view$
+      CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
+      SELECT
+        tenant_key,
+        opportunity_id AS opportunity_ref,
+        opportunity_id,
+        vendor_id AS vendor_ref,
+        vendor_id,
+        contract_id AS contract_ref,
+        contract_id,
+        event_id AS event_ref,
+        event_id,
+        opportunity_type AS action_type,
+        opportunity_type,
+        title,
+        finding_summary,
+        deterministic_basis,
+        value_low,
+        value_high,
+        COALESCE(value_high, value_low) AS annual_value_exposed,
+        COALESCE(value_low, 0) AS addressable_spend,
+        CASE
+          WHEN COALESCE(value_high, value_low, 0) >= 10000000 THEN 'high'
+          WHEN COALESCE(value_high, value_low, 0) >= 1000000 THEN 'medium'
+          ELSE 'low'
+        END AS priority,
+        confidence,
+        CASE
+          WHEN quality_state = 'accepted' AND confidence >= 0.75 THEN 'ready_to_act'
+          WHEN quality_state IN ('missing_evidence', 'blocked') THEN 'evidence_blocked'
+          ELSE 'review_required'
+        END AS readiness_state,
+        CASE WHEN evidence_reference IS NULL OR evidence_reference = '' THEN 'missing' ELSE 'present' END AS evidence_state,
+        recommended_action,
+        accountable_role,
+        NULL::date AS decision_due_date,
+        opportunity_type AS finding_rule_ref,
+        as_of_date,
+        'skyharbor-v3-live-load-20260803'::text AS knowledge_baseline_ref,
+        'sourcing-consumption-v1'::text AS projection_contract_version,
+        quality_state AS authority_state,
+        'current'::text AS freshness_state,
+        'available'::text AS availability_state,
+        load_run_id,
+        timing_window,
+        quality_state
+      FROM source.sourcing_opportunity
+      WHERE source.can_read_sourcing_tenant(tenant_key)
+
+      UNION ALL
+
+      SELECT
+        o.tenant_key,
+        o.opportunity_id AS opportunity_ref,
+        o.opportunity_id,
+        o.vendor_id AS vendor_ref,
+        o.vendor_id,
+        o.contract_id AS contract_ref,
+        o.contract_id,
+        NULL::text AS event_ref,
+        NULL::text AS event_id,
+        o.value_type AS action_type,
+        o.value_type AS opportunity_type,
+        COALESCE(o.payload ->> 'title', o.narrative) AS title,
+        COALESCE(o.payload ->> 'finding_summary', o.narrative) AS finding_summary,
+        COALESCE(o.payload ->> 'deterministic_basis', o.payload ->> 'native_vs_nexus_note', o.blocking_gap, o.narrative) AS deterministic_basis,
+        o.amount_usd AS value_low,
+        o.amount_usd AS value_high,
+        o.amount_usd AS annual_value_exposed,
+        o.amount_usd AS addressable_spend,
+        CASE
+          WHEN o.value_type = 'control_action' THEN 'control'
+          WHEN COALESCE(o.amount_usd, 0) >= 10000000 THEN 'high'
+          WHEN COALESCE(o.amount_usd, 0) >= 1000000 THEN 'medium'
+          ELSE 'low'
+        END AS priority,
+        o.confidence,
+        CASE
+          WHEN o.value_type = 'control_action' THEN 'control_required'
+          WHEN o.stage = 'finance_confirmed' THEN 'ready_to_act'
+          WHEN o.approval_state = 'requires_review' THEN 'finance_confirmation_required'
+          WHEN o.stage IN ('evidence_required', 'baseline_conflict') THEN 'evidence_blocked'
+          ELSE 'review_required'
+        END AS readiness_state,
+        CASE
+          WHEN EXISTS (
+            SELECT 1
+            FROM source.opportunity_evidence e
+            WHERE e.tenant_key = o.tenant_key
+              AND e.dataset_version = o.dataset_version
+              AND e.opportunity_id = o.opportunity_id
+              AND e.evidence_status = 'EVIDENCE_AVAILABLE'
+          ) THEN 'present'
+          ELSE 'missing'
+        END AS evidence_state,
+        o.next_action AS recommended_action,
+        o.owner AS accountable_role,
+        o.deadline AS decision_due_date,
+        o.value_type AS finding_rule_ref,
+        o.created_at::date AS as_of_date,
+        o.dataset_version AS knowledge_baseline_ref,
+        'source-optimization-opportunity-v1'::text AS projection_contract_version,
+        o.approval_state AS authority_state,
+        'current'::text AS freshness_state,
+        'available'::text AS availability_state,
+        c.load_run_id,
+        COALESCE(o.payload ->> 'timing_window', o.deadline::text) AS timing_window,
+        o.evidence_grade AS quality_state
+      FROM source.optimization_opportunity o
+      JOIN source.contract c
+        ON c.tenant_key = o.tenant_key
+       AND c.contract_id = o.contract_id
+      WHERE source.can_read_sourcing_tenant(o.tenant_key)
+    $view$;
+  END IF;
+END $$;
 
 CREATE OR REPLACE VIEW consumption.sourcing_cloud_usage_monthly_v1 AS
 SELECT
