@@ -22,6 +22,29 @@ const PROOF_END = "__SEMANTIC2_PROOF_TGZ_END__";
 const PROJECTION_VERSION = 2;
 const CUBE_VERSION = 2;
 
+const BRIDGE_METRIC_DEFINITIONS = [
+  {
+    metricKey: "source_cloud_candidate_value_usd",
+    metricName: "Source cloud candidate value",
+    definition:
+      "Candidate annual value from Source cloud-consumption opportunities before finance confirmation.",
+    unit: "USD",
+    directionality: "neutral",
+    cadence: "annual",
+    aggregationRule: "sum",
+  },
+  {
+    metricKey: "source_cloud_evidence_gate",
+    metricName: "Source cloud evidence gate",
+    definition:
+      "Evidence-readiness gate for Source cloud-consumption actions projected into Tower.",
+    unit: "state",
+    directionality: "neutral",
+    cadence: "point_in_time",
+    aggregationRule: "none",
+  },
+];
+
 const PROJECTION_KEYS = {
   recommended_actions: "tower_recommended_actions",
   value_proof: "tower_value_proof",
@@ -1007,6 +1030,36 @@ async function deleteBridgeRows(client, context) {
   );
 }
 
+async function ensureBridgeMetricDefinitions(client, context) {
+  for (const metric of BRIDGE_METRIC_DEFINITIONS) {
+    await client.query(
+      `INSERT INTO ecl_context.metric_definition (
+         id, tenant_key, metric_key, metric_name, definition,
+         unit, directionality, cadence, aggregation_rule
+       )
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       ON CONFLICT (tenant_key, metric_key)
+       DO UPDATE SET metric_name = EXCLUDED.metric_name,
+                     definition = EXCLUDED.definition,
+                     unit = EXCLUDED.unit,
+                     directionality = EXCLUDED.directionality,
+                     cadence = EXCLUDED.cadence,
+                     aggregation_rule = EXCLUDED.aggregation_rule`,
+      [
+        stableUuid("tower-source-cloud-bridge:metric-definition", context.tenantKey, metric.metricKey),
+        context.tenantKey,
+        metric.metricKey,
+        metric.metricName,
+        metric.definition,
+        metric.unit,
+        metric.directionality,
+        metric.cadence,
+        metric.aggregationRule,
+      ],
+    );
+  }
+}
+
 async function applyBridge(client, context, args, sourceFiles) {
   const byId = new Map(
     (sourceFiles["optimization_opportunities.csv"] ?? []).map((row) => [
@@ -1019,6 +1072,7 @@ async function applyBridge(client, context, args, sourceFiles) {
     ...(byId.get(row.opportunity_id) ?? {}),
   }));
 
+  await ensureBridgeMetricDefinitions(client, context);
   await deleteBridgeRows(client, context);
   for (const opportunity of opportunities) {
     await upsertCommandRow(client, context, args, "recommended_actions", opportunity);
