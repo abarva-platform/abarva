@@ -2081,6 +2081,18 @@ function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
     module: readString(record.module),
     provider: readString(record.provider),
     sourceProvider: readString(record.sourceProvider),
+    sourceContract360Mode: readBoolean(record.sourceContract360Mode),
+    contractId: readString(record.contractId),
+    contractName: readString(record.contractName),
+    vendorName: readString(record.vendorName),
+    annualValue: readNumber(record.annualValue),
+    actualAnnualSpend: readNumber(record.actualAnnualSpend),
+    endDate: readString(record.endDate),
+    evidencePosture: readString(record.evidencePosture),
+    nextAction: readString(record.nextAction),
+    contractDatasetSummary: readString(record.contractDatasetSummary),
+    contractCubeSummary: readString(record.contractCubeSummary),
+    contractTopVendorSummary: readString(record.contractTopVendorSummary),
     evaluationCaseId: readString(record.evaluationCaseId),
     evalCaseId: readString(record.evalCaseId),
     caseId: readString(record.caseId),
@@ -2108,6 +2120,10 @@ function readString(value: unknown): string | null {
 
 function readBoolean(value: unknown): boolean {
   return value === true || value === "true" || value === "1";
+}
+
+function readNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function readPlainObject(value: unknown): Record<string, unknown> | undefined {

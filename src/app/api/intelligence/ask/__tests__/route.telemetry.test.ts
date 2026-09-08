@@ -397,6 +397,62 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain("Contract Evidence Relationship");
   });
 
+  it("preserves direct Contract 360 context for Claude-authored selected-contract answers", async () => {
+    (askIntelligence as jest.Mock).mockClear();
+
+    const response = await POST(
+      makeRequest({
+        query:
+          "What is the candidate opportunity value on this contract, and what evidence supports it?",
+        client: "active-client",
+        richText: true,
+        answerOnlyStreaming: true,
+        surfaceContext: {
+          module: "Source",
+          activeClient: "Active Client",
+          clientKey: "apexretail",
+          sourceContract360Mode: true,
+          contractId: "CTR-123",
+          contractName: "Platform Services Agreement",
+          vendorName: "Primary Vendor",
+          annualValue: 12_400_000,
+          actualAnnualSpend: 13_100_000,
+          endDate: "2027-06-30",
+          evidencePosture: "92% source confidence",
+          nextAction: "Confirm the source event evidence owner.",
+          contractDatasetSummary: "2 contracts / 8 scope rows.",
+          contractCubeSummary: "3 action candidates / 6 aVa grounding bundles.",
+          contractTopVendorSummary:
+            "Primary Vendor is the largest loaded contract-directory vendor.",
+        },
+      }) as never,
+    );
+    await readResponseText(response);
+
+    expect(askIntelligence).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        answerOnlyStreaming: true,
+        surfaceContext: expect.objectContaining({
+          module: "Source",
+          sourceContract360Mode: true,
+          contractId: "CTR-123",
+          contractName: "Platform Services Agreement",
+          vendorName: "Primary Vendor",
+          annualValue: 12_400_000,
+          actualAnnualSpend: 13_100_000,
+          endDate: "2027-06-30",
+          evidencePosture: "92% source confidence",
+          nextAction: "Confirm the source event evidence owner.",
+          contractDatasetSummary: "2 contracts / 8 scope rows.",
+          contractCubeSummary: "3 action candidates / 6 aVa grounding bundles.",
+          contractTopVendorSummary:
+            "Primary Vendor is the largest loaded contract-directory vendor.",
+        }),
+      }),
+    );
+  });
+
   it("does not append a generic Moves phase plan to deterministic Source contract answers", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
