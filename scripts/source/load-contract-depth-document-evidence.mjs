@@ -167,6 +167,44 @@ function nonEmpty(value) {
   return text ? text : null;
 }
 
+export function buildDocumentFileInputs(pages, clauses) {
+  const pagesByFile = new Map();
+  for (const row of pages) {
+    const list = pagesByFile.get(row.source_file_id) ?? [];
+    list.push(row);
+    pagesByFile.set(row.source_file_id, list);
+  }
+
+  const clausesByFile = new Map();
+  for (const row of clauses) {
+    const list = clausesByFile.get(row.source_file_id) ?? [];
+    list.push(row);
+    clausesByFile.set(row.source_file_id, list);
+  }
+
+  const sourceFileIds = new Set([
+    ...pagesByFile.keys(),
+    ...clausesByFile.keys(),
+  ]);
+  return [...sourceFileIds]
+    .filter(Boolean)
+    .sort()
+    .map((sourceFileId) => {
+      const filePages = pagesByFile.get(sourceFileId) ?? [];
+      const fileClauses = clausesByFile.get(sourceFileId) ?? [];
+      const first = filePages[0] ?? fileClauses[0];
+      const pageCount = Math.max(
+        filePages.length,
+        ...fileClauses.map((row) => intValue(row.source_page) ?? 1),
+        1,
+      );
+      const combinedText = filePages.length
+        ? filePages.map((row) => row.page_text || "").join("\n")
+        : fileClauses.map((row) => row.value_text || "").join("\n");
+      return { sourceFileId, first, pageCount, combinedText };
+    });
+}
+
 async function ensureDocumentSchema(client) {
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}`);
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(META_SCHEMA)}`);
@@ -395,16 +433,9 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
   // the concatenation of that file's page text, since the package has no
   // separate PDF binary -- consistent with how contract_page_text.csv already
   // ships a page_text_sha256 per page).
-  const pagesByFile = new Map();
-  for (const row of pages) {
-    const list = pagesByFile.get(row.source_file_id) ?? [];
-    list.push(row);
-    pagesByFile.set(row.source_file_id, list);
-  }
+  const documentFiles = buildDocumentFileInputs(pages, clauses);
   let fileCount = 0;
-  for (const [sourceFileId, fileRows] of pagesByFile.entries()) {
-    const first = fileRows[0];
-    const combinedText = fileRows.map((r) => r.page_text || "").join("\n");
+  for (const { sourceFileId, first, pageCount, combinedText } of documentFiles) {
     await client.query(
       `INSERT INTO ${quoteIdent(DOC_SCHEMA)}.file (
          file_id, tenant_key, blob_uri, content_sha256, file_name, media_type,
@@ -425,7 +456,7 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
         blobUriFor(args, sourceFileId),
         sha256(combinedText),
         `${sourceFileId}.txt`,
-        fileRows.length,
+        pageCount,
         args.loadRunId,
         documentRole(sourceFileId),
         documentTypeFor(sourceFileId),
@@ -434,7 +465,7 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
           dataset_version: args.datasetVersion,
           synthetic_policy: "synthetic_demo_only_not_client_truth",
           vendor_name: first.vendor_name,
-          source_package: "meridian-contract-depth-v1-20260828/source-files/contract_page_text.csv",
+          source_package: `${args.datasetVersion}/source-files`,
         }),
       ],
     );
@@ -603,7 +634,10 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(JSON.stringify({ ok: false, error: error.message, code: error.code, detail: error.detail, schema: error.schema, table: error.table, column: error.column, constraint: error.constraint }, null, 2));
-  process.exit(1);
-});
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  main().catch((error) => {
+    console.error(JSON.stringify({ ok: false, error: error.message, code: error.code, detail: error.detail, schema: error.schema, table: error.table, column: error.column, constraint: error.constraint }, null, 2));
+    process.exit(1);
+  });
+}
