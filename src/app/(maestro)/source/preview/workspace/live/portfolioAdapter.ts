@@ -35,8 +35,6 @@ import {
   listContract360,
   listContractApplicationScope,
   listContractInitiativeDependency,
-  listSourceContractActionCandidates,
-  listSourceContractEvidenceCoverage,
   listVendorContractPortfolio,
 } from "@/lib/source/data-model/read-adapter";
 import type {
@@ -692,17 +690,26 @@ async function loadSourceWorkspaceImpactLayerWithTimings(
   readonly timings: readonly SourceWorkspaceLoadTiming[];
 }> {
   const timings: SourceWorkspaceLoadTiming[] = [];
-  const [
+  const {
     evidenceCoverage,
-    actionCandidates,
-  ] = await Promise.all([
-    timeWorkspaceRead(timings, "impact.evidence_coverage_view", () =>
-      listSourceContractEvidenceCoverage(tenantKey),
-    ),
-    timeWorkspaceRead(timings, "impact.action_candidates_view", () =>
-      listSourceContractActionCandidates(tenantKey),
-    ),
-  ]);
+    actionCandidates: rawActionCandidates,
+  } = await loadDirectSourceWorkspaceImpactRows(tenantKey, timings);
+  const coverageByContract = new Map(
+    evidenceCoverage.map((row) => [row.contract_id, row]),
+  );
+  const actionCandidates = rawActionCandidates.map((row) => {
+    const coverage = coverageByContract.get(row.contract_id);
+    return {
+      ...row,
+      coverage_state: row.coverage_state ?? coverage?.coverage_state ?? null,
+      blocker_if_missing:
+        row.blocker_if_missing ?? coverage?.blocker_if_missing ?? null,
+      citation_basis_json: {
+        ...(row.citation_basis_json ?? {}),
+        evidence_coverage: coverage?.evidence_basis_json ?? null,
+      },
+    };
+  });
   const claimCards = actionCandidates.map(claimCardFromActionCandidate);
   timings.push({
     label: "impact.claim_cards_generated",
@@ -757,6 +764,221 @@ async function loadSourceWorkspaceImpactLayerWithTimings(
     };
   }
   return { impact: viewImpact, timings };
+}
+
+async function loadDirectSourceWorkspaceImpactRows(
+  tenantKey: string,
+  timings: SourceWorkspaceLoadTiming[],
+): Promise<Pick<SourceWorkspaceImpactLayer, "evidenceCoverage" | "actionCandidates">> {
+  const acceptedTenantKeys = Array.from(
+    new Set(
+      [
+        canonicalTenantKey(tenantKey),
+        tenantKey,
+        ...tenantAliasesFor(tenantKey),
+      ].map((value) => value.trim()),
+    ),
+  );
+  try {
+    const rows = await azureRead.withSession(async (run) => {
+      await run("SELECT set_config('app.tenant_key', $1, false)", [
+        canonicalTenantKey(tenantKey),
+      ]);
+      const evidenceCoverage = await timeWorkspaceRead(
+        timings,
+        "impact.evidence_coverage_direct",
+        () =>
+          run<SourceContractEvidenceCoverageRow>(
+            `WITH spend AS (
+               SELECT
+                 tenant_key,
+                 contract_id,
+                 count(*)::bigint AS spend_rows,
+                 COALESCE(sum(actual_spend), 0)::numeric AS actual_spend_usd,
+                 COALESCE(sum(committed_amount), 0)::numeric AS committed_spend_usd
+                FROM consumption.sourcing_spend_monthly_v1
+               WHERE tenant_key = ANY($1::text[])
+               GROUP BY tenant_key, contract_id
+             ),
+             performance AS (
+               SELECT
+                 tenant_key,
+                 contract_id,
+                 count(*)::bigint AS performance_rows,
+                 count(*) FILTER (WHERE performance_state = 'breached')::bigint AS breach_rows,
+                 COALESCE(sum(credit_calculated), 0)::numeric AS credit_calculated_usd,
+                 COALESCE(sum(credit_claimed), 0)::numeric AS credit_claimed_usd,
+                 COALESCE(sum(credit_recovered), 0)::numeric AS credit_recovered_usd
+                FROM consumption.sourcing_performance_v1
+               WHERE tenant_key = ANY($1::text[])
+               GROUP BY tenant_key, contract_id
+             ),
+             opportunities AS (
+               SELECT
+                 tenant_key,
+                 contract_id,
+                 count(*)::bigint AS opportunity_rows,
+                 COALESCE(sum(annual_value_exposed), 0)::numeric AS candidate_amount_usd,
+                 count(*) FILTER (WHERE readiness_state = 'finance_confirmation_required')::bigint AS finance_confirmation_required_rows,
+                 count(*) FILTER (WHERE evidence_state = 'present')::bigint AS opportunities_with_evidence
+                FROM consumption.sourcing_opportunity_v1
+               WHERE tenant_key = ANY($1::text[])
+               GROUP BY tenant_key, contract_id
+             ),
+             scope AS (
+               SELECT
+                 tenant_key,
+                 contract_id,
+                 count(*)::bigint AS scope_rows,
+                 count(*) FILTER (WHERE critical_application_flag)::bigint AS critical_scope_rows
+                FROM consumption.sourcing_contract_scope_v1
+               WHERE tenant_key = ANY($1::text[])
+               GROUP BY tenant_key, contract_id
+             )
+             SELECT
+               c.tenant_key,
+               c.contract_id,
+               c.vendor_ref,
+               c.vendor_name,
+               c.vendor_category,
+               c.vendor_category AS contract_archetype,
+               c.contract_name,
+               COALESCE(spend.spend_rows, 0)::bigint AS spend_rows,
+               COALESCE(spend.actual_spend_usd, 0)::numeric AS actual_spend_usd,
+               COALESCE(spend.committed_spend_usd, 0)::numeric AS committed_spend_usd,
+               COALESCE(performance.performance_rows, 0)::bigint AS performance_rows,
+               COALESCE(performance.breach_rows, 0)::bigint AS breach_rows,
+               COALESCE(performance.credit_calculated_usd, 0)::numeric AS credit_calculated_usd,
+               COALESCE(performance.credit_claimed_usd, 0)::numeric AS credit_claimed_usd,
+               COALESCE(performance.credit_recovered_usd, 0)::numeric AS credit_recovered_usd,
+               GREATEST(COALESCE(performance.credit_calculated_usd, 0) - COALESCE(performance.credit_claimed_usd, 0), 0)::numeric AS unclaimed_credit_usd,
+               COALESCE(opportunities.opportunity_rows, 0)::bigint AS opportunity_rows,
+               COALESCE(opportunities.candidate_amount_usd, 0)::numeric AS candidate_amount_usd,
+               COALESCE(opportunities.finance_confirmation_required_rows, 0)::bigint AS finance_confirmation_required_rows,
+               COALESCE(opportunities.opportunities_with_evidence, 0)::bigint AS opportunities_with_evidence,
+               COALESCE(scope.scope_rows, 0)::bigint AS scope_rows,
+               COALESCE(scope.critical_scope_rows, 0)::bigint AS critical_scope_rows,
+               COALESCE(c.document_page_text_count, 0)::bigint AS document_page_text_rows,
+               COALESCE(c.change_order_count, 0)::bigint AS change_order_rows,
+               CASE
+                 WHEN COALESCE(opportunities.opportunity_rows, 0) > 0
+                  AND COALESCE(opportunities.opportunities_with_evidence, 0) = 0 THEN 'blocked'
+                 WHEN COALESCE(spend.spend_rows, 0) > 0
+                  AND COALESCE(performance.performance_rows, 0) > 0
+                  AND COALESCE(c.document_page_text_count, 0) > 0 THEN 'decision_ready'
+                 WHEN COALESCE(spend.spend_rows, 0) > 0
+                   OR COALESCE(performance.performance_rows, 0) > 0
+                   OR COALESCE(c.document_page_text_count, 0) > 0
+                   OR COALESCE(opportunities.opportunity_rows, 0) > 0 THEN 'partial'
+                 ELSE 'not_loaded'
+               END AS coverage_state,
+               concat_ws(
+                 '; ',
+                 CASE WHEN COALESCE(spend.spend_rows, 0) = 0 THEN 'monthly spend missing' END,
+                 CASE WHEN COALESCE(performance.performance_rows, 0) = 0 THEN 'performance rows missing' END,
+                 CASE WHEN COALESCE(c.document_page_text_count, 0) = 0 THEN 'document page text missing' END,
+                 CASE
+                   WHEN COALESCE(opportunities.finance_confirmation_required_rows, 0) > 0
+                     THEN 'finance confirmation required before realized-value claim'
+                 END
+               ) AS blocker_if_missing,
+               jsonb_build_object(
+                 'source.contract_360', jsonb_build_object(
+                   'document_page_text_rows', COALESCE(c.document_page_text_count, 0),
+                   'change_order_rows', COALESCE(c.change_order_count, 0)
+                 ),
+                 'consumption.sourcing_spend_monthly_v1', COALESCE(spend.spend_rows, 0),
+                 'consumption.sourcing_performance_v1', COALESCE(performance.performance_rows, 0),
+                 'consumption.sourcing_opportunity_v1', COALESCE(opportunities.opportunity_rows, 0),
+                 'consumption.sourcing_contract_scope_v1', COALESCE(scope.scope_rows, 0)
+               ) AS evidence_basis_json,
+               c.load_run_id
+              FROM source.contract_360 c
+              LEFT JOIN spend ON spend.tenant_key = c.tenant_key AND spend.contract_id = c.contract_id
+              LEFT JOIN performance ON performance.tenant_key = c.tenant_key AND performance.contract_id = c.contract_id
+              LEFT JOIN opportunities ON opportunities.tenant_key = c.tenant_key AND opportunities.contract_id = c.contract_id
+              LEFT JOIN scope ON scope.tenant_key = c.tenant_key AND scope.contract_id = c.contract_id
+             WHERE c.tenant_key = ANY($1::text[])
+               AND (
+                 COALESCE(spend.spend_rows, 0) > 0
+                 OR COALESCE(performance.performance_rows, 0) > 0
+                 OR COALESCE(opportunities.opportunity_rows, 0) > 0
+                 OR COALESCE(c.document_page_text_count, 0) > 0
+               )
+             ORDER BY COALESCE(opportunities.candidate_amount_usd, 0) DESC NULLS LAST,
+                      GREATEST(COALESCE(performance.credit_calculated_usd, 0) - COALESCE(performance.credit_claimed_usd, 0), 0) DESC NULLS LAST,
+                      c.contract_id`,
+            [acceptedTenantKeys],
+          ).then((rows) => rows.map(normalizeDerivedEvidenceCoverageRow)),
+      );
+      const actionCandidates = await timeWorkspaceRead(
+        timings,
+        "impact.action_candidates_direct",
+        () =>
+          run<SourceContractActionCandidateRow>(
+            `SELECT
+               o.tenant_key,
+               o.opportunity_id AS action_candidate_id,
+               o.opportunity_id,
+               o.contract_id,
+               o.vendor_ref,
+               COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
+               o.title,
+               o.action_type,
+               o.opportunity_type,
+               o.finding_summary,
+               o.deterministic_basis,
+               o.annual_value_exposed::numeric AS candidate_amount_usd,
+               o.priority,
+               o.readiness_state,
+               o.evidence_state,
+               o.authority_state,
+               CASE
+                 WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+                 WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+                 ELSE 'not_confirmed'
+               END AS finance_confirmation_state,
+               o.recommended_action AS next_action,
+               o.accountable_role,
+               o.decision_due_date,
+               NULL::text AS coverage_state,
+               CASE
+                 WHEN o.readiness_state = 'finance_confirmation_required'
+                   THEN 'Never present this candidate as realized savings until finance confirms it.'
+                 ELSE NULL::text
+               END AS blocker_if_missing,
+               jsonb_build_object(
+                 'opportunity_ref', o.opportunity_id,
+                 'contract_ref', o.contract_id,
+                 'finance_confirmation_state',
+                   CASE
+                     WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+                     WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+                     ELSE 'not_confirmed'
+                   END
+               ) AS citation_basis_json,
+               o.load_run_id
+              FROM consumption.sourcing_opportunity_v1 o
+              LEFT JOIN source.contract_360 c
+                ON c.tenant_key = o.tenant_key
+               AND c.contract_id = o.contract_id
+             WHERE o.tenant_key = ANY($1::text[])
+             ORDER BY o.annual_value_exposed DESC NULLS LAST, o.opportunity_id`,
+            [acceptedTenantKeys],
+          ).then((rows) => rows.map(normalizeDerivedActionCandidateRow)),
+      );
+      return { evidenceCoverage, actionCandidates };
+    });
+    return rows ?? { evidenceCoverage: [], actionCandidates: [] };
+  } catch {
+    timings.push({
+      label: "impact.direct_session",
+      ms: 0,
+      rows: 0,
+      error: "read_failed",
+    });
+    return { evidenceCoverage: [], actionCandidates: [] };
+  }
 }
 
 async function timeDerivedWorkspaceImpactRead(

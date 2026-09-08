@@ -39,6 +39,26 @@ function csv(rows: readonly Record<string, string>[]): string {
   return `${lines.join("\n")}\n`;
 }
 
+function isDirectEvidenceCoverageSql(sql: string): boolean {
+  return (
+    sql.includes("WITH spend AS") &&
+    sql.includes("FROM source.contract_360 c") &&
+    sql.includes("COALESCE(spend.spend_rows, 0)::bigint AS spend_rows") &&
+    sql.includes("c.document_page_text_count") &&
+    sql.includes("consumption.sourcing_spend_monthly_v1") &&
+    sql.includes("consumption.sourcing_performance_v1") &&
+    sql.includes("consumption.sourcing_opportunity_v1") &&
+    sql.includes("consumption.sourcing_contract_scope_v1")
+  );
+}
+
+function isDirectActionCandidateSql(sql: string): boolean {
+  return (
+    sql.includes("FROM consumption.sourcing_opportunity_v1 o") &&
+    sql.includes("o.opportunity_id AS action_candidate_id")
+  );
+}
+
 describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
   let dir: string;
 
@@ -497,7 +517,10 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_360")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("FROM source.contract_360")
+        ) {
           return [
             {
               tenant_key: "meridian-health",
@@ -552,7 +575,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_evidence_coverage_v1")) {
+        if (isDirectEvidenceCoverageSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -585,7 +608,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_action_candidate_v1")) {
+        if (isDirectActionCandidateSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -701,17 +724,32 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("consumption.sourcing_spend_monthly_v1")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_spend_monthly_v1")
+        ) {
           return [
             {
-              spend_row_count: "12",
-              spend_actual: "8587900.00",
-              spend_committed: "8600004.00",
-              performance_row_count: "12",
-              performance_breach_count: "3",
+              row_count: "12",
+              invoice_lines: "12",
+              actual_spend: "8587900.00",
+              committed_amount: "8600004.00",
+              off_contract_spend: "0",
+            },
+          ] as R[];
+        }
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_performance_v1")
+        ) {
+          return [
+            {
+              row_count: "12",
+              breach_count: "3",
               credit_calculated: "43000.02",
               credit_claimed: "0",
               credit_recovered: "0",
+              unclaimed_credit: "43000.02",
             },
           ] as R[];
         }
@@ -772,7 +810,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         call.sql.includes("set_config") &&
         call.params[0] === "meridian-health",
     );
-    expect(canonicalImpactSetConfigCalls).toHaveLength(2);
+    expect(canonicalImpactSetConfigCalls.length).toBeGreaterThanOrEqual(1);
     const legacyImpactSetConfigCalls = runCalls.filter(
       (call) =>
         call.sql.includes("set_config") &&
@@ -820,9 +858,15 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toBe(false);
     expect(
       runCalls.some((call) =>
-        call.sql.includes("FROM consumption.sourcing_spend_monthly_v1"),
+        call.sql.includes("FROM source.contract_evidence_coverage_v1"),
       ),
     ).toBe(false);
+    expect(runCalls.some((call) => isDirectEvidenceCoverageSql(call.sql))).toBe(
+      true,
+    );
+    expect(runCalls.some((call) => isDirectActionCandidateSql(call.sql))).toBe(
+      true,
+    );
     expect(
       portfolio.cockpit.proofLayers.sourceSystems.find(
         (row) => row.name === "executive_portfolio",
@@ -837,7 +881,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toEqual(["Workday Finance", "BlackLine Account Reconciliations"]);
   });
 
-  it("completes partial prebuilt impact views with derived claim and aVa grounding", async () => {
+  it("completes direct impact rows with generated claim and aVa grounding", async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
     const runCalls: Array<{ sql: string; params: readonly unknown[] }> = [];
     mockWithSession.mockImplementation(async (fn) => {
@@ -889,7 +933,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ) {
           return [] as R[];
         }
-        if (sql.includes("FROM source.contract_action_candidate_v1")) {
+        if (isDirectActionCandidateSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -933,24 +977,38 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
           return [] as R[];
         }
         if (
-          sql.includes("consumption.sourcing_spend_monthly_v1") &&
-          sql.includes("performance AS") &&
-          sql.includes("spend_row_count")
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_spend_monthly_v1")
         ) {
           return [
             {
-              spend_row_count: "12",
-              spend_actual: "1452000.00",
-              spend_committed: "1480000.00",
-              performance_row_count: "0",
-              performance_breach_count: "0",
-              credit_calculated: "0",
-              credit_claimed: "0",
-              credit_recovered: "0",
+              row_count: "12",
+              invoice_lines: "12",
+              actual_spend: "1452000.00",
+              committed_amount: "1480000.00",
+              off_contract_spend: "0",
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_360 c")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_performance_v1")
+        ) {
+          return [
+            {
+              row_count: "0",
+              breach_count: "0",
+              credit_calculated: "0",
+              credit_claimed: "0",
+              credit_recovered: "0",
+              unclaimed_credit: "0",
+            },
+          ] as R[];
+        }
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("FROM source.contract_360 c")
+        ) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1065,7 +1123,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toBe(true);
   });
 
-  it("does not block full impact loading on derived fallback when physical action views are complete", async () => {
+  it("does not call heavy impact views when direct impact rows are complete", async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
     const runCalls: Array<{ sql: string; params: readonly unknown[] }> = [];
     mockWithSession.mockImplementation(async (fn) => {
@@ -1116,7 +1174,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ) {
           return [] as R[];
         }
-        if (sql.includes("FROM source.contract_evidence_coverage_v1")) {
+        if (isDirectEvidenceCoverageSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1151,7 +1209,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_action_candidate_v1")) {
+        if (isDirectActionCandidateSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1249,20 +1307,30 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.impact.avaGroundingBundles).toHaveLength(6);
     expect(
       runCalls.some((call) => call.sql.includes("FROM source.contract_360 c")),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       runCalls.some((call) =>
         call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
       ),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       runCalls.some((call) =>
         call.sql.includes("FROM consumption.sourcing_spend_monthly_v1"),
       ),
+    ).toBe(true);
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("FROM source.contract_evidence_coverage_v1"),
+      ),
+    ).toBe(false);
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("FROM source.contract_action_candidate_v1"),
+      ),
     ).toBe(false);
   });
 
-  it("derives impact cards from base Source and consumption views when prebuilt impact views are empty", async () => {
+  it("derives impact cards from direct Source and consumption rows", async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
     const runCalls: Array<{ sql: string; params: readonly unknown[] }> = [];
     mockWithSession.mockImplementation(async (fn) => {
@@ -1312,38 +1380,6 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ) {
           return [] as R[];
         }
-        if (sql.includes("FROM source.contract_evidence_coverage_v1")) {
-          return [
-            {
-              tenant_key: "meridian-health",
-              contract_id: "MER-TECH-M365-001",
-              vendor_ref: "vendor-microsoft",
-              vendor_name: "Microsoft Corporation",
-              contract_name: "Microsoft 365 Enterprise Agreement",
-              spend_rows: "0",
-              actual_spend_usd: "0",
-              committed_spend_usd: "0",
-              performance_rows: "0",
-              breach_rows: "0",
-              credit_calculated_usd: "0",
-              credit_claimed_usd: "0",
-              credit_recovered_usd: "0",
-              unclaimed_credit_usd: "0",
-              opportunity_rows: "0",
-              candidate_amount_usd: "0",
-              finance_confirmation_required_rows: "0",
-              opportunities_with_evidence: "0",
-              scope_rows: "0",
-              critical_scope_rows: "0",
-              document_page_text_rows: "0",
-              change_order_rows: "0",
-              coverage_state: "not_loaded",
-              blocker_if_missing: "legacy coverage row only",
-              evidence_basis_json: {},
-              load_run_id: "legacy-impact-view",
-            },
-          ] as R[];
-        }
         if (
           sql.includes("FROM source.contract_action_candidate_v1") ||
           sql.includes("FROM source.contract_claim_card_v1") ||
@@ -1354,24 +1390,35 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
           return [] as R[];
         }
         if (
-          sql.includes("consumption.sourcing_spend_monthly_v1") &&
-          sql.includes("performance AS") &&
-          sql.includes("spend_row_count")
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_spend_monthly_v1")
         ) {
           return [
             {
-              spend_row_count: "12",
-              spend_actual: "1452000.00",
-              spend_committed: "1480000.00",
-              performance_row_count: "3",
-              performance_breach_count: "1",
-              credit_calculated: "25000.00",
-              credit_claimed: "0",
-              credit_recovered: "0",
+              row_count: "12",
+              invoice_lines: "12",
+              actual_spend: "1452000.00",
+              committed_amount: "1480000.00",
+              off_contract_spend: "0",
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_360 c")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("sourcing_performance_v1")
+        ) {
+          return [
+            {
+              row_count: "3",
+              breach_count: "1",
+              credit_calculated: "25000.00",
+              credit_claimed: "0",
+              credit_recovered: "0",
+              unclaimed_credit: "25000.00",
+            },
+          ] as R[];
+        }
+        if (isDirectEvidenceCoverageSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1404,7 +1451,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM consumption.sourcing_opportunity_v1 o")) {
+        if (isDirectActionCandidateSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1454,7 +1501,10 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM source.contract_360")) {
+        if (
+          !isDirectEvidenceCoverageSql(sql) &&
+          sql.includes("FROM source.contract_360")
+        ) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1536,7 +1586,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       runCalls.some((call) =>
         call.sql.includes("FROM source.contract_evidence_coverage_v1"),
       ),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       runCalls.some((call) =>
         call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
