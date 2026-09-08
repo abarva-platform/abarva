@@ -181,6 +181,10 @@ import {
   isGroundedAnswerMode,
   shouldSuppressGenericContextBundleForSourceMode,
 } from "@/lib/source/ava/answer-mode";
+import {
+  buildSourceContract360PromptBlock,
+  buildSourcePortfolioFallbackAnswer,
+} from "@/lib/source/ava/portfolio-fallback-answer";
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
 import { runSourceAnswerQualityGate } from "@/lib/source/ava/answer-quality-gate";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
@@ -1924,6 +1928,10 @@ export async function POST(request: Request) {
     hasSourceContractGrounding
       ? ""
       : contextBundlePromptBlock;
+  const sourceContract360PromptBlock = buildSourceContract360PromptBlock(
+    surfaceContext,
+    activeClientDisplayName,
+  );
 
   // aVa Source polish gate — Gap 2 fix (follow-up to Gap 1 / #4602).
   //
@@ -2210,6 +2218,7 @@ export async function POST(request: Request) {
     // string when the flag is off or no event id is present — the join-filter
     // strips it and the chat is unchanged.
     sourceAvaGroundingBlock,
+    sourceContract360PromptBlock,
     "",
     tenantTechnologyContextBlock,
     "",
@@ -2341,8 +2350,10 @@ export async function POST(request: Request) {
       : []),
     ...(isSourceSurface(surface)
       ? [
-          "- SOURCE CONSULTING PARTNER STYLE: short, calm, commercially sharp. No lengthy passages. No intake-form behavior. No 'Acknowledged' opener.",
-          "- Default Source reply shape: (1) one-sentence read of what you heard, (2) one sentence on why it matters, (3) exactly ONE next question or action.",
+          "- SOURCE CONSULTING PARTNER STYLE: answer like a senior sourcing partner advising an executive team: direct, commercially sharp, evidence-aware, and decision-oriented. No intake-form behavior. No 'Acknowledged' opener.",
+          "- SOURCE ANALYTICAL ANSWER SHAPE: for substantive contract, pricing, renewal, risk, evidence, vendor, or strategy questions, use three short paragraphs by default. Paragraph 1 is the strategic read: answer directly and name the contract/vendor/event basis. Paragraph 2 is the diagnosis: explain the commercial, operational, evidence, or risk implication, using a compact table or allowed chart block when comparison/shape matters. Paragraph 3 is the recommendation: state the next move, decision caveat, and single highest-value evidence/action needed.",
+          "- SOURCE SIMPLE ANSWER SHAPE: for narrow workflow/intake questions, answer in one short paragraph and ask at most one next question.",
+          "- SOURCE CONTRACT INTELLIGENCE: when Contract 360 selected-contract context is present, treat the selected contract plus the contract dataset/cube rollups as available page context. Do not say no contract is selected. Do not tell the user to open Contract 360.",
           '- SOURCE VISUAL OUTPUT CONTRACT: if the user asks for a chart, graph, visual, trend, waterfall, matrix, heatmap, or Recharts-style output, answer with one short interpretation sentence and then emit exactly one compact ```abarva-chart fenced JSON block using only grounded values already present in the Source context. The chart JSON shape is {"type":"bar"|"line"|"waterfall"|"matrix","title":"...","data":[{"label":"...","value":123}]}; labels must be business-readable and values must be numbers, not formatted strings. If the necessary grounded values are missing, do not invent them; say the visual is blocked by missing evidence and name the source family needed.',
           "- SOURCE TABLE OUTPUT CONTRACT: if the user asks for a table, matrix, scorecard, ranking, comparison, or heatmap-ready output, include a compact markdown table in the visible answer. Keep it to the smallest useful set of columns, state the counting basis in prose, and keep unknowns as 'missing' or 'not established' rather than zero.",
           "- SOURCE VIEWED-STAGE DISCIPLINE: when a Source event turn includes a viewed stage, answer operational questions (approval gate, files, templates, collection plan, workshops, guidebook, next step) for that viewed stage even if the event's persisted current stage is later. Mention the persisted current stage only when the user asks where the event is overall.",
@@ -2432,6 +2443,20 @@ export async function POST(request: Request) {
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
   }
+  const sourcePortfolioFallbackAnswer = buildSourcePortfolioFallbackAnswer({
+    message,
+    surface,
+    activeClientDisplayName,
+    surfaceContext,
+  });
+  if (sourcePortfolioFallbackAnswer) {
+    return new Response(demoSafeClientText(sourcePortfolioFallbackAnswer), {
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
   const nativePdfContentBlocks = await buildAgentNativePdfContentBlocks({
     surfaceContext,
     activeClientId: activeClient.id,
@@ -2491,30 +2516,19 @@ export async function POST(request: Request) {
   // (synthesis_violations recorder) for telemetry.
   let bufferedOutput = "";
   let pendingAgentOutput = "";
-  // Phase A + Phase B quality gate (2026-08-04: telemetry-only — see
-  // docs/releases/records/2026-08-04-ava-source-quality-gate-telemetry-only.md):
-  // when a Phase A OR Phase B mode is classified AND grounding is active,
-  // still run the agent's full text through `runSourceAnswerQualityGate`
-  // after the turn completes — but the text now streams to the client
-  // live, token-by-token, exactly like every other surface. The gate no
-  // longer holds the answer back or ships a repaired substitute; it only
-  // logs unresolved checks for telemetry. Holding the whole answer for a
-  // 12-check pass cost 20-30s of visible silence on event-scoped modes
-  // (RFP/BAFO/pricing) — an unacceptable latency tradeoff now that
-  // upstream grounding (source portfolio + per-event) has substantially
-  // cut the fabrication risk this gate exists to catch.
-  const sourceAvaQualityGateActive =
+  // Source aVa output discipline is prompt-first: the model receives the
+  // grounding and answer contract before generation. The quality gate runs as
+  // telemetry only after streaming; it must not rewrite Claude's visible text.
+  const sourceAvaTelemetryGateActive =
     sourceAvaAnswerMode !== null &&
     isGroundedAnswerMode(sourceAvaAnswerMode) &&
     sourceAvaGroundingBlock !== "";
-  let heldAgentText = "";
   const readable = new ReadableStream({
     async start(controller) {
       const flushAgentOutput = () => {
         if (!pendingAgentOutput) return;
         const demoSafeText = demoSafeClientText(pendingAgentOutput);
         bufferedOutput += demoSafeText;
-        heldAgentText += demoSafeText;
         controller.enqueue(encoder.encode(demoSafeText));
         pendingAgentOutput = "";
       };
@@ -2533,7 +2547,6 @@ export async function POST(request: Request) {
       const emitAgentText = (safeText: string) => {
         if (!safeText) return;
         bufferedOutput += safeText;
-        heldAgentText += safeText;
         controller.enqueue(encoder.encode(safeText));
       };
       const flushRestrictedFinancialTail = () => {
@@ -2633,10 +2646,10 @@ export async function POST(request: Request) {
         // this pass runs the same 12 checks purely to log what would have
         // failed, so quality regressions stay visible without holding the
         // turn. Never blocks or re-ships text.
-        if (sourceAvaQualityGateActive) {
+        if (sourceAvaTelemetryGateActive) {
           try {
             const gateResult = runSourceAnswerQualityGate({
-              answerText: heldAgentText,
+              answerText: bufferedOutput,
               mode: sourceAvaAnswerMode,
               hasGroundingContext: sourceAvaGroundingBlock !== "",
               groundingFacts: sourceAvaModeGroundingFacts,
@@ -2656,12 +2669,13 @@ export async function POST(request: Request) {
               // a shared type. The answer already streamed — this never
               // blocks the turn, it only records what failed.
               console.warn(
-                "[source-ava-quality-gate] unresolved checks (telemetry-only, already streamed)",
+                "[source-ava-quality-gate] telemetry checks failed",
                 {
                   surface,
                   tenantId: activeClientKey ?? undefined,
                   mode: sourceAvaAnswerMode,
                   unresolvedChecks: gateResult.unresolvedChecks,
+                  repairedWouldHaveRun: gateResult.repaired,
                 },
               );
             }
