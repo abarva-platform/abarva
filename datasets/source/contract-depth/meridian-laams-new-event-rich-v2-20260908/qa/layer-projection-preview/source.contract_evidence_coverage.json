@@ -1,0 +1,21 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-laams-new-event-rich-v2-20260908",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "document_count": "45",
+    "page_text_rows": "45",
+    "clause_extractions": "56",
+    "monthly_spend_rows": "12",
+    "sla_rows": "72",
+    "change_order_rows": "12",
+    "resource_model_rows": "30",
+    "invoice_line_rows": "72",
+    "batch_job_rows": "96",
+    "qbr_rows": "4",
+    "coverage_state": "contract_brain_ready",
+    "synthetic_policy": "synthetic_demo_only_not_client_truth"
+  }
+]
