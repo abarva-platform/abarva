@@ -4,5 +4,7 @@ export * from "./evaluation-scorecard";
 export * from "./evidence-readiness";
 export * from "./executive-story";
 export * from "./fixtures";
+export * from "./normalized-response-quality";
 export * from "./types";
 export * from "./vendor-response";
+export * from "../vendor-response-matrix";

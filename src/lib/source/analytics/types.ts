@@ -1,3 +1,8 @@
+import type {
+  NormalizedRequirementResponse,
+  NormalizedResponseQualityAnalytics,
+} from "../vendor-response-matrix";
+
 export type SourceEvidenceMode =
   | "evidence_rich"
   | "evidence_partial"
@@ -225,6 +230,7 @@ export interface VendorResponseMveInput {
   };
   assumptions: string[];
   exceptions: string[];
+  requirementResponses?: NormalizedRequirementResponse[];
 }
 
 export interface VendorResponseAnalytics {
@@ -237,6 +243,7 @@ export interface VendorResponseAnalytics {
   transitionReadinessScore: number;
   slaStrengthScore: number;
   staffingCoverageRiskScore: number;
+  normalizedResponseQuality: NormalizedResponseQualityAnalytics | null;
   readyForEvaluation: "yes" | "conditional" | "no";
   clarificationQuestions: string[];
   findings: SourceAnalyticFinding[];
