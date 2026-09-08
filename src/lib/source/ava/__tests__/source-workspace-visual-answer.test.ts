@@ -318,6 +318,62 @@ describe("Source Workspace visual aVa answer", () => {
     );
   });
 
+  it("routes missing requested Contract 360 context before portfolio-level synthesis", () => {
+    const context = {
+      module: "Source",
+      activeClient: "Active Demo Client",
+      clientKey: "active_demo_client",
+      activeTab: "Contract 360 / Story",
+      sourceContract360Mode: true,
+      contractId: "MER-TECH-REQUESTED-001",
+      contractName: null,
+      vendorName: null,
+      annualValue: null,
+      actualAnnualSpend: null,
+      endDate: "Not established",
+      evidencePosture:
+        "Requested contract was not returned by the active Source provider.",
+      nextAction:
+        "Select a contract present in the governed Source rows before making a contract-specific value or evidence claim.",
+      contractDatasetSummary: "230 contracts / 94 vendors / $1.8402B annual value.",
+      contractCubeSummary: "690 scope rows / 0 invoice lines / 32 action candidates.",
+      sourceV4: {
+        selectedContract: null,
+        executivePortfolio: {
+          contracts: 230,
+          annualValue: "$1.8402B",
+        },
+        contextCoverage: {
+          vendors: 94,
+          scopeRows: 690,
+          invoiceLines: 0,
+        },
+      },
+    } as AskSurfaceContext;
+
+    expect(
+      canBuildSourceWorkspaceVisualAnswer({
+        query:
+          "What is the candidate opportunity value on this contract, and what evidence supports it?",
+        surfaceContext: context,
+      }),
+    ).toBe(true);
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query:
+        "What is the candidate opportunity value on this contract, and what evidence supports it?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("MER-TECH-REQUESTED-001");
+    expect(answer?.directAnswer).toContain("Requested contract");
+    expect(answer?.directAnswer).toContain("candidate opportunity value is not established");
+    expect(answer?.directAnswer).toContain(
+      "Requested contract was not returned by the active Source provider",
+    );
+    expect(answer?.directAnswer).not.toContain("No specific contract is selected");
+  });
+
   it("binds a named contract question to the contract directory instead of the visible portfolio selection", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: Record<string, unknown>;
