@@ -767,12 +767,18 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.v4Snapshot.performanceCredits.unclaimedCredit).toBe(
       43000.02,
     );
-    const impactSetConfigCalls = runCalls.filter(
+    const canonicalImpactSetConfigCalls = runCalls.filter(
+      (call) =>
+        call.sql.includes("set_config") &&
+        call.params[0] === "meridian-health",
+    );
+    expect(canonicalImpactSetConfigCalls).toHaveLength(6);
+    const legacyImpactSetConfigCalls = runCalls.filter(
       (call) =>
         call.sql.includes("set_config") &&
         call.params[0] === "meridian_health_global",
     );
-    expect(impactSetConfigCalls).toHaveLength(6);
+    expect(legacyImpactSetConfigCalls).toHaveLength(0);
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_events")),
     ).toBe(false);
