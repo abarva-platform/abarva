@@ -637,14 +637,15 @@ async function loadOpportunities(client, args, sourceFiles) {
   return result.rows;
 }
 
-function gateForOpportunity(row) {
+function gateForOpportunity(args, row) {
+  const isContractDepth = args.packageKind === "contract_depth";
+  const sourceLabel = isContractDepth ? "Source contract-depth" : "Source cloud";
   const amount = Number(row.annual_value_exposed ?? 0);
   if (amount > 0) {
     return {
       status: "gated",
       code: "finance_confirmation_required",
-      detail:
-        "Source cloud opportunity is evidence-backed, but the amount is not finance-confirmed realized value.",
+      detail: `${sourceLabel} opportunity is evidence-backed, but the amount is not finance-confirmed realized value.`,
       nextGate: "finance_confirmation",
       evidenceNeeded: [
         "finance owner confirmation",
@@ -657,8 +658,7 @@ function gateForOpportunity(row) {
   return {
     status: "blocked",
     code: "control_action_required",
-    detail:
-      "Source cloud row is a governance blocker, not a savings amount; resolve it before allocating value by owner or application.",
+    detail: `${sourceLabel} row is a governance blocker, not a savings amount; resolve it before allocating value by owner or application.`,
     nextGate: "control_owner_resolution",
     evidenceNeeded: [
       "control owner resolution",
@@ -772,7 +772,7 @@ async function upsertCommandRow(client, context, args, pageKey, opportunity) {
     vendor_ref: opportunity.vendor_ref,
     vendor_name: opportunity.vendor_name,
   });
-  const gate = gateForOpportunity(opportunity);
+  const gate = gateForOpportunity(args, opportunity);
   const payload = projectionEntryPayload(args, opportunity, pageKey, refs, gate);
   const rowType = `${config.rowTypePrefix}_optimization_candidate`;
   const entry = await upsertProjectionEntry(client, context, args, pageKey, rowKey, rowType, payload, refs);
@@ -861,7 +861,7 @@ async function upsertValueRow(client, context, args, pageKey, opportunity) {
     vendor_ref: opportunity.vendor_ref,
     vendor_name: opportunity.vendor_name,
   });
-  const gate = gateForOpportunity(opportunity);
+  const gate = gateForOpportunity(args, opportunity);
   const periodEndValue = opportunity.decision_due_date ?? "2026-12-31";
   const payload = {
     ...projectionEntryPayload(args, opportunity, pageKey, refs, gate),
@@ -954,7 +954,7 @@ async function upsertEvidenceRow(client, context, args, pageKey, opportunity) {
     vendor_ref: opportunity.vendor_ref,
     vendor_name: opportunity.vendor_name,
   });
-  const gate = gateForOpportunity(opportunity);
+  const gate = gateForOpportunity(args, opportunity);
   const payload = {
     ...projectionEntryPayload(args, opportunity, pageKey, refs, gate),
     proof_needed:

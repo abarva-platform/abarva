@@ -32,10 +32,15 @@ const test = (name, fn) => tests.push([name, fn]);
 
 test("the deletes are shared, not duplicated between load and purge", () => {
   assert.match(loader, /function projectionDeletes\(options\)/);
+  assert.match(loader, /function sourceBridgeRefreshGuardSql\(options\)/);
+  assert.match(loader, /tower_layer4_source_bridge_reapply_required/);
+  assert.match(loader, /TOWER_LAYER4_SOURCE_BRIDGE_REAPPLY_APPROVED/);
+  assert.match(loader, /row_key like 'source_cloud:%'/);
+  assert.match(loader, /row_key like 'source_contract_depth:%'/);
   assert.match(loader, /\.\.\.projectionDeletes\(options\),/);
   assert.match(
     loader,
-    /const sql = \["begin;", \.\.\.projectionDeletes\(options\), "commit;"\]/,
+    /sourceBridgeRefreshGuardSql\(options\),[\s\S]*\.\.\.projectionDeletes\(options\)/,
   );
 });
 
