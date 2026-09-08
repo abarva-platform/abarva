@@ -3,7 +3,7 @@ contracts_rows,1,1,PASS
 contract_clauses_rows,56,56,PASS
 cmdb_application_scope_rows,48,48,PASS
 monthly_spend_rows,12,12,PASS
-sla_performance_rows,12,12,PASS
+sla_performance_rows,72,72,PASS
 ticket_volumetrics_rows,72,72,PASS
 resource_model_rows,30,30,PASS
 invoice_line_detail_rows,72,72,PASS

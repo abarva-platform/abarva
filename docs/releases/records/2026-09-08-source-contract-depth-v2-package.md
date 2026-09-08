@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`data-plane-verified`
 
 ## Plain-English Summary
 
@@ -22,9 +22,11 @@ Layer 2: Produces adapter-preview outputs using the existing contract-depth adap
 
 Layer 3: Produces canonical projection-preview outputs for contract, vendor, scope, performance, financial exposure, evidence, and opportunity objects.
 
-Layer 4: Candidate only until the package is deployed in the ACA image and applied through the governed operator job path.
+Layer 4: Applied and verified through the governed operator ACA job path for the package load run.
 
 Layer 4 update: Serving-view refresh now treats the active contract row as the contract-depth version authority, so rebuilt package rows do not stack with older rows for the same contract.
+
+Tower bridge: Applied and verified into the active Tower assessment context as Source contract-depth candidate rows, value/cost/evidence/risk rows, and cube slices with source references intact.
 
 ## Client Applicability
 
@@ -47,20 +49,24 @@ Layer 4 update: Serving-view refresh now treats the active contract row as the c
 - Layer 3 projection preview status: `PASS`.
 - Package checks include no finance-confirmed realized value, synthetic evidence policy, contract/vendor identity consistency, source-file lineage, and non-empty managed-services evidence coverage.
 - Layer 4 serving-view guard added for active contract version scoping.
+- ACA Layer 2 apply and Layer 3 apply completed for the governed load run.
+- ACA Layer 2/3 verify completed with expected row readbacks.
+- ACA Layer 4 apply and Layer 4 verify completed with package-scoped serving readbacks.
+- ACA Tower bridge apply and verify completed with projection rows, Tower serving rows, cube slices, and source references reconciled.
 
 ## Rollout Plan
 
-Merge through PR, deploy the repo-owned Azure Container Apps main workflow, then run the approved operator ACA job sequence for this dataset version: Layer 2 apply, Layer 3 apply, Layer 2/3 verify, Layer 4 apply, Layer 4 verify, document evidence apply if required, Tower bridge apply, Tower bridge verify, and signed-in product/aVa proof.
+Merge through PR, deploy the repo-owned Azure Container Apps main workflow, then run or re-run the signed-in product and assistant proof for affected Source and Tower surfaces.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: Required before the ACA job can see this package.
+- Repo-owned deploy workflow: Completed before the ACA job sequence.
 - Shared runtime mutators: Only the approved repo-owned workflow may shift shared web traffic.
-- Approved image digest: To be captured from the deploy workflow.
-- ACA runtime invariant: Required after deploy.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:2eb6b33cce7e18381b73acb0fddd3d205cc0f358f6f705964af721ab8d5f06f6`
+- ACA runtime invariant: Passed for the deployed web runtime before the final Layer 4 and Tower bridge jobs.
 - Worker image invariant: Not changed by this release.
 - Feature/env flag update path: Not applicable.
-- Live signed-in proof required: Yes.
+- Live signed-in proof required: Yes; blocked if the available browser session is signed into the wrong tenant.
 
 ## Rollback Plan
 
@@ -70,7 +76,8 @@ Rollback product code through the prior ACA image digest if any runtime issue ap
 
 - Local package: `datasets/source/contract-depth/meridian-laams-new-event-rich-v2-20260908/`
 - Local projection command output.
-- Future ACA job proof bundles for Layer 2, Layer 3, Layer 4, Tower bridge, and signed-in product proof.
+- ACA job proof bundles under `proof/source-laams-rich-v2-azure-load-20260908/` for Layer 2, Layer 3, Layer 2/3 verify, Layer 4 apply/verify, and Tower bridge apply/verify.
+- Signed-in product proof remains a separate gate from data-plane verification.
 
 ## Known Gaps
 
