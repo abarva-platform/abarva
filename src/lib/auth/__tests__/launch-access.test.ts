@@ -13,7 +13,7 @@ describe('launch access roster', () => {
     });
     expect(getStaticLaunchAccessProfile('anand@abarva.ai')).toMatchObject({
       role: 'admin',
-      clientKey: 'skyharbor',
+      clientKey: 'meridian',
     });
   });
 

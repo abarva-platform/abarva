@@ -243,6 +243,27 @@ describe("resolveTenant", () => {
     });
   });
 
+  it("pins the founder launch profile to Meridian ahead of stale session and cookie tenants", async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: "client", clientId: "skyharbor" },
+      primaryEmailAddress: { emailAddress: "anand@abarva.ai" },
+      emailAddresses: [],
+    });
+    mockCookie("skyharbor");
+    mockClientRow({
+      id: "client-meridian",
+      name: "Meridian Health",
+      industry_code: "HEALTHCARE_IDN",
+    });
+
+    await expect(resolveTenant({ requestedClient: "skyharbor" })).resolves.toMatchObject({
+      appClientKey: "meridian",
+      canonicalKey: "meridian-health",
+      clientId: "client-meridian",
+      source: "email",
+    });
+  });
+
   it("pins admin@abarva.ai to Meridian ahead of stale request and cookie tenants", async () => {
     currentUserMock.mockResolvedValue({
       publicMetadata: { role: "client", clientId: "skyharbor" },

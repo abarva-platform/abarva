@@ -23,8 +23,8 @@ export const STATIC_LAUNCH_ACCESS_PROFILES = [
   {
     email: "anand@abarva.ai",
     role: "admin",
-    clientKey: "skyharbor",
-    label: "SkyHarbor founder login",
+    clientKey: "meridian",
+    label: "Meridian founder login",
   },
   {
     email: "anand.sundaram+apex@thesundaram.com",

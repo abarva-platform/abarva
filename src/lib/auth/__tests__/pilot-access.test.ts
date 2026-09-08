@@ -3,6 +3,7 @@ import {
   hasExplicitTenantAlias,
   inferSessionRoleFromEmail,
   resolvePinnedSessionClientKey,
+  shouldStripUnauthorizedClientParam,
 } from "@/lib/auth/access-routing";
 import { inferClientKeyFromEmail, type ClientKey } from "@/lib/client-config";
 
@@ -16,7 +17,7 @@ const PILOT_GRANTS: ReadonlyArray<
   ["surekha.durvasula@gmail.com", "lakeshore", "client"],
   ["anandshp@gmail.com", "lakeshore", "client"],
   ["admin@abarva.ai", "meridian", "client"],
-  ["anand@abarva.ai", "skyharbor", "admin"],
+  ["anand@abarva.ai", "meridian", "admin"],
   ["mreddy@republicebank.com", "arcturus", "client"],
 ];
 
@@ -34,6 +35,31 @@ describe("pilot user access (main)", () => {
   it("is case-insensitive (Clerk may pass mixed case)", () => {
     expect(inferClientKeyFromEmail("KMysore@Gmail.com")).toBe("meridian");
     expect(hasExplicitTenantAlias("Admin@Abarva.AI")).toBe(true);
+  });
+
+  it("keeps the Meridian client parameter for the founder launch profile despite stale session metadata", () => {
+    expect(
+      shouldStripUnauthorizedClientParam(
+        "client",
+        {
+          email: "anand@abarva.ai",
+          clientId: "skyharbor",
+          defaultClientId: "skyharbor",
+        },
+        "meridian",
+      ),
+    ).toBe(false);
+    expect(
+      shouldStripUnauthorizedClientParam(
+        "client",
+        {
+          email: "anand@abarva.ai",
+          clientId: "skyharbor",
+          defaultClientId: "skyharbor",
+        },
+        "skyharbor",
+      ),
+    ).toBe(true);
   });
 
   it("FENCE: an unrelated gmail user gets no client and no alias", () => {
