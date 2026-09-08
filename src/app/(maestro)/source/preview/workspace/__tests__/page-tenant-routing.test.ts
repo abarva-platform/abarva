@@ -136,6 +136,9 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain("X-Source-Portfolio-Impact-Mode");
     expect(portfolioApiSource).toContain("X-Source-Portfolio-Load-Ms");
     expect(portfolioApiSource).toContain("X-Source-Portfolio-Response-Scope");
+    expect(portfolioApiSource).toContain("X-Source-Portfolio-Timings");
+    expect(portfolioApiSource).toContain("compactTimingsHeader(timings)");
+    expect(portfolioApiSource).toContain("timings,");
     expect(portfolioApiSource).toContain('Cache-Control": "private, no-store"');
   });
 

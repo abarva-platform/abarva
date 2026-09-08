@@ -9,6 +9,7 @@ import {
   loadSourceWorkspacePortfolio,
   type SourceWorkspaceImpactLayer,
   type SourceWorkspaceImpactMode,
+  type SourceWorkspaceLoadTiming,
   type SourceWorkspacePortfolioData,
   type SourceWorkspaceProviderMode,
 } from "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter";
@@ -35,6 +36,7 @@ type ImpactCacheEntry = {
     readonly impact: SourceWorkspaceImpactLayer;
     readonly sourceProviderKey: SourceWorkspaceProviderMode;
     readonly loadMs: number;
+    readonly timings: readonly SourceWorkspaceLoadTiming[];
   }>;
 };
 
@@ -91,11 +93,12 @@ export async function GET(request: Request) {
       requestedProvider,
       impactMode,
     });
-    const { impact, sourceProviderKey, loadMs } = await value;
+    const { impact, sourceProviderKey, loadMs, timings } = await value;
     return NextResponse.json({
       impact,
       sourceProviderKey,
       impactMode,
+      timings,
     }, {
       headers: {
         "Cache-Control": "private, no-store",
@@ -103,6 +106,7 @@ export async function GET(request: Request) {
         "X-Source-Portfolio-Impact-Mode": impactMode,
         "X-Source-Portfolio-Load-Ms": String(loadMs),
         "X-Source-Portfolio-Response-Scope": responseScope,
+        "X-Source-Portfolio-Timings": compactTimingsHeader(timings),
       },
     });
   }
@@ -203,6 +207,7 @@ function loadCachedImpact({
       impact: payload.impact,
       sourceProviderKey: payload.sourceProviderKey,
       loadMs: Date.now() - startedAt,
+      timings: payload.timings ?? [],
     }))
     .catch((error) => {
       impactCache.delete(cacheKey);
@@ -214,6 +219,14 @@ function loadCachedImpact({
     value,
   });
   return { value, cacheState: "miss" as const };
+}
+
+function compactTimingsHeader(
+  timings: readonly SourceWorkspaceLoadTiming[],
+): string {
+  return timings
+    .map((timing) => `${timing.label}:${timing.ms}:${timing.rows}`)
+    .join(",");
 }
 
 function responseScopeFromRequest(requestUrl: URL): "portfolio" | "impact" {
