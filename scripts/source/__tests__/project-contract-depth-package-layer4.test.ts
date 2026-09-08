@@ -44,6 +44,19 @@ describe("contract depth package Layer 4 overlay job", () => {
       "source_contract_360_change_order_rows_package: 8",
     );
     expect(source).toContain("source_optimization_opportunity: 6");
+    expect(source).toContain("meridian-laams-new-event-rich-v2-20260908");
+    expect(source).toContain("source_contract_scope: 48");
+    expect(source).toContain("source_contract_performance_observation: 72");
+    expect(source).toContain("source_contract_360_page_text_rows_package: 45");
+    expect(source).toContain(
+      "source_contract_360_change_order_rows_package: 12",
+    );
+    expect(source).toContain(
+      "source_contract_360_resource_role_rows_package: 30",
+    );
+    expect(source).toContain(
+      "source_contract_360_invoice_line_rows_package: 72",
+    );
     expect(source).toContain("meridian-managed-services-depth-v1-20260907");
     expect(source).toContain("source_contract: 1");
     expect(source).toContain("source_contract_consumption_observation: 12");
@@ -95,7 +108,9 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain(
       "COALESCE(NULLIF(cov.vendor_name, ''), 'Vendor name not resolved') AS vendor_name",
     );
-    expect(source).not.toContain("o.vendor_ref, 'Unknown vendor') AS vendor_name");
+    expect(source).not.toContain(
+      "o.vendor_ref, 'Unknown vendor') AS vendor_name",
+    );
     expect(source).not.toContain("o.vendor_name,");
     expect(source).toContain("page_key = 'contract_action'");
     expect(source).toContain("FROM source.contract_action_candidate_v1 a");
