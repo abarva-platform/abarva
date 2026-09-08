@@ -416,6 +416,21 @@ async function l4Readback(
 }
 
 function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
+  if (datasetVersion === "meridian-laams-new-event-rich-v2-20260908") {
+    return {
+      source_contract: 1,
+      source_contract_scope: 48,
+      source_contract_consumption_observation: 12,
+      source_contract_performance_observation: 72,
+      source_contract_service_credit: 5,
+      source_contract_term: 56,
+      source_optimization_opportunity: 4,
+      opportunities_not_finance_confirmed: 4,
+      source_page_text_fact_assertion: 45,
+      source_change_order_fact_assertion: 28,
+      contracts_with_assessed_alternatives: 0,
+    };
+  }
   if (datasetVersion === "meridian-managed-services-depth-v1-20260907") {
     return {
       source_contract: 1,
@@ -431,7 +446,9 @@ function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
       contracts_with_assessed_alternatives: 0,
     };
   }
-  if (datasetVersion === "meridian-legacy-analytics-managed-services-v1-20260907") {
+  if (
+    datasetVersion === "meridian-legacy-analytics-managed-services-v1-20260907"
+  ) {
     return {
       source_contract: 1,
       source_contract_scope: 8,
@@ -462,6 +479,31 @@ function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
 }
 
 function l4ExpectedCounts(datasetVersion: string): Record<string, number> {
+  if (datasetVersion === "meridian-laams-new-event-rich-v2-20260908") {
+    return {
+      source_contract_360_package: 1,
+      source_contract_financial_exposure_package: 1,
+      source_contract_operational_performance_package: 1,
+      source_contract_application_scope_package: 48,
+      consumption_sourcing_spend_monthly_v1_package: 12,
+      consumption_sourcing_performance_v1_package: 72,
+      consumption_sourcing_opportunity_v1_package: 4,
+      source_contract_evidence_coverage_v1_package: 1,
+      source_contract_action_candidate_v1_package: 4,
+      source_contract_claim_card_v1_package: 4,
+      source_vendor_position_v1_package: 1,
+      source_page_storyline_v1_rows: 5,
+      source_ava_grounding_bundle_v1_rows: 4,
+      source_contract_360_page_text_rows_package: 45,
+      source_contract_360_change_order_rows_package: 12,
+      source_contract_360_resource_role_rows_package: 30,
+      source_contract_360_invoice_line_rows_package: 72,
+      source_contract_360_batch_rows_package: 96,
+      source_contract_360_qbr_rows_package: 4,
+      package_contracts_with_assessed_alternatives: 0,
+      skyharbor_strings_in_scope: 0,
+    };
+  }
   if (datasetVersion === "meridian-managed-services-depth-v1-20260907") {
     return {
       source_contract_360_package: 1,
@@ -483,7 +525,9 @@ function l4ExpectedCounts(datasetVersion: string): Record<string, number> {
       skyharbor_strings_in_scope: 0,
     };
   }
-  if (datasetVersion === "meridian-legacy-analytics-managed-services-v1-20260907") {
+  if (
+    datasetVersion === "meridian-legacy-analytics-managed-services-v1-20260907"
+  ) {
     return {
       source_contract_360_package: 1,
       source_contract_financial_exposure_package: 1,

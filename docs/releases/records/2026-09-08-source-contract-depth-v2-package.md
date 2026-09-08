@@ -14,6 +14,8 @@ Adds a tenant-scoped synthetic managed-services contract-depth package with rich
 
 ## Layer Impact
 
+Release lane: `client-data-lane`
+
 Layer 1: Adds source files and synthetic document artifacts organized as operator evidence for a managed-services contract review.
 
 Layer 2: Produces adapter-preview outputs using the existing contract-depth adapter path and preserves source-file/source-row lineage.
@@ -25,7 +27,7 @@ Layer 4: Candidate only until the package is deployed in the ACA image and appli
 ## Client Applicability
 
 - All clients: No.
-- Specific clients: One synthetic healthcare demo tenant.
+- Specific clients: Governed synthetic dataset only.
 - Internal only: Operator build and proof flow.
 - Public/demo only: Synthetic demo evidence.
 - Feature flag: Not applicable.
@@ -68,4 +70,4 @@ Rollback product code through the prior ACA image digest if any runtime issue ap
 
 ## Known Gaps
 
-The current contract-depth loader does not yet ingest the raw New Event/RFP/vendor-response files as first-class Source Event stage objects. Those files are preserved in the package for the next loader extension and must not be claimed as loaded until separately applied and verified.
+Current contract-depth loaders do not yet ingest raw New Event/RFP/vendor-response files as primary Source Event stage objects. Those files are preserved in the package for the next loader extension and must not be claimed as loaded until separately applied and verified.
