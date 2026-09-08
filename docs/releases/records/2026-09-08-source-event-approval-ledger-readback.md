@@ -12,7 +12,7 @@
 
 This release strengthens the Source event approval path by reading the approval ledger from the column the database actually stores (`approved_at`) and adding an operator verification script that proves a synthetic Source event can be approved, advanced, and read back through the same code path used by the product.
 
-Follow-up hardening keeps Clerk display-name lookup lazy and optional so the governed ACA operator verifier can read the ledger without importing the Next request runtime.
+Follow-up hardening keeps Clerk display-name lookup lazy and optional so the governed ACA operator verifier can read the ledger without importing the Next request runtime. The verifier now emits a structured event name so the ACA operator wrapper can extract the readback result into a machine-readable evidence file.
 
 ## Layer Impact
 
@@ -39,6 +39,7 @@ Operational proof layer: the lab migration workflow gains a repository readback 
 - `src/lib/source/__tests__/approval-ledger-loader.test.ts` covers the timestamp mapping and query order.
 - `src/lib/source/__tests__/approval-ledger-loader.test.ts` covers the operator readback mode that skips Clerk lookup.
 - `src/lib/source/verify-event-approvals-readback.ts` creates a synthetic event, runs `applyApproval`, advances the stage, and reads the ledger back.
+- `src/lib/source/verify-event-approvals-readback.ts` emits `structured_event: source_event_approval_repository_readback` for ACA proof extraction.
 - `package.json` adds `db:verify:source-event-approvals`.
 - `.github/workflows/db-migration-lab.yml` runs the new verifier during `mode=apply`.
 
@@ -59,6 +60,10 @@ Blocked:
 Failed proof:
 
 - DB migration workflow run `34196192378` deployed the new verifier into the governed operator lane, but the initial run failed before the ledger query because the script crossed an application-runtime import boundary under `tsx`. This follow-up fixes that boundary and requires a rerun of the same `event-approvals-readback` gate.
+
+Passed proof:
+
+- DB migration workflow run `34199028148` on deployed merge `9a7bea6eaaf12b8a76b2e1620cf23aa282a93552` passed the same `event-approvals-readback` gate. It proved a synthetic non-client approval receipt could be written, the event advanced to `currentStageKey: scope`, and the approval ledger read back `approvedStageKey: strategy`.
 
 ## Rollout Plan
 
@@ -84,6 +89,8 @@ After release, inspect the PR, GitHub Actions checks, ACA deploy run, runtime in
 
 Failed proof artifact to retain: DB migration workflow run `34196192378`, `event-approvals-readback/04-logs.txt`.
 
+Passed proof artifact to retain: DB migration workflow run `34199028148`, `event-approvals-readback/04-logs.txt`.
+
 ## Known Gaps
 
-Signed-in approval UI proof is still required. The current browser session was missing or expired during this work, so this candidate does not claim a live approval-button proof. The initial governed operator readback run also exposed and fixed an application-runtime import issue; a clean rerun is required before claiming repository readback proof.
+Signed-in approval UI proof is still required. The current browser session was missing or expired during this work, so this candidate does not claim a live approval-button proof. A clean governed operator readback has passed; the follow-up structured event makes that readback extractable by the operator wrapper.
