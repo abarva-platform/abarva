@@ -103,6 +103,9 @@ function parseArgs(argv) {
     // this field exists to retire.
     builtAt: new Date().toISOString(),
     purgeOnly: argv.includes("--purge-only") || envFlag("TOWER_LAYER4_PURGE_ONLY"),
+    sourceBridgeReapplyApproved: envFlag(
+      "TOWER_LAYER4_SOURCE_BRIDGE_REAPPLY_APPROVED",
+    ),
     emitProofBundle:
       argv.includes("--emit-proof-bundle") ||
       envFlag("TOWER_LAYER4_EMIT_PROOF_BUNDLE"),
@@ -1399,9 +1402,38 @@ function projectionDeletes(options) {
   ];
 }
 
+function sourceBridgeRefreshGuardSql(options) {
+  if (options.sourceBridgeReapplyApproved) {
+    return "-- Source bridge removal approved; bridge jobs must run after this Layer 4 refresh.";
+  }
+  const tenant = sqlText(options.tenantKey);
+  const assessment = sqlText(options.assessmentId);
+  return `do $source_bridge_refresh_guard$
+begin
+  if exists (
+    select 1
+      from ecl_projection.tower_command_center
+     where tenant_key = ${tenant}
+       and assessment_id = ${assessment}
+       and (
+         row_key like 'source_cloud:%'
+         or row_key like 'source_contract_depth:%'
+       )
+  ) then
+    raise exception 'tower_layer4_source_bridge_reapply_required';
+  end if;
+end
+$source_bridge_refresh_guard$;`;
+}
+
 /** The deletes alone, so Layer 3 can be replaced. Carries the same approval gate as a write. */
 function writePurgeSql(outPath, options) {
-  const sql = ["begin;", ...projectionDeletes(options), "commit;"].join("\n");
+  const sql = [
+    "begin;",
+    sourceBridgeRefreshGuardSql(options),
+    ...projectionDeletes(options),
+    "commit;"
+  ].join("\n");
   fs.writeFileSync(outPath, sql, "utf8");
 }
 
@@ -1455,6 +1487,7 @@ $lifecycle$;`;
 function writeLoadSql(outPath, options, rows) {
   const sql = [
     "begin;",
+    sourceBridgeRefreshGuardSql(options),
     ...projectionDeletes(options),
     insertSql("ecl_context.snapshot", ["id", "tenant_key", "assessment_id", "snapshot_key", "snapshot_type", "source_hash", "context_hash", "created_by_job", "quality_state", "proof_uri"], [rows.snapshot]),
     insertSql("ecl_projection.projection_manifest", ["id", "tenant_key", "assessment_id", "snapshot_id", "projection_key", "projection_version", "rebuild_command", "source_hash", "projection_hash", "row_count", "quality_state", "admission_status", "admission_gate_results_json", "gated_claim_count", "proof_uri"], rows.projectionManifests),
@@ -1961,6 +1994,7 @@ function main() {
       build_version: options.buildVersion,
       input_source_version: options.inputSourceVersion,
       idempotency_key: options.idempotencyKey,
+      source_bridge_reapply_approved: options.sourceBridgeReapplyApproved,
       operator_identity: process.env.USER ?? "unknown",
       git_sha: gitSha(),
       image_digest: process.env.ABARVA_OPERATOR_IMAGE_DIGEST ?? null,
