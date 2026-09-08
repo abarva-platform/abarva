@@ -412,14 +412,16 @@ describe("POST /api/intelligence/ask telemetry", () => {
           activeClient: "Active Client",
           clientKey: "apexretail",
           sourceContract360Mode: true,
-          contractId: "CTR-123",
-          contractName: "Platform Services Agreement",
-          vendorName: "Primary Vendor",
-          annualValue: 12_400_000,
-          actualAnnualSpend: 13_100_000,
-          endDate: "2027-06-30",
-          evidencePosture: "92% source confidence",
-          nextAction: "Confirm the source event evidence owner.",
+          contractId: "MER-TECH-REQUESTED-001",
+          contractName: null,
+          vendorName: null,
+          annualValue: null,
+          actualAnnualSpend: null,
+          endDate: "Not established",
+          evidencePosture:
+            "Requested contract was not returned by the active Source provider.",
+          nextAction:
+            "Select a contract present in the governed Source rows before making a contract-specific value or evidence claim.",
           contractDatasetSummary: "2 contracts / 8 scope rows.",
           contractCubeSummary: "3 action candidates / 6 aVa grounding bundles.",
           contractTopVendorSummary:
@@ -432,9 +434,12 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(askIntelligence).not.toHaveBeenCalled();
     expect(text).toContain('"type":"agent-answer"');
     expect(text).toContain("source_contract_visual");
-    expect(text).toContain("CTR-123");
-    expect(text).toContain("Primary Vendor");
+    expect(text).toContain("MER-TECH-REQUESTED-001");
+    expect(text).toContain("Requested contract");
     expect(text).toContain("candidate opportunity value is not established");
+    expect(text).toContain(
+      "Requested contract was not returned by the active Source provider",
+    );
     expect(text).not.toContain("No specific contract is selected");
   });
 
