@@ -876,9 +876,9 @@ describe("Source workspace ECL browser-surface proof", () => {
           },
           {
             tenant_key: "meridian-health",
-            contract_id: "MER-TECH-LAAMS-001",
-            vendor_ref: "MER-VEN-COGNIZANT",
-            vendor_name: "Cognizant Technology Solutions",
+            contract_id: "SUP-TECH-AMS-001",
+            vendor_ref: "SUP-VEN-AMS",
+            vendor_name: "Example Managed Services Provider",
             contract_name: "Legacy Analytics Application Managed Services Agreement",
             spend_rows: 12,
             actual_spend_usd: 8_032_500.04,
@@ -943,12 +943,12 @@ describe("Source workspace ECL browser-surface proof", () => {
           evidenceDepthPortfolio.contracts.find(
             (contract) => contract.contract_id === requestedContractId,
           ) ??
-          (requestedContractId === "MER-TECH-LAAMS-001"
+          (requestedContractId === "SUP-TECH-AMS-001"
             ? {
                 ...evidenceDepthPortfolio.contracts[0],
-                contract_id: "MER-TECH-LAAMS-001",
-                vendor_ref: "MER-VEN-COGNIZANT",
-                vendor_name: "Cognizant Technology Solutions",
+                contract_id: "SUP-TECH-AMS-001",
+                vendor_ref: "SUP-VEN-AMS",
+                vendor_name: "Example Managed Services Provider",
                 contract_name:
                   "Legacy Analytics Application Managed Services Agreement",
                 annual_value: 7_850_000,
@@ -962,7 +962,41 @@ describe("Source workspace ECL browser-surface proof", () => {
               financialExposure: null,
               operationalPerformance: null,
               initiativeDependencies: [],
-              scopeTiers: { explicit: [], inferred: [], unresolved: [] },
+              scopeTiers:
+                requestedContractId === "SUP-TECH-AMS-001"
+                  ? {
+                      explicit: [
+                        {
+                          tenant_key: "example-health",
+                          contract_id: "SUP-TECH-AMS-001",
+                          vendor_ref: "SUP-VEN-AMS",
+                          vendor_name: "Example Managed Services Provider",
+                          application_ref: "APP-LA-001",
+                          application_name: "Legacy Claims Analytics",
+                          business_function: "Revenue Cycle Management",
+                          function_ref: "FUNC-RCM",
+                          criticality: "Tier 1",
+                          lifecycle_state: "Maintain",
+                          hosting_model: "AWS",
+                          annual_run_cost: 820_000,
+                          modernization_plan: "Transition to governed AWS platform",
+                          sla_tier: "Gold",
+                          known_pain_risk: "Batch-window dependency",
+                          it_portfolio_ref: "PORT-LA",
+                        },
+                      ],
+                      reviewed: [],
+                      vendorInferred: [],
+                      unresolved: [],
+                      totalCount: 1,
+                    }
+                  : {
+                      explicit: [],
+                      reviewed: [],
+                      vendorInferred: [],
+                      unresolved: [],
+                      totalCount: 0,
+                    },
               towerObservations: [],
               towerValueClaims: [],
               hasTowerOverlay: false,
@@ -1039,17 +1073,17 @@ describe("Source workspace ECL browser-surface proof", () => {
     const contractSearch = screen.getByRole("searchbox", {
       name: "Find a contract",
     });
-    fireEvent.change(contractSearch, { target: { value: "MER-TECH-LAAMS-001" } });
+    fireEvent.change(contractSearch, { target: { value: "SUP-TECH-AMS-001" } });
     expect(
       screen.getByRole("button", {
-        name: /Legacy Analytics Application Managed Services Agreement MER-TECH-LAAMS-001 Cognizant Technology Solutions Supplemental depth decision ready; outside the .*contract register Contract 360/,
+        name: /Legacy Analytics Application Managed Services Agreement SUP-TECH-AMS-001 Example Managed Services Provider Supplemental depth decision ready; outside the .*contract register Contract 360/,
       }),
     ).toBeTruthy();
     expect(screen.getByText("1 matching contracts")).toBeTruthy();
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Legacy Analytics Application Managed Services Agreement MER-TECH-LAAMS-001 Cognizant Technology Solutions/,
+        name: /Legacy Analytics Application Managed Services Agreement SUP-TECH-AMS-001 Example Managed Services Provider/,
       }),
     );
     await waitFor(() => {
@@ -1059,6 +1093,11 @@ describe("Source workspace ECL browser-surface proof", () => {
         ),
       ).toBeTruthy();
     });
+    expect(screen.getByText("Detail loaded")).toBeTruthy();
+    expect(screen.queryByText("Contract not found in governed Source rows")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
+    expect(screen.getByText("1 scoped rows")).toBeTruthy();
+    expect(screen.getByText("Legacy Claims Analytics")).toBeTruthy();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Contracts" })[0]);
     const reopenedContractSearch = screen.getByRole("searchbox", {
@@ -1170,6 +1209,39 @@ describe("Source workspace ECL browser-surface proof", () => {
         actionCandidates: [actionCandidate],
       },
     };
+    let resolveOffSliceFetch: ((response: Response) => void) | null = null;
+    const offSliceFetch = new Promise<Response>((resolve) => {
+      resolveOffSliceFetch = resolve;
+    });
+    const offSliceResponse = {
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          contract: offSliceContract,
+          financialExposure: null,
+          operationalPerformance: null,
+          initiativeDependencies: [],
+          scopeTiers: {
+            explicit: [],
+            reviewed: [],
+            vendorInferred: [],
+            unresolved: [],
+            totalCount: 0,
+          },
+          towerObservations: [],
+          towerValueClaims: [],
+          hasTowerOverlay: false,
+          docExtractions: [],
+          optimizationEvidence: null,
+          optimizationOpportunitySet: null,
+          evidenceOverview: null,
+          evidenceScope: [],
+          evidencePricing: [],
+          evidencePerformance: null,
+          performancePeriods: [],
+          spendMonths: [],
+        }),
+    } as Response;
 
     (global.fetch as jest.Mock).mockImplementation(
       (input: RequestInfo | URL) => {
@@ -1178,12 +1250,13 @@ describe("Source workspace ECL browser-surface proof", () => {
             String(input)
               .split("/api/source/workspace/contract/")[1]
               ?.split("?")[0] ?? offSliceContractId;
+          if (requestedContractId === offSliceContractId) {
+            return offSliceFetch;
+          }
           const requestedContract =
-            requestedContractId === offSliceContractId
-              ? offSliceContract
-              : (portfolio.contracts.find(
-                  (contract) => contract.contract_id === requestedContractId,
-                ) ?? portfolio.contracts[0]);
+            portfolio.contracts.find(
+              (contract) => contract.contract_id === requestedContractId,
+            ) ?? portfolio.contracts[0];
           return Promise.resolve({
             ok: true,
             json: () =>
@@ -1236,6 +1309,12 @@ describe("Source workspace ECL browser-surface proof", () => {
     });
     expect(offSliceRow.textContent).toContain(offSliceContractId);
     fireEvent.click(offSliceRow);
+
+    expect(screen.getByText("Loading contract detail")).toBeTruthy();
+    expect(
+      screen.queryByRole("heading", { name: "Helix Shared Services Group" }),
+    ).toBeNull();
+    resolveOffSliceFetch?.(offSliceResponse);
 
     await waitFor(() => {
       expect(

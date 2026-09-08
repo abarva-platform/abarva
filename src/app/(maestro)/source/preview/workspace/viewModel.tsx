@@ -309,14 +309,31 @@ export class WorkspaceViewModel {
   // ── per-contract enrichment: joins the real functions' classifications
   // onto each row, plus a raw day-count used only for chart pixel geometry.
   enrich(): EnrichedContract[] {
-    const rows = this.contracts();
-    const leverageByContract = new Map(this.leverage().map((l) => [l.contractId, l]));
+    return this.enrichRows(this.contracts());
+  }
+
+  enrichContract(row: SourceContract360Row): EnrichedContract {
+    return this.enrichRows([row])[0]!;
+  }
+
+  private enrichRows(rows: readonly SourceContract360Row[]): EnrichedContract[] {
+    const leverageByContract = new Map(
+      computeContractLeverageSignals(rows).map((l) => [l.contractId, l]),
+    );
     const categoryByContract = new Map(this.portfolio.categoryQuality.semanticRows.map((row) => [row.contract_id, row]));
-    const passed90 = new Set(this.renewal(90).noticeDeadlinePassed.map((r) => r.contract_id));
-    const win90 = new Set(this.renewal(90).expiringWithinWindow.map((r) => r.contract_id));
-    const win180 = new Set(this.renewal(180).expiringWithinWindow.map((r) => r.contract_id));
-    const noticePassedSet = new Set(this.renewal(180).noticeDeadlinePassed.map((r) => r.contract_id));
-    void passed90;
+    const renewal90 = computeRenewalExposure(
+      rows,
+      this.portfolio.asOfDateIso,
+      90,
+    );
+    const renewal180 = computeRenewalExposure(
+      rows,
+      this.portfolio.asOfDateIso,
+      180,
+    );
+    const win90 = new Set(renewal90.expiringWithinWindow.map((r) => r.contract_id));
+    const win180 = new Set(renewal180.expiringWithinWindow.map((r) => r.contract_id));
+    const noticePassedSet = new Set(renewal180.noticeDeadlinePassed.map((r) => r.contract_id));
     return rows.map((row) => {
       const leverage = leverageByContract.get(row.contract_id) ?? {
         contractId: row.contract_id, vendorRef: row.vendor_ref, vendorName: row.vendor_name,

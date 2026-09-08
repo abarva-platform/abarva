@@ -211,12 +211,26 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     kind = sel.kind;
 
   const byId = new Map(rows.map((r) => [r.row.contract_id, r]));
+  const selectedContractDetail =
+    sel.kind === "contract" && sel.id ? S.contractDetail[sel.id] : undefined;
+  const fetchedContractDetail =
+    selectedContractDetail &&
+    selectedContractDetail !== "loading" &&
+    selectedContractDetail !== "error"
+      ? selectedContractDetail
+      : null;
+  const fetchedContract = fetchedContractDetail
+    ? vm.enrichContract(fetchedContractDetail.contract)
+    : null;
   const selectedContractMissing =
-    sel.kind === "contract" && Boolean(sel.id) && !byId.has(String(sel.id));
+    sel.kind === "contract" &&
+    Boolean(sel.id) &&
+    !byId.has(String(sel.id)) &&
+    !fetchedContract;
   const contract =
     sel.kind === "contract"
       ? sel.id
-        ? (byId.get(sel.id) ?? null)
+        ? (byId.get(sel.id) ?? fetchedContract)
         : null
       : (rows[0] ?? null);
   const isContractMode =
@@ -259,9 +273,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       : (opportunities[0] ?? null);
   const oppContract = opp ? (byId.get(opp.contractId) ?? null) : null;
 
-  const contractDetail = contract
-    ? S.contractDetail[contract.row.contract_id]
-    : undefined;
+  const contractDetail =
+    selectedContractDetail ??
+    (contract ? S.contractDetail[contract.row.contract_id] : undefined);
   const detail =
     contractDetail && contractDetail !== "loading" && contractDetail !== "error"
       ? contractDetail
@@ -2094,13 +2108,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         },
       ]
     : [];
-  const fallbackScopeRows: DataTableRow[] = c
-    ? vm
-        .scopeTiers(c.contract_id)
-        .unresolved.concat(
-          vm.scopeTiers(c.contract_id).explicit,
-          vm.scopeTiers(c.contract_id).vendorInferred,
-        )
+  const selectedScopeTiers =
+    detail?.scopeTiers ?? (c ? vm.scopeTiers(c.contract_id) : null);
+  const fallbackScopeRows: DataTableRow[] = selectedScopeTiers
+    ? [
+        ...(selectedScopeTiers.unresolved ?? []),
+        ...(selectedScopeTiers.explicit ?? []),
+        ...(selectedScopeTiers.reviewed ?? []),
+        ...(selectedScopeTiers.vendorInferred ?? []),
+      ]
         .map((a) => ({
           cells: [
             vm.cell(a.application_name, { weight: 600, wrap: true }),
@@ -3348,7 +3364,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               sourceConfidence: c.source_confidence,
             }
           : null,
-      contractDirectory: vm.portfolio.contracts.map((contractRow) => ({
+      contractDirectory: [
+        ...vm.portfolio.contracts,
+        ...(c &&
+        !vm.portfolio.contracts.some(
+          (contractRow) => contractRow.contract_id === c.contract_id,
+        )
+          ? [c]
+          : []),
+      ].map((contractRow) => ({
         contractId: contractRow.contract_id,
         vendorId: contractRow.vendor_ref,
         vendorName: contractRow.vendor_name,
