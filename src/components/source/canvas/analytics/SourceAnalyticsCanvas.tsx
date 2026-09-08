@@ -1884,6 +1884,7 @@ function FocusedWorkPanel({
               ) : null}
 
               <StepDetail
+                key={activeStep.id}
                 step={activeStep}
                 eventId={view.event.id}
                 stageKey={view.stage.key}
@@ -5366,10 +5367,101 @@ function CurrentStageArtifactReviewRow({
             hasGeneratedDraft
             onAccepted={onClientFinalAccepted}
           />
+        ) : row.lifecycleState === "not_registered" ? (
+          <GenerateArtifactButton
+            eventId={eventId}
+            artifactCode={row.code}
+            artifactName={row.name}
+            onGenerated={onClientFinalAccepted}
+          />
         ) : (
           <span style={SMALL_STATUS_PILL}>{action.cta}</span>
         )}
       </div>
+    </div>
+  );
+}
+
+function GenerateArtifactButton({
+  eventId,
+  artifactCode,
+  artifactName,
+  onGenerated,
+}: {
+  eventId: string;
+  artifactCode: string;
+  artifactName: string;
+  onGenerated: () => void;
+}) {
+  const router = useRouter();
+  const [state, setState] = useState<
+    | { phase: "idle" }
+    | { phase: "generating" }
+    | { phase: "error"; message: string }
+  >({ phase: "idle" });
+
+  const generate = async () => {
+    setState({ phase: "generating" });
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(artifactCode)}/generate`,
+        { method: "POST", credentials: "include" },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        detail?: string;
+        blockers?: Array<{ detail?: string }>;
+      } | null;
+      if (!response.ok || payload?.ok !== true) {
+        const blocker = payload?.blockers?.find((item) => item.detail)?.detail;
+        throw new Error(
+          blocker ??
+            payload?.detail ??
+            payload?.error ??
+            `Generation failed with HTTP ${response.status}.`,
+        );
+      }
+      setState({ phase: "idle" });
+      onGenerated();
+      router.refresh();
+    } catch (error) {
+      setState({
+        phase: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : `Could not generate ${artifactName}.`,
+      });
+    }
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      <button
+        type="button"
+        data-testid={`source-generate-artifact-${artifactCode}`}
+        disabled={state.phase === "generating"}
+        onClick={() => void generate()}
+        style={{
+          ...BUTTON_STYLE,
+          background: ANALYTICS.INK,
+          color: "#fff",
+          cursor: state.phase === "generating" ? "wait" : "pointer",
+          opacity: state.phase === "generating" ? 0.65 : 1,
+          padding: "9px 12px",
+        }}
+      >
+        {state.phase === "generating" ? "Generating..." : "Generate with aVa"}
+      </button>
+      {state.phase === "error" ? (
+        <span
+          role="alert"
+          style={{ color: ANALYTICS.RUST, fontSize: 11.5, lineHeight: 1.35 }}
+        >
+          {state.message}
+        </span>
+      ) : null}
     </div>
   );
 }
