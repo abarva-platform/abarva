@@ -61,7 +61,7 @@ export function ArtifactAcceptancePanel({
   artifactName,
   latestAcceptance,
   operation,
-  artifactRole = "evidence",
+  artifactRole = "authoritative",
   parseStatus = null,
   embeddingStatus = null,
   graphStatus = null,
@@ -231,20 +231,35 @@ export function ArtifactAcceptancePanel({
           operation={operation}
         />
       ) : null}
-      <button
-        type="button"
-        onClick={() => {
-          setOpen((v) => !v);
-          setBlockers([]);
-        }}
-        data-testid={`source-shell-artifact-accept-toggle-${artifactCode}`}
-        style={TOGGLE_STYLE}
-      >
-        {latestAcceptance
-          ? "Re-accept with a new reason"
-          : "Accept as authoritative"}
-      </button>
-      {open ? (
+      {artifactRole === "authoritative" ? (
+        <button
+          type="button"
+          onClick={() => {
+            setOpen((v) => !v);
+            setBlockers([]);
+          }}
+          data-testid={`source-shell-artifact-accept-toggle-${artifactCode}`}
+          style={TOGGLE_STYLE}
+        >
+          {latestAcceptance
+            ? "Re-accept with a new reason"
+            : "Accept as authoritative"}
+        </button>
+      ) : (
+        <div
+          data-testid={`source-shell-artifact-supporting-${artifactCode}`}
+          style={{
+            marginTop: 8,
+            color: ANALYTICS.MUTED,
+            fontSize: 11.5,
+            lineHeight: 1.4,
+          }}
+        >
+          Supporting evidence is ready for local workflow use when parsed. It
+          cannot replace or become the client-final deliverable for this stage.
+        </div>
+      )}
+      {artifactRole === "authoritative" && open ? (
         <form
           onSubmit={handleSubmit}
           data-testid={`source-shell-artifact-accept-form-${artifactCode}`}

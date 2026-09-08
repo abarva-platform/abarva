@@ -83,6 +83,30 @@ describe("ArtifactAcceptancePanel", () => {
     expect(screen.getByText("Accept as authoritative")).toBeInTheDocument();
   });
 
+  it("does not offer authoritative acceptance for a supporting upload", () => {
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="uploaded_source_artifact"
+        artifactName="Current-state evidence.csv"
+        latestAcceptance={null}
+        artifactRole="evidence"
+        parseStatus="parsed"
+      />,
+    );
+
+    expect(
+      screen.queryByText("Accept as authoritative"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId(
+        "source-shell-artifact-supporting-uploaded_source_artifact",
+      ),
+    ).toHaveTextContent(
+      "cannot replace or become the client-final deliverable",
+    );
+  });
+
   it("renders the real latest acceptance — rationale, accepted-by, drift, gate precondition", () => {
     render(
       <ArtifactAcceptancePanel

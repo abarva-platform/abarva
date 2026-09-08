@@ -246,6 +246,94 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
   });
 
+  it("resets the upload pane when Continue advances between provide steps", async () => {
+    const provideSteps = SAMPLE_SCOPE_STAGE.tasks.filter((task) =>
+      ["scope.volumetrics", "scope.app-inventory"].includes(task.id),
+    );
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          artifact: {
+            id: "artifact-volumetrics",
+            originalName: "volumetrics.csv",
+            sourceFormat: "csv",
+            sizeBytes: 1024,
+            parseStatus: "parsed",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          factsWritten: 5,
+          unmappedColumns: [],
+          rejectedRows: [],
+        }),
+      });
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={{ ...SAMPLE_SCOPE_STAGE, tasks: provideSteps }}
+        initialWorkspace="steps"
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("task-file-input"), {
+      target: {
+        files: [new File(["value"], "volumetrics.csv", { type: "text/csv" })],
+      },
+    });
+
+    await screen.findByText("volumetrics.csv");
+    const continueButton = screen.getByRole("button", { name: /Continue/ });
+    await waitFor(() => expect(continueButton).toBeEnabled());
+    fireEvent.click(continueButton);
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Provide the application inventory",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("volumetrics.csv")).not.toBeInTheDocument();
+    expect(screen.getByTestId("task-file-input")).toHaveValue("");
+  });
+
+  it("generates a missing current-stage artifact from the Files review queue", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        artifact: { artifactCode: "d04_app_inv" },
+      }),
+    });
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={SAMPLE_SCOPE_STAGE}
+        initialWorkspace="files"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("source-generate-artifact-d04_app_inv"));
+
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/evt-scope/artifacts/d04_app_inv/generate",
+        { method: "POST", credentials: "include" },
+      ),
+    );
+    expect(routerRefresh).toHaveBeenCalled();
+  });
+
   it("opens the approval workspace once all required stage inputs are complete", () => {
     const completedScopeStage = {
       ...SAMPLE_SCOPE_STAGE,
