@@ -28,6 +28,8 @@ import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
 import type { Contract360Response } from "./live/contractDetail";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
 import type {
+  DocExtractionRow,
+  DocFileRow,
   SourceContractApplicationScopeRow,
   SourceContract360Row,
   SourceContractActionCandidateRow,
@@ -2449,6 +2451,12 @@ function ContractPage({
             />
           </div>
         )}
+        {tab === "Evidence" && detailReady && vm.detail ? (
+          <ContractEvidenceDocuments
+            files={vm.detail.documentFiles ?? []}
+            extractions={vm.detail.docExtractions}
+          />
+        ) : null}
       </section>
 
       <section className="sw-v2-panel">
@@ -3927,6 +3935,115 @@ function ContractScopeTable({
       ) : null}
     </div>
   );
+}
+
+export function ContractEvidenceDocuments({
+  files,
+  extractions,
+}: {
+  files: readonly DocFileRow[];
+  extractions: readonly DocExtractionRow[];
+}) {
+  const extractionCountByFile = new Map<string, number>();
+  for (const row of extractions) {
+    if (!row.source_file_id) continue;
+    extractionCountByFile.set(
+      row.source_file_id,
+      (extractionCountByFile.get(row.source_file_id) ?? 0) + 1,
+    );
+  }
+  const rankedFiles = [...files].sort((a, b) => {
+    const extractionDelta =
+      (extractionCountByFile.get(b.file_id) ?? 0) -
+      (extractionCountByFile.get(a.file_id) ?? 0);
+    if (extractionDelta !== 0) return extractionDelta;
+    return (b.page_count ?? 0) - (a.page_count ?? 0);
+  });
+  const visibleFiles = rankedFiles.slice(0, 8);
+  const extractedDocumentCount = extractionCountByFile.size;
+  const pageCount = files.reduce(
+    (sum, file) => sum + (numberFromDb(file.page_count) ?? 0),
+    0,
+  );
+
+  return (
+    <div className="sw-v2-contract-documents">
+      <div
+        className="sw-v2-document-metrics"
+        aria-label="Contract document evidence summary"
+      >
+        <Fact label="Governed files" value={String(files.length)} />
+        <Fact label="Document pages" value={String(pageCount)} />
+        <Fact label="Extracted facts" value={String(extractions.length)} />
+        <Fact
+          label="Clause-bearing documents"
+          value={String(extractedDocumentCount)}
+        />
+      </div>
+      {visibleFiles.length ? (
+        <div className="sw-v2-table">
+          <div className="sw-v2-table-head sw-v2-document-row">
+            <span>Source document</span>
+            <span>Type</span>
+            <span>Pages</span>
+            <span>Facts</span>
+            <span>Evidence state</span>
+          </div>
+          {visibleFiles.map((file) => (
+            <div
+              key={file.file_id}
+              className="sw-v2-table-row sw-v2-document-row"
+            >
+              <span>
+                <b>{documentEvidenceLabel(file)}</b>
+                <small>{file.file_id}</small>
+              </span>
+              <span>{humanizeEvidenceToken(file.document_type)}</span>
+              <span>{formatCount(file.page_count)}</span>
+              <span>{extractionCountByFile.get(file.file_id) ?? 0}</span>
+              <span>
+                {file.content_authenticity === "synthetic"
+                  ? "Reviewed synthetic"
+                  : "Governed source"}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="sw-v2-muted">
+          No governed source documents are attached to this contract.
+        </p>
+      )}
+      {rankedFiles.length > visibleFiles.length ? (
+        <p className="sw-v2-muted">
+          {rankedFiles.length - visibleFiles.length} additional governed evidence
+          files remain available in the evidence inventory.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function documentEvidenceLabel(file: DocFileRow): string {
+  const knownLabels: Record<string, string> = {
+    master_services_agreement: "Master services agreement",
+    statement_of_work: "Statement of work",
+    pricing_schedule: "Pricing schedule",
+    sla_report: "SLA schedule and performance evidence",
+    usage_entitlement_report: "Usage and entitlement evidence",
+    change_order_ledger: "Change-order ledger",
+    invoice_export: "Invoice and spend evidence",
+  };
+  return knownLabels[file.document_type ?? ""] ?? file.file_name ?? file.file_id;
+}
+
+function humanizeEvidenceToken(value: string | null): string {
+  if (!value) return "Supplemental evidence";
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
 }
 
 function activePage(

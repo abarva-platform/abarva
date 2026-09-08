@@ -42,6 +42,7 @@ import {
 } from "./contract-optimization-opportunity";
 import type {
   DocExtractionRow,
+  DocFileRow,
   SourceApplicationVendorExposureRow,
   SourceContract360Row,
   SourceContractApplicationScopeRow,
@@ -2409,6 +2410,23 @@ export async function listDocExtractionsForSubject(
     tenantKey,
     "SELECT * FROM doc.extraction WHERE tenant_key = ANY($1::text[]) AND subject_ref = $2 ORDER BY extracted_at DESC",
     [subjectRef],
+  );
+}
+
+/** Governed source files attached to one contract, used by Contract 360 evidence. */
+export async function listDocFilesForContract(
+  tenantKey: string,
+  contractId: string,
+): Promise<DocFileRow[]> {
+  return queryForTenant<DocFileRow>(
+    tenantKey,
+    `SELECT file_id, tenant_key, file_name, media_type, page_count, load_run_id,
+            document_role, document_type, contract_ref, visibility_class,
+            content_authenticity, uploaded_at, metadata_json
+       FROM doc.file
+      WHERE tenant_key = ANY($1::text[]) AND contract_ref = $2
+      ORDER BY document_role, document_type, file_name, file_id`,
+    [contractId],
   );
 }
 

@@ -1102,6 +1102,31 @@
   grid-template-columns: minmax(160px, 0.8fr) minmax(230px, 1.2fr) 70px 110px;
 }
 
+.sw-v2-contract-documents {
+  margin-top: 20px;
+}
+
+.sw-v2-document-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid #dedad1;
+  border-bottom: 0;
+}
+
+.sw-v2-document-metrics > * {
+  min-width: 0;
+  padding: 14px 16px;
+  border-right: 1px solid #dedad1;
+}
+
+.sw-v2-document-metrics > *:last-child {
+  border-right: 0;
+}
+
+.sw-v2-document-row {
+  grid-template-columns: minmax(240px, 1.4fr) minmax(170px, 0.9fr) 70px 70px minmax(150px, 0.8fr);
+}
+
 .sw-v2-graph-volume-row {
   grid-template-columns:
     minmax(150px, 0.8fr) minmax(210px, 1fr) 70px minmax(260px, 1.4fr);
@@ -1575,11 +1600,16 @@
   .sw-v2-opt-contract-row,
   .sw-v2-action-row,
   .sw-v2-evidence-row,
+  .sw-v2-document-row,
   .sw-v2-archetype-coverage-row,
   .sw-v2-graph-volume-row,
   .sw-v2-graph-spine-row,
   .sw-v2-decision-row {
     grid-template-columns: 1fr;
+  }
+
+  .sw-v2-document-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .sw-v2-contract-finder {

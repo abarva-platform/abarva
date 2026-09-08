@@ -649,6 +649,22 @@ export interface DocExtractionRow {
   readonly extracted_at: string;
 }
 
+export interface DocFileRow {
+  readonly file_id: string;
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly file_name: string | null;
+  readonly media_type: string | null;
+  readonly page_count: number | null;
+  readonly load_run_id: string;
+  readonly document_role: string | null;
+  readonly document_type: string | null;
+  readonly contract_ref: string | null;
+  readonly visibility_class: string;
+  readonly content_authenticity: string;
+  readonly uploaded_at: string | null;
+  readonly metadata_json: Record<string, unknown> | null;
+}
+
 /**
  * A vendor whose contract(s) exist only as supplemental evidence — loaded
  * (or pending load) into doc.* for a specific demo/analysis, but NOT part
