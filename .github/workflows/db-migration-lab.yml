@@ -323,6 +323,24 @@ jobs:
             --out-dir audit-artifacts/db-migration-lab/event-approvals-readback \
             | tee audit-artifacts/db-migration-lab/event-approvals-readback.log
 
+      # The canvas can render virtual fallback rows when physical state tables
+      # are absent, so a health check alone cannot detect this drift. Exercise
+      # the actual Azure read/write seams against a synthetic fixture and
+      # remove it in the same transaction before declaring migration success.
+      - name: Repository readback — Source canvas substrate
+        id: source_canvas_substrate_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:source-canvas-substrate \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/source-canvas-substrate-readback \
+            | tee audit-artifacts/db-migration-lab/source-canvas-substrate-readback.log
+
       # Affected-feature verification: confirm the deployed application is
       # still healthy after the schema change. This is a coarse signal
       # (the health endpoint, not a per-migration feature probe) — a
