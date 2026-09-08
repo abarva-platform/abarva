@@ -12,6 +12,8 @@
 
 Corrects a synthetic managed-services contract-depth package so the contract, evidence, and action rows use the selected incumbent vendor identity consistently. The package also gains the missing source-system depth required by the governed loader: resource model, pricing bridge, invoice line detail, batch/job volumetrics, and QBR scorecards. The change preserves candidate-only value posture; no realized savings are created.
 
+Follow-up patch: refreshes identity-bearing fields on monthly spend observation reloads so stale adapter values cannot survive when a reviewed package changes vendor references.
+
 ## Layer Impact
 
 Layer 1 client intake: updates the synthetic source files for one managed-services package and adds the missing source-system extracts for resource, pricing, invoice, operational, and QBR evidence.
@@ -19,6 +21,8 @@ Layer 1 client intake: updates the synthetic source files for one managed-servic
 Layer 2 source adapters: increases the package adapter row set from the thin shape to the full gated shape, with deterministic vendor identity and CSV-safe legal-name handling.
 
 Layer 3 canonical model: requires a digest-pinned ACA data-build job rerun so canonical contract, vendor-linked facts, document text, optimization, calculation, evidence, and fact-assertion rows are updated from the corrected source package.
+
+Layer 3 loader behavior: monthly spend observation upserts now update business unit, cost center, currency, source metadata, confidence, and quality state on conflict, in addition to amount/date/payload fields.
 
 Layer 4 products: requires a Layer 4 projection refresh so Source 360, Contract 360, Optimize, aVa grounding, and the Tower bridge no longer surface the retired package vendor identity and can read the added depth rows.
 
@@ -35,6 +39,8 @@ Release lane: `client-data-lane` for synthetic reference data and Source/Tower p
 ## Changes Included
 
 - `datasets/source/contract-depth/meridian-managed-services-depth-v1-20260907/source-files/*`
+- `scripts/source/load-contract-depth-package.ts`
+- `scripts/source/__tests__/load-contract-depth-package.test.ts`
 - `scripts/source/__tests__/managed-services-package-identity.test.ts`
 - This release record.
 
@@ -46,6 +52,7 @@ Candidate validation before PR:
 - `pass` — source arithmetic reconciliation: 12 invoice-month totals match the 12 monthly spend rows, actual spend totals `$12.546M`, resource model totals 93 FTE with 9 onshore / 84 offshore and `$11.88M` billed base.
 - `pass` — page-text hash reconciliation for all 12 document text rows.
 - `pass` — focused tests for managed-services package identity, contract-depth loader guardrails, and Layer 4 projection guardrails.
+- `pass` — focused regression test proving monthly spend observation reloads refresh identity-bearing fields instead of preserving stale adapter values.
 
 Required after merge/deploy:
 

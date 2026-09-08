@@ -845,12 +845,21 @@ async function upsertSpend(client: Client, args: Args, spendRows: readonly CsvRe
          $13, $2, CURRENT_DATE, 0.9, 'reviewed', $14, $15, $16::jsonb
        )
        ON CONFLICT (tenant_key, observation_id)
-       DO UPDATE SET period_start = EXCLUDED.period_start,
+       DO UPDATE SET contract_id = EXCLUDED.contract_id,
+                     business_unit = EXCLUDED.business_unit,
+                     cost_center = EXCLUDED.cost_center,
+                     period_start = EXCLUDED.period_start,
                      period_end = EXCLUDED.period_end,
                      committed_amount = EXCLUDED.committed_amount,
                      invoice_amount = EXCLUDED.invoice_amount,
                      paid_amount = EXCLUDED.paid_amount,
                      actual_spend = EXCLUDED.actual_spend,
+                     currency = EXCLUDED.currency,
+                     source_system = EXCLUDED.source_system,
+                     source_record_id = EXCLUDED.source_record_id,
+                     as_of_date = EXCLUDED.as_of_date,
+                     confidence = EXCLUDED.confidence,
+                     quality_state = EXCLUDED.quality_state,
                      evidence_reference = EXCLUDED.evidence_reference,
                      load_run_id = EXCLUDED.load_run_id,
                      raw_payload = EXCLUDED.raw_payload,

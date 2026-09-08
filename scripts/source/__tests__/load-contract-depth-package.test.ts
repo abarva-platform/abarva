@@ -57,6 +57,25 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain("calculation_output: sourceFiles.optimizationOpportunities.length * 2");
   });
 
+  it("refreshes spend observation identity fields when a package row is reloaded", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    const spendUpsert = loader.slice(
+      loader.indexOf("async function upsertSpend"),
+      loader.indexOf("async function upsertPerformance"),
+    );
+
+    expect(spendUpsert).toContain("cost_center = EXCLUDED.cost_center");
+    expect(spendUpsert).toContain("business_unit = EXCLUDED.business_unit");
+    expect(spendUpsert).toContain("currency = EXCLUDED.currency");
+    expect(spendUpsert).toContain("source_system = EXCLUDED.source_system");
+    expect(spendUpsert).toContain("quality_state = EXCLUDED.quality_state");
+  });
+
   it("does not use an invalid case_opportunity conflict target", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(
