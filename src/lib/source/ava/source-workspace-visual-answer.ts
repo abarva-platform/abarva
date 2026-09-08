@@ -250,12 +250,45 @@ function contractContextFromRecord(
   };
 }
 
+function directContractContextFrom(
+  context: AskSurfaceContext,
+): SourceContractContext | null {
+  if (context.sourceContract360Mode !== true) return null;
+  const contractId = stringValue(context.contractId);
+  const vendorName = stringValue(context.vendorName);
+  if (!contractId || !vendorName) return null;
+
+  return {
+    contractId,
+    vendorName,
+    contractName: stringValue(context.contractName) ?? "Contract 360 record",
+    annualValueUsd: numberValue(context.annualValue),
+    actualAnnualSpendUsd: numberValue(context.actualAnnualSpend),
+    totalCommittedValueUsd: null,
+    contractedToActualVarianceUsd: null,
+    endDate: stringValue(context.endDate),
+    noticeDate: null,
+    autoRenew: null,
+    renewalOwnerRef: null,
+    scopeSummary: stringValue(context.evidencePosture),
+    scopeRowCount: null,
+  };
+}
+
 function selectedContractFrom(
   context: AskSurfaceContext,
   query?: string,
 ): SourceContractContext | null {
+  const direct = directContractContextFrom(context);
   const source = sourceV4(context);
   const requestedContractId = query ? contractIdFromQuery(query) : null;
+  if (
+    direct &&
+    (!requestedContractId ||
+      direct.contractId.toUpperCase() === requestedContractId)
+  ) {
+    return direct;
+  }
   const raw = isRecord(source?.selectedContract)
     ? source.selectedContract
     : null;
@@ -713,7 +746,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       : currencyLabel(topOpportunity.amountUsd);
   const topOpportunitySummary = topOpportunity
     ? ` The top governed opportunity is ${topOpportunity.label} (${topOpportunityValue}), with evidence state ${topOpportunity.evidenceClass} and next action: ${topOpportunity.nextAction}.`
-    : " No governed opportunity row is tied to this contract in the current Source aVa packet; treat actionability and value as not established until the contract-specific evidence is loaded or opened.";
+    : " No governed opportunity row is tied to this contract in the current Source aVa packet, so candidate opportunity value is not established; treat actionability and value as missing until the contract-specific evidence is loaded or opened.";
 
   return {
     directAnswer:

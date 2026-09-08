@@ -397,7 +397,7 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain("Contract Evidence Relationship");
   });
 
-  it("preserves direct Contract 360 context for Claude-authored selected-contract answers", async () => {
+  it("routes direct Contract 360 value questions through the governed Source answer", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
     const response = await POST(
@@ -427,30 +427,15 @@ describe("POST /api/intelligence/ask telemetry", () => {
         },
       }) as never,
     );
-    await readResponseText(response);
+    const text = await readResponseText(response);
 
-    expect(askIntelligence).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        answerOnlyStreaming: true,
-        surfaceContext: expect.objectContaining({
-          module: "Source",
-          sourceContract360Mode: true,
-          contractId: "CTR-123",
-          contractName: "Platform Services Agreement",
-          vendorName: "Primary Vendor",
-          annualValue: 12_400_000,
-          actualAnnualSpend: 13_100_000,
-          endDate: "2027-06-30",
-          evidencePosture: "92% source confidence",
-          nextAction: "Confirm the source event evidence owner.",
-          contractDatasetSummary: "2 contracts / 8 scope rows.",
-          contractCubeSummary: "3 action candidates / 6 aVa grounding bundles.",
-          contractTopVendorSummary:
-            "Primary Vendor is the largest loaded contract-directory vendor.",
-        }),
-      }),
-    );
+    expect(askIntelligence).not.toHaveBeenCalled();
+    expect(text).toContain('"type":"agent-answer"');
+    expect(text).toContain("source_contract_visual");
+    expect(text).toContain("CTR-123");
+    expect(text).toContain("Primary Vendor");
+    expect(text).toContain("candidate opportunity value is not established");
+    expect(text).not.toContain("No specific contract is selected");
   });
 
   it("does not append a generic Moves phase plan to deterministic Source contract answers", async () => {
