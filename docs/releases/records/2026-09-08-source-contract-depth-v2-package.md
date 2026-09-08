@@ -24,6 +24,8 @@ Layer 3: Produces canonical projection-preview outputs for contract, vendor, sco
 
 Layer 4: Candidate only until the package is deployed in the ACA image and applied through the governed operator job path.
 
+Layer 4 update: Serving-view refresh now treats the active contract row as the contract-depth version authority, so rebuilt package rows do not stack with older rows for the same contract.
+
 ## Client Applicability
 
 - All clients: No.
@@ -36,6 +38,7 @@ Layer 4: Candidate only until the package is deployed in the ACA image and appli
 
 - `datasets/source/contract-depth/meridian-laams-new-event-rich-v2-20260908/`
 - `docs/governance/dataset-manifests/meridian-laams-new-event-rich-v2-20260908.json`
+- `scripts/source/project-contract-depth-package-layer4.ts`
 
 ## QA / Validation
 
@@ -43,6 +46,7 @@ Layer 4: Candidate only until the package is deployed in the ACA image and appli
 - Layer 2 adapter preview status: `PASS`.
 - Layer 3 projection preview status: `PASS`.
 - Package checks include no finance-confirmed realized value, synthetic evidence policy, contract/vendor identity consistency, source-file lineage, and non-empty managed-services evidence coverage.
+- Layer 4 serving-view guard added for active contract version scoping.
 
 ## Rollout Plan
 

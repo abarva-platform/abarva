@@ -694,14 +694,35 @@ async function applyLayer4(
 
 async function rebuildViews(client: Client): Promise<void> {
   const activeRuns = `
-    SELECT tenant_key, load_run_id FROM source.l4_cube_active_load_run
-    UNION
-    SELECT tenant_key, load_run_id FROM source.l4_cube_active_load_run_overlay
+    SELECT DISTINCT ON (tenant_key, load_run_id)
+      tenant_key,
+      load_run_id,
+      dataset_version
+    FROM (
+      SELECT tenant_key, load_run_id, NULL::text AS dataset_version, 0::int AS precedence
+      FROM source.l4_cube_active_load_run
+      UNION ALL
+      SELECT tenant_key, load_run_id, dataset_version, 1::int AS precedence
+      FROM source.l4_cube_active_load_run_overlay
+    ) runs
+    ORDER BY tenant_key, load_run_id, precedence DESC
+  `;
+  const activeContractVersions = `
+    SELECT
+      c.tenant_key,
+      c.contract_id,
+      c.load_run_id,
+      COALESCE(active.dataset_version, NULLIF(c.raw_payload->>'dataset_version', '')) AS dataset_version
+    FROM source.contract c
+    JOIN active_runs active
+      ON active.tenant_key = c.tenant_key
+     AND active.load_run_id = c.load_run_id
   `;
 
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_application_scope AS
-    WITH active_runs AS (${activeRuns})
+    WITH active_runs AS (${activeRuns}),
+    active_contract_versions AS (${activeContractVersions})
     SELECT
       cs.tenant_key,
       cs.contract_id,
@@ -721,8 +742,9 @@ async function rebuildViews(client: Client): Promise<void> {
       cs.scope_ref AS it_portfolio_ref,
       cs.load_run_id
     FROM source.contract_scope cs
-    JOIN active_runs active
+    JOIN active_contract_versions active
       ON active.tenant_key = cs.tenant_key
+     AND active.contract_id = cs.contract_id
      AND active.load_run_id = cs.load_run_id
     LEFT JOIN source.contract c
       ON c.tenant_key = cs.tenant_key
@@ -735,6 +757,7 @@ async function rebuildViews(client: Client): Promise<void> {
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_financial_exposure AS
     WITH active_runs AS (${activeRuns}),
+    active_contract_versions AS (${activeContractVersions}),
     consumption AS (
       SELECT
         o.tenant_key,
@@ -748,8 +771,9 @@ async function rebuildViews(client: Client): Promise<void> {
         sum(o.committed_amount)::numeric AS linked_committed_amount,
         count(*)::bigint AS linked_budget_lines
       FROM source.contract_consumption_observation o
-      JOIN active_runs active
+      JOIN active_contract_versions active
         ON active.tenant_key = o.tenant_key
+       AND active.contract_id = o.contract_id
        AND active.load_run_id = o.load_run_id
       GROUP BY o.tenant_key, o.contract_id, o.load_run_id
     )
@@ -769,8 +793,9 @@ async function rebuildViews(client: Client): Promise<void> {
       COALESCE(consumption.linked_budget_lines, 0)::bigint AS linked_budget_lines,
       c.load_run_id
     FROM source.contract c
-    JOIN active_runs active
+    JOIN active_contract_versions active
       ON active.tenant_key = c.tenant_key
+     AND active.contract_id = c.contract_id
      AND active.load_run_id = c.load_run_id
     LEFT JOIN source.vendor v
       ON v.tenant_key = c.tenant_key
@@ -784,17 +809,22 @@ async function rebuildViews(client: Client): Promise<void> {
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_operational_performance AS
     WITH active_runs AS (${activeRuns}),
+    active_contract_versions AS (${activeContractVersions}),
     scope AS (
       SELECT
-        tenant_key,
-        contract_id,
-        load_run_id,
-        count(DISTINCT scope_ref)::bigint AS scoped_application_count,
-        count(DISTINCT scope_ref) FILTER (
-          WHERE criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical')
+        s.tenant_key,
+        s.contract_id,
+        s.load_run_id,
+        count(DISTINCT s.scope_ref)::bigint AS scoped_application_count,
+        count(DISTINCT s.scope_ref) FILTER (
+          WHERE s.criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical')
         )::bigint AS critical_application_count
-      FROM source.contract_scope
-      GROUP BY tenant_key, contract_id, load_run_id
+      FROM source.contract_scope s
+      JOIN active_contract_versions active
+        ON active.tenant_key = s.tenant_key
+       AND active.contract_id = s.contract_id
+       AND active.load_run_id = s.load_run_id
+      GROUP BY s.tenant_key, s.contract_id, s.load_run_id
     ),
     perf AS (
       SELECT
@@ -807,8 +837,9 @@ async function rebuildViews(client: Client): Promise<void> {
         COALESCE(sum(p.credit_claimed), 0)::numeric AS credit_claimed,
         COALESCE(sum(p.credit_recovered), 0)::numeric AS credit_recovered
       FROM source.contract_performance_observation p
-      JOIN active_runs active
+      JOIN active_contract_versions active
         ON active.tenant_key = p.tenant_key
+       AND active.contract_id = p.contract_id
        AND active.load_run_id = p.load_run_id
       GROUP BY p.tenant_key, p.contract_id, p.load_run_id
     )
@@ -830,8 +861,9 @@ async function rebuildViews(client: Client): Promise<void> {
       CASE WHEN perf.period_count IS NULL THEN 'true' ELSE 'false' END AS evidence_gap,
       c.load_run_id
     FROM source.contract c
-    JOIN active_runs active
+    JOIN active_contract_versions active
       ON active.tenant_key = c.tenant_key
+     AND active.contract_id = c.contract_id
      AND active.load_run_id = c.load_run_id
     LEFT JOIN source.vendor v
       ON v.tenant_key = c.tenant_key
@@ -849,15 +881,20 @@ async function rebuildViews(client: Client): Promise<void> {
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_vendor_360 AS
     WITH active_runs AS (${activeRuns}),
+    active_contract_versions AS (${activeContractVersions}),
     consumption AS (
       SELECT
-        tenant_key,
-        contract_id,
-        load_run_id,
-        sum(committed_amount)::numeric AS committed_annual_spend,
-        sum(actual_spend)::numeric AS actual_annual_spend
-      FROM source.contract_consumption_observation
-      GROUP BY tenant_key, contract_id, load_run_id
+        o.tenant_key,
+        o.contract_id,
+        o.load_run_id,
+        sum(o.committed_amount)::numeric AS committed_annual_spend,
+        sum(o.actual_spend)::numeric AS actual_annual_spend
+      FROM source.contract_consumption_observation o
+      JOIN active_contract_versions active
+        ON active.tenant_key = o.tenant_key
+       AND active.contract_id = o.contract_id
+       AND active.load_run_id = o.load_run_id
+      GROUP BY o.tenant_key, o.contract_id, o.load_run_id
     )
     SELECT
       c.tenant_key,
@@ -891,8 +928,9 @@ async function rebuildViews(client: Client): Promise<void> {
       false AS total_committed_value_conflict_flag,
       c.load_run_id
     FROM source.contract c
-    JOIN active_runs active
+    JOIN active_contract_versions active
       ON active.tenant_key = c.tenant_key
+     AND active.contract_id = c.contract_id
      AND active.load_run_id = c.load_run_id
     LEFT JOIN source.vendor v
       ON v.tenant_key = c.tenant_key
@@ -922,10 +960,13 @@ async function rebuildViews(client: Client): Promise<void> {
 
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_360 AS
-    WITH depth AS (
+    WITH active_runs AS (${activeRuns}),
+    active_contract_versions AS (${activeContractVersions}),
+    depth AS (
       SELECT
-        tenant_key,
-        contract_id,
+        facts.tenant_key,
+        facts.contract_id,
+        active.load_run_id,
         count(*) FILTER (WHERE fact_key = 'document.page_text_char_count')::bigint AS document_page_text_count,
         COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'change_order_count'), 0)::bigint AS change_order_count,
         COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'annual_change_order_spend'), 0)::numeric AS annual_change_order_spend,
@@ -943,7 +984,14 @@ async function rebuildViews(client: Client): Promise<void> {
         count(*) FILTER (WHERE fact_key = 'qbr.run_percent')::bigint AS qbr_scorecard_count,
         COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'qbr.automation_backlog_items'), 0)::numeric AS latest_qbr_automation_backlog_items,
         COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'qbr.report_retirement_candidates'), 0)::numeric AS latest_qbr_report_retirement_candidates
-      FROM source.canonical_fact_assertion
+      FROM source.canonical_fact_assertion facts
+      JOIN active_contract_versions active
+        ON active.tenant_key = facts.tenant_key
+       AND active.contract_id = facts.contract_id
+       AND (
+         active.dataset_version IS NULL
+         OR facts.dataset_version = active.dataset_version
+       )
       WHERE fact_key = 'document.page_text_char_count'
          OR fact_key LIKE 'change_order%'
          OR fact_key IN ('annual_change_order_spend', 'recurring_change_order_spend', 'recurring_avoidable_pct')
@@ -951,7 +999,7 @@ async function rebuildViews(client: Client): Promise<void> {
          OR fact_key LIKE 'invoice_line.%'
          OR fact_key LIKE 'batch_operations.%'
          OR fact_key LIKE 'qbr.%'
-      GROUP BY tenant_key, contract_id
+      GROUP BY facts.tenant_key, facts.contract_id, active.load_run_id
     )
     SELECT
       c.*,
@@ -1006,7 +1054,8 @@ async function rebuildViews(client: Client): Promise<void> {
      AND op.load_run_id = c.load_run_id
     LEFT JOIN depth
       ON depth.tenant_key = c.tenant_key
-     AND depth.contract_id = c.contract_id`);
+     AND depth.contract_id = c.contract_id
+     AND depth.load_run_id = c.load_run_id`);
 
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_contract_v1 AS
@@ -1202,7 +1251,8 @@ async function rebuildViews(client: Client): Promise<void> {
 
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_spend_monthly_v1 AS
-    WITH active_runs AS (${activeRuns})
+    WITH active_runs AS (${activeRuns}),
+    active_contract_versions AS (${activeContractVersions})
     SELECT
       o.tenant_key,
       o.observation_id,
@@ -1237,14 +1287,16 @@ async function rebuildViews(client: Client): Promise<void> {
       CASE WHEN o.actual_spend IS NULL AND o.invoice_amount IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
       o.load_run_id
     FROM source.contract_consumption_observation o
-    JOIN active_runs active
+    JOIN active_contract_versions active
       ON active.tenant_key = o.tenant_key
+     AND active.contract_id = o.contract_id
      AND active.load_run_id = o.load_run_id
     WHERE source.can_read_sourcing_tenant(o.tenant_key)`);
 
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_performance_v1 AS
-    WITH active_runs AS (${activeRuns})
+    WITH active_runs AS (${activeRuns}),
+    active_contract_versions AS (${activeContractVersions})
     SELECT
       o.tenant_key,
       o.observation_id,
@@ -1279,14 +1331,16 @@ async function rebuildViews(client: Client): Promise<void> {
       CASE WHEN o.actual_value IS NULL AND o.value_num IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
       o.load_run_id
     FROM source.contract_performance_observation o
-    JOIN active_runs active
+    JOIN active_contract_versions active
       ON active.tenant_key = o.tenant_key
+     AND active.contract_id = o.contract_id
      AND active.load_run_id = o.load_run_id
     WHERE source.can_read_sourcing_tenant(o.tenant_key)`);
 
   await client.query(`
     CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
     WITH active_runs AS (${activeRuns}),
+    active_contract_versions AS (${activeContractVersions}),
     sourcing AS (
       SELECT
         o.tenant_key,
@@ -1325,8 +1379,9 @@ async function rebuildViews(client: Client): Promise<void> {
         'available'::text AS availability_state,
         o.load_run_id
       FROM source.sourcing_opportunity o
-      JOIN active_runs active
+      JOIN active_contract_versions active
         ON active.tenant_key = o.tenant_key
+       AND active.contract_id = o.contract_id
        AND active.load_run_id = o.load_run_id
     ),
     optimization AS (
@@ -1371,12 +1426,17 @@ async function rebuildViews(client: Client): Promise<void> {
         'available'::text AS availability_state,
         c.load_run_id
       FROM source.optimization_opportunity o
+      JOIN active_contract_versions active
+        ON active.tenant_key = o.tenant_key
+       AND active.contract_id = o.contract_id
+       AND (
+         active.dataset_version IS NULL
+         OR o.dataset_version = active.dataset_version
+       )
       JOIN source.contract c
-        ON c.tenant_key = o.tenant_key
-       AND c.contract_id = o.contract_id
-      JOIN active_runs active
-        ON active.tenant_key = c.tenant_key
-       AND active.load_run_id = c.load_run_id
+        ON c.tenant_key = active.tenant_key
+       AND c.contract_id = active.contract_id
+       AND c.load_run_id = active.load_run_id
     )
     SELECT * FROM sourcing
     WHERE source.can_read_sourcing_tenant(tenant_key)
