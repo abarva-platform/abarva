@@ -514,8 +514,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeNull();
     expect(screen.getByText("/ Vendors")).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Concentration" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "By evidence depth" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "By archetype" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Evidence depth" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Archetype mix" })).toBeTruthy();
     expect(screen.getByText("Vendor 360")).toBeTruthy();
     expect(screen.getByText("One row per supplier relationship")).toBeTruthy();
     const vendorChart = screen.getByLabelText("Vendor concentration chart");
@@ -529,14 +529,14 @@ describe("Source workspace ECL browser-surface proof", () => {
       screen.queryByRole("heading", { name: "Helix Shared Services Group" }),
     ).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "By evidence depth" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Evidence depth" }));
     expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
     expectChartEmptyState(
       screen.getByLabelText("Vendor evidence depth chart"),
       /No vendor evidence depth chart available/i,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: "By archetype" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Archetype mix" }));
     expect(screen.getByText("Declared contract archetypes")).toBeTruthy();
     expectChartEmptyState(
       screen.getByLabelText("Vendor archetype annual value chart"),
@@ -913,14 +913,14 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText(/vendors are loaded/i)).toBeNull();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Vendors" })[0]);
-    fireEvent.click(screen.getByRole("tab", { name: "By evidence depth" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Evidence depth" }));
     expect(screen.getByText("Which vendors have usable depth")).toBeTruthy();
     expectMeasuredRechartsCard(
       screen.getByLabelText("Vendor evidence depth chart"),
     );
     expect(screen.getByRole("button", { name: /Kyndryl, Inc./ })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("tab", { name: "By archetype" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Archetype mix" }));
     expect(screen.getByText("Declared contract archetypes")).toBeTruthy();
     expectMeasuredRechartsCard(
       screen.getByLabelText("Vendor archetype annual value chart"),

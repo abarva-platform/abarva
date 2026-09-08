@@ -53,7 +53,7 @@ const CONTRACT_TABS = [
   "Evidence",
   "Optimize",
 ] as const;
-const VENDOR_SUBTABS = ["Concentration", "By evidence depth", "By archetype"] as const;
+const VENDOR_SUBTABS = ["Concentration", "Evidence depth", "Archetype mix"] as const;
 const CONTRACT_LIST_SUBTABS = ["Table", "By evidence depth", "By finance status"] as const;
 const OPTIMIZE_SUBTABS = ["Queue", "By type", "By contract"] as const;
 const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"] as const;
@@ -979,7 +979,7 @@ function VendorsPage({
           eyebrow="Vendor 360"
           title={vendorSubtabTitle(subtab)}
         />
-        {subtab === "By evidence depth" ? (
+        {subtab === "Evidence depth" ? (
           <div className="sw-v2-vendor-evidence-view">
             <VendorEvidenceDepthChart portfolio={portfolio} vendors={vendors} />
             <VendorEvidenceDepthTable
@@ -989,7 +989,7 @@ function VendorsPage({
               onOpenVendor={onOpenVendor}
             />
           </div>
-        ) : subtab === "By archetype" ? (
+        ) : subtab === "Archetype mix" ? (
           <div className="sw-v2-vendor-archetype-view">
             <VendorArchetypeMixChart portfolio={portfolio} />
             <VendorArchetypeTable
@@ -4262,8 +4262,8 @@ function financialPosture(contract: SourceContract360Row) {
 }
 
 function vendorSubtabTitle(subtab: string) {
-  if (subtab === "By evidence depth") return "Which vendors have usable depth";
-  if (subtab === "By archetype") return "Declared contract archetypes";
+  if (subtab === "Evidence depth") return "Which vendors have usable depth";
+  if (subtab === "Archetype mix") return "Declared contract archetypes";
   return "One row per supplier relationship";
 }
 
