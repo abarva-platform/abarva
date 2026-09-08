@@ -262,6 +262,62 @@ describe("Source Workspace visual aVa answer", () => {
     ).toBe(true);
   });
 
+  it("routes visible Contract 360 header context before portfolio-level synthesis", () => {
+    const context = {
+      module: "Source",
+      activeClient: "Active Demo Client",
+      clientKey: "active_demo_client",
+      activeTab: "Contract 360 / Story",
+      sourceContract360Mode: true,
+      contractId: "CTR-0006",
+      contractName: "Managed infrastructure agreement",
+      vendorName: "Primary Vendor Inc.",
+      annualValue: 39_800_000,
+      actualAnnualSpend: null,
+      endDate: "31 Dec 2027",
+      evidencePosture: "Header only; contract-specific optimization evidence is not loaded.",
+      nextAction: "Load contract-specific opportunity and evidence rows before sizing value.",
+      contractDatasetSummary: "230 contracts / 94 vendors / $1.8402B annual value.",
+      contractCubeSummary: "3 scope rows / 32 action candidates / 0 claimable value rows.",
+      sourceV4: {
+        executivePortfolio: {
+          contracts: 230,
+          annualValue: "$1.8402B",
+        },
+        contextCoverage: {
+          vendors: 94,
+          scopeRows: 3,
+        },
+      },
+    } as AskSurfaceContext;
+
+    expect(
+      canBuildSourceWorkspaceVisualAnswer({
+        query:
+          "What is the candidate opportunity value on this contract, and what evidence supports it?",
+        surfaceContext: context,
+      }),
+    ).toBe(true);
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query:
+        "What is the candidate opportunity value on this contract, and what evidence supports it?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("CTR-0006");
+    expect(answer?.directAnswer).toContain("Primary Vendor Inc.");
+    expect(answer?.directAnswer).toContain("candidate opportunity value is not established");
+    expect(answer?.directAnswer).toContain("No governed opportunity row");
+    expect(answer?.directAnswer).not.toContain("No specific contract is selected");
+    expect(answer?.metricsUsed).toContainEqual(
+      expect.objectContaining({
+        id: "annual-value",
+        value: 39_800_000,
+      }),
+    );
+  });
+
   it("binds a named contract question to the contract directory instead of the visible portfolio selection", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: Record<string, unknown>;
