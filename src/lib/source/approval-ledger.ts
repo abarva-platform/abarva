@@ -5,7 +5,6 @@ import "server-only";
 // approval-ledger-model.ts. Kept separate so UI code/tests can import the
 // pure model without pulling in server-only Clerk/DB dependencies.
 
-import { clerkClient } from "@clerk/nextjs/server";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
   buildApprovalLedger,
@@ -31,6 +30,10 @@ interface ApprovalLedgerDbRow {
   notes?: string | null;
 }
 
+interface LoadApprovalLedgerOptions {
+  resolveApproverNames?: boolean;
+}
+
 function nameFromClerkUser(user: ClerkUserLite | null): string | null {
   if (!user) return null;
   const parts = [user.firstName ?? "", user.lastName ?? ""].filter(
@@ -49,6 +52,7 @@ async function resolveApproverNames(
 ): Promise<Map<string, string>> {
   const names = new Map<string, string>();
   const unique = Array.from(new Set(userIds));
+  const { clerkClient } = await import("@clerk/nextjs/server");
   const clerk = await clerkClient().catch(() => null);
   if (!clerk) return names;
   await Promise.all(
@@ -77,6 +81,7 @@ export async function loadApprovalLedger(
   currentStageKey: string | null,
   stages?: readonly ApprovalLedgerStageLike[],
   db = getAzureWriteFluentClient(),
+  options: LoadApprovalLedgerOptions = {},
 ): Promise<ApprovalLedgerRow[]> {
   const { data, error } = await db
     .from("source_event_approvals")
@@ -95,9 +100,12 @@ export async function loadApprovalLedger(
         }))
       : [];
 
-  const approverNames = await resolveApproverNames(
-    approvalRows.map((r) => r.approved_by_user_id),
-  );
+  const approverNames =
+    options.resolveApproverNames === false
+      ? new Map<string, string>()
+      : await resolveApproverNames(
+          approvalRows.map((r) => r.approved_by_user_id),
+        );
 
   return buildApprovalLedger({
     currentStageKey,
