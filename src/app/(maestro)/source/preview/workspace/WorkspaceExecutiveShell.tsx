@@ -311,9 +311,9 @@ export function WorkspaceExecutiveShell({
           (contract) => contract.contract_id === selectedContractId,
         ) ?? fetchedContract)
       : null) ??
-    preferredContract(portfolio) ??
-    portfolio.contracts[0] ??
-    null;
+    (selectedContractId
+      ? null
+      : (preferredContract(portfolio) ?? portfolio.contracts[0] ?? null));
   const currentPage = activePage(logic, vm);
   const selectedVendorRef =
     logic.state.sel.kind === "vendor"
@@ -644,14 +644,21 @@ export function WorkspaceExecutiveShell({
           ) : null}
 
           {currentPage === "Contracts" ? (
-            vm.isContract && selectedContract ? (
-              <ContractPage
-                vm={vm}
-                logic={logic}
-                portfolio={portfolio}
-                contract={selectedContract}
-                onOpenTab={(tab) => logic.setTab("contract", tab)}
-              />
+            vm.isContract ? (
+              selectedContract ? (
+                <ContractPage
+                  vm={vm}
+                  logic={logic}
+                  portfolio={portfolio}
+                  contract={selectedContract}
+                  onOpenTab={(tab) => logic.setTab("contract", tab)}
+                />
+              ) : (
+                <ContractDetailLoadState
+                  contractId={selectedContractId}
+                  state={fetchedContractDetail}
+                />
+              )
             ) : (
               <ContractsPage
                 portfolio={portfolio}
@@ -2278,6 +2285,33 @@ function ContractFinancialPostureTable({
   );
 }
 
+function ContractDetailLoadState({
+  contractId,
+  state,
+}: {
+  contractId: string | null;
+  state: Contract360Response | "loading" | "error" | undefined;
+}) {
+  const failed = state === "error";
+  return (
+    <section
+      className="sw-v2-panel sw-v2-span-3"
+      role={failed ? "alert" : "status"}
+      aria-live="polite"
+    >
+      <PanelHead
+        eyebrow="Contract 360"
+        title={failed ? "Contract detail unavailable" : "Loading contract detail"}
+      />
+      <p className="sw-v2-lede">
+        {failed
+          ? `Source could not load ${contractId ?? "the selected contract"}. No substitute contract is being shown.`
+          : `Loading ${contractId ?? "the selected contract"} from the governed contract-detail service.`}
+      </p>
+    </section>
+  );
+}
+
 function ContractPage({
   vm,
   logic,
@@ -2294,9 +2328,19 @@ function ContractPage({
   const tab = logic.state.tabs.contract ?? "Story";
   const detailReady = vm.detailState === "ready";
   const coverage = coverageForContract(portfolio, contract.contract_id);
-  const scopeRows = portfolio.applicationScope.filter(
+  const portfolioScopeRows = portfolio.applicationScope.filter(
     (row) => row.contract_id === contract.contract_id,
   );
+  const detailScopeRows = detailReady && vm.detail
+    ? [
+        ...(vm.detail.scopeTiers.explicit ?? []),
+        ...(vm.detail.scopeTiers.reviewed ?? []),
+        ...(vm.detail.scopeTiers.vendorInferred ?? []),
+        ...(vm.detail.scopeTiers.unresolved ?? []),
+      ]
+    : [];
+  const scopeRows =
+    portfolioScopeRows.length > 0 ? portfolioScopeRows : detailScopeRows;
   const contractClaimCards = portfolio.impact.claimCards.filter(
     (row) => row.contract_id === contract.contract_id,
   );
