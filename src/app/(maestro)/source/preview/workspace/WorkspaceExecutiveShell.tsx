@@ -617,6 +617,7 @@ export function WorkspaceExecutiveShell({
               performanceRows={performanceRows}
               spendRows={spendRows}
               impactCandidateAmount={impactCandidateAmount}
+              impactLoadState={impactLoadState}
               showLineage={showLineage}
               onToggleLineage={() => setShowLineage((current) => !current)}
               onOpenContract={openContract}
@@ -718,6 +719,7 @@ function PortfolioPage({
   performanceRows,
   spendRows,
   impactCandidateAmount,
+  impactLoadState,
   showLineage,
   onToggleLineage,
   onOpenContract,
@@ -733,6 +735,7 @@ function PortfolioPage({
   performanceRows: number;
   spendRows: number;
   impactCandidateAmount: number;
+  impactLoadState: ImpactLoadState;
   showLineage: boolean;
   onToggleLineage: () => void;
   onOpenContract: (contractId: string, tab?: string) => void;
@@ -860,6 +863,17 @@ function PortfolioPage({
               Open finding
             </button>
           </>
+        ) : impactLoadState === "loading" ? (
+          <p className="sw-v2-muted">
+            Evidence depth is still updating. Candidate actions and credit
+            findings will appear after the governed impact layer finishes
+            hydrating.
+          </p>
+        ) : impactLoadState === "error" ? (
+          <p className="sw-v2-muted">
+            Evidence depth did not finish loading. Source is withholding
+            quantified action claims until the impact layer can be refreshed.
+          </p>
         ) : (
           <p className="sw-v2-muted">
             No quantified opportunity is loaded in the current deterministic
