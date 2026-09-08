@@ -489,6 +489,26 @@ describe("Source workspace ECL browser-surface proof", () => {
       screen.queryByLabelText("Persistent Source workspace toolbar"),
     ).toBeNull();
     expect(screen.getByText("/ MER-CTR-SSO-BPO-001")).toBeTruthy();
+    [
+      "Story",
+      "Scope",
+      "Economics",
+      "Performance",
+      "Relationship",
+      "Evidence",
+      "Optimize",
+    ].forEach((tabName) => {
+      expect(
+        screen.getAllByRole("button", { name: tabName }).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(screen.queryByRole("button", { name: "Spend and Usage" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Risks and Compliance" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Savings and Value" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Documents" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "AI Insights" })).toBeNull();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[1]);
 

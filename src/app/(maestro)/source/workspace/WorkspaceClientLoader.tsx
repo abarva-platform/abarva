@@ -93,7 +93,7 @@ export function WorkspaceClientLoader({
 
   useEffect(() => {
     let cancelled = false;
-    let fullImpactTimer: ReturnType<typeof window.setTimeout> | null = null;
+    let fullImpactTimer: number | null = null;
     setPortfolio(null);
     setError(null);
     setImpactLoadState("loading");
