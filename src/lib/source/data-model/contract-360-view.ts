@@ -20,6 +20,7 @@ import type { ContractOptimizationEvidencePack } from "./contract-optimization-e
 import type { ContractOptimizationOpportunitySet } from "./contract-optimization-opportunity";
 import type {
   DocExtractionRow,
+  DocFileRow,
   SourceContract360Row,
   SourceContractApplicationScopeRow,
   SourceContractEvidenceOverviewRow,
@@ -46,6 +47,8 @@ export interface Contract360View {
   readonly hasTowerOverlay: boolean;
   /** doc.extraction rows citing this contract or its vendor — exact clause/row provenance. */
   readonly docExtractions: readonly DocExtractionRow[];
+  /** Governed document inventory attached to this contract. */
+  readonly documentFiles?: readonly DocFileRow[];
   /** Shared four-ledger optimization evidence, if governed system/document rows exist. */
   readonly optimizationEvidence: ContractOptimizationEvidencePack | null;
   /** Atomic opportunity spine and governed calculation/evidence detail. */
@@ -68,6 +71,7 @@ export interface BuildContract360ViewInput {
   readonly towerObservations: readonly TowerMetricObservationRow[];
   readonly towerValueClaims: readonly TowerValueClaimRow[];
   readonly docExtractions?: readonly DocExtractionRow[];
+  readonly documentFiles?: readonly DocFileRow[];
   readonly optimizationEvidence?: ContractOptimizationEvidencePack | null;
   readonly optimizationOpportunitySet?: ContractOptimizationOpportunitySet | null;
   readonly evidenceOverview?: SourceContractEvidenceOverviewRow | null;
@@ -92,6 +96,7 @@ export function buildContract360View(
     towerObservations,
     towerValueClaims,
     docExtractions = [],
+    documentFiles = [],
     optimizationEvidence = null,
     optimizationOpportunitySet = null,
     evidenceOverview = null,
@@ -126,6 +131,7 @@ export function buildContract360View(
     hasTowerOverlay:
       towerObservations.length > 0 || towerValueClaims.length > 0,
     docExtractions,
+    documentFiles,
     optimizationEvidence,
     optimizationOpportunitySet,
     evidenceOverview,

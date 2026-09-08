@@ -18,6 +18,7 @@ import {
   listContractPerformancePeriods,
   listContractSpendMonthly,
   listDocExtractionsForSubject,
+  listDocFilesForContract,
   listLatestTowerObservationsForSubjects,
   listTowerValueClaimsForSubjects,
 } from '@/lib/source/data-model/read-adapter';
@@ -122,11 +123,12 @@ export async function GET(
       : (projectionDetail?.initiativeDependencies ?? []);
 
   const subjectRefs = collectContractSubjectRefs(contract, applicationScope);
-  const [towerObservations, towerValueClaims, extractionsByContract, extractionsByVendor, optimizationEvidence, optimizationOpportunitySet] = await Promise.all([
+  const [towerObservations, towerValueClaims, extractionsByContract, extractionsByVendor, documentFiles, optimizationEvidence, optimizationOpportunitySet] = await Promise.all([
     listLatestTowerObservationsForSubjects(tenantKey, subjectRefs).catch(() => []),
     listTowerValueClaimsForSubjects(tenantKey, subjectRefs).catch(() => []),
     listDocExtractionsForSubject(tenantKey, contract.contract_id).catch(() => []),
     listDocExtractionsForSubject(tenantKey, contract.vendor_ref).catch(() => []),
+    listDocFilesForContract(tenantKey, contract.contract_id).catch(() => []),
     getContractOptimizationEvidencePack(tenantKey, contract.contract_id).catch(() => null),
     getContractOptimizationOpportunitySet(tenantKey, contract.contract_id, contract).catch(() => null),
   ]);
@@ -145,6 +147,7 @@ export async function GET(
     towerObservations,
     towerValueClaims,
     docExtractions,
+    documentFiles,
     optimizationEvidence,
     optimizationOpportunitySet,
     evidenceOverview,
