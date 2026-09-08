@@ -767,12 +767,12 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.v4Snapshot.performanceCredits.unclaimedCredit).toBe(
       43000.02,
     );
-    expect(
-      runCalls.filter((call) => call.sql.includes("set_config")),
-    ).toContainEqual({
-      sql: "SELECT set_config('app.tenant_key', $1, false)",
-      params: ["meridian-health"],
-    });
+    const impactSetConfigCalls = runCalls.filter(
+      (call) =>
+        call.sql.includes("set_config") &&
+        call.params[0] === "meridian_health_global",
+    );
+    expect(impactSetConfigCalls).toHaveLength(6);
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_events")),
     ).toBe(false);
