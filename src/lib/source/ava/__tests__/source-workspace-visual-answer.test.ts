@@ -388,6 +388,35 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).not.toContain("No specific contract is selected");
   });
 
+  it("fills direct Contract 360 coverage from the matching selected contract packet", () => {
+    const context = sourceContext();
+    context.sourceContract360Mode = true;
+    context.contractId = "CTR-090";
+    context.contractName = "Salesforce Data Platform Agreement 3";
+    context.vendorName = "Salesforce";
+    context.annualValue = 43_500_000;
+    context.actualAnnualSpend = 37_400_000;
+    context.endDate = "28 Jun 2031";
+    context.evidencePosture = "Detail loaded.";
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query:
+        "What is the annual value, actual spend, scope, performance coverage, and candidate opportunity value?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("75 scope rows");
+    expect(answer?.directAnswer).toContain(
+      "72 active performance observations",
+    );
+    expect(answer?.directAnswer).not.toContain(
+      "scope coverage not established",
+    );
+    expect(answer?.directAnswer).not.toContain(
+      "performance coverage not established",
+    );
+  });
+
   it("binds a named contract question to the contract directory instead of the visible portfolio selection", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: Record<string, unknown>;
