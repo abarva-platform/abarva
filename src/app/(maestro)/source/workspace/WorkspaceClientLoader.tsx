@@ -16,6 +16,7 @@ interface PortfolioResponse {
 }
 
 type ImpactLoadState = "loading" | "ready" | "error";
+const SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS = 1200;
 
 function portfolioApiUrl(input: {
   readonly tenantKey: string;
@@ -92,26 +93,30 @@ export function WorkspaceClientLoader({
 
   useEffect(() => {
     let cancelled = false;
+    let fullImpactTimer: ReturnType<typeof window.setTimeout> | null = null;
     setPortfolio(null);
     setError(null);
     setImpactLoadState("loading");
 
     fetchPortfolio(deferredUrl)
-      .then(async (payload) => {
+      .then((payload) => {
         if (cancelled) return;
         setPortfolio(payload.portfolio);
         setResolvedProvider(payload.sourceProviderKey);
 
-        try {
-          const fullPayload = await fetchPortfolio(fullUrl);
-          if (cancelled) return;
-          setPortfolio(fullPayload.portfolio);
-          setResolvedProvider(fullPayload.sourceProviderKey);
-          setImpactLoadState("ready");
-        } catch {
-          if (cancelled) return;
-          setImpactLoadState("error");
-        }
+        fullImpactTimer = window.setTimeout(() => {
+          fetchPortfolio(fullUrl)
+            .then((fullPayload) => {
+              if (cancelled) return;
+              setPortfolio(fullPayload.portfolio);
+              setResolvedProvider(fullPayload.sourceProviderKey);
+              setImpactLoadState("ready");
+            })
+            .catch(() => {
+              if (cancelled) return;
+              setImpactLoadState("error");
+            });
+        }, SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -123,6 +128,7 @@ export function WorkspaceClientLoader({
       });
     return () => {
       cancelled = true;
+      if (fullImpactTimer) window.clearTimeout(fullImpactTimer);
     };
   }, [deferredUrl, fullUrl]);
 
