@@ -348,8 +348,14 @@ export function WorkspaceExecutiveShell({
     () => source360RecoverableCreditFinding(portfolio),
     [portfolio],
   );
-  const performanceRows = portfolio.v4Snapshot.performanceCredits.rowCount;
-  const spendRows = portfolio.v4Snapshot.spendConsumption.rowCount;
+  const spendRows =
+    sourceImpactCoverageRowTotal(portfolio.impact.evidenceCoverage, "spend_rows") ||
+    portfolio.v4Snapshot.spendConsumption.rowCount;
+  const performanceRows =
+    sourceImpactCoverageRowTotal(
+      portfolio.impact.evidenceCoverage,
+      "performance_rows",
+    ) || portfolio.v4Snapshot.performanceCredits.rowCount;
   const performanceCreditContract = [...recoverableCreditRows]
     .sort(
       (left, right) =>
@@ -3203,7 +3209,11 @@ function GraphSpineTable({
       adapter: "contract_consumption_adapter",
       canonical: "source.contract_consumption_observation",
       substrate: "consumption.sourcing_spend_monthly_v1",
-      rows: portfolio.v4Snapshot.spendConsumption.rowCount,
+      rows:
+        sourceImpactCoverageRowTotal(
+          portfolio.impact.evidenceCoverage,
+          "spend_rows",
+        ) || portfolio.v4Snapshot.spendConsumption.rowCount,
     },
     {
       family: "SLA performance",
@@ -3211,7 +3221,11 @@ function GraphSpineTable({
       adapter: "contract_performance_adapter",
       canonical: "source.contract_performance_observation",
       substrate: "consumption.sourcing_performance_v1",
-      rows: portfolio.v4Snapshot.performanceCredits.rowCount,
+      rows:
+        sourceImpactCoverageRowTotal(
+          portfolio.impact.evidenceCoverage,
+          "performance_rows",
+        ) || portfolio.v4Snapshot.performanceCredits.rowCount,
     },
     {
       family: "Optimization action",
@@ -3756,6 +3770,17 @@ function storylineBySurface(
 
 function formatCount(value: number | null | undefined) {
   return value == null ? "Not established" : String(value);
+}
+
+export function sourceImpactCoverageRowTotal(
+  rows: readonly SourceContractEvidenceCoverageRow[],
+  key:
+    | "spend_rows"
+    | "performance_rows"
+    | "document_page_text_rows"
+    | "change_order_rows",
+) {
+  return rows.reduce((sum, row) => sum + (numberFromDb(row[key]) ?? 0), 0);
 }
 
 function contractsByAnnualValue(
