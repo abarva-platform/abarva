@@ -44,7 +44,9 @@ async function main() {
     .single<{ id: string }>();
 
   if (eventError || !event) {
-    console.error("x Failed to create the synthetic approval verification event.");
+    console.error(
+      "x Failed to create the synthetic approval verification event.",
+    );
     console.error(eventError);
     process.exit(1);
     return;
@@ -102,24 +104,36 @@ async function main() {
     return;
   }
 
-  const ledger = await loadApprovalLedger(event.id, "scope", [
-    { key: "strategy", label: "Strategy" },
-    { key: "scope", label: "Scope" },
-  ]);
+  const ledger = await loadApprovalLedger(
+    event.id,
+    "scope",
+    [
+      { key: "strategy", label: "Strategy" },
+      { key: "scope", label: "Scope" },
+    ],
+    db,
+    { resolveApproverNames: false },
+  );
   const approvedStrategy = ledger.find((row) => row.stageKey === "strategy");
 
   const problems: string[] = [];
   if (persistedEvent.lifecycle_state !== "active") {
-    problems.push(`lifecycle_state mismatch: ${persistedEvent.lifecycle_state}`);
+    problems.push(
+      `lifecycle_state mismatch: ${persistedEvent.lifecycle_state}`,
+    );
   }
   if (persistedEvent.current_stage_key !== "scope") {
-    problems.push(`current_stage_key mismatch: ${persistedEvent.current_stage_key}`);
+    problems.push(
+      `current_stage_key mismatch: ${persistedEvent.current_stage_key}`,
+    );
   }
   if (!approvedStrategy) {
     problems.push("strategy approval ledger row missing");
   } else {
     if (approvedStrategy.state !== "approved") {
-      problems.push(`strategy ledger state mismatch: ${approvedStrategy.state}`);
+      problems.push(
+        `strategy ledger state mismatch: ${approvedStrategy.state}`,
+      );
     }
     if (!approvedStrategy.approvedAtIso) {
       problems.push("strategy approvedAtIso missing");
