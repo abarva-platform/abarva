@@ -261,6 +261,36 @@ describe("agent route · Source aVa visual and table output discipline", () => {
   });
 });
 
+describe("agent route · Source Contract 360 selected-context prompt", () => {
+  const source = readRoute();
+
+  it("injects Contract 360 selected-contract context into the prompt before generation", () => {
+    const blockIdx = source.indexOf("const sourceContract360PromptBlock =");
+    const promptIdx = source.indexOf("sourceContract360PromptBlock,");
+
+    expect(source).toContain("buildSourceContract360PromptBlock");
+    expect(source).toContain("buildSourcePortfolioFallbackAnswer");
+    expect(blockIdx).toBeGreaterThan(-1);
+    expect(promptIdx).toBeGreaterThan(blockIdx);
+  });
+
+  it("keeps selected Contract 360 turns out of the canned portfolio fallback", () => {
+    expect(source).toContain("const sourcePortfolioFallbackAnswer =");
+    expect(source).toContain("buildSourcePortfolioFallbackAnswer({");
+  });
+
+  it("runs Source answer quality checks as telemetry without rewriting Claude output", () => {
+    expect(source).toContain("const sourceAvaTelemetryGateActive =");
+    expect(source).toContain("answerText: bufferedOutput");
+    expect(source).toContain("[source-ava-quality-gate] telemetry checks failed");
+    expect(source).toContain("repairedWouldHaveRun: gateResult.repaired");
+    expect(source).not.toContain("let heldAgentText");
+    expect(source).not.toContain("heldAgentText +=");
+    expect(source).not.toContain("const finalText = gateResult.finalText");
+    expect(source).not.toContain("controller.enqueue(encoder.encode(finalText))");
+  });
+});
+
 describe("agent route · Source aVa vendor-response grounding — Gap 2", () => {
   const source = readRoute();
 
