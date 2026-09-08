@@ -3218,6 +3218,34 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     activeClient: vm.tenantName,
     clientKey: vm.portfolio.tenantKey,
     activeTab: sourceWorkspaceActiveTab,
+    sourceContract360Mode: kind === "contract",
+    contractId: kind === "contract" ? (c?.contract_id ?? sel.id ?? null) : null,
+    contractName: kind === "contract" ? (c?.contract_name ?? null) : null,
+    vendorName: kind === "contract" ? (c?.vendor_name ?? null) : null,
+    annualValue: kind === "contract" ? numberFromDb(c?.annual_value) : null,
+    actualAnnualSpend:
+      kind === "contract" ? effectiveActualAnnualSpend : null,
+    endDate: kind === "contract" ? fmtDate(c?.end_date) : null,
+    evidencePosture:
+      kind === "contract" && c?.source_confidence != null &&
+      Number.isFinite(c.source_confidence)
+        ? pct(c.source_confidence) + " source confidence"
+        : selectedContractMissing
+          ? "Requested contract was not returned by the active Source provider."
+          : null,
+    nextAction:
+      kind === "contract"
+        ? selectedContractMissing
+          ? "Select a contract present in the governed Source rows before making a contract-specific value or evidence claim."
+          : (opportunityView?.recommendationDetail ??
+            "Confirm evidence owner and decision path before claiming value.")
+        : null,
+    contractDatasetSummary: `${v4Snapshot.executivePortfolio.contractCount} contracts / ${v4Snapshot.contextCoverage.vendors} vendors / ${money(v4Snapshot.executivePortfolio.annualValue)} annual value / ${money(v4Snapshot.executivePortfolio.totalCommittedValue)} total committed value.`,
+    contractCubeSummary: `${v4Snapshot.contextCoverage.scopeRows} scope rows / ${v4Snapshot.contextCoverage.performanceRows} performance rows / ${v4Snapshot.contextCoverage.invoiceLines} invoice lines / ${sourceWorkspaceGroundingStatus.actionCandidates} action candidates / ${sourceWorkspaceGroundingStatus.avaGroundingBundles} aVa grounding bundles.`,
+    contractTopVendorSummary:
+      conc.byVendor[0]
+        ? `${conc.byVendor[0].vendorName} is the largest loaded vendor by annual contract value at ${money(conc.byVendor[0].annualValue)}.`
+        : null,
     selection:
       kind === "contract" && c
         ? c.contract_id + " · " + c.vendor_name
