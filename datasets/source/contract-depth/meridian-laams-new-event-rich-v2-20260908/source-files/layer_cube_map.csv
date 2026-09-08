@@ -1,0 +1,7 @@
+source_file,layer_2_adapter,layer_3_object,layer_4_cube_or_view,plain_english_use
+contracts.csv,contract_register_adapter,"source.contract, source.vendor","source.contract_360, source.vendor_contract_portfolio",contract identity and commercial header
+cmdb_application_scope.csv,contract_scope_adapter,source.contract_scope,source.contract_application_scope,application and system scope
+monthly_spend.csv,contract_consumption_adapter,source.contract_consumption_observation,consumption.sourcing_spend_monthly_v1,trailing 12 month spend trend
+sla_performance.csv,contract_performance_adapter,"source.contract_performance_observation, source.contract_service_credit",consumption.sourcing_performance_v1,SLA misses and credit calculation
+optimization_opportunities.csv,optimization_opportunity_adapter,source.optimization_opportunity,source.contract_action_candidate_v1,Optimize candidate queue
+raw_110_rfp_requirements.csv,source_event_adapter_v2_pending,source.source_event_requirement,Source New Event stage artifacts,future extension; not loaded by current contract-depth loader

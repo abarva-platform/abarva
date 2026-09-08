@@ -1,0 +1,5 @@
+tenant_key,dataset_version,source_row_id,contract_id,vendor_ref,vendor_name,quarter,run_percent,transform_percent,automation_backlog_items,report_retirement_candidates,client_satisfaction_score,source_file_id
+meridian-health,meridian-laams-new-event-rich-v2-20260908,qbr:MER-TECH-LAAMS-001:2026-Q3,MER-TECH-LAAMS-001,VEN-COGNIZANT,Cognizant Technology Solutions,2026-Q3,0.78,0.22,44,39,3.4,DOC-LAAMS-MONTHLY-SERVICE-REVIEWS
+meridian-health,meridian-laams-new-event-rich-v2-20260908,qbr:MER-TECH-LAAMS-001:2026-Q4,MER-TECH-LAAMS-001,VEN-COGNIZANT,Cognizant Technology Solutions,2026-Q4,0.76,0.24,49,44,3.3,DOC-LAAMS-MONTHLY-SERVICE-REVIEWS
+meridian-health,meridian-laams-new-event-rich-v2-20260908,qbr:MER-TECH-LAAMS-001:2027-Q1,MER-TECH-LAAMS-001,VEN-COGNIZANT,Cognizant Technology Solutions,2027-Q1,0.74,0.26,53,48,3.2,DOC-LAAMS-MONTHLY-SERVICE-REVIEWS
+meridian-health,meridian-laams-new-event-rich-v2-20260908,qbr:MER-TECH-LAAMS-001:2027-Q2,MER-TECH-LAAMS-001,VEN-COGNIZANT,Cognizant Technology Solutions,2027-Q2,0.72,0.28,57,52,3.1,DOC-LAAMS-MONTHLY-SERVICE-REVIEWS
