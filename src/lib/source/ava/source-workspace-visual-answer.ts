@@ -34,6 +34,8 @@ interface SourceContractContext {
   renewalOwnerRef: string | null;
   scopeSummary: string | null;
   scopeRowCount: number | null;
+  performanceObservationCount: number | null;
+  documentExtractionCount: number | null;
 }
 
 interface SourceLedgerLine {
@@ -247,6 +249,8 @@ function contractContextFromRecord(
     renewalOwnerRef: stringValue(raw.renewalOwnerRef),
     scopeSummary: stringValue(raw.scopeSummary),
     scopeRowCount: numberValue(raw.scopeRowCount),
+    performanceObservationCount: numberValue(raw.performanceObservationCount),
+    documentExtractionCount: numberValue(raw.documentExtractionCount),
   };
 }
 
@@ -271,6 +275,8 @@ function directContractContextFrom(
     renewalOwnerRef: null,
     scopeSummary: stringValue(context.evidencePosture),
     scopeRowCount: null,
+    performanceObservationCount: null,
+    documentExtractionCount: null,
   };
 }
 
@@ -547,6 +553,14 @@ function opportunityClassName(kind: string): string {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function sentenceFragment(value: string): string {
+  return value.trim().replace(/[.!?]+$/g, "");
+}
+
+function lineCount(value: number): string {
+  return `${value} ${value === 1 ? "line" : "lines"}`;
+}
+
 function buildOpportunityRows(lines: SourceOpportunityLine[]) {
   return lines.map((line) => ({
     class: opportunityClassName(line.kind),
@@ -726,17 +740,21 @@ export function buildSourceWorkspaceVisualAnswer(input: {
     });
   }
 
-  const evidenceReadyCount = lines.filter((line) =>
-    /quantified|validated|evidenced/i.test(
+  const evidencePresentCount = lines.filter((line) =>
+    /\bpresent\b|quantified|validated|evidenced/i.test(
       `${line.state} ${line.evidenceClass}`,
     ),
   ).length;
   const gapCount = lines.filter((line) =>
-    /baseline_conflict|evidence_required|workflow_required|missing|needs evidence|not established|requires_/i.test(
+    /baseline_conflict|evidence_required|workflow_required|review_required|finance_confirmation_required|finance confirmation required|not_confirmed|not confirmed|missing|needs evidence|not established|requires_/i.test(
       `${line.state} ${line.evidenceClass} ${line.nextAction}`,
     ),
   ).length;
   const quantified = numericRows.length;
+  const candidateTotalUsd = numericRows.reduce(
+    (total, row) => total + row.valueUsd,
+    0,
+  );
   const topOpportunity =
     lines.find((line) => line.amountUsd != null) ?? lines[0] ?? null;
   const topOpportunityValue =
@@ -744,12 +762,27 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       ? (topOpportunity?.amount ?? "Not established")
       : currencyLabel(topOpportunity.amountUsd);
   const topOpportunitySummary = topOpportunity
-    ? ` The top governed opportunity is ${topOpportunity.label} (${topOpportunityValue}), with evidence state ${topOpportunity.evidenceClass} and next action: ${topOpportunity.nextAction}.`
+    ? ` The top governed opportunity is ${topOpportunity.label} (${topOpportunityValue}), with evidence state ${topOpportunity.evidenceClass} and next action: ${sentenceFragment(topOpportunity.nextAction)}.`
     : ` No governed opportunity row is tied to this contract in the current Source aVa packet, so candidate opportunity value is not established; treat actionability and value as missing until the contract-specific evidence is loaded or opened.${contract.scopeSummary ? ` Evidence posture: ${contract.scopeSummary}.` : ""}`;
+
+  const loadedContractFacts = [
+    `recorded annual value ${currencyLabel(contract.annualValueUsd)}`,
+    `actual annual spend ${currencyLabel(contract.actualAnnualSpendUsd)}`,
+    contract.scopeRowCount == null
+      ? "scope coverage not established"
+      : `${contract.scopeRowCount} scope rows`,
+    contract.performanceObservationCount == null
+      ? "performance coverage not established"
+      : `${contract.performanceObservationCount} active performance observations`,
+  ].join(", ");
+  const candidateSummary =
+    quantified > 0
+      ? `${lineCount(quantified)} of contract-specific candidate commercial opportunities total ${currencyLabel(candidateTotalUsd)}. Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation. These amounts are candidates, not realized savings.`
+      : `There are no contract-specific candidate commercial opportunity lines with governed numeric values. Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation.`;
 
   return {
     directAnswer:
-      `${contract.vendorName} ${contract.contractName} (${contract.contractId}) ${contractMismatch ? "is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "is bound from the governed Source contract context. "}There are ${quantified} contract-specific commercial opportunity line(s) with governed numeric values, ${evidenceReadyCount} line(s) marked evidence-ready, and ${gapCount} line(s) that still require explicit workflow, review, or evidence. ` +
+      `${contract.vendorName} ${contract.contractName} (${contract.contractId}) ${contractMismatch ? "is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "is bound from the governed Source contract context. "}Loaded contract facts: ${loadedContractFacts}. ${candidateSummary}` +
       `${topOpportunitySummary} The outside-in pattern is advisory only: for large enterprise software and managed-service renewals, the strongest negotiation story usually combines contract terms, AP/ERP invoice proof, SLA/service-credit proof, usage or entitlement data, and a finance-confirmed value gate. It should guide the ask, not replace Source/Tower evidence.`,
     artifacts,
     citations,
@@ -781,6 +814,28 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         value: contract.actualAnnualSpendUsd ?? "Not established",
         unit: contract.actualAnnualSpendUsd == null ? undefined : "USD",
         citationIds: [contractCitationId],
+      },
+      {
+        id: "scope-row-count",
+        label: "Contract scope rows",
+        value: contract.scopeRowCount ?? "Not established",
+        unit: contract.scopeRowCount == null ? undefined : "rows",
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "performance-observation-count",
+        label: "Active performance observations",
+        value: contract.performanceObservationCount ?? "Not established",
+        unit:
+          contract.performanceObservationCount == null ? undefined : "rows",
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "candidate-opportunity-total",
+        label: "Candidate opportunity total",
+        value: quantified > 0 ? candidateTotalUsd : "Not established",
+        unit: quantified > 0 ? "USD" : undefined,
+        citationIds: [opportunityCitationId],
       },
     ],
     relationshipsUsed: connections.map((connection) => ({

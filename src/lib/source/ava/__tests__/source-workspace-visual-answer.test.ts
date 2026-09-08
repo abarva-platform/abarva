@@ -25,6 +25,8 @@ function sourceContext(): AskSurfaceContext {
         renewalOwnerRef: "LDR-032",
         scopeSummary: "Enterprise data platform and managed application scope.",
         scopeRowCount: 75,
+        performanceObservationCount: 72,
+        documentExtractionCount: 45,
       },
       optimizationOpportunities: {
         recommendation: "Start contract optimization now.",
@@ -131,7 +133,17 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).toContain(
       "outside-in pattern is advisory only",
     );
-    expect(answer?.directAnswer).toContain("commercial opportunity line");
+    expect(answer?.directAnswer).toContain(
+      "lines of contract-specific candidate commercial opportunities",
+    );
+    expect(answer?.directAnswer).toContain("recorded annual value $43.5M");
+    expect(answer?.directAnswer).toContain("actual annual spend $37.4M");
+    expect(answer?.directAnswer).toContain("75 scope rows");
+    expect(answer?.directAnswer).toContain("72 active performance observations");
+    expect(answer?.directAnswer).toContain(
+      "4 lines of contract-specific candidate commercial opportunities total $5.6M",
+    );
+    expect(answer?.directAnswer).toContain("These amounts are candidates, not realized savings");
     expect(answer?.artifacts.map((artifact) => artifact.artifact)).toEqual([
       "table",
       "chart",
@@ -256,7 +268,9 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).toContain(
       "SLA credits earned but not claimed",
     );
-    expect(answer?.directAnswer).toContain("commercial opportunity line");
+    expect(answer?.directAnswer).toContain(
+      "lines of contract-specific candidate commercial opportunities",
+    );
     expect(
       answer?.citations.some((citation) => citation.recordId === "CTR-090"),
     ).toBe(true);
@@ -521,5 +535,51 @@ describe("Source Workspace visual aVa answer", () => {
     expect(evidenceBasis).not.toContain("consumption.Sourcing");
     expect(evidenceBasis).not.toContain("Finance Confirmation State");
     expect(evidenceBasis).not.toContain("{");
+  });
+
+  it("separates evidence presence from finance-confirmation readiness", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.optimizationOpportunities = null;
+    context.sourceV4.contractOpportunityDirectory = [
+      {
+        id: "candidate-001",
+        contractId: "CTR-090",
+        label: "Recover eligible service credits",
+        amountUsd: 25_000,
+        state: "finance_confirmation_required",
+        evidenceClass: "present",
+        nextAction: "Submit the evidence packet for finance confirmation.",
+        sourceRefs: ["performance evidence"],
+      },
+      {
+        id: "candidate-002",
+        contractId: "CTR-090",
+        label: "Rebalance delivery mix",
+        amountUsd: 620_000,
+        state: "review_required",
+        evidenceClass: "present",
+        nextAction: "Complete commercial review!",
+        sourceRefs: ["contract scope evidence"],
+      },
+    ];
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "Why is this contract actionable and what is still gated?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("Evidence is present for 2 lines");
+    expect(answer?.directAnswer).toContain(
+      "2 lines still require explicit workflow, review, or finance confirmation",
+    );
+    expect(answer?.directAnswer).toContain(
+      "These amounts are candidates, not realized savings",
+    );
+    expect(answer?.directAnswer).toContain(
+      "next action: Submit the evidence packet for finance confirmation.",
+    );
+    expect(answer?.directAnswer).not.toContain("confirmation..");
   });
 });

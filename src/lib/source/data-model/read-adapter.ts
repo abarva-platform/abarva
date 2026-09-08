@@ -770,44 +770,47 @@ export async function listContractPerformancePeriods(
     await queryCanonicalSourceWithFallback<SourceContractPerformancePeriodRow>(
       tenantKey,
       `SELECT
-	     tenant_key,
-	     observation_id,
-	     contract_id,
-       service_id,
-       metric_name,
-       period_start,
-       period_end,
-       contracted_target,
-       actual_value,
-       value_num,
-       unit,
+	     o.tenant_key,
+	     o.observation_id,
+	     o.contract_id,
+       o.service_id,
+       o.metric_name,
+       o.period_start,
+       o.period_end,
+       o.contracted_target,
+       o.actual_value,
+       o.value_num,
+       o.unit,
        CASE
-         WHEN COALESCE(breach_count, 0) > 0 THEN 'breached'
-         WHEN actual_value IS NULL AND value_num IS NULL THEN 'not_loaded'
+         WHEN COALESCE(o.breach_count, 0) > 0 THEN 'breached'
+         WHEN o.actual_value IS NULL AND o.value_num IS NULL THEN 'not_loaded'
          ELSE 'met_or_unclassified'
        END AS performance_state,
        CASE
-         WHEN COALESCE(credit_recovered, 0) > 0 THEN 'recovered'
-         WHEN COALESCE(credit_claimed, 0) > 0 THEN 'claimed'
-         WHEN COALESCE(credit_calculated, 0) > 0 THEN 'earned_unclaimed'
+         WHEN COALESCE(o.credit_recovered, 0) > 0 THEN 'recovered'
+         WHEN COALESCE(o.credit_claimed, 0) > 0 THEN 'claimed'
+         WHEN COALESCE(o.credit_calculated, 0) > 0 THEN 'earned_unclaimed'
          ELSE 'none'
        END AS credit_state,
-       breach_count,
-       credit_eligible,
-       credit_calculated,
-       credit_claimed,
-       credit_recovered,
-       currency,
-       source_system,
-       source_record_id,
-       as_of_date,
-       quality_state,
-       evidence_reference,
-       load_run_id
-     FROM source.contract_performance_observation
-	   WHERE tenant_key = ANY($1::text[])
-	     AND contract_id = $2
-	   ORDER BY period_start, observation_id`,
+       o.breach_count,
+       o.credit_eligible,
+       o.credit_calculated,
+       o.credit_claimed,
+       o.credit_recovered,
+       o.currency,
+       o.source_system,
+       o.source_record_id,
+       o.as_of_date,
+       o.quality_state,
+       o.evidence_reference,
+       o.load_run_id
+     FROM source.contract_performance_observation o
+     INNER JOIN consumption.sourcing_performance_v1 active
+       ON active.tenant_key = o.tenant_key
+      AND active.observation_id = o.observation_id
+	   WHERE o.tenant_key = ANY($1::text[])
+	     AND o.contract_id = $2
+	   ORDER BY o.period_start, o.observation_id`,
       [contractId],
     );
   return rows.map(normalizePerformancePeriodRow);

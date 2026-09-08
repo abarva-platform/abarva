@@ -385,6 +385,15 @@ describe("listContractVendor360 tenant-key resolution", () => {
     expect(avaBundles).toHaveLength(1);
     expect(spendRows).toHaveLength(1);
     expect(performanceRows).toHaveLength(1);
+    const performanceQuery = run.mock.calls.find(([sql]) =>
+      sql.includes("source.contract_performance_observation"),
+    );
+    expect(performanceQuery?.[0]).toContain(
+      "INNER JOIN consumption.sourcing_performance_v1 active",
+    );
+    expect(performanceQuery?.[0]).toContain(
+      "active.observation_id = o.observation_id",
+    );
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
       ["meridian-health"],
