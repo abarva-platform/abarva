@@ -260,6 +260,28 @@ The buyer reserves the right to treat unsupported claims, incomplete pricing fie
 
 const VENDOR_RESPONSE_CONTROL_SECTIONS = [
   {
+    title: "Requirement Response Matrix",
+    purpose:
+      "Give every issued requirement a stable identifier and a normalized vendor answer shape that survives completeness, evaluation, pricing, BAFO, and decision review.",
+    columns: [
+      "Requirement ID",
+      "Requirement Category",
+      "RFP Section",
+      "Requirement Statement",
+      "Mandatory / Scored / Informational",
+      "Response Type",
+      "Vendor Response: Comply / Partially Comply / Exception / Not Applicable",
+      "Response Narrative",
+      "Evidence Required",
+      "Evidence Reference",
+      "Pricing Linkage",
+      "SLA / KPI Linkage",
+      "Assumption / Exception Reference",
+      "Evaluation Criterion ID",
+      "Vendor Owner",
+    ],
+  },
+  {
     title: "Vendor Claim Register",
     purpose: "Force vendors to declare major claims in a structured way.",
     columns: [
@@ -1430,7 +1452,7 @@ Writing and format requirements:
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 11,
+    version: 12,
     model: BOARD_GRADE_MODEL,
     maxTokens: 128_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
@@ -1467,7 +1489,8 @@ Mandatory tables:
 - SLA and operational obligations table.
 - Transition constraints and blackout calendar table.
 - Pricing and volume-basis instruction table.
-- Vendor response control table covering the single Vendor Response Workbook and its required tabs: Guide, Mandatory Compliance, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Transition Plan, Assumptions and Exclusions Log, Commercial Exceptions Table, and Evidence Checklist.
+- Vendor response control table covering the single Vendor Response Workbook and its required tabs: Guide, Mandatory Compliance, Requirement Response Matrix, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location Model, SLA Commitment Table, Transition Plan, Assumptions and Exclusions Log, Commercial Exceptions Table, and Evidence Checklist.
+- Requirement-to-response matrix defining stable requirement IDs, normalized response categories, required evidence, pricing/SLA linkages, and the evaluation criterion tied to each scored requirement.
 - Evaluation weights and evidence-required scoring table.
 - Risk, issue, dependency, and mitigation table.
 - Process timeline table using governed dates from evidence or explicit gate-relative anchors when dates are genuinely missing.
@@ -1516,7 +1539,9 @@ Required compact section skeleton:
 ## §10 · Risk register, transition controls, and failure modes
 ## §11 · Source register, assumptions, and client-to-complete gaps
 
-Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as an issue-to-release gap with accountable role/action. Include practical mitigations for risks; do not merely flag them. Do not use bracketed client fill-in markers. If exact names or dates are not loaded, provide the accountable role and a gate-relative target date or trigger in the §11 closure table with blocking gate and downstream impact.`,
+Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as an issue-to-release gap with accountable role/action. Include practical mitigations for risks; do not merely flag them. Do not use bracketed client fill-in markers. If exact names or dates are not loaded, provide the accountable role and a gate-relative target date or trigger in the §11 closure table with blocking gate and downstream impact.
+
+Analytics continuity requirement: assign each issued requirement a unique stable ID and one normalized category from service scope | service management | staffing and location | SLA and performance | transition | security and compliance | architecture and tooling | automation and productivity | commercial and pricing | governance | innovation and value. The Vendor Response Workbook must preserve that ID and category and capture a normalized disposition of Comply | Partially Comply | Exception | Not Applicable. Tie every scored requirement to an Evaluation Criterion ID and every commercial requirement to a pricing, SLA/KPI, claim, assumption, or exception reference as applicable. These identifiers must remain usable without reinterpretation in response completeness, evaluation scoring, pricing normalization, BAFO challenge, and executive decision artifacts.`,
     buildUserMessage: (ctx, upstream) => {
       const lines: string[] = [
         `Company: ${ctx.tenantName}`,
@@ -1780,7 +1805,7 @@ Writing and format requirements:
 
   d11_response_checklist: {
     artifactCode: "d11_response_checklist",
-    version: 2,
+    version: 3,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
@@ -1805,16 +1830,17 @@ ${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
 
 Required structural sections:
 ## §1 · Response compliance mandate
-## §2 · Vendor Claim Register
-## §3 · Automation / Productivity Commitment Table
-## §4 · Pricing Response Tab
-## §5 · Staffing and Location Model
-## §6 · SLA Commitment Table
-## §7 · Assumptions and Exclusions Log
-## §8 · Transition Plan Template
-## §9 · Commercial Exceptions Table
-## §10 · Commercial leverage readiness checks enabled
-## §11 · Completion, submission, and clarification rules
+## §2 · Requirement Response Matrix
+## §3 · Vendor Claim Register
+## §4 · Automation / Productivity Commitment Table
+## §5 · Pricing Response Tab
+## §6 · Staffing and Location Model
+## §7 · SLA Commitment Table
+## §8 · Assumptions and Exclusions Log
+## §9 · Transition Plan Template
+## §10 · Commercial Exceptions Table
+## §11 · Commercial leverage readiness checks enabled
+## §12 · Completion, submission, and clarification rules
 
 Required response-control components:
 ${formatVendorResponseControlSections()}
@@ -1832,7 +1858,9 @@ Writing and format requirements:
 - Open with a short procurement-ready explanation of why this pack exists: to make vendor proposals comparable, evidence-backed, and negotiation-ready.
 - Include the response-compliance mandate in §1.
 - For every required component, include a table specification with purpose, required columns, required completion rule, and how Source will use it later.
-- Specify the single Vendor Response Workbook tab set. The first tab must be Guide. Required tabs must include Mandatory Compliance, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location, SLA Commitments, Transition Plan, Assumptions and Exclusions, Commercial Exceptions, and Evidence Checklist.
+- Specify the single Vendor Response Workbook tab set. The first tab must be Guide. Required tabs must include Mandatory Compliance, Requirement Response Matrix, Vendor Claim Register, Solution Approach, Pricing Response, Staffing and Location, SLA Commitments, Transition Plan, Assumptions and Exclusions, Commercial Exceptions, and Evidence Checklist.
+- Require vendors to preserve every issued Requirement ID and normalized requirement category. Each response must use exactly one disposition: Comply, Partially Comply, Exception, or Not Applicable. Require evidence, pricing, SLA/KPI, claim, assumption/exception, and Evaluation Criterion ID references wherever the issued requirement calls for them.
+- Explain how Source uses the same identifiers to calculate completeness, detect unsupported claims and commercial exceptions, normalize pricing, preserve scoring evidence, generate BAFO questions, and explain the final decision. Do not permit free-text-only answers for mandatory or scored requirements.
 - For the Pricing Response tab, name every required cost section: one-time costs, recurring run costs, transition costs, transformation costs, tooling costs, governance costs, pass-through costs, optional services, change-order unit rates, retained client cost assumptions, volume-based pricing, productivity credits, SLA credits, assumptions.
 - For the Automation / Productivity Commitment Table, state that it is required whenever the vendor claims AI, automation, productivity, transformation, or efficiency.
 - For the Transition Plan Template, require named transition lead, knowledge-transfer plan, dependency list, cutover criteria, service-readiness criteria, early-life support plan, and transition-fee milestone linkage.
@@ -1918,7 +1946,7 @@ Writing and format requirements:
 
   d13_vendor_responses: {
     artifactCode: "d13_vendor_responses",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: ["d09_rfp_pack", "d11_response_checklist"],
@@ -1946,6 +1974,7 @@ Writing and format requirements:
 - §1 opens with a crisp status call: ready for completeness review / partial intake / blocked.
 - §2 must include a vendor table: Vendor | Receipt status | Files received | Checklist status | Pricing workbook | Evidence pointers | Exceptions submitted | Nonconformance flags.
 - §3 must flag missing mandatory response sections, missing pricing workbook fields, missing signatures, late/nonconforming files, and unsupported claims. Do not mark a vendor complete because a narrative response exists.
+- §3 must reconcile each vendor submission to the issued Requirement IDs and normalized categories, preserving Comply / Partially Comply / Exception / Not Applicable dispositions and flagging missing, duplicate, unknown, or free-text-only rows.
 - §4 must summarize key vendor claims by type and evidence status; never promote unsupported productivity, AI, automation, transformation, or SLA claims as facts.
 - §5 must list every declared assumption, exclusion, commercial exception, and change-order exposure that should flow to d15, d19, d20, and d22.
 - §6 maps friendly evidence file names to the response areas they support. If evidence is not available, show the gap with owner/action rather than inventing evidence.
@@ -2099,7 +2128,7 @@ Writing and format requirements:
 
   d15_response_completeness: {
     artifactCode: "d15_response_completeness",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d11_response_checklist", "d13_vendor_responses"],
@@ -2122,7 +2151,8 @@ ${formatResponseCompletenessDimensions()}
 
 Writing and format requirements:
 - §1 makes a direct gate call: all vendors ready / selected vendors conditionally ready / blocked until gaps close.
-- §2 must include a table: Vendor | Overall completeness | Mandatory sections | Pricing workbook | Claim evidence | SLA commitments | Exceptions | Assumptions/exclusions | Clarifications open | Gate disposition.
+- §2 must include a table: Vendor | Requirement IDs received | Mandatory requirements complete | Normalized dispositions valid | Pricing workbook | Claim evidence | SLA commitments | Exceptions | Assumptions/exclusions | Clarifications open | Gate disposition.
+- Preserve Requirement IDs and categories from the issued RFP. Report missing, duplicate, unknown, or free-text-only requirement responses explicitly; do not collapse them into an overall percentage.
 - §3 lists missing mandatory fields by vendor and source requirement. Do not convert unknowns into passes.
 - §4 separates unsupported claims from merely missing evidence pointers. Unsupported transformation, AI, automation, productivity, SLA, or cost-reduction claims must remain gaps until evidenced.
 - §5 names the pricing/commercial fields that d19 and d20 need. If missing, show downstream impact on pricing normalization and trap detection.
@@ -2289,7 +2319,7 @@ Writing and format requirements:
 
   d16_scorecard: {
     artifactCode: "d16_scorecard",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: [
@@ -2322,7 +2352,8 @@ ${formatEvaluationScorecardRequirements()}
 Writing and format requirements:
 - §1 leads with an evidence-limited answer: ranked / conditionally ranked / blocked. Name the exact reason if ranking is blocked.
 - §2 must mirror d17 locked criteria and weights. Do not change weights in d16; disputed weights go back to d17.
-- §3 must include a table: Vendor | Criterion | Weight | Score | Weighted score | Evidence citation | Evaluator rationale | Pass/fail flags | Confidence.
+- §3 must include a table: Vendor | Requirement ID | Response category | Criterion ID | Weight | Score | Weighted score | Evidence citation | Evaluator rationale | Pass/fail flags | Confidence.
+- Preserve issued Requirement IDs, normalized response categories, and locked Criterion IDs. Every material score, exception, price impact, and BAFO challenge must remain traceable to the vendor's structured response row; free-text proposal narrative may support a score but cannot replace that row.
 - §4 preserves evaluator rationale and calls out where the second rater is missing or deviations exceed the governance threshold.
 - §5 cites source files, artifact names, or uploaded evidence for every material score. No evidence means no scored claim.
 - §6 summarizes final rank only for vendors admitted by d15 and not excluded by d18. Conditional vendors must be labeled conditional.
@@ -2784,7 +2815,7 @@ Writing requirements:
 
   d19_pricing_workbook: {
     artifactCode: "d19_pricing_workbook",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: ["d21_assumption_set"],
@@ -2820,6 +2851,7 @@ Writing requirements:
 - §3 must be a table: Vendor | Submitted TCO | Normalized TCO | One-time | Run | Transition | Transformation/tooling | Retained/pass-through | Adjustments | Confidence.
 - §4 must bridge submitted price to normalized TCO by cost category; include "not provided" rather than guessing.
 - §5 must explain each adjustment with rationale, evidence basis, owner, and whether it is a correction, assumption alignment, or commercial challenge.
+- Preserve the Requirement ID, pricing linkage, claim ID, and assumption/exception reference behind every submitted price, normalization adjustment, and commercial gap so the price comparison remains traceable to the issued RFP and structured vendor response.
 - §6 must include scenario sensitivity: base case, volume downside/upside, escalator/FX exposure, transition overrun, productivity-credit realization.
 - §7 must produce BAFO-ready commercial questions for every material gap or trap.
 - Never invent vendor names, vendor prices, TCO, rates, FX, or savings. Use only upstream/vendor-response/uploaded evidence; otherwise state the gap and what must be collected.`,
@@ -2925,7 +2957,7 @@ Writing requirements:
 
   d20_trap_log: {
     artifactCode: "d20_trap_log",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d21_assumption_set", "d19_pricing_workbook"],
@@ -2955,6 +2987,7 @@ Writing requirements:
 - §2 must be a table: Trap ID | Vendor | Category | Severity P0/P1/P2 | Evidence basis | Estimated materiality | Decision impact | Resolution path | Owner | Status.
 - P0 means materially changes ranking or award viability; P1 means meaningful BAFO/commercial impact; P2 means monitor or contract-control item.
 - Every trap must tie to the pricing workbook, locked assumption set, vendor response evidence, or an explicit missing evidence gap. No unsupported traps.
+- Every trap must also carry the originating Requirement ID and vendor response, pricing, claim, or exception reference where available; preserve those identifiers in the BAFO handoff.
 - §4 maps each open P0/P1 trap to a precise BAFO question or commercial ask.
 - §5 names traps that should become contract controls if accepted rather than resolved.`,
     buildUserMessage: (ctx, upstream) => {
@@ -3039,7 +3072,7 @@ Writing requirements:
 
   d22_bafo_question_pack: {
     artifactCode: "d22_bafo_question_pack",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: 48_000,
     upstreamRequired: ["d20_trap_log"],
@@ -3068,7 +3101,7 @@ ${formatBafoQuestionFields()}
 
 Writing and format requirements:
 - §1 states whether the BAFO pack is ready to issue / conditionally ready / blocked. If no Pricing Trap Log exists, this artifact should not be generated.
-- §2 must be a vendor-specific table: Question ID | Vendor/finalist | Trap or gap reference | Question text | Commercial ask | Required response format | Proof requested | Walk-away or evaluation impact | Owner | Due date.
+- §2 must be a vendor-specific table: Question ID | Vendor/finalist | Requirement ID | Trap or gap reference | Question text | Commercial ask | Required response format | Proof requested | Walk-away or evaluation impact | Owner | Due date.
 - Every P0/P1 trap from the Pricing Trap Log must have a targeted BAFO question or an explicit rationale for why it is accepted rather than challenged.
 - Do not invent finalists, vendors, prices, concessions, walk-away positions, due dates, or legal terms. If a vendor, trap, or price delta is not evidenced, mark the row as blocked and name the owner action.
 - Vendor-facing language must be clean and neutral. Do not expose internal labels such as P0/P1, scoring rationale, walk-away economics, tenant ids, database table names, routing keys, model/provider names, or implementation labels in the vendor-facing body.
@@ -3262,7 +3295,7 @@ Writing and format requirements:
 
   d24_decision_brief: {
     artifactCode: "d24_decision_brief",
-    version: 1,
+    version: 2,
     model: BOARD_GRADE_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     // The Decision Brief names a recommended vendor — it must not be draftable before the
@@ -3291,6 +3324,7 @@ Required structural sections:
 Ground every claim in the bound upstream artifacts and uploaded evidence, cited by code and source-file name:
 - §1 leads with the recommendation, stated conditionally (which vendor, conditional on what — e.g. security uplift, a priced assumption, a transition milestone).
 - §4 finalist comparison must draw normalized TCO from the pricing workbook (d19) and the capability / security / transition scores from the evaluation scorecard (d16), and present them as a comparison table. Do NOT invent vendor names, scores, or prices that are not present in the bound upstream — if a finalist's number is missing, show it as a gap to close, not a guess.
+- For every material score, price difference, exception, and unresolved condition in the recommendation, preserve the Requirement ID, Criterion ID, pricing row, or BAFO question that supports it. The brief may summarize the chain, but it may not sever it.
 - §3 tradeoff card frames value posture from the value target (d02), open risks with residual exposure, and the transition window; scope boundaries come from d05; the mandate from d01.
 - §5 states the runner-up's case honestly so the brief is a real decision, not a one-sided pitch.
 - §6 lists the sign-offs required to advance to Selection (sponsor commitment, Steward sign-off, Sentinel risk attestation).

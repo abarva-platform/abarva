@@ -141,6 +141,11 @@ describe("Source artifact prompt registry provider config", () => {
     expect(template?.systemPrompt).toContain(SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE);
     expect(template?.systemPrompt).toContain("Vendor Claim Register");
     expect(template?.systemPrompt).toContain("Commercial Exceptions Table");
+    expect(template?.systemPrompt).toContain("Requirement-to-response matrix");
+    expect(template?.systemPrompt).toContain("Evaluation Criterion ID");
+    expect(template?.systemPrompt).toContain(
+      "Comply | Partially Comply | Exception | Not Applicable",
+    );
   });
 
   it("keeps the existing core Source generation artifacts available", () => {
@@ -188,6 +193,7 @@ describe("Source artifact prompt registry provider config", () => {
     expect(template?.systemPrompt).toContain("Vendor Response Control Pack");
     expect(template?.systemPrompt).toContain(SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE);
     expect(template?.systemPrompt).toContain("Vendor Claim Register");
+    expect(template?.systemPrompt).toContain("Requirement Response Matrix");
     expect(template?.systemPrompt).toContain("Automation / Productivity Commitment Table");
     expect(template?.systemPrompt).toContain("Pricing Response");
     expect(template?.systemPrompt).toContain("one vendor response workbook");
@@ -199,6 +205,12 @@ describe("Source artifact prompt registry provider config", () => {
     expect(template?.systemPrompt).toContain("Productivity claimed but not priced back");
     expect(template?.systemPrompt).toContain("Outcome claim not contractually committed");
     expect(template?.systemPrompt).toContain("Do not claim perfect proposal parsing");
+    expect(template?.systemPrompt).toContain(
+      "calculate completeness, detect unsupported claims and commercial exceptions",
+    );
+    expect(template?.systemPrompt).toContain(
+      "Do not permit free-text-only answers",
+    );
     expect(template?.systemPrompt).not.toContain("Sentinel");
     expect(template?.systemPrompt).not.toContain("Nexus");
     expect(template?.systemPrompt).not.toContain("Atlas");
@@ -496,8 +508,26 @@ describe("Source artifact prompt registry provider config", () => {
     expect(d17?.systemPrompt).toContain("locked before vendor scoring");
     expect(d16?.systemPrompt).toContain("evidence-cited scoring workbook");
     expect(d16?.systemPrompt).toContain("two-rater coverage");
+    expect(d16?.systemPrompt).toContain("Requirement ID");
+    expect(d16?.systemPrompt).toContain("structured response row");
     expect(d18?.systemPrompt).toContain("no evidenced disqualifications");
     expect(d18?.systemPrompt).toContain("do not invent one");
+  });
+
+  it("preserves issued requirement identifiers through response, pricing, BAFO, and decision analytics", () => {
+    const expectedByArtifact = {
+      d13_vendor_responses: "Requirement IDs",
+      d15_response_completeness: "Requirement IDs",
+      d16_scorecard: "Requirement ID",
+      d19_pricing_workbook: "Requirement ID",
+      d20_trap_log: "Requirement ID",
+      d22_bafo_question_pack: "Requirement ID",
+      d24_decision_brief: "Requirement ID",
+    } as const;
+
+    for (const [artifactCode, marker] of Object.entries(expectedByArtifact)) {
+      expect(getPromptTemplate(artifactCode)?.systemPrompt).toContain(marker);
+    }
   });
 
   it("blocks the evaluation scorecard until weights, responses, and completeness exist", () => {
