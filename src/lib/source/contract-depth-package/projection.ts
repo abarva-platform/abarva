@@ -5,6 +5,11 @@ export interface ContractDepthPackageInput {
   readonly applicationScope: readonly CsvRecord[];
   readonly changeOrders: readonly CsvRecord[];
   readonly contractPageText: readonly CsvRecord[];
+  readonly resourceModel: readonly CsvRecord[];
+  readonly pricingBridge: readonly CsvRecord[];
+  readonly invoiceLineDetail: readonly CsvRecord[];
+  readonly batchJobVolumetrics: readonly CsvRecord[];
+  readonly qbrScorecards: readonly CsvRecord[];
   readonly monthlySpend: readonly CsvRecord[];
   readonly slaPerformance: readonly CsvRecord[];
   readonly ticketVolumetrics: readonly CsvRecord[];
@@ -24,6 +29,11 @@ export interface ContractDepthProjection {
   readonly contractPdfClauseExtractions: readonly CsvRecord[];
   readonly contractPdfPageText: readonly CsvRecord[];
   readonly contractChangeOrders: readonly CsvRecord[];
+  readonly contractResourceModel: readonly CsvRecord[];
+  readonly contractPricingBridge: readonly CsvRecord[];
+  readonly contractInvoiceLines: readonly CsvRecord[];
+  readonly contractBatchObservations: readonly CsvRecord[];
+  readonly contractQbrObservations: readonly CsvRecord[];
   readonly contractEvidenceCoverage: readonly CsvRecord[];
   readonly optimizationOpportunities: readonly CsvRecord[];
   readonly qualityGate: {
@@ -108,6 +118,11 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
   const ticketsByContract = groupBy(input.ticketVolumetrics, 'contract_id');
   const docsByContract = groupBy(input.evidenceManifest, 'contract_id');
   const changeOrdersByContract = groupBy(input.changeOrders, 'contract_id');
+  const resourceByContract = groupBy(input.resourceModel, 'contract_id');
+  const pricingByContract = groupBy(input.pricingBridge, 'contract_id');
+  const invoiceByContract = groupBy(input.invoiceLineDetail, 'contract_id');
+  const batchByContract = groupBy(input.batchJobVolumetrics, 'contract_id');
+  const qbrByContract = groupBy(input.qbrScorecards, 'contract_id');
   const pageTextByFile = groupBy(input.contractPageText, 'source_file_id');
   const pageTextByContract = groupBy(input.contractPageText, 'contract_id');
 
@@ -144,6 +159,10 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
     const tickets = ticketsByContract.get(contractId) ?? [];
     const docs = docsByContract.get(contractId) ?? [];
     const changeOrders = changeOrdersByContract.get(contractId) ?? [];
+    const resources = resourceByContract.get(contractId) ?? [];
+    const invoices = invoiceByContract.get(contractId) ?? [];
+    const batches = batchByContract.get(contractId) ?? [];
+    const qbrs = qbrByContract.get(contractId) ?? [];
     const pageRows = pageTextByContract.get(contractId) ?? [];
     const criticalApps = scope.filter((row) => value(row, 'criticality').toLowerCase() === 'tier 1').length;
     const sev1Sev2Tickets = tickets
@@ -153,6 +172,9 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
     const creditsRecovered = sum(sla, 'credit_recovered_usd');
     const recurringChangeOrderSpend = sum(changeOrders.filter((row) => isTrue(row, 'recurring')), 'annualized_spend_usd');
     const oneTimeChangeOrderSpend = sum(changeOrders, 'one_time_spend_usd');
+    const onshoreFte = sum(resources.filter((row) => value(row, 'location_mix').toLowerCase() === 'onshore'), 'fte');
+    const offshoreFte = sum(resources.filter((row) => value(row, 'location_mix').toLowerCase() === 'offshore'), 'fte');
+    const latestQbr = [...qbrs].sort((left, right) => value(right, 'quarter').localeCompare(value(left, 'quarter')))[0];
     return {
       tenant_key: value(contract, 'tenant_key'),
       contract_id: contractId,
@@ -194,6 +216,18 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
       recurring_change_order_count: String(changeOrders.filter((row) => isTrue(row, 'recurring')).length),
       recurring_change_order_exposure_usd: String(recurringChangeOrderSpend),
       one_time_change_order_exposure_usd: String(oneTimeChangeOrderSpend),
+      resource_role_count: String(resources.length),
+      total_fte: String(onshoreFte + offshoreFte),
+      onshore_fte: String(onshoreFte),
+      offshore_fte: String(offshoreFte),
+      pricing_bridge_rows: String(pricingByContract.get(contractId)?.length ?? 0),
+      invoice_line_count: String(invoices.length),
+      batch_observation_count: String(batches.length),
+      batch_failed_jobs: String(sum(batches, 'failed_jobs')),
+      batch_manual_restarts: String(sum(batches, 'manual_restarts')),
+      qbr_scorecard_count: String(qbrs.length),
+      latest_qbr_run_percent: latestQbr ? value(latestQbr, 'run_percent') : '',
+      latest_qbr_transform_percent: latestQbr ? value(latestQbr, 'transform_percent') : '',
       service_credits_earned: String(creditsEarned),
       service_credits_claimed: String(creditsRecovered),
     };
@@ -250,9 +284,12 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
     const sla = slaByContract.get(contractId) ?? [];
     const scope = scopeByContract.get(contractId) ?? [];
     const tickets = ticketsByContract.get(contractId) ?? [];
+    const batches = batchByContract.get(contractId) ?? [];
+    const qbrs = qbrByContract.get(contractId) ?? [];
     const creditsEarned = sum(sla, 'credit_owed_usd');
     const creditsRecovered = sum(sla, 'credit_recovered_usd');
     const breached = sla.filter((row) => value(row, 'breach_state') === 'breached').length;
+    const latestQbr = [...qbrs].sort((left, right) => value(right, 'quarter').localeCompare(value(left, 'quarter')))[0];
     return {
       tenant_key: value(contract, 'tenant_key'),
       contract_id: contractId,
@@ -269,6 +306,12 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
       service_credits_claimed: String(creditsRecovered),
       change_order_count: String((changeOrdersByContract.get(contractId) ?? []).length),
       recurring_change_order_exposure_usd: String(sum((changeOrdersByContract.get(contractId) ?? []).filter((row) => isTrue(row, 'recurring')), 'annualized_spend_usd')),
+      batch_observation_count: String(batches.length),
+      batch_failed_jobs: String(sum(batches, 'failed_jobs')),
+      batch_manual_restarts: String(sum(batches, 'manual_restarts')),
+      qbr_scorecard_count: String(qbrs.length),
+      latest_qbr_run_percent: latestQbr ? value(latestQbr, 'run_percent') : '',
+      latest_qbr_transform_percent: latestQbr ? value(latestQbr, 'transform_percent') : '',
       evidence_gap: sla.length || tickets.length ? 'false' : 'true',
     };
   });
@@ -336,6 +379,10 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
     const changes = changeOrdersByContract.get(contractId) ?? [];
     const sla = slaByContract.get(contractId) ?? [];
     const spend = spendByContract.get(contractId) ?? [];
+    const resources = resourceByContract.get(contractId) ?? [];
+    const invoices = invoiceByContract.get(contractId) ?? [];
+    const batches = batchByContract.get(contractId) ?? [];
+    const qbrs = qbrByContract.get(contractId) ?? [];
     return {
       tenant_key: value(contract, 'tenant_key'),
       dataset_version: value(contract, 'dataset_version'),
@@ -348,8 +395,12 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
       monthly_spend_rows: String(spend.length),
       sla_rows: String(sla.length),
       change_order_rows: String(changes.length),
+      resource_model_rows: String(resources.length),
+      invoice_line_rows: String(invoices.length),
+      batch_job_rows: String(batches.length),
+      qbr_rows: String(qbrs.length),
       coverage_state:
-        docs.length >= 5 && pages.length >= docs.length && spend.length >= 12 && clauses.length > 0
+        docs.length >= 5 && pages.length >= docs.length && spend.length >= 12 && clauses.length > 0 && resources.length > 0 && invoices.length > 0 && batches.length > 0
           ? 'contract_brain_ready'
           : 'partial',
       synthetic_policy: 'synthetic_demo_only_not_client_truth',
@@ -379,6 +430,11 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
     contractPdfClauseExtractions,
     contractPdfPageText,
     contractChangeOrders,
+    contractResourceModel: input.resourceModel,
+    contractPricingBridge: input.pricingBridge,
+    contractInvoiceLines: input.invoiceLineDetail,
+    contractBatchObservations: input.batchJobVolumetrics,
+    contractQbrObservations: input.qbrScorecards,
     contractEvidenceCoverage,
     optimizationOpportunities: input.optimizationOpportunities,
   } as const;
@@ -399,6 +455,11 @@ export function projectContractDepthPackage(input: ContractDepthPackageInput): C
         contractPdfClauseExtractions: projection.contractPdfClauseExtractions.length,
         contractPdfPageText: projection.contractPdfPageText.length,
         contractChangeOrders: projection.contractChangeOrders.length,
+        contractResourceModel: projection.contractResourceModel.length,
+        contractPricingBridge: projection.contractPricingBridge.length,
+        contractInvoiceLines: projection.contractInvoiceLines.length,
+        contractBatchObservations: projection.contractBatchObservations.length,
+        contractQbrObservations: projection.contractQbrObservations.length,
         contractEvidenceCoverage: projection.contractEvidenceCoverage.length,
         optimizationOpportunities: projection.optimizationOpportunities.length,
       },

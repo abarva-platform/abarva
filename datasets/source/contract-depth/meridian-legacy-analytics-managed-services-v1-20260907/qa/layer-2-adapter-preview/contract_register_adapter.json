@@ -1,0 +1,32 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "source_row_id": "contract_terms:MER-TECH-LAAMS-001",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "source_row_number": "1",
+    "contract_name": "Legacy Analytics Managed Services SOW",
+    "category": "Managed Services",
+    "archetype": "legacy_analytics_managed_services",
+    "annual_value_usd": "7850000",
+    "committed_annual_spend_usd": "7620000",
+    "actual_annual_spend_usd": "8335000",
+    "signed_date": "2024-07-15",
+    "start_date": "2024-08-01",
+    "end_date": "2027-07-31",
+    "renewal_notice_date": "2027-04-30",
+    "notice_period_days": "90",
+    "auto_renew": "true",
+    "benchmarking_clause": "present",
+    "termination_rights": "termination for convenience with 120 day transition assistance; stranded knowledge-transfer fees capped at two months of run fees",
+    "business_owner": "SVP Enterprise Analytics",
+    "it_owner": "VP Data Platforms and Analytics Operations",
+    "source_confidence": "0.94",
+    "source_file_id": "DOC-MER-TECH-LAAMS-001-MSA",
+    "adapter_name": "contract_register_adapter",
+    "adapter_row_number": "1",
+    "adapter_version": "source-contract-depth-v1"
+  }
+]

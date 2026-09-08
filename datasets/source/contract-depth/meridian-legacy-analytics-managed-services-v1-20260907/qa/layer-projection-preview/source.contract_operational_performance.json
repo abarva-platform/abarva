@@ -1,0 +1,24 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "sla_summary": "4 breached SLA periods; 63500.00 credits earned; 0.00 recovered.",
+    "scoped_application_count": "8",
+    "critical_application_count": "3",
+    "cloud_sev1_sev2_incidents": "1416",
+    "avg_cloud_change_failure_rate": "",
+    "service_credits_earned": "63500",
+    "service_credits_claimed": "0",
+    "change_order_count": "8",
+    "recurring_change_order_exposure_usd": "214000",
+    "batch_observation_count": "96",
+    "batch_failed_jobs": "529",
+    "batch_manual_restarts": "348",
+    "qbr_scorecard_count": "4",
+    "latest_qbr_run_percent": "0.88",
+    "latest_qbr_transform_percent": "0.12",
+    "evidence_gap": "false"
+  }
+]

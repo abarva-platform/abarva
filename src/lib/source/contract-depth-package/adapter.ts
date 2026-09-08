@@ -3,6 +3,11 @@ import type { ContractDepthPackageInput, CsvRecord } from './projection';
 export interface ContractDepthSourceFileInput extends ContractDepthPackageInput {
   readonly applications: readonly CsvRecord[];
   readonly saasUsage: readonly CsvRecord[];
+  readonly resourceModel: readonly CsvRecord[];
+  readonly pricingBridge: readonly CsvRecord[];
+  readonly invoiceLineDetail: readonly CsvRecord[];
+  readonly batchJobVolumetrics: readonly CsvRecord[];
+  readonly qbrScorecards: readonly CsvRecord[];
 }
 
 export interface ContractDepthAdapterOutput {
@@ -16,6 +21,11 @@ export interface ContractDepthAdapterOutput {
   readonly usageAdapter: readonly CsvRecord[];
   readonly ticketVolumeAdapter: readonly CsvRecord[];
   readonly performanceAdapter: readonly CsvRecord[];
+  readonly resourceModelAdapter: readonly CsvRecord[];
+  readonly pricingBridgeAdapter: readonly CsvRecord[];
+  readonly invoiceLineAdapter: readonly CsvRecord[];
+  readonly batchOperationsAdapter: readonly CsvRecord[];
+  readonly qbrAdapter: readonly CsvRecord[];
   readonly optimizationAdapter: readonly CsvRecord[];
   readonly evidenceDocumentAdapter: readonly CsvRecord[];
   readonly qualityGate: {
@@ -32,6 +42,10 @@ export interface ContractDepthAdapterOutput {
       readonly contractsWithChangeOrders: number;
       readonly contractsWithPageText: number;
       readonly contractsWithRecurringChangeOrders: number;
+      readonly managedServiceContractsWithResourceModel: number;
+      readonly managedServiceContractsWithInvoiceLines: number;
+      readonly managedServiceContractsWithBatchVolumetrics: number;
+      readonly managedServiceContractsWithQbrScorecards: number;
       readonly managedServiceContractsWithSlaEvidence: number;
       readonly distinctVendors: number;
       readonly distinctCategories: number;
@@ -128,6 +142,11 @@ export function adaptContractDepthPackage(
     ...input.ticketVolumetrics,
     ...input.saasUsage,
     ...input.changeOrders,
+    ...input.resourceModel,
+    ...input.pricingBridge,
+    ...input.invoiceLineDetail,
+    ...input.batchJobVolumetrics,
+    ...input.qbrScorecards,
   ].map((row) => value(row, 'source_row_id')).filter(Boolean);
   const duplicateSourceRowCount = sourceRowIds.length - new Set(sourceRowIds).size;
   if (duplicateSourceRowCount > 0) failures.push(`${duplicateSourceRowCount} duplicate source_row_id values`);
@@ -141,6 +160,11 @@ export function adaptContractDepthPackage(
   requireTenantAndVersion(failures, input.contractClauses, 'contract clauses', { ...validationContext, requireDatasetVersion: true });
   requireTenantAndVersion(failures, input.changeOrders, 'change orders', { ...validationContext, requireDatasetVersion: true });
   requireTenantAndVersion(failures, input.contractPageText, 'contract page text', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.resourceModel, 'resource model', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.pricingBridge, 'pricing bridge', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.invoiceLineDetail, 'invoice line detail', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.batchJobVolumetrics, 'batch job volumetrics', { ...validationContext, requireDatasetVersion: true });
+  requireTenantAndVersion(failures, input.qbrScorecards, 'QBR scorecards', { ...validationContext, requireDatasetVersion: true });
   requireTenantAndVersion(failures, input.evidenceManifest, 'evidence manifest', { ...validationContext, requireDatasetVersion: true });
   requireTenantAndVersion(failures, input.optimizationOpportunities, 'optimization opportunities', { ...validationContext, requireDatasetVersion: true });
   requireTenantAndVersion(failures, input.applications, 'applications', { ...validationContext, requireDatasetVersion: false });
@@ -153,6 +177,11 @@ export function adaptContractDepthPackage(
   requireKnownContracts(failures, input.contractClauses, contractIds, 'contract clause');
   requireKnownContracts(failures, input.changeOrders, contractIds, 'change order');
   requireKnownContracts(failures, input.contractPageText, contractIds, 'contract page text');
+  requireKnownContracts(failures, input.resourceModel, contractIds, 'resource model');
+  requireKnownContracts(failures, input.pricingBridge, contractIds, 'pricing bridge');
+  requireKnownContracts(failures, input.invoiceLineDetail, contractIds, 'invoice line detail');
+  requireKnownContracts(failures, input.batchJobVolumetrics, contractIds, 'batch job volumetrics');
+  requireKnownContracts(failures, input.qbrScorecards, contractIds, 'QBR scorecard');
   requireKnownContracts(failures, input.evidenceManifest, contractIds, 'evidence manifest');
   requireKnownContracts(failures, input.optimizationOpportunities, contractIds, 'optimization opportunity');
   requireKnownContracts(failures, input.saasUsage, contractIds, 'SaaS usage');
@@ -165,6 +194,10 @@ export function adaptContractDepthPackage(
   const changeOrdersByContract = groupBy(input.changeOrders, 'contract_id');
   const pageTextByContract = groupBy(input.contractPageText, 'contract_id');
   const pageTextByFile = groupBy(input.contractPageText, 'source_file_id');
+  const resourceByContract = groupBy(input.resourceModel, 'contract_id');
+  const invoiceByContract = groupBy(input.invoiceLineDetail, 'contract_id');
+  const batchByContract = groupBy(input.batchJobVolumetrics, 'contract_id');
+  const qbrByContract = groupBy(input.qbrScorecards, 'contract_id');
   const evidenceFileIds = unique(input.evidenceManifest, 'source_file_id');
   const managedServiceContracts = input.contracts.filter((row) =>
     value(row, 'category').toLowerCase().includes('managed services') ||
@@ -187,6 +220,18 @@ export function adaptContractDepthPackage(
     const rows = slaByContract.get(contractId) ?? [];
     if (!rows.some((row) => value(row, 'breach_state') === 'breached' && value(row, 'credit_claimed') === 'false')) {
       failures.push(`${contractId} managed-services contract must carry breached unclaimed-credit SLA evidence`);
+    }
+    if ((resourceByContract.get(contractId) ?? []).length === 0) {
+      failures.push(`${contractId} managed-services contract must carry a resource model`);
+    }
+    if ((invoiceByContract.get(contractId) ?? []).length === 0) {
+      failures.push(`${contractId} managed-services contract must carry invoice line detail`);
+    }
+    if ((batchByContract.get(contractId) ?? []).length === 0) {
+      failures.push(`${contractId} managed-services contract must carry batch/job volumetrics`);
+    }
+    if ((qbrByContract.get(contractId) ?? []).length === 0) {
+      failures.push(`${contractId} managed-services contract must carry QBR scorecards`);
     }
   }
 
@@ -247,6 +292,11 @@ export function adaptContractDepthPackage(
     usageAdapter: withAdapterLineage(input.saasUsage, 'usage_entitlement_adapter'),
     ticketVolumeAdapter: withAdapterLineage(input.ticketVolumetrics, 'ticket_volumetrics_adapter'),
     performanceAdapter: withAdapterLineage(input.slaPerformance, 'contract_performance_adapter'),
+    resourceModelAdapter: withAdapterLineage(input.resourceModel, 'contract_resource_model_adapter'),
+    pricingBridgeAdapter: withAdapterLineage(input.pricingBridge, 'contract_pricing_bridge_adapter'),
+    invoiceLineAdapter: withAdapterLineage(input.invoiceLineDetail, 'invoice_line_adapter'),
+    batchOperationsAdapter: withAdapterLineage(input.batchJobVolumetrics, 'batch_operations_adapter'),
+    qbrAdapter: withAdapterLineage(input.qbrScorecards, 'qbr_scorecard_adapter'),
     optimizationAdapter: withAdapterLineage(input.optimizationOpportunities, 'optimization_opportunity_adapter'),
     evidenceDocumentAdapter: withAdapterLineage(input.evidenceManifest, 'evidence_document_adapter'),
   } as const;
@@ -269,6 +319,11 @@ export function adaptContractDepthPackage(
         usageAdapter: output.usageAdapter.length,
         ticketVolumeAdapter: output.ticketVolumeAdapter.length,
         performanceAdapter: output.performanceAdapter.length,
+        resourceModelAdapter: output.resourceModelAdapter.length,
+        pricingBridgeAdapter: output.pricingBridgeAdapter.length,
+        invoiceLineAdapter: output.invoiceLineAdapter.length,
+        batchOperationsAdapter: output.batchOperationsAdapter.length,
+        qbrAdapter: output.qbrAdapter.length,
         optimizationAdapter: output.optimizationAdapter.length,
         evidenceDocumentAdapter: output.evidenceDocumentAdapter.length,
       },
@@ -282,6 +337,10 @@ export function adaptContractDepthPackage(
         contractsWithRecurringChangeOrders: input.contracts.filter((contract) =>
           (changeOrdersByContract.get(value(contract, 'contract_id')) ?? []).some((row) => value(row, 'recurring') === 'true'),
         ).length,
+        managedServiceContractsWithResourceModel: managedServiceContracts.filter((contract) => (resourceByContract.get(value(contract, 'contract_id')) ?? []).length > 0).length,
+        managedServiceContractsWithInvoiceLines: managedServiceContracts.filter((contract) => (invoiceByContract.get(value(contract, 'contract_id')) ?? []).length > 0).length,
+        managedServiceContractsWithBatchVolumetrics: managedServiceContracts.filter((contract) => (batchByContract.get(value(contract, 'contract_id')) ?? []).length > 0).length,
+        managedServiceContractsWithQbrScorecards: managedServiceContracts.filter((contract) => (qbrByContract.get(value(contract, 'contract_id')) ?? []).length > 0).length,
         managedServiceContractsWithSlaEvidence: managedServiceContracts.filter((contract) =>
           (slaByContract.get(value(contract, 'contract_id')) ?? []).some((row) => value(row, 'breach_state') === 'breached' && value(row, 'credit_claimed') === 'false'),
         ).length,

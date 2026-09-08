@@ -1,0 +1,21 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-legacy-analytics-managed-services-v1-20260907",
+    "contract_id": "MER-TECH-LAAMS-001",
+    "vendor_ref": "VEN-COGNIZANT",
+    "vendor_name": "Cognizant Technology Solutions",
+    "document_count": "8",
+    "page_text_rows": "19",
+    "clause_extractions": "8",
+    "monthly_spend_rows": "12",
+    "sla_rows": "12",
+    "change_order_rows": "8",
+    "resource_model_rows": "15",
+    "invoice_line_rows": "56",
+    "batch_job_rows": "96",
+    "qbr_rows": "4",
+    "coverage_state": "contract_brain_ready",
+    "synthetic_policy": "synthetic_demo_only_not_client_truth"
+  }
+]

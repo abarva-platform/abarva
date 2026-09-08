@@ -107,6 +107,36 @@ const ADAPTER_SPECS = Object.freeze([
     rowIdField: "source_row_id",
   },
   {
+    key: "resourceModelAdapter",
+    adapterName: "contract_resource_model_adapter",
+    sourceFileName: "resource_model.csv",
+    rowIdField: "source_row_id",
+  },
+  {
+    key: "pricingBridgeAdapter",
+    adapterName: "contract_pricing_bridge_adapter",
+    sourceFileName: "pricing_bridge.csv",
+    rowIdField: "source_row_id",
+  },
+  {
+    key: "invoiceLineAdapter",
+    adapterName: "invoice_line_adapter",
+    sourceFileName: "invoice_line_detail.csv",
+    rowIdField: "source_row_id",
+  },
+  {
+    key: "batchOperationsAdapter",
+    adapterName: "batch_operations_adapter",
+    sourceFileName: "batch_job_volumetrics.csv",
+    rowIdField: "source_row_id",
+  },
+  {
+    key: "qbrAdapter",
+    adapterName: "qbr_scorecard_adapter",
+    sourceFileName: "qbr_scorecards.csv",
+    rowIdField: "source_row_id",
+  },
+  {
     key: "optimizationAdapter",
     adapterName: "optimization_opportunity_adapter",
     sourceFileName: "optimization_opportunities.csv",
@@ -259,6 +289,7 @@ function parseCsv(text: string): string[][] {
 }
 
 function readCsv(filePath: string): CsvRecord[] {
+  if (!fs.existsSync(filePath)) return [];
   const parsed = parseCsv(fs.readFileSync(filePath, "utf8"));
   const headers = parsed[0] ?? [];
   return parsed.slice(1).map((values) => {
@@ -278,6 +309,11 @@ function readSourceFiles(packageDir: string): ContractDepthSourceFileInput {
     applicationScope: readCsv(path.join(sourceDir, "cmdb_application_scope.csv")),
     changeOrders: readCsv(path.join(sourceDir, "change_orders.csv")),
     contractPageText: readCsv(path.join(sourceDir, "contract_page_text.csv")),
+    resourceModel: readCsv(path.join(sourceDir, "resource_model.csv")),
+    pricingBridge: readCsv(path.join(sourceDir, "pricing_bridge.csv")),
+    invoiceLineDetail: readCsv(path.join(sourceDir, "invoice_line_detail.csv")),
+    batchJobVolumetrics: readCsv(path.join(sourceDir, "batch_job_volumetrics.csv")),
+    qbrScorecards: readCsv(path.join(sourceDir, "qbr_scorecards.csv")),
     monthlySpend: readCsv(path.join(sourceDir, "monthly_spend.csv")),
     saasUsage: readCsv(path.join(sourceDir, "saas_usage.csv")),
     slaPerformance: readCsv(path.join(sourceDir, "sla_performance.csv")),
@@ -1169,6 +1205,221 @@ async function upsertPageTextFacts(client: Client, args: Args, pageRows: readonl
   }
 }
 
+async function upsertResourceModelFacts(client: Client, args: Args, resourceRows: readonly CsvRecord[]): Promise<void> {
+  const byContract = groupBy(resourceRows, "contract_id");
+  for (const row of resourceRows) {
+    const rowId = stringValue(row, "source_row_id");
+    const contractId = stringValue(row, "contract_id");
+    const vendorId = stringValue(row, "vendor_ref");
+    const sourceFileId = stringValue(row, "source_file_id");
+    const facts = [
+      ["resource_model.fte", numberValue(row, "fte"), null, "FTE"],
+      ["resource_model.annual_client_bill_rate_usd", numberValue(row, "annual_client_bill_rate_usd"), "USD", null],
+      ["resource_model.annual_vendor_cost_usd", numberValue(row, "annual_vendor_cost_usd"), "USD", null],
+      ["resource_model.annual_billed_amount_usd", numberValue(row, "annual_billed_amount_usd"), "USD", null],
+    ] as const;
+    for (const [factKey, numeric, currency, unit] of facts) {
+      if (numeric === null) continue;
+      await insertCanonicalFact(client, args, {
+        assertionId: `${rowId}:${factKey}`,
+        contractId,
+        vendorId,
+        factKey,
+        numeric,
+        currency,
+        unit,
+        sourceRecordId: rowId,
+        sourceDocumentId: sourceFileId,
+        assertionBasis: "Role-level resource model loaded from the managed-services SOW evidence package.",
+        sourceRefs: [rowId, sourceFileId],
+        payload: row,
+      });
+    }
+  }
+  for (const [contractId, rows] of byContract.entries()) {
+    const vendorId = stringValue(rows[0], "vendor_ref");
+    const sourceRefs = rows.map((row) => stringValue(row, "source_row_id"));
+    const sourceFileId = stringValue(rows[0], "source_file_id");
+    const aggregateFacts = [
+      ["resource_model.total_fte", rows.reduce((total, row) => total + (numberValue(row, "fte") ?? 0), 0), null, "FTE"],
+      ["resource_model.onshore_fte", rows.filter((row) => stringValue(row, "location_mix") === "onshore").reduce((total, row) => total + (numberValue(row, "fte") ?? 0), 0), null, "FTE"],
+      ["resource_model.offshore_fte", rows.filter((row) => stringValue(row, "location_mix") === "offshore").reduce((total, row) => total + (numberValue(row, "fte") ?? 0), 0), null, "FTE"],
+      ["resource_model.annual_billed_amount_usd", rows.reduce((total, row) => total + (numberValue(row, "annual_billed_amount_usd") ?? 0), 0), "USD", null],
+      ["resource_model.annual_vendor_cost_usd", rows.reduce((total, row) => total + (numberValue(row, "annual_vendor_cost_usd") ?? 0), 0), "USD", null],
+    ] as const;
+    for (const [factKey, numeric, currency, unit] of aggregateFacts) {
+      await insertCanonicalFact(client, args, {
+        assertionId: `${contractId}:${factKey}:aggregate`,
+        contractId,
+        vendorId,
+        factKey,
+        numeric,
+        currency,
+        unit,
+        sourceRecordId: sourceRefs[0],
+        sourceDocumentId: sourceFileId,
+        assertionBasis: "Contract-level resource economics aggregated from role-level SOW rows.",
+        sourceRefs: [...sourceRefs, sourceFileId],
+        payload: { contract_id: contractId, row_count: rows.length, synthetic_policy: "synthetic_demo_only_not_client_truth" },
+      });
+    }
+  }
+}
+
+async function upsertPricingBridgeFacts(client: Client, args: Args, rows: readonly CsvRecord[]): Promise<void> {
+  for (const row of rows) {
+    const amount = numberValue(row, "amount_usd");
+    if (amount === null) continue;
+    await insertCanonicalFact(client, args, {
+      assertionId: `${stringValue(row, "source_row_id")}:pricing_bridge.amount_usd`,
+      contractId: stringValue(row, "contract_id"),
+      vendorId: stringValue(row, "vendor_ref"),
+      factKey: `pricing_bridge.${stringValue(row, "bridge_component")}.amount_usd`,
+      numeric: amount,
+      currency: "USD",
+      sourceRecordId: stringValue(row, "source_row_id"),
+      sourceDocumentId: stringValue(row, "source_file_id"),
+      assertionBasis: "Pricing bridge row ties resource model, fees, and improvement pool to the contract annual value.",
+      sourceRefs: [stringValue(row, "source_row_id"), stringValue(row, "source_file_id")],
+      payload: row,
+    });
+  }
+}
+
+async function upsertInvoiceLineFacts(client: Client, args: Args, rows: readonly CsvRecord[]): Promise<void> {
+  const byContract = groupBy(rows, "contract_id");
+  for (const row of rows) {
+    const amount = numberValue(row, "line_amount_usd");
+    if (amount === null) continue;
+    await insertCanonicalFact(client, args, {
+      assertionId: `${stringValue(row, "source_row_id")}:invoice_line.amount_usd`,
+      contractId: stringValue(row, "contract_id"),
+      vendorId: stringValue(row, "vendor_ref"),
+      factKey: `invoice_line.${stringValue(row, "line_type")}.amount_usd`,
+      numeric: amount,
+      currency: "USD",
+      sourceRecordId: stringValue(row, "source_row_id"),
+      sourceDocumentId: stringValue(row, "source_file_id"),
+      assertionBasis: "AP invoice line detail loaded to separate base run charges from change-order and variable support charges.",
+      sourceRefs: [stringValue(row, "source_row_id"), stringValue(row, "source_file_id")],
+      payload: row,
+    });
+  }
+  for (const [contractId, contractRows] of byContract.entries()) {
+    const vendorId = stringValue(contractRows[0], "vendor_ref");
+    const sourceRefs = contractRows.map((row) => stringValue(row, "source_row_id"));
+    const sourceFileId = stringValue(contractRows[0], "source_file_id");
+    const changeOrderSpend = contractRows
+      .filter((row) => stringValue(row, "line_type") === "change_order")
+      .reduce((total, row) => total + (numberValue(row, "line_amount_usd") ?? 0), 0);
+    const aggregateFacts = [
+      ["invoice_line.count", contractRows.length, null, "row"],
+      ["invoice_line.change_order_spend_usd", changeOrderSpend, "USD", null],
+    ] as const;
+    for (const [factKey, numeric, currency, unit] of aggregateFacts) {
+      await insertCanonicalFact(client, args, {
+        assertionId: `${contractId}:${factKey}:aggregate`,
+        contractId,
+        vendorId,
+        factKey,
+        numeric,
+        currency,
+        unit,
+        sourceRecordId: sourceRefs[0],
+        sourceDocumentId: sourceFileId,
+        assertionBasis: "Invoice-line aggregate derived from AP line detail.",
+        sourceRefs: [...sourceRefs, sourceFileId],
+        payload: { contract_id: contractId, row_count: contractRows.length, synthetic_policy: "synthetic_demo_only_not_client_truth" },
+      });
+    }
+  }
+}
+
+async function upsertBatchOperationFacts(client: Client, args: Args, rows: readonly CsvRecord[]): Promise<void> {
+  const byContract = groupBy(rows, "contract_id");
+  for (const row of rows) {
+    const rowId = stringValue(row, "source_row_id");
+    const facts = [
+      ["batch_operations.failed_jobs", numberValue(row, "failed_jobs"), null, "job"],
+      ["batch_operations.late_completion_count", numberValue(row, "late_completion_count"), null, "job"],
+      ["batch_operations.manual_restarts", numberValue(row, "manual_restarts"), null, "restart"],
+    ] as const;
+    for (const [factKey, numeric, currency, unit] of facts) {
+      if (numeric === null) continue;
+      await insertCanonicalFact(client, args, {
+        assertionId: `${rowId}:${factKey}`,
+        contractId: stringValue(row, "contract_id"),
+        vendorId: stringValue(row, "vendor_ref"),
+        factKey,
+        numeric,
+        currency,
+        unit,
+        sourceRecordId: rowId,
+        sourceDocumentId: stringValue(row, "source_file_id"),
+        assertionBasis: "Operational batch volumetric row loaded from service operations evidence.",
+        sourceRefs: [rowId, stringValue(row, "source_file_id")],
+        payload: row,
+      });
+    }
+  }
+  for (const [contractId, contractRows] of byContract.entries()) {
+    const vendorId = stringValue(contractRows[0], "vendor_ref");
+    const sourceRefs = contractRows.map((row) => stringValue(row, "source_row_id"));
+    const sourceFileId = stringValue(contractRows[0], "source_file_id");
+    const aggregateFacts = [
+      ["batch_operations.failed_jobs_total", contractRows.reduce((total, row) => total + (numberValue(row, "failed_jobs") ?? 0), 0), null, "job"],
+      ["batch_operations.late_completion_total", contractRows.reduce((total, row) => total + (numberValue(row, "late_completion_count") ?? 0), 0), null, "job"],
+      ["batch_operations.manual_restarts_total", contractRows.reduce((total, row) => total + (numberValue(row, "manual_restarts") ?? 0), 0), null, "restart"],
+    ] as const;
+    for (const [factKey, numeric, currency, unit] of aggregateFacts) {
+      await insertCanonicalFact(client, args, {
+        assertionId: `${contractId}:${factKey}:aggregate`,
+        contractId,
+        vendorId,
+        factKey,
+        numeric,
+        currency,
+        unit,
+        sourceRecordId: sourceRefs[0],
+        sourceDocumentId: sourceFileId,
+        assertionBasis: "Contract-level operations aggregate derived from batch/job volumetric evidence.",
+        sourceRefs: [...sourceRefs, sourceFileId],
+        payload: { contract_id: contractId, row_count: contractRows.length, synthetic_policy: "synthetic_demo_only_not_client_truth" },
+      });
+    }
+  }
+}
+
+async function upsertQbrFacts(client: Client, args: Args, rows: readonly CsvRecord[]): Promise<void> {
+  for (const row of rows) {
+    const rowId = stringValue(row, "source_row_id");
+    const facts = [
+      ["qbr.run_percent", pctValue(row, "run_percent"), null, "%"],
+      ["qbr.transform_percent", pctValue(row, "transform_percent"), null, "%"],
+      ["qbr.automation_backlog_items", numberValue(row, "automation_backlog_items"), null, "item"],
+      ["qbr.report_retirement_candidates", numberValue(row, "report_retirement_candidates"), null, "report"],
+      ["qbr.client_satisfaction_score", numberValue(row, "client_satisfaction_score"), null, "score"],
+    ] as const;
+    for (const [factKey, numeric, currency, unit] of facts) {
+      if (numeric === null) continue;
+      await insertCanonicalFact(client, args, {
+        assertionId: `${rowId}:${factKey}`,
+        contractId: stringValue(row, "contract_id"),
+        vendorId: stringValue(row, "vendor_ref"),
+        factKey,
+        numeric,
+        currency,
+        unit,
+        sourceRecordId: rowId,
+        sourceDocumentId: stringValue(row, "source_file_id"),
+        assertionBasis: "Quarterly business review metric loaded from the vendor scorecard evidence.",
+        sourceRefs: [rowId, stringValue(row, "source_file_id")],
+        payload: row,
+      });
+    }
+  }
+}
+
 async function upsertOptimizationSpine(
   client: Client,
   args: Args,
@@ -1546,6 +1797,11 @@ async function applyLayer3(
   await upsertUsageFacts(client, args, sourceFiles.saasUsage);
   await upsertChangeOrderFacts(client, args, sourceFiles.changeOrders);
   await upsertPageTextFacts(client, args, sourceFiles.contractPageText);
+  await upsertResourceModelFacts(client, args, sourceFiles.resourceModel);
+  await upsertPricingBridgeFacts(client, args, sourceFiles.pricingBridge);
+  await upsertInvoiceLineFacts(client, args, sourceFiles.invoiceLineDetail);
+  await upsertBatchOperationFacts(client, args, sourceFiles.batchJobVolumetrics);
+  await upsertQbrFacts(client, args, sourceFiles.qbrScorecards);
   await upsertOptimizationSpine(client, args, sourceFiles);
 
   return layer3Readback(client, args, sourceFiles);
@@ -1580,6 +1836,11 @@ async function layer3Readback(
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])) AS canonical_fact_assertion,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND fact_key = 'document.page_text_char_count' AND contract_id = ANY($3::text[])) AS page_text_fact_assertion,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[]) AND (fact_key LIKE 'change_order%' OR fact_key IN ('annual_change_order_spend', 'recurring_change_order_spend', 'recurring_avoidable_pct'))) AS change_order_fact_assertion,
+       (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[]) AND fact_key LIKE 'resource_model.%') AS resource_model_fact_assertion,
+       (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[]) AND fact_key LIKE 'pricing_bridge.%') AS pricing_bridge_fact_assertion,
+       (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[]) AND fact_key LIKE 'invoice_line.%') AS invoice_line_fact_assertion,
+       (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[]) AND fact_key LIKE 'batch_operations.%') AS batch_operations_fact_assertion,
+       (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[]) AND fact_key LIKE 'qbr.%') AS qbr_fact_assertion,
        (SELECT coalesce(sum(amount_usd), 0)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS opportunity_amount_usd,
        (SELECT count(*)::text FROM source.contract WHERE tenant_key = $1 AND contract_id = ANY($3::text[]) AND load_run_id = $5 AND coalesce(raw_payload->>'alternatives_available', '') <> '') AS contracts_with_assessed_alternatives,
        (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[]) AND payload->>'finance_confirmation_state' = 'not_confirmed') AS opportunities_not_finance_confirmed`,
@@ -1627,6 +1888,13 @@ function expectedLayer3(sourceFiles: ContractDepthSourceFileInput, rows: readonl
     contractsWithChangeOrders.size * 3 +
     contractsWithRecurringChangeOrders.size;
   const pageTextFactCount = sourceFiles.contractPageText.length;
+  const resourceModelFactCount = sourceFiles.resourceModel.length * 4 + new Set(sourceFiles.resourceModel.map((row) => stringValue(row, "contract_id")).filter(Boolean)).size * 5;
+  const pricingBridgeFactCount = sourceFiles.pricingBridge.filter((row) => numberValue(row, "amount_usd") !== null).length;
+  const invoiceLineFactCount = sourceFiles.invoiceLineDetail.filter((row) => numberValue(row, "line_amount_usd") !== null).length +
+    new Set(sourceFiles.invoiceLineDetail.map((row) => stringValue(row, "contract_id")).filter(Boolean)).size * 2;
+  const batchOperationsFactCount = sourceFiles.batchJobVolumetrics.length * 3 +
+    new Set(sourceFiles.batchJobVolumetrics.map((row) => stringValue(row, "contract_id")).filter(Boolean)).size * 3;
+  const qbrFactCount = sourceFiles.qbrScorecards.length * 5;
   return {
     layer2_adapter_rows: rows.length,
     source_record_snapshot: rows.length,
@@ -1645,9 +1913,14 @@ function expectedLayer3(sourceFiles: ContractDepthSourceFileInput, rows: readonl
     calculation_input: opportunityEvidenceRows,
     calculation_output: sourceFiles.optimizationOpportunities.length * 2,
     opportunity_valuation: sourceFiles.optimizationOpportunities.length,
-    canonical_fact_assertion: usageFactCount + changeOrderFactCount + pageTextFactCount,
+    canonical_fact_assertion: usageFactCount + changeOrderFactCount + pageTextFactCount + resourceModelFactCount + pricingBridgeFactCount + invoiceLineFactCount + batchOperationsFactCount + qbrFactCount,
     page_text_fact_assertion: pageTextFactCount,
     change_order_fact_assertion: changeOrderFactCount,
+    resource_model_fact_assertion: resourceModelFactCount,
+    pricing_bridge_fact_assertion: pricingBridgeFactCount,
+    invoice_line_fact_assertion: invoiceLineFactCount,
+    batch_operations_fact_assertion: batchOperationsFactCount,
+    qbr_fact_assertion: qbrFactCount,
     opportunities_not_finance_confirmed: sourceFiles.optimizationOpportunities.length,
     contracts_with_assessed_alternatives: 0,
   };
