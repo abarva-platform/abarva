@@ -1209,7 +1209,7 @@ describe("Source workspace ECL browser-surface proof", () => {
         actionCandidates: [actionCandidate],
       },
     };
-    let resolveOffSliceFetch: ((response: Response) => void) | null = null;
+    let resolveOffSliceFetch!: (response: Response) => void;
     const offSliceFetch = new Promise<Response>((resolve) => {
       resolveOffSliceFetch = resolve;
     });
@@ -1314,7 +1314,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.queryByRole("heading", { name: "Helix Shared Services Group" }),
     ).toBeNull();
-    resolveOffSliceFetch?.(offSliceResponse);
+    resolveOffSliceFetch(offSliceResponse);
 
     await waitFor(() => {
       expect(
