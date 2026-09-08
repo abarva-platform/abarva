@@ -995,7 +995,26 @@ describe("Source workspace ECL browser-surface proof", () => {
       screen.queryByText(/No declared archetype rows are loaded/i),
     ).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Contracts" })[0]);
+    const contractSearch = screen.getByRole("searchbox", {
+      name: "Find a contract",
+    });
+    fireEvent.change(contractSearch, { target: { value: "Kyndryl" } });
+    expect(
+      screen.getByRole("button", {
+        name: /Service Desk Managed Services MER-TECH-SD-001 Kyndryl, Inc\./,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("1 matching contracts")).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Service Desk Managed Services MER-TECH-SD-001 Kyndryl, Inc\./,
+      }),
+    );
+    expect(screen.getByText("Contract 360 / Story")).toBeTruthy();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Optimize" })[0]);
 
     expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
     const optimizeChart = screen.getByLabelText("Optimize action type mix chart");

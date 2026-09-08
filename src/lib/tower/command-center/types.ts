@@ -571,6 +571,8 @@ export interface TowerActionView {
   moveTitle: string;
   /** Mart `module_handoff` — the routing target, or null when none is governed. */
   moduleHandoff: string | null;
+  /** Governed object identifier used for a read-only module drill-through. */
+  handoffEntityId: string | null;
 }
 
 /**

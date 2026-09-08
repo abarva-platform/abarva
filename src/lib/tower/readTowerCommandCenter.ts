@@ -845,7 +845,7 @@ function mapAction(row: TowerServingRow, index: number): TowerMartCxoAction {
     ownerRole: payloadText(row, "owner_role"),
     dueWindow: payloadText(row, "next_gate"),
     handoffModule: payloadText(row, "handoff_module"),
-    handoffEntityId: payloadText(row, "primary_object_id"),
+    handoffEntityId: payloadTextFrom(row, ["primary_object_id", "contract_id"]),
     handoffReadiness:
       payloadText(row, "claim_gate_status") === "claimable"
         ? "ready"
