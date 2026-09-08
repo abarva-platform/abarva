@@ -239,6 +239,10 @@ Write like an expert, not a machine:
 Integrity is what makes you credible, not generic — keep it, but in an advisor's voice:
 - Never fabricate. If an input is missing, say so plainly and treat it as a gap to close — phrased as advice ("we don't yet have the current SLA baseline; until we do, treat the savings target as directional"), not as a bare "asserted / unknown" tag.
 - Separate what the evidence supports from what is still a working assumption — woven into the reasoning, not bolted on as audit labels.
+- Treat the intake "value at stake" as a candidate opportunity or validation target. It is not contract annual value, total contract value, spend baseline, savings realized, or a finance-approved commitment unless bound evidence explicitly establishes that meaning.
+- Do not introduce market conditions, vendor capabilities, comparable-event outcomes, benchmark percentages, typical timelines, savings rates, or commercial norms as facts unless the bound evidence names the source. Expert judgment may recommend what to test or negotiate, but it may not manufacture a factual basis.
+- Use only source-bound dates. Do not invent a document date, review calendar, due date, or elapsed-time statement. If the evidence supports a contract date or notice period but not a complete schedule, state the dependency and leave the calendar open.
+- Preserve numeric semantics. A candidate opportunity stays candidate; a contract baseline stays baseline; a vendor proposal stays proposed; measured value stays measured; realized value requires the stated finance authority.
 - No hedging-by-listing, no generic procurement boilerplate, no restating the prompt. If a section has nothing decision-relevant to say, say less.
 
 Client-facing language:
@@ -947,7 +951,7 @@ function formatStageGuidebookContext(
 const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
   d01_strategy_memo: {
     artifactCode: "d01_strategy_memo",
-    version: 1,
+    version: 2,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: [],
@@ -959,7 +963,7 @@ You are drafting the Sourcing Strategy Memo. This is the foundational document f
 Required structural sections:
 ${formatRequiredSectionsForPrompt("d01_strategy_memo")}
 
-This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the value at stake, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band when the intake supports one (and say plainly when it does not, rather than manufacturing precision). Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material savings claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids).`,
+This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the candidate value to validate, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band only when the intake or bound evidence supports one. Never convert the intake value-at-stake field into contract value, annual spend, TCV, or realized savings. If the contract baseline is not present in the bound evidence, say it is not established instead of deriving a percentage or dollar range. Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material candidate-value claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids).`,
     buildUserMessage: (ctx) => {
       return [
         `Company: ${ctx.tenantName}`,
@@ -969,7 +973,7 @@ This memo is your recommendation to the CIO on whether and how to take this to m
         ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
         ctx.event.estimatedValueUsd
-          ? `Estimated value: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          ? `Candidate opportunity / validation target from intake (not contract value or realized savings): $${ctx.event.estimatedValueUsd.toLocaleString()}`
           : null,
         "",
         `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided in intake)"}`,
@@ -991,7 +995,7 @@ This memo is your recommendation to the CIO on whether and how to take this to m
 
   d02_value_target: {
     artifactCode: "d02_value_target",
-    version: 3,
+    version: 4,
     model: BOARD_GRADE_MODEL,
     maxTokens: BOARD_GRADE_MAX_TOKENS,
     upstreamRequired: [],
@@ -1009,8 +1013,10 @@ Required structural sections:
 
 Requirements:
 - State the value target as a RANGE (low / base / high) with an explicit confidence band (low / medium / high) and the basis for each bound.
+- Treat the intake value estimate as a candidate opportunity / validation target. Do not relabel it as contract value, spend baseline, TCV, savings realized, or a finance-approved commitment.
 - Decompose value by lever: labor arbitrage, automation / productivity, consolidation / rationalization, rate / commercial, demand / volume. Quantify each lever's contribution where the bound context supports it; mark unsupported levers as "indicative — requires baseline".
 - Tie every number to a source: incumbent baseline, ticket / volume evidence, or a stated assumption. Never fabricate a baseline. If the baseline is missing, size the lever as a range against a clearly labeled assumption and flag it as a client-to-complete gap.
+- Do not apply generic benchmark percentages or comparable-event savings rates unless a named bound source provides them. If evidence cannot support low/base/high amounts yet, preserve the intake target as a validation hypothesis and make the range "not established" pending the named inputs.
 - Name the realization owner and the first measurement window. Separate projected → committed → measured value.
 - 600-1000 words. Use a table for the lever decomposition and a table for the sizing range. No generic savings boilerplate.`,
     buildUserMessage: (ctx, upstream) => {
@@ -1019,8 +1025,8 @@ Requirements:
         `Event: ${ctx.event.name} (${ctx.event.code})`,
         ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
         ctx.event.estimatedValueUsd
-          ? `Intake value estimate: $${ctx.event.estimatedValueUsd.toLocaleString()}`
-          : `Intake value estimate: (not provided)`,
+          ? `Candidate opportunity / validation target from intake (not contract value or realized savings): $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : `Candidate opportunity / validation target from intake: (not provided)`,
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
         "",
         `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,

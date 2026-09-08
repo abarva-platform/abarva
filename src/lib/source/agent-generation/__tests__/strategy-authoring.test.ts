@@ -48,11 +48,20 @@ describe("strategy-stage authoring (d02_value_target, d03_archetype_decision)", 
     expect(template).toBeTruthy();
     expect(template!.systemPrompt).toContain("§1 · Value thesis");
     expect(template!.systemPrompt).toContain("confidence band");
+    expect(template!.systemPrompt).toContain(
+      "candidate opportunity / validation target",
+    );
+    expect(template!.systemPrompt).toContain(
+      "Do not apply generic benchmark percentages",
+    );
     expect(template!.upstreamOptional).toContain("d01_strategy_memo");
 
     const withoutUpstream = template!.buildUserMessage(ctx, {});
     expect(withoutUpstream).toContain("Managed Service sourcing");
     expect(withoutUpstream).toMatch(/not yet authored/);
+    expect(withoutUpstream).toContain(
+      "Candidate opportunity / validation target from intake (not contract value or realized savings): $80,000,000",
+    );
 
     const withUpstream = template!.buildUserMessage(ctx, {
       d01_strategy_memo: "STRATEGY MEMO BODY",
