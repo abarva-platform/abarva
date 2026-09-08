@@ -35,12 +35,8 @@ import {
   listContract360,
   listContractApplicationScope,
   listContractInitiativeDependency,
-  listSourceAvaGroundingBundles,
   listSourceContractActionCandidates,
-  listSourceContractClaimCards,
   listSourceContractEvidenceCoverage,
-  listSourcePageStoryline,
-  listSourceVendorPositions,
   listVendorContractPortfolio,
 } from "@/lib/source/data-model/read-adapter";
 import type {
@@ -699,10 +695,6 @@ async function loadSourceWorkspaceImpactLayerWithTimings(
   const [
     evidenceCoverage,
     actionCandidates,
-    claimCards,
-    vendorPositions,
-    storyline,
-    avaGroundingBundles,
   ] = await Promise.all([
     timeWorkspaceRead(timings, "impact.evidence_coverage_view", () =>
       listSourceContractEvidenceCoverage(tenantKey),
@@ -710,19 +702,41 @@ async function loadSourceWorkspaceImpactLayerWithTimings(
     timeWorkspaceRead(timings, "impact.action_candidates_view", () =>
       listSourceContractActionCandidates(tenantKey),
     ),
-    timeWorkspaceRead(timings, "impact.claim_cards_view", () =>
-      listSourceContractClaimCards(tenantKey),
-    ),
-    timeWorkspaceRead(timings, "impact.vendor_positions_view", () =>
-      listSourceVendorPositions(tenantKey),
-    ),
-    timeWorkspaceRead(timings, "impact.storyline_view", () =>
-      listSourcePageStoryline(tenantKey),
-    ),
-    timeWorkspaceRead(timings, "impact.ava_grounding_bundles_view", () =>
-      listSourceAvaGroundingBundles(tenantKey),
-    ),
   ]);
+  const claimCards = actionCandidates.map(claimCardFromActionCandidate);
+  timings.push({
+    label: "impact.claim_cards_generated",
+    ms: 0,
+    rows: claimCards.length,
+  });
+  const vendorPositions = vendorPositionsFromImpactRows(
+    evidenceCoverage,
+    actionCandidates,
+  );
+  timings.push({
+    label: "impact.vendor_positions_generated",
+    ms: 0,
+    rows: vendorPositions.length,
+  });
+  const storyline = storylineFromDerivedImpact(
+    evidenceCoverage,
+    actionCandidates,
+  );
+  timings.push({
+    label: "impact.storyline_generated",
+    ms: 0,
+    rows: storyline.length,
+  });
+  const avaGroundingBundles = avaBundlesFromDerivedImpact(
+    storyline,
+    actionCandidates,
+  );
+  timings.push({
+    label: "impact.ava_grounding_bundles_generated",
+    ms: 0,
+    rows: avaGroundingBundles.length,
+  });
+
   const viewImpact = {
     evidenceCoverage,
     actionCandidates,
@@ -789,6 +803,12 @@ function hasExecutiveImpactRows(impact: SourceWorkspaceImpactLayer): boolean {
 
 function shouldCompleteImpactLayer(impact: SourceWorkspaceImpactLayer): boolean {
   if (!hasExecutiveImpactRows(impact)) return true;
+  if (
+    impact.evidenceCoverage.length === 0 ||
+    !hasLoadedEvidenceCoverageRows(impact.evidenceCoverage)
+  ) {
+    return true;
+  }
   const actionGroundingBundleCount = impact.avaGroundingBundles.filter(
     (row) => row.page_key === "contract_action",
   ).length;
@@ -797,6 +817,20 @@ function shouldCompleteImpactLayer(impact: SourceWorkspaceImpactLayer): boolean 
       impact.claimCards.length < impact.actionCandidates.length) ||
     (impact.actionCandidates.length > 0 &&
       actionGroundingBundleCount < impact.actionCandidates.length)
+  );
+}
+
+function hasLoadedEvidenceCoverageRows(
+  rows: readonly SourceContractEvidenceCoverageRow[],
+): boolean {
+  return rows.some(
+    (row) =>
+      valueOf(row.spend_rows) > 0 ||
+      valueOf(row.performance_rows) > 0 ||
+      valueOf(row.opportunity_rows) > 0 ||
+      valueOf(row.candidate_amount_usd) > 0 ||
+      valueOf(row.document_page_text_rows) > 0 ||
+      valueOf(row.change_order_rows) > 0,
   );
 }
 
@@ -1421,6 +1455,154 @@ function vendorPositionsFromImpact(
         load_run_id: null,
       };
     })
+    .filter(
+      (row) =>
+        row.action_candidate_count > 0 ||
+        row.unclaimed_credit_usd > 0 ||
+        row.spend_rows > 0 ||
+        row.performance_rows > 0,
+    )
+    .sort(
+      (left, right) =>
+        valueOf(right.candidate_amount_usd) -
+          valueOf(left.candidate_amount_usd) ||
+        valueOf(right.annual_value) - valueOf(left.annual_value) ||
+        left.vendor_name.localeCompare(right.vendor_name),
+    );
+}
+
+function vendorPositionsFromImpactRows(
+  coverageRows: readonly SourceContractEvidenceCoverageRow[],
+  actionRows: readonly SourceContractActionCandidateRow[],
+): SourceVendorPositionRow[] {
+  type Accumulator = {
+    tenantKey: string;
+    vendorRef: string;
+    vendorName: string;
+    vendorCategory: string | null;
+    contractRefs: Set<string>;
+    annualValue: number;
+    totalCommittedValue: number;
+    actionCandidateCount: number;
+    candidateAmountUsd: number;
+    notConfirmedCount: number;
+    decisionReadyContracts: number;
+    unclaimedCreditUsd: number;
+    spendRows: number;
+    performanceRows: number;
+    loadRunId: string | null;
+  };
+
+  const byVendor = new Map<string, Accumulator>();
+  const ensureVendor = ({
+    tenantKey,
+    vendorRef,
+    vendorName,
+    vendorCategory,
+    loadRunId,
+  }: {
+    tenantKey: string;
+    vendorRef: string;
+    vendorName: string;
+    vendorCategory: string | null;
+    loadRunId: string | null;
+  }) => {
+    const key = vendorRef || vendorName;
+    const current =
+      byVendor.get(key) ??
+      ({
+        tenantKey,
+        vendorRef: key,
+        vendorName: vendorName || key,
+        vendorCategory,
+        contractRefs: new Set<string>(),
+        annualValue: 0,
+        totalCommittedValue: 0,
+        actionCandidateCount: 0,
+        candidateAmountUsd: 0,
+        notConfirmedCount: 0,
+        decisionReadyContracts: 0,
+        unclaimedCreditUsd: 0,
+        spendRows: 0,
+        performanceRows: 0,
+        loadRunId,
+      } satisfies Accumulator);
+    if (!current.vendorCategory && vendorCategory) {
+      current.vendorCategory = vendorCategory;
+    }
+    if (!current.loadRunId && loadRunId) {
+      current.loadRunId = loadRunId;
+    }
+    byVendor.set(key, current);
+    return current;
+  };
+
+  for (const row of coverageRows) {
+    const current = ensureVendor({
+      tenantKey: row.tenant_key,
+      vendorRef: row.vendor_ref,
+      vendorName: row.vendor_name,
+      vendorCategory: row.contract_archetype ?? row.vendor_category ?? null,
+      loadRunId: row.load_run_id,
+    });
+    current.contractRefs.add(row.contract_id);
+    current.annualValue += Math.max(
+      valueOf(row.actual_spend_usd),
+      valueOf(row.committed_spend_usd),
+      valueOf(row.candidate_amount_usd),
+    );
+    current.totalCommittedValue += valueOf(row.committed_spend_usd);
+    current.decisionReadyContracts +=
+      row.coverage_state === "decision_ready" ? 1 : 0;
+    current.unclaimedCreditUsd += valueOf(row.unclaimed_credit_usd);
+    current.spendRows += valueOf(row.spend_rows);
+    current.performanceRows += valueOf(row.performance_rows);
+  }
+
+  for (const row of actionRows) {
+    const current = ensureVendor({
+      tenantKey: row.tenant_key,
+      vendorRef: row.vendor_ref,
+      vendorName: row.vendor_name,
+      vendorCategory: row.opportunity_type ?? row.action_type ?? null,
+      loadRunId: row.load_run_id,
+    });
+    current.contractRefs.add(row.contract_id);
+    current.actionCandidateCount += 1;
+    current.candidateAmountUsd += valueOf(row.candidate_amount_usd);
+    current.notConfirmedCount +=
+      row.finance_confirmation_state === "confirmed" ? 0 : 1;
+    if (current.annualValue === 0) {
+      current.annualValue += valueOf(row.candidate_amount_usd);
+    }
+  }
+
+  return [...byVendor.values()]
+    .map((row) => ({
+      tenant_key: row.tenantKey,
+      vendor_ref: row.vendorRef,
+      vendor_name: row.vendorName,
+      vendor_category: row.vendorCategory,
+      contract_count: row.contractRefs.size,
+      annual_value: row.annualValue,
+      total_committed_value: row.totalCommittedValue,
+      auto_renew_contracts: 0,
+      next_end_date: null,
+      contract_refs: [...row.contractRefs].sort(),
+      action_candidate_count: row.actionCandidateCount,
+      candidate_amount_usd: row.candidateAmountUsd,
+      not_confirmed_count: row.notConfirmedCount,
+      decision_ready_contracts: row.decisionReadyContracts,
+      unclaimed_credit_usd: row.unclaimedCreditUsd,
+      spend_rows: row.spendRows,
+      performance_rows: row.performanceRows,
+      vendor_position_state: row.actionCandidateCount
+        ? "act_on_evidence"
+        : row.decisionReadyContracts
+          ? "monitor_evidence"
+          : "header_only",
+      load_run_id: row.loadRunId,
+    }))
     .filter(
       (row) =>
         row.action_candidate_count > 0 ||

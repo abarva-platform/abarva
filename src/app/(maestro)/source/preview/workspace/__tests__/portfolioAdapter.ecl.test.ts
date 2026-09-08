@@ -737,8 +737,8 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.impact.actionCandidates).toHaveLength(1);
     expect(portfolio.impact.claimCards).toHaveLength(1);
     expect(portfolio.impact.vendorPositions).toHaveLength(1);
-    expect(portfolio.impact.storyline).toHaveLength(1);
-    expect(portfolio.impact.avaGroundingBundles).toHaveLength(1);
+    expect(portfolio.impact.storyline).toHaveLength(5);
+    expect(portfolio.impact.avaGroundingBundles).toHaveLength(6);
     expect(
       portfolio.contracts.find(
         (row) => row.contract_id === "MER-TECH-M365-001",
@@ -772,7 +772,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         call.sql.includes("set_config") &&
         call.params[0] === "meridian-health",
     );
-    expect(canonicalImpactSetConfigCalls).toHaveLength(6);
+    expect(canonicalImpactSetConfigCalls).toHaveLength(2);
     const legacyImpactSetConfigCalls = runCalls.filter(
       (call) =>
         call.sql.includes("set_config") &&
@@ -817,7 +817,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       runCalls.some((call) =>
         call.sql.includes("source.contract_claim_card_v1"),
       ),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       runCalls.some((call) =>
         call.sql.includes("FROM consumption.sourcing_spend_monthly_v1"),
@@ -1116,6 +1116,41 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ) {
           return [] as R[];
         }
+        if (sql.includes("FROM source.contract_evidence_coverage_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              vendor_category: "productivity_platform",
+              contract_archetype: "productivity_platform",
+              contract_name: "Microsoft 365 Enterprise Agreement",
+              spend_rows: "12",
+              actual_spend_usd: "1452000",
+              committed_spend_usd: "1480000",
+              performance_rows: "0",
+              breach_rows: "0",
+              credit_calculated_usd: "0",
+              credit_claimed_usd: "0",
+              credit_recovered_usd: "0",
+              unclaimed_credit_usd: "0",
+              opportunity_rows: "1",
+              candidate_amount_usd: "1960000",
+              finance_confirmation_required_rows: "1",
+              opportunities_with_evidence: "1",
+              scope_rows: "2",
+              critical_scope_rows: "1",
+              document_page_text_rows: "6",
+              change_order_rows: "1",
+              coverage_state: "partial",
+              blocker_if_missing:
+                "finance confirmation required before realized-value claim",
+              evidence_basis_json: { rows: ["SPEND-001", "CLAUSE-001"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
         if (sql.includes("FROM source.contract_action_candidate_v1")) {
           return [
             {
@@ -1211,7 +1246,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
 
     expect(portfolio.impact.actionCandidates).toHaveLength(1);
     expect(portfolio.impact.claimCards).toHaveLength(1);
-    expect(portfolio.impact.avaGroundingBundles).toHaveLength(1);
+    expect(portfolio.impact.avaGroundingBundles).toHaveLength(6);
     expect(
       runCalls.some((call) => call.sql.includes("FROM source.contract_360 c")),
     ).toBe(false);
