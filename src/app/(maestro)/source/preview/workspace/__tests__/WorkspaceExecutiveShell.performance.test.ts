@@ -6,6 +6,7 @@ import {
   focusedVendorSet,
   optimizeTypeRows,
   performanceActual,
+  sourceImpactCoverageRowTotal,
   source360RecoverableCreditCoverageRows,
   source360RecoverableCreditFinding,
   topVendors,
@@ -70,6 +71,28 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(css).toContain(".sw-v2-graph-node");
     expect(css).toContain(".sw-v2-graph-volume-visual");
     expect(css).toContain(".sw-v2-mapping-flow");
+  });
+
+  it("derives graph row volumes from loaded impact coverage before old snapshots", () => {
+    const coverage = [
+      {
+        spend_rows: 24,
+        performance_rows: 12,
+        document_page_text_rows: 8,
+        change_order_rows: 3,
+      },
+      {
+        spend_rows: "180",
+        performance_rows: "132",
+        document_page_text_rows: "79",
+        change_order_rows: "22",
+      },
+    ] as unknown as Parameters<typeof sourceImpactCoverageRowTotal>[0];
+
+    expect(sourceImpactCoverageRowTotal(coverage, "spend_rows")).toBe(204);
+    expect(sourceImpactCoverageRowTotal(coverage, "performance_rows")).toBe(144);
+    expect(sourceImpactCoverageRowTotal(coverage, "document_page_text_rows")).toBe(87);
+    expect(sourceImpactCoverageRowTotal(coverage, "change_order_rows")).toBe(25);
   });
 
   it("keeps the Evidence page visual before the row-detail tables", () => {
