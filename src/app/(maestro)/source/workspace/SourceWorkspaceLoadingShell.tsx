@@ -95,8 +95,8 @@ export function SourceWorkspaceLoadingShell({
             lineHeight: 1.55,
           }}
         >
-          Loading portfolio rows, vendor rollups, action candidates, and
-          evidence coverage before the executive view opens.
+          Opening portfolio rows and vendor rollups first. Evidence coverage
+          and action candidates hydrate after the executive view is visible.
         </p>
         <div
           style={{

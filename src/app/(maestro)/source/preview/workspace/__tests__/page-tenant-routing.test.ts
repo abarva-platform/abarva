@@ -86,6 +86,9 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource).toContain("/api/source/workspace/portfolio");
     expect(loaderSource).toContain("SourceWorkspaceLoadingShell");
     expect(loaderSource).toContain("<WorkspaceClient");
+    expect(loaderSource).toContain(
+      "SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS",
+    );
     expect(loaderSource).toContain('impactMode: "deferred"');
     expect(loaderSource).toContain('impactMode: "full"');
     expect(loaderSource).toContain('setImpactLoadState("ready")');
@@ -133,8 +136,10 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain("impactMode");
     expect(loaderSource).toContain('params.set("impact", input.impactMode)');
     expect(loaderSource.indexOf("fetchPortfolio(deferredUrl)")).toBeLessThan(
-      loaderSource.indexOf("const fullPayload = await fetchPortfolio(fullUrl)"),
+      loaderSource.indexOf("fetchPortfolio(fullUrl)"),
     );
+    expect(loaderSource).toContain("window.setTimeout");
+    expect(loaderSource).toContain("window.clearTimeout(fullImpactTimer)");
   });
 
   it("keeps the historical preview route as a query-preserving redirect only", () => {
