@@ -102,9 +102,17 @@ export interface SourceWorkspaceLoadOptions {
   readonly impactMode?: SourceWorkspaceImpactMode;
 }
 
+export interface SourceWorkspaceLoadTiming {
+  readonly label: string;
+  readonly ms: number;
+  readonly rows: number;
+  readonly error?: string;
+}
+
 export interface SourceWorkspaceImpactPayload {
   readonly sourceProviderKey: SourceWorkspaceProviderMode;
   readonly impact: SourceWorkspaceImpactLayer;
+  readonly timings?: readonly SourceWorkspaceLoadTiming[];
 }
 
 export interface SourceWorkspacePortfolioData {
@@ -370,28 +378,82 @@ export async function loadSourceWorkspaceImpactPayload(
   options: SourceWorkspaceLoadOptions = {},
 ): Promise<SourceWorkspaceImpactPayload> {
   const provider = sourceWorkspaceProvider(providerOverride);
-  const impact = await loadWorkspaceImpactLayerForMode(
-    tenantKey,
-    options.impactMode,
-  );
+  const timings: SourceWorkspaceLoadTiming[] = [];
+  const { impact, timings: impactTimings } =
+    await loadWorkspaceImpactLayerForModeWithTimings(
+      tenantKey,
+      options.impactMode,
+    );
+  timings.push(...impactTimings);
   if (options.impactMode === "deferred") {
-    return { sourceProviderKey: provider, impact };
+    return { sourceProviderKey: provider, impact, timings };
   }
 
   const [contracts, vendors] =
     provider === "legacy"
       ? await Promise.all([
-          listContract360(tenantKey)
-            .then(excludeSupplementalContracts)
-            .catch(() => []),
-          listVendorContractPortfolio(tenantKey).catch(() => []),
+          timeWorkspaceRead(timings, "name_rows.legacy_contracts", () =>
+            listContract360(tenantKey).then(excludeSupplementalContracts),
+          ),
+          timeWorkspaceRead(timings, "name_rows.legacy_vendors", () =>
+            listVendorContractPortfolio(tenantKey),
+          ),
         ])
-      : await readEclProjectionNameRows(tenantKey, provider);
+      : await readEclProjectionNameRows(tenantKey, provider, timings);
 
   return {
     sourceProviderKey: provider,
     impact: resolveImpactVendorNames(impact, contracts, vendors),
+    timings,
   };
+}
+
+async function timeWorkspaceRead<Row>(
+  timings: SourceWorkspaceLoadTiming[] | undefined,
+  label: string,
+  read: () => Promise<readonly Row[]>,
+): Promise<readonly Row[]> {
+  const startedAt = Date.now();
+  try {
+    const rows = await read();
+    timings?.push({ label, ms: Date.now() - startedAt, rows: rows.length });
+    return rows;
+  } catch {
+    timings?.push({
+      label,
+      ms: Date.now() - startedAt,
+      rows: 0,
+      error: "read_failed",
+    });
+    return [];
+  }
+}
+
+async function loadWorkspaceImpactLayerForModeWithTimings(
+  tenantKey: string,
+  impactMode: SourceWorkspaceImpactMode = "full",
+): Promise<{
+  readonly impact: SourceWorkspaceImpactLayer;
+  readonly timings: readonly SourceWorkspaceLoadTiming[];
+}> {
+  if (impactMode === "deferred") {
+    return {
+      impact: emptySourceWorkspaceImpactLayer(),
+      timings: [{ label: "impact.deferred", ms: 0, rows: 0 }],
+    };
+  }
+  return loadSourceWorkspaceImpactLayerWithTimings(tenantKey);
+}
+
+async function loadWorkspaceImpactLayerForMode(
+  tenantKey: string,
+  impactMode: SourceWorkspaceImpactMode = "full",
+): Promise<SourceWorkspaceImpactLayer> {
+  const { impact } = await loadWorkspaceImpactLayerForModeWithTimings(
+    tenantKey,
+    impactMode,
+  );
+  return impact;
 }
 
 export function sourceWorkspaceProvider(
@@ -564,6 +626,7 @@ async function loadEclProjectionWorkspacePortfolio(
 async function readEclProjectionNameRows(
   tenantKey: string,
   provider: SourceWorkspaceProviderMode,
+  timings?: SourceWorkspaceLoadTiming[],
 ): Promise<
   readonly [
     readonly SourceContract360Row[],
@@ -579,14 +642,28 @@ async function readEclProjectionNameRows(
 
   const [contractRows, vendorRows] = await Promise.all([
     provider === "ecl_projection_db"
-      ? readProjectionTable(tenantKey, "source_contract_360")
-      : readProjectionCsv(
-          path.join(projectionDir ?? "", "source_contract_360_projection.csv"),
+      ? timeWorkspaceRead(timings, "name_rows.ecl_contracts", () =>
+          readProjectionTable(tenantKey, "source_contract_360"),
+        )
+      : timeWorkspaceRead(timings, "name_rows.ecl_contracts", () =>
+          readProjectionCsv(
+            path.join(
+              projectionDir ?? "",
+              "source_contract_360_projection.csv",
+            ),
+          ),
         ),
     provider === "ecl_projection_db"
-      ? readProjectionView(tenantKey, "source_vendor_portfolio")
-      : readProjectionCsv(
-          path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
+      ? timeWorkspaceRead(timings, "name_rows.ecl_vendors", () =>
+          readProjectionView(tenantKey, "source_vendor_portfolio"),
+        )
+      : timeWorkspaceRead(timings, "name_rows.ecl_vendors", () =>
+          readProjectionCsv(
+            path.join(
+              projectionDir ?? "",
+              "source_vendor_360_projection.csv",
+            ),
+          ),
         ),
   ]);
   const acceptedTenantKeys = new Set(
@@ -601,16 +678,6 @@ async function readEclProjectionNameRows(
   ];
 }
 
-function loadWorkspaceImpactLayerForMode(
-  tenantKey: string,
-  impactMode: SourceWorkspaceImpactMode = "full",
-): Promise<SourceWorkspaceImpactLayer> {
-  if (impactMode === "deferred") {
-    return Promise.resolve(emptySourceWorkspaceImpactLayer());
-  }
-  return loadSourceWorkspaceImpactLayer(tenantKey);
-}
-
 function emptySourceWorkspaceImpactLayer(): SourceWorkspaceImpactLayer {
   return {
     evidenceCoverage: [],
@@ -622,9 +689,13 @@ function emptySourceWorkspaceImpactLayer(): SourceWorkspaceImpactLayer {
   };
 }
 
-async function loadSourceWorkspaceImpactLayer(
+async function loadSourceWorkspaceImpactLayerWithTimings(
   tenantKey: string,
-): Promise<SourceWorkspaceImpactLayer> {
+): Promise<{
+  readonly impact: SourceWorkspaceImpactLayer;
+  readonly timings: readonly SourceWorkspaceLoadTiming[];
+}> {
+  const timings: SourceWorkspaceLoadTiming[] = [];
   const [
     evidenceCoverage,
     actionCandidates,
@@ -633,12 +704,24 @@ async function loadSourceWorkspaceImpactLayer(
     storyline,
     avaGroundingBundles,
   ] = await Promise.all([
-    listSourceContractEvidenceCoverage(tenantKey).catch(() => []),
-    listSourceContractActionCandidates(tenantKey).catch(() => []),
-    listSourceContractClaimCards(tenantKey).catch(() => []),
-    listSourceVendorPositions(tenantKey).catch(() => []),
-    listSourcePageStoryline(tenantKey).catch(() => []),
-    listSourceAvaGroundingBundles(tenantKey).catch(() => []),
+    timeWorkspaceRead(timings, "impact.evidence_coverage_view", () =>
+      listSourceContractEvidenceCoverage(tenantKey),
+    ),
+    timeWorkspaceRead(timings, "impact.action_candidates_view", () =>
+      listSourceContractActionCandidates(tenantKey),
+    ),
+    timeWorkspaceRead(timings, "impact.claim_cards_view", () =>
+      listSourceContractClaimCards(tenantKey),
+    ),
+    timeWorkspaceRead(timings, "impact.vendor_positions_view", () =>
+      listSourceVendorPositions(tenantKey),
+    ),
+    timeWorkspaceRead(timings, "impact.storyline_view", () =>
+      listSourcePageStoryline(tenantKey),
+    ),
+    timeWorkspaceRead(timings, "impact.ava_grounding_bundles_view", () =>
+      listSourceAvaGroundingBundles(tenantKey),
+    ),
   ]);
   const viewImpact = {
     evidenceCoverage,
@@ -648,12 +731,40 @@ async function loadSourceWorkspaceImpactLayer(
     storyline,
     avaGroundingBundles,
   };
-  if (!shouldCompleteImpactLayer(viewImpact)) return viewImpact;
-  const derivedImpact = await loadDerivedSourceWorkspaceImpactLayer(tenantKey);
+  if (!shouldCompleteImpactLayer(viewImpact)) return { impact: viewImpact, timings };
+  const derivedImpact = await timeDerivedWorkspaceImpactRead(
+    timings,
+    tenantKey,
+  );
   if (derivedImpact && hasImpactLayerRows(derivedImpact)) {
-    return mergeSourceWorkspaceImpactLayer(viewImpact, derivedImpact);
+    return {
+      impact: mergeSourceWorkspaceImpactLayer(viewImpact, derivedImpact),
+      timings,
+    };
   }
-  return viewImpact;
+  return { impact: viewImpact, timings };
+}
+
+async function timeDerivedWorkspaceImpactRead(
+  timings: SourceWorkspaceLoadTiming[],
+  tenantKey: string,
+): Promise<SourceWorkspaceImpactLayer> {
+  const startedAt = Date.now();
+  const impact =
+    (await loadDerivedSourceWorkspaceImpactLayer(tenantKey)) ??
+    emptySourceWorkspaceImpactLayer();
+  timings.push({
+    label: "impact.derived_overlay",
+    ms: Date.now() - startedAt,
+    rows:
+      impact.evidenceCoverage.length +
+      impact.actionCandidates.length +
+      impact.claimCards.length +
+      impact.vendorPositions.length +
+      impact.storyline.length +
+      impact.avaGroundingBundles.length,
+  });
+  return impact;
 }
 
 function hasImpactLayerRows(impact: SourceWorkspaceImpactLayer): boolean {
