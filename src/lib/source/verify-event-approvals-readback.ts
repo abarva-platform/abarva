@@ -156,6 +156,7 @@ async function main() {
   console.log(
     JSON.stringify(
       {
+        structured_event: "source_event_approval_repository_readback",
         ok: true,
         verificationEventId: event.id,
         tenantKey: VERIFY_TENANT_KEY,
