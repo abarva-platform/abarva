@@ -16,6 +16,8 @@ A different loader (`load-source-golden-contract-evidence.mjs`) already writes i
 
 This adds a small, narrowly-scoped companion loader (`load-contract-depth-document-evidence.mjs`) that reads the same `contract_clauses.csv` / `contract_page_text.csv` rows the existing loader already parses, and writes them into `doc.file` / `doc.page` / `doc.span` / `doc.extraction` using the same schema and insert pattern already proven by the golden-evidence loader — without that loader's incompatible reconciliation requirements. It invents nothing: every row traces to a source CSV row already reviewed and tagged `synthetic_demo_reviewed` / `synthetic_demo_only_not_client_truth`.
 
+Follow-up hardening materializes `doc.file` rows from the union of page-text and clause source files. This preserves foreign-key integrity when a reviewed clause cites a source file that has no separate page-text row in the package.
+
 ## Layer Impact
 
 Release lane: `client-data-lane` — writes governed synthetic evidence for a specific tenant's contracts; no shared control-plane behavior changes.
@@ -41,6 +43,7 @@ Release lane: `client-data-lane` — writes governed synthetic evidence for a sp
 ## QA / Validation
 
 - `npx eslint scripts/source/load-contract-depth-document-evidence.mjs` — **pass**, clean.
+- `node --test scripts/source/__tests__/load-contract-depth-document-evidence.test.mjs` — **pass**; covers clause-only source-file materialization.
 - Plan mode run locally against the real package for `MER-TECH-AMS-001` (Cognizant Technology Solutions) — **pass**: output matched exact independent verification done earlier by reading the CSVs directly — 6 `contract_page_text` rows, 7 `contract_clauses` rows, 6 distinct source files. No DB write in plan mode.
 - Initial live ACA Job apply run, scoped to `--contract-id MER-TECH-AMS-001` — **fail**: Postgres error `42703`, `column "vendor_name" does not exist`, raised by `verifyContractsExist` before any `INSERT` runs. No rows written; the job's own idle-restore completed cleanly afterward. Root-caused and fixed same-day (see Changes Included).
 - Second live ACA Job apply run, after the fix — **not run** as of this PR. That is the explicit next step, same job path, same contract scope.
