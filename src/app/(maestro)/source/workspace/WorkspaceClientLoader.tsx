@@ -16,7 +16,6 @@ interface PortfolioResponse {
 }
 
 type ImpactLoadState = "loading" | "ready" | "error";
-const SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS = 1200;
 
 function portfolioApiUrl(input: {
   readonly tenantKey: string;
@@ -93,7 +92,6 @@ export function WorkspaceClientLoader({
 
   useEffect(() => {
     let cancelled = false;
-    let fullImpactTimer: number | null = null;
     setPortfolio(null);
     setError(null);
     setImpactLoadState("loading");
@@ -101,22 +99,21 @@ export function WorkspaceClientLoader({
     fetchPortfolio(deferredUrl)
       .then((payload) => {
         if (cancelled) return;
+        const fullImpactPromise = fetchPortfolio(fullUrl);
         setPortfolio(payload.portfolio);
         setResolvedProvider(payload.sourceProviderKey);
 
-        fullImpactTimer = window.setTimeout(() => {
-          fetchPortfolio(fullUrl)
-            .then((fullPayload) => {
-              if (cancelled) return;
-              setPortfolio(fullPayload.portfolio);
-              setResolvedProvider(fullPayload.sourceProviderKey);
-              setImpactLoadState("ready");
-            })
-            .catch(() => {
-              if (cancelled) return;
-              setImpactLoadState("error");
-            });
-        }, SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS);
+        fullImpactPromise
+          .then((fullPayload) => {
+            if (cancelled) return;
+            setPortfolio(fullPayload.portfolio);
+            setResolvedProvider(fullPayload.sourceProviderKey);
+            setImpactLoadState("ready");
+          })
+          .catch(() => {
+            if (cancelled) return;
+            setImpactLoadState("error");
+          });
       })
       .catch((err) => {
         if (cancelled) return;
@@ -125,10 +122,9 @@ export function WorkspaceClientLoader({
             ? err.message
             : "Source workspace data could not be loaded.",
         );
-      });
+    });
     return () => {
       cancelled = true;
-      if (fullImpactTimer) window.clearTimeout(fullImpactTimer);
     };
   }, [deferredUrl, fullUrl]);
 

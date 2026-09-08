@@ -86,9 +86,11 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource).toContain("/api/source/workspace/portfolio");
     expect(loaderSource).toContain("SourceWorkspaceLoadingShell");
     expect(loaderSource).toContain("<WorkspaceClient");
-    expect(loaderSource).toContain(
+    expect(loaderSource).toContain("const fullImpactPromise = fetchPortfolio(fullUrl)");
+    expect(loaderSource).not.toContain(
       "SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS",
     );
+    expect(loaderSource).not.toContain("window.setTimeout");
     expect(loaderSource).toContain('impactMode: "deferred"');
     expect(loaderSource).toContain('impactMode: "full"');
     expect(loaderSource).toContain('setImpactLoadState("ready")');
@@ -130,7 +132,7 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain('Cache-Control": "private, no-store"');
   });
 
-  it("allows the first Source 360 paint to defer the heavy impact layer explicitly", () => {
+  it("allows the initial Source 360 paint to defer the heavy impact layer explicitly", () => {
     expect(portfolioApiSource).toContain("impactModeFromRequest(requestUrl)");
     expect(portfolioApiSource).toContain('normalized === "deferred"');
     expect(portfolioApiSource).toContain("impactMode");
@@ -138,8 +140,9 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource.indexOf("fetchPortfolio(deferredUrl)")).toBeLessThan(
       loaderSource.indexOf("fetchPortfolio(fullUrl)"),
     );
-    expect(loaderSource).toContain("window.setTimeout");
-    expect(loaderSource).toContain("window.clearTimeout(fullImpactTimer)");
+    expect(loaderSource).toContain("const fullImpactPromise = fetchPortfolio(fullUrl)");
+    expect(loaderSource).not.toContain("window.setTimeout");
+    expect(loaderSource).not.toContain("window.clearTimeout");
   });
 
   it("keeps the historical preview route as a query-preserving redirect only", () => {
