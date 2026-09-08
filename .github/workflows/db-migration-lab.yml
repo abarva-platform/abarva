@@ -341,6 +341,23 @@ jobs:
             --out-dir audit-artifacts/db-migration-lab/source-canvas-substrate-readback \
             | tee audit-artifacts/db-migration-lab/source-canvas-substrate-readback.log
 
+      # Parsed evidence must be physically present before an accepted upload
+      # can become chunks, facts, requirements, pricing, or reasoning context.
+      # This catches migration-ledger drift without writing any tenant rows.
+      - name: Repository readback — Source artifact substrate
+        id: source_artifact_substrate_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:source-artifact-substrate \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/source-artifact-substrate-readback \
+            | tee audit-artifacts/db-migration-lab/source-artifact-substrate-readback.log
+
       # Affected-feature verification: confirm the deployed application is
       # still healthy after the schema change. This is a coarse signal
       # (the health endpoint, not a per-migration feature probe) — a
