@@ -62,8 +62,27 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).toContain('className="sw-v2-graph-links"');
     expect(source).toContain("GraphVolumeTable");
     expect(source).toContain("GraphSpineTable");
+    expect(source).toContain("GraphVolumeBars");
+    expect(source).toContain("GraphMappingFlow");
+    expect(source).toContain('aria-label="Source graph row volume"');
+    expect(source).toContain('aria-label="Source mapping flow"');
     expect(css).toContain(".sw-v2-graph");
     expect(css).toContain(".sw-v2-graph-node");
+    expect(css).toContain(".sw-v2-graph-volume-visual");
+    expect(css).toContain(".sw-v2-mapping-flow");
+  });
+
+  it("keeps the Evidence page visual before the row-detail tables", () => {
+    const source = readFileSync(
+      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
+      "utf8",
+    );
+    const css = readFileSync(`${__dirname}/../workspace.css`, "utf8");
+
+    expect(source).toContain("EvidenceLaneBarChart");
+    expect(source).toContain('aria-label="Evidence lane row counts"');
+    expect(css).toContain(".sw-v2-visual-bars");
+    expect(css).toContain(".sw-v2-visual-bar-row");
   });
 
   it("does not print raw vendor names in executive-facing labels", () => {
