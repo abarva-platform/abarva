@@ -3361,6 +3361,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
                 cVm?.scopeSummary ??
                 "Contract scope has not been extracted yet.",
               scopeRowCount: scopeRows.length,
+              performanceObservationCount:
+                detail?.performancePeriods.length ?? 0,
+              documentExtractionCount: detail?.docExtractions.length ?? 0,
               sourceConfidence: c.source_confidence,
             }
           : null,
