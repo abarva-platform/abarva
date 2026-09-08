@@ -303,6 +303,26 @@ jobs:
             --out-dir audit-artifacts/db-migration-lab/artifact-acceptances-readback \
             | tee audit-artifacts/db-migration-lab/artifact-acceptances-readback.log
 
+      # Source approval route core persistence check: creates a synthetic
+      # non-client event, runs applyApproval + updateStage through the Azure
+      # Source write adapter, then reads the approval receipt through the
+      # ledger loader. This catches the class of failure where the table exists
+      # in migration history but the approval button's database contract still
+      # cannot persist or display the receipt.
+      - name: Repository readback — event approvals
+        id: event_approvals_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:source-event-approvals \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/event-approvals-readback \
+            | tee audit-artifacts/db-migration-lab/event-approvals-readback.log
+
       # Affected-feature verification: confirm the deployed application is
       # still healthy after the schema change. This is a coarse signal
       # (the health endpoint, not a per-migration feature probe) — a

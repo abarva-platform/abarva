@@ -23,6 +23,14 @@ interface ClerkUserLite {
   lastName?: string | null;
 }
 
+interface ApprovalLedgerDbRow {
+  stage_key: string | null;
+  approved_by_user_id: string;
+  action: string;
+  approved_at: string;
+  notes?: string | null;
+}
+
 function nameFromClerkUser(user: ClerkUserLite | null): string | null {
   if (!user) return null;
   const parts = [user.firstName ?? "", user.lastName ?? ""].filter(
@@ -72,12 +80,20 @@ export async function loadApprovalLedger(
 ): Promise<ApprovalLedgerRow[]> {
   const { data, error } = await db
     .from("source_event_approvals")
-    .select("stage_key, approved_by_user_id, action, created_at, notes")
+    .select("stage_key, approved_by_user_id, action, approved_at, notes")
     .eq("event_id", eventId)
-    .order("created_at", { ascending: true });
+    .order("approved_at", { ascending: true });
 
   const approvalRows: ApprovalRowLike[] =
-    !error && Array.isArray(data) ? (data as ApprovalRowLike[]) : [];
+    !error && Array.isArray(data)
+      ? (data as ApprovalLedgerDbRow[]).map((row) => ({
+          stage_key: row.stage_key,
+          approved_by_user_id: row.approved_by_user_id,
+          action: row.action,
+          created_at: row.approved_at,
+          notes: row.notes,
+        }))
+      : [];
 
   const approverNames = await resolveApproverNames(
     approvalRows.map((r) => r.approved_by_user_id),
