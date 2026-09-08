@@ -1892,23 +1892,23 @@ function ContractsPage({
 }) {
   const [contractQuery, setContractQuery] = useState("");
   const normalizedQuery = contractQuery.trim().toLowerCase();
+  const searchableContracts = useMemo(
+    () => contractFinderRows(portfolio),
+    [portfolio],
+  );
   const matchingContracts = useMemo(() => {
     if (normalizedQuery.length < 2) return [];
-    return portfolio.contracts
+    return searchableContracts
       .filter((contract) =>
-        [
-          contract.contract_id,
-          contract.contract_name,
-          safeContractVendorDisplayName(contract),
-        ].some((value) => value.toLowerCase().includes(normalizedQuery)),
+        contract.searchText.some((value) => value.includes(normalizedQuery)),
       )
       .sort(
         (a, b) =>
-          (numberFromDb(b.annual_value) ?? 0) -
-            (numberFromDb(a.annual_value) ?? 0) ||
-          a.contract_id.localeCompare(b.contract_id),
+          Number(a.isSupplemental) - Number(b.isSupplemental) ||
+          (b.sortValue ?? 0) - (a.sortValue ?? 0) ||
+          a.contractId.localeCompare(b.contractId),
       );
-  }, [normalizedQuery, portfolio.contracts]);
+  }, [normalizedQuery, searchableContracts]);
 
   return (
     <div className="sw-v2-grid">
@@ -1934,7 +1934,10 @@ function ContractsPage({
               ? matchingContracts.length > 20
                 ? `First 20 of ${matchingContracts.length} matching contracts`
                 : `${matchingContracts.length} matching contracts`
-              : `${portfolio.contracts.length} contracts available`}
+              : [
+                  `${portfolio.contracts.length} register contracts`,
+                  `${searchableContracts.length - portfolio.contracts.length} supplemental depth contracts`,
+                ].join("; ")}
           </span>
         </div>
         {normalizedQuery.length >= 2 ? (
@@ -1989,14 +1992,14 @@ function ContractSearchResults({
   query,
   onOpenContract,
 }: {
-  contracts: readonly SourceContract360Row[];
+  contracts: readonly ContractFinderRow[];
   query: string;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   if (contracts.length === 0) {
     return (
       <div className="sw-v2-empty-state">
-        <b>No governed contract matches “{query}”.</b>
+        <b>No loaded contract matches “{query}”.</b>
         <p>Try a contract ID, vendor name, or agreement name.</p>
       </div>
     );
@@ -2007,27 +2010,127 @@ function ContractSearchResults({
       <div className="sw-v2-table-head sw-v2-contract-search-row">
         <span>Contract</span>
         <span>Vendor</span>
-        <span>Annual value</span>
+        <span>Source</span>
         <span>Open</span>
       </div>
       {contracts.map((contract) => (
         <button
-          key={contract.contract_id}
+          key={contract.contractId}
           type="button"
           className="sw-v2-table-row sw-v2-contract-search-row"
-          onClick={() => onOpenContract(contract.contract_id)}
+          onClick={() => onOpenContract(contract.contractId)}
         >
           <span>
-            <b>{contract.contract_name}</b>
-            <small>{contract.contract_id}</small>
+            <b>{contract.contractName}</b>
+            <small>{contract.contractId}</small>
           </span>
-          <span>{safeContractVendorDisplayName(contract)}</span>
-          <span>{money(numberFromDb(contract.annual_value))}</span>
+          <span>{contract.vendorName}</span>
+          <span>
+            <b>{contract.sourceLabel}</b>
+            <small>{contract.sourceDetail}</small>
+          </span>
           <span>Contract 360</span>
         </button>
       ))}
     </div>
   );
+}
+
+interface ContractFinderRow {
+  readonly contractId: string;
+  readonly contractName: string;
+  readonly vendorName: string;
+  readonly sourceLabel: string;
+  readonly sourceDetail: string;
+  readonly isSupplemental: boolean;
+  readonly sortValue: number | null;
+  readonly searchText: readonly string[];
+}
+
+function contractFinderRows(
+  portfolio: SourceWorkspacePortfolioData,
+): readonly ContractFinderRow[] {
+  const rows = new Map<string, ContractFinderRow>();
+
+  for (const contract of portfolio.contracts) {
+    const vendorName = safeContractVendorDisplayName(contract);
+    const annualValue = numberFromDb(contract.annual_value);
+    rows.set(contract.contract_id, {
+      contractId: contract.contract_id,
+      contractName: contract.contract_name,
+      vendorName,
+      sourceLabel: "Governed register",
+      sourceDetail: money(annualValue),
+      isSupplemental: false,
+      sortValue: annualValue,
+      searchText: [contract.contract_id, contract.contract_name, vendorName].map(
+        (value) => value.toLowerCase(),
+      ),
+    });
+  }
+
+  for (const coverage of portfolio.impact.evidenceCoverage) {
+    const existing = rows.get(coverage.contract_id);
+    if (existing) continue;
+    const vendorName = safeVendorDisplayName(
+      coverage.vendor_name,
+      coverage.vendor_ref,
+    );
+    const coverageState = coverage.coverage_state.replaceAll("_", " ");
+    rows.set(coverage.contract_id, {
+      contractId: coverage.contract_id,
+      contractName: coverage.contract_name || "Contract depth record",
+      vendorName,
+      sourceLabel: "Supplemental depth",
+      sourceDetail: `${coverageState}; outside the ${portfolio.contracts.length}-contract register`,
+      isSupplemental: true,
+      sortValue:
+        numberFromDb(coverage.actual_spend_usd) ??
+        numberFromDb(coverage.committed_spend_usd),
+      searchText: [
+        coverage.contract_id,
+        coverage.contract_name,
+        vendorName,
+        coverage.coverage_state,
+      ].map((value) => value.toLowerCase()),
+    });
+  }
+
+  for (const action of portfolio.impact.actionCandidates) {
+    const existing = rows.get(action.contract_id);
+    if (existing) {
+      rows.set(action.contract_id, {
+        ...existing,
+        searchText: [
+          ...existing.searchText,
+          action.title ?? "",
+          action.finding_summary ?? "",
+        ].map((value) => value.toLowerCase()),
+      });
+      continue;
+    }
+    const vendorName = safeVendorDisplayName(
+      action.vendor_name,
+      action.vendor_ref,
+    );
+    rows.set(action.contract_id, {
+      contractId: action.contract_id,
+      contractName: action.title || "Action-layer contract",
+      vendorName,
+      sourceLabel: "Supplemental action",
+      sourceDetail: `outside the ${portfolio.contracts.length}-contract register`,
+      isSupplemental: true,
+      sortValue: numberFromDb(action.candidate_amount_usd),
+      searchText: [
+        action.contract_id,
+        action.title ?? "",
+        action.finding_summary ?? "",
+        vendorName,
+      ].map((value) => value.toLowerCase()),
+    });
+  }
+
+  return [...rows.values()];
 }
 
 function ContractListTable({

@@ -874,6 +874,35 @@ describe("Source workspace ECL browser-surface proof", () => {
             evidence_basis_json: { source: "unit-fixture" },
             load_run_id: "unit-depth-run",
           },
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-LAAMS-001",
+            vendor_ref: "MER-VEN-COGNIZANT",
+            vendor_name: "Cognizant Technology Solutions",
+            contract_name: "Legacy Analytics Application Managed Services Agreement",
+            spend_rows: 12,
+            actual_spend_usd: 8_032_500.04,
+            committed_spend_usd: 7_850_000.04,
+            performance_rows: 72,
+            breach_rows: 5,
+            credit_calculated_usd: 24_531.25,
+            credit_claimed_usd: 0,
+            credit_recovered_usd: 0,
+            unclaimed_credit_usd: 24_531.25,
+            opportunity_rows: 4,
+            candidate_amount_usd: 1_977_031.25,
+            finance_confirmation_required_rows: 4,
+            opportunities_with_evidence: 4,
+            scope_rows: 48,
+            critical_scope_rows: 8,
+            document_page_text_rows: 45,
+            change_order_rows: 12,
+            coverage_state: "decision_ready",
+            blocker_if_missing:
+              "Finance confirmation required before realized-value claim.",
+            evidence_basis_json: { source: "unit-fixture" },
+            load_run_id: "unit-depth-run",
+          },
         ],
       },
     };
@@ -913,7 +942,18 @@ describe("Source workspace ECL browser-surface proof", () => {
         const requestedContract =
           evidenceDepthPortfolio.contracts.find(
             (contract) => contract.contract_id === requestedContractId,
-          ) ?? evidenceDepthPortfolio.contracts[0];
+          ) ??
+          (requestedContractId === "MER-TECH-LAAMS-001"
+            ? {
+                ...evidenceDepthPortfolio.contracts[0],
+                contract_id: "MER-TECH-LAAMS-001",
+                vendor_ref: "MER-VEN-COGNIZANT",
+                vendor_name: "Cognizant Technology Solutions",
+                contract_name:
+                  "Legacy Analytics Application Managed Services Agreement",
+                annual_value: 7_850_000,
+              }
+            : evidenceDepthPortfolio.contracts[0]);
         return Promise.resolve({
           ok: true,
           json: () =>
@@ -999,7 +1039,32 @@ describe("Source workspace ECL browser-surface proof", () => {
     const contractSearch = screen.getByRole("searchbox", {
       name: "Find a contract",
     });
-    fireEvent.change(contractSearch, { target: { value: "Kyndryl" } });
+    fireEvent.change(contractSearch, { target: { value: "MER-TECH-LAAMS-001" } });
+    expect(
+      screen.getByRole("button", {
+        name: /Legacy Analytics Application Managed Services Agreement MER-TECH-LAAMS-001 Cognizant Technology Solutions Supplemental depth decision ready; outside the .*contract register Contract 360/,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("1 matching contracts")).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Legacy Analytics Application Managed Services Agreement MER-TECH-LAAMS-001 Cognizant Technology Solutions/,
+      }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Legacy Analytics Application Managed Services Agreement",
+        ),
+      ).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Contracts" })[0]);
+    const reopenedContractSearch = screen.getByRole("searchbox", {
+      name: "Find a contract",
+    });
+    fireEvent.change(reopenedContractSearch, { target: { value: "Kyndryl" } });
     expect(
       screen.getByRole("button", {
         name: /Service Desk Managed Services MER-TECH-SD-001 Kyndryl, Inc\./,
