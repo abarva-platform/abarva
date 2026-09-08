@@ -286,18 +286,34 @@ function selectedContractFrom(
 ): SourceContractContext | null {
   const direct = directContractContextFrom(context);
   const source = sourceV4(context);
+  const raw = isRecord(source?.selectedContract)
+    ? source.selectedContract
+    : null;
+  const selected = raw ? contractContextFromRecord(raw) : null;
   const requestedContractId = query ? contractIdFromQuery(query) : null;
   if (
     direct &&
     (!requestedContractId ||
       direct.contractId.toUpperCase() === requestedContractId)
   ) {
+    if (
+      selected &&
+      selected.contractId.toUpperCase() === direct.contractId.toUpperCase()
+    ) {
+      return {
+        ...selected,
+        contractId: direct.contractId,
+        vendorName: direct.vendorName,
+        contractName: direct.contractName,
+        annualValueUsd: direct.annualValueUsd ?? selected.annualValueUsd,
+        actualAnnualSpendUsd:
+          direct.actualAnnualSpendUsd ?? selected.actualAnnualSpendUsd,
+        endDate: direct.endDate ?? selected.endDate,
+        scopeSummary: selected.scopeSummary ?? direct.scopeSummary,
+      };
+    }
     return direct;
   }
-  const raw = isRecord(source?.selectedContract)
-    ? source.selectedContract
-    : null;
-  const selected = raw ? contractContextFromRecord(raw) : null;
   if (
     selected &&
     (!requestedContractId ||
