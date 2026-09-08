@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "tenantKey": "meridian-health",
+  "datasetVersion": "meridian-legacy-analytics-managed-services-v1-20260907",
+  "failures": [],
+  "rowCounts": {
+    "contractRegisterAdapter": 1,
+    "contractClauseAdapter": 8,
+    "changeOrderAdapter": 8,
+    "contractPageTextAdapter": 19,
+    "cmdbApplicationAdapter": 0,
+    "contractScopeAdapter": 8,
+    "spendAdapter": 12,
+    "usageAdapter": 0,
+    "ticketVolumeAdapter": 48,
+    "performanceAdapter": 12,
+    "resourceModelAdapter": 15,
+    "pricingBridgeAdapter": 5,
+    "invoiceLineAdapter": 56,
+    "batchOperationsAdapter": 96,
+    "qbrAdapter": 4,
+    "optimizationAdapter": 3,
+    "evidenceDocumentAdapter": 8
+  },
+  "richness": {
+    "contractsWithTwelveSpendMonths": 1,
+    "contractsWithDocuments": 1,
+    "contractsWithScope": 1,
+    "contractsWithOpportunities": 1,
+    "contractsWithChangeOrders": 1,
+    "contractsWithPageText": 1,
+    "contractsWithRecurringChangeOrders": 1,
+    "managedServiceContractsWithResourceModel": 1,
+    "managedServiceContractsWithInvoiceLines": 1,
+    "managedServiceContractsWithBatchVolumetrics": 1,
+    "managedServiceContractsWithQbrScorecards": 1,
+    "managedServiceContractsWithSlaEvidence": 1,
+    "distinctVendors": 1,
+    "distinctCategories": 1
+  }
+}

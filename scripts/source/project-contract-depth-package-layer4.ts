@@ -293,6 +293,34 @@ async function l4Readback(
         WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
       [args.tenantKey, contractIds],
     ),
+    source_contract_360_resource_role_rows_package: await tableScalar(
+      client,
+      `SELECT COALESCE(SUM(COALESCE(resource_role_count, 0)), 0) AS value
+         FROM source.contract_360
+        WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
+    source_contract_360_invoice_line_rows_package: await tableScalar(
+      client,
+      `SELECT COALESCE(SUM(COALESCE(invoice_line_count, 0)), 0) AS value
+         FROM source.contract_360
+        WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
+    source_contract_360_batch_rows_package: await tableScalar(
+      client,
+      `SELECT COALESCE(SUM(COALESCE(batch_observation_count, 0)), 0) AS value
+         FROM source.contract_360
+        WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
+    source_contract_360_qbr_rows_package: await tableScalar(
+      client,
+      `SELECT COALESCE(SUM(COALESCE(qbr_scorecard_count, 0)), 0) AS value
+         FROM source.contract_360
+        WHERE tenant_key = $1 AND contract_id = ANY($2::text[])`,
+      [args.tenantKey, contractIds],
+    ),
     package_unclaimed_credit_usd: await tableScalar(
       client,
       `SELECT COALESCE(SUM(COALESCE(credit_calculated, 0) - COALESCE(credit_claimed, 0)), 0) AS value
@@ -403,6 +431,21 @@ function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
       contracts_with_assessed_alternatives: 0,
     };
   }
+  if (datasetVersion === "meridian-legacy-analytics-managed-services-v1-20260907") {
+    return {
+      source_contract: 1,
+      source_contract_scope: 8,
+      source_contract_consumption_observation: 12,
+      source_contract_performance_observation: 12,
+      source_contract_service_credit: 4,
+      source_contract_term: 8,
+      source_optimization_opportunity: 3,
+      opportunities_not_finance_confirmed: 3,
+      source_page_text_fact_assertion: 19,
+      source_change_order_fact_assertion: 20,
+      contracts_with_assessed_alternatives: 0,
+    };
+  }
   return {
     source_contract: 5,
     source_contract_scope: 18,
@@ -436,6 +479,31 @@ function l4ExpectedCounts(datasetVersion: string): Record<string, number> {
       source_ava_grounding_bundle_v1_rows: 3,
       source_contract_360_page_text_rows_package: 12,
       source_contract_360_change_order_rows_package: 5,
+      package_contracts_with_assessed_alternatives: 0,
+      skyharbor_strings_in_scope: 0,
+    };
+  }
+  if (datasetVersion === "meridian-legacy-analytics-managed-services-v1-20260907") {
+    return {
+      source_contract_360_package: 1,
+      source_contract_financial_exposure_package: 1,
+      source_contract_operational_performance_package: 1,
+      source_contract_application_scope_package: 8,
+      consumption_sourcing_spend_monthly_v1_package: 12,
+      consumption_sourcing_performance_v1_package: 12,
+      consumption_sourcing_opportunity_v1_package: 3,
+      source_contract_evidence_coverage_v1_package: 1,
+      source_contract_action_candidate_v1_package: 3,
+      source_contract_claim_card_v1_package: 3,
+      source_vendor_position_v1_package: 1,
+      source_page_storyline_v1_rows: 5,
+      source_ava_grounding_bundle_v1_rows: 3,
+      source_contract_360_page_text_rows_package: 19,
+      source_contract_360_change_order_rows_package: 8,
+      source_contract_360_resource_role_rows_package: 15,
+      source_contract_360_invoice_line_rows_package: 56,
+      source_contract_360_batch_rows_package: 96,
+      source_contract_360_qbr_rows_package: 4,
       package_contracts_with_assessed_alternatives: 0,
       skyharbor_strings_in_scope: 0,
     };
@@ -818,11 +886,27 @@ async function rebuildViews(client: Client): Promise<void> {
         COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'change_order_count'), 0)::bigint AS change_order_count,
         COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'annual_change_order_spend'), 0)::numeric AS annual_change_order_spend,
         COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'recurring_change_order_spend'), 0)::numeric AS recurring_change_order_exposure_usd,
-        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'recurring_avoidable_pct'), 0)::numeric AS recurring_avoidable_pct
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'recurring_avoidable_pct'), 0)::numeric AS recurring_avoidable_pct,
+        count(*) FILTER (WHERE fact_key = 'resource_model.fte')::bigint AS resource_role_count,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'resource_model.total_fte'), 0)::numeric AS total_fte,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'resource_model.onshore_fte'), 0)::numeric AS onshore_fte,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'resource_model.offshore_fte'), 0)::numeric AS offshore_fte,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'invoice_line.count'), 0)::bigint AS invoice_line_count,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'invoice_line.change_order_spend_usd'), 0)::numeric AS invoice_change_order_spend_usd,
+        count(*) FILTER (WHERE fact_key = 'batch_operations.failed_jobs')::bigint AS batch_observation_count,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'batch_operations.failed_jobs_total'), 0)::numeric AS batch_failed_jobs,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'batch_operations.manual_restarts_total'), 0)::numeric AS batch_manual_restarts,
+        count(*) FILTER (WHERE fact_key = 'qbr.run_percent')::bigint AS qbr_scorecard_count,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'qbr.automation_backlog_items'), 0)::numeric AS latest_qbr_automation_backlog_items,
+        COALESCE(max(value_numeric) FILTER (WHERE fact_key = 'qbr.report_retirement_candidates'), 0)::numeric AS latest_qbr_report_retirement_candidates
       FROM source.canonical_fact_assertion
       WHERE fact_key = 'document.page_text_char_count'
          OR fact_key LIKE 'change_order%'
          OR fact_key IN ('annual_change_order_spend', 'recurring_change_order_spend', 'recurring_avoidable_pct')
+         OR fact_key LIKE 'resource_model.%'
+         OR fact_key LIKE 'invoice_line.%'
+         OR fact_key LIKE 'batch_operations.%'
+         OR fact_key LIKE 'qbr.%'
       GROUP BY tenant_key, contract_id
     )
     SELECT
@@ -839,7 +923,19 @@ async function rebuildViews(client: Client): Promise<void> {
       COALESCE(depth.change_order_count, 0)::bigint AS change_order_count,
       COALESCE(depth.annual_change_order_spend, 0)::numeric AS annual_change_order_spend,
       COALESCE(depth.recurring_change_order_exposure_usd, 0)::numeric AS recurring_change_order_exposure_usd,
-      COALESCE(depth.recurring_avoidable_pct, 0)::numeric AS recurring_avoidable_pct
+      COALESCE(depth.recurring_avoidable_pct, 0)::numeric AS recurring_avoidable_pct,
+      COALESCE(depth.resource_role_count, 0)::bigint AS resource_role_count,
+      COALESCE(depth.total_fte, 0)::numeric AS total_fte,
+      COALESCE(depth.onshore_fte, 0)::numeric AS onshore_fte,
+      COALESCE(depth.offshore_fte, 0)::numeric AS offshore_fte,
+      COALESCE(depth.invoice_line_count, 0)::bigint AS invoice_line_count,
+      COALESCE(depth.invoice_change_order_spend_usd, 0)::numeric AS invoice_change_order_spend_usd,
+      COALESCE(depth.batch_observation_count, 0)::bigint AS batch_observation_count,
+      COALESCE(depth.batch_failed_jobs, 0)::numeric AS batch_failed_jobs,
+      COALESCE(depth.batch_manual_restarts, 0)::numeric AS batch_manual_restarts,
+      COALESCE(depth.qbr_scorecard_count, 0)::bigint AS qbr_scorecard_count,
+      COALESCE(depth.latest_qbr_automation_backlog_items, 0)::numeric AS latest_qbr_automation_backlog_items,
+      COALESCE(depth.latest_qbr_report_retirement_candidates, 0)::numeric AS latest_qbr_report_retirement_candidates
     FROM source.contract_vendor_360 c
     LEFT JOIN (
       SELECT
