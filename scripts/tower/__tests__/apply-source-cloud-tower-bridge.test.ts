@@ -51,11 +51,11 @@ describe("Source cloud to Tower bridge", () => {
     expect(summary.source_expected_readback.opportunities).toBe(3);
     expect(summary.source_expected_readback.spend_months).toBe(12);
     expect(summary.source_expected_readback.performance_rows).toBe(12);
-    expect(summary.source_expected_readback.service_credit_rows).toBe(5);
+    expect(summary.source_expected_readback.service_credit_rows).toBe(4);
     expect(summary.source_expected_readback.ticket_rows).toBe(48);
-    expect(summary.source_expected_readback.change_order_rows).toBe(5);
-    expect(summary.source_expected_readback.app_scope_rows).toBe(5);
-    expect(summary.source_expected_readback.evidence_docs).toBe(6);
+    expect(summary.source_expected_readback.change_order_rows).toBe(8);
+    expect(summary.source_expected_readback.app_scope_rows).toBe(8);
+    expect(summary.source_expected_readback.evidence_docs).toBe(8);
     expect(summary.tower_expected_delta.projection_entry_rows).toBe(15);
     expect(summary.tower_expected_delta.tower_recommended_actions_rows).toBe(3);
     expect(summary.tower_expected_delta.tower_value_proof_rows).toBe(3);
@@ -75,6 +75,7 @@ describe("Source cloud to Tower bridge", () => {
     expect(script).toContain("consumption.sourcing_cloud_usage_monthly_v1");
     expect(script).toContain("consumption.sourcing_performance_v1");
     expect(script).toContain("source.contract_service_credit");
+    expect(script).toContain("source.contract_depth_adapter_row.evidence_document_adapter");
     expect(script).toContain("tower_spend_value_cube");
     expect(script).toContain("tower_evidence_cube");
     expect(script).toContain("INSERT INTO ecl_context.metric_definition");

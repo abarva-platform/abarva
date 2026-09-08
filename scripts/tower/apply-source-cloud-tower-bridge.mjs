@@ -19,10 +19,11 @@ const DEFAULT_LOAD_RUN_ID =
 const DEFAULT_PACKAGE_KIND = "cloud";
 const PACKAGE_KINDS = new Set(["cloud", "contract_depth"]);
 const CONTRACT_DEPTH_DEFAULTS = {
-  datasetVersion: "meridian-managed-services-depth-v1-20260907",
-  packageDir: "datasets/source/contract-depth/meridian-managed-services-depth-v1-20260907",
-  buildVersion: "tower-source-contract-depth-bridge-v20260907",
-  loadRunId: "source-contract-depth-package-meridian-managed-services-depth-v1-20260907-20260907T1835Z",
+  datasetVersion: "meridian-legacy-analytics-managed-services-v1-20260907",
+  packageDir:
+    "datasets/source/contract-depth/meridian-legacy-analytics-managed-services-v1-20260907",
+  buildVersion: "tower-source-contract-depth-bridge-v20260908-laams",
+  loadRunId: "source-contract-depth-laams-20260908T0115Z",
 };
 const PROOF_BEGIN = "__SEMANTIC2_PROOF_TGZ_BEGIN__";
 const PROOF_END = "__SEMANTIC2_PROOF_TGZ_END__";
@@ -552,7 +553,11 @@ async function sourceReadback(client, args, sourceFiles) {
          (SELECT count(*)::int FROM source.source_record_snapshot WHERE tenant_key = $1 AND dataset_version = $5 AND contract_id = ANY($2::text[]) AND source_record_id LIKE 'ticket_volume:%') AS ticket_rows,
          (SELECT COALESCE(SUM(COALESCE(change_order_count, 0)), 0)::int FROM source.contract_360 WHERE tenant_key = $1 AND contract_id = ANY($2::text[])) AS change_order_rows,
          (SELECT count(*)::int FROM source.contract_application_scope WHERE tenant_key = $1 AND contract_id = ANY($2::text[]) AND load_run_id = $4) AS app_scope_rows,
-         (SELECT count(*)::int FROM doc.file WHERE tenant_key = $1 AND contract_ref = ANY($2::text[]) AND metadata_json->>'dataset_version' = $5) AS evidence_docs,
+         (SELECT count(*)::int FROM source.source_record_snapshot
+           WHERE tenant_key = $1
+             AND dataset_version = $5
+             AND contract_id = ANY($2::text[])
+             AND source_table = 'source.contract_depth_adapter_row.evidence_document_adapter') AS evidence_docs,
          (SELECT count(*)::int FROM consumption.sourcing_opportunity_v1 WHERE tenant_key = $1 AND opportunity_id = ANY($3::text[]) AND annual_value_exposed > 0) AS monetary_opportunities,
          (SELECT count(*)::int FROM consumption.sourcing_opportunity_v1 WHERE tenant_key = $1 AND opportunity_id = ANY($3::text[]) AND annual_value_exposed = 0) AS control_opportunities`,
       [args.tenantKey, contracts, opportunities, args.loadRunId, args.datasetVersion],
