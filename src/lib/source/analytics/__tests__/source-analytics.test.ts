@@ -4,6 +4,7 @@ import {
   buildEvidenceReadinessSummary,
   buildSourceExecutiveStoryPayload,
   buildVendorResponseAnalytics,
+  analyzeNormalizedResponseQuality,
   assessEvaluationCriterionScoreReadiness,
   calculateChangeOrderLeakage,
   calculateEvidenceCompleteness,
@@ -156,6 +157,161 @@ describe("Source deterministic sourcing analytics", () => {
         "Pricing is not fully comparable",
         "Transition readiness is conditional",
       ]),
+    );
+  });
+
+  it("marks a fully normalized requirement response matrix ready for evaluation without assigning vendor merit", () => {
+    const quality = analyzeNormalizedResponseQuality([
+      {
+        requirementId: "REQ-SCOPE-001",
+        category: "service scope",
+        section: "Scope",
+        requirement: "Confirm supported applications and service boundaries.",
+        requirementLevel: "Mandatory",
+        responseType: "Evidence",
+        evidenceRequired: true,
+        responseDisposition: "Comply",
+        responseNarrative: "The service boundary is accepted as issued.",
+        evidenceRefs: ["Solution Approach / section 2"],
+        vendorOwner: "Solution lead",
+      },
+      {
+        requirementId: "REQ-PRICE-001",
+        category: "commercial and pricing",
+        section: "Commercial",
+        requirement: "Provide the normalized recurring run price.",
+        requirementLevel: "Scored",
+        responseType: "Pricing",
+        evidenceRequired: true,
+        evaluationCriterionId: "CRIT-COMMERCIAL-01",
+        responseDisposition: "Comply",
+        responseNarrative: "Recurring run pricing is provided by service tower.",
+        evidenceRefs: ["Pricing Response / Run Cost"],
+        pricingRef: "PRICE-RUN-001",
+        vendorOwner: "Commercial lead",
+      },
+      {
+        requirementId: "REQ-SLA-001",
+        category: "SLA and performance",
+        section: "Service levels",
+        requirement: "Commit to the issued severity-one restoration target.",
+        requirementLevel: "Scored",
+        responseType: "SLA / KPI",
+        evidenceRequired: true,
+        evaluationCriterionId: "CRIT-SERVICE-02",
+        responseDisposition: "Partially Comply",
+        responseNarrative: "The target is accepted with one stated dependency.",
+        evidenceRefs: ["SLA Commitments / row 4"],
+        slaRef: "SLA-SEV1-004",
+        exceptionRef: "EXC-003",
+        vendorOwner: "Service delivery lead",
+      },
+    ]);
+
+    expect(quality).toMatchObject({
+      requirementCount: 3,
+      requirementCoverageScore: 100,
+      mandatoryCompletenessScore: 100,
+      evidenceCoverageScore: 100,
+      pricingTraceabilityScore: 100,
+      slaTraceabilityScore: 100,
+      exceptionDisclosureScore: 100,
+      criterionLinkageScore: 100,
+      readyForEvaluation: "yes",
+    });
+    expect(quality).not.toHaveProperty("vendorScore");
+    expect(quality.nonConformances).toHaveLength(0);
+  });
+
+  it("blocks false compliance and creates requirement-specific clarification questions", () => {
+    const quality = analyzeNormalizedResponseQuality([
+      {
+        requirementId: "REQ-SCOPE-001",
+        category: "service scope",
+        section: "Scope",
+        requirement: "Confirm supported applications and service boundaries.",
+        requirementLevel: "Mandatory",
+        responseType: "Evidence",
+        evidenceRequired: true,
+        responseDisposition: "Comply",
+        responseNarrative: "Comply.",
+        vendorOwner: "Solution lead",
+      },
+      {
+        requirementId: "REQ-PRICE-001",
+        category: "commercial and pricing",
+        section: "Commercial",
+        requirement: "Provide normalized recurring run pricing.",
+        requirementLevel: "Scored",
+        responseType: "Pricing",
+        evidenceRequired: true,
+        responseDisposition: "Partially Comply",
+        responseNarrative: "Pricing excludes one dependency.",
+        vendorOwner: "Commercial lead",
+      },
+      {
+        requirementId: "REQ-SLA-001",
+        category: "SLA and performance",
+        section: "Service levels",
+        requirement: "Commit to the issued severity-one restoration target.",
+        requirementLevel: "Mandatory",
+        responseType: "SLA / KPI",
+        evidenceRequired: true,
+        responseDisposition: "Not Applicable",
+        responseNarrative: "Not applicable.",
+      },
+    ]);
+
+    expect(quality.readyForEvaluation).toBe("no");
+    expect(quality.nonConformances.join(" ")).toMatch(
+      /Comply is unsupported/i,
+    );
+    expect(quality.nonConformances.join(" ")).toMatch(
+      /pricing reference is missing/i,
+    );
+    expect(quality.nonConformances.join(" ")).toMatch(
+      /evaluation criterion ID is missing/i,
+    );
+    expect(quality.nonConformances.join(" ")).toMatch(
+      /mandatory requirement is marked Not Applicable/i,
+    );
+    expect(quality.nonConformances.join(" ")).toMatch(
+      /SLA \/ KPI reference is missing/i,
+    );
+    expect(quality.clarificationQuestions).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("REQ-SCOPE-001"),
+        expect.stringContaining("REQ-PRICE-001"),
+        expect.stringContaining("REQ-SLA-001"),
+      ]),
+    );
+  });
+
+  it("uses normalized matrix readiness to prevent coarse section completion from unlocking evaluation", () => {
+    const [vendor] = skyHarborVendorResponseFixture();
+    const analytics = buildVendorResponseAnalytics({
+      ...vendor,
+      requirementResponses: [
+        {
+          requirementId: "REQ-SCOPE-001",
+          category: "service scope",
+          section: "Scope",
+          requirement: "Confirm the issued scope.",
+          requirementLevel: "Mandatory",
+          responseType: "Evidence",
+          evidenceRequired: true,
+          responseDisposition: "Comply",
+          responseNarrative: "Comply.",
+          vendorOwner: "Solution lead",
+        },
+      ],
+    });
+
+    expect(analytics.responseCompletenessScore).toBe(100);
+    expect(analytics.normalizedResponseQuality?.readyForEvaluation).toBe("no");
+    expect(analytics.readyForEvaluation).toBe("no");
+    expect(analytics.findings.map((finding) => finding.title)).toContain(
+      "Normalized requirement responses are not evaluation-ready",
     );
   });
 

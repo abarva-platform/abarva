@@ -3,6 +3,7 @@ import {
   buildResponseChecklistWorkbook,
   type ResponseChecklistPayload,
 } from '../renderers/response-checklist';
+import { parseChecklistFromRfp } from '../payloads/response-checklist-payload';
 
 function makePayload(
   overrides: Partial<ResponseChecklistPayload> = {},
@@ -24,6 +25,11 @@ function makePayload(
         id: 'M-PRICING-01',
         section: 'Pricing',
         requirement: 'Submit d19 pricing workbook against locked assumption set.',
+        category: 'commercial and pricing',
+        requirementLevel: 'Scored',
+        responseType: 'Pricing',
+        evidenceRequired: true,
+        evaluationCriterionId: 'CRIT-COMMERCIAL-01',
       },
     ],
     optionalItems: [
@@ -46,6 +52,30 @@ function makePayload(
 }
 
 describe('buildResponseChecklistWorkbook', () => {
+  it('preserves the issued RFP requirement matrix before using legacy bullet parsing', () => {
+    const parsed = parseChecklistFromRfp(`
+## Requirement Response Matrix
+| Requirement ID | Requirement Category | RFP Section | Requirement Statement | Mandatory / Scored / Informational | Response Type | Evidence Required | Evaluation Criterion ID |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| REQ-SCOPE-001 | service scope | Scope | Confirm the application boundary. | Mandatory | Evidence | Yes | |
+| REQ-PRICE-001 | commercial and pricing | Pricing | Submit normalized run pricing. | Scored | Pricing | Yes | CRIT-COMMERCIAL-01 |
+| REQ-INNOV-001 | innovation and value | Innovation | Describe optional innovation ideas. | Informational | Narrative | No | |
+`);
+
+    expect(parsed.mandatory).toHaveLength(2);
+    expect(parsed.optional).toHaveLength(1);
+    expect(parsed.mandatory[1]).toMatchObject({
+      id: 'REQ-PRICE-001',
+      category: 'commercial and pricing',
+      section: 'Pricing',
+      requirement: 'Submit normalized run pricing.',
+      requirementLevel: 'Scored',
+      responseType: 'Pricing',
+      evidenceRequired: true,
+      evaluationCriterionId: 'CRIT-COMMERCIAL-01',
+    });
+  });
+
   it('produces a workbook with the six canonical sheets and a first Guide tab', () => {
     const wb = buildResponseChecklistWorkbook(makePayload());
     expect(wb.worksheets.map((s) => s.name)).toEqual([
@@ -64,7 +94,9 @@ describe('buildResponseChecklistWorkbook', () => {
     expect(text).toContain('Vendor Response Control Pack');
     expect(text).toContain('Vendor-facing response workbook');
     expect(text).toContain('Mandatory Items');
-    expect(text).toContain('evidence pointer');
+    expect(text).toContain('Evidence references');
+    expect(text).toContain('Partially Comply');
+    expect(text).toContain('requirement-ID level');
   });
 
   it('Cover sheet carries event metadata + a Vendor name slot + submission deadline', () => {
@@ -81,18 +113,49 @@ describe('buildResponseChecklistWorkbook', () => {
     const sheet = wb.getWorksheet('Mandatory Items')!;
     expect(sheet.getCell('A2').value).toBe('M-EXEC-01');
     expect(sheet.getCell('A3').value).toBe('M-PRICING-01');
-    expect(sheet.getCell('C3').value).toContain('d19');
-    // Vendor confirmation column starts blank; data validation present.
-    expect(sheet.getCell('D2').value).toBe('');
-    expect(sheet.getCell('D2').dataValidation?.type).toBe('list');
+    expect(sheet.getCell('D3').value).toContain('d19');
+    // Vendor disposition starts blank; data validation is constrained.
+    expect(sheet.getCell('I2').value).toBe('');
+    expect(sheet.getCell('I2').dataValidation?.type).toBe('list');
+  });
+
+  it('issues a normalized requirement matrix that preserves scoring and evidence lineage', () => {
+    const wb = buildResponseChecklistWorkbook(makePayload());
+    const sheet = wb.getWorksheet('Mandatory Items')!;
+
+    expect(sheet.getRow(1).values).toEqual(
+      expect.arrayContaining([
+        'Requirement ID',
+        'Requirement category',
+        'Requirement level',
+        'Response type',
+        'Evaluation criterion ID',
+        'Evidence required',
+        'Response disposition',
+        'Pricing reference',
+        'SLA / KPI reference',
+        'Assumption / exception reference',
+        'Vendor owner',
+      ]),
+    );
+    expect(sheet.getCell('B3').value).toBe('commercial and pricing');
+    expect(sheet.getCell('E3').value).toBe('Scored');
+    expect(sheet.getCell('F3').value).toBe('Pricing');
+    expect(sheet.getCell('G3').value).toBe('CRIT-COMMERCIAL-01');
+    expect(sheet.getCell('H3').value).toBe('Yes');
+    expect(sheet.getCell('I3').dataValidation.formulae).toEqual([
+      '"Comply,Partially Comply,Exception,Not Applicable"',
+    ]);
+    expect(sheet.getCell('A3').protection.locked).toBe(true);
+    expect(sheet.getCell('I3').protection.locked).toBe(false);
   });
 
   it('Optional Items sheet preserves N/A as a valid value', () => {
     const wb = buildResponseChecklistWorkbook(makePayload());
     const sheet = wb.getWorksheet('Optional Items')!;
     expect(sheet.getCell('A2').value).toBe('O-AI-01');
-    const validation = sheet.getCell('D2').dataValidation;
-    expect(validation?.formulae?.[0]).toContain('N/A');
+    const validation = sheet.getCell('I2').dataValidation;
+    expect(validation?.formulae?.[0]).toContain('Not Applicable');
   });
 
   it('Format Expectations sheet contains every supplied row', () => {
@@ -123,7 +186,7 @@ describe('buildResponseChecklistWorkbook', () => {
       }),
     );
     const sheet = wb.getWorksheet('Mandatory Items')!;
-    const cell = sheet.getCell('C2').value;
+    const cell = sheet.getCell('D2').value;
     expect(typeof cell).toBe('string');
     expect((cell as string).startsWith("'=")).toBe(true);
   });
