@@ -607,9 +607,6 @@ function shouldCompleteImpactLayer(impact: SourceWorkspaceImpactLayer): boolean 
     (row) => row.page_key === "contract_action",
   ).length;
   return (
-    impact.evidenceCoverage.length === 0 ||
-    impact.vendorPositions.length === 0 ||
-    impact.storyline.length === 0 ||
     (impact.actionCandidates.length > 0 &&
       impact.claimCards.length < impact.actionCandidates.length) ||
     (impact.actionCandidates.length > 0 &&

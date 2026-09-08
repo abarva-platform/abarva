@@ -1059,6 +1059,168 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toBe(true);
   });
 
+  it("does not block full impact loading on derived fallback when physical action views are complete", async () => {
+    process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
+    const runCalls: Array<{ sql: string; params: readonly unknown[] }> = [];
+    mockWithSession.mockImplementation(async (fn) => {
+      const run = async <R>(sql: string, params: readonly unknown[]) => {
+        runCalls.push({ sql, params });
+        if (sql.includes("set_config")) return [] as R[];
+        if (sql.includes("serving.source_contract_360")) {
+          return [
+            {
+              payload_json: {
+                tenant_key: "meridian-health",
+                row_key: "MER-TECH-M365-001",
+                contract_id: "MER-TECH-M365-001",
+                vendor_object_id: "vendor-microsoft",
+                vendor_name: "Microsoft Corporation",
+                contract_name: "Microsoft 365 Enterprise Agreement",
+                annualized_value_usd: "1480000",
+                total_contract_value_usd: "4440000",
+                end_date: "2027-06-30",
+                value_state: "known",
+                scope_json: "[]",
+                spend_summary_json: "{}",
+                gap_flags_json: "[]",
+              },
+            },
+          ] as R[];
+        }
+        if (sql.includes("serving.source_vendor_360")) {
+          return [
+            {
+              payload_json: {
+                tenant_key: "meridian-health",
+                row_key: "vendor-microsoft",
+                vendor_object_id: "vendor-microsoft",
+                vendor_name: "Microsoft Corporation",
+                contract_count: "1",
+                annualized_spend_usd: "1480000",
+                contract_ids_json: JSON.stringify(["MER-TECH-M365-001"]),
+              },
+            },
+          ] as R[];
+        }
+        if (
+          sql.includes("serving.source_events") ||
+          sql.includes("serving.source_compare") ||
+          sql.includes("serving.source_approvals") ||
+          sql.includes("ecl_projection.cube_slice")
+        ) {
+          return [] as R[];
+        }
+        if (sql.includes("FROM source.contract_action_candidate_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              action_candidate_id: "OPT-M365-SHELFWARE-001",
+              opportunity_id: "OPT-M365-SHELFWARE-001",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              title: "Unused license reduction candidate",
+              action_type: "optimize",
+              opportunity_type: "shelfware",
+              finding_summary:
+                "Unused entitled seats create an avoidable-cost candidate.",
+              deterministic_basis: "usage and spend evidence rows",
+              candidate_amount_usd: "1960000",
+              priority: "high",
+              readiness_state: "finance_confirmation_required",
+              evidence_state: "present",
+              authority_state: "owner_review_required",
+              finance_confirmation_state: "not_confirmed",
+              next_action: "Validate reclaim eligibility.",
+              accountable_role: "Technology sourcing",
+              decision_due_date: "2027-03-31",
+              coverage_state: null,
+              blocker_if_missing:
+                "Never present this candidate as realized savings until finance confirms it.",
+              citation_basis_json: {
+                opportunity_ref: "OPT-M365-SHELFWARE-001",
+              },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.contract_claim_card_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              claim_card_id: "CLAIM-M365-SHELFWARE-001",
+              action_candidate_id: "OPT-M365-SHELFWARE-001",
+              opportunity_id: "OPT-M365-SHELFWARE-001",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              claim_title: "Unused license reduction candidate",
+              allowed_executive_statement:
+                "This contract has an evidence-backed candidate action; finance confirmation is not complete.",
+              blocker_if_missing:
+                "Never present this candidate as realized savings until finance confirms it.",
+              candidate_amount_usd: "1960000",
+              finance_confirmation_state: "not_confirmed",
+              readiness_state: "ready_for_review",
+              evidence_state: "evidence_available",
+              citation_basis_json: { rows: ["USAGE-001"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.ava_grounding_bundle_v1")) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              grounding_bundle_id: "AVA-M365-SHELFWARE-001",
+              page_key: "contract_action",
+              section_key: "OPT-M365-SHELFWARE-001",
+              question_family: "value_claim",
+              allowed_claims_json: [{ claim: "candidate action exists" }],
+              refusal_rules_json: [
+                "Refuse realized savings without finance confirmation.",
+              ],
+              citation_sources_json: { rows: ["CLAIM-M365-SHELFWARE-001"] },
+              load_run_id: "test-run",
+            },
+          ] as R[];
+        }
+        if (
+          sql.includes("FROM source.contract_evidence_coverage_v1") ||
+          sql.includes("FROM source.vendor_position_v1") ||
+          sql.includes("FROM source.source_page_storyline_v1")
+        ) {
+          return [] as R[];
+        }
+        return [] as R[];
+      };
+      return fn(run);
+    });
+
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+      "ecl_projection_db",
+    );
+
+    expect(portfolio.impact.actionCandidates).toHaveLength(1);
+    expect(portfolio.impact.claimCards).toHaveLength(1);
+    expect(portfolio.impact.avaGroundingBundles).toHaveLength(1);
+    expect(
+      runCalls.some((call) => call.sql.includes("FROM source.contract_360 c")),
+    ).toBe(false);
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
+      ),
+    ).toBe(false);
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("FROM consumption.sourcing_spend_monthly_v1"),
+      ),
+    ).toBe(false);
+  });
+
   it("derives impact cards from base Source and consumption views when prebuilt impact views are empty", async () => {
     process.env.SOURCE_WORKSPACE_PROVIDER = "ecl_projection_db";
     const runCalls: Array<{ sql: string; params: readonly unknown[] }> = [];
