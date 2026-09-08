@@ -5,7 +5,9 @@ import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
 import { SOURCE_V4_CUBE_AS_OF_DATE } from "@/lib/source/data-model/source-v4-cube-ui-catalog";
 import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 import {
+  loadSourceWorkspaceImpactPayload,
   loadSourceWorkspacePortfolio,
+  type SourceWorkspaceImpactLayer,
   type SourceWorkspaceImpactMode,
   type SourceWorkspacePortfolioData,
   type SourceWorkspaceProviderMode,
@@ -26,6 +28,17 @@ type PortfolioCacheEntry = {
 };
 
 const portfolioCache = new Map<string, PortfolioCacheEntry>();
+
+type ImpactCacheEntry = {
+  readonly expiresAt: number;
+  readonly value: Promise<{
+    readonly impact: SourceWorkspaceImpactLayer;
+    readonly sourceProviderKey: SourceWorkspaceProviderMode;
+    readonly loadMs: number;
+  }>;
+};
+
+const impactCache = new Map<string, ImpactCacheEntry>();
 
 export async function GET(request: Request) {
   let tenancy;
@@ -68,9 +81,32 @@ export async function GET(request: Request) {
 
   const requestedProvider = sourceProviderFromRequest(requestUrl);
   const impactMode = impactModeFromRequest(requestUrl);
+  const responseScope = responseScopeFromRequest(requestUrl);
   const asOfDateIso =
     requestUrl.searchParams.get("asOf")?.trim() ||
     SOURCE_WORKSPACE_DEFAULT_AS_OF;
+  if (responseScope === "impact") {
+    const { value, cacheState } = loadCachedImpact({
+      tenantKey,
+      requestedProvider,
+      impactMode,
+    });
+    const { impact, sourceProviderKey, loadMs } = await value;
+    return NextResponse.json({
+      impact,
+      sourceProviderKey,
+      impactMode,
+    }, {
+      headers: {
+        "Cache-Control": "private, no-store",
+        "X-Source-Portfolio-Cache": cacheState,
+        "X-Source-Portfolio-Impact-Mode": impactMode,
+        "X-Source-Portfolio-Load-Ms": String(loadMs),
+        "X-Source-Portfolio-Response-Scope": responseScope,
+      },
+    });
+  }
+
   const { value, cacheState } = loadCachedPortfolio({
     tenantKey,
     asOfDateIso,
@@ -89,6 +125,7 @@ export async function GET(request: Request) {
       "X-Source-Portfolio-Cache": cacheState,
       "X-Source-Portfolio-Impact-Mode": impactMode,
       "X-Source-Portfolio-Load-Ms": String(loadMs),
+      "X-Source-Portfolio-Response-Scope": responseScope,
     },
   });
 }
@@ -135,6 +172,53 @@ function loadCachedPortfolio({
     value,
   });
   return { value, cacheState: "miss" as const };
+}
+
+function loadCachedImpact({
+  tenantKey,
+  requestedProvider,
+  impactMode,
+}: {
+  readonly tenantKey: string;
+  readonly requestedProvider: SourceWorkspaceProviderMode | null;
+  readonly impactMode: SourceWorkspaceImpactMode;
+}) {
+  const cacheKey = [
+    tenantKey,
+    requestedProvider ?? "default",
+    impactMode,
+    "impact-only",
+  ].join("|");
+  const now = Date.now();
+  const cached = impactCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return { value: cached.value, cacheState: "hit" as const };
+  }
+
+  const startedAt = Date.now();
+  const value = loadSourceWorkspaceImpactPayload(tenantKey, requestedProvider, {
+    impactMode,
+  })
+    .then((payload) => ({
+      impact: payload.impact,
+      sourceProviderKey: payload.sourceProviderKey,
+      loadMs: Date.now() - startedAt,
+    }))
+    .catch((error) => {
+      impactCache.delete(cacheKey);
+      throw error;
+    });
+
+  impactCache.set(cacheKey, {
+    expiresAt: now + SOURCE_WORKSPACE_PORTFOLIO_CACHE_TTL_MS,
+    value,
+  });
+  return { value, cacheState: "miss" as const };
+}
+
+function responseScopeFromRequest(requestUrl: URL): "portfolio" | "impact" {
+  const normalized = (requestUrl.searchParams.get("scope") ?? "").trim();
+  return normalized === "impact" ? "impact" : "portfolio";
 }
 
 function impactModeFromRequest(requestUrl: URL): SourceWorkspaceImpactMode {

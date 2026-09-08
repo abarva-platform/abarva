@@ -102,6 +102,11 @@ export interface SourceWorkspaceLoadOptions {
   readonly impactMode?: SourceWorkspaceImpactMode;
 }
 
+export interface SourceWorkspaceImpactPayload {
+  readonly sourceProviderKey: SourceWorkspaceProviderMode;
+  readonly impact: SourceWorkspaceImpactLayer;
+}
+
 export interface SourceWorkspacePortfolioData {
   readonly tenantKey: string;
   readonly asOfDateIso: string;
@@ -359,6 +364,36 @@ export async function loadSourceWorkspacePortfolio(
   };
 }
 
+export async function loadSourceWorkspaceImpactPayload(
+  tenantKey: string,
+  providerOverride?: SourceWorkspaceProviderMode | null,
+  options: SourceWorkspaceLoadOptions = {},
+): Promise<SourceWorkspaceImpactPayload> {
+  const provider = sourceWorkspaceProvider(providerOverride);
+  const impact = await loadWorkspaceImpactLayerForMode(
+    tenantKey,
+    options.impactMode,
+  );
+  if (options.impactMode === "deferred") {
+    return { sourceProviderKey: provider, impact };
+  }
+
+  const [contracts, vendors] =
+    provider === "legacy"
+      ? await Promise.all([
+          listContract360(tenantKey)
+            .then(excludeSupplementalContracts)
+            .catch(() => []),
+          listVendorContractPortfolio(tenantKey).catch(() => []),
+        ])
+      : await readEclProjectionNameRows(tenantKey, provider);
+
+  return {
+    sourceProviderKey: provider,
+    impact: resolveImpactVendorNames(impact, contracts, vendors),
+  };
+}
+
 export function sourceWorkspaceProvider(
   providerOverride?: SourceWorkspaceProviderMode | null,
 ): SourceWorkspaceProviderMode {
@@ -524,6 +559,46 @@ async function loadEclProjectionWorkspacePortfolio(
     isEmpty: contracts.length === 0,
     reads,
   };
+}
+
+async function readEclProjectionNameRows(
+  tenantKey: string,
+  provider: SourceWorkspaceProviderMode,
+): Promise<
+  readonly [
+    readonly SourceContract360Row[],
+    readonly SourceVendorContractPortfolioRow[],
+  ]
+> {
+  const projectionDir = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR?.trim();
+  if (provider === "ecl_projection" && !projectionDir) {
+    throw new Error(
+      "SOURCE_WORKSPACE_PROVIDER=ecl_projection requires SOURCE_WORKSPACE_ECL_PROJECTION_DIR.",
+    );
+  }
+
+  const [contractRows, vendorRows] = await Promise.all([
+    provider === "ecl_projection_db"
+      ? readProjectionTable(tenantKey, "source_contract_360")
+      : readProjectionCsv(
+          path.join(projectionDir ?? "", "source_contract_360_projection.csv"),
+        ),
+    provider === "ecl_projection_db"
+      ? readProjectionView(tenantKey, "source_vendor_portfolio")
+      : readProjectionCsv(
+          path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
+        ),
+  ]);
+  const acceptedTenantKeys = new Set(
+    [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
+  );
+  const tenantMatches = (row: EclProjectionRow) =>
+    acceptedTenantKeys.has(textValue(row.tenant_key).trim());
+
+  return [
+    contractRows.filter(tenantMatches).map(contractFromEclProjectionRow),
+    vendorRows.filter(tenantMatches).map(vendorFromEclProjectionRow),
+  ];
 }
 
 function loadWorkspaceImpactLayerForMode(

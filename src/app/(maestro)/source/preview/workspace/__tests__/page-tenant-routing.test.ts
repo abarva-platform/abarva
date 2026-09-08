@@ -86,7 +86,9 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource).toContain("/api/source/workspace/portfolio");
     expect(loaderSource).toContain("SourceWorkspaceLoadingShell");
     expect(loaderSource).toContain("<WorkspaceClient");
-    expect(loaderSource).toContain("const fullImpactPromise = fetchPortfolio(fullUrl)");
+    expect(loaderSource).toContain("const fullImpactPromise = fetchImpact(fullUrl)");
+    expect(loaderSource).toContain('responseScope: "impact"');
+    expect(loaderSource).toContain("impact: impactPayload.impact");
     expect(loaderSource).not.toContain(
       "SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS",
     );
@@ -110,6 +112,7 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain("requireTenancy()");
     expect(portfolioApiSource).toContain("checkTenantAccessByKey(requestedClientKey)");
     expect(portfolioApiSource).toContain("loadSourceWorkspacePortfolio(");
+    expect(portfolioApiSource).toContain("loadSourceWorkspaceImpactPayload(");
     expect(portfolioApiSource).toContain("sourceProviderKey");
   });
 
@@ -118,6 +121,7 @@ describe("Source workspace requested-client routing", () => {
       "SOURCE_WORKSPACE_PORTFOLIO_CACHE_TTL_MS",
     );
     expect(portfolioApiSource).toContain("const portfolioCache = new Map");
+    expect(portfolioApiSource).toContain("const impactCache = new Map");
     expect(portfolioApiSource).toContain("checkTenantAccessByKey(requestedClientKey)");
     expect(portfolioApiSource.indexOf("checkTenantAccessByKey(requestedClientKey)")).toBeLessThan(
       portfolioApiSource.indexOf("loadCachedPortfolio({"),
@@ -126,9 +130,12 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain("asOfDateIso,");
     expect(portfolioApiSource).toContain('requestedProvider ?? "default"');
     expect(portfolioApiSource).toContain("impactMode,");
+    expect(portfolioApiSource).toContain("responseScopeFromRequest(requestUrl)");
+    expect(portfolioApiSource).toContain('normalized === "impact"');
     expect(portfolioApiSource).toContain("X-Source-Portfolio-Cache");
     expect(portfolioApiSource).toContain("X-Source-Portfolio-Impact-Mode");
     expect(portfolioApiSource).toContain("X-Source-Portfolio-Load-Ms");
+    expect(portfolioApiSource).toContain("X-Source-Portfolio-Response-Scope");
     expect(portfolioApiSource).toContain('Cache-Control": "private, no-store"');
   });
 
@@ -138,9 +145,9 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain("impactMode");
     expect(loaderSource).toContain('params.set("impact", input.impactMode)');
     expect(loaderSource.indexOf("fetchPortfolio(deferredUrl)")).toBeLessThan(
-      loaderSource.indexOf("fetchPortfolio(fullUrl)"),
+      loaderSource.indexOf("fetchImpact(fullUrl)"),
     );
-    expect(loaderSource).toContain("const fullImpactPromise = fetchPortfolio(fullUrl)");
+    expect(loaderSource).toContain("const fullImpactPromise = fetchImpact(fullUrl)");
     expect(loaderSource).not.toContain("window.setTimeout");
     expect(loaderSource).not.toContain("window.clearTimeout");
   });

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { WorkspaceClient } from "../preview/workspace/WorkspaceClient";
 import { SourceWorkspaceLoadingShell } from "./SourceWorkspaceLoadingShell";
 import type {
+  SourceWorkspaceImpactLayer,
   SourceWorkspaceImpactMode,
   SourceWorkspacePortfolioData,
   SourceWorkspaceProviderMode,
@@ -15,6 +16,12 @@ interface PortfolioResponse {
   readonly impactMode?: SourceWorkspaceImpactMode;
 }
 
+interface ImpactResponse {
+  readonly impact: SourceWorkspaceImpactLayer;
+  readonly sourceProviderKey: SourceWorkspaceProviderMode;
+  readonly impactMode?: SourceWorkspaceImpactMode;
+}
+
 type ImpactLoadState = "loading" | "ready" | "error";
 
 function portfolioApiUrl(input: {
@@ -22,6 +29,7 @@ function portfolioApiUrl(input: {
   readonly asOfDateIso: string;
   readonly sourceProviderKey?: SourceWorkspaceProviderMode | null;
   readonly impactMode?: SourceWorkspaceImpactMode;
+  readonly responseScope?: "portfolio" | "impact";
 }) {
   const params = new URLSearchParams();
   if (input.tenantKey.trim()) params.set("client", input.tenantKey.trim());
@@ -30,6 +38,7 @@ function portfolioApiUrl(input: {
     params.set("sourceProvider", input.sourceProviderKey.trim());
   }
   if (input.impactMode) params.set("impact", input.impactMode);
+  if (input.responseScope) params.set("scope", input.responseScope);
   const query = params.toString();
   return `/api/source/workspace/portfolio${query ? `?${query}` : ""}`;
 }
@@ -45,6 +54,19 @@ async function fetchPortfolio(url: string): Promise<PortfolioResponse> {
     );
   }
   return payload as PortfolioResponse;
+}
+
+async function fetchImpact(url: string): Promise<ImpactResponse> {
+  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.impact) {
+    throw new Error(
+      payload?.detail ??
+        payload?.error ??
+        `Source workspace impact returned ${response.status}`,
+    );
+  }
+  return payload as ImpactResponse;
 }
 
 export function WorkspaceClientLoader({
@@ -86,6 +108,7 @@ export function WorkspaceClientLoader({
         asOfDateIso,
         sourceProviderKey,
         impactMode: "full",
+        responseScope: "impact",
       }),
     [asOfDateIso, sourceProviderKey, tenantKey],
   );
@@ -99,15 +122,22 @@ export function WorkspaceClientLoader({
     fetchPortfolio(deferredUrl)
       .then((payload) => {
         if (cancelled) return;
-        const fullImpactPromise = fetchPortfolio(fullUrl);
+        const fullImpactPromise = fetchImpact(fullUrl);
         setPortfolio(payload.portfolio);
         setResolvedProvider(payload.sourceProviderKey);
 
         fullImpactPromise
-          .then((fullPayload) => {
+          .then((impactPayload) => {
             if (cancelled) return;
-            setPortfolio(fullPayload.portfolio);
-            setResolvedProvider(fullPayload.sourceProviderKey);
+            setPortfolio((current) =>
+              current
+                ? {
+                    ...current,
+                    impact: impactPayload.impact,
+                  }
+                : current,
+            );
+            setResolvedProvider(impactPayload.sourceProviderKey);
             setImpactLoadState("ready");
           })
           .catch(() => {
