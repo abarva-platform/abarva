@@ -846,7 +846,17 @@ describe("Source artifact prompt registry provider config", () => {
     expect(d05?.systemPrompt).toContain("## Executive summary");
     expect(d05?.systemPrompt).toContain("bulleted or tabular list");
     expect(d01?.systemPrompt).toContain("never say \"tenant\"");
+    expect(d01?.systemPrompt).toContain(
+      "Never convert the intake value-at-stake field into contract value",
+    );
+    expect(d01?.systemPrompt).toContain("Use only source-bound dates");
+    expect(d01?.systemPrompt).toContain(
+      "Do not introduce market conditions",
+    );
     expect(d01Message).toContain("Company: SkyHarbor Air");
+    expect(d01Message).toContain(
+      "Candidate opportunity / validation target from intake (not contract value or realized savings)",
+    );
     expect(d05Message).toContain("Company: SkyHarbor Air");
     expect(d01Message).not.toContain("Tenant:");
     expect(d05Message).not.toContain("Tenant:");
