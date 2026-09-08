@@ -671,6 +671,49 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
   });
 
+  it("does not describe deferred impact rows as absent while evidence depth is still loading", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const dbPortfolio: SourceWorkspacePortfolioData = {
+      ...portfolio,
+      workspaceDiagnostics: {
+        ...portfolio.workspaceDiagnostics,
+        exploreProvider: "EclProjectionDbProvider" as const,
+      },
+    };
+
+    render(
+      <WorkspaceClient
+        portfolio={dbPortfolio}
+        tenantName="Meridian Health"
+        sourceClientKey="meridian-health"
+        impactLoadState="loading"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("navigation", {
+          name: "Source workspace navigation",
+        }),
+      ).toBeTruthy();
+    });
+
+    expect(screen.getByText("Evidence depth updating")).toBeTruthy();
+    expect(
+      screen.getByText(
+        /Evidence depth is still updating\. Candidate actions and credit findings will appear/i,
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(
+        "No quantified opportunity is loaded in the current deterministic slice.",
+      ),
+    ).toBeNull();
+  });
+
   it("renders a Recharts action mix on the default Optimize page when action rows exist", async () => {
     const portfolio = await loadSourceWorkspacePortfolio(
       "meridian",
