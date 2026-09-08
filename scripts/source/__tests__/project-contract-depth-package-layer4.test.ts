@@ -11,10 +11,27 @@ describe("contract depth package Layer 4 overlay job", () => {
 
   it("projects the depth package as an overlay instead of replacing the active base cube", () => {
     expect(source).toContain("source.l4_cube_active_load_run_overlay");
-    expect(source).toContain("UNION");
+    expect(source).toContain("UNION ALL");
     expect(source).toContain("source.l4_cube_active_load_run");
+    expect(source).toContain("active_contract_versions");
+    expect(source).toContain("SELECT DISTINCT ON (tenant_key, load_run_id)");
     expect(source).toContain("source_contract_360_total regressed");
     expect(source).not.toMatch(/\bDROP VIEW\b/i);
+  });
+
+  it("scopes overlay facts to the active contract version instead of stacking historical package rows", () => {
+    expect(source).toContain(
+      "JOIN active_contract_versions active\n        ON active.tenant_key = s.tenant_key\n       AND active.contract_id = s.contract_id\n       AND active.load_run_id = s.load_run_id",
+    );
+    expect(source).toContain(
+      "JOIN active_contract_versions active\n        ON active.tenant_key = o.tenant_key\n       AND active.contract_id = o.contract_id\n       AND active.load_run_id = o.load_run_id",
+    );
+    expect(source).toContain(
+      "JOIN active_contract_versions active\n        ON active.tenant_key = facts.tenant_key\n       AND active.contract_id = facts.contract_id",
+    );
+    expect(source).toContain("facts.dataset_version = active.dataset_version");
+    expect(source).toContain("o.dataset_version = active.dataset_version");
+    expect(source).toContain("AND depth.load_run_id = c.load_run_id");
   });
 
   it("requires repaired canonical alternatives before product projection", () => {
