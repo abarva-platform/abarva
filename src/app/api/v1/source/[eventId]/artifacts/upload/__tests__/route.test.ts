@@ -236,6 +236,9 @@ beforeEach(() => {
       version: 1,
     }),
   );
+  mockParseSourceTextArtifact.mockImplementation(
+    async ({ artifact }: { artifact: unknown }) => artifact,
+  );
 });
 
 describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
@@ -283,6 +286,21 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
         text: 'Pricing: fixed transition fee $1.2M.',
       }),
     );
+  });
+
+  it('surfaces structured database parse errors instead of hiding them', async () => {
+    mockParseSourceTextArtifact.mockRejectedValueOnce({
+      message: 'relation missing',
+      code: '42P01',
+      detail: 'source_artifact_chunks',
+    });
+    const req = makeMultipartRequest('volumetrics.xlsx', XLSX_MIME, 2048);
+    const res = await POST(req, EVENT_PARAMS);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { parseWarnings?: string[] };
+    expect(body.parseWarnings).toEqual([
+      'relation missing | 42P01 | source_artifact_chunks',
+    ]);
   });
 
   it('rejects a request with no file (400)', async () => {

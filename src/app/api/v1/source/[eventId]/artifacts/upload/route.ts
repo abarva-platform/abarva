@@ -72,6 +72,20 @@ function jsonError(status: number, code: string, detail?: string): Response {
   );
 }
 
+function describeUnknownError(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const parts = [record.message, record.code, record.detail]
+      .filter((value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+      )
+      .map((value) => value.trim());
+    if (parts.length > 0) return parts.join(" | ");
+  }
+  return fallback;
+}
+
 function parseOptionalString(
   raw: FormDataEntryValue | null,
 ): string | undefined {
@@ -469,11 +483,7 @@ export async function POST(
           text: extracted.text,
         });
       } catch (parseError) {
-        parseWarnings.push(
-          parseError instanceof Error
-            ? parseError.message
-            : "text parse failed",
-        );
+        parseWarnings.push(describeUnknownError(parseError, "text parse failed"));
         console.error(
           "[POST /api/v1/source/:eventId/artifacts/upload] text_parse_failed",
           {
