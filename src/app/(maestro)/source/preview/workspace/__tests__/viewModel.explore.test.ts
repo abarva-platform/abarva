@@ -262,6 +262,19 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     expect(view.valueStrip.map((item) => item.value)).toContain(
       "CTR-DOES-NOT-EXIST",
     );
+    expect(view.avaSurfaceContext).toMatchObject({
+      module: "Source",
+      sourceContract360Mode: true,
+      contractId: "CTR-DOES-NOT-EXIST",
+      contractName: null,
+      vendorName: null,
+      annualValue: null,
+      actualAnnualSpend: null,
+      evidencePosture:
+        "Requested contract was not returned by the active Source provider.",
+      nextAction:
+        "Select a contract present in the governed Source rows before making a contract-specific value or evidence claim.",
+    });
     expect(view.title).not.toContain(CONTRACTS[0]!.vendor_name);
   });
 
