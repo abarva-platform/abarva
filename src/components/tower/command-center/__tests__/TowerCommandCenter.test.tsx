@@ -459,6 +459,7 @@ describe("TowerCommandCenter", () => {
           why: "Microsoft contract has a sourced optimization opportunity, but finance confirmation and evidence review must close before Tower treats it as realized value.",
           amountExposedUsd: 99_000_000,
           moduleHandoff: "Source",
+          handoffEntityId: "MER-TECH-IMS-001",
         },
       ],
     });
@@ -469,6 +470,16 @@ describe("TowerCommandCenter", () => {
       screen.getByText("Archive dormant source licenses before true-up"),
     ).toBeInTheDocument();
     expect(screen.getByText("$99M")).toBeInTheDocument();
+
+    clickFirstButtonContaining("Archive dormant source licenses before true-up");
+    const drawer = screen.getByRole("dialog");
+    expect(
+      within(drawer).getByRole("link", { name: "View in Source" }),
+    ).toHaveAttribute(
+      "href",
+      "/source/workspace?contractId=MER-TECH-IMS-001&contractTab=Optimize",
+    );
+    expect(within(drawer).getByText("MER-TECH-IMS-001")).toBeInTheDocument();
   });
 
   it("opens the program drawer from Value Proof decision lanes", () => {

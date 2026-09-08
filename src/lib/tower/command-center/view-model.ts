@@ -1396,6 +1396,7 @@ function toActionView(
     moveTitle: action.title,
     moduleHandoff:
       trimOrNull(action.handoffModule) ?? trimOrNull(action.moduleHandoff),
+    handoffEntityId: trimOrNull(action.handoffEntityId),
   };
 }
 

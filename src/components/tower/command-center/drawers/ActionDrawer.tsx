@@ -23,6 +23,7 @@
 // correct. This is a stop-and-ask item in the PR.
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import type { TowerActionView } from "@/lib/tower/command-center/types";
 
@@ -67,6 +68,11 @@ export function ActionDrawer({
   }, [action?.id]);
 
   const tone = action ? LANE_TONE[action.lane] : "amber";
+  const sourceContractHref =
+    action?.moduleHandoff?.trim().toLowerCase() === "source" &&
+    action.handoffEntityId
+      ? `/source/workspace?contractId=${encodeURIComponent(action.handoffEntityId)}&contractTab=Optimize`
+      : null;
 
   const handleRoute = async () => {
     if (!action || !canRoute || !onRoute) return;
@@ -107,6 +113,14 @@ export function ActionDrawer({
             <button type="button" className={styles.btn} onClick={onClose}>
               Defer
             </button>
+            {sourceContractHref ? (
+              <Link
+                className={cx(styles.btn, styles.sourceLink)}
+                href={sourceContractHref}
+              >
+                View in Source
+              </Link>
+            ) : null}
             <button
               type="button"
               className={cx(styles.btn, styles.primary)}
@@ -160,6 +174,13 @@ export function ActionDrawer({
                 small
               />
               <DrawerStat label="Owner" value={action.ownerRole} small />
+              {action.handoffEntityId ? (
+                <DrawerStat
+                  label="Linked object"
+                  value={action.handoffEntityId}
+                  small
+                />
+              ) : null}
             </div>
 
             <DrawerSection>Why now</DrawerSection>

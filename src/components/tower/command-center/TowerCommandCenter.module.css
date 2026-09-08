@@ -711,6 +711,7 @@ button.chip.cBlue { border-color: rgba(0, 102, 204, 0.3); }
 .btn.primary:hover { background: #000; }
 .btn.primary::after { content: ' →'; }
 .btn.primary:disabled:hover { background: var(--canon-bg-dark); }
+.sourceLink { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .moveDone { text-align: center; padding: 38px 20px; }
 .moveDone .md { font-size: 26px; color: var(--canon-teal); }
 .moveDone h4 { font-family: var(--abarva-serif); font-size: 21px; font-weight: 500; margin: 12px 0 8px; }

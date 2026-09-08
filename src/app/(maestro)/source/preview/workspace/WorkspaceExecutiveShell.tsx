@@ -1890,6 +1890,26 @@ function ContractsPage({
   onOpenSubtab: (tab: string) => void;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
+  const [contractQuery, setContractQuery] = useState("");
+  const normalizedQuery = contractQuery.trim().toLowerCase();
+  const matchingContracts = useMemo(() => {
+    if (normalizedQuery.length < 2) return [];
+    return portfolio.contracts
+      .filter((contract) =>
+        [
+          contract.contract_id,
+          contract.contract_name,
+          safeContractVendorDisplayName(contract),
+        ].some((value) => value.toLowerCase().includes(normalizedQuery)),
+      )
+      .sort(
+        (a, b) =>
+          (numberFromDb(b.annual_value) ?? 0) -
+            (numberFromDb(a.annual_value) ?? 0) ||
+          a.contract_id.localeCompare(b.contract_id),
+      );
+  }, [normalizedQuery, portfolio.contracts]);
+
   return (
     <div className="sw-v2-grid">
       <section className="sw-v2-panel sw-v2-span-2">
@@ -1899,7 +1919,31 @@ function ContractsPage({
           onSelect={onOpenSubtab}
         />
         <PanelHead eyebrow="Contracts" title={contractListSubtabTitle(subtab)} />
-        {subtab === "By evidence depth" ? (
+        <div className="sw-v2-contract-finder">
+          <label htmlFor="source-contract-search">Find a contract</label>
+          <input
+            id="source-contract-search"
+            type="search"
+            value={contractQuery}
+            onChange={(event) => setContractQuery(event.currentTarget.value)}
+            placeholder="Search contract ID, vendor, or agreement"
+            autoComplete="off"
+          />
+          <span>
+            {normalizedQuery.length >= 2
+              ? matchingContracts.length > 20
+                ? `First 20 of ${matchingContracts.length} matching contracts`
+                : `${matchingContracts.length} matching contracts`
+              : `${portfolio.contracts.length} contracts available`}
+          </span>
+        </div>
+        {normalizedQuery.length >= 2 ? (
+          <ContractSearchResults
+            contracts={matchingContracts.slice(0, 20)}
+            query={contractQuery.trim()}
+            onOpenContract={onOpenContract}
+          />
+        ) : subtab === "By evidence depth" ? (
           <ContractEvidenceDepthTable
             portfolio={portfolio}
             onOpenContract={onOpenContract}
@@ -1936,6 +1980,52 @@ function ContractsPage({
           </p>
         </div>
       </section>
+    </div>
+  );
+}
+
+function ContractSearchResults({
+  contracts,
+  query,
+  onOpenContract,
+}: {
+  contracts: readonly SourceContract360Row[];
+  query: string;
+  onOpenContract: (contractId: string, tab?: string) => void;
+}) {
+  if (contracts.length === 0) {
+    return (
+      <div className="sw-v2-empty-state">
+        <b>No governed contract matches “{query}”.</b>
+        <p>Try a contract ID, vendor name, or agreement name.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="sw-v2-table" aria-label="Contract search results">
+      <div className="sw-v2-table-head sw-v2-contract-search-row">
+        <span>Contract</span>
+        <span>Vendor</span>
+        <span>Annual value</span>
+        <span>Open</span>
+      </div>
+      {contracts.map((contract) => (
+        <button
+          key={contract.contract_id}
+          type="button"
+          className="sw-v2-table-row sw-v2-contract-search-row"
+          onClick={() => onOpenContract(contract.contract_id)}
+        >
+          <span>
+            <b>{contract.contract_name}</b>
+            <small>{contract.contract_id}</small>
+          </span>
+          <span>{safeContractVendorDisplayName(contract)}</span>
+          <span>{money(numberFromDb(contract.annual_value))}</span>
+          <span>Contract 360</span>
+        </button>
+      ))}
     </div>
   );
 }
