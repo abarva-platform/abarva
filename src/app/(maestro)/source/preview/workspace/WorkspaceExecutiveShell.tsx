@@ -2691,6 +2691,7 @@ function EvidencePage({
           showLineage={showLineage}
           onToggleLineage={onToggleLineage}
         />
+        <EvidenceLaneBarChart rows={sourceRows} />
         <div className="sw-v2-table">
           <div className="sw-v2-table-head sw-v2-archetype-coverage-row">
             <span>Archetype</span>
@@ -3133,24 +3134,27 @@ function GraphVolumeTable({
     },
   ];
   return (
-    <div className="sw-v2-table">
-      <div className="sw-v2-table-head sw-v2-graph-volume-row">
-        <span>Layer</span>
-        <span>{showLineage ? "Read object" : "Substrate"}</span>
-        <span>Rows</span>
-        <span>Allowed claim</span>
-      </div>
-      {rows.map((row) => (
-        <div key={row.object} className="sw-v2-table-row sw-v2-graph-volume-row">
-          <span>
-            <b>{row.layer}</b>
-          </span>
-          <span>{showLineage ? row.object : plainSubstrateLabel(row.object)}</span>
-          <span>{row.count}</span>
-          <span>{row.claim}</span>
+    <>
+      <GraphVolumeBars rows={rows} />
+      <div className="sw-v2-table">
+        <div className="sw-v2-table-head sw-v2-graph-volume-row">
+          <span>Layer</span>
+          <span>{showLineage ? "Read object" : "Substrate"}</span>
+          <span>Rows</span>
+          <span>Allowed claim</span>
         </div>
-      ))}
-    </div>
+        {rows.map((row) => (
+          <div key={row.object} className="sw-v2-table-row sw-v2-graph-volume-row">
+            <span>
+              <b>{row.layer}</b>
+            </span>
+            <span>{showLineage ? row.object : plainSubstrateLabel(row.object)}</span>
+            <span>{row.count}</span>
+            <span>{row.claim}</span>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -3241,32 +3245,156 @@ function GraphSpineTable({
     },
   ];
   return (
-    <div className="sw-v2-table">
-      <div className="sw-v2-table-head sw-v2-graph-spine-row">
-        <span>Evidence family</span>
-        <span>Source system</span>
-        <span>{showLineage ? "Adapter" : "Intake path"}</span>
-        <span>{showLineage ? "Canonical" : "Facts created"}</span>
-        <span>{showLineage ? "Product substrate" : "Source view"}</span>
-        <span>Rows</span>
+    <>
+      <GraphMappingFlow rows={rows} showLineage={showLineage} />
+      <div className="sw-v2-table">
+        <div className="sw-v2-table-head sw-v2-graph-spine-row">
+          <span>Evidence family</span>
+          <span>Source system</span>
+          <span>{showLineage ? "Adapter" : "Intake path"}</span>
+          <span>{showLineage ? "Canonical" : "Facts created"}</span>
+          <span>{showLineage ? "Product substrate" : "Source view"}</span>
+          <span>Rows</span>
+        </div>
+        {rows.map((row) => (
+          <div
+            key={row.family}
+            className="sw-v2-table-row sw-v2-graph-spine-row"
+          >
+            <span>{row.family}</span>
+            <span>{row.sourceSystem}</span>
+            <span>
+              {showLineage ? row.adapter : plainAdapterLabel(row.adapter)}
+            </span>
+            <span>
+              {showLineage ? row.canonical : plainCanonicalLabel(row.canonical)}
+            </span>
+            <span>
+              {showLineage ? row.substrate : plainSubstrateLabel(row.substrate)}
+            </span>
+            <span>{row.rows}</span>
+          </div>
+        ))}
       </div>
-      {rows.map((row) => (
-        <div
-          key={row.family}
-          className="sw-v2-table-row sw-v2-graph-spine-row"
-        >
-          <span>{row.family}</span>
-          <span>{row.sourceSystem}</span>
+    </>
+  );
+}
+
+type EvidenceLaneVisualRow = {
+  readonly name: string;
+  readonly support: string;
+  readonly lineage: string;
+  readonly count: number;
+  readonly state: string;
+};
+
+function EvidenceLaneBarChart({
+  rows,
+}: {
+  rows: readonly EvidenceLaneVisualRow[];
+}) {
+  const maxCount = Math.max(...rows.map((row) => row.count), 1);
+  return (
+    <div className="sw-v2-visual-bars" aria-label="Evidence lane row counts">
+      {rows.map((row, index) => {
+        const width = Math.max(4, Math.round((row.count / maxCount) * 100));
+        return (
+          <div key={row.lineage} className="sw-v2-visual-bar-row">
+            <span>{row.name}</span>
+            <div className="sw-v2-visual-bar-track">
+              <i
+                style={
+                  {
+                    "--sw-v2-bar-width": `${width}%`,
+                    "--sw-v2-bar-color": chartSeriesColor(index),
+                  } as CSSProperties
+                }
+              />
+            </div>
+            <b>{formatCount(row.count)}</b>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function GraphVolumeBars({
+  rows,
+}: {
+  rows: readonly {
+    readonly layer: string;
+    readonly object: string;
+    readonly count: number;
+    readonly claim: string;
+  }[];
+}) {
+  const maxCount = Math.max(...rows.map((row) => row.count), 1);
+  return (
+    <div className="sw-v2-graph-volume-visual" aria-label="Source graph row volume">
+      {rows.map((row, index) => {
+        const width = Math.max(5, Math.round((row.count / maxCount) * 100));
+        return (
+          <div key={row.object} className="sw-v2-volume-card">
+            <span>{row.layer}</span>
+            <b>{formatCount(row.count)}</b>
+            <i
+              style={
+                {
+                  "--sw-v2-volume-width": `${width}%`,
+                  "--sw-v2-volume-color": chartSeriesColor(index),
+                } as CSSProperties
+              }
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function GraphMappingFlow({
+  rows,
+  showLineage,
+}: {
+  rows: readonly {
+    readonly family: string;
+    readonly sourceSystem: string;
+    readonly adapter: string;
+    readonly canonical: string;
+    readonly substrate: string;
+    readonly rows: number;
+  }[];
+  showLineage: boolean;
+}) {
+  const featuredRows = rows.slice(0, 6);
+  return (
+    <div className="sw-v2-mapping-flow" aria-label="Source mapping flow">
+      {featuredRows.map((row) => (
+        <div key={row.family} className="sw-v2-mapping-flow-row">
           <span>
-            {showLineage ? row.adapter : plainAdapterLabel(row.adapter)}
+            <b>{row.sourceSystem}</b>
+            <small>{row.family}</small>
           </span>
+          <i aria-hidden="true" />
           <span>
-            {showLineage ? row.canonical : plainCanonicalLabel(row.canonical)}
+            <b>{showLineage ? row.adapter : plainAdapterLabel(row.adapter)}</b>
+            <small>adapter</small>
           </span>
+          <i aria-hidden="true" />
           <span>
-            {showLineage ? row.substrate : plainSubstrateLabel(row.substrate)}
+            <b>
+              {showLineage ? row.canonical : plainCanonicalLabel(row.canonical)}
+            </b>
+            <small>{formatCount(row.rows)} rows</small>
           </span>
-          <span>{row.rows}</span>
+          <i aria-hidden="true" />
+          <span>
+            <b>
+              {showLineage ? row.substrate : plainSubstrateLabel(row.substrate)}
+            </b>
+            <small>Source view</small>
+          </span>
         </div>
       ))}
     </div>
