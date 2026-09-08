@@ -3,7 +3,7 @@
   "tenant_key": "meridian-health",
   "contract_id": "MER-TECH-LAAMS-001",
   "vendor_name": "Cognizant Technology Solutions",
-  "status": "repo_package_generated_not_loaded",
+  "status": "data_plane_loaded_verified",
   "loader_ready_files": {
     "batch_job_volumetrics.csv": 96,
     "change_orders.csv": 12,
@@ -35,7 +35,7 @@
     "raw_96_aws_cur_monthly_summary.csv": 96,
     "reconciliation.csv": 14,
     "resource_model.csv": 30,
-    "sla_performance.csv": 12,
+    "sla_performance.csv": 72,
     "ticket_volumetrics.csv": 72
   },
   "notes": [

@@ -18,7 +18,10 @@ const SHELL_SURFACE_PREFIXES = [
   "/knowledge-preview",
 ] as const;
 
-const IMMERSIVE_PRODUCT_PATHS = [] as const;
+const IMMERSIVE_PRODUCT_PATHS = [
+  "/source/workspace",
+  "/source/preview/workspace",
+] as const;
 
 function isShellNativePath(pathname: string): boolean {
   return (
