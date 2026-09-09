@@ -1228,7 +1228,7 @@ When no inventory is supplied, produce the §2 table framework (headers + a plac
 
   d05_scope_memo: {
     artifactCode: "d05_scope_memo",
-    version: 1,
+    version: 2,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d01_strategy_memo"],
@@ -1246,6 +1246,10 @@ Tone: precise, business-facing, list-heavy, and operational. Start with an execu
         `Company: ${ctx.tenantName}`,
         `Event: ${ctx.event.name} (${ctx.event.code})`,
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
+        ctx.event.triggerDescription
+          ? `Approved event trigger / why-now: ${ctx.event.triggerDescription}`
+          : "Approved event trigger / why-now: (not provided)",
+        `Approved event scope and intake facts: ${ctx.event.scopeDescription || "(not provided)"}`,
         "",
         "— UPSTREAM CONTEXT —",
         "",
@@ -1267,6 +1271,13 @@ Tone: precise, business-facing, list-heavy, and operational. Start with an execu
           "Ticket History Synthesis (d07_ticket_synth) — informs SLA / hours-of-coverage:",
         );
         lines.push(upstream.d07_ticket_synth);
+        lines.push("");
+      }
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push("— UPLOADED / PARSED SCOPE EVIDENCE —");
+        lines.push(evidenceBlock);
         lines.push("");
       }
 
@@ -4522,7 +4533,7 @@ function formatEvidenceStates(ctx: SourceGenerationContext): string {
         `- ${item.requirementId}`,
         `stage=${item.stage}`,
         `state=${state}`,
-        item.sourceArtifactId ? `artifact=${item.sourceArtifactId}` : null,
+        item.sourceArtifactId ? "source=linked evidence record" : null,
         item.notes ? `notes=${item.notes}` : null,
       ]
         .filter(Boolean)
@@ -4538,7 +4549,7 @@ function formatUploadedEvidence(ctx: SourceGenerationContext): string {
     .map((artifact) => {
       const lines = [
         `### ${artifact.originalName}`,
-        `artifact_id=${artifact.id}; family=${artifact.artifactFamily}; format=${artifact.sourceFormat}; parse=${artifact.parseStatus}; evidence=${artifact.evidenceState}; stage=${artifact.stageKey}`,
+        `family=${artifact.artifactFamily}; format=${artifact.sourceFormat}; parse=${artifact.parseStatus}; evidence=${artifact.evidenceState}; stage=${artifact.stageKey}`,
       ];
       const excerpts = artifact.chunkExcerpts.slice(0, 2);
       if (excerpts.length > 0) {

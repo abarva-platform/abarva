@@ -281,7 +281,7 @@ export function buildSourceQualitySourceContext(args: {
     return [
       `- ${item.requirementId}`,
       `state=${state}`,
-      item.sourceArtifactId ? `artifact=${item.sourceArtifactId}` : null,
+      item.sourceArtifactId ? "source=linked evidence record" : null,
       item.notes ? `notes=${item.notes}` : null,
     ]
       .filter(Boolean)
