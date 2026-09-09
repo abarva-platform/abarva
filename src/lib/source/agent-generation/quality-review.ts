@@ -64,8 +64,8 @@ const DETERMINISTIC_CLAIM_GATE_CODES = new Set([
 /**
  * Deterministic backstop for the artifacts that establish the event's
  * commercial narrative. Model review remains useful for judgment, but it
- * cannot waive an unbound percentage, dollar amount, benchmark, or market
- * assertion.
+ * cannot waive an unbound percentage, dollar amount, date, duration,
+ * benchmark, market assertion, or leaked internal identifier.
  */
 export function findDeterministicSourceClaimViolations(args: {
   artifactCode: string;
@@ -85,11 +85,28 @@ export function findDeterministicSourceClaimViolations(args: {
     }
   }
 
+  const supportedTemporalClaims = new Set(
+    extractTemporalClaims(args.sourceContext).map((claim) => claim.key),
+  );
+  for (const claim of extractTemporalClaims(args.body)) {
+    if (!supportedTemporalClaims.has(claim.key)) {
+      violations.push({
+        claim: claim.text,
+        reason:
+          "Date or duration claim is absent from the bound event evidence; do not invent or back-solve a sourcing calendar in narrative generation.",
+      });
+    }
+  }
+
   const generalizationPatterns = [
     /\b(?:typically|frequently|almost always|industry benchmark|market benchmark|best practice)\b/i,
     /\bmarket\s+(?:is|remains|appears)\s+(?:active|receptive|competitive|favorable)\b/i,
     /\b(?:providers?|vendors?)\s+(?:are|remain)\s+competing\s+aggressively\b/i,
     /\bperiod of vendor capacity constraint\b/i,
+    /\b(?:uncommon|unusual)\s+to\s+have\b/i,
+    /\b(?:normal|typical)\s+for\s+(?:this|the)\s+stage\b/i,
+    /\bcompared\s+with\s+[^.!?]*\b(?:typical|equivalent)\b/i,
+    /\bpricing\s+can\s+diverge\s+from\s+market\b/i,
   ];
   for (const sentence of args.body.split(/(?<=[.!?])\s+|\n+/)) {
     const text = sentence.replace(/\s+/g, " ").trim();
@@ -103,7 +120,42 @@ export function findDeterministicSourceClaimViolations(args: {
     }
   }
 
+  for (const match of args.body.matchAll(/\bartifact\s+[0-9a-f]{6,}\b/gi)) {
+    violations.push({
+      claim: match[0],
+      reason:
+        "Client-facing narrative exposes an internal artifact identifier instead of a friendly evidence citation.",
+    });
+  }
+
   return uniqueViolations(violations).slice(0, 12);
+}
+
+function extractTemporalClaims(text: string): Array<{
+  text: string;
+  key: string;
+}> {
+  const claims: Array<{ text: string; key: string }> = [];
+  const patterns = [
+    /\b(?:Q[1-4]\s+20\d{2})\b/gi,
+    /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+20\d{2}\b/gi,
+    /\b\d{1,2}\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+20\d{2}\b/gi,
+    /\b(?:mid-|early\s+|late\s+)?(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+20\d{2}\b/gi,
+    /\b20\d{2}-\d{2}-\d{2}\b/g,
+    /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s*(?:-|–|to)\s*(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
+    /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(?:\s*-\s*|\s+)(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const normalized = match[0]
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .replace(/,/g, "")
+        .trim();
+      claims.push({ text: match[0].trim(), key: normalized });
+    }
+  }
+  return claims;
 }
 
 export function applyDeterministicSourceClaimGate(
