@@ -36,6 +36,8 @@ Layer 4 products: Source workspace opportunity cards and aVa contract grounding 
 
 Updates the cloud-consumption package builder and loader, the synthetic package source files and workbook previews, the Source workspace view model and contract canvas, the aVa contract grounding context, and loader regression coverage.
 
+Follow-up reconciliation fix: the governed cloud-consumption loader now writes the calculation output key expected by the contract-optimization traceability reader, so persisted opportunity amounts can be reproduced by the Source Optimize value-proof gate.
+
 ## QA / Validation
 
 - `node scripts/source/build-meridian-databricks-cloud-consumption-package.mjs` — PASS.
@@ -43,6 +45,7 @@ Updates the cloud-consumption package builder and loader, the synthetic package 
 - Plan readback expectation: 169 Layer 2 rows, 6 optimization opportunities, 20 opportunity-evidence links, 6 Layer 4 cloud opportunity rows.
 - `npm test -- scripts/source/__tests__/load-cloud-consumption-package.test.ts src/lib/source/facts/view/__tests__/ava-contract-grounding-context.test.ts src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx --runInBand` — PASS.
 - `npx eslint scripts/source/build-meridian-databricks-cloud-consumption-package.mjs scripts/source/load-cloud-consumption-package.mjs scripts/source/__tests__/load-cloud-consumption-package.test.ts src/lib/source/facts/view/ava-contract-grounding-context.ts src/app/(maestro)/source/preview/workspace/buildViewModel.ts src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx` — PASS.
+- Follow-up calculation-output-key validation: `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --dataset-version=meridian-databricks-consumption-commit-v1-20260908 --package-dir=datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908 --proof-dir=/tmp/source-dbx-calc-key-plan-20260909T1420Z` — PASS; `npx jest --runTestsByPath scripts/source/__tests__/load-cloud-consumption-package.test.ts src/lib/source/data-model/__tests__/contract-optimization-traceability.test.ts src/lib/source/data-model/__tests__/read-adapter.contract-optimization.test.ts --runInBand` — PASS; `npx eslint scripts/source/load-cloud-consumption-package.mjs scripts/source/__tests__/load-cloud-consumption-package.test.ts` — PASS.
 
 ## Rollout Plan
 

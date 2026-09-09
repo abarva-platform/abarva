@@ -1281,7 +1281,7 @@ async function upsertOptimizationSpine(client, args, files) {
      )
      ON CONFLICT (tenant_key, dataset_version, rule_id, rule_version)
      DO UPDATE SET formula = EXCLUDED.formula`,
-    [args.tenantKey, args.datasetVersion, JSON.stringify(["cloud_usage", "commitment_coverage", "resource_inventory", "ap_reconciliation", "contract_terms"]), JSON.stringify(["candidate_amount_usd"])],
+    [args.tenantKey, args.datasetVersion, JSON.stringify(["cloud_usage", "commitment_coverage", "resource_inventory", "ap_reconciliation", "contract_terms"]), JSON.stringify(["calculated_amount_usd"])],
   );
 
   for (const contract of contracts) {
@@ -1405,7 +1405,7 @@ async function upsertOptimizationSpine(client, args, files) {
          amount_usd, quantity, unit, payload
        )
        VALUES
-         ($1,$2,$3,'candidate_amount_usd',$4,NULL,'USD','{}'::jsonb),
+         ($1,$2,$3,'calculated_amount_usd',$4,NULL,'USD','{}'::jsonb),
          ($1,$2,$3,'evidence_row_count',NULL,$5,'row','{}'::jsonb)`,
       [args.tenantKey, args.datasetVersion, calculationRunId, amount, evidenceRows.length],
     );
