@@ -9,6 +9,7 @@ import {
   numberFromDb,
   type LeverageSignal,
 } from "@/lib/source/data-model/vendor-contract-portfolio";
+import { focusableContractRows } from "./contractDiscovery";
 import { buildContractOptimizationLedger } from "@/lib/source/data-model/contract-optimization-ledger";
 import { buildContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
 import type { SourcingOpportunityReason } from "@/lib/source/data-model/sourcing-opportunities";
@@ -45,6 +46,15 @@ const textOrNull = (value: unknown): string | null => {
   const text = String(value).trim();
   return text.length > 0 ? text : null;
 };
+const normalizedVendorKey = (name: string | null | undefined): string =>
+  (name ?? "")
+    .toLowerCase()
+    .replace(
+      /\b(incorporated|inc|corporation|corp|llc|ltd|limited|company|co)\b/g,
+      "",
+    )
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 const splitList = (value: string | null | undefined): string[] =>
   (value ?? "")
     .split(/[;|]/)
@@ -248,12 +258,33 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     kind === "contract" && (Boolean(contract) || selectedContractMissing);
   const vendorRef =
     sel.kind === "vendor" ? sel.id : (contract?.row.vendor_ref ?? null);
-  const vendorContracts = vendorRef
-    ? rows.filter((c) => c.row.vendor_ref === vendorRef)
-    : [];
   const vendorPortfolioRow = vendorRef ? vm.vendorRow(vendorRef) : undefined;
+  const vendorExplicitContractRefs = new Set(
+    vendorPortfolioRow?.contract_refs ?? [],
+  );
+  const selectedVendorName =
+    vendorPortfolioRow?.vendor_name ?? contract?.row.vendor_name ?? null;
+  const selectedVendorKey = normalizedVendorKey(selectedVendorName);
+  const vendorCandidateRows = vendorRef
+    ? focusableContractRows(vm.portfolio).map((row) => vm.enrichContract(row))
+    : [];
+  const vendorContracts = vendorRef
+    ? vendorCandidateRows.filter((c) => {
+        if (c.row.vendor_ref === vendorRef) return true;
+        if (vendorExplicitContractRefs.has(c.row.contract_id)) return true;
+        return (
+          selectedVendorKey.length > 0 &&
+          normalizedVendorKey(c.row.vendor_name) === selectedVendorKey
+        );
+      })
+    : [];
   const vendorConcentration = vendorRef
-    ? conc.byVendor.find((r) => r.vendorRef === vendorRef)
+    ? conc.byVendor.find(
+        (r) =>
+          r.vendorRef === vendorRef ||
+          (selectedVendorKey.length > 0 &&
+            normalizedVendorKey(r.vendorName) === selectedVendorKey),
+      )
     : undefined;
   const vendorAnnualValue =
     vendorConcentration?.annualValue ??
