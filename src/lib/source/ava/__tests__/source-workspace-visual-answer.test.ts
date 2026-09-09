@@ -167,6 +167,9 @@ describe("Source Workspace visual aVa answer", () => {
       "Commercial posture: Commitment posture = Commitment ahead of usage",
     );
     expect(answer?.directAnswer).toContain(
+      "Contract 360 posture detail: Commitment posture = Commitment ahead of usage ($6.1M below committed annual baseline; use this as renegotiation-shape evidence, not realized savings); Value type = Recoverable opportunity ($1.3M recoverable; $2.4M avoidable; $1.9M negotiable)",
+    );
+    expect(answer?.directAnswer).toContain(
       "outside-in market practice is advisory pattern context only",
     );
     expect(answer?.directAnswer).toContain(

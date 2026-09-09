@@ -839,6 +839,15 @@ export function buildSourceWorkspaceVisualAnswer(input: {
           .map((line) => `${line.label} = ${line.value}`)
           .join("; ")}.`
       : "";
+  const postureDetailSummary =
+    commercialPostureLines.length > 0
+      ? ` Contract 360 posture detail: ${commercialPostureLines
+          .map(
+            (line) =>
+              `${line.label} = ${line.value} (${sentenceFragment(line.detail)})`,
+          )
+          .join("; ")}.`
+      : "";
   const leverTableSummary =
     opportunityRows.length > 0
       ? ` Lever table: ${opportunityRows
@@ -883,7 +892,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       : `There are no contract-specific candidate commercial opportunity lines with governed numeric values. Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation.`;
 
   return {
-    directAnswer: `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is a candidate commercial optimization case, not realized savings, unless finance-confirmed outcome rows are explicitly loaded. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "It is bound from the governed Source contract context. "}Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}${postureSummary} ${leverTableSummary} Caveat: Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.`,
+    directAnswer: `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is a candidate commercial optimization case, not realized savings, unless finance-confirmed outcome rows are explicitly loaded. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "It is bound from the governed Source contract context. "}Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}${postureSummary}${postureDetailSummary} ${leverTableSummary} Caveat: Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.`,
     artifacts,
     citations,
     factsUsed: [
