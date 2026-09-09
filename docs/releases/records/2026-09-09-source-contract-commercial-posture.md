@@ -39,6 +39,7 @@ Layer 4 Products: Source presentation and Source aVa surface context changed. Th
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts' 'src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' src/lib/source/ava/source-workspace-visual-answer.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts` — pass.
 - `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' 'src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts' --runInBand` — required for the product-shell mount regression.
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx' 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts' 'src/lib/source/ava/source-workspace-visual-answer.ts'` — required for the product-shell follow-up.
+- `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' 'src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts' --runInBand` — required for contract posture lever-label formatting.
 
 ## Rollout Plan
 

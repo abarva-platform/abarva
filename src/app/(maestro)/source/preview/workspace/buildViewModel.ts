@@ -2929,7 +2929,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           },
           {
             label: "Top lever",
-            value: topOpportunity?.shortLabel ?? "No lever loaded",
+            value: topOpportunity?.label ?? "No lever loaded",
             detail:
               topOpportunity?.nextAction ??
               "Load governed opportunity rows before naming a vendor ask.",
