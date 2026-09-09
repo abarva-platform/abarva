@@ -24,6 +24,7 @@ import {
 } from "recharts";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
+import { focusableContractRows } from "./contractDiscovery";
 import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
 import type { Contract360Response } from "./live/contractDetail";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
@@ -1001,7 +1002,7 @@ function VendorsPage({
 }) {
   const vendors = topVendors(portfolio);
   const selectedContracts = selectedVendor
-    ? vendorLinkedContracts(portfolio.contracts, selectedVendor)
+    ? vendorLinkedContracts(focusableContractRows(portfolio), selectedVendor)
     : [];
   const selectedVendorPosition = selectedVendor
     ? portfolio.impact.vendorPositions.find(
@@ -1011,6 +1012,9 @@ function VendorsPage({
   const selectedVendorCoverage = selectedVendor
     ? (vendorCoverageRows(portfolio).get(selectedVendor.vendor_ref) ?? null)
     : null;
+  const registerContractIds = new Set(
+    portfolio.contracts.map((contract) => contract.contract_id),
+  );
 
   return (
     <div className="sw-v2-grid">
@@ -1114,22 +1118,32 @@ function VendorsPage({
             <div className="sw-v2-vendor-contracts">
               <span>Grouped contracts</span>
               {selectedContracts.length > 0 ? (
-                selectedContracts.slice(0, 6).map((contract) => (
-                  <button
-                    key={contract.contract_id}
-                    type="button"
-                    onClick={() => onOpenContract(contract.contract_id)}
-                  >
-                    <b>{contract.contract_id}</b>
-                    <small>
-                      {contract.contract_name ||
-                        safeContractVendorDisplayName(contract)}
-                    </small>
-                    <strong>
-                      {money(numberFromDb(contract.annual_value))}
-                    </strong>
-                  </button>
-                ))
+                selectedContracts.slice(0, 6).map((contract) => {
+                  const isSupplemental = !registerContractIds.has(
+                    contract.contract_id,
+                  );
+                  return (
+                    <button
+                      key={contract.contract_id}
+                      type="button"
+                      onClick={() => onOpenContract(contract.contract_id)}
+                    >
+                      <b>{contract.contract_id}</b>
+                      <small>
+                        {contract.contract_name ||
+                          safeContractVendorDisplayName(contract)}
+                      </small>
+                      <strong>
+                        {money(numberFromDb(contract.annual_value))}
+                      </strong>
+                      {isSupplemental ? (
+                        <em className="sw-v2-vendor-depth-badge">
+                          Depth layer
+                        </em>
+                      ) : null}
+                    </button>
+                  );
+                })
               ) : (
                 <p className="sw-v2-muted">
                   Contract-level rows are not materialized for this vendor
@@ -1939,7 +1953,9 @@ function ContractsPage({
       )
       .sort(
         (a, b) =>
-          Number(a.isSupplemental) - Number(b.isSupplemental) ||
+          contractSearchRank(a, normalizedQuery) -
+            contractSearchRank(b, normalizedQuery) ||
+          b.evidenceScore - a.evidenceScore ||
           (b.sortValue ?? 0) - (a.sortValue ?? 0) ||
           a.contractId.localeCompare(b.contractId),
       );
@@ -2077,7 +2093,7 @@ function ContractSearchResults({
   );
 }
 
-interface ContractFinderRow {
+export interface ContractFinderRow {
   readonly contractId: string;
   readonly contractName: string;
   readonly vendorName: string;
@@ -2085,7 +2101,22 @@ interface ContractFinderRow {
   readonly sourceDetail: string;
   readonly isSupplemental: boolean;
   readonly sortValue: number | null;
+  readonly evidenceScore: number;
   readonly searchText: readonly string[];
+}
+
+export function contractSearchRank(contract: ContractFinderRow, query: string) {
+  const normalizedId = contract.contractId.toLowerCase();
+  const normalizedName = contract.contractName.toLowerCase();
+  const normalizedVendor = contract.vendorName.toLowerCase();
+  if (normalizedId === query) return 0;
+  if (normalizedId.startsWith(query)) return 1;
+  if (contract.isSupplemental && normalizedVendor.includes(query)) return 2;
+  if (contract.isSupplemental && normalizedName.includes(query)) return 3;
+  if (normalizedId.includes(query)) return 4;
+  if (normalizedVendor.includes(query)) return 5;
+  if (normalizedName.includes(query)) return 6;
+  return 7;
 }
 
 function contractFinderRows(
@@ -2104,6 +2135,7 @@ function contractFinderRows(
       sourceDetail: money(annualValue),
       isSupplemental: false,
       sortValue: annualValue,
+      evidenceScore: 0,
       searchText: [
         contract.contract_id,
         contract.contract_name,
@@ -2130,6 +2162,11 @@ function contractFinderRows(
       sortValue:
         numberFromDb(coverage.actual_spend_usd) ??
         numberFromDb(coverage.committed_spend_usd),
+      evidenceScore:
+        (numberFromDb(coverage.opportunity_rows) ?? 0) * 100 +
+        (numberFromDb(coverage.spend_rows) ?? 0) * 10 +
+        (numberFromDb(coverage.performance_rows) ?? 0) * 8 +
+        (numberFromDb(coverage.document_page_text_rows) ?? 0) * 4,
       searchText: [
         coverage.contract_id,
         coverage.contract_name,
@@ -2144,6 +2181,7 @@ function contractFinderRows(
     if (existing) {
       rows.set(action.contract_id, {
         ...existing,
+        evidenceScore: existing.evidenceScore + 100,
         searchText: [
           ...existing.searchText,
           action.title ?? "",
@@ -2164,6 +2202,7 @@ function contractFinderRows(
       sourceDetail: `outside the ${portfolio.contracts.length}-contract register`,
       isSupplemental: true,
       sortValue: numberFromDb(action.candidate_amount_usd),
+      evidenceScore: 100,
       searchText: [
         action.contract_id,
         action.title ?? "",
@@ -4400,7 +4439,7 @@ function contractsByAnnualValue(contracts: readonly SourceContract360Row[]) {
     );
 }
 
-function focusedContractSet(
+export function focusedContractSet(
   portfolio: SourceWorkspacePortfolioData,
   limit = 7,
 ): FocusedContractSet {
@@ -4413,7 +4452,7 @@ function focusedContractSet(
   const claimRowsByContract = countByContract(
     portfolio.impact.claimCards.map((row) => row.contract_id),
   );
-  const ranked = contractsByAnnualValue(portfolio.contracts)
+  const ranked = contractsByAnnualValue(focusableContractRows(portfolio))
     .map((contract): FocusedContractRow => {
       const coverage = coverageByContract.get(contract.contract_id) ?? null;
       const actionRows = actionRowsByContract.get(contract.contract_id) ?? 0;
@@ -4606,7 +4645,10 @@ function vendorsWithImpactEvidence(
   }
 
   const contractsById = new Map(
-    portfolio.contracts.map((contract) => [contract.contract_id, contract]),
+    focusableContractRows(portfolio).map((contract) => [
+      contract.contract_id,
+      contract,
+    ]),
   );
   const upsert = ({
     contractId,
@@ -5220,7 +5262,7 @@ function withContractBackedVendorMetrics(
   };
 }
 
-function vendorLinkedContracts(
+export function vendorLinkedContracts(
   contracts: readonly SourceContract360Row[],
   vendor: ExecutiveVendorRow,
 ) {

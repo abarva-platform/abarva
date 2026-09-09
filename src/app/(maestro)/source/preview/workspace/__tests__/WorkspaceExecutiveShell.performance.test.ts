@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 
 import {
   SOURCE_CHART_PALETTE,
+  contractSearchRank,
   displayBenchmarkingClause,
+  focusedContractSet,
   focusedVendorSet,
   optimizeTypeRows,
   performanceActual,
@@ -13,7 +15,10 @@ import {
   vendorArchetypeCoverage,
   vendorArchetypeRows,
   vendorCoverageRows,
+  vendorLinkedContracts,
 } from "../WorkspaceExecutiveShell";
+import { focusableContractRows } from "../contractDiscovery";
+import { INITIAL_STATE, WorkspaceViewModel } from "../viewModel";
 
 describe("WorkspaceExecutiveShell performance formatting", () => {
   it("keeps Source charts on semantic palette tokens instead of hard-black slabs", () => {
@@ -77,6 +82,308 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).toContain("Signal-stage");
     expect(source).toContain("requires more evidence before upgrade");
     expect(source).toContain("no outcome claimed");
+  });
+
+  it("promotes supplemental depth/action contracts into the focused contract list", () => {
+    const action = (
+      contractId: string,
+      vendorName: string,
+      amount: number,
+      index: number,
+    ) => ({
+      tenant_key: "meridian-health",
+      action_candidate_id: `${contractId}:action:${index}`,
+      opportunity_id: `${contractId}:opportunity:${index}`,
+      contract_id: contractId,
+      vendor_ref: vendorName.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"),
+      vendor_name: vendorName,
+      title: "Loaded optimization action",
+      action_type: "commercial_opportunity",
+      opportunity_type: "negotiated_improvement",
+      finding_summary: "Loaded governed opportunity evidence",
+      deterministic_basis: "source opportunity projection",
+      candidate_amount_usd: amount,
+      priority: "high",
+      readiness_state: "candidate",
+      evidence_state: "present",
+      authority_state: "not_confirmed",
+      finance_confirmation_state: "not_confirmed",
+      next_action: "Open Optimize",
+      accountable_role: "Finance",
+      decision_due_date: null,
+      coverage_state: "decision_ready",
+      blocker_if_missing: null,
+      citation_basis_json: null,
+      load_run_id: "test-run",
+    });
+    const portfolio = {
+      contracts: [
+        {
+          tenant_key: "meridian-health",
+          contract_id: "CTR-REGISTRY-001",
+          vendor_ref: "vendor-register",
+          vendor_name: "Large Registry Vendor",
+          vendor_category: "platform",
+          contract_name: "Large header-only registry agreement",
+          annual_value: 50_000_000,
+          actual_annual_spend: null,
+          total_committed_value: null,
+          committed_annual_spend: null,
+          auto_renew: false,
+        },
+      ],
+      impact: {
+        evidenceCoverage: [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "vendor-databricks",
+            vendor_name: "Databricks, Inc.",
+            vendor_category: "cloud_data_platform",
+            contract_archetype: "cloud_consumption",
+            contract_name: "Databricks Enterprise Agreement",
+            spend_rows: 12,
+            actual_spend_usd: 66_000,
+            committed_spend_usd: 1_900_000,
+            performance_rows: 12,
+            unclaimed_credit_usd: 0,
+            opportunity_rows: 6,
+            scope_rows: 4,
+            critical_scope_rows: 2,
+            document_page_text_rows: 6,
+            coverage_state: "decision_ready",
+          },
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-CLOUD-AWS-001",
+            vendor_ref: "vendor-aws",
+            vendor_name: "Amazon Web Services, Inc.",
+            vendor_category: "cloud",
+            contract_archetype: "cloud_consumption",
+            contract_name: "AWS Enterprise Discount Program",
+            spend_rows: 12,
+            actual_spend_usd: 24_300_000,
+            committed_spend_usd: 23_400_000,
+            performance_rows: 12,
+            unclaimed_credit_usd: 0,
+            opportunity_rows: 5,
+            scope_rows: 5,
+            critical_scope_rows: 3,
+            document_page_text_rows: 6,
+            coverage_state: "decision_ready",
+          },
+        ],
+        actionCandidates: [
+          ...Array.from({ length: 6 }, (_, index) =>
+            action("MER-TECH-DBX-001", "Databricks, Inc.", 620_000, index),
+          ),
+          ...Array.from({ length: 5 }, (_, index) =>
+            action(
+              "MER-CLOUD-AWS-001",
+              "Amazon Web Services, Inc.",
+              620_000,
+              index,
+            ),
+          ),
+        ],
+        claimCards: [],
+      },
+    };
+
+    const focus = focusedContractSet(portfolio as never, 3);
+
+    expect(focus.rows.map((row) => row.contract.contract_id)).toEqual([
+      "MER-TECH-DBX-001",
+      "MER-CLOUD-AWS-001",
+      "CTR-REGISTRY-001",
+    ]);
+    expect(focus.rows[0]).toMatchObject({
+      actionRows: 6,
+      reason: "6 action rows",
+    });
+    expect(focus.rows[1]).toMatchObject({
+      actionRows: 5,
+      reason: "5 action rows",
+    });
+    expect(focus.rows[0]?.contract.contract_name).toContain("Databricks");
+    expect(focus.rows[1]?.contract.vendor_name).toBe(
+      "Amazon Web Services, Inc.",
+    );
+  });
+
+  it("sorts searched supplemental vendor contracts ahead of old register-only rows", () => {
+    const oldRegisterRow = {
+      contractId: "CTR-OLD-DATABRICKS-001",
+      contractName: "Older Databricks register agreement",
+      vendorName: "Databricks, Inc.",
+      sourceLabel: "Governed register",
+      sourceDetail: "$250K",
+      isSupplemental: false,
+      sortValue: 250_000,
+      evidenceScore: 0,
+      searchText: ["ctr-old-databricks-001", "databricks, inc."],
+    };
+    const loadedDepthRow = {
+      contractId: "MER-TECH-DBX-001",
+      contractName: "Databricks Enterprise Agreement",
+      vendorName: "Databricks, Inc.",
+      sourceLabel: "Supplemental depth",
+      sourceDetail: "decision ready",
+      isSupplemental: true,
+      sortValue: 1_900_000,
+      evidenceScore: 760,
+      searchText: ["mer-tech-dbx-001", "databricks, inc."],
+    };
+
+    const rows = [oldRegisterRow, loadedDepthRow].sort(
+      (a, b) =>
+        contractSearchRank(a, "databricks") -
+          contractSearchRank(b, "databricks") ||
+        b.evidenceScore - a.evidenceScore ||
+        (b.sortValue ?? 0) - (a.sortValue ?? 0) ||
+        a.contractId.localeCompare(b.contractId),
+    );
+
+    expect(rows[0]?.contractId).toBe("MER-TECH-DBX-001");
+  });
+
+  it("groups supplemental depth contracts under a selected vendor even when vendor refs differ", () => {
+    const portfolio = {
+      contracts: [
+        {
+          tenant_key: "meridian-health",
+          contract_id: "CTR-OLD-DATABRICKS-001",
+          vendor_ref: "legacy-dbx-vendor-ref",
+          vendor_name: "Databricks, Inc.",
+          vendor_category: "cloud_data_platform",
+          contract_name: "Older Databricks register agreement",
+          annual_value: 250_000,
+          actual_annual_spend: null,
+          total_committed_value: null,
+          committed_annual_spend: null,
+          auto_renew: false,
+        },
+      ],
+      impact: {
+        evidenceCoverage: [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-VEN-DATABRICKS",
+            vendor_name: "Databricks, Inc.",
+            vendor_category: "cloud_data_platform",
+            contract_archetype: "cloud_consumption",
+            contract_name: "Databricks Enterprise Agreement",
+            spend_rows: 12,
+            actual_spend_usd: 66_000,
+            committed_spend_usd: 1_900_000,
+            performance_rows: 12,
+            unclaimed_credit_usd: 0,
+            opportunity_rows: 6,
+            scope_rows: 4,
+            critical_scope_rows: 2,
+            document_page_text_rows: 6,
+            coverage_state: "decision_ready",
+          },
+        ],
+        actionCandidates: [],
+        claimCards: [],
+      },
+    };
+    const selectedVendor = {
+      tenant_key: "meridian-health",
+      vendor_ref: "legacy-dbx-vendor-ref",
+      vendor_refs: ["legacy-dbx-vendor-ref"],
+      vendor_name: "Databricks, Inc.",
+      vendor_category: "cloud_data_platform",
+      contract_count: 1,
+      annual_value: 250_000,
+      total_committed_value: null,
+      auto_renew_contracts: 0,
+      next_end_date: null,
+      contract_refs: ["CTR-OLD-DATABRICKS-001"],
+    };
+
+    const contracts = vendorLinkedContracts(
+      focusableContractRows(portfolio as never),
+      selectedVendor,
+    );
+
+    expect(contracts.map((contract) => contract.contract_id)).toEqual([
+      "MER-TECH-DBX-001",
+      "CTR-OLD-DATABRICKS-001",
+    ]);
+  });
+
+  it("keeps portfolio summary and concentration on the governed register rows", () => {
+    const portfolio = {
+      tenantKey: "meridian-health",
+      asOfDateIso: "2027-06-30",
+      contracts: [
+        {
+          tenant_key: "meridian-health",
+          contract_id: "CTR-REGISTER-001",
+          vendor_ref: "vendor-register",
+          vendor_name: "Register Vendor",
+          vendor_category: "platform",
+          contract_name: "Register agreement",
+          annual_value: 10_000_000,
+          actual_annual_spend: null,
+          total_committed_value: null,
+          committed_annual_spend: null,
+          auto_renew: false,
+        },
+      ],
+      vendors: [],
+      impact: {
+        evidenceCoverage: [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-VEN-DATABRICKS",
+            vendor_name: "Databricks, Inc.",
+            vendor_category: "cloud_data_platform",
+            contract_archetype: "cloud_consumption",
+            contract_name: "Databricks Enterprise Agreement",
+            spend_rows: 12,
+            actual_spend_usd: 66_000,
+            committed_spend_usd: 1_900_000,
+            performance_rows: 12,
+            unclaimed_credit_usd: 0,
+            opportunity_rows: 6,
+            scope_rows: 4,
+            critical_scope_rows: 2,
+            document_page_text_rows: 6,
+            coverage_state: "decision_ready",
+          },
+        ],
+        actionCandidates: [],
+        claimCards: [],
+      },
+      categoryQuality: { semanticRows: [] },
+      applicationScope: [],
+      initiativeDependencies: [],
+    };
+    const vm = new WorkspaceViewModel(
+      INITIAL_STATE,
+      () => undefined,
+      portfolio as never,
+      "Meridian Health",
+      () => undefined,
+    );
+
+    expect(focusableContractRows(portfolio as never)).toHaveLength(2);
+    expect(vm.contracts().map((contract) => contract.contract_id)).toEqual([
+      "CTR-REGISTER-001",
+    ]);
+    expect(vm.summary()).toMatchObject({
+      contractCount: 1,
+      vendorCount: 1,
+      totalAnnualValue: 10_000_000,
+    });
+    expect(vm.concentration().byVendor.map((vendor) => vendor.vendorRef)).toEqual([
+      "vendor-register",
+    ]);
   });
 
   it("keeps the contract graph tab as a real lineage visual with drill-down subtabs", () => {
