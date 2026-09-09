@@ -30,6 +30,7 @@ interface SourceContractContext {
   contractedToActualVarianceUsd: number | null;
   endDate: string | null;
   noticeDate: string | null;
+  noticePeriodDays: number | null;
   autoRenew: boolean | null;
   renewalOwnerRef: string | null;
   scopeSummary: string | null;
@@ -245,6 +246,7 @@ function contractContextFromRecord(
     ),
     endDate: stringValue(raw.endDate),
     noticeDate: stringValue(raw.noticeDate),
+    noticePeriodDays: numberValue(raw.noticePeriodDays),
     autoRenew: booleanValue(raw.autoRenew),
     renewalOwnerRef: stringValue(raw.renewalOwnerRef),
     scopeSummary: stringValue(raw.scopeSummary),
@@ -271,6 +273,7 @@ function directContractContextFrom(
     contractedToActualVarianceUsd: null,
     endDate: stringValue(context.endDate),
     noticeDate: null,
+    noticePeriodDays: null,
     autoRenew: null,
     renewalOwnerRef: null,
     scopeSummary: stringValue(context.evidencePosture),
@@ -308,7 +311,16 @@ function selectedContractFrom(
         annualValueUsd: direct.annualValueUsd ?? selected.annualValueUsd,
         actualAnnualSpendUsd:
           direct.actualAnnualSpendUsd ?? selected.actualAnnualSpendUsd,
+        totalCommittedValueUsd:
+          direct.totalCommittedValueUsd ?? selected.totalCommittedValueUsd,
+        contractedToActualVarianceUsd:
+          direct.contractedToActualVarianceUsd ??
+          selected.contractedToActualVarianceUsd,
         endDate: direct.endDate ?? selected.endDate,
+        noticeDate: direct.noticeDate ?? selected.noticeDate,
+        noticePeriodDays: direct.noticePeriodDays ?? selected.noticePeriodDays,
+        autoRenew: direct.autoRenew ?? selected.autoRenew,
+        renewalOwnerRef: direct.renewalOwnerRef ?? selected.renewalOwnerRef,
         scopeSummary: selected.scopeSummary ?? direct.scopeSummary,
       };
     }
@@ -782,8 +794,24 @@ export function buildSourceWorkspaceVisualAnswer(input: {
     : ` No governed opportunity row is tied to this contract in the current Source aVa packet, so candidate opportunity value is not established; treat actionability and value as missing until the contract-specific evidence is loaded or opened.${contract.scopeSummary ? ` Evidence posture: ${contract.scopeSummary}.` : ""}`;
 
   const loadedContractFacts = [
+    `contract ID ${contract.contractId}`,
     `recorded annual value ${currencyLabel(contract.annualValueUsd)}`,
     `actual annual spend ${currencyLabel(contract.actualAnnualSpendUsd)}`,
+    `end date ${contract.endDate ?? "not established"}`,
+    `notice date ${contract.noticeDate ?? "not established"}`,
+    `notice period ${
+      contract.noticePeriodDays == null
+        ? "not established"
+        : `${contract.noticePeriodDays} days`
+    }`,
+    `auto-renew ${
+      contract.autoRenew == null
+        ? "not established"
+        : contract.autoRenew
+          ? "yes"
+          : "no"
+    }`,
+    `renewal owner ${contract.renewalOwnerRef ?? "not assigned"}`,
     contract.scopeRowCount == null
       ? "scope coverage not established"
       : `${contract.scopeRowCount} scope rows`,
@@ -842,8 +870,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         id: "performance-observation-count",
         label: "Active performance observations",
         value: contract.performanceObservationCount ?? "Not established",
-        unit:
-          contract.performanceObservationCount == null ? undefined : "rows",
+        unit: contract.performanceObservationCount == null ? undefined : "rows",
         citationIds: [contractCitationId],
       },
       {

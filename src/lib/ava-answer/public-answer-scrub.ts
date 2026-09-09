@@ -1,5 +1,8 @@
 const RAW_ID_REPLACE =
   /\b(?:APP|DP|CON|NODE|EDGE)-\d{3,}\b|\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
+const PUBLIC_SOURCE_CONTRACT_ID_RE =
+  /\b(?:CTR-\d{3,6}|MER-[A-Z0-9]+(?:-[A-Z0-9]+){2,})\b/g;
+const PUBLIC_CONTRACT_ID_TOKEN = "PUBLICCONTRACTIDTOKEN";
 
 export const PUBLIC_ANSWER_FORBIDDEN_LANGUAGE_RE =
   /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|supporting material|evidence ledger|supporting material ledger|Current-state read|current-state context|loaded context|source context|loaded source context|loaded evidence|loaded sources|loaded tenant sources|tenant evidence|Evidence points|\bevidence points?\b|\bsource signals?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|canonical entities|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|last\s+\w+\s+(?:turns?|times)|all session|same answer(?: as)?|answer is the same|answer hasn'?t (?:changed|moved)|substrate|not loaded|candidate_move|move_id|phase_id|artifact_id|evidence_id|source_record_id|program_evidence_items|move_artifacts|context_pack_id|tenant_id|client_id|\/Users\/|localhost)\b|\bV\d+(?:[_-][A-Za-z0-9./-]+|\s+(?:substrate|data\s+layer|context\s+layer))\b|^\s*(Read|Evidence):/i;
@@ -91,8 +94,29 @@ export function operationalEvidenceInsufficiencyLead(
   return "Lakeshore does not yet have enough operational-process material to make a finance close, Treasury, or Kyriba automation case. The operational depth is concentrated in Shared IT service-management work, so Home can show adjacent business material and the source gap, but it should not imply a finance close, Treasury, or Kyriba automation priority until function-specific work-item and process material is added.";
 }
 
+function replaceRawIdsPreservingPublicContractIds(
+  value: string,
+  replacement: string,
+): string {
+  const ids: string[] = [];
+  const protectedValue = value.replace(
+    PUBLIC_SOURCE_CONTRACT_ID_RE,
+    (match) => {
+      const token = `${PUBLIC_CONTRACT_ID_TOKEN}${ids.length}`;
+      ids.push(match);
+      return token;
+    },
+  );
+  const scrubbed = protectedValue.replace(RAW_ID_REPLACE, replacement);
+  return ids.reduce(
+    (text, id, index) =>
+      text.replaceAll(`${PUBLIC_CONTRACT_ID_TOKEN}${index}`, id),
+    scrubbed,
+  );
+}
+
 export function scrubPublicAvaAnswerText(value: string): string {
-  const scrubbed = scrubVisibleAvaDataStateLanguage(
+  const answerReady = scrubVisibleAvaDataStateLanguage(
     scrubInternalVisibleAvaTerms(stripInternalEvidenceAppendix(value)),
   )
     .replace(
@@ -269,8 +293,12 @@ export function scrubPublicAvaAnswerText(value: string): string {
     )
     .replace(/\s+\d+\s+vs\.(?=\s|$)/gi, ".")
     .replace(/\bS\.\s*$/gm, "")
-    .replace(/\s+-\s+(?=[A-Z0-9])/g, "\n\n- ")
-    .replace(RAW_ID_REPLACE, "source reference")
+    .replace(/\s+-\s+(?=[A-Z0-9])/g, "\n\n- ");
+
+  const scrubbed = replaceRawIdsPreservingPublicContractIds(
+    answerReady,
+    "source reference",
+  )
     .replace(/\bbusiness context supports\b/gi, "business context shows")
     .replace(/\ba available\b/gi, "an available")
     .replace(/[ \t]+/g, " ")
