@@ -60,6 +60,16 @@ export interface ContractEvidenceRuntimeSummary {
   userFacingSummary: string;
 }
 
+export interface ContractEvidenceGenerationRecord {
+  family: SourceContractEvidenceFamily;
+  sourceSheet: string;
+  sourceRowNumber: number | null;
+  payload: Record<string, unknown>;
+  periodStart: string | null;
+  amountUsd: number | null;
+  confidence: number;
+}
+
 type ManifestRow = {
   id?: string;
   evidence_pack_name?: string;
@@ -90,6 +100,7 @@ export const CONTRACT_EVIDENCE_FAMILY_LABELS: Record<
   SourceContractEvidenceFamily,
   string
 > = {
+  application_inventory: "Application inventory",
   contract_baseline: "Contract baseline",
   invoice_summary: "Invoice baseline",
   invoice_exception: "Invoice exceptions",
@@ -102,6 +113,7 @@ export const CONTRACT_EVIDENCE_FAMILY_LABELS: Record<
 };
 
 const FAMILY_ORDER: SourceContractEvidenceFamily[] = [
+  "application_inventory",
   "contract_baseline",
   "invoice_summary",
   "invoice_exception",
@@ -112,6 +124,42 @@ const FAMILY_ORDER: SourceContractEvidenceFamily[] = [
   "renewal_terms",
   "evidence_reference",
 ];
+
+export async function loadContractEvidenceGenerationRecords(args: {
+  db: ReadDb;
+  tenantKey: string;
+  sourceEventId: string;
+}): Promise<ContractEvidenceGenerationRecord[]> {
+  try {
+    const result = await args.db
+      .from("source_contract_evidence_rows")
+      .select(
+        "evidence_family,source_sheet,source_row_number,row_payload,period_start,amount_usd,confidence,validation_status",
+      )
+      .eq("tenant_key", args.tenantKey)
+      .eq("source_event_id", args.sourceEventId)
+      .eq("validation_status", "accepted")
+      .order("evidence_family", { ascending: true })
+      .order("source_row_number", { ascending: true })
+      .limit(1000);
+    if (result.error) return [];
+    return (result.data ?? []).map((row: Record<string, unknown>) => ({
+      family: row.evidence_family as SourceContractEvidenceFamily,
+      sourceSheet: String(row.source_sheet ?? "structured_evidence"),
+      sourceRowNumber:
+        typeof row.source_row_number === "number" ? row.source_row_number : null,
+      payload:
+        row.row_payload && typeof row.row_payload === "object"
+          ? (row.row_payload as Record<string, unknown>)
+          : {},
+      periodStart: typeof row.period_start === "string" ? row.period_start : null,
+      amountUsd: typeof row.amount_usd === "number" ? row.amount_usd : null,
+      confidence: Number(row.confidence ?? 0),
+    }));
+  } catch {
+    return [];
+  }
+}
 
 export async function loadContractEvidenceRuntimeSummary(args: {
   db: ReadDb;
@@ -282,6 +330,16 @@ function deriveFindings(
           evidence: `${metric.label}: ${formatMetricValue(metric)}.`,
           implication:
             "This supports stronger service-credit economics and chronic-miss remedies.",
+        };
+      }
+      if (metric.key === "unclaimed_service_credit_usd") {
+        return {
+          key: "unclaimed_service_credit",
+          label: "Unclaimed service credits",
+          evidenceFamily: metric.family,
+          evidence: `${metric.label}: ${formatMetricValue(metric)}.`,
+          implication:
+            "This supports a documented service-credit claim and tighter recovery controls before renewal.",
         };
       }
       if (metric.key === "recurring_change_order_exposure_usd") {

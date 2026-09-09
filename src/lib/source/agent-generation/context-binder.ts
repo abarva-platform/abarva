@@ -30,6 +30,10 @@ import { getAuthoritativeVendorProposalFacts } from "@/lib/source/vendor-proposa
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
+import {
+  loadContractEvidenceGenerationRecords,
+  loadContractEvidenceRuntimeSummary,
+} from "@/lib/source/contract-evidence/read-model";
 import type { SourceCategoryId } from "@/lib/source/taxonomy/category-taxonomy";
 import type {
   SourceAppInventoryEntry,
@@ -110,6 +114,8 @@ export async function buildSourceGenerationContext(
     authoritativeVendorProposalFacts,
     currentStageGuidebook,
     nextStageGuidebook,
+    structuredContractEvidenceSummary,
+    structuredContractEvidenceRecords,
   ] = await Promise.all([
     listArtifactStatesForEvent(substrateEventId),
     listGateCriterionStatesForEvent(substrateEventId),
@@ -138,6 +144,20 @@ export async function buildSourceGenerationContext(
           activeClient.key,
         ).catch(() => null)
       : Promise.resolve(null),
+    activeClient?.key
+      ? loadContractEvidenceRuntimeSummary({
+          db: getAzureReadFluentClient(),
+          tenantKey: activeClient.key,
+          sourceEventId: substrateEventId,
+        })
+      : Promise.resolve(null),
+    activeClient?.key
+      ? loadContractEvidenceGenerationRecords({
+          db: getAzureReadFluentClient(),
+          tenantKey: activeClient.key,
+          sourceEventId: substrateEventId,
+        })
+      : Promise.resolve([]),
   ]);
 
   // Pull the company's application inventory through the sanctioned broker seam
@@ -204,6 +224,12 @@ export async function buildSourceGenerationContext(
     gateCriteria,
     evidence,
     uploadedEvidence,
+    structuredContractEvidence: structuredContractEvidenceSummary
+      ? {
+          summary: structuredContractEvidenceSummary,
+          records: structuredContractEvidenceRecords,
+        }
+      : undefined,
     archetypeAdvisory,
     enterpriseAppInventory,
     authoritativeVendorProposalFacts,

@@ -14,6 +14,11 @@ import type {
   SourceGenerationContext,
 } from "./types";
 import { buildAppInventoryPromptBlock } from "./app-inventory";
+import {
+  formatStructuredApplicationInventory,
+  formatStructuredEvidenceOverview,
+  formatStructuredOperationalEvidence,
+} from "./structured-evidence";
 import { formatRequiredSectionsForPrompt } from "./section-conformance";
 import { buildLanguagePolicyBlock } from "@/lib/source/documentation-standards/source-documentation-standards";
 import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
@@ -911,7 +916,10 @@ function formatDraftEvidenceContext(
             return `  - ${a.originalName} (${a.artifactFamily} · ${a.evidenceState})${facts}${excerpt}`;
           }),
         ].join("\n");
-  return [guidebookBlock, evidenceBlock].filter(Boolean).join("\n\n") || null;
+  const structuredEvidenceBlock = formatStructuredEvidenceOverview(ctx);
+  return [guidebookBlock, structuredEvidenceBlock, evidenceBlock]
+    .filter(Boolean)
+    .join("\n\n") || null;
 }
 
 function formatStageGuidebookContext(
@@ -2571,7 +2579,7 @@ Writing and format requirements:
 
   d04_app_inv: {
     artifactCode: "d04_app_inv",
-    version: 1,
+    version: 2,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d01_strategy_memo"],
@@ -2588,7 +2596,7 @@ Required structural sections:
 ## §5 · Coverage gaps and assumptions
 
 Requirements:
-- §1 must include a table: Application/System | Type | Technology stack | Department/function | Current support model | Annual incident volume (if known) | Disposition. Derive the list from the scope memo, strategy memo, and uploaded evidence. If no application list is available, construct a representative draft from the event context and mark each row as [ASSUMED — client to validate].
+- §1 must include a table: Application/System | Type | Technology stack | Department/function | Current support model | Annual incident volume (if known) | Disposition. Derive the list only from the event-scoped application inventory, scope memo, strategy memo, and uploaded evidence. If no application list is available, render an empty framework and a named collection action; never invent representative applications.
 - §2 classifies each application by criticality tier (Mission Critical / Business Critical / Standard) and risk dimension (compliance, data sensitivity, integration breadth, age/tech debt). Use a compact table.
 - §3 captures key integration touch-points, upstream/downstream dependencies, and data flows relevant to sourcing scope decisions. Focus on dependencies that create transition risk or scope-split ambiguity.
 - §4 recommends a disposition per application: retain current support model / include in scope / carve out / rationalize / retire. Ground recommendations in evidence where available; flag assumptions explicitly.
@@ -2627,6 +2635,14 @@ Requirements:
       lines.push(buildAppInventoryPromptBlock(ctx.enterpriseAppInventory));
       lines.push("");
 
+      const structuredApplicationInventory =
+        formatStructuredApplicationInventory(ctx);
+      if (structuredApplicationInventory) {
+        lines.push("— EVENT-SCOPED CONTRACT APPLICATION INVENTORY —");
+        lines.push(structuredApplicationInventory);
+        lines.push("");
+      }
+
       const evidenceBlock = formatDraftEvidenceContext(ctx);
       if (evidenceBlock) {
         lines.push(evidenceBlock);
@@ -2634,7 +2650,7 @@ Requirements:
       }
 
       lines.push(
-        "Draft the Application and System Inventory per the system prompt requirements. Where the company's application inventory above is provided, build the in-scope application table directly from it (verbatim IDs and names). Any application row NOT supported by that inventory or by uploaded evidence must be marked [ASSUMED — client to validate]. Do not expose internal product terms.",
+        "Draft the Application and System Inventory per the system prompt requirements. When the event-scoped contract application inventory is present, it is the controlling list: use every row, preserve its exact application ID and name, and do not substitute the broader enterprise inventory. Do not add any application row unsupported by that inventory or uploaded evidence. Do not expose internal product terms.",
       );
       return lines.join("\n");
     },
@@ -2642,7 +2658,7 @@ Requirements:
 
   d07_ticket_synth: {
     artifactCode: "d07_ticket_synth",
-    version: 1,
+    version: 2,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: ["d01_strategy_memo"],
@@ -2659,7 +2675,7 @@ Required structural sections:
 ## §5 · SLA and operational implications for the RFP
 
 Requirements:
-- §1 must include a demand table: Period | Total tickets | P1 | P2 | P3/P4 | Monthly average | Peak month | Channel split. Derive from uploaded ITSM/ticket evidence or SLA reports. Where evidence is missing, construct a representative baseline from the event context and mark every row [ASSUMED — client to validate].
+- §1 must include a demand table derived from the loaded event-scoped ITSM rows. Show the loaded ticket classes honestly; do not relabel P2 as P1 and do not invent a channel split. If a requested breakdown is not loaded, state that it is not established and assign a collection owner.
 - §2 must include an SLA performance table: Severity | SLA target | Actual performance | Breach count | Breach penalty (if stated) | Root cause trend. Cite uploaded SLA performance evidence by filename.
 - §3 breaks ticket volume by service tower (e.g. MDR/SOC, endpoint, IAM, PAM, OT security for a cybersecurity event; or service desk, infrastructure, application ops for a managed services event). Use a workload-by-tower table: Tower | Volume | % of total | Primary driver | SLA tier.
 - §4 identifies demand trends, seasonality peaks, and structural shifts that the vendor must price for. Note any incident patterns (recurring root causes, growing categories) that signal scope risk.
@@ -2697,8 +2713,15 @@ Requirements:
         lines.push("");
       }
 
+      const structuredOperationalEvidence =
+        formatStructuredOperationalEvidence(ctx);
+      if (structuredOperationalEvidence) {
+        lines.push(structuredOperationalEvidence);
+        lines.push("");
+      }
+
       lines.push(
-        "Draft the Ticket History Synthesis per the system prompt requirements. Prioritize uploaded SLA performance, incident log, and ITSM evidence; where that evidence exists, derive every SLA figure and volume from it. Where it is absent, construct a plausible baseline from the event context and mark every row [ASSUMED — client to validate]. Do not expose internal product terms.",
+        "Draft the Ticket History Synthesis per the system prompt requirements. Use only loaded event-scoped ITSM and SLA rows for every period, volume, target, actual result, breach, and credit. Keep ticket classes separate when their resolution measures are not comparable. Where evidence is absent, say not established and name the collection action; never construct a plausible baseline. Do not expose internal product terms.",
       );
       return lines.join("\n");
     },

@@ -4,6 +4,7 @@ export type SourceContractEvidenceArchetypeKey =
   | "saas_renewal_optimization";
 
 export type SourceContractEvidenceFamily =
+  | "application_inventory"
   | "contract_baseline"
   | "invoice_summary"
   | "invoice_exception"

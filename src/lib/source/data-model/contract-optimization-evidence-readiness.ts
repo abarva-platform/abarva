@@ -93,6 +93,19 @@ interface EvidenceFamilySpec {
 }
 
 const FAMILY_SPECS: Record<SourceContractEvidenceFamily, EvidenceFamilySpec> = {
+  application_inventory: {
+    ownerRole: "Application owner / CMDB steward",
+    sourceSystems: ["CMDB / service catalog", "CLM / SOW scope schedule"],
+    grainHistory:
+      "One row per in-scope application or system, reconciled between the CMDB and executed scope schedule.",
+    artifactImpact: "Application Inventory, Scope Memo, RFP volumetrics",
+    blocks: "Application-level scope, transition sizing, and tower handoff",
+    evidenceRefMatchers: ["cmdb.application_scope", "application_inventory"],
+    nextActionWhenMissing:
+      "Request the governed CMDB extract and executed SOW application scope schedule.",
+    nextActionWhenPresent:
+      "Reconcile application IDs, criticality, hosting model, and scope role before locking scope.",
+  },
   contract_baseline: {
     ownerRole: "Contract manager / Legal operations",
     sourceSystems: ["CLM / contract repository"],
