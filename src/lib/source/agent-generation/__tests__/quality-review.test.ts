@@ -124,6 +124,10 @@ describe("Source consulting-grade quality gate helpers", () => {
 
     expect(context).toContain("SkyHarbor Air");
     expect(context).toContain("Estimated value: $300,000,000");
+    expect(context).toContain("Approved event trigger / why-now: Board mandate");
+    expect(context).toContain(
+      "Approved event scope and intake facts: Full IT outsourcing event",
+    );
     expect(context).toContain("dc-infra-inventory");
     expect(context).toContain("11_Data_Center_Infrastructure_Inventory.csv");
     expect(context).toContain("D09 RFP evidence coverage semantics");

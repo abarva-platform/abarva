@@ -29,6 +29,7 @@ import { buildArchetypeAdvisoryBlock } from "./archetype-advisory";
 import { getAuthoritativeVendorProposalFacts } from "@/lib/source/vendor-proposals/vendor-proposal-facts";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import type { SourceCategoryId } from "@/lib/source/taxonomy/category-taxonomy";
 import type {
   SourceAppInventoryEntry,
@@ -333,13 +334,14 @@ async function listUploadedEvidenceForGeneration(
   tenantKey: string,
 ): Promise<SourceGenerationUploadedArtifact[]> {
   const supabase = getAzureReadFluentClient();
+  const tenantAliases = tenantAliasesFor(tenantKey);
   const { data: artifactRows, error: artifactError } = await supabase
     .from("source_artifacts")
     .select(
       "id, original_name, artifact_family, source_format, parse_status, evidence_state, stage_key, created_at, source_origin",
     )
     .eq("source_event_id", sourceEventId)
-    .eq("tenant_key", tenantKey)
+    .in("tenant_key", tenantAliases)
     .eq("source_origin", "uploaded")
     .order("created_at", { ascending: false })
     .limit(200);
@@ -377,14 +379,14 @@ async function listUploadedEvidenceForGeneration(
       .from("source_artifact_chunks")
       .select("artifact_id, chunk_text, chunk_kind, confidence")
       .in("artifact_id", artifactIds)
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantAliases)
       .order("confidence", { ascending: false })
       .limit(160),
     supabase
       .from("source_artifact_facts")
       .select("artifact_id, fact_type, fact_key, fact_value, confidence")
       .in("artifact_id", artifactIds)
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantAliases)
       .order("confidence", { ascending: false })
       .limit(160),
   ]);

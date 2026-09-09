@@ -18,6 +18,7 @@ jest.mock("@/lib/active-client", () => ({
 }));
 
 jest.mock("@/lib/client-config", () => ({
+  ...jest.requireActual("@/lib/client-config"),
   canonicalClientDisplayName: jest.fn(() => "Apex Retail"),
 }));
 
@@ -312,7 +313,7 @@ describe("buildSourceGenerationContext", () => {
     );
   });
 
-  it("re-checks tenant_key at every join hop of the uploaded-evidence read (RLS/tenant-isolation workstream, PR B)", async () => {
+  it("re-checks the registered tenant alias set at every uploaded-evidence join hop", async () => {
     getSourcingEvent.mockResolvedValue({
       ...makeSeedEvent(),
       id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
@@ -345,13 +346,85 @@ describe("buildSourceGenerationContext", () => {
 
     await buildSourceGenerationContext("522eedf2-ff6b-4307-b312-3e0903c6fd42");
 
-    // First hop: source_artifacts filtered by tenant_key, not just event.
-    expect(artifacts.eq).toHaveBeenCalledWith("tenant_key", "apexretail");
+    // First hop: source_artifacts remains tenant-scoped while accepting only
+    // aliases registered to the same canonical tenant.
+    expect(artifacts.in).toHaveBeenCalledWith(
+      "tenant_key",
+      expect.arrayContaining(["apexretail", "apex-retail"]),
+    );
     // Second hop: the artifact_id-keyed chunks/facts reads carry an
     // INDEPENDENT tenant_key check too — never just trusting the first
     // hop's artifactIds without re-verifying.
-    expect(chunks.eq).toHaveBeenCalledWith("tenant_key", "apexretail");
-    expect(facts.eq).toHaveBeenCalledWith("tenant_key", "apexretail");
+    expect(chunks.in).toHaveBeenCalledWith(
+      "tenant_key",
+      expect.arrayContaining(["apexretail", "apex-retail"]),
+    );
+    expect(facts.in).toHaveBeenCalledWith(
+      "tenant_key",
+      expect.arrayContaining(["apexretail", "apex-retail"]),
+    );
+  });
+
+  it("binds canonical evidence rows when the signed-in client uses an app-key alias", async () => {
+    getActiveClientRow.mockResolvedValue({
+      id: "client-meridian",
+      key: "meridian",
+      name: "Meridian Health",
+      industry_code: "HEALTHCARE",
+    });
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+      accountName: "Meridian Health",
+    });
+    isUuid.mockReturnValue(true);
+    const artifacts = makeFluentResult([
+      {
+        id: "artifact-msa",
+        original_name: "Managed_Services_Agreement.docx",
+        artifact_family: "contract",
+        source_format: "docx",
+        parse_status: "parsed",
+        evidence_state: "parsed_uncited",
+        stage_key: "strategy",
+        created_at: "2026-09-08T00:00:00.000Z",
+      },
+    ]);
+    const chunks = makeFluentResult([
+      {
+        artifact_id: "artifact-msa",
+        chunk_text: "The agreement runs through 31 July 2027.",
+        confidence: 0.95,
+      },
+    ]);
+    const facts = makeFluentResult([]);
+    getAzureReadFluentClient.mockReturnValue({
+      from: jest.fn((table: string) => {
+        if (table === "source_artifacts") return artifacts;
+        if (table === "source_artifact_chunks") return chunks;
+        if (table === "source_artifact_facts") return facts;
+        return makeFluentResult([]);
+      }),
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    const expectedAliases = expect.arrayContaining([
+      "meridian",
+      "meridian-health",
+      "meridian_health_global",
+    ]);
+    expect(artifacts.in).toHaveBeenCalledWith("tenant_key", expectedAliases);
+    expect(chunks.in).toHaveBeenCalledWith("tenant_key", expectedAliases);
+    expect(facts.in).toHaveBeenCalledWith("tenant_key", expectedAliases);
+    expect(ctx?.uploadedEvidence?.[0]).toEqual(
+      expect.objectContaining({
+        originalName: "Managed_Services_Agreement.docx",
+        chunkExcerpts: ["The agreement runs through 31 July 2027."],
+      }),
+    );
   });
 
   it("binds the latest uploaded artifact per filename when live crawls re-upload evidence", async () => {
