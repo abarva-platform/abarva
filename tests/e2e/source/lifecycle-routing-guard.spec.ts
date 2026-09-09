@@ -56,8 +56,27 @@ test.describe("Source lifecycle routing guard", () => {
     expect(existsSync(summaryPagePath), summaryPagePath).toBe(true);
 
     const summaryPage = readFileSync(summaryPagePath, "utf8");
-    expect(summaryPage).toContain('stage: "value"');
-    expect(summaryPage).toContain('workspace: "approvals"');
+    expect(summaryPage).toContain('requested.stage === "string"');
+    expect(summaryPage).toContain(': "value"');
+    expect(summaryPage).toContain('requested.workspace === "string"');
+    expect(summaryPage).toContain(': "approvals"');
     expect(summaryPage).toContain("SourceEventDetailPage");
+  });
+
+  test("completed-event historical stage links retain their requested view", () => {
+    const action = resolveSourceLifecycleRoute({
+      eventId: "apex-retail-ams-outsourcing-2026",
+      lifecycleState: "completed",
+      currentStageKey: "value",
+      pathname: "/source/events/apex-retail-ams-outsourcing-2026",
+      search: "?stage=evaluation&workspace=steps",
+    });
+
+    expect(action).toEqual({
+      type: "redirect",
+      destination:
+        "/source/events/apex-retail-ams-outsourcing-2026/summary?stage=evaluation&workspace=steps",
+      status: 302,
+    });
   });
 });

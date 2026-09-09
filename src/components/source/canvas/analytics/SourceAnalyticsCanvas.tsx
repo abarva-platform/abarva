@@ -876,7 +876,7 @@ function SourceShellRail({
           textDecoration: "none",
         }}
       >
-        ← All Source events
+        ← Source 360
       </Link>
       <div style={{ marginTop: 16, marginBottom: 22 }}>
         <div

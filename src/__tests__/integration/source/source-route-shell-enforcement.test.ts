@@ -10,6 +10,8 @@ describe("DESROUTE4 source route shell enforcement (analytics shell)", () => {
   const sourceEventsRoute = "src/app/(maestro)/source/events/page.tsx";
   const sourceEventDetailRoute =
     "src/app/(maestro)/source/events/[eventId]/page.tsx";
+  const sourceAnalyticsCanvas =
+    "src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx";
   const sentinelAgentColumn = "src/components/source/SentinelAgentColumn.tsx";
   const chatAgentRoute = "src/app/api/chat/agent/route.ts";
 
@@ -43,6 +45,13 @@ describe("DESROUTE4 source route shell enforcement (analytics shell)", () => {
     expect(source).not.toContain("SentinelAgentColumn");
     expect(source).not.toContain("UniversalCanvasShell");
     expect(source).toContain("SourceAnalyticsCanvas");
+  });
+
+  it("labels the event return link for its real Source 360 destination", () => {
+    const source = read(sourceAnalyticsCanvas);
+    expect(source).toContain('href="/source/workspace"');
+    expect(source).toContain("← Source 360");
+    expect(source).not.toContain("← All Source events");
   });
 
   it("Source agent prompt uses consulting-partner pacing and tenant context for every Source agent", () => {
