@@ -34,6 +34,7 @@ Layer 4 Products: Source presentation and Source aVa surface context changed. Th
 - Deterministic Source aVa contract answers use Verdict, Rationale, Lever table, and Caveat sections for contract optimization questions.
 - Source opportunity readers treat loaded opportunity titles as display labels when the payload has no explicit label, preventing ID-like opportunity keys from appearing as the top-lever card headline.
 - The cloud-consumption loader now persists explicit display labels in opportunity payloads for future governed loads.
+- Source aVa contract-optimization answers repeat the Contract 360 posture detail so recoverable, avoidable, negotiable, and finance-confirmed value splits remain visible in the executive answer.
 
 ## QA / Validation
 
@@ -43,6 +44,8 @@ Layer 4 Products: Source presentation and Source aVa surface context changed. Th
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx' 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts' 'src/lib/source/ava/source-workspace-visual-answer.ts'` — required for the product-shell follow-up.
 - `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' 'src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts' --runInBand` — required for contract posture lever-label formatting.
 - `npm test -- --runTestsByPath src/lib/source/data-model/__tests__/read-adapter.contract-optimization.test.ts 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' --runInBand` — required for loaded opportunity title normalization.
+- `npm test -- --runTestsByPath src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts --runInBand` — required for aVa Contract 360 posture-detail value split.
+- `npx eslint src/lib/source/ava/source-workspace-visual-answer.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts` — required for aVa Contract 360 posture-detail value split.
 
 ## Rollout Plan
 
