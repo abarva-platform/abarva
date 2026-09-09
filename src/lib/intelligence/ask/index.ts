@@ -14,6 +14,7 @@ import {
   isEclProjectionProvider,
   retrieveEclServingContextSources,
 } from "./retrievers/ecl-serving-context";
+import { retrieveNexusProductManualSources } from "./retrievers/nexus-product-manual";
 import { retrieveRetailOverlaySources } from "./retrievers/retail-overlay";
 import { retrieveCuratedDossierSources } from "./retrievers/curated-dossier";
 import {
@@ -315,6 +316,19 @@ export async function* askIntelligence(
       };
       return;
     }
+    const nexusProductManualStartedAt = Date.now();
+    const nexusProductManual = await retrieveNexusProductManualSources(
+      trimmed,
+    );
+    emitTiming(
+      trace.finish(
+        "retrieval.nexus_product_manual.done",
+        nexusProductManualStartedAt,
+        {
+          sourceCount: nexusProductManual.sources.length,
+        },
+      ),
+    );
     emitTiming(
       trace.mark("retrieval.context_dossier.disabled", {
         sourceCount: 0,
@@ -491,6 +505,7 @@ export async function* askIntelligence(
       ...(clientGroundingPacket ? [clientGroundingPacket] : []),
       ...retailOverlay,
       ...currentTenantSources,
+      ...nexusProductManual.sources,
     ].slice(0, sourceLimit);
     const selectedSources = conciseAsk
       ? compactSourceDetailsForConciseAsk(rawSources)

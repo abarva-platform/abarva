@@ -32,6 +32,7 @@ export const CORPUS_GLOBAL_SCOPE = "corpus_global";
 export const SOURCE_LAYERS = [
   "tenant_context",
   "industry_corpus",
+  "product_docs",
   "uploaded_evidence",
   "artifact",
   "pattern",
@@ -240,7 +241,8 @@ export function evaluateGovernedObject(input: unknown): PolicyEvaluation {
   }
   // PHI/PII/restricted may not live in shared corpus.
   if (
-    o.source_layer === "industry_corpus" &&
+    (o.source_layer === "industry_corpus" ||
+      o.source_layer === "product_docs") &&
     SENSITIVE_CLASSIFICATIONS.has(o.classification)
   ) {
     errors.push(

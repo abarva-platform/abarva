@@ -5,12 +5,15 @@ import {
   POLICY_VERSION,
   type GovernedObject,
 } from "../context-corpus-policy";
+import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
+
+const TEST_TENANT_KEY = CANONICAL_TENANT_KEYS[0];
 
 function ready(over: Partial<GovernedObject> = {}): GovernedObject {
   return {
     id: "obj-1",
     tenant_id: "tenant-uuid-1",
-    client_key: "lakeshore-holdings",
+    client_key: TEST_TENANT_KEY,
     object_type: "enterprise_context_chunk",
     source_layer: "tenant_context",
     industry: "DIVERSIFIED",
@@ -20,7 +23,7 @@ function ready(over: Partial<GovernedObject> = {}): GovernedObject {
     use_case_category: "current-state",
     strategic_move_phase_applicability: ["P2"],
     applicable_agents: ["sentinel", "nexus"],
-    source_basis: "Lakeshore 360 Intelligence substrate",
+    source_basis: "tenant 360 Intelligence substrate",
     source_references: ["chunk-123"],
     classification: "confidential",
     compliance_basis: null,
@@ -61,7 +64,7 @@ describe("context-corpus policy contract", () => {
     expect(r.agentReady).toBe(true);
   });
 
-  it("BLOCKS an object that claims agent_ready but is only committed (not indexed) — the Lakeshore trap", () => {
+  it("BLOCKS an object that claims agent_ready but is only committed (not indexed)", () => {
     const r = evaluateGovernedObject(
       ready({ retrievability: "committed_not_indexed" }),
     );
@@ -82,6 +85,19 @@ describe("context-corpus policy contract", () => {
         client_key: "corpus_global",
         tenant_id: null,
         classification: "phi",
+      }),
+    );
+    expect(r.decision).toBe("block");
+    expect(r.errors.join(" ")).toMatch(/shared corpus/);
+  });
+
+  it("BLOCKS sensitive product documentation in shared corpus", () => {
+    const r = evaluateGovernedObject(
+      ready({
+        source_layer: "product_docs",
+        client_key: "corpus_global",
+        tenant_id: null,
+        classification: "restricted",
       }),
     );
     expect(r.decision).toBe("block");
@@ -122,7 +138,7 @@ describe("context-corpus policy contract", () => {
   });
 
   it("recognizes canonical client keys + corpus_global", () => {
-    expect(isCanonicalClientKey("skyharbor-air")).toBe(true);
+    expect(isCanonicalClientKey(TEST_TENANT_KEY)).toBe(true);
     expect(isCanonicalClientKey("corpus_global")).toBe(true);
     expect(isCanonicalClientKey("morgan-street")).toBe(false);
   });

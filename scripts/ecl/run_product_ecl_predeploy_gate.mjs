@@ -176,14 +176,13 @@ const CHECKS = [
     ],
   },
   {
-    key: "source_workspace_reads_distinct_event_views",
+    key: "source_workspace_reads_current_db_serving_views",
     file: "src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts",
     mustContain: [
-      "readProjectionViews(tenantKey, [",
-      "\"source_events\"",
-      "\"source_compare\"",
-      "\"source_approvals\"",
+      "provider === \"ecl_projection_db\"\n      ? readProjectionTable(tenantKey, \"source_contract_360\")",
       "readProjectionView(tenantKey, \"source_vendor_portfolio\")",
+      "provider === \"ecl_projection_db\"\n      ? Promise.resolve([])",
+      "eventRows.filter(",
     ],
   },
   {

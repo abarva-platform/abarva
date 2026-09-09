@@ -27,7 +27,8 @@ export type SourceType =
   | 'WORLDVIEW'
   | 'TENANT'
   | 'GRAPH'
-  | 'SURFACE';
+  | 'SURFACE'
+  | 'PRODUCT_DOC';
 
 export interface AskSource {
   type: SourceType;

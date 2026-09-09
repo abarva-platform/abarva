@@ -43,6 +43,10 @@
   overflow: hidden;
 }
 
+.sw-ecl-surface-coverage {
+  flex: 0 0 auto;
+}
+
 .sw-v2-shell {
   min-height: 0;
   height: 100%;

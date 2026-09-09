@@ -100,6 +100,9 @@ describe("TowerCommandCenter", () => {
 
   it("renders the six designed tabs as a real tablist", () => {
     renderPage();
+    expect(screen.getByTestId("tower-tenant-identity")).toHaveTextContent(
+      "Fixture Tenant",
+    );
     const labels = screen.getAllByRole("tab").map((node) =>
       (node.textContent ?? "")
         .replace(/needs attention/g, "")

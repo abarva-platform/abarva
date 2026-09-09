@@ -22,6 +22,7 @@ import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import type { AskSource } from "@/lib/intelligence/ask/types";
+import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { Tooltip } from "./Tooltip";
 import { WorkspaceExecutiveShell } from "./WorkspaceExecutiveShell";
 
@@ -528,6 +529,11 @@ export function WorkspaceClient({
           <span style={{ color: "rgba(255,255,255,.74)" }}>
             Nothing below is estimated in its place.
           </span>
+        </div>
+      ) : null}
+      {sourceProviderKey === "ecl_projection_db" ? (
+        <div className="sw-ecl-surface-coverage">
+          <EclServingSurfaceCoverage product="source" />
         </div>
       ) : null}
 

@@ -7,11 +7,14 @@ import {
   fromEnterpriseBundle,
   fromAskSource,
 } from "../context-bundle-adapters";
+import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
+
+const TEST_TENANT_KEY = CANONICAL_TENANT_KEYS[0];
 
 function candidate(over: Partial<GovernedCandidate> = {}): GovernedCandidate {
   return {
     id: "c1",
-    client_key: "lakeshore-holdings",
+    client_key: TEST_TENANT_KEY,
     tenant_id: "tenant-1",
     source_layer: "tenant_context",
     source_basis: "tenant_admin_upload",
@@ -54,6 +57,21 @@ describe("buildValidatedAgentContextBundle", () => {
     ]);
     expect(b.usable).toHaveLength(0);
     expect(b.blocked).toHaveLength(1);
+  });
+
+  it("blocks sensitive product docs before they can enter a model bundle", () => {
+    const b = buildValidatedAgentContextBundle([
+      candidate({
+        client_key: "corpus_global",
+        tenant_id: null,
+        source_layer: "product_docs",
+        classification: "restricted",
+      }),
+    ]);
+
+    expect(b.usable).toHaveLength(0);
+    expect(b.blocked).toHaveLength(1);
+    expect(b.blocked[0].errors.join(" ")).toMatch(/sensitive classification/);
   });
 
   it("blocks a non-canonical client_key (real client name leak guard)", () => {
@@ -203,7 +221,7 @@ describe("buildDecisionReasoningRequest", () => {
 describe("bundle-shape adapters", () => {
   it("adapts a broker EnterpriseAgentContextBundle, fencing restricted items", () => {
     const bundle = {
-      tenantKey: "lakeshore-holdings",
+      tenantKey: TEST_TENANT_KEY,
       items: [
         {
           id: "i1",
@@ -223,8 +241,8 @@ describe("bundle-shape adapters", () => {
     };
     const candidates = fromEnterpriseBundle(
       bundle,
-      "lakeshore-holdings",
-      "lakeshore-holdings",
+      TEST_TENANT_KEY,
+      TEST_TENANT_KEY,
     );
     expect(candidates).toHaveLength(2);
     const b = buildValidatedAgentContextBundle(candidates);
@@ -236,7 +254,7 @@ describe("bundle-shape adapters", () => {
   it("preserves downstream context policy from enterprise bundle items", () => {
     const candidates = fromEnterpriseBundle(
       {
-        tenantKey: "lakeshore-holdings",
+        tenantKey: TEST_TENANT_KEY,
         items: [
           {
             id: "source-artifact-1",
@@ -245,8 +263,8 @@ describe("bundle-shape adapters", () => {
           },
         ],
       },
-      "lakeshore-holdings",
-      "lakeshore-holdings",
+      TEST_TENANT_KEY,
+      TEST_TENANT_KEY,
     );
 
     expect(candidates[0].downstream_context_policy).toBe("exclude");
@@ -258,8 +276,8 @@ describe("bundle-shape adapters", () => {
   it("maps AskSource confidence to a confidence level", () => {
     const c = fromAskSource(
       { id: "s1", name: "Annual report", confidence: 0.9 },
-      "lakeshore-holdings",
-      "lakeshore-holdings",
+      TEST_TENANT_KEY,
+      TEST_TENANT_KEY,
     );
     expect(c.confidence_level).toBe("high");
     expect(c.citations).toEqual(["s1"]);
