@@ -108,6 +108,8 @@ describe("looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)", () => {
     expect(ROUTE_SOURCE).toContain("looksLikeValueLedgerQuestion");
     expect(ROUTE_SOURCE).toContain("buildSelectionDecisionGovernedAnswer");
     expect(ROUTE_SOURCE).toContain("looksLikeSelectionDecisionQuestion");
+    expect(ROUTE_SOURCE).toContain("buildRfpDesignGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikeRfpDesignQuestion");
     expect(ROUTE_SOURCE).toContain("combineSourceEventDecisionAndValueAnswers");
     expect(ROUTE_SOURCE).toContain(
       "looksLikeSourceEventDecisionAndValueQuestion",
@@ -135,6 +137,15 @@ describe("looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)", () => {
     expect(
       ROUTE_SOURCE.indexOf(
         "looksLikeSelectionDecisionQuestion(normalizedBody.prompt)",
+      ),
+    ).toBeLessThan(
+      ROUTE_SOURCE.indexOf(
+        "looksLikeRfpDesignQuestion(normalizedBody.prompt)",
+      ),
+    );
+    expect(
+      ROUTE_SOURCE.indexOf(
+        "looksLikeRfpDesignQuestion(normalizedBody.prompt)",
       ),
     ).toBeLessThan(
       ROUTE_SOURCE.indexOf(
