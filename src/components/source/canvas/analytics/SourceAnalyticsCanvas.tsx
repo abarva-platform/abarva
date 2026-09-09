@@ -1309,6 +1309,8 @@ type StageOperatingStatus = {
   gateReady: number;
   gateTotal: number;
   blockedCount: number;
+  approvalRecorded: boolean;
+  historicalApproval: boolean;
   nextActionLabel: string;
 };
 
@@ -1369,9 +1371,15 @@ function buildStageOperatingStatus(
     gateReady: recommendation.requiredMet,
     gateTotal: recommendation.requiredTotal,
     blockedCount: recommendation.blockers.length,
-    nextActionLabel: allRequiredReady
-      ? "Open approval gate"
-      : "Load required evidence",
+    approvalRecorded: view.stage.approvalRecorded,
+    historicalApproval: view.stage.approvalTraceState === "historical",
+    nextActionLabel: view.stage.approvalRecorded
+      ? recommendation.blockers.length > 0
+        ? "Remediate current gaps"
+        : "Approval recorded"
+      : allRequiredReady
+        ? "Open approval gate"
+        : "Load required evidence",
   };
 }
 
@@ -1415,7 +1423,9 @@ function StageOperatingStatusPanel({
       >
         <div style={{ minWidth: 0 }}>
           <strong style={{ color: ANALYTICS.INK, fontSize: 13 }}>
-            {status.stageLabel} gate readiness
+            {status.approvalRecorded
+              ? `${status.stageLabel} decision status`
+              : `${status.stageLabel} gate readiness`}
           </strong>
           <div
             style={{
@@ -1425,8 +1435,13 @@ function StageOperatingStatusPanel({
               marginTop: 3,
             }}
           >
-            {status.simpleScreen.deliverable.name} unlocks{" "}
-            {status.simpleScreen.nextStep.label}.
+            {status.approvalRecorded
+              ? status.blockedCount > 0
+                ? status.historicalApproval
+                  ? "The event advanced under an earlier control state; today's open controls remain visible for remediation."
+                  : "Approval is recorded; today's open controls remain visible for remediation."
+                : "Approval is recorded and current controls are clear."
+              : `${status.simpleScreen.deliverable.name} unlocks ${status.simpleScreen.nextStep.label}.`}
           </div>
         </div>
         <ReadinessChip
@@ -1456,7 +1471,7 @@ function StageOperatingStatusPanel({
           value={`${status.coverageValue} total`}
         />
         <StepNeedDatum
-          label="Gate"
+          label={status.approvalRecorded ? "Current controls" : "Gate"}
           value={`${status.gateReady}/${status.gateTotal || 0} criteria`}
           tone={status.blockedCount > 0 ? "warn" : "good"}
         />
@@ -2000,7 +2015,9 @@ function StageReadyPanel({
         >
           {approvalRecorded
             ? hasArtifactGaps
-              ? "The stage decision is complete. Remaining artifact-review gaps stay visible as part of the accepted exception record; no duplicate approval is required."
+              ? view.stage.approvalTraceState === "historical"
+                ? "The event advanced before stage-level approval tracking captured a complete decision record. Current artifact gaps are follow-up remediation under today's controls; no duplicate approval is required."
+                : "The stage decision is complete. Current artifact-review gaps remain visible for remediation; no duplicate approval is required."
               : "The stage decision is complete and no further approval is required. Open the approval record to review its rationale and audit trail."
             : hasArtifactGaps
             ? "Review Files first to accept client-final artifacts and close quality gates. An exception decision is available only if the owner chooses to approve with the visible gaps."
@@ -2035,7 +2052,9 @@ function StageReadyPanel({
           label="Next"
           value={
             approvalRecorded
-              ? "No further approval required"
+              ? hasArtifactGaps
+                ? "Remediate current review gaps"
+                : "No further approval required"
               : hasArtifactGaps
                 ? "Accept artifacts in Files"
                 : "Open approval gate"
@@ -5837,7 +5856,11 @@ function IntelligenceReadinessBrief({ view }: { view: SourceEventShellView }) {
           .join(", ")
       : intelligenceBasisLabel(view.intelligence.sourceBasis);
   const nextAction =
-    view.stage.ready < view.stage.total
+    view.stage.approvalRecorded
+      ? view.stage.artifactReadiness.blockerCount > 0
+        ? "Remediate current artifact gaps; approval remains recorded."
+        : "No further approval required."
+      : view.stage.ready < view.stage.total
       ? "Complete the active step before approval."
       : view.stage.artifactReadiness.blockerCount > 0
         ? "Resolve Files blockers before approval."
@@ -5990,7 +6013,9 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
       ? "Clear artifact queue."
       : (view.approvals.currentStageItem?.actionLabel ?? "No approval action.");
   const readinessTitle = stageApproved
-    ? "Stage approved"
+    ? !filesReady && view.stage.approvalTraceState === "historical"
+      ? "Historically approved; remediation open"
+      : "Stage approved"
     : ready
     ? "Ready to decide"
     : workflowComplete

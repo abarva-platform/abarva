@@ -727,6 +727,72 @@ describe("buildSourceEventShellView", () => {
     });
   });
 
+  it("presents an inferred past-stage approval as historical while keeping current artifact gaps visible", () => {
+    const completeRfpStage: StageAnalyticsView = {
+      ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
+      stageKey: "rfp",
+      stageName: "RFP",
+      tasks: [
+        {
+          id: "rfp.package",
+          title: "Prepare the RFP package",
+          subtitle: "Client-ready release pack",
+          type: "confirm",
+          state: "done",
+          evidenceComplete: true,
+          guide: "Review the RFP package before release.",
+          cta: "Confirm RFP",
+        },
+      ],
+    };
+    const view = buildSourceEventShellView({
+      event: {
+        ...EVENT,
+        currentStageKey: "responses",
+        currentStageLabel: "Responses",
+      },
+      tenantName: "FS Demo",
+      viewedStageKey: "rfp",
+      stageView: completeRfpStage,
+      approvalLedger: [
+        {
+          stageKey: "rfp",
+          stageLabel: "RFP",
+          index: 4,
+          state: "approved",
+          approverName: null,
+          approvedAtIso: null,
+          authorizationNote:
+            "Approved - approver not recorded for this stage (predates stage-level tracking).",
+          approverRationale: null,
+        },
+      ],
+      artifacts: [
+        {
+          id: "rfp-draft-1",
+          artifactCode: "d09_rfp_pack",
+          artifactGroup: "generated",
+          sourceOrigin: "generated",
+          stageKey: "rfp",
+          status: "draft",
+        },
+      ],
+    });
+
+    expect(view.stage.approvalRecorded).toBe(true);
+    expect(view.stage.approvalTraceState).toBe("historical");
+    expect(view.stage.artifactReadiness.ready).toBe(false);
+    expect(view.stage.gateReadinessLine).toContain(
+      "advanced under an earlier control state",
+    );
+    expect(view.stage.gateReadinessLine).toContain(
+      "current artifact review gaps remain for remediation",
+    );
+    expect(view.stage.gateReadinessLine).toContain(
+      "no duplicate approval is required",
+    );
+  });
+
   it("scopes the Approvals workspace to this event only, and never renders the featured item twice", () => {
     // Regression test: the raw inbox is cross-tenant ("everything waiting on
     // you across every event" — the portfolio-level /source/approvals page
