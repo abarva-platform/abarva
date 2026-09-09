@@ -1,0 +1,21 @@
+boundary,scope,identity,role,allowed,denied
+acr,acrabarvalab001.azurecr.io,mi-hcdn-source-loader-lab-001,AcrPull,yes,no runtime data access from ACR
+acr,acrabarvalab001.azurecr.io,mi-hcdn-parser-worker-lab-001,AcrPull,yes,no runtime data access from ACR
+acr,acrabarvalab001.azurecr.io,mi-hcdn-knowledge-worker-lab-001,AcrPull,yes,no runtime data access from ACR
+acr,acrabarvalab001.azurecr.io,mi-hcdn-publisher-lab-001,AcrPull,yes,no runtime data access from ACR
+acr,acrabarvalab001.azurecr.io,mi-hcdn-operations-admin-lab-001,AcrPull,yes,no runtime data access from ACR
+acr,acrabarvalab001.azurecr.io,mi-hcdn-evaluator-lab-001,AcrPull,yes,no runtime data access from ACR
+storage,stabhcdnlab001/raw,mi-hcdn-source-loader-lab-001,Storage Blob Data Contributor,yes,cross-tenant storage
+storage,stabhcdnlab001/validated,mi-hcdn-parser-worker-lab-001,Storage Blob Data Reader,yes,write to raw or hidden truth
+storage,stabhcdnlab001/working,mi-hcdn-knowledge-worker-lab-001,Storage Blob Data Contributor,yes,hidden truth
+storage,stabhcdnlab001/published,mi-hcdn-publisher-lab-001,Storage Blob Data Contributor,yes,hidden truth
+storage,stabhcdnlab001/published,mi-hcdn-runtime-reader-lab-001,Storage Blob Data Reader,yes,raw working hidden truth
+storage,stabhcdnlab001/audit,mi-hcdn-evaluator-lab-001,Storage Blob Data Contributor,yes,cross-tenant storage
+storage,stabhcdneval001/hidden-truth,mi-hcdn-evaluator-lab-001,Storage Blob Data Reader,yes,all non-evaluator identities
+storage,stabhcdneval001/reconstruction-proof,mi-hcdn-evaluator-lab-001,Storage Blob Data Contributor,yes,cross-tenant storage
+key-vault,kv-abarva-hcdn-lab-001,mi-hcdn-source-loader-lab-001,Key Vault Secrets User,yes,non-tenant secret scopes
+key-vault,kv-abarva-hcdn-lab-001,mi-hcdn-parser-worker-lab-001,Key Vault Secrets User,yes,non-tenant secret scopes
+key-vault,kv-abarva-hcdn-lab-001,mi-hcdn-knowledge-worker-lab-001,Key Vault Secrets User,yes,non-tenant secret scopes
+key-vault,kv-abarva-hcdn-lab-001,mi-hcdn-publisher-lab-001,Key Vault Secrets User,yes,non-tenant secret scopes
+key-vault,kv-abarva-hcdn-lab-001,mi-hcdn-operations-admin-lab-001,Key Vault Secrets User,yes,non-tenant secret scopes
+key-vault,kv-abarva-hcdn-lab-001,mi-hcdn-evaluator-lab-001,Key Vault Secrets User,yes,non-tenant secret scopes

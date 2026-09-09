@@ -1,0 +1,5 @@
+object,location,allowed_identity,blocked_identities,reason
+hidden truth sample,stabhcdneval001/hidden-truth,mi-hcdn-evaluator-lab-001,"mi-hcdn-source-loader-lab-001; mi-hcdn-parser-worker-lab-001; mi-hcdn-knowledge-worker-lab-001; mi-hcdn-publisher-lab-001; mi-hcdn-runtime-reader-lab-001",evaluator truth must not influence parser-visible records
+source-to-truth crosswalk,stabhcdneval001/hidden-truth,mi-hcdn-evaluator-lab-001,"mi-hcdn-source-loader-lab-001; mi-hcdn-parser-worker-lab-001; mi-hcdn-knowledge-worker-lab-001; mi-hcdn-publisher-lab-001; mi-hcdn-runtime-reader-lab-001",reconstruction scorer only
+reconstruction proof,stabhcdneval001/reconstruction-proof,mi-hcdn-evaluator-lab-001,"mi-hcdn-source-loader-lab-001; mi-hcdn-parser-worker-lab-001; mi-hcdn-knowledge-worker-lab-001",prevents parser leakage
+published baseline readback,stabhcdnlab001/published,"mi-hcdn-runtime-reader-lab-001; mi-hcdn-evaluator-lab-001",mi-hcdn-source-loader-lab-001,source loader cannot read published truth for feedback loops
