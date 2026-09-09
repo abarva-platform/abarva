@@ -138,6 +138,7 @@ describe("Source Workspace visual aVa answer", () => {
     );
     expect(answer?.directAnswer).toContain("recorded annual value $43.5M");
     expect(answer?.directAnswer).toContain("actual annual spend $37.4M");
+    expect(answer?.directAnswer).toContain("vendor Salesforce");
     expect(answer?.directAnswer).toContain("contract ID CTR-090");
     expect(answer?.directAnswer).toContain("end date 28 Jun 2031");
     expect(answer?.directAnswer).toContain("notice date 28 Feb 2031");
@@ -438,6 +439,7 @@ describe("Source Workspace visual aVa answer", () => {
       "72 active performance observations",
     );
     expect(answer?.directAnswer).toContain("notice period 90 days");
+    expect(answer?.directAnswer).toContain("vendor Salesforce");
     expect(answer?.directAnswer).not.toContain(
       "scope coverage not established",
     );

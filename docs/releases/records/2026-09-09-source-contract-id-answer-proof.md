@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source aVa answers now preserve public Source contract identifiers that use multi-part contract codes, while continuing to scrub internal record identifiers before rendering. Contract 360 answers also include selected contract header fields so renewal timing, notice period, auto-renewal, and owner details can be reported from governed Source context, even when serialized surface fields arrive as numeric strings.
+Source aVa answers now preserve public Source contract identifiers that use multi-part contract codes, while continuing to scrub internal record identifiers before rendering. Contract 360 answers also include selected contract header fields so vendor, renewal timing, notice period, auto-renewal, and owner details can be reported from governed Source context, even when serialized surface fields arrive as numeric strings.
 
 ## Layer Impact
 
@@ -43,6 +43,7 @@ Pass before merge:
 - `npm test -- --runTestsByPath src/lib/intelligence/answer/__tests__/answer-safety.test.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts src/lib/ava-answer/__tests__/render-layer-shaper.test.ts`
 - `npm test -- --runTestsByPath src/lib/agent/product-truth/__tests__/runtime-guard.test.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts src/lib/ava-answer/__tests__/render-layer-shaper.test.ts src/lib/intelligence/answer/__tests__/answer-safety.test.ts`
 - `npm test -- --runTestsByPath src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts src/lib/agent/product-truth/__tests__/runtime-guard.test.ts src/lib/ava-answer/__tests__/render-layer-shaper.test.ts src/lib/intelligence/answer/__tests__/answer-safety.test.ts`
+- `npm test -- --runTestsByPath src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts src/lib/agent/product-truth/__tests__/runtime-guard.test.ts src/lib/ava-answer/__tests__/render-layer-shaper.test.ts src/lib/intelligence/answer/__tests__/answer-safety.test.ts` after adding explicit selected-vendor prose coverage.
 - `npx eslint src/lib/ava-answer/public-answer-scrub.ts src/lib/ava-answer/render-layer-shaper.ts src/lib/intelligence/answer/answer-safety.ts src/lib/source/ava/source-workspace-visual-answer.ts src/lib/intelligence/answer/__tests__/answer-safety.test.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts`
 - `npm run release:check`
 
@@ -58,7 +59,7 @@ Merge through PR and deploy through the repo-owned Azure Container Apps main dep
 - ACA runtime invariant: required after deploy
 - Worker image invariant: required after deploy
 - Feature/env flag update path: none
-- Live signed-in proof required: Source Contract 360 aVa answers preserve the selected public contract ID and report governed contract header fields from Source context.
+- Live signed-in proof required: Source Contract 360 aVa answers preserve the selected public contract ID and report governed contract header fields, including vendor and notice period, from Source context.
 
 ## Rollback Plan
 
