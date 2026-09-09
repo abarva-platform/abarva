@@ -1147,18 +1147,111 @@ describe("buildViewModel numeric coercion", () => {
         ],
       },
     });
+    vm.state.sel = { kind: "contract", id: "c1" };
+    vm.state.contractDetail.c1 = {
+      contract: CONTRACTS[0],
+      financialExposure: null,
+      operationalPerformance: null,
+      initiativeDependencies: [],
+      scopeTiers: {
+        explicit: [],
+        reviewed: [],
+        vendorInferred: [],
+        unresolved: [],
+        totalCount: 0,
+      },
+      towerObservations: [],
+      towerValueClaims: [],
+      hasTowerOverlay: false,
+      docExtractions: [],
+      optimizationEvidence: null,
+      evidenceOverview: null,
+      evidenceScope: [],
+      evidencePricing: [],
+      evidencePerformance: null,
+      performancePeriods: [],
+      spendMonths: [],
+      optimizationOpportunitySet: {
+        tenantKey: "skyharbor_global",
+        datasetVersion: "v4-golden-evidence",
+        contractId: "c1",
+        vendorId: "vendor-one",
+        vendorName: "Vendor One",
+        contractName: "Default Contract",
+        recommendation: "Prepare service-credit claim.",
+        recommendationDetail: "Service-credit claim evidence is available.",
+        actionState: "validate_opportunity",
+        baseline: {
+          status: "ready",
+          headline: "Commercial baseline loaded",
+          detail: "Annual value is available.",
+          annualValueUsd: 50_000_000,
+          pricingScheduleAnnualValueUsd: null,
+          actualAnnualSpendUsd: 48_000_000,
+          totalCommittedValueUsd: 150_000_000,
+          conflictAmountUsd: null,
+          sourceRefs: ["source.contract_360"],
+        },
+        selectedOpportunityId: "c1:sla-credit-recovery",
+        opportunities: [
+          {
+            opportunityId: "c1:sla-credit-recovery",
+            contractId: "c1",
+            label: "Unclaimed service credits",
+            shortLabel: "Service credits",
+            valueType: "recoverable_leakage",
+            amountUsd: 43_000,
+            amountState: "exact",
+            stage: "workflow_required",
+            evidenceGrade: "document_evidenced",
+            confidence: 0.81,
+            deadline: null,
+            owner: "Sourcing lead",
+            blockingGap: "Finance confirmation evidence is not complete.",
+            nextAction: "Prepare service-credit claim.",
+            sourceSystems: ["CLM / contract repository"],
+            evidenceRefs: [],
+            calculation: null,
+            overlapTreatment:
+              "Included only in recoverable leakage to avoid double counting.",
+            approvalState: "needs_review",
+            narrative: "Service credits were earned and not claimed.",
+          },
+        ],
+        financeRealizations: [],
+        evidenceRequirements: ["Finance confirmation evidence is required."],
+        potentialRecoverableUsd: 43_000,
+        potentialAvoidableUsd: 0,
+        potentialNegotiableUsd: 0,
+        financeConfirmedUsd: 0,
+      },
+    };
     const built = buildViewModel(vm) as {
       avaSurfaceContext: {
         sourceV4: {
-          contractOpportunityDirectory: Array<{ sourceRefs: string[] }>;
+          contractOpportunityDirectory: Array<{
+            blockingGap: string;
+            confidence: number | null;
+            evidenceGrade: string;
+            owner: string | null;
+            sourceRefs: string[];
+            stage: string | null;
+          }>;
         };
       };
     };
-    const refs =
-      built.avaSurfaceContext.sourceV4.contractOpportunityDirectory[0]
-        .sourceRefs;
+    const row =
+      built.avaSurfaceContext.sourceV4.contractOpportunityDirectory[0];
+    const refs = row.sourceRefs;
     const refsText = refs.join(" | ");
 
+    expect(row.stage).toBe("workflow_required");
+    expect(row.confidence).toBe(0.81);
+    expect(row.evidenceGrade).toBe("document_evidenced");
+    expect(row.blockingGap).toBe(
+      "Finance confirmation evidence is not complete.",
+    );
+    expect(row.owner).toBe("Sourcing lead");
     expect(refsText).toContain("Contract record");
     expect(refsText).toContain("Opportunity record");
     expect(refsText).toContain("Finance confirmation not complete");
