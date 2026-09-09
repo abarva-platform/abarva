@@ -30,6 +30,7 @@ import { getAuthoritativeVendorProposalFacts } from "@/lib/source/vendor-proposa
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
+import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
 import {
   loadContractEvidenceGenerationRecords,
   loadContractEvidenceRuntimeSummary,
@@ -111,6 +112,7 @@ export async function buildSourceGenerationContext(
     gateCriteria,
     evidence,
     uploadedEvidence,
+    normalizedVendorResponsePackages,
     authoritativeVendorProposalFacts,
     currentStageGuidebook,
     nextStageGuidebook,
@@ -122,6 +124,12 @@ export async function buildSourceGenerationContext(
     listEvidenceStatesForEvent(substrateEventId),
     activeClient?.key
       ? listUploadedEvidenceForGeneration(substrateEventId, activeClient.key)
+      : Promise.resolve([]),
+    activeClient?.key
+      ? readNormalizedVendorResponsePackages({
+          eventId: substrateEventId,
+          tenantKey: activeClient.key,
+        }).catch(() => [])
       : Promise.resolve([]),
     activeClient?.key
       ? getAuthoritativeVendorProposalFacts(
@@ -224,6 +232,7 @@ export async function buildSourceGenerationContext(
     gateCriteria,
     evidence,
     uploadedEvidence,
+    normalizedVendorResponsePackages,
     structuredContractEvidence: structuredContractEvidenceSummary
       ? {
           summary: structuredContractEvidenceSummary,

@@ -54,6 +54,11 @@ jest.mock("@/lib/source/stage-guidebooks/repository", () => ({
   getSourceStageGuidebook: jest.fn(),
 }));
 
+jest.mock("@/lib/source/vendor-response-persistence", () => ({
+  __esModule: true,
+  readNormalizedVendorResponsePackages: jest.fn(),
+}));
+
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureReadFluentClient: jest.fn(),
 }));
@@ -99,6 +104,12 @@ const { getSourceStageGuidebook } = jest.requireMock(
 
 const { getCurrentUser } = jest.requireMock("@/lib/auth/current-user") as {
   getCurrentUser: jest.Mock;
+};
+
+const { readNormalizedVendorResponsePackages } = jest.requireMock(
+  "@/lib/source/vendor-response-persistence",
+) as {
+  readNormalizedVendorResponsePackages: jest.Mock;
 };
 
 function makeFluentResult(data: unknown[] = []) {
@@ -202,6 +213,51 @@ describe("buildSourceGenerationContext", () => {
       industry_code: "RETAIL",
     });
     getSourceStageGuidebook.mockResolvedValue(null);
+    readNormalizedVendorResponsePackages.mockResolvedValue([]);
+  });
+
+  it("binds normalized vendor response packages as generation evidence", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    readNormalizedVendorResponsePackages.mockResolvedValue([
+      {
+        artifactId: "response-1",
+        originalName: "vendor-a.xlsx",
+        receivedAt: "2026-09-09T00:00:00.000Z",
+        vendorId: "vendor-a",
+        vendorName: "Vendor A",
+        rows: [],
+        analytics: {
+          requirementCount: 110,
+          requirementCoverageScore: 100,
+          mandatoryCompletenessScore: 100,
+          evidenceCoverageScore: 100,
+          pricingTraceabilityScore: 100,
+          slaTraceabilityScore: 100,
+          exceptionDisclosureScore: 100,
+          criterionLinkageScore: 100,
+          readyForEvaluation: "yes",
+          nonConformances: [],
+          clarificationQuestions: [],
+        },
+        parserWarnings: [],
+      },
+    ]);
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(readNormalizedVendorResponsePackages).toHaveBeenCalledWith({
+      eventId: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+      tenantKey: "apexretail",
+    });
+    expect(ctx?.normalizedVendorResponsePackages?.[0]?.vendorName).toBe(
+      "Vendor A",
+    );
   });
 
   it("binds parsed uploaded evidence chunks and facts for generation prompts", async () => {

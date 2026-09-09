@@ -2054,6 +2054,9 @@ Writing and format requirements:
       }
 
       lines.push(
+        "— NORMALIZED VENDOR RESPONSE PACKAGES (CONTROLLING INTAKE EVIDENCE) —",
+        formatNormalizedVendorResponsePackages(ctx),
+        "",
         "— PARSED UPLOADED RESPONSE EVIDENCE —",
         formatUploadedEvidence(ctx),
         "",
@@ -2142,6 +2145,9 @@ Writing and format requirements:
       }
 
       lines.push(
+        "— NORMALIZED VENDOR RESPONSE CLARIFICATIONS —",
+        formatNormalizedVendorResponsePackages(ctx),
+        "",
         "— UPLOADED Q&A / ADDENDUM EVIDENCE —",
         formatUploadedEvidence(ctx),
         "",
@@ -2228,6 +2234,9 @@ Writing and format requirements:
       }
 
       lines.push(
+        "— NORMALIZED VENDOR RESPONSE PACKAGES (CONTROLLING INTAKE EVIDENCE) —",
+        formatNormalizedVendorResponsePackages(ctx),
+        "",
         "— UPLOADED RESPONSE EVIDENCE —",
         formatUploadedEvidence(ctx),
         "",
@@ -4625,6 +4634,83 @@ function formatUploadedEvidence(ctx: SourceGenerationContext): string {
       return lines.join("\n");
     })
     .join("\n\n");
+}
+
+function formatNormalizedVendorResponsePackages(
+  ctx: SourceGenerationContext,
+): string {
+  const packages = ctx.normalizedVendorResponsePackages ?? [];
+  if (packages.length === 0) {
+    return "(no normalized vendor response packages available)";
+  }
+
+  const lines = [
+    "Use these latest-per-vendor normalized packages as the controlling intake record when an older uploaded file summary conflicts with them.",
+  ];
+  for (const responsePackage of packages) {
+    const rows = responsePackage.rows;
+    const dispositionCounts = new Map<string, number>();
+    for (const row of rows) {
+      const key = row.responseDisposition ?? "Missing";
+      dispositionCounts.set(key, (dispositionCounts.get(key) ?? 0) + 1);
+    }
+    const counts = [...dispositionCounts.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, count]) => `${key}=${count}`)
+      .join(", ");
+    const mandatoryRows = rows.filter(
+      (row) => row.requirementLevel === "Mandatory",
+    );
+    const citedRows = rows.filter(
+      (row) => (row.evidenceRefs?.length ?? 0) > 0,
+    );
+    const pricingRows = rows.filter((row) => Boolean(row.pricingRef));
+    const slaRows = rows.filter((row) => Boolean(row.slaRef));
+    const exceptionRows = rows.filter(
+      (row) =>
+        row.responseDisposition === "Exception" || Boolean(row.exceptionRef),
+    );
+    const issueRows = rows
+      .filter(
+        (row) =>
+          row.responseDisposition === "Partially Comply" ||
+          row.responseDisposition === "Exception" ||
+          row.responseDisposition === null,
+      )
+      .slice(0, 20);
+
+    lines.push(
+      "",
+      `### ${responsePackage.vendorName} (${responsePackage.vendorId})`,
+      `file=${responsePackage.originalName}; requirements=${rows.length}; mandatory=${mandatoryRows.length}; dispositions=${counts || "none"}`,
+      `quality: requirement=${responsePackage.analytics.requirementCoverageScore}%; mandatory=${responsePackage.analytics.mandatoryCompletenessScore}%; evidence=${responsePackage.analytics.evidenceCoverageScore}%; pricing=${responsePackage.analytics.pricingTraceabilityScore}%; SLA=${responsePackage.analytics.slaTraceabilityScore}%; exceptions=${responsePackage.analytics.exceptionDisclosureScore}%; criteria=${responsePackage.analytics.criterionLinkageScore}%; ready=${responsePackage.analytics.readyForEvaluation}`,
+      `traceability: cited_rows=${citedRows.length}; pricing_rows=${pricingRows.length}; SLA_rows=${slaRows.length}; exception_rows=${exceptionRows.length}`,
+    );
+    if (responsePackage.analytics.nonConformances.length > 0) {
+      lines.push(
+        "Nonconformances:",
+        ...responsePackage.analytics.nonConformances.map((item) => `- ${item}`),
+      );
+    }
+    if (responsePackage.analytics.clarificationQuestions.length > 0) {
+      lines.push(
+        "Clarifications:",
+        ...responsePackage.analytics.clarificationQuestions.map(
+          (item) => `- ${item}`,
+        ),
+      );
+    }
+    if (issueRows.length > 0) {
+      lines.push(
+        "Exception/partial/missing rows:",
+        ...issueRows.map(
+          (row) =>
+            `- ${row.requirementId} | ${row.responseDisposition ?? "Missing"} | ${row.responseNarrative ?? "No response narrative"} | evidence=${(row.evidenceRefs ?? []).join(", ") || "none"} | pricing=${row.pricingRef ?? "none"} | SLA=${row.slaRef ?? "none"} | exception=${row.exceptionRef ?? "none"}`,
+        ),
+      );
+    }
+  }
+  return lines.join("\n");
 }
 
 /**

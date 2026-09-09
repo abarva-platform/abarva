@@ -25,6 +25,7 @@ import type {
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { SourceStageKey } from "@/lib/source/types";
 import type { VendorProposalFactRecord } from "@/lib/source/vendor-proposals/types";
+import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
 import type {
   ContractEvidenceGenerationRecord,
   ContractEvidenceRuntimeSummary,
@@ -145,6 +146,12 @@ export interface SourceGenerationContext {
    * Empty array when no evidence has been uploaded or parsed.
    */
   uploadedEvidence?: SourceGenerationUploadedArtifact[];
+  /**
+   * Latest persisted normalized response package for each vendor. These rows
+   * are the controlling response-intake evidence for d13-d15 and downstream
+   * evaluation; generic uploaded-file excerpts must not override them.
+   */
+  normalizedVendorResponsePackages?: NormalizedVendorResponsePackage[];
   /**
    * Tenant- and event-scoped structured evidence loaded through the governed
    * contract-evidence import path. Summary supports claim discipline; records
