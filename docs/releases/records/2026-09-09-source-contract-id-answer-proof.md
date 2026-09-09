@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source aVa answers now preserve public Source contract identifiers that use multi-part contract codes, while continuing to scrub internal record identifiers before rendering. Contract 360 answers also include selected contract header fields so renewal timing, notice period, auto-renewal, and owner details can be reported from governed Source context.
+Source aVa answers now preserve public Source contract identifiers that use multi-part contract codes, while continuing to scrub internal record identifiers before rendering. Contract 360 answers also include selected contract header fields so renewal timing, notice period, auto-renewal, and owner details can be reported from governed Source context, even when serialized surface fields arrive as numeric strings.
 
 ## Layer Impact
 
@@ -42,6 +42,7 @@ Pass before merge:
 
 - `npm test -- --runTestsByPath src/lib/intelligence/answer/__tests__/answer-safety.test.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts src/lib/ava-answer/__tests__/render-layer-shaper.test.ts`
 - `npm test -- --runTestsByPath src/lib/agent/product-truth/__tests__/runtime-guard.test.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts src/lib/ava-answer/__tests__/render-layer-shaper.test.ts src/lib/intelligence/answer/__tests__/answer-safety.test.ts`
+- `npm test -- --runTestsByPath src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts src/lib/agent/product-truth/__tests__/runtime-guard.test.ts src/lib/ava-answer/__tests__/render-layer-shaper.test.ts src/lib/intelligence/answer/__tests__/answer-safety.test.ts`
 - `npx eslint src/lib/ava-answer/public-answer-scrub.ts src/lib/ava-answer/render-layer-shaper.ts src/lib/intelligence/answer/answer-safety.ts src/lib/source/ava/source-workspace-visual-answer.ts src/lib/intelligence/answer/__tests__/answer-safety.test.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts`
 - `npm run release:check`
 
