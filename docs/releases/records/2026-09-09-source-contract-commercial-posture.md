@@ -32,6 +32,8 @@ Layer 4 Products: Source presentation and Source aVa surface context changed. Th
 - Contract 360 renders the posture strip in both the product shell and the legacy canvas path ahead of the executive story panel.
 - Source aVa surface context includes posture facts, a contract-optimization answer frame, and demo-safe suggested prompts for commercial posture, value types, CFO wording, and vendor asks.
 - Deterministic Source aVa contract answers use Verdict, Rationale, Lever table, and Caveat sections for contract optimization questions.
+- Source opportunity readers treat loaded opportunity titles as display labels when the payload has no explicit label, preventing ID-like opportunity keys from appearing as the top-lever card headline.
+- The cloud-consumption loader now persists explicit display labels in opportunity payloads for future governed loads.
 
 ## QA / Validation
 
@@ -40,6 +42,7 @@ Layer 4 Products: Source presentation and Source aVa surface context changed. Th
 - `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' 'src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts' --runInBand` — required for the product-shell mount regression.
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx' 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts' 'src/lib/source/ava/source-workspace-visual-answer.ts'` — required for the product-shell follow-up.
 - `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' 'src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts' --runInBand` — required for contract posture lever-label formatting.
+- `npm test -- --runTestsByPath src/lib/source/data-model/__tests__/read-adapter.contract-optimization.test.ts 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' --runInBand` — required for loaded opportunity title normalization.
 
 ## Rollout Plan
 

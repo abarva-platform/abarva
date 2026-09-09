@@ -1299,6 +1299,8 @@ async function upsertOptimizationSpine(client, args, files) {
         value(opportunity, "title"),
         JSON.stringify({
           ...opportunity,
+          label: value(opportunity, "title"),
+          short_label: value(opportunity, "title"),
           source_opportunity_type: value(opportunity, "opportunity_type"),
           canonical_value_type: canonicalOpportunityValueType(opportunity),
           finance_confirmation_state: "not_confirmed",

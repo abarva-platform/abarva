@@ -92,7 +92,7 @@ describe("getContractOptimizationOpportunitySet", () => {
               approval_state: "requires_scope_owner_approval",
               narrative:
                 "Scope reduction is ready for an internal reclaim decision.",
-              payload: { label: "Scope reduction" },
+              payload: { title: "Scope reduction from loaded title" },
             },
             {
               tenant_key: "skyharbor_global",
@@ -221,6 +221,12 @@ describe("getContractOptimizationOpportunitySet", () => {
 
     expect(set?.contractId).toBe("CTR-090");
     expect(set?.baseline.status).toBe("ready");
+    expect(set?.opportunities[0]?.label).toBe(
+      "Scope reduction from loaded title",
+    );
+    expect(set?.opportunities[0]?.shortLabel).toBe(
+      "Scope reduction from loaded title",
+    );
     expect(set?.evidenceRequirements).toEqual([
       "Review included invoice lines and complete the amendment search.",
     ]);
