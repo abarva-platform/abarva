@@ -177,6 +177,28 @@ describe("Source Workspace visual aVa answer", () => {
     ).toBe(true);
   });
 
+  it("routes simple contract summary prompts through deterministic selected-contract answers", () => {
+    const context = sourceContext();
+    const query = "Summarize this contract.";
+
+    expect(
+      canBuildSourceWorkspaceVisualAnswer({ query, surfaceContext: context }),
+    ).toBe(true);
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query,
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain(
+      "Salesforce Data Platform Agreement 3 (CTR-090)",
+    );
+    expect(answer?.directAnswer).toContain("vendor Salesforce");
+    expect(answer?.directAnswer).toContain("contract ID CTR-090");
+    expect(answer?.directAnswer).not.toContain("()");
+    expect(answer?.directAnswer).not.toContain("(contract -)");
+  });
+
   it("does not fall back to raw conflicted values when the governed opportunity is blocked", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: {
