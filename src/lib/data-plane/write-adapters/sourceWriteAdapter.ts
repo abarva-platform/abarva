@@ -105,6 +105,17 @@ export interface SourceLifecycleTransition {
   readonly updatedAtIso: string;
 }
 
+/** Correct governed intake fields without changing lifecycle or stage state. */
+export interface SourceEventIntakeUpdate {
+  readonly eventId: string;
+  readonly clientKey: string;
+  readonly triggerDescription?: string;
+  readonly scopeDescription?: string;
+  readonly decisionOwner?: string;
+  readonly estimatedValueUsd?: number;
+  readonly updatedAtIso: string;
+}
+
 /** Flip a per-event gate-criterion state. */
 export interface GateCriterionUpdate {
   readonly criterionRowId: string;
@@ -175,6 +186,10 @@ export interface SourceWriteAdapter {
   /** Update only the persisted event lifecycle. */
   transitionLifecycle(
     input: SourceLifecycleTransition,
+  ): Promise<SourceWriteOutcome<void>>;
+  /** Correct whitelisted event-intake fields on the tenant-owned event. */
+  updateEventIntake(
+    input: SourceEventIntakeUpdate,
   ): Promise<SourceWriteOutcome<void>>;
   /** Update a gate-criterion row; returns the updated row. */
   updateGateCriterion(
@@ -314,6 +329,31 @@ export function createSupabaseSourceWriteAdapter(
           lifecycle_state: input.lifecycleState,
           updated_at: input.updatedAtIso,
         })
+        .eq("id", input.eventId)
+        .eq("client_key", input.clientKey);
+      if (error) return fail(error.message);
+      return ok();
+    },
+
+    async updateEventIntake(input) {
+      const columns: Record<string, unknown> = {
+        updated_at: input.updatedAtIso,
+      };
+      if (input.triggerDescription !== undefined) {
+        columns.trigger_description = input.triggerDescription;
+      }
+      if (input.scopeDescription !== undefined) {
+        columns.scope_description = input.scopeDescription;
+      }
+      if (input.decisionOwner !== undefined) {
+        columns.decision_owner = input.decisionOwner;
+      }
+      if (input.estimatedValueUsd !== undefined) {
+        columns.estimated_value_usd = input.estimatedValueUsd;
+      }
+      const { error } = await getClient()
+        .from("source_events")
+        .update(columns)
         .eq("id", input.eventId)
         .eq("client_key", input.clientKey);
       if (error) return fail(error.message);
@@ -576,6 +616,41 @@ export function createAzureSourceWriteAdapter(
               input.eventId,
               input.clientKey,
             ],
+          ),
+        );
+        return ok();
+      } catch (err) {
+        return fail(errMessage(err));
+      }
+    },
+
+    async updateEventIntake(input) {
+      try {
+        const assignments = ["updated_at = $1"];
+        const values: unknown[] = [input.updatedAtIso];
+        if (input.triggerDescription !== undefined) {
+          values.push(input.triggerDescription);
+          assignments.push(`trigger_description = $${values.length}`);
+        }
+        if (input.scopeDescription !== undefined) {
+          values.push(input.scopeDescription);
+          assignments.push(`scope_description = $${values.length}`);
+        }
+        if (input.decisionOwner !== undefined) {
+          values.push(input.decisionOwner);
+          assignments.push(`decision_owner = $${values.length}`);
+        }
+        if (input.estimatedValueUsd !== undefined) {
+          values.push(input.estimatedValueUsd);
+          assignments.push(`estimated_value_usd = $${values.length}`);
+        }
+        values.push(input.eventId, input.clientKey);
+        await session((run) =>
+          run(
+            `UPDATE source_events
+               SET ${assignments.join(", ")}
+             WHERE id = $${values.length - 1} AND client_key = $${values.length}`,
+            values,
           ),
         );
         return ok();
