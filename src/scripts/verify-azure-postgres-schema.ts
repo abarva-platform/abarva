@@ -15,6 +15,15 @@ const TABLES_TO_VERIFY = [
   'source_events',
   'gate_criteria',
   'ai_initiatives_registry',
+  'source_contract_evidence_manifests',
+  'source_contract_evidence_rows',
+  'source_contract_evidence_metrics',
+];
+
+const REQUIRED_SOURCE_EVIDENCE_TABLES = [
+  'source_contract_evidence_manifests',
+  'source_contract_evidence_rows',
+  'source_contract_evidence_metrics',
 ];
 
 async function scalar<T = unknown>(client: Client, sql: string): Promise<T> {
@@ -45,6 +54,15 @@ async function main() {
     for (const table of TABLES_TO_VERIFY) {
       const exists = await scalar<boolean>(client, `select to_regclass('public.${table}') is not null`);
       summary[table] = exists ? await scalar<number>(client, `select count(*)::int from ${table}`) : null;
+    }
+
+    const missingSourceEvidenceTables = REQUIRED_SOURCE_EVIDENCE_TABLES.filter(
+      (table) => summary[table] === null,
+    );
+    if (missingSourceEvidenceTables.length > 0) {
+      throw new Error(
+        `Required Source evidence tables are missing: ${missingSourceEvidenceTables.join(', ')}`,
+      );
     }
 
     console.log(JSON.stringify(summary, null, 2));

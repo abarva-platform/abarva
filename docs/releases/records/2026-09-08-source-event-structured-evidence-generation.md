@@ -33,6 +33,7 @@ Source artifact generation now reads the structured contract evidence already lo
 - Correct SLA miss direction handling and derive unclaimed service credits only from explicit credit fields.
 - Remove prompt language that allowed plausible invented baselines.
 - Add an approver-only review action that promotes a Scope evidence requirement only when an accepted same-tenant, same-event manifest contains accepted rows for the mapped evidence family.
+- Restore the three physical structured-evidence tables when a historical migration ledger entry exists without the corresponding relations, and make Azure schema verification fail if they are absent.
 
 ## QA / Validation
 
