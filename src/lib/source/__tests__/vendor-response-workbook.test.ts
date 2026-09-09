@@ -1,7 +1,10 @@
 import ExcelJS from "exceljs";
 
 import { parseNormalizedVendorResponseWorkbook } from "../vendor-response-workbook";
-import { deriveVendorResponseSeedInputsFromNormalized } from "../vendor-response-completeness-from-normalized";
+import {
+  deriveVendorResponseProfilesFromNormalized,
+  deriveVendorResponseSeedInputsFromNormalized,
+} from "../vendor-response-completeness-from-normalized";
 
 const HEADERS = [
   "Requirement ID",
@@ -48,6 +51,34 @@ async function workbookBytes(): Promise<Buffer> {
   return Buffer.from(buffer);
 }
 
+async function syntheticWorkbookBytes(): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  const cover = workbook.addWorksheet("Cover");
+  cover.addRow(["Vendor name", "Example Services LLC"]);
+  cover.addRow(["Status", "Completed synthetic demo response."]);
+  const mandatory = workbook.addWorksheet("Mandatory Items");
+  mandatory.addRow(HEADERS);
+  mandatory.addRow([
+    "REQ-COM-001",
+    "commercial and pricing",
+    "Pricing",
+    "Provide the recurring run price.",
+    "Scored",
+    "Pricing",
+    "CRIT-COM-01",
+    "Yes",
+    "Comply",
+    "Recurring run pricing is supplied in the normalized pricing schedule.",
+    "Pricing Exhibit, row 12",
+    "PRICE-RUN-001",
+    "",
+    "",
+    "Commercial lead",
+  ]);
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer);
+}
+
 describe("normalized vendor response workbook", () => {
   it("parses the issued workbook shape and computes traceability", async () => {
     const parsed = await parseNormalizedVendorResponseWorkbook({
@@ -67,6 +98,7 @@ describe("normalized vendor response workbook", () => {
         criterionLinkageScore: 100,
         readyForEvaluation: "yes",
       },
+      syntheticDemo: false,
     });
     expect(parsed?.rows[0]).toMatchObject({
       requirementId: "REQ-COM-001",
@@ -74,6 +106,14 @@ describe("normalized vendor response workbook", () => {
       pricingRef: "PRICE-RUN-001",
       vendorOwner: "Commercial lead",
     });
+  });
+
+  it("preserves an explicit synthetic-demo declaration from the workbook", async () => {
+    const parsed = await parseNormalizedVendorResponseWorkbook({
+      buffer: await syntheticWorkbookBytes(),
+    });
+
+    expect(parsed?.syntheticDemo).toBe(true);
   });
 
   it("derives package readiness without claiming vendor merit", async () => {
@@ -99,6 +139,56 @@ describe("normalized vendor response workbook", () => {
     });
     expect(seed[0].submittedSections).toEqual(
       expect.arrayContaining(["Pricing template", "References and evidence"]),
+    );
+  });
+
+  it("builds evidence-bound response intelligence without inventing bid values", async () => {
+    const parsed = await parseNormalizedVendorResponseWorkbook({
+      buffer: await workbookBytes(),
+    });
+    const profiles = deriveVendorResponseProfilesFromNormalized({
+      packages: [
+        {
+          ...parsed!,
+          artifactId: "artifact-1",
+          originalName: "example-response.xlsx",
+          receivedAt: "2026-09-08T00:00:00.000Z",
+        },
+      ],
+      event: { id: "event-1", name: "Managed services sourcing" },
+      tenantKey: "example-tenant",
+    });
+
+    expect(profiles).toMatchObject({
+      sourceEventId: "event-1",
+      tenantKey: "example-tenant",
+      profileCount: 1,
+      profiles: [
+        {
+          vendorName: "Example Services LLC",
+          responseCompleteness: { percent: 100 },
+          pricingSummary: {
+            yearOneRunCostUsd: null,
+            transitionCostUsd: null,
+            optionalCostUsd: null,
+          },
+          readyForEvaluation: "yes",
+        },
+      ],
+    });
+    expect(profiles?.profiles[0].pricingSummary.pricingBasis).toMatch(
+      /remain unclaimed until pricing facts are parsed and accepted/i,
+    );
+    expect(profiles?.profiles[0].evidenceProvided).toContain(
+      "Pricing Exhibit, row 12",
+    );
+    expect(profiles?.profiles[0].extractionCards).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "pricing",
+          evidenceReference: expect.stringContaining("PRICE-RUN-001"),
+        }),
+      ]),
     );
   });
 });

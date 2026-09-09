@@ -42,6 +42,7 @@ export interface ParsedNormalizedVendorResponse {
   rows: NormalizedRequirementResponse[];
   analytics: NormalizedResponseQualityAnalytics;
   parserWarnings: string[];
+  syntheticDemo: boolean;
 }
 
 export async function parseNormalizedVendorResponseWorkbook(args: {
@@ -150,6 +151,7 @@ export async function parseNormalizedVendorResponseWorkbook(args: {
     rows,
     analytics: analyzeNormalizedResponseQuality(rows),
     parserWarnings,
+    syntheticDemo: readSyntheticDemo(workbook),
   };
 }
 
@@ -219,6 +221,19 @@ function readVendorName(workbook: ExcelJS.Workbook): string | null {
     }
   }
   return null;
+}
+
+function readSyntheticDemo(workbook: ExcelJS.Workbook): boolean {
+  const sheet = workbook.getWorksheet("Cover");
+  if (!sheet) return false;
+  for (let rowNumber = 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
+    const row = sheet.getRow(rowNumber);
+    const label = cellText(row.getCell(1).value).trim().toLowerCase();
+    if (label !== "status" && label !== "synthetic policy") continue;
+    const value = cellText(row.getCell(2).value).trim();
+    if (/synthetic[ _-]*(?:demo|only)/i.test(value)) return true;
+  }
+  return false;
 }
 
 function slug(value: string): string {

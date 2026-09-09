@@ -41,7 +41,10 @@ import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repositor
 import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
 import { resolveVendorResponseSeedInputs } from "@/lib/source/vendor-response-completeness-from-profiles";
-import { deriveVendorResponseSeedInputsFromNormalized } from "@/lib/source/vendor-response-completeness-from-normalized";
+import {
+  deriveVendorResponseProfilesFromNormalized,
+  deriveVendorResponseSeedInputsFromNormalized,
+} from "@/lib/source/vendor-response-completeness-from-normalized";
 import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
 import {
   buildVendorBafoInstructionPack,
@@ -147,7 +150,7 @@ export default async function SourceEventDetailPage({
             },
           })
         : null;
-    const vendorResponseProfiles =
+    const seededVendorResponseProfiles =
       viewStage === "responses"
         ? buildVendorResponseMveProfiles({
             id: event.id,
@@ -169,6 +172,16 @@ export default async function SourceEventDetailPage({
             return [];
           })
         : [];
+    const vendorResponseProfiles =
+      viewStage === "responses"
+        ? ((activeClient?.key
+            ? deriveVendorResponseProfilesFromNormalized({
+                packages: normalizedResponsePackages,
+                event: { id: event.id, name: event.name },
+                tenantKey: activeClient.key,
+              })
+            : null) ?? seededVendorResponseProfiles)
+        : null;
     const normalizedResponseSeeds =
       deriveVendorResponseSeedInputsFromNormalized(normalizedResponsePackages);
     // Events outside the vendor-response seed table take their vendor
@@ -239,15 +252,13 @@ export default async function SourceEventDetailPage({
     // verification. File cards do not render body previews, so content remains a
     // server-side artifact concern rather than default route payload.
     const analyticsRegistryArtifacts =
-      await listSourceArtifactsForSourceEventId(event.id).catch(
-        (error) => {
-          console.error(
-            "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
-            error instanceof Error ? error.message : String(error),
-          );
-          return [];
-        },
-      );
+      await listSourceArtifactsForSourceEventId(event.id).catch((error) => {
+        console.error(
+          "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      });
     analyticsEvidenceStates = await listEffectiveEvidenceStatesForEvent(
       event.id,
     ).catch((error) => {
