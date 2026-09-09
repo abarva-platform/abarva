@@ -34,6 +34,7 @@ Source artifact generation now reads the structured contract evidence already lo
 - Remove prompt language that allowed plausible invented baselines.
 - Add an approver-only review action that promotes a Scope evidence requirement only when an accepted same-tenant, same-event manifest contains accepted rows for the mapped evidence family.
 - Restore the three physical structured-evidence tables when a historical migration ledger entry exists without the corresponding relations, and make Azure schema verification fail if they are absent.
+- Add a digest-pinned ACA operator job that loads an immutable, reconciled event-evidence payload and emits row-family, metric, idempotency, and quality-gate proof.
 
 ## QA / Validation
 
