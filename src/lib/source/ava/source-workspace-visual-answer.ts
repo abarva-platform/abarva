@@ -799,6 +799,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
     : ` No governed opportunity row is tied to this contract in the current Source aVa packet, so candidate opportunity value is not established; treat actionability and value as missing until the contract-specific evidence is loaded or opened.${contract.scopeSummary ? ` Evidence posture: ${contract.scopeSummary}.` : ""}`;
 
   const loadedContractFacts = [
+    `vendor ${contract.vendorName}`,
     `contract ID ${contract.contractId}`,
     `recorded annual value ${currencyLabel(contract.annualValueUsd)}`,
     `actual annual spend ${currencyLabel(contract.actualAnnualSpendUsd)}`,
