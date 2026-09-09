@@ -435,6 +435,93 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     });
   });
 
+  it("keeps evidence aliases when a selected vendor also exists in the register", () => {
+    const registerVendor = {
+      tenant_key: "tenant-a",
+      vendor_ref: "VEN-REGISTER",
+      vendor_name: "Register Cloud Vendor, Inc.",
+      vendor_category: null,
+      contract_count: 7,
+      annual_value: 17_300_000,
+      total_committed_value: 17_300_000,
+      auto_renew_contracts: 7,
+      next_end_date: null,
+      contract_refs: ["CTR-REGISTER-001"],
+      vendor_refs: [],
+    };
+    const portfolio = {
+      tenantKey: "tenant-a",
+      contracts: [],
+      impact: {
+        evidenceCoverage: [
+          {
+            tenant_key: "tenant-a",
+            contract_id: "CONTRACT-DEPTH-001",
+            vendor_ref: "VEN-REGISTER",
+            vendor_name: "Register Cloud Vendor, Inc.",
+            vendor_category: "cloud_platform",
+            contract_archetype: "cloud_services",
+            contract_name: "Primary cloud services agreement",
+            spend_rows: 12,
+            actual_spend_usd: 2_400_000,
+            committed_spend_usd: 2_300_000,
+            performance_rows: 0,
+            unclaimed_credit_usd: 0,
+            opportunity_rows: 5,
+            scope_rows: 2,
+            critical_scope_rows: 1,
+            document_page_text_rows: 4,
+            coverage_state: "decision_ready",
+          },
+          {
+            tenant_key: "tenant-a",
+            contract_id: "CONTRACT-DEPTH-002",
+            vendor_ref: "VEN-DEPTH-ALIAS",
+            vendor_name: "Register Cloud Vendor, Inc.",
+            vendor_category: "cloud_platform",
+            contract_archetype: "cloud_services",
+            contract_name: "Supplemental cloud services agreement",
+            spend_rows: 12,
+            actual_spend_usd: 22_000_000,
+            committed_spend_usd: 21_100_000,
+            performance_rows: 0,
+            unclaimed_credit_usd: 0,
+            opportunity_rows: 1,
+            scope_rows: 1,
+            critical_scope_rows: 0,
+            document_page_text_rows: 2,
+            coverage_state: "decision_ready",
+          },
+        ],
+        actionCandidates: [],
+        claimCards: [],
+      },
+    };
+
+    const selectedVendor = resolveSelectedVendor(
+      portfolio as never,
+      [registerVendor as never],
+      "VEN-REGISTER",
+    );
+
+    expect(selectedVendor?.vendor_ref).toBe("VEN-REGISTER");
+    expect(selectedVendor?.vendor_refs).toEqual([
+      "VEN-REGISTER",
+      "VEN-DEPTH-ALIAS",
+    ]);
+    expect(
+      coverageForVendor(
+        selectedVendor as never,
+        vendorCoverageRows(portfolio as never),
+      ),
+    ).toMatchObject({
+      spendRows: 24,
+      performanceRows: 0,
+      actionRows: 6,
+      unclaimedCredit: 0,
+    });
+  });
+
   it("keeps portfolio summary and concentration on the governed register rows", () => {
     const portfolio = {
       tenantKey: "meridian-health",
