@@ -274,6 +274,10 @@ export interface SourcingEventSummary {
 export interface SourcingEventDetail extends SourcingEventSummary {
   synopsis: string;
   problemStatement: string;
+  /** Persisted intake trigger, kept separate from the user-facing problem summary. */
+  triggerDescription?: string | null;
+  /** Persisted intake scope, kept separate from the trigger. */
+  scopeDescription?: string | null;
   stages: WorkflowStage[];
   alerts: SourceAlert[];
   artifacts: SourceArtifactSummary[];

@@ -208,6 +208,8 @@ describe("buildSourceGenerationContext", () => {
     getSourcingEvent.mockResolvedValue({
       ...makeSeedEvent(),
       id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+      triggerDescription: "Renewal and run-cost pressure.",
+      scopeDescription: "Eight-system analytics managed-services scope.",
     });
     isUuid.mockImplementation(
       (value: string) => value === "522eedf2-ff6b-4307-b312-3e0903c6fd42",
@@ -257,6 +259,12 @@ describe("buildSourceGenerationContext", () => {
         factSummaries: ['artifact_summary/text_uploaded: {"chunk_count":1}'],
       }),
     ]);
+    expect(ctx?.event.triggerDescription).toBe(
+      "Renewal and run-cost pressure.",
+    );
+    expect(ctx?.event.scopeDescription).toBe(
+      "Eight-system analytics managed-services scope.",
+    );
   });
 
   it("binds current and next-stage guidebooks for workflow-aware artifact prompts", async () => {

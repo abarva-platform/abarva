@@ -68,6 +68,8 @@ describe("Source persisted event row mapping", () => {
       "active",
     );
     expect(detail.problemStatement).toContain("Second attempt");
+    expect(detail.triggerDescription).toBe(baseRow.trigger_description);
+    expect(detail.scopeDescription).toBe(baseRow.scope_description);
     expect(
       detail.artifacts.some((artifact) => artifact.id.includes(baseRow.id)),
     ).toBe(true);

@@ -188,10 +188,16 @@ export async function buildSourceGenerationContext(
       currentStageKey: event.currentStageKey,
       statusLabel: event.statusLabel,
       owner: event.owner ?? null,
-      // SourcingEventDetail exposes synopsis + problemStatement which
-      // capture the trigger + scope narrative produced at intake time.
-      triggerDescription: extractTrigger(event.problemStatement) ?? null,
-      scopeDescription: event.problemStatement ?? null,
+      // Bind the persisted intake fields independently. `problemStatement`
+      // remains a compatibility fallback for seed events that predate the
+      // explicit trigger/scope fields; it must never be reused as scope.
+      triggerDescription:
+        event.triggerDescription ??
+        extractTrigger(event.problemStatement) ??
+        event.problemStatement ??
+        null,
+      scopeDescription:
+        event.scopeDescription ?? event.synopsis ?? null,
       estimatedValueUsd: event.valueAtStakeUsd ?? null,
     },
     artifactStates,

@@ -64,6 +64,19 @@ describe("Source artifact prompt registry provider config", () => {
         requirementId: "EVID-SRC-STR-INCUMBENT",
       }),
     ).toBe("Available parsed evidence — citation review pending");
+
+    ctx.uploadedEvidence = ctx.uploadedEvidence?.map((artifact) => ({
+      ...artifact,
+      factSummaries: ["contract_value_usd: 7850000"],
+    }));
+    expect(
+      resolveGenerationEvidenceState(ctx, {
+        ...evidenceBase,
+        requirementId: "EVID-SRC-STR-INCUMBENT",
+      }),
+    ).toBe(
+      "Available parsed evidence — file-level citation and structured facts bound; page/row locator review pending",
+    );
     expect(
       resolveGenerationEvidenceState(ctx, {
         ...evidenceBase,

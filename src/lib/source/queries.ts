@@ -919,6 +919,8 @@ export function sourceEventRowToDetail(
     ...summary,
     synopsis: `${summary.name} is a persisted Source event for ${accountName}. Ava is tracking intake, evidence, artifacts, approvals, and value from the live source_events row.`,
     problemStatement: trigger,
+    triggerDescription: row.trigger_description,
+    scopeDescription: row.scope_description,
     stages: buildWorkflowStagesForRow(row),
     alerts: buildAlertsForRow(row),
     artifacts: buildArtifactsForRow(row),
