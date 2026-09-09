@@ -82,6 +82,10 @@ jest.mock("@/lib/source/queries", () => ({
   scaffoldNewEventSubstrate: jest.fn(async () => undefined),
 }));
 
+jest.mock("@/lib/source/canvas-substrate/event-intake-sync", () => ({
+  syncEventIntakeEvidence: jest.fn(async () => false),
+}));
+
 jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
   selectSourceWriteAdapter: jest.fn(() => writeAdapter),
 }));

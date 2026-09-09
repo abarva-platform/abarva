@@ -48,6 +48,7 @@ import {
   validateApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
 import { scaffoldNewEventSubstrate } from "@/lib/source/queries";
+import { syncEventIntakeEvidence } from "@/lib/source/canvas-substrate/event-intake-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -129,7 +130,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const { data: persistedEvent, error: fetchError } = await supabase
       .from("source_events")
       .select(
-        "id, client_key, event_name, event_code, decision_owner, created_by_user_id",
+        "id, client_key, event_name, event_code, decision_owner, created_by_user_id, trigger_description",
       )
       .eq("id", eventId)
       .maybeSingle();
@@ -176,6 +177,14 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         "[source gate criterion] substrate scaffold repair failed:",
         error instanceof Error ? error.message : String(error),
       );
+    });
+    await syncEventIntakeEvidence({
+      sourceEventId: persistedEvent.id,
+      tenantKey: persistedEvent.client_key,
+      triggerDescription:
+        typeof persistedEvent.trigger_description === "string"
+          ? persistedEvent.trigger_description
+          : null,
     });
 
     const accessPolicy =
