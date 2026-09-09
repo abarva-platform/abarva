@@ -35,6 +35,7 @@ const SOURCE_TYPES = new Set<SourceContractEvidenceSourceType>([
 ]);
 
 const FAMILIES = new Set<SourceContractEvidenceFamily>([
+  "application_inventory",
   "contract_baseline",
   "invoice_summary",
   "invoice_exception",

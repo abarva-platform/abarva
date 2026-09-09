@@ -135,6 +135,47 @@ describe("Source contract evidence persistence payload", () => {
     });
   });
 
+  it("uses explicit breach direction and credit state for SLA metrics", () => {
+    const payload = buildContractEvidencePersistencePayload({
+      ...baseInput,
+      rows: [
+        ...baseInput.rows.filter((row) => row.family !== "sla_performance"),
+        {
+          family: "sla_performance",
+          payload: {
+            service_level: "Critical incident response minutes",
+            target_pct: 30,
+            actual_pct: 35,
+            threshold_direction: "maximum",
+            breach_state: "missed",
+            credit_owed_usd: 8177.08,
+            credit_claimed: false,
+            period: "2026-09-01",
+          },
+        },
+        {
+          family: "sla_performance",
+          payload: {
+            service_level: "Batch completion by 7am",
+            target_pct: 98,
+            actual_pct: 94,
+            threshold_direction: "minimum",
+            breach_state: "missed",
+            credit_owed_usd: 6541.67,
+            credit_claimed: true,
+            period: "2026-11-01",
+          },
+        },
+      ],
+    });
+
+    const metrics = Object.fromEntries(
+      payload.metrics.map((metric) => [metric.metric_key, metric.metric_value]),
+    );
+    expect(metrics.sla_miss_count).toBe(2);
+    expect(metrics.unclaimed_service_credit_usd).toBe(8177.08);
+  });
+
   it("marks incomplete packs partial and calls out synthetic demo evidence", () => {
     const payload = buildContractEvidencePersistencePayload({
       ...baseInput,

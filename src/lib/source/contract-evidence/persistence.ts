@@ -94,6 +94,7 @@ function amountFor(row: SourceContractEvidenceRowInput): number | null {
 function subjectFor(row: SourceContractEvidenceRowInput): string | null {
   const payload = row.payload;
   return (
+    asString(payload.application_name) ??
     asString(payload.contract_name) ??
     asString(payload.incumbent_vendor) ??
     asString(payload.service_level) ??
@@ -207,15 +208,48 @@ function deriveMetrics(
 
   const slaMisses = input.rows.filter((row) => {
     if (row.family !== "sla_performance") return false;
+    const breachState = asString(row.payload.breach_state)?.toLowerCase();
+    if (breachState) return !["met", "pass", "passed", "compliant"].includes(breachState);
     const target = asNumber(row.payload.target_pct);
     const actual = asNumber(row.payload.actual_pct);
-    return target !== null && actual !== null && actual < target;
+    const direction = asString(row.payload.threshold_direction)?.toLowerCase();
+    if (target === null || actual === null) return false;
+    return direction === "maximum" || direction === "max"
+      ? actual > target
+      : actual < target;
   }).length;
   if (slaMisses > 0) {
     metrics.push(
       metric(input, "sla_miss_count", "SLA misses", slaMisses, "count", "sla_performance", {
         calculation: "count(actual_pct < target_pct)",
       }),
+    );
+  }
+
+  const unclaimedCredits = input.rows
+    .filter(
+      (row) =>
+        row.family === "sla_performance" &&
+        asBoolean(row.payload.credit_claimed) === false,
+    )
+    .reduce(
+      (total, row) => total + (asNumber(row.payload.credit_owed_usd) ?? 0),
+      0,
+    );
+  if (unclaimedCredits > 0) {
+    metrics.push(
+      metric(
+        input,
+        "unclaimed_service_credit_usd",
+        "Calculated service credits not claimed",
+        unclaimedCredits,
+        "USD",
+        "sla_performance",
+        {
+          calculation:
+            "sum(credit_owed_usd where credit_claimed=false); explicit evidence fields only",
+        },
+      ),
     );
   }
 

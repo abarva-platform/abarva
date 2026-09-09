@@ -25,6 +25,10 @@ import type {
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { SourceStageKey } from "@/lib/source/types";
 import type { VendorProposalFactRecord } from "@/lib/source/vendor-proposals/types";
+import type {
+  ContractEvidenceGenerationRecord,
+  ContractEvidenceRuntimeSummary,
+} from "@/lib/source/contract-evidence/read-model";
 
 /**
  * Audit receipt persisted to body_generation_metadata after an Anthropic
@@ -137,6 +141,15 @@ export interface SourceGenerationContext {
    * Empty array when no evidence has been uploaded or parsed.
    */
   uploadedEvidence?: SourceGenerationUploadedArtifact[];
+  /**
+   * Tenant- and event-scoped structured evidence loaded through the governed
+   * contract-evidence import path. Summary supports claim discipline; records
+   * provide exact application, ticket, SLA, staffing, and commercial inputs.
+   */
+  structuredContractEvidence?: {
+    summary: ContractEvidenceRuntimeSummary;
+    records: ContractEvidenceGenerationRecord[];
+  };
   /**
    * Archetype-specific commercial intelligence block (traps, levers, failure
    * modes) resolved from the event's classified category. Pre-formatted for
