@@ -601,6 +601,57 @@ describe("buildSourceEventShellView", () => {
     );
   });
 
+  it("does not route a terminal stage for approval after its approval is recorded", () => {
+    const completeValueStage: StageAnalyticsView = {
+      ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),
+      stageKey: "value",
+      stageName: "Value",
+      tasks: (SAMPLE_SCOPE_STAGE as StageAnalyticsView).tasks.map((task) => ({
+        ...task,
+        state: "done",
+        evidenceComplete: true,
+      })),
+    };
+    const valueApproval: ApprovalsInboxItem = {
+      ...APPROVAL,
+      stageKey: "value",
+      stageLabel: "Value",
+      ask: "Approve advancing out of Value.",
+    };
+
+    const view = buildSourceEventShellView({
+      event: {
+        ...EVENT,
+        currentStageKey: "value",
+        currentStageLabel: "Value",
+      },
+      tenantName: "FS Demo",
+      viewedStageKey: "value",
+      stageView: completeValueStage,
+      approvalItems: [valueApproval],
+      approvalLedger: [
+        {
+          stageKey: "value",
+          stageLabel: "Value",
+          index: 11,
+          state: "approved",
+          approverName: "A. Approver",
+          approvedAtIso: "2026-09-09T00:00:00.000Z",
+          authorizationNote: "Approved by A. Approver.",
+          approverRationale: "Final value record accepted.",
+        },
+      ],
+    });
+
+    expect(view.stage.approvalRecorded).toBe(true);
+    expect(view.stage.gateReadinessLine).toContain("approval is recorded");
+    expect(view.stage.approvalCtaLabel).toBe("View Value approval record");
+    expect(view.approvals.currentStageItem).toBeNull();
+    expect(view.approvals.readinessLine).toBe(
+      "Value approval is recorded. No further stage decision is required.",
+    );
+  });
+
   it("does not present completed RFP inputs as cleanly ready when gate artifacts are draft or missing", () => {
     const completeRfpStage: StageAnalyticsView = {
       ...(SAMPLE_SCOPE_STAGE as StageAnalyticsView),

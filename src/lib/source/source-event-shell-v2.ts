@@ -209,6 +209,7 @@ export interface SourceEventShellView {
     readyPct: number;
     groups: SourceShellStepGroup[];
     activeStep: SourceShellStep | null;
+    approvalRecorded: boolean;
     gateReadinessLine: string;
     artifactReadiness: SourceShellStageArtifactReadiness;
     approvalHref: string;
@@ -439,6 +440,10 @@ export function buildSourceEventShellView(
   const currentStageApprovalWorkspaceHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(visibleCurrentStageKey)}&workspace=approvals`;
   const viewedStageIsCurrent = input.viewedStageKey === visibleCurrentStageKey;
   const completedViewedStage = total > 0 && ready === total;
+  const viewedStageApprovalRecorded = approvedStageKeys.has(input.viewedStageKey);
+  const currentStageApprovalRecorded = approvedStageKeys.has(
+    visibleCurrentStageKey,
+  );
   const stageReadyWithArtifactGaps =
     completedViewedStage && !artifactReadiness.ready;
   const normalizedCurrentStageItem = rawCurrentStageItem
@@ -449,8 +454,9 @@ export function buildSourceEventShellView(
         currentStageApprovalWorkspaceHref,
       )
     : null;
-  const currentStageItem =
-    normalizedCurrentStageItem && viewedStageIsCurrent
+  const currentStageItem = currentStageApprovalRecorded
+    ? null
+    : normalizedCurrentStageItem && viewedStageIsCurrent
       ? {
           ...normalizedCurrentStageItem,
           status: completedViewedStage
@@ -513,8 +519,11 @@ export function buildSourceEventShellView(
       readyPct: total > 0 ? Math.round((ready / total) * 100) : 0,
       groups,
       activeStep,
+      approvalRecorded: viewedStageApprovalRecorded,
       gateReadinessLine:
-        completedViewedStage && artifactReadiness.ready
+        viewedStageApprovalRecorded
+          ? `${viewedStageLabel} approval is recorded. No further approval is required for this stage.`
+          : completedViewedStage && artifactReadiness.ready
           ? "Stage complete - required inputs and gate artifacts are ready. Open the approval workspace to advance."
           : stageReadyWithArtifactGaps
             ? artifactReadiness.line
@@ -522,8 +531,12 @@ export function buildSourceEventShellView(
       artifactReadiness,
       approvalHref: stageApprovalWorkspaceHref,
       approvalCtaLabel: stageReadyWithArtifactGaps
-        ? `Review ${viewedStageLabel} approval gaps`
-        : `Open ${viewedStageLabel} approval`,
+        ? viewedStageApprovalRecorded
+          ? `View ${viewedStageLabel} approval record`
+          : `Review ${viewedStageLabel} approval gaps`
+        : viewedStageApprovalRecorded
+          ? `View ${viewedStageLabel} approval record`
+          : `Open ${viewedStageLabel} approval`,
       approvalLockedLabel: "Approval opens when required evidence is ready",
     },
     files: {
@@ -560,8 +573,10 @@ export function buildSourceEventShellView(
       items: approvals,
       currentStageItem,
       readinessLine:
-        currentStageItem?.readiness ??
-        "No approval item is currently routed for this viewed stage.",
+        viewedStageApprovalRecorded
+          ? `${viewedStageLabel} approval is recorded. No further stage decision is required.`
+          : currentStageItem?.readiness ??
+            "No approval item is currently routed for this viewed stage.",
       ledger: Array.from(input.approvalLedger ?? []),
     },
     guidebook: {
