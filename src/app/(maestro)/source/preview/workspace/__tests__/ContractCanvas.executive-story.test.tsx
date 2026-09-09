@@ -214,6 +214,94 @@ describe("ContractCanvas executive story", () => {
     expect(screen.queryByText("Contract optimization story")).toBeNull();
   });
 
+  it("summarizes the optimization levers in an executive strip", () => {
+    const base = executiveStoryVm();
+    const sixLeverVm = {
+      ...base,
+      opportunityView: {
+        ...base.opportunityView,
+        potential: {
+          ...base.opportunityView.potential,
+          negotiable: "$1.8M",
+          total: "$1.8M",
+        },
+        financeConfirmed: "Not established",
+        opportunities: [
+          {
+            ...base.opportunityView.opportunities[0],
+            stage: "Quantified",
+            stageRaw: "quantified",
+          },
+          {
+            ...base.opportunityView.opportunities[1],
+            stage: "Quantified",
+            stageRaw: "quantified",
+          },
+          {
+            ...base.opportunityView.opportunities[2],
+            stage: "Quantified",
+            stageRaw: "quantified",
+          },
+          {
+            id: "c1:discount",
+            shortLabel: "Discount band re-price",
+            label: "Discount band re-price",
+            valueType: "Negotiable Improvement",
+            amount: "$270K",
+            stage: "Signal",
+            stageRaw: "signal",
+            grade: "System Evidenced",
+            tone: "#ba7517",
+            selected: false,
+            blockingGap: "Benchmark comparable required.",
+            nextAction: "Load comparable benchmark.",
+          },
+          {
+            id: "c1:marketplace",
+            shortLabel: "Marketplace private offer",
+            label: "Marketplace private offer",
+            valueType: "Negotiable Improvement",
+            amount: "$150K",
+            stage: "Quantified",
+            stageRaw: "quantified",
+            grade: "Document Evidenced",
+            tone: "#1d9e75",
+            selected: false,
+            blockingGap: null,
+            nextAction: "Confirm marketplace route.",
+          },
+          {
+            id: "c1:serverless",
+            shortLabel: "Serverless parity check",
+            label: "Serverless parity check",
+            valueType: "Negotiable Improvement",
+            amount: "$55K",
+            stage: "Signal",
+            stageRaw: "signal",
+            grade: "System Evidenced",
+            tone: "#ba7517",
+            selected: false,
+            blockingGap: "Per-SKU comparison required.",
+            nextAction: "Load per-SKU comparison.",
+          },
+        ],
+      },
+    };
+
+    render(<ContractCanvas vm={sixLeverVm as never} />);
+
+    expect(screen.getByLabelText("Executive lever summary")).toBeTruthy();
+    expect(screen.getByLabelText("Levers: 6")).toBeTruthy();
+    expect(screen.getByLabelText("Negotiable: $1.8M")).toBeTruthy();
+    expect(screen.getByLabelText("Quantified: 4")).toBeTruthy();
+    expect(screen.getByLabelText("Signal-stage: 2")).toBeTruthy();
+    expect(screen.getByLabelText("Finance confirmed: 0")).toBeTruthy();
+    expect(screen.getByText("no outcome claimed")).toBeTruthy();
+    expect(
+      screen.getByText("requires more evidence before upgrade"),
+    ).toBeTruthy();
+  });
+
   it("uses the governed contract value as relationship baseline fallback", () => {
     const vm = {
       ...executiveStoryVm(),

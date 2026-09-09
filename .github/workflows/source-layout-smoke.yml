@@ -30,6 +30,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Normalize runner apt sources
+        shell: bash
+        run: |
+          for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*; do
+            if [[ -f "$source_file" ]] && grep -q "dl.google.com/linux/chrome" "$source_file"; then
+              sudo mv "$source_file" "${source_file}.disabled"
+            fi
+          done
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 

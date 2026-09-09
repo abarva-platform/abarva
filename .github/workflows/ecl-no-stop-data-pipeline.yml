@@ -83,6 +83,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*; do
+            if [[ -f "$source_file" ]] && grep -q "dl.google.com/linux/chrome" "$source_file"; then
+              sudo mv "$source_file" "${source_file}.disabled"
+            fi
+          done
           sudo apt-get update
           sudo apt-get install -y postgresql postgresql-client
           pg_bin="$(find /usr/lib/postgresql -path '*/bin/initdb' -print | sort -V | tail -1)"

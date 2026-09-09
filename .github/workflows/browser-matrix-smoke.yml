@@ -45,6 +45,15 @@ jobs:
             echo "CLERK_SECRET_KEY=${clerk_sk_prefix}${clerk_sk_suffix}" >> "$GITHUB_ENV"
           fi
 
+      - name: Normalize runner apt sources
+        shell: bash
+        run: |
+          for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/*; do
+            if [[ -f "$source_file" ]] && grep -q "dl.google.com/linux/chrome" "$source_file"; then
+              sudo mv "$source_file" "${source_file}.disabled"
+            fi
+          done
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium firefox webkit
 
