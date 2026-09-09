@@ -83,3 +83,14 @@ export interface NormalizedResponseQualityAnalytics {
   nonConformances: string[];
   clarificationQuestions: string[];
 }
+
+export interface NormalizedVendorResponsePackage {
+  artifactId: string;
+  originalName: string;
+  receivedAt: string;
+  vendorId: string;
+  vendorName: string;
+  rows: NormalizedRequirementResponse[];
+  analytics: NormalizedResponseQualityAnalytics;
+  parserWarnings: string[];
+}

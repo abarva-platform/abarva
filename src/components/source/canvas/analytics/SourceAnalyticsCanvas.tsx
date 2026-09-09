@@ -25,6 +25,7 @@ import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tab
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
 import { SourceVendorSelectionReadinessPanel } from "@/components/source/SourceVendorSelectionReadinessPanel";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
+import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
 import type {
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
@@ -218,6 +219,7 @@ interface SourceAnalyticsCanvasProps {
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
+  normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -694,6 +696,7 @@ export function SourceAnalyticsCanvas({
   vendorBafoInstructionPack = null,
   vendorEvaluationDecisionView = null,
   vendorResponseParseReports = [],
+  normalizedResponsePackages = [],
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const resolvedInitialWorkspace = initialWorkspace ?? "steps";
@@ -820,6 +823,7 @@ export function SourceAnalyticsCanvas({
               vendorBafoInstructionPack={vendorBafoInstructionPack}
               vendorEvaluationDecisionView={vendorEvaluationDecisionView}
               vendorResponseParseReports={vendorResponseParseReports}
+              normalizedResponsePackages={normalizedResponsePackages}
               evidenceStates={evidenceStates}
               eventDisplayName={event.name}
               contractOptimizationProfile={contractOptimizationProfile}
@@ -1064,6 +1068,7 @@ function SourceWorkspace({
   vendorBafoInstructionPack,
   vendorEvaluationDecisionView,
   vendorResponseParseReports,
+  normalizedResponsePackages,
   evidenceStates,
   eventDisplayName,
   contractOptimizationProfile,
@@ -1079,6 +1084,7 @@ function SourceWorkspace({
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
+  normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
   evidenceStates?: readonly SourceEventEvidence[];
   eventDisplayName?: string;
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
@@ -1133,6 +1139,7 @@ function SourceWorkspace({
             bafoInstructionPack={vendorBafoInstructionPack}
             evaluationDecisionView={vendorEvaluationDecisionView}
             parseReports={vendorResponseParseReports}
+            normalizedResponsePackages={normalizedResponsePackages}
             contractOptimizationProfile={contractOptimizationProfile}
             eventDisplayName={eventDisplayName}
             documentWorkspace={null}

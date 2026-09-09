@@ -57,6 +57,8 @@ import {
   buildMalformedSourceConsultingGradeReview,
   buildSourceQualityGateMetadata,
   buildSourceQualitySourceContext,
+  applyDeterministicSourceClaimGate,
+  findDeterministicSourceClaimViolations,
   parseSourceConsultingGradeReview,
   requiresSourceConsultingGradeGate,
   shortSourceArtifactCode,
@@ -1109,7 +1111,7 @@ async function runConsultingGradeQualityGate(args: {
     artifactCode: args.artifactCode,
   });
   const reviews = [];
-  const firstReview = await runConsultingGradeReview({
+  const firstReviewResult = await runConsultingGradeReview({
     artifactCode: args.artifactCode,
     artifactName: args.artifactName,
     body: args.body,
@@ -1119,9 +1121,17 @@ async function runConsultingGradeQualityGate(args: {
     artifactId: args.artifactId,
     model: args.model,
   });
-  if (!firstReview.ok) return firstReview;
-  reviews.push(firstReview.review);
-  if (firstReview.review.pass) {
+  if (!firstReviewResult.ok) return firstReviewResult;
+  const firstReview = applyDeterministicSourceClaimGate(
+    firstReviewResult.review,
+    findDeterministicSourceClaimViolations({
+      artifactCode: args.artifactCode,
+      body: args.body,
+      sourceContext,
+    }),
+  );
+  reviews.push(firstReview);
+  if (firstReview.pass) {
     return {
       ok: true,
       body: args.body,
@@ -1157,7 +1167,7 @@ async function runConsultingGradeQualityGate(args: {
     artifactName: args.artifactName,
     bodyMarkdown: args.body,
     sourceContext,
-    review: firstReview.review,
+    review: firstReview,
   });
   const rewritePreflight = await preflightAnthropicDirectClient({
     tenantId: args.tenantId,
@@ -1227,7 +1237,7 @@ async function runConsultingGradeQualityGate(args: {
     companyName: args.ctx.tenantName,
   });
 
-  const secondReview = await runConsultingGradeReview({
+  const secondReviewResult = await runConsultingGradeReview({
     artifactCode: args.artifactCode,
     artifactName: args.artifactName,
     body: rewrittenBody,
@@ -1237,8 +1247,16 @@ async function runConsultingGradeQualityGate(args: {
     artifactId: args.artifactId,
     model: args.model,
   });
-  if (!secondReview.ok) return secondReview;
-  reviews.push(secondReview.review);
+  if (!secondReviewResult.ok) return secondReviewResult;
+  const secondReview = applyDeterministicSourceClaimGate(
+    secondReviewResult.review,
+    findDeterministicSourceClaimViolations({
+      artifactCode: args.artifactCode,
+      body: rewrittenBody,
+      sourceContext,
+    }),
+  );
+  reviews.push(secondReview);
   const qualityGate = buildSourceQualityGateMetadata({
     reviews,
     rewriteAttempted: true,
