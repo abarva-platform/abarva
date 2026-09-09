@@ -72,6 +72,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).toContain(
       "<ProductShellOptimizationExecutiveStrip vm={vm} />",
     );
+    expect(source).toContain('tab === "Optimize"');
     expect(source).toContain('aria-label="Executive lever summary"');
     expect(source).toContain("Signal-stage");
     expect(source).toContain("requires more evidence before upgrade");

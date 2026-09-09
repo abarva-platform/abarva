@@ -28,7 +28,7 @@ Layer 4 products: updates the Source workspace contract canvas presentation. The
 
 ## Changes Included
 
-Adds the executive lever strip to the Source Contract 360 optimization story panel and the live Source Workspace product-shell Optimize queue. Adds regression coverage for the six-lever summary state and for the product shell retaining the strip. Disables runner-provided browser apt sources before CI dependency install steps that do not depend on those sources.
+Adds the executive lever strip to the Source Contract 360 optimization story panel, the live Source Workspace product-shell Optimize queue, and the Contract 360 Optimize subtab. Adds regression coverage for the six-lever summary state and for the product shell retaining the strip. Disables runner-provided browser apt sources before CI dependency install steps that do not depend on those sources.
 
 ## QA / Validation
 
