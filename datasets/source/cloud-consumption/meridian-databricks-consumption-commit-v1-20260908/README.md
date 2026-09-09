@@ -6,7 +6,12 @@ This package is Layer 1 intake evidence for governed Azure loading through scrip
 
 ## Contract visibility
 
-Source360 should show vendor Databricks, Inc., contract MER-TECH-DBX-001, annual platform commitment 1550000 USD, support fee 341000 USD, annual commercial value 1891000 USD, five-year committed value 7750000 USD, actual usage 66100 USD, and four candidate opportunities. Opportunity rows also preserve buyer ask, negotiation language, vendor concession, timing dependency, owner role, priority, and risk-if-ignored fields for Optimize and aVa grounding.
+Source360 should show vendor Databricks, Inc., contract MER-TECH-DBX-001, annual platform commitment 1550000 USD, support fee 341000 USD, annual commercial value 1891000 USD, five-year committed value 7750000 USD, actual usage 66100 USD, and six candidate opportunities. Four opportunities are document-evidenced package candidates; two are intentionally low-confidence signal-stage reviews that require benchmark or per-SKU evidence before they can be upgraded. Opportunity rows preserve buyer ask, negotiation language, vendor concession, timing dependency, owner role, priority, risk-if-ignored, and native-vs-Nexus fields for Optimize and aVa grounding.
+
+## Signal-stage opportunities
+
+- `OPT-DBX-DISCOUNT-REPRICE-001` requires one accepted benchmark comparable for a similar multi-year consumption-platform commitment before it can become a supported discount-band ask.
+- `OPT-DBX-SERVERLESS-PARITY-001` requires a per-SKU serverless-versus-classic comparison for the loaded jobs-compute workload before it can become a priced migration finding.
 
 ## Restricted-source boundary
 

@@ -2694,6 +2694,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             stage: fmtStage(opportunity.stage),
             stageRaw: opportunity.stage,
             grade: fmtGrade(opportunity.evidenceGrade),
+            confidence:
+              opportunity.confidence == null
+                ? "Not established"
+                : pct(opportunity.confidence),
             tone: stageTone(opportunity.stage),
             owner: opportunity.owner ?? "Not assigned",
             deadline: opportunity.deadline
@@ -3264,7 +3268,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         `Potential value is separated from finance confirmation: ${opportunityView.potential.recoverable} recoverable, ${opportunityView.potential.avoidable} avoidable, ${opportunityView.potential.negotiable} negotiable, ${opportunityView.financeConfirmed} finance-confirmed.`,
         ...opportunityView.opportunities.map(
           (opportunity) =>
-            `${opportunity.label}: ${opportunity.amount}; stage ${opportunity.stage}; evidence ${opportunity.grade}; owner ${opportunity.owner}; next action ${opportunity.nextAction}; blocking gap ${opportunity.blockingGap ?? "none"}.`,
+            `${opportunity.label}: ${opportunity.amount}; stage ${opportunity.stage}; confidence ${opportunity.confidence}; evidence ${opportunity.grade}; owner ${opportunity.owner}; next action ${opportunity.nextAction}; blocking gap ${opportunity.blockingGap ?? "none"}.`,
         ),
         ...(opportunityView.selectedOpportunity?.calculation
           ? [
@@ -3613,6 +3617,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               stage: opportunity.stage,
               stageRaw: opportunity.stageRaw,
               grade: opportunity.grade,
+              confidence: opportunity.confidence,
               owner: opportunity.owner,
               nextAction: opportunity.nextAction,
               blockingGap: opportunity.blockingGap,

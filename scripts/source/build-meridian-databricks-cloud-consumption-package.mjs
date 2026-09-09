@@ -275,7 +275,10 @@ async function buildWorkbook(csvs) {
   const supportFee = 341000;
   const committedTotal = 7750000;
   const utilization = spendTotal / annualCommit;
-  const opportunityHigh = 620000 + 341000 + 400000 + 150000;
+  const opportunityHigh = csvs.optimization_opportunities.reduce(
+    (total, row) => total + Number(row.annual_value_usd ?? 0),
+    0,
+  );
 
   summary.showGridLines = false;
   summary.getRange("A2").values = [["Meridian Databricks consumption commitment"]];
@@ -333,7 +336,7 @@ async function buildWorkbook(csvs) {
   opportunities.showGridLines = false;
   opportunities.getRange("A2").values = [["Candidate opportunities"]];
   opportunities.getRange("A2").format.font = { name: font, size: 14, bold: true };
-  opportunities.getRange("A4:G8").values = [
+  opportunities.getRange(`A4:G${4 + csvs.optimization_opportunities.length}`).values = [
     ["Opportunity", "Low", "High", "Priority", "Owner", "Recommended action", "Evidence rows"],
     ...csvs.optimization_opportunities.map((row) => [
       row.title,
@@ -346,7 +349,7 @@ async function buildWorkbook(csvs) {
     ]),
   ];
   opportunities.getRange("A4:G4").format = { fill: "#78350F", font: { name: font, bold: true, color: "#FFFFFF" } };
-  opportunities.getRange("B5:C8").format.numberFormat = "$#,##0";
+  opportunities.getRange(`B5:C${4 + csvs.optimization_opportunities.length}`).format.numberFormat = "$#,##0";
   opportunities.freezePanes.freezeRows(4);
 
   levers.showGridLines = false;
@@ -390,7 +393,7 @@ async function buildWorkbook(csvs) {
     ["Coverage months", 12, csvs.cloud_commitment_coverage_monthly.length, csvs.cloud_commitment_coverage_monthly.length === 12 ? "PASS" : "FAIL"],
     ["AP reconciliation months", 12, csvs.cloud_ap_invoice_reconciliation.length, csvs.cloud_ap_invoice_reconciliation.length === 12 ? "PASS" : "FAIL"],
     ["Synthetic evidence docs", 6, csvs.evidence_manifest.length, csvs.evidence_manifest.length === 6 ? "PASS" : "FAIL"],
-    ["Opportunities not finance-confirmed", 4, csvs.optimization_opportunities.filter((row) => row.finance_confirmation_state === "not_confirmed").length, "PASS"],
+    ["Opportunities not finance-confirmed", 6, csvs.optimization_opportunities.filter((row) => row.finance_confirmation_state === "not_confirmed").length, csvs.optimization_opportunities.filter((row) => row.finance_confirmation_state === "not_confirmed").length === 6 ? "PASS" : "FAIL"],
   ];
   checks.getRange("A4:D4").format = { fill: "#374151", font: { name: font, bold: true, color: "#FFFFFF" } };
   checks.getRange("D5:D11").conditionalFormats.add("containsText", {
@@ -682,11 +685,65 @@ async function main() {
       native_vs_nexus_note: "Nexus connects vendor contract action with cloud portfolio strategy.",
       source_file_id: sourceFile.awsEdp,
     },
+    {
+      opportunity_id: "OPT-DBX-DISCOUNT-REPRICE-001",
+      opportunity_type: "negotiated_improvement",
+      title: "Signal-stage discount band re-price review",
+      annual_value_usd: 270000,
+      amount_low_usd: 150000,
+      amount_high_usd: 450000,
+      confidence: 0.35,
+      stage: "signal",
+      amount_state: "range",
+      evidence_grade: "system_evidenced",
+      evidence_family: "discount_band_review",
+      evidence_rows: `clause:${contractId}:benchmarking_clause;clause:${contractId}:minimum_commitment;commitment:DBX-COMMIT-2025-Y1;${sourceFile.order}`,
+      recommended_action: "Treat as advisory until a comparable benchmark is loaded; request re-pricing evidence for the five-year volume tier.",
+      buyer_ask: "Re-price the platform services discount band after Finance loads an accepted comparable for a similar multi-year consumption-platform commitment.",
+      negotiation_language: "This is an advisory signal, not a document-proven finding. The current package shows the commitment size and confirms benchmarking is absent, so we are asking Databricks to re-open discount-band evidence once a comparable five-year volume benchmark is available.",
+      vendor_concession: "Databricks would move from the current discount position to a benchmark-supported tier if the buyer proves comparable market terms.",
+      timing_dependency: "Load one accepted benchmark comparable before treating this as an executive ask in the Year 2 amendment.",
+      owner_role: "Strategic Sourcing with Technology Finance",
+      priority: "P2",
+      blocking_gap: "Benchmark comparable required before discount-band value can be treated as supported.",
+      risk_if_ignored: "The buyer may negotiate only ramp timing and credits while leaving a potentially mispriced discount band untested.",
+      native_vs_nexus_note: "Nexus surfaces the missing benchmark as the point: native Databricks usage cannot prove whether the contracted discount band is market-appropriate.",
+      source_file_id: sourceFile.order,
+    },
+    {
+      opportunity_id: "OPT-DBX-SERVERLESS-PARITY-001",
+      opportunity_type: "negotiated_improvement",
+      title: "Signal-stage serverless/classic discount parity check",
+      annual_value_usd: 55000,
+      amount_low_usd: 30000,
+      amount_high_usd: 80000,
+      confidence: 0.3,
+      stage: "signal",
+      amount_state: "range",
+      evidence_grade: "system_evidenced",
+      evidence_family: "compute_mode_review",
+      evidence_rows: `cloud_usage:${contractId}:2026-08:JOBS-COMPUTE;cloud_usage:${contractId}:2026-09:JOBS-COMPUTE;${sourceFile.usage}`,
+      recommended_action: "Confirm discount parity and per-SKU economics before shifting bursty pilot jobs from classic compute to serverless.",
+      buyer_ask: "Confirm committed-discount treatment across serverless and classic compute and load a side-by-side per-SKU cost comparison before workload migration.",
+      negotiation_language: "This is a workload-shape signal, not a priced finding. The package shows bursty pilot jobs-compute usage, but it does not include per-SKU serverless comparison evidence, so the ask is to confirm discount parity before making serverless the default operating model.",
+      vendor_concession: "Databricks would preserve committed-discount economics across the target compute mode or provide a clear commercial bridge for the migrated workload.",
+      timing_dependency: "Complete before the pilot workload moves from classic jobs compute into production serverless jobs.",
+      owner_role: "Cloud FinOps and Enterprise Data Platforms",
+      priority: "P2",
+      blocking_gap: "Per-SKU serverless versus classic comparison required before value can be treated as priced.",
+      risk_if_ignored: "A technically sensible compute shift could dilute the committed discount or move spend into a SKU pattern the contract does not protect.",
+      native_vs_nexus_note: "Nexus flags the workload-shape question and the missing SKU comparison separately so aVa does not present the serverless move as proven savings.",
+      source_file_id: sourceFile.usage,
+    },
   ].map((opportunity) => ({
     tenant_key: tenantKey,
     dataset_version: datasetVersion,
     contract_id: contractId,
     confidence: 0.82,
+    stage: "quantified",
+    amount_state: "exact",
+    evidence_grade: "document_evidenced",
+    blocking_gap: "Finance confirmation and owner approval are required before realized value can be claimed.",
     finance_confirmation_state: "not_confirmed",
     vendor_ref: vendorRef,
     vendor_name: vendorName,
@@ -743,7 +800,7 @@ async function main() {
     ["Commitments", 2, "PASS", "Annual platform commitment and support fee are separated."],
     ["Coverage", 12, "PASS", "Commitment coverage rows retain the underuse trend by month."],
     ["AP reconciliation", 12, "PASS", "Billing export, invoice and paid amounts match in every synthetic month."],
-    ["Optimization opportunities", 4, "PASS", "All opportunities remain candidate and not finance-confirmed."],
+    ["Optimization opportunities", 6, "PASS", "All opportunities remain candidate and not finance-confirmed; two are low-confidence signal-stage reviews."],
     ["Synthetic evidence", 6, "PASS", "Evidence manifest maps to six synthetic markdown documents."],
   ].map(([check, row_count, pass, plain_english_result]) => ({ check, row_count, pass, plain_english_result }));
 
@@ -768,7 +825,7 @@ async function main() {
 
   await fs.writeFile(
     path.join(packageDir, "README.md"),
-    `# Meridian Databricks consumption commitment package\n\nSynthetic demo evidence package for a Databricks consumption-commit contract running on AWS.\n\nThis package is Layer 1 intake evidence for governed Azure loading through scripts/source/load-cloud-consumption-package.mjs. It is not client truth, it is not a real Databricks transaction, and it does not authorize finance-confirmed savings claims.\n\n## Contract visibility\n\nSource360 should show vendor ${vendorName}, contract ${contractId}, annual platform commitment 1550000 USD, support fee 341000 USD, annual commercial value 1891000 USD, five-year committed value 7750000 USD, actual usage 66100 USD, and four candidate opportunities. Opportunity rows also preserve buyer ask, negotiation language, vendor concession, timing dependency, owner role, priority, and risk-if-ignored fields for Optimize and aVa grounding.\n\n## Restricted-source boundary\n\nRaw/full Databricks contract files and pricing exhibits stay outside the public repo in local restricted storage. This repo package contains only synthetic source rows and synthetic markdown evidence summaries stamped ${syntheticPolicy}.\n\n## Non-mutating validation\n\nRun:\n\n\`\`\`bash\nnode scripts/source/load-cloud-consumption-package.mjs --mode=plan --dataset-version=${datasetVersion} --package-dir=${packageDir} --proof-dir=${packageDir}/qa/plan-proof\n\`\`\`\n\nMutating Layer 2/3/4 load requires the governed ACA data-build job path and explicit operator approval.\n`,
+    `# Meridian Databricks consumption commitment package\n\nSynthetic demo evidence package for a Databricks consumption-commit contract running on AWS.\n\nThis package is Layer 1 intake evidence for governed Azure loading through scripts/source/load-cloud-consumption-package.mjs. It is not client truth, it is not a real Databricks transaction, and it does not authorize finance-confirmed savings claims.\n\n## Contract visibility\n\nSource360 should show vendor ${vendorName}, contract ${contractId}, annual platform commitment 1550000 USD, support fee 341000 USD, annual commercial value 1891000 USD, five-year committed value 7750000 USD, actual usage 66100 USD, and six candidate opportunities. Four opportunities are document-evidenced package candidates; two are intentionally low-confidence signal-stage reviews that require benchmark or per-SKU evidence before they can be upgraded. Opportunity rows preserve buyer ask, negotiation language, vendor concession, timing dependency, owner role, priority, risk-if-ignored, and native-vs-Nexus fields for Optimize and aVa grounding.\n\n## Signal-stage opportunities\n\n- \`OPT-DBX-DISCOUNT-REPRICE-001\` requires one accepted benchmark comparable for a similar multi-year consumption-platform commitment before it can become a supported discount-band ask.\n- \`OPT-DBX-SERVERLESS-PARITY-001\` requires a per-SKU serverless-versus-classic comparison for the loaded jobs-compute workload before it can become a priced migration finding.\n\n## Restricted-source boundary\n\nRaw/full Databricks contract files and pricing exhibits stay outside the public repo in local restricted storage. This repo package contains only synthetic source rows and synthetic markdown evidence summaries stamped ${syntheticPolicy}.\n\n## Non-mutating validation\n\nRun:\n\n\`\`\`bash\nnode scripts/source/load-cloud-consumption-package.mjs --mode=plan --dataset-version=${datasetVersion} --package-dir=${packageDir} --proof-dir=${packageDir}/qa/plan-proof\n\`\`\`\n\nMutating Layer 2/3/4 load requires the governed ACA data-build job path and explicit operator approval.\n`,
   );
 
   const manifest = {

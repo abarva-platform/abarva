@@ -5,5 +5,5 @@ Service usage,48,PASS,Four service rows per month split the synthetic Databricks
 Commitments,2,PASS,Annual platform commitment and support fee are separated.
 Coverage,12,PASS,Commitment coverage rows retain the underuse trend by month.
 AP reconciliation,12,PASS,"Billing export, invoice and paid amounts match in every synthetic month."
-Optimization opportunities,4,PASS,All opportunities remain candidate and not finance-confirmed.
+Optimization opportunities,6,PASS,All opportunities remain candidate and not finance-confirmed; two are low-confidence signal-stage reviews.
 Synthetic evidence,6,PASS,Evidence manifest maps to six synthetic markdown documents.

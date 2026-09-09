@@ -53,6 +53,11 @@ function fmtUsd(value: number | null | undefined): string {
   return USD_COMPACT.format(value);
 }
 
+function fmtPct(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "not established";
+  return `${Math.round(value * 100)}%`;
+}
+
 const VALUE_TYPE_LABEL: Record<OptimizationOpportunityValueType, string> = {
   recoverable_leakage: "Recoverable leakage",
   avoided_cost: "Avoided cost",
@@ -227,7 +232,7 @@ export async function buildAvaSourceContractGrounding(
         : "";
       return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${fmtUsd(
         opportunity.amountUsd,
-      )} · stage ${opportunity.stage} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
+      )} · stage ${opportunity.stage} · confidence ${fmtPct(opportunity.confidence)} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
     });
 
   const lines: string[] = [
