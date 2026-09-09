@@ -951,7 +951,7 @@ function formatStageGuidebookContext(
 const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
   d01_strategy_memo: {
     artifactCode: "d01_strategy_memo",
-    version: 3,
+    version: 4,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: [],
@@ -4559,7 +4559,17 @@ export function resolveGenerationEvidenceState(
         ),
     )
   ) {
-    return "Available parsed evidence — citation review pending";
+    const hasBoundFacts = (ctx.uploadedEvidence ?? []).some(
+      (artifact) =>
+        artifact.parseStatus === "parsed" &&
+        /(?:^|[_\s-])(msa|sow|contract|agreement)(?:[_\s.-]|$)/i.test(
+          artifact.originalName,
+        ) &&
+        (artifact.chunkExcerpts.length > 0 || artifact.factSummaries.length > 0),
+    );
+    return hasBoundFacts
+      ? "Available parsed evidence — file-level citation and structured facts bound; page/row locator review pending"
+      : "Available parsed evidence — citation review pending";
   }
   if (
     includeD09Coverage &&

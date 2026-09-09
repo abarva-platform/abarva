@@ -115,6 +115,8 @@ export function buildConsultingGradeReviewPrompt(args: {
     "- A clean, well-formatted but shallow artifact must fail.",
     "- Flag any claim that needs evidence, any missing table, and any client-to-complete gap.",
     "- Score this as a governed draft, not an issued final. Do not penalize explicit [CLIENT TO SET], [CLIENT TO COMPLETE], [ASSUMPTION TO VALIDATE], or evidence-pending placeholders when they are clearly registered with owner/action/impact and not hidden as facts.",
+    "- Parsed uploaded files with bound excerpts or structured facts are usable governed-draft evidence when the artifact cites the business filename and the claim matches the bound source context. A pending page/row locator prevents final issue, but does not by itself make a matching file-cited draft claim unsupported.",
+    "- A statement that a benchmark or evidence family is absent from the bound source context is a governed gap statement, not an external market claim. Penalize invented benchmark values or market assertions, not an explicit refusal to invent them.",
     "- If the bound source context contains a D09 RFP evidence coverage map where an uploaded exhibit satisfies an EVID-SRC-* requirement, do not treat an older scaffold row saying Not Requested as missing for that same requirement. Judge whether the artifact used the mapped exhibit and registered any remaining citation-review/client-closure action.",
     "- Penalize placeholders that are buried in the narrative, lack an owner/action, or would make the artifact unusable for its stated gate.",
     "",
