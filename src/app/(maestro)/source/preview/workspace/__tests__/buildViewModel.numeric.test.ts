@@ -444,6 +444,10 @@ describe("buildViewModel numeric coercion", () => {
           value: "No sized opportunity",
         }),
         expect.objectContaining({
+          label: "Top lever",
+          value: "Commercial baseline conflict",
+        }),
+        expect.objectContaining({
           label: "Evidence depth",
           value: "Partial",
         }),
