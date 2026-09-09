@@ -50,6 +50,17 @@ const splitList = (value: string | null | undefined): string[] =>
     .split(/[;|]/)
     .map((item) => item.trim())
     .filter(Boolean);
+const hasEstablishedValue = (value: string | null | undefined): boolean => {
+  const text = (value ?? "").trim().toLowerCase();
+  return (
+    text.length > 0 &&
+    text !== "$0" &&
+    text !== "$0.0m" &&
+    text !== "not established" &&
+    text !== "not quantified" &&
+    text !== "not sized"
+  );
+};
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const publicEvidenceLabel = (
@@ -2791,6 +2802,164 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       .find((o) => o.contractId === contract?.row.contract_id)
       ?.rationale.join(" ") ??
     "No sourcing-opportunity rule has flagged this contract at the governed as-of date.";
+  const topOpportunity =
+    opportunityView?.opportunities
+      .slice()
+      .sort(
+        (left, right) =>
+          (right.amountUsd ?? Number.NEGATIVE_INFINITY) -
+          (left.amountUsd ?? Number.NEGATIVE_INFINITY),
+      )[0] ??
+    opportunityView?.selectedOpportunity ??
+    null;
+  const committedAnnualSpend =
+    numberFromDb(c?.committed_annual_spend) ?? numberFromDb(c?.annual_value);
+  const commitmentDelta =
+    committedAnnualSpend != null && effectiveActualAnnualSpend != null
+      ? effectiveActualAnnualSpend - committedAnnualSpend
+      : null;
+  const commitmentPosture =
+    committedAnnualSpend == null || effectiveActualAnnualSpend == null
+      ? {
+          value: "Commitment posture missing",
+          detail:
+            "Committed annual spend and actual annual spend are both required before Source can classify consumption posture.",
+          tone: COL.gray,
+        }
+      : effectiveActualAnnualSpend < committedAnnualSpend * 0.9
+        ? {
+            value: "Commitment ahead of usage",
+            detail: `${money(Math.abs(commitmentDelta ?? 0))} below committed annual baseline; use this as renegotiation-shape evidence, not realized savings.`,
+            tone: COL.amber,
+          }
+        : effectiveActualAnnualSpend > committedAnnualSpend * 1.05
+          ? {
+              value: "Spend above commitment",
+              detail: `${money(Math.abs(commitmentDelta ?? 0))} above committed annual baseline; test committed-use coverage before renewal or re-baseline.`,
+              tone: COL.red,
+            }
+          : {
+              value: "Commitment aligned",
+              detail:
+                "Actual annual spend is within the governed commitment band; prioritize terms, SLA, scope, and leverage evidence.",
+              tone: COL.teal,
+            };
+  const valueTypeSummary =
+    opportunityView == null
+      ? {
+          value: "Value type missing",
+          detail:
+            "No governed optimization opportunity set is loaded for this contract.",
+          tone: COL.gray,
+        }
+      : hasEstablishedValue(opportunityView.financeConfirmed)
+        ? {
+            value: "Finance-confirmed outcome",
+            detail: `${opportunityView.financeConfirmed} confirmed; potential value remains shown separately.`,
+            tone: "#246b45",
+          }
+        : hasEstablishedValue(opportunityView.potential.recoverable)
+          ? {
+              value: "Recoverable opportunity",
+              detail: `${opportunityView.potential.recoverable} recoverable; ${opportunityView.potential.avoidable} avoidable; ${opportunityView.potential.negotiable} negotiable.`,
+              tone: COL.red,
+            }
+          : hasEstablishedValue(opportunityView.potential.avoidable)
+            ? {
+                value: "Avoidable opportunity",
+                detail: `${opportunityView.potential.avoidable} avoidable; ${opportunityView.potential.negotiable} negotiable; finance-confirmed ${opportunityView.financeConfirmed}.`,
+                tone: COL.amber,
+              }
+            : hasEstablishedValue(opportunityView.potential.negotiable)
+              ? {
+                  value: "Negotiable opportunity",
+                  detail: `${opportunityView.potential.negotiable} negotiable; recoverable ${opportunityView.potential.recoverable}; avoidable ${opportunityView.potential.avoidable}.`,
+                  tone: COL.blue,
+                }
+              : {
+                  value: "No sized opportunity",
+                  detail:
+                    "Opportunity rows are not sized; Source should ask for evidence before framing value.",
+                  tone: COL.gray,
+                };
+  const evidenceGrades =
+    opportunitySet?.opportunities.map(
+      (opportunity) => opportunity.evidenceGrade,
+    ) ?? [];
+  const evidenceDepth =
+    evidenceGrades.length === 0
+      ? {
+          value: "Missing",
+          detail:
+            "No contract-specific opportunity evidence rows are loaded for this posture.",
+          tone: COL.gray,
+        }
+      : evidenceGrades.some(
+            (grade) => grade === "missing" || grade === "conflicted",
+          )
+        ? {
+            value: "Partial",
+            detail:
+              "At least one opportunity still has missing or conflicted evidence; keep blockers visible.",
+            tone: COL.amber,
+          }
+        : {
+            value: "Loaded",
+            detail:
+              "Opportunity evidence is system, document, human, or finance evidenced; finance outcome still remains a separate gate.",
+            tone: COL.teal,
+          };
+  const commercialPosture = c
+    ? {
+        headline: "Commercial posture",
+        summary:
+          "Source projects the existing Contract 360 and optimization rows into a decision strip; it does not create a savings claim.",
+        items: [
+          {
+            label: "Commitment posture",
+            value: commitmentPosture.value,
+            detail: commitmentPosture.detail,
+            tone: commitmentPosture.tone,
+          },
+          {
+            label: "Value type",
+            value: valueTypeSummary.value,
+            detail: valueTypeSummary.detail,
+            tone: valueTypeSummary.tone,
+          },
+          {
+            label: "Top lever",
+            value: topOpportunity?.shortLabel ?? "No lever loaded",
+            detail:
+              topOpportunity?.nextAction ??
+              "Load governed opportunity rows before naming a vendor ask.",
+            tone: topOpportunity ? COL.ink : COL.gray,
+          },
+          {
+            label: "Evidence depth",
+            value: evidenceDepth.value,
+            detail: evidenceDepth.detail,
+            tone: evidenceDepth.tone,
+          },
+          {
+            label: "Decision owner",
+            value:
+              topOpportunity?.owner && topOpportunity.owner !== "Not assigned"
+                ? topOpportunity.owner
+                : (c.renewal_owner_ref ?? "Not assigned"),
+            detail:
+              "Owner comes from the opportunity owner when loaded, otherwise the Contract 360 renewal owner.",
+            tone: COL.ink,
+          },
+          {
+            label: "Next action",
+            value: topOpportunity ? "Work the lever" : "Load evidence",
+            detail: topOpportunity?.nextAction ?? recWhy,
+            tone: topOpportunity ? COL.blue : COL.gray,
+          },
+        ],
+      }
+    : null;
 
   // ── opportunity canvas ──
   const o = opp
@@ -3104,6 +3273,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           : []),
       ]
     : [];
+  const sourceWorkspaceCommercialPostureFacts =
+    commercialPosture && kind === "contract"
+      ? [
+          `Commercial posture strip: ${commercialPosture.items
+            .map((item) => `${item.label} ${item.value} - ${item.detail}`)
+            .join(" | ")}.`,
+          "Contract-optimization answers must follow this frame when asked for levers, optimization rationale, CFO wording, or vendor asks: Verdict; Rationale; Lever table; Caveat.",
+        ]
+      : [];
   const sourceWorkspaceGraphFacts = [
     ...(optSpineView?.selected
       ? [
@@ -3170,6 +3348,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       "Name the exact Source basis: tab, selection, as-of date, row family, and evidence state.",
       "Use a compact table or chart artifact when rows support it; otherwise state the missing rows.",
       "End with the next operator action only when the current Source state supports one.",
+    ],
+    contractOptimizationResponseShape: [
+      "Verdict: state whether this is a candidate negotiation opportunity, avoidable opportunity, recoverable opportunity, or finance-confirmed outcome. Do not call candidate value realized savings.",
+      "Rationale: explain the commercial pattern and the governed evidence basis in consultant-grade prose.",
+      "Lever table: show lever, value, why it exists, evidence, owner, next action, and finance-confirmation status from loaded opportunity rows.",
+      "Caveat: name what Source refuses to claim until the missing evidence, approval, or finance gate is closed.",
     ],
   };
   const sourceWorkspaceCapabilities = {
@@ -3283,6 +3467,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     sourceFacts: [
       ...sourceWorkspaceOpportunityFacts,
       ...sourceWorkspaceLedgerFacts,
+      ...sourceWorkspaceCommercialPostureFacts,
       ...sourceWorkspaceQualityFacts,
       `aVa grounding status: ${sourceWorkspaceGroundingStatus.contractRows} contract rows, ${sourceWorkspaceGroundingStatus.vendorRows} vendor rows, ${sourceWorkspaceGroundingStatus.actionCandidates} action candidates, ${sourceWorkspaceGroundingStatus.claimCards} claim cards, ${sourceWorkspaceGroundingStatus.avaGroundingBundles} aVa grounding bundles.`,
       sourceWorkspaceClaimContract.posture,
@@ -3362,6 +3547,17 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               sourceConfidence: c.source_confidence,
             }
           : null,
+      commercialPosture: commercialPosture
+        ? {
+            headline: commercialPosture.headline,
+            summary: commercialPosture.summary,
+            items: commercialPosture.items.map((item) => ({
+              label: item.label,
+              value: item.value,
+              detail: item.detail,
+            })),
+          }
+        : null,
       contractDirectory: [
         ...vm.portfolio.contracts,
         ...(c &&
@@ -3531,6 +3727,16 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const avaSuggestedActions = (
     kind === "contract"
       ? [
+          [
+            "commercial-posture",
+            "Compare this contract's commercial posture with the portfolio.",
+          ],
+          [
+            "value-types",
+            "Which levers are negotiable, avoidable, or recoverable?",
+          ],
+          ["cfo-brief", "What can I safely say to a CFO?"],
+          ["vendor-ask", "What would we ask the vendor for next?"],
           ["weak-leverage", "Why does this contract carry weak leverage?"],
           ["evidence-gaps", "What evidence is missing for this contract?"],
         ]
@@ -3861,6 +4067,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     optLedger: optLedgerView,
     optSpine: optSpineView,
     opportunityView,
+    commercialPosture,
     optCtaLabel,
     optCtaDisabled: optLaunch?.status === "loading",
     optCtaError,

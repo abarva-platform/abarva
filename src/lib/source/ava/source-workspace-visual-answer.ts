@@ -75,6 +75,12 @@ interface SourceConnection {
   outcome: string;
 }
 
+interface SourceCommercialPostureLine {
+  label: string;
+  value: string;
+  detail: string;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -549,6 +555,33 @@ function connectionsFrom(context: AskSurfaceContext): SourceConnection[] {
     .slice(0, 6);
 }
 
+function commercialPostureLinesFrom(
+  context: AskSurfaceContext,
+): SourceCommercialPostureLine[] {
+  const source = sourceV4(context);
+  const posture = isRecord(source?.commercialPosture)
+    ? source.commercialPosture
+    : null;
+  const items = Array.isArray(posture?.items) ? posture.items : [];
+  return items
+    .flatMap((item): SourceCommercialPostureLine[] => {
+      if (!isRecord(item)) return [];
+      const label = stringValue(item.label);
+      const value = stringValue(item.value);
+      if (!label || !value) return [];
+      return [
+        {
+          label,
+          value,
+          detail:
+            stringValue(item.detail) ??
+            "No additional posture detail was supplied.",
+        },
+      ];
+    })
+    .slice(0, 8);
+}
+
 function wantsSourceVisualAnswer(query: string): boolean {
   return /\b(chart|visual|graph|relationship|table|tabular|ledger|evidence|source systems?|where.*data|contract context|contract details?|contract facts?|summari[sz]e|summary|tell me about.*contract|what(?:'s| is).*contract|renewal|notice period|auto[-\s]?renew|annual value|actual spend|vendor|lever(?:s)?|outside[-\s]?in|industry|actionable|actionability|why.*action|optimi[sz]e|opportunit(?:y|ies)|claim value|claim savings|realized? value|what.*missing|missing.*before|before.*claim)\b/i.test(
     query,
@@ -622,6 +655,9 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   }
   const lines = opportunityLinesFrom(input.surfaceContext, contract.contractId);
   const connections = connectionsFrom(input.surfaceContext);
+  const commercialPostureLines = commercialPostureLinesFrom(
+    input.surfaceContext,
+  );
   const contractMismatch =
     requestedContractId &&
     contract.contractId.toUpperCase() !== requestedContractId;
@@ -797,6 +833,22 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   const topOpportunitySummary = topOpportunity
     ? ` The top governed opportunity is ${topOpportunity.label} (${topOpportunityValue}), with evidence state ${topOpportunity.evidenceClass} and next action: ${sentenceFragment(topOpportunity.nextAction)}.`
     : ` No governed opportunity row is tied to this contract in the current Source aVa packet, so candidate opportunity value is not established; treat actionability and value as missing until the contract-specific evidence is loaded or opened.${contract.scopeSummary ? ` Evidence posture: ${contract.scopeSummary}.` : ""}`;
+  const postureSummary =
+    commercialPostureLines.length > 0
+      ? ` Commercial posture: ${commercialPostureLines
+          .map((line) => `${line.label} = ${line.value}`)
+          .join("; ")}.`
+      : "";
+  const leverTableSummary =
+    opportunityRows.length > 0
+      ? ` Lever table: ${opportunityRows
+          .slice(0, 6)
+          .map(
+            (row) =>
+              `${row.opportunity} | ${row.value} | ${row.class} | evidence ${row.evidence} | owner ${row.owner} | next ${sentenceFragment(row.nextAction)}`,
+          )
+          .join(" ; ")}.`
+      : " Lever table: no governed contract-specific opportunity rows are loaded.";
 
   const loadedContractFacts = [
     `vendor ${contract.vendorName}`,
@@ -831,9 +883,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       : `There are no contract-specific candidate commercial opportunity lines with governed numeric values. Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation.`;
 
   return {
-    directAnswer:
-      `${contract.vendorName} ${contract.contractName} (${contract.contractId}) ${contractMismatch ? "is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "is bound from the governed Source contract context. "}Loaded contract facts: ${loadedContractFacts}. ${candidateSummary}` +
-      `${topOpportunitySummary} The outside-in pattern is advisory only: for large enterprise software and managed-service renewals, the strongest negotiation story usually combines contract terms, AP/ERP invoice proof, SLA/service-credit proof, usage or entitlement data, and a finance-confirmed value gate. It should guide the ask, not replace Source/Tower evidence.`,
+    directAnswer: `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is a candidate commercial optimization case, not realized savings, unless finance-confirmed outcome rows are explicitly loaded. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "It is bound from the governed Source contract context. "}Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}${postureSummary} ${leverTableSummary} Caveat: Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.`,
     artifacts,
     citations,
     factsUsed: [

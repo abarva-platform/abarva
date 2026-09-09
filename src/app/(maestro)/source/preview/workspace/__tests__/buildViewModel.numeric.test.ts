@@ -417,11 +417,51 @@ describe("buildViewModel numeric coercion", () => {
         };
         financeConfirmed: string;
       };
+      commercialPosture: {
+        items: Array<{ label: string; value: string; detail: string }>;
+      };
+      avaSuggestedActions: Array<{ id: string; label: string; body: string }>;
+      avaSurfaceContext: {
+        sourceV4: {
+          commercialPosture: {
+            items: Array<{ label: string; value: string; detail: string }>;
+          };
+        };
+      };
     };
 
     expect(built.opportunityView.potential.recoverable).toBe("Not sized");
     expect(built.opportunityView.potential.total).toBe("Not sized");
     expect(built.opportunityView.financeConfirmed).toBe("Not established");
+    expect(built.commercialPosture.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Commitment posture",
+          value: "Commitment aligned",
+        }),
+        expect.objectContaining({
+          label: "Value type",
+          value: "No sized opportunity",
+        }),
+        expect.objectContaining({
+          label: "Evidence depth",
+          value: "Partial",
+        }),
+      ]),
+    );
+    expect(
+      built.avaSurfaceContext.sourceV4.commercialPosture.items.map(
+        (item) => item.label,
+      ),
+    ).toContain("Commitment posture");
+    expect(built.avaSuggestedActions.map((action) => action.label)).toEqual(
+      expect.arrayContaining([
+        "Compare this contract's commercial posture with the portfolio.",
+        "Which levers are negotiable, avoidable, or recoverable?",
+        "What can I safely say to a CFO?",
+        "What would we ask the vendor for next?",
+      ]),
+    );
     expect(built.compactItems).toEqual(
       expect.arrayContaining([
         { label: "potential recoverable", value: "Not sized" },

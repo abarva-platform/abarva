@@ -29,6 +29,52 @@ function executiveStoryVm() {
     recWhy: "Governed opportunities are ready for executive review.",
     goActions: jest.fn(),
     detailState: "ready",
+    commercialPosture: {
+      headline: "Commercial posture",
+      summary:
+        "Source projects the existing Contract 360 and optimization rows into a decision strip; it does not create a savings claim.",
+      items: [
+        {
+          label: "Commitment posture",
+          value: "Commitment ahead of usage",
+          detail:
+            "$2.0M below committed annual baseline; use this as renegotiation-shape evidence, not realized savings.",
+          tone: "#ba7517",
+        },
+        {
+          label: "Value type",
+          value: "Recoverable opportunity",
+          detail: "$2.0M recoverable; $500.0K avoidable; $300.0K negotiable.",
+          tone: "#a32d2d",
+        },
+        {
+          label: "Top lever",
+          value: "Invoice variance",
+          detail: "Review invoice exceptions with AP and the supplier.",
+          tone: "#0a0a0b",
+        },
+        {
+          label: "Evidence depth",
+          value: "Loaded",
+          detail:
+            "Opportunity evidence is system, document, human, or finance evidenced; finance outcome still remains a separate gate.",
+          tone: "#1d9e75",
+        },
+        {
+          label: "Decision owner",
+          value: "Procurement",
+          detail:
+            "Owner comes from the opportunity owner when loaded, otherwise the Contract 360 renewal owner.",
+          tone: "#0a0a0b",
+        },
+        {
+          label: "Next action",
+          value: "Work the lever",
+          detail: "Review invoice exceptions with AP and the supplier.",
+          tone: "#0f6e56",
+        },
+      ],
+    },
     optSpine: {
       selected: {
         rank: "#1",
@@ -39,7 +85,8 @@ function executiveStoryVm() {
           {
             kind: "weak_leverage",
             label: "2 weak leverage signals",
-            detail: "Benchmark rights are limited and supplier alternatives need market scan.",
+            detail:
+              "Benchmark rights are limited and supplier alternatives need market scan.",
             role: "action_trigger",
             tone: "#ba7517",
             points: "18",
@@ -131,6 +178,16 @@ describe("ContractCanvas executive story", () => {
     render(<ContractCanvas vm={executiveStoryVm() as never} />);
 
     expect(screen.getByText("Executive opening")).toBeTruthy();
+    expect(screen.getByLabelText("Commercial posture")).toBeTruthy();
+    expect(screen.getByText("Commitment posture")).toBeTruthy();
+    expect(screen.getByText("Commitment ahead of usage")).toBeTruthy();
+    expect(screen.getByText("Value type")).toBeTruthy();
+    expect(screen.getByText("Recoverable opportunity")).toBeTruthy();
+    expect(screen.getByText("Top lever")).toBeTruthy();
+    expect(screen.getAllByText("Invoice variance").length).toBeGreaterThan(0);
+    expect(screen.getByText("Evidence depth")).toBeTruthy();
+    expect(screen.getByText("Decision owner")).toBeTruthy();
+    expect(screen.getByText("Next action")).toBeTruthy();
     expect(screen.getByText(/governed potential value is ready/)).toBeTruthy();
     expect(
       screen.getByText(/Finance confirmation is shown separately/),
@@ -141,17 +198,13 @@ describe("ContractCanvas executive story", () => {
     expect(screen.getByText("Pricing schedule baseline")).toBeTruthy();
     expect(screen.getByText("Why this contract first")).toBeTruthy();
     expect(screen.getByText("Action trigger")).toBeTruthy();
-    expect(
-      screen.getByText(/Benchmark rights are limited/),
-    ).toBeTruthy();
+    expect(screen.getByText(/Benchmark rights are limited/)).toBeTruthy();
     expect(
       screen.getByText(
         "$2.0M variance is visible, but it is an evidence gate, not savings.",
       ),
     ).toBeTruthy();
-    expect(
-      screen.getByText(/Three opportunities identified/),
-    ).toBeTruthy();
+    expect(screen.getByText(/Three opportunities identified/)).toBeTruthy();
     expect(screen.getAllByText("Recover money").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Avoid future spend").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Improve the deal").length).toBeGreaterThan(0);
@@ -229,10 +282,14 @@ describe("ContractCanvas executive story", () => {
     render(<ContractCanvas vm={vm as never} />);
 
     expect(
-      screen.getByText("Monthly SLA performance is reviewable for this contract."),
+      screen.getByText(
+        "Monthly SLA performance is reviewable for this contract.",
+      ),
     ).toBeTruthy();
     expect(screen.getByText("Monthly SLA history")).toBeTruthy();
-    expect(screen.getByText("claims processed within 24 hours (%)")).toBeTruthy();
+    expect(
+      screen.getByText("claims processed within 24 hours (%)"),
+    ).toBeTruthy();
     expect(screen.getByText("Missed")).toBeTruthy();
     expect(screen.getByText("No")).toBeTruthy();
     expect(screen.queryByText(/No operational performance/)).toBeNull();
