@@ -48,6 +48,9 @@ describe("VendorEvaluationScorecardPanel", () => {
     expect(html).toContain("do not confuse lowest price with lowest risk");
     expect(html).toContain("How the score is defended");
     expect(html).toContain("BAFO Improvement Scenario");
+    expect(html).toContain("Held");
+    expect(html).toContain("pending evidence");
+    expect(html).toContain("score remains provisional");
     expect(html).toContain("Decision brief");
     expect(html).toContain("DOCX");
     expect(html).toContain("PDF");

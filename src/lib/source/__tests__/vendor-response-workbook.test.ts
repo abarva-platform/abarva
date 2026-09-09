@@ -5,6 +5,10 @@ import {
   deriveVendorResponseProfilesFromNormalized,
   deriveVendorResponseSeedInputsFromNormalized,
 } from "../vendor-response-completeness-from-normalized";
+import {
+  buildVendorChallengeIntelligence,
+  buildVendorEvaluationDecisionView,
+} from "../proposal-intelligence";
 
 const HEADERS = [
   "Requirement ID",
@@ -190,5 +194,52 @@ describe("normalized vendor response workbook", () => {
         }),
       ]),
     );
+  });
+
+  it("preserves mandatory exception lineage into evaluation holdbacks", async () => {
+    const parsed = await parseNormalizedVendorResponseWorkbook({
+      buffer: await workbookBytes(),
+    });
+    const responsePackage = {
+      ...parsed!,
+      artifactId: "artifact-exception",
+      originalName: "example-response.xlsx",
+      receivedAt: "2026-09-08T00:00:00.000Z",
+      rows: [
+        {
+          ...parsed!.rows[0],
+          requirementLevel: "Mandatory" as const,
+          responseType: "Commercial exception" as const,
+          responseDisposition: "Exception" as const,
+          exceptionRef: "EXC-001",
+        },
+      ],
+    };
+    const profiles = deriveVendorResponseProfilesFromNormalized({
+      packages: [responsePackage],
+      event: { id: "event-1", name: "Managed services sourcing" },
+      tenantKey: "example-tenant",
+    });
+    const intelligence = buildVendorChallengeIntelligence(profiles);
+    const decisionView = buildVendorEvaluationDecisionView(
+      profiles,
+      intelligence,
+      null,
+    );
+
+    expect(profiles?.profiles[0].extractionCards[0]).toMatchObject({
+      type: "exception",
+      requirementLevel: "Mandatory",
+      sourceCategory: "commercial and pricing",
+      evaluationCriterionId: "CRIT-COM-01",
+    });
+    expect(intelligence?.challengeLog[0]).toMatchObject({
+      issueCategory: "pricing_gap",
+      severity: "high",
+    });
+    expect(decisionView?.vendorSummaries[0].recommendation).toBe(
+      "hold_until_clarified",
+    );
+    expect(decisionView?.recommendedAdvanceVendorIds).toEqual([]);
   });
 });

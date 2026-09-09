@@ -335,8 +335,19 @@ export function VendorEvaluationScorecardPanel({
                   </td>
                   <td style={TD_CENTER}>{scenario.currentScore.toFixed(1)}</td>
                   <td style={TD_CENTER}>
-                    {scenario.potentialScore.toFixed(1)}
-                    <span style={DELTA}>+{scenario.scoreDelta.toFixed(1)}</span>
+                    {scenario.scoreStatus === "held_pending_condition" ? (
+                      <>
+                        Held
+                        <span style={DELTA}>pending evidence</span>
+                      </>
+                    ) : (
+                      <>
+                        {scenario.potentialScore.toFixed(1)}
+                        <span style={DELTA}>
+                          +{scenario.scoreDelta.toFixed(1)}
+                        </span>
+                      </>
+                    )}
                   </td>
                   <td style={TD}>{scenario.bafoCure}</td>
                   <td style={TD}>{scenario.decisionImpact}</td>

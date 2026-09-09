@@ -421,6 +421,9 @@ function buildExtractionCards(
           : `${responsePackage.originalName} · ${row.requirementId}`,
       confidence: references.length > 0 ? "high" : "medium",
       structuredExhibitStatus: status,
+      requirementLevel: row.requirementLevel,
+      sourceCategory: row.category,
+      evaluationCriterionId: row.evaluationCriterionId,
       missingFields: [
         ...(!hasNarrative ? ["response narrative"] : []),
         ...(row.evidenceRequired && references.length === 0
