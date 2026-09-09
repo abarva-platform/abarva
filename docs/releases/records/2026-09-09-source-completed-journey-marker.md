@@ -29,10 +29,10 @@ All clients with completed Source events. The completion mark remains fail-close
 
 ## QA / Validation
 
-- Focused Source event shell tests.
-- Scoped ESLint and full TypeScript checks.
-- `npm run release:check` and `git diff --check`.
-- Live signed-in completed-event journey proof required after deployment.
+- PASS: focused Source event shell tests (24 tests).
+- PASS: scoped ESLint and full TypeScript checks.
+- PASS: local `npm run release:check` and `git diff --check`.
+- NOT RUN: live signed-in completed-event journey proof; required after deployment.
 
 ## Rollout Plan
 
