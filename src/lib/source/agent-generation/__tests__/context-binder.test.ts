@@ -358,6 +358,53 @@ describe("buildSourceGenerationContext", () => {
     expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts.at(-1)).toContain("QA-12");
   });
 
+  it("does not truncate authoritative bidder Q&A content after 900 characters", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const fullQaChunk = [
+      "Q-001 | Question: First controlled clarification.",
+      `Authoritative answer: ${"A".repeat(920)}`,
+      "Q-002 | Question: Is the complete second clarification retained?",
+      "Authoritative answer: Yes. Preserve this answer for every eligible bidder.",
+    ].join("\n");
+    mockUploadedEvidenceQueries({
+      artifacts: [
+        {
+          id: "qa-artifact",
+          original_name: "source-bidder-qa-log.txt",
+          artifact_family: "meeting_notes",
+          source_format: "txt",
+          parse_status: "parsed",
+          evidence_state: "parsed",
+          stage_key: "responses",
+          source_origin: "uploaded",
+          created_at: "2026-09-09T00:00:00.000Z",
+        },
+      ],
+      chunks: [
+        {
+          artifact_id: "qa-artifact",
+          chunk_text: fullQaChunk,
+          confidence: 0.99,
+        },
+      ],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toEqual([
+      fullQaChunk.replace(/\s+/g, " ").trim(),
+    ]);
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts[0]).toContain(
+      "Q-002 | Question: Is the complete second clarification retained?",
+    );
+  });
+
   it("binds current and next-stage guidebooks for workflow-aware artifact prompts", async () => {
     getSourcingEvent.mockResolvedValue({
       ...makeSeedEvent(),
