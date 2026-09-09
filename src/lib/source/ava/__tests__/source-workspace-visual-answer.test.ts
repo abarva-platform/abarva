@@ -412,7 +412,11 @@ describe("Source Workspace visual aVa answer", () => {
   });
 
   it("fills direct Contract 360 coverage from the matching selected contract packet", () => {
-    const context = sourceContext();
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: {
+        selectedContract: Record<string, unknown>;
+      };
+    };
     context.sourceContract360Mode = true;
     context.contractId = "CTR-090";
     context.contractName = "Salesforce Data Platform Agreement 3";
@@ -421,6 +425,7 @@ describe("Source Workspace visual aVa answer", () => {
     context.actualAnnualSpend = 37_400_000;
     context.endDate = "28 Jun 2031";
     context.evidencePosture = "Detail loaded.";
+    context.sourceV4.selectedContract.noticePeriodDays = "90";
 
     const answer = buildSourceWorkspaceVisualAnswer({
       query:
@@ -432,6 +437,7 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).toContain(
       "72 active performance observations",
     );
+    expect(answer?.directAnswer).toContain("notice period 90 days");
     expect(answer?.directAnswer).not.toContain(
       "scope coverage not established",
     );
