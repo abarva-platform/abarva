@@ -6,7 +6,9 @@
 
 ## Status
 
-`candidate`
+`released` — live-verified 2026-07-24 (see QA below). One follow-up issue found during
+verification, tracked separately: the apps dimension's Claude-authored narrative predates this
+data and now contradicts it (see Known Gaps).
 
 ## Plain-English Summary
 
@@ -107,10 +109,20 @@ blast-radius half of this release.
 - `pass` — live signed-in browser verification on the deployed environment (screenshot) prior to
   this specific change, confirming the earlier V4 preview defects stay fixed (5-item real Change &
   Transformation nav, a scatter_2x2 visual actually rendering as a scatter).
-- `pending` — live re-verification of both changes in this release specifically has not yet been
-  captured; do before marking `released`: (a) the Applications grid rendering 412 rows with
-  working filters on `/home/v4-preview?tenant=skyharbor-air`, (b) the live `/home` sidebar showing
-  14 deduplicated items across the same 8 groups, for at least one real tenant.
+- `pass` — live signed-in browser verification of this release's specific changes, post-deploy,
+  platform-admin session: (a) `/home/v4-preview?tenant=skyharbor-air` → Enterprise Context →
+  Applications & Systems shows "900 of 900 applications" and the gap-note text "682 of 900
+  applications have a named owner on file (derived from a team/domain match, not directly
+  captured — see the caveat on hover). The remaining 218 show 'Not captured' rather than a
+  guess." — matches the reconciliation script's own output exactly; (b) `/home` for
+  meridian-health shows exactly 14 sidebar items across all 8 groups (1+2+2+2+4+1+1+1), matching
+  the deduplicated `NAV_GROUPS` structure.
+- **New finding during this verification**: the apps dimension's `gaps_tab` still states
+  "Ownership of the data behind a legality-bound recovery decision is unassigned," and
+  `relationship_tab` still shows an explicit "Owners" node labeled "Data steward to confirm"
+  (`missing_evidence`) — directly under the grid that now shows 682 of 900 applications with a
+  real owner. The narrative was generated before `tower-standardized-v1` was found and has no
+  awareness of this data. Not fixed in this release — see Known Gaps.
 
 ## Rollout Plan
 
@@ -145,6 +157,15 @@ navigation bug, but not a new risk, since that was the pre-existing behavior.
   nav dedup).
 
 ## Known Gaps
+
+- **P1, found live during verification, not yet fixed**: the apps dimension's Claude-authored
+  narrative directly contradicts the new grid — `gaps_tab.decision_gaps` states ownership is
+  "unassigned" and `relationship_tab` shows an "Owners" node as `missing_evidence`, while the grid
+  immediately below shows 682 of 900 applications with a real owner. The narrative was generated
+  before this data was found; fixing it correctly requires a paid Claude regeneration run, which
+  needs explicit authorization (same standing rule as every other paid-generation step this
+  session) — not done here. A cheap same-day mitigation (a visible callout noting the narrative
+  predates this data) was proposed but not yet approved or built as of this record.
 
 - **apex-retail and lakeshore-holdings have real, reconciled application+ownership data
   (170 and 130 rows respectively, both 100% owned) that is not visible anywhere**, because no V4
