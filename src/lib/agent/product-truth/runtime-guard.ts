@@ -108,7 +108,11 @@ const EVIDENCE_CLAIM_PATTERN =
   /\b(loaded estate shows|confirmed in the data|we have loaded|the data shows|evidence confirms)\b/i;
 const RAW_INTERNAL_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6}|[A-Z]\d{3,4})\b/g;
-const PUBLIC_SOURCE_CONTRACT_ID_RE = /\bCTR-\d{3,6}\b/;
+const PUBLIC_SOURCE_CONTRACT_ID_RE =
+  /\b(?:CTR-\d{3,6}|MER-[A-Z0-9]+(?:-[A-Z0-9]+){2,})\b/g;
+const PUBLIC_SOURCE_CONTRACT_ID_TEST_RE =
+  /\b(?:CTR-\d{3,6}|MER-[A-Z0-9]+(?:-[A-Z0-9]+){2,})\b/;
+const PUBLIC_SOURCE_CONTRACT_ID_TOKEN = "PUBLICSOURCECONTRACTIDTOKEN";
 
 export function applyProductTruthRuntimeGuard(
   text: string,
@@ -871,9 +875,15 @@ function normalizedSurface(surface: string | null | undefined): string {
 }
 
 function normalizeWhitespace(text: string): string {
-  return text
+  const publicContractIds: string[] = [];
+  const protectedText = text.replace(PUBLIC_SOURCE_CONTRACT_ID_RE, (match) => {
+    const token = `${PUBLIC_SOURCE_CONTRACT_ID_TOKEN}${publicContractIds.length}`;
+    publicContractIds.push(match);
+    return token;
+  });
+  const scrubbed = protectedText
     .replace(RAW_INTERNAL_ID_RE, (match) =>
-      PUBLIC_SOURCE_CONTRACT_ID_RE.test(match) ? match : "",
+      PUBLIC_SOURCE_CONTRACT_ID_TEST_RE.test(match) ? match : "",
     )
     .replace(/\s+\)/g, ")")
     .replace(/\(\s+/g, "(")
@@ -881,6 +891,14 @@ function normalizeWhitespace(text: string): string {
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  return publicContractIds.reduce(
+    (result, contractId, index) =>
+      result.replaceAll(
+        `${PUBLIC_SOURCE_CONTRACT_ID_TOKEN}${index}`,
+        contractId,
+      ),
+    scrubbed,
+  );
 }
 
 function dedupe(values: readonly string[]): string[] {
