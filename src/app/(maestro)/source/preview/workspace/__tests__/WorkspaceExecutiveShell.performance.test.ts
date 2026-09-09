@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import {
   SOURCE_CHART_PALETTE,
+  coverageForVendor,
   contractSearchRank,
   displayBenchmarkingClause,
   focusedContractSet,
@@ -359,6 +360,78 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       contract_count: 1,
       contract_refs: ["CONTRACT-EVIDENCE-001"],
       vendor_refs: ["VEN-EVIDENCE-ONLY"],
+    });
+  });
+
+  it("aggregates selected vendor coverage across evidence vendor aliases", () => {
+    const portfolio = {
+      tenantKey: "tenant-a",
+      contracts: [],
+      impact: {
+        evidenceCoverage: [
+          {
+            tenant_key: "tenant-a",
+            contract_id: "CONTRACT-EVIDENCE-001",
+            vendor_ref: "VEN-EVIDENCE-PRIMARY",
+            vendor_name: "Evidence Cloud Vendor, Inc.",
+            vendor_category: "cloud_platform",
+            contract_archetype: "cloud_services",
+            contract_name: "Primary evidence-backed agreement",
+            spend_rows: 12,
+            actual_spend_usd: 66_000,
+            committed_spend_usd: 1_900_000,
+            performance_rows: 0,
+            unclaimed_credit_usd: 0,
+            opportunity_rows: 6,
+            scope_rows: 4,
+            critical_scope_rows: 2,
+            document_page_text_rows: 6,
+            coverage_state: "decision_ready",
+          },
+          {
+            tenant_key: "tenant-a",
+            contract_id: "CONTRACT-EVIDENCE-002",
+            vendor_ref: "VEN-EVIDENCE-ALIAS",
+            vendor_name: "Evidence Cloud Vendor, Inc.",
+            vendor_category: "cloud_platform",
+            contract_archetype: "advisory_services",
+            contract_name: "Supplemental evidence-backed agreement",
+            spend_rows: 1,
+            actual_spend_usd: 10_000,
+            committed_spend_usd: 180_000,
+            performance_rows: 0,
+            unclaimed_credit_usd: 5_000,
+            opportunity_rows: 1,
+            scope_rows: 1,
+            critical_scope_rows: 0,
+            document_page_text_rows: 1,
+            coverage_state: "decision_ready",
+          },
+        ],
+        actionCandidates: [],
+        claimCards: [],
+      },
+    };
+    const selectedVendor = resolveSelectedVendor(
+      portfolio as never,
+      [],
+      "VEN-EVIDENCE-PRIMARY",
+    );
+
+    expect(selectedVendor?.vendor_refs).toEqual([
+      "VEN-EVIDENCE-PRIMARY",
+      "VEN-EVIDENCE-ALIAS",
+    ]);
+    expect(
+      coverageForVendor(
+        selectedVendor as never,
+        vendorCoverageRows(portfolio as never),
+      ),
+    ).toMatchObject({
+      spendRows: 13,
+      performanceRows: 0,
+      actionRows: 7,
+      unclaimedCredit: 5_000,
     });
   });
 

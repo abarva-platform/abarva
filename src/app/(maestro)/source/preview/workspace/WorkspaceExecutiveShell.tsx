@@ -1010,7 +1010,7 @@ function VendorsPage({
       )
     : null;
   const selectedVendorCoverage = selectedVendor
-    ? (vendorCoverageRows(portfolio).get(selectedVendor.vendor_ref) ?? null)
+    ? coverageForVendor(selectedVendor, vendorCoverageRows(portfolio))
     : null;
   const registerContractIds = new Set(
     portfolio.contracts.map((contract) => contract.contract_id),
@@ -4800,7 +4800,7 @@ function unresolvedVendorIdentityCount(vendors: readonly ExecutiveVendorRow[]) {
   return unresolvedRefs.size;
 }
 
-function coverageForVendor(
+export function coverageForVendor(
   vendor: ExecutiveVendorRow,
   coverageByVendor: Map<string, VendorCoverageSummary>,
 ) {
