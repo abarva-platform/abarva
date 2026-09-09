@@ -138,12 +138,20 @@ describe("Source Workspace visual aVa answer", () => {
     );
     expect(answer?.directAnswer).toContain("recorded annual value $43.5M");
     expect(answer?.directAnswer).toContain("actual annual spend $37.4M");
+    expect(answer?.directAnswer).toContain("contract ID CTR-090");
+    expect(answer?.directAnswer).toContain("end date 28 Jun 2031");
+    expect(answer?.directAnswer).toContain("notice date 28 Feb 2031");
+    expect(answer?.directAnswer).toContain("auto-renew no");
     expect(answer?.directAnswer).toContain("75 scope rows");
-    expect(answer?.directAnswer).toContain("72 active performance observations");
+    expect(answer?.directAnswer).toContain(
+      "72 active performance observations",
+    );
     expect(answer?.directAnswer).toContain(
       "4 lines of contract-specific candidate commercial opportunities total $5.6M",
     );
-    expect(answer?.directAnswer).toContain("These amounts are candidates, not realized savings");
+    expect(answer?.directAnswer).toContain(
+      "These amounts are candidates, not realized savings",
+    );
     expect(answer?.artifacts.map((artifact) => artifact.artifact)).toEqual([
       "table",
       "chart",
@@ -289,10 +297,14 @@ describe("Source Workspace visual aVa answer", () => {
       annualValue: 39_800_000,
       actualAnnualSpend: null,
       endDate: "31 Dec 2027",
-      evidencePosture: "Header only; contract-specific optimization evidence is not loaded.",
-      nextAction: "Load contract-specific opportunity and evidence rows before sizing value.",
-      contractDatasetSummary: "230 contracts / 94 vendors / $1.8402B annual value.",
-      contractCubeSummary: "3 scope rows / 32 action candidates / 0 claimable value rows.",
+      evidencePosture:
+        "Header only; contract-specific optimization evidence is not loaded.",
+      nextAction:
+        "Load contract-specific opportunity and evidence rows before sizing value.",
+      contractDatasetSummary:
+        "230 contracts / 94 vendors / $1.8402B annual value.",
+      contractCubeSummary:
+        "3 scope rows / 32 action candidates / 0 claimable value rows.",
       sourceV4: {
         executivePortfolio: {
           contracts: 230,
@@ -321,9 +333,14 @@ describe("Source Workspace visual aVa answer", () => {
 
     expect(answer?.directAnswer).toContain("CTR-0006");
     expect(answer?.directAnswer).toContain("Primary Vendor Inc.");
-    expect(answer?.directAnswer).toContain("candidate opportunity value is not established");
+    expect(answer?.directAnswer).toContain("end date 31 Dec 2027");
+    expect(answer?.directAnswer).toContain(
+      "candidate opportunity value is not established",
+    );
     expect(answer?.directAnswer).toContain("No governed opportunity row");
-    expect(answer?.directAnswer).not.toContain("No specific contract is selected");
+    expect(answer?.directAnswer).not.toContain(
+      "No specific contract is selected",
+    );
     expect(answer?.metricsUsed).toContainEqual(
       expect.objectContaining({
         id: "annual-value",
@@ -349,8 +366,10 @@ describe("Source Workspace visual aVa answer", () => {
         "Requested contract was not returned by the active Source provider.",
       nextAction:
         "Select a contract present in the governed Source rows before making a contract-specific value or evidence claim.",
-      contractDatasetSummary: "230 contracts / 94 vendors / $1.8402B annual value.",
-      contractCubeSummary: "690 scope rows / 0 invoice lines / 32 action candidates.",
+      contractDatasetSummary:
+        "230 contracts / 94 vendors / $1.8402B annual value.",
+      contractCubeSummary:
+        "690 scope rows / 0 invoice lines / 32 action candidates.",
       sourceV4: {
         selectedContract: null,
         executivePortfolio: {
@@ -381,11 +400,15 @@ describe("Source Workspace visual aVa answer", () => {
 
     expect(answer?.directAnswer).toContain("MER-TECH-REQUESTED-001");
     expect(answer?.directAnswer).toContain("Requested contract");
-    expect(answer?.directAnswer).toContain("candidate opportunity value is not established");
+    expect(answer?.directAnswer).toContain(
+      "candidate opportunity value is not established",
+    );
     expect(answer?.directAnswer).toContain(
       "Requested contract was not returned by the active Source provider",
     );
-    expect(answer?.directAnswer).not.toContain("No specific contract is selected");
+    expect(answer?.directAnswer).not.toContain(
+      "No specific contract is selected",
+    );
   });
 
   it("fills direct Contract 360 coverage from the matching selected contract packet", () => {

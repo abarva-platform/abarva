@@ -18,8 +18,10 @@ const RAW_RECORD_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/g;
 const RAW_RECORD_ID_TEST_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/;
-const PUBLIC_SOURCE_CONTRACT_ID_RE = /\bCTR-\d{3,6}\b/g;
-const PUBLIC_SOURCE_CONTRACT_ID_TEST_RE = /\bCTR-\d{3,6}\b/;
+const PUBLIC_SOURCE_CONTRACT_ID_RE =
+  /\b(?:CTR-\d{3,6}|MER-[A-Z0-9]+(?:-[A-Z0-9]+){2,})\b/g;
+const PUBLIC_SOURCE_CONTRACT_ID_TEST_RE =
+  /\b(?:CTR-\d{3,6}|MER-[A-Z0-9]+(?:-[A-Z0-9]+){2,})\b/;
 const UUID_RE =
   /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const UUID_TEST_RE =
@@ -32,6 +34,7 @@ const INTERNAL_FIELD_TEST_RE =
   /\b(?:tenant_id|client_id|person_id|graph_node_id|record_id|source_id|raw_[a-z0-9_]+)\b/i;
 const CONSULTANT_LABEL_RE =
   /\b(Read|Evidence|Implication|Next move|Recommendation|Decision|Owner|Action):\s*(?:\1:\s*)+/gi;
+const PUBLIC_CONTRACT_ID_TOKEN = "PUBLICCONTRACTIDTOKEN";
 
 function fallbackCitationLabel(citation: AnswerCitation): string {
   switch (citation.sourceClass) {
@@ -72,17 +75,42 @@ export function dedupeConsultantLabels(value: string): string {
   );
 }
 
+function protectPublicSourceContractIds(
+  value: string,
+  transform: (protectedValue: string) => string,
+): string {
+  const ids: string[] = [];
+  const protectedValue = value.replace(
+    PUBLIC_SOURCE_CONTRACT_ID_RE,
+    (match) => {
+      const token = `${PUBLIC_CONTRACT_ID_TOKEN}${ids.length}`;
+      ids.push(match);
+      return token;
+    },
+  );
+  const transformed = transform(protectedValue);
+  return ids.reduce(
+    (text, id, index) =>
+      text.replaceAll(`${PUBLIC_CONTRACT_ID_TOKEN}${index}`, id),
+    transformed,
+  );
+}
+
 export function sanitizePublicText(
   value: string,
   fallback = "evidence",
 ): string {
-  const withoutUnsafeIds = dedupeConsultantLabels(value)
-    .replace(BRACKET_RECORD_RE, fallback)
-    .replace(UUID_RE, fallback)
-    .replace(RAW_RECORD_ID_RE, (match) =>
-      PUBLIC_SOURCE_CONTRACT_ID_TEST_RE.test(match) ? match : fallback,
-    )
-    .replace(INTERNAL_FIELD_RE, "source field");
+  const withoutUnsafeIds = protectPublicSourceContractIds(
+    dedupeConsultantLabels(value),
+    (protectedValue) =>
+      protectedValue
+        .replace(BRACKET_RECORD_RE, fallback)
+        .replace(UUID_RE, fallback)
+        .replace(RAW_RECORD_ID_RE, (match) =>
+          PUBLIC_SOURCE_CONTRACT_ID_TEST_RE.test(match) ? match : fallback,
+        )
+        .replace(INTERNAL_FIELD_RE, "source field"),
+  );
   const cleaned = shapePublicText(
     scrubPublicAvaAnswerText(withoutUnsafeIds),
     fallback,
@@ -96,13 +124,17 @@ function sanitizePublicSourceText(
   value: string,
   fallback = "evidence",
 ): string {
-  const withoutUnsafeIds = dedupeConsultantLabels(value)
-    .replace(BRACKET_RECORD_RE, fallback)
-    .replace(UUID_RE, fallback)
-    .replace(RAW_RECORD_ID_RE, (match) =>
-      PUBLIC_SOURCE_CONTRACT_ID_TEST_RE.test(match) ? match : fallback,
-    )
-    .replace(INTERNAL_FIELD_RE, "source field");
+  const withoutUnsafeIds = protectPublicSourceContractIds(
+    dedupeConsultantLabels(value),
+    (protectedValue) =>
+      protectedValue
+        .replace(BRACKET_RECORD_RE, fallback)
+        .replace(UUID_RE, fallback)
+        .replace(RAW_RECORD_ID_RE, (match) =>
+          PUBLIC_SOURCE_CONTRACT_ID_TEST_RE.test(match) ? match : fallback,
+        )
+        .replace(INTERNAL_FIELD_RE, "source field"),
+  );
   const cleaned = shapePublicText(
     scrubPublicAvaSourceText(withoutUnsafeIds),
     fallback,
