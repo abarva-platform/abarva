@@ -11,7 +11,7 @@ import {
 } from "@/lib/deliverables/quality/consulting-grade-rubric";
 import {
   formatD09RfpEvidenceCoverage,
-  getD09RfpSatisfiedRequirementIds,
+  resolveGenerationEvidenceState,
 } from "./prompt-registry";
 import type { SourceGenerationContext } from "./types";
 import { getSourceArtifactProfile } from "@/lib/source/documentation-standards/source-artifact-profiles";
@@ -138,24 +138,79 @@ function extractTemporalClaims(text: string): Array<{
   const claims: Array<{ text: string; key: string }> = [];
   const patterns = [
     /\b(?:Q[1-4]\s+20\d{2})\b/gi,
+    /\b(?:20\d{2}[-\s]?Q[1-4])\b/gi,
     /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+20\d{2}\b/gi,
     /\b\d{1,2}\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+20\d{2}\b/gi,
-    /\b(?:mid-|early\s+|late\s+)?(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+20\d{2}\b/gi,
+    /(?<!\d\s)\b(?:mid-|early\s+|late\s+)?(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+20\d{2}\b/gi,
     /\b20\d{2}-\d{2}-\d{2}\b/g,
     /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s*(?:-|–|to)\s*(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
     /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(?:\s*-\s*|\s+)(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
   ];
   for (const pattern of patterns) {
     for (const match of text.matchAll(pattern)) {
-      const normalized = match[0]
-        .toLowerCase()
-        .replace(/\s+/g, " ")
-        .replace(/,/g, "")
-        .trim();
+      const normalized = normalizeTemporalClaim(match[0]);
       claims.push({ text: match[0].trim(), key: normalized });
     }
   }
   return claims;
+}
+
+const MONTH_NUMBER_BY_NAME: Record<string, string> = {
+  jan: "01",
+  january: "01",
+  feb: "02",
+  february: "02",
+  mar: "03",
+  march: "03",
+  apr: "04",
+  april: "04",
+  may: "05",
+  jun: "06",
+  june: "06",
+  jul: "07",
+  july: "07",
+  aug: "08",
+  august: "08",
+  sep: "09",
+  september: "09",
+  oct: "10",
+  october: "10",
+  nov: "11",
+  november: "11",
+  dec: "12",
+  december: "12",
+};
+
+function normalizeTemporalClaim(raw: string): string {
+  const normalized = raw
+    .toLowerCase()
+    .replace(/[–—]/g, "-")
+    .replace(/,/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const quarter = normalized.match(/(?:q([1-4])\s+(20\d{2})|(20\d{2})[-\s]?q([1-4]))/);
+  if (quarter) {
+    return `${quarter[2] ?? quarter[3]}-q${quarter[1] ?? quarter[4]}`;
+  }
+  const isoDate = normalized.match(/^(20\d{2})-(\d{2})-(\d{2})$/);
+  if (isoDate) return `${isoDate[1]}-${isoDate[2]}-${isoDate[3]}`;
+  const monthFirst = normalized.match(
+    /^([a-z]+)\s+(\d{1,2})\s+(20\d{2})$/,
+  );
+  if (monthFirst && MONTH_NUMBER_BY_NAME[monthFirst[1]]) {
+    return `${monthFirst[3]}-${MONTH_NUMBER_BY_NAME[monthFirst[1]]}-${monthFirst[2].padStart(2, "0")}`;
+  }
+  const dayFirst = normalized.match(
+    /^(\d{1,2})\s+([a-z]+)\s+(20\d{2})$/,
+  );
+  if (dayFirst && MONTH_NUMBER_BY_NAME[dayFirst[2]]) {
+    return `${dayFirst[3]}-${MONTH_NUMBER_BY_NAME[dayFirst[2]]}-${dayFirst[1].padStart(2, "0")}`;
+  }
+  return normalized
+    .replace(/\b(days?|weeks?|months?|years?)\b/g, (unit) =>
+      unit.endsWith("s") ? unit.slice(0, -1) : unit,
+    )
+    .replace(/(?<=\d)-(?=day|week|month|year)/g, " ");
 }
 
 export function applyDeterministicSourceClaimGate(
@@ -269,15 +324,8 @@ export function buildSourceQualitySourceContext(args: {
     const excerpt = body.replace(/\s+/g, " ").trim().slice(0, 900);
     return `- ${code}: ${excerpt}${body.length > 900 ? "..." : ""}`;
   });
-  const d09SatisfiedIds = isRfpPackage
-    ? getD09RfpSatisfiedRequirementIds(ctx)
-    : new Set<string>();
   const evidenceLines = ctx.evidence.map((item) => {
-    const state =
-      item.currentState === "Not Requested" &&
-      d09SatisfiedIds.has(item.requirementId)
-        ? "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)"
-        : item.currentState;
+    const state = resolveGenerationEvidenceState(ctx, item, isRfpPackage);
     return [
       `- ${item.requirementId}`,
       `state=${state}`,
@@ -300,7 +348,7 @@ export function buildSourceQualitySourceContext(args: {
         .slice(0, 3)
         .map((chunk) => `  chunk: ${chunk}`);
       const facts = artifact.factSummaries
-        .slice(0, 3)
+        .slice(0, 6)
         .map((fact) => `  fact: ${fact}`);
       return [header, ...chunks, ...facts];
     },
