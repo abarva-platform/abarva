@@ -55,6 +55,10 @@ import {
   looksLikeCrossTenantDataRequest,
   looksLikeSelectionDecisionQuestion,
 } from "@/lib/source/ava/selection-decision-governed-answer";
+import {
+  combineSourceEventDecisionAndValueAnswers,
+  looksLikeSourceEventDecisionAndValueQuestion,
+} from "@/lib/source/ava/source-event-summary-governed-answer";
 import { buildSourceAvaModuleHandoffForRuntime } from "@/lib/source/ava/module-handoff-runtime";
 import {
   resolveAuthoritativeArtifactSlots,
@@ -264,6 +268,49 @@ export async function POST(
           clientKey: activeClientKey,
           question: normalizedBody.prompt ?? "",
         });
+      } else if (
+        eventId &&
+        looksLikeSourceEventDecisionAndValueQuestion(normalizedBody.prompt)
+      ) {
+        const answerInput = {
+          eventId: liveEventDetail?.id ?? eventId,
+          eventName: liveEventDetail?.name ?? null,
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+        };
+        const [selectionAnswer, valueAnswer] = await Promise.all([
+          buildSelectionDecisionGovernedAnswer(answerInput).catch((err) => {
+            console.error(
+              "[source.nexus-ask.composite-selection-answer.failed]",
+              JSON.stringify({
+                eventId,
+                clientKey: activeClientKey,
+                message: err instanceof Error ? err.message : String(err),
+              }),
+            );
+            return null;
+          }),
+          buildValueLedgerGovernedAnswer(answerInput).catch((err) => {
+            console.error(
+              "[source.nexus-ask.composite-value-answer.failed]",
+              JSON.stringify({
+                eventId,
+                clientKey: activeClientKey,
+                message: err instanceof Error ? err.message : String(err),
+              }),
+            );
+            return null;
+          }),
+        ]);
+        agentAnswer =
+          selectionAnswer && valueAnswer
+            ? combineSourceEventDecisionAndValueAnswers({
+                question: normalizedBody.prompt ?? "",
+                selection: selectionAnswer,
+                value: valueAnswer,
+              })
+            : (selectionAnswer ?? valueAnswer);
       } else if (
         eventId &&
         looksLikeSelectionDecisionQuestion(normalizedBody.prompt)
