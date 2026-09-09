@@ -285,6 +285,46 @@ function canonicalOpportunityValueType(row) {
   return sourceType === "governance_action" ? "control_action" : sourceType;
 }
 
+function opportunityStage(row) {
+  const stage = value(row, "stage");
+  if (stage) return stage;
+  const confidence = numberValue(row, "confidence");
+  return confidence !== null && confidence < 0.5 ? "signal" : "quantified";
+}
+
+function opportunityAmountState(row) {
+  const amountState = value(row, "amount_state");
+  if (amountState) return amountState;
+  const confidence = numberValue(row, "confidence");
+  return confidence !== null && confidence < 0.5 ? "range" : "exact";
+}
+
+function opportunityEvidenceGrade(row) {
+  const evidenceGrade = value(row, "evidence_grade");
+  if (evidenceGrade) return evidenceGrade;
+  const confidence = numberValue(row, "confidence");
+  return confidence !== null && confidence < 0.5 ? "system_evidenced" : "document_evidenced";
+}
+
+function opportunityBlockingGap(row) {
+  return (
+    value(row, "blocking_gap") ||
+    "Finance confirmation and owner approval are required before realized value can be claimed."
+  );
+}
+
+function opportunityValuationBasis(row) {
+  return opportunityStage(row) === "signal"
+    ? "Cloud opportunity amount is a low-confidence signal and requires additional evidence before upgrade."
+    : "Cloud opportunity amount is evidence-backed but not finance-confirmed.";
+}
+
+function opportunityRequirementStatusDetail(row) {
+  return opportunityStage(row) === "signal"
+    ? "Candidate opportunity is signal-stage and requires supporting evidence plus finance confirmation before upgrade."
+    : "Candidate opportunity is quantified, but finance confirmation remains not_confirmed.";
+}
+
 function boolValue(row, key) {
   const raw = value(row, key).trim().toLowerCase();
   if (!raw) return null;
@@ -448,8 +488,12 @@ function qualifyPackage(args, sourceFiles, docs) {
   }
   if (!contracts.some((row) => value(row, "cloud_provider") === "aws" || value(row, "vendor_ref") === "VEN-AWS")) failures.push("AWS contract is required for the cloud-consumption story");
   for (const opportunity of sourceFiles["optimization_opportunities.csv"]) {
+    const opportunityId = value(opportunity, "opportunity_id");
     if (value(opportunity, "finance_confirmation_state") !== "not_confirmed") failures.push(`${value(opportunity, "opportunity_id")} must remain not_confirmed`);
     if (!value(opportunity, "evidence_rows")) failures.push(`${value(opportunity, "opportunity_id")} missing evidence_rows`);
+    if (!["signal", "quantified", "approved", "realized"].includes(opportunityStage(opportunity))) failures.push(`${opportunityId} has unsupported stage ${opportunityStage(opportunity)}`);
+    if (!["exact", "range", "not_sized"].includes(opportunityAmountState(opportunity))) failures.push(`${opportunityId} has unsupported amount_state ${opportunityAmountState(opportunity)}`);
+    if (!["document_evidenced", "system_evidenced", "human_validated", "missing", "not_loaded"].includes(opportunityEvidenceGrade(opportunity))) failures.push(`${opportunityId} has unsupported evidence_grade ${opportunityEvidenceGrade(opportunity)}`);
     for (const field of ["buyer_ask", "negotiation_language", "vendor_concession", "timing_dependency", "owner_role", "priority", "risk_if_ignored"]) {
       if (!value(opportunity, field)) failures.push(`${value(opportunity, "opportunity_id")} missing ${field}`);
     }
@@ -1282,9 +1326,8 @@ async function upsertOptimizationSpine(client, args, files) {
          owner, next_action, blocking_gap, deadline, overlap_treatment,
          approval_state, narrative, payload
        )
-       VALUES ($1,$2,$3,$4,$5,$6,'quantified',$7,'exact','package_evidenced',$8,$9,$10,
-         'Finance confirmation and owner approval are required before realized value can be claimed.',
-         NULL,'standalone_candidate','requires_review',$11,$12::jsonb)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
+         NULL,'standalone_candidate','requires_review',$15,$16::jsonb)`,
       [
         args.tenantKey,
         args.datasetVersion,
@@ -1292,10 +1335,14 @@ async function upsertOptimizationSpine(client, args, files) {
         value(opportunity, "contract_id"),
         value(opportunity, "vendor_ref"),
         canonicalOpportunityValueType(opportunity),
+        opportunityStage(opportunity),
         amount,
+        opportunityAmountState(opportunity),
+        opportunityEvidenceGrade(opportunity),
         numberValue(opportunity, "confidence") ?? 0.8,
         value(contract, "business_owner"),
         value(opportunity, "recommended_action"),
+        opportunityBlockingGap(opportunity),
         value(opportunity, "title"),
         JSON.stringify({
           ...opportunity,
@@ -1367,8 +1414,16 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, opportunity_id, valuation_type,
          amount_usd, valuation_state, basis, source_run_id, effective_date, payload
        )
-       VALUES ($1,$2,$3,'potential',$4,'candidate_quantified','Cloud opportunity amount is evidence-backed but not finance-confirmed.',$5,CURRENT_DATE,$6::jsonb)`,
-      [args.tenantKey, args.datasetVersion, opportunityId, amount, calculationRunId, JSON.stringify({ finance_confirmation_state: "not_confirmed" })],
+       VALUES ($1,$2,$3,'potential',$4,'candidate_quantified',$5,$6,CURRENT_DATE,$7::jsonb)`,
+      [
+        args.tenantKey,
+        args.datasetVersion,
+        opportunityId,
+        amount,
+        opportunityValuationBasis(opportunity),
+        calculationRunId,
+        JSON.stringify({ finance_confirmation_state: "not_confirmed", stage: opportunityStage(opportunity) }),
+      ],
     );
     await client.query(
       `INSERT INTO source.evidence_requirement (
@@ -1383,8 +1438,15 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, opportunity_id, requirement_id,
          status, status_detail, owner, payload
        )
-       VALUES ($1,$2,$3,$4,'workflow_required','Candidate opportunity is quantified, but finance confirmation remains not_confirmed.',$5,'{}'::jsonb)`,
-      [args.tenantKey, args.datasetVersion, opportunityId, requirementId, value(contract, "business_owner")],
+       VALUES ($1,$2,$3,$4,'workflow_required',$5,$6,'{}'::jsonb)`,
+      [
+        args.tenantKey,
+        args.datasetVersion,
+        opportunityId,
+        requirementId,
+        opportunityRequirementStatusDetail(opportunity),
+        value(contract, "business_owner"),
+      ],
     );
     await client.query(
       `INSERT INTO source.evidence_request (

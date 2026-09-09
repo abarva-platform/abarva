@@ -55,4 +55,42 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("source_cloud_consumption_package_layer4_verified");
     expect(loader).toContain("consumption.sourcing_cloud_usage_monthly_v1");
   });
+
+  it("plans the Databricks consumption package with signal-stage opportunity evidence states", () => {
+    const proofDir = fs.mkdtempSync(path.join(os.tmpdir(), "source-dbx-consumption-plan-"));
+    const result = spawnSync(
+      "node",
+      [
+        "scripts/source/load-cloud-consumption-package.mjs",
+        "--mode=plan",
+        "--dataset-version=meridian-databricks-consumption-commit-v1-20260908",
+        "--package-dir=datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908",
+        `--proof-dir=${proofDir}`,
+      ],
+      { cwd: repoRoot, encoding: "utf8" },
+    );
+
+    expect(result.status).toBe(0);
+    const summary = JSON.parse(fs.readFileSync(path.join(proofDir, "summary.json"), "utf8"));
+    expect(summary.quality_gate.status).toBe("PASS");
+    expect(summary.layer2_expected_rows).toBe(169);
+    expect(summary.layer2_expected_by_adapter.optimization_opportunity_adapter).toBe(6);
+    expect(summary.layer3_expected_readback.source_optimization_opportunity).toBe(6);
+    expect(summary.layer3_expected_readback.source_opportunity_evidence).toBe(20);
+    expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_cloud_rows).toBe(6);
+    expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_finance_required_rows).toBe(6);
+
+    const opportunities = fs.readFileSync(
+      path.join(
+        repoRoot,
+        "datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908/source-files/optimization_opportunities.csv",
+      ),
+      "utf8",
+    );
+    expect(opportunities).toContain("OPT-DBX-DISCOUNT-REPRICE-001");
+    expect(opportunities).toContain("OPT-DBX-SERVERLESS-PARITY-001");
+    expect(opportunities).toContain(",signal,range,system_evidenced,");
+    expect(opportunities).toContain("Benchmark comparable required");
+    expect(opportunities).toContain("Per-SKU serverless versus classic comparison required");
+  });
 });

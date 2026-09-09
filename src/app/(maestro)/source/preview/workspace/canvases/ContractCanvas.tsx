@@ -1527,6 +1527,16 @@ function OpportunityCockpit({ vm }: { vm: SourceWorkspaceVM }) {
               value={selected?.grade ?? "Not established"}
             />
             <SmallMetric
+              label="Confidence"
+              value={selected?.confidence ?? "Not established"}
+              tone={
+                selected?.confidence === "Not established" ||
+                Number.parseFloat(selected?.confidence ?? "0") < 50
+                  ? "#ba7517"
+                  : "#0f6e56"
+              }
+            />
+            <SmallMetric
               label="Finance confirmed"
               value={view.financeConfirmed}
               tone="#246b45"
@@ -1563,7 +1573,8 @@ function OpportunityCockpit({ vm }: { vm: SourceWorkspaceVM }) {
                     {opportunity.label}
                   </div>
                   <div style={{ fontSize: 11, color: "#5f5e5a", marginTop: 3 }}>
-                    {opportunity.stage} · {opportunity.grade}
+                    {opportunity.stage} · {opportunity.confidence} confidence ·{" "}
+                    {opportunity.grade}
                   </div>
                 </div>
                 <div
