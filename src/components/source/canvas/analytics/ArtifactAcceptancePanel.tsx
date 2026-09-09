@@ -615,10 +615,14 @@ const LABEL_STYLE: CSSProperties = {
 const INPUT_STYLE: CSSProperties = {
   border: `1px solid ${ANALYTICS.LINE}`,
   borderRadius: ANALYTICS.RADIUS_SM,
+  boxSizing: "border-box",
+  maxWidth: "100%",
+  minWidth: 0,
   padding: "6px 8px",
   fontSize: 12,
   fontFamily: ANALYTICS.SANS,
   color: ANALYTICS.INK,
+  width: "100%",
 };
 
 const TEXTAREA_STYLE: CSSProperties = {

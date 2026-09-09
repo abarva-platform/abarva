@@ -293,6 +293,35 @@ describe("ArtifactAcceptancePanel", () => {
     );
   });
 
+  it("keeps long acceptance controls inside narrow artifact cards", () => {
+    render(
+      <ArtifactAcceptancePanel
+        eventId="event-1"
+        artifactCode="d17_weight_log"
+        artifactName="Weight Set Governance Log"
+        latestAcceptance={null}
+      />,
+    );
+    fireEvent.click(
+      screen.getByTestId(
+        "source-shell-artifact-accept-toggle-d17_weight_log",
+      ),
+    );
+
+    for (const control of [
+      screen.getByLabelText("Content drift"),
+      screen.getByLabelText("Gate precondition"),
+      screen.getByLabelText("Agent context eligibility"),
+    ]) {
+      expect(control).toHaveStyle({
+        boxSizing: "border-box",
+        maxWidth: "100%",
+        minWidth: 0,
+        width: "100%",
+      });
+    }
+  });
+
   it("shows the server error message and does not call onAccepted on failure", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
