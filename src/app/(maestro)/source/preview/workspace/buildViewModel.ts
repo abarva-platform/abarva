@@ -3412,6 +3412,21 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         "Render a structured exhibit only from loaded rows; otherwise explain the missing row family.",
     },
   ];
+  const opportunityContextById = new Map(
+    (opportunitySet?.opportunities ?? []).map((opportunity) => [
+      opportunity.opportunityId,
+      {
+        stage: opportunity.stage,
+        confidence: opportunity.confidence,
+        evidenceGrade: opportunity.evidenceGrade,
+        blockingGap: clientFacingOpportunityText(opportunity.blockingGap),
+        owner: opportunity.owner,
+        nextAction:
+          clientFacingOpportunityText(opportunity.nextAction) ??
+          opportunity.nextAction,
+      },
+    ]),
+  );
   const avaSurfaceContext = {
     tenant: vm.tenantName,
     module: "Source",
@@ -3586,20 +3601,32 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         sourceConfidence: contractRow.source_confidence,
       })),
       contractOpportunityDirectory: vm.portfolio.impact.actionCandidates.map(
-        (candidate) => ({
-          id: candidate.action_candidate_id,
-          opportunityId: candidate.opportunity_id,
-          contractId: candidate.contract_id,
-          vendorName: candidate.vendor_name,
-          label: candidate.title ?? "Review candidate action",
-          amountUsd: numberFromDb(candidate.candidate_amount_usd),
-          state: candidate.readiness_state,
-          evidenceClass: candidate.evidence_state,
-          nextAction:
-            candidate.next_action ??
-            "Confirm evidence owner and decision path before claiming value.",
-          sourceRefs: clientFacingSourceRefs(candidate.citation_basis_json),
-        }),
+        (candidate) => {
+          const opportunityContext = opportunityContextById.get(
+            candidate.opportunity_id ?? "",
+          );
+          return {
+            id: candidate.action_candidate_id,
+            opportunityId: candidate.opportunity_id,
+            contractId: candidate.contract_id,
+            vendorName: candidate.vendor_name,
+            label: candidate.title ?? "Review candidate action",
+            amountUsd: numberFromDb(candidate.candidate_amount_usd),
+            state: candidate.readiness_state,
+            stage: opportunityContext?.stage ?? candidate.readiness_state,
+            confidence: opportunityContext?.confidence ?? null,
+            evidenceClass: candidate.evidence_state,
+            evidenceGrade:
+              opportunityContext?.evidenceGrade ?? candidate.evidence_state,
+            blockingGap: opportunityContext?.blockingGap ?? "Not established",
+            owner: opportunityContext?.owner ?? null,
+            nextAction:
+              opportunityContext?.nextAction ??
+              candidate.next_action ??
+              "Confirm evidence owner and decision path before claiming value.",
+            sourceRefs: clientFacingSourceRefs(candidate.citation_basis_json),
+          };
+        },
       ),
       optimizationOpportunities: opportunityView
         ? {
