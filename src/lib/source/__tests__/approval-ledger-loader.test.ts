@@ -120,6 +120,36 @@ describe("loadApprovalLedger", () => {
     });
   });
 
+  it("uses the canonical email when the person name is a generic placeholder", async () => {
+    const personId = "d6ed8004-c031-4eb5-ad59-53135f61369e";
+    queuedRows = {
+      data: [
+        {
+          stage_key: "value",
+          approved_by_user_id: personId,
+          action: "admin_review",
+          approved_at: "2026-09-09T12:34:56.000Z",
+          notes: "Final value gate approved.",
+        },
+      ],
+      error: null,
+    };
+    queuedPersonRows = {
+      data: [{ id: personId, name: "User", email: "operator@example.test" }],
+      error: null,
+    };
+
+    const ledger = await loadApprovalLedger("event-1", "value", [
+      { key: "value", label: "Value" },
+    ]);
+
+    expect(mockClerkClient).not.toHaveBeenCalled();
+    expect(ledger[0]).toMatchObject({
+      approverName: "operator@example.test",
+      authorizationNote: "Approved by operator@example.test.",
+    });
+  });
+
   it("reads approved_at from the database and maps it into the ledger timestamp", async () => {
     queuedRows = {
       data: [

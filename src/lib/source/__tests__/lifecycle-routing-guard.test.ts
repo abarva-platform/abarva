@@ -132,6 +132,22 @@ describe("source lifecycle routing guard", () => {
     ).toEqual({ type: "allow" });
   });
 
+  it("preserves stage navigation when completed events redirect to summary", () => {
+    expect(
+      resolveSourceLifecycleRoute({
+        eventId: "SRC-100",
+        lifecycleState: "completed",
+        pathname: "/source/events/SRC-100",
+        search: "?stage=strategy&workspace=files&client=other",
+      }),
+    ).toEqual({
+      type: "redirect",
+      destination:
+        "/source/events/SRC-100/summary?stage=strategy&workspace=files",
+      status: 302,
+    });
+  });
+
   it("redirects archived events to the Source portfolio book", () => {
     expect(
       resolveSourceLifecycleRoute({

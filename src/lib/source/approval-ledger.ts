@@ -43,6 +43,15 @@ interface ApprovalLedgerPersonRow {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const GENERIC_PERSON_NAMES = new Set(["admin", "unknown", "user"]);
+
+function nameFromPerson(row: ApprovalLedgerPersonRow): string | null {
+  const name = row.name?.trim() || null;
+  const email = row.email?.trim() || null;
+  if (name && !GENERIC_PERSON_NAMES.has(name.toLowerCase())) return name;
+  return email ?? name;
+}
+
 function nameFromClerkUser(user: ClerkUserLite | null): string | null {
   if (!user) return null;
   const parts = [user.firstName ?? "", user.lastName ?? ""].filter(
@@ -72,7 +81,7 @@ async function resolvePersonNames(
     if (error || !Array.isArray(data)) return names;
 
     for (const row of data as ApprovalLedgerPersonRow[]) {
-      const name = row.name?.trim() || row.email?.trim();
+      const name = nameFromPerson(row);
       if (name) names.set(row.id, name);
     }
   } catch (error) {

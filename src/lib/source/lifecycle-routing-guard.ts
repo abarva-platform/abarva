@@ -134,7 +134,18 @@ export function resolveSourceLifecycleRoute(
     state === "completed"
   ) {
     if (match.section === "summary") return { type: "allow" };
-    return { type: "redirect", destination: summaryPath, status: 302 };
+    const requested = new URLSearchParams(input.search ?? "");
+    const summarySearch = new URLSearchParams();
+    for (const key of ["stage", "workspace"] as const) {
+      const value = requested.get(key)?.trim();
+      if (value) summarySearch.set(key, value);
+    }
+    const query = summarySearch.toString();
+    return {
+      type: "redirect",
+      destination: `${summaryPath}${query ? `?${query}` : ""}`,
+      status: 302,
+    };
   }
 
   if (state === "archived") {
