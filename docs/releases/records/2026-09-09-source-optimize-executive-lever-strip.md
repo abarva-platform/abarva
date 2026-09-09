@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -38,22 +38,26 @@ Adds the executive lever strip to the Source Contract 360 optimization story pan
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx'` — PASS.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` — PASS.
 - `npm run release:check` — PASS.
-- Pending PR checks.
-- Pending live signed-in Source smoke after deploy.
+- PR checks for the presentation change passed before merge.
+- ACA main deploy run `34390274043` for merge SHA `936240a7a8090e727b95f1fc9f382311e0b9107a` completed successfully and proved digest `sha256:f473ead5fe447453d3771517f5ed8858c1cca7a32c5180f31c98b9641a89254b`.
+- The later main deploy run `34391038983` for SHA `dc9326e8fa614ca35f71cf2540cb08b97a35a672` completed successfully and proved the current digest `sha256:0c2ed0b0468f246cdb0caf3bb526a99a33832da90b4684846b5bbd7b813ce687`.
+- Independent runtime-invariant check passed for `acrabarvalab001.azurecr.io/abarva/web@sha256:0c2ed0b0468f246cdb0caf3bb526a99a33832da90b4684846b5bbd7b813ce687`: web template image, 100% traffic revision image, and required worker job images matched.
+- Live signed-in Source smoke passed on Source Workspace / Contract 360 Optimize for `contractId=MER-TECH-DBX-001`: the executive strip rendered 6 levers, $1.8M negotiable value, 4 quantified rows, 2 signal-stage rows, and 0 finance-confirmed outcomes, with no conflict sentinel.
+- Live advisor smoke passed on the same route: aVa returned the six optimization rows with dollar values, confidence, evidence grade, and signal-stage upgrade gaps, without an empty contract-ID artifact.
 
 ## Rollout Plan
 
-Merge through PR, deploy the approved main SHA through the repo-owned Azure Container Apps main workflow, prove the digest-pinned runtime invariant, then run a live signed-in Source workspace smoke against a contract with governed optimization opportunities.
+Completed through PR merge, repo-owned Azure Container Apps main deploy, digest-pinned runtime invariant, and live signed-in Source workspace smoke against a contract with governed optimization opportunities.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: required.
+- Repo-owned deploy workflow: completed.
 - Shared runtime mutators: not authorized outside the repo-owned deploy workflow.
-- Approved image digest: pending deployment.
-- ACA runtime invariant: required after deployment.
-- Worker image invariant: required after deployment.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:0c2ed0b0468f246cdb0caf3bb526a99a33832da90b4684846b5bbd7b813ce687`.
+- ACA runtime invariant: passed for active revision `ca-abarva-web-lab-eastus--mdc9326e8` at 100% traffic.
+- Worker image invariant: passed for required worker jobs.
 - Feature/env flag update path: none.
-- Live signed-in proof required: Source Workspace / Contract 360 Optimize.
+- Live signed-in proof: passed for Source Workspace / Contract 360 Optimize.
 
 ## Rollback Plan
 
@@ -61,7 +65,7 @@ Revert the PR and redeploy through the repo-owned ACA main workflow. No data rol
 
 ## Audit Evidence
 
-Inspect the PR, local validation output, CI checks, ACA deploy workflow, runtime-invariant proof, and live signed-in Source smoke output.
+Inspect the PR, local validation output, CI checks, ACA deploy workflow, runtime-invariant proof, and live signed-in Source smoke output. The current production proof URL used was `https://app.abarva.ai/source/workspace?client=meridian-health&contractId=MER-TECH-DBX-001&contractTab=Optimize&proof=contract-optimize-strip-live-20260909T1901Z`.
 
 ## Known Gaps
 
