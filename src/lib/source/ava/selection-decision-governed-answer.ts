@@ -255,8 +255,6 @@ async function readAcceptedSelectionMemoBody(
     .select("body")
     .eq("source_event_id", artifact.sourceEventId)
     .eq("artifact_code", artifact.artifactKind)
-    .eq("linked_artifact_id", artifact.id)
-    .eq("status", "approved")
     .maybeSingle<{ body: string | null }>();
   if (error) return null;
   const body = data?.body?.trim();

@@ -194,7 +194,7 @@ describe("buildSelectionDecisionGovernedAnswer", () => {
     expect(mockReadContent).not.toHaveBeenCalled();
   });
 
-  it("reads the approved linked artifact-state body when the registry blob is unavailable", async () => {
+  it("reads the canonical event-artifact body when the authoritative registry blob is unavailable", async () => {
     mockListArtifacts.mockResolvedValue([selectionArtifact()]);
     mockReadContent.mockResolvedValue(null);
     const state = mockAcceptedStateBody(SELECTION_BODY);
@@ -209,11 +209,12 @@ describe("buildSelectionDecisionGovernedAnswer", () => {
 
     expect(answer?.status).toBe("answered");
     expect(answer?.directAnswer).toContain("Supplier Alpha");
+    expect(state.eq).toHaveBeenCalledWith("source_event_id", "event-1");
     expect(state.eq).toHaveBeenCalledWith(
-      "linked_artifact_id",
-      "artifact-selection-1",
+      "artifact_code",
+      "d27_selection_memo",
     );
-    expect(state.eq).toHaveBeenCalledWith("status", "approved");
+    expect(state.eq).toHaveBeenCalledTimes(2);
   });
 });
 
