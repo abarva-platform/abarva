@@ -26,7 +26,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
 
     expect(source).not.toContain('fill="#0a0a0b"');
     expect(source).not.toContain('stroke="#0a0a0b"');
-    expect(source).not.toContain('<b>black</b>');
+    expect(source).not.toContain("<b>black</b>");
     expect(source).not.toContain('? "#0a0a0b"');
   });
 
@@ -51,6 +51,18 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).not.toContain("<span>Graph</span></button>");
   });
 
+  it("renders commercial posture on the product-shell Contract 360 page", () => {
+    const source = readFileSync(
+      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
+      "utf8",
+    );
+
+    expect(source).toContain("<ProductShellCommercialPostureStrip vm={vm} />");
+    expect(source).toContain('aria-label="Commercial posture"');
+    expect(source).toContain('PanelHead eyebrow="Commercial posture"');
+    expect(source).toContain("posture.items.map");
+  });
+
   it("keeps the contract graph tab as a real lineage visual with drill-down subtabs", () => {
     const source = readFileSync(
       `${__dirname}/../WorkspaceExecutiveShell.tsx`,
@@ -58,7 +70,9 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     );
     const css = readFileSync(`${__dirname}/../workspace.css`, "utf8");
 
-    expect(source).toContain('const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"]');
+    expect(source).toContain(
+      'const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"]',
+    );
     expect(source).toContain('aria-label="Source contract graph flow"');
     expect(source).toContain('className="sw-v2-graph-links"');
     expect(source).toContain("GraphVolumeTable");
@@ -90,9 +104,15 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     ] as unknown as Parameters<typeof sourceImpactCoverageRowTotal>[0];
 
     expect(sourceImpactCoverageRowTotal(coverage, "spend_rows")).toBe(204);
-    expect(sourceImpactCoverageRowTotal(coverage, "performance_rows")).toBe(144);
-    expect(sourceImpactCoverageRowTotal(coverage, "document_page_text_rows")).toBe(87);
-    expect(sourceImpactCoverageRowTotal(coverage, "change_order_rows")).toBe(25);
+    expect(sourceImpactCoverageRowTotal(coverage, "performance_rows")).toBe(
+      144,
+    );
+    expect(
+      sourceImpactCoverageRowTotal(coverage, "document_page_text_rows"),
+    ).toBe(87);
+    expect(sourceImpactCoverageRowTotal(coverage, "change_order_rows")).toBe(
+      25,
+    );
   });
 
   it("keeps the Evidence page visual before the row-detail tables", () => {
@@ -117,14 +137,13 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).not.toContain("<b>{vendor.vendor_name}</b>");
     expect(source).not.toContain("<span>{contract.vendor_name}</span>");
     expect(source).not.toContain("<small>{contract.vendor_name}</small>");
-    expect(source).not.toContain('value={contract.vendor_name}');
+    expect(source).not.toContain("value={contract.vendor_name}");
     expect(source).not.toContain("title={selectedVendor?.vendor_name");
     expect(source).not.toContain("? selectedVendor.vendor_name");
     expect(source).not.toContain("return vendor?.vendor_name");
     expect(source).not.toContain("return contract?.vendor_name");
-    expect(source).toContain(
-      "<b>{safeVendorDisplayName(vendor.vendor_name, vendor.vendor_ref)}</b>",
-    );
+    expect(source).toContain("safeVendorDisplayName(vendor.vendor_name");
+    expect(source).toContain("vendor.vendor_ref");
     expect(source).toContain("safeContractVendorDisplayName(contract)");
   });
 
@@ -622,11 +641,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
           typeof source360RecoverableCreditCoverageRows
         >[0],
       ).map((row) => row.contract_id),
-    ).toEqual([
-      "MER-TECH-SFDC-001",
-      "MER-TECH-AMS-001",
-      "MER-TECH-SD-001",
-    ]);
+    ).toEqual(["MER-TECH-SFDC-001", "MER-TECH-AMS-001", "MER-TECH-SD-001"]);
     expect(
       source360RecoverableCreditFinding(
         portfolio as unknown as Parameters<
@@ -663,8 +678,10 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
             contract_id: "MER-TECH-AMS-001",
             action_type: "avoid_future_spend",
             opportunity_type: "change_order_control",
-            title: "Convert recurring AMS change orders into base service catalog",
-            finding_summary: "Recurring change orders should be moved into run catalog.",
+            title:
+              "Convert recurring AMS change orders into base service catalog",
+            finding_summary:
+              "Recurring change orders should be moved into run catalog.",
             deterministic_basis: "change order rows",
             candidate_amount_usd: 151_000,
             finance_confirmation_state: "not_confirmed",
@@ -722,18 +739,18 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       portfolio as unknown as Parameters<typeof optimizeTypeRows>[0],
     );
 
-    expect(rows.find((row) => row.type === "recoverable leakage")).toMatchObject(
-      {
-        count: 3,
-        amount: 102_666.65,
-      },
-    );
-    expect(rows.find((row) => row.type === "change order control")).toMatchObject(
-      {
-        count: 1,
-        amount: 151_000,
-      },
-    );
+    expect(
+      rows.find((row) => row.type === "recoverable leakage"),
+    ).toMatchObject({
+      count: 3,
+      amount: 102_666.65,
+    });
+    expect(
+      rows.find((row) => row.type === "change order control"),
+    ).toMatchObject({
+      count: 1,
+      amount: 151_000,
+    });
   });
 
   it("aggregates vendor evidence depth rows for charting without inventing coverage", () => {
