@@ -28,11 +28,13 @@ Layer 4 products: updates the Source workspace contract canvas presentation. The
 
 ## Changes Included
 
-Adds the executive lever strip to the Source Contract 360 optimization story panel and regression coverage for the six-lever summary state. Disables runner-provided browser apt sources before CI dependency install steps that do not depend on those sources.
+Adds the executive lever strip to the Source Contract 360 optimization story panel and the live Source Workspace product-shell Optimize queue. Adds regression coverage for the six-lever summary state and for the product shell retaining the strip. Disables runner-provided browser apt sources before CI dependency install steps that do not depend on those sources.
 
 ## QA / Validation
 
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' --runInBand` — PASS.
+- `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts' --runInBand` — PASS.
+- `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts'` — PASS.
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx'` — PASS.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` — PASS.
 - `npm run release:check` — PASS.
