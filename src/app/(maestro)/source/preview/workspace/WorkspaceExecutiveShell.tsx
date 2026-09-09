@@ -336,11 +336,11 @@ export function WorkspaceExecutiveShell({
         : (selectedContract?.vendor_ref ??
           executiveVendors[0]?.vendor_ref ??
           null);
-  const selectedVendor = selectedVendorRef
-    ? (executiveVendors.find((vendor) =>
-        vendor.vendor_refs.includes(selectedVendorRef),
-      ) ?? null)
-    : null;
+  const selectedVendor = resolveSelectedVendor(
+    portfolio,
+    executiveVendors,
+    selectedVendorRef,
+  );
   const headerContract = vm.isContract ? selectedContract : null;
   const lapsedAutoRenewSupport = supportByLabel(
     portfolio,
@@ -4625,6 +4625,25 @@ export function focusedVendorSet(
       .length,
     unresolvedCount,
   };
+}
+
+export function resolveSelectedVendor(
+  portfolio: SourceWorkspacePortfolioData,
+  vendors: readonly ExecutiveVendorRow[],
+  selectedVendorRef: string | null,
+): ExecutiveVendorRow | null {
+  if (!selectedVendorRef) return null;
+
+  const linkedByRef = (vendor: ExecutiveVendorRow) =>
+    uniqueRefs([vendor.vendor_ref, ...vendor.vendor_refs]).includes(
+      selectedVendorRef,
+    );
+
+  return (
+    vendors.find(linkedByRef) ??
+    vendorsWithImpactEvidence(portfolio, vendors).find(linkedByRef) ??
+    null
+  );
 }
 
 function vendorsWithImpactEvidence(
