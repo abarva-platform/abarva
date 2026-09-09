@@ -12,6 +12,8 @@
 
 Source now calculates the selected-vendor evidence metrics from the same alias-aware coverage rollup used by the vendor evidence table. This keeps the selected-vendor panel consistent with the row a user clicked when a supplier relationship is assembled from multiple evidence-backed vendor references.
 
+Follow-up candidate: the selected-vendor action-row tile also reads from the alias-aware evidence coverage rollup, so the selected panel and evidence table report the same action-row count.
+
 ## Layer Impact
 
 Layer 4 Products: Source presentation logic only. The change affects vendor detail metric display and does not change loaders, adapters, canonical records, migrations, or data-plane writes.
@@ -27,6 +29,7 @@ Layer 4 Products: Source presentation logic only. The change affects vendor deta
 ## Changes Included
 
 - Uses alias-aware coverage aggregation for the selected-vendor panel.
+- Uses the same alias-aware action-row count in the selected-vendor metric tile.
 - Adds a behavioral regression for selected-vendor coverage across evidence vendor aliases.
 
 ## QA / Validation

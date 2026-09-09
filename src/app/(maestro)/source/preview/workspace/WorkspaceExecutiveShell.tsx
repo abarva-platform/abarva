@@ -1092,9 +1092,7 @@ function VendorsPage({
               />
               <Fact
                 label="Action rows"
-                value={String(
-                  selectedVendorPosition?.action_candidate_count ?? 0,
-                )}
+                value={formatCount(selectedVendorCoverage?.actionRows)}
               />
               <Fact
                 label="Unconfirmed action value"
