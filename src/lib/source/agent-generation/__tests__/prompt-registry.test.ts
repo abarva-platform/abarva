@@ -500,6 +500,65 @@ describe("Source artifact prompt registry provider config", () => {
     );
   });
 
+  it("uses normalized vendor packages as the controlling responses evidence", () => {
+    const d13 = getPromptTemplate("d13_vendor_responses");
+    const ctx = makeD09Context(["stale-response-coverage.csv"]);
+    ctx.normalizedVendorResponsePackages = [
+      {
+        artifactId: "response-1",
+        originalName: "vendor-a-normalized.xlsx",
+        receivedAt: "2026-09-09T00:00:00.000Z",
+        vendorId: "vendor-a",
+        vendorName: "Vendor A",
+        rows: [
+          {
+            requirementId: "REQ-001",
+            category: "service scope",
+            section: "Scope",
+            requirement: "Accept end-to-end accountability.",
+            requirementLevel: "Mandatory",
+            responseType: "Evidence",
+            evidenceRequired: true,
+            evaluationCriterionId: "EVAL-001",
+            responseDisposition: "Exception",
+            responseNarrative: "Accountability excludes one named interface.",
+            evidenceRefs: ["Exhibit A"],
+            pricingRef: "Pricing 1",
+            slaRef: "SLA 1",
+            exceptionRef: "EXC-001",
+            vendorOwner: "Bid lead",
+          },
+        ],
+        analytics: {
+          requirementCount: 110,
+          requirementCoverageScore: 100,
+          mandatoryCompletenessScore: 100,
+          evidenceCoverageScore: 100,
+          pricingTraceabilityScore: 100,
+          slaTraceabilityScore: 100,
+          exceptionDisclosureScore: 100,
+          criterionLinkageScore: 100,
+          readyForEvaluation: "yes",
+          nonConformances: [],
+          clarificationQuestions: ["Confirm interface accountability."],
+        },
+        parserWarnings: [],
+      },
+    ];
+
+    const message = d13?.buildUserMessage(ctx, {
+      d09_rfp_pack: "# RFP",
+      d11_response_checklist: "# Response Control",
+    });
+
+    expect(message).toContain("CONTROLLING INTAKE EVIDENCE");
+    expect(message).toContain("Vendor A (vendor-a)");
+    expect(message).toContain("requirements=1; mandatory=1");
+    expect(message).toContain("Exception=1");
+    expect(message).toContain("REQ-001 | Exception");
+    expect(message).toContain("Confirm interface accountability.");
+  });
+
   it("requires the vendor response pack before drafting response completeness", () => {
     const d15 = getPromptTemplate("d15_response_completeness");
     const ctx = makeD09Context(["Vendor_A_Response.docx"]);
