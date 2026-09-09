@@ -11,15 +11,38 @@ import {
   type SourceArtifactRegistryRecord,
 } from "@/lib/source/artifact-registry";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 
 jest.mock("@/lib/source/artifact-registry", () => ({
   listSourceArtifactsForSourceEventId: jest.fn(),
   readSourceArtifactRegistryTextContent: jest.fn(),
 }));
+jest.mock("@/lib/data-plane/postgresCompat", () => ({
+  getAzureReadFluentClient: jest.fn(),
+}));
 
 const mockListArtifacts = jest.mocked(listSourceArtifactsForSourceEventId);
 const mockReadContent = jest.mocked(readSourceArtifactRegistryTextContent);
+const mockGetReadClient = jest.mocked(getAzureReadFluentClient);
 const TEST_TENANT_KEY = CANONICAL_TENANT_KEYS[0]!;
+
+function mockAcceptedStateBody(body: string | null) {
+  const maybeSingle = jest.fn().mockResolvedValue({
+    data: body === null ? null : { body },
+    error: null,
+  });
+  const chain = {
+    from: jest.fn(),
+    select: jest.fn(),
+    eq: jest.fn(),
+    maybeSingle,
+  };
+  chain.from.mockReturnValue(chain);
+  chain.select.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
+  mockGetReadClient.mockReturnValue(chain as never);
+  return chain;
+}
 
 const SELECTION_BODY = `
 <section>
@@ -120,6 +143,7 @@ describe("parseSelectionDecisionArtifact", () => {
 describe("buildSelectionDecisionGovernedAnswer", () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    mockAcceptedStateBody(null);
   });
 
   it("answers from the authoritative selection memo without recalculating the decision", async () => {
@@ -168,6 +192,28 @@ describe("buildSelectionDecisionGovernedAnswer", () => {
       "No authoritative selection memo is available",
     );
     expect(mockReadContent).not.toHaveBeenCalled();
+  });
+
+  it("reads the approved linked artifact-state body when the registry blob is unavailable", async () => {
+    mockListArtifacts.mockResolvedValue([selectionArtifact()]);
+    mockReadContent.mockResolvedValue(null);
+    const state = mockAcceptedStateBody(SELECTION_BODY);
+
+    const answer = await buildSelectionDecisionGovernedAnswer({
+      eventId: "event-1",
+      eventName: "Managed services event",
+      clientKey: TEST_TENANT_KEY,
+      tenantId: "tenant-1",
+      question: "Why was the supplier selected? Cite the score and BAFO TCV.",
+    });
+
+    expect(answer?.status).toBe("answered");
+    expect(answer?.directAnswer).toContain("Supplier Alpha");
+    expect(state.eq).toHaveBeenCalledWith(
+      "linked_artifact_id",
+      "artifact-selection-1",
+    );
+    expect(state.eq).toHaveBeenCalledWith("status", "approved");
   });
 });
 

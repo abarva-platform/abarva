@@ -29,6 +29,7 @@ Source aVa now explains an event's accepted supplier decision from the authorita
 ## Changes Included
 
 - Add an event-scoped selection-decision answer built from the authoritative selection memo.
+- Read an accepted selection memo from its approved, linked artifact-state body when its registry blob is unavailable.
 - Render committed value facts as committed rather than projected and state committed, projected, and realized totals separately.
 - Add an explicit pre-retrieval refusal for cross-tenant commercial-data requests.
 - Add focused intent, parser, governance, value-state, and route-order tests.
