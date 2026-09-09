@@ -2383,6 +2383,124 @@ function pluralOpportunity(count: number) {
   return count === 1 ? "opportunity" : "opportunities";
 }
 
+function OpportunityExecutiveStrip({
+  view,
+}: {
+  view: NonNullable<SourceWorkspaceVM["opportunityView"]>;
+}) {
+  const quantifiedCount = view.opportunities.filter(
+    (opportunity) => opportunity.stageRaw === "quantified",
+  ).length;
+  const signalCount = view.opportunities.filter(
+    (opportunity) => opportunity.stageRaw === "signal",
+  ).length;
+  const financeConfirmedCount = view.opportunities.filter(
+    (opportunity) => opportunity.stageRaw === "finance_confirmed",
+  ).length;
+  const items = [
+    {
+      label: "Levers",
+      value: String(view.opportunities.length),
+      detail: "governed opportunity rows",
+      tone: "#0a0a0b",
+    },
+    {
+      label: "Negotiable",
+      value: view.potential.negotiable,
+      detail: "potential value, not a booked outcome",
+      tone: "#0f6e56",
+    },
+    {
+      label: "Quantified",
+      value: String(quantifiedCount),
+      detail: "calculation-backed or document-evidenced",
+      tone: "#1d9e75",
+    },
+    {
+      label: "Signal-stage",
+      value: String(signalCount),
+      detail: "requires more evidence before upgrade",
+      tone: "#ba7517",
+    },
+    {
+      label: "Finance confirmed",
+      value: String(financeConfirmedCount),
+      detail:
+        view.financeConfirmed === "Not established"
+          ? "no outcome claimed"
+          : `${view.financeConfirmed} outcome`,
+      tone: financeConfirmedCount > 0 ? "#246b45" : "#5f5e5a",
+    },
+  ];
+
+  return (
+    <div
+      aria-label="Executive lever summary"
+      style={{
+        borderTop: "1px solid rgba(10,10,11,.1)",
+        background: "#fff",
+        padding: "12px 16px",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+          gap: 8,
+        }}
+      >
+        {items.map((item) => (
+          <div
+            key={item.label}
+            aria-label={`${item.label}: ${item.value}`}
+            style={{
+              border: "1px solid rgba(10,10,11,.1)",
+              borderRadius: 7,
+              padding: "10px 11px",
+              background: "#fbfaf7",
+              minHeight: 72,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 9.5,
+                fontWeight: 850,
+                letterSpacing: ".08em",
+                textTransform: "uppercase",
+                color: "#888780",
+                marginBottom: 5,
+              }}
+            >
+              {item.label}
+            </div>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 18,
+                fontWeight: 900,
+                color: item.tone,
+                lineHeight: 1.05,
+              }}
+            >
+              {item.value}
+            </div>
+            <div
+              style={{
+                fontSize: 11.3,
+                lineHeight: 1.35,
+                color: "#5f5e5a",
+                marginTop: 5,
+              }}
+            >
+              {item.detail}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const view = vm.opportunityView;
   if (!view) return null;
@@ -2638,6 +2756,7 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
           </div>
         </div>
       </div>
+      <OpportunityExecutiveStrip view={view} />
       <div
         style={{
           borderTop: "1px solid rgba(10,10,11,.1)",
