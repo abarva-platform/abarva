@@ -38,6 +38,7 @@ function sourceContext(): AskSurfaceContext {
             amount: "$1.3M",
             amountUsd: 1_301_000,
             stageRaw: "quantified",
+            confidence: 0.82,
             grade: "SYSTEM EVIDENCED",
             blockingGap: "SLA and invoice extracts reconciled.",
             nextAction: "Prepare recovery claim.",
@@ -54,6 +55,7 @@ function sourceContext(): AskSurfaceContext {
             amount: "$2.4M",
             amountUsd: 2_420_000,
             stageRaw: "quantified",
+            confidence: 0.82,
             grade: "SYSTEM EVIDENCED",
             blockingGap: "Entitlement and usage extracts reconciled.",
             nextAction: "Negotiate removal from renewal baseline.",
@@ -67,6 +69,7 @@ function sourceContext(): AskSurfaceContext {
             amount: "$1.9M",
             amountUsd: 1_850_000,
             stageRaw: "workflow_required",
+            confidence: 0.35,
             grade: "DOCUMENT EVIDENCED",
             blockingGap: "Levers visible; signed concession pending.",
             nextAction: "Run Door 1 negotiation plan.",
@@ -80,6 +83,7 @@ function sourceContext(): AskSurfaceContext {
             amount: "$22K",
             amountUsd: 22_140,
             stageRaw: "quantified",
+            confidence: 0.82,
             grade: "SYSTEM EVIDENCED",
             blockingGap:
               "VMS rate-card rows reconciled to CLM pricing schedule.",
@@ -192,6 +196,8 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).toContain(
       "These amounts are candidates, not realized savings",
     );
+    expect(answer?.directAnswer).toContain("confidence 0.82 (82%)");
+    expect(answer?.directAnswer).toContain("confidence 0.35 (35%)");
     expect(answer?.artifacts.map((artifact) => artifact.artifact)).toEqual([
       "table",
       "chart",
@@ -201,6 +207,12 @@ describe("Source Workspace visual aVa answer", () => {
       artifact: "table",
       id: "source-contract-opportunity-table",
     });
+    expect(JSON.stringify(answer?.artifacts[0])).toContain("Confidence");
+    expect(JSON.stringify(answer?.artifacts[0])).toContain("Stage");
+    expect(JSON.stringify(answer?.artifacts[0])).toContain("Evidence grade");
+    expect(JSON.stringify(answer?.artifacts[0])).toContain("Blocking gap");
+    expect(JSON.stringify(answer?.artifacts[0])).toContain("0.82 (82%)");
+    expect(JSON.stringify(answer?.artifacts[0])).toContain("0.35 (35%)");
     expect(answer?.artifacts[1]).toMatchObject({
       artifact: "chart",
       kind: "horizontal-bar",

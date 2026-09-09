@@ -59,8 +59,12 @@ interface SourceOpportunityLine {
   amount: string;
   amountUsd: number | null;
   state: string;
+  stage: string;
+  confidence: string;
   evidenceClass: string;
+  evidenceGrade: string;
   evidence: string;
+  blockingGap: string;
   nextAction: string;
   owner: string | null;
   sourceRefs: string[];
@@ -467,10 +471,18 @@ function opportunityLinesFrom(
             stringValue(opportunity.stageRaw) ??
             stringValue(opportunity.stage) ??
             "Not established",
+          stage:
+            stringValue(opportunity.stage) ??
+            stringValue(opportunity.stageRaw) ??
+            "Not established",
+          confidence: confidenceLabel(opportunity.confidence),
           evidenceClass: stringValue(opportunity.grade) ?? "Not established",
+          evidenceGrade: stringValue(opportunity.grade) ?? "Not established",
           evidence:
             stringValue(opportunity.blockingGap) ??
             "Governed Source opportunity row with calculation and evidence references.",
+          blockingGap:
+            stringValue(opportunity.blockingGap) ?? "Not established",
           nextAction:
             stringValue(opportunity.nextAction) ??
             "Confirm evidence owner and decision path.",
@@ -502,9 +514,21 @@ function opportunityLinesFrom(
             : currencyLabel(numberValue(line.amountUsd)),
         amountUsd: numberValue(line.amountUsd),
         state: stringValue(line.state) ?? "Not established",
+        stage:
+          stringValue(line.stage) ??
+          stringValue(line.stageRaw) ??
+          stringValue(line.state) ??
+          "Not established",
+        confidence: confidenceLabel(line.confidence),
         evidenceClass: stringValue(line.evidenceClass) ?? "Not established",
+        evidenceGrade:
+          stringValue(line.evidenceGrade) ??
+          stringValue(line.grade) ??
+          stringValue(line.evidenceClass) ??
+          "Not established",
         evidence:
           "Governed Source action-candidate row tied to the named contract.",
+        blockingGap: stringValue(line.blockingGap) ?? "Not established",
         nextAction:
           stringValue(line.nextAction) ??
           "Confirm evidence owner and decision path.",
@@ -522,6 +546,10 @@ function opportunityLinesFrom(
     )
     .map((line) => ({
       ...line,
+      stage: line.state,
+      confidence: "Not established",
+      evidenceGrade: line.evidenceClass,
+      blockingGap: line.evidence,
       owner: null,
     }));
 }
@@ -613,6 +641,20 @@ function currencyLabel(value: number | null): string {
   return `${sign}$${abs.toFixed(0)}`;
 }
 
+function confidenceLabel(value: unknown): string {
+  const numeric = numberValue(value);
+  if (numeric != null) {
+    if (numeric >= 0 && numeric <= 1) {
+      return `${numeric.toFixed(2)} (${(numeric * 100).toFixed(0)}%)`;
+    }
+    if (numeric > 1 && numeric <= 100) {
+      return `${(numeric / 100).toFixed(2)} (${numeric.toFixed(0)}%)`;
+    }
+    return numeric.toString();
+  }
+  return stringValue(value) ?? "Not established";
+}
+
 function opportunityClassName(kind: string): string {
   return kind
     .replace(/_/g, " ")
@@ -634,7 +676,11 @@ function buildOpportunityRows(lines: SourceOpportunityLine[]) {
     value: line.amountUsd == null ? line.amount : currencyLabel(line.amountUsd),
     valueUsd: line.amountUsd,
     state: line.state,
+    stage: line.stage,
+    confidence: line.confidence,
     evidence: line.evidenceClass,
+    evidenceGrade: line.evidenceGrade,
+    blockingGap: line.blockingGap,
     owner: line.owner ?? "Not established",
     sourceRefs:
       publicEvidenceRefs(line.sourceRefs).join(", ") || "Not established",
@@ -725,7 +771,11 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         { key: "opportunity", label: "Opportunity" },
         { key: "value", label: "Value", format: "currency", align: "right" },
         { key: "state", label: "State" },
+        { key: "stage", label: "Stage" },
+        { key: "confidence", label: "Confidence" },
         { key: "evidence", label: "Evidence" },
+        { key: "evidenceGrade", label: "Evidence grade" },
+        { key: "blockingGap", label: "Blocking gap" },
         { key: "owner", label: "Owner" },
         { key: "sourceRefs", label: "Evidence basis" },
         { key: "nextAction", label: "Next action" },
@@ -735,7 +785,11 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         opportunity: row.opportunity,
         value: row.value,
         state: row.state,
+        stage: row.stage,
+        confidence: row.confidence,
         evidence: row.evidence,
+        evidenceGrade: row.evidenceGrade,
+        blockingGap: row.blockingGap,
         owner: row.owner,
         sourceRefs: row.sourceRefs,
         nextAction: row.nextAction,
@@ -854,7 +908,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
           .slice(0, 6)
           .map(
             (row) =>
-              `${row.opportunity} | ${row.value} | ${row.class} | evidence ${row.evidence} | owner ${row.owner} | next ${sentenceFragment(row.nextAction)}`,
+              `${row.opportunity} | ${row.value} | ${row.class} | stage ${row.stage} | confidence ${row.confidence} | evidence grade ${row.evidenceGrade} | blocking gap ${sentenceFragment(row.blockingGap)} | owner ${row.owner} | next ${sentenceFragment(row.nextAction)}`,
           )
           .join(" ; ")}.`
       : " Lever table: no governed contract-specific opportunity rows are loaded.";
