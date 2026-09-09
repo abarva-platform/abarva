@@ -24,4 +24,14 @@ describe("shouldShowGovernedAnswerProse", () => {
       ),
     ).toBe(false);
   });
+
+  it("shows governed prose when structured response parts replace the response text", () => {
+    expect(
+      shouldShowGovernedAnswerProse(
+        "The accepted decision is recorded.",
+        "The accepted decision is recorded.",
+        true,
+      ),
+    ).toBe(true);
+  });
 });

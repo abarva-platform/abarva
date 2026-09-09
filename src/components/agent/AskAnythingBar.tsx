@@ -80,9 +80,11 @@ const RAIL_W = 76; // AppRail width — bar sits to the right of it
 export function shouldShowGovernedAnswerProse(
   response: string | null | undefined,
   directAnswer: string | null | undefined,
+  hasResponseParts = false,
 ): boolean {
   const governed = directAnswer?.trim();
   if (!governed) return false;
+  if (hasResponseParts) return true;
   return governed !== response?.trim();
 }
 
@@ -330,6 +332,7 @@ export function AskAnythingBar({
                         showProse={shouldShowGovernedAnswerProse(
                           response,
                           agentAnswer.directAnswer,
+                          responseParts.length > 0,
                         )}
                       />
                     </div>
