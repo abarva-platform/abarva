@@ -77,15 +77,8 @@ const MAX_TA_HEIGHT = 180;
 const FONT = '"Inter", -apple-system, BlinkMacSystemFont, sans-serif';
 const RAIL_W = 76; // AppRail width — bar sits to the right of it
 
-export function shouldShowGovernedAnswerProse(
-  response: string | null | undefined,
-  directAnswer: string | null | undefined,
-  hasResponseParts = false,
-): boolean {
-  const governed = directAnswer?.trim();
-  if (!governed) return false;
-  if (hasResponseParts) return true;
-  return governed !== response?.trim();
+export function shouldShowResponseTranscript(hasGovernedAnswer: boolean): boolean {
+  return !hasGovernedAnswer;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -308,33 +301,27 @@ export function AskAnythingBar({
                       </span>
                     )}
                   </div>
-                  {/* Response text */}
-                  <div style={{
-                    fontSize: 13.5, lineHeight: 1.65, color: '#0c1a3a',
-                    maxHeight: 220, overflowY: 'auto',
-                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                  }}>
-                    {error ? (
-                      <span style={{ color: '#c0392b' }}>Error: {error}</span>
-                    ) : responseParts.length > 0 ? (
-                      <AgentResponseParts parts={responseParts} />
-                    ) : (
-                      response || <span style={{ opacity: 0.4 }}>…</span>
-                    )}
-                    {isStreaming && (
-                      <span className="aab-cursor">▋</span>
-                    )}
-                  </div>
+                  {shouldShowResponseTranscript(Boolean(agentAnswer)) ? (
+                    <div style={{
+                      fontSize: 13.5, lineHeight: 1.65, color: '#0c1a3a',
+                      maxHeight: 220, overflowY: 'auto',
+                      whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                    }}>
+                      {error ? (
+                        <span style={{ color: '#c0392b' }}>Error: {error}</span>
+                      ) : responseParts.length > 0 ? (
+                        <AgentResponseParts parts={responseParts} />
+                      ) : (
+                        response || <span style={{ opacity: 0.4 }}>…</span>
+                      )}
+                      {isStreaming && (
+                        <span className="aab-cursor">▋</span>
+                      )}
+                    </div>
+                  ) : null}
                   {agentAnswer ? (
                     <div style={{ marginTop: 10, maxHeight: 420, overflowY: 'auto' }}>
-                      <AgentAnswerRenderer
-                        answer={agentAnswer}
-                        showProse={shouldShowGovernedAnswerProse(
-                          response,
-                          agentAnswer.directAnswer,
-                          responseParts.length > 0,
-                        )}
-                      />
+                      <AgentAnswerRenderer answer={agentAnswer} showProse />
                     </div>
                   ) : null}
                 </div>
