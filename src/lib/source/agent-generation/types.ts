@@ -73,6 +73,10 @@ export interface SourceArtifactBodyGenerationMetadata {
   humanEditedAt?: string;
   /** Clerk user id of the human who edited/saved the AI draft. */
   humanEditedByUserId?: string | null;
+  /** ISO timestamp set when Gate B is rerun on the current human-edited body. */
+  reviewedExistingBodyAt?: string;
+  /** Clerk user id of whoever initiated the human-edited-body review. */
+  reviewedExistingBodyByUserId?: string | null;
   /**
    * Reasoning-spine capture (Slices 1.6–1.7, flag `source_reasoning_spine`). Present
    * iff the flag was on.
