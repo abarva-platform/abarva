@@ -86,7 +86,10 @@ export function findDeterministicSourceClaimViolations(args: {
   }
 
   const supportedTemporalClaims = new Set(
-    extractTemporalClaims(args.sourceContext).map((claim) => claim.key),
+    extractTemporalClaims(args.sourceContext).flatMap((claim) => {
+      const month = claim.key.match(/^(20\d{2}-\d{2})-\d{2}$/)?.[1];
+      return month ? [claim.key, month] : [claim.key];
+    }),
   );
   for (const claim of extractTemporalClaims(args.body)) {
     if (!supportedTemporalClaims.has(claim.key)) {
@@ -111,6 +114,7 @@ export function findDeterministicSourceClaimViolations(args: {
   for (const sentence of args.body.split(/(?<=[.!?])\s+|\n+/)) {
     const text = sentence.replace(/\s+/g, " ").trim();
     if (!text) continue;
+    if (isEvidenceAbsenceStatement(text)) continue;
     if (generalizationPatterns.some((pattern) => pattern.test(text))) {
       violations.push({
         claim: text.slice(0, 220),
@@ -143,6 +147,7 @@ function extractTemporalClaims(text: string): Array<{
     /\b\d{1,2}\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+20\d{2}\b/gi,
     /(?<!\d\s)\b(?:mid-|early\s+|late\s+)?(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+20\d{2}\b/gi,
     /\b20\d{2}-\d{2}-\d{2}\b/g,
+    /\b20\d{2}-(?:0[1-9]|1[0-2])\b/g,
     /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s*(?:-|–|to)\s*(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
     /\b(?:\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(?:\s*-\s*|\s+)(?:business\s+)?(?:days?|weeks?|months?|years?)\b/gi,
   ];
@@ -206,11 +211,57 @@ function normalizeTemporalClaim(raw: string): string {
   if (dayFirst && MONTH_NUMBER_BY_NAME[dayFirst[2]]) {
     return `${dayFirst[3]}-${MONTH_NUMBER_BY_NAME[dayFirst[2]]}-${dayFirst[1].padStart(2, "0")}`;
   }
+  const isoMonth = normalized.match(/^(20\d{2})-(\d{2})$/);
+  if (isoMonth) return `${isoMonth[1]}-${isoMonth[2]}`;
+  const monthYear = normalized.match(/^([a-z]+)\s+(20\d{2})$/);
+  if (monthYear && MONTH_NUMBER_BY_NAME[monthYear[1]]) {
+    return `${monthYear[2]}-${MONTH_NUMBER_BY_NAME[monthYear[1]]}`;
+  }
+  const duration = normalized
+    .replace(/(?<=\w)-(?=\w)/g, " ")
+    .match(
+      /^(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(business\s+)?(day|days|week|weeks|month|months|year|years)$/,
+    );
+  if (duration) {
+    const amount = durationWordToNumber(duration[1]);
+    const unit = duration[3].replace(/s$/, "");
+    if (amount !== null) {
+      if (unit === "year") return `duration-month:${amount * 12}`;
+      if (unit === "month") return `duration-month:${amount}`;
+      return `duration-${duration[2] ? "business-" : ""}${unit}:${amount}`;
+    }
+  }
   return normalized
     .replace(/\b(days?|weeks?|months?|years?)\b/g, (unit) =>
       unit.endsWith("s") ? unit.slice(0, -1) : unit,
     )
     .replace(/(?<=\d)-(?=day|week|month|year)/g, " ");
+}
+
+function durationWordToNumber(raw: string): number | null {
+  const numeric = Number(raw);
+  if (Number.isFinite(numeric)) return numeric;
+  const words: Record<string, number> = {
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    ten: 10,
+    eleven: 11,
+    twelve: 12,
+  };
+  return words[raw] ?? null;
+}
+
+function isEvidenceAbsenceStatement(text: string): boolean {
+  return /\b(?:no|none|absent|missing|unavailable|not\s+(?:loaded|available|provided|established))\b[^.!?]{0,100}\b(?:benchmark|evidence|source|dataset|baseline)\b/i.test(
+    text,
+  );
 }
 
 export function applyDeterministicSourceClaimGate(
@@ -256,7 +307,21 @@ export function applyDeterministicSourceClaimGate(
 }
 
 function extractMaterialNumbers(text: string): number[] {
-  return extractMaterialNumberClaims(text).map((claim) => claim.value);
+  const values = extractMaterialNumberClaims(text).map((claim) => claim.value);
+  for (const line of text.split("\n")) {
+    if (
+      !/\b(?:amount|annual_value|baseline|cost|credit|fee|invoice|price|rate|spend|usd|value)\b/i.test(
+        line,
+      )
+    ) {
+      continue;
+    }
+    for (const match of line.matchAll(/\b\d[\d,]*(?:\.\d+)?\b/g)) {
+      const value = Number(match[0].replace(/,/g, ""));
+      if (Number.isFinite(value)) values.push(value);
+    }
+  }
+  return values;
 }
 
 function extractMaterialNumberClaims(text: string): Array<{
@@ -265,7 +330,7 @@ function extractMaterialNumberClaims(text: string): Array<{
 }> {
   const matches: Array<{ text: string; value: number }> = [];
   const pattern =
-    /\$\s*\d[\d,]*(?:\.\d+)?\s*(?:billion|million|thousand|bn|mm|m|k)?|\b\d+(?:\.\d+)?\s*(?:%|percent)\b/gi;
+    /\$\s*\d[\d,]*(?:\.\d+)?(?:\s*(?:billion|million|thousand|bn|mm|m|k)\b)?|\b\d+(?:\.\d+)?\s*(?:%|percent)\b/gi;
   for (const match of text.matchAll(pattern)) {
     const value = parseMaterialNumber(match[0]);
     if (value !== null) matches.push({ text: match[0].trim(), value });
