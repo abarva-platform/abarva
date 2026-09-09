@@ -143,6 +143,8 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(context).toContain("rfp-package-complete");
     expect(context).toContain("Artifact-specific requirements (from source-artifact-profiles.ts)");
     expect(context).toContain("Decision purpose:");
+    expect(context).toContain("source=linked evidence record");
+    expect(context).not.toContain("artifact=artifact-1");
   });
 
   it("does not leak D09 RFP evidence-coverage language into other artifact codes", () => {

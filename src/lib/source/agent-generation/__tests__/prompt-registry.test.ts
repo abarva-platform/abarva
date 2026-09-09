@@ -832,7 +832,7 @@ describe("Source artifact prompt registry provider config", () => {
   });
 
   it("uses client-facing company language for strategy and scope drafts", () => {
-    const ctx = makeD09Context([]);
+    const ctx = makeD09Context(["Scope_Evidence.docx"]);
     const d01 = getPromptTemplate("d01_strategy_memo");
     const d05 = getPromptTemplate("d05_scope_memo");
 
@@ -858,12 +858,23 @@ describe("Source artifact prompt registry provider config", () => {
       "Candidate opportunity / validation target from intake (not contract value or realized savings)",
     );
     expect(d05Message).toContain("Company: SkyHarbor Air");
+    expect(d05?.version).toBeGreaterThanOrEqual(2);
+    expect(d05Message).toContain(
+      "Approved event trigger / why-now: Contracts expiring.",
+    );
+    expect(d05Message).toContain(
+      "Approved event scope and intake facts: Managed services scope.",
+    );
+    expect(d05Message).toContain(
+      "Uploaded evidence for this event",
+    );
     expect(d01Message).not.toContain("Tenant:");
     expect(d05Message).not.toContain("Tenant:");
     expect(d01Message).not.toContain("tenantKey");
     expect(d05Message).not.toContain("tenantKey");
     expect(d01Message).not.toContain("key: skyharbor");
     expect(d05Message).not.toContain("key: skyharbor");
+    expect(d05Message).not.toContain("artifact-1");
   });
 
   it("binds uploaded evidence-room files into the D09 RFP coverage map", () => {
