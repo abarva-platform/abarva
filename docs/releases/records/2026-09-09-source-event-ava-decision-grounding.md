@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source aVa now explains an event's accepted supplier decision from the authoritative selection memo, keeps committed and realized value states distinct, and refuses explicit requests for another tenant's commercial data before retrieval. It does not recalculate evaluation scores, select a supplier, or promote unconfirmed value.
+Source aVa now explains an event's accepted supplier decision from the authoritative selection memo, keeps committed and realized value states distinct, and refuses explicit requests for another tenant's commercial data before retrieval. The Source answer toolbar also renders the governed direct answer whenever older summary prose differs, while suppressing exact duplicates. It does not recalculate evaluation scores, select a supplier, or promote unconfirmed value.
 
 ## Layer Impact
 
@@ -32,11 +32,12 @@ Source aVa now explains an event's accepted supplier decision from the authorita
 - Read an accepted selection memo from its approved, linked artifact-state body when its registry blob is unavailable.
 - Render committed value facts as committed rather than projected and state committed, projected, and realized totals separately.
 - Add an explicit pre-retrieval refusal for cross-tenant commercial-data requests.
+- Show governed direct-answer prose in the Source answer toolbar when it is not already visible as the exact response text.
 - Add focused intent, parser, governance, value-state, and route-order tests.
 
 ## QA / Validation
 
-- Focused Jest selection and value answer tests: passed.
+- Focused Jest selection, value, and governed-prose visibility tests: passed.
 - Focused Jest Source answer-route intent and ordering tests: passed.
 - Scoped ESLint and TypeScript checks: required before release.
 - Signed-in production selection, value, tenant-boundary, and workflow-regression proof: required after deployment.
