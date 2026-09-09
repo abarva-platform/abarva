@@ -1900,9 +1900,11 @@ function persistedOpportunityFromRow(input: {
   return {
     opportunityId,
     contractId: textValue(input.row.contract_id) ?? "",
-    label: textValue(payload.label) ?? opportunityId,
+    label:
+      textValue(payload.label) ?? textValue(payload.title) ?? opportunityId,
     shortLabel:
       textValue(payload.short_label) ??
+      textValue(payload.title) ??
       textValue(payload.label) ??
       opportunityId,
     valueType: readValueType(input.row.value_type),
