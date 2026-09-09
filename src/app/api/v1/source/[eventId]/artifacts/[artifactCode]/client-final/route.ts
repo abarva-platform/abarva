@@ -17,6 +17,7 @@ import {
   registerSourceArtifactUpload,
 } from "@/lib/source/artifact-registry";
 import { sourceArtifactFormatFromMime } from "@/lib/source/artifact-registry/upload-contract";
+import { extractSourceUploadText } from "@/lib/source/artifact-registry/upload-text-extraction";
 import {
   artifactStateRowToView,
   type SourceEventArtifactStateRow,
@@ -214,6 +215,10 @@ export async function POST(request: Request, { params }: RouteContext) {
   );
   const acceptedAt = new Date().toISOString();
   const buffer = Buffer.from(await file.arrayBuffer());
+  const extractedClientFinal = await extractSourceUploadText({
+    buffer,
+    mimeType,
+  });
 
   const dataProtection = evaluateSensitiveUpload({
     filename,
@@ -413,6 +418,11 @@ export async function POST(request: Request, { params }: RouteContext) {
       note,
       reviewMeetingDate,
       stakeholderGroup,
+      textExtraction: {
+        method: extractedClientFinal.method,
+        bodyAvailable: Boolean(extractedClientFinal.text),
+        warnings: extractedClientFinal.warnings,
+      },
       sourceGeneratedArtifactId:
         previousGenerated?.id ?? artifactState.linked_artifact_id,
       governanceMessage: CLIENT_FINAL_GOVERNANCE_MESSAGE,
@@ -428,6 +438,10 @@ export async function POST(request: Request, { params }: RouteContext) {
     ).updateArtifactBody({
       artifactRowId: artifactState.id,
       columns: {
+        body: extractedClientFinal.text,
+        body_format: extractedClientFinal.text ? "markdown" : null,
+        body_authored_by: tenancy.userId,
+        body_updated_at: acceptedAt,
         linked_artifact_id: artifact.id,
         status: "approved",
         tier: "rich",
