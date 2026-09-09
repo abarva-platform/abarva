@@ -63,6 +63,21 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).toContain("posture.items.map");
   });
 
+  it("renders the Optimize executive lever summary in the product shell", () => {
+    const source = readFileSync(
+      `${__dirname}/../WorkspaceExecutiveShell.tsx`,
+      "utf8",
+    );
+
+    expect(source).toContain(
+      "<ProductShellOptimizationExecutiveStrip vm={vm} />",
+    );
+    expect(source).toContain('aria-label="Executive lever summary"');
+    expect(source).toContain("Signal-stage");
+    expect(source).toContain("requires more evidence before upgrade");
+    expect(source).toContain("no outcome claimed");
+  });
+
   it("keeps the contract graph tab as a real lineage visual with drill-down subtabs", () => {
     const source = readFileSync(
       `${__dirname}/../WorkspaceExecutiveShell.tsx`,

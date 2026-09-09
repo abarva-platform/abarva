@@ -2690,6 +2690,7 @@ function OptimizePage({
           />
         ) : (
           <>
+            <ProductShellOptimizationExecutiveStrip vm={vm} />
             <OptimizeTypeMixChart rows={optimizeTypeRows(portfolio)} />
             <div className="sw-v2-lanes">
               <ValueLane
@@ -2788,6 +2789,131 @@ function OptimizePage({
         </div>
       </section>
     </div>
+  );
+}
+
+function ProductShellOptimizationExecutiveStrip({
+  vm,
+}: {
+  vm: SourceWorkspaceVM;
+}) {
+  const view = vm.opportunityView;
+  if (!view || view.opportunities.length === 0) return null;
+
+  const quantifiedCount = view.opportunities.filter(
+    (opportunity) => opportunity.stageRaw === "quantified",
+  ).length;
+  const signalCount = view.opportunities.filter(
+    (opportunity) => opportunity.stageRaw === "signal",
+  ).length;
+  const financeConfirmedCount = view.opportunities.filter(
+    (opportunity) => opportunity.stageRaw === "finance_confirmed",
+  ).length;
+  const items = [
+    {
+      label: "Levers",
+      value: String(view.opportunities.length),
+      detail: "governed opportunity rows",
+      tone: "#0a0a0b",
+    },
+    {
+      label: "Negotiable",
+      value: view.potential.negotiable,
+      detail: "potential value, not a booked outcome",
+      tone: SOURCE_CHART_PALETTE.teal,
+    },
+    {
+      label: "Quantified",
+      value: String(quantifiedCount),
+      detail: "calculation-backed or document-evidenced",
+      tone: SOURCE_CHART_PALETTE.teal,
+    },
+    {
+      label: "Signal-stage",
+      value: String(signalCount),
+      detail: "requires more evidence before upgrade",
+      tone: SOURCE_CHART_PALETTE.amber,
+    },
+    {
+      label: "Finance confirmed",
+      value: String(financeConfirmedCount),
+      detail:
+        view.financeConfirmed === "Not established"
+          ? "no outcome claimed"
+          : `${view.financeConfirmed} outcome`,
+      tone:
+        financeConfirmedCount > 0
+          ? SOURCE_CHART_PALETTE.teal
+          : SOURCE_CHART_PALETTE.slate,
+    },
+  ];
+
+  return (
+    <section
+      aria-label="Executive lever summary"
+      style={{
+        border: "1px solid rgba(10,10,11,.1)",
+        borderRadius: 8,
+        background: "#fffdfa",
+        margin: "0 0 14px",
+        padding: "12px 14px",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gap: 8,
+          gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
+        }}
+      >
+        {items.map((item) => (
+          <div
+            key={item.label}
+            aria-label={`${item.label}: ${item.value}`}
+            style={{
+              borderLeft: `3px solid ${item.tone}`,
+              minHeight: 62,
+              padding: "2px 10px 2px 11px",
+            }}
+          >
+            <span
+              style={{
+                color: "#74716a",
+                display: "block",
+                fontSize: 9.5,
+                fontWeight: 850,
+                letterSpacing: ".08em",
+                marginBottom: 3,
+                textTransform: "uppercase",
+              }}
+            >
+              {item.label}
+            </span>
+            <b
+              style={{
+                color: item.tone,
+                display: "block",
+                fontSize: 18,
+                lineHeight: 1.05,
+                marginBottom: 4,
+              }}
+            >
+              {item.value}
+            </b>
+            <small
+              style={{
+                color: "#5f5e5a",
+                display: "block",
+                fontSize: 11,
+                lineHeight: 1.3,
+              }}
+            >
+              {item.detail}
+            </small>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
