@@ -4521,14 +4521,9 @@ function shortPromptProfileCode(artifactCode: string): string {
 
 function formatEvidenceStates(ctx: SourceGenerationContext): string {
   if (ctx.evidence.length === 0) return "(no evidence states recorded)";
-  const d09SatisfiedIds = getD09RfpSatisfiedRequirementIds(ctx);
   return ctx.evidence
     .map((item) => {
-      const state =
-        item.currentState === "Not Requested" &&
-        d09SatisfiedIds.has(item.requirementId)
-          ? "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)"
-          : item.currentState;
+      const state = resolveGenerationEvidenceState(ctx, item);
       return [
         `- ${item.requirementId}`,
         `stage=${item.stage}`,
@@ -4540,6 +4535,39 @@ function formatEvidenceStates(ctx: SourceGenerationContext): string {
         .join("; ");
     })
     .join("\n");
+}
+
+export function resolveGenerationEvidenceState(
+  ctx: SourceGenerationContext,
+  item: SourceGenerationContext["evidence"][number],
+  includeD09Coverage = true,
+): string {
+  if (item.currentState !== "Not Requested") return item.currentState;
+  if (
+    item.requirementId === "EVID-SRC-STR-TRIGGER" &&
+    Boolean(ctx.event.triggerDescription?.trim())
+  ) {
+    return "Available in approved event intake";
+  }
+  if (
+    item.requirementId === "EVID-SRC-STR-INCUMBENT" &&
+    (ctx.uploadedEvidence ?? []).some(
+      (artifact) =>
+        artifact.parseStatus === "parsed" &&
+        /(?:^|[_\s-])(msa|sow|contract|agreement)(?:[_\s.-]|$)/i.test(
+          artifact.originalName,
+        ),
+    )
+  ) {
+    return "Available parsed evidence — citation review pending";
+  }
+  if (
+    includeD09Coverage &&
+    getD09RfpSatisfiedRequirementIds(ctx).has(item.requirementId)
+  ) {
+    return "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)";
+  }
+  return item.currentState;
 }
 
 function formatUploadedEvidence(ctx: SourceGenerationContext): string {

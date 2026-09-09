@@ -7,6 +7,7 @@ import {
   SOURCE_ARTIFACT_STORY_PACKAGES,
   SOURCE_NARRATIVE_LEADER_EXECUTIVE_EDITOR_PASS,
   SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE,
+  resolveGenerationEvidenceState,
 } from "../prompt-registry";
 import type { SourceGenerationContext } from "../types";
 import { SOURCE_ARTIFACT_SPECS } from "@/lib/source/canonical-specs";
@@ -34,6 +35,41 @@ describe("Source artifact prompt registry provider config", () => {
       expect(contract?.packageId).toBeTruthy();
       expect(contract?.role).toBeTruthy();
     }
+  });
+
+  it("reconciles approved intake and parsed incumbent files without masking real gaps", () => {
+    const ctx = makeD09Context(["Executed_MSA.docx", "Current_SOW.docx"]);
+    const evidenceBase = {
+      id: "evidence-strategy",
+      sourceEventId: "event-1",
+      tenantKey: "skyharbor",
+      stage: "strategy" as const,
+      currentState: "Not Requested" as const,
+      sourceArtifactId: null,
+      notes: null,
+      lastSyncedAt: null,
+      createdAt: "2026-06-12T00:00:00.000Z",
+      updatedAt: "2026-06-12T00:00:00.000Z",
+    };
+
+    expect(
+      resolveGenerationEvidenceState(ctx, {
+        ...evidenceBase,
+        requirementId: "EVID-SRC-STR-TRIGGER",
+      }),
+    ).toBe("Available in approved event intake");
+    expect(
+      resolveGenerationEvidenceState(ctx, {
+        ...evidenceBase,
+        requirementId: "EVID-SRC-STR-INCUMBENT",
+      }),
+    ).toBe("Available parsed evidence — citation review pending");
+    expect(
+      resolveGenerationEvidenceState(ctx, {
+        ...evidenceBase,
+        requirementId: "EVID-SRC-STR-MARKET-BENCHMARK",
+      }),
+    ).toBe("Not Requested");
   });
 
   it("lets legacy suffixed prompt keys resolve without changing the legacy prompt keys", () => {

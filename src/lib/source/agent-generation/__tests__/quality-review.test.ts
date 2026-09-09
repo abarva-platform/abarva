@@ -225,6 +225,18 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(violations.some((item) => item.claim === "120-day")).toBe(false);
   });
 
+  it("treats equivalent source-bound date, quarter, and duration formats as the same claim", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext:
+        "Term end 2027-07-31; notice deadline 2027-04-30; QBR period 2025-Q3; notice period 90 days.",
+      body:
+        "The term ends 31 July 2027, the deadline is April 30, 2027, the QBR covers Q3 2025, and the agreement has a 90-day notice period.",
+    });
+
+    expect(violations).toEqual([]);
+  });
+
   it("forces evidence and source-discipline dimensions below the release bar", () => {
     const baseReview = {
       standardId: "partner-grade-consulting-deliverable-v1" as const,
