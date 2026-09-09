@@ -327,6 +327,8 @@ export function buildSourceQualitySourceContext(args: {
     ctx.event.estimatedValueUsd
       ? `Estimated value: $${ctx.event.estimatedValueUsd.toLocaleString()}`
       : "Estimated value: not recorded",
+    `Approved event trigger / why-now: ${ctx.event.triggerDescription ?? "not recorded"}`,
+    `Approved event scope and intake facts: ${ctx.event.scopeDescription ?? "not recorded"}`,
     "",
     "Artifact-specific requirements (from source-artifact-profiles.ts):",
     ...profileLines,

@@ -901,7 +901,7 @@ function formatDraftEvidenceContext(
       : [
           "Uploaded evidence for this event — CITE these by filename where they support a claim,",
           "and do not invent figures beyond what they state:",
-          ...items.slice(0, 8).map((a) => {
+          ...items.slice(0, 16).map((a) => {
             const facts = a.factSummaries?.length
               ? `\n    Facts: ${a.factSummaries.slice(0, 6).join("; ")}`
               : "";
@@ -951,7 +951,7 @@ function formatStageGuidebookContext(
 const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
   d01_strategy_memo: {
     artifactCode: "d01_strategy_memo",
-    version: 2,
+    version: 3,
     model: DEFAULT_MODEL,
     maxTokens: DEFAULT_MAX_TOKENS,
     upstreamRequired: [],
@@ -963,7 +963,7 @@ You are drafting the Sourcing Strategy Memo. This is the foundational document f
 Required structural sections:
 ${formatRequiredSectionsForPrompt("d01_strategy_memo")}
 
-This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the candidate value to validate, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band only when the intake or bound evidence supports one. Never convert the intake value-at-stake field into contract value, annual spend, TCV, or realized savings. If the contract baseline is not present in the bound evidence, say it is not established instead of deriving a percentage or dollar range. Do not introduce generic percentage benchmarks, typical timelines, current-market conditions, vendor appetite, competitive-intensity claims, or comparisons with a typical/equivalent event unless a named bound source establishes them. Use only dates and durations that appear verbatim in the bound context. Do not calculate notice deadlines, back-solve an RFP issue quarter, or supply an elapsed-time estimate in prose; state the loaded expiry and notice inputs separately and assign calendar validation as an action until a deterministic schedule artifact supplies the derived dates. Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material candidate-value claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids).`,
+This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the candidate value to validate, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band only when the intake or bound evidence supports one. Never convert the intake value-at-stake field into contract value, annual spend, TCV, or realized savings. If the contract baseline is not present in the bound evidence, say it is not established instead of deriving a percentage or dollar range. Do not introduce generic percentage benchmarks, typical timelines, current-market conditions, vendor appetite, competitive-intensity claims, or comparisons with a typical/equivalent event unless a named bound source establishes them. Use only dates and durations that appear verbatim in the bound context. Do not calculate notice deadlines, back-solve an RFP issue quarter, or supply an elapsed-time estimate in prose; state the loaded expiry and notice inputs separately and assign calendar validation as an action until a deterministic schedule artifact supplies the derived dates. Cite evidence by its business filename only. Never invent or expose a bracketed hash, shortened identifier, artifact id, or chunk id as a citation. Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material candidate-value claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids).`,
     buildUserMessage: (ctx) => {
       return [
         `Company: ${ctx.tenantName}`,
