@@ -1,6 +1,8 @@
 // POST /api/v1/source/:eventId/artifacts/:artifactCode/generate
 //
-// Body: {} (no inputs — context is bound server-side)
+// Body: {} for a new draft, or { reviewExistingBody: true } to rerun the
+// consulting-grade gate against the current human-edited body without first
+// generating a replacement draft. Context remains bound server-side.
 //
 // Generates an artifact body via Anthropic using bound tenant + event +
 // upstream-artifact context. Persists the body to
@@ -102,6 +104,7 @@ import {
   withComplianceReviewFlag,
 } from "@/lib/source/artifact-governance";
 import { evaluateGenerationEligibility } from "@/lib/source/contracts/generation-eligibility";
+import { resolveSourceArtifactGenerationInput } from "@/lib/source/agent-generation/review-existing-body";
 
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
@@ -317,6 +320,9 @@ export async function generateSourceArtifactDraft(
   }
 
   const { eventId, artifactCode } = await params;
+  const requestBody = (await _req.json().catch(() => null)) as {
+    reviewExistingBody?: unknown;
+  } | null;
 
   // Resolve template up front so unknown artifact codes 404 fast.
   const template = getPromptTemplate(artifactCode);
@@ -495,6 +501,20 @@ export async function generateSourceArtifactDraft(
       { status: 409 },
     );
   }
+  const generationInput = resolveSourceArtifactGenerationInput({
+    requestedReview: requestBody?.reviewExistingBody,
+    existingBody: artifactRow.body,
+  });
+  const { reviewExistingBody } = generationInput;
+  if (generationInput.error === "artifact_body_required") {
+    return Response.json(
+      {
+        error: "artifact_body_required",
+        detail: `Artifact ${artifactCode} has no authored body to review.`,
+      },
+      { status: 409 },
+    );
+  }
 
   // Collect upstream bodies + build the user message.
   const upstreamBound = collectUpstreamBodies(ctx, [
@@ -518,16 +538,31 @@ export async function generateSourceArtifactDraft(
   // deterministic Source draft so the canvas remains useful in local/dev
   // environments without silently routing to another provider.
   const startedAt = Date.now();
-  let body = "";
-  let stopReason: string | null = null;
+  let body = generationInput.body;
+  let stopReason: string | null = reviewExistingBody
+    ? "human_edited_body_review"
+    : null;
   let tokensIn: number | null = null;
   let tokensOut: number | null = null;
-  let model = template.model;
+  let model =
+    (reviewExistingBody &&
+    typeof artifactRow.body_generation_metadata?.model === "string"
+      ? artifactRow.body_generation_metadata.model
+      : null) ?? template.model;
   try {
-    if (!tenancy) {
+    if (reviewExistingBody) {
+      if (!requiresQualityGate) {
+        return Response.json(
+          {
+            error: "quality_gate_not_required",
+            detail: `${artifactCode} does not require the consulting-grade review lane.`,
+          },
+          { status: 409 },
+        );
+      }
+    } else if (!tenancy) {
       return tenancyErrorResponse(tenancyError);
-    }
-    if (!process.env.ANTHROPIC_API_KEY) {
+    } else if (!process.env.ANTHROPIC_API_KEY) {
       model = "source-deterministic-fallback";
       stopReason = "missing_anthropic_api_key";
       body = buildDeterministicFallbackBody({
@@ -717,6 +752,9 @@ export async function generateSourceArtifactDraft(
   );
   const generationMetadata = withSectionVerificationMetadata(
     {
+      ...(reviewExistingBody
+        ? (artifactRow.body_generation_metadata ?? {})
+        : {}),
       model,
       promptTemplateId: template.artifactCode,
       promptTemplateVersion: template.version,
@@ -732,6 +770,12 @@ export async function generateSourceArtifactDraft(
       reasoningStatus: reasoningCapture.status,
       reasoningEnvelope: reasoningCapture.envelope ?? undefined,
       bannedTermMatches,
+      ...(reviewExistingBody
+        ? {
+            reviewedExistingBodyAt: nowIso,
+            reviewedExistingBodyByUserId: currentUser?.clerkUserId ?? null,
+          }
+        : {}),
     },
     sectionVerification,
   ) satisfies SourceArtifactBodyGenerationMetadata;
