@@ -30,6 +30,7 @@ Source aVa now explains an event's accepted supplier decision from the authorita
 
 - Add an event-scoped selection-decision answer built from the authoritative selection memo.
 - Read an accepted selection memo from its approved, linked artifact-state body when its registry blob is unavailable.
+- Resolve the selection answer from the exact `d27_selection_memo` object so a newer contract record in the same artifact family cannot displace it.
 - Render committed value facts as committed rather than projected and state committed, projected, and realized totals separately.
 - Add an explicit pre-retrieval refusal for cross-tenant commercial-data requests.
 - Show governed direct-answer prose in the Source answer toolbar when it is not already visible as the exact response text.

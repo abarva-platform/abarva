@@ -177,6 +177,36 @@ describe("buildSelectionDecisionGovernedAnswer", () => {
     expect(answer!.safety.tenantFencePassed).toBe(true);
   });
 
+  it("does not let a newer contract record displace the selection memo", async () => {
+    const memo = selectionArtifact();
+    const contractRecord: SourceArtifactRegistryRecord = {
+      ...selectionArtifact(),
+      id: "artifact-contract-1",
+      artifactKind: "d28_contract_record",
+      originalName: "contract-record-client-final.html",
+      blobUri: "blob://contract-record",
+      createdAt: "2026-09-09T13:00:00.000Z",
+      updatedAt: "2026-09-09T13:00:00.000Z",
+    };
+    mockListArtifacts.mockResolvedValue([contractRecord, memo]);
+    mockReadContent.mockImplementation(async (record) =>
+      record.artifactKind === "d27_selection_memo" ? SELECTION_BODY : null,
+    );
+
+    const answer = await buildSelectionDecisionGovernedAnswer({
+      eventId: "event-1",
+      eventName: "Managed services event",
+      clientKey: TEST_TENANT_KEY,
+      tenantId: "tenant-1",
+      question: "Why was the supplier selected?",
+    });
+
+    expect(answer?.status).toBe("answered");
+    expect(answer?.directAnswer).toContain("Supplier Alpha");
+    expect(mockReadContent).toHaveBeenCalledWith(memo);
+    expect(mockReadContent).not.toHaveBeenCalledWith(contractRecord);
+  });
+
   it("fails closed when no authoritative selection memo exists", async () => {
     mockListArtifacts.mockResolvedValue([]);
 
