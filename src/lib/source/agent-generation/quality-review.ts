@@ -34,6 +34,7 @@ export function shortSourceArtifactCode(artifactCode: string): string {
 export const SOURCE_CONSULTING_GRADE_GATE_CODES = new Set([
   "d09_rfp_pack",
   "d01_strategy_memo",
+  "d02_value_target",
   "d05_scope_memo",
   "d24_decision_brief",
   "d27_selection_memo",
@@ -48,6 +49,155 @@ export interface SourceArtifactQualityGateMetadata {
   attempts: number;
   finalSummary: string;
   reviews: ConsultingGradeReview[];
+}
+
+export interface DeterministicSourceClaimViolation {
+  claim: string;
+  reason: string;
+}
+
+const DETERMINISTIC_CLAIM_GATE_CODES = new Set([
+  "d01_strategy_memo",
+  "d02_value_target",
+]);
+
+/**
+ * Deterministic backstop for the artifacts that establish the event's
+ * commercial narrative. Model review remains useful for judgment, but it
+ * cannot waive an unbound percentage, dollar amount, benchmark, or market
+ * assertion.
+ */
+export function findDeterministicSourceClaimViolations(args: {
+  artifactCode: string;
+  body: string;
+  sourceContext: string;
+}): DeterministicSourceClaimViolation[] {
+  if (!DETERMINISTIC_CLAIM_GATE_CODES.has(args.artifactCode)) return [];
+
+  const supportedNumbers = extractMaterialNumbers(args.sourceContext);
+  const violations: DeterministicSourceClaimViolation[] = [];
+  for (const claim of extractMaterialNumberClaims(args.body)) {
+    if (!supportedNumbers.some((value) => materiallyEqual(value, claim.value))) {
+      violations.push({
+        claim: claim.text,
+        reason: "Quantified claim is absent from the bound event evidence.",
+      });
+    }
+  }
+
+  const generalizationPatterns = [
+    /\b(?:typically|frequently|almost always|industry benchmark|market benchmark|best practice)\b/i,
+    /\bmarket\s+(?:is|remains|appears)\s+(?:active|receptive|competitive|favorable)\b/i,
+    /\b(?:providers?|vendors?)\s+(?:are|remain)\s+competing\s+aggressively\b/i,
+    /\bperiod of vendor capacity constraint\b/i,
+  ];
+  for (const sentence of args.body.split(/(?<=[.!?])\s+|\n+/)) {
+    const text = sentence.replace(/\s+/g, " ").trim();
+    if (!text) continue;
+    if (generalizationPatterns.some((pattern) => pattern.test(text))) {
+      violations.push({
+        claim: text.slice(0, 220),
+        reason:
+          "External benchmark or current-market assertion is not established by the bound event evidence.",
+      });
+    }
+  }
+
+  return uniqueViolations(violations).slice(0, 12);
+}
+
+export function applyDeterministicSourceClaimGate(
+  review: ConsultingGradeReview,
+  violations: readonly DeterministicSourceClaimViolation[],
+): ConsultingGradeReview {
+  if (violations.length === 0) return review;
+  const claims = violations.map(
+    (violation) => `${violation.claim} - ${violation.reason}`,
+  );
+  const dimensionScores = review.dimensionScores.map((dimension) => {
+    if (
+      dimension.id !== "evidence_grounding" &&
+      dimension.id !== "source_discipline"
+    ) {
+      return dimension;
+    }
+    return {
+      ...dimension,
+      score: Math.min(dimension.score, 5),
+      rationale:
+        "Deterministic evidence scan found material claims outside the bound source context.",
+      requiredFixes: [
+        ...dimension.requiredFixes,
+        "Remove, cite, or register every flagged claim as an unvalidated hypothesis.",
+      ].slice(0, 3),
+    };
+  });
+  return {
+    ...review,
+    pass: false,
+    overallScore: Math.min(review.overallScore, 5),
+    dimensionScores,
+    unsupportedClaims: [...new Set([...review.unsupportedClaims, ...claims])].slice(
+      0,
+      12,
+    ),
+    rewriteGuidance: [
+      ...review.rewriteGuidance,
+      "Use only values and market facts present in bound evidence; otherwise name the gap without supplying a benchmark.",
+    ].slice(0, 12),
+  };
+}
+
+function extractMaterialNumbers(text: string): number[] {
+  return extractMaterialNumberClaims(text).map((claim) => claim.value);
+}
+
+function extractMaterialNumberClaims(text: string): Array<{
+  text: string;
+  value: number;
+}> {
+  const matches: Array<{ text: string; value: number }> = [];
+  const pattern =
+    /\$\s*\d[\d,]*(?:\.\d+)?\s*(?:billion|million|thousand|bn|mm|m|k)?|\b\d+(?:\.\d+)?\s*(?:%|percent)\b/gi;
+  for (const match of text.matchAll(pattern)) {
+    const value = parseMaterialNumber(match[0]);
+    if (value !== null) matches.push({ text: match[0].trim(), value });
+  }
+  for (const match of text.matchAll(
+    /\b(\d+(?:\.\d+)?)\s*(?:to|-)\s*(\d+(?:\.\d+)?)\s*(%|percent)\b/gi,
+  )) {
+    matches.push(
+      { text: `${match[1]} ${match[3]}`, value: Number(match[1]) },
+      { text: `${match[2]} ${match[3]}`, value: Number(match[2]) },
+    );
+  }
+  return matches;
+}
+
+function parseMaterialNumber(raw: string): number | null {
+  const normalized = raw.toLowerCase().replace(/[$,%]/g, "").replace(/,/g, "");
+  const numeric = Number(normalized.match(/\d+(?:\.\d+)?/)?.[0]);
+  if (!Number.isFinite(numeric)) return null;
+  if (/(?:billion|bn)\s*$/.test(normalized)) return numeric * 1_000_000_000;
+  if (/(?:million|mm|m)\s*$/.test(normalized)) return numeric * 1_000_000;
+  if (/(?:thousand|k)\s*$/.test(normalized)) return numeric * 1_000;
+  return numeric;
+}
+
+function materiallyEqual(left: number, right: number): boolean {
+  return Math.abs(left - right) <= Math.max(0.01, Math.abs(right) * 0.0001);
+}
+
+function uniqueViolations(
+  violations: readonly DeterministicSourceClaimViolation[],
+): DeterministicSourceClaimViolation[] {
+  const seen = new Set<string>();
+  return violations.filter((violation) => {
+    const key = `${violation.claim}|${violation.reason}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function requiresSourceConsultingGradeGate(

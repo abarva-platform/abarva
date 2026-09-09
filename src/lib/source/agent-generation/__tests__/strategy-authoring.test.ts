@@ -36,7 +36,7 @@ describe("strategy-stage authoring (d02_value_target, d03_archetype_decision)", 
     expect(requiresSourceConsultingGradeGate("d05_scope_memo")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d24_decision_brief")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d27_selection_memo")).toBe(true);
-    expect(requiresSourceConsultingGradeGate("d02_value_target")).toBe(false);
+    expect(requiresSourceConsultingGradeGate("d02_value_target")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d03_archetype_decision")).toBe(
       false,
     );

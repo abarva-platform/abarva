@@ -41,6 +41,8 @@ import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repositor
 import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
 import { resolveVendorResponseSeedInputs } from "@/lib/source/vendor-response-completeness-from-profiles";
+import { deriveVendorResponseSeedInputsFromNormalized } from "@/lib/source/vendor-response-completeness-from-normalized";
+import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
 import {
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
@@ -154,6 +156,21 @@ export default async function SourceEventDetailPage({
             accountName: event.accountName,
           })
         : null;
+    const normalizedResponsePackages =
+      viewStage === "responses" && activeClient?.key
+        ? await readNormalizedVendorResponsePackages({
+            eventId: event.id,
+            tenantKey: activeClient.key,
+          }).catch((error) => {
+            console.error(
+              "[SourceEventDetailPage] normalized response read failed",
+              error instanceof Error ? error.message : String(error),
+            );
+            return [];
+          })
+        : [];
+    const normalizedResponseSeeds =
+      deriveVendorResponseSeedInputsFromNormalized(normalizedResponsePackages);
     // Events outside the vendor-response seed table take their vendor
     // population from the same parsed profiles the rest of the stage renders,
     // so the cockpit and the file-readiness ledger cannot report an empty
@@ -165,10 +182,13 @@ export default async function SourceEventDetailPage({
               id: event.id,
               name: event.name,
               currentStageKey: viewStage,
-              vendorResponses: resolveVendorResponseSeedInputs(
-                event.id,
-                vendorResponseProfiles,
-              ),
+              vendorResponses:
+                normalizedResponseSeeds.length > 0
+                  ? normalizedResponseSeeds
+                  : resolveVendorResponseSeedInputs(
+                      event.id,
+                      vendorResponseProfiles,
+                    ),
             },
           })
         : null;
@@ -550,6 +570,7 @@ export default async function SourceEventDetailPage({
         vendorBafoInstructionPack={vendorBafoInstructionPack}
         vendorEvaluationDecisionView={vendorEvaluationDecisionView}
         vendorResponseParseReports={vendorResponseParseReports}
+        normalizedResponsePackages={normalizedResponsePackages}
       />
     );
   }

@@ -24,6 +24,8 @@ import { VendorResponseIngestionPathPanel } from "./VendorResponseIngestionPathP
 import { VendorResponseIntelligenceBrief } from "./VendorResponseIntelligenceBrief";
 import { VendorResponsePackageCockpit } from "./VendorResponsePackageCockpit";
 import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
+import { NormalizedResponseQualityPanel } from "./NormalizedResponseQualityPanel";
+import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
 
 export function ResponsesStageView({
   readiness,
@@ -37,6 +39,7 @@ export function ResponsesStageView({
   decisionBriefPdfHref,
   eventDisplayName,
   documentWorkspace,
+  normalizedResponsePackages,
 }: {
   readiness?: SourceVendorResponseCompleteness;
   profileSet?: VendorResponseProfileSet | null;
@@ -49,6 +52,7 @@ export function ResponsesStageView({
   decisionBriefPdfHref?: string;
   eventDisplayName?: string;
   documentWorkspace: ReactNode;
+  normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
 }) {
   const records = readiness?.records ?? [];
   const blocker = readiness?.blockers[0];
@@ -116,6 +120,7 @@ export function ResponsesStageView({
               231px short and forced it to scroll, hiding two section columns and
               clipping a status badge mid-pill. The log reads fine stacked below. */}
           <CompletenessMatrix readiness={readiness} />
+          <NormalizedResponseQualityPanel packages={normalizedResponsePackages} />
           <QnaSymmetryLog />
         </>
       ) : null}

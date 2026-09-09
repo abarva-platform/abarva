@@ -48,6 +48,8 @@ import {
   syncUploadToCanvasSubstrate,
   type UploadSubstrateSyncResult,
 } from "@/lib/source/canvas-substrate/upload-sync";
+import { parseNormalizedVendorResponseWorkbook } from "@/lib/source/vendor-response-workbook";
+import { persistNormalizedVendorResponsePackage } from "@/lib/source/vendor-response-persistence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -499,6 +501,37 @@ export async function POST(
       );
     }
 
+    let normalizedResponse:
+      | Awaited<ReturnType<typeof parseNormalizedVendorResponseWorkbook>>
+      | undefined;
+    if (artifact.sourceFormat === "xlsx") {
+      try {
+        normalizedResponse =
+          (await parseNormalizedVendorResponseWorkbook({
+            buffer,
+            vendorName:
+              parseOptionalString(formData.get("vendorName")) ?? undefined,
+          })) ?? undefined;
+        if (normalizedResponse) {
+          await persistNormalizedVendorResponsePackage({
+            artifact,
+            parsed: normalizedResponse,
+          });
+          parseWarnings.push(...normalizedResponse.parserWarnings);
+        }
+      } catch (normalizedError) {
+        const message = describeUnknownError(
+          normalizedError,
+          "normalized vendor-response parse failed",
+        );
+        parseWarnings.push(message);
+        console.error(
+          "[POST /api/v1/source/:eventId/artifacts/upload] normalized_response_parse_failed",
+          { artifactId: artifact.id, sourceEventId: artifact.sourceEventId, message },
+        );
+      }
+    }
+
     // Durably reflect the upload in the canvas substrate (evidence readiness
     // ladder + gate-criterion evidence links). The in-memory addEvidence above
     // only survives the current process; the canvas reads the Postgres
@@ -582,6 +615,16 @@ export async function POST(
         dataProtection,
         ...(landing ? { landing } : {}),
         substrateSync,
+        ...(normalizedResponse
+          ? {
+              normalizedResponse: {
+                vendorId: normalizedResponse.vendorId,
+                vendorName: normalizedResponse.vendorName,
+                requirementCount: normalizedResponse.rows.length,
+                analytics: normalizedResponse.analytics,
+              },
+            }
+          : {}),
         ...(parseWarnings.length > 0 ? { parseWarnings } : {}),
       },
       { status: 200 },

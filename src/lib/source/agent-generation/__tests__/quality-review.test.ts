@@ -3,6 +3,8 @@ import {
   buildSourceConsultingGradeCompactRetryPrompt,
   buildSourceQualityGateMetadata,
   buildSourceQualitySourceContext,
+  applyDeterministicSourceClaimGate,
+  findDeterministicSourceClaimViolations,
   requiresSourceConsultingGradeGate,
 } from "../quality-review";
 import type { SourceGenerationContext } from "../types";
@@ -103,6 +105,7 @@ describe("Source consulting-grade quality gate helpers", () => {
   it("requires Gate B for flagship narrative, decision, and vendor-pack artifacts", () => {
     expect(requiresSourceConsultingGradeGate("d09_rfp_pack")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d01_strategy_memo")).toBe(true);
+    expect(requiresSourceConsultingGradeGate("d02_value_target")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d05_scope_memo")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d24_decision_brief")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d27_selection_memo")).toBe(true);
@@ -161,6 +164,58 @@ describe("Source consulting-grade quality gate helpers", () => {
     });
 
     expect(context).toContain("No registered profile for this artifact code.");
+  });
+
+  it("deterministically rejects unbound percentages and market assertions", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext:
+        "Candidate target: $2,000,000. Contract run rate: $7,850,000.",
+      body: [
+        "The $2M candidate target sits against a $7.85M run rate.",
+        "Change orders frequently represent 10 to 25 percent of loaded cost.",
+        "The market is active and receptive.",
+      ].join(" "),
+    });
+
+    expect(violations.map((item) => item.claim)).toEqual(
+      expect.arrayContaining(["10 percent", "25 percent"]),
+    );
+    expect(violations.some((item) => /market is active/i.test(item.claim))).toBe(
+      true,
+    );
+    expect(violations.some((item) => item.claim === "$2M")).toBe(false);
+    expect(violations.some((item) => item.claim === "$7.85M")).toBe(false);
+  });
+
+  it("forces evidence and source-discipline dimensions below the release bar", () => {
+    const baseReview = {
+      standardId: "partner-grade-consulting-deliverable-v1" as const,
+      minRequiredScore: 8,
+      artifactCode: "d01_strategy_memo",
+      artifactName: "Sourcing Strategy Memo",
+      pass: true,
+      overallScore: 9,
+      dimensionScores: CONSULTING_GRADE_DIMENSIONS.map((dimension) => ({
+        id: dimension.id,
+        score: 9,
+        rationale: "Strong.",
+        requiredFixes: [],
+      })),
+      unsupportedClaims: [],
+      missingEvidence: [],
+      rewriteGuidance: [],
+    };
+
+    const gated = applyDeterministicSourceClaimGate(baseReview, [
+      { claim: "25%", reason: "Absent from bound evidence." },
+    ]);
+    expect(gated.pass).toBe(false);
+    expect(
+      gated.dimensionScores.find((score) => score.id === "evidence_grounding")
+        ?.score,
+    ).toBe(5);
+    expect(gated.unsupportedClaims.join(" ")).toContain("25%");
   });
 
   it("marks the quality gate failed when any review dimension is below threshold", () => {
