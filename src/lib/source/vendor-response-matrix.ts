@@ -93,4 +93,5 @@ export interface NormalizedVendorResponsePackage {
   rows: NormalizedRequirementResponse[];
   analytics: NormalizedResponseQualityAnalytics;
   parserWarnings: string[];
+  syntheticDemo?: boolean;
 }

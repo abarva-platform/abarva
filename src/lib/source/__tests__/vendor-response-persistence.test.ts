@@ -1,6 +1,9 @@
 import type { SourceArtifactRegistryRecord } from "../artifact-registry";
 
-const insert = jest.fn(async (_payload: unknown) => ({ data: null, error: null }));
+const insert = jest.fn(async (payload: unknown) => {
+  void payload;
+  return { data: null, error: null };
+});
 const filters: Array<[string, unknown]> = [];
 let readRows: unknown[] = [];
 
@@ -16,13 +19,13 @@ const readClient = {
     const chain = {} as ReadChain;
     chain.select = jest.fn(() => chain);
     chain.eq = jest.fn((column: string, value: unknown) => {
-        filters.push([column, value]);
-        return chain;
-      });
+      filters.push([column, value]);
+      return chain;
+    });
     chain.in = jest.fn((column: string, value: unknown) => {
-        filters.push([column, value]);
-        return chain;
-      });
+      filters.push([column, value]);
+      return chain;
+    });
     chain.limit = jest.fn(async () => ({ data: readRows, error: null }));
     return chain;
   }),
@@ -51,8 +54,7 @@ const artifact: SourceArtifactRegistryRecord = {
   originalName: "example-response.xlsx",
   blobUri: "example-tenant/event-1/artifact-1/example-response.xlsx",
   uploaderUserId: "user-1",
-  mimeType:
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   sizeBytes: 100,
   sha256: "a".repeat(64),
   parseStatus: "parsed",
@@ -116,11 +118,16 @@ describe("normalized vendor response persistence", () => {
         ],
         analytics,
         parserWarnings: [],
+        syntheticDemo: true,
       },
     });
 
     const facts = insert.mock.calls[0][0] as Array<Record<string, unknown>>;
     expect(facts).toHaveLength(2);
+    expect(facts[1]).toMatchObject({
+      fact_type: "normalized_response_quality",
+      fact_value: { synthetic_demo: true },
+    });
     expect(facts).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -153,7 +160,7 @@ describe("normalized vendor response persistence", () => {
     expect(filters).toEqual(
       expect.arrayContaining([
         ["source_event_id", "event-1"],
-        ["tenant_key", "example-tenant"],
+        ["tenant_key", ["example-tenant"]],
       ]),
     );
     expect(packages).toHaveLength(1);
@@ -163,6 +170,18 @@ describe("normalized vendor response persistence", () => {
       vendorName: "Example Services",
     });
     expect(packages[0].rows[0].responseNarrative).toBe("Current response");
+  });
+
+  it("reads canonical and app-client aliases for the same tenant", async () => {
+    await readNormalizedVendorResponsePackages({
+      eventId: "event-1",
+      tenantKey: "meridian",
+    });
+
+    expect(filters).toContainEqual([
+      "tenant_key",
+      expect.arrayContaining(["meridian", "meridian-health"]),
+    ]);
   });
 });
 
@@ -193,7 +212,11 @@ function responseRow(
   };
 }
 
-function summaryRow(artifactId: string, receivedAt: string, originalName: string) {
+function summaryRow(
+  artifactId: string,
+  receivedAt: string,
+  originalName: string,
+) {
   return {
     artifact_id: artifactId,
     fact_type: "normalized_response_quality",

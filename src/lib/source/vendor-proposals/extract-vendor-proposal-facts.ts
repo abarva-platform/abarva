@@ -145,6 +145,44 @@ const LABEL_TO_FACT: Record<string, { factKey: string; sectionKey: string }> = {
   evidence: { factKey: "evidence_reference", sectionKey: "evidence_quality" },
 };
 
+const ADJACENT_LABEL_TO_FACT: Record<
+  string,
+  { factKey: string; sectionKey: string; unit?: string }
+> = {
+  "annual steady-state price": {
+    factKey: "price",
+    sectionKey: "pricing_structure",
+    unit: "year",
+  },
+  "transition fee": {
+    factKey: "transition_cost",
+    sectionKey: "transition_approach",
+  },
+  "one-time transition": {
+    factKey: "transition_cost",
+    sectionKey: "transition_approach",
+  },
+  "proposed productive fte": {
+    factKey: "productive_fte",
+    sectionKey: "staffing_model",
+    unit: "fte",
+  },
+  "productive fte": {
+    factKey: "productive_fte",
+    sectionKey: "staffing_model",
+    unit: "fte",
+  },
+  "onshore / offshore": {
+    factKey: "staffing_location_mix",
+    sectionKey: "delivery_locations",
+  },
+  "three-year submitted tcv": {
+    factKey: "submitted_tcv",
+    sectionKey: "commercial_model",
+    unit: "three_year_term",
+  },
+};
+
 function stripMarkdownBullet(line: string): string {
   return line.replace(/^\s*(?:[-*]|\d+[.)])\s+/, "").trim();
 }
@@ -179,6 +217,58 @@ function confidenceForMethod(
   }
 }
 
+function parsedValue(
+  body: string,
+  preferredUnit?: string,
+): {
+  valueNumeric: number | null;
+  valueText: string | null;
+  unit: string | null;
+  currency: string | null;
+} {
+  const dollarMatch = body.match(DOLLAR_AMOUNT_RE);
+  const percentMatch = body.match(PERCENT_RE);
+  const plainNumberMatch = body.match(/^\s*(\d+(?:\.\d+)?)\s*$/);
+
+  if (dollarMatch) {
+    const valueNumeric = Number(dollarMatch[1].replace(/,/g, ""));
+    if (Number.isFinite(valueNumeric)) {
+      return {
+        valueNumeric,
+        valueText: null,
+        currency: "USD",
+        unit:
+          preferredUnit ??
+          (/hour|hr\b/i.test(body)
+            ? "hour"
+            : /month/i.test(body)
+              ? "month"
+              : /year|annual/i.test(body)
+                ? "year"
+                : null),
+      };
+    }
+  }
+  if (percentMatch) {
+    const valueNumeric = Number(percentMatch[1]);
+    if (Number.isFinite(valueNumeric)) {
+      return { valueNumeric, valueText: null, unit: "percent", currency: null };
+    }
+  }
+  if (preferredUnit && plainNumberMatch) {
+    const valueNumeric = Number(plainNumberMatch[1]);
+    if (Number.isFinite(valueNumeric)) {
+      return {
+        valueNumeric,
+        valueText: null,
+        unit: preferredUnit,
+        currency: null,
+      };
+    }
+  }
+  return { valueNumeric: null, valueText: body, unit: null, currency: null };
+}
+
 /**
  * Extract candidate facts from proposal text. Never throws — malformed,
  * empty, or garbled text simply yields zero candidates. `extractionMethod`
@@ -205,62 +295,65 @@ export function extractVendorProposalFacts(
     const line = lineWithoutPage;
     if (!line) return;
     const match = line.match(PROPOSAL_FACT_LABEL_RE);
-    if (!match) return;
-
-    const label = match[1].toLowerCase();
-    const mapping = LABEL_TO_FACT[label] ?? {
-      factKey: label.replace(/\s+/g, "_"),
-      sectionKey: label.replace(/\s+/g, "_"),
-    };
-    const body = match[2].trim();
+    const adjacentMapping = ADJACENT_LABEL_TO_FACT[line.toLowerCase()];
+    let label: string;
+    let mapping: { factKey: string; sectionKey: string; unit?: string };
+    let body: string;
+    let bodyIndex = index;
+    if (match) {
+      label = match[1].toLowerCase();
+      mapping = LABEL_TO_FACT[label] ?? {
+        factKey: label.replace(/\s+/g, "_"),
+        sectionKey: label.replace(/\s+/g, "_"),
+      };
+      body = match[2].trim();
+    } else if (adjacentMapping) {
+      let nextIndex = index + 1;
+      while (nextIndex < lines.length && !lines[nextIndex]?.trim())
+        nextIndex += 1;
+      body = stripMarkdownBullet(lines[nextIndex] ?? "").trim();
+      if (!body) return;
+      label = line.toLowerCase();
+      mapping = adjacentMapping;
+      bodyIndex = nextIndex;
+    } else {
+      return;
+    }
     if (!body) return;
-
-    const dollarMatch = body.match(DOLLAR_AMOUNT_RE);
-    const percentMatch = body.match(PERCENT_RE);
-
-    let valueNumeric: number | null = null;
-    let valueText: string | null = null;
-    let unit: string | null = null;
-    let currency: string | null = null;
-
-    if (dollarMatch) {
-      const parsed = Number(dollarMatch[1].replace(/,/g, ""));
-      if (Number.isFinite(parsed)) {
-        valueNumeric = parsed;
-        currency = "USD";
-        unit = /hour|hr\b/i.test(body)
-          ? "hour"
-          : /month/i.test(body)
-            ? "month"
-            : /year|annual/i.test(body)
-              ? "year"
-              : null;
-      }
-    } else if (percentMatch) {
-      const parsed = Number(percentMatch[1]);
-      if (Number.isFinite(parsed)) {
-        valueNumeric = parsed;
-        unit = "percent";
-      }
-    }
-
-    if (valueNumeric === null) {
-      valueText = body;
-    }
+    const { valueNumeric, valueText, unit, currency } = parsedValue(
+      body,
+      mapping.unit,
+    );
 
     candidates.push({
       factKey: mapping.factKey,
       sectionKey: options.sectionKey ?? mapping.sectionKey,
-      pageOrLocation: page ? `${page}, line ${index + 1}` : `line ${index + 1}`,
+      pageOrLocation: page
+        ? `${page}, line ${index + 1}`
+        : bodyIndex === index
+          ? `line ${index + 1}`
+          : `lines ${index + 1}-${bodyIndex + 1}`,
       valueNumeric,
       valueText,
       unit,
       currency,
-      sourceQuote: line,
+      sourceQuote: match ? line : `${line}: ${body}`,
       confidence,
       extractionMethod,
     });
   });
 
-  return candidates;
+  const seen = new Set<string>();
+  return candidates.filter((candidate) => {
+    const identity = [
+      candidate.factKey,
+      candidate.valueNumeric ?? "",
+      candidate.valueText ?? "",
+      candidate.unit ?? "",
+      candidate.currency ?? "",
+    ].join("|");
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
 }

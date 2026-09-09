@@ -7,6 +7,7 @@ import {
 import type { SourceArtifactRegistryRecord } from "./artifact-registry";
 import type { ParsedNormalizedVendorResponse } from "./vendor-response-workbook";
 import type { NormalizedVendorResponsePackage } from "./vendor-response-matrix";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 
 export async function persistNormalizedVendorResponsePackage(args: {
   artifact: SourceArtifactRegistryRecord;
@@ -50,6 +51,7 @@ export async function persistNormalizedVendorResponsePackage(args: {
         original_name: artifact.originalName,
         analytics: parsed.analytics,
         parser_warnings: parsed.parserWarnings,
+        synthetic_demo: parsed.syntheticDemo,
       },
     },
   ];
@@ -63,11 +65,12 @@ export async function readNormalizedVendorResponsePackages(args: {
   eventId: string;
   tenantKey: string;
 }): Promise<NormalizedVendorResponsePackage[]> {
+  const tenantKeys = tenantAliasesFor(args.tenantKey);
   const { data, error } = await getAzureReadFluentClient()
     .from("source_artifact_facts")
     .select("artifact_id, fact_type, fact_key, fact_value")
     .eq("source_event_id", args.eventId)
-    .eq("tenant_key", args.tenantKey)
+    .in("tenant_key", tenantKeys)
     .in("fact_type", [
       "normalized_requirement_response",
       "normalized_response_quality",
@@ -86,6 +89,7 @@ export async function readNormalizedVendorResponsePackages(args: {
         originalName: string;
         analytics: ParsedNormalizedVendorResponse["analytics"];
         parserWarnings: string[];
+        syntheticDemo: boolean;
       };
     }
   >();
@@ -108,11 +112,15 @@ export async function readNormalizedVendorResponsePackages(args: {
         vendorId: String(value.vendor_id ?? ""),
         vendorName: String(value.vendor_name ?? "Vendor not identified"),
         receivedAt: String(value.received_at ?? ""),
-        originalName: String(value.original_name ?? "Vendor Response Workbook.xlsx"),
-        analytics: value.analytics as ParsedNormalizedVendorResponse["analytics"],
+        originalName: String(
+          value.original_name ?? "Vendor Response Workbook.xlsx",
+        ),
+        analytics:
+          value.analytics as ParsedNormalizedVendorResponse["analytics"],
         parserWarnings: Array.isArray(value.parser_warnings)
           ? value.parser_warnings.map(String)
           : [],
+        syntheticDemo: value.synthetic_demo === true,
       };
     }
     byArtifact.set(artifactId, group);
@@ -132,6 +140,7 @@ export async function readNormalizedVendorResponsePackages(args: {
       ),
       analytics: group.summary.analytics,
       parserWarnings: group.summary.parserWarnings,
+      syntheticDemo: group.summary.syntheticDemo,
     };
     const prior = latestByVendor.get(candidate.vendorId);
     if (!prior || candidate.receivedAt > prior.receivedAt) {
@@ -148,7 +157,8 @@ function toNormalizedResponse(
 ): ParsedNormalizedVendorResponse["rows"][number] {
   return {
     requirementId: String(value.requirementId ?? ""),
-    category: value.category as ParsedNormalizedVendorResponse["rows"][number]["category"],
+    category:
+      value.category as ParsedNormalizedVendorResponse["rows"][number]["category"],
     section: String(value.section ?? ""),
     requirement: String(value.requirement ?? ""),
     requirementLevel:
