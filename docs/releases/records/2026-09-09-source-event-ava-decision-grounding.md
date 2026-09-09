@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source aVa now explains an event's accepted supplier decision from the authoritative selection memo, keeps committed and realized value states distinct, and refuses explicit requests for another tenant's commercial data before retrieval. The Source answer toolbar also renders the governed direct answer whenever older summary prose differs, while suppressing exact duplicates. It does not recalculate evaluation scores, select a supplier, or promote unconfirmed value.
+Source aVa now explains an event's accepted supplier decision from the authoritative selection memo, keeps committed and realized value states distinct, and refuses explicit requests for another tenant's commercial data before retrieval. The Source answer toolbar also renders the governed direct answer whenever structured response parts replace the plain response text or older summary prose differs, while suppressing exact duplicates in the plain-text path. It does not recalculate evaluation scores, select a supplier, or promote unconfirmed value.
 
 ## Layer Impact
 
@@ -34,6 +34,7 @@ Source aVa now explains an event's accepted supplier decision from the authorita
 - Render committed value facts as committed rather than projected and state committed, projected, and realized totals separately.
 - Add an explicit pre-retrieval refusal for cross-tenant commercial-data requests.
 - Show governed direct-answer prose in the Source answer toolbar when it is not already visible as the exact response text.
+- Preserve governed direct-answer prose when streamed response parts are the visible response surface.
 - Add focused intent, parser, governance, value-state, and route-order tests.
 
 ## QA / Validation
