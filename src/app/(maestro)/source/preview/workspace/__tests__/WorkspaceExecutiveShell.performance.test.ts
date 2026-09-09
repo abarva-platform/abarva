@@ -8,6 +8,7 @@ import {
   focusedVendorSet,
   optimizeTypeRows,
   performanceActual,
+  resolveSelectedVendor,
   sourceImpactCoverageRowTotal,
   source360RecoverableCreditCoverageRows,
   source360RecoverableCreditFinding,
@@ -315,6 +316,52 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     ]);
   });
 
+  it("resolves a selected evidence-only vendor into the vendor detail panel", () => {
+    const portfolio = {
+      tenantKey: "tenant-a",
+      contracts: [],
+      impact: {
+        evidenceCoverage: [
+          {
+            tenant_key: "tenant-a",
+            contract_id: "CONTRACT-EVIDENCE-001",
+            vendor_ref: "VEN-EVIDENCE-ONLY",
+            vendor_name: "Evidence Cloud Vendor, Inc.",
+            vendor_category: "cloud_platform",
+            contract_archetype: "cloud_services",
+            contract_name: "Evidence-backed cloud services agreement",
+            spend_rows: 13,
+            actual_spend_usd: 66_000,
+            committed_spend_usd: 1_900_000,
+            performance_rows: 0,
+            unclaimed_credit_usd: 0,
+            opportunity_rows: 7,
+            scope_rows: 4,
+            critical_scope_rows: 2,
+            document_page_text_rows: 6,
+            coverage_state: "decision_ready",
+          },
+        ],
+        actionCandidates: [],
+        claimCards: [],
+      },
+    };
+
+    const selectedVendor = resolveSelectedVendor(
+      portfolio as never,
+      [],
+      "VEN-EVIDENCE-ONLY",
+    );
+
+    expect(selectedVendor).toMatchObject({
+      vendor_ref: "VEN-EVIDENCE-ONLY",
+      vendor_name: "Evidence Cloud Vendor, Inc.",
+      contract_count: 1,
+      contract_refs: ["CONTRACT-EVIDENCE-001"],
+      vendor_refs: ["VEN-EVIDENCE-ONLY"],
+    });
+  });
+
   it("keeps portfolio summary and concentration on the governed register rows", () => {
     const portfolio = {
       tenantKey: "meridian-health",
@@ -381,9 +428,9 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       vendorCount: 1,
       totalAnnualValue: 10_000_000,
     });
-    expect(vm.concentration().byVendor.map((vendor) => vendor.vendorRef)).toEqual([
-      "vendor-register",
-    ]);
+    expect(
+      vm.concentration().byVendor.map((vendor) => vendor.vendorRef),
+    ).toEqual(["vendor-register"]);
   });
 
   it("keeps the contract graph tab as a real lineage visual with drill-down subtabs", () => {
