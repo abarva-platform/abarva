@@ -59,6 +59,10 @@ import {
   combineSourceEventDecisionAndValueAnswers,
   looksLikeSourceEventDecisionAndValueQuestion,
 } from "@/lib/source/ava/source-event-summary-governed-answer";
+import {
+  buildRfpDesignGovernedAnswer,
+  looksLikeRfpDesignQuestion,
+} from "@/lib/source/ava/rfp-design-governed-answer";
 import { buildSourceAvaModuleHandoffForRuntime } from "@/lib/source/ava/module-handoff-runtime";
 import {
   resolveAuthoritativeArtifactSlots,
@@ -326,6 +330,28 @@ export async function POST(
             "[source.nexus-ask.selection-decision-governed-answer.failed]",
             JSON.stringify({
               eventId,
+              clientKey: activeClientKey,
+              message: err instanceof Error ? err.message : String(err),
+            }),
+          );
+          return null;
+        });
+      } else if (
+        eventId &&
+        looksLikeRfpDesignQuestion(normalizedBody.prompt)
+      ) {
+        agentAnswer = await buildRfpDesignGovernedAnswer({
+          eventId: liveEventDetail?.id ?? eventId,
+          eventName: liveEventDetail?.name ?? null,
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+        }).catch((err) => {
+          console.error(
+            "[source.nexus-ask.rfp-design-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              resolvedEventId: liveEventDetail?.id ?? eventId,
               clientKey: activeClientKey,
               message: err instanceof Error ? err.message : String(err),
             }),
