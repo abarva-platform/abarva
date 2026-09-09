@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -26,8 +26,8 @@ Layer 4 products: prepares Source360, Source workspace, cloud-consumption sourci
 
 ## Client Applicability
 
-- All clients: no direct runtime effect before the package is loaded.
-- Specific clients: none.
+- All clients: no direct runtime effect outside the governed synthetic package.
+- Specific clients: `meridian-health` synthetic demo package.
 - Internal only: package authoring, local workbook QA, and non-mutating load planning.
 - Public/demo only: synthetic demo dataset after governed load approval.
 - Feature flag: none.
@@ -45,20 +45,28 @@ Adds a cloud-consumption package builder, synthetic source-file package, governe
 - `npx tsc --noEmit --pretty false` — PASS.
 - `npm run release:check` — PASS.
 - Workbook rendered and inspected for Summary, Coverage, Opportunities, Levers, Sources, and Checks tabs.
+- Governed ACA data-build run `source-cloud-consumption-package-meridian-databricks-consumption-commit-v1-20260908-current-20260909T043545Z` applied Layer 2, Layer 3, Layer 4, and Tower bridge projections with package-scoped readback gates passing.
+- Layer 2/3 readback: 167 adapter rows; 1 canonical vendor; 1 canonical contract; 12 spend observations; 4 opportunities; 6 evidence documents; quality gate `PASS`.
+- Layer 4 readback: 1 Source Contract360 cloud contract; 12 spend rows; 4 opportunity rows; 48 usage rows; 12 commitment-coverage rows; 12 inventory rows; 12 tag-quality rows; 12 AP reconciliation rows; quality gate `PASS`.
+- Tower bridge readback: 20 projection rows; 4 recommended-action rows; 4 value-proof rows; 8 cube slices; `source_ref_missing_rows: 0`; quality gate `PASS`.
+- Tower fact-lineage report for `meridian-health`: zero conflicts on package-touched metrics.
+- Source substrate lineage report for `meridian-health`: zero conflicts and zero source errors; portfolio headline metrics still include report-scope `ABSENT` rows and were not used as contract-specific proof.
+- Live signed-in Source workspace proof for `MER-TECH-DBX-001` confirmed contract ID, vendor, annual value, actual annual spend, end date, notice window, auto-renewal, evidence posture, Optimize top action, and deterministic opportunity cards.
+- Live signed-in aVa proof confirmed the summary and optimization-lever prompts render `MER-TECH-DBX-001` without empty-parens or fallback-contract-ID behavior, with the four optimization levers present in a table and supporting charts.
 
 ## Rollout Plan
 
-Merge through PR only. Runtime activation requires an approved Azure Container Apps data-build job to apply Layer 2, Layer 3, and Layer 4 projections, followed by readback and live signed-in Source360/aVa checks.
+Merged through PR and deployed through the repo-owned Azure Container Apps main workflow. Runtime activation was completed through governed ACA data-build jobs for Layer 2, Layer 3, Layer 4, and Tower bridge projections, followed by package readback and live signed-in Source360/aVa checks.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: required for web runtime code after merge.
-- Shared runtime mutators: not authorized by this release record.
-- Approved image digest: not assigned yet.
-- ACA runtime invariant: must be proven after any deploy or flag/env update.
-- Worker image invariant: required before any mutating data-build job.
+- Repo-owned deploy workflow: completed.
+- Shared runtime mutators: not authorized by this release record outside the governed ACA job path.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:e91c0bb1f6f1859511e9d75813877e36d92b8a695558cf625e65b6aa0c9ee4fa`
+- ACA runtime invariant: passed after deployment; the web template image, 100%-traffic revision image, and required worker job images matched the approved digest.
+- Worker image invariant: passed before and after the governed data-build job sequence.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes, for Source360 and aVa contract grounding after data load.
+- Live signed-in proof required: completed for Source360, Source workspace, Optimize, and aVa contract grounding.
 
 ## Rollback Plan
 
@@ -66,8 +74,22 @@ Revert the PR before load, or run the approved data-build rollback/delete proced
 
 ## Audit Evidence
 
-Inspect the package README, package manifest, QA plan proof, workbook previews, governance manifest validation output, loader test output, ESLint output, and eventual ACA data-build proof bundle.
+Inspect the package README, package manifest, QA plan proof, workbook previews, governance manifest validation output, loader test output, ESLint output, ACA data-build proof bundles, lineage reports, and live signed-in proof artifacts.
+
+Current run proof:
+
+- Layer 2 apply: `/tmp/source-dbx-layer2-apply-current-20260909T043545Z/proof/source-cloud-consumption-package-apply-layer2-20260909T043634Z/summary.json`
+- Layer 3 apply: `/tmp/source-dbx-layer3-apply-current-20260909T043545Z/proof/source-cloud-consumption-package-apply-layer3-20260909T043822Z/summary.json`
+- Layer 2/3 verify: `/tmp/source-dbx-layer23-verify-current-20260909T043545Z-after-apply/proof/source-cloud-consumption-package-verify-20260909T044003Z/summary.json`
+- Layer 4 apply: `/tmp/source-dbx-layer4-apply-current-20260909T043545Z/proof/source-cloud-consumption-package-apply-layer4-20260909T044147Z/summary.json`
+- Layer 4 verify: `/tmp/source-dbx-layer4-verify-current-20260909T043545Z/proof/source-cloud-consumption-package-verify-layer4-20260909T044336Z/summary.json`
+- Tower bridge apply: `/tmp/tower-source-dbx-bridge-apply-current-20260909T043545Z/proof/tower-source-cloud-bridge-apply-20260909T044522Z/summary.json`
+- Tower bridge verify: `/tmp/tower-source-dbx-bridge-verify-current-20260909T043545Z/proof/tower-source-cloud-bridge-verify-20260909T044704Z/summary.json`
+- Tower fact lineage: `/tmp/tower-fact-lineage-current-20260909T050812Z.json`
+- Source substrate lineage: `/tmp/source-substrate-lineage-current-20260909T052048Z/05-structured-events.json`
+- Live aVa proof text: `/tmp/source-contract-live-proof-20260909T0514Z/databricks-ava-levers.txt`
+- Live aVa proof screenshot: `/tmp/source-contract-live-proof-20260909T0514Z/databricks-ava-levers.png`
 
 ## Known Gaps
 
-No mutating data-build job has been run in this task. Source360 browser proof and aVa response proof remain gated on approved Layer 2/3/4 load and deployment.
+Raw/full vendor contract documents remain outside the public repository and must stay in the local restricted evidence lane unless a separate governed intake process approves a sanitized derivative. The package is synthetic demo evidence only; values are candidate optimization signals, not finance-confirmed realized savings. Source substrate lineage has no conflicts, but some portfolio headline rows remain `ABSENT` by report scope; contract-specific readiness is established by the package readback and live Source/aVa proof above.

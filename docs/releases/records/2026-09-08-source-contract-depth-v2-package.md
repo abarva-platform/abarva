@@ -6,7 +6,7 @@
 
 ## Status
 
-`data-plane-verified`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -53,20 +53,28 @@ Tower bridge: Applied and verified into the active Tower assessment context as S
 - ACA Layer 2/3 verify completed with expected row readbacks.
 - ACA Layer 4 apply and Layer 4 verify completed with package-scoped serving readbacks.
 - ACA Tower bridge apply and verify completed with projection rows, Tower serving rows, cube slices, and source references reconciled.
+- Current governed ACA data-build run `source-contract-depth-package-meridian-laams-new-event-rich-v2-20260908-current-20260909T044757Z` re-applied and verified Layer 2, Layer 3, Layer 4, and Tower bridge projections.
+- Current Layer 2/3 readback: 622 adapter rows; 1 contract; 56 terms; 48 application-scope rows; 12 spend observations; 72 performance rows; 5 service-credit rows; 4 opportunities; 45 evidence documents; quality gate `PASS`.
+- Current Layer 4 readback: 1 Source Contract360 record; 1 financial-exposure row; 1 operational-performance row; 48 app-scope rows; 12 spend rows; 72 performance rows; 4 opportunities; 45 page-text rows; 12 change orders; 30 resource-role rows; 72 invoice-line rows; 96 batch-operation rows; 4 QBR rows; quality gate `PASS`.
+- Current Tower bridge readback: 20 projection rows; 4 recommended-action rows; 4 value-proof rows; 8 cube slices; `source_ref_missing_rows: 0`; quality gate `PASS`.
+- Tower fact-lineage report for `meridian-health`: zero conflicts on package-touched metrics.
+- Source substrate lineage report for `meridian-health`: zero conflicts and zero source errors; portfolio headline metrics still include report-scope `ABSENT` rows and were not used as contract-specific proof.
+- Live signed-in Source workspace proof for `MER-TECH-LAAMS-001` confirmed contract ID, vendor, annual value, actual annual spend, end date, notice window, auto-renewal, evidence posture, Optimize top action, and deterministic opportunity cards.
+- Live signed-in aVa proof confirmed the summary and optimization-lever prompts render `MER-TECH-LAAMS-001` without empty-parens or fallback-contract-ID behavior, with the four optimization levers present in a table and supporting charts.
 
 ## Rollout Plan
 
-Merge through PR, deploy the repo-owned Azure Container Apps main workflow, then run or re-run the signed-in product and assistant proof for affected Source and Tower surfaces.
+Merged through PR, deployed through the repo-owned Azure Container Apps main workflow, then verified the governed data-build outputs and signed-in product/assistant proof for affected Source and Tower surfaces.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: Completed before the ACA job sequence.
 - Shared runtime mutators: Only the approved repo-owned workflow may shift shared web traffic.
-- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:2eb6b33cce7e18381b73acb0fddd3d205cc0f358f6f705964af721ab8d5f06f6`
-- ACA runtime invariant: Passed for the deployed web runtime before the final Layer 4 and Tower bridge jobs.
-- Worker image invariant: Not changed by this release.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:e91c0bb1f6f1859511e9d75813877e36d92b8a695558cf625e65b6aa0c9ee4fa`
+- ACA runtime invariant: Passed after deployment; the web template image, 100%-traffic revision image, and required worker job images matched the approved digest.
+- Worker image invariant: Passed before and after the governed data-build job sequence.
 - Feature/env flag update path: Not applicable.
-- Live signed-in proof required: Yes; blocked if the available browser session is signed into the wrong tenant.
+- Live signed-in proof required: Completed for Source360, Source workspace, Optimize, and aVa contract grounding.
 
 ## Rollback Plan
 
@@ -77,7 +85,15 @@ Rollback product code through the prior ACA image digest if any runtime issue ap
 - Local package: `datasets/source/contract-depth/meridian-laams-new-event-rich-v2-20260908/`
 - Local projection command output.
 - ACA job proof bundles under `proof/source-laams-rich-v2-azure-load-20260908/` for Layer 2, Layer 3, Layer 2/3 verify, Layer 4 apply/verify, and Tower bridge apply/verify.
-- Signed-in product proof remains a separate gate from data-plane verification.
+- Current Layer 2/3 verify: `/tmp/source-laams-layer23-verify-current-20260909T044757Z/proof/source-contract-depth-package-verify-20260909T045226Z/result.json`
+- Current Layer 4 apply: `/tmp/source-laams-layer4-apply-current-20260909T044757Z/proof/source-contract-depth-package-layer4-apply-20260909T045451Z/summary.json`
+- Current Layer 4 verify: `/tmp/source-laams-layer4-verify-current-20260909T044757Z/proof/source-contract-depth-package-layer4-verify-20260909T045633Z/summary.json`
+- Current Tower bridge apply: `/tmp/tower-source-laams-bridge-apply-current-20260909T044757Z/proof/tower-source-cloud-bridge-apply-20260909T045849Z/summary.json`
+- Current Tower bridge verify: `/tmp/tower-source-laams-bridge-verify-current-20260909T044757Z/proof/tower-source-cloud-bridge-verify-20260909T050033Z/summary.json`
+- Tower fact lineage: `/tmp/tower-fact-lineage-current-20260909T050812Z.json`
+- Source substrate lineage: `/tmp/source-substrate-lineage-current-20260909T052048Z/05-structured-events.json`
+- Live aVa proof text: `/tmp/source-contract-live-proof-20260909T0514Z/laams-ava-levers.txt`
+- Live aVa proof screenshot: `/tmp/source-contract-live-proof-20260909T0514Z/laams-ava-levers.png`
 
 ## Known Gaps
 
