@@ -83,7 +83,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 
 | Audience | Route count | aVa posture |
 | --- | --- | --- |
-| client | 97 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
+| client | 98 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
 | admin | 70 | Explain setup/governance controls; avoid tenant data claims unless scoped evidence is supplied. |
 | public | 38 | Describe public/product material; never imply authenticated capability proof. |
 | internal | 8 | Treat as preview/demo/operator-only unless release evidence says otherwise. |
@@ -98,7 +98,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | Moves | 16 |
 | Platform | 5 |
 | Shared | 55 |
-| Source | 33 |
+| Source | 34 |
 | Tenant workspace | 6 |
 | Tower | 5 |
 
@@ -272,6 +272,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | /source/events/[eventId]/gate | client | Source | src/app/(maestro)/source/events/[eventId]/gate/page.tsx |
 | /source/events/[eventId]/report | client | Source | src/app/(maestro)/source/events/[eventId]/report/page.tsx |
 | /source/events/[eventId]/scorecard | client | Source | src/app/(maestro)/source/events/[eventId]/scorecard/page.tsx |
+| /source/events/[eventId]/summary | client | Source | src/app/(maestro)/source/events/[eventId]/summary/page.tsx |
 | /source/events/[eventId]/value | client | Source | src/app/(maestro)/source/events/[eventId]/value/page.tsx |
 | /source/events/[eventId]/vendors/[vendorId] | client | Source | src/app/(maestro)/source/events/[eventId]/vendors/[vendorId]/page.tsx |
 | /source/events/[eventId]/workspace | client | Source | src/app/(maestro)/source/events/[eventId]/workspace/page.tsx |
