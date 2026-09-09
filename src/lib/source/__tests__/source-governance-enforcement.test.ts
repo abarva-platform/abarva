@@ -87,7 +87,7 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
-  it("blocks a hard gate when required evidence is only client-stated", () => {
+  it("allows a named human review to clear ready client-stated evidence", () => {
     const verdict = evaluateCriterionMetReadiness({
       criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
       artifacts: [
@@ -98,7 +98,7 @@ describe("Source governance enforcement", () => {
         }),
       ],
       evidence: strategyEvidenceReady({
-        incumbent: {
+        trigger: {
           currentState: "Available",
           sourceArtifactId: null,
         },
@@ -106,13 +106,33 @@ describe("Source governance enforcement", () => {
       reason: REVIEW_REASON,
     });
 
+    expect(verdict.ok).toBe(true);
+  });
+
+  it("keeps client-stated evidence blocked during automatic assessment", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [
+        artifact({
+          artifactCode: "d01_strategy_memo",
+          status: "approved",
+          body: "Approved strategy memo body.",
+        }),
+      ],
+      evidence: strategyEvidenceReady({
+        trigger: {
+          currentState: "Available",
+          sourceArtifactId: null,
+        },
+      }),
+      reason: "system-auto-assessment",
+      skipApprovalReasonCheck: true,
+    });
+
     expect(verdict.ok).toBe(false);
     expect(verdict.blockers).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          code: "required_evidence_unverified",
-          detail: expect.stringContaining("client-stated answer"),
-        }),
+        expect.objectContaining({ code: "required_evidence_unverified" }),
       ]),
     );
   });
@@ -186,6 +206,18 @@ describe("Source governance enforcement", () => {
         }),
         evidence({
           requirementId: "EVID-SRC-EVAL-WEIGHT-RATIONALE",
+          stage: "evaluation",
+          currentState: "Available",
+          sourceArtifactId: null,
+        }),
+        evidence({
+          requirementId: "EVID-SRC-EVAL-RISK-ASSESSMENT",
+          stage: "evaluation",
+          currentState: "Available",
+          sourceArtifactId: null,
+        }),
+        evidence({
+          requirementId: "EVID-SRC-EVAL-TCO-NORMALIZATION",
           stage: "evaluation",
           currentState: "Available",
           sourceArtifactId: null,
@@ -475,15 +507,29 @@ function evidence(
 }
 
 function strategyEvidenceReady(overrides?: {
+  trigger?: Partial<SourceEventEvidence>;
   incumbent?: Partial<SourceEventEvidence>;
+  spendBaseline?: Partial<SourceEventEvidence>;
   sponsorCommit?: Partial<SourceEventEvidence>;
 }): SourceEventEvidence[] {
   return [
+    evidence({
+      requirementId: "EVID-SRC-STR-TRIGGER",
+      currentState: "Available",
+      sourceArtifactId: "artifact-sourcing-trigger",
+      ...overrides?.trigger,
+    }),
     evidence({
       requirementId: "EVID-SRC-STR-INCUMBENT",
       currentState: "Available",
       sourceArtifactId: "artifact-incumbent-contract",
       ...overrides?.incumbent,
+    }),
+    evidence({
+      requirementId: "EVID-SRC-STR-SPEND-BASELINE",
+      currentState: "Available",
+      sourceArtifactId: "artifact-spend-baseline",
+      ...overrides?.spendBaseline,
     }),
     evidence({
       requirementId: "EVID-SRC-STR-SPONSOR-COMMIT",

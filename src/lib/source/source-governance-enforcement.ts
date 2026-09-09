@@ -82,6 +82,8 @@ export function evaluateCriterionMetReadiness(input: {
   reason: unknown;
   skipApprovalReasonCheck?: boolean;
 }): SourceGovernanceVerdict {
+  const hasExplicitHumanReview =
+    !input.skipApprovalReasonCheck && validateApprovalReason(input.reason).ok;
   const blockers: SourceGovernanceBlocker[] = input.skipApprovalReasonCheck
     ? []
     : [...validateApprovalReason(input.reason).blockers];
@@ -121,14 +123,17 @@ export function evaluateCriterionMetReadiness(input: {
       state.sourceArtifactId === null &&
       !isFactBackedEvidence(state) &&
       state.currentState !== "Usable Evidence";
-    if (!rankOk || (isHardCriterion && isClientStatedPlaceholder)) {
+    if (
+      !rankOk ||
+      (isHardCriterion && isClientStatedPlaceholder && !hasExplicitHumanReview)
+    ) {
       blockers.push({
         code: !rankOk
           ? "required_evidence_not_ready"
           : "required_evidence_unverified",
         detail: !rankOk
           ? `${requirement.label} must be at least ${requirement.minimumState}; current state is ${state?.currentState ?? "missing"}.`
-          : `${requirement.label} is a client-stated answer, not verified evidence. A hard gate requires uploaded/processed evidence or explicit review before it can clear.`,
+          : `${requirement.label} is a client-stated answer, not verified evidence. A hard gate requires uploaded/processed evidence or an explicit human review before it can clear.`,
       });
     }
   }

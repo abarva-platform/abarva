@@ -62,6 +62,7 @@ import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { coerceUsdAmountOrZero } from "./usd-amount";
 import { autoDraftOnStageEntry } from "./stage-entry-autodraft";
 import { htmlToPlainText, isFullHtmlDocument } from "./html-to-plain-text";
+import { syncEventIntakeEvidence } from "./canvas-substrate/event-intake-sync";
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -285,6 +286,11 @@ export async function createSourcingEvent(
   // script can recover any partial state.
   try {
     await scaffoldNewEventSubstrate(row.id, row.client_key);
+    await syncEventIntakeEvidence({
+      sourceEventId: row.id,
+      tenantKey: row.client_key,
+      triggerDescription: row.trigger_description,
+    });
   } catch (scaffoldError) {
     // Keep this as console.warn (not error) per project log discipline.
     // The event row is already persisted; the substrate scaffold can be
