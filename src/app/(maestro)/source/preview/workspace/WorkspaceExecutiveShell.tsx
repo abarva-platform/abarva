@@ -2556,6 +2556,9 @@ function ContractPage({
         )}
       </section>
 
+      {tab === "Optimize" ? (
+        <ProductShellOptimizationExecutiveStrip vm={vm} />
+      ) : null}
       <ProductShellCommercialPostureStrip vm={vm} />
     </div>
   );
