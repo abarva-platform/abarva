@@ -647,6 +647,7 @@
     "source:contract-evidence:golden:plan": "node scripts/source/load-source-golden-contract-evidence.mjs",
     "source:contract-evidence:golden:apply": "node scripts/source/load-source-golden-contract-evidence.mjs --apply",
     "source:event-contract-evidence:apply-job": "SOURCE_EVENT_EVIDENCE_APPLY_APPROVED=true SOURCE_EVENT_EVIDENCE_EMIT_PROOF_BUNDLE=true npx tsx scripts/source/load-source-event-contract-evidence-job.ts",
+    "source:event-journey:repair-job": "npx tsx scripts/source/repair-source-event-journey-state.ts",
     "source:skyharbor-layer-cube:plan": "npx tsx scripts/source/load-skyharbor-source-layer-cube-package.mjs --tenant-key skyharbor",
     "source:skyharbor-layer-cube:apply": "SOURCE_SKYHARBOR_LAYER_CUBE_APPLY=true npx tsx scripts/source/load-skyharbor-source-layer-cube-package.mjs --tenant-key skyharbor --apply",
     "source:inspect-contract-360-definition": "node scripts/source/inspect-source-contract-360-definition.mjs",
