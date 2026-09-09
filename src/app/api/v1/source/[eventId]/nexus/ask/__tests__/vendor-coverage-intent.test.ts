@@ -13,12 +13,12 @@
 // contains the expected implementation, then exercise a reimplementation
 // against representative queries so a future edit that silently narrows or
 // widens the heuristic fails this test.
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 const ROUTE_SOURCE = fs.readFileSync(
-  path.join(__dirname, '..', 'route.ts'),
-  'utf8',
+  path.join(__dirname, "..", "route.ts"),
+  "utf8",
 );
 
 const PROPOSAL_EVIDENCE_PATTERN =
@@ -96,97 +96,120 @@ function hasEventSpecificProposalEvidence(context: {
   );
 }
 
-describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
-  it('is present in the route source as the opt-in NDJSON gate', () => {
+describe("looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)", () => {
+  it("is present in the route source as the opt-in NDJSON gate", () => {
     expect(ROUTE_SOURCE).toContain(
-      'function looksLikeVendorCoverageQuestion(prompt: string | undefined): boolean {',
+      "function looksLikeVendorCoverageQuestion(prompt: string | undefined): boolean {",
     );
-    expect(ROUTE_SOURCE).toContain('wantsNdjson');
-    expect(ROUTE_SOURCE).toContain('buildVendorCoverageGovernedAnswer');
-    expect(ROUTE_SOURCE).toContain('summary: agentAnswer.directAnswer');
-    expect(ROUTE_SOURCE).toContain('buildValueLedgerGovernedAnswer');
-    expect(ROUTE_SOURCE).toContain('looksLikeValueLedgerQuestion');
-    expect(ROUTE_SOURCE).toContain('buildEvidenceReadinessGovernedAnswer');
-    expect(ROUTE_SOURCE).toContain('looksLikeEvidenceReadinessQuestion');
-    expect(ROUTE_SOURCE).toContain('buildArtifactQualityGovernedAnswer');
-    expect(ROUTE_SOURCE).toContain('looksLikeArtifactQualityQuestion');
-    expect(ROUTE_SOURCE).toContain('eventId: liveEventDetail?.id ?? eventId');
-    expect(ROUTE_SOURCE).toContain('buildSourceAvaModuleHandoffForRuntime');
+    expect(ROUTE_SOURCE).toContain("wantsNdjson");
+    expect(ROUTE_SOURCE).toContain("buildVendorCoverageGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("summary: agentAnswer.directAnswer");
+    expect(ROUTE_SOURCE).toContain("buildValueLedgerGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikeValueLedgerQuestion");
+    expect(ROUTE_SOURCE).toContain("buildSelectionDecisionGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikeSelectionDecisionQuestion");
+    expect(ROUTE_SOURCE).toContain("buildCrossTenantRefusalAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikeCrossTenantDataRequest");
+    expect(ROUTE_SOURCE).toContain("buildEvidenceReadinessGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikeEvidenceReadinessQuestion");
+    expect(ROUTE_SOURCE).toContain("buildArtifactQualityGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikeArtifactQualityQuestion");
+    expect(ROUTE_SOURCE).toContain("eventId: liveEventDetail?.id ?? eventId");
+    expect(ROUTE_SOURCE).toContain("buildSourceAvaModuleHandoffForRuntime");
     expect(ROUTE_SOURCE).toContain('"source_analytics"');
     expect(ROUTE_SOURCE).toContain('"moves_ava_chat_hardening"');
     expect(ROUTE_SOURCE).toContain('type: "module-handoff"');
     expect(
-      ROUTE_SOURCE.indexOf('looksLikeValueLedgerQuestion(normalizedBody.prompt)'),
+      ROUTE_SOURCE.indexOf(
+        "looksLikeSelectionDecisionQuestion(normalizedBody.prompt)",
+      ),
     ).toBeLessThan(
       ROUTE_SOURCE.indexOf(
-        'looksLikeArtifactQualityQuestion(normalizedBody.prompt)',
+        "looksLikeVendorCoverageQuestion(normalizedBody.prompt)",
       ),
     );
     expect(
       ROUTE_SOURCE.indexOf(
-        'looksLikeArtifactQualityQuestion(normalizedBody.prompt)',
+        "looksLikeValueLedgerQuestion(normalizedBody.prompt)",
       ),
     ).toBeLessThan(
       ROUTE_SOURCE.indexOf(
-        'looksLikeEvidenceReadinessQuestion(normalizedBody.prompt)',
+        "looksLikeArtifactQualityQuestion(normalizedBody.prompt)",
+      ),
+    );
+    expect(
+      ROUTE_SOURCE.indexOf(
+        "looksLikeArtifactQualityQuestion(normalizedBody.prompt)",
+      ),
+    ).toBeLessThan(
+      ROUTE_SOURCE.indexOf(
+        "looksLikeEvidenceReadinessQuestion(normalizedBody.prompt)",
       ),
     );
   });
 
-  it('matches real vendor-response-coverage questions', () => {
+  it("matches real vendor-response-coverage questions", () => {
     expect(
       looksLikeVendorCoverageQuestion(
-        'How is vendor response coverage looking on this event?',
-      ),
-    ).toBe(true);
-    expect(
-      looksLikeVendorCoverageQuestion('Which vendors dodged the volume-band ask?'),
-    ).toBe(true);
-    expect(
-      looksLikeVendorCoverageQuestion('Did the bidders respond to every lever?'),
-    ).toBe(true);
-    expect(
-      looksLikeVendorCoverageQuestion(
-        'Which claims are unsupported or lack evidence?',
+        "How is vendor response coverage looking on this event?",
       ),
     ).toBe(true);
     expect(
       looksLikeVendorCoverageQuestion(
-        'Which supplier assertions are unproven?',
+        "Which vendors dodged the volume-band ask?",
+      ),
+    ).toBe(true);
+    expect(
+      looksLikeVendorCoverageQuestion(
+        "Did the bidders respond to every lever?",
+      ),
+    ).toBe(true);
+    expect(
+      looksLikeVendorCoverageQuestion(
+        "Which claims are unsupported or lack evidence?",
+      ),
+    ).toBe(true);
+    expect(
+      looksLikeVendorCoverageQuestion(
+        "Which supplier assertions are unproven?",
       ),
     ).toBe(true);
   });
 
-  it('does not match unrelated questions (no dormant transport for other intents)', () => {
+  it("does not match unrelated questions (no dormant transport for other intents)", () => {
     expect(looksLikeVendorCoverageQuestion(undefined)).toBe(false);
-    expect(looksLikeVendorCoverageQuestion('')).toBe(false);
+    expect(looksLikeVendorCoverageQuestion("")).toBe(false);
     expect(
-      looksLikeVendorCoverageQuestion('What is the value at stake for this event?'),
+      looksLikeVendorCoverageQuestion(
+        "What is the value at stake for this event?",
+      ),
     ).toBe(false);
     expect(
-      looksLikeVendorCoverageQuestion('Summarize the RFP scope for this vendor.'),
+      looksLikeVendorCoverageQuestion(
+        "Summarize the RFP scope for this vendor.",
+      ),
     ).toBe(false);
     expect(
-      looksLikeVendorCoverageQuestion('What evidence is missing for the gate?'),
+      looksLikeVendorCoverageQuestion("What evidence is missing for the gate?"),
     ).toBe(false);
   });
 
-  it('gates deterministic proposal intelligence on event-specific proposal evidence', () => {
-    expect(ROUTE_SOURCE).toContain('hasEventSpecificProposalEvidence');
+  it("gates deterministic proposal intelligence on event-specific proposal evidence", () => {
+    expect(ROUTE_SOURCE).toContain("hasEventSpecificProposalEvidence");
     expect(ROUTE_SOURCE).toContain(
-      'const vendorProfiles = hasEventSpecificProposalEvidence(artifactContext)',
+      "const vendorProfiles = hasEventSpecificProposalEvidence(artifactContext)",
     );
 
     expect(
       hasEventSpecificProposalEvidence({
         artifacts: [
           {
-            title: 'Provide the volumetrics',
-            artifact_kind: 'scope_volumetrics',
-            original_name: 'bad-volumetrics.csv',
-            stage_key: 'scope',
-            source_origin: 'uploaded',
-            parse_status: 'failed',
+            title: "Provide the volumetrics",
+            artifact_kind: "scope_volumetrics",
+            original_name: "bad-volumetrics.csv",
+            stage_key: "scope",
+            source_origin: "uploaded",
+            parse_status: "failed",
           },
         ],
         facts: [],
@@ -197,12 +220,12 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
       hasEventSpecificProposalEvidence({
         artifacts: [
           {
-            title: 'Vendor response pack',
-            artifact_kind: 'vendor_response',
-            original_name: 'vendor-response.xlsx',
-            stage_key: 'responses',
-            source_origin: 'uploaded',
-            parse_status: 'parsed',
+            title: "Vendor response pack",
+            artifact_kind: "vendor_response",
+            original_name: "vendor-response.xlsx",
+            stage_key: "responses",
+            source_origin: "uploaded",
+            parse_status: "parsed",
           },
         ],
         facts: [],
@@ -212,7 +235,7 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
     expect(
       hasEventSpecificProposalEvidence({
         artifacts: [],
-        facts: [{ fact_type: 'vendor_bid', fact_key: 'vendor_headline_bid' }],
+        facts: [{ fact_type: "vendor_bid", fact_key: "vendor_headline_bid" }],
       }),
     ).toBe(true);
   });
