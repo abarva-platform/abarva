@@ -15,17 +15,26 @@ let queuedRows: { data: unknown[] | null; error: unknown } = {
   data: [],
   error: null,
 };
+let queuedPersonRows: { data: unknown[] | null; error: unknown } = {
+  data: [],
+  error: null,
+};
 
 interface FakeBuilder {
   select: jest.Mock<FakeBuilder, unknown[]>;
   eq: jest.Mock<FakeBuilder, unknown[]>;
+  in: jest.Mock<FakeBuilder, unknown[]>;
+  limit: jest.Mock<
+    Promise<{ data: unknown[] | null; error: unknown }>,
+    unknown[]
+  >;
   order: jest.Mock<
     Promise<{ data: unknown[] | null; error: unknown }>,
     unknown[]
   >;
 }
 
-function makeBuilder(): FakeBuilder {
+function makeBuilder(table: string): FakeBuilder {
   const builder: FakeBuilder = {
     select: jest.fn((...args: unknown[]) => {
       builderCalls.push({ name: "select", args });
@@ -34,6 +43,14 @@ function makeBuilder(): FakeBuilder {
     eq: jest.fn((...args: unknown[]) => {
       builderCalls.push({ name: "eq", args });
       return builder;
+    }),
+    in: jest.fn((...args: unknown[]) => {
+      builderCalls.push({ name: "in", args });
+      return builder;
+    }),
+    limit: jest.fn(async (...args: unknown[]) => {
+      builderCalls.push({ name: "limit", args });
+      return table === "persons" ? queuedPersonRows : queuedRows;
     }),
     order: jest.fn(async (...args: unknown[]) => {
       builderCalls.push({ name: "order", args });
@@ -44,7 +61,7 @@ function makeBuilder(): FakeBuilder {
 }
 
 const fakeClient = {
-  from: jest.fn(() => makeBuilder()),
+  from: jest.fn((table: string) => makeBuilder(table)),
 };
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
@@ -61,8 +78,46 @@ describe("loadApprovalLedger", () => {
   beforeEach(() => {
     builderCalls.length = 0;
     queuedRows = { data: [], error: null };
+    queuedPersonRows = { data: [], error: null };
     fakeClient.from.mockClear();
     mockClerkClient.mockClear();
+  });
+
+  it("resolves canonical person UUIDs without sending them to Clerk", async () => {
+    const personId = "d6ed8004-c031-4eb5-ad59-53135f61369e";
+    queuedRows = {
+      data: [
+        {
+          stage_key: "value",
+          approved_by_user_id: personId,
+          action: "admin_review",
+          approved_at: "2026-09-09T12:34:56.000Z",
+          notes: "Final value gate approved.",
+        },
+      ],
+      error: null,
+    };
+    queuedPersonRows = {
+      data: [{ id: personId, name: "Approval Operator", email: null }],
+      error: null,
+    };
+
+    const ledger = await loadApprovalLedger("event-1", "value", [
+      { key: "value", label: "Value" },
+    ]);
+
+    expect(fakeClient.from).toHaveBeenCalledWith("persons");
+    expect(builderCalls.find((call) => call.name === "in")?.args).toEqual([
+      "id",
+      [personId],
+    ]);
+    expect(mockClerkClient).not.toHaveBeenCalled();
+    expect(ledger[0]).toMatchObject({
+      stageKey: "value",
+      state: "approved",
+      approverName: "Approval Operator",
+      authorizationNote: "Approved by Approval Operator.",
+    });
   });
 
   it("reads approved_at from the database and maps it into the ledger timestamp", async () => {
