@@ -1,0 +1,88 @@
+{
+  "ok": true,
+  "status": 200,
+  "url": "https://app.abarva.ai/api/v1/programs/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/phase-capture",
+  "headers": {
+    "content-type": "application/json",
+    "date": "Tue, 14 Jul 2026 11:57:32 GMT",
+    "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "x-middleware-rewrite": "/api/v1/programs/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/phase-capture"
+  },
+  "body": {
+    "ok": true,
+    "programId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+    "phase": 1,
+    "persisted": true,
+    "savedFields": [
+      "sponsor_commitment",
+      "scope_boundary",
+      "success_criteria",
+      "stakeholder_map",
+      "decision_rights",
+      "evidence_plan"
+    ],
+    "allSaved": true,
+    "recordCreated": true,
+    "deliverableId": "8591697c-ec3d-4230-b0de-192c0be40e2e",
+    "capture": {
+      "phase": 1,
+      "sections": [
+        {
+          "key": "sponsor_commitment",
+          "label": "Sponsor commitment",
+          "description": "Sponsor engagement, authority, and decision cadence for the Move.",
+          "required": true,
+          "value": "COO role is the accountable sponsor placeholder for this disposable smoke Move. This is not a real Meridian signoff; it validates the signed-in phase workflow.",
+          "complete": true
+        },
+        {
+          "key": "scope_boundary",
+          "label": "Scope boundary",
+          "description": "Included and excluded process, user, function, system, or cohort boundaries.",
+          "required": true,
+          "value": "P1 scope is limited to proving context-extract generation for member-service agent assist. No candidate promotion, no Active Tenant Access update, no Tower outcome.",
+          "complete": true
+        },
+        {
+          "key": "success_criteria",
+          "label": "Success criteria",
+          "description": "Outcomes, KPIs, and directional targets that Discovery must validate.",
+          "required": true,
+          "value": "Pass criteria: context extract artifact created; attached evidence has an evidence id; candidate version is null; deliverables are queued; repeat run skips existing extract.",
+          "complete": true
+        },
+        {
+          "key": "stakeholder_map",
+          "label": "Stakeholder map",
+          "description": "Business, IT, finance, risk, and operational stakeholders needed for Discovery.",
+          "required": true,
+          "value": "Roles only: COO sponsor, VP Member Operations owner, CIO/CDO data-platform reviewer, privacy/compliance reviewer.",
+          "complete": true
+        },
+        {
+          "key": "decision_rights",
+          "label": "Decision rights",
+          "description": "Who can approve scope, investment, design decisions, and phase advancement.",
+          "required": true,
+          "value": "This smoke authorizes only a disposable workflow proof. It does not authorize investment, implementation, realized-value claims, or production rollout.",
+          "complete": true
+        },
+        {
+          "key": "evidence_plan",
+          "label": "Evidence plan",
+          "description": "Evidence families, interviews, workshops, extracts, or templates needed next.",
+          "required": true,
+          "value": "Use active module context and generated context-extract evidence only. Suggested/excluded/gap material remains review-only and must not be treated as approved evidence.",
+          "complete": true
+        }
+      ],
+      "complete": true,
+      "missing": []
+    },
+    "generationEligibility": {
+      "captureComplete": true,
+      "gateApprovalRequired": true,
+      "nextAction": "Approve the phase gate."
+    }
+  }
+}

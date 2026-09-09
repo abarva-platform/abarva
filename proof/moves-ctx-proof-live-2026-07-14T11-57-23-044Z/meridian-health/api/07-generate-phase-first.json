@@ -1,0 +1,61 @@
+{
+  "status": 202,
+  "url": "https://app.abarva.ai/api/v1/deliverables/generate-phase",
+  "headers": {
+    "date": "Tue, 14 Jul 2026 11:57:44 GMT",
+    "x-middleware-rewrite": "/api/v1/deliverables/generate-phase",
+    "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "content-type": "application/json"
+  },
+  "body": {
+    "phase": 1,
+    "phaseLabel": "P1 Charter",
+    "contextExtract": {
+      "status": "created",
+      "extractId": "move_context_extract:meridian:44f6f4d4-ab88-4fdf-88e8-45c26f27838c:p1:20260714T115742",
+      "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+      "tenantKey": "meridian",
+      "sourceMode": "active_home_context",
+      "phase": 1,
+      "targetPhase": 1,
+      "activeTenantAccessVersionId": null,
+      "candidateVersionId": null,
+      "sourceBuildId": null,
+      "attachedEvidenceItems": [],
+      "suggestedContextItems": [],
+      "excludedContextItems": [
+        {
+          "status": "excluded_context",
+          "label": "Candidate preview data",
+          "summary": "Candidate context was not read because this was a default active-mode Approve & Build request.",
+          "reason": "Never read candidate data by default.",
+          "sourceMode": "candidate_preview"
+        }
+      ],
+      "gapItems": [
+        {
+          "status": "gap",
+          "label": "Agent-ready tenant context",
+          "summary": "No active agent-ready context matched this Move and phase. Upload, review, or promote source-backed evidence before relying on enterprise context.",
+          "reason": "No attached evidence was created.",
+          "sourceMode": "active_home_context"
+        }
+      ],
+      "generatedAt": "2026-07-14T11:57:42.516Z",
+      "artifactId": "f41a57f0-6aab-43fd-8b5a-8a117ffd236c",
+      "evidenceId": null
+    },
+    "queued": 1,
+    "total": 1,
+    "deliverables": [
+      {
+        "deliverableTypeKey": "charter",
+        "documentTitle": "Program Charter",
+        "deliverableType": "charter",
+        "gateArtifact": true,
+        "runId": "b7785254-08c2-4d3c-897d-667183a4cb78",
+        "status": "queued"
+      }
+    ]
+  }
+}

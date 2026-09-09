@@ -1,0 +1,174 @@
+{
+  "proofDir": "/Users/anand/Projects/nexus-moves-ctx-proof/proof/moves-ctx-proof-live-2026-07-14T11-57-23-044Z",
+  "baseUrl": "https://app.abarva.ai",
+  "attempts": [
+    {
+      "tenant": "Meridian Health",
+      "ok": true,
+      "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c"
+    }
+  ],
+  "result": {
+    "status": "completed",
+    "tenant": "Meridian Health",
+    "tenantKey": "meridian-health",
+    "baseUrl": "https://app.abarva.ai",
+    "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+    "moveName": "CTX Smoke Member Assist 2026-07-14T11-57-23-7c646661",
+    "proofDir": "/Users/anand/Projects/nexus-moves-ctx-proof/proof/moves-ctx-proof-live-2026-07-14T11-57-23-044Z",
+    "firstGenerate": {
+      "status": 202,
+      "contextExtract": {
+        "status": "created",
+        "extractId": "move_context_extract:meridian:44f6f4d4-ab88-4fdf-88e8-45c26f27838c:p1:20260714T115742",
+        "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+        "tenantKey": "meridian",
+        "sourceMode": "active_home_context",
+        "phase": 1,
+        "targetPhase": 1,
+        "activeTenantAccessVersionId": null,
+        "candidateVersionId": null,
+        "sourceBuildId": null,
+        "attachedEvidenceItems": [],
+        "suggestedContextItems": [],
+        "excludedContextItems": [
+          {
+            "status": "excluded_context",
+            "label": "Candidate preview data",
+            "summary": "Candidate context was not read because this was a default active-mode Approve & Build request.",
+            "reason": "Never read candidate data by default.",
+            "sourceMode": "candidate_preview"
+          }
+        ],
+        "gapItems": [
+          {
+            "status": "gap",
+            "label": "Agent-ready tenant context",
+            "summary": "No active agent-ready context matched this Move and phase. Upload, review, or promote source-backed evidence before relying on enterprise context.",
+            "reason": "No attached evidence was created.",
+            "sourceMode": "active_home_context"
+          }
+        ],
+        "generatedAt": "2026-07-14T11:57:42.516Z",
+        "artifactId": "f41a57f0-6aab-43fd-8b5a-8a117ffd236c",
+        "evidenceId": null
+      },
+      "queued": 1,
+      "total": 1,
+      "deliverableStatuses": [
+        {
+          "key": "charter",
+          "status": "queued",
+          "runId": "b7785254-08c2-4d3c-897d-667183a4cb78"
+        }
+      ]
+    },
+    "runTerminal": true,
+    "finalRunStatuses": [
+      {
+        "runId": "b7785254-08c2-4d3c-897d-667183a4cb78",
+        "status": "succeeded",
+        "retrievedEvidence": 4,
+        "artifactId": "b81f6ca6-d4ce-4fe1-aa91-3e4d476a09c4",
+        "quality": {
+          "contextReadiness": "checked",
+          "gateReadiness": "ready",
+          "goldenBarStatus": "Passed quality check",
+          "artifactStatus": "generated",
+          "evidenceCaveats": [],
+          "blockers": []
+        },
+        "warnings": [],
+        "blockers": []
+      }
+    ],
+    "contextExtractArtifact": {
+      "artifactId": "f41a57f0-6aab-43fd-8b5a-8a117ffd236c",
+      "artifactType": "move_context_extract_p1",
+      "family": "session_artifact",
+      "title": "P1 Context Extract",
+      "phase": 1,
+      "fileFormat": "md",
+      "fileName": "move_context_extract_p1.md",
+      "version": 1,
+      "status": "draft",
+      "lifecycleState": "current",
+      "qualityScore": null,
+      "unsupportedClaims": 0,
+      "generatedBy": "d15d16a8-e5ad-4a0a-a1cf-93e06a3936d0",
+      "createdAt": "2026-07-14T11:57:44.722Z",
+      "fileSize": 1037,
+      "stored": "azure_blob",
+      "openItems": [],
+      "reviewStatus": null,
+      "feedbackStatus": null,
+      "feedbackItemCount": null,
+      "regeneratedFromArtifactId": null,
+      "qualityStatus": null,
+      "goldenBarStatus": null,
+      "artifactStatus": null,
+      "preliminaryCaveat": null,
+      "clientFacingVersionLabel": null,
+      "outputRole": null,
+      "provenanceCategory": null,
+      "primaryEditableRecordLabel": null,
+      "pairedVisualCompanionArtifactId": null,
+      "visualCompanionArtifactType": null,
+      "downloadUrl": "/api/v1/programs/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/artifacts/f41a57f0-6aab-43fd-8b5a-8a117ffd236c/download"
+    },
+    "extractDownload": {
+      "status": 200,
+      "contentType": "text/markdown; charset=utf-8",
+      "length": 1037,
+      "sha256": "7426bf4bedf2cde8991e1e150e0f2fea019630cf8d4f9216b69b680ba9a93669",
+      "hasAttachedEvidenceSection": true,
+      "hasSuggestedSection": true,
+      "hasExcludedSection": true,
+      "hasGapsSection": true,
+      "saysCandidateNotUsed": true
+    },
+    "secondGenerate": {
+      "status": 202,
+      "contextExtract": {
+        "status": "skipped_existing",
+        "extractId": null,
+        "artifactId": "f41a57f0-6aab-43fd-8b5a-8a117ffd236c",
+        "evidenceId": null,
+        "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+        "tenantKey": "meridian",
+        "sourceMode": "active_home_context",
+        "phase": 1,
+        "targetPhase": 1,
+        "activeTenantAccessVersionId": null,
+        "candidateVersionId": null,
+        "sourceBuildId": null,
+        "attachedEvidenceItems": [],
+        "suggestedContextItems": [],
+        "excludedContextItems": [],
+        "gapItems": [],
+        "generatedAt": "2026-07-14T12:01:33.722Z",
+        "message": "Existing current Move Context Extract found; not regenerated."
+      },
+      "queued": 1,
+      "total": 1
+    },
+    "checks": {
+      "signedInCreate": true,
+      "firstGenerateAccepted": true,
+      "contextExtractCreated": true,
+      "evidenceIdCreated": false,
+      "sourceModeActive": true,
+      "candidateVersionNull": true,
+      "candidateExcludedByDefault": true,
+      "fileCabinetArtifactVisible": true,
+      "extractSectionsPresent": true,
+      "deliverablesQueued": true,
+      "noSilentOverwrite": true,
+      "noCandidatePreviewHeaderSent": true
+    },
+    "limitations": [
+      "Laptop-side production DB query was not available; DB persistence is proven via signed-in API response evidenceId/artifactId and File Cabinet API/download.",
+      "Generation assembler still retrieves active tenant context directly in addition to Move-scoped program_evidence_items; this smoke proves suggested/candidate context was not attached or preview-read, not that generation is limited solely to the new evidence row."
+    ]
+  }
+}
