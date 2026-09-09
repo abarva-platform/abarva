@@ -125,6 +125,7 @@ function fakeAdapter(
     insertCriterionApproval: jest.fn(),
     updateStage: jest.fn(),
     transitionLifecycle: jest.fn(),
+    updateEventIntake: jest.fn(),
     updateGateCriterion: jest.fn(async (input) => {
       updates.push(input);
       return updateResult;

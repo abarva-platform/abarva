@@ -294,6 +294,28 @@ describe("supabase source write adapter", () => {
     });
   });
 
+  it("updateEventIntake updates only supplied governed intake fields", async () => {
+    const { client, calls } = fakeSupabase(null);
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.updateEventIntake({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      triggerDescription: "Corrected renewal trigger.",
+      estimatedValueUsd: 2_000_000,
+      updatedAtIso: "2026-05-15T00:00:00.000Z",
+    });
+    expect(result.ok).toBe(true);
+    expect(calls[0]).toMatchObject({
+      table: "source_events",
+      op: "update",
+      payload: {
+        trigger_description: "Corrected renewal trigger.",
+        estimated_value_usd: 2_000_000,
+        updated_at: "2026-05-15T00:00:00.000Z",
+      },
+    });
+  });
+
   it("updateGateCriterion returns the updated row", async () => {
     const { client, calls } = fakeSupabase({ id: "crit-1", state: "met" });
     const adapter = createSupabaseSourceWriteAdapter(() => client);
@@ -485,6 +507,28 @@ describe("azure source write adapter", () => {
     expect(result.ok).toBe(true);
     expect(statements[0]).toContain("UPDATE source_events");
     expect(statements[0]).toContain("SET lifecycle_state = $1");
+  });
+
+  it("updateEventIntake tenant-scopes the Azure event correction", async () => {
+    const { session, statements, paramSets } = fakeTxSession(() => []);
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.updateEventIntake({
+      eventId: "evt-1",
+      clientKey: "apex-retail",
+      triggerDescription: "Corrected renewal trigger.",
+      scopeDescription: "Corrected scope.",
+      updatedAtIso: "2026-05-15T00:00:00.000Z",
+    });
+    expect(result.ok).toBe(true);
+    expect(statements[0]).toContain("UPDATE source_events");
+    expect(statements[0]).toContain("WHERE id = $4 AND client_key = $5");
+    expect(paramSets[0]).toEqual([
+      "2026-05-15T00:00:00.000Z",
+      "Corrected renewal trigger.",
+      "Corrected scope.",
+      "evt-1",
+      "apex-retail",
+    ]);
   });
 
   it("updateGateCriterion issues an UPDATE ... RETURNING * and returns the row", async () => {
