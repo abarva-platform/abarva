@@ -189,7 +189,7 @@ jobs:
 
       - name: Build and push image with Docker Buildx cache
         if: steps.existing_revision.outputs.reuse != 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
