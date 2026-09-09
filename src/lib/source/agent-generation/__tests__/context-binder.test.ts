@@ -323,6 +323,41 @@ describe("buildSourceGenerationContext", () => {
     );
   });
 
+  it("preserves the complete parsed bidder Q&A chunk set for parity-log generation", async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    });
+    isUuid.mockReturnValue(true);
+    const qaChunks = Array.from({ length: 12 }, (_, index) => ({
+      artifact_id: "qa-artifact",
+      chunk_text: `QA-${String(index + 1).padStart(2, "0")} authoritative answer`,
+      confidence: 0.99,
+    }));
+    mockUploadedEvidenceQueries({
+      artifacts: [
+        {
+          id: "qa-artifact",
+          original_name: "source-bidder-qa-log.txt",
+          artifact_family: "meeting_notes",
+          source_format: "txt",
+          parse_status: "parsed",
+          evidence_state: "parsed_uncited",
+          stage_key: "responses",
+          created_at: "2026-09-09T00:00:00.000Z",
+        },
+      ],
+      chunks: qaChunks,
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      "522eedf2-ff6b-4307-b312-3e0903c6fd42",
+    );
+
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts).toHaveLength(12);
+    expect(ctx?.uploadedEvidence?.[0]?.chunkExcerpts.at(-1)).toContain("QA-12");
+  });
+
   it("binds current and next-stage guidebooks for workflow-aware artifact prompts", async () => {
     getSourcingEvent.mockResolvedValue({
       ...makeSeedEvent(),

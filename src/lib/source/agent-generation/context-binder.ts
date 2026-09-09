@@ -422,7 +422,7 @@ async function listUploadedEvidenceForGeneration(
       .in("artifact_id", artifactIds)
       .in("tenant_key", tenantAliases)
       .order("confidence", { ascending: false })
-      .limit(160),
+      .limit(400),
     supabase
       .from("source_artifact_facts")
       .select("artifact_id, fact_type, fact_key, fact_value, confidence")
@@ -433,6 +433,16 @@ async function listUploadedEvidenceForGeneration(
   ]);
 
   const chunksByArtifact = new Map<string, string[]>();
+  const responseQaArtifactIds = new Set(
+    latestArtifactRows
+      .filter((row) =>
+        /(?:bidder|vendor)[-_\s]*(?:qa|q&a)|(?:qa|q&a)[-_\s]*(?:log|clarification)|clarification[-_\s]*log/i.test(
+          String((row as { original_name?: unknown }).original_name ?? ""),
+        ),
+      )
+      .map((row) => String((row as { id?: unknown }).id ?? ""))
+      .filter(Boolean),
+  );
   for (const row of chunksResult.data ?? []) {
     const artifactId = String(
       (row as { artifact_id?: unknown }).artifact_id ?? "",
@@ -442,7 +452,8 @@ async function listUploadedEvidenceForGeneration(
       .trim();
     if (!artifactId || !chunkText) continue;
     const list = chunksByArtifact.get(artifactId) ?? [];
-    if (list.length < 5) {
+    const chunkLimit = responseQaArtifactIds.has(artifactId) ? 24 : 5;
+    if (list.length < chunkLimit) {
       list.push(chunkText.slice(0, 900));
       chunksByArtifact.set(artifactId, list);
     }
