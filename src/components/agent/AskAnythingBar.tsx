@@ -77,6 +77,15 @@ const MAX_TA_HEIGHT = 180;
 const FONT = '"Inter", -apple-system, BlinkMacSystemFont, sans-serif';
 const RAIL_W = 76; // AppRail width — bar sits to the right of it
 
+export function shouldShowGovernedAnswerProse(
+  response: string | null | undefined,
+  directAnswer: string | null | undefined,
+): boolean {
+  const governed = directAnswer?.trim();
+  if (!governed) return false;
+  return governed !== response?.trim();
+}
+
 // ── Component ──────────────────────────────────────────────────────────────
 
 export function AskAnythingBar({
@@ -316,7 +325,13 @@ export function AskAnythingBar({
                   </div>
                   {agentAnswer ? (
                     <div style={{ marginTop: 10, maxHeight: 420, overflowY: 'auto' }}>
-                      <AgentAnswerRenderer answer={agentAnswer} showProse={false} />
+                      <AgentAnswerRenderer
+                        answer={agentAnswer}
+                        showProse={shouldShowGovernedAnswerProse(
+                          response,
+                          agentAnswer.directAnswer,
+                        )}
+                      />
                     </div>
                   ) : null}
                 </div>
