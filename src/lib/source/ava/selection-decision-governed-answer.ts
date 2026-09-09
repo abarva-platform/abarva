@@ -20,6 +20,7 @@ import {
   governedClientKeyForSourceClientKey,
 } from "@/lib/source/ava/vendor-coverage-governed-answer";
 import { governedCandidateFromSourceArtifact } from "@/lib/source/ava/artifact-quality-governed-answer";
+import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 
 export interface BuildSelectionDecisionGovernedAnswerInput {
   eventId: string;
@@ -243,6 +244,25 @@ function citationIdsForArtifact(
     .map((citation) => citation.id);
 }
 
+async function readAcceptedSelectionMemoBody(
+  artifact: SourceArtifactRegistryRecord,
+): Promise<string | null> {
+  const registryBody = await readSourceArtifactRegistryTextContent(artifact);
+  if (registryBody?.trim()) return registryBody;
+
+  const { data, error } = await getAzureReadFluentClient()
+    .from("source_event_artifact_states")
+    .select("body")
+    .eq("source_event_id", artifact.sourceEventId)
+    .eq("artifact_code", artifact.artifactKind)
+    .eq("linked_artifact_id", artifact.id)
+    .eq("status", "approved")
+    .maybeSingle<{ body: string | null }>();
+  if (error) return null;
+  const body = data?.body?.trim();
+  return body ? body : null;
+}
+
 export async function buildSelectionDecisionGovernedAnswer(
   input: BuildSelectionDecisionGovernedAnswerInput,
 ): Promise<AvaAnswerPacket | null> {
@@ -279,8 +299,7 @@ export async function buildSelectionDecisionGovernedAnswer(
     });
   }
 
-  const bodyMarkdown =
-    await readSourceArtifactRegistryTextContent(authoritative);
+  const bodyMarkdown = await readAcceptedSelectionMemoBody(authoritative);
   const artifact: SourceArtifactRegistryRecordWithContent = bodyMarkdown
     ? { ...authoritative, bodyMarkdown }
     : authoritative;
