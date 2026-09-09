@@ -49,6 +49,12 @@ import {
   buildValueLedgerGovernedAnswer,
   looksLikeValueLedgerQuestion,
 } from "@/lib/source/ava/value-ledger-governed-answer";
+import {
+  buildCrossTenantRefusalAnswer,
+  buildSelectionDecisionGovernedAnswer,
+  looksLikeCrossTenantDataRequest,
+  looksLikeSelectionDecisionQuestion,
+} from "@/lib/source/ava/selection-decision-governed-answer";
 import { buildSourceAvaModuleHandoffForRuntime } from "@/lib/source/ava/module-handoff-runtime";
 import {
   resolveAuthoritativeArtifactSlots,
@@ -253,7 +259,36 @@ export async function POST(
       request.headers.get("accept")?.includes("application/x-ndjson") ?? false;
     if (wantsNdjson) {
       let agentAnswer = null;
-      if (eventId && looksLikeVendorCoverageQuestion(normalizedBody.prompt)) {
+      if (looksLikeCrossTenantDataRequest(normalizedBody.prompt)) {
+        agentAnswer = buildCrossTenantRefusalAnswer({
+          clientKey: activeClientKey,
+          question: normalizedBody.prompt ?? "",
+        });
+      } else if (
+        eventId &&
+        looksLikeSelectionDecisionQuestion(normalizedBody.prompt)
+      ) {
+        agentAnswer = await buildSelectionDecisionGovernedAnswer({
+          eventId: liveEventDetail?.id ?? eventId,
+          eventName: liveEventDetail?.name ?? null,
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+        }).catch((err) => {
+          console.error(
+            "[source.nexus-ask.selection-decision-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              clientKey: activeClientKey,
+              message: err instanceof Error ? err.message : String(err),
+            }),
+          );
+          return null;
+        });
+      } else if (
+        eventId &&
+        looksLikeVendorCoverageQuestion(normalizedBody.prompt)
+      ) {
         agentAnswer = await buildVendorCoverageGovernedAnswer({
           eventId,
           clientKey: activeClientKey,

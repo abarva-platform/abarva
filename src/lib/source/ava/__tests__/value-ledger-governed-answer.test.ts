@@ -3,6 +3,7 @@ import {
   buildValueLedgerGovernedAnswer,
   governedCandidateFromValueLedgerEntry,
   looksLikeValueLedgerQuestion,
+  valueLedgerDisplayState,
   valueConfidenceToConfidenceLevel,
 } from "@/lib/source/ava/value-ledger-governed-answer";
 import {
@@ -10,6 +11,7 @@ import {
   readRealizedValueLevers,
 } from "@/lib/source/facts/event-facts-reader";
 import type { ValueLedgerEntry } from "@/lib/source/types";
+import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 
 jest.mock("@/lib/source/facts/event-facts-reader", () => ({
   readCommittedValueLevers: jest.fn(),
@@ -18,6 +20,7 @@ jest.mock("@/lib/source/facts/event-facts-reader", () => ({
 
 const mockReadCommittedValueLevers = jest.mocked(readCommittedValueLevers);
 const mockReadRealizedValueLevers = jest.mocked(readRealizedValueLevers);
+const TEST_TENANT_KEY = CANONICAL_TENANT_KEYS[0]!;
 
 function ledgerEntry(
   overrides: Partial<ValueLedgerEntry> = {},
@@ -25,7 +28,7 @@ function ledgerEntry(
   return {
     id: "ledger-1",
     eventId: "event-1",
-    eventName: "Apex AMS Sourcing",
+    eventName: "Synthetic AMS Sourcing",
     kind: "projected",
     label: "Run-rate sourcing target",
     stageKey: "pricing",
@@ -84,10 +87,21 @@ describe("valueConfidenceToConfidenceLevel", () => {
   });
 });
 
+describe("valueLedgerDisplayState", () => {
+  it("renders a committed fact as committed instead of projected", () => {
+    expect(
+      valueLedgerDisplayState(
+        ledgerEntry({ id: "committed:event-1:AMS.VOLUME_BAND_PRICING" }),
+      ),
+    ).toBe("committed");
+    expect(valueLedgerDisplayState(ledgerEntry())).toBe("projected");
+  });
+});
+
 describe("governedCandidateFromValueLedgerEntry", () => {
   it("maps a ledger row to an honest governed financial candidate", () => {
     const candidate = governedCandidateFromValueLedgerEntry(ledgerEntry(), {
-      clientKey: "apex-retail",
+      clientKey: TEST_TENANT_KEY,
       tenantId: "tenant-1",
     });
 
@@ -105,7 +119,7 @@ describe("governedCandidateFromValueLedgerEntry", () => {
 
   it("stays usable for diagnostics when not agent_ready is explicitly allowed", () => {
     const candidate = governedCandidateFromValueLedgerEntry(ledgerEntry(), {
-      clientKey: "apex-retail",
+      clientKey: TEST_TENANT_KEY,
       tenantId: "tenant-1",
     });
 
@@ -136,22 +150,22 @@ describe("buildValueLedgerGovernedAnswer", () => {
 
     const answer = await buildValueLedgerGovernedAnswer({
       eventId: "event-1",
-      eventName: "Apex AMS Sourcing",
-      clientKey: "apexretail",
+      eventName: "Synthetic AMS Sourcing",
+      clientKey: TEST_TENANT_KEY,
       tenantId: "tenant-1",
       question: "Show the value waterfall for this event.",
     });
 
     expect(readCommittedValueLevers).toHaveBeenCalledWith({
       eventId: "event-1",
-      clientKey: "apexretail",
+      clientKey: TEST_TENANT_KEY,
     });
     expect(readRealizedValueLevers).toHaveBeenCalledWith({
       eventId: "event-1",
-      clientKey: "apexretail",
+      clientKey: TEST_TENANT_KEY,
     });
     expect(answer).not.toBeNull();
-    expect(answer!.tenantKey).toBe("apex-retail");
+    expect(answer!.tenantKey).toBe(TEST_TENANT_KEY);
     expect(answer!.intent).toBe("value_ledger_waterfall");
     expect(answer!.status).toBe("answered");
     expect(answer!.artifacts.map((artifact) => artifact.artifact)).toEqual([
@@ -164,11 +178,17 @@ describe("buildValueLedgerGovernedAnswer", () => {
       title: "Source value waterfall",
     });
     expect(answer!.directAnswer).toContain(
-      "Apex AMS Sourcing carries $3.3M of projected Source value",
+      "Synthetic AMS Sourcing carries $3.3M of committed Source value",
+    );
+    expect(answer!.directAnswer).toContain(
+      "$0 of separately recorded projected value",
     );
     expect(answer!.directAnswer).toContain("No realized value is registered");
     expect(answer!.directAnswer).not.toMatch(/realized savings/i);
     expect(answer!.citations).toHaveLength(2);
+    expect(answer!.tables?.[0]?.rows).toEqual(
+      expect.arrayContaining([expect.objectContaining({ state: "committed" })]),
+    );
     expect(
       answer!.citations.map((citation) => citation.recordId).sort(),
     ).toEqual(
@@ -192,8 +212,8 @@ describe("buildValueLedgerGovernedAnswer", () => {
 
     const answer = await buildValueLedgerGovernedAnswer({
       eventId: "event-1",
-      eventName: "Apex AMS Sourcing",
-      clientKey: "apexretail",
+      eventName: "Synthetic AMS Sourcing",
+      clientKey: TEST_TENANT_KEY,
       tenantId: "tenant-1",
       question: "What value is at stake?",
     });
@@ -210,7 +230,7 @@ describe("buildValueLedgerGovernedAnswer", () => {
 
     const answer = await buildValueLedgerGovernedAnswer({
       eventId: "missing-event",
-      clientKey: "apexretail",
+      clientKey: TEST_TENANT_KEY,
       tenantId: "tenant-1",
       question: "Show the value waterfall.",
     });

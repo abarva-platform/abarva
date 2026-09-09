@@ -96,7 +96,7 @@ export function governedCandidateFromValueLedgerEntry(
  * Build event-scoped ledger entries straight from `source_event_facts` —
  * the same real-facts seam `vendor-coverage-governed-answer.ts` reads,
  * never the mock event catalog. `committed_value_usd` rows back the
- * "projected" band (each lever's negotiated-and-evidenced value); `
+ * committed band (each lever's negotiated-and-evidenced value); `
  * realized_value_usd` rows back the "realized" band. Both are per-lever
  * `value_lever` facts, one row per canonical lever key — see
  * `readCommittedValueLevers`/`readRealizedValueLevers` in
@@ -126,6 +126,9 @@ async function readEntriesFromFacts(input: {
       id: `committed:${input.eventId}:${leverKey}`,
       eventId: input.eventId,
       eventName: input.eventName,
+      // ValueLedgerEntry predates committed as a first-class kind. Keep the
+      // storage-compatible kind here, but derive the rendered state from the
+      // committed fact identity below so it is never presented as projected.
       kind: "projected",
       label: leverKey,
       stageKey: null,
@@ -160,6 +163,12 @@ function committedProjected(entries: readonly ValueLedgerEntry[]) {
   return entries.filter(
     (entry) => entry.confidence === "high" && entry.evidenceCount > 0,
   );
+}
+
+export function valueLedgerDisplayState(
+  entry: ValueLedgerEntry,
+): "committed" | "projected" | "realized" {
+  return entry.id.startsWith("committed:") ? "committed" : entry.kind;
 }
 
 function measuringProjected(entries: readonly ValueLedgerEntry[]) {
@@ -219,7 +228,7 @@ function buildValueLedgerTable(args: {
     ],
     rows: args.entries.map((entry) => ({
       lineItem: entry.label,
-      state: entry.kind,
+      state: valueLedgerDisplayState(entry),
       amountUsd: entry.amountUsd,
       confidence: entry.confidence,
       evidence: entry.evidenceCount,
@@ -254,8 +263,15 @@ export async function buildValueLedgerGovernedAnswer(
     eventName: input.eventName ?? input.eventId,
   });
   const scoped = {
-    projected: entries.filter((entry) => entry.kind === "projected"),
-    realized: entries.filter((entry) => entry.kind === "realized"),
+    committed: entries.filter(
+      (entry) => valueLedgerDisplayState(entry) === "committed",
+    ),
+    projected: entries.filter(
+      (entry) => valueLedgerDisplayState(entry) === "projected",
+    ),
+    realized: entries.filter(
+      (entry) => valueLedgerDisplayState(entry) === "realized",
+    ),
   };
 
   if (!signalPresent || entries.length === 0) {
@@ -332,7 +348,7 @@ export async function buildValueLedgerGovernedAnswer(
 
   const projectedUsd = sumLedger(scoped.projected);
   const realizedUsd = sumLedger(scoped.realized);
-  const committedUsd = sumLedger(committedProjected(scoped.projected));
+  const committedUsd = sumLedger(committedProjected(scoped.committed));
   const measuringUsd = sumLedger(measuringProjected(scoped.projected));
   const citations = avaCitationsFromGovernedCandidates(bundle.usable);
   const citationIds = citationIdsForEntries(entries, citations);
@@ -350,7 +366,7 @@ export async function buildValueLedgerGovernedAnswer(
     intent: "value_ledger_waterfall",
     status: "answered",
     tenantFencePassed: true,
-    directAnswer: `${eventName} carries ${formatUsd(projectedUsd)} of projected Source value. ${formatUsd(committedUsd)} is high-confidence with evidence, ${formatUsd(measuringUsd)} still needs measurement or stronger evidence, and ${realizedClause}`,
+    directAnswer: `${eventName} carries ${formatUsd(committedUsd)} of committed Source value and ${formatUsd(projectedUsd)} of separately recorded projected value. ${formatUsd(measuringUsd)} still needs measurement or stronger evidence. ${realizedClause}`,
     businessImplication:
       realizedUsd > 0
         ? "The event has a value trail, but leaders still need to check whether realized rows are finance-attested and cite-render verified before using them as claimable value."
