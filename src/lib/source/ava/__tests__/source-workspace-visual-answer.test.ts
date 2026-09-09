@@ -90,6 +90,35 @@ function sourceContext(): AskSurfaceContext {
           },
         ],
       },
+      commercialPosture: {
+        headline: "Commercial posture",
+        summary:
+          "Source projects the existing Contract 360 and optimization rows into a decision strip; it does not create a savings claim.",
+        items: [
+          {
+            label: "Commitment posture",
+            value: "Commitment ahead of usage",
+            detail:
+              "$6.1M below committed annual baseline; use this as renegotiation-shape evidence, not realized savings.",
+          },
+          {
+            label: "Value type",
+            value: "Recoverable opportunity",
+            detail: "$1.3M recoverable; $2.4M avoidable; $1.9M negotiable.",
+          },
+          {
+            label: "Top lever",
+            value: "Shelfware removed",
+            detail: "Negotiate removal from renewal baseline.",
+          },
+          {
+            label: "Evidence depth",
+            value: "Loaded",
+            detail:
+              "Opportunity evidence is system, document, human, or finance evidenced; finance outcome still remains a separate gate.",
+          },
+        ],
+      },
       optimizationSpine: {
         sourceConnections: [
           {
@@ -130,8 +159,15 @@ describe("Source Workspace visual aVa answer", () => {
     });
 
     expect(answer?.directAnswer).toContain("CTR-090");
+    expect(answer?.directAnswer).toContain("Verdict:");
+    expect(answer?.directAnswer).toContain("Rationale:");
+    expect(answer?.directAnswer).toContain("Lever table:");
+    expect(answer?.directAnswer).toContain("Caveat:");
     expect(answer?.directAnswer).toContain(
-      "outside-in pattern is advisory only",
+      "Commercial posture: Commitment posture = Commitment ahead of usage",
+    );
+    expect(answer?.directAnswer).toContain(
+      "outside-in market practice is advisory pattern context only",
     );
     expect(answer?.directAnswer).toContain(
       "lines of contract-specific candidate commercial opportunities",
@@ -298,6 +334,9 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).toContain("$1.3M");
     expect(answer?.directAnswer).toContain(
       "SLA credits earned but not claimed",
+    );
+    expect(answer?.directAnswer).toContain(
+      "Lever table: SLA credits earned but not claimed | $1.3M | Recoverable Leakage",
     );
     expect(answer?.directAnswer).toContain(
       "lines of contract-specific candidate commercial opportunities",

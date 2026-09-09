@@ -129,6 +129,7 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
               </div>
             </div>
           ) : null}
+          <CommercialPostureStrip vm={vm} />
           <ContractActionStoryPanel vm={vm} />
           <div
             style={{
@@ -1879,6 +1880,94 @@ const subStyle: CSSProperties = {
   lineHeight: 1.35,
 };
 
+function CommercialPostureStrip({ vm }: { vm: SourceWorkspaceVM }) {
+  const posture = vm.commercialPosture;
+  if (!posture) return null;
+  return (
+    <section
+      aria-label="Commercial posture"
+      style={{
+        background: "#fff",
+        border: "1px solid rgba(10,10,11,.12)",
+        borderRadius: 8,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          padding: "13px 16px",
+          borderBottom: "1px solid rgba(10,10,11,.08)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 850,
+            letterSpacing: ".08em",
+            textTransform: "uppercase",
+            color: "#0f6e56",
+            marginBottom: 4,
+          }}
+        >
+          {posture.headline}
+        </div>
+        <div style={{ fontSize: 12.5, color: "#5f5e5a", lineHeight: 1.45 }}>
+          {posture.summary}
+        </div>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))",
+        }}
+      >
+        {posture.items.map((item) => (
+          <div
+            key={item.label}
+            style={{
+              minHeight: 104,
+              padding: "12px 14px",
+              borderRight: "1px solid rgba(10,10,11,.07)",
+              borderBottom: "1px solid rgba(10,10,11,.07)",
+              background:
+                item.label === "Commitment posture"
+                  ? "rgba(15,110,86,.05)"
+                  : "#fff",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 9.5,
+                fontWeight: 850,
+                letterSpacing: ".08em",
+                textTransform: "uppercase",
+                color: "#888780",
+                marginBottom: 6,
+              }}
+            >
+              {item.label}
+            </div>
+            <div
+              style={{
+                fontSize: 13.5,
+                fontWeight: 850,
+                color: item.tone,
+                lineHeight: 1.25,
+                marginBottom: 6,
+              }}
+            >
+              {item.value}
+            </div>
+            <div style={{ fontSize: 11.5, color: "#5f5e5a", lineHeight: 1.4 }}>
+              {item.detail}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function ContractActionStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
   const spine = vm.optSpine;
   if (!spine?.selected) return null;
@@ -2347,8 +2436,8 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
     : actionTriggers.length > 0
       ? actionTriggers.map((reason) => reason.detail).join(" ")
       : c?.notice && c?.expiry
-      ? `Notice ${c.notice}; expiry ${c.expiry}. Timing informs the workflow, but the case is driven by evidence and materiality.`
-      : "Timing is governed by the loaded contract terms when available.";
+        ? `Notice ${c.notice}; expiry ${c.expiry}. Timing informs the workflow, but the case is driven by evidence and materiality.`
+        : "Timing is governed by the loaded contract terms when available.";
   const rankRead = selectedSpine
     ? `${selectedSpine.rank} of the current optimization queue with fit ${selectedSpine.score}/100. ${
         supportSignals.length > 0
@@ -2449,7 +2538,11 @@ function OpportunityStoryPanel({ vm }: { vm: SourceWorkspaceVM }) {
               title="Proof standard"
               body={conflict ? view.baseline.headline : evidenceGateRead}
             />
-            <StoryTile index="05" title="Next decision" body={`${evidenceRead} ${nextAction}`} />
+            <StoryTile
+              index="05"
+              title="Next decision"
+              body={`${evidenceRead} ${nextAction}`}
+            />
           </div>
         </div>
         <div>
@@ -4119,8 +4212,7 @@ function DetailPanel({
         sum +
         Math.max(
           0,
-          Number(row.credit_calculated ?? 0) -
-            Number(row.credit_claimed ?? 0),
+          Number(row.credit_calculated ?? 0) - Number(row.credit_claimed ?? 0),
         ),
       0,
     );
@@ -4153,10 +4245,13 @@ function DetailPanel({
               {
                 text:
                   row.actual_value ??
-                  (row.value_num == null ? "Not established" : String(row.value_num)),
+                  (row.value_num == null
+                    ? "Not established"
+                    : String(row.value_num)),
                 align: "right" as const,
                 weight: row.performance_state === "breached" ? 800 : 400,
-                color: row.performance_state === "breached" ? "#a32d2d" : "#2c2c2a",
+                color:
+                  row.performance_state === "breached" ? "#a32d2d" : "#2c2c2a",
               },
               {
                 text:
@@ -4166,7 +4261,8 @@ function DetailPanel({
                       ? "Not loaded"
                       : "Met",
                 weight: row.performance_state === "breached" ? 800 : 500,
-                color: row.performance_state === "breached" ? "#a32d2d" : "#246b45",
+                color:
+                  row.performance_state === "breached" ? "#a32d2d" : "#246b45",
               },
               {
                 text: hasCredit ? formatCurrency(creditOwed) : "-",
