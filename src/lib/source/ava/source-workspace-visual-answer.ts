@@ -537,8 +537,8 @@ function opportunityLinesFrom(
       },
     ];
   });
-  if (directoryLines.length > 0) return directoryLines.slice(0, 8);
   if (mapped.length > 0) return mapped.slice(0, 8);
+  if (directoryLines.length > 0) return directoryLines.slice(0, 8);
   return ledgerLinesFrom(context)
     .filter(
       (line) =>

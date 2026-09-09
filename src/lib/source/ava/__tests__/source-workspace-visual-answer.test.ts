@@ -94,6 +94,18 @@ function sourceContext(): AskSurfaceContext {
           },
         ],
       },
+      contractOpportunityDirectory: [
+        {
+          id: "ctr-090-fallback-row",
+          contractId: "CTR-090",
+          label: "Fallback directory row should not mask rich opportunity rows",
+          amountUsd: 999_999,
+          state: "finance_confirmation_required",
+          evidenceClass: "present",
+          nextAction: "Use only if rich opportunity rows are unavailable.",
+          sourceRefs: ["source.contract_action_candidate_v1"],
+        },
+      ],
       commercialPosture: {
         headline: "Commercial posture",
         summary:

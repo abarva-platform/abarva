@@ -40,6 +40,8 @@ Follow-up reconciliation fix: the governed cloud-consumption loader now writes t
 
 Follow-up answer-surface fix: the deterministic Source aVa opportunity table now preserves opportunity stage, exact confidence, evidence grade, and blocking gap fields instead of collapsing them into generic state/evidence prose.
 
+Follow-up priority fix: when rich contract opportunity rows and fallback contract-directory rows are both present, Source aVa now prefers the rich rows so confidence, stage, evidence grade, and blocking gaps survive into the live table.
+
 ## QA / Validation
 
 - `node scripts/source/build-meridian-databricks-cloud-consumption-package.mjs` — PASS.
@@ -49,6 +51,7 @@ Follow-up answer-surface fix: the deterministic Source aVa opportunity table now
 - `npx eslint scripts/source/build-meridian-databricks-cloud-consumption-package.mjs scripts/source/load-cloud-consumption-package.mjs scripts/source/__tests__/load-cloud-consumption-package.test.ts src/lib/source/facts/view/ava-contract-grounding-context.ts src/app/(maestro)/source/preview/workspace/buildViewModel.ts src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx` — PASS.
 - Follow-up calculation-output-key validation: `node scripts/source/load-cloud-consumption-package.mjs --mode=plan --dataset-version=meridian-databricks-consumption-commit-v1-20260908 --package-dir=datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908 --proof-dir=/tmp/source-dbx-calc-key-plan-20260909T1420Z` — PASS; `npx jest --runTestsByPath scripts/source/__tests__/load-cloud-consumption-package.test.ts src/lib/source/data-model/__tests__/contract-optimization-traceability.test.ts src/lib/source/data-model/__tests__/read-adapter.contract-optimization.test.ts --runInBand` — PASS; `npx eslint scripts/source/load-cloud-consumption-package.mjs scripts/source/__tests__/load-cloud-consumption-package.test.ts` — PASS.
 - Follow-up Source aVa table-field validation: `npx jest --runTestsByPath src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts --runInBand` — PASS; `npx eslint src/lib/source/ava/source-workspace-visual-answer.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts` — PASS.
+- Follow-up Source aVa rich-row priority validation: `npx jest --runTestsByPath src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts --runInBand` — PASS; `npx eslint src/lib/source/ava/source-workspace-visual-answer.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts` — PASS.
 
 ## Rollout Plan
 
