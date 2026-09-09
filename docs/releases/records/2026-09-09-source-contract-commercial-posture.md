@@ -29,7 +29,7 @@ Layer 4 Products: Source presentation and Source aVa surface context changed. Th
 ## Changes Included
 
 - Source Contract 360 view model derives a commercial posture object from existing contract economics, opportunity value types, evidence grades, owner fields, and next actions.
-- Contract 360 Story tab renders the posture strip ahead of the executive story panel.
+- Contract 360 renders the posture strip in both the product shell and the legacy canvas path ahead of the executive story panel.
 - Source aVa surface context includes posture facts, a contract-optimization answer frame, and demo-safe suggested prompts for commercial posture, value types, CFO wording, and vendor asks.
 - Deterministic Source aVa contract answers use Verdict, Rationale, Lever table, and Caveat sections for contract optimization questions.
 
@@ -37,6 +37,8 @@ Layer 4 Products: Source presentation and Source aVa surface context changed. Th
 
 - `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' 'src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts' --runInBand` — pass, 3 suites / 39 tests.
 - `npx eslint 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts' 'src/app/(maestro)/source/preview/workspace/canvases/ContractCanvas.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' src/lib/source/ava/source-workspace-visual-answer.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts` — pass.
+- `npm test -- --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/ContractCanvas.executive-story.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/buildViewModel.numeric.test.ts' 'src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts' --runInBand` — required for the product-shell mount regression.
+- `npx eslint 'src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx' 'src/app/(maestro)/source/preview/workspace/buildViewModel.ts' 'src/lib/source/ava/source-workspace-visual-answer.ts'` — required for the product-shell follow-up.
 
 ## Rollout Plan
 
