@@ -33,6 +33,9 @@ export interface BuildRfpDesignGovernedAnswerInput {
 export interface RfpDesignSnapshot {
   requirementCount: number | null;
   mandatoryRequirementCount: number | null;
+  scoredRequirementCount: number | null;
+  informationalRequirementCount: number | null;
+  evaluationRequiredCount: number | null;
   dispositions: string[];
   categories: string[];
   responseFields: string[];
@@ -122,19 +125,90 @@ function chooseCount(args: {
   return args.identifiers && args.identifiers > 0 ? args.identifiers : null;
 }
 
-function requirementIdsInMandatoryRows(body: string): Set<string> {
-  const htmlRows = [
-    ...body.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi),
-  ].map((match) => match[1] ?? "");
-  const rows = htmlRows.length > 0 ? htmlRows : body.split(/\r?\n/);
-  const ids = new Set<string>();
-  for (const row of rows) {
-    if (!/\bmandatory\b/i.test(row)) continue;
-    for (const match of row.matchAll(/\bREQ-[A-Z0-9-]+\b/gi)) {
-      ids.add((match[0] ?? "").toUpperCase());
-    }
+function chooseStructuredCount(args: {
+  label: string;
+  explicit: number[];
+  identifiers: number;
+  conflicts: string[];
+}): number | null {
+  if (args.identifiers <= 0) return chooseCount(args);
+  if (args.explicit.length > 1) {
+    args.conflicts.push(
+      `${args.label} counts conflict in the accepted artifacts: ${args.explicit.join(", ")}.`,
+    );
+    return null;
   }
-  return ids;
+  if (args.explicit.length === 1 && args.explicit[0] !== args.identifiers) {
+    args.conflicts.push(
+      `${args.label} count conflicts with the controlled matrix: the summary states ${args.explicit[0]}, while the matrix contains ${args.identifiers}.`,
+    );
+    return null;
+  }
+  return args.identifiers;
+}
+
+type RequirementLevel = "mandatory" | "scored" | "informational";
+
+interface StructuredRequirementCounts {
+  all: Set<string>;
+  byLevel: Record<RequirementLevel, Set<string>>;
+}
+
+function plainCell(value: string): string {
+  return value
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\\\|/g, "|")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function structuredRequirementRows(body: string): string[][] {
+  const htmlRows = [...body.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)]
+    .map((rowMatch) =>
+      [...(rowMatch[1] ?? "").matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)]
+        .map((cellMatch) => plainCell(cellMatch[1] ?? "")),
+    )
+    .filter((cells) => cells.length > 0);
+  const markdownRows = body
+    .split(/\r?\n/)
+    .filter((line) => /^\s*\|.*\bREQ-[A-Z0-9-]+\b/i.test(line))
+    .map((line) =>
+      line
+        .replace(/^\s*\|/, "")
+        .replace(/\|\s*$/, "")
+        .split("|")
+        .map(plainCell),
+    );
+  return [...htmlRows, ...markdownRows];
+}
+
+function structuredRequirementCounts(body: string): StructuredRequirementCounts {
+  const counts: StructuredRequirementCounts = {
+    all: new Set<string>(),
+    byLevel: {
+      mandatory: new Set<string>(),
+      scored: new Set<string>(),
+      informational: new Set<string>(),
+    },
+  };
+
+  for (const cells of structuredRequirementRows(body)) {
+    const ids = cells
+      .flatMap((cell) => [...cell.matchAll(/\bREQ-[A-Z0-9-]+\b/gi)])
+      .map((match) => (match[0] ?? "").toUpperCase());
+    if (ids.length !== 1) continue;
+    const level = cells
+      .map((cell) => cell.toLowerCase())
+      .find((cell): cell is RequirementLevel =>
+        cell === "mandatory" || cell === "scored" || cell === "informational",
+      );
+    if (!level) continue;
+    counts.all.add(ids[0]!);
+    counts.byLevel[level].add(ids[0]!);
+  }
+  return counts;
 }
 
 export function parseRfpDesignArtifacts(
@@ -143,34 +217,69 @@ export function parseRfpDesignArtifacts(
 ): RfpDesignSnapshot {
   const joined = `${rfpBody}\n${responseControlBody}`;
   const conflicts: string[] = [];
-  const requirementIds = new Set(
-    [...joined.matchAll(/\bREQ-[A-Z0-9-]+\b/gi)].map((match) =>
-      (match[0] ?? "").toUpperCase(),
-    ),
-  );
-  const mandatoryRequirementIds = requirementIdsInMandatoryRows(joined);
-  const requirementCount = chooseCount({
+  const structured = structuredRequirementCounts(joined);
+  const requirementCount = chooseStructuredCount({
     label: "Total requirement",
     explicit: uniqueNumbers(
       joined,
       /\b(\d{1,4})\s+(?:issued\s+)?requirements?\b/gi,
     ),
-    identifiers: requirementIds.size,
+    identifiers: structured.all.size,
     conflicts,
   });
-  const mandatoryRequirementCount = chooseCount({
+  const mandatoryRequirementCount = chooseStructuredCount({
     label: "Mandatory requirement",
     explicit: uniqueNumbers(
       joined,
       /\b(\d{1,4})\s+mandatory\s+requirements?\b/gi,
     ),
-    identifiers: mandatoryRequirementIds.size,
+    identifiers: structured.byLevel.mandatory.size,
     conflicts,
   });
+  const scoredRequirementCount = chooseStructuredCount({
+    label: "Scored requirement",
+    explicit: uniqueNumbers(
+      joined,
+      /\b(\d{1,4})\s+scored\s+requirements?\b/gi,
+    ),
+    identifiers: structured.byLevel.scored.size,
+    conflicts,
+  });
+  const informationalRequirementCount = chooseStructuredCount({
+    label: "Informational requirement",
+    explicit: uniqueNumbers(
+      joined,
+      /\b(\d{1,4})\s+informational\s+requirements?\b/gi,
+    ),
+    identifiers: structured.byLevel.informational.size,
+    conflicts,
+  });
+  const evaluationRequiredCount =
+    mandatoryRequirementCount !== null && scoredRequirementCount !== null
+      ? mandatoryRequirementCount + scoredRequirementCount
+      : null;
+
+  if (
+    requirementCount !== null &&
+    mandatoryRequirementCount !== null &&
+    scoredRequirementCount !== null &&
+    informationalRequirementCount !== null &&
+    requirementCount !==
+      mandatoryRequirementCount +
+        scoredRequirementCount +
+        informationalRequirementCount
+  ) {
+    conflicts.push(
+      `Requirement-level counts do not reconcile to the accepted total: ${mandatoryRequirementCount} Mandatory + ${scoredRequirementCount} Scored + ${informationalRequirementCount} Informational does not equal ${requirementCount}.`,
+    );
+  }
 
   return {
     requirementCount,
     mandatoryRequirementCount,
+    scoredRequirementCount,
+    informationalRequirementCount,
+    evaluationRequiredCount,
     dispositions: DISPOSITIONS.filter((value) =>
       new RegExp(`\\b${value.replace(" ", "\\s+")}\\b`, "i").test(joined),
     ),
@@ -246,8 +355,23 @@ function rfpControlTable(args: {
   }
   if (args.snapshot.mandatoryRequirementCount !== null) {
     rows.push({
-      control: "Mandatory requirements",
-      acceptedDesign: `${args.snapshot.mandatoryRequirementCount} rows require a compliant, evidenced response`,
+      control: "Mandatory pass/fail requirements",
+      acceptedDesign: `${args.snapshot.mandatoryRequirementCount} requirements require a compliant, evidenced response`,
+    });
+  }
+  if (
+    args.snapshot.evaluationRequiredCount !== null &&
+    args.snapshot.scoredRequirementCount !== null
+  ) {
+    rows.push({
+      control: "Evaluation-ready submission",
+      acceptedDesign: `${args.snapshot.evaluationRequiredCount} required responses: ${args.snapshot.mandatoryRequirementCount} Mandatory + ${args.snapshot.scoredRequirementCount} Scored`,
+    });
+  }
+  if (args.snapshot.informationalRequirementCount !== null) {
+    rows.push({
+      control: "Informational requirements",
+      acceptedDesign: `${args.snapshot.informationalRequirementCount} normalized responses support comparison but do not gate submission`,
     });
   }
   if (args.snapshot.dispositions.length > 0) {
@@ -374,20 +498,27 @@ export async function buildRfpDesignGovernedAnswer(
   const hasCoreDesign =
     snapshot.requirementCount !== null &&
     snapshot.mandatoryRequirementCount !== null &&
+    snapshot.scoredRequirementCount !== null &&
+    snapshot.informationalRequirementCount !== null &&
+    snapshot.evaluationRequiredCount !== null &&
     snapshot.dispositions.length > 0 &&
     snapshot.responseFields.length > 0 &&
     snapshot.conflicts.length === 0;
   const requirementPhrase = snapshot.requirementCount
     ? `${snapshot.requirementCount} issued requirements`
     : "a requirement-level response matrix";
-  const mandatoryPhrase = snapshot.mandatoryRequirementCount
-    ? `, including ${snapshot.mandatoryRequirementCount} mandatory requirements`
-    : "";
+  const requirementMixPhrase =
+    snapshot.evaluationRequiredCount !== null &&
+    snapshot.mandatoryRequirementCount !== null &&
+    snapshot.scoredRequirementCount !== null &&
+    snapshot.informationalRequirementCount !== null
+      ? `: ${snapshot.evaluationRequiredCount} are required for an evaluation-ready submission (${snapshot.mandatoryRequirementCount} Mandatory and ${snapshot.scoredRequirementCount} Scored), while ${snapshot.informationalRequirementCount} are Informational`
+      : "";
   const dispositionPhrase = snapshot.dispositions.length
     ? ` Vendors had to use the normalized dispositions ${snapshot.dispositions.join(", ")}.`
     : "";
   const fieldPhrase = snapshot.responseFields.length
-    ? ` Each scored row preserves ${snapshot.responseFields.slice(0, 8).join(", ")}${snapshot.responseFields.length > 8 ? ", and linked commercial/control references" : ""}.`
+    ? ` Each scored response preserves ${snapshot.responseFields.slice(0, 8).join(", ")}${snapshot.responseFields.length > 8 ? ", and linked commercial/control references" : ""}.`
     : "";
 
   return composeAvaAnswer({
@@ -398,7 +529,7 @@ export async function buildRfpDesignGovernedAnswer(
     intent: "rfp_design_controls",
     status: hasCoreDesign ? "answered" : "partial",
     tenantFencePassed: true,
-    directAnswer: `The accepted RFP for ${input.eventName ?? "this event"} controls ${requirementPhrase}${mandatoryPhrase}.${dispositionPhrase}${fieldPhrase}`,
+    directAnswer: `The accepted RFP for ${input.eventName ?? "this event"} controls ${requirementPhrase}${requirementMixPhrase}.${dispositionPhrase}${fieldPhrase}`,
     businessImplication:
       "The response design makes vendors answer the same requirement grain and ties evaluable claims to evidence, pricing, SLA/KPI, and exception references before scoring.",
     recommendation:
@@ -449,7 +580,9 @@ export async function buildRfpDesignGovernedAnswer(
       sourceCount: citations.length,
       metricCount:
         (snapshot.requirementCount !== null ? 1 : 0) +
-        (snapshot.mandatoryRequirementCount !== null ? 1 : 0),
+        (snapshot.mandatoryRequirementCount !== null ? 1 : 0) +
+        (snapshot.scoredRequirementCount !== null ? 1 : 0) +
+        (snapshot.informationalRequirementCount !== null ? 1 : 0),
       hasTenantFacts: citations.length > 0,
       hasCorpus: false,
       hasExperts: false,

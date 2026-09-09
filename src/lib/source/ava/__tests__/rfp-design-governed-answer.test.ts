@@ -29,12 +29,16 @@ const RFP_BODY = `
 <p>This package issues 110 issued requirements across service scope, service management,
 SLA and service credits, staffing and productivity, security and compliance, cloud and data,
 transition, commercial and pricing, governance and reporting, and value measurement.</p>
-<p>88 mandatory requirements require evidence.</p>
 <table><tr><th>Requirement ID</th><th>Requirement category</th><th>RFP section</th>
 <th>Requirement statement</th><th>Requirement level</th><th>Response type</th>
 <th>Evaluation criterion ID</th><th>Evidence required</th></tr>
 <tr><td>REQ-SCOPE-001</td><td>Service scope</td><td>4.1</td><td>Describe coverage.</td>
-<td>Mandatory</td><td>Narrative</td><td>EVAL-01</td><td>Service matrix</td></tr></table>`;
+<td>Mandatory</td><td>Narrative</td><td>EVAL-01</td><td>Service matrix</td></tr>
+${Array.from({ length: 54 }, (_, index) => `<tr><td>REQ-M-${String(index + 2).padStart(3, "0")}</td><td>Service scope</td><td>4.1</td><td>Mandatory control.</td><td>Mandatory</td><td>Narrative</td><td>EVAL-01</td><td>Evidence</td></tr>`).join("\n")}
+${Array.from({ length: 33 }, (_, index) => `<tr><td>REQ-S-${String(index + 1).padStart(3, "0")}</td><td>Service scope</td><td>4.1</td><td>Scored control.</td><td>Scored</td><td>Narrative</td><td>EVAL-01</td><td>Evidence</td></tr>`).join("\n")}
+${Array.from({ length: 22 }, (_, index) => `<tr><td>REQ-I-${String(index + 1).padStart(3, "0")}</td><td>Service scope</td><td>4.1</td><td>Informational control.</td><td>Informational</td><td>Narrative</td><td>EVAL-01</td><td>No</td></tr>`).join("\n")}
+</table>
+<p>See illustrative reference REQ-EXAMPLE-999 before completing the matrix.</p>`;
 
 const RESPONSE_CONTROL_BODY = `
 <h1>Vendor response control pack</h1>
@@ -108,7 +112,10 @@ describe("parseRfpDesignArtifacts", () => {
     );
 
     expect(snapshot.requirementCount).toBe(110);
-    expect(snapshot.mandatoryRequirementCount).toBe(88);
+    expect(snapshot.mandatoryRequirementCount).toBe(55);
+    expect(snapshot.scoredRequirementCount).toBe(33);
+    expect(snapshot.informationalRequirementCount).toBe(22);
+    expect(snapshot.evaluationRequiredCount).toBe(88);
     expect(snapshot.dispositions).toEqual([
       "Comply",
       "Partially Comply",
@@ -145,13 +152,43 @@ describe("parseRfpDesignArtifacts", () => {
     expect(snapshot.conflicts[0]).toContain("110, 109");
   });
 
-  it("counts requirement rows when an accepted artifact has no summary sentence", () => {
+  it("fails closed when a summary count disagrees with the controlled matrix", () => {
     const snapshot = parseRfpDesignArtifacts(
-      "<table><tr><td>REQ-001</td><td>Mandatory</td></tr><tr><td>REQ-002</td><td>Scored</td></tr></table>",
+      "<p>2 mandatory requirements.</p><table><tr><td>REQ-001</td><td>Mandatory</td></tr><tr><td>REQ-002</td><td>Scored</td></tr><tr><td>REQ-003</td><td>Informational</td></tr></table>",
       "",
     );
-    expect(snapshot.requirementCount).toBe(2);
+    expect(snapshot.mandatoryRequirementCount).toBeNull();
+    expect(snapshot.conflicts[0]).toContain(
+      "summary states 2, while the matrix contains 1",
+    );
+  });
+
+  it("counts only structured requirement entries and ignores prose references", () => {
+    const snapshot = parseRfpDesignArtifacts(
+      "<p>See REQ-EXAMPLE-999.</p><table><tr><td>REQ-001</td><td>Mandatory</td></tr><tr><td>REQ-002</td><td>Scored</td></tr><tr><td>REQ-003</td><td>Informational</td></tr></table>",
+      "",
+    );
+    expect(snapshot.requirementCount).toBe(3);
     expect(snapshot.mandatoryRequirementCount).toBe(1);
+    expect(snapshot.scoredRequirementCount).toBe(1);
+    expect(snapshot.informationalRequirementCount).toBe(1);
+    expect(snapshot.evaluationRequiredCount).toBe(2);
+  });
+
+  it("parses the markdown matrix shape used by the governed RFP generator", () => {
+    const snapshot = parseRfpDesignArtifacts(
+      `| Requirement ID | Requirement statement | Requirement level |
+| --- | --- | --- |
+| REQ-001 | Preserve the literal word mandatory in this narrative. | Scored |
+| REQ-002 | Provide evidence. | Mandatory |
+| REQ-003 | Add context. | Informational |`,
+      "",
+    );
+    expect(snapshot.requirementCount).toBe(3);
+    expect(snapshot.mandatoryRequirementCount).toBe(1);
+    expect(snapshot.scoredRequirementCount).toBe(1);
+    expect(snapshot.informationalRequirementCount).toBe(1);
+    expect(snapshot.conflicts).toEqual([]);
   });
 });
 
@@ -183,7 +220,12 @@ describe("buildRfpDesignGovernedAnswer", () => {
     expect(answer?.intent).toBe("rfp_design_controls");
     expect(answer?.status).toBe("answered");
     expect(answer?.directAnswer).toContain("110 issued requirements");
-    expect(answer?.directAnswer).toContain("88 mandatory requirements");
+    expect(answer?.directAnswer).toContain(
+      "88 are required for an evaluation-ready submission",
+    );
+    expect(answer?.directAnswer).toContain("55 Mandatory and 33 Scored");
+    expect(answer?.directAnswer).toContain("22 are Informational");
+    expect(answer?.directAnswer).not.toContain("row");
     expect(answer?.directAnswer).toContain("Partially Comply");
     expect(answer?.tables?.[0]?.rows).toEqual(
       expect.arrayContaining([
