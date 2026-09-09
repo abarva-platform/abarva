@@ -122,7 +122,7 @@ export async function POST(
   const { data: event, error: fetchError } = await supabase
     .from("source_events")
     .select(
-      "id, lifecycle_state, current_stage_key, event_name, event_code, event_type, classified_category, trigger_description, client_key",
+      "id, lifecycle_state, current_stage_key, event_name, event_code, event_type, sourcing_motion, classified_category, trigger_description, client_key",
     )
     .eq("id", eventId)
     .eq("client_key", activeClient.key)
@@ -145,6 +145,7 @@ export async function POST(
     ),
   );
   const journey = getSourceJourneyForEvent({
+    sourcingMotion: event.sourcing_motion as string | null,
     eventName: event.event_name as string | null,
     eventCode: event.event_code as string | null,
     eventType: event.event_type as string | null,
