@@ -266,6 +266,14 @@ function numberValue(row, key) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function totalCommittedValue(row) {
+  return (
+    numberValue(row, "total_committed_value_usd") ??
+    numberValue(row, "total_committed_usd") ??
+    numberValue(row, "committed_annual_spend_usd")
+  );
+}
+
 function requiredNumber(row, key) {
   const parsed = numberValue(row, key);
   if (parsed === null) throw new Error(`Missing numeric field ${key} on ${value(row, "source_row_id") || value(row, "contract_id") || value(row, "opportunity_id")}`);
@@ -438,10 +446,13 @@ function qualifyPackage(args, sourceFiles, docs) {
     if (new Set((apByContract.get(contractId) ?? []).map((row) => value(row, "month"))).size !== 12) failures.push(`${contractId} must carry 12 AP reconciliation months`);
     if ((oppsByContract.get(contractId) ?? []).length === 0) failures.push(`${contractId} must carry optimization candidates`);
   }
-  if (!contracts.some((row) => value(row, "cloud_provider") === "aws" || value(row, "vendor_ref") === "VEN-AWS")) failures.push("AWS contract is required for the PHS story");
+  if (!contracts.some((row) => value(row, "cloud_provider") === "aws" || value(row, "vendor_ref") === "VEN-AWS")) failures.push("AWS contract is required for the cloud-consumption story");
   for (const opportunity of sourceFiles["optimization_opportunities.csv"]) {
     if (value(opportunity, "finance_confirmation_state") !== "not_confirmed") failures.push(`${value(opportunity, "opportunity_id")} must remain not_confirmed`);
     if (!value(opportunity, "evidence_rows")) failures.push(`${value(opportunity, "opportunity_id")} missing evidence_rows`);
+    for (const field of ["buyer_ask", "negotiation_language", "vendor_concession", "timing_dependency", "owner_role", "priority", "risk_if_ignored"]) {
+      if (!value(opportunity, field)) failures.push(`${value(opportunity, "opportunity_id")} missing ${field}`);
+    }
     for (const evidenceRef of value(opportunity, "evidence_rows").split(";").map((item) => item.trim()).filter(Boolean)) {
       const found = Object.values(sourceFiles).some((rows) =>
         rows.some((row) =>
@@ -450,7 +461,7 @@ function qualifyPackage(args, sourceFiles, docs) {
           value(row, "commitment_id") === evidenceRef ||
           value(row, "extraction_id") === evidenceRef,
         ),
-      );
+      ) || evidenceIds.has(evidenceRef);
       if (!found) failures.push(`${value(opportunity, "opportunity_id")} cites unknown evidence row ${evidenceRef}`);
     }
   }
@@ -686,9 +697,9 @@ async function upsertContracts(client, args, contracts) {
        )
        VALUES (
          $1, $2, $3, $4, $5, NULLIF($6, '')::date, NULLIF($7, '')::date,
-         NULLIF($8, '')::date, 'review_required', $9, $10, $11, $11, 'USD',
-         $12, $13, $14, $15, $16, $17, CURRENT_DATE, $18, 'reviewed',
-         $19, $20, $21::jsonb
+         NULLIF($8, '')::date, 'review_required', $9, $10, $11, $12, 'USD',
+         $13, $14, $15, $16, $17, $18, CURRENT_DATE, $19, 'reviewed',
+         $20, $21, $22::jsonb
        )
        ON CONFLICT (tenant_key, contract_id)
        DO UPDATE SET vendor_id = EXCLUDED.vendor_id,
@@ -722,6 +733,7 @@ async function upsertContracts(client, args, contracts) {
         value(contract, "renewal_notice_date"),
         boolValue(contract, "auto_renew"),
         numberValue(contract, "annual_value_usd"),
+        totalCommittedValue(contract),
         numberValue(contract, "committed_annual_spend_usd"),
         value(contract, "benchmarking_clause"),
         value(contract, "termination_rights"),
@@ -1245,7 +1257,7 @@ async function upsertOptimizationSpine(client, args, files) {
         contractId,
         numberValue(contract, "annual_value_usd"),
         spend.reduce((total, row) => total + requiredNumber(row, "actual_spend_usd"), 0),
-        numberValue(contract, "committed_annual_spend_usd"),
+        totalCommittedValue(contract),
         "Baseline uses 12 monthly AP-reconciled cloud spend observations plus native cloud evidence rows.",
         JSON.stringify(spend.map((row) => value(row, "source_row_id"))),
         JSON.stringify({ synthetic_policy: SYNTHETIC_POLICY }),
@@ -1456,10 +1468,10 @@ async function applyLayer3(client, args, files, rows, expectedL2) {
   await upsertCloudTables(client, args, files);
   await upsertCloudCanonicalFacts(client, args, files);
   await upsertOptimizationSpine(client, args, files);
-  return layer3Readback(client, args, files, rows);
+  return layer3Readback(client, args, files);
 }
 
-async function layer3Readback(client, args, files, rows) {
+async function layer3Readback(client, args, files) {
   const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
   const vendorIds = uniqueRows(files["cloud_contract_register.csv"], "vendor_ref").map((row) => value(row, "vendor_ref"));
   const opportunityIds = files["optimization_opportunities.csv"].map((row) => value(row, "opportunity_id"));
@@ -1661,7 +1673,7 @@ async function main() {
       summary.layer3_readback = readback;
     } else if (args.mode === "verify") {
       const layer2 = await layer2Readback(client, args);
-      const layer3 = await layer3Readback(client, args, sourceFiles, rows);
+      const layer3 = await layer3Readback(client, args, sourceFiles);
       assertCounts(expectedL2, layer2, "Layer 2");
       assertCounts(expectedL3, layer3, "Layer 3");
       summary.event = "source_cloud_consumption_package_layer23_verified";
@@ -1669,7 +1681,7 @@ async function main() {
       summary.layer3_readback = layer3;
     } else if (args.mode === "apply-layer4") {
       requireApplyApproval(args);
-      const layer3 = await layer3Readback(client, args, sourceFiles, rows);
+      const layer3 = await layer3Readback(client, args, sourceFiles);
       assertCounts(expectedL3, layer3, "Layer 3");
       await client.query("BEGIN");
       await activateLayer4Overlay(client, args);

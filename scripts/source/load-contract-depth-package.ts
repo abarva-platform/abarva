@@ -367,6 +367,14 @@ function numberValue(row: CsvRecord, key: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function totalCommittedValue(row: CsvRecord): number | null {
+  return (
+    numberValue(row, "total_committed_value_usd") ??
+    numberValue(row, "total_committed_usd") ??
+    numberValue(row, "committed_annual_spend_usd")
+  );
+}
+
 function requiredNumber(row: CsvRecord, key: string): number {
   const parsed = numberValue(row, key);
   if (parsed === null) throw new Error(`Missing numeric field ${key} on ${row.source_row_id ?? row.contract_id ?? row.opportunity_id}`);
@@ -725,7 +733,7 @@ async function upsertContracts(client: Client, args: Args, contracts: readonly C
         stringValue(contract, "renewal_notice_date"),
         boolValue(contract, "auto_renew"),
         numberValue(contract, "annual_value_usd"),
-        numberValue(contract, "committed_annual_spend_usd"),
+        totalCommittedValue(contract),
         stringValue(contract, "benchmarking_clause"),
         stringValue(contract, "termination_rights"),
         stringValue(contract, "business_owner"),
@@ -1546,7 +1554,7 @@ async function upsertOptimizationSpine(
         contractId,
         numberValue(contract, "annual_value_usd"),
         actualSpend,
-        numberValue(contract, "committed_annual_spend_usd"),
+        totalCommittedValue(contract),
         "Baseline uses 12 monthly spend observations from the package-backed Source adapter.",
         JSON.stringify(spend.map((row) => stringValue(row, "source_row_id"))),
         JSON.stringify({ synthetic_policy: "synthetic_demo_only_not_client_truth" }),

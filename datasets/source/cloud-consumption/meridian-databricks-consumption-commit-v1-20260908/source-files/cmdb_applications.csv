@@ -1,0 +1,5 @@
+tenant_key,application_ref,application_name,business_function,criticality,hosting_model,lifecycle_state
+meridian-health,MER-APP-CLAIMSDENIAL,Claims Denials Pattern Analysis (Pilot),Revenue Cycle Analytics,Tier 2,AWS,active
+meridian-health,MER-APP-LAAMSMIG,Legacy Analytics Migration Workload,Enterprise Data & Analytics,Tier 1,AWS,planned
+meridian-health,MER-APP-MEDEEXIT,MedeAnalytics Exit - Reporting Consolidation,Enterprise Data & Analytics,Tier 2,AWS,planned
+meridian-health,MER-APP-EPICINTEG,Epic Clarity/Caboodle Integration Layer,Clinical Platforms,Tier 1,AWS,planned

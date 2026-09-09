@@ -1,0 +1,5 @@
+native_tool,what_it_already_does,what_it_cannot_govern,nexus_role
+Databricks account console,"Shows workspace, metastore, entitlement and usage posture.","Does not govern renewal timing, AP payment state, or sourcing action.","Ingest as source evidence and reconcile with CLM, ERP/AP and CMDB."
+Databricks system tables,"Shows DBU consumption, warehouse/job use and workload signals.",Does not explain whether commitment sizing is commercially right.,Connects usage to contract economics and action workflow.
+AWS Marketplace,Can route private offers and align vendor spend to cloud commercial strategy.,Does not prove a contract right exists or a future private offer has been accepted.,"Flags routing as a sourced negotiation lever, not a realized value claim."
+AP invoice extract,Shows billed and paid amounts.,"Does not prove underuse, scope timing or finance-confirmed value.",Reconciles paid amount to usage and contract terms.

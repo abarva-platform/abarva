@@ -56,63 +56,77 @@ function fmtUsd(value: number | null | undefined): string {
 const VALUE_TYPE_LABEL: Record<OptimizationOpportunityValueType, string> = {
   recoverable_leakage: "Recoverable leakage",
   avoided_cost: "Avoided cost",
-  negotiable_improvement: "Negotiated improvement",
+  negotiated_improvement: "Negotiated improvement",
 };
 
 const CONTRACT_SOURCE_EVIDENCE_MAP = [
   {
     sourceSystem: "CLM / contract repository",
-    extracts: "Executed agreement, SOW, order forms, pricing schedules, renewal and termination clauses",
+    extracts:
+      "Executed agreement, SOW, order forms, pricing schedules, renewal and termination clauses",
     fields:
       "annual value, total committed value, end date, notice period, auto-renew flag, benchmark rights, exit rights",
     grain: "contract document, clause, order form, pricing schedule line",
-    history: "current executed terms plus amended versions/change orders when supplied",
-    updateFrequency: "on contract upload, amendment, order-form change, or renewal package update",
+    history:
+      "current executed terms plus amended versions/change orders when supplied",
+    updateFrequency:
+      "on contract upload, amendment, order-form change, or renewal package update",
   },
   {
     sourceSystem: "Procurement / S2P",
-    extracts: "POs, sourcing events, supplier responses, award summary, approved savings case",
+    extracts:
+      "POs, sourcing events, supplier responses, award summary, approved savings case",
     fields:
       "PO value, supplier offer, concession, award decision, negotiated improvement, approval status",
     grain: "event, supplier response, PO line, award item",
     history: "per sourcing event and per approved commercial change",
-    updateFrequency: "at intake, response receipt, BAFO, award, and approval gates",
+    updateFrequency:
+      "at intake, response receipt, BAFO, award, and approval gates",
   },
   {
     sourceSystem: "AP / ERP / financial subledger",
-    extracts: "Invoice lines, payments, PO match, GL coding, credits, disputes, taxes, pass-throughs",
+    extracts:
+      "Invoice lines, payments, PO match, GL coding, credits, disputes, taxes, pass-throughs",
     fields:
       "billed amount, contracted rate, quantity, PO coverage, exception amount, payment status, credit received",
     grain: "invoice line and payment transaction",
-    history: "monthly or full contract lookback period; 24 months is the preferred baseline for optimization",
+    history:
+      "monthly or full contract lookback period; 24 months is the preferred baseline for optimization",
     updateFrequency: "monthly close or AP extract refresh",
   },
   {
     sourceSystem: "ITSM / service management",
-    extracts: "SLA performance, incident severity, breach logs, service review packs, credit eligibility",
+    extracts:
+      "SLA performance, incident severity, breach logs, service review packs, credit eligibility",
     fields:
       "incident count, Sev1/Sev2 count, SLA target, actual performance, credit earned, credit claimed, credit received",
     grain: "service, severity, month, SLA obligation",
-    history: "monthly performance history; 24 months is the preferred baseline for recurring services",
+    history:
+      "monthly performance history; 24 months is the preferred baseline for recurring services",
     updateFrequency: "monthly service review or ITSM export refresh",
   },
   {
     sourceSystem: "Usage / entitlement / consumption platforms",
-    extracts: "Seats, active users, consumption, storage, workload, feature adoption, license assignment",
+    extracts:
+      "Seats, active users, consumption, storage, workload, feature adoption, license assignment",
     fields:
       "entitled quantity, assigned quantity, active usage, consumed units, shelfware, overage, workload owner",
     grain: "product, entitlement, account/workload, month",
-    history: "monthly entitlement and usage trend; 12-24 months depending on product lifecycle",
+    history:
+      "monthly entitlement and usage trend; 12-24 months depending on product lifecycle",
     updateFrequency: "monthly admin-console, SaaS, or cloud-consumption export",
   },
   {
     sourceSystem: "Finance / Tower confirmation",
-    extracts: "Approved value claim, finance confirmation request, realization ledger, periodized proof",
+    extracts:
+      "Approved value claim, finance confirmation request, realization ledger, periodized proof",
     fields:
       "approved realized value, claim state, confirmation owner, approval timestamp, period, Tower handoff reference",
     grain: "value claim, accounting period, confirmation request",
-    history: "periodized from approval forward; prior periods remain pending until approved",
-    updateFrequency: "on finance approval, monthly close, or Tower value-proof refresh",
+    history:
+      "periodized from approval forward; prior periods remain pending until approved",
+    updateFrequency:
+      "on finance approval, monthly close, or Tower value-proof refresh",
   },
 ] as const;
 
@@ -197,10 +211,9 @@ export async function buildAvaSourceContractGrounding(
   });
   const largestLedger = ledgerTotals
     .filter((row) => row.valueType !== "realized_value")
-    .reduce<(typeof ledgerTotals)[number] | null>(
-      (best, row) => (best == null || row.amountUsd > best.amountUsd ? row : best),
-      null,
-    );
+    .reduce<
+      (typeof ledgerTotals)[number] | null
+    >((best, row) => (best == null || row.amountUsd > best.amountUsd ? row : best), null);
 
   const opportunityLines = (opportunitySet?.opportunities ?? [])
     .slice(0, 8)
@@ -208,9 +221,13 @@ export async function buildAvaSourceContractGrounding(
       const trace = traceability.rows.find(
         (row) => row.opportunityId === opportunity.opportunityId,
       );
+      const detail = opportunity.negotiationDetail;
+      const negotiation = detail
+        ? ` · buyer ask: ${detail.buyerAsk ?? "not established"} · negotiation language: ${detail.negotiationLanguage ?? "not established"} · Databricks concession: ${detail.vendorConcession ?? "not established"} · timing: ${detail.timingDependency ?? "not established"} · owner: ${detail.ownerRole ?? opportunity.owner ?? "not established"} · priority: ${detail.priority ?? "not established"} · risk if ignored: ${detail.riskIfIgnored ?? "not established"}`
+        : "";
       return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${fmtUsd(
         opportunity.amountUsd,
-      )} · stage ${opportunity.stage} · ${trace?.label ?? "traceability not evaluated"}`;
+      )} · stage ${opportunity.stage} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
     });
 
   const lines: string[] = [
@@ -268,9 +285,7 @@ function buildLedgerTotals(input: {
   financeConfirmedUsd: number;
   valueProofClosed: boolean;
 }): readonly {
-  readonly valueType:
-    | OptimizationOpportunityValueType
-    | "realized_value";
+  readonly valueType: OptimizationOpportunityValueType | "realized_value";
   readonly label: string;
   readonly amountUsd: number;
 }[] {
@@ -286,9 +301,9 @@ function buildLedgerTotals(input: {
       amountUsd: input.tracedByValueType.avoided_cost ?? 0,
     },
     {
-      valueType: "negotiable_improvement",
-      label: VALUE_TYPE_LABEL.negotiable_improvement,
-      amountUsd: input.tracedByValueType.negotiable_improvement ?? 0,
+      valueType: "negotiated_improvement",
+      label: VALUE_TYPE_LABEL.negotiated_improvement,
+      amountUsd: input.tracedByValueType.negotiated_improvement ?? 0,
     },
     {
       valueType: "realized_value",

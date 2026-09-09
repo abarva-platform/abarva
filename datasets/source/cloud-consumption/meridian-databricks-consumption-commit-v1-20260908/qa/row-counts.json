@@ -1,0 +1,20 @@
+{
+  "cloud_contract_register": 1,
+  "cloud_accounts": 4,
+  "cmdb_applications": 4,
+  "cmdb_application_scope": 4,
+  "monthly_spend": 12,
+  "cloud_service_usage_monthly": 48,
+  "cloud_commitments": 2,
+  "cloud_commitment_coverage_monthly": 12,
+  "cloud_resource_inventory": 12,
+  "cloud_tag_quality": 12,
+  "cloud_ap_invoice_reconciliation": 12,
+  "contract_clauses": 8,
+  "optimization_opportunities": 4,
+  "evidence_manifest": 6,
+  "native_tool_comparison": 4,
+  "source_extraction_guide": 6,
+  "layer_cube_map": 8,
+  "reconciliation": 8
+}

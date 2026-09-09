@@ -1,0 +1,17 @@
+{
+  "dataset_id": "meridian-databricks-consumption-commit-v1-20260908",
+  "title": "Meridian Databricks Consumption Commit Demo Evidence Pack",
+  "client_key": "meridian-health",
+  "source_layer": "tenant_context",
+  "classification": "confidential",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "synthetic_demo_cloud_consumption_package",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free, planning-grade Databricks consumption commitment and contract evidence package. No patient, member, provider, claim-line, PHI, PII, real production records, real Databricks transactions, or real pricing exhibits are included. Raw/full Databricks contract documents and pricing exhibits remain outside the public repository in local restricted storage.",
+  "expected_object_count": 173,
+  "approved_by": "active-task-operator-approval",
+  "approved_at": "2026-09-08",
+  "notes": "Manifest gates the repo-staged source-file package at datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908. It authorizes only a controlled operator ACA data-build job with row-count reconciliation, quality-gate output, proof bundle, and live retrieval proof before Source, Tower, or aVa claims rely on the package. The 173-object count is 167 CSV source rows plus 6 synthetic evidence documents. Databricks is named as the real vendor in a fictional Meridian Health demo case; all economics, dates, clauses, documents, opportunities, and workbook values are synthetic and not finance-confirmed."
+}

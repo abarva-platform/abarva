@@ -1,0 +1,9 @@
+check,row_count,pass,plain_english_result
+Cloud contracts,1,PASS,"One Databricks contract has stable ID, owner, terms and annual/actual values."
+Monthly spend,12,PASS,Twelve AP-reconciled rows carry actual usage and commitment run-rate context.
+Service usage,48,PASS,Four service rows per month split the synthetic Databricks usage stream.
+Commitments,2,PASS,Annual platform commitment and support fee are separated.
+Coverage,12,PASS,Commitment coverage rows retain the underuse trend by month.
+AP reconciliation,12,PASS,"Billing export, invoice and paid amounts match in every synthetic month."
+Optimization opportunities,4,PASS,All opportunities remain candidate and not finance-confirmed.
+Synthetic evidence,6,PASS,Evidence manifest maps to six synthetic markdown documents.

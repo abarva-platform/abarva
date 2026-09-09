@@ -1,0 +1,6 @@
+restricted-source-documents/
+_restricted/
+raw-documents/
+*.pdf
+*.docx
+*.xlsx.tmp
