@@ -2148,10 +2148,13 @@ Writing and format requirements:
         "— NORMALIZED VENDOR RESPONSE CLARIFICATIONS —",
         formatNormalizedVendorResponsePackages(ctx),
         "",
-        "— UPLOADED Q&A / ADDENDUM EVIDENCE —",
+        "— CONTROLLING PARSED BIDDER Q&A EVIDENCE —",
+        formatResponseQaEvidence(ctx),
+        "",
+        "— OTHER UPLOADED Q&A / ADDENDUM EVIDENCE —",
         formatUploadedEvidence(ctx),
         "",
-        "Draft the Q&A Parity Log per the system prompt. If no vendor-question evidence is present, create the controlled log shell with explicit missing question/answer inputs and publication controls; do not invent vendor questions or authoritative answers.",
+        "Draft the Q&A Parity Log per the system prompt. When controlling parsed bidder Q&A evidence is present, reproduce those question IDs, questions, and authoritative answers faithfully; do not replace them with inferred questions from vendor exceptions. If no vendor-question evidence is present, create the controlled log shell with explicit missing question/answer inputs and publication controls; do not invent vendor questions or authoritative answers.",
       );
       return lines.join("\n");
     },
@@ -4630,6 +4633,32 @@ function formatUploadedEvidence(ctx: SourceGenerationContext): string {
       if (facts.length > 0) {
         lines.push("Structured fact summaries:");
         lines.push(...facts.map((fact) => `- ${fact}`));
+      }
+      return lines.join("\n");
+    })
+    .join("\n\n");
+}
+
+function formatResponseQaEvidence(ctx: SourceGenerationContext): string {
+  const evidence = (ctx.uploadedEvidence ?? []).filter((artifact) =>
+    /(?:bidder|vendor)[-_\s]*(?:qa|q&a)|(?:qa|q&a)[-_\s]*(?:log|clarification)|clarification[-_\s]*log/i.test(
+      artifact.originalName,
+    ),
+  );
+  if (evidence.length === 0) {
+    return "(no parsed bidder Q&A evidence available)";
+  }
+  return evidence
+    .map((artifact) => {
+      const lines = [
+        `### ${artifact.originalName}`,
+        `parse=${artifact.parseStatus}; evidence=${artifact.evidenceState}; stage=${artifact.stageKey}`,
+      ];
+      if (artifact.chunkExcerpts.length > 0) {
+        lines.push("Authoritative parsed content:");
+        lines.push(...artifact.chunkExcerpts.map((excerpt) => `- ${excerpt}`));
+      } else {
+        lines.push("(file is registered but no parsed content is available)");
       }
       return lines.join("\n");
     })

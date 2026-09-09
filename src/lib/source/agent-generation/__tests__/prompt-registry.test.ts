@@ -453,6 +453,36 @@ describe("Source artifact prompt registry provider config", () => {
     expect(d15?.systemPrompt).toContain("must not rank vendors on merit");
   });
 
+  it("binds parsed bidder Q&A as controlling evidence without inventing replacements", () => {
+    const d14 = getPromptTemplate("d14_qa_log");
+    const ctx = makeD09Context(["source-bidder-qa-log.txt"]);
+    ctx.uploadedEvidence = [
+      {
+        id: "qa-artifact",
+        originalName: "source-bidder-qa-log.txt",
+        artifactFamily: "meeting_notes",
+        sourceFormat: "txt",
+        parseStatus: "parsed",
+        evidenceState: "parsed_uncited",
+        stageKey: "responses",
+        chunkExcerpts: [
+          "QA-001 | Question: Is scope fixed? | Authoritative answer: The 48-application baseline controls.",
+          "QA-012 | Question: Is BAFO permitted? | Authoritative answer: Yes, under the issued rules.",
+        ],
+        factSummaries: [],
+      },
+    ];
+
+    const message = d14?.buildUserMessage(ctx, {
+      d09_rfp_pack: "# RFP\n\nIssued package.",
+    });
+
+    expect(message).toContain("CONTROLLING PARSED BIDDER Q&A EVIDENCE");
+    expect(message).toContain("QA-001");
+    expect(message).toContain("QA-012");
+    expect(message).toContain("do not replace them with inferred questions");
+  });
+
   it("blocks vendor response intake until the RFP and control pack exist", () => {
     const d13 = getPromptTemplate("d13_vendor_responses");
     const ctx = makeD09Context(["Vendor_A_Response.docx"]);
