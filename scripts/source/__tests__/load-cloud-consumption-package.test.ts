@@ -54,6 +54,8 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("source_cloud_consumption_package_layer23_verified");
     expect(loader).toContain("source_cloud_consumption_package_layer4_verified");
     expect(loader).toContain("consumption.sourcing_cloud_usage_monthly_v1");
+    expect(loader).toContain("'calculated_amount_usd'");
+    expect(loader).not.toContain("'candidate_amount_usd',$4");
   });
 
   it("plans the Databricks consumption package with signal-stage opportunity evidence states", () => {
