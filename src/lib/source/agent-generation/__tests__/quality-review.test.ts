@@ -237,6 +237,43 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(violations).toEqual([]);
   });
 
+  it("reconciles structured financial facts and avoids reading monthly as million", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: [
+        'fact: invoice/monthly_cost: {"base_run":540000,"governance":35000,"tooling":25000}',
+        "Loaded base invoice: $635,000.",
+      ].join("\n"),
+      body:
+        "Monthly cost includes $540,000 base run, $35,000 governance, $25,000 tooling, and a $635,000 monthly invoice.",
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it("reconciles month precision and equivalent month/year durations", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext:
+        "Invoice period 2025-08; notice deadline 2027-04-30; initial term 36 months.",
+      body:
+        "The invoice period is August 2025, the notice month is April 2027, and the initial term is three-year.",
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it("accepts an explicit refusal to invent a missing benchmark", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext: "No market benchmark dataset is loaded.",
+      body:
+        "No external market benchmark is available in the bound evidence, so no benchmark value is asserted.",
+    });
+
+    expect(violations).toEqual([]);
+  });
+
   it("forces evidence and source-discipline dimensions below the release bar", () => {
     const baseReview = {
       standardId: "partner-grade-consulting-deliverable-v1" as const,
