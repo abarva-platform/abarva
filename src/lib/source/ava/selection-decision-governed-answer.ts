@@ -185,8 +185,7 @@ function selectionRecords(
     (record) =>
       governedClientKeyForSourceClientKey(record.tenantKey) ===
         governedClientKey &&
-      (record.artifactKind === "d27_selection_memo" ||
-        record.artifactFamily === "selection_memo"),
+      record.artifactKind === "d27_selection_memo",
   );
 }
 
