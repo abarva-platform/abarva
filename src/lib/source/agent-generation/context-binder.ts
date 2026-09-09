@@ -452,9 +452,15 @@ async function listUploadedEvidenceForGeneration(
       .trim();
     if (!artifactId || !chunkText) continue;
     const list = chunksByArtifact.get(artifactId) ?? [];
-    const chunkLimit = responseQaArtifactIds.has(artifactId) ? 24 : 5;
+    const isResponseQaArtifact = responseQaArtifactIds.has(artifactId);
+    const chunkLimit = isResponseQaArtifact ? 24 : 5;
     if (list.length < chunkLimit) {
-      list.push(chunkText.slice(0, 900));
+      // The text parser emits chunks up to 1,800 characters. Controlled bidder
+      // Q&A records often contain two complete entries in one chunk, so the
+      // generic 900-character prompt excerpt can silently drop the second
+      // authoritative answer. Preserve the parser chunk for this evidence
+      // class while keeping the tighter cap for ordinary uploads.
+      list.push(isResponseQaArtifact ? chunkText : chunkText.slice(0, 900));
       chunksByArtifact.set(artifactId, list);
     }
   }
