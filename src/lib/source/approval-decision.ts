@@ -49,7 +49,11 @@ export const REQUIRED_APPROVAL_CONFIRMATIONS = [
 export type SourceStageConfirmations = Record<string, boolean | undefined>;
 
 /** Lifecycle state the event moves to as a result of the decision. */
-export type SourceApprovalToState = "active" | "archived" | "waiting_on_client";
+export type SourceApprovalToState =
+  | "active"
+  | "archived"
+  | "waiting_on_client"
+  | "completed";
 
 export interface SourceApprovalDecision {
   ok: boolean;
@@ -82,10 +86,9 @@ export interface SourceApprovalDecision {
  *                to the creator via the approval record), no stage change.
  * - approve    → requires EVERY confirmation the current stage's gate declares
  *                (defaults to the strategy P0 set when the caller does not pass
- *                `requiredConfirmationKeys`); on success moves to active and
- *                advances the event to the NEXT stage in `SOURCE_STAGE_ORDER`
- *                (or leaves the stage untouched when it is the final stage or is
- *                unknown/absent).
+ *                `requiredConfirmationKeys`); on success advances to the NEXT
+ *                journey stage and stays active, or moves to completed when the
+ *                caller positively identifies the current stage as terminal.
  *
  * `requiredConfirmationKeys` lets the route validate against the stage the event
  * actually sits on (e.g. the three Scope-gate boxes on Scope) rather than a
@@ -99,6 +102,8 @@ export function evaluateSourceApprovalDecision(
     currentStageKey?: string | null;
     requiredConfirmationKeys?: readonly string[];
     nextStageKey?: SourceStageKey | null;
+    /** True only when the caller resolved the current stage as the journey's final stage. */
+    isTerminalStage?: boolean;
   },
 ): SourceApprovalDecision {
   if (action !== "approve" && action !== "reject" && action !== "send_back") {
@@ -149,14 +154,16 @@ export function evaluateSourceApprovalDecision(
   }
 
   // Advance to the next stage resolved by the caller's journey. Fall back to the
-  // canonical RFP order when a caller has no motion context.
+  // canonical RFP order when a caller has no motion context. A missing successor
+  // is not enough to infer completion: only the journey-aware caller can assert
+  // that this is the terminal stage.
   const advanceStageTo =
     opts && "nextStageKey" in opts
       ? (opts.nextStageKey ?? null)
       : nextSourceStage(opts?.currentStageKey);
   return {
     ok: true,
-    toState: "active",
+    toState: opts?.isTerminalStage === true ? "completed" : "active",
     advanceStageTo,
     approvalAction: "admin_review",
   };
