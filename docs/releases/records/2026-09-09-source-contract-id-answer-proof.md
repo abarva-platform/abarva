@@ -28,8 +28,10 @@ Layer 4 - Products, `global-control-lane`: updates Source aVa answer shaping and
 
 - `src/lib/ava-answer/public-answer-scrub.ts`
 - `src/lib/ava-answer/render-layer-shaper.ts`
+- `src/lib/agent/product-truth/runtime-guard.ts`
 - `src/lib/intelligence/answer/answer-safety.ts`
 - `src/lib/source/ava/source-workspace-visual-answer.ts`
+- `src/lib/agent/product-truth/__tests__/runtime-guard.test.ts`
 - `src/lib/intelligence/answer/__tests__/answer-safety.test.ts`
 - `src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts`
 - `docs/releases/records/2026-09-09-source-contract-id-answer-proof.md`
@@ -39,6 +41,7 @@ Layer 4 - Products, `global-control-lane`: updates Source aVa answer shaping and
 Pass before merge:
 
 - `npm test -- --runTestsByPath src/lib/intelligence/answer/__tests__/answer-safety.test.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts src/lib/ava-answer/__tests__/render-layer-shaper.test.ts`
+- `npm test -- --runTestsByPath src/lib/agent/product-truth/__tests__/runtime-guard.test.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts src/lib/ava-answer/__tests__/render-layer-shaper.test.ts src/lib/intelligence/answer/__tests__/answer-safety.test.ts`
 - `npx eslint src/lib/ava-answer/public-answer-scrub.ts src/lib/ava-answer/render-layer-shaper.ts src/lib/intelligence/answer/answer-safety.ts src/lib/source/ava/source-workspace-visual-answer.ts src/lib/intelligence/answer/__tests__/answer-safety.test.ts src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts`
 - `npm run release:check`
 
