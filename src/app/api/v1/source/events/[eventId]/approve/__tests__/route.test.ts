@@ -311,4 +311,43 @@ describe("POST Source event approve", () => {
       expect.objectContaining({ stageKey: "rfp" }),
     );
   });
+
+  it("persists completed when approving the terminal Value stage", async () => {
+    eventRow.current_stage_key = "value";
+    eventRow.sourcing_motion = "competitive_rfp";
+
+    const request = new Request(
+      "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          action: "approve",
+          notes: "Sponsor confirms the final value gate is complete.",
+          confirmations: {
+            evidenceComplete: true,
+            exclusionsReviewed: true,
+            stageFinal: true,
+          },
+        }),
+      },
+    );
+
+    const response = await POST(request, {
+      params: Promise.resolve({ eventId: "event-1" }),
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toMatchObject({
+      newLifecycleState: "completed",
+      stageAdvancedTo: null,
+    });
+    expect(applyApproval).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toState: "completed",
+        stageKey: "value",
+      }),
+    );
+    expect(updateStage).not.toHaveBeenCalled();
+  });
 });

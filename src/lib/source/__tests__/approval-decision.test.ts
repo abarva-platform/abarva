@@ -67,13 +67,12 @@ describe("evaluateSourceApprovalDecision", () => {
 
     // Generic next-stage advance: every stage gate now advances the event to the
     // NEXT stage in SOURCE_STAGE_ORDER — no longer only strategy → scope.
-    it("advances to the next stage in the canonical order for every stage", () => {
+    it("advances to the next stage in the canonical order for every non-terminal stage", () => {
       const cases: Array<[string, string | null]> = [
         ["strategy", "scope"],
         ["scope", "rfp"],
         ["pricing", "bafo"],
         ["transition", "value"],
-        ["value", null], // final stage — no further advance
         ["not_a_stage", null], // unknown — leaves the stage untouched
       ];
       for (const [currentStageKey, expected] of cases) {
@@ -86,6 +85,31 @@ describe("evaluateSourceApprovalDecision", () => {
         expect(d.toState).toBe("active");
         expect(d.advanceStageTo).toBe(expected);
       }
+    });
+
+    it("completes a positively identified terminal stage without advancing", () => {
+      const d = evaluateSourceApprovalDecision("approve", ALL_CONFIRMED, {
+        currentStageKey: "value",
+        nextStageKey: null,
+        isTerminalStage: true,
+      });
+
+      expect(d).toMatchObject({
+        ok: true,
+        toState: "completed",
+        advanceStageTo: null,
+        approvalAction: "admin_review",
+      });
+    });
+
+    it("does not complete an unresolved stage merely because it cannot advance", () => {
+      const d = evaluateSourceApprovalDecision("approve", ALL_CONFIRMED, {
+        currentStageKey: "not_a_stage",
+        nextStageKey: null,
+      });
+
+      expect(d.toState).toBe("active");
+      expect(d.advanceStageTo).toBeNull();
     });
 
     it("normalizes a legacy stage key before advancing", () => {

@@ -9,8 +9,9 @@
 // against the CURRENT stage's gate keys, not a hardcoded strategy set.
 //
 // Actions:
-//   approve   → lifecycle_state 'active' (requires the current stage's
-//               confirmations); advances current_stage_key to the next stage.
+//   approve   → lifecycle_state 'active' while work remains, or 'completed'
+//               on the resolved journey's terminal stage; requires the current
+//               stage's confirmations and otherwise advances to the next stage.
 //   send_back → stays 'waiting_on_client'; the reviewer's comment is recorded
 //               so the creator can revise.
 //   reject    → lifecycle_state 'archived'.
@@ -166,6 +167,7 @@ export async function POST(
         effectiveCurrentStage ?? currentStageKey,
       ),
       nextStageKey: nextStage,
+      isTerminalStage: effectiveCurrentStage !== null && nextStage === null,
     },
   );
   if (!decision.ok) {
