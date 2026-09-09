@@ -622,6 +622,8 @@ describe("buildSourceEventShellView", () => {
     const view = buildSourceEventShellView({
       event: {
         ...EVENT,
+        status: "completed",
+        statusLabel: "Completed",
         currentStageKey: "value",
         currentStageLabel: "Value",
       },
@@ -644,6 +646,11 @@ describe("buildSourceEventShellView", () => {
     });
 
     expect(view.stage.approvalRecorded).toBe(true);
+    expect(view.journey.find((stage) => stage.key === "value")).toMatchObject({
+      current: true,
+      state: "complete",
+      approvalEvidenced: true,
+    });
     expect(view.stage.gateReadinessLine).toContain("approval is recorded");
     expect(view.stage.approvalCtaLabel).toBe("View Value approval record");
     expect(view.approvals.currentStageItem).toBeNull();

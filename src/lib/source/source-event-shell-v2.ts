@@ -385,8 +385,21 @@ export function buildSourceEventShellView(
     (stageKey, index) => {
       const viewed = stageKey === input.viewedStageKey;
       const current = stageKey === visibleCurrentStageKey;
+      const approvalEvidenced = hasApprovalLedger
+        ? approvedStageKeys.has(stageKey)
+        : null;
+      const completedCurrentStage =
+        input.event.status === "completed" &&
+        current &&
+        approvalEvidenced === true;
       const state: SourceShellJourneyStage["state"] =
-        index < currentStageIndex ? "past" : current ? "current" : "future";
+        completedCurrentStage
+          ? "complete"
+          : index < currentStageIndex
+            ? "past"
+            : current
+              ? "current"
+              : "future";
       const stageTotal = viewed && state !== "past" ? Math.max(total, 1) : 1;
       const stageDone = state === "past" ? stageTotal : viewed ? ready : 0;
       return {
@@ -398,9 +411,7 @@ export function buildSourceEventShellView(
         done: stageDone,
         total: stageTotal,
         state,
-        approvalEvidenced: hasApprovalLedger
-          ? approvedStageKeys.has(stageKey)
-          : null,
+        approvalEvidenced,
       };
     },
   );

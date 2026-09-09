@@ -943,17 +943,21 @@ function SourceShellRail({
                   display: "grid",
                   placeItems: "center",
                   background:
-                    stage.state === "past"
+                    stage.state === "past" || stage.state === "complete"
                       ? ANALYTICS.INK
                       : stage.current
                         ? ANALYTICS.BLUE
                         : ANALYTICS.CARD,
                   color:
-                    stage.state === "past" || stage.current
+                    stage.state === "past" ||
+                    stage.state === "complete" ||
+                    stage.current
                       ? "#fff"
                       : ANALYTICS.FAINT,
                   border:
-                    stage.state === "past" || stage.current
+                    stage.state === "past" ||
+                    stage.state === "complete" ||
+                    stage.current
                       ? "none"
                       : `1px solid ${ANALYTICS.LINE_STRONG}`,
                   fontFamily: ANALYTICS.MONO,
@@ -961,14 +965,18 @@ function SourceShellRail({
                   fontWeight: 800,
                 }}
               >
-                {stage.state === "past" && stage.approvalEvidenced !== false
+                {(stage.state === "past" || stage.state === "complete") &&
+                stage.approvalEvidenced !== false
                   ? "✓"
                   : String(stage.index).padStart(2, "0")}
               </span>
               <span
                 style={{
                   color:
-                    stage.viewed || stage.current || stage.state === "past"
+                    stage.viewed ||
+                    stage.current ||
+                    stage.state === "past" ||
+                    stage.state === "complete"
                       ? ANALYTICS.INK
                       : ANALYTICS.MUTED,
                   fontSize: 13,
