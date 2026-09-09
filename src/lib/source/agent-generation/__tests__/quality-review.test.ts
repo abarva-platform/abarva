@@ -188,6 +188,37 @@ describe("Source consulting-grade quality gate helpers", () => {
     expect(violations.some((item) => item.claim === "$7.85M")).toBe(false);
   });
 
+  it("rejects invented calendars, unsupported durations, comparisons, and internal ids", () => {
+    const violations = findDeterministicSourceClaimViolations({
+      artifactCode: "d01_strategy_memo",
+      sourceContext:
+        "The agreement expires 14 July 2027 and carries a 120-day notice requirement.",
+      body: [
+        "The agreement expires 14 July 2027 and carries a 120-day notice requirement.",
+        "A four to six months sourcing event means the RFP must issue by Q3 2025.",
+        "A 90-day drafting period is required.",
+        "It is uncommon to have parsed exhibits at an equivalent stage.",
+        "See artifact fab64527 for support.",
+      ].join(" "),
+    });
+
+    expect(violations.some((item) => item.claim === "four to six months")).toBe(
+      true,
+    );
+    expect(violations.some((item) => item.claim === "Q3 2025")).toBe(true);
+    expect(violations.some((item) => item.claim === "90-day")).toBe(true);
+    expect(violations.some((item) => /uncommon to have/i.test(item.claim))).toBe(
+      true,
+    );
+    expect(violations.some((item) => item.claim === "artifact fab64527")).toBe(
+      true,
+    );
+    expect(violations.some((item) => item.claim === "14 July 2027")).toBe(
+      false,
+    );
+    expect(violations.some((item) => item.claim === "120-day")).toBe(false);
+  });
+
   it("forces evidence and source-discipline dimensions below the release bar", () => {
     const baseReview = {
       standardId: "partner-grade-consulting-deliverable-v1" as const,
