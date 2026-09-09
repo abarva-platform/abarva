@@ -146,6 +146,9 @@ export interface VendorExtractionCard {
   evidenceReference: string | null;
   confidence: "high" | "medium" | "low";
   structuredExhibitStatus: "supported" | "partial" | "missing";
+  requirementLevel?: "Mandatory" | "Scored" | "Informational";
+  sourceCategory?: string;
+  evaluationCriterionId?: string | null;
   missingFields: string[];
   finding: string;
   recommendedAction: string;
@@ -365,6 +368,7 @@ export interface VendorEvaluationScoreImpact {
   currentScore: number;
   potentialScore: number;
   scoreDelta: number;
+  scoreStatus: "modeled" | "held_pending_condition";
   bafoCure: string;
   requiredEvidence: string;
   decisionImpact: string;

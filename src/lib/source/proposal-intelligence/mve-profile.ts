@@ -1145,7 +1145,7 @@ export function buildVendorEvaluationDecisionView(
 ): VendorEvaluationDecisionView | null {
   if (!profileSet?.profiles.length) return null;
   const profiles = profileSet.profiles;
-  const scorecardRows = buildEvaluationScorecardRows(profiles);
+  const scorecardRows = buildEvaluationScorecardRows(profiles, intelligence);
   const vendorSummaries = buildEvaluationVendorSummaries({
     profiles,
     scorecardRows,
@@ -1454,6 +1454,7 @@ const CRITERION_EVIDENCE: Record<string, CriterionEvidenceSpec> = {
 
 function buildEvaluationScorecardRows(
   profiles: VendorResponseProfile[],
+  intelligence?: VendorChallengeIntelligence | null,
 ): VendorEvaluationScorecardRow[] {
   const criteria: Array<{
     id: string;
@@ -1542,7 +1543,19 @@ function buildEvaluationScorecardRows(
       guidance: criterion.guidance,
       scores: profiles.map((profile) => {
         const derived = scoreCriterionFromEvidence(profile, spec, peerCosts);
-        const readiness = scoreReadinessFromEvidence(derived);
+        const mustResolve = mustResolveChallengesForCriterion(
+          intelligence,
+          profile.vendorId,
+          criterion.id,
+        );
+        const readiness =
+          mustResolve.length > 0
+            ? {
+                eligibility: "clarification_required" as const,
+                label: "Must-resolve issue open",
+                action: mustResolve[0].clarificationQuestion,
+              }
+            : scoreReadinessFromEvidence(derived);
         return {
           vendorId: profile.vendorId,
           vendorName: profile.vendorName,
@@ -1550,7 +1563,10 @@ function buildEvaluationScorecardRows(
           weightedContribution: derived.scorable
             ? weightedContribution(derived.score, criterion.weight)
             : 0,
-          rationale: derived.rationale,
+          rationale:
+            mustResolve.length > 0
+              ? `${derived.rationale} Provisional: ${mustResolve.length} must-resolve issue(s) remain for this criterion.`
+              : derived.rationale,
           evidenceLabel:
             derived.evidenceLabel ??
             (derived.scorable
@@ -1564,6 +1580,34 @@ function buildEvaluationScorecardRows(
       }),
     };
   });
+}
+
+const CRITERIA_BY_CHALLENGE: Record<VendorChallengeIssueCategory, string[]> = {
+  unsupported_claim: ["evidence-completeness"],
+  pricing_gap: ["commercial-value", "pricing-transparency"],
+  productivity_gap: ["automation-credibility", "commercial-value"],
+  sla_gap: ["service-sla-strength", "risk-exceptions"],
+  staffing_coverage_gap: ["staffing-delivery", "scope-fit"],
+  transition_gap: ["transition-readiness"],
+  assumption_exclusion_risk: ["risk-exceptions", "pricing-transparency"],
+  commercial_exception: ["risk-exceptions", "commercial-value"],
+  scope_coverage_gap: ["scope-fit"],
+  evidence_missing: ["evidence-completeness"],
+};
+
+function mustResolveChallengesForCriterion(
+  intelligence: VendorChallengeIntelligence | null | undefined,
+  vendorId: string,
+  criterionId: string,
+): VendorChallengeLogEntry[] {
+  return (
+    intelligence?.challengeLog.filter(
+      (challenge) =>
+        challenge.vendorId === vendorId &&
+        challenge.severity === "high" &&
+        CRITERIA_BY_CHALLENGE[challenge.issueCategory].includes(criterionId),
+    ) ?? []
+  );
 }
 
 function scoreReadinessFromEvidence(
@@ -1633,7 +1677,23 @@ function buildEvaluationVendorSummaries(args: {
 
   return totals.map(
     ({ profile, weightedScore, openChallenges, bafoInstruction }) => {
-      const recommendation = recommendationForVendor(profile);
+      const highChallengeQuestions = openChallenges
+        .filter((challenge) => challenge.severity === "high")
+        .map((challenge) => challenge.clarificationQuestion);
+      const conditions = Array.from(
+        new Set(
+          highChallengeQuestions.length > 0
+            ? highChallengeQuestions
+            : (bafoInstruction?.mustResolveBeforeScoring ?? []),
+        ),
+      );
+      const hasMustResolve =
+        (bafoInstruction?.mustResolveBeforeScoring.length ?? 0) > 0 ||
+        openChallenges.some((challenge) => challenge.severity === "high");
+      const recommendation = recommendationForVendor(profile, {
+        hasMustResolve,
+        hasConditions: conditions.length > 0,
+      });
       return {
         vendorId: profile.vendorId,
         vendorName: profile.vendorName,
@@ -1641,15 +1701,14 @@ function buildEvaluationVendorSummaries(args: {
         weightedScore,
         readiness: profile.readyForEvaluation,
         recommendation,
-        decisionRationale: decisionRationale(profile, weightedScore),
+        decisionRationale: decisionRationale(
+          profile,
+          weightedScore,
+          conditions.length,
+        ),
         tradeoffs: tradeoffsForVendor(profile),
-        conditions: [
-          ...(bafoInstruction?.mustResolveBeforeScoring ?? []),
-          ...openChallenges
-            .filter((challenge) => challenge.severity === "high")
-            .map((challenge) => challenge.clarificationQuestion),
-        ].slice(0, 4),
-        finalistPosture: finalistPostureForVendor(profile),
+        conditions,
+        finalistPosture: finalistPostureForVendor(recommendation),
       };
     },
   );
@@ -1678,11 +1737,17 @@ function weightedVendorScore(
 
 function recommendationForVendor(
   profile: VendorResponseProfile,
+  conditionState: { hasMustResolve: boolean; hasConditions: boolean } = {
+    hasMustResolve: false,
+    hasConditions: false,
+  },
 ): VendorEvaluationRecommendation {
   // Derived from the vendor's own parsed readiness and unresolved claims, not
   // from which vendor they are.
+  if (conditionState.hasMustResolve) return "hold_until_clarified";
   if (profile.readyForEvaluation === "no") return "hold_until_clarified";
   if (profile.unsupportedClaims.length > 2) return "hold_until_clarified";
+  if (conditionState.hasConditions) return "advance_with_conditions";
   if (
     profile.readyForEvaluation === "yes" &&
     profile.unsupportedClaims.length === 0
@@ -1695,6 +1760,7 @@ function recommendationForVendor(
 function decisionRationale(
   profile: VendorResponseProfile,
   score: number,
+  mustResolveCount = 0,
 ): string {
   const openClaims = profile.unsupportedClaims.length;
   const partialExhibits = profile.exhibits.filter(
@@ -1706,6 +1772,9 @@ function decisionRationale(
     .filter((exhibit) => exhibit.status === "complete")
     .map((exhibit) => exhibit.label);
   const gaps = [
+    mustResolveCount > 0
+      ? `${mustResolveCount} must-resolve scoring condition(s)`
+      : null,
     openClaims > 0 ? `${openClaims} unsupported claim(s)` : null,
     partialExhibits > 0 ? `${partialExhibits} exhibit(s) not complete` : null,
     missingSections > 0 ? `${missingSections} missing section(s)` : null,
@@ -1723,8 +1792,9 @@ function decisionRationale(
   return `Weighted ${score.toFixed(1)}/10 across evidenced criteria. ${strengthText}${gapText}`;
 }
 
-function finalistPostureForVendor(profile: VendorResponseProfile): string {
-  const recommendation = recommendationForVendor(profile);
+function finalistPostureForVendor(
+  recommendation: VendorEvaluationRecommendation,
+): string {
   if (recommendation === "hold_until_clarified") {
     return "Hold from preferred-finalist status until the named evidence gaps are closed at BAFO.";
   }
@@ -1830,7 +1900,10 @@ function buildScoreImprovementScenarios(
     const profile = profiles.find(
       (candidate) => candidate.vendorId === summary.vendorId,
     );
-    const potentialScore = weightedVendorScore(summary.vendorId, curedRows);
+    const modeledPotentialScore = weightedVendorScore(
+      summary.vendorId,
+      curedRows,
+    );
 
     const gapCards =
       profile?.extractionCards.filter(
@@ -1842,8 +1915,13 @@ function buildScoreImprovementScenarios(
       profile?.exhibits.filter((exhibit) => exhibit.status !== "complete") ??
       [];
 
-    const bafoCure =
-      gapCards.length > 0
+    const conditionHeld = summary.conditions.length > 0;
+    const potentialScore = conditionHeld
+      ? summary.weightedScore
+      : modeledPotentialScore;
+    const bafoCure = conditionHeld
+      ? summary.conditions.slice(0, 3).join(" ")
+      : gapCards.length > 0
         ? gapCards
             .map((card) => card.recommendedAction)
             .filter(Boolean)
@@ -1851,25 +1929,28 @@ function buildScoreImprovementScenarios(
             .join(" ")
         : "No parsed gaps remain for this vendor.";
 
-    const requiredEvidence =
-      [
-        ...gapCards.flatMap((card) => card.missingFields),
-        ...openExhibits.map(
-          (exhibit) => `${exhibit.label} (${exhibit.status})`,
-        ),
-      ]
-        .slice(0, 4)
-        .join("; ") || "No further evidence required.";
+    const requiredEvidence = conditionHeld
+      ? "Vendor clarification response plus a cited revised exhibit or commercial exception disposition for every open condition."
+      : [
+          ...gapCards.flatMap((card) => card.missingFields),
+          ...openExhibits.map(
+            (exhibit) => `${exhibit.label} (${exhibit.status})`,
+          ),
+        ]
+          .slice(0, 4)
+          .join("; ") || "No further evidence required.";
 
     const delta =
       Math.round((potentialScore - summary.weightedScore) * 10) / 10;
-    const decisionImpact =
-      delta > 0
+    const decisionImpact = conditionHeld
+      ? `The ${summary.weightedScore.toFixed(1)} score remains provisional. Close ${summary.conditions.length} must-resolve condition(s) before ranking or advancement; no numeric uplift is claimed in advance of that evidence.`
+      : delta > 0
         ? `Closing the named gaps moves the weighted score from ${summary.weightedScore.toFixed(1)} to ${potentialScore.toFixed(1)} (+${delta.toFixed(1)}).`
         : "Closing the named gaps does not change the weighted score; the position is already evidenced.";
 
     return scoreImpact(summary, {
       potentialScore,
+      scoreStatus: conditionHeld ? "held_pending_condition" : "modeled",
       bafoCure,
       requiredEvidence,
       decisionImpact,
@@ -1904,6 +1985,7 @@ function scoreImpact(
   summary: VendorEvaluationVendorSummary,
   input: {
     potentialScore: number;
+    scoreStatus: VendorEvaluationScoreImpact["scoreStatus"];
     bafoCure: string;
     requiredEvidence: string;
     decisionImpact: string;
@@ -1917,6 +1999,7 @@ function scoreImpact(
     currentScore,
     potentialScore,
     scoreDelta: Math.round((potentialScore - currentScore) * 10) / 10,
+    scoreStatus: input.scoreStatus,
     bafoCure: input.bafoCure,
     requiredEvidence: input.requiredEvidence,
     decisionImpact: input.decisionImpact,
@@ -2065,6 +2148,7 @@ function requiredResponseFormatForLever(
 
 function shouldChallengeCard(card: VendorExtractionCard): boolean {
   return (
+    card.type === "exception" ||
     card.structuredExhibitStatus !== "supported" ||
     card.missingFields.length > 0 ||
     /not fully|not backed|not staffed|weak|front-loaded|optional|exclusion|risk|slower|not comparable|commercial/i.test(
@@ -2105,7 +2189,21 @@ function issueCategoryForCard(
   if (card.type === "staffing") return "staffing_coverage_gap";
   if (card.type === "transition") return "transition_gap";
   if (card.type === "assumption") return "assumption_exclusion_risk";
-  if (card.type === "exception") return "commercial_exception";
+  if (card.type === "exception") {
+    if (card.sourceCategory === "SLA and performance") return "sla_gap";
+    if (card.sourceCategory === "staffing and location") {
+      return "staffing_coverage_gap";
+    }
+    if (card.sourceCategory === "transition") return "transition_gap";
+    if (card.sourceCategory === "automation and productivity") {
+      return "productivity_gap";
+    }
+    if (card.sourceCategory === "service scope") return "scope_coverage_gap";
+    if (card.sourceCategory === "commercial and pricing") {
+      return "pricing_gap";
+    }
+    return "commercial_exception";
+  }
   if (card.type === "claim") return "unsupported_claim";
   return card.structuredExhibitStatus === "missing"
     ? "evidence_missing"
@@ -2116,6 +2214,12 @@ function severityForCard(
   card: VendorExtractionCard,
   profile: VendorResponseProfile,
 ): VendorChallengeLogEntry["severity"] {
+  if (card.type === "exception" && card.requirementLevel === "Mandatory") {
+    return "high";
+  }
+  if (card.type === "exception" && card.requirementLevel === "Scored") {
+    return "medium";
+  }
   if (
     card.structuredExhibitStatus === "missing" ||
     profile.readyForEvaluation === "no" ||

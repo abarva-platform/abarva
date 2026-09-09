@@ -34,6 +34,7 @@ import {
 import type {
   EvaluationCriterion,
   ProposalNormalizationRow,
+  VendorChallengeIntelligence,
   VendorScore,
 } from "../types";
 
@@ -477,7 +478,8 @@ describe("vendor response parser contract", () => {
       accountName: "Demo account",
     });
     const fullReports = buildVendorResponseParseReportsFromProfiles(profileSet);
-    const compactReports = compactVendorResponseParseReportsForRoute(fullReports);
+    const compactReports =
+      compactVendorResponseParseReportsForRoute(fullReports);
 
     expect(Buffer.byteLength(JSON.stringify(compactReports))).toBeLessThan(
       Buffer.byteLength(JSON.stringify(fullReports)) * 0.75,
@@ -495,10 +497,7 @@ describe("vendor response parser contract", () => {
 
     const scorecard = buildSourceFirstPassScorecard(compactReports);
     const optimizer = buildSourceBafoLeverageOptimizer(compactReports);
-    const decisionPack = buildSourceExecutiveDecisionPack(
-      scorecard,
-      optimizer,
-    );
+    const decisionPack = buildSourceExecutiveDecisionPack(scorecard, optimizer);
     const valuePlan = buildSourceValueRealizationProofPlan(optimizer);
 
     expect(scorecard.totalVendorCount).toBe(fullReports.length);
@@ -840,6 +839,41 @@ describe("vendor challenge log and commercial leverage seeds", () => {
   it("does not create challenge intelligence without a profile set", () => {
     expect(buildVendorChallengeIntelligence(null)).toBeNull();
   });
+
+  it("treats a cited response exception as a scoring challenge", () => {
+    const profile = {
+      ...set.profiles[0],
+      readyForEvaluation: "yes" as const,
+      extractionCards: [
+        {
+          ...set.profiles[0].extractionCards[0],
+          cardId: "supported-sla-exception",
+          type: "exception" as const,
+          title: "REQ-001 · SLA and performance",
+          finding:
+            "Exception: vendor requests a departure from the requirement.",
+          recommendedAction: "Resolve before final scoring.",
+          structuredExhibitStatus: "supported" as const,
+          requirementLevel: "Mandatory" as const,
+          sourceCategory: "SLA and performance",
+          missingFields: [],
+        },
+      ],
+    };
+    const challenge = buildVendorChallengeIntelligence({
+      ...set,
+      profiles: [profile],
+      profileCount: 1,
+    })?.challengeLog[0];
+
+    expect(challenge).toEqual(
+      expect.objectContaining({
+        issueCategory: "sla_gap",
+        severity: "high",
+        evidenceLabel: expect.any(String),
+      }),
+    );
+  });
 });
 
 describe("vendor BAFO instruction pack", () => {
@@ -939,11 +973,15 @@ describe("vendor evaluation decision view", () => {
     expect(view.scoringTransparency.join(" ")).toMatch(/weights total 100/i);
     expect(view.finalistRecommendation).toMatch(/Vendor A|Vendor C|Vendor B/);
     expect(view.scoreImprovementScenarios).toHaveLength(3);
-    expect(
-      view.scoreImprovementScenarios.find((scenario) =>
-        scenario.vendorName.includes("Vendor B"),
-      )?.potentialScore,
-    ).toBeGreaterThan(7);
+    const vendorBScenario = view.scoreImprovementScenarios.find((scenario) =>
+      scenario.vendorName.includes("Vendor B"),
+    );
+    expect(vendorBScenario).toEqual(
+      expect.objectContaining({
+        scoreStatus: "held_pending_condition",
+        scoreDelta: 0,
+      }),
+    );
     // The leader is whichever vendor the evidence ranks first, not a fixed
     // vendor. Assert the invariant so the scorecard can never be tuned to a
     // predetermined winner.
@@ -1008,5 +1046,79 @@ describe("vendor evaluation decision view", () => {
     expect(vendorB.finalistPosture).toMatch(/hold/i);
     expect(vendorB.conditions.join(" ")).toMatch(/coverage|staffing|retained/i);
     expect(vendorC.tradeoffs.join(" ")).toMatch(/SLA|scope|transition/i);
+  });
+
+  it("holds complete packages when a must-resolve commercial issue remains", () => {
+    const profile = {
+      ...set.profiles[0],
+      readyForEvaluation: "yes" as const,
+      unsupportedClaims: [],
+      exhibits: set.profiles[0].exhibits.map((exhibit) => ({
+        ...exhibit,
+        status: "complete" as const,
+      })),
+      extractionCards: set.profiles[0].extractionCards.map((card) => ({
+        ...card,
+        structuredExhibitStatus: "supported" as const,
+        missingFields: [],
+      })),
+    };
+    const completeSet = { ...set, profiles: [profile], profileCount: 1 };
+    const mustResolve: VendorChallengeIntelligence = {
+      sourceEventId: set.sourceEventId,
+      tenantKey: set.tenantKey,
+      generatedAt: set.generatedAt,
+      challengeCount: 1,
+      leverageSeedCount: 0,
+      leverageSeeds: [],
+      challengeLog: [
+        {
+          challengeId: "challenge-commercial-exception",
+          vendorId: profile.vendorId,
+          vendorName: profile.vendorName,
+          issueCategory: "commercial_exception",
+          finding: "A material liability exception remains open.",
+          evidenceLabel: "Commercial exceptions exhibit",
+          severity: "high",
+          whyItMatters: "The exception changes the buyer risk position.",
+          clarificationQuestion:
+            "Remove, price, or obtain buyer acceptance for the exception.",
+          scoringImplication:
+            "Do not score risk and commercial value as final until resolved.",
+          readyForEvaluation: "conditional",
+        },
+      ],
+    };
+    const view = buildVendorEvaluationDecisionView(
+      completeSet,
+      mustResolve,
+      null,
+    )!;
+
+    expect(view.vendorSummaries[0].recommendation).toBe("hold_until_clarified");
+    expect(view.vendorSummaries[0].decisionRationale).toMatch(
+      /must-resolve scoring condition/i,
+    );
+    expect(
+      view.scorecardRows.find((row) => row.criterionId === "risk-exceptions")
+        ?.scores[0].scoreEligibility,
+    ).toBe("clarification_required");
+    expect(
+      view.scorecardRows.find((row) => row.criterionId === "commercial-value")
+        ?.scores[0].scoreReadinessLabel,
+    ).toBe("Must-resolve issue open");
+    expect(view.recommendedAdvanceVendorIds).toEqual([]);
+    expect(view.scoreImprovementScenarios[0]).toEqual(
+      expect.objectContaining({
+        scoreStatus: "held_pending_condition",
+        scoreDelta: 0,
+      }),
+    );
+    expect(view.scoreImprovementScenarios[0].decisionImpact).toMatch(
+      /remains provisional|no numeric uplift is claimed/i,
+    );
+    expect(JSON.stringify(view.scoreImprovementScenarios[0])).not.toMatch(
+      /No parsed gaps remain|No further evidence required|position is already evidenced/i,
+    );
   });
 });
