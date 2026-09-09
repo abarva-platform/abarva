@@ -1,0 +1,40 @@
+{
+  "dataset_version": "meridian-databricks-consumption-commit-v1-20260908",
+  "tenant_key": "meridian-health",
+  "generated_at": "2026-09-08T00:00:00.000Z",
+  "workbook": "Meridian_Databricks_Consumption_Commit_Intake_Workbook_v1.xlsx",
+  "preview": "qa/workbook-summary-preview.png",
+  "workbook_preview_sheets": [
+    "Summary",
+    "Coverage",
+    "Opportunities",
+    "Levers",
+    "Sources",
+    "Checks"
+  ],
+  "source_directory": "source-files",
+  "document_directory": "synthetic-evidence-documents",
+  "qa_directory": "qa",
+  "synthetic_policy": "synthetic_demo_only_not_client_truth",
+  "row_counts": {
+    "cloud_contract_register": 1,
+    "cloud_accounts": 4,
+    "cmdb_applications": 4,
+    "cmdb_application_scope": 4,
+    "monthly_spend": 12,
+    "cloud_service_usage_monthly": 48,
+    "cloud_commitments": 2,
+    "cloud_commitment_coverage_monthly": 12,
+    "cloud_resource_inventory": 12,
+    "cloud_tag_quality": 12,
+    "cloud_ap_invoice_reconciliation": 12,
+    "contract_clauses": 8,
+    "optimization_opportunities": 4,
+    "evidence_manifest": 6,
+    "native_tool_comparison": 4,
+    "source_extraction_guide": 6,
+    "layer_cube_map": 8,
+    "reconciliation": 8
+  },
+  "workbook_sha256": "bcaf6d5d89850942e1f546f0028a7ce68da3003a8d56eebc7cf6f34da6b73c0a"
+}

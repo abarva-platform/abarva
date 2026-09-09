@@ -374,7 +374,17 @@ describe("getContractOptimizationOpportunitySet", () => {
               approval_state: "requires_strategy_approval",
               narrative:
                 "The target position is ready for approval before outreach.",
-              payload: { label: "Negotiated improvement" },
+              payload: {
+                label: "Negotiated improvement",
+                buyer_ask: "Reset the commitment ramp.",
+                negotiation_language:
+                  "Tie commitment step-up to production workload gates.",
+                vendor_concession: "Accept milestone-based consumption growth.",
+                timing_dependency: "Before renewal lock-in.",
+                owner_role: "Strategic sourcing",
+                priority: "P0",
+                risk_if_ignored: "Shelfware commitment persists.",
+              },
             },
           ];
         } else if (sql.includes("FROM source.optimization_baseline")) {
@@ -444,7 +454,7 @@ describe("getContractOptimizationOpportunitySet", () => {
               opportunity_id: "CTR-090:negotiated-improvement",
               contract_id: "CTR-090",
               vendor_id: "salesforce",
-              value_type: "negotiable_improvement",
+              value_type: "negotiated_improvement",
               stage: "target_position",
               amount_usd: 1_300_000,
               amount_state: "exact",
@@ -456,7 +466,17 @@ describe("getContractOptimizationOpportunitySet", () => {
               approval_state: "requires_strategy_approval",
               narrative:
                 "The target position is ready for approval before outreach.",
-              payload: { label: "Negotiated improvement" },
+              payload: {
+                label: "Negotiated improvement",
+                buyer_ask: "Reset the commitment ramp.",
+                negotiation_language:
+                  "Tie commitment step-up to production workload gates.",
+                vendor_concession: "Accept milestone-based consumption growth.",
+                timing_dependency: "Before renewal lock-in.",
+                owner_role: "Strategic sourcing",
+                priority: "P0",
+                risk_if_ignored: "Shelfware commitment persists.",
+              },
             },
             {
               tenant_key: "skyharbor_global",
@@ -535,5 +555,20 @@ describe("getContractOptimizationOpportunitySet", () => {
     );
 
     expect(set?.selectedOpportunityId).toBe("CTR-090:rate-variance");
+    expect(
+      set?.opportunities.find(
+        (opportunity) =>
+          opportunity.opportunityId === "CTR-090:negotiated-improvement",
+      )?.negotiationDetail,
+    ).toMatchObject({
+      buyerAsk: "Reset the commitment ramp.",
+      negotiationLanguage:
+        "Tie commitment step-up to production workload gates.",
+      vendorConcession: "Accept milestone-based consumption growth.",
+      timingDependency: "Before renewal lock-in.",
+      ownerRole: "Strategic sourcing",
+      priority: "P0",
+      riskIfIgnored: "Shelfware commitment persists.",
+    });
   });
 });

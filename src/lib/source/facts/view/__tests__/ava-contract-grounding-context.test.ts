@@ -101,9 +101,9 @@ describe("buildAvaSourceContractGrounding", () => {
       block: "",
       hasLiveNumbers: false,
     });
-    expect(await buildAvaSourceContractGrounding("skyharbor-air", "  ")).toEqual(
-      { block: "", hasLiveNumbers: false },
-    );
+    expect(
+      await buildAvaSourceContractGrounding("skyharbor-air", "  "),
+    ).toEqual({ block: "", hasLiveNumbers: false });
   });
 
   it("returns nothing for an unknown contract rather than guessing", async () => {
@@ -151,7 +151,9 @@ describe("buildAvaSourceContractGrounding", () => {
     );
     expect(block).toContain('Exact vendor display name: "Salesforce"');
     expect(block).toContain("Annual value: $43.5M");
-    expect(block).toContain("Contract-grain grounding IS available for CTR-090");
+    expect(block).toContain(
+      "Contract-grain grounding IS available for CTR-090",
+    );
   });
 
   it("grounds the contract with baseline, readiness, and traceability", async () => {
@@ -180,7 +182,9 @@ describe("buildAvaSourceContractGrounding", () => {
       "CTR-090",
     );
 
-    expect(block).toContain("Source-system evidence map for this contract view");
+    expect(block).toContain(
+      "Source-system evidence map for this contract view",
+    );
     expect(block).toContain("CLM / contract repository");
     expect(block).toContain("AP / ERP / financial subledger");
     expect(block).toContain("ITSM / service management");
@@ -260,8 +264,18 @@ describe("buildAvaSourceContractGrounding", () => {
           opportunity({
             opportunityId: "CTR-090:negotiated",
             shortLabel: "Price and term improvement",
-            valueType: "negotiable_improvement",
+            valueType: "negotiated_improvement",
             amountUsd: 1_300_000,
+            negotiationDetail: {
+              buyerAsk: "Reset the Year 2 commitment ramp.",
+              negotiationLanguage:
+                "Tie commitment step-up to production workload gates.",
+              vendorConcession: "Accept milestone-based consumption growth.",
+              timingDependency: "Before renewal lock-in.",
+              ownerRole: "Strategic sourcing",
+              priority: "P0",
+              riskIfIgnored: "Shelfware commitment persists.",
+            },
             calculation: {
               ruleId: "terms",
               ruleVersion: "1",
@@ -295,6 +309,10 @@ describe("buildAvaSourceContractGrounding", () => {
     );
     expect(block).toContain(
       "Largest reproducible non-realized ledger for chart narration: Recoverable leakage at $3.1M.",
+    );
+    expect(block).toContain("buyer ask: Reset the Year 2 commitment ramp.");
+    expect(block).toContain(
+      "negotiation language: Tie commitment step-up to production workload gates.",
     );
     expect(block).toContain(
       "If the user asks for a chart, graph, or table, use the chart-safe ledger totals above",
@@ -336,7 +354,9 @@ describe("buildAvaSourceContractGrounding", () => {
       "skyharbor-air",
       "CTR-090",
     );
-    expect(block).toContain("Contract-grain grounding IS available for CTR-090");
+    expect(block).toContain(
+      "Contract-grain grounding IS available for CTR-090",
+    );
     expect(block).toContain("do NOT deflect them to Contract 360");
   });
 
@@ -421,8 +441,6 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain("Approved realized value: $0 until");
     expect(block).toContain("Approved realized value $0");
     expect(block).not.toContain("Finance-confirmed realized value: $940K");
-    expect(block).toContain(
-      "do not say Finance has confirmed",
-    );
+    expect(block).toContain("do not say Finance has confirmed");
   });
 });

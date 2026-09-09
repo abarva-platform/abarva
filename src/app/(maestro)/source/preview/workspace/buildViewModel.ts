@@ -2116,27 +2116,26 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         ...(selectedScopeTiers.explicit ?? []),
         ...(selectedScopeTiers.reviewed ?? []),
         ...(selectedScopeTiers.vendorInferred ?? []),
-      ]
-        .map((a) => ({
-          cells: [
-            vm.cell(a.application_name, { weight: 600, wrap: true }),
-            vm.cell(a.business_function ?? "Not established", {
-              color: "#5f5e5a",
-            }),
-            vm.cell(a.criticality ?? "Not established", { align: "center" }),
-            vm.cell(a.lifecycle_state ?? "Not established", {
-              color: "#5f5e5a",
-            }),
-            vm.cell(a.hosting_model ?? "Not established", { color: "#5f5e5a" }),
-            vm.cell(
-              a.annual_run_cost != null
-                ? money(a.annual_run_cost)
-                : "Not established",
-              { align: "right", mono: true },
-            ),
-            vm.cell(a.modernization_plan ?? "Not established", {}),
-          ],
-        }))
+      ].map((a) => ({
+        cells: [
+          vm.cell(a.application_name, { weight: 600, wrap: true }),
+          vm.cell(a.business_function ?? "Not established", {
+            color: "#5f5e5a",
+          }),
+          vm.cell(a.criticality ?? "Not established", { align: "center" }),
+          vm.cell(a.lifecycle_state ?? "Not established", {
+            color: "#5f5e5a",
+          }),
+          vm.cell(a.hosting_model ?? "Not established", { color: "#5f5e5a" }),
+          vm.cell(
+            a.annual_run_cost != null
+              ? money(a.annual_run_cost)
+              : "Not established",
+            { align: "right", mono: true },
+          ),
+          vm.cell(a.modernization_plan ?? "Not established", {}),
+        ],
+      }))
     : [];
   const evidenceScopeRows: DataTableRow[] = evidenceScope.map((a) => ({
     cells: [
@@ -2459,7 +2458,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               ({
                 recoverable_leakage: "Recoverable opportunity",
                 avoided_cost: "Avoidable opportunity",
-                negotiated_improvement: "Negotiable improvement",
+                negotiated_improvement: "Negotiated improvement",
                 realized_value: "Finance-confirmed outcome",
               })[ledger],
           ),
@@ -2608,7 +2607,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           potential: {
             recoverable: opportunityMoney("recoverable_leakage"),
             avoidable: opportunityMoney("avoided_cost"),
-            negotiable: opportunityMoney("negotiable_improvement"),
+            negotiable: opportunityMoney("negotiated_improvement"),
             total: totalOpportunityMoney(),
           },
           financeConfirmed,
@@ -3192,18 +3191,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     optimize: {
       candidateRows: vm.portfolio.impact.actionCandidates.length,
       claimCards: vm.portfolio.impact.claimCards.length,
-      financeConfirmedRows: vm.portfolio.impact.claimCards.filter(
-        (row) =>
-          String(row.finance_confirmation_state ?? "")
-            .toLowerCase()
-            .includes("confirm"),
+      financeConfirmedRows: vm.portfolio.impact.claimCards.filter((row) =>
+        String(row.finance_confirmation_state ?? "")
+          .toLowerCase()
+          .includes("confirm"),
       ).length,
-      rule:
-        "Optimize can prepare governed actions from candidate rows, but must not call them realized value until finance state is confirmed.",
+      rule: "Optimize can prepare governed actions from candidate rows, but must not call them realized value until finance state is confirmed.",
     },
     newEvent: {
-      rule:
-        "New Event questions require selected event stage, evidence, supplier response, evaluation, pricing, BAFO, and approval context; the Source 360 portfolio alone is not enough for an award recommendation.",
+      rule: "New Event questions require selected event stage, evidence, supplier response, evaluation, pricing, BAFO, and approval context; the Source 360 portfolio alone is not enough for an award recommendation.",
     },
   };
   const sourceWorkspaceRefusalExamples = [
@@ -3239,11 +3235,11 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     contractName: kind === "contract" ? (c?.contract_name ?? null) : null,
     vendorName: kind === "contract" ? (c?.vendor_name ?? null) : null,
     annualValue: kind === "contract" ? numberFromDb(c?.annual_value) : null,
-    actualAnnualSpend:
-      kind === "contract" ? effectiveActualAnnualSpend : null,
+    actualAnnualSpend: kind === "contract" ? effectiveActualAnnualSpend : null,
     endDate: kind === "contract" ? fmtDate(c?.end_date) : null,
     evidencePosture:
-      kind === "contract" && c?.source_confidence != null &&
+      kind === "contract" &&
+      c?.source_confidence != null &&
       Number.isFinite(c.source_confidence)
         ? pct(c.source_confidence) + " source confidence"
         : selectedContractMissing
@@ -3258,10 +3254,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         : null,
     contractDatasetSummary: `${v4Snapshot.executivePortfolio.contractCount} contracts / ${v4Snapshot.contextCoverage.vendors} vendors / ${money(v4Snapshot.executivePortfolio.annualValue)} annual value / ${money(v4Snapshot.executivePortfolio.totalCommittedValue)} total committed value.`,
     contractCubeSummary: `${v4Snapshot.contextCoverage.scopeRows} scope rows / ${v4Snapshot.contextCoverage.performanceRows} performance rows / ${v4Snapshot.contextCoverage.invoiceLines} invoice lines / ${sourceWorkspaceGroundingStatus.actionCandidates} action candidates / ${sourceWorkspaceGroundingStatus.avaGroundingBundles} aVa grounding bundles.`,
-    contractTopVendorSummary:
-      conc.byVendor[0]
-        ? `${conc.byVendor[0].vendorName} is the largest loaded vendor by annual contract value at ${money(conc.byVendor[0].annualValue)}.`
-        : null,
+    contractTopVendorSummary: conc.byVendor[0]
+      ? `${conc.byVendor[0].vendorName} is the largest loaded vendor by annual contract value at ${money(conc.byVendor[0].annualValue)}.`
+      : null,
     selection:
       kind === "contract" && c
         ? c.contract_id + " · " + c.vendor_name

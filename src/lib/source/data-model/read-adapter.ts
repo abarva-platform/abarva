@@ -38,6 +38,7 @@ import {
   type OptimizationOpportunityValueType,
   type OpportunityCalculationLine,
   type OpportunityCalculationRead,
+  type OpportunityNegotiationDetail,
   type OpportunitySourceReference,
 } from "./contract-optimization-opportunity";
 import type {
@@ -899,28 +900,26 @@ export async function listSourceContractClaimCards(
 export async function listSourceVendorPositions(
   tenantKey: string,
 ): Promise<SourceVendorPositionRow[]> {
-  const rows =
-    await queryCanonicalSourceWithFallback<SourceVendorPositionRow>(
-      tenantKey,
-      `SELECT *
+  const rows = await queryCanonicalSourceWithFallback<SourceVendorPositionRow>(
+    tenantKey,
+    `SELECT *
 	     FROM source.vendor_position_v1
 	    WHERE tenant_key = ANY($1::text[])
 	    ORDER BY candidate_amount_usd DESC NULLS LAST, annual_value DESC NULLS LAST, vendor_name`,
-    );
+  );
   return rows.map(normalizeSourceVendorPositionRow);
 }
 
 export async function listSourcePageStoryline(
   tenantKey: string,
 ): Promise<SourcePageStorylineRow[]> {
-  const rows =
-    await queryCanonicalSourceWithFallback<SourcePageStorylineRow>(
-      tenantKey,
-      `SELECT *
+  const rows = await queryCanonicalSourceWithFallback<SourcePageStorylineRow>(
+    tenantKey,
+    `SELECT *
 	     FROM source.source_page_storyline_v1
 	    WHERE tenant_key = ANY($1::text[])
 	    ORDER BY page_key, sort_order, section_key`,
-    );
+  );
   return rows.map(normalizeSourcePageStorylineRow);
 }
 
@@ -1673,7 +1672,7 @@ async function getPersistedContractOptimizationOpportunitySet(
   const potentialNegotiableUsd = sumNumbers(
     opportunities
       .filter(
-        (opportunity) => opportunity.valueType === "negotiable_improvement",
+        (opportunity) => opportunity.valueType === "negotiated_improvement",
       )
       .map((opportunity) => opportunity.amountUsd),
   );
@@ -1938,7 +1937,23 @@ function persistedOpportunityFromRow(input: {
     narrative:
       textValue(input.row.narrative) ??
       "Opportunity narrative is not recorded in the persisted spine.",
+    negotiationDetail: negotiationDetailFromPayload(payload),
   };
+}
+
+function negotiationDetailFromPayload(
+  payload: Record<string, unknown>,
+): OpportunityNegotiationDetail | null {
+  const detail = {
+    buyerAsk: textValue(payload.buyer_ask),
+    negotiationLanguage: textValue(payload.negotiation_language),
+    vendorConcession: textValue(payload.vendor_concession),
+    timingDependency: textValue(payload.timing_dependency),
+    ownerRole: textValue(payload.owner_role),
+    priority: textValue(payload.priority),
+    riskIfIgnored: textValue(payload.risk_if_ignored),
+  };
+  return Object.values(detail).some(Boolean) ? detail : null;
 }
 
 function persistedCalculationFromRows(input: {
@@ -2156,11 +2171,11 @@ function uniqueSourceRefs(
 
 function readValueType(value: unknown): OptimizationOpportunityValueType {
   const text = textValue(value);
-  if (text === "negotiated_improvement") return "negotiable_improvement";
+  if (text === "negotiable_improvement") return "negotiated_improvement";
   if (
     text === "recoverable_leakage" ||
     text === "avoided_cost" ||
-    text === "negotiable_improvement"
+    text === "negotiated_improvement"
   ) {
     return text;
   }

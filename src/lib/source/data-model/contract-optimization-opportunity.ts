@@ -3,7 +3,7 @@ import type { SourceContract360Row } from "./types";
 export type OptimizationOpportunityValueType =
   | "recoverable_leakage"
   | "avoided_cost"
-  | "negotiable_improvement";
+  | "negotiated_improvement";
 
 export type OptimizationOpportunityStage =
   | "signal"
@@ -81,6 +81,16 @@ export interface OpportunityCalculationRead {
   readonly lines: readonly OpportunityCalculationLine[];
 }
 
+export interface OpportunityNegotiationDetail {
+  readonly buyerAsk: string | null;
+  readonly negotiationLanguage: string | null;
+  readonly vendorConcession: string | null;
+  readonly timingDependency: string | null;
+  readonly ownerRole: string | null;
+  readonly priority: string | null;
+  readonly riskIfIgnored: string | null;
+}
+
 export interface ContractOptimizationOpportunity {
   readonly opportunityId: string;
   readonly contractId: string;
@@ -102,6 +112,7 @@ export interface ContractOptimizationOpportunity {
   readonly overlapTreatment: string;
   readonly approvalState: string;
   readonly narrative: string;
+  readonly negotiationDetail?: OpportunityNegotiationDetail | null;
 }
 
 export interface FinanceRealizationLink {
@@ -212,7 +223,8 @@ const DATASET_FALLBACK = "source-v4-golden-contract-evidence";
 const RATE_VARIANCE_RULE = "source.contract_optimization.rate_variance.v1";
 const RATE_VARIANCE_FORMULA =
   "Eligible quantity × (billed rate - operative contract rate) - approved exceptions = rate-variance opportunity";
-const VMS_RATE_CARD_RULE = "source.contract_optimization.vms_rate_card_variance.v1";
+const VMS_RATE_CARD_RULE =
+  "source.contract_optimization.vms_rate_card_variance.v1";
 const VMS_RATE_CARD_FORMULA =
   "SUM(hours × (billed hourly rate - operative rate-card hourly rate)) for VMS/rate-card lines with no amendment = labor rate-card variance";
 const OFF_CONTRACT_BILLING_RULE =
@@ -334,7 +346,7 @@ export function buildContractOptimizationOpportunitySet(
   const potentialNegotiableUsd = sum(
     opportunities
       .filter(
-        (opportunity) => opportunity.valueType === "negotiable_improvement",
+        (opportunity) => opportunity.valueType === "negotiated_improvement",
       )
       .map((opportunity) => opportunity.amountUsd),
   );
@@ -547,7 +559,8 @@ function buildVmsRateCardOpportunity(
         "Rate-card row has positive rate_variance_usd and no amendment reference approving the higher billed rate.",
       pricingScheduleRef: text(row.rate_card_line_id),
       contractTermRef: "doc.extraction:contract.pricing_schedule",
-      amendmentRef: text(row.amendment_reference) ?? "No rate-card amendment found",
+      amendmentRef:
+        text(row.amendment_reference) ?? "No rate-card amendment found",
       sourceRefs: [
         sourceRef(row, "source.golden_contract_rate_card_variance"),
         ...pdfRefs
@@ -953,9 +966,7 @@ function buildSlaOpportunity(
           text(row.reporting_month) ??
           null,
         skuOrService:
-          text(row.service_tower) ??
-          text(row.sla_name) ??
-          "monthly SLA credit",
+          text(row.service_tower) ?? text(row.sla_name) ?? "monthly SLA credit",
         quantity:
           number(row.sev1_sev2_incidents) ??
           number(row.credit_eligible_incidents) ??
@@ -1214,7 +1225,7 @@ function buildNegotiatedOpportunity(
     contractId,
     label: "Negotiated price and term improvement",
     shortLabel: "Negotiated improvement",
-    valueType: "negotiable_improvement",
+    valueType: "negotiated_improvement",
     amountUsd: roundCurrency(amount),
     amountState: "exact",
     stage: "target_position",
@@ -1326,7 +1337,12 @@ function monthEndDate(value: string | null): string | null {
   if (!match) return isoDate(value);
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12
+  ) {
     return null;
   }
   const end = new Date(Date.UTC(year, month, 0));

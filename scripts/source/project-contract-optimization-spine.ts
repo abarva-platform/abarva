@@ -826,9 +826,7 @@ async function persistOpportunity(
       opportunity.opportunityId,
       opportunity.contractId,
       set.vendorId ?? "unknown-vendor",
-      opportunity.valueType === "negotiable_improvement"
-        ? "negotiated_improvement"
-        : opportunity.valueType,
+      opportunity.valueType,
       opportunity.stage,
       opportunity.amountUsd,
       opportunity.amountState,

@@ -1070,6 +1070,18 @@ function StrategyApprovalPacket({
       </strong>
       <div style={STRATEGY_PACKET_GRID_STYLE}>
         <StrategyPacketItem label="Target ask" value={opportunity.nextAction} />
+        {opportunity.negotiationDetail?.buyerAsk ? (
+          <StrategyPacketItem
+            label="Buyer ask"
+            value={opportunity.negotiationDetail.buyerAsk}
+          />
+        ) : null}
+        {opportunity.negotiationDetail?.negotiationLanguage ? (
+          <StrategyPacketItem
+            label="Negotiation language"
+            value={opportunity.negotiationDetail.negotiationLanguage}
+          />
+        ) : null}
         <StrategyPacketItem
           label="Value basis"
           value={`${labelValueType(opportunity.valueType)} · ${formatMaybeUsd(opportunity.amountUsd)} · ${labelAmountState(opportunity.amountState)}`}
@@ -1078,6 +1090,24 @@ function StrategyApprovalPacket({
           label="Evidence basis"
           value={`${labelEvidenceGrade(opportunity.evidenceGrade)} · ${sourceSystems}`}
         />
+        {opportunity.negotiationDetail?.vendorConcession ? (
+          <StrategyPacketItem
+            label="Vendor concession"
+            value={opportunity.negotiationDetail.vendorConcession}
+          />
+        ) : null}
+        {opportunity.negotiationDetail?.timingDependency ? (
+          <StrategyPacketItem
+            label="Timing"
+            value={opportunity.negotiationDetail.timingDependency}
+          />
+        ) : null}
+        {opportunity.negotiationDetail?.riskIfIgnored ? (
+          <StrategyPacketItem
+            label="Risk if ignored"
+            value={opportunity.negotiationDetail.riskIfIgnored}
+          />
+        ) : null}
         <StrategyPacketItem
           label="Approval guardrail"
           value="Controlled outreach only; Finance/Tower still controls realized value."
@@ -2017,7 +2047,8 @@ function labelLedger(value: string): string {
 function labelValueType(value: string): string {
   if (value === "recoverable_leakage") return "Recoverable leakage";
   if (value === "avoided_cost") return "Avoided cost";
-  if (value === "negotiable_improvement") return "Negotiated improvement";
+  if (value === "negotiated_improvement" || value === "negotiable_improvement")
+    return "Negotiated improvement";
   return value;
 }
 
