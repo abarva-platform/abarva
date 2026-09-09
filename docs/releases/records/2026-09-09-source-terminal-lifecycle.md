@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Make final-stage Source approval close the event lifecycle instead of leaving a fully approved event marked active. Add a guarded operator repair for events approved before this behavior shipped.
+Make final-stage Source approval close the event lifecycle instead of leaving a fully approved event marked active. Add a guarded operator repair for events approved before this behavior shipped, and preserve read-only access through the completed-event summary route.
 
 ## Layer Impact
 
@@ -26,6 +26,7 @@ All clients receive the forward approval behavior. No client receives a historic
 
 - Approval decision contract recognizes a positively identified terminal journey stage.
 - Source approval route persists `completed` for final Value approval and does not advance beyond Value.
+- The completed-event `/summary` route reuses the governed Value-stage canvas in read-only form instead of resolving to an unimplemented page.
 - Focused decision and route regression tests.
 - `source:event-terminal-lifecycle:repair-job` for guarded, idempotent historical reconciliation and proof emission.
 - This release record.
@@ -36,7 +37,8 @@ All clients receive the forward approval behavior. No client receives a historic
 - **PASS:** scoped ESLint for every touched TypeScript file.
 - **PASS:** full TypeScript check with `npx tsc --noEmit --pretty false`.
 - **PASS:** `npm run release:check`.
-- **PENDING after deployment:** digest-pinned operator repair proof and signed-in event plus portfolio readback.
+- **PASS:** digest-pinned operator repair changed the explicitly scoped event from `active` to `completed`; tenant ownership, Value stage, terminal approval, optimistic lifecycle, and readback checks all passed.
+- **PENDING after deployment:** signed-in completed-event summary and portfolio readback.
 
 ## Rollout Plan
 
