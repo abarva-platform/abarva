@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tower Context Layer Audit</title>
+  <style>
+    body { margin: 0; background: #f8f7f4; color: #101828; font-family: Inter, system-ui, sans-serif; }
+    main { max-width: 1180px; margin: 0 auto; padding: 42px 28px 80px; }
+    h1, h2 { font-family: Georgia, serif; letter-spacing: 0; }
+    h1 { font-size: 42px; margin: 0 0 12px; }
+    h2 { font-size: 26px; margin-top: 36px; }
+    .eyebrow { color: #087443; font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 700; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; margin: 24px 0; }
+    .card { background: white; border: 1px solid #ddd8cc; border-radius: 10px; padding: 18px; box-shadow: 0 10px 28px rgba(15,23,42,.06); }
+    .metric { font-family: Georgia, serif; font-size: 30px; font-weight: 700; }
+    .label { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+    table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #ddd8cc; }
+    th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid #e8e2d7; font-size: 13px; }
+    th { color: #475569; text-transform: uppercase; letter-spacing: .09em; font-size: 11px; }
+    .partial { color: #9a5b00; font-weight: 700; }
+    .pass { color: #087443; font-weight: 700; }
+    .fail { color: #b42318; font-weight: 700; }
+    code { background: #ede8de; padding: 2px 5px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">Tower · Context Layer Audit</div>
+    <h1>Tower should become the enterprise value-realization ledger.</h1>
+    <p>This proof is read-only. It audits Tower's current context paths, value-claim discipline, Meridian demo safety, and future product direction.</p>
+    <section class="grid">
+      <div class="card"><div class="label">Context layer</div><div class="metric partial">Partial</div><p>Governed facts exist, but no single TowerContextPack boundary.</p></div>
+      <div class="card"><div class="label">Old V labels</div><div class="metric fail">Found</div><p>Internal V6/V7 markers still appear in code/contracts.</p></div>
+      <div class="card"><div class="label">Unsupported ROI</div><div class="metric fail">Risk</div><p>Needs universal value-claim gate before board-grade ROI.</p></div>
+      <div class="card"><div class="label">Meridian demo</div><div class="metric partial">Safe with caveat</div><p>Show readiness and measurement plans, not realized ROI.</p></div>
+    </section>
+    <h2>Top Recommendations</h2>
+    <table><thead><tr><th>rank</th><th>recommendation</th><th>problem</th><th>demo_priority</th></tr></thead><tbody><tr><td>1</td><td>Formalize TowerContextPack</td><td>Tower has several valid read paths but no single named context pack boundary.</td><td>High</td></tr><tr><td>2</td><td>Create TowerValueClaim gate</td><td>ROI/realized value needs a hard status gate.</td><td>High</td></tr><tr><td>3</td><td>Add measurement-plan first view</td><td>Many Meridian metrics are trackable but not validated.</td><td>High</td></tr><tr><td>4</td><td>Make baseline/target/promised/measured/realized visible</td><td>The data model separates states but UI can still compress them.</td><td>High</td></tr><tr><td>5</td><td>Persist context gaps as IDs</td><td>Current gaps are derived strings in places.</td><td>High</td></tr><tr><td>6</td><td>Integrate Source handoff</td><td>Savings/commercial value should flow as hypotheses.</td><td>Medium</td></tr><tr><td>7</td><td>Integrate Moves handoff</td><td>Move charters and phase success metrics should seed Tower.</td><td>High</td></tr><tr><td>8</td><td>Add control dimension</td><td>CDAO/CFO trust requires controls, not just risks.</td><td>Medium</td></tr><tr><td>9</td><td>Role-based Tower views</td><td>CFO, CIO, CDAO, CPO need different slices.</td><td>Medium</td></tr><tr><td>10</td><td>Retire old V-language from visible contracts</td><td>Internal V6/V7 terms remain in code headers/internal labels.</td><td>Medium</td></tr></tbody></table>
+    <p>See the CSV and markdown reports in <code>reports/tower-audit/</code> for the full evidence set.</p>
+  </main>
+</body>
+</html>
