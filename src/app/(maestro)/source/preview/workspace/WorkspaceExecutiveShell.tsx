@@ -4636,12 +4636,41 @@ export function resolveSelectedVendor(
     uniqueRefs([vendor.vendor_ref, ...vendor.vendor_refs]).includes(
       selectedVendorRef,
     );
-
-  return (
-    vendors.find(linkedByRef) ??
-    vendorsWithImpactEvidence(portfolio, vendors).find(linkedByRef) ??
-    null
+  const registerVendor = vendors.find(linkedByRef);
+  const evidenceVendor = vendorsWithImpactEvidence(portfolio, vendors).find(
+    linkedByRef,
   );
+
+  if (registerVendor && evidenceVendor) {
+    return {
+      ...evidenceVendor,
+      vendor_ref: registerVendor.vendor_ref,
+      vendor_name: preferVendorDisplayName(
+        registerVendor.vendor_name,
+        evidenceVendor.vendor_name,
+      ),
+      vendor_category:
+        registerVendor.vendor_category ?? evidenceVendor.vendor_category,
+      annual_value: registerVendor.annual_value ?? evidenceVendor.annual_value,
+      total_committed_value:
+        registerVendor.total_committed_value ??
+        evidenceVendor.total_committed_value,
+      auto_renew_contracts: registerVendor.auto_renew_contracts,
+      next_end_date: registerVendor.next_end_date,
+      vendor_refs: uniqueRefs([
+        registerVendor.vendor_ref,
+        ...registerVendor.vendor_refs,
+        evidenceVendor.vendor_ref,
+        ...evidenceVendor.vendor_refs,
+      ]),
+      contract_refs: uniqueRefs([
+        ...registerVendor.contract_refs,
+        ...evidenceVendor.contract_refs,
+      ]),
+    };
+  }
+
+  return registerVendor ?? evidenceVendor ?? null;
 }
 
 function vendorsWithImpactEvidence(
