@@ -1925,14 +1925,25 @@ function StageReadyPanel({
   onOpenApprovalPage: () => void;
   onOpenFiles: () => void;
 }) {
+  const approvalRecorded = view.stage.approvalRecorded;
   const hasArtifactGaps = view.stage.artifactReadiness.blockerCount > 0;
-  const primaryActionLabel = hasArtifactGaps
+  const primaryActionLabel = approvalRecorded
+    ? "View approval record"
+    : hasArtifactGaps
     ? "Review Files and accept artifacts"
     : view.stage.approvalCtaLabel;
-  const primaryAction = hasArtifactGaps ? onOpenFiles : onOpenApprovalPage;
-  const gateStatus = hasArtifactGaps
-    ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
-    : "Ready for approval";
+  const primaryAction = approvalRecorded
+    ? onOpenApprovalPage
+    : hasArtifactGaps
+      ? onOpenFiles
+      : onOpenApprovalPage;
+  const fileStatus = approvalRecorded
+    ? hasArtifactGaps
+      ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
+      : "No blockers"
+    : hasArtifactGaps
+      ? `${view.stage.artifactReadiness.blockerCount} file review gap${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"}`
+      : "Ready for approval";
   return (
     <div
       data-testid="source-shell-stage-ready-panel"
@@ -1957,12 +1968,16 @@ function StageReadyPanel({
             textTransform: "uppercase",
           }}
         >
-          {hasArtifactGaps
+          {approvalRecorded
+            ? "Stage approved"
+            : hasArtifactGaps
             ? "Inputs ready - artifact review open"
             : "Stage ready"}
         </div>
         <h2 style={{ fontSize: 20, lineHeight: 1.25, margin: 0 }}>
-          {hasArtifactGaps
+          {approvalRecorded
+            ? `${view.stage.label} approval is recorded.`
+            : hasArtifactGaps
             ? `Required inputs are complete, but ${view.stage.artifactReadiness.blockerCount} artifact review item${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain.`
             : `All required evidence is ready for ${view.stage.label}.`}
         </h2>
@@ -1975,7 +1990,11 @@ function StageReadyPanel({
             maxWidth: 650,
           }}
         >
-          {hasArtifactGaps
+          {approvalRecorded
+            ? hasArtifactGaps
+              ? "The stage decision is complete. Remaining artifact-review gaps stay visible as part of the accepted exception record; no duplicate approval is required."
+              : "The stage decision is complete and no further approval is required. Open the approval record to review its rationale and audit trail."
+            : hasArtifactGaps
             ? "Review Files first to accept client-final artifacts and close quality gates. An exception decision is available only if the owner chooses to approve with the visible gaps."
             : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
@@ -2001,13 +2020,17 @@ function StageReadyPanel({
         />
         <StageReadyStatusDatum
           label="Files"
-          value={gateStatus}
+          value={fileStatus}
           tone={hasArtifactGaps ? "warn" : "good"}
         />
         <StageReadyStatusDatum
           label="Next"
           value={
-            hasArtifactGaps ? "Accept artifacts in Files" : "Open approval gate"
+            approvalRecorded
+              ? "No further approval required"
+              : hasArtifactGaps
+                ? "Accept artifacts in Files"
+                : "Open approval gate"
           }
           tone={hasArtifactGaps ? "warn" : "good"}
         />
@@ -2015,7 +2038,7 @@ function StageReadyPanel({
       {view.stage.key === "bafo" || view.stage.key === "orals_bafo" ? (
         <BafoScenarioComparePanel view={buildBafoScenarioCompareView()} />
       ) : null}
-      {hasArtifactGaps ? (
+      {hasArtifactGaps && !approvalRecorded ? (
         <div
           data-testid="source-stage-ready-approval-blocker"
           style={{
@@ -2070,7 +2093,9 @@ function StageReadyPanel({
         <button
           type="button"
           data-testid={
-            hasArtifactGaps
+            approvalRecorded
+              ? "source-stage-ready-view-approval"
+              : hasArtifactGaps
               ? "source-stage-ready-primary-files"
               : "source-stage-ready-open-approval"
           }
@@ -2087,7 +2112,7 @@ function StageReadyPanel({
         >
           {primaryActionLabel}
         </button>
-        {hasArtifactGaps ? (
+        {hasArtifactGaps && !approvalRecorded ? (
           <button
             type="button"
             data-testid="source-stage-ready-open-approval"
@@ -5936,28 +5961,36 @@ function ApprovalsWorkspace({
 }
 
 function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
+  const stageApproved = view.stage.approvalRecorded;
   const workflowComplete = view.stage.ready >= view.stage.total;
   const filesReady = view.stage.artifactReadiness.ready;
-  const ready = workflowComplete && filesReady;
+  const ready = !stageApproved && workflowComplete && filesReady;
   const stageHref = `/source/events/${encodeURIComponent(
     view.event.id,
   )}?stage=${encodeURIComponent(view.stage.key)}`;
   const filesHref = `${stageHref}&workspace=files`;
-  const decision =
-    view.approvals.currentStageItem != null
+  const decision = stageApproved
+    ? `${view.stage.label} approval is recorded.`
+    : view.approvals.currentStageItem != null
       ? `${view.stage.label} gate decision routed.`
       : `No approval item is currently routed for ${view.stage.label}.`;
-  const nextAction = !workflowComplete
+  const nextAction = stageApproved
+    ? "No further approval required."
+    : !workflowComplete
     ? "Return to steps."
     : !filesReady
       ? "Clear artifact queue."
       : (view.approvals.currentStageItem?.actionLabel ?? "No approval action.");
-  const readinessTitle = ready
+  const readinessTitle = stageApproved
+    ? "Stage approved"
+    : ready
     ? "Ready to decide"
     : workflowComplete
       ? "Artifact queue blocks the gate"
       : "Workflow inputs still open";
-  const readinessStatus = ready
+  const readinessStatus = stageApproved
+    ? "Approved"
+    : ready
     ? "Ready"
     : workflowComplete
       ? "Not gate-ready"
@@ -5993,7 +6026,10 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
         <span
           style={{
             ...SMALL_STATUS_PILL,
-            color: ready ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+            color:
+              ready || stageApproved
+                ? ANALYTICS.GREEN_TEXT
+                : ANALYTICS.AMBER_TEXT,
           }}
         >
           {readinessStatus}
@@ -6024,10 +6060,10 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
         <StepNeedDatum
           label="Next action"
           value={nextAction}
-          tone={ready ? "good" : "warn"}
+          tone={ready || stageApproved ? "good" : "warn"}
         />
       </div>
-      {!filesReady ? (
+      {!filesReady && !stageApproved ? (
         <div
           data-testid="source-shell-approval-review-gaps"
           style={{
@@ -6061,7 +6097,7 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
           ) : null}
         </div>
       ) : null}
-      {!ready ? (
+      {!ready && !stageApproved ? (
         <div
           data-testid="source-shell-approval-next-actions"
           style={{

@@ -702,6 +702,64 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     ).toHaveTextContent("Prepare negotiation brief");
   });
 
+  it("renders a completed terminal approval without another approve action", () => {
+    const completeValueStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      stageKey: "value" as const,
+      stageName: "Value",
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done" as const,
+        evidenceComplete: true,
+      })),
+    };
+    const valueEvent: SourcingEventSummary = {
+      ...EVENT,
+      currentStageKey: "value",
+      currentStageLabel: "Value",
+    };
+    const valueApproval: ApprovalsInboxItem = {
+      ...APPROVAL,
+      stageKey: "value",
+      stageLabel: "Value",
+      ask: "Approve advancing out of Value.",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={valueEvent}
+        viewStage="value"
+        tenantName="Demo Client"
+        stageView={completeValueStage}
+        approvalItems={[valueApproval]}
+        approvalLedger={[
+          {
+            stageKey: "value",
+            stageLabel: "Value",
+            index: 11,
+            state: "approved",
+            approverName: "A. Approver",
+            approvedAtIso: "2026-09-09T00:00:00.000Z",
+            authorizationNote: "Approved by A. Approver.",
+            approverRationale: "Final value record accepted.",
+          },
+        ]}
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("source-shell-approval-readiness"),
+    ).toHaveTextContent("Stage approved");
+    expect(
+      screen.getByTestId("source-shell-approval-readiness"),
+    ).toHaveTextContent("No further approval required");
+    expect(screen.queryByText("Approve now")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Approve advancing out of Value."),
+    ).not.toBeInTheDocument();
+  });
+
   it("consolidates commercial lenses above the active workflow canvas", () => {
     render(
       <SourceAnalyticsCanvas
