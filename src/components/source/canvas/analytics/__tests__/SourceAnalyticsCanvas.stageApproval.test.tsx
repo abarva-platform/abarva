@@ -760,6 +760,67 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("renders a historically approved RFP with current gaps as remediation, not a new approval gate", () => {
+    const completedRfpStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      stageKey: "rfp" as const,
+      stageName: "RFP",
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) => ({
+        ...task,
+        state: "done" as const,
+        evidenceComplete: true,
+      })),
+    };
+    const advancedEvent: SourcingEventSummary = {
+      ...EVENT,
+      currentStageKey: "responses",
+      currentStageLabel: "Responses",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={advancedEvent}
+        viewStage="rfp"
+        tenantName="Demo Client"
+        stageView={completedRfpStage}
+        artifacts={[
+          {
+            id: "rfp-draft-1",
+            artifactCode: "d09_rfp_pack",
+            stageKey: "rfp",
+            sourceOrigin: "generated",
+            status: "draft",
+          },
+        ]}
+        approvalLedger={[
+          {
+            stageKey: "rfp",
+            stageLabel: "RFP",
+            index: 4,
+            state: "approved",
+            approverName: null,
+            approvedAtIso: null,
+            authorizationNote:
+              "Approved - approver not recorded for this stage (predates stage-level tracking).",
+            approverRationale: null,
+          },
+        ]}
+        initialWorkspace="steps"
+      />,
+    );
+
+    const readyPanel = screen.getByTestId("source-shell-stage-ready-panel");
+    expect(readyPanel).toHaveTextContent("Stage approved");
+    expect(readyPanel).toHaveTextContent(
+      "advanced before stage-level approval tracking",
+    );
+    expect(readyPanel).toHaveTextContent("RFP decision status");
+    expect(readyPanel).toHaveTextContent("Remediate current gaps");
+    expect(readyPanel).toHaveTextContent("Current controls");
+    expect(readyPanel).not.toHaveTextContent("Open approval gate");
+    expect(readyPanel).not.toHaveTextContent("accepted exception record");
+  });
+
   it("consolidates commercial lenses above the active workflow canvas", () => {
     render(
       <SourceAnalyticsCanvas

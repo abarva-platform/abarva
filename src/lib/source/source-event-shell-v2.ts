@@ -210,6 +210,7 @@ export interface SourceEventShellView {
     groups: SourceShellStepGroup[];
     activeStep: SourceShellStep | null;
     approvalRecorded: boolean;
+    approvalTraceState: "none" | "recorded" | "historical";
     gateReadinessLine: string;
     artifactReadiness: SourceShellStageArtifactReadiness;
     approvalHref: string;
@@ -452,6 +453,16 @@ export function buildSourceEventShellView(
   const viewedStageIsCurrent = input.viewedStageKey === visibleCurrentStageKey;
   const completedViewedStage = total > 0 && ready === total;
   const viewedStageApprovalRecorded = approvedStageKeys.has(input.viewedStageKey);
+  const viewedStageApproval = approvalLedger.find(
+    (row) =>
+      row.stageKey === input.viewedStageKey && row.state === "approved",
+  );
+  const approvalTraceState: SourceEventShellView["stage"]["approvalTraceState"] =
+    !viewedStageApprovalRecorded
+      ? "none"
+      : viewedStageApproval?.approverName && viewedStageApproval.approvedAtIso
+        ? "recorded"
+        : "historical";
   const currentStageApprovalRecorded = approvedStageKeys.has(
     visibleCurrentStageKey,
   );
@@ -531,9 +542,14 @@ export function buildSourceEventShellView(
       groups,
       activeStep,
       approvalRecorded: viewedStageApprovalRecorded,
+      approvalTraceState,
       gateReadinessLine:
         viewedStageApprovalRecorded
-          ? `${viewedStageLabel} approval is recorded. No further approval is required for this stage.`
+          ? stageReadyWithArtifactGaps
+            ? approvalTraceState === "historical"
+              ? `${viewedStageLabel} advanced under an earlier control state. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
+              : `${viewedStageLabel} approval is recorded. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
+            : `${viewedStageLabel} approval is recorded. No further approval is required for this stage.`
           : completedViewedStage && artifactReadiness.ready
           ? "Stage complete - required inputs and gate artifacts are ready. Open the approval workspace to advance."
           : stageReadyWithArtifactGaps
