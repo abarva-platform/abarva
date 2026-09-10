@@ -2562,7 +2562,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           emptyLabel = "Not established",
         ) => {
           const typed = opportunitySet.opportunities.filter(
-            (opportunity) => opportunity.valueType === valueType,
+            (opportunity) =>
+              opportunity.valueType === valueType &&
+              opportunity.stage !== "signal",
           );
           if (typed.length === 0) return emptyLabel;
           const valued = typed.filter(
@@ -2581,6 +2583,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         const totalOpportunityMoney = () => {
           const valued = opportunitySet.opportunities.filter(
             (opportunity) =>
+              opportunity.stage !== "signal" &&
               opportunity.amountUsd != null &&
               Number.isFinite(opportunity.amountUsd),
           );

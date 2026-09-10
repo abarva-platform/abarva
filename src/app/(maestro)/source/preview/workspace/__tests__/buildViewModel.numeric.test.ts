@@ -474,6 +474,147 @@ describe("buildViewModel numeric coercion", () => {
     );
   });
 
+  it("keeps signal-stage opportunities out of selected-contract posture totals", () => {
+    const vm = buildVm();
+    vm.state.sel = { kind: "contract", id: "c1" };
+    vm.state.tabs.contract = "Optimize";
+    vm.state.contractDetail.c1 = {
+      contract: CONTRACTS[0],
+      financialExposure: null,
+      operationalPerformance: null,
+      initiativeDependencies: [],
+      scopeTiers: {
+        explicit: [],
+        reviewed: [],
+        vendorInferred: [],
+        unresolved: [],
+        totalCount: 0,
+      },
+      towerObservations: [],
+      towerValueClaims: [],
+      hasTowerOverlay: false,
+      docExtractions: [],
+      optimizationEvidence: null,
+      evidenceOverview: null,
+      evidenceScope: [],
+      evidencePricing: [],
+      evidencePerformance: null,
+      performancePeriods: [],
+      spendMonths: [],
+      optimizationOpportunitySet: {
+        tenantKey: "skyharbor_global",
+        datasetVersion: "v4-golden-evidence",
+        contractId: "c1",
+        vendorId: "vendor-one",
+        vendorName: "Vendor One",
+        contractName: "Default Contract",
+        recommendation: "Build an optimization plan.",
+        recommendationDetail: "Line-level opportunity evidence is available.",
+        actionState: "validate_opportunity",
+        baseline: {
+          status: "ready",
+          headline: "Commercial baseline loaded",
+          detail: "Annual value is available.",
+          annualValueUsd: 50_000_000,
+          pricingScheduleAnnualValueUsd: null,
+          actualAnnualSpendUsd: 48_000_000,
+          totalCommittedValueUsd: 150_000_000,
+          conflictAmountUsd: null,
+          sourceRefs: ["source.contract_360"],
+        },
+        selectedOpportunityId: "c1:commitment-ramp",
+        opportunities: [
+          {
+            opportunityId: "c1:commitment-ramp",
+            contractId: "c1",
+            label: "Re-time annual commitment",
+            shortLabel: "Commitment ramp",
+            valueType: "negotiated_improvement",
+            amountUsd: 620_000,
+            amountState: "exact",
+            stage: "quantified",
+            evidenceGrade: "document_evidenced",
+            confidence: 0.82,
+            deadline: null,
+            owner: "Commercial owner",
+            blockingGap: "Finance confirmation is required.",
+            nextAction: "Propose milestone-based ramp schedule.",
+            sourceSystems: ["CLM / contract repository"],
+            evidenceRefs: [],
+            calculation: null,
+            overlapTreatment:
+              "Included only in negotiated improvement to avoid double counting.",
+            approvalState: "needs_review",
+            narrative: "Commitment ramp evidence is document-backed.",
+          },
+          {
+            opportunityId: "c1:discount-signal",
+            contractId: "c1",
+            label: "Discount-band signal",
+            shortLabel: "Discount signal",
+            valueType: "negotiated_improvement",
+            amountUsd: 330_000,
+            amountState: "range",
+            stage: "signal",
+            evidenceGrade: "system_evidenced",
+            confidence: 0.3,
+            deadline: null,
+            owner: "Strategic sourcing",
+            blockingGap:
+              "Benchmark comparable required before discount-band value can be treated as supported.",
+            nextAction: "Load benchmark comparable before sizing the ask.",
+            sourceSystems: ["Benchmark gap register"],
+            evidenceRefs: [],
+            calculation: null,
+            overlapTreatment:
+              "Excluded from sized totals until the evidence gate closes.",
+            approvalState: "needs_review",
+            narrative: "Discount signal remains advisory.",
+          },
+        ],
+        financeRealizations: [],
+        evidenceRequirements: ["Finance confirmation evidence is required."],
+        potentialRecoverableUsd: 0,
+        potentialAvoidableUsd: 0,
+        potentialNegotiableUsd: 950_000,
+        financeConfirmedUsd: 0,
+      },
+    };
+
+    const built = buildViewModel(vm) as {
+      opportunityView: {
+        potential: {
+          negotiable: string;
+          total: string;
+        };
+      };
+      commercialPosture: {
+        items: Array<{ label: string; value: string; detail: string }>;
+      };
+      avaSurfaceContext: {
+        sourceV4: {
+          commercialPosture: {
+            items: Array<{ label: string; value: string; detail: string }>;
+          };
+        };
+      };
+    };
+    const valueType = built.commercialPosture.items.find(
+      (item) => item.label === "Value type",
+    );
+    const avaValueType =
+      built.avaSurfaceContext.sourceV4.commercialPosture.items.find(
+        (item) => item.label === "Value type",
+      );
+
+    expect(built.opportunityView.potential.negotiable).toBe("$620K");
+    expect(built.opportunityView.potential.total).toBe("$620K");
+    expect(valueType?.detail).toContain("$620K negotiable");
+    expect(valueType?.detail).not.toContain("$950K negotiable");
+    expect(avaValueType?.detail).toContain("$620K negotiable");
+    expect(avaValueType?.detail).not.toContain("$950K negotiable");
+  });
+
   it("labels invoice billing-rate variance separately from rate-card evidence", () => {
     const vm = buildVm();
     vm.state.sel = { kind: "contract", id: "c1" };
