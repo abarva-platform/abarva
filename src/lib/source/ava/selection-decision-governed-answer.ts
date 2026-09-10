@@ -43,6 +43,11 @@ export function looksLikeSelectionDecisionQuestion(
 ): boolean {
   if (!prompt) return false;
   const q = prompt.toLowerCase();
+  const asksAboutReadinessOrHold =
+    /\b(not ready|no (?:vendor|supplier) is ready|readiness|held?|holdback|block(?:ed|er|ing)?|before (?:selection|award)|ready for (?:selection|award))\b/.test(
+      q,
+    );
+  if (asksAboutReadinessOrHold) return false;
   const asksAboutDecision =
     /\b(select(?:ed|ion)?|award(?:ed)?|preferred|winner|recommend(?:ed|ation)?)\b/.test(
       q,
