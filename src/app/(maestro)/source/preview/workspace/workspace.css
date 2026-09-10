@@ -749,6 +749,36 @@
   border-left-color: #2d6cdf;
 }
 
+.sw-v2-contract-purpose {
+  margin: 0 0 14px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid rgba(10, 10, 11, 0.1);
+}
+
+.sw-v2-contract-purpose h3 {
+  margin: 0 0 6px;
+  color: #0a0a0b;
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.sw-v2-contract-purpose p {
+  margin: 0;
+  color: #2c2c2a;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.sw-v2-contract-purpose span {
+  display: block;
+  margin-top: 8px;
+  color: #6f6b62;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .sw-v2-contract-story > div:first-child > span {
   color: #0f6e56;
   display: block;

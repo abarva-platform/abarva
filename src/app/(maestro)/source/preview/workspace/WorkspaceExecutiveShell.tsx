@@ -2446,7 +2446,9 @@ function ContractPage({
           title={contract.contract_name}
         />
         <ContractTabStory
+          coverage={coverage}
           contract={contract}
+          scopeRows={scopeRows}
           tab={tab}
           tabNarrative={tabNarrative}
           vm={vm}
@@ -2603,18 +2605,27 @@ function ContractCommandBar({
 }
 
 function ContractTabStory({
+  coverage,
   contract,
+  scopeRows,
   tab,
   tabNarrative,
   vm,
 }: {
+  coverage: SourceContractEvidenceCoverageRow | null | undefined;
   contract: SourceContract360Row;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
   tab: string;
   tabNarrative: ReturnType<typeof contractTabNarrative>;
   vm: SourceWorkspaceVM;
 }) {
-  const actualSpend = numberFromDb(contract.actual_annual_spend);
-  const annualValue = numberFromDb(contract.annual_value);
+  const actualSpend =
+    numberFromDb(contract.actual_annual_spend) ??
+    numberFromDb(coverage?.actual_spend_usd);
+  const annualValue =
+    numberFromDb(contract.resolved_annual_value) ??
+    numberFromDb(contract.annual_value) ??
+    numberFromDb(coverage?.committed_spend_usd);
   const utilization =
     annualValue && annualValue > 0 && actualSpend != null
       ? Math.round((actualSpend / annualValue) * 100)
@@ -2657,12 +2668,18 @@ function ContractTabStory({
               contract.notice_period_days == null
                 ? "Not established"
                 : `${contract.notice_period_days} days`,
-            ],
-          ];
+          ],
+        ];
+  const purpose = contractPurposeSummary(contract, coverage, scopeRows);
 
   return (
     <div className={`sw-v2-contract-story is-${tab.toLowerCase()}`}>
       <div>
+        <div className="sw-v2-contract-purpose">
+          <h3>{purpose.heading}</h3>
+          <p>{purpose.body}</p>
+          <span>{purpose.evidence}</span>
+        </div>
         <span>{tabNarrative.provenance}</span>
         <h2>{tabNarrative.headline}</h2>
         <p>{tabNarrative.body}</p>
@@ -2678,6 +2695,110 @@ function ContractTabStory({
       </dl>
     </div>
   );
+}
+
+export function contractPurposeSummary(
+  contract: SourceContract360Row,
+  coverage?: SourceContractEvidenceCoverageRow | null,
+  scopeRows: readonly SourceContractApplicationScopeRow[] = [],
+) {
+  const vendor = safeContractVendorDisplayName(contract);
+  const contractName = usableText(contract.contract_name) ?? contract.contract_id;
+  const rawArchetype =
+    coverage?.contract_archetype ??
+    contractArchetype(contract) ??
+    contract.vendor_category ??
+    null;
+  const archetype = isDeclaredArchetype(rawArchetype)
+    ? titleFromSourceKey(String(rawArchetype))
+    : null;
+  const scopePhrase =
+    usableText(contract.scope_summary) ??
+    scopeFromContractName(contractName) ??
+    "the loaded commercial scope";
+  const classificationText = [
+    rawArchetype,
+    contract.vendor_category,
+    contractName,
+    vendor,
+    scopePhrase,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const kind = contractPurposeKind(classificationText);
+  const annualValue =
+    numberFromDb(contract.resolved_annual_value) ??
+    numberFromDb(contract.annual_value) ??
+    numberFromDb(coverage?.committed_spend_usd);
+  const actualSpend =
+    numberFromDb(contract.actual_annual_spend) ??
+    numberFromDb(coverage?.actual_spend_usd);
+  const evidenceParts = [
+    archetype ? `${archetype} archetype` : null,
+    annualValue != null ? `${money(annualValue)} annual value` : null,
+    actualSpend != null ? `${money(actualSpend)} observed spend` : null,
+    `${numberFromDb(coverage?.scope_rows) ?? scopeRows.length} scope rows`,
+    coverage ? `${numberFromDb(coverage.spend_rows) ?? 0} spend rows` : null,
+    coverage
+      ? `${numberFromDb(coverage.document_page_text_rows) ?? 0} document text rows`
+      : null,
+    coverage
+      ? `${numberFromDb(coverage.opportunity_rows) ?? 0} opportunity rows`
+      : null,
+  ].filter(Boolean);
+
+  return {
+    heading: "What this contract is",
+    body: `This is ${kind.article} ${kind.label} with ${vendor} covering ${scopePhrase}. Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
+    evidence: `Loaded basis: ${evidenceParts.join("; ")}.`,
+  };
+}
+
+function usableText(value: string | null | undefined) {
+  const text = value?.trim();
+  if (!text || /^(not established|unknown|unresolved|none|null|n\/a)$/i.test(text)) {
+    return null;
+  }
+  return text;
+}
+
+function scopeFromContractName(contractName: string) {
+  const [, scope] = contractName.split(/\s[-–—]\s(.+)/);
+  return usableText(scope);
+}
+
+function contractPurposeKind(text: string) {
+  if (
+    /(cloud|consumption|committed purchase|enterprise discount program|edp|dbu|databricks|aws|marketplace|compute|lakehouse)/i.test(
+      text,
+    )
+  ) {
+    return {
+      article: "a",
+      label: "cloud consumption commitment",
+      readAs: "a usage-backed commercial commitment",
+    };
+  }
+  if (/(managed service|managed-services|ams|bpo|outsourcing|service desk|sow)/i.test(text)) {
+    return {
+      article: "a",
+      label: "managed-services contract",
+      readAs: "a service-scope and performance-control agreement",
+    };
+  }
+  if (/(saas|subscription|seat|license|licence|enterprise agreement)/i.test(text)) {
+    return {
+      article: "a",
+      label: "software subscription contract",
+      readAs: "an entitlement, usage, and renewal-control agreement",
+    };
+  }
+  return {
+    article: "a",
+    label: "commercial contract",
+    readAs: "a governed commercial record",
+  };
 }
 
 function ContractTabBody({
