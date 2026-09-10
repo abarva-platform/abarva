@@ -1,133 +1,297 @@
 import type { CSSProperties } from "react";
 import type {
-  PricingCompletenessGap,
-  PricingGapSeverity,
-  PricingVendorCompleteness,
-} from "@/lib/source/pricing-completeness-view";
-import { buildPricingCompletenessView } from "@/lib/source/pricing-completeness-view";
-import { buildAwardDecisionView } from "@/lib/source/award-decision-view";
-import { buildTransitionReadinessView } from "@/lib/source/transition-readiness-view";
+  VendorEvaluationDecisionView,
+  VendorResponseProfile,
+  VendorResponseProfileSet,
+} from "@/lib/source/proposal-intelligence";
 import { type SourceStageKey } from "@/lib/source/types";
 import { CANVAS } from "../canvas-tokens";
 
 interface StageDecisionLensPanelProps {
   stage: SourceStageKey;
+  profileSet?: VendorResponseProfileSet | null;
+  decisionView?: VendorEvaluationDecisionView | null;
 }
 
-export function StageDecisionLensPanel({ stage }: StageDecisionLensPanelProps) {
-  if (stage === "pricing") {
-    const view = buildPricingCompletenessView();
-    return (
-      <section
-        data-testid="source-stage-decision-lens"
-        style={PANEL_STYLE}
-        aria-label="Pricing comparability"
+export function StageDecisionLensPanel({
+  stage,
+  profileSet,
+  decisionView,
+}: StageDecisionLensPanelProps) {
+  if (stage === "pricing")
+    return <PricingEvidenceLens profileSet={profileSet} />;
+  if (stage === "executive_decision" || stage === "selection") {
+    return <AwardEvidenceLens decisionView={decisionView} />;
+  }
+  if (stage === "transition") {
+    return <TransitionEvidenceLens profileSet={profileSet} />;
+  }
+  return null;
+}
+
+function PricingEvidenceLens({
+  profileSet,
+}: {
+  profileSet?: VendorResponseProfileSet | null;
+}) {
+  const profiles = profileSet?.profiles ?? [];
+  const comparable = profiles.filter(hasComparablePricing).length;
+  const conditionCount = profiles.reduce(
+    (sum, profile) =>
+      sum +
+      profile.assumptionsExclusions.length +
+      profile.commercialExceptions.length,
+    0,
+  );
+
+  return (
+    <section
+      data-testid="source-stage-decision-lens"
+      style={PANEL_STYLE}
+      aria-label="Pricing evidence comparability"
+    >
+      <div style={EYEBROW_STYLE}>Pricing evidence</div>
+      <h3 style={TITLE_STYLE}>Compare what vendors actually submitted</h3>
+      <p style={BODY_STYLE}>
+        Pricing is comparable only when the normalized response contains a
+        numeric commercial basis and a cited pricing exhibit. Missing values
+        stay visibly unestablished.
+      </p>
+      <div
+        data-testid="source-pricing-completeness-summary"
+        style={SUMMARY_BAR_STYLE}
       >
-        <div style={EYEBROW_STYLE}>Pricing comparability</div>
-        <h3 style={TITLE_STYLE}>{view.headline}</h3>
-        <p style={BODY_STYLE}>{view.summary.overallReason}</p>
-        <div
-          data-testid="source-pricing-completeness-summary"
-          style={SUMMARY_BAR_STYLE}
-        >
-          <SummaryDatum
-            label="Comparable vendors"
-            value={`${view.summary.comparableVendorCount}/${view.summary.totalVendorCount}`}
-          />
-          <SummaryDatum
-            label="Cross-vendor gaps"
-            value={String(view.summary.crossVendorGaps.length)}
-          />
-          <SummaryDatum
-            label="State"
-            value={labelize(view.summary.overallComparability)}
-          />
-        </div>
+        <SummaryDatum
+          label="Submitted vendors"
+          value={String(profiles.length)}
+        />
+        <SummaryDatum
+          label="Comparable pricing"
+          value={`${comparable}/${profiles.length}`}
+        />
+        <SummaryDatum label="Open conditions" value={String(conditionCount)} />
+      </div>
+      {profiles.length === 0 ? (
+        <FailClosedMessage>
+          No normalized vendor response profiles are available for this event.
+          Pricing comparison is withheld; sample vendors and fixture bids are
+          never substituted.
+        </FailClosedMessage>
+      ) : (
         <div style={DRILLDOWN_GRID_STYLE}>
-          {view.vendors.map((vendor) => (
-            <PricingVendorCard key={vendor.vendorId} vendor={vendor} />
+          {profiles.map((profile) => (
+            <PricingVendorCard key={profile.vendorId} profile={profile} />
           ))}
         </div>
-        <div
-          data-testid="source-pricing-cross-vendor-gaps"
-          style={SECTION_STYLE}
-        >
-          <div style={SECTION_TITLE_STYLE}>Cross-vendor gaps</div>
-          <div style={GAP_LIST_STYLE}>
-            {view.summary.crossVendorGaps.map((gap) => (
-              <PricingGapRow key={gap.gapId} gap={gap} />
-            ))}
+      )}
+      <p style={DISCLAIMER_STYLE}>
+        Governed event evidence only. No sample vendors, modeled bid medians, or
+        savings amounts are introduced when the response package does not
+        establish them.
+      </p>
+    </section>
+  );
+}
+
+function PricingVendorCard({ profile }: { profile: VendorResponseProfile }) {
+  const pricingCards = profile.extractionCards.filter(
+    (card) => card.type === "pricing",
+  );
+  const conditions = [
+    ...profile.assumptionsExclusions,
+    ...profile.commercialExceptions,
+  ];
+  return (
+    <article
+      data-testid={`source-pricing-vendor-${profile.vendorId}`}
+      style={CARD_STYLE}
+    >
+      <div style={CARD_HEADER_STYLE}>
+        <div>
+          <div style={CARD_TITLE_STYLE}>{profile.vendorName}</div>
+          <div style={META_STYLE}>
+            Response v{profile.responseVersion} · {profile.readyForEvaluation}
           </div>
         </div>
-        <button type="button" disabled style={DISABLED_ACTION_STYLE}>
-          {view.clarificationLabel}
-        </button>
-        <p style={DISCLAIMER_STYLE}>{view.clarificationDisabledReason}</p>
-        <p style={DISCLAIMER_STYLE}>{view.honestDisclaimer}</p>
-      </section>
-    );
-  }
+        <span
+          style={{
+            ...SEVERITY_PILL_STYLE,
+            ...(hasComparablePricing(profile)
+              ? SEVERITY_GOOD_STYLE
+              : SEVERITY_RISK_STYLE),
+          }}
+        >
+          {hasComparablePricing(profile) ? "numeric basis" : "not comparable"}
+        </span>
+      </div>
+      <div style={PRICE_GRID_STYLE}>
+        <SummaryDatum
+          label="Year-one run"
+          value={formatMoney(profile.pricingSummary.yearOneRunCostUsd)}
+        />
+        <SummaryDatum
+          label="Transition"
+          value={formatMoney(profile.pricingSummary.transitionCostUsd)}
+        />
+        <SummaryDatum
+          label="Five-year TCO"
+          value={formatMoney(profile.pricingSummary.fiveYearTcoUsd)}
+        />
+      </div>
+      <div style={SECTION_STYLE}>
+        <div style={SECTION_TITLE_STYLE}>Pricing basis and evidence</div>
+        <p style={BODY_STYLE}>
+          {profile.pricingSummary.pricingBasis || "Not established"}
+        </p>
+        {pricingCards.length > 0 ? (
+          <ul style={COMPACT_LIST_STYLE}>
+            {pricingCards.slice(0, 4).map((card) => (
+              <li key={card.cardId}>
+                <strong>{card.title}:</strong> {card.extractedValue} ·{" "}
+                {card.evidenceReference ?? "citation missing"}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p style={BODY_STYLE}>No cited pricing extraction is loaded.</p>
+        )}
+      </div>
+      <div style={SECTION_STYLE}>
+        <div style={SECTION_TITLE_STYLE}>Conditions before comparison</div>
+        <CompactList
+          items={conditions.slice(0, 5)}
+          emptyLabel="No assumptions or commercial exceptions were extracted."
+        />
+      </div>
+    </article>
+  );
+}
 
-  if (stage === "executive_decision" || stage === "selection") {
-    const view = buildAwardDecisionView();
-    return (
-      <section
-        data-testid="source-stage-decision-lens"
-        style={PANEL_STYLE}
-        aria-label="Award recommendation"
-      >
-        <div style={EYEBROW_STYLE}>Award recommendation</div>
-        <h3 style={TITLE_STYLE}>
-          Recommend {view.summary.recommendedVendorName}
-        </h3>
-        <p style={BODY_STYLE}>{view.summary.rationale}</p>
+function AwardEvidenceLens({
+  decisionView,
+}: {
+  decisionView?: VendorEvaluationDecisionView | null;
+}) {
+  const summaries = decisionView?.vendorSummaries ?? [];
+  const ready = summaries.filter((summary) =>
+    decisionView?.recommendedAdvanceVendorIds.includes(summary.vendorId),
+  );
+  return (
+    <section
+      data-testid="source-stage-decision-lens"
+      style={PANEL_STYLE}
+      aria-label="Award decision evidence"
+    >
+      <div style={EYEBROW_STYLE}>Award decision</div>
+      <h3 style={TITLE_STYLE}>
+        {ready.length > 0
+          ? `${ready.length} vendor${ready.length === 1 ? " is" : "s are"} eligible to advance`
+          : "No vendor is decision-ready for award"}
+      </h3>
+      <p style={BODY_STYLE}>
+        {decisionView?.finalistRecommendation ??
+          "Normalized response evidence is unavailable, so Source withholds ranking and award guidance."}
+      </p>
+      {summaries.length === 0 ? (
+        <FailClosedMessage>
+          No event-specific evaluation record is available. A sample award
+          recommendation is never shown in its place.
+        </FailClosedMessage>
+      ) : (
         <div style={GRID_STYLE}>
-          {view.vendors.map((vendor) => (
-            <div key={vendor.vendorId} style={CARD_STYLE}>
-              <div style={CARD_TITLE_STYLE}>
-                {vendor.rank}. {vendor.vendorName}
+          {summaries.map((vendor) => (
+            <article key={vendor.vendorId} style={CARD_STYLE}>
+              <div style={CARD_HEADER_STYLE}>
+                <div>
+                  <div style={CARD_TITLE_STYLE}>{vendor.vendorName}</div>
+                  <div style={META_STYLE}>
+                    Provisional score {vendor.weightedScore.toFixed(1)}/10
+                  </div>
+                </div>
+                <span
+                  style={{
+                    ...SEVERITY_PILL_STYLE,
+                    ...(vendor.recommendation === "hold_until_clarified"
+                      ? SEVERITY_RISK_STYLE
+                      : SEVERITY_GOOD_STYLE),
+                  }}
+                >
+                  {labelize(vendor.recommendation)}
+                </span>
               </div>
-              <div style={META_STYLE}>
-                {labelize(vendor.status)} · Overall {vendor.scores.overall}
+              <p style={BODY_STYLE}>{vendor.decisionRationale}</p>
+              <div style={SECTION_STYLE}>
+                <div style={SECTION_TITLE_STYLE}>Conditions</div>
+                <CompactList
+                  items={vendor.conditions.slice(0, 4)}
+                  emptyLabel="No unresolved conditions recorded."
+                />
               </div>
-              <div style={BODY_STYLE}>{vendor.decisionNote}</div>
-            </div>
+            </article>
           ))}
         </div>
-      </section>
-    );
-  }
+      )}
+    </section>
+  );
+}
 
-  if (stage === "transition") {
-    const view = buildTransitionReadinessView();
-    return (
-      <section
-        data-testid="source-stage-decision-lens"
-        style={PANEL_STYLE}
-        aria-label="Transition readiness"
-      >
-        <div style={EYEBROW_STYLE}>Transition readiness</div>
-        <h3 style={TITLE_STYLE}>
-          {view.summary.goNoGoMetCount}/{view.summary.goNoGoTotalCount} go/no-go
-          checks met
-        </h3>
-        <p style={BODY_STYLE}>{view.atlasGuidance}</p>
+function TransitionEvidenceLens({
+  profileSet,
+}: {
+  profileSet?: VendorResponseProfileSet | null;
+}) {
+  const profiles = profileSet?.profiles ?? [];
+  return (
+    <section
+      data-testid="source-stage-decision-lens"
+      style={PANEL_STYLE}
+      aria-label="Transition evidence"
+    >
+      <div style={EYEBROW_STYLE}>Transition evidence</div>
+      <h3 style={TITLE_STYLE}>
+        Proposal commitments are not execution readiness
+      </h3>
+      <p style={BODY_STYLE}>
+        These commitments come from normalized vendor responses. Go-live
+        readiness remains blocked until an awarded vendor, accepted plan, named
+        owners, dates, dependencies, and entry/exit evidence exist.
+      </p>
+      {profiles.length === 0 ? (
+        <FailClosedMessage>
+          No normalized proposal commitments are available for this event.
+        </FailClosedMessage>
+      ) : (
         <div style={GRID_STYLE}>
-          {view.vendors.map((vendor) => (
-            <div key={vendor.vendorId} style={CARD_STYLE}>
-              <div style={CARD_TITLE_STYLE}>{vendor.vendorLabel}</div>
-              <div style={META_STYLE}>{labelize(vendor.overallStatus)}</div>
-              <div style={BODY_STYLE}>
-                {vendor.blockerSummary ?? "No blocker summary recorded."}
-              </div>
-            </div>
+          {profiles.map((profile) => (
+            <article key={profile.vendorId} style={CARD_STYLE}>
+              <div style={CARD_TITLE_STYLE}>{profile.vendorName}</div>
+              <p style={BODY_STYLE}>
+                {profile.transitionCommitments || "Not established"}
+              </p>
+            </article>
           ))}
         </div>
-      </section>
-    );
-  }
+      )}
+    </section>
+  );
+}
 
-  return null;
+function hasComparablePricing(profile: VendorResponseProfile): boolean {
+  return [
+    profile.pricingSummary.yearOneRunCostUsd,
+    profile.pricingSummary.transitionCostUsd,
+    profile.pricingSummary.fiveYearTcoUsd,
+  ].some((value) => typeof value === "number" && Number.isFinite(value));
+}
+
+function formatMoney(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "Not established";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
 }
 
 function labelize(value: string): string {
@@ -143,106 +307,6 @@ function SummaryDatum({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PricingVendorCard({ vendor }: { vendor: PricingVendorCompleteness }) {
-  const topGap = vendor.gaps[0];
-
-  return (
-    <article
-      data-testid={`source-pricing-vendor-${vendor.vendorId}`}
-      style={CARD_STYLE}
-    >
-      <div style={CARD_HEADER_STYLE}>
-        <div>
-          <div style={CARD_TITLE_STYLE}>{vendor.vendorName}</div>
-          <div style={META_STYLE}>{labelize(vendor.comparabilityStatus)}</div>
-        </div>
-        <SeverityPill
-          severity={
-            vendor.blockerCount > 0
-              ? "blocker"
-              : vendor.riskCount > 0
-                ? "risk"
-                : "advisory"
-          }
-          label={
-            vendor.blockerCount > 0
-              ? `${vendor.blockerCount} blocker${vendor.blockerCount === 1 ? "" : "s"}`
-              : `${vendor.riskCount} risk${vendor.riskCount === 1 ? "" : "s"}`
-          }
-        />
-      </div>
-      <p style={BODY_STYLE}>{vendor.comparabilityReason}</p>
-      <div style={PRICE_GRID_STYLE}>
-        <SummaryDatum
-          label="YR2+ run"
-          value={formatMoney(vendor.annualRunCostUsd)}
-        />
-        <SummaryDatum
-          label="Transition"
-          value={formatMoney(vendor.transitionCostUsd)}
-        />
-      </div>
-      <div style={SECTION_STYLE}>
-        <div style={SECTION_TITLE_STYLE}>Assumptions</div>
-        <CompactList
-          items={vendor.assumptions}
-          emptyLabel="No assumptions listed."
-        />
-      </div>
-      <div style={SECTION_STYLE}>
-        <div style={SECTION_TITLE_STYLE}>Exclusions</div>
-        <CompactList
-          items={vendor.exclusions}
-          emptyLabel="No exclusions listed."
-        />
-      </div>
-      {topGap ? (
-        <div style={GAP_LIST_STYLE}>
-          <PricingGapRow gap={topGap} />
-        </div>
-      ) : null}
-    </article>
-  );
-}
-
-function PricingGapRow({ gap }: { gap: PricingCompletenessGap }) {
-  return (
-    <div style={GAP_ROW_STYLE}>
-      <div style={{ minWidth: 0 }}>
-        <div style={GAP_TITLE_STYLE}>
-          <SeverityPill
-            severity={gap.severity}
-            label={labelize(gap.severity)}
-          />
-          <span>{gap.label}</span>
-        </div>
-        <p style={BODY_STYLE}>{gap.detail}</p>
-      </div>
-      <div style={NEXT_ACTION_STYLE}>
-        <div style={META_STYLE}>Next action</div>
-        <div>{gap.nextAction}</div>
-      </div>
-    </div>
-  );
-}
-
-function SeverityPill({
-  severity,
-  label,
-}: {
-  severity: PricingGapSeverity;
-  label: string;
-}) {
-  const tone =
-    severity === "blocker"
-      ? SEVERITY_BLOCKER_STYLE
-      : severity === "risk"
-        ? SEVERITY_RISK_STYLE
-        : SEVERITY_ADVISORY_STYLE;
-
-  return <span style={{ ...SEVERITY_PILL_STYLE, ...tone }}>{label}</span>;
-}
-
 function CompactList({
   items,
   emptyLabel,
@@ -250,10 +314,7 @@ function CompactList({
   items: readonly string[];
   emptyLabel: string;
 }) {
-  if (items.length === 0) {
-    return <p style={BODY_STYLE}>{emptyLabel}</p>;
-  }
-
+  if (items.length === 0) return <p style={BODY_STYLE}>{emptyLabel}</p>;
   return (
     <ul style={COMPACT_LIST_STYLE}>
       {items.map((item) => (
@@ -263,222 +324,144 @@ function CompactList({
   );
 }
 
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    currency: "USD",
-    maximumFractionDigits: 0,
-    style: "currency",
-  }).format(value);
+function FailClosedMessage({ children }: { children: string }) {
+  return (
+    <div data-testid="source-stage-decision-lens-empty" style={EMPTY_STYLE}>
+      {children}
+    </div>
+  );
 }
 
 const PANEL_STYLE: CSSProperties = {
+  background: CANVAS.CARD,
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
   display: "grid",
-  gap: 12,
-  marginTop: 16,
-  padding: "16px 18px",
-  border: `1px solid ${CANVAS.HAIRLINE}`,
-  borderRadius: 8,
-  background: "#fff",
+  gap: 14,
+  padding: 16,
 };
-
 const EYEBROW_STYLE: CSSProperties = {
+  color: CANVAS.INK_MUTED,
   fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  letterSpacing: "0.14em",
+  fontSize: CANVAS.T_MICRO,
+  fontWeight: 800,
+  letterSpacing: "0.12em",
   textTransform: "uppercase",
-  color: CANVAS.GRAY_DK,
 };
-
 const TITLE_STYLE: CSSProperties = {
-  margin: 0,
+  color: CANVAS.INK,
   fontFamily: CANVAS.SERIF,
-  fontSize: 20,
-  color: CANVAS.INK,
-  lineHeight: 1.2,
-};
-
-const BODY_STYLE: CSSProperties = {
+  fontSize: 23,
+  lineHeight: 1.15,
   margin: 0,
-  fontFamily: CANVAS.SANS,
-  fontSize: 13,
-  lineHeight: 1.5,
+};
+const BODY_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
+  fontSize: CANVAS.T_BODY_SMALL,
+  lineHeight: 1.5,
+  margin: 0,
 };
-
-const GRID_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: 10,
-};
-
-const DRILLDOWN_GRID_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-  gap: 10,
-};
-
-const CARD_STYLE: CSSProperties = {
-  display: "grid",
-  gap: 10,
-  padding: "12px 14px",
-  border: `1px solid ${CANVAS.HAIRLINE}`,
-  borderRadius: 8,
-  background: CANVAS.PAGE_BG,
-};
-
-const CARD_HEADER_STYLE: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 10,
-  alignItems: "flex-start",
-};
-
-const CARD_TITLE_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 13,
-  fontWeight: 700,
-  color: CANVAS.INK,
-};
-
-const META_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: CANVAS.GRAY_DK,
-};
-
 const SUMMARY_BAR_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.RULE}`,
   display: "grid",
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-  gap: 0,
-  border: `1px solid ${CANVAS.HAIRLINE}`,
-  borderRadius: 8,
-  overflow: "hidden",
 };
-
 const SUMMARY_DATUM_STYLE: CSSProperties = {
+  borderRight: `1px solid ${CANVAS.RULE}`,
   display: "grid",
   gap: 4,
-  padding: "10px 12px",
-  borderRight: `1px solid ${CANVAS.HAIRLINE}`,
-  background: "#fff",
+  minWidth: 0,
+  padding: 12,
 };
-
 const SUMMARY_VALUE_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SERIF,
+  color: CANVAS.INK,
   fontSize: 19,
-  lineHeight: 1.1,
-  color: CANVAS.INK,
-};
-
-const PRICE_GRID_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: 8,
-};
-
-const SECTION_STYLE: CSSProperties = {
-  display: "grid",
-  gap: 6,
-};
-
-const SECTION_TITLE_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 12,
   fontWeight: 800,
-  color: CANVAS.INK,
 };
-
-const COMPACT_LIST_STYLE: CSSProperties = {
-  margin: 0,
-  paddingLeft: 18,
-  fontFamily: CANVAS.SANS,
-  fontSize: 12,
-  lineHeight: 1.45,
-  color: CANVAS.INK_SOFT,
-};
-
-const GAP_LIST_STYLE: CSSProperties = {
+const DRILLDOWN_GRID_STYLE: CSSProperties = {
   display: "grid",
-  gap: 8,
-};
-
-const GAP_ROW_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(180px, 0.45fr)",
   gap: 12,
-  padding: "10px 12px",
-  border: `1px solid ${CANVAS.HAIRLINE}`,
-  borderRadius: 8,
-  background: "#fff",
+  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
 };
-
-const GAP_TITLE_STYLE: CSSProperties = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: 7,
-  alignItems: "center",
-  fontFamily: CANVAS.SANS,
-  fontSize: 12.5,
-  fontWeight: 800,
-  color: CANVAS.INK,
-};
-
-const NEXT_ACTION_STYLE: CSSProperties = {
+const GRID_STYLE: CSSProperties = DRILLDOWN_GRID_STYLE;
+const CARD_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
   display: "grid",
-  alignContent: "start",
-  gap: 4,
-  fontFamily: CANVAS.SANS,
-  fontSize: 12,
-  lineHeight: 1.35,
-  color: CANVAS.INK,
+  gap: 12,
+  padding: 14,
 };
-
-const SEVERITY_PILL_STYLE: CSSProperties = {
-  borderRadius: 999,
-  display: "inline-flex",
-  fontFamily: CANVAS.MONO,
-  fontSize: 9,
+const CARD_HEADER_STYLE: CSSProperties = {
+  alignItems: "start",
+  display: "flex",
+  gap: 10,
+  justifyContent: "space-between",
+};
+const CARD_TITLE_STYLE: CSSProperties = {
+  color: CANVAS.INK,
+  fontSize: 15,
   fontWeight: 800,
-  lineHeight: 1,
-  padding: "4px 6px",
+};
+const META_STYLE: CSSProperties = {
+  color: CANVAS.INK_MUTED,
+  fontFamily: CANVAS.MONO,
+  fontSize: CANVAS.T_MICRO,
   textTransform: "uppercase",
 };
-
-const SEVERITY_BLOCKER_STYLE: CSSProperties = {
-  background: "#fbe9ea",
-  color: "#9f2f37",
+const PRICE_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
 };
-
-const SEVERITY_RISK_STYLE: CSSProperties = {
-  background: "#fff1df",
-  color: "#8a4d11",
+const SECTION_STYLE: CSSProperties = {
+  borderTop: `1px solid ${CANVAS.RULE}`,
+  display: "grid",
+  gap: 6,
+  paddingTop: 10,
 };
-
-const SEVERITY_ADVISORY_STYLE: CSSProperties = {
-  background: "#e9f5ef",
-  color: "#1f6a4f",
-};
-
-const DISABLED_ACTION_STYLE: CSSProperties = {
-  border: `1px solid ${CANVAS.HAIRLINE}`,
-  borderRadius: 8,
-  background: "#e8e0d4",
-  color: "#81786a",
-  cursor: "not-allowed",
-  fontFamily: CANVAS.SANS,
-  fontSize: 13,
-  fontWeight: 800,
-  justifySelf: "start",
-  minHeight: 38,
-  padding: "0 14px",
-};
-
-const DISCLAIMER_STYLE: CSSProperties = {
-  margin: 0,
-  fontFamily: CANVAS.SANS,
+const SECTION_TITLE_STYLE: CSSProperties = {
+  color: CANVAS.INK,
   fontSize: 12,
+  fontWeight: 800,
+};
+const COMPACT_LIST_STYLE: CSSProperties = {
+  color: CANVAS.INK_SOFT,
+  display: "grid",
+  fontSize: CANVAS.T_BODY_SMALL,
+  gap: 6,
   lineHeight: 1.45,
-  color: CANVAS.GRAY_DK,
+  margin: 0,
+  paddingLeft: 18,
+};
+const SEVERITY_PILL_STYLE: CSSProperties = {
+  border: "1px solid currentColor",
+  borderRadius: 999,
+  fontFamily: CANVAS.MONO,
+  fontSize: CANVAS.T_MICRO,
+  fontWeight: 800,
+  padding: "4px 7px",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+const SEVERITY_GOOD_STYLE: CSSProperties = {
+  background: "#eaf8f3",
+  color: "#08715e",
+};
+const SEVERITY_RISK_STYLE: CSSProperties = {
+  background: "#fff4e5",
+  color: "#9a5d00",
+};
+const EMPTY_STYLE: CSSProperties = {
+  background: "#fff8e8",
+  border: "1px solid #d8a344",
+  color: "#6d4b12",
+  fontSize: CANVAS.T_BODY_SMALL,
+  lineHeight: 1.5,
+  padding: 12,
+};
+const DISCLAIMER_STYLE: CSSProperties = {
+  color: CANVAS.INK_MUTED,
+  fontFamily: CANVAS.MONO,
+  fontSize: CANVAS.T_MICRO,
+  lineHeight: 1.45,
+  margin: 0,
 };

@@ -50,6 +50,8 @@ describe("VendorEvaluationScorecardPanel", () => {
     expect(html).toContain("BAFO Improvement Scenario");
     expect(html).toContain("Held");
     expect(html).toContain("pending evidence");
+    expect(html).toContain("no score uplift is asserted");
+    expect(html).not.toContain("+0.0 pts");
     expect(html).toContain("score remains provisional");
     expect(html).toContain("Decision brief");
     expect(html).toContain("DOCX");
