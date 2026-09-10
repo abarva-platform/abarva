@@ -14,15 +14,16 @@ export function SourceWorkspaceLoadingShell({
         flexDirection: "column",
       }}
     >
-      <div
+      <nav
+        aria-label="Main application navigation"
         style={{
-          height: 56,
-          background: "#0a0a0b",
+          minHeight: 64,
+          background: "#08080b",
           color: "#fff",
           display: "flex",
           alignItems: "center",
-          gap: 18,
-          padding: "0 40px",
+          gap: 20,
+          padding: "0 32px",
           flexShrink: 0,
         }}
       >
@@ -37,29 +38,55 @@ export function SourceWorkspaceLoadingShell({
         </span>
         <span
           style={{
-            fontFamily: "JetBrains Mono, monospace",
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: ".16em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,.62)",
-          }}
-        >
-          Source 360
-        </span>
-        <span
-          style={{
-            marginLeft: "auto",
-            fontFamily: "JetBrains Mono, monospace",
-            fontSize: 10,
-            letterSpacing: ".12em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,.62)",
+            paddingLeft: 18,
+            borderLeft: "1px solid rgba(255,255,255,.18)",
+            fontFamily: "Fraunces, Georgia, serif",
+            fontSize: 14,
+            fontStyle: "italic",
+            fontWeight: 520,
+            color: "rgba(255,255,255,.82)",
           }}
         >
           {tenantName}
         </span>
-      </div>
+        <div
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          {["Home", "Intelligence", "Moves", "Source", "Tower"].map((label) => (
+            <a
+              key={label}
+              href={
+                label === "Home"
+                  ? "/home"
+                  : label === "Moves"
+                    ? "/strategic-moves"
+                    : `/${label.toLowerCase()}`
+              }
+              aria-current={label === "Source" ? "page" : undefined}
+              style={{
+                minHeight: 36,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 8,
+                background: label === "Source" ? "#fff" : "transparent",
+                color: label === "Source" ? "#0a0a0b" : "rgba(255,255,255,.68)",
+                padding: "0 14px",
+                fontSize: 13,
+                fontWeight: 760,
+                textDecoration: "none",
+              }}
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+      </nav>
       <div style={{ padding: "28px 40px 40px" }}>
         <p
           style={{
@@ -84,7 +111,7 @@ export function SourceWorkspaceLoadingShell({
             lineHeight: 1.1,
           }}
         >
-          Preparing the governed contract book.
+          Preparing Source command center.
         </h1>
         <p
           style={{
@@ -95,41 +122,44 @@ export function SourceWorkspaceLoadingShell({
             lineHeight: 1.55,
           }}
         >
-          Opening portfolio rows and vendor rollups first. Evidence coverage
-          and action candidates hydrate after the executive view is visible.
+          Opening portfolio rows and vendor rollups first. Evidence coverage and
+          action candidates hydrate after the executive view is visible.
         </p>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(6, minmax(112px, 1fr))",
-            border: "1px solid rgba(10,10,11,.22)",
-            borderBottom: "3px solid #0a0a0b",
+            gridTemplateColumns: "repeat(5, minmax(112px, 1fr))",
+            gap: 24,
+            borderBottom: "1px solid rgba(10,10,11,.22)",
             background: "#f5f1eb",
             maxWidth: 920,
           }}
         >
-          {[
-            "Verdict",
-            "Vendors",
-            "Contracts",
-            "Optimize",
-            "Evidence",
-            "Contract graph",
-          ].map((label) => (
-            <div
-              key={label}
-              style={{
-                padding: "16px 18px",
-                borderRight: "1px solid rgba(10,10,11,.22)",
-                background: label === "Verdict" ? "#0a0a0b" : "#fff",
-                color: label === "Verdict" ? "#fff" : "#5f5e5a",
-                fontWeight: 800,
-                textAlign: "center",
-              }}
-            >
-              {label}
-            </div>
-          ))}
+          {["Command", "Contracts", "Levers", "Evidence", "Coverage"].map(
+            (label) => (
+              <div
+                key={label}
+                style={{
+                  minHeight: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "1px solid transparent",
+                  borderBottom: 0,
+                  borderRadius: "8px 8px 0 0",
+                  padding: "0 14px",
+                  background: label === "Command" ? "#e1f5ee" : "transparent",
+                  color: label === "Command" ? "#0f6e56" : "#0a0a0b",
+                  fontWeight: 800,
+                  textAlign: "center",
+                  boxShadow:
+                    label === "Command" ? "inset 0 -3px 0 #1d9e75" : "none",
+                }}
+              >
+                {label}
+              </div>
+            ),
+          )}
         </div>
         <div
           style={{

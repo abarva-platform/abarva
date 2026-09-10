@@ -110,7 +110,13 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listVendorContractPortfolio: jest.fn(),
 }));
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -373,6 +379,15 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByLabelText("Source workspace header")).toBeNull();
     expect(screen.queryByLabelText("Source workspace sidebar")).toBeNull();
     expect(screen.queryByText("Nexus Source")).toBeNull();
+    const appNav = screen.getByRole("navigation", {
+      name: "Main application navigation",
+    });
+    expect(appNav).toBeTruthy();
+    expect(
+      within(appNav)
+        .getByRole("link", { name: "Source" })
+        .getAttribute("aria-current"),
+    ).toBe("page");
     expect(
       screen.getByRole("heading", {
         name: "Meridian Health contract actions, governed by evidence.",

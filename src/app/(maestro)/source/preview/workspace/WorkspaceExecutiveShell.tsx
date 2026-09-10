@@ -741,6 +741,7 @@ export function WorkspaceExecutiveShell({
 
   return (
     <main className="sw-v2-shell" aria-label="Source workspace">
+      <SourceWorkspaceAppNav tenantName={tenantName} />
       <section ref={mainRef} className="sw-v2-main">
         <header className="sw-v2-topbar">
           <div>
@@ -927,6 +928,40 @@ export function WorkspaceExecutiveShell({
         />
       </section>
     </main>
+  );
+}
+
+function SourceWorkspaceAppNav({
+  tenantName,
+}: {
+  readonly tenantName: string;
+}) {
+  const items = [
+    { label: "Home", href: "/home" },
+    { label: "Intelligence", href: "/intelligence" },
+    { label: "Moves", href: "/strategic-moves" },
+    { label: "Source", href: "/source/workspace", active: true },
+    { label: "Tower", href: "/tower" },
+  ];
+  return (
+    <nav className="sw-v2-app-nav" aria-label="Main application navigation">
+      <a className="sw-v2-app-brand" href="/home" aria-label="AbarVa home">
+        Abar<span>Va</span>
+      </a>
+      <span className="sw-v2-app-tenant">{tenantName}</span>
+      <div className="sw-v2-app-links">
+        {items.map((item) => (
+          <a
+            key={item.label}
+            href={item.href}
+            className={item.active ? "is-active" : ""}
+            aria-current={item.active ? "page" : undefined}
+          >
+            {item.label}
+          </a>
+        ))}
+      </div>
+    </nav>
   );
 }
 
