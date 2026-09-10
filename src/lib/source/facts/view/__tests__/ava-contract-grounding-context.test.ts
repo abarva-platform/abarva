@@ -319,6 +319,81 @@ describe("buildAvaSourceContractGrounding", () => {
     );
   });
 
+  it("gives aVa copy-ready export rows with owner, timing, and signal-stage limits", async () => {
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({
+        opportunities: [
+          opportunity({
+            opportunityId: "CTR-090:retime",
+            shortLabel: "Re-time commitment",
+            valueType: "negotiated_improvement",
+            amountUsd: 1_480_000,
+            amountState: "exact",
+            stage: "quantified",
+            evidenceGrade: "document_evidenced",
+            negotiationDetail: {
+              buyerAsk: "Move the Year 2 commitment to match production gates.",
+              negotiationLanguage:
+                "Re-time annual commitment to program delivery pace.",
+              vendorConcession:
+                "Preserves the account while aligning payment to adoption.",
+              timingDependency: "Before Year 2 lock-in.",
+              ownerRole: "VP Technology Sourcing",
+              priority: "P0",
+              riskIfIgnored: "Auto-renew preserves unused capacity.",
+            },
+          }),
+          opportunity({
+            opportunityId: "CTR-090:discount",
+            shortLabel: "Discount band review",
+            valueType: "negotiated_improvement",
+            amountUsd: null,
+            amountState: "not_sized",
+            stage: "signal",
+            confidence: 0.35,
+            evidenceGrade: "missing",
+            blockingGap: "Benchmark comparable not loaded",
+            negotiationDetail: {
+              buyerAsk: "Review the discount band after a benchmark comparable is loaded.",
+              negotiationLanguage:
+                "Do not re-open price until a comparable is accepted.",
+              vendorConcession:
+                "Vendor can agree once the buyer proves comparable market terms.",
+              timingDependency: "Hold back until benchmark evidence is ready.",
+              ownerRole: "Strategic Sourcing",
+              priority: "P5",
+              riskIfIgnored: "Premature pricing ask reopens term length.",
+            },
+          }),
+        ],
+      }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(block).toContain("CONTRACT OPTIMIZATION EXPORT ROWS");
+    expect(block).toContain(
+      "Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet",
+    );
+    expect(block).toContain("Lever: Re-time commitment");
+    expect(block).toContain("Value state: $1.5M");
+    expect(block).toContain(
+      "Owner / timing: VP Technology Sourcing / Before Year 2 lock-in.",
+    );
+    expect(block).toContain("Lever: Discount band review");
+    expect(block).toContain(
+      "Value state: Not sized - needs evidence before it carries a number",
+    );
+    expect(block).toContain("blocking gap: Benchmark comparable not loaded");
+    expect(block).toContain(
+      "answer with only a short executive read and the required lever table",
+    );
+    expect(block).toContain("Do not add sections named VISUALS");
+  });
+
   it("separates reproducible value from value nothing can rebuild", async () => {
     getContractOptimizationOpportunitySet.mockResolvedValue(
       opportunitySet({
