@@ -13,7 +13,13 @@
 // them — a behavioral assertion, not a shape/snapshot check.
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -298,7 +304,21 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
     } as SourcingEventSummary;
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ ok: true }),
+      json: async () => ({
+        ok: true,
+        review: {
+          actionLabel:
+            "Reviewed parsed evidence: Requirements and service levels",
+          reviewer: {
+            displayName: "Evidence Reviewer",
+            email: "reviewer@example.test",
+            role: "maestro",
+          },
+          targetState: "Available",
+          disclaimer:
+            "Confirms parsed evidence availability only; it is not content approval.",
+        },
+      }),
     });
     const previousFetch = global.fetch;
     global.fetch = fetchMock as unknown as typeof fetch;
@@ -327,7 +347,9 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
       const sourcingRulesRow = screen.getByTestId(
         "source-stage-evidence-checklist-row-EVID-SRC-RFP-SOURCING-RULES",
       );
-      expect(sourcingRulesRow).toHaveTextContent("Procurement / sourcing owner");
+      expect(sourcingRulesRow).toHaveTextContent(
+        "Procurement / sourcing owner",
+      );
       expect(sourcingRulesRow).toHaveTextContent("DOCX, PDF, XLSX, CSV");
 
       const securityRow = screen.getByTestId(
@@ -343,19 +365,23 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
           name: "Review parsed evidence",
         }),
       );
-      const rationale = within(requirementsRow).getByLabelText(
+      const rationale = (await within(requirementsRow).findByLabelText(
         "Review rationale for Requirements and service levels",
-      ) as HTMLTextAreaElement;
+      )) as HTMLTextAreaElement;
       expect(rationale.value).toContain("source-requirement-intake.csv");
+      expect(requirementsRow).toHaveTextContent(
+        "Reviewer: Evidence Reviewer (reviewer@example.test)",
+      );
+      expect(requirementsRow).toHaveTextContent("not content approval");
       fireEvent.click(
         within(requirementsRow).getByRole("button", {
-          name: "Confirm evidence",
+          name: "Record evidence review",
         }),
       );
 
       await waitFor(() =>
         expect(fetchMock).toHaveBeenCalledWith(
-          "/api/v1/source/evt-1/evidence/EVID-SRC-RFP-REQUIREMENTS/answer",
+          "/api/v1/source/evt-1/evidence/EVID-SRC-RFP-REQUIREMENTS/availability-review",
           expect.objectContaining({ method: "POST" }),
         ),
       );

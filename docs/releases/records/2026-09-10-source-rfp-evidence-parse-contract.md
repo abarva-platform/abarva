@@ -31,7 +31,7 @@ Parsed evidence that needs a higher authority state can now be reviewed and conf
 - Canonical RFP evidence requirement accepts CSV for structured sourcing rules.
 - Source canvas resolves sourcing-system requirements to the procurement/sourcing owner.
 - Risk-control evidence resolves to the risk/security owner before generic source-system matching.
-- Parsed checklist evidence exposes an explicit human review form that records the rationale through the existing tenant-scoped evidence-answer route.
+- Parsed checklist evidence exposes an explicit human availability-review form. Follow-up release `2026-09-10-source-evidence-review-contract` separates that record from client-stated answers and content approval.
 - Focused behavior tests cover both contracts.
 
 ## QA / Validation
