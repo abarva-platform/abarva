@@ -11,10 +11,11 @@ const CHECKS = [
     mustContain: [
       "/home/preview?tenant=",
       "provider=ecl_projection_db",
+      "diagnosticsPath(",
       "/750\\s+applications/i",
-      "/1350\\s+data\\s+flows/i",
+      "/1350\\s+data\\s+flows|Current-state data flow\\s+1350/i",
       "/230\\s+contracts/i",
-      "/220\\s+(?:infra|infrastructure)/i",
+      "/220\\s+(?:infra|infrastructure)|Infrastructure & Platforms\\s+220/i",
     ],
   },
   {

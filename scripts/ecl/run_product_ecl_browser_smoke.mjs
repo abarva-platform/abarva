@@ -79,21 +79,26 @@ function eclPath(path, separator = "?") {
   return `${path}${separator}provider=ecl_projection_db`;
 }
 
+function diagnosticsPath(path) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}diagnostics=ecl`;
+}
+
 const ROUTES = [
   {
     key: "home_preview_ecl",
-    path: eclPath(`/home/preview?tenant=${encodeURIComponent(TENANT_KEY)}`, "&"),
+    path: diagnosticsPath(eclPath(`/home/preview?tenant=${encodeURIComponent(TENANT_KEY)}`, "&")),
     requiredText: [
       new RegExp(EXPECTED_TENANT_NAME.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
       /750\s+applications/i,
-      /1350\s+data\s+flows/i,
-      /230\s+contracts/i,
-      /220\s+(?:infra|infrastructure)/i,
+      /1350\s+data\s+flows|Current-state data flow\s+1350/i,
+      /230\s+contracts|Vendor Contracts\s+230/i,
+      /220\s+(?:infra|infrastructure)|Infrastructure & Platforms\s+220/i,
     ],
   },
   {
     key: "source_workspace_ecl",
-    path: eclPath("/source/preview/workspace"),
+    path: diagnosticsPath(eclPath("/source/preview/workspace")),
     requiredText: [
       new RegExp(`${EXPECTED_TENANT_NAME.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}|Source`, "i"),
       /230\s+contracts/i,
@@ -102,12 +107,12 @@ const ROUTES = [
   },
   {
     key: "tower_ecl",
-    path: eclPath("/tower"),
+    path: diagnosticsPath(eclPath("/tower")),
     requiredText: [/IT INVESTMENT TOWER|Tower/i, /Value Proof/i, /Decision Lanes/i, /AI Portfolio/i],
   },
   {
     key: "intelligence_ecl",
-    path: eclPath("/intelligence"),
+    path: diagnosticsPath(eclPath("/intelligence")),
     requiredText: [
       /Intelligence context pack projection is loaded/i,
       /Permitted facts/i,

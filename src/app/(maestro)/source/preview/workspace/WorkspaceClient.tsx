@@ -18,11 +18,12 @@ import {
   type AttachmentRef,
   type ChatMessage,
 } from "@/components/agent/AgentDock";
+import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
+import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import type { AskSource } from "@/lib/intelligence/ask/types";
-import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { Tooltip } from "./Tooltip";
 import { WorkspaceExecutiveShell } from "./WorkspaceExecutiveShell";
 
@@ -291,8 +292,15 @@ export function WorkspaceClient({
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const diagnostics = params.get("diagnostics")?.trim().toLowerCase();
+    const debug = params.get("debug")?.trim().toLowerCase();
     setShowEclDiagnostics(
-      params.get("diagnostics") === "1" || params.get("debug") === "1",
+      diagnostics === "1" ||
+        diagnostics === "ecl" ||
+        diagnostics === "serving" ||
+        debug === "1" ||
+        debug === "ecl" ||
+        debug === "serving",
     );
   }, []);
 
@@ -540,7 +548,10 @@ export function WorkspaceClient({
         </div>
       ) : null}
       {showEclDiagnostics ? (
-        <EclServingSurfaceCoverage product="source" />
+        <>
+          <EclDemoFindingsPanel product="source" />
+          <EclServingSurfaceCoverage product="source" />
+        </>
       ) : null}
 
       <div
