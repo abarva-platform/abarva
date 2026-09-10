@@ -6,7 +6,11 @@
   margin: 0;
   background: #f5f1eb;
   color: #2c2c2a;
-  font-family: Inter, -apple-system, system-ui, sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    system-ui,
+    sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -58,6 +62,11 @@
   border-top: 3px solid #0a0a0b;
   background: #faf7f1;
   padding: 26px;
+}
+
+.sw-v2-content-canvas.is-contract-detail {
+  min-height: clamp(520px, calc(100vh - 275px), 920px);
+  padding: 18px;
 }
 
 .sw-v2-claim-contract {
@@ -146,6 +155,81 @@
 .sw-v2-horizontal-tabs button:hover {
   background: #faf7f1;
   color: #0a0a0b;
+}
+
+.sw-v2-contract-commandbar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  margin: 14px 0 14px;
+  padding: 8px;
+  border: 1px solid #d3d1c7;
+  border-bottom: 3px solid #0a0a0b;
+  border-radius: 8px;
+  background: rgba(250, 247, 241, 0.96);
+  box-shadow: 0 10px 22px rgba(10, 10, 11, 0.08);
+}
+
+.sw-v2-contract-commandbar button {
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #4f4d48;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sw-v2-contract-commandbar button:hover {
+  background: #fff;
+  border-color: #d3d1c7;
+  color: #0a0a0b;
+}
+
+.sw-v2-contract-command {
+  background: #fff !important;
+  border-color: #d3d1c7 !important;
+}
+
+.sw-v2-contract-commandbar-tabs {
+  display: flex;
+  gap: 3px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.sw-v2-contract-commandbar-tabs button.is-active {
+  background: #0a0a0b;
+  border-color: #0a0a0b;
+  color: #fff;
+  box-shadow: inset 0 -4px 0 #ba7517;
+}
+
+.sw-v2-contract-commandbar-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.sw-v2-contract-commandbar-actions button {
+  background: #e1f5ee;
+  border-color: rgba(29, 158, 117, 0.35);
+  color: #0f6e56;
+}
+
+.sw-v2-contract-commandbar-id {
+  color: #888780;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .sw-v2-impact-load-badge {
@@ -576,9 +660,15 @@
   align-items: start;
 }
 
+.sw-v2-contract-detail-grid {
+  grid-template-columns: minmax(0, 1.85fr) minmax(280px, 0.75fr);
+}
+
 .sw-v2-verdict-grid {
-  grid-template-columns:
-    minmax(0, 1.35fr) minmax(255px, 0.74fr) minmax(255px, 0.74fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(255px, 0.74fr) minmax(
+      255px,
+      0.74fr
+    );
   grid-template-areas:
     "position action evidence"
     "vendors vendors quality";
@@ -627,6 +717,110 @@
 
 .sw-v2-lede {
   margin: 10px 0 0;
+}
+
+.sw-v2-contract-story-panel {
+  padding: 18px;
+}
+
+.sw-v2-contract-context-panel {
+  position: sticky;
+  top: 64px;
+}
+
+.sw-v2-contract-story {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.75fr);
+  gap: 18px;
+  align-items: stretch;
+  margin: 14px 0 16px;
+  border: 1px solid rgba(10, 10, 11, 0.1);
+  border-left: 5px solid #1d9e75;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fffdfa 0%, #f7f2e8 100%);
+  padding: 18px;
+}
+
+.sw-v2-contract-story.is-optimize {
+  border-left-color: #ba7517;
+}
+
+.sw-v2-contract-story.is-economics {
+  border-left-color: #2d6cdf;
+}
+
+.sw-v2-contract-story > div:first-child > span {
+  color: #0f6e56;
+  display: block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  margin-bottom: 7px;
+  text-transform: uppercase;
+}
+
+.sw-v2-contract-story h2 {
+  margin: 0;
+  color: #0a0a0b;
+  font-size: 22px;
+  line-height: 1.18;
+  letter-spacing: 0;
+}
+
+.sw-v2-contract-story p {
+  margin: 9px 0 0;
+  color: #4f4d48;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.sw-v2-contract-story small {
+  display: block;
+  margin-top: 10px;
+  color: #8c5510;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.sw-v2-contract-story dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-content: stretch;
+  margin: 0;
+}
+
+.sw-v2-contract-story dl div {
+  min-width: 0;
+  border: 1px solid rgba(10, 10, 11, 0.09);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 10px;
+}
+
+.sw-v2-contract-story dt {
+  color: #74716a;
+  font-size: 9.5px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  margin: 0 0 5px;
+  text-transform: uppercase;
+}
+
+.sw-v2-contract-story dd {
+  margin: 0;
+  color: #0a0a0b;
+  font-size: 16px;
+  font-weight: 820;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.sw-v2-contract-story-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
 }
 
 .sw-v2-decision-list,
@@ -795,8 +989,7 @@
   border-radius: 7px;
   background:
     linear-gradient(90deg, rgba(10, 10, 11, 0.035) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(10, 10, 11, 0.035) 1px, transparent 1px),
-    #faf7f1;
+    linear-gradient(0deg, rgba(10, 10, 11, 0.035) 1px, transparent 1px), #faf7f1;
   background-size: 42px 42px;
   padding: 22px;
 }
@@ -868,7 +1061,11 @@
   border: 1px solid #d3d1c7;
   border-radius: 8px;
   background:
-    linear-gradient(90deg, rgba(15, 110, 86, 0.14) var(--sw-v2-share), transparent 0),
+    linear-gradient(
+      90deg,
+      rgba(15, 110, 86, 0.14) var(--sw-v2-share),
+      transparent 0
+    ),
     #fff;
   padding: 12px;
   text-align: left;
@@ -1011,18 +1208,18 @@
 }
 
 .sw-v2-vendor-row {
-  grid-template-columns:
-    minmax(220px, 1fr) 90px 140px 90px minmax(150px, 0.8fr);
+  grid-template-columns: minmax(220px, 1fr) 90px 140px 90px minmax(150px, 0.8fr);
 }
 
 .sw-v2-vendor-depth-row {
-  grid-template-columns:
-    minmax(220px, 1.2fr) 90px 120px 120px minmax(120px, 0.8fr);
+  grid-template-columns: minmax(220px, 1.2fr) 90px 120px 120px minmax(
+      120px,
+      0.8fr
+    );
 }
 
 .sw-v2-archetype-row {
-  grid-template-columns:
-    minmax(180px, 1fr) 80px 90px 130px minmax(170px, 1fr);
+  grid-template-columns: minmax(180px, 1fr) 80px 90px 130px minmax(170px, 1fr);
 }
 
 .sw-v2-archetype-coverage-row {
@@ -1033,12 +1230,15 @@
 
 .sw-v2-contract-row {
   grid-template-columns:
-    minmax(230px, 1.4fr) minmax(170px, 1fr) minmax(120px, 0.8fr) 120px 120px;
+    minmax(230px, 1.4fr) minmax(170px, 1fr) minmax(120px, 0.8fr)
+    120px 120px;
 }
 
 .sw-v2-contract-search-row {
-  grid-template-columns:
-    minmax(250px, 1.4fr) minmax(190px, 1fr) 130px minmax(110px, 0.55fr);
+  grid-template-columns: minmax(250px, 1.4fr) minmax(190px, 1fr) 130px minmax(
+      110px,
+      0.55fr
+    );
 }
 
 .sw-v2-contract-finder {
@@ -1082,13 +1282,17 @@
 }
 
 .sw-v2-contract-depth-row {
-  grid-template-columns:
-    minmax(240px, 1.4fr) 76px 110px 76px 76px minmax(120px, 0.8fr);
+  grid-template-columns: minmax(240px, 1.4fr) 76px 110px 76px 76px minmax(
+      120px,
+      0.8fr
+    );
 }
 
 .sw-v2-financial-row {
-  grid-template-columns:
-    minmax(240px, 1.4fr) 120px 120px 130px minmax(170px, 1fr);
+  grid-template-columns: minmax(240px, 1.4fr) 120px 120px 130px minmax(
+      170px,
+      1fr
+    );
 }
 
 .sw-v2-performance-row {
@@ -1101,7 +1305,8 @@
 
 .sw-v2-opt-contract-row {
   grid-template-columns:
-    minmax(190px, 0.95fr) minmax(250px, 1.5fr) 120px minmax(170px, 1fr);
+    minmax(190px, 0.95fr) minmax(250px, 1.5fr)
+    120px minmax(170px, 1fr);
 }
 
 .sw-v2-action-queue {
@@ -1140,12 +1345,16 @@
 }
 
 .sw-v2-document-row {
-  grid-template-columns: minmax(240px, 1.4fr) minmax(170px, 0.9fr) 70px 70px minmax(150px, 0.8fr);
+  grid-template-columns:
+    minmax(240px, 1.4fr) minmax(170px, 0.9fr)
+    70px 70px minmax(150px, 0.8fr);
 }
 
 .sw-v2-graph-volume-row {
-  grid-template-columns:
-    minmax(150px, 0.8fr) minmax(210px, 1fr) 70px minmax(260px, 1.4fr);
+  grid-template-columns: minmax(150px, 0.8fr) minmax(210px, 1fr) 70px minmax(
+      260px,
+      1.4fr
+    );
 }
 
 .sw-v2-graph-spine-row {
@@ -1530,6 +1739,23 @@
     grid-template-columns: 1fr;
   }
 
+  .sw-v2-contract-commandbar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .sw-v2-contract-commandbar-tabs {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+
+  .sw-v2-contract-commandbar-id {
+    display: none;
+  }
+
+  .sw-v2-contract-context-panel {
+    position: static;
+  }
+
   .sw-v2-verdict-grid {
     grid-template-areas:
       "position"
@@ -1562,6 +1788,28 @@
     min-width: 126px;
     min-height: 44px;
     padding: 0 16px;
+  }
+
+  .sw-v2-contract-commandbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .sw-v2-contract-commandbar-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sw-v2-contract-commandbar-tabs button {
+    min-width: 108px;
+  }
+
+  .sw-v2-contract-story {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-v2-contract-story dl {
+    grid-template-columns: 1fr;
   }
 
   .sw-v2-recharts-legend {

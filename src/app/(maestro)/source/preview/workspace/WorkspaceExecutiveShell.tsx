@@ -517,52 +517,58 @@ export function WorkspaceExecutiveShell({
               <span>Evidence depth</span>
               <ImpactLoadBadge state={impactLoadState} />
             </div>
-            <div
-              className="sw-v2-control sw-v2-control-actions"
-              aria-label="Workspace action toolbar"
-            >
-              <span>Actions</span>
-              <div className="sw-v2-action-toolbar-buttons">
-                <button
-                  type="button"
-                  className="sw-v2-action-button"
-                  onClick={() => logic.select("contractList", null)}
-                >
-                  <span>View contracts</span>
-                </button>
-                <button
-                  type="button"
-                  className="sw-v2-action-button"
-                  onClick={() =>
-                    logic.select(
-                      "optimize",
-                      null,
-                      logic.state.tabs.optimize ?? "Queue",
-                    )
-                  }
-                >
-                  <span>Run optimize</span>
-                </button>
+            {selectedContractId ? null : (
+              <div
+                className="sw-v2-control sw-v2-control-actions"
+                aria-label="Workspace action toolbar"
+              >
+                <span>Actions</span>
+                <div className="sw-v2-action-toolbar-buttons">
+                  <button
+                    type="button"
+                    className="sw-v2-action-button"
+                    onClick={() => selectPage("Contracts")}
+                  >
+                    <span>View contracts</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="sw-v2-action-button"
+                    onClick={() => selectPage("Optimize")}
+                  >
+                    <span>Run optimize</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </header>
 
-        <nav
-          className="sw-v2-horizontal-tabs"
-          aria-label="Source workspace navigation"
-        >
-          {PAGE_LABELS.map((label) => (
-            <button
-              key={label}
-              type="button"
-              className={label === currentPage ? "is-active" : ""}
-              onClick={() => selectPage(label)}
-            >
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
+        {selectedContractId && selectedContract ? (
+          <ContractCommandBar
+            activeTab={logic.state.tabs.contract ?? "Story"}
+            contract={selectedContract}
+            onBackToContracts={() => logic.select("contractList", null)}
+            onOpenPortfolioPage={selectPage}
+            onOpenTab={(tab) => logic.setTab("contract", tab)}
+          />
+        ) : (
+          <nav
+            className="sw-v2-horizontal-tabs"
+            aria-label="Source workspace navigation"
+          >
+            {PAGE_LABELS.map((label) => (
+              <button
+                key={label}
+                type="button"
+                className={label === currentPage ? "is-active" : ""}
+                onClick={() => selectPage(label)}
+              >
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+        )}
 
         {selectedContractId ? null : (
           <section className="sw-v2-metrics" aria-label="Portfolio facts">
@@ -626,13 +632,17 @@ export function WorkspaceExecutiveShell({
         )}
 
         <section
-          className="sw-v2-content-canvas"
+          className={`sw-v2-content-canvas${
+            selectedContractId ? " is-contract-detail" : ""
+          }`}
           aria-label="Source 360 canvas"
         >
-          <ClaimContract
-            allowed={claimContract.allowed}
-            blocker={claimContract.blocker}
-          />
+          {selectedContractId ? null : (
+            <ClaimContract
+              allowed={claimContract.allowed}
+              blocker={claimContract.blocker}
+            />
+          )}
 
           {currentPage === "Verdict" ? (
             <PortfolioPage
@@ -670,7 +680,6 @@ export function WorkspaceExecutiveShell({
                   logic={logic}
                   portfolio={portfolio}
                   contract={selectedContract}
-                  onOpenTab={(tab) => logic.setTab("contract", tab)}
                 />
               ) : (
                 <ContractDetailLoadState
@@ -2394,13 +2403,11 @@ function ContractPage({
   logic,
   portfolio,
   contract,
-  onOpenTab,
 }: {
   vm: SourceWorkspaceVM;
   logic: WorkspaceViewModel;
   portfolio: SourceWorkspacePortfolioData;
   contract: SourceContract360Row;
-  onOpenTab: (tab: string) => void;
 }) {
   const tab = logic.state.tabs.contract ?? "Story";
   const detailReady = vm.detailState === "ready";
@@ -2432,30 +2439,26 @@ function ContractPage({
   );
 
   return (
-    <div className="sw-v2-grid">
-      <section className="sw-v2-panel sw-v2-span-2">
-        <div className="sw-v2-tabbar">
-          {CONTRACT_TABS.map((label) => (
-            <button
-              key={label}
-              type="button"
-              className={tab === label ? "is-active" : ""}
-              onClick={() => onOpenTab(label)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+    <div className="sw-v2-grid sw-v2-contract-detail-grid">
+      <section className="sw-v2-panel sw-v2-span-2 sw-v2-contract-story-panel">
         <PanelHead
           eyebrow={`Contract 360 / ${tab}`}
           title={contract.contract_name}
         />
-        <p className="sw-v2-lede">{tabNarrative.body}</p>
-        <div className="sw-v2-tab-claim">
-          <span>{tabNarrative.provenance}</span>
-          <b>{tabNarrative.headline}</b>
-          <small>{tabNarrative.blocker}</small>
-        </div>
+        <ContractTabStory
+          contract={contract}
+          tab={tab}
+          tabNarrative={tabNarrative}
+          vm={vm}
+        />
+        {tab === "Optimize" && vm.opportunityView ? (
+          <ProductShellOptimizationExecutiveStrip vm={vm} />
+        ) : null}
+        {tab === "Economics" &&
+        detailReady &&
+        vm.detail?.spendMonths?.length ? (
+          <ContractConsumptionRamp spendMonths={vm.detail.spendMonths} />
+        ) : null}
         {tab === "Scope" ? (
           <ContractScopeTable scopeRows={scopeRows} />
         ) : tab === "Performance" &&
@@ -2487,61 +2490,22 @@ function ContractPage({
               ))}
             </div>
           </>
-        ) : (
-          <div className="sw-v2-fact-grid">
-            <Fact
-              label="Vendor"
-              value={safeContractVendorDisplayName(contract)}
-            />
-            <Fact
-              label="Annual value"
-              value={money(numberFromDb(contract.annual_value))}
-            />
-            <Fact
-              label="Actual annual spend"
-              value={money(numberFromDb(contract.actual_annual_spend))}
-            />
-            <Fact label="End date" value={fmtDate(contract.end_date)} />
-            <Fact
-              label="Auto-renew"
-              value={contract.auto_renew ? "Yes" : "No"}
-            />
-            <Fact
-              label="Notice period"
-              value={
-                contract.notice_period_days == null
-                  ? "Not established"
-                  : `${contract.notice_period_days} days`
-              }
-            />
-            <Fact
-              label="Benchmarking"
-              value={displayBenchmarkingClause(contract.benchmarking_clause)}
-            />
-            <Fact
-              label="Source confidence"
-              value={
-                contract.source_confidence == null
-                  ? "Not established"
-                  : pct(numberFromDb(contract.source_confidence) ?? 0)
-              }
-            />
-          </div>
-        )}
-        {detailReady &&
-        (tab === "Economics" || tab === "Optimize") &&
-        vm.detail?.spendMonths?.length ? (
-          <ContractConsumptionRamp spendMonths={vm.detail.spendMonths} />
-        ) : null}
-        {tab === "Evidence" && detailReady && vm.detail ? (
+        ) : tab === "Evidence" && detailReady && vm.detail ? (
           <ContractEvidenceDocuments
             files={vm.detail.documentFiles ?? []}
             extractions={vm.detail.docExtractions}
           />
-        ) : null}
+        ) : (
+          <ContractTabBody
+            contract={contract}
+            scopeRows={scopeRows}
+            tab={tab}
+            vm={vm}
+          />
+        )}
       </section>
 
-      <section className="sw-v2-panel">
+      <section className="sw-v2-panel sw-v2-contract-context-panel">
         <PanelHead
           eyebrow={tab === "Scope" ? "Scope coverage" : "Evidence state"}
           title={
@@ -2582,10 +2546,209 @@ function ContractPage({
         )}
       </section>
 
-      {tab === "Optimize" ? (
-        <ProductShellOptimizationExecutiveStrip vm={vm} />
+      {tab === "Story" || tab === "Relationship" ? (
+        <ProductShellCommercialPostureStrip vm={vm} />
       ) : null}
-      <ProductShellCommercialPostureStrip vm={vm} />
+    </div>
+  );
+}
+
+function ContractCommandBar({
+  activeTab,
+  contract,
+  onBackToContracts,
+  onOpenPortfolioPage,
+  onOpenTab,
+}: {
+  activeTab: string;
+  contract: SourceContract360Row;
+  onBackToContracts: () => void;
+  onOpenPortfolioPage: (page: PageLabel) => void;
+  onOpenTab: (tab: string) => void;
+}) {
+  return (
+    <nav
+      className="sw-v2-contract-commandbar"
+      aria-label="Contract command toolbar"
+    >
+      <button
+        type="button"
+        className="sw-v2-contract-command"
+        onClick={onBackToContracts}
+      >
+        Back to contracts
+      </button>
+      <div className="sw-v2-contract-commandbar-tabs" role="tablist">
+        {CONTRACT_TABS.map((label) => (
+          <button
+            key={label}
+            type="button"
+            className={activeTab === label ? "is-active" : ""}
+            onClick={() => onOpenTab(label)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="sw-v2-contract-commandbar-actions">
+        <button type="button" onClick={() => onOpenPortfolioPage("Evidence")}>
+          Evidence map
+        </button>
+      </div>
+      <span className="sw-v2-contract-commandbar-id">
+        {contract.contract_id}
+      </span>
+    </nav>
+  );
+}
+
+function ContractTabStory({
+  contract,
+  tab,
+  tabNarrative,
+  vm,
+}: {
+  contract: SourceContract360Row;
+  tab: string;
+  tabNarrative: ReturnType<typeof contractTabNarrative>;
+  vm: SourceWorkspaceVM;
+}) {
+  const actualSpend = numberFromDb(contract.actual_annual_spend);
+  const annualValue = numberFromDb(contract.annual_value);
+  const utilization =
+    annualValue && annualValue > 0 && actualSpend != null
+      ? Math.round((actualSpend / annualValue) * 100)
+      : null;
+  const sizedTotal = vm.opportunityView
+    ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
+    : 0;
+  const stats =
+    tab === "Optimize"
+      ? [
+          [
+            "Sized opportunity",
+            sizedTotal > 0 ? money(sizedTotal) : "Not sized",
+          ],
+          [
+            "Levers",
+            vm.opportunityView
+              ? `${vm.opportunityView.opportunities.length} total`
+              : "Not loaded",
+          ],
+          [
+            "Finance confirmed",
+            vm.opportunityView?.financeConfirmed ?? "Not established",
+          ],
+        ]
+      : tab === "Economics"
+        ? [
+            ["Annual value", money(annualValue)],
+            ["Actual annual spend", money(actualSpend)],
+            [
+              "Utilization",
+              utilization == null ? "Not established" : `${utilization}%`,
+            ],
+          ]
+        : [
+            ["Vendor", safeContractVendorDisplayName(contract)],
+            ["End date", fmtDate(contract.end_date)],
+            [
+              "Notice",
+              contract.notice_period_days == null
+                ? "Not established"
+                : `${contract.notice_period_days} days`,
+            ],
+          ];
+
+  return (
+    <div className={`sw-v2-contract-story is-${tab.toLowerCase()}`}>
+      <div>
+        <span>{tabNarrative.provenance}</span>
+        <h2>{tabNarrative.headline}</h2>
+        <p>{tabNarrative.body}</p>
+        <small>{tabNarrative.blocker}</small>
+      </div>
+      <dl>
+        {stats.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+function ContractTabBody({
+  contract,
+  scopeRows,
+  tab,
+  vm,
+}: {
+  contract: SourceContract360Row;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+  tab: string;
+  vm: SourceWorkspaceVM;
+}) {
+  if (tab === "Story") {
+    return (
+      <div className="sw-v2-contract-story-grid">
+        <Fact
+          label="Commercial position"
+          value={vm.commercialPosture?.headline ?? "Contract header loaded"}
+        />
+        <Fact
+          label="Action posture"
+          value={vm.opportunityView?.recommendation ?? "No action loaded"}
+        />
+        <Fact
+          label="Benchmarking"
+          value={displayBenchmarkingClause(contract.benchmarking_clause)}
+        />
+        <Fact
+          label="Source confidence"
+          value={
+            contract.source_confidence == null
+              ? "Not established"
+              : pct(numberFromDb(contract.source_confidence) ?? 0)
+          }
+        />
+      </div>
+    );
+  }
+  if (tab === "Relationship") {
+    return (
+      <div className="sw-v2-contract-story-grid">
+        <Fact label="Vendor" value={safeContractVendorDisplayName(contract)} />
+        <Fact label="Scoped applications" value={String(scopeRows.length)} />
+        <Fact
+          label="Loaded evidence"
+          value={
+            vm.detailState === "ready"
+              ? "Detail loaded"
+              : detailStateLabel(vm.detailState)
+          }
+        />
+        <Fact
+          label="Contract graph"
+          value="Open the evidence map for relationship lineage"
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="sw-v2-contract-story-grid">
+      <Fact label="Auto-renew" value={contract.auto_renew ? "Yes" : "No"} />
+      <Fact
+        label="Notice period"
+        value={
+          contract.notice_period_days == null
+            ? "Not established"
+            : `${contract.notice_period_days} days`
+        }
+      />
+      <Fact label="End date" value={fmtDate(contract.end_date)} />
     </div>
   );
 }
@@ -3069,7 +3232,8 @@ export function consumptionRampRows(
         ? periodEnd > today.getTime()
         : false,
       serviceId: row.service_id ?? "All services",
-      businessUnit: row.business_unit ?? row.cost_center ?? "Owner not recorded",
+      businessUnit:
+        row.business_unit ?? row.cost_center ?? "Owner not recorded",
       evidenceReference: row.evidence_reference ?? "Evidence ref not recorded",
     };
   });
@@ -3154,7 +3318,8 @@ const NEGOTIATION_PLAYBOOK: readonly NegotiationPlayRule[] = [
     rationale:
       "Use after a benchmark comparable is loaded; opening with rate can invite the vendor to reopen term length before the easier concessions are banked.",
     holdBack: true,
-    evidenceGap: "Needs an accepted benchmark comparable before it becomes a primary ask.",
+    evidenceGap:
+      "Needs an accepted benchmark comparable before it becomes a primary ask.",
   },
 ];
 
@@ -3170,7 +3335,9 @@ function negotiationPlayRuleFor(
   ]
     .filter(Boolean)
     .join(" ");
-  return NEGOTIATION_PLAYBOOK.find((rule) => rule.pattern.test(haystack)) ?? null;
+  return (
+    NEGOTIATION_PLAYBOOK.find((rule) => rule.pattern.test(haystack)) ?? null
+  );
 }
 
 function priorityRank(priority: string | null | undefined): number {
@@ -3195,10 +3362,10 @@ function stageRank(stage: string | null | undefined): number {
 function hasNegotiationDetail(opportunity: NegotiationSequenceInput): boolean {
   return Boolean(
     opportunity.buyerAsk ||
-      opportunity.negotiationLanguage ||
-      opportunity.vendorConcession ||
-      opportunity.timingDependency ||
-      opportunity.priority,
+    opportunity.negotiationLanguage ||
+    opportunity.vendorConcession ||
+    opportunity.timingDependency ||
+    opportunity.priority,
   );
 }
 
@@ -3304,7 +3471,9 @@ function ContractConsumptionRamp({
   );
   const totalActual = rows.reduce((sum, row) => sum + (row.actualUsd ?? 0), 0);
   const utilization =
-    totalCommitted > 0 ? Math.round((totalActual / totalCommitted) * 100) : null;
+    totalCommitted > 0
+      ? Math.round((totalActual / totalCommitted) * 100)
+      : null;
   const latest = rows[rows.length - 1];
 
   return (
@@ -3684,9 +3853,7 @@ function ProductShellNegotiationSequence({ vm }: { vm: SourceWorkspaceVM }) {
             key={row.opportunity.id}
             style={{
               border: `1px ${row.holdBack ? "dashed" : "solid"} ${
-                row.holdBack
-                  ? "rgba(186,117,23,.55)"
-                  : "rgba(10,10,11,.1)"
+                row.holdBack ? "rgba(186,117,23,.55)" : "rgba(10,10,11,.1)"
               }`,
               borderRadius: 8,
               background: row.holdBack
