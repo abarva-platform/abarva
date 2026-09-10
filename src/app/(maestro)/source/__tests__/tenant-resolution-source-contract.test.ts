@@ -38,26 +38,68 @@ describe("Source tenant identity binding", () => {
     expect(source).toContain("export default SourceWorkspacePage");
   });
 
-  it("keeps the Source 360 executive shell aligned to the six-tab design contract", () => {
+  it("keeps the Source 360 executive shell aligned to the command-center design contract", () => {
     const source = readRepoFile(
       "src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx",
     );
+    const labelsMatch = source.match(
+      /const PAGE_LABELS = \[([\s\S]*?)\] as const;/,
+    );
+    const pageLabelsSource = labelsMatch?.[1] ?? "";
 
+    expect(pageLabelsSource).toBeTruthy();
     for (const label of [
+      "Command",
+      "Contracts",
+      "Levers",
+      "Evidence",
+      "Coverage",
+    ]) {
+      expect(pageLabelsSource).toContain(`"${label}"`);
+    }
+    for (const oldLabel of [
       "Verdict",
       "Vendors",
-      "Contracts",
       "Optimize",
-      "Evidence",
       "Contract graph",
+    ]) {
+      expect(pageLabelsSource).not.toContain(`"${oldLabel}"`);
+    }
+    expect(source).toContain("SourceWorkspaceAppNav");
+    expect(source).toContain('aria-label="Main application navigation"');
+    expect(source).toContain("SourceCommandKpiStrip");
+    expect(source).toContain("PortfolioPage");
+    expect(source).toContain("CoveragePage");
+    expect(source).toContain("EvidencePage");
+    expect(source).not.toContain("sw-v2-action-toolbar-buttons");
+  });
+
+  it("keeps the route loading shell aligned to the live command-center navigation", () => {
+    const source = readRepoFile(
+      "src/app/(maestro)/source/workspace/SourceWorkspaceLoadingShell.tsx",
+    );
+
+    expect(source).toContain('aria-label="Main application navigation"');
+    expect(source).toContain(
+      'aria-current={label === "Source" ? "page" : undefined}',
+    );
+    for (const label of [
+      "Command",
+      "Contracts",
+      "Levers",
+      "Evidence",
+      "Coverage",
     ]) {
       expect(source).toContain(`"${label}"`);
     }
-    expect(source).toContain("ClaimContract");
-    expect(source).toContain("EvidencePage");
-    expect(source).toContain("ContractGraphPage");
-    expect(source).toContain("Source 360 · {tenantName");
-    expect(source).toContain("governed");
-    expect(source).toContain("contract book");
+    for (const oldLabel of [
+      "Verdict",
+      "Vendors",
+      "Optimize",
+      "Contract graph",
+    ]) {
+      expect(source).not.toContain(`"${oldLabel}"`);
+    }
+    expect(source).toContain("Preparing Source command center.");
   });
 });
