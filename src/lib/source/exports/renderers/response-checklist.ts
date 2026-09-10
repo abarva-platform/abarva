@@ -89,6 +89,22 @@ export interface ResponseChecklistPayload {
   certifications: ReadonlyArray<string>;
 }
 
+interface ControlledColumn {
+  header: string;
+  key: string;
+  width: number;
+  locked?: boolean;
+  validation?: 'claim-type' | 'location' | 'cost-type';
+}
+
+interface ControlledTemplate {
+  name: string;
+  purpose: string;
+  columns: ReadonlyArray<ControlledColumn>;
+  seedRows?: ReadonlyArray<Record<string, string>>;
+  blankRows: number;
+}
+
 /** Build the workbook. */
 export function buildResponseChecklistWorkbook(
   payload: ResponseChecklistPayload,
@@ -118,8 +134,18 @@ export function buildResponseChecklistWorkbook(
     ],
     tabDescriptions: [
       { tab: 'Cover', purpose: 'Event metadata, vendor name, and submission deadline.' },
-      { tab: 'Mandatory Items', purpose: 'Required response checklist; every row must be addressed.' },
+      { tab: 'Mandatory Compliance', purpose: 'Required response checklist; every row must be addressed.' },
       { tab: 'Optional Items', purpose: 'Recommended response items that may strengthen scoring but do not gate completeness.' },
+      { tab: 'Vendor Claims', purpose: 'Material claims bound to baselines, commitments, remedies, and evidence.' },
+      { tab: 'Solution Approach', purpose: 'Service design, responsibilities, dependencies, and measurable outcomes.' },
+      { tab: 'Pricing Response', purpose: 'Comparable run, change, transition, tooling, pass-through, and optional-service economics.' },
+      { tab: 'Staffing & Location', purpose: 'Role, level, location, capacity, rate, and transition assumptions.' },
+      { tab: 'SLA Commitments', purpose: 'Baseline, target, measurement, credit, cure, and chronic-failure remedy.' },
+      { tab: 'Automation Commitments', purpose: 'Dated, measurable, commercially enforceable automation and productivity claims.' },
+      { tab: 'Assumptions & Exclusions', purpose: 'Explicit assumptions, exclusions, dependencies, owners, and commercial effects.' },
+      { tab: 'Transition Plan', purpose: 'Milestones, acceptance criteria, owners, dependencies, and payment linkage.' },
+      { tab: 'Commercial Exceptions', purpose: 'Requested deviations, rationale, value effect, and fallback position.' },
+      { tab: 'Evidence Checklist', purpose: 'Traceable evidence pointers for material claims and commitments.' },
       { tab: 'Format Expectations', purpose: 'Locked file, naming, page-limit, redaction, and submission-channel rules.' },
       { tab: 'Submission Sign-off', purpose: 'Authorized officer certification and submission attestations.' },
     ],
@@ -137,10 +163,10 @@ export function buildResponseChecklistWorkbook(
     },
     instructions: [
       'Vendor of record: fill the Vendor name slot below before completing the checklist.',
-      'Sheet 2 (Mandatory Items) — every row requires a normalized disposition, response narrative, accountable owner, and the specified evidence linkages.',
-      'Sheet 3 (Optional Items) — every row still requires a disposition; use Not Applicable when declining to respond and explain the basis.',
-      'Sheet 4 (Format Expectations) is locked. Submissions outside these conventions may be rejected.',
-      'Sheet 5 (Sign-off) — an authorized officer must complete the certification statements before submission.',
+      'Mandatory Compliance — every row requires a normalized disposition, response narrative, accountable owner, and the specified evidence linkages.',
+      'Complete every applicable commercial, staffing, SLA, automation, assumption, transition, exception, and evidence tab.',
+      'Format Expectations is locked. Submissions outside these conventions may be rejected.',
+      'Submission Sign-off — an authorized officer must complete every certification before submission.',
     ],
   });
   // Vendor name slot + submission deadline.
@@ -161,12 +187,38 @@ export function buildResponseChecklistWorkbook(
     }
   }
 
-  buildItemsSheet(workbook, 'Mandatory Items', payload.mandatoryItems, true);
+  buildItemsSheet(workbook, 'Mandatory Compliance', payload.mandatoryItems, true);
   buildItemsSheet(workbook, 'Optional Items', payload.optionalItems, false);
+  controlledTemplates().forEach((template) =>
+    buildControlledTemplateSheet(workbook, template),
+  );
   buildFormatExpectationsSheet(workbook, payload.formatExpectations);
   buildSignoffSheet(workbook, payload.certifications);
+  applyWorkbookPrintContract(workbook);
 
   return workbook;
+}
+
+function applyWorkbookPrintContract(workbook: ExcelJS.Workbook): void {
+  workbook.worksheets.forEach((sheet) => {
+    const narrativeSheet = sheet.name === 'Guide' || sheet.name === 'Cover';
+    sheet.pageSetup = {
+      orientation: narrativeSheet ? 'portrait' : 'landscape',
+      paperSize: 9,
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+      margins: {
+        left: 0.25,
+        right: 0.25,
+        top: 0.45,
+        bottom: 0.45,
+        header: 0.2,
+        footer: 0.2,
+      },
+    };
+    sheet.headerFooter.oddFooter = `&L${safeCell(workbook.title ?? 'Vendor Response Control Pack')}&RPage &P of &N`;
+  });
 }
 
 function buildItemsSheet(
@@ -249,6 +301,230 @@ function buildItemsSheet(
   }
 
   return sheet;
+}
+
+function controlledTemplates(): ControlledTemplate[] {
+  return [
+    template('Vendor Claims', 'Register each material claim once and bind it to a baseline, measurable commitment, commercial remedy, and evidence.', [
+      locked('Claim ID', 'claimId', 16),
+      editable('Claim type', 'claimType', 22, 'claim-type'),
+      editable('Service / workstream', 'service', 28),
+      editable('Claim statement', 'claim', 46),
+      editable('Current baseline', 'baseline', 28),
+      editable('Measurement source', 'measurementSource', 30),
+      editable('Committed outcome', 'outcome', 30),
+      editable('Commitment date', 'commitmentDate', 18),
+      editable('Commercial remedy', 'remedy', 30),
+      editable('Evidence reference', 'evidence', 34),
+    ], 20),
+    template('Solution Approach', 'Describe how each in-scope service will operate, who owns it, what it depends on, and how success will be measured.', [
+      locked('Approach ID', 'approachId', 16),
+      editable('Service / workstream', 'service', 28),
+      editable('Proposed approach', 'approach', 48),
+      editable('Vendor responsibility', 'vendorResponsibility', 34),
+      editable('Client dependency', 'clientDependency', 34),
+      editable('Tooling / automation', 'tooling', 30),
+      editable('Measurable outcome', 'outcome', 30),
+      editable('Evidence reference', 'evidence', 34),
+    ], 18),
+    template('Pricing Response', 'Separate every cost component so run, change, transition, transformation, tooling, pass-through, and retained costs can be normalized.', [
+      locked('Price line ID', 'priceLineId', 16),
+      editable('Service / tower', 'service', 26),
+      editable('Cost type', 'costType', 22, 'cost-type'),
+      editable('Unit / basis', 'unit', 20),
+      editable('Volume', 'volume', 14),
+      editable('Unit rate', 'unitRate', 16),
+      editable('Year 1 amount', 'year1', 18),
+      editable('Term amount', 'term', 18),
+      editable('Currency', 'currency', 12),
+      editable('Escalation / index', 'escalation', 24),
+      editable('Productivity credit', 'productivityCredit', 22),
+      editable('SLA credit', 'slaCredit', 18),
+      editable('Assumption / evidence', 'evidence', 36),
+    ], 30),
+    template('Staffing & Location', 'Expose the complete resource model, onshore/offshore mix, productive capacity, and rate basis behind the price.', [
+      locked('Role line ID', 'roleLineId', 16),
+      editable('Service / tower', 'service', 24),
+      editable('Role', 'role', 28),
+      editable('Level / skill', 'level', 22),
+      editable('Location', 'location', 16, 'location'),
+      editable('Country / city', 'countryCity', 22),
+      editable('FTE', 'fte', 12),
+      editable('Productive hours / FTE', 'hours', 20),
+      editable('Rate / FTE / year', 'rate', 18),
+      editable('Annual cost', 'annualCost', 18),
+      editable('Start period', 'startPeriod', 16),
+      editable('Transition action', 'transitionAction', 28),
+      editable('Evidence reference', 'evidence', 32),
+    ], 30),
+    template('SLA Commitments', 'Make service outcomes enforceable by tying each target to its baseline, measurement rule, credit, cure, and chronic-failure remedy.', [
+      locked('SLA ID', 'slaId', 16),
+      editable('Service / tower', 'service', 24),
+      editable('Metric', 'metric', 32),
+      editable('Current baseline', 'baseline', 20),
+      editable('Proposed target', 'target', 20),
+      editable('Measurement period', 'period', 20),
+      editable('Source system / report', 'source', 28),
+      editable('Credit formula', 'creditFormula', 30),
+      editable('Credit cap', 'creditCap', 18),
+      editable('Cure window', 'cureWindow', 18),
+      editable('Chronic miss remedy', 'chronicRemedy', 30),
+      editable('Exclusions', 'exclusions', 28),
+      editable('Evidence reference', 'evidence', 32),
+    ], 24),
+    {
+      ...template('Automation Commitments', 'Do not score automation or productivity narrative unless the supplier converts it into a dated, measurable, commercially enforceable commitment.', [
+        locked('Commitment ID', 'commitmentId', 18),
+        editable('Claim type', 'claimType', 22, 'claim-type'),
+        editable('Service / workstream', 'service', 28),
+        editable('Current baseline', 'baseline', 24),
+        editable('Measurement source', 'measurementSource', 30),
+        editable('Committed outcome', 'outcome', 30),
+        editable('Commitment date', 'commitmentDate', 18),
+        editable('Commercial remedy', 'remedy', 32),
+        editable('Evidence reference', 'evidence', 34),
+      ], 11),
+      seedRows: [{ commitmentId: 'AUTO-001', claimType: 'automation' }],
+    },
+    template('Assumptions & Exclusions', 'Make every pricing, scope, volume, dependency, and exclusion assumption explicit before evaluation.', [
+      locked('Item ID', 'itemId', 16),
+      editable('Type', 'type', 18),
+      editable('Service / workstream', 'service', 26),
+      editable('Assumption or exclusion', 'statement', 48),
+      editable('Commercial effect', 'commercialEffect', 28),
+      editable('Client action / dependency', 'clientAction', 32),
+      editable('Owner', 'owner', 20),
+      editable('Required-by date', 'requiredBy', 18),
+      editable('Evidence reference', 'evidence', 32),
+    ], 20),
+    template('Transition Plan', 'Bind transition fees and payments to accepted knowledge-transfer, mobilization, cutover, and stabilization milestones.', [
+      locked('Milestone ID', 'milestoneId', 16),
+      editable('Phase', 'phase', 20),
+      editable('Milestone / deliverable', 'milestone', 38),
+      editable('Planned start', 'plannedStart', 16),
+      editable('Planned finish', 'plannedFinish', 16),
+      editable('Vendor owner', 'vendorOwner', 22),
+      editable('Client owner', 'clientOwner', 22),
+      editable('Dependency', 'dependency', 30),
+      editable('Acceptance criteria', 'acceptance', 38),
+      editable('Payment linkage', 'payment', 24),
+      editable('Evidence reference', 'evidence', 32),
+    ], 20),
+    template('Commercial Exceptions', 'Capture every requested deviation from the RFP or contract position with value impact and a usable fallback.', [
+      locked('Exception ID', 'exceptionId', 16),
+      editable('RFP / term reference', 'reference', 24),
+      editable('Requested exception', 'exception', 42),
+      editable('Vendor rationale', 'rationale', 36),
+      editable('Value / risk effect', 'effect', 28),
+      editable('Vendor fallback', 'fallback', 34),
+      editable('Buyer disposition', 'disposition', 22),
+      editable('Evidence reference', 'evidence', 32),
+    ], 18),
+    template('Evidence Checklist', 'Give evaluators a direct file, sheet, row, page, exhibit, certificate, or system reference for each material response.', [
+      locked('Evidence ID', 'evidenceId', 16),
+      editable('Related item ID', 'relatedItemId', 18),
+      editable('Claim / commitment supported', 'supportedItem', 42),
+      editable('File name', 'fileName', 34),
+      editable('Tab / page / row', 'pointer', 24),
+      editable('Evidence date', 'evidenceDate', 16),
+      editable('Evidence owner', 'owner', 22),
+      editable('Confidentiality', 'confidentiality', 18),
+      editable('Vendor note', 'note', 34),
+    ], 30),
+  ];
+}
+
+function template(
+  name: string,
+  purpose: string,
+  columns: ReadonlyArray<ControlledColumn>,
+  blankRows: number,
+): ControlledTemplate {
+  return { name, purpose, columns, blankRows };
+}
+
+function locked(header: string, key: string, width: number): ControlledColumn {
+  return { header, key, width, locked: true };
+}
+
+function editable(
+  header: string,
+  key: string,
+  width: number,
+  validation?: ControlledColumn['validation'],
+): ControlledColumn {
+  return { header, key, width, validation };
+}
+
+function buildControlledTemplateSheet(
+  workbook: ExcelJS.Workbook,
+  templateSpec: ControlledTemplate,
+): ExcelJS.Worksheet {
+  const sheet = workbook.addWorksheet(templateSpec.name, {
+    views: [{ showGridLines: true, state: 'frozen', ySplit: 2 }],
+  });
+  sheet.columns = templateSpec.columns.map((column) => ({
+    key: column.key,
+    width: column.width,
+  }));
+  sheet.addRow([templateSpec.purpose]);
+  sheet.mergeCells(1, 1, 1, templateSpec.columns.length);
+  sheet.getRow(1).height = 34;
+  sheet.getCell('A1').alignment = { wrapText: true, vertical: 'middle' };
+  sheet.getCell('A1').font = { bold: true, color: { argb: SOURCE_XLSX.HEADER_FILL } };
+  const headerRow = sheet.addRow(templateSpec.columns.map((column) => column.header));
+  applyHeaderRow(headerRow);
+
+  const rows = [
+    ...(templateSpec.seedRows ?? []),
+    ...Array.from({ length: templateSpec.blankRows }, () => ({} as Record<string, string>)),
+  ];
+  rows.forEach((values, rowIndex) => {
+    const row = sheet.addRow(
+      templateSpec.columns.map((column) => safeCell(values[column.key] ?? '')),
+    );
+    row.height = 32;
+    templateSpec.columns.forEach((column, columnIndex) => {
+      const cell = row.getCell(columnIndex + 1);
+      cell.alignment = { wrapText: true, vertical: 'top' };
+      cell.protection = { locked: Boolean(column.locked) };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: {
+          argb: column.locked ? SOURCE_XLSX.LOCKED_FILL : SOURCE_XLSX.WARNING_FILL,
+        },
+      };
+      applyControlledValidation(cell, column.validation, rowIndex + 3);
+    });
+  });
+  sheet.autoFilter = {
+    from: { row: 2, column: 1 },
+    to: { row: rows.length + 2, column: templateSpec.columns.length },
+  };
+  return sheet;
+}
+
+function applyControlledValidation(
+  cell: ExcelJS.Cell,
+  validation: ControlledColumn['validation'],
+  rowNumber: number,
+): void {
+  if (!validation) return;
+  const values: Record<NonNullable<ControlledColumn['validation']>, string> = {
+    'claim-type': '"automation,productivity,transformation,efficiency,other"',
+    location: '"Onshore,Nearshore,Offshore,Client site,Remote"',
+    'cost-type': '"Recurring run,One-time,Transition,Transformation,Tooling,Governance,Pass-through,Optional service,Change-order unit rate,Retained client cost"',
+  };
+  cell.dataValidation = {
+    type: 'list',
+    allowBlank: true,
+    formulae: [values[validation]],
+    showErrorMessage: true,
+    errorStyle: 'stop',
+    errorTitle: 'Controlled response value',
+    error: `Select a controlled value in row ${rowNumber}.`,
+  };
 }
 
 function inferRequirementCategory(

@@ -76,13 +76,23 @@ describe('buildResponseChecklistWorkbook', () => {
     });
   });
 
-  it('produces a workbook with the six canonical sheets and a first Guide tab', () => {
+  it('produces one governed workbook with every required response-control sheet', () => {
     const wb = buildResponseChecklistWorkbook(makePayload());
     expect(wb.worksheets.map((s) => s.name)).toEqual([
       'Guide',
       'Cover',
-      'Mandatory Items',
+      'Mandatory Compliance',
       'Optional Items',
+      'Vendor Claims',
+      'Solution Approach',
+      'Pricing Response',
+      'Staffing & Location',
+      'SLA Commitments',
+      'Automation Commitments',
+      'Assumptions & Exclusions',
+      'Transition Plan',
+      'Commercial Exceptions',
+      'Evidence Checklist',
       'Format Expectations',
       'Submission Sign-off',
     ]);
@@ -93,7 +103,8 @@ describe('buildResponseChecklistWorkbook', () => {
     const text = collectSheetText(wb.getWorksheet('Guide')!);
     expect(text).toContain('Vendor Response Control Pack');
     expect(text).toContain('Vendor-facing response workbook');
-    expect(text).toContain('Mandatory Items');
+    expect(text).toContain('Mandatory Compliance');
+    expect(text).toContain('Automation Commitments');
     expect(text).toContain('Evidence references');
     expect(text).toContain('Partially Comply');
     expect(text).toContain('requirement-ID level');
@@ -108,9 +119,9 @@ describe('buildResponseChecklistWorkbook', () => {
     expect(text).toContain('2026-06-15T17:00:00.000Z');
   });
 
-  it('Mandatory Items sheet has one row per item with the buyer columns locked-styled', () => {
+  it('Mandatory Compliance sheet has one row per item with the buyer columns locked-styled', () => {
     const wb = buildResponseChecklistWorkbook(makePayload());
-    const sheet = wb.getWorksheet('Mandatory Items')!;
+    const sheet = wb.getWorksheet('Mandatory Compliance')!;
     expect(sheet.getCell('A2').value).toBe('M-EXEC-01');
     expect(sheet.getCell('A3').value).toBe('M-PRICING-01');
     expect(sheet.getCell('D3').value).toContain('d19');
@@ -121,7 +132,7 @@ describe('buildResponseChecklistWorkbook', () => {
 
   it('issues a normalized requirement matrix that preserves scoring and evidence lineage', () => {
     const wb = buildResponseChecklistWorkbook(makePayload());
-    const sheet = wb.getWorksheet('Mandatory Items')!;
+    const sheet = wb.getWorksheet('Mandatory Compliance')!;
 
     expect(sheet.getRow(1).values).toEqual(
       expect.arrayContaining([
@@ -148,6 +159,35 @@ describe('buildResponseChecklistWorkbook', () => {
     ]);
     expect(sheet.getCell('A3').protection.locked).toBe(true);
     expect(sheet.getCell('I3').protection.locked).toBe(false);
+  });
+
+  it('requires measurable automation claims and complete commercial controls', () => {
+    const wb = buildResponseChecklistWorkbook(makePayload());
+    const automation = wb.getWorksheet('Automation Commitments')!;
+    const pricing = wb.getWorksheet('Pricing Response')!;
+    const staffing = wb.getWorksheet('Staffing & Location')!;
+    const sla = wb.getWorksheet('SLA Commitments')!;
+    const evidence = wb.getWorksheet('Evidence Checklist')!;
+
+    expect(collectSheetText(automation)).toContain('Measurement source');
+    expect(collectSheetText(automation)).toContain('Commercial remedy');
+    expect(automation.getCell('A3').value).toBe('AUTO-001');
+    expect(automation.getCell('B3').dataValidation?.type).toBe('list');
+    expect(collectSheetText(pricing)).toContain('Productivity credit');
+    expect(collectSheetText(pricing)).toContain('retained costs');
+    expect(collectSheetText(staffing)).toContain('Productive hours / FTE');
+    expect(collectSheetText(sla)).toContain('Chronic miss remedy');
+    expect(collectSheetText(evidence)).toContain('Tab / page / row');
+  });
+
+  it('fits every sheet to one printed page width', () => {
+    const wb = buildResponseChecklistWorkbook(makePayload());
+    for (const sheet of wb.worksheets) {
+      expect(sheet.pageSetup.fitToPage).toBe(true);
+      expect(sheet.pageSetup.fitToWidth).toBe(1);
+      expect(sheet.pageSetup.fitToHeight).toBe(0);
+      expect(sheet.headerFooter.oddFooter).toContain('Page &P of &N');
+    }
   });
 
   it('Optional Items sheet preserves N/A as a valid value', () => {
@@ -185,7 +225,7 @@ describe('buildResponseChecklistWorkbook', () => {
         ],
       }),
     );
-    const sheet = wb.getWorksheet('Mandatory Items')!;
+    const sheet = wb.getWorksheet('Mandatory Compliance')!;
     const cell = sheet.getCell('D2').value;
     expect(typeof cell).toBe('string');
     expect((cell as string).startsWith("'=")).toBe(true);
