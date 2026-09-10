@@ -59,6 +59,7 @@ export function portfolioDiscountComparatorSummary(
   const selectedDiscountPct = median(
     selectedRows
       .map((row) => numberFromDb(row.expected_discount_pct))
+      .map(normalizeDiscountPct)
       .filter(isFiniteNumber),
   );
   if (!discountSignal && selectedDiscountPct == null) return null;
@@ -67,7 +68,9 @@ export function portfolioDiscountComparatorSummary(
     selectedRows.find((row) => row.cloud_provider)?.cloud_provider ?? null;
   const peerRows = coverageRows.filter((row) => {
     if (row.contract_id === normalizedContractId) return false;
-    const expectedDiscount = numberFromDb(row.expected_discount_pct);
+    const expectedDiscount = normalizeDiscountPct(
+      numberFromDb(row.expected_discount_pct),
+    );
     if (expectedDiscount == null || !Number.isFinite(expectedDiscount)) {
       return false;
     }
@@ -78,6 +81,7 @@ export function portfolioDiscountComparatorSummary(
   });
   const peerDiscounts = peerRows
     .map((row) => numberFromDb(row.expected_discount_pct))
+    .map(normalizeDiscountPct)
     .filter(isFiniteNumber)
     .sort((left, right) => left - right);
   const peerMedianPct = median(peerDiscounts);
@@ -133,6 +137,13 @@ export function portfolioDiscountComparatorSummary(
 
 function isFiniteNumber(value: number | null | undefined): value is number {
   return value != null && Number.isFinite(value);
+}
+
+function normalizeDiscountPct(
+  value: number | null | undefined,
+): number | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  return Math.abs(value) > 1 ? value / 100 : value;
 }
 
 function median(values: readonly number[]): number | null {

@@ -31,6 +31,7 @@ Layer 4 PRODUCTS, lane `global-control-lane`: Source Contract 360 renders the co
 - Adds a read adapter for `source.cloud_commitment_coverage_observation`.
 - Carries same-tenant cloud commitment coverage rows through the lazy Contract 360 detail JSON.
 - Adds a deterministic portfolio-relative discount comparator helper.
+- Normalizes loaded discount values whether the source row stores a ratio (`0.09`) or whole percentage (`9`).
 - Renders the comparator on Contract 360 Optimize when discount repricing evidence or a loaded discount signal exists.
 - Adds the comparator fact to the Source workspace aVa surface context.
 

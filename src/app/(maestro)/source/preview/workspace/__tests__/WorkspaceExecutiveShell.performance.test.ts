@@ -1821,6 +1821,40 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(summary?.evidenceGate).toContain("Benchmark comparable required");
   });
 
+  it("normalizes loaded discount percentages stored as whole percentages", () => {
+    const summary = portfolioDiscountComparatorSummary(
+      "MER-TECH-DBX-001",
+      [
+        {
+          contract_id: "MER-TECH-DBX-001",
+          cloud_provider: "aws",
+          commitment_covered_spend_usd: 1_900_000,
+          expected_discount_pct: 9,
+        },
+        {
+          contract_id: "MER-CLOUD-AWS-001",
+          cloud_provider: "aws",
+          commitment_covered_spend_usd: 23_400_000,
+          expected_discount_pct: 28,
+        },
+      ],
+      [
+        {
+          id: "OPT-DBX-DISCOUNT-REPRICE-001",
+          label: "Signal-stage discount band re-price review",
+          stageRaw: "signal",
+          blockingGap:
+            "Benchmark comparable required before discount-band value can be treated as supported.",
+        },
+      ],
+    );
+
+    expect(summary?.headline).toBe(
+      "Loaded discount 9.0%; same-tenant cloud peer median 28.0%.",
+    );
+    expect(summary?.basis).toContain("portfolio-relative range of 28.0%");
+  });
+
   it("keeps the discount ask gated when no same-tenant comparator is loaded", () => {
     const summary = portfolioDiscountComparatorSummary(
       "MER-TECH-DBX-001",
