@@ -22,6 +22,7 @@ import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import type { AskSource } from "@/lib/intelligence/ask/types";
+import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { Tooltip } from "./Tooltip";
 import { WorkspaceExecutiveShell } from "./WorkspaceExecutiveShell";
 
@@ -139,6 +140,7 @@ export function WorkspaceClient({
     }),
   );
   const [thread, setThread] = useState<ChatMessage[]>([]);
+  const [showEclDiagnostics, setShowEclDiagnostics] = useState(false);
 
   const setState = useMemo(
     () =>
@@ -286,6 +288,13 @@ export function WorkspaceClient({
     ],
   );
   const vm = useMemo(() => buildViewModel(logic), [logic]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setShowEclDiagnostics(
+      params.get("diagnostics") === "1" || params.get("debug") === "1",
+    );
+  }, []);
 
   // The Source dock uses the rich aVa route so charts, tables, graphs, and
   // citations survive as structured packets instead of being flattened to text.
@@ -529,6 +538,9 @@ export function WorkspaceClient({
             Nothing below is estimated in its place.
           </span>
         </div>
+      ) : null}
+      {showEclDiagnostics ? (
+        <EclServingSurfaceCoverage product="source" />
       ) : null}
 
       <div

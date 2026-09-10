@@ -502,7 +502,11 @@ async function loadEclProjectionWorkspacePortfolio(
           path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
         ),
     provider === "ecl_projection_db"
-      ? Promise.resolve([])
+      ? readProjectionViews(tenantKey, [
+          "source_events",
+          "source_compare",
+          "source_approvals",
+        ])
       : readProjectionCsv(
           path.join(
             projectionDir ?? "",
@@ -567,15 +571,12 @@ async function loadEclProjectionWorkspacePortfolio(
     exploreMatchesV4: true,
     mismatchWarning: null,
     eclProjectionDir: provider === "ecl_projection_db" ? null : projectionDir,
-    eclCompareResponseCount:
-      provider === "ecl_projection_db"
-        ? undefined
-        : eventRows.filter(
-            (row) =>
-              tenantMatches(row) &&
-              textValue(row.workspace_tab) === "compare" &&
-              textValue(row.row_type) === "vendor_response_compare",
-          ).length,
+    eclCompareResponseCount: eventRows.filter(
+      (row) =>
+        tenantMatches(row) &&
+        textValue(row.workspace_tab) === "compare" &&
+        textValue(row.row_type) === "vendor_response_compare",
+    ).length,
   };
   const reads = {
     contracts:
@@ -2094,6 +2095,18 @@ async function readProjectionView(
     );
     return rows.map((row) => row.payload_json);
   });
+}
+
+async function readProjectionViews(
+  tenantKey: string,
+  servingViews: readonly SourceServingViewName[],
+): Promise<EclProjectionRow[]> {
+  const rowSets = await Promise.all(
+    servingViews.map((servingView) =>
+      readProjectionView(tenantKey, servingView),
+    ),
+  );
+  return rowSets.flat();
 }
 
 async function readEclCubeSlices(
