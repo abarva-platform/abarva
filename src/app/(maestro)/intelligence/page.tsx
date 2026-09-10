@@ -70,6 +70,8 @@ export default async function IntelligencePage({
   const resolvedSearchParams = await searchParams;
   const rawRequestedClient = firstSearchValue(resolvedSearchParams?.client);
   const requestedProvider = firstSearchValue(resolvedSearchParams?.provider);
+  const requestedDiagnostics = firstSearchValue(resolvedSearchParams?.diagnostics);
+  const requestedDebug = firstSearchValue(resolvedSearchParams?.debug);
   const productProvider = resolveEclProductProvider(requestedProvider);
   const requestedClient = (await hasLockedTenantSession())
     ? rawRequestedClient
@@ -115,7 +117,9 @@ export default async function IntelligencePage({
     ? { ...authored, sections: canonical.sections }
     : authored;
   const intelligenceEclPreview =
-    isExplicitEclPreviewRequest(requestedProvider) &&
+    (isExplicitEclPreviewRequest(requestedProvider) ||
+      isExplicitEclPreviewRequest(requestedDiagnostics) ||
+      isExplicitEclPreviewRequest(requestedDebug)) &&
     isEclProductProvider(productProvider)
       ? await readIntelligenceEclContextPackPreview(
           canonicalTenantKey(contextTenantKey),
