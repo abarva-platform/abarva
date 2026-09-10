@@ -169,25 +169,39 @@ export const QA_GATES: QAGate[] = [
         return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const firstBlock = content.slice(0, 800).toLowerCase();
       if (isVendorPack(profile)) {
-        const opening = searchableText(content.slice(0, 1_200));
+        const opening = searchableText(content.slice(0, 2_400));
         const hasPurpose =
+          opening.includes("why this pack exists") ||
+          opening.includes("document purpose") ||
           opening.includes("request for proposal") ||
           opening.includes("invitation to bid") ||
           opening.includes("purpose and scope") ||
-          opening.includes("scope of services");
-        const hasResponseDirection =
+          opening.includes("scope of services") ||
+          opening.includes("response compliance") ||
+          opening.includes("clarification") ||
+          opening.includes("best and final offer") ||
+          opening.includes("bafo");
+        const hasRecipientAction =
+          opening.includes("must complete") ||
+          opening.includes("must submit") ||
+          opening.includes("must respond") ||
+          opening.includes("required to complete") ||
+          opening.includes("required to submit") ||
+          opening.includes("submit the") ||
+          opening.includes("complete the") ||
+          opening.includes("respond to") ||
           opening.includes("response instruction") ||
           opening.includes("submission instruction") ||
           opening.includes("vendor response") ||
           opening.includes("supplier response") ||
           opening.includes("proposal response");
         return {
-          pass: hasPurpose && hasResponseDirection,
+          pass: hasPurpose && hasRecipientAction,
           message:
-            hasPurpose && hasResponseDirection
-              ? "Opening section states the solicitation purpose and response direction"
-              : "Missing: vendor-facing purpose/scope and proposal-response direction in the opening section",
-          blocksRelease: !(hasPurpose && hasResponseDirection),
+            hasPurpose && hasRecipientAction
+              ? "Opening section states the vendor-facing purpose and recipient action"
+              : "Missing: vendor-facing purpose and recipient action in the opening section",
+          blocksRelease: !(hasPurpose && hasRecipientAction),
         };
       }
       const hasDecision =
