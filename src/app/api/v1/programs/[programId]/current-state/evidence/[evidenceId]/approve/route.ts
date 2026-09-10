@@ -8,6 +8,8 @@
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../../../_auth";
 import { decideEvidenceReview } from "@/lib/programs/current-state-doc-ingest";
+import { getProgramById } from "@/lib/programs/queries";
+import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,6 +21,9 @@ export async function POST(
   try {
     const { programId, evidenceId } = await params;
     const ctx = await requireTenancy();
+    const { supabase } = await getProgramsRouteSupabase("mutation");
+    const program = await getProgramById(ctx, programId, { supabase });
+    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
     const body = (await req.json().catch(() => ({}))) as {
       decision?: string;
