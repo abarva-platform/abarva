@@ -60,7 +60,10 @@ export function completeD09RfpGovernanceSections(args: {
   ctx: SourceGenerationContext;
 }): string {
   if (args.artifactCode !== "d09_rfp_pack") return args.body;
-  const sanitizedBody = sanitizeD09ClientFacingNames(args.body);
+  const sanitizedBody = ensureD09VendorOpening(
+    sanitizeD09ClientFacingNames(args.body),
+    args.ctx,
+  );
   if (sanitizedBody.includes(COMPLETION_MARKER)) return sanitizedBody;
 
   const body = stripFinalCompletionLine(sanitizedBody.trim());
@@ -68,6 +71,41 @@ export function completeD09RfpGovernanceSections(args: {
   return [body, appendix, "RFP package draft complete — pending client closure of registered gaps."]
     .filter(Boolean)
     .join("\n\n");
+}
+
+function ensureD09VendorOpening(
+  body: string,
+  ctx: SourceGenerationContext,
+): string {
+  const opening = body
+    .slice(0, 1_200)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ");
+  const hasPurpose =
+    opening.includes("request for proposal") ||
+    opening.includes("invitation to bid") ||
+    opening.includes("purpose and scope") ||
+    opening.includes("scope of services");
+  const hasResponseDirection =
+    opening.includes("response instruction") ||
+    opening.includes("submission instruction") ||
+    opening.includes("vendor response") ||
+    opening.includes("supplier response") ||
+    opening.includes("proposal response");
+  if (hasPurpose && hasResponseDirection) return body;
+
+  const preface = [
+    "## Solicitation purpose and scope",
+    "",
+    `This request for proposal invites qualified service providers to respond to the stated service scope for ${ctx.event.name}.`,
+    "",
+    "Vendors must complete the Vendor Response Workbook and submit a proposal response against every mandatory requirement, pricing field, SLA, staffing commitment, transition obligation, assumption, exception, and evidence pointer.",
+  ].join("\n");
+  const lines = body.split("\n");
+  if ((lines[0]?.trim() ?? "").startsWith("# ")) {
+    return [lines[0], "", preface, "", ...lines.slice(1)].join("\n");
+  }
+  return [preface, "", body].join("\n");
 }
 
 export function sanitizeD09ClientFacingNames(body: string): string {
@@ -99,7 +137,7 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     "| Bidder Q&A close | T+7 weeks from sponsor sign-off | Sourcing lead + Legal | Equal-information gate | Keeps late Q&A changes controlled and comparable across bidders. |",
     "| Proposal due date | T+9 weeks from sponsor sign-off | Sourcing lead | Evaluation gate | Establishes a fixed receipt deadline for scoring and compliance checks. |",
     "| Downselect / finalist demos | T+11 weeks from sponsor sign-off | Evaluation chair | Shortlist gate | Lets demos, references, and clarification cycles be scheduled cleanly. |",
-    "| Target award | Sep 2026 constraint from event planning context | Executive sponsor + Finance | Award gate | Transition plan and incumbent notice windows must align to this date. |",
+    "| Target award | To be confirmed from the client-approved sourcing calendar | Executive sponsor + Finance | Award gate | Transition plan and incumbent notice windows must align to the approved date. |",
     "",
     "## §9A · Evaluation controls and normalization closure",
     "",
@@ -129,10 +167,10 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     "| R-01 | Incumbent knowledge-transfer or exit support is insufficient for safe transition. | Exhibit 07 / Exhibit 14 | Transition lead | Require KT plan, named SMEs, cutover entry criteria, and exit-support obligations in vendor response. | Transition readiness gate |",
     "| R-02 | Proposal economics are not comparable because run, change, transition, and pass-through costs are mixed. | Exhibit 08 / Exhibit 15 | Finance | Require normalized workbook tabs for steady-state run, transition, retained cost, pass-through, and productivity glidepath. | Commercial evaluation gate |",
     "| R-03 | Data center, private-cloud, or infrastructure refresh dependencies are under-scoped. | Exhibit 11 / Exhibit 14 | Infrastructure owner | Require dependency inventory, refresh assumptions, transition exclusions, and bidder exception log. | Scope-lock gate |",
-    "| R-04 | Security, PCI DSS, or compliance continuity weakens during incumbent-to-MSP cutover. | Exhibit 13 | Security owner | Require control mapping, evidence transfer plan, access recertification, vulnerability backlog treatment, and incident-response obligations. | Security approval gate |",
-    "| R-05 | Transition blackout windows conflict with airline operational peaks or freeze periods. | Exhibit 14 | Operations transition owner | Require milestone calendar, blackout acknowledgement, rollback plan, and change-freeze exception process. | Transition plan gate |",
-    "| R-06 | Network/site connectivity obligations are misunderstood across airports, OCC, and corporate locations. | Exhibit 12 | Network owner | Require circuit/site inventory validation, carrier handoff matrix, redundancy commitments, and escalation paths. | Technical evaluation gate |",
-    "| R-07 | Workforce adoption and service continuity degrade during movement of 1,800+ FTE-supported work. | Exhibit 04 / Exhibit 14 | HR / change lead | Require change-readiness plan, retained-role map, communication plan, and stabilization hypercare metrics. | Mobilization gate |",
+    "| R-04 | Security, privacy, or regulatory-control continuity weakens during incumbent-to-provider cutover. | Exhibit 13 | Security owner | Require control mapping, evidence transfer plan, access recertification, vulnerability backlog treatment, and incident-response obligations. | Security approval gate |",
+    "| R-05 | Transition blackout windows conflict with critical operating periods or change freezes. | Exhibit 14 | Operations transition owner | Require milestone calendar, blackout acknowledgement, rollback plan, and change-freeze exception process. | Transition plan gate |",
+    "| R-06 | Network and site-connectivity obligations are misunderstood across operational and corporate locations. | Exhibit 12 | Network owner | Require circuit and site inventory validation, carrier handoff matrix, redundancy commitments, and escalation paths. | Technical evaluation gate |",
+    "| R-07 | Workforce adoption and service continuity degrade during service transition. | Exhibit 04 / Exhibit 14 | HR / change lead | Require change-readiness plan, retained-role map, communication plan, and stabilization hypercare metrics. | Mobilization gate |",
     "| R-08 | SLA/XLA obligations are accepted without measurable baselines or credit mechanics. | Exhibit 05 | Service owner | Require SLA definitions, baseline volumes, reporting cadence, service-credit method, and cure period. | Contracting gate |",
     "",
     "## §11 · Source register, assumptions, and client-to-complete gaps",
@@ -150,7 +188,7 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     `| G-04 | ${hasEvaluationWeights ? "Validate Exhibit 09 weighted-scorecard math and rater model." : "Set final E-06 commercial evaluation weight and total-score math."} | Finance + sourcing lead | T+2 weeks from sponsor sign-off | Issue-to-market gate | Evaluation model cannot be represented as final until weights sum to 100%. |`,
     "| G-09 | Confirm RFP issue, Q&A, proposal due, downselect, BAFO, and award calendar dates against transition blackout windows. | Sourcing lead | T+3 weeks from sponsor sign-off | Issue-to-market gate | Vendors cannot plan response resources or transition commitments against open dates. |",
     "| G-10 | Confirm rater roles, consensus process, and conflict-of-interest treatment. | Evaluation chair | T+6 weeks from sponsor sign-off | Evaluation gate | Scores will not be auditable without a named process. |",
-    "| G-11 | Confirm PCI DSS and security-control continuity obligations for transition. | Security owner | T+7 weeks from sponsor sign-off | Security approval gate | Compliance gaps may surface too late for vendor remediation. |",
+    "| G-11 | Confirm applicable security, privacy, and regulatory-control continuity obligations for transition. | Security owner | T+7 weeks from sponsor sign-off | Security approval gate | Compliance gaps may surface too late for vendor remediation. |",
     "| G-12 | Confirm workforce-transition, retained-role, and change-management assumptions. | HR / change lead | T+10 weeks from sponsor sign-off | Mobilization gate | Adoption and continuity risks remain under-owned. |",
     "",
     "## §12 · Legal, commercial, and submission terms for client counsel review",

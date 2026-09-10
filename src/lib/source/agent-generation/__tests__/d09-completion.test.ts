@@ -35,8 +35,12 @@ describe("completeD09RfpGovernanceSections", () => {
     expect(completed).toContain("## Appendix C · Internal Review and Negotiation Workbook");
     expect(completed).toContain("## Appendix D · BAFO and Clarification Round Instructions");
     expect(completed).toContain("R-08");
-    expect(completed).toContain("PCI DSS");
-    expect(completed).toContain("1,800+ FTE");
+    expect(completed).toContain(
+      "applicable security, privacy, and regulatory-control",
+    );
+    expect(completed).toContain(
+      "service continuity degrade during service transition",
+    );
     expect(completed).toContain("Vendor Claim Register");
     expect(completed).toContain("Assumptions and Exclusions");
     expect(completed).toContain(
@@ -52,6 +56,14 @@ describe("completeD09RfpGovernanceSections", () => {
     expect(completed).toContain(
       "RFP package draft complete — pending client closure of registered gaps.",
     );
+    expect(completed).toContain("## Solicitation purpose and scope");
+    expect(completed).toContain(
+      "Vendors must complete the Vendor Response Workbook",
+    );
+    expect(completed).toContain(
+      "To be confirmed from the client-approved sourcing calendar",
+    );
+    expect(completed).not.toMatch(/airline|airport|\bOCC\b|1,800\+ FTE|Sep 2026/i);
   });
 
   it("is idempotent and does not alter non-D09 artifacts", () => {
