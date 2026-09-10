@@ -3902,7 +3902,14 @@ function StageEvidenceChecklistPanel({
             </thead>
             <tbody>
               {rows.map(
-                ({ requirement, evidence, file, lifecycle, ready, uploaded }) => {
+                ({
+                  requirement,
+                  evidence,
+                  file,
+                  lifecycle,
+                  ready,
+                  uploaded,
+                }) => {
                   const requiresHumanReview =
                     lifecycle.parsed &&
                     !ready &&
@@ -4086,15 +4093,54 @@ function EvidenceReviewControl({
 }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [preview, setPreview] = useState<{
+    actionLabel: string;
+    reviewer: {
+      displayName: string;
+      email: string;
+      role: string;
+    };
+    targetState: string;
+    disclaimer: string;
+  } | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const beginReview = () => {
-    setNote(
-      `Reviewed ${fileName} and confirmed that the parsed evidence supports this event requirement.`,
-    );
+  const reviewUrl = `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(requirement.requirementId)}/availability-review`;
+
+  const beginReview = async () => {
+    setLoadingPreview(true);
     setError(null);
-    setOpen(true);
+    try {
+      const response = await fetch(reviewUrl, { credentials: "include" });
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        detail?: string;
+        error?: string;
+        review?: typeof preview;
+      } | null;
+      if (!response.ok || payload?.ok !== true || !payload.review) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            `Evidence review preview failed with HTTP ${response.status}.`,
+        );
+      }
+      setPreview(payload.review);
+      setNote(
+        `Reviewed ${fileName} for evidence availability and confirmed that its parsed content is relevant to this workflow requirement. This is not legal, security, commercial, supplier, or finance approval.`,
+      );
+      setOpen(true);
+    } catch (previewError) {
+      setError(
+        previewError instanceof Error
+          ? previewError.message
+          : "Evidence review preview failed.",
+      );
+    } finally {
+      setLoadingPreview(false);
+    }
   };
 
   const submitReview = async () => {
@@ -4105,18 +4151,15 @@ function EvidenceReviewControl({
     setPending(true);
     setError(null);
     try {
-      const response = await fetch(
-        `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(requirement.requirementId)}/answer`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            answer: note.trim(),
-            stage: requirement.stage,
-          }),
-        },
-      );
+      const response = await fetch(reviewUrl, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rationale: note.trim(),
+          stage: requirement.stage,
+        }),
+      });
       const payload = (await response.json().catch(() => null)) as {
         ok?: boolean;
         detail?: string;
@@ -4130,6 +4173,7 @@ function EvidenceReviewControl({
         );
       }
       setOpen(false);
+      setPreview(null);
       onReviewed();
     } catch (reviewError) {
       setError(
@@ -4144,14 +4188,22 @@ function EvidenceReviewControl({
 
   if (!open) {
     return (
-      <button
-        type="button"
-        data-testid={`source-evidence-review-open-${requirement.requirementId}`}
-        onClick={beginReview}
-        style={{ ...TABLE_BUTTON_STYLE, marginTop: 7 }}
-      >
-        Review parsed evidence
-      </button>
+      <div style={{ display: "grid", gap: 6, marginTop: 7 }}>
+        <button
+          type="button"
+          data-testid={`source-evidence-review-open-${requirement.requirementId}`}
+          disabled={loadingPreview}
+          onClick={() => void beginReview()}
+          style={TABLE_BUTTON_STYLE}
+        >
+          {loadingPreview ? "Resolving reviewer..." : "Review parsed evidence"}
+        </button>
+        {error ? (
+          <span role="alert" style={{ color: ANALYTICS.AMBER_TEXT }}>
+            {error}
+          </span>
+        ) : null}
+      </div>
     );
   }
 
@@ -4164,6 +4216,30 @@ function EvidenceReviewControl({
       }}
       style={{ display: "grid", gap: 6, marginTop: 7 }}
     >
+      {preview ? (
+        <div
+          data-testid={`source-evidence-review-preview-${requirement.requirementId}`}
+          style={{
+            background: ANALYTICS.CARD,
+            border: `1px solid ${ANALYTICS.LINE_STRONG}`,
+            borderRadius: 6,
+            color: ANALYTICS.MUTED,
+            display: "grid",
+            gap: 3,
+            padding: 8,
+          }}
+        >
+          <strong style={{ color: ANALYTICS.INK }}>
+            {preview.actionLabel}
+          </strong>
+          <span>
+            Reviewer: {preview.reviewer.displayName} ({preview.reviewer.email})
+            · {preview.reviewer.role}
+          </span>
+          <span>Evidence state after review: {preview.targetState}</span>
+          <span>{preview.disclaimer}</span>
+        </div>
+      ) : null}
       <textarea
         aria-label={`Review rationale for ${requirement.label}`}
         value={note}
@@ -4181,13 +4257,14 @@ function EvidenceReviewControl({
       />
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <button type="submit" disabled={pending} style={TABLE_BUTTON_STYLE}>
-          {pending ? "Confirming..." : "Confirm evidence"}
+          {pending ? "Recording..." : "Record evidence review"}
         </button>
         <button
           type="button"
           disabled={pending}
           onClick={() => {
             setOpen(false);
+            setPreview(null);
             setError(null);
           }}
           style={{
