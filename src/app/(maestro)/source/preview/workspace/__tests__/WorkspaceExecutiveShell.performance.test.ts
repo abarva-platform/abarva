@@ -25,6 +25,7 @@ import {
   vendorCoverageRows,
   vendorLinkedContracts,
 } from "../WorkspaceExecutiveShell";
+import { portfolioDiscountComparatorSummary } from "../contractDiscountComparator";
 import { focusableContractRows } from "../contractDiscovery";
 import { INITIAL_STATE, WorkspaceViewModel } from "../viewModel";
 
@@ -1781,5 +1782,72 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(summary.body).not.toContain("cloud consumption commitment");
     expect(summary.evidence).toContain("Managed Services archetype");
     expect(summary.evidence).toContain("$7.2M annual value");
+  });
+
+  it("summarizes discount evidence as portfolio-relative, not external benchmark proof", () => {
+    const summary = portfolioDiscountComparatorSummary(
+      "MER-TECH-DBX-001",
+      [
+        {
+          contract_id: "MER-TECH-DBX-001",
+          cloud_provider: "aws",
+          commitment_covered_spend_usd: 10_000,
+          expected_discount_pct: 0.09,
+        },
+        {
+          contract_id: "MER-CLOUD-AWS-001",
+          cloud_provider: "aws",
+          commitment_covered_spend_usd: 500_000,
+          expected_discount_pct: 0.28,
+        },
+      ],
+      [
+        {
+          id: "OPT-DBX-DISCOUNT-REPRICE-001",
+          label: "Signal-stage discount band re-price review",
+          stageRaw: "signal",
+          blockingGap:
+            "Benchmark comparable required before discount-band value can be treated as supported.",
+        },
+      ],
+    );
+
+    expect(summary?.headline).toBe(
+      "Loaded discount 9.0%; same-tenant cloud peer median 28.0%.",
+    );
+    expect(summary?.basis).toContain("1 peer contract");
+    expect(summary?.basis).toContain("portfolio-relative range of 28.0%");
+    expect(summary?.caveat).toContain("not an external market benchmark");
+    expect(summary?.evidenceGate).toContain("Benchmark comparable required");
+  });
+
+  it("keeps the discount ask gated when no same-tenant comparator is loaded", () => {
+    const summary = portfolioDiscountComparatorSummary(
+      "MER-TECH-DBX-001",
+      [
+        {
+          contract_id: "MER-TECH-DBX-001",
+          cloud_provider: "aws",
+          commitment_covered_spend_usd: 10_000,
+          expected_discount_pct: 0.09,
+        },
+      ],
+      [
+        {
+          id: "OPT-DBX-DISCOUNT-REPRICE-001",
+          label: "Signal-stage discount band re-price review",
+          stageRaw: "signal",
+          blockingGap:
+            "Benchmark comparable required before discount-band value can be treated as supported.",
+        },
+      ],
+    );
+
+    expect(summary?.headline).toBe(
+      "Loaded discount 9.0%; no same-tenant cloud peer discount is loaded.",
+    );
+    expect(summary?.peerMedianPct).toBeNull();
+    expect(summary?.basis).toContain("cannot benchmark the rate");
+    expect(summary?.factLine).toContain("Evidence gate");
   });
 });

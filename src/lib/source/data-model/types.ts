@@ -352,6 +352,32 @@ export interface SourceContractSpendMonthlyRow {
   readonly load_run_id: string | null;
 }
 
+export interface SourceCloudCommitmentCoverageRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string;
+  readonly coverage_id: string;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_id: string;
+  readonly vendor_name: string | null;
+  readonly cloud_provider: string | null;
+  readonly period_start: string;
+  readonly period_end: string;
+  readonly eligible_stable_workload_spend_usd: number | null;
+  readonly commitment_covered_spend_usd: number | null;
+  readonly on_demand_eligible_spend_usd: number | null;
+  readonly commitment_coverage_pct: number | null;
+  readonly commitment_utilization_pct: number | null;
+  readonly recommended_step_up_usd: number | null;
+  readonly expected_discount_pct: number | null;
+  readonly candidate_monthly_savings_usd: number | null;
+  readonly evidence_reference: string | null;
+  readonly source_file_id: string | null;
+  readonly confidence: number | null;
+  readonly quality_state: string | null;
+  readonly load_run_id: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Deterministic Source impact layer
 //

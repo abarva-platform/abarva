@@ -4,6 +4,7 @@ import {
   getContractEvidenceOverview,
   getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
+  listCloudCommitmentCoverageRows,
   listContract360,
   listContractEvidencePricing,
   listContractEvidenceScope,
@@ -411,6 +412,57 @@ describe("listContractVendor360 tenant-key resolution", () => {
       ["meridian-health"],
       ["meridian-health"],
     ]);
+  });
+
+  it("reads cloud commitment coverage rows through canonical Source tenant context", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("source.cloud_commitment_coverage_observation")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            dataset_version: "cloud-consumption-test",
+            coverage_id: "coverage:MER-TECH-DBX-001:2026-08",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-VEN-DATABRICKS",
+            vendor_id: "MER-VEN-DATABRICKS",
+            vendor_name: "Databricks, Inc.",
+            cloud_provider: "aws",
+            period_start: "2026-08-01",
+            period_end: "2026-08-31",
+            eligible_stable_workload_spend_usd: "13900",
+            commitment_covered_spend_usd: "13900",
+            on_demand_eligible_spend_usd: "0",
+            commitment_coverage_pct: "0.1076",
+            commitment_utilization_pct: "0.1076",
+            recommended_step_up_usd: "0",
+            expected_discount_pct: "0.09",
+            candidate_monthly_savings_usd: "12500",
+            evidence_reference: "source_cloud_consumption_package:test",
+            source_file_id: "DOC-MER-TECH-DBX-001-METERING",
+            confidence: "0.9",
+            quality_state: "reviewed",
+            load_run_id: "source-contract-depth-package-test",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const rows = await listCloudCommitmentCoverageRows("meridian");
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      contract_id: "MER-TECH-DBX-001",
+      expected_discount_pct: 0.09,
+      commitment_utilization_pct: 0.1076,
+      confidence: 0.9,
+    });
+    expect(run.mock.calls[0]).toEqual([
+      "SELECT set_config('app.tenant_key', $1, false)",
+      ["meridian-health"],
+    ]);
+    expect(run.mock.calls[1][1][0]).toEqual(["meridian-health"]);
   });
 
   it("reads every Source 360 impact view with canonical tenant context before alias fallback", async () => {
