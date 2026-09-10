@@ -74,6 +74,46 @@ Required payload/review fields: `review_state`, `confidence`, `payload.value_tex
 `payload.context_review_state`, `payload.context_reviewer_role`, `payload.context_reviewed_at`,
 `payload.derived_from_load_run_id`, and `payload.basis_type = reviewed_contract_intelligence`.
 
+### Contract Tab Intelligence
+
+View: `source.contract_tab_intelligence_v1`
+
+This is the primary data contract for Contract 360 tab storytelling. Claude Design should bind the
+top narrative of each tab to this view before using any render-time fallback copy.
+
+One selected contract should return seven rows:
+
+| `tab_key`       | Meaning                                                                        |
+| --------------- | ------------------------------------------------------------------------------ |
+| `story`         | What the contract is, why it matters, and what action posture it implies.      |
+| `scope`         | What applications, services, functions, and boundaries are actually in scope.  |
+| `economics`     | What spend, AP, consumption, commitment, and ledger facts can be shown.        |
+| `performance`   | Whether SLA, usage, or service-credit evidence supports a contractual ask.     |
+| `relationship`  | Declared vendor, contract, workload, owner, and function relationships only.   |
+| `evidence`      | Which evidence families are loaded, which are missing, and what that blocks.   |
+| `optimize`      | Which governed levers are loaded, their evidence state, owner, and next step. |
+
+Fields:
+
+| Field                            | Render Rule                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `headline`                       | Large tab-specific claim. It must not be generic across tabs.                               |
+| `allowed_executive_statement`    | The plain-English story the presenter may say.                                              |
+| `supporting_evidence_summary`    | Compact row-count/source summary. Use it as proof text or provenance, not as the headline.  |
+| `missing_evidence_summary`       | If present, render as an evidence gate; do not bury it in footnotes.                        |
+| `action_prompt`                  | The next thing the user should do from this tab.                                            |
+| `source_basis`                   | Human-readable source basis for the tab.                                                    |
+| `confidence_level`               | `high`, `medium`, `low`, or `unverified`; controls visual treatment.                        |
+| `confidence_rationale`           | Why this row is allowed.                                                                    |
+| `review_status`                  | `system_generated_from_reviewed_sources` or `draft_gap` initially.                          |
+| `provenance`                     | JSON counts/references to `source.contract_360`, evidence coverage, scope, and opportunity. |
+| `derived_from_load_run_id`       | Invalidates the row when the source package is refreshed.                                   |
+
+Design implication: every Contract 360 tab should begin with a tab-specific narrative card from
+this view. If the row is absent, the page should show a compact "tab intelligence not loaded" state
+with the missing data family. It should not repeat the same contract header, vendor/date/notice
+cards, or generic evidence-state strip as filler.
+
 ### Archetype Mapping
 
 Every contract visible in Contract 360 needs a declared archetype. Missing archetype is not a design
@@ -238,6 +278,9 @@ Each tab needs a distinct purpose. These are the minimum beats:
 | Evidence     | What backs this?                                                            | Source files, clause rows, canonical facts, restricted raw-doc note; no empty page-span dashboards. |
 | Optimize     | What should we ask for, why, when, and with what proof?                     | Exportable lever table plus sequence, blocker, approval state, and finance-proof state.             |
 
+The render source for the tab opener is `source.contract_tab_intelligence_v1`. Secondary tables can
+fill the body of the tab, but they should not be asked to invent the tab's executive story.
+
 ## aVa and Export Prompt Contract
 
 aVa should answer like a pricing/CXO negotiation advisor, but only from the loaded objects above.
@@ -307,6 +350,8 @@ For a public-cloud enterprise commitment:
 - Main app nav is visible on every Source and Optimize Contract page.
 - Contract 360 never repeats the same filler block across Story, Scope, Relationship, Evidence, and
   Optimize.
+- Each selected contract reads seven `source.contract_tab_intelligence_v1` rows or shows an explicit
+  missing-tab-intelligence gap.
 - Optimize Contract shows current workflow step, blocker, and next action from governed state.
 - The lever table is exportable and distinguishes sized, signal-stage, approved, agreed, and
   finance-confirmed states.

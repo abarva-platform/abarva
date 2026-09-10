@@ -508,6 +508,27 @@ export interface SourcePageStorylineRow {
   readonly citation_basis_json: Record<string, unknown> | null;
 }
 
+export interface SourceContractTabIntelligenceRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string | null;
+  readonly vendor_name: string | null;
+  readonly contract_name: string | null;
+  readonly tab_key: string;
+  readonly sort_order: number;
+  readonly headline: string;
+  readonly allowed_executive_statement: string;
+  readonly supporting_evidence_summary: string;
+  readonly missing_evidence_summary: string | null;
+  readonly action_prompt: string | null;
+  readonly source_basis: string;
+  readonly confidence_level: "high" | "medium" | "low" | "unverified";
+  readonly confidence_rationale: string;
+  readonly review_status: string;
+  readonly provenance: Record<string, unknown> | null;
+  readonly derived_from_load_run_id: string | null;
+}
+
 export interface SourceAvaGroundingBundleRow {
   readonly tenant_key: SkyHarborTenantKey;
   readonly grounding_bundle_id: string;

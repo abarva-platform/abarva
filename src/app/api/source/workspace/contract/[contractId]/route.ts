@@ -18,6 +18,7 @@ import {
   listContractOperationalPerformance,
   listContractPerformancePeriods,
   listContractSpendMonthly,
+  listContractTabIntelligence,
   listDocExtractionsForSubject,
   listDocFilesForContract,
   listLatestTowerObservationsForSubjects,
@@ -101,7 +102,7 @@ export async function GET(
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
 
-  const [storedApplicationScope, financialExposure, operationalPerformance, storedInitiativeDependencies, evidenceOverview, evidenceScope, evidencePricing, evidencePerformance, performancePeriods, spendMonths, cloudCommitmentPeerCoverage] =
+  const [storedApplicationScope, financialExposure, operationalPerformance, storedInitiativeDependencies, evidenceOverview, evidenceScope, evidencePricing, evidencePerformance, performancePeriods, spendMonths, cloudCommitmentPeerCoverage, contractTabIntelligence] =
     await Promise.all([
       listContractApplicationScope(tenantKey, contractId).catch(() => []),
       listContractFinancialExposure(tenantKey).catch(() => []),
@@ -114,6 +115,7 @@ export async function GET(
       listContractPerformancePeriods(tenantKey, contractId).catch(() => []),
       listContractSpendMonthly(tenantKey, contractId).catch(() => []),
       listCloudCommitmentCoverageRows(tenantKey).catch(() => []),
+      listContractTabIntelligence(tenantKey, contractId).catch(() => []),
     ]);
   const applicationScope =
     storedApplicationScope.length > 0
@@ -159,6 +161,7 @@ export async function GET(
     performancePeriods,
     spendMonths,
     cloudCommitmentPeerCoverage,
+    contractTabIntelligence,
   });
 
   return NextResponse.json(view);

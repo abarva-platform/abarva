@@ -32,6 +32,7 @@ import type {
   SourceContractOperationalPerformanceRow,
   SourceContractPerformancePeriodRow,
   SourceContractSpendMonthlyRow,
+  SourceContractTabIntelligenceRow,
   SourceCloudCommitmentCoverageRow,
   TowerMetricObservationRow,
   TowerValueClaimRow,
@@ -63,6 +64,8 @@ export interface Contract360View {
   readonly spendMonths: readonly SourceContractSpendMonthlyRow[];
   /** Same-tenant cloud commitment coverage rows for portfolio-relative comparator context. */
   readonly cloudCommitmentPeerCoverage?: readonly SourceCloudCommitmentCoverageRow[];
+  /** Load-time governed stories, one per Contract 360 tab. */
+  readonly contractTabIntelligence?: readonly SourceContractTabIntelligenceRow[];
 }
 
 export interface BuildContract360ViewInput {
@@ -84,6 +87,7 @@ export interface BuildContract360ViewInput {
   readonly performancePeriods?: readonly SourceContractPerformancePeriodRow[];
   readonly spendMonths?: readonly SourceContractSpendMonthlyRow[];
   readonly cloudCommitmentPeerCoverage?: readonly SourceCloudCommitmentCoverageRow[];
+  readonly contractTabIntelligence?: readonly SourceContractTabIntelligenceRow[];
   /** (contract_id, application_ref) pairs proven by an actual SOW/contract-scope reference. */
   readonly explicitApplicationPairs?: ReadonlySet<string>;
 }
@@ -110,6 +114,7 @@ export function buildContract360View(
     performancePeriods = [],
     spendMonths = [],
     cloudCommitmentPeerCoverage = [],
+    contractTabIntelligence = [],
     explicitApplicationPairs,
   } = input;
 
@@ -150,6 +155,9 @@ export function buildContract360View(
       (r) => r.contract_id === contract.contract_id,
     ),
     cloudCommitmentPeerCoverage,
+    contractTabIntelligence: contractTabIntelligence.filter(
+      (r) => r.contract_id === contract.contract_id,
+    ),
   };
 }
 
