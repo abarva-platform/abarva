@@ -25,6 +25,7 @@ import { sanitizeClientFacingArtifactMarkdown } from "@/lib/deliverables/client-
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
+import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { humanizeSourceFamily } from "./source-register";
 
 /** Bounded-concurrency map that preserves input order. */
@@ -207,6 +208,58 @@ export function summariseSection(s: RenderableSection): {
     title: s.title,
     summary: s.bodyMarkdown.replace(/\s+/g, " ").slice(0, 400),
   };
+}
+
+function documentTextForSignalCheck(
+  sections: readonly RenderableSection[],
+  tables: readonly RenderableTable[],
+  recommendation: string,
+  nextActions: readonly string[],
+): string {
+  return [
+    sections.map((s) => `${s.title}\n${s.bodyMarkdown}`).join("\n\n"),
+    tables
+      .map((t) => `${t.title}\n${t.columns.join(" | ")}\n${t.rows.map((r) => r.join(" | ")).join("\n")}`)
+      .join("\n\n"),
+    recommendation,
+    nextActions.join("\n"),
+  ].join("\n\n");
+}
+
+function appendMissingEvidenceSignals(
+  req: DeliverableIntelligenceRequest,
+  sections: readonly RenderableSection[],
+  tables: readonly RenderableTable[],
+  recommendation: string,
+  nextActions: readonly string[],
+): RenderableSection[] {
+  const required = req.requiredEvidenceSignals ?? [];
+  if (required.length === 0) return [...sections];
+  const haystack = documentTextForSignalCheck(sections, tables, recommendation, nextActions);
+  const missing = required.filter(
+    (signal) =>
+      !carriesRequiredEvidenceSignal(
+        haystack,
+        signal.label,
+        signal.statement,
+      ),
+  );
+  if (missing.length === 0) return [...sections];
+  return [
+    ...sections,
+    {
+      key: "evidence_signals_carried_forward",
+      title: "Evidence Signals Carried Forward",
+      bodyMarkdown: missing
+        .map((signal) => `- ${signal.label}: ${signal.statement} [${signal.citationNumber}]`)
+        .join("\n"),
+      rawBodyMarkdown: missing
+        .map((signal) => `- ${signal.label}: ${signal.statement} [${signal.citationNumber}]`)
+        .join("\n"),
+      groundingMode: "governed_facts",
+      citationsUsed: missing.map((signal) => signal.citationNumber),
+    },
+  ];
 }
 
 /**
@@ -523,20 +576,28 @@ export function assembleDeliverable(
   const nextActions = (synth.nextActions ?? []).map(
     repairStructuredClientFactText,
   );
+  const recommendation = repairStructuredClientFactText(
+    fallbackRecommendation(req, finalSections, synth),
+  );
+  const sectionsWithSignals = appendMissingEvidenceSignals(
+    req,
+    finalSections,
+    tables,
+    recommendation,
+    nextActions,
+  );
   return {
     title: honestTitle(req, synth),
     subtitle: synth.subtitle,
     clientDisplayName: req.clientDisplayName,
     initiativeDisplayName: req.initiativeDisplayName,
-    generatedSections: finalSections,
+    generatedSections: sectionsWithSignals,
     tables,
     exhibits: expectedExhibitsForProfile(req, options.brief),
-    sourceRegister: buildSourceRegister(evidence, finalSections),
+    sourceRegister: buildSourceRegister(evidence, sectionsWithSignals),
     assumptions: req.approvedAssumptions ?? [],
     clientCompleteChecklist: checklist,
-    recommendation: repairStructuredClientFactText(
-      fallbackRecommendation(req, finalSections, synth),
-    ),
+    recommendation,
     nextActions,
   };
 }

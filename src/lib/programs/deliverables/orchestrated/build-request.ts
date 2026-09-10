@@ -21,6 +21,7 @@ import type {
   SourceRegisterEntry,
 } from "@/lib/deliverables/orchestrator/types";
 import { resolveQualityBar } from "@/lib/deliverables/orchestrator/quality-bar-registry";
+import { selectRequiredEvidenceSignals } from "@/lib/deliverables/orchestrator/evidence-signals";
 
 /** Board-grade defaults shared by orchestrated Move deliverables. */
 const FORMATTING_PROFILE: FormattingProfile = {
@@ -288,6 +289,10 @@ export function buildMoveDeliverableRequest(
     decisionContext: options.decisionContext,
     governedEvidenceBundle,
     sourceRegister,
+    requiredEvidenceSignals:
+      options.deliverableType === "charter"
+        ? []
+        : selectRequiredEvidenceSignals(governedEvidenceBundle),
     missingEvidence,
     clientCompleteItems: [],
     approvedAssumptions: [],

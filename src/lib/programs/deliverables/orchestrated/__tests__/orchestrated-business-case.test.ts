@@ -49,6 +49,18 @@ const FULL_MOVE: MoveBusinessCaseInput = {
   tenant_name: "SkyHarbor Air",
 };
 
+const SIGNAL_MOVE: MoveBusinessCaseInput = {
+  ...FULL_MOVE,
+  baseline_metrics: [
+    {
+      metric_name: "Overall care-gap closure rate",
+      value: "41.2",
+      unit: "%",
+      as_of: "FY2026",
+    },
+  ],
+};
+
 /** A stub ModelCaller that returns a plan + document derived from the real brief. */
 function passingStub(): ModelCaller {
   return async (prompt, req: DeliverableIntelligenceRequest) => {
@@ -224,6 +236,19 @@ describe("buildBusinessCaseRequest — binds only recorded facts", () => {
     );
   });
 
+  it("selects metric-dense evidence signals that must survive generation", () => {
+    const { request } = buildBusinessCaseRequest(SIGNAL_MOVE);
+
+    expect(request.requiredEvidenceSignals).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Overall care-gap closure rate",
+          statement: expect.stringContaining("41.2"),
+        }),
+      ]),
+    );
+  });
+
   it("records UUID-backed committed evidence as lineage and ignores non-UUID provenance", () => {
     const evidenceId = "00000000-0000-4000-8000-000000000201";
     const { request, citedInputIds } = buildBusinessCaseRequest({
@@ -279,6 +304,23 @@ describe("runOrchestratedBusinessCase — multi-pass flow + quality gate", () =>
     expect(res.passTrace?.map((p) => p.pass)).toEqual(
       expect.arrayContaining(["architect", "section_draft", "synthesis"]),
     );
+  });
+
+  it("carries forward required baseline signals even when the section drafts omit them", async () => {
+    const res = await runOrchestratedBusinessCase({
+      moveInput: SIGNAL_MOVE,
+      moveId: "move-signal-1",
+      tenantId: "skyharbor-air",
+      generatedOn: "2026-06-11",
+      modelCaller: passingStub(),
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.html).toContain("Evidence Signals Carried Forward");
+    expect(res.html).toContain("Overall care-gap closure rate");
+    expect(res.html).toContain("41.2");
+    expect(res.quality?.metrics.requiredEvidenceSignalCount).toBeGreaterThan(0);
+    expect(res.quality?.metrics.missingRequiredEvidenceSignalCount).toBe(0);
   });
 
   it("blocks (no HTML) when the Move has no recorded evidence — honest fallback", async () => {

@@ -96,6 +96,17 @@ export interface SourceRegisterEntry {
   asOf?: string;
 }
 
+export interface RequiredEvidenceSignal {
+  /** Stable key used for audit/debug output only; never rendered as client prose. */
+  key: string;
+  /** The exact governed evidence statement that must survive into the artifact. */
+  statement: string;
+  /** The citation number that proves this signal. */
+  citationNumber: number;
+  /** Human-readable label shown in prompts and any deterministic carry-forward row. */
+  label: string;
+}
+
 // ── Formatting + quality profile ──
 
 export interface FormattingProfile {
@@ -197,6 +208,12 @@ export interface DeliverableIntelligenceRequest {
   decisionContext: string; // the decision this artifact must support
   governedEvidenceBundle: GovernedEvidenceItem[];
   sourceRegister: SourceRegisterEntry[];
+  /**
+   * High-signal facts selected from governed evidence that must remain visible
+   * in the generated artifact. This closes the gap where a document can use many
+   * citations but quietly drop a decision-critical baseline metric.
+   */
+  requiredEvidenceSignals?: RequiredEvidenceSignal[];
   missingEvidence: MissingEvidenceItem[];
   clientCompleteItems: ClientCompleteItem[];
   approvedAssumptions: ApprovedAssumption[];
@@ -417,6 +434,8 @@ export interface QualityValidationResult {
     hasCentralTension: boolean;
     hasOptionsConsidered: boolean;
     hasEvidenceGapsNoted: boolean;
+    requiredEvidenceSignalCount?: number;
+    missingRequiredEvidenceSignalCount?: number;
     /** ~200 words/minute executive reading pace, rounded up to at least 1. */
     readingTimeMinutes: number;
     /** true whenever any advisory/warning fired — a signal to track whether the

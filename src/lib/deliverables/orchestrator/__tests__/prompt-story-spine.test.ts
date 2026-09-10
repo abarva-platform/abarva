@@ -99,6 +99,32 @@ describe("deterministic-numbers mandate", () => {
   });
 });
 
+describe("required evidence signal prompting", () => {
+  it("tells the model to preserve selected high-signal metrics", () => {
+    const req = movesRequest("business_case");
+    req.requiredEvidenceSignals = [
+      {
+        key: "closure-rate",
+        label: "Overall care-gap closure rate",
+        statement: "Overall care-gap closure rate: 41.2 % (as of FY2026)",
+        citationNumber: 6,
+      },
+    ];
+    const brief = getArtifactBrief(req);
+    const prompt = buildPassPrompt("full_draft", {
+      req,
+      brief,
+      evidence: req.governedEvidenceBundle,
+      approvedPlanJson: "{}",
+    }).user;
+
+    expect(prompt).toContain("REQUIRED EVIDENCE SIGNALS TO CARRY FORWARD");
+    expect(prompt).toContain("Overall care-gap closure rate");
+    expect(prompt).toContain("41.2");
+    expect(prompt).toMatch(/Preserve the exact number\/value/i);
+  });
+});
+
 describe("size discipline reflects how length is actually measured", () => {
   it("tells the model tables are free when the band counts prose only", () => {
     const prompt = promptFor("business_case");
