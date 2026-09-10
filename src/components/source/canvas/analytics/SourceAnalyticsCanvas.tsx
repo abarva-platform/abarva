@@ -3633,6 +3633,7 @@ function FilesWorkspace({
       <StageEvidenceChecklistPanel
         view={view}
         evidenceStates={evidenceStates}
+        onEvidenceReviewed={onClientFinalAccepted}
         onUploadClick={() => {
           document
             .getElementById("source-session-evidence-capture")
@@ -3805,10 +3806,12 @@ function virtualGateCriteriaForStage(
 function StageEvidenceChecklistPanel({
   view,
   evidenceStates,
+  onEvidenceReviewed,
   onUploadClick,
 }: {
   view: SourceEventShellView;
   evidenceStates: readonly SourceEventEvidence[];
+  onEvidenceReviewed: () => void;
   onUploadClick: () => void;
 }) {
   const rows = buildStageEvidenceRequirementRows(view, evidenceStates);
@@ -3899,7 +3902,12 @@ function StageEvidenceChecklistPanel({
             </thead>
             <tbody>
               {rows.map(
-                ({ requirement, evidence, lifecycle, ready, uploaded }) => {
+                ({ requirement, evidence, file, lifecycle, ready, uploaded }) => {
+                  const requiresHumanReview =
+                    lifecycle.parsed &&
+                    !ready &&
+                    EVIDENCE_STATE_RANK[requirement.minimumState] >
+                      EVIDENCE_STATE_RANK.Parsed;
                   return (
                     <tr
                       key={requirement.requirementId}
@@ -4044,6 +4052,14 @@ function StageEvidenceChecklistPanel({
                             ? "Use in stage review and approval."
                             : nextActionForRequirement(requirement, lifecycle)}
                         </span>
+                        {requiresHumanReview ? (
+                          <EvidenceReviewControl
+                            eventId={view.event.id}
+                            requirement={requirement}
+                            fileName={file?.name ?? requirement.label}
+                            onReviewed={onEvidenceReviewed}
+                          />
+                        ) : null}
                       </td>
                     </tr>
                   );
@@ -4054,6 +4070,141 @@ function StageEvidenceChecklistPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function EvidenceReviewControl({
+  eventId,
+  requirement,
+  fileName,
+  onReviewed,
+}: {
+  eventId: string;
+  requirement: SourceEvidenceRequirement;
+  fileName: string;
+  onReviewed: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const beginReview = () => {
+    setNote(
+      `Reviewed ${fileName} and confirmed that the parsed evidence supports this event requirement.`,
+    );
+    setError(null);
+    setOpen(true);
+  };
+
+  const submitReview = async () => {
+    if (note.trim().length < 8) {
+      setError("Record a short review rationale before confirming.");
+      return;
+    }
+    setPending(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/evidence/${encodeURIComponent(requirement.requirementId)}/answer`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            answer: note.trim(),
+            stage: requirement.stage,
+          }),
+        },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        detail?: string;
+        error?: string;
+      } | null;
+      if (!response.ok || payload?.ok !== true) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            `Evidence review failed with HTTP ${response.status}.`,
+        );
+      }
+      setOpen(false);
+      onReviewed();
+    } catch (reviewError) {
+      setError(
+        reviewError instanceof Error
+          ? reviewError.message
+          : "Evidence review failed.",
+      );
+    } finally {
+      setPending(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        data-testid={`source-evidence-review-open-${requirement.requirementId}`}
+        onClick={beginReview}
+        style={{ ...TABLE_BUTTON_STYLE, marginTop: 7 }}
+      >
+        Review parsed evidence
+      </button>
+    );
+  }
+
+  return (
+    <form
+      data-testid={`source-evidence-review-form-${requirement.requirementId}`}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void submitReview();
+      }}
+      style={{ display: "grid", gap: 6, marginTop: 7 }}
+    >
+      <textarea
+        aria-label={`Review rationale for ${requirement.label}`}
+        value={note}
+        onChange={(event) => setNote(event.currentTarget.value)}
+        rows={3}
+        style={{
+          border: `1px solid ${ANALYTICS.LINE_STRONG}`,
+          borderRadius: 6,
+          color: ANALYTICS.INK,
+          font: "inherit",
+          minWidth: 260,
+          padding: 8,
+          resize: "vertical",
+        }}
+      />
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <button type="submit" disabled={pending} style={TABLE_BUTTON_STYLE}>
+          {pending ? "Confirming..." : "Confirm evidence"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            setOpen(false);
+            setError(null);
+          }}
+          style={{
+            ...TABLE_BUTTON_STYLE,
+            background: ANALYTICS.CARD,
+            color: ANALYTICS.INK,
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+      {error ? (
+        <span role="alert" style={{ color: ANALYTICS.AMBER_TEXT }}>
+          {error}
+        </span>
+      ) : null}
+    </form>
   );
 }
 
@@ -4189,6 +4340,17 @@ function ownerRoleForRequirement(
   requirement: SourceEvidenceRequirement,
 ): string {
   if (
+    requirement.stage === "rfp" &&
+    requirement.sourceSystems.some((system) =>
+      /Coupa Sourcing|Ariba Sourcing|Jaggaer|procurement/i.test(system),
+    )
+  ) {
+    return "Procurement / sourcing owner";
+  }
+  if (requirement.evidenceClass === "risk_control") {
+    return "Risk / security owner";
+  }
+  if (
     requirement.sourceSystems.some((system) =>
       /ServiceNow|Jira|BMC/i.test(system),
     )
@@ -4214,9 +4376,6 @@ function ownerRoleForRequirement(
   }
   if (requirement.evidenceClass === "workforce") {
     return "HR / workforce owner";
-  }
-  if (requirement.evidenceClass === "risk_control") {
-    return "Risk / security owner";
   }
   return "Stage owner";
 }

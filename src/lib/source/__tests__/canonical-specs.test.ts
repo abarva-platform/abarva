@@ -139,6 +139,12 @@ describe('canonical evidence requirements · coverage', () => {
     expect(evidenceById('EVID-NOPE')).toBeUndefined();
   });
 
+  it('accepts parseable tabular sourcing-rule evidence', () => {
+    expect(
+      evidenceById('EVID-SRC-RFP-SOURCING-RULES')?.acceptedFileTypes,
+    ).toContain('csv');
+  });
+
   it('every evidence requirement is operationally sourceable and parseable', () => {
     for (const req of SOURCE_EVIDENCE_REQUIREMENTS) {
       expect(req.sourceSystems.length).toBeGreaterThan(0);

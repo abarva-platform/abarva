@@ -357,7 +357,7 @@ const RFP: SourceEvidenceRequirement[] = [
     evidenceClass: "risk_control",
     sourceLabel: "Procurement policy, event rules, and communications plan",
     sourceSystems: ["Coupa Sourcing", "Ariba Sourcing", "Jaggaer", "SharePoint procurement playbook"],
-    acceptedFileTypes: ["docx", "pdf", "xlsx"],
+    acceptedFileTypes: ["docx", "pdf", "xlsx", "csv"],
     recordGrain: "one event rule, timeline, communication rule, or scoring protocol per row/section",
     criticalFields: ["rule_name", "applies_to", "deadline", "communication_channel", "disqualification_condition", "owner_role"],
     filenameTokens: ["sourcing_rules", "process", "timeline", "communications"],
