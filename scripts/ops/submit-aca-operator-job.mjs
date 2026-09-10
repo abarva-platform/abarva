@@ -40,6 +40,10 @@ Options:
   --secret-env KEY=NAME    Secret reference override for this execution. Repeatable.
   --out-dir <path>         Local proof/log output folder.
   --poll-seconds <n>       Poll interval. Default: 15
+  --update-retry-seconds <n>
+                           If an ACA job update is rejected because another
+                           provisioning operation is active, retry up to this
+                           many seconds before failing. Default: 300.
   --idle-verify-wait-seconds <n>
                            If restore verification only fails because another
                            execution on this shared job is still running, wait
@@ -72,6 +76,7 @@ function parseArgs(argv) {
     memory: process.env.ACA_OPERATOR_MEMORY || "4Gi",
     timeout: process.env.ACA_OPERATOR_TIMEOUT || "7200",
     pollSeconds: Number(process.env.ACA_OPERATOR_POLL_SECONDS || 15),
+    updateRetrySeconds: Number(process.env.ACA_OPERATOR_UPDATE_RETRY_SECONDS || 300),
     idleVerifyWaitSeconds: Number(process.env.ACA_OPERATOR_IDLE_VERIFY_WAIT_SECONDS || 0),
     outDir: "",
     wait: true,
@@ -111,6 +116,7 @@ function parseArgs(argv) {
       parsed.secretEnv.push(`${key}=secretref:${secret}`);
     } else if (arg === "--out-dir") parsed.outDir = next();
     else if (arg === "--poll-seconds") parsed.pollSeconds = Number(next());
+    else if (arg === "--update-retry-seconds") parsed.updateRetrySeconds = Number(next());
     else if (arg === "--idle-verify-wait-seconds") parsed.idleVerifyWaitSeconds = Number(next());
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -158,6 +164,42 @@ function runAz(args, options = {}) {
     throw new Error(`az ${redactArgs(args).join(" ")} failed (${result.status})\n${stderr || stdout}`);
   }
   return { stdout, stderr };
+}
+
+function isProvisioningOperationInProgress(error) {
+  return /ContainerAppsJobOperationInProgress|active provisioning operation in progress/i.test(
+    String(error?.message || error),
+  );
+}
+
+function runAzWithProvisioningRetry(args, options = {}) {
+  const retrySeconds = Number(options.updateRetrySeconds || 0);
+  const pollSeconds = Math.max(1, Number(options.pollSeconds || 15));
+  const deadline = Date.now() + retrySeconds * 1000;
+  const attempts = [];
+
+  while (true) {
+    try {
+      const result = runAz(args, options.spawnOptions);
+      if (attempts.length > 0) {
+        console.log(`az update succeeded after ${attempts.length + 1} attempt(s).`);
+      }
+      return { ...result, attempts };
+    } catch (error) {
+      const retryable = isProvisioningOperationInProgress(error);
+      attempts.push({
+        at: new Date().toISOString(),
+        retryable,
+        error: String(error?.message || error),
+      });
+      if (!retryable || retrySeconds <= 0 || Date.now() >= deadline) {
+        error.updateAttempts = attempts;
+        throw error;
+      }
+      const remainingMs = Math.max(0, deadline - Date.now());
+      sleep(Math.min(pollSeconds * 1000, remainingMs));
+    }
+  }
 }
 
 function redactArgs(args) {
@@ -521,9 +563,10 @@ function restoreIdle(options, outDir) {
     "--output",
     "json",
   ];
-  const result = runAz(args);
+  const result = runAzWithProvisioningRetry(args, options);
   fs.writeFileSync(path.join(outDir, "99-restore-idle.json"), result.stdout);
-  return { restored: true, idleImage: options.idleImage };
+  writeJson(path.join(outDir, "99a-restore-idle-update-attempts.json"), result.attempts);
+  return { restored: true, idleImage: options.idleImage, updateAttempts: result.attempts };
 }
 
 // Fixed expectations for the manual-trigger shape of this job. Unlike
@@ -788,6 +831,7 @@ function planOnly(options) {
     idleImage: options.idleImage,
     script: options.script,
     pollSeconds: options.pollSeconds,
+    updateRetrySeconds: options.updateRetrySeconds,
     idleVerifyWaitSeconds: options.idleVerifyWaitSeconds,
     env: sanitizedEnv(effectiveEnv),
     commands: {
@@ -911,6 +955,9 @@ async function main() {
   if (!Number.isFinite(options.pollSeconds) || options.pollSeconds <= 0) {
     throw new Error("--poll-seconds must be a positive number");
   }
+  if (!Number.isFinite(options.updateRetrySeconds) || options.updateRetrySeconds < 0) {
+    throw new Error("--update-retry-seconds must be a non-negative number");
+  }
   if (!Number.isFinite(options.idleVerifyWaitSeconds) || options.idleVerifyWaitSeconds < 0) {
     throw new Error("--idle-verify-wait-seconds must be a non-negative number");
   }
@@ -939,6 +986,7 @@ async function main() {
     wait: options.wait,
     restoreIdle: options.restoreIdle,
     idleImage: options.idleImage,
+    updateRetrySeconds: options.updateRetrySeconds,
     idleVerifyWaitSeconds: options.idleVerifyWaitSeconds,
     env: sanitizedEnv(effectiveEnv),
     startedAt: new Date().toISOString(),
@@ -954,8 +1002,9 @@ async function main() {
   let failed = null;
 
   try {
-    const update = runAz(buildTimeoutUpdateArgs(options));
+    const update = runAzWithProvisioningRetry(buildTimeoutUpdateArgs(options), options);
     fs.writeFileSync(path.join(options.outDir, "01-timeout-update.json"), update.stdout);
+    writeJson(path.join(options.outDir, "01b-timeout-update-attempts.json"), update.attempts);
 
     const start = runAz(buildStartArgs(options, effectiveEnv));
     fs.writeFileSync(path.join(options.outDir, "02-start.json"), start.stdout);

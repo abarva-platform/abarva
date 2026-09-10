@@ -141,6 +141,7 @@ describe('submit-aca-operator-job.mjs --plan-only', () => {
         '--script', 'db:migrate:dry',
         '--container', 'db-migrate',
         '--poll-seconds', '5',
+        '--update-retry-seconds', '120',
         '--idle-verify-wait-seconds', '300',
       ],
       outDir,
@@ -148,6 +149,7 @@ describe('submit-aca-operator-job.mjs --plan-only', () => {
     expect(result.status).toBe(0)
     const plan = readPlan(outDir)
     expect(plan.pollSeconds).toBe(5)
+    expect(plan.updateRetrySeconds).toBe(120)
     expect(plan.idleVerifyWaitSeconds).toBe(300)
   })
 
@@ -184,6 +186,19 @@ describe('submit-aca-operator-job.mjs --plan-only', () => {
     )
     expect(result.status).not.toBe(0)
     expect(result.stderr).toMatch(/idle-verify-wait-seconds/)
+  })
+
+  test('refuses a negative update retry wait even in plan-only mode', () => {
+    const result = runPlanOnly(
+      [
+        '--image', FAKE_DIGEST_IMAGE,
+        '--script', 'db:migrate:dry',
+        '--update-retry-seconds', '-1',
+      ],
+      outDir,
+    )
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toMatch(/update-retry-seconds/)
   })
 })
 
