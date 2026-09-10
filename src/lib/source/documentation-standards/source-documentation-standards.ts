@@ -154,6 +154,43 @@ function searchableText(value: string): string {
     .trim();
 }
 
+const REQUIRED_EXHIBIT_ALIASES: Record<
+  string,
+  Record<string, readonly string[]>
+> = {
+  d12: {
+    shortlisted_vendors: [
+      "approved vendor list",
+      "approved vendors",
+      "vendor shortlist decision",
+    ],
+    screening_criteria: [
+      "coverage commercial and risk fit",
+      "vendor screening criteria",
+      "conditions before release to vendors",
+    ],
+    eliminated_vendors: [
+      "excluded not invited vendor rationale",
+      "excluded vendor rationale",
+      "not invited vendor rationale",
+    ],
+  },
+};
+
+function hasRequiredExhibit(
+  content: string,
+  profile: SourceArtifactProfile,
+  exhibit: string,
+): boolean {
+  const candidates = [
+    exhibit,
+    ...(REQUIRED_EXHIBIT_ALIASES[profile.id]?.[exhibit] ?? []),
+  ];
+  return candidates.some((candidate) =>
+    content.includes(searchableText(candidate)),
+  );
+}
+
 export const QA_GATES: QAGate[] = [
   // ── 1. Decision Clarity ──────────────────────────────────────────────────
   // The sponsor can identify the decision requested and recommendation quickly.
@@ -502,7 +539,7 @@ export const QA_GATES: QAGate[] = [
     check: ({ content, profile }) => {
       const lc = searchableText(content);
       const missing = profile.requiredExhibits.filter(
-        (ex) => !lc.includes(searchableText(ex)),
+        (ex) => !hasRequiredExhibit(lc, profile, ex),
       );
       return {
         pass: missing.length === 0,
