@@ -504,6 +504,9 @@ Document presentation standard
 Produce an executive-quality Charter designed for approximately ${CHARTER_CONTRACT.estimatedRenderedPages} pages.
 - Target ${wb.targetWords.min}-${wb.targetWords.max.toLocaleString()} body words.
 - Hard maximum ${wb.hardMaxWords.toLocaleString()} body words.
+- Write at least ${(
+    wb.minProseWords ?? wb.minWords
+  ).toLocaleString()} words of prose before tables, exhibits, and appendices; table-heavy output below that floor will fail the quality gate.
 - Use concise executive prose, short paragraphs, and descriptive headings.
 - Use no more than ${CHARTER_CONTRACT.maxSubstantiveTables} substantive tables.
 - Prefer tables where they improve decision clarity; do not convert every section into a table.
