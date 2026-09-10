@@ -34,7 +34,7 @@ const CHECKS = [
     file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
     mustContain: [
       "eclPath(\"/tower\")",
-      "/IT INVESTMENT TOWER|Tower/i",
+      "/IT INVESTMENT TOWER|Tower|Today's verdict/i",
       "/Value Proof/i",
       "/Decision Lanes/i",
       "/AI Portfolio/i",
