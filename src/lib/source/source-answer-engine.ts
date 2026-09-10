@@ -1172,7 +1172,11 @@ function buildSourceStageReadinessAnswer(args: {
   const event = args.contextBundle.sourcingEvent;
   if (!event) return null;
 
-  const stage = event.currentStageKey ?? "current";
+  const lifecycleStage = event.currentStageKey ?? "current";
+  const requestedStage = inferRequestedSourceStage(text);
+  const stageLine = requestedStage
+    ? `The requested stage is ${requestedStage}; the event lifecycle is currently ${lifecycleStage}.`
+    : `The current lifecycle stage is ${lifecycleStage}.`;
   const blockers = [
     ...args.contextBundle.blockers,
     ...args.contextBundle.missingInputs,
@@ -1184,11 +1188,11 @@ function buildSourceStageReadinessAnswer(args: {
   return {
     title: "Source stage readiness answer",
     answerText: [
-      `The current stage is ${stage}.`,
+      stageLine,
       `What is blocking or gating it: ${blockerLine}`,
       "Stage readiness should be judged from the visible Source gate, the authoritative artifact chain, and the event's recorded evidence. aVa can explain that record, but it must not bypass named human approval.",
     ].join("\n"),
-    currentStateFindings: [`Current stage is ${stage}.`, blockerLine],
+    currentStateFindings: [stageLine, blockerLine],
     sourcingImplications: [
       "Stage movement should follow gate criteria and authoritative artifact status.",
       "Supplier recommendations should remain withheld until proposal evidence and scoring holdbacks exist for this event.",
@@ -1199,6 +1203,14 @@ function buildSourceStageReadinessAnswer(args: {
     recommendedNextAction:
       "Review the visible stage gate, confirm artifact finality, and resolve any named evidence or approval blockers before advancing.",
   };
+}
+
+function inferRequestedSourceStage(prompt: string): string | null {
+  const match = prompt.match(
+    /\b(strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value)\s+readiness\b/,
+  );
+  if (!match?.[1]) return null;
+  return match[1] === "response" ? "responses" : match[1];
 }
 
 function buildArtifactStandardsAnswer(args: {

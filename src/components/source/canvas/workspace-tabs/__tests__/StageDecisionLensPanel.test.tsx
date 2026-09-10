@@ -157,6 +157,12 @@ describe("StageDecisionLensPanel", () => {
     expect(screen.getByTestId("source-stage-decision-lens")).toHaveTextContent(
       "Proposal commitments are not execution readiness",
     );
+    expect(screen.getByTestId("source-stage-decision-lens")).toHaveTextContent(
+      "accepted transition packet and approval record",
+    );
+    expect(screen.getByTestId("source-stage-decision-lens")).not.toHaveTextContent(
+      "readiness remains blocked",
+    );
     expect(screen.getByText("Accenture")).toBeInTheDocument();
   });
 
