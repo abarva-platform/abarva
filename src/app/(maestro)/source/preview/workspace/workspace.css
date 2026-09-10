@@ -644,6 +644,11 @@
   align-items: start;
 }
 
+.sw-v2-command-queue {
+  grid-column: 2;
+  grid-row: span 2;
+}
+
 .sw-v2-command-read,
 .sw-v2-command-vendors,
 .sw-v2-command-evidence,

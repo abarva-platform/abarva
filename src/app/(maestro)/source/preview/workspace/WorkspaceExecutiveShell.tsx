@@ -68,6 +68,7 @@ const CONTRACT_LIST_SUBTABS = [
   "By finance status",
 ] as const;
 const OPTIMIZE_SUBTABS = ["Queue", "By type", "By contract"] as const;
+const CONTRACT_OPTIMIZE_SUBTABS = ["Levers", "Sequence", "Comparator"] as const;
 const GRAPH_SUBTABS = ["Flow", "Volume", "Mapping spine"] as const;
 
 export const SOURCE_CHART_PALETTE = {
@@ -892,14 +893,11 @@ export function WorkspaceExecutiveShell({
             )
           ) : null}
 
-          {currentPage === "Levers" && selectedContract ? (
+          {currentPage === "Levers" && !selectedContractId ? (
             <OptimizePage
               vm={vm}
-              contract={selectedContract}
               creditFinding={creditFinding}
               findingContract={findingContract}
-              performanceRows={performanceRows}
-              spendRows={spendRows}
               portfolio={portfolio}
               subtab={logic.state.tabs.optimize ?? "Queue"}
               onOpenSubtab={(tab) => logic.setTab("optimize", tab)}
@@ -2907,9 +2905,7 @@ function ContractPage({
           tabNarrative={tabNarrative}
           vm={vm}
         />
-        {tab === "Optimize" && vm.opportunityView ? (
-          <ProductShellOptimizationExecutiveStrip vm={vm} />
-        ) : null}
+        {tab === "Optimize" ? <ContractOptimizeContent vm={vm} /> : null}
         {tab === "Economics" &&
         detailReady &&
         vm.detail?.spendMonths?.length ? (
@@ -2952,7 +2948,7 @@ function ContractPage({
             files={vm.detail.documentFiles ?? []}
             extractions={vm.detail.docExtractions}
           />
-        ) : (
+        ) : tab === "Optimize" ? null : (
           <ContractTabBody
             contract={contract}
             scopeRows={scopeRows}
@@ -3730,47 +3726,123 @@ function ProductShellCommercialPostureStrip({ vm }: { vm: SourceWorkspaceVM }) {
   );
 }
 
+function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
+  const [subtab, setSubtab] =
+    useState<(typeof CONTRACT_OPTIMIZE_SUBTABS)[number]>("Levers");
+  const view = vm.opportunityView;
+  if (!view || view.opportunities.length === 0) {
+    return (
+      <div className="sw-v2-empty-state">
+        <b>No contract-specific optimization levers loaded.</b>
+        <p>
+          Source can show the contract record, but it will not invent an
+          optimization play until governed opportunity rows exist for this
+          contract.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <ProductShellOptimizationExecutiveStrip vm={vm} />
+      <SubtabBar
+        tabs={CONTRACT_OPTIMIZE_SUBTABS}
+        active={subtab}
+        onSelect={(tab) =>
+          setSubtab(
+            CONTRACT_OPTIMIZE_SUBTABS.includes(
+              tab as (typeof CONTRACT_OPTIMIZE_SUBTABS)[number],
+            )
+              ? (tab as (typeof CONTRACT_OPTIMIZE_SUBTABS)[number])
+              : "Levers",
+          )
+        }
+      />
+      {subtab === "Levers" ? <ContractLeverTableContent vm={vm} /> : null}
+      {subtab === "Sequence" ? (
+        <ContractNegotiationSequenceContent vm={vm} />
+      ) : null}
+      {subtab === "Comparator" ? <ContractComparatorContent vm={vm} /> : null}
+    </>
+  );
+}
+
+function ContractLeverTableContent({ vm }: { vm: SourceWorkspaceVM }) {
+  const rows = leverTableRows(vm.opportunityView?.opportunities ?? []);
+  if (rows.length === 0) {
+    return (
+      <div className="sw-v2-empty-state">
+        <b>No negotiation text is loaded for this contract.</b>
+        <p>
+          Opportunity rows exist, but Source needs buyer ask, concession, or
+          negotiation language fields before it can render a client-ready lever
+          table.
+        </p>
+      </div>
+    );
+  }
+  return <ProductShellLeverTable vm={vm} />;
+}
+
+function ContractNegotiationSequenceContent({ vm }: { vm: SourceWorkspaceVM }) {
+  const rows = negotiationSequenceRows(vm.opportunityView?.opportunities ?? []);
+  if (rows.length === 0) {
+    return (
+      <div className="sw-v2-empty-state">
+        <b>No governed negotiation sequence is loaded.</b>
+        <p>
+          Source needs priority, timing, or authored playbook fields before it
+          can say what must happen first.
+        </p>
+      </div>
+    );
+  }
+  return <ProductShellNegotiationSequence vm={vm} />;
+}
+
+function ContractComparatorContent({ vm }: { vm: SourceWorkspaceVM }) {
+  const summary = portfolioDiscountComparatorSummary(
+    vm.c?.id,
+    vm.detail?.cloudCommitmentPeerCoverage ?? [],
+    vm.opportunityView?.opportunities ?? [],
+  );
+  if (!summary) {
+    return (
+      <div className="sw-v2-empty-state">
+        <b>No discount comparator is loaded.</b>
+        <p>
+          Load same-tenant peer coverage or an accepted benchmark comparable
+          before Source treats a discount-band ask as supported.
+        </p>
+      </div>
+    );
+  }
+  return <ProductShellDiscountComparator vm={vm} />;
+}
+
 function OptimizePage({
   vm,
-  contract,
   creditFinding,
   findingContract,
-  performanceRows,
-  spendRows,
   portfolio,
   subtab,
   onOpenSubtab,
   onOpenContract,
 }: {
   vm: SourceWorkspaceVM;
-  contract: SourceContract360Row;
   creditFinding: number;
   findingContract: { contractId: string; counterparty: string } | null;
-  performanceRows: number;
-  spendRows: number;
   portfolio: SourceWorkspacePortfolioData;
   subtab: string;
   onOpenSubtab: (tab: string) => void;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
-  const contractCandidates = portfolio.impact.actionCandidates.filter(
-    (row) => row.contract_id === contract.contract_id,
-  );
-  const topCandidate = contractCandidates[0] ?? null;
-  const candidateAmount = contractCandidates.reduce(
-    (sum, row) => sum + (numberFromDb(row.candidate_amount_usd) ?? 0),
-    0,
-  );
-  const claimCard = topCandidate
-    ? portfolio.impact.claimCards.find(
-        (row) => row.opportunity_id === topCandidate.opportunity_id,
-      )
-    : null;
   const actionSet = focusedActionSet(portfolio);
 
   return (
     <div className="sw-v2-grid">
-      <section className="sw-v2-panel sw-v2-span-2">
+      <section className="sw-v2-panel sw-v2-span-3">
         <SubtabBar
           tabs={OPTIMIZE_SUBTABS}
           active={subtab}
@@ -3804,18 +3876,18 @@ function OptimizePage({
                 active={creditFinding > 0}
               />
               <ValueLane
-                title="Avoid future spend"
+                title="Governed action value"
                 value={
-                  candidateAmount > 0
-                    ? money(candidateAmount)
+                  actionSet.totalAmount > 0
+                    ? money(actionSet.totalAmount)
                     : "Not established"
                 }
                 note={
-                  topCandidate
-                    ? `${topCandidate.opportunity_type}: ${topCandidate.deterministic_basis}`
+                  actionSet.rows[0]
+                    ? `${actionSet.totalRows} portfolio action rows. Open a row to inspect the selected contract evidence.`
                     : "Requires usage, renewal, rate-card, or entitlement evidence before sizing."
                 }
-                active={candidateAmount > 0}
+                active={actionSet.totalAmount > 0}
               />
               <ValueLane
                 title="Improve the deal"
@@ -3840,49 +3912,6 @@ function OptimizePage({
             />
           </>
         )}
-      </section>
-
-      <section className="sw-v2-panel">
-        <PanelHead eyebrow="Evidence basis" title="Why this is shown" />
-        <div className="sw-v2-fact-stack">
-          <Fact label="Contract in view" value={contract.contract_id} />
-          <Fact label="Spend rows" value={String(spendRows)} />
-          <Fact label="Performance rows" value={String(performanceRows)} />
-          <Fact label="Action rows" value={String(contractCandidates.length)} />
-          <Fact
-            label="Action amount"
-            value={
-              candidateAmount > 0 ? money(candidateAmount) : "Not established"
-            }
-          />
-          <Fact
-            label="Credit finding"
-            value={
-              creditFinding > 0
-                ? impactCreditMoney(creditFinding)
-                : "Not established"
-            }
-          />
-          <Fact
-            label="Selected opportunity"
-            value={
-              topCandidate?.next_action ??
-              vm.opportunityView?.selectedOpportunity?.label ??
-              "Not established"
-            }
-          />
-          <Fact
-            label="Finance confirmed"
-            value={
-              topCandidate?.finance_confirmation_state ??
-              vm.opportunityView?.financeConfirmed ??
-              "Not established"
-            }
-          />
-          {claimCard ? (
-            <p className="sw-v2-muted">{claimCard.blocker_if_missing}</p>
-          ) : null}
-        </div>
       </section>
     </div>
   );
@@ -4013,9 +4042,6 @@ function ProductShellOptimizationExecutiveStrip({
           </div>
         ))}
       </div>
-      <ProductShellLeverTable vm={vm} />
-      <ProductShellDiscountComparator vm={vm} />
-      <ProductShellNegotiationSequence vm={vm} />
     </section>
   );
 }
@@ -4801,7 +4827,8 @@ function ProductShellNegotiationSequence({ vm }: { vm: SourceWorkspaceVM }) {
             Negotiation sequence
           </span>
           <b style={{ display: "block", fontSize: 15 }}>
-            What to ask for first, and what to hold back
+            {rows.length} lever{rows.length === 1 ? "" : "s"}, in the order they
+            have to happen
           </b>
         </div>
         <small

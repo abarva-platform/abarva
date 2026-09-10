@@ -110,13 +110,7 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listVendorContractPortfolio: jest.fn(),
 }));
 
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -379,15 +373,11 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByLabelText("Source workspace header")).toBeNull();
     expect(screen.queryByLabelText("Source workspace sidebar")).toBeNull();
     expect(screen.queryByText("Nexus Source")).toBeNull();
-    const appNav = screen.getByRole("navigation", {
-      name: "Main application navigation",
-    });
-    expect(appNav).toBeTruthy();
     expect(
-      within(appNav)
-        .getByRole("link", { name: "Source" })
-        .getAttribute("aria-current"),
-    ).toBe("page");
+      screen.queryByRole("navigation", {
+        name: "Main application navigation",
+      }),
+    ).toBeNull();
     expect(
       screen.getByRole("heading", {
         name: "Meridian Health contract actions, governed by evidence.",
@@ -594,9 +584,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.getByText("No optimize-ready action rows loaded."),
     ).toBeTruthy();
-    expect(screen.getByText("Evidence basis")).toBeTruthy();
-    expect(screen.getByText("Why this is shown")).toBeTruthy();
-    expect(screen.getByText("Action rows")).toBeTruthy();
+    expect(screen.queryByText("Evidence basis")).toBeNull();
+    expect(screen.queryByText("Why this is shown")).toBeNull();
+    expect(screen.queryByText("Action rows")).toBeNull();
     expect(screen.queryByText(/Proof Layers/i)).toBeNull();
     expect(screen.queryByText(/Action candidates/i)).toBeNull();
 
@@ -1099,7 +1089,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
 
     expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
-    expect(screen.getByText("Optimize gap")).toBeTruthy();
+    expect(
+      screen.getByText("No contract-specific optimization levers loaded."),
+    ).toBeTruthy();
     expect(screen.getByText("Evidence state")).toBeTruthy();
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
 
@@ -1114,6 +1106,240 @@ describe("Source workspace ECL browser-surface proof", () => {
     expectMeasuredRechartsCard(
       screen.getByLabelText("Contract performance trend chart"),
     );
+  });
+
+  it("keeps selected-contract Optimize scoped to that contract's levers", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const selectedContract: SourceContract360Row = {
+      ...portfolio.contracts[0],
+      contract_id: "MER-TECH-DBX-001",
+      vendor_ref: "MER-VEN-DATABRICKS",
+      vendor_name: "Databricks, Inc.",
+      vendor_category: "cloud_data_platform",
+      contract_name:
+        "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+      annual_value: 1_900_000,
+      resolved_annual_value: 1_900_000,
+      actual_annual_spend: 66_000,
+      total_committed_value: 5_700_000,
+      resolved_total_committed_value: 5_700_000,
+      end_date: "2030-10-14",
+      auto_renew: true,
+      notice_period_days: 90,
+    };
+    const selectedAction: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number] =
+      {
+        tenant_key: "meridian-health",
+        action_candidate_id: "OPT-DBX-NOTICE-001",
+        opportunity_id: "OPT-DBX-NOTICE-001",
+        contract_id: selectedContract.contract_id,
+        vendor_ref: selectedContract.vendor_ref,
+        vendor_name: selectedContract.vendor_name,
+        title: "Serve notice before the anniversary",
+        action_type: "negotiated_improvement",
+        opportunity_type: "negotiated_improvement",
+        finding_summary: "Commitment is ahead of consumption.",
+        deterministic_basis: "Spend rows and renewal terms support the ask.",
+        candidate_amount_usd: 1_480_000,
+        priority: "P0",
+        readiness_state: "approval_required",
+        evidence_state: "loaded",
+        authority_state: "not_confirmed",
+        finance_confirmation_state: "not_confirmed",
+        next_action: "Approve the notice strategy.",
+        accountable_role: "VP Technology Sourcing",
+        decision_due_date: "2030-07-16",
+        coverage_state: "decision_ready",
+        blocker_if_missing: null,
+        citation_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      };
+    const unrelatedAction = {
+      ...selectedAction,
+      action_candidate_id: "OPT-M365-UNRELATED-001",
+      opportunity_id: "OPT-M365-UNRELATED-001",
+      contract_id: "MER-TECH-M365-001",
+      vendor_ref: "MER-VEN-M365",
+      vendor_name: "Microsoft Corporation",
+      title: "Remove unrelated productivity licenses before true-up",
+      candidate_amount_usd: 2_000_000,
+    };
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          contract: selectedContract,
+          financialExposure: null,
+          operationalPerformance: null,
+          initiativeDependencies: [],
+          scopeTiers: {
+            explicit: [],
+            reviewed: [],
+            vendorInferred: [],
+            unresolved: [],
+            totalCount: 0,
+          },
+          towerObservations: [],
+          towerValueClaims: [],
+          hasTowerOverlay: false,
+          docExtractions: [],
+          optimizationEvidence: null,
+          optimizationOpportunitySet: {
+            tenantKey: "meridian-health",
+            datasetVersion: "unit-proof",
+            contractId: selectedContract.contract_id,
+            vendorId: selectedContract.vendor_ref,
+            vendorName: selectedContract.vendor_name,
+            contractName: selectedContract.contract_name,
+            recommendation: "Build the negotiation sequence.",
+            recommendationDetail:
+              "Commitment is ahead of observed consumption; notice preserves leverage.",
+            actionState: "approval_required",
+            baseline: {
+              status: "ready",
+              headline: "Commercial baseline loaded",
+              detail: "Committed value and observed spend are loaded.",
+              annualValueUsd: 1_900_000,
+              pricingScheduleAnnualValueUsd: null,
+              actualAnnualSpendUsd: 66_000,
+              totalCommittedValueUsd: 5_700_000,
+              conflictAmountUsd: null,
+              sourceRefs: ["source.contract_360"],
+            },
+            selectedOpportunityId: "OPT-DBX-NOTICE-001",
+            opportunities: [
+              {
+                opportunityId: "OPT-DBX-NOTICE-001",
+                contractId: selectedContract.contract_id,
+                label: "Serve notice before the anniversary",
+                shortLabel: "Serve notice",
+                valueType: "negotiated_improvement",
+                amountUsd: 1_480_000,
+                amountState: "exact",
+                stage: "approval_required",
+                evidenceGrade: "document_evidenced",
+                confidence: 0.82,
+                deadline: "2030-07-16",
+                owner: "VP Technology Sourcing",
+                blockingGap: "CFO delegate approval is required.",
+                nextAction: "Approve the notice strategy.",
+                sourceSystems: ["CLM / contract repository"],
+                evidenceRefs: [],
+                calculation: null,
+                overlapTreatment:
+                  "Included only in negotiated improvement to avoid double counting.",
+                approvalState: "pending",
+                narrative: "Notice keeps the other levers alive.",
+                negotiationDetail: {
+                  buyerAsk:
+                    "Non-renewal notice, then a re-based term with carry-forward of unconsumed capacity.",
+                  negotiationLanguage:
+                    "Serve notice before the anniversary and negotiate the ramp before renewal.",
+                  vendorConcession:
+                    "Carry-forward protects renewal revenue while preserving buyer value.",
+                  timingDependency: "Before notice window closes.",
+                  ownerRole: "VP Technology Sourcing",
+                  riskIfIgnored: "Auto-renew locks in unused capacity.",
+                  priority: "P0",
+                },
+              },
+              {
+                opportunityId: "OPT-DBX-SCOPE-001",
+                contractId: selectedContract.contract_id,
+                label: "Move two workloads off the platform",
+                shortLabel: "Rationalize workload scope",
+                valueType: "negotiated_improvement",
+                amountUsd: null,
+                amountState: "not_sized",
+                stage: "signal",
+                evidenceGrade: "missing",
+                confidence: 0.3,
+                deadline: null,
+                owner: "Enterprise Architect",
+                blockingGap: "Application run-cost evidence is missing.",
+                nextAction: "Request the CMDB extract.",
+                sourceSystems: ["Application inventory"],
+                evidenceRefs: [],
+                calculation: null,
+                overlapTreatment:
+                  "Excluded from sized totals until scope economics are loaded.",
+                approvalState: "needs_evidence",
+                narrative: "Scope row exists but run cost is missing.",
+                negotiationDetail: {
+                  buyerAsk:
+                    "Move two workload groups off the platform and reduce committed capacity.",
+                  negotiationLanguage:
+                    "Hold scope movement until application economics are loaded.",
+                  vendorConcession:
+                    "Not stateable until replacement economics exist.",
+                  timingDependency: "After CMDB extract.",
+                  ownerRole: "Enterprise Architect",
+                  riskIfIgnored: "Blast radius and saving remain unknown.",
+                  priority: "P3",
+                },
+              },
+            ],
+            financeRealizations: [],
+            evidenceRequirements: ["CFO delegate approval is required."],
+            potentialRecoverableUsd: 0,
+            potentialAvoidableUsd: 0,
+            potentialNegotiableUsd: 1_480_000,
+            financeConfirmedUsd: 0,
+          },
+          evidenceOverview: null,
+          evidenceScope: [],
+          evidencePricing: [],
+          evidencePerformance: null,
+          performancePeriods: [],
+          spendMonths: [],
+        }),
+    } as Response);
+
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          contracts: [selectedContract, ...portfolio.contracts],
+          impact: {
+            ...portfolio.impact,
+            actionCandidates: [unrelatedAction, selectedAction],
+          },
+        }}
+        tenantName="Meridian Health"
+        sourceClientKey="meridian-health"
+        initialContractId={selectedContract.contract_id}
+        initialContractTab="Optimize"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText("Negotiation levers")).toBeTruthy();
+    });
+
+    expect(screen.getByRole("tab", { name: "Levers" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Sequence" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Comparator" })).toBeTruthy();
+    expect(screen.getByText("Serve notice")).toBeTruthy();
+    expect(screen.getByText("Rationalize workload scope")).toBeTruthy();
+    expect(screen.queryByText("Optimize evidenced opportunities")).toBeNull();
+    expect(screen.queryByText("Evidence-backed action queue")).toBeNull();
+    expect(
+      screen.queryByText(
+        "Remove unrelated productivity licenses before true-up",
+      ),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Sequence" }));
+    expect(
+      screen.getByText("2 levers, in the order they have to happen"),
+    ).toBeTruthy();
   });
 
   it("opens the clicked contract's own Contract 360, not a preloaded default, when the row is outside the preloaded portfolio slice", async () => {
