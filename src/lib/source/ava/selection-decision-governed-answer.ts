@@ -53,7 +53,7 @@ export function looksLikeSelectionDecisionQuestion(
       q,
     );
   const asksForBasis =
-    /\b(why|basis|rationale|reason|score|bafo|tcv|condition|runner[- ]?up|counter[- ]?case|trade[- ]?off)\b/.test(
+    /\b(why|basis|rationale|reason|score|bafo|tcv|conditions?|runner[- ]?up|counter[- ]?case|trade[- ]?off)\b/.test(
       q,
     );
   return asksAboutDecision && asksForBasis;

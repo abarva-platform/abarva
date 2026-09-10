@@ -25,6 +25,11 @@ describe("award-readiness intent", () => {
     expect(
       looksLikeAwardReadinessQuestion("Why was Supplier Alpha selected?"),
     ).toBe(false);
+    expect(
+      looksLikeAwardReadinessQuestion(
+        "What selection decision was recorded, and what conditions remain?",
+      ),
+    ).toBe(false);
   });
 });
 
