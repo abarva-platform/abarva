@@ -3039,9 +3039,9 @@ function ContractValueTypeStack({
       ))}
       {absent.length > 0 ? (
         <p className="sw-v2-muted">
-          No {absent.join(" or ")} dollars on this contract &mdash; nothing has
-          been mischarged, so the whole opportunity has to be negotiated rather
-          than simply claimed.
+          No {absent.join(" or ")} dollars on this contract - nothing has been
+          mischarged, so the whole opportunity has to be negotiated rather than
+          simply claimed.
         </p>
       ) : null}
       <Fact
@@ -3188,8 +3188,8 @@ function ProductShellLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
         }}
       >
         Every row is a candidate until finance confirms it. Signal-stage rows
-        carry no dollar figure on purpose &mdash; the evidence behind them does
-        not yet support one.
+        carry no dollar figure on purpose - the evidence behind them does not
+        yet support one.
       </p>
     </div>
   );
