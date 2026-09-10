@@ -4,6 +4,7 @@ import {
   SOURCE_CHART_PALETTE,
   consumptionRampRows,
   coverageForVendor,
+  contractPurposeSummary,
   contractSearchRank,
   contractValueTypeSummary,
   displayBenchmarkingClause,
@@ -1715,5 +1716,68 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source.slice(Math.max(0, marker - 220), marker)).toContain(
       "selectedContractId ? null : (",
     );
+  });
+
+  it("summarizes a cloud consumption contract before showing optimization levers", () => {
+    const summary = contractPurposeSummary(
+      {
+        contract_id: "MER-TECH-DBX-001",
+        vendor_ref: "MER-VEN-DATABRICKS",
+        vendor_name: "Databricks, Inc.",
+        vendor_category: "cloud_data_platform",
+        contract_name:
+          "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+        scope_summary: null,
+        annual_value: 1_900_000,
+        resolved_annual_value: null,
+        actual_annual_spend: null,
+      } as never,
+      {
+        contract_id: "MER-TECH-DBX-001",
+        contract_archetype: "cloud_consumption",
+        actual_spend_usd: 66_000,
+        committed_spend_usd: 1_900_000,
+        scope_rows: 4,
+        spend_rows: 12,
+        document_page_text_rows: 6,
+        opportunity_rows: 6,
+      } as never,
+    );
+
+    expect(summary.heading).toBe("What this contract is");
+    expect(summary.body).toContain("cloud consumption commitment");
+    expect(summary.body).toContain("Databricks, Inc.");
+    expect(summary.body).toContain("Platform, Support and Committed Purchase");
+    expect(summary.body).toContain("usage-backed commercial commitment");
+    expect(summary.evidence).toContain("Cloud Consumption archetype");
+    expect(summary.evidence).toContain("$1.9M annual value");
+    expect(summary.evidence).toContain("$66K observed spend");
+    expect(summary.evidence).toContain("6 document text rows");
+    expect(summary.evidence).toContain("6 opportunity rows");
+  });
+
+  it("does not force cloud language onto a generic managed-services contract", () => {
+    const summary = contractPurposeSummary(
+      {
+        contract_id: "MER-AMS-001",
+        vendor_ref: "VEN-AMS",
+        vendor_name: "Service Partner",
+        vendor_category: "managed_services",
+        contract_name: "Application Managed Services SOW",
+        scope_summary:
+          "run support, service desk triage, and change-request governance",
+        annual_value: 7_200_000,
+        resolved_annual_value: null,
+        actual_annual_spend: 7_100_000,
+      } as never,
+    );
+
+    expect(summary.body).toContain("managed-services contract");
+    expect(summary.body).toContain(
+      "run support, service desk triage, and change-request governance",
+    );
+    expect(summary.body).not.toContain("cloud consumption commitment");
+    expect(summary.evidence).toContain("Managed Services archetype");
+    expect(summary.evidence).toContain("$7.2M annual value");
   });
 });
