@@ -8,8 +8,6 @@ import path from "node:path";
 const DEFAULT_RESOURCE_GROUP = "rg-abarva-controlplane-lab-eastus";
 const DEFAULT_JOB = "job-abarva-private-operator-eus";
 const DEFAULT_CONTAINER = "db-migrate";
-const DEFAULT_IDLE_IMAGE =
-  "acrabarvalab001.azurecr.io/abarva/web@sha256:918b6cbf298ebd5bd20782b15f7d1817111d94e438436d64f2ea64db543db8a9";
 // The documented idle contract for the shared operator job. restoreIdle()
 // writes these; verifyIdle() reads them back and fails loudly on any drift
 // (e.g. a caller passing a --container name that doesn't exist on the job
@@ -48,7 +46,8 @@ Options:
                            up to this many seconds before failing. Default: 0.
   --no-wait                Start and return without polling.
   --no-restore-idle        Do not restore the job command/image after submission.
-  --idle-image <image>     Idle image used when restoring. Env: ACA_OPERATOR_IDLE_IMAGE.
+  --idle-image <image>     Idle image used when restoring. Defaults to --image.
+                            Env: ACA_OPERATOR_IDLE_IMAGE.
   --plan-only              Build and write the intended az command args to plan.json without
                             calling az at all. Never authenticates, never touches Azure. Use
                             this to validate argument construction (e.g. in CI) for inputs
@@ -77,7 +76,7 @@ function parseArgs(argv) {
     outDir: "",
     wait: true,
     restoreIdle: process.env.ACA_OPERATOR_RESTORE_IDLE !== "false",
-    idleImage: process.env.ACA_OPERATOR_IDLE_IMAGE || DEFAULT_IDLE_IMAGE,
+    idleImage: process.env.ACA_OPERATOR_IDLE_IMAGE || "",
     planOnly: false,
     selfTest: false,
     help: false,
@@ -105,6 +104,7 @@ function parseArgs(argv) {
     else if (arg === "--memory") parsed.memory = next();
     else if (arg === "--timeout") parsed.timeout = next();
     else if (arg === "--env") parsed.env.push(next());
+    else if (arg === "--idle-image") parsed.idleImage = next();
     else if (arg === "--secret-env") {
       const value = next();
       const [key, secret] = splitKeyValue(value, "--secret-env");
@@ -117,6 +117,9 @@ function parseArgs(argv) {
 
   if (!parsed.outDir) {
     parsed.outDir = path.join(os.tmpdir(), `abarva-aca-operator-job-${stamp()}`);
+  }
+  if (!parsed.idleImage) {
+    parsed.idleImage = parsed.image;
   }
   return parsed;
 }
@@ -782,6 +785,7 @@ function planOnly(options) {
     resourceGroup: options.resourceGroup,
     container: options.container,
     image: options.image,
+    idleImage: options.idleImage,
     script: options.script,
     pollSeconds: options.pollSeconds,
     idleVerifyWaitSeconds: options.idleVerifyWaitSeconds,
