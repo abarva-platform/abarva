@@ -13,7 +13,7 @@
 // them — a behavioral assertion, not a shape/snapshot check.
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -288,5 +288,79 @@ describe("SourceAnalyticsCanvas — artifact role badge (SOURCE-SHELL-002)", () 
     expect(
       within(inventoryRow).getByRole("button", { name: "Upload" }),
     ).toBeInTheDocument();
+  });
+
+  it("labels RFP evidence owners and reviews parsed evidence", async () => {
+    const rfpEvent: SourcingEventSummary = {
+      ...makeEvent(),
+      currentStageKey: "rfp",
+      currentStageLabel: "RFP",
+    } as SourcingEventSummary;
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+    const previousFetch = global.fetch;
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    try {
+      render(
+        <SourceAnalyticsCanvas
+          event={rfpEvent}
+          viewStage="rfp"
+          tenantName="Demo Client"
+          artifacts={[
+            {
+              id: "art-requirements",
+              artifactCode: "workshop_output",
+              stageKey: "rfp",
+              title: "source-requirement-intake.csv",
+              status: "draft",
+              parseStatus: "parsed",
+            },
+          ]}
+          evidenceStates={[]}
+          initialWorkspace="files"
+        />,
+      );
+
+      const sourcingRulesRow = screen.getByTestId(
+        "source-stage-evidence-checklist-row-EVID-SRC-RFP-SOURCING-RULES",
+      );
+      expect(sourcingRulesRow).toHaveTextContent("Procurement / sourcing owner");
+      expect(sourcingRulesRow).toHaveTextContent("DOCX, PDF, XLSX, CSV");
+
+      const securityRow = screen.getByTestId(
+        "source-stage-evidence-checklist-row-EVID-SRC-RFP-SECURITY-PRIVACY",
+      );
+      expect(securityRow).toHaveTextContent("Risk / security owner");
+
+      const requirementsRow = screen.getByTestId(
+        "source-stage-evidence-checklist-row-EVID-SRC-RFP-REQUIREMENTS",
+      );
+      fireEvent.click(
+        within(requirementsRow).getByRole("button", {
+          name: "Review parsed evidence",
+        }),
+      );
+      const rationale = within(requirementsRow).getByLabelText(
+        "Review rationale for Requirements and service levels",
+      ) as HTMLTextAreaElement;
+      expect(rationale.value).toContain("source-requirement-intake.csv");
+      fireEvent.click(
+        within(requirementsRow).getByRole("button", {
+          name: "Confirm evidence",
+        }),
+      );
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          "/api/v1/source/evt-1/evidence/EVID-SRC-RFP-REQUIREMENTS/answer",
+          expect.objectContaining({ method: "POST" }),
+        ),
+      );
+    } finally {
+      global.fetch = previousFetch;
+    }
   });
 });
