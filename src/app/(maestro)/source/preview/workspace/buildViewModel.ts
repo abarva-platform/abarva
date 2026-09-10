@@ -2750,6 +2750,18 @@ export function buildViewModel(vm: WorkspaceViewModel) {
                   .join(" · "),
               )
               .filter(Boolean),
+            // The negotiation detail is already parsed by the read adapter and
+            // was being dropped at this boundary, which is why the Optimize tab
+            // could only count levers instead of showing what each one asks for.
+            buyerAsk: opportunity.negotiationDetail?.buyerAsk ?? null,
+            negotiationLanguage:
+              opportunity.negotiationDetail?.negotiationLanguage ?? null,
+            vendorConcession:
+              opportunity.negotiationDetail?.vendorConcession ?? null,
+            timingDependency:
+              opportunity.negotiationDetail?.timingDependency ?? null,
+            riskIfIgnored: opportunity.negotiationDetail?.riskIfIgnored ?? null,
+            priority: opportunity.negotiationDetail?.priority ?? null,
             selected: opportunity.opportunityId === selected?.opportunityId,
           })),
           calculationLines: selectedLines.map((line) => ({
