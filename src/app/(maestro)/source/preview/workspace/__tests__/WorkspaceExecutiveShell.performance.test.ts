@@ -1707,7 +1707,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       new URL("../WorkspaceExecutiveShell.tsx", import.meta.url),
       "utf8",
     );
-    const marker = source.indexOf('aria-label="Portfolio facts"');
+    const marker = source.indexOf("<SourceCommandKpiStrip");
     expect(marker).toBeGreaterThan(-1);
     // The portfolio strip must sit behind a selected-contract guard so a
     // reader drilled into one agreement is not shown book-level totals.
