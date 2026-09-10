@@ -33,6 +33,7 @@ Source aVa answers now show delivery-model, should-cost, and proposal-normalizat
 - Route vendor price-comparison questions to the normalized response packages before the event value ledger.
 - Refuse price ranking and savings calculations until every vendor has accepted numeric commercial facts on a comparable basis.
 - Route BAFO ask questions to a governed instruction pack derived from the same normalized response challenges as the BAFO page.
+- Route award-readiness questions to the normalized response challenges, BAFO holdbacks, and provisional evaluation view so aVa names each real vendor's controlling condition without treating response coverage as award readiness.
 - Distinguish the stage named in a readiness question from the event's current lifecycle stage.
 - Clarify that proposal commitments alone do not prove Transition readiness and that the accepted transition packet plus approval record are controlling.
 - Suppress delivery-model panels unless the question asks about the delivery model.
