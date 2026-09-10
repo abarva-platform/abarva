@@ -14,6 +14,7 @@ import { buildContractOptimizationLedger } from "@/lib/source/data-model/contrac
 import { buildContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
 import type { SourcingOpportunityReason } from "@/lib/source/data-model/sourcing-opportunities";
 import { isReviewableContractScope } from "@/lib/source/contract-optimization-intake";
+import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
 
 /**
  * `node-postgres` returns NUMERIC/DECIMAL columns as strings; a lone value
@@ -3313,6 +3314,14 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         `Opportunity recommendation: ${opportunityView.recommendation} ${opportunityView.recommendationDetail}`,
         `Commercial baseline: ${opportunityView.baseline.headline} ${opportunityView.baseline.detail}`,
         `Potential value is separated from finance confirmation: ${opportunityView.potential.recoverable} recoverable, ${opportunityView.potential.avoidable} avoidable, ${opportunityView.potential.negotiable} negotiable, ${opportunityView.financeConfirmed} finance-confirmed.`,
+        ...(() => {
+          const comparator = portfolioDiscountComparatorSummary(
+            c?.contract_id,
+            detail?.cloudCommitmentPeerCoverage ?? [],
+            opportunityView.opportunities,
+          );
+          return comparator ? [comparator.factLine] : [];
+        })(),
         ...opportunityView.opportunities.map(
           (opportunity) =>
             `${opportunity.label}: ${opportunity.amount}; stage ${opportunity.stage}; confidence ${opportunity.confidence}; evidence ${opportunity.grade}; owner ${opportunity.owner}; next action ${opportunity.nextAction}; blocking gap ${opportunity.blockingGap ?? "none"}.`,

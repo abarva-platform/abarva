@@ -59,6 +59,7 @@ import type {
   SourceContractOperationalPerformanceRow,
   SourceContractPerformancePeriodRow,
   SourceAvaGroundingBundleRow,
+  SourceCloudCommitmentCoverageRow,
   SourcePageStorylineRow,
   SourceContractSpendMonthlyRow,
   SourceContractVendor360Row,
@@ -855,6 +856,43 @@ export async function listContractSpendMonthly(
   return rows.map(normalizeSpendMonthlyRow);
 }
 
+export async function listCloudCommitmentCoverageRows(
+  tenantKey: string,
+): Promise<SourceCloudCommitmentCoverageRow[]> {
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceCloudCommitmentCoverageRow>(
+      tenantKey,
+      `SELECT
+	     tenant_key,
+       dataset_version,
+	     coverage_id,
+       contract_id,
+       vendor_id AS vendor_ref,
+       vendor_id,
+       vendor_name,
+       cloud_provider,
+       period_start,
+       period_end,
+       eligible_stable_workload_spend_usd,
+       commitment_covered_spend_usd,
+       on_demand_eligible_spend_usd,
+       commitment_coverage_pct,
+       commitment_utilization_pct,
+       recommended_step_up_usd,
+       expected_discount_pct,
+       candidate_monthly_savings_usd,
+       evidence_reference,
+       source_file_id,
+       confidence,
+       quality_state,
+       load_run_id
+     FROM source.cloud_commitment_coverage_observation
+	    WHERE tenant_key = ANY($1::text[])
+	    ORDER BY contract_id, period_start, coverage_id`,
+    );
+  return rows.map(normalizeCloudCommitmentCoverageRow);
+}
+
 export async function listSourceContractEvidenceCoverage(
   tenantKey: string,
 ): Promise<SourceContractEvidenceCoverageRow[]> {
@@ -1121,6 +1159,31 @@ function normalizeSpendMonthlyRow(
     invoice_amount: numberValue(row.invoice_amount),
     paid_amount: numberValue(row.paid_amount),
     actual_spend: numberValue(row.actual_spend),
+  };
+}
+
+function normalizeCloudCommitmentCoverageRow(
+  row: SourceCloudCommitmentCoverageRow,
+): SourceCloudCommitmentCoverageRow {
+  return {
+    ...row,
+    eligible_stable_workload_spend_usd: numberValue(
+      row.eligible_stable_workload_spend_usd,
+    ),
+    commitment_covered_spend_usd: numberValue(
+      row.commitment_covered_spend_usd,
+    ),
+    on_demand_eligible_spend_usd: numberValue(
+      row.on_demand_eligible_spend_usd,
+    ),
+    commitment_coverage_pct: numberValue(row.commitment_coverage_pct),
+    commitment_utilization_pct: numberValue(row.commitment_utilization_pct),
+    recommended_step_up_usd: numberValue(row.recommended_step_up_usd),
+    expected_discount_pct: numberValue(row.expected_discount_pct),
+    candidate_monthly_savings_usd: numberValue(
+      row.candidate_monthly_savings_usd,
+    ),
+    confidence: numberValue(row.confidence),
   };
 }
 

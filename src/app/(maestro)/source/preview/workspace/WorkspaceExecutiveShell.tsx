@@ -27,6 +27,7 @@ import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
 import type { Contract360Response } from "./live/contractDetail";
+import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
 import type {
   DocExtractionRow,
@@ -3253,6 +3254,7 @@ function ProductShellOptimizationExecutiveStrip({
         ))}
       </div>
       <ProductShellLeverTable vm={vm} />
+      <ProductShellDiscountComparator vm={vm} />
       <ProductShellNegotiationSequence vm={vm} />
     </section>
   );
@@ -3925,6 +3927,77 @@ function ProductShellLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
         carry no dollar figure on purpose - the evidence behind them does not
         yet support one.
       </p>
+    </div>
+  );
+}
+
+function ProductShellDiscountComparator({ vm }: { vm: SourceWorkspaceVM }) {
+  const summary = portfolioDiscountComparatorSummary(
+    vm.c?.id,
+    vm.detail?.cloudCommitmentPeerCoverage ?? [],
+    vm.opportunityView?.opportunities ?? [],
+  );
+  if (!summary) return null;
+
+  return (
+    <div
+      aria-label="Portfolio-relative discount comparator"
+      style={{
+        background: "rgba(250,247,241,.72)",
+        border: "1px solid rgba(10,10,11,.1)",
+        borderRadius: 8,
+        display: "grid",
+        gap: 12,
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        marginTop: 14,
+        padding: "12px 13px",
+      }}
+    >
+      <div>
+        <span
+          style={{
+            color: SOURCE_CHART_PALETTE.teal,
+            display: "block",
+            fontSize: 9.5,
+            fontWeight: 850,
+            letterSpacing: ".08em",
+            marginBottom: 4,
+            textTransform: "uppercase",
+          }}
+        >
+          {summary.heading}
+        </span>
+        <b style={{ display: "block", fontSize: 15, marginBottom: 4 }}>
+          {summary.headline}
+        </b>
+        <p className="sw-v2-muted" style={{ margin: 0 }}>
+          {summary.basis}
+        </p>
+      </div>
+      <div>
+        <small
+          style={{
+            color: SOURCE_CHART_PALETTE.amber,
+            display: "block",
+            fontSize: 10.5,
+            fontWeight: 800,
+            lineHeight: 1.35,
+            marginBottom: 7,
+          }}
+        >
+          Evidence gate: {summary.evidenceGate}
+        </small>
+        <small
+          style={{
+            color: "#5f5e5a",
+            display: "block",
+            fontSize: 10.5,
+            lineHeight: 1.35,
+          }}
+        >
+          {summary.caveat}
+        </small>
+      </div>
     </div>
   );
 }
