@@ -2689,6 +2689,7 @@ export function contractPurposeSummary(
     ? titleFromSourceKey(String(rawArchetype))
     : null;
   const scopePhrase =
+    usableScopeSummary(contract.purpose_summary) ??
     scopeFromContractName(contractName) ??
     usableScopeSummary(contract.scope_summary) ??
     "the loaded commercial scope";
@@ -2728,7 +2729,9 @@ export function contractPurposeSummary(
 
   return {
     heading: "What this contract is",
-    body: `This is ${kind.article} ${kind.label} with ${vendor} covering ${scopePhrase}. Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
+    body: usableScopeSummary(contract.purpose_summary)
+      ? `${scopePhrase} Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`
+      : `This is ${kind.article} ${kind.label} with ${vendor} covering ${scopePhrase}. Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
     evidence: `Loaded basis: ${evidenceParts.join("; ")}.`,
   };
 }

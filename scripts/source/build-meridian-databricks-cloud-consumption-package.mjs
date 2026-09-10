@@ -464,6 +464,19 @@ async function main() {
       business_owner: "VP Technology and Data",
       it_owner: "Enterprise Data Platforms",
       finance_owner: "Technology Finance",
+      contract_english_overview:
+        "Databricks-on-AWS consumption commitment for lakehouse, SQL warehouse, model serving, and pilot analytics workloads. The agreement buys committed platform capacity and Business Critical Support ahead of current consumption, so Source treats it as a renegotiation and ramp-timing case, not a refund-recovery case.",
+      scope_english_summary:
+        "Loaded scope covers named AWS-hosted analytics workloads: claims-denials pilot, legacy analytics migration, MedeAnalytics reporting exit, and Epic Clarity/Caboodle integration. It does not prove enterprise-wide Databricks coverage beyond those mapped applications.",
+      commercial_thesis:
+        "The governed financial fields show committed Databricks platform capacity and support materially ahead of observed usage. The optimization story is to re-time or carry forward the commitment and rebase support before the next lock-in; finance has not confirmed realized value.",
+      relationship_summary:
+        "The governed relationship is Databricks vendor to contract MER-TECH-DBX-001 to named AWS-hosted application scopes and candidate opportunities. No broader business-unit, CMDB, or Tower dependency should be inferred without matching rows.",
+      evidence_boundary_summary:
+        "Structured source rows are loaded for contract terms, monthly spend, DBU/service usage, commitment coverage, AP reconciliation, scope, clauses, and opportunities. Full raw contract documents remain restricted outside the public repo; document page text is not loaded.",
+      context_review_state: "reviewed",
+      context_reviewer_role: "Source contract intelligence reviewer",
+      context_reviewed_at: "2026-09-08T00:00:00Z",
       source_confidence: 0.92,
       source_file_id: sourceFile.order,
     },

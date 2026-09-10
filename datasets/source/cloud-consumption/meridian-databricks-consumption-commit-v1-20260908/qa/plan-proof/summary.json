@@ -3,10 +3,10 @@
   "mode": "plan",
   "tenant_key": "meridian-health",
   "dataset_version": "meridian-databricks-consumption-commit-v1-20260908",
-  "load_run_id": "source-cloud-consumption-package-meridian-databricks-consumption-commit-v1-20260908-20260909T133447Z",
+  "load_run_id": "source-cloud-consumption-package-meridian-databricks-consumption-commit-v1-20260908-20260910T121159Z",
   "idempotency_key": "meridian-health:meridian-databricks-consumption-commit-v1-20260908:layer2-layer3",
-  "package_dir": "/Users/anand/Projects/nexus-worktrees/source-dbx-signal-levers/datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908",
-  "package_sha256": "fa12b0bdb7b2844cfe1d2e83b2e5269cba602cb2624f7832881760ffce08009b",
+  "package_dir": "/Users/anand/Projects/nexus-worktrees/source-contract-context-enrichment/datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908",
+  "package_sha256": "24cd1b7921bfcbebd0599dc731703b79689ce01b1290e377ccf6cbc030a8cbd5",
   "synthetic_evidence_documents": 6,
   "layer2_expected_rows": 169,
   "layer2_expected_by_adapter": {
@@ -55,7 +55,7 @@
     "source_evidence_requirement": 6,
     "source_opportunity_requirement_status": 6,
     "source_evidence_request": 6,
-    "source_canonical_fact_assertion": 108
+    "source_canonical_fact_assertion": 113
   },
   "layer4_expected_readback": {
     "source_contract_360_cloud_contracts": 1,
