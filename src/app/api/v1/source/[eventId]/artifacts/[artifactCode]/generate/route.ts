@@ -46,6 +46,7 @@ import {
 } from "@/lib/source/contracts/upstream-satisfaction";
 import { sanitizeClientFacingSourceDraft } from "@/lib/source/agent-generation/client-facing-hygiene";
 import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
+import { completeD11ResponseControlSections } from "@/lib/source/agent-generation/d11-completion";
 import { generateD09ViaMapReduce } from "@/lib/source/agent-generation/d09-map-reduce";
 import {
   normalizeRequiredSectionHeadings,
@@ -667,6 +668,7 @@ export async function generateSourceArtifactDraft(
     );
   }
   body = completeD09RfpGovernanceSections({ artifactCode, body, ctx });
+  body = completeD11ResponseControlSections({ artifactCode, body });
   body = sanitizeClientFacingSourceDraft(body, {
     artifactCode,
     companyName: ctx.tenantName,
@@ -1275,6 +1277,10 @@ async function runConsultingGradeQualityGate(args: {
     artifactCode: args.artifactCode,
     body: rewrittenBody,
     ctx: args.ctx,
+  });
+  rewrittenBody = completeD11ResponseControlSections({
+    artifactCode: args.artifactCode,
+    body: rewrittenBody,
   });
   rewrittenBody = sanitizeClientFacingSourceDraft(rewrittenBody, {
     artifactCode: args.artifactCode,
