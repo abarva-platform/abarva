@@ -493,6 +493,8 @@ export interface AgentDockProps {
   keepSuggestedActionsVisible?: boolean;
   /** Human-facing composer placeholder. Defaults to "Ask {agent.name}…". */
   placeholder?: string;
+  /** Optional reason to pause the composer until the host surface is ready. */
+  composerDisabledReason?: string | null;
   thread: ChatMessage[];
   /** Caller handles network. We pass plain text + attachment refs. */
   onMessage: (
@@ -716,6 +718,7 @@ export function AgentDock(props: AgentDockProps) {
     suggestedActions: rawSuggestedActions = [],
     keepSuggestedActionsVisible = false,
     placeholder: rawPlaceholder,
+    composerDisabledReason: rawComposerDisabledReason,
     thread: rawThread,
     onMessage,
     workspace,
@@ -753,6 +756,11 @@ export function AgentDock(props: AgentDockProps) {
       ? rawPlaceholder
       : demoSafeClientText(rawPlaceholder)
     : rawPlaceholder;
+  const composerDisabledReason = rawComposerDisabledReason
+    ? preserveVisibleText
+      ? rawComposerDisabledReason
+      : demoSafeClientText(rawComposerDisabledReason)
+    : null;
   const safeThread = preserveVisibleText
     ? rawThread
     : sanitizeVisibleStrings(rawThread);
@@ -847,9 +855,11 @@ export function AgentDock(props: AgentDockProps) {
   );
 
   const anyUploading = uploads.some((u) => u.status === "uploading");
+  const composerDisabled = Boolean(composerDisabledReason);
   const sendDisabled =
     submitting ||
     anyUploading ||
+    composerDisabled ||
     (draft.trim().length === 0 && uploads.length === 0);
   const canExportSession =
     thread.length > 0 &&
@@ -917,7 +927,8 @@ export function AgentDock(props: AgentDockProps) {
             u.status === "done" && !!u.ref,
         )
         .map((u) => u.ref);
-      if (trimmed.length === 0 && refs.length === 0) return;
+      if (composerDisabled || (trimmed.length === 0 && refs.length === 0))
+        return;
       setDraft("");
       setUploads([]);
       const ta = inputRef.current;
@@ -929,13 +940,13 @@ export function AgentDock(props: AgentDockProps) {
         setSubmitting(false);
       }
     },
-    [draft, uploads, onMessage],
+    [composerDisabled, draft, uploads, onMessage],
   );
 
   const submitSuggestedAction = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || submitting) return;
+      if (!trimmed || submitting || composerDisabled) return;
       setDraft("");
       const ta = inputRef.current;
       if (ta) ta.style.height = "auto";
@@ -946,7 +957,7 @@ export function AgentDock(props: AgentDockProps) {
         setSubmitting(false);
       }
     },
-    [onMessage, submitting],
+    [composerDisabled, onMessage, submitting],
   );
 
   // ── Upload handling ─────────────────────────────────────────────────────
@@ -1351,7 +1362,7 @@ export function AgentDock(props: AgentDockProps) {
             aria-label="Attach files"
             data-testid="agent-dock-attach"
             onClick={() => fileInputRef.current?.click()}
-            disabled={submitting}
+            disabled={submitting || composerDisabled}
             style={ATTACH_BUTTON_STYLE}
           >
             <span aria-hidden="true" style={ATTACH_PLUS_STYLE}>
@@ -1376,10 +1387,14 @@ export function AgentDock(props: AgentDockProps) {
             value={draft}
             onChange={(e) => onChangeDraft(e.target.value)}
             onKeyDown={onComposerKeyDown}
-            placeholder={placeholder ?? `Ask ${displayAgentName}…`}
+            placeholder={
+              composerDisabledReason ??
+              placeholder ??
+              `Ask ${displayAgentName}…`
+            }
             rows={1}
             spellCheck
-            disabled={submitting}
+            disabled={submitting || composerDisabled}
             data-testid="agent-dock-input"
             style={INPUT_STYLE}
           />
@@ -1412,6 +1427,8 @@ export function AgentDock(props: AgentDockProps) {
   }, [
     agent,
     chatOnly,
+    composerDisabled,
+    composerDisabledReason,
     dockId,
     draft,
     draggingOver,
