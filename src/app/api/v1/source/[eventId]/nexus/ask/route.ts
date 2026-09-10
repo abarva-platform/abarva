@@ -56,6 +56,10 @@ import {
   looksLikeSelectionDecisionQuestion,
 } from "@/lib/source/ava/selection-decision-governed-answer";
 import {
+  buildPricingComparisonGovernedAnswer,
+  looksLikePricingComparisonQuestion,
+} from "@/lib/source/ava/pricing-comparison-governed-answer";
+import {
   combineSourceEventDecisionAndValueAnswers,
   looksLikeSourceEventDecisionAndValueQuestion,
 } from "@/lib/source/ava/source-event-summary-governed-answer";
@@ -271,6 +275,27 @@ export async function POST(
         agentAnswer = buildCrossTenantRefusalAnswer({
           clientKey: activeClientKey,
           question: normalizedBody.prompt ?? "",
+        });
+      } else if (
+        eventId &&
+        looksLikePricingComparisonQuestion(normalizedBody.prompt)
+      ) {
+        agentAnswer = await buildPricingComparisonGovernedAnswer({
+          eventId: liveEventDetail?.id ?? eventId,
+          eventName: liveEventDetail?.name ?? null,
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+        }).catch((err) => {
+          console.error(
+            "[source.nexus-ask.pricing-comparison-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              clientKey: activeClientKey,
+              message: err instanceof Error ? err.message : String(err),
+            }),
+          );
+          return null;
         });
       } else if (
         eventId &&
