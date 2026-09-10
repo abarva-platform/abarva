@@ -46,6 +46,14 @@ describe("required evidence signal selection", () => {
           statement: expect.stringContaining("41.2"),
         }),
         expect.objectContaining({
+          label: "Interface channels",
+          statement: expect.stringContaining("41 of 86"),
+        }),
+        expect.objectContaining({
+          label: "Unmonitored interfaces",
+          statement: expect.stringContaining("33 of 86"),
+        }),
+        expect.objectContaining({
           label: "Kona Coast scope caveat",
           statement: expect.stringContaining("design-only"),
         }),

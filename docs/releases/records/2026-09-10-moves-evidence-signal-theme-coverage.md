@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-Moves generated deliverables now retain a broader mix of required evidence signals. The selector preserves representative signals across metric, control, ownership, caveat, prior-decision, and value-discipline themes before filling the remaining prompt budget by score. When a draft omits a citation on an exact governed numeric fact, generation now adds the matching citation deterministically; invented or transformed numbers still block.
+Moves generated deliverables now retain a broader mix of required evidence signals. The selector preserves representative signals across metric, interface-versioning, interface-monitoring, ownership, caveat, prior-decision, and value-discipline themes before filling the remaining prompt budget by score. When a draft omits a citation on an exact governed numeric fact, generation now adds the matching citation deterministically; invented or transformed numbers still block.
 
 ## Layer Impact
 
 Lane: `global-control-lane`.
 
-Products: Moves deliverable generation receives a stronger required-signal list during artifact generation and validation. It also repairs exact governed numeric citation omissions before validation while leaving unsupported numbers blocked. This is shared product behavior for all tenants using Moves generation.
+Products: Moves deliverable generation receives a stronger required-signal list during artifact generation and validation, including separate retention for interface versioning and interface monitoring facts. It also repairs exact governed numeric citation omissions before validation while leaving unsupported numbers blocked. This is shared product behavior for all tenants using Moves generation.
 
 Canonical model: No schema or data-model change.
 
@@ -40,6 +40,7 @@ PRs:
 
 - https://github.com/abarva-platform/abarva/pull/7571
 - https://github.com/abarva-platform/abarva/pull/7572
+- https://github.com/abarva-platform/abarva/pull/7574
 
 Code:
 
