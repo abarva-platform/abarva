@@ -190,6 +190,40 @@ describe("QA gate runner", () => {
     expect(decisionGate?.result.message).toContain("recipient action");
   });
 
+  it("recognizes human shortlist headings as the required decision exhibits", () => {
+    const content = `Recommendation: approve the conditionally locked vendor shortlist.
+
+    ## Approved Vendor List
+    Four governed invitation candidates with rationale and conditions.
+
+    ## Excluded / Not-Invited Vendor Rationale
+    No additional supplier is invited without evidence and sponsor approval.
+
+    ## Coverage, Commercial, and Risk Fit
+    Evaluate service coverage, commercial comparability, conflicts, and delivery risk.
+
+    Recommended action: approve the list after the stated pre-invitation conditions close.`;
+
+    const report = runDocumentQA({ artifactCode: "d12", content });
+    const exhibitGate = report.results.find(
+      (row) => row.gate.id === "required_exhibits",
+    );
+
+    expect(exhibitGate?.result.pass).toBe(true);
+    expect(report.blockers).toEqual([]);
+  });
+
+  it("still blocks a shortlist that omits an exclusion rationale", () => {
+    const content = `Recommendation: approve the vendor shortlist.
+    ## Approved Vendor List
+    ## Coverage, Commercial, and Risk Fit
+    Recommended action: hold until the evidence is complete.`;
+
+    const report = runDocumentQA({ artifactCode: "d12", content });
+
+    expect(report.blockers.join(" ")).toContain("eliminated_vendors");
+  });
+
   it("allows legitimate security-vector language while still blocking vector infrastructure jargon", () => {
     const base = `# Request for Proposal
     ## Purpose and scope
