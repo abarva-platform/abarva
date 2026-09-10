@@ -22,7 +22,7 @@ describe("Source tenant identity binding", () => {
     const source = readRepoFile("src/app/(maestro)/source/portfolio/page.tsx");
 
     expect(source).toContain('from "next/navigation"');
-    expect(source).toContain("/source/workspace");
+    expect(source).toContain("/source");
     expect(source).toContain("sourceProvider");
     expect(source).toContain("contractId");
     expect(source).toContain("contractTab");
@@ -36,6 +36,15 @@ describe("Source tenant identity binding", () => {
     expect(source).toContain('from "../workspace/page"');
     expect(source).toContain('title: "Source 360 · AbarVa"');
     expect(source).toContain("export default SourceWorkspacePage");
+  });
+
+  it("mounts the canonical Source route on the governed workspace substrate", () => {
+    const source = readRepoFile("src/app/(maestro)/source/page.tsx");
+
+    expect(source).toContain('from "./workspace/page"');
+    expect(source).toContain('title: "Source · AbarVa"');
+    expect(source).toContain("export default SourceWorkspacePage");
+    expect(source).not.toContain('redirect("/source/workspace")');
   });
 
   it("keeps the Source 360 executive shell aligned to the command-center design contract", () => {

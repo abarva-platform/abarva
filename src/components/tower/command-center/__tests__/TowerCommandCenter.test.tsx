@@ -253,27 +253,40 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Investment to value conversion"),
     ).toBeInTheDocument();
-    expect(screen.getByText("No substitution between states")).toBeInTheDocument();
-    expect(screen.queryByText("Seven gates · in order")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("No substitution between states"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Seven gates · in order"),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Eight-quarter trajectory")).toBeInTheDocument();
     expect(screen.getByText("Claim ledger")).toBeInTheDocument();
     expect(screen.getByText("Value case lanes")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Stacked" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "2 × 2" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "Stacked" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "2 × 2" }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the AI Portfolio tab-specific contract layout", () => {
     renderPage();
     goTo(TAB.tools, /AI portfolio/);
-    expect(screen.getByText("AI initiatives and tool rollouts")).toBeInTheDocument();
-    expect(screen.getByText("All AI initiatives and tools")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /All initiatives\/tools/ })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    expect(
+      screen.getByText("AI initiatives and tool rollouts"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("All AI initiatives and tools"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /All initiatives\/tools/ }),
+    ).toHaveAttribute("aria-selected", "true");
     fireEvent.click(screen.getByRole("tab", { name: /Cost lens/ }));
-    expect(screen.getByText("Attributed spend by category")).toBeInTheDocument();
+    expect(
+      screen.getByText("Attributed spend by category"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Cost findings · evidenced")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Risk lens/ }));
     expect(
@@ -283,7 +296,9 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Tool rollouts ranked by recorded usage evidence"),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: /All initiatives\/tools/ }));
+    fireEvent.click(
+      screen.getByRole("tab", { name: /All initiatives\/tools/ }),
+    );
     expect(
       screen.getByText("All AI initiatives and tools"),
     ).toBeInTheDocument();
@@ -330,17 +345,29 @@ describe("TowerCommandCenter", () => {
     });
 
     goTo(TAB.decisions, /Decisions for this review/);
-    expect(screen.getByRole("heading", { name: /No value claims loaded/ })).toBeInTheDocument();
-    expect(screen.getByText("Usage evidence mapped").parentElement).toHaveTextContent("Not loaded");
+    expect(
+      screen.getByRole("heading", { name: /No value claims loaded/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Usage evidence mapped").parentElement,
+    ).toHaveTextContent("Not loaded");
     expect(document.body.textContent).not.toContain("0 of 0");
     expect(document.body.textContent).not.toContain("$0 board-claimable");
-    expect(document.body.textContent).not.toContain("0 value claims and the gate");
-    expect(document.body.textContent).not.toContain("Every value claim has usage-to-value support");
+    expect(document.body.textContent).not.toContain(
+      "0 value claims and the gate",
+    );
+    expect(document.body.textContent).not.toContain(
+      "Every value claim has usage-to-value support",
+    );
     expect(screen.getByText("Value claims not loaded →")).toBeInTheDocument();
 
     expect(screen.getByText("No review decisions loaded")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Review/ })).not.toBeInTheDocument();
-    expect(document.body.textContent).not.toContain("Backfill measured outcome on the 0 claims");
+    expect(
+      screen.queryByRole("button", { name: /Review/ }),
+    ).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain(
+      "Backfill measured outcome on the 0 claims",
+    );
   });
 
   it("renders the Evidence & Actions tab-specific contract layout", () => {
@@ -394,7 +421,9 @@ describe("TowerCommandCenter", () => {
     const drawer = screen.getByRole("dialog");
     expect(within(drawer).getByText("Value type")).toBeInTheDocument();
     expect(within(drawer).getByText("Control blocker")).toBeInTheDocument();
-    expect(within(drawer).getByRole("button", { name: /Back to list/ })).toBeInTheDocument();
+    expect(
+      within(drawer).getByRole("button", { name: /Back to list/ }),
+    ).toBeInTheDocument();
   });
 
   it("opens the AI initiative drawer from the tools rollout table", () => {
@@ -434,16 +463,22 @@ describe("TowerCommandCenter", () => {
     expect(within(drawer).getByText(/AI tool rollout/)).toBeInTheDocument();
     expect(within(drawer).getByText("Tool rollout detail")).toBeInTheDocument();
     expect(within(drawer).getByText("Tool spend")).toBeInTheDocument();
-    expect(within(drawer).getByText("self-service analytics assistance")).toBeInTheDocument();
+    expect(
+      within(drawer).getByText("self-service analytics assistance"),
+    ).toBeInTheDocument();
     expect(within(drawer).getByText("2,300")).toBeInTheDocument();
     expect(within(drawer).getByText("1,035")).toBeInTheDocument();
     expect(within(drawer).getByText("690")).toBeInTheDocument();
     expect(within(drawer).getByText("16 pts")).toBeInTheDocument();
-    expect(within(drawer).getByText("AI Portfolio and Business Case Tracker")).toBeInTheDocument();
+    expect(
+      within(drawer).getByText("AI Portfolio and Business Case Tracker"),
+    ).toBeInTheDocument();
     expect(within(drawer).getByText("TOOL-MER-007")).toBeInTheDocument();
     expect(within(drawer).getByText("2026-08-24")).toBeInTheDocument();
     expect(within(drawer).getByText("monthly")).toBeInTheDocument();
-    expect(within(drawer).getByText("synthetic_review_ready")).toBeInTheDocument();
+    expect(
+      within(drawer).getByText("synthetic_review_ready"),
+    ).toBeInTheDocument();
   });
 
   it("surfaces Source contract actions without dumping the full action queue", () => {
@@ -471,13 +506,15 @@ describe("TowerCommandCenter", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("$99M")).toBeInTheDocument();
 
-    clickFirstButtonContaining("Archive dormant source licenses before true-up");
+    clickFirstButtonContaining(
+      "Archive dormant source licenses before true-up",
+    );
     const drawer = screen.getByRole("dialog");
     expect(
       within(drawer).getByRole("link", { name: "View in Source" }),
     ).toHaveAttribute(
       "href",
-      "/source/workspace?contractId=MER-TECH-IMS-001&contractTab=Optimize",
+      "/source?contractId=MER-TECH-IMS-001&contractTab=Optimize",
     );
     expect(within(drawer).getByText("MER-TECH-IMS-001")).toBeInTheDocument();
   });
@@ -527,7 +564,9 @@ describe("TowerCommandCenter", () => {
     const firstAction = [...view.actions].sort(
       (a, b) => a.sequence - b.sequence,
     )[0]!;
-    clickFirstButtonContaining(firstAction.title.replace(/^FIX PROOF:\s*/i, ""));
+    clickFirstButtonContaining(
+      firstAction.title.replace(/^FIX PROOF:\s*/i, ""),
+    );
 
     const drawer = screen.getByRole("dialog");
     const approve = within(drawer).getByRole("button", {

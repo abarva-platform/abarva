@@ -17,7 +17,10 @@ const loadingSource = readFileSync(
 );
 
 const loaderSource = readFileSync(
-  join(process.cwd(), "src/app/(maestro)/source/workspace/WorkspaceClientLoader.tsx"),
+  join(
+    process.cwd(),
+    "src/app/(maestro)/source/workspace/WorkspaceClientLoader.tsx",
+  ),
   "utf8",
 );
 
@@ -86,7 +89,9 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource).toContain("/api/source/workspace/portfolio");
     expect(loaderSource).toContain("SourceWorkspaceLoadingShell");
     expect(loaderSource).toContain("<WorkspaceClient");
-    expect(loaderSource).toContain("const fullImpactPromise = fetchImpact(fullUrl)");
+    expect(loaderSource).toContain(
+      "const fullImpactPromise = fetchImpact(fullUrl)",
+    );
     expect(loaderSource).toContain('responseScope: "impact"');
     expect(loaderSource).toContain("impact: impactPayload.impact");
     expect(loaderSource).not.toContain(
@@ -110,7 +115,9 @@ describe("Source workspace requested-client routing", () => {
 
   it("keeps portfolio loading tenant-guarded inside the API route", () => {
     expect(portfolioApiSource).toContain("requireTenancy()");
-    expect(portfolioApiSource).toContain("checkTenantAccessByKey(requestedClientKey)");
+    expect(portfolioApiSource).toContain(
+      "checkTenantAccessByKey(requestedClientKey)",
+    );
     expect(portfolioApiSource).toContain("loadSourceWorkspacePortfolio(");
     expect(portfolioApiSource).toContain("loadSourceWorkspaceImpactPayload(");
     expect(portfolioApiSource).toContain("sourceProviderKey");
@@ -122,15 +129,19 @@ describe("Source workspace requested-client routing", () => {
     );
     expect(portfolioApiSource).toContain("const portfolioCache = new Map");
     expect(portfolioApiSource).toContain("const impactCache = new Map");
-    expect(portfolioApiSource).toContain("checkTenantAccessByKey(requestedClientKey)");
-    expect(portfolioApiSource.indexOf("checkTenantAccessByKey(requestedClientKey)")).toBeLessThan(
-      portfolioApiSource.indexOf("loadCachedPortfolio({"),
+    expect(portfolioApiSource).toContain(
+      "checkTenantAccessByKey(requestedClientKey)",
     );
+    expect(
+      portfolioApiSource.indexOf("checkTenantAccessByKey(requestedClientKey)"),
+    ).toBeLessThan(portfolioApiSource.indexOf("loadCachedPortfolio({"));
     expect(portfolioApiSource).toContain("tenantKey,");
     expect(portfolioApiSource).toContain("asOfDateIso,");
     expect(portfolioApiSource).toContain('requestedProvider ?? "default"');
     expect(portfolioApiSource).toContain("impactMode,");
-    expect(portfolioApiSource).toContain("responseScopeFromRequest(requestUrl)");
+    expect(portfolioApiSource).toContain(
+      "responseScopeFromRequest(requestUrl)",
+    );
     expect(portfolioApiSource).toContain('normalized === "impact"');
     expect(portfolioApiSource).toContain("X-Source-Portfolio-Cache");
     expect(portfolioApiSource).toContain("X-Source-Portfolio-Impact-Mode");
@@ -150,7 +161,9 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource.indexOf("fetchPortfolio(deferredUrl)")).toBeLessThan(
       loaderSource.indexOf("fetchImpact(fullUrl)"),
     );
-    expect(loaderSource).toContain("const fullImpactPromise = fetchImpact(fullUrl)");
+    expect(loaderSource).toContain(
+      "const fullImpactPromise = fetchImpact(fullUrl)",
+    );
     expect(loaderSource).not.toContain("window.setTimeout");
     expect(loaderSource).not.toContain("window.clearTimeout");
   });
@@ -158,7 +171,7 @@ describe("Source workspace requested-client routing", () => {
   it("keeps the historical preview route as a query-preserving redirect only", () => {
     expect(previewPageSource).toContain("SourceWorkspacePreviewRedirect");
     expect(previewPageSource).toContain(
-      'redirect(`/source/workspace${queryString ? `?${queryString}` : ""}`);',
+      'redirect(`/source${queryString ? `?${queryString}` : ""}`);',
     );
     expect(previewPageSource).not.toContain("loadSourceWorkspacePortfolio(");
     expect(previewPageSource).not.toContain("<WorkspaceClient");

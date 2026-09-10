@@ -67,8 +67,8 @@ export function SourceSourcingOpportunitiesPage({
     >
       <main data-testid="source-sourcing-opportunities" style={MAIN_STYLE}>
         <div style={CONTAINER_STYLE}>
-          <Link href="/source/workspace" style={BACK_LINK_STYLE}>
-            &larr; Back to Source workspace
+          <Link href="/source" style={BACK_LINK_STYLE}>
+            &larr; Back to Source
           </Link>
           <header style={HEADER_STYLE}>
             <div style={EYEBROW_STYLE}>Source · Sourcing Opportunities</div>
@@ -98,7 +98,7 @@ export function SourceSourcingOpportunitiesPage({
                   <div style={CARD_HEAD_STYLE}>
                     <div style={{ minWidth: 0, display: "grid", gap: 2 }}>
                       <Link
-                        href={`/source/workspace?contractId=${encodeURIComponent(opp.contractId)}`}
+                        href={`/source?contractId=${encodeURIComponent(opp.contractId)}`}
                         style={CARD_TITLE_STYLE}
                       >
                         {opp.contractName}

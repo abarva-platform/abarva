@@ -10,8 +10,8 @@ describe("Source segment not-found state", () => {
   it("uses Source-specific access language and safe Source exits", () => {
     expect(source).toContain("Source · access guard");
     expect(source).toContain("This Source item is not available");
-    expect(source).toContain("/source/workspace");
-    expect(source).toContain("Open Source workspace");
+    expect(source).toContain("/source");
+    expect(source).toContain("Open Source");
     expect(source).toContain("Switch account");
   });
 

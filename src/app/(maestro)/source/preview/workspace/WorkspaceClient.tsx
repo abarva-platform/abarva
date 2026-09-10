@@ -569,7 +569,7 @@ export function WorkspaceClient({
         {/* ── Canvas, wrapped in the shared aVa dock (same component/pattern as Moves' Move advisor) ── */}
         <AgentDock
           agent={SOURCE_WORKSPACE_AGENT}
-          surface="/source/workspace"
+          surface="/source"
           defaultMode="collapsed"
           collapsedRestoreMode="expand"
           collapsedSummary={{ label: "aVa", detail: vm.title }}

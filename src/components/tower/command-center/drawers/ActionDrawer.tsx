@@ -71,7 +71,7 @@ export function ActionDrawer({
   const sourceContractHref =
     action?.moduleHandoff?.trim().toLowerCase() === "source" &&
     action.handoffEntityId
-      ? `/source/workspace?contractId=${encodeURIComponent(action.handoffEntityId)}&contractTab=Optimize`
+      ? `/source?contractId=${encodeURIComponent(action.handoffEntityId)}&contractTab=Optimize`
       : null;
 
   const handleRoute = async () => {

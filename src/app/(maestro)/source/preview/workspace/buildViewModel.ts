@@ -531,7 +531,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         label: "Events dashboard",
         depth: 1,
         onClick: () => {
-          window.location.href = "/source/workspace";
+          window.location.href = "/source";
         },
       }),
     );

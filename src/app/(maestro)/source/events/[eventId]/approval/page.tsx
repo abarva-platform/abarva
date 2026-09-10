@@ -82,7 +82,7 @@ export default async function SourceEventApprovalPage({
     redirect(currentStageHref);
   }
   if (!APPROVAL_STATES.has(row.lifecycle_state)) {
-    redirect("/source/workspace");
+    redirect("/source");
   }
 
   const sourceAccessPolicy = await loadUserSourceAccessPolicy(tenancy, {

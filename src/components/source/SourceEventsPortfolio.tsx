@@ -430,10 +430,7 @@ export function SourceEventsPortfolio({
                 Compare events →
               </Link>
               {activeStage || activeStatus ? (
-                <Link
-                  href="/source/workspace"
-                  style={SOURCE_ACTION_LINK_SECONDARY}
-                >
+                <Link href="/source" style={SOURCE_ACTION_LINK_SECONDARY}>
                   Reset filters
                 </Link>
               ) : null}
@@ -513,7 +510,7 @@ export function SourceEventsPortfolio({
             rather than this portfolio surface.
           </div>
           <div>
-            <Link href="/source/workspace" style={SOURCE_ACTION_LINK_PRIMARY}>
+            <Link href="/source" style={SOURCE_ACTION_LINK_PRIMARY}>
               Reset filters
             </Link>
           </div>
@@ -628,7 +625,7 @@ function buildChoiceHref({
   if (stage) params.set("stage", stage);
   if (status) params.set("status", status);
   const query = params.toString();
-  return query ? `/source/workspace?${query}` : "/source/workspace";
+  return query ? `/source?${query}` : "/source";
 }
 
 function ContextTile({

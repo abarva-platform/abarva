@@ -940,7 +940,7 @@ function SourceWorkspaceAppNav({
     { label: "Home", href: "/home" },
     { label: "Intelligence", href: "/intelligence" },
     { label: "Moves", href: "/strategic-moves" },
-    { label: "Source", href: "/source/workspace", active: true },
+    { label: "Source", href: "/source", active: true },
     { label: "Tower", href: "/tower" },
   ];
   return (

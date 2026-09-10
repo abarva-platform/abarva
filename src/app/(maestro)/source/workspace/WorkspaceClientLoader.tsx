@@ -44,7 +44,9 @@ function portfolioApiUrl(input: {
 }
 
 async function fetchPortfolio(url: string): Promise<PortfolioResponse> {
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+  });
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.portfolio) {
     throw new Error(
@@ -57,7 +59,9 @@ async function fetchPortfolio(url: string): Promise<PortfolioResponse> {
 }
 
 async function fetchImpact(url: string): Promise<ImpactResponse> {
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+  });
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.impact) {
     throw new Error(
@@ -150,9 +154,9 @@ export function WorkspaceClientLoader({
         setError(
           err instanceof Error
             ? err.message
-            : "Source workspace data could not be loaded.",
+            : "Source data could not be loaded.",
         );
-    });
+      });
     return () => {
       cancelled = true;
     };
@@ -192,7 +196,7 @@ export function WorkspaceClientLoader({
               textTransform: "uppercase",
             }}
           >
-            Source workspace unavailable
+            Source unavailable
           </p>
           <h1 style={{ margin: 0, fontSize: 24 }}>
             Contract book could not load.
