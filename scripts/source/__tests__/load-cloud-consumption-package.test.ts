@@ -37,6 +37,13 @@ describe("Source cloud consumption package loader", () => {
       path.join(repoRoot, "supabase/migrations/20260907143000_source_cloud_consumption_package.sql"),
       "utf8",
     );
+    const layer4RepairMigration = fs.readFileSync(
+      path.join(
+        repoRoot,
+        "supabase/migrations/20260910143500_source_cloud_l4_opportunity_readiness_repair.sql",
+      ),
+      "utf8",
+    );
     const loader = fs.readFileSync(
       path.join(repoRoot, "scripts/source/load-cloud-consumption-package.mjs"),
       "utf8",
@@ -56,6 +63,9 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("consumption.sourcing_cloud_usage_monthly_v1");
     expect(loader).toContain("'calculated_amount_usd'");
     expect(loader).not.toContain("'candidate_amount_usd',$4");
+    expect(layer4RepairMigration).toContain("legacy.opportunity_id");
+    expect(layer4RepairMigration).toContain("canonical.opportunity_id = legacy.opportunity_id");
+    expect(layer4RepairMigration).toContain("WHEN o.value_type = 'control_action' THEN 'control_required'");
   });
 
   it("plans the Databricks consumption package with signal-stage opportunity evidence states", () => {
