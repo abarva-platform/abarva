@@ -57,6 +57,11 @@ const REVIEW_PROVENANCE = "uploaded-evidence-human-review";
 const REVIEW_SCOPE = "availability_only";
 const REVIEW_DISCLAIMER =
   "Confirms that parsed evidence is available for this workflow requirement. It does not approve legal, security, commercial, supplier, or finance content.";
+const PLACEHOLDER_REVIEWER_NAMES = new Set([
+  "user",
+  "unknown",
+  "unknown user",
+]);
 
 function badRequest(detail: string): Response {
   return Response.json(
@@ -70,6 +75,14 @@ function cleanRationale(value: unknown): string | null {
   const trimmed = value.trim();
   if (trimmed.length < 8) return null;
   return trimmed.slice(0, 8_000);
+}
+
+function cleanReviewerName(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed || PLACEHOLDER_REVIEWER_NAMES.has(trimmed.toLowerCase())) {
+    return null;
+  }
+  return trimmed;
 }
 
 function reviewPreview(context: ReviewContext) {
@@ -152,7 +165,7 @@ async function resolveReviewContext(
     );
   }
   const reviewerPersonId = reviewerPerson?.id;
-  const reviewerName = reviewerPerson?.name?.trim();
+  const reviewerName = cleanReviewerName(reviewerPerson?.name);
   const reviewerEmail =
     reviewerPerson?.email?.trim() || currentUser.email.trim();
   if (!reviewerPersonId || !reviewerName || !reviewerEmail) {

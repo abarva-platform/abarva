@@ -242,4 +242,17 @@ describe("Source parsed-evidence availability review", () => {
       expect.objectContaining({ error: "reviewer_identity_required" }),
     );
   });
+
+  it("fails closed when the canonical person row has a placeholder name", async () => {
+    personRow = {
+      id: "person-1",
+      name: "User",
+      email: "reviewer@example.test",
+    };
+    const response = await GET(request(), ctx);
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error: "reviewer_identity_required" }),
+    );
+  });
 });
