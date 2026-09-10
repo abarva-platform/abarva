@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed; RFP signed-in proof not run`
 
 ## Plain-English Summary
 
@@ -40,7 +40,10 @@ Parsed evidence that needs a higher authority state can now be reviewed and conf
 - PASS: scoped ESLint for touched TypeScript files.
 - PASS: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit`.
 - PASS: `git diff --check`.
-- Pending: live signed-in verification after deployment.
+- PASS: PR checks for #7533.
+- PASS: ACA deploy run `34442823605` for merge SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- PASS: Runtime invariant on active digest `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160`.
+- NOT RUN: signed-in RFP checklist proof. The final live smoke in this proof turn covered Source Contract 360/Optimize for the consumption-contract paths, not the RFP checklist upload/review path.
 
 ## Rollout Plan
 
@@ -50,9 +53,9 @@ Squash merge through a pull request. The repository-owned ACA main deploy workfl
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` only.
 - Shared runtime mutators: repository-owned workflow only.
-- Approved image digest: recorded by the deploy workflow.
-- ACA runtime invariant: template, active revision, and required worker images must match the approved digest.
-- Worker image invariant: enforced by the deploy workflow.
+- Approved image digest: `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160` on active SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- ACA runtime invariant: PASS on active revision `ca-abarva-web-lab-eastus--mb9a0225d`.
+- Worker image invariant: PASS for required worker jobs on the same digest.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes.
 
@@ -62,9 +65,10 @@ Revert the squash merge through a pull request and redeploy via the repository-o
 
 ## Audit Evidence
 
-- Pull request and merge SHA.
+- Pull request #7533 and merge SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
 - Focused Jest, ESLint, TypeScript, release-check, and diff-check output.
-- ACA workflow run and signed-in Source checklist proof after deployment.
+- ACA workflow run `34442823605` and runtime-invariant output.
+- Signed-in Source checklist proof remains required before marking this RFP-specific path live-proven.
 
 ## Known Gaps
 

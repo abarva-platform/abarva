@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released; live-proven`
 
 ## Plain-English Summary
 
@@ -44,6 +44,11 @@ as the adjacent products, while the default executive pages remain unchanged for
 - `npx eslint scripts/ecl/run_product_ecl_browser_smoke.mjs src/app/'(maestro)'/source/preview/workspace/WorkspaceClient.tsx src/app/'(maestro)'/intelligence/page.tsx` — PASS.
 - `npx tsc --noEmit` — PASS.
 - `git diff --check` — PASS.
+- PR checks for #7532 — PASS.
+- ACA deploy run `34441258100` for merge SHA `b1dd611601b0735a1cf2be469c852b8b1b9fb67d` — PASS.
+- Carried forward into active main SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- Runtime invariant on active digest `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160` — PASS.
+- ECL product live proof run `34443822224` — PASS: 4/4 default entry routes, 40/40 named surfaces, 10/10 demonstrable findings, and 13/13 aVa evaluated answers accepted.
 
 ## Rollout Plan
 
@@ -55,9 +60,9 @@ workflow and capture the structured browser smoke event.
 
 - Repo-owned deploy workflow: required.
 - Shared runtime mutators: none outside the repo-owned deploy workflow.
-- Approved image digest: produced by the ACA main deploy workflow after merge.
-- ACA runtime invariant: required after deploy.
-- Worker image invariant: required after deploy.
+- Approved image digest: `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160` on active SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- ACA runtime invariant: PASS on active revision `ca-abarva-web-lab-eastus--mb9a0225d`.
+- Worker image invariant: PASS for required worker jobs on the same digest.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes, through the ECL product live proof workflow.
 
@@ -68,8 +73,8 @@ workflow. No data rollback is required.
 
 ## Audit Evidence
 
-Inspect the pull request, local validation output, ACA deploy workflow run, runtime invariant
-proof, and the post-deploy ECL product live proof workflow run.
+Inspect pull request #7532, local validation output, ACA deploy workflow runs `34441258100` and
+`34442823605`, runtime invariant proof, and ECL product live proof run `34443822224`.
 
 ## Known Gaps
 
