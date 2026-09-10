@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released; live-proven`
 
 ## Plain-English Summary
 
@@ -39,7 +39,12 @@ Layer 4 PRODUCTS, lane `global-control-lane`: Source presentation and view-model
 - PASS: TypeScript `tsc --noEmit`.
 - PASS: `git diff --check`.
 - PASS: Release-control check.
-- Pending: CI, ACA runtime invariant, and live signed-in Source smoke after pull request merge and deploy.
+- PASS: CI checks for the merged Source Optimize dashboard clarity change.
+- PASS: ACA deploy carried the change into active main SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- PASS: Runtime invariant on active digest `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160`.
+- PASS: Live signed-in Source Databricks Optimize smoke showed the contract command surface, removed the duplicate top action toolbar and old instructional labels, rendered `MER-TECH-DBX-001`, six levers, `4 sized · 2 signal-stage`, sized opportunity `$1.5M`, the lever table, and the negotiation sequence with no `$1.8M` or `6 sized` leakage.
+- PASS: Live signed-in aVa smoke for `MER-TECH-DBX-001` returned the proof marker, contract ID, vendor, sized-vs-signal distinction, sequence, and evidence gates without signal-stage dollar leakage.
+- PASS: Live signed-in Source AWS Optimize smoke showed `MER-CLOUD-AWS-001`, Amazon Web Services, annual value, avoidable and negotiable opportunity figures, and no Databricks bleed.
 
 ## Rollout Plan
 
@@ -49,9 +54,9 @@ Merge through pull request, then deploy through the repository-owned Azure Conta
 
 - Repo-owned deploy workflow: Required for production runtime.
 - Shared runtime mutators: None outside the repo-owned workflow.
-- Approved image digest: To be captured by the deploy workflow after merge.
-- ACA runtime invariant: Required before live proof.
-- Worker image invariant: Required before live proof.
+- Approved image digest: `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160` on active SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- ACA runtime invariant: PASS on active revision `ca-abarva-web-lab-eastus--mb9a0225d`.
+- Worker image invariant: PASS for required worker jobs on the same digest.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Source Contract 360 Economics and Optimize smoke after deployment.
 
@@ -61,7 +66,7 @@ Revert the Source presentation change or roll production back to the previous he
 
 ## Audit Evidence
 
-- Pull request URL, CI checks, merge SHA, ACA deploy run, runtime-invariant output, and live Source smoke notes.
+- Pull request, CI checks, active main SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`, ACA deploy run `34442823605`, runtime-invariant output, Source Databricks/AWS smoke notes, and aVa Databricks smoke notes.
 
 ## Known Gaps
 

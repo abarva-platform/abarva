@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released; live-proven`
 
 ## Plain-English Summary
 
@@ -38,6 +38,11 @@ Layer 4 products: the Source workspace imports and diagnostics-gates the shared 
 
 - `npm run ecl:product-browser:predeploy-gate` — PASS.
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/portfolioAdapter.ecl.test.ts' 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx' --runInBand` — PASS, 16 tests.
+- PR checks for #7531 — PASS.
+- ACA deploy run `34439389838` for merge SHA `59bfd05571aa59e4930f935a0ff8d42a305014f5` — PASS.
+- Carried forward into active main SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- Runtime invariant on active digest `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160` — PASS.
+- ECL product live proof run `34443822224` — PASS: Source 9/9 named surfaces, all default entry routes accepted, and zero browser proof issues.
 
 ## Rollout Plan
 
@@ -47,9 +52,9 @@ Open a PR, squash merge to `main`, allow the repo-owned Azure Container Apps mai
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: None outside the repo-owned workflow.
-- Approved image digest: Pending deploy.
-- ACA runtime invariant: Required after deploy.
-- Worker image invariant: Required after deploy.
+- Approved image digest: `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160` on active SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- ACA runtime invariant: PASS on active revision `ca-abarva-web-lab-eastus--mb9a0225d`.
+- Worker image invariant: PASS for required worker jobs on the same digest.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Yes, Source workspace plus ECL product live proof.
 
@@ -59,11 +64,11 @@ Revert the squash merge and redeploy through the repo-owned ACA main deploy work
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- CI checks: Pending.
-- ACA deploy run: Pending.
-- Runtime invariant proof: Pending.
-- Live proof: Pending.
+- PR URL: #7531.
+- CI checks: PASS.
+- ACA deploy runs: `34439389838`, carried forward by `34442823605`.
+- Runtime invariant proof: PASS on active digest `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160`.
+- Live proof: PASS in ECL product live proof run `34443822224`.
 
 ## Known Gaps
 

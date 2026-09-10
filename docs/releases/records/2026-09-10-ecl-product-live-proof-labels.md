@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released; live-proven`
 
 ## Plain-English Summary
 
@@ -41,6 +41,11 @@ the product vocabulary without making proof-only wording visible on default page
 - PASS — `npx eslint scripts/ecl/run_product_ecl_browser_smoke.mjs scripts/ecl/run_product_ecl_predeploy_gate.mjs`.
 - PASS — `git diff --check`.
 - PASS — `npm run release:check`.
+- PR checks for #7534 — PASS.
+- ACA deploy run `34442660760` for merge SHA `0f31e2ea7992c34e756bb24393ff62efd9b8ad42` — PASS.
+- Carried forward into active main SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- Runtime invariant on active digest `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160` — PASS.
+- ECL product live proof run `34443822224` — PASS: 4/4 default entry routes, 40/40 named surfaces, 10/10 demonstrable findings, and 13/13 aVa evaluated answers accepted.
 
 ## Rollout Plan
 
@@ -52,9 +57,9 @@ workflow and capture the structured browser smoke event.
 
 - Repo-owned deploy workflow: required.
 - Shared runtime mutators: none outside the repo-owned deploy workflow.
-- Approved image digest: produced by the ACA main deploy workflow after merge.
-- ACA runtime invariant: required after deploy.
-- Worker image invariant: required after deploy.
+- Approved image digest: `sha256:9b1a94625361acd6e350a8871426e2c9a79d93dcee21b2d0c1131bde3ed5c160` on active SHA `b9a0225d96cbe4f127445f5ee225fea5b3fecb0d`.
+- ACA runtime invariant: PASS on active revision `ca-abarva-web-lab-eastus--mb9a0225d`.
+- Worker image invariant: PASS for required worker jobs on the same digest.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes, through the ECL product live proof workflow.
 
@@ -65,8 +70,8 @@ workflow. No data rollback is required.
 
 ## Audit Evidence
 
-Inspect the pull request, local validation output, ACA deploy workflow run, runtime invariant
-proof, and the post-deploy ECL product live proof workflow run.
+Inspect pull request #7534, local validation output, ACA deploy workflow runs `34442660760` and
+`34442823605`, runtime invariant proof, and ECL product live proof run `34443822224`.
 
 ## Known Gaps
 
