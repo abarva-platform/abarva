@@ -109,6 +109,16 @@ describe("selection decision intent", () => {
         "Which suppliers responded to the pricing workbook?",
       ),
     ).toBe(false);
+    expect(
+      looksLikeSelectionDecisionQuestion(
+        "Why is no vendor ready for award yet? Name the evidence conditions.",
+      ),
+    ).toBe(false);
+    expect(
+      looksLikeSelectionDecisionQuestion(
+        "What is blocking the award readiness gate?",
+      ),
+    ).toBe(false);
   });
 
   it("recognizes protected cross-tenant data requests", () => {

@@ -29,6 +29,7 @@ Source aVa answers now show delivery-model, should-cost, and proposal-normalizat
 ## Changes Included
 
 - Recognize named Source-stage readiness questions, including Transition and Selection.
+- Keep award-readiness, holdback, and blocker questions out of the accepted-selection-memo intent.
 - Suppress delivery-model panels unless the question asks about the delivery model.
 - Suppress should-cost panels unless the question asks about should-cost or TCO.
 - Suppress proposal-normalization panels unless the question asks for proposal, bid, or price normalization/comparison.
