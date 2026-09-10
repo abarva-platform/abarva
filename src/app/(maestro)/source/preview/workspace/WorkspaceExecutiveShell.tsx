@@ -2528,6 +2528,11 @@ function ContractPage({
             />
           </div>
         )}
+        {detailReady &&
+        (tab === "Economics" || tab === "Optimize") &&
+        vm.detail?.spendMonths?.length ? (
+          <ContractConsumptionRamp spendMonths={vm.detail.spendMonths} />
+        ) : null}
         {tab === "Evidence" && detailReady && vm.detail ? (
           <ContractEvidenceDocuments
             files={vm.detail.documentFiles ?? []}
@@ -2942,6 +2947,7 @@ function ProductShellOptimizationExecutiveStrip({
         ))}
       </div>
       <ProductShellLeverTable vm={vm} />
+      <ProductShellNegotiationSequence vm={vm} />
     </section>
   );
 }
@@ -2998,6 +3004,237 @@ export function sizedOpportunityTotalUsd(
     .reduce((total, opportunity) => total + (opportunity.amountUsd ?? 0), 0);
 }
 
+type ConsumptionRampInput = {
+  readonly period_start?: string | null;
+  readonly period_end?: string | null;
+  readonly month?: string | null;
+  readonly committed_amount?: number | string | null;
+  readonly actual_spend?: number | string | null;
+  readonly invoice_amount?: number | string | null;
+  readonly paid_amount?: number | string | null;
+  readonly service_id?: string | null;
+  readonly business_unit?: string | null;
+  readonly cost_center?: string | null;
+  readonly evidence_reference?: string | null;
+};
+
+export function consumptionRampRows(
+  spendMonths: readonly ConsumptionRampInput[],
+  today = new Date(),
+) {
+  const ordered = spendMonths
+    .slice()
+    .sort((left, right) =>
+      String(left.period_start ?? left.month ?? "").localeCompare(
+        String(right.period_start ?? right.month ?? ""),
+      ),
+    );
+  if (ordered.length === 0) return [];
+
+  const maxCommitted = Math.max(
+    0,
+    ...ordered.map((row) => numberFromDb(row.committed_amount) ?? 0),
+  );
+
+  return ordered.map((row) => {
+    const committedUsd = numberFromDb(row.committed_amount);
+    const actualUsd = numberFromDb(row.actual_spend);
+    const invoiceUsd = numberFromDb(row.invoice_amount);
+    const paidUsd = numberFromDb(row.paid_amount);
+    const committedScalePct =
+      maxCommitted > 0 && committedUsd != null
+        ? Math.max(8, Math.min(100, (committedUsd / maxCommitted) * 100))
+        : null;
+    const actualScalePct =
+      maxCommitted > 0 && actualUsd != null
+        ? Math.max(0, Math.min(100, (actualUsd / maxCommitted) * 100))
+        : null;
+    const utilizationPct =
+      committedUsd != null && committedUsd > 0 && actualUsd != null
+        ? Math.round((actualUsd / committedUsd) * 100)
+        : null;
+    const periodEnd = row.period_end ? Date.parse(row.period_end) : NaN;
+
+    return {
+      key: `${row.period_start ?? row.month ?? "period"}:${row.service_id ?? "all"}`,
+      periodLabel: formatRampPeriodLabel(row.period_start ?? row.month),
+      committedUsd,
+      actualUsd,
+      invoiceUsd,
+      paidUsd,
+      committedScalePct,
+      actualScalePct,
+      utilizationPct,
+      isPartial: Number.isFinite(periodEnd)
+        ? periodEnd > today.getTime()
+        : false,
+      serviceId: row.service_id ?? "All services",
+      businessUnit: row.business_unit ?? row.cost_center ?? "Owner not recorded",
+      evidenceReference: row.evidence_reference ?? "Evidence ref not recorded",
+    };
+  });
+}
+
+function formatRampPeriodLabel(value: string | null | undefined): string {
+  if (!value) return "Period";
+  const parsed = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+
+type NegotiationSequenceInput = {
+  readonly id: string;
+  readonly label: string;
+  readonly shortLabel?: string | null;
+  readonly buyerAsk?: string | null;
+  readonly vendorConcession?: string | null;
+  readonly negotiationLanguage?: string | null;
+  readonly timingDependency?: string | null;
+  readonly owner?: string | null;
+  readonly ownerRole?: string | null;
+  readonly priority?: string | null;
+  readonly deadline?: string | null;
+  readonly stageRaw?: string | null;
+};
+
+type NegotiationPlayRule = {
+  readonly pattern: RegExp;
+  readonly order: number;
+  readonly lane: string;
+  readonly rationale: string;
+  readonly holdBack?: boolean;
+  readonly evidenceGap?: string;
+};
+
+const NEGOTIATION_PLAYBOOK: readonly NegotiationPlayRule[] = [
+  {
+    pattern: /carry[-_\s]?forward|unused/i,
+    order: 10,
+    lane: "Open first",
+    rationale:
+      "Preserve buyer value before the next payment cycle; this is easier for the vendor to concede because it can be framed as adoption enablement, not a refund.",
+  },
+  {
+    pattern: /commit[-_\s]?ramp|ramp schedule|re-time/i,
+    order: 20,
+    lane: "Anchor amendment",
+    rationale:
+      "Reset the commitment curve around production gates while the utilization evidence is fresh.",
+  },
+  {
+    pattern: /support[-_\s]?rebase|support fee/i,
+    order: 30,
+    lane: "Attach economics",
+    rationale:
+      "Tie support economics to the same low-consumption fact pattern so it travels with the amendment instead of becoming a separate dispute.",
+  },
+  {
+    pattern: /marketplace|private offer|edp/i,
+    order: 40,
+    lane: "Route conditionally",
+    rationale:
+      "Confirm cloud-portfolio credit treatment before papering the next commercial route.",
+    evidenceGap: "Cloud commitment credit treatment must be confirmed first.",
+  },
+  {
+    pattern: /serverless|classic|compute mode/i,
+    order: 50,
+    lane: "Validate before migration",
+    rationale:
+      "Protect the buyer from moving workloads into a compute mode whose discount treatment has not been proven.",
+    evidenceGap: "Needs per-SKU serverless versus classic cost comparison.",
+  },
+  {
+    pattern: /discount|re[-_\s]?price|pricing band/i,
+    order: 90,
+    lane: "Hold back",
+    rationale:
+      "Use after a benchmark comparable is loaded; opening with rate can invite the vendor to reopen term length before the easier concessions are banked.",
+    holdBack: true,
+    evidenceGap: "Needs an accepted benchmark comparable before it becomes a primary ask.",
+  },
+];
+
+function negotiationPlayRuleFor(
+  opportunity: NegotiationSequenceInput,
+): NegotiationPlayRule | null {
+  const haystack = [
+    opportunity.id,
+    opportunity.label,
+    opportunity.shortLabel,
+    opportunity.buyerAsk,
+    opportunity.negotiationLanguage,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return NEGOTIATION_PLAYBOOK.find((rule) => rule.pattern.test(haystack)) ?? null;
+}
+
+function priorityRank(priority: string | null | undefined): number {
+  const match = priority?.match(/\d+/);
+  return match ? Number(match[0]) : Number.POSITIVE_INFINITY;
+}
+
+function deadlineRank(deadline: string | null | undefined): number {
+  if (!deadline) return Number.POSITIVE_INFINITY;
+  const parsed = Date.parse(deadline);
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
+function stageRank(stage: string | null | undefined): number {
+  if (stage === "finance_confirmed" || stage === "validated") return 0;
+  if (stage === "quantified") return 1;
+  if (stage === "approval_required" || stage === "target_position") return 2;
+  if (stage === "signal") return 8;
+  return 5;
+}
+
+function hasNegotiationDetail(opportunity: NegotiationSequenceInput): boolean {
+  return Boolean(
+    opportunity.buyerAsk ||
+      opportunity.negotiationLanguage ||
+      opportunity.vendorConcession ||
+      opportunity.timingDependency ||
+      opportunity.priority,
+  );
+}
+
+export function negotiationSequenceRows(
+  opportunities: readonly NegotiationSequenceInput[],
+) {
+  return opportunities
+    .filter(hasNegotiationDetail)
+    .map((opportunity) => {
+      const play = negotiationPlayRuleFor(opportunity);
+      return {
+        opportunity,
+        lane: play?.lane ?? "Sequence by evidence",
+        rationale:
+          play?.rationale ??
+          "Sequence by priority, deadline, and evidence stage; no authored lever-specific sequencing rule is loaded for this row.",
+        evidenceGap: play?.evidenceGap ?? null,
+        holdBack: Boolean(play?.holdBack),
+        sortOrder: play?.order ?? 60,
+      };
+    })
+    .sort((left, right) => {
+      if (left.holdBack !== right.holdBack) return left.holdBack ? 1 : -1;
+      return (
+        left.sortOrder - right.sortOrder ||
+        priorityRank(left.opportunity.priority) -
+          priorityRank(right.opportunity.priority) ||
+        deadlineRank(left.opportunity.deadline) -
+          deadlineRank(right.opportunity.deadline) ||
+        stageRank(left.opportunity.stageRaw) -
+          stageRank(right.opportunity.stageRaw) ||
+        left.opportunity.label.localeCompare(right.opportunity.label)
+      );
+    });
+}
+
 /** Levers with enough negotiation content to be worth a row. */
 export function leverTableRows<
   T extends {
@@ -3050,6 +3287,191 @@ function ContractValueTypeStack({
       />
       <Fact label="Deterministic cards" value={String(cardCount)} />
     </div>
+  );
+}
+
+function ContractConsumptionRamp({
+  spendMonths,
+}: {
+  spendMonths: readonly ConsumptionRampInput[];
+}) {
+  const rows = consumptionRampRows(spendMonths);
+  if (rows.length === 0) return null;
+
+  const totalCommitted = rows.reduce(
+    (sum, row) => sum + (row.committedUsd ?? 0),
+    0,
+  );
+  const totalActual = rows.reduce((sum, row) => sum + (row.actualUsd ?? 0), 0);
+  const utilization =
+    totalCommitted > 0 ? Math.round((totalActual / totalCommitted) * 100) : null;
+  const latest = rows[rows.length - 1];
+
+  return (
+    <section
+      aria-label="Contract consumption ramp"
+      style={{
+        border: "1px solid rgba(10,10,11,.1)",
+        borderRadius: 8,
+        background: "#fffdfa",
+        margin: "14px 0",
+        padding: "13px 14px",
+      }}
+    >
+      <div
+        style={{
+          alignItems: "start",
+          display: "grid",
+          gap: 14,
+          gridTemplateColumns: "minmax(0, 1.6fr) minmax(185px, .7fr)",
+        }}
+      >
+        <div>
+          <span
+            style={{
+              color: SOURCE_CHART_PALETTE.teal,
+              display: "block",
+              fontSize: 9.5,
+              fontWeight: 850,
+              letterSpacing: ".08em",
+              marginBottom: 5,
+              textTransform: "uppercase",
+            }}
+          >
+            Consumption ramp
+          </span>
+          <b style={{ display: "block", fontSize: 15, marginBottom: 3 }}>
+            Monthly actual spend against committed run-rate
+          </b>
+          <p className="sw-v2-muted" style={{ margin: "0 0 12px" }}>
+            The empty space is the commercial argument: Source shows what was
+            committed and what was actually consumed, month by month, without
+            extrapolating missing periods.
+          </p>
+          <div
+            style={{
+              alignItems: "end",
+              display: "grid",
+              gap: 7,
+              gridTemplateColumns: `repeat(${rows.length}, minmax(34px, 1fr))`,
+              minHeight: 144,
+              overflowX: "auto",
+              paddingBottom: 2,
+            }}
+          >
+            {rows.map((row) => (
+              <div
+                key={row.key}
+                aria-label={`${row.periodLabel}: ${
+                  row.utilizationPct == null
+                    ? "utilization not established"
+                    : `${row.utilizationPct}% utilized`
+                }`}
+                style={{
+                  alignItems: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
+                  minWidth: 0,
+                }}
+              >
+                <small
+                  style={{
+                    color: row.isPartial
+                      ? SOURCE_CHART_PALETTE.amber
+                      : "#5f5e5a",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    minHeight: 12,
+                  }}
+                >
+                  {row.utilizationPct == null ? "-" : `${row.utilizationPct}%`}
+                </small>
+                <div
+                  style={{
+                    alignItems: "end",
+                    display: "flex",
+                    height: 96,
+                    justifyContent: "center",
+                    width: "100%",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: row.isPartial
+                        ? "rgba(186,117,23,.05)"
+                        : "rgba(29,158,117,.04)",
+                      border: `1px ${row.isPartial ? "dashed" : "solid"} ${
+                        row.isPartial
+                          ? "rgba(186,117,23,.6)"
+                          : "rgba(15,110,86,.35)"
+                      }`,
+                      borderRadius: 5,
+                      height:
+                        row.committedScalePct == null
+                          ? 38
+                          : `${row.committedScalePct}%`,
+                      minHeight: 28,
+                      overflow: "hidden",
+                      position: "relative",
+                      width: "100%",
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: row.isPartial
+                          ? "rgba(186,117,23,.45)"
+                          : "rgba(29,158,117,.65)",
+                        bottom: 0,
+                        height:
+                          row.actualScalePct == null
+                            ? 0
+                            : `${row.actualScalePct}%`,
+                        left: 0,
+                        position: "absolute",
+                        right: 0,
+                      }}
+                    />
+                  </div>
+                </div>
+                <span
+                  style={{
+                    color: "#74716a",
+                    fontSize: 10,
+                    fontWeight: 750,
+                  }}
+                >
+                  {row.periodLabel}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="sw-v2-fact-stack">
+          <Fact
+            label="Observed utilization"
+            value={utilization == null ? "Not established" : `${utilization}%`}
+          />
+          <Fact label="Observed actual" value={money(totalActual)} />
+          <Fact label="Observed commitment" value={money(totalCommitted)} />
+          <Fact
+            label="Latest tracking grain"
+            value={`${latest.serviceId} · ${latest.businessUnit}`}
+          />
+          <p className="sw-v2-muted">
+            Track the same fields every month: commitment run-rate, actual
+            consumed spend, invoice/paid amount, workload or service, owner/cost
+            center, and evidence reference.
+          </p>
+          {rows.some((row) => row.isPartial) ? (
+            <p className="sw-v2-muted">
+              Dashed month is still open; Source does not project it to a full
+              period.
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -3162,7 +3584,7 @@ function ProductShellLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
                   ) : null}
                 </td>
                 <td style={cellStyle}>
-                  {opportunity.owner}
+                  {opportunity.ownerRole ?? opportunity.owner}
                   <small
                     style={{
                       color: "#5f5e5a",
@@ -3191,6 +3613,178 @@ function ProductShellLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
         carry no dollar figure on purpose - the evidence behind them does not
         yet support one.
       </p>
+    </div>
+  );
+}
+
+function ProductShellNegotiationSequence({ vm }: { vm: SourceWorkspaceVM }) {
+  const view = vm.opportunityView;
+  if (!view || view.opportunities.length === 0) return null;
+  const rows = negotiationSequenceRows(view.opportunities);
+  if (rows.length === 0) return null;
+
+  return (
+    <div
+      aria-label="Negotiation sequence"
+      style={{
+        borderTop: "1px solid rgba(10,10,11,.1)",
+        marginTop: 16,
+        paddingTop: 14,
+      }}
+    >
+      <div
+        style={{
+          alignItems: "end",
+          display: "flex",
+          gap: 12,
+          justifyContent: "space-between",
+          marginBottom: 10,
+        }}
+      >
+        <div>
+          <span
+            style={{
+              color: SOURCE_CHART_PALETTE.teal,
+              display: "block",
+              fontSize: 9.5,
+              fontWeight: 850,
+              letterSpacing: ".08em",
+              marginBottom: 3,
+              textTransform: "uppercase",
+            }}
+          >
+            Negotiation sequence
+          </span>
+          <b style={{ display: "block", fontSize: 15 }}>
+            What to ask for first, and what to hold back
+          </b>
+        </div>
+        <small
+          style={{
+            color: "#5f5e5a",
+            fontSize: 11,
+            lineHeight: 1.35,
+            maxWidth: 360,
+            textAlign: "right",
+          }}
+        >
+          Authored playbook keyed to lever type; not model-generated strategy.
+          Rows still remain candidates until finance confirms.
+        </small>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gap: 8,
+          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+        }}
+      >
+        {rows.map((row, index) => (
+          <div
+            key={row.opportunity.id}
+            style={{
+              border: `1px ${row.holdBack ? "dashed" : "solid"} ${
+                row.holdBack
+                  ? "rgba(186,117,23,.55)"
+                  : "rgba(10,10,11,.1)"
+              }`,
+              borderRadius: 8,
+              background: row.holdBack
+                ? "rgba(186,117,23,.05)"
+                : "rgba(250,247,241,.72)",
+              padding: "10px 11px",
+            }}
+          >
+            <div
+              style={{
+                alignItems: "center",
+                display: "flex",
+                gap: 8,
+                marginBottom: 7,
+              }}
+            >
+              <span
+                style={{
+                  alignItems: "center",
+                  background: row.holdBack
+                    ? SOURCE_CHART_PALETTE.amber
+                    : SOURCE_CHART_PALETTE.ink,
+                  borderRadius: 999,
+                  color: "white",
+                  display: "inline-flex",
+                  fontSize: 11,
+                  fontWeight: 850,
+                  height: 22,
+                  justifyContent: "center",
+                  width: 22,
+                }}
+              >
+                {index + 1}
+              </span>
+              <span
+                style={{
+                  color: row.holdBack
+                    ? SOURCE_CHART_PALETTE.amber
+                    : SOURCE_CHART_PALETTE.teal,
+                  fontSize: 9.5,
+                  fontWeight: 850,
+                  letterSpacing: ".08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {row.lane}
+              </span>
+            </div>
+            <b style={{ display: "block", fontSize: 13, marginBottom: 5 }}>
+              {row.opportunity.shortLabel || row.opportunity.label}
+            </b>
+            <p style={{ fontSize: 12, lineHeight: 1.35, margin: "0 0 7px" }}>
+              {row.rationale}
+            </p>
+            {row.opportunity.negotiationLanguage ? (
+              <em
+                style={{
+                  color: "#5f5e5a",
+                  display: "block",
+                  fontSize: 11,
+                  lineHeight: 1.35,
+                  marginBottom: 6,
+                }}
+              >
+                &ldquo;{row.opportunity.negotiationLanguage}&rdquo;
+              </em>
+            ) : null}
+            <small
+              style={{
+                color: "#5f5e5a",
+                display: "block",
+                fontSize: 10.5,
+                lineHeight: 1.35,
+              }}
+            >
+              {row.opportunity.ownerRole ??
+                row.opportunity.owner ??
+                "Owner not recorded"}
+              {row.opportunity.timingDependency
+                ? ` · ${row.opportunity.timingDependency}`
+                : ""}
+            </small>
+            {row.evidenceGap ? (
+              <small
+                style={{
+                  color: SOURCE_CHART_PALETTE.amber,
+                  display: "block",
+                  fontSize: 10.5,
+                  lineHeight: 1.35,
+                  marginTop: 5,
+                }}
+              >
+                Evidence gate: {row.evidenceGap}
+              </small>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

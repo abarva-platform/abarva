@@ -2760,6 +2760,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               opportunity.negotiationDetail?.vendorConcession ?? null,
             timingDependency:
               opportunity.negotiationDetail?.timingDependency ?? null,
+            ownerRole: opportunity.negotiationDetail?.ownerRole ?? null,
             riskIfIgnored: opportunity.negotiationDetail?.riskIfIgnored ?? null,
             priority: opportunity.negotiationDetail?.priority ?? null,
             selected: opportunity.opportunityId === selected?.opportunityId,
@@ -3689,6 +3690,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               grade: opportunity.grade,
               confidence: opportunity.confidence,
               owner: opportunity.owner,
+              ownerRole: opportunity.ownerRole,
               nextAction: opportunity.nextAction,
               blockingGap: opportunity.blockingGap,
               sourceRefs: opportunity.sourceRefs,
