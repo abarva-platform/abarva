@@ -5,6 +5,7 @@ import {
   consumptionRampRows,
   coverageForVendor,
   contractPurposeSummary,
+  contractTabNarrative,
   contractSearchRank,
   contractValueTypeSummary,
   displayBenchmarkingClause,
@@ -1546,11 +1547,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       new Date("2026-03-15T00:00:00Z"),
     );
 
-    expect(rows.map((row) => row.periodLabel)).toEqual([
-      "Jan",
-      "Feb",
-      "Mar",
-    ]);
+    expect(rows.map((row) => row.periodLabel)).toEqual(["Jan", "Feb", "Mar"]);
     expect(rows[0].committedScalePct).toBe(50);
     expect(rows[0].actualScalePct).toBe(25);
     expect(rows[0].utilizationPct).toBe(50);
@@ -1728,7 +1725,8 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
         vendor_category: "cloud_data_platform",
         contract_name:
           "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
-        scope_summary: "Cloud data platform subscription - absent - for_cause_only",
+        scope_summary:
+          "Cloud data platform subscription - absent - for_cause_only",
         annual_value: 1_900_000,
         resolved_annual_value: null,
         actual_annual_spend: null,
@@ -1759,21 +1757,112 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(summary.evidence).toContain("6 opportunity rows");
   });
 
-  it("does not force cloud language onto a generic managed-services contract", () => {
-    const summary = contractPurposeSummary(
+  it("gives Story, Scope, Relationship, and Evidence distinct CXO-ready narratives", () => {
+    const contract = {
+      contract_id: "CONTRACT-CLOUD-001",
+      vendor_ref: "VENDOR-CLOUD",
+      vendor_name: "Cloud Platform Vendor, Inc.",
+      vendor_category: "cloud_data_platform",
+      contract_name:
+        "Enterprise Agreement - Platform, Support and Committed Purchase",
+      scope_summary: null,
+      annual_value: 1_900_000,
+      resolved_annual_value: null,
+      actual_annual_spend: 66_000,
+    } as never;
+    const coverage = {
+      contract_id: "CONTRACT-CLOUD-001",
+      contract_archetype: "cloud_consumption",
+      actual_spend_usd: 66_000,
+      committed_spend_usd: 1_900_000,
+      scope_rows: 4,
+      spend_rows: 12,
+      document_page_text_rows: 0,
+      opportunity_rows: 6,
+      performance_rows: 12,
+    } as never;
+    const scopeRows = [
       {
-        contract_id: "MER-AMS-001",
-        vendor_ref: "VEN-AMS",
-        vendor_name: "Service Partner",
-        vendor_category: "managed_services",
-        contract_name: "Application Managed Services SOW",
-        scope_summary:
-          "run support, service desk triage, and change-request governance",
-        annual_value: 7_200_000,
-        resolved_annual_value: null,
-        actual_annual_spend: 7_100_000,
-      } as never,
+        application_name: "Claims analytics workload",
+        business_function: "Revenue Cycle Analytics",
+        hosting_model: "AWS",
+        criticality: "Tier 2",
+      },
+      {
+        application_name: "Data migration workload",
+        business_function: "Enterprise Data & Analytics",
+        hosting_model: "AWS",
+        criticality: "Tier 1",
+      },
+    ] as never;
+    const vm = {
+      detailState: "ready",
+      opportunityView: {
+        opportunities: [
+          { stageRaw: "quantified", amountUsd: 1_500_000 },
+          { stageRaw: "signal", amountUsd: 300_000 },
+        ],
+      },
+    } as never;
+
+    const story = contractTabNarrative(
+      "Story",
+      vm,
+      contract,
+      coverage,
+      scopeRows,
+      undefined,
     );
+    const scope = contractTabNarrative(
+      "Scope",
+      vm,
+      contract,
+      coverage,
+      scopeRows,
+      undefined,
+    );
+    const relationship = contractTabNarrative(
+      "Relationship",
+      vm,
+      contract,
+      coverage,
+      scopeRows,
+      undefined,
+    );
+    const evidence = contractTabNarrative(
+      "Evidence",
+      vm,
+      contract,
+      coverage,
+      scopeRows,
+      undefined,
+    );
+
+    expect(story.provenance).toBe("Executive story");
+    expect(story.headline).toContain("governed optimization levers");
+    expect(scope.provenance).toBe("Scope story");
+    expect(scope.headline).toContain("not the whole enterprise");
+    expect(scope.body).toContain("Plain English scope");
+    expect(relationship.provenance).toBe("Relationship map");
+    expect(relationship.body).toContain("vendor -> contract");
+    expect(evidence.provenance).toBe("Evidence boundary");
+    expect(evidence.headline).toContain("Document pages are not attached");
+    expect(evidence.body).toContain("structured rows support");
+  });
+
+  it("does not force cloud language onto a generic managed-services contract", () => {
+    const summary = contractPurposeSummary({
+      contract_id: "MER-AMS-001",
+      vendor_ref: "VEN-AMS",
+      vendor_name: "Service Partner",
+      vendor_category: "managed_services",
+      contract_name: "Application Managed Services SOW",
+      scope_summary:
+        "run support, service desk triage, and change-request governance",
+      annual_value: 7_200_000,
+      resolved_annual_value: null,
+      actual_annual_spend: 7_100_000,
+    } as never);
 
     expect(summary.body).toContain("managed-services contract");
     expect(summary.body).toContain(

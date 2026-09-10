@@ -853,6 +853,65 @@
   gap: 10px;
 }
 
+.sw-v2-relationship-map {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.sw-v2-relationship-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.sw-v2-relationship-step > div {
+  min-height: 112px;
+  border: 1px solid rgba(10, 10, 11, 0.12);
+  border-radius: 8px;
+  background: #fffdfa;
+  padding: 13px;
+}
+
+.sw-v2-relationship-step span {
+  display: block;
+  color: #0f6e56;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9.5px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.sw-v2-relationship-step b {
+  display: block;
+  color: #0a0a0b;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.sw-v2-relationship-step small {
+  display: block;
+  color: #6f6b62;
+  font-size: 11px;
+  line-height: 1.35;
+  margin-top: 8px;
+}
+
+.sw-v2-relationship-step i {
+  color: #888780;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .sw-v2-decision-list,
 .sw-v2-mini-list,
 .sw-v2-fact-stack {
@@ -1495,6 +1554,29 @@
   background: #faf7f1;
 }
 
+.sw-v2-evidence-empty {
+  margin-top: 14px;
+  border: 1px solid #d3d1c7;
+  border-left: 3px solid #0f6e56;
+  border-radius: 7px;
+  background: #fff;
+  padding: 14px;
+}
+
+.sw-v2-evidence-empty b {
+  display: block;
+  color: #0a0a0b;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.sw-v2-evidence-empty p {
+  margin: 7px 0 0;
+  color: #5f5e5a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .sw-v2-fact {
   border: 1px solid #d3d1c7;
   border-radius: 7px;
@@ -1840,6 +1922,15 @@
 
   .sw-v2-contract-story dl {
     grid-template-columns: 1fr;
+  }
+
+  .sw-v2-relationship-map,
+  .sw-v2-relationship-step {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-v2-relationship-step i {
+    display: none;
   }
 
   .sw-v2-recharts-legend {

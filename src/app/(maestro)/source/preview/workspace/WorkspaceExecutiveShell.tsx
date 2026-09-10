@@ -2495,6 +2495,7 @@ function ContractPage({
           </>
         ) : tab === "Evidence" && detailReady && vm.detail ? (
           <ContractEvidenceDocuments
+            coverage={coverage}
             files={vm.detail.documentFiles ?? []}
             extractions={vm.detail.docExtractions}
           />
@@ -2509,49 +2510,17 @@ function ContractPage({
       </section>
 
       <section className="sw-v2-panel sw-v2-contract-context-panel">
-        <PanelHead
-          eyebrow={tab === "Scope" ? "Scope coverage" : "Evidence state"}
-          title={
-            tab === "Scope"
-              ? `${scopeRows.length} scoped rows`
-              : detailStateLabel(vm.detailState)
-          }
+        <ContractDetailSidePanel
+          cardCount={contractClaimCards.length}
+          contract={contract}
+          coverage={coverage}
+          scopeRows={scopeRows}
+          tab={tab}
+          vm={vm}
         />
-        {vm.opportunityView ? (
-          <ContractValueTypeStack
-            view={vm.opportunityView}
-            cardCount={contractClaimCards.length}
-          />
-        ) : (
-          <div className="sw-v2-fact-stack">
-            <Fact
-              label="Coverage state"
-              value={coverage?.coverage_state ?? "Header only"}
-            />
-            <Fact label="Scope rows" value={String(scopeRows.length)} />
-            <Fact
-              label="Spend rows"
-              value={formatCount(coverage?.spend_rows)}
-            />
-            <Fact
-              label="Performance rows"
-              value={formatCount(coverage?.performance_rows)}
-            />
-            <Fact
-              label="Document pages"
-              value={formatCount(coverage?.document_page_text_rows)}
-            />
-            <p className="sw-v2-muted">
-              {coverage?.blocker_if_missing ??
-                "Contract-specific optimization evidence is not loaded for this selection."}
-            </p>
-          </div>
-        )}
       </section>
 
-      {tab === "Story" || tab === "Relationship" ? (
-        <ProductShellCommercialPostureStrip vm={vm} />
-      ) : null}
+      {tab === "Story" ? <ProductShellCommercialPostureStrip vm={vm} /> : null}
     </div>
   );
 }
@@ -2669,18 +2638,23 @@ function ContractTabStory({
               contract.notice_period_days == null
                 ? "Not established"
                 : `${contract.notice_period_days} days`,
-          ],
-        ];
-  const purpose = contractPurposeSummary(contract, coverage, scopeRows);
+            ],
+          ];
+  const purpose =
+    tab === "Story"
+      ? contractPurposeSummary(contract, coverage, scopeRows)
+      : null;
 
   return (
     <div className={`sw-v2-contract-story is-${tab.toLowerCase()}`}>
       <div>
-        <div className="sw-v2-contract-purpose">
-          <h3>{purpose.heading}</h3>
-          <p>{purpose.body}</p>
-          <span>{purpose.evidence}</span>
-        </div>
+        {purpose ? (
+          <div className="sw-v2-contract-purpose">
+            <h3>{purpose.heading}</h3>
+            <p>{purpose.body}</p>
+            <span>{purpose.evidence}</span>
+          </div>
+        ) : null}
         <span>{tabNarrative.provenance}</span>
         <h2>{tabNarrative.headline}</h2>
         <p>{tabNarrative.body}</p>
@@ -2704,7 +2678,8 @@ export function contractPurposeSummary(
   scopeRows: readonly SourceContractApplicationScopeRow[] = [],
 ) {
   const vendor = safeContractVendorDisplayName(contract);
-  const contractName = usableText(contract.contract_name) ?? contract.contract_id;
+  const contractName =
+    usableText(contract.contract_name) ?? contract.contract_id;
   const rawArchetype =
     coverage?.contract_archetype ??
     contractArchetype(contract) ??
@@ -2742,9 +2717,7 @@ export function contractPurposeSummary(
     positiveCount(numberFromDb(coverage?.scope_rows) ?? scopeRows.length)
       ? `${numberFromDb(coverage?.scope_rows) ?? scopeRows.length} scope rows`
       : null,
-    coverage
-      ? evidenceCount(coverage.spend_rows, "spend rows")
-      : null,
+    coverage ? evidenceCount(coverage.spend_rows, "spend rows") : null,
     coverage
       ? evidenceCount(coverage.document_page_text_rows, "document text rows")
       : null,
@@ -2762,7 +2735,10 @@ export function contractPurposeSummary(
 
 function usableText(value: string | null | undefined) {
   const text = value?.trim();
-  if (!text || /^(not established|unknown|unresolved|none|null|n\/a)$/i.test(text)) {
+  if (
+    !text ||
+    /^(not established|unknown|unresolved|none|null|n\/a)$/i.test(text)
+  ) {
     return null;
   }
   return text;
@@ -2771,7 +2747,9 @@ function usableText(value: string | null | undefined) {
 function usableScopeSummary(value: string | null | undefined) {
   const text = usableText(value);
   if (!text) return null;
-  if (/\b(absent|unknown|unresolved|none|null|n\/a|for_cause_only)\b/i.test(text)) {
+  if (
+    /\b(absent|unknown|unresolved|none|null|n\/a|for_cause_only)\b/i.test(text)
+  ) {
     return null;
   }
   return text;
@@ -2803,14 +2781,20 @@ function contractPurposeKind(text: string) {
       readAs: "a usage-backed commercial commitment",
     };
   }
-  if (/(managed service|managed-services|ams|bpo|outsourcing|service desk|sow)/i.test(text)) {
+  if (
+    /(managed service|managed-services|ams|bpo|outsourcing|service desk|sow)/i.test(
+      text,
+    )
+  ) {
     return {
       article: "a",
       label: "managed-services contract",
       readAs: "a service-scope and performance-control agreement",
     };
   }
-  if (/(saas|subscription|seat|license|licence|enterprise agreement)/i.test(text)) {
+  if (
+    /(saas|subscription|seat|license|licence|enterprise agreement)/i.test(text)
+  ) {
     return {
       article: "a",
       label: "software subscription contract",
@@ -2863,22 +2847,7 @@ function ContractTabBody({
   }
   if (tab === "Relationship") {
     return (
-      <div className="sw-v2-contract-story-grid">
-        <Fact label="Vendor" value={safeContractVendorDisplayName(contract)} />
-        <Fact label="Scoped applications" value={String(scopeRows.length)} />
-        <Fact
-          label="Loaded evidence"
-          value={
-            vm.detailState === "ready"
-              ? "Detail loaded"
-              : detailStateLabel(vm.detailState)
-          }
-        />
-        <Fact
-          label="Contract graph"
-          value="Open the evidence map for relationship lineage"
-        />
-      </div>
+      <ContractRelationshipMap contract={contract} scopeRows={scopeRows} />
     );
   }
   return (
@@ -2893,6 +2862,341 @@ function ContractTabBody({
         }
       />
       <Fact label="End date" value={fmtDate(contract.end_date)} />
+    </div>
+  );
+}
+
+function ContractDetailSidePanel({
+  cardCount,
+  contract,
+  coverage,
+  scopeRows,
+  tab,
+  vm,
+}: {
+  cardCount: number;
+  contract: SourceContract360Row;
+  coverage: ReturnType<typeof coverageForContract>;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+  tab: string;
+  vm: SourceWorkspaceVM;
+}) {
+  if (tab === "Story") {
+    return (
+      <>
+        <PanelHead eyebrow="Executive read" title="Why this contract matters" />
+        <ContractStoryContextStack
+          contract={contract}
+          coverage={coverage}
+          scopeRows={scopeRows}
+          vm={vm}
+        />
+      </>
+    );
+  }
+  if (tab === "Scope") {
+    return (
+      <>
+        <PanelHead eyebrow="Scope readout" title="What is actually covered" />
+        <ContractScopeContextStack scopeRows={scopeRows} />
+      </>
+    );
+  }
+  if (tab === "Relationship") {
+    return (
+      <>
+        <PanelHead
+          eyebrow="Relationship readout"
+          title="Loaded dependency path"
+        />
+        <ContractRelationshipContextStack
+          contract={contract}
+          coverage={coverage}
+          scopeRows={scopeRows}
+        />
+      </>
+    );
+  }
+  if (tab === "Evidence") {
+    return (
+      <>
+        <PanelHead eyebrow="Evidence readout" title="What evidence exists" />
+        <ContractEvidenceContextStack coverage={coverage} />
+      </>
+    );
+  }
+  if (tab === "Optimize" && vm.opportunityView) {
+    return (
+      <>
+        <PanelHead eyebrow="Optimization gates" title="What can be claimed" />
+        <ContractValueTypeStack
+          view={vm.opportunityView}
+          cardCount={cardCount}
+        />
+      </>
+    );
+  }
+  return (
+    <>
+      <PanelHead
+        eyebrow="Evidence state"
+        title={detailStateLabel(vm.detailState)}
+      />
+      <div className="sw-v2-fact-stack">
+        <Fact
+          label="Coverage state"
+          value={coverage?.coverage_state ?? "Header only"}
+        />
+        <Fact label="Scope rows" value={String(scopeRows.length)} />
+        <Fact label="Spend rows" value={formatCount(coverage?.spend_rows)} />
+        <Fact
+          label="Performance rows"
+          value={formatCount(coverage?.performance_rows)}
+        />
+        <Fact
+          label="Document pages"
+          value={formatCount(coverage?.document_page_text_rows)}
+        />
+        <p className="sw-v2-muted">
+          {coverage?.blocker_if_missing ??
+            "Contract-specific optimization evidence is not loaded for this selection."}
+        </p>
+      </div>
+    </>
+  );
+}
+
+function ContractEvidenceContextStack({
+  coverage,
+}: {
+  coverage: ReturnType<typeof coverageForContract>;
+}) {
+  const documentRows = numberFromDb(coverage?.document_page_text_rows) ?? 0;
+  const structuredRows =
+    (numberFromDb(coverage?.spend_rows) ?? 0) +
+    (numberFromDb(coverage?.scope_rows) ?? 0) +
+    (numberFromDb(coverage?.performance_rows) ?? 0) +
+    (numberFromDb(coverage?.opportunity_rows) ?? 0);
+
+  return (
+    <div className="sw-v2-fact-stack">
+      <Fact label="Structured evidence rows" value={String(structuredRows)} />
+      <Fact label="Document page rows" value={String(documentRows)} />
+      <Fact
+        label="What this means"
+        value={
+          documentRows > 0
+            ? "Clause text can be cited"
+            : structuredRows > 0
+              ? "Optimization can render; clause text stays withheld"
+              : "Header only"
+        }
+      />
+      <p className="sw-v2-muted">
+        Evidence is not a generic status panel. It tells the presenter which
+        claims are supported by structured rows and which claims still need raw
+        document page text.
+      </p>
+    </div>
+  );
+}
+
+function ContractStoryContextStack({
+  contract,
+  coverage,
+  scopeRows,
+  vm,
+}: {
+  contract: SourceContract360Row;
+  coverage: ReturnType<typeof coverageForContract>;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+  vm: SourceWorkspaceVM;
+}) {
+  const annualValue =
+    numberFromDb(contract.resolved_annual_value) ??
+    numberFromDb(contract.annual_value) ??
+    numberFromDb(coverage?.committed_spend_usd);
+  const actualSpend =
+    numberFromDb(contract.actual_annual_spend) ??
+    numberFromDb(coverage?.actual_spend_usd);
+  const sizedTotal = vm.opportunityView
+    ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
+    : 0;
+  const signalCount =
+    vm.opportunityView?.opportunities.filter(
+      (opportunity) => opportunity.stageRaw === "signal",
+    ).length ?? 0;
+
+  return (
+    <div className="sw-v2-fact-stack">
+      <Fact label="Contract value" value={money(annualValue)} />
+      <Fact label="Observed spend" value={money(actualSpend)} />
+      <Fact
+        label="Optimization levers"
+        value={
+          vm.opportunityView
+            ? `${vm.opportunityView.opportunities.length} loaded`
+            : "Not loaded"
+        }
+      />
+      <Fact
+        label="Sized ask"
+        value={sizedTotal > 0 ? money(sizedTotal) : "Not sized"}
+      />
+      {signalCount > 0 ? (
+        <p className="sw-v2-muted">
+          {signalCount} signal-stage lever{signalCount === 1 ? "" : "s"} stay
+          visible, but do not carry a dollar claim until the evidence gate
+          closes.
+        </p>
+      ) : null}
+      <p className="sw-v2-muted">
+        Scope is bounded to {scopeRows.length} loaded row
+        {scopeRows.length === 1 ? "" : "s"}; Source will not expand this into
+        tower, CMDB, or ownership claims without matching rows.
+      </p>
+    </div>
+  );
+}
+
+function ContractScopeContextStack({
+  scopeRows,
+}: {
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+}) {
+  const functions = uniqueTruthy(scopeRows.map((row) => row.business_function));
+  const hosting = uniqueTruthy(scopeRows.map((row) => row.hosting_model));
+  const critical = uniqueTruthy(scopeRows.map((row) => row.criticality));
+  const missingRunCost = scopeRows.filter(
+    (row) => numberFromDb(row.annual_run_cost) == null,
+  ).length;
+  return (
+    <div className="sw-v2-fact-stack">
+      <Fact label="Workloads covered" value={String(scopeRows.length)} />
+      <Fact
+        label="Business functions"
+        value={functions.length ? functions.join(", ") : "Not established"}
+      />
+      <Fact
+        label="Hosting"
+        value={hosting.length ? hosting.join(", ") : "Not established"}
+      />
+      <Fact
+        label="Criticality"
+        value={critical.length ? critical.join(", ") : "Not established"}
+      />
+      <p className="sw-v2-muted">
+        Plain English: this contract covers the named workloads in the table,
+        not every system that happens to depend on the vendor.
+      </p>
+      {missingRunCost > 0 ? (
+        <p className="sw-v2-muted">
+          {missingRunCost} row{missingRunCost === 1 ? "" : "s"} still need run
+          cost before scope can become a full economics view.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function ContractRelationshipContextStack({
+  contract,
+  coverage,
+  scopeRows,
+}: {
+  contract: SourceContract360Row;
+  coverage: ReturnType<typeof coverageForContract>;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+}) {
+  const functions = uniqueTruthy(scopeRows.map((row) => row.business_function));
+  const hosting = uniqueTruthy(scopeRows.map((row) => row.hosting_model));
+  return (
+    <div className="sw-v2-fact-stack">
+      <Fact label="Vendor" value={safeContractVendorDisplayName(contract)} />
+      <Fact label="Contract" value={contract.contract_id} />
+      <Fact label="Scoped workloads" value={String(scopeRows.length)} />
+      <Fact
+        label="Functions touched"
+        value={functions.length ? functions.join(", ") : "Not established"}
+      />
+      <Fact
+        label="Platform / hosting"
+        value={hosting.length ? hosting.join(", ") : "Not established"}
+      />
+      <Fact
+        label="Evidence documents"
+        value={formatCount(coverage?.document_page_text_rows)}
+      />
+      <p className="sw-v2-muted">
+        Relationship means loaded linkage, not proximity. The dependency path
+        stops where rows stop.
+      </p>
+    </div>
+  );
+}
+
+function ContractRelationshipMap({
+  contract,
+  scopeRows,
+}: {
+  contract: SourceContract360Row;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+}) {
+  const functions = uniqueTruthy(scopeRows.map((row) => row.business_function));
+  const hosting = uniqueTruthy(scopeRows.map((row) => row.hosting_model));
+  const topWorkloads = scopeRows
+    .map((row) => row.application_name)
+    .filter((name): name is string => Boolean(usableText(name)))
+    .slice(0, 4);
+  const nodes = [
+    {
+      label: "Vendor",
+      value: safeContractVendorDisplayName(contract),
+      detail: "commercial counterparty",
+    },
+    {
+      label: "Contract",
+      value: contract.contract_id,
+      detail: contract.contract_name,
+    },
+    {
+      label: "Covered work",
+      value:
+        topWorkloads.length > 0
+          ? topWorkloads.join(" · ")
+          : "No workload rows loaded",
+      detail:
+        scopeRows.length > topWorkloads.length
+          ? `${scopeRows.length - topWorkloads.length} more scoped row${scopeRows.length - topWorkloads.length === 1 ? "" : "s"}`
+          : `${scopeRows.length} scoped row${scopeRows.length === 1 ? "" : "s"}`,
+    },
+    {
+      label: "Business functions",
+      value: functions.length ? functions.join(" · ") : "Not established",
+      detail: "loaded from scope rows",
+    },
+    {
+      label: "Platform / hosting",
+      value: hosting.length ? hosting.join(" · ") : "Not established",
+      detail: "no inferred dependencies",
+    },
+  ];
+
+  return (
+    <div
+      className="sw-v2-relationship-map"
+      aria-label="Loaded relationship path"
+    >
+      {nodes.map((node, index) => (
+        <div className="sw-v2-relationship-step" key={node.label}>
+          <div>
+            <span>{node.label}</span>
+            <b>{node.value}</b>
+            <small>{node.detail}</small>
+          </div>
+          {index < nodes.length - 1 ? <i aria-hidden="true">then</i> : null}
+        </div>
+      ))}
     </div>
   );
 }
@@ -5441,9 +5745,11 @@ function ContractScopeTable({
 }
 
 export function ContractEvidenceDocuments({
+  coverage,
   files,
   extractions,
 }: {
+  coverage?: SourceContractEvidenceCoverageRow | null;
   files: readonly DocFileRow[];
   extractions: readonly DocExtractionRow[];
 }) {
@@ -5471,18 +5777,20 @@ export function ContractEvidenceDocuments({
 
   return (
     <div className="sw-v2-contract-documents">
-      <div
-        className="sw-v2-document-metrics"
-        aria-label="Contract document evidence summary"
-      >
-        <Fact label="Governed files" value={String(files.length)} />
-        <Fact label="Document pages" value={String(pageCount)} />
-        <Fact label="Extracted facts" value={String(extractions.length)} />
-        <Fact
-          label="Clause-bearing documents"
-          value={String(extractedDocumentCount)}
-        />
-      </div>
+      {files.length || extractions.length ? (
+        <div
+          className="sw-v2-document-metrics"
+          aria-label="Contract document evidence summary"
+        >
+          <Fact label="Governed files" value={String(files.length)} />
+          <Fact label="Document pages" value={String(pageCount)} />
+          <Fact label="Extracted facts" value={String(extractions.length)} />
+          <Fact
+            label="Clause-bearing documents"
+            value={String(extractedDocumentCount)}
+          />
+        </div>
+      ) : null}
       {visibleFiles.length ? (
         <div className="sw-v2-table">
           <div className="sw-v2-table-head sw-v2-document-row">
@@ -5513,9 +5821,34 @@ export function ContractEvidenceDocuments({
           ))}
         </div>
       ) : (
-        <p className="sw-v2-muted">
-          No governed source documents are attached to this contract.
-        </p>
+        <div className="sw-v2-evidence-empty">
+          <b>Document package not attached in this demo-safe layer.</b>
+          <p>
+            Source can still optimize this contract because structured spend,
+            scope, performance, and opportunity rows are loaded separately from
+            raw PDF page text. That is why document counts stay at zero while
+            the Economics, Scope, and Optimize tabs can still render governed
+            rows.
+          </p>
+          <div className="sw-v2-fact-grid">
+            <Fact
+              label="Spend rows"
+              value={formatCount(coverage?.spend_rows)}
+            />
+            <Fact
+              label="Scope rows"
+              value={formatCount(coverage?.scope_rows)}
+            />
+            <Fact
+              label="Opportunity rows"
+              value={formatCount(coverage?.opportunity_rows)}
+            />
+            <Fact
+              label="Performance rows"
+              value={formatCount(coverage?.performance_rows)}
+            />
+          </div>
+        </div>
       )}
       {rankedFiles.length > visibleFiles.length ? (
         <p className="sw-v2-muted">
@@ -6723,7 +7056,7 @@ function subheadFor(
   return `${portfolio.contracts.length} contracts / ${portfolio.vendors.length} vendors. Unsupported dashboard claims are hidden.`;
 }
 
-function contractTabNarrative(
+export function contractTabNarrative(
   tab: string,
   vm: SourceWorkspaceVM,
   contract: SourceContract360Row,
@@ -6740,13 +7073,17 @@ function contractTabNarrative(
           row.application_name &&
           !/^scoped application \d+$/i.test(row.application_name),
       ).length;
+      const functions = uniqueTruthy(
+        scopeRows.map((row) => row.business_function),
+      );
+      const critical = uniqueTruthy(scopeRows.map((row) => row.criticality));
       return {
-        headline: `${scopeRows.length} scoped application rows loaded.`,
-        body: `${namedRows} of ${scopeRows.length} rows carry named application or service scope. Criticality, hosting, and run-cost fields remain visible only where Source has them.`,
-        provenance: "Scope basis",
+        headline: `${safeContractVendorDisplayName(contract)} covers ${namedRows} named workload${namedRows === 1 ? "" : "s"}, not the whole enterprise.`,
+        body: `Plain English scope: this contract is tied to ${functions.join(", ") || "the loaded business functions"} across ${scopeRows.length} scoped row${scopeRows.length === 1 ? "" : "s"}. ${critical.length ? `Criticality on record: ${critical.join(", ")}.` : "Criticality is not yet recorded."}`,
+        provenance: "Scope story",
         blocker:
           namedRows === scopeRows.length
-            ? "Do not infer unsupported tower, module, or CMDB relationships beyond these rows."
+            ? "Use only these named workloads when explaining coverage; do not expand to tower, module, or CMDB relationships without matching rows."
             : "Generic scope labels block a stronger executive claim until CMDB/SOW names are loaded.",
       };
     }
@@ -6786,12 +7123,26 @@ function contractTabNarrative(
     };
   }
   if (tab === "Relationship") {
+    const namedRows = scopeRows.filter((row) =>
+      usableText(row.application_name),
+    ).length;
+    const businessFunctions = uniqueTruthy(
+      scopeRows.map((row) => row.business_function),
+    );
+    const hostingModels = uniqueTruthy(
+      scopeRows.map((row) => row.hosting_model),
+    );
     return {
-      headline: "Relationship is limited to loaded rollups and headers.",
-      body: "Relationship facts are limited to the vendor rollup and contract headers unless dependency rows are loaded.",
-      provenance: "Relationship basis",
+      headline: `${safeContractVendorDisplayName(contract)} links to ${namedRows} scoped workloads.`,
+      body:
+        namedRows > 0
+          ? `The loaded relationship path is vendor -> contract -> ${businessFunctions.length || "named"} business function${businessFunctions.length === 1 ? "" : "s"} -> ${hostingModels.join(" and ") || "recorded hosting"}. Use this to explain dependency, not to invent unrecorded system ownership.`
+          : "The relationship path stops at vendor and contract header because no scoped workloads are loaded.",
+      provenance: "Relationship map",
       blocker:
-        "Do not claim business-unit, application, or tower dependency coverage without matching rows.",
+        namedRows > 0
+          ? "Dependencies are bounded to the scoped rows below; no business-unit, tower, or CMDB expansion without matching evidence."
+          : "Load scoped workload rows before claiming application, function, or tower dependency coverage.",
     };
   }
   if (tab === "Evidence") {
@@ -6802,6 +7153,21 @@ function contractTabNarrative(
         provenance: "Evidence guard",
         blocker:
           "Do not use document, clause, or row-level claims from this contract until detail proof loads.",
+      };
+    }
+    const structuredRows =
+      (coverage?.spend_rows ?? 0) +
+      (coverage?.scope_rows ?? 0) +
+      (coverage?.performance_rows ?? 0) +
+      (coverage?.opportunity_rows ?? 0);
+    if ((coverage?.document_page_text_rows ?? 0) === 0 && structuredRows > 0) {
+      return {
+        headline:
+          "Document pages are not attached; structured evidence is loaded.",
+        body: `${structuredRows} structured rows support this contract across spend, scope, performance, and opportunity lanes. The raw contract document remains outside this demo-safe evidence layer, so page-span citation claims stay withheld.`,
+        provenance: "Evidence boundary",
+        blocker:
+          "Use the structured rows for optimization and scope; do not claim exact PDF clause text until governed document pages are attached.",
       };
     }
     return {
@@ -6852,12 +7218,78 @@ function contractTabNarrative(
     };
   }
   return {
-    headline: "Contract header loaded; actions require evidence.",
-    body: `${safeContractVendorDisplayName(contract)} has a governed contract header. Source sizes action only where supporting rows are loaded.`,
-    provenance: "Story basis",
+    headline: contractStoryHeadline(contract, coverage, vm),
+    body: contractStoryBody(contract, coverage, scopeRows, vm),
+    provenance: "Executive story",
     blocker:
-      "No opportunity narrative unless the tab can point to scope, spend, performance, or claim rows.",
+      "Use this as the opening talk track; dollar claims still stay bounded to loaded opportunity and finance rows.",
   };
+}
+
+function uniqueTruthy(values: readonly (string | null | undefined)[]) {
+  return Array.from(
+    new Set(values.map((value) => usableText(value)).filter(Boolean)),
+  ) as string[];
+}
+
+function contractStoryHeadline(
+  contract: SourceContract360Row,
+  coverage: ReturnType<typeof coverageForContract>,
+  vm: SourceWorkspaceVM,
+) {
+  const vendor = safeContractVendorDisplayName(contract);
+  const opportunityTotal = vm.opportunityView
+    ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
+    : 0;
+  const actualSpend =
+    numberFromDb(contract.actual_annual_spend) ??
+    numberFromDb(coverage?.actual_spend_usd);
+  const annualValue =
+    numberFromDb(contract.resolved_annual_value) ??
+    numberFromDb(contract.annual_value) ??
+    numberFromDb(coverage?.committed_spend_usd);
+  if (opportunityTotal > 0) {
+    return `${vendor}: ${money(opportunityTotal)} of governed optimization levers are ready to work.`;
+  }
+  if (annualValue != null && actualSpend != null && annualValue > actualSpend) {
+    return `${vendor}: commitment is ahead of observed use.`;
+  }
+  if (annualValue != null && actualSpend != null && actualSpend > annualValue) {
+    return `${vendor}: spend is running above the recorded commitment.`;
+  }
+  return `${vendor}: contract header is governed; action depends on loaded evidence.`;
+}
+
+function contractStoryBody(
+  contract: SourceContract360Row,
+  coverage: ReturnType<typeof coverageForContract>,
+  scopeRows: readonly SourceContractApplicationScopeRow[],
+  vm: SourceWorkspaceVM,
+) {
+  const annualValue =
+    numberFromDb(contract.resolved_annual_value) ??
+    numberFromDb(contract.annual_value) ??
+    numberFromDb(coverage?.committed_spend_usd);
+  const actualSpend =
+    numberFromDb(contract.actual_annual_spend) ??
+    numberFromDb(coverage?.actual_spend_usd);
+  const opportunityCount = vm.opportunityView?.opportunities.length ?? 0;
+  const sizedTotal = vm.opportunityView
+    ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
+    : 0;
+  const phrases = [
+    `${contract.contract_name} carries ${money(annualValue)} in annual value`,
+    actualSpend != null
+      ? `${money(actualSpend)} of observed annual spend`
+      : null,
+    scopeRows.length > 0
+      ? `${scopeRows.length} scoped workload${scopeRows.length === 1 ? "" : "s"}`
+      : null,
+    opportunityCount > 0
+      ? `${opportunityCount} optimization lever${opportunityCount === 1 ? "" : "s"}${sizedTotal > 0 ? `, with ${money(sizedTotal)} sized` : ""}`
+      : null,
+  ].filter(Boolean);
+  return `${phrases.join(", ")}. The executive story is not "data loaded"; it is whether the buyer should recover money, avoid future spend, or negotiate a better commercial shape before the next decision window.`;
 }
 
 function detailStateLabel(state: SourceWorkspaceVM["detailState"]) {
