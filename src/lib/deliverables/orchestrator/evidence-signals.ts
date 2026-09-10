@@ -1,7 +1,7 @@
 import type { GovernedEvidenceItem, RequiredEvidenceSignal } from "./types";
 
 const SIGNAL_NUMBER_RE =
-  /(?:\$\s?\d[\d,]*(?:\.\d+)?[kmb]?\b|\b\d{1,3}(?:,\d{3})+\b|\b\d+(?:\.\d+)?\s?%|\b\d+(?:\.\d+)?[- ]?(?:day|week|month|year|hour|minute)s?\b|\bzero\b)/i;
+  /(?:\$\s?\d[\d,]*(?:\.\d+)?[kmb]?\b|\b\d{1,3}(?:,\d{3})+\b|\b\d+\s+of\s+\d+\b|\b\d+(?:\.\d+)?\s?%|\b\d+(?:\.\d+)?[- ]?(?:day|week|month|year|hour|minute)s?\b|\bzero\b)/i;
 const SIGNAL_KEYWORD_RE =
   /\b(baseline|metric|rate|coverage|gap|gaps|volume|count|open|unversioned|unmonitored|risk|cost|value|lead[- ]?time|cycle[- ]?time|throughput|sla|availability|mttr|failure|retention|vacant|validated|unvalidated|owner|interfaces?|channels?)\b/i;
 const SIGNAL_PRIORITY_RE =
@@ -10,9 +10,10 @@ const QUALITATIVE_SIGNAL_RE =
   /\b(scope|caveat|design[- ]?only|excluded|exception|owner|vacant|declined|retired|monitoring plan|shadow|unvalidated)\b/i;
 
 const SIGNAL_THEMES: ReadonlyArray<{ key: string; pattern: RegExp }> = [
-  { key: "closure_rate", pattern: /\b(closure\s+rate|care[- ]?gap\s+closure|rate)\b/i },
+  { key: "closure_rate", pattern: /\b(closure\s+rate|care[- ]?gap\s+closure)\b/i },
   { key: "care_gap_volume", pattern: /\b(care[- ]?gap|open\s+gaps?|volume|backlog)\b/i },
-  { key: "interface_controls", pattern: /\b(unversioned|unmonitored|interfaces?|channels?)\b/i },
+  { key: "interface_unversioned", pattern: /\b(unversioned|not\s+under\s+source\s+control)\b/i },
+  { key: "interface_unmonitored", pattern: /\b(unmonitored|monitoring\s+(?:coverage|gap)|without\s+monitoring)\b/i },
   { key: "shadow_ownership", pattern: /\bshadow\b/i },
   { key: "scope_caveat", pattern: /\b(scope|caveat|design[- ]?only|excluded|exception|weekly\s+feed)\b/i },
   { key: "prior_ai_governance", pattern: /\b(retired|declined|sepsis|readmission|monitoring\s+plan)\b/i },
