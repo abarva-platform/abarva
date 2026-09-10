@@ -29,6 +29,7 @@ Layer 4 PRODUCTS, lane `global-control-lane`: Source contract-detail presentatio
 - Adds a deterministic contract-purpose summary helper for Source Contract 360.
 - Renders the purpose block at the top of the selected-contract story panel before tab-specific action narrative.
 - Uses existing contract name, vendor, declared category or archetype, scope summary, annual value, observed spend, scope rows, spend rows, document text rows, and opportunity rows when present.
+- Prefers human-readable contract-title scope over scope-summary values that contain unresolved extraction tokens, and suppresses zero-row evidence counts from the purpose sentence.
 - Adds behavioral tests for cloud-consumption and managed-services contract descriptions.
 
 ## QA / Validation
