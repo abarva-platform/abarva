@@ -2,6 +2,7 @@
 import {
   mapWithConcurrency,
   extractUnsupportedFigureClaims,
+  repairEvidenceBackedUncitedFigures,
   repairUncitedFigures,
   buildSourceRegister,
   assembleDeliverable,
@@ -9,7 +10,7 @@ import {
   type SynthesisResult,
 } from "../section-generation";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
-import type { RenderableSection } from "../types";
+import type { GovernedEvidenceItem, RenderableSection } from "../types";
 
 describe("mapWithConcurrency", () => {
   it("preserves order and never exceeds the concurrency limit", async () => {
@@ -51,6 +52,54 @@ describe("repairUncitedFigures", () => {
     const text = "Target by FY2026 (open input — see Open Inputs Required).";
     expect(extractUnsupportedFigureClaims(text)).toEqual([]);
     expect(repairUncitedFigures(text)).toBe(text);
+  });
+});
+
+describe("repairEvidenceBackedUncitedFigures", () => {
+  const evidence: GovernedEvidenceItem[] = [
+    {
+      citationNumber: 4,
+      label: "Open care gaps",
+      statement: "Open care gaps: 1,142,000.",
+      evidenceFamily: "baseline_metric",
+      confidence: "high",
+      disclosureTier: "internal_only",
+      provenanceRef: "test:open-care-gaps",
+    },
+  ];
+
+  it("adds a citation for an uncited exact governed number", () => {
+    const repaired = repairEvidenceBackedUncitedFigures(
+      "Their causal weight on the 1,142,000 count is selected, not measured.",
+      evidence,
+    );
+
+    expect(repaired).toContain("1,142,000 count is selected, not measured [4].");
+    expect(extractUnsupportedFigureClaims(repaired)).toEqual([]);
+  });
+
+  it("does not mask an invented number", () => {
+    const repaired = repairEvidenceBackedUncitedFigures(
+      "Their causal weight on the 9,999 count is selected, not measured.",
+      evidence,
+    );
+
+    expect(repaired).not.toContain("[4]");
+    expect(extractUnsupportedFigureClaims(repaired)).toEqual([
+      "Their causal weight on the 9,999 count is selected, not measured.",
+    ]);
+  });
+
+  it("does not mask an invented number when a governed number is also present", () => {
+    const repaired = repairEvidenceBackedUncitedFigures(
+      "The 1,142,000 gap count should not be reduced to 9,999 without evidence.",
+      evidence,
+    );
+
+    expect(repaired).not.toContain("[4]");
+    expect(extractUnsupportedFigureClaims(repaired)).toEqual([
+      "The 1,142,000 gap count should not be reduced to 9,999 without evidence.",
+    ]);
   });
 });
 

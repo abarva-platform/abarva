@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-Moves generated deliverables now retain a broader mix of required evidence signals. The selector preserves representative signals across metric, control, ownership, caveat, prior-decision, and value-discipline themes before filling the remaining prompt budget by score.
+Moves generated deliverables now retain a broader mix of required evidence signals. The selector preserves representative signals across metric, control, ownership, caveat, prior-decision, and value-discipline themes before filling the remaining prompt budget by score. When a draft omits a citation on an exact governed numeric fact, generation now adds the matching citation deterministically; invented or transformed numbers still block.
 
 ## Layer Impact
 
 Lane: `global-control-lane`.
 
-Products: Moves deliverable generation receives a stronger required-signal list during artifact generation and validation. This is shared product behavior for all tenants using Moves generation.
+Products: Moves deliverable generation receives a stronger required-signal list during artifact generation and validation. It also repairs exact governed numeric citation omissions before validation while leaving unsupported numbers blocked. This is shared product behavior for all tenants using Moves generation.
 
 Canonical model: No schema or data-model change.
 
@@ -36,18 +36,24 @@ Feature flag: None.
 
 ## Changes Included
 
-PR: https://github.com/abarva-platform/abarva/pull/7571
+PRs:
+
+- https://github.com/abarva-platform/abarva/pull/7571
+- https://github.com/abarva-platform/abarva/pull/7572
 
 Code:
 
 - `src/lib/deliverables/orchestrator/evidence-signals.ts`
 - `src/lib/deliverables/orchestrator/__tests__/evidence-signals.test.ts`
+- `src/lib/deliverables/orchestrator/orchestrator.ts`
+- `src/lib/deliverables/orchestrator/section-generation.ts`
+- `src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts`
 
 ## QA / Validation
 
 Focused tests:
 
-- PASS — `npm test -- --runTestsByPath src/lib/deliverables/orchestrator/__tests__/evidence-signals.test.ts src/lib/programs/deliverables/orchestrated/__tests__/orchestrated-business-case.test.ts src/lib/deliverables/orchestrator/__tests__/quality-validator-hardening.test.ts src/lib/deliverables/orchestrator/__tests__/prompt-story-spine.test.ts`
+- PASS — `npm test -- --runTestsByPath src/lib/deliverables/orchestrator/__tests__/evidence-signals.test.ts src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts src/lib/programs/deliverables/orchestrated/__tests__/orchestrated-business-case.test.ts src/lib/deliverables/orchestrator/__tests__/quality-validator-hardening.test.ts src/lib/deliverables/orchestrator/__tests__/prompt-story-spine.test.ts`
 
 Static validation:
 
