@@ -260,9 +260,15 @@ export async function POST(
     const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
-    const artifact = await getGeneratedArtifactById(artifactId, {
-      clientId: ctx.clientId,
-    });
+    const artifact =
+      (await getGeneratedArtifactById(artifactId, {
+        clientId: ctx.clientId,
+      })) ??
+      (ctx.clientKey && ctx.clientKey !== ctx.clientId
+        ? await getGeneratedArtifactById(artifactId, {
+            clientId: ctx.clientKey,
+          })
+        : null);
     if (!artifact) return Response.json({ error: "not_found" }, { status: 404 });
     if (!generatedArtifactBelongsToMove(artifact.sourceArtifactRef, programId)) {
       return Response.json(
