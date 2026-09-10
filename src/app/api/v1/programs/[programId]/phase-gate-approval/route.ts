@@ -70,9 +70,9 @@ function parsePhase(value: unknown): number | null {
   return parsed;
 }
 
-function appendGatePassed(gatesPassed: unknown, phase: number): unknown[] {
+function gatePassedIncludes(gatesPassed: unknown, phase: number): boolean {
   const existing = Array.isArray(gatesPassed) ? gatesPassed : [];
-  const alreadyPresent = existing.some((entry) => {
+  return existing.some((entry) => {
     if (entry === phase || entry === String(phase) || entry === `P${phase}`) {
       return true;
     }
@@ -91,11 +91,26 @@ function appendGatePassed(gatesPassed: unknown, phase: number): unknown[] {
         value === phase || value === String(phase) || value === `P${phase}`,
     );
   });
+}
+
+function appendGatePassed(gatesPassed: unknown, phase: number): unknown[] {
+  const existing = Array.isArray(gatesPassed) ? gatesPassed : [];
+  const alreadyPresent = gatePassedIncludes(existing, phase);
   return alreadyPresent ? existing : [...existing, phase];
 }
 
 function toJsonbParam(value: unknown): string {
   return JSON.stringify(value ?? null);
+}
+
+function terminalTowerHandoffComplete(
+  program: Awaited<ReturnType<typeof getProgramById>>,
+): boolean {
+  if (!program) return false;
+  return (
+    program.lifecycleState === "completed" &&
+    gatePassedIncludes(program.gatesPassed, 5)
+  );
 }
 
 async function captureCompletion(
@@ -363,7 +378,10 @@ export async function POST(
       );
     }
 
-    if (await isPhaseApproved(ctx, programId, phase)) {
+    const approved = await isPhaseApproved(ctx, programId, phase);
+    const terminalHandoffNeedsCompletion =
+      phase === 5 && approved && !terminalTowerHandoffComplete(program);
+    if (approved && !terminalHandoffNeedsCompletion) {
       return Response.json({
         ok: true,
         programId,

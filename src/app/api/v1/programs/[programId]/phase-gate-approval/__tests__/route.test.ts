@@ -330,6 +330,106 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     });
   });
 
+  it("repairs a partial P5 approval snapshot instead of short-circuiting terminal handoff completion", async () => {
+    const writes: Array<{ table: string; payload: Record<string, unknown> }> =
+      [];
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      name: "MEMBER AI ASSIST",
+      currentPhase: 5,
+      lifecycleState: "active",
+      gatesPassed: [],
+    });
+    mockGetPhaseSnapshots.mockResolvedValue([
+      { id: "partial-snapshot", approvalStatus: "approved" },
+    ]);
+    mockGetPhaseCaptureSections.mockReturnValue([
+      { key: "launch_readiness", label: "Launch readiness" },
+    ]);
+    mockGetModuleState.mockResolvedValue([]);
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: true,
+    });
+    mockSbFrom.mockImplementation((table: string) => {
+      if (table === "phase_snapshots") {
+        return {
+          insert: jest.fn((payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return {
+              select: jest.fn(() => ({
+                single: async () => ({
+                  data: { id: "repair-snapshot" },
+                  error: null,
+                }),
+              })),
+            };
+          }),
+        };
+      }
+      if (table === "engagements") {
+        return {
+          update: jest.fn((payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return {
+              eq: jest.fn(() => ({
+                eq: async () => ({ error: null }),
+              })),
+            };
+          }),
+        };
+      }
+      if (table === "module_state_log") {
+        return {
+          insert: jest.fn(async (payload: Record<string, unknown>) => {
+            writes.push({ table, payload });
+            return { error: null };
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ limit: async () => ({ data: [], error: null }) }),
+          }),
+        }),
+      };
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({ phase: 5, rationale: "Complete partial terminal handoff." }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({
+      ok: true,
+      newPhase: 6,
+      terminalHandoff: true,
+      snapshotId: "repair-snapshot",
+    });
+    expect(body.alreadyApproved).toBeUndefined();
+    expect(mockEvaluateGate).toHaveBeenCalledWith(
+      ctx,
+      "prog-1",
+      5,
+      6,
+      expect.anything(),
+    );
+    expect(writes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ table: "phase_snapshots" }),
+        expect.objectContaining({
+          table: "engagements",
+          payload: expect.objectContaining({ lifecycle_state: "completed" }),
+        }),
+        expect.objectContaining({ table: "module_state_log" }),
+      ]),
+    );
+  });
+
   it("labels a soft-carry pass as softGapsCarried=true, never as an override", async () => {
     mockEvaluateGate.mockResolvedValue({
       failedChecks: [
