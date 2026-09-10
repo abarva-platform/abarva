@@ -206,6 +206,7 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
             --script db:migrate:dry \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -220,6 +221,7 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
             --script db:migrate:ci \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -234,11 +236,27 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
             --script db:azure:verify \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
             --out-dir audit-artifacts/db-migration-lab/readback \
             | tee audit-artifacts/db-migration-lab/readback.log
+
+      - name: Moves current-state schema readback
+        id: moves_current_state_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
+            --script db:verify:moves-current-state-schema \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/moves-current-state-readback \
+            | tee audit-artifacts/db-migration-lab/moves-current-state-readback.log
 
       # Database-version half of the audit chain: the schema_migrations
       # ledger itself (name, sha256, applied_at for every applied
@@ -260,6 +278,7 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
             --script db:migrate:ledger \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -278,6 +297,7 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
             --script db:verify:source-stage-guidebooks \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -297,6 +317,7 @@ jobs:
           set -euo pipefail
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
+            --idle-image "${{ steps.image.outputs.image }}" \
             --script db:verify:source-artifact-acceptances \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -441,7 +462,7 @@ jobs:
             echo
             if [[ "${{ inputs.mode }}" == "apply" ]]; then
               echo "Applied via the ACA operator job (advisory-locked, sha256 drift-checked)."
-              echo "Sequence completed: schema readback -> migration ledger -> repository readback -> affected-feature health -> audit chain."
+              echo "Sequence completed: schema readback -> Moves current-state readback -> migration ledger -> repository readback -> affected-feature health -> audit chain."
               echo
               if [[ -f audit-artifacts/db-migration-lab/audit-chain.json ]]; then
                 echo "### Audit chain"

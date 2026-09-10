@@ -12,10 +12,10 @@ import path from 'node:path'
 // imported directly via Node's CJS->ESM dynamic import() interop instead,
 // since spawning a subprocess for a one-line pure function is unnecessary.
 const WRAPPER = path.join(__dirname, '..', 'submit-aca-operator-job.mjs')
-const REAL_IDLE_IMAGE =
-  'acrabarvalab001.azurecr.io/abarva/web@sha256:918b6cbf298ebd5bd20782b15f7d1817111d94e438436d64f2ea64db543db8a9'
 const FAKE_DIGEST_IMAGE =
   'acrabarvalab001.azurecr.io/abarva/web@sha256:' + '0'.repeat(64)
+const EXPLICIT_IDLE_IMAGE =
+  'acrabarvalab001.azurecr.io/abarva/web@sha256:' + '1'.repeat(64)
 
 function runPlanOnly(args: string[], outDir: string) {
   return spawnSync(
@@ -101,7 +101,7 @@ describe('submit-aca-operator-job.mjs --plan-only', () => {
     expect(planText).not.toContain('secretref:')
   })
 
-  test('restoreIdle plan targets the approved idle image and documented idle values', () => {
+  test('restoreIdle plan defaults to the execution image and documented idle values', () => {
     const result = runPlanOnly(
       ['--image', FAKE_DIGEST_IMAGE, '--script', 'db:migrate:dry', '--container', 'db-migrate'],
       outDir,
@@ -109,11 +109,29 @@ describe('submit-aca-operator-job.mjs --plan-only', () => {
     expect(result.status).toBe(0)
     const plan = readPlan(outDir)
     const restore: string[] = plan.commands.restoreIdle
-    expect(restore).toContain(REAL_IDLE_IMAGE)
+    expect(plan.idleImage).toBe(FAKE_DIGEST_IMAGE)
+    expect(restore).toContain(FAKE_DIGEST_IMAGE)
     expect(restore).toEqual(expect.arrayContaining(['--command', '/bin/true']))
     expect(restore).toEqual(expect.arrayContaining(['--replica-timeout', '1800']))
     expect(restore).toEqual(expect.arrayContaining(['--cpu', '0.5']))
     expect(restore).toEqual(expect.arrayContaining(['--memory', '1Gi']))
+  })
+
+  test('restoreIdle plan honors an explicit idle image override', () => {
+    const result = runPlanOnly(
+      [
+        '--image', FAKE_DIGEST_IMAGE,
+        '--idle-image', EXPLICIT_IDLE_IMAGE,
+        '--script', 'db:migrate:dry',
+        '--container', 'db-migrate',
+      ],
+      outDir,
+    )
+    expect(result.status).toBe(0)
+    const plan = readPlan(outDir)
+    const restore: string[] = plan.commands.restoreIdle
+    expect(plan.idleImage).toBe(EXPLICIT_IDLE_IMAGE)
+    expect(restore).toContain(EXPLICIT_IDLE_IMAGE)
   })
 
   test('records the bounded idle verification wait in plan-only output', () => {
