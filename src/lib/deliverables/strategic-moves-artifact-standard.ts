@@ -581,7 +581,7 @@ P2 evidence-specific requirements:
   how work starts, who touches it, what systems are used, where decisions happen, how exceptions
   are resolved, and what changes would affect people/adoption.
 - Treat workshop agendas, business/IT interviews, process walkthrough notes, and client corrections
-  as first-class evidence; if they are missing, list them as client-to-complete evidence rather than
+  as first-class evidence; if they are missing, list them in Open Inputs Required rather than
   pretending the process narrative is final.
 - Keep draft/final gates honest; do not mark P2 final or ready for P3 if readiness remains partial.`;
 }
@@ -723,9 +723,9 @@ Required sections:
 
 Length discipline:
 - Target 3,200-4,800 body words so the final rendered package remains under 5,200 words
-  after title page, status block, source register, and appendix overhead.
+  after title page, status block, and evidence appendix overhead.
 - Stop before 4,800 body words. Use exhibits and tables instead of expanded prose.
-- Do not repeat the full architecture, operating model, sourcing strategy, or evidence register.
+- Do not repeat the full architecture, operating model, sourcing strategy, or evidence appendix.
 - Prefer exhibits and concise captions over architecture essays.`;
 }
 
@@ -752,9 +752,9 @@ Required sections:
 
 Length discipline:
 - Target 2,400-4,600 rendered words / approximately 5-8 table-rich pages.
-- Stop before 4,600 rendered words, including source register and appendix overhead.
+- Stop before 4,600 rendered words, including evidence appendix overhead.
 - Do not reproduce the architecture, detailed workflow specification,
-  sourcing options, implementation roadmap, or source register in the body.
+  sourcing options, implementation roadmap, or evidence appendix in the body.
 - Use plain operating language; avoid governance-legal and generic PMO prose.`;
 }
 
@@ -783,7 +783,7 @@ Evidence discipline:
 
 Length discipline:
 - Target 1,800-3,600 rendered words / approximately 4-6 pages.
-- Stop before 3,600 rendered words, including source register and appendix overhead.
+- Stop before 3,600 rendered words, including evidence appendix overhead.
 - Do not repeat the full target architecture or operating model.`;
 }
 

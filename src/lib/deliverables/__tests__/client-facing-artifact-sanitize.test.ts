@@ -4,6 +4,9 @@ import {
   sanitizeClientFacingRenderableDeliverable,
 } from "../client-facing-artifact-sanitize";
 import type { RenderableDeliverable } from "../orchestrator/types";
+import { CLIENT_NARRATIVE_BANNED_TERMS } from "../profiles/machinery-lexicon";
+import { getDeliverableProfile } from "../profiles/registry";
+import { scanMachinery } from "../quality/transformation-gates";
 
 describe("sanitizeClientFacingArtifactHtml", () => {
   it("rewrites priority shorthand without removing the evidence appendix", () => {
@@ -138,6 +141,25 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     expect(html).not.toMatch(/quality score/i);
     expect(html).not.toMatch(/data plane/i);
     expect(html).not.toMatch(/client_judgment/i);
+  });
+
+  it("rewrites the full machinery lexicon before the quality gate scans client narrative", () => {
+    const body = CLIENT_NARRATIVE_BANNED_TERMS.map(
+      (term) => `<p>The draft repeated ${term} in the client narrative.</p>`,
+    ).join("\n");
+    const html = sanitizeClientFacingArtifactHtml(`
+      ${body}
+      <h2>Appendix A — Source Register</h2>
+      <p>[1] Approved operating evidence.</p>
+    `);
+
+    const findings = scanMachinery({
+      profile: getDeliverableProfile("execution_roadmap"),
+      narrativeText: html,
+    });
+
+    expect(findings).toHaveLength(0);
+    expect(html).toContain("Appendix A — Source Register");
   });
 
   it("sanitizes renderable deliverable text while preserving governance keys", () => {

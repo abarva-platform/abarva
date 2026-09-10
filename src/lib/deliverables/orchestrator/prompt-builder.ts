@@ -102,14 +102,14 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     `2. EXPERT ARTIFACT MODE — for artifact structure, narrative, exhibits, tables, decision frameworks, recommended sections, standard boilerplate, and professional language you use your full expert knowledge, unconstrained by the minimum section list.`,
     ``,
     `Hard rules:`,
-    `- Cite every client-specific fact with [n] tied to the Source Register.`,
+    `- Cite every client-specific fact with [n] tied to the evidence appendix.`,
     `- No numeric, date, currency, percentage, timeline, ROI, NPV, payback, or value claim may appear as an asserted fact without [n]. If not grounded, label it [ASSUMPTION TO VALIDATE: ...] or route it to Open Inputs Required.`,
     `- Use ONE consolidated Open Inputs Required table for missing inputs. Do not scatter [CLIENT TO COMPLETE] tags through the narrative.`,
     `- Where a client fact is missing, write [EVIDENCE MISSING: <what>], [ASSUMPTION TO VALIDATE: <what>], or [CLIENT TO COMPLETE: <what>] — never fabricate.`,
     `- Never expose internal source ids, chunk ids, table names, fact keys, or system status words in the body.`,
     `- Do not use internal phase shorthand (P0, P1, P2, P3, P4, P5) in client prose. Write "origination", "charter", "discovery", "design", "roadmap/business-case planning", or "handoff" instead. If ranking priority, write "Priority 1", not "P1".`,
-    `- Use "Source Register" only as the appendix/evidence-register heading. In the narrative body, say "cited evidence", "evidence appendix", or "what the evidence shows".`,
-    `- Citation and evidence-handling rules are invisible authoring controls. Never explain, restate, or summarize these rules in the client artifact, and never write that a claim is "tied to" a Source Register or evidence register. Simply comply with the rules.`,
+    `- Use "Source Register" only as the formal appendix heading. In the narrative body, say "cited evidence", "evidence appendix", or "what the evidence shows".`,
+    `- Citation and evidence-handling rules are invisible authoring controls. Never explain, restate, or summarize these rules in the client artifact, and never write that a claim is "tied to" an evidence appendix. Simply comply with the rules.`,
     `- Never write "authorized to build", "not authorized", or "not authorized to build" in client prose. Use executive decision language such as "in scope for delivery", "hold the investment decision", or "requires further validation", as appropriate.`,
     conciseInstrument
       ? `- This artifact is a concise approval instrument with an enforced length ceiling. Respect brevity as a quality requirement: use compact tables, remove repetition, and do not expand into later-phase analysis.`
@@ -501,14 +501,14 @@ export function buildPassPrompt(
         `PASS 2 — EVIDENCE GROUNDING. Here is the approved plan:`,
         inputs.approvedPlanJson ?? "(plan missing)",
         ``,
-        `For EACH planned section, state precisely: what is supported by governed evidence (with [n]), what is missing, what must be client-to-complete, and what is standard expert/template content. Return the updated evidenceMapping + missingEvidenceHandling arrays of the plan as JSON.`,
+        `For EACH planned section, state precisely: what is supported by governed evidence (with [n]), what is missing, what must be handled in the Open Inputs Required table, and what is standard expert/template content. Return the updated evidenceMapping + missingEvidenceHandling arrays of the plan as JSON.`,
       ].join("\n");
       break;
     case "full_draft":
       user = [
         context,
         ``,
-        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include the required decision tables, risk/issues/dependencies table, client-to-complete checklist, evidence appendix/register, and a clear recommendation with next steps. Write in Markdown with numbered headings. Apply citation and evidence rules silently; do not describe those authoring rules in the document body.`,
+        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include the required decision tables, risk/issues/dependencies table, Open Inputs Required table, evidence appendix, and a clear recommendation with next steps. Write in Markdown with numbered headings. Apply citation and evidence rules silently; do not describe those authoring rules in the document body.`,
         conciseInstrumentDraftInstruction(req),
         `APPROVED PLAN:`,
         inputs.approvedPlanJson ?? "(plan missing)",
@@ -540,7 +540,7 @@ export function buildPassPrompt(
       break;
     case "render_package":
       user = [
-        `Convert the final board-grade document into the structured render package below. Preserve all content, citations [n], placeholders, tables, exhibits, assumptions, the client-to-complete checklist, the recommendation, and next actions. Keep evidence traceability in the appendix/register, not repeated in the narrative body. Wide datasets should be expressed as tables with targetFormat "xlsx".`,
+        `Convert the final board-grade document into the structured render package below. Preserve all content, citations [n], placeholders, tables, exhibits, assumptions, the Open Inputs Required table, the recommendation, and next actions. Keep evidence traceability in the evidence appendix, not repeated in the narrative body. Wide datasets should be expressed as tables with targetFormat "xlsx".`,
         RENDER_SCHEMA_HINT,
         ``,
         `FINAL DOCUMENT:`,

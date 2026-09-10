@@ -10,6 +10,9 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bCLIENT TO COMPLETE:\s*/gi, "Client input required: "],
   [/\bClient[-\s]to[-\s]Complete Checklist\b/gi, "Client Input Checklist"],
   [/\bclient[-\s]to[-\s]complete\b/gi, "client input"],
+  [/\bnot authorized to build\b/gi, "requires further validation before build"],
+  [/\bnot authorized\b/gi, "requires further validation"],
+  [/\bauthorized to build\b/gi, "in scope for delivery"],
   [/\bis\s+TBC\b/gi, "requires confirmation"],
   [/\bis\s+to be confirmed\b/gi, "requires confirmation"],
   [/\bTBC\b/gi, "requires confirmation"],
@@ -50,6 +53,8 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bsubstrate\b/gi, "enterprise data foundation"],
   [/\bcontext rows\b/gi, "evidence records"],
   [/\btower rows\b/gi, "measurement records"],
+  [/\bentity graph\b/gi, "operating relationship map"],
+  [/\bgovernance-correct\b/gi, "control-ready"],
   [/\bclient_judgment\b/gi, "client decision"],
   [/\bquality score\b/gi, "evidence readiness rating"],
   [
@@ -67,6 +72,8 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bevidence appendix\s*\(\s*Source Register\s*\)/gi, "evidence appendix"],
   [/\btied to (?:the )?Source Register\b/gi, "tied to cited evidence"],
   [/\bSource Register\b/gi, "evidence appendix"],
+  [/\btied to (?:the )?evidence register\b/gi, "tied to cited evidence"],
+  [/\bevidence register\b/gi, "evidence appendix"],
   [
     /\benterprise_context(?:_chunks|_records|_facts|_sources)?\b/gi,
     "enterprise evidence",
