@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released; live-proven`
 
 ## Plain-English Summary
 
@@ -35,9 +35,12 @@ Layer 4 PRODUCTS, lane `global-control-lane`: Source and the shared aVa dock pre
 - PASS: Focused Source aVa composer tests, 11/11.
 - PASS: ESLint on touched Source and AgentDock files.
 - PASS: TypeScript `tsc --noEmit --pretty false`.
-- Pending: Full CI on pull request.
-- Pending: ACA deploy through the repository-owned main workflow.
-- Pending: Live signed-in Source Contract 360 and aVa smoke after deploy.
+- PASS: Pull request CI checks completed successfully before merge.
+- PASS: ACA deploy through the repository-owned main workflow, run `34447935502`.
+- PASS: Independent ACA runtime invariant after deploy at `2026-09-10T07:11:11.827Z`.
+- PASS: Live signed-in Source Contract 360 smoke for selected contract detail loading. The aVa composer was disabled with the governed-context loading placeholder while contract detail was loading, then re-enabled after detail became ready.
+- PASS: Live signed-in Source aVa smoke after readiness. The answer stayed bound to the selected contract, carried sized versus signal-stage distinction, cited evidence gates, and did not return the incomplete-provider fallback.
+- PASS: Live signed-in companion contract smoke verified the same Source Optimize path after hydration without cross-contract bleed or the retired action toolbar controls.
 
 ## Rollout Plan
 
@@ -45,13 +48,15 @@ Merge through pull request, then deploy through the repository-owned Azure Conta
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: Required for production runtime.
+- Repo-owned deploy workflow: Completed in run `34447935502`.
 - Shared runtime mutators: None outside the repo-owned workflow.
-- Approved image digest: Pending.
-- ACA runtime invariant: Pending.
-- Worker image invariant: Pending.
+- Approved image digest: `sha256:22ba0b2c1512fa157791ac3b9feeb81f8e4b5612f38fc53d7db4ea80c6b17234`.
+- Approved image: `acrabarvalab001.azurecr.io/abarva/web@sha256:22ba0b2c1512fa157791ac3b9feeb81f8e4b5612f38fc53d7db4ea80c6b17234`.
+- ACA runtime invariant: Passed. Template image and the 100%-traffic revision image matched the approved digest.
+- Active revision: `ca-abarva-web-lab-eastus--mfc3960da` at 100% traffic.
+- Worker image invariant: Passed for `job-abarva-deliv-worker` and `job-abarva-deliv-worker-event`.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Source contract deep link, composer gating while loading, and aVa answer after contract detail is ready.
+- Live signed-in proof required: Completed for Source contract deep link, composer gating while loading, aVa answer after contract detail readiness, and companion contract smoke.
 
 ## Rollback Plan
 
@@ -59,7 +64,12 @@ Revert the Source/AgentDock presentation change or roll production back to the p
 
 ## Audit Evidence
 
-Pull request, CI checks, runtime deploy evidence, and live signed-in Source/aVa smoke output after deployment.
+- Pull request: `#7536`, squash-merged as `fc3960da8cfc7cc6b95b21226cb8c0efb418aa79`.
+- Deploy evidence: GitHub Actions run `34447935502`; local artifact path `/tmp/aca-main-deploy-34447935502-evidence`.
+- Independent runtime invariant evidence: `/tmp/source-ava-contract-ready-gate-runtime-invariant-fc3960da`.
+- Live Source proof: selected contract page first exposed the disabled aVa composer with `Loading governed contract context before aVa can answer.` while detail was loading, then re-enabled the composer after the selected contract detail was ready.
+- Live aVa proof: selected-contract answer returned governed contract facts and optimization detail, including 4 sized opportunities totaling `$1.5M`, 2 signal-stage levers excluded from totals/charts, and explicit benchmark/per-SKU evidence gates. It did not return the incomplete-provider fallback and did not leak signal-stage dollar estimates into the answer.
+- Companion contract proof: selected-contract Optimize smoke for the companion cloud contract rendered the correct contract, vendor, annual value, avoidable/negotiable posture, and no cross-contract bleed.
 
 ## Known Gaps
 
