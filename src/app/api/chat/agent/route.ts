@@ -2132,6 +2132,20 @@ export async function POST(request: Request) {
           "Use only grounded Source values from this turn's context. If a value is missing or not established, omit it from the chart and name the missing evidence in prose instead of inventing or zero-filling.",
         ].join("\n")
       : "";
+  const sourceContractOptimizationExportDirective =
+    isSourceSurface(surface) &&
+    hasSourceContractGrounding &&
+    looksLikeSourceContractOptimizationExportRequest(message)
+      ? [
+          "SOURCE CONTRACT OPTIMIZATION EXPORT CONTRACT",
+          "This user turn is asking for a contract-optimization, lever, negotiation, PDF/export, or client-sample answer for the selected Source contract.",
+          "Use AUTHORITATIVE SOURCE CONTRACT GROUNDING and its CONTRACT OPTIMIZATION EXPORT ROWS as the answer authority.",
+          "Visible answer shape is mandatory: first a short Executive read paragraph under 80 words, then one markdown table with exactly these columns in this order: Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet.",
+          "Do not add VISUALS, Relationship map, Decision table, Appendix, raw lineage, JSON, chart fences, or a second table unless the user's exact question explicitly asks for one of those extra artifacts.",
+          "Keep signal-stage rows unsized. Preserve owner and timing from the row; do not write 'not established' for owner/timing when the row carries owner, ownerRole, deadline, or timingDependency.",
+          "Do not call candidate, signal-stage, pending, approval-required, or finance-unconfirmed value realized savings.",
+        ].join("\n")
+      : "";
 
   const systemPrompt = [
     voiceLine,
@@ -2366,6 +2380,7 @@ export async function POST(request: Request) {
           "- SOURCE TENANT BOUNDARY WORDING: if the user asks for another tenant's records, say literally: \"I can't access another tenant from the current tenant session.\" Then stop or redirect to the active tenant. Do not soften this into a generic access-policy answer.",
           '- SOURCE QUOTE BOUNDARY WORDING: if the user asks what should not be quoted, say literally: "Do not quote missing, conflicting, unproven, or non-governed Source figures." Name the owning read model or evidence family needed before the figure can be quoted.',
           "- SOURCE LINEAGE DISCIPLINE: source systems, extracts, fields, grain, history, update frequency, and Contract 360 data lineage are in-scope Source questions. If AUTHORITATIVE SOURCE CONTRACT GROUNDING includes a source-system evidence map, answer from it in a compact table; do not deflect as platform architecture.",
+          sourceContractOptimizationExportDirective,
           "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
           sourceVisualTurnDirective,
@@ -2780,6 +2795,21 @@ function looksLikeSourcePortfolioChartOrConcentrationRequest(
     (looksLikeSourceVisualRequest(message) && asksForPortfolioSlice) ||
     asksForPortfolioRanking
   );
+}
+
+function looksLikeSourceContractOptimizationExportRequest(
+  message: string,
+): boolean {
+  const normalized = message.toLowerCase();
+  const asksForContractOptimization =
+    /\b(optimi[sz]e|optimization|levers?|negotiat(?:e|ion|ing)|commercial ask|buyer ask|vendor ask|counter[-\s]?proposal|renewal|re[-\s]?time|rebase|right[-\s]?size|carry[-\s]?forward|savings|value)\b/.test(
+      normalized,
+    );
+  const asksForExportableShape =
+    /\b(table|pdf|export|client sample|client-ready|memo|brief|cxo|executive|send client|send to client)\b/.test(
+      normalized,
+    );
+  return asksForContractOptimization && asksForExportableShape;
 }
 
 function isStrategicMovesSurface(surface: string): boolean {

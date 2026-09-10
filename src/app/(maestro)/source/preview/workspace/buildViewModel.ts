@@ -3705,6 +3705,12 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               ownerRole: opportunity.ownerRole,
               nextAction: opportunity.nextAction,
               blockingGap: opportunity.blockingGap,
+              buyerAsk: opportunity.buyerAsk,
+              negotiationLanguage: opportunity.negotiationLanguage,
+              vendorConcession: opportunity.vendorConcession,
+              timingDependency: opportunity.timingDependency,
+              priority: opportunity.priority,
+              riskIfIgnored: opportunity.riskIfIgnored,
               sourceRefs: opportunity.sourceRefs,
             })),
           }

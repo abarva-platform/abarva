@@ -289,6 +289,26 @@ describe("agent route · Source Contract 360 selected-context prompt", () => {
     expect(source).not.toContain("const finalText = gateResult.finalText");
     expect(source).not.toContain("controller.enqueue(encoder.encode(finalText))");
   });
+
+  it("injects a selected-contract optimization export contract for PDF/client-sample asks", () => {
+    expect(source).toContain("function looksLikeSourceContractOptimizationExportRequest");
+    expect(source).toContain("const sourceContractOptimizationExportDirective =");
+    expect(source).toContain("hasSourceContractGrounding");
+    expect(source).toContain(
+      "looksLikeSourceContractOptimizationExportRequest(message)",
+    );
+    expect(source).toContain("SOURCE CONTRACT OPTIMIZATION EXPORT CONTRACT");
+    expect(source).toContain(
+      "Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet",
+    );
+    expect(source).toContain(
+      "Do not add VISUALS, Relationship map, Decision table, Appendix",
+    );
+    expect(source).toContain(
+      "Preserve owner and timing from the row",
+    );
+    expect(source).toContain("sourceContractOptimizationExportDirective,");
+  });
 });
 
 describe("agent route · Source aVa vendor-response grounding — Gap 2", () => {

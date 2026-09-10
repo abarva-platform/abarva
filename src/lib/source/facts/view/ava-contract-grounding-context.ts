@@ -228,11 +228,23 @@ export async function buildAvaSourceContractGrounding(
       );
       const detail = opportunity.negotiationDetail;
       const negotiation = detail
-        ? ` · buyer ask: ${detail.buyerAsk ?? "not established"} · negotiation language: ${detail.negotiationLanguage ?? "not established"} · Databricks concession: ${detail.vendorConcession ?? "not established"} · timing: ${detail.timingDependency ?? "not established"} · owner: ${detail.ownerRole ?? opportunity.owner ?? "not established"} · priority: ${detail.priority ?? "not established"} · risk if ignored: ${detail.riskIfIgnored ?? "not established"}`
+        ? ` · buyer ask: ${detail.buyerAsk ?? "not established"} · negotiation language: ${detail.negotiationLanguage ?? "not established"} · vendor rationale/concession: ${detail.vendorConcession ?? "not established"} · timing: ${detail.timingDependency ?? "not established"} · owner: ${detail.ownerRole ?? opportunity.owner ?? "not established"} · priority: ${detail.priority ?? "not established"} · risk if ignored: ${detail.riskIfIgnored ?? "not established"}`
         : "";
       return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${fmtUsd(
         opportunity.amountUsd,
       )} · stage ${opportunity.stage} · confidence ${fmtPct(opportunity.confidence)} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
+    });
+  const opportunityExportRows = (opportunitySet?.opportunities ?? [])
+    .slice(0, 8)
+    .map((opportunity, index) => {
+      const trace = traceability.rows.find(
+        (row) => row.opportunityId === opportunity.opportunityId,
+      );
+      return formatOpportunityExportRow({
+        index,
+        opportunity,
+        traceLabel: trace?.label ?? null,
+      });
     });
 
   const lines: string[] = [
@@ -274,13 +286,88 @@ export async function buildAvaSourceContractGrounding(
     opportunityLines.length > 0
       ? `Opportunity rows:\n${opportunityLines.join("\n")}`
       : "Opportunity rows: none loaded for this contract.",
+    opportunityExportRows.length > 0
+      ? [
+          "CONTRACT OPTIMIZATION EXPORT ROWS (use these rows when the user asks how to optimize this contract, asks for levers, or asks for a client/PDF-ready sample):",
+          "Required visible table columns, in this exact order: Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet.",
+          "Rows to use; do not invent, rename, or add rows:",
+          ...opportunityExportRows,
+        ].join("\n")
+      : "",
     buildSourceEvidenceMapLine(),
     `Contract-grain grounding IS available for ${trimmedId}. Answer questions about ${trimmedId} from the numbers above — do NOT deflect them to Contract 360, and do NOT fall back to portfolio-level figures or generic tenant-context retrieval for this contract.`,
+    "For contract-optimization, lever, negotiation, PDF, export, or client-sample asks: answer with only a short executive read and the required lever table unless the user explicitly asks for additional visuals, relationship maps, or decision tables. Do not add sections named VISUALS, Relationship map, Decision table, Appendix, or Next visuals. A table ask is not a chart ask.",
     "If the user asks which source systems feed the contract view, which fields they contribute, what extracts are needed, the grain/history/update frequency, or the data lineage behind Contract 360, answer from the Source-system evidence map above. That is an in-scope Source contract-evidence question, not a platform-architecture question. Prefer a compact markdown table when the user asks for a table.",
     "Rules for these numbers: a missing evidence family is missing, never zero. Only the reproducible total and the chart-safe ledger totals may be presented as value that can be defended outside this workspace; the non-reproducible figure must be described as not yet traceable to a calculation run. Approved realized value exists only when the finance evidence is present AND the Finance/Tower confirmation request is approved. If the value-proof gate is open, do not say Finance has confirmed, do not say realized value to date, do not call the pending evidence booked, claimable, confirmed, or approved. Do not say the pending amount automatically becomes realized value, converts into approved value, or moves from pending to approved; say it is eligible to be recorded only if Finance/Tower approves the confirmation request. If the user asks for a chart, graph, or table, use the chart-safe ledger totals above and do not add or recompute row-level amounts yourself. If the user asks something about this contract that is not covered above, say so plainly instead of estimating.",
   ].filter(Boolean);
 
   return { block: lines.join("\n"), hasLiveNumbers: true };
+}
+
+function formatOpportunityExportRow(input: {
+  index: number;
+  opportunity: {
+    readonly shortLabel: string;
+    readonly valueType: OptimizationOpportunityValueType;
+    readonly amountUsd: number | null;
+    readonly amountState: "exact" | "range" | "not_sized";
+    readonly stage: string;
+    readonly confidence: number | null;
+    readonly deadline: string | null;
+    readonly owner: string | null;
+    readonly blockingGap: string | null;
+    readonly nextAction: string;
+    readonly evidenceGrade: string;
+    readonly negotiationDetail?: {
+      readonly buyerAsk: string | null;
+      readonly negotiationLanguage: string | null;
+      readonly vendorConcession: string | null;
+      readonly timingDependency: string | null;
+      readonly ownerRole: string | null;
+      readonly priority: string | null;
+      readonly riskIfIgnored: string | null;
+    } | null;
+  };
+  traceLabel: string | null;
+}): string {
+  const { opportunity } = input;
+  const detail = opportunity.negotiationDetail;
+  const isSignal =
+    opportunity.stage === "signal" ||
+    opportunity.amountState === "not_sized" ||
+    (opportunity.confidence != null && opportunity.confidence < 0.5);
+  const askParts = [
+    detail?.buyerAsk,
+    detail?.negotiationLanguage ? `Language: ${detail.negotiationLanguage}` : null,
+  ].filter((part): part is string => Boolean(part));
+  const evidenceParts = [
+    input.traceLabel,
+    opportunity.evidenceGrade,
+    detail?.priority ? `priority ${detail.priority}` : null,
+  ].filter((part): part is string => Boolean(part));
+  const ownerTimingParts = [
+    detail?.ownerRole ?? opportunity.owner,
+    detail?.timingDependency ?? opportunity.deadline,
+  ].filter((part): part is string => Boolean(part));
+  const doNotClaimParts = [
+    "Do not call this realized savings until Finance/Tower confirms it",
+    isSignal
+      ? "do not attach a dollar value until the named evidence gate is loaded"
+      : null,
+    opportunity.blockingGap ? `blocking gap: ${opportunity.blockingGap}` : null,
+    detail?.riskIfIgnored ? `risk if ignored: ${detail.riskIfIgnored}` : null,
+  ].filter((part): part is string => Boolean(part));
+
+  return [
+    `- Sequence ${input.index + 1}`,
+    `Lever: ${opportunity.shortLabel}`,
+    `Action / buyer ask: ${askParts.join(" ") || opportunity.nextAction}`,
+    `Why vendor can agree: ${detail?.vendorConcession ?? "not established in governed opportunity detail"}`,
+    `Evidence basis: ${evidenceParts.join("; ") || "not established"}`,
+    `Value state: ${isSignal ? "Not sized - needs evidence before it carries a number" : fmtUsd(opportunity.amountUsd)}`,
+    `Owner / timing: ${ownerTimingParts.join(" / ") || "not established"}`,
+    `What not to claim yet: ${doNotClaimParts.join("; ")}.`,
+  ].join(" | ");
 }
 
 function buildLedgerTotals(input: {
