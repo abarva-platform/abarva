@@ -297,13 +297,14 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
           payload: expect.objectContaining({
             phase_number: 5,
             approval_status: "approved",
+            snapshot_jsonb: expect.any(String),
           }),
         }),
         expect.objectContaining({
           table: "engagements",
           payload: expect.objectContaining({
             lifecycle_state: "completed",
-            gates_passed: [5],
+            gates_passed: expect.any(String),
           }),
         }),
         expect.objectContaining({
@@ -311,10 +312,22 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
           payload: expect.objectContaining({
             module_key: "phase_5",
             new_state: "completed",
+            context_jsonb: expect.any(String),
           }),
         }),
       ]),
     );
+    const snapshotWrite = writes.find((write) => write.table === "phase_snapshots");
+    const engagementWrite = writes.find((write) => write.table === "engagements");
+    const logWrite = writes.find((write) => write.table === "module_state_log");
+    expect(JSON.parse(snapshotWrite?.payload.snapshot_jsonb as string)).toMatchObject({
+      terminal_tower_handoff: true,
+    });
+    expect(JSON.parse(engagementWrite?.payload.gates_passed as string)).toEqual([5]);
+    expect(JSON.parse(logWrite?.payload.context_jsonb as string)).toMatchObject({
+      terminal_tower_handoff: true,
+      snapshot_id: "p5-snap-1",
+    });
   });
 
   it("labels a soft-carry pass as softGapsCarried=true, never as an override", async () => {

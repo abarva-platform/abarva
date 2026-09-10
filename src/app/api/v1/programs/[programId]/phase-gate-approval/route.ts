@@ -94,6 +94,10 @@ function appendGatePassed(gatesPassed: unknown, phase: number): unknown[] {
   return alreadyPresent ? existing : [...existing, phase];
 }
 
+function toJsonbParam(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
 async function captureCompletion(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
@@ -221,7 +225,7 @@ async function completeTerminalTowerHandoff(
     .insert({
       engagement_id: programId,
       phase_number: 5,
-      snapshot_jsonb: snapshot,
+      snapshot_jsonb: toJsonbParam(snapshot),
       locked_by_user_id: ctx.userId,
       locked_at: nowIso,
       approval_status: "approved",
@@ -237,7 +241,7 @@ async function completeTerminalTowerHandoff(
     .from("engagements")
     .update({
       lifecycle_state: "completed",
-      gates_passed: appendGatePassed(gatesPassed, 5),
+      gates_passed: toJsonbParam(appendGatePassed(gatesPassed, 5)),
       phase_locked_at: nowIso,
       phase_locked_by_user_id: ctx.userId,
       updated_at: nowIso,
@@ -253,11 +257,11 @@ async function completeTerminalTowerHandoff(
     new_state: "completed",
     changed_by_user_id: ctx.userId,
     notes: "Completed P5 terminal Tower handoff",
-    context_jsonb: {
+    context_jsonb: toJsonbParam({
       terminal_tower_handoff: true,
       approved_by: ctx.userId,
       snapshot_id: snapshotId,
-    },
+    }),
   });
   if (logError) throw logError;
 
