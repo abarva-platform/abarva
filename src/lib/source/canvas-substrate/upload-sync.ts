@@ -49,16 +49,33 @@ export function matchEvidenceRequirementForUpload(args: {
   filename: string;
 }): SourceEvidenceRequirement | null {
   const name = args.filename.toLowerCase();
+  const normalizedName = `_${normalizeFilenameToken(name)}_`;
   const stageRequirements = SOURCE_EVIDENCE_REQUIREMENTS.filter(
     (r) => r.stage === args.stageKey,
   );
-  let best: { req: SourceEvidenceRequirement; hits: number } | null = null;
+  let best: { req: SourceEvidenceRequirement; score: number } | null = null;
   for (const req of stageRequirements) {
-    const keywords = req.filenameTokens;
-    const hits = keywords.filter((k) => name.includes(k)).length;
-    if (hits > 0 && (!best || hits > best.hits)) best = { req, hits };
+    const score = req.filenameTokens.reduce((total, token) => {
+      const normalizedToken = normalizeFilenameToken(token);
+      if (!normalizedToken) return total;
+      if (normalizedName.includes(`_${normalizedToken}_`)) {
+        return total + 10 + normalizedToken.length / 100;
+      }
+      if (name.includes(token.toLowerCase())) {
+        return total + 1 + normalizedToken.length / 100;
+      }
+      return total;
+    }, 0);
+    if (score > 0 && (!best || score > best.score)) best = { req, score };
   }
   return best?.req ?? null;
+}
+
+function normalizeFilenameToken(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 /**
