@@ -1,8 +1,4 @@
-export function SourceWorkspaceLoadingShell({
-  tenantName = "AbarVa Client",
-}: {
-  tenantName?: string;
-}) {
+export function SourceWorkspaceLoadingShell() {
   return (
     <section
       aria-label="Source 360 is preparing"
@@ -14,79 +10,6 @@ export function SourceWorkspaceLoadingShell({
         flexDirection: "column",
       }}
     >
-      <nav
-        aria-label="Main application navigation"
-        style={{
-          minHeight: 64,
-          background: "#08080b",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          gap: 20,
-          padding: "0 32px",
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "Fraunces, Georgia, serif",
-            fontSize: 21,
-            fontWeight: 600,
-          }}
-        >
-          Abar<span style={{ color: "#2fbf8f" }}>Va</span>
-        </span>
-        <span
-          style={{
-            paddingLeft: 18,
-            borderLeft: "1px solid rgba(255,255,255,.18)",
-            fontFamily: "Fraunces, Georgia, serif",
-            fontSize: 14,
-            fontStyle: "italic",
-            fontWeight: 520,
-            color: "rgba(255,255,255,.82)",
-          }}
-        >
-          {tenantName}
-        </span>
-        <div
-          style={{
-            marginLeft: "auto",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          {["Home", "Intelligence", "Moves", "Source", "Tower"].map((label) => (
-            <a
-              key={label}
-              href={
-                label === "Home"
-                  ? "/home"
-                  : label === "Moves"
-                    ? "/strategic-moves"
-                    : `/${label.toLowerCase()}`
-              }
-              aria-current={label === "Source" ? "page" : undefined}
-              style={{
-                minHeight: 36,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 8,
-                background: label === "Source" ? "#fff" : "transparent",
-                color: label === "Source" ? "#0a0a0b" : "rgba(255,255,255,.68)",
-                padding: "0 14px",
-                fontSize: 13,
-                fontWeight: 760,
-                textDecoration: "none",
-              }}
-            >
-              {label}
-            </a>
-          ))}
-        </div>
-      </nav>
       <div style={{ padding: "28px 40px 40px" }}>
         <p
           style={{

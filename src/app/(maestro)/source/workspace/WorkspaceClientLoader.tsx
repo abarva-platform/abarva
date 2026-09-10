@@ -210,7 +210,7 @@ export function WorkspaceClientLoader({
   }
 
   if (!portfolio) {
-    return <SourceWorkspaceLoadingShell tenantName={tenantName} />;
+    return <SourceWorkspaceLoadingShell />;
   }
 
   return (

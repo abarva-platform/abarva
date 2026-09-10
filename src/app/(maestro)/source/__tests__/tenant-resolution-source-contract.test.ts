@@ -74,8 +74,9 @@ describe("Source tenant identity binding", () => {
     ]) {
       expect(pageLabelsSource).not.toContain(`"${oldLabel}"`);
     }
-    expect(source).toContain("SourceWorkspaceAppNav");
-    expect(source).toContain('aria-label="Main application navigation"');
+    expect(source).not.toContain("SourceWorkspaceAppNav");
+    expect(source).not.toContain('aria-label="Main application navigation"');
+    expect(source).toContain('aria-label="Source workspace navigation"');
     expect(source).toContain("SourceCommandKpiStrip");
     expect(source).toContain("PortfolioPage");
     expect(source).toContain("CoveragePage");
@@ -88,8 +89,8 @@ describe("Source tenant identity binding", () => {
       "src/app/(maestro)/source/workspace/SourceWorkspaceLoadingShell.tsx",
     );
 
-    expect(source).toContain('aria-label="Main application navigation"');
-    expect(source).toContain(
+    expect(source).not.toContain('aria-label="Main application navigation"');
+    expect(source).not.toContain(
       'aria-current={label === "Source" ? "page" : undefined}',
     );
     for (const label of [
