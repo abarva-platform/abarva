@@ -92,6 +92,22 @@ function sourceContext(): AskSurfaceContext {
             sourceRefs: ["golden_contract_rate_card_variance"],
             owner: "Procurement",
           },
+          {
+            id: "CTR-090:discount-band-signal",
+            valueType: "negotiated_improvement",
+            label: "Discount band benchmark signal",
+            amount: "$510K",
+            amountUsd: 510_000,
+            stageRaw: "signal",
+            confidence: 0.3,
+            grade: "SYSTEM EVIDENCED",
+            blockingGap:
+              "Benchmark comparable required before discount-band value can be treated as supported.",
+            nextAction:
+              "Load one accepted benchmark comparable before pricing this as an executive ask.",
+            sourceRefs: ["benchmark_gap_register"],
+            owner: "Strategic sourcing",
+          },
         ],
       },
       contractOpportunityDirectory: [
@@ -203,7 +219,10 @@ describe("Source Workspace visual aVa answer", () => {
       "72 active performance observations",
     );
     expect(answer?.directAnswer).toContain(
-      "4 lines of contract-specific candidate commercial opportunities total $5.6M",
+      "4 sized lines of contract-specific candidate commercial opportunities total $5.6M",
+    );
+    expect(answer?.directAnswer).toContain(
+      "1 lever is signal-stage and excluded from sized totals and charts until evidence gates close",
     );
     expect(answer?.directAnswer).toContain(
       "These amounts are candidates, not realized savings",
@@ -225,10 +244,17 @@ describe("Source Workspace visual aVa answer", () => {
     expect(JSON.stringify(answer?.artifacts[0])).toContain("Blocking gap");
     expect(JSON.stringify(answer?.artifacts[0])).toContain("0.82 (82%)");
     expect(JSON.stringify(answer?.artifacts[0])).toContain("0.35 (35%)");
+    expect(JSON.stringify(answer?.artifacts[0])).toContain(
+      "Discount band benchmark signal",
+    );
+    expect(JSON.stringify(answer?.artifacts[0])).toContain("Not sized");
     expect(answer?.artifacts[1]).toMatchObject({
       artifact: "chart",
       kind: "horizontal-bar",
     });
+    expect(JSON.stringify(answer?.artifacts[1])).not.toContain(
+      "Discount band benchmark signal",
+    );
     expect(answer?.artifacts[2]).toMatchObject({
       artifact: "graph",
       id: "source-contract-evidence-relationship-graph",

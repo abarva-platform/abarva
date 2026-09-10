@@ -669,12 +669,28 @@ function lineCount(value: number): string {
   return `${value} ${value === 1 ? "line" : "lines"}`;
 }
 
+function leverCount(value: number): string {
+  return `${value} ${value === 1 ? "lever" : "levers"}`;
+}
+
+function signalStageClause(value: number): string {
+  return `${leverCount(value)} ${value === 1 ? "is" : "are"} signal-stage`;
+}
+
+function isSignalStage(stage: string): boolean {
+  return /\bsignal\b/i.test(stage);
+}
+
 function buildOpportunityRows(lines: SourceOpportunityLine[]) {
   return lines.map((line) => ({
     class: opportunityClassName(line.kind),
     opportunity: line.label,
-    value: line.amountUsd == null ? line.amount : currencyLabel(line.amountUsd),
-    valueUsd: line.amountUsd,
+    value: isSignalStage(line.stage)
+      ? "Not sized"
+      : line.amountUsd == null
+        ? line.amount
+        : currencyLabel(line.amountUsd),
+    valueUsd: isSignalStage(line.stage) ? null : line.amountUsd,
     state: line.state,
     stage: line.stage,
     confidence: line.confidence,
@@ -753,13 +769,14 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   ];
 
   const opportunityRows = buildOpportunityRows(lines);
-  const numericRows = opportunityRows
+  const sizedRows = opportunityRows
     .filter((row) => typeof row.valueUsd === "number")
     .map((row) => ({
       opportunity: row.opportunity,
       valueUsd: row.valueUsd as number,
       state: row.state,
     }));
+  const signalRows = opportunityRows.filter((row) => isSignalStage(row.stage));
 
   const artifacts: AvaArtifact[] = [
     {
@@ -838,27 +855,28 @@ export function buildSourceWorkspaceVisualAnswer(input: {
     },
   ];
 
-  if (numericRows.length >= 2) {
+  if (sizedRows.length >= 2) {
     artifacts.splice(1, 0, {
       artifact: "chart",
       id: "source-contract-opportunity-value-chart",
       kind: "horizontal-bar",
-      title: "Commercial Opportunities With Quantified Evidence",
-      subtitle: "Only numeric, governed opportunity values are plotted.",
+      title: "Sized Commercial Opportunities",
+      subtitle:
+        "Signal-stage levers are listed as evidence gates, not plotted.",
       data: {
         type: "horizontal-bar",
-        data: numericRows,
+        data: sizedRows,
         xKey: "opportunity",
         yKey: "valueUsd",
         unit: "USD",
-        note: "Chart excludes opportunities without a governed numeric value rather than rendering them as zero.",
+        note: "Chart excludes signal-stage opportunities and rows without a governed numeric value rather than rendering them as zero.",
       },
       builder: "inlineChart",
       xKey: "opportunity",
       yKey: "valueUsd",
       unit: "USD",
       sourceNote:
-        "Numeric values come from governed Source opportunity rows for the selected contract.",
+        "Sized values come from governed Source opportunity rows for the selected contract; signal-stage rows remain evidence gates.",
       citationIds: [opportunityCitationId],
     });
   }
@@ -873,13 +891,17 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       `${line.state} ${line.evidenceClass} ${line.nextAction}`,
     ),
   ).length;
-  const quantified = numericRows.length;
-  const candidateTotalUsd = numericRows.reduce(
+  const sizedCount = sizedRows.length;
+  const candidateTotalUsd = sizedRows.reduce(
     (total, row) => total + row.valueUsd,
     0,
   );
   const topOpportunity =
-    lines.find((line) => line.amountUsd != null) ?? lines[0] ?? null;
+    lines.find(
+      (line) => line.amountUsd != null && !isSignalStage(line.stage),
+    ) ??
+    lines[0] ??
+    null;
   const topOpportunityValue =
     topOpportunity?.amountUsd == null
       ? (topOpportunity?.amount ?? "Not established")
@@ -941,9 +963,9 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       : `${contract.performanceObservationCount} active performance observations`,
   ].join(", ");
   const candidateSummary =
-    quantified > 0
-      ? `${lineCount(quantified)} of contract-specific candidate commercial opportunities total ${currencyLabel(candidateTotalUsd)}. Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation. These amounts are candidates, not realized savings.`
-      : `There are no contract-specific candidate commercial opportunity lines with governed numeric values. Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation.`;
+    sizedCount > 0
+      ? `${sizedCount} sized ${sizedCount === 1 ? "line" : "lines"} of contract-specific candidate commercial opportunities total ${currencyLabel(candidateTotalUsd)}. ${signalRows.length > 0 ? `${signalStageClause(signalRows.length)} and excluded from sized totals and charts until evidence gates close. ` : ""}Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation. These amounts are candidates, not realized savings.`
+      : `There are no sized contract-specific candidate commercial opportunity lines with governed numeric values. ${signalRows.length > 0 ? `${signalStageClause(signalRows.length)} and excluded from sized totals and charts until evidence gates close. ` : ""}Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation.`;
 
   return {
     directAnswer: `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is a candidate commercial optimization case, not realized savings, unless finance-confirmed outcome rows are explicitly loaded. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "It is bound from the governed Source contract context. "}Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}${postureSummary}${postureDetailSummary} ${leverTableSummary} Caveat: Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.`,
@@ -994,9 +1016,9 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       },
       {
         id: "candidate-opportunity-total",
-        label: "Candidate opportunity total",
-        value: quantified > 0 ? candidateTotalUsd : "Not established",
-        unit: quantified > 0 ? "USD" : undefined,
+        label: "Sized candidate opportunity total",
+        value: sizedCount > 0 ? candidateTotalUsd : "Not established",
+        unit: sizedCount > 0 ? "USD" : undefined,
         citationIds: [opportunityCitationId],
       },
     ],
@@ -1015,7 +1037,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         detail:
           "Industry context is pattern guidance only. It cannot create recoverable leakage, avoided future spend, negotiated improvement, or finance-confirmed value without governed evidence.",
       },
-      ...(numericRows.length < 2
+      ...(sizedRows.length < 2
         ? [
             {
               id: "chart-evidence-threshold",
