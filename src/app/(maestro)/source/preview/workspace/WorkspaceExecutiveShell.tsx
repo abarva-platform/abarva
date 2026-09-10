@@ -564,6 +564,7 @@ export function WorkspaceExecutiveShell({
           ))}
         </nav>
 
+        {selectedContractId ? null : (
         <section className="sw-v2-metrics" aria-label="Portfolio facts">
           <Metric
             label="Contracts"
@@ -622,6 +623,7 @@ export function WorkspaceExecutiveShell({
             }
           />
         </section>
+        )}
 
         <section
           className="sw-v2-content-canvas"
@@ -2544,28 +2546,10 @@ function ContractPage({
           }
         />
         {vm.opportunityView ? (
-          <div className="sw-v2-fact-stack">
-            <Fact
-              label="Recoverable"
-              value={vm.opportunityView.potential.recoverable}
-            />
-            <Fact
-              label="Avoidable"
-              value={vm.opportunityView.potential.avoidable}
-            />
-            <Fact
-              label="Negotiable"
-              value={vm.opportunityView.potential.negotiable}
-            />
-            <Fact
-              label="Finance confirmed"
-              value={vm.opportunityView.financeConfirmed}
-            />
-            <Fact
-              label="Deterministic cards"
-              value={String(contractClaimCards.length)}
-            />
-          </div>
+          <ContractValueTypeStack
+            view={vm.opportunityView}
+            cardCount={contractClaimCards.length}
+          />
         ) : (
           <div className="sw-v2-fact-stack">
             <Fact
@@ -2849,17 +2833,21 @@ function ProductShellOptimizationExecutiveStrip({
   const financeConfirmedCount = view.opportunities.filter(
     (opportunity) => opportunity.stageRaw === "finance_confirmed",
   ).length;
+  // Sized and signal-stage dollars are reported apart. A signal has no
+  // defensible number behind it yet, so folding it into one total would
+  // overstate exactly the figure a CFO will challenge first.
+  const sizedTotalUsd = sizedNegotiableTotalUsd(view.opportunities);
   const items = [
     {
       label: "Levers",
       value: String(view.opportunities.length),
-      detail: "governed opportunity rows",
+      detail: `${quantifiedCount} sized · ${signalCount} signal-stage`,
       tone: "#0a0a0b",
     },
     {
-      label: "Negotiable",
-      value: view.potential.negotiable,
-      detail: "potential value, not a booked outcome",
+      label: "Sized negotiable",
+      value: sizedTotalUsd > 0 ? money(sizedTotalUsd) : "Not sized",
+      detail: "excludes signal-stage rows; candidate, not booked",
       tone: SOURCE_CHART_PALETTE.teal,
     },
     {
@@ -2953,7 +2941,261 @@ function ProductShellOptimizationExecutiveStrip({
           </div>
         ))}
       </div>
+      <ProductShellLeverTable vm={vm} />
     </section>
+  );
+}
+
+const VALUE_TYPE_NOT_SET = "Not established";
+
+/**
+ * Split a contract's value types into the ones that carry a figure and the
+ * ones that do not. A contract where nothing was mischarged legitimately has
+ * no recoverable or avoidable dollars, and that absence is a finding in its
+ * own right rather than a blank row.
+ */
+export function contractValueTypeSummary(view: {
+  readonly potential: {
+    readonly recoverable: string;
+    readonly avoidable: string;
+    readonly negotiable: string;
+  };
+  readonly financeConfirmed: string;
+}) {
+  const labelled = [
+    ["Recoverable", view.potential.recoverable, "already owed back to you"],
+    ["Avoidable", view.potential.avoidable, "stops when you act, unilaterally"],
+    ["Negotiable", view.potential.negotiable, "needs the vendor to agree"],
+  ] as const;
+  return {
+    established: labelled.filter(
+      ([, value]) => Boolean(value) && value !== VALUE_TYPE_NOT_SET,
+    ),
+    absent: labelled
+      .filter(([label]) => label !== "Negotiable")
+      .filter(([, value]) => !value || value === VALUE_TYPE_NOT_SET)
+      .map(([label]) => label.toLowerCase()),
+    confirmed:
+      view.financeConfirmed && view.financeConfirmed !== VALUE_TYPE_NOT_SET
+        ? view.financeConfirmed
+        : null,
+  };
+}
+
+/**
+ * Sum only the levers that carry a defensible figure. Signal-stage rows are
+ * excluded on purpose: they have no evidence behind a number yet, so folding
+ * them into a headline would overstate the first figure a CFO challenges.
+ */
+export function sizedNegotiableTotalUsd(
+  opportunities: readonly {
+    readonly stageRaw: string;
+    readonly amountUsd: number | null;
+  }[],
+): number {
+  return opportunities
+    .filter((opportunity) => opportunity.stageRaw !== "signal")
+    .reduce((total, opportunity) => total + (opportunity.amountUsd ?? 0), 0);
+}
+
+/** Levers with enough negotiation content to be worth a row. */
+export function leverTableRows<
+  T extends {
+    readonly buyerAsk?: string | null;
+    readonly vendorConcession?: string | null;
+    readonly negotiationLanguage?: string | null;
+  },
+>(opportunities: readonly T[]): readonly T[] {
+  return opportunities.filter(
+    (opportunity) =>
+      Boolean(opportunity.buyerAsk) ||
+      Boolean(opportunity.vendorConcession) ||
+      Boolean(opportunity.negotiationLanguage),
+  );
+}
+
+/**
+ * The value-type stack on a contract's evidence panel.
+ *
+ * Renders the value types that are actually established, then states in one
+ * line which ones are not and what that absence means. A contract where
+ * nothing was mischarged legitimately has no recoverable or avoidable
+ * dollars; listing those as two empty rows made a correct reading look like
+ * a data failure.
+ */
+function ContractValueTypeStack({
+  view,
+  cardCount,
+}: {
+  view: NonNullable<SourceWorkspaceVM["opportunityView"]>;
+  cardCount: number;
+}) {
+  const { established, absent, confirmed } = contractValueTypeSummary(view);
+
+  return (
+    <div className="sw-v2-fact-stack">
+      {established.map(([label, value, meaning]) => (
+        <Fact key={label} label={`${label} — ${meaning}`} value={value} />
+      ))}
+      {absent.length > 0 ? (
+        <p className="sw-v2-muted">
+          No {absent.join(" or ")} dollars on this contract &mdash; nothing has
+          been mischarged, so the whole opportunity has to be negotiated rather
+          than simply claimed.
+        </p>
+      ) : null}
+      <Fact
+        label="Finance confirmed"
+        value={confirmed ?? "Nothing booked yet"}
+      />
+      <Fact label="Deterministic cards" value={String(cardCount)} />
+    </div>
+  );
+}
+
+/**
+ * The lever table.
+ *
+ * Every column here reads a field the read adapter already returned and the
+ * view model previously discarded: what the term is today, what to ask for,
+ * why the vendor can agree, what it is worth, and who owns it by when. The
+ * screen used to show a count of levers with no way to find out what they
+ * were, which made the tab unactionable.
+ */
+function ProductShellLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
+  const view = vm.opportunityView;
+  if (!view || view.opportunities.length === 0) return null;
+  const rows = leverTableRows(view.opportunities);
+  if (rows.length === 0) return null;
+
+  const cellStyle: React.CSSProperties = {
+    borderTop: "1px solid rgba(10,10,11,.08)",
+    fontSize: 12,
+    lineHeight: 1.35,
+    padding: "9px 10px",
+    verticalAlign: "top",
+  };
+  const headStyle: React.CSSProperties = {
+    color: "#74716a",
+    fontSize: 9.5,
+    fontWeight: 850,
+    letterSpacing: ".08em",
+    padding: "0 10px 6px",
+    textAlign: "left",
+    textTransform: "uppercase",
+    whiteSpace: "nowrap",
+  };
+
+  return (
+    <div style={{ marginTop: 14, overflowX: "auto" }}>
+      <table
+        aria-label="Negotiation levers"
+        style={{ borderCollapse: "collapse", minWidth: 940, width: "100%" }}
+      >
+        <thead>
+          <tr>
+            <th style={headStyle}>Lever</th>
+            <th style={headStyle}>The ask</th>
+            <th style={headStyle}>Why they can agree</th>
+            <th style={headStyle}>Worth</th>
+            <th style={headStyle}>Owner &amp; timing</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((opportunity) => {
+            const isSignal = opportunity.stageRaw === "signal";
+            return (
+              <tr key={opportunity.id}>
+                <td style={cellStyle}>
+                  <b style={{ display: "block", fontSize: 13 }}>
+                    {opportunity.shortLabel || opportunity.label}
+                  </b>
+                  <small
+                    style={{
+                      color: isSignal
+                        ? SOURCE_CHART_PALETTE.amber
+                        : "#5f5e5a",
+                      display: "block",
+                      fontSize: 10,
+                      marginTop: 3,
+                    }}
+                  >
+                    {opportunity.valueType} · {opportunity.stage}
+                  </small>
+                </td>
+                <td style={cellStyle}>
+                  {opportunity.buyerAsk ?? "Ask not recorded"}
+                  {opportunity.negotiationLanguage ? (
+                    <em
+                      style={{
+                        color: "#5f5e5a",
+                        display: "block",
+                        fontStyle: "italic",
+                        marginTop: 5,
+                      }}
+                    >
+                      &ldquo;{opportunity.negotiationLanguage}&rdquo;
+                    </em>
+                  ) : null}
+                </td>
+                <td style={cellStyle}>
+                  {opportunity.vendorConcession ?? "Not recorded"}
+                </td>
+                <td style={cellStyle}>
+                  <b
+                    style={{
+                      color: isSignal
+                        ? "#74716a"
+                        : SOURCE_CHART_PALETTE.teal,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {isSignal ? "Not sized" : opportunity.amount}
+                  </b>
+                  {isSignal ? (
+                    <small
+                      style={{
+                        color: SOURCE_CHART_PALETTE.amber,
+                        display: "block",
+                        fontSize: 10,
+                        marginTop: 3,
+                      }}
+                    >
+                      needs evidence before it carries a number
+                    </small>
+                  ) : null}
+                </td>
+                <td style={cellStyle}>
+                  {opportunity.owner}
+                  <small
+                    style={{
+                      color: "#5f5e5a",
+                      display: "block",
+                      fontSize: 10,
+                      marginTop: 3,
+                    }}
+                  >
+                    {opportunity.timingDependency ?? opportunity.deadline}
+                  </small>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <p
+        style={{
+          color: "#5f5e5a",
+          fontSize: 11,
+          lineHeight: 1.4,
+          margin: "9px 2px 0",
+        }}
+      >
+        Every row is a candidate until finance confirms it. Signal-stage rows
+        carry no dollar figure on purpose &mdash; the evidence behind them does
+        not yet support one.
+      </p>
+    </div>
   );
 }
 
