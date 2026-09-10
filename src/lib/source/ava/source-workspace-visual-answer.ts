@@ -704,6 +704,41 @@ function buildOpportunityRows(lines: SourceOpportunityLine[]) {
   }));
 }
 
+function markdownTableCell(value: string): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  return normalized.length > 0
+    ? normalized.replace(/\|/g, "\\|")
+    : "Not established";
+}
+
+function opportunityEvidenceGate(
+  row: ReturnType<typeof buildOpportunityRows>[number],
+): string {
+  const status = isSignalStage(row.stage)
+    ? "Signal-stage; not sized until evidence closes"
+    : `Stage ${row.stage}`;
+  return `${status}; confidence ${row.confidence}; evidence ${row.evidenceGrade}; gate ${sentenceFragment(row.blockingGap)}`;
+}
+
+function buildExecutiveLeverTable(
+  rows: ReturnType<typeof buildOpportunityRows>,
+): string {
+  const header =
+    "| Lever | Action | Value | Owner | Status / evidence gate |\n| --- | --- | ---: | --- | --- |";
+  const body = rows
+    .slice(0, 8)
+    .map(
+      (row) =>
+        `| ${markdownTableCell(row.opportunity)} | ${markdownTableCell(
+          sentenceFragment(row.nextAction),
+        )} | ${markdownTableCell(row.value)} | ${markdownTableCell(
+          row.owner,
+        )} | ${markdownTableCell(opportunityEvidenceGate(row))} |`,
+    )
+    .join("\n");
+  return `${header}\n${body}`;
+}
+
 export function buildSourceWorkspaceVisualAnswer(input: {
   query: string;
   surfaceContext: AskSurfaceContext;
@@ -926,14 +961,8 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       : "";
   const leverTableSummary =
     opportunityRows.length > 0
-      ? ` Lever table: ${opportunityRows
-          .slice(0, 6)
-          .map(
-            (row) =>
-              `${row.opportunity} | ${row.value} | ${row.class} | stage ${row.stage} | confidence ${row.confidence} | evidence grade ${row.evidenceGrade} | blocking gap ${sentenceFragment(row.blockingGap)} | owner ${row.owner} | next ${sentenceFragment(row.nextAction)}`,
-          )
-          .join(" ; ")}.`
-      : " Lever table: no governed contract-specific opportunity rows are loaded.";
+      ? `Lever table:\n${buildExecutiveLeverTable(opportunityRows)}`
+      : "Lever table: no governed contract-specific opportunity rows are loaded.";
 
   const loadedContractFacts = [
     `vendor ${contract.vendorName}`,
@@ -966,9 +995,19 @@ export function buildSourceWorkspaceVisualAnswer(input: {
     sizedCount > 0
       ? `${sizedCount} sized ${sizedCount === 1 ? "line" : "lines"} of contract-specific candidate commercial opportunities total ${currencyLabel(candidateTotalUsd)}. ${signalRows.length > 0 ? `${signalStageClause(signalRows.length)} and excluded from sized totals and charts until evidence gates close. ` : ""}Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation. These amounts are candidates, not realized savings.`
       : `There are no sized contract-specific candidate commercial opportunity lines with governed numeric values. ${signalRows.length > 0 ? `${signalStageClause(signalRows.length)} and excluded from sized totals and charts until evidence gates close. ` : ""}Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation.`;
+  const negotiationStance =
+    topOpportunity && opportunityRows.length > 0
+      ? `Negotiation stance: lead with ${topOpportunity.label} because it is the clearest governed lever in the current packet; ask the owner to ${sentenceFragment(topOpportunity.nextAction).toLowerCase()}. ${postureSummary}${postureDetailSummary}`
+      : `Negotiation stance: do not make a commercial ask until a contract-specific opportunity row is loaded. ${postureSummary}${postureDetailSummary}`;
 
   return {
-    directAnswer: `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is a candidate commercial optimization case, not realized savings, unless finance-confirmed outcome rows are explicitly loaded. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question. " : "It is bound from the governed Source contract context. "}Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}${postureSummary}${postureDetailSummary} ${leverTableSummary} Caveat: Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.`,
+    directAnswer: [
+      `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is a candidate commercial optimization case, not realized savings, unless finance-confirmed outcome rows are explicitly loaded. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question." : "It is bound from the governed Source contract context."}`,
+      `Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}`,
+      leverTableSummary,
+      negotiationStance,
+      "Caveat: Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.",
+    ].join("\n\n"),
     artifacts,
     citations,
     factsUsed: [

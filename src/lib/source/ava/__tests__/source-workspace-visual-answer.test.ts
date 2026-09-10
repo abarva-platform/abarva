@@ -196,6 +196,15 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).toContain("Lever table:");
     expect(answer?.directAnswer).toContain("Caveat:");
     expect(answer?.directAnswer).toContain(
+      "| Lever | Action | Value | Owner | Status / evidence gate |",
+    );
+    expect(answer?.directAnswer).toContain(
+      "| SLA credits earned but not claimed | Prepare recovery claim | $1.3M | Vendor management | Stage quantified; confidence 0.82 (82%); evidence SYSTEM EVIDENCED; gate SLA and invoice extracts reconciled |",
+    );
+    expect(answer?.directAnswer).toContain(
+      "| Discount band benchmark signal | Load one accepted benchmark comparable before pricing this as an executive ask | Not sized | Strategic sourcing | Signal-stage; not sized until evidence closes; confidence 0.30 (30%); evidence SYSTEM EVIDENCED; gate Benchmark comparable required before discount-band value can be treated as supported |",
+    );
+    expect(answer?.directAnswer).toContain(
       "Commercial posture: Commitment posture = Commitment ahead of usage",
     );
     expect(answer?.directAnswer).toContain(
@@ -389,7 +398,7 @@ describe("Source Workspace visual aVa answer", () => {
       "SLA credits earned but not claimed",
     );
     expect(answer?.directAnswer).toContain(
-      "Lever table: SLA credits earned but not claimed | $1.3M | Recoverable Leakage",
+      "| SLA credits earned but not claimed | Prepare recovery claim | $1.3M | Vendor management | Stage quantified; confidence 0.82 (82%); evidence SYSTEM EVIDENCED; gate SLA and invoice extracts reconciled |",
     );
     expect(answer?.directAnswer).toContain(
       "lines of contract-specific candidate commercial opportunities",
