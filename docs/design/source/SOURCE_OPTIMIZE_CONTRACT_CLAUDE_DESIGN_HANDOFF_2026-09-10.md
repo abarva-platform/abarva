@@ -1,0 +1,316 @@
+# Source Optimize Contract - Claude Design Handoff
+
+## Purpose
+
+Claude Design is redesigning Source 360 and Contract 360. It needs the real data model before
+changing the page. Optimize Contract is not just a visual tab and not the same journey as a new
+competitive sourcing event. It is the focused Door 1 workflow for an incumbent contract: pick one
+existing governed contract, lock the baseline, read evidence, diagnose value, build the strategy,
+approve/execute, and prove value through Finance/Tower.
+
+This handoff is the design contract for the page. Use it as the source of truth for what the UI may
+say, what it must refuse, and which objects actually exist.
+
+## Product Boundary
+
+| Surface              | Job                                                                                                  | Do Not Do                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Source 360 portfolio | Show where contract action should start across the book.                                             | Do not lead with generic counts or charts that do not change the decision.                |
+| Contract 360         | Explain one contract: what it is, scope, economics, performance, relationship, evidence, and levers. | Do not repeat the same evidence-state block on every tab as filler.                       |
+| Optimize Contract    | Move one selected contract through the incumbent-optimization workflow.                              | Do not make it look like the 11-stage new-event workflow or a magic "run savings" button. |
+| New 11-stage event   | Run a competitive sourcing journey from strategy through value.                                      | Do not use it as the default path for every incumbent optimization.                       |
+
+The main application navigation stays visible above Source at all times: Home, Intelligence, Moves,
+Source, Tower, account, sign out. Contract 360 tabs and Optimize Contract stages are subnavigation;
+they must not replace the main app nav.
+
+## Current Optimize Contract Workflow
+
+The current product has a real Optimize Contract route and workflow action API:
+
+| Route or Module                                            | Meaning                                                                                                         |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `/source/optimize`                                         | Dedicated Optimize Contract route. It can open as a candidate picker or with `contractId`.                      |
+| `/source/optimize?contractId=<id>`                         | Opens the seven-step incumbent-contract workflow for that contract.                                             |
+| `/api/source/workspace/contract/<contractId>/optimization` | Creates or refreshes a contract-optimization event from Contract 360 and returns an approval URL.               |
+| `/api/source/optimize/contract/<contractId>/workflow`      | Mutates the workflow state: strategy approval request, approval/sent-back, negotiated outcome, finance handoff. |
+| `deriveOptimizeWorkflowPosition`                           | Derives the visible stage position from governed state, not hardcoded progress.                                 |
+| `buildContractOptimizationSpine`                           | Ranks candidates, explains why a contract is surfaced, and lists source systems/evidence families.              |
+| `buildContractOptimizationLedger`                          | Separates recoverable, avoided, negotiated, and realized value states.                                          |
+
+This is not identical to a new contract event. It is a smaller, faster, evidence-led Door 1 journey.
+The UI should say that plainly.
+
+## Seven-Step Journey
+
+| Step | Label                | Data Gate                                                                                  |
+| ---- | -------------------- | ------------------------------------------------------------------------------------------ |
+| 1    | Select contract      | One governed contract is selected.                                                         |
+| 2    | Lock baseline        | `source.optimization_baseline.baseline_state = ready`; conflict blocks progress.           |
+| 3    | Read evidence        | Required evidence families are loaded or explicitly missing.                               |
+| 4    | Diagnose opportunity | Opportunity rows exist, are validated, and stated amounts trace to calculation runs.       |
+| 5    | Build strategy       | At least one opportunity has a target position and a strategy approval request exists.     |
+| 6    | Approve and execute  | Strategy approval is approved and a negotiated outcome is recorded.                        |
+| 7    | Prove value          | Finance/Tower confirmation exists; no estimated amount becomes realized value before this. |
+
+Design implication: show this as a journey rail or progress spine, not as a row of dashboard tabs.
+Each step needs the next action and the blocker, because the blocker is the point.
+
+## Canonical Data Model Copy
+
+### Contract Context Facts
+
+These are loaded as reviewed contract-intelligence facts in `source.canonical_fact_assertion`.
+
+| Intake Field                | Canonical Fact Key              | UI Use                                          |
+| --------------------------- | ------------------------------- | ----------------------------------------------- |
+| `contract_english_overview` | `contract.purpose_summary`      | Plain-English "what this contract is" opener.   |
+| `scope_english_summary`     | `contract.scope_summary`        | Scope tab thesis and bounded scope description. |
+| `commercial_thesis`         | `contract.commercial_thesis`    | Economics and Optimize setup.                   |
+| `relationship_summary`      | `contract.relationship_summary` | Relationship tab opener and boundary.           |
+| `evidence_boundary_summary` | `contract.evidence_boundary`    | Evidence tab opener and aVa caveat.             |
+
+Required payload/review fields: `review_state`, `confidence`, `payload.value_text`,
+`payload.context_review_state`, `payload.context_reviewer_role`, `payload.context_reviewed_at`,
+`payload.derived_from_load_run_id`, and `payload.basis_type = reviewed_contract_intelligence`.
+
+### Archetype Mapping
+
+Every contract visible in Contract 360 needs a declared archetype. Missing archetype is not a design
+gap; it is a data-readiness gap.
+
+| Field                         | Rule                                                                                            |
+| ----------------------------- | ----------------------------------------------------------------------------------------------- |
+| `contract_archetype_key`      | Canonical key, for example `cloud_consumption_commit`, `saas_subscription`, `managed_services`. |
+| `contract_archetype_label`    | Human-readable label.                                                                           |
+| `archetype_confidence`        | Mapping confidence; inferred mappings start lower than document-declared mappings.              |
+| `archetype_source_basis`      | `document_declared`, `scope_and_pricing_inferred`, `vendor_category_inferred`, or `unmapped`.   |
+| `archetype_playbook_version`  | Version of the authored evidence and negotiation playbook used.                                 |
+| `archetype_review_state`      | `draft`, `reviewed`, or `approved`; only reviewed/approved is decision-grade.                   |
+| `archetype_reviewer_role`     | Accountable reviewer role.                                                                      |
+| `archetype_reviewed_at`       | Timestamp for staleness and review reset.                                                       |
+| `archetype_required_evidence` | Evidence families expected for this archetype.                                                  |
+| `archetype_missing_evidence`  | Families that block claims, visuals, or aVa advice.                                             |
+
+Archetype determines the evidence checklist and lever playbook. Vendor category is only descriptive;
+it must not silently stand in for archetype.
+
+### Optimization Baseline
+
+Table: `source.optimization_baseline`
+
+| Field                                                         | Meaning                                                               |
+| ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `tenant_key`, `dataset_version`, `baseline_id`, `contract_id` | Identity and scope.                                                   |
+| `baseline_state`                                              | `ready`, `missing`, or `conflict`; conflict blocks downstream claims. |
+| `annual_value_usd`                                            | Contract annual value from governed baseline.                         |
+| `pricing_schedule_annual_value_usd`                           | Pricing schedule annual value.                                        |
+| `actual_annual_spend_usd`                                     | Observed annual spend.                                                |
+| `total_committed_value_usd`                                   | Total committed value where applicable.                               |
+| `conflict_amount_usd`                                         | Difference when baseline inputs conflict.                             |
+| `detail`, `source_refs`, `payload`                            | Human explanation and provenance.                                     |
+
+### Optimization Case
+
+Table: `source.optimization_case`
+
+| Field                                     | Meaning                                                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `optimization_case_id`                    | Stable case identity.                                                                                                                             |
+| `door1_event_id`                          | Optional linked Source event.                                                                                                                     |
+| `contract_id`, `vendor_id`, `baseline_id` | Scope of the optimization.                                                                                                                        |
+| `case_state`                              | `intake`, `baseline_confirmed`, `evidence_review`, `calculation_validated`, `outreach_approval`, `outcome_recorded`, `finance_handoff`, `closed`. |
+| `owner`                                   | Workflow owner.                                                                                                                                   |
+| `next_action`                             | The single next action the UI should emphasize.                                                                                                   |
+| `payload`, `created_at`, `updated_at`     | Supporting metadata and audit timing.                                                                                                             |
+
+### Opportunity Spine
+
+Tables: `source.optimization_opportunity`, `source.case_opportunity`,
+`source.opportunity_valuation`, `source.calculation_run`, `source.calculation_input`,
+`source.calculation_output`.
+
+| Object                   | UI Meaning                                                        |
+| ------------------------ | ----------------------------------------------------------------- |
+| Opportunity              | One lever or value candidate.                                     |
+| Case opportunity         | Connects an opportunity to a case and records sequence/selection. |
+| Valuation                | Stores value classification and amount state.                     |
+| Calculation run          | Reproducible rule execution.                                      |
+| Calculation input/output | Shows why a number is traceable instead of asserted.              |
+
+Opportunity fields that matter for design: `opportunity_id`, `contract_id`, `label`, `value_type`,
+`amount_usd`, `amount_state`, `stage`, `evidence_grade`, `confidence`, `deadline`, `owner`,
+`blocking_gap`, `next_action`, `evidence_refs`, `calculation`, `overlap_treatment`,
+`approval_state`, `narrative`, and `negotiation_detail`.
+
+`negotiation_detail` contains the CXO-ready lever table fields:
+
+| Field                 | Render As                                     |
+| --------------------- | --------------------------------------------- |
+| `buyerAsk`            | What we ask the vendor for.                   |
+| `negotiationLanguage` | Client-ready wording.                         |
+| `vendorConcession`    | Why the vendor can agree / what they give up. |
+| `timingDependency`    | When the ask must be made.                    |
+| `ownerRole`           | Who owns the action.                          |
+| `priority`            | Sequence cue.                                 |
+| `riskIfIgnored`       | Consequence of doing nothing.                 |
+
+### Evidence and Requirements
+
+Tables: `source.opportunity_evidence`, `source.evidence_requirement`,
+`source.opportunity_requirement_status`, `source.evidence_request`.
+
+Evidence families should drive the tab story and missing-proof state:
+
+| Family                 | Owner                                | Why It Matters                                          |
+| ---------------------- | ------------------------------------ | ------------------------------------------------------- |
+| Contract baseline      | Contract manager / Legal ops         | Rights, term, pricing, renewal, benchmark, termination. |
+| Application inventory  | App owner / CMDB steward             | What services/apps are actually in scope.               |
+| Invoice summary        | AP / Finance operations              | Actual spend, billing variance, PO matching.            |
+| Invoice exception      | AP / Procurement operations          | Duplicate, off-contract, and rate-card issues.          |
+| SLA performance        | Service delivery / Vendor management | Credits, cure rights, service accountability.           |
+| Ticket or usage volume | Service delivery / platform admin    | Demand versus baseline, DBU/service use, seats.         |
+| Staffing model         | Vendor management / Tower lead       | Paid-for versus observed capacity.                      |
+| Change order           | Contract manager / Category manager  | Recurring work hidden as change.                        |
+| Renewal terms          | Contract manager / Legal ops         | Notice window and negotiation timing.                   |
+| Evidence reference     | Vendor management                    | Citation map for exports and aVa.                       |
+
+Do not show a zero-heavy evidence grid if the family is not loaded. Show a compact gap: what is
+missing, who owns it, and what it unlocks.
+
+### Workflow Actions
+
+Route: `/api/source/optimize/contract/<contractId>/workflow`
+
+| Action                         | Writes                                                           | Guardrail                                                  |
+| ------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| `create_approval_request`      | `source.approval_request` with type `vendor_outreach_strategy`   | Requires target position, traceable amount, and rationale. |
+| `approve_request`              | `source.approval_decision`; keeps case in approval/outcome path  | Requires approver permission and pending request.          |
+| `send_back_request`            | `source.approval_decision`; moves case back for revision         | Requires approver permission and rationale.                |
+| `record_agreed_outcome`        | `source.negotiated_outcome`                                      | Agreement state only; does not claim realized value.       |
+| `request_finance_confirmation` | `source.approval_request` with type `finance_value_confirmation` | Handoff only; Finance/Tower owns realized value.           |
+
+Tables: `source.approval_request`, `source.approval_decision`, `source.negotiated_outcome`,
+`source.finance_realization`, `source.finance_realization_evidence`.
+
+## Four Value Ledgers
+
+The page must keep these separate. Never blend them into one "savings" number.
+
+| Ledger                 | Meaning                                                                       | When It Can Carry Dollars                                             |
+| ---------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Recoverable leakage    | SLA credits, duplicate charges, off-contract billing, rate-card variance.     | Only when invoice/SLA/rate-card evidence and calculation trace exist. |
+| Avoided cost           | Renewal uplift avoided, shelfware removed, scope rationalized.                | Only when entitlement, renewal quote, or scope evidence supports it.  |
+| Negotiated improvement | Price, term, index cap, volume tier, commitment timing, termination leverage. | Can be sized as candidate only through calculation/valuation rows.    |
+| Realized value         | Finance-confirmed outcome.                                                    | Only through Finance/Tower confirmation evidence.                     |
+
+Design implication: use labels like "candidate", "target position", "approved for outreach",
+"agreed", and "finance-confirmed". Do not use "saved" unless the finance realization object exists.
+
+## Required Source 360 Dashboard Story
+
+The portfolio page should answer "where should the team work this quarter?", not "what data can we
+chart?"
+
+| Visual                     | Data Grain                                                                                    | Why It Leads                                                      |
+| -------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Readiness vs value scatter | `annual_value`, `decision_ready_contracts`, `contract_count`, `candidate_amount_usd`, posture | Shows big/ready, big/blocked, small/ready, and leave-alone zones. |
+| Credit funnel              | `credit_calculated`, `credit_claimed`, `credit_recovered`, `unclaimed_credit_usd`             | Separates calculated, claimed, and recovered value.               |
+| Posture distribution       | under-consumed, over-consumed, aligned, leakage, not assessed                                 | Actionable with current data.                                     |
+| Archetype coverage unlock  | mapped count, unmapped count, unmapped value, next fields required                            | Honest until all contracts are mapped.                            |
+| Archetype concentration    | reviewed/approved `contract_archetype_key`                                                    | Only after mapping coverage is sufficient.                        |
+
+Do not draw an archetype concentration chart from a placeholder/unmapped bucket. If coverage is
+thin, the chart is not "missing"; the correct product story is "the book is not classifiable yet,
+here is the backfill required."
+
+## Required Contract 360 Tab Story
+
+Each tab needs a distinct purpose. These are the minimum beats:
+
+| Tab          | CXO Question                                                                | Render                                                                                              |
+| ------------ | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Story        | What is this contract and why should I care?                                | Purpose summary, commercial thesis, baseline facts, action posture, evidence state.                 |
+| Scope        | What is actually in scope?                                                  | Plain-English scope summary, grouped apps/services, hosting, criticality, explicit boundary.        |
+| Economics    | Are we ahead, behind, overpaying, or under-committed?                       | Commitment-vs-actual ramp, AP reconciliation, candidate vs finance-confirmed value.                 |
+| Performance  | Does usage/performance support the commercial position?                     | DBU/service mix, service usage, SLA/tickets if present; otherwise missing-proof state.              |
+| Relationship | What systems, owners, opportunities, and evidence connect to this contract? | Declared relationship map/list only; no inferred CMDB/Tower dependency claims.                      |
+| Evidence     | What backs this?                                                            | Source files, clause rows, canonical facts, restricted raw-doc note; no empty page-span dashboards. |
+| Optimize     | What should we ask for, why, when, and with what proof?                     | Exportable lever table plus sequence, blocker, approval state, and finance-proof state.             |
+
+## aVa and Export Prompt Contract
+
+aVa should answer like a pricing/CXO negotiation advisor, but only from the loaded objects above.
+All restrictions must be in the prompt/input contract before generation. Do not scrub Claude's
+response after the fact to make it compliant.
+
+Minimum prompt contract for an Optimize answer:
+
+1. Use only loaded `contract_360`, `optimization_opportunity`, calculation, evidence, approval,
+   outcome, finance, and reviewed context facts for the selected contract.
+2. Start with a two-to-three sentence executive answer.
+3. Then render a table with: lever, action, buyer ask, rationale, evidence basis, value state,
+   amount/range or not-sized state, owner, timing, blocker, next step.
+4. Separate sized opportunities from signal-stage or evidence-gated opportunities.
+5. Do not call candidate, negotiated, or agreed amounts "realized" unless Finance/Tower confirmation
+   is loaded.
+6. Do not invent benchmark rates, discount ranges, page citations, dates, or savings percentages.
+7. If the user asks "why would the vendor agree?", answer from the loaded concession/rationale field
+   or the authored archetype play; label anything else as advisor reasoning.
+8. End with the single next governed action.
+
+This same structure should power PDF export. The export should be a client-ready sample memo, not a
+chat transcript.
+
+## Design Don'ts
+
+- Do not use "Run Optimize" unless it actually creates or advances persisted workflow state.
+- Do not place a top-right "Optimize" CTA beside an "Optimize" tab.
+- Do not repeat the same generic evidence-state box across tabs.
+- Do not show empty evidence/page-span counters as if they are insight.
+- Do not let vendor category replace contract archetype.
+- Do not turn signal-stage opportunities into a total dollar headline.
+- Do not hide the main app nav.
+- Do not use raw contract document text in the public repo or visible demo artifacts.
+
+## Example Story Beats
+
+For a cloud data-platform consumption commitment:
+
+- It is a usage-backed commercial commitment, not a generic software subscription.
+- The executive issue is commitment timing versus adoption ramp.
+- The first visual should show committed capacity versus observed usage over time.
+- The lever table should separate re-timing/carry-forward/support rebase from lower-confidence
+  discount or compute-mode signals.
+- The next action is strategy approval or evidence backfill, not "claim savings."
+
+For a public-cloud enterprise commitment:
+
+- It is the mirror-image pattern when actual usage exceeds committed coverage.
+- The executive issue is moving durable usage into better coverage while avoiding false savings.
+- The first visual should show actual spend above/below commitment and the coverage gap.
+- The lever table should focus on committed-use coverage, rightsizing, support economics, and
+  governance/tags where evidence supports it.
+
+## What Claude Design Should Produce
+
+1. A Source 360 portfolio redesign that leads with decision pressure, not generic contract count.
+2. A Contract 360 detail redesign where every tab has a distinct story grain.
+3. A dedicated Optimize Contract workflow screen using the seven-step journey and workflow objects.
+4. A CXO-ready lever table that can be exported unchanged into PDF.
+5. Clear empty states that name the missing data family, owner, and unlock.
+6. An archetype coverage/backfill panel instead of an unmapped-archetype chart.
+7. aVa answer and PDF export layout using the same data model and prompt contract.
+
+## Acceptance Criteria
+
+- Main app nav is visible on every Source and Optimize Contract page.
+- Contract 360 never repeats the same filler block across Story, Scope, Relationship, Evidence, and
+  Optimize.
+- Optimize Contract shows current workflow step, blocker, and next action from governed state.
+- The lever table is exportable and distinguishes sized, signal-stage, approved, agreed, and
+  finance-confirmed states.
+- Evidence tabs hide irrelevant zero-heavy widgets and show tab-specific gaps instead.
+- Archetype charts render only from reviewed/approved mappings; otherwise the UI shows the backfill
+  unlock.
+- aVa answers use the same loaded objects and restrictions as the UI/export.
