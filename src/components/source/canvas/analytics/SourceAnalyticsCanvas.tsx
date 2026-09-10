@@ -18,9 +18,11 @@ import rehypeSanitize from "rehype-sanitize";
 import { AskAnythingBar } from "@/components/agent/AskAnythingBar";
 import { AppShell } from "@/components/shell/AppShell";
 import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-tabs/AcceptClientFinalButton";
-import { BafoScenarioComparePanel } from "@/components/source/canvas/bafo/BafoScenarioComparePanel";
 import { ContractOptimizationProfilePanel } from "@/components/source/canvas/contract-optimization/ContractOptimizationProfilePanel";
 import { ResponsesStageView } from "@/components/source/canvas/responses/ResponsesStageView";
+import { VendorBafoInstructionPackPanel } from "@/components/source/canvas/responses/VendorBafoInstructionPackPanel";
+import { VendorChallengeLeveragePanel } from "@/components/source/canvas/responses/VendorChallengeLeveragePanel";
+import { VendorEvaluationScorecardPanel } from "@/components/source/canvas/responses/VendorEvaluationScorecardPanel";
 import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tabs/StageDecisionLensPanel";
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
 import { SourceVendorSelectionReadinessPanel } from "@/components/source/SourceVendorSelectionReadinessPanel";
@@ -83,7 +85,6 @@ import {
   resolveSimpleStageScreen,
   type SimpleStageScreenView,
 } from "@/lib/source/simple-front";
-import { buildBafoScenarioCompareView } from "@/lib/source/bafo-scenario-compare-view";
 import {
   adaptStageViewToSourceJourney,
   sourceJourneyLabelForStage,
@@ -1128,9 +1129,15 @@ function SourceWorkspace({
         view={view}
         onWorkspaceChange={onWorkspaceChange}
       />
-      {view.stage.key === "pricing" ? (
+      {["pricing", "executive_decision", "selection", "transition"].includes(
+        view.stage.key,
+      ) ? (
         <div style={{ maxWidth: 1120, marginBottom: 16 }}>
-          <StageDecisionLensPanel stage={view.stage.key} />
+          <StageDecisionLensPanel
+            stage={view.stage.key}
+            profileSet={vendorResponseProfiles}
+            decisionView={vendorEvaluationDecisionView}
+          />
         </div>
       ) : null}
       <FocusedWorkPanel
@@ -1152,6 +1159,24 @@ function SourceWorkspace({
             eventDisplayName={eventDisplayName}
             documentWorkspace={null}
           />
+        </div>
+      ) : null}
+      {view.stage.key === "evaluation" ? (
+        <div style={{ marginTop: 16, maxWidth: 1120 }}>
+          <VendorEvaluationScorecardPanel
+            decisionView={vendorEvaluationDecisionView}
+            eventDisplayName={eventDisplayName}
+          />
+        </div>
+      ) : null}
+      {view.stage.key === "bafo" ? (
+        <div
+          style={{ display: "grid", gap: 16, marginTop: 16, maxWidth: 1120 }}
+        >
+          <VendorChallengeLeveragePanel
+            intelligence={vendorChallengeIntelligence}
+          />
+          <VendorBafoInstructionPackPanel pack={vendorBafoInstructionPack} />
         </div>
       ) : null}
     </section>
@@ -1953,8 +1978,8 @@ function StageReadyPanel({
   const primaryActionLabel = approvalRecorded
     ? "View approval record"
     : hasArtifactGaps
-    ? "Review Files and accept artifacts"
-    : view.stage.approvalCtaLabel;
+      ? "Review Files and accept artifacts"
+      : view.stage.approvalCtaLabel;
   const primaryAction = approvalRecorded
     ? onOpenApprovalPage
     : hasArtifactGaps
@@ -1994,15 +2019,15 @@ function StageReadyPanel({
           {approvalRecorded
             ? "Stage approved"
             : hasArtifactGaps
-            ? "Inputs ready - artifact review open"
-            : "Stage ready"}
+              ? "Inputs ready - artifact review open"
+              : "Stage ready"}
         </div>
         <h2 style={{ fontSize: 20, lineHeight: 1.25, margin: 0 }}>
           {approvalRecorded
             ? `${view.stage.label} approval is recorded.`
             : hasArtifactGaps
-            ? `Required inputs are complete, but ${view.stage.artifactReadiness.blockerCount} artifact review item${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain.`
-            : `All required evidence is ready for ${view.stage.label}.`}
+              ? `Required inputs are complete, but ${view.stage.artifactReadiness.blockerCount} artifact review item${view.stage.artifactReadiness.blockerCount === 1 ? "" : "s"} remain.`
+              : `All required evidence is ready for ${view.stage.label}.`}
         </h2>
         <p
           style={{
@@ -2020,8 +2045,8 @@ function StageReadyPanel({
                 : "The stage decision is complete. Current artifact-review gaps remain visible for remediation; no duplicate approval is required."
               : "The stage decision is complete and no further approval is required. Open the approval record to review its rationale and audit trail."
             : hasArtifactGaps
-            ? "Review Files first to accept client-final artifacts and close quality gates. An exception decision is available only if the owner chooses to approve with the visible gaps."
-            : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
+              ? "Review Files first to accept client-final artifacts and close quality gates. An exception decision is available only if the owner chooses to approve with the visible gaps."
+              : "The next step is the approval workspace. Review the captured evidence, record the decision, and advance the event from there."}
         </p>
       </div>
       {stageOperatingStatus ? (
@@ -2062,9 +2087,6 @@ function StageReadyPanel({
           tone={hasArtifactGaps ? "warn" : "good"}
         />
       </div>
-      {view.stage.key === "bafo" || view.stage.key === "orals_bafo" ? (
-        <BafoScenarioComparePanel view={buildBafoScenarioCompareView()} />
-      ) : null}
       {hasArtifactGaps && !approvalRecorded ? (
         <div
           data-testid="source-stage-ready-approval-blocker"
@@ -2123,8 +2145,8 @@ function StageReadyPanel({
             approvalRecorded
               ? "source-stage-ready-view-approval"
               : hasArtifactGaps
-              ? "source-stage-ready-primary-files"
-              : "source-stage-ready-open-approval"
+                ? "source-stage-ready-primary-files"
+                : "source-stage-ready-open-approval"
           }
           onClick={primaryAction}
           style={{
@@ -5855,12 +5877,11 @@ function IntelligenceReadinessBrief({ view }: { view: SourceEventShellView }) {
           .map((file) => file.name)
           .join(", ")
       : intelligenceBasisLabel(view.intelligence.sourceBasis);
-  const nextAction =
-    view.stage.approvalRecorded
-      ? view.stage.artifactReadiness.blockerCount > 0
-        ? "Remediate current artifact gaps; approval remains recorded."
-        : "No further approval required."
-      : view.stage.ready < view.stage.total
+  const nextAction = view.stage.approvalRecorded
+    ? view.stage.artifactReadiness.blockerCount > 0
+      ? "Remediate current artifact gaps; approval remains recorded."
+      : "No further approval required."
+    : view.stage.ready < view.stage.total
       ? "Complete the active step before approval."
       : view.stage.artifactReadiness.blockerCount > 0
         ? "Resolve Files blockers before approval."
@@ -6008,26 +6029,27 @@ function ApprovalReadinessBrief({ view }: { view: SourceEventShellView }) {
   const nextAction = stageApproved
     ? "No further approval required."
     : !workflowComplete
-    ? "Return to steps."
-    : !filesReady
-      ? "Clear artifact queue."
-      : (view.approvals.currentStageItem?.actionLabel ?? "No approval action.");
+      ? "Return to steps."
+      : !filesReady
+        ? "Clear artifact queue."
+        : (view.approvals.currentStageItem?.actionLabel ??
+          "No approval action.");
   const readinessTitle = stageApproved
     ? !filesReady && view.stage.approvalTraceState === "historical"
       ? "Historically approved; remediation open"
       : "Stage approved"
     : ready
-    ? "Ready to decide"
-    : workflowComplete
-      ? "Artifact queue blocks the gate"
-      : "Workflow inputs still open";
+      ? "Ready to decide"
+      : workflowComplete
+        ? "Artifact queue blocks the gate"
+        : "Workflow inputs still open";
   const readinessStatus = stageApproved
     ? "Approved"
     : ready
-    ? "Ready"
-    : workflowComplete
-      ? "Not gate-ready"
-      : "Inputs open";
+      ? "Ready"
+      : workflowComplete
+        ? "Not gate-ready"
+        : "Inputs open";
 
   return (
     <section

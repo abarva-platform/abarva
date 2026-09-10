@@ -150,6 +150,15 @@ export default async function SourceEventDetailPage({
             },
           })
         : null;
+    const needsVendorResponseContext = [
+      "responses",
+      "evaluation",
+      "pricing",
+      "bafo",
+      "executive_decision",
+      "selection",
+      "transition",
+    ].includes(viewStage);
     const seededVendorResponseProfiles =
       viewStage === "responses"
         ? buildVendorResponseMveProfiles({
@@ -160,7 +169,7 @@ export default async function SourceEventDetailPage({
           })
         : null;
     const normalizedResponsePackages =
-      viewStage === "responses" && activeClient?.key
+      needsVendorResponseContext && activeClient?.key
         ? await readNormalizedVendorResponsePackages({
             eventId: event.id,
             tenantKey: activeClient.key,
@@ -172,16 +181,17 @@ export default async function SourceEventDetailPage({
             return [];
           })
         : [];
-    const vendorResponseProfiles =
-      viewStage === "responses"
-        ? ((activeClient?.key
-            ? deriveVendorResponseProfilesFromNormalized({
-                packages: normalizedResponsePackages,
-                event: { id: event.id, name: event.name },
-                tenantKey: activeClient.key,
-              })
-            : null) ?? seededVendorResponseProfiles)
-        : null;
+    const normalizedVendorResponseProfiles = activeClient?.key
+      ? deriveVendorResponseProfilesFromNormalized({
+          packages: normalizedResponsePackages,
+          event: { id: event.id, name: event.name },
+          tenantKey: activeClient.key,
+        })
+      : null;
+    const vendorResponseProfiles = needsVendorResponseContext
+      ? (normalizedVendorResponseProfiles ??
+        (viewStage === "responses" ? seededVendorResponseProfiles : null))
+      : null;
     const normalizedResponseSeeds =
       deriveVendorResponseSeedInputsFromNormalized(normalizedResponsePackages);
     // Events outside the vendor-response seed table take their vendor
@@ -205,22 +215,19 @@ export default async function SourceEventDetailPage({
             },
           })
         : null;
-    const vendorChallengeIntelligence =
-      viewStage === "responses"
-        ? buildVendorChallengeIntelligence(vendorResponseProfiles)
-        : null;
-    const vendorBafoInstructionPack =
-      viewStage === "responses"
-        ? buildVendorBafoInstructionPack(vendorChallengeIntelligence)
-        : null;
-    const vendorEvaluationDecisionView =
-      viewStage === "responses"
-        ? buildVendorEvaluationDecisionView(
-            vendorResponseProfiles,
-            vendorChallengeIntelligence,
-            vendorBafoInstructionPack,
-          )
-        : null;
+    const vendorChallengeIntelligence = needsVendorResponseContext
+      ? buildVendorChallengeIntelligence(vendorResponseProfiles)
+      : null;
+    const vendorBafoInstructionPack = needsVendorResponseContext
+      ? buildVendorBafoInstructionPack(vendorChallengeIntelligence)
+      : null;
+    const vendorEvaluationDecisionView = needsVendorResponseContext
+      ? buildVendorEvaluationDecisionView(
+          vendorResponseProfiles,
+          vendorChallengeIntelligence,
+          vendorBafoInstructionPack,
+        )
+      : null;
     const vendorResponseParseReports =
       viewStage === "responses"
         ? compactVendorResponseParseReportsForRoute(
