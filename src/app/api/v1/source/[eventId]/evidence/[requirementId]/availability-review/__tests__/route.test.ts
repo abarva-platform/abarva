@@ -18,7 +18,7 @@ const currentUser: {
   personId: "person-1",
   clerkUserId: "clerk-user-1",
   email: "reviewer@example.test",
-  name: "Evidence Reviewer",
+  name: "User",
   primaryRole: "maestro",
   metadataClientKey: "client-one",
 };
@@ -81,6 +81,11 @@ const evidenceRow: SourceEventEvidenceStateRow = {
 };
 
 let existingEvidence: SourceEventEvidenceStateRow | null = evidenceRow;
+let personRow: { id: string; name: string | null; email: string | null } | null = {
+  id: "person-1",
+  name: "Evidence Reviewer",
+  email: "reviewer@example.test",
+};
 
 function fakeFluentClient() {
   return {
@@ -100,6 +105,9 @@ function fakeFluentClient() {
               data: { id: "evt-1", client_key: "client-one" },
               error: null,
             };
+          }
+          if (table === "persons") {
+            return { data: personRow, error: null };
           }
           if (table === "source_event_evidence_states") {
             return { data: existingEvidence, error: null };
@@ -139,6 +147,11 @@ beforeEach(() => {
   writes.length = 0;
   existingEvidence = evidenceRow;
   currentUser.personId = "person-1";
+  personRow = {
+    id: "person-1",
+    name: "Evidence Reviewer",
+    email: "reviewer@example.test",
+  };
 });
 
 describe("Source parsed-evidence availability review", () => {
@@ -214,6 +227,15 @@ describe("Source parsed-evidence availability review", () => {
 
   it("requires a resolved tenant person before attributing a review", async () => {
     currentUser.personId = null;
+    const response = await GET(request(), ctx);
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error: "reviewer_identity_required" }),
+    );
+  });
+
+  it("fails closed when the canonical person row has no display name", async () => {
+    personRow = { id: "person-1", name: null, email: "reviewer@example.test" };
     const response = await GET(request(), ctx);
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual(

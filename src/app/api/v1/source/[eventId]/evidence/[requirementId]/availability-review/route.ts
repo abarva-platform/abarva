@@ -28,7 +28,19 @@ type ReviewContext = {
   effectiveClientKey: string;
   eventId: string;
   evidence: SourceEventEvidenceStateRow;
+  reviewer: {
+    personId: string;
+    displayName: string;
+    email: string;
+    role: string;
+  };
   requirement: NonNullable<ReturnType<typeof evidenceById>>;
+};
+
+type ReviewPersonRow = {
+  id: string;
+  name: string | null;
+  email: string | null;
 };
 
 const STATE_RANK: Record<SourceEventEvidenceCurrentState, number> = {
@@ -64,12 +76,7 @@ function reviewPreview(context: ReviewContext) {
   return {
     actionType: "evidence_reviewed",
     actionLabel: `Reviewed parsed evidence: ${context.requirement.label}`,
-    reviewer: {
-      personId: context.currentUser.personId,
-      displayName: context.currentUser.name,
-      email: context.currentUser.email,
-      role: context.currentUser.primaryRole,
-    },
+    reviewer: context.reviewer,
     requirementId: context.requirement.requirementId,
     requirementLabel: context.requirement.label,
     stage: context.requirement.stage,
@@ -120,7 +127,35 @@ async function resolveReviewContext(
       { status: 403 },
     );
   }
-  if (!currentUser?.personId || !currentUser.name || !currentUser.email) {
+  if (!currentUser?.personId || !currentUser.email) {
+    return Response.json(
+      {
+        ok: false,
+        error: "reviewer_identity_required",
+        detail:
+          "A tenant-scoped person record with name and email is required before evidence can be reviewed.",
+      },
+      { status: 409 },
+    );
+  }
+
+  const db = getAzureWriteFluentClient();
+  const { data: reviewerPerson, error: reviewerError } = await db
+    .from("persons")
+    .select("id, name, email")
+    .eq("id", currentUser.personId)
+    .maybeSingle<ReviewPersonRow>();
+  if (reviewerError) {
+    return Response.json(
+      { ok: false, error: "lookup_failed", detail: reviewerError.message },
+      { status: 500 },
+    );
+  }
+  const reviewerPersonId = reviewerPerson?.id;
+  const reviewerName = reviewerPerson?.name?.trim();
+  const reviewerEmail =
+    reviewerPerson?.email?.trim() || currentUser.email.trim();
+  if (!reviewerPersonId || !reviewerName || !reviewerEmail) {
     return Response.json(
       {
         ok: false,
@@ -137,7 +172,6 @@ async function resolveReviewContext(
     effectiveClientKey,
   ).catch(() => null);
   const persistedEventId = resolvedEventId ?? eventId;
-  const db = getAzureWriteFluentClient();
   const { data: persistedEvent, error: eventError } = await db
     .from("source_events")
     .select("id, client_key")
@@ -211,6 +245,12 @@ async function resolveReviewContext(
     effectiveClientKey,
     eventId: persistedEvent.id,
     evidence,
+    reviewer: {
+      personId: reviewerPersonId,
+      displayName: reviewerName,
+      email: reviewerEmail,
+      role: currentUser.primaryRole,
+    },
     requirement,
   };
 }
@@ -263,8 +303,8 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
         : "Available";
     const reviewNote = [
       `Evidence lifecycle review (${nowIso})`,
-      `reviewer=${context.currentUser.name}`,
-      `person_id=${context.currentUser.personId}`,
+      `reviewer=${context.reviewer.displayName}`,
+      `person_id=${context.reviewer.personId}`,
       `scope=${REVIEW_SCOPE}`,
       "approval_granted=false",
       rationale,
@@ -311,9 +351,9 @@ export async function POST(request: NextRequest, { params }: RouteCtx) {
     const activityWrite = await sourceWrite.insertActivityLog({
       eventId: context.eventId,
       clientKey: context.effectiveClientKey,
-      actorUserId: context.currentUser.personId,
-      actorDisplayName: context.currentUser.name,
-      actorRole: context.currentUser.primaryRole,
+      actorUserId: context.reviewer.personId,
+      actorDisplayName: context.reviewer.displayName,
+      actorRole: context.reviewer.role,
       actionType: preview.actionType,
       actionLabel: preview.actionLabel,
       stageKey: context.requirement.stage,
