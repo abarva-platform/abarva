@@ -46,7 +46,10 @@ export interface SourceCanvasSubstrateReadAdapter {
    * ordered by `artifact_code`. Throws on a read failure — the lib helper
    * catches and degrades to `[]`, so callers' behavior is preserved.
    */
-  listArtifactStateRows(sourceEventId: string): Promise<SourceEventArtifactStateRow[]>;
+  listArtifactStateRows(
+    sourceEventId: string,
+    stageKey?: string,
+  ): Promise<SourceEventArtifactStateRow[]>;
   /**
    * Read every `source_event_gate_criterion_states` row for `sourceEventId`,
    * ordered by `criterion_id`. Throws on a read failure.
@@ -58,7 +61,9 @@ export interface SourceCanvasSubstrateReadAdapter {
    * Read every `source_event_evidence_states` row for `sourceEventId`,
    * ordered by `requirement_id`. Throws on a read failure.
    */
-  listEvidenceStateRows(sourceEventId: string): Promise<SourceEventEvidenceStateRow[]>;
+  listEvidenceStateRows(
+    sourceEventId: string,
+  ): Promise<SourceEventEvidenceStateRow[]>;
   /**
    * Read every non-stale `source_event_facts` row for `sourceEventId`,
    * newest first. Throws on a read failure.
@@ -82,14 +87,18 @@ export function createSupabaseSourceCanvasSubstrateReadAdapter(
 ): SourceCanvasSubstrateReadAdapter {
   return {
     name: 'supabase',
-    async listArtifactStateRows(sourceEventId) {
+    async listArtifactStateRows(sourceEventId, stageKey) {
       const sb = getClient();
-      const { data, error } = await sb
+      let query = sb
         .from('source_event_artifact_states')
         .select('*')
-        .eq('source_event_id', sourceEventId)
-        .order('artifact_code', { ascending: true });
-      if (error) throw new Error(`listArtifactStatesForEvent: ${error.message}`);
+        .eq('source_event_id', sourceEventId);
+      if (stageKey) query = query.eq('stage_key', stageKey);
+      const { data, error } = await query.order('artifact_code', {
+        ascending: true,
+      });
+      if (error)
+        throw new Error(`listArtifactStatesForEvent: ${error.message}`);
       return (data as SourceEventArtifactStateRow[] | null) ?? [];
     },
     async listGateCriterionStateRows(sourceEventId) {
@@ -99,7 +108,8 @@ export function createSupabaseSourceCanvasSubstrateReadAdapter(
         .select('*')
         .eq('source_event_id', sourceEventId)
         .order('criterion_id', { ascending: true });
-      if (error) throw new Error(`listGateCriterionStatesForEvent: ${error.message}`);
+      if (error)
+        throw new Error(`listGateCriterionStatesForEvent: ${error.message}`);
       return (data as SourceEventGateCriterionStateRow[] | null) ?? [];
     },
     async listEvidenceStateRows(sourceEventId) {
@@ -109,7 +119,8 @@ export function createSupabaseSourceCanvasSubstrateReadAdapter(
         .select('*')
         .eq('source_event_id', sourceEventId)
         .order('requirement_id', { ascending: true });
-      if (error) throw new Error(`listEvidenceStatesForEvent: ${error.message}`);
+      if (error)
+        throw new Error(`listEvidenceStatesForEvent: ${error.message}`);
       return (data as SourceEventEvidenceStateRow[] | null) ?? [];
     },
     async listEventFactRows(sourceEventId) {
@@ -135,16 +146,22 @@ export function createSupabaseSourceCanvasSubstrateReadAdapter(
  * an in-memory fake.
  */
 export function createAzureSourceCanvasSubstrateReadAdapter(
-  session: SessionRunner = createDefaultSession('abarva-data-plane-source-canvas'),
+  session: SessionRunner = createDefaultSession(
+    'abarva-data-plane-source-canvas',
+  ),
 ): SourceCanvasSubstrateReadAdapter {
   return {
     name: 'azure-postgres',
-    async listArtifactStateRows(sourceEventId) {
+    async listArtifactStateRows(sourceEventId, stageKey) {
       return session((run) =>
         run<SourceEventArtifactStateRow>(
-          `SELECT * FROM source_event_artifact_states
-            WHERE source_event_id = $1 ORDER BY artifact_code ASC`,
-          [sourceEventId],
+          stageKey
+            ? `SELECT * FROM source_event_artifact_states
+                WHERE source_event_id = $1 AND stage_key = $2
+                ORDER BY artifact_code ASC`
+            : `SELECT * FROM source_event_artifact_states
+                WHERE source_event_id = $1 ORDER BY artifact_code ASC`,
+          stageKey ? [sourceEventId, stageKey] : [sourceEventId],
         ),
       );
     },

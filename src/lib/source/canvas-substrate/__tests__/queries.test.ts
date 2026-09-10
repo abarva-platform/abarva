@@ -1,4 +1,8 @@
-import { getStageSubstrate, listEffectiveEvidenceStatesForEvent } from "../queries";
+import {
+  getStageSubstrate,
+  listArtifactStatesForEventStage,
+  listEffectiveEvidenceStatesForEvent,
+} from "../queries";
 import type {
   SourceEventArtifactStateRow,
   SourceEventEvidenceStateRow,
@@ -13,9 +17,12 @@ const mockAdapter = {
   listEventFactRows: jest.fn(),
 };
 
-jest.mock("@/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter", () => ({
-  selectSourceCanvasSubstrateReadAdapter: jest.fn(() => mockAdapter),
-}));
+jest.mock(
+  "@/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter",
+  () => ({
+    selectSourceCanvasSubstrateReadAdapter: jest.fn(() => mockAdapter),
+  }),
+);
 
 describe("canvas substrate queries", () => {
   beforeEach(() => {
@@ -24,6 +31,20 @@ describe("canvas substrate queries", () => {
     mockAdapter.listGateCriterionStateRows.mockResolvedValue([]);
     mockAdapter.listEvidenceStateRows.mockResolvedValue([]);
     mockAdapter.listEventFactRows.mockResolvedValue([]);
+  });
+
+  it("scopes artifact-state body hydration to the viewed stage", async () => {
+    mockAdapter.listArtifactStateRows.mockResolvedValue([
+      artifactRow({ artifact_code: "d09_rfp_pack", stage_key: "rfp" }),
+    ]);
+
+    const rows = await listArtifactStatesForEventStage("event-1", "rfp");
+
+    expect(mockAdapter.listArtifactStateRows).toHaveBeenCalledWith(
+      "event-1",
+      "rfp",
+    );
+    expect(rows[0]?.artifactCode).toBe("d09_rfp_pack");
   });
 
   it("merges cited source_event_facts into effective evidence", async () => {
@@ -156,7 +177,9 @@ function evidenceRow(
   };
 }
 
-function factRow(overrides: Partial<SourceEventFactRow> = {}): SourceEventFactRow {
+function factRow(
+  overrides: Partial<SourceEventFactRow> = {},
+): SourceEventFactRow {
   return {
     id: "fact-1",
     source_event_id: "event-1",

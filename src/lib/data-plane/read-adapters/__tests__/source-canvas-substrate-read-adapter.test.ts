@@ -18,7 +18,9 @@ function fakeSession(
   handler: (sql: string, params: unknown[]) => unknown[],
 ): SessionRunner {
   return async (fn) =>
-    fn(async <R>(sql: string, params: unknown[]) => handler(sql, params) as R[]);
+    fn(
+      async <R>(sql: string, params: unknown[]) => handler(sql, params) as R[],
+    );
 }
 
 /** A Supabase mock; the `.from(...).select().eq().order()` chain resolves. */
@@ -40,7 +42,10 @@ function fakeSupabase(result: { data: unknown; error: unknown }): {
     calls.push({ method: 'order', args });
     return Promise.resolve(result);
   };
-  return { client: { from: () => builder } as unknown as SupabaseClient, calls };
+  return {
+    client: { from: () => builder } as unknown as SupabaseClient,
+    calls,
+  };
 }
 
 describe('selectSourceCanvasSubstrateReadAdapter', () => {
@@ -57,27 +62,61 @@ describe('selectSourceCanvasSubstrateReadAdapter', () => {
 
   it('returns the Azure adapter when ABARVA_DATA_PLANE=azure-postgres', () => {
     process.env.ABARVA_DATA_PLANE = 'azure-postgres';
-    expect(selectSourceCanvasSubstrateReadAdapter().name).toBe('azure-postgres');
+    expect(selectSourceCanvasSubstrateReadAdapter().name).toBe(
+      'azure-postgres',
+    );
   });
 
   it('honors an explicit plane argument over the env var', () => {
     process.env.ABARVA_DATA_PLANE = 'azure-postgres';
-    expect(selectSourceCanvasSubstrateReadAdapter('supabase').name).toBe('supabase');
+    expect(selectSourceCanvasSubstrateReadAdapter('supabase').name).toBe(
+      'supabase',
+    );
   });
 });
 
 describe('supabaseSourceCanvasSubstrateReadAdapter', () => {
   it('reads artifact states scoped to source_event_id ordered by artifact_code', async () => {
-    const { client, calls } = fakeSupabase({ data: [{ id: 'a-1' }], error: null });
-    const adapter = createSupabaseSourceCanvasSubstrateReadAdapter(() => client);
+    const { client, calls } = fakeSupabase({
+      data: [{ id: 'a-1' }],
+      error: null,
+    });
+    const adapter = createSupabaseSourceCanvasSubstrateReadAdapter(
+      () => client,
+    );
     const rows = await adapter.listArtifactStateRows('evt-1');
 
     expect(rows).toEqual([{ id: 'a-1' }]);
     expect(
-      calls.some((c) => c.method === 'eq' && c.args[0] === 'source_event_id'
-        && c.args[1] === 'evt-1'),
+      calls.some(
+        (c) =>
+          c.method === 'eq' &&
+          c.args[0] === 'source_event_id' &&
+          c.args[1] === 'evt-1',
+      ),
     ).toBe(true);
-    expect(calls.some((c) => c.method === 'order' && c.args[0] === 'artifact_code')).toBe(true);
+    expect(
+      calls.some((c) => c.method === 'order' && c.args[0] === 'artifact_code'),
+    ).toBe(true);
+  });
+
+  it('can scope artifact-state bodies to the viewed stage', async () => {
+    const { client, calls } = fakeSupabase({
+      data: [{ id: 'a-1' }],
+      error: null,
+    });
+    const adapter = createSupabaseSourceCanvasSubstrateReadAdapter(
+      () => client,
+    );
+
+    await adapter.listArtifactStateRows('evt-1', 'rfp');
+
+    expect(
+      calls.some(
+        (c) =>
+          c.method === 'eq' && c.args[0] === 'stage_key' && c.args[1] === 'rfp',
+      ),
+    ).toBe(true);
   });
 
   it('reads gate criterion + evidence states with their orderings', async () => {
@@ -93,20 +132,33 @@ describe('supabaseSourceCanvasSubstrateReadAdapter', () => {
   });
 
   it('reads non-stale event facts newest first', async () => {
-    const { client, calls } = fakeSupabase({ data: [{ id: 'fact-1' }], error: null });
-    const adapter = createSupabaseSourceCanvasSubstrateReadAdapter(() => client);
+    const { client, calls } = fakeSupabase({
+      data: [{ id: 'fact-1' }],
+      error: null,
+    });
+    const adapter = createSupabaseSourceCanvasSubstrateReadAdapter(
+      () => client,
+    );
     const rows = await adapter.listEventFactRows('evt-1');
 
     expect(rows).toEqual([{ id: 'fact-1' }]);
     expect(
-      calls.some((c) => c.method === 'eq' && c.args[0] === 'source_event_id'
-        && c.args[1] === 'evt-1'),
+      calls.some(
+        (c) =>
+          c.method === 'eq' &&
+          c.args[0] === 'source_event_id' &&
+          c.args[1] === 'evt-1',
+      ),
     ).toBe(true);
     expect(
-      calls.some((c) => c.method === 'eq' && c.args[0] === 'is_stale'
-        && c.args[1] === false),
+      calls.some(
+        (c) =>
+          c.method === 'eq' && c.args[0] === 'is_stale' && c.args[1] === false,
+      ),
     ).toBe(true);
-    expect(calls.some((c) => c.method === 'order' && c.args[0] === 'captured_at')).toBe(true);
+    expect(
+      calls.some((c) => c.method === 'order' && c.args[0] === 'captured_at'),
+    ).toBe(true);
   });
 
   it('throws with the pre-seam helper prefix on a query error', async () => {
@@ -155,8 +207,25 @@ describe('azureSourceCanvasSubstrateReadAdapter', () => {
     expect(seen.every((s) => s.params[0] === 'evt-1')).toBe(true);
   });
 
+  it('uses a parameterized stage predicate for scoped artifact-state reads', async () => {
+    const seen: { sql: string; params: unknown[] }[] = [];
+    const adapter = createAzureSourceCanvasSubstrateReadAdapter(
+      fakeSession((sql, params) => {
+        seen.push({ sql, params });
+        return [];
+      }),
+    );
+
+    await adapter.listArtifactStateRows('evt-1', 'rfp');
+
+    expect(seen[0].sql).toContain('stage_key = $2');
+    expect(seen[0].params).toEqual(['evt-1', 'rfp']);
+  });
+
   it('returns an empty array when the query yields no rows', async () => {
-    const adapter = createAzureSourceCanvasSubstrateReadAdapter(fakeSession(() => []));
+    const adapter = createAzureSourceCanvasSubstrateReadAdapter(
+      fakeSession(() => []),
+    );
     expect(await adapter.listEvidenceStateRows('evt-empty')).toEqual([]);
   });
 });
