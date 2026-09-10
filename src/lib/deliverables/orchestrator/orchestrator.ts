@@ -31,6 +31,7 @@ import { validateDeliverableQuality } from "./quality-validator";
 import {
   mapWithConcurrency,
   extractUnsupportedFigureClaims,
+  repairEvidenceBackedUncitedFigures,
   repairUncitedFigures,
   summariseSection,
   assembleDeliverable,
@@ -252,7 +253,11 @@ export async function runDeliverableOrchestration(
       const parsed = extractJson<RenderableSection>(res.text);
       const body =
         parsed && parsed.bodyMarkdown ? parsed.bodyMarkdown : res.text;
-      const unsupported = extractUnsupportedFigureClaims(body);
+      const citationRepairedBody = repairEvidenceBackedUncitedFigures(
+        body,
+        evidence,
+      );
+      const unsupported = extractUnsupportedFigureClaims(citationRepairedBody);
       for (const claim of unsupported) {
         unsupportedFigureClaims.push({
           sectionKey: s.key,
@@ -275,10 +280,10 @@ export async function runDeliverableOrchestration(
       return {
         key: s.key,
         title: (parsed && parsed.title) || s.title,
-        bodyMarkdown: repairUncitedFigures(body),
-        // Keep what the model actually wrote, so the quality gate judges the
-        // original claim rather than the repaired one — see RenderableSection.
-        rawBodyMarkdown: body,
+        bodyMarkdown: repairUncitedFigures(citationRepairedBody),
+        // Keep the evidence-backed citation repair visible to validation while
+        // leaving invented/transformed figures unsupported.
+        rawBodyMarkdown: citationRepairedBody,
         groundingMode: s.groundingMode,
         citationsUsed,
       };

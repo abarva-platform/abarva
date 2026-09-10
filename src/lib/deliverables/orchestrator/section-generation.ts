@@ -51,6 +51,8 @@ export async function mapWithConcurrency<T, R>(
 // Mirror of quality-validator.ts countUnsupportedClaims — keep in lockstep.
 const FACT_LIKE =
   /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
+const FACT_TOKEN_RE =
+  /(\$\s?\d[\d,]*(?:\.\d+)?[kmb]?|\b\d{1,3}(?:,\d{3})+\b|\b\d+(?:\.\d+)?%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/gi;
 const SUPPORTED =
   /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
 const DECISIVE_RECOMMENDATION =
@@ -69,6 +71,67 @@ export function extractUnsupportedFigureClaims(markdown: string): string[] {
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter((s) => FACT_LIKE.test(s) && !SUPPORTED.test(s));
+}
+
+function normalizeFactToken(value: string): string {
+  return value.toLowerCase().replace(/[\s,$]/g, "");
+}
+
+function factTokens(value: string): string[] {
+  const matches = value.match(FACT_TOKEN_RE) ?? [];
+  return Array.from(new Set(matches.map(normalizeFactToken)));
+}
+
+function sentenceEvidenceCitations(
+  sentence: string,
+  evidence: readonly GovernedEvidenceItem[],
+): number[] {
+  const tokens = factTokens(sentence);
+  if (tokens.length === 0) return [];
+  const backedTokens = new Set<string>();
+  const citations = new Set<number>();
+  for (const item of evidence) {
+    const itemTokens = new Set(factTokens(`${item.label} ${item.statement}`));
+    const matchingTokens = tokens.filter((token) => itemTokens.has(token));
+    if (matchingTokens.length > 0) {
+      matchingTokens.forEach((token) => backedTokens.add(token));
+      citations.add(item.citationNumber);
+    }
+  }
+  if (tokens.some((token) => !backedTokens.has(token))) return [];
+  return Array.from(citations).sort((a, b) => a - b);
+}
+
+function appendCitations(sentence: string, citations: readonly number[]): string {
+  const suffix = citations.map((n) => `[${n}]`).join("");
+  if (!suffix) return sentence;
+  return sentence.replace(/([.!?])?(\s*)$/u, (_match, punctuation = "", whitespace = "") => {
+    if (punctuation) return ` ${suffix}${punctuation}${whitespace}`;
+    return ` ${suffix}${whitespace}`;
+  });
+}
+
+/**
+ * Add citations only when an uncited numeric/date token exactly appears in the governed
+ * evidence bundle. This is intentionally narrower than `repairUncitedFigures`: it fixes
+ * citation omissions for known facts, while invented/transformed figures still flow to
+ * the unsupported-claim blocker.
+ */
+export function repairEvidenceBackedUncitedFigures(
+  markdown: string,
+  evidence: readonly GovernedEvidenceItem[],
+): string {
+  if (!markdown || evidence.length === 0) return markdown;
+  const sentences = markdown.split(/(?<=[.!?])\s+/);
+  let changed = false;
+  const repaired = sentences.map((sentence) => {
+    if (!FACT_LIKE.test(sentence) || SUPPORTED.test(sentence)) return sentence;
+    const citations = sentenceEvidenceCitations(sentence, evidence);
+    if (citations.length === 0) return sentence;
+    changed = true;
+    return appendCitations(sentence, citations);
+  });
+  return changed ? repaired.join(" ") : markdown;
 }
 
 /**
@@ -549,9 +612,14 @@ export function assembleDeliverable(
   const finalSections = cleanedSections.map((section) => ({
     ...section,
     bodyMarkdown: sanitizeClientFacingArtifactMarkdown(
-      repairUncitedFigures(section.bodyMarkdown),
+      repairUncitedFigures(
+        repairEvidenceBackedUncitedFigures(section.bodyMarkdown, evidence),
+      ),
     ),
-    rawBodyMarkdown: section.rawBodyMarkdown ?? section.bodyMarkdown,
+    rawBodyMarkdown: repairEvidenceBackedUncitedFigures(
+      section.rawBodyMarkdown ?? section.bodyMarkdown,
+      evidence,
+    ),
   }));
   const combinedClaims: UnsupportedFigureClaim[] = [
     ...(options.unsupportedClaims ?? []),
