@@ -354,6 +354,9 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     );
     expect(p.user).toContain("Workshop Agenda and Session Notes appendix");
     expect(p.user).toContain("leadership, teams, decision rights, locations");
+    expect(p.user).toContain("Every sentence containing a number");
+    expect(p.user).toContain("that same sentence");
+    expect(p.user).toContain("Open Inputs Required");
   });
 
   it("P2 package contract makes Word the editable phase record and HTML the visual companion", () => {

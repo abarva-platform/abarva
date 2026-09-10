@@ -564,6 +564,11 @@ Required structures:
 P2 evidence-specific requirements:
 - Start with a metrics-backed diagnostic thesis. If the evidence packet contains exact metrics,
   do not describe the issue generically; use the exact numbers and explain what they imply.
+- Every sentence containing a number, date, dollar value, percentage, range, ratio, approximation
+  such as about/roughly/~, or arithmetic-derived implication must carry its own [n] citation in
+  that same sentence or an explicit [ASSUMPTION TO VALIDATE: ...], [EVIDENCE MISSING: ...], or
+  [CLIENT TO COMPLETE: ...] tag. If the source is absent from the assigned evidence, route the
+  claim to Open Inputs Required instead of writing uncited diagnostic prose.
 - Include exact available metrics in the executive summary and evidence matrix.
 - Use the exception taxonomy from uploaded evidence; include owners and risk levels when available.
 - Distinguish validated metrics from finance-validation caveats.

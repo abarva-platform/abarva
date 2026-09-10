@@ -286,6 +286,36 @@ describe("multi-pass prompt builder", () => {
     expect(section.user).toMatch(/ENFORCED SECTION-SIZE RULES/);
     expect(section.user).toMatch(/WRITE ONLY THIS SECTION/);
   });
+
+  it("P2 discovery section prompt requires same-sentence citations for numeric diagnostic claims", () => {
+    const discoveryReq = amsRfpRequest({
+      module: "moves",
+      useCaseArchetype: "AI_PDLC",
+      deliverableType: "discovery_report",
+      qualityBar: resolveQualityBar("moves", "discovery_report"),
+    });
+    const discoveryBrief = getArtifactBrief(discoveryReq);
+    const p = buildPassPrompt("section_draft", {
+      req: discoveryReq,
+      brief: discoveryBrief,
+      evidence: discoveryReq.governedEvidenceBundle.slice(0, 2),
+      outlineSummary: "1. Current State Diagnostic",
+      section: {
+        key: "current_state",
+        title: "Current State Diagnostic",
+        groundingMode: "mixed",
+        evidenceCitations: [1, 2],
+        assumptionsUsed: [],
+        placeholders: [],
+        rationale: "Explain the evidence-backed current-state diagnosis.",
+      },
+    });
+
+    expect(p.user).toMatch(/DISCOVERY METRIC DISCIPLINE/);
+    expect(p.user).toMatch(/same sentence/i);
+    expect(p.user).toMatch(/disagreement rates, counts, totals/i);
+    expect(p.user).toMatch(/Open Inputs Required/);
+  });
 });
 
 describe("plan validation (gate before drafting)", () => {
