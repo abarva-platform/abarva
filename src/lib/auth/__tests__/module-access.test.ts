@@ -14,6 +14,20 @@ describe('module access resolver', () => {
     expect(access.noWorkspaceAssigned).toBe(false);
   });
 
+  it('treats legacy Moves metadata as Programs access', () => {
+    const access = resolveModuleAccess({
+      role: 'client',
+      email: 'operator@example.com',
+      publicMetadata: { moduleAccess: ['home', 'moves', 'source', 'tower'] },
+    });
+
+    expect(access.modules).toContain('programs');
+    expect(access.modules).toContain('source');
+    expect(access.modules).toContain('intelligence');
+    expect(access.modules).toContain('tower');
+    expect(access.noWorkspaceAssigned).toBe(false);
+  });
+
   it('grants Source-only operators Source plus common context surfaces', () => {
     const access = resolveModuleAccess({
       role: 'client',
@@ -42,7 +56,7 @@ describe('module access resolver', () => {
   it('keeps Setup limited to client-pinned admin users', () => {
     const access = resolveModuleAccess({
       role: 'client',
-      email: 'nina.patel@meridian-health.example.com',
+      email: 'admin@abarva.ai',
       publicMetadata: { moduleAccess: ['programs'] },
     });
 

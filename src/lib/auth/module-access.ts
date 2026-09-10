@@ -26,6 +26,7 @@ function normalizeEmail(email: string | null | undefined): string {
 }
 
 function normalizeModule(value: unknown): ProductModule | null {
+  if (value === 'moves') return 'programs';
   if (
     value === 'setup' ||
     value === 'programs' ||
