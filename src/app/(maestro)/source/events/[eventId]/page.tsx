@@ -4,7 +4,10 @@ import { getSourcingEvent, isUuid } from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
-import { listEffectiveEvidenceStatesForEvent } from "@/lib/source/canvas-substrate";
+import {
+  listArtifactStatesForEventStage,
+  listEffectiveEvidenceStatesForEvent,
+} from "@/lib/source/canvas-substrate";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import {
@@ -242,14 +245,23 @@ export default async function SourceEventDetailPage({
     // 11-stage event can push the RSC payload into megabytes and freeze browser
     // verification. File cards do not render body previews, so content remains a
     // server-side artifact concern rather than default route payload.
-    const analyticsRegistryArtifacts =
-      await listSourceArtifactsForSourceEventId(event.id).catch((error) => {
-        console.error(
-          "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
-          error instanceof Error ? error.message : String(error),
-        );
-        return [];
-      });
+    const [analyticsRegistryArtifacts, currentStageArtifactStates] =
+      await Promise.all([
+        listSourceArtifactsForSourceEventId(event.id).catch((error) => {
+          console.error(
+            "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
+            error instanceof Error ? error.message : String(error),
+          );
+          return [];
+        }),
+        listArtifactStatesForEventStage(event.id, viewStage).catch((error) => {
+          console.error(
+            "[SourceEventDetailPage] current-stage artifact state read failed for analytics shell",
+            error instanceof Error ? error.message : String(error),
+          );
+          return [];
+        }),
+      ]);
     analyticsEvidenceStates = await listEffectiveEvidenceStatesForEvent(
       event.id,
     ).catch((error) => {
@@ -259,7 +271,18 @@ export default async function SourceEventDetailPage({
       );
       return [];
     });
-    const analyticsArtifacts = [...analyticsRegistryArtifacts];
+    const analyticsArtifacts = [
+      ...currentStageArtifactStates.map((artifact) => ({
+        id: artifact.id,
+        artifactCode: artifact.artifactCode,
+        artifactKind: artifact.artifactCode,
+        stageKey: artifact.stage,
+        status: artifact.status,
+        body: artifact.body,
+        bodyGenerationMetadata: artifact.bodyGenerationMetadata,
+      })),
+      ...analyticsRegistryArtifacts,
+    ];
     const analyticsHydrationArtifacts = analyticsArtifacts.flatMap(
       (artifact) =>
         artifact.stageKey ? [{ stageKey: artifact.stageKey }] : [],

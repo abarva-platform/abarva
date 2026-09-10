@@ -4922,7 +4922,11 @@ function ArtifactLifecyclePanel({
     (row) => row.stageLabel === view.stage.label,
   );
   const currentStageActionRows = currentStageRows.filter(
-    (row) => row.lifecycleState !== "client_final",
+    (row) =>
+      row.lifecycleState !== "client_final" ||
+      row.consultingGate.state === "required_not_run" ||
+      row.consultingGate.state === "failed" ||
+      row.contentQuality.state === "blocked",
   );
   const standardsCsvHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
     buildSourceArtifactStandardsCsv(lifecycle.rows),
@@ -5273,8 +5277,12 @@ function CurrentStageArtifactReviewQueue({
   rows: SourceArtifactLifecycleRow[];
   onClientFinalAccepted: () => void;
 }) {
-  const blockers = rows.filter((row) =>
-    ["ai_draft", "not_registered"].includes(row.lifecycleState),
+  const blockers = rows.filter(
+    (row) =>
+      ["ai_draft", "not_registered"].includes(row.lifecycleState) ||
+      row.consultingGate.state === "required_not_run" ||
+      row.consultingGate.state === "failed" ||
+      row.contentQuality.state === "blocked",
   );
   const evidenceOnly = rows.filter(
     (row) => row.lifecycleState === "evidence_only",
@@ -5425,7 +5433,16 @@ function CurrentStageArtifactReviewRow({
         </div>
       </div>
       <div>
-        {row.lifecycleState === "ai_draft" ? (
+        {row.lifecycleState === "client_final" &&
+        row.consultingGate.required &&
+        row.consultingGate.state !== "passed" ? (
+          <ReviewArtifactQualityButton
+            eventId={eventId}
+            artifactCode={row.code}
+            artifactName={row.name}
+            onReviewed={onClientFinalAccepted}
+          />
+        ) : row.lifecycleState === "ai_draft" ? (
           <AcceptClientFinalButton
             eventId={eventId}
             artifactCode={row.code}
@@ -5532,11 +5549,109 @@ function GenerateArtifactButton({
   );
 }
 
+function ReviewArtifactQualityButton({
+  eventId,
+  artifactCode,
+  artifactName,
+  onReviewed,
+}: {
+  eventId: string;
+  artifactCode: string;
+  artifactName: string;
+  onReviewed: () => void;
+}) {
+  const router = useRouter();
+  const [state, setState] = useState<
+    | { phase: "idle" }
+    | { phase: "reviewing" }
+    | { phase: "error"; message: string }
+  >({ phase: "idle" });
+
+  const review = async () => {
+    setState({ phase: "reviewing" });
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(artifactCode)}/generate`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reviewExistingBody: true }),
+        },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        detail?: string;
+      } | null;
+      if (!response.ok || payload?.ok !== true) {
+        throw new Error(
+          payload?.detail ??
+            payload?.error ??
+            `Quality review failed with HTTP ${response.status}.`,
+        );
+      }
+      setState({ phase: "idle" });
+      onReviewed();
+      router.refresh();
+    } catch (error) {
+      setState({
+        phase: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : `Could not review ${artifactName}.`,
+      });
+    }
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      <button
+        type="button"
+        data-testid={`source-review-artifact-quality-${artifactCode}`}
+        disabled={state.phase === "reviewing"}
+        onClick={() => void review()}
+        style={{
+          ...BUTTON_STYLE,
+          background: ANALYTICS.INK,
+          color: "#fff",
+          cursor: state.phase === "reviewing" ? "wait" : "pointer",
+          opacity: state.phase === "reviewing" ? 0.65 : 1,
+          padding: "9px 12px",
+        }}
+      >
+        {state.phase === "reviewing" ? "Reviewing..." : "Run quality review"}
+      </button>
+      {state.phase === "error" ? (
+        <span
+          role="alert"
+          style={{ color: ANALYTICS.RUST, fontSize: 11.5, lineHeight: 1.35 }}
+        >
+          {state.message}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function artifactReviewAction(row: SourceArtifactLifecycleRow): {
   title: string;
   detail: string;
   cta: string;
 } {
+  if (
+    row.lifecycleState === "client_final" &&
+    row.consultingGate.required &&
+    row.consultingGate.state !== "passed"
+  ) {
+    return {
+      title: "Run the consulting-grade review on the accepted package.",
+      detail:
+        "The accepted body is preserved; Source records a separate quality receipt and fails closed if the package does not pass.",
+      cta: "Run review",
+    };
+  }
   if (row.lifecycleState === "ai_draft") {
     return {
       title: "Review the draft and accept the client-final version.",
@@ -5786,6 +5901,17 @@ function LifecycleStageRows({
                   artifactName={row.name}
                   hasGeneratedDraft
                   onAccepted={onClientFinalAccepted}
+                />
+              </div>
+            ) : row.lifecycleState === "client_final" &&
+              row.consultingGate.required &&
+              row.consultingGate.state !== "passed" ? (
+              <div style={{ marginTop: 10 }}>
+                <ReviewArtifactQualityButton
+                  eventId={eventId}
+                  artifactCode={row.code}
+                  artifactName={row.name}
+                  onReviewed={onClientFinalAccepted}
                 />
               </div>
             ) : null}

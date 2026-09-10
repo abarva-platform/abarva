@@ -31,9 +31,10 @@ export async function listArtifactStatesForEvent(
   try {
     // Physical read goes through the data-plane seam (Supabase default,
     // Azure Postgres opt-in via ABARVA_DATA_PLANE).
-    const rows = await selectSourceCanvasSubstrateReadAdapter().listArtifactStateRows(
-      sourceEventId,
-    );
+    const rows =
+      await selectSourceCanvasSubstrateReadAdapter().listArtifactStateRows(
+        sourceEventId,
+      );
     return rows.map(artifactStateRowToView);
   } catch (error) {
     // An unconfigured env (tests, local dev without DB) or a query error —
@@ -46,15 +47,36 @@ export async function listArtifactStatesForEvent(
   }
 }
 
+export async function listArtifactStatesForEventStage(
+  sourceEventId: string,
+  stageKey: string,
+): Promise<SourceEventArtifactState[]> {
+  try {
+    const rows =
+      await selectSourceCanvasSubstrateReadAdapter().listArtifactStateRows(
+        sourceEventId,
+        stageKey,
+      );
+    return rows.map(artifactStateRowToView);
+  } catch (error) {
+    console.error(
+      '[listArtifactStatesForEventStage]',
+      error instanceof Error ? error.message : error,
+    );
+    return [];
+  }
+}
+
 export async function listGateCriterionStatesForEvent(
   sourceEventId: string,
 ): Promise<SourceEventGateCriterion[]> {
   try {
     // Physical read goes through the data-plane seam (Supabase default,
     // Azure Postgres opt-in via ABARVA_DATA_PLANE).
-    const rows = await selectSourceCanvasSubstrateReadAdapter().listGateCriterionStateRows(
-      sourceEventId,
-    );
+    const rows =
+      await selectSourceCanvasSubstrateReadAdapter().listGateCriterionStateRows(
+        sourceEventId,
+      );
     return rows.map(gateCriterionStateRowToView);
   } catch (error) {
     // An unconfigured env (tests, local dev without DB) or a query error —
@@ -73,9 +95,10 @@ export async function listEvidenceStatesForEvent(
   try {
     // Physical read goes through the data-plane seam (Supabase default,
     // Azure Postgres opt-in via ABARVA_DATA_PLANE).
-    const rows = await selectSourceCanvasSubstrateReadAdapter().listEvidenceStateRows(
-      sourceEventId,
-    );
+    const rows =
+      await selectSourceCanvasSubstrateReadAdapter().listEvidenceStateRows(
+        sourceEventId,
+      );
     return rows.map(evidenceStateRowToView);
   } catch (error) {
     // An unconfigured env (tests, local dev without DB) or a query error —
@@ -92,9 +115,10 @@ export async function listEventFactsForEvent(
   sourceEventId: string,
 ): Promise<SourceEventFactRow[]> {
   try {
-    const rows = await selectSourceCanvasSubstrateReadAdapter().listEventFactRows(
-      sourceEventId,
-    );
+    const rows =
+      await selectSourceCanvasSubstrateReadAdapter().listEventFactRows(
+        sourceEventId,
+      );
     return rows;
   } catch (error) {
     console.error(
@@ -162,7 +186,9 @@ export function countGateProgress(
   fromStage: string,
 ): { met: number; total: number; allMet: boolean } {
   const slice = criteria.filter((c) => c.fromStage === fromStage);
-  const met = slice.filter((c) => c.state === 'met' || c.state === 'waived').length;
+  const met = slice.filter(
+    (c) => c.state === 'met' || c.state === 'waived',
+  ).length;
   const total = slice.length;
   return { met, total, allMet: total > 0 && met === total };
 }

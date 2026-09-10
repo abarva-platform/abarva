@@ -334,6 +334,54 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(routerRefresh).toHaveBeenCalled();
   });
 
+  it("reviews an accepted flagship artifact without replacing its body", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        artifact: { artifactCode: "d05_scope_memo" },
+      }),
+    });
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={SAMPLE_SCOPE_STAGE}
+        artifacts={[
+          {
+            id: "scope-memo-final",
+            artifactCode: "d05_scope_memo",
+            stageKey: "scope",
+            status: "client_final",
+            isClientFinal: true,
+            title: "Scope Memo with Boundaries",
+            body: "Approved scope memo with evidence basis, decision, boundaries, risks, and next actions.",
+          },
+        ]}
+        initialWorkspace="files"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getAllByTestId("source-review-artifact-quality-d05_scope_memo")[0],
+    );
+
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/evt-scope/artifacts/d05_scope_memo/generate",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reviewExistingBody: true }),
+        },
+      ),
+    );
+    expect(routerRefresh).toHaveBeenCalled();
+  });
+
   it("opens the approval workspace once all required stage inputs are complete", () => {
     const completedScopeStage = {
       ...SAMPLE_SCOPE_STAGE,
@@ -661,7 +709,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     ).toHaveTextContent("Ready to decide");
   });
 
-  it("shows BAFO scenario compare on the actual stage-ready workflow surface", () => {
+  it("does not substitute a modeled BAFO scenario without live vendor context", () => {
     const completedBafoStage = {
       ...SAMPLE_BAFO_STAGE,
       tasks: SAMPLE_BAFO_STAGE.tasks.map((task) => ({
@@ -692,14 +740,11 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       screen.getByTestId("source-shell-stage-ready-panel"),
     ).toHaveTextContent("Required inputs are complete");
     expect(
-      screen.getByTestId("source-bafo-scenario-compare"),
-    ).toHaveTextContent("What can we realistically improve in BAFO?");
-    expect(
-      screen.getByTestId("source-bafo-scenario-compare"),
-    ).toHaveTextContent("Base-case upside to test");
-    expect(
-      screen.getByTestId("source-bafo-scenario-compare"),
-    ).toHaveTextContent("Prepare negotiation brief");
+      screen.queryByTestId("source-bafo-scenario-compare"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-v2-steps")).not.toHaveTextContent(
+      /Vendor A|Vendor B|Vendor C/,
+    );
   });
 
   it("renders a completed terminal approval without another approve action", () => {
@@ -877,7 +922,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
   });
 
-  it("shows pricing comparability drilldown on the actual live workflow canvas", () => {
+  it("fails closed when pricing has no normalized vendor response context", () => {
     render(
       <SourceAnalyticsCanvas
         event={{
@@ -894,25 +939,17 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     );
 
     expect(screen.getByTestId("source-stage-decision-lens")).toHaveTextContent(
-      "Why is this vendor not comparable?",
+      "No normalized vendor response profiles are available for this event",
     );
     expect(
       screen.getByTestId("source-pricing-completeness-summary"),
-    ).toHaveTextContent("Comparable vendors");
+    ).toHaveTextContent("0/0");
     expect(
-      screen.getByTestId("source-pricing-cross-vendor-gaps"),
-    ).toHaveTextContent("Application count varies by vendor");
+      screen.queryByTestId("source-pricing-cross-vendor-gaps"),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByTestId("source-pricing-vendor-vendor-b"),
-    ).toHaveTextContent(
-      "SOC-2 compliance cost gap and security tower exclusion",
-    );
-    expect(
-      screen.getByTestId("source-pricing-vendor-vendor-c"),
-    ).toHaveTextContent("155 applications in scope");
-    expect(
-      screen.getByRole("button", { name: /Send clarification request/ }),
-    ).toBeDisabled();
+      screen.queryByText(/Vendor A|Vendor B|Vendor C/),
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
   });
 });
