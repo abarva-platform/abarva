@@ -83,7 +83,7 @@ export default async function RenewalCockpitPage({
               fabricates a renewal.
             </p>
             <Link
-              href="/source/workspace"
+              href="/source"
               style={{
                 fontFamily: SHELL.SANS,
                 fontSize: 13,

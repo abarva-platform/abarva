@@ -855,7 +855,7 @@ function SourceShellRail({
       }}
     >
       <Link
-        href="/source/workspace"
+        href="/source"
         style={{
           color: ANALYTICS.MUTED,
           fontSize: 12,

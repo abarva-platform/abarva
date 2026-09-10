@@ -104,8 +104,8 @@ export default async function SourceNotFound() {
                 marginTop: 28,
               }}
             >
-              <SourceUnavailableLink href="/source/workspace" primary>
-                Open Source workspace
+              <SourceUnavailableLink href="/source" primary>
+                Open Source
               </SourceUnavailableLink>
               <SourceUnavailableLink href="/home">
                 Go to Home

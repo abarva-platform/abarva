@@ -399,14 +399,12 @@ function ModuleHeader({
         <Link
           href={
             selected
-              ? `/source/workspace?contractId=${encodeURIComponent(
-                  selected.contractId,
-                )}`
-              : "/source/workspace"
+              ? `/source?contractId=${encodeURIComponent(selected.contractId)}`
+              : "/source"
           }
           style={GHOST_BUTTON_STYLE}
         >
-          Source workspace
+          Source
         </Link>
         <Link href="/source/new" style={GHOST_BUTTON_STYLE}>
           New 11-stage event

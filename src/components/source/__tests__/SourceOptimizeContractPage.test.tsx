@@ -422,9 +422,10 @@ describe("SourceOptimizeContractPage", () => {
     expect(
       screen.getByText(/focused 7-step incumbent-contract path/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Source workspace" }),
-    ).toHaveAttribute("href", "/source/workspace?contractId=CTR-090");
+    expect(screen.getByRole("link", { name: "Source" })).toHaveAttribute(
+      "href",
+      "/source?contractId=CTR-090",
+    );
     expect(screen.getByText("Contract exposure")).toBeInTheDocument();
     expect(screen.getByText("Opportunity rows")).toBeInTheDocument();
     expect(screen.getByText("Open evidence gaps")).toBeInTheDocument();

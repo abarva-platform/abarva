@@ -1,11 +1,5 @@
-import { SHELL } from '@/lib/shell/shell-tokens'
+import { SourceWorkspaceLoadingShell } from "./workspace/SourceWorkspaceLoadingShell";
 
 export default function SourceLoading() {
-  return (
-    <div style={{ flex: 1, background: SHELL.PAPER, padding: '32px 40px' }}>
-      <div style={{ background: SHELL.GRAY_BG, borderRadius: 6, height: 20, marginBottom: 12, opacity: 0.6, maxWidth: 320 }} />
-      <div style={{ background: SHELL.GRAY_BG, borderRadius: 6, height: 20, marginBottom: 12, opacity: 0.6, maxWidth: 480 }} />
-      <div style={{ background: SHELL.GRAY_BG, borderRadius: 6, height: 20, marginBottom: 12, opacity: 0.6, maxWidth: 240 }} />
-    </div>
-  )
+  return <SourceWorkspaceLoadingShell />;
 }

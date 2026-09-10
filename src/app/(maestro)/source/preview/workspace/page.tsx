@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 /**
  * Compatibility route for historical proof links.
  *
- * The governed commercial workspace is now a product route at /source/workspace;
+ * The governed commercial workspace is now the canonical /source route;
  * keep this redirect so older proof URLs and bookmarks continue to resolve
  * without leaving "preview" in the operator-facing address bar.
  */
@@ -34,5 +34,5 @@ export default async function SourceWorkspacePreviewRedirect({
     }
   }
   const queryString = query.toString();
-  redirect(`/source/workspace${queryString ? `?${queryString}` : ""}`);
+  redirect(`/source${queryString ? `?${queryString}` : ""}`);
 }

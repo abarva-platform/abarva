@@ -793,7 +793,7 @@ export function SourceIndexPage() {
 
         {/* Source book front door — the canonical portfolio entry for Source. */}
         <Link
-          href="/source/workspace"
+          href="/source"
           style={{
             display: "block",
             background: SHELL.CARD_WHITE,

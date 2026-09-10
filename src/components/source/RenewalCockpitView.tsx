@@ -159,7 +159,7 @@ export function RenewalCockpitView({
     >
       <header style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <Link
-          href="/source/workspace"
+          href="/source"
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 12,
