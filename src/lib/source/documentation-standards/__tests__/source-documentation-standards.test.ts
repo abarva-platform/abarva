@@ -170,8 +170,24 @@ describe("QA gate runner", () => {
     expect(report.blockers).toHaveLength(0);
     expect(report.warnings).toHaveLength(0);
     expect(report.results.find((row) => row.gate.id === "decision_clarity")?.result.message).toContain(
-      "solicitation purpose",
+      "vendor-facing purpose",
     );
+  });
+
+  it("accepts a response-control pack opening without forcing RFP-specific wording", () => {
+    const content = `# Vendor Response Control Pack
+
+    ## Why This Pack Exists
+    This pack makes supplier proposals comparable, evidence-backed, and ready for challenge.
+    Vendors must complete the controlled response workbook. Narrative proposals may supplement it but may not replace required structured fields.`;
+
+    const report = runDocumentQA({ artifactCode: "d11", content });
+    const decisionGate = report.results.find(
+      (row) => row.gate.id === "decision_clarity",
+    );
+
+    expect(decisionGate?.result.pass).toBe(true);
+    expect(decisionGate?.result.message).toContain("recipient action");
   });
 
   it("allows legitimate security-vector language while still blocking vector infrastructure jargon", () => {
