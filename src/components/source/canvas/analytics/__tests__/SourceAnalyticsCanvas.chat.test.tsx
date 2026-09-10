@@ -62,7 +62,7 @@ jest.mock("@/components/agent/AskAnythingBar", () => ({
 }));
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
-import { SAMPLE_SCOPE_STAGE } from "../sample-view-model";
+import { SAMPLE_RFP_STAGE, SAMPLE_SCOPE_STAGE } from "../sample-view-model";
 import type { StageAnalyticsView } from "../view-model";
 import type { SourcingEventSummary } from "@/lib/source/types";
 import {
@@ -330,7 +330,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
             title: "RFP Package",
             fileFormat: "docx",
             status: "draft",
-            body: "Recommendation: release the RFP package after approval. Decision requested: approve vendor release. Our internal sensitivity is $3.5M walk-away. This d09 was AI generated.",
+            body: "Scope of services: managed-services operations. Vendors must provide a proposal response against every requirement. Our internal sensitivity is $3.5M walk-away. This d09 was AI generated.",
             description:
               "Generated Source deliverable. [compliance-review-flagged]",
           },
@@ -524,6 +524,66 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.queryByTestId("source-artifact-review-queue-row-d09_rfp_pack"),
     ).not.toBeInTheDocument();
+  });
+
+  it("separates evidence items from blockers and offers replacement for a blocked client final", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent({ currentStageKey: "rfp", currentStageLabel: "RFP" })}
+        viewStage="rfp"
+        tenantName="Demo Client"
+        stageView={SAMPLE_RFP_STAGE}
+        artifacts={[
+          {
+            id: "rfp-final",
+            artifactCode: "d09_rfp_pack",
+            stageKey: "rfp",
+            status: "client_final",
+            isClientFinal: true,
+            isCurrentAuthoritative: true,
+            title: "Approved RFP Package",
+            body: "Scope of services: managed-services operations. Vendors must provide a proposal response against every requirement. Our internal sensitivity is $3.5M walk-away.",
+            bodyGenerationMetadata: {
+              qualityGate: {
+                passed: true,
+                overallScore: 9,
+                finalSummary: "Passed consulting-grade review.",
+                unsupportedClaims: [],
+                missingEvidence: [],
+              },
+            },
+          },
+          {
+            id: "rfi-evidence",
+            artifactCode: "d10_rfi_summary",
+            stageKey: "rfp",
+            artifactGroup: "upload",
+            status: "preliminary",
+            title: "RFI Summary",
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /^files & deliverables$/i }),
+    );
+
+    const queue = screen.getByTestId("source-artifact-review-queue");
+    expect(queue).toHaveTextContent(/3 blockers/);
+    expect(queue).toHaveTextContent(/1 evidence item/);
+    const blockedFinal = screen.getByTestId(
+      "source-artifact-review-queue-row-d09_rfp_pack",
+    );
+    expect(blockedFinal).toHaveTextContent(
+      "Repair the accepted final before relying on it.",
+    );
+    expect(
+      screen.getByTestId("source-accept-client-final-toggle-d09_rfp_pack"),
+    ).toHaveTextContent("Replace Client Final");
+    expect(
+      screen.getByTestId("source-artifact-review-queue-row-d10_rfi_summary"),
+    ).toHaveTextContent("Review supporting evidence");
   });
 
   it("summarizes Source evidence parsing and search readiness without implying enterprise promotion", () => {
