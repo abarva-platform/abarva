@@ -43,6 +43,29 @@ WITH scope AS (
   FROM source.contract_application_scope
   GROUP BY tenant_key, contract_id
 ),
+opportunity_ranked AS (
+  SELECT
+    tenant_key,
+    contract_id,
+    action_candidate_id,
+    NULLIF(title, '') AS title,
+    NULLIF(next_action, '') AS next_action,
+    NULLIF(accountable_role, '') AS accountable_role,
+    candidate_amount_usd,
+    row_number() OVER (
+      PARTITION BY tenant_key, contract_id
+      ORDER BY
+        CASE priority
+          WHEN 'high' THEN 1
+          WHEN 'medium' THEN 2
+          WHEN 'low' THEN 3
+          ELSE 4
+        END,
+        decision_due_date NULLS LAST,
+        action_candidate_id
+    ) AS action_rank
+  FROM source.contract_action_candidate_v1
+),
 opportunity AS (
   SELECT
     tenant_key,
@@ -50,10 +73,10 @@ opportunity AS (
     count(*)::bigint AS opportunity_rows,
     count(*) FILTER (WHERE candidate_amount_usd IS NOT NULL AND candidate_amount_usd > 0)::bigint AS sized_rows,
     COALESCE(sum(candidate_amount_usd) FILTER (WHERE candidate_amount_usd IS NOT NULL), 0)::numeric AS candidate_amount_usd,
-    string_agg(DISTINCT NULLIF(title, ''), '; ') FILTER (WHERE NULLIF(title, '') IS NOT NULL) AS top_actions,
-    string_agg(DISTINCT NULLIF(next_action, ''), '; ') FILTER (WHERE NULLIF(next_action, '') IS NOT NULL) AS next_actions,
-    string_agg(DISTINCT NULLIF(accountable_role, ''), ', ') FILTER (WHERE NULLIF(accountable_role, '') IS NOT NULL) AS accountable_roles
-  FROM source.contract_action_candidate_v1
+    string_agg(DISTINCT title, '; ') FILTER (WHERE title IS NOT NULL AND action_rank <= 5) AS top_actions,
+    string_agg(DISTINCT next_action, '; ') FILTER (WHERE next_action IS NOT NULL AND action_rank <= 3) AS next_actions,
+    string_agg(DISTINCT accountable_role, ', ') FILTER (WHERE accountable_role IS NOT NULL) AS accountable_roles
+  FROM opportunity_ranked
   GROUP BY tenant_key, contract_id
 ),
 contract_rows AS (
