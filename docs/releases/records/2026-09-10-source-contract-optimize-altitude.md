@@ -63,7 +63,7 @@ Merge through a pull request to `main`. The repo-owned Azure Container Apps main
 
 ## Rollback Plan
 
-Revert the pull request and let the repo-owned ACA main deploy workflow publish the reverted image. Drop or stop reading `source.contract_tab_intelligence_v1` by reverting the migration/projection change if the data projection causes issues. No tenant source rows require rollback.
+Revert the pull request and let the repo-owned ACA main deploy workflow publish the reverted image. Because this release also introduces `source.contract_tab_intelligence_v1`, rollback has a separate data-plane step if the projection itself causes issues: run the approved migration/projection path to drop or replace the view, or restore the prior Layer 4 projection that does not expose it. No tenant source rows require rollback.
 
 ## Audit Evidence
 
@@ -75,4 +75,5 @@ Revert the pull request and let the repo-owned ACA main deploy workflow publish 
 ## Known Gaps
 
 - This release creates the governed tab-intelligence projection, but it does not itself reparse source documents, add missing archetype mappings, or load new evidence rows.
+- Optimize tab opener text deliberately caps action summaries to the top governed actions; the detailed lever table remains the full source for all loaded opportunities.
 - Discount benchmarks remain governed data-layer work; the tab-intelligence projection refuses to invent market comparables, rates, or derived savings.
