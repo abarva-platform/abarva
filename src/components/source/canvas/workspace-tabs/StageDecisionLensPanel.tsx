@@ -252,9 +252,10 @@ function TransitionEvidenceLens({
         Proposal commitments are not execution readiness
       </h3>
       <p style={BODY_STYLE}>
-        These commitments come from normalized vendor responses. Go-live
-        readiness remains blocked until an awarded vendor, accepted plan, named
-        owners, dates, dependencies, and entry/exit evidence exist.
+        These commitments come from normalized vendor responses and do not, by
+        themselves, establish go-live readiness. Use the accepted transition
+        packet and approval record below as the controlling evidence for named
+        owners, dates, dependencies, and entry/exit criteria.
       </p>
       {profiles.length === 0 ? (
         <FailClosedMessage>

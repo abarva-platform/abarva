@@ -1264,7 +1264,7 @@ describe("Source answer engine", () => {
         sourcingArchetype: "ams_outsourcing",
         sourcingEvent: {
           ...contextBundle.sourcingEvent!,
-          currentStageKey: "transition",
+          currentStageKey: "value",
         },
         blockers: [],
         missingInputs: [],
@@ -1274,7 +1274,8 @@ describe("Source answer engine", () => {
 
     const rendered = JSON.stringify(answer?.responseParts ?? []);
     expect(answer?.title).toBe("Source stage readiness answer");
-    expect(answer?.answerText).toContain("current stage is transition");
+    expect(answer?.answerText).toContain("requested stage is transition");
+    expect(answer?.answerText).toContain("event lifecycle is currently value");
     expect(rendered).not.toContain("TCO iceberg");
     expect(rendered).not.toContain("No vendor proposals submitted");
     expect(rendered).not.toContain("Delivery-model gate");

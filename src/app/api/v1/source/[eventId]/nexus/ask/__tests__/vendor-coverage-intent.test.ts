@@ -116,6 +116,10 @@ describe("looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)", () => {
     );
     expect(ROUTE_SOURCE).toContain("buildCrossTenantRefusalAnswer");
     expect(ROUTE_SOURCE).toContain("looksLikeCrossTenantDataRequest");
+    expect(ROUTE_SOURCE).toContain("buildPricingComparisonGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikePricingComparisonQuestion");
+    expect(ROUTE_SOURCE).toContain("buildBafoInstructionsGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikeBafoInstructionsQuestion");
     expect(ROUTE_SOURCE).toContain("buildEvidenceReadinessGovernedAnswer");
     expect(ROUTE_SOURCE).toContain("looksLikeEvidenceReadinessQuestion");
     expect(ROUTE_SOURCE).toContain("buildArtifactQualityGovernedAnswer");
@@ -125,6 +129,15 @@ describe("looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)", () => {
     expect(ROUTE_SOURCE).toContain('"source_analytics"');
     expect(ROUTE_SOURCE).toContain('"moves_ava_chat_hardening"');
     expect(ROUTE_SOURCE).toContain('type: "module-handoff"');
+    expect(
+      ROUTE_SOURCE.indexOf(
+        "looksLikePricingComparisonQuestion(normalizedBody.prompt)",
+      ),
+    ).toBeLessThan(
+      ROUTE_SOURCE.indexOf(
+        "looksLikeSourceEventDecisionAndValueQuestion(normalizedBody.prompt)",
+      ),
+    );
     expect(
       ROUTE_SOURCE.indexOf(
         "looksLikeSourceEventDecisionAndValueQuestion(normalizedBody.prompt)",

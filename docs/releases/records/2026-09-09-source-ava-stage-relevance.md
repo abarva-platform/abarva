@@ -30,6 +30,11 @@ Source aVa answers now show delivery-model, should-cost, and proposal-normalizat
 
 - Recognize named Source-stage readiness questions, including Transition and Selection.
 - Keep award-readiness, holdback, and blocker questions out of the accepted-selection-memo intent.
+- Route vendor price-comparison questions to the normalized response packages before the event value ledger.
+- Refuse price ranking and savings calculations until every vendor has accepted numeric commercial facts on a comparable basis.
+- Route BAFO ask questions to a governed instruction pack derived from the same normalized response challenges as the BAFO page.
+- Distinguish the stage named in a readiness question from the event's current lifecycle stage.
+- Clarify that proposal commitments alone do not prove Transition readiness and that the accepted transition packet plus approval record are controlling.
 - Suppress delivery-model panels unless the question asks about the delivery model.
 - Suppress should-cost panels unless the question asks about should-cost or TCO.
 - Suppress proposal-normalization panels unless the question asks for proposal, bid, or price normalization/comparison.
@@ -37,7 +42,7 @@ Source aVa answers now show delivery-model, should-cost, and proposal-normalizat
 
 ## QA / Validation
 
-- PASS — 60 focused Source answer-engine tests.
+- PASS — 83 focused Source answer-engine, governed-intent, stage-lens, and API route-order tests.
 - PASS — regression proving a Transition-readiness answer contains no TCO iceberg, empty-proposal message, delivery-model gate, or generic retained-organization gap.
 - PASS — scoped ESLint.
 - PASS — TypeScript no-emit compile with `NODE_OPTIONS=--max-old-space-size=8192`.
