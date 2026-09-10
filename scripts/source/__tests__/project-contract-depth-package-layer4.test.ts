@@ -129,6 +129,9 @@ describe("contract depth package Layer 4 overlay job", () => {
       "source_contract_tab_intelligence_v1_package: 35",
     );
     expect(source).toContain("source_ava_grounding_bundle_v1_rows: 6");
+    expect(source).toContain("source_stage <> 'signal'");
+    expect(source).toContain("source_amount_state <> 'not_sized'");
+    expect(source).toContain("signal-stage rows");
     expect(source).toContain(
       "deterministic_layer_unclaimed_credit_usd expected > 0",
     );

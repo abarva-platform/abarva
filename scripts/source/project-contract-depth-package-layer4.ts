@@ -1925,34 +1925,55 @@ async function rebuildViews(client: Client): Promise<void> {
     ),
     opportunity_ranked AS (
       SELECT
-        tenant_key,
-        contract_id,
-        action_candidate_id,
-        NULLIF(title, '') AS title,
-        NULLIF(next_action, '') AS next_action,
-        NULLIF(accountable_role, '') AS accountable_role,
-        candidate_amount_usd,
+        a.tenant_key,
+        a.contract_id,
+        a.action_candidate_id,
+        NULLIF(a.title, '') AS title,
+        NULLIF(a.next_action, '') AS next_action,
+        NULLIF(a.accountable_role, '') AS accountable_role,
+        a.candidate_amount_usd,
+        COALESCE(NULLIF(o.stage, ''), CASE WHEN a.candidate_amount_usd IS NOT NULL AND a.candidate_amount_usd > 0 THEN 'quantified' ELSE 'signal' END) AS source_stage,
+        COALESCE(NULLIF(o.amount_state, ''), CASE WHEN a.candidate_amount_usd IS NOT NULL AND a.candidate_amount_usd > 0 THEN 'exact' ELSE 'not_sized' END) AS source_amount_state,
+        o.confidence AS source_confidence,
         row_number() OVER (
-          PARTITION BY tenant_key, contract_id
+          PARTITION BY a.tenant_key, a.contract_id
           ORDER BY
-            CASE priority
+            CASE a.priority
               WHEN 'high' THEN 1
               WHEN 'medium' THEN 2
               WHEN 'low' THEN 3
               ELSE 4
             END,
-            decision_due_date NULLS LAST,
-            action_candidate_id
+            a.decision_due_date NULLS LAST,
+            a.action_candidate_id
         ) AS action_rank
-      FROM source.contract_action_candidate_v1
+      FROM source.contract_action_candidate_v1 a
+      LEFT JOIN source.optimization_opportunity o
+        ON o.tenant_key = a.tenant_key
+       AND o.contract_id = a.contract_id
+       AND o.opportunity_id = a.opportunity_id
     ),
     opportunity AS (
       SELECT
         tenant_key,
         contract_id,
         count(*)::bigint AS opportunity_rows,
-        count(*) FILTER (WHERE candidate_amount_usd IS NOT NULL AND candidate_amount_usd > 0)::bigint AS sized_rows,
-        COALESCE(sum(candidate_amount_usd) FILTER (WHERE candidate_amount_usd IS NOT NULL), 0)::numeric AS candidate_amount_usd,
+        count(*) FILTER (
+          WHERE candidate_amount_usd IS NOT NULL
+            AND candidate_amount_usd > 0
+            AND source_stage <> 'signal'
+            AND source_amount_state <> 'not_sized'
+        )::bigint AS sized_rows,
+        count(*) FILTER (
+          WHERE source_stage = 'signal'
+             OR source_amount_state = 'not_sized'
+             OR COALESCE(source_confidence, 1) < 0.5
+        )::bigint AS signal_rows,
+        COALESCE(sum(candidate_amount_usd) FILTER (
+          WHERE candidate_amount_usd IS NOT NULL
+            AND source_stage <> 'signal'
+            AND source_amount_state <> 'not_sized'
+        ), 0)::numeric AS candidate_amount_usd,
         string_agg(DISTINCT title, '; ') FILTER (WHERE title IS NOT NULL AND action_rank <= 5) AS top_actions,
         string_agg(DISTINCT next_action, '; ') FILTER (WHERE next_action IS NOT NULL AND action_rank <= 3) AS next_actions,
         string_agg(DISTINCT accountable_role, ', ') FILTER (WHERE accountable_role IS NOT NULL) AS accountable_roles
@@ -2147,7 +2168,7 @@ async function rebuildViews(client: Client): Promise<void> {
             WHEN COALESCE(opportunity.opportunity_rows, 0) > 0 THEN concat('Use these actions in sequence: ', COALESCE(opportunity.top_actions, 'loaded opportunity rows'), '. Every row remains candidate until the required approval or finance gate closes.')
             ELSE 'Do not recommend a vendor ask until an opportunity row, evidence basis, owner, and blocker are loaded.'
           END,
-          concat_ws('; ', concat(COALESCE(opportunity.opportunity_rows, 0)::text, ' opportunity rows'), concat(COALESCE(opportunity.sized_rows, 0)::text, ' sized rows'), CASE WHEN opportunity.accountable_roles IS NOT NULL THEN concat('owners: ', opportunity.accountable_roles) END),
+          concat_ws('; ', concat(COALESCE(opportunity.opportunity_rows, 0)::text, ' opportunity rows'), concat(COALESCE(opportunity.sized_rows, 0)::text, ' sized rows'), concat(COALESCE(opportunity.signal_rows, 0)::text, ' signal-stage rows'), CASE WHEN opportunity.accountable_roles IS NOT NULL THEN concat('owners: ', opportunity.accountable_roles) END),
           CASE WHEN COALESCE(opportunity.opportunity_rows, 0) = 0 THEN 'Load opportunity rows with action type, buyer ask, evidence reference, value state, owner, and next step.' ELSE NULL END,
           COALESCE(NULLIF(opportunity.next_actions, ''), 'Work only the governed opportunity rows; keep signal-stage rows unsized.'),
           'source.contract_action_candidate_v1 and source.contract_claim_card_v1',
