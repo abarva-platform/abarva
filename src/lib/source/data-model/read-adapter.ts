@@ -60,6 +60,7 @@ import type {
   SourceContractPerformancePeriodRow,
   SourceAvaGroundingBundleRow,
   SourceCloudCommitmentCoverageRow,
+  SourceContractTabIntelligenceRow,
   SourcePageStorylineRow,
   SourceContractSpendMonthlyRow,
   SourceContractVendor360Row,
@@ -961,6 +962,23 @@ export async function listSourcePageStoryline(
   return rows.map(normalizeSourcePageStorylineRow);
 }
 
+export async function listContractTabIntelligence(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractTabIntelligenceRow[]> {
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractTabIntelligenceRow>(
+      tenantKey,
+      `SELECT *
+	     FROM source.contract_tab_intelligence_v1
+	    WHERE tenant_key = ANY($1::text[])
+	      AND contract_id = $2
+	    ORDER BY sort_order, tab_key`,
+      [contractId],
+    );
+  return rows.map(normalizeSourceContractTabIntelligenceRow);
+}
+
 export async function listSourceAvaGroundingBundles(
   tenantKey: string,
 ): Promise<SourceAvaGroundingBundleRow[]> {
@@ -1262,6 +1280,16 @@ function normalizeSourcePageStorylineRow(
     ...row,
     sort_order: numberValue(row.sort_order) ?? 0,
     citation_basis_json: jsonObject(row.citation_basis_json),
+  };
+}
+
+function normalizeSourceContractTabIntelligenceRow(
+  row: SourceContractTabIntelligenceRow,
+): SourceContractTabIntelligenceRow {
+  return {
+    ...row,
+    sort_order: numberValue(row.sort_order) ?? 0,
+    provenance: jsonObject(row.provenance),
   };
 }
 

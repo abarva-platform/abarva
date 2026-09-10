@@ -1296,6 +1296,32 @@ describe("Source workspace ECL browser-surface proof", () => {
           evidencePerformance: null,
           performancePeriods: [],
           spendMonths: [],
+          contractTabIntelligence: [
+            {
+              tenant_key: "meridian-health",
+              contract_id: selectedContract.contract_id,
+              vendor_ref: selectedContract.vendor_ref,
+              vendor_name: selectedContract.vendor_name,
+              contract_name: selectedContract.contract_name,
+              tab_key: "optimize",
+              sort_order: 70,
+              headline: "Two Databricks levers are governed for outreach.",
+              allowed_executive_statement:
+                "Use the approved opportunity rows; signal rows stay unsized.",
+              supporting_evidence_summary:
+                "2 opportunity rows; 1 sized row; owners: VP Technology Sourcing",
+              missing_evidence_summary:
+                "Signal rows need benchmark and per-SKU evidence before they carry value.",
+              action_prompt: "Work the sequence before sending terms.",
+              source_basis: "source.contract_action_candidate_v1",
+              confidence_level: "high",
+              confidence_rationale:
+                "Generated from reviewed contract and opportunity rows.",
+              review_status: "system_generated_from_reviewed_sources",
+              provenance: { "source.contract_action_candidate_v1": 2 },
+              derived_from_load_run_id: "unit-proof",
+            },
+          ],
         }),
     } as Response);
 
@@ -1323,6 +1349,14 @@ describe("Source workspace ECL browser-surface proof", () => {
       expect(screen.getByLabelText("Negotiation levers")).toBeTruthy();
     });
 
+    expect(
+      screen.getByText("Two Databricks levers are governed for outreach."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        /Signal rows need benchmark and per-SKU evidence before they carry value/,
+      ),
+    ).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Levers" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Sequence" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Comparator" })).toBeTruthy();

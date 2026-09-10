@@ -30,13 +30,18 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   getContractEvidencePerformanceSummary: jest.fn(),
   getContractOptimizationEvidencePack: jest.fn(),
   getContractOptimizationOpportunitySet: jest.fn(),
+  listCloudCommitmentCoverageRows: jest.fn(),
   listContractApplicationScope: jest.fn(),
   listContractEvidencePricing: jest.fn(),
   listContractEvidenceScope: jest.fn(),
   listContractFinancialExposure: jest.fn(),
   listContractInitiativeDependency: jest.fn(),
   listContractOperationalPerformance: jest.fn(),
+  listContractPerformancePeriods: jest.fn(),
+  listContractSpendMonthly: jest.fn(),
+  listContractTabIntelligence: jest.fn(),
   listDocExtractionsForSubject: jest.fn(),
+  listDocFilesForContract: jest.fn(),
   listLatestTowerObservationsForSubjects: jest.fn(),
   listTowerValueClaimsForSubjects: jest.fn(),
 }));
@@ -69,13 +74,18 @@ import {
   getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
   getContractOptimizationOpportunitySet,
+  listCloudCommitmentCoverageRows,
   listContractApplicationScope,
   listContractEvidencePricing,
   listContractEvidenceScope,
   listContractFinancialExposure,
   listContractInitiativeDependency,
   listContractOperationalPerformance,
+  listContractPerformancePeriods,
+  listContractSpendMonthly,
+  listContractTabIntelligence,
   listDocExtractionsForSubject,
+  listDocFilesForContract,
   listLatestTowerObservationsForSubjects,
   listTowerValueClaimsForSubjects,
 } from "@/lib/source/data-model/read-adapter";
@@ -107,8 +117,16 @@ const mockGetContractOptimizationOpportunitySet =
 const mockListContractEvidencePricing =
   listContractEvidencePricing as jest.Mock;
 const mockListContractEvidenceScope = listContractEvidenceScope as jest.Mock;
+const mockListCloudCommitmentCoverageRows =
+  listCloudCommitmentCoverageRows as jest.Mock;
+const mockListContractPerformancePeriods =
+  listContractPerformancePeriods as jest.Mock;
+const mockListContractSpendMonthly = listContractSpendMonthly as jest.Mock;
+const mockListContractTabIntelligence =
+  listContractTabIntelligence as jest.Mock;
 const mockListDocExtractionsForSubject =
   listDocExtractionsForSubject as jest.Mock;
+const mockListDocFilesForContract = listDocFilesForContract as jest.Mock;
 const mockListLatestTowerObservationsForSubjects =
   listLatestTowerObservationsForSubjects as jest.Mock;
 const mockListTowerValueClaimsForSubjects =
@@ -150,10 +168,15 @@ beforeEach(() => {
   mockListContractEvidenceScope.mockResolvedValue([]);
   mockListContractEvidencePricing.mockResolvedValue([]);
   mockGetContractEvidencePerformanceSummary.mockResolvedValue(null);
+  mockListContractPerformancePeriods.mockResolvedValue([]);
+  mockListContractSpendMonthly.mockResolvedValue([]);
+  mockListCloudCommitmentCoverageRows.mockResolvedValue([]);
+  mockListContractTabIntelligence.mockResolvedValue([]);
   mockCollectContractSubjectRefs.mockReturnValue(["CTR-0006", "VEN-0006"]);
   mockListLatestTowerObservationsForSubjects.mockResolvedValue([]);
   mockListTowerValueClaimsForSubjects.mockResolvedValue([]);
   mockListDocExtractionsForSubject.mockResolvedValue([]);
+  mockListDocFilesForContract.mockResolvedValue([]);
   mockGetContractOptimizationEvidencePack.mockResolvedValue(null);
   mockGetContractOptimizationOpportunitySet.mockResolvedValue(null);
   mockBuildContract360View.mockReturnValue({
@@ -192,6 +215,10 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
       "CTR-0006",
     );
     expect(listContractFinancialExposure).toHaveBeenCalledWith("meridian");
+    expect(listContractTabIntelligence).toHaveBeenCalledWith(
+      "meridian",
+      "CTR-0006",
+    );
   });
 
   it("authorizes a cross-session requested client before reading contract detail", async () => {
@@ -310,6 +337,32 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
       expect.objectContaining({
         contract,
         applicationScope: projectionScope,
+      }),
+    );
+  });
+
+  it("passes governed tab intelligence into the contract-detail view builder", async () => {
+    const tabIntelligence = [
+      {
+        tenant_key: "meridian",
+        contract_id: "CTR-0006",
+        tab_key: "scope",
+        headline: "Scope is reviewed at load time.",
+      },
+    ];
+    mockListContractTabIntelligence.mockResolvedValueOnce(tabIntelligence);
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian",
+      ),
+      params(),
+    );
+
+    expect(res.status).toBe(200);
+    expect(buildContract360View).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contractTabIntelligence: tabIntelligence,
       }),
     );
   });

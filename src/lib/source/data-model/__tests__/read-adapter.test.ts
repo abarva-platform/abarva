@@ -10,6 +10,7 @@ import {
   listContractEvidenceScope,
   listContractPerformancePeriods,
   listContractSpendMonthly,
+  listContractTabIntelligence,
   listContractFinancialExposure,
   listContractOperationalPerformance,
   listContractVendor360,
@@ -597,6 +598,32 @@ describe("listContractVendor360 tenant-key resolution", () => {
           },
         ];
       }
+      if (sql.includes("FROM source.contract_tab_intelligence_v1")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-M365-001",
+            vendor_ref: "vendor-microsoft",
+            vendor_name: "Microsoft Corporation",
+            contract_name: "Microsoft Enterprise Agreement",
+            tab_key: "optimize",
+            sort_order: "70",
+            headline: "One governed optimization lever is loaded.",
+            allowed_executive_statement:
+              "Use the opportunity row and keep finance confirmation separate.",
+            supporting_evidence_summary: "1 opportunity row; 1 sized row",
+            missing_evidence_summary: null,
+            action_prompt: "Approve the outreach before sending terms.",
+            source_basis: "source.contract_action_candidate_v1",
+            confidence_level: "high",
+            confidence_rationale:
+              "Generated from reviewed contract and opportunity rows.",
+            review_status: "system_generated_from_reviewed_sources",
+            provenance: { "source.contract_action_candidate_v1": 1 },
+            derived_from_load_run_id: "source-contract-depth-package-test",
+          },
+        ];
+      }
       if (sql.includes("FROM source.ava_grounding_bundle_v1")) {
         return [
           {
@@ -621,10 +648,17 @@ describe("listContractVendor360 tenant-key resolution", () => {
       listSourceContractClaimCards("meridian"),
       listSourceVendorPositions("meridian"),
       listSourcePageStoryline("meridian"),
+      listContractTabIntelligence("meridian", "MER-TECH-M365-001"),
       listSourceAvaGroundingBundles("meridian"),
     ]);
 
-    expect(rows.map((row) => row.length)).toEqual([1, 1, 1, 1, 1, 1]);
+    expect(rows.map((row) => row.length)).toEqual([1, 1, 1, 1, 1, 1, 1]);
+    expect(rows[5][0]).toMatchObject({
+      tab_key: "optimize",
+      sort_order: 70,
+      headline: "One governed optimization lever is loaded.",
+      provenance: { "source.contract_action_candidate_v1": 1 },
+    });
     expect(
       run.mock.calls
         .filter(
@@ -634,11 +668,12 @@ describe("listContractVendor360 tenant-key resolution", () => {
     ).toEqual([
       ["meridian-health"],
       ["meridian-health"],
-      ["meridian-health"],
-      ["meridian-health"],
-      ["meridian-health"],
-      ["meridian-health"],
-    ]);
+        ["meridian-health"],
+        ["meridian-health"],
+        ["meridian-health"],
+        ["meridian-health"],
+        ["meridian-health"],
+      ]);
     expect(JSON.stringify(run.mock.calls)).not.toContain(
       "meridian_health_global",
     );

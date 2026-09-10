@@ -114,6 +114,7 @@ describe("contract depth package Layer 4 overlay job", () => {
       "source.contract_claim_card_v1",
       "source.vendor_position_v1",
       "source.source_page_storyline_v1",
+      "source.contract_tab_intelligence_v1",
       "source.ava_grounding_bundle_v1",
     ];
     expectedViews.forEach((viewName) => {
@@ -124,6 +125,9 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("source_contract_claim_card_v1_package: 6");
     expect(source).toContain("source_vendor_position_v1_package: 5");
     expect(source).toContain("source_page_storyline_v1_rows: 5");
+    expect(source).toContain(
+      "source_contract_tab_intelligence_v1_package: 35",
+    );
     expect(source).toContain("source_ava_grounding_bundle_v1_rows: 6");
     expect(source).toContain(
       "deterministic_layer_unclaimed_credit_usd expected > 0",
@@ -177,7 +181,7 @@ describe("contract depth package Layer 4 overlay job", () => {
       "COALESCE(op.cloud_sev1_sev2_incidents, 0)::numeric AS cloud_sev1_sev2_incidents",
     );
     expect(source).toContain(
-      "WHEN c.source_confidence ~ '^[0-9]+(\\\\.[0-9]+)?$' THEN c.source_confidence::numeric",
+      "WHEN c.source_confidence::text ~ '^[0-9]+(\\\\.[0-9]+)?$' THEN c.source_confidence::numeric",
     );
     expect(source).toContain("ELSE 0.9::numeric");
     expect(source).not.toContain(

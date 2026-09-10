@@ -37,6 +37,7 @@ import type {
   SourceContractActionCandidateRow,
   SourceContractEvidenceCoverageRow,
   SourceContractPerformancePeriodRow,
+  SourceContractTabIntelligenceRow,
   SourceVendorPositionRow,
   SourceVendorContractPortfolioRow,
 } from "@/lib/source/data-model/types";
@@ -7473,6 +7474,28 @@ export function contractTabNarrative(
     | SourceWorkspacePortfolioData["impact"]["claimCards"][number]
     | undefined,
 ) {
+  const governedTab = contractTabIntelligenceFor(
+    tab,
+    vm.detail?.contractTabIntelligence ?? [],
+  );
+  if (governedTab) {
+    return {
+      headline: governedTab.headline,
+      body: [
+        governedTab.allowed_executive_statement,
+        governedTab.supporting_evidence_summary
+          ? `Evidence basis: ${governedTab.supporting_evidence_summary}.`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+      provenance: `${tab} intelligence · ${governedTab.review_status}`,
+      blocker:
+        governedTab.missing_evidence_summary ??
+        governedTab.action_prompt ??
+        "Stay within the governed tab evidence.",
+    };
+  }
   if (tab === "Scope") {
     if (scopeRows.length > 0) {
       const namedRows = scopeRows.filter(
@@ -7631,6 +7654,14 @@ export function contractTabNarrative(
     blocker:
       "Use this as the opening talk track; dollar claims still stay bounded to loaded opportunity and finance rows.",
   };
+}
+
+function contractTabIntelligenceFor(
+  tab: string,
+  rows: readonly SourceContractTabIntelligenceRow[],
+) {
+  const key = tab.toLowerCase();
+  return rows.find((row) => row.tab_key.toLowerCase() === key) ?? null;
 }
 
 function uniqueTruthy(values: readonly (string | null | undefined)[]) {
