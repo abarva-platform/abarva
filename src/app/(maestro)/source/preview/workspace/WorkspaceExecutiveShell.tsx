@@ -2836,7 +2836,7 @@ function ProductShellOptimizationExecutiveStrip({
   // Sized and signal-stage dollars are reported apart. A signal has no
   // defensible number behind it yet, so folding it into one total would
   // overstate exactly the figure a CFO will challenge first.
-  const sizedTotalUsd = sizedNegotiableTotalUsd(view.opportunities);
+  const sizedTotalUsd = sizedOpportunityTotalUsd(view.opportunities);
   const items = [
     {
       label: "Levers",
@@ -2845,7 +2845,7 @@ function ProductShellOptimizationExecutiveStrip({
       tone: "#0a0a0b",
     },
     {
-      label: "Sized negotiable",
+      label: "Sized opportunity",
       value: sizedTotalUsd > 0 ? money(sizedTotalUsd) : "Not sized",
       detail: "excludes signal-stage rows; candidate, not booked",
       tone: SOURCE_CHART_PALETTE.teal,
@@ -2987,7 +2987,7 @@ export function contractValueTypeSummary(view: {
  * excluded on purpose: they have no evidence behind a number yet, so folding
  * them into a headline would overstate the first figure a CFO challenges.
  */
-export function sizedNegotiableTotalUsd(
+export function sizedOpportunityTotalUsd(
   opportunities: readonly {
     readonly stageRaw: string;
     readonly amountUsd: number | null;
