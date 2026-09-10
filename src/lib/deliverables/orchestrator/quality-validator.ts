@@ -11,6 +11,7 @@ import type {
   QualityValidationResult,
   RenderableDeliverable,
 } from "./types";
+import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { scanForInternalLeaks } from "./source-register";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 
@@ -214,6 +215,29 @@ export function validateDeliverableQuality(
     /\[EVIDENCE MISSING|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE/.test(
       body,
     ) || clientCompleteCount > 0;
+  const wholeDocumentText = [
+    body,
+    doc.tables
+      .map(
+        (t) =>
+          `${t.title}\n${t.columns.join(" | ")}\n${t.rows
+            .map((row) => row.join(" | "))
+            .join("\n")}`,
+      )
+      .join("\n\n"),
+    doc.recommendation,
+    doc.nextActions.join("\n"),
+  ].join("\n\n");
+  const missingRequiredEvidenceSignals = (req.requiredEvidenceSignals ?? [])
+    .filter(
+      (signal) =>
+        !carriesRequiredEvidenceSignal(
+          wholeDocumentText,
+          signal.label,
+          signal.statement,
+        ),
+    )
+    .map((signal) => `${signal.label} [${signal.citationNumber}]`);
 
   // ── BLOCKERS ──
   if (leakedInternalTags.length > 0)
@@ -263,6 +287,11 @@ export function validateDeliverableQuality(
     blockers.push("no risk/issues/dependencies table");
   if (qb.requiresCitations && hasSourceRegister && !/\[\d+\]/.test(body))
     blockers.push("source register present but body cites nothing [n]");
+  if (missingRequiredEvidenceSignals.length > 0) {
+    blockers.push(
+      `required evidence signal(s) missing from client artifact: ${missingRequiredEvidenceSignals.join("; ")}`,
+    );
+  }
   if (
     qb.requiresClientCompleteChecklistWhenGaps &&
     req.missingEvidence.length + req.clientCompleteItems.length > 0 &&
@@ -417,6 +446,8 @@ export function validateDeliverableQuality(
       hasCentralTension,
       hasOptionsConsidered,
       hasEvidenceGapsNoted,
+      requiredEvidenceSignalCount: req.requiredEvidenceSignals?.length ?? 0,
+      missingRequiredEvidenceSignalCount: missingRequiredEvidenceSignals.length,
       readingTimeMinutes: Math.max(1, Math.round(bodyWordCount / 200)),
       manualEditNeeded: warnings.length > 0 || blockers.length > 0,
       wordBand,

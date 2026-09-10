@@ -148,6 +148,15 @@ function buildContextBlock(
               `- ${a.statement} (basis: ${a.basis}${a.mustValidate ? "; VALIDATE" : ""})`,
           )
           .join("\n");
+  const requiredSignals =
+    req.requiredEvidenceSignals && req.requiredEvidenceSignals.length > 0
+      ? req.requiredEvidenceSignals
+          .map(
+            (signal) =>
+              `- [${signal.citationNumber}] ${signal.label}: ${signal.statement}`,
+          )
+          .join("\n")
+      : "(none selected)";
 
   const latitude = brief.fixedStructure
     ? `This artifact uses a FIXED STRUCTURE. Do not add sections, exhibits, tables, appendices, or decision views beyond the recommended structure unless explicitly listed under EXPECTED EXHIBITS or EXPECTED TABLES. Apply expert frameworks, synthesis, and executive language only within that fixed structure; qualitative industry context must never become a fabricated client fact.`
@@ -168,6 +177,12 @@ function buildContextBlock(
     ``,
     `AVAILABLE GOVERNED EVIDENCE (cite by [n]):`,
     renderEvidenceForPrompt(evidence),
+    ``,
+    `REQUIRED EVIDENCE SIGNALS TO CARRY FORWARD:`,
+    requiredSignals,
+    req.requiredEvidenceSignals && req.requiredEvidenceSignals.length > 0
+      ? `These are the metric-dense facts most likely to anchor the decision. Preserve the exact number/value and its meaning in the artifact, cited with the shown [n]. If they do not fit naturally in a section, carry them in a compact evidence-signals table.`
+      : ``,
     ``,
     `MISSING EVIDENCE (mark as [EVIDENCE MISSING] or [ASSUMPTION TO VALIDATE]):`,
     missing,
