@@ -118,6 +118,8 @@ describe("looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)", () => {
     expect(ROUTE_SOURCE).toContain("looksLikeCrossTenantDataRequest");
     expect(ROUTE_SOURCE).toContain("buildPricingComparisonGovernedAnswer");
     expect(ROUTE_SOURCE).toContain("looksLikePricingComparisonQuestion");
+    expect(ROUTE_SOURCE).toContain("buildBafoInstructionsGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikeBafoInstructionsQuestion");
     expect(ROUTE_SOURCE).toContain("buildEvidenceReadinessGovernedAnswer");
     expect(ROUTE_SOURCE).toContain("looksLikeEvidenceReadinessQuestion");
     expect(ROUTE_SOURCE).toContain("buildArtifactQualityGovernedAnswer");
