@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released; live-proven`
 
 ## Plain-English Summary
 
@@ -38,9 +38,11 @@ Layer 4 PRODUCTS, lane `global-control-lane`: Source contract-detail presentatio
 - PASS: ESLint on touched Source files.
 - PASS: TypeScript `tsc --noEmit --pretty false`.
 - PASS: Release record check.
-- NOT RUN: Pull request CI.
-- NOT RUN: ACA deploy through the repository-owned main workflow.
-- NOT RUN: Live signed-in Source Contract 360 smoke after deploy.
+- PASS: Pull request CI completed successfully before merge.
+- PASS: ACA deploy through the repository-owned main workflow, final run `34453299483`.
+- PASS: Independent ACA runtime invariant after final deploy at `2026-09-10T08:15:41.830Z`.
+- PASS: Live signed-in Source Contract 360 smoke after deploy. The selected contract page rendered a human-readable purpose block for the Databricks contract, including contract kind, vendor, title-derived scope, annual value, observed spend, scope rows, spend rows, and opportunity rows.
+- PASS: Live signed-in smoke confirmed unresolved extraction tokens and zero-row evidence counts were not shown in the contract-purpose block.
 
 ## Rollout Plan
 
@@ -48,13 +50,15 @@ Merge through pull request, then deploy through the repository-owned Azure Conta
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: Required for production runtime.
+- Repo-owned deploy workflow: Completed in final run `34453299483`.
 - Shared runtime mutators: None outside the repo-owned workflow.
-- Approved image digest: Pending.
-- ACA runtime invariant: Pending.
-- Worker image invariant: Pending.
+- Approved image digest: `sha256:6f1d7945b1252ec7c2d48fffc7720f0e3fc6d2cb75449abed7da6d74bcc2f624`.
+- Approved image: `acrabarvalab001.azurecr.io/abarva/web@sha256:6f1d7945b1252ec7c2d48fffc7720f0e3fc6d2cb75449abed7da6d74bcc2f624`.
+- ACA runtime invariant: Passed. Template image and the 100%-traffic revision image matched the approved digest.
+- Active revision: `ca-abarva-web-lab-eastus--m13effb3e` at 100% traffic.
+- Worker image invariant: Passed for `job-abarva-deliv-worker` and `job-abarva-deliv-worker-event`.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Selected contract detail page renders the purpose block from loaded fields without changing contract metrics or aVa behavior.
+- Live signed-in proof required: Completed for selected contract detail page and purpose-block readability.
 
 ## Rollback Plan
 
@@ -62,7 +66,11 @@ Revert the Source presentation change or roll production back to the previous he
 
 ## Audit Evidence
 
-Pull request, CI checks, runtime deploy evidence, and live signed-in Source Contract 360 smoke output after deployment.
+- Pull requests: `#7538` and follow-up readability polish `#7539`.
+- Final merge commit: `13effb3e99369313cc1c5a7e626f4a8eaebddc30`.
+- Final deploy evidence: GitHub Actions run `34453299483`; local artifact path `/tmp/aca-main-deploy-34453299483-evidence`.
+- Independent runtime invariant evidence: `/tmp/source-contract-purpose-polish-runtime-invariant-13effb3e`.
+- Live Source proof: selected Databricks contract page rendered `What this contract is` with a cloud-consumption commitment description, title-derived scope, annual value, observed spend, scope rows, spend rows, and opportunity rows. The proof also confirmed unresolved extraction tokens and zero-row document text counts were not rendered in the purpose block.
 
 ## Known Gaps
 
