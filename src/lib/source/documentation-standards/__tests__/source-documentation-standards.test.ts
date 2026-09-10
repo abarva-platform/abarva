@@ -144,6 +144,68 @@ describe("QA gate runner", () => {
     expect(report.passed).toBe(false);
   });
 
+  it("scores vendor packs against solicitation controls instead of executive recommendation language", () => {
+    const content = `# Request for Proposal
+
+    ## Purpose and scope
+    This request for proposal defines the scope of services and the supplier response required for managed application services.
+
+    ## Executive summary
+    ## Current-State Baseline
+    ## Scope towers
+    ## Estate summary
+    ## SLA obligations
+    ## Transition approach
+    ## Commercial model
+    ## Response instructions
+    ## Evaluation framework
+    ## Risk register
+    ## Gap register
+
+    ## Submission instructions
+    Submit the completed response by the submission deadline. An authorized representative must acknowledge the proposal validity period.`;
+
+    const report = runDocumentQA({ artifactCode: "d09", content });
+
+    expect(report.blockers).toHaveLength(0);
+    expect(report.warnings).toHaveLength(0);
+    expect(report.results.find((row) => row.gate.id === "decision_clarity")?.result.message).toContain(
+      "solicitation purpose",
+    );
+  });
+
+  it("allows legitimate security-vector language while still blocking vector infrastructure jargon", () => {
+    const base = `# Request for Proposal
+    ## Purpose and scope
+    This request for proposal defines the scope of services and vendor response instructions.
+    ## Executive summary
+    ## Current state baseline
+    ## Scope towers
+    ## Estate summary
+    ## SLA obligations
+    ## Transition approach
+    ## Commercial model
+    ## Response instructions
+    ## Evaluation framework
+    ## Risk register
+    ## Gap register
+    ## Submission instructions
+    Submit the completed response by the submission deadline.`;
+
+    expect(
+      runDocumentQA({
+        artifactCode: "d09",
+        content: `${base}\nAddress every identified threat vector.`,
+      }).blockers.join(" "),
+    ).not.toContain("Mechanical language");
+    expect(
+      runDocumentQA({
+        artifactCode: "d09",
+        content: `${base}\nThe internal vector database is the evidence substrate.`,
+      }).blockers.join(" "),
+    ).toContain("Mechanical language");
+  });
+
   it("does not block for length — no hard cap enforcement", () => {
     const longContent = `Recommendation: approve the sourcing strategy.
     Decision requested: authorize full RFP process.
