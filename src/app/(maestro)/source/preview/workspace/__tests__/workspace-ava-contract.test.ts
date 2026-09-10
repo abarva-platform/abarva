@@ -50,6 +50,12 @@ describe("Source Workspace aVa contract", () => {
     expect(workspaceClientSource).toContain("richText: true");
     expect(workspaceClientSource).toContain("answerOnlyStreaming: true");
     expect(workspaceClientSource).toContain("surfaceContext: vm.avaSurfaceContext");
+    expect(workspaceClientSource).toContain(
+      "composerDisabledReason={avaComposerDisabledReason}",
+    );
+    expect(workspaceClientSource).toContain(
+      "sourceAvaComposerDisabledReason",
+    );
     expect(workspaceClientSource).not.toContain(
       "JSON.stringify(vm.avaSurfaceContext)}. The user is asking",
     );

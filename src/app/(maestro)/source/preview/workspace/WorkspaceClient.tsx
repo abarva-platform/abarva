@@ -18,6 +18,7 @@ import {
   type AttachmentRef,
   type ChatMessage,
 } from "@/components/agent/AgentDock";
+import { sourceAvaComposerDisabledReason } from "./avaComposerGate";
 import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
 import { EclServingSurfaceCoverage } from "@/components/ecl/EclServingSurfaceCoverage";
 import { stripArtifactsForDisplay } from "@/lib/agent/artifacts";
@@ -289,6 +290,10 @@ export function WorkspaceClient({
     ],
   );
   const vm = useMemo(() => buildViewModel(logic), [logic]);
+  const avaComposerDisabledReason = sourceAvaComposerDisabledReason({
+    sourceContract360Mode: Boolean(vm.avaSurfaceContext.sourceContract360Mode),
+    detailState: vm.detailState,
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -571,6 +576,7 @@ export function WorkspaceClient({
           thread={thread}
           onMessage={onAvaMessage}
           suggestedActions={vm.avaSuggestedActions}
+          composerDisabledReason={avaComposerDisabledReason}
           surfaceContext={vm.avaSurfaceContext}
           workspace={
             <WorkspaceExecutiveShell
