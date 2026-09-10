@@ -6,20 +6,28 @@ BEGIN
      AND to_regclass('source.contract_application_scope') IS NOT NULL
      AND to_regclass('source.contract_evidence_coverage_v1') IS NOT NULL
      AND to_regclass('source.contract_action_candidate_v1') IS NOT NULL
-     AND EXISTS (
-       SELECT 1
+     AND (
+       SELECT count(*)
        FROM information_schema.columns
        WHERE table_schema = 'source'
          AND table_name = 'contract_360'
-         AND column_name = 'purpose_summary'
-     )
-     AND EXISTS (
-       SELECT 1
-       FROM information_schema.columns
-       WHERE table_schema = 'source'
-         AND table_name = 'contract_360'
-         AND column_name = 'document_page_text_count'
-     )
+         AND column_name = ANY(ARRAY[
+           'annual_value',
+           'commercial_thesis',
+           'contract_id',
+           'contract_name',
+           'document_page_text_count',
+           'end_date',
+           'evidence_boundary_summary',
+           'load_run_id',
+           'purpose_summary',
+           'relationship_summary',
+           'source_confidence',
+           'tenant_key',
+           'vendor_name',
+           'vendor_ref'
+         ])
+     ) = 14
   THEN
     EXECUTE $view$
 CREATE OR REPLACE VIEW source.contract_tab_intelligence_v1 AS
