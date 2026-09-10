@@ -290,6 +290,9 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toContain("Discovery Preparation table");
     expect(p.user).toContain("Discovery Activities table");
     expect(p.user).toContain("Target depth: 900-1,100 words");
+    expect(p.user).toContain(
+      "Write at least 700 words of prose before tables, exhibits, and appendices",
+    );
     expect(p.user).toContain("Discovery Preparation");
     expect(p.user).toContain("Discovery Guidebook");
     expect(p.user).toContain("Client Decision Required");
