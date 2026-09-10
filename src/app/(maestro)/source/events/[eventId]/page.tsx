@@ -38,7 +38,6 @@ import {
 import { type SourceShellWorkspace } from "@/lib/source/source-event-shell-v2";
 import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
-import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
 import { resolveVendorResponseSeedInputs } from "@/lib/source/vendor-response-completeness-from-profiles";
 import {
@@ -135,21 +134,6 @@ export default async function SourceEventDetailPage({
       event.currentStageKey,
       event.currentStageKey,
     );
-    const selectionReadiness =
-      viewStage === "executive_decision" || viewStage === "selection"
-        ? buildSourceVendorSelectionReadiness({
-            event: {
-              id: event.id,
-              name: event.name,
-              currentStageKey: viewStage,
-              currentStageLabel: sourceJourneyLabelForStage(
-                sourceJourney,
-                viewStage,
-              ),
-              valueAtStakeUsd: event.valueAtStakeUsd,
-            },
-          })
-        : null;
     const needsVendorResponseContext = [
       "responses",
       "evaluation",
@@ -581,7 +565,6 @@ export default async function SourceEventDetailPage({
         initialWorkspace={initialWorkspace}
         contractOptimizationProfile={contractOptimizationProfile}
         journey={sourceJourney}
-        selectionReadiness={selectionReadiness}
         vendorResponseReadiness={vendorResponseReadiness}
         vendorResponseProfiles={vendorResponseProfiles}
         vendorChallengeIntelligence={vendorChallengeIntelligence}
