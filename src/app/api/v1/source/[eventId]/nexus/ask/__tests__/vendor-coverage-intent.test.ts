@@ -120,6 +120,8 @@ describe("looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)", () => {
     expect(ROUTE_SOURCE).toContain("looksLikePricingComparisonQuestion");
     expect(ROUTE_SOURCE).toContain("buildBafoInstructionsGovernedAnswer");
     expect(ROUTE_SOURCE).toContain("looksLikeBafoInstructionsQuestion");
+    expect(ROUTE_SOURCE).toContain("buildAwardReadinessGovernedAnswer");
+    expect(ROUTE_SOURCE).toContain("looksLikeAwardReadinessQuestion");
     expect(ROUTE_SOURCE).toContain("buildEvidenceReadinessGovernedAnswer");
     expect(ROUTE_SOURCE).toContain("looksLikeEvidenceReadinessQuestion");
     expect(ROUTE_SOURCE).toContain("buildArtifactQualityGovernedAnswer");
@@ -141,6 +143,15 @@ describe("looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)", () => {
     expect(
       ROUTE_SOURCE.indexOf(
         "looksLikeSourceEventDecisionAndValueQuestion(normalizedBody.prompt)",
+      ),
+    ).toBeLessThan(
+      ROUTE_SOURCE.indexOf(
+        "looksLikeSelectionDecisionQuestion(normalizedBody.prompt)",
+      ),
+    );
+    expect(
+      ROUTE_SOURCE.indexOf(
+        "looksLikeAwardReadinessQuestion(normalizedBody.prompt)",
       ),
     ).toBeLessThan(
       ROUTE_SOURCE.indexOf(

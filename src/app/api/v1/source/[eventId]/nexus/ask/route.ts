@@ -64,6 +64,10 @@ import {
   looksLikeBafoInstructionsQuestion,
 } from "@/lib/source/ava/bafo-instructions-governed-answer";
 import {
+  buildAwardReadinessGovernedAnswer,
+  looksLikeAwardReadinessQuestion,
+} from "@/lib/source/ava/award-readiness-governed-answer";
+import {
   combineSourceEventDecisionAndValueAnswers,
   looksLikeSourceEventDecisionAndValueQuestion,
 } from "@/lib/source/ava/source-event-summary-governed-answer";
@@ -314,6 +318,27 @@ export async function POST(
         }).catch((err) => {
           console.error(
             "[source.nexus-ask.bafo-instructions-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              clientKey: activeClientKey,
+              message: err instanceof Error ? err.message : String(err),
+            }),
+          );
+          return null;
+        });
+      } else if (
+        eventId &&
+        looksLikeAwardReadinessQuestion(normalizedBody.prompt)
+      ) {
+        agentAnswer = await buildAwardReadinessGovernedAnswer({
+          eventId: liveEventDetail?.id ?? eventId,
+          eventName: liveEventDetail?.name ?? null,
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+        }).catch((err) => {
+          console.error(
+            "[source.nexus-ask.award-readiness-governed-answer.failed]",
             JSON.stringify({
               eventId,
               clientKey: activeClientKey,
