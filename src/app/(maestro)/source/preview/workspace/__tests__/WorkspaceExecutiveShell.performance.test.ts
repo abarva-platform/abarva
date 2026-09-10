@@ -1727,7 +1727,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
         vendor_category: "cloud_data_platform",
         contract_name:
           "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
-        scope_summary: null,
+        scope_summary: "Cloud data platform subscription - absent - for_cause_only",
         annual_value: 1_900_000,
         resolved_annual_value: null,
         actual_annual_spend: null,
@@ -1749,6 +1749,8 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(summary.body).toContain("Databricks, Inc.");
     expect(summary.body).toContain("Platform, Support and Committed Purchase");
     expect(summary.body).toContain("usage-backed commercial commitment");
+    expect(summary.body).not.toContain("for_cause_only");
+    expect(summary.body).not.toContain("absent");
     expect(summary.evidence).toContain("Cloud Consumption archetype");
     expect(summary.evidence).toContain("$1.9M annual value");
     expect(summary.evidence).toContain("$66K observed spend");

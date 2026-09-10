@@ -2713,8 +2713,8 @@ export function contractPurposeSummary(
     ? titleFromSourceKey(String(rawArchetype))
     : null;
   const scopePhrase =
-    usableText(contract.scope_summary) ??
     scopeFromContractName(contractName) ??
+    usableScopeSummary(contract.scope_summary) ??
     "the loaded commercial scope";
   const classificationText = [
     rawArchetype,
@@ -2738,13 +2738,17 @@ export function contractPurposeSummary(
     archetype ? `${archetype} archetype` : null,
     annualValue != null ? `${money(annualValue)} annual value` : null,
     actualSpend != null ? `${money(actualSpend)} observed spend` : null,
-    `${numberFromDb(coverage?.scope_rows) ?? scopeRows.length} scope rows`,
-    coverage ? `${numberFromDb(coverage.spend_rows) ?? 0} spend rows` : null,
-    coverage
-      ? `${numberFromDb(coverage.document_page_text_rows) ?? 0} document text rows`
+    positiveCount(numberFromDb(coverage?.scope_rows) ?? scopeRows.length)
+      ? `${numberFromDb(coverage?.scope_rows) ?? scopeRows.length} scope rows`
       : null,
     coverage
-      ? `${numberFromDb(coverage.opportunity_rows) ?? 0} opportunity rows`
+      ? evidenceCount(coverage.spend_rows, "spend rows")
+      : null,
+    coverage
+      ? evidenceCount(coverage.document_page_text_rows, "document text rows")
+      : null,
+    coverage
+      ? evidenceCount(coverage.opportunity_rows, "opportunity rows")
       : null,
   ].filter(Boolean);
 
@@ -2763,9 +2767,27 @@ function usableText(value: string | null | undefined) {
   return text;
 }
 
+function usableScopeSummary(value: string | null | undefined) {
+  const text = usableText(value);
+  if (!text) return null;
+  if (/\b(absent|unknown|unresolved|none|null|n\/a|for_cause_only)\b/i.test(text)) {
+    return null;
+  }
+  return text;
+}
+
 function scopeFromContractName(contractName: string) {
   const [, scope] = contractName.split(/\s[-–—]\s(.+)/);
   return usableText(scope);
+}
+
+function positiveCount(value: number | null | undefined) {
+  return value != null && value > 0;
+}
+
+function evidenceCount(value: number | null | undefined, label: string) {
+  const count = numberFromDb(value);
+  return positiveCount(count) ? `${count} ${label}` : null;
 }
 
 function contractPurposeKind(text: string) {
