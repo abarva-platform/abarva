@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -39,6 +39,10 @@ Layer 4 product presentation only. Source workspace reads the same governed Cont
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` — PASS.
 - `npx jest --runTestsByPath 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx' 'src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts' --runInBand` — PASS. Jest emitted pre-existing duplicate manual mock warnings.
 - `git diff --check` — PASS.
+- PR checks for #7521 — PASS.
+- ACA main deploy carried this change forward to active SHA `f2bd2fddad32b26f0016618ef292b8af303e2f24` — PASS.
+- `node scripts/deploy/check-aca-runtime-invariant.mjs --expected-image acrabarvalab001.azurecr.io/abarva/web@sha256:48e7df951294db34501ce1b2a8cf028e7ddb94e1ba03c9a9e751aae514c9c653 --out-dir /tmp/source-final-runtime-invariant-f2bd2fdd` — PASS.
+- Live signed-in selected-contract Source workspace smoke on `https://app.abarva.ai` — PASS. Contract commandbar rendered, portfolio workspace navigation and action toolbar were absent, old instructional banner was absent, exactly one Optimize tab was present, and the lever-table story rendered.
 
 ## Rollout Plan
 
@@ -48,11 +52,11 @@ Open a PR, merge through the protected repository workflow, and let the repo-own
 
 - Repo-owned deploy workflow: required.
 - Shared runtime mutators: none.
-- Approved image digest: populated after deploy.
-- ACA runtime invariant: required before claiming live.
-- Worker image invariant: unchanged by this presentation-only release.
+- Approved image digest: `sha256:48e7df951294db34501ce1b2a8cf028e7ddb94e1ba03c9a9e751aae514c9c653`.
+- ACA runtime invariant: PASS on active revision `ca-abarva-web-lab-eastus--mf2bd2fdd`.
+- Worker image invariant: PASS for required worker jobs on the same digest.
 - Feature/env flag update path: none.
-- Live signed-in proof required: Source workspace contract-detail page.
+- Live signed-in proof required: completed for selected-contract Source workspace contract-detail page.
 
 ## Rollback Plan
 
