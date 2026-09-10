@@ -11,7 +11,7 @@ import {
   leverTableRows,
   optimizeTypeRows,
   performanceActual,
-  sizedNegotiableTotalUsd,
+  sizedOpportunityTotalUsd,
   resolveSelectedVendor,
   sourceImpactCoverageRowTotal,
   source360RecoverableCreditCoverageRows,
@@ -1493,15 +1493,20 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
         vendorConcession: null,
         negotiationLanguage: "Tie the fee to what we actually run.",
       },
-      { id: "OPP-3", buyerAsk: null, vendorConcession: null, negotiationLanguage: null },
+      {
+        id: "OPP-3",
+        buyerAsk: null,
+        vendorConcession: null,
+        negotiationLanguage: null,
+      },
     ]);
     // A lever with no ask and no language has nothing to show a negotiator,
     // so it stays out of the table rather than rendering an empty row.
     expect(rows.map((row) => row.id)).toEqual(["OPP-1", "OPP-2"]);
   });
 
-  it("keeps signal-stage levers out of the sized negotiable total", () => {
-    const total = sizedNegotiableTotalUsd([
+  it("keeps signal-stage levers out of the sized opportunity total", () => {
+    const total = sizedOpportunityTotalUsd([
       { stageRaw: "quantified", amountUsd: 400_000 },
       { stageRaw: "quantified", amountUsd: 620_000 },
       { stageRaw: "signal", amountUsd: 900_000 },
@@ -1556,5 +1561,4 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       "selectedContractId ? null : (",
     );
   });
-
 });
