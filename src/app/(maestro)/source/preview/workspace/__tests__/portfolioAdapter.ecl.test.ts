@@ -767,7 +767,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(portfolio.workspaceDiagnostics.exploreProvider).toBe(
       "EclProjectionDbProvider",
     );
-    expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBeUndefined();
+    expect(portfolio.workspaceDiagnostics.eclCompareResponseCount).toBe(1);
     expect(portfolio.workspaceDiagnostics.eclProjectionDir).toBeNull();
     expect(portfolio.contracts).toHaveLength(1);
     expect(portfolio.vendors).toHaveLength(1);
@@ -819,7 +819,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(legacyImpactSetConfigCalls).toHaveLength(0);
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_events")),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       runCalls
         .filter((call) => call.sql.includes("FROM serving."))
@@ -847,10 +847,10 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     });
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_compare")),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       runCalls.some((call) => call.sql.includes("serving.source_approvals")),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       runCalls.some((call) =>
         call.sql.includes("source.contract_claim_card_v1"),
