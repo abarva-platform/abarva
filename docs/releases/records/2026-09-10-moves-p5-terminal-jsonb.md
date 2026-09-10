@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The final Strategic Moves phase gate can now record its terminal handoff snapshot and audit state on the Azure Postgres runtime. The route already passed the governed gate checks; this change fixes how its P5-only terminal write serializes structured JSON fields before inserting them into JSONB columns.
+The final Strategic Moves phase gate can now record its terminal handoff snapshot and audit state on the Azure Postgres runtime. The route already passed the governed gate checks; this change fixes how its P5-only terminal write serializes structured JSON fields before inserting them into JSONB columns and prevents a partial approved snapshot from being mistaken for a fully completed terminal handoff.
 
 ## Layer Impact
 
@@ -37,7 +37,7 @@ All clients using Strategic Moves terminal handoff.
 
 ## QA / Validation
 
-- Pass: focused route regression verifies terminal P5 JSONB fields are serialized as parseable JSON.
+- Pass: focused route regression verifies terminal P5 JSONB fields are serialized as parseable JSON and that a partial P5 approved snapshot is repaired rather than short-circuited.
 - Blocked: targeted integration route coverage includes the terminal P5 handoff assertion, but the suite currently stops on unrelated P0 capture expectations on latest `main`.
 - Pass: ESLint run for changed route and test files.
 - Pass: `npm run release:check -- --base origin/main --head HEAD`.
@@ -66,4 +66,4 @@ Inspect the PR, CI output, deploy workflow, ACA runtime invariant output, and th
 
 ## Known Gaps
 
-The terminal P5 route still uses the route-local write helper rather than the broader programs write adapter because it deliberately completes the lifecycle without writing `current_phase = 6`. A future cleanup can move this terminal handoff into a typed adapter method, but this release keeps the behavioral surface unchanged and fixes only the JSONB serialization defect.
+The terminal P5 route still uses the route-local write helper rather than the broader programs write adapter because it deliberately completes the lifecycle without writing `current_phase = 6`. A future cleanup can move this terminal handoff into a typed adapter method, but this release keeps the behavioral surface unchanged and fixes only the JSONB serialization and partial-state repair defects.
