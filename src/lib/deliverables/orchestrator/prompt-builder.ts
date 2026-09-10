@@ -260,6 +260,21 @@ function deterministicNumbersInstruction(
   req: DeliverableIntelligenceRequest,
 ): string {
   if (req.module !== "moves") return "";
+  if (
+    req.deliverableType === "discovery_report" ||
+    req.deliverableType === "root_cause_worksheet"
+  ) {
+    return (
+      "\nDISCOVERY METRIC DISCIPLINE: discovery diagnostics are metric-heavy, " +
+      "so every sentence containing a number, date, dollar value, percentage, " +
+      "range, ratio, approximation such as about/roughly/~, or arithmetic-derived " +
+      "claim must carry its own [n] citation in that same sentence, or an explicit " +
+      "[ASSUMPTION TO VALIDATE: ...], [EVIDENCE MISSING: ...], or [CLIENT TO COMPLETE: ...] " +
+      "tag. Do not write uncited numeric implications such as disagreement rates, " +
+      "counts, totals, dates, throughput, or thresholds; if the source is not in the " +
+      "assigned evidence, route the claim to Open Inputs Required instead."
+    );
+  }
   const spine = storySpineFor(req.deliverableType as MovesDeliverableKey);
   if (spine !== "p4_investment_case") return "";
   return (
@@ -551,7 +566,7 @@ export function buildPassPrompt(
         `WRITE ONLY THIS SECTION: "${s?.title ?? ""}"  (groundingMode: ${s?.groundingMode ?? "expert_template"}).`,
         `Intent: ${s?.rationale || s?.title || ""}`,
         conciseSectionDraftInstruction(req, brief, s),
-        `Write board-grade, senior-consulting Markdown for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY figure has a [n], an approved assumption, or a placeholder tag.`,
+        `Write board-grade, senior-consulting Markdown for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY sentence that contains a number, date, dollar value, percentage, range, ratio, or approximation has a [n] citation in that same sentence or an explicit assumption/open-input tag.`,
         ``,
         `ASSIGNED EVIDENCE (the only [n] you may cite):`,
         assigned,
