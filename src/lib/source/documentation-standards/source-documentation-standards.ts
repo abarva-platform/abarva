@@ -142,6 +142,18 @@ export interface QAResult {
   blocksRelease: boolean;
 }
 
+function isVendorPack(profile: SourceArtifactProfile): boolean {
+  return profile.readerMode === "vendor-pack";
+}
+
+function searchableText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export const QA_GATES: QAGate[] = [
   // ── 1. Decision Clarity ──────────────────────────────────────────────────
   // The sponsor can identify the decision requested and recommendation quickly.
@@ -156,6 +168,28 @@ export const QA_GATES: QAGate[] = [
       if (!profile.clientFacing)
         return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const firstBlock = content.slice(0, 800).toLowerCase();
+      if (isVendorPack(profile)) {
+        const opening = searchableText(content.slice(0, 1_200));
+        const hasPurpose =
+          opening.includes("request for proposal") ||
+          opening.includes("invitation to bid") ||
+          opening.includes("purpose and scope") ||
+          opening.includes("scope of services");
+        const hasResponseDirection =
+          opening.includes("response instruction") ||
+          opening.includes("submission instruction") ||
+          opening.includes("vendor response") ||
+          opening.includes("supplier response") ||
+          opening.includes("proposal response");
+        return {
+          pass: hasPurpose && hasResponseDirection,
+          message:
+            hasPurpose && hasResponseDirection
+              ? "Opening section states the solicitation purpose and response direction"
+              : "Missing: vendor-facing purpose/scope and proposal-response direction in the opening section",
+          blocksRelease: !(hasPurpose && hasResponseDirection),
+        };
+      }
       const hasDecision =
         firstBlock.includes("recommendation") ||
         firstBlock.includes("decision requested") ||
@@ -246,6 +280,14 @@ export const QA_GATES: QAGate[] = [
     check: ({ content, profile }) => {
       if (!profile.clientFacing)
         return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      if (isVendorPack(profile)) {
+        return {
+          pass: true,
+          message:
+            "N/A (vendor response tables are instructions, schedules, and completion controls)",
+          blocksRelease: false,
+        };
+      }
       const lc = content.toLowerCase();
       const genericFillers = [
         "the purpose of this document",
@@ -310,6 +352,14 @@ export const QA_GATES: QAGate[] = [
     check: ({ content, profile }) => {
       if (!profile.clientFacing)
         return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      if (isVendorPack(profile)) {
+        return {
+          pass: true,
+          message:
+            "N/A (vendor response tables are instructions, schedules, and completion controls)",
+          blocksRelease: false,
+        };
+      }
       const lc = content.toLowerCase();
       const hasTabularContent =
         lc.includes("| ") ||
@@ -355,6 +405,28 @@ export const QA_GATES: QAGate[] = [
       if (!profile.clientFacing)
         return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const tail = content.slice(-600).toLowerCase();
+      if (isVendorPack(profile)) {
+        const close = searchableText(content.slice(-1_200));
+        const hasSubmissionClose = [
+          "submission instruction",
+          "submission deadline",
+          "authorized representative",
+          "proposal validity",
+          "return the completed",
+          "submit the completed",
+          "bidder certification",
+          "supplier certification",
+          "acknowledgement",
+          "acknowledgment",
+        ].some((phrase) => close.includes(phrase));
+        return {
+          pass: hasSubmissionClose,
+          message: hasSubmissionClose
+            ? "Document closes with a vendor submission or certification control"
+            : "Missing: document should close with submission instructions, deadline, certification, or acknowledgement",
+          blocksRelease: false,
+        };
+      }
       const hasDecisionClose =
         tail.includes("approve") ||
         tail.includes("redirect") ||
@@ -414,9 +486,9 @@ export const QA_GATES: QAGate[] = [
     appliesToClientFacing: false,
     appliesToAll: true,
     check: ({ content, profile }) => {
-      const lc = content.toLowerCase();
+      const lc = searchableText(content);
       const missing = profile.requiredExhibits.filter(
-        (ex) => !lc.includes(ex.replace(/_/g, " ")),
+        (ex) => !lc.includes(searchableText(ex)),
       );
       return {
         pass: missing.length === 0,
