@@ -598,7 +598,11 @@ async function mutate(client: Client, args: Args, moveIds: string[], runId: stri
           `update public.move_artifacts
               set lifecycle_state = 'retired',
                   status = case when status = 'retired' then status else 'retired' end,
-                  metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object('archivedByRunId', $2, 'archivedBy', $3, 'archivedAt', $4::text),
+                  metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(
+                    'archivedByRunId', $2::text,
+                    'archivedBy', $3::text,
+                    'archivedAt', $4::timestamptz::text
+                  ),
                   updated_at = $4::timestamptz
             where move_id = any($1::uuid[])`,
           [moveIds, runId, args.operator, now],
