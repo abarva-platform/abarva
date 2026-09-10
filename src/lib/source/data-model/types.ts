@@ -51,6 +51,10 @@ export interface SourceContractVendor360Row extends ConflictFlagged {
   readonly contract_archetype?: string | null;
   readonly contract_name: string;
   readonly scope_summary: string | null;
+  readonly purpose_summary?: string | null;
+  readonly commercial_thesis?: string | null;
+  readonly relationship_summary?: string | null;
+  readonly evidence_boundary_summary?: string | null;
   readonly annual_value: number | null;
   readonly total_committed_value: number | null;
   readonly committed_annual_spend: number | null;

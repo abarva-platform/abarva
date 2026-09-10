@@ -24,7 +24,7 @@ describe("Source cloud consumption package loader", () => {
     expect(summary.layer3_expected_readback.source_cloud_service_usage_observation).toBe(192);
     expect(summary.layer3_expected_readback.source_cloud_resource_inventory).toBe(84);
     expect(summary.layer3_expected_readback.source_optimization_opportunity).toBe(8);
-    expect(summary.layer3_expected_readback.source_canonical_fact_assertion).toBe(372);
+    expect(summary.layer3_expected_readback.source_canonical_fact_assertion).toBe(382);
     expect(summary.layer4_expected_readback.source_contract_360_cloud_contracts).toBe(2);
     expect(summary.layer4_expected_readback.source_vendor_contract_portfolio_cloud_vendors).toBe(2);
     expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_cloud_rows).toBe(8);
@@ -79,8 +79,27 @@ describe("Source cloud consumption package loader", () => {
     expect(summary.layer2_expected_by_adapter.optimization_opportunity_adapter).toBe(6);
     expect(summary.layer3_expected_readback.source_optimization_opportunity).toBe(6);
     expect(summary.layer3_expected_readback.source_opportunity_evidence).toBe(20);
+    expect(summary.layer3_expected_readback.source_canonical_fact_assertion).toBe(113);
     expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_cloud_rows).toBe(6);
     expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_finance_required_rows).toBe(6);
+
+    const contractRegister = fs.readFileSync(
+      path.join(
+        repoRoot,
+        "datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908/source-files/cloud_contract_register.csv",
+      ),
+      "utf8",
+    );
+    expect(contractRegister).toContain("contract_english_overview");
+    expect(contractRegister).toContain("scope_english_summary");
+    expect(contractRegister).toContain("commercial_thesis");
+    expect(contractRegister).toContain("relationship_summary");
+    expect(contractRegister).toContain("evidence_boundary_summary");
+    expect(contractRegister).toContain("context_review_state");
+    expect(contractRegister).toContain("context_reviewer_role");
+    expect(contractRegister).toContain("context_reviewed_at");
+    expect(contractRegister).toContain("reviewed,Source contract intelligence reviewer,2026-09-08T00:00:00Z");
+    expect(contractRegister).toContain("Full raw contract documents remain restricted outside the public repo");
 
     const opportunities = fs.readFileSync(
       path.join(
@@ -94,5 +113,23 @@ describe("Source cloud consumption package loader", () => {
     expect(opportunities).toContain(",signal,range,system_evidenced,");
     expect(opportunities).toContain("Benchmark comparable required");
     expect(opportunities).toContain("Per-SKU serverless versus classic comparison required");
+  });
+
+  it("loads contract context as reviewed canonical facts rather than render-time prose", () => {
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-cloud-consumption-package.mjs"),
+      "utf8",
+    );
+
+    expect(loader).toContain("CONTRACT_CONTEXT_FACTS");
+    expect(loader).toContain('factKey: "contract.purpose_summary"');
+    expect(loader).toContain('factKey: "contract.scope_summary"');
+    expect(loader).toContain('factKey: "contract.commercial_thesis"');
+    expect(loader).toContain('factKey: "contract.relationship_summary"');
+    expect(loader).toContain('factKey: "contract.evidence_boundary"');
+    expect(loader).toContain('basis_type: "reviewed_contract_intelligence"');
+    expect(loader).toContain("derived_from_load_run_id: args.loadRunId");
+    expect(loader).toContain('reviewState: value(row, "context_review_state")');
+    expect(loader).toContain("must carry reviewed or approved contract context");
   });
 });
