@@ -393,8 +393,139 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain("CTR-090");
     expect(text).toContain("CTR-090 Salesforce");
     expect(text).toContain("Contract Commercial Opportunities");
-    expect(text).toContain("Commercial Opportunities With Quantified Evidence");
+    expect(text).toContain("Sized Commercial Opportunities");
     expect(text).toContain("Contract Evidence Relationship");
+  });
+
+  it("emits a crisp Source contract optimization export packet without generic synthesis", async () => {
+    (askIntelligence as jest.Mock).mockClear();
+
+    const response = await POST(
+      makeRequest({
+        query:
+          "For MER-TECH-DBX-001, act like a CXO pricing negotiator. Answer crisply as something I can export as a client sample PDF. Show the levers to optimize this contract in a table.",
+        client: "apexretail",
+        richText: true,
+        answerOnlyStreaming: true,
+        surfaceContext: {
+          module: "Source",
+          activeClient: "Apex Retail Group",
+          clientKey: "apexretail",
+          sourceContract360Mode: true,
+          contractId: "MER-TECH-DBX-001",
+          contractName:
+            "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+          vendorName: "Databricks, Inc.",
+          annualValue: 1_900_000,
+          actualAnnualSpend: 66_000,
+          endDate: "14 Oct 2030",
+          sourceV4: {
+            selectedContract: {
+              contractId: "MER-TECH-DBX-001",
+              vendorName: "Databricks, Inc.",
+              contractName:
+                "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+              annualValueUsd: 1_900_000,
+              actualAnnualSpendUsd: 66_000,
+              endDate: "14 Oct 2030",
+              scopeSummary:
+                "Databricks-on-AWS consumption commitment for governed analytics workloads.",
+              scopeRowCount: 4,
+            },
+            optimizationOpportunities: {
+              opportunities: [
+                {
+                  id: "dbx-retime",
+                  contractId: "MER-TECH-DBX-001",
+                  valueType: "negotiated_improvement",
+                  label: "Re-time annual commitment to program delivery pace",
+                  amount: "$620K",
+                  amountUsd: 620_000,
+                  stageRaw: "candidate",
+                  stage: "candidate",
+                  confidence: 0.82,
+                  grade: "DOCUMENT EVIDENCED",
+                  blockingGap:
+                    "Finance confirmation and owner approval are still required.",
+                  nextAction:
+                    "Propose milestone-based ramp before the Year 2 commitment lock-in.",
+                  owner: "VP Technology and Data",
+                  buyerAsk:
+                    "Reset the commitment curve around production gates.",
+                  negotiationLanguage:
+                    "Ask for a ramp that follows governed workload adoption.",
+                  vendorConcession:
+                    "Databricks preserves total contract value while shifting timing.",
+                  timingDependency:
+                    "Complete before the Year 2 commitment lock-in.",
+                  priority: "P0",
+                  riskIfIgnored:
+                    "The current commitment pace locks before production usage catches up.",
+                  sourceRefs: ["spend_monthly", "contract_clause"],
+                },
+                {
+                  id: "dbx-discount-signal",
+                  contractId: "MER-TECH-DBX-001",
+                  valueType: "negotiated_improvement",
+                  label: "Signal-stage discount band re-price review",
+                  amount: "Not sized",
+                  amountUsd: null,
+                  stageRaw: "signal",
+                  stage: "signal",
+                  confidence: 0.3,
+                  grade: "SIGNAL",
+                  blockingGap:
+                    "Benchmark comparable required before value can be treated as supported.",
+                  nextAction:
+                    "Load one accepted benchmark comparable before making this a primary ask.",
+                  owner: "Strategic Sourcing",
+                  buyerAsk:
+                    "Keep discount repricing as a held-back signal until benchmark evidence is loaded.",
+                  vendorConcession:
+                    "Databricks can review the band after the buyer proves a comparable market term.",
+                  timingDependency:
+                    "Use only after benchmark evidence is loaded.",
+                  priority: "P3",
+                  riskIfIgnored:
+                    "Opening rate too early can invite the vendor to reopen term length.",
+                  sourceRefs: ["benchmark_gap_register"],
+                },
+              ],
+            },
+          },
+        },
+      }) as never,
+    );
+
+    const text = await readResponseText(response);
+    const events = parseNdjson(text);
+    const packetEvent = events.find((event) => event.type === "agent-answer");
+    const packet = packetEvent?.answer as {
+      directAnswer?: string;
+      artifacts?: Array<{ id?: string; rows?: unknown[] }>;
+    };
+
+    expect(askIntelligence).not.toHaveBeenCalled();
+    expect(packet?.directAnswer).toContain("Executive read:");
+    expect(packet?.directAnswer).toContain(
+      "| Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet |",
+    );
+    expect(packet?.directAnswer).toContain(
+      "Reset the commitment curve around production gates.",
+    );
+    expect(packet?.directAnswer).toContain(
+      "Databricks preserves total contract value while shifting timing.",
+    );
+    expect(packet?.directAnswer).toContain(
+      "Not sized - needs evidence before it carries a number",
+    );
+    expect(packet?.directAnswer).not.toContain("VISUALS");
+    expect(packet?.directAnswer).not.toContain("RELATIONSHIP MAP");
+    expect(packet?.directAnswer).not.toContain("DECISION TABLE");
+    expect(packet?.artifacts?.[0]?.id).toBe(
+      "source-contract-optimization-export-table",
+    );
+    expect(events.some((event) => event.type === "done")).toBe(true);
   });
 
   it("routes direct Contract 360 value questions through the governed Source answer", async () => {

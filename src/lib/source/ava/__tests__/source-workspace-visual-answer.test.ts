@@ -1,5 +1,7 @@
 import {
+  buildSourceContractOptimizationExportAnswer,
   buildSourceWorkspaceVisualAnswer,
+  canBuildSourceContractOptimizationExportAnswer,
   canBuildSourceWorkspaceVisualAnswer,
 } from "@/lib/source/ava/source-workspace-visual-answer";
 import type { AskSurfaceContext } from "@/lib/intelligence/ask/types";
@@ -47,6 +49,17 @@ function sourceContext(): AskSurfaceContext {
               "invoice_lines",
             ],
             owner: "Vendor management",
+            buyerAsk:
+              "Apply the earned service credit against the next invoice.",
+            negotiationLanguage:
+              "The March breach is calculated from contract service levels and should be credited under the availability SLA.",
+            vendorConcession:
+              "The vendor avoids reopening the broader commercial schedule by applying the contractual credit formula.",
+            timingDependency:
+              "Confirm during the next invoice review cycle.",
+            priority: "P0",
+            riskIfIgnored:
+              "The credit can age out before finance records it.",
           },
           {
             id: "CTR-090:shelfware",
@@ -61,6 +74,16 @@ function sourceContext(): AskSurfaceContext {
             nextAction: "Negotiate removal from renewal baseline.",
             sourceRefs: ["usage_entitlement_monthly"],
             owner: "Sourcing lead",
+            buyerAsk:
+              "Remove unused entitlements from the renewal baseline.",
+            negotiationLanguage:
+              "Renew only the capacity tied to active users and governed usage.",
+            vendorConcession:
+              "The vendor preserves active use while removing shelfware from the next commitment.",
+            timingDependency: "Complete before renewal pricing is finalized.",
+            priority: "P1",
+            riskIfIgnored:
+              "The unused baseline rolls into the next renewal.",
           },
           {
             id: "CTR-090:negotiated-improvement",
@@ -75,6 +98,16 @@ function sourceContext(): AskSurfaceContext {
             nextAction: "Run Door 1 negotiation plan.",
             sourceRefs: ["renewal_negotiation_history"],
             owner: "Procurement",
+            buyerAsk:
+              "Reframe the commercial term around observed usage and renewal timing.",
+            negotiationLanguage:
+              "Move the concession into the renewal paper without treating it as realized savings today.",
+            vendorConcession:
+              "The vendor protects the renewal while giving the buyer a governed path to right-size the term.",
+            timingDependency: "Complete before outreach is approved.",
+            priority: "P2",
+            riskIfIgnored:
+              "The renewal strategy goes out without a sequenced commercial ask.",
           },
           {
             id: "CTR-090:vms-rate-card-variance",
@@ -91,6 +124,17 @@ function sourceContext(): AskSurfaceContext {
               "Confirm no amendment approved the higher billed rates.",
             sourceRefs: ["golden_contract_rate_card_variance"],
             owner: "Procurement",
+            buyerAsk:
+              "Correct billed rates back to the governed rate card.",
+            negotiationLanguage:
+              "The claim is limited to reconciled line variance and does not dispute unrelated delivery scope.",
+            vendorConcession:
+              "The vendor can correct invoice mechanics without reopening the service model.",
+            timingDependency:
+              "Confirm before the next AP close and dispute deadline.",
+            priority: "P0",
+            riskIfIgnored:
+              "The higher billed rate becomes the practical baseline.",
           },
           {
             id: "CTR-090:discount-band-signal",
@@ -107,6 +151,16 @@ function sourceContext(): AskSurfaceContext {
               "Load one accepted benchmark comparable before pricing this as an executive ask.",
             sourceRefs: ["benchmark_gap_register"],
             owner: "Strategic sourcing",
+            buyerAsk:
+              "Hold the discount-band question until a governed comparable is loaded.",
+            negotiationLanguage:
+              "This is an advisory signal, not a priced finding.",
+            vendorConcession:
+              "The vendor can evaluate repricing once a comparable benchmark is on the record.",
+            timingDependency: "Use after benchmark evidence is loaded.",
+            priority: "P3",
+            riskIfIgnored:
+              "Opening rate too early can invite the vendor to reopen term length.",
           },
         ],
       },
@@ -273,6 +327,50 @@ describe("Source Workspace visual aVa answer", () => {
         (citation) => citation.sourceClass === "worldview",
       ),
     ).toBe(true);
+  });
+
+  it("builds a PDF-ready contract optimization export answer without extra visual sections", () => {
+    const context = sourceContext();
+    const query =
+      "For CTR-090, act like a CXO pricing negotiator and give me a PDF-ready table of levers to optimize this contract.";
+
+    expect(
+      canBuildSourceContractOptimizationExportAnswer({
+        query,
+        surfaceContext: { ...context, sourceContract360Mode: true },
+      }),
+    ).toBe(true);
+
+    const answer = buildSourceContractOptimizationExportAnswer({
+      query,
+      surfaceContext: { ...context, sourceContract360Mode: true },
+    });
+
+    expect(answer?.directAnswer).toContain("Executive read:");
+    expect(answer?.directAnswer).toContain(
+      "| Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet |",
+    );
+    expect(answer?.directAnswer).toContain(
+      "Apply the earned service credit against the next invoice.",
+    );
+    expect(answer?.directAnswer).toContain(
+      "The vendor avoids reopening the broader commercial schedule",
+    );
+    expect(answer?.directAnswer).toContain(
+      "Not sized - needs evidence before it carries a number",
+    );
+    expect(answer?.directAnswer).not.toContain("VISUALS");
+    expect(answer?.directAnswer).not.toContain("RELATIONSHIP MAP");
+    expect(answer?.directAnswer).not.toContain("DECISION TABLE");
+    expect(answer?.artifacts).toHaveLength(1);
+    expect(answer?.artifacts[0]).toMatchObject({
+      artifact: "table",
+      id: "source-contract-optimization-export-table",
+      title: "Contract Optimization Lever Table",
+    });
+    expect(JSON.stringify(answer?.artifacts[0])).toContain(
+      "What not to claim yet",
+    );
   });
 
   it("routes simple contract summary prompts through deterministic selected-contract answers", () => {

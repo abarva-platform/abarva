@@ -74,7 +74,9 @@ import {
   productTruthGroundingText,
 } from "@/lib/agent/product-truth";
 import {
+  buildSourceContractOptimizationExportAnswer,
   buildSourceWorkspaceVisualAnswer,
+  canBuildSourceContractOptimizationExportAnswer,
   canBuildSourceWorkspaceVisualAnswer,
 } from "@/lib/source/ava/source-workspace-visual-answer";
 import {
@@ -430,6 +432,101 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           return;
         }
         if (blockRetiredFacts({})) return;
+        if (
+          canBuildSourceContractOptimizationExportAnswer({
+            query,
+            surfaceContext,
+          })
+        ) {
+          const sourceExportAnswer = buildSourceContractOptimizationExportAnswer({
+            query,
+            surfaceContext: surfaceContext as AskSurfaceContext,
+          });
+          if (sourceExportAnswer) {
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "context-summary",
+                }) + "\n",
+              ),
+            );
+            const answer = composeAvaAnswer({
+              surface: "source",
+              mode: "ANALYZE",
+              tenantKey:
+                tenantInventoryKey ??
+                tenantClientKey ??
+                requestedOrSurfaceClient ??
+                "unknown",
+              question: query,
+              intent: "source_contract_optimization_export",
+              status: "answered",
+              directAnswer: sourceExportAnswer.directAnswer,
+              factsUsed: sourceExportAnswer.factsUsed,
+              metricsUsed: sourceExportAnswer.metricsUsed,
+              relationshipsUsed: sourceExportAnswer.relationshipsUsed,
+              artifacts: sourceExportAnswer.artifacts,
+              citations: sourceExportAnswer.citations,
+              caveats: sourceExportAnswer.caveats,
+              nextSteps: sourceExportAnswer.nextSteps,
+              retrievalSummary: {
+                substrate: "module_read_model",
+                sourceCount: sourceExportAnswer.citations.length,
+                hasTenantFacts: true,
+                hasCorpus: false,
+                hasExperts: false,
+              },
+            });
+            const guardedAnswer = applyProductTruthToAvaAnswer(
+              answer,
+              productTruthContext({
+                surface: "source",
+                groundingParts: [surfaceContext, sourceExportAnswer],
+              }),
+              { preserveModelOutput: true },
+            );
+            if (
+              blockRetiredFacts({
+                textBlocks: [
+                  {
+                    location: "route.source_contract_optimization_export.answer",
+                    text: JSON.stringify(guardedAnswer),
+                  },
+                ],
+              })
+            )
+              return;
+            assistantText = guardedAnswer.directAnswer;
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "agent-answer",
+                  answer: guardedAnswer,
+                }) + "\n",
+              ),
+            );
+            const event = recordIntelligenceTelemetry({
+              startedAt,
+              tenantId,
+              instanceId:
+                memory?.sessionId ??
+                memory?.tabId ??
+                requestedOrSurfaceClient ??
+                "source-contract-optimization-export-ask",
+              patternId: "source-contract-optimization-export",
+              citationCount: sourceExportAnswer.citations.length,
+            });
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "done",
+                  telemetryEventId: event.id,
+                }) + "\n",
+              ),
+            );
+            return;
+          }
+        }
         if (
           canBuildSourceWorkspaceVisualAnswer({
             query,

@@ -68,6 +68,12 @@ interface SourceOpportunityLine {
   nextAction: string;
   owner: string | null;
   sourceRefs: string[];
+  buyerAsk: string | null;
+  negotiationLanguage: string | null;
+  vendorConcession: string | null;
+  timingDependency: string | null;
+  priority: string | null;
+  riskIfIgnored: string | null;
 }
 
 interface SourceConnection {
@@ -488,6 +494,12 @@ function opportunityLinesFrom(
             "Confirm evidence owner and decision path.",
           owner: stringValue(opportunity.owner),
           sourceRefs: stringArray(opportunity.sourceRefs),
+          buyerAsk: stringValue(opportunity.buyerAsk),
+          negotiationLanguage: stringValue(opportunity.negotiationLanguage),
+          vendorConcession: stringValue(opportunity.vendorConcession),
+          timingDependency: stringValue(opportunity.timingDependency),
+          priority: stringValue(opportunity.priority),
+          riskIfIgnored: stringValue(opportunity.riskIfIgnored),
         },
       ];
     },
@@ -534,6 +546,12 @@ function opportunityLinesFrom(
           "Confirm evidence owner and decision path.",
         owner: null,
         sourceRefs: stringArray(line.sourceRefs),
+        buyerAsk: null,
+        negotiationLanguage: null,
+        vendorConcession: null,
+        timingDependency: null,
+        priority: null,
+        riskIfIgnored: null,
       },
     ];
   });
@@ -551,6 +569,12 @@ function opportunityLinesFrom(
       evidenceGrade: line.evidenceClass,
       blockingGap: line.evidence,
       owner: null,
+      buyerAsk: null,
+      negotiationLanguage: null,
+      vendorConcession: null,
+      timingDependency: null,
+      priority: null,
+      riskIfIgnored: null,
     }));
 }
 
@@ -737,6 +761,254 @@ function buildExecutiveLeverTable(
     )
     .join("\n");
   return `${header}\n${body}`;
+}
+
+function wantsContractOptimizationExport(query: string): boolean {
+  return (
+    /\b(optimi[sz]e|lever(?:s)?|negotiat(?:e|ion|ing)|client\s+sample|pdf|export|memo|report)\b/i.test(
+      query,
+    ) &&
+    !/\b(chart|graph|map|visuali[sz]e|relationship\s+map)\b/i.test(query)
+  );
+}
+
+function exportEvidenceBasis(line: SourceOpportunityLine): string {
+  const refs = publicEvidenceRefs(line.sourceRefs);
+  return [
+    refs.join(", "),
+    line.evidenceGrade,
+    line.priority ? `priority ${line.priority}` : null,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join("; ");
+}
+
+function isNotSizedLine(line: SourceOpportunityLine): boolean {
+  return (
+    isSignalStage(line.stage) ||
+    line.amountUsd == null ||
+    /\bnot\s*sized\b/i.test(line.amount)
+  );
+}
+
+function exportValueState(line: SourceOpportunityLine): string {
+  if (isNotSizedLine(line)) {
+    return "Not sized - needs evidence before it carries a number";
+  }
+  return `${currencyLabel(line.amountUsd)} candidate; not finance-confirmed`;
+}
+
+function exportOwnerTiming(line: SourceOpportunityLine): string {
+  return [
+    line.owner,
+    line.timingDependency,
+    line.nextAction && !line.timingDependency ? line.nextAction : null,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join(" / ");
+}
+
+function exportDoNotClaim(line: SourceOpportunityLine): string {
+  return [
+    "Do not call this realized or finance-confirmed",
+    isNotSizedLine(line)
+      ? "do not attach value until the evidence gate is loaded"
+      : null,
+    line.blockingGap && !/not established/i.test(line.blockingGap)
+      ? line.blockingGap
+      : null,
+    line.riskIfIgnored,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join("; ");
+}
+
+function buildOptimizationExportRows(lines: SourceOpportunityLine[]) {
+  return lines.slice(0, 8).map((line, index) => ({
+    sequence: String(index + 1),
+    lever: line.label,
+    action:
+      [line.buyerAsk, line.negotiationLanguage]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join(" ") || line.nextAction,
+    vendorRationale:
+      line.vendorConcession ??
+      "Not established in the governed opportunity detail.",
+    evidenceBasis: exportEvidenceBasis(line) || "Not established",
+    valueState: exportValueState(line),
+    ownerTiming: exportOwnerTiming(line) || "Not established",
+    doNotClaim: exportDoNotClaim(line),
+  }));
+}
+
+function buildOptimizationExportMarkdownTable(
+  rows: ReturnType<typeof buildOptimizationExportRows>,
+): string {
+  const header = [
+    "| Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet |",
+    "| ---: | --- | --- | --- | --- | --- | --- | --- |",
+  ].join("\n");
+  const body = rows
+    .map(
+      (row) =>
+        `| ${markdownTableCell(row.sequence)} | ${markdownTableCell(row.lever)} | ${markdownTableCell(row.action)} | ${markdownTableCell(row.vendorRationale)} | ${markdownTableCell(row.evidenceBasis)} | ${markdownTableCell(row.valueState)} | ${markdownTableCell(row.ownerTiming)} | ${markdownTableCell(row.doNotClaim)} |`,
+    )
+    .join("\n");
+  return `${header}\n${body}`;
+}
+
+export function canBuildSourceContractOptimizationExportAnswer(input: {
+  query: string;
+  surfaceContext?: AskSurfaceContext | null;
+}): boolean {
+  const context = input.surfaceContext;
+  const requestedContractId = contractIdFromQuery(input.query);
+  return Boolean(
+    context &&
+      stringValue(context.module)?.toLowerCase() === "source" &&
+      context.sourceContract360Mode === true &&
+      wantsContractOptimizationExport(input.query) &&
+      (selectedContractFrom(context, input.query) || requestedContractId),
+  );
+}
+
+export function buildSourceContractOptimizationExportAnswer(input: {
+  query: string;
+  surfaceContext: AskSurfaceContext;
+}): SourceWorkspaceVisualAnswer | null {
+  const requestedContractId = contractIdFromQuery(input.query);
+  const contract = selectedContractFrom(input.surfaceContext, input.query);
+  if (!contract) {
+    return requestedContractId
+      ? buildMissingContractAnswer(requestedContractId)
+      : null;
+  }
+
+  const lines = opportunityLinesFrom(input.surfaceContext, contract.contractId);
+  const rows = buildOptimizationExportRows(lines);
+  const sizedRows = lines.filter((line) => !isNotSizedLine(line));
+  const signalRows = lines.filter((line) => isNotSizedLine(line));
+  const sizedTotalUsd = sizedRows.reduce(
+    (total, line) => total + (line.amountUsd ?? 0),
+    0,
+  );
+  const tableMarkdown =
+    rows.length > 0
+      ? buildOptimizationExportMarkdownTable(rows)
+      : "No governed optimization levers are loaded for this contract.";
+  const contractCitationId = "source-contract-context";
+  const opportunityCitationId = "source-contract-lever-export";
+  const directAnswer = [
+    `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is an optimization case, not realized savings. Work the ${sizedRows.length} sized levers first (${currencyLabel(sizedTotalUsd)} candidate value) and keep ${signalRows.length} signal-stage ${signalRows.length === 1 ? "lever" : "levers"} unsized until the named evidence gates close. Finance-confirmed value remains $0 until Finance/Tower approval is loaded.`,
+    tableMarkdown,
+  ].join("\n\n");
+
+  return {
+    directAnswer,
+    artifacts:
+      rows.length > 0
+        ? [
+            {
+              artifact: "table",
+              id: "source-contract-optimization-export-table",
+              title: "Contract Optimization Lever Table",
+              columns: [
+                { key: "sequence", label: "Sequence", align: "right" },
+                { key: "lever", label: "Lever" },
+                { key: "action", label: "Action / buyer ask" },
+                {
+                  key: "vendorRationale",
+                  label: "Why vendor can agree",
+                },
+                { key: "evidenceBasis", label: "Evidence basis" },
+                { key: "valueState", label: "Value state" },
+                { key: "ownerTiming", label: "Owner / timing" },
+                {
+                  key: "doNotClaim",
+                  label: "What not to claim yet",
+                },
+              ],
+              rows,
+              note: "Rows are governed Source opportunity rows. Signal-stage rows deliberately carry no dollar value until the named evidence gate closes.",
+              citationIds: [opportunityCitationId],
+            },
+          ]
+        : [],
+    citations: [
+      {
+        id: contractCitationId,
+        label: `${contract.vendorName} ${contract.contractName}`,
+        sourceClass: "tenant-fact",
+        recordId: contract.contractId,
+        excerpt:
+          "Selected contract facts come from the governed Source Contract 360 surface context.",
+        confidence: "high",
+      },
+      {
+        id: opportunityCitationId,
+        label: "Contract optimization opportunity rows",
+        sourceClass: "tenant-fact",
+        recordId: contract.contractId,
+        excerpt:
+          "Lever, ask, rationale, owner, timing, value state, and evidence gates are read from governed Source opportunity rows.",
+        confidence: rows.length > 0 ? "high" : "medium",
+      },
+    ],
+    factsUsed: [
+      {
+        id: "selected-contract",
+        label: "Selected contract",
+        value: `${contract.contractId} ${contract.vendorName}`,
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "optimization-lever-count",
+        label: "Governed optimization levers",
+        value: rows.length,
+        citationIds: [opportunityCitationId],
+      },
+    ],
+    metricsUsed: [
+      {
+        id: "sized-candidate-total",
+        label: "Sized candidate value",
+        value: sizedRows.length > 0 ? sizedTotalUsd : "Not established",
+        unit: sizedRows.length > 0 ? "USD" : undefined,
+        citationIds: [opportunityCitationId],
+      },
+      {
+        id: "signal-stage-levers",
+        label: "Signal-stage levers",
+        value: signalRows.length,
+        unit: "levers",
+        citationIds: [opportunityCitationId],
+      },
+    ],
+    relationshipsUsed: [],
+    caveats: [
+      {
+        id: "candidate-not-realized",
+        label: "Candidate value only",
+        detail:
+          "The memo may show candidate and signal-stage opportunities, but it must not call any amount realized or finance-confirmed until Finance/Tower confirmation is loaded.",
+      },
+      {
+        id: "no-extra-market-benchmark",
+        label: "No invented benchmarks",
+        detail:
+          "The answer must not invent market discount percentages, pricing benchmarks, page quotes, or missing scope.",
+      },
+    ],
+    nextSteps: [
+      {
+        id: "export-client-memo",
+        label: "Export the governed lever table as a client memo",
+        rationale:
+          "The answer packet is structured as one table plus a short executive read so it can be rendered directly to PDF.",
+        targetSurface: "source",
+      },
+    ],
+  };
 }
 
 export function buildSourceWorkspaceVisualAnswer(input: {
