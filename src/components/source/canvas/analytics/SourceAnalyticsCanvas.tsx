@@ -25,7 +25,6 @@ import { VendorChallengeLeveragePanel } from "@/components/source/canvas/respons
 import { VendorEvaluationScorecardPanel } from "@/components/source/canvas/responses/VendorEvaluationScorecardPanel";
 import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tabs/StageDecisionLensPanel";
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
-import { SourceVendorSelectionReadinessPanel } from "@/components/source/SourceVendorSelectionReadinessPanel";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
 import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
 import type {
@@ -98,7 +97,6 @@ import type {
   SourceEmbeddingStatus,
   SourceParseStatus,
 } from "@/lib/source/artifact-registry/types";
-import type { SourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness-types";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
@@ -210,8 +208,6 @@ interface SourceAnalyticsCanvasProps {
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   /** Event-specific journey: competitive RFP by default, contract optimization for incumbent-renegotiation work. */
   journey?: SourceJourneyDefinition;
-  /** Server-built Source selection readiness projection for Selection / Executive Decision stages. */
-  selectionReadiness?: SourceVendorSelectionReadiness | null;
   /** Server-built vendor response package readiness for the live Responses stage. */
   vendorResponseReadiness?: SourceVendorResponseCompleteness | null;
   /** Server-built proposal profile chain used by the live Responses cockpit. */
@@ -690,7 +686,6 @@ export function SourceAnalyticsCanvas({
   initialWorkspace,
   contractOptimizationProfile = null,
   journey,
-  selectionReadiness = null,
   vendorResponseReadiness = null,
   vendorResponseProfiles = null,
   vendorChallengeIntelligence = null,
@@ -801,16 +796,6 @@ export function SourceAnalyticsCanvas({
               <div style={{ marginBottom: 28 }}>
                 <ContractOptimizationProfilePanel
                   profile={contractOptimizationProfile}
-                />
-              </div>
-            ) : null}
-            {selectionReadiness && workspace === "steps" ? (
-              <div
-                data-testid="source-shell-selection-readiness-bridge"
-                style={{ maxWidth: 1040, marginBottom: 12 }}
-              >
-                <SourceVendorSelectionReadinessPanel
-                  readiness={selectionReadiness}
                 />
               </div>
             ) : null}
