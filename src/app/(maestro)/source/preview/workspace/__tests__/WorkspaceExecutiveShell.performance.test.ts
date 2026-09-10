@@ -4,11 +4,14 @@ import {
   SOURCE_CHART_PALETTE,
   coverageForVendor,
   contractSearchRank,
+  contractValueTypeSummary,
   displayBenchmarkingClause,
   focusedContractSet,
   focusedVendorSet,
+  leverTableRows,
   optimizeTypeRows,
   performanceActual,
+  sizedNegotiableTotalUsd,
   resolveSelectedVendor,
   sourceImpactCoverageRowTotal,
   source360RecoverableCreditCoverageRows,
@@ -1476,4 +1479,82 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       supplementalDeclaredCount: 2,
     });
   });
+  it("shows the levers themselves, not just a count of them", () => {
+    const rows = leverTableRows([
+      {
+        id: "OPP-1",
+        buyerAsk: "Amend Section 2 to carry unused commitment forward.",
+        vendorConcession: "Scheduling concession, no cash cost.",
+        negotiationLanguage: null,
+      },
+      {
+        id: "OPP-2",
+        buyerAsk: null,
+        vendorConcession: null,
+        negotiationLanguage: "Tie the fee to what we actually run.",
+      },
+      { id: "OPP-3", buyerAsk: null, vendorConcession: null, negotiationLanguage: null },
+    ]);
+    // A lever with no ask and no language has nothing to show a negotiator,
+    // so it stays out of the table rather than rendering an empty row.
+    expect(rows.map((row) => row.id)).toEqual(["OPP-1", "OPP-2"]);
+  });
+
+  it("keeps signal-stage levers out of the sized negotiable total", () => {
+    const total = sizedNegotiableTotalUsd([
+      { stageRaw: "quantified", amountUsd: 400_000 },
+      { stageRaw: "quantified", amountUsd: 620_000 },
+      { stageRaw: "signal", amountUsd: 900_000 },
+      { stageRaw: "quantified", amountUsd: null },
+    ]);
+    // The signal row must not inflate the headline, and a null amount must
+    // not throw the sum.
+    expect(total).toBe(1_020_000);
+  });
+
+  it("reads an absent value type as a finding instead of a blank row", () => {
+    const summary = contractValueTypeSummary({
+      potential: {
+        recoverable: "Not established",
+        avoidable: "Not established",
+        negotiable: "$1.8M",
+      },
+      financeConfirmed: "Not established",
+    });
+    expect(summary.established.map(([label]) => label)).toEqual(["Negotiable"]);
+    expect(summary.absent).toEqual(["recoverable", "avoidable"]);
+    expect(summary.confirmed).toBeNull();
+  });
+
+  it("still lists recoverable value when the contract actually has some", () => {
+    const summary = contractValueTypeSummary({
+      potential: {
+        recoverable: "$50.5K",
+        avoidable: "Not established",
+        negotiable: "$1.8M",
+      },
+      financeConfirmed: "$12.0K",
+    });
+    expect(summary.established.map(([label]) => label)).toEqual([
+      "Recoverable",
+      "Negotiable",
+    ]);
+    expect(summary.absent).toEqual(["avoidable"]);
+    expect(summary.confirmed).toBe("$12.0K");
+  });
+
+  it("keeps portfolio-level facts off a single-contract view", () => {
+    const source = readFileSync(
+      new URL("../WorkspaceExecutiveShell.tsx", import.meta.url),
+      "utf8",
+    );
+    const marker = source.indexOf('aria-label="Portfolio facts"');
+    expect(marker).toBeGreaterThan(-1);
+    // The portfolio strip must sit behind a selected-contract guard so a
+    // reader drilled into one agreement is not shown book-level totals.
+    expect(source.slice(Math.max(0, marker - 220), marker)).toContain(
+      "selectedContractId ? null : (",
+    );
+  });
+
 });
