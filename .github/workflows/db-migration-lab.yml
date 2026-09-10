@@ -207,6 +207,7 @@ jobs:
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
             --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:migrate:dry \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -222,6 +223,7 @@ jobs:
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
             --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:migrate:ci \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -237,6 +239,7 @@ jobs:
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
             --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:azure:verify \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -252,6 +255,7 @@ jobs:
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
             --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:verify:moves-current-state-schema \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -279,6 +283,7 @@ jobs:
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
             --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:migrate:ledger \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -298,6 +303,7 @@ jobs:
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
             --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:verify:source-stage-guidebooks \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
@@ -318,6 +324,7 @@ jobs:
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
             --idle-image "${{ steps.image.outputs.image }}" \
+            --idle-verify-wait-seconds 300 \
             --script db:verify:source-artifact-acceptances \
             --container db-migrate \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
