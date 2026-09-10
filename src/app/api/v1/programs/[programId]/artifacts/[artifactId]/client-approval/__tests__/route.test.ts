@@ -251,6 +251,35 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     expect(mockSignOffDeliverable).toHaveBeenCalled();
   });
 
+  it("finds generated artifacts persisted under the tenant key alias", async () => {
+    mockGetGeneratedArtifactById.mockImplementation(
+      async (_artifactId: string, opts: { clientId?: string }) =>
+        opts.clientId === ctx.clientKey ? generatedArtifact : null,
+    );
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Client reviewer accepts this AI draft." }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(200);
+    expect(json).toMatchObject({
+      ok: true,
+      artifactId: "artifact-1",
+      deliverableTypeKey: "charter",
+    });
+    expect(mockGetGeneratedArtifactById).toHaveBeenNthCalledWith(1, "artifact-1", {
+      clientId: ctx.clientId,
+    });
+    expect(mockGetGeneratedArtifactById).toHaveBeenNthCalledWith(2, "artifact-1", {
+      clientId: ctx.clientKey,
+    });
+    expect(mockDraftModuleDeliverable).toHaveBeenCalled();
+    expect(mockSignOffDeliverable).toHaveBeenCalled();
+  });
+
   it("still denies callers without policy or participant approval authority", async () => {
     mockLoadUserProgramAccessPolicy.mockResolvedValue({ canApproveGates: false });
     const { POST } = await import("../route");
