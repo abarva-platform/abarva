@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import {
   SOURCE_CHART_PALETTE,
+  consumptionRampRows,
   coverageForVendor,
   contractSearchRank,
   contractValueTypeSummary,
@@ -9,6 +10,7 @@ import {
   focusedContractSet,
   focusedVendorSet,
   leverTableRows,
+  negotiationSequenceRows,
   optimizeTypeRows,
   performanceActual,
   sizedOpportunityTotalUsd,
@@ -1515,6 +1517,159 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     // The signal row must not inflate the headline, and a null amount must
     // not throw the sum.
     expect(total).toBe(1_020_000);
+  });
+
+  it("scales monthly consumption ramp rows against the largest commitment month", () => {
+    const rows = consumptionRampRows(
+      [
+        {
+          period_start: "2026-01-01",
+          period_end: "2026-01-31",
+          committed_amount: 100_000,
+          actual_spend: 50_000,
+        },
+        {
+          period_start: "2026-02-01",
+          period_end: "2026-02-28",
+          committed_amount: 200_000,
+          actual_spend: 25_000,
+        },
+        {
+          period_start: "2026-03-01",
+          period_end: "2026-12-31",
+          committed_amount: null,
+          actual_spend: 10_000,
+        },
+      ],
+      new Date("2026-03-15T00:00:00Z"),
+    );
+
+    expect(rows.map((row) => row.periodLabel)).toEqual([
+      "Jan",
+      "Feb",
+      "Mar",
+    ]);
+    expect(rows[0].committedScalePct).toBe(50);
+    expect(rows[0].actualScalePct).toBe(25);
+    expect(rows[0].utilizationPct).toBe(50);
+    expect(rows[1].utilizationPct).toBe(13);
+    expect(rows[2].committedScalePct).toBeNull();
+    expect(rows[2].utilizationPct).toBeNull();
+    expect(rows[2].isPartial).toBe(true);
+  });
+
+  it("renders no ramp rows when no monthly observations are loaded", () => {
+    expect(consumptionRampRows([])).toEqual([]);
+  });
+
+  it("orders negotiation levers by authored play while keeping held-back asks last", () => {
+    const rows = negotiationSequenceRows([
+      {
+        id: "OPT-DISCOUNT-REPRICE",
+        label: "Signal-stage discount band re-price review",
+        buyerAsk: "Re-price the discount band.",
+        vendorConcession: null,
+        negotiationLanguage: null,
+        timingDependency: "Load benchmark first.",
+        owner: "Sourcing",
+        ownerRole: "Strategic sourcing",
+        priority: "P0",
+        deadline: "2026-09-01",
+        stageRaw: "signal",
+      },
+      {
+        id: "OPT-COMMIT-RAMP",
+        label: "Re-time annual commitment to program delivery pace",
+        buyerAsk: "Reset the commitment ramp.",
+        vendorConcession: null,
+        negotiationLanguage: null,
+        timingDependency: "Before year-two lock.",
+        owner: "Finance",
+        ownerRole: "Technology finance",
+        priority: "P0",
+        deadline: "2026-08-01",
+        stageRaw: "quantified",
+      },
+      {
+        id: "OPT-CARRY-FORWARD",
+        label: "Add carry-forward provision for unused year-one commitment",
+        buyerAsk: "Carry unused commitment forward.",
+        vendorConcession: null,
+        negotiationLanguage: null,
+        timingDependency: "Before payment authorization.",
+        owner: "Sourcing",
+        ownerRole: "Strategic sourcing",
+        priority: "P1",
+        deadline: "2026-12-01",
+        stageRaw: "quantified",
+      },
+      {
+        id: "OPT-SUPPORT-REBASE",
+        label: "Re-base support fee to consumed spend",
+        buyerAsk: "Tie support to consumed spend.",
+        vendorConcession: null,
+        negotiationLanguage: null,
+        timingDependency: "Attach to amendment.",
+        owner: "Finance",
+        ownerRole: "Technology finance",
+        priority: "P0",
+        deadline: "2026-10-01",
+        stageRaw: "quantified",
+      },
+    ]);
+
+    expect(rows.map((row) => row.opportunity.id)).toEqual([
+      "OPT-CARRY-FORWARD",
+      "OPT-COMMIT-RAMP",
+      "OPT-SUPPORT-REBASE",
+      "OPT-DISCOUNT-REPRICE",
+    ]);
+    expect(rows.at(-1)?.holdBack).toBe(true);
+    expect(rows.at(-1)?.evidenceGap).toContain("benchmark comparable");
+  });
+
+  it("falls back to priority when a lever has no authored sequencing rule", () => {
+    const rows = negotiationSequenceRows([
+      {
+        id: "OPT-GENERIC-MISSING",
+        label: "Generic missing priority",
+        buyerAsk: "Review commercial term.",
+        priority: null,
+        deadline: "2026-01-01",
+        stageRaw: "quantified",
+      },
+      {
+        id: "OPT-GENERIC-P2",
+        label: "Generic priority two",
+        buyerAsk: "Review commercial term.",
+        priority: "P2",
+        deadline: "2026-12-31",
+        stageRaw: "signal",
+      },
+    ]);
+
+    expect(rows.map((row) => row.opportunity.id)).toEqual([
+      "OPT-GENERIC-P2",
+      "OPT-GENERIC-MISSING",
+    ]);
+  });
+
+  it("does not sequence rows that have no negotiation detail", () => {
+    expect(
+      negotiationSequenceRows([
+        {
+          id: "OPT-EMPTY",
+          label: "Empty opportunity",
+          buyerAsk: null,
+          vendorConcession: null,
+          negotiationLanguage: null,
+          timingDependency: null,
+          priority: null,
+          deadline: null,
+          stageRaw: "quantified",
+        },
+      ]),
+    ).toEqual([]);
   });
 
   it("reads an absent value type as a finding instead of a blank row", () => {
