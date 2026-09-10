@@ -339,11 +339,16 @@
 }
 
 .sw-v2-topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 22px;
   margin-bottom: 18px;
+}
+
+.sw-v2-topbar > div:first-child {
+  min-width: 0;
 }
 
 .sw-v2-breadcrumb,
@@ -389,6 +394,7 @@
 
 .sw-v2-topbar h1 {
   margin: 6px 0 6px;
+  max-width: min(100%, 1280px);
   color: #0a0a0b;
   font-size: 28px;
   line-height: 1.15;
@@ -407,7 +413,7 @@
 
 .sw-v2-topbar p {
   margin: 0;
-  max-width: 78ch;
+  max-width: min(100%, 1120px);
 }
 
 .sw-v2-actions,
@@ -420,7 +426,8 @@
 
 .sw-v2-controls {
   align-items: stretch;
-  min-width: min(100%, 610px);
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .sw-v2-control {
@@ -2245,6 +2252,15 @@
 }
 
 @media (max-width: 1180px) {
+  .sw-v2-topbar {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-v2-controls {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
   .sw-v2-metrics,
   .sw-v2-loading-grid,
   .sw-v2-vendor-strip,
@@ -2295,7 +2311,7 @@
   }
 
   .sw-v2-topbar {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .sw-v2-horizontal-tabs {

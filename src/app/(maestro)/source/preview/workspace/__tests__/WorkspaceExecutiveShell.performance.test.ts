@@ -64,6 +64,10 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(css).not.toContain(".sw-v2-compact-action-button");
     expect(source).not.toContain("<span>Evidence</span></button>");
     expect(source).not.toContain("<span>Graph</span></button>");
+    expect(css).toContain("grid-template-columns: minmax(0, 1fr) auto");
+    expect(css).toContain("max-width: min(100%, 1280px)");
+    expect(css).toContain("max-width: min(100%, 1120px)");
+    expect(css).toContain("grid-template-columns: 1fr");
   });
 
   it("renders commercial posture on the product-shell Contract 360 page", () => {

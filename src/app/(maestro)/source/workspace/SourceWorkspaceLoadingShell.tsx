@@ -118,7 +118,7 @@ export function SourceWorkspaceLoadingShell({
             margin: "10px 0 26px",
             color: "#5f5e5a",
             fontSize: 14,
-            maxWidth: 640,
+            maxWidth: 1120,
             lineHeight: 1.55,
           }}
         >
@@ -132,7 +132,7 @@ export function SourceWorkspaceLoadingShell({
             gap: 24,
             borderBottom: "1px solid rgba(10,10,11,.22)",
             background: "#f5f1eb",
-            maxWidth: 920,
+            maxWidth: 1280,
           }}
         >
           {["Command", "Contracts", "Levers", "Evidence", "Coverage"].map(
@@ -168,6 +168,7 @@ export function SourceWorkspaceLoadingShell({
             gridTemplateColumns: "repeat(3, minmax(180px, 1fr))",
             gap: 12,
             maxWidth: 920,
+            width: "100%",
           }}
         >
           {["Portfolio", "Evidence", "Actions"].map((label) => (
