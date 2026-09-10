@@ -267,7 +267,7 @@ describe("Source answer engine", () => {
       true,
     );
     expect(answer?.responseParts.some((part) => part.type === "barChart")).toBe(
-      true,
+      false,
     );
     expect(
       answer?.responseParts.some((part) => part.type === "citations"),
@@ -1214,7 +1214,7 @@ describe("Source answer engine", () => {
 
   it("attaches a Slice 1.3 should-cost estimate modelling the full TCO iceberg", () => {
     const answer = buildSourceAnswerEngine({
-      prompt: "How should the CIO shape the CDP sourcing event?",
+      prompt: "What is the should-cost and full TCO for the CDP sourcing event?",
       contextBundle,
       userRole: "cio",
     });
@@ -1237,7 +1237,7 @@ describe("Source answer engine", () => {
 
   it("attaches a Slice 1.4 proposal-normalization matrix scoped to the event", () => {
     const answer = buildSourceAnswerEngine({
-      prompt: "How should the CIO shape the CDP sourcing event?",
+      prompt: "Normalize the vendor proposals for the CDP sourcing event.",
       contextBundle,
       userRole: "cio",
     });
@@ -1253,6 +1253,32 @@ describe("Source answer engine", () => {
     // return the conservative "collect responses first" posture.
     expect(matrix?.summary.totalVendors).toBe(0);
     expect(matrix?.recommendedNextAction).toContain("Collect responses");
+  });
+
+  it("keeps late-stage readiness answers free of pre-RFP cost and empty-proposal panels", () => {
+    const answer = buildSourceAnswerEngine({
+      prompt:
+        "What can you claim about transition readiness for this event, and what is still missing?",
+      contextBundle: {
+        ...contextBundle,
+        sourcingArchetype: "ams_outsourcing",
+        sourcingEvent: {
+          ...contextBundle.sourcingEvent!,
+          currentStageKey: "transition",
+        },
+        blockers: [],
+        missingInputs: [],
+      },
+      userRole: "cio",
+    });
+
+    const rendered = JSON.stringify(answer?.responseParts ?? []);
+    expect(answer?.title).toBe("Source stage readiness answer");
+    expect(answer?.answerText).toContain("current stage is transition");
+    expect(rendered).not.toContain("TCO iceberg");
+    expect(rendered).not.toContain("No vendor proposals submitted");
+    expect(rendered).not.toContain("Delivery-model gate");
+    expect(rendered).not.toContain("Retained organization design");
   });
 
   it("grounds Apex AMS BAFO savings questions in the expanded Source corpus doctrine", () => {

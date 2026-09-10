@@ -257,6 +257,13 @@ export function buildSourceAnswerEngine(
     unique([...missingData, ...corpusMissingData]),
     live,
   );
+  const answerRiskTraps = stageReadinessAnswer ? [] : finalRiskTraps;
+  const answerMissingData = stageReadinessAnswer
+    ? unique([
+        ...input.contextBundle.blockers,
+        ...input.contextBundle.missingInputs,
+      ])
+    : finalMissingData;
   const finalExpertLens = unique([...playbook.expertLens, ...corpusExpertLens]);
   const confidence = deriveAnswerConfidence(live, evidence);
   const limits = unique([
@@ -290,8 +297,8 @@ export function buildSourceAnswerEngine(
       currentStateFindings,
       sourcingImplications,
       cxoGuidance,
-      riskTraps: finalRiskTraps,
-      missingData: finalMissingData,
+      riskTraps: answerRiskTraps,
+      missingData: answerMissingData,
       confidence,
       evidence,
       limits,
@@ -331,8 +338,8 @@ export function buildSourceAnswerEngine(
   const visibleSourcingImplications =
     sourcingImplications.map(toAvaVisibleText);
   const visibleCxoGuidance = finalCxoGuidance.map(toAvaVisibleText);
-  const visibleRiskTraps = finalRiskTraps.map(toAvaVisibleText);
-  const visibleMissingData = finalMissingData.map(toAvaVisibleText);
+  const visibleRiskTraps = answerRiskTraps.map(toAvaVisibleText);
+  const visibleMissingData = answerMissingData.map(toAvaVisibleText);
   const visibleRecommendedNextAction = toAvaVisibleText(recommendedNextAction);
   const categoryStrategy = classifyEventCategory(input.contextBundle);
   const deliveryModelGate = gateEventDeliveryModel(input.contextBundle);
@@ -374,9 +381,15 @@ export function buildSourceAnswerEngine(
       missingData: visibleMissingData,
       evidenceCitations,
       recommendedNextAction: visibleRecommendedNextAction,
-      deliveryModelGate,
-      shouldCostEstimate,
-      proposalNormalization,
+      deliveryModelGate: shouldShowDeliveryModelGate(input.prompt)
+        ? deliveryModelGate
+        : null,
+      shouldCostEstimate: shouldShowShouldCost(input.prompt)
+        ? shouldCostEstimate
+        : null,
+      proposalNormalization: shouldShowProposalNormalization(input.prompt)
+        ? proposalNormalization
+        : null,
       extraResponseParts:
         structuredEvidenceAnswer?.extraResponseParts ??
         contractOptimizationAnswer?.extraResponseParts ??
@@ -387,6 +400,24 @@ export function buildSourceAnswerEngine(
     shouldCostEstimate,
     proposalNormalization,
   };
+}
+
+function shouldShowDeliveryModelGate(prompt: string): boolean {
+  return /\b(build\s*\/\s*buy|build or buy|build buy|delivery model|partner model|systems? integrator|\bsi\b)\b/i.test(
+    prompt,
+  );
+}
+
+function shouldShowShouldCost(prompt: string): boolean {
+  return /\b(should[- ]cost|tco|total cost|cost iceberg|hidden costs?|vendor quote|quoted cost)\b/i.test(
+    prompt,
+  );
+}
+
+function shouldShowProposalNormalization(prompt: string): boolean {
+  return /\b(normaliz(?:e|ed|ation)|compare (?:the )?(?:vendor )?(?:proposals?|bids?|prices?)|proposal comparison|pricing comparison|bid comparison)\b/i.test(
+    prompt,
+  );
 }
 
 /**
@@ -1131,7 +1162,7 @@ function buildSourceStageReadinessAnswer(args: {
 } | null {
   const text = args.prompt.toLowerCase();
   if (
-    !/\b(current stage|stage readiness|what'?s blocking the gate|what is blocking the current stage|blocking the current stage|stage blocker|gate blocker|blocking the gate)\b/.test(
+    !/\b(current stage|stage readiness|(?:strategy|scope|rfp|responses?|evaluation|pricing|bafo|executive decision|selection|award|transition|value) readiness|what'?s blocking the gate|what is blocking the current stage|blocking the current stage|stage blocker|gate blocker|blocking the gate)\b/.test(
       text,
     )
   ) {
@@ -1155,7 +1186,7 @@ function buildSourceStageReadinessAnswer(args: {
     answerText: [
       `The current stage is ${stage}.`,
       `What is blocking or gating it: ${blockerLine}`,
-      "Stage readiness should be judged from the Source gate, the client-final artifact authority chain, and event-specific evidence. aVa can explain the blockers, but it should not bypass named human approval.",
+      "Stage readiness should be judged from the visible Source gate, the authoritative artifact chain, and the event's recorded evidence. aVa can explain that record, but it must not bypass named human approval.",
     ].join("\n"),
     currentStateFindings: [`Current stage is ${stage}.`, blockerLine],
     sourcingImplications: [
