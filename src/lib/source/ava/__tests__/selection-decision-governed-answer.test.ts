@@ -119,6 +119,11 @@ describe("selection decision intent", () => {
         "What is blocking the award readiness gate?",
       ),
     ).toBe(false);
+    expect(
+      looksLikeSelectionDecisionQuestion(
+        "What selection decision was recorded, and what conditions remain?",
+      ),
+    ).toBe(true);
   });
 
   it("recognizes protected cross-tenant data requests", () => {

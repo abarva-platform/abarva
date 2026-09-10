@@ -33,7 +33,7 @@ export function looksLikeAwardReadinessQuestion(
   const hasAwardContext =
     /\b(award|selection|select|finalists?|vendors?|suppliers?)\b/.test(q);
   const hasReadinessContext =
-    /\b(ready|readiness|held|hold|blocked|blocker|must[- ]resolve|condition|conditional)\b/.test(
+    /\b(ready|readiness|held|hold|blocked|blocker|must[- ]resolve)\b/.test(
       q,
     );
   return hasAwardContext && hasReadinessContext;
