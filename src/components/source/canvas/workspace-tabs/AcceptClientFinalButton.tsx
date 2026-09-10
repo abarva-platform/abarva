@@ -7,6 +7,7 @@ interface AcceptClientFinalButtonProps {
   artifactCode: string;
   artifactName: string;
   hasGeneratedDraft?: boolean;
+  buttonLabel?: string;
   onAccepted?: () => void;
 }
 
@@ -15,6 +16,7 @@ export function AcceptClientFinalButton({
   artifactCode,
   artifactName,
   hasGeneratedDraft = true,
+  buttonLabel = "Accept Client Final",
   onAccepted,
 }: AcceptClientFinalButtonProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -88,7 +90,7 @@ export function AcceptClientFinalButton({
             : "Generate and persist an AbarVa draft before accepting a client-final version."
         }
       >
-        Accept Client Final
+        {buttonLabel}
       </button>
       {!hasGeneratedDraft ? (
         <p style={COPY_STYLE}>

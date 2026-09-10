@@ -5289,7 +5289,11 @@ function CurrentStageArtifactReviewQueue({
   );
   const queueLabel =
     blockers.length > 0
-      ? `${blockers.length} artifact review blocker${blockers.length === 1 ? "" : "s"}`
+      ? `${blockers.length} blocker${blockers.length === 1 ? "" : "s"}${
+          evidenceOnly.length > 0
+            ? ` · ${evidenceOnly.length} evidence item${evidenceOnly.length === 1 ? "" : "s"}`
+            : ""
+        }`
       : evidenceOnly.length > 0
         ? `${evidenceOnly.length} evidence item${evidenceOnly.length === 1 ? "" : "s"} to review`
         : "Ready for approval";
@@ -5441,6 +5445,16 @@ function CurrentStageArtifactReviewRow({
             artifactCode={row.code}
             artifactName={row.name}
             onReviewed={onClientFinalAccepted}
+          />
+        ) : row.lifecycleState === "client_final" &&
+          row.contentQuality.state === "blocked" ? (
+          <AcceptClientFinalButton
+            eventId={eventId}
+            artifactCode={row.code}
+            artifactName={row.name}
+            hasGeneratedDraft
+            buttonLabel="Replace Client Final"
+            onAccepted={onClientFinalAccepted}
           />
         ) : row.lifecycleState === "ai_draft" ? (
           <AcceptClientFinalButton
@@ -5650,6 +5664,18 @@ function artifactReviewAction(row: SourceArtifactLifecycleRow): {
       detail:
         "The accepted body is preserved; Source records a separate quality receipt and fails closed if the package does not pass.",
       cta: "Run review",
+    };
+  }
+  if (
+    row.lifecycleState === "client_final" &&
+    row.contentQuality.state === "blocked"
+  ) {
+    return {
+      title: "Repair the accepted final before relying on it.",
+      detail:
+        row.contentQuality.blockers[0] ??
+        "Content QA found a blocking issue in the accepted version. Upload the corrected client-approved final to replace it.",
+      cta: "Replace final",
     };
   }
   if (row.lifecycleState === "ai_draft") {
