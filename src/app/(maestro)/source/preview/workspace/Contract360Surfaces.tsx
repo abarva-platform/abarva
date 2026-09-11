@@ -51,6 +51,16 @@ function tabIntelligence(
   );
 }
 
+/**
+ * How close the notice deadline has to be before the header raises it in alarm.
+ *
+ * The chip is the loudest element on the page. Rendering "notice window — 1404
+ * days" in red said something benign in the most urgent treatment available,
+ * which trains a reader to ignore it by the time it matters. Beyond this
+ * horizon the same fact is stated quietly.
+ */
+const NOTICE_URGENT_DAYS = 120;
+
 /* -------------------------------------------------------------------------- */
 /* Header                                                                     */
 /* -------------------------------------------------------------------------- */
@@ -75,6 +85,15 @@ export function ContractBriefingHeader({
   onBack: () => void;
 }) {
   const story = tabIntelligence(vm, "Story");
+  /*
+   * The design pairs the contract name with a short second clause in grey.
+   * The governed `headline` is long-form prose — on a real contract it runs to
+   * several sentences — so using it whole turned the page heading into a
+   * paragraph. Take it only when it is genuinely one short clause, and let the
+   * Story tab carry the full text where it belongs.
+   */
+  const shortClause =
+    story?.headline && story.headline.length <= 60 ? story.headline : null;
   const archetype = vm.contractEducation?.archetypeLabel ?? null;
   const committed = numberFromDb(
     (contract as unknown as { committed_value?: unknown }).committed_value,
@@ -102,16 +121,20 @@ export function ContractBriefingHeader({
         <div className="sw-c3-head-main">
           <h1 className="sw-c3-title">
             {contract.contract_name}
-            {story?.headline ? (
-              <span className="sw-c3-title-dim"> {story.headline}</span>
+            {shortClause ? (
+              <span className="sw-c3-title-dim"> {shortClause}</span>
             ) : null}
           </h1>
           {subline ? <p className="sw-c3-note">{sentenceCase(subline)}</p> : null}
         </div>
-        {noticeDays != null ? (
+        {noticeDays != null && noticeDays <= NOTICE_URGENT_DAYS ? (
           <span className="sw-c3-pill-alert">
             <span className="sw-c3-dot" />
             Notice window — {noticeDays} days
+          </span>
+        ) : noticeDays != null ? (
+          <span className="sw-c3-pill-quiet">
+            Notice window opens in {noticeDays} days
           </span>
         ) : null}
       </div>
@@ -266,7 +289,12 @@ export function ContractStoryBriefing({
       required: true,
     },
   ].map((lane) => ({
-    name: lane.value == null ? lane.name : `${lane.name} · ${lane.value}`,
+    // A not-required lane carries no count. Appending "· 0" to it reintroduces
+    // exactly the zero the state is there to replace.
+    name:
+      !lane.required || lane.value == null
+        ? lane.name
+        : `${lane.name} · ${lane.value}`,
     state: !lane.required
       ? "Not required"
       : lane.value == null

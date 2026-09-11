@@ -3780,3 +3780,16 @@
   color: var(--sw-c3-body);
   line-height: 1.55;
 }
+
+.sw-c3-pill-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sw-c3-muted);
+  background: var(--sw-c3-sand);
+  padding: 6px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
