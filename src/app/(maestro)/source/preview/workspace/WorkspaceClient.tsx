@@ -6,6 +6,7 @@ import {
   buildInitialWorkspaceState,
   WorkspaceViewModel,
   type WorkspaceState,
+  workspaceTabParamFor,
 } from "./viewModel";
 import { buildViewModel } from "./buildViewModel";
 import type {
@@ -146,6 +147,46 @@ export function WorkspaceClient({
   );
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [showEclDiagnostics, setShowEclDiagnostics] = useState(false);
+
+  /*
+   * Keep the address bar in step with the selection.
+   *
+   * Selecting a contract and switching a contract tab were React state only,
+   * while the URL kept whatever workspace tab the page was opened on. The page
+   * therefore described a different view from the one on screen, so a refresh,
+   * a shared link or the back button rebuilt the workspace from the stale
+   * parameters and the contract vanished — which reads as the layout changing
+   * by itself.
+   *
+   * replaceState rather than pushState: this mirrors state that already
+   * changed, and pushing an entry per tab click would turn the back button into
+   * a tab-history walker. Deep links already rehydrate correctly; only the
+   * writing half was missing.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const next = new URLSearchParams(url.search);
+
+    if (state.sel.kind === "contract" && state.sel.id) {
+      next.set("contractId", state.sel.id);
+      next.set("contractTab", state.tabs.contract ?? "Story");
+      next.delete("workspaceTab");
+      next.delete("tab");
+    } else {
+      next.delete("contractId");
+      next.delete("contractTab");
+      next.delete("tab");
+      const workspaceTab = workspaceTabParamFor(state.sel, state.tabs);
+      if (workspaceTab) next.set("workspaceTab", workspaceTab);
+      else next.delete("workspaceTab");
+    }
+
+    const search = next.toString();
+    const target = `${url.pathname}${search ? `?${search}` : ""}`;
+    if (target === `${url.pathname}${url.search}`) return;
+    window.history.replaceState(window.history.state, "", target);
+  }, [state.sel, state.tabs]);
 
   const setState = useMemo(
     () =>
