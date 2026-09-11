@@ -5,8 +5,19 @@
 jest.mock("server-only", () => ({}));
 
 jest.mock("@/components/agent/AgentDock", () => ({
-  AgentDock: ({ workspace }: { workspace: ReactNode }) => (
-    <div data-testid="source-agent-dock">{workspace}</div>
+  AgentDock: ({
+    disableStoredMode,
+    workspace,
+  }: {
+    disableStoredMode?: boolean;
+    workspace: ReactNode;
+  }) => (
+    <div
+      data-disable-stored-mode={String(Boolean(disableStoredMode))}
+      data-testid="source-agent-dock"
+    >
+      {workspace}
+    </div>
   ),
 }));
 
@@ -459,6 +470,11 @@ describe("Source workspace ECL browser-surface proof", () => {
     const contractsTab = screen.getAllByRole("button", {
       name: "Contracts",
     })[0] as HTMLAnchorElement;
+    expect(
+      screen
+        .getByTestId("source-agent-dock")
+        .getAttribute("data-disable-stored-mode"),
+    ).toBe("true");
     expect(contractsTab.getAttribute("href")).toContain(
       "/source?workspaceTab=contracts",
     );

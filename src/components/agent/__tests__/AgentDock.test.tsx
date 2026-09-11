@@ -162,6 +162,26 @@ describe("AgentDock · default mode", () => {
     ).toHaveAttribute("src", "/brand/ava/ava-wordmark-2tone-light.svg");
   });
 
+  it("honors disableStoredMode when a stale expanded preference exists", () => {
+    window.localStorage.setItem(modeStorageKey(SURFACE), "expand");
+
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="collapsed"
+        disableStoredMode
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    expect(screen.getByTestId("workspace")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
+    expect(screen.queryByTestId("agent-dock-expand-overlay")).toBeNull();
+  });
+
   it("softens stale gate wording on Moves surfaces", () => {
     render(
       <AgentDock
