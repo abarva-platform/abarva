@@ -42,6 +42,7 @@ The loader now consumes structured negotiation findings and lever rows instead o
 - `adapter.test.ts`, `projection.test.ts`, and `contract-intelligence/prompt.test.ts`: **5 tests passed**.
 - TypeScript project check with `tsc --noEmit`: **passed**.
 - Selected source-package projection: **correctly blocked**. The source package contains malformed negotiation CSV rows and has document inventory without page-text rows; no clean extract is approved from that package.
+- Dense package projections also passed for the tracked managed-services cohort: each of the three companion packages carries page text, scope, clauses, twelve spend periods, invoices, performance, workload volume, change orders, and optimization rows. The five-contract bundle projects the intelligence records but its adapter gate remains blocked for the two managed-services rows that lack resource, invoice-detail, batch-volume, and QBR lanes.
 
 ## Rollout Plan
 
