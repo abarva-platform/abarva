@@ -546,12 +546,12 @@ function opportunityLinesFrom(
           "Confirm evidence owner and decision path.",
         owner: null,
         sourceRefs: stringArray(line.sourceRefs),
-        buyerAsk: null,
-        negotiationLanguage: null,
-        vendorConcession: null,
-        timingDependency: null,
-        priority: null,
-        riskIfIgnored: null,
+        buyerAsk: stringValue(line.buyerAsk),
+        negotiationLanguage: stringValue(line.negotiationLanguage),
+        vendorConcession: stringValue(line.vendorConcession),
+        timingDependency: stringValue(line.timingDependency),
+        priority: stringValue(line.priority),
+        riskIfIgnored: stringValue(line.riskIfIgnored),
       },
     ];
   });

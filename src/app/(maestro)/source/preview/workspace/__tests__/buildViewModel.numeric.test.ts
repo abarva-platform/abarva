@@ -1357,6 +1357,17 @@ describe("buildViewModel numeric coercion", () => {
               "Included only in recoverable leakage to avoid double counting.",
             approvalState: "needs_review",
             narrative: "Service credits were earned and not claimed.",
+            negotiationDetail: {
+              buyerAsk: "Apply the earned credit.",
+              negotiationLanguage:
+                "Apply the credit to the next governed invoice.",
+              vendorConcession:
+                "The vendor can credit the next invoice without reopening delivery scope.",
+              timingDependency: "Before the next invoice cycle.",
+              ownerRole: "Sourcing lead",
+              riskIfIgnored: "The credit can age out.",
+              priority: "P0",
+            },
           },
         ],
         financeRealizations: [],
@@ -1370,11 +1381,20 @@ describe("buildViewModel numeric coercion", () => {
     const built = buildViewModel(vm) as {
       avaSurfaceContext: {
         sourceV4: {
+          optimizationOpportunities: {
+            opportunities: Array<{
+              buyerAsk: string | null;
+              contractId: string | null;
+              vendorConcession: string | null;
+            }>;
+          };
           contractOpportunityDirectory: Array<{
             blockingGap: string;
+            buyerAsk: string | null;
             confidence: number | null;
             evidenceGrade: string;
             owner: string | null;
+            vendorConcession: string | null;
             sourceRefs: string[];
             stage: string | null;
           }>;
@@ -1393,6 +1413,19 @@ describe("buildViewModel numeric coercion", () => {
       "Finance confirmation evidence is not complete.",
     );
     expect(row.owner).toBe("Sourcing lead");
+    expect(row.buyerAsk).toBe("Apply the earned credit.");
+    expect(row.vendorConcession).toBe(
+      "The vendor can credit the next invoice without reopening delivery scope.",
+    );
+    expect(
+      built.avaSurfaceContext.sourceV4.optimizationOpportunities
+        .opportunities[0],
+    ).toMatchObject({
+      contractId: "c1",
+      buyerAsk: "Apply the earned credit.",
+      vendorConcession:
+        "The vendor can credit the next invoice without reopening delivery scope.",
+    });
     expect(refsText).toContain("Contract record");
     expect(refsText).toContain("Opportunity record");
     expect(refsText).toContain("Finance confirmation not complete");
