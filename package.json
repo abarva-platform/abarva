@@ -636,6 +636,7 @@
     "moves:member-ai-assist-correction": "npx tsx scripts/programs/correct-member-ai-assist-phase.ts",
     "moves:member-ai-assist-correction:inspect": "npx tsx scripts/programs/correct-member-ai-assist-phase.ts --mode inspect",
     "moves:member-ai-assist-correction:apply": "npx tsx scripts/programs/correct-member-ai-assist-phase.ts --mode apply",
+    "moves:smoke:role-approvals:apply": "npx tsx scripts/programs/record-smoke-role-approvals.ts",
     "ops:archive-existing-moves": "npx tsx scripts/ops/archive-existing-moves.ts",
     "source:contract-optimization:load-skyharbor": "npx tsx scripts/source/load-skyharbor-contract-optimization.ts --apply",
     "source:skyharbor-v3:load-current-state": "npx tsx scripts/source/load-skyharbor-v3-current-state.ts",
