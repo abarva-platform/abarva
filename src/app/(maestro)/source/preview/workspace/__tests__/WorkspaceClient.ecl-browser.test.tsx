@@ -1218,6 +1218,7 @@ describe("Source workspace ECL browser-surface proof", () => {
             "Carry-forward keeps the vendor renewal intact while preserving unused buyer value.",
           risk_if_ignored:
             "Unused commitment forfeits at anniversary and weakens the renewal position.",
+          timing_dependency: "Resolve before Year 2 payment authorization.",
           evidence_rows:
             "coverage:MER-TECH-DBX-001:2026-09;clause:MER-TECH-DBX-001:no_carry_forward",
         },
@@ -1287,6 +1288,10 @@ describe("Source workspace ECL browser-surface proof", () => {
         "Carry forward unused Year 1 commitment into Year 2 or convert it into adoption credits.",
       ).length,
     ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Resolve before Year 2 payment authorization.").length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText("No due date")).toBeNull();
     expect(screen.queryByText(/coverage:MER-TECH-DBX-001/)).toBeNull();
     expect(screen.queryByText(/no_carry_forward/)).toBeNull();
     fireEvent.click(

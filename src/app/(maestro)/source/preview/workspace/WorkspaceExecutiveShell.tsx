@@ -699,7 +699,13 @@ function decisionDueLabel(
   if (days == null)
     return candidate.decision_due_date
       ? fmtDate(candidate.decision_due_date)
-      : "No due date";
+      : (actionPayloadText(candidate, [
+          "timing_dependency",
+          "timingDependency",
+          "deadline",
+          "next_step",
+          "nextStep",
+        ]) ?? "Timing gate not loaded");
   if (days < 0) return `${Math.abs(days)} days late`;
   if (days === 0) return "due today";
   return `${days} days`;
