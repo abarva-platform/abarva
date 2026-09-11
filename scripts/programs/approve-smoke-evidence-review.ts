@@ -143,8 +143,8 @@ async function main() {
         `insert into program_audit_log
            (tenant_key, program_id, engagement_id, actor_id, actor_role, action,
             from_state, to_state, rationale, evidence_refs)
-         values ($1, $2, $2, $3, 'client', 'current_state_doc_committed',
-                 'review_required', 'committed', $4, $5)`,
+         values ($1, $2::text, $2::uuid, $3::uuid, 'client', 'current_state_doc_committed',
+                 'review_required', 'committed', $4, $5::text[])`,
         [
           tenantKey,
           moveId,
