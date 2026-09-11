@@ -330,6 +330,104 @@ function primaryCommitmentAction(portfolio: SourceWorkspacePortfolioData) {
   return rows[0] ?? null;
 }
 
+function actionSequenceRank(candidate: SourceContractActionCandidateRow) {
+  const text = actionText(candidate);
+  if (/notice|non-renew|auto-renew/i.test(text)) return 0;
+  if (/credit|claim|breach/i.test(text)) return 1;
+  if (/right-size|re-time|retime|ramp|commitment/i.test(text)) return 2;
+  if (/marketplace|private offer|route/i.test(text)) return 3;
+  if (/serverless|classic|migration/i.test(text)) return 4;
+  if (/discount|re-price|benchmark/i.test(text)) return 5;
+  if (/scope|cmdb|workload/i.test(text)) return 6;
+  return 7;
+}
+
+function orderedActionRows(
+  rows: readonly SourceContractActionCandidateRow[],
+): SourceContractActionCandidateRow[] {
+  return [...rows].sort(
+    (left, right) =>
+      actionSequenceRank(left) - actionSequenceRank(right) ||
+      priorityRank(left.priority) - priorityRank(right.priority) ||
+      sortableDate(left.decision_due_date) -
+        sortableDate(right.decision_due_date) ||
+      (numberFromDb(right.candidate_amount_usd) ?? 0) -
+        (numberFromDb(left.candidate_amount_usd) ?? 0) ||
+      left.action_candidate_id.localeCompare(right.action_candidate_id),
+  );
+}
+
+function anchorContractActionSet(
+  portfolio: SourceWorkspacePortfolioData,
+): FocusedActionSet & { contract: SourceContract360Row | null } {
+  const byContract = new Map<string, SourceContractActionCandidateRow[]>();
+  for (const row of portfolio.impact.actionCandidates) {
+    const current = byContract.get(row.contract_id) ?? [];
+    current.push(row);
+    byContract.set(row.contract_id, current);
+  }
+
+  const ranked = [...byContract.entries()]
+    .map(([contractId, rows]) => {
+      const orderedRows = orderedActionRows(rows);
+      const contract = contractById(portfolio, contractId);
+      const text = orderedRows.map(actionText).join(" ");
+      return {
+        contract,
+        contractId,
+        rows: orderedRows,
+        totalAmount: orderedRows.reduce(
+          (sum, row) => sum + (numberFromDb(row.candidate_amount_usd) ?? 0),
+          0,
+        ),
+        commitmentScore: /commit|notice|renew|ramp|consumption|usage/i.test(
+          text,
+        )
+          ? 1
+          : 0,
+      };
+    })
+    .sort(
+      (left, right) =>
+        right.commitmentScore - left.commitmentScore ||
+        right.rows.length - left.rows.length ||
+        right.totalAmount - left.totalAmount ||
+        left.contractId.localeCompare(right.contractId),
+    );
+
+  const anchor = ranked[0];
+  if (!anchor) {
+    return {
+      contract: null,
+      rows: [],
+      remainderCount: 0,
+      remainderAmount: 0,
+      totalRows: 0,
+      totalAmount: 0,
+    };
+  }
+
+  const totalRows = portfolio.impact.actionCandidates.length;
+  const totalAmount = portfolio.impact.actionCandidates.reduce(
+    (sum, row) => sum + (numberFromDb(row.candidate_amount_usd) ?? 0),
+    0,
+  );
+  return {
+    contract: anchor.contract,
+    rows: anchor.rows,
+    remainderCount: totalRows - anchor.rows.length,
+    remainderAmount: totalAmount - anchor.totalAmount,
+    totalRows,
+    totalAmount,
+  };
+}
+
+function actionOrderTitle(count: number) {
+  const noun = count === 1 ? "lever" : "levers";
+  const subject = count === 1 ? "it has" : "they have";
+  return `${count} ${noun}, in the order ${subject} to happen`;
+}
+
 function sourceCreditFunnel(
   portfolio: SourceWorkspacePortfolioData,
   creditFinding: number,
@@ -835,7 +933,7 @@ export function WorkspaceExecutiveShell({
           </nav>
         )}
 
-        {selectedContractId ? null : (
+        {selectedContractId || currentPage !== "Command" ? null : (
           <SourceCommandKpiStrip
             portfolio={portfolio}
             totalAnnualValue={totalAnnualValue}
@@ -914,9 +1012,6 @@ export function WorkspaceExecutiveShell({
 
           {currentPage === "Levers" && !selectedContractId ? (
             <OptimizePage
-              vm={vm}
-              creditFinding={creditFinding}
-              findingContract={findingContract}
               portfolio={portfolio}
               subtab={logic.state.tabs.optimize ?? "Queue"}
               onOpenSubtab={(tab) => logic.setTab("optimize", tab)}
@@ -3841,23 +3936,18 @@ function ContractComparatorContent({ vm }: { vm: SourceWorkspaceVM }) {
 }
 
 function OptimizePage({
-  vm,
-  creditFinding,
-  findingContract,
   portfolio,
   subtab,
   onOpenSubtab,
   onOpenContract,
 }: {
-  vm: SourceWorkspaceVM;
-  creditFinding: number;
-  findingContract: { contractId: string; counterparty: string } | null;
   portfolio: SourceWorkspacePortfolioData;
   subtab: string;
   onOpenSubtab: (tab: string) => void;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   const actionSet = focusedActionSet(portfolio);
+  const anchorActionSet = anchorContractActionSet(portfolio);
 
   return (
     <div className="sw-v2-grid">
@@ -3875,63 +3965,108 @@ function OptimizePage({
             portfolio={portfolio}
             onOpenContract={onOpenContract}
           />
+        ) : anchorActionSet.rows.length > 0 ? (
+          <SourceLeverSequence
+            actionSet={anchorActionSet}
+            asOfDateIso={portfolio.asOfDateIso}
+            onOpenContract={onOpenContract}
+          />
         ) : (
-          <>
-            <ProductShellOptimizationExecutiveStrip vm={vm} />
-            <OptimizeTypeMixChart rows={optimizeTypeRows(portfolio)} />
-            <div className="sw-v2-lanes">
-              <ValueLane
-                title="Recover money"
-                value={
-                  creditFinding > 0
-                    ? impactCreditMoney(creditFinding)
-                    : "Not established"
-                }
-                note={
-                  creditFinding > 0 && findingContract
-                    ? `${findingContract.contractId} / ${findingContract.counterparty}. Loaded service-credit rows show calculated credits above claimed credits.`
-                    : "No recoverable opportunity is quantified in loaded rows."
-                }
-                active={creditFinding > 0}
-              />
-              <ValueLane
-                title="Governed action value"
-                value={
-                  actionSet.totalAmount > 0
-                    ? money(actionSet.totalAmount)
-                    : "Not established"
-                }
-                note={
-                  actionSet.rows[0]
-                    ? `${actionSet.totalRows} portfolio action rows. Open a row to inspect the selected contract evidence.`
-                    : "Requires usage, renewal, rate-card, or entitlement evidence before sizing."
-                }
-                active={actionSet.totalAmount > 0}
-              />
-              <ValueLane
-                title="Improve the deal"
-                value="Not established"
-                note="Requires terms extraction or benchmark evidence before a negotiation value is shown."
-              />
-            </div>
-            {findingContract ? (
-              <button
-                type="button"
-                className="sw-v2-primary"
-                onClick={() =>
-                  onOpenContract(findingContract.contractId, "Performance")
-                }
-              >
-                Review performance evidence
-              </button>
-            ) : null}
-            <OptimizeActionQueue
-              actionSet={actionSet}
-              onOpenContract={onOpenContract}
-            />
-          </>
+          <OptimizeActionQueue
+            actionSet={actionSet}
+            onOpenContract={onOpenContract}
+          />
         )}
       </section>
+    </div>
+  );
+}
+
+function SourceLeverSequence({
+  actionSet,
+  asOfDateIso,
+  onOpenContract,
+}: {
+  actionSet: FocusedActionSet & { contract: SourceContract360Row | null };
+  asOfDateIso: string;
+  onOpenContract: (contractId: string, tab?: string) => void;
+}) {
+  const contract = actionSet.contract;
+  const contractLabel = contract
+    ? `${safeContractVendorDisplayName(contract)} · ${contract.contract_id}`
+    : "Selected governed contract";
+
+  return (
+    <div className="sw-v2-lever-sequence">
+      <div className="sw-v2-lever-sequence-head">
+        <div>
+          <span>Action order</span>
+          <h3>{actionOrderTitle(actionSet.rows.length)}</h3>
+          <p>{contractLabel}</p>
+        </div>
+        <small>
+          Derived from governed action rows. Finance confirmation remains
+          separate.
+        </small>
+      </div>
+
+      <div className="sw-v2-lever-sequence-list">
+        {actionSet.rows.map((row, index) => {
+          const amount = numberFromDb(row.candidate_amount_usd);
+          const amountLabel =
+            amount && amount > 0
+              ? impactCreditMoney(amount)
+              : row.readiness_state ?? "Not sized";
+          const dueLabel = decisionDueLabel(row, asOfDateIso);
+          const basis =
+            row.deterministic_basis ??
+            row.evidence_state ??
+            "Loaded evidence row";
+
+          return (
+            <button
+              key={row.action_candidate_id}
+              type="button"
+              className="sw-v2-lever-sequence-card"
+              onClick={() => onOpenContract(row.contract_id, "Optimize")}
+            >
+              <span className="sw-v2-lever-sequence-index">{index + 1}</span>
+              <span className="sw-v2-lever-sequence-main">
+                <b>{row.title ?? row.finding_summary ?? "Review loaded action"}</b>
+                <small>
+                  {row.finding_summary ??
+                    row.next_action ??
+                    "Open the governed contract record before outreach."}
+                </small>
+                <em>
+                  Backed by <strong>{basis}</strong>
+                </em>
+              </span>
+              <span className="sw-v2-lever-sequence-value">
+                <b>{amountLabel}</b>
+                <small>{formatFinanceState(row.finance_confirmation_state)}</small>
+              </span>
+              <span className="sw-v2-lever-sequence-owner">
+                <b>{row.accountable_role ?? "Owner not assigned"}</b>
+                <small>{dueLabel}</small>
+              </span>
+              <span className="sw-v2-lever-sequence-next">
+                <b>Open the record</b>
+                <small>
+                  {row.next_action ?? row.readiness_state ?? "Review evidence"}
+                </small>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {actionSet.remainderCount > 0 ? (
+        <p className="sw-v2-lever-sequence-footnote">
+          {actionSet.remainderCount} further portfolio action rows stay in By
+          contract until an operator selects the next move.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -6110,26 +6245,6 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ValueLane({
-  title,
-  value,
-  note,
-  active,
-}: {
-  title: string;
-  value: string;
-  note: string;
-  active?: boolean;
-}) {
-  return (
-    <div className={`sw-v2-lane ${active ? "is-active" : ""}`}>
-      <span>{title}</span>
-      <b>{value}</b>
-      <p>{note}</p>
-    </div>
-  );
-}
-
 function ContractScopeTable({
   scopeRows,
 }: {
@@ -7138,7 +7253,7 @@ function contractListSubtabTitle(subtab: string) {
 function optimizeSubtabTitle(subtab: string) {
   if (subtab === "By type") return "Action rows grouped by type";
   if (subtab === "By contract") return "Contract-level action rows";
-  return "Evidence-backed action queue";
+  return "What to ask first";
 }
 
 function graphSubtabTitle(subtab: string) {
@@ -7439,7 +7554,12 @@ function headlineFor(
   if (page === "Contracts") {
     return contract ? safeContractVendorDisplayName(contract) : "Contract 360";
   }
-  if (page === "Levers") return "Optimize evidenced opportunities";
+  if (page === "Levers") {
+    const anchor = anchorContractActionSet(portfolio);
+    return anchor.rows.length > 0
+      ? actionOrderTitle(anchor.rows.length)
+      : "Optimize evidenced opportunities";
+  }
   if (page === "Evidence") return "Evidence and proof";
   return commandHeadline(portfolio, tenantName);
 }
@@ -7459,6 +7579,11 @@ function subheadFor(
     return `${contract.contract_id} / ${money(numberFromDb(contract.annual_value))} annual value / expiry ${fmtDate(contract.end_date)}.`;
   }
   if (page === "Levers") {
+    const anchor = anchorContractActionSet(portfolio);
+    const anchorContract = anchor.contract;
+    if (anchorContract && anchor.rows.length > 0) {
+      return `${safeContractVendorDisplayName(anchorContract)} · ${anchorContract.contract_id}`;
+    }
     return "Only quantified findings with loaded evidence are shown. Finance confirmation remains separate.";
   }
   if (page === "Evidence") {
