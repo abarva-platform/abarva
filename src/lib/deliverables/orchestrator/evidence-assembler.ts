@@ -108,6 +108,116 @@ function compactText(
     .slice(0, max);
 }
 
+function humanizeCaptureLabel(value: string | null | undefined): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return "Capture signal";
+  return raw
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatCaptureScalar(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+      value,
+    );
+  }
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "string" && value.trim()) return value.trim();
+  return null;
+}
+
+function parseCaptureValue(value: string): unknown | null {
+  const trimmed = value.trim();
+  if (!/^[\[{]/.test(trimmed)) return null;
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function captureSnippetLabel(snippet: string): string | null {
+  if (/\bclosure[_ -]?rate\b/i.test(snippet)) return "Closure rate";
+  if (/\bopen\s+gaps?|\bcare[- ]?gaps?\b/i.test(snippet))
+    return "Open care gaps";
+  if (/\bunmonitored|without\s+monitoring\b/i.test(snippet))
+    return "Unmonitored interfaces";
+  if (/\bunversioned|not\s+under\s+source\s+control\b/i.test(snippet))
+    return "Unversioned interfaces";
+  if (
+    /\bdesign[- ]?only|scope\s+caveat|exclude[ds]?|exclusion\b/i.test(snippet)
+  )
+    return "Scope caveat";
+  if (/\bvacant|vacancy|owner|ownership\b/i.test(snippet))
+    return "Ownership gap";
+  if (/\bzero|unvalidated\b/i.test(snippet)) return "Unvalidated value input";
+  if (/\bshadow\b/i.test(snippet)) return "Shadow ownership";
+  if (/\bretired|declined|monitoring\s+plan\b/i.test(snippet))
+    return "Prior governance decision";
+  return null;
+}
+
+function captureValueSignals(
+  label: string,
+  value: string,
+): Array<{ label: string; statement: string; key: string }> {
+  const parsed = parseCaptureValue(value);
+  const out: Array<{ label: string; statement: string; key: string }> = [];
+
+  const push = (rawKey: string, rawValue: unknown, source?: unknown) => {
+    const formattedValue = formatCaptureScalar(rawValue);
+    if (!formattedValue) return;
+    const signalLabel = humanizeCaptureLabel(rawKey);
+    const sourceText = formatCaptureScalar(source);
+    out.push({
+      key: rawKey,
+      label: signalLabel,
+      statement: `${signalLabel}: ${formattedValue}${sourceText ? ` (source: ${sourceText})` : ""}`,
+    });
+  };
+
+  if (Array.isArray(parsed)) {
+    for (const item of parsed.slice(0, 24)) {
+      const obj = sourceRefObject(item);
+      const metric = stringOrNull(obj.metric) ?? stringOrNull(obj.label);
+      if (!metric) continue;
+      push(metric, obj.value ?? obj.result ?? obj.count, obj.source);
+    }
+  } else if (parsed && typeof parsed === "object") {
+    const obj = sourceRefObject(parsed);
+    for (const [key, rawValue] of Object.entries(obj).slice(0, 24)) {
+      push(key, rawValue);
+    }
+  }
+
+  if (parsed === null) {
+    const snippets = value
+      .split(/[.;]|\s*,\s+(?=(?:and\s+)?(?:\d|[A-Z]))/g)
+      .map((part) => part.trim())
+      .filter((part) => part.length >= 12 && part.length <= 220);
+    for (const snippet of snippets.slice(0, 32)) {
+      const signalLabel = captureSnippetLabel(snippet);
+      if (!signalLabel) continue;
+      out.push({
+        key: signalLabel.toLowerCase().replace(/\s+/g, "_"),
+        label: signalLabel,
+        statement: `${signalLabel}: ${snippet}`,
+      });
+    }
+  }
+
+  const seen = new Set<string>();
+  return out.filter((signal) => {
+    const key = `${signal.label}:${signal.statement}`.toLowerCase();
+    if (seen.has(key) || signal.statement === `${label}: ${value}`) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function stripHtml(value: string): string {
   return value
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -168,12 +278,12 @@ function structuredSignals(value: unknown): string[] {
   return out;
 }
 
-function phaseCaptureCandidate(
+function phaseCaptureCandidates(
   row: Record<string, unknown>,
-): GovernedCandidateLike | null {
+): GovernedCandidateLike[] {
   const state = sourceRefObject(row.state_jsonb);
   const value = stringOrNull(state.value);
-  if (!value) return null;
+  if (!value) return [];
 
   const moduleKey = stringOrNull(row.module_key);
   const sectionKey =
@@ -190,8 +300,7 @@ function phaseCaptureCandidate(
     status === "completed" ? "high" : "medium";
   const phasePrefix =
     phaseNumber === null ? "Move capture" : `P${phaseNumber} capture`;
-
-  return {
+  const baseCandidate: GovernedCandidateLike = {
     label: `${phasePrefix}: ${label}`,
     statement: `${label}: ${value}`,
     evidenceFamily: `phase_capture:${sectionKey}`,
@@ -204,6 +313,21 @@ function phaseCaptureCandidate(
     provenanceRef:
       stringOrNull(row.id) ?? moduleKey ?? `program_modules:${sectionKey}`,
   };
+  const signalCandidates = captureValueSignals(label, value).map(
+    (signal, index): GovernedCandidateLike => ({
+      label: `${phasePrefix}: ${signal.label}`,
+      statement: signal.statement,
+      evidenceFamily: `phase_capture:${sectionKey}:${signal.key}`,
+      confidence,
+      asOf: baseCandidate.asOf,
+      disclosureTier: "internal_only",
+      provenanceRef: `${baseCandidate.provenanceRef}:signal:${index}`,
+    }),
+  );
+
+  return signalCandidates.length > 0
+    ? [...signalCandidates, baseCandidate]
+    : [baseCandidate];
 }
 
 function evidenceItemToCandidate(
@@ -335,8 +459,7 @@ async function loadMoveCurrentStateCandidates(
         if (status !== "completed" && status !== "in_progress") continue;
         const moduleKey = stringOrNull(row.module_key);
         if (!moduleKey?.startsWith("phase_")) continue;
-        const candidate = phaseCaptureCandidate(row);
-        if (candidate) candidates.push(candidate);
+        candidates.push(...phaseCaptureCandidates(row));
       }
     }
   } catch {
