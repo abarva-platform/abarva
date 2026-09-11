@@ -24,6 +24,11 @@ export interface ContractDepthPackageInput {
   readonly optimizationOpportunities: readonly CsvRecord[];
   readonly negotiationFindings?: readonly CsvRecord[];
   readonly negotiationLevers?: readonly CsvRecord[];
+  /** Cloud-native evidence remains separate from invoice/spend arithmetic. */
+  readonly usageObservations?: readonly CsvRecord[];
+  readonly commitmentCoverage?: readonly CsvRecord[];
+  readonly apReconciliation?: readonly CsvRecord[];
+  readonly resourceInventory?: readonly CsvRecord[];
 }
 
 export interface ContractDepthProjection {

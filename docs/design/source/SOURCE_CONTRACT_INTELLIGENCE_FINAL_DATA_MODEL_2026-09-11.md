@@ -128,15 +128,14 @@ type ContractIntelligenceRecord = {
     archetypeLabel: string | null;
     archetypeSourceBasis: "document_declared" | "scope_and_pricing_inferred" | "vendor_category_inferred" | "unmapped" | null;
     archetypeConfidence: "high" | "medium" | "low" | "unverified";
-    archetypePlaybookVersion: string | null;
     startDate: string | null;
     endDate: string | null;
     noticePeriodDays: number | null;
     annualValueUsd: number | null;
   };
   story: {
-    purpose: string | null;
-    scope: string | null;
+    purpose: string;
+    scope: string;
     decision: string;
     evidenceBoundary: string;
     headline: string;
@@ -155,19 +154,26 @@ type ContractIntelligenceRecord = {
   derivedInsights: ContractIntelligenceDerivedInsight[];
   industryIntelligence: {
     state: "loaded" | "missing_benchmark" | "not_applicable";
-    archetypeKey: string | null;
+    archetype: string;
+    plainEnglish: string;
+    benchmarkBoundary: string;
     benchmarkSources: string[];
     allowedUses: string[];
     blockedClaims: string[];
   };
   review: {
     status: "draft" | "reviewed" | "approved" | "blocked_missing_evidence";
+    plainEnglish: string;
     missingEvidence: string[];
     reviewerRole: string | null;
     reviewedAt: string | null;
     derivedFromLoadRunId: string;
   };
   provenance: {
+    tenantKey: string;
+    datasetVersion: string;
+    modelVersion: string;
+    loadRunId: string | null;
     sourceFiles: string[];
     sourceSystems: string[];
     sourceRefs: string[];
@@ -178,6 +184,9 @@ type ContractIntelligenceRecord = {
 
 The complete field definitions are implemented in:
 `src/lib/source/contract-intelligence/types.ts`.
+The record also retains flat `contractId`, `vendorName`, `contractName`, `category`, and `archetype`
+fields for existing Source read adapters while the nested `contract` object is the new design-facing
+identity contract.
 
 ## Anatomy Model
 
@@ -190,6 +199,7 @@ contract
   -> classified_as -> archetype
   -> covers -> declared scope
   -> supported_by -> document / clause / spend / invoice / performance / change order
+  -> supported_by -> native usage / commitment coverage / cloud resources / AP reconciliation
   -> creates_opportunity -> finding / lever
   -> owned_by -> accountable owner
 lever
@@ -199,6 +209,11 @@ lever
 Each node and edge carries a stable ID, plain-English label, description, and source references.
 Only canonical relationship verbs are allowed. A missing edge is a visible boundary, not an
 invitation to infer one.
+
+Evidence lanes also carry `rowCount`, `supports`, and `blocks`. A cloud service-usage row is kept
+in the usage lane and is never added to monthly spend again; AP reconciliation supports the invoice
+lane without replacing invoice detail, and commitment coverage explains eligibility rather than
+creating a savings number.
 
 ## Evidence and Review States
 

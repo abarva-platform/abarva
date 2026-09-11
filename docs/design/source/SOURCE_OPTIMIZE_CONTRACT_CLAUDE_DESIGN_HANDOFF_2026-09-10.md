@@ -11,6 +11,12 @@ approve/execute, and prove value through Finance/Tower.
 This handoff is the design contract for the page. Use it as the source of truth for what the UI may
 say, what it must refuse, and which objects actually exist.
 
+The implementation-level final model is maintained in
+`docs/design/source/SOURCE_CONTRACT_INTELLIGENCE_FINAL_DATA_MODEL_2026-09-11.md`. That document and
+`src/lib/source/contract-intelligence/types.ts` supersede any abbreviated TypeScript examples in
+this handoff when fields differ. Claude Design should bind to the produced record, not recreate a
+parallel shape in the page.
+
 ## Product Boundary
 
 | Surface              | Job                                                                                                  | Do Not Do                                                                                 |
@@ -108,6 +114,14 @@ Fields:
 | `review_status`                  | `system_generated_from_reviewed_sources` or `draft_gap` initially.                          |
 | `provenance`                     | JSON counts/references to `source.contract_360`, evidence coverage, scope, and opportunity. |
 | `derived_from_load_run_id`       | Invalidates the row when the source package is refreshed.                                   |
+
+For cloud-consumption contracts, the record also carries separate native evidence families:
+monthly spend, service or DBU usage, commitment coverage, cloud resources/accounts, AP
+reconciliation, clauses, scope, and structured optimization opportunities. Usage must never be
+added to monthly spend a second time. AP reconciliation supports billing state; it does not replace
+invoice detail. A cloud package without raw searchable page text may still carry a reviewed plain-
+English context boundary when its restricted document inventory and reviewer metadata pass; the UI
+must show that boundary rather than inventing page citations.
 
 Design implication: every Contract 360 tab should begin with a tab-specific narrative card from
 this view. If the row is absent, the page should show a compact "tab intelligence not loaded" state

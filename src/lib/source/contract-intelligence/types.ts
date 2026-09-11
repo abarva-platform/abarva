@@ -43,6 +43,9 @@ export interface ContractIntelligenceEvidenceLane {
   readonly label: string;
   readonly state: ContractIntelligenceEvidenceState;
   readonly plainEnglish: string;
+  readonly rowCount: number;
+  readonly supports: readonly string[];
+  readonly blocks: readonly string[];
   readonly sourceRefs: readonly string[];
 }
 
@@ -53,6 +56,10 @@ export interface ContractIntelligenceFinding {
   readonly implication: string;
   readonly recommendedAction: string;
   readonly annualImpact: string;
+  readonly valueType: "recoverable_leakage" | "avoided_cost" | "negotiated_improvement" | "realized_value";
+  readonly amountState: "exact" | "range" | "not_sized";
+  readonly evidenceState: ContractIntelligenceEvidenceState;
+  readonly evidenceRefs: readonly string[];
   readonly confidence: "high" | "medium" | "low";
   readonly sourceRefs: readonly string[];
 }
@@ -68,6 +75,10 @@ export interface ContractIntelligenceLever {
   readonly vendorGive: string;
   readonly valueBasis: string;
   readonly candidateRange: string;
+  readonly valueType: "recoverable_leakage" | "avoided_cost" | "negotiated_improvement" | "realized_value";
+  readonly amountState: "exact" | "range" | "not_sized";
+  readonly evidenceState: ContractIntelligenceEvidenceState;
+  readonly evidenceRefs: readonly string[];
   readonly timingDependency: string;
   readonly ownerRole: string;
   readonly priority: string;
@@ -127,11 +138,28 @@ export interface ContractIntelligenceReadout {
 }
 
 export interface ContractIntelligenceRecord {
+  readonly modelVersion: string;
+  readonly tenantKey: string;
+  readonly datasetVersion: string;
   readonly contractId: string;
   readonly vendorName: string;
   readonly contractName: string;
   readonly category: string;
   readonly archetype: string;
+  readonly contract: {
+    readonly contractId: string;
+    readonly vendorId: string | null;
+    readonly vendorName: string;
+    readonly title: string;
+    readonly archetypeKey: string | null;
+    readonly archetypeLabel: string | null;
+    readonly archetypeSourceBasis: "document_declared" | "scope_and_pricing_inferred" | "vendor_category_inferred" | "unmapped" | null;
+    readonly archetypeConfidence: "high" | "medium" | "low" | "unverified";
+    readonly startDate: string | null;
+    readonly endDate: string | null;
+    readonly noticePeriodDays: number | null;
+    readonly annualValueUsd: number | null;
+  };
   readonly story: {
     readonly headline: string;
     readonly purpose: string;
@@ -149,15 +177,21 @@ export interface ContractIntelligenceRecord {
   readonly levers: readonly ContractIntelligenceLever[];
   readonly derivedInsights: readonly ContractIntelligenceDerivedInsight[];
   readonly industryIntelligence: {
-    readonly state: "archetype_play_available" | "missing_benchmark";
+    readonly state: "loaded" | "missing_benchmark" | "not_applicable";
     readonly archetype: string;
     readonly plainEnglish: string;
     readonly benchmarkBoundary: string;
+    readonly benchmarkSources: readonly string[];
+    readonly allowedUses: readonly string[];
+    readonly blockedClaims: readonly string[];
   };
   readonly review: {
     readonly status: ContractIntelligenceReviewStatus;
     readonly plainEnglish: string;
     readonly missingEvidence: readonly string[];
+    readonly reviewerRole: string | null;
+    readonly reviewedAt: string | null;
+    readonly derivedFromLoadRunId: string;
   };
   readonly provenance: {
     readonly tenantKey: string;
@@ -165,5 +199,8 @@ export interface ContractIntelligenceRecord {
     readonly modelVersion: string;
     readonly sourceRefs: readonly string[];
     readonly loadRunId: string | null;
+    readonly sourceFiles: readonly string[];
+    readonly sourceSystems: readonly string[];
+    readonly buildVersion: string;
   };
 }

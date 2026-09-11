@@ -36,12 +36,19 @@ The loader now consumes structured negotiation findings and lever rows instead o
 - Claude Design handoff now includes the complete record shape, tab binding rules, anatomy rendering rules, and the 8,192-token response requirement.
 - Cohort audit records which managed-services packages pass the dense-page gate and keeps the separate cloud-consumption packages out of the pass count until their adapter mapping is reconciled.
 - Final data-model document maps the four layers to existing canonical Source tables, the deterministic contract-intelligence record, anatomy edges, review states, money rules, aVa prompting, and export bindings.
+- Cloud-consumption adapter now maps Databricks/AWS-shaped packages into the same record without
+  merging native usage into spend: usage, commitment coverage, AP reconciliation, resources, and
+  structured opportunity rows remain separate evidence lanes.
 - Source Optimize prompt directive expanded with evidence, benchmark, amount-state, anatomy, and output rules.
 - Package projection script now writes the contract-intelligence extract and readout and rejects malformed CSV rows.
 
 ## QA / Validation
 
 - `adapter.test.ts`, `projection.test.ts`, and `contract-intelligence/prompt.test.ts`: **5 tests passed**.
+- Cloud adapter behavior test: **1 test passed**; Databricks-shaped input produced a reviewed record
+  with reviewed purpose/scope, separate cloud evidence lanes, and sized versus signal-stage levers.
+- Non-mutating cloud projections passed for the Databricks package and the two-contract cloud package;
+  no Azure database was changed.
 - TypeScript project check with `tsc --noEmit`: **passed**.
 - Selected source-package projection: **correctly blocked**. The source package contains malformed negotiation CSV rows and has document inventory without page-text rows; no clean extract is approved from that package.
 - Dense package projections also passed for the tracked managed-services cohort: each of the three companion packages carries page text, scope, clauses, twelve spend periods, invoices, performance, workload volume, change orders, and optimization rows. The five-contract bundle projects the intelligence records but its adapter gate remains blocked for the two managed-services rows that lack resource, invoice-detail, batch-volume, and QBR lanes.
@@ -75,7 +82,8 @@ Do not run the data-build job until the package quality gate passes. If the cand
 
 ## Known Gaps
 
-- The current package needs corrected CSV quoting before negotiation fields can be loaded safely.
+- The legacy managed-services package needs corrected CSV quoting before its malformed negotiation fields
+  can be loaded safely; cloud packages pass their native loader and intelligence projection gates.
 - The current package has document inventory but no searchable page-text rows; document-backed executive claims remain blocked until page text is loaded and cited.
 - Azure refresh, Layer 3 persistence, Source UI binding, signed-in smoke, and deployment are out of scope for this candidate.
 - Industry benchmark intelligence remains a separate governed source; no external market rate is inferred.
