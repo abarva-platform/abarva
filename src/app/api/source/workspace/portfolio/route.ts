@@ -242,14 +242,17 @@ function impactModeFromRequest(requestUrl: URL): SourceWorkspaceImpactMode {
 function sourceProviderFromRequest(
   requestUrl: URL,
 ): SourceWorkspaceProviderMode | null {
-  if (process.env.SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true") {
-    return null;
-  }
   const normalized = (
     requestUrl.searchParams.get("sourceProvider") ??
     requestUrl.searchParams.get("provider") ??
     ""
   ).trim();
+  if (normalized === "ecl_projection_db") {
+    return normalized;
+  }
+  if (process.env.SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true") {
+    return null;
+  }
   if (
     normalized === "legacy" ||
     normalized === "ecl_projection" ||
