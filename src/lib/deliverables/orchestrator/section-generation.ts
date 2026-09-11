@@ -22,6 +22,7 @@ import type {
   SourceRegisterEntry,
 } from "./types";
 import { sanitizeClientFacingArtifactMarkdown } from "@/lib/deliverables/client-facing-artifact-sanitize";
+import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import { clientCompleteReasonLabel } from "./client-complete-labels";
@@ -57,7 +58,6 @@ const SUPPORTED =
   /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
 const DECISIVE_RECOMMENDATION =
   /\b(recommend|approve|approval|decision|decide|proceed|hold|stop|fund|invest|select|award|endorse|choose|do not approve)\b/i;
-const MARKDOWN_WORD_RE = /\b[\p{L}\p{N}][\p{L}\p{N}'-]*\b/gu;
 
 export interface UnsupportedFigureClaim {
   sectionKey: string;
@@ -607,15 +607,6 @@ function fallbackRiskTable(
   };
 }
 
-function sectionProseWordCount(sections: readonly RenderableSection[]): number {
-  return sections.reduce((total, section) => {
-    const text = `${section.title}\n${section.bodyMarkdown}`
-      .replace(/\[[^\]]+\]/g, " ")
-      .replace(/[#*_`>|-]/g, " ");
-    return total + (text.match(MARKDOWN_WORD_RE)?.length ?? 0);
-  }, 0);
-}
-
 function ensureMovesCharterMinimumProse(
   req: DeliverableIntelligenceRequest,
   sections: readonly RenderableSection[],
@@ -623,7 +614,11 @@ function ensureMovesCharterMinimumProse(
   if (req.module !== "moves" || req.deliverableType !== "charter") {
     return [...sections];
   }
-  if (sectionProseWordCount(sections) >= req.qualityBar.minBodyWords) {
+  const countWords = (candidate: readonly RenderableSection[]) =>
+    countBodyWords(candidate, {
+      excludeNonProse: req.qualityBar.excludeNonProseFromBody === true,
+    });
+  if (countWords(sections) >= req.qualityBar.minBodyWords) {
     return [...sections];
   }
   if (sections.some((s) => s.key === "discovery_readiness_carry_forward")) {
@@ -654,8 +649,7 @@ function ensureMovesCharterMinimumProse(
       bodyMarkdown: body.join("\n\n"),
     };
     if (
-      sectionProseWordCount([...sections, candidate]) >=
-      req.qualityBar.minBodyWords
+      countWords([...sections, candidate]) >= req.qualityBar.minBodyWords
     ) {
       return [...sections, candidate];
     }

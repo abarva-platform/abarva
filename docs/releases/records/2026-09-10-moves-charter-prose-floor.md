@@ -12,6 +12,8 @@
 
 Moves charter assembly now adds a bounded discovery-readiness carry-forward section when a generated charter is otherwise below the configured prose floor. The section is decision-useful operating guidance, not client-specific filler, and the existing quality gate still enforces the final word count.
 
+Follow-up hardening aligns the assembly guard with the shared body-word counter used by the quality gate, so the fallback and validator measure the prose floor the same way.
+
 ## Layer Impact
 
 Release lane: `global-control-lane`.
@@ -32,6 +34,7 @@ Canonical model layer: No schema or data mutation change. The change only affect
 
 - `src/lib/deliverables/orchestrator/section-generation.ts`
 - `src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts`
+- `src/lib/deliverables/shared/body-word-count.ts` is reused as the counter contract; no shared counter code changed.
 
 ## QA / Validation
 
