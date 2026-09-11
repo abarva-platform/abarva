@@ -205,6 +205,51 @@ describe("assembleDeliverable", () => {
     });
   });
 
+  it("adds a decision-useful carry-forward section when a Moves charter is below its prose floor", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "charter",
+      missingEvidence: [],
+      clientCompleteItems: [],
+      qualityBar: {
+        ...amsRfpRequest().qualityBar,
+        minSections: 9,
+        minBodyWords: 700,
+        requiresSourceRegister: false,
+      },
+    });
+    const thinBody =
+      "Sponsor alignment, evidence acceptance, decision rights, scope control, owner attendance, value discipline, review cadence, and caveat handling are confirmed for discovery.";
+    const sections: RenderableSection[] = Array.from({ length: 9 }, (_, i) => ({
+      key: `charter_section_${i + 1}`,
+      title:
+        i === 0
+          ? "Charter Decision"
+          : `Charter Working Section ${i + 1}`,
+      bodyMarkdown: thinBody,
+      groundingMode: "mixed",
+      citationsUsed: [],
+    }));
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {},
+      req.governedEvidenceBundle,
+    );
+    const bodyText = doc.generatedSections
+      .map((section) => `${section.title}\n${section.bodyMarkdown}`)
+      .join("\n\n");
+    const wordCount = bodyText.match(/\b[\w'-]+\b/g)?.length ?? 0;
+
+    expect(
+      doc.generatedSections.some(
+        (section) => section.key === "discovery_readiness_carry_forward",
+      ),
+    ).toBe(true);
+    expect(wordCount).toBeGreaterThanOrEqual(700);
+  });
+
   it("adds a risk-table fallback for Moves target architecture when synthesis omits it", () => {
     const req = amsRfpRequest({
       module: "moves",
