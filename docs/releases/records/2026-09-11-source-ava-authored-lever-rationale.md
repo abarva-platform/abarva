@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-live-proven`
 
 ## Plain-English Summary
 
@@ -34,21 +34,28 @@ Source aVa optimization export answers now use an authored, deterministic lever-
 - `npm test -- --runTestsByPath 'src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts' --runInBand` passed.
 - `npx eslint 'src/lib/source/ava/source-workspace-visual-answer.ts' 'src/lib/source/ava/__tests__/source-workspace-visual-answer.test.ts'` passed.
 - `npx tsc --noEmit --pretty false` passed.
-- `npm run release:check` must pass before merge.
+- `npm run release:check` passed before merge.
+- Pull request #7599 was squash-merged as `7a88c093a3e9fcbeb5400d4fac40a9b5a6c2431e`.
+- ACA main deploy workflow run `34566100712` completed successfully.
+- Deployed image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:dbde0b9ded0ed3c36be196b74c55856e1bdd472e4307cc4c620c3ef3eb9c8564`.
+- Active revision: `ca-abarva-web-lab-eastus--m7a88c093`, healthy at 100% traffic.
+- Runtime invariant verified: web template image, 100%-traffic revision image, and both required worker job images all matched the approved digest.
+- Signed-in Source proof verified the contract-scoped Levers page for the governed demo tenant: main nav present, six contract levers visible, current refresh date shown, and no stale date, missing due-date, or raw-token leaks.
+- Signed-in Source aVa proof verified the contract optimization export answer included the contract ID, executive takeaway, lever table, all six levers, authored vendor-agreement rationale, unsized signal-stage rows, and no missing-packet or fallback-rationale text.
 
 ## Rollout Plan
 
-Merge through a pull request to `main`. The repo-owned Azure Container Apps main deploy workflow builds and deploys the digest-pinned web image. No migration, data reload, or data-build job is part of this release.
+Merged through pull request #7599 to `main`. The repo-owned Azure Container Apps main deploy workflow built and deployed the digest-pinned web image. No migration, data reload, or data-build job is part of this release.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: required for Product/Lab runtime update.
 - Shared runtime mutators: none outside the repo-owned deploy workflow.
-- Approved image digest: produced by the repo-owned deploy workflow after merge.
-- ACA runtime invariant: required after deploy.
-- Worker image invariant: required after deploy.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:dbde0b9ded0ed3c36be196b74c55856e1bdd472e4307cc4c620c3ef3eb9c8564`.
+- ACA runtime invariant: verified after deploy.
+- Worker image invariant: verified after deploy.
 - Feature/env flag update path: not applicable.
-- Live signed-in proof required: yes, Source Command Center contract-scoped aVa optimization export prompt.
+- Live signed-in proof required: completed for the Source Command Center contract-scoped aVa optimization export prompt.
 
 ## Rollback Plan
 
