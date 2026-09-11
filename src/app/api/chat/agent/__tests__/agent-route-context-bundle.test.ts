@@ -21,6 +21,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { getAgentResponseTokenBudget } from "../route";
+
 function readRoute(): string {
   return fs.readFileSync(
     path.join(process.cwd(), "src/app/api/chat/agent/route.ts"),
@@ -114,6 +116,9 @@ describe("agent route · CB-6 context-bundle wiring", () => {
     expect(source).toMatch(/surface === ["']\/source["']/);
     expect(source).toMatch(/surface\.startsWith\(["']\/source\/["']\)/);
     expect(source).toContain("return SOURCE_AGENT_RESPONSE_MAX_TOKENS");
+    expect(getAgentResponseTokenBudget("/source")).toBe(8192);
+    expect(getAgentResponseTokenBudget("/source/optimize")).toBe(8192);
+    expect(getAgentResponseTokenBudget("/tower")).toBe(2048);
   });
 
   it("forces explicit Programs deliverable save requests through the persistence tool", () => {
