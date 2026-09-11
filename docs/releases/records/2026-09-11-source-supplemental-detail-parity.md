@@ -16,6 +16,7 @@ then fail because the detail route searched a narrower dataset than the list.
 
 ## Layer Impact
 
+- Affected lane: `global-control-lane`.
 - **Layer 4 - Products:** Source workspace contract discovery and contract-detail
   routing now use one promoted contract-row set.
 - **Layer 3 - Canonical model:** No canonical data is changed.
