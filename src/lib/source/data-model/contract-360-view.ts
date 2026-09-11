@@ -33,6 +33,7 @@ import type {
   SourceContractPerformancePeriodRow,
   SourceContractSpendMonthlyRow,
   SourceContractTabIntelligenceRow,
+  SourceContractIntelligenceRow,
   SourceCloudCommitmentCoverageRow,
   TowerMetricObservationRow,
   TowerValueClaimRow,
@@ -66,6 +67,8 @@ export interface Contract360View {
   readonly cloudCommitmentPeerCoverage?: readonly SourceCloudCommitmentCoverageRow[];
   /** Load-time governed stories, one per Contract 360 tab. */
   readonly contractTabIntelligence?: readonly SourceContractTabIntelligenceRow[];
+  /** One governed record shared by Contract 360, Education, anatomy, and aVa. */
+  readonly contractIntelligence?: SourceContractIntelligenceRow | null;
 }
 
 export interface BuildContract360ViewInput {
@@ -88,6 +91,7 @@ export interface BuildContract360ViewInput {
   readonly spendMonths?: readonly SourceContractSpendMonthlyRow[];
   readonly cloudCommitmentPeerCoverage?: readonly SourceCloudCommitmentCoverageRow[];
   readonly contractTabIntelligence?: readonly SourceContractTabIntelligenceRow[];
+  readonly contractIntelligence?: SourceContractIntelligenceRow | null;
   /** (contract_id, application_ref) pairs proven by an actual SOW/contract-scope reference. */
   readonly explicitApplicationPairs?: ReadonlySet<string>;
 }
@@ -115,6 +119,7 @@ export function buildContract360View(
     spendMonths = [],
     cloudCommitmentPeerCoverage = [],
     contractTabIntelligence = [],
+    contractIntelligence = null,
     explicitApplicationPairs,
   } = input;
 
@@ -158,6 +163,10 @@ export function buildContract360View(
     contractTabIntelligence: contractTabIntelligence.filter(
       (r) => r.contract_id === contract.contract_id,
     ),
+    contractIntelligence:
+      contractIntelligence?.contract_id === contract.contract_id
+        ? contractIntelligence
+        : null,
   };
 }
 

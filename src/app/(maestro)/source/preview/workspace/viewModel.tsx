@@ -157,6 +157,7 @@ const CONTRACT_TABS = new Set([
   'Relationship',
   'Evidence',
   'Optimize',
+  'Education',
 ]);
 const CONTRACT_TAB_BY_PARAM = new Map(
   [...CONTRACT_TABS].map((tab) => [tab.toLowerCase(), tab]),

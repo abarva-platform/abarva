@@ -12,6 +12,8 @@
 
 Adds a governed contract-intelligence record that explains what an agreement buys, what it covers, which evidence sources support it, how it maps to an archetype, and which documented negotiation levers follow from those facts. The record is designed for Source tabs and client-ready Optimize reports, with business-language labels instead of unexplained ratios or filler counts.
 
+This candidate now includes the persisted read-model migration and runtime bindings: one deterministic intelligence record per contract, an authored archetype playbook, anatomy relationships, Track/Load/Observe education, and the same record in Contract 360 and aVa grounding.
+
 The loader now consumes structured negotiation findings and lever rows instead of dropping them at the projection boundary. It also refuses malformed CSV rows before they can shift owner, timing, or risk fields into the wrong columns.
 
 ## Layer Impact
@@ -20,6 +22,7 @@ The loader now consumes structured negotiation findings and lever rows instead o
 - **Layer 2 — Source adapters:** adds named adapter outputs and quality-gate coverage for negotiation findings and negotiation levers.
 - **Layer 3 — Canonical model:** adds deterministic contract anatomy, evidence lanes, findings, levers, derived insights, provenance, and executive readout shapes.
 - **Layer 4 — Products:** adds a prompt contract for Source contract optimization so Claude receives the evidence rules before generation.
+- **Governed read model:** adds `source.contract_archetype_playbook` and `source.contract_intelligence_v1`; the latter is populated only after the Layer 4 operator refresh sees the canonical contract and evidence views.
 
 ## Client Applicability
 
@@ -41,10 +44,12 @@ The loader now consumes structured negotiation findings and lever rows instead o
   structured opportunity rows remain separate evidence lanes.
 - Source Optimize prompt directive expanded with evidence, benchmark, amount-state, anatomy, and output rules.
 - Package projection script now writes the contract-intelligence extract and readout and rejects malformed CSV rows.
+- Contract 360 now reads the intelligence record, prefers its load-time education guide, and passes the full governed record to aVa without post-generation scrubbing.
 
 ## QA / Validation
 
 - `adapter.test.ts`, `projection.test.ts`, and `contract-intelligence/prompt.test.ts`: **5 tests passed**.
+- Persisted-record education, aVa passthrough, Contract 360 route, and read-adapter tests: **40 tests passed**.
 - Cloud adapter behavior test: **1 test passed**; Databricks-shaped input produced a reviewed record
   with reviewed purpose/scope, separate cloud evidence lanes, and sized versus signal-stage levers.
 - Non-mutating cloud projections passed for the Databricks package and the two-contract cloud package;
@@ -85,5 +90,6 @@ Do not run the data-build job until the package quality gate passes. If the cand
 - The legacy managed-services package needs corrected CSV quoting before its malformed negotiation fields
   can be loaded safely; cloud packages pass their native loader and intelligence projection gates.
 - The current package has document inventory but no searchable page-text rows; document-backed executive claims remain blocked until page text is loaded and cited.
-- Azure refresh, Layer 3 persistence, Source UI binding, signed-in smoke, and deployment are out of scope for this candidate.
+- Migration apply, ACA VNet data-build refresh, seven-tab signed-in smoke, and production deployment are still pending; this candidate does not claim those proof layers.
+- The persisted record is deterministic and reviewable. Claude may explain it, but this release does not persist free-form Claude prose as canonical fact.
 - Industry benchmark intelligence remains a separate governed source; no external market rate is inferred.

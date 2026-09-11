@@ -17,6 +17,20 @@ The implementation-level final model is maintained in
 this handoff when fields differ. Claude Design should bind to the produced record, not recreate a
 parallel shape in the page.
 
+## Runtime Binding
+
+The load-time record is exposed by `source.contract_intelligence_v1` and read through
+`getContractIntelligence(tenantKey, contractId)`. Contract 360 receives the same object through
+the contract-detail response. Education binds to `record.education`; Story and tab narratives bind
+to governed tab rows and `record.story`; Relationship binds only to `record.anatomy`; archetype
+coaching binds to `record.education`; and aVa receives the complete record in its contract-grounding
+block. The UI must show the record review state and provenance rather than silently falling back to
+generic filler when the record is unavailable.
+
+`source.contract_archetype_playbook` is authored guidance, not a contract fact. It selects the
+Track/Load/Observe loop and industry context after controlled archetype mapping. It must not be
+rendered as an external benchmark or used to invent a price, discount, dependency, or savings claim.
+
 ## Product Boundary
 
 | Surface              | Job                                                                                                  | Do Not Do                                                                                 |

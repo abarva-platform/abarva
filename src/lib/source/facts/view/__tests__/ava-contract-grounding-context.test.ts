@@ -1,11 +1,13 @@
 import { buildAvaSourceContractGrounding } from "../ava-contract-grounding-context";
 
 const getContract360 = jest.fn();
+const getContractIntelligence = jest.fn();
 const getContractOptimizationOpportunitySet = jest.fn();
 const getContractOptimizationEvidencePack = jest.fn();
 
 jest.mock("@/lib/source/data-model/read-adapter", () => ({
   getContract360: (...args: unknown[]) => getContract360(...args),
+  getContractIntelligence: (...args: unknown[]) => getContractIntelligence(...args),
   getContractOptimizationOpportunitySet: (...args: unknown[]) =>
     getContractOptimizationOpportunitySet(...args),
   getContractOptimizationEvidencePack: (...args: unknown[]) =>
@@ -86,6 +88,7 @@ function opportunitySet(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   getContract360.mockResolvedValue(contractRow());
+  getContractIntelligence.mockResolvedValue(null);
   getContractOptimizationOpportunitySet.mockImplementation(
     (_tenantKey: string, contractId: string) =>
       Promise.resolve(
@@ -174,6 +177,35 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain("0 of 8 required evidence families");
     expect(block).toContain("Missing:");
     expect(block).toContain("Rate variance");
+  });
+
+  it("includes the governed contract-intelligence record without rewriting it", async () => {
+    getContractIntelligence.mockResolvedValue({
+      contract_id: "CTR-090",
+      intelligence_record: {
+        model_version: "source-contract-intelligence-v1",
+        contract: { archetype_key: "cloud_consumption" },
+        anatomy: {
+          plain_english: "A cloud commitment tied to governed workloads.",
+        },
+        education: {
+          headline: "Manage the commitment against real workload demand.",
+        },
+        industry_intelligence: { state: "missing_benchmark" },
+      },
+    });
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(block).toContain("LOAD-TIME CONTRACT INTELLIGENCE RECORD");
+    expect(block).toContain("cloud_consumption");
+    expect(block).toContain("A cloud commitment tied to governed workloads.");
+    expect(block).toContain(
+      "Explain it, but do not add facts, relationships, benchmarks, or amounts outside it.",
+    );
   });
 
   it("grounds Contract 360 lineage questions with source systems, fields, grain, history, and update frequency", async () => {
