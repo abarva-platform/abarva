@@ -174,6 +174,27 @@ const WORKSPACE_TAB_SELECTIONS = new Map<
   ['coverage', { kind: 'vendorList', id: null }],
 ]);
 
+/**
+ * The workspace-tab parameter that would reproduce a given selection.
+ *
+ * `WORKSPACE_TAB_SELECTIONS` reads a URL into state; this reads state back out,
+ * so the address bar can be kept in step with what is on screen. Returns null
+ * for a selection no workspace tab represents (a contract, for instance, which
+ * is addressed by contractId instead).
+ */
+export function workspaceTabParamFor(
+  sel: { kind: string; id: string | null },
+  tabs: Record<string, string>,
+): string | null {
+  for (const [param, selection] of WORKSPACE_TAB_SELECTIONS) {
+    if (selection.kind !== sel.kind) continue;
+    if ((selection.id ?? null) !== (sel.id ?? null)) continue;
+    if (selection.tab && tabs[sel.kind] !== selection.tab) continue;
+    return param;
+  }
+  return null;
+}
+
 function normalizeContractTab(value: string | null | undefined): string {
   const requestedTab = value?.trim();
   if (!requestedTab) return INITIAL_STATE.tabs.contract;
