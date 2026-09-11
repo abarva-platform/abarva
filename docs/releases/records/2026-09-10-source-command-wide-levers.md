@@ -12,7 +12,7 @@
 
 The command-center Levers panel now uses the full content grid width when it renders the action-order story. The component already applied the `sw-v2-span-3` class, but the stylesheet did not define that class, so the panel collapsed into the primary grid column and left a large unused region on the right side of the canvas.
 
-This release defines the missing span class and adds a regression assertion that the class used for full-width command panels maps to `grid-column: 1 / -1`.
+This release also makes the action-order cards open the governed action detail drawer before navigating to the contract record, matching the report-style interaction in the approved design contract. Contract detail navigation remains available through the drawer CTA.
 
 ## Layer Impact
 
@@ -29,7 +29,9 @@ This release defines the missing span class and adds a regression assertion that
 ## Changes Included
 
 - `src/app/(maestro)/source/preview/workspace/workspace.css`
+- `src/app/(maestro)/source/preview/workspace/WorkspaceExecutiveShell.tsx`
 - `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceExecutiveShell.performance.test.ts`
+- `src/app/(maestro)/source/preview/workspace/__tests__/WorkspaceClient.ecl-browser.test.tsx`
 
 ## QA / Validation
 
@@ -60,6 +62,7 @@ Revert this release commit and redeploy through the repo-owned ACA main deploy w
 
 - PR review should confirm the full-width grid class is defined in the stylesheet.
 - Regression coverage asserts the full-width grid class exists and maps to `grid-column: 1 / -1`.
+- Regression coverage asserts a command-center lever card opens the governed action detail drawer.
 - Live proof after deploy should confirm the Source Levers panel spans the command-center canvas.
 
 ## Known Gaps

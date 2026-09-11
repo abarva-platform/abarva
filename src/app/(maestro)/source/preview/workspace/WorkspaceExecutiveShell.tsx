@@ -1086,6 +1086,9 @@ export function WorkspaceExecutiveShell({
               portfolio={portfolio}
               subtab={logic.state.tabs.optimize ?? "Queue"}
               onOpenSubtab={(tab) => logic.setTab("optimize", tab)}
+              onOpenAction={(candidateId) =>
+                setOpenActionCandidateId(candidateId)
+              }
               onOpenContract={openContract}
             />
           ) : null}
@@ -4010,11 +4013,13 @@ function OptimizePage({
   portfolio,
   subtab,
   onOpenSubtab,
+  onOpenAction,
   onOpenContract,
 }: {
   portfolio: SourceWorkspacePortfolioData;
   subtab: string;
   onOpenSubtab: (tab: string) => void;
+  onOpenAction: (candidateId: string) => void;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   const actionSet = focusedActionSet(portfolio);
@@ -4040,7 +4045,7 @@ function OptimizePage({
           <SourceLeverSequence
             actionSet={anchorActionSet}
             asOfDateIso={portfolio.asOfDateIso}
-            onOpenContract={onOpenContract}
+            onOpenAction={onOpenAction}
           />
         ) : (
           <OptimizeActionQueue
@@ -4056,11 +4061,11 @@ function OptimizePage({
 function SourceLeverSequence({
   actionSet,
   asOfDateIso,
-  onOpenContract,
+  onOpenAction,
 }: {
   actionSet: FocusedActionSet & { contract: SourceContract360Row | null };
   asOfDateIso: string;
-  onOpenContract: (contractId: string, tab?: string) => void;
+  onOpenAction: (candidateId: string) => void;
 }) {
   const contract = actionSet.contract;
   const contractLabel = contract
@@ -4097,7 +4102,7 @@ function SourceLeverSequence({
               key={row.action_candidate_id}
               type="button"
               className="sw-v2-lever-sequence-card"
-              onClick={() => onOpenContract(row.contract_id, "Optimize")}
+              onClick={() => onOpenAction(row.action_candidate_id)}
             >
               <span className="sw-v2-lever-sequence-index">{index + 1}</span>
               <span className="sw-v2-lever-sequence-main">
