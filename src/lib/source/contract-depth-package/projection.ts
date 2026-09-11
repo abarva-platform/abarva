@@ -1,5 +1,11 @@
 export type CsvRecord = Record<string, string>;
 
+import {
+  buildContractIntelligenceReadout,
+  buildContractIntelligenceRecords,
+} from "../contract-intelligence/build";
+import type { ContractIntelligenceRecord } from "../contract-intelligence/types";
+
 export interface ContractDepthPackageInput {
   readonly contracts: readonly CsvRecord[];
   readonly applicationScope: readonly CsvRecord[];
@@ -16,6 +22,8 @@ export interface ContractDepthPackageInput {
   readonly contractClauses: readonly CsvRecord[];
   readonly evidenceManifest: readonly CsvRecord[];
   readonly optimizationOpportunities: readonly CsvRecord[];
+  readonly negotiationFindings?: readonly CsvRecord[];
+  readonly negotiationLevers?: readonly CsvRecord[];
 }
 
 export interface ContractDepthProjection {
@@ -36,6 +44,12 @@ export interface ContractDepthProjection {
   readonly contractQbrObservations: readonly CsvRecord[];
   readonly contractEvidenceCoverage: readonly CsvRecord[];
   readonly optimizationOpportunities: readonly CsvRecord[];
+  readonly negotiationFindings: readonly CsvRecord[];
+  readonly negotiationLevers: readonly CsvRecord[];
+  readonly contractIntelligence: readonly ContractIntelligenceRecord[];
+  readonly contractIntelligenceReadout: ReturnType<
+    typeof buildContractIntelligenceReadout
+  >;
   readonly qualityGate: {
     readonly status: "PASS" | "FAIL";
     readonly failures: readonly string[];
@@ -93,6 +107,16 @@ function sum(rows: readonly CsvRecord[], key: string): number {
   return rows.reduce((total, row) => total + numberValue(row, key), 0);
 }
 
+function sumFirstAvailable(
+  rows: readonly CsvRecord[],
+  keys: readonly string[],
+): number {
+  return rows.reduce((total, row) => {
+    const key = keys.find((candidate) => value(row, candidate));
+    return total + (key ? numberValue(row, key) : 0);
+  }, 0);
+}
+
 function totalCommittedValue(contract: CsvRecord): string {
   return (
     value(contract, "total_committed_value_usd") ||
@@ -145,6 +169,8 @@ export function projectContractDepthPackage(
   const invoiceByContract = groupBy(input.invoiceLineDetail, "contract_id");
   const batchByContract = groupBy(input.batchJobVolumetrics, "contract_id");
   const qbrByContract = groupBy(input.qbrScorecards, "contract_id");
+  const negotiationFindings = input.negotiationFindings ?? [];
+  const negotiationLevers = input.negotiationLevers ?? [];
   const pageTextByFile = groupBy(input.contractPageText, "source_file_id");
   const pageTextByContract = groupBy(input.contractPageText, "contract_id");
 
@@ -243,7 +269,7 @@ export function projectContractDepthPackage(
       total_committed_value: totalCommittedValue(contract),
       committed_annual_spend: value(contract, "committed_annual_spend_usd"),
       actual_annual_spend: spend.length
-        ? String(sum(spend, "actual_spend_usd"))
+        ? String(sumFirstAvailable(spend, ["actual_spend_usd", "spend_usd"]))
         : value(contract, "actual_annual_spend_usd"),
       end_date: value(contract, "end_date"),
       notice_period_days: value(contract, "notice_period_days"),
@@ -263,7 +289,7 @@ export function projectContractDepthPackage(
       critical_application_count: String(criticalApps),
       linked_budget_amount: value(contract, "committed_annual_spend_usd"),
       linked_actual_amount: spend.length
-        ? String(sum(spend, "actual_spend_usd"))
+        ? String(sumFirstAvailable(spend, ["actual_spend_usd", "spend_usd"]))
         : value(contract, "actual_annual_spend_usd"),
       linked_budget_lines: String(spend.length),
       cloud_sev1_sev2_incidents: String(sev1Sev2Tickets),
@@ -344,15 +370,20 @@ export function projectContractDepthPackage(
       total_committed_value: totalCommittedValue(contract),
       committed_annual_spend: value(contract, "committed_annual_spend_usd"),
       actual_annual_spend: spend.length
-        ? String(sum(spend, "actual_spend_usd"))
+        ? String(sumFirstAvailable(spend, ["actual_spend_usd", "spend_usd"]))
         : value(contract, "actual_annual_spend_usd"),
       linked_budget_amount: value(contract, "committed_annual_spend_usd"),
       linked_forecast_amount: value(contract, "annual_value_usd"),
       linked_actual_amount: spend.length
-        ? String(sum(spend, "actual_spend_usd"))
+        ? String(sumFirstAvailable(spend, ["actual_spend_usd", "spend_usd"]))
         : value(contract, "actual_annual_spend_usd"),
       linked_committed_amount: spend.length
-        ? String(sum(spend, "committed_base_amount_usd"))
+        ? String(
+            sumFirstAvailable(spend, [
+              "committed_base_amount_usd",
+              "commitment_run_rate_usd",
+            ]),
+          )
         : value(contract, "committed_annual_spend_usd"),
       linked_budget_lines: String(spend.length),
     };
@@ -559,6 +590,12 @@ export function projectContractDepthPackage(
     contractQbrObservations: input.qbrScorecards,
     contractEvidenceCoverage,
     optimizationOpportunities: input.optimizationOpportunities,
+    negotiationFindings,
+    negotiationLevers,
+    contractIntelligence: buildContractIntelligenceRecords(input),
+    contractIntelligenceReadout: buildContractIntelligenceReadout(
+      buildContractIntelligenceRecords(input),
+    ),
   } as const;
 
   return {
@@ -587,6 +624,9 @@ export function projectContractDepthPackage(
         contractQbrObservations: projection.contractQbrObservations.length,
         contractEvidenceCoverage: projection.contractEvidenceCoverage.length,
         optimizationOpportunities: projection.optimizationOpportunities.length,
+        negotiationFindings: projection.negotiationFindings.length,
+        negotiationLevers: projection.negotiationLevers.length,
+        contractIntelligence: projection.contractIntelligence.length,
       },
     },
   };
