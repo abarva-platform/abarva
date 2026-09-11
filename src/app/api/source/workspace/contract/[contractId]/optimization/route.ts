@@ -292,6 +292,12 @@ function sourceProviderFromRequest(
     requestUrl.searchParams.get("provider") ??
     ""
   ).trim();
+  if (normalized === "ecl_projection_db") {
+    return normalized;
+  }
+  if (process.env.SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true") {
+    return null;
+  }
   if (
     normalized === "legacy" ||
     normalized === "ecl_projection" ||

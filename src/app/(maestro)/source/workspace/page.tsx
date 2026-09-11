@@ -23,6 +23,8 @@ export const dynamic = "force-dynamic";
 // Renewal and notice math must use that stable cut by default; `?asOf=`
 // remains the operator override for explicit live-date comparisons.
 const SOURCE_WORKSPACE_DEFAULT_AS_OF = `${SOURCE_V4_CUBE_AS_OF_DATE}T00:00:00Z`;
+const SOURCE_WORKSPACE_DEFAULT_PROVIDER: SourceWorkspaceProviderMode =
+  "ecl_projection_db";
 
 /**
  * /source/workspace — product Source workspace: native analytical canvas +
@@ -66,6 +68,8 @@ export default async function SourceWorkspacePage({
   const requestedSourceProvider = sourceProviderOverrideFromRequest(
     params.sourceProvider ?? params.provider,
   );
+  const sourceProviderKey =
+    requestedSourceProvider ?? SOURCE_WORKSPACE_DEFAULT_PROVIDER;
   const requestedClientKey = appClientKeyForTenant(requestedClient);
   if (requestedClient && !requestedClientKey) {
     notFound();
@@ -129,7 +133,7 @@ export default async function SourceWorkspacePage({
         tenantName={tenantName}
         tenantKey={tenantKey}
         asOfDateIso={asOfDateIso}
-        sourceProviderKey={requestedSourceProvider}
+        sourceProviderKey={sourceProviderKey}
         initialContractId={requestedContractId}
         initialContractTab={requestedContractTab}
         initialWorkspaceTab={requestedWorkspaceTab}
@@ -204,10 +208,13 @@ function SourceWorkspaceTenantAccessDenied() {
 function sourceProviderOverrideFromRequest(
   value?: string,
 ): SourceWorkspaceProviderMode | null {
+  const normalized = value?.trim();
+  if (normalized === "ecl_projection_db") {
+    return normalized;
+  }
   if (process.env.SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true") {
     return null;
   }
-  const normalized = value?.trim();
   if (
     normalized === "legacy" ||
     normalized === "ecl_projection" ||

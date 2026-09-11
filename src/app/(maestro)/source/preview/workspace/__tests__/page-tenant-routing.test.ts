@@ -74,15 +74,30 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource).toContain("initialWorkspaceTab");
   });
 
-  it("guards the ECL provider query override behind an explicit environment flag", () => {
+  it("uses the governed DB projection as the canonical Source default", () => {
+    expect(pageSource).toContain("SOURCE_WORKSPACE_DEFAULT_PROVIDER");
+    expect(pageSource).toContain(
+      'const SOURCE_WORKSPACE_DEFAULT_PROVIDER: SourceWorkspaceProviderMode =\n  "ecl_projection_db";',
+    );
+    expect(pageSource).toContain(
+      "requestedSourceProvider ?? SOURCE_WORKSPACE_DEFAULT_PROVIDER",
+    );
+    expect(pageSource).toContain("sourceProviderKey={sourceProviderKey}");
+  });
+
+  it("keeps legacy and local provider query overrides behind an explicit environment flag", () => {
     expect(pageSource).toContain("provider?: string");
     expect(pageSource).toContain("sourceProvider?: string");
+    expect(pageSource).toContain('normalized === "ecl_projection_db"');
     expect(pageSource).toContain(
       'SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true"',
     );
-    expect(pageSource).toContain('normalized === "ecl_projection_db"');
     expect(pageSource).toContain("params.sourceProvider ?? params.provider");
     expect(pageSource).toContain("requestedSourceProvider");
+    expect(portfolioApiSource).toContain('normalized === "ecl_projection_db"');
+    expect(portfolioApiSource).toContain(
+      'SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true"',
+    );
   });
 
   it("uses the governed Source cube as-of date unless the operator overrides it", () => {
