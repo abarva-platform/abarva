@@ -361,6 +361,38 @@ function actionPayloadText(
   return null;
 }
 
+function humanizeEvidenceLabel(value: string | null | undefined) {
+  if (!value) return null;
+  const normalized = value
+    .replace(/[_:;]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!normalized) return null;
+  return normalized
+    .split(" ")
+    .map((part) =>
+      /^[A-Z0-9]+$/.test(part)
+        ? part
+        : `${part.charAt(0).toUpperCase()}${part.slice(1)}`,
+    )
+    .join(" ");
+}
+
+function isMachineEvidenceTokenText(value: string | null | undefined) {
+  if (!value) return false;
+  const text = value.trim();
+  if (!text) return false;
+  if (/[;:]/.test(text) && /[_-]/.test(text)) return true;
+  if (
+    /\b(?:cloud_account|marketplace_routing|contract_ref|opportunity_ref|finance_confirmation_state|evidence_rows)\b/i.test(
+      text,
+    )
+  )
+    return true;
+  const snakeTokens = text.match(/\b[a-z]+(?:_[a-z0-9]+){1,}\b/g) ?? [];
+  return snakeTokens.length >= 2;
+}
+
 function actionCardBody(candidate: SourceContractActionCandidateRow) {
   const title = candidate.title?.trim() ?? "";
   const candidates = [
@@ -376,11 +408,15 @@ function actionCardBody(candidate: SourceContractActionCandidateRow) {
 }
 
 function actionCardBasis(candidate: SourceContractActionCandidateRow) {
+  const payloadBasis = actionPayloadText(candidate, ["evidence_family"]);
+  if (payloadBasis) return humanizeEvidenceLabel(payloadBasis) ?? payloadBasis;
+  if (
+    candidate.deterministic_basis &&
+    !isMachineEvidenceTokenText(candidate.deterministic_basis)
+  )
+    return candidate.deterministic_basis;
   return (
-    actionPayloadText(candidate, ["evidence_rows", "evidence_family"]) ??
-    candidate.deterministic_basis ??
-    candidate.evidence_state ??
-    "Loaded evidence row"
+    humanizeEvidenceLabel(candidate.evidence_state) ?? "Loaded evidence row"
   );
 }
 
@@ -592,6 +628,52 @@ function topVendorShareLabel(
   return `${Math.min(100, Math.round((topThree / totalAnnualValue) * 100))}%`;
 }
 
+function parseDateStampFromText(value: string | null | undefined) {
+  if (!value) return null;
+  const text = value.trim();
+  const dashed = text.match(/\b(20\d{2})[-_](0[1-9]|1[0-2])[-_]([0-3]\d)\b/);
+  const compact = text.match(/\b(20\d{2})(0[1-9]|1[0-2])([0-3]\d)\b/);
+  const match = dashed ?? compact;
+  if (!match) return null;
+  const iso = `${match[1]}-${match[2]}-${match[3]}`;
+  const time = new Date(`${iso}T00:00:00Z`).getTime();
+  return Number.isNaN(time) ? null : iso;
+}
+
+function sourceDateControl(portfolio: SourceWorkspacePortfolioData) {
+  const loadRunDates = [
+    ...portfolio.impact.actionCandidates.map((row) => row.load_run_id),
+    ...portfolio.impact.evidenceCoverage.map((row) => row.load_run_id),
+    ...portfolio.impact.vendorPositions.map((row) => row.load_run_id),
+  ]
+    .map(parseDateStampFromText)
+    .filter((value): value is string => Boolean(value));
+  const sortedLoadRunDates = loadRunDates.sort();
+  const refreshedIso =
+    sortedLoadRunDates.length > 0
+      ? sortedLoadRunDates[sortedLoadRunDates.length - 1]
+      : null;
+  if (refreshedIso) {
+    return {
+      ariaLabel: "Source freshness",
+      label: "Refreshed",
+      value: fmtDate(refreshedIso),
+    };
+  }
+  if (portfolio.asOfDateIso?.startsWith("2027-06-30")) {
+    return {
+      ariaLabel: "Source scenario date",
+      label: "Scenario date",
+      value: fmtDate(portfolio.asOfDateIso),
+    };
+  }
+  return {
+    ariaLabel: "Data as of",
+    label: "As of",
+    value: fmtDate(portfolio.asOfDateIso),
+  };
+}
+
 function sortableDate(value: string | null | undefined) {
   if (!value) return Number.POSITIVE_INFINITY;
   const time = new Date(value).getTime();
@@ -627,8 +709,16 @@ function actionCitationSummary(
   candidate: SourceContractActionCandidateRow,
   coverage: SourceContractEvidenceCoverageRow | null,
 ) {
-  const citationKeys = candidate.citation_basis_json
+  const citationLabelByKey: Record<string, string> = {
+    contract_ref: "contract record",
+    finance_confirmation_state: "finance gate",
+    opportunity_ref: "opportunity record",
+    payload: "loaded opportunity payload",
+  };
+  const citationLabels = candidate.citation_basis_json
     ? Object.keys(candidate.citation_basis_json)
+        .map((key) => citationLabelByKey[key])
+        .filter((value): value is string => Boolean(value))
     : [];
   const rowBits = coverage
     ? [
@@ -639,7 +729,7 @@ function actionCitationSummary(
       ]
     : [];
   return (
-    [...rowBits, ...citationKeys]
+    [...rowBits, ...new Set(citationLabels)]
       .filter((value) => !/^0 /.test(value))
       .join(" · ") || "No detailed citation row is loaded for this action."
   );
@@ -861,6 +951,7 @@ export function WorkspaceExecutiveShell({
       ? headerContract.contract_id
       : currentPage;
   const isCommandCenter = !selectedContractId;
+  const dateControl = sourceDateControl(portfolio);
 
   const resetMainScroll = useCallback(() => {
     const schedule =
@@ -966,9 +1057,9 @@ export function WorkspaceExecutiveShell({
               <span>Scope</span>
               <b>All loaded contracts</b>
             </div>
-            <div className="sw-v2-control" aria-label="Data as of">
-              <span>As of</span>
-              <b>{fmtDate(portfolio.asOfDateIso)}</b>
+            <div className="sw-v2-control" aria-label={dateControl.ariaLabel}>
+              <span>{dateControl.label}</span>
+              <b>{dateControl.value}</b>
             </div>
             <div className="sw-v2-control" aria-label="Evidence depth status">
               <span>Evidence depth</span>
@@ -1221,6 +1312,19 @@ function SourceActionDrawer({
 }) {
   if (!candidate) return null;
   const basis = actionCitationSummary(candidate, coverage);
+  const defensible =
+    actionPayloadText(candidate, [
+      "vendor_concession",
+      "native_vs_nexus_note",
+      "negotiation_language",
+    ]) ??
+    (isMachineEvidenceTokenText(candidate.deterministic_basis)
+      ? null
+      : candidate.deterministic_basis) ??
+    basis;
+  const riskIfIgnored =
+    actionPayloadText(candidate, ["risk_if_ignored"]) ??
+    candidate.blocker_if_missing;
   return (
     <div className="sw-v2-action-drawer-shell" role="presentation">
       <button
@@ -1243,11 +1347,11 @@ function SourceActionDrawer({
             <dd>{impactCreditMoney(candidate.candidate_amount_usd)}</dd>
           </div>
           <div>
-            <dt>Due</dt>
+            <dt>Deadline</dt>
             <dd>{fmtDate(candidate.decision_due_date)}</dd>
           </div>
           <div>
-            <dt>Owner</dt>
+            <dt>Accountable</dt>
             <dd>{candidate.accountable_role ?? "Not established"}</dd>
           </div>
           <div>
@@ -1261,16 +1365,16 @@ function SourceActionDrawer({
         </section>
         <section>
           <span>Why it is defensible</span>
-          <p>{candidate.deterministic_basis ?? basis}</p>
+          <p>{defensible}</p>
         </section>
         <section>
-          <span>Evidence basis</span>
+          <span>What backs it</span>
           <p>{basis}</p>
         </section>
-        {candidate.blocker_if_missing ? (
+        {riskIfIgnored ? (
           <section>
-            <span>Blocked by</span>
-            <p>{candidate.blocker_if_missing}</p>
+            <span>If ignored</span>
+            <p>{riskIfIgnored}</p>
           </section>
         ) : null}
         <div className="sw-v2-action-drawer-foot">

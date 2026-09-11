@@ -1014,7 +1014,12 @@ async function loadDirectSourceWorkspaceImpactRows(
                  o.value_type AS action_type,
                  o.value_type AS opportunity_type,
                  o.narrative AS finding_summary,
-                 COALESCE(NULLIF(o.payload->>'evidence_rows', ''), o.evidence_grade) AS deterministic_basis,
+                 COALESCE(
+                   NULLIF(o.payload->>'native_vs_nexus_note', ''),
+                   NULLIF(o.payload->>'vendor_concession', ''),
+                   NULLIF(o.payload->>'negotiation_language', ''),
+                   NULLIF(o.evidence_grade, '')
+                 ) AS deterministic_basis,
                  o.amount_usd::numeric AS candidate_amount_usd,
                  COALESCE(NULLIF(o.payload->>'priority', ''), o.stage) AS priority,
                  o.stage AS readiness_state,
@@ -1654,7 +1659,12 @@ async function loadDerivedSourceWorkspaceImpactLayer(
              o.value_type AS action_type,
              o.value_type AS opportunity_type,
              o.narrative AS finding_summary,
-             COALESCE(NULLIF(o.payload->>'evidence_rows', ''), o.evidence_grade) AS deterministic_basis,
+             COALESCE(
+               NULLIF(o.payload->>'native_vs_nexus_note', ''),
+               NULLIF(o.payload->>'vendor_concession', ''),
+               NULLIF(o.payload->>'negotiation_language', ''),
+               NULLIF(o.evidence_grade, '')
+             ) AS deterministic_basis,
              o.amount_usd::numeric AS candidate_amount_usd,
              COALESCE(NULLIF(o.payload->>'priority', ''), o.stage) AS priority,
              o.stage AS readiness_state,
