@@ -25,7 +25,10 @@ import {
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
-import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
+import type {
+  SourceWorkspacePortfolioData,
+  SourceWorkspaceProviderMode,
+} from "./live/portfolioAdapter";
 import type { Contract360Response } from "./live/contractDetail";
 import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
@@ -562,12 +565,16 @@ export function WorkspaceExecutiveShell({
   logic,
   portfolio,
   tenantName,
+  sourceClientKey,
+  sourceProviderKey,
   impactLoadState = "ready",
 }: {
   vm: SourceWorkspaceVM;
   logic: WorkspaceViewModel;
   portfolio: SourceWorkspacePortfolioData;
   tenantName: string;
+  sourceClientKey?: string | null;
+  sourceProviderKey?: SourceWorkspaceProviderMode | null;
   impactLoadState?: ImpactLoadState;
 }) {
   const [showLineage, setShowLineage] = useState(false);
@@ -699,6 +706,16 @@ export function WorkspaceExecutiveShell({
     });
   }, []);
 
+  const workspaceHrefFor = (page: PageLabel) => {
+    const params = new URLSearchParams();
+    params.set("workspaceTab", page.toLowerCase());
+    if (sourceClientKey?.trim()) params.set("client", sourceClientKey.trim());
+    if (sourceProviderKey?.trim()) {
+      params.set("sourceProvider", sourceProviderKey.trim());
+    }
+    return `/source?${params.toString()}`;
+  };
+
   const selectPage = (page: PageLabel) => {
     if (page === "Command") {
       logic.select("portfolio", null, "Portfolio");
@@ -805,14 +822,15 @@ export function WorkspaceExecutiveShell({
             aria-label="Source workspace navigation"
           >
             {PAGE_LABELS.map((label) => (
-              <button
+              <a
                 key={label}
-                type="button"
+                role="button"
+                href={workspaceHrefFor(label)}
                 className={label === currentPage ? "is-active" : ""}
                 onClick={() => selectPage(label)}
               >
                 <span>{label}</span>
-              </button>
+              </a>
             ))}
           </nav>
         )}

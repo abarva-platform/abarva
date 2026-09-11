@@ -65,6 +65,15 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).toContain("initialContractTab={requestedContractTab}");
   });
 
+  it("threads command-center tab deep links into the workspace client", () => {
+    expect(pageSource).toContain("workspaceTab?: string");
+    expect(pageSource).toContain(
+      "const requestedWorkspaceTab = params.workspaceTab?.trim() || null;",
+    );
+    expect(pageSource).toContain("initialWorkspaceTab={requestedWorkspaceTab}");
+    expect(loaderSource).toContain("initialWorkspaceTab");
+  });
+
   it("guards the ECL provider query override behind an explicit environment flag", () => {
     expect(pageSource).toContain("provider?: string");
     expect(pageSource).toContain("sourceProvider?: string");

@@ -239,6 +239,27 @@ describe("WorkspaceViewModel.explore — associative selection", () => {
     expect(state.tabs.contract).toBe(INITIAL_STATE.tabs.contract);
   });
 
+  it("initializes command-center sections from URL state", () => {
+    expect(
+      buildInitialWorkspaceState({ workspaceTab: "contracts" }).sel.kind,
+    ).toBe("contractList");
+    expect(
+      buildInitialWorkspaceState({ workspaceTab: "levers" }).sel.kind,
+    ).toBe("optimize");
+    expect(
+      buildInitialWorkspaceState({ workspaceTab: "evidence" }).sel.kind,
+    ).toBe("evidence");
+    expect(
+      buildInitialWorkspaceState({ workspaceTab: "coverage" }).sel.kind,
+    ).toBe("vendorList");
+
+    const commandState = buildInitialWorkspaceState({
+      workspaceTab: "command",
+    });
+    expect(commandState.sel.kind).toBe("portfolio");
+    expect(commandState.tabs.portfolio).toBe("Portfolio");
+  });
+
   it("does not substitute the first contract when a deep link points to a missing contract", () => {
     const state = buildInitialWorkspaceState({
       contractId: "CTR-DOES-NOT-EXIST",

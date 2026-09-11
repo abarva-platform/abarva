@@ -126,6 +126,7 @@ export function WorkspaceClient({
   impactLoadState = "ready",
   initialContractId,
   initialContractTab,
+  initialWorkspaceTab,
 }: {
   portfolio: SourceWorkspacePortfolioData;
   tenantName: string;
@@ -134,11 +135,13 @@ export function WorkspaceClient({
   impactLoadState?: ImpactLoadState;
   initialContractId?: string | null;
   initialContractTab?: string | null;
+  initialWorkspaceTab?: string | null;
 }) {
   const [state, setStateRaw] = useState<WorkspaceState>(() =>
     buildInitialWorkspaceState({
       contractId: initialContractId,
       contractTab: initialContractTab,
+      workspaceTab: initialWorkspaceTab,
     }),
   );
   const [thread, setThread] = useState<ChatMessage[]>([]);
@@ -584,6 +587,8 @@ export function WorkspaceClient({
               logic={logic}
               portfolio={portfolio}
               tenantName={tenantName}
+              sourceClientKey={sourceClientKey}
+              sourceProviderKey={sourceProviderKey}
               impactLoadState={impactLoadState}
             />
           }

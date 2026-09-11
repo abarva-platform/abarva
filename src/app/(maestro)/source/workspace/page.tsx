@@ -44,6 +44,7 @@ export default async function SourceWorkspacePage({
     provider?: string;
     sourceProvider?: string;
     tab?: string;
+    workspaceTab?: string;
   }>;
 }) {
   let tenancy;
@@ -61,6 +62,7 @@ export default async function SourceWorkspacePage({
   const requestedContractId = params.contractId?.trim() || null;
   const requestedContractTab =
     params.contractTab?.trim() || params.tab?.trim() || null;
+  const requestedWorkspaceTab = params.workspaceTab?.trim() || null;
   const requestedSourceProvider = sourceProviderOverrideFromRequest(
     params.sourceProvider ?? params.provider,
   );
@@ -130,6 +132,7 @@ export default async function SourceWorkspacePage({
         sourceProviderKey={requestedSourceProvider}
         initialContractId={requestedContractId}
         initialContractTab={requestedContractTab}
+        initialWorkspaceTab={requestedWorkspaceTab}
       />
     </div>
   );

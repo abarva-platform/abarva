@@ -162,6 +162,17 @@ const CONTRACT_TAB_BY_PARAM = new Map(
   [...CONTRACT_TABS].map((tab) => [tab.toLowerCase(), tab]),
 );
 
+const WORKSPACE_TAB_SELECTIONS = new Map<
+  string,
+  { kind: string; id: string | null; tab?: string }
+>([
+  ['command', { kind: 'portfolio', id: null, tab: 'Portfolio' }],
+  ['contracts', { kind: 'contractList', id: null }],
+  ['levers', { kind: 'optimize', id: null, tab: 'Queue' }],
+  ['evidence', { kind: 'evidence', id: null, tab: 'Coverage' }],
+  ['coverage', { kind: 'vendorList', id: null }],
+]);
+
 function normalizeContractTab(value: string | null | undefined): string {
   const requestedTab = value?.trim();
   if (!requestedTab) return INITIAL_STATE.tabs.contract;
@@ -174,9 +185,33 @@ function normalizeContractTab(value: string | null | undefined): string {
 export function buildInitialWorkspaceState(input?: {
   contractId?: string | null;
   contractTab?: string | null;
+  workspaceTab?: string | null;
 }): WorkspaceState {
   const contractId = input?.contractId?.trim();
-  if (!contractId) return INITIAL_STATE;
+  if (!contractId) {
+    const workspaceSelection = WORKSPACE_TAB_SELECTIONS.get(
+      input?.workspaceTab?.trim().toLowerCase() ?? '',
+    );
+    if (!workspaceSelection) return INITIAL_STATE;
+    return {
+      ...INITIAL_STATE,
+      sel: { kind: workspaceSelection.kind, id: workspaceSelection.id },
+      tabs: workspaceSelection.tab
+        ? {
+            ...INITIAL_STATE.tabs,
+            [workspaceSelection.kind]: workspaceSelection.tab,
+          }
+        : INITIAL_STATE.tabs,
+      hist: [
+        {
+          kind: workspaceSelection.kind,
+          id: workspaceSelection.id,
+          tab: workspaceSelection.tab,
+        },
+      ],
+      hi: 0,
+    };
+  }
 
   const contractTab = normalizeContractTab(input?.contractTab);
 
