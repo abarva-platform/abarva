@@ -30,6 +30,10 @@ import {
 } from "./Contract360Briefing";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
+import {
+  contractPopulations,
+  countOrDash,
+} from "./contractPopulations";
 import type {
   SourceWorkspacePortfolioData,
   SourceWorkspaceProviderMode,
@@ -116,6 +120,8 @@ type FocusedContractRow = {
   readonly reason: string;
 };
 type FocusedContractSet = {
+  /** Every contract the set ranked over. Any partition must sum to this. */
+  readonly populationCount: number;
   readonly rows: readonly FocusedContractRow[];
   readonly remainderCount: number;
   readonly remainderAnnualValue: number;
@@ -1647,16 +1653,20 @@ function CoveragePage({
   onOpenVendor: (vendorRef: string) => void;
 }) {
   const readinessRows = vendorReadinessDecisionRows(portfolio);
-  const archetypeCoverage = vendorArchetypeCoverage(portfolio);
-  const archetypes = vendorArchetypeRows(portfolio).slice(0, 6);
-  const mappedPct =
-    archetypeCoverage.totalContracts > 0
+  const populations = contractPopulations(portfolio);
+  /*
+   * Scored against the contract book alone. A percentage whose numerator came
+   * from the evidence layer and whose denominator came from the register is
+   * not a coverage rate — the two describe different contracts.
+   */
+  const registerMappedPct =
+    populations.registerCount > 0
       ? Math.round(
-          (archetypeCoverage.declaredContracts /
-            archetypeCoverage.totalContracts) *
+          (populations.declaredInRegisterCount / populations.registerCount) *
             100,
         )
       : 0;
+  const archetypes = vendorArchetypeRows(portfolio).slice(0, 6);
 
   return (
     <div className="sw-v2-coverage-grid">
@@ -1708,32 +1718,48 @@ function CoveragePage({
       <section className="sw-v2-panel">
         <PanelHead
           eyebrow="Archetype coverage"
-          title={`${mappedPct}% mapped to a declared contract archetype`}
+          title={`${populations.declaredInRegisterCount} of ${populations.registerCount} contracts carry a declared archetype`}
         />
         <div className="sw-v2-coverage-meter">
           <i
             style={
               {
-                "--sw-v2-fill": `${mappedPct}%`,
+                "--sw-v2-fill": `${registerMappedPct}%`,
               } as CSSProperties
             }
           />
         </div>
+        {/*
+          This partition sums to the register and nothing else. The earlier
+          panel put a declared count taken from the evidence layer beside an
+          unmapped count taken from the register, which read as a partition and
+          summed past the size of the book.
+        */}
         <div className="sw-v2-fact-stack sw-v2-compact-facts">
           <Fact
             label="Declared"
-            value={String(archetypeCoverage.declaredContracts)}
+            value={String(populations.declaredInRegisterCount)}
           />
           <Fact
-            label="Unmapped register"
-            value={String(archetypeCoverage.unmappedCount)}
+            label="Not yet declared"
+            value={String(populations.undeclaredInRegisterCount)}
           />
-          <Fact
-            label="Supplemental declared"
-            value={String(archetypeCoverage.supplementalDeclaredCount)}
-          />
+          <Fact label="Contract book" value={String(populations.registerCount)} />
         </div>
-        {archetypeCoverage.unmappedCount > 0 ? (
+        {populations.unjoinedDepthCount > 0 ? (
+          <p className="sw-v2-muted">
+            <b>
+              {populations.unjoinedDepthCount} of {populations.depthCount}{" "}
+              contracts with loaded evidence are not in this book.
+            </b>{" "}
+            Their identifiers do not match any register header, so their
+            evidence cannot be counted as coverage of these{" "}
+            {populations.registerCount} contracts, and no percentage spanning
+            the two is shown. Reconciling the two identifier sets is a load-path
+            fix, not a display one.
+          </p>
+        ) : null}
+        {populations.undeclaredInRegisterCount > 0 ? (
           <p className="sw-v2-muted">
             Backfill unlock: every register header needs a declared archetype
             before Source can draw an archetype concentration chart without
@@ -2081,7 +2107,7 @@ function VendorArchetypeMixChart({
       <ChartEmptyState
         label="Vendor archetype annual value chart"
         title="Archetype data not charted."
-        body={`${coverage.totalContracts} contract headers stay in the register, but Source will not draw a concentration chart from an unmapped placeholder bucket.`}
+        body={`${contractPopulations(portfolio).registerCount} contract headers stay in the register, but Source will not draw a concentration chart from an unmapped placeholder bucket.`}
       />
     );
   }
@@ -3085,10 +3111,14 @@ function ContractEvidenceDepthTable({
       ))}
       {focus.remainderCount > 0 ? (
         <div className="sw-v2-table-foot">
-          <b>{focus.depthReadyCount} contracts have loaded detail rows.</b>
+          <b>
+            {focus.depthReadyCount} of {focus.populationCount} contracts have
+            loaded detail rows.
+          </b>
           <span>
-            The remaining {focus.remainderCount} are held as portfolio registry
-            rows until their evidence lanes are populated.
+            {focus.populationCount - focus.depthReadyCount} are held as registry
+            rows until their evidence lanes are populated;{" "}
+            {focus.remainderCount} are not shown above.
           </span>
         </div>
       ) : null}
@@ -3382,10 +3412,28 @@ function ContractTabStory({
     numberFromDb(contract.resolved_annual_value) ??
     numberFromDb(contract.annual_value) ??
     numberFromDb(coverage?.committed_spend_usd);
-  const utilization =
-    annualValue && annualValue > 0 && actualSpend != null
-      ? Math.round((actualSpend / annualValue) * 100)
-      : null;
+  /*
+   * Utilization is consumption against the amount that can be consumed.
+   *
+   * `annual_value` carries the whole annual cost of the agreement, support
+   * and other non-consumable fees included. Dividing consumption by it
+   * understates how much of the commitment is being drawn on, and put a
+   * different utilization figure on this tab from the one the consumption
+   * chart computes against committed spend a few inches below. Prefer the
+   * committed amount, and fall back to annual value only when no commitment
+   * is recorded — naming which denominator was used either way.
+   */
+  const committedSpend = numberFromDb(coverage?.committed_spend_usd);
+  const utilizationBasis =
+    committedSpend && committedSpend > 0
+      ? { amount: committedSpend, label: "committed spend" }
+      : annualValue && annualValue > 0
+        ? { amount: annualValue, label: "annual contract value" }
+        : null;
+  const utilization = utilizationAgainstCommitment(
+    actualSpend,
+    utilizationBasis?.amount ?? null,
+  );
   const sizedTotal = vm.opportunityView
     ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
     : 0;
@@ -3424,7 +3472,9 @@ function ContractTabStory({
             ["Annual value", money(annualValue)],
             ["Actual annual spend", money(actualSpend)],
             [
-              "Utilization",
+              utilizationBasis == null
+                ? "Utilization"
+                : `Utilization of ${utilizationBasis.label}`,
               utilization == null ? "Not established" : `${utilization}%`,
             ],
           ]
@@ -4884,10 +4934,7 @@ function ContractConsumptionRamp({
     0,
   );
   const totalActual = rows.reduce((sum, row) => sum + (row.actualUsd ?? 0), 0);
-  const utilization =
-    totalCommitted > 0
-      ? Math.round((totalActual / totalCommitted) * 100)
-      : null;
+  const utilization = utilizationAgainstCommitment(totalActual, totalCommitted);
   const latest = rows[rows.length - 1];
 
   return (
@@ -5730,11 +5777,11 @@ function EvidencePage({
                 <small>{row.description}</small>
               </span>
               <span>{row.contractCount}</span>
-              <span>{row.spendRows}</span>
-              <span>{row.performanceRows}</span>
-              <span>{row.documentPageTextRows}</span>
-              <span>{row.changeOrderRows}</span>
-              <span>{row.actionRows}</span>
+              <span>{countOrDash(row.spendRows)}</span>
+              <span>{countOrDash(row.performanceRows)}</span>
+              <span>{countOrDash(row.documentPageTextRows)}</span>
+              <span>{countOrDash(row.changeOrderRows)}</span>
+              <span>{countOrDash(row.actionRows)}</span>
               <span>{row.registryLabel}</span>
             </div>
           ))}
@@ -5828,22 +5875,48 @@ function evidenceArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
     {
       description: string;
       contractCount: number;
-      spendRows: number;
-      performanceRows: number;
-      documentPageTextRows: number;
-      changeOrderRows: number;
-      actionRows: number;
+      /** Null means the lane was never loaded for this group; 0 means loaded and empty. */
+      spendRows: number | null;
+      performanceRows: number | null;
+      documentPageTextRows: number | null;
+      changeOrderRows: number | null;
+      actionRows: number | null;
     }
   >();
 
-  for (const contract of portfolio.contracts) {
-    const rawArchetype = contract.vendor_category?.trim() || "";
+  /*
+   * Walk the evidence rows, not the contract book.
+   *
+   * The matrix used to iterate `portfolio.contracts` and look the evidence up
+   * by contract_id. Where the two collections do not share an identifier space
+   * every lookup misses, so the lane columns rendered as zeros directly above
+   * the same lanes summed from the evidence rows themselves — the same figure
+   * reported twice on one screen, once as 0 and once as its real value.
+   *
+   * Counting the evidence rows makes the lane totals agree with the lane panel
+   * by construction. Register headers with no evidence row are then reported
+   * separately, as a book with no evidence rather than as archetypes with none.
+   */
+  const registerIds = new Set(
+    portfolio.contracts.map((contract) => contract.contract_id),
+  );
+  const registerById = new Map(
+    portfolio.contracts.map((contract) => [contract.contract_id, contract]),
+  );
+
+  for (const coverage of portfolio.impact.evidenceCoverage) {
+    const contract = registerById.get(coverage.contract_id) ?? null;
+    const rawArchetype =
+      coverage.contract_archetype?.trim() ||
+      coverage.vendor_category?.trim() ||
+      contract?.vendor_category?.trim() ||
+      "";
     const archetype = rawArchetype
       ? titleFromSourceKey(rawArchetype)
       : "Not established";
     const current = groups.get(archetype) ?? {
       description: rawArchetype
-        ? "Declared category from the governed contract row."
+        ? "Declared category from the governed evidence row."
         : "No declared category; no inferred taxonomy override.",
       contractCount: 0,
       spendRows: 0,
@@ -5852,15 +5925,32 @@ function evidenceArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
       changeOrderRows: 0,
       actionRows: 0,
     };
-    const coverage = coverageByContractId.get(contract.contract_id);
     current.contractCount += 1;
-    current.spendRows += numberFromDb(coverage?.spend_rows) ?? 0;
-    current.performanceRows += numberFromDb(coverage?.performance_rows) ?? 0;
-    current.documentPageTextRows +=
-      numberFromDb(coverage?.document_page_text_rows) ?? 0;
-    current.changeOrderRows += numberFromDb(coverage?.change_order_rows) ?? 0;
-    current.actionRows += actionRowsByContractId.get(contract.contract_id) ?? 0;
+    current.spendRows = (current.spendRows ?? 0) + (numberFromDb(coverage.spend_rows) ?? 0);
+    current.performanceRows = (current.performanceRows ?? 0) + (numberFromDb(coverage.performance_rows) ?? 0);
+    current.documentPageTextRows =
+      (current.documentPageTextRows ?? 0) + (numberFromDb(coverage.document_page_text_rows) ?? 0);
+    current.changeOrderRows = (current.changeOrderRows ?? 0) + (numberFromDb(coverage.change_order_rows) ?? 0);
+    current.actionRows =
+      (current.actionRows ?? 0) +
+      (actionRowsByContractId.get(coverage.contract_id) ?? 0);
     groups.set(archetype, current);
+  }
+
+  const registerWithoutEvidence = portfolio.contracts.filter(
+    (contract) => !coverageByContractId.has(contract.contract_id),
+  ).length;
+  if (registerWithoutEvidence > 0) {
+    groups.set("No evidence loaded", {
+      description: `${registerWithoutEvidence} of ${registerIds.size} contract headers have no evidence row in any lane.`,
+      contractCount: registerWithoutEvidence,
+      // Null, not zero: nothing was loaded to look in. These render as a dash.
+      spendRows: null,
+      performanceRows: null,
+      documentPageTextRows: null,
+      changeOrderRows: null,
+      actionRows: null,
+    });
   }
 
   return [...groups.entries()]
@@ -6893,14 +6983,22 @@ export function focusedContractSet(
     }
   }
   const selectedIds = new Set(rows.map((row) => row.contract.contract_id));
-  const remainder = portfolio.contracts.filter(
-    (contract) => !selectedIds.has(contract.contract_id),
+  /*
+   * Remainder is taken from `ranked`, the same population the depth count is
+   * taken from. Taking it from `portfolio.contracts` instead counted the
+   * register while the depth count counted the register plus supplemental
+   * rows, so the two figures were rendered in one sentence and summed to more
+   * than either population contained.
+   */
+  const remainder = ranked.filter(
+    (row) => !selectedIds.has(row.contract.contract_id),
   );
   return {
     rows,
+    populationCount: ranked.length,
     remainderCount: remainder.length,
     remainderAnnualValue: remainder.reduce(
-      (sum, contract) => sum + (numberFromDb(contract.annual_value) ?? 0),
+      (sum, row) => sum + (numberFromDb(row.contract.annual_value) ?? 0),
       0,
     ),
     depthReadyCount: ranked.filter((row) => row.depthScore > 0).length,
@@ -6913,6 +7011,24 @@ function countByContract(contractIds: readonly string[]) {
     counts.set(contractId, (counts.get(contractId) ?? 0) + 1);
   }
   return counts;
+}
+
+/**
+ * Consumption as a share of the amount that can actually be consumed.
+ *
+ * One definition, used by every surface that reports utilization, so the tab
+ * summary and the consumption chart cannot disagree about the same contract.
+ * Returns null rather than 0 when there is no commitment to measure against —
+ * an unknown ratio is not a zero one.
+ */
+export function utilizationAgainstCommitment(
+  consumed: number | null | undefined,
+  commitment: number | null | undefined,
+): number | null {
+  if (consumed == null || commitment == null) return null;
+  if (!Number.isFinite(consumed) || !Number.isFinite(commitment)) return null;
+  if (commitment <= 0) return null;
+  return Math.round((consumed / commitment) * 100);
 }
 
 function contractDepthScore(
@@ -7902,7 +8018,7 @@ function subheadFor(
   if (page === "Coverage") {
     return vendor
       ? `${vendor.contract_count} contracts / ${money(numberFromDb(vendor.annual_value))} recorded annual value.`
-      : `${portfolio.contracts.length} register contracts · ${portfolio.impact.evidenceCoverage.length} contracts with depth rows · ${vendorArchetypeCoverage(portfolio).unmappedCount} register headers still need archetype mapping.`;
+      : coverageScopeLine(portfolio);
   }
   if (page === "Contracts" && contract) {
     return `${contract.contract_id} / ${money(numberFromDb(contract.annual_value))} annual value / expiry ${fmtDate(contract.end_date)}.`;
@@ -7934,6 +8050,72 @@ function commandHeadline(
     return "Credits are calculated. Claims are the constraint.";
   }
   return `${tenantName || "Source"} contract actions, governed by evidence.`;
+}
+
+/**
+ * Clauses in a stored missing-evidence summary, keyed by the facet they name.
+ *
+ * The summary is assembled in SQL, which has no view of the archetype model, so
+ * it lists every empty lane as missing. On a contract type that does not carry
+ * service levels, "performance rows missing" then contradicts the Performance
+ * tab's own statement that the lane is not required — the same fact described
+ * as a gap on one tab and as not applicable on another.
+ */
+const FACET_CLAUSE_PATTERNS: readonly {
+  readonly facet: ContractFacetKey;
+  readonly test: RegExp;
+}[] = [
+  { facet: "Performance", test: /performance|sla|service[- ]credit/i },
+];
+
+/**
+ * Drop clauses that name a facet this contract's archetype does not require.
+ * Returns null when nothing survives, so the caller falls through to its own
+ * wording rather than rendering an empty caveat.
+ */
+export function withoutNotRequiredFacets(
+  vm: SourceWorkspaceVM,
+  summary: string | null | undefined,
+): string | null {
+  const text = summary?.trim();
+  if (!text) return null;
+  const kept = text
+    .split(";")
+    .map((clause) => clause.trim())
+    .filter((clause) => clause.length > 0)
+    .filter((clause) =>
+      FACET_CLAUSE_PATTERNS.every(
+        ({ facet, test }) =>
+          !test.test(clause) || contractFacetIsRequired(vm, facet),
+      ),
+    );
+  return kept.length > 0 ? kept.join("; ") : null;
+}
+
+/**
+ * The Coverage page scope line.
+ *
+ * Register headers and contracts with evidence are two collections, and they
+ * join on contract_id. Putting the two totals side by side reads as "83 of the
+ * 230" whenever they happen to appear together, which is only true to the
+ * extent the identifiers actually match. Say how many join.
+ */
+export function coverageScopeLine(
+  portfolio: SourceWorkspacePortfolioData,
+): string {
+  const populations = contractPopulations(portfolio);
+  const parts = [
+    `${populations.registerCount} contracts in the book`,
+    `${populations.declaredInRegisterCount} with a declared archetype`,
+  ];
+  if (populations.unjoinedDepthCount > 0) {
+    parts.push(
+      `${populations.unjoinedDepthCount} of ${populations.depthCount} contracts with loaded evidence are not in this book`,
+    );
+  } else {
+    parts.push(`${populations.depthCount} with loaded evidence`);
+  }
+  return `${parts.join(" · ")}.`;
 }
 
 export function contractTabNarrative(
@@ -7972,7 +8154,7 @@ export function contractTabNarrative(
         .join(" "),
       provenance: `${tab} intelligence · ${governedTab.review_status}`,
       blocker:
-        governedTab.missing_evidence_summary ??
+        withoutNotRequiredFacets(vm, governedTab.missing_evidence_summary) ??
         governedTab.action_prompt ??
         "Stay within the governed tab evidence.",
     };
