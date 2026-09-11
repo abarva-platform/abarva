@@ -10,7 +10,7 @@ const QUALITATIVE_SIGNAL_RE =
   /\b(scope|caveat|design[- ]?only|excluded|exception|owner|vacant|declined|retired|monitoring plan|shadow|unvalidated)\b/i;
 
 const SIGNAL_THEMES: ReadonlyArray<{ key: string; pattern: RegExp }> = [
-  { key: "closure_rate", pattern: /\b(closure\s+rate|care[- ]?gap\s+closure)\b/i },
+  { key: "closure_rate", pattern: /\bclosure[_ -]?rate\b/i },
   { key: "care_gap_volume", pattern: /\b(care[- ]?gap|open\s+gaps?|volume|backlog)\b/i },
   { key: "interface_unversioned", pattern: /\b(unversioned|not\s+under\s+source\s+control)\b/i },
   { key: "interface_unmonitored", pattern: /\b(unmonitored|monitoring\s+(?:coverage|gap)|without\s+monitoring)\b/i },
@@ -97,10 +97,18 @@ function signalScore(evidence: GovernedEvidenceItem): number {
   }
   let score = 1;
   if (/\b\d+(?:\.\d+)?\s?%/.test(haystack)) score += 4;
+  if (/\b\d+\s+of\s+\d+\b/i.test(haystack)) score += 4;
   if (/\b\d{1,3}(?:,\d{3})+\b/.test(haystack)) score += 3;
   if (/\$\s?\d/.test(haystack)) score += 2;
   if (SIGNAL_PRIORITY_RE.test(haystack)) score += 5;
   if (!hasNumber && hasQualitativeSignal) score += 4;
+  if (/^phase_capture:/i.test(evidence.evidenceFamily)) score += 8;
+  else if (
+    /^(current_state|document_extract:|program_evidence:)/i.test(
+      evidence.evidenceFamily,
+    )
+  )
+    score += 4;
   if (evidence.confidence === "high") score += 2;
   else if (evidence.confidence === "medium") score += 1;
   return score;
