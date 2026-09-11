@@ -69,6 +69,9 @@ function unique(values: readonly string[]): string[] {
 function humanArchetype(archetype: string): string {
   const labels: Record<string, string> = {
     application_managed_services: "application managed services",
+    infra_service_desk_managed_services: "infrastructure and service desk managed services",
+    productivity_platform: "productivity and collaboration platform",
+    crm_saas: "CRM SaaS subscription",
     consumption_commit: "consumption commitment",
     cloud_consumption: "cloud consumption",
     cloud_data_platform_subscription: "cloud data platform subscription",

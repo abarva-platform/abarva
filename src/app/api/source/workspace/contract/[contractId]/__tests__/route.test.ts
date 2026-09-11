@@ -27,6 +27,7 @@ jest.mock("@/lib/source/data-model/contract-360-view", () => ({
 jest.mock("@/lib/source/data-model/read-adapter", () => ({
   getContract360: jest.fn(),
   getContractEvidenceOverview: jest.fn(),
+  getContractIntelligence: jest.fn(),
   getContractEvidencePerformanceSummary: jest.fn(),
   getContractOptimizationEvidencePack: jest.fn(),
   getContractOptimizationOpportunitySet: jest.fn(),
@@ -71,6 +72,7 @@ import {
 import {
   getContract360,
   getContractEvidenceOverview,
+  getContractIntelligence,
   getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
   getContractOptimizationOpportunitySet,
@@ -108,6 +110,7 @@ const mockListContractOperationalPerformance =
   listContractOperationalPerformance as jest.Mock;
 const mockGetContractEvidenceOverview =
   getContractEvidenceOverview as jest.Mock;
+const mockGetContractIntelligence = getContractIntelligence as jest.Mock;
 const mockGetContractEvidencePerformanceSummary =
   getContractEvidencePerformanceSummary as jest.Mock;
 const mockGetContractOptimizationEvidencePack =
@@ -172,6 +175,7 @@ beforeEach(() => {
   mockListContractSpendMonthly.mockResolvedValue([]);
   mockListCloudCommitmentCoverageRows.mockResolvedValue([]);
   mockListContractTabIntelligence.mockResolvedValue([]);
+  mockGetContractIntelligence.mockResolvedValue(null);
   mockCollectContractSubjectRefs.mockReturnValue(["CTR-0006", "VEN-0006"]);
   mockListLatestTowerObservationsForSubjects.mockResolvedValue([]);
   mockListTowerValueClaimsForSubjects.mockResolvedValue([]);

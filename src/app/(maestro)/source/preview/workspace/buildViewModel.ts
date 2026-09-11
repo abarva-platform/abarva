@@ -15,7 +15,10 @@ import { buildContractOptimizationSpine } from "@/lib/source/data-model/contract
 import type { SourcingOpportunityReason } from "@/lib/source/data-model/sourcing-opportunities";
 import { isReviewableContractScope } from "@/lib/source/contract-optimization-intake";
 import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
-import { buildContractEducation } from "@/lib/source/contract-intelligence/education";
+import {
+  buildContractEducation,
+  contractEducationFromRecord,
+} from "@/lib/source/contract-intelligence/education";
 
 /**
  * `node-postgres` returns NUMERIC/DECIMAL columns as strings; a lone value
@@ -2021,8 +2024,13 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         (row) => row.contract_id === c.contract_id,
       )
     : null;
+  const persistedEducation = detail?.contractIntelligence
+    ? contractEducationFromRecord(
+        detail.contractIntelligence.intelligence_record,
+      )
+    : null;
   const contractEducation = c
-    ? buildContractEducation({
+    ? persistedEducation ?? buildContractEducation({
         archetype: c.contract_archetype ?? contractCoverage?.contract_archetype,
         vendorName: c.vendor_name,
         contractName: c.contract_name,
@@ -4225,6 +4233,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     goActions: () => vm.setTab("contract", "Optimize"),
     detailState,
     detail,
+    contractIntelligence: detail?.contractIntelligence ?? null,
     contractEducation,
 
     isOpp: kind === "opportunity" && !!opp,

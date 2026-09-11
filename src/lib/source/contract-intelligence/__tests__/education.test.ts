@@ -1,4 +1,4 @@
-import { buildContractEducation } from "../education";
+import { buildContractEducation, contractEducationFromRecord } from "../education";
 
 const base = {
   vendorName: "Synthetic Vendor",
@@ -67,5 +67,47 @@ describe("contract education guide", () => {
     expect(view.steps).toHaveLength(3);
     expect(view.body).not.toHaveLength(0);
     expect(view.state).toBe("blocked");
+  });
+
+  it("prefers the persisted load-time education record when it is available", () => {
+    const view = contractEducationFromRecord({
+      contract: {
+        title: "Synthetic cloud agreement",
+        vendor_name: "Synthetic Cloud Vendor",
+        archetype_key: "cloud_consumption",
+        archetype_label: "Cloud consumption commitment",
+      },
+      education: {
+        archetype_key: "cloud_consumption",
+        archetype_label: "Cloud consumption commitment",
+        headline: "Manage the commitment against real workload demand.",
+        body: "Track the commitment against governed workload evidence.",
+        track: {
+          question: "Are workloads using what the contract commits?",
+          guidance: "Track committed and actual spend by month.",
+          state: "loaded",
+        },
+        load: {
+          question: "What makes the consumption number defensible?",
+          guidance: "Load the executed paper and billing export.",
+          state: "loaded",
+        },
+        observe: {
+          question: "What should change before renewal?",
+          guidance: "Watch utilization and the notice window.",
+          state: "next",
+        },
+      },
+      review: { status: "partial" },
+    });
+
+    expect(view).not.toBeNull();
+    expect(view?.headline).toContain("real workload demand");
+    expect(view?.steps.map((step) => step.state)).toEqual([
+      "loaded",
+      "loaded",
+      "next",
+    ]);
+    expect(view?.basis.join(" ")).toContain("load-time governed playbook");
   });
 });

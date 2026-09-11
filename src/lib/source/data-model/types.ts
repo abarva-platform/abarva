@@ -529,6 +529,23 @@ export interface SourceContractTabIntelligenceRow {
   readonly derived_from_load_run_id: string | null;
 }
 
+/** One governed, load-time contract-intelligence record shared by tabs and aVa. */
+export interface SourceContractIntelligenceRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly contract_id: string;
+  readonly vendor_ref: string | null;
+  readonly vendor_name: string | null;
+  readonly contract_name: string | null;
+  readonly archetype_key: string;
+  readonly archetype_label: string;
+  readonly industry_key: string;
+  readonly playbook_review_status: string;
+  readonly review_status: string;
+  readonly intelligence_record: Record<string, unknown>;
+  readonly provenance: Record<string, unknown> | null;
+  readonly derived_from_load_run_id: string | null;
+}
+
 export interface SourceAvaGroundingBundleRow {
   readonly tenant_key: SkyHarborTenantKey;
   readonly grounding_bundle_id: string;

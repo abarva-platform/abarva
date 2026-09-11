@@ -147,6 +147,8 @@ const GUIDES: readonly EducationGuide[] = [
       "software",
       "license",
       "productivity",
+      "productivity_platform",
+      "collaboration",
       "enterprise_agreement",
     ],
     archetypeLabel: "Software subscription",
@@ -289,4 +291,85 @@ export function buildContractEducation(
     focus: selected.focus,
     basis,
   };
+}
+
+/**
+ * Reads the persisted Layer 3 education object. The fallback builder remains
+ * useful for older read models, but new Contract 360 pages should prefer the
+ * load-time record so the guide has the same version and provenance as the
+ * contract anatomy and evidence story.
+ */
+export function contractEducationFromRecord(
+  record: Record<string, unknown> | null | undefined,
+): ContractEducationView | null {
+  const sourceRecord = record ?? {};
+  const education = sourceRecord.education;
+  if (!isRecord(education)) return null;
+  const contract = isRecord(sourceRecord.contract) ? sourceRecord.contract : {};
+  const steps = (['track', 'load', 'observe'] as const).map((key) => {
+    const raw = education[key];
+    const step = isRecord(raw) ? raw : {};
+    const state: ContractEducationStep["state"] =
+      step.state === 'loaded' || step.state === 'not_required'
+        ? step.state
+        : 'next';
+    return {
+      key,
+      title: key[0].toUpperCase() + key.slice(1),
+      question: stringValue(step.question) ?? 'What evidence is needed next?',
+      guidance: stringValue(step.guidance) ?? 'Load the governed evidence family for this archetype.',
+      evidence: state === 'loaded' ? 'Loaded in the contract intelligence record.' : 'Next evidence action is required.',
+      state,
+    };
+  });
+  const review = isRecord(sourceRecord.review) ? sourceRecord.review : {};
+  const recordState = stringValue(review.status);
+  const state: ContractEducationState =
+    recordState === 'reviewed' || recordState === 'approved'
+      ? 'ready'
+      : steps.some((step) => step.state === 'loaded')
+        ? 'partial'
+        : 'blocked';
+  const archetypeLabel =
+    stringValue(education.archetype_label) ??
+    stringValue(contract.archetype_label) ??
+    'Contract governance';
+  const archetypeKey =
+    stringValue(education.archetype_key) ??
+    stringValue(contract.archetype_key) ??
+    'unmapped';
+  const headline =
+    stringValue(education.headline) ??
+    'Build the evidence loop before changing the deal.';
+  const body =
+    stringValue(education.body) ??
+    'Use the contract archetype to decide what to track, load, and observe.';
+  return {
+    archetypeKey,
+    archetypeLabel,
+    headline,
+    body,
+    state,
+    stateLabel:
+      state === 'ready'
+        ? 'Education basis loaded'
+        : state === 'partial'
+          ? 'Education basis is partial'
+          : 'Education starts with evidence mapping',
+    steps,
+    focus: body,
+    basis: [
+      `${stringValue(contract.title) ?? 'Contract'} · ${stringValue(contract.vendor_name) ?? 'Vendor'}`,
+      `${archetypeLabel} guide · load-time governed playbook`,
+      'Archetype, industry context, evidence requirements, and provenance are linked in the same record',
+    ],
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 }

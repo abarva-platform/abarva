@@ -37,6 +37,7 @@ import { deriveOptimizeWorkflowPosition } from "@/lib/source/data-model/contract
 import type { OptimizationOpportunityValueType } from "@/lib/source/data-model/contract-optimization-opportunity";
 import {
   getContract360,
+  getContractIntelligence,
   getContractOptimizationEvidencePack,
   getContractOptimizationOpportunitySet,
 } from "@/lib/source/data-model/read-adapter";
@@ -164,11 +165,12 @@ export async function buildAvaSourceContractGrounding(
   if (!tenantKey || !trimmedId) return { block: "", hasLiveNumbers: false };
 
   const contract = await getContract360(tenantKey, trimmedId).catch(() => null);
-  const [opportunitySet, evidencePack] = await Promise.all([
+  const [opportunitySet, evidencePack, contractIntelligence] = await Promise.all([
     getContractOptimizationOpportunitySet(tenantKey, trimmedId, contract).catch(
       () => null,
     ),
     getContractOptimizationEvidencePack(tenantKey, trimmedId).catch(() => null),
+    getContractIntelligence(tenantKey, trimmedId).catch(() => null),
   ]);
   if (!contract && !opportunitySet) {
     return { block: "", hasLiveNumbers: false };
@@ -263,6 +265,13 @@ export async function buildAvaSourceContractGrounding(
         ? " (Stated annual value and extracted value disagreed; the resolved value is quoted.)"
         : ""
     }`,
+    contractIntelligence?.intelligence_record
+      ? [
+          "LOAD-TIME CONTRACT INTELLIGENCE RECORD (authoritative for purpose, archetype, anatomy, education, and industry boundary):",
+          JSON.stringify(contractIntelligence.intelligence_record),
+          "The record is deterministic and versioned from the governed load. Explain it, but do not add facts, relationships, benchmarks, or amounts outside it.",
+        ].join("\n")
+      : "Load-time contract intelligence record: not available for this contract; do not invent purpose, archetype, anatomy, education, or industry claims.",
     `Commercial baseline status: ${opportunitySet?.baseline.status ?? "no governed baseline"}.`,
     `Workflow position: step ${position.currentIndex} of ${position.steps.length} (${position.currentLabel}). Next action: ${position.primaryAction}.${
       position.blocker ? ` Blocked by: ${position.blocker}` : ""

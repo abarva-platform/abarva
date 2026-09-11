@@ -61,6 +61,7 @@ import type {
   SourceAvaGroundingBundleRow,
   SourceCloudCommitmentCoverageRow,
   SourceContractTabIntelligenceRow,
+  SourceContractIntelligenceRow,
   SourcePageStorylineRow,
   SourceContractSpendMonthlyRow,
   SourceContractVendor360Row,
@@ -979,6 +980,22 @@ export async function listContractTabIntelligence(
   return rows.map(normalizeSourceContractTabIntelligenceRow);
 }
 
+export async function getContractIntelligence(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceContractIntelligenceRow | null> {
+  const rows = await queryCanonicalSourceWithFallback<SourceContractIntelligenceRow>(
+    tenantKey,
+    `SELECT *
+       FROM source.contract_intelligence_v1
+      WHERE tenant_key = ANY($1::text[])
+        AND contract_id = $2
+      LIMIT 1`,
+    [contractId],
+  );
+  return rows[0] ? normalizeSourceContractIntelligenceRow(rows[0]) : null;
+}
+
 export async function listSourceAvaGroundingBundles(
   tenantKey: string,
 ): Promise<SourceAvaGroundingBundleRow[]> {
@@ -1289,6 +1306,16 @@ function normalizeSourceContractTabIntelligenceRow(
   return {
     ...row,
     sort_order: numberValue(row.sort_order) ?? 0,
+    provenance: jsonObject(row.provenance),
+  };
+}
+
+function normalizeSourceContractIntelligenceRow(
+  row: SourceContractIntelligenceRow,
+): SourceContractIntelligenceRow {
+  return {
+    ...row,
+    intelligence_record: jsonObject(row.intelligence_record) ?? {},
     provenance: jsonObject(row.provenance),
   };
 }

@@ -42,6 +42,7 @@ const TARGET_VIEWS = [
   ["source", "vendor_position_v1"],
   ["source", "source_page_storyline_v1"],
   ["source", "contract_tab_intelligence_v1"],
+  ["source", "contract_intelligence_v1"],
   ["source", "ava_grounding_bundle_v1"],
   ["consumption", "sourcing_vendor_v1"],
   ["consumption", "sourcing_vendor_semantic_v1"],
@@ -2258,6 +2259,7 @@ async function rebuildViews(client: Client): Promise<void> {
       source.vendor_position_v1,
       source.source_page_storyline_v1,
       source.contract_tab_intelligence_v1,
+      source.contract_intelligence_v1,
       source.ava_grounding_bundle_v1
     TO authenticated, service_role`);
 

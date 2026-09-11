@@ -6,6 +6,7 @@ import { buildContract360View, collectContractSubjectRefs } from '@/lib/source/d
 import {
   getContract360,
   getContractEvidenceOverview,
+  getContractIntelligence,
   getContractEvidencePerformanceSummary,
   getContractOptimizationEvidencePack,
   getContractOptimizationOpportunitySet,
@@ -103,7 +104,7 @@ export async function GET(
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
 
-  const [storedApplicationScope, financialExposure, operationalPerformance, storedInitiativeDependencies, evidenceOverview, evidenceScope, evidencePricing, evidencePerformance, performancePeriods, spendMonths, cloudCommitmentPeerCoverage, contractTabIntelligence] =
+  const [storedApplicationScope, financialExposure, operationalPerformance, storedInitiativeDependencies, evidenceOverview, evidenceScope, evidencePricing, evidencePerformance, performancePeriods, spendMonths, cloudCommitmentPeerCoverage, contractTabIntelligence, contractIntelligence] =
     await Promise.all([
       listContractApplicationScope(tenantKey, contractId).catch(() => []),
       listContractFinancialExposure(tenantKey).catch(() => []),
@@ -117,6 +118,7 @@ export async function GET(
       listContractSpendMonthly(tenantKey, contractId).catch(() => []),
       listCloudCommitmentCoverageRows(tenantKey).catch(() => []),
       listContractTabIntelligence(tenantKey, contractId).catch(() => []),
+      getContractIntelligence(tenantKey, contractId).catch(() => null),
     ]);
   const applicationScope =
     storedApplicationScope.length > 0
@@ -163,6 +165,7 @@ export async function GET(
     spendMonths,
     cloudCommitmentPeerCoverage,
     contractTabIntelligence,
+    contractIntelligence,
   });
 
   return NextResponse.json(view);
