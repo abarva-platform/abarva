@@ -114,6 +114,178 @@ this view. If the row is absent, the page should show a compact "tab intelligenc
 with the missing data family. It should not repeat the same contract header, vendor/date/notice
 cards, or generic evidence-state strip as filler.
 
+### Governed Contract Intelligence Record
+
+The deterministic loader emits one `ContractIntelligenceRecord` per governed contract. This is the
+binding contract for the richer tab experience. The record is built from Layer 2 adapter rows and is
+safe for Layer 3 persistence only when its source references, review state, and quality gate pass.
+Claude Design must consume this record as a projection input; it must not recreate these facts from
+labels, filenames, or page layout.
+
+```ts
+type ContractIntelligenceRecord = {
+  modelVersion: string;
+  tenantKey: string;
+  datasetVersion: string;
+  contract: {
+    contractId: string;
+    vendorId: string | null;
+    vendorName: string;
+    title: string;
+    archetypeKey: string | null;
+    archetypeLabel: string | null;
+    archetypeSourceBasis: string | null;
+    archetypeConfidence: "high" | "medium" | "low" | "unverified";
+    archetypePlaybookVersion: string | null;
+    startDate: string | null;
+    endDate: string | null;
+    noticePeriodDays: number | null;
+    annualValueUsd: number | null;
+  };
+  story: {
+    purpose: string | null;
+    scope: string | null;
+    decision: string;
+    evidenceBoundary: string;
+    headline: string;
+  };
+  baseline: {
+    metrics: Array<{
+      key: string;
+      label: string;
+      value: string | number | null;
+      meaning: string;
+      sourceRefs: string[];
+    }>;
+    facts: Array<{
+      key: string;
+      label: string;
+      value: string | number | null;
+      meaning: string;
+      sourceRefs: string[];
+      reviewStatus: "loaded" | "partial" | "missing" | "not_required";
+    }>;
+  };
+  evidenceLanes: Array<{
+    key: string;
+    label: string;
+    state: "loaded" | "partial" | "missing" | "not_required";
+    rowCount: number;
+    sourceRefs: string[];
+    supports: string[];
+    blocks: string[];
+    ownerRole: string | null;
+  }>;
+  anatomy: {
+    nodes: Array<{
+      id: string;
+      kind: "contract" | "vendor" | "archetype" | "scope" | "document" | "clause" |
+        "spend" | "invoice" | "performance" | "change_order" | "optimization" | "owner" | "lever";
+      label: string;
+      description: string;
+      sourceRefs: string[];
+    }>;
+    relationships: Array<{
+      fromId: string;
+      toId: string;
+      type: "provided_by" | "classified_as" | "covers" | "supported_by" | "owned_by" |
+        "creates_opportunity" | "implemented_by";
+      label: string;
+      sourceRefs: string[];
+    }>;
+  };
+  findings: Array<{
+    label: string;
+    valueType: "recoverable_leakage" | "avoided_cost" | "negotiated_improvement" | "realized_value";
+    amountState: "sized" | "candidate" | "not_sized" | "not_applicable";
+    amountUsd: number | null;
+    evidenceState: "loaded" | "partial" | "missing" | "not_required";
+    explanation: string;
+    blockingGap: string | null;
+    sourceRefs: string[];
+  }>;
+  levers: Array<{
+    leverType: string;
+    label: string;
+    buyerAsk: string;
+    negotiationLanguage: string;
+    vendorConcession: string;
+    currentTerm: string | null;
+    targetTerm: string | null;
+    valueBasis: string;
+    amountState: "sized" | "candidate" | "not_sized";
+    candidateRange: string | null;
+    timingDependency: string | null;
+    ownerRole: string | null;
+    priority: number | null;
+    riskIfIgnored: string | null;
+    evidenceState: "loaded" | "partial" | "missing";
+    evidenceRefs: string[];
+  }>;
+  derivedInsights: Array<{
+    insightType: "purpose" | "scope" | "archetype" | "decision" | "evidence" | "sequence";
+    statement: string;
+    basis: string;
+    sourceRefs: string[];
+    reviewStatus: "draft" | "reviewed" | "approved" | "blocked_missing_evidence";
+  }>;
+  industryIntelligence: {
+    state: "loaded" | "missing_benchmark" | "not_applicable";
+    archetypeKey: string | null;
+    benchmarkSources: string[];
+    allowedUses: string[];
+    blockedClaims: string[];
+  };
+  review: {
+    status: "draft" | "reviewed" | "approved" | "blocked_missing_evidence";
+    missingEvidence: string[];
+    reviewerRole: string | null;
+    reviewedAt: string | null;
+    derivedFromLoadRunId: string;
+  };
+  provenance: {
+    sourceFiles: string[];
+    sourceSystems: string[];
+    sourceRefs: string[];
+    buildVersion: string;
+  };
+};
+```
+
+### How Claude Design Must Render the Record
+
+1. Start every tab with the tab-specific `story` field. Purpose comes before optimization. Scope
+   comes before economics. Evidence boundaries come before any recommendation.
+2. Render the anatomy as a traceable chain: contract -> vendor/archetype -> declared scope -> source
+   documents/clauses -> spend/invoice/performance/change-order records -> findings -> levers -> owners.
+   Only draw relationships present in `anatomy.relationships`; never add a guessed CMDB, Tower, system,
+   application, or business-unit edge.
+3. Use `evidenceLanes` to say what a data family enables and what it blocks. Do not render a wall of
+   zeroes. If a lane is missing, show the owner and the decision it prevents.
+4. Keep `findings` separated by value ledger. `realized_value` is empty until Finance/Tower evidence
+   exists. `not_sized` is not zero and must not be displayed as a dollar amount.
+5. Render `levers` as the client-ready report table: Lever, The ask, Why the vendor can agree,
+   Evidence basis, Value state/amount, Owner, Timing, and Next step. Preserve the supplied negotiation
+   language and label signal-stage rows clearly.
+6. Render `industryIntelligence` only when `state = loaded` and every benchmark source is cited. A
+   buyer-portfolio comparison is not an external benchmark. When missing, say what source is needed.
+7. Do not invent or silently repair missing content. The loader must fail closed for malformed rows;
+   the UI must explain the missing evidence in business language.
+
+### Claude Output Contract and Token Budget
+
+The Source contract-review prompt is the control boundary. It receives the governed record plus the
+rules for evidence, amount states, archetype plays, anatomy, benchmark claims, and client-ready
+formatting before generation. Claude Design must not add a second semantic scrubber or rewrite the
+generated business language after the model returns it. Technical access-control, tenant isolation,
+transport, and output-size controls remain independent safety controls.
+
+The Source response budget is **8,192 output tokens**. This is deliberate: a useful response may need
+to explain purpose, archetype, scope, evidence gaps, anatomy, sequencing, and a full lever table with
+citations. Do not lower it to the generic 2,048-token default or truncate the table to fit a card.
+The UI may provide a compact view and a client-ready export, but both must derive from the same
+prompt-governed response and must preserve evidence state and amount-state labels.
+
 ### Archetype Mapping
 
 Every contract visible in Contract 360 needs a declared archetype. Missing archetype is not a design
