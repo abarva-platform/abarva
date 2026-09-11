@@ -3,6 +3,7 @@
 // gate honored — all without Azure/Claude/DB (collaborators injected).
 import { buildDeliverableRequest } from "../build-request";
 import { assembleGovernedEvidence } from "../evidence-assembler";
+import { selectRequiredEvidenceSignals } from "../evidence-signals";
 import {
   buildSectionDrivenEvidenceQueries,
   runDeliverableForTenant,
@@ -282,6 +283,142 @@ describe("assembleGovernedEvidence", () => {
     expect(out.evidence[0].evidenceFamily).toBe("Scope Boundary");
     expect(out.evidence[0].statement).toMatch(/Commercial loan onboarding/);
     expect(out.evidence[1].evidenceFamily).toBe("Enterprise Ai Portfolio");
+  });
+
+  it("expands structured phase capture into required evidence signals", async () => {
+    const fakeQuery = (async () => []) as never;
+    const fakeDb = {
+      from(table: string) {
+        if (table === "program_modules") {
+          return {
+            select: () => ({
+              eq: () => ({
+                order: () => ({
+                  order: () => ({
+                    limit: async () => ({
+                      data: [
+                        {
+                          id: "pm-baseline",
+                          module_key: "phase_2_baseline_metrics",
+                          module_name: "Baseline metrics",
+                          phase_number: 2,
+                          module_order: 1,
+                          status: "completed",
+                          state_jsonb: {
+                            capture_section_key: "baseline_metrics",
+                            label: "Baseline metrics",
+                            value: JSON.stringify([
+                              {
+                                metric: "closure_rate",
+                                value: "41.2%",
+                                source: "quality_measures.csv",
+                              },
+                              {
+                                metric: "unmonitored_interfaces",
+                                value: "33 of 86 plus 18 partial",
+                                source: "interface_inventory.csv",
+                              },
+                            ]),
+                          },
+                          completed_at: "2026-09-10T12:00:00Z",
+                        },
+                        {
+                          id: "pm-readiness",
+                          module_key: "phase_4_launch_readiness",
+                          module_name: "Launch readiness",
+                          phase_number: 4,
+                          module_order: 2,
+                          status: "completed",
+                          state_jsonb: {
+                            capture_section_key: "launch_readiness",
+                            label: "Launch readiness",
+                            value:
+                              "Launch readiness excludes Coastal Region from go-live scope until the weekly legacy feed improves.",
+                          },
+                          completed_at: "2026-09-10T12:05:00Z",
+                        },
+                      ],
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "evidence_ledger") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "program_evidence_reviews") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "generated_artifacts") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  is: () => ({
+                    is: () => ({
+                      order: () => ({
+                        limit: async () => ({ data: [] }),
+                      }),
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+    } as never;
+
+    const out = await assembleGovernedEvidence(
+      {
+        tenantClientKey: "arcturus",
+        clientId: "client-1",
+        sourceArtifactRef: "move-1",
+        query: "launch readiness baseline",
+      },
+      { queryTenantContext: fakeQuery, db: fakeDb },
+    );
+    const signals = selectRequiredEvidenceSignals(out.evidence);
+
+    expect(signals).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "P2 Capture Closure Rate",
+          statement: expect.stringContaining("41.2%"),
+        }),
+        expect.objectContaining({
+          label: "P2 Capture Unmonitored Interfaces",
+          statement: expect.stringContaining("33 of 86"),
+        }),
+        expect.objectContaining({
+          label: "P4 Capture Scope Caveat",
+          statement: expect.stringContaining("Coastal Region"),
+        }),
+      ]),
+    );
   });
 
   it("uses current generated Move artifacts as internal evidence for later phases", async () => {
