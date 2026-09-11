@@ -31,6 +31,7 @@ import type {
 } from "./live/portfolioAdapter";
 import type { Contract360Response } from "./live/contractDetail";
 import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
+import type { ContractFacetKey } from "@/lib/source/contract-intelligence/education";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
 import type {
   DocExtractionRow,
@@ -3230,6 +3231,12 @@ function ContractPage({
         {tab === "Scope" ? (
           <ContractScopeTable scopeRows={scopeRows} />
         ) : tab === "Performance" &&
+          !contractFacetIsRequired(vm, "Performance") ? (
+          <ContractFacetNotRequired
+            tab="Performance"
+            reason={contractFacetReason(vm, "Performance")}
+          />
+        ) : tab === "Performance" &&
           detailReady &&
           vm.detail?.performancePeriods?.length ? (
           <>
@@ -3394,7 +3401,13 @@ function ContractTabStory({
             ["Education state", vm.contractEducation?.stateLabel ?? "Loading"],
             ["Operating loop", "Track · Load · Observe"],
           ]
-        : tab === "Economics"
+      : tab === "Performance" && !contractFacetIsRequired(vm, "Performance")
+        ? [
+            ["Applicability", "Not part of this archetype"],
+            ["Evidence lane", "Not required"],
+            ["Next focus", "Consumption and commercial evidence"],
+          ]
+      : tab === "Economics"
         ? [
             ["Annual value", money(annualValue)],
             ["Actual annual spend", money(actualSpend)],
@@ -3442,6 +3455,41 @@ function ContractTabStory({
         ))}
       </dl>
     </div>
+  );
+}
+
+function contractFacetIsRequired(
+  vm: SourceWorkspaceVM,
+  tab: ContractFacetKey,
+): boolean {
+  return vm.contractEducation?.facetRequirements[tab]?.state !== "not_required";
+}
+
+function contractFacetReason(vm: SourceWorkspaceVM, tab: ContractFacetKey) {
+  return (
+    vm.contractEducation?.facetRequirements[tab]?.reason ??
+    "This evidence lane is not required by the declared contract archetype."
+  );
+}
+
+function ContractFacetNotRequired({
+  tab,
+  reason,
+}: {
+  tab: string;
+  reason: string;
+}) {
+  return (
+    <section className="sw-v2-evidence-empty" aria-label={`${tab} applicability`}>
+      <b>{tab} is not a required evidence lane for this contract.</b>
+      <p>{reason}</p>
+      <p>
+        Source is not treating the absence of service-level rows as a defect or
+        asking someone to load irrelevant evidence. If the executed agreement
+        contains a service-level obligation, map it to the contract and this
+        lane will become applicable.
+      </p>
+    </section>
   );
 }
 
@@ -7999,6 +8047,15 @@ export function contractTabNarrative(
     | SourceWorkspacePortfolioData["impact"]["claimCards"][number]
     | undefined,
 ) {
+  if (tab === "Performance" && !contractFacetIsRequired(vm, "Performance")) {
+    return {
+      headline: "Service performance is not part of this contract archetype.",
+      body: contractFacetReason(vm, "Performance"),
+      provenance: "Archetype applicability · governed education model",
+      blocker:
+        "No SLA, service-credit, or performance rows are expected unless the executed agreement declares a service-level obligation.",
+    };
+  }
   const governedTab = contractTabIntelligenceFor(
     tab,
     vm.detail?.contractTabIntelligence ?? [],
