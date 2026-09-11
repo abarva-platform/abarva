@@ -234,6 +234,12 @@ function isEstablishedAmount(value: string): boolean {
 /* Education — four states, never collapsed                                    */
 /* -------------------------------------------------------------------------- */
 
+const THRESHOLD_TONE: Record<string, string> = {
+  act: "var(--sw-c3-red)",
+  watch: "var(--sw-c3-amber)",
+  relax: "var(--sw-c3-green)",
+};
+
 const EDU_STATE_INK: Record<string, string> = {
   loaded: "var(--sw-c3-green-deep)",
   next: "var(--sw-c3-amber-deep)",
@@ -263,6 +269,13 @@ export function ContractEducationBriefing({
   const notRequired = education.steps.filter(
     (step) => step.state === "not_required",
   );
+  /*
+   * Degrade rather than crash. The field is required by the type, but this
+   * renders a governed surface from a payload that can be served by an older
+   * revision or a cached record — dropping the thresholds section is a far
+   * better failure than taking the whole tab down with it.
+   */
+  const thresholds = education.thresholds ?? [];
 
   return (
     <div className="sw-c3-stack">
@@ -305,6 +318,40 @@ export function ContractEducationBriefing({
           </section>
         ))}
       </div>
+
+      {thresholds.length > 0 ? (
+        <section className="sw-c3-card">
+          <div className="sw-c3-eyebrow">Observe</div>
+          <p className="sw-c3-display sw-c3-display-sm sw-c3-edu-question">
+            The thresholds that change the decision
+          </p>
+          <p className="sw-c3-note">
+            Written before the numbers move, so the response is a policy rather
+            than an argument. These come from the archetype playbook, not from
+            this contract&rsquo;s own figures.
+          </p>
+          <div className="sw-c3-rows">
+            {thresholds.map((threshold) => (
+              <div className="sw-c3-threshold" key={threshold.signal}>
+                <span className="sw-c3-threshold-signal">
+                  <span
+                    className="sw-c3-dot"
+                    style={
+                      {
+                        "--sw-c3-tone": THRESHOLD_TONE[threshold.tone],
+                      } as React.CSSProperties
+                    }
+                  />
+                  {threshold.signal}
+                </span>
+                <span className="sw-c3-threshold-decision">
+                  {threshold.decision}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {notRequired.length > 0 ? (
         <section className="sw-c3-card-flag">
