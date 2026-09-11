@@ -107,14 +107,18 @@ describe("Source workspace requested-client routing", () => {
     expect(pageSource).not.toContain("new Date().toISOString()");
   });
 
-  it("renders Source 360 through a client portfolio loader instead of blocking on the heavy read", () => {
+  it("renders Source 360 through a client portfolio loader with action tabs impact-ready", () => {
     expect(pageSource).toContain("<WorkspaceClientLoader");
     expect(pageSource).not.toContain("loadSourceWorkspacePortfolio(");
     expect(loaderSource).toContain("/api/source/workspace/portfolio");
     expect(loaderSource).toContain("SourceWorkspaceLoadingShell");
     expect(loaderSource).toContain("<WorkspaceClient");
+    expect(loaderSource).toContain("initialPortfolioImpactModeForWorkspaceTab");
+    expect(loaderSource).toContain('"levers"');
+    expect(loaderSource).toContain('"evidence"');
+    expect(loaderSource).toContain('"coverage"');
     expect(loaderSource).toContain(
-      "const fullImpactPromise = fetchImpact(fullUrl)",
+      'initialImpactMode === "full"\n            ? Promise.resolve',
     );
     expect(loaderSource).toContain('responseScope: "impact"');
     expect(loaderSource).toContain("impact: impactPayload.impact");
@@ -122,7 +126,7 @@ describe("Source workspace requested-client routing", () => {
       "SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS",
     );
     expect(loaderSource).not.toContain("window.setTimeout");
-    expect(loaderSource).toContain('impactMode: "deferred"');
+    expect(loaderSource).toContain(': "deferred";');
     expect(loaderSource).toContain('impactMode: "full"');
     expect(loaderSource).toContain('setImpactLoadState("ready")');
     expect(loaderSource).toContain('setImpactLoadState("error")');
@@ -182,12 +186,10 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain('normalized === "deferred"');
     expect(portfolioApiSource).toContain("impactMode");
     expect(loaderSource).toContain('params.set("impact", input.impactMode)');
-    expect(loaderSource.indexOf("fetchPortfolio(deferredUrl)")).toBeLessThan(
-      loaderSource.indexOf("fetchImpact(fullUrl)"),
-    );
-    expect(loaderSource).toContain(
-      "const fullImpactPromise = fetchImpact(fullUrl)",
-    );
+    expect(loaderSource).toContain("fetchPortfolio(initialPortfolioUrl)");
+    expect(loaderSource).toContain("ACTION_READY_WORKSPACE_TABS");
+    expect(loaderSource).toContain("initialImpactMode");
+    expect(loaderSource).toContain(": fetchImpact(fullUrl)");
     expect(loaderSource).not.toContain("window.setTimeout");
     expect(loaderSource).not.toContain("window.clearTimeout");
   });
