@@ -1073,6 +1073,10 @@
   grid-column: span 2;
 }
 
+.sw-v2-span-3 {
+  grid-column: 1 / -1;
+}
+
 .sw-v2-panel-head h2 {
   margin: 5px 0 0;
   color: #0a0a0b;

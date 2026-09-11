@@ -1716,8 +1716,18 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     // The portfolio strip must sit behind a selected-contract guard so a
     // reader drilled into one agreement is not shown book-level totals.
     expect(source.slice(Math.max(0, marker - 220), marker)).toContain(
-      "selectedContractId ? null : (",
+      'selectedContractId || currentPage !== "Command" ? null : (',
     );
+  });
+
+  it("gives full-width command panels a real grid span", () => {
+    const css = readFileSync(
+      new URL("../workspace.css", import.meta.url),
+      "utf8",
+    );
+
+    expect(css).toContain(".sw-v2-span-3");
+    expect(css).toContain("grid-column: 1 / -1;");
   });
 
   it("summarizes a cloud consumption contract before showing optimization levers", () => {
