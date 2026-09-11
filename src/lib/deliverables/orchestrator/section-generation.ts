@@ -538,34 +538,56 @@ function fallbackRiskTable(
     ]);
   }
 
-  if (
-    rows.length === 0 &&
-    req.module === "moves" &&
-    req.deliverableType === "charter"
-  ) {
-    rows.push(
-      [
-        "Sponsor cadence and decision attendance",
-        "Risk",
-        "P2 can lose momentum if accountable roles are not present for working sessions and gates.",
-        "Executive sponsor / Move lead",
-        "Confirm sponsor cadence and operating-owner attendance before P2 close.",
-      ],
-      [
-        "Evidence readiness for P2 Discovery",
-        "Dependency",
-        "Current-state findings should not be finalized until uploaded evidence is reviewed and accepted.",
-        "Evidence owners",
-        "Use the P2 evidence plan and Files & Evidence review before Approve & Build.",
-      ],
-      [
-        "Scope expansion beyond the charter boundary",
-        "Issue",
-        "Uncontrolled expansion can turn Discovery into solution design before facts are proven.",
-        "Move lead / operating owner",
-        "Hold out-of-scope requests as P3 options unless the sponsor revises the Charter.",
-      ],
-    );
+  if (rows.length === 0 && req.module === "moves") {
+    if (req.deliverableType === "charter") {
+      rows.push(
+        [
+          "Sponsor cadence and decision attendance",
+          "Risk",
+          "P2 can lose momentum if accountable roles are not present for working sessions and gates.",
+          "Executive sponsor / Move lead",
+          "Confirm sponsor cadence and operating-owner attendance before P2 close.",
+        ],
+        [
+          "Evidence readiness for P2 Discovery",
+          "Dependency",
+          "Current-state findings should not be finalized until uploaded evidence is reviewed and accepted.",
+          "Evidence owners",
+          "Use the P2 evidence plan and Files & Evidence review before Approve & Build.",
+        ],
+        [
+          "Scope expansion beyond the charter boundary",
+          "Issue",
+          "Uncontrolled expansion can turn Discovery into solution design before facts are proven.",
+          "Move lead / operating owner",
+          "Hold out-of-scope requests as P3 options unless the sponsor revises the Charter.",
+        ],
+      );
+    } else {
+      rows.push(
+        [
+          "Evidence-to-decision traceability",
+          "Dependency",
+          "The phase decision should stay tied to approved evidence, assumptions, and open inputs.",
+          "Move lead / evidence owners",
+          "Review the source register and open-input table before gate approval.",
+        ],
+        [
+          "Governance and control ownership",
+          "Risk",
+          "The design can drift if decision rights, approval points, or control owners remain implicit.",
+          "Sponsor / accountable operating owner",
+          "Name owners and approval cadence before the next phase commits execution work.",
+        ],
+        [
+          "Implementation sequencing",
+          "Issue",
+          "Roadmap planning depends on resolving critical path dependencies before commitments are made.",
+          "Workstream leads",
+          "Carry dependencies into roadmap sequencing and mobilization readiness checks.",
+        ],
+      );
+    }
   }
 
   if (rows.length === 0) return null;

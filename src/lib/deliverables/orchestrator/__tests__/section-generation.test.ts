@@ -205,6 +205,45 @@ describe("assembleDeliverable", () => {
     });
   });
 
+  it("adds a risk-table fallback for Moves target architecture when synthesis omits it", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "target_state_architecture",
+      missingEvidence: [],
+      clientCompleteItems: [],
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "architecture_decision",
+        title: "Architecture Decision",
+        bodyMarkdown:
+          "The target-state architecture should be reviewed before roadmap commitments are made.",
+        groundingMode: "mixed",
+        citationsUsed: [],
+      },
+    ];
+
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {
+        recommendation:
+          "We recommend approving the governed target architecture for roadmap planning, subject to named owners and evidence review.",
+      },
+      req.governedEvidenceBundle,
+    );
+
+    expect(
+      doc.tables.find((t) => /risk|issue|dependenc/i.test(t.title)),
+    ).toMatchObject({
+      key: "risk_register",
+      title: "Risk / Issues / Dependencies",
+      rows: expect.arrayContaining([
+        expect.arrayContaining(["Evidence-to-decision traceability"]),
+      ]),
+    });
+  });
+
   it("uses the explicit P3 decision section when synthesis is long but non-decisive", () => {
     const req = amsRfpRequest({
       module: "moves",
