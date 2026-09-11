@@ -375,7 +375,10 @@ const DEFAULT_VOICE =
   "You are an AbarVa AI advisor. Be direct, specific, and actionable.";
 const DEFAULT_AGENT_RESPONSE_MAX_TOKENS = 2048;
 const PROGRAM_AGENT_RESPONSE_MAX_TOKENS = 4096;
-const SOURCE_AGENT_RESPONSE_MAX_TOKENS = 4096;
+// Source contract reviews carry purpose, anatomy, evidence boundaries, and a
+// client-ready lever table. Keep enough headroom for Claude to explain the
+// decision without collapsing the table into labels or dropping the caveats.
+const SOURCE_AGENT_RESPONSE_MAX_TOKENS = 8192;
 const PROGRAM_DELIVERABLE_SAVE_RE =
   /\b(save|persist|sign\s*off|signed\s*off|complete|approve|submit)\b/i;
 const PROGRAM_DELIVERABLE_NOUN_RE =
@@ -2144,6 +2147,12 @@ export async function POST(request: Request) {
           "Do not add VISUALS, Relationship map, Decision table, Appendix, raw lineage, JSON, chart fences, or a second table unless the user's exact question explicitly asks for one of those extra artifacts.",
           "Keep signal-stage rows unsized. Preserve owner and timing from the row; do not write 'not established' for owner/timing when the row carries owner, ownerRole, deadline, or timingDependency.",
           "Do not call candidate, signal-stage, pending, approval-required, or finance-unconfirmed value realized savings.",
+          "Before recommending anything, explain in plain English what the contract buys, which archetype it belongs to, what workloads or services are in scope, and which evidence sources connect the commercial position to usage, invoices, performance, owners, and levers.",
+          "Treat the contract anatomy as deterministic input: do not infer a system, application, tower, business-unit, or dependency relationship that is not explicitly present in the supplied grounding.",
+          "Keep four classes separate in the answer: loaded contract facts, deterministic interpretations, authored archetype playbook guidance, and missing evidence. Name the decision blocked by each missing lane.",
+          "Do not use a wall of unlabeled counts. Every number must answer a business question in its label or sentence; replace ratio-style labels such as '84 of 230 blocked' with the business meaning of the state.",
+          "Do not add an external benchmark, industry percentile, discount range, or rate claim unless the supplied grounding includes a cited benchmark source. Buyer-portfolio comparison is not market proof.",
+          "The prompt is the control boundary. Preserve Claude's generated business wording; do not semantically rewrite or scrub the response after generation. Technical access-control and transport safety controls remain independent of this instruction.",
         ].join("\n")
       : "";
 
