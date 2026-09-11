@@ -3689,33 +3689,60 @@ function ContractDetailSidePanel({
       </>
     );
   }
+  if (tab === "Performance" || tab === "Economics") {
+    const tabNarrative = contractTabNarrative(
+      tab,
+      vm,
+      contract,
+      coverage,
+      scopeRows,
+      undefined,
+    );
+    return (
+      <>
+        <PanelHead
+          eyebrow={`${tab} readout`}
+          title={
+            tab === "Performance"
+              ? "What performance evidence supports"
+              : "What the spend evidence supports"
+          }
+        />
+        <ContractNarrativeContextStack narrative={tabNarrative} />
+      </>
+    );
+  }
   return (
     <>
       <PanelHead
-        eyebrow="Evidence state"
+        eyebrow="Contract readout"
         title={detailStateLabel(vm.detailState)}
       />
-      <div className="sw-v2-fact-stack">
-        <Fact
-          label="Coverage state"
-          value={coverage?.coverage_state ?? "Header only"}
-        />
-        <Fact label="Scope rows" value={String(scopeRows.length)} />
-        <Fact label="Spend rows" value={formatCount(coverage?.spend_rows)} />
-        <Fact
-          label="Performance rows"
-          value={formatCount(coverage?.performance_rows)}
-        />
-        <Fact
-          label="Document pages"
-          value={formatCount(coverage?.document_page_text_rows)}
-        />
-        <p className="sw-v2-muted">
-          {coverage?.blocker_if_missing ??
-            "Contract-specific optimization evidence is not loaded for this selection."}
-        </p>
-      </div>
+      <ContractNarrativeContextStack
+        narrative={contractTabNarrative(
+          tab,
+          vm,
+          contract,
+          coverage,
+          scopeRows,
+          undefined,
+        )}
+      />
     </>
+  );
+}
+
+function ContractNarrativeContextStack({
+  narrative,
+}: {
+  narrative: ReturnType<typeof contractTabNarrative>;
+}) {
+  return (
+    <div className="sw-v2-fact-stack">
+      <Fact label="Decision consequence" value={narrative.blocker} />
+      <p className="sw-v2-muted">{narrative.body}</p>
+      <p className="sw-v2-muted">Basis: {narrative.provenance}.</p>
+    </div>
   );
 }
 
@@ -7872,10 +7899,10 @@ export function contractTabNarrative(
     }
     return {
       headline: "No performance periods loaded.",
-      body: "No contract-specific performance periods are loaded for this selection.",
+      body: "This contract can still be optimized on consumption, commitment timing, and commercial terms. It cannot support a service-quality, SLA-credit, or performance-trend story until contract-specific performance periods are loaded.",
       provenance: "Performance gap",
       blocker:
-        "No SLA quality, credit, or performance trend claim is allowed for this contract.",
+        "Load ITSM, SLA, service-credit, or monthly performance rows before making service-quality claims.",
     };
   }
   if (tab === "Relationship") {

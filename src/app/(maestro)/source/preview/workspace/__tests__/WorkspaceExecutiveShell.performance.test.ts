@@ -1864,6 +1864,38 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(evidence.body).toContain("structured rows support");
   });
 
+  it("turns an empty Performance tab into an explicit governed gap instead of filler counts", () => {
+    const performance = contractTabNarrative(
+      "Performance",
+      { detailState: "ready", detail: { performancePeriods: [] } } as never,
+      {
+        contract_id: "CONTRACT-CLOUD-001",
+        vendor_name: "Cloud Platform Vendor, Inc.",
+        contract_name: "Enterprise Agreement - Platform Commitment",
+      } as never,
+      {
+        contract_id: "CONTRACT-CLOUD-001",
+        scope_rows: 4,
+        spend_rows: 12,
+        performance_rows: 0,
+        document_page_text_rows: 0,
+        opportunity_rows: 6,
+      } as never,
+      [] as never,
+      undefined,
+    );
+
+    expect(performance.provenance).toBe("Performance gap");
+    expect(performance.headline).toBe("No performance periods loaded.");
+    expect(performance.body).toContain(
+      "can still be optimized on consumption, commitment timing, and commercial terms",
+    );
+    expect(performance.body).toContain("cannot support a service-quality");
+    expect(performance.blocker).toContain("Load ITSM, SLA, service-credit");
+    expect(performance.body).not.toContain("Scope rows");
+    expect(performance.body).not.toContain("Document pages");
+  });
+
   it("does not force cloud language onto a generic managed-services contract", () => {
     const summary = contractPurposeSummary({
       contract_id: "MER-AMS-001",
