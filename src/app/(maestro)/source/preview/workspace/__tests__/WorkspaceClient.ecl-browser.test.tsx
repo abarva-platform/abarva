@@ -406,7 +406,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByLabelText("Scope filter").textContent).toContain(
       "All loaded contracts",
     );
-    expect(screen.getByLabelText("Data as of").textContent).toContain(
+    expect(screen.getByLabelText("Source scenario date").textContent).toContain(
       "30 Jun 2027",
     );
     expect(screen.getAllByRole("button", { name: "Command" })).toHaveLength(1);
@@ -1214,6 +1214,10 @@ describe("Source workspace ECL browser-surface proof", () => {
         payload: {
           buyer_ask:
             "Carry forward unused Year 1 commitment into Year 2 or convert it into adoption credits.",
+          vendor_concession:
+            "Carry-forward keeps the vendor renewal intact while preserving unused buyer value.",
+          risk_if_ignored:
+            "Unused commitment forfeits at anniversary and weakens the renewal position.",
           evidence_rows:
             "coverage:MER-TECH-DBX-001:2026-09;clause:MER-TECH-DBX-001:no_carry_forward",
         },
@@ -1283,6 +1287,8 @@ describe("Source workspace ECL browser-surface proof", () => {
         "Carry forward unused Year 1 commitment into Year 2 or convert it into adoption credits.",
       ).length,
     ).toBeGreaterThan(0);
+    expect(screen.queryByText(/coverage:MER-TECH-DBX-001/)).toBeNull();
+    expect(screen.queryByText(/no_carry_forward/)).toBeNull();
     fireEvent.click(
       screen.getAllByRole("button", {
         name: /Add carry-forward provision for unused Year 1 commitment/,
@@ -1291,6 +1297,22 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByRole("complementary", { name: "Action details" }))
       .toBeTruthy();
     expect(screen.getByText("Governed action")).toBeTruthy();
+    expect(screen.getByText("Deadline")).toBeTruthy();
+    expect(screen.getByText("Accountable")).toBeTruthy();
+    expect(screen.getByText("What backs it")).toBeTruthy();
+    expect(screen.getByText("If ignored")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Carry-forward keeps the vendor renewal intact while preserving unused buyer value.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Unused commitment forfeits at anniversary and weakens the renewal position.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/coverage:MER-TECH-DBX-001/)).toBeNull();
+    expect(screen.queryByText(/no_carry_forward/)).toBeNull();
     expect(screen.getByRole("button", { name: "Open Contract 360" }))
       .toBeTruthy();
     expect(
