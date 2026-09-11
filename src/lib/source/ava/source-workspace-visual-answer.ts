@@ -364,8 +364,56 @@ function selectedContractFrom(
   );
   if (isRecord(directoryMatch))
     return contractContextFromRecord(directoryMatch);
+  const opportunityMatch = requestedContractId
+    ? contractContextFromOpportunityRows(source, requestedContractId)
+    : null;
+  if (opportunityMatch) return opportunityMatch;
   if (requestedContractId) return null;
   return selected;
+}
+
+function contractContextFromOpportunityRows(
+  source: Record<string, unknown> | null,
+  contractId: string,
+): SourceContractContext | null {
+  const opportunities = isRecord(source?.optimizationOpportunities)
+    ? source.optimizationOpportunities
+    : null;
+  const richRows = Array.isArray(opportunities?.opportunities)
+    ? opportunities.opportunities
+    : [];
+  const directoryRows = Array.isArray(source?.contractOpportunityDirectory)
+    ? source.contractOpportunityDirectory
+    : [];
+  const rows = [...directoryRows, ...richRows];
+  const match = rows.find(
+    (row) => isRecord(row) && lineMatchesContract(row, contractId),
+  );
+  if (!isRecord(match)) return null;
+  return {
+    contractId,
+    vendorName: stringValue(match.vendorName) ?? "Selected vendor",
+    contractName:
+      stringValue(match.contractName) ?? "Contract optimization case",
+    annualValueUsd: numberValue(match.annualValueUsd),
+    actualAnnualSpendUsd: numberValue(match.actualAnnualSpendUsd),
+    totalCommittedValueUsd: numberValue(match.totalCommittedValueUsd),
+    contractedToActualVarianceUsd: numberValue(
+      match.contractedToActualVarianceUsd,
+    ),
+    endDate: stringValue(match.endDate),
+    noticeDate: stringValue(match.noticeDate),
+    noticePeriodDays: numberValue(match.noticePeriodDays),
+    autoRenew:
+      typeof match.autoRenew === "boolean" ? match.autoRenew : null,
+    renewalOwnerRef: stringValue(match.renewalOwnerRef),
+    scopeSummary: stringValue(match.scopeSummary),
+    scopeRowCount: numberValue(match.scopeRowCount),
+    performanceObservationCount: numberValue(
+      match.performanceObservationCount,
+    ),
+    documentExtractionCount: numberValue(match.documentExtractionCount),
+  };
 }
 
 function buildMissingContractAnswer(
@@ -866,7 +914,6 @@ export function canBuildSourceContractOptimizationExportAnswer(input: {
   return Boolean(
     context &&
       stringValue(context.module)?.toLowerCase() === "source" &&
-      context.sourceContract360Mode === true &&
       wantsContractOptimizationExport(input.query) &&
       (selectedContractFrom(context, input.query) || requestedContractId),
   );

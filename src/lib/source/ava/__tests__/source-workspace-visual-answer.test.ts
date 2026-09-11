@@ -410,6 +410,74 @@ describe("Source Workspace visual aVa answer", () => {
     );
   });
 
+  it("recognizes contract-scoped Command Center lever context without a selected Contract 360 record", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: {
+        selectedContract?: unknown;
+        contractDirectory?: unknown;
+        contractOpportunityDirectory: Array<Record<string, unknown>>;
+        optimizationOpportunities: {
+          opportunities: Array<Record<string, unknown>>;
+        };
+      };
+    };
+    context.sourceContract360Mode = false;
+    delete context.sourceV4.selectedContract;
+    delete context.sourceV4.contractDirectory;
+    context.sourceV4.contractOpportunityDirectory = [
+      {
+        id: "action-candidate-opaque",
+        opportunityId: "OPT-OPAQUE-1",
+        contractId: "CTR-090",
+        vendorName: "Salesforce",
+        label: "Fallback directory row should only identify the contract",
+        amountUsd: 999_999,
+        state: "finance_confirmation_required",
+        evidenceClass: "present",
+        nextAction: "Use only if rich opportunity rows are unavailable.",
+        sourceRefs: ["source.contract_action_candidate_v1"],
+      },
+    ];
+    context.sourceV4.optimizationOpportunities.opportunities =
+      context.sourceV4.optimizationOpportunities.opportunities
+        .slice(0, 2)
+        .map((opportunity, index) => ({
+          ...opportunity,
+          id: `OPT-OPAQUE-${index + 1}`,
+          contractId: "CTR-090",
+        }));
+
+    const query =
+      "For CTR-090, act like a CXO pricing negotiator and give me a PDF-ready table of levers to optimize this contract.";
+
+    expect(
+      canBuildSourceContractOptimizationExportAnswer({
+        query,
+        surfaceContext: context,
+      }),
+    ).toBe(true);
+
+    const answer = buildSourceContractOptimizationExportAnswer({
+      query,
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("Salesforce");
+    expect(answer?.directAnswer).toContain("CTR-090");
+    expect(answer?.directAnswer).toContain(
+      "The vendor avoids reopening the broader commercial schedule",
+    );
+    expect(answer?.directAnswer).not.toContain(
+      "CTR-090 is not present in the current Source aVa contract packet",
+    );
+    expect(answer?.directAnswer).not.toContain(
+      "Fallback directory row should only identify the contract",
+    );
+    expect(answer?.directAnswer).not.toContain(
+      "Not established in the governed opportunity detail",
+    );
+  });
+
   it("routes simple contract summary prompts through deterministic selected-contract answers", () => {
     const context = sourceContext();
     const query = "Summarize this contract.";
