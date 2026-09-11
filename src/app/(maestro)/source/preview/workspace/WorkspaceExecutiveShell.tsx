@@ -1205,6 +1205,7 @@ export function WorkspaceExecutiveShell({
               ? coverageForContract(portfolio, openActionCandidate.contract_id)
               : null
           }
+          asOfDateIso={portfolio.asOfDateIso}
           onClose={() => setOpenActionCandidateId(null)}
           onOpenContract={openContract}
         />
@@ -1308,11 +1309,13 @@ function SourceCommandKpiStrip({
 function SourceActionDrawer({
   candidate,
   coverage,
+  asOfDateIso,
   onClose,
   onOpenContract,
 }: {
   candidate: SourceContractActionCandidateRow | null;
   coverage: SourceContractEvidenceCoverageRow | null;
+  asOfDateIso: string;
   onClose: () => void;
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
@@ -1354,7 +1357,7 @@ function SourceActionDrawer({
           </div>
           <div>
             <dt>Deadline</dt>
-            <dd>{fmtDate(candidate.decision_due_date)}</dd>
+            <dd>{decisionDueLabel(candidate, asOfDateIso)}</dd>
           </div>
           <div>
             <dt>Accountable</dt>

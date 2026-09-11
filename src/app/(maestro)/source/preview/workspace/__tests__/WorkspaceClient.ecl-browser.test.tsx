@@ -1303,6 +1303,10 @@ describe("Source workspace ECL browser-surface proof", () => {
       .toBeTruthy();
     expect(screen.getByText("Governed action")).toBeTruthy();
     expect(screen.getByText("Deadline")).toBeTruthy();
+    expect(
+      screen.getAllByText("Resolve before Year 2 payment authorization.")
+        .length,
+    ).toBeGreaterThan(1);
     expect(screen.getByText("Accountable")).toBeTruthy();
     expect(screen.getByText("What backs it")).toBeTruthy();
     expect(screen.getByText("If ignored")).toBeTruthy();
