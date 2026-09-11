@@ -871,6 +871,37 @@ function exportDoNotClaim(line: SourceOpportunityLine): string {
     .join("; ");
 }
 
+function authoredVendorRationale(line: SourceOpportunityLine): string | null {
+  const haystack = [
+    line.id,
+    line.label,
+    line.buyerAsk,
+    line.negotiationLanguage,
+    line.nextAction,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (/carry[-_\s]?forward|unused/i.test(haystack)) {
+    return "Carry-forward preserves the vendor relationship and future revenue while avoiding a forced competitive review over unused first-year capacity.";
+  }
+  if (/commit[-_\s]?ramp|ramp schedule|re-time/i.test(haystack)) {
+    return "The vendor keeps the long-term platform commitment, but the Year 2 drawdown moves to the production pace the buyer can actually consume.";
+  }
+  if (/support[-_\s]?rebase|support fee/i.test(haystack)) {
+    return "The support tier can stay intact while the fee basis follows observed consumption and support demand instead of unused committed capacity.";
+  }
+  if (/marketplace|private offer|edp/i.test(haystack)) {
+    return "Databricks still captures the future commitment while the buyer tests whether private-offer routing improves broader cloud portfolio economics.";
+  }
+  if (/serverless|classic|compute mode/i.test(haystack)) {
+    return "The vendor can preserve committed-discount economics across the migrated workload if the buyer proves the per-SKU serverless and classic comparison first.";
+  }
+  if (/discount|re[-_\s]?price|pricing band/i.test(haystack)) {
+    return "The vendor can evaluate repricing after an accepted comparable is loaded; holding this ask back avoids opening with an unsupported rate demand.";
+  }
+  return null;
+}
+
 function buildOptimizationExportRows(lines: SourceOpportunityLine[]) {
   return lines.slice(0, 8).map((line, index) => ({
     sequence: String(index + 1),
@@ -881,6 +912,7 @@ function buildOptimizationExportRows(lines: SourceOpportunityLine[]) {
         .join(" ") || line.nextAction,
     vendorRationale:
       line.vendorConcession ??
+      authoredVendorRationale(line) ??
       "Not established in the governed opportunity detail.",
     evidenceBasis: exportEvidenceBasis(line) || "Not established",
     valueState: exportValueState(line),
