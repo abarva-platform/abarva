@@ -46,6 +46,18 @@ function kpiBlock(ctx: SolutionContext): string {
   );
 }
 
+function baselineMetricsBlock(ctx: SolutionContext): string {
+  const entries = Object.entries(ctx.baselineMetrics ?? {}).filter(
+    ([label, value]) => label.trim() && value.trim(),
+  );
+  if (!entries.length)
+    return "RECORDED BASELINE METRICS:\n[none captured]";
+  return (
+    "RECORDED BASELINE METRICS:\n" +
+    entries.map(([label, value]) => `- ${label}: ${value}`).join("\n")
+  );
+}
+
 function decisionsBlock(ctx: SolutionContext): string {
   if (!ctx.decisions.length) return "APPROVED DECISIONS:\n[none yet]";
   return (
@@ -109,6 +121,7 @@ export function buildArtifactPrompt(args: {
       "no use case — blocking input",
     ),
     kpiBlock(ctx),
+    baselineMetricsBlock(ctx),
     field(
       "CURRENT STATE",
       ctx.currentState,

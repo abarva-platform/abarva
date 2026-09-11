@@ -258,10 +258,30 @@ export function inferP2EvidenceSpecificity(ctx: SolutionContext): P2EvidenceSpec
   };
 }
 
+function cleanEvidenceTerm(value: string): string {
+  return value
+    .replace(/\s+\[[^\]]+\]\s*$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function pushUniqueTerm(terms: string[], value: string | undefined): void {
+  const term = cleanEvidenceTerm(value ?? "");
+  if (!term || !/[0-9]/.test(term)) return;
+  if (terms.some((candidate) => candidate.toLowerCase() === term.toLowerCase()))
+    return;
+  terms.push(term);
+}
+
 export function exactEvidenceTermsForGoldenBar(ctx: SolutionContext): string[] {
-  return (ctx.metricsThatMatter ?? [])
-    .map((metric) => metric.value)
-    .filter((value) => /[0-9]/.test(value));
+  const terms: string[] = [];
+  for (const metric of ctx.metricsThatMatter ?? []) {
+    pushUniqueTerm(terms, metric.value);
+  }
+  for (const value of Object.values(ctx.baselineMetrics ?? {})) {
+    pushUniqueTerm(terms, value);
+  }
+  return terms;
 }
 
 export function taxonomyTermsForGoldenBar(ctx: SolutionContext): string[] {
