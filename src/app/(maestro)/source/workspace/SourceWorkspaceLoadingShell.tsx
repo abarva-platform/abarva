@@ -1,4 +1,9 @@
-export function SourceWorkspaceLoadingShell() {
+export function SourceWorkspaceLoadingShell({
+  contractId,
+}: {
+  readonly contractId?: string | null;
+}) {
+  const openingContract = Boolean(contractId?.trim());
   return (
     <section
       aria-label="Source 360 is preparing"
@@ -34,7 +39,9 @@ export function SourceWorkspaceLoadingShell() {
             lineHeight: 1.1,
           }}
         >
-          Preparing Source command center.
+          {openingContract
+            ? "Opening Contract 360."
+            : "Opening Source command center."}
         </h1>
         <p
           style={{
@@ -45,8 +52,9 @@ export function SourceWorkspaceLoadingShell() {
             lineHeight: 1.55,
           }}
         >
-          Opening portfolio rows and vendor rollups first. Evidence coverage and
-          action candidates hydrate after the executive view is visible.
+          {openingContract
+            ? `Restoring ${contractId} in the governed Source workspace. The selected contract and tab will remain stable through refresh.`
+            : "Opening portfolio rows and vendor rollups first. Evidence coverage and action candidates hydrate after the executive view is visible."}
         </p>
         <div
           style={{

@@ -237,7 +237,7 @@ export function WorkspaceClientLoader({
   }
 
   if (!portfolio) {
-    return <SourceWorkspaceLoadingShell />;
+    return <SourceWorkspaceLoadingShell contractId={initialContractId} />;
   }
 
   return (
