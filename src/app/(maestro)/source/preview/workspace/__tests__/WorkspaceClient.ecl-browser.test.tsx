@@ -1283,6 +1283,16 @@ describe("Source workspace ECL browser-surface proof", () => {
         "Carry forward unused Year 1 commitment into Year 2 or convert it into adoption credits.",
       ).length,
     ).toBeGreaterThan(0);
+    fireEvent.click(
+      screen.getAllByRole("button", {
+        name: /Add carry-forward provision for unused Year 1 commitment/,
+      })[0],
+    );
+    expect(screen.getByRole("complementary", { name: "Action details" }))
+      .toBeTruthy();
+    expect(screen.getByText("Governed action")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open Contract 360" }))
+      .toBeTruthy();
     expect(
       screen.queryByText("Cognizant Technology Solutions · MER-TECH-LAAMS-001"),
     ).toBeNull();
