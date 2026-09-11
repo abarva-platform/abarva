@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-live-proven`
 
 ## Plain-English Summary
 
@@ -36,9 +36,9 @@ Source action tabs now request the governed impact layer during the initial port
 - PASS: ESLint for changed files.
 - PASS: TypeScript (`npx tsc --noEmit --pretty false`).
 - PASS: release check (`npm run release:check`).
-- Pending after deploy: ACA runtime invariant.
-- Pending after deploy: signed-in Source Levers page proof.
-- Pending after deploy: signed-in Source aVa contract-optimization export proof.
+- PASS after deploy: ACA runtime invariant on merge commit `e2a16e8d791364435c38efcf5b35b79291711738`, image `acrabarvalab001.azurecr.io/abarva/web@sha256:096ee18b61deb1a38dce4658ff544bc2781ce1142cce8beb2688b2ea0c06cca6`, revision `ca-abarva-web-lab-eastus--me2a16e8d`.
+- PASS after deploy: signed-in action-tab proof showed contract-scoped governed impact rows, expected action count, current as-of date, and no empty fallback state.
+- PASS after deploy: signed-in aVa contract-optimization export prompt returned a crisp executive takeaway and table-shaped lever answer without raw field-token leakage or unsupported-value wording.
 
 ## Rollout Plan
 
