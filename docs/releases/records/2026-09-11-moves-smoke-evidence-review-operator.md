@@ -37,6 +37,7 @@ Candidate validation:
 - PASS: operator wrapper plan-only check
 - PASS: `npm run release:check`
 - PASS: initial deployed operator failure was verified as pre-write runtime import failure; this revision removes that dependency.
+- PASS: audit insert parameter casts verified after operator dry validation.
 
 ## Rollout Plan
 
