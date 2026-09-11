@@ -213,7 +213,19 @@
   overflow-x: auto;
 }
 
-.sw-v2-contract-commandbar-tabs button.is-active {
+/*
+ * The design's tab treatment is a flat row with an underline on the active tab.
+ * The filled chip this replaced read as a toolbar button rather than a tab, and
+ * put a second active treatment on the page next to the portfolio tabs' own.
+ */
+.sw-c3-tabrow button.is-active {
+  background: none;
+  border-color: transparent;
+  color: var(--sw-c3-ink);
+  box-shadow: none;
+}
+
+.sw-v2-contract-commandbar-tabs:not(.sw-c3-tabrow) button.is-active {
   background: #e1f5ee;
   border-color: rgba(29, 158, 117, 0.48);
   color: #0f6e56;
@@ -3524,4 +3536,247 @@
 .sw-c3-basis li:first-child {
   border-top: 0;
   padding-top: 0;
+}
+
+/* --- contract header ----------------------------------------------------- */
+
+.sw-c3-head {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sw-c3-crumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sw-c3-crumb-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sw-c3-ink);
+  background: #fff;
+  border: 1px solid var(--sw-c3-edge);
+  border-radius: 8px;
+  padding: 7px 13px;
+  cursor: pointer;
+}
+
+.sw-c3-crumb-back:hover {
+  border-color: var(--sw-c3-ink);
+  color: var(--sw-c3-green-deep);
+}
+
+.sw-c3-head-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.sw-c3-head-main {
+  min-width: 0;
+}
+
+.sw-c3-title {
+  margin: 0;
+  font-family: var(--font-body-serif);
+  font-weight: 500;
+  font-size: 26px;
+  line-height: 1.12;
+  letter-spacing: -0.028em;
+  color: var(--sw-c3-ink);
+  max-width: 40ch;
+  text-wrap: balance;
+}
+
+.sw-c3-title-dim {
+  color: var(--sw-c3-muted);
+}
+
+.sw-c3-head .sw-c3-note {
+  margin: 9px 0 0;
+}
+
+/* --- tab row ------------------------------------------------------------- */
+
+.sw-c3-tabrow {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--sw-c3-edge);
+  margin-top: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.sw-c3-tabrow button {
+  position: relative;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sw-c3-ink);
+  background: none;
+  border: 0;
+  padding: 12px 15px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sw-c3-tabrow button:hover {
+  color: var(--sw-c3-green-deep);
+}
+
+.sw-c3-tabrow button[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -1px;
+  height: 2.5px;
+  background: var(--sw-c3-green);
+  border-radius: 2px;
+}
+
+/* --- story --------------------------------------------------------------- */
+
+.sw-c3-evidence-state {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.sw-c3-evidence-state-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.sw-c3-evidence-state-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--sw-c3-body);
+}
+
+.sw-c3-evidence-state-value {
+  font-size: 11px;
+  color: var(--sw-c3-muted);
+  white-space: nowrap;
+}
+
+/* --- scope --------------------------------------------------------------- */
+
+.sw-c3-scope-hosting {
+  display: block;
+  font-size: 13px;
+  color: var(--sw-c3-body);
+}
+
+.sw-c3-scope-crit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--sw-c3-body);
+}
+
+/* --- evidence families --------------------------------------------------- */
+
+.sw-c3-family-count {
+  display: block;
+  font-family: var(--font-body-serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--sw-c3-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.sw-c3-family-system {
+  display: block;
+  font-size: 11.5px;
+  color: var(--sw-c3-muted);
+  margin-top: 4px;
+}
+
+.sw-c3-evidence-footer {
+  max-width: 88ch;
+  line-height: 1.6;
+}
+
+/* --- lever table --------------------------------------------------------- */
+
+.sw-c3-card-flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+.sw-c3-lever-head {
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--sw-c3-hairline);
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.sw-c3-lever-head .sw-c3-note {
+  margin: 0;
+}
+
+.sw-c3-lever-basis {
+  font-size: 12px;
+  color: var(--sw-c3-mid);
+  word-break: break-word;
+  min-width: 170px;
+}
+
+.sw-c3-lever-ownerrole {
+  display: block;
+  font-size: 11.5px;
+  color: var(--sw-c3-muted);
+  margin-top: 4px;
+}
+
+/* --- education thresholds ------------------------------------------------ */
+
+.sw-c3-threshold {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 18px;
+  padding: 14px 0;
+  border-top: 1px solid var(--sw-c3-hairline);
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .sw-c3-threshold {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+}
+
+.sw-c3-threshold-signal {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sw-c3-ink);
+  line-height: 1.45;
+}
+
+.sw-c3-threshold-decision {
+  font-size: 14px;
+  color: var(--sw-c3-body);
+  line-height: 1.55;
 }
