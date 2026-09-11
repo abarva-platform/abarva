@@ -34,6 +34,7 @@ The loader now consumes structured negotiation findings and lever rows instead o
 - Contract-depth projection and adapter extensions for structured findings and levers.
 - New contract-intelligence types, deterministic builder, anatomy relationships, executive readout, and prompt contract.
 - Claude Design handoff now includes the complete record shape, tab binding rules, anatomy rendering rules, and the 8,192-token response requirement.
+- Cohort audit records which managed-services packages pass the dense-page gate and keeps the separate cloud-consumption packages out of the pass count until their adapter mapping is reconciled.
 - Source Optimize prompt directive expanded with evidence, benchmark, amount-state, anatomy, and output rules.
 - Package projection script now writes the contract-intelligence extract and readout and rejects malformed CSV rows.
 
