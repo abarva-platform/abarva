@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds an operator-only command for approved synthetic smoke runs to record a governed evidence-review approval when the browser approval path cannot be used by automation. The command uses the existing evidence-review decision function, scopes the action to one supplied Move and one supplied evidence item, and refuses to run unless explicitly applied.
+Adds an operator-only command for approved synthetic smoke runs to record a governed evidence-review approval when the browser approval path cannot be used by automation. The command applies the same bounded review-state transition, scopes the action to one supplied Move and one supplied evidence item, and refuses to run unless explicitly applied.
 
 ## Layer Impact
 
@@ -36,10 +36,11 @@ Candidate validation:
 - PASS: `npx eslint scripts/programs/approve-smoke-evidence-review.ts`
 - PASS: operator wrapper plan-only check
 - PASS: `npm run release:check`
+- PASS: initial deployed operator failure was verified as pre-write runtime import failure; this revision removes that dependency.
 
 ## Rollout Plan
 
-Merge to `main`, allow the repo-owned Azure Container Apps deployment workflow to build and deploy the digest-pinned image, then run the operator command only for an approved synthetic smoke Move.
+Merge to `main`, allow the repo-owned Azure Container Apps deployment workflow to build and deploy the digest-pinned image, then run the operator command only for an approved representative smoke Move.
 
 ## Deployment Authority
 
@@ -66,4 +67,4 @@ Pending:
 
 ## Known Gaps
 
-This is not a general product approval replacement. It is an operator-only support path for approved synthetic smoke execution when automated browser approval cannot reach the nested approval endpoint.
+This is not a general product approval replacement. It is an operator-only support path for approved representative smoke execution when automated browser approval cannot reach the nested approval endpoint. The initial deployed version imported too much app runtime for `tsx` in the operator image and failed before writing; this revision avoids that dependency.

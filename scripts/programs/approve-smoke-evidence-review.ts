@@ -1,7 +1,5 @@
 import { Client } from "pg";
 
-import { decideEvidenceReview } from "../../src/lib/programs/current-state-doc-ingest";
-import type { TenancyCtx } from "../../src/lib/programs/types.db";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
 
 type EngagementRow = {
@@ -60,6 +58,15 @@ function ensureSyntheticSmokeName(name: string | null): void {
   }
 }
 
+function uuidOrNull(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value,
+  )
+    ? value
+    : null;
+}
+
 async function main() {
   const apply = process.env.APPLY === "1";
   const moveId = requiredEnv("MOVE_ID");
@@ -83,6 +90,7 @@ async function main() {
     postgresClientOptions(databaseUrl(), "moves-smoke-evidence-approval-operator"),
   );
   await client.connect();
+  let transactionStarted = false;
   try {
     const engagementResult = await client.query<EngagementRow>(
       `select id, client_id, name
@@ -111,24 +119,43 @@ async function main() {
       throw new Error("Evidence review not found for supplied Move and tenant");
     }
 
-    const ctx: TenancyCtx = {
-      clientId: engagement.client_id,
-      clientKey: tenantKey,
-      userId: reviewerUserId,
-      clerkUserId: reviewerUserId,
-      role: "client",
-      tenantRole: "client_admin",
-      email: reviewerEmail,
-    };
-    const decision = await decideEvidenceReview(ctx, {
-      moveId,
-      evidenceId,
-      decision: "approved",
-      rationale,
-    });
-    if (!decision.ok || decision.decision !== "approved") {
+    await client.query("begin");
+    transactionStarted = true;
+    if (before.decision === "pending") {
+      const now = new Date().toISOString();
+      const updateResult = await client.query(
+        `update program_evidence_reviews
+            set decision = 'approved',
+                reviewed_by_user_id = $4,
+                reviewed_at = $5,
+                updated_at = $5,
+                rationale = $6
+          where program_id = $1
+            and evidence_id = $2
+            and tenant_key = $3
+            and decision = 'pending'`,
+        [moveId, evidenceId, tenantKey, reviewerUserId, now, rationale],
+      );
+      if (updateResult.rowCount !== 1) {
+        throw new Error("Expected to approve exactly one pending review row");
+      }
+      await client.query(
+        `insert into program_audit_log
+           (tenant_key, program_id, engagement_id, actor_id, actor_role, action,
+            from_state, to_state, rationale, evidence_refs)
+         values ($1, $2, $2, $3, 'client', 'current_state_doc_committed',
+                 'review_required', 'committed', $4, $5)`,
+        [
+          tenantKey,
+          moveId,
+          uuidOrNull(reviewerUserId),
+          rationale,
+          [evidenceId],
+        ],
+      );
+    } else if (before.decision !== "approved") {
       throw new Error(
-        `Evidence review did not approve: ${JSON.stringify(decision)}`,
+        `Evidence review is not pending or approved; got ${before.decision ?? "null"}`,
       );
     }
 
@@ -145,6 +172,8 @@ async function main() {
     if (!after || after.decision !== "approved") {
       throw new Error("Readback did not show approved review state");
     }
+    await client.query("commit");
+    transactionStarted = false;
 
     console.log(
       JSON.stringify(
@@ -153,7 +182,9 @@ async function main() {
           moveId,
           evidenceId,
           tenantKey,
+          reviewerEmail,
           familyKey: after.family_key,
+          idempotent: before.decision === "approved",
           before: {
             decision: before.decision,
             reviewedAt: before.reviewed_at,
@@ -168,6 +199,11 @@ async function main() {
         2,
       ),
     );
+  } catch (error) {
+    if (transactionStarted) {
+      await client.query("rollback").catch(() => undefined);
+    }
+    throw error;
   } finally {
     await client.end();
   }
