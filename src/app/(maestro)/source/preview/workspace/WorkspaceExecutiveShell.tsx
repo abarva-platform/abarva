@@ -28,6 +28,15 @@ import {
   ContractValueLedgers,
   ContractWorkflowRail,
 } from "./Contract360Briefing";
+import {
+  ContractBriefingHeader,
+  ContractEvidenceFamilies,
+  ContractLeverTable,
+  ContractRegisterOnly,
+  ContractRelationshipBriefing,
+  ContractScopeBriefing,
+  ContractStoryBriefing,
+} from "./Contract360Surfaces";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
@@ -1093,13 +1102,21 @@ export function WorkspaceExecutiveShell({
         </header>
 
         {selectedContractId && selectedContract ? (
-          <ContractCommandBar
-            activeTab={logic.state.tabs.contract ?? "Story"}
-            contract={selectedContract}
-            onBackToContracts={() => logic.select("contractList", null)}
-            onOpenPortfolioPage={selectPage}
-            onOpenTab={(tab) => logic.setTab("contract", tab)}
-          />
+          <>
+            <ContractBriefingHeader
+              contract={selectedContract}
+              noticeDays={contractNoticeDays(selectedContract)}
+              onBack={() => logic.select("contractList", null)}
+              vm={vm}
+            />
+            <ContractCommandBar
+              activeTab={logic.state.tabs.contract ?? "Story"}
+              contract={selectedContract}
+              onBackToContracts={() => logic.select("contractList", null)}
+              onOpenPortfolioPage={selectPage}
+              onOpenTab={(tab) => logic.setTab("contract", tab)}
+            />
+          </>
         ) : (
           <nav
             className="sw-v2-horizontal-tabs"
@@ -3233,6 +3250,37 @@ function ContractPage({
   const contractClaimCards = portfolio.impact.claimCards.filter(
     (row) => row.contract_id === contract.contract_id,
   );
+
+  /*
+   * Register-only tier.
+   *
+   * A contract with no evidence row in any lane cannot answer the questions the
+   * tabs ask. Rendering seven empty tabs reads as a product that does not work;
+   * withholding them and saying what loading would unlock reads as a product
+   * that knows what it does not have. This is the majority state of the book
+   * today, so it is the state worth getting right.
+   */
+  const hasAnyEvidence =
+    coverage != null ||
+    scopeRows.length > 0 ||
+    contractClaimCards.length > 0 ||
+    (detailReady &&
+      ((vm.detail?.spendMonths?.length ?? 0) > 0 ||
+        (vm.detail?.performancePeriods?.length ?? 0) > 0 ||
+        (vm.detail?.docExtractions?.length ?? 0) > 0 ||
+        (vm.detail?.optimizationOpportunitySet?.opportunities?.length ?? 0) >
+          0 ||
+        (vm.opportunityView?.opportunities?.length ?? 0) > 0));
+
+  if (!hasAnyEvidence && detailReady) {
+    return (
+      <ContractRegisterOnly
+        contract={contract}
+        onBack={() => logic.select("contractList", null)}
+      />
+    );
+  }
+
   const tabNarrative = contractTabNarrative(
     tab,
     vm,
@@ -3245,10 +3293,14 @@ function ContractPage({
   return (
     <div className="sw-v2-grid sw-v2-contract-detail-grid">
       <section className="sw-v2-panel sw-v2-span-2 sw-v2-contract-story-panel">
-        <PanelHead
-          eyebrow={`Contract 360 / ${tab}`}
-          title={contract.contract_name}
-        />
+        {/*
+          The contract name is carried once, by the briefing header above the
+          tab row. Repeating it as a panel title put the same heading on screen
+          twice and pushed the tab's own opening sentence below the fold.
+        */}
+        <div className="sw-v2-panel-head">
+          <span>{`Contract 360 / ${tab}`}</span>
+        </div>
         <ContractTabStory
           coverage={coverage}
           contract={contract}
@@ -3261,6 +3313,7 @@ function ContractPage({
           <>
             <ContractWorkflowRail vm={vm} />
             <ContractValueLedgers vm={vm} />
+            <ContractLeverTable vm={vm} />
             <ContractOptimizeContent vm={vm} />
           </>
         ) : null}
@@ -3270,8 +3323,23 @@ function ContractPage({
           <ContractConsumptionRamp spendMonths={vm.detail.spendMonths} />
         ) : null}
         {tab === "Economics" ? <ContractValueLedgers vm={vm} /> : null}
-        {tab === "Scope" ? (
-          <ContractScopeTable scopeRows={scopeRows} />
+        {tab === "Story" ? (
+          <ContractStoryBriefing
+            contract={contract}
+            coverage={coverage}
+            vm={vm}
+          />
+        ) : tab === "Scope" ? (
+          // The briefing carries all five columns the table did — application,
+          // business function, criticality, hosting and run cost — so keeping
+          // both rendered every scope row twice.
+          <ContractScopeBriefing scopeRows={scopeRows} vm={vm} />
+        ) : tab === "Relationship" ? (
+          <ContractRelationshipBriefing
+            contract={contract}
+            scopeRows={scopeRows}
+            vm={vm}
+          />
         ) : tab === "Performance" &&
           !contractFacetIsRequired(vm, "Performance") ? (
           <ContractFacetNotRequired
@@ -3308,11 +3376,14 @@ function ContractPage({
             </div>
           </>
         ) : tab === "Evidence" && detailReady && vm.detail ? (
-          <ContractEvidenceDocuments
-            coverage={coverage}
-            files={vm.detail.documentFiles ?? []}
-            extractions={vm.detail.docExtractions}
-          />
+          <>
+            <ContractEvidenceFamilies coverage={coverage} vm={vm} />
+            <ContractEvidenceDocuments
+              coverage={coverage}
+              files={vm.detail.documentFiles ?? []}
+              extractions={vm.detail.docExtractions}
+            />
+          </>
         ) : tab === "Education" && vm.contractEducation ? (
           <ContractEducationBriefing education={vm.contractEducation} />
         ) : tab === "Optimize" ? null : (
@@ -3341,6 +3412,32 @@ function ContractPage({
   );
 }
 
+/**
+ * Days remaining before the notice window closes.
+ *
+ * Returns null unless the contract records both an end date and a notice
+ * period — a notice countdown assembled from a default would be the most
+ * actionable false fact on the page.
+ */
+export function contractNoticeDays(
+  contract: SourceContract360Row,
+): number | null {
+  const endDate = contract.end_date ? new Date(contract.end_date) : null;
+  const noticeDays = numberFromDb(
+    (contract as unknown as { notice_period_days?: unknown })
+      .notice_period_days,
+  );
+  if (!endDate || Number.isNaN(endDate.getTime())) return null;
+  if (noticeDays == null || !Number.isFinite(noticeDays)) return null;
+
+  const deadline = new Date(endDate);
+  deadline.setDate(deadline.getDate() - noticeDays);
+  const days = Math.ceil(
+    (deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+  );
+  return days >= 0 ? days : null;
+}
+
 function ContractCommandBar({
   activeTab,
   contract,
@@ -3366,11 +3463,16 @@ function ContractCommandBar({
       >
         Back to contracts
       </button>
-      <div className="sw-v2-contract-commandbar-tabs" role="tablist">
+      <div
+        className="sw-v2-contract-commandbar-tabs sw-c3-tabrow"
+        role="tablist"
+      >
         {CONTRACT_TABS.map((label) => (
           <button
             key={label}
             type="button"
+            role="tab"
+            aria-selected={activeTab === label}
             className={activeTab === label ? "is-active" : ""}
             onClick={() => onOpenTab(label)}
           >
@@ -6660,56 +6762,6 @@ function Fact({ label, value }: { label: string; value: string }) {
     <div className="sw-v2-fact">
       <span>{label}</span>
       <b>{value}</b>
-    </div>
-  );
-}
-
-function ContractScopeTable({
-  scopeRows,
-}: {
-  scopeRows: readonly SourceContractApplicationScopeRow[];
-}) {
-  if (scopeRows.length === 0) {
-    return (
-      <div className="sw-v2-empty-state">
-        <b>No scoped applications loaded for this contract.</b>
-        <p>
-          Source can show the contract header, but it will not infer which
-          applications, services, or business functions are covered.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="sw-v2-table">
-      <div className="sw-v2-table-head sw-v2-scope-row">
-        <span>Application / service</span>
-        <span>Business function</span>
-        <span>Criticality</span>
-        <span>Hosting</span>
-        <span>Run cost</span>
-      </div>
-      {scopeRows.slice(0, 12).map((row) => (
-        <div
-          key={`${row.contract_id}:${row.application_ref}`}
-          className="sw-v2-table-row sw-v2-scope-row"
-        >
-          <span>
-            <b>{row.application_name}</b>
-            <small>{row.application_ref}</small>
-          </span>
-          <span>{row.business_function ?? "Not established"}</span>
-          <span>{row.criticality ?? "Not established"}</span>
-          <span>{row.hosting_model ?? "Not established"}</span>
-          <span>{money(numberFromDb(row.annual_run_cost))}</span>
-        </div>
-      ))}
-      {scopeRows.length > 12 ? (
-        <div className="sw-v2-table-foot">
-          Showing 12 of {scopeRows.length} scoped rows.
-        </div>
-      ) : null}
     </div>
   );
 }

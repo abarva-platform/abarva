@@ -518,9 +518,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.getByRole("button", { name: "Back to contracts" }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Scope" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Economics" })).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Optimize" })).toHaveLength(1);
+    expect(screen.getByRole("tab", { name: "Scope" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Economics" })).toBeTruthy();
+    expect(screen.getAllByRole("tab", { name: "Optimize" })).toHaveLength(1);
     expect(
       screen.queryByLabelText("Persistent Source workspace toolbar"),
     ).toBeNull();
@@ -535,7 +535,7 @@ describe("Source workspace ECL browser-surface proof", () => {
       "Optimize",
     ].forEach((tabName) => {
       expect(
-        screen.getAllByRole("button", { name: tabName }).length,
+        screen.getAllByRole("tab", { name: tabName }).length,
       ).toBeGreaterThan(0);
     });
     expect(
@@ -550,20 +550,28 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByRole("button", { name: "Documents" })).toBeNull();
     expect(screen.queryByRole("button", { name: "AI Insights" })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
     expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
     expect(screen.getByText("Optimize gap")).toBeTruthy();
     expect(screen.getByText("Contract readout")).toBeTruthy();
     expect(screen.getByText("Decision consequence")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Story" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Story" })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Scope" }));
 
     expect(screen.getByText("Contract 360 / Scope")).toBeTruthy();
     expect(screen.getByText("Scope story")).toBeTruthy();
     expect(screen.getAllByText("Workday Finance").length).toBeGreaterThan(0);
-    expect(screen.getByText("Business function")).toBeTruthy();
+    // The scope briefing renders each row's business function as content
+    // beside the workload it belongs to, rather than as a column header on a
+    // separate table — so assert the boundary statement the tab is for.
+    expect(
+      screen.getByText(
+        "Declared scope, not enterprise-wide dependency coverage.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("The boundary")).toBeTruthy();
     expect(
       screen.getByText(
         "Use only these named workloads when explaining coverage; do not expand to tower, module, or CMDB relationships without matching rows.",
@@ -1110,7 +1118,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.queryByText("Contract not found in governed Source rows"),
     ).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Scope" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Scope" }));
     expect(screen.getByText("Workloads covered")).toBeTruthy();
     expect(
       screen.getByText(
@@ -1138,7 +1146,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
     expect(screen.getByText("Contract 360 / Story")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Optimize" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
     expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
     expect(
@@ -1148,7 +1156,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("Decision consequence")).toBeTruthy();
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Performance" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Performance" }));
 
     expect(screen.getByText("Service Desk Managed Services")).toBeTruthy();
     expect(screen.getAllByText(/MER-TECH-SD-001/).length).toBeGreaterThan(0);
