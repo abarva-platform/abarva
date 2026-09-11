@@ -741,9 +741,8 @@ function actionCitationSummary(
   );
 }
 
-function vendorReadinessScatterRows(
+export function vendorReadinessDecisionRows(
   portfolio: SourceWorkspacePortfolioData,
-  totalAnnualValue: number | null,
 ) {
   const rows =
     portfolio.impact.vendorPositions.length > 0
@@ -774,15 +773,6 @@ function vendorReadinessScatterRows(
             load_run_id: null,
           }),
         );
-  const maxValue = Math.max(
-    1,
-    totalAnnualValue ?? 0,
-    ...rows.map((row) => numberFromDb(row.annual_value) ?? 0),
-  );
-  const maxCandidate = Math.max(
-    1,
-    ...rows.map((row) => numberFromDb(row.candidate_amount_usd) ?? 0),
-  );
   return rows
     .slice()
     .sort(
@@ -792,7 +782,7 @@ function vendorReadinessScatterRows(
         (numberFromDb(right.annual_value) ?? 0) -
           (numberFromDb(left.annual_value) ?? 0),
     )
-    .slice(0, 12)
+    .slice(0, 8)
     .map((row) => {
       const annualValue = numberFromDb(row.annual_value) ?? 0;
       const readiness =
@@ -803,19 +793,34 @@ function vendorReadinessScatterRows(
             )
           : 0;
       const candidateValue = numberFromDb(row.candidate_amount_usd) ?? 0;
+      const evidenceBits = [
+        row.spend_rows > 0 ? `${row.spend_rows} spend` : null,
+        row.performance_rows > 0 ? `${row.performance_rows} performance` : null,
+        row.unclaimed_credit_usd > 0 ? "credit gap" : null,
+      ].filter((value): value is string => Boolean(value));
       return {
         vendorRef: row.vendor_ref,
         vendorName: compactVendorName(
           safeVendorDisplayName(row.vendor_name, row.vendor_ref),
         ),
+        annualValueLabel: money(annualValue),
+        candidateValueLabel:
+          candidateValue > 0 ? money(candidateValue) : "No candidate value",
+        actionLabel:
+          row.action_candidate_count > 0
+            ? `${row.action_candidate_count} action${row.action_candidate_count === 1 ? "" : "s"}`
+            : "No action row",
+        evidenceLabel:
+          evidenceBits.length > 0
+            ? evidenceBits.join(" · ")
+            : "No depth evidence",
+        postureLabel:
+          humanizeEvidenceLabel(row.vendor_position_state) ?? "Not loaded",
+        readinessLabel:
+          row.contract_count > 0
+            ? `${row.decision_ready_contracts}/${row.contract_count} ready · ${Math.round(readiness)}%`
+            : "No governed contracts",
         valueLabel: money(annualValue),
-        readinessLabel: `${Math.round(readiness)}% ready`,
-        x: Math.max(5, Math.min(95, (annualValue / maxValue) * 95)),
-        y: Math.max(8, Math.min(92, readiness)),
-        size: Math.max(
-          12,
-          Math.min(38, 12 + (candidateValue / maxCandidate) * 26),
-        ),
         tone: /ready|action|credit/i.test(row.vendor_position_state)
           ? "ready"
           : row.action_candidate_count > 0
@@ -1148,7 +1153,6 @@ export function WorkspaceExecutiveShell({
           {currentPage === "Coverage" && logic.state.sel.kind !== "vendor" ? (
             <CoveragePage
               portfolio={portfolio}
-              totalAnnualValue={totalAnnualValue}
               onOpenVendor={openVendor}
             />
           ) : null}
@@ -1630,14 +1634,12 @@ function PortfolioPage({
 
 function CoveragePage({
   portfolio,
-  totalAnnualValue,
   onOpenVendor,
 }: {
   portfolio: SourceWorkspacePortfolioData;
-  totalAnnualValue: number | null;
   onOpenVendor: (vendorRef: string) => void;
 }) {
-  const scatterRows = vendorReadinessScatterRows(portfolio, totalAnnualValue);
+  const readinessRows = vendorReadinessDecisionRows(portfolio);
   const archetypeCoverage = vendorArchetypeCoverage(portfolio);
   const archetypes = vendorArchetypeRows(portfolio).slice(0, 6);
   const mappedPct =
@@ -1656,31 +1658,43 @@ function CoveragePage({
           eyebrow="Readiness by value"
           title="Big is not the same as ready"
         />
-        <div className="sw-v2-scatter" aria-label="Vendor readiness scatter">
-          <div className="sw-v2-scatter-axis is-y">Decision readiness</div>
-          <div className="sw-v2-scatter-axis is-x">Recorded annual value</div>
-          {scatterRows.map((row) => (
+        <div
+          className="sw-v2-readiness-table"
+          aria-label="Vendor readiness by value"
+        >
+          <div className="sw-v2-readiness-head">
+            <span>Vendor</span>
+            <span>Recorded value</span>
+            <span>Readiness</span>
+            <span>Evidence</span>
+            <span>Action value</span>
+          </div>
+          {readinessRows.map((row) => (
             <button
               key={row.vendorRef}
               type="button"
-              className={`sw-v2-scatter-point is-${row.tone}`}
-              style={
-                {
-                  "--sw-v2-x": `${row.x}%`,
-                  "--sw-v2-y": `${row.y}%`,
-                  "--sw-v2-size": `${row.size}px`,
-                } as CSSProperties
-              }
+              className={`sw-v2-readiness-row is-${row.tone}`}
               onClick={() => onOpenVendor(row.vendorRef)}
               aria-label={`${row.vendorName}: ${row.readinessLabel}, ${row.valueLabel}`}
             >
-              <span>{row.vendorName}</span>
+              <span>
+                <b>{row.vendorName}</b>
+                <small>{row.postureLabel}</small>
+              </span>
+              <strong>{row.annualValueLabel}</strong>
+              <span>
+                <b>{row.readinessLabel}</b>
+                <small>{row.actionLabel}</small>
+              </span>
+              <span>{row.evidenceLabel}</span>
+              <strong>{row.candidateValueLabel}</strong>
             </button>
           ))}
         </div>
         <p className="sw-v2-muted">
-          Bubble size is candidate value where the impact layer has it. Empty
-          bubbles are vendor relationships with value but no loaded action row.
+          Ranked by loaded candidate action value first, then recorded annual
+          value. A large vendor without an action row is an evidence backlog,
+          not a work queue.
         </p>
       </section>
 
