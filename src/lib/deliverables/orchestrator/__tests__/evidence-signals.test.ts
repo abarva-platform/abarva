@@ -8,12 +8,13 @@ function evidence(
   citationNumber: number,
   label: string,
   statement: string,
+  evidenceFamily = "smoke_test",
 ): GovernedEvidenceItem {
   return {
     citationNumber,
     label,
     statement,
-    evidenceFamily: "smoke_test",
+    evidenceFamily,
     confidence: "high",
     disclosureTier: "internal_only",
     provenanceRef: `test:${citationNumber}`,
@@ -69,5 +70,52 @@ describe("required evidence signal selection", () => {
         "Kona Coast remains design-only because the legacy feed is weekly.",
       ),
     ).toBe(true);
+  });
+
+  it("prefers exact phase-captured metrics over broad prior generated prose", () => {
+    const signals = selectRequiredEvidenceSignals(
+      [
+        evidence(
+          1,
+          "Prior roadmap",
+          "Care-gap closure roadmap discusses validation closure, operating closure, and gap-closure throughput without a measured baseline.",
+          "generated_artifact:execution_roadmap",
+        ),
+        evidence(
+          2,
+          "P2 Capture Closure Rate",
+          "Closure Rate: 41.2% (source: quality_measures.csv)",
+          "phase_capture:baseline_metrics:closure_rate",
+        ),
+        evidence(
+          3,
+          "Prior architecture",
+          "Interfaces are unmonitored and unversioned across the target architecture narrative.",
+          "generated_artifact:target_state_architecture",
+        ),
+        evidence(
+          4,
+          "P2 Capture Unmonitored Interfaces",
+          "Unmonitored Interfaces: 33 of 86 plus 18 partial (source: interface_inventory.csv)",
+          "phase_capture:baseline_metrics:unmonitored_interfaces",
+        ),
+      ],
+      2,
+    );
+
+    expect(signals).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          citationNumber: 2,
+          statement: expect.stringContaining("41.2%"),
+        }),
+        expect.objectContaining({
+          citationNumber: 4,
+          statement: expect.stringContaining("33 of 86"),
+        }),
+      ]),
+    );
+    expect(signals.map((signal) => signal.citationNumber)).not.toContain(1);
+    expect(signals.map((signal) => signal.citationNumber)).not.toContain(3);
   });
 });
