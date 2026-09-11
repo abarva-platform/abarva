@@ -612,7 +612,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByRole("tab", { name: "Queue" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By type" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By contract" })).toBeTruthy();
-    expect(screen.getByText("Evidence-backed action queue")).toBeTruthy();
+    expect(screen.getByText("What to ask first")).toBeTruthy();
     expect(
       screen.getByText("No optimize-ready action rows loaded."),
     ).toBeTruthy();
@@ -726,7 +726,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeNull();
   });
 
-  it("renders a Recharts action mix on the default Optimize page when action rows exist", async () => {
+  it("renders a sequenced lever report on the default Optimize page when action rows exist", async () => {
     const portfolio = await loadSourceWorkspacePortfolio(
       "meridian",
       "2027-06-30T00:00:00Z",
@@ -1052,6 +1052,25 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("1 governed actions")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Run optimize" })).toBeNull();
     expect(screen.queryByText(/vendors are loaded/i)).toBeNull();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Levers" })[0]);
+    expect(screen.getByText("Action order")).toBeTruthy();
+    expect(
+      screen.getAllByText("1 lever, in the order it has to happen").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Helix Shared Services Group · MER-TECH-M365-001")
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText("Right-size loaded application support tier"),
+    ).toBeTruthy();
+    expect(screen.getByText("Backed by")).toBeTruthy();
+    expect(
+      screen.getByText("Action row cites loaded contract and spend rows."),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText("Source command KPIs")).toBeNull();
+    expect(screen.queryByText("Evidence-backed action queue")).toBeNull();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Coverage" })[0]);
     expect(screen.getByText("Readiness by value")).toBeTruthy();

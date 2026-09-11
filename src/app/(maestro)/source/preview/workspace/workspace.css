@@ -1774,6 +1774,158 @@
     minmax(150px, 0.85fr);
 }
 
+.sw-v2-lever-sequence {
+  display: grid;
+  gap: 14px;
+}
+
+.sw-v2-lever-sequence-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+  gap: 18px;
+  align-items: end;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #d3d1c7;
+}
+
+.sw-v2-lever-sequence-head span {
+  display: block;
+  margin-bottom: 7px;
+  color: #0f6e56;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sw-v2-lever-sequence-head h3 {
+  margin: 0;
+  color: #0a0a0b;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(22px, 2.1vw, 30px);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.12;
+}
+
+.sw-v2-lever-sequence-head p,
+.sw-v2-lever-sequence-head small {
+  margin: 7px 0 0;
+  color: #686762;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.sw-v2-lever-sequence-head small {
+  justify-self: end;
+  max-width: 320px;
+  text-align: right;
+}
+
+.sw-v2-lever-sequence-list {
+  display: grid;
+  gap: 10px;
+}
+
+.sw-v2-lever-sequence-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns:
+    30px minmax(260px, 1.2fr) minmax(130px, 0.42fr)
+    minmax(150px, 0.52fr) minmax(190px, 0.78fr);
+  gap: 16px;
+  align-items: start;
+  border: 1px solid #d3d1c7;
+  border-left: 4px solid #1d9e75;
+  border-radius: 8px;
+  background: #fff;
+  padding: 16px 18px 15px;
+  color: #2c2c2a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sw-v2-lever-sequence-card:hover,
+.sw-v2-lever-sequence-card:focus-visible {
+  border-color: #0f6e56;
+  border-left-color: #0f6e56;
+  background: #fbfaf7;
+  outline: none;
+}
+
+.sw-v2-lever-sequence-index {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #102033;
+  color: #fff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.sw-v2-lever-sequence-card b {
+  color: #0a0a0b;
+  font-size: 13px;
+  line-height: 1.28;
+}
+
+.sw-v2-lever-sequence-main b {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.sw-v2-lever-sequence-card small,
+.sw-v2-lever-sequence-card em {
+  display: block;
+  margin-top: 7px;
+  color: #5f5e5a;
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.42;
+}
+
+.sw-v2-lever-sequence-card em {
+  padding-top: 10px;
+  border-top: 1px solid #e6e1d8;
+}
+
+.sw-v2-lever-sequence-card strong {
+  color: #0a0a0b;
+  font-weight: 800;
+}
+
+.sw-v2-lever-sequence-value b {
+  color: #0f6e56;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+}
+
+.sw-v2-lever-sequence-next b {
+  font-size: 12px;
+}
+
+.sw-v2-lever-sequence-next small {
+  color: #ad2d2d;
+}
+
+.sw-v2-lever-sequence-footnote {
+  margin: 0;
+  border: 1px solid #e5ddcf;
+  border-radius: 8px;
+  background: #faf7f1;
+  padding: 12px 14px;
+  color: #5f5e5a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .sw-v2-evidence-row {
   grid-template-columns: minmax(160px, 0.8fr) minmax(230px, 1.2fr) 70px 110px;
 }
@@ -2222,6 +2374,26 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .sw-v2-lever-sequence-head {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-v2-lever-sequence-head small {
+    justify-self: start;
+    max-width: none;
+    text-align: left;
+  }
+
+  .sw-v2-lever-sequence-card {
+    grid-template-columns:
+      28px minmax(260px, 1fr) minmax(120px, 0.38fr)
+      minmax(140px, 0.46fr);
+  }
+
+  .sw-v2-lever-sequence-next {
+    grid-column: 2 / -1;
+  }
+
   .sw-v2-grid {
     grid-template-columns: 1fr;
   }
@@ -2388,6 +2560,18 @@
   .sw-v2-visual-bar-row,
   .sw-v2-mapping-flow-row {
     grid-template-columns: 1fr;
+  }
+
+  .sw-v2-lever-sequence-card {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .sw-v2-lever-sequence-value,
+  .sw-v2-lever-sequence-owner,
+  .sw-v2-lever-sequence-next {
+    grid-column: 2;
   }
 
   .sw-v2-visual-bar-row > b {
