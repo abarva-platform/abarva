@@ -10,6 +10,7 @@ import {
   type SynthesisResult,
 } from "../section-generation";
 import { amsRfpRequest } from "../__fixtures__/ams-rfp";
+import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import type { GovernedEvidenceItem, RenderableSection } from "../types";
 
 describe("mapWithConcurrency", () => {
@@ -237,10 +238,9 @@ describe("assembleDeliverable", () => {
       {},
       req.governedEvidenceBundle,
     );
-    const bodyText = doc.generatedSections
-      .map((section) => `${section.title}\n${section.bodyMarkdown}`)
-      .join("\n\n");
-    const wordCount = bodyText.match(/\b[\w'-]+\b/g)?.length ?? 0;
+    const wordCount = countBodyWords(doc.generatedSections, {
+      excludeNonProse: req.qualityBar.excludeNonProseFromBody === true,
+    });
 
     expect(
       doc.generatedSections.some(
