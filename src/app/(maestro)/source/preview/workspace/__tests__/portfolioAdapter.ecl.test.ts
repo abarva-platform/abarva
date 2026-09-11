@@ -48,6 +48,7 @@ function isDirectEvidenceCoverageSql(sql: string): boolean {
     sql.includes("consumption.sourcing_spend_monthly_v1") &&
     sql.includes("consumption.sourcing_performance_v1") &&
     sql.includes("consumption.sourcing_opportunity_v1") &&
+    sql.includes("source.optimization_opportunity") &&
     sql.includes("consumption.sourcing_contract_scope_v1")
   );
 }
@@ -55,6 +56,7 @@ function isDirectEvidenceCoverageSql(sql: string): boolean {
 function isDirectActionCandidateSql(sql: string): boolean {
   return (
     sql.includes("FROM consumption.sourcing_opportunity_v1 o") &&
+    sql.includes("FROM source.optimization_opportunity o") &&
     sql.includes("o.opportunity_id AS action_candidate_id")
   );
 }
@@ -1119,6 +1121,11 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     expect(
       runCalls.some((call) =>
         call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
+      ),
+    ).toBe(true);
+    expect(
+      runCalls.some((call) =>
+        call.sql.includes("FROM source.optimization_opportunity o"),
       ),
     ).toBe(true);
   });

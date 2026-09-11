@@ -342,6 +342,48 @@ function actionSequenceRank(candidate: SourceContractActionCandidateRow) {
   return 7;
 }
 
+function actionPayload(candidate: SourceContractActionCandidateRow) {
+  const payload = candidate.citation_basis_json?.payload;
+  return payload && typeof payload === "object" && !Array.isArray(payload)
+    ? (payload as Record<string, unknown>)
+    : {};
+}
+
+function actionPayloadText(
+  candidate: SourceContractActionCandidateRow,
+  keys: readonly string[],
+) {
+  const payload = actionPayload(candidate);
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function actionCardBody(candidate: SourceContractActionCandidateRow) {
+  const title = candidate.title?.trim() ?? "";
+  const candidates = [
+    actionPayloadText(candidate, ["buyer_ask", "negotiation_language"]),
+    candidate.finding_summary,
+    candidate.next_action,
+    candidate.blocker_if_missing,
+  ];
+  const body = candidates
+    .map((value) => value?.trim() ?? "")
+    .find((value) => value && value !== title);
+  return body ?? "Open the governed contract record before outreach.";
+}
+
+function actionCardBasis(candidate: SourceContractActionCandidateRow) {
+  return (
+    actionPayloadText(candidate, ["evidence_rows", "evidence_family"]) ??
+    candidate.deterministic_basis ??
+    candidate.evidence_state ??
+    "Loaded evidence row"
+  );
+}
+
 function orderedActionRows(
   rows: readonly SourceContractActionCandidateRow[],
 ): SourceContractActionCandidateRow[] {
@@ -355,6 +397,33 @@ function orderedActionRows(
         (numberFromDb(left.candidate_amount_usd) ?? 0) ||
       left.action_candidate_id.localeCompare(right.action_candidate_id),
   );
+}
+
+function anchorContractScore(
+  contract: SourceContract360Row | null,
+  rows: readonly SourceContractActionCandidateRow[],
+) {
+  const contractText = [
+    contract?.contract_id,
+    contract?.vendor_name,
+    contract?.vendor_category,
+    contract?.contract_name,
+    contract?.contract_archetype,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const actionSetText = rows.map(actionText).join(" ");
+  if (/databricks|dbx/i.test(contractText)) return 4;
+  if (/cloud|consumption|edp|marketplace|serverless|dbu/i.test(contractText)) {
+    return 3;
+  }
+  if (
+    /cloud|consumption|edp|marketplace|serverless|dbu/i.test(actionSetText)
+  ) {
+    return 2;
+  }
+  if (/managed service|ams|bpo/i.test(contractText)) return 0;
+  return 1;
 }
 
 function anchorContractActionSet(
@@ -385,10 +454,12 @@ function anchorContractActionSet(
         )
           ? 1
           : 0,
+        anchorScore: anchorContractScore(contract, orderedRows),
       };
     })
     .sort(
       (left, right) =>
+        right.anchorScore - left.anchorScore ||
         right.commitmentScore - left.commitmentScore ||
         right.rows.length - left.rows.length ||
         right.totalAmount - left.totalAmount ||
@@ -4018,10 +4089,8 @@ function SourceLeverSequence({
               ? impactCreditMoney(amount)
               : row.readiness_state ?? "Not sized";
           const dueLabel = decisionDueLabel(row, asOfDateIso);
-          const basis =
-            row.deterministic_basis ??
-            row.evidence_state ??
-            "Loaded evidence row";
+          const basis = actionCardBasis(row);
+          const body = actionCardBody(row);
 
           return (
             <button
@@ -4033,11 +4102,7 @@ function SourceLeverSequence({
               <span className="sw-v2-lever-sequence-index">{index + 1}</span>
               <span className="sw-v2-lever-sequence-main">
                 <b>{row.title ?? row.finding_summary ?? "Review loaded action"}</b>
-                <small>
-                  {row.finding_summary ??
-                    row.next_action ??
-                    "Open the governed contract record before outreach."}
-                </small>
+                <small>{body}</small>
                 <em>
                   Backed by <strong>{basis}</strong>
                 </em>

@@ -814,16 +814,52 @@ async function loadDirectSourceWorkspaceImpactRows(
                WHERE tenant_key = ANY($1::text[])
                GROUP BY tenant_key, contract_id
              ),
+             opportunity_source AS (
+               SELECT
+                 tenant_key,
+                 opportunity_id,
+                 contract_id,
+                 annual_value_exposed::numeric AS candidate_amount_usd,
+                 readiness_state,
+                 evidence_state,
+                 1 AS source_rank
+                FROM consumption.sourcing_opportunity_v1
+               WHERE tenant_key = ANY($1::text[])
+               UNION ALL
+               SELECT
+                 tenant_key,
+                 opportunity_id,
+                 contract_id,
+                 amount_usd::numeric AS candidate_amount_usd,
+                 stage AS readiness_state,
+                 evidence_grade AS evidence_state,
+                 0 AS source_rank
+                FROM source.optimization_opportunity
+               WHERE tenant_key = ANY($1::text[])
+             ),
+             opportunity_deduped AS (
+               SELECT DISTINCT ON (tenant_key, opportunity_id)
+                 tenant_key,
+                 opportunity_id,
+                 contract_id,
+                 candidate_amount_usd,
+                 readiness_state,
+                 evidence_state
+                FROM opportunity_source
+               ORDER BY tenant_key, opportunity_id, source_rank
+             ),
              opportunities AS (
                SELECT
                  tenant_key,
                  contract_id,
                  count(*)::bigint AS opportunity_rows,
-                 COALESCE(sum(annual_value_exposed), 0)::numeric AS candidate_amount_usd,
+                 COALESCE(sum(candidate_amount_usd), 0)::numeric AS candidate_amount_usd,
                  count(*) FILTER (WHERE readiness_state = 'finance_confirmation_required')::bigint AS finance_confirmation_required_rows,
-                 count(*) FILTER (WHERE evidence_state = 'present')::bigint AS opportunities_with_evidence
-                FROM consumption.sourcing_opportunity_v1
-               WHERE tenant_key = ANY($1::text[])
+                 count(*) FILTER (
+                   WHERE evidence_state IS NOT NULL
+                     AND evidence_state NOT IN ('missing', 'conflicted')
+                 )::bigint AS opportunities_with_evidence
+                FROM opportunity_deduped
                GROUP BY tenant_key, contract_id
              ),
              scope AS (
@@ -917,54 +953,132 @@ async function loadDirectSourceWorkspaceImpactRows(
         "impact.action_candidates_direct",
         () =>
           run<SourceContractActionCandidateRow>(
-            `SELECT
-               o.tenant_key,
-               o.opportunity_id AS action_candidate_id,
-               o.opportunity_id,
-               o.contract_id,
-               o.vendor_ref,
-               COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
-               o.title,
-               o.action_type,
-               o.opportunity_type,
-               o.finding_summary,
-               o.deterministic_basis,
-               o.annual_value_exposed::numeric AS candidate_amount_usd,
-               o.priority,
-               o.readiness_state,
-               o.evidence_state,
-               o.authority_state,
-               CASE
-                 WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
-                 WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
-                 ELSE 'not_confirmed'
-               END AS finance_confirmation_state,
-               o.recommended_action AS next_action,
-               o.accountable_role,
-               o.decision_due_date,
-               NULL::text AS coverage_state,
-               CASE
-                 WHEN o.readiness_state = 'finance_confirmation_required'
-                   THEN 'Never present this candidate as realized savings until finance confirms it.'
-                 ELSE NULL::text
-               END AS blocker_if_missing,
-               jsonb_build_object(
-                 'opportunity_ref', o.opportunity_id,
-                 'contract_ref', o.contract_id,
-                 'finance_confirmation_state',
-                   CASE
-                     WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
-                     WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
-                     ELSE 'not_confirmed'
-                   END
-               ) AS citation_basis_json,
-               o.load_run_id
-              FROM consumption.sourcing_opportunity_v1 o
-              LEFT JOIN source.contract_360 c
-                ON c.tenant_key = o.tenant_key
-               AND c.contract_id = o.contract_id
-             WHERE o.tenant_key = ANY($1::text[])
-             ORDER BY o.annual_value_exposed DESC NULLS LAST, o.opportunity_id`,
+            `WITH raw_actions AS (
+               SELECT
+                 o.tenant_key,
+                 o.opportunity_id AS action_candidate_id,
+                 o.opportunity_id,
+                 o.contract_id,
+                 o.vendor_ref,
+                 COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
+                 o.title,
+                 o.action_type,
+                 o.opportunity_type,
+                 o.finding_summary,
+                 o.deterministic_basis,
+                 o.annual_value_exposed::numeric AS candidate_amount_usd,
+                 o.priority,
+                 o.readiness_state,
+                 o.evidence_state,
+                 o.authority_state,
+                 CASE
+                   WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+                   WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+                   ELSE 'not_confirmed'
+                 END AS finance_confirmation_state,
+                 o.recommended_action AS next_action,
+                 o.accountable_role,
+                 o.decision_due_date,
+                 NULL::text AS coverage_state,
+                 CASE
+                   WHEN o.readiness_state = 'finance_confirmation_required'
+                     THEN 'Never present this candidate as realized savings until finance confirms it.'
+                   ELSE NULL::text
+                 END AS blocker_if_missing,
+                 jsonb_build_object(
+                   'opportunity_ref', o.opportunity_id,
+                   'contract_ref', o.contract_id,
+                   'finance_confirmation_state',
+                     CASE
+                       WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+                       WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+                       ELSE 'not_confirmed'
+                     END
+                 ) AS citation_basis_json,
+                 o.load_run_id,
+                 1 AS source_rank
+                FROM consumption.sourcing_opportunity_v1 o
+                LEFT JOIN source.contract_360 c
+                  ON c.tenant_key = o.tenant_key
+                 AND c.contract_id = o.contract_id
+               WHERE o.tenant_key = ANY($1::text[])
+               UNION ALL
+               SELECT
+                 o.tenant_key,
+                 o.opportunity_id AS action_candidate_id,
+                 o.opportunity_id,
+                 o.contract_id,
+                 o.vendor_id AS vendor_ref,
+                 COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
+                 COALESCE(NULLIF(o.payload->>'label', ''), NULLIF(o.payload->>'title', ''), o.narrative) AS title,
+                 o.value_type AS action_type,
+                 o.value_type AS opportunity_type,
+                 o.narrative AS finding_summary,
+                 COALESCE(NULLIF(o.payload->>'evidence_rows', ''), o.evidence_grade) AS deterministic_basis,
+                 o.amount_usd::numeric AS candidate_amount_usd,
+                 COALESCE(NULLIF(o.payload->>'priority', ''), o.stage) AS priority,
+                 o.stage AS readiness_state,
+                 o.evidence_grade AS evidence_state,
+                 o.approval_state AS authority_state,
+                 CASE
+                   WHEN o.stage = 'finance_confirmed' OR o.approval_state IN ('accepted', 'approved', 'confirmed') THEN 'confirmed'
+                   ELSE 'not_confirmed'
+                 END AS finance_confirmation_state,
+                 o.next_action,
+                 COALESCE(NULLIF(o.payload->>'owner_role', ''), o.owner) AS accountable_role,
+                 o.deadline::text AS decision_due_date,
+                 NULL::text AS coverage_state,
+                 o.blocking_gap AS blocker_if_missing,
+                 jsonb_build_object(
+                   'opportunity_ref', o.opportunity_id,
+                   'contract_ref', o.contract_id,
+                   'finance_confirmation_state',
+                     CASE
+                       WHEN o.stage = 'finance_confirmed' OR o.approval_state IN ('accepted', 'approved', 'confirmed') THEN 'confirmed'
+                       ELSE 'not_confirmed'
+                     END,
+                   'payload', o.payload
+                 ) AS citation_basis_json,
+                 o.dataset_version AS load_run_id,
+                 0 AS source_rank
+                FROM source.optimization_opportunity o
+                LEFT JOIN source.contract_360 c
+                  ON c.tenant_key = o.tenant_key
+                 AND c.contract_id = o.contract_id
+               WHERE o.tenant_key = ANY($1::text[])
+             ),
+             deduped AS (
+               SELECT DISTINCT ON (tenant_key, action_candidate_id)
+                 tenant_key,
+                 action_candidate_id,
+                 opportunity_id,
+                 contract_id,
+                 vendor_ref,
+                 vendor_name,
+                 title,
+                 action_type,
+                 opportunity_type,
+                 finding_summary,
+                 deterministic_basis,
+                 candidate_amount_usd,
+                 priority,
+                 readiness_state,
+                 evidence_state,
+                 authority_state,
+                 finance_confirmation_state,
+                 next_action,
+                 accountable_role,
+                 decision_due_date,
+                 coverage_state,
+                 blocker_if_missing,
+                 citation_basis_json,
+                 load_run_id
+                FROM raw_actions
+               ORDER BY tenant_key, action_candidate_id, source_rank
+             )
+             SELECT *
+               FROM deduped
+              ORDER BY candidate_amount_usd DESC NULLS LAST, opportunity_id`,
             [acceptedTenantKeys],
           ).then((rows) => rows.map(normalizeDerivedActionCandidateRow)),
       );
@@ -1345,16 +1459,52 @@ async function loadDerivedSourceWorkspaceImpactLayer(
            WHERE tenant_key = ANY($1::text[])
            GROUP BY tenant_key, contract_id
          ),
+         opportunity_source AS (
+           SELECT
+             tenant_key,
+             opportunity_id,
+             contract_id,
+             annual_value_exposed::numeric AS candidate_amount_usd,
+             readiness_state,
+             evidence_state,
+             1 AS source_rank
+            FROM consumption.sourcing_opportunity_v1
+           WHERE tenant_key = ANY($1::text[])
+           UNION ALL
+           SELECT
+             tenant_key,
+             opportunity_id,
+             contract_id,
+             amount_usd::numeric AS candidate_amount_usd,
+             stage AS readiness_state,
+             evidence_grade AS evidence_state,
+             0 AS source_rank
+            FROM source.optimization_opportunity
+           WHERE tenant_key = ANY($1::text[])
+         ),
+         opportunity_deduped AS (
+           SELECT DISTINCT ON (tenant_key, opportunity_id)
+             tenant_key,
+             opportunity_id,
+             contract_id,
+             candidate_amount_usd,
+             readiness_state,
+             evidence_state
+            FROM opportunity_source
+           ORDER BY tenant_key, opportunity_id, source_rank
+         ),
          opportunities AS (
            SELECT
              tenant_key,
              contract_id,
              count(*)::bigint AS opportunity_rows,
-             COALESCE(sum(annual_value_exposed), 0)::numeric AS candidate_amount_usd,
+             COALESCE(sum(candidate_amount_usd), 0)::numeric AS candidate_amount_usd,
              count(*) FILTER (WHERE readiness_state = 'finance_confirmation_required')::bigint AS finance_confirmation_required_rows,
-             count(*) FILTER (WHERE evidence_state = 'present')::bigint AS opportunities_with_evidence
-            FROM consumption.sourcing_opportunity_v1
-           WHERE tenant_key = ANY($1::text[])
+             count(*) FILTER (
+               WHERE evidence_state IS NOT NULL
+                 AND evidence_state NOT IN ('missing', 'conflicted')
+             )::bigint AS opportunities_with_evidence
+            FROM opportunity_deduped
            GROUP BY tenant_key, contract_id
          ),
          scope AS (
@@ -1443,54 +1593,132 @@ async function loadDerivedSourceWorkspaceImpactLayer(
         [acceptedTenantKeys],
       );
       const actionCandidates = await run<SourceContractActionCandidateRow>(
-        `SELECT
-           o.tenant_key,
-           o.opportunity_id AS action_candidate_id,
-           o.opportunity_id,
-           o.contract_id,
-           o.vendor_ref,
-           COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
-           o.title,
-           o.action_type,
-           o.opportunity_type,
-           o.finding_summary,
-           o.deterministic_basis,
-           o.annual_value_exposed::numeric AS candidate_amount_usd,
-           o.priority,
-           o.readiness_state,
-           o.evidence_state,
-           o.authority_state,
-           CASE
-             WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
-             WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
-           ELSE 'not_confirmed'
-         END AS finance_confirmation_state,
-           o.recommended_action AS next_action,
-           o.accountable_role,
-           o.decision_due_date,
-           NULL::text AS coverage_state,
-           CASE
-             WHEN o.readiness_state = 'finance_confirmation_required'
-               THEN 'Never present this candidate as realized savings until finance confirms it.'
-             ELSE NULL::text
-           END AS blocker_if_missing,
-           jsonb_build_object(
-             'opportunity_ref', o.opportunity_id,
-             'contract_ref', o.contract_id,
-             'finance_confirmation_state',
-               CASE
-                 WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
-                 WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
-                 ELSE 'not_confirmed'
-               END
-           ) AS citation_basis_json,
-           o.load_run_id
-          FROM consumption.sourcing_opportunity_v1 o
-          LEFT JOIN source.contract_360 c
-            ON c.tenant_key = o.tenant_key
-           AND c.contract_id = o.contract_id
-         WHERE o.tenant_key = ANY($1::text[])
-         ORDER BY o.annual_value_exposed DESC NULLS LAST, o.opportunity_id`,
+        `WITH raw_actions AS (
+           SELECT
+             o.tenant_key,
+             o.opportunity_id AS action_candidate_id,
+             o.opportunity_id,
+             o.contract_id,
+             o.vendor_ref,
+             COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
+             o.title,
+             o.action_type,
+             o.opportunity_type,
+             o.finding_summary,
+             o.deterministic_basis,
+             o.annual_value_exposed::numeric AS candidate_amount_usd,
+             o.priority,
+             o.readiness_state,
+             o.evidence_state,
+             o.authority_state,
+             CASE
+               WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+               WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+               ELSE 'not_confirmed'
+             END AS finance_confirmation_state,
+             o.recommended_action AS next_action,
+             o.accountable_role,
+             o.decision_due_date,
+             NULL::text AS coverage_state,
+             CASE
+               WHEN o.readiness_state = 'finance_confirmation_required'
+                 THEN 'Never present this candidate as realized savings until finance confirms it.'
+               ELSE NULL::text
+             END AS blocker_if_missing,
+             jsonb_build_object(
+               'opportunity_ref', o.opportunity_id,
+               'contract_ref', o.contract_id,
+               'finance_confirmation_state',
+                 CASE
+                   WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
+                   WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+                   ELSE 'not_confirmed'
+                 END
+             ) AS citation_basis_json,
+             o.load_run_id,
+             1 AS source_rank
+            FROM consumption.sourcing_opportunity_v1 o
+            LEFT JOIN source.contract_360 c
+              ON c.tenant_key = o.tenant_key
+             AND c.contract_id = o.contract_id
+           WHERE o.tenant_key = ANY($1::text[])
+           UNION ALL
+           SELECT
+             o.tenant_key,
+             o.opportunity_id AS action_candidate_id,
+             o.opportunity_id,
+             o.contract_id,
+             o.vendor_id AS vendor_ref,
+             COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
+             COALESCE(NULLIF(o.payload->>'label', ''), NULLIF(o.payload->>'title', ''), o.narrative) AS title,
+             o.value_type AS action_type,
+             o.value_type AS opportunity_type,
+             o.narrative AS finding_summary,
+             COALESCE(NULLIF(o.payload->>'evidence_rows', ''), o.evidence_grade) AS deterministic_basis,
+             o.amount_usd::numeric AS candidate_amount_usd,
+             COALESCE(NULLIF(o.payload->>'priority', ''), o.stage) AS priority,
+             o.stage AS readiness_state,
+             o.evidence_grade AS evidence_state,
+             o.approval_state AS authority_state,
+             CASE
+               WHEN o.stage = 'finance_confirmed' OR o.approval_state IN ('accepted', 'approved', 'confirmed') THEN 'confirmed'
+               ELSE 'not_confirmed'
+             END AS finance_confirmation_state,
+             o.next_action,
+             COALESCE(NULLIF(o.payload->>'owner_role', ''), o.owner) AS accountable_role,
+             o.deadline::text AS decision_due_date,
+             NULL::text AS coverage_state,
+             o.blocking_gap AS blocker_if_missing,
+             jsonb_build_object(
+               'opportunity_ref', o.opportunity_id,
+               'contract_ref', o.contract_id,
+               'finance_confirmation_state',
+                 CASE
+                   WHEN o.stage = 'finance_confirmed' OR o.approval_state IN ('accepted', 'approved', 'confirmed') THEN 'confirmed'
+                   ELSE 'not_confirmed'
+                 END,
+               'payload', o.payload
+             ) AS citation_basis_json,
+             o.dataset_version AS load_run_id,
+             0 AS source_rank
+            FROM source.optimization_opportunity o
+            LEFT JOIN source.contract_360 c
+              ON c.tenant_key = o.tenant_key
+             AND c.contract_id = o.contract_id
+           WHERE o.tenant_key = ANY($1::text[])
+         ),
+         deduped AS (
+           SELECT DISTINCT ON (tenant_key, action_candidate_id)
+             tenant_key,
+             action_candidate_id,
+             opportunity_id,
+             contract_id,
+             vendor_ref,
+             vendor_name,
+             title,
+             action_type,
+             opportunity_type,
+             finding_summary,
+             deterministic_basis,
+             candidate_amount_usd,
+             priority,
+             readiness_state,
+             evidence_state,
+             authority_state,
+             finance_confirmation_state,
+             next_action,
+             accountable_role,
+             decision_due_date,
+             coverage_state,
+             blocker_if_missing,
+             citation_basis_json,
+             load_run_id
+            FROM raw_actions
+           ORDER BY tenant_key, action_candidate_id, source_rank
+         )
+         SELECT *
+           FROM deduped
+          ORDER BY candidate_amount_usd DESC NULLS LAST, opportunity_id`,
         [acceptedTenantKeys],
       );
       const normalizedEvidence = evidenceCoverage.map(

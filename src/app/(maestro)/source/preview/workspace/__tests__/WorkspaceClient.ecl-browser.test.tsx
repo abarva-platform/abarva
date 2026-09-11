@@ -1159,6 +1159,135 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
   });
 
+  it("anchors the default Levers story on the cloud-consumption action set when it is loaded", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const baseAction: SourceWorkspacePortfolioData["impact"]["actionCandidates"][number] =
+      {
+        tenant_key: "meridian-health",
+        action_candidate_id: "OPT-BASE-001",
+        opportunity_id: "OPT-BASE-001",
+        contract_id: "MER-TECH-LAAMS-001",
+        vendor_ref: "MER-VEN-LAAMS",
+        vendor_name: "Cognizant Technology Solutions",
+        title: "Managed services lever",
+        action_type: "avoided_cost",
+        opportunity_type: "avoided_cost",
+        finding_summary: "Managed-services action row.",
+        deterministic_basis: "service rows",
+        candidate_amount_usd: 620000,
+        priority: "P1",
+        readiness_state: "finance_confirmation_required",
+        evidence_state: "present",
+        authority_state: "not_confirmed",
+        finance_confirmation_state: "not_confirmed",
+        next_action: "Review managed-services packet.",
+        accountable_role: "Data & Analytics Operations",
+        decision_due_date: null,
+        coverage_state: "partial",
+        blocker_if_missing:
+          "Never present this candidate as realized savings until finance confirms it.",
+        citation_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      };
+    const databricksAction = {
+      ...baseAction,
+      action_candidate_id: "OPT-DBX-CARRY-FORWARD-001",
+      opportunity_id: "OPT-DBX-CARRY-FORWARD-001",
+      contract_id: "MER-TECH-DBX-001",
+      vendor_ref: "MER-VEN-DATABRICKS",
+      vendor_name: "Databricks, Inc.",
+      title: "Add carry-forward provision for unused Year 1 commitment",
+      action_type: "negotiated_improvement",
+      opportunity_type: "negotiated_improvement",
+      finding_summary:
+        "The contract's no-carry-forward position should not convert delayed workload adoption into lost buyer value.",
+      deterministic_basis:
+        "coverage:MER-TECH-DBX-001:2026-09;clause:MER-TECH-DBX-001:no_carry_forward",
+      candidate_amount_usd: 400000,
+      priority: "P1",
+      next_action: "Draft carry-forward amendment before the Year 2 payment locks.",
+      accountable_role: "Strategic Sourcing",
+      citation_basis_json: {
+        payload: {
+          buyer_ask:
+            "Carry forward unused Year 1 commitment into Year 2 or convert it into adoption credits.",
+          evidence_rows:
+            "coverage:MER-TECH-DBX-001:2026-09;clause:MER-TECH-DBX-001:no_carry_forward",
+        },
+      },
+    };
+    const databricksContract: SourceContract360Row = {
+      ...portfolio.contracts[0],
+      contract_id: "MER-TECH-DBX-001",
+      vendor_ref: "MER-VEN-DATABRICKS",
+      vendor_name: "Databricks, Inc.",
+      vendor_category: "cloud_data_platform",
+      contract_archetype: "cloud_consumption",
+      contract_name:
+        "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+      annual_value: 1900000,
+      resolved_annual_value: 1900000,
+      actual_annual_spend: 66000,
+    };
+    const managedServicesContract: SourceContract360Row = {
+      ...portfolio.contracts[0],
+      contract_id: "MER-TECH-LAAMS-001",
+      vendor_ref: "MER-VEN-LAAMS",
+      vendor_name: "Cognizant Technology Solutions",
+      vendor_category: "managed_services",
+      contract_archetype: "managed_services",
+      contract_name: "Legacy Application Managed Services",
+      annual_value: 34800000,
+      resolved_annual_value: 34800000,
+    };
+
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          contracts: [managedServicesContract, databricksContract],
+          impact: {
+            ...portfolio.impact,
+            actionCandidates: [
+              ...Array.from({ length: 7 }, (_, index) => ({
+                ...baseAction,
+                action_candidate_id: `OPT-LAAMS-${index}`,
+                opportunity_id: `OPT-LAAMS-${index}`,
+              })),
+              ...Array.from({ length: 6 }, (_, index) => ({
+                ...databricksAction,
+                action_candidate_id: `OPT-DBX-${index}`,
+                opportunity_id: `OPT-DBX-${index}`,
+              })),
+            ],
+          },
+        }}
+        tenantName="Meridian Health"
+        sourceClientKey="meridian-health"
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Levers" })[0]);
+
+    expect(
+      screen.getAllByText("6 levers, in the order they have to happen").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Databricks, Inc. · MER-TECH-DBX-001").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(
+        "Carry forward unused Year 1 commitment into Year 2 or convert it into adoption credits.",
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByText("Cognizant Technology Solutions · MER-TECH-LAAMS-001"),
+    ).toBeNull();
+  });
+
   it("keeps selected-contract Optimize scoped to that contract's levers", async () => {
     const portfolio = await loadSourceWorkspacePortfolio(
       "meridian",
