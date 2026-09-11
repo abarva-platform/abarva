@@ -3480,6 +3480,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         nextAction:
           clientFacingOpportunityText(opportunity.nextAction) ??
           opportunity.nextAction,
+        buyerAsk: opportunity.negotiationDetail?.buyerAsk ?? null,
+        negotiationLanguage:
+          opportunity.negotiationDetail?.negotiationLanguage ?? null,
+        vendorConcession:
+          opportunity.negotiationDetail?.vendorConcession ?? null,
+        timingDependency:
+          opportunity.negotiationDetail?.timingDependency ?? null,
+        priority: opportunity.negotiationDetail?.priority ?? null,
+        riskIfIgnored: opportunity.negotiationDetail?.riskIfIgnored ?? null,
       },
     ]),
   );
@@ -3681,6 +3690,13 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               candidate.next_action ??
               "Confirm evidence owner and decision path before claiming value.",
             sourceRefs: clientFacingSourceRefs(candidate.citation_basis_json),
+            buyerAsk: opportunityContext?.buyerAsk ?? null,
+            negotiationLanguage:
+              opportunityContext?.negotiationLanguage ?? null,
+            vendorConcession: opportunityContext?.vendorConcession ?? null,
+            timingDependency: opportunityContext?.timingDependency ?? null,
+            priority: opportunityContext?.priority ?? null,
+            riskIfIgnored: opportunityContext?.riskIfIgnored ?? null,
           };
         },
       ),
@@ -3693,6 +3709,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             selectedOpportunity: opportunityView.selectedOpportunity,
             opportunities: opportunityView.opportunities.map((opportunity) => ({
               id: opportunity.id,
+              contractId: c?.contract_id ?? sel.id ?? null,
               label: opportunity.label,
               valueType: opportunity.valueType,
               amount: opportunity.amount,

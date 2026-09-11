@@ -373,6 +373,43 @@ describe("Source Workspace visual aVa answer", () => {
     );
   });
 
+  it("uses rich optimization rows with opaque opportunity ids before action-directory fallbacks", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: {
+        optimizationOpportunities: {
+          opportunities: Array<Record<string, unknown>>;
+        };
+      };
+    };
+    context.sourceV4.optimizationOpportunities.opportunities =
+      context.sourceV4.optimizationOpportunities.opportunities.map(
+        (opportunity, index) => ({
+          ...opportunity,
+          id: `OPT-OPAQUE-${index + 1}`,
+          contractId: "CTR-090",
+        }),
+      );
+
+    const answer = buildSourceContractOptimizationExportAnswer({
+      query:
+        "For CTR-090, give me a PDF-ready table of levers to optimize this contract.",
+      surfaceContext: { ...context, sourceContract360Mode: true },
+    });
+
+    expect(answer?.directAnswer).toContain(
+      "The vendor avoids reopening the broader commercial schedule",
+    );
+    expect(answer?.directAnswer).toContain(
+      "The vendor preserves active use while removing shelfware",
+    );
+    expect(answer?.directAnswer).not.toContain(
+      "Fallback directory row should not mask rich opportunity rows",
+    );
+    expect(answer?.directAnswer).not.toContain(
+      "Not established in the governed opportunity detail",
+    );
+  });
+
   it("routes simple contract summary prompts through deterministic selected-contract answers", () => {
     const context = sourceContext();
     const query = "Summarize this contract.";
