@@ -2,10 +2,10 @@
  * Config-driven Explore inventory framework. Per the reconciliation matrix's
  * `ExploreInventoryViewModel` classification, only two of the original eight
  * inventory kinds are DIRECTLY_SUPPORTED by the real consumption contract
- * today (`applications` -> domainKey "technology", `vendors` -> domainKey
- * "vendors", both backed by real registered projections --
- * application_inventory_v1 / vendor_contract_inventory_v1). The other six
- * (dataProducts, integrations, infrastructure, programs, risks, measures)
+ * today (`applications` -> domainKey "technology", `infrastructure` ->
+ * domainKey "technology_estate", `dataProducts` -> domainKey "data_products",
+ * `vendors` -> domainKey "vendors", backed by real registered projections).
+ * The other four (integrations, programs, risks, measures)
  * have no real projection behind them at any layer of the registered
  * contract -- their `fetch` returns an honest PROJECTION_UNAVAILABLE
  * envelope directly, without an assembler call, rather than pretending a
@@ -195,9 +195,10 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
       },
     ],
     facets: [],
-    fetch: unavailableFetch(
-      "No data_product_inventory_v1 projection is registered in the consumption contract yet -- a data-plane build reports rows under this name, but the TS contract/registry has not caught up to expose it.",
-    ),
+    fetch: realFetch("data_products", "data_product", (e) => ({
+      name: e.displayName,
+      readinessState: entityReadiness(e),
+    })),
   },
   {
     kind: "integrations",
@@ -237,9 +238,10 @@ export const INVENTORY_KINDS: readonly InventoryKindConfig[] = [
       },
     ],
     facets: [],
-    fetch: unavailableFetch(
-      "No technology_estate_v1 projection is registered in the consumption contract yet -- a data-plane build reports rows under this name, but the TS contract/registry has not caught up to expose it.",
-    ),
+    fetch: realFetch("technology_estate", "technology_estate", (e) => ({
+      name: e.displayName,
+      readinessState: entityReadiness(e),
+    })),
   },
   {
     kind: "vendors",
