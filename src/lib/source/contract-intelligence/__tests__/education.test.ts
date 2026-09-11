@@ -36,6 +36,8 @@ describe("contract education guide", () => {
     );
     expect(view.steps.find((step) => step.key === "load")?.state).toBe("next");
     expect(view.state).toBe("partial");
+    expect(view.facetRequirements.Performance.state).toBe("not_required");
+    expect(view.facetRequirements.Performance.reason).toMatch(/SLA/i);
   });
 
   it("returns a ready managed-services guide when the operating evidence loop is present", () => {
@@ -57,6 +59,7 @@ describe("contract education guide", () => {
     expect(view.state).toBe("ready");
     expect(view.steps.every((step) => step.state === "loaded")).toBe(true);
     expect(view.focus).toMatch(/service demand/i);
+    expect(view.facetRequirements.Performance.state).toBe("required");
   });
 
   it("never leaves an unmapped archetype without an education path", () => {
@@ -109,5 +112,6 @@ describe("contract education guide", () => {
       "next",
     ]);
     expect(view?.basis.join(" ")).toContain("load-time governed playbook");
+    expect(view?.facetRequirements.Performance.state).toBe("not_required");
   });
 });

@@ -1,5 +1,19 @@
 export type ContractEducationState = "ready" | "partial" | "blocked";
 
+export type ContractFacetKey =
+  | "Story"
+  | "Scope"
+  | "Economics"
+  | "Performance"
+  | "Relationship"
+  | "Evidence"
+  | "Optimize";
+
+export interface ContractFacetRequirement {
+  readonly state: "required" | "not_required";
+  readonly reason: string;
+}
+
 export interface ContractEducationStep {
   readonly key: "track" | "load" | "observe";
   readonly title: string;
@@ -19,6 +33,9 @@ export interface ContractEducationView {
   readonly steps: readonly ContractEducationStep[];
   readonly focus: string;
   readonly basis: readonly string[];
+  readonly facetRequirements: Readonly<
+    Record<ContractFacetKey, ContractFacetRequirement>
+  >;
 }
 
 export interface ContractEducationInput {
@@ -38,7 +55,12 @@ export interface ContractEducationInput {
 
 type EducationGuide = Omit<
   ContractEducationView,
-  "archetypeKey" | "state" | "stateLabel" | "steps" | "basis"
+  | "archetypeKey"
+  | "state"
+  | "stateLabel"
+  | "steps"
+  | "basis"
+  | "facetRequirements"
 > & {
   readonly match: (key: string) => boolean;
   readonly requiredEvidence: readonly (keyof ContractEducationInput)[];
@@ -49,6 +71,63 @@ type EducationGuide = Omit<
     >
   >;
 };
+
+const REQUIRED_FACETS: Readonly<
+  Record<ContractFacetKey, ContractFacetRequirement>
+> = {
+  Story: {
+    state: "required",
+    reason: "Every contract needs a plain-English commercial purpose.",
+  },
+  Scope: {
+    state: "required",
+    reason: "The named applications, services, or workloads bound the contract.",
+  },
+  Economics: {
+    state: "required",
+    reason: "Commercial value and observed spend are part of the contract baseline.",
+  },
+  Performance: {
+    state: "required",
+    reason: "Service quality evidence is part of this archetype's operating model.",
+  },
+  Relationship: {
+    state: "required",
+    reason: "Loaded relationships explain who provides and owns the contract.",
+  },
+  Evidence: {
+    state: "required",
+    reason: "Every claim must show its evidence boundary.",
+  },
+  Optimize: {
+    state: "required",
+    reason: "The relevant commercial actions belong in the optimization view.",
+  },
+};
+
+function facetRequirementsForArchetype(
+  key: string,
+): Readonly<Record<ContractFacetKey, ContractFacetRequirement>> {
+  const notPerformance =
+    key.includes("cloud") ||
+    key.includes("consumption") ||
+    key.includes("edp") ||
+    key.includes("saas") ||
+    key.includes("subscription") ||
+    key.includes("software") ||
+    key.includes("license") ||
+    key.includes("productivity") ||
+    key.includes("crm");
+  if (!notPerformance) return REQUIRED_FACETS;
+  return {
+    ...REQUIRED_FACETS,
+    Performance: {
+      state: "not_required",
+      reason:
+        "This archetype is governed by consumption, entitlement, or commercial evidence; SLA and service-credit performance is not a required lane unless the contract declares it.",
+    },
+  };
+}
 
 const guide = (
   config: Omit<EducationGuide, "match"> & {
@@ -290,6 +369,7 @@ export function buildContractEducation(
     steps,
     focus: selected.focus,
     basis,
+    facetRequirements: facetRequirementsForArchetype(key),
   };
 }
 
@@ -338,6 +418,10 @@ export function contractEducationFromRecord(
     stringValue(education.archetype_key) ??
     stringValue(contract.archetype_key) ??
     'unmapped';
+  const facetRequirements = readFacetRequirements(
+    education.facet_requirements,
+    archetypeKey,
+  );
   const headline =
     stringValue(education.headline) ??
     'Build the evidence loop before changing the deal.';
@@ -363,7 +447,30 @@ export function contractEducationFromRecord(
       `${archetypeLabel} guide · load-time governed playbook`,
       'Archetype, industry context, evidence requirements, and provenance are linked in the same record',
     ],
+    facetRequirements,
   };
+}
+
+function readFacetRequirements(
+  value: unknown,
+  archetypeKey: string,
+): Readonly<Record<ContractFacetKey, ContractFacetRequirement>> {
+  const fallback = facetRequirementsForArchetype(archetypeKey);
+  if (!isRecord(value)) return fallback;
+  const result = { ...fallback };
+  for (const key of Object.keys(fallback) as ContractFacetKey[]) {
+    const raw = value[key];
+    if (!isRecord(raw)) continue;
+    const state =
+      raw.state === "not_required"
+        ? "not_required"
+        : raw.state === "required"
+          ? "required"
+          : null;
+    const reason = stringValue(raw.reason);
+    if (state && reason) result[key] = { state, reason };
+  }
+  return result;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
