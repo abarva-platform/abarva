@@ -33,6 +33,18 @@ export interface ContractEducationView {
   readonly steps: readonly ContractEducationStep[];
   readonly focus: string;
   readonly basis: readonly string[];
+  /**
+   * How many evidence inputs this archetype's playbook requires, and which of
+   * them are not loaded — in reader-facing words.
+   *
+   * `stateLabel` alone says "partial" without saying partial for what, which
+   * let a summary contradict the steps beneath it: the step states and the
+   * readiness word are computed from different populations, so a step could
+   * read "loaded" while the requirement behind it was still outstanding.
+   * Carrying the reason means the surface never has to infer it.
+   */
+  readonly requiredEvidenceCount: number;
+  readonly missingEvidence: readonly string[];
   readonly facetRequirements: Readonly<
     Record<ContractFacetKey, ContractFacetRequirement>
   >;
@@ -50,7 +62,14 @@ export interface ContractEducationInput {
   readonly opportunityRows: number;
   readonly changeOrderRows: number;
   readonly hasReviewedPurpose: boolean;
-  readonly hasBenchmarking: boolean;
+  /**
+   * The recorded benchmarking-clause value, verbatim from the contract record
+   * (for example "present", "absent", "limited"), or null when the contract
+   * carries no value at all. This is deliberately not a boolean: the field is
+   * a value enum, and coercing it to a flag reads an explicitly recorded
+   * "absent" as presence.
+   */
+  readonly benchmarkingClause: string | null;
 }
 
 type EducationGuide = Omit<
@@ -61,6 +80,8 @@ type EducationGuide = Omit<
   | "steps"
   | "basis"
   | "facetRequirements"
+  | "requiredEvidenceCount"
+  | "missingEvidence"
 > & {
   readonly match: (key: string) => boolean;
   readonly requiredEvidence: readonly (keyof ContractEducationInput)[];
@@ -303,6 +324,38 @@ function display(value: string | null | undefined): string {
   return value?.trim() || "not established";
 }
 
+/**
+ * Render the benchmarking clause as the contract records it.
+ *
+ * The stored field is a value enum ("present", "present_with_annual_right",
+ * "limited", "none", "absent", ...), so a truthiness check on it reports every
+ * populated row as a clause the buyer holds — including the rows that say the
+ * opposite. Report the recorded value instead of a flag, and reserve "not
+ * established" for contracts that carry no value at all.
+ */
+const EVIDENCE_LABELS: Readonly<
+  Partial<Record<keyof ContractEducationInput, string>>
+> = {
+  spendRows: "spend and usage rows",
+  scopeRows: "scope rows",
+  documentRows: "document rows",
+  performanceRows: "performance rows",
+  invoiceRows: "invoice rows",
+  opportunityRows: "opportunity rows",
+  changeOrderRows: "change-order rows",
+};
+
+function evidenceLabel(field: keyof ContractEducationInput): string {
+  return EVIDENCE_LABELS[field] ?? String(field);
+}
+
+function describeBenchmarkingClause(value: string | null | undefined): string {
+  const recorded = value?.trim();
+  if (!recorded) return "Benchmarking clause not established";
+  const spoken = recorded.replace(/[_-]+/g, " ").toLowerCase();
+  return `Benchmarking clause ${spoken}`;
+}
+
 export function buildContractEducation(
   input: ContractEducationInput,
 ): ContractEducationView {
@@ -355,9 +408,7 @@ export function buildContractEducation(
     `${display(input.contractName)} · ${display(input.vendorName)}`,
     `${selected.archetypeLabel} guide selected from ${display(input.archetype)}`,
     `${input.scopeRows} scope · ${input.spendRows} spend/usage · ${input.performanceRows} performance · ${input.documentRows} document rows`,
-    input.hasBenchmarking
-      ? "Benchmarking clause present"
-      : "Benchmarking clause not established",
+    describeBenchmarkingClause(input.benchmarkingClause),
   ];
   return {
     archetypeKey: key || "unmapped",
@@ -369,6 +420,8 @@ export function buildContractEducation(
     steps,
     focus: selected.focus,
     basis,
+    requiredEvidenceCount: selected.requiredEvidence.length,
+    missingEvidence: missing.map(evidenceLabel),
     facetRequirements: facetRequirementsForArchetype(key),
   };
 }
@@ -404,12 +457,23 @@ export function contractEducationFromRecord(
   });
   const review = isRecord(sourceRecord.review) ? sourceRecord.review : {};
   const recordState = stringValue(review.status);
-  const state: ContractEducationState =
-    recordState === 'reviewed' || recordState === 'approved'
-      ? 'ready'
-      : steps.some((step) => step.state === 'loaded')
-        ? 'partial'
-        : 'blocked';
+  const reviewed = recordState === 'reviewed' || recordState === 'approved';
+  /**
+   * A step the archetype does not require is not an outstanding step. Counting
+   * it as one is how a contract with nothing missing came to be described as
+   * having a partial basis.
+   */
+  const applicableSteps = steps.filter((step) => step.state !== 'not_required');
+  const outstandingSteps = applicableSteps.filter(
+    (step) => step.state !== 'loaded',
+  );
+  const everyApplicableStepLoaded =
+    applicableSteps.length > 0 && outstandingSteps.length === 0;
+  const state: ContractEducationState = reviewed
+    ? 'ready'
+    : steps.some((step) => step.state === 'loaded')
+      ? 'partial'
+      : 'blocked';
   const archetypeLabel =
     stringValue(education.archetype_label) ??
     stringValue(contract.archetype_label) ??
@@ -434,12 +498,20 @@ export function contractEducationFromRecord(
     headline,
     body,
     state,
+    /*
+     * Name the thing that is actually incomplete. "Education basis is partial"
+     * on a contract whose every applicable step is loaded blames the evidence
+     * for what is really an unsigned review, and reads on screen as a gap the
+     * team has to go and close.
+     */
     stateLabel:
       state === 'ready'
         ? 'Education basis loaded'
-        : state === 'partial'
-          ? 'Education basis is partial'
-          : 'Education starts with evidence mapping',
+        : state === 'blocked'
+          ? 'Education starts with evidence mapping'
+          : everyApplicableStepLoaded
+            ? 'Evidence loaded · record not yet reviewed'
+            : 'Education basis is partial',
     steps,
     focus: body,
     basis: [
@@ -447,6 +519,10 @@ export function contractEducationFromRecord(
       `${archetypeLabel} guide · load-time governed playbook`,
       'Archetype, industry context, evidence requirements, and provenance are linked in the same record',
     ],
+    requiredEvidenceCount: applicableSteps.length,
+    missingEvidence: outstandingSteps.map(
+      (step) => `${step.title.toLowerCase()} evidence`,
+    ),
     facetRequirements,
   };
 }

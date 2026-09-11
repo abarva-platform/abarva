@@ -11,7 +11,7 @@ const base = {
   opportunityRows: 0,
   changeOrderRows: 0,
   hasReviewedPurpose: false,
-  hasBenchmarking: false,
+  benchmarkingClause: null,
 };
 
 describe("contract education guide", () => {
@@ -52,7 +52,7 @@ describe("contract education guide", () => {
       opportunityRows: 3,
       changeOrderRows: 3,
       hasReviewedPurpose: true,
-      hasBenchmarking: true,
+      benchmarkingClause: "present",
     });
 
     expect(view.archetypeLabel).toBe("Managed services agreement");
@@ -113,5 +113,44 @@ describe("contract education guide", () => {
     ]);
     expect(view?.basis.join(" ")).toContain("load-time governed playbook");
     expect(view?.facetRequirements.Performance.state).toBe("not_required");
+  });
+});
+
+describe("benchmarking clause basis line", () => {
+  // The field is a value enum, not a presence flag. A truthiness check on it
+  // reported every populated row — "absent" and "none" included — as a clause
+  // the buyer holds, and could only ever say "not established" for a contract
+  // carrying no value at all.
+  const basisFor = (clause: string | null) =>
+    buildContractEducation({
+      ...base,
+      archetype: "cloud_consumption",
+      benchmarkingClause: clause,
+    }).basis.join(" | ");
+
+  it.each([
+    ["absent", "benchmarking clause absent"],
+    ["none", "benchmarking clause none"],
+    ["limited", "benchmarking clause limited"],
+  ])("does not report %s as a clause the buyer holds", (clause, expected) => {
+    const basis = basisFor(clause).toLowerCase();
+    expect(basis).toContain(expected);
+    expect(basis).not.toContain("benchmarking clause present");
+  });
+
+  it.each([
+    ["present", "benchmarking clause present"],
+    ["present_with_annual_right", "benchmarking clause present with annual right"],
+  ])("reports %s as recorded", (clause, expected) => {
+    expect(basisFor(clause).toLowerCase()).toContain(expected);
+  });
+
+  it("distinguishes an unrecorded clause from a recorded absence", () => {
+    expect(basisFor(null).toLowerCase()).toContain(
+      "benchmarking clause not established",
+    );
+    expect(basisFor("   ").toLowerCase()).toContain(
+      "benchmarking clause not established",
+    );
   });
 });

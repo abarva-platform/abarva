@@ -23,6 +23,11 @@ import {
   YAxis,
 } from "recharts";
 import type { SourceWorkspaceVM } from "./buildViewModel";
+import {
+  ContractEducationBriefing,
+  ContractValueLedgers,
+  ContractWorkflowRail,
+} from "./Contract360Briefing";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import type {
@@ -3222,12 +3227,19 @@ function ContractPage({
           tabNarrative={tabNarrative}
           vm={vm}
         />
-        {tab === "Optimize" ? <ContractOptimizeContent vm={vm} /> : null}
+        {tab === "Optimize" ? (
+          <>
+            <ContractWorkflowRail vm={vm} />
+            <ContractValueLedgers vm={vm} />
+            <ContractOptimizeContent vm={vm} />
+          </>
+        ) : null}
         {tab === "Economics" &&
         detailReady &&
         vm.detail?.spendMonths?.length ? (
           <ContractConsumptionRamp spendMonths={vm.detail.spendMonths} />
         ) : null}
+        {tab === "Economics" ? <ContractValueLedgers vm={vm} /> : null}
         {tab === "Scope" ? (
           <ContractScopeTable scopeRows={scopeRows} />
         ) : tab === "Performance" &&
@@ -3272,7 +3284,7 @@ function ContractPage({
             extractions={vm.detail.docExtractions}
           />
         ) : tab === "Education" && vm.contractEducation ? (
-          <ContractEducationContent education={vm.contractEducation} />
+          <ContractEducationBriefing education={vm.contractEducation} />
         ) : tab === "Optimize" ? null : (
           <ContractTabBody
             contract={contract}
@@ -3850,119 +3862,6 @@ function ContractEducationSidePanel({
         not replace contract evidence or create a value claim.
       </p>
     </div>
-  );
-}
-
-function ContractEducationContent({
-  education,
-}: {
-  education: NonNullable<SourceWorkspaceVM["contractEducation"]>;
-}) {
-  return (
-    <section
-      aria-label="Contract education guide"
-      style={{
-        borderTop: "1px solid rgba(10,10,11,.1)",
-        paddingTop: 18,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 18,
-          alignItems: "start",
-          flexWrap: "wrap",
-          marginBottom: 16,
-        }}
-      >
-        <div style={{ maxWidth: 820 }}>
-          <div className="sw-v2-eyebrow">Archetype coaching guide</div>
-          <h3 style={{ margin: "7px 0 8px", fontSize: 22, lineHeight: 1.16 }}>
-            {education.headline}
-          </h3>
-          <p style={{ margin: 0, color: "#5f5e5a", lineHeight: 1.55 }}>
-            {education.body}
-          </p>
-        </div>
-        <span
-          style={{
-            border: "1px solid rgba(15,110,86,.28)",
-            background: education.state === "ready" ? "#e5f5ef" : "#fbf2df",
-            color: education.state === "ready" ? "#0f6e56" : "#995c00",
-            borderRadius: 999,
-            padding: "7px 10px",
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 9.5,
-            letterSpacing: ".08em",
-            textTransform: "uppercase",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {education.stateLabel}
-        </span>
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          gap: 10,
-        }}
-      >
-        {education.steps.map((step) => (
-          <article
-            key={step.key}
-            style={{
-              border: "1px solid rgba(10,10,11,.12)",
-              borderTop: `3px solid ${step.state === "loaded" ? "#2f9e78" : "#c27a13"}`,
-              borderRadius: 7,
-              padding: "15px 16px 16px",
-              minHeight: 198,
-              background: "#fff",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <strong style={{ fontSize: 15 }}>{step.title}</strong>
-              <span
-                style={{
-                  color: step.state === "loaded" ? "#0f6e56" : "#995c00",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 9,
-                  letterSpacing: ".08em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {step.state === "loaded" ? "Loaded" : "Next"}
-              </span>
-            </div>
-            <p style={{ fontWeight: 700, margin: "14px 0 8px", lineHeight: 1.35 }}>
-              {step.question}
-            </p>
-            <p style={{ color: "#5f5e5a", lineHeight: 1.5, margin: 0, fontSize: 12.5 }}>
-              {step.guidance}
-            </p>
-            <small style={{ display: "block", color: "#888780", marginTop: 14, lineHeight: 1.4 }}>
-              Basis: {step.evidence}.
-            </small>
-          </article>
-        ))}
-      </div>
-      <div
-        style={{
-          marginTop: 12,
-          padding: "12px 14px",
-          background: "#fbfaf7",
-          border: "1px solid rgba(10,10,11,.1)",
-          borderRadius: 7,
-          color: "#5f5e5a",
-          fontSize: 12,
-          lineHeight: 1.5,
-        }}
-      >
-        <strong style={{ color: "#0a0a0b" }}>Data basis.</strong>{" "}
-        {education.basis.join(" · ")}.
-      </div>
-    </section>
   );
 }
 
