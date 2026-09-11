@@ -574,6 +574,7 @@ export function WorkspaceClient({
           agent={SOURCE_WORKSPACE_AGENT}
           surface="/source"
           defaultMode="collapsed"
+          disableStoredMode
           collapsedRestoreMode="expand"
           collapsedSummary={{ label: "aVa", detail: vm.title }}
           thread={thread}
