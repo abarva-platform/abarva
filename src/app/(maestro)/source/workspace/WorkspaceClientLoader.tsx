@@ -23,6 +23,21 @@ interface ImpactResponse {
 }
 
 type ImpactLoadState = "loading" | "ready" | "error";
+const ACTION_READY_WORKSPACE_TABS = new Set([
+  "command",
+  "coverage",
+  "evidence",
+  "levers",
+]);
+
+export function initialPortfolioImpactModeForWorkspaceTab(
+  workspaceTab?: string | null,
+): SourceWorkspaceImpactMode {
+  const normalized = workspaceTab?.trim().toLowerCase();
+  return normalized && ACTION_READY_WORKSPACE_TABS.has(normalized)
+    ? "full"
+    : "deferred";
+}
 
 function portfolioApiUrl(input: {
   readonly tenantKey: string;
@@ -97,15 +112,19 @@ export function WorkspaceClientLoader({
   const [impactLoadState, setImpactLoadState] =
     useState<ImpactLoadState>("loading");
   const [error, setError] = useState<string | null>(null);
-  const deferredUrl = useMemo(
+  const initialImpactMode = useMemo(
+    () => initialPortfolioImpactModeForWorkspaceTab(initialWorkspaceTab),
+    [initialWorkspaceTab],
+  );
+  const initialPortfolioUrl = useMemo(
     () =>
       portfolioApiUrl({
         tenantKey,
         asOfDateIso,
         sourceProviderKey,
-        impactMode: "deferred",
+        impactMode: initialImpactMode,
       }),
-    [asOfDateIso, sourceProviderKey, tenantKey],
+    [asOfDateIso, initialImpactMode, sourceProviderKey, tenantKey],
   );
   const fullUrl = useMemo(
     () =>
@@ -125,10 +144,16 @@ export function WorkspaceClientLoader({
     setError(null);
     setImpactLoadState("loading");
 
-    fetchPortfolio(deferredUrl)
+    fetchPortfolio(initialPortfolioUrl)
       .then((payload) => {
         if (cancelled) return;
-        const fullImpactPromise = fetchImpact(fullUrl);
+        const fullImpactPromise =
+          initialImpactMode === "full"
+            ? Promise.resolve({
+                impact: payload.portfolio.impact,
+                sourceProviderKey: payload.sourceProviderKey,
+              })
+            : fetchImpact(fullUrl);
         setPortfolio(payload.portfolio);
         setResolvedProvider(payload.sourceProviderKey);
 
@@ -162,7 +187,7 @@ export function WorkspaceClientLoader({
     return () => {
       cancelled = true;
     };
-  }, [deferredUrl, fullUrl]);
+  }, [fullUrl, initialImpactMode, initialPortfolioUrl]);
 
   if (error) {
     return (
