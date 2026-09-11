@@ -178,9 +178,15 @@ export async function assembleMoveSolutionContext(
 
   // Promote concrete P2 evidence into first-class prompt fields so the model does
   // not have to hunt through raw CSV/XLSX excerpts for the facts that should drive
-  // the diagnostic thesis. P3 draft shaping must also carry these P2 signals
-  // forward so the future-state blueprint is grounded in the approved diagnostic.
-  if (currentStateBound && (args.targetPhase === 2 || args.targetPhase === 3)) {
+  // the diagnostic thesis. Later phase artifacts inherit the same diagnostic
+  // metrics through approved prior digests, so keep promoting them instead of
+  // letting terminal artifacts fall back to generic prose.
+  const hasSpecificEvidenceInputs =
+    currentStateBound ||
+    Object.keys(ctx.baselineMetrics ?? {}).length > 0 ||
+    (ctx.metricsThatMatter?.length ?? 0) > 0 ||
+    (ctx.evidenceTaxonomy?.length ?? 0) > 0;
+  if (hasSpecificEvidenceInputs && args.targetPhase >= 2) {
     const specificity = inferP2EvidenceSpecificity(ctx);
     ctx = applyPhaseDigest(ctx, specificity);
   }

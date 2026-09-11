@@ -322,6 +322,13 @@ export function premiumGoldenBarOptionsForArtifact(
     enforceMaximumWordCount,
     ...(advisoryMaximumWordCount ? { advisoryMaximumWordCount } : {}),
     forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
+    ...(context
+      ? {
+          requiredExactEvidenceTerms: exactEvidenceTermsForGoldenBar(context),
+          requiredTaxonomyTerms: taxonomyTermsForGoldenBar(context),
+          forbidClientFacingRawIds: true,
+        }
+      : {}),
     // REF_EXECUTIVE_ROADMAP pilot (2026-07-25) — mirrors the orchestrator's
     // forbiddenContentPatterns for the same artifact type, so both pipelines
     // flag the same "this reads like an implementation schedule" signal.
@@ -396,6 +403,16 @@ function metricsThatMatterBlock(ctx: SolutionContext): string {
       ].filter(Boolean);
       return `- ${parts.join(" | ")}`;
     })
+    .join("\n");
+}
+
+function recordedBaselineMetricsBlock(ctx: SolutionContext): string {
+  const entries = Object.entries(ctx.baselineMetrics ?? {}).filter(
+    ([label, value]) => label.trim() && value.trim(),
+  );
+  if (!entries.length) return "- [none captured as structured baseline metrics]";
+  return entries
+    .map(([label, value]) => `- ${label}: ${value}`)
     .join("\n");
 }
 
@@ -917,6 +934,8 @@ Standard: ${STRATEGIC_MOVES_ARTIFACT_STANDARD_DOC}
 - Current state, extracted context, and structured summaries must be used when present below; do not treat file names or metadata as a substitute for extracted evidence.
 - Metrics that must be foregrounded when available:
 ${metricsThatMatterBlock(ctx)}
+- Recorded baseline metrics from phase capture; use these exact values when they are relevant to the artifact:
+${recordedBaselineMetricsBlock(ctx)}
 - Exception taxonomy / risk-owner signals that must be used when available:
 ${evidenceTaxonomyBlock(ctx)}
 - Client-actionable missing inputs:

@@ -468,6 +468,31 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toMatch(/If the evidence packet contains exact metrics/);
   });
 
+  it("foregrounds recorded baseline metrics even when metric inference has not run", () => {
+    const ctx = applyPhaseDigest(richContext(), {
+      baselineMetrics: {
+        "Care-gap closure rate": "41.2% [quality_measures.csv]",
+        "Unmonitored interfaces":
+          "33 of 86 plus 18 partial [interface_inventory.csv]",
+      },
+    });
+
+    const p = buildArtifactPrompt({
+      artifact: "handoff_package",
+      phase: 5,
+      context: ctx,
+    });
+
+    expect(p.user).toContain("RECORDED BASELINE METRICS");
+    expect(p.user).toContain("Care-gap closure rate: 41.2%");
+    expect(p.user).toContain(
+      "Unmonitored interfaces: 33 of 86 plus 18 partial",
+    );
+    expect(p.user).toContain(
+      "Recorded baseline metrics from phase capture; use these exact values",
+    );
+  });
+
   it("draft prompt uses the standard pre-gate caveat", () => {
     const p = buildArtifactPrompt({
       artifact: "charter",
