@@ -15,6 +15,7 @@ import { buildContractOptimizationSpine } from "@/lib/source/data-model/contract
 import type { SourcingOpportunityReason } from "@/lib/source/data-model/sourcing-opportunities";
 import { isReviewableContractScope } from "@/lib/source/contract-optimization-intake";
 import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
+import { buildContractEducation } from "@/lib/source/contract-intelligence/education";
 
 /**
  * `node-postgres` returns NUMERIC/DECIMAL columns as strings; a lone value
@@ -580,6 +581,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       "Relationship",
       "Evidence",
       "Optimize",
+      "Education",
     ],
     evidence: [
       "Coverage",
@@ -2014,6 +2016,34 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const performancePeriods = detail?.performancePeriods ?? [];
   const spendMonths = detail?.spendMonths ?? [];
   const opportunitySet = detail?.optimizationOpportunitySet ?? null;
+  const contractCoverage = c
+    ? vm.portfolio.impact.evidenceCoverage.find(
+        (row) => row.contract_id === c.contract_id,
+      )
+    : null;
+  const contractEducation = c
+    ? buildContractEducation({
+        archetype: c.contract_archetype ?? contractCoverage?.contract_archetype,
+        vendorName: c.vendor_name,
+        contractName: c.contract_name,
+        scopeRows: numberFromDb(contractCoverage?.scope_rows) ?? evidenceScope.length,
+        spendRows: numberFromDb(contractCoverage?.spend_rows) ?? spendMonths.length,
+        invoiceRows: detail?.evidencePerformance?.invoice_line_count ?? 0,
+        performanceRows:
+          numberFromDb(contractCoverage?.performance_rows) ?? performancePeriods.length,
+        documentRows:
+          numberFromDb(contractCoverage?.document_page_text_rows) ??
+          detail?.docExtractions.length ??
+          0,
+        opportunityRows:
+          numberFromDb(contractCoverage?.opportunity_rows) ??
+          opportunitySet?.opportunities.length ??
+          0,
+        changeOrderRows: contractCoverage?.change_order_rows ?? 0,
+        hasReviewedPurpose: Boolean(textOrNull(c.purpose_summary)),
+        hasBenchmarking: Boolean(textOrNull(c.benchmarking_clause)),
+      })
+    : null;
   const cVm = c
     ? {
         id: c.contract_id,
@@ -4155,6 +4185,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     cLeverage: false,
     cEvidence: activeTab === "Evidence",
     cActions: activeTab === "Optimize",
+    cEducation: activeTab === "Education",
     termRows,
     econBars,
     scopeRows,
@@ -4194,6 +4225,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     goActions: () => vm.setTab("contract", "Optimize"),
     detailState,
     detail,
+    contractEducation,
 
     isOpp: kind === "opportunity" && !!opp,
     oppLevers,

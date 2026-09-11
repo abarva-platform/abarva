@@ -690,6 +690,64 @@ export function ContractCanvas({ vm }: { vm: SourceWorkspaceVM }) {
         </>
       ) : null}
 
+      {vm.cEducation && vm.contractEducation ? (
+        <section
+          style={{
+            background: "#fff",
+            border: "1px solid rgba(10,10,11,.12)",
+            borderRadius: 8,
+            padding: "22px 26px",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 9.5,
+              letterSpacing: ".1em",
+              textTransform: "uppercase",
+              color: "#0f6e56",
+              marginBottom: 8,
+            }}
+          >
+            Archetype coaching guide
+          </div>
+          <h2 style={{ margin: "0 0 8px", fontSize: 22 }}>
+            {vm.contractEducation.headline}
+          </h2>
+          <p style={{ color: "#5f5e5a", lineHeight: 1.55, maxWidth: 900 }}>
+            {vm.contractEducation.body}
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+              gap: 10,
+              marginTop: 16,
+            }}
+          >
+            {vm.contractEducation.steps.map((step) => (
+              <div
+                key={step.key}
+                style={{
+                  border: "1px solid rgba(10,10,11,.12)",
+                  borderTop: `3px solid ${step.state === "loaded" ? "#2f9e78" : "#c27a13"}`,
+                  borderRadius: 7,
+                  padding: "14px 15px",
+                  minHeight: 170,
+                }}
+              >
+                <b>{step.title}</b>
+                <p style={{ fontWeight: 700, lineHeight: 1.35 }}>{step.question}</p>
+                <p style={{ color: "#5f5e5a", lineHeight: 1.45, fontSize: 12 }}>
+                  {step.guidance}
+                </p>
+                <small style={{ color: "#888780" }}>Basis: {step.evidence}.</small>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {vm.cRenewal ? (
         <div
           style={{
