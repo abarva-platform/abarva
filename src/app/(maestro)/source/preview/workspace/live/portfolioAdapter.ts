@@ -978,7 +978,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                  END AS finance_confirmation_state,
                  o.recommended_action AS next_action,
                  o.accountable_role,
-                 o.decision_due_date,
+                 o.decision_due_date::text AS decision_due_date,
                  NULL::text AS coverage_state,
                  CASE
                    WHEN o.readiness_state = 'finance_confirmation_required'

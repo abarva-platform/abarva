@@ -61,6 +61,10 @@ function isDirectActionCandidateSql(sql: string): boolean {
   );
 }
 
+function normalizedSql(sql: string): string {
+  return sql.replace(/\s+/g, " ").trim();
+}
+
 describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
   let dir: string;
 
@@ -1127,6 +1131,15 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       runCalls.some((call) =>
         call.sql.includes("FROM source.optimization_opportunity o"),
       ),
+    ).toBe(true);
+    expect(
+      runCalls
+        .filter((call) => isDirectActionCandidateSql(call.sql))
+        .some((call) =>
+          normalizedSql(call.sql).includes(
+            "o.decision_due_date::text AS decision_due_date",
+          ),
+        ),
     ).toBe(true);
   });
 
