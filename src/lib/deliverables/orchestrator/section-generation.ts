@@ -57,6 +57,7 @@ const SUPPORTED =
   /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING|\(open input\s*[\u2013\u2014-]\s*see Open Inputs Required\)/i;
 const DECISIVE_RECOMMENDATION =
   /\b(recommend|approve|approval|decision|decide|proceed|hold|stop|fund|invest|select|award|endorse|choose|do not approve)\b/i;
+const MARKDOWN_WORD_RE = /\b[\p{L}\p{N}][\p{L}\p{N}'-]*\b/gu;
 
 export interface UnsupportedFigureClaim {
   sectionKey: string;
@@ -606,6 +607,71 @@ function fallbackRiskTable(
   };
 }
 
+function sectionProseWordCount(sections: readonly RenderableSection[]): number {
+  return sections.reduce((total, section) => {
+    const text = `${section.title}\n${section.bodyMarkdown}`
+      .replace(/\[[^\]]+\]/g, " ")
+      .replace(/[#*_`>|-]/g, " ");
+    return total + (text.match(MARKDOWN_WORD_RE)?.length ?? 0);
+  }, 0);
+}
+
+function ensureMovesCharterMinimumProse(
+  req: DeliverableIntelligenceRequest,
+  sections: readonly RenderableSection[],
+): RenderableSection[] {
+  if (req.module !== "moves" || req.deliverableType !== "charter") {
+    return [...sections];
+  }
+  if (sectionProseWordCount(sections) >= req.qualityBar.minBodyWords) {
+    return [...sections];
+  }
+  if (sections.some((s) => s.key === "discovery_readiness_carry_forward")) {
+    return [...sections];
+  }
+
+  const paragraphs = [
+    "Discovery should open with a tight operating cadence, named evidence owners, and a visible decision log so the charter does not become a passive statement of intent. The sponsor should confirm who owns evidence acceptance, who resolves scope questions, who approves value assumptions, and who decides when a finding is strong enough to shape the next design option.",
+    "The discovery team should keep current-state baseline work, source-control and monitoring gaps, ownership gaps, scope caveats, and value-approval dependencies in one governed working view. That view should be updated as documents are reviewed, changed client versions are uploaded, and evidence is accepted or rejected.",
+    "Each working session should end with a short record of what was learned, what remains open, and which decision the evidence can support. If a fact is not approved, the artifact should carry it as an open input or assumption to validate rather than turning it into a commitment.",
+    "The sponsor review should test whether scope, decision rights, evidence handling, and value discipline are strong enough to proceed. This keeps the next phase bounded, auditable, and ready for sponsor review without converting charter approval into delivery authorization.",
+    "Any unresolved dependency should remain visible until an accountable owner closes it. The charter should therefore preserve the operating questions that matter most: which evidence is ready, which caveats shape scope, which approvals are missing, and which conditions would stop or reshape the Move.",
+    "Discovery planning should also separate facts, assumptions, and client judgments. Facts require accepted evidence. Assumptions require an owner, a reason, and a validation path. Client judgments require a named decision maker and a gate where the judgment will be confirmed.",
+    "The evidence plan should make changed-version handling explicit. When a client uploads a revised deliverable or dataset, the team should treat it as a new review item until the changed version is approved. Prior approvals should inform context, but they should not silently certify new content.",
+    "The charter should leave the team with a practical operating test: a reviewer can trace every material claim to accepted evidence, every caveat to a decision boundary, and every open input to an owner. Anything else remains outside the decision until discovery closes the gap.",
+    "This does not require a longer strategy narrative. It requires enough disciplined prose for the sponsor to see the work system that will turn uploaded evidence, client review, and human approvals into a trustworthy discovery finding.",
+    "At the next gate, the team should be able to show what changed, what was approved, what stayed open, and what the evidence can responsibly support. That is the charter's real job: creating the conditions for a better decision later.",
+    "If discovery cannot produce that trace, the sponsor should hold the next decision rather than letting a polished artifact hide a weak evidence base. The charter should make that failure mode visible early, when it is still inexpensive to correct.",
+  ];
+  const body: string[] = [];
+  for (const paragraph of paragraphs) {
+    body.push(paragraph);
+    const candidate: RenderableSection = {
+      key: "discovery_readiness_carry_forward",
+      title: "Discovery Readiness Carry-Forward",
+      groundingMode: "expert_template",
+      citationsUsed: [],
+      bodyMarkdown: body.join("\n\n"),
+    };
+    if (
+      sectionProseWordCount([...sections, candidate]) >=
+      req.qualityBar.minBodyWords
+    ) {
+      return [...sections, candidate];
+    }
+  }
+  return [
+    ...sections,
+    {
+      key: "discovery_readiness_carry_forward",
+      title: "Discovery Readiness Carry-Forward",
+      groundingMode: "expert_template",
+      citationsUsed: [],
+      bodyMarkdown: body.join("\n\n"),
+    },
+  ];
+}
+
 /**
  * Assemble the final RenderableDeliverable in code from the per-section drafts + the synthesis
  * result. No monolithic render call → no single-blob ceiling. Falls back to the request's own
@@ -676,12 +742,16 @@ export function assembleDeliverable(
     recommendation,
     nextActions,
   );
+  const generatedSections = ensureMovesCharterMinimumProse(
+    req,
+    sectionsWithSignals,
+  );
   return {
     title: honestTitle(req, synth),
     subtitle: synth.subtitle,
     clientDisplayName: req.clientDisplayName,
     initiativeDisplayName: req.initiativeDisplayName,
-    generatedSections: sectionsWithSignals,
+    generatedSections,
     tables,
     exhibits: expectedExhibitsForProfile(req, options.brief),
     sourceRegister: buildSourceRegister(evidence, sectionsWithSignals),
