@@ -1018,7 +1018,7 @@ async function loadDirectSourceWorkspaceImpactRows(
                    NULLIF(o.payload->>'native_vs_nexus_note', ''),
                    NULLIF(o.payload->>'vendor_concession', ''),
                    NULLIF(o.payload->>'negotiation_language', ''),
-                   NULLIF(o.evidence_grade, '')
+                   NULLIF(o.evidence_grade::text, '')
                  ) AS deterministic_basis,
                  o.amount_usd::numeric AS candidate_amount_usd,
                  COALESCE(NULLIF(o.payload->>'priority', ''), o.stage) AS priority,
@@ -1663,7 +1663,7 @@ async function loadDerivedSourceWorkspaceImpactLayer(
                NULLIF(o.payload->>'native_vs_nexus_note', ''),
                NULLIF(o.payload->>'vendor_concession', ''),
                NULLIF(o.payload->>'negotiation_language', ''),
-               NULLIF(o.evidence_grade, '')
+               NULLIF(o.evidence_grade::text, '')
              ) AS deterministic_basis,
              o.amount_usd::numeric AS candidate_amount_usd,
              COALESCE(NULLIF(o.payload->>'priority', ''), o.stage) AS priority,
