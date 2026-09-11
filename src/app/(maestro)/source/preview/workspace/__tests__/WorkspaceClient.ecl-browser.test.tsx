@@ -554,7 +554,8 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
     expect(screen.getByText("Optimize gap")).toBeTruthy();
-    expect(screen.getByText("Evidence state")).toBeTruthy();
+    expect(screen.getByText("Contract readout")).toBeTruthy();
+    expect(screen.getByText("Decision consequence")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Story" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Scope" }));
@@ -577,7 +578,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeNull();
     expect(screen.getByText("/ Coverage")).toBeTruthy();
     expect(screen.getByText("Big is not the same as ready")).toBeTruthy();
-    expect(screen.getByLabelText("Vendor readiness scatter")).toBeTruthy();
+    expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
     expect(screen.getByText("Archetype coverage")).toBeTruthy();
     expect(
       screen.getByText("Archetype determines which levers are allowed"),
@@ -656,7 +657,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     fireEvent.click(screen.getByRole("button", { name: "Coverage" }));
     expect(screen.getByText("/ Coverage")).toBeTruthy();
     expect(screen.getByText("Big is not the same as ready")).toBeTruthy();
-    expect(screen.getByLabelText("Vendor readiness scatter")).toBeTruthy();
+    expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
     expect(screen.getByText("Archetype coverage")).toBeTruthy();
     expect(
       screen.getByText("Archetype determines which levers are allowed"),
@@ -1074,7 +1075,7 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Coverage" })[0]);
     expect(screen.getByText("Readiness by value")).toBeTruthy();
-    expect(screen.getByLabelText("Vendor readiness scatter")).toBeTruthy();
+    expect(screen.getByLabelText("Vendor readiness by value")).toBeTruthy();
     expect(screen.getByText("Archetype coverage")).toBeTruthy();
     expect(screen.getByText("Declared plays")).toBeTruthy();
     expect(
@@ -1143,7 +1144,8 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.getByText("No contract-specific optimization levers loaded."),
     ).toBeTruthy();
-    expect(screen.getByText("Evidence state")).toBeTruthy();
+    expect(screen.getByText("Contract readout")).toBeTruthy();
+    expect(screen.getByText("Decision consequence")).toBeTruthy();
     expect(screen.queryByText(/Savings realized/i)).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Performance" }));

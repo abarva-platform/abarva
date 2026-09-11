@@ -25,6 +25,7 @@ import {
   vendorArchetypeRows,
   vendorCoverageRows,
   vendorLinkedContracts,
+  vendorReadinessDecisionRows,
 } from "../WorkspaceExecutiveShell";
 import { portfolioDiscountComparatorSummary } from "../contractDiscountComparator";
 import { focusableContractRows } from "../contractDiscovery";
@@ -1487,6 +1488,62 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       unmappedCount: 1,
       supplementalDeclaredCount: 2,
     });
+  });
+
+  it("turns coverage readiness into readable decision rows instead of chart coordinates", () => {
+    const rows = vendorReadinessDecisionRows({
+      tenantKey: "meridian-health",
+      impact: {
+        vendorPositions: [
+          {
+            vendor_ref: "vendor-ready",
+            vendor_name: "Ready Vendor",
+            contract_count: 4,
+            annual_value: 1_000_000,
+            action_candidate_count: 2,
+            candidate_amount_usd: 250_000,
+            decision_ready_contracts: 3,
+            spend_rows: 12,
+            performance_rows: 4,
+            unclaimed_credit_usd: 10_000,
+            vendor_position_state: "decision_ready",
+          },
+          {
+            vendor_ref: "vendor-large",
+            vendor_name: "Large Thin Vendor",
+            contract_count: 10,
+            annual_value: 10_000_000,
+            action_candidate_count: 0,
+            candidate_amount_usd: 0,
+            decision_ready_contracts: 0,
+            spend_rows: 0,
+            performance_rows: 0,
+            unclaimed_credit_usd: 0,
+            vendor_position_state: "not_loaded",
+          },
+        ],
+      },
+    } as unknown as Parameters<typeof vendorReadinessDecisionRows>[0]);
+
+    expect(rows[0]).toMatchObject({
+      vendorRef: "vendor-ready",
+      annualValueLabel: "$1.0M",
+      candidateValueLabel: "$250K",
+      readinessLabel: "3/4 ready · 75%",
+      actionLabel: "2 actions",
+      evidenceLabel: "12 spend · 4 performance · credit gap",
+      postureLabel: "Decision Ready",
+    });
+    expect(rows[1]).toMatchObject({
+      vendorRef: "vendor-large",
+      candidateValueLabel: "No candidate value",
+      readinessLabel: "0/10 ready · 0%",
+      evidenceLabel: "No depth evidence",
+      postureLabel: "Not Loaded",
+    });
+    expect(rows[0]).not.toHaveProperty("x");
+    expect(rows[0]).not.toHaveProperty("y");
+    expect(rows[0]).not.toHaveProperty("size");
   });
   it("shows the levers themselves, not just a count of them", () => {
     const rows = leverTableRows([
