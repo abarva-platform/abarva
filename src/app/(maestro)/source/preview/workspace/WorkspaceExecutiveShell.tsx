@@ -51,6 +51,7 @@ import type { Contract360Response } from "./live/contractDetail";
 import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
 import type { ContractFacetKey } from "@/lib/source/contract-intelligence/education";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
+import { buildCanonicalWorkspaceUrl } from "./workspaceNavigation";
 import type {
   DocExtractionRow,
   DocFileRow,
@@ -986,6 +987,38 @@ export function WorkspaceExecutiveShell({
   const isCommandCenter = !selectedContractId;
   const dateControl = sourceDateControl(portfolio);
 
+  // Keep the canonical /source URL as the single source of navigation truth.
+  // The workspace deliberately stays client-side so tab changes do not swap
+  // shells, but a refresh or shared link must reconstruct the same selection.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const nextUrl = buildCanonicalWorkspaceUrl({
+      currentHref: currentUrl,
+      selectedKind: logic.state.sel.kind,
+      selectedId: logic.state.sel.id,
+      contractTab: logic.state.tabs.contract,
+      currentPage,
+      sourceClientKey,
+      sourceProviderKey,
+    });
+    if (nextUrl !== currentUrl) {
+      window.history.replaceState(
+        { ...window.history.state, sourceWorkspace: true },
+        "",
+        nextUrl,
+      );
+    }
+  }, [
+    currentPage,
+    logic.state.sel.id,
+    logic.state.sel.kind,
+    logic.state.tabs.contract,
+    selectedContractId,
+    sourceClientKey,
+    sourceProviderKey,
+  ]);
+
   const resetMainScroll = useCallback(() => {
     const schedule =
       typeof requestAnimationFrame === "function"
@@ -1128,7 +1161,10 @@ export function WorkspaceExecutiveShell({
                 role="button"
                 href={workspaceHrefFor(label)}
                 className={label === currentPage ? "is-active" : ""}
-                onClick={() => selectPage(label)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  selectPage(label);
+                }}
               >
                 <span>{label}</span>
               </a>
