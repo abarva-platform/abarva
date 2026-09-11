@@ -130,7 +130,10 @@
   overflow-x: auto;
 }
 
-.sw-v2-horizontal-tabs button {
+.sw-v2-horizontal-tabs button,
+.sw-v2-horizontal-tabs a {
+  display: inline-grid;
+  place-items: center;
   min-height: 48px;
   min-width: 0;
   border: 1px solid transparent;
@@ -143,17 +146,20 @@
   font-size: 14px;
   font-weight: 760;
   cursor: pointer;
+  text-decoration: none;
   white-space: nowrap;
 }
 
-.sw-v2-horizontal-tabs button.is-active {
+.sw-v2-horizontal-tabs button.is-active,
+.sw-v2-horizontal-tabs a.is-active {
   border-color: rgba(29, 158, 117, 0.42);
   background: #e1f5ee;
   color: #0f6e56;
   box-shadow: inset 0 -3px 0 #1d9e75;
 }
 
-.sw-v2-horizontal-tabs button:hover {
+.sw-v2-horizontal-tabs button:hover,
+.sw-v2-horizontal-tabs a:hover {
   border-color: rgba(29, 158, 117, 0.28);
   background: rgba(225, 245, 238, 0.68);
   color: #0f6e56;
@@ -2265,7 +2271,8 @@
     text-align: center;
   }
 
-  .sw-v2-horizontal-tabs button {
+  .sw-v2-horizontal-tabs button,
+  .sw-v2-horizontal-tabs a {
     min-width: 126px;
     min-height: 44px;
     padding: 0 16px;

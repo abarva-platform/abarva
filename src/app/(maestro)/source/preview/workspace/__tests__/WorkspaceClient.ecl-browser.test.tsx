@@ -456,7 +456,17 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText(/Risk score/i)).toBeNull();
     expect(screen.queryByText(/Spend by category/i)).toBeNull();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Contracts" })[0]);
+    const contractsTab = screen.getAllByRole("button", {
+      name: "Contracts",
+    })[0] as HTMLAnchorElement;
+    expect(contractsTab.getAttribute("href")).toContain(
+      "/source?workspaceTab=contracts",
+    );
+    expect(contractsTab.getAttribute("href")).toContain(
+      "client=meridian-health",
+    );
+
+    fireEvent.click(contractsTab);
 
     await waitFor(() => expect(scrollToMock).toHaveBeenCalled());
     expect(
@@ -576,7 +586,13 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.queryByText("Portfolio position")).toBeNull();
     expect(screen.queryByText("Material contracts")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Levers" }));
+    const leversTab = screen.getByRole("button", {
+      name: "Levers",
+    }) as HTMLAnchorElement;
+    expect(leversTab.getAttribute("href")).toContain(
+      "/source?workspaceTab=levers",
+    );
+    fireEvent.click(leversTab);
     expect(screen.getByRole("tab", { name: "Queue" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By type" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By contract" })).toBeTruthy();

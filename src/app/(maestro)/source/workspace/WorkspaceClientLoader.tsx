@@ -80,6 +80,7 @@ export function WorkspaceClientLoader({
   sourceProviderKey,
   initialContractId,
   initialContractTab,
+  initialWorkspaceTab,
 }: {
   readonly tenantName: string;
   readonly tenantKey: string;
@@ -87,6 +88,7 @@ export function WorkspaceClientLoader({
   readonly sourceProviderKey?: SourceWorkspaceProviderMode | null;
   readonly initialContractId?: string | null;
   readonly initialContractTab?: string | null;
+  readonly initialWorkspaceTab?: string | null;
 }) {
   const [portfolio, setPortfolio] =
     useState<SourceWorkspacePortfolioData | null>(null);
@@ -222,6 +224,7 @@ export function WorkspaceClientLoader({
       impactLoadState={impactLoadState}
       initialContractId={initialContractId}
       initialContractTab={initialContractTab}
+      initialWorkspaceTab={initialWorkspaceTab}
     />
   );
 }
