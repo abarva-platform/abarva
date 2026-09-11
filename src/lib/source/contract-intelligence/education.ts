@@ -14,6 +14,14 @@ export interface ContractFacetRequirement {
   readonly reason: string;
 }
 
+export interface ContractEducationThreshold {
+  /** The observable signal, in the reader's terms. */
+  readonly signal: string;
+  /** What it changes about the commercial position. */
+  readonly decision: string;
+  readonly tone: "act" | "watch" | "relax";
+}
+
 export interface ContractEducationStep {
   readonly key: "track" | "load" | "observe";
   readonly title: string;
@@ -45,6 +53,15 @@ export interface ContractEducationView {
    */
   readonly requiredEvidenceCount: number;
   readonly missingEvidence: readonly string[];
+  /**
+   * The thresholds that change the commercial decision, written before the
+   * numbers move so the response is a policy rather than an argument.
+   *
+   * Authored per archetype, never derived from a contract's own figures: a
+   * threshold inferred from the data it is meant to judge is circular, and on a
+   * governed surface it would read as a finding rather than a rule.
+   */
+  readonly thresholds: readonly ContractEducationThreshold[];
   readonly facetRequirements: Readonly<
     Record<ContractFacetKey, ContractFacetRequirement>
   >;
@@ -173,6 +190,36 @@ const GUIDES: readonly EducationGuide[] = [
     focus:
       "Turn consumption evidence into a right-sized commitment and a controlled renewal decision.",
     requiredEvidence: ["spendRows", "scopeRows", "documentRows"],
+    thresholds: [
+      {
+        signal:
+          "Utilization is still under 40% at the two-thirds mark of the term",
+        decision:
+          "Serve notice and re-base. The commitment was sized wrong, not the adoption plan.",
+        tone: "act",
+      },
+      {
+        signal:
+          "Utilization crosses 70%",
+        decision:
+          "Stop treating this as over-bought and move the conversation to rate and tier.",
+        tone: "relax",
+      },
+      {
+        signal:
+          "A third workload group starts drawing on the commitment",
+        decision:
+          "Re-forecast before renewal — the original sizing may turn out to be right.",
+        tone: "watch",
+      },
+      {
+        signal:
+          "Unconsumed balance exceeds a year of observed use",
+        decision:
+          "Carry-forward becomes the primary ask, ahead of a step-down.",
+        tone: "watch",
+      },
+    ],
     stepCopy: {
       track: {
         key: "track",
@@ -216,6 +263,29 @@ const GUIDES: readonly EducationGuide[] = [
       "performanceRows",
       "invoiceRows",
     ],
+    thresholds: [
+      {
+        signal:
+          "Service credits are earned two periods running",
+        decision:
+          "Raise the credits as a governance failure, not a billing correction.",
+        tone: "act",
+      },
+      {
+        signal:
+          "Ticket volume falls while the fee holds flat",
+        decision:
+          "The price no longer tracks the work. Re-base at the next commercial gate.",
+        tone: "watch",
+      },
+      {
+        signal:
+          "A scope change lands without a change order",
+        decision:
+          "Stop and document it. Undocumented scope is the most expensive drift on this contract type.",
+        tone: "act",
+      },
+    ],
     stepCopy: {
       track: {
         key: "track",
@@ -257,6 +327,7 @@ const GUIDES: readonly EducationGuide[] = [
     focus:
       "Reduce shelfware and renewal surprise without confusing adoption signals with a savings outcome.",
     requiredEvidence: ["documentRows", "spendRows", "scopeRows"],
+    thresholds: [],
     stepCopy: {
       track: {
         key: "track",
@@ -291,6 +362,22 @@ const FALLBACK_GUIDE: EducationGuide = guide({
   focus:
     "Map the contract to an archetype, then run its evidence loop through renewal and value review.",
   requiredEvidence: ["documentRows", "scopeRows", "spendRows"],
+  thresholds: [
+    {
+      signal:
+        "The notice window opens with no position agreed",
+      decision:
+        "Escalate. Auto-renewal is the default outcome of an unmade decision.",
+      tone: "act",
+    },
+    {
+      signal:
+        "Invoiced and paid diverge for two periods",
+      decision:
+        "Reconcile before treating any figure on this contract as evidence.",
+      tone: "watch",
+    },
+  ],
   stepCopy: {
     track: {
       key: "track",
@@ -422,6 +509,7 @@ export function buildContractEducation(
     basis,
     requiredEvidenceCount: selected.requiredEvidence.length,
     missingEvidence: missing.map(evidenceLabel),
+    thresholds: selected.thresholds,
     facetRequirements: facetRequirementsForArchetype(key),
   };
 }
@@ -519,6 +607,9 @@ export function contractEducationFromRecord(
       `${archetypeLabel} guide · load-time governed playbook`,
       'Archetype, industry context, evidence requirements, and provenance are linked in the same record',
     ],
+    thresholds:
+      GUIDES.find((candidate) => candidate.match(archetypeKey))?.thresholds ??
+      FALLBACK_GUIDE.thresholds,
     requiredEvidenceCount: applicableSteps.length,
     missingEvidence: outstandingSteps.map(
       (step) => `${step.title.toLowerCase()} evidence`,

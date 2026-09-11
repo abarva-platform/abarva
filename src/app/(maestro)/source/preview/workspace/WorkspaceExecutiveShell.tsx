@@ -37,6 +37,10 @@ import {
   ContractScopeBriefing,
   ContractStoryBriefing,
 } from "./Contract360Surfaces";
+import {
+  ContractConsumptionMix,
+  ContractEconomicsBriefing,
+} from "./Contract360Economics";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
@@ -3358,7 +3362,18 @@ function ContractPage({
         vm.detail?.spendMonths?.length ? (
           <ContractConsumptionRamp spendMonths={vm.detail.spendMonths} />
         ) : null}
+        {tab === "Economics" && detailReady && vm.detail?.spendMonths?.length ? (
+          <ContractEconomicsBriefing spendMonths={vm.detail.spendMonths} />
+        ) : null}
         {tab === "Economics" ? <ContractValueLedgers vm={vm} /> : null}
+        {tab === "Performance" &&
+        !contractFacetIsRequired(vm, "Performance") &&
+        detailReady &&
+        vm.detail?.spendMonths?.length ? (
+          // On a contract type with no service-credit regime the useful
+          // performance question is which workloads draw on the commitment.
+          <ContractConsumptionMix spendMonths={vm.detail.spendMonths} vm={vm} />
+        ) : null}
         {tab === "Story" ? (
           <ContractStoryBriefing
             contract={contract}

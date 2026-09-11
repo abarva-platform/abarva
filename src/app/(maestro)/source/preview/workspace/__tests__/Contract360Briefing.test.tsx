@@ -95,6 +95,13 @@ const education = (
     basis: ["12 spend/usage rows", "Benchmarking clause absent"],
     requiredEvidenceCount: 2,
     missingEvidence: [],
+    thresholds: [
+      {
+        signal: "Utilization stays under 40%",
+        decision: "Serve notice and re-base.",
+        tone: "act",
+      },
+    ],
     facetRequirements: {} as ContractEducationView["facetRequirements"],
     steps: [
       {
