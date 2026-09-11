@@ -12,6 +12,9 @@ import {
 import { focusableContractRows } from "./contractDiscovery";
 import { buildContractOptimizationLedger } from "@/lib/source/data-model/contract-optimization-ledger";
 import { buildContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
+import { buildContractOptimizationEvidenceReadiness } from "@/lib/source/data-model/contract-optimization-evidence-readiness";
+import { summarizeOpportunityTraceability } from "@/lib/source/data-model/contract-optimization-traceability";
+import { deriveOptimizeWorkflowPosition } from "@/lib/source/data-model/contract-optimization-workflow-step";
 import type { SourcingOpportunityReason } from "@/lib/source/data-model/sourcing-opportunities";
 import { isReviewableContractScope } from "@/lib/source/contract-optimization-intake";
 import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
@@ -2049,7 +2052,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           0,
         changeOrderRows: contractCoverage?.change_order_rows ?? 0,
         hasReviewedPurpose: Boolean(textOrNull(c.purpose_summary)),
-        hasBenchmarking: Boolean(textOrNull(c.benchmarking_clause)),
+        benchmarkingClause: textOrNull(c.benchmarking_clause),
       })
     : null;
   const cVm = c
@@ -2417,6 +2420,24 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         view: detail,
         contract: contract.row,
         leverage: contract.leverage,
+      })
+    : null;
+  /**
+   * Where this optimization case actually stands, from the governed state
+   * machine. The seven steps are derived from baseline status, required-evidence
+   * readiness, amount traceability and opportunity maturity — never from an
+   * index — so a case cannot appear to have advanced past work it has not done.
+   */
+  const optWorkflow = contract
+    ? deriveOptimizeWorkflowPosition({
+        hasSelectedContract: true,
+        opportunitySet,
+        readiness: buildContractOptimizationEvidenceReadiness({
+          evidencePack: detail?.optimizationEvidence ?? null,
+        }),
+        traceability: summarizeOpportunityTraceability(
+          opportunitySet?.opportunities ?? [],
+        ),
       })
     : null;
   const optSpine = contract
@@ -4217,6 +4238,7 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     optScenarios,
     optLedger: optLedgerView,
     optSpine: optSpineView,
+    optWorkflow,
     opportunityView,
     commercialPosture,
     optCtaLabel,

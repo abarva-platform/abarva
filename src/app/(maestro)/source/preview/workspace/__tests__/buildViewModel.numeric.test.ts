@@ -879,6 +879,7 @@ describe("buildViewModel numeric coercion", () => {
       "Relationship",
       "Evidence",
       "Optimize",
+      "Education",
     ]);
     expect(built.cOverview).toBe(true);
     expect(built.cRelationship).toBe(false);
