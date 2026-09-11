@@ -38,6 +38,7 @@ import {
   sourceWorkspaceProvider,
   type SourceWorkspaceProviderMode,
 } from '@/app/(maestro)/source/preview/workspace/live/portfolioAdapter';
+import { focusableContractRows } from '@/app/(maestro)/source/preview/workspace/contractDiscovery';
 
 // Lazy, per-contract detail read for the Source Workspace — mirrors exactly
 // what the retired /source/vendor-portfolio/[contractId] route used to do,
@@ -184,7 +185,9 @@ async function getProjectionContractDetail(
     provider,
   ).catch(() => null);
   const contract =
-    portfolio?.contracts.find((row) => row.contract_id === contractId) ?? null;
+    (portfolio ? focusableContractRows(portfolio) : []).find(
+      (row) => row.contract_id === contractId,
+    ) ?? null;
   if (!contract || !portfolio) return null;
   return {
     contract,

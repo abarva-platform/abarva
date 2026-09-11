@@ -341,6 +341,55 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
     );
   });
 
+  it("hydrates detail for a supplemental evidence contract promoted into the workspace list", async () => {
+    mockGetContract360.mockResolvedValueOnce(null);
+    mockLoadSourceWorkspacePortfolio.mockResolvedValueOnce({
+      contracts: [],
+      applicationScope: [],
+      initiativeDependencies: [],
+      impact: {
+        evidenceCoverage: [
+          {
+            tenant_key: "meridian",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-DBX-VENDOR",
+            vendor_name: "Databricks, Inc.",
+            contract_name:
+              "Databricks Enterprise Agreement - Platform, Support and Committed Purchase",
+            contract_archetype: "cloud_consumption_commit",
+            coverage_state: "partial",
+            committed_spend_usd: 1550000,
+            actual_spend_usd: 66000,
+            scope_rows: 4,
+            critical_scope_rows: 2,
+          },
+        ],
+        actionCandidates: [],
+        claimCards: [],
+        vendorPositions: [],
+        storyline: [],
+        avaGroundingBundles: [],
+      },
+    });
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/MER-TECH-DBX-001?client=meridian&sourceProvider=ecl_projection_db",
+      ),
+      params("MER-TECH-DBX-001"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(buildContract360View).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contract: expect.objectContaining({
+          contract_id: "MER-TECH-DBX-001",
+          vendor_name: "Databricks, Inc.",
+        }),
+      }),
+    );
+  });
+
   it("passes governed tab intelligence into the contract-detail view builder", async () => {
     const tabIntelligence = [
       {
