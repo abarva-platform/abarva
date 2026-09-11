@@ -438,14 +438,58 @@ describe("Source Workspace visual aVa answer", () => {
         sourceRefs: ["source.contract_action_candidate_v1"],
       },
     ];
-    context.sourceV4.optimizationOpportunities.opportunities =
-      context.sourceV4.optimizationOpportunities.opportunities
-        .slice(0, 2)
-        .map((opportunity, index) => ({
-          ...opportunity,
-          id: `OPT-OPAQUE-${index + 1}`,
-          contractId: "CTR-090",
-        }));
+    context.sourceV4.optimizationOpportunities.opportunities = [
+      {
+        id: "OPT-OPAQUE-1",
+        contractId: "CTR-090",
+        valueType: "negotiated_improvement",
+        label: "Re-time annual commitment to program delivery pace",
+        amount: "$620K",
+        amountUsd: 620_000,
+        stageRaw: "quantified",
+        confidence: 0.82,
+        grade: "DOCUMENT EVIDENCED",
+        blockingGap: "Monthly spend and scope rows loaded.",
+        nextAction:
+          "Propose milestone-based ramp schedule before Year 2 commitment lock-in.",
+        sourceRefs: ["monthly_spend_history", "contract_scope"],
+        owner: "Sourcing lead",
+        buyerAsk:
+          "Reset Year 2 committed purchase to a ramped schedule tied to named workloads reaching production readiness.",
+        negotiationLanguage:
+          "Move the commitment curve around production gates while utilization evidence is fresh.",
+        vendorConcession: null,
+        timingDependency: "Complete before Year 2 lock-in.",
+        priority: "P0",
+        riskIfIgnored:
+          "Buyer prepays for unused capacity while workloads remain outside production.",
+      },
+      {
+        id: "OPT-OPAQUE-2",
+        contractId: "CTR-090",
+        valueType: "negotiated_improvement",
+        label: "Add carry-forward provision for unused Year 1 commitment",
+        amount: "$400K",
+        amountUsd: 400_000,
+        stageRaw: "quantified",
+        confidence: 0.82,
+        grade: "DOCUMENT EVIDENCED",
+        blockingGap: "Commitment and payment schedule rows loaded.",
+        nextAction:
+          "Draft carry-forward amendment before the Year 2 payment locks.",
+        sourceRefs: ["commitment_terms"],
+        owner: "Strategic sourcing",
+        buyerAsk:
+          "Carry forward unused Year 1 commitment into Year 2 or convert it into onboarding credits.",
+        negotiationLanguage:
+          "Preserve buyer value before the next payment cycle.",
+        vendorConcession: null,
+        timingDependency: "Resolve before payment authorization.",
+        priority: "P1",
+        riskIfIgnored:
+          "Unused first-year commitment becomes the renewal baseline.",
+      },
+    ];
 
     const query =
       "For CTR-090, act like a CXO pricing negotiator and give me a PDF-ready table of levers to optimize this contract.";
@@ -465,7 +509,10 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).toContain("Salesforce");
     expect(answer?.directAnswer).toContain("CTR-090");
     expect(answer?.directAnswer).toContain(
-      "The vendor avoids reopening the broader commercial schedule",
+      "The vendor keeps the long-term platform commitment",
+    );
+    expect(answer?.directAnswer).toContain(
+      "Carry-forward preserves the vendor relationship",
     );
     expect(answer?.directAnswer).not.toContain(
       "CTR-090 is not present in the current Source aVa contract packet",
