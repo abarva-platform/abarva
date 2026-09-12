@@ -314,9 +314,73 @@ const PARSER_STATE_RANK: Record<
  * evidence class and parser state among them: a family is only as trustworthy as
  * its least-supported input.
  */
+/**
+ * Evidence that is loaded on the contract's own projection lanes.
+ *
+ * The readiness ledger (`ledger_items`) is a curation surface: a reviewer adds
+ * an item when they attach evidence to an opportunity. Nothing populates it at
+ * load time. Scoring readiness from it alone therefore reported every required
+ * family as missing on contracts carrying hundreds of loaded evidence rows —
+ * service levels "missing" beside 72 loaded performance periods, invoices
+ * "missing" beside 24 loaded spend months.
+ *
+ * These counts let a family be satisfied by the evidence that exists. Provenance
+ * is kept distinct: a family evidenced this way is `system_evidenced` from the
+ * projection, never promoted to document- or human-verified.
+ */
+export interface ContractEvidenceLaneCounts {
+  readonly scopeRows?: number;
+  readonly spendMonths?: number;
+  readonly invoicedMonths?: number;
+  readonly performancePeriods?: number;
+  readonly documentRows?: number;
+  readonly changeOrderRows?: number;
+  readonly ticketRows?: number;
+  readonly staffingRows?: number;
+  readonly contractTermsLoaded?: boolean;
+  readonly renewalTermsLoaded?: boolean;
+}
+
+/**
+ * Which projection lane can satisfy each required family.
+ *
+ * A family with no entry here has no lane that speaks to it, so it stays
+ * missing until a reviewer attaches evidence. That is the honest state — the
+ * point of this map is to stop claiming a family is missing when the contract
+ * plainly holds it, not to mark everything satisfied.
+ */
+const FAMILY_LANE: Readonly<
+  Partial<
+    Record<
+      SourceContractEvidenceFamily,
+      (lanes: ContractEvidenceLaneCounts) => boolean
+    >
+  >
+> = {
+  application_inventory: (l) => (l.scopeRows ?? 0) > 0,
+  contract_baseline: (l) => l.contractTermsLoaded === true,
+  invoice_summary: (l) => (l.invoicedMonths ?? l.spendMonths ?? 0) > 0,
+  sla_performance: (l) => (l.performancePeriods ?? 0) > 0,
+  ticket_volume: (l) => (l.ticketRows ?? 0) > 0,
+  staffing_model: (l) => (l.staffingRows ?? 0) > 0,
+  change_order: (l) => (l.changeOrderRows ?? 0) > 0,
+  renewal_terms: (l) => l.renewalTermsLoaded === true,
+  evidence_reference: (l) => (l.documentRows ?? 0) > 0,
+};
+
+function laneSatisfies(
+  family: SourceContractEvidenceFamily,
+  lanes: ContractEvidenceLaneCounts | undefined,
+): boolean {
+  if (!lanes) return false;
+  return FAMILY_LANE[family]?.(lanes) === true;
+}
+
 export function buildContractOptimizationEvidenceReadiness(input: {
   readonly evidencePack: ContractOptimizationEvidencePack | null;
   readonly archetypeKey?: SourceContractEvidenceArchetypeKey;
+  /** Evidence loaded on the contract's projection lanes. See the type doc. */
+  readonly lanes?: ContractEvidenceLaneCounts;
 }): ContractOptimizationEvidenceReadiness {
   const archetypeKey =
     input.archetypeKey ?? inferEvidenceArchetype(input.evidencePack);
@@ -326,7 +390,11 @@ export function buildContractOptimizationEvidenceReadiness(input: {
 
   const items = input.evidencePack?.ledger_items ?? [];
   const rows = templates.map((template) =>
-    buildRow(template, matchItems(items, template.family)),
+    buildRow(
+      template,
+      matchItems(items, template.family),
+      laneSatisfies(template.family, input.lanes),
+    ),
   );
 
   const requiredRows = rows.filter((row) => row.obligation === "required");
@@ -397,6 +465,7 @@ function matchItems(
 function buildRow(
   template: SourceContractEvidenceTemplate,
   matched: readonly ContractOptimizationEvidenceItem[],
+  laneEvidenced = false,
 ): ContractOptimizationEvidenceReadinessRow {
   const spec = FAMILY_SPECS[template.family];
   const obligation: ContractOptimizationEvidenceObligation = template.required
@@ -409,19 +478,24 @@ function buildRow(
       label: template.sheetName,
       purpose: template.purpose,
       obligation,
-      evidenceClass: "missing",
+      // Evidenced from the contract's own loaded lane when the curation ledger
+      // holds nothing for it. system_evidenced, never promoted further: a
+      // projection row is not a reviewed document.
+      evidenceClass: laneEvidenced ? "system_evidenced" : "missing",
       sourceSystems: spec.sourceSystems,
       ownerRole: spec.ownerRole,
       grainHistory: spec.grainHistory,
       templateFileName: template.fileName,
       templateSheetName: template.sheetName,
-      loadState: "not_loaded",
-      parserState: "not_run",
+      loadState: laneEvidenced ? "system_loaded" : "not_loaded",
+      parserState: laneEvidenced ? "extracted" : "not_run",
       factObjectRefs: [],
       factObjectCount: 0,
       artifactImpact: spec.artifactImpact,
-      blocks: spec.blocks,
-      nextAction: spec.nextActionWhenMissing,
+      blocks: laneEvidenced ? "" : spec.blocks,
+      nextAction: laneEvidenced
+        ? "Attach the loaded rows to an opportunity to raise this above system-evidenced."
+        : spec.nextActionWhenMissing,
     };
   }
 

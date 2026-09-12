@@ -3796,12 +3796,28 @@ export function contractPurposeSummary(
       : null,
   ].filter(Boolean);
 
+  const reviewedPurpose = usableScopeSummary(contract.purpose_summary);
+
+  /*
+   * Say where this characterisation came from.
+   *
+   * Both branches compose readable prose from governed fields, which is the
+   * intended behaviour. What was missing is provenance: with no reviewed
+   * purpose the card asserted a characterisation in the same voice as a
+   * reviewed one, directly above the narrative's own line saying the purpose is
+   * not yet reviewed. The two read as a contradiction. Marking the derived case
+   * as derived resolves it without withholding what the header does establish.
+   */
+  const basis = reviewedPurpose
+    ? "Reviewed purpose extraction"
+    : "Derived from the contract header and declared archetype; no reviewed purpose extraction yet";
+
   return {
     heading: "What this contract is",
-    body: usableScopeSummary(contract.purpose_summary)
+    body: reviewedPurpose
       ? `${scopePhrase} Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`
       : `This is ${kind.article} ${kind.label} with ${vendor} covering ${scopePhrase}. Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
-    evidence: `Loaded basis: ${evidenceParts.join("; ")}.`,
+    evidence: `${basis}. Loaded basis: ${evidenceParts.join("; ")}.`,
   };
 }
 
@@ -3817,7 +3833,7 @@ function usableText(value: string | null | undefined) {
 }
 
 function usableScopeSummary(value: string | null | undefined) {
-  const text = usableText(value);
+  const text = withoutIdentifierTokens(usableText(value));
   if (!text) return null;
   if (
     /\b(absent|unknown|unresolved|none|null|n\/a|for_cause_only)\b/i.test(text)
@@ -3825,6 +3841,33 @@ function usableScopeSummary(value: string | null | undefined) {
     return null;
   }
   return text;
+}
+
+/**
+ * Drop snake_case database values from a string meant to read as English.
+ *
+ * A scope summary arrived as "Managed Services - present_with_annual_right -
+ * present_after_year_2_with_90_days_notice" — the clause and exit-rights enum
+ * values concatenated onto a real phrase. Rendered whole, an executive read
+ * column values as a sentence.
+ *
+ * The prose that survives is kept; if nothing usable remains, the caller falls
+ * through to its next source rather than showing identifiers.
+ */
+export function withoutIdentifierTokens(
+  value: string | null | undefined,
+): string | null {
+  if (!value) return null;
+  const cleaned = value
+    // A lowercase run joined by underscores is an identifier, never prose.
+    .replace(/\b[a-z0-9]+(?:_[a-z0-9]+)+\b/g, " ")
+    // Tidy the separators the removal leaves behind.
+    .replace(/\s*[-–—]\s*(?=\s*[-–—]|$)/g, " ")
+    .replace(/[-–—]\s*$/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+    .replace(/[,;:]\s*$/g, "");
+  return cleaned.length > 0 ? cleaned : null;
 }
 
 function scopeFromContractName(contractName: string) {
