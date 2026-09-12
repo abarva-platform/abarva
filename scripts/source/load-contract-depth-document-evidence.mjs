@@ -210,6 +210,19 @@ export function documentFileIdentityConflictMessage(rows) {
   return `Source file identity conflict: ${details}. A document file id cannot be reused across contract ids.`;
 }
 
+export function staleDocumentFileIds(rows, currentFileIds, args) {
+  const current = new Set(currentFileIds);
+  const sourcePackage = `${args.datasetVersion}/source-files`;
+  return rows
+    .filter(
+      (row) =>
+        !current.has(row.file_id) &&
+        args.contractIds.includes(row.contract_ref) &&
+        row.metadata_json?.source_package === sourcePackage,
+    )
+    .map((row) => row.file_id)
+    .sort();
+}
 async function ensureDocumentSchema(client) {
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}`);
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(META_SCHEMA)}`);
@@ -406,6 +419,31 @@ async function deleteExisting(client, args, fileIds, pageIds, spanIds, extractio
   }
 }
 
+async function deleteStalePackageFiles(client, args, fileIds) {
+  if (fileIds.length === 0) return;
+  const aliases = [args.tenantKey];
+  await client.query(
+    `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.extraction
+      WHERE tenant_key = ANY($1::text[]) AND source_file_id = ANY($2::text[])`,
+    [aliases, fileIds],
+  );
+  await client.query(
+    `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.span
+      WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
+    [aliases, fileIds],
+  );
+  await client.query(
+    `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.page
+      WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
+    [aliases, fileIds],
+  );
+  await client.query(
+    `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.file
+      WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
+    [aliases, fileIds],
+  );
+}
+
 async function loadDocumentEvidence(client, args, pages, clauses) {
   await ensureDocumentSchema(client);
 
@@ -423,6 +461,17 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
     const details = conflictingFiles.rows.map((row) => `${row.file_id} -> ${row.contract_ref}`).join(", ");
     throw new Error(`Source file identity conflict: ${details}. A document file id cannot be reused across contract ids.`);
   }
+  const staleFiles = await client.query(
+    `SELECT file_id, contract_ref, metadata_json
+       FROM ${quoteIdent(DOC_SCHEMA)}.file
+      WHERE tenant_key = $1
+        AND contract_ref = ANY($2::text[])
+        AND metadata_json->>'source_package' = $3
+        AND NOT (file_id = ANY($4::text[]))`,
+    [args.tenantKey, args.contractIds, `${args.datasetVersion}/source-files`, fileIds],
+  );
+  const staleFileIds = staleDocumentFileIds(staleFiles.rows, fileIds, args);
+  await deleteStalePackageFiles(client, args, staleFileIds);
   const pageIds = pages.map(pageId);
   const spanIds = clauses.map(spanId);
   const extractionIds = clauses.map((row) => row.extraction_id);
@@ -586,6 +635,7 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
     doc_page: pages.length,
     doc_span: clauses.length,
     doc_extraction: clauses.length,
+    stale_package_files_removed: staleFileIds.length,
   };
 }
 
