@@ -7006,10 +7006,13 @@ function contractFocusReason(
   actionRows: number,
   claimRows: number,
 ) {
+  // "Why listed" answers a reader's question, so it names what the contract
+  // has rather than the internal artifact that holds it. A claim card is our
+  // object; an evidenced claim is what the reader gets from it.
   if (claimRows > 0)
-    return `${claimRows} executive claim card${claimRows === 1 ? "" : "s"}`;
+    return `${claimRows} evidenced claim${claimRows === 1 ? "" : "s"}`;
   if (actionRows > 0)
-    return `${actionRows} action row${actionRows === 1 ? "" : "s"}`;
+    return `${actionRows} governed action${actionRows === 1 ? "" : "s"}`;
   if ((coverage?.unclaimed_credit_usd ?? 0) > 0)
     return "Unclaimed credit evidence";
   if ((coverage?.performance_rows ?? 0) > 0)
@@ -7020,7 +7023,7 @@ function contractFocusReason(
   if ((coverage?.scope_rows ?? 0) > 0) return "Application scope mapped";
   if (numberFromDb(contract.actual_annual_spend) != null)
     return "Actual spend loaded";
-  return "Header-only portfolio signal";
+  return "Register entry only — no evidence loaded";
 }
 
 export function focusedVendorSet(
