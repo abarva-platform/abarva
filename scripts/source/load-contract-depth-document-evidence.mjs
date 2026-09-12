@@ -367,26 +367,33 @@ function spanId(row) {
 
 async function deleteExisting(client, args, fileIds, pageIds, spanIds, extractionIds) {
   const aliases = [args.tenantKey];
-  if (extractionIds.length) {
+  if (fileIds.length || extractionIds.length) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.extraction
         WHERE tenant_key = ANY($1::text[]) AND (extraction_id = ANY($2::text[]) OR source_file_id = ANY($3::text[]))`,
       [aliases, extractionIds, fileIds],
     );
   }
-  if (spanIds.length) {
+  if (fileIds.length || spanIds.length) {
+    // A file can already have spans from an earlier extraction version. Delete
+    // every dependent span before replacing the file; deleting only the current
+    // clause IDs leaves stale spans behind and the file FK rejects the retry.
     await client.query(
-      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.span WHERE tenant_key = ANY($1::text[]) AND span_id = ANY($2::text[])`,
-      [aliases, spanIds],
+      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.span
+        WHERE tenant_key = ANY($1::text[]) AND (span_id = ANY($2::text[]) OR file_id = ANY($3::text[]))`,
+      [aliases, spanIds, fileIds],
     );
   }
-  if (pageIds.length) {
+  if (fileIds.length || pageIds.length) {
     await client.query(
-      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.page WHERE tenant_key = ANY($1::text[]) AND page_id = ANY($2::text[])`,
-      [aliases, pageIds],
+      `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.page
+        WHERE tenant_key = ANY($1::text[]) AND (page_id = ANY($2::text[]) OR file_id = ANY($3::text[]))`,
+      [aliases, pageIds, fileIds],
     );
   }
-  if (fileIds.length) {
+  // Keep the file row in place when possible. Existing spans/pages reference
+  // it, so the upsert below is the idempotent replacement boundary.
+  if (fileIds.length && process.env.SOURCE_DOCUMENT_EVIDENCE_DELETE_ORPHAN_FILES === "true") {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.file WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
       [aliases, fileIds],
