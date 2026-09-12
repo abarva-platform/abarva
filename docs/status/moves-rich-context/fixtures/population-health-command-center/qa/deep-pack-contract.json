@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-09-05T00:00:00Z",
+  "expected_files_after_validation": 38,
+  "expected_structured_tables": 8,
+  "expected_data_rows": 838,
+  "expected_cheat_sheet_refs": 23,
+  "validation_scope": [
+    "csv_xlsx_row_parity",
+    "docx_markdown_heading_parity",
+    "care_gap_reconciliation",
+    "cheat_sheet_references",
+    "public_repo_sensitivity_scan"
+  ]
+}
