@@ -8096,7 +8096,10 @@ export function contractTabNarrative(
       headline: governedTab.headline,
       body: [
         governedTab.allowed_executive_statement,
-        governedTab.supporting_evidence_summary
+        // The basis line belongs beside the figures it supports. Story's own
+        // briefing card renders it from the same summary, so appending it here
+        // put the identical clause on the tab twice.
+        governedTab.supporting_evidence_summary && tab !== "Story"
           ? `Evidence basis: ${governedTab.supporting_evidence_summary}.`
           : null,
       ]

@@ -51,6 +51,13 @@ The predicate added in the previous change is renamed. It decides whether the
 narrative's body is already on screen, which is now true for two different
 reasons, and its old name claimed something narrower than it checks.
 
+**The evidence-basis clause twice on Story.** The narrative appends "Evidence
+basis: …" to its body from the governed record's supporting summary, and
+Story's own briefing card renders the identical clause from the same summary.
+The basis line belongs beside the figures it supports, so the narrative no
+longer appends it on that tab. Every other tab keeps it, since no other tab's
+body renders it.
+
 ## Layer Impact
 
 - **Release lane:** `global-control-lane` — shared Contract 360 narrative and evidence-lane presentation for all clients, not feature-gated.
@@ -71,11 +78,11 @@ reasons, and its old name claimed something narrower than it checks.
 - `viewModel.tsx`: `asSentence`, alongside the other formatters.
 - `WorkspaceExecutiveShell.tsx`: Education blocker returns nothing where there is no next step; Education always and Scope conditionally join the headline-only case; the predicate is renamed to `narrativeBodyIsAlreadyOnScreen`.
 - `Contract360Surfaces.tsx`: two evidence-lane captions put into words; two unconditional periods replaced by the shared formatter.
-- `governedDirectives.test.ts`: six more tests covering fragment casing, the doubled terminator, and three refusals.
+- `governedDirectives.test.ts`: eight more tests covering fragment casing, the doubled terminator, three refusals, and a tab-to-tab differential on the evidence-basis clause.
 
 ## QA / Validation
 
-- Focused Jest: 26 suites, 225 tests passed across the workspace slice.
+- Focused Jest: 26 suites, 227 tests passed across the workspace slice.
 - An existing full-shell test caught an over-broad earlier attempt at the Scope suppression, which would have dropped a governed claim on a contract with no governed Scope record. The condition is now on the record's presence.
 - Repository TypeScript: clean.
 - ESLint on all four changed files: clean.

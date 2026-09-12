@@ -119,6 +119,59 @@ describe("governed tab narrative", () => {
   });
 });
 
+describe("the evidence-basis clause", () => {
+  const row = {
+    tab_key: "story",
+    headline: "The governed financial fields are loaded.",
+    allowed_executive_statement: "Committed capacity runs ahead of usage.",
+    supporting_evidence_summary: "annual value loaded; 6 opportunity rows",
+    missing_evidence_summary: null,
+    action_prompt: "Start with what the contract is for.",
+    review_status: "reviewed",
+  };
+
+  it("is left to Story's own briefing card, which renders it already", () => {
+    const narrative = contractTabNarrative(
+      "Story",
+      {
+        detail: { contractTabIntelligence: [row] },
+        contractEducation: {
+          facetRequirements: { Story: { state: "required", reason: "" } },
+        },
+      } as unknown as SourceWorkspaceVM,
+      contract,
+      null as never,
+      [],
+      undefined,
+    );
+
+    expect(narrative.body).toBe("Committed capacity runs ahead of usage.");
+    expect(narrative.body).not.toContain("Evidence basis");
+  });
+
+  it("still carries on a tab whose body does not render it", () => {
+    const narrative = contractTabNarrative(
+      "Economics",
+      {
+        detail: {
+          contractTabIntelligence: [{ ...row, tab_key: "economics" }],
+        },
+        contractEducation: {
+          facetRequirements: { Economics: { state: "required", reason: "" } },
+        },
+      } as unknown as SourceWorkspaceVM,
+      contract,
+      null as never,
+      [],
+      undefined,
+    );
+
+    expect(narrative.body).toContain(
+      "Evidence basis: annual value loaded; 6 opportunity rows.",
+    );
+  });
+});
+
 describe("asSentence", () => {
   it("opens and closes a bare fragment", () => {
     expect(asSentence("finance confirmation required")).toBe(
