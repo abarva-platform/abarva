@@ -60,8 +60,9 @@ English prose, and a characterisation that did not say it was derived.
   now be satisfied by the contract's loaded rows when the curation ledger holds
   nothing for it, at `system_evidenced` and no higher.
 - `buildViewModel.ts` — passes the real lane counts: scope rows, spend months,
-  invoiced months, performance periods, document rows, change orders, and
-  whether contract and renewal terms are loaded.
+  invoiced months, performance periods, document rows, contract-scoped term
+  rows, renewal/notice term rows, and change orders. A register header or end
+  date alone cannot satisfy the term families.
 - `WorkspaceExecutiveShell.tsx` — `withoutIdentifierTokens` strips snake_case
   database values from text meant to read as English; the purpose card now
   names its basis, so a derived characterisation no longer speaks in the same

@@ -334,11 +334,13 @@ export interface ContractEvidenceLaneCounts {
   readonly invoicedMonths?: number;
   readonly performancePeriods?: number;
   readonly documentRows?: number;
+  /** Contract-scoped document/term rows, not merely a register header. */
+  readonly contractTermRows?: number;
+  /** Extracted renewal, notice, cure, benchmark, or termination terms. */
+  readonly renewalTermRows?: number;
   readonly changeOrderRows?: number;
   readonly ticketRows?: number;
   readonly staffingRows?: number;
-  readonly contractTermsLoaded?: boolean;
-  readonly renewalTermsLoaded?: boolean;
 }
 
 /**
@@ -358,13 +360,13 @@ const FAMILY_LANE: Readonly<
   >
 > = {
   application_inventory: (l) => (l.scopeRows ?? 0) > 0,
-  contract_baseline: (l) => l.contractTermsLoaded === true,
+  contract_baseline: (l) => (l.contractTermRows ?? 0) > 0,
   invoice_summary: (l) => (l.invoicedMonths ?? l.spendMonths ?? 0) > 0,
   sla_performance: (l) => (l.performancePeriods ?? 0) > 0,
   ticket_volume: (l) => (l.ticketRows ?? 0) > 0,
   staffing_model: (l) => (l.staffingRows ?? 0) > 0,
   change_order: (l) => (l.changeOrderRows ?? 0) > 0,
-  renewal_terms: (l) => l.renewalTermsLoaded === true,
+  renewal_terms: (l) => (l.renewalTermRows ?? 0) > 0,
   evidence_reference: (l) => (l.documentRows ?? 0) > 0,
 };
 
