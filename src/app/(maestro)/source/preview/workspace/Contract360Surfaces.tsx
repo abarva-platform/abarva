@@ -753,7 +753,7 @@ export function ContractLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
   const opportunities = view?.opportunities ?? [];
   if (opportunities.length === 0) return null;
 
-  const sized = opportunities.filter((row) => row.amountUsd != null).length;
+  const sized = opportunities.filter((row) => row.stageRaw !== "signal").length;
 
   return (
     <section className="sw-c3-card sw-c3-card-flush">
@@ -800,7 +800,9 @@ export function ContractLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
                 <td>
                   <span className="sw-c3-badge">{row.stage}</span>
                 </td>
-                <td className="sw-c3-lever-amount">{row.amount}</td>
+                <td className="sw-c3-lever-amount">
+                  {row.stageRaw === "signal" ? "Not sized" : row.amount}
+                </td>
                 <td>
                   <span>{row.owner}</span>
                   {row.ownerRole ? (

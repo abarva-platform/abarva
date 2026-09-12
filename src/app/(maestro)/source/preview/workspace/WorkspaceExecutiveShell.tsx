@@ -31,7 +31,6 @@ import {
 import {
   ContractBriefingHeader,
   ContractEvidenceFamilies,
-  ContractLeverTable,
   ContractRegisterOnly,
   ContractRelationshipBriefing,
   ContractScopeBriefing,
@@ -3340,7 +3339,6 @@ function ContractPage({
           <>
             <ContractWorkflowRail vm={vm} />
             <ContractValueLedgers vm={vm} />
-            <ContractLeverTable vm={vm} />
             <ContractOptimizeContent vm={vm} />
           </>
         ) : null}
