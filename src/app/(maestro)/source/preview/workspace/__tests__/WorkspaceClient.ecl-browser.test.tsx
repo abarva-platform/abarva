@@ -548,13 +548,22 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
-    // The provenance label ("Optimize gap") was builder vocabulary rendered
-    // above the tab body; the governed statement now sits in the right column
-    // under a reader-facing heading instead.
-    expect(screen.getByText("What Source can state")).toBeTruthy();
+    // Optimize's right column carries the value-type ledger and the evidence
+    // gate. It does not carry the governed statement, whose body the sub-tabs
+    // to its left already render as tables, and it does not carry a count of
+    // deterministic claim cards, which is a measure of the pipeline rather
+    // than a fact about the contract.
+    expect(screen.queryByText("What Source can state")).toBeNull();
+    expect(screen.queryByText("Deterministic cards")).toBeNull();
     expect(screen.getByText("Contract readout")).toBeTruthy();
     expect(screen.getByText("Decision consequence")).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Story" })).toBeTruthy();
+
+    // Only Optimize loses the statement. Every other tab keeps it.
+    fireEvent.click(screen.getByRole("tab", { name: "Story" }));
+    expect(screen.getByText("What Source can state")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
+    expect(screen.queryByText("What Source can state")).toBeNull();
 
     fireEvent.click(screen.getByRole("tab", { name: "Scope" }));
 
@@ -1573,9 +1582,19 @@ describe("Source workspace ECL browser-surface proof", () => {
       expect(screen.getByText("Why they can say yes")).toBeTruthy();
     });
 
+    // The governed Optimize headline is the lever list in prose, and the three
+    // sub-tabs to the left render those levers as tables. Because the statement
+    // is keyed on the Contract 360 tab and not the sub-tab, it restated
+    // whichever sub-tab was open, on all three. The evidence gate is the one
+    // claim with no other home, so it is what survives in the right column.
     expect(
-      screen.getByText("Two Databricks levers are governed for outreach."),
-    ).toBeTruthy();
+      screen.queryByText("Two Databricks levers are governed for outreach."),
+    ).toBeNull();
+    expect(screen.getByText("What still gates value")).toBeTruthy();
+    // The value-type ledger is the standing context that earns its place on
+    // every sub-tab: the three ledgers never sum, whichever view is open.
+    expect(screen.getByText("What can be claimed")).toBeTruthy();
+    expect(screen.queryByText("Deterministic cards")).toBeNull();
     expect(
       screen.getByText(
         /Signal rows need benchmark and per-SKU evidence before they carry value/,

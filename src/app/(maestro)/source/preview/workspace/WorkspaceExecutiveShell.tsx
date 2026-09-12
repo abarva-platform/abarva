@@ -3434,7 +3434,6 @@ function ContractPage({
 
       <section className="sw-v2-panel sw-v2-contract-context-panel">
         <ContractDetailSidePanel
-          cardCount={contractClaimCards.length}
           contract={contract}
           coverage={coverage}
           scopeRows={scopeRows}
@@ -3450,13 +3449,33 @@ function ContractPage({
           surface; dropping it outright would have lost a governed claim. It
           reads as a quiet statement beside the tab instead.
         */}
-        <ContractGovernedStatement
-          contract={contract}
-          coverage={coverage}
-          scopeRows={scopeRows}
-          tab={tab}
-          vm={vm}
-        />
+        {/*
+          Optimize keeps its gate and loses its restatement.
+
+          The statement is keyed on the Contract 360 tab, not the Optimize
+          sub-tab, so the same paragraph stood on Levers, Sequence and
+          Comparator alike. On each of them it restated what the reader was
+          already looking at: the reviewed body is the lever list and the ask
+          sequence written as prose, plus a row-count line. The lever table
+          renders those levers with their asks, the sequence view renders their
+          order, and the refusal chips render the gates — all in structured
+          form, three feet to the left.
+
+          What only the statement says is the evidence gate: the one sentence
+          naming what a signal row still needs before it can carry value. That
+          survives here on its own.
+        */}
+        {tab === "Optimize" ? (
+          <ContractOptimizeGateStatement vm={vm} />
+        ) : (
+          <ContractGovernedStatement
+            contract={contract}
+            coverage={coverage}
+            scopeRows={scopeRows}
+            tab={tab}
+            vm={vm}
+          />
+        )}
       </section>
 
       {tab === "Story" ? <ProductShellCommercialPostureStrip vm={vm} /> : null}
@@ -3913,15 +3932,41 @@ function ContractGovernedStatement({
   );
 }
 
+/**
+ * The Optimize evidence gate, and nothing else.
+ *
+ * The governed Optimize record's headline and body are the lever list and the
+ * ask sequence written as prose, which the Optimize sub-tabs render as tables.
+ * Its missing-evidence summary is the one claim with no other home: what a
+ * signal-stage row still needs before it can carry a value.
+ *
+ * The action-prompt fallback is deliberately not used here. Where no gate is
+ * recorded, that fallback is the ask list again, and this surface would be
+ * restating the Sequence sub-tab to say nothing new.
+ */
+function ContractOptimizeGateStatement({ vm }: { vm: SourceWorkspaceVM }) {
+  const governed = contractTabIntelligenceFor(
+    "Optimize",
+    vm.detail?.contractTabIntelligence ?? [],
+  );
+  const gate = withoutNotRequiredFacets(vm, governed?.missing_evidence_summary);
+  if (!gate) return null;
+
+  return (
+    <div className="sw-c3-governed-statement">
+      <div className="sw-c3-eyebrow">What still gates value</div>
+      <p className="sw-c3-note sw-c3-governed-blocker">{gate}</p>
+    </div>
+  );
+}
+
 function ContractDetailSidePanel({
-  cardCount,
   contract,
   coverage,
   scopeRows,
   tab,
   vm,
 }: {
-  cardCount: number;
   contract: SourceContract360Row;
   coverage: ReturnType<typeof coverageForContract>;
   scopeRows: readonly SourceContractApplicationScopeRow[];
@@ -3987,10 +4032,7 @@ function ContractDetailSidePanel({
     return (
       <>
         <PanelHead eyebrow="Optimization gates" title="What can be claimed" />
-        <ContractValueTypeStack
-          view={vm.opportunityView}
-          cardCount={cardCount}
-        />
+        <ContractValueTypeStack view={vm.opportunityView} />
       </>
     );
   }
@@ -5056,10 +5098,8 @@ export function leverTableRows<
  */
 function ContractValueTypeStack({
   view,
-  cardCount,
 }: {
   view: NonNullable<SourceWorkspaceVM["opportunityView"]>;
-  cardCount: number;
 }) {
   const { established, absent, confirmed } = contractValueTypeSummary(view);
 
@@ -5079,7 +5119,11 @@ function ContractValueTypeStack({
         label="Finance confirmed"
         value={confirmed ?? "Nothing booked yet"}
       />
-      <Fact label="Deterministic cards" value={String(cardCount)} />
+      {/*
+        A count of deterministic claim cards used to sit here. It is a builder's
+        measure of the pipeline, not a fact about the contract, and a reader has
+        no way to act on it or to tell what it would mean if it changed.
+      */}
     </div>
   );
 }
