@@ -14,6 +14,7 @@ Make the governed document-evidence loader safely repeatable. A retry now refres
 
 ## Layer Impact
 
+- **Release lane:** `client-data-lane`.
 - **Source adapters:** no change.
 - **Canonical model:** no change.
 - **Products:** no change; this supplies the document rows consumed by Source Evidence and Contract 360.
