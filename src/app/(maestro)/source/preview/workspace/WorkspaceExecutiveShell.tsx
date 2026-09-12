@@ -41,6 +41,7 @@ import {
   ContractEconomicsBriefing,
 } from "./Contract360Economics";
 import { ContractLeverTable } from "./ContractLeverTable";
+import { ContractAnatomy } from "./ContractAnatomy";
 import {
   ContractOptimizeMethod,
   ContractRefusalChips,
@@ -3404,6 +3405,11 @@ function ContractPage({
           </>
         ) : tab === "Evidence" && detailReady && vm.detail ? (
           <>
+            <ContractAnatomy
+              coverage={coverage}
+              scopeRowCount={scopeRows.length}
+              vm={vm}
+            />
             <ContractEvidenceFamilies coverage={coverage} vm={vm} />
             <ContractEvidenceDocuments
               coverage={coverage}
