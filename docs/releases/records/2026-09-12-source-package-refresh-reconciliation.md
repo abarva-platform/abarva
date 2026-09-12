@@ -13,13 +13,15 @@
 Repeated Source package loads now reconcile the complete dataset-scoped row set. Rows that are no
 longer present in the incoming package are removed inside the same transaction before the package
 is written, so readback counts describe the package that was actually loaded rather than a mixture
-of current and stale rows.
+of current and stale rows. The same convergence rule applies to canonical fact assertions, including
+contract context and searchable page-text facts.
 
 ## Layer Impact
 
 - **Lane:** `client-data-lane`
-- **Layers:** Layer 2 source adapters and Layer 3 canonical snapshots. Cleanup is limited to the
-  same tenant and dataset version; it does not change rows for another dataset or tenant.
+- **Layers:** Layer 2 source adapters, Layer 3 canonical snapshots, and Layer 3 canonical fact
+  assertions. Cleanup is limited to the same tenant and dataset version; it does not change rows
+  for another dataset or tenant.
 
 ## Client Applicability
 
@@ -32,14 +34,15 @@ of current and stale rows.
 ## Changes Included
 
 - `scripts/source/load-cloud-consumption-package.mjs` — dataset-scoped reconciliation for adapter
-  rows and canonical snapshots before upsert.
-- `scripts/source/__tests__/load-cloud-consumption-package.test.ts` — regression coverage for both
+  rows, canonical snapshots, and canonical fact assertions before upsert.
+- `scripts/source/__tests__/load-cloud-consumption-package.test.ts` — regression coverage for all
   cleanup paths.
 - This release record.
 
 ## QA / Validation
 
-- PASS: focused Source loader, readiness, purpose, and browser-contract tests.
+- PASS: focused Source loader, readiness, purpose, and browser-contract tests, including canonical
+  fact refresh coverage.
 - PASS: TypeScript, ESLint, and `git diff --check`.
 - Required after merge: digest-pinned ACA deployment and runtime invariant.
 - Required after deployment: the approved ACA operator batch through Layer 2, Layer 3, readback,
@@ -74,4 +77,5 @@ readback contract have been reviewed.
 ## Known Gaps
 
 This release fixes refresh correctness for a package that is already governed and does not classify
-unmapped portfolio register rows, invent document evidence, or replace missing client packages.
+unmapped portfolio register rows, invent document evidence, or replace missing client packages. It
+does not change the source package contents or the product's evidence review status.

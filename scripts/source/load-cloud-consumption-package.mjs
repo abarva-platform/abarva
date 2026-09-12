@@ -1370,6 +1370,35 @@ async function upsertCloudCanonicalFacts(client, args, files) {
   }
 }
 
+function canonicalFactAssertionIds(files, pageRows = []) {
+  const ids = [];
+  for (const row of files["cloud_contract_register.csv"]) {
+    for (const contextFact of CONTRACT_CONTEXT_FACTS) {
+      ids.push(`${value(row, "source_row_id")}:${contextFact.column}`);
+    }
+  }
+  for (const row of files["monthly_spend.csv"]) ids.push(`${value(row, "source_row_id")}:actual_spend_usd`);
+  for (const row of files["cloud_service_usage_monthly.csv"]) ids.push(`${value(row, "source_row_id")}:total_spend_usd`);
+  for (const row of files["cloud_commitment_coverage_monthly.csv"]) {
+    ids.push(`${value(row, "source_row_id")}:candidate_monthly_savings_usd`);
+    ids.push(`${value(row, "source_row_id")}:commitment_coverage_pct`);
+  }
+  for (const row of files["cloud_resource_inventory.csv"]) ids.push(`${value(row, "source_row_id")}:monthly_spend_usd`);
+  for (const row of files["cloud_tag_quality.csv"]) ids.push(`${value(row, "source_row_id")}:untagged_spend_usd`);
+  for (const row of pageRows) ids.push(`${value(row, "source_row_id")}:page_text_char_count`);
+  return ids;
+}
+
+async function reconcileCanonicalFacts(client, args, files, pageRows = []) {
+  await client.query(
+    `DELETE FROM source.canonical_fact_assertion
+      WHERE tenant_key = $1
+        AND dataset_version = $2
+        AND NOT (assertion_id = ANY($3::text[]))`,
+    [args.tenantKey, args.datasetVersion, canonicalFactAssertionIds(files, pageRows)],
+  );
+}
+
 async function upsertCloudPageTextFacts(client, args, pageRows) {
   for (const row of pageRows) {
     const pageText = value(row, "page_text");
@@ -1681,6 +1710,7 @@ async function applyLayer3(client, args, files, rows, expectedL2, pageRows = [])
   await upsertContractScope(client, args, files["cmdb_application_scope.csv"]);
   await upsertSpend(client, args, files["monthly_spend.csv"]);
   await upsertCloudTables(client, args, files);
+  await reconcileCanonicalFacts(client, args, files, pageRows);
   await upsertCloudCanonicalFacts(client, args, files);
   await upsertCloudPageTextFacts(client, args, pageRows);
   await upsertOptimizationSpine(client, args, files);

@@ -71,6 +71,7 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("consumption.sourcing_cloud_usage_monthly_v1");
     expect(loader).toContain("DELETE FROM source.cloud_consumption_adapter_row");
     expect(loader).toContain("DELETE FROM source.source_record_snapshot");
+    expect(loader).toContain("DELETE FROM source.canonical_fact_assertion");
     expect(loader).toContain("'calculated_amount_usd'");
     expect(loader).not.toContain("'candidate_amount_usd',$4");
     expect(layer4RepairMigration).toContain("legacy.opportunity_id");
