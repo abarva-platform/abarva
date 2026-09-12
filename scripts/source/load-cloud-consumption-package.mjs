@@ -120,6 +120,10 @@ function parseArgs() {
     process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_TENANT_KEY ??
     DEFAULT_TENANT_KEY;
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const loadRunId =
+    argValue("load-run-id") ??
+    process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_LOAD_RUN_ID ??
+    `source-cloud-consumption-package-${datasetVersion}-${stamp}`;
   return {
     mode,
     packageDir: path.resolve(
@@ -134,10 +138,11 @@ function parseArgs() {
       argValue("idempotency-key") ??
       process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_IDEMPOTENCY_KEY ??
       `${tenantKey}:${datasetVersion}:layer2-layer3`,
-    loadRunId:
-      argValue("load-run-id") ??
-      process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_LOAD_RUN_ID ??
-      `source-cloud-consumption-package-${datasetVersion}-${stamp}`,
+    loadRunId,
+    layer3LoadRunId:
+      argValue("layer3-load-run-id") ??
+      process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_LAYER3_LOAD_RUN_ID ??
+      loadRunId,
     proofDir: path.resolve(
       argValue("proof-dir") ??
         process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_PROOF_DIR ??
@@ -1683,7 +1688,7 @@ async function layer3Readback(client, args, files) {
        (SELECT count(*)::text FROM source.opportunity_requirement_status WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_opportunity_requirement_status,
        (SELECT count(*)::text FROM source.evidence_request WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_evidence_request,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($4::text[])) AS source_canonical_fact_assertion`,
-    [args.tenantKey, args.datasetVersion, vendorIds, contractIds, opportunityIds, caseIds, args.loadRunId, calculationRunIds],
+    [args.tenantKey, args.datasetVersion, vendorIds, contractIds, opportunityIds, caseIds, args.layer3LoadRunId, calculationRunIds],
   );
   return Object.fromEntries(Object.entries(result.rows[0] ?? {}).map(([key, count]) => [key, Number(count)]));
 }
