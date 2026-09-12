@@ -2,6 +2,7 @@ import {
   contractTabNarrative,
   reviewStatusInWords,
 } from "../WorkspaceExecutiveShell";
+import { asSentence } from "../viewModel";
 import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import type { SourceWorkspaceVM } from "../buildViewModel";
 
@@ -81,6 +82,25 @@ describe("governed tab narrative", () => {
     );
   });
 
+  it("sets a lowercase authored fragment as a sentence", () => {
+    // Real authored value, rendered into a paragraph of prose. As a bare
+    // lowercase fragment it read as a machine token beside the claim it makes.
+    const narrative = narrativeFor({
+      tab_key: "relationship",
+      headline: "Vendor links to 4 scoped workloads.",
+      allowed_executive_statement: "The governed relationship is loaded.",
+      supporting_evidence_summary: "4 scope relationships",
+      missing_evidence_summary:
+        "finance confirmation required before realized-value claim",
+      action_prompt: "Show declared relationships and the boundary.",
+      review_status: "reviewed",
+    });
+
+    expect(narrative.blocker).toBe(
+      "Finance confirmation required before realized-value claim.",
+    );
+  });
+
   it("states the review status in words, not as an identifier", () => {
     const narrative = narrativeFor({
       tab_key: "relationship",
@@ -96,6 +116,102 @@ describe("governed tab narrative", () => {
       "Relationship intelligence · generated from reviewed rows",
     );
     expect(narrative.provenance).not.toContain("_");
+  });
+});
+
+describe("the evidence-basis clause", () => {
+  const row = {
+    tab_key: "story",
+    headline: "The governed financial fields are loaded.",
+    allowed_executive_statement: "Committed capacity runs ahead of usage.",
+    supporting_evidence_summary: "annual value loaded; 6 opportunity rows",
+    missing_evidence_summary: null,
+    action_prompt: "Start with what the contract is for.",
+    review_status: "reviewed",
+  };
+
+  it("is left to Story's own briefing card, which renders it already", () => {
+    const narrative = contractTabNarrative(
+      "Story",
+      {
+        detail: { contractTabIntelligence: [row] },
+        contractEducation: {
+          facetRequirements: { Story: { state: "required", reason: "" } },
+        },
+      } as unknown as SourceWorkspaceVM,
+      contract,
+      null as never,
+      [],
+      undefined,
+    );
+
+    expect(narrative.body).toBe("Committed capacity runs ahead of usage.");
+    expect(narrative.body).not.toContain("Evidence basis");
+  });
+
+  it("still carries on a tab whose body does not render it", () => {
+    const narrative = contractTabNarrative(
+      "Economics",
+      {
+        detail: {
+          contractTabIntelligence: [{ ...row, tab_key: "economics" }],
+        },
+        contractEducation: {
+          facetRequirements: { Economics: { state: "required", reason: "" } },
+        },
+      } as unknown as SourceWorkspaceVM,
+      contract,
+      null as never,
+      [],
+      undefined,
+    );
+
+    expect(narrative.body).toContain(
+      "Evidence basis: annual value loaded; 6 opportunity rows.",
+    );
+  });
+});
+
+describe("asSentence", () => {
+  it("opens and closes a bare fragment", () => {
+    expect(asSentence("finance confirmation required")).toBe(
+      "Finance confirmation required.",
+    );
+  });
+
+  it("leaves an already-formed sentence alone", () => {
+    expect(asSentence("Load the CMDB extract.")).toBe(
+      "Load the CMDB extract.",
+    );
+    expect(asSentence("Is the commitment drawn on?")).toBe(
+      "Is the commitment drawn on?",
+    );
+  });
+
+  it("does not touch a fragment that opens with an identifier", () => {
+    // Uppercase-first already, so nothing is rewritten but the terminator.
+    expect(asSentence("MER-TECH-DBX-001 has no scope rows")).toBe(
+      "MER-TECH-DBX-001 has no scope rows.",
+    );
+  });
+
+  it("does not add a second period to a value that has one", () => {
+    // The live Scope boundary read "...a sized economics claim.." because two
+    // callers appended their own period to an authored value that already
+    // ended in one. Both now go through this helper.
+    expect(
+      asSentence(
+        "4 scope rows still need annual run cost before scope can become a sized economics claim.",
+      ),
+    ).toBe(
+      "4 scope rows still need annual run cost before scope can become a sized economics claim.",
+    );
+    expect(asSentence("Already a sentence.")).not.toContain("..");
+  });
+
+  it("refuses rather than returning an empty sentence", () => {
+    expect(asSentence(null)).toBeNull();
+    expect(asSentence("   ")).toBeNull();
   });
 });
 

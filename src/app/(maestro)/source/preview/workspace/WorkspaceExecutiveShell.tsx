@@ -47,7 +47,7 @@ import {
   ContractOptimizeMethod,
   ContractRefusalChips,
 } from "./ContractOptimizeMethod";
-import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
+import { asSentence, fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
   contractPopulations,
@@ -3482,7 +3482,7 @@ function ContractPage({
           <ContractGovernedStatement
             contract={contract}
             coverage={coverage}
-            headlineOnly={sidePanelRendersTabNarrative(tab, vm)}
+            headlineOnly={narrativeBodyIsAlreadyOnScreen(tab, vm)}
             scopeRows={scopeRows}
             tab={tab}
             vm={vm}
@@ -4007,27 +4007,45 @@ function ContractOptimizeGateStatement({ vm }: { vm: SourceWorkspaceVM }) {
 }
 
 /**
- * Whether the right-hand panel renders the tab narrative for this tab.
+ * Whether this tab already shows the narrative's body somewhere else.
  *
- * Mirrors ContractDetailSidePanel's branch order. Both the panel's narrative
- * stack and the governed statement read `contractTabNarrative` with the same
- * arguments, so wherever the panel takes that branch the statement repeats its
- * body and blocker word for word. The grid asks this before deciding how much
- * of the statement is still worth rendering.
+ * Two ways that happens. Most tabs: the side panel's narrative stack and the
+ * governed statement both read `contractTabNarrative` with the same arguments,
+ * so wherever the panel takes that branch the statement repeats its body and
+ * blocker word for word. Education: the panel is not the narrative stack, but
+ * the tab body opens with the same archetype paragraph the narrative carries
+ * as its body, and the panel repeats it again as the coaching focus.
+ *
+ * Either way the statement's headline is the only part not already on screen,
+ * which is what the grid uses this to decide.
  */
-function sidePanelRendersTabNarrative(
+function narrativeBodyIsAlreadyOnScreen(
   tab: string,
   vm: SourceWorkspaceVM,
 ): boolean {
-  if (
-    tab === "Story" ||
-    tab === "Scope" ||
-    tab === "Relationship" ||
-    tab === "Evidence"
-  ) {
+  // Scope duplicates only when a governed record exists.
+  //
+  // Its boundary card renders that record's allowed statement and missing
+  // evidence, which are exactly the narrative's body and blocker. With no
+  // record the card falls back to its own prose and the narrative's are the
+  // only statement of theirs on the tab, so suppressing them there would lose
+  // a claim rather than a repeat.
+  if (tab === "Scope") {
+    return (
+      contractTabIntelligenceFor(
+        "Scope",
+        vm.detail?.contractTabIntelligence ?? [],
+      ) != null
+    );
+  }
+  if (tab === "Story" || tab === "Relationship" || tab === "Evidence") {
     return false;
   }
-  if (tab === "Education" && vm.contractEducation) return false;
+  // Education is the exception to the rule above: its side panel is not the
+  // narrative stack, but its tab body opens with the same archetype paragraph
+  // the narrative carries as `body`, and the panel repeats it again as the
+  // coaching focus. Only the headline is not already on screen.
+  if (tab === "Education" && vm.contractEducation) return true;
   if (tab === "Optimize" && vm.opportunityView) return false;
   return true;
 }
@@ -5198,13 +5216,13 @@ function ContractValueTypeStack({
   return (
     <div className="sw-v2-fact-stack">
       {established.map(([label, value, meaning]) => (
-        <Fact key={label} label={`${label} - ${meaning}`} value={value} />
+        <Fact key={label} label={`${label} — ${meaning}`} value={value} />
       ))}
       {absent.length > 0 ? (
         <p className="sw-v2-muted">
-          No {absent.join(" or ")} dollars on this contract - nothing has been
-          mischarged, so the whole opportunity has to be negotiated rather than
-          simply claimed.
+          No {absent.join(" or ")} dollars on this contract — nothing has
+          been mischarged, so the whole opportunity has to be negotiated rather
+          than simply claimed.
         </p>
       ) : null}
       <Fact
@@ -8078,7 +8096,10 @@ export function contractTabNarrative(
       headline: governedTab.headline,
       body: [
         governedTab.allowed_executive_statement,
-        governedTab.supporting_evidence_summary
+        // The basis line belongs beside the figures it supports. Story's own
+        // briefing card renders it from the same summary, so appending it here
+        // put the identical clause on the tab twice.
+        governedTab.supporting_evidence_summary && tab !== "Story"
           ? `Evidence basis: ${governedTab.supporting_evidence_summary}.`
           : null,
       ]
@@ -8097,9 +8118,8 @@ export function contractTabNarrative(
        * tab that had nothing missing. Where a tab records no missing input,
        * there is no blocker, and saying so is the honest reading.
        */
-      blocker: withoutNotRequiredFacets(
-        vm,
-        governedTab.missing_evidence_summary,
+      blocker: asSentence(
+        withoutNotRequiredFacets(vm, governedTab.missing_evidence_summary),
       ),
     };
   }
@@ -8221,9 +8241,11 @@ export function contractTabNarrative(
       headline: vm.contractEducation.headline,
       body: vm.contractEducation.body,
       provenance: `${vm.contractEducation.archetypeLabel} guide · ${vm.contractEducation.stateLabel}`,
-      blocker: next
-        ? `${next.title} next: ${next.question}`
-        : vm.contractEducation.focus,
+      // `focus` and `body` are the same paragraph on this record, so falling
+      // back to it printed the card's own body again, immediately beneath
+      // itself. With every applicable step loaded there is no next move, and
+      // saying nothing is the accurate reading.
+      blocker: next ? `${next.title} next: ${next.question}` : null,
     };
   }
   if (tab === "Optimize") {
