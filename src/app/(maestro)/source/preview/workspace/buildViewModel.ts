@@ -1,4 +1,4 @@
-import { COL, money, pct, fmtDate } from "./viewModel";
+import { COL, money, moneyPrecise, pct, fmtDate } from "./viewModel";
 import type {
   WorkspaceViewModel,
   EnrichedContract,
@@ -2986,13 +2986,16 @@ export function buildViewModel(vm: WorkspaceViewModel) {
       : effectiveActualAnnualSpend < committedAnnualSpend * 0.9
         ? {
             value: "Commitment ahead of usage",
-            detail: `${money(Math.abs(commitmentDelta ?? 0))} below committed annual baseline; use this as renegotiation-shape evidence, not realized savings.`,
+            // Names the measure and disclaims the inference. This figure and
+            // the sized ask sit in adjacent strips on Story and were rendering
+            // as the same string, which read as "the ask is the gap".
+            detail: `${moneyPrecise(Math.abs(commitmentDelta ?? 0))} of committed capacity was not drawn on. This is the shape of the renegotiation, not the size of the ask, and not realized savings.`,
             tone: COL.amber,
           }
         : effectiveActualAnnualSpend > committedAnnualSpend * 1.05
           ? {
               value: "Spend above commitment",
-              detail: `${money(Math.abs(commitmentDelta ?? 0))} above committed annual baseline; test committed-use coverage before renewal or re-baseline.`,
+              detail: `${moneyPrecise(Math.abs(commitmentDelta ?? 0))} drawn above the committed annual baseline. Test committed-use coverage before renewal or re-baseline; this is not an ask.`,
               tone: COL.red,
             }
           : {
@@ -3108,12 +3111,23 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               "Owner comes from the opportunity owner when loaded, otherwise the Contract 360 renewal owner.",
             tone: COL.ink,
           },
-          {
-            label: "Next action",
-            value: topOpportunity ? "Work the lever" : "Load evidence",
-            detail: topOpportunity?.nextAction ?? recWhy,
-            tone: topOpportunity ? COL.blue : COL.gray,
-          },
+          // "Next action" is only a card when there is no lever to work.
+          //
+          // With a lever loaded its value read "Work the lever", which says
+          // nothing, and its detail was the lever's own nextAction — the exact
+          // string the Top lever card two positions above already carries. The
+          // lever card is the action; a second card restating it is not a
+          // second step.
+          ...(topOpportunity
+            ? []
+            : [
+                {
+                  label: "Next action",
+                  value: "Load evidence",
+                  detail: recWhy,
+                  tone: COL.gray,
+                },
+              ]),
         ],
       }
     : null;
