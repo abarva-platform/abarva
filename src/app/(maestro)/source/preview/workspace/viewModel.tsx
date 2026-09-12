@@ -51,6 +51,22 @@ export function money(m: number | null | undefined): string {
   if (abs >= 1_000) return '$' + (m / 1_000).toFixed(0) + 'K';
   return '$' + m.toFixed(0);
 }
+/**
+ * Two decimals in the millions, for a figure that shares a surface with a
+ * different quantity of similar size.
+ *
+ * `money` renders millions to one decimal, so $1.511M and $1.484M both print
+ * as "$1.5M". On the Story decision strip the sized ask and the undrawn
+ * commitment are exactly that far apart, and rendering both as the same string
+ * invited the reader to conclude the ask was derived from the gap. It is not:
+ * the two differ by $27K and are unrelated measures.
+ */
+export function moneyPrecise(m: number | null | undefined): string {
+  if (m == null) return 'Not established';
+  const abs = Math.abs(m);
+  if (abs < 1_000_000 || abs >= 1_000_000_000) return money(m);
+  return '$' + (m / 1_000_000).toFixed(2) + 'M';
+}
 export function pct(v: number): string {
   if (!Number.isFinite(v)) return 'Not established';
   return (v * 100).toFixed(1) + '%';
