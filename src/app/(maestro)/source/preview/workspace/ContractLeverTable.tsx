@@ -42,6 +42,13 @@ function isSignalStage(row: Opportunity): boolean {
 
 /** A lever with no traced amount states why, never a figure. */
 function candidateFor(row: Opportunity): string {
+  // Signal-stage rows are deliberately unpriced. A source row may carry a
+  // provisional amount for internal analysis, but it must never become a
+  // client-facing dollar figure until the required evidence gate closes.
+  if (isSignalStage(row)) {
+    if (row.blockingGap) return `Not sized — ${lowerFirst(row.blockingGap)}`;
+    return "Not sized";
+  }
   if (row.amountUsd != null) return row.amount;
   if (row.blockingGap) return `Not sized — ${lowerFirst(row.blockingGap)}`;
   return "Not sized";
@@ -58,17 +65,20 @@ export function ContractLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
   const rows = view?.opportunities ?? [];
   if (rows.length === 0) return null;
 
-  const sized = rows.filter((row) => row.amountUsd != null);
-  const signalCount = rows.length - sized.length;
+  const sized = rows.filter(
+    (row) => !isSignalStage(row) && row.amountUsd != null,
+  );
+  const signalCount = rows.filter(isSignalStage).length;
+  const unsizedCount = rows.length - sized.length - signalCount;
 
   return (
     <section className="sw-c3-card sw-c3-card-flush sw-c3-levers">
       <div className="sw-c3-lever-head">
         <span className="sw-c3-display sw-c3-display-sm">
           {rows.length} {rows.length === 1 ? "ask" : "asks"}
-          {signalCount > 0
-            ? `. ${sized.length} carry a traced amount.`
-            : ". Every one carries a traced amount."}
+          {signalCount > 0 || unsizedCount > 0
+            ? `. ${sized.length} carry a sized amount; ${signalCount + unsizedCount} do not.`
+            : ". Every one carries a sized amount."}
         </span>
         <span className="sw-c3-note">Exports unchanged into the memo</span>
       </div>
@@ -150,6 +160,9 @@ export function ContractLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
           not happened.
           {signalCount > 0
             ? ` ${signalCount} further ${signalCount === 1 ? "ask carries" : "asks carry"} no amount and ${signalCount === 1 ? "is" : "are"} not counted.`
+            : ""}
+          {unsizedCount > 0
+            ? ` ${unsizedCount} ${unsizedCount === 1 ? "further ask has" : "further asks have"} no reproducible amount and ${unsizedCount === 1 ? "is" : "are"} not counted.`
             : ""}
         </span>
       </div>
