@@ -223,7 +223,6 @@ export function staleDocumentFileIds(rows, currentFileIds, args) {
     .map((row) => row.file_id)
     .sort();
 }
-
 async function ensureDocumentSchema(client) {
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}`);
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(META_SCHEMA)}`);
