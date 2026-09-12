@@ -3307,38 +3307,24 @@ function ContractPage({
     );
   }
 
-  const tabNarrative = contractTabNarrative(
-    tab,
-    vm,
-    contract,
-    coverage,
-    scopeRows,
-    contractClaimCards[0],
-  );
 
   return (
     <div className="sw-v2-grid sw-v2-contract-detail-grid">
       <section className="sw-v2-panel sw-v2-span-2 sw-v2-contract-story-panel">
         {/*
-          The contract name is carried once, by the briefing header above the
-          tab row. Repeating it as a panel title put the same heading on screen
-          twice and pushed the tab's own opening sentence below the fold.
+          Straight from the tab row to the tab's own content.
+
+          The design gives every surface two or three cards and nothing else.
+          What sat here instead was a panel head repeating the contract name, a
+          governed-narrative block that rendered the lever list as a run-on
+          paragraph under a SYSTEM_GENERATED label, and three stat tiles with
+          most of their height empty — all of it above the fold, on every tab.
+          Each briefing component now owns its surface, carries its own
+          provenance line, and states its figures once.
         */}
-        <div className="sw-v2-panel-head">
-          <span>{`Contract 360 / ${tab}`}</span>
-        </div>
-        <ContractTabStory
-          coverage={coverage}
-          contract={contract}
-          scopeRows={scopeRows}
-          tab={tab}
-          tabNarrative={tabNarrative}
-          vm={vm}
-        />
         {tab === "Optimize" ? (
           <>
             <ContractWorkflowRail vm={vm} />
-            <ContractValueLedgers vm={vm} />
             <ContractOptimizeContent vm={vm} />
           </>
         ) : null}
@@ -3361,6 +3347,7 @@ function ContractPage({
           <ContractStoryBriefing
             contract={contract}
             coverage={coverage}
+            scopeRows={scopeRows}
             vm={vm}
           />
         ) : tab === "Scope" ? (
@@ -3433,6 +3420,22 @@ function ContractPage({
       <section className="sw-v2-panel sw-v2-contract-context-panel">
         <ContractDetailSidePanel
           cardCount={contractClaimCards.length}
+          contract={contract}
+          coverage={coverage}
+          scopeRows={scopeRows}
+          tab={tab}
+          vm={vm}
+        />
+        {/*
+          The governed statement moved here from the tab body.
+
+          In the design the right-hand column is where interpretation lives, and
+          the tab body is content cards only. Rendering the narrative in the body
+          put a SYSTEM_GENERATED label and a run-on paragraph above every
+          surface; dropping it outright would have lost a governed claim. It
+          reads as a quiet statement beside the tab instead.
+        */}
+        <ContractGovernedStatement
           contract={contract}
           coverage={coverage}
           scopeRows={scopeRows}
@@ -3523,151 +3526,6 @@ function ContractCommandBar({
         {contract.contract_id}
       </span>
     </nav>
-  );
-}
-
-function ContractTabStory({
-  coverage,
-  contract,
-  scopeRows,
-  tab,
-  tabNarrative,
-  vm,
-}: {
-  coverage: SourceContractEvidenceCoverageRow | null | undefined;
-  contract: SourceContract360Row;
-  scopeRows: readonly SourceContractApplicationScopeRow[];
-  tab: string;
-  tabNarrative: ReturnType<typeof contractTabNarrative>;
-  vm: SourceWorkspaceVM;
-}) {
-  const actualSpend =
-    numberFromDb(contract.actual_annual_spend) ??
-    numberFromDb(coverage?.actual_spend_usd);
-  const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
-    numberFromDb(coverage?.committed_spend_usd);
-  /*
-   * Utilization is consumption against the amount that can be consumed.
-   *
-   * `annual_value` carries the whole annual cost of the agreement, support
-   * and other non-consumable fees included. Dividing consumption by it
-   * understates how much of the commitment is being drawn on, and put a
-   * different utilization figure on this tab from the one the consumption
-   * chart computes against committed spend a few inches below. Prefer the
-   * committed amount, and fall back to annual value only when no commitment
-   * is recorded — naming which denominator was used either way.
-   */
-  const committedSpend = numberFromDb(coverage?.committed_spend_usd);
-  const utilizationBasis =
-    committedSpend && committedSpend > 0
-      ? { amount: committedSpend, label: "committed spend" }
-      : annualValue && annualValue > 0
-        ? { amount: annualValue, label: "annual contract value" }
-        : null;
-  const utilization = utilizationAgainstCommitment(
-    actualSpend,
-    utilizationBasis?.amount ?? null,
-  );
-  const sizedTotal = vm.opportunityView
-    ? sizedOpportunityTotalUsd(vm.opportunityView.opportunities)
-    : 0;
-  const stats =
-    tab === "Optimize"
-      ? [
-          [
-            "Sized opportunity",
-            sizedTotal > 0 ? money(sizedTotal) : "Not sized",
-          ],
-          [
-            "Levers",
-            vm.opportunityView
-              ? `${vm.opportunityView.opportunities.length} total`
-              : "Not loaded",
-          ],
-          [
-            "Finance confirmed",
-            vm.opportunityView?.financeConfirmed ?? "Not established",
-          ],
-        ]
-      : tab === "Education"
-        ? [
-            ["Archetype", vm.contractEducation?.archetypeLabel ?? "Not mapped"],
-            ["Education state", vm.contractEducation?.stateLabel ?? "Loading"],
-            ["Operating loop", "Track · Load · Observe"],
-          ]
-      : tab === "Performance" && !contractFacetIsRequired(vm, "Performance")
-        ? [
-            ["Applicability", "Not part of this archetype"],
-            ["Evidence lane", "Not required"],
-            ["Next focus", "Consumption and commercial evidence"],
-          ]
-      : tab === "Economics"
-        ? [
-            ["Annual value", money(annualValue)],
-            ["Actual annual spend", money(actualSpend)],
-            [
-              utilizationBasis == null
-                ? "Utilization"
-                : `Utilization of ${utilizationBasis.label}`,
-              utilization == null ? "Not established" : `${utilization}%`,
-            ],
-          ]
-        : [
-            ["Vendor", safeContractVendorDisplayName(contract)],
-            ["End date", fmtDate(contract.end_date)],
-            [
-              "Notice",
-              contract.notice_period_days == null
-                ? "Not established"
-                : `${contract.notice_period_days} days`,
-            ],
-          ];
-  const purpose =
-    tab === "Story"
-      ? contractPurposeSummary(contract, coverage, scopeRows)
-      : null;
-
-  return (
-    <div className={`sw-v2-contract-story is-${tab.toLowerCase()}`}>
-      <div>
-        {purpose ? (
-          <div className="sw-v2-contract-purpose">
-            <h3>{purpose.heading}</h3>
-            <p>{purpose.body}</p>
-            <span>{purpose.evidence}</span>
-          </div>
-        ) : null}
-        {/*
-          The purpose block above and the governed narrative are written from
-          the same reviewed source, so on Story they print the same paragraph
-          twice. Show the narrative's own contribution — what it adds beyond the
-          purpose — and drop the repeat.
-        */}
-        <span>{tabNarrative.provenance}</span>
-        {/*
-          The governed headline is long-form prose drawn from the same reviewed
-          source as the purpose block above, so on Story the two resolved to the
-          same paragraph and it appeared twice. The narrative's own body says
-          something the purpose does not, so only the repeated headline is
-          dropped.
-        */}
-        {repeatsPurpose(purpose, tabNarrative.headline) ? null : (
-          <h2>{tabNarrative.headline}</h2>
-        )}
-        <p>{tabNarrative.body}</p>
-        <small>{tabNarrative.blocker}</small>
-      </div>
-      <dl>
-        {stats.map(([label, value]) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
   );
 }
 
@@ -3977,6 +3835,65 @@ function ContractTabBody({
         }
       />
       <Fact label="End date" value={fmtDate(contract.end_date)} />
+    </div>
+  );
+}
+
+/**
+ * The governed narrative for a tab, stated once, beside it.
+ *
+ * Carries the reviewed headline, the allowed executive statement and what the
+ * tab cannot say — the content the removed tab-body block held — without the
+ * builder-facing provenance label or the stat tiles that came with it.
+ */
+function ContractGovernedStatement({
+  contract,
+  coverage,
+  scopeRows,
+  tab,
+  vm,
+}: {
+  contract: SourceContract360Row;
+  coverage: ReturnType<typeof coverageForContract>;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+  tab: string;
+  vm: SourceWorkspaceVM;
+}) {
+  const narrative = contractTabNarrative(
+    tab,
+    vm,
+    contract,
+    coverage,
+    scopeRows,
+    // The claim card is optional context for the narrative; the callers that
+    // have one pass it, and this statement reads fine without.
+    undefined,
+  );
+  if (!narrative.headline && !narrative.body) return null;
+
+  /*
+   * The Story purpose card and this headline are written from the same reviewed
+   * source. They now sit in different columns rather than stacked, but that is
+   * still the same paragraph twice on one screen.
+   */
+  const purpose =
+    tab === "Story"
+      ? contractPurposeSummary(contract, coverage, scopeRows)
+      : null;
+  const headline = repeatsPurpose(purpose, narrative.headline)
+    ? null
+    : narrative.headline;
+
+  return (
+    <div className="sw-c3-governed-statement">
+      <div className="sw-c3-eyebrow">What Source can state</div>
+      {headline ? (
+        <p className="sw-c3-governed-headline">{headline}</p>
+      ) : null}
+      {narrative.body ? <p className="sw-c3-note">{narrative.body}</p> : null}
+      {narrative.blocker ? (
+        <p className="sw-c3-note sw-c3-governed-blocker">{narrative.blocker}</p>
+      ) : null}
     </div>
   );
 }

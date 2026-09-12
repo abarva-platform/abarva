@@ -548,16 +548,16 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
-    expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
-    expect(screen.getByText("Optimize gap")).toBeTruthy();
+    // The provenance label ("Optimize gap") was builder vocabulary rendered
+    // above the tab body; the governed statement now sits in the right column
+    // under a reader-facing heading instead.
+    expect(screen.getByText("What Source can state")).toBeTruthy();
     expect(screen.getByText("Contract readout")).toBeTruthy();
     expect(screen.getByText("Decision consequence")).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Story" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "Scope" }));
 
-    expect(screen.getByText("Contract 360 / Scope")).toBeTruthy();
-    expect(screen.getByText("Scope story")).toBeTruthy();
     expect(screen.getAllByText("Workday Finance").length).toBeGreaterThan(0);
     // The scope briefing renders each row's business function as content
     // beside the workload it belongs to, rather than as a column header on a
@@ -1139,11 +1139,9 @@ describe("Source workspace ECL browser-surface proof", () => {
         name: /Service Desk Managed Services MER-TECH-SD-001 Kyndryl, Inc\./,
       }),
     );
-    expect(screen.getByText("Contract 360 / Story")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
-    expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
     expect(
       screen.getByText("No contract-specific optimization levers loaded."),
     ).toBeTruthy();
@@ -1155,7 +1153,6 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     expect(screen.getByText("Service Desk Managed Services")).toBeTruthy();
     expect(screen.getAllByText(/MER-TECH-SD-001/).length).toBeGreaterThan(0);
-    expect(screen.getByText("Contract 360 / Performance")).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText("12 performance periods loaded.")).toBeTruthy();
     });
@@ -1569,8 +1566,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Contract 360 / Optimize")).toBeTruthy();
-    });
+      });
     await waitFor(() => {
       expect(screen.getByLabelText("Negotiation levers")).toBeTruthy();
     });

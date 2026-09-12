@@ -3876,3 +3876,21 @@
   margin-top: 10px;
   max-width: 58ch;
 }
+
+.sw-c3-governed-statement {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sw-c3-hairline);
+}
+
+.sw-c3-governed-headline {
+  margin: 9px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sw-c3-ink);
+  line-height: 1.45;
+}
+
+.sw-c3-governed-blocker {
+  color: var(--sw-c3-mid);
+}
