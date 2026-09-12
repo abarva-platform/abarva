@@ -1661,7 +1661,7 @@ function PortfolioPage({
             value={String(portfolio.impact.actionCandidates.length)}
           />
           <Fact
-            label="aVa grounding bundles"
+            label="Answerable contracts"
             value={String(portfolio.impact.avaGroundingBundles.length)}
           />
           <Fact
@@ -1684,10 +1684,10 @@ function PortfolioPage({
             </div>
           ))}
           <p className="sw-v2-muted">
-            Contract pages should show scope, economics, performance,
-            relationship, and evidence narratives only when the corresponding
-            load rows exist. Otherwise they should render a specific backfill
-            request, not a reusable placeholder.
+            A contract page states a scope, economics, performance,
+            relationship or evidence finding only where rows exist behind it.
+            Where they do not, it names the input it needs rather than showing
+            a placeholder.
           </p>
         </div>
       </section>
