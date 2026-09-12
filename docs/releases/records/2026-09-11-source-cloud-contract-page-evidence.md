@@ -33,7 +33,7 @@ Adds the governed page-text companion lane for the synthetic cloud-consumption c
 - Six `contract_page_text.csv` rows for the staged synthetic cloud-consumption package.
 - Package-manifest and governed dataset-manifest row-count updates.
 - Cloud package hash update so companion page text changes the recorded source version.
-- Contract 360 document-count refresh after companion loading so tab summaries and document lineage use the same count.
+- Canonical page-text facts are loaded with the cloud package so the Contract 360 projection and document lineage use the same count.
 - Behavioral loader coverage for companion-row reporting and hash invalidation.
 
 ## QA / Validation

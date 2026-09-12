@@ -104,7 +104,7 @@ describe("Source cloud consumption package loader", () => {
     expect(summary.layer2_expected_by_adapter.optimization_opportunity_adapter).toBe(6);
     expect(summary.layer3_expected_readback.source_optimization_opportunity).toBe(6);
     expect(summary.layer3_expected_readback.source_opportunity_evidence).toBe(20);
-    expect(summary.layer3_expected_readback.source_canonical_fact_assertion).toBe(113);
+    expect(summary.layer3_expected_readback.source_canonical_fact_assertion).toBe(119);
     expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_cloud_rows).toBe(6);
     expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_finance_required_rows).toBe(6);
 
