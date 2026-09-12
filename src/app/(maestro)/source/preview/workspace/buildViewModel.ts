@@ -2434,6 +2434,28 @@ export function buildViewModel(vm: WorkspaceViewModel) {
         opportunitySet,
         readiness: buildContractOptimizationEvidenceReadiness({
           evidencePack: detail?.optimizationEvidence ?? null,
+          /*
+           * The curation ledger is empty until a reviewer attaches evidence to
+           * an opportunity, and nothing populates it at load time. Scoring from
+           * it alone reported every required family missing on contracts
+           * carrying hundreds of loaded rows. Pass what the contract actually
+           * holds so a family can be satisfied by the evidence that exists.
+           */
+          lanes: {
+            scopeRows: scopeRows.length,
+            spendMonths: detail?.spendMonths?.length ?? 0,
+            invoicedMonths: (detail?.spendMonths ?? []).filter(
+              (row) => numberFromDb(row.invoice_amount) != null,
+            ).length,
+            performancePeriods: detail?.performancePeriods?.length ?? 0,
+            documentRows:
+              (detail?.docExtractions?.length ?? 0) +
+              (detail?.documentFiles?.length ?? 0),
+            changeOrderRows:
+              numberFromDb(contractCoverage?.change_order_rows) ?? 0,
+            contractTermsLoaded: Boolean(textOrNull(c?.contract_name)),
+            renewalTermsLoaded: Boolean(textOrNull(c?.end_date)),
+          },
         }),
         traceability: summarizeOpportunityTraceability(
           opportunitySet?.opportunities ?? [],
