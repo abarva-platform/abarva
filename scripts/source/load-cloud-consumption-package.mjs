@@ -650,9 +650,30 @@ async function writeRunStatus(client, args, packageHash, status, layer2RowCount,
   );
 }
 
+async function reconcileLayer2Rows(client, args, rows) {
+  const sourceIdsByAdapter = new Map();
+  for (const row of rows) {
+    const sourceIds = sourceIdsByAdapter.get(row.adapterName) ?? [];
+    sourceIds.push(row.sourceRowId);
+    sourceIdsByAdapter.set(row.adapterName, sourceIds);
+  }
+
+  for (const [adapterName, sourceIds] of sourceIdsByAdapter) {
+    await client.query(
+      `DELETE FROM source.cloud_consumption_adapter_row
+        WHERE tenant_key = $1
+          AND dataset_version = $2
+          AND adapter_name = $3
+          AND NOT (source_row_id = ANY($4::text[]))`,
+      [args.tenantKey, args.datasetVersion, adapterName, sourceIds],
+    );
+  }
+}
+
 async function applyLayer2(client, args, rows, packageHash, qualityGate) {
   await assertTables(client, REQUIRED_LAYER2_TABLES);
   await writeRunStatus(client, args, packageHash, "running", 0, qualityGate);
+  await reconcileLayer2Rows(client, args, rows);
   for (const row of rows) {
     await client.query(
       `INSERT INTO source.cloud_consumption_adapter_row (
@@ -708,6 +729,17 @@ function assertCounts(expected, actual, label) {
     .filter(([name, count]) => actual[name] !== count)
     .map(([name, count]) => `${name}: expected ${count}, read ${actual[name] ?? 0}`);
   if (failures.length) throw new Error(`${label} count mismatch: ${failures.join("; ")}`);
+}
+
+async function reconcileSnapshots(client, args, rows) {
+  const snapshotIds = rows.map((row) => `${row.adapterName}:${row.sourceRowId}`);
+  await client.query(
+    `DELETE FROM source.source_record_snapshot
+      WHERE tenant_key = $1
+        AND dataset_version = $2
+        AND NOT (snapshot_id = ANY($3::text[]))`,
+    [args.tenantKey, args.datasetVersion, snapshotIds],
+  );
 }
 
 async function insertSnapshots(client, args, rows) {
@@ -1641,6 +1673,7 @@ function expectedLayer4(files) {
 async function applyLayer3(client, args, files, rows, expectedL2, pageRows = []) {
   await assertTables(client, [...REQUIRED_LAYER2_TABLES, ...REQUIRED_LAYER3_TABLES]);
   assertCounts(expectedL2, await layer2Readback(client, args), "Layer 2");
+  await reconcileSnapshots(client, args, rows);
   await insertSnapshots(client, args, rows);
   await upsertVendors(client, args, files["cloud_contract_register.csv"]);
   await upsertContracts(client, args, files["cloud_contract_register.csv"]);
