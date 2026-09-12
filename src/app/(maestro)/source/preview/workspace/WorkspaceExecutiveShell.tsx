@@ -3758,6 +3758,35 @@ function usableScopeSummary(value: string | null | undefined) {
  * The prose that survives is kept; if nothing usable remains, the caller falls
  * through to its next source rather than showing identifiers.
  */
+/**
+ * The governed record's review status, in words a reader can use.
+ *
+ * The raw value is an identifier - `system_generated_from_reviewed_sources`,
+ * `draft_gap` - and it was rendering verbatim into the provenance line a
+ * reader consults to judge how much to trust the tab. It also undersold
+ * itself: the longest of those values means the tab was generated from rows a
+ * person had already reviewed, which is a strong provenance rather than a
+ * machine disclaimer.
+ *
+ * An unrecognised value is stripped rather than guessed at, so a status added
+ * upstream cannot leak an identifier onto this surface.
+ */
+const REVIEW_STATUS_WORDS: Readonly<Record<string, string>> = {
+  system_generated_from_reviewed_sources: "generated from reviewed rows",
+  draft_gap: "draft, evidence incomplete",
+  requires_review: "awaiting review",
+  reviewed: "reviewed",
+  approved: "approved",
+};
+
+export function reviewStatusInWords(value: string | null | undefined): string {
+  const raw = value?.trim();
+  if (!raw) return "review status not recorded";
+  const known = REVIEW_STATUS_WORDS[raw.toLowerCase()];
+  if (known) return known;
+  return withoutIdentifierTokens(raw) ?? "review status not recorded";
+}
+
 export function withoutIdentifierTokens(
   value: string | null | undefined,
 ): string | null {
@@ -4140,7 +4169,14 @@ function ContractNarrativeContextStack({
 }) {
   return (
     <div className="sw-v2-fact-stack">
-      <Fact label="Decision consequence" value={narrative.blocker} />
+      {/*
+        No consequence card where nothing is blocked. The slot used to be
+        filled by the governed record's authoring directive, which read as a
+        consequence to anyone who did not know it was an instruction.
+      */}
+      {narrative.blocker ? (
+        <Fact label="Decision consequence" value={narrative.blocker} />
+      ) : null}
       {bodyOwnedElsewhere ? null : (
         <p className="sw-v2-muted">{narrative.body}</p>
       )}
@@ -8048,11 +8084,23 @@ export function contractTabNarrative(
       ]
         .filter(Boolean)
         .join(" "),
-      provenance: `${tab} intelligence · ${governedTab.review_status}`,
-      blocker:
-        withoutNotRequiredFacets(vm, governedTab.missing_evidence_summary) ??
-        governedTab.action_prompt ??
-        "Stay within the governed tab evidence.",
+      provenance: `${tab} intelligence · ${reviewStatusInWords(governedTab.review_status)}`,
+      /*
+       * A blocker is a missing input, not an authoring note.
+       *
+       * `action_prompt` is authored as an instruction to whatever renders the
+       * tab — "Show declared relationships and the boundary", "Render evidence
+       * lanes only when rows exist", "Keep contract value, actual spend,
+       * invoiced, paid and finance-confirmed outcomes in separate ledgers".
+       * Substituting it for a missing-evidence summary put those directives in
+       * front of an executive under the label "Decision consequence", on every
+       * tab that had nothing missing. Where a tab records no missing input,
+       * there is no blocker, and saying so is the honest reading.
+       */
+      blocker: withoutNotRequiredFacets(
+        vm,
+        governedTab.missing_evidence_summary,
+      ),
     };
   }
   if (tab === "Scope") {
