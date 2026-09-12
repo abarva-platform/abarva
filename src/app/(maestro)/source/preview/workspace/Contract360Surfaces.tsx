@@ -10,6 +10,12 @@ import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio"
 import { money, fmtDate } from "./viewModel";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { countOrDash } from "./contractPopulations";
+import {
+  evidenceLede,
+  relationshipLede,
+  scopeLede,
+  storyLede,
+} from "./contract360Ledes";
 
 /**
  * Contract 360 — the per-tab briefing surfaces.
@@ -323,6 +329,23 @@ export function ContractStoryBriefing({
         */}
         <section className="sw-c3-card sw-c3-story-thesis">
           <div className="sw-c3-eyebrow">Commercial position</div>
+          {/*
+            The position stated as a finding, computed from the same figures in
+            the tiles below it, so the sentence and the numbers cannot disagree.
+          */}
+          {storyLede(
+            contract,
+            coverage,
+            vm.contractEducation?.archetypeLabel ?? null,
+          ) ? (
+            <p className="sw-c3-display sw-c3-display-sm sw-c3-story-position">
+              {storyLede(
+                contract,
+                coverage,
+                vm.contractEducation?.archetypeLabel ?? null,
+              )}
+            </p>
+          ) : null}
           <p className="sw-c3-prose" style={{ marginTop: 10 }}>
             {story?.supporting_evidence_summary
               ? `Evidence basis: ${story.supporting_evidence_summary}.`
@@ -426,8 +449,15 @@ export function ContractScopeBriefing({
         <div className="sw-c3-eyebrow sw-c3-eyebrow-accent">
           What is actually in scope
         </div>
+        {/*
+          A computed finding, not a restatement of the row count. The governed
+          headline reads "4 scoped application or service rows are loaded",
+          which is true and is the builder's sentence; this says what the rows
+          mean. Falls back to the governed narrative when they support no claim.
+        */}
         <p className="sw-c3-display">
-          {scope?.headline ??
+          {scopeLede(scopeRows, vm.detail?.spendMonths ?? []) ??
+            scope?.headline ??
             `${scopeRows.length} declared workload scope${scopeRows.length === 1 ? "" : "s"}.`}
         </p>
         <p className="sw-c3-note">
@@ -562,7 +592,8 @@ export function ContractRelationshipBriefing({
           Declared relationships
         </div>
         <p className="sw-c3-display">
-          {relationship?.headline ??
+          {relationshipLede(scopeRows) ??
+            relationship?.headline ??
             "One vendor, one agreement, and the work it covers."}
         </p>
         <p className="sw-c3-note">
@@ -671,7 +702,8 @@ export function ContractEvidenceFamilies({
     <div className="sw-c3-stack">
       <section className="sw-c3-card sw-c3-card-lead">
         <p className="sw-c3-display">
-          {evidence?.headline ??
+          {evidenceLede(coverage, performanceRequired ? 0 : 1) ??
+            evidence?.headline ??
             "Every figure on this contract resolves to a loaded row."}
         </p>
         {evidence?.supporting_evidence_summary ? (

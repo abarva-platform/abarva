@@ -3871,3 +3871,8 @@
 .sw-c3-mix {
   margin-top: 12px;
 }
+
+.sw-c3-story-position {
+  margin-top: 10px;
+  max-width: 58ch;
+}
