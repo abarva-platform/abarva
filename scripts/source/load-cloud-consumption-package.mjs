@@ -1333,6 +1333,31 @@ async function upsertCloudCanonicalFacts(client, args, files) {
   }
 }
 
+async function upsertCloudPageTextFacts(client, args, pageRows) {
+  for (const row of pageRows) {
+    const pageText = value(row, "page_text");
+    await insertCanonicalFact(client, args, {
+      assertionId: `${value(row, "source_row_id")}:page_text_char_count`,
+      contractId: value(row, "contract_id"),
+      vendorId: value(row, "vendor_ref"),
+      factKey: "document.page_text_char_count",
+      numeric: pageText.length,
+      unit: "character",
+      sourceTable: "source.contract_page_text_adapter",
+      sourceRecordId: value(row, "source_row_id"),
+      sourceDocumentId: value(row, "source_file_id"),
+      assertionBasis: "Searchable page text is present for this reviewed synthetic contract evidence document.",
+      sourceRefs: [value(row, "source_row_id"), value(row, "source_file_id")],
+      payload: {
+        source_file_id: value(row, "source_file_id"),
+        source_page: value(row, "source_page"),
+        page_text_sha256: value(row, "page_text_sha256"),
+        synthetic_policy: SYNTHETIC_POLICY,
+      },
+    });
+  }
+}
+
 async function upsertOptimizationSpine(client, args, files) {
   const opportunities = files["optimization_opportunities.csv"];
   const contracts = files["cloud_contract_register.csv"];
@@ -1546,7 +1571,7 @@ async function upsertOptimizationSpine(client, args, files) {
   }
 }
 
-function expectedLayer3(files, rows) {
+function expectedLayer3(files, rows, pageRows = []) {
   const opportunities = files["optimization_opportunities.csv"];
   const evidenceInputCount = opportunities.reduce((sum, row) => sum + value(row, "evidence_rows").split(";").map((item) => item.trim()).filter(Boolean).length, 0);
   const canonicalFactCount =
@@ -1555,7 +1580,7 @@ function expectedLayer3(files, rows) {
     files["cloud_service_usage_monthly.csv"].length +
     files["cloud_commitment_coverage_monthly.csv"].length * 2 +
     files["cloud_resource_inventory.csv"].length +
-    files["cloud_tag_quality.csv"].length;
+    files["cloud_tag_quality.csv"].length + pageRows.length;
   return {
     source_record_snapshot: rows.length,
     source_vendor: uniqueRows(files["cloud_contract_register.csv"], "vendor_ref").length,
@@ -1608,7 +1633,7 @@ function expectedLayer4(files) {
   };
 }
 
-async function applyLayer3(client, args, files, rows, expectedL2) {
+async function applyLayer3(client, args, files, rows, expectedL2, pageRows = []) {
   await assertTables(client, [...REQUIRED_LAYER2_TABLES, ...REQUIRED_LAYER3_TABLES]);
   assertCounts(expectedL2, await layer2Readback(client, args), "Layer 2");
   await insertSnapshots(client, args, rows);
@@ -1619,6 +1644,7 @@ async function applyLayer3(client, args, files, rows, expectedL2) {
   await upsertSpend(client, args, files["monthly_spend.csv"]);
   await upsertCloudTables(client, args, files);
   await upsertCloudCanonicalFacts(client, args, files);
+  await upsertCloudPageTextFacts(client, args, pageRows);
   await upsertOptimizationSpine(client, args, files);
   return layer3Readback(client, args, files);
 }
@@ -1776,7 +1802,7 @@ async function main() {
   const packageHash = sourcePackageHash(sourceFiles, docs, companionSourceFiles);
   const qualityGate = qualifyPackage(args, sourceFiles, docs);
   const expectedL2 = adapterCountByName(rows);
-  const expectedL3 = expectedLayer3(sourceFiles, rows);
+  const expectedL3 = expectedLayer3(sourceFiles, rows, companionSourceFiles.contract_page_text);
   const expectedL4 = expectedLayer4(sourceFiles);
   const summary = {
     event: "source_cloud_consumption_package_started",
@@ -1822,7 +1848,7 @@ async function main() {
     } else if (args.mode === "apply-layer3") {
       requireApplyApproval(args);
       await client.query("BEGIN");
-      const readback = await applyLayer3(client, args, sourceFiles, rows, expectedL2);
+      const readback = await applyLayer3(client, args, sourceFiles, rows, expectedL2, companionSourceFiles.contract_page_text);
       assertCounts(expectedL3, readback, "Layer 3");
       await writeRunStatus(client, args, packageHash, "completed", rows.length, qualityGate, readback);
       await client.query("COMMIT");
