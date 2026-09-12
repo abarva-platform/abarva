@@ -41,6 +41,10 @@ import {
   ContractEconomicsBriefing,
 } from "./Contract360Economics";
 import { ContractLeverTable } from "./ContractLeverTable";
+import {
+  ContractOptimizeMethod,
+  ContractRefusalChips,
+} from "./ContractOptimizeMethod";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
@@ -3326,6 +3330,7 @@ function ContractPage({
         {tab === "Optimize" ? (
           <>
             <ContractWorkflowRail vm={vm} />
+            <ContractRefusalChips vm={vm} />
             <ContractOptimizeContent vm={vm} />
           </>
         ) : null}
@@ -3407,7 +3412,10 @@ function ContractPage({
             />
           </>
         ) : tab === "Education" && vm.contractEducation ? (
-          <ContractEducationBriefing education={vm.contractEducation} />
+          <>
+            <ContractEducationBriefing education={vm.contractEducation} />
+            <ContractOptimizeMethod vm={vm} />
+          </>
         ) : tab === "Optimize" ? null : (
           <ContractTabBody
             contract={contract}
