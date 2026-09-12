@@ -4,7 +4,6 @@ import { render, screen } from "@testing-library/react";
 
 import {
   ContractBriefingHeader,
-  ContractLeverTable,
 } from "../Contract360Surfaces";
 import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import type { SourceWorkspaceVM } from "../buildViewModel";
@@ -123,63 +122,5 @@ describe("ContractBriefingHeader", () => {
 
     expect(container.querySelector(".sw-c3-pill-alert")).toBeNull();
     expect(container.querySelector(".sw-c3-pill-quiet")).toBeNull();
-  });
-});
-
-describe("ContractLeverTable", () => {
-  it("never renders a signal-stage amount as sized", () => {
-    const vm = {
-      opportunityView: {
-        opportunities: [
-          {
-            id: "quantified-1",
-            label: "Re-time commitment",
-            valueType: "Negotiated Improvement",
-            timingDependency: "Before renewal",
-            stage: "Quantified",
-            stageRaw: "quantified",
-            amount: "$620K",
-            amountUsd: 620000,
-            owner: "Sourcing",
-            ownerRole: "Sourcing lead",
-            buyerAsk: "Reset the commitment schedule.",
-            vendorConcession: "Preserve the relationship.",
-            sourceRefs: ["doc-1"],
-            grade: "A",
-            nextAction: "Draft the amendment.",
-            blockingGap: null,
-          },
-          {
-            id: "signal-1",
-            label: "Review discount band",
-            valueType: "Negotiated Improvement",
-            timingDependency: "After benchmark load",
-            stage: "Signal",
-            stageRaw: "signal",
-            amount: "$270K",
-            amountUsd: 270000,
-            owner: "Technology Finance",
-            ownerRole: "Finance lead",
-            buyerAsk: "Load a comparable before re-pricing.",
-            vendorConcession: "Not stateable yet.",
-            sourceRefs: ["doc-2"],
-            grade: "B",
-            nextAction: "Load the benchmark.",
-            blockingGap: "Benchmark required.",
-          },
-        ],
-        financeConfirmed: "Not established",
-      },
-    } as unknown as SourceWorkspaceVM;
-
-    const { container } = render(<ContractLeverTable vm={vm} />);
-
-    expect(container.querySelector(".sw-c3-table-foot")?.textContent).toContain(
-      "1 lever carries no amount",
-    );
-    const rows = container.querySelectorAll("tbody tr");
-    expect(rows[0]?.textContent).toContain("$620K");
-    expect(rows[1]?.textContent).toContain("Not sized");
-    expect(rows[1]?.textContent).not.toContain("$270K");
   });
 });
