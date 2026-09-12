@@ -1,28 +1,4 @@
 tenant_key,dataset_version,source_row_id,contract_id,vendor_ref,vendor_name,source_file_id,source_page,page_text,page_text_sha256,mapping_status,parser_version,synthetic_policy
-meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-CLOUD-AWS-001-EDP:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-CLOUD-AWS-001-EDP,1,"# AWS Marketplace routing synthetic evidence
-
-Tenant: meridian-health
-Dataset: meridian-databricks-consumption-commit-v1-20260908
-Contract: MER-TECH-DBX-001
-Vendor: Databricks, Inc.
-
-Illustrative synthetic sourcing note. The Databricks workspace runs on AWS, and the buyer should evaluate whether future commitments can route through an AWS Marketplace private offer. This row is a sourcing option, not proof of an existing private offer.",ee749a629e9437df452f8a2b2915aaa5987446fe3e7e5c7a46e4670a3ea30f4a,mapped_to_register_contract,synthetic-markdown-page-parser-v1,synthetic_demo_only_not_client_truth
-meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-TECH-DBX-001-INVOICE:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-TECH-DBX-001-INVOICE,1,"# Databricks annual invoice synthetic evidence
-
-Tenant: meridian-health
-Dataset: meridian-databricks-consumption-commit-v1-20260908
-Contract: MER-TECH-DBX-001
-Vendor: Databricks, Inc.
-
-Illustrative synthetic invoice DB-INV-2025-08841. Year 1 platform services invoice amount is 1550000 USD. Support fee is 341000 USD. Payment is annual in advance. The invoice is used as AP reconciliation evidence only and is not a real Databricks transaction.",b8ca7a233453f583b653c3e75819db42805931c7cfca76fee356e2a2ef978a75,mapped_to_register_contract,synthetic-markdown-page-parser-v1,synthetic_demo_only_not_client_truth
-meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-TECH-DBX-001-METERING:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-TECH-DBX-001-METERING,1,"# Databricks monthly metering synthetic evidence
-
-Tenant: meridian-health
-Dataset: meridian-databricks-consumption-commit-v1-20260908
-Contract: MER-TECH-DBX-001
-Vendor: Databricks, Inc.
-
-Illustrative synthetic metering statements. Twelve monthly rows total 66100 USD of actual usage against a 1550000 USD annual commitment. The package classifies every opportunity as candidate and not finance-confirmed.",980fce55f704f07f778974184918262dfff80b6c1dfdaa54c4326a9b03d4d7f7,mapped_to_register_contract,synthetic-markdown-page-parser-v1,synthetic_demo_only_not_client_truth
 meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-TECH-DBX-001-ORDER:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-TECH-DBX-001-ORDER,1,"# Databricks order form synthetic evidence
 
 Tenant: meridian-health
@@ -30,15 +6,15 @@ Dataset: meridian-databricks-consumption-commit-v1-20260908
 Contract: MER-TECH-DBX-001
 Vendor: Databricks, Inc.
 
-Illustrative synthetic order form. The subscription term runs from 2025-10-15 to 2030-10-14. The annual committed purchase amount is 1550000 USD and the full five-year committed purchase amount is 7750000 USD. Business Critical Support is priced at 22 percent of annual committed purchase amount. Unused annual commitment does not carry forward.",01fd166cff78150c59ec4f6425f408b0283fc88216520e5293df88555f158c7f,mapped_to_register_contract,synthetic-markdown-page-parser-v1,synthetic_demo_only_not_client_truth
-meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-TECH-DBX-001-RENEWAL:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-TECH-DBX-001-RENEWAL,1,"# Databricks renewal notice synthetic evidence
+Illustrative synthetic order form. The subscription term runs from 2025-10-15 to 2030-10-14. The annual committed purchase amount is 1550000 USD and the full five-year committed purchase amount is 7750000 USD. Business Critical Support is priced at 22 percent of annual committed purchase amount. Unused annual commitment does not carry forward.",01fd166cff78150c59ec4f6425f408b0283fc88216520e5293df88555f158c7f,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-TECH-DBX-001-INVOICE:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-TECH-DBX-001-INVOICE,1,"# Databricks annual invoice synthetic evidence
 
 Tenant: meridian-health
 Dataset: meridian-databricks-consumption-commit-v1-20260908
 Contract: MER-TECH-DBX-001
 Vendor: Databricks, Inc.
 
-Illustrative synthetic renewal notice. The next commercial action date is 2026-10-14 for Year 2 commitment lock-in. The contractual renewal notice date is 2030-07-16 for the full subscription term.",cd5d93cc1f74e1b66959819d4662816f49b94c4228dc1b963f658eee273dbc53,mapped_to_register_contract,synthetic-markdown-page-parser-v1,synthetic_demo_only_not_client_truth
+Illustrative synthetic invoice DB-INV-2025-08841. Year 1 platform services invoice amount is 1550000 USD. Support fee is 341000 USD. Payment is annual in advance. The invoice is used as AP reconciliation evidence only and is not a real Databricks transaction.",b8ca7a233453f583b653c3e75819db42805931c7cfca76fee356e2a2ef978a75,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
 meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-TECH-DBX-001-USAGE:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-TECH-DBX-001-USAGE,1,"# Databricks usage statement synthetic evidence
 
 Tenant: meridian-health
@@ -46,4 +22,28 @@ Dataset: meridian-databricks-consumption-commit-v1-20260908
 Contract: MER-TECH-DBX-001
 Vendor: Databricks, Inc.
 
-Illustrative synthetic usage statement. Only the Claims Denials Pattern Analysis pilot is active. Three data platform workloads remain planned. Usage rows split monthly synthetic DBU spend across jobs compute, SQL warehouses, Delta storage, and model serving.",d107e1ff25fe501da70087db340466a2b313bd99b505c1b28e42821eb8af61ee,mapped_to_register_contract,synthetic-markdown-page-parser-v1,synthetic_demo_only_not_client_truth
+Illustrative synthetic usage statement. Only the Claims Denials Pattern Analysis pilot is active. Three data platform workloads remain planned. Usage rows split monthly synthetic DBU spend across jobs compute, SQL warehouses, Delta storage, and model serving.",d107e1ff25fe501da70087db340466a2b313bd99b505c1b28e42821eb8af61ee,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-TECH-DBX-001-METERING:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-TECH-DBX-001-METERING,1,"# Databricks monthly metering synthetic evidence
+
+Tenant: meridian-health
+Dataset: meridian-databricks-consumption-commit-v1-20260908
+Contract: MER-TECH-DBX-001
+Vendor: Databricks, Inc.
+
+Illustrative synthetic metering statements. Twelve monthly rows total 66100 USD of actual usage against a 1550000 USD annual commitment. The package classifies every opportunity as candidate and not finance-confirmed.",980fce55f704f07f778974184918262dfff80b6c1dfdaa54c4326a9b03d4d7f7,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-TECH-DBX-001-RENEWAL:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-TECH-DBX-001-RENEWAL,1,"# Databricks renewal notice synthetic evidence
+
+Tenant: meridian-health
+Dataset: meridian-databricks-consumption-commit-v1-20260908
+Contract: MER-TECH-DBX-001
+Vendor: Databricks, Inc.
+
+Illustrative synthetic renewal notice. The next commercial action date is 2026-10-14 for Year 2 commitment lock-in. The contractual renewal notice date is 2030-07-16 for the full subscription term.",cd5d93cc1f74e1b66959819d4662816f49b94c4228dc1b963f658eee273dbc53,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
+meridian-health,meridian-databricks-consumption-commit-v1-20260908,page:MER-TECH-DBX-001:DOC-MER-TECH-DBX-001-AWS-MARKETPLACE:p1,MER-TECH-DBX-001,MER-VEN-DATABRICKS,"Databricks, Inc.",DOC-MER-TECH-DBX-001-AWS-MARKETPLACE,1,"# AWS Marketplace routing synthetic evidence
+
+Tenant: meridian-health
+Dataset: meridian-databricks-consumption-commit-v1-20260908
+Contract: MER-TECH-DBX-001
+Vendor: Databricks, Inc.
+
+Illustrative synthetic sourcing note. The Databricks workspace runs on AWS, and the buyer should evaluate whether future commitments can route through an AWS Marketplace private offer. This row is a sourcing option, not proof of an existing private offer.",ee749a629e9437df452f8a2b2915aaa5987446fe3e7e5c7a46e4670a3ea30f4a,reviewed,contract-page-text-companion-v1,synthetic_demo_only_not_client_truth
