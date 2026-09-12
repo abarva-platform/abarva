@@ -3,6 +3,7 @@
 import type { SourceContractSpendMonthlyRow } from "@/lib/source/data-model/types";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
 import { money } from "./viewModel";
+import { utilizationAgainstCommitment } from "./WorkspaceExecutiveShell";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 
 /**
@@ -74,9 +75,15 @@ export function ContractEconomicsBriefing({
   const rows = byPeriod(spendMonths);
   const totals = totalsFrom(rows);
   const hasCommitment = totals.committed > 0;
-  const utilization = hasCommitment
-    ? Math.round((totals.actual / totals.committed) * 100)
-    : null;
+  /*
+   * One definition of utilization, shared with every other surface that
+   * reports it. Recomputing the same ratio locally is how this tab came to
+   * show two different figures for it in the first place.
+   */
+  const utilization = utilizationAgainstCommitment(
+    totals.actual,
+    totals.committed,
+  );
   const inFlight = totals.invoiced - totals.paid;
 
   return (

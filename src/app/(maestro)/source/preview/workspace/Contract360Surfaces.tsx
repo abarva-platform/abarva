@@ -10,6 +10,7 @@ import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio"
 import { money, fmtDate } from "./viewModel";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { countOrDash } from "./contractPopulations";
+import { contractPurposeSummary } from "./WorkspaceExecutiveShell";
 import {
   evidenceLede,
   relationshipLede,
@@ -252,13 +253,16 @@ export function ContractRegisterOnly({
 export function ContractStoryBriefing({
   contract,
   coverage,
+  scopeRows,
   vm,
 }: {
   contract: SourceContract360Row;
   coverage: Coverage;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
   vm: SourceWorkspaceVM;
 }) {
   const story = tabIntelligence(vm, "Story");
+  const purpose = contractPurposeSummary(contract, coverage, scopeRows);
   const committed = laneCount(coverage, "committed_spend_usd");
   const actual = laneCount(coverage, "actual_spend_usd");
   const workflow = vm.optWorkflow;
@@ -320,13 +324,17 @@ export function ContractStoryBriefing({
     <div className="sw-c3-split">
       <div className="sw-c3-stack">
         {/*
-          The purpose paragraph is not repeated here.
-          `ContractTabStory` renders the governed narrative — headline, allowed
-          executive statement and provenance — above every tab including this
-          one, so opening this briefing with the same text printed it twice and
-          pushed the facts below the fold. This surface carries what the
-          narrative does not: the figures, the posture and the evidence state.
+          The design opens Story with this card. It previously lived inside the
+          shared narrative block, which has been removed from the tab body, so
+          it moves here — rendered once, from the same governed summary.
         */}
+        <section className="sw-c3-card sw-c3-card-lead sw-c3-story-purpose">
+          <div className="sw-c3-eyebrow sw-c3-eyebrow-accent">
+            {purpose.heading}
+          </div>
+          <p className="sw-c3-display">{purpose.body}</p>
+          <p className="sw-c3-note">{purpose.evidence}</p>
+        </section>
         <section className="sw-c3-card sw-c3-story-thesis">
           <div className="sw-c3-eyebrow">Commercial position</div>
           {/*
