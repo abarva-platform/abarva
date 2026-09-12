@@ -125,6 +125,8 @@ describe("Source cloud consumption package loader", () => {
     expect(contractRegister).toContain("context_reviewed_at");
     expect(contractRegister).toContain("reviewed,Source contract intelligence reviewer,2026-09-08T00:00:00Z");
     expect(contractRegister).toContain("Full raw contract documents remain restricted outside the public repo");
+    expect(contractRegister).toContain("six governed document page rows");
+    expect(contractRegister).not.toContain("document page text is not loaded");
 
     const opportunities = fs.readFileSync(
       path.join(

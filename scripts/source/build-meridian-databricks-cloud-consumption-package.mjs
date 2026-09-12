@@ -473,7 +473,7 @@ async function main() {
       relationship_summary:
         "The governed relationship is Databricks vendor to contract MER-TECH-DBX-001 to named AWS-hosted application scopes and candidate opportunities. No broader business-unit, CMDB, or Tower dependency should be inferred without matching rows.",
       evidence_boundary_summary:
-        "Structured source rows are loaded for contract terms, monthly spend, DBU/service usage, commitment coverage, AP reconciliation, scope, clauses, and opportunities. Full raw contract documents remain restricted outside the public repo; document page text is not loaded.",
+        "Structured source rows are loaded for contract terms, monthly spend, DBU/service usage, commitment coverage, AP reconciliation, scope, clauses, opportunities, and six governed document page rows. Full raw contract documents remain restricted outside the public repo; the page rows are reviewed synthetic extracts, not client PDFs.",
       context_review_state: "reviewed",
       context_reviewer_role: "Source contract intelligence reviewer",
       context_reviewed_at: "2026-09-08T00:00:00Z",
