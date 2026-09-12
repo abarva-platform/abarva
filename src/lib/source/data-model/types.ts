@@ -382,6 +382,35 @@ export interface SourceCloudCommitmentCoverageRow {
   readonly load_run_id: string | null;
 }
 
+/**
+ * Monthly tag-quality observation for a cloud consumption contract.
+ *
+ * Coverage percentages are stored 0-100 by the loader, which normalises a
+ * fractional intake value on the way in.
+ */
+export interface SourceCloudTagQualityRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string;
+  readonly tag_quality_id: string;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string | null;
+  readonly cloud_provider: string | null;
+  readonly period_start: string;
+  readonly period_end: string;
+  readonly total_spend_usd: number | null;
+  readonly owner_tagged_spend_usd: number | null;
+  readonly application_tagged_spend_usd: number | null;
+  readonly untagged_spend_usd: number | null;
+  readonly owner_tag_coverage_pct: number | null;
+  readonly application_tag_coverage_pct: number | null;
+  readonly data_quality_state: string | null;
+  readonly source_file_id: string | null;
+  readonly confidence: number | null;
+  readonly quality_state: string | null;
+  readonly load_run_id: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Deterministic Source impact layer
 //

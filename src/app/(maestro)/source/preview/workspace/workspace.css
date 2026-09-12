@@ -3348,6 +3348,95 @@
   margin-bottom: 4px;
 }
 
+.sw-c3-meter-value {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--sw-c3-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.sw-c3-meters {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+/* Square, not rounded: the design's meters read as a measurement scale rather
+   than as the pill-shaped bars used for the consumption mix. */
+.sw-c3-meter-track {
+  display: block;
+  height: 8px;
+  background: var(--sw-c3-sand);
+}
+
+.sw-c3-meter-fill {
+  display: block;
+  height: 100%;
+  background: var(--sw-c3-tone, var(--sw-c3-green));
+  width: var(--sw-c3-share, 0%);
+}
+
+/* --- performance cards --------------------------------------------------- */
+
+.sw-c3-perf-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+@media (max-width: 980px) {
+  .sw-c3-perf-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sw-c3-perf-card {
+  border: 1px solid var(--sw-c3-hairline);
+  border-radius: 10px;
+  padding: 14px;
+  min-width: 0;
+}
+
+/* A not-required state is marked by a quiet left rule, not by a colour that
+   would read as a warning. */
+.sw-c3-perf-card-na {
+  border-left: 4px solid var(--sw-c3-rule);
+}
+
+.sw-c3-perf-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sw-c3-ink);
+}
+
+.sw-c3-perf-card-na .sw-c3-perf-card-title {
+  margin-top: 8px;
+}
+
+.sw-c3-perf-card-figure {
+  margin: 10px 0 0;
+  font-family: var(--font-body-serif);
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--sw-c3-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.sw-c3-perf-card-note {
+  font-size: 12px;
+  color: var(--sw-c3-muted);
+  margin-top: 9px;
+  line-height: 1.45;
+}
+
+.sw-c3-perf-card-prose {
+  margin: 9px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--sw-c3-body);
+}
+
 /* --- lever table --------------------------------------------------------- */
 
 .sw-c3-table-wrap {
