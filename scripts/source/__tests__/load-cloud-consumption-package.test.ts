@@ -178,6 +178,33 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("args.layer3LoadRunId,");
   });
 
+  it("derives one phased Layer 3 run when Layer 4 is invoked without an override", () => {
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-cloud-consumption-package.mjs"),
+      "utf8",
+    );
+
+    expect(loader).toContain("layer3LoadRunIdExplicit: suppliedLayer3LoadRunId !== undefined");
+    expect(loader).toContain("async function resolveLayer3LoadRunId(client, args, files)");
+    expect(loader).toContain("SELECT DISTINCT load_run_id");
+    expect(loader).toContain("pass --layer3-load-run-id when the package spans phased runs");
+    expect(loader).toContain("await resolveLayer3LoadRunId(client, args, sourceFiles);");
+    expect(loader).not.toContain("const projectionLoadRunId = args.loadRunId;");
+  });
+
+  it("requires complete contract identity in the Layer 3 readback", () => {
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-cloud-consumption-package.mjs"),
+      "utf8",
+    );
+
+    expect(loader).toContain("async function assertContractIdentityReadback(client, args, files, loadRunId)");
+    expect(loader).toContain("c.contract_name, c.expiration_date, v.legal_name AS vendor_name");
+    expect(loader).toContain("!row.contract_name || !row.vendor_name || !row.expiration_date");
+    expect(loader).toContain("Contract identity readback failed");
+    expect(loader).toContain("await assertContractIdentityReadback(client, args, files, args.loadRunId);");
+  });
+
   it("refuses to reconcile an empty canonical fact target", () => {
     const loader = fs.readFileSync(
       path.join(repoRoot, "scripts/source/load-cloud-consumption-package.mjs"),
