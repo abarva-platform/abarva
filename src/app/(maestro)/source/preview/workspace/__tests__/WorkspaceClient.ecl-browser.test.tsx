@@ -128,6 +128,7 @@ import path from "node:path";
 import type { ReactNode } from "react";
 
 import { WorkspaceClient } from "../WorkspaceClient";
+import { expectCleanComposition } from "../test-support/compositionInvariants";
 import {
   loadSourceWorkspacePortfolio,
   type SourceWorkspacePortfolioData,
@@ -592,6 +593,13 @@ describe("Source workspace ECL browser-surface proof", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByText("The boundary")).toBeTruthy();
+
+    // Composition, not correctness: no governed sentence on the mounted tab
+    // may be stated twice, and no identifier may reach the reader. Checked per
+    // tab because the previous tab's content is unmounted. Every defect worth
+    // fixing on this surface was found by reading the deployed page rather
+    // than by the suite, because each render is right on its own.
+    expectCleanComposition(container);
     expect(
       screen.getByText(
         "Use only these named workloads when explaining coverage; do not expand to tower, module, or CMDB relationships without matching rows.",
