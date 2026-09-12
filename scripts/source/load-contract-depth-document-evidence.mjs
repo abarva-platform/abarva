@@ -205,6 +205,11 @@ export function buildDocumentFileInputs(pages, clauses) {
     });
 }
 
+export function documentFileIdentityConflictMessage(rows) {
+  const details = rows.map((row) => `${row.file_id} -> ${row.contract_ref}`).join(", ");
+  return `Source file identity conflict: ${details}. A document file id cannot be reused across contract ids.`;
+}
+
 async function ensureDocumentSchema(client) {
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(DOC_SCHEMA)}`);
   await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(META_SCHEMA)}`);
@@ -405,6 +410,19 @@ async function loadDocumentEvidence(client, args, pages, clauses) {
   await ensureDocumentSchema(client);
 
   const fileIds = [...new Set([...pages.map((r) => r.source_file_id), ...clauses.map((r) => r.source_file_id)])].filter(Boolean);
+  const conflictingFiles = await client.query(
+    `SELECT file_id, contract_ref
+       FROM ${quoteIdent(DOC_SCHEMA)}.file
+      WHERE tenant_key = $1
+        AND file_id = ANY($2::text[])
+        AND contract_ref IS NOT NULL
+        AND NOT (contract_ref = ANY($3::text[]))`,
+    [args.tenantKey, fileIds, args.contractIds],
+  );
+  if (conflictingFiles.rows.length > 0) {
+    const details = conflictingFiles.rows.map((row) => `${row.file_id} -> ${row.contract_ref}`).join(", ");
+    throw new Error(`Source file identity conflict: ${details}. A document file id cannot be reused across contract ids.`);
+  }
   const pageIds = pages.map(pageId);
   const spanIds = clauses.map(spanId);
   const extractionIds = clauses.map((row) => row.extraction_id);

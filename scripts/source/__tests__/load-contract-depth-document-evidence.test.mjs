@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildDocumentFileInputs } from "../load-contract-depth-document-evidence.mjs";
+import { buildDocumentFileInputs, documentFileIdentityConflictMessage } from "../load-contract-depth-document-evidence.mjs";
 
 test("materializes file inputs for page-backed and clause-only evidence", () => {
   const rows = buildDocumentFileInputs(
@@ -41,5 +41,14 @@ test("materializes file inputs for page-backed and clause-only evidence", () => 
         combinedText: "Page-backed evidence",
       },
     ],
+  );
+});
+
+test("describes cross-contract document identity conflicts instead of overwriting ownership", () => {
+  assert.equal(
+    documentFileIdentityConflictMessage([
+      { file_id: "DOC-SHARED", contract_ref: "CONTRACT-A" },
+    ]),
+    "Source file identity conflict: DOC-SHARED -> CONTRACT-A. A document file id cannot be reused across contract ids.",
   );
 });

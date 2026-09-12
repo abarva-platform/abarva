@@ -95,6 +95,7 @@ const headers = [
 writeCsv(path.join(sourceDir, "contract_page_text.csv"), headers, pageRows);
 
 for (const metadataPath of [path.join(packageDir, "package-manifest.json"), path.join(packageDir, "qa", "row-counts.json"), path.join(packageDir, "qa", "package-quality-gate.json")]) {
+  if (!fs.existsSync(metadataPath)) continue;
   const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
   if (metadata.row_counts) metadata.row_counts.contract_page_text = pageRows.length;
   if (Object.hasOwn(metadata, "synthetic_evidence_documents")) metadata.contract_page_text = pageRows.length;

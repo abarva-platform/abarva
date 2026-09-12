@@ -26,7 +26,7 @@ const sourceFile = {
   usage: "DOC-MER-TECH-DBX-001-USAGE",
   metering: "DOC-MER-TECH-DBX-001-METERING",
   renewal: "DOC-MER-TECH-DBX-001-RENEWAL",
-  awsEdp: "DOC-MER-CLOUD-AWS-001-EDP",
+  awsEdp: "DOC-MER-TECH-DBX-001-AWS-MARKETPLACE",
 };
 
 const months = [
