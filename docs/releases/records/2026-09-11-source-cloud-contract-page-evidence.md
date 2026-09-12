@@ -33,6 +33,7 @@ Adds the governed page-text companion lane for the synthetic cloud-consumption c
 - Six `contract_page_text.csv` rows for the staged synthetic cloud-consumption package.
 - Package-manifest and governed dataset-manifest row-count updates.
 - Cloud package hash update so companion page text changes the recorded source version.
+- Contract 360 document-count refresh after companion loading so tab summaries and document lineage use the same count.
 - Behavioral loader coverage for companion-row reporting and hash invalidation.
 
 ## QA / Validation
@@ -41,11 +42,11 @@ Adds the governed page-text companion lane for the synthetic cloud-consumption c
 - Cloud package plan: **PASS**, 169 Layer 2 rows, six synthetic documents, six companion page rows.
 - `npm run validate:context-corpus:manifests`: **PASS**.
 - `git diff --check`: **PASS**.
-- Focused cloud-loader tests are required before merge.
+- Focused cloud-loader and document-evidence tests: **PASS**.
 
 ## Rollout Plan
 
-Merge through the protected pull-request path. The repo-owned ACA deploy workflow must build the merged main SHA with a digest-pinned image. After the web image is live, run the approved ACA operator job for the companion document-evidence load, then run the existing Layer 4 bridge refresh and signed-in Contract 360 proof.
+Merge through the protected pull-request path. The repo-owned ACA deploy workflow must build the merged main SHA with a digest-pinned image. After the web image is live, run the approved ACA operator jobs for the package layers and companion document-evidence load, then run the existing Layer 4 bridge refresh and signed-in Contract 360 proof.
 
 ## Deployment Authority
 

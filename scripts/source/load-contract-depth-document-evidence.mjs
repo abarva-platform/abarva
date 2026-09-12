@@ -577,6 +577,26 @@ async function verifyContractsExist(client, args) {
   return result.rows;
 }
 
+async function refreshContract360DocumentCounts(client, args) {
+  const result = await client.query(
+    `UPDATE source.contract_360 AS c
+        SET document_page_text_count = COALESCE((
+          SELECT count(*)
+            FROM doc.page AS p
+            JOIN doc.file AS f
+              ON f.tenant_key = p.tenant_key
+             AND f.file_id = p.file_id
+           WHERE p.tenant_key = c.tenant_key
+             AND f.contract_ref = c.contract_id
+        ), 0)
+      WHERE c.tenant_key = $1
+        AND c.contract_id = ANY($2::text[])
+      RETURNING c.contract_id, c.document_page_text_count`,
+    [args.tenantKey, args.contractIds],
+  );
+  return result.rows;
+}
+
 async function main() {
   const args = parseArgs();
   if (args.contractIds.length === 0) {
@@ -624,8 +644,9 @@ async function main() {
     await client.query("select set_config('app.tenant_key', $1, false)", [args.tenantKey]);
     const contracts = await verifyContractsExist(client, args);
     const inserted = await loadDocumentEvidence(client, args, pages, clauses);
+    const refreshedContract360 = await refreshContract360DocumentCounts(client, args);
     await client.query("commit");
-    console.log(JSON.stringify({ ...plan, event: "source_contract_depth_document_evidence_loaded", apply: true, contracts, inserted }, null, 2));
+    console.log(JSON.stringify({ ...plan, event: "source_contract_depth_document_evidence_loaded", apply: true, contracts, inserted, refreshed_contract_360: refreshedContract360 }, null, 2));
   } catch (error) {
     await client.query("rollback").catch(() => undefined);
     throw error;
