@@ -5216,13 +5216,13 @@ function ContractValueTypeStack({
   return (
     <div className="sw-v2-fact-stack">
       {established.map(([label, value, meaning]) => (
-        <Fact key={label} label={`${label} - ${meaning}`} value={value} />
+        <Fact key={label} label={`${label} — ${meaning}`} value={value} />
       ))}
       {absent.length > 0 ? (
         <p className="sw-v2-muted">
-          No {absent.join(" or ")} dollars on this contract - nothing has been
-          mischarged, so the whole opportunity has to be negotiated rather than
-          simply claimed.
+          No {absent.join(" or ")} dollars on this contract — nothing has
+          been mischarged, so the whole opportunity has to be negotiated rather
+          than simply claimed.
         </p>
       ) : null}
       <Fact

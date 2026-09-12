@@ -58,6 +58,11 @@ The basis line belongs beside the figures it supports, so the narrative no
 longer appends it on that tab. Every other tab keeps it, since no other tab's
 body renders it.
 
+**A hyphen standing in for a dash on the Optimize gates.** The value-type
+ledger set its aside with a hyphen while the lever table beside it and the
+briefing cards above it use an em dash. On the surface this product is judged
+on, a hyphen doing a dash's work reads as a typo. Both instances now match.
+
 ## Layer Impact
 
 - **Release lane:** `global-control-lane` — shared Contract 360 narrative and evidence-lane presentation for all clients, not feature-gated.
@@ -78,6 +83,7 @@ body renders it.
 - `viewModel.tsx`: `asSentence`, alongside the other formatters.
 - `WorkspaceExecutiveShell.tsx`: Education blocker returns nothing where there is no next step; Education always and Scope conditionally join the headline-only case; the predicate is renamed to `narrativeBodyIsAlreadyOnScreen`.
 - `Contract360Surfaces.tsx`: two evidence-lane captions put into words; two unconditional periods replaced by the shared formatter.
+- `WorkspaceExecutiveShell.tsx`: two hyphens in the value-type ledger replaced with the em dash the surrounding surfaces use.
 - `governedDirectives.test.ts`: eight more tests covering fragment casing, the doubled terminator, three refusals, and a tab-to-tab differential on the evidence-basis clause.
 
 ## QA / Validation
