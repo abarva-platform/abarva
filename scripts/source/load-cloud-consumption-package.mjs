@@ -1390,12 +1390,18 @@ function canonicalFactAssertionIds(files, pageRows = []) {
 }
 
 async function reconcileCanonicalFacts(client, args, files, pageRows = []) {
+  const assertionIds = canonicalFactAssertionIds(files, pageRows);
+  if (assertionIds.length === 0) {
+    throw new Error(
+      `Refusing canonical fact reconciliation with an empty target set for ${args.tenantKey}/${args.datasetVersion}`,
+    );
+  }
   await client.query(
     `DELETE FROM source.canonical_fact_assertion
       WHERE tenant_key = $1
         AND dataset_version = $2
         AND NOT (assertion_id = ANY($3::text[]))`,
-    [args.tenantKey, args.datasetVersion, canonicalFactAssertionIds(files, pageRows)],
+    [args.tenantKey, args.datasetVersion, assertionIds],
   );
 }
 
@@ -1818,6 +1824,9 @@ async function layer4Readback(client, args, files) {
 }
 
 async function activateLayer4Overlay(client, args) {
+  // Layer 4 selects the source rows written by Layer 3. The operation load ID
+  // is a proof/run identifier; it is not the source projection version.
+  const projectionLoadRunId = args.layer3LoadRunId;
   await client.query(`
     CREATE TABLE IF NOT EXISTS source.l4_cube_active_load_run_overlay (
       tenant_key TEXT NOT NULL,
@@ -1844,11 +1853,13 @@ async function activateLayer4Overlay(client, args) {
                    raw_payload = EXCLUDED.raw_payload`,
     [
       args.tenantKey,
-      args.loadRunId,
+      projectionLoadRunId,
       args.datasetVersion,
       args.idempotencyKey,
       JSON.stringify({
         projection: "source-cloud-consumption-layer4-overlay",
+        operation_load_run_id: args.loadRunId,
+        projection_load_run_id: projectionLoadRunId,
         synthetic_policy: SYNTHETIC_POLICY,
       }),
     ],
@@ -1878,6 +1889,7 @@ async function main() {
     tenant_key: args.tenantKey,
     dataset_version: args.datasetVersion,
     load_run_id: args.loadRunId,
+    projection_load_run_id: args.layer3LoadRunId,
     idempotency_key: args.idempotencyKey,
     package_dir: args.packageDir,
     package_sha256: packageHash,
@@ -1942,6 +1954,7 @@ async function main() {
       await client.query("COMMIT");
       summary.event = "source_cloud_consumption_package_layer4_applied";
       summary.layer3_readback = layer3;
+      summary.projection_load_run_id = args.layer3LoadRunId;
       summary.layer4_readback = layer4;
     } else if (args.mode === "verify-layer4") {
       const layer4 = await layer4Readback(client, args, sourceFiles);

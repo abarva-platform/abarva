@@ -166,6 +166,29 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("args.layer3LoadRunId");
   });
 
+  it("binds Layer 4 activation to the exact Layer 3 projection run", () => {
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-cloud-consumption-package.mjs"),
+      "utf8",
+    );
+
+    expect(loader).toContain("const projectionLoadRunId = args.layer3LoadRunId;");
+    expect(loader).toContain("projection_load_run_id: projectionLoadRunId");
+    expect(loader).toContain("operation_load_run_id: args.loadRunId");
+    expect(loader).toContain("args.layer3LoadRunId,");
+  });
+
+  it("refuses to reconcile an empty canonical fact target", () => {
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-cloud-consumption-package.mjs"),
+      "utf8",
+    );
+
+    expect(loader).toContain("const assertionIds = canonicalFactAssertionIds(files, pageRows);");
+    expect(loader).toContain("Refusing canonical fact reconciliation with an empty target set");
+    expect(loader).toContain("if (assertionIds.length === 0)");
+  });
+
   it("exposes a governed reapply entrypoint for stale Layer 4 readiness views", () => {
     const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
 
