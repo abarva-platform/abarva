@@ -1036,16 +1036,6 @@ export function WorkspaceExecutiveShell({
     });
   }, []);
 
-  const workspaceHrefFor = (page: PageLabel) => {
-    const params = new URLSearchParams();
-    params.set("workspaceTab", page.toLowerCase());
-    if (sourceClientKey?.trim()) params.set("client", sourceClientKey.trim());
-    if (sourceProviderKey?.trim()) {
-      params.set("sourceProvider", sourceProviderKey.trim());
-    }
-    return `/source?${params.toString()}`;
-  };
-
   const selectPage = (page: PageLabel) => {
     if (page === "Command") {
       logic.select("portfolio", null, "Portfolio");
@@ -1160,18 +1150,15 @@ export function WorkspaceExecutiveShell({
             aria-label="Source workspace navigation"
           >
             {PAGE_LABELS.map((label) => (
-              <a
+              <button
                 key={label}
                 role="button"
-                href={workspaceHrefFor(label)}
                 className={label === currentPage ? "is-active" : ""}
-                onClick={(event) => {
-                  event.preventDefault();
-                  selectPage(label);
-                }}
+                aria-pressed={label === currentPage}
+                onClick={() => selectPage(label)}
               >
                 <span>{label}</span>
-              </a>
+              </button>
             ))}
           </nav>
         )}

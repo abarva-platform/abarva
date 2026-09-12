@@ -469,18 +469,14 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     const contractsTab = screen.getAllByRole("button", {
       name: "Contracts",
-    })[0] as HTMLAnchorElement;
+    })[0] as HTMLButtonElement;
     expect(
       screen
         .getByTestId("source-agent-dock")
         .getAttribute("data-disable-stored-mode"),
     ).toBe("true");
-    expect(contractsTab.getAttribute("href")).toContain(
-      "/source?workspaceTab=contracts",
-    );
-    expect(contractsTab.getAttribute("href")).toContain(
-      "client=meridian-health",
-    );
+    expect(contractsTab.getAttribute("href")).toBeNull();
+    expect(contractsTab.getAttribute("aria-pressed")).toBe("false");
 
     fireEvent.click(contractsTab);
 
@@ -613,10 +609,9 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     const leversTab = screen.getByRole("button", {
       name: "Levers",
-    }) as HTMLAnchorElement;
-    expect(leversTab.getAttribute("href")).toContain(
-      "/source?workspaceTab=levers",
-    );
+    }) as HTMLButtonElement;
+    expect(leversTab.getAttribute("href")).toBeNull();
+    expect(leversTab.getAttribute("aria-pressed")).toBe("false");
     fireEvent.click(leversTab);
     expect(screen.getByRole("tab", { name: "Queue" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "By type" })).toBeTruthy();
