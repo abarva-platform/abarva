@@ -1,41 +1,80 @@
-# 2026-09-12 Source Optimize signal-state display
+# 2026-09-12 — Source Optimize signal-state display
 
-## Release lane
+## Release ID
 
-- Lane: `global-control-lane`
-- Clients: all clients using Source Contract 360
-- Data or schema migration: none
+`source-optimize-signal-state-2026-09-12`
 
-## Change
+## Status
 
-Source Contract 360 now renders one contract Optimize lever table instead of
-showing the legacy table alongside the current subtab table. Signal-stage
-opportunities are explicitly rendered as `Not sized` in the retained table,
-even if an upstream row contains a candidate amount. The table footer keeps the
-signal count outside sized totals.
+`candidate`
 
-## Why
+## Plain-English Summary
 
-A signal-stage opportunity needs additional evidence before it can carry a
-defensible value. Showing a candidate amount in one table and `Not sized` in
-another made the same contract appear to carry two different value states.
+Source Contract 360 now shows one contract Optimize lever table. Signal-stage
+opportunities are displayed as `Not sized` until the required evidence is
+loaded, even if an upstream row contains a candidate amount.
 
-## Validation
+## Layer Impact
 
-- Focused Source Contract 360 behavior suites pass.
-- Signal-stage table behavior asserts that the candidate amount is withheld.
-- ESLint and `git diff --check` pass.
-- `npm run release:check -- --base origin/main --head HEAD` passes.
-- Post-deploy signed-in proof must confirm one lever table, six loaded levers,
-  four sized rows, two signal-stage rows, and no legacy duplicate table.
+- **Layer 1 - Client intake:** no change.
+- **Layer 2 - Source adapters:** no change.
+- **Layer 3 - Canonical model:** no change; this release does not alter rows or values.
+- **Layer 4 - Product:** `global-control-lane`; Source Contract 360 Optimize presentation and claim-state binding.
 
-## Rollout and rollback
+## Client Applicability
 
-Roll out through the protected `main` ACA workflow using the exact merge SHA
-and digest-pinned image. Roll back by restoring the prior approved main image
-through the same workflow if the live Source contract route regresses.
+- All clients: all authorized Source Contract 360 users receive the corrected Optimize view.
+- Specific clients: none.
+- Internal only: no.
+- Public/demo only: no.
+- Feature flag: none.
 
-## Audit evidence
+## Changes Included
 
-The implementation is limited to the Source Contract 360 presentation path;
-it does not mutate canonical data, load runs, or tenant records.
+- Removed the legacy duplicate lever table from the contract Optimize page.
+- Kept the Optimize subtabs and the current governed lever table.
+- Hardened the retained legacy component so signal-stage rows cannot display a dollar amount if reused.
+- Added behavioral coverage for the signal-stage amount refusal.
+
+## QA / Validation
+
+- Focused Source Contract 360 suites: pass, 14 tests.
+- Signal-stage component test: pass; `$270K` is withheld and `Not sized` is rendered.
+- ESLint: pass.
+- `git diff --check`: pass.
+- `npm run release:check -- --base origin/main --head HEAD`: pass locally.
+- Post-deploy signed-in proof required: one lever table, six loaded levers, four sized rows, two signal-stage rows, and no legacy duplicate table.
+
+## Rollout Plan
+
+Merge through the protected `main` ACA workflow. Build from the exact merge
+SHA, deploy the digest-pinned image, verify the ACA runtime invariant, assign
+100% traffic, and run the signed-in Source Contract 360 proof.
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
+- Shared runtime mutators: repo-owned ACA main deploy workflow only.
+- Approved image digest: recorded after deployment.
+- ACA runtime invariant: required and recorded after deployment.
+- Worker image invariant: required and recorded after deployment.
+- Feature/env flag update path: none.
+- Live signed-in proof required: yes.
+
+## Rollback Plan
+
+Restore the prior approved digest-pinned ACA revision through the protected main
+deploy workflow if the signed-in Source proof fails. No data or migration
+rollback is required.
+
+## Audit Evidence
+
+Inspect PR #7636, its CI checks, the ACA deployment artifact, the runtime
+invariant proof, and the signed-in Source Contract 360 navigation and Optimize
+tab evidence.
+
+## Known Gaps
+
+This release does not reconcile the separate portfolio register and contract
+depth populations or add missing contract evidence. Those remain data-plane work
+and must not be inferred from the Optimize presentation.
