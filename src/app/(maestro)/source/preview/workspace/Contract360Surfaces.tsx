@@ -678,14 +678,14 @@ export function ContractEvidenceFamilies({
       name: "Opportunities",
       note: "Governed optimization candidates raised against this contract.",
       count: laneCount(coverage, "opportunity_rows"),
-      system: "source",
+      system: "governed analysis",
       required: true,
     },
     {
       name: "Document page text",
       note: "Page spans and proof text behind a clause-level claim.",
       count: laneCount(coverage, "document_page_text_rows"),
-      system: "contract_pdf · restricted",
+      system: "contract document · restricted",
       required: true,
     },
     {

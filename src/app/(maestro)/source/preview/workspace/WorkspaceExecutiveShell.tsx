@@ -3482,7 +3482,7 @@ function ContractPage({
           <ContractGovernedStatement
             contract={contract}
             coverage={coverage}
-            headlineOnly={sidePanelRendersTabNarrative(tab, vm)}
+            headlineOnly={narrativeBodyIsAlreadyOnScreen(tab, vm)}
             scopeRows={scopeRows}
             tab={tab}
             vm={vm}
@@ -3779,6 +3779,28 @@ const REVIEW_STATUS_WORDS: Readonly<Record<string, string>> = {
   approved: "approved",
 };
 
+/**
+ * A governed fragment, rendered as a sentence.
+ *
+ * Some authored fields are written as lowercase fragments with no terminal
+ * punctuation - "finance confirmation required before realized-value claim".
+ * Set into a paragraph of prose that reads as a machine token rather than a
+ * statement, which undercuts the claim it is making.
+ *
+ * Only the first character and the terminal punctuation are touched. A
+ * fragment that already opens with a capital or an identifier, or already ends
+ * in punctuation, is returned unchanged - the aim is to stop a fragment
+ * looking like a token, not to rewrite authored text.
+ */
+export function asSentence(value: string | null | undefined): string | null {
+  const text = value?.trim();
+  if (!text) return null;
+  const first = text[0];
+  const opened =
+    first === first.toUpperCase() ? text : first.toUpperCase() + text.slice(1);
+  return /[.!?]$/.test(opened) ? opened : `${opened}.`;
+}
+
 export function reviewStatusInWords(value: string | null | undefined): string {
   const raw = value?.trim();
   if (!raw) return "review status not recorded";
@@ -4007,15 +4029,19 @@ function ContractOptimizeGateStatement({ vm }: { vm: SourceWorkspaceVM }) {
 }
 
 /**
- * Whether the right-hand panel renders the tab narrative for this tab.
+ * Whether this tab already shows the narrative's body somewhere else.
  *
- * Mirrors ContractDetailSidePanel's branch order. Both the panel's narrative
- * stack and the governed statement read `contractTabNarrative` with the same
- * arguments, so wherever the panel takes that branch the statement repeats its
- * body and blocker word for word. The grid asks this before deciding how much
- * of the statement is still worth rendering.
+ * Two ways that happens. Most tabs: the side panel's narrative stack and the
+ * governed statement both read `contractTabNarrative` with the same arguments,
+ * so wherever the panel takes that branch the statement repeats its body and
+ * blocker word for word. Education: the panel is not the narrative stack, but
+ * the tab body opens with the same archetype paragraph the narrative carries
+ * as its body, and the panel repeats it again as the coaching focus.
+ *
+ * Either way the statement's headline is the only part not already on screen,
+ * which is what the grid uses this to decide.
  */
-function sidePanelRendersTabNarrative(
+function narrativeBodyIsAlreadyOnScreen(
   tab: string,
   vm: SourceWorkspaceVM,
 ): boolean {
@@ -4027,7 +4053,11 @@ function sidePanelRendersTabNarrative(
   ) {
     return false;
   }
-  if (tab === "Education" && vm.contractEducation) return false;
+  // Education is the exception to the rule above: its side panel is not the
+  // narrative stack, but its tab body opens with the same archetype paragraph
+  // the narrative carries as `body`, and the panel repeats it again as the
+  // coaching focus. Only the headline is not already on screen.
+  if (tab === "Education" && vm.contractEducation) return true;
   if (tab === "Optimize" && vm.opportunityView) return false;
   return true;
 }
@@ -8097,9 +8127,8 @@ export function contractTabNarrative(
        * tab that had nothing missing. Where a tab records no missing input,
        * there is no blocker, and saying so is the honest reading.
        */
-      blocker: withoutNotRequiredFacets(
-        vm,
-        governedTab.missing_evidence_summary,
+      blocker: asSentence(
+        withoutNotRequiredFacets(vm, governedTab.missing_evidence_summary),
       ),
     };
   }
@@ -8221,9 +8250,11 @@ export function contractTabNarrative(
       headline: vm.contractEducation.headline,
       body: vm.contractEducation.body,
       provenance: `${vm.contractEducation.archetypeLabel} guide · ${vm.contractEducation.stateLabel}`,
-      blocker: next
-        ? `${next.title} next: ${next.question}`
-        : vm.contractEducation.focus,
+      // `focus` and `body` are the same paragraph on this record, so falling
+      // back to it printed the card's own body again, immediately beneath
+      // itself. With every applicable step loaded there is no next move, and
+      // saying nothing is the accurate reading.
+      blocker: next ? `${next.title} next: ${next.question}` : null,
     };
   }
   if (tab === "Optimize") {

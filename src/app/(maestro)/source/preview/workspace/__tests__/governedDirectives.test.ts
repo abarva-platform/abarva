@@ -1,4 +1,5 @@
 import {
+  asSentence,
   contractTabNarrative,
   reviewStatusInWords,
 } from "../WorkspaceExecutiveShell";
@@ -81,6 +82,25 @@ describe("governed tab narrative", () => {
     );
   });
 
+  it("sets a lowercase authored fragment as a sentence", () => {
+    // Real authored value, rendered into a paragraph of prose. As a bare
+    // lowercase fragment it read as a machine token beside the claim it makes.
+    const narrative = narrativeFor({
+      tab_key: "relationship",
+      headline: "Vendor links to 4 scoped workloads.",
+      allowed_executive_statement: "The governed relationship is loaded.",
+      supporting_evidence_summary: "4 scope relationships",
+      missing_evidence_summary:
+        "finance confirmation required before realized-value claim",
+      action_prompt: "Show declared relationships and the boundary.",
+      review_status: "reviewed",
+    });
+
+    expect(narrative.blocker).toBe(
+      "Finance confirmation required before realized-value claim.",
+    );
+  });
+
   it("states the review status in words, not as an identifier", () => {
     const narrative = narrativeFor({
       tab_key: "relationship",
@@ -96,6 +116,35 @@ describe("governed tab narrative", () => {
       "Relationship intelligence · generated from reviewed rows",
     );
     expect(narrative.provenance).not.toContain("_");
+  });
+});
+
+describe("asSentence", () => {
+  it("opens and closes a bare fragment", () => {
+    expect(asSentence("finance confirmation required")).toBe(
+      "Finance confirmation required.",
+    );
+  });
+
+  it("leaves an already-formed sentence alone", () => {
+    expect(asSentence("Load the CMDB extract.")).toBe(
+      "Load the CMDB extract.",
+    );
+    expect(asSentence("Is the commitment drawn on?")).toBe(
+      "Is the commitment drawn on?",
+    );
+  });
+
+  it("does not touch a fragment that opens with an identifier", () => {
+    // Uppercase-first already, so nothing is rewritten but the terminator.
+    expect(asSentence("MER-TECH-DBX-001 has no scope rows")).toBe(
+      "MER-TECH-DBX-001 has no scope rows.",
+    );
+  });
+
+  it("refuses rather than returning an empty sentence", () => {
+    expect(asSentence(null)).toBeNull();
+    expect(asSentence("   ")).toBeNull();
   });
 });
 
