@@ -313,24 +313,14 @@ export function ContractStoryBriefing({
   return (
     <div className="sw-c3-split">
       <div className="sw-c3-stack">
-        <section className="sw-c3-card sw-c3-card-lead sw-c3-story-purpose">
-          <div className="sw-c3-eyebrow sw-c3-eyebrow-accent">
-            What this contract is
-          </div>
-          <p className="sw-c3-display">
-            {story?.headline ?? "Purpose has not been reviewed for this contract."}
-          </p>
-          <p className="sw-c3-prose">
-            {story?.allowed_executive_statement ??
-              "No reviewed commercial purpose is loaded, so Source will not characterise this agreement."}
-          </p>
-          {story ? (
-            <p className="sw-c3-note">
-              {`Reviewed contract intelligence · confidence ${story.confidence_level} · ${story.review_status}`}
-            </p>
-          ) : null}
-        </section>
-
+        {/*
+          The purpose paragraph is not repeated here.
+          `ContractTabStory` renders the governed narrative — headline, allowed
+          executive statement and provenance — above every tab including this
+          one, so opening this briefing with the same text printed it twice and
+          pushed the facts below the fold. This surface carries what the
+          narrative does not: the figures, the posture and the evidence state.
+        */}
         <section className="sw-c3-card sw-c3-story-thesis">
           <div className="sw-c3-eyebrow">Commercial position</div>
           <p className="sw-c3-prose" style={{ marginTop: 10 }}>

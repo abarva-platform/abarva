@@ -3342,12 +3342,10 @@ function ContractPage({
             <ContractOptimizeContent vm={vm} />
           </>
         ) : null}
-        {tab === "Economics" &&
-        detailReady &&
-        vm.detail?.spendMonths?.length ? (
-          <ContractConsumptionRamp spendMonths={vm.detail.spendMonths} />
-        ) : null}
         {tab === "Economics" && detailReady && vm.detail?.spendMonths?.length ? (
+          // One chart of these rows, not two. The briefing carries the
+          // commitment-pace view the design specifies; the earlier ramp plotted
+          // the same months beside it as a separate percentage chart.
           <ContractEconomicsBriefing spendMonths={vm.detail.spendMonths} />
         ) : null}
         {tab === "Economics" ? <ContractValueLedgers vm={vm} /> : null}
@@ -3641,9 +3639,19 @@ function ContractTabStory({
             <span>{purpose.evidence}</span>
           </div>
         ) : null}
-        <span>{tabNarrative.provenance}</span>
-        <h2>{tabNarrative.headline}</h2>
-        <p>{tabNarrative.body}</p>
+        {/*
+          The purpose block above and the governed narrative are written from
+          the same reviewed source, so on Story they print the same paragraph
+          twice. Show the narrative's own contribution — what it adds beyond the
+          purpose — and drop the repeat.
+        */}
+        {narrativeAddsToPurpose(purpose, tabNarrative) ? (
+          <>
+            <span>{tabNarrative.provenance}</span>
+            <h2>{tabNarrative.headline}</h2>
+            <p>{tabNarrative.body}</p>
+          </>
+        ) : null}
         <small>{tabNarrative.blocker}</small>
       </div>
       <dl>
@@ -3690,6 +3698,33 @@ function ContractFacetNotRequired({
         lane will become applicable.
       </p>
     </section>
+  );
+}
+
+/**
+ * Whether the governed narrative says anything the purpose block has not.
+ *
+ * Both are written from the same reviewed contract intelligence, so on the
+ * Story tab they resolve to the same sentences. Rendering both put one
+ * paragraph on screen twice and pushed the figures below the fold. Compared on
+ * normalised text so punctuation or casing differences do not defeat it.
+ */
+function narrativeAddsToPurpose(
+  purpose: ReturnType<typeof contractPurposeSummary> | null,
+  narrative: ReturnType<typeof contractTabNarrative>,
+): boolean {
+  if (!purpose) return true;
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  const purposeText = normalize(`${purpose.heading} ${purpose.body}`);
+  if (purposeText.length === 0) return true;
+  const narrativeText = normalize(`${narrative.headline} ${narrative.body}`);
+  if (narrativeText.length === 0) return false;
+  return (
+    !purposeText.includes(narrativeText) && !narrativeText.includes(purposeText)
   );
 }
 
@@ -5056,190 +5091,6 @@ function ContractValueTypeStack({
       />
       <Fact label="Deterministic cards" value={String(cardCount)} />
     </div>
-  );
-}
-
-function ContractConsumptionRamp({
-  spendMonths,
-}: {
-  spendMonths: readonly ConsumptionRampInput[];
-}) {
-  const rows = consumptionRampRows(spendMonths);
-  if (rows.length === 0) return null;
-
-  const totalCommitted = rows.reduce(
-    (sum, row) => sum + (row.committedUsd ?? 0),
-    0,
-  );
-  const totalActual = rows.reduce((sum, row) => sum + (row.actualUsd ?? 0), 0);
-  const utilization = utilizationAgainstCommitment(totalActual, totalCommitted);
-  const latest = rows[rows.length - 1];
-
-  return (
-    <section
-      aria-label="Contract consumption ramp"
-      style={{
-        border: "1px solid rgba(10,10,11,.1)",
-        borderRadius: 8,
-        background: "#fffdfa",
-        margin: "14px 0",
-        padding: "13px 14px",
-      }}
-    >
-      <div
-        style={{
-          alignItems: "start",
-          display: "grid",
-          gap: 14,
-          gridTemplateColumns: "minmax(0, 1.6fr) minmax(185px, .7fr)",
-        }}
-      >
-        <div>
-          <span
-            style={{
-              color: SOURCE_CHART_PALETTE.teal,
-              display: "block",
-              fontSize: 9.5,
-              fontWeight: 850,
-              letterSpacing: ".08em",
-              marginBottom: 5,
-              textTransform: "uppercase",
-            }}
-          >
-            Consumption ramp
-          </span>
-          <b style={{ display: "block", fontSize: 15, marginBottom: 3 }}>
-            Monthly actual spend against committed run-rate
-          </b>
-          <p className="sw-v2-muted" style={{ margin: "0 0 12px" }}>
-            The empty space is the commercial argument: Source shows what was
-            committed and what was actually consumed, month by month, without
-            extrapolating missing periods.
-          </p>
-          <div
-            style={{
-              alignItems: "end",
-              display: "grid",
-              gap: 7,
-              gridTemplateColumns: `repeat(${rows.length}, minmax(34px, 1fr))`,
-              minHeight: 144,
-              overflowX: "auto",
-              paddingBottom: 2,
-            }}
-          >
-            {rows.map((row) => (
-              <div
-                key={row.key}
-                aria-label={`${row.periodLabel}: ${
-                  row.utilizationPct == null
-                    ? "utilization not established"
-                    : `${row.utilizationPct}% utilized`
-                }`}
-                style={{
-                  alignItems: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 5,
-                  minWidth: 0,
-                }}
-              >
-                <small
-                  style={{
-                    color: row.isPartial
-                      ? SOURCE_CHART_PALETTE.amber
-                      : "#5f5e5a",
-                    fontSize: 10,
-                    fontWeight: 800,
-                    minHeight: 12,
-                  }}
-                >
-                  {row.utilizationPct == null ? "-" : `${row.utilizationPct}%`}
-                </small>
-                <div
-                  style={{
-                    alignItems: "end",
-                    display: "flex",
-                    height: 96,
-                    justifyContent: "center",
-                    width: "100%",
-                  }}
-                >
-                  <div
-                    style={{
-                      background: row.isPartial
-                        ? "rgba(186,117,23,.05)"
-                        : "rgba(29,158,117,.04)",
-                      border: `1px ${row.isPartial ? "dashed" : "solid"} ${
-                        row.isPartial
-                          ? "rgba(186,117,23,.6)"
-                          : "rgba(15,110,86,.35)"
-                      }`,
-                      borderRadius: 5,
-                      height:
-                        row.committedScalePct == null
-                          ? 38
-                          : `${row.committedScalePct}%`,
-                      minHeight: 28,
-                      overflow: "hidden",
-                      position: "relative",
-                      width: "100%",
-                    }}
-                  >
-                    <div
-                      style={{
-                        background: row.isPartial
-                          ? "rgba(186,117,23,.45)"
-                          : "rgba(29,158,117,.65)",
-                        bottom: 0,
-                        height:
-                          row.actualScalePct == null
-                            ? 0
-                            : `${row.actualScalePct}%`,
-                        left: 0,
-                        position: "absolute",
-                        right: 0,
-                      }}
-                    />
-                  </div>
-                </div>
-                <span
-                  style={{
-                    color: "#74716a",
-                    fontSize: 10,
-                    fontWeight: 750,
-                  }}
-                >
-                  {row.periodLabel}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="sw-v2-fact-stack">
-          <Fact
-            label="Observed utilization"
-            value={utilization == null ? "Not established" : `${utilization}%`}
-          />
-          <Fact label="Observed actual" value={money(totalActual)} />
-          <Fact label="Observed commitment" value={money(totalCommitted)} />
-          <Fact
-            label="Latest tracking grain"
-            value={`${latest.serviceId} · ${latest.businessUnit}`}
-          />
-          <p className="sw-v2-muted">
-            Track the same fields every month: commitment run-rate, actual
-            consumed spend, invoice/paid amount, workload or service, owner/cost
-            center, and evidence reference.
-          </p>
-          {rows.some((row) => row.isPartial) ? (
-            <p className="sw-v2-muted">
-              Dashed month is still open; Source does not project it to a full
-              period.
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </section>
   );
 }
 

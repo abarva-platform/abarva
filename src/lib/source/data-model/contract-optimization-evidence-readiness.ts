@@ -75,6 +75,15 @@ export interface ContractOptimizationEvidenceReadiness {
    */
   readonly sizingBlocked: boolean;
   readonly summary: string;
+  /**
+   * The evidence template pack this readiness was scored against, or null when
+   * no pack matches the contract and the generic required list was used.
+   *
+   * A caller must be able to tell the difference. A generic list is not a
+   * governed statement about *this* contract shape, so a block derived from it
+   * cannot be presented as one.
+   */
+  readonly archetypeKey: SourceContractEvidenceArchetypeKey | null;
 }
 
 interface EvidenceFamilySpec {
@@ -342,6 +351,7 @@ export function buildContractOptimizationEvidenceReadiness(input: {
     status,
     blockingFamilies,
     sizingBlocked: blockingFamilies.length > 0,
+    archetypeKey: archetypeKey ?? null,
     summary: summarize(
       status,
       evidencedRequired.length,
