@@ -1,0 +1,5 @@
+{
+  "$comment": "A declared absence is a decision someone made, not a gap nobody noticed. Every entry needs a family, a reason a reader can evaluate, and an owner. CI fails on any required intake family that is neither contributing nor listed here, and it also fails on an entry here whose family has started contributing -- a stale exception hides a fix.",
+  "policy": "docs/governance/CONTEXT_CORPUS_POLICY.md",
+  "absences": []
+}
