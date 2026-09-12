@@ -47,7 +47,7 @@ import {
   ContractOptimizeMethod,
   ContractRefusalChips,
 } from "./ContractOptimizeMethod";
-import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
+import { asSentence, fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
   contractPopulations,
@@ -3779,28 +3779,6 @@ const REVIEW_STATUS_WORDS: Readonly<Record<string, string>> = {
   approved: "approved",
 };
 
-/**
- * A governed fragment, rendered as a sentence.
- *
- * Some authored fields are written as lowercase fragments with no terminal
- * punctuation - "finance confirmation required before realized-value claim".
- * Set into a paragraph of prose that reads as a machine token rather than a
- * statement, which undercuts the claim it is making.
- *
- * Only the first character and the terminal punctuation are touched. A
- * fragment that already opens with a capital or an identifier, or already ends
- * in punctuation, is returned unchanged - the aim is to stop a fragment
- * looking like a token, not to rewrite authored text.
- */
-export function asSentence(value: string | null | undefined): string | null {
-  const text = value?.trim();
-  if (!text) return null;
-  const first = text[0];
-  const opened =
-    first === first.toUpperCase() ? text : first.toUpperCase() + text.slice(1);
-  return /[.!?]$/.test(opened) ? opened : `${opened}.`;
-}
-
 export function reviewStatusInWords(value: string | null | undefined): string {
   const raw = value?.trim();
   if (!raw) return "review status not recorded";
@@ -4045,12 +4023,22 @@ function narrativeBodyIsAlreadyOnScreen(
   tab: string,
   vm: SourceWorkspaceVM,
 ): boolean {
-  if (
-    tab === "Story" ||
-    tab === "Scope" ||
-    tab === "Relationship" ||
-    tab === "Evidence"
-  ) {
+  // Scope duplicates only when a governed record exists.
+  //
+  // Its boundary card renders that record's allowed statement and missing
+  // evidence, which are exactly the narrative's body and blocker. With no
+  // record the card falls back to its own prose and the narrative's are the
+  // only statement of theirs on the tab, so suppressing them there would lose
+  // a claim rather than a repeat.
+  if (tab === "Scope") {
+    return (
+      contractTabIntelligenceFor(
+        "Scope",
+        vm.detail?.contractTabIntelligence ?? [],
+      ) != null
+    );
+  }
+  if (tab === "Story" || tab === "Relationship" || tab === "Evidence") {
     return false;
   }
   // Education is the exception to the rule above: its side panel is not the

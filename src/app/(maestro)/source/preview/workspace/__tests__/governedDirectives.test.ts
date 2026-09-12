@@ -1,8 +1,8 @@
 import {
-  asSentence,
   contractTabNarrative,
   reviewStatusInWords,
 } from "../WorkspaceExecutiveShell";
+import { asSentence } from "../viewModel";
 import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import type { SourceWorkspaceVM } from "../buildViewModel";
 
@@ -140,6 +140,20 @@ describe("asSentence", () => {
     expect(asSentence("MER-TECH-DBX-001 has no scope rows")).toBe(
       "MER-TECH-DBX-001 has no scope rows.",
     );
+  });
+
+  it("does not add a second period to a value that has one", () => {
+    // The live Scope boundary read "...a sized economics claim.." because two
+    // callers appended their own period to an authored value that already
+    // ended in one. Both now go through this helper.
+    expect(
+      asSentence(
+        "4 scope rows still need annual run cost before scope can become a sized economics claim.",
+      ),
+    ).toBe(
+      "4 scope rows still need annual run cost before scope can become a sized economics claim.",
+    );
+    expect(asSentence("Already a sentence.")).not.toContain("..");
   });
 
   it("refuses rather than returning an empty sentence", () => {

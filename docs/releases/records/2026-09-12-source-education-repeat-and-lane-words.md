@@ -28,13 +28,24 @@ named a table, and `source` named the product the reader is already looking at,
 which says nothing about provenance. They now read "contract document ·
 restricted" and "governed analysis".
 
-**A lowercase authored fragment set into prose.** Some authored governed fields
-are written as bare fragments with no terminal punctuation — "finance
-confirmation required before realized-value claim". Rendered into a paragraph
-that reads as a machine token rather than a statement, which undercuts the claim
-it makes. A fragment is now opened and closed as a sentence; one that already
-begins with a capital or ends in punctuation is left alone, so authored text is
-not rewritten.
+**A lowercase authored fragment set into prose, and a visible double period.**
+Some authored governed fields are written as bare fragments with no terminal
+punctuation — "finance confirmation required before realized-value claim".
+Rendered into a paragraph that reads as a machine token rather than a
+statement, which undercuts the claim it makes. Two other callers appended their
+own period to the same class of value, and on one that already ended in a
+period the Scope boundary card read "...a sized economics claim..". One shared
+formatter now handles all three: a fragment is opened and closed as a sentence,
+and one that already begins with a capital or ends in punctuation is left
+alone, so authored text is not rewritten and no terminator is doubled.
+
+**The Scope statement repeats its boundary card, but only sometimes.** Where a
+governed Scope record exists, the boundary card renders that record's allowed
+statement and missing evidence — which are exactly the narrative's body and
+blocker — so the statement keeps only its headline. Where no record exists the
+card falls back to its own prose and the narrative carries the only statement
+of those claims on the tab, so it renders in full. A blanket suppression lost a
+real claim in the second case, and an existing test caught it.
 
 The predicate added in the previous change is renamed. It decides whether the
 narrative's body is already on screen, which is now true for two different
@@ -57,15 +68,17 @@ reasons, and its old name claimed something narrower than it checks.
 
 ## Changes Included
 
-- `WorkspaceExecutiveShell.tsx`: Education blocker returns nothing where there is no next step; Education joins the headline-only case; `asSentence`; the predicate is renamed to `narrativeBodyIsAlreadyOnScreen`.
-- `Contract360Surfaces.tsx`: two evidence-lane captions put into words.
-- `governedDirectives.test.ts`: five more tests covering fragment casing and its three refusals.
+- `viewModel.tsx`: `asSentence`, alongside the other formatters.
+- `WorkspaceExecutiveShell.tsx`: Education blocker returns nothing where there is no next step; Education always and Scope conditionally join the headline-only case; the predicate is renamed to `narrativeBodyIsAlreadyOnScreen`.
+- `Contract360Surfaces.tsx`: two evidence-lane captions put into words; two unconditional periods replaced by the shared formatter.
+- `governedDirectives.test.ts`: six more tests covering fragment casing, the doubled terminator, and three refusals.
 
 ## QA / Validation
 
-- Focused Jest: 26 suites, 224 tests passed across the workspace slice.
+- Focused Jest: 26 suites, 225 tests passed across the workspace slice.
+- An existing full-shell test caught an over-broad earlier attempt at the Scope suppression, which would have dropped a governed claim on a contract with no governed Scope record. The condition is now on the record's presence.
 - Repository TypeScript: clean.
-- ESLint on all three changed files: clean.
+- ESLint on all four changed files: clean.
 - Required follow-up: read the deployed Education tab and confirm the archetype paragraph appears once per column, and the Evidence tab for the lane captions.
 
 ## Rollout Plan

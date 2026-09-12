@@ -7,7 +7,7 @@ import type {
   SourceContractTabIntelligenceRow,
 } from "@/lib/source/data-model/types";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
-import { money, fmtDate } from "./viewModel";
+import { asSentence, fmtDate, money } from "./viewModel";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { countOrDash } from "./contractPopulations";
 import { contractPurposeSummary } from "./WorkspaceExecutiveShell";
@@ -522,7 +522,9 @@ export function ContractScopeBriefing({
             "These are the rows the contract record declares. Source does not infer a wider dependency footprint from them."}
         </p>
         {scope?.missing_evidence_summary ? (
-          <p className="sw-c3-note">{sentenceCase(scope.missing_evidence_summary)}.</p>
+          <p className="sw-c3-note">
+            {asSentence(scope.missing_evidence_summary)}
+          </p>
         ) : null}
       </section>
     </div>
@@ -716,7 +718,7 @@ export function ContractEvidenceFamilies({
         </p>
         {evidence?.supporting_evidence_summary ? (
           <p className="sw-c3-note">
-            {sentenceCase(evidence.supporting_evidence_summary)}.
+            {asSentence(evidence.supporting_evidence_summary)}
           </p>
         ) : null}
 
