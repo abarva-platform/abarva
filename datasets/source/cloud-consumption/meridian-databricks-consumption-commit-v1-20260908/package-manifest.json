@@ -34,7 +34,8 @@
     "native_tool_comparison": 4,
     "source_extraction_guide": 6,
     "layer_cube_map": 8,
-    "reconciliation": 8
+    "reconciliation": 8,
+    "contract_page_text": 6
   },
   "workbook_sha256": "c971acb15b475fc76495f53e9376935d280290cf1f52cf6981363a8c4f91260b"
 }
