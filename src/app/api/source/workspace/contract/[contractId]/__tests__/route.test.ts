@@ -32,6 +32,7 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   getContractOptimizationEvidencePack: jest.fn(),
   getContractOptimizationOpportunitySet: jest.fn(),
   listCloudCommitmentCoverageRows: jest.fn(),
+  listCloudTagQualityRows: jest.fn(),
   listContractApplicationScope: jest.fn(),
   listContractEvidencePricing: jest.fn(),
   listContractEvidenceScope: jest.fn(),
@@ -77,6 +78,7 @@ import {
   getContractOptimizationEvidencePack,
   getContractOptimizationOpportunitySet,
   listCloudCommitmentCoverageRows,
+  listCloudTagQualityRows,
   listContractApplicationScope,
   listContractEvidencePricing,
   listContractEvidenceScope,
@@ -122,6 +124,7 @@ const mockListContractEvidencePricing =
 const mockListContractEvidenceScope = listContractEvidenceScope as jest.Mock;
 const mockListCloudCommitmentCoverageRows =
   listCloudCommitmentCoverageRows as jest.Mock;
+const mockListCloudTagQualityRows = listCloudTagQualityRows as jest.Mock;
 const mockListContractPerformancePeriods =
   listContractPerformancePeriods as jest.Mock;
 const mockListContractSpendMonthly = listContractSpendMonthly as jest.Mock;
@@ -174,6 +177,7 @@ beforeEach(() => {
   mockListContractPerformancePeriods.mockResolvedValue([]);
   mockListContractSpendMonthly.mockResolvedValue([]);
   mockListCloudCommitmentCoverageRows.mockResolvedValue([]);
+  mockListCloudTagQualityRows.mockResolvedValue([]);
   mockListContractTabIntelligence.mockResolvedValue([]);
   mockGetContractIntelligence.mockResolvedValue(null);
   mockCollectContractSubjectRefs.mockReturnValue(["CTR-0006", "VEN-0006"]);
@@ -417,6 +421,39 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
       expect.objectContaining({
         contractTabIntelligence: tabIntelligence,
       }),
+    );
+  });
+
+  it("reads the contract's tag-quality observations and passes them through", async () => {
+    // These rows were loaded and asserted as canonical facts for weeks while
+    // no read selected them, so the attribution gap they record could not
+    // reach a surface. This pins the read and the hand-off, which is the step
+    // that was missing rather than the load.
+    const tagQuality = [
+      {
+        tenant_key: "meridian",
+        contract_id: "CTR-0006",
+        tag_quality_id: "tq-1",
+        owner_tag_coverage_pct: 74,
+        application_tag_coverage_pct: 68,
+      },
+    ];
+    mockListCloudTagQualityRows.mockResolvedValueOnce(tagQuality);
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian",
+      ),
+      params(),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockListCloudTagQualityRows).toHaveBeenCalledWith(
+      "meridian",
+      "CTR-0006",
+    );
+    expect(buildContract360View).toHaveBeenCalledWith(
+      expect.objectContaining({ cloudTagQuality: tagQuality }),
     );
   });
 });

@@ -60,6 +60,7 @@ import type {
   SourceContractPerformancePeriodRow,
   SourceAvaGroundingBundleRow,
   SourceCloudCommitmentCoverageRow,
+  SourceCloudTagQualityRow,
   SourceContractTabIntelligenceRow,
   SourceContractIntelligenceRow,
   SourcePageStorylineRow,
@@ -895,6 +896,48 @@ export async function listCloudCommitmentCoverageRows(
   return rows.map(normalizeCloudCommitmentCoverageRow);
 }
 
+/**
+ * Monthly tag-quality observations for one contract.
+ *
+ * These rows were being loaded and asserted as canonical facts while nothing
+ * read them, so the attribution gap they record could not reach any surface.
+ */
+export async function listCloudTagQualityRows(
+  tenantKey: string,
+  contractId: string,
+): Promise<SourceCloudTagQualityRow[]> {
+  const rows = await queryCanonicalSourceWithFallback<SourceCloudTagQualityRow>(
+    tenantKey,
+    `SELECT
+	     tenant_key,
+       dataset_version,
+       tag_quality_id,
+       contract_id,
+       vendor_id AS vendor_ref,
+       vendor_name,
+       cloud_provider,
+       period_start,
+       period_end,
+       total_spend_usd,
+       owner_tagged_spend_usd,
+       application_tagged_spend_usd,
+       untagged_spend_usd,
+       owner_tag_coverage_pct,
+       application_tag_coverage_pct,
+       data_quality_state,
+       source_file_id,
+       confidence,
+       quality_state,
+       load_run_id
+     FROM source.cloud_tag_quality_observation
+	    WHERE tenant_key = ANY($1::text[])
+	      AND contract_id = $2
+	    ORDER BY period_start, tag_quality_id`,
+    [contractId],
+  );
+  return rows.map(normalizeCloudTagQualityRow);
+}
+
 export async function listSourceContractEvidenceCoverage(
   tenantKey: string,
 ): Promise<SourceContractEvidenceCoverageRow[]> {
@@ -1217,6 +1260,25 @@ function normalizeCloudCommitmentCoverageRow(
     expected_discount_pct: numberValue(row.expected_discount_pct),
     candidate_monthly_savings_usd: numberValue(
       row.candidate_monthly_savings_usd,
+    ),
+    confidence: numberValue(row.confidence),
+  };
+}
+
+function normalizeCloudTagQualityRow(
+  row: SourceCloudTagQualityRow,
+): SourceCloudTagQualityRow {
+  return {
+    ...row,
+    total_spend_usd: numberValue(row.total_spend_usd),
+    owner_tagged_spend_usd: numberValue(row.owner_tagged_spend_usd),
+    application_tagged_spend_usd: numberValue(
+      row.application_tagged_spend_usd,
+    ),
+    untagged_spend_usd: numberValue(row.untagged_spend_usd),
+    owner_tag_coverage_pct: numberValue(row.owner_tag_coverage_pct),
+    application_tag_coverage_pct: numberValue(
+      row.application_tag_coverage_pct,
     ),
     confidence: numberValue(row.confidence),
   };

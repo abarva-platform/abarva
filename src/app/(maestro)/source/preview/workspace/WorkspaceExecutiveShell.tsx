@@ -38,6 +38,7 @@ import {
 } from "./Contract360Surfaces";
 import {
   ContractConsumptionMix,
+  ContractPerformanceCards,
   ContractEconomicsBriefing,
 } from "./Contract360Economics";
 import { ContractLeverTable } from "./ContractLeverTable";
@@ -3348,7 +3349,17 @@ function ContractPage({
         vm.detail?.spendMonths?.length ? (
           // On a contract type with no service-credit regime the useful
           // performance question is which workloads draw on the commitment.
-          <ContractConsumptionMix spendMonths={vm.detail.spendMonths} vm={vm} />
+          <>
+            <ContractPerformanceCards
+              spendMonths={vm.detail.spendMonths}
+              tagQuality={vm.detail.cloudTagQuality ?? []}
+              vm={vm}
+            />
+            <ContractConsumptionMix
+              spendMonths={vm.detail.spendMonths}
+              vm={vm}
+            />
+          </>
         ) : null}
         {tab === "Story" ? (
           <ContractStoryBriefing

@@ -1,6 +1,9 @@
 "use client";
 
-import type { SourceContractSpendMonthlyRow } from "@/lib/source/data-model/types";
+import type {
+  SourceCloudTagQualityRow,
+  SourceContractSpendMonthlyRow,
+} from "@/lib/source/data-model/types";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
 import { money } from "./viewModel";
 import { utilizationAgainstCommitment } from "./WorkspaceExecutiveShell";
@@ -374,4 +377,183 @@ export function ContractConsumptionMix({
       </section>
     </div>
   );
+}
+
+/**
+ * The design's three-card Performance row.
+ *
+ * The middle card is the reason this exists. Twelve monthly tag-quality
+ * observations were being loaded and asserted as canonical facts while nothing
+ * in the read model selected them, so the attribution gap they record could
+ * not reach any surface. Every figure here is read from those rows.
+ *
+ * The card labels follow the stored columns rather than the design's prose.
+ * The design captions its first meter "attributed to a scope"; the column it
+ * would have to read is `application_tag_coverage_pct`, and application
+ * tagging is not the same claim as scope attribution. Naming the column's own
+ * meaning keeps the meter honest at the cost of a less quotable label.
+ *
+ * The design's basis line also opens with a service-usage observation count.
+ * That count lives in a table the read model does not select; the nearest
+ * available number counts commitment-coverage rows, which is a different
+ * measurement wearing the same label. This surface counts only what it reads.
+ */
+export function ContractPerformanceCards({
+  spendMonths,
+  tagQuality,
+  vm,
+}: {
+  spendMonths: SpendRows;
+  tagQuality: readonly SourceCloudTagQualityRow[];
+  vm: SourceWorkspaceVM;
+}) {
+  const totals = totalsFrom(spendMonths);
+  const utilization = utilizationAgainstCommitment(
+    totals.actual,
+    totals.committed,
+  );
+  const performanceRequired =
+    vm.contractEducation?.facetRequirements.Performance?.state !==
+    "not_required";
+
+  const meters = tagMeters(tagQuality);
+  const latest = tagQuality.length > 0 ? tagQuality[tagQuality.length - 1] : null;
+  const untagged = latest ? numberFromDb(latest.untagged_spend_usd) : null;
+
+  // With no tag rows and no not-required state there is nothing this row can
+  // say that the tab does not already say better.
+  if (meters.length === 0 && performanceRequired) return null;
+
+  return (
+    <section className="sw-c3-card">
+      <p className="sw-c3-display sw-c3-display-sm">
+        {meters.length > 0 && !performanceRequired
+          ? "Delivery is not the problem. Attribution is."
+          : meters.length > 0
+            ? "What the evidence says about delivery and attribution."
+            : "Service levels are not a lane on this contract type."}
+      </p>
+      <p className="sw-c3-note">
+        {[
+          tagQuality.length > 0
+            ? `${tagQuality.length} tag-quality check${tagQuality.length === 1 ? "" : "s"}`
+            : null,
+          performanceRequired
+            ? null
+            : "SLA credits not required by this archetype",
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
+
+      <div className="sw-c3-perf-cards">
+        <div className="sw-c3-perf-card">
+          <div className="sw-c3-perf-card-title">
+            Consumption against commitment pace
+          </div>
+          {utilization != null ? (
+            <>
+              <p className="sw-c3-perf-card-figure">
+                {utilization}%
+              </p>
+              <div className="sw-c3-perf-card-note">
+                {`Drawn on across ${spendMonths.length} loaded month${spendMonths.length === 1 ? "" : "s"}`}
+              </div>
+            </>
+          ) : (
+            <div className="sw-c3-perf-card-note">
+              No committed amount is recorded, so pace cannot be computed.
+            </div>
+          )}
+        </div>
+
+        {meters.length > 0 ? (
+          <div className="sw-c3-perf-card">
+            <div className="sw-c3-perf-card-title">Tag quality</div>
+            <div className="sw-c3-meters">
+              {meters.map((meter) => (
+                <div className="sw-c3-meter" key={meter.label}>
+                  <div className="sw-c3-meter-head">
+                    <span>{meter.label}</span>
+                    <span className="sw-c3-meter-value">
+                      {Math.round(meter.pct)}%
+                    </span>
+                  </div>
+                  <span className="sw-c3-meter-track">
+                    <i
+                      className="sw-c3-meter-fill"
+                      style={{
+                        ["--sw-c3-share" as string]: `${meter.pct.toFixed(1)}%`,
+                        ["--sw-c3-tone" as string]:
+                          meter.pct >= 90
+                            ? "var(--sw-c3-green)"
+                            : "var(--sw-c3-amber)",
+                      }}
+                    />
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="sw-c3-perf-card-note">
+              {meters.every((meter) => meter.unchanged)
+                ? `Unchanged across all ${tagQuality.length} monthly check${tagQuality.length === 1 ? "" : "s"}`
+                : `Latest of ${tagQuality.length} monthly check${tagQuality.length === 1 ? "" : "s"}`}
+              {untagged != null && untagged > 0
+                ? ` · ${money(untagged)} unattributed in the latest month`
+                : ""}
+            </div>
+          </div>
+        ) : null}
+
+        {performanceRequired ? null : (
+          <div className="sw-c3-perf-card sw-c3-perf-card-na">
+            <div className="sw-c3-eyebrow">Not required · this archetype</div>
+            <div className="sw-c3-perf-card-title">
+              SLA credits and ticket volume
+            </div>
+            <p className="sw-c3-perf-card-prose">
+              {vm.contractEducation?.facetRequirements.Performance?.reason ??
+                "This contract type carries no service-credit regime, so the absence of those rows blocks nothing. Not a gap — a state."}
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+interface TagMeter {
+  readonly label: string;
+  readonly pct: number;
+  /** True when every loaded check records the same coverage. */
+  readonly unchanged: boolean;
+}
+
+/**
+ * One meter per stored coverage column, read from the latest check.
+ *
+ * A column present on the rows but null on every one of them yields no meter,
+ * rather than a zero — nobody looked, which is not the same as nothing tagged.
+ */
+function tagMeters(rows: readonly SourceCloudTagQualityRow[]): TagMeter[] {
+  if (rows.length === 0) return [];
+  const columns = [
+    ["Owner tag present", "owner_tag_coverage_pct"],
+    ["Application tag present", "application_tag_coverage_pct"],
+  ] as const;
+
+  const meters: TagMeter[] = [];
+  for (const [label, column] of columns) {
+    const values = rows
+      .map((row) => numberFromDb(row[column]))
+      .filter((value): value is number => value != null);
+    if (values.length === 0) continue;
+    const latest = values[values.length - 1];
+    meters.push({
+      label,
+      pct: Math.max(0, Math.min(100, latest)),
+      unchanged: values.every((value) => value === latest),
+    });
+  }
+  return meters;
 }
