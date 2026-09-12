@@ -214,11 +214,12 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     ]);
     expect(focus.rows[0]).toMatchObject({
       actionRows: 6,
-      reason: "6 action rows",
+      // "Why listed" names what the reader gets, not the row that holds it.
+      reason: "6 governed actions",
     });
     expect(focus.rows[1]).toMatchObject({
       actionRows: 5,
-      reason: "5 action rows",
+      reason: "5 governed actions",
     });
     expect(focus.rows[0]?.contract.contract_name).toContain("Databricks");
     expect(focus.rows[1]?.contract.vendor_name).toBe(
