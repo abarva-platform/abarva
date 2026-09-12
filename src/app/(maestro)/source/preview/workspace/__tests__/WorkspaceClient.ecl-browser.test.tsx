@@ -451,7 +451,13 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(
       screen.getByText("Thin records do not get rich narrative"),
     ).toBeTruthy();
-    expect(screen.getByText(/specific backfill request/i)).toBeTruthy();
+    // The rule is the same; it is now stated to the reader rather than to
+    // whoever builds the page. "Contract pages should show…" was an authoring
+    // instruction rendered at the foot of the executive view.
+    expect(
+      screen.getByText(/names the input it needs rather than showing/i),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Contract pages should show/i)).toBeNull();
     expect(screen.queryByText("Contract register")).toBeNull();
     expect(screen.queryByText("Application scope")).toBeNull();
     expect(screen.queryByText("No Source rows returned")).toBeNull();
