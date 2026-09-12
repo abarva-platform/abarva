@@ -75,6 +75,35 @@ async function main() {
         WHERE n.nspname = 'source' AND c.relname IN ('contract', 'vendor', 'contract_360', 'contract_vendor_360')
         ORDER BY c.relname`,
     );
+    const viewColumns = await client.query(
+      `SELECT table_name, ordinal_position, column_name, data_type
+         FROM information_schema.columns
+        WHERE table_schema = 'source'
+          AND table_name IN ('contract_vendor_360', 'contract_360')
+        ORDER BY table_name, ordinal_position`,
+    );
+    const viewDependencies = await client.query(
+      `SELECT dependent.relname AS dependent_view,
+              source_view.relname AS source_view
+         FROM pg_depend dependency
+         JOIN pg_rewrite rewrite ON rewrite.oid = dependency.objid
+         JOIN pg_class dependent ON dependent.oid = rewrite.ev_class
+         JOIN pg_class source_view ON source_view.oid = dependency.refobjid
+         JOIN pg_namespace source_schema ON source_schema.oid = source_view.relnamespace
+        WHERE source_schema.nspname = 'source'
+          AND source_view.relname IN ('contract_vendor_360', 'contract_360')
+          AND dependent.relkind = 'v'
+        GROUP BY dependent.relname, source_view.relname
+        ORDER BY source_view.relname, dependent.relname`,
+    );
+    const packageRows = await client.query(
+      `SELECT contract_id, vendor_id, contract_name, load_run_id, raw_payload
+         FROM source.contract
+        WHERE tenant_key = $1
+          AND raw_payload ->> 'dataset_version' = 'meridian-databricks-consumption-commit-v1-20260908'
+        ORDER BY load_run_id, contract_id`,
+      [tenantKey],
+    );
     const viewdefs = await client.query(
       `SELECT
          (SELECT pg_get_viewdef('source.contract_vendor_360'::regclass, true)) AS contract_vendor_360_def,
@@ -104,6 +133,9 @@ async function main() {
           activeLoadRunRows,
           contractLoadRuns: contractLoadRuns.rows,
           counts: counts.rows[0],
+          viewColumns: viewColumns.rows,
+          viewDependencies: viewDependencies.rows,
+          packageRows: packageRows.rows,
           contract_vendor_360_def: viewdefs.rows[0].contract_vendor_360_def,
           contract_360_def: viewdefs.rows[0].contract_360_def,
         },
