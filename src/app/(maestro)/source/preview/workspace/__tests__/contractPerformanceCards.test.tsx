@@ -130,7 +130,7 @@ describe("ContractPerformanceCards", () => {
     expect(screen.queryByText(/Unchanged across/)).toBeNull();
   });
 
-  it("carries the archetype's own reason on the not-required card", () => {
+  it("marks the not-required state without repeating the governed reason", () => {
     render(
       <ContractPerformanceCards
         spendMonths={spend()}
@@ -140,9 +140,13 @@ describe("ContractPerformanceCards", () => {
     );
 
     expect(screen.getByText("Not required · this archetype")).toBeTruthy();
+    expect(screen.getByText("SLA credits and ticket volume")).toBeTruthy();
+    // The applicability panel in the tab body states the governed reason in
+    // full, directly beneath this card. Rendering it here too put the same
+    // sentence on screen twice, which is what the live page showed.
     expect(
-      screen.getByText("No service-credit regime on this archetype."),
-    ).toBeTruthy();
+      screen.queryByText("No service-credit regime on this archetype."),
+    ).toBeNull();
   });
 
   it("renders nothing when there are no tag rows and performance is required", () => {

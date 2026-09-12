@@ -3476,12 +3476,13 @@ function ContractPage({
           naming what a signal row still needs before it can carry value. That
           survives here on its own.
         */}
-        {tab === "Optimize" ? (
+        {tab === "Optimize" && vm.opportunityView ? (
           <ContractOptimizeGateStatement vm={vm} />
         ) : (
           <ContractGovernedStatement
             contract={contract}
             coverage={coverage}
+            headlineOnly={sidePanelRendersTabNarrative(tab, vm)}
             scopeRows={scopeRows}
             tab={tab}
             vm={vm}
@@ -3894,12 +3895,15 @@ function ContractTabBody({
 function ContractGovernedStatement({
   contract,
   coverage,
+  headlineOnly,
   scopeRows,
   tab,
   vm,
 }: {
   contract: SourceContract360Row;
   coverage: ReturnType<typeof coverageForContract>;
+  /** The side panel already rendered this narrative's body and blocker. */
+  headlineOnly: boolean;
   scopeRows: readonly SourceContractApplicationScopeRow[];
   tab: string;
   vm: SourceWorkspaceVM;
@@ -3914,7 +3918,7 @@ function ContractGovernedStatement({
     // have one pass it, and this statement reads fine without.
     undefined,
   );
-  if (!narrative.headline && !narrative.body) return null;
+  if (!narrative.headline && (headlineOnly || !narrative.body)) return null;
 
   /*
    * The Story purpose card and this headline are written from the same reviewed
@@ -3935,8 +3939,10 @@ function ContractGovernedStatement({
       {headline ? (
         <p className="sw-c3-governed-headline">{headline}</p>
       ) : null}
-      {narrative.body ? <p className="sw-c3-note">{narrative.body}</p> : null}
-      {narrative.blocker ? (
+      {!headlineOnly && narrative.body ? (
+        <p className="sw-c3-note">{narrative.body}</p>
+      ) : null}
+      {!headlineOnly && narrative.blocker ? (
         <p className="sw-c3-note sw-c3-governed-blocker">{narrative.blocker}</p>
       ) : null}
     </div>
@@ -3969,6 +3975,32 @@ function ContractOptimizeGateStatement({ vm }: { vm: SourceWorkspaceVM }) {
       <p className="sw-c3-note sw-c3-governed-blocker">{gate}</p>
     </div>
   );
+}
+
+/**
+ * Whether the right-hand panel renders the tab narrative for this tab.
+ *
+ * Mirrors ContractDetailSidePanel's branch order. Both the panel's narrative
+ * stack and the governed statement read `contractTabNarrative` with the same
+ * arguments, so wherever the panel takes that branch the statement repeats its
+ * body and blocker word for word. The grid asks this before deciding how much
+ * of the statement is still worth rendering.
+ */
+function sidePanelRendersTabNarrative(
+  tab: string,
+  vm: SourceWorkspaceVM,
+): boolean {
+  if (
+    tab === "Story" ||
+    tab === "Scope" ||
+    tab === "Relationship" ||
+    tab === "Evidence"
+  ) {
+    return false;
+  }
+  if (tab === "Education" && vm.contractEducation) return false;
+  if (tab === "Optimize" && vm.opportunityView) return false;
+  return true;
 }
 
 function ContractDetailSidePanel({
@@ -4066,7 +4098,10 @@ function ContractDetailSidePanel({
               : "What the spend evidence supports"
           }
         />
-        <ContractNarrativeContextStack narrative={tabNarrative} />
+        <ContractNarrativeContextStack
+          bodyOwnedElsewhere={!contractFacetIsRequired(vm, tab)}
+          narrative={tabNarrative}
+        />
       </>
     );
   }
@@ -4091,14 +4126,24 @@ function ContractDetailSidePanel({
 }
 
 function ContractNarrativeContextStack({
+  bodyOwnedElsewhere = false,
   narrative,
 }: {
+  /**
+   * The tab body already renders this narrative's body verbatim. On a
+   * not-required tab the body IS the governed applicability reason, which the
+   * applicability panel states in full, so repeating it here put the identical
+   * sentence in both columns.
+   */
+  bodyOwnedElsewhere?: boolean;
   narrative: ReturnType<typeof contractTabNarrative>;
 }) {
   return (
     <div className="sw-v2-fact-stack">
       <Fact label="Decision consequence" value={narrative.blocker} />
-      <p className="sw-v2-muted">{narrative.body}</p>
+      {bodyOwnedElsewhere ? null : (
+        <p className="sw-v2-muted">{narrative.body}</p>
+      )}
       <p className="sw-v2-muted">Basis: {narrative.provenance}.</p>
     </div>
   );

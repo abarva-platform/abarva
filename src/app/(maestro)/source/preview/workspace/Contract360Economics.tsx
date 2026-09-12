@@ -512,8 +512,8 @@ export function ContractPerformanceCards({
               SLA credits and ticket volume
             </div>
             <p className="sw-c3-perf-card-prose">
-              {vm.contractEducation?.facetRequirements.Performance?.reason ??
-                "This contract type carries no service-credit regime, so the absence of those rows blocks nothing. Not a gap — a state."}
+              Not a gap — a state. The applicability panel below carries the
+              governed reason; it is not repeated here.
             </p>
           </div>
         )}

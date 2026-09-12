@@ -548,22 +548,37 @@ describe("Source workspace ECL browser-surface proof", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
 
-    // Optimize's right column carries the value-type ledger and the evidence
-    // gate. It does not carry the governed statement, whose body the sub-tabs
-    // to its left already render as tables, and it does not carry a count of
-    // deterministic claim cards, which is a measure of the pipeline rather
-    // than a fact about the contract.
-    expect(screen.queryByText("What Source can state")).toBeNull();
+    // Optimize's right column no longer restates the tab body. This fixture
+    // has no governed lever view, so the column falls back to the narrative
+    // branch and the statement keeps only its headline — the side panel below
+    // it owns the body and blocker, and rendering both put the same two
+    // paragraphs on screen twice.
     expect(screen.queryByText("Deterministic cards")).toBeNull();
     expect(screen.getByText("Contract readout")).toBeTruthy();
+    {
+      const statement = screen
+        .getByText("What Source can state")
+        .closest(".sw-c3-governed-statement");
+      expect(
+        statement?.querySelectorAll(".sw-c3-governed-blocker").length,
+      ).toBe(0);
+    }
     expect(screen.getByText("Decision consequence")).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Story" })).toBeTruthy();
 
-    // Only Optimize loses the statement. Every other tab keeps it.
+    // Story's side panel has its own context stack rather than the tab
+    // narrative, so the statement keeps its blocker there. That is the
+    // differential: the statement is trimmed only where the panel beside it
+    // already renders the same paragraphs.
     fireEvent.click(screen.getByRole("tab", { name: "Story" }));
-    expect(screen.getByText("What Source can state")).toBeTruthy();
-    fireEvent.click(screen.getByRole("tab", { name: "Optimize" }));
-    expect(screen.queryByText("What Source can state")).toBeNull();
+    {
+      const statement = screen
+        .getByText("What Source can state")
+        .closest(".sw-c3-governed-statement");
+      expect(
+        statement?.querySelectorAll(".sw-c3-governed-blocker").length,
+      ).toBe(1);
+    }
 
     fireEvent.click(screen.getByRole("tab", { name: "Scope" }));
 
