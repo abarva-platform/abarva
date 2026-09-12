@@ -84,3 +84,6 @@ out/
 
 # Generated contract packets (regenerate with npm run packet:check)
 .artifacts/contract-packets/
+
+# Official vendor icon packs are downloaded locally from documented source URLs.
+docs/architecture/vendor-icons/**/*.zip

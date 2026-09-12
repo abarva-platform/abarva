@@ -1,0 +1,29 @@
+{
+  "retrievedAt": "2026-09-08",
+  "packs": [
+    {
+      "vendor": "AWS",
+      "description": "AWS Architecture Icons official icon package for architecture diagrams.",
+      "sourcePage": "https://aws.amazon.com/architecture/icons/",
+      "downloadUrl": "https://d1.awsstatic.com/onedam/marketing-channels/website/public/shared/architecture-icon-release/Icon-package_07312026.5846e92413caa21490223536cc97f1269e44fa92.zip",
+      "repoPath": "docs/architecture/vendor-icons/aws/aws-architecture-icons-2026-08-06.zip",
+      "contentLengthBytes": 13988918,
+      "sha256": "d2d166c453526471749d520e0db022c459abef759d2946cf2dd1d1c992dc6526",
+      "sourceLastModified": "2026-08-06T07:01:09Z",
+      "sourceEtag": "\"06ce0fa0fe50fb7ca17782f07824faeb\"",
+      "usageSummary": "Use the official AWS icon package to create AWS architecture diagrams and presentation materials. Keep icons current with the AWS quarterly release cadence."
+    },
+    {
+      "vendor": "Microsoft Azure",
+      "description": "Azure Public Service Icons V24 official SVG package for architecture diagrams and documentation.",
+      "sourcePage": "https://learn.microsoft.com/en-us/azure/architecture/icons/",
+      "downloadUrl": "https://arch-center.azureedge.net/icons/Azure_Public_Service_Icons_V24.zip",
+      "repoPath": "docs/architecture/vendor-icons/azure/azure-public-service-icons-v24-2026-07.zip",
+      "contentLengthBytes": 1033184,
+      "sha256": "921594ccd1bf3d9c0a1bd7b6d924e050551a59342f2b353bb74bdcf761c35141",
+      "sourceLastModified": "2026-07-08T22:21:41Z",
+      "sourceEtag": "\"0x8DEDD3F49332567\"",
+      "usageSummary": "Microsoft permits use of these icons in architectural diagrams, training materials, or documentation; follow the terms published with the package and source page."
+    }
+  ]
+}
