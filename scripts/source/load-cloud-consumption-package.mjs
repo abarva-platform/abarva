@@ -124,6 +124,8 @@ function parseArgs() {
     argValue("load-run-id") ??
     process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_LOAD_RUN_ID ??
     `source-cloud-consumption-package-${datasetVersion}-${stamp}`;
+  const suppliedLayer3LoadRunId =
+    argValue("layer3-load-run-id") ?? process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_LAYER3_LOAD_RUN_ID;
   return {
     mode,
     packageDir: path.resolve(
@@ -139,10 +141,8 @@ function parseArgs() {
       process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_IDEMPOTENCY_KEY ??
       `${tenantKey}:${datasetVersion}:layer2-layer3`,
     loadRunId,
-    layer3LoadRunId:
-      argValue("layer3-load-run-id") ??
-      process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_LAYER3_LOAD_RUN_ID ??
-      loadRunId,
+    layer3LoadRunId: suppliedLayer3LoadRunId ?? loadRunId,
+    layer3LoadRunIdExplicit: suppliedLayer3LoadRunId !== undefined,
     proofDir: path.resolve(
       argValue("proof-dir") ??
         process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_PROOF_DIR ??
@@ -1720,10 +1720,11 @@ async function applyLayer3(client, args, files, rows, expectedL2, pageRows = [])
   await upsertCloudCanonicalFacts(client, args, files);
   await upsertCloudPageTextFacts(client, args, pageRows);
   await upsertOptimizationSpine(client, args, files);
-  return layer3Readback(client, args, files);
+  await assertContractIdentityReadback(client, args, files, args.loadRunId);
+  return layer3Readback(client, args, files, args.loadRunId);
 }
 
-async function layer3Readback(client, args, files) {
+async function layer3Readback(client, args, files, loadRunId = args.layer3LoadRunId) {
   const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
   const vendorIds = uniqueRows(files["cloud_contract_register.csv"], "vendor_ref").map((row) => value(row, "vendor_ref"));
   const opportunityIds = files["optimization_opportunities.csv"].map((row) => value(row, "opportunity_id"));
@@ -1757,9 +1758,63 @@ async function layer3Readback(client, args, files) {
        (SELECT count(*)::text FROM source.opportunity_requirement_status WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_opportunity_requirement_status,
        (SELECT count(*)::text FROM source.evidence_request WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_evidence_request,
        (SELECT count(*)::text FROM source.canonical_fact_assertion WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($4::text[])) AS source_canonical_fact_assertion`,
-    [args.tenantKey, args.datasetVersion, vendorIds, contractIds, opportunityIds, caseIds, args.layer3LoadRunId, calculationRunIds],
+    [args.tenantKey, args.datasetVersion, vendorIds, contractIds, opportunityIds, caseIds, loadRunId, calculationRunIds],
   );
   return Object.fromEntries(Object.entries(result.rows[0] ?? {}).map(([key, count]) => [key, Number(count)]));
+}
+
+async function assertContractIdentityReadback(client, args, files, loadRunId) {
+  const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
+  const result = await client.query(
+    `SELECT c.contract_id, c.contract_name, c.expiration_date, v.legal_name AS vendor_name
+       FROM source.contract c
+       LEFT JOIN source.vendor v
+         ON v.tenant_key = c.tenant_key
+        AND v.vendor_id = c.vendor_id
+        AND v.load_run_id = c.load_run_id
+      WHERE c.tenant_key = $1
+        AND c.contract_id = ANY($2::text[])
+        AND c.load_run_id = $3
+      ORDER BY c.contract_id`,
+    [args.tenantKey, contractIds, loadRunId],
+  );
+  const expectedIds = new Set(contractIds);
+  const actualIds = new Set(result.rows.map((row) => row.contract_id));
+  const missingIds = contractIds.filter((contractId) => !actualIds.has(contractId));
+  const incomplete = result.rows
+    .filter((row) => !row.contract_name || !row.vendor_name || !row.expiration_date)
+    .map((row) => row.contract_id);
+  if (result.rows.length !== expectedIds.size || missingIds.length || incomplete.length) {
+    throw new Error(
+      `Contract identity readback failed for ${args.tenantKey}/${args.datasetVersion}: ` +
+        `expected ${expectedIds.size} complete contract identities, got ${result.rows.length}; ` +
+        `missing=${missingIds.join(",") || "none"}; incomplete=${incomplete.join(",") || "none"}`,
+    );
+  }
+}
+
+async function resolveLayer3LoadRunId(client, args, files) {
+  if (args.layer3LoadRunIdExplicit) return args.layer3LoadRunId;
+  const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
+  const result = await client.query(
+    `SELECT DISTINCT load_run_id
+       FROM source.contract
+      WHERE tenant_key = $1
+        AND contract_id = ANY($2::text[])
+        AND load_run_id IS NOT NULL
+      ORDER BY load_run_id`,
+    [args.tenantKey, contractIds],
+  );
+  const loadRunIds = result.rows.map((row) => row.load_run_id).filter(Boolean);
+  if (loadRunIds.length !== 1) {
+    throw new Error(
+      `Unable to derive one Layer 3 load run for ${args.tenantKey}/${args.datasetVersion}: ` +
+        `found ${loadRunIds.length} (${loadRunIds.join(", ") || "none"}); ` +
+        "pass --layer3-load-run-id when the package spans phased runs",
+    );
+  }
+  args.layer3LoadRunId = loadRunIds[0];
+  return args.layer3LoadRunId;
 }
 
 async function layer4Readback(client, args, files) {
@@ -1945,6 +2000,8 @@ async function main() {
       summary.layer3_readback = layer3;
     } else if (args.mode === "apply-layer4") {
       requireApplyApproval(args);
+      await resolveLayer3LoadRunId(client, args, sourceFiles);
+      await assertContractIdentityReadback(client, args, sourceFiles, args.layer3LoadRunId);
       const layer3 = await layer3Readback(client, args, sourceFiles);
       assertCounts(expectedL3, layer3, "Layer 3");
       await client.query("BEGIN");
@@ -1957,6 +2014,8 @@ async function main() {
       summary.projection_load_run_id = args.layer3LoadRunId;
       summary.layer4_readback = layer4;
     } else if (args.mode === "verify-layer4") {
+      await resolveLayer3LoadRunId(client, args, sourceFiles);
+      await assertContractIdentityReadback(client, args, sourceFiles, args.layer3LoadRunId);
       const layer4 = await layer4Readback(client, args, sourceFiles);
       assertCounts(expectedL4, layer4, "Layer 4");
       summary.event = "source_cloud_consumption_package_layer4_verified";
