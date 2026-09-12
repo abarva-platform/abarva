@@ -3645,13 +3645,18 @@ function ContractTabStory({
           twice. Show the narrative's own contribution — what it adds beyond the
           purpose — and drop the repeat.
         */}
-        {narrativeAddsToPurpose(purpose, tabNarrative) ? (
-          <>
-            <span>{tabNarrative.provenance}</span>
-            <h2>{tabNarrative.headline}</h2>
-            <p>{tabNarrative.body}</p>
-          </>
-        ) : null}
+        <span>{tabNarrative.provenance}</span>
+        {/*
+          The governed headline is long-form prose drawn from the same reviewed
+          source as the purpose block above, so on Story the two resolved to the
+          same paragraph and it appeared twice. The narrative's own body says
+          something the purpose does not, so only the repeated headline is
+          dropped.
+        */}
+        {repeatsPurpose(purpose, tabNarrative.headline) ? null : (
+          <h2>{tabNarrative.headline}</h2>
+        )}
+        <p>{tabNarrative.body}</p>
         <small>{tabNarrative.blocker}</small>
       </div>
       <dl>
@@ -3702,29 +3707,37 @@ function ContractFacetNotRequired({
 }
 
 /**
- * Whether the governed narrative says anything the purpose block has not.
+ * Whether a governed string repeats the purpose paragraph already on screen.
  *
- * Both are written from the same reviewed contract intelligence, so on the
- * Story tab they resolve to the same sentences. Rendering both put one
- * paragraph on screen twice and pushed the figures below the fold. Compared on
- * normalised text so punctuation or casing differences do not defeat it.
+ * Compared on a normalised opening rather than on containment. The two are
+ * written from the same reviewed source and share their first sentences before
+ * diverging, so neither string contains the other — an equality or `includes`
+ * test misses a repeat that a reader plainly sees.
  */
-function narrativeAddsToPurpose(
+function repeatsPurpose(
   purpose: ReturnType<typeof contractPurposeSummary> | null,
-  narrative: ReturnType<typeof contractTabNarrative>,
+  candidate: string | null | undefined,
 ): boolean {
-  if (!purpose) return true;
-  const normalize = (value: string) =>
+  if (!purpose || !candidate) return false;
+  const words = (value: string) =>
     value
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, " ")
-      .trim();
-  const purposeText = normalize(`${purpose.heading} ${purpose.body}`);
-  if (purposeText.length === 0) return true;
-  const narrativeText = normalize(`${narrative.headline} ${narrative.body}`);
-  if (narrativeText.length === 0) return false;
+      .trim()
+      .split(" ")
+      .filter(Boolean);
+  const purposeWords = words(purpose.body);
+  const candidateWords = words(candidate);
+  const SHARED_OPENING = 12;
+  if (
+    purposeWords.length < SHARED_OPENING ||
+    candidateWords.length < SHARED_OPENING
+  ) {
+    return purposeWords.join(" ") === candidateWords.join(" ");
+  }
   return (
-    !purposeText.includes(narrativeText) && !narrativeText.includes(purposeText)
+    purposeWords.slice(0, SHARED_OPENING).join(" ") ===
+    candidateWords.slice(0, SHARED_OPENING).join(" ")
   );
 }
 
