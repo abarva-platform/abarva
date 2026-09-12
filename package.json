@@ -679,6 +679,7 @@
     "source:contract-depth-package:doc-evidence:plan": "node scripts/source/load-contract-depth-document-evidence.mjs",
     "source:contract-depth-package:doc-evidence:apply-job": "node scripts/source/load-contract-depth-document-evidence.mjs --apply",
     "source:cloud-consumption-package:schema:apply-job": "npx tsx src/scripts/run-migrations.ts --ci",
+    "source:cloud-consumption-package:control-readiness:reapply-job": "npx tsx src/scripts/run-migrations.ts --ci --force 20260910231500_source_cloud_l4_control_readiness_projection.sql",
     "source:cloud-consumption-package:plan": "node scripts/source/load-cloud-consumption-package.mjs --mode=plan",
     "source:cloud-consumption-package:layer2:apply-job": "SOURCE_CLOUD_CONSUMPTION_PACKAGE_APPLY_APPROVED=true SOURCE_CLOUD_CONSUMPTION_PACKAGE_EMIT_PROOF_BUNDLE=true node scripts/source/load-cloud-consumption-package.mjs --mode=apply-layer2",
     "source:cloud-consumption-package:layer3:apply-job": "SOURCE_CLOUD_CONSUMPTION_PACKAGE_APPLY_APPROVED=true SOURCE_CLOUD_CONSUMPTION_PACKAGE_EMIT_PROOF_BUNDLE=true node scripts/source/load-cloud-consumption-package.mjs --mode=apply-layer3",

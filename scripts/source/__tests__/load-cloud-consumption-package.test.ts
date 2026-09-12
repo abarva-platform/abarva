@@ -159,5 +159,15 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("derived_from_load_run_id: args.loadRunId");
     expect(loader).toContain('reviewState: value(row, "context_review_state")');
     expect(loader).toContain("must carry reviewed or approved contract context");
+    expect(loader).toContain("SOURCE_CLOUD_CONSUMPTION_PACKAGE_LAYER3_LOAD_RUN_ID");
+    expect(loader).toContain("args.layer3LoadRunId");
+  });
+
+  it("exposes a governed reapply entrypoint for stale Layer 4 readiness views", () => {
+    const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
+
+    expect(packageJson.scripts["source:cloud-consumption-package:control-readiness:reapply-job"]).toBe(
+      "npx tsx src/scripts/run-migrations.ts --ci --force 20260910231500_source_cloud_l4_control_readiness_projection.sql",
+    );
   });
 });
