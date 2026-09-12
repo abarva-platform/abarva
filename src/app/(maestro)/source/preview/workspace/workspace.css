@@ -4132,3 +4132,170 @@
 .sw-c3-refusal-live .sw-c3-refusal-count {
   color: var(--sw-c3-red);
 }
+
+/* --- contract anatomy ---------------------------------------------------- */
+
+.sw-c3-anatomy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+  margin-top: 18px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .sw-c3-anatomy {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sw-c3-anatomy-col {
+  border: 1px solid var(--sw-c3-hairline);
+  border-radius: 12px;
+  padding: 16px 17px;
+  min-width: 0;
+}
+
+.sw-c3-anatomy-col .sw-c3-row:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.sw-c3-anatomy-col > .sw-c3-note:last-child {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sw-c3-hairline);
+}
+
+/* The canonical record sits in the middle, in the product's own dark ground,
+   because it is the one column that is schema rather than contract state. */
+.sw-c3-anatomy-canonical {
+  background: var(--sw-c3-ink);
+  border-color: var(--sw-c3-ink);
+  color: #fff;
+}
+
+.sw-c3-anatomy-canonical .sw-c3-eyebrow {
+  color: var(--sw-c3-mint);
+}
+
+.sw-c3-anatomy-canonical .sw-c3-note {
+  color: rgba(250, 247, 241, 0.68);
+}
+
+.sw-c3-anatomy-canonical > .sw-c3-note:last-child {
+  border-top-color: rgba(255, 255, 255, 0.14);
+}
+
+.sw-c3-anatomy-model {
+  margin: 10px 0 0;
+  font-family: var(--font-body-serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.sw-c3-anatomy-fields {
+  display: grid;
+  gap: 11px;
+  margin-top: 16px;
+}
+
+.sw-c3-anatomy-fields code {
+  display: block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: var(--sw-c3-mint);
+  word-break: break-word;
+}
+
+.sw-c3-anatomy-fields span {
+  display: block;
+  font-size: 11.5px;
+  color: rgba(250, 247, 241, 0.6);
+  margin-top: 2px;
+}
+
+/* --- the seven facets ---------------------------------------------------- */
+
+.sw-c3-facets {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.sw-c3-facet {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--sw-c3-hairline);
+  border-radius: 9px;
+  padding: 10px 12px;
+}
+
+.sw-c3-facet-index {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--sw-c3-stone);
+  padding-top: 2px;
+}
+
+.sw-c3-facet-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sw-c3-facet-name {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sw-c3-ink);
+}
+
+.sw-c3-facet-question {
+  display: block;
+  font-size: 11.5px;
+  color: var(--sw-c3-muted);
+  margin-top: 2px;
+  line-height: 1.45;
+}
+
+.sw-c3-facet-mark {
+  flex: none;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding-top: 2px;
+  color: var(--sw-c3-stone);
+}
+
+.sw-c3-facet-answered {
+  border-color: rgba(29, 158, 117, 0.4);
+  background: var(--sw-c3-green-tint);
+}
+
+.sw-c3-facet-answered .sw-c3-facet-mark {
+  color: var(--sw-c3-green-deep);
+}
+
+/* Open is amber, not red. A question without evidence yet is work to do, not a
+   failure — the product says so everywhere else and should here too. */
+.sw-c3-facet-open {
+  border-color: rgba(186, 117, 23, 0.38);
+  background: var(--sw-c3-amber-tint);
+}
+
+.sw-c3-facet-open .sw-c3-facet-mark {
+  color: var(--sw-c3-amber);
+}
+
+.sw-c3-facet-not_required {
+  border-style: dashed;
+  border-color: var(--sw-c3-rule);
+}
+
+.sw-c3-facet-not_required .sw-c3-facet-name {
+  color: var(--sw-c3-mid);
+}
