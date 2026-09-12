@@ -19,12 +19,13 @@ describe("Source cloud consumption package loader", () => {
     expect(summary.quality_gate.status).toBe("PASS");
     expect(summary.layer2_expected_rows).toBe(460);
     expect(summary.synthetic_evidence_documents).toBe(10);
+    expect(summary.companion_source_rows.contract_page_text).toBe(10);
     expect(summary.layer2_expected_by_adapter.cloud_service_usage_adapter).toBe(192);
     expect(summary.layer2_expected_by_adapter.cloud_resource_inventory_adapter).toBe(84);
     expect(summary.layer3_expected_readback.source_cloud_service_usage_observation).toBe(192);
     expect(summary.layer3_expected_readback.source_cloud_resource_inventory).toBe(84);
     expect(summary.layer3_expected_readback.source_optimization_opportunity).toBe(8);
-    expect(summary.layer3_expected_readback.source_canonical_fact_assertion).toBe(382);
+    expect(summary.layer3_expected_readback.source_canonical_fact_assertion).toBe(392);
     expect(summary.layer4_expected_readback.source_contract_360_cloud_contracts).toBe(2);
     expect(summary.layer4_expected_readback.source_vendor_contract_portfolio_cloud_vendors).toBe(2);
     expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_cloud_rows).toBe(8);
