@@ -43,8 +43,8 @@ describe("evidence readiness against the contract's own lanes", () => {
         performancePeriods: 72,
         documentRows: 118,
         changeOrderRows: 3,
-        contractTermsLoaded: true,
-        renewalTermsLoaded: true,
+        contractTermRows: 12,
+        renewalTermRows: 6,
       },
     });
 
@@ -102,5 +102,17 @@ describe("evidence readiness against the contract's own lanes", () => {
       if (row.evidenceClass === "missing") continue;
       expect(["system_evidenced", "inferred"]).toContain(row.evidenceClass);
     }
+  });
+
+  it("does not treat a register header or end date as loaded contract terms", () => {
+    const readiness = buildContractOptimizationEvidenceReadiness({
+      evidencePack: null,
+      archetypeKey: "ams_contract_optimization",
+      lanes: { contractTermRows: 0, renewalTermRows: 0 },
+    });
+
+    const byFamily = new Map(readiness.rows.map((row) => [row.family, row]));
+    expect(byFamily.get("contract_baseline")?.evidenceClass).toBe("missing");
+    expect(byFamily.get("renewal_terms")?.evidenceClass).toBe("missing");
   });
 });

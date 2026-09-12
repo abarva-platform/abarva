@@ -54,6 +54,24 @@ const textOrNull = (value: unknown): string | null => {
   const text = String(value).trim();
   return text.length > 0 ? text : null;
 };
+const isContractSourceFile = (file: {
+  readonly document_role?: string | null;
+  readonly document_type?: string | null;
+  readonly file_name?: string | null;
+}): boolean =>
+  [file.document_role, file.document_type, file.file_name].some((value) =>
+    /contract|agreement|master|order[ _-]?form|sow|amendment|change[ _-]?order/i.test(
+      value ?? "",
+    ),
+  );
+const isContractTermConcept = (conceptRef: string | null | undefined): boolean =>
+  /contract|agreement|pricing|scope|term|renewal|notice|auto[._-]?renew|benchmark|termination|exit[._-]?rights/i.test(
+    conceptRef ?? "",
+  );
+const isRenewalTermConcept = (conceptRef: string | null | undefined): boolean =>
+  /renewal|notice|end[._-]?date|auto[._-]?renew|benchmark|termination|exit[._-]?rights|cure/i.test(
+    conceptRef ?? "",
+  );
 const normalizedVendorKey = (name: string | null | undefined): string =>
   (name ?? "")
     .toLowerCase()
@@ -2021,6 +2039,14 @@ export function buildViewModel(vm: WorkspaceViewModel) {
   const evidencePerformance = detail?.evidencePerformance ?? null;
   const performancePeriods = detail?.performancePeriods ?? [];
   const spendMonths = detail?.spendMonths ?? [];
+  const documentFiles = detail?.documentFiles ?? [];
+  const documentExtractions = detail?.docExtractions ?? [];
+  const contractTermRows =
+    documentFiles.filter(isContractSourceFile).length +
+    documentExtractions.filter((row) => isContractTermConcept(row.concept_ref)).length;
+  const renewalTermRows = documentExtractions.filter((row) =>
+    isRenewalTermConcept(row.concept_ref),
+  ).length;
   const opportunitySet = detail?.optimizationOpportunitySet ?? null;
   const contractCoverage = c
     ? vm.portfolio.impact.evidenceCoverage.find(
@@ -2448,13 +2474,11 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               (row) => numberFromDb(row.invoice_amount) != null,
             ).length,
             performancePeriods: detail?.performancePeriods?.length ?? 0,
-            documentRows:
-              (detail?.docExtractions?.length ?? 0) +
-              (detail?.documentFiles?.length ?? 0),
+            documentRows: documentExtractions.length + documentFiles.length,
+            contractTermRows,
+            renewalTermRows,
             changeOrderRows:
               numberFromDb(contractCoverage?.change_order_rows) ?? 0,
-            contractTermsLoaded: Boolean(textOrNull(c?.contract_name)),
-            renewalTermsLoaded: Boolean(textOrNull(c?.end_date)),
           },
         }),
         traceability: summarizeOpportunityTraceability(
