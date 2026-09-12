@@ -99,6 +99,8 @@ describe("Source cloud consumption package loader", () => {
     const summary = JSON.parse(fs.readFileSync(path.join(proofDir, "summary.json"), "utf8"));
     expect(summary.quality_gate.status).toBe("PASS");
     expect(summary.layer2_expected_rows).toBe(169);
+    expect(summary.companion_source_rows.contract_page_text).toBe(6);
+    expect(summary.package_sha256).not.toBe("24cd1b7921bfcbebd0599dc731703b79689ce01b1290e377ccf6cbc030a8cbd5");
     expect(summary.layer2_expected_by_adapter.optimization_opportunity_adapter).toBe(6);
     expect(summary.layer3_expected_readback.source_optimization_opportunity).toBe(6);
     expect(summary.layer3_expected_readback.source_opportunity_evidence).toBe(20);

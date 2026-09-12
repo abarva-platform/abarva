@@ -257,6 +257,11 @@ function readSourceFiles(packageDir) {
   );
 }
 
+function readOptionalSourceFile(packageDir, fileName) {
+  const filePath = path.join(packageDir, "source-files", fileName);
+  return fs.existsSync(filePath) ? readCsv(filePath) : [];
+}
+
 function writeJson(filePath, value) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
@@ -446,8 +451,8 @@ function adapterCountByName(rows) {
   }, {});
 }
 
-function sourcePackageHash(sourceFiles, syntheticDocs) {
-  return sha256(JSON.stringify({ sourceFiles, syntheticDocs }));
+function sourcePackageHash(sourceFiles, syntheticDocs, companionSourceFiles) {
+  return sha256(JSON.stringify({ sourceFiles, syntheticDocs, companionSourceFiles }));
 }
 
 function syntheticDocs(packageDir) {
@@ -1763,9 +1768,12 @@ async function setTenant(client, tenantKey) {
 async function main() {
   const args = parseArgs();
   const sourceFiles = readSourceFiles(args.packageDir);
+  const companionSourceFiles = {
+    contract_page_text: readOptionalSourceFile(args.packageDir, "contract_page_text.csv"),
+  };
   const docs = syntheticDocs(args.packageDir);
   const rows = adapterRows(sourceFiles);
-  const packageHash = sourcePackageHash(sourceFiles, docs);
+  const packageHash = sourcePackageHash(sourceFiles, docs, companionSourceFiles);
   const qualityGate = qualifyPackage(args, sourceFiles, docs);
   const expectedL2 = adapterCountByName(rows);
   const expectedL3 = expectedLayer3(sourceFiles, rows);
@@ -1780,6 +1788,9 @@ async function main() {
     package_dir: args.packageDir,
     package_sha256: packageHash,
     synthetic_evidence_documents: docs.length,
+    companion_source_rows: Object.fromEntries(
+      Object.entries(companionSourceFiles).map(([fileName, fileRows]) => [fileName, fileRows.length]),
+    ),
     layer2_expected_rows: rows.length,
     layer2_expected_by_adapter: expectedL2,
     layer3_expected_readback: expectedL3,
