@@ -40,6 +40,11 @@ import {
   ContractConsumptionMix,
   ContractEconomicsBriefing,
 } from "./Contract360Economics";
+import { ContractLeverTable } from "./ContractLeverTable";
+import {
+  ContractOptimizeMethod,
+  ContractRefusalChips,
+} from "./ContractOptimizeMethod";
 import { fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
@@ -3325,6 +3330,7 @@ function ContractPage({
         {tab === "Optimize" ? (
           <>
             <ContractWorkflowRail vm={vm} />
+            <ContractRefusalChips vm={vm} />
             <ContractOptimizeContent vm={vm} />
           </>
         ) : null}
@@ -3406,7 +3412,10 @@ function ContractPage({
             />
           </>
         ) : tab === "Education" && vm.contractEducation ? (
-          <ContractEducationBriefing education={vm.contractEducation} />
+          <>
+            <ContractEducationBriefing education={vm.contractEducation} />
+            <ContractOptimizeMethod vm={vm} />
+          </>
         ) : tab === "Optimize" ? null : (
           <ContractTabBody
             contract={contract}
@@ -4425,7 +4434,9 @@ function ContractLeverTableContent({ vm }: { vm: SourceWorkspaceVM }) {
       </div>
     );
   }
-  return <ProductShellLeverTable vm={vm} />;
+  // The deck's treatment: five columns with the argument in prose, a dashed
+  // rule on signal-stage rows, and a total stated as a candidate.
+  return <ContractLeverTable vm={vm} />;
 }
 
 function ContractNegotiationSequenceContent({ vm }: { vm: SourceWorkspaceVM }) {
@@ -5076,139 +5087,6 @@ function ContractValueTypeStack({
  * screen used to show a count of levers with no way to find out what they
  * were, which made the tab unactionable.
  */
-function ProductShellLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
-  const view = vm.opportunityView;
-  if (!view || view.opportunities.length === 0) return null;
-  const rows = leverTableRows(view.opportunities);
-  if (rows.length === 0) return null;
-
-  const cellStyle: React.CSSProperties = {
-    borderTop: "1px solid rgba(10,10,11,.08)",
-    fontSize: 12,
-    lineHeight: 1.35,
-    padding: "9px 10px",
-    verticalAlign: "top",
-  };
-  const headStyle: React.CSSProperties = {
-    color: "#74716a",
-    fontSize: 9.5,
-    fontWeight: 850,
-    letterSpacing: ".08em",
-    padding: "0 10px 6px",
-    textAlign: "left",
-    textTransform: "uppercase",
-    whiteSpace: "nowrap",
-  };
-
-  return (
-    <div style={{ marginTop: 14, overflowX: "auto" }}>
-      <table
-        aria-label="Negotiation levers"
-        style={{ borderCollapse: "collapse", minWidth: 940, width: "100%" }}
-      >
-        <thead>
-          <tr>
-            <th style={headStyle}>Lever</th>
-            <th style={headStyle}>The ask</th>
-            <th style={headStyle}>Why they can agree</th>
-            <th style={headStyle}>Worth</th>
-            <th style={headStyle}>Owner &amp; timing</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((opportunity) => {
-            const isSignal = opportunity.stageRaw === "signal";
-            return (
-              <tr key={opportunity.id}>
-                <td style={cellStyle}>
-                  <b style={{ display: "block", fontSize: 13 }}>
-                    {opportunity.shortLabel || opportunity.label}
-                  </b>
-                  <small
-                    style={{
-                      color: isSignal ? SOURCE_CHART_PALETTE.amber : "#5f5e5a",
-                      display: "block",
-                      fontSize: 10,
-                      marginTop: 3,
-                    }}
-                  >
-                    {opportunity.valueType} · {opportunity.stage}
-                  </small>
-                </td>
-                <td style={cellStyle}>
-                  {opportunity.buyerAsk ?? "Ask not recorded"}
-                  {opportunity.negotiationLanguage ? (
-                    <em
-                      style={{
-                        color: "#5f5e5a",
-                        display: "block",
-                        fontStyle: "italic",
-                        marginTop: 5,
-                      }}
-                    >
-                      &ldquo;{opportunity.negotiationLanguage}&rdquo;
-                    </em>
-                  ) : null}
-                </td>
-                <td style={cellStyle}>
-                  {opportunity.vendorConcession ?? "Not recorded"}
-                </td>
-                <td style={cellStyle}>
-                  <b
-                    style={{
-                      color: isSignal ? "#74716a" : SOURCE_CHART_PALETTE.teal,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {isSignal ? "Not sized" : opportunity.amount}
-                  </b>
-                  {isSignal ? (
-                    <small
-                      style={{
-                        color: SOURCE_CHART_PALETTE.amber,
-                        display: "block",
-                        fontSize: 10,
-                        marginTop: 3,
-                      }}
-                    >
-                      needs evidence before it carries a number
-                    </small>
-                  ) : null}
-                </td>
-                <td style={cellStyle}>
-                  {opportunity.ownerRole ?? opportunity.owner}
-                  <small
-                    style={{
-                      color: "#5f5e5a",
-                      display: "block",
-                      fontSize: 10,
-                      marginTop: 3,
-                    }}
-                  >
-                    {opportunity.timingDependency ?? opportunity.deadline}
-                  </small>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <p
-        style={{
-          color: "#5f5e5a",
-          fontSize: 11,
-          lineHeight: 1.4,
-          margin: "9px 2px 0",
-        }}
-      >
-        Every row is a candidate until finance confirms it. Signal-stage rows
-        carry no dollar figure on purpose - the evidence behind them does not
-        yet support one.
-      </p>
-    </div>
-  );
-}
-
 function ProductShellDiscountComparator({ vm }: { vm: SourceWorkspaceVM }) {
   const summary = portfolioDiscountComparatorSummary(
     vm.c?.id,

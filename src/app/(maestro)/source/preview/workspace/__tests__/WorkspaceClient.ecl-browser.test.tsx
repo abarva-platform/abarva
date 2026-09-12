@@ -1568,7 +1568,9 @@ describe("Source workspace ECL browser-surface proof", () => {
     await waitFor(() => {
       });
     await waitFor(() => {
-      expect(screen.getByLabelText("Negotiation levers")).toBeTruthy();
+      // The deck's table replaced the inline-styled one; it is addressed by
+      // its column heading rather than an aria-label.
+      expect(screen.getByText("Why they can say yes")).toBeTruthy();
     });
 
     expect(
