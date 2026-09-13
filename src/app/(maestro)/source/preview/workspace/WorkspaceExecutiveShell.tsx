@@ -661,14 +661,43 @@ function topVendorShareLabel(
   return `${Math.min(100, Math.round((topThree / totalAnnualValue) * 100))}%`;
 }
 
-function parseDateStampFromText(value: string | null | undefined) {
+/**
+ * The load date carried by a run identifier, but only when it is unambiguous.
+ *
+ * A run id is an opaque string that often carries more than one date. A cloud
+ * package run reads
+ * `…-consumption-commit-v1-20260908-20260913T…`: the first stamp is the
+ * dataset version, the second is the run. Taking the first match reported the
+ * package's version date as the portfolio's refresh date — confidently, and
+ * wrongly, on the surface an executive checks to know whether they are looking
+ * at today's numbers.
+ *
+ * So this refuses rather than guesses. One distinct stamp in the id is
+ * evidence of when it ran; two or more means the id cannot tell us, and the
+ * row contributes nothing instead of voting for whichever substring came
+ * first.
+ */
+export function loadDateFromRunId(value: string | null | undefined) {
   if (!value) return null;
   const text = value.trim();
-  const dashed = text.match(/\b(20\d{2})[-_](0[1-9]|1[0-2])[-_]([0-3]\d)\b/);
-  const compact = text.match(/\b(20\d{2})(0[1-9]|1[0-2])([0-3]\d)\b/);
-  const match = dashed ?? compact;
-  if (!match) return null;
-  const iso = `${match[1]}-${match[2]}-${match[3]}`;
+  const stamps = new Set<string>();
+  for (const match of text.matchAll(
+    /\b(20\d{2})[-_](0[1-9]|1[0-2])[-_]([0-3]\d)\b/g,
+  )) {
+    stamps.add(`${match[1]}-${match[2]}-${match[3]}`);
+  }
+  // A trailing word boundary hides the very stamp that matters: a run id ends
+  // `…-20260913T0421`, and `3` to `T` is not a boundary, so the run's own date
+  // was invisible while the dataset version's `-20260908-` was not. That is
+  // why the chip reported the package version as the refresh date. Accept a
+  // time component or any non-digit after the day.
+  for (const match of text.matchAll(
+    /\b(20\d{2})(0[1-9]|1[0-2])([0-3]\d)(?=\D|$)/g,
+  )) {
+    stamps.add(`${match[1]}-${match[2]}-${match[3]}`);
+  }
+  if (stamps.size !== 1) return null;
+  const iso = [...stamps][0];
   const time = new Date(`${iso}T00:00:00Z`).getTime();
   return Number.isNaN(time) ? null : iso;
 }
@@ -679,7 +708,7 @@ function sourceDateControl(portfolio: SourceWorkspacePortfolioData) {
     ...portfolio.impact.evidenceCoverage.map((row) => row.load_run_id),
     ...portfolio.impact.vendorPositions.map((row) => row.load_run_id),
   ]
-    .map(parseDateStampFromText)
+    .map(loadDateFromRunId)
     .filter((value): value is string => Boolean(value));
   const sortedLoadRunDates = loadRunDates.sort();
   const refreshedIso =
@@ -1299,7 +1328,7 @@ function ImpactLoadBadge({ state }: { state: ImpactLoadState }) {
   );
 }
 
-function SourceCommandKpiStrip({
+export function SourceCommandKpiStrip({
   portfolio,
   totalAnnualValue,
   creditFinding,
@@ -1323,10 +1352,14 @@ function SourceCommandKpiStrip({
   const actualAmount =
     numberFromDb(commitmentCoverage?.actual_spend_usd) ??
     numberFromDb(commitmentContract?.actual_annual_spend);
-  const utilization =
+  // A percentage or nothing — never a refusal phrase, because the caller sets
+  // it into a sentence that ends in "consumed". Carrying the refusal as a
+  // string produced "Databricks, Inc. · Usage not established consumed" on the
+  // command tile.
+  const utilizationPercent =
     committedAmount && committedAmount > 0 && actualAmount != null
       ? `${Math.round((actualAmount / committedAmount) * 1000) / 10}%`
-      : "Usage not established";
+      : null;
   const decisionRows = focusedActionSet(portfolio);
   const readyRows = portfolio.impact.actionCandidates.filter((row) =>
     /ready|approved|complete/i.test(
@@ -1349,14 +1382,22 @@ function SourceCommandKpiStrip({
         value={impactCreditMoney(commitmentRow?.candidate_amount_usd)}
         note={
           commitmentRow
-            ? `${safeVendorDisplayName(commitmentRow.vendor_name, commitmentRow.vendor_ref)} · ${utilization} consumed`
+            ? `${safeVendorDisplayName(commitmentRow.vendor_name, commitmentRow.vendor_ref)}${utilizationPercent ? ` · ${utilizationPercent} consumed` : " · consumption against commitment not established"}`
             : "No commitment-timing action is loaded."
         }
         tone={commitmentRow ? "warn" : undefined}
       />
+      {/*
+        No credit row loaded is not a credit of zero.
+        `$0` states that we looked and found none; the note beside it said the
+        opposite — that nothing was loaded. On an executive tile that reads as
+        a measured result, so the absence is now named as one.
+      */}
       <Metric
         label="Unclaimed credit"
-        value={impactCreditMoney(creditFinding)}
+        value={
+          creditFinding > 0 ? impactCreditMoney(creditFinding) : "Not established"
+        }
         note={
           creditFinding > 0
             ? "Calculated above recovered; finance confirmation stays separate."
