@@ -56,6 +56,26 @@ describe("Source contract depth package loader", () => {
     );
   });
 
+  it("preserves explicit SLA credit and change-order fields before legacy fallbacks", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain(
+      'stringValue(row, "credit_owed_usd") ||\n        stringValue(row, "credit_amount_usd") ||',
+    );
+    expect(loader).toContain(
+      'stringValue(row, "recurring") || "false"',
+    );
+    expect(loader).toContain(
+      'stringValue(row, "annualized_spend_usd") ||\n          stringValue(row, "value_impact_usd")',
+    );
+    expect(loader).not.toContain('credit_owed_usd: "0"');
+    expect(loader).not.toContain('recurring: "false"');
+  });
+
   it("reconciles package-owned canonical facts before rebuilding Layer 3", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(
