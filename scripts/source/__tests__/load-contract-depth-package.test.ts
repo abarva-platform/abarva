@@ -147,6 +147,19 @@ describe("Source contract depth package loader", () => {
     expect(adapter).not.toContain("const EXPECTED_DATASET_VERSION");
   });
 
+  it("normalizes alternate contract-depth source column names without dropping evidence links", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain('stringValue(row, "application_ref")');
+    expect(loader).toContain('stringValue(row, "extraction_id")');
+    expect(loader).toContain('stringValue(row, "source_file_id") ||');
+    expect(loader).toContain("datasetVersion.length > 0");
+  });
+
   it("keeps optimization opportunity value types inside the canonical enum", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(

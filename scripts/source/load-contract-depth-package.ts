@@ -57,7 +57,7 @@ const ADAPTER_SPECS = Object.freeze([
     key: "contractClauseAdapter",
     adapterName: "contract_clause_adapter",
     sourceFileName: "contract_clauses.csv",
-    rowIdField: "clause_id",
+    rowIdField: "extraction_id",
   },
   {
     key: "changeOrderAdapter",
@@ -332,11 +332,55 @@ function readSourceFiles(
   const rawContracts = readCsv(path.join(sourceDir, "contracts.csv"));
   const rawApplications = readCsv(
     path.join(sourceDir, "cmdb_applications.csv"),
-  );
-  const rawScope = readCsv(path.join(sourceDir, "cmdb_application_scope.csv"));
-  const rawClauses = readCsv(path.join(sourceDir, "contract_clauses.csv"));
+  ).map((row) => ({
+    ...row,
+    application_id:
+      stringValue(row, "application_id") ||
+      stringValue(row, "application_ref") ||
+      stringValue(row, "source_record_id"),
+    business_unit:
+      stringValue(row, "business_unit") || stringValue(row, "business_function"),
+    lifecycle_status:
+      stringValue(row, "lifecycle_status") || stringValue(row, "lifecycle_state"),
+    source_row_id:
+      stringValue(row, "source_row_id") ||
+      stringValue(row, "source_record_id") ||
+      stringValue(row, "application_ref"),
+  }));
+  const rawScope = readCsv(
+    path.join(sourceDir, "cmdb_application_scope.csv"),
+  ).map((row) => ({
+    ...row,
+    application_id:
+      stringValue(row, "application_id") || stringValue(row, "application_ref"),
+  }));
+  const rawClauses = readCsv(
+    path.join(sourceDir, "contract_clauses.csv"),
+  ).map((row) => ({
+    ...row,
+    clause_id:
+      stringValue(row, "clause_id") ||
+      stringValue(row, "extraction_id") ||
+      stringValue(row, "source_row_id"),
+    source_row_id:
+      stringValue(row, "source_row_id") || stringValue(row, "extraction_id"),
+    clause_type:
+      stringValue(row, "clause_type") || stringValue(row, "concept_ref"),
+    source_page_ref:
+      stringValue(row, "source_page_ref") ||
+      stringValue(row, "source_page") ||
+      stringValue(row, "source_section"),
+  }));
   const rawChangeOrders = readCsv(path.join(sourceDir, "change_orders.csv"));
-  const rawManifest = readCsv(path.join(sourceDir, "evidence_manifest.csv"));
+  const rawManifest = readCsv(
+    path.join(sourceDir, "evidence_manifest.csv"),
+  ).map((row) => ({
+    ...row,
+    source_row_id:
+      stringValue(row, "source_row_id") ||
+      stringValue(row, "evidence_id") ||
+      stringValue(row, "source_file_id"),
+  }));
   const rawSpend = readCsv(path.join(sourceDir, "monthly_spend.csv"));
   const rawUsage = readCsv(path.join(sourceDir, "saas_usage.csv"));
   const rawPerformance = readCsv(path.join(sourceDir, "sla_performance.csv"));
@@ -369,11 +413,14 @@ function readSourceFiles(
     ...rawFindings,
     ...rawLevers,
   ].filter((row) => row.dataset_version || row.tenant_key);
-  const identityFailures = identityRows.filter(
-    (row) =>
-      stringValue(row, "tenant_key") !== expectedTenantKey ||
-      stringValue(row, "dataset_version") !== expectedDatasetVersion,
-  );
+  const identityFailures = identityRows.filter((row) => {
+    const tenantKey = stringValue(row, "tenant_key");
+    const datasetVersion = stringValue(row, "dataset_version");
+    return (
+      (tenantKey.length > 0 && tenantKey !== expectedTenantKey) ||
+      (datasetVersion.length > 0 && datasetVersion !== expectedDatasetVersion)
+    );
+  });
   if (identityFailures.length > 0) {
     throw new Error(
       `Package identity mismatch: expected ${expectedTenantKey}/${expectedDatasetVersion}, found ${identityFailures
@@ -431,7 +478,10 @@ function readSourceFiles(
         relationship_confidence: "1",
         vendor_ref: stringValue(contract ?? {}, "vendor_ref"),
         vendor_name: stringValue(contract ?? {}, "vendor_name"),
-        source_file_id: "EVID-01",
+        source_file_id:
+          stringValue(row, "source_file_id") ||
+          stringValue(contract ?? {}, "source_file_id") ||
+          "EVID-01",
       };
     }),
     changeOrders: rawChangeOrders.map((row) => {
@@ -449,7 +499,10 @@ function readSourceFiles(
         recurring: "false",
         annualized_spend_usd: stringValue(row, "value_impact_usd"),
         one_time_spend_usd: "0",
-        source_file_id: "EVID-01",
+        source_file_id:
+          stringValue(row, "source_file_id") ||
+          stringValue(contract ?? {}, "source_file_id") ||
+          "EVID-01",
         source_page: "Order Form change order record",
       };
     }),
