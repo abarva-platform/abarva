@@ -134,4 +134,22 @@ describe("Source contract depth package loader", () => {
       "Unsupported canonical optimization opportunity value_type",
     );
   });
+
+  it("counts only populated QBR facts in the Layer 3 readback contract", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain(
+      'pctValue(row, "run_percent")',
+    );
+    expect(loader).toContain(
+      'numberValue(row, "client_satisfaction_score")',
+    );
+    expect(loader).not.toContain(
+      "const qbrFactCount = sourceFiles.qbrScorecards.length * 5",
+    );
+  });
 });
