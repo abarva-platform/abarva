@@ -2765,6 +2765,9 @@ function expectedLayer3(
       ].filter((value) => value !== null).length
     );
   }, 0);
+  const contractContextFactCount = sourceFiles.contracts.filter(
+    (row) => stringValue(row, "contract_purpose_summary") !== "",
+  ).length;
   return {
     layer2_adapter_rows: rows.length,
     source_record_snapshot: rows.length,
@@ -2790,6 +2793,7 @@ function expectedLayer3(
     calculation_output: sourceFiles.optimizationOpportunities.length * 2,
     opportunity_valuation: sourceFiles.optimizationOpportunities.length,
     canonical_fact_assertion:
+      contractContextFactCount +
       usageFactCount +
       changeOrderFactCount +
       pageTextFactCount +
