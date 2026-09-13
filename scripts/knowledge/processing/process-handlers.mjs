@@ -415,6 +415,7 @@ function buildCandidatesForParsedRows(parsedSources) {
           source_family: source.sourceFamily,
           raw_row: row,
         },
+        evidenceRefs: [evidenceRef],
       });
       factCandidates.push({
         candidateRef: `factcand:${source.sourceVersionRef}:${objectId}`,
