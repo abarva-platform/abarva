@@ -2252,10 +2252,18 @@ async function upsertOptimizationSpine(
     const contract = contractsById.get(stringValue(opportunity, "contract_id"));
     if (!contract)
       throw new Error(`Unknown contract for opportunity ${opportunityId}`);
-    const opportunityType = stringValue(opportunity, "opportunity_type") as
-      | "recoverable_leakage"
-      | "avoided_cost"
-      | "negotiated_improvement";
+    const opportunityType = stringValue(opportunity, "opportunity_type");
+    if (
+      ![
+        "recoverable_leakage",
+        "avoided_cost",
+        "negotiated_improvement",
+      ].includes(opportunityType)
+    ) {
+      throw new Error(
+        `Unsupported canonical optimization opportunity value_type for ${opportunityId}: ${opportunityType || "<empty>"}`,
+      );
+    }
     const amount = numberValue(opportunity, "annual_value_usd");
     const amountState =
       stringValue(opportunity, "amount_state") ||

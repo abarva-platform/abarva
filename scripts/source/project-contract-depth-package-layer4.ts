@@ -423,6 +423,24 @@ async function l4Readback(
 }
 
 function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
+  if (
+    datasetVersion ===
+    "meridian-databricks-enterprise-agreement-v1-20260908"
+  ) {
+    return {
+      source_contract: 1,
+      source_contract_scope: 4,
+      source_contract_consumption_observation: 12,
+      source_contract_performance_observation: 4,
+      source_contract_service_credit: 0,
+      source_contract_term: 8,
+      source_optimization_opportunity: 4,
+      opportunities_not_finance_confirmed: 4,
+      source_page_text_fact_assertion: 6,
+      source_change_order_fact_assertion: 5,
+      contracts_with_assessed_alternatives: 0,
+    };
+  }
   if (datasetVersion === "meridian-laams-new-event-rich-v2-20260908") {
     return {
       source_contract: 1,
@@ -486,6 +504,35 @@ function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
 }
 
 function l4ExpectedCounts(datasetVersion: string): Record<string, number> {
+  if (
+    datasetVersion ===
+    "meridian-databricks-enterprise-agreement-v1-20260908"
+  ) {
+    return {
+      source_contract_360_package: 1,
+      source_contract_financial_exposure_package: 1,
+      source_contract_operational_performance_package: 1,
+      source_contract_application_scope_package: 4,
+      consumption_sourcing_spend_monthly_v1_package: 12,
+      consumption_sourcing_performance_v1_package: 4,
+      consumption_sourcing_opportunity_v1_package: 4,
+      source_contract_evidence_coverage_v1_package: 1,
+      source_contract_action_candidate_v1_package: 4,
+      source_contract_claim_card_v1_package: 4,
+      source_vendor_position_v1_package: 1,
+      source_page_storyline_v1_rows: 5,
+      source_contract_tab_intelligence_v1_package: 7,
+      source_ava_grounding_bundle_v1_rows: 4,
+      source_contract_360_page_text_rows_package: 6,
+      source_contract_360_change_order_rows_package: 1,
+      source_contract_360_resource_role_rows_package: 0,
+      source_contract_360_invoice_line_rows_package: 12,
+      source_contract_360_batch_rows_package: 11,
+      source_contract_360_qbr_rows_package: 2,
+      package_contracts_with_assessed_alternatives: 0,
+      skyharbor_strings_in_scope: 0,
+    };
+  }
   if (datasetVersion === "meridian-laams-new-event-rich-v2-20260908") {
     return {
       source_contract_360_package: 1,

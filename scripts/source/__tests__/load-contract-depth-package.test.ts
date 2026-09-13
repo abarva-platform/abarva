@@ -113,4 +113,25 @@ describe("Source contract depth package loader", () => {
     expect(adapter).toContain("datasetVersion,");
     expect(adapter).not.toContain("const EXPECTED_DATASET_VERSION");
   });
+
+  it("keeps optimization opportunity value types inside the canonical enum", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+    const opportunities = fs.readFileSync(
+      path.join(
+        repoRoot,
+        "datasets/source/contract-depth/meridian-databricks-enterprise-agreement-v1-20260908/source-files/optimization_opportunities.csv",
+      ),
+      "utf8",
+    );
+
+    expect(opportunities).not.toContain("negotiable_improvement");
+    expect(opportunities).toContain("negotiated_improvement");
+    expect(loader).toContain(
+      "Unsupported canonical optimization opportunity value_type",
+    );
+  });
 });
