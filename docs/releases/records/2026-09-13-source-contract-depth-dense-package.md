@@ -104,6 +104,10 @@ tenant key returns no rows.
   opportunity type, title, amount, confidence, evidence family, and action
   fields while accepting legacy aliases, so actionable rows remain governed
   instead of failing closed on an empty canonical type.
+- Contract-depth performance and change-order normalization now preserves
+  explicit service-credit, recovery, recurrence, date, and spend fields before
+  applying legacy aliases, so dense evidence is not replaced by zero or false
+  defaults during Layer 3 loading.
 - Layer 3 reconciles canonical facts owned by the package before rebuilding
   them inside the existing transaction, preventing stale fact families from
   surviving a valid package refresh.
