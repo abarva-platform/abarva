@@ -1992,6 +1992,7 @@ async function rebuildViews(client: Client): Promise<void> {
       SELECT
         a.tenant_key,
         a.contract_id,
+        a.load_run_id,
         a.action_candidate_id,
         NULLIF(a.title, '') AS title,
         NULLIF(a.next_action, '') AS next_action,
@@ -2001,7 +2002,7 @@ async function rebuildViews(client: Client): Promise<void> {
         COALESCE(NULLIF(o.amount_state, ''), CASE WHEN a.candidate_amount_usd IS NOT NULL AND a.candidate_amount_usd > 0 THEN 'exact' ELSE 'not_sized' END) AS source_amount_state,
         o.confidence AS source_confidence,
         row_number() OVER (
-          PARTITION BY a.tenant_key, a.contract_id
+          PARTITION BY a.tenant_key, a.contract_id, a.load_run_id
           ORDER BY
             CASE a.priority
               WHEN 'high' THEN 1
@@ -2028,6 +2029,7 @@ async function rebuildViews(client: Client): Promise<void> {
       SELECT
         tenant_key,
         contract_id,
+        load_run_id,
         count(*)::bigint AS opportunity_rows,
         count(*) FILTER (
           WHERE candidate_amount_usd IS NOT NULL
@@ -2049,7 +2051,7 @@ async function rebuildViews(client: Client): Promise<void> {
         string_agg(DISTINCT next_action, '; ') FILTER (WHERE next_action IS NOT NULL AND action_rank <= 3) AS next_actions,
         string_agg(DISTINCT accountable_role, ', ') FILTER (WHERE accountable_role IS NOT NULL) AS accountable_roles
       FROM opportunity_ranked
-      GROUP BY tenant_key, contract_id
+      GROUP BY tenant_key, contract_id, load_run_id
     ),
     contract_rows AS (
       SELECT
