@@ -363,8 +363,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
     0,
   );
   const effectiveActualAnnualSpend =
-    numberFromDb(contract?.row.actual_annual_spend) ??
-    (detailActualAnnualSpend > 0 ? detailActualAnnualSpend : null);
+    detailActualAnnualSpend > 0
+      ? detailActualAnnualSpend
+      : numberFromDb(contract?.row.actual_annual_spend);
 
   // ── explorer tree ──
   interface TreeNode {

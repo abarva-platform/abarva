@@ -120,6 +120,9 @@ tenant key returns no rows.
 - Contract detail pages reconcile thin portfolio coverage with the selected
   contract's loaded detail lanes, so Evidence and Anatomy cannot show stale
   zeroes beside loaded Scope, Economics, or Optimize rows.
+- Selected-contract economics now prefers a positive, loaded monthly-spend
+  total over a stale zero in the portfolio summary row, with regression
+  coverage for the live database-driver shape.
 - Follow-up regression coverage verifies that a canonical-source miss falls
   back to the tenant-compatible governed reader instead of returning a false
   contract-not-found result.
