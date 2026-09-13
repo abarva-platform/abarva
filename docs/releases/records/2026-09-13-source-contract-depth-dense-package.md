@@ -18,6 +18,10 @@ opportunity types before mutation, and carries finding-level rationale into the
 corresponding opportunity record. The load also promotes the deterministic
 contract-purpose summary into the canonical fact layer, while the Source read
 path filters stale optimization rows to the active contract dataset.
+The follow-up reader fix keeps the contract detail route on the same governed
+tenant-compatible canonical read path as the other Source tabs, preventing a
+valid loaded contract from appearing unavailable when the preferred canonical
+tenant key returns no rows.
 
 ## Layer Impact
 
@@ -45,6 +49,8 @@ path filters stale optimization rows to the active contract dataset.
 - `src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts`
 - `scripts/source/__tests__/load-contract-depth-package.test.ts`
 - `src/lib/source/contract-depth-package/adapter.ts`
+- `src/lib/source/data-model/read-adapter.ts`
+- `src/lib/source/data-model/__tests__/read-adapter.test.ts`
 - `datasets/source/contract-depth/`
 - `docs/governance/dataset-manifests/`
 - `docs/source/SOURCE_CONTRACT_DEPTH_DATA_MODEL.md`
@@ -91,6 +97,9 @@ path filters stale optimization rows to the active contract dataset.
 - Regression coverage verifies current-version spend, performance, document,
   optimization, and narrative reads, including the explicit aliasing required
   by the active-contract joins.
+- Follow-up regression coverage verifies that a canonical-source miss falls
+  back to the tenant-compatible governed reader instead of returning a false
+  contract-not-found result.
 - Azure data-plane load: completed through the private ACA Job with Layer 2,
   Layer 3, document evidence, and Layer 4 readbacks passing.
 - Signed-in tab-by-tab product proof: completed for the Databricks dense
