@@ -330,7 +330,7 @@ function readSourceFiles(
 ): ContractDepthSourceFileInput {
   const sourceDir = path.join(packageDir, "source-files");
   const rawContracts = readCsv(path.join(sourceDir, "contracts.csv"));
-  const rawApplications = readCsv(
+  const rawApplications: CsvRecord[] = readCsv(
     path.join(sourceDir, "cmdb_applications.csv"),
   ).map((row) => ({
     ...row,
@@ -347,14 +347,14 @@ function readSourceFiles(
       stringValue(row, "source_record_id") ||
       stringValue(row, "application_ref"),
   }));
-  const rawScope = readCsv(
+  const rawScope: CsvRecord[] = readCsv(
     path.join(sourceDir, "cmdb_application_scope.csv"),
   ).map((row) => ({
     ...row,
     application_id:
       stringValue(row, "application_id") || stringValue(row, "application_ref"),
   }));
-  const rawClauses = readCsv(
+  const rawClauses: CsvRecord[] = readCsv(
     path.join(sourceDir, "contract_clauses.csv"),
   ).map((row) => ({
     ...row,
@@ -372,7 +372,7 @@ function readSourceFiles(
       stringValue(row, "source_section"),
   }));
   const rawChangeOrders = readCsv(path.join(sourceDir, "change_orders.csv"));
-  const rawManifest = readCsv(
+  const rawManifest: CsvRecord[] = readCsv(
     path.join(sourceDir, "evidence_manifest.csv"),
   ).map((row) => ({
     ...row,
