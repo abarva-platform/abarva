@@ -97,6 +97,9 @@ tenant key returns no rows.
 - Contract-depth performance and ticket loaders preserve explicit source period
   dates and use the month field only as a fallback, preventing valid evidence
   rows from reaching Layer 3 with empty date values.
+- Contract-depth spend normalization preserves explicit committed, invoiced,
+  paid, and actual-spend fields while accepting the legacy commitment and
+  spend aliases, so dense packages cannot pass planning but fail during apply.
 - The cloud-consumption loader applies the same version-aware overlay migration
   as the contract-depth projector, including re-keying an older run-only
   primary key before Layer 4 activation.

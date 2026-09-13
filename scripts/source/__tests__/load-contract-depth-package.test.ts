@@ -17,6 +17,24 @@ describe("Source contract depth package loader", () => {
     );
   });
 
+  it("preserves dense spend fields and supports the legacy spend aliases", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain(
+      'stringValue(row, "actual_spend_usd") || stringValue(row, "spend_usd")',
+    );
+    expect(loader).toContain(
+      'stringValue(row, "invoice_amount_usd") || stringValue(row, "spend_usd")',
+    );
+    expect(loader).toContain(
+      'stringValue(row, "committed_base_amount_usd") ||',
+    );
+  });
+
   it("reuses one package load run across Layer 2 and Layer 3 phases", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(
