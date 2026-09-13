@@ -94,6 +94,9 @@ tenant key returns no rows.
   and dataset version. Multiple package versions can therefore share an
   operator run without one activation overwriting the other, and contract
   headers must match the active dataset version before their facts are exposed.
+- Contract-depth performance and ticket loaders preserve explicit source period
+  dates and use the month field only as a fallback, preventing valid evidence
+  rows from reaching Layer 3 with empty date values.
 - The cloud-consumption loader applies the same version-aware overlay migration
   as the contract-depth projector, including re-keying an older run-only
   primary key before Layer 4 activation.
