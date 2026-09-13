@@ -549,12 +549,19 @@ function readSourceFiles(
     })),
     monthlySpend: rawSpend.map((row) => ({
       ...row,
-      period_start: monthStart(stringValue(row, "month")),
-      period_end: monthEnd(stringValue(row, "month")),
-      committed_base_amount_usd: stringValue(row, "commitment_run_rate_usd"),
-      invoice_amount_usd: stringValue(row, "spend_usd"),
-      paid_amount_usd: stringValue(row, "spend_usd"),
-      actual_spend_usd: stringValue(row, "spend_usd"),
+      period_start:
+        stringValue(row, "period_start") || monthStart(stringValue(row, "month")),
+      period_end:
+        stringValue(row, "period_end") || monthEnd(stringValue(row, "month")),
+      committed_base_amount_usd:
+        stringValue(row, "committed_base_amount_usd") ||
+        stringValue(row, "commitment_run_rate_usd"),
+      invoice_amount_usd:
+        stringValue(row, "invoice_amount_usd") || stringValue(row, "spend_usd"),
+      paid_amount_usd:
+        stringValue(row, "paid_amount_usd") || stringValue(row, "spend_usd"),
+      actual_spend_usd:
+        stringValue(row, "actual_spend_usd") || stringValue(row, "spend_usd"),
       currency: "USD",
       invoice_ref: `DBX-${stringValue(row, "month")}`,
       source_file_id: "EVID-03",
