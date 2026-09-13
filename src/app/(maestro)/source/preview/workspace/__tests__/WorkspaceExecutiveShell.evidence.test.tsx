@@ -2,7 +2,11 @@
 
 import { render, screen, within } from "@testing-library/react";
 
-import { ContractEvidenceDocuments } from "../WorkspaceExecutiveShell";
+import {
+  ContractEvidenceDocuments,
+  contractCoverageWithDetailLanes,
+} from "../WorkspaceExecutiveShell";
+import type { SourceContract360Row } from "@/lib/source/data-model/types";
 
 describe("ContractEvidenceDocuments", () => {
   it("prioritizes clause-bearing documents and keeps the inventory compact", () => {
@@ -50,5 +54,53 @@ describe("ContractEvidenceDocuments", () => {
     expect(screen.getByText("DOC-SLA")).toBeTruthy();
     expect(screen.getByText(/2 additional governed evidence files/)).toBeTruthy();
     expect(screen.queryByText("DOC-EVIDENCE-9")).toBeNull();
+  });
+});
+
+describe("contractCoverageWithDetailLanes", () => {
+  it("uses loaded contract-detail lanes when portfolio coverage has stale zeroes", () => {
+    const contract = {
+      tenant_key: "skyharbor_global",
+      contract_id: "CONTRACT-001",
+      vendor_ref: "VENDOR-001",
+      vendor_name: "Synthetic Vendor",
+      vendor_category: "technology",
+      contract_archetype: "cloud_consumption_commit",
+      contract_name: "Synthetic platform agreement",
+    } as unknown as SourceContract360Row;
+    const coverage = {
+      contract_id: contract.contract_id,
+      spend_rows: 0,
+      performance_rows: 0,
+      document_page_text_rows: 0,
+      opportunity_rows: 0,
+    } as never;
+    const vm = {
+      detailState: "ready",
+      detail: {
+        spendMonths: Array.from({ length: 12 }),
+        performancePeriods: Array.from({ length: 4 }),
+        docExtractions: Array.from({ length: 8 }),
+        optimizationOpportunitySet: {
+          opportunities: Array.from({ length: 4 }),
+        },
+      },
+      opportunityView: null,
+    } as never;
+
+    const resolved = contractCoverageWithDetailLanes(
+      coverage,
+      contract,
+      Array.from({ length: 4 }) as never,
+      vm,
+    );
+
+    expect(resolved).toMatchObject({
+      spend_rows: 12,
+      performance_rows: 4,
+      document_page_text_rows: 8,
+      opportunity_rows: 4,
+      scope_rows: 4,
+    });
   });
 });

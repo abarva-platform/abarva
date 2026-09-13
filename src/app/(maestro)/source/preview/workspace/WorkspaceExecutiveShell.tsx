@@ -3265,7 +3265,6 @@ function ContractPage({
 }) {
   const tab = logic.state.tabs.contract ?? "Story";
   const detailReady = vm.detailState === "ready";
-  const coverage = coverageForContract(portfolio, contract.contract_id);
   const portfolioScopeRows = portfolio.applicationScope.filter(
     (row) => row.contract_id === contract.contract_id,
   );
@@ -3280,6 +3279,12 @@ function ContractPage({
       : [];
   const scopeRows =
     portfolioScopeRows.length > 0 ? portfolioScopeRows : detailScopeRows;
+  const coverage = contractCoverageWithDetailLanes(
+    coverageForContract(portfolio, contract.contract_id),
+    contract,
+    scopeRows,
+    vm,
+  );
   const contractClaimCards = portfolio.impact.claimCards.filter(
     (row) => row.contract_id === contract.contract_id,
   );
@@ -6845,6 +6850,66 @@ function coverageForContract(
       (row) => row.contract_id === contractId,
     ) ?? null
   );
+}
+
+/**
+ * Detail rows are the authoritative counts for the selected contract. The
+ * portfolio projection can legitimately be thinner, but its zeroes must not
+ * make a loaded contract look empty on Evidence or Anatomy.
+ */
+export function contractCoverageWithDetailLanes(
+  coverage: ReturnType<typeof coverageForContract>,
+  contract: SourceContract360Row,
+  scopeRows: readonly SourceContractApplicationScopeRow[],
+  vm: SourceWorkspaceVM,
+): SourceContractEvidenceCoverageRow | null {
+  const detail = vm.detailState === "ready" ? vm.detail : null;
+  const opportunityCount =
+    detail?.optimizationOpportunitySet?.opportunities.length ??
+    vm.opportunityView?.opportunities.length ??
+    0;
+  const detailCounts = {
+    scope_rows: scopeRows.length,
+    spend_rows: detail?.spendMonths.length ?? 0,
+    performance_rows: detail?.performancePeriods.length ?? 0,
+    document_page_text_rows: detail?.docExtractions.length ?? 0,
+    opportunity_rows: opportunityCount,
+  };
+  const hasDetailLane = Object.values(detailCounts).some((count) => count > 0);
+  if (!coverage && !hasDetailLane) return null;
+
+  const base: SourceContractEvidenceCoverageRow = coverage ?? {
+    tenant_key: contract.tenant_key,
+    contract_id: contract.contract_id,
+    vendor_ref: contract.vendor_ref,
+    vendor_name: contract.vendor_name,
+    vendor_category: contract.vendor_category,
+    contract_archetype: contract.contract_archetype,
+    contract_name: contract.contract_name,
+    spend_rows: 0,
+    actual_spend_usd: 0,
+    committed_spend_usd: 0,
+    performance_rows: 0,
+    breach_rows: 0,
+    credit_calculated_usd: 0,
+    credit_claimed_usd: 0,
+    credit_recovered_usd: 0,
+    unclaimed_credit_usd: 0,
+    opportunity_rows: 0,
+    candidate_amount_usd: 0,
+    finance_confirmation_required_rows: 0,
+    opportunities_with_evidence: 0,
+    scope_rows: 0,
+    critical_scope_rows: 0,
+    document_page_text_rows: 0,
+    change_order_rows: 0,
+    coverage_state: "partial",
+    blocker_if_missing: null,
+    evidence_basis_json: null,
+    load_run_id: null,
+  };
+
+  return { ...base, ...detailCounts };
 }
 
 function storylineBySurface(

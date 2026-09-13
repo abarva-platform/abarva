@@ -117,6 +117,9 @@ tenant key returns no rows.
 - Regression coverage verifies current-version spend, performance, document,
   optimization, and narrative reads, including the explicit aliasing required
   by the active-contract joins.
+- Contract detail pages reconcile thin portfolio coverage with the selected
+  contract's loaded detail lanes, so Evidence and Anatomy cannot show stale
+  zeroes beside loaded Scope, Economics, or Optimize rows.
 - Follow-up regression coverage verifies that a canonical-source miss falls
   back to the tenant-compatible governed reader instead of returning a false
   contract-not-found result.
