@@ -80,6 +80,10 @@ path filters stale optimization rows to the active contract dataset.
   to the active contract load run and dataset version, preventing historical
   rows from being mixed into the current contract tabs. Missing narrative fields
   may only be hydrated from governed facts in that same active version.
+- The Layer 4 opportunity summary now carries the load-run identity from the
+  projected action candidate rather than assuming the base opportunity table
+  has that column. Aggregation, ranking, and the final contract join all use
+  the active contract run, so the view can be rebuilt against the live schema.
 - Regression coverage verifies current-version spend, performance, document,
   optimization, and narrative reads, including the explicit aliasing required
   by the active-contract joins.

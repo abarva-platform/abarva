@@ -53,6 +53,12 @@ describe("contract depth package Layer 4 overlay job", () => {
 
   it("projects governed optimization and consumption rows into product views", () => {
     expect(source).toContain("source.optimization_opportunity");
+    expect(source).toContain("a.load_run_id,");
+    expect(source).toContain(
+      "PARTITION BY a.tenant_key, a.contract_id, a.load_run_id",
+    );
+    expect(source).toContain("GROUP BY tenant_key, contract_id, load_run_id");
+    expect(source).toContain("opportunity.load_run_id = c.load_run_id");
     expect(source).toContain("context_brief AS");
     expect(source).toContain("contract.purpose_summary");
     expect(source).toContain("contract.scope_summary");
