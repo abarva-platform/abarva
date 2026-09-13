@@ -655,6 +655,9 @@ function assertL4Ready(
   datasetVersion: string,
 ): void {
   const expected = l4ExpectedCounts(datasetVersion);
+  const expectedLayer3 = layer3ExpectedCounts(datasetVersion);
+  const packageHasServiceCreditEvidence =
+    (expectedLayer3.source_contract_service_credit ?? 0) > 0;
   const failures = Object.entries(expected)
     .filter(([key, expectedValue]) => rows[key] !== expectedValue)
     .map(
@@ -669,13 +672,16 @@ function assertL4Ready(
       `source_contract_360_total regressed from ${beforeContractCount} to ${rows.source_contract_360_total}`,
     );
   }
-  if (rows.package_unclaimed_credit_usd <= 0) {
+  if (packageHasServiceCreditEvidence && rows.package_unclaimed_credit_usd <= 0) {
     failures.push("package_unclaimed_credit_usd expected > 0");
   }
   if (rows.package_opportunity_amount_usd <= 0) {
     failures.push("package_opportunity_amount_usd expected > 0");
   }
-  if (rows.deterministic_layer_unclaimed_credit_usd <= 0) {
+  if (
+    packageHasServiceCreditEvidence &&
+    rows.deterministic_layer_unclaimed_credit_usd <= 0
+  ) {
     failures.push("deterministic_layer_unclaimed_credit_usd expected > 0");
   }
   if (rows.deterministic_layer_candidate_amount_usd <= 0) {

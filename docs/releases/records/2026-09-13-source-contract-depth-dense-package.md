@@ -58,6 +58,9 @@ corresponding opportunity record.
 - A Layer 3 readback mismatch was intentionally rolled back before commit; the
   expected QBR fact count was corrected to count only populated fields,
   matching the writer's null handling.
+- Layer 4 validation now treats zero unclaimed service credit as valid when the
+  package has no service-credit evidence; positive-credit assertions remain
+  required for packages whose Layer 3 evidence contains service-credit rows.
 - Azure data-plane load: pending this candidate's merge and ACA Job execution.
 - Signed-in tab-by-tab product proof: pending the Azure load.
 
