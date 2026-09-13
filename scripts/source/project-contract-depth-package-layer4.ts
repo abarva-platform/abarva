@@ -963,6 +963,7 @@ async function rebuildViews(client: Client): Promise<void> {
   await client.query(`
     CREATE OR REPLACE VIEW source.contract_vendor_360 AS
     WITH active_runs AS (${activeRuns}),
+    active_contract_versions AS (${activeContractVersions}),
     active_contract_runs AS (${activeContractRuns}),
     consumption AS (
       SELECT
