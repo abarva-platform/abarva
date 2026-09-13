@@ -41,6 +41,9 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain(
       "JOIN active_contract_versions active\n        ON active.tenant_key = facts.tenant_key\n       AND active.contract_id = facts.contract_id",
     );
+    expect(source).toContain(
+      "CREATE OR REPLACE VIEW source.contract_vendor_360 AS\n    WITH active_runs AS (${activeRuns}),\n    active_contract_versions AS (${activeContractVersions}),\n    active_contract_runs AS (${activeContractRuns}),",
+    );
     expect(source).toContain("facts.dataset_version = active.dataset_version");
     expect(source).toContain("o.dataset_version = active.dataset_version");
     expect(source).toContain("AND depth.load_run_id = c.load_run_id");
