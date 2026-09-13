@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "tenantKey": "meridian-health",
+  "datasetVersion": "meridian-databricks-enterprise-agreement-v1-20260908",
+  "failures": [],
+  "rowCounts": {
+    "contractRegisterAdapter": 1,
+    "contractClauseAdapter": 8,
+    "cmdbApplicationAdapter": 4,
+    "contractScopeAdapter": 4,
+    "spendAdapter": 12,
+    "usageAdapter": 4,
+    "ticketVolumeAdapter": 4,
+    "performanceAdapter": 4,
+    "resourceModelAdapter": 0,
+    "pricingBridgeAdapter": 2,
+    "invoiceLineAdapter": 12,
+    "batchOperationsAdapter": 11,
+    "changeOrderAdapter": 1,
+    "qbrAdapter": 2,
+    "optimizationAdapter": 4,
+    "evidenceDocumentAdapter": 6
+  },
+  "richness": {
+    "contractsWithTwelveSpendMonths": 1,
+    "contractsWithDocuments": 1,
+    "contractsWithScope": 1,
+    "contractsWithOpportunities": 1,
+    "managedServiceContractsWithSlaEvidence": 0,
+    "distinctVendors": 1,
+    "distinctCategories": 1
+  }
+}

@@ -1,0 +1,21 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "contract_id": "MER-TECH-DBX-001",
+    "vendor_ref": "MER-VEN-DATABRICKS",
+    "vendor_name": "Databricks, Inc.",
+    "contracted_annual_value": "1550000",
+    "total_committed_value": "1550000",
+    "committed_annual_spend": "1550000",
+    "actual_annual_spend": "0",
+    "linked_budget_amount": "1550000",
+    "linked_forecast_amount": "1550000",
+    "linked_actual_amount": "0",
+    "linked_committed_amount": "0",
+    "linked_budget_lines": "12",
+    "invoice_line_count": "12",
+    "invoice_line_spend": "66100",
+    "invoice_change_order_spend": "0",
+    "change_order_requested_amount": "0"
+  }
+]

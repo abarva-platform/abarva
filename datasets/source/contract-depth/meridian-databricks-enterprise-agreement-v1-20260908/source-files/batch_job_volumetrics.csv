@@ -1,0 +1,12 @@
+tenant_key,dataset_version,contract_id,month,job_name,job_type,run_count,dbu_hours,dbu_cost_usd,source_row_id
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2025-10,claims_denials_daily_batch,batch,18,140,1400,SRC-BAT-001
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2025-11,claims_denials_daily_batch,batch,26,190,1900,SRC-BAT-002
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2025-12,claims_denials_daily_batch,batch,29,230,2300,SRC-BAT-003
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-01,claims_denials_daily_batch,batch,30,290,2900,SRC-BAT-004
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-02,claims_denials_daily_batch,batch,28,350,3500,SRC-BAT-005
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-03,claims_denials_daily_batch,batch,31,430,4300,SRC-BAT-006
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-04,claims_denials_daily_batch,batch,30,530,5300,SRC-BAT-007
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-05,claims_denials_daily_batch,batch,31,710,7100,SRC-BAT-008
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-06,claims_denials_daily_batch,batch,30,810,8100,SRC-BAT-009
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-07,claims_denials_daily_batch,batch,31,1060,10600,SRC-BAT-010
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-08,claims_denials_daily_batch,batch,31,1390,13900,SRC-BAT-011

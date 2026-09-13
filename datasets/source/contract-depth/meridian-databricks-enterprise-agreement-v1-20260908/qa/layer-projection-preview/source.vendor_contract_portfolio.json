@@ -1,0 +1,14 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "vendor_ref": "MER-VEN-DATABRICKS",
+    "vendor_name": "Databricks, Inc.",
+    "vendor_category": "cloud_data_platform_subscription",
+    "contract_count": "1",
+    "annual_value": "1550000",
+    "total_committed_value": "1550000",
+    "auto_renew_contracts": "1",
+    "next_end_date": "2030-10-14",
+    "contract_refs": "{MER-TECH-DBX-001}"
+  }
+]
