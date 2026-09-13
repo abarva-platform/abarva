@@ -2698,7 +2698,18 @@ function expectedLayer3(
         .filter(Boolean),
     ).size *
       3;
-  const qbrFactCount = sourceFiles.qbrScorecards.length * 5;
+  const qbrFactCount = sourceFiles.qbrScorecards.reduce((total, row) => {
+    return (
+      total +
+      [
+        pctValue(row, "run_percent"),
+        pctValue(row, "transform_percent"),
+        numberValue(row, "automation_backlog_items"),
+        numberValue(row, "report_retirement_candidates"),
+        numberValue(row, "client_satisfaction_score"),
+      ].filter((value) => value !== null).length
+    );
+  }, 0);
   return {
     layer2_adapter_rows: rows.length,
     source_record_snapshot: rows.length,
