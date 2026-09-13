@@ -124,7 +124,7 @@ export function ContractAnatomy({
   const feeds: readonly { readonly label: string; readonly detail: string }[] = [
     {
       label: "Contract register",
-      detail: `header ${vm.c ? "loaded" : "not loaded"} · archetype ${education?.archetypeKey && education.archetypeKey !== "unmapped" ? "mapped" : "not mapped"} · terms ${vm.c?.end_date ? "loaded" : "not loaded"}`,
+      detail: `header ${vm.c ? "loaded" : "not loaded"} · archetype ${education?.archetypeKey && education.archetypeKey !== "unmapped" ? "mapped" : "not mapped"} · terms ${vm.c?.expiry && vm.c.expiry !== "Not established" ? "loaded" : "not loaded"}`,
     },
     {
       label: "Monthly spend and invoices",
