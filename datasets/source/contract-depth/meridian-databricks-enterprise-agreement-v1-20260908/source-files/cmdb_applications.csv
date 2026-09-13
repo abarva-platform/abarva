@@ -1,0 +1,5 @@
+tenant_key,dataset_version,application_id,application_name,business_unit,lifecycle_status,target_go_live,source_row_id
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-APP-CLAIMSDENIAL,Claims Denials Pattern Analysis (Pilot),Revenue Cycle Analytics,active_pilot,2025-11-01,SRC-APP-001
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-APP-LAAMSMIG,Legacy Analytics Migration Workload,Enterprise Data & Analytics,planned,2027-03-01,SRC-APP-002
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-APP-MEDEEXIT,MedeAnalytics Exit — Reporting Consolidation,Enterprise Data & Analytics,planned,2027-09-01,SRC-APP-003
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-APP-EPICINTEG,Epic Clarity/Caboodle Integration Layer,Clinical Platforms,planned,2027-01-15,SRC-APP-004

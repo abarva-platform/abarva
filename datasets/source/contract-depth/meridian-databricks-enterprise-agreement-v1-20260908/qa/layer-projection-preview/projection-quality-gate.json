@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "failures": [],
+  "rowCounts": {
+    "contract360": 1,
+    "contractVendor360": 1,
+    "vendorContractPortfolio": 1,
+    "contractApplicationScope": 4,
+    "contractFinancialExposure": 1,
+    "contractOperationalPerformance": 1,
+    "contractResourceModel": 0,
+    "contractPricingBridge": 2,
+    "contractInvoiceLines": 12,
+    "contractBatchObservations": 11,
+    "contractChangeOrders": 1,
+    "contractQbrObservations": 2,
+    "contractPdfDocumentInventory": 6,
+    "contractPdfClauseExtractions": 8,
+    "optimizationOpportunities": 4
+  }
+}

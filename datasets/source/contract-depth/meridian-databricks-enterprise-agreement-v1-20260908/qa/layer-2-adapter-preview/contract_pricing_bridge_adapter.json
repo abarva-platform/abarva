@@ -1,0 +1,34 @@
+[
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "contract_id": "MER-TECH-DBX-001",
+    "scenario": "current_signed",
+    "list_dbu_rate_equiv_usd": "1703297",
+    "discount_pct": "9",
+    "net_annual_commitment_usd": "1550000",
+    "support_pct_of_commit": "22",
+    "support_fee_usd": "341000",
+    "total_annual_usd": "1891000",
+    "source_row_id": "SRC-PRB-001",
+    "adapter_name": "contract_pricing_bridge_adapter",
+    "adapter_row_number": "1",
+    "adapter_version": "source-contract-depth-v1"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "dataset_version": "meridian-databricks-enterprise-agreement-v1-20260908",
+    "contract_id": "MER-TECH-DBX-001",
+    "scenario": "nexus_target_year2",
+    "list_dbu_rate_equiv_usd": "1043956",
+    "discount_pct": "9",
+    "net_annual_commitment_usd": "950000",
+    "support_pct_of_commit": "15",
+    "support_fee_usd": "142500",
+    "total_annual_usd": "1092500",
+    "source_row_id": "SRC-PRB-002",
+    "adapter_name": "contract_pricing_bridge_adapter",
+    "adapter_row_number": "2",
+    "adapter_version": "source-contract-depth-v1"
+  }
+]

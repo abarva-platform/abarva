@@ -63,6 +63,26 @@ function value(row: CsvRecord, key: string): string {
   return row[key] ?? "";
 }
 
+function expandEvidenceRows(
+  raw: string,
+  lanes: Readonly<Record<string, readonly CsvRecord[]>>,
+): string[] {
+  return raw
+    .split(";")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .flatMap((entry) => {
+      const match = entry.match(/^([^ ]+) x(\d+)$/u);
+      if (!match) return [entry];
+      const rows = lanes[match[1]] ?? [];
+      const requestedCount = Number(match[2]);
+      if (rows.length < requestedCount) return [entry];
+      return rows
+        .slice(0, requestedCount)
+        .map((row) => value(row, "source_row_id"));
+    });
+}
+
 function groupBy(
   rows: readonly CsvRecord[],
   key: string,
@@ -185,6 +205,7 @@ export function adaptContractDepthPackage(
     ...input.invoiceLineDetail,
     ...input.batchJobVolumetrics,
     ...input.qbrScorecards,
+    ...input.contractClauses,
     ...(input.negotiationFindings ?? []),
     ...(input.negotiationLevers ?? []),
   ]
@@ -535,6 +556,15 @@ export function adaptContractDepthPackage(
       .map((row) => value(row, "source_file_id"))
       .filter(Boolean),
   ]);
+  const evidenceLanes = {
+    monthly_spend: input.monthlySpend,
+    invoice_line_detail: input.invoiceLineDetail,
+    qbr_scorecards: input.qbrScorecards,
+    ticket_volumetrics: input.ticketVolumetrics,
+    pricing_bridge: input.pricingBridge,
+    contract_clauses: input.contractClauses,
+    change_orders: input.changeOrders,
+  } as const;
   for (const opportunity of input.optimizationOpportunities) {
     if (value(opportunity, "finance_confirmation_state") !== "not_confirmed") {
       failures.push(
@@ -546,10 +576,10 @@ export function adaptContractDepthPackage(
         `opportunity ${value(opportunity, "opportunity_id") || "<missing>"} missing evidence_rows`,
       );
     }
-    for (const evidenceRow of value(opportunity, "evidence_rows")
-      .split(";")
-      .map((row) => row.trim())
-      .filter(Boolean)) {
+    for (const evidenceRow of expandEvidenceRows(
+      value(opportunity, "evidence_rows"),
+      evidenceLanes,
+    )) {
       if (!evidenceRowIds.has(evidenceRow)) {
         failures.push(
           `opportunity ${value(opportunity, "opportunity_id") || "<missing>"} cites unknown evidence row ${evidenceRow}`,

@@ -1,0 +1,5 @@
+tenant_key,dataset_version,contract_id,month,sla_metric,target_pct,actual_pct,breach_state,credit_claimed,severity,vendor_category,auto_renew,end_date,synthetic_policy,source_row_id
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2025-Q4,platform_uptime,99.95,99.98,met,false,none,cloud_data_platform,true,2030-10-14,synthetic_demo_only_not_client_truth,SRC-SLA-001
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-Q1,platform_uptime,99.95,99.96,met,false,none,cloud_data_platform,true,2030-10-14,synthetic_demo_only_not_client_truth,SRC-SLA-002
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-Q2,platform_uptime,99.95,99.99,met,false,none,cloud_data_platform,true,2030-10-14,synthetic_demo_only_not_client_truth,SRC-SLA-003
+meridian-health,meridian-databricks-enterprise-agreement-v1-20260908,MER-TECH-DBX-001,2026-Q3,platform_uptime,99.95,99.97,met,false,none,cloud_data_platform,true,2030-10-14,synthetic_demo_only_not_client_truth,SRC-SLA-004
