@@ -55,7 +55,9 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("contract.commercial_thesis");
     expect(source).toContain("contract.relationship_summary");
     expect(source).toContain("contract.evidence_boundary");
-    expect(source).toContain("facts.review_state IN ('reviewed', 'approved')");
+    expect(source).toContain(
+      "facts.review_state IN ('reviewed', 'approved', 'system_extracted_synthetic_demo')",
+    );
     expect(source).toContain("context_brief.scope_summary");
     expect(source).toContain("purpose_summary");
     expect(source).toContain("commercial_thesis");

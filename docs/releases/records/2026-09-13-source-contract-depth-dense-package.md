@@ -15,7 +15,9 @@ contract anatomy, evidence/page citations, scope, commercial history,
 performance, change records, and structured Optimize findings and levers. The
 loader now rejects tenant or dataset identity drift and unsupported canonical
 opportunity types before mutation, and carries finding-level rationale into the
-corresponding opportunity record.
+corresponding opportunity record. The load also promotes the deterministic
+contract-purpose summary into the canonical fact layer, while the Source read
+path filters stale optimization rows to the active contract dataset.
 
 ## Layer Impact
 
@@ -40,6 +42,7 @@ corresponding opportunity record.
 
 - `scripts/source/load-contract-depth-package.ts`
 - `scripts/source/project-contract-depth-package-layer4.ts`
+- `src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts`
 - `scripts/source/__tests__/load-contract-depth-package.test.ts`
 - `src/lib/source/contract-depth-package/adapter.ts`
 - `datasets/source/contract-depth/`
@@ -65,8 +68,15 @@ corresponding opportunity record.
   schema (`clause_id`, `clause_type`, and `source_page_ref`) before writing
   document projections, with a regression test preventing undefined extraction
   identities from reaching the database.
-- Azure data-plane load: pending this candidate's merge and ACA Job execution.
-- Signed-in tab-by-tab product proof: pending the Azure load.
+- The contract record's deterministic purpose summary is written as a governed
+  canonical text fact with package and source-document references.
+- Direct Source impact reads only include optimization rows whose dataset
+  version matches the currently loaded contract header, preventing old package
+  rows from being merged into the active contract view.
+- Azure data-plane load: completed through the private ACA Job with Layer 2,
+  Layer 3, document evidence, and Layer 4 readbacks passing.
+- Signed-in tab-by-tab product proof: completed for the Databricks dense
+  synthetic contract; the package is synthetic demo content, not client truth.
 
 ## Rollout Plan
 
@@ -83,7 +93,7 @@ dataset-version slot per active run.
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: none outside the repo-owned workflow.
-- Approved image digest: recorded after the exact merge-SHA ACA deploy.
+- Approved image digest: `sha256:ea0aac83c2e9b90e5590b3f750c21613577943422a2ba7bcc568f54cfbe62931`.
 - ACA runtime invariant: template image, 100% traffic revision, and required
   worker images must match the approved digest.
 - Worker image invariant: private operator Job uses the same approved digest.
@@ -109,7 +119,8 @@ ineligible for product use.
 
 ## Known Gaps
 
-Azure execution and live product proof are not asserted by this candidate
-record. Original restricted contract PDFs are not stored in the public
+The loaded dense package covers one synthetic Databricks contract; it does not
+classify or enrich the remaining register-only portfolio without authoritative
+source mappings. Original restricted contract PDFs are not stored in the public
 repository; the included page-text rows are synthetic demo summaries. A
 multi-package same-contract overlay remains a separate design change.

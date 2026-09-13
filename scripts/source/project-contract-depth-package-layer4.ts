@@ -985,7 +985,7 @@ async function rebuildViews(client: Client): Promise<void> {
         'contract.relationship_summary',
         'contract.evidence_boundary'
       )
-        AND facts.review_state IN ('reviewed', 'approved')
+        AND facts.review_state IN ('reviewed', 'approved', 'system_extracted_synthetic_demo')
       GROUP BY facts.tenant_key, facts.contract_id, active.load_run_id
     )
     SELECT
