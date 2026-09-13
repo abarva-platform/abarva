@@ -816,9 +816,9 @@ async function loadDirectSourceWorkspaceImpactRows(
              ),
              opportunity_source AS (
                SELECT
-                 tenant_key,
-                 opportunity_id,
-                 contract_id,
+                 o.tenant_key,
+                 o.opportunity_id,
+                 o.contract_id,
                  annual_value_exposed::numeric AS candidate_amount_usd,
                  readiness_state,
                  evidence_state,
@@ -826,16 +826,20 @@ async function loadDirectSourceWorkspaceImpactRows(
                 FROM consumption.sourcing_opportunity_v1
                WHERE tenant_key = ANY($1::text[])
                UNION ALL
-               SELECT
-                 tenant_key,
-                 opportunity_id,
-                 contract_id,
+           SELECT
+             o.tenant_key,
+             o.opportunity_id,
+             o.contract_id,
                  amount_usd::numeric AS candidate_amount_usd,
                  stage AS readiness_state,
                  evidence_grade AS evidence_state,
                  0 AS source_rank
-                FROM source.optimization_opportunity
-               WHERE tenant_key = ANY($1::text[])
+                FROM source.optimization_opportunity o
+                JOIN source.contract current_contract
+                  ON current_contract.tenant_key = o.tenant_key
+                 AND current_contract.contract_id = o.contract_id
+                 AND current_contract.raw_payload->>'dataset_version' = o.dataset_version
+               WHERE o.tenant_key = ANY($1::text[])
              ),
              opportunity_deduped AS (
                SELECT DISTINCT ON (tenant_key, opportunity_id)
@@ -1047,6 +1051,10 @@ async function loadDirectSourceWorkspaceImpactRows(
                  o.dataset_version AS load_run_id,
                  0 AS source_rank
                 FROM source.optimization_opportunity o
+                JOIN source.contract current_contract
+                  ON current_contract.tenant_key = o.tenant_key
+                 AND current_contract.contract_id = o.contract_id
+                 AND current_contract.raw_payload->>'dataset_version' = o.dataset_version
                 LEFT JOIN source.contract_360 c
                   ON c.tenant_key = o.tenant_key
                  AND c.contract_id = o.contract_id
@@ -1466,9 +1474,9 @@ async function loadDerivedSourceWorkspaceImpactLayer(
          ),
          opportunity_source AS (
            SELECT
-             tenant_key,
-             opportunity_id,
-             contract_id,
+             o.tenant_key,
+             o.opportunity_id,
+             o.contract_id,
              annual_value_exposed::numeric AS candidate_amount_usd,
              readiness_state,
              evidence_state,
@@ -1484,8 +1492,12 @@ async function loadDerivedSourceWorkspaceImpactLayer(
              stage AS readiness_state,
              evidence_grade AS evidence_state,
              0 AS source_rank
-            FROM source.optimization_opportunity
-           WHERE tenant_key = ANY($1::text[])
+            FROM source.optimization_opportunity o
+            JOIN source.contract current_contract
+              ON current_contract.tenant_key = o.tenant_key
+             AND current_contract.contract_id = o.contract_id
+             AND current_contract.raw_payload->>'dataset_version' = o.dataset_version
+           WHERE o.tenant_key = ANY($1::text[])
          ),
          opportunity_deduped AS (
            SELECT DISTINCT ON (tenant_key, opportunity_id)
@@ -1692,6 +1704,10 @@ async function loadDerivedSourceWorkspaceImpactLayer(
              o.dataset_version AS load_run_id,
              0 AS source_rank
             FROM source.optimization_opportunity o
+            JOIN source.contract current_contract
+              ON current_contract.tenant_key = o.tenant_key
+             AND current_contract.contract_id = o.contract_id
+             AND current_contract.raw_payload->>'dataset_version' = o.dataset_version
             LEFT JOIN source.contract_360 c
               ON c.tenant_key = o.tenant_key
              AND c.contract_id = o.contract_id

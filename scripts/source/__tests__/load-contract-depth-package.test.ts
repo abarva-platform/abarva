@@ -57,6 +57,26 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain("calculation_output: sourceFiles.optimizationOpportunities.length * 2");
   });
 
+  it("promotes the contract purpose into a governed canonical fact", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+    const contracts = fs.readFileSync(
+      path.join(
+        repoRoot,
+        "datasets/source/contract-depth/meridian-databricks-enterprise-agreement-v1-20260908/source-files/contracts.csv",
+      ),
+      "utf8",
+    );
+
+    expect(contracts).toContain("contract_purpose_summary");
+    expect(loader).toContain("contract.purpose_summary");
+    expect(loader).toContain("system_extracted_synthetic_demo");
+    expect(loader).toContain("upsertContractContextFacts");
+  });
+
   it("refreshes spend observation identity fields when a package row is reloaded", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(

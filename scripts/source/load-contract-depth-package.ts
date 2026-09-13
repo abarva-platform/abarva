@@ -1160,6 +1160,60 @@ async function upsertContracts(
   }
 }
 
+async function upsertContractContextFacts(
+  client: Client,
+  args: Args,
+  contracts: readonly CsvRecord[],
+): Promise<void> {
+  for (const contract of contracts) {
+    const purpose = stringValue(contract, "contract_purpose_summary");
+    if (!purpose) continue;
+
+    const contractId = stringValue(contract, "contract_id");
+    const sourceRecordId = stringValue(contract, "source_row_id");
+    await client.query(
+      `INSERT INTO source.canonical_fact_assertion (
+         tenant_key, dataset_version, assertion_id, entity_kind, entity_id,
+         contract_id, vendor_id, fact_key, value_numeric, currency, unit,
+         source_system, source_table, source_record_id, source_document_id,
+         assertion_basis, confidence, review_state, source_refs, payload
+       )
+       VALUES (
+         $1, $2, $3, 'contract', $4, $4, $5, 'contract.purpose_summary',
+         NULL, NULL, NULL, $6, 'source.contract_depth_adapter_row', $7, $8,
+         'Deterministic contract purpose composed from the declared archetype, contract header, and governed document extracts.',
+         0.86, 'system_extracted_synthetic_demo', $9::jsonb, $10::jsonb
+       )
+       ON CONFLICT (tenant_key, dataset_version, assertion_id)
+       DO UPDATE SET
+         source_record_id = EXCLUDED.source_record_id,
+         source_document_id = EXCLUDED.source_document_id,
+         assertion_basis = EXCLUDED.assertion_basis,
+         confidence = EXCLUDED.confidence,
+         review_state = EXCLUDED.review_state,
+         source_refs = EXCLUDED.source_refs,
+         payload = EXCLUDED.payload`,
+      [
+        args.tenantKey,
+        args.datasetVersion,
+        `${sourceRecordId}:contract.purpose_summary`,
+        contractId,
+        stringValue(contract, "vendor_ref"),
+        SOURCE_SYSTEM,
+        sourceRecordId,
+        "EVID-01",
+        JSON.stringify([sourceRecordId, "EVID-01"]),
+        JSON.stringify({
+          value_text: purpose,
+          contract_id: contractId,
+          archetype: stringValue(contract, "archetype"),
+          synthetic_policy: "synthetic_demo_only_not_client_truth",
+        }),
+      ],
+    );
+  }
+}
+
 async function upsertContractTerms(
   client: Client,
   args: Args,
@@ -2546,6 +2600,7 @@ async function applyLayer3(
   await insertSnapshots(client, args, rows);
   await upsertVendors(client, args, sourceFiles.contracts);
   await upsertContracts(client, args, sourceFiles.contracts);
+  await upsertContractContextFacts(client, args, sourceFiles.contracts);
   await upsertContractTerms(client, args, sourceFiles.contractClauses);
   await upsertContractScope(client, args, sourceFiles.applicationScope);
   await upsertSpend(client, args, sourceFiles.monthlySpend);
