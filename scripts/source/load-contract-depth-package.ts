@@ -490,15 +490,33 @@ function readSourceFiles(
         ...row,
         vendor_ref: stringValue(contract ?? {}, "vendor_ref"),
         vendor_name: stringValue(contract ?? {}, "vendor_name"),
-        change_order_type: "scope_change",
-        effective_date: stringValue(row, "date_proposed"),
-        approval_date: stringValue(row, "date_proposed"),
-        approval_owner: stringValue(contract ?? {}, "business_owner"),
-        scope_summary: stringValue(row, "description"),
-        commercial_impact: stringValue(row, "value_impact_usd"),
-        recurring: "false",
-        annualized_spend_usd: stringValue(row, "value_impact_usd"),
-        one_time_spend_usd: "0",
+        change_order_type:
+          stringValue(row, "change_order_type") ||
+          stringValue(row, "change_type") ||
+          "scope_change",
+        effective_date:
+          stringValue(row, "effective_date") ||
+          stringValue(row, "request_date") ||
+          stringValue(row, "date_proposed"),
+        approval_date:
+          stringValue(row, "approval_date") ||
+          stringValue(row, "request_date") ||
+          stringValue(row, "date_proposed"),
+        approval_owner:
+          stringValue(row, "approval_owner") ||
+          stringValue(contract ?? {}, "business_owner"),
+        scope_summary:
+          stringValue(row, "scope_summary") || stringValue(row, "description"),
+        commercial_impact:
+          stringValue(row, "commercial_impact") ||
+          stringValue(row, "requested_amount_usd") ||
+          stringValue(row, "value_impact_usd"),
+        recurring: stringValue(row, "recurring") || "false",
+        annualized_spend_usd:
+          stringValue(row, "annualized_spend_usd") ||
+          stringValue(row, "value_impact_usd"),
+        one_time_spend_usd:
+          stringValue(row, "one_time_spend_usd") || "0",
         source_file_id:
           stringValue(row, "source_file_id") ||
           stringValue(contract ?? {}, "source_file_id") ||
@@ -593,13 +611,25 @@ function readSourceFiles(
         stringValue(row, "period_start") || monthStart(stringValue(row, "month")),
       period_end:
         stringValue(row, "period_end") || monthEnd(stringValue(row, "month")),
-      metric_name: stringValue(row, "sla_metric"),
-      service_tower: stringValue(row, "vendor_category"),
-      committed_threshold_pct: stringValue(row, "target_pct"),
-      actual_result_pct: stringValue(row, "actual_pct"),
-      credit_owed_usd: "0",
-      credit_recovered_usd: "0",
-      source_file_id: "EVID-03",
+      metric_name:
+        stringValue(row, "metric_name") || stringValue(row, "sla_metric"),
+      service_tower:
+        stringValue(row, "service_tower") || stringValue(row, "vendor_category"),
+      committed_threshold_pct:
+        stringValue(row, "committed_threshold_pct") ||
+        stringValue(row, "target_pct"),
+      actual_result_pct:
+        stringValue(row, "actual_result_pct") || stringValue(row, "actual_pct"),
+      credit_owed_usd:
+        stringValue(row, "credit_owed_usd") ||
+        stringValue(row, "credit_amount_usd") ||
+        "0",
+      credit_recovered_usd:
+        stringValue(row, "credit_recovered_usd") || "0",
+      source_file_id:
+        stringValue(row, "source_file_id") ||
+        stringValue(row, "evidence_reference") ||
+        "EVID-03",
       vendor_ref: stringValue(
         contractById.get(stringValue(row, "contract_id")) ?? {},
         "vendor_ref",
