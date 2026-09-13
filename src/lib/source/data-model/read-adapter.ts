@@ -231,6 +231,68 @@ async function withMeridianFallback<R>(
   return legacyRead();
 }
 
+async function enrichContractNarrativeFacts(
+  tenantKey: string,
+  contract: SourceContract360Row,
+): Promise<SourceContract360Row> {
+  const missingKeys = [
+    ["purpose_summary", "contract.purpose_summary"],
+    ["scope_summary", "contract.scope_summary"],
+    ["commercial_thesis", "contract.commercial_thesis"],
+    ["relationship_summary", "contract.relationship_summary"],
+    ["evidence_boundary_summary", "contract.evidence_boundary"],
+  ].filter(
+    ([field]) =>
+      !String(contract[field as keyof SourceContract360Row] ?? "").trim(),
+  );
+  if (missingKeys.length === 0) return contract;
+
+  const facts = await safeCanonicalSourceQueryForTenant<{
+    fact_key: string;
+    value_text: string | null;
+  }>(
+    tenantKey,
+    `SELECT facts.fact_key, facts.payload ->> 'value_text' AS value_text
+       FROM source.canonical_fact_assertion facts
+       JOIN source.contract current_contract
+         ON current_contract.tenant_key = facts.tenant_key
+        AND current_contract.contract_id = facts.contract_id
+        AND current_contract.raw_payload ->> 'dataset_version' = facts.dataset_version
+      WHERE facts.tenant_key = ANY($1::text[])
+        AND facts.contract_id = $2
+        AND facts.fact_key = ANY($3::text[])
+        AND facts.review_state IN ('reviewed', 'approved', 'system_extracted_synthetic_demo')
+      ORDER BY facts.fact_key, facts.updated_at DESC NULLS LAST`,
+    [contract.contract_id, missingKeys.map(([, factKey]) => factKey)],
+  );
+  if (facts.length === 0) return contract;
+
+  const byKey = new Map(
+    facts
+      .filter((fact) => fact.value_text?.trim())
+      .map((fact) => [fact.fact_key, fact.value_text!.trim()]),
+  );
+  return {
+    ...contract,
+    purpose_summary:
+      contract.purpose_summary ?? byKey.get("contract.purpose_summary") ?? null,
+    scope_summary:
+      contract.scope_summary ?? byKey.get("contract.scope_summary") ?? null,
+    commercial_thesis:
+      contract.commercial_thesis ??
+      byKey.get("contract.commercial_thesis") ??
+      null,
+    relationship_summary:
+      contract.relationship_summary ??
+      byKey.get("contract.relationship_summary") ??
+      null,
+    evidence_boundary_summary:
+      contract.evidence_boundary_summary ??
+      byKey.get("contract.evidence_boundary") ??
+      null,
+  };
+}
+
 export async function listContractVendor360(
   tenantKey: string,
 ): Promise<SourceContractVendor360Row[]> {
@@ -526,10 +588,13 @@ export async function getContract360(
       "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
       [contractId],
     );
-  if (governedRows[0]) return governedRows[0];
+  if (governedRows[0]) {
+    return enrichContractNarrativeFacts(tenantKey, governedRows[0]);
+  }
   if (isMeridianTenantKey(tenantKey)) {
     const rows = await listContract360(tenantKey);
-    return rows.find((row) => row.contract_id === contractId) ?? null;
+    const contract = rows.find((row) => row.contract_id === contractId) ?? null;
+    return contract ? enrichContractNarrativeFacts(tenantKey, contract) : null;
   }
 
   const rows = await queryForTenant<SourceContract360Row>(
@@ -537,7 +602,7 @@ export async function getContract360(
     "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
     [contractId],
   );
-  return rows[0] ?? null;
+  return rows[0] ? enrichContractNarrativeFacts(tenantKey, rows[0]) : null;
 }
 
 export async function listVendorContractPortfolio(
@@ -814,6 +879,11 @@ export async function listContractPerformancePeriods(
      INNER JOIN consumption.sourcing_performance_v1 active
        ON active.tenant_key = o.tenant_key
       AND active.observation_id = o.observation_id
+      AND active.load_run_id = o.load_run_id
+     INNER JOIN source.contract current_contract
+       ON current_contract.tenant_key = o.tenant_key
+      AND current_contract.contract_id = o.contract_id
+      AND current_contract.load_run_id = o.load_run_id
 	   WHERE o.tenant_key = ANY($1::text[])
 	     AND o.contract_id = $2
 	   ORDER BY o.period_start, o.observation_id`,
@@ -830,30 +900,34 @@ export async function listContractSpendMonthly(
     await queryCanonicalSourceWithFallback<SourceContractSpendMonthlyRow>(
       tenantKey,
       `SELECT
-	     tenant_key,
-	     observation_id,
-       contract_id,
-       service_id,
-       business_unit,
-       cost_center,
-       period_start AS month,
-       period_start,
-       period_end,
-       committed_amount,
-       invoice_amount,
-       paid_amount,
-       actual_spend,
-       currency,
-       source_system,
-       source_record_id,
-       as_of_date,
-       quality_state,
-       evidence_reference,
-       load_run_id
-     FROM source.contract_consumption_observation
-	   WHERE tenant_key = ANY($1::text[])
-	     AND contract_id = $2
-	   ORDER BY period_start, observation_id`,
+	     o.tenant_key,
+	     o.observation_id,
+       o.contract_id,
+       o.service_id,
+       o.business_unit,
+       o.cost_center,
+       o.period_start AS month,
+       o.period_start,
+       o.period_end,
+       o.committed_amount,
+       o.invoice_amount,
+       o.paid_amount,
+       o.actual_spend,
+       o.currency,
+       o.source_system,
+       o.source_record_id,
+       o.as_of_date,
+       o.quality_state,
+       o.evidence_reference,
+       o.load_run_id
+	   FROM source.contract_consumption_observation o
+	   INNER JOIN source.contract current_contract
+	     ON current_contract.tenant_key = o.tenant_key
+	    AND current_contract.contract_id = o.contract_id
+	    AND current_contract.load_run_id = o.load_run_id
+	   WHERE o.tenant_key = ANY($1::text[])
+	     AND o.contract_id = $2
+	   ORDER BY o.period_start, o.observation_id`,
       [contractId],
     );
   return rows.map(normalizeSpendMonthlyRow);
@@ -1027,15 +1101,16 @@ export async function getContractIntelligence(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractIntelligenceRow | null> {
-  const rows = await queryCanonicalSourceWithFallback<SourceContractIntelligenceRow>(
-    tenantKey,
-    `SELECT *
+  const rows =
+    await queryCanonicalSourceWithFallback<SourceContractIntelligenceRow>(
+      tenantKey,
+      `SELECT *
        FROM source.contract_intelligence_v1
       WHERE tenant_key = ANY($1::text[])
         AND contract_id = $2
       LIMIT 1`,
-    [contractId],
-  );
+      [contractId],
+    );
   return rows[0] ? normalizeSourceContractIntelligenceRow(rows[0]) : null;
 }
 
@@ -1248,12 +1323,8 @@ function normalizeCloudCommitmentCoverageRow(
     eligible_stable_workload_spend_usd: numberValue(
       row.eligible_stable_workload_spend_usd,
     ),
-    commitment_covered_spend_usd: numberValue(
-      row.commitment_covered_spend_usd,
-    ),
-    on_demand_eligible_spend_usd: numberValue(
-      row.on_demand_eligible_spend_usd,
-    ),
+    commitment_covered_spend_usd: numberValue(row.commitment_covered_spend_usd),
+    on_demand_eligible_spend_usd: numberValue(row.on_demand_eligible_spend_usd),
     commitment_coverage_pct: numberValue(row.commitment_coverage_pct),
     commitment_utilization_pct: numberValue(row.commitment_utilization_pct),
     recommended_step_up_usd: numberValue(row.recommended_step_up_usd),
@@ -1272,14 +1343,10 @@ function normalizeCloudTagQualityRow(
     ...row,
     total_spend_usd: numberValue(row.total_spend_usd),
     owner_tagged_spend_usd: numberValue(row.owner_tagged_spend_usd),
-    application_tagged_spend_usd: numberValue(
-      row.application_tagged_spend_usd,
-    ),
+    application_tagged_spend_usd: numberValue(row.application_tagged_spend_usd),
     untagged_spend_usd: numberValue(row.untagged_spend_usd),
     owner_tag_coverage_pct: numberValue(row.owner_tag_coverage_pct),
-    application_tag_coverage_pct: numberValue(
-      row.application_tag_coverage_pct,
-    ),
+    application_tag_coverage_pct: numberValue(row.application_tag_coverage_pct),
     confidence: numberValue(row.confidence),
   };
 }
@@ -1525,10 +1592,14 @@ async function getPersistedContractOptimizationOpportunitySet(
 ): Promise<ContractOptimizationOpportunitySet | null> {
   const versionRows = await safeQueryForTenant<{ dataset_version: string }>(
     tenantKey,
-    `SELECT dataset_version
-       FROM source.optimization_opportunity
-      WHERE tenant_key = ANY($1::text[])
-        AND contract_id = $2
+    `SELECT opportunity.dataset_version AS dataset_version
+       FROM source.optimization_opportunity opportunity
+       JOIN source.contract current_contract
+         ON current_contract.tenant_key = opportunity.tenant_key
+        AND current_contract.contract_id = opportunity.contract_id
+        AND current_contract.raw_payload ->> 'dataset_version' = opportunity.dataset_version
+      WHERE opportunity.tenant_key = ANY($1::text[])
+        AND opportunity.contract_id = $2
       GROUP BY dataset_version
       ORDER BY max(updated_at) DESC NULLS LAST
       LIMIT 1`,
@@ -2605,7 +2676,18 @@ export async function listDocExtractionsForSubject(
 ): Promise<DocExtractionRow[]> {
   return queryForTenant<DocExtractionRow>(
     tenantKey,
-    "SELECT * FROM doc.extraction WHERE tenant_key = ANY($1::text[]) AND subject_ref = $2 ORDER BY extracted_at DESC",
+    `SELECT extraction.*
+       FROM doc.extraction extraction
+       JOIN doc.file file
+         ON file.tenant_key = extraction.tenant_key
+        AND file.file_id = extraction.source_file_id
+       JOIN source.contract current_contract
+         ON current_contract.tenant_key = file.tenant_key
+        AND current_contract.contract_id = file.contract_ref
+        AND current_contract.load_run_id = file.load_run_id
+      WHERE extraction.tenant_key = ANY($1::text[])
+        AND extraction.subject_ref = $2
+      ORDER BY extraction.extracted_at DESC, extraction.extraction_id`,
     [subjectRef],
   );
 }
@@ -2617,11 +2699,15 @@ export async function listDocFilesForContract(
 ): Promise<DocFileRow[]> {
   return queryForTenant<DocFileRow>(
     tenantKey,
-    `SELECT file_id, tenant_key, file_name, media_type, page_count, load_run_id,
+    `SELECT file.file_id, file.tenant_key, file.file_name, file.media_type, file.page_count, file.load_run_id,
             document_role, document_type, contract_ref, visibility_class,
             content_authenticity, uploaded_at, metadata_json
-       FROM doc.file
-      WHERE tenant_key = ANY($1::text[]) AND contract_ref = $2
+       FROM doc.file file
+       JOIN source.contract current_contract
+         ON current_contract.tenant_key = file.tenant_key
+        AND current_contract.contract_id = file.contract_ref
+        AND current_contract.load_run_id = file.load_run_id
+      WHERE file.tenant_key = ANY($1::text[]) AND file.contract_ref = $2
       ORDER BY document_role, document_type, file_name, file_id`,
     [contractId],
   );

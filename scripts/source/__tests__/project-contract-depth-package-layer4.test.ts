@@ -32,6 +32,10 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("facts.dataset_version = active.dataset_version");
     expect(source).toContain("o.dataset_version = active.dataset_version");
     expect(source).toContain("AND depth.load_run_id = c.load_run_id");
+    expect(source).toContain("GROUP BY tenant_key, contract_id, load_run_id");
+    expect(source).toContain("AND spend.load_run_id = c.load_run_id");
+    expect(source).toContain("AND opportunities.load_run_id = c.load_run_id");
+    expect(source).toContain("AND cov.load_run_id = o.load_run_id");
   });
 
   it("requires repaired canonical alternatives before product projection", () => {
@@ -63,9 +67,13 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("commercial_thesis");
     expect(source).toContain("relationship_summary");
     expect(source).toContain("evidence_boundary_summary");
-    expect(source).toContain("c.load_run_id,\n      COALESCE(app.scoped_application_count");
+    expect(source).toContain(
+      "c.load_run_id,\n      COALESCE(app.scoped_application_count",
+    );
     expect(source).toContain("c.evidence_boundary_summary");
-    expect(source).not.toContain("SELECT\n      c.*,\n      COALESCE(app.scoped_application_count");
+    expect(source).not.toContain(
+      "SELECT\n      c.*,\n      COALESCE(app.scoped_application_count",
+    );
     expect(source).toContain("consumption.sourcing_spend_monthly_v1");
     expect(source).toContain("consumption.sourcing_performance_v1");
     expect(source).toContain("finance_confirmation_required");
@@ -127,9 +135,7 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("source_contract_claim_card_v1_package: 6");
     expect(source).toContain("source_vendor_position_v1_package: 5");
     expect(source).toContain("source_page_storyline_v1_rows: 5");
-    expect(source).toContain(
-      "source_contract_tab_intelligence_v1_package: 35",
-    );
+    expect(source).toContain("source_contract_tab_intelligence_v1_package: 35");
     expect(source).toContain("source_ava_grounding_bundle_v1_rows: 6");
     expect(source).toContain("source_stage <> 'signal'");
     expect(source).toContain("source_amount_state <> 'not_sized'");

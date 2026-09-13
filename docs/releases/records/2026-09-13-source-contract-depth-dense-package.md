@@ -76,6 +76,13 @@ path filters stale optimization rows to the active contract dataset.
 - The Layer 3 expected-readback calculation includes the deterministic contract
   purpose fact written for each populated contract, so the transactional gate
   cannot reject a valid enriched package because its expected count is stale.
+- Contract detail reads and Layer 4 summary projections now join evidence lanes
+  to the active contract load run and dataset version, preventing historical
+  rows from being mixed into the current contract tabs. Missing narrative fields
+  may only be hydrated from governed facts in that same active version.
+- Regression coverage verifies current-version spend, performance, document,
+  optimization, and narrative reads, including the explicit aliasing required
+  by the active-contract joins.
 - Azure data-plane load: completed through the private ACA Job with Layer 2,
   Layer 3, document evidence, and Layer 4 readbacks passing.
 - Signed-in tab-by-tab product proof: completed for the Databricks dense
