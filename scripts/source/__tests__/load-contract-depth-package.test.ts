@@ -77,6 +77,19 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain("upsertContractContextFacts");
   });
 
+  it("counts one canonical context fact for each populated contract purpose", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain(
+      'const contractContextFactCount = sourceFiles.contracts.filter',
+    );
+    expect(loader).toContain("contractContextFactCount +");
+  });
+
   it("refreshes spend observation identity fields when a package row is reloaded", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(
