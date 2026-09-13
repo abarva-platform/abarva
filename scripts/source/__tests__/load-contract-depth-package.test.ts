@@ -152,4 +152,18 @@ describe("Source contract depth package loader", () => {
       "const qbrFactCount = sourceFiles.qbrScorecards.length * 5",
     );
   });
+
+  it("keeps positive service-credit assertions conditional on package evidence", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const layer4 = fs.readFileSync(
+      path.join(
+        repoRoot,
+        "scripts/source/project-contract-depth-package-layer4.ts",
+      ),
+      "utf8",
+    );
+
+    expect(layer4).toContain("packageHasServiceCreditEvidence");
+    expect(layer4).toContain("expectedLayer3.source_contract_service_credit");
+  });
 });
