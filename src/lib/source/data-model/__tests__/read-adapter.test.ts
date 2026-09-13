@@ -396,6 +396,18 @@ describe("listContractVendor360 tenant-key resolution", () => {
     expect(performanceQuery?.[0]).toContain(
       "active.observation_id = o.observation_id",
     );
+    expect(performanceQuery?.[0]).toContain(
+      "active.load_run_id = o.load_run_id",
+    );
+    expect(performanceQuery?.[0]).toContain(
+      "current_contract.load_run_id = o.load_run_id",
+    );
+    const spendQuery = run.mock.calls.find(([sql]) =>
+      sql.includes("source.contract_consumption_observation"),
+    );
+    expect(spendQuery?.[0]).toContain(
+      "current_contract.load_run_id = o.load_run_id",
+    );
     expect(run.mock.calls[0]).toEqual([
       "SELECT set_config('app.tenant_key', $1, false)",
       ["meridian-health"],
@@ -413,6 +425,44 @@ describe("listContractVendor360 tenant-key resolution", () => {
       ["meridian-health"],
       ["meridian-health"],
     ]);
+  });
+
+  it("hydrates missing contract narrative fields from governed fact assertions", async () => {
+    run.mockImplementation(async (sql: string) => {
+      if (sql.startsWith("SELECT set_config")) return [];
+      if (sql.includes("FROM source.contract_360")) {
+        return [
+          {
+            tenant_key: "meridian-health",
+            contract_id: "MER-TECH-DBX-001",
+            vendor_ref: "MER-VEN-DATABRICKS",
+            vendor_name: "Databricks, Inc.",
+            contract_name: "Enterprise Agreement",
+            purpose_summary: null,
+          },
+        ];
+      }
+      if (sql.includes("FROM source.canonical_fact_assertion")) {
+        return [
+          {
+            fact_key: "contract.purpose_summary",
+            value_text:
+              "Databricks provides governed analytics platform capacity for the declared workload groups.",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const row = await getContract360("meridian-health", "MER-TECH-DBX-001");
+
+    expect(row?.purpose_summary).toContain(
+      "governed analytics platform capacity",
+    );
+    const factQuery = run.mock.calls.find(([sql]) =>
+      sql.includes("FROM source.canonical_fact_assertion"),
+    );
+    expect(factQuery?.[0]).toContain("review_state IN");
   });
 
   it("reads cloud commitment coverage rows through canonical Source tenant context", async () => {
@@ -668,12 +718,12 @@ describe("listContractVendor360 tenant-key resolution", () => {
     ).toEqual([
       ["meridian-health"],
       ["meridian-health"],
-        ["meridian-health"],
-        ["meridian-health"],
-        ["meridian-health"],
-        ["meridian-health"],
-        ["meridian-health"],
-      ]);
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+      ["meridian-health"],
+    ]);
     expect(JSON.stringify(run.mock.calls)).not.toContain(
       "meridian_health_global",
     );
