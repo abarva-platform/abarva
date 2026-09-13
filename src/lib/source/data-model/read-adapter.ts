@@ -325,7 +325,7 @@ export async function listContract360(
   tenantKey: string,
 ): Promise<SourceContract360Row[]> {
   const governedRows =
-    await queryCanonicalSourceForTenant<SourceContract360Row>(
+    await queryCanonicalSourceWithFallback<SourceContract360Row>(
       tenantKey,
       "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
     );
@@ -583,7 +583,7 @@ export async function getContract360(
   contractId: string,
 ): Promise<SourceContract360Row | null> {
   const governedRows =
-    await queryCanonicalSourceForTenant<SourceContract360Row>(
+    await queryCanonicalSourceWithFallback<SourceContract360Row>(
       tenantKey,
       "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
       [contractId],
