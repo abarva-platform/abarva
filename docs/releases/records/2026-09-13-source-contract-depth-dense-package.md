@@ -73,6 +73,9 @@ path filters stale optimization rows to the active contract dataset.
 - Direct Source impact reads only include optimization rows whose dataset
   version matches the currently loaded contract header, preventing old package
   rows from being merged into the active contract view.
+- The Layer 3 expected-readback calculation includes the deterministic contract
+  purpose fact written for each populated contract, so the transactional gate
+  cannot reject a valid enriched package because its expected count is stale.
 - Azure data-plane load: completed through the private ACA Job with Layer 2,
   Layer 3, document evidence, and Layer 4 readbacks passing.
 - Signed-in tab-by-tab product proof: completed for the Databricks dense
