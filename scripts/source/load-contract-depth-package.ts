@@ -510,8 +510,10 @@ function readSourceFiles(
     resourceModel: readCsv(path.join(sourceDir, "resource_model.csv")),
     pricingBridge: rawPricing.map((row) => ({
       ...row,
-      bridge_component: stringValue(row, "scenario"),
+      bridge_component:
+        stringValue(row, "bridge_component") || stringValue(row, "scenario"),
       amount_usd:
+        stringValue(row, "amount_usd") ||
         stringValue(row, "total_annual_usd") ||
         stringValue(row, "net_annual_commitment_usd"),
       vendor_ref: stringValue(
@@ -2653,6 +2655,24 @@ async function upsertOptimizationSpine(
   }
 }
 
+async function reconcileCanonicalFactsForPackage(
+  client: Client,
+  args: Args,
+  contractIds: readonly string[],
+): Promise<void> {
+  if (contractIds.length === 0) {
+    throw new Error("Contract-depth package has no contract ids to reconcile.");
+  }
+  await client.query(
+    `DELETE FROM source.canonical_fact_assertion
+      WHERE tenant_key = $1
+        AND dataset_version = $2
+        AND source_system = $3
+        AND contract_id = ANY($4::text[])`,
+    [args.tenantKey, args.datasetVersion, SOURCE_SYSTEM, contractIds],
+  );
+}
+
 async function applyLayer3(
   client: Client,
   args: Args,
@@ -2666,6 +2686,11 @@ async function applyLayer3(
   ]);
   assertLayer2Matches(expectedLayer2, await layer2Readback(client, args));
 
+  await reconcileCanonicalFactsForPackage(
+    client,
+    args,
+    sourceFiles.contracts.map((contract) => stringValue(contract, "contract_id")),
+  );
   await insertSnapshots(client, args, rows);
   await upsertVendors(client, args, sourceFiles.contracts);
   await upsertContracts(client, args, sourceFiles.contracts);

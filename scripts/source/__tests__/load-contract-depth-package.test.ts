@@ -56,6 +56,33 @@ describe("Source contract depth package loader", () => {
     );
   });
 
+  it("reconciles package-owned canonical facts before rebuilding Layer 3", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain("reconcileCanonicalFactsForPackage");
+    expect(loader).toContain("source_system = $3");
+    expect(loader).toContain("contract_id = ANY($4::text[])");
+  });
+
+  it("preserves explicit pricing bridge fields and supports legacy aliases", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain(
+      'stringValue(row, "bridge_component") || stringValue(row, "scenario")',
+    );
+    expect(loader).toContain(
+      'stringValue(row, "amount_usd") ||',
+    );
+  });
+
   it("reuses one package load run across Layer 2 and Layer 3 phases", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(
