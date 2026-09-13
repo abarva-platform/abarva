@@ -4,8 +4,46 @@ import test from "node:test";
 import {
   buildDocumentFileInputs,
   documentFileIdentityConflictMessage,
+  normalizeDocumentClauseRows,
   staleDocumentFileIds,
 } from "../load-contract-depth-document-evidence.mjs";
+
+test("normalizes dense package clauses before document projection", () => {
+  const rows = normalizeDocumentClauseRows(
+    [
+      {
+        clause_id: "CL-01",
+        clause_type: "committed_purchase_amount",
+        contract_id: "CONTRACT-001",
+        source_file_id: "EVID-01",
+        source_page_ref: "Order Form Sec. 2",
+        value_text: "$1,550,000 annual commitment",
+      },
+    ],
+    [{ source_file_id: "EVID-01", source_page: "1" }],
+  );
+
+  assert.deepEqual(
+    rows[0],
+    {
+      clause_id: "CL-01",
+      clause_type: "committed_purchase_amount",
+      contract_id: "CONTRACT-001",
+      source_file_id: "EVID-01",
+      source_page_ref: "Order Form Sec. 2",
+      value_text: "$1,550,000 annual commitment",
+      extraction_id: "CL-01",
+      concept_ref: "committed_purchase_amount",
+      subject_kind: "contract",
+      subject_ref: "CONTRACT-001",
+      source_section: "Order Form Sec. 2",
+      source_page: "1",
+      evidence_class: "contract_clause",
+      confidence: "0.95",
+      review_state: "system_extracted_synthetic_demo",
+    },
+  );
+});
 
 test("materializes file inputs for page-backed and clause-only evidence", () => {
   const rows = buildDocumentFileInputs(

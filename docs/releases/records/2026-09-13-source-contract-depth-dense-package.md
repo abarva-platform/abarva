@@ -61,6 +61,10 @@ corresponding opportunity record.
 - Layer 4 validation now treats zero unclaimed service credit as valid when the
   package has no service-credit evidence; positive-credit assertions remain
   required for packages whose Layer 3 evidence contains service-credit rows.
+- The document-evidence companion now normalizes the dense package's clause
+  schema (`clause_id`, `clause_type`, and `source_page_ref`) before writing
+  document projections, with a regression test preventing undefined extraction
+  identities from reaching the database.
 - Azure data-plane load: pending this candidate's merge and ACA Job execution.
 - Signed-in tab-by-tab product proof: pending the Azure load.
 

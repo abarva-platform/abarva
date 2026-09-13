@@ -167,6 +167,34 @@ function nonEmpty(value) {
   return text ? text : null;
 }
 
+// The dense contract-depth package uses the canonical clause columns while
+// this companion writes the document-shaped projection. Normalize at that
+// boundary so the projection cannot silently insert undefined identities.
+export function normalizeDocumentClauseRows(clauses, pages) {
+  const pageByFile = new Map();
+  for (const row of pages) {
+    const sourceFileId = nonEmpty(row.source_file_id);
+    if (sourceFileId && !pageByFile.has(sourceFileId)) pageByFile.set(sourceFileId, row);
+  }
+  return clauses.map((row) => {
+    const sourceFileId = nonEmpty(row.source_file_id);
+    const page = sourceFileId ? pageByFile.get(sourceFileId) : undefined;
+    return {
+      ...row,
+      extraction_id: nonEmpty(row.extraction_id) || nonEmpty(row.clause_id) || nonEmpty(row.source_row_id),
+      concept_ref: nonEmpty(row.concept_ref) || nonEmpty(row.clause_type),
+      subject_kind: nonEmpty(row.subject_kind) || "contract",
+      subject_ref: nonEmpty(row.subject_ref) || nonEmpty(row.contract_id),
+      source_section: nonEmpty(row.source_section) || nonEmpty(row.source_page_ref),
+      source_page: nonEmpty(row.source_page) || nonEmpty(page?.source_page) || "1",
+      source_file_id: sourceFileId,
+      evidence_class: nonEmpty(row.evidence_class) || "contract_clause",
+      confidence: nonEmpty(row.confidence) || "0.95",
+      review_state: nonEmpty(row.review_state) || "system_extracted_synthetic_demo",
+    };
+  });
+}
+
 export function buildDocumentFileInputs(pages, clauses) {
   const pagesByFile = new Map();
   for (const row of pages) {
@@ -661,7 +689,10 @@ async function main() {
   const allPages = readCsv(args.packageDir, "contract_page_text.csv");
   const allClauses = readCsv(args.packageDir, "contract_clauses.csv");
   const pages = allPages.filter((row) => args.contractIds.includes(row.contract_id));
-  const clauses = allClauses.filter((row) => args.contractIds.includes(row.contract_id));
+  const clauses = normalizeDocumentClauseRows(
+    allClauses.filter((row) => args.contractIds.includes(row.contract_id)),
+    pages,
+  );
 
   const plan = {
     event: "source_contract_depth_document_evidence_plan",
