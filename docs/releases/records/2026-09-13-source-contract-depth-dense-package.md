@@ -84,6 +84,10 @@ path filters stale optimization rows to the active contract dataset.
   projected action candidate rather than assuming the base opportunity table
   has that column. Aggregation, ranking, and the final contract join all use
   the active contract run, so the view can be rebuilt against the live schema.
+- The Layer 4 active-run overlay is version-aware: its key is tenant, load run,
+  and dataset version. Multiple package versions can therefore share an
+  operator run without one activation overwriting the other, and contract
+  headers must match the active dataset version before their facts are exposed.
 - Regression coverage verifies current-version spend, performance, document,
   optimization, and narrative reads, including the explicit aliasing required
   by the active-contract joins.
@@ -99,15 +103,16 @@ through the repo-owned ACA deploy workflow. Run this package only through the
 private ACA operator Job with one explicit tenant, dataset version,
 idempotency key, and load run ID. Apply Layer 2, verify, apply Layer 3, verify,
 load document evidence, apply Layer 4, verify, and then run Tower lineage
-reconciliation. Companion packages must use separate load runs and are not
-activated by this release because the current Layer-4 overlay has one
-dataset-version slot per active run.
+reconciliation. Each package must still declare its own dataset version and
+idempotency key; packages may share an operator run only when their source
+contract headers and readbacks prove the versioned overlay remains disjoint.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: none outside the repo-owned workflow.
-- Approved image digest: `sha256:ea0aac83c2e9b90e5590b3f750c21613577943422a2ba7bcc568f54cfbe62931`.
+- Approved image digest: update to the exact digest produced by the final main
+  deploy for this release candidate before recording live proof.
 - ACA runtime invariant: template image, 100% traffic revision, and required
   worker images must match the approved digest.
 - Worker image invariant: private operator Job uses the same approved digest.
@@ -133,8 +138,10 @@ ineligible for product use.
 
 ## Known Gaps
 
-The loaded dense package covers one synthetic Databricks contract; it does not
+The loaded dense package covers one synthetic contract; it does not
 classify or enrich the remaining register-only portfolio without authoritative
 source mappings. Original restricted contract PDFs are not stored in the public
 repository; the included page-text rows are synthetic demo summaries. A
-multi-package same-contract overlay remains a separate design change.
+multi-package same-run overlay now has version-aware storage, but the browser
+serving projection still requires a separately reconciled ECL assessment slice
+before it can be called the canonical read path for this package.

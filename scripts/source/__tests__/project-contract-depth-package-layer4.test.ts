@@ -14,7 +14,19 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("UNION ALL");
     expect(source).toContain("source.l4_cube_active_load_run");
     expect(source).toContain("active_contract_versions");
-    expect(source).toContain("SELECT DISTINCT ON (tenant_key, load_run_id)");
+    expect(source).toContain(
+      "PRIMARY KEY (tenant_key, load_run_id, dataset_version)",
+    );
+    expect(source).toContain(
+      "ON CONFLICT (tenant_key, load_run_id, dataset_version)",
+    );
+    expect(source).toContain(
+      "DROP CONSTRAINT IF EXISTS l4_cube_active_load_run_overlay_pkey",
+    );
+    expect(source).toContain("WHERE NOT EXISTS (");
+    expect(source).not.toContain(
+      "SELECT DISTINCT ON (tenant_key, load_run_id)",
+    );
     expect(source).toContain("source_contract_360_total regressed");
     expect(source).not.toMatch(/\bDROP VIEW\b/i);
   });
@@ -31,6 +43,9 @@ describe("contract depth package Layer 4 overlay job", () => {
     );
     expect(source).toContain("facts.dataset_version = active.dataset_version");
     expect(source).toContain("o.dataset_version = active.dataset_version");
+    expect(source).toContain(
+      "NULLIF(c.raw_payload->>'dataset_version', '') = active.dataset_version",
+    );
     expect(source).toContain("AND depth.load_run_id = c.load_run_id");
     expect(source).toContain("GROUP BY tenant_key, contract_id, load_run_id");
     expect(source).toContain("AND spend.load_run_id = c.load_run_id");
