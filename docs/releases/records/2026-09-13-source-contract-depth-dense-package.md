@@ -104,6 +104,9 @@ tenant key returns no rows.
   opportunity type, title, amount, confidence, evidence family, and action
   fields while accepting legacy aliases, so actionable rows remain governed
   instead of failing closed on an empty canonical type.
+- Layer 3 reconciles canonical facts owned by the package before rebuilding
+  them inside the existing transaction, preventing stale fact families from
+  surviving a valid package refresh.
 - The cloud-consumption loader applies the same version-aware overlay migration
   as the contract-depth projector, including re-keying an older run-only
   primary key before Layer 4 activation.
