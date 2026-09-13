@@ -1892,16 +1892,24 @@ async function activateLayer4Overlay(client, args) {
       overlay_role TEXT NOT NULL,
       activated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-      PRIMARY KEY (tenant_key, load_run_id)
+      PRIMARY KEY (tenant_key, load_run_id, dataset_version)
     )`);
+
+  // Older deployments keyed the overlay only by run. Re-key it before the
+  // upsert so distinct package versions sharing an operator run coexist.
+  await client.query(`
+    ALTER TABLE source.l4_cube_active_load_run_overlay
+      DROP CONSTRAINT IF EXISTS l4_cube_active_load_run_overlay_pkey;
+    ALTER TABLE source.l4_cube_active_load_run_overlay
+      ADD CONSTRAINT l4_cube_active_load_run_overlay_pkey
+      PRIMARY KEY (tenant_key, load_run_id, dataset_version)`);
 
   await client.query(
     `INSERT INTO source.l4_cube_active_load_run_overlay
        (tenant_key, load_run_id, dataset_version, input_source_version, idempotency_key, overlay_role, raw_payload)
      VALUES ($1, $2, $3, $3, $4, 'cloud_consumption_package', $5::jsonb)
-     ON CONFLICT (tenant_key, load_run_id)
-     DO UPDATE SET dataset_version = EXCLUDED.dataset_version,
-                   input_source_version = EXCLUDED.input_source_version,
+     ON CONFLICT (tenant_key, load_run_id, dataset_version)
+     DO UPDATE SET input_source_version = EXCLUDED.input_source_version,
                    idempotency_key = EXCLUDED.idempotency_key,
                    overlay_role = EXCLUDED.overlay_role,
                    activated_at = now(),

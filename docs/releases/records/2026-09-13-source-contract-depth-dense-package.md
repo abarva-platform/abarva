@@ -94,6 +94,9 @@ tenant key returns no rows.
   and dataset version. Multiple package versions can therefore share an
   operator run without one activation overwriting the other, and contract
   headers must match the active dataset version before their facts are exposed.
+- The cloud-consumption loader applies the same version-aware overlay migration
+  as the contract-depth projector, including re-keying an older run-only
+  primary key before Layer 4 activation.
 - Regression coverage verifies current-version spend, performance, document,
   optimization, and narrative reads, including the explicit aliasing required
   by the active-contract joins.
