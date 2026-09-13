@@ -2,6 +2,21 @@ import fs from "node:fs";
 import path from "node:path";
 
 describe("Source contract depth package loader", () => {
+  it("preserves explicit performance and ticket periods before month fallback", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain(
+      'stringValue(row, "period_start") || monthStart(stringValue(row, "month"))',
+    );
+    expect(loader).toContain(
+      'stringValue(row, "period_end") || monthEnd(stringValue(row, "month"))',
+    );
+  });
+
   it("reuses one package load run across Layer 2 and Layer 3 phases", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(

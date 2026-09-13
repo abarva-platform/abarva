@@ -580,8 +580,10 @@ function readSourceFiles(
     })),
     slaPerformance: rawPerformance.map((row) => ({
       ...row,
-      period_start: monthStart(stringValue(row, "month")),
-      period_end: monthEnd(stringValue(row, "month")),
+      period_start:
+        stringValue(row, "period_start") || monthStart(stringValue(row, "month")),
+      period_end:
+        stringValue(row, "period_end") || monthEnd(stringValue(row, "month")),
       metric_name: stringValue(row, "sla_metric"),
       service_tower: stringValue(row, "vendor_category"),
       committed_threshold_pct: stringValue(row, "target_pct"),
@@ -596,8 +598,10 @@ function readSourceFiles(
     })),
     ticketVolumetrics: rawTickets.map((row) => ({
       ...row,
-      period_start: monthStart(stringValue(row, "month")),
-      period_end: monthEnd(stringValue(row, "month")),
+      period_start:
+        stringValue(row, "period_start") || monthStart(stringValue(row, "month")),
+      period_end:
+        stringValue(row, "period_end") || monthEnd(stringValue(row, "month")),
       service_tower: stringValue(row, "category"),
       severity: stringValue(row, "severity_mix"),
       source_file_id: "EVID-03",
