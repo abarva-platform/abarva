@@ -33,24 +33,34 @@ describe("contract depth package Layer 4 overlay job", () => {
 
   it("scopes overlay facts to the active contract version instead of stacking historical package rows", () => {
     expect(source).toContain(
-      "JOIN active_contract_versions active\n        ON active.tenant_key = s.tenant_key\n       AND active.contract_id = s.contract_id\n       AND active.load_run_id = s.load_run_id",
+      "JOIN active_contract_runs active\n        ON active.tenant_key = s.tenant_key\n       AND active.contract_id = s.contract_id\n       AND active.load_run_id = s.load_run_id",
     );
     expect(source).toContain(
-      "JOIN active_contract_versions active\n        ON active.tenant_key = o.tenant_key\n       AND active.contract_id = o.contract_id\n       AND active.load_run_id = o.load_run_id",
+      "JOIN active_contract_runs active\n        ON active.tenant_key = o.tenant_key\n       AND active.contract_id = o.contract_id\n       AND active.load_run_id = o.load_run_id",
     );
     expect(source).toContain(
       "JOIN active_contract_versions active\n        ON active.tenant_key = facts.tenant_key\n       AND active.contract_id = facts.contract_id",
     );
     expect(source).toContain("facts.dataset_version = active.dataset_version");
     expect(source).toContain("o.dataset_version = active.dataset_version");
-    expect(source).toContain(
-      "NULLIF(c.raw_payload->>'dataset_version', '') = active.dataset_version",
-    );
     expect(source).toContain("AND depth.load_run_id = c.load_run_id");
     expect(source).toContain("GROUP BY tenant_key, contract_id, load_run_id");
     expect(source).toContain("AND spend.load_run_id = c.load_run_id");
     expect(source).toContain("AND opportunities.load_run_id = c.load_run_id");
     expect(source).toContain("AND cov.load_run_id = o.load_run_id");
+  });
+
+  it("keeps one active header usable across multiple package versions on a shared run", () => {
+    expect(source).toContain("const activeContractRuns = `");
+    expect(source).toContain(
+      "FROM (${activeContractVersions}) active_contract_versions",
+    );
+    expect(source).not.toContain(
+      "NULLIF(c.raw_payload->>'dataset_version', '') = active.dataset_version",
+    );
+    expect(source).toContain(
+      "o.dataset_version IN (\n         SELECT active.dataset_version",
+    );
   });
 
   it("requires repaired canonical alternatives before product projection", () => {

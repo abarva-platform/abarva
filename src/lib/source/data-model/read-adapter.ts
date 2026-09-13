@@ -1132,6 +1132,61 @@ export async function getContractEvidenceOverview(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractEvidenceOverviewRow | null> {
+  const canonicalRows = await queryCanonicalSourceWithFallback<SourceContractEvidenceOverviewRow>(
+    tenantKey,
+    `WITH scope AS (
+       SELECT
+         tenant_key,
+         contract_id,
+         string_agg(DISTINCT NULLIF(business_function, ''), ', ')
+           FILTER (WHERE NULLIF(business_function, '') IS NOT NULL) AS business_functions_supported,
+         string_agg(DISTINCT NULLIF(hosting_model, ''), ', ')
+           FILTER (WHERE NULLIF(hosting_model, '') IS NOT NULL) AS systems_services_supported
+       FROM source.contract_application_scope
+       WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
+       GROUP BY tenant_key, contract_id
+     )
+     SELECT
+       c.tenant_key,
+       NULL::text AS dataset_version,
+       c.contract_id,
+       c.vendor_ref AS vendor_id,
+       c.vendor_name,
+       c.contract_name,
+       c.vendor_category AS contract_archetype,
+       COALESCE(NULLIF(c.purpose_summary, ''), NULLIF(c.scope_summary, '')) AS contract_english_overview,
+       scope.business_functions_supported,
+       scope.systems_services_supported,
+       c.annual_value AS annual_value_usd,
+       c.actual_annual_spend AS actual_annual_spend_usd,
+       c.total_committed_value AS total_committed_value_usd,
+       NULL::date AS start_date,
+       c.end_date,
+       CASE
+         WHEN c.end_date IS NOT NULL AND c.notice_period_days IS NOT NULL
+           THEN c.end_date - c.notice_period_days::int
+         ELSE NULL::date
+       END AS notice_deadline,
+       c.notice_period_days,
+       c.auto_renew,
+       c.renewal_owner_ref AS decision_owner_role_ref,
+       'canonical_source'::text AS source_system,
+       NULL::text AS source_system_examples,
+       NULL::text AS source_file_report,
+       concat('contract:', c.contract_id) AS source_record_id,
+       'canonical contract projection'::text AS extraction_grain,
+       NULL::text AS refresh_frequency,
+       'system_extracted_synthetic_demo'::text AS review_status
+     FROM source.contract_360 c
+     LEFT JOIN scope
+       ON scope.tenant_key = c.tenant_key
+      AND scope.contract_id = c.contract_id
+     WHERE c.tenant_key = ANY($1::text[]) AND c.contract_id = $2
+     LIMIT 1`,
+    [contractId],
+  );
+  if (canonicalRows[0]) return canonicalRows[0];
+
   const rows = await safeQueryForTenant<SourceContractEvidenceOverviewRow>(
     tenantKey,
     `SELECT *
@@ -1148,6 +1203,36 @@ export async function listContractEvidenceScope(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractEvidenceScopeRow[]> {
+  const canonicalRows = await queryCanonicalSourceWithFallback<SourceContractEvidenceScopeRow>(
+    tenantKey,
+    `SELECT
+       tenant_key,
+       NULL::text AS dataset_version,
+       contract_id,
+       vendor_ref AS vendor_id,
+       vendor_name,
+       application_ref,
+       application_name,
+       business_function,
+       criticality,
+       NULL::text AS service_or_platform_component,
+       annual_run_cost AS annual_run_cost_usd,
+       'reviewed_mapping'::text AS relationship_method,
+       0.8::numeric AS relationship_confidence,
+       'canonical_source'::text AS source_system,
+       NULL::text AS source_system_examples,
+       NULL::text AS source_record_id,
+       NULL::text AS source_file_report,
+       'canonical scope projection'::text AS extraction_grain,
+       NULL::text AS refresh_frequency,
+       'system_extracted_synthetic_demo'::text AS review_status
+      FROM source.contract_application_scope
+     WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
+     ORDER BY annual_run_cost DESC NULLS LAST, application_name`,
+    [contractId],
+  );
+  if (canonicalRows.length > 0) return canonicalRows;
+
   return safeQueryForTenant<SourceContractEvidenceScopeRow>(
     tenantKey,
     `SELECT *
@@ -1176,6 +1261,55 @@ export async function getContractEvidencePerformanceSummary(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractEvidencePerformanceSummary | null> {
+  const canonicalRows = await queryCanonicalSourceWithFallback<SourceContractEvidencePerformanceSummary>(
+    tenantKey,
+    `WITH sla AS (
+       SELECT
+         contract_id,
+         MIN(period_start) AS period_start,
+         MAX(period_end) AS period_end,
+         COUNT(*)::int AS sla_months,
+         COALESCE(SUM(breach_count), 0)::int AS breach_count,
+         COALESCE(SUM(credit_calculated), 0)::numeric AS credit_calculated,
+         COALESCE(SUM(credit_claimed), 0)::numeric AS credit_claimed,
+         COALESCE(SUM(credit_recovered), 0)::numeric AS credit_recovered,
+         ARRAY_AGG(DISTINCT source_system) FILTER (WHERE source_system IS NOT NULL) AS source_systems
+       FROM source.contract_performance_observation
+       WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
+       GROUP BY contract_id
+     ), invoice AS (
+       SELECT COUNT(*)::int AS invoice_line_count
+       FROM source.contract_consumption_observation
+       WHERE tenant_key = ANY($1::text[]) AND contract_id = $2
+     )
+     SELECT
+       sla.contract_id,
+       NULL::text AS dataset_version,
+       sla.period_start,
+       sla.period_end,
+       sla.sla_months,
+       0::int AS sev1_incidents,
+       0::int AS sev2_incidents,
+       sla.credit_calculated AS service_credits_earned_usd,
+       sla.credit_claimed AS service_credits_claimed_usd,
+       sla.credit_recovered AS service_credits_received_usd,
+       COALESCE(invoice.invoice_line_count, 0)::int AS invoice_line_count,
+       0::int AS invoice_exception_count,
+       0::numeric AS invoice_exception_amount_usd,
+       0::numeric AS rate_card_variance_usd,
+       0::numeric AS recoverable_leakage_usd,
+       0::numeric AS avoided_cost_usd,
+       0::numeric AS negotiated_improvement_usd,
+       0::numeric AS realized_value_usd,
+       COALESCE(sla.source_systems, ARRAY[]::text[]) AS source_systems,
+       NULL::text AS refresh_frequency,
+       'system_extracted_synthetic_demo'::text AS review_status
+      FROM sla
+      CROSS JOIN invoice`,
+    [contractId],
+  );
+  if (canonicalRows[0]) return normalizeEvidencePerformanceSummary(canonicalRows[0]);
+
   const rows =
     await safeQueryForTenant<SourceContractEvidencePerformanceSummary>(
       tenantKey,
@@ -1594,10 +1728,6 @@ async function getPersistedContractOptimizationOpportunitySet(
     tenantKey,
     `SELECT opportunity.dataset_version AS dataset_version
        FROM source.optimization_opportunity opportunity
-       JOIN source.contract current_contract
-         ON current_contract.tenant_key = opportunity.tenant_key
-        AND current_contract.contract_id = opportunity.contract_id
-        AND current_contract.raw_payload ->> 'dataset_version' = opportunity.dataset_version
       WHERE opportunity.tenant_key = ANY($1::text[])
         AND opportunity.contract_id = $2
       GROUP BY dataset_version
