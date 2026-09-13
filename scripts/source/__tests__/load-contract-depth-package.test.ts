@@ -35,6 +35,27 @@ describe("Source contract depth package loader", () => {
     );
   });
 
+  it("preserves dense opportunity fields and supports legacy opportunity aliases", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+
+    expect(loader).toContain(
+      'stringValue(row, "opportunity_type") || stringValue(row, "value_type")',
+    );
+    expect(loader).toContain(
+      'stringValue(row, "annual_value_usd") ||',
+    );
+    expect(loader).toContain(
+      'stringValue(row, "evidence_family") || stringValue(row, "value_type")',
+    );
+    expect(loader).toContain(
+      'stringValue(row, "recommended_action") || stringValue(row, "next_action")',
+    );
+  });
+
   it("reuses one package load run across Layer 2 and Layer 3 phases", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(

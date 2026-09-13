@@ -100,6 +100,10 @@ tenant key returns no rows.
 - Contract-depth spend normalization preserves explicit committed, invoiced,
   paid, and actual-spend fields while accepting the legacy commitment and
   spend aliases, so dense packages cannot pass planning but fail during apply.
+- Contract-depth opportunity normalization preserves the package's explicit
+  opportunity type, title, amount, confidence, evidence family, and action
+  fields while accepting legacy aliases, so actionable rows remain governed
+  instead of failing closed on an empty canonical type.
 - The cloud-consumption loader applies the same version-aware overlay migration
   as the contract-depth projector, including re-keying an older run-only
   primary key before Layer 4 activation.

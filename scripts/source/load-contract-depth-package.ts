@@ -658,28 +658,33 @@ function readSourceFiles(
           stringValue(lever, "finding_id") ===
           `F-${stringValue(row, "opportunity_id").replace(/^OPP-/u, "")}`,
       ) ?? {}),
-      opportunity_type: stringValue(row, "value_type"),
-      title: stringValue(row, "label"),
+      opportunity_type:
+        stringValue(row, "opportunity_type") || stringValue(row, "value_type"),
+      title: stringValue(row, "title") || stringValue(row, "label"),
       annual_value_usd:
         stringValue(row, "amount_state") === "signal"
           ? ""
-          : stringValue(row, "amount_low_usd"),
+          : stringValue(row, "annual_value_usd") ||
+            stringValue(row, "amount_low_usd"),
       confidence:
-        stringValue(row, "confidence") === "high"
+        stringValue(row, "confidence") ||
+        (stringValue(row, "confidence_level") === "high"
           ? "0.9"
-          : stringValue(row, "confidence") === "medium"
+          : stringValue(row, "confidence_level") === "medium"
             ? "0.75"
-            : "0.6",
+            : "0.6"),
       finance_confirmation_state: stringValue(
         row,
         "finance_confirmation_state",
       ),
-      evidence_family: stringValue(row, "value_type"),
+      evidence_family:
+        stringValue(row, "evidence_family") || stringValue(row, "value_type"),
       evidence_rows: denseEvidenceRefs(
         stringValue(row, "evidence_rows"),
         rowsByFile,
       ),
-      recommended_action: stringValue(row, "next_action"),
+      recommended_action:
+        stringValue(row, "recommended_action") || stringValue(row, "next_action"),
       vendor_ref: stringValue(
         contractById.get(stringValue(row, "contract_id")) ?? {},
         "vendor_ref",
