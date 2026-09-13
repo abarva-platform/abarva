@@ -55,6 +55,9 @@ corresponding opportunity record.
 - ESLint on changed TypeScript files: passed.
 - CI ECL and repository governance checks: passed on the initial candidate;
   follow-up checks rerun after main rebase.
+- A Layer 3 readback mismatch was intentionally rolled back before commit; the
+  expected QBR fact count was corrected to count only populated fields,
+  matching the writer's null handling.
 - Azure data-plane load: pending this candidate's merge and ACA Job execution.
 - Signed-in tab-by-tab product proof: pending the Azure load.
 
