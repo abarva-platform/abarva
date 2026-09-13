@@ -13,8 +13,9 @@
 Adds a governed dense contract-depth intake package and loader support for
 contract anatomy, evidence/page citations, scope, commercial history,
 performance, change records, and structured Optimize findings and levers. The
-loader now rejects tenant or dataset identity drift before mutation and carries
-finding-level rationale into the corresponding opportunity record.
+loader now rejects tenant or dataset identity drift and unsupported canonical
+opportunity types before mutation, and carries finding-level rationale into the
+corresponding opportunity record.
 
 ## Layer Impact
 
@@ -38,6 +39,8 @@ finding-level rationale into the corresponding opportunity record.
 ## Changes Included
 
 - `scripts/source/load-contract-depth-package.ts`
+- `scripts/source/project-contract-depth-package-layer4.ts`
+- `scripts/source/__tests__/load-contract-depth-package.test.ts`
 - `src/lib/source/contract-depth-package/adapter.ts`
 - `datasets/source/contract-depth/`
 - `docs/governance/dataset-manifests/`
@@ -50,17 +53,21 @@ finding-level rationale into the corresponding opportunity record.
 - Adapter and projection preview: passed.
 - Contract-depth adapter and projection tests: passed.
 - ESLint on changed TypeScript files: passed.
+- CI ECL and repository governance checks: passed on the initial candidate;
+  follow-up checks rerun after main rebase.
 - Azure data-plane load: pending this candidate's merge and ACA Job execution.
 - Signed-in tab-by-tab product proof: pending the Azure load.
 
 ## Rollout Plan
 
 Merge through the protected main PR lane. Build and deploy the exact merge SHA
-through the repo-owned ACA deploy workflow. Run the package only through the
-private ACA operator Job with one explicit tenant, dataset version, idempotency
-key, and shared load run ID across companion lanes. Apply Layer 2, verify,
-apply Layer 3, verify, load document evidence, apply Layer 4, verify, and then
-run Tower lineage reconciliation.
+through the repo-owned ACA deploy workflow. Run this package only through the
+private ACA operator Job with one explicit tenant, dataset version,
+idempotency key, and load run ID. Apply Layer 2, verify, apply Layer 3, verify,
+load document evidence, apply Layer 4, verify, and then run Tower lineage
+reconciliation. Companion packages must use separate load runs and are not
+activated by this release because the current Layer-4 overlay has one
+dataset-version slot per active run.
 
 ## Deployment Authority
 
@@ -94,4 +101,5 @@ ineligible for product use.
 
 Azure execution and live product proof are not asserted by this candidate
 record. Original restricted contract PDFs are not stored in the public
-repository; the included page-text rows are synthetic demo summaries.
+repository; the included page-text rows are synthetic demo summaries. A
+multi-package same-contract overlay remains a separate design change.
