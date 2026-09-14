@@ -6904,7 +6904,11 @@ export function contractCoverageWithDetailLanes(
   scopeRows: readonly SourceContractApplicationScopeRow[],
   vm: SourceWorkspaceVM,
 ): SourceContractEvidenceCoverageRow | null {
-  const detail = vm.detailState === "ready" ? vm.detail : null;
+  // The detail payload can be populated during the final hydration transition
+  // before the status flag flips to ready. The rows themselves are the
+  // authority for the selected contract; do not let a lagging status label
+  // expose a stale portfolio zero.
+  const detail = vm.detail;
   const opportunityCount =
     detail?.optimizationOpportunitySet?.opportunities.length ??
     vm.opportunityView?.opportunities.length ??
