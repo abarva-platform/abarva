@@ -71,6 +71,16 @@ function lane(coverage: Coverage, field: keyof SourceContractEvidenceCoverageRow
   return numberFromDb(coverage[field] as never);
 }
 
+function laneCountLabel(
+  coverage: Coverage,
+  field: keyof SourceContractEvidenceCoverageRow,
+  noun: string,
+): string {
+  const count = lane(coverage, field);
+  if (count == null) return `${noun} not loaded`;
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
 function facetStates(
   coverage: Coverage,
   education: ContractEducationView | null,
@@ -128,7 +138,7 @@ export function ContractAnatomy({
     },
     {
       label: "Monthly spend and invoices",
-      detail: `${lane(coverage, "spend_rows") ?? 0} rows`,
+      detail: laneCountLabel(coverage, "spend_rows", "spend row"),
     },
     {
       label: "Application scope",
@@ -139,11 +149,11 @@ export function ContractAnatomy({
       detail:
         states.Performance === "not_required"
           ? "not required by this contract type"
-          : `${lane(coverage, "performance_rows") ?? 0} rows`,
+        : laneCountLabel(coverage, "performance_rows", "performance row"),
     },
     {
       label: "Source documents",
-      detail: `${lane(coverage, "document_page_text_rows") ?? 0} page-text rows`,
+      detail: laneCountLabel(coverage, "document_page_text_rows", "document passage"),
     },
     {
       label: "Optimization opportunities",
@@ -155,7 +165,7 @@ export function ContractAnatomy({
     <section className="sw-c3-card">
       <div className="sw-c3-eyebrow">What a contract actually is</div>
       <p className="sw-c3-display sw-c3-display-sm sw-c3-edu-question">
-        A contract is seven questions. This one answers {answered}.
+        This contract answers {answered} of {FACET_ORDER.length} decision questions.
       </p>
       <p className="sw-c3-note">
         {open === 0

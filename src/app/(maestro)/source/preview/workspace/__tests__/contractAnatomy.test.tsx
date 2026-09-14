@@ -99,7 +99,7 @@ describe("ContractAnatomy", () => {
     // Story, Scope, Economics, Relationship, Evidence, Optimize answered;
     // Performance not required.
     expect(
-      screen.getByText(/A contract is seven questions. This one answers 6\./),
+      screen.getByText(/This contract answers 6 of 7 decision questions\./),
     ).toBeTruthy();
   });
 

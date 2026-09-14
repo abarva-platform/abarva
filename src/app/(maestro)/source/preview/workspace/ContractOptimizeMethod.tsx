@@ -13,7 +13,7 @@ import type { SourceWorkspaceVM } from "./buildViewModel";
  *    belongs on the playbook tab beside the archetype guide.
  *  - `ContractRefusalChips` shows the three states a case can be refused in,
  *    lit from the opportunities actually in them. It reports live state, so it
- *    belongs on the case.
+ *    belongs on the case below the decision surface rather than above it.
  *
  * The phase names, questions, step copy and outcomes are authored: they
  * describe the method and do not vary by contract. The step *states* and the
@@ -193,7 +193,8 @@ export function ContractOptimizeMethod({ vm }: { vm: SourceWorkspaceVM }) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * The three states a case can be refused in.
+ * The three states a case can be refused in. Inactive states stay out of the
+ * visual hierarchy; a clear gate is useful context, not a three-row report.
  *
  * These are not slide copy. `baseline_conflict`, `evidence_required` and
  * `workflow_required` are stages an opportunity is actually in, so a chip
@@ -236,34 +237,36 @@ export function ContractRefusalChips({ vm }: { vm: SourceWorkspaceVM }) {
   const active = REFUSALS.filter((refusal) => (counts.get(refusal.stage) ?? 0) > 0);
 
   return (
-    <section className="sw-c3-card">
-      <div className="sw-c3-eyebrow">Refusals at the gate</div>
-      <p className="sw-c3-note">
-        {active.length === 0
-          ? "No lever on this contract is being refused. Each one is held by its own next step rather than by a governance gate."
-          : `${active.length} of ${REFUSALS.length} refusal states are live on this contract.`}
-      </p>
-      <div className="sw-c3-refusals">
-        {REFUSALS.map((refusal) => {
-          const count = counts.get(refusal.stage) ?? 0;
-          return (
-            <span
-              className={
-                count > 0
-                  ? "sw-c3-refusal sw-c3-refusal-live"
-                  : "sw-c3-refusal"
-              }
-              key={refusal.stage}
-            >
-              <b>{refusal.label}</b>
-              <span> — {refusal.detail}</span>
-              <span className="sw-c3-refusal-count">
-                {count > 0 ? `${count} lever${count === 1 ? "" : "s"}` : "none"}
-              </span>
-            </span>
-          );
-        })}
+    <section className="sw-c3-card sw-c3-gate-card" aria-label="Gate checks">
+      <div className="sw-c3-gate-head">
+        <div>
+          <div className="sw-c3-eyebrow">Gate checks</div>
+          <p className="sw-c3-note">
+            {active.length === 0
+              ? "No active refusal gate. Each lever is held by its own next step."
+              : `${active.length} active refusal ${active.length === 1 ? "state" : "states"} on this contract.`}
+          </p>
+        </div>
+        <span className={active.length === 0 ? "sw-c3-gate-state" : "sw-c3-gate-state sw-c3-gate-state-live"}>
+          {active.length === 0 ? "Clear" : `${active.length} active`}
+        </span>
       </div>
+      {active.length > 0 ? (
+        <div className="sw-c3-refusals">
+          {active.map((refusal) => {
+            const count = counts.get(refusal.stage) ?? 0;
+            return (
+              <span className="sw-c3-refusal sw-c3-refusal-live" key={refusal.stage}>
+                <b>{refusal.label}</b>
+                <span> — {refusal.detail}</span>
+                <span className="sw-c3-refusal-count">
+                  {count} lever{count === 1 ? "" : "s"}
+                </span>
+              </span>
+            );
+          })}
+        </div>
+      ) : null}
     </section>
   );
 }
