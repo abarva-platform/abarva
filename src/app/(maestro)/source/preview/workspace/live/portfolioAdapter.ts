@@ -2519,7 +2519,7 @@ async function readCanonicalArchetypeCoverageRows(
              NULLIF(c.raw_payload ->> 'contract_archetype', ''),
              NULLIF(c.raw_payload ->> 'archetype', '')
            ) AS contract_archetype,
-           COALESCE(c.resolved_annual_value, c.annual_value)::numeric AS annual_value
+           c.annual_value::numeric AS annual_value
          FROM source.contract c
         WHERE c.tenant_key = ANY($1::text[])
           AND COALESCE(
