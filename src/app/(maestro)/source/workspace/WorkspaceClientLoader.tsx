@@ -23,20 +23,15 @@ interface ImpactResponse {
 }
 
 type ImpactLoadState = "loading" | "ready" | "error";
-const ACTION_READY_WORKSPACE_TABS = new Set([
-  "command",
-  "coverage",
-  "evidence",
-  "levers",
-]);
 
 export function initialPortfolioImpactModeForWorkspaceTab(
   workspaceTab?: string | null,
 ): SourceWorkspaceImpactMode {
-  const normalized = workspaceTab?.trim().toLowerCase();
-  return normalized && ACTION_READY_WORKSPACE_TABS.has(normalized)
-    ? "full"
-    : "deferred";
+  // The first paint is the governed portfolio shell. Impact/action rows are
+  // hydrated after it is visible; the shell already labels that state rather
+  // than pretending the rows are absent.
+  void workspaceTab;
+  return "deferred";
 }
 
 function portfolioApiUrl(input: {

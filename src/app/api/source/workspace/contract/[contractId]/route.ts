@@ -189,6 +189,10 @@ async function getProjectionContractDetail(
     tenantKey,
     new Date().toISOString(),
     provider,
+    // This fallback only resolves the requested contract header and its
+    // declared scope. Loading the full impact layer here made a direct URL
+    // wait on the portfolio action fan-out before Contract 360 could start.
+    { impactMode: 'deferred' },
   ).catch(() => null);
   const contract =
     (portfolio ? focusableContractRows(portfolio) : []).find(

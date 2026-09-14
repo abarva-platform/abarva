@@ -51,6 +51,14 @@ describe("contract detail fetch", () => {
     expect(client).toContain("if (remaining > 0)");
   });
 
+  it("requeues one initial deep-link failure after request retries", () => {
+    expect(client).toContain("initialDetailRetry = useRef");
+    expect(client).toContain("INITIAL_CONTRACT_DETAIL_RETRY_DELAY_MS");
+    expect(client).toContain('state.contractDetail[contractId] !== "error"');
+    expect(client).toContain("fetchContractDetail(contractId)");
+    expect(client).toContain("window.clearTimeout(retry)");
+  });
+
   it("releases a contract after the attempts are spent, rather than latching", () => {
     // The surface must be able to say it failed, and a later open must be able
     // to try again instead of meeting a stored verdict.

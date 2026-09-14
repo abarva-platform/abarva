@@ -340,6 +340,7 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
       "meridian",
       expect.any(String),
       "ecl_projection_db",
+      { impactMode: "deferred" },
     );
     expect(buildContract360View).toHaveBeenCalledWith(
       expect.objectContaining({
