@@ -46,6 +46,8 @@ classification exists, while keeping the contract-book denominator explicit.
   from unclassified register headers.
 - Population counts now include distinct classified sidecar IDs, so the
   Coverage narrative and facts reconcile with the declared-play rows.
+- Evidence-population counts now deduplicate depth and sidecar IDs, so page
+  subtitles do not report zero while the sidecar is loaded.
 - Focused regression coverage protects the ECL read path and Coverage counts.
 - No migration, loader, or Azure data-build job is included.
 
@@ -61,6 +63,8 @@ classification exists, while keeping the contract-book denominator explicit.
   population labels.
 - **PASS:** population regression coverage counts a sidecar contract once even
   when it is present in both depth and archetype-coverage rows.
+- **PASS:** Coverage subtitle and explanatory facts use the deduplicated
+  evidence population across both loaded sources.
 - **PASS:** ESLint for all changed Source files.
 - **PASS:** `git diff --check`.
 - **PASS:** `npm run release:check` after this record was brought into the
