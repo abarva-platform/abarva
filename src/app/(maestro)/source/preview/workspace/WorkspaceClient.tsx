@@ -22,6 +22,9 @@ import type { Contract360Response } from "./live/contractDetail";
  */
 const CONTRACT_DETAIL_RETRY_ATTEMPTS = 2;
 const CONTRACT_DETAIL_RETRY_DELAY_MS = 600;
+const INITIAL_CONTRACT_DETAIL_RETRY_DELAY_MS = 1200;
+const DEFAULT_SOURCE_PROVIDER_KEY: SourceWorkspaceProviderMode =
+  "ecl_projection_db";
 import {
   AgentDock,
   type AttachmentRef,
@@ -158,7 +161,10 @@ export function WorkspaceClient({
   const detailRequests = useRef<Map<string, "loading" | "loaded">>(
     new Map(),
   );
+  const initialDetailRetry = useRef<string | null>(null);
   const [showEclDiagnostics, setShowEclDiagnostics] = useState(false);
+  const effectiveSourceProviderKey =
+    sourceProviderKey ?? DEFAULT_SOURCE_PROVIDER_KEY;
 
   /*
    * Keep the address bar in step with the selection.
@@ -242,7 +248,11 @@ export function WorkspaceClient({
 
       const attempt = (remaining: number) => {
         fetch(
-          buildContractApiUrl(contractId, sourceClientKey, sourceProviderKey),
+          buildContractApiUrl(
+            contractId,
+            sourceClientKey,
+            effectiveSourceProviderKey,
+          ),
         )
           .then((r) =>
             r.ok
@@ -276,7 +286,7 @@ export function WorkspaceClient({
 
       attempt(CONTRACT_DETAIL_RETRY_ATTEMPTS);
     },
-    [sourceClientKey, sourceProviderKey],
+    [effectiveSourceProviderKey, sourceClientKey],
   );
 
   const startContractOptimization = useCallback(
@@ -356,8 +366,21 @@ export function WorkspaceClient({
 
   useEffect(() => {
     if (!initialContractId?.trim()) return;
+    // The loader resolves this before mount; the component default also keeps
+    // standalone embeds and tests on the governed provider path.
     fetchContractDetail(initialContractId.trim());
   }, [fetchContractDetail, initialContractId]);
+
+  useEffect(() => {
+    const contractId = initialContractId?.trim();
+    if (!contractId || state.contractDetail[contractId] !== "error") return;
+    if (initialDetailRetry.current === contractId) return;
+    initialDetailRetry.current = contractId;
+    const retry = window.setTimeout(() => {
+      fetchContractDetail(contractId);
+    }, INITIAL_CONTRACT_DETAIL_RETRY_DELAY_MS);
+    return () => window.clearTimeout(retry);
+  }, [fetchContractDetail, initialContractId, state.contractDetail]);
 
   const logic = useMemo(
     () =>
