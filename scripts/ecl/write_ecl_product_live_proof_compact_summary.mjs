@@ -70,7 +70,8 @@ const compact = {
     ? {
         numerator: (browser.routes || []).filter((route) => route.accepted).length,
         denominator: browser.route_count,
-        accepted: browser.accepted,
+        accepted: (browser.routes || []).length === browser.route_count
+          && (browser.routes || []).every((route) => route.accepted),
       }
     : null,
   named_surfaces_browser_proven: browser?.named_surfaces_browser_proven ?? null,
