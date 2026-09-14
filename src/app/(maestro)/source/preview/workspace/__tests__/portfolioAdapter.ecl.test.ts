@@ -1747,6 +1747,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         datasetVersion: "test",
         analyticsProvider: "test",
         activeLoadRunId: null,
+        lastCompletedLoadAtIso: null,
         asOfDateIso: "2027-06-30T00:00:00Z",
         v4ContractCount: 3,
         v4VendorCount: 3,

@@ -184,6 +184,7 @@ const WORKSPACE_DIAGNOSTICS = {
   datasetVersion: "v4",
   analyticsProvider: "CubeSourceProvider",
   activeLoadRunId: "source-v4-load-20260803",
+  lastCompletedLoadAtIso: null,
   asOfDateIso: "2027-06-30T00:00:00Z",
   v4ContractCount: 100,
   v4VendorCount: 60,

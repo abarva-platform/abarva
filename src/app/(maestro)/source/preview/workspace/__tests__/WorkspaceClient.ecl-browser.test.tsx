@@ -117,6 +117,7 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listSourceContractClaimCards: jest.fn(() => Promise.resolve([])),
   listSourceContractEvidenceCoverage: jest.fn(() => Promise.resolve([])),
   listSourcePageStoryline: jest.fn(() => Promise.resolve([])),
+  listSourceLoadRunCompletions: jest.fn(() => Promise.resolve([])),
   listSourceVendorPositions: jest.fn(() => Promise.resolve([])),
   listVendorContractPortfolio: jest.fn(),
 }));
