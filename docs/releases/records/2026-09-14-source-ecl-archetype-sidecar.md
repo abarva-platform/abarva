@@ -42,6 +42,8 @@ classification exists, while keeping the contract-book denominator explicit.
   `source.vendor.legal_name` fields.
 - Source Coverage groups canonical supplemental rows without changing the
   register denominator or inferring classifications.
+- Source Coverage labels classified evidence outside the register separately
+  from unclassified register headers.
 - Focused regression coverage protects the ECL read path and Coverage counts.
 - No migration, loader, or Azure data-build job is included.
 
@@ -53,6 +55,8 @@ classification exists, while keeping the contract-book denominator explicit.
   the canonical archetype query.
 - **PASS:** regression guard rejects projection-only vendor fields in the
   canonical archetype query.
+- **PASS:** Coverage presentation linted with explicit register/evidence
+  population labels.
 - **PASS:** ESLint for all changed Source files.
 - **PASS:** `git diff --check`.
 - **PASS:** `npm run release:check` after this record was brought into the
