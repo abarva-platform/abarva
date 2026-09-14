@@ -1474,6 +1474,47 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     });
   });
 
+  it("shows canonical depth archetypes in the mix without changing the register denominator", () => {
+    const portfolio = {
+      contracts: [
+        {
+          contract_id: "CTR-0001",
+          vendor_ref: "vendor-register",
+          vendor_name: "Register Vendor",
+          vendor_category: "Not established",
+          annual_value: 549_000_000,
+        },
+      ],
+      archetypeCoverageRows: [
+        {
+          tenant_key: "meridian-health",
+          contract_id: "MER-TECH-DBX-001",
+          vendor_ref: "vendor-databricks",
+          vendor_name: "Databricks, Inc.",
+          contract_archetype: "cloud_consumption_commit",
+          annual_value: 1_550_000,
+        },
+      ],
+    } as unknown as Parameters<typeof vendorArchetypeRows>[0];
+
+    expect(vendorArchetypeRows(portfolio)).toEqual([
+      {
+        category: "cloud_consumption_commit",
+        vendorCount: 1,
+        contractCount: 1,
+        annualValue: 1_550_000,
+        vendorRef: "vendor-databricks",
+        vendorName: "Databricks, Inc.",
+      },
+    ]);
+    expect(vendorArchetypeCoverage(portfolio)).toEqual({
+      totalContracts: 2,
+      declaredContracts: 1,
+      unmappedCount: 1,
+      supplementalDeclaredCount: 1,
+    });
+  });
+
   it("turns coverage readiness into readable decision rows instead of chart coordinates", () => {
     const rows = vendorReadinessDecisionRows({
       tenantKey: "meridian-health",

@@ -65,6 +65,14 @@ type SourceWorkspaceExploreProvider =
   | "EclProjectionDbProvider";
 
 type EclProjectionRow = Record<string, unknown>;
+export type SourceWorkspaceArchetypeCoverageRow = {
+  readonly tenant_key: string;
+  readonly contract_id: string;
+  readonly vendor_ref: string;
+  readonly vendor_name: string;
+  readonly contract_archetype: string;
+  readonly annual_value: number | null;
+};
 type SourceServingViewName =
   | "source_contract_360"
   | "source_vendor_portfolio"
@@ -149,6 +157,8 @@ export interface SourceWorkspacePortfolioData {
   readonly cockpit: SourceVendor360CockpitData;
   readonly impact: SourceWorkspaceImpactLayer;
   readonly contracts: readonly SourceContract360Row[];
+  /** Declared canonical archetypes, including depth rows outside the ECL book. */
+  readonly archetypeCoverageRows?: readonly SourceWorkspaceArchetypeCoverageRow[];
   readonly vendors: readonly SourceVendorContractPortfolioRow[];
   readonly applicationScope: readonly SourceContractApplicationScopeRow[];
   readonly initiativeDependencies: readonly SourceContractInitiativeDependencyRow[];
@@ -574,6 +584,7 @@ async function loadEclProjectionWorkspacePortfolio(
     eventRows,
     cubeSliceRows,
     impact,
+    archetypeCoverageRows,
   ] = await Promise.all([
     provider === "ecl_projection_db"
       ? readProjectionTable(tenantKey, "source_contract_360")
@@ -601,6 +612,9 @@ async function loadEclProjectionWorkspacePortfolio(
       ? readEclCubeSlices(tenantKey)
       : Promise.resolve([]),
     loadWorkspaceImpactLayerForMode(tenantKey, options.impactMode),
+    provider === "ecl_projection_db"
+      ? readCanonicalArchetypeCoverageRows(tenantKey)
+      : Promise.resolve([]),
   ]);
   const lastCompletedLoadAtIso = latestCompletedLoadIso(
     await listSourceLoadRunCompletions(tenantKey).catch(() => []),
@@ -611,9 +625,21 @@ async function loadEclProjectionWorkspacePortfolio(
   const tenantMatches = (row: EclProjectionRow) =>
     acceptedTenantKeys.has(textValue(row.tenant_key).trim());
 
+  const canonicalArchetypesByContract = new Map(
+    archetypeCoverageRows.map((row) => [row.contract_id, row]),
+  );
   const eclContracts = contractRows
     .filter(tenantMatches)
-    .map(contractFromEclProjectionRow);
+    .map(contractFromEclProjectionRow)
+    .map((contract) => {
+      const declared = canonicalArchetypesByContract.get(contract.contract_id);
+      if (!declared) return contract;
+      return {
+        ...contract,
+        contract_archetype: declared.contract_archetype,
+        vendor_category: declared.contract_archetype,
+      };
+    });
   const contracts = eclContracts;
   const eclVendors = vendorRows
     .filter(tenantMatches)
@@ -698,6 +724,7 @@ async function loadEclProjectionWorkspacePortfolio(
     }),
     impact: impactResolved,
     contracts,
+    archetypeCoverageRows,
     vendors,
     applicationScope,
     initiativeDependencies,
@@ -2465,6 +2492,56 @@ async function readProjectionTable(
     source_vendor_360: "source_vendor_360",
   };
   return readProjectionView(tenantKey, servingViewByTable[tableName]);
+}
+
+async function readCanonicalArchetypeCoverageRows(
+  tenantKey: string,
+): Promise<SourceWorkspaceArchetypeCoverageRow[]> {
+  const acceptedTenantKeys = Array.from(
+    new Set(
+      [canonicalTenantKey(tenantKey), tenantKey, ...tenantAliasesFor(tenantKey)].map(
+        (value) => value.trim(),
+      ),
+    ),
+  );
+  try {
+    return await azureRead.withSession(async (run) => {
+      await run("SELECT set_config('app.tenant_key', $1, false)", [
+        canonicalTenantKey(tenantKey),
+      ]);
+      const rows = await run<SourceWorkspaceArchetypeCoverageRow>(
+        `SELECT
+           c.tenant_key,
+           c.contract_id,
+           c.vendor_ref,
+           c.vendor_name,
+           COALESCE(
+             NULLIF(c.raw_payload ->> 'contract_archetype', ''),
+             NULLIF(c.raw_payload ->> 'archetype', '')
+           ) AS contract_archetype,
+           COALESCE(c.resolved_annual_value, c.annual_value)::numeric AS annual_value
+         FROM source.contract c
+        WHERE c.tenant_key = ANY($1::text[])
+          AND COALESCE(
+            NULLIF(c.raw_payload ->> 'contract_archetype', ''),
+            NULLIF(c.raw_payload ->> 'archetype', '')
+          ) IS NOT NULL
+        ORDER BY annual_value DESC NULLS LAST, c.contract_id`,
+        [acceptedTenantKeys],
+      );
+      return rows.map((row) => ({
+        ...row,
+        tenant_key: textValue(row.tenant_key),
+        contract_id: textValue(row.contract_id),
+        vendor_ref: textValue(row.vendor_ref),
+        vendor_name: textValue(row.vendor_name),
+        contract_archetype: textValue(row.contract_archetype),
+        annual_value: numberFromValue(row.annual_value),
+      }));
+    });
+  } catch {
+    return [];
+  }
 }
 
 async function readProjectionView(
