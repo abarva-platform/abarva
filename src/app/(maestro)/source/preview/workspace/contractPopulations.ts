@@ -35,6 +35,10 @@ export interface ContractPopulations {
    * contracts the book does not contain, so they can never be a slice of it.
    */
   readonly unjoinedDepthCount: number;
+  /** Distinct contracts represented by depth or canonical archetype coverage. */
+  readonly evidenceContractCount: number;
+  /** Evidence contracts absent from the register, deduplicated across sources. */
+  readonly unjoinedEvidenceCount: number;
   /** Register contracts carrying a declared archetype. */
   readonly declaredInRegisterCount: number;
   /** Register contracts with no declared archetype. Partitions with the above. */
@@ -138,12 +142,22 @@ export function contractPopulations(
 
   const depthCount = depthById.size;
   const joinRate = depthCount === 0 ? 1 : joinedCount / depthCount;
+  const evidenceContractIds = new Set([
+    ...depthById.keys(),
+    ...archetypeCoverageById.keys(),
+  ]);
+  let unjoinedEvidenceCount = 0;
+  for (const id of evidenceContractIds) {
+    if (!registerIds.has(id)) unjoinedEvidenceCount += 1;
+  }
 
   return {
     registerCount: register.length,
     depthCount,
     joinedCount,
     unjoinedDepthCount: depthCount - joinedCount,
+    evidenceContractCount: evidenceContractIds.size,
+    unjoinedEvidenceCount,
     declaredInRegisterCount,
     undeclaredInRegisterCount: Math.max(
       0,

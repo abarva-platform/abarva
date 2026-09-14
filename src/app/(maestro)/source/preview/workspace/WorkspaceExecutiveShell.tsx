@@ -1808,10 +1808,10 @@ function CoveragePage({
             <Fact label="Contract book" value={String(populations.registerCount)} />
           )}
         </div>
-        {populations.unjoinedDepthCount > 0 ? (
+        {populations.unjoinedEvidenceCount > 0 ? (
           <p className="sw-v2-muted">
             <b>
-              {populations.unjoinedDepthCount} of {populations.depthCount}{" "}
+              {populations.unjoinedEvidenceCount} of {populations.evidenceContractCount}{" "}
               contracts with loaded evidence are not in this book.
             </b>{" "}
             Their identifiers do not match any register header, so their
@@ -8040,12 +8040,12 @@ export function coverageScopeLine(
     `${populations.registerCount} contracts in the book`,
     `${populations.declaredInRegisterCount} with a declared archetype`,
   ];
-  if (populations.unjoinedDepthCount > 0) {
+  if (populations.unjoinedEvidenceCount > 0) {
     parts.push(
-      `${populations.unjoinedDepthCount} of ${populations.depthCount} contracts with loaded evidence are not in this book`,
+      `${populations.unjoinedEvidenceCount} of ${populations.evidenceContractCount} contracts with loaded evidence are not in this book`,
     );
   } else {
-    parts.push(`${populations.depthCount} with loaded evidence`);
+    parts.push(`${populations.evidenceContractCount} with loaded evidence`);
   }
   return `${parts.join(" · ")}.`;
 }

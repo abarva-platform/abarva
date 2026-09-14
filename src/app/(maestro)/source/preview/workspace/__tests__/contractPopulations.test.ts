@@ -77,8 +77,10 @@ describe("contractPopulations", () => {
 
     expect(p.registerCount).toBe(230);
     expect(p.depthCount).toBe(3);
+    expect(p.evidenceContractCount).toBe(3);
     expect(p.joinedCount).toBe(1);
     expect(p.unjoinedDepthCount).toBe(2);
+    expect(p.unjoinedEvidenceCount).toBe(2);
     expect(p.declaredOutsideRegisterCount).toBe(2);
     expect(p.populationsDisjoint).toBe(true);
 
@@ -102,6 +104,8 @@ describe("contractPopulations", () => {
     expect(p.joinedCount).toBe(2);
     expect(p.unjoinedDepthCount).toBe(0);
     expect(p.populationsDisjoint).toBe(false);
+    expect(p.evidenceContractCount).toBe(2);
+    expect(p.unjoinedEvidenceCount).toBe(0);
     expect(p.joinRate).toBe(1);
     expect(p.contractRecordCount).toBe(3);
   });
@@ -121,6 +125,8 @@ describe("contractPopulations", () => {
     expect(p.declaredInRegisterCount).toBe(0);
     expect(p.undeclaredInRegisterCount).toBe(2);
     expect(p.declaredOutsideRegisterCount).toBe(2);
+    expect(p.evidenceContractCount).toBe(2);
+    expect(p.unjoinedEvidenceCount).toBe(2);
     expect(p.contractRecordCount).toBe(4);
   });
 
@@ -144,6 +150,8 @@ describe("contractPopulations", () => {
   it("scores an empty book without dividing by zero", () => {
     const p = contractPopulations(portfolio({ register: [], depth: [] }));
     expect(p.registerCount).toBe(0);
+    expect(p.evidenceContractCount).toBe(0);
+    expect(p.unjoinedEvidenceCount).toBe(0);
     expect(p.joinRate).toBe(1);
     expect(p.populationsDisjoint).toBe(false);
     expect(p.contractRecordCount).toBe(0);
