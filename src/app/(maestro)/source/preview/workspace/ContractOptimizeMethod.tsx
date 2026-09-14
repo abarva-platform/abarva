@@ -248,7 +248,7 @@ export function ContractRefusalChips({ vm }: { vm: SourceWorkspaceVM }) {
           </p>
         </div>
         <span className={active.length === 0 ? "sw-c3-gate-state" : "sw-c3-gate-state sw-c3-gate-state-live"}>
-          {active.length === 0 ? "Clear" : `${active.length} active`}
+          {active.length === 0 ? "No refusal gate" : `${active.length} active`}
         </span>
       </div>
       {active.length > 0 ? (
