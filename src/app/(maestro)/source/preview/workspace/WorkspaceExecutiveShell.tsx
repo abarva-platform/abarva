@@ -6916,6 +6916,14 @@ export function contractCoverageWithDetailLanes(
     document_page_text_rows: detail?.docExtractions.length ?? 0,
     opportunity_rows: opportunityCount,
   };
+  const detailActualSpend = (detail?.spendMonths ?? []).reduce(
+    (sum, row) => sum + (numberFromDb(row.actual_spend) ?? 0),
+    0,
+  );
+  const detailCommittedSpend = (detail?.spendMonths ?? []).reduce(
+    (sum, row) => sum + (numberFromDb(row.committed_amount) ?? 0),
+    0,
+  );
   const hasDetailLane = Object.values(detailCounts).some((count) => count > 0);
   if (!coverage && !hasDetailLane) return null;
 
@@ -6950,7 +6958,16 @@ export function contractCoverageWithDetailLanes(
     load_run_id: null,
   };
 
-  return { ...base, ...detailCounts };
+  return {
+    ...base,
+    ...detailCounts,
+    actual_spend_usd:
+      detailActualSpend > 0 ? detailActualSpend : base.actual_spend_usd,
+    committed_spend_usd:
+      detailCommittedSpend > 0
+        ? detailCommittedSpend
+        : base.committed_spend_usd,
+  };
 }
 
 function storylineBySurface(
