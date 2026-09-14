@@ -45,6 +45,7 @@ function isDirectEvidenceCoverageSql(sql: string): boolean {
     sql.includes("FROM source.contract_360 c") &&
     sql.includes("COALESCE(spend.spend_rows, 0)::bigint AS spend_rows") &&
     sql.includes("FROM source.contract_consumption_observation o") &&
+    /SELECT\s+o\.tenant_key/.test(sql) &&
     sql.includes("FROM source.contract_performance_observation o") &&
     sql.includes("FROM source.canonical_fact_assertion facts") &&
     sql.includes("FROM source.contract_scope cs") &&
