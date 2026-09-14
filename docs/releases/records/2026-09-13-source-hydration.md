@@ -32,6 +32,7 @@ The Source workspace now renders its governed portfolio shell before optional im
 - Portfolio loader uses deferred impact mode for the initial shell on every workspace tab.
 - Contract detail fallback resolves the requested projection header and declared scope with deferred impact mode.
 - Direct deep links use the governed ECL provider default and perform one bounded lifecycle requeue after request-level retries.
+- Transient portfolio service failures receive two bounded retries; authorization failures still fail immediately.
 - Updated focused routing, detail-retry, ECL browser-surface, and API route tests.
 
 ## QA / Validation
@@ -69,4 +70,4 @@ Reassign traffic to the previous verified digest through the repo-owned ACA depl
 
 ## Known Gaps
 
-This release does not enrich or reload contract data, add archetype mappings, or implement report/email delivery. The heavy impact request may still take time in the background; the product now exposes that state without blocking the governed shell.
+This release does not enrich or reload contract data, add archetype mappings, or implement report/email delivery. The heavy impact request may still take time in the background; the product exposes that state without blocking the governed shell.

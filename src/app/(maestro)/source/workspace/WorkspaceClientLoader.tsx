@@ -23,6 +23,8 @@ interface ImpactResponse {
 }
 
 type ImpactLoadState = "loading" | "ready" | "error";
+const PORTFOLIO_RETRY_ATTEMPTS = 2;
+const PORTFOLIO_RETRY_DELAY_MS = 800;
 
 export function initialPortfolioImpactModeForWorkspaceTab(
   workspaceTab?: string | null,
@@ -53,19 +55,37 @@ function portfolioApiUrl(input: {
   return `/api/source/workspace/portfolio${query ? `?${query}` : ""}`;
 }
 
-async function fetchPortfolio(url: string): Promise<PortfolioResponse> {
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
-  });
-  const payload = await response.json().catch(() => null);
-  if (!response.ok || !payload?.portfolio) {
-    throw new Error(
-      payload?.detail ??
-        payload?.error ??
-        `Source workspace returned ${response.status}`,
+async function fetchPortfolio(
+  url: string,
+  remaining = PORTFOLIO_RETRY_ATTEMPTS,
+): Promise<PortfolioResponse> {
+  try {
+    const response = await fetch(url, {
+      headers: { Accept: "application/json" },
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.portfolio) {
+      const error = new Error(
+        payload?.detail ??
+          payload?.error ??
+          `Source workspace returned ${response.status}`,
+      ) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
+    }
+    return payload as PortfolioResponse;
+  } catch (error) {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? Number((error as { status?: unknown }).status)
+        : null;
+    const retryable = status == null || status >= 500;
+    if (!retryable || remaining <= 0) throw error;
+    await new Promise((resolve) =>
+      window.setTimeout(resolve, PORTFOLIO_RETRY_DELAY_MS),
     );
+    return fetchPortfolio(url, remaining - 1);
   }
-  return payload as PortfolioResponse;
 }
 
 async function fetchImpact(url: string): Promise<ImpactResponse> {

@@ -116,12 +116,15 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource).toContain("initialPortfolioImpactModeForWorkspaceTab");
     expect(loaderSource).not.toContain("ACTION_READY_WORKSPACE_TABS");
     expect(loaderSource).toContain('return "deferred"');
+    expect(loaderSource).toContain("PORTFOLIO_RETRY_ATTEMPTS = 2");
+    expect(loaderSource).toContain("PORTFOLIO_RETRY_DELAY_MS = 800");
+    expect(loaderSource).toContain("return fetchPortfolio(url, remaining - 1)");
     expect(loaderSource).toContain('responseScope: "impact"');
     expect(loaderSource).toContain("impact: impactPayload.impact");
     expect(loaderSource).not.toContain(
       "SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS",
     );
-    expect(loaderSource).not.toContain("window.setTimeout");
+    expect(loaderSource).toContain("PORTFOLIO_RETRY_DELAY_MS");
     expect(loaderSource).toContain('impactMode: "full"');
     expect(loaderSource).toContain('setImpactLoadState("ready")');
     expect(loaderSource).toContain('setImpactLoadState("error")');
@@ -184,8 +187,10 @@ describe("Source workspace requested-client routing", () => {
     expect(loaderSource).toContain("fetchPortfolio(initialPortfolioUrl)");
     expect(loaderSource).toContain("initialImpactMode");
     expect(loaderSource).toContain(": fetchImpact(fullUrl)");
-    expect(loaderSource).not.toContain("window.setTimeout");
-    expect(loaderSource).not.toContain("window.clearTimeout");
+    expect(loaderSource).toContain("PORTFOLIO_RETRY_DELAY_MS");
+    expect(loaderSource).not.toContain(
+      "SOURCE_WORKSPACE_FULL_IMPACT_IDLE_DELAY_MS",
+    );
   });
 
   it("keeps the historical preview route as a query-preserving redirect only", () => {
