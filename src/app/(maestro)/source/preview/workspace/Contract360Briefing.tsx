@@ -290,6 +290,28 @@ export function ContractEducationBriefing({
         </p>
       </section>
 
+      <section className="sw-c3-card sw-c3-edu-loop" aria-label="Archetype operating loop">
+        <div className="sw-c3-eyebrow">How to run this contract</div>
+        <div className="sw-c3-edu-loop-track">
+          {education.steps.map((step, index) => (
+            <div className="sw-c3-edu-loop-step" key={step.key}>
+              <div className="sw-c3-edu-loop-node">0{index + 1}</div>
+              <div>
+                <strong>{step.title}</strong>
+                <span>{EDU_STATE_LABEL[step.state]}</span>
+              </div>
+              {index < education.steps.length - 1 ? (
+                <i aria-hidden="true">then</i>
+              ) : null}
+            </div>
+          ))}
+        </div>
+        <p className="sw-c3-note">
+          Move from the archetype&rsquo;s operating question to the evidence that
+          makes the next commercial decision defensible.
+        </p>
+      </section>
+
       <div className="sw-c3-split-even">
         {education.steps.map((step) => (
           <section className="sw-c3-card" key={step.key}>

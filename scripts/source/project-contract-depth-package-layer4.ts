@@ -1012,7 +1012,11 @@ async function rebuildViews(client: Client): Promise<void> {
       c.contract_id,
       c.vendor_id AS vendor_ref,
       COALESCE(v.legal_name, c.vendor_id, 'Unknown vendor') AS vendor_name,
-      COALESCE(NULLIF(c.raw_payload ->> 'archetype', ''), v.supplier_category) AS vendor_category,
+      COALESCE(
+        NULLIF(c.raw_payload ->> 'contract_archetype', ''),
+        NULLIF(c.raw_payload ->> 'archetype', ''),
+        v.supplier_category
+      ) AS vendor_category,
       c.contract_name,
       COALESCE(
         NULLIF(context_brief.scope_summary, ''),
