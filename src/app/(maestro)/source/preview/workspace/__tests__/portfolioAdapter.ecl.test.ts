@@ -1016,6 +1016,21 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
           ] as R[];
         }
         if (
+          sql.includes("FROM source.contract c") &&
+          sql.includes("raw_payload ->> 'contract_archetype'")
+        ) {
+          return [
+            {
+              tenant_key: "meridian-health",
+              contract_id: "MER-TECH-M365-001",
+              vendor_ref: "vendor-microsoft",
+              vendor_name: "Microsoft Corporation",
+              contract_archetype: "productivity_platform",
+              annual_value: "1480000",
+            },
+          ] as R[];
+        }
+        if (
           !isDirectEvidenceCoverageSql(sql) &&
           sql.includes("FROM source.contract_360 c")
         ) {
@@ -1113,6 +1128,12 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     );
 
     expect(portfolio.impact.actionCandidates).toHaveLength(1);
+    expect(portfolio.archetypeCoverageRows).toEqual([
+      expect.objectContaining({
+        contract_id: "MER-TECH-M365-001",
+        contract_archetype: "productivity_platform",
+      }),
+    ]);
     expect(portfolio.impact.claimCards).toHaveLength(1);
     expect(portfolio.impact.claimCards[0]).toMatchObject({
       action_candidate_id: "OPT-M365-SHELFWARE-001",

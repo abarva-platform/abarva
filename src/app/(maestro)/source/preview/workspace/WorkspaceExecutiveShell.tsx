@@ -7396,7 +7396,9 @@ export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
     groups.set(categoryKey, current);
   };
 
+  const seenContractIds = new Set<string>();
   for (const contract of portfolio.contracts) {
+    seenContractIds.add(contract.contract_id);
     addArchetypeContract({
       category: contractArchetype(contract) ?? contract.vendor_category,
       contractId: contract.contract_id,
@@ -7405,6 +7407,21 @@ export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
       annualValue:
         numberFromDb(contract.resolved_annual_value) ??
         numberFromDb(contract.annual_value),
+    });
+  }
+
+  // Canonical depth can be loaded before its identifier is bridged into the
+  // portfolio register. Show that declared taxonomy in the mix without
+  // pretending it belongs to the register's annual-value denominator.
+  for (const row of portfolio.archetypeCoverageRows ?? []) {
+    if (seenContractIds.has(row.contract_id)) continue;
+    seenContractIds.add(row.contract_id);
+    addArchetypeContract({
+      category: row.contract_archetype,
+      contractId: row.contract_id,
+      vendorRef: row.vendor_ref,
+      vendorName: row.vendor_name,
+      annualValue: row.annual_value,
     });
   }
 
@@ -7437,19 +7454,22 @@ export function vendorArchetypeCoverage(
       declaredRegisterIds.add(contract.contract_id);
     }
   }
+  const considerDeclared = (
+    contractId: string,
+    archetype: string | null | undefined,
+  ) => {
+    if (!isDeclaredArchetype(archetype)) return;
+    if (registerIds.has(contractId)) declaredRegisterIds.add(contractId);
+    else declaredSupplementalIds.add(contractId);
+  };
+  for (const row of portfolio.archetypeCoverageRows ?? []) {
+    considerDeclared(row.contract_id, row.contract_archetype);
+  }
   for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
-    if (
-      !isDeclaredArchetype(
-        coverage.contract_archetype ?? coverage.vendor_category,
-      )
-    ) {
-      continue;
-    }
-    if (registerIds.has(coverage.contract_id)) {
-      declaredRegisterIds.add(coverage.contract_id);
-    } else {
-      declaredSupplementalIds.add(coverage.contract_id);
-    }
+    considerDeclared(
+      coverage.contract_id,
+      coverage.contract_archetype ?? coverage.vendor_category,
+    );
   }
   const totalContracts =
     portfolio.contracts.length + declaredSupplementalIds.size;
