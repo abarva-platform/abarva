@@ -52,6 +52,7 @@ jest.mock(
   "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter",
   () => ({
     loadSourceWorkspacePortfolio: jest.fn(),
+    loadSourceWorkspaceContractDetailFallback: jest.fn(),
     sourceWorkspaceProvider: jest.fn(
       (provider: string | null | undefined) => provider ?? "legacy",
     ),
@@ -64,6 +65,7 @@ import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import {
   loadSourceWorkspacePortfolio,
+  loadSourceWorkspaceContractDetailFallback,
   sourceWorkspaceProvider,
 } from "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter";
 import {
@@ -99,6 +101,8 @@ const mockGetActiveClientRow = getActiveClientRow as jest.Mock;
 const mockCheckTenantAccessByKey = checkTenantAccessByKey as jest.Mock;
 const mockBuildContract360View = buildContract360View as jest.Mock;
 const mockLoadSourceWorkspacePortfolio = loadSourceWorkspacePortfolio as jest.Mock;
+const mockLoadSourceWorkspaceContractDetailFallback =
+  loadSourceWorkspaceContractDetailFallback as jest.Mock;
 const mockSourceWorkspaceProvider = sourceWorkspaceProvider as jest.Mock;
 const mockCollectContractSubjectRefs = collectContractSubjectRefs as jest.Mock;
 const mockGetContract360 = getContract360 as jest.Mock;
@@ -196,6 +200,7 @@ beforeEach(() => {
     applicationScope: [],
     initiativeDependencies: [],
   });
+  mockLoadSourceWorkspaceContractDetailFallback.mockResolvedValue(null);
   mockSourceWorkspaceProvider.mockImplementation(
     (provider: string | null | undefined) => provider ?? "legacy",
   );
@@ -321,8 +326,8 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
         application_ref: "ehr-core",
       },
     ];
-    mockLoadSourceWorkspacePortfolio.mockResolvedValueOnce({
-      contracts: [contract],
+    mockLoadSourceWorkspaceContractDetailFallback.mockResolvedValueOnce({
+      contract,
       applicationScope: projectionScope,
       initiativeDependencies: [],
     });
@@ -336,12 +341,12 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
 
     expect(res.status).toBe(200);
     expect(sourceWorkspaceProvider).toHaveBeenCalledWith("ecl_projection_db");
-    expect(loadSourceWorkspacePortfolio).toHaveBeenCalledWith(
+    expect(loadSourceWorkspaceContractDetailFallback).toHaveBeenCalledWith(
       "meridian",
-      expect.any(String),
+      "CTR-0006",
       "ecl_projection_db",
-      { impactMode: "deferred" },
     );
+    expect(loadSourceWorkspacePortfolio).not.toHaveBeenCalled();
     expect(buildContract360View).toHaveBeenCalledWith(
       expect.objectContaining({
         contract,
@@ -352,6 +357,7 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
 
   it("hydrates detail for a supplemental evidence contract promoted into the workspace list", async () => {
     mockGetContract360.mockResolvedValueOnce(null);
+    mockLoadSourceWorkspaceContractDetailFallback.mockResolvedValueOnce(null);
     mockLoadSourceWorkspacePortfolio.mockResolvedValueOnce({
       contracts: [],
       applicationScope: [],

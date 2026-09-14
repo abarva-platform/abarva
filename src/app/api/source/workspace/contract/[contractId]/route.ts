@@ -37,6 +37,7 @@ import type {
 import { appClientKeyForTenant } from '@/lib/tenant/aliases';
 import {
   loadSourceWorkspacePortfolio,
+  loadSourceWorkspaceContractDetailFallback,
   sourceWorkspaceProvider,
   type SourceWorkspaceProviderMode,
 } from '@/app/(maestro)/source/preview/workspace/live/portfolioAdapter';
@@ -93,6 +94,14 @@ export async function GET(
   const eclProvider = sourceWorkspaceProvider(requestedSourceProvider);
   let projectionDetail: ProjectionContractDetail | null = null;
   let contract = await getContract360(tenantKey, contractId).catch(() => null);
+  if (!contract && eclProvider !== 'legacy') {
+    projectionDetail = await loadSourceWorkspaceContractDetailFallback(
+      tenantKey,
+      contractId,
+      eclProvider,
+    ).catch(() => null);
+    contract = projectionDetail?.contract ?? null;
+  }
   if (!contract && eclProvider !== 'legacy') {
     projectionDetail = await getProjectionContractDetail(
       tenantKey,
