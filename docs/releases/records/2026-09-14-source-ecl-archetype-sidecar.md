@@ -44,6 +44,8 @@ classification exists, while keeping the contract-book denominator explicit.
   register denominator or inferring classifications.
 - Source Coverage labels classified evidence outside the register separately
   from unclassified register headers.
+- Population counts now include distinct classified sidecar IDs, so the
+  Coverage narrative and facts reconcile with the declared-play rows.
 - Focused regression coverage protects the ECL read path and Coverage counts.
 - No migration, loader, or Azure data-build job is included.
 
@@ -57,6 +59,8 @@ classification exists, while keeping the contract-book denominator explicit.
   canonical archetype query.
 - **PASS:** Coverage presentation linted with explicit register/evidence
   population labels.
+- **PASS:** population regression coverage counts a sidecar contract once even
+  when it is present in both depth and archetype-coverage rows.
 - **PASS:** ESLint for all changed Source files.
 - **PASS:** `git diff --check`.
 - **PASS:** `npm run release:check` after this record was brought into the

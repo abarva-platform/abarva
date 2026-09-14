@@ -16,6 +16,7 @@ import {
 const portfolio = (input: {
   register: readonly { id: string; archetype?: string | null }[];
   depth: readonly { id: string; archetype?: string | null }[];
+  archetypeCoverage?: readonly { id: string; archetype?: string | null }[];
 }) =>
   ({
     contracts: input.register.map((row) => ({
@@ -30,6 +31,10 @@ const portfolio = (input: {
         vendor_category: null,
       })),
     },
+    archetypeCoverageRows: (input.archetypeCoverage ?? []).map((row) => ({
+      contract_id: row.id,
+      contract_archetype: row.archetype ?? null,
+    })),
   }) as never;
 
 describe("contractPopulations", () => {
@@ -99,6 +104,24 @@ describe("contractPopulations", () => {
     expect(p.populationsDisjoint).toBe(false);
     expect(p.joinRate).toBe(1);
     expect(p.contractRecordCount).toBe(3);
+  });
+
+  it("counts declared sidecar contracts outside the register once", () => {
+    const p = contractPopulations(
+      portfolio({
+        register: [{ id: "CTR-0001" }, { id: "CTR-0002" }],
+        depth: [{ id: "MER-TECH-DBX-001", archetype: "cloud_consumption_commit" }],
+        archetypeCoverage: [
+          { id: "MER-TECH-DBX-001", archetype: "cloud_consumption_commit" },
+          { id: "MER-TECH-LAAMS-001", archetype: "managed_services" },
+        ],
+      }),
+    );
+
+    expect(p.declaredInRegisterCount).toBe(0);
+    expect(p.undeclaredInRegisterCount).toBe(2);
+    expect(p.declaredOutsideRegisterCount).toBe(2);
+    expect(p.contractRecordCount).toBe(4);
   });
 
   it("treats placeholder text as undeclared rather than as a classification", () => {
