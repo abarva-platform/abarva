@@ -91,9 +91,13 @@ export function contractPopulations(
 
   const registerIds = new Set(register.map((row) => row.contract_id));
   const depthById = new Map(depth.map((row) => [row.contract_id, row]));
+  const archetypeCoverageById = new Map(
+    (portfolio.archetypeCoverageRows ?? []).map((row) => [row.contract_id, row]),
+  );
   const contractRecordIds = new Set([
     ...registerIds,
     ...depthById.keys(),
+    ...archetypeCoverageById.keys(),
     ...actions.map((row) => row.contract_id),
   ]);
 
@@ -105,19 +109,28 @@ export function contractPopulations(
   let declaredInRegisterCount = 0;
   for (const contract of register) {
     const fromDepth = depthById.get(contract.contract_id);
+    const fromArchetypeCoverage = archetypeCoverageById.get(contract.contract_id);
     const declared =
       isDeclaredArchetypeKey(contract.contract_archetype) ||
       isDeclaredArchetypeKey(fromDepth?.contract_archetype) ||
+      isDeclaredArchetypeKey(fromArchetypeCoverage?.contract_archetype) ||
       isDeclaredArchetypeKey(contract.vendor_category);
     if (declared) declaredInRegisterCount += 1;
   }
 
   let declaredOutsideRegisterCount = 0;
-  for (const [id, row] of depthById) {
+  const nonRegisterDepthIds = new Set([
+    ...depthById.keys(),
+    ...archetypeCoverageById.keys(),
+  ]);
+  for (const id of nonRegisterDepthIds) {
     if (registerIds.has(id)) continue;
+    const row = depthById.get(id);
+    const archetypeCoverage = archetypeCoverageById.get(id);
     if (
-      isDeclaredArchetypeKey(row.contract_archetype) ||
-      isDeclaredArchetypeKey(row.vendor_category)
+      isDeclaredArchetypeKey(row?.contract_archetype) ||
+      isDeclaredArchetypeKey(row?.vendor_category) ||
+      isDeclaredArchetypeKey(archetypeCoverage?.contract_archetype)
     ) {
       declaredOutsideRegisterCount += 1;
     }
