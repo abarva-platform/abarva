@@ -1718,6 +1718,10 @@ function CoveragePage({
         )
       : 0;
   const archetypes = vendorArchetypeRows(portfolio).slice(0, 6);
+  const archetypeCoverageTitle =
+    populations.declaredOutsideRegisterCount > 0
+      ? `${populations.declaredInRegisterCount} of ${populations.registerCount} register contracts are classified`
+      : `${populations.declaredInRegisterCount} of ${populations.registerCount} contracts carry a declared archetype`;
 
   return (
     <div className="sw-v2-coverage-grid">
@@ -1769,7 +1773,7 @@ function CoveragePage({
       <section className="sw-v2-panel">
         <PanelHead
           eyebrow="Archetype coverage"
-          title={`${populations.declaredInRegisterCount} of ${populations.registerCount} contracts carry a declared archetype`}
+          title={archetypeCoverageTitle}
         />
         <div className="sw-v2-coverage-meter">
           <i
@@ -1788,14 +1792,21 @@ function CoveragePage({
         */}
         <div className="sw-v2-fact-stack sw-v2-compact-facts">
           <Fact
-            label="Declared"
+            label="Classified in register"
             value={String(populations.declaredInRegisterCount)}
           />
           <Fact
-            label="Not yet declared"
+            label="Unclassified register headers"
             value={String(populations.undeclaredInRegisterCount)}
           />
-          <Fact label="Contract book" value={String(populations.registerCount)} />
+          {populations.declaredOutsideRegisterCount > 0 ? (
+            <Fact
+              label="Classified evidence outside register"
+              value={String(populations.declaredOutsideRegisterCount)}
+            />
+          ) : (
+            <Fact label="Contract book" value={String(populations.registerCount)} />
+          )}
         </div>
         {populations.unjoinedDepthCount > 0 ? (
           <p className="sw-v2-muted">
@@ -1808,6 +1819,14 @@ function CoveragePage({
             {populations.registerCount} contracts, and no percentage spanning
             the two is shown. Reconciling the two identifier sets is a load-path
             fix, not a display one.
+          </p>
+        ) : null}
+        {populations.declaredOutsideRegisterCount > 0 ? (
+          <p className="sw-v2-muted">
+            {populations.declaredOutsideRegisterCount} loaded evidence
+            contracts already carry a declared archetype, but their identifiers
+            are not linked to a register header yet. They are shown in the
+            declared plays below and excluded from the register percentage.
           </p>
         ) : null}
         {populations.undeclaredInRegisterCount > 0 ? (
