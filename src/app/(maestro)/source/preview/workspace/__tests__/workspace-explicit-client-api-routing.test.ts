@@ -36,9 +36,13 @@ describe("Source workspace explicit-client API routing", () => {
     expect(workspaceClientSource).toContain(
       'params.set("sourceProvider", provider)',
     );
-    expect(workspaceClientSource).toContain(
-      "fetch(buildContractApiUrl(contractId, sourceClientKey, sourceProviderKey))",
-    );
+    // Asserted on the arguments rather than one formatting of the call, so a
+    // reflow of the line cannot fail a test about which client is routed.
+    expect(
+      /buildContractApiUrl\(\s*contractId,\s*sourceClientKey,\s*sourceProviderKey,?\s*\)/.test(
+        workspaceClientSource,
+      ),
+    ).toBe(true);
     expect(workspaceClientSource).toContain('"/optimization"');
     expect(workspaceClientSource).toContain("{ opportunityId }");
   });
