@@ -3117,10 +3117,11 @@ function ContractListTable({
       ))}
       {focus.remainderCount > 0 ? (
         <div className="sw-v2-table-foot">
-          <b>{focus.remainderCount} further registry contracts</b>
+          <b>{focus.remainderCount} more contract records</b>
           <span>
-            {money(focus.remainderAnnualValue)} stays summarized until spend,
-            performance, document, or action evidence is loaded.
+            {money(focus.remainderAnnualValue)} of contract-book value stays
+            summarized until spend, performance, document, or action evidence
+            is loaded. Supplemental evidence records remain outside that book.
           </span>
         </div>
       ) : null}
