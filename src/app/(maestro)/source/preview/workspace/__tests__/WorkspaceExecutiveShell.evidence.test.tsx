@@ -78,7 +78,10 @@ describe("contractCoverageWithDetailLanes", () => {
     const vm = {
       detailState: "ready",
       detail: {
-        spendMonths: Array.from({ length: 12 }),
+        spendMonths: Array.from({ length: 12 }, (_, index) => ({
+          actual_spend: index === 0 ? 66_100 : 0,
+          committed_amount: index === 0 ? 1_550_000 : 0,
+        })),
         performancePeriods: Array.from({ length: 4 }),
         docExtractions: Array.from({ length: 8 }),
         optimizationOpportunitySet: {
@@ -97,6 +100,8 @@ describe("contractCoverageWithDetailLanes", () => {
 
     expect(resolved).toMatchObject({
       spend_rows: 12,
+      actual_spend_usd: 66_100,
+      committed_spend_usd: 1_550_000,
       performance_rows: 4,
       document_page_text_rows: 8,
       opportunity_rows: 4,
