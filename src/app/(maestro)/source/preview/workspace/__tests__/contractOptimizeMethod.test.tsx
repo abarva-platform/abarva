@@ -74,7 +74,7 @@ describe("ContractRefusalChips", () => {
     render(<ContractRefusalChips vm={vmWithStages(["quantified", "validated"])} />);
 
     expect(screen.getByText(/No active refusal gate/)).toBeTruthy();
-    expect(screen.getByText("Clear")).toBeTruthy();
+    expect(screen.getByText("No refusal gate")).toBeTruthy();
   });
 
   it("counts each live gate separately", () => {
