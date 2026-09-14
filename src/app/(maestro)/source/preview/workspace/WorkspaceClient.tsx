@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./workspace.css";
 import {
   buildInitialWorkspaceState,
@@ -14,6 +14,14 @@ import type {
   SourceWorkspaceProviderMode,
 } from "./live/portfolioAdapter";
 import type { Contract360Response } from "./live/contractDetail";
+
+/**
+ * A cold contract-detail request can fail once and succeed immediately after.
+ * Two further attempts rides out that window without turning a genuinely
+ * missing contract into a long spinner.
+ */
+const CONTRACT_DETAIL_RETRY_ATTEMPTS = 2;
+const CONTRACT_DETAIL_RETRY_DELAY_MS = 600;
 import {
   AgentDock,
   type AttachmentRef,
@@ -146,6 +154,10 @@ export function WorkspaceClient({
     }),
   );
   const [thread, setThread] = useState<ChatMessage[]>([]);
+  /** Which contract details have been requested, decided synchronously. */
+  const detailRequests = useRef<Map<string, "loading" | "loaded">>(
+    new Map(),
+  );
   const [showEclDiagnostics, setShowEclDiagnostics] = useState(false);
 
   /*
@@ -203,33 +215,66 @@ export function WorkspaceClient({
     [],
   );
 
+  /**
+   * Load one contract's detail, and do not state failure on a single attempt.
+   *
+   * A deep link that met one cold-start failure showed "Source could not load
+   * <id>. No substitute contract is being shown." — a definitive claim built on
+   * a single request — and recovered only when the reader happened to open the
+   * same contract again from the register, because the fetch ran whether or not
+   * the guard above it had allowed the attempt.
+   *
+   * The request ledger is a ref, not state: the decision to send a request has
+   * to be made synchronously at call time, and a state updater may not have run
+   * by the time this function returns. A contract is requested once while in
+   * flight, never re-requested once loaded, and released back for a later
+   * attempt if every retry fails — so a failure is reported, not latched.
+   */
   const fetchContractDetail = useCallback(
     (contractId: string) => {
-      setStateRaw((prev) => {
-        if (prev.contractDetail[contractId]) return prev; // already loaded/loading
-        return {
-          ...prev,
-          contractDetail: { ...prev.contractDetail, [contractId]: "loading" },
-        };
-      });
-      fetch(buildContractApiUrl(contractId, sourceClientKey, sourceProviderKey))
-        .then((r) =>
-          r.ok
-            ? (r.json() as Promise<Contract360Response>)
-            : Promise.reject(new Error(String(r.status))),
+      const pending = detailRequests.current.get(contractId);
+      if (pending === "loading" || pending === "loaded") return;
+      detailRequests.current.set(contractId, "loading");
+      setStateRaw((prev) => ({
+        ...prev,
+        contractDetail: { ...prev.contractDetail, [contractId]: "loading" },
+      }));
+
+      const attempt = (remaining: number) => {
+        fetch(
+          buildContractApiUrl(contractId, sourceClientKey, sourceProviderKey),
         )
-        .then((view) =>
-          setStateRaw((prev) => ({
-            ...prev,
-            contractDetail: { ...prev.contractDetail, [contractId]: view },
-          })),
-        )
-        .catch(() =>
-          setStateRaw((prev) => ({
-            ...prev,
-            contractDetail: { ...prev.contractDetail, [contractId]: "error" },
-          })),
-        );
+          .then((r) =>
+            r.ok
+              ? (r.json() as Promise<Contract360Response>)
+              : Promise.reject(new Error(String(r.status))),
+          )
+          .then((view) => {
+            detailRequests.current.set(contractId, "loaded");
+            setStateRaw((prev) => ({
+              ...prev,
+              contractDetail: { ...prev.contractDetail, [contractId]: view },
+            }));
+          })
+          .catch(() => {
+            if (remaining > 0) {
+              window.setTimeout(
+                () => attempt(remaining - 1),
+                CONTRACT_DETAIL_RETRY_DELAY_MS,
+              );
+              return;
+            }
+            // Released, so opening the contract again tries afresh rather than
+            // meeting a stored verdict.
+            detailRequests.current.delete(contractId);
+            setStateRaw((prev) => ({
+              ...prev,
+              contractDetail: { ...prev.contractDetail, [contractId]: "error" },
+            }));
+          });
+      };
+
+      attempt(CONTRACT_DETAIL_RETRY_ATTEMPTS);
     },
     [sourceClientKey, sourceProviderKey],
   );
