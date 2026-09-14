@@ -49,6 +49,8 @@ export interface ContractPopulations {
   readonly populationsDisjoint: boolean;
   /** Share of depth rows that join to the register, 0-1. */
   readonly joinRate: number;
+  /** Union of register, evidence, and action contract ids used by the focus view. */
+  readonly contractRecordCount: number;
 }
 
 const UNDECLARED_ARCHETYPE_KEYS = new Set([
@@ -85,9 +87,15 @@ export function contractPopulations(
 ): ContractPopulations {
   const register = portfolio.contracts ?? [];
   const depth = portfolio.impact?.evidenceCoverage ?? [];
+  const actions = portfolio.impact?.actionCandidates ?? [];
 
   const registerIds = new Set(register.map((row) => row.contract_id));
   const depthById = new Map(depth.map((row) => [row.contract_id, row]));
+  const contractRecordIds = new Set([
+    ...registerIds,
+    ...depthById.keys(),
+    ...actions.map((row) => row.contract_id),
+  ]);
 
   let joinedCount = 0;
   for (const id of depthById.keys()) {
@@ -131,7 +139,29 @@ export function contractPopulations(
     declaredOutsideRegisterCount,
     populationsDisjoint: depthCount > 0 && joinRate < 0.5,
     joinRate,
+    contractRecordCount: contractRecordIds.size,
   };
+}
+
+/**
+ * Annual contract value belongs to the governed contract book. Evidence and
+ * action rows may carry spend or candidate amounts, but those are not annual
+ * contract value and must never be substituted into this total.
+ */
+export function contractBookAnnualValue(
+  portfolio: SourceWorkspacePortfolioData,
+): number | null {
+  let total = 0;
+  let sawValue = false;
+  for (const contract of portfolio.contracts ?? []) {
+    const value =
+      numberFromDb(contract.resolved_annual_value) ??
+      numberFromDb(contract.annual_value);
+    if (value == null) continue;
+    sawValue = true;
+    total += value;
+  }
+  return sawValue ? total : null;
 }
 
 /**

@@ -50,6 +50,7 @@ import {
 import { asSentence, fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
+  contractBookAnnualValue,
   contractPopulations,
   countOrDash,
 } from "./contractPopulations";
@@ -2782,7 +2783,7 @@ function VendorArchetypeTable({
             {coverage.unmappedCount} register headers remain unclassified and
             are not collapsed into a placeholder bucket.
             {coverage.supplementalDeclaredCount > 0
-              ? ` ${coverage.supplementalDeclaredCount} classified contract-depth rows are shown from the evidence layer.`
+              ? ` ${coverage.supplementalDeclaredCount} classified evidence records sit outside the contract book and are excluded from annual-value archetype totals.`
               : ""}
           </span>
         </div>
@@ -3135,6 +3136,7 @@ function ContractEvidenceDepthTable({
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   const focus = focusedContractSet(portfolio);
+  const populations = contractPopulations(portfolio);
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-contract-depth-row">
@@ -3166,13 +3168,13 @@ function ContractEvidenceDepthTable({
       {focus.remainderCount > 0 ? (
         <div className="sw-v2-table-foot">
           <b>
-            {focus.depthReadyCount} of {focus.populationCount} contracts have
-            loaded detail rows.
+            {focus.depthReadyCount} of {focus.populationCount} contract records
+            have loaded evidence or action rows.
           </b>
           <span>
-            {focus.populationCount - focus.depthReadyCount} are held as registry
-            rows until their evidence lanes are populated;{" "}
-            {focus.remainderCount} are not shown above.
+            {populations.registerCount} are governed contract-book headers;{" "}
+            {populations.unjoinedDepthCount} evidence records sit outside that
+            book; {focus.remainderCount} records are not shown above.
           </span>
         </div>
       ) : null}
@@ -7035,7 +7037,7 @@ export function focusedContractSet(
   );
   return {
     rows,
-    populationCount: ranked.length,
+    populationCount: contractPopulations(portfolio).contractRecordCount,
     remainderCount: remainder.length,
     remainderAnnualValue: remainder.reduce(
       (sum, row) => sum + (numberFromDb(row.contract.annual_value) ?? 0),
@@ -7473,9 +7475,6 @@ export function vendorCoverageRows(portfolio: SourceWorkspacePortfolioData) {
 }
 
 export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
-  const contractsById = new Map(
-    portfolio.contracts.map((contract) => [contract.contract_id, contract]),
-  );
   const groups = new Map<
     string,
     {
@@ -7533,20 +7532,6 @@ export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
       annualValue:
         numberFromDb(contract.resolved_annual_value) ??
         numberFromDb(contract.annual_value),
-    });
-  }
-
-  for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
-    if (contractsById.has(coverage.contract_id)) continue;
-    addArchetypeContract({
-      category: coverage.contract_archetype ?? coverage.vendor_category,
-      contractId: coverage.contract_id,
-      vendorRef: coverage.vendor_ref,
-      vendorName: coverage.vendor_name,
-      annualValue:
-        numberFromDb(coverage.committed_spend_usd) ??
-        numberFromDb(coverage.actual_spend_usd) ??
-        numberFromDb(coverage.candidate_amount_usd),
     });
   }
 
@@ -7988,15 +7973,7 @@ function uniqueRefs(refs: readonly string[]) {
 }
 
 function portfolioAnnualValue(portfolio: SourceWorkspacePortfolioData) {
-  const snapshotValue = numberFromDb(
-    portfolio.v4Snapshot.executivePortfolio.annualValue,
-  );
-  if (snapshotValue && snapshotValue > 0) return snapshotValue;
-  const vendorValue = portfolio.vendors.reduce(
-    (sum, vendor) => sum + (numberFromDb(vendor.annual_value) ?? 0),
-    0,
-  );
-  return vendorValue > 0 ? vendorValue : null;
+  return contractBookAnnualValue(portfolio);
 }
 
 function vendorShare(

@@ -1,4 +1,5 @@
 import {
+  contractBookAnnualValue,
   contractPopulations,
   countOrDash,
   isDeclaredArchetypeKey,
@@ -47,6 +48,7 @@ describe("contractPopulations", () => {
     expect(p.registerCount).toBe(3);
     expect(p.declaredInRegisterCount).toBe(1);
     expect(p.undeclaredInRegisterCount).toBe(2);
+    expect(p.contractRecordCount).toBe(3);
     expect(p.declaredInRegisterCount + p.undeclaredInRegisterCount).toBe(
       p.registerCount,
     );
@@ -78,6 +80,7 @@ describe("contractPopulations", () => {
     // The partition still sums to the book, and the unjoined rows are not in it.
     expect(p.declaredInRegisterCount + p.undeclaredInRegisterCount).toBe(230);
     expect(p.declaredInRegisterCount).toBe(1);
+    expect(p.contractRecordCount).toBe(232);
   });
 
   it("does not report disjoint populations when the identifiers line up", () => {
@@ -95,6 +98,7 @@ describe("contractPopulations", () => {
     expect(p.unjoinedDepthCount).toBe(0);
     expect(p.populationsDisjoint).toBe(false);
     expect(p.joinRate).toBe(1);
+    expect(p.contractRecordCount).toBe(3);
   });
 
   it("treats placeholder text as undeclared rather than as a classification", () => {
@@ -119,6 +123,33 @@ describe("contractPopulations", () => {
     expect(p.registerCount).toBe(0);
     expect(p.joinRate).toBe(1);
     expect(p.populationsDisjoint).toBe(false);
+    expect(p.contractRecordCount).toBe(0);
+  });
+});
+
+describe("contractBookAnnualValue", () => {
+  it("uses only governed register value and never evidence spend", () => {
+    const value = contractBookAnnualValue({
+      contracts: [
+        { annual_value: 1_550_000, resolved_annual_value: null },
+      ],
+      impact: {
+        evidenceCoverage: [
+          { contract_id: "DEPTH-ONLY", committed_spend_usd: 9_900_000 },
+        ],
+        actionCandidates: [
+          { contract_id: "ACTION-ONLY", candidate_amount_usd: 2_000_000 },
+        ],
+      },
+    } as never);
+
+    expect(value).toBe(1_550_000);
+  });
+
+  it("returns null when the contract book has no value", () => {
+    expect(
+      contractBookAnnualValue({ contracts: [{ annual_value: null }] } as never),
+    ).toBeNull();
   });
 });
 
