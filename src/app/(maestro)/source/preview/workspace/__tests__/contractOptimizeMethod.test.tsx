@@ -64,18 +64,17 @@ describe("ContractRefusalChips", () => {
     expect(live[0]?.textContent).toContain("Evidence required");
     expect(live[0]?.textContent).toContain("2 levers");
 
-    // The other two gates are shown, at rest, not lit.
-    expect(container.querySelectorAll(".sw-c3-refusal")).toHaveLength(3);
-    expect(screen.getByText(/Baseline conflict/)).toBeTruthy();
-    expect(screen.getByText(/Workflow required/)).toBeTruthy();
+    // Inactive gates stay out of the decision surface.
+    expect(container.querySelectorAll(".sw-c3-refusal")).toHaveLength(1);
+    expect(screen.queryByText(/Baseline conflict/)).toBeNull();
+    expect(screen.queryByText(/Workflow required/)).toBeNull();
   });
 
   it("says plainly when nothing is being refused", () => {
     render(<ContractRefusalChips vm={vmWithStages(["quantified", "validated"])} />);
 
-    expect(
-      screen.getByText(/No lever on this contract is being refused/),
-    ).toBeTruthy();
+    expect(screen.getByText(/No active refusal gate/)).toBeTruthy();
+    expect(screen.getByText("Clear")).toBeTruthy();
   });
 
   it("counts each live gate separately", () => {

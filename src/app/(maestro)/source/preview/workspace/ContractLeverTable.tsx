@@ -74,13 +74,16 @@ export function ContractLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
   return (
     <section className="sw-c3-card sw-c3-card-flush sw-c3-levers">
       <div className="sw-c3-lever-head">
-        <span className="sw-c3-display sw-c3-display-sm">
-          {rows.length} {rows.length === 1 ? "ask" : "asks"}
-          {signalCount > 0 || unsizedCount > 0
-            ? `. ${sized.length} carry a sized amount; ${signalCount + unsizedCount} do not.`
-            : ". Every one carries a sized amount."}
-        </span>
-        <span className="sw-c3-note">Exports unchanged into the memo</span>
+        <div>
+          <div className="sw-c3-eyebrow">Negotiation levers</div>
+          <span className="sw-c3-display sw-c3-display-sm">
+            {rows.length} {rows.length === 1 ? "ask" : "asks"}
+            {signalCount > 0 || unsizedCount > 0
+              ? `. ${sized.length} carry a sized amount; ${signalCount + unsizedCount} do not.`
+              : ". Every one carries a sized amount."}
+          </span>
+        </div>
+        <span className="sw-c3-note">Client-ready view · exports unchanged into the memo</span>
       </div>
 
       <div className="sw-c3-table-wrap">

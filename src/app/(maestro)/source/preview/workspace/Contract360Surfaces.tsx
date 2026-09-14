@@ -623,8 +623,8 @@ export function ContractRelationshipBriefing({
         </div>
       </section>
 
-      <section className="sw-c3-card sw-c3-card-rule sw-c3-rel-boundary">
-        <div className="sw-c3-eyebrow">Not shown</div>
+    <section className="sw-c3-card sw-c3-card-rule sw-c3-rel-boundary">
+        <div className="sw-c3-eyebrow">What this does not claim</div>
         <p className="sw-c3-prose" style={{ marginTop: 10 }}>
           No dependency graph and no initiative links appear here. Those
           relationships would be inferred, and an inferred dependency in front of
@@ -663,42 +663,42 @@ export function ContractEvidenceFamilies({
 
   const families = [
     {
-      name: "Spend, monthly",
+      name: "Invoices, payments and usage",
       note: "Committed, invoiced, paid and actual amounts by month.",
       count: laneCount(coverage, "spend_rows"),
       system: "finance ledger",
       required: true,
     },
     {
-      name: "Application scope",
+      name: "Named workloads and functions",
       note: "The declared workloads and business functions this contract covers.",
       count: laneCount(coverage, "scope_rows"),
       system: "contract record",
       required: true,
     },
     {
-      name: "Opportunities",
+      name: "Negotiation levers",
       note: "Governed optimization candidates raised against this contract.",
       count: laneCount(coverage, "opportunity_rows"),
       system: "governed analysis",
       required: true,
     },
     {
-      name: "Document page text",
+      name: "Contract document proof",
       note: "Page spans and proof text behind a clause-level claim.",
       count: laneCount(coverage, "document_page_text_rows"),
       system: "contract document · restricted",
       required: true,
     },
     {
-      name: "Change orders",
+      name: "Changes to the agreement",
       note: "Scope and commercial drift against the original agreement.",
       count: laneCount(coverage, "change_order_rows"),
       system: "contract record",
       required: true,
     },
     {
-      name: "Service performance and credits",
+      name: "Service levels and credits",
       note: performanceRequired
         ? "Service levels achieved, breaches, and credits calculated against them."
         : "Not required by this contract type. Its absence blocks no claim here.",

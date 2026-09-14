@@ -3329,6 +3329,14 @@ function ContractPage({
 
   return (
     <div className="sw-v2-grid sw-v2-contract-detail-grid">
+      <ContractCaseThread
+        contract={contract}
+        coverage={coverage}
+        scopeRows={scopeRows}
+        tab={tab}
+        vm={vm}
+      />
+      <ContractTabGuide tab={tab} />
       <section className="sw-v2-panel sw-v2-span-2 sw-v2-contract-story-panel">
         {/*
           Straight from the tab row to the tab's own content.
@@ -3344,8 +3352,8 @@ function ContractPage({
         {tab === "Optimize" ? (
           <>
             <ContractWorkflowRail vm={vm} />
-            <ContractRefusalChips vm={vm} />
             <ContractOptimizeContent vm={vm} />
+            <ContractRefusalChips vm={vm} />
           </>
         ) : null}
         {tab === "Economics" && detailReady && vm.detail?.spendMonths?.length ? (
@@ -3504,6 +3512,131 @@ function ContractPage({
 
       {tab === "Story" ? <ProductShellCommercialPostureStrip vm={vm} /> : null}
     </div>
+  );
+}
+
+const CONTRACT_TAB_GUIDANCE: Readonly<
+  Record<string, { question: string; handoff: string }>
+> = {
+  Story: {
+    question: "What is this contract, and why does it matter now?",
+    handoff: "Start here, then move to Scope to test the boundary.",
+  },
+  Scope: {
+    question: "What workloads, functions, and services does it actually cover?",
+    handoff: "Use the named scope to avoid negotiating against an assumption.",
+  },
+  Economics: {
+    question: "What did we buy, what was used, and where is the commercial gap?",
+    handoff: "This is the money diagnosis; Performance explains the operating signal.",
+  },
+  Performance: {
+    question: "Does delivery or consumption support the commercial position?",
+    handoff: "Only the applicable evidence lane is shown for this archetype.",
+  },
+  Relationship: {
+    question: "Who owns the decision, and what declared work does the contract touch?",
+    handoff: "The path stops where governed relationship rows stop.",
+  },
+  Evidence: {
+    question: "Which claims can we defend, and which source rows support them?",
+    handoff: "A loaded row is evidence; a cited document is proof.",
+  },
+  Optimize: {
+    question: "What should we ask for, in what order, and what is not sized yet?",
+    handoff: "The lever table is the client-ready output; Sequence gives the order.",
+  },
+  Education: {
+    question: "What should this contract archetype track before the next review?",
+    handoff: "The playbook turns the current case into a repeatable operating habit.",
+  },
+};
+
+function ContractTabGuide({ tab }: { tab: string }) {
+  const guidance = CONTRACT_TAB_GUIDANCE[tab] ?? CONTRACT_TAB_GUIDANCE.Story;
+  return (
+    <section className="sw-v2-contract-tab-guide sw-v2-span-3" aria-label={`${tab} tab question`}>
+      <span className="sw-v2-contract-tab-guide-label">{tab} answers</span>
+      <strong>{guidance.question}</strong>
+      <span>{guidance.handoff}</span>
+    </section>
+  );
+}
+
+function ContractCaseThread({
+  contract,
+  coverage,
+  scopeRows,
+  tab,
+  vm,
+}: {
+  contract: SourceContract360Row;
+  coverage: ReturnType<typeof coverageForContract>;
+  scopeRows: readonly SourceContractApplicationScopeRow[];
+  tab: string;
+  vm: SourceWorkspaceVM;
+}) {
+  const purpose = contractPurposeSummary(contract, coverage, scopeRows);
+  const archetype = vm.contractEducation?.archetypeLabel ?? "Archetype not declared";
+  const namedScope = scopeRows.filter((row) => usableText(row.application_name)).length;
+  const spendRows = numberFromDb(coverage?.spend_rows) ?? 0;
+  const documentRows = numberFromDb(coverage?.document_page_text_rows) ?? 0;
+  const opportunities = vm.opportunityView?.opportunities ?? [];
+  const firstLeverRow = leverTableRows(opportunities)[0];
+  const firstLever = firstLeverRow
+    ? firstLeverRow.shortLabel || firstLeverRow.label
+    : null;
+  const activeStage =
+    tab === "Story"
+      ? 0
+      : tab === "Scope" || tab === "Relationship" || tab === "Education"
+        ? 1
+        : tab === "Economics" || tab === "Performance" || tab === "Evidence"
+          ? 2
+          : 3;
+  const steps = [
+    {
+      label: "What it is",
+      value: archetype,
+      detail: purpose.body.split(" Read it as")[0],
+    },
+    {
+      label: "What it covers",
+      value: namedScope > 0 ? `${namedScope} named workload${namedScope === 1 ? "" : "s"}` : "Scope not loaded",
+      detail: namedScope > 0 ? "Declared contract scope" : "Load SOW or application scope",
+    },
+    {
+      label: "What is proven",
+      value: spendRows > 0 ? `${spendRows} spend month${spendRows === 1 ? "" : "s"}` : "Commercial evidence is thin",
+      detail: documentRows > 0 ? `${documentRows} document passages available for citation` : "Structured rows only; clause proof is withheld",
+    },
+    {
+      label: "What to do",
+      value: firstLever ?? vm.optWorkflow?.primaryAction ?? "No governed action yet",
+      detail: opportunities.length > 0 ? `${opportunities.length} governed lever${opportunities.length === 1 ? "" : "s"} · Finance confirmation stays separate` : "Load opportunity rows before naming an ask",
+    },
+  ];
+
+  return (
+    <section className="sw-v2-contract-case-thread sw-v2-span-3" aria-label="Contract case thread">
+      <div className="sw-v2-contract-case-head">
+        <span className="sw-v2-contract-case-eyebrow">Case thread</span>
+        <span>Follow the contract from archetype to action.</span>
+      </div>
+      <div className="sw-v2-contract-case-steps">
+        {steps.map((step, index) => (
+          <div
+            className={index === activeStage ? "is-active" : ""}
+            key={step.label}
+          >
+            <span className="sw-v2-contract-case-index">0{index + 1}</span>
+            <span className="sw-v2-contract-case-label">{step.label}</span>
+            <strong>{step.value}</strong>
+            <small>{step.detail}</small>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -4254,8 +4387,14 @@ function ContractEvidenceContextStack({
 
   return (
     <div className="sw-v2-fact-stack">
-      <Fact label="Structured evidence rows" value={String(structuredRows)} />
-      <Fact label="Document page rows" value={String(documentRows)} />
+      <Fact
+        label="Reconciled records"
+        value={coverage ? String(structuredRows) : "Not loaded"}
+      />
+      <Fact
+        label="Citable contract passages"
+        value={coverage ? String(documentRows) : "Not loaded"}
+      />
       <Fact
         label="What this means"
         value={
@@ -4314,7 +4453,7 @@ function ContractStoryContextStack({
         }
       />
       <Fact
-        label="Sized ask"
+        label="Candidate value to negotiate"
         value={sizedTotal > 0 ? money(sizedTotal) : "Not sized"}
       />
       {signalCount > 0 ? (
