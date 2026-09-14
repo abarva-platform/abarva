@@ -792,8 +792,8 @@ async function loadDirectSourceWorkspaceImpactRows(
           run<SourceContractEvidenceCoverageRow>(
             `WITH spend AS (
                SELECT
-                 tenant_key,
-                 contract_id,
+                 o.tenant_key,
+                 o.contract_id,
                  count(*)::bigint AS spend_rows,
                  COALESCE(sum(actual_spend), 0)::numeric AS actual_spend_usd,
                  COALESCE(sum(committed_amount), 0)::numeric AS committed_spend_usd
@@ -807,8 +807,8 @@ async function loadDirectSourceWorkspaceImpactRows(
              ),
              performance AS (
                SELECT
-                 tenant_key,
-                 contract_id,
+                 o.tenant_key,
+                 o.contract_id,
                  count(*)::bigint AS performance_rows,
                  count(*) FILTER (WHERE COALESCE(breach_count, 0) > 0)::bigint AS breach_rows,
                  COALESCE(sum(credit_calculated), 0)::numeric AS credit_calculated_usd,
@@ -1466,8 +1466,8 @@ async function loadDerivedSourceWorkspaceImpactLayer(
       const evidenceCoverage = await run<SourceContractEvidenceCoverageRow>(
         `WITH spend AS (
            SELECT
-             tenant_key,
-             contract_id,
+             o.tenant_key,
+             o.contract_id,
              count(*)::bigint AS spend_rows,
              COALESCE(sum(actual_spend), 0)::numeric AS actual_spend_usd,
              COALESCE(sum(committed_amount), 0)::numeric AS committed_spend_usd
@@ -1481,8 +1481,8 @@ async function loadDerivedSourceWorkspaceImpactLayer(
          ),
          performance AS (
            SELECT
-             tenant_key,
-             contract_id,
+             o.tenant_key,
+             o.contract_id,
              count(*)::bigint AS performance_rows,
              count(*) FILTER (WHERE COALESCE(breach_count, 0) > 0)::bigint AS breach_rows,
              COALESCE(sum(credit_calculated), 0)::numeric AS credit_calculated_usd,
