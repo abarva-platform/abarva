@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Population Health Command Center Fixture Cheat Sheet</title>
+  <style>
+    :root { color-scheme: light; --ink:#17202a; --muted:#51606f; --line:#c9d3dd; --soft:#f4f7fa; --accent:#0f766e; --warn:#9a3412; }
+    body { margin:0; font-family: Arial, sans-serif; color:var(--ink); background:#ffffff; }
+    main { max-width:1180px; margin:0 auto; padding:28px; }
+    h1 { font-size:32px; margin:0 0 8px; }
+    h2 { font-size:18px; margin:28px 0 10px; }
+    p { color:var(--muted); line-height:1.45; }
+    .grid { display:grid; grid-template-columns:repeat(5, minmax(150px, 1fr)); gap:10px; }
+    .block { border:1px solid var(--line); border-radius:6px; padding:12px; background:var(--soft); min-height:118px; }
+    .block h3 { margin:0 0 8px; font-size:15px; }
+    .phases { display:flex; gap:8px; flex-wrap:wrap; }
+    .pill { border:1px solid var(--accent); color:var(--accent); padding:7px 10px; border-radius:999px; font-weight:700; }
+    .fields { columns:3; border:1px solid var(--line); border-radius:6px; padding:14px 24px; }
+    .refs { columns:2; border:1px solid var(--line); border-radius:6px; padding:14px 24px; }
+    code { overflow-wrap:anywhere; }
+    .note { border-left:4px solid var(--warn); padding-left:12px; }
+    @media (max-width: 760px) { main { padding:18px; } .grid { grid-template-columns:1fr; } .fields, .refs { columns:1; } }
+  </style>
+</head>
+<body>
+<main data-fixture="population-health-command-center" data-phase-count="6" data-field-count="21" data-upload-block-count="5" data-file-ref-count="23">
+  <h1>Population Health Command Center Fixture</h1>
+  <p>Unloaded synthetic evidence pack for Moves rich-context testing. It is aggregate-only, uses cover names, and does not claim live tenant readiness.</p>
+  <section>
+    <h2>Phases</h2>
+    <div class="phases"><span class="pill" data-phase="P0">P0</span>
+<span class="pill" data-phase="P1">P1</span>
+<span class="pill" data-phase="P2">P2</span>
+<span class="pill" data-phase="P3">P3</span>
+<span class="pill" data-phase="P4">P4</span>
+<span class="pill" data-phase="P5">P5</span></div>
+  </section>
+  <section>
+    <h2>Upload Blocks</h2>
+    <div class="grid"><article class="block" data-upload-block="CSV current-state"><h3>CSV current-state</h3><b>Structured path</b><p>Use all eight CSV tables.</p></article>
+<article class="block" data-upload-block="XLSX current-state"><h3>XLSX current-state</h3><b>Structured path</b><p>Use all eight XLSX workbooks.</p></article>
+<article class="block" data-upload-block="DOCX narrative"><h3>DOCX narrative</h3><b>Upload and Review</b><p>Use all four DOCX narratives.</p></article>
+<article class="block" data-upload-block="Markdown narrative"><h3>Markdown narrative</h3><b>Upload and Review</b><p>Use selected Markdown companions.</p></article>
+<article class="block" data-upload-block="Control proof"><h3>Control proof</h3><b>Reviewer</b><p>Use expected signals and validation report.</p></article></div>
+  </section>
+  <section>
+    <h2>Fields To Watch</h2>
+    <ol class="fields"><li data-field="tenant_key">tenant_key</li>
+<li data-field="source_file">source_file</li>
+<li data-field="source_row">source_row</li>
+<li data-field="owner_role">owner_role</li>
+<li data-field="evidence_note">evidence_note</li>
+<li data-field="measure_code">measure_code</li>
+<li data-field="cohort_key">cohort_key</li>
+<li data-field="open_gap_count">open_gap_count</li>
+<li data-field="closed_gap_count">closed_gap_count</li>
+<li data-field="closure_rate_pct">closure_rate_pct</li>
+<li data-field="source_control_state">source_control_state</li>
+<li data-field="monitoring_state">monitoring_state</li>
+<li data-field="vacancy_status">vacancy_status</li>
+<li data-field="feed_cadence">feed_cadence</li>
+<li data-field="design_scope_only">design_scope_only</li>
+<li data-field="decision_right">decision_right</li>
+<li data-field="status">status</li>
+<li data-field="severity">severity</li>
+<li data-field="metric_value">metric_value</li>
+<li data-field="source_reference">source_reference</li>
+<li data-field="acceptance_signal">acceptance_signal</li></ol>
+  </section>
+  <section>
+    <h2>File References</h2>
+    <ol class="refs" data-file-refs><li><code>data/systems_inventory.csv</code></li>
+<li><code>data/interface_inventory.csv</code></li>
+<li><code>data/facility_footprint.csv</code></li>
+<li><code>data/org_roles.csv</code></li>
+<li><code>data/roadmap.csv</code></li>
+<li><code>data/quality_measures.csv</code></li>
+<li><code>data/care_gap_cells.csv</code></li>
+<li><code>data/operating_evidence.csv</code></li>
+<li><code>data/systems_inventory.xlsx</code></li>
+<li><code>data/interface_inventory.xlsx</code></li>
+<li><code>data/facility_footprint.xlsx</code></li>
+<li><code>data/org_roles.xlsx</code></li>
+<li><code>data/roadmap.xlsx</code></li>
+<li><code>data/quality_measures.xlsx</code></li>
+<li><code>data/care_gap_cells.xlsx</code></li>
+<li><code>data/operating_evidence.xlsx</code></li>
+<li><code>documents/case_study.docx</code></li>
+<li><code>documents/process_walkthrough.docx</code></li>
+<li><code>documents/governance_history.docx</code></li>
+<li><code>documents/test_runbook.docx</code></li>
+<li><code>documents/case_study.md</code></li>
+<li><code>documents/process_walkthrough.md</code></li>
+<li><code>expected-signals.json</code></li></ol>
+  </section>
+  <p class="note">Expected generated-artifact signals: shadow registry, unversioned channels, weekly legacy feed, retired model, declined alert, vacant VP Application Services, and zero UNVALIDATED value inputs.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,144 @@
+{
+  "pack_id": "population-health-command-center-rich-context-v1",
+  "generated_at": "2026-09-05T00:00:00Z",
+  "fixture_status": "synthetic_unloaded",
+  "tenant_loading_status": "not_loaded",
+  "public_repo_safety": "uses cover organization names, generic locations, aggregate counts, and no PHI/PII",
+  "headline": {
+    "attributed_lives": 418000,
+    "open_care_gaps": 1142000,
+    "closure_rate_pct": 41.2,
+    "weighted_cell_closure_rate_pct": 41.19,
+    "quality_measures": 40
+  },
+  "tables": [
+    {
+      "slug": "systems_inventory",
+      "label": "Systems Inventory",
+      "owner": "IT applications owner",
+      "rows": 120,
+      "csv": "data/systems_inventory.csv",
+      "xlsx": "data/systems_inventory.xlsx"
+    },
+    {
+      "slug": "interface_inventory",
+      "label": "Interface Inventory",
+      "owner": "Integration services owner",
+      "rows": 86,
+      "csv": "data/interface_inventory.csv",
+      "xlsx": "data/interface_inventory.xlsx"
+    },
+    {
+      "slug": "facility_footprint",
+      "label": "Facility Footprint",
+      "owner": "Clinical operations owner",
+      "rows": 78,
+      "csv": "data/facility_footprint.csv",
+      "xlsx": "data/facility_footprint.xlsx"
+    },
+    {
+      "slug": "org_roles",
+      "label": "Organization Roles",
+      "owner": "Technology leadership",
+      "rows": 72,
+      "csv": "data/org_roles.csv",
+      "xlsx": "data/org_roles.xlsx"
+    },
+    {
+      "slug": "roadmap",
+      "label": "Roadmap",
+      "owner": "Move sponsor",
+      "rows": 42,
+      "csv": "data/roadmap.csv",
+      "xlsx": "data/roadmap.xlsx"
+    },
+    {
+      "slug": "quality_measures",
+      "label": "Quality Measures",
+      "owner": "Quality analytics",
+      "rows": 40,
+      "csv": "data/quality_measures.csv",
+      "xlsx": "data/quality_measures.xlsx"
+    },
+    {
+      "slug": "care_gap_cells",
+      "label": "Care Gap Cells",
+      "owner": "Population health analytics",
+      "rows": 118,
+      "csv": "data/care_gap_cells.csv",
+      "xlsx": "data/care_gap_cells.xlsx"
+    },
+    {
+      "slug": "operating_evidence",
+      "label": "Operating Evidence",
+      "owner": "Move PMO",
+      "rows": 282,
+      "csv": "data/operating_evidence.csv",
+      "xlsx": "data/operating_evidence.xlsx"
+    }
+  ],
+  "narrative_documents": [
+    {
+      "markdown": "documents/case_study.md",
+      "docx": "documents/case_study.docx"
+    },
+    {
+      "markdown": "documents/process_walkthrough.md",
+      "docx": "documents/process_walkthrough.docx"
+    },
+    {
+      "markdown": "documents/governance_history.md",
+      "docx": "documents/governance_history.docx"
+    },
+    {
+      "markdown": "documents/test_runbook.md",
+      "docx": "documents/test_runbook.docx"
+    }
+  ],
+  "upload_blocks": [
+    "load-plans/01-structured-csv-upload.json",
+    "load-plans/02-structured-xlsx-upload.json",
+    "load-plans/03-review-docx-upload.json",
+    "load-plans/04-review-markdown-upload.json"
+  ],
+  "cheat_sheet_file_refs": [
+    "data/systems_inventory.csv",
+    "data/interface_inventory.csv",
+    "data/facility_footprint.csv",
+    "data/org_roles.csv",
+    "data/roadmap.csv",
+    "data/quality_measures.csv",
+    "data/care_gap_cells.csv",
+    "data/operating_evidence.csv",
+    "data/systems_inventory.xlsx",
+    "data/interface_inventory.xlsx",
+    "data/facility_footprint.xlsx",
+    "data/org_roles.xlsx",
+    "data/roadmap.xlsx",
+    "data/quality_measures.xlsx",
+    "data/care_gap_cells.xlsx",
+    "data/operating_evidence.xlsx",
+    "documents/case_study.docx",
+    "documents/process_walkthrough.docx",
+    "documents/governance_history.docx",
+    "documents/test_runbook.docx",
+    "documents/case_study.md",
+    "documents/process_walkthrough.md",
+    "expected-signals.json"
+  ],
+  "expected_artifact_signals": [
+    "shadow registry",
+    "unversioned interface channels",
+    "weekly legacy-platform feed",
+    "retired 2024 readmission model",
+    "declined 2025 sepsis alert",
+    "vacant VP Application Services",
+    "UNVALIDATED zero-value inputs"
+  ],
+  "non_claims": [
+    "loaded into tenant",
+    "live prompt proof",
+    "real patient data",
+    "realized savings"
+  ]
+}

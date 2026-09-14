@@ -1,0 +1,73 @@
+role_id,role_title,department,reports_to_role,location,fte,vacancy_status,primary_platform,decision_right,evidence_note
+ROLE-0001,Chief Digital and Information Officer,Executive,Chief Executive Officer,Metro HQ,1.0,filled,Enterprise,executive sponsor,synthetic leadership role
+ROLE-0002,VP Application Services,Technology,Chief Digital and Information Officer,Metro HQ,1.0,open_requisition,EHR and clinical apps,blocking vacancy,intentionally vacant; two directors report to this role
+ROLE-0003,Director Clinical Applications,Technology,VP Application Services,Regional Office,1.0,filled,EHR,implementation owner,reports to vacant VP Application Services
+ROLE-0004,Director Patient Access Platforms,Technology,VP Application Services,Remote,1.0,filled,CRM,workflow owner,reports to vacant VP Application Services
+ROLE-0005,Data Governance Lead,Data and Analytics,VP Enterprise Data,Metro HQ,1.0,open_requisition,Governance,approval dependency,open role required before wave 1 governance sign-off
+ROLE-0006,Clinical AI Monitoring Manager,Quality,Chief Quality Officer,Remote,1.0,open_requisition,Model monitoring,approval dependency,third open role; no model moves without owner
+ROLE-0007,Analyst 007,Clinical Operations,Director Clinical Applications,Regional Office,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0008,Nurse Informaticist 008,Value Based Care,VP Value Based Care,Remote,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0009,Product Owner 009,Data Platform,Chief Quality Officer,Metro HQ,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0010,Data Engineer 010,Care Management,Director Data Platform,Regional Office,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0011,Quality Specialist 011,Patient Access,Director Clinical Applications,Remote,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0012,Manager 012,Quality,VP Value Based Care,Metro HQ,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0013,Analyst 013,Clinical Operations,Chief Quality Officer,Regional Office,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0014,Nurse Informaticist 014,Value Based Care,Director Data Platform,Remote,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0015,Product Owner 015,Data Platform,Director Clinical Applications,Metro HQ,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0016,Data Engineer 016,Care Management,VP Value Based Care,Regional Office,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0017,Quality Specialist 017,Patient Access,Chief Quality Officer,Remote,0.5,filled,CRM,consulted,synthetic org role row
+ROLE-0018,Manager 018,Quality,Director Data Platform,Metro HQ,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0019,Analyst 019,Clinical Operations,Director Clinical Applications,Regional Office,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0020,Nurse Informaticist 020,Value Based Care,VP Value Based Care,Remote,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0021,Product Owner 021,Data Platform,Chief Quality Officer,Metro HQ,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0022,Data Engineer 022,Care Management,Director Data Platform,Regional Office,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0023,Quality Specialist 023,Patient Access,Director Clinical Applications,Remote,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0024,Manager 024,Quality,VP Value Based Care,Metro HQ,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0025,Analyst 025,Clinical Operations,Chief Quality Officer,Regional Office,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0026,Nurse Informaticist 026,Value Based Care,Director Data Platform,Remote,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0027,Product Owner 027,Data Platform,Director Clinical Applications,Metro HQ,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0028,Data Engineer 028,Care Management,VP Value Based Care,Regional Office,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0029,Quality Specialist 029,Patient Access,Chief Quality Officer,Remote,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0030,Manager 030,Quality,Director Data Platform,Metro HQ,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0031,Analyst 031,Clinical Operations,Director Clinical Applications,Regional Office,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0032,Nurse Informaticist 032,Value Based Care,VP Value Based Care,Remote,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0033,Product Owner 033,Data Platform,Chief Quality Officer,Metro HQ,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0034,Data Engineer 034,Care Management,Director Data Platform,Regional Office,0.5,filled,Analytics,informed,synthetic org role row
+ROLE-0035,Quality Specialist 035,Patient Access,Director Clinical Applications,Remote,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0036,Manager 036,Quality,VP Value Based Care,Metro HQ,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0037,Analyst 037,Clinical Operations,Chief Quality Officer,Regional Office,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0038,Nurse Informaticist 038,Value Based Care,Director Data Platform,Remote,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0039,Product Owner 039,Data Platform,Director Clinical Applications,Metro HQ,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0040,Data Engineer 040,Care Management,VP Value Based Care,Regional Office,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0041,Quality Specialist 041,Patient Access,Chief Quality Officer,Remote,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0042,Manager 042,Quality,Director Data Platform,Metro HQ,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0043,Analyst 043,Clinical Operations,Director Clinical Applications,Regional Office,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0044,Nurse Informaticist 044,Value Based Care,VP Value Based Care,Remote,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0045,Product Owner 045,Data Platform,Chief Quality Officer,Metro HQ,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0046,Data Engineer 046,Care Management,Director Data Platform,Regional Office,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0047,Quality Specialist 047,Patient Access,Director Clinical Applications,Remote,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0048,Manager 048,Quality,VP Value Based Care,Metro HQ,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0049,Analyst 049,Clinical Operations,Chief Quality Officer,Regional Office,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0050,Nurse Informaticist 050,Value Based Care,Director Data Platform,Remote,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0051,Product Owner 051,Data Platform,Director Clinical Applications,Metro HQ,0.5,filled,Care management,delivery,synthetic org role row
+ROLE-0052,Data Engineer 052,Care Management,VP Value Based Care,Regional Office,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0053,Quality Specialist 053,Patient Access,Chief Quality Officer,Remote,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0054,Manager 054,Quality,Director Data Platform,Metro HQ,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0055,Analyst 055,Clinical Operations,Director Clinical Applications,Regional Office,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0056,Nurse Informaticist 056,Value Based Care,VP Value Based Care,Remote,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0057,Product Owner 057,Data Platform,Chief Quality Officer,Metro HQ,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0058,Data Engineer 058,Care Management,Director Data Platform,Regional Office,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0059,Quality Specialist 059,Patient Access,Director Clinical Applications,Remote,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0060,Manager 060,Quality,VP Value Based Care,Metro HQ,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0061,Analyst 061,Clinical Operations,Chief Quality Officer,Regional Office,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0062,Nurse Informaticist 062,Value Based Care,Director Data Platform,Remote,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0063,Product Owner 063,Data Platform,Director Clinical Applications,Metro HQ,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0064,Data Engineer 064,Care Management,VP Value Based Care,Regional Office,1.0,filled,EHR,accountable,synthetic org role row
+ROLE-0065,Quality Specialist 065,Patient Access,Chief Quality Officer,Remote,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0066,Manager 066,Quality,Director Data Platform,Metro HQ,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0067,Analyst 067,Clinical Operations,Director Clinical Applications,Regional Office,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0068,Nurse Informaticist 068,Value Based Care,VP Value Based Care,Remote,0.5,filled,EHR,accountable,synthetic org role row
+ROLE-0069,Product Owner 069,Data Platform,Chief Quality Officer,Metro HQ,1.0,filled,CRM,consulted,synthetic org role row
+ROLE-0070,Data Engineer 070,Care Management,Director Data Platform,Regional Office,1.0,filled,Analytics,informed,synthetic org role row
+ROLE-0071,Quality Specialist 071,Patient Access,Director Clinical Applications,Remote,1.0,filled,Care management,delivery,synthetic org role row
+ROLE-0072,Manager 072,Quality,VP Value Based Care,Metro HQ,1.0,filled,EHR,accountable,synthetic org role row
