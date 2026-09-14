@@ -108,4 +108,41 @@ describe("contractCoverageWithDetailLanes", () => {
       scope_rows: 4,
     });
   });
+
+  it("uses populated detail rows during the hydration transition", () => {
+    const contract = {
+      tenant_key: "skyharbor_global",
+      contract_id: "CONTRACT-002",
+      vendor_ref: "VENDOR-002",
+      vendor_name: "Synthetic Vendor",
+      contract_name: "Synthetic platform agreement",
+    } as unknown as SourceContract360Row;
+    const resolved = contractCoverageWithDetailLanes(
+      {
+        contract_id: contract.contract_id,
+        spend_rows: 12,
+        actual_spend_usd: 0,
+        committed_spend_usd: 0,
+      } as never,
+      contract,
+      [],
+      {
+        detailState: "loading",
+        detail: {
+          spendMonths: [
+            { actual_spend: 66_100, committed_amount: 1_550_000 },
+          ],
+          performancePeriods: [],
+          docExtractions: [],
+        },
+        opportunityView: null,
+      } as never,
+    );
+
+    expect(resolved).toMatchObject({
+      actual_spend_usd: 66_100,
+      committed_spend_usd: 1_550_000,
+      spend_rows: 1,
+    });
+  });
 });
