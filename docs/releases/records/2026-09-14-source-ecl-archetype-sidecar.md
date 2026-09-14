@@ -38,6 +38,8 @@ classification exists, while keeping the contract-book denominator explicit.
 - Source ECL portfolio adapter reads canonical declared archetype rows.
 - The follow-up read uses the physical canonical `annual_value` field rather
   than a Layer 4 projection alias.
+- The canonical vendor reference/name read uses the physical `vendor_id` and
+  `source.vendor.legal_name` fields.
 - Source Coverage groups canonical supplemental rows without changing the
   register denominator or inferring classifications.
 - Focused regression coverage protects the ECL read path and Coverage counts.
@@ -49,6 +51,8 @@ classification exists, while keeping the contract-book denominator explicit.
   projection; 60 tests passed.
 - **PASS:** regression guard rejects projection-only annual-value aliases in
   the canonical archetype query.
+- **PASS:** regression guard rejects projection-only vendor fields in the
+  canonical archetype query.
 - **PASS:** ESLint for all changed Source files.
 - **PASS:** `git diff --check`.
 - **PASS:** `npm run release:check` after this record was brought into the

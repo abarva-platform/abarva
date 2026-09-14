@@ -1021,6 +1021,11 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         ) {
           expect(sql).not.toContain("resolved_annual_value");
           expect(sql).toContain("c.annual_value::numeric AS annual_value");
+          expect(sql).toContain("c.vendor_id AS vendor_ref");
+          expect(sql).toContain("FROM source.contract c");
+          expect(sql).toContain("LEFT JOIN source.vendor v");
+          expect(sql).not.toContain("c.vendor_ref");
+          expect(sql).not.toContain("c.vendor_name");
           return [
             {
               tenant_key: "meridian-health",
