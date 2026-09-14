@@ -83,20 +83,20 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(source).toContain("posture.items.map");
   });
 
-  it("renders the Optimize executive lever summary in the product shell", () => {
+  it("keeps Contract 360 Optimize table-first", () => {
     const source = readFileSync(
       `${__dirname}/../WorkspaceExecutiveShell.tsx`,
       "utf8",
     );
 
-    expect(source).toContain(
+    expect(source).toContain("<ContractOptimizeContent vm={vm} />");
+    expect(source).toContain("<ContractLeverTableContent vm={vm} />");
+    expect(source).toContain('tab === "Optimize"');
+    expect(source).not.toContain(
       "<ProductShellOptimizationExecutiveStrip vm={vm} />",
     );
-    expect(source).toContain('tab === "Optimize"');
-    expect(source).toContain('aria-label="Executive lever summary"');
-    expect(source).toContain("Signal-stage");
-    expect(source).toContain("requires more evidence before upgrade");
-    expect(source).toContain("no outcome claimed");
+    expect(source).not.toContain("<ContractWorkflowRail vm={vm} />");
+    expect(source).not.toContain("<ContractRefusalChips vm={vm} />");
   });
 
   it("promotes supplemental depth/action contracts into the focused contract list", () => {

@@ -138,29 +138,49 @@ export function ContractEconomicsBriefing({
         </section>
 
         <section className="sw-c3-card sw-c3-ap-recon">
-          <div className="sw-c3-eyebrow">Invoice reconciliation</div>
-          <div className="sw-c3-recon">
-            <div className="sw-c3-recon-row">
-              <span>Invoiced to date</span>
-              <span className="sw-c3-mono">{money(totals.invoiced)}</span>
-            </div>
-            <div className="sw-c3-recon-row">
-              <span>Paid to date</span>
-              <span className="sw-c3-mono">{money(totals.paid)}</span>
-            </div>
-            <div className="sw-c3-recon-row">
-              <span>In flight</span>
-              <span className="sw-c3-mono">{money(inFlight)}</span>
-            </div>
-            <div className="sw-c3-recon-row sw-c3-recon-total">
-              <span>Consumed against invoiced</span>
-              <span className="sw-c3-mono">
-                {totals.invoiced > 0
-                  ? `${Math.round((totals.actual / totals.invoiced) * 100)}%`
-                  : "Not established"}
-              </span>
-            </div>
-          </div>
+          <div className="sw-c3-eyebrow">Commercial reconciliation</div>
+          <p className="sw-c3-note">
+            The chart shows the shape. This table shows the figures behind the
+            conversation.
+          </p>
+          <table className="sw-c3-recon-table">
+            <thead>
+              <tr>
+                <th scope="col">Measure</th>
+                <th scope="col">To date</th>
+                <th scope="col">Read</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Committed capacity</th>
+                <td>{hasCommitment ? money(totals.committed) : "Not loaded"}</td>
+                <td>Reference pace</td>
+              </tr>
+              <tr>
+                <th scope="row">Consumed</th>
+                <td>{money(totals.actual)}</td>
+                <td>
+                  {utilization != null ? `${utilization}% of commitment` : "No denominator"}
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Invoiced</th>
+                <td>{money(totals.invoiced)}</td>
+                <td>Billing recorded</td>
+              </tr>
+              <tr>
+                <th scope="row">Paid</th>
+                <td>{money(totals.paid)}</td>
+                <td>{Math.abs(inFlight) < 1 ? "Reconciled" : `${money(inFlight)} in flight`}</td>
+              </tr>
+              <tr>
+                <th scope="row">Unconsumed commitment</th>
+                <td>{hasCommitment ? money(totals.committed - totals.actual) : "Not sized"}</td>
+                <td>{hasCommitment ? "Commercial gap" : "No commitment basis"}</td>
+              </tr>
+            </tbody>
+          </table>
           <p className="sw-c3-prose">
             {Math.abs(inFlight) < 1
               ? `Invoiced and paid agree across ${totals.months} reconciled month${totals.months === 1 ? "" : "s"}. There is no billing leakage to recover here.`

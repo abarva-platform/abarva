@@ -142,7 +142,7 @@ describe("contract depth package Layer 4 overlay job", () => {
       "source_contract_360_change_order_rows_package: 5",
     );
     expect(source).toContain(
-      "COALESCE(NULLIF(c.raw_payload ->> 'archetype', ''), v.supplier_category) AS vendor_category",
+      "NULLIF(c.raw_payload ->> 'contract_archetype', ''),\n        NULLIF(c.raw_payload ->> 'archetype', ''),\n        v.supplier_category",
     );
     expect(source).toContain(`SELECT * FROM sourcing
     WHERE source.can_read_sourcing_tenant(tenant_key)

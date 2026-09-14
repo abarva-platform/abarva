@@ -984,8 +984,16 @@ async function loadDirectSourceWorkspaceImpactRows(
                c.contract_id,
                c.vendor_ref,
                c.vendor_name,
-               c.vendor_category,
-               c.vendor_category AS contract_archetype,
+               COALESCE(
+                 NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
+                 NULLIF(canonical.raw_payload ->> 'archetype', ''),
+                 c.vendor_category
+               ) AS vendor_category,
+               COALESCE(
+                 NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
+                 NULLIF(canonical.raw_payload ->> 'archetype', ''),
+                 c.vendor_category
+               ) AS contract_archetype,
                c.contract_name,
                COALESCE(spend.spend_rows, 0)::bigint AS spend_rows,
                COALESCE(spend.actual_spend_usd, 0)::numeric AS actual_spend_usd,
@@ -1038,6 +1046,9 @@ async function loadDirectSourceWorkspaceImpactRows(
                ) AS evidence_basis_json,
                c.load_run_id
               FROM source.contract_360 c
+              LEFT JOIN source.contract canonical
+                ON canonical.tenant_key = c.tenant_key
+               AND canonical.contract_id = c.contract_id
               LEFT JOIN spend ON spend.tenant_key = c.tenant_key AND spend.contract_id = c.contract_id
               LEFT JOIN performance ON performance.tenant_key = c.tenant_key AND performance.contract_id = c.contract_id
               LEFT JOIN opportunities ON opportunities.tenant_key = c.tenant_key AND opportunities.contract_id = c.contract_id
@@ -1658,8 +1669,16 @@ async function loadDerivedSourceWorkspaceImpactLayer(
            c.contract_id,
            c.vendor_ref,
            c.vendor_name,
-           c.vendor_category,
-           c.vendor_category AS contract_archetype,
+           COALESCE(
+             NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
+             NULLIF(canonical.raw_payload ->> 'archetype', ''),
+             c.vendor_category
+           ) AS vendor_category,
+           COALESCE(
+             NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
+             NULLIF(canonical.raw_payload ->> 'archetype', ''),
+             c.vendor_category
+           ) AS contract_archetype,
            c.contract_name,
            COALESCE(spend.spend_rows, 0)::bigint AS spend_rows,
            COALESCE(spend.actual_spend_usd, 0)::numeric AS actual_spend_usd,
@@ -1712,6 +1731,9 @@ async function loadDerivedSourceWorkspaceImpactLayer(
            ) AS evidence_basis_json,
            c.load_run_id
           FROM source.contract_360 c
+          LEFT JOIN source.contract canonical
+            ON canonical.tenant_key = c.tenant_key
+           AND canonical.contract_id = c.contract_id
           LEFT JOIN spend ON spend.tenant_key = c.tenant_key AND spend.contract_id = c.contract_id
           LEFT JOIN performance ON performance.tenant_key = c.tenant_key AND performance.contract_id = c.contract_id
           LEFT JOIN opportunities ON opportunities.tenant_key = c.tenant_key AND opportunities.contract_id = c.contract_id

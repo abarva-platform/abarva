@@ -26,7 +26,6 @@ import type { SourceWorkspaceVM } from "./buildViewModel";
 import {
   ContractEducationBriefing,
   ContractValueLedgers,
-  ContractWorkflowRail,
 } from "./Contract360Briefing";
 import {
   ContractBriefingHeader,
@@ -43,10 +42,7 @@ import {
 } from "./Contract360Economics";
 import { ContractLeverTable } from "./ContractLeverTable";
 import { ContractAnatomy } from "./ContractAnatomy";
-import {
-  ContractOptimizeMethod,
-  ContractRefusalChips,
-} from "./ContractOptimizeMethod";
+import { ContractOptimizeMethod } from "./ContractOptimizeMethod";
 import { asSentence, fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
@@ -3329,15 +3325,11 @@ function ContractPage({
 
   return (
     <div className="sw-v2-grid sw-v2-contract-detail-grid">
-      <ContractCaseThread
-        contract={contract}
-        coverage={coverage}
-        scopeRows={scopeRows}
-        tab={tab}
-        vm={vm}
-      />
-      <ContractTabGuide tab={tab} />
-      <section className="sw-v2-panel sw-v2-span-2 sw-v2-contract-story-panel">
+      <section
+        className={`sw-v2-panel ${
+          tab === "Optimize" ? "sw-v2-span-3" : "sw-v2-span-2"
+        } sw-v2-contract-story-panel`}
+      >
         {/*
           Straight from the tab row to the tab's own content.
 
@@ -3350,11 +3342,7 @@ function ContractPage({
           provenance line, and states its figures once.
         */}
         {tab === "Optimize" ? (
-          <>
-            <ContractWorkflowRail vm={vm} />
-            <ContractOptimizeContent vm={vm} />
-            <ContractRefusalChips vm={vm} />
-          </>
+          <ContractOptimizeContent vm={vm} />
         ) : null}
         {tab === "Economics" && detailReady && vm.detail?.spendMonths?.length ? (
           // One chart of these rows, not two. The briefing carries the
@@ -3463,7 +3451,7 @@ function ContractPage({
         )}
       </section>
 
-      <section className="sw-v2-panel sw-v2-contract-context-panel">
+      {tab !== "Optimize" ? <section className="sw-v2-panel sw-v2-contract-context-panel">
         <ContractDetailSidePanel
           contract={contract}
           coverage={coverage}
@@ -3508,135 +3496,10 @@ function ContractPage({
             vm={vm}
           />
         )}
-      </section>
+      </section> : null}
 
       {tab === "Story" ? <ProductShellCommercialPostureStrip vm={vm} /> : null}
     </div>
-  );
-}
-
-const CONTRACT_TAB_GUIDANCE: Readonly<
-  Record<string, { question: string; handoff: string }>
-> = {
-  Story: {
-    question: "What is this contract, and why does it matter now?",
-    handoff: "Start here, then move to Scope to test the boundary.",
-  },
-  Scope: {
-    question: "What workloads, functions, and services does it actually cover?",
-    handoff: "Use the named scope to avoid negotiating against an assumption.",
-  },
-  Economics: {
-    question: "What did we buy, what was used, and where is the commercial gap?",
-    handoff: "This is the money diagnosis; Performance explains the operating signal.",
-  },
-  Performance: {
-    question: "Does delivery or consumption support the commercial position?",
-    handoff: "Only the applicable evidence lane is shown for this archetype.",
-  },
-  Relationship: {
-    question: "Who owns the decision, and what declared work does the contract touch?",
-    handoff: "The path stops where governed relationship rows stop.",
-  },
-  Evidence: {
-    question: "Which claims can we defend, and which source rows support them?",
-    handoff: "A loaded row is evidence; a cited document is proof.",
-  },
-  Optimize: {
-    question: "What should we ask for, in what order, and what is not sized yet?",
-    handoff: "The lever table is the client-ready output; Sequence gives the order.",
-  },
-  Education: {
-    question: "What should this contract archetype track before the next review?",
-    handoff: "The playbook turns the current case into a repeatable operating habit.",
-  },
-};
-
-function ContractTabGuide({ tab }: { tab: string }) {
-  const guidance = CONTRACT_TAB_GUIDANCE[tab] ?? CONTRACT_TAB_GUIDANCE.Story;
-  return (
-    <section className="sw-v2-contract-tab-guide sw-v2-span-3" aria-label={`${tab} tab question`}>
-      <span className="sw-v2-contract-tab-guide-label">{tab} answers</span>
-      <strong>{guidance.question}</strong>
-      <span>{guidance.handoff}</span>
-    </section>
-  );
-}
-
-function ContractCaseThread({
-  contract,
-  coverage,
-  scopeRows,
-  tab,
-  vm,
-}: {
-  contract: SourceContract360Row;
-  coverage: ReturnType<typeof coverageForContract>;
-  scopeRows: readonly SourceContractApplicationScopeRow[];
-  tab: string;
-  vm: SourceWorkspaceVM;
-}) {
-  const purpose = contractPurposeSummary(contract, coverage, scopeRows);
-  const archetype = vm.contractEducation?.archetypeLabel ?? "Archetype not declared";
-  const namedScope = scopeRows.filter((row) => usableText(row.application_name)).length;
-  const spendRows = numberFromDb(coverage?.spend_rows) ?? 0;
-  const documentRows = numberFromDb(coverage?.document_page_text_rows) ?? 0;
-  const opportunities = vm.opportunityView?.opportunities ?? [];
-  const firstLeverRow = leverTableRows(opportunities)[0];
-  const firstLever = firstLeverRow
-    ? firstLeverRow.shortLabel || firstLeverRow.label
-    : null;
-  const activeStage =
-    tab === "Story"
-      ? 0
-      : tab === "Scope" || tab === "Relationship" || tab === "Education"
-        ? 1
-        : tab === "Economics" || tab === "Performance" || tab === "Evidence"
-          ? 2
-          : 3;
-  const steps = [
-    {
-      label: "What it is",
-      value: archetype,
-      detail: purpose.body.split(" Read it as")[0],
-    },
-    {
-      label: "What it covers",
-      value: namedScope > 0 ? `${namedScope} named workload${namedScope === 1 ? "" : "s"}` : "Scope not loaded",
-      detail: namedScope > 0 ? "Declared contract scope" : "Load SOW or application scope",
-    },
-    {
-      label: "What is proven",
-      value: spendRows > 0 ? `${spendRows} spend month${spendRows === 1 ? "" : "s"}` : "Commercial evidence is thin",
-      detail: documentRows > 0 ? `${documentRows} document passages available for citation` : "Structured rows only; clause proof is withheld",
-    },
-    {
-      label: "What to do",
-      value: firstLever ?? vm.optWorkflow?.primaryAction ?? "No governed action yet",
-      detail: opportunities.length > 0 ? `${opportunities.length} governed lever${opportunities.length === 1 ? "" : "s"} · Finance confirmation stays separate` : "Load opportunity rows before naming an ask",
-    },
-  ];
-
-  return (
-    <section className="sw-v2-contract-case-thread sw-v2-span-3" aria-label="Contract case thread">
-      <div className="sw-v2-contract-case-head">
-        <span className="sw-v2-contract-case-eyebrow">Case thread</span>
-        <span>Follow the contract from archetype to action.</span>
-      </div>
-      <div className="sw-v2-contract-case-steps">
-        {steps.map((step, index) => (
-          <div
-            className={index === activeStage ? "is-active" : ""}
-            key={step.label}
-          >
-            <span className="sw-v2-contract-case-index">0{index + 1}</span>
-            <span className="sw-v2-contract-case-label">{step.label}</span>
-            <strong>{step.value}</strong>
-            <small>{step.detail}</small>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -4706,7 +4569,6 @@ function ContractOptimizeContent({ vm }: { vm: SourceWorkspaceVM }) {
 
   return (
     <>
-      <ProductShellOptimizationExecutiveStrip vm={vm} />
       <SubtabBar
         tabs={CONTRACT_OPTIMIZE_SUBTABS}
         active={subtab}
@@ -4913,135 +4775,6 @@ function SourceLeverSequence({
         </p>
       ) : null}
     </div>
-  );
-}
-
-function ProductShellOptimizationExecutiveStrip({
-  vm,
-}: {
-  vm: SourceWorkspaceVM;
-}) {
-  const view = vm.opportunityView;
-  if (!view || view.opportunities.length === 0) return null;
-
-  const quantifiedCount = view.opportunities.filter(
-    (opportunity) => opportunity.stageRaw === "quantified",
-  ).length;
-  const signalCount = view.opportunities.filter(
-    (opportunity) => opportunity.stageRaw === "signal",
-  ).length;
-  const financeConfirmedCount = view.opportunities.filter(
-    (opportunity) => opportunity.stageRaw === "finance_confirmed",
-  ).length;
-  // Sized and signal-stage dollars are reported apart. A signal has no
-  // defensible number behind it yet, so folding it into one total would
-  // overstate exactly the figure a CFO will challenge first.
-  const sizedTotalUsd = sizedOpportunityTotalUsd(view.opportunities);
-  const items = [
-    {
-      label: "Levers",
-      value: String(view.opportunities.length),
-      detail: `${quantifiedCount} sized · ${signalCount} signal-stage`,
-      tone: "#0a0a0b",
-    },
-    {
-      label: "Sized opportunity",
-      value: sizedTotalUsd > 0 ? money(sizedTotalUsd) : "Not sized",
-      detail: "excludes signal-stage rows; candidate, not booked",
-      tone: SOURCE_CHART_PALETTE.teal,
-    },
-    {
-      label: "Quantified",
-      value: String(quantifiedCount),
-      detail: "calculation-backed or document-evidenced",
-      tone: SOURCE_CHART_PALETTE.teal,
-    },
-    {
-      label: "Signal-stage",
-      value: String(signalCount),
-      detail: "requires more evidence before upgrade",
-      tone: SOURCE_CHART_PALETTE.amber,
-    },
-    {
-      label: "Finance confirmed",
-      value: String(financeConfirmedCount),
-      detail:
-        view.financeConfirmed === "Not established"
-          ? "no outcome claimed"
-          : `${view.financeConfirmed} outcome`,
-      tone:
-        financeConfirmedCount > 0
-          ? SOURCE_CHART_PALETTE.teal
-          : SOURCE_CHART_PALETTE.slate,
-    },
-  ];
-
-  return (
-    <section
-      aria-label="Executive lever summary"
-      style={{
-        border: "1px solid rgba(10,10,11,.1)",
-        borderRadius: 8,
-        background: "#fffdfa",
-        margin: "0 0 14px",
-        padding: "12px 14px",
-      }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gap: 8,
-          gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
-        }}
-      >
-        {items.map((item) => (
-          <div
-            key={item.label}
-            aria-label={`${item.label}: ${item.value}`}
-            style={{
-              borderLeft: `3px solid ${item.tone}`,
-              minHeight: 62,
-              padding: "2px 10px 2px 11px",
-            }}
-          >
-            <span
-              style={{
-                color: "#74716a",
-                display: "block",
-                fontSize: 9.5,
-                fontWeight: 850,
-                letterSpacing: ".08em",
-                marginBottom: 3,
-                textTransform: "uppercase",
-              }}
-            >
-              {item.label}
-            </span>
-            <b
-              style={{
-                color: item.tone,
-                display: "block",
-                fontSize: 18,
-                lineHeight: 1.05,
-                marginBottom: 4,
-              }}
-            >
-              {item.value}
-            </b>
-            <small
-              style={{
-                color: "#5f5e5a",
-                display: "block",
-                fontSize: 11,
-                lineHeight: 1.3,
-              }}
-            >
-              {item.detail}
-            </small>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 

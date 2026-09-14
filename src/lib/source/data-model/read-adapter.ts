@@ -328,11 +328,11 @@ export async function listContract360(
   const governedRows =
     await queryCanonicalSourceWithFallback<SourceContract360Row>(
       tenantKey,
-      "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+      contract360ReadSql(),
     );
   const governedWithGolden = await mergeGoldenContract360Overlay(
     tenantKey,
-    governedRows,
+    resolveContractArchetypes(governedRows),
   );
   if (governedWithGolden.length > 0) return governedWithGolden;
   if (isMeridianTenantKey(tenantKey)) {
@@ -348,7 +348,7 @@ export async function listContract360(
     () =>
       queryForTenant<SourceContract360Row>(
         tenantKey,
-        "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) ORDER BY annual_value DESC NULLS LAST",
+        contract360ReadSql(),
       ),
     () =>
       meridianCanaryRows<SourceContract360Row>(
@@ -428,7 +428,56 @@ export async function listContract360(
          order by annual_value desc nulls last`,
       ),
   );
-  return mergeGoldenContract360Overlay(tenantKey, rows);
+  return mergeGoldenContract360Overlay(
+    tenantKey,
+    resolveContractArchetypes(rows),
+  );
+}
+
+type Contract360ReadRow = SourceContract360Row & {
+  readonly __declared_contract_archetype?: string | null;
+};
+
+/**
+ * The contract read model historically exposed only vendor_category. Loaders
+ * also persist the reviewed archetype on source.contract.raw_payload, so the
+ * product must read that declared field before falling back to the legacy
+ * category column. This keeps the classification contract-level and avoids
+ * guessing from vendor names or evidence lanes.
+ */
+function contract360ReadSql(contractIdFilter = false): string {
+  return `
+    SELECT
+      c.*,
+      COALESCE(
+        NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
+        NULLIF(canonical.raw_payload ->> 'archetype', ''),
+        NULLIF(c.vendor_category, '')
+      ) AS __declared_contract_archetype
+    FROM source.contract_360 c
+    LEFT JOIN source.contract canonical
+      ON canonical.tenant_key = c.tenant_key
+     AND canonical.contract_id = c.contract_id
+    WHERE c.tenant_key = ANY($1::text[])
+    ${contractIdFilter ? "AND c.contract_id = $2" : ""}
+    ORDER BY c.annual_value DESC NULLS LAST`;
+}
+
+function resolveContractArchetypes(
+  rows: readonly Contract360ReadRow[],
+): SourceContract360Row[] {
+  return rows.map(({ __declared_contract_archetype, ...row }) => {
+    const declared =
+      typeof __declared_contract_archetype === "string"
+        ? __declared_contract_archetype.trim()
+        : "";
+    if (!declared) return row;
+    return {
+      ...row,
+      contract_archetype: declared,
+      vendor_category: declared,
+    };
+  });
 }
 
 async function mergeGoldenContract360Overlay<
@@ -586,11 +635,14 @@ export async function getContract360(
   const governedRows =
     await queryCanonicalSourceWithFallback<SourceContract360Row>(
       tenantKey,
-      "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
+      `${contract360ReadSql(true)} LIMIT 1`,
       [contractId],
     );
   if (governedRows[0]) {
-    return enrichContractNarrativeFacts(tenantKey, governedRows[0]);
+    return enrichContractNarrativeFacts(
+      tenantKey,
+      resolveContractArchetypes(governedRows)[0],
+    );
   }
   if (isMeridianTenantKey(tenantKey)) {
     const rows = await listContract360(tenantKey);
@@ -600,10 +652,15 @@ export async function getContract360(
 
   const rows = await queryForTenant<SourceContract360Row>(
     tenantKey,
-    "SELECT * FROM source.contract_360 WHERE tenant_key = ANY($1::text[]) AND contract_id = $2 LIMIT 1",
+    `${contract360ReadSql(true)} LIMIT 1`,
     [contractId],
   );
-  return rows[0] ? enrichContractNarrativeFacts(tenantKey, rows[0]) : null;
+  return rows[0]
+    ? enrichContractNarrativeFacts(
+        tenantKey,
+        resolveContractArchetypes(rows)[0],
+      )
+    : null;
 }
 
 export async function listVendorContractPortfolio(
