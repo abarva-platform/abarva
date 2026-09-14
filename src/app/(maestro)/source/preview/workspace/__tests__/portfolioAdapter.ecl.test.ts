@@ -1019,6 +1019,8 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
           sql.includes("FROM source.contract c") &&
           sql.includes("raw_payload ->> 'contract_archetype'")
         ) {
+          expect(sql).not.toContain("resolved_annual_value");
+          expect(sql).toContain("c.annual_value::numeric AS annual_value");
           return [
             {
               tenant_key: "meridian-health",
