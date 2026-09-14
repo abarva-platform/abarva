@@ -98,6 +98,12 @@ export interface SourceWorkspaceLoadOptions {
   readonly impactMode?: SourceWorkspaceImpactMode;
 }
 
+export interface SourceWorkspaceContractDetailFallback {
+  readonly contract: SourceContract360Row;
+  readonly applicationScope: readonly SourceContractApplicationScopeRow[];
+  readonly initiativeDependencies: readonly SourceContractInitiativeDependencyRow[];
+}
+
 export interface SourceWorkspaceLoadTiming {
   readonly label: string;
   readonly ms: number;
@@ -152,6 +158,47 @@ export interface SourceWorkspacePortfolioData {
     readonly vendors: "available" | "missing";
     readonly applicationScope: "available" | "missing";
     readonly initiativeDependencies: "available" | "missing";
+  };
+}
+
+/**
+ * Resolve a direct Contract 360 request from the ECL contract projection.
+ * Contract navigation must not wait for portfolio-wide impact fan-out.
+ */
+export async function loadSourceWorkspaceContractDetailFallback(
+  tenantKey: string,
+  contractId: string,
+  providerOverride?: SourceWorkspaceProviderMode | null,
+): Promise<SourceWorkspaceContractDetailFallback | null> {
+  const provider = sourceWorkspaceProvider(providerOverride);
+  if (provider === "legacy") return null;
+
+  const projectionDir = process.env.SOURCE_WORKSPACE_ECL_PROJECTION_DIR?.trim();
+  if (provider === "ecl_projection" && !projectionDir) {
+    throw new Error(
+      "SOURCE_WORKSPACE_PROVIDER=ecl_projection requires SOURCE_WORKSPACE_ECL_PROJECTION_DIR.",
+    );
+  }
+  const rows =
+    provider === "ecl_projection_db"
+      ? await readProjectionTable(tenantKey, "source_contract_360")
+      : await readProjectionCsv(
+          path.join(projectionDir ?? "", "source_contract_360_projection.csv"),
+        );
+  const acceptedTenantKeys = new Set(
+    [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
+  );
+  const row = rows.find(
+    (candidate) =>
+      acceptedTenantKeys.has(textValue(candidate.tenant_key).trim()) &&
+      textValue(candidate.row_key || candidate.contract_id) === contractId,
+  );
+  if (!row) return null;
+
+  return {
+    contract: contractFromEclProjectionRow(row),
+    applicationScope: scopeFromEclProjectionRow(row),
+    initiativeDependencies: [],
   };
 }
 

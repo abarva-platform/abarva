@@ -33,6 +33,7 @@ The Source workspace now renders its governed portfolio shell before optional im
 - Contract detail fallback resolves the requested projection header and declared scope with deferred impact mode.
 - Direct deep links use the governed ECL provider default and perform one bounded lifecycle requeue after request-level retries.
 - Transient portfolio service failures receive two bounded retries; authorization failures still fail immediately.
+- Direct ECL contract requests resolve header and declared scope from the contract projection before using the supplemental portfolio fallback.
 - Updated focused routing, detail-retry, ECL browser-surface, and API route tests.
 
 ## QA / Validation
