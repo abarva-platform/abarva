@@ -2513,14 +2513,17 @@ async function readCanonicalArchetypeCoverageRows(
         `SELECT
            c.tenant_key,
            c.contract_id,
-           c.vendor_ref,
-           c.vendor_name,
+           c.vendor_id AS vendor_ref,
+           COALESCE(v.legal_name, c.vendor_id, 'Unknown vendor') AS vendor_name,
            COALESCE(
              NULLIF(c.raw_payload ->> 'contract_archetype', ''),
              NULLIF(c.raw_payload ->> 'archetype', '')
            ) AS contract_archetype,
            c.annual_value::numeric AS annual_value
          FROM source.contract c
+         LEFT JOIN source.vendor v
+           ON v.tenant_key = c.tenant_key
+          AND v.vendor_id = c.vendor_id
         WHERE c.tenant_key = ANY($1::text[])
           AND COALESCE(
             NULLIF(c.raw_payload ->> 'contract_archetype', ''),
