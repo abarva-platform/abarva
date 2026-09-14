@@ -44,12 +44,15 @@ function isDirectEvidenceCoverageSql(sql: string): boolean {
     sql.includes("WITH spend AS") &&
     sql.includes("FROM source.contract_360 c") &&
     sql.includes("COALESCE(spend.spend_rows, 0)::bigint AS spend_rows") &&
-    sql.includes("c.document_page_text_count") &&
-    sql.includes("consumption.sourcing_spend_monthly_v1") &&
-    sql.includes("consumption.sourcing_performance_v1") &&
-    sql.includes("consumption.sourcing_opportunity_v1") &&
+    sql.includes("FROM source.contract_consumption_observation o") &&
+    sql.includes("FROM source.contract_performance_observation o") &&
+    sql.includes("FROM source.canonical_fact_assertion facts") &&
+    sql.includes("FROM source.contract_scope cs") &&
+    !sql.includes("FROM consumption.sourcing_spend_monthly_v1") &&
+    !sql.includes("FROM consumption.sourcing_performance_v1") &&
+    !sql.includes("FROM consumption.sourcing_opportunity_v1") &&
     sql.includes("source.optimization_opportunity") &&
-    sql.includes("consumption.sourcing_contract_scope_v1")
+    sql.includes("source.contract_scope")
   );
 }
 
@@ -1335,7 +1338,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toBe(true);
     expect(
       runCalls.some((call) =>
-        call.sql.includes("FROM consumption.sourcing_spend_monthly_v1"),
+        call.sql.includes("FROM source.contract_consumption_observation o"),
       ),
     ).toBe(true);
     expect(

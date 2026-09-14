@@ -797,42 +797,39 @@ async function loadDirectSourceWorkspaceImpactRows(
                  count(*)::bigint AS spend_rows,
                  COALESCE(sum(actual_spend), 0)::numeric AS actual_spend_usd,
                  COALESCE(sum(committed_amount), 0)::numeric AS committed_spend_usd
-                FROM consumption.sourcing_spend_monthly_v1
-               WHERE tenant_key = ANY($1::text[])
-               GROUP BY tenant_key, contract_id
+                FROM source.contract_consumption_observation o
+                JOIN source.contract current_contract
+                  ON current_contract.tenant_key = o.tenant_key
+                 AND current_contract.contract_id = o.contract_id
+                 AND current_contract.load_run_id = o.load_run_id
+               WHERE o.tenant_key = ANY($1::text[])
+               GROUP BY o.tenant_key, o.contract_id
              ),
              performance AS (
                SELECT
                  tenant_key,
                  contract_id,
                  count(*)::bigint AS performance_rows,
-                 count(*) FILTER (WHERE performance_state = 'breached')::bigint AS breach_rows,
+                 count(*) FILTER (WHERE COALESCE(breach_count, 0) > 0)::bigint AS breach_rows,
                  COALESCE(sum(credit_calculated), 0)::numeric AS credit_calculated_usd,
                  COALESCE(sum(credit_claimed), 0)::numeric AS credit_claimed_usd,
                  COALESCE(sum(credit_recovered), 0)::numeric AS credit_recovered_usd
-                FROM consumption.sourcing_performance_v1
-               WHERE tenant_key = ANY($1::text[])
-               GROUP BY tenant_key, contract_id
+                FROM source.contract_performance_observation o
+                JOIN source.contract current_contract
+                  ON current_contract.tenant_key = o.tenant_key
+                 AND current_contract.contract_id = o.contract_id
+                 AND current_contract.load_run_id = o.load_run_id
+               WHERE o.tenant_key = ANY($1::text[])
+               GROUP BY o.tenant_key, o.contract_id
              ),
              opportunity_source AS (
                SELECT
                  o.tenant_key,
                  o.opportunity_id,
                  o.contract_id,
-                 annual_value_exposed::numeric AS candidate_amount_usd,
-                 readiness_state,
-                 evidence_state,
-                 1 AS source_rank
-                FROM consumption.sourcing_opportunity_v1
-               WHERE tenant_key = ANY($1::text[])
-               UNION ALL
-           SELECT
-             o.tenant_key,
-             o.opportunity_id,
-             o.contract_id,
-                 amount_usd::numeric AS candidate_amount_usd,
-                 stage AS readiness_state,
-                 evidence_grade AS evidence_state,
+                 o.amount_usd::numeric AS candidate_amount_usd,
+                 o.stage AS readiness_state,
+                 o.evidence_grade AS evidence_state,
                  0 AS source_rank
                 FROM source.optimization_opportunity o
                 JOIN source.contract current_contract
@@ -868,13 +865,31 @@ async function loadDirectSourceWorkspaceImpactRows(
              ),
              scope AS (
                SELECT
-                 tenant_key,
-                 contract_id,
+                 cs.tenant_key,
+                 cs.contract_id,
                  count(*)::bigint AS scope_rows,
-                 count(*) FILTER (WHERE critical_application_flag)::bigint AS critical_scope_rows
-                FROM consumption.sourcing_contract_scope_v1
-               WHERE tenant_key = ANY($1::text[])
-               GROUP BY tenant_key, contract_id
+                 count(*) FILTER (WHERE cs.criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical'))::bigint AS critical_scope_rows
+                FROM source.contract_scope cs
+                JOIN source.contract current_contract
+                  ON current_contract.tenant_key = cs.tenant_key
+                 AND current_contract.contract_id = cs.contract_id
+                 AND current_contract.load_run_id = cs.load_run_id
+               WHERE cs.tenant_key = ANY($1::text[])
+               GROUP BY cs.tenant_key, cs.contract_id
+             ),
+             depth AS (
+               SELECT
+                 facts.tenant_key,
+                 facts.contract_id,
+                 count(*) FILTER (WHERE facts.fact_key = 'document.page_text_char_count')::bigint AS document_page_text_rows,
+                 COALESCE(max(facts.value_numeric) FILTER (WHERE facts.fact_key = 'change_order_count'), 0)::bigint AS change_order_rows
+                FROM source.canonical_fact_assertion facts
+                JOIN source.contract current_contract
+                  ON current_contract.tenant_key = facts.tenant_key
+                 AND current_contract.contract_id = facts.contract_id
+                 AND current_contract.raw_payload->>'dataset_version' = facts.dataset_version
+               WHERE facts.tenant_key = ANY($1::text[])
+               GROUP BY facts.tenant_key, facts.contract_id
              )
              SELECT
                c.tenant_key,
@@ -899,17 +914,17 @@ async function loadDirectSourceWorkspaceImpactRows(
                COALESCE(opportunities.opportunities_with_evidence, 0)::bigint AS opportunities_with_evidence,
                COALESCE(scope.scope_rows, 0)::bigint AS scope_rows,
                COALESCE(scope.critical_scope_rows, 0)::bigint AS critical_scope_rows,
-               COALESCE(c.document_page_text_count, 0)::bigint AS document_page_text_rows,
-               COALESCE(c.change_order_count, 0)::bigint AS change_order_rows,
+               COALESCE(depth.document_page_text_rows, 0)::bigint AS document_page_text_rows,
+               COALESCE(depth.change_order_rows, 0)::bigint AS change_order_rows,
                CASE
                  WHEN COALESCE(opportunities.opportunity_rows, 0) > 0
                   AND COALESCE(opportunities.opportunities_with_evidence, 0) = 0 THEN 'blocked'
                  WHEN COALESCE(spend.spend_rows, 0) > 0
                   AND COALESCE(performance.performance_rows, 0) > 0
-                  AND COALESCE(c.document_page_text_count, 0) > 0 THEN 'decision_ready'
+                  AND COALESCE(depth.document_page_text_rows, 0) > 0 THEN 'decision_ready'
                  WHEN COALESCE(spend.spend_rows, 0) > 0
                    OR COALESCE(performance.performance_rows, 0) > 0
-                   OR COALESCE(c.document_page_text_count, 0) > 0
+                   OR COALESCE(depth.document_page_text_rows, 0) > 0
                    OR COALESCE(opportunities.opportunity_rows, 0) > 0 THEN 'partial'
                  ELSE 'not_loaded'
                END AS coverage_state,
@@ -917,21 +932,21 @@ async function loadDirectSourceWorkspaceImpactRows(
                  '; ',
                  CASE WHEN COALESCE(spend.spend_rows, 0) = 0 THEN 'monthly spend missing' END,
                  CASE WHEN COALESCE(performance.performance_rows, 0) = 0 THEN 'performance rows missing' END,
-                 CASE WHEN COALESCE(c.document_page_text_count, 0) = 0 THEN 'document page text missing' END,
+                 CASE WHEN COALESCE(depth.document_page_text_rows, 0) = 0 THEN 'document page text missing' END,
                  CASE
                    WHEN COALESCE(opportunities.finance_confirmation_required_rows, 0) > 0
                      THEN 'finance confirmation required before realized-value claim'
                  END
                ) AS blocker_if_missing,
                jsonb_build_object(
-                 'source.contract_360', jsonb_build_object(
-                   'document_page_text_rows', COALESCE(c.document_page_text_count, 0),
-                   'change_order_rows', COALESCE(c.change_order_count, 0)
+                 'source.canonical_fact_assertion', jsonb_build_object(
+                   'document_page_text_rows', COALESCE(depth.document_page_text_rows, 0),
+                   'change_order_rows', COALESCE(depth.change_order_rows, 0)
                  ),
-                 'consumption.sourcing_spend_monthly_v1', COALESCE(spend.spend_rows, 0),
-                 'consumption.sourcing_performance_v1', COALESCE(performance.performance_rows, 0),
-                 'consumption.sourcing_opportunity_v1', COALESCE(opportunities.opportunity_rows, 0),
-                 'consumption.sourcing_contract_scope_v1', COALESCE(scope.scope_rows, 0)
+                 'source.contract_consumption_observation', COALESCE(spend.spend_rows, 0),
+                 'source.contract_performance_observation', COALESCE(performance.performance_rows, 0),
+                 'source.optimization_opportunity', COALESCE(opportunities.opportunity_rows, 0),
+                 'source.contract_scope', COALESCE(scope.scope_rows, 0)
                ) AS evidence_basis_json,
                c.load_run_id
               FROM source.contract_360 c
@@ -939,12 +954,13 @@ async function loadDirectSourceWorkspaceImpactRows(
               LEFT JOIN performance ON performance.tenant_key = c.tenant_key AND performance.contract_id = c.contract_id
               LEFT JOIN opportunities ON opportunities.tenant_key = c.tenant_key AND opportunities.contract_id = c.contract_id
               LEFT JOIN scope ON scope.tenant_key = c.tenant_key AND scope.contract_id = c.contract_id
+              LEFT JOIN depth ON depth.tenant_key = c.tenant_key AND depth.contract_id = c.contract_id
              WHERE c.tenant_key = ANY($1::text[])
                AND (
                  COALESCE(spend.spend_rows, 0) > 0
                  OR COALESCE(performance.performance_rows, 0) > 0
                  OR COALESCE(opportunities.opportunity_rows, 0) > 0
-                 OR COALESCE(c.document_page_text_count, 0) > 0
+                 OR COALESCE(depth.document_page_text_rows, 0) > 0
                )
              ORDER BY COALESCE(opportunities.candidate_amount_usd, 0) DESC NULLS LAST,
                       GREATEST(COALESCE(performance.credit_calculated_usd, 0) - COALESCE(performance.credit_claimed_usd, 0), 0) DESC NULLS LAST,
@@ -1455,42 +1471,39 @@ async function loadDerivedSourceWorkspaceImpactLayer(
              count(*)::bigint AS spend_rows,
              COALESCE(sum(actual_spend), 0)::numeric AS actual_spend_usd,
              COALESCE(sum(committed_amount), 0)::numeric AS committed_spend_usd
-            FROM consumption.sourcing_spend_monthly_v1
-           WHERE tenant_key = ANY($1::text[])
-           GROUP BY tenant_key, contract_id
+            FROM source.contract_consumption_observation o
+            JOIN source.contract current_contract
+              ON current_contract.tenant_key = o.tenant_key
+             AND current_contract.contract_id = o.contract_id
+             AND current_contract.load_run_id = o.load_run_id
+           WHERE o.tenant_key = ANY($1::text[])
+           GROUP BY o.tenant_key, o.contract_id
          ),
          performance AS (
            SELECT
              tenant_key,
              contract_id,
              count(*)::bigint AS performance_rows,
-             count(*) FILTER (WHERE performance_state = 'breached')::bigint AS breach_rows,
+             count(*) FILTER (WHERE COALESCE(breach_count, 0) > 0)::bigint AS breach_rows,
              COALESCE(sum(credit_calculated), 0)::numeric AS credit_calculated_usd,
              COALESCE(sum(credit_claimed), 0)::numeric AS credit_claimed_usd,
              COALESCE(sum(credit_recovered), 0)::numeric AS credit_recovered_usd
-            FROM consumption.sourcing_performance_v1
-           WHERE tenant_key = ANY($1::text[])
-           GROUP BY tenant_key, contract_id
+            FROM source.contract_performance_observation o
+            JOIN source.contract current_contract
+              ON current_contract.tenant_key = o.tenant_key
+             AND current_contract.contract_id = o.contract_id
+             AND current_contract.load_run_id = o.load_run_id
+           WHERE o.tenant_key = ANY($1::text[])
+           GROUP BY o.tenant_key, o.contract_id
          ),
          opportunity_source AS (
            SELECT
              o.tenant_key,
              o.opportunity_id,
              o.contract_id,
-             annual_value_exposed::numeric AS candidate_amount_usd,
-             readiness_state,
-             evidence_state,
-             1 AS source_rank
-            FROM consumption.sourcing_opportunity_v1
-           WHERE tenant_key = ANY($1::text[])
-           UNION ALL
-           SELECT
-             tenant_key,
-             opportunity_id,
-             contract_id,
-             amount_usd::numeric AS candidate_amount_usd,
-             stage AS readiness_state,
-             evidence_grade AS evidence_state,
+             o.amount_usd::numeric AS candidate_amount_usd,
+             o.stage AS readiness_state,
+             o.evidence_grade AS evidence_state,
              0 AS source_rank
             FROM source.optimization_opportunity o
             JOIN source.contract current_contract
@@ -1526,13 +1539,31 @@ async function loadDerivedSourceWorkspaceImpactLayer(
          ),
          scope AS (
            SELECT
-             tenant_key,
-             contract_id,
+             cs.tenant_key,
+             cs.contract_id,
              count(*)::bigint AS scope_rows,
-             count(*) FILTER (WHERE critical_application_flag)::bigint AS critical_scope_rows
-            FROM consumption.sourcing_contract_scope_v1
-           WHERE tenant_key = ANY($1::text[])
-           GROUP BY tenant_key, contract_id
+             count(*) FILTER (WHERE cs.criticality IN ('Tier 0', 'Tier 1', 'Mission critical', 'Critical'))::bigint AS critical_scope_rows
+            FROM source.contract_scope cs
+            JOIN source.contract current_contract
+              ON current_contract.tenant_key = cs.tenant_key
+             AND current_contract.contract_id = cs.contract_id
+             AND current_contract.load_run_id = cs.load_run_id
+           WHERE cs.tenant_key = ANY($1::text[])
+           GROUP BY cs.tenant_key, cs.contract_id
+         ),
+         depth AS (
+           SELECT
+             facts.tenant_key,
+             facts.contract_id,
+             count(*) FILTER (WHERE facts.fact_key = 'document.page_text_char_count')::bigint AS document_page_text_rows,
+             COALESCE(max(facts.value_numeric) FILTER (WHERE facts.fact_key = 'change_order_count'), 0)::bigint AS change_order_rows
+            FROM source.canonical_fact_assertion facts
+            JOIN source.contract current_contract
+              ON current_contract.tenant_key = facts.tenant_key
+             AND current_contract.contract_id = facts.contract_id
+             AND current_contract.raw_payload->>'dataset_version' = facts.dataset_version
+           WHERE facts.tenant_key = ANY($1::text[])
+           GROUP BY facts.tenant_key, facts.contract_id
          )
          SELECT
            c.tenant_key,
@@ -1557,17 +1588,17 @@ async function loadDerivedSourceWorkspaceImpactLayer(
            COALESCE(opportunities.opportunities_with_evidence, 0)::bigint AS opportunities_with_evidence,
            COALESCE(scope.scope_rows, 0)::bigint AS scope_rows,
            COALESCE(scope.critical_scope_rows, 0)::bigint AS critical_scope_rows,
-           COALESCE(c.document_page_text_count, 0)::bigint AS document_page_text_rows,
-           COALESCE(c.change_order_count, 0)::bigint AS change_order_rows,
+           COALESCE(depth.document_page_text_rows, 0)::bigint AS document_page_text_rows,
+           COALESCE(depth.change_order_rows, 0)::bigint AS change_order_rows,
            CASE
              WHEN COALESCE(opportunities.opportunity_rows, 0) > 0
               AND COALESCE(opportunities.opportunities_with_evidence, 0) = 0 THEN 'blocked'
              WHEN COALESCE(spend.spend_rows, 0) > 0
               AND COALESCE(performance.performance_rows, 0) > 0
-              AND COALESCE(c.document_page_text_count, 0) > 0 THEN 'decision_ready'
+              AND COALESCE(depth.document_page_text_rows, 0) > 0 THEN 'decision_ready'
              WHEN COALESCE(spend.spend_rows, 0) > 0
                OR COALESCE(performance.performance_rows, 0) > 0
-               OR COALESCE(c.document_page_text_count, 0) > 0
+               OR COALESCE(depth.document_page_text_rows, 0) > 0
                OR COALESCE(opportunities.opportunity_rows, 0) > 0 THEN 'partial'
              ELSE 'not_loaded'
            END AS coverage_state,
@@ -1575,21 +1606,21 @@ async function loadDerivedSourceWorkspaceImpactLayer(
              '; ',
              CASE WHEN COALESCE(spend.spend_rows, 0) = 0 THEN 'monthly spend missing' END,
              CASE WHEN COALESCE(performance.performance_rows, 0) = 0 THEN 'performance rows missing' END,
-             CASE WHEN COALESCE(c.document_page_text_count, 0) = 0 THEN 'document page text missing' END,
+             CASE WHEN COALESCE(depth.document_page_text_rows, 0) = 0 THEN 'document page text missing' END,
              CASE
                WHEN COALESCE(opportunities.finance_confirmation_required_rows, 0) > 0
                  THEN 'finance confirmation required before realized-value claim'
              END
            ) AS blocker_if_missing,
            jsonb_build_object(
-             'source.contract_360', jsonb_build_object(
-               'document_page_text_rows', COALESCE(c.document_page_text_count, 0),
-               'change_order_rows', COALESCE(c.change_order_count, 0)
+             'source.canonical_fact_assertion', jsonb_build_object(
+               'document_page_text_rows', COALESCE(depth.document_page_text_rows, 0),
+               'change_order_rows', COALESCE(depth.change_order_rows, 0)
              ),
-             'consumption.sourcing_spend_monthly_v1', COALESCE(spend.spend_rows, 0),
-             'consumption.sourcing_performance_v1', COALESCE(performance.performance_rows, 0),
-             'consumption.sourcing_opportunity_v1', COALESCE(opportunities.opportunity_rows, 0),
-             'consumption.sourcing_contract_scope_v1', COALESCE(scope.scope_rows, 0)
+             'source.contract_consumption_observation', COALESCE(spend.spend_rows, 0),
+             'source.contract_performance_observation', COALESCE(performance.performance_rows, 0),
+             'source.optimization_opportunity', COALESCE(opportunities.opportunity_rows, 0),
+             'source.contract_scope', COALESCE(scope.scope_rows, 0)
            ) AS evidence_basis_json,
            c.load_run_id
           FROM source.contract_360 c
@@ -1597,12 +1628,13 @@ async function loadDerivedSourceWorkspaceImpactLayer(
           LEFT JOIN performance ON performance.tenant_key = c.tenant_key AND performance.contract_id = c.contract_id
           LEFT JOIN opportunities ON opportunities.tenant_key = c.tenant_key AND opportunities.contract_id = c.contract_id
           LEFT JOIN scope ON scope.tenant_key = c.tenant_key AND scope.contract_id = c.contract_id
+          LEFT JOIN depth ON depth.tenant_key = c.tenant_key AND depth.contract_id = c.contract_id
          WHERE c.tenant_key = ANY($1::text[])
            AND (
              COALESCE(spend.spend_rows, 0) > 0
              OR COALESCE(performance.performance_rows, 0) > 0
              OR COALESCE(opportunities.opportunity_rows, 0) > 0
-             OR COALESCE(c.document_page_text_count, 0) > 0
+             OR COALESCE(depth.document_page_text_rows, 0) > 0
            )
          ORDER BY COALESCE(opportunities.candidate_amount_usd, 0) DESC NULLS LAST,
                   GREATEST(COALESCE(performance.credit_calculated_usd, 0) - COALESCE(performance.credit_claimed_usd, 0), 0) DESC NULLS LAST,
