@@ -20,8 +20,6 @@ function safeSupplementalVendorName(
 function supplementalCoverageContractRow(
   coverage: SourceContractEvidenceCoverageRow,
 ): SourceContract360Row {
-  const committedSpend = numberFromDb(coverage.committed_spend_usd);
-  const actualSpend = numberFromDb(coverage.actual_spend_usd);
   return {
     tenant_key: coverage.tenant_key,
     contract_id: coverage.contract_id,
@@ -34,10 +32,12 @@ function supplementalCoverageContractRow(
     contract_archetype: coverage.contract_archetype ?? null,
     contract_name: coverage.contract_name || "Contract depth record",
     scope_summary: (coverage.coverage_state ?? "loaded").replaceAll("_", " "),
-    annual_value: committedSpend ?? actualSpend,
-    total_committed_value: committedSpend,
-    committed_annual_spend: committedSpend,
-    actual_annual_spend: actualSpend,
+    // Evidence spend is not annual contract value. Keep the supplemental row
+    // discoverable, but do not let it enter contract-value totals or shares.
+    annual_value: null,
+    total_committed_value: null,
+    committed_annual_spend: null,
+    actual_annual_spend: null,
     renewal_notice_date: null,
     notice_deadline: null,
     end_date: null,
@@ -50,8 +50,8 @@ function supplementalCoverageContractRow(
     alternatives_available: null,
     concentration_note: "Loaded through supplemental contract-depth evidence.",
     source_confidence: null,
-    resolved_annual_value: committedSpend ?? actualSpend,
-    resolved_total_committed_value: committedSpend,
+    resolved_annual_value: null,
+    resolved_total_committed_value: null,
     annual_value_conflict_flag: false,
     total_committed_value_conflict_flag: false,
     scoped_application_count: coverage.scope_rows,

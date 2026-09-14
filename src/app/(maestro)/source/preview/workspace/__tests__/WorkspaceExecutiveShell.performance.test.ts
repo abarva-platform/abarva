@@ -326,8 +326,8 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     );
 
     expect(contracts.map((contract) => contract.contract_id)).toEqual([
-      "MER-TECH-DBX-001",
       "CTR-OLD-DATABRICKS-001",
+      "MER-TECH-DBX-001",
     ]);
   });
 
@@ -1434,7 +1434,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     });
   });
 
-  it("uses declared archetypes from supplemental impact coverage without charting the unmapped register", () => {
+  it("keeps declared supplemental evidence out of annual-value archetype charts", () => {
     const portfolio = {
       contracts: [
         {
@@ -1465,24 +1465,7 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
       },
     } as unknown as Parameters<typeof vendorArchetypeRows>[0];
 
-    expect(vendorArchetypeRows(portfolio)).toEqual([
-      {
-        category: "productivity_platform",
-        vendorCount: 1,
-        contractCount: 1,
-        annualValue: 14_800_000,
-        vendorRef: "vendor-msft",
-        vendorName: "Microsoft Corporation",
-      },
-      {
-        category: "crm_saas",
-        vendorCount: 1,
-        contractCount: 1,
-        annualValue: 9_200_000,
-        vendorRef: "vendor-sfdc",
-        vendorName: "Salesforce, Inc.",
-      },
-    ]);
+    expect(vendorArchetypeRows(portfolio)).toEqual([]);
     expect(vendorArchetypeCoverage(portfolio)).toEqual({
       totalContracts: 3,
       declaredContracts: 2,
