@@ -41,6 +41,9 @@ portfolio annual value is calculated from the governed contract book only.
   annual-value archetype totals.
 - Updated Contract 360 depth copy to name the contract-book and evidence
   populations separately.
+- Clarified the Contract 360 remainder copy so mixed contract records are not
+  mislabeled as registry-only rows, and summarized dollars remain explicitly
+  scoped to contract-book value.
 - Added regression coverage for population arithmetic and value-source
   separation.
 
@@ -50,6 +53,8 @@ portfolio annual value is calculated from the governed contract book only.
 - ESLint passed for all changed source and test files.
 - TypeScript passed with the repository typecheck command.
 - `git diff --check` passed.
+- Follow-up wording regression: focused Contract 360 performance suite, 49
+  tests passed.
 - Live signed-in proof is required after ACA deployment for Command, Coverage,
   and Contracts surfaces.
 
