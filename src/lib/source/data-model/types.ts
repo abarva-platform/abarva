@@ -383,6 +383,22 @@ export interface SourceCloudCommitmentCoverageRow {
 }
 
 /**
+ * When a governed package load last completed for a tenant.
+ *
+ * Both package loaders write a run row and stamp `completed_at` with `now()`
+ * on a terminal status. Nothing read it, so the portfolio's freshness control
+ * inferred a date by pattern-matching load run identifiers instead — and
+ * reported a package's version date as the refresh date.
+ */
+export interface SourceLoadRunCompletionRow {
+  readonly tenant_key: SkyHarborTenantKey;
+  readonly dataset_version: string;
+  readonly load_run_id: string;
+  readonly source_table: string;
+  readonly completed_at: string;
+}
+
+/**
  * Monthly tag-quality observation for a cloud consumption contract.
  *
  * Coverage percentages are stored 0-100 by the loader, which normalises a

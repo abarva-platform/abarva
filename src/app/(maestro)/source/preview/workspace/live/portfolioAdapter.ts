@@ -35,6 +35,7 @@ import {
   listContract360,
   listContractApplicationScope,
   listContractInitiativeDependency,
+  listSourceLoadRunCompletions,
   listVendorContractPortfolio,
 } from "@/lib/source/data-model/read-adapter";
 import type {
@@ -45,9 +46,10 @@ import type {
   SourceContractClaimCardRow,
   SourceContractEvidenceCoverageRow,
   SourceContractInitiativeDependencyRow,
+  SourceLoadRunCompletionRow,
   SourcePageStorylineRow,
-  SourceVendorPositionRow,
   SourceVendorContractPortfolioRow,
+  SourceVendorPositionRow,
 } from "@/lib/source/data-model/types";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -121,6 +123,12 @@ export interface SourceWorkspacePortfolioData {
     readonly datasetVersion: string;
     readonly analyticsProvider: string;
     readonly activeLoadRunId: string | null;
+    /**
+     * When a governed package load last completed, read from the loaders' own
+     * run ledger. Null when no completed run is recorded — a real state, not a
+     * reason to infer a date from an identifier.
+     */
+    readonly lastCompletedLoadAtIso: string | null;
     readonly asOfDateIso: string;
     readonly v4ContractCount: number;
     readonly v4VendorCount: number;
@@ -260,6 +268,31 @@ interface CockpitSourceMappingRow {
   readonly state: CockpitReadState;
 }
 
+/**
+ * The newest completed package load, as an ISO string.
+ *
+ * The query already orders by completion, but a caller should not depend on a
+ * query's ordering to be correct about a date it puts in front of a reader.
+ */
+function latestCompletedLoadIso(
+  rows: readonly SourceLoadRunCompletionRow[] | null | undefined,
+): string | null {
+  // A freshness date is not worth a crash. A provider that returns nothing
+  // means no completed run is known, which the control already reports.
+  if (!Array.isArray(rows)) return null;
+  let newest: number | null = null;
+  let newestIso: string | null = null;
+  for (const row of rows) {
+    const time = new Date(row.completed_at).getTime();
+    if (Number.isNaN(time)) continue;
+    if (newest == null || time > newest) {
+      newest = time;
+      newestIso = new Date(time).toISOString();
+    }
+  }
+  return newestIso;
+}
+
 export async function loadSourceWorkspacePortfolio(
   tenantKey: string,
   asOfDateIso: string,
@@ -283,6 +316,7 @@ export async function loadSourceWorkspacePortfolio(
     initiativeDependencies,
     v4Snapshot,
     impact,
+    loadCompletions,
   ] = await Promise.all([
     listContract360(tenantKey).catch(() => []),
     listVendorContractPortfolio(tenantKey).catch(() => []),
@@ -290,7 +324,9 @@ export async function loadSourceWorkspacePortfolio(
     listContractInitiativeDependency(tenantKey).catch(() => []),
     loadSourceV4WorkspaceSnapshot(tenantKey, asOfDateIso),
     loadWorkspaceImpactLayerForMode(tenantKey, options.impactMode),
+    listSourceLoadRunCompletions(tenantKey).catch(() => []),
   ]);
+  const lastCompletedLoadAtIso = latestCompletedLoadIso(loadCompletions);
 
   const contracts = excludeSupplementalContracts(contractsRaw);
   const impactResolved = resolveImpactVendorNames(impact, contracts, vendors);
@@ -312,6 +348,7 @@ export async function loadSourceWorkspacePortfolio(
     datasetVersion: v4Snapshot.datasetVersion,
     analyticsProvider: v4Snapshot.analyticsProvider,
     activeLoadRunId: v4Snapshot.activeLoadRunId,
+    lastCompletedLoadAtIso,
     asOfDateIso: v4Snapshot.asOfDateIso,
     v4ContractCount,
     v4VendorCount,
@@ -518,6 +555,9 @@ async function loadEclProjectionWorkspacePortfolio(
       : Promise.resolve([]),
     loadWorkspaceImpactLayerForMode(tenantKey, options.impactMode),
   ]);
+  const lastCompletedLoadAtIso = latestCompletedLoadIso(
+    await listSourceLoadRunCompletions(tenantKey).catch(() => []),
+  );
   const acceptedTenantKeys = new Set(
     [tenantKey, ...tenantAliasesFor(tenantKey)].map((value) => value.trim()),
   );
@@ -559,6 +599,7 @@ async function loadEclProjectionWorkspacePortfolio(
         ? "EclProjectionDbProvider"
         : "EclProjectionCsvProvider",
     activeLoadRunId: v4Snapshot.activeLoadRunId,
+    lastCompletedLoadAtIso,
     asOfDateIso: v4Snapshot.asOfDateIso,
     v4ContractCount: contracts.length,
     v4VendorCount: legacyVendorCount,

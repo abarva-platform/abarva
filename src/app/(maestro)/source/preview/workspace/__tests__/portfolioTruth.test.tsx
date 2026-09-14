@@ -2,10 +2,7 @@
 
 import { render, screen } from "@testing-library/react";
 
-import {
-  loadDateFromRunId,
-  SourceCommandKpiStrip,
-} from "../WorkspaceExecutiveShell";
+import { SourceCommandKpiStrip } from "../WorkspaceExecutiveShell";
 import type { SourceWorkspacePortfolioData } from "../live/portfolioAdapter";
 
 /**
@@ -122,34 +119,15 @@ describe("Unclaimed credit", () => {
   });
 });
 
-describe("loadDateFromRunId", () => {
-  it("refuses a run id that carries two dates", () => {
-    // The live defect. This id holds the dataset version's stamp and the run's;
-    // taking the first match reported 08 Sept as the portfolio refresh date,
-    // days after the reload actually ran.
-    expect(
-      loadDateFromRunId(
-        "source-cloud-consumption-package-meridian-databricks-consumption-commit-v1-20260908-20260913T0421",
-      ),
-    ).toBeNull();
-  });
-
-  it("reads a run id that carries exactly one date", () => {
-    expect(loadDateFromRunId("contract-depth-dense-20260913-01bf0f31")).toBe(
-      "2026-09-13",
-    );
-  });
-
-  it("accepts a repeated stamp, which is still unambiguous", () => {
-    expect(loadDateFromRunId("run-2026-09-13-part-20260913")).toBe("2026-09-13");
-  });
-
-  it("refuses an id with no date at all", () => {
-    expect(loadDateFromRunId("unit-proof")).toBeNull();
-    expect(loadDateFromRunId(null)).toBeNull();
-  });
-
-  it("does not mistake a hex fragment for a date", () => {
-    expect(loadDateFromRunId("01bf0f31")).toBeNull();
-  });
-});
+/*
+ * The identifier-parsing tests that stood here are gone with the parser.
+ *
+ * They pinned a heuristic: refuse an id carrying two date stamps, accept one
+ * carrying a single stamp. It was the wrong thing to get right. An id with one
+ * stamp may carry the dataset version's date and no run date at all, which is
+ * exactly what the deployed portfolio held — so the rule was satisfied and the
+ * answer was still wrong.
+ *
+ * The control now reads `completed_at`, which both loaders record. Freshness is
+ * covered by the adapter and shell tests that exercise that field.
+ */

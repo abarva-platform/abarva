@@ -61,6 +61,7 @@ import type {
   SourceAvaGroundingBundleRow,
   SourceCloudCommitmentCoverageRow,
   SourceCloudTagQualityRow,
+  SourceLoadRunCompletionRow,
   SourceContractTabIntelligenceRow,
   SourceContractIntelligenceRow,
   SourcePageStorylineRow,
@@ -976,6 +977,53 @@ export async function listCloudCommitmentCoverageRows(
  * These rows were being loaded and asserted as canonical facts while nothing
  * read them, so the attribution gap they record could not reach any surface.
  */
+/**
+ * The most recent completed package load per source table, newest first.
+ *
+ * `completed_at` is written by both package loaders on a terminal status. A
+ * caller wanting "when did this data last change" should read this rather than
+ * infer a date from a run identifier: an identifier may carry the dataset
+ * version's stamp, the run's, both, or neither, and cannot be told apart.
+ *
+ * Only `completed` rows are returned. A failed run also carries a timestamp,
+ * and reporting it as a refresh would state that data landed when it did not.
+ */
+export async function listSourceLoadRunCompletions(
+  tenantKey: string,
+): Promise<SourceLoadRunCompletionRow[]> {
+  // Canonical only, deliberately. The fallback helper retries under the legacy
+  // tenant alias, and the ECL path must never scope to it — a freshness read is
+  // not worth widening tenant scope for. The load-run ledger is canonical, so a
+  // canonical miss means no completed run is recorded, which the caller reports
+  // as such rather than guessing.
+  const rows = await safeCanonicalSourceQueryForTenant<SourceLoadRunCompletionRow>(
+      tenantKey,
+      `SELECT
+         tenant_key,
+         dataset_version,
+         load_run_id,
+         'source.cloud_consumption_package_load_run' AS source_table,
+         completed_at
+       FROM source.cloud_consumption_package_load_run
+        WHERE tenant_key = ANY($1::text[])
+          AND status = 'completed'
+          AND completed_at IS NOT NULL
+       UNION ALL
+       SELECT
+         tenant_key,
+         dataset_version,
+         load_run_id,
+         'source.contract_depth_package_load_run' AS source_table,
+         completed_at
+       FROM source.contract_depth_package_load_run
+        WHERE tenant_key = ANY($1::text[])
+          AND status = 'completed'
+          AND completed_at IS NOT NULL
+       ORDER BY completed_at DESC`,
+    );
+  return rows;
+}
+
 export async function listCloudTagQualityRows(
   tenantKey: string,
   contractId: string,

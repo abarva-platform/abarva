@@ -661,65 +661,28 @@ function topVendorShareLabel(
   return `${Math.min(100, Math.round((topThree / totalAnnualValue) * 100))}%`;
 }
 
-/**
- * The load date carried by a run identifier, but only when it is unambiguous.
- *
- * A run id is an opaque string that often carries more than one date. A cloud
- * package run reads
- * `…-consumption-commit-v1-20260908-20260913T…`: the first stamp is the
- * dataset version, the second is the run. Taking the first match reported the
- * package's version date as the portfolio's refresh date — confidently, and
- * wrongly, on the surface an executive checks to know whether they are looking
- * at today's numbers.
- *
- * So this refuses rather than guesses. One distinct stamp in the id is
- * evidence of when it ran; two or more means the id cannot tell us, and the
- * row contributes nothing instead of voting for whichever substring came
- * first.
- */
-export function loadDateFromRunId(value: string | null | undefined) {
-  if (!value) return null;
-  const text = value.trim();
-  const stamps = new Set<string>();
-  for (const match of text.matchAll(
-    /\b(20\d{2})[-_](0[1-9]|1[0-2])[-_]([0-3]\d)\b/g,
-  )) {
-    stamps.add(`${match[1]}-${match[2]}-${match[3]}`);
-  }
-  // A trailing word boundary hides the very stamp that matters: a run id ends
-  // `…-20260913T0421`, and `3` to `T` is not a boundary, so the run's own date
-  // was invisible while the dataset version's `-20260908-` was not. That is
-  // why the chip reported the package version as the refresh date. Accept a
-  // time component or any non-digit after the day.
-  for (const match of text.matchAll(
-    /\b(20\d{2})(0[1-9]|1[0-2])([0-3]\d)(?=\D|$)/g,
-  )) {
-    stamps.add(`${match[1]}-${match[2]}-${match[3]}`);
-  }
-  if (stamps.size !== 1) return null;
-  const iso = [...stamps][0];
-  const time = new Date(`${iso}T00:00:00Z`).getTime();
-  return Number.isNaN(time) ? null : iso;
-}
 
 function sourceDateControl(portfolio: SourceWorkspacePortfolioData) {
-  const loadRunDates = [
-    ...portfolio.impact.actionCandidates.map((row) => row.load_run_id),
-    ...portfolio.impact.evidenceCoverage.map((row) => row.load_run_id),
-    ...portfolio.impact.vendorPositions.map((row) => row.load_run_id),
-  ]
-    .map(loadDateFromRunId)
-    .filter((value): value is string => Boolean(value));
-  const sortedLoadRunDates = loadRunDates.sort();
-  const refreshedIso =
-    sortedLoadRunDates.length > 0
-      ? sortedLoadRunDates[sortedLoadRunDates.length - 1]
-      : null;
-  if (refreshedIso) {
+  /*
+   * Read the recorded completion, do not infer one.
+   *
+   * This used to pattern-match a date out of every row's load run id. An
+   * identifier may carry the dataset version's stamp, the run's, both, or
+   * neither, and nothing distinguishes them — so the control reported a
+   * package's version date as the portfolio's refresh date, on the surface a
+   * reader checks to know whether the numbers are today's.
+   *
+   * Both package loaders stamp `completed_at` on a terminal status and the
+   * portfolio now carries the newest of them. Where no completed run is
+   * recorded the control says what it does know — the as-of date — rather than
+   * guessing at freshness.
+   */
+  const completedAt = portfolio.workspaceDiagnostics.lastCompletedLoadAtIso;
+  if (completedAt) {
     return {
       ariaLabel: "Source freshness",
       label: "Refreshed",
-      value: fmtDate(refreshedIso),
+      value: fmtDate(completedAt),
     };
   }
   if (portfolio.asOfDateIso?.startsWith("2027-06-30")) {
