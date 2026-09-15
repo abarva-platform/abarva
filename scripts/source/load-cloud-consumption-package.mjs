@@ -84,6 +84,7 @@ const REQUIRED_LAYER3_TABLES = [
   "optimization_case",
   "case_opportunity",
   "opportunity_evidence",
+  "opportunity_claim",
   "calculation_rule",
   "calculation_run",
   "calculation_input",
@@ -1641,6 +1642,72 @@ async function upsertOptimizationSpine(client, args, files) {
       [args.tenantKey, args.datasetVersion, `cloud-consumption:${opportunityId}:finance-confirmation-request`, opportunityId, requirementId, value(contract, "business_owner")],
     );
   }
+
+  // Claim rows are the contract-level explanation layer. The legacy
+  // opportunity amount is intentionally not copied into sizing claims: this
+  // package's compatibility calculation rule is descriptive prose, not a
+  // reproducible arithmetic rule.
+  await client.query(
+    `WITH evidence AS (
+       SELECT opportunity_id,
+         jsonb_agg(jsonb_build_object(
+           'sourceSystem', source_system,
+           'sourceTable', source_table,
+           'sourceRecordId', source_record_id,
+           'sourceFileReport', source_file_report,
+           'pageSpan', COALESCE(source_span, source_page),
+           'reviewState', review_state
+         ) ORDER BY source_record_id) AS source_refs
+       FROM source.opportunity_evidence
+       WHERE tenant_key = $1 AND dataset_version = $2
+         AND opportunity_id = ANY($3::text[])
+       GROUP BY opportunity_id
+     )
+     INSERT INTO source.opportunity_claim (
+       tenant_key, dataset_version, claim_id, opportunity_id, contract_id,
+       claim_role, statement, basis, scenario_kind, evidence_status,
+       review_status, source_refs, produced_by, load_run_id
+     )
+     SELECT $1, $2, o.opportunity_id || ':problem', o.opportunity_id, o.contract_id,
+       'problem', COALESCE(o.payload->>'label', o.opportunity_id),
+       CASE WHEN COALESCE(jsonb_array_length(e.source_refs), 0) > 0
+            THEN 'client_record' ELSE 'not_recorded' END,
+       'signed_record',
+       CASE WHEN COALESCE(jsonb_array_length(e.source_refs), 0) > 0
+            THEN 'partial' ELSE 'not_established' END,
+       'draft', COALESCE(e.source_refs, '[]'::jsonb), 'deterministic_loader', $4
+     FROM source.optimization_opportunity o
+     LEFT JOIN evidence e ON e.opportunity_id = o.opportunity_id
+     WHERE o.tenant_key = $1 AND o.dataset_version = $2
+       AND o.opportunity_id = ANY($3::text[])
+     ON CONFLICT (tenant_key, dataset_version, claim_id)
+     DO UPDATE SET statement = EXCLUDED.statement,
+       basis = EXCLUDED.basis, evidence_status = EXCLUDED.evidence_status,
+       source_refs = EXCLUDED.source_refs, load_run_id = EXCLUDED.load_run_id,
+       updated_at = now()` ,
+    [args.tenantKey, args.datasetVersion, opportunityIds, args.loadRunId],
+  );
+  await client.query(
+    `INSERT INTO source.opportunity_claim (
+       tenant_key, dataset_version, claim_id, opportunity_id, contract_id,
+       claim_role, statement, basis, scenario_kind, evidence_status,
+       review_status, source_refs, produced_by, load_run_id
+     )
+     SELECT tenant_key, dataset_version, opportunity_id || ':sizing', opportunity_id,
+       contract_id, 'sizing',
+       'Sizing remains unestablished until a reproducible calculation is recorded.',
+       'not_recorded', 'signed_record', 'not_established', 'draft', '[]'::jsonb,
+       'deterministic_loader', $4
+     FROM source.optimization_opportunity
+     WHERE tenant_key = $1 AND dataset_version = $2
+       AND opportunity_id = ANY($3::text[])
+     ON CONFLICT (tenant_key, dataset_version, claim_id)
+     DO UPDATE SET statement = EXCLUDED.statement,
+       basis = EXCLUDED.basis, evidence_status = EXCLUDED.evidence_status,
+       source_refs = EXCLUDED.source_refs, load_run_id = EXCLUDED.load_run_id,
+       updated_at = now()` ,
+    [args.tenantKey, args.datasetVersion, opportunityIds, args.loadRunId],
+  );
 }
 
 function expectedLayer3(files, rows, pageRows = []) {
@@ -1672,6 +1739,7 @@ function expectedLayer3(files, rows, pageRows = []) {
     source_optimization_case: files["cloud_contract_register.csv"].length,
     source_case_opportunity: opportunities.length,
     source_opportunity_evidence: evidenceInputCount,
+    source_opportunity_claim: opportunities.length * 2,
     source_calculation_run: opportunities.length,
     source_calculation_input: evidenceInputCount,
     source_calculation_output: opportunities.length * 2,
@@ -1750,6 +1818,7 @@ async function layer3Readback(client, args, files, loadRunId = args.layer3LoadRu
        (SELECT count(*)::text FROM source.optimization_case WHERE tenant_key = $1 AND dataset_version = $2 AND optimization_case_id = ANY($6::text[])) AS source_optimization_case,
        (SELECT count(*)::text FROM source.case_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_case_opportunity,
        (SELECT count(*)::text FROM source.opportunity_evidence WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_opportunity_evidence,
+       (SELECT count(*)::text FROM source.opportunity_claim WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_opportunity_claim,
        (SELECT count(*)::text FROM source.calculation_run WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($5::text[])) AS source_calculation_run,
        (SELECT count(*)::text FROM source.calculation_input WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($8::text[])) AS source_calculation_input,
        (SELECT count(*)::text FROM source.calculation_output WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($8::text[])) AS source_calculation_output,

@@ -232,10 +232,18 @@ export async function buildAvaSourceContractGrounding(
       const negotiation = detail
         ? ` · buyer ask: ${detail.buyerAsk ?? "not established"} · negotiation language: ${detail.negotiationLanguage ?? "not established"} · vendor rationale/concession: ${detail.vendorConcession ?? "not established"} · timing: ${detail.timingDependency ?? "not established"} · owner: ${detail.ownerRole ?? opportunity.owner ?? "not established"} · priority: ${detail.priority ?? "not established"} · risk if ignored: ${detail.riskIfIgnored ?? "not established"}`
         : "";
-      return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${fmtUsd(
-        opportunity.amountUsd,
-      )} · stage ${opportunity.stage} · confidence ${fmtPct(opportunity.confidence)} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
+      const amountLabel =
+        opportunity.stage === "signal" || opportunity.amountState === "not_sized"
+          ? "not sized"
+          : fmtUsd(opportunity.amountUsd);
+      return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${amountLabel} · stage ${opportunity.stage} · confidence ${fmtPct(opportunity.confidence)} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
     });
+  const claimLines = (opportunitySet?.claims ?? [])
+    .slice(0, 32)
+    .map(
+      (claim) =>
+        `- ${claim.claimId} · ${claim.role} · basis ${claim.basis} · evidence ${claim.evidenceStatus} · review ${claim.reviewStatus} · ${claim.statement}`,
+    );
   const opportunityExportRows = (opportunitySet?.opportunities ?? [])
     .slice(0, 8)
     .map((opportunity, index) => {
@@ -295,6 +303,13 @@ export async function buildAvaSourceContractGrounding(
     opportunityLines.length > 0
       ? `Opportunity rows:\n${opportunityLines.join("\n")}`
       : "Opportunity rows: none loaded for this contract.",
+    claimLines.length > 0
+      ? [
+          "CLAIM-LEVEL PROVENANCE (use this to explain why a statement may or may not be made):",
+          ...claimLines,
+          "A claim with basis not_recorded, evidence missing/not_established, or review draft is not a supported external fact.",
+        ].join("\n")
+      : "Claim-level provenance: no claim rows are loaded for this contract; do not upgrade opportunity prose into a governed fact.",
     opportunityExportRows.length > 0
       ? [
           "CONTRACT OPTIMIZATION EXPORT ROWS (use these rows when the user asks how to optimize this contract, asks for levers, or asks for a client/PDF-ready sample):",

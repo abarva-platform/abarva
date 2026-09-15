@@ -91,6 +91,30 @@ export interface OpportunityNegotiationDetail {
   readonly riskIfIgnored: string | null;
 }
 
+export interface ContractOpportunityClaim {
+  readonly claimId: string;
+  readonly opportunityId: string;
+  readonly contractId: string;
+  readonly role: string;
+  readonly statement: string;
+  readonly basis: string;
+  readonly scenarioKind: "signed_record" | "proposed_target" | "benchmark_comparable";
+  readonly amountUsd: number | null;
+  readonly amountLowUsd: number | null;
+  readonly amountHighUsd: number | null;
+  readonly evidenceStatus: "supported" | "partial" | "missing" | "conflicted" | "not_established";
+  readonly reviewStatus: "draft" | "reviewed" | "approved" | "blocked";
+  readonly sourceRefs: readonly OpportunitySourceReference[];
+  readonly calculationRunId: string | null;
+  readonly benchmarkId: string | null;
+  readonly playbookRuleId: string | null;
+  readonly playbookRuleVersion: string | null;
+  readonly producedBy: "package_author" | "deterministic_loader" | "human_reviewer" | "claude";
+  readonly generationRef: string | null;
+  readonly reviewerRef: string | null;
+  readonly reviewedAt: string | null;
+}
+
 export interface ContractOptimizationOpportunity {
   readonly opportunityId: string;
   readonly contractId: string;
@@ -190,6 +214,8 @@ export interface ContractOptimizationOpportunitySet {
   readonly baseline: OptimizationBaselineRead;
   readonly selectedOpportunityId: string | null;
   readonly opportunities: readonly ContractOptimizationOpportunity[];
+  /** Claim-level provenance for the opportunity statements shown in Optimize. */
+  readonly claims?: readonly ContractOpportunityClaim[];
   readonly optimizationCase?: OptimizationCaseRead | null;
   readonly approvalRequests?: readonly OptimizationApprovalRequestRead[];
   readonly negotiatedOutcomes?: readonly OptimizationNegotiatedOutcomeRead[];
@@ -353,6 +379,7 @@ export function buildContractOptimizationOpportunitySet(
   const financeConfirmedUsd = sum(
     financeRealizations.map((item) => item.amountUsd),
   );
+  const claims = buildCompatibilityClaims(opportunities);
 
   const selectedOpportunityId =
     opportunities.find((opportunity) =>
@@ -385,6 +412,7 @@ export function buildContractOptimizationOpportunitySet(
     baseline,
     selectedOpportunityId,
     opportunities,
+    claims,
     optimizationCase: null,
     approvalRequests: [],
     negotiatedOutcomes: [],
@@ -395,6 +423,97 @@ export function buildContractOptimizationOpportunitySet(
     potentialNegotiableUsd,
     financeConfirmedUsd,
   };
+}
+
+function buildCompatibilityClaims(
+  opportunities: readonly ContractOptimizationOpportunity[],
+): readonly ContractOpportunityClaim[] {
+  return opportunities.flatMap((opportunity) => {
+    const sourceRefs = opportunity.evidenceRefs;
+    const sourceBasis = sourceRefs.length > 0 ? "client_record" : "not_recorded";
+    const claims: ContractOpportunityClaim[] = [
+      {
+        claimId: `${opportunity.opportunityId}:problem`,
+        opportunityId: opportunity.opportunityId,
+        contractId: opportunity.contractId,
+        role: "problem",
+        statement: opportunity.label,
+        basis: sourceBasis,
+        scenarioKind: "signed_record",
+        amountUsd: null,
+        amountLowUsd: null,
+        amountHighUsd: null,
+        evidenceStatus: sourceRefs.length > 0 ? "partial" : "not_established",
+        reviewStatus: "draft",
+        sourceRefs,
+        calculationRunId: null,
+        benchmarkId: null,
+        playbookRuleId: null,
+        playbookRuleVersion: null,
+        producedBy: "deterministic_loader",
+        generationRef: null,
+        reviewerRef: null,
+        reviewedAt: null,
+      },
+    ];
+    if (opportunity.negotiationDetail?.buyerAsk) {
+      claims.push({
+        claimId: `${opportunity.opportunityId}:proposed-ask`,
+        opportunityId: opportunity.opportunityId,
+        contractId: opportunity.contractId,
+        role: "proposed_ask",
+        statement: opportunity.negotiationDetail.buyerAsk,
+        basis: "judgment",
+        scenarioKind: "proposed_target",
+        amountUsd: null,
+        amountLowUsd: null,
+        amountHighUsd: null,
+        evidenceStatus: "not_established",
+        reviewStatus: "draft",
+        sourceRefs,
+        calculationRunId: null,
+        benchmarkId: null,
+        playbookRuleId: null,
+        playbookRuleVersion: null,
+        producedBy: "deterministic_loader",
+        generationRef: null,
+        reviewerRef: null,
+        reviewedAt: null,
+      });
+    }
+    if (opportunity.amountUsd != null || opportunity.calculation) {
+      claims.push({
+        claimId: `${opportunity.opportunityId}:sizing`,
+        opportunityId: opportunity.opportunityId,
+        contractId: opportunity.contractId,
+        role: "sizing",
+        statement:
+          opportunity.amountUsd != null
+            ? `Candidate value for ${opportunity.shortLabel}.`
+            : `Sizing remains open for ${opportunity.shortLabel}.`,
+        // The legacy calculation field is descriptive metadata, not a
+        // completed calculation run. Keep the compatibility claim honest
+        // until the persisted calculation lineage is available.
+        basis: "not_recorded",
+        scenarioKind: "signed_record",
+        amountUsd: null,
+        amountLowUsd: null,
+        amountHighUsd: null,
+        evidenceStatus: "not_established",
+        reviewStatus: "draft",
+        sourceRefs,
+        calculationRunId: null,
+        benchmarkId: null,
+        playbookRuleId: null,
+        playbookRuleVersion: null,
+        producedBy: "deterministic_loader",
+        generationRef: null,
+        reviewerRef: null,
+        reviewedAt: null,
+      });
+    }
+    return claims;
+  });
 }
 
 function buildBaseline(input: {

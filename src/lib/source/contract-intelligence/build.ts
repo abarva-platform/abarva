@@ -492,7 +492,9 @@ function buildContractRecord(
   const plannedScope = scope.filter((row) =>
     text(row, "scope_status").includes("planned"),
   ).length;
-  const archetype = text(contract, "archetype") || text(contract, "category");
+  const declaredArchetype =
+    text(contract, "contract_archetype") || text(contract, "archetype");
+  const archetype = declaredArchetype || "unmapped";
   const contextReviewed = ["reviewed", "approved"].includes(
     text(contract, "context_review_state"),
   );
@@ -507,16 +509,16 @@ function buildContractRecord(
     missingEvidence.push("the applications or services covered");
   if (spend.length === 0) missingEvidence.push("monthly consumption or spend");
   if (invoices.length === 0) missingEvidence.push("invoice detail");
-  const performanceRequired =
-    archetype.includes("managed_services") ||
-    text(contract, "category").toLowerCase().includes("managed services");
+  const performanceRequired = archetype.includes("managed_services");
   if (performanceRequired && performance.length === 0 && tickets.length === 0)
     missingEvidence.push("service performance or ticket evidence");
   if (pages.length === 0 && !contextReviewed)
     missingEvidence.push("searchable document text");
   const reviewStatus: ContractIntelligenceReviewStatus =
     missingEvidence.length === 0 ? "reviewed" : "blocked_missing_evidence";
-  const purpose = reviewedPurpose || `${text(contract, "vendor_name")} provides ${humanArchetype(archetype)} under this agreement. ${scopeNames.length > 0 ? `The loaded scope names ${scopeNames.slice(0, 4).join(", ")}${scopeNames.length > 4 ? " and other workloads" : ""}.` : "The agreement's covered applications and services are not loaded yet."}`;
+  const purpose =
+    reviewedPurpose ||
+    "Contract purpose is not established from reviewed contract context.";
   const evidenceBoundary =
     reviewedBoundary || (missingEvidence.length > 0
       ? `The next conclusion is blocked until ${missingEvidence.join(", ")}.`
@@ -791,10 +793,10 @@ function buildContractRecord(
       vendorId: text(contract, "vendor_ref") || null,
       vendorName: text(contract, "vendor_name"),
       title: text(contract, "contract_name"),
-      archetypeKey: archetype || null,
-      archetypeLabel: archetype ? humanArchetype(archetype) : null,
-      archetypeSourceBasis: archetype ? "document_declared" : "unmapped",
-      archetypeConfidence: archetype ? "high" : "unverified",
+      archetypeKey: declaredArchetype || null,
+      archetypeLabel: declaredArchetype ? humanArchetype(archetype) : null,
+      archetypeSourceBasis: declaredArchetype ? "document_declared" : "unmapped",
+      archetypeConfidence: declaredArchetype ? "high" : "unverified",
       startDate: text(contract, "start_date") || null,
       endDate: text(contract, "end_date") || null,
       noticePeriodDays: number(contract, "notice_period_days"),
