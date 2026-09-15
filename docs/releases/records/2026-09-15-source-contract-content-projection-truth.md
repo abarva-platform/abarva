@@ -13,7 +13,10 @@
 This release aligns the Source Contract 360 content model with the governed data that the
 contract-content design expects. Contract archetype identity is read from the canonical contract
 payload, evidence counts follow the active package, and Optimize only shows a monetary amount when
-an approved sizing claim has a supported calculation or benchmark and resolvable evidence.
+an approved sizing claim has a supported calculation or benchmark and resolvable evidence. Exact
+contract grounding also takes precedence over portfolio and sourcing-event context in aVa. Source
+workspace reads with an explicit, authorized client key no longer depend on a second active-client
+lookup before loading the portfolio or contract detail.
 
 ## Layer Impact
 
@@ -38,6 +41,15 @@ an approved sizing claim has a supported calculation or benchmark and resolvable
 
 - Canonical archetype projection migration for `source.contract_intelligence_v2`.
 - Claim-gated opportunity amount and range mapping in Contract 360 and Source portfolio adapters.
+- Active-package archetype aliases for cloud data platforms and managed-service variants, with
+  canonical contract identity refreshed in the hardened read model.
+- Legacy opportunity rows are suppressed when the same contract has an active current-package
+  opportunity, preventing duplicate or stale portfolio value.
+- Cloud contract page text is retained in deterministic contract-intelligence projection inputs.
+- Contract-scoped aVa grounding is authoritative for every answer mode and carries explicit
+  annual-value, commitment, spend, and payment semantic boundaries.
+- Explicit Source workspace client keys are authorized directly before portfolio, impact, or
+  contract-detail reads; session tenancy remains the fallback when no client is supplied.
 - Claim-gated Layer 4 action, coverage, and sourcing opportunity projections.
 - Dataset-version-aware document lineage joins.
 - Loader validation that distinguishes resolvable source references from descriptive tokens.
@@ -46,7 +58,7 @@ an approved sizing claim has a supported calculation or benchmark and resolvable
 ## QA / Validation
 
 - `npx tsc --noEmit --pretty false` passed.
-- Focused Jest suite passed: 3 suites, 29 tests.
+- Focused Jest suites passed: 9 suites, 84 tests.
 - ESLint passed for all changed TypeScript/JavaScript files.
 - `git diff --check` passed.
 - ACA data-job readback and signed-in browser proof are required after merge and deployment.

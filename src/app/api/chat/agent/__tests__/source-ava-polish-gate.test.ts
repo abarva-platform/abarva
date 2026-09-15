@@ -104,9 +104,7 @@ describe("agent route · Source aVa contract optimization authority", () => {
     expect(source).toContain(
       "const contractGroundingTenantKeys = uniqueSourceTenantCandidates([",
     );
-    expect(source).toContain(
-      "sourceContractReadTenantKey,",
-    );
+    expect(source).toContain("sourceContractReadTenantKey,");
     expect(source).toContain(
       "for (const contractGroundingTenantKey of contractGroundingTenantKeys)",
     );
@@ -142,13 +140,10 @@ describe("agent route · Source aVa contract optimization authority", () => {
     );
   });
 
-  it("keeps single-contract grounding authoritative over the older event optimization block", () => {
-    expect(source).toContain(
-      "const contractGroundingIsAuthoritativeForMode =",
-    );
-    expect(source).toContain("hasSourceContractGrounding");
-    expect(source).toContain(
-      'modeClassification.mode === "contract_optimization"',
+  it("keeps single-contract grounding authoritative over every older event mode block", () => {
+    expect(source).toContain("const contractGroundingIsAuthoritativeForMode =");
+    expect(source).toMatch(
+      /const contractGroundingIsAuthoritativeForMode =\s*hasSourceContractGrounding;/,
     );
 
     const groundingAppendStart = source.indexOf("if (");
@@ -157,6 +152,12 @@ describe("agent route · Source aVa contract optimization authority", () => {
       groundingAppendStart,
     );
     expect(authorityCheck).toBeGreaterThan(-1);
+  });
+
+  it("removes portfolio grounding whenever exact contract grounding is present", () => {
+    expect(source).toContain(
+      'hasSourceContractGrounding ? "" : sourcePortfolioGroundingBlock,',
+    );
   });
 
   it("passes the single-contract block to the quality gate when it suppresses the event block", () => {
@@ -175,8 +176,12 @@ describe("agent route · Source aVa visual and table output discipline", () => {
     expect(source).toContain("looksLikeSourceVisualRequest(message)");
     expect(source).toContain("```abarva-chart");
     expect(source).toContain('"type":"bar"|"line"|"waterfall"|"matrix"');
-    expect(source).toContain("using only grounded values already present in the Source context");
-    expect(source).toContain("Do not substitute a markdown-only table for the visual");
+    expect(source).toContain(
+      "using only grounded values already present in the Source context",
+    );
+    expect(source).toContain(
+      "Do not substitute a markdown-only table for the visual",
+    );
     expect(source).toContain("do not invent them");
     expect(source).not.toContain(
       "do not print chart JSON, inline object literals, code fences, or renderer instructions",
@@ -196,29 +201,43 @@ describe("agent route · Source aVa visual and table output discipline", () => {
 
   it("keeps event-stage operational asks table-shaped and prevents status/value overclaiming", () => {
     expect(source).toContain("SOURCE VIEWED-STAGE DISCIPLINE");
-    expect(source).toContain("when a Source event turn includes a viewed stage");
+    expect(source).toContain(
+      "when a Source event turn includes a viewed stage",
+    );
     expect(source).toContain("answer operational questions");
     expect(source).toContain("for that viewed stage");
     expect(source).toContain("SOURCE EVENT ANSWER SHAPE");
     expect(source).toContain("files/templates");
     expect(source).toContain("workshops");
     expect(source).toContain("vendor unsupported claims");
-    expect(source).toContain("Include the exact words template, collect, next, approval, blocking, workshop, attend, and data");
+    expect(source).toContain(
+      "Include the exact words template, collect, next, approval, blocking, workshop, attend, and data",
+    );
     expect(source).toContain("collect the template before the next stage");
     expect(source).toContain("approval gate");
     expect(source).toContain("blocking");
     expect(source).toContain("workshop, attend, and data");
     expect(source).toContain("SOURCE EVENT PROVENANCE WORDING");
     expect(source).toContain("Foundation, Vendor 360, and fact");
-    expect(source).toContain("Do not collapse this into a generic value-bridge answer");
-    expect(source).toContain("Do not answer those asks as prose-only paragraphs");
+    expect(source).toContain(
+      "Do not collapse this into a generic value-bridge answer",
+    );
+    expect(source).toContain(
+      "Do not answer those asks as prose-only paragraphs",
+    );
     expect(source).toContain("SOURCE STAGE STATUS DISCIPLINE");
-    expect(source).toContain("distinguish stage/task completion from approved value");
-    expect(source).toContain("Do not imply guaranteed, booked, approved, realized, realized value, or realized savings");
+    expect(source).toContain(
+      "distinguish stage/task completion from approved value",
+    );
+    expect(source).toContain(
+      "Do not imply guaranteed, booked, approved, realized, realized value, or realized savings",
+    );
     expect(source).toContain("never write the exact phrase");
     expect(source).toContain("realized value is");
     expect(source).toContain("realized savings");
-    expect(source).toContain("pending value remains pending Finance/Tower approval; approved/booked value remains $0");
+    expect(source).toContain(
+      "pending value remains pending Finance/Tower approval; approved/booked value remains $0",
+    );
     expect(source).toContain("not finance-confirmed");
     expect(source).toContain("SOURCE CALCULATION-RUN DISCIPLINE");
     expect(source).toContain("missing a calculation run");
@@ -228,31 +247,49 @@ describe("agent route · Source aVa visual and table output discipline", () => {
 
   it("uses literal Source boundary wording for tenant isolation and unquotable figures", () => {
     expect(source).toContain("SOURCE TENANT BOUNDARY WORDING");
-    expect(source).toContain("I can't access another tenant from the current tenant session");
+    expect(source).toContain(
+      "I can't access another tenant from the current tenant session",
+    );
     expect(source).toContain("SOURCE QUOTE BOUNDARY WORDING");
-    expect(source).toContain("Do not quote missing, conflicting, unproven, or non-governed Source figures");
+    expect(source).toContain(
+      "Do not quote missing, conflicting, unproven, or non-governed Source figures",
+    );
   });
 
   it("keeps portfolio charts and contract lineage answers grounded instead of scrubbed after generation", () => {
     expect(source).toContain("SOURCE PORTFOLIO CHART DISCIPLINE");
     expect(source).toContain("SOURCE PORTFOLIO CHART DATASET DISCIPLINE");
     expect(source).toContain("AUTHORITATIVE SOURCE PORTFOLIO GROUNDING only");
-    expect(source).toContain("copy labels and numeric values only from the Top vendors");
-    expect(source).toContain("Do not add a vendor, supplier, category, spend total, or percentage");
-    expect(source).toContain("governed Source portfolio grounding is unavailable");
+    expect(source).toContain(
+      "copy labels and numeric values only from the Top vendors",
+    );
+    expect(source).toContain(
+      "Do not add a vendor, supplier, category, spend total, or percentage",
+    );
+    expect(source).toContain(
+      "governed Source portfolio grounding is unavailable",
+    );
     expect(source).toContain("old intake-corpus totals");
     expect(source).toContain("SOURCE LINEAGE DISCIPLINE");
-    expect(source).toContain("source systems, extracts, fields, grain, history, update frequency");
+    expect(source).toContain(
+      "source systems, extracts, fields, grain, history, update frequency",
+    );
     expect(source).toContain("do not deflect as platform architecture");
   });
 
   it("suppresses generic Source broker context on portfolio-wide chart/concentration asks", () => {
-    expect(source).toContain("function looksLikeSourcePortfolioChartOrConcentrationRequest");
-    expect(source).toContain("const shouldUseSourcePortfolioGroundingExclusively =");
+    expect(source).toContain(
+      "function looksLikeSourcePortfolioChartOrConcentrationRequest",
+    );
+    expect(source).toContain(
+      "const shouldUseSourcePortfolioGroundingExclusively =",
+    );
     expect(source).toContain("hasSourcePortfolioGrounding");
     expect(source).toContain("!contractIdFromContext");
     expect(source).toContain("!sourceEventIdFromContext");
-    expect(source).toContain("looksLikeSourcePortfolioChartOrConcentrationRequest(message)");
+    expect(source).toContain(
+      "looksLikeSourcePortfolioChartOrConcentrationRequest(message)",
+    );
     expect(source).toContain("const sourceTenantContextBlockForPrompt =");
     expect(source).toMatch(
       /shouldUseSourcePortfolioGroundingExclusively\s*\?\s*""\s*:\s*sourceTenantContextBlock/,
@@ -282,17 +319,25 @@ describe("agent route · Source Contract 360 selected-context prompt", () => {
   it("runs Source answer quality checks as telemetry without rewriting Claude output", () => {
     expect(source).toContain("const sourceAvaTelemetryGateActive =");
     expect(source).toContain("answerText: bufferedOutput");
-    expect(source).toContain("[source-ava-quality-gate] telemetry checks failed");
+    expect(source).toContain(
+      "[source-ava-quality-gate] telemetry checks failed",
+    );
     expect(source).toContain("repairedWouldHaveRun: gateResult.repaired");
     expect(source).not.toContain("let heldAgentText");
     expect(source).not.toContain("heldAgentText +=");
     expect(source).not.toContain("const finalText = gateResult.finalText");
-    expect(source).not.toContain("controller.enqueue(encoder.encode(finalText))");
+    expect(source).not.toContain(
+      "controller.enqueue(encoder.encode(finalText))",
+    );
   });
 
   it("injects a selected-contract optimization export contract for PDF/client-sample asks", () => {
-    expect(source).toContain("function looksLikeSourceContractOptimizationExportRequest");
-    expect(source).toContain("const sourceContractOptimizationExportDirective =");
+    expect(source).toContain(
+      "function looksLikeSourceContractOptimizationExportRequest",
+    );
+    expect(source).toContain(
+      "const sourceContractOptimizationExportDirective =",
+    );
     expect(source).toContain("hasSourceContractGrounding");
     expect(source).toContain(
       "looksLikeSourceContractOptimizationExportRequest(message)",
@@ -304,9 +349,7 @@ describe("agent route · Source Contract 360 selected-context prompt", () => {
     expect(source).toContain(
       "Do not add VISUALS, Relationship map, Decision table, Appendix",
     );
-    expect(source).toContain(
-      "Preserve owner and timing from the row",
-    );
+    expect(source).toContain("Preserve owner and timing from the row");
     expect(source).toContain("sourceContractOptimizationExportDirective,");
   });
 });
@@ -316,13 +359,11 @@ describe("agent route · Source aVa vendor-response grounding — Gap 2", () => 
 
   it("honors the top-level stage when the request omits surfaceContext.viewStage", () => {
     expect(source).toContain("const viewStageFromContext =");
-    expect(source).toContain(
-      'typeof surfaceContext.viewStage === "string" &&',
-    );
+    expect(source).toContain('typeof surfaceContext.viewStage === "string" &&');
     expect(source).toContain('typeof stage === "string" && stage.trim()');
-    expect(source.indexOf('typeof stage === "string" && stage.trim()')).toBeGreaterThan(
-      source.indexOf("surfaceContext.viewStage"),
-    );
+    expect(
+      source.indexOf('typeof stage === "string" && stage.trim()'),
+    ).toBeGreaterThan(source.indexOf("surfaceContext.viewStage"));
   });
 
   it("uses event-visible response profiles for unsupported-claim asks even after the event leaves Responses", () => {
@@ -346,13 +387,13 @@ describe("agent route · Source aVa vendor-response grounding — Gap 2", () => 
       "looksLikeVisibleVendorResponseProfileQuestion(message)",
     );
     expect(visibleProfileBlock).toContain("buildVendorResponseMveProfiles");
-    expect(visibleProfileBlock).not.toContain(
-      'modeStageKey === "responses"',
-    );
+    expect(visibleProfileBlock).not.toContain('modeStageKey === "responses"');
   });
 
   it("uses event-visible response profiles for generic comparison and completeness asks, not only unsupported-claim asks", () => {
-    expect(source).toContain("function looksLikeVisibleVendorResponseProfileQuestion");
+    expect(source).toContain(
+      "function looksLikeVisibleVendorResponseProfileQuestion",
+    );
     expect(source).toContain("completeness");
     expect(source).toContain("coverage");
     expect(source).toContain("asksAboutComparisonOrCoverage");
