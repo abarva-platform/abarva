@@ -17,9 +17,18 @@ import type {
   ContractIntelligenceReadout,
   ContractIntelligenceReviewStatus,
 } from "./types";
+import { buildContractEducation } from "./education";
+import type {
+  ContractIntelligenceCompleteness,
+  ContractIntelligenceReportingContext,
+} from "./types";
 
 const MODEL_VERSION = "source-contract-intelligence-v1";
-type ValueType = "recoverable_leakage" | "avoided_cost" | "negotiated_improvement" | "realized_value";
+type ValueType =
+  | "recoverable_leakage"
+  | "avoided_cost"
+  | "negotiated_improvement"
+  | "realized_value";
 type AmountState = "exact" | "range" | "not_sized";
 function text(row: CsvRecord, key: string): string {
   return row[key]?.trim() ?? "";
@@ -66,10 +75,71 @@ function unique(values: readonly string[]): string[] {
   return [...new Set(values.filter(Boolean))];
 }
 
+function isoDate(value: string): string | null {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+}
+
+function rowPeriodDate(row: CsvRecord): string | null {
+  for (const key of [
+    "as_of_date",
+    "reporting_date",
+    "period_end",
+    "service_period_end",
+    "period_month",
+    "month",
+    "date",
+    "effective_date",
+  ]) {
+    const value = isoDate(text(row, key));
+    if (value) return value;
+  }
+  return null;
+}
+
+function buildReportingContext(
+  contract: CsvRecord,
+  rows: readonly CsvRecord[],
+): ContractIntelligenceReportingContext {
+  const asOfDate =
+    ["reporting_date", "as_of_date", "dataset_as_of_date"]
+      .map((key) => isoDate(text(contract, key)))
+      .find((value): value is string => value !== null) ?? null;
+  const periodDates = rows
+    .map(rowPeriodDate)
+    .filter((value): value is string => value !== null)
+    .sort();
+  const excludedObservationCount = asOfDate
+    ? periodDates.filter((value) => value > asOfDate).length
+    : 0;
+  const explicitCompleteness = text(contract, "evidence_completeness");
+  const completeness: ContractIntelligenceCompleteness =
+    explicitCompleteness === "complete" || explicitCompleteness === "partial"
+      ? explicitCompleteness
+      : "unknown";
+  return {
+    asOfDate,
+    state: asOfDate ? "declared" : "not_declared",
+    periodStart: periodDates[0] ?? null,
+    periodEnd: periodDates.at(-1) ?? null,
+    excludedObservationCount,
+    completeness,
+    completenessReason: asOfDate
+      ? excludedObservationCount > 0
+        ? `${excludedObservationCount} observation${excludedObservationCount === 1 ? "" : "s"} fall after the declared reporting cutoff.`
+        : "Loaded observations fall on or before the declared reporting cutoff."
+      : "No reporting cutoff is declared; current-state period claims remain provisional.",
+    sourceRefs: unique([
+      sourceRef(contract, text(contract, "contract_id")),
+      ...sourceRefs(rows, text(contract, "contract_id")),
+    ]),
+  };
+}
+
 function humanArchetype(archetype: string): string {
   const labels: Record<string, string> = {
     application_managed_services: "application managed services",
-    infra_service_desk_managed_services: "infrastructure and service desk managed services",
+    infra_service_desk_managed_services:
+      "infrastructure and service desk managed services",
     productivity_platform: "productivity and collaboration platform",
     crm_saas: "CRM SaaS subscription",
     consumption_commit: "consumption commitment",
@@ -112,7 +182,12 @@ function lane(
 
 function valueType(row: CsvRecord): ValueType {
   const value = text(row, "value_type") || text(row, "opportunity_type");
-  return ["recoverable_leakage", "avoided_cost", "negotiated_improvement", "realized_value"].includes(value)
+  return [
+    "recoverable_leakage",
+    "avoided_cost",
+    "negotiated_improvement",
+    "realized_value",
+  ].includes(value)
     ? (value as ValueType)
     : "negotiated_improvement";
 }
@@ -125,7 +200,12 @@ function amountState(row: CsvRecord): AmountState {
 function evidenceState(row: CsvRecord): ContractIntelligenceEvidenceState {
   const grade = text(row, "evidence_grade");
   if (grade === "missing" || grade === "not_loaded") return "missing";
-  if (grade === "human_validated" || grade === "system_evidenced" || grade === "document_evidenced") return "loaded";
+  if (
+    grade === "human_validated" ||
+    grade === "system_evidenced" ||
+    grade === "document_evidenced"
+  )
+    return "loaded";
   return "partial";
 }
 
@@ -205,7 +285,12 @@ function buildAnatomy(
   opportunities: readonly CsvRecord[],
   levers: readonly CsvRecord[],
   archetype: string,
-  extraEvidence: ReadonlyArray<{ key: string; label: string; rows: readonly CsvRecord[]; description: string }> = [],
+  extraEvidence: ReadonlyArray<{
+    key: string;
+    label: string;
+    rows: readonly CsvRecord[];
+    description: string;
+  }> = [],
 ): ContractIntelligenceAnatomy {
   const contractId = text(contract, "contract_id");
   const contractNode = `contract:${contractId}`;
@@ -516,11 +601,33 @@ function buildContractRecord(
     missingEvidence.push("searchable document text");
   const reviewStatus: ContractIntelligenceReviewStatus =
     missingEvidence.length === 0 ? "reviewed" : "blocked_missing_evidence";
-  const purpose =
-    reviewedPurpose ||
-    "Contract purpose is not established from reviewed contract context.";
+  const reporting = buildReportingContext(contract, [
+    ...scope,
+    ...spend,
+    ...invoices,
+    ...performance,
+    ...tickets,
+    ...changes,
+    ...documents,
+  ]);
+  const education = buildContractEducation({
+    archetype,
+    vendorName: text(contract, "vendor_name"),
+    contractName: text(contract, "contract_name"),
+    scopeRows: scope.length,
+    spendRows: spend.length,
+    invoiceRows: invoices.length,
+    performanceRows: performance.length,
+    documentRows: documents.length + pages.length,
+    opportunityRows: opportunities.length,
+    changeOrderRows: changes.length,
+    hasReviewedPurpose: Boolean(reviewedPurpose),
+    benchmarkingClause: text(contract, "benchmarking_clause") || null,
+  });
+  const purpose = reviewedPurpose || null;
   const evidenceBoundary =
-    reviewedBoundary || (missingEvidence.length > 0
+    reviewedBoundary ||
+    (missingEvidence.length > 0
       ? `The next conclusion is blocked until ${missingEvidence.join(", ")}.`
       : "The loaded contract, commercial, usage, invoice, and performance records support a decision view.");
   const metrics: ContractIntelligenceMetric[] = [
@@ -528,6 +635,11 @@ function buildContractRecord(
       key: "annual_commitment",
       label: "Annual commitment",
       value: money(annualCommitment),
+      valueNumeric: annualCommitment,
+      unit: "USD",
+      basis: "client_record",
+      asOfDate: reporting.asOfDate,
+      completeness: annualCommitment === null ? "unknown" : "complete",
       meaning:
         "The recurring amount the agreement commits the buyer to before actual usage is considered.",
       sourceRefs: [sourceRef(contract, contractId)],
@@ -536,6 +648,11 @@ function buildContractRecord(
       key: "observed_spend",
       label: "Observed spend",
       value: money(observedSpend),
+      valueNumeric: observedSpend,
+      unit: "USD",
+      basis: spend.length > 0 ? "calculated" : "client_record",
+      asOfDate: reporting.asOfDate,
+      completeness: observedSpend === null ? "unknown" : reporting.completeness,
       meaning:
         "The amount present in the loaded monthly spend rows or contract baseline.",
       sourceRefs: sourceRefs(spend, sourceRef(contract, contractId)),
@@ -544,6 +661,11 @@ function buildContractRecord(
       key: "usage_against_commitment",
       label: "Usage against commitment",
       value: percent(utilization),
+      valueNumeric: utilization,
+      unit: "percent",
+      basis: "calculated",
+      asOfDate: reporting.asOfDate,
+      completeness: utilization === null ? "unknown" : reporting.completeness,
       meaning:
         "How much of the annual commitment the loaded spend represents; it is not a savings claim.",
       sourceRefs: [
@@ -555,6 +677,11 @@ function buildContractRecord(
       key: "documented_levers",
       label: "Documented negotiation levers",
       value: String(levers.length || opportunities.length),
+      valueNumeric: levers.length || opportunities.length,
+      unit: "count",
+      basis: "client_record",
+      asOfDate: reporting.asOfDate,
+      completeness: "complete",
       meaning:
         "Structured asks connected to contract evidence; finance confirmation is still a separate gate.",
       sourceRefs:
@@ -566,6 +693,11 @@ function buildContractRecord(
       key: "usage_observations",
       label: "Usage observations",
       value: String(usageObservations.length),
+      valueNumeric: usageObservations.length,
+      unit: "count",
+      basis: "client_record",
+      asOfDate: reporting.asOfDate,
+      completeness: "complete",
       meaning:
         "Native usage rows explain workload consumption without being added to invoice or spend totals.",
       sourceRefs: sourceRefs(usageObservations, contractId),
@@ -574,6 +706,11 @@ function buildContractRecord(
       key: "commitment_coverage_periods",
       label: "Commitment coverage periods",
       value: String(commitmentCoverage.length),
+      valueNumeric: commitmentCoverage.length,
+      unit: "count",
+      basis: "client_record",
+      asOfDate: reporting.asOfDate,
+      completeness: "complete",
       meaning:
         "Coverage rows show which stable workload spend was eligible against the commitment.",
       sourceRefs: sourceRefs(commitmentCoverage, contractId),
@@ -795,7 +932,9 @@ function buildContractRecord(
       title: text(contract, "contract_name"),
       archetypeKey: declaredArchetype || null,
       archetypeLabel: declaredArchetype ? humanArchetype(archetype) : null,
-      archetypeSourceBasis: declaredArchetype ? "document_declared" : "unmapped",
+      archetypeSourceBasis: declaredArchetype
+        ? "document_declared"
+        : "unmapped",
       archetypeConfidence: declaredArchetype ? "high" : "unverified",
       startDate: text(contract, "start_date") || null,
       endDate: text(contract, "end_date") || null,
@@ -809,16 +948,19 @@ function buildContractRecord(
           : "The loaded evidence supports a contract decision.",
       purpose,
       scope:
-        reviewedScope || (scope.length > 0
+        reviewedScope ||
+        (scope.length > 0
           ? `${scope.length} named scope rows: ${scopeNames.slice(0, 4).join(", ")}.`
           : "Scope is not established from governed rows."),
       decision:
-        reviewedDecision || (leverRows.length > 0
+        reviewedDecision ||
+        (leverRows.length > 0
           ? `The next decision is to review ${leverRows.length} documented negotiation lever${leverRows.length === 1 ? "" : "s"}, in order of timing and evidence.`
           : "No documented negotiation lever is loaded yet."),
       evidenceBoundary,
     },
     baseline: { metrics, facts },
+    reporting,
     evidenceLanes: lanes,
     anatomy: buildAnatomy(
       contract,
@@ -838,28 +980,33 @@ function buildContractRecord(
           key: "cloud-usage",
           label: "Native cloud usage",
           rows: usageObservations,
-          description: "Native DBU, service, or workload usage linked to the contract.",
+          description:
+            "Native DBU, service, or workload usage linked to the contract.",
         },
         {
           key: "commitment-coverage",
           label: "Commitment coverage",
           rows: commitmentCoverage,
-          description: "Monthly coverage evidence showing which spend qualifies against commitment.",
+          description:
+            "Monthly coverage evidence showing which spend qualifies against commitment.",
         },
         {
           key: "cloud-resources",
           label: "Cloud resources",
           rows: resourceInventory,
-          description: "Cloud accounts, resources, services, and workload tags mapped to scope.",
+          description:
+            "Cloud accounts, resources, services, and workload tags mapped to scope.",
         },
         {
           key: "ap-reconciliation",
           label: "AP reconciliation",
           rows: apReconciliation,
-          description: "Billing export, invoice, and paid-state reconciliation rows.",
+          description:
+            "Billing export, invoice, and paid-state reconciliation rows.",
         },
       ],
     ),
+    education,
     findings: findingRows,
     levers: leverRows,
     derivedInsights,
@@ -885,7 +1032,7 @@ function buildContractRecord(
       plainEnglish:
         reviewStatus === "blocked_missing_evidence"
           ? `This record is not ready for an executive claim because ${missingEvidence.join(", ")} ${missingEvidence.length === 1 ? "is" : "are"} missing.`
-        : "This record has the minimum evidence required for a reviewable decision view.",
+          : "This record has the minimum evidence required for a reviewable decision view.",
       missingEvidence,
       reviewerRole: text(contract, "context_reviewer_role") || null,
       reviewedAt: text(contract, "context_reviewed_at") || null,
@@ -897,7 +1044,7 @@ function buildContractRecord(
       datasetVersion: text(contract, "dataset_version"),
       modelVersion: MODEL_VERSION,
       sourceRefs: sourceRowRefs,
-      loadRunId: null,
+      loadRunId: text(contract, "load_run_id") || null,
       sourceFiles: unique([
         ...documents.map((row) => text(row, "source_file_id")),
         ...sourceRowRefs.filter((ref) => ref.startsWith("DOC-")),
@@ -939,6 +1086,24 @@ export function buildContractIntelligenceReadout(
   const sourceRefs = unique(
     records.flatMap((record) => record.provenance.sourceRefs),
   );
+  const readoutMetric = (
+    key: string,
+    label: string,
+    value: number,
+    meaning: string,
+    refs: readonly string[],
+  ): ContractIntelligenceMetric => ({
+    key,
+    label,
+    value: String(value),
+    valueNumeric: value,
+    unit: "count",
+    basis: "calculated",
+    asOfDate: null,
+    completeness: "complete",
+    meaning,
+    sourceRefs: unique(refs),
+  });
   return {
     headline:
       records.length === 0
@@ -951,40 +1116,36 @@ export function buildContractIntelligenceReadout(
         ? "Load a governed contract package before showing a decision story."
         : "Every statement below is tied to a contract record and source reference.",
     metrics: [
-      {
-        key: "contracts_with_intelligence",
-        label: "Contracts with a governed intelligence record",
-        value: String(records.length),
-        meaning:
-          "A contract has an identity, purpose, evidence lanes, anatomy, and provenance record.",
+      readoutMetric(
+        "contracts_with_intelligence",
+        "Contracts with a governed intelligence record",
+        records.length,
+        "A contract has an identity, purpose, evidence lanes, anatomy, and provenance record.",
         sourceRefs,
-      },
-      {
-        key: "contracts_ready_for_review",
-        label: "Contracts ready for an evidence-backed decision review",
-        value: String(ready.length),
-        meaning:
-          "Required evidence lanes are loaded well enough to support a reviewable decision story.",
-        sourceRefs: ready.flatMap((record) => record.provenance.sourceRefs),
-      },
-      {
-        key: "contracts_needing_evidence",
-        label: "Contracts needing more evidence before action",
-        value: String(blocked.length),
-        meaning:
-          "The record is useful for directing the next data request, but it must not be presented as a completed recommendation.",
-        sourceRefs: blocked.flatMap((record) => record.provenance.sourceRefs),
-      },
-      {
-        key: "documented_levers",
-        label: "Documented negotiation levers",
-        value: String(leverCount),
-        meaning:
-          "Levers loaded from structured contract findings; amounts remain candidate until finance confirms them.",
-        sourceRefs: records.flatMap((record) =>
+      ),
+      readoutMetric(
+        "contracts_ready_for_review",
+        "Contracts ready for an evidence-backed decision review",
+        ready.length,
+        "Required evidence lanes are loaded well enough to support a reviewable decision story.",
+        ready.flatMap((record) => record.provenance.sourceRefs),
+      ),
+      readoutMetric(
+        "contracts_needing_evidence",
+        "Contracts needing more evidence before action",
+        blocked.length,
+        "The record is useful for directing the next data request, but it must not be presented as a completed recommendation.",
+        blocked.flatMap((record) => record.provenance.sourceRefs),
+      ),
+      readoutMetric(
+        "documented_levers",
+        "Documented negotiation levers",
+        leverCount,
+        "Levers loaded from structured contract findings; amounts remain candidate until finance confirms them.",
+        records.flatMap((record) =>
           record.levers.flatMap((lever) => lever.sourceRefs),
         ),
-      },
+      ),
     ],
     interpretation:
       blocked.length > 0
