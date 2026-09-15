@@ -84,10 +84,16 @@ function diagnosticsPath(path) {
   return `${path}${separator}diagnostics=ecl`;
 }
 
+function homeRoutePath() {
+  const tenantValue = encodeURIComponent(TENANT_KEY);
+  if (ROUTE_MODE === "default_routes") return `/home?tenant=${tenantValue}`;
+  return diagnosticsPath(eclPath(`/home/preview?tenant=${tenantValue}`, "&"));
+}
+
 const ROUTES = [
   {
     key: "home_preview_ecl",
-    path: diagnosticsPath(eclPath(`/home/preview?tenant=${encodeURIComponent(TENANT_KEY)}`, "&")),
+    path: homeRoutePath(),
     requiredText: [
       new RegExp(EXPECTED_TENANT_NAME.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
       /750\s+applications/i,

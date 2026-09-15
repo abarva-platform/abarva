@@ -9,6 +9,8 @@ const CHECKS = [
     key: "smoke_home_requires_dense_ecl_counts",
     file: "scripts/ecl/run_product_ecl_browser_smoke.mjs",
     mustContain: [
+      "function homeRoutePath()",
+      "ROUTE_MODE === \"default_routes\") return `/home?",
       "/home/preview?tenant=",
       "provider=ecl_projection_db",
       "diagnosticsPath(",
@@ -61,12 +63,12 @@ const CHECKS = [
   },
   {
     key: "home_route_uses_ecl_provider",
-    file: "src/app/(maestro)/home/preview/page.tsx",
+    file: "src/app/(maestro)/home/page.tsx",
     mustContain: [
       "tenant?: string",
       "provider?: string",
       "resolveEclProductProvider(provider)",
-      "getHomeEclProjectionBundle(tenantKey)",
+      "getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)",
     ],
   },
   {
