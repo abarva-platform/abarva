@@ -1565,6 +1565,8 @@ async function rebuildViews(client: Client): Promise<void> {
         CASE WHEN COALESCE(o.amount_usd, 0) >= 10000000 THEN 'high' WHEN COALESCE(o.amount_usd, 0) >= 1000000 THEN 'medium' ELSE 'low' END AS priority,
         o.confidence,
         CASE
+          WHEN o.value_type = 'control_action' THEN 'control_required'
+          WHEN o.stage = 'finance_confirmed' THEN 'ready_to_act'
           WHEN o.payload->>'finance_confirmation_state' = 'not_confirmed' THEN 'finance_confirmation_required'
           WHEN o.stage IN ('validated', 'approval_required') THEN 'review_required'
           ELSE 'review_required'
