@@ -13,6 +13,10 @@ import {
 import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
+import {
+  isEclProductProvider,
+  resolveEclProductProvider,
+} from "@/lib/ecl/product-provider";
 
 export const metadata: Metadata = {
   title: "Home | AbarVa",
@@ -34,7 +38,7 @@ function toHomeTenantKey(
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ tenant?: string }>;
+  searchParams: Promise<{ tenant?: string; provider?: string }>;
 }) {
   await connection();
 
@@ -42,16 +46,17 @@ export default async function HomePage({
     resolveTenant().catch(() => null),
     searchParams,
   ]);
+  const { tenant: requestedTenant, provider } = params;
   const activeTenantKey =
     toHomeTenantKey(tenant?.appClientKey) ??
     toHomeTenantKey(tenant?.displayName);
-  const requestedTenantKey = toHomeTenantKey(params.tenant);
+  const requestedTenantKey = toHomeTenantKey(requestedTenant);
   const tenantKey =
     requestedTenantKey ?? activeTenantKey ?? HOME_PREVIEW_TENANT_KEYS[0];
-  const served =
-    tenantKey === "meridian-health"
-      ? await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
-      : null;
+  const productProvider = resolveEclProductProvider(provider);
+  const served = isEclProductProvider(productProvider)
+    ? await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
+    : null;
   const bundle = served?.bundle ?? getHomeReviewBundle(tenantKey);
 
   if (!bundle) {
@@ -65,8 +70,11 @@ export default async function HomePage({
 
   const tenantName =
     canonicalClientDisplayName({
-      key: tenant?.appClientKey ?? tenantKey,
-      name: tenant?.displayName,
+      key: tenantKey,
+      name:
+        !requestedTenantKey && activeTenantKey === tenantKey
+          ? tenant?.displayName
+          : undefined,
     }) ??
     canonicalClientDisplayName({ key: tenantKey }) ??
     tenant?.displayName ??
