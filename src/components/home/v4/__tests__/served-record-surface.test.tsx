@@ -26,7 +26,6 @@ import {
 import type { HomeReviewBundle } from "@/lib/home/preview/types";
 import { getHomeReviewBundle } from "@/lib/home/preview/golden-snapshot";
 import { HomeV4App } from "../HomeV4App";
-import { isGeneratorDeferral } from "../cxo-language";
 
 jest.mock("@/components/home/preview/HomeAvaChat", () => ({
   HomeAvaChat: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -66,12 +65,31 @@ function open(hash: string) {
 }
 
 describe("the served path", () => {
-  it("writes chapter text that the deferral gate recognises", () => {
-    // If the gate stops matching what this generator writes, the headline reaches the reader.
-    const deferred = servedBundle().chapters.filter((c) =>
-      isGeneratorDeferral(c.headline),
+  it("preserves reviewed executive chapters when the served record has no published chapter claims", () => {
+    const base = getHomeReviewBundle("meridian-health");
+    if (!base) throw new Error("stored copy missing");
+    const served = servedBundle();
+
+    expect(served.chapters.map((chapter) => chapter.headline)).toEqual(
+      base.chapters.map((chapter) => chapter.headline),
     );
-    expect(deferred.length).toBeGreaterThan(0);
+    expect(
+      served.chapters.find((chapter) => chapter.chapterId === "executive_brief")
+        ?.headline,
+    ).toBe(
+      base.chapters.find((chapter) => chapter.chapterId === "executive_brief")
+        ?.headline,
+    );
+    expect(served.provenance.canonical_snapshot_hash).toBe(
+      "ecl:assessment-test:serving.home_*:1",
+    );
+    expect(
+      served.technologyEstate?.recordTypes.find(
+        (recordType) => recordType.objectType === "application_system",
+      )?.rows[0],
+    ).toMatchObject({
+      systemName: "Claims Administration Platform",
+    });
   });
 
   it("states when the record on screen came from the ECL serving projection", () => {
@@ -157,13 +175,13 @@ describe("the served path", () => {
     const text = container.textContent ?? "";
     const headline = container.querySelector("h1")?.textContent ?? "";
 
-    expect(headline).toContain("first read");
+    expect(headline).toContain("strategic program");
     expect(headline).not.toContain("100% of the estate is self-hosted.");
     expect(text).not.toMatch(/Executive Brief is not yet answered/i);
     expect(text).not.toMatch(/Nothing in the loaded record speaks to this question yet/i);
     expect(text).not.toMatch(/Nothing established here yet/i);
-    expect(container.querySelector("[data-home-briefing-opening]")).not.toBeNull();
-    expect(text).toContain("Record coverage");
+    expect(container.querySelector("[data-home-briefing-opening]")).toBeNull();
+    expect(text).toContain("In your first ten minutes");
   });
 
   it("opens Our Business as a business briefing rather than an empty chapter", () => {
@@ -171,12 +189,12 @@ describe("the served path", () => {
     const text = container.textContent ?? "";
     const headline = container.querySelector("h1")?.textContent ?? "";
 
-    expect(headline).toContain("business read");
+    expect(headline).toContain("provider/health-plan model");
     expect(text).not.toMatch(/Our Business is not yet answered/i);
     expect(text).not.toMatch(/Nothing in the loaded record speaks to this question yet/i);
     expect(text).not.toMatch(/Nothing established here yet/i);
-    expect(container.querySelector("[data-home-briefing-opening]")).not.toBeNull();
-    expect(text).toContain("Business inputs");
+    expect(container.querySelector("[data-home-briefing-opening]")).toBeNull();
+    expect(text).toContain("This enterprise creates value through a 60/40 split");
   });
 });
 

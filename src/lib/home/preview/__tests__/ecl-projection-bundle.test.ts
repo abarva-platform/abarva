@@ -679,7 +679,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
     );
   });
 
-  it("renders a deferred Home ECL narrative instead of throwing when no published chapter claims exist", () => {
+  it("preserves the reviewed executive narrative when served ECL rows have no published chapter claims", () => {
     const base = getHomeReviewBundle("meridian-health");
     expect(base).toBeTruthy();
 
@@ -692,28 +692,53 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
         summary:
           "750 applications and 230 contracts are available from the ECL projection.",
       }),
+      row({
+        page_key: "applications_systems",
+        row_key: "APP-001",
+        row_type: "application",
+        title: "Claims Administration Platform",
+        display_payload_json: {
+          application_id: "APP-001",
+          application_name: "Claims Administration Platform",
+          business_function: "Health Plan Operations",
+        },
+      }),
     ]);
 
     expect(bundle.thesis.publishedGeneration.enterprise_story).toBe(
-      "The Home narrative is deferred until verified chapter claims are available.",
+      base!.thesis.publishedGeneration.enterprise_story,
     );
     expect(
       bundle.thesis.publishedGeneration.things_a_new_cxo_should_know,
-    ).toEqual([]);
+    ).toEqual(base!.thesis.publishedGeneration.things_a_new_cxo_should_know);
     expect(bundle.chapters).toHaveLength(8);
-    expect(bundle.chapters[0]).toMatchObject({
-      headline: "Executive Brief is deferred pending verified claims",
-      key_insights: [],
-      tensions: [],
-      what_to_watch: [],
-    });
-    // The limitation states what is true of the record. It used to instruct the reader not to draw a
-    // narrative from counts, in our words rather than theirs, and named an internal artefact.
-    expect(bundle.chapters[0]?.limitations[0]).toContain(
-      "Counts alone do not carry a conclusion",
+    expect(bundle.chapters[0]?.headline).toBe(base!.chapters[0]?.headline);
+    expect(bundle.chapters[0]?.executive_synthesis).toBe(
+      base!.chapters[0]?.executive_synthesis,
     );
-    expect(bundle.chapters[0]?.limitations[0]).not.toMatch(
-      /projection|CXO readout/i,
+    expect(bundle.executiveStoryPlan).toEqual(base!.executiveStoryPlan);
+    expect(bundle.provenance.canonical_snapshot_hash).toBe(
+      "ecl:assessment-dense-source-room-20260823:serving.home_*:2",
+    );
+    expect(bundle.provenance.model).toBe("deterministic-ecl-projection");
+    expect(
+      bundle.technologyEstate?.recordTypes.find(
+        (recordType) => recordType.objectType === "application_system",
+      )?.rows,
+    ).toEqual([
+      expect.objectContaining({
+        systemName: "Claims Administration Platform",
+      }),
+    ]);
+    expect(bundle.thesis.signalPacket.contextItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "ctx_ecl_applications_systems_application_APP_001",
+          statement: expect.stringContaining(
+            "Claims Administration Platform is loaded as an application",
+          ),
+        }),
+      ]),
     );
   });
 

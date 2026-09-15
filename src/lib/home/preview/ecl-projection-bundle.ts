@@ -1918,7 +1918,11 @@ function storyPlanFromRows(
   claims: Map<ChapterId, GroundedClaim[]>,
 ): HomeExecutiveStoryPlanV1 {
   const row = storyPlanRow(rows);
-  if (!row) return blockedStoryPlan(tenantKey, assessmentId);
+  if (!row) {
+    throw new Error(
+      `Home ECL preview: missing story_plan row for ${tenantKey}/${assessmentId}.`,
+    );
+  }
 
   const payload = rowPayload(row);
   const planPayload =
@@ -2064,45 +2068,6 @@ function storyPlanFromRows(
   };
 }
 
-function blockedStoryPlan(
-  tenantKey: string,
-  assessmentId: string,
-): HomeExecutiveStoryPlanV1 {
-  const chapterStates = Object.fromEntries(
-    CHAPTER_DEFS.map((definition) => [
-      definition.id,
-      {
-        state: "deferred" as const,
-        reasonCode: "story_plan_not_published",
-      },
-    ]),
-  ) as HomeExecutiveStoryPlanV1["chapterStates"];
-  return {
-    contractVersion: STORY_PLAN_CONTRACT_VERSION,
-    tenantKey,
-    assessmentId,
-    snapshotId: null,
-    openingThesisClaimRef: null,
-    openingSupportingClaimRefs: [],
-    scaleFactRef: null,
-    decisions: [],
-    sectionOrder: STORY_SECTION_IDS,
-    sections: STORY_SECTION_IDS.map((sectionId) => ({
-      sectionId,
-      state: "deferred",
-      leadClaimRef: null,
-      supportingClaimRefs: [],
-      reasonCode: "story_plan_not_published",
-    })),
-    chapterStates,
-    heroVisualDatasetRef: null,
-    overallEvidenceBoundary:
-      "The executive storyline is deferred because a verified story plan has not been published for this tenant.",
-    sourceClaimRefs: [],
-    storyPlanHash: "story_plan_not_published",
-  };
-}
-
 function summaryText(
   summaries: Map<string, HomeProjectionRow>,
   chapterId: ChapterId,
@@ -2216,27 +2181,6 @@ function hasPublishedChapterClaims(
   );
 }
 
-function buildDeferredChapters(): ChapterView[] {
-  return CHAPTER_DEFS.map((definition) => ({
-    chapterId: definition.id,
-    title: definition.title,
-    guidingQuestion: definition.guidingQuestion,
-    headline: `${definition.title} is deferred pending verified claims`,
-    executive_synthesis:
-      "No statements citing this chapter's records have been published, so the chapter asserts nothing.",
-    key_insights: [],
-    tensions: [],
-    what_to_watch: [],
-    questions_to_ask: [
-      "Which records and interviews should this chapter be built from?",
-    ],
-    visual_opportunities: [],
-    limitations: [
-      "Counts alone do not carry a conclusion. Nothing is asserted for this chapter until statements citing its own records are published.",
-    ],
-  }));
-}
-
 function buildPublishedChapters(
   rows: HomeProjectionRow[],
   claims: Map<ChapterId, GroundedClaim[]>,
@@ -2302,16 +2246,16 @@ export function buildHomeReviewBundleFromEclProjectionRows(
     assessmentId,
   );
   const claims = chapterClaimsByPage(rows);
-  const thesis = publishedThesisFromRows(rows);
-  const chapters = hasPublishedChapterClaims(claims)
+  const hasPublishedClaims = hasPublishedChapterClaims(claims);
+  const thesis = hasPublishedClaims
+    ? publishedThesisFromRows(rows)
+    : base.thesis.publishedGeneration;
+  const chapters = hasPublishedClaims
     ? buildPublishedChapters(rows, claims)
-    : buildDeferredChapters();
-  const executiveStoryPlan = storyPlanFromRows(
-    base.tenantKey,
-    assessmentId,
-    rows,
-    claims,
-  );
+    : base.chapters;
+  const executiveStoryPlan = storyPlanRow(rows)
+    ? storyPlanFromRows(base.tenantKey, assessmentId, rows, claims)
+    : base.executiveStoryPlan;
   return normalizeHomeReviewBundle({
     tenantKey: base.tenantKey,
     provenance: {
