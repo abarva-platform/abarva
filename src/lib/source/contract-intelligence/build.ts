@@ -35,7 +35,9 @@ function text(row: CsvRecord, key: string): string {
 }
 
 function number(row: CsvRecord, key: string): number | null {
-  const parsed = Number(text(row, key).replace(/[$,%]/g, ""));
+  const raw = text(row, key);
+  if (!raw) return null;
+  const parsed = Number(raw.replace(/[$,%]/g, ""));
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -214,12 +216,19 @@ function sourceList(row: CsvRecord): string[] {
 }
 
 function candidateRange(row: CsvRecord): string {
+  if (amountState(row) === "not_sized") return "Not sized";
   const low = number(row, "annual_impact_low_usd");
   const high = number(row, "annual_impact_high_usd");
   if (low === null && high === null) return "Not sized";
   if (low !== null && high !== null && low !== high)
     return `${money(low)}-${money(high)}`;
   return money(low ?? high);
+}
+
+function findingAnnualImpact(row: CsvRecord): string {
+  return amountState(row) === "not_sized"
+    ? "Not sized"
+    : money(number(row, "estimated_annual_impact_usd"));
 }
 
 function buildFindings(
@@ -233,7 +242,7 @@ function buildFindings(
       text(row, "sourcing_implication") || "Commercial implication not loaded.",
     recommendedAction:
       text(row, "recommended_action") || "Recommended action not loaded.",
-    annualImpact: money(number(row, "estimated_annual_impact_usd")),
+    annualImpact: findingAnnualImpact(row),
     valueType: valueType(row),
     amountState: amountState(row),
     evidenceState: evidenceState(row),

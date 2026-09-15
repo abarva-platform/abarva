@@ -769,10 +769,7 @@ async function readEclProjectionNameRows(
         )
       : timeWorkspaceRead(timings, "name_rows.ecl_vendors", () =>
           readProjectionCsv(
-            path.join(
-              projectionDir ?? "",
-              "source_vendor_360_projection.csv",
-            ),
+            path.join(projectionDir ?? "", "source_vendor_360_projection.csv"),
           ),
         ),
   ]);
@@ -806,10 +803,8 @@ async function loadSourceWorkspaceImpactLayerWithTimings(
   readonly timings: readonly SourceWorkspaceLoadTiming[];
 }> {
   const timings: SourceWorkspaceLoadTiming[] = [];
-  const {
-    evidenceCoverage,
-    actionCandidates: rawActionCandidates,
-  } = await loadDirectSourceWorkspaceImpactRows(tenantKey, timings);
+  const { evidenceCoverage, actionCandidates: rawActionCandidates } =
+    await loadDirectSourceWorkspaceImpactRows(tenantKey, timings);
   const coverageByContract = new Map(
     evidenceCoverage.map((row) => [row.contract_id, row]),
   );
@@ -868,7 +863,8 @@ async function loadSourceWorkspaceImpactLayerWithTimings(
     storyline,
     avaGroundingBundles,
   };
-  if (!shouldCompleteImpactLayer(viewImpact)) return { impact: viewImpact, timings };
+  if (!shouldCompleteImpactLayer(viewImpact))
+    return { impact: viewImpact, timings };
   const derivedImpact = await timeDerivedWorkspaceImpactRead(
     timings,
     tenantKey,
@@ -885,7 +881,9 @@ async function loadSourceWorkspaceImpactLayerWithTimings(
 async function loadDirectSourceWorkspaceImpactRows(
   tenantKey: string,
   timings: SourceWorkspaceLoadTiming[],
-): Promise<Pick<SourceWorkspaceImpactLayer, "evidenceCoverage" | "actionCandidates">> {
+): Promise<
+  Pick<SourceWorkspaceImpactLayer, "evidenceCoverage" | "actionCandidates">
+> {
   const acceptedTenantKeys = Array.from(
     new Set(
       [
@@ -1160,6 +1158,16 @@ async function loadDirectSourceWorkspaceImpactRows(
                   ON c.tenant_key = o.tenant_key
                  AND c.contract_id = o.contract_id
                WHERE o.tenant_key = ANY($1::text[])
+                 AND NOT EXISTS (
+                   SELECT 1
+                     FROM source.contract current_contract
+                     JOIN source.optimization_opportunity current_opportunity
+                       ON current_opportunity.tenant_key = current_contract.tenant_key
+                      AND current_opportunity.contract_id = current_contract.contract_id
+                      AND current_opportunity.dataset_version = current_contract.raw_payload->>'dataset_version'
+                    WHERE current_contract.tenant_key = o.tenant_key
+                      AND current_contract.contract_id = o.contract_id
+                 )
                UNION ALL
                SELECT
                  o.tenant_key,
@@ -1178,7 +1186,18 @@ async function loadDirectSourceWorkspaceImpactRows(
                    NULLIF(o.payload->>'negotiation_language', ''),
                    NULLIF(o.evidence_grade::text, '')
                  ) AS deterministic_basis,
-                 o.amount_usd::numeric AS candidate_amount_usd,
+                 CASE
+                   WHEN sizing_claim.claim_id IS NOT NULL
+                    AND sizing_claim.basis IN ('calculated', 'benchmark')
+                    AND sizing_claim.evidence_status IN ('supported', 'partial')
+                    AND jsonb_array_length(sizing_claim.source_refs) > 0
+                    AND (
+                      sizing_claim.amount_usd IS NOT NULL
+                      OR (sizing_claim.amount_low_usd IS NOT NULL AND sizing_claim.amount_high_usd IS NOT NULL)
+                    )
+                     THEN COALESCE(sizing_claim.amount_usd, sizing_claim.amount_high_usd)
+                   ELSE NULL::numeric
+                 END AS candidate_amount_usd,
                  COALESCE(NULLIF(o.payload->>'priority', ''), o.stage) AS priority,
                  o.stage AS readiness_state,
                  o.evidence_grade AS evidence_state,
@@ -1212,6 +1231,11 @@ async function loadDirectSourceWorkspaceImpactRows(
                 LEFT JOIN source.contract_360 c
                   ON c.tenant_key = o.tenant_key
                  AND c.contract_id = o.contract_id
+                LEFT JOIN source.opportunity_claim sizing_claim
+                  ON sizing_claim.tenant_key = o.tenant_key
+                 AND sizing_claim.dataset_version = o.dataset_version
+                 AND sizing_claim.opportunity_id = o.opportunity_id
+                 AND sizing_claim.claim_role = 'sizing'
                WHERE o.tenant_key = ANY($1::text[])
              ),
              deduped AS (
@@ -1305,7 +1329,9 @@ function hasExecutiveImpactRows(impact: SourceWorkspaceImpactLayer): boolean {
   );
 }
 
-function shouldCompleteImpactLayer(impact: SourceWorkspaceImpactLayer): boolean {
+function shouldCompleteImpactLayer(
+  impact: SourceWorkspaceImpactLayer,
+): boolean {
   if (!hasExecutiveImpactRows(impact)) return true;
   if (
     impact.evidenceCoverage.length === 0 ||
@@ -1455,11 +1481,7 @@ function buildVendorNameResolver(
     addVendorName(vendorNameByRef, vendor.vendor_ref, vendor.vendor_name);
   }
   for (const contract of contracts) {
-    addVendorName(
-      vendorNameByRef,
-      contract.vendor_ref,
-      contract.vendor_name,
-    );
+    addVendorName(vendorNameByRef, contract.vendor_ref, contract.vendor_name);
     if (isReadableVendorName(contract.vendor_name, contract.vendor_ref)) {
       vendorNameByContract.set(contract.contract_id, contract.vendor_name);
     }
@@ -1847,6 +1869,16 @@ async function loadDerivedSourceWorkspaceImpactLayer(
               ON c.tenant_key = o.tenant_key
              AND c.contract_id = o.contract_id
            WHERE o.tenant_key = ANY($1::text[])
+             AND NOT EXISTS (
+               SELECT 1
+                 FROM source.contract current_contract
+                 JOIN source.optimization_opportunity current_opportunity
+                   ON current_opportunity.tenant_key = current_contract.tenant_key
+                  AND current_opportunity.contract_id = current_contract.contract_id
+                  AND current_opportunity.dataset_version = current_contract.raw_payload->>'dataset_version'
+                WHERE current_contract.tenant_key = o.tenant_key
+                  AND current_contract.contract_id = o.contract_id
+             )
            UNION ALL
            SELECT
              o.tenant_key,
@@ -2534,9 +2566,11 @@ async function readCanonicalArchetypeCoverageRows(
 ): Promise<SourceWorkspaceArchetypeCoverageRow[]> {
   const acceptedTenantKeys = Array.from(
     new Set(
-      [canonicalTenantKey(tenantKey), tenantKey, ...tenantAliasesFor(tenantKey)].map(
-        (value) => value.trim(),
-      ),
+      [
+        canonicalTenantKey(tenantKey),
+        tenantKey,
+        ...tenantAliasesFor(tenantKey),
+      ].map((value) => value.trim()),
     ),
   );
   try {
@@ -2669,8 +2703,7 @@ function runtimeEvidenceFromImpactLayer(
     (summary, row) => ({
       spendRowCount: summary.spendRowCount + valueOf(row.spend_rows),
       spendActual: summary.spendActual + valueOf(row.actual_spend_usd),
-      spendCommitted:
-        summary.spendCommitted + valueOf(row.committed_spend_usd),
+      spendCommitted: summary.spendCommitted + valueOf(row.committed_spend_usd),
       performanceRowCount:
         summary.performanceRowCount + valueOf(row.performance_rows),
       performanceBreachCount:
@@ -3347,7 +3380,9 @@ function buildClaimQualityControls(input: {
     "utilization_evidence",
   );
   const lapsedNoticeIds = new Set(
-    input.renewal180.noticeDeadlinePassed.map((contract) => contract.contract_id),
+    input.renewal180.noticeDeadlinePassed.map(
+      (contract) => contract.contract_id,
+    ),
   );
   const staleRenewalRows = uniqueContracts([
     ...input.renewal180.expiredAsOfDate,
@@ -3686,7 +3721,9 @@ function daysBetween(a: Date, b: Date): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000);
 }
 
-function sumAnnual(rows: readonly { readonly annual_value: unknown }[]): number {
+function sumAnnual(
+  rows: readonly { readonly annual_value: unknown }[],
+): number {
   return rows.reduce((total, row) => total + valueOf(row.annual_value), 0);
 }
 

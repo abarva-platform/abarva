@@ -100,7 +100,8 @@ const mockRequireTenancy = requireTenancy as jest.Mock;
 const mockGetActiveClientRow = getActiveClientRow as jest.Mock;
 const mockCheckTenantAccessByKey = checkTenantAccessByKey as jest.Mock;
 const mockBuildContract360View = buildContract360View as jest.Mock;
-const mockLoadSourceWorkspacePortfolio = loadSourceWorkspacePortfolio as jest.Mock;
+const mockLoadSourceWorkspacePortfolio =
+  loadSourceWorkspacePortfolio as jest.Mock;
 const mockLoadSourceWorkspaceContractDetailFallback =
   loadSourceWorkspaceContractDetailFallback as jest.Mock;
 const mockSourceWorkspaceProvider = sourceWorkspaceProvider as jest.Mock;
@@ -211,7 +212,7 @@ function params(contractId = "CTR-0006") {
 }
 
 describe("GET /api/source/workspace/contract/[contractId]", () => {
-  it("uses a requested client that matches trusted tenancy without a secondary access lookup", async () => {
+  it("authorizes an explicit requested client without depending on active tenancy lookup", async () => {
     const res = await GET(
       new Request(
         "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian",
@@ -220,7 +221,8 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(checkTenantAccessByKey).not.toHaveBeenCalled();
+    expect(checkTenantAccessByKey).toHaveBeenCalledWith("meridian");
+    expect(requireTenancy).not.toHaveBeenCalled();
     expect(getActiveClientRow).not.toHaveBeenCalled();
     expect(getContract360).toHaveBeenCalledWith("meridian", "CTR-0006");
     expect(listContractApplicationScope).toHaveBeenCalledWith(
@@ -235,12 +237,6 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
   });
 
   it("authorizes a cross-session requested client before reading contract detail", async () => {
-    mockRequireTenancy.mockResolvedValueOnce({
-      clientId: "client-arcturus",
-      clientKey: "arcturus",
-      userId: "user-1",
-    });
-
     const res = await GET(
       new Request(
         "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian",

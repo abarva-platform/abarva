@@ -1611,8 +1611,7 @@ export async function POST(request: Request) {
       // When the single-contract read model is present, it is the authority for
       // this contract; do not append the older event/archetype block after it.
       const contractGroundingIsAuthoritativeForMode =
-        hasSourceContractGrounding &&
-        modeClassification.mode === "contract_optimization";
+        hasSourceContractGrounding;
       if (isGroundedAnswerMode(modeClassification.mode) && groundingEvent) {
         const modeStageKey =
           viewStageFromContext ?? groundingEvent.currentStageKey;
@@ -1814,10 +1813,10 @@ export async function POST(request: Request) {
           artifacts: modeArtifacts,
           question: message,
           archetype: needsArchetype
-            ? resolveValueArchetype(
+            ? (resolveValueArchetype(
                 groundingEvent.eventType,
                 groundingEvent.classifiedCategory,
-              ) ?? undefined
+              ) ?? undefined)
             : undefined,
           baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
           rfpClausePresentLeverKeys: rfpClauseSignal.signalPresent
@@ -2229,7 +2228,7 @@ export async function POST(request: Request) {
     // before the per-event grounding so aVa reads portfolio-wide totals
     // first, then narrows to the specific event if one is active. Empty
     // string when the tenant has no governed contract rows.
-    sourcePortfolioGroundingBlock,
+    hasSourceContractGrounding ? "" : sourcePortfolioGroundingBlock,
     "",
     // aVa DETERMINISTIC GROUNDING · the single contract in scope on the Optimize
     // Contract surface. Deliberately placed AFTER the portfolio block: the

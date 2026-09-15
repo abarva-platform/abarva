@@ -59,6 +59,16 @@ function fmtPct(value: number | null | undefined): string {
   return `${Math.round(value * 100)}%`;
 }
 
+function firstNonBlank(
+  ...values: readonly (string | null | undefined)[]
+): string | null {
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
 const VALUE_TYPE_LABEL: Record<OptimizationOpportunityValueType, string> = {
   recoverable_leakage: "Recoverable leakage",
   avoided_cost: "Avoided cost",
@@ -165,13 +175,18 @@ export async function buildAvaSourceContractGrounding(
   if (!tenantKey || !trimmedId) return { block: "", hasLiveNumbers: false };
 
   const contract = await getContract360(tenantKey, trimmedId).catch(() => null);
-  const [opportunitySet, evidencePack, contractIntelligence] = await Promise.all([
-    getContractOptimizationOpportunitySet(tenantKey, trimmedId, contract).catch(
-      () => null,
-    ),
-    getContractOptimizationEvidencePack(tenantKey, trimmedId).catch(() => null),
-    getContractIntelligence(tenantKey, trimmedId).catch(() => null),
-  ]);
+  const [opportunitySet, evidencePack, contractIntelligence] =
+    await Promise.all([
+      getContractOptimizationOpportunitySet(
+        tenantKey,
+        trimmedId,
+        contract,
+      ).catch(() => null),
+      getContractOptimizationEvidencePack(tenantKey, trimmedId).catch(
+        () => null,
+      ),
+      getContractIntelligence(tenantKey, trimmedId).catch(() => null),
+    ]);
   if (!contract && !opportunitySet) {
     return { block: "", hasLiveNumbers: false };
   }
@@ -233,7 +248,8 @@ export async function buildAvaSourceContractGrounding(
         ? ` · buyer ask: ${detail.buyerAsk ?? "not established"} · negotiation language: ${detail.negotiationLanguage ?? "not established"} · vendor rationale/concession: ${detail.vendorConcession ?? "not established"} · timing: ${detail.timingDependency ?? "not established"} · owner: ${detail.ownerRole ?? opportunity.owner ?? "not established"} · priority: ${detail.priority ?? "not established"} · risk if ignored: ${detail.riskIfIgnored ?? "not established"}`
         : "";
       const amountLabel =
-        opportunity.stage === "signal" || opportunity.amountState === "not_sized"
+        opportunity.stage === "signal" ||
+        opportunity.amountState === "not_sized"
           ? "not sized"
           : fmtUsd(opportunity.amountUsd);
       return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${amountLabel} · stage ${opportunity.stage} · confidence ${fmtPct(opportunity.confidence)} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
@@ -257,22 +273,29 @@ export async function buildAvaSourceContractGrounding(
       });
     });
 
+  const contractDisplayName =
+    firstNonBlank(contract?.contract_name, opportunitySet?.contractName) ??
+    `Contract ${trimmedId}`;
+  const vendorDisplayName =
+    firstNonBlank(contract?.vendor_name, opportunitySet?.vendorName) ??
+    "Vendor not established";
+  const annualValueUsd = contract
+    ? contract.annual_value_conflict_flag
+      ? contract.resolved_annual_value
+      : contract.annual_value
+    : opportunitySet?.baseline.annualValueUsd;
+
   const lines: string[] = [
     `AUTHORITATIVE SOURCE CONTRACT GROUNDING (LIVE — the same governed reads the Optimize Contract page renders, tenant "${tenantKey}", contract ${trimmedId}):`,
-    `Exact contract display name: "${contract?.contract_name ?? opportunitySet?.contractName ?? trimmedId}". Exact vendor display name: "${contract?.vendor_name ?? opportunitySet?.vendorName ?? "not established"}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
+    `Exact contract display name: "${contractDisplayName}". Exact vendor display name: "${vendorDisplayName}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
     // `resolved_annual_value` wins whenever extraction disagreed with the
     // stated value; quoting the raw column there would repeat a known conflict.
-    `Contract: ${contract?.contract_name ?? opportunitySet?.contractName ?? trimmedId}. Vendor: ${contract?.vendor_name ?? opportunitySet?.vendorName ?? "not established"}. Annual value: ${fmtUsd(
-      contract
-        ? contract.annual_value_conflict_flag
-          ? contract.resolved_annual_value
-          : contract.annual_value
-        : opportunitySet?.baseline.annualValueUsd,
-    )}.${
+    `Contract: ${contractDisplayName}. Vendor: ${vendorDisplayName}. Annual value: ${fmtUsd(annualValueUsd)}.${
       contract?.annual_value_conflict_flag
         ? " (Stated annual value and extracted value disagreed; the resolved value is quoted.)"
         : ""
     }`,
+    "SEMANTIC VALUE GUARD: Annual value is the contract header value, not an annual commitment. Observed spend is consumption or spend evidence, not AP-paid cash. Never call annual value a commitment, and never say an amount was paid unless governed AP/payment evidence explicitly establishes payment status.",
     contractIntelligence?.intelligence_record
       ? [
           "LOAD-TIME CONTRACT INTELLIGENCE RECORD (authoritative for purpose, archetype, anatomy, education, and industry boundary):",
@@ -362,7 +385,9 @@ function formatOpportunityExportRow(input: {
     (opportunity.confidence != null && opportunity.confidence < 0.5);
   const askParts = [
     detail?.buyerAsk,
-    detail?.negotiationLanguage ? `Language: ${detail.negotiationLanguage}` : null,
+    detail?.negotiationLanguage
+      ? `Language: ${detail.negotiationLanguage}`
+      : null,
   ].filter((part): part is string => Boolean(part));
   const evidenceParts = [
     input.traceLabel,

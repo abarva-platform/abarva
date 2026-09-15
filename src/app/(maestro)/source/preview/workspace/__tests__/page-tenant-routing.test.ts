@@ -40,6 +40,8 @@ describe("Source workspace requested-client routing", () => {
     );
     expect(pageSource).toContain("if (requestedClient && !requestedClientKey)");
     expect(pageSource).toContain("checkTenantAccessByKey(requestedClientKey)");
+    expect(pageSource).toContain("if (requestedClientKey)");
+    expect(pageSource).toContain("if (!requestedClientKey)");
     expect(pageSource).toContain("requestedClientKey ??");
     expect(pageSource).toContain("tenantKey={tenantKey}");
   });
@@ -147,6 +149,8 @@ describe("Source workspace requested-client routing", () => {
     expect(portfolioApiSource).toContain("loadSourceWorkspacePortfolio(");
     expect(portfolioApiSource).toContain("loadSourceWorkspaceImpactPayload(");
     expect(portfolioApiSource).toContain("sourceProviderKey");
+    expect(portfolioApiSource).toContain("if (requestedClientKey)");
+    expect(portfolioApiSource).toContain("if (!requestedClientKey)");
   });
 
   it("keeps repeated portfolio reads coalesced behind a tenant-scoped cache", () => {

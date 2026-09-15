@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server';
-import { getActiveClientRow } from '@/lib/active-client';
-import { checkTenantAccessByKey } from '@/lib/auth/tenant-access';
-import { requireTenancy, TenancyError } from '@/lib/auth/tenancy';
-import { buildContract360View, collectContractSubjectRefs } from '@/lib/source/data-model/contract-360-view';
+import { NextResponse } from "next/server";
+import { getActiveClientRow } from "@/lib/active-client";
+import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
+import { requireTenancy, TenancyError } from "@/lib/auth/tenancy";
+import {
+  buildContract360View,
+  collectContractSubjectRefs,
+} from "@/lib/source/data-model/contract-360-view";
 import {
   getContract360,
   getContractEvidenceOverview,
@@ -25,7 +28,7 @@ import {
   listDocFilesForContract,
   listLatestTowerObservationsForSubjects,
   listTowerValueClaimsForSubjects,
-} from '@/lib/source/data-model/read-adapter';
+} from "@/lib/source/data-model/read-adapter";
 import type {
   DocExtractionRow,
   SourceContract360Row,
@@ -33,15 +36,15 @@ import type {
   SourceContractInitiativeDependencyRow,
   SourceContractEvidencePerformanceSummary,
   SourceContractOperationalPerformanceRow,
-} from '@/lib/source/data-model/types';
-import { appClientKeyForTenant } from '@/lib/tenant/aliases';
+} from "@/lib/source/data-model/types";
+import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 import {
   loadSourceWorkspacePortfolio,
   loadSourceWorkspaceContractDetailFallback,
   sourceWorkspaceProvider,
   type SourceWorkspaceProviderMode,
-} from '@/app/(maestro)/source/preview/workspace/live/portfolioAdapter';
-import { focusableContractRows } from '@/app/(maestro)/source/preview/workspace/contractDiscovery';
+} from "@/app/(maestro)/source/preview/workspace/live/portfolioAdapter";
+import { focusableContractRows } from "@/app/(maestro)/source/preview/workspace/contractDiscovery";
 
 // Lazy, per-contract detail read for the Source Workspace — mirrors exactly
 // what the retired /source/vendor-portfolio/[contractId] route used to do,
@@ -52,49 +55,54 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ contractId: string }> },
 ) {
-  let tenancy;
-  try {
-    tenancy = await requireTenancy();
-  } catch (err) {
-    if (err instanceof TenancyError && err.code === 'unauthenticated') {
-      return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
-    }
-    return NextResponse.json({ error: 'tenancy_unavailable' }, { status: 503 });
-  }
-
   const { contractId: rawContractId } = await params;
   const contractId = decodeURIComponent(rawContractId);
   const requestUrl = new URL(request.url);
-  const requestedClient = requestUrl.searchParams.get('client')?.trim() || null;
+  const requestedClient = requestUrl.searchParams.get("client")?.trim() || null;
   const requestedSourceProvider = sourceProviderFromRequest(requestUrl);
   const requestedClientKey = appClientKeyForTenant(requestedClient);
   if (requestedClient && !requestedClientKey) {
-    return NextResponse.json({ error: 'unknown_client' }, { status: 404 });
+    return NextResponse.json({ error: "unknown_client" }, { status: 404 });
   }
-  if (requestedClientKey && requestedClientKey !== tenancy.clientKey) {
+  if (requestedClientKey) {
     const access = await checkTenantAccessByKey(requestedClientKey);
     if (!access.ok) {
       const status =
-        access.reason === 'unauthenticated'
+        access.reason === "unauthenticated"
           ? 401
-          : access.reason === 'forbidden'
+          : access.reason === "forbidden"
             ? 403
             : 404;
       return NextResponse.json({ error: access.reason }, { status });
     }
   }
+  let tenancy = null;
+  if (!requestedClientKey) {
+    try {
+      tenancy = await requireTenancy();
+    } catch (err) {
+      if (err instanceof TenancyError && err.code === "unauthenticated") {
+        return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+      }
+      return NextResponse.json(
+        { error: "tenancy_unavailable" },
+        { status: 503 },
+      );
+    }
+  }
   const activeClient = requestedClientKey
     ? null
     : await getActiveClientRow().catch(() => null);
-  const tenantKey = requestedClientKey ?? activeClient?.key ?? tenancy.clientKey ?? '';
+  const tenantKey =
+    requestedClientKey ?? activeClient?.key ?? tenancy?.clientKey ?? "";
   if (!tenantKey) {
-    return NextResponse.json({ error: 'no_tenant' }, { status: 404 });
+    return NextResponse.json({ error: "no_tenant" }, { status: 404 });
   }
 
   const eclProvider = sourceWorkspaceProvider(requestedSourceProvider);
   let projectionDetail: ProjectionContractDetail | null = null;
   let contract = await getContract360(tenantKey, contractId).catch(() => null);
-  if (!contract && eclProvider !== 'legacy') {
+  if (!contract && eclProvider !== "legacy") {
     projectionDetail = await loadSourceWorkspaceContractDetailFallback(
       tenantKey,
       contractId,
@@ -102,7 +110,7 @@ export async function GET(
     ).catch(() => null);
     contract = projectionDetail?.contract ?? null;
   }
-  if (!contract && eclProvider !== 'legacy') {
+  if (!contract && eclProvider !== "legacy") {
     projectionDetail = await getProjectionContractDetail(
       tenantKey,
       contractId,
@@ -111,26 +119,42 @@ export async function GET(
     contract = projectionDetail?.contract ?? null;
   }
   if (!contract) {
-    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
-  const [storedApplicationScope, financialExposure, operationalPerformance, storedInitiativeDependencies, evidenceOverview, evidenceScope, evidencePricing, evidencePerformance, performancePeriods, spendMonths, cloudCommitmentPeerCoverage, cloudTagQuality, contractTabIntelligence, contractIntelligence] =
-    await Promise.all([
-      listContractApplicationScope(tenantKey, contractId).catch(() => []),
-      listContractFinancialExposure(tenantKey).catch(() => []),
-      listContractOperationalPerformance(tenantKey).catch(() => []),
-      listContractInitiativeDependency(tenantKey, contractId).catch(() => []),
-      getContractEvidenceOverview(tenantKey, contractId).catch(() => null),
-      listContractEvidenceScope(tenantKey, contractId).catch(() => []),
-      listContractEvidencePricing(tenantKey, contractId).catch(() => []),
-      getContractEvidencePerformanceSummary(tenantKey, contractId).catch(() => null),
-      listContractPerformancePeriods(tenantKey, contractId).catch(() => []),
-      listContractSpendMonthly(tenantKey, contractId).catch(() => []),
-      listCloudCommitmentCoverageRows(tenantKey).catch(() => []),
-      listCloudTagQualityRows(tenantKey, contractId).catch(() => []),
-      listContractTabIntelligence(tenantKey, contractId).catch(() => []),
-      getContractIntelligence(tenantKey, contractId).catch(() => null),
-    ]);
+  const [
+    storedApplicationScope,
+    financialExposure,
+    operationalPerformance,
+    storedInitiativeDependencies,
+    evidenceOverview,
+    evidenceScope,
+    evidencePricing,
+    evidencePerformance,
+    performancePeriods,
+    spendMonths,
+    cloudCommitmentPeerCoverage,
+    cloudTagQuality,
+    contractTabIntelligence,
+    contractIntelligence,
+  ] = await Promise.all([
+    listContractApplicationScope(tenantKey, contractId).catch(() => []),
+    listContractFinancialExposure(tenantKey).catch(() => []),
+    listContractOperationalPerformance(tenantKey).catch(() => []),
+    listContractInitiativeDependency(tenantKey, contractId).catch(() => []),
+    getContractEvidenceOverview(tenantKey, contractId).catch(() => null),
+    listContractEvidenceScope(tenantKey, contractId).catch(() => []),
+    listContractEvidencePricing(tenantKey, contractId).catch(() => []),
+    getContractEvidencePerformanceSummary(tenantKey, contractId).catch(
+      () => null,
+    ),
+    listContractPerformancePeriods(tenantKey, contractId).catch(() => []),
+    listContractSpendMonthly(tenantKey, contractId).catch(() => []),
+    listCloudCommitmentCoverageRows(tenantKey).catch(() => []),
+    listCloudTagQualityRows(tenantKey, contractId).catch(() => []),
+    listContractTabIntelligence(tenantKey, contractId).catch(() => []),
+    getContractIntelligence(tenantKey, contractId).catch(() => null),
+  ]);
   const applicationScope =
     storedApplicationScope.length > 0
       ? storedApplicationScope
@@ -141,16 +165,39 @@ export async function GET(
       : (projectionDetail?.initiativeDependencies ?? []);
 
   const subjectRefs = collectContractSubjectRefs(contract, applicationScope);
-  const [towerObservations, towerValueClaims, extractionsByContract, extractionsByVendor, documentFiles, optimizationEvidence, optimizationOpportunitySet] = await Promise.all([
-    listLatestTowerObservationsForSubjects(tenantKey, subjectRefs).catch(() => []),
+  const [
+    towerObservations,
+    towerValueClaims,
+    extractionsByContract,
+    extractionsByVendor,
+    documentFiles,
+    optimizationEvidence,
+    optimizationOpportunitySet,
+  ] = await Promise.all([
+    listLatestTowerObservationsForSubjects(tenantKey, subjectRefs).catch(
+      () => [],
+    ),
     listTowerValueClaimsForSubjects(tenantKey, subjectRefs).catch(() => []),
-    listDocExtractionsForSubject(tenantKey, contract.contract_id).catch(() => []),
-    listDocExtractionsForSubject(tenantKey, contract.vendor_ref).catch(() => []),
+    listDocExtractionsForSubject(tenantKey, contract.contract_id).catch(
+      () => [],
+    ),
+    listDocExtractionsForSubject(tenantKey, contract.vendor_ref).catch(
+      () => [],
+    ),
     listDocFilesForContract(tenantKey, contract.contract_id).catch(() => []),
-    getContractOptimizationEvidencePack(tenantKey, contract.contract_id).catch(() => null),
-    getContractOptimizationOpportunitySet(tenantKey, contract.contract_id, contract).catch(() => null),
+    getContractOptimizationEvidencePack(tenantKey, contract.contract_id).catch(
+      () => null,
+    ),
+    getContractOptimizationOpportunitySet(
+      tenantKey,
+      contract.contract_id,
+      contract,
+    ).catch(() => null),
   ]);
-  const docExtractions = dedupeExtractions([...extractionsByContract, ...extractionsByVendor]);
+  const docExtractions = dedupeExtractions([
+    ...extractionsByContract,
+    ...extractionsByVendor,
+  ]);
 
   const view = buildContract360View({
     contract,
@@ -201,7 +248,7 @@ async function getProjectionContractDetail(
     // This fallback only resolves the requested contract header and its
     // declared scope. Loading the full impact layer here made a direct URL
     // wait on the portfolio action fan-out before Contract 360 could start.
-    { impactMode: 'deferred' },
+    { impactMode: "deferred" },
   ).catch(() => null);
   const contract =
     (portfolio ? focusableContractRows(portfolio) : []).find(
@@ -223,27 +270,29 @@ function sourceProviderFromRequest(
   requestUrl: URL,
 ): SourceWorkspaceProviderMode | null {
   const normalized = (
-    requestUrl.searchParams.get('sourceProvider') ??
-    requestUrl.searchParams.get('provider') ??
-    ''
+    requestUrl.searchParams.get("sourceProvider") ??
+    requestUrl.searchParams.get("provider") ??
+    ""
   ).trim();
-  if (normalized === 'ecl_projection_db') {
+  if (normalized === "ecl_projection_db") {
     return normalized;
   }
-  if (process.env.SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== 'true') {
+  if (process.env.SOURCE_WORKSPACE_ALLOW_PROVIDER_QUERY_OVERRIDE !== "true") {
     return null;
   }
   if (
-    normalized === 'legacy' ||
-    normalized === 'ecl_projection' ||
-    normalized === 'ecl_projection_db'
+    normalized === "legacy" ||
+    normalized === "ecl_projection" ||
+    normalized === "ecl_projection_db"
   ) {
     return normalized;
   }
   return null;
 }
 
-function dedupeExtractions(rows: readonly DocExtractionRow[]): DocExtractionRow[] {
+function dedupeExtractions(
+  rows: readonly DocExtractionRow[],
+): DocExtractionRow[] {
   const byId = new Map<string, DocExtractionRow>();
   for (const row of rows) byId.set(row.extraction_id, row);
   return [...byId.values()];
@@ -252,7 +301,7 @@ function dedupeExtractions(rows: readonly DocExtractionRow[]): DocExtractionRow[
 function normalizeOperationalPerformanceRows(
   rows: readonly SourceContractOperationalPerformanceRow[],
   contract: {
-    readonly tenant_key: SourceContractOperationalPerformanceRow['tenant_key'];
+    readonly tenant_key: SourceContractOperationalPerformanceRow["tenant_key"];
     readonly contract_id: string;
     readonly vendor_ref: string;
     readonly vendor_name: string;
@@ -264,7 +313,9 @@ function normalizeOperationalPerformanceRows(
   evidencePerformance: SourceContractEvidencePerformanceSummary | null,
 ): SourceContractOperationalPerformanceRow[] {
   if (!evidencePerformance) return [...rows];
-  const index = rows.findIndex((row) => row.contract_id === contract.contract_id);
+  const index = rows.findIndex(
+    (row) => row.contract_id === contract.contract_id,
+  );
   const base =
     index >= 0
       ? rows[index]
@@ -295,7 +346,7 @@ function normalizeOperationalPerformanceRows(
       evidencePerformance.service_credits_claimed_usd,
     evidence_gap:
       base.evidence_gap ??
-      (typeof contract.operational_evidence_gap === 'string'
+      (typeof contract.operational_evidence_gap === "string"
         ? contract.operational_evidence_gap
         : null) ??
       (evidencePerformance.review_status

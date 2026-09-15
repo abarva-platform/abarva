@@ -39,7 +39,7 @@ describe("Source workspace explicit-client API routing", () => {
     // Asserted on the arguments rather than one formatting of the call, so a
     // reflow of the line cannot fail a test about which client is routed.
     expect(
-      /buildContractApiUrl\(\s*contractId,\s*sourceClientKey,\s*sourceProviderKey,?\s*\)/.test(
+      /buildContractApiUrl\(\s*contractId,\s*sourceClientKey,\s*effectiveSourceProviderKey,?\s*\)/.test(
         workspaceClientSource,
       ),
     ).toBe(true);
@@ -53,13 +53,12 @@ describe("Source workspace explicit-client API routing", () => {
     expect(contractDetailRouteSource).toContain(
       "checkTenantAccessByKey(requestedClientKey)",
     );
-    expect(contractDetailRouteSource).toContain("requestedClientKey !== tenancy.clientKey");
+    expect(contractDetailRouteSource).toContain("if (requestedClientKey)");
+    expect(contractDetailRouteSource).toContain("if (!requestedClientKey)");
     expect(contractDetailRouteSource).toContain(
-      "return NextResponse.json({ error: 'unknown_client' }, { status: 404 })",
+      'return NextResponse.json({ error: "unknown_client" }, { status: 404 })',
     );
-    expect(contractDetailRouteSource).toContain(
-      "loadSourceWorkspacePortfolio",
-    );
+    expect(contractDetailRouteSource).toContain("loadSourceWorkspacePortfolio");
     expect(contractDetailRouteSource).toContain(
       "sourceProviderFromRequest(requestUrl)",
     );
@@ -71,7 +70,9 @@ describe("Source workspace explicit-client API routing", () => {
     expect(optimizationRouteSource).toContain(
       "checkTenantAccessByKey(requestedClientKey)",
     );
-    expect(optimizationRouteSource).toContain("requestedClientKey !== tenancy.clientKey");
+    expect(optimizationRouteSource).toContain(
+      "requestedClientKey !== tenancy.clientKey",
+    );
     expect(optimizationRouteSource).toContain(
       '{ ok: false, error: "unknown_client" }',
     );

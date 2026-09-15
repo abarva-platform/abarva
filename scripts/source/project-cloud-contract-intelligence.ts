@@ -9,7 +9,10 @@ import type { CsvRecord } from "../../src/lib/source/contract-depth-package/proj
 
 function argument(name: string, fallback: string): string {
   const prefix = `--${name}=`;
-  return process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length) ?? fallback;
+  return (
+    process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length) ??
+    fallback
+  );
 }
 
 function parseCsv(content: string): CsvRecord[] {
@@ -48,17 +51,29 @@ function parseCsv(content: string): CsvRecord[] {
     rows.push(row);
   }
   const headers = rows[0] ?? [];
-  return rows.slice(1).filter((candidate) => candidate.some(Boolean)).map((values, index) => {
-    if (values.length !== headers.length) {
-      throw new Error(`Malformed CSV at row ${index + 2}: expected ${headers.length} fields, got ${values.length}`);
-    }
-    return Object.fromEntries(headers.map((header, headerIndex) => [header, values[headerIndex] ?? ""]));
-  });
+  return rows
+    .slice(1)
+    .filter((candidate) => candidate.some(Boolean))
+    .map((values, index) => {
+      if (values.length !== headers.length) {
+        throw new Error(
+          `Malformed CSV at row ${index + 2}: expected ${headers.length} fields, got ${values.length}`,
+        );
+      }
+      return Object.fromEntries(
+        headers.map((header, headerIndex) => [
+          header,
+          values[headerIndex] ?? "",
+        ]),
+      );
+    });
 }
 
 function readCsv(sourceDir: string, fileName: string): CsvRecord[] {
   const filePath = path.join(sourceDir, fileName);
-  return fs.existsSync(filePath) ? parseCsv(fs.readFileSync(filePath, "utf8")) : [];
+  return fs.existsSync(filePath)
+    ? parseCsv(fs.readFileSync(filePath, "utf8"))
+    : [];
 }
 
 function main(): void {
@@ -67,36 +82,60 @@ function main(): void {
     "datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908",
   );
   const sourceDir = path.join(packageDir, "source-files");
-  const outDir = argument("out-dir", path.join(packageDir, "qa", "contract-intelligence"));
+  const outDir = argument(
+    "out-dir",
+    path.join(packageDir, "qa", "contract-intelligence"),
+  );
   const input: CloudContractIntelligencePackageInput = {
     contracts: readCsv(sourceDir, "cloud_contract_register.csv"),
     applicationScope: readCsv(sourceDir, "cmdb_application_scope.csv"),
     contractClauses: readCsv(sourceDir, "contract_clauses.csv"),
+    contractPageText: readCsv(sourceDir, "contract_page_text.csv"),
     evidenceManifest: readCsv(sourceDir, "evidence_manifest.csv"),
     monthlySpend: readCsv(sourceDir, "monthly_spend.csv"),
     serviceUsage: readCsv(sourceDir, "cloud_service_usage_monthly.csv"),
-    commitmentCoverage: readCsv(sourceDir, "cloud_commitment_coverage_monthly.csv"),
+    commitmentCoverage: readCsv(
+      sourceDir,
+      "cloud_commitment_coverage_monthly.csv",
+    ),
     apReconciliation: readCsv(sourceDir, "cloud_ap_invoice_reconciliation.csv"),
     resourceInventory: readCsv(sourceDir, "cloud_resource_inventory.csv"),
-    optimizationOpportunities: readCsv(sourceDir, "optimization_opportunities.csv"),
+    optimizationOpportunities: readCsv(
+      sourceDir,
+      "optimization_opportunities.csv",
+    ),
   };
   const records = buildCloudContractIntelligenceRecords(input);
   fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, "contract-intelligence.json"), `${JSON.stringify(records, null, 2)}\n`);
-  fs.writeFileSync(path.join(outDir, "summary.json"), `${JSON.stringify({
-    status: "PASS",
-    contracts: records.length,
-    records: records.map((record) => ({
-      contractId: record.contractId,
-      reviewStatus: record.review.status,
-      archetype: record.contract.archetypeLabel,
-      purpose: record.story.purpose,
-      scope: record.story.scope,
-      levers: record.levers.length,
-      evidenceLanes: record.evidenceLanes.map((lane) => ({ key: lane.key, state: lane.state, rows: lane.rowCount })),
-      sourceRefs: record.provenance.sourceRefs.length,
-    })),
-  }, null, 2)}\n`);
+  fs.writeFileSync(
+    path.join(outDir, "contract-intelligence.json"),
+    `${JSON.stringify(records, null, 2)}\n`,
+  );
+  fs.writeFileSync(
+    path.join(outDir, "summary.json"),
+    `${JSON.stringify(
+      {
+        status: "PASS",
+        contracts: records.length,
+        records: records.map((record) => ({
+          contractId: record.contractId,
+          reviewStatus: record.review.status,
+          archetype: record.contract.archetypeLabel,
+          purpose: record.story.purpose,
+          scope: record.story.scope,
+          levers: record.levers.length,
+          evidenceLanes: record.evidenceLanes.map((lane) => ({
+            key: lane.key,
+            state: lane.state,
+            rows: lane.rowCount,
+          })),
+          sourceRefs: record.provenance.sourceRefs.length,
+        })),
+      },
+      null,
+      2,
+    )}\n`,
+  );
 }
 
 main();

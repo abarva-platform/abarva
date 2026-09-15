@@ -7,7 +7,8 @@ const getContractOptimizationEvidencePack = jest.fn();
 
 jest.mock("@/lib/source/data-model/read-adapter", () => ({
   getContract360: (...args: unknown[]) => getContract360(...args),
-  getContractIntelligence: (...args: unknown[]) => getContractIntelligence(...args),
+  getContractIntelligence: (...args: unknown[]) =>
+    getContractIntelligence(...args),
   getContractOptimizationOpportunitySet: (...args: unknown[]) =>
     getContractOptimizationOpportunitySet(...args),
   getContractOptimizationEvidencePack: (...args: unknown[]) =>
@@ -177,6 +178,31 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain("0 of 8 required evidence families");
     expect(block).toContain("Missing:");
     expect(block).toContain("Rate variance");
+    expect(block).toContain(
+      "Annual value is the contract header value, not an annual commitment",
+    );
+    expect(block).toContain(
+      "never say an amount was paid unless governed AP/payment evidence explicitly establishes payment status",
+    );
+  });
+
+  it("never emits a blank contract or vendor display name", async () => {
+    getContract360.mockResolvedValue(
+      contractRow({ contract_name: "  ", vendor_name: "" }),
+    );
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({ contractName: "", vendorName: "" }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+
+    expect(block).toContain('Exact contract display name: "Contract CTR-090"');
+    expect(block).toContain(
+      'Exact vendor display name: "Vendor not established"',
+    );
   });
 
   it("includes the governed contract-intelligence record without rewriting it", async () => {
@@ -386,7 +412,8 @@ describe("buildAvaSourceContractGrounding", () => {
             evidenceGrade: "missing",
             blockingGap: "Benchmark comparable not loaded",
             negotiationDetail: {
-              buyerAsk: "Review the discount band after a benchmark comparable is loaded.",
+              buyerAsk:
+                "Review the discount band after a benchmark comparable is loaded.",
               negotiationLanguage:
                 "Do not re-open price until a comparable is accepted.",
               vendorConcession:

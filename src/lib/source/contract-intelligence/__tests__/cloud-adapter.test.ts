@@ -40,6 +40,13 @@ describe("buildCloudContractIntelligenceRecords", () => {
         row("scope-1", { application_name: "Analytics workload" }),
       ],
       contractClauses: [row("clause-1")],
+      contractPageText: [
+        row("page-1", {
+          source_file_id: "DOC-1",
+          source_page: "1",
+          page_text: "Synthetic governed contract passage.",
+        }),
+      ],
       evidenceManifest: [row("DOC-1", { source_file_id: "DOC-1" })],
       monthlySpend: [row("spend-1", { actual_spend_usd: "100" })],
       serviceUsage: [row("usage-1", { total_spend_usd: "100" })],
@@ -111,6 +118,13 @@ describe("buildCloudContractIntelligenceRecords", () => {
         ?.rowCount,
     ).toBe(1);
     expect(
+      records[0].baseline.facts.find((fact) => fact.key === "document_basis"),
+    ).toMatchObject({
+      value: "1 source documents",
+      meaning: "1 searchable page rows are available for traceability.",
+      reviewStatus: "reviewed",
+    });
+    expect(
       records[0].evidenceLanes.find(
         (lane) => lane.key === "commitment_coverage",
       )?.state,
@@ -119,5 +133,6 @@ describe("buildCloudContractIntelligenceRecords", () => {
       records[0].anatomy.nodes.some((node) => node.label === "Cloud resources"),
     ).toBe(true);
     expect(records[0].review.status).toBe("reviewed");
+    expect(records[0].levers[1].candidateRange).toBe("Not sized");
   });
 });

@@ -1,4 +1,7 @@
-import type { CsvRecord, ContractDepthPackageInput } from "../contract-depth-package/projection";
+import type {
+  CsvRecord,
+  ContractDepthPackageInput,
+} from "../contract-depth-package/projection";
 import { buildContractIntelligenceRecords } from "./build";
 import type { ContractIntelligenceRecord } from "./types";
 
@@ -6,6 +9,7 @@ export interface CloudContractIntelligencePackageInput {
   readonly contracts: readonly CsvRecord[];
   readonly applicationScope: readonly CsvRecord[];
   readonly contractClauses: readonly CsvRecord[];
+  readonly contractPageText: readonly CsvRecord[];
   readonly evidenceManifest: readonly CsvRecord[];
   readonly monthlySpend: readonly CsvRecord[];
   readonly serviceUsage: readonly CsvRecord[];
@@ -72,7 +76,7 @@ export function buildCloudContractIntelligenceRecords(
     contracts: input.contracts,
     applicationScope: input.applicationScope,
     changeOrders: [],
-    contractPageText: [],
+    contractPageText: input.contractPageText,
     resourceModel: [],
     pricingBridge: [],
     invoiceLineDetail: invoiceEvidence,
