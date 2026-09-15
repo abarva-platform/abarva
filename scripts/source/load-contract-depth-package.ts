@@ -2695,7 +2695,7 @@ async function upsertOptimizationSpine(
   // until the calculation rule and inputs can be independently recomputed.
   await client.query(
     `WITH evidence AS (
-       SELECT opportunity_id,
+       SELECT evidence_row.opportunity_id,
          jsonb_agg(jsonb_build_object(
            'sourceSystem', source_system,
            'sourceTable', source_table,
@@ -2703,11 +2703,31 @@ async function upsertOptimizationSpine(
            'sourceFileReport', source_file_report,
            'pageSpan', COALESCE(source_span, source_page),
            'reviewState', review_state
-         ) ORDER BY source_record_id) AS source_refs
-       FROM source.opportunity_evidence
-       WHERE tenant_key = $1 AND dataset_version = $2
-         AND opportunity_id = ANY($3::text[])
-       GROUP BY opportunity_id
+         ) ORDER BY source_record_id)
+           FILTER (WHERE EXISTS (
+             SELECT 1
+             FROM source.source_record_snapshot snapshot
+             WHERE snapshot.tenant_key = evidence_row.tenant_key
+               AND snapshot.dataset_version = evidence_row.dataset_version
+               AND snapshot.contract_id = opportunity.contract_id
+               AND snapshot.source_record_id = evidence_row.source_record_id
+           )) AS source_refs,
+         count(*) FILTER (WHERE EXISTS (
+           SELECT 1
+           FROM source.source_record_snapshot snapshot
+           WHERE snapshot.tenant_key = evidence_row.tenant_key
+             AND snapshot.dataset_version = evidence_row.dataset_version
+             AND snapshot.contract_id = opportunity.contract_id
+             AND snapshot.source_record_id = evidence_row.source_record_id
+         )) AS resolved_ref_count
+       FROM source.opportunity_evidence evidence_row
+       JOIN source.optimization_opportunity opportunity
+         ON opportunity.tenant_key = evidence_row.tenant_key
+        AND opportunity.dataset_version = evidence_row.dataset_version
+        AND opportunity.opportunity_id = evidence_row.opportunity_id
+       WHERE evidence_row.tenant_key = $1 AND evidence_row.dataset_version = $2
+         AND evidence_row.opportunity_id = ANY($3::text[])
+       GROUP BY evidence_row.opportunity_id
      )
      INSERT INTO source.opportunity_claim (
        tenant_key, dataset_version, claim_id, opportunity_id, contract_id,
@@ -2716,10 +2736,10 @@ async function upsertOptimizationSpine(
      )
      SELECT $1, $2, o.opportunity_id || ':problem', o.opportunity_id, o.contract_id,
        'problem', COALESCE(o.payload->>'label', o.opportunity_id),
-       CASE WHEN COALESCE(jsonb_array_length(e.source_refs), 0) > 0
+       CASE WHEN COALESCE(e.resolved_ref_count, 0) > 0
             THEN 'client_record' ELSE 'not_recorded' END,
        'signed_record',
-       CASE WHEN COALESCE(jsonb_array_length(e.source_refs), 0) > 0
+       CASE WHEN COALESCE(e.resolved_ref_count, 0) > 0
             THEN 'partial' ELSE 'not_established' END,
        'draft', COALESCE(e.source_refs, '[]'::jsonb), 'deterministic_loader', $4
      FROM source.optimization_opportunity o

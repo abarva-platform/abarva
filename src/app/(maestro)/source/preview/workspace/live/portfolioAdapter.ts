@@ -942,7 +942,18 @@ async function loadDirectSourceWorkspaceImpactRows(
                  o.tenant_key,
                  o.opportunity_id,
                  o.contract_id,
-                 o.amount_usd::numeric AS candidate_amount_usd,
+                 CASE
+                   WHEN sizing_claim.claim_id IS NOT NULL
+                    AND sizing_claim.basis IN ('calculated', 'benchmark')
+                    AND sizing_claim.evidence_status IN ('supported', 'partial')
+                    AND jsonb_array_length(sizing_claim.source_refs) > 0
+                    AND (
+                      sizing_claim.amount_usd IS NOT NULL
+                      OR (sizing_claim.amount_low_usd IS NOT NULL AND sizing_claim.amount_high_usd IS NOT NULL)
+                    )
+                     THEN COALESCE(sizing_claim.amount_usd, sizing_claim.amount_high_usd)
+                   ELSE NULL::numeric
+                 END AS candidate_amount_usd,
                  o.stage AS readiness_state,
                  o.evidence_grade AS evidence_state,
                  0 AS source_rank
@@ -951,6 +962,11 @@ async function loadDirectSourceWorkspaceImpactRows(
                   ON current_contract.tenant_key = o.tenant_key
                  AND current_contract.contract_id = o.contract_id
                  AND current_contract.raw_payload->>'dataset_version' = o.dataset_version
+                LEFT JOIN source.opportunity_claim sizing_claim
+                  ON sizing_claim.tenant_key = o.tenant_key
+                 AND sizing_claim.dataset_version = o.dataset_version
+                 AND sizing_claim.opportunity_id = o.opportunity_id
+                 AND sizing_claim.claim_role = 'sizing'
                WHERE o.tenant_key = ANY($1::text[])
              ),
              opportunity_deduped AS (
@@ -1011,15 +1027,10 @@ async function loadDirectSourceWorkspaceImpactRows(
                c.contract_id,
                c.vendor_ref,
                c.vendor_name,
+               c.vendor_category AS vendor_category,
                COALESCE(
                  NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
-                 NULLIF(canonical.raw_payload ->> 'archetype', ''),
-                 c.vendor_category
-               ) AS vendor_category,
-               COALESCE(
-                 NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
-                 NULLIF(canonical.raw_payload ->> 'archetype', ''),
-                 c.vendor_category
+                 NULLIF(canonical.raw_payload ->> 'archetype', '')
                ) AS contract_archetype,
                c.contract_name,
                COALESCE(spend.spend_rows, 0)::bigint AS spend_rows,
@@ -1076,6 +1087,7 @@ async function loadDirectSourceWorkspaceImpactRows(
               LEFT JOIN source.contract canonical
                 ON canonical.tenant_key = c.tenant_key
                AND canonical.contract_id = c.contract_id
+               AND canonical.load_run_id = c.load_run_id
               LEFT JOIN spend ON spend.tenant_key = c.tenant_key AND spend.contract_id = c.contract_id
               LEFT JOIN performance ON performance.tenant_key = c.tenant_key AND performance.contract_id = c.contract_id
               LEFT JOIN opportunities ON opportunities.tenant_key = c.tenant_key AND opportunities.contract_id = c.contract_id
@@ -1627,7 +1639,18 @@ async function loadDerivedSourceWorkspaceImpactLayer(
              o.tenant_key,
              o.opportunity_id,
              o.contract_id,
-             o.amount_usd::numeric AS candidate_amount_usd,
+             CASE
+               WHEN sizing_claim.claim_id IS NOT NULL
+                AND sizing_claim.basis IN ('calculated', 'benchmark')
+                AND sizing_claim.evidence_status IN ('supported', 'partial')
+                AND jsonb_array_length(sizing_claim.source_refs) > 0
+                AND (
+                  sizing_claim.amount_usd IS NOT NULL
+                  OR (sizing_claim.amount_low_usd IS NOT NULL AND sizing_claim.amount_high_usd IS NOT NULL)
+                )
+                 THEN COALESCE(sizing_claim.amount_usd, sizing_claim.amount_high_usd)
+               ELSE NULL::numeric
+             END AS candidate_amount_usd,
              o.stage AS readiness_state,
              o.evidence_grade AS evidence_state,
              0 AS source_rank
@@ -1696,15 +1719,10 @@ async function loadDerivedSourceWorkspaceImpactLayer(
            c.contract_id,
            c.vendor_ref,
            c.vendor_name,
+           c.vendor_category AS vendor_category,
            COALESCE(
              NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
-             NULLIF(canonical.raw_payload ->> 'archetype', ''),
-             c.vendor_category
-           ) AS vendor_category,
-           COALESCE(
-             NULLIF(canonical.raw_payload ->> 'contract_archetype', ''),
-             NULLIF(canonical.raw_payload ->> 'archetype', ''),
-             c.vendor_category
+             NULLIF(canonical.raw_payload ->> 'archetype', '')
            ) AS contract_archetype,
            c.contract_name,
            COALESCE(spend.spend_rows, 0)::bigint AS spend_rows,
@@ -1761,6 +1779,7 @@ async function loadDerivedSourceWorkspaceImpactLayer(
           LEFT JOIN source.contract canonical
             ON canonical.tenant_key = c.tenant_key
            AND canonical.contract_id = c.contract_id
+           AND canonical.load_run_id = c.load_run_id
           LEFT JOIN spend ON spend.tenant_key = c.tenant_key AND spend.contract_id = c.contract_id
           LEFT JOIN performance ON performance.tenant_key = c.tenant_key AND performance.contract_id = c.contract_id
           LEFT JOIN opportunities ON opportunities.tenant_key = c.tenant_key AND opportunities.contract_id = c.contract_id
@@ -1846,7 +1865,18 @@ async function loadDerivedSourceWorkspaceImpactLayer(
                NULLIF(o.payload->>'negotiation_language', ''),
                NULLIF(o.evidence_grade::text, '')
              ) AS deterministic_basis,
-             o.amount_usd::numeric AS candidate_amount_usd,
+             CASE
+               WHEN sizing_claim.claim_id IS NOT NULL
+                AND sizing_claim.basis IN ('calculated', 'benchmark')
+                AND sizing_claim.evidence_status IN ('supported', 'partial')
+                AND jsonb_array_length(sizing_claim.source_refs) > 0
+                AND (
+                  sizing_claim.amount_usd IS NOT NULL
+                  OR (sizing_claim.amount_low_usd IS NOT NULL AND sizing_claim.amount_high_usd IS NOT NULL)
+                )
+                 THEN COALESCE(sizing_claim.amount_usd, sizing_claim.amount_high_usd)
+               ELSE NULL::numeric
+             END AS candidate_amount_usd,
              COALESCE(NULLIF(o.payload->>'priority', ''), o.stage) AS priority,
              o.stage AS readiness_state,
              o.evidence_grade AS evidence_state,
@@ -1880,6 +1910,11 @@ async function loadDerivedSourceWorkspaceImpactLayer(
             LEFT JOIN source.contract_360 c
               ON c.tenant_key = o.tenant_key
              AND c.contract_id = o.contract_id
+            LEFT JOIN source.opportunity_claim sizing_claim
+              ON sizing_claim.tenant_key = o.tenant_key
+             AND sizing_claim.dataset_version = o.dataset_version
+             AND sizing_claim.opportunity_id = o.opportunity_id
+             AND sizing_claim.claim_role = 'sizing'
            WHERE o.tenant_key = ANY($1::text[])
          ),
          deduped AS (

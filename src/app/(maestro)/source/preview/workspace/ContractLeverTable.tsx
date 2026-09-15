@@ -49,6 +49,9 @@ function candidateFor(row: Opportunity): string {
     if (row.blockingGap) return `Not sized — ${lowerFirst(row.blockingGap)}`;
     return "Not sized";
   }
+  if (row.amountLowUsd != null && row.amountHighUsd != null) {
+    return `${row.amountLowUsd}–${row.amountHighUsd}`;
+  }
   if (row.amountUsd != null) return row.amount;
   if (row.blockingGap) return `Not sized — ${lowerFirst(row.blockingGap)}`;
   return "Not sized";
@@ -66,7 +69,10 @@ export function ContractLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
   if (rows.length === 0) return null;
 
   const sized = rows.filter(
-    (row) => !isSignalStage(row) && row.amountUsd != null,
+    (row) =>
+      !isSignalStage(row) &&
+      (row.amountUsd != null ||
+        (row.amountLowUsd != null && row.amountHighUsd != null)),
   );
   const signalCount = rows.filter(isSignalStage).length;
   const unsizedCount = rows.length - sized.length - signalCount;
