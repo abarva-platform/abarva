@@ -472,14 +472,13 @@ export default async function SourceEventDetailPage({
             ? { bids: [...bidsByVendor.values()], vendors }
             : undefined;
         }
-        // eventType is not on the summary; leave it unset so the builder
-        // resolves the value archetype the same way buildLiveStageView does
-        // (the first archetype carrying value-lever rules — today AMS).
         stepInsight =
           buildStepInsight({
             stageKey: viewStage,
             inputs,
             citations,
+            eventType: event.eventType,
+            classifiedCategory: event.classifiedCategory,
             baselineLabel: "Value at stake (event estimate)",
             baselineAmount: event.valueAtStakeUsd ?? 0,
             rfpClausePresentLeverKeys,
@@ -495,6 +494,8 @@ export default async function SourceEventDetailPage({
             buildLiveStageView({
               inputs,
               citations,
+              eventType: event.eventType,
+              classifiedCategory: event.classifiedCategory,
               baselineLabel: "Value at stake (event estimate)",
               baselineAmount: event.valueAtStakeUsd ?? 0,
               stageKey: viewStage,

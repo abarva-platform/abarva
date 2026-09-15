@@ -147,6 +147,8 @@ export interface BuildStepInsightInput {
   citations: Record<string, FactSourceCitation | null>;
   /** The event's raw event_type — used to resolve the archetype. */
   eventType?: string | null;
+  /** Preferred deterministic classifier category for archetype resolution. */
+  classifiedCategory?: string | null;
   /** Explicit archetype id override (tests). */
   archetypeId?: string;
   /** Baseline label/amount for the value bridge. */
@@ -223,7 +225,7 @@ export function buildStepInsight(
   // Explicit archetype id (tests) short-circuits event_type resolution.
   const resolved = input.archetypeId
     ? resolveArchetypeById(input.archetypeId)
-    : resolveValueArchetype(input.eventType);
+    : resolveValueArchetype(input.eventType, input.classifiedCategory);
   if (!resolved) return null;
 
   switch (kind) {

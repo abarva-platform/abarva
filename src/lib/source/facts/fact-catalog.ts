@@ -92,9 +92,9 @@ export interface FactSpec {
  * (rather than inferred) forces a human to state what each fact IS and which
  * entity it hangs off before the value engine can use it.
  *
- * Today this covers the AMS archetype's inputs. As other archetypes gain
- * `valueLeverRules`, add their input keys here; the derivation picks them up with
- * no change to the build logic.
+ * Today this covers the inputs for every archetype with deterministic value
+ * rules. As other archetypes gain `valueLeverRules`, add their input keys here;
+ * the derivation picks them up with no change to the build logic.
  */
 interface FactEnrichment {
   label: string;
@@ -205,6 +205,140 @@ const FACT_ENRICHMENT: Record<string, FactEnrichment> = {
     entityKind: 'event',
     description:
       'Length of the contract term in years, parsed from the vendor proposal. Multiplies annualized value levers over the life of the deal.',
+  },
+  // ── Cloud / FinOps · consumption and commitment economics ────────────────
+  annual_eligible_cloud_spend: {
+    label: 'Annual commitment-eligible cloud spend',
+    entityKind: 'event',
+    description:
+      'Annualized cloud consumption eligible for the commitment instrument being evaluated, reconciled from billing exports and explicitly excluding ineligible services, regions, and charges.',
+  },
+  uncovered_commitment_pct: {
+    label: 'Eligible usage not covered by commitments',
+    entityKind: 'event',
+    description:
+      'Share of commitment-eligible usage currently billed without an applicable reserved or committed-use benefit, measured from billing and commitment inventory.',
+  },
+  benchmark_commitment_discount_pct: {
+    label: 'Comparable commitment discount',
+    entityKind: 'event',
+    description:
+      'Discount percentage supported by a named, dated, and comparable public, licensed, client-provided, or anonymized benchmark for the same service, region, term, and commitment structure.',
+  },
+  annual_compute_spend: {
+    label: 'Annual compute spend',
+    entityKind: 'event',
+    description:
+      'Annualized in-scope compute consumption reconciled from billing records before applying any rightsizing signal.',
+  },
+  identified_idle_waste_pct: {
+    label: 'Measured idle or oversized compute share',
+    entityKind: 'event',
+    description:
+      'Share of compute spend tied to resources whose governed telemetry and workload-owner review support an idle or oversized classification.',
+  },
+  annual_storage_spend: {
+    label: 'Annual storage spend',
+    entityKind: 'event',
+    description:
+      'Annualized in-scope storage consumption reconciled from cloud billing records before lifecycle or tier optimization.',
+  },
+  cold_data_pct: {
+    label: 'Cold-data share',
+    entityKind: 'event',
+    description:
+      'Share of storage whose measured access history, retention class, and workload constraints support treatment as cold data.',
+  },
+  storage_rate_reduction_pct: {
+    label: 'Comparable storage tier-rate reduction',
+    entityKind: 'event',
+    description:
+      'Rate reduction supported by a named and comparable source after accounting for retrieval charges, minimum duration, geography, and storage class.',
+  },
+  annual_egress_spend: {
+    label: 'Annual data-egress spend',
+    entityKind: 'event',
+    description:
+      'Annualized in-scope data-transfer and egress charges reconciled from cloud billing records.',
+  },
+  avoidable_egress_pct: {
+    label: 'Architecture-validated avoidable egress share',
+    entityKind: 'event',
+    description:
+      'Share of egress spend that an architecture review has tied to a removable routing, replication, or placement pattern; it is not inferred from the billing line alone.',
+  },
+  annual_pass_through_spend: {
+    label: 'Annual hyperscaler pass-through spend',
+    entityKind: 'vendor',
+    description:
+      'Annual hyperscaler consumption passed through by a managed-cloud vendor, reconciled to buyer net rates before any management fee or markup.',
+  },
+  pass_through_markup_pct: {
+    label: 'Pass-through markup over buyer net rate',
+    entityKind: 'vendor',
+    description:
+      'Contracted or invoiced markup applied by a managed-cloud vendor to buyer net hyperscaler consumption, excluding separately stated management fees.',
+  },
+  annual_committed_spend: {
+    label: 'Annual committed cloud spend',
+    entityKind: 'event',
+    description:
+      'Annual spend floor stated by the applicable cloud commitment instrument, normalized to the decision horizon.',
+  },
+  forecast_shortfall_pct: {
+    label: 'Forecast commitment shortfall',
+    entityKind: 'event',
+    description:
+      'Share of committed spend not supported by the governed workload forecast after planned migrations, retirements, growth, and uncertainty are included.',
+  },
+  // ── Contract renewal · leverage and exposure ─────────────────────────────
+  annual_contract_spend: {
+    label: 'Annual contract spend',
+    entityKind: 'event',
+    description:
+      'Reconciled annual spend for the contract being renewed, sourced from invoice or AP actuals rather than contract face value alone.',
+  },
+  unused_entitlement_pct: {
+    label: 'Unused entitlement share',
+    entityKind: 'event',
+    description:
+      'Share of licensed or committed units whose governed usage evidence supports removal or re-rating, after contractual minimums and valid inactive populations are reconciled.',
+  },
+  annual_benchmarkable_spend: {
+    label: 'Annual benchmarkable spend',
+    entityKind: 'event',
+    description:
+      'Annual spend whose unit, scope, geography, service level, and volume can be compared to the cited benchmark.',
+  },
+  benchmark_price_gap_pct: {
+    label: 'Comparable price gap',
+    entityKind: 'event',
+    description:
+      'Percentage by which the current comparable unit price exceeds a named, dated, and methodologically comparable benchmark.',
+  },
+  credit_owed_usd: {
+    label: 'Contractual SLA credits owed',
+    entityKind: 'event',
+    description:
+      'Credits earned under the governing SLA clause, reconciled from period performance, threshold, fee base, credit formula, and any cap.',
+  },
+  credit_claimed_usd: {
+    label: 'SLA credits already claimed',
+    entityKind: 'event',
+    description:
+      'Portion of earned SLA credits already claimed, settled, or recovered, supported by a claim or finance record.',
+  },
+  proposed_renewal_uplift_pct: {
+    label: 'Proposed renewal uplift',
+    entityKind: 'vendor',
+    description:
+      'Percentage increase in the vendor renewal proposal over the reconciled current-price basis, before negotiated concessions.',
+  },
+  locked_renewal_years: {
+    label: 'Contractually locked renewal period',
+    entityKind: 'event',
+    description:
+      'Years of commercial commitment created by the confirmed renewal or auto-renewal clause after notice, cure, termination, and negotiated-release rights are considered.',
   },
 };
 

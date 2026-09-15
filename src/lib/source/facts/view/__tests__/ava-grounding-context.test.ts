@@ -65,7 +65,7 @@ const BASELINE = 65_000_000;
  * exactly as the builder computes it — used to assert the grounding block quotes
  * the identical number. */
 function canvasValueBridgeTotalFragment(facts: EventFactMap): string | null {
-  const archetype = resolveValueArchetype(null);
+  const archetype = resolveValueArchetype('ams');
   expect(archetype).not.toBeNull();
   const bridge = buildValueBridgeInsight(archetype!, {
     stageKey: 'pricing',
@@ -90,7 +90,7 @@ describe('aVa Source grounding — the divergence eval (anti-contradiction)', ()
       citations: NO_CITATIONS,
       stageKey: 'pricing',
       baselineAmount: BASELINE,
-      eventType: null,
+      eventType: 'ams',
     });
 
     // The canvas value-bridge headline (the authoritative "$…" moment).
@@ -111,7 +111,7 @@ describe('aVa Source grounding — the divergence eval (anti-contradiction)', ()
       citations: NO_CITATIONS,
       stageKey,
       baselineAmount: BASELINE,
-      eventType: null,
+      eventType: 'ams',
     });
 
     // The canvas builds the SAME insight the same way (page.tsx call-site).
@@ -119,6 +119,7 @@ describe('aVa Source grounding — the divergence eval (anti-contradiction)', ()
       stageKey,
       inputs: FACTS_ONE_LEVER,
       citations: NO_CITATIONS,
+      eventType: 'ams',
       baselineLabel: AVA_GROUNDING_BASELINE_LABEL,
       baselineAmount: BASELINE,
     });
@@ -134,7 +135,7 @@ describe('aVa Source grounding — the divergence eval (anti-contradiction)', ()
       citations: NO_CITATIONS,
       stageKey: 'strategy',
       baselineAmount: BASELINE,
-      eventType: null,
+      eventType: 'ams',
     });
     expect(live.hasLiveNumbers).toBe(true);
     expect(live.block).toContain('LIVE');
@@ -144,7 +145,7 @@ describe('aVa Source grounding — the divergence eval (anti-contradiction)', ()
       citations: NO_CITATIONS,
       stageKey: 'strategy',
       baselineAmount: BASELINE,
-      eventType: null,
+      eventType: 'ams',
     });
     // No cited facts → the numbers are illustrative shape, marked SAMPLE/MODEL,
     // never dressed as this event's value.
@@ -158,7 +159,7 @@ describe('aVa Source grounding — the divergence eval (anti-contradiction)', ()
       citations: NO_CITATIONS,
       stageKey: 'strategy',
       baselineAmount: 0,
-      eventType: null,
+      eventType: 'ams',
     });
     // A sample/model block may still render (the shape), but it must NOT be tagged
     // LIVE and must carry the "provide evidence" honesty note.

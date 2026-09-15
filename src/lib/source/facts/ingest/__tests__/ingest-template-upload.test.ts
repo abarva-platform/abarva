@@ -9,6 +9,8 @@ import type { ParsedTemplateUpload } from "../../extraction/structured-map";
 import type { SourceEventFactInsert } from "../../fact-types";
 
 let eventClientKey = "lakeshore";
+let eventType = "ams";
+let classifiedCategory: string | null = "ams";
 const insertFacts = jest.fn(
   async (facts: readonly SourceEventFactInsert[]) => ({
     ok: true as const,
@@ -24,7 +26,15 @@ function fakeReadClient() {
         eq: () => chain,
         maybeSingle: async () =>
           table === "source_events"
-            ? { data: { id: "evt-1", client_key: eventClientKey }, error: null }
+            ? {
+                data: {
+                  id: "evt-1",
+                  client_key: eventClientKey,
+                  event_type: eventType,
+                  classified_category: classifiedCategory,
+                },
+                error: null,
+              }
             : { data: null, error: null },
       };
       return chain;
@@ -85,9 +95,22 @@ const APP_INVENTORY_UPLOAD: ParsedTemplateUpload = {
   ],
 };
 
+const RESPONSE_COVERAGE_UPLOAD: ParsedTemplateUpload = {
+  headers: ['Vendor', 'Lever Key', 'Addressed (1/0/0.5)'],
+  rows: [
+    {
+      Vendor: 'vendor-1',
+      'Lever Key': 'AMS.VOLUME_BAND_PRICING',
+      'Addressed (1/0/0.5)': 1,
+    },
+  ],
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
   eventClientKey = "lakeshore";
+  eventType = "ams";
+  classifiedCategory = "ams";
 });
 
 describe("ingestTemplateUpload — VOLUMETRICS_V1", () => {
@@ -188,6 +211,25 @@ describe("ingestTemplateUpload — validation + fencing", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.code).toBe("not_found");
+    expect(insertFacts).not.toHaveBeenCalled();
+  });
+
+  it('fails before writing composite facts when the event archetype is not analytics-ready', async () => {
+    eventType = 'software';
+    classifiedCategory = 'data_ai_platform';
+
+    const result = await ingestTemplateUpload(
+      {
+        templateCode: 'RESPONSE_COVERAGE_V1',
+        upload: RESPONSE_COVERAGE_UPLOAD,
+        scope: { eventId: 'evt-1', clientKey: 'lakeshore' },
+      },
+      deps(),
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe('archetype_not_ready');
     expect(insertFacts).not.toHaveBeenCalled();
   });
 });

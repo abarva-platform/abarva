@@ -70,6 +70,8 @@ export interface BuildAvaSourceGroundingInput {
   /** The event's raw event_type, used to resolve the value archetype (the same
    * resolution the canvas uses when eventType is unset). Optional. */
   eventType?: string | null;
+  /** Preferred deterministic classifier category. */
+  classifiedCategory?: string | null;
 }
 
 export interface AvaSourceGrounding {
@@ -150,6 +152,8 @@ export interface RenderAvaGroundingFromFactsInput {
   baselineAmount?: number | null;
   /** The event's raw event_type (archetype resolution). Optional. */
   eventType?: string | null;
+  /** Preferred deterministic classifier category. */
+  classifiedCategory?: string | null;
 }
 
 /**
@@ -179,6 +183,7 @@ export function renderAvaSourceGroundingFromFacts(
     inputs,
     citations,
     eventType: input.eventType ?? undefined,
+    classifiedCategory: input.classifiedCategory,
     baselineLabel: AVA_GROUNDING_BASELINE_LABEL,
     baselineAmount,
   });
@@ -195,6 +200,7 @@ export function renderAvaSourceGroundingFromFacts(
           inputs,
           citations,
           eventType: input.eventType ?? undefined,
+          classifiedCategory: input.classifiedCategory,
           baselineLabel: AVA_GROUNDING_BASELINE_LABEL,
           baselineAmount,
         });
@@ -208,6 +214,7 @@ export function renderAvaSourceGroundingFromFacts(
     inputs,
     citations,
     eventType: input.eventType ?? undefined,
+    classifiedCategory: input.classifiedCategory,
     baselineLabel: AVA_GROUNDING_BASELINE_LABEL,
     baselineAmount,
     stageKey: stageKey === 'strategy' ? 'scope' : stageKey,
@@ -286,5 +293,6 @@ export async function buildAvaSourceGrounding(
     stageKey: input.stageKey,
     baselineAmount: input.baselineAmount,
     eventType: input.eventType,
+    classifiedCategory: input.classifiedCategory,
   });
 }

@@ -469,6 +469,7 @@ export function sourceEventRowToSummary(
     accountName,
     leadAgent: "Sentinel",
     archetype: formatSourceEventType(row.event_type),
+    eventType: row.event_type,
     rigor:
       row.event_type === "managed_service" || row.event_type === "consulting"
         ? "strategic"

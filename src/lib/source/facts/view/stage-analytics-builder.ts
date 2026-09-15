@@ -24,6 +24,11 @@ import {
   archetypeForEventType,
   listSourceArchetypes,
 } from '@/lib/source/archetypes/registry';
+import { resolveArchetypeForEvent } from '@/lib/source/archetypes/event-archetype-resolver';
+import {
+  SOURCE_CATEGORY_IDS,
+  type SourceCategoryId,
+} from '@/lib/source/taxonomy/category-taxonomy';
 import type { SourceEventArchetype } from '@/lib/source/archetypes/types';
 import type { FactSourceCitation } from '@/lib/source/facts/fact-types';
 import type { EvaluatorInputs } from '@/lib/source/facts/evaluators/types';
@@ -54,21 +59,41 @@ import type {
 
 /**
  * Resolve the archetype whose value-lever rules should evaluate this event.
- * Prefers the archetype mapped from the event's `event_type` WHEN it declares
- * value-lever rules; otherwise falls back to the first archetype that has rules
- * (today only AMS is authored). Returns null when no archetype carries rules.
+ * Prefers the event's classified category, then accepts an unambiguous exact
+ * event-type match. It never substitutes another archetype merely because that
+ * archetype happens to have authored rules.
  */
 export function resolveValueArchetype(
   eventType: string | null | undefined,
+  classifiedCategory?: string | null,
 ): SourceEventArchetype | null {
-  if (eventType) {
-    const mapped = archetypeForEventType(eventType);
-    if (mapped && (mapped.valueLeverRules?.length ?? 0) > 0) return mapped;
+  const categoryId =
+    classifiedCategory &&
+    (SOURCE_CATEGORY_IDS as readonly string[]).includes(classifiedCategory)
+      ? (classifiedCategory as SourceCategoryId)
+      : null;
+  const resolution = resolveArchetypeForEvent({ categoryId, eventType });
+  if (
+    resolution.archetype &&
+    (resolution.archetype.valueLeverRules?.length ?? 0) > 0
+  ) {
+    return resolution.archetype;
   }
-  const withRules = listSourceArchetypes().find(
-    (a) => (a.valueLeverRules?.length ?? 0) > 0,
+
+  // A valid classifier result is authoritative. If that archetype has no rules,
+  // report not-ready instead of falling back to a different raw event type.
+  if (categoryId) return null;
+
+  if (!eventType) return null;
+  const exactMatches = listSourceArchetypes().filter(
+    (candidate) =>
+      candidate.eventType === eventType &&
+      (candidate.valueLeverRules?.length ?? 0) > 0,
   );
-  return withRules ?? null;
+  if (exactMatches.length === 1) return exactMatches[0];
+
+  const mapped = archetypeForEventType(eventType);
+  return mapped && (mapped.valueLeverRules?.length ?? 0) > 0 ? mapped : null;
 }
 
 export interface BuildLiveStageInput {
@@ -78,6 +103,8 @@ export interface BuildLiveStageInput {
   citations: Record<string, FactSourceCitation | null>;
   /** The event's raw event_type (used to resolve the archetype). */
   eventType?: string | null;
+  /** Preferred deterministic classifier category for archetype resolution. */
+  classifiedCategory?: string | null;
   /** Explicit archetype id override (skips event_type resolution) — used in tests. */
   archetypeId?: string;
   /** The value baseline label / amount to show the movements against. */
@@ -98,7 +125,7 @@ export function buildLiveStageView(
 ): StageAnalyticsView | null {
   const archetype = input.archetypeId
     ? getSourceArchetype(input.archetypeId) ?? null
-    : resolveValueArchetype(input.eventType);
+    : resolveValueArchetype(input.eventType, input.classifiedCategory);
   if (!archetype) return null;
 
   const factMap: EventFactMap = input.inputs;

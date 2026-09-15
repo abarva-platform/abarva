@@ -33,10 +33,30 @@ const LEAKAGE_CITATIONS: Record<string, FactSourceCitation | null> = {
 };
 
 describe('resolveValueArchetype', () => {
-  it('falls back to the archetype that has value-lever rules (AMS today)', () => {
-    // An unknown event_type still resolves to a rules-bearing archetype.
-    expect(resolveValueArchetype('nonexistent')?.id).toBe(ARCHETYPE_ID);
-    expect(resolveValueArchetype(null)?.id).toBe(ARCHETYPE_ID);
+  it('resolves authored rules only for the event archetype', () => {
+    expect(resolveValueArchetype('ams')?.id).toBe(ARCHETYPE_ID);
+    expect(resolveValueArchetype(null)).toBeNull();
+    expect(resolveValueArchetype('nonexistent')).toBeNull();
+  });
+
+  it('fails closed when a resolved archetype has no deterministic rules', () => {
+    expect(resolveValueArchetype('software', 'data_ai_platform')).toBeNull();
+  });
+
+  it('never overrides a governed classifier result with a different event-type pack', () => {
+    expect(resolveValueArchetype('managed_service', 'data_ai_platform')).toBeNull();
+  });
+
+  it('resolves the authored Cloud FinOps pack from the classified category', () => {
+    expect(resolveValueArchetype('infrastructure', 'cloud_finops')?.id).toBe(
+      'CLOUD_FINOPS',
+    );
+  });
+
+  it('resolves Contract Renewal only from its governed classified category', () => {
+    expect(resolveValueArchetype('managed_service', 'saas_renewal')?.id).toBe(
+      'CONTRACT_RENEWAL',
+    );
   });
 });
 
@@ -85,5 +105,30 @@ describe('buildLiveStageView', () => {
       archetypeId: ARCHETYPE_ID,
     });
     expect(view).toBeNull();
+  });
+
+  it('builds Cloud FinOps analytics without evaluating AMS rules', () => {
+    const view = buildLiveStageView({
+      inputs: {
+        annual_eligible_cloud_spend: 10_000_000,
+        uncovered_commitment_pct: 40,
+        benchmark_commitment_discount_pct: 25,
+        term_years: 1,
+      },
+      citations: {},
+      eventType: 'infrastructure',
+      classifiedCategory: 'cloud_finops',
+      stageKey: 'pricing',
+    });
+    expect(view).not.toBeNull();
+    expect(view!.intel.points.find((point) => point.tag === 'Archetype')?.text).toContain(
+      'Cloud / Infrastructure / FinOps',
+    );
+    expect(view!.waterfall!.bands.some((band) => band.id.includes('CLOUD.'))).toBe(
+      true,
+    );
+    expect(view!.waterfall!.bands.some((band) => band.id.includes('AMS.'))).toBe(
+      false,
+    );
   });
 });
