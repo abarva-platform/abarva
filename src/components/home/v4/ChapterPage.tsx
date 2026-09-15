@@ -35,6 +35,18 @@ import { cxoText, isGeneratorDeferral, launderChapter } from "./cxo-language";
 import type { ChapterDepth } from "./chapter-page-content";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
+export interface BriefingOpening {
+  headline: string;
+  standfirst: string;
+  readoutHeading: string;
+  readoutText: string;
+  cards: Array<{
+    label: string;
+    tone: string;
+    value: string;
+  }>;
+}
+
 /**
  * One chapter, rendered in v4's reading order: header, exhibit, then the bands in the order a
  * reader needs them -- what is counted, what follows, what is exposed, what is not established --
@@ -56,6 +68,7 @@ export function ChapterPage({
   onOpenRows,
   metrics,
   queue,
+  briefingOpening,
 }: {
   chapter: ChapterView;
   chapterNumber: number;
@@ -80,6 +93,11 @@ export function ChapterPage({
     programs?: EstateRow[];
     contracts?: EstateRow[];
   };
+  /**
+   * Briefing chapters answer an enterprise-orientation question. They should never promote a
+   * specialist finding into the opening simply because authored claims are absent.
+   */
+  briefingOpening?: BriefingOpening;
 }) {
   // One gate, at the top, before any of this chapter's text is drawn.
   const chapter = launderChapter(rawChapter);
@@ -93,11 +111,15 @@ export function ChapterPage({
   // strongest thing they say rather than with the generator's status.
   const deferred = isGeneratorDeferral(chapter.headline);
   const strongest = depth?.findings?.[0];
-  const headline = deferred
+  const headline = briefingOpening
+    ? briefingOpening.headline
+    : deferred
     ? (strongest?.claim ??
       `${chapter.title} is not yet answered by this record.`)
     : chapter.headline;
-  const standfirst = deferred
+  const standfirst = briefingOpening
+    ? briefingOpening.standfirst
+    : deferred
     ? strongest
       ? strongest.because
       : `Nothing in the loaded record speaks to this question yet. The chapters either side of it draw on families that are present; this one draws on families that are not, and that absence is reported here rather than filled.`
@@ -119,11 +141,15 @@ export function ChapterPage({
         standfirst={standfirst}
       />
 
-      <ChapterExecutiveReadout
-        chapter={chapter}
-        bands={bands}
-        signalPacket={signalPacket}
-      />
+      {briefingOpening ? (
+        <BriefingExecutiveReadout opening={briefingOpening} />
+      ) : (
+        <ChapterExecutiveReadout
+          chapter={chapter}
+          bands={bands}
+          signalPacket={signalPacket}
+        />
+      )}
 
       {depth ? (
         <PageShape
@@ -163,8 +189,12 @@ export function ChapterPage({
         />
       ) : null}
 
-      <RecordBand claims={bands.record} signalPacket={signalPacket} />
-      <FollowsBand claims={bands.follows} signalPacket={signalPacket} />
+      {briefingOpening ? null : (
+        <>
+          <RecordBand claims={bands.record} signalPacket={signalPacket} />
+          <FollowsBand claims={bands.follows} signalPacket={signalPacket} />
+        </>
+      )}
 
       {rest.map((visual, i) => (
         <ExhibitFor
@@ -177,11 +207,15 @@ export function ChapterPage({
         />
       ))}
 
-      <ExposuresBand claims={bands.exposures} signalPacket={signalPacket} />
-      <NotEstablishedBand gaps={bands.gaps} />
-      <QuestionsSection questions={bands.questions} />
+      {briefingOpening ? null : (
+        <>
+          <ExposuresBand claims={bands.exposures} signalPacket={signalPacket} />
+          <NotEstablishedBand gaps={bands.gaps} />
+          <QuestionsSection questions={bands.questions} />
+        </>
+      )}
 
-      {bands.filledBandCount === 0 ? (
+      {!briefingOpening && bands.filledBandCount === 0 ? (
         <div style={{ padding: `44px ${PAGE_X}px 0` }}>
           <p
             style={{
@@ -200,6 +234,31 @@ export function ChapterPage({
         </div>
       ) : null}
     </>
+  );
+}
+
+function BriefingExecutiveReadout({ opening }: { opening: BriefingOpening }) {
+  return (
+    <section style={{ padding: `24px ${PAGE_X}px 0` }}>
+      <div data-home-briefing-opening style={readoutShellStyle}>
+        <div style={readoutLeadStyle}>
+          <div>
+            <h2 style={readoutTitleStyle}>{opening.readoutHeading}</h2>
+            <p style={readoutTextStyle}>{opening.readoutText}</p>
+          </div>
+        </div>
+        <div style={readoutCardGridStyle}>
+          {opening.cards.map((card) => (
+            <ReadoutCard
+              key={card.label}
+              label={card.label}
+              tone={card.tone}
+              value={card.value}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

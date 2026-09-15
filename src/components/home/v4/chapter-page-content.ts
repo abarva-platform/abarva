@@ -155,22 +155,6 @@ const FAMILY_LABELS: Record<EstateFamily, string> = {
 };
 
 const EXTRA_FINDING_SOURCES: Partial<Record<ChapterId, EstateFamily[]>> = {
-  // The Executive Brief is the only chapter whose job is to orient a reader across the whole
-  // record in the first ten minutes. It should not duplicate the detailed tables owned by the
-  // specialist chapters, but it can safely open from their deterministic findings when no authored
-  // chapter claims have been published yet.
-  executive_brief: [
-    "applications",
-    "data",
-    "vendors",
-    "infrastructure",
-    "metrics",
-    "risks",
-    "programs",
-    "ai",
-    "organization",
-    "interviews",
-  ],
   what_needs_attention: ["applications", "infrastructure"],
   // A contract that renews without a decision is value leaving, which is this chapter's subject
   // even though the contract register is described elsewhere.

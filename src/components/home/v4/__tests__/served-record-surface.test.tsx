@@ -152,16 +152,31 @@ describe("the served path", () => {
     }
   });
 
-  it("opens the Executive Brief from deterministic served-record findings when authored claims are absent", () => {
+  it("opens the Executive Brief as an executive orientation, not a raw finding", () => {
     const { container } = open("executive_brief");
     const text = container.textContent ?? "";
+    const headline = container.querySelector("h1")?.textContent ?? "";
 
-    expect(container.querySelector("h1")?.textContent ?? "").toContain(
-      "100% of the estate is self-hosted.",
-    );
+    expect(headline).toContain("first read");
+    expect(headline).not.toContain("100% of the estate is self-hosted.");
     expect(text).not.toMatch(/Executive Brief is not yet answered/i);
     expect(text).not.toMatch(/Nothing in the loaded record speaks to this question yet/i);
-    expect(text).toContain("Chief Information Officer");
+    expect(text).not.toMatch(/Nothing established here yet/i);
+    expect(container.querySelector("[data-home-briefing-opening]")).not.toBeNull();
+    expect(text).toContain("Record coverage");
+  });
+
+  it("opens Our Business as a business briefing rather than an empty chapter", () => {
+    const { container } = open("our_business");
+    const text = container.textContent ?? "";
+    const headline = container.querySelector("h1")?.textContent ?? "";
+
+    expect(headline).toContain("business read");
+    expect(text).not.toMatch(/Our Business is not yet answered/i);
+    expect(text).not.toMatch(/Nothing in the loaded record speaks to this question yet/i);
+    expect(text).not.toMatch(/Nothing established here yet/i);
+    expect(container.querySelector("[data-home-briefing-opening]")).not.toBeNull();
+    expect(text).toContain("Business inputs");
   });
 });
 
