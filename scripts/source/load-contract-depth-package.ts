@@ -340,9 +340,11 @@ function readSourceFiles(
       stringValue(row, "application_ref") ||
       stringValue(row, "source_record_id"),
     business_unit:
-      stringValue(row, "business_unit") || stringValue(row, "business_function"),
+      stringValue(row, "business_unit") ||
+      stringValue(row, "business_function"),
     lifecycle_status:
-      stringValue(row, "lifecycle_status") || stringValue(row, "lifecycle_state"),
+      stringValue(row, "lifecycle_status") ||
+      stringValue(row, "lifecycle_state"),
     source_row_id:
       stringValue(row, "source_row_id") ||
       stringValue(row, "source_record_id") ||
@@ -516,8 +518,7 @@ function readSourceFiles(
         annualized_spend_usd:
           stringValue(row, "annualized_spend_usd") ||
           stringValue(row, "value_impact_usd"),
-        one_time_spend_usd:
-          stringValue(row, "one_time_spend_usd") || "0",
+        one_time_spend_usd: stringValue(row, "one_time_spend_usd") || "0",
         source_file_id:
           stringValue(row, "source_file_id") ||
           stringValue(contract ?? {}, "source_file_id") ||
@@ -571,7 +572,8 @@ function readSourceFiles(
     monthlySpend: rawSpend.map((row) => ({
       ...row,
       period_start:
-        stringValue(row, "period_start") || monthStart(stringValue(row, "month")),
+        stringValue(row, "period_start") ||
+        monthStart(stringValue(row, "month")),
       period_end:
         stringValue(row, "period_end") || monthEnd(stringValue(row, "month")),
       committed_base_amount_usd:
@@ -609,13 +611,15 @@ function readSourceFiles(
     slaPerformance: rawPerformance.map((row) => ({
       ...row,
       period_start:
-        stringValue(row, "period_start") || monthStart(stringValue(row, "month")),
+        stringValue(row, "period_start") ||
+        monthStart(stringValue(row, "month")),
       period_end:
         stringValue(row, "period_end") || monthEnd(stringValue(row, "month")),
       metric_name:
         stringValue(row, "metric_name") || stringValue(row, "sla_metric"),
       service_tower:
-        stringValue(row, "service_tower") || stringValue(row, "vendor_category"),
+        stringValue(row, "service_tower") ||
+        stringValue(row, "vendor_category"),
       committed_threshold_pct:
         stringValue(row, "committed_threshold_pct") ||
         stringValue(row, "target_pct"),
@@ -625,8 +629,7 @@ function readSourceFiles(
         stringValue(row, "credit_owed_usd") ||
         stringValue(row, "credit_amount_usd") ||
         "0",
-      credit_recovered_usd:
-        stringValue(row, "credit_recovered_usd") || "0",
+      credit_recovered_usd: stringValue(row, "credit_recovered_usd") || "0",
       source_file_id:
         stringValue(row, "source_file_id") ||
         stringValue(row, "evidence_reference") ||
@@ -639,7 +642,8 @@ function readSourceFiles(
     ticketVolumetrics: rawTickets.map((row) => ({
       ...row,
       period_start:
-        stringValue(row, "period_start") || monthStart(stringValue(row, "month")),
+        stringValue(row, "period_start") ||
+        monthStart(stringValue(row, "month")),
       period_end:
         stringValue(row, "period_end") || monthEnd(stringValue(row, "month")),
       service_tower: stringValue(row, "category"),
@@ -717,7 +721,8 @@ function readSourceFiles(
         rowsByFile,
       ),
       recommended_action:
-        stringValue(row, "recommended_action") || stringValue(row, "next_action"),
+        stringValue(row, "recommended_action") ||
+        stringValue(row, "next_action"),
       vendor_ref: stringValue(
         contractById.get(stringValue(row, "contract_id")) ?? {},
         "vendor_ref",
@@ -2785,7 +2790,9 @@ async function applyLayer3(
   await reconcileCanonicalFactsForPackage(
     client,
     args,
-    sourceFiles.contracts.map((contract) => stringValue(contract, "contract_id")),
+    sourceFiles.contracts.map((contract) =>
+      stringValue(contract, "contract_id"),
+    ),
   );
   await insertSnapshots(client, args, rows);
   await upsertVendors(client, args, sourceFiles.contracts);
@@ -2838,6 +2845,7 @@ async function layer3Readback(
        (SELECT count(*)::text FROM source.optimization_case WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])) AS optimization_case,
        (SELECT count(*)::text FROM source.case_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS case_opportunity,
        (SELECT count(*)::text FROM source.opportunity_evidence WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS opportunity_evidence,
+       (SELECT count(*)::text FROM source.opportunity_claim WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS opportunity_claim,
        (SELECT count(*)::text FROM source.calculation_run WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS calculation_run,
        (SELECT count(*)::text FROM source.calculation_input WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($6::text[])) AS calculation_input,
        (SELECT count(*)::text FROM source.calculation_output WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($6::text[])) AS calculation_output,
