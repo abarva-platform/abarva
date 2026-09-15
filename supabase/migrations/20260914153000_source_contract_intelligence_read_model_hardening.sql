@@ -60,28 +60,22 @@ BEGIN
         mapped.industry_key,
         mapped.playbook_status AS playbook_review_status,
         base.review_status,
-        jsonb_set(
-          jsonb_set(
-            jsonb_set(
-              jsonb_set(
-                jsonb_set(
-                  jsonb_set(
-                    base.intelligence_record,
-                    '{contract,archetype_key}', to_jsonb(mapped.playbook_key), true
-                  ),
-                  '{contract,archetype_label}', to_jsonb(mapped.archetype_label), true
-                ),
-                '{contract,archetype_source_basis}',
-                to_jsonb(CASE WHEN mapped.playbook_key = 'unmapped' THEN 'unmapped' ELSE 'explicit_contract_mapping' END), true
-              ),
-              '{contract,archetype_confidence}',
-              to_jsonb(CASE WHEN mapped.playbook_key = 'unmapped' THEN 'unverified' ELSE 'high' END), true
-            ),
-            '{story,purpose}',
-            CASE WHEN mapped.purpose_summary IS NULL THEN 'null'::jsonb ELSE to_jsonb(mapped.purpose_summary) END,
-            true
-            ),
-            '{education}',
+        coalesce(base.intelligence_record, '{}'::jsonb)
+        || jsonb_build_object(
+          'contract',
+          coalesce(base.intelligence_record->'contract', '{}'::jsonb)
+          || jsonb_build_object(
+            'archetype_key', mapped.playbook_key,
+            'archetype_label', mapped.archetype_label,
+            'archetype_source_basis', CASE WHEN mapped.playbook_key = 'unmapped' THEN 'unmapped' ELSE 'explicit_contract_mapping' END,
+            'archetype_confidence', CASE WHEN mapped.playbook_key = 'unmapped' THEN 'unverified' ELSE 'high' END
+          ),
+          'story',
+          coalesce(base.intelligence_record->'story', '{}'::jsonb)
+          || jsonb_build_object(
+            'purpose', CASE WHEN mapped.purpose_summary IS NULL THEN 'null'::jsonb ELSE to_jsonb(mapped.purpose_summary) END
+          ),
+          'education',
           jsonb_build_object(
             'archetype_key', mapped.playbook_key,
             'archetype_label', mapped.archetype_label,
@@ -92,9 +86,7 @@ BEGIN
             'observe', jsonb_build_object('question', mapped.observe_question, 'guidance', mapped.observe_guidance, 'state', base.intelligence_record->'education'->'observe'->>'state'),
             'required_evidence', mapped.required_evidence_json
           ),
-            true
-          ),
-          '{industry_intelligence}',
+          'industry_intelligence',
           jsonb_build_object(
             'state', 'missing_benchmark',
             'industry_key', mapped.industry_key,
@@ -102,8 +94,7 @@ BEGIN
             'benchmark_sources', '[]'::jsonb,
             'allowed_uses', jsonb_build_array('select the authored archetype playbook', 'frame contract-specific questions'),
             'blocked_claims', jsonb_build_array('market percentile', 'industry discount range', 'external rate benchmark')
-          ),
-          true
+          )
         ) AS intelligence_record,
         jsonb_set(
           coalesce(base.provenance, '{}'::jsonb),
