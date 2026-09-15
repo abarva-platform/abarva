@@ -57,7 +57,7 @@ Merge through protected `main`, deploy through the repo-owned ACA workflow, appl
 
 ## Rollback Plan
 
-Revert the repair through a new PR and redeploy the prior approved digest. The first provenance migration is additive and already applied; do not delete its rows during rollback. Reconcile data only through the governed ACA Job after the replacement migration is approved.
+Revert the repair through a new PR and redeploy the prior approved digest. The provenance migration applied in the prior step is additive and already applied; do not delete its rows during rollback. Reconcile data only through the governed ACA Job after the replacement migration is approved.
 
 ## Audit Evidence
 
