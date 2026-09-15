@@ -9,16 +9,22 @@ import { demoSafeClientText } from "@/lib/client-config";
 import type { HomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import type {
   ChapterId,
+  EnterpriseSignalPacket,
   HomeRecordRenderSource,
   HomeReviewBundle,
+  TechRecordType,
   TechObjectType,
 } from "@/lib/home/preview/types";
 import { ArchitecturePage } from "./ArchitecturePage";
-import { ChapterPage } from "./ChapterPage";
+import { ChapterPage, type BriefingOpening } from "./ChapterPage";
 import { sectionId } from "./TableSet";
 import type { EstateRow } from "./page-tables";
 import { chapterArguesFrom, chapterDepth } from "./chapter-page-content";
-import { buildBusinessBriefing } from "./business-briefing";
+import { isGeneratorDeferral } from "./cxo-language";
+import {
+  buildBusinessBriefing,
+  type BusinessBriefing,
+} from "./business-briefing";
 import {
   BusinessBriefingSections,
   PerspectiveSections,
@@ -41,6 +47,14 @@ const TENANT_LABEL: Record<HomePreviewTenantKey, string> = {
   "meridian-health": demoSafeClientText("Meridian Health"),
   "skyharbor-air": demoSafeClientText("SkyHarbor Air"),
 };
+
+const BRIEFING_RECORD_TYPES = [
+  "application_system",
+  "data_asset_or_integration",
+  "vendor_contract",
+  "infrastructure_platform",
+  "organization_ownership",
+] as const;
 
 type ActiveView =
   | ChapterId
@@ -89,6 +103,111 @@ function formatCompiledDate(value: string): string {
     timeZone: "UTC",
     year: "numeric",
   }).format(new Date(value));
+}
+
+function recordCoverageLine(recordTypes: TechRecordType[]): string {
+  const parts = BRIEFING_RECORD_TYPES.map((objectType) =>
+    recordTypes.find((type) => type.objectType === objectType),
+  )
+    .filter((type): type is TechRecordType => Boolean(type))
+    .map(
+      (type) =>
+        `${type.rows.length.toLocaleString()} ${type.label.toLowerCase()}`,
+    );
+
+  if (parts.length === 0) {
+    return "no counted evidence families";
+  }
+
+  return parts.join("; ");
+}
+
+function businessBriefingOpening({
+  chapterId,
+  briefing,
+  signalPacket,
+  techRecordTypes,
+}: {
+  chapterId: ChapterId;
+  briefing: BusinessBriefing;
+  signalPacket: EnterpriseSignalPacket;
+  techRecordTypes: TechRecordType[];
+}): BriefingOpening | undefined {
+  const coverage = recordCoverageLine(techRecordTypes);
+  const signalCount = (signalPacket.signals ?? []).length;
+  const factCount = (signalPacket.contextItems ?? []).length;
+  const evidenceLine = `${coverage}; ${signalCount.toLocaleString()} signals; ${factCount.toLocaleString()} governed facts.`;
+
+  if (chapterId === "executive_brief") {
+    return {
+      headline:
+        "The first read is estate scale, operating dependency, and evidence quality.",
+      standfirst: `This record carries ${evidenceLine} The brief separates counted evidence from decisions that still need review.`,
+      readoutHeading: "What this brief supports",
+      readoutText:
+        "Use the opening read to orient on scale, dependencies, and unanswered decisions before moving into the specialist chapters.",
+      cards: [
+        {
+          label: "Record coverage",
+          tone: V4.navy,
+          value: coverage,
+        },
+        {
+          label: "Executive use",
+          tone: V4.green,
+          value:
+            "Start with the pattern of evidence, then use the chapter trail to test whether a decision has enough support.",
+        },
+        {
+          label: "Boundary",
+          tone: V4.amber,
+          value:
+            "Counts locate where to look. They do not certify value, risk, or business priority without cited statements.",
+        },
+      ],
+    };
+  }
+
+  if (chapterId === "our_business") {
+    const sectionNames = briefing.sections.map((section) => section.heading);
+    const describedBy =
+      sectionNames.length > 0
+        ? sectionNames.join("; ")
+        : "estate counts and explicit evidence gaps";
+    return {
+      headline:
+        "The business read is organized around model, priorities, leadership voice, and explicit gaps.",
+      standfirst:
+        sectionNames.length > 0
+          ? `It draws from ${briefing.sections.length.toLocaleString()} briefing sections: ${describedBy}.`
+          : `This record carries ${evidenceLine} It has not published enough business-model statements to turn those counts into a business narrative.`,
+      readoutHeading: "What this page orients",
+      readoutText:
+        "Read this page as the bridge between enterprise context and the estate evidence, with unanswered market and peer questions kept visible.",
+      cards: [
+        {
+          label: "Business inputs",
+          tone: V4.navy,
+          value: describedBy,
+        },
+        {
+          label: "What remains open",
+          tone: V4.amber,
+          value:
+            briefing.notInTheRecord[0]?.question ??
+            "Which business records should this chapter be built from?",
+        },
+        {
+          label: "How to use it",
+          tone: V4.green,
+          value:
+            "Use this orientation before drawing conclusions from application, vendor, infrastructure, or metric counts.",
+        },
+      ],
+    };
+  }
+
+  return undefined;
 }
 
 export function HomeV4App({
@@ -149,6 +268,10 @@ export function HomeV4App({
   );
   const signalPacket = bundle.thesis.signalPacket;
   const visualDatasets = signalPacket.visualDatasets ?? {};
+  const businessBriefing = useMemo(
+    () => buildBusinessBriefing(signalPacket),
+    [signalPacket],
+  );
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -328,6 +451,15 @@ export function HomeV4App({
     `from ${signalPacket.signals.length} signals`,
     `and ${signalPacket.contextItems.length} governed facts`,
   ];
+  const activeBriefingOpening =
+    activeChapter && isGeneratorDeferral(activeChapter.headline)
+    ? businessBriefingOpening({
+        chapterId: activeChapter.chapterId,
+        briefing: businessBriefing,
+        signalPacket,
+        techRecordTypes,
+      })
+    : undefined;
 
   return (
     <HomeAvaChat
@@ -395,35 +527,40 @@ export function HomeV4App({
                       )?.rows as EstateRow[] | undefined)
                     : undefined
                 }
-                depth={chapterDepth(activeChapter.chapterId, {
-                  asOf: bundle.provenance?.generated_at?.slice(0, 10),
-                  applications: applications?.rows,
-                  vendors: techRecordTypes.find(
-                    (r) => r.objectType === "vendor_contract",
-                  )?.rows,
-                  infrastructure: infrastructure?.rows,
-                  data: techRecordTypes.find(
-                    (r) => r.objectType === "data_asset_or_integration",
-                  )?.rows,
-                  metrics: techRecordTypes.find(
-                    (r) => r.objectType === "metric_outcome",
-                  )?.rows,
-                  risks: techRecordTypes.find(
-                    (r) => r.objectType === "risk_control",
-                  )?.rows,
-                  programs: techRecordTypes.find(
-                    (r) => r.objectType === "program_initiative",
-                  )?.rows,
-                  ai: techRecordTypes.find(
-                    (r) => r.objectType === "ai_use_case",
-                  )?.rows,
-                  organization: techRecordTypes.find(
-                    (r) => r.objectType === "organization_ownership",
-                  )?.rows,
-                  interviews: techRecordTypes.find(
-                    (r) => r.objectType === "executive_interview",
-                  )?.rows,
-                })}
+                depth={
+                  activeBriefingOpening
+                    ? undefined
+                    : chapterDepth(activeChapter.chapterId, {
+                        asOf: bundle.provenance?.generated_at?.slice(0, 10),
+                        applications: applications?.rows,
+                        vendors: techRecordTypes.find(
+                          (r) => r.objectType === "vendor_contract",
+                        )?.rows,
+                        infrastructure: infrastructure?.rows,
+                        data: techRecordTypes.find(
+                          (r) => r.objectType === "data_asset_or_integration",
+                        )?.rows,
+                        metrics: techRecordTypes.find(
+                          (r) => r.objectType === "metric_outcome",
+                        )?.rows,
+                        risks: techRecordTypes.find(
+                          (r) => r.objectType === "risk_control",
+                        )?.rows,
+                        programs: techRecordTypes.find(
+                          (r) => r.objectType === "program_initiative",
+                        )?.rows,
+                        ai: techRecordTypes.find(
+                          (r) => r.objectType === "ai_use_case",
+                        )?.rows,
+                        organization: techRecordTypes.find(
+                          (r) => r.objectType === "organization_ownership",
+                        )?.rows,
+                        interviews: techRecordTypes.find(
+                          (r) => r.objectType === "executive_interview",
+                        )?.rows,
+                      })
+                }
+                briefingOpening={activeBriefingOpening}
               />
             ) : (
               <NotDraftedPage
@@ -465,17 +602,13 @@ export function HomeV4App({
           ) : null}
 
           {activeChapter?.chapterId === "leadership_perspective" ? (
-            <PerspectiveSections
-              perspective={buildBusinessBriefing(signalPacket).perspective}
-            />
+            <PerspectiveSections perspective={businessBriefing.perspective} />
           ) : null}
 
           {activeChapter &&
           (activeChapter.chapterId === "executive_brief" ||
             activeChapter.chapterId === "our_business") ? (
-            <BusinessBriefingSections
-              briefing={buildBusinessBriefing(signalPacket)}
-            />
+            <BusinessBriefingSections briefing={businessBriefing} />
           ) : null}
 
           {activeView === "architecture" && applications ? (

@@ -1,4 +1,4 @@
-# 2026-09-15-home-executive-brief-served-findings — Home Executive Brief Served Findings
+# 2026-09-15-home-executive-brief-served-findings — Home Briefing Served Readout
 
 ## Release ID
 
@@ -10,11 +10,11 @@
 
 ## Plain-English Summary
 
-Home's default Executive Brief now opens from deterministic findings already computed from the served record when authored chapter claims have not been published yet. A reader no longer sees an empty "not answered" page while the same served record carries application, data, contract, platform, metric, risk, program, AI, organization, or interview rows.
+Home's briefing chapters now open from a deterministic executive orientation when authored chapter claims have not been published yet. Executive Brief and Our Business no longer promote a specialist row-level finding into the chapter thesis, and they no longer show the empty "not answered" readout while the served record carries governed evidence families.
 
 ## Layer Impact
 
-Layer 4 PRODUCTS, `global-control-lane`: Home presentation now uses existing read-only findings as the Executive Brief fallback. It does not create, mutate, or reinterpret Layer 3 records.
+Layer 4 PRODUCTS, `global-control-lane`: Home presentation now uses existing read-only record counts and governed briefing packet state as the briefing-chapter fallback. It does not create, mutate, or reinterpret Layer 3 records.
 
 ## Client Applicability
 
@@ -26,13 +26,19 @@ Layer 4 PRODUCTS, `global-control-lane`: Home presentation now uses existing rea
 
 ## Changes Included
 
-- `src/components/home/v4/chapter-page-content.ts`: lets the Executive Brief draw deterministic findings from served estate families without duplicating the specialist chapters' detailed tables.
-- `src/components/home/v4/__tests__/served-record-surface.test.tsx`: fixes the served-path fixture row type and adds a regression test for authored-claim-absent Executive Brief rendering.
+- `src/components/home/v4/HomeV4App.tsx`: builds one governed business briefing packet per render and supplies Executive Brief / Our Business fallback openings only when the chapter text is a generator deferral.
+- `src/components/home/v4/ChapterPage.tsx`: adds a briefing-opening readout that replaces the generic empty-state bands on those fallback chapters.
+- `src/components/home/v4/chapter-page-content.ts`: removes the broad Executive Brief extra-finding source so a specialist finding cannot become the briefing hero.
+- `src/components/home/v4/__tests__/served-record-surface.test.tsx`: fixes the served-path fixture row type and asserts Executive Brief and Our Business do not open as empty or row-level finding chapters.
+- `src/components/home/v4/__tests__/every-surface.test.tsx`: adds a deferral-state guard proving briefing chapters use the briefing opening rather than the findings block.
 
 ## QA / Validation
 
-- `NODE_PATH=/Users/anand/Projects/nexus/node_modules ./node_modules/.bin/jest --runTestsByPath src/components/home/v4/__tests__/served-record-surface.test.tsx src/components/home/v4/__tests__/chapter-ownership.test.ts src/components/home/v4/__tests__/page-tables.test.ts --runInBand` — passed, 63 tests.
-- Mutation check: removing the Executive Brief deterministic-source bridge made the served-path regression test fail on the old empty headline, then restoring the bridge made the focused suite pass.
+- `NODE_PATH=/Users/anand/Projects/nexus/node_modules ./node_modules/.bin/jest src/components/home/v4/__tests__/served-record-surface.test.tsx src/components/home/v4/__tests__/every-surface.test.tsx src/components/home/v4/__tests__/HomeV4App.depth.test.tsx --runInBand` — passed, 86 tests.
+- `NODE_PATH=/Users/anand/Projects/nexus/node_modules ./node_modules/.bin/jest src/components/home/v4/__tests__ src/components/home/preview/__tests__ src/app/'(maestro)'/home/__tests__ --runInBand` — passed, 369 tests.
+- `npx tsc --noEmit --pretty false` — passed.
+- `npx eslint src/components/home/v4/HomeV4App.tsx src/components/home/v4/ChapterPage.tsx src/components/home/v4/chapter-page-content.ts src/components/home/v4/__tests__/served-record-surface.test.tsx src/components/home/v4/__tests__/every-surface.test.tsx` — passed.
+- Mutation check: disconnecting the briefing-opening prop made the served-path regression fail on the old "not yet answered" Executive Brief and Our Business headlines, then restoring the prop made the suite pass.
 
 ## Rollout Plan
 
