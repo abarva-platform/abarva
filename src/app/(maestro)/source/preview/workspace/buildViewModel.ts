@@ -2830,8 +2830,14 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             label: displayOpportunityLabel(opportunity),
             shortLabel: displayOpportunityShortLabel(opportunity),
             valueType: fmtStage(opportunity.valueType),
-            amount: amount(opportunity.amountUsd),
+            amount:
+              opportunity.amountLowUsd != null &&
+              opportunity.amountHighUsd != null
+                ? `${amount(opportunity.amountLowUsd)}–${amount(opportunity.amountHighUsd)}`
+                : amount(opportunity.amountUsd),
             amountUsd: opportunity.amountUsd,
+            amountLowUsd: opportunity.amountLowUsd ?? null,
+            amountHighUsd: opportunity.amountHighUsd ?? null,
             stage: fmtStage(opportunity.stage),
             stageRaw: opportunity.stage,
             grade: fmtGrade(opportunity.evidenceGrade),

@@ -122,6 +122,9 @@ export interface ContractOptimizationOpportunity {
   readonly shortLabel: string;
   readonly valueType: OptimizationOpportunityValueType;
   readonly amountUsd: number | null;
+  /** Present only when a governed sizing claim supplies both bounds. */
+  readonly amountLowUsd?: number | null;
+  readonly amountHighUsd?: number | null;
   readonly amountState: "exact" | "range" | "not_sized";
   readonly stage: OptimizationOpportunityStage;
   readonly evidenceGrade: OptimizationEvidenceGrade;

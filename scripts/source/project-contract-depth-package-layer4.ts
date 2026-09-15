@@ -685,8 +685,8 @@ function assertL4Ready(
   ) {
     failures.push("deterministic_layer_unclaimed_credit_usd expected > 0");
   }
-  if (rows.deterministic_layer_candidate_amount_usd <= 0) {
-    failures.push("deterministic_layer_candidate_amount_usd expected > 0");
+  if (rows.deterministic_layer_candidate_amount_usd < 0) {
+    failures.push("deterministic_layer_candidate_amount_usd cannot be negative");
   }
   if (failures.length > 0) {
     throw new Error(`Layer 4 readback failed: ${failures.join("; ")}`);
@@ -1498,6 +1498,24 @@ async function rebuildViews(client: Client): Promise<void> {
     WITH active_runs AS (${activeRuns}),
     active_contract_runs AS (${activeContractRuns}),
     active_contract_versions AS (${activeContractVersions}),
+    accepted_sizing AS (
+      SELECT
+        claim.tenant_key,
+        claim.dataset_version,
+        claim.opportunity_id,
+        claim.amount_usd,
+        claim.amount_low_usd,
+        claim.amount_high_usd
+      FROM source.opportunity_claim claim
+      WHERE claim.claim_role = 'sizing'
+        AND claim.basis IN ('calculated', 'benchmark')
+        AND claim.evidence_status IN ('supported', 'partial')
+        AND jsonb_array_length(claim.source_refs) > 0
+        AND (
+          claim.amount_usd IS NOT NULL
+          OR (claim.amount_low_usd IS NOT NULL AND claim.amount_high_usd IS NOT NULL)
+        )
+    ),
     sourcing AS (
       SELECT
         o.tenant_key,
@@ -1557,21 +1575,22 @@ async function rebuildViews(client: Client): Promise<void> {
         COALESCE(o.payload->>'title', o.narrative) AS title,
         COALESCE(o.payload->>'finding_summary', o.narrative) AS finding_summary,
         COALESCE(o.payload->>'deterministic_basis', o.blocking_gap) AS deterministic_basis,
-        o.amount_usd AS value_low,
-        o.amount_usd AS value_high,
+        COALESCE(accepted.amount_low_usd, accepted.amount_usd) AS value_low,
+        COALESCE(accepted.amount_high_usd, accepted.amount_usd) AS value_high,
         COALESCE(o.payload->>'timing_window', o.deadline::text) AS timing_window,
-        o.amount_usd AS annual_value_exposed,
-        o.amount_usd AS addressable_spend,
-        CASE WHEN COALESCE(o.amount_usd, 0) >= 10000000 THEN 'high' WHEN COALESCE(o.amount_usd, 0) >= 1000000 THEN 'medium' ELSE 'low' END AS priority,
+        COALESCE(accepted.amount_high_usd, accepted.amount_usd) AS annual_value_exposed,
+        COALESCE(accepted.amount_low_usd, accepted.amount_usd) AS addressable_spend,
+        CASE WHEN COALESCE(accepted.amount_high_usd, accepted.amount_usd, 0) >= 10000000 THEN 'high' WHEN COALESCE(accepted.amount_high_usd, accepted.amount_usd, 0) >= 1000000 THEN 'medium' ELSE 'low' END AS priority,
         o.confidence,
         CASE
           WHEN o.value_type = 'control_action' THEN 'control_required'
+          WHEN accepted.opportunity_id IS NULL THEN 'review_required'
           WHEN o.stage = 'finance_confirmed' THEN 'ready_to_act'
           WHEN o.payload->>'finance_confirmation_state' = 'not_confirmed' THEN 'finance_confirmation_required'
           WHEN o.stage IN ('validated', 'approval_required') THEN 'review_required'
           ELSE 'review_required'
         END AS readiness_state,
-        CASE WHEN o.evidence_grade IN ('missing', 'not_loaded') THEN 'missing' ELSE 'present' END AS evidence_state,
+        CASE WHEN accepted.opportunity_id IS NULL OR o.evidence_grade IN ('missing', 'not_loaded') THEN 'missing' ELSE 'present' END AS evidence_state,
         o.next_action AS recommended_action,
         o.owner AS accountable_role,
         o.evidence_grade AS quality_state,
@@ -1582,7 +1601,7 @@ async function rebuildViews(client: Client): Promise<void> {
         'sourcing-consumption-v1'::text AS projection_contract_version,
         o.approval_state AS authority_state,
         'current'::text AS freshness_state,
-        'available'::text AS availability_state,
+        CASE WHEN accepted.opportunity_id IS NULL THEN 'partial' ELSE 'available' END AS availability_state,
         c.load_run_id
       FROM source.optimization_opportunity o
       JOIN active_contract_versions active
@@ -1592,6 +1611,10 @@ async function rebuildViews(client: Client): Promise<void> {
          active.dataset_version IS NULL
          OR o.dataset_version = active.dataset_version
        )
+      LEFT JOIN accepted_sizing accepted
+        ON accepted.tenant_key = o.tenant_key
+       AND accepted.dataset_version = o.dataset_version
+       AND accepted.opportunity_id = o.opportunity_id
       JOIN source.contract c
         ON c.tenant_key = active.tenant_key
        AND c.contract_id = active.contract_id
@@ -2023,8 +2046,14 @@ async function rebuildViews(client: Client): Promise<void> {
         NULLIF(a.next_action, '') AS next_action,
         NULLIF(a.accountable_role, '') AS accountable_role,
         a.candidate_amount_usd,
-        COALESCE(NULLIF(o.stage, ''), CASE WHEN a.candidate_amount_usd IS NOT NULL AND a.candidate_amount_usd > 0 THEN 'quantified' ELSE 'signal' END) AS source_stage,
-        COALESCE(NULLIF(o.amount_state, ''), CASE WHEN a.candidate_amount_usd IS NOT NULL AND a.candidate_amount_usd > 0 THEN 'exact' ELSE 'not_sized' END) AS source_amount_state,
+        CASE
+          WHEN a.candidate_amount_usd IS NULL THEN 'signal'
+          ELSE COALESCE(NULLIF(o.stage, ''), 'quantified')
+        END AS source_stage,
+        CASE
+          WHEN a.candidate_amount_usd IS NULL THEN 'not_sized'
+          ELSE COALESCE(NULLIF(o.amount_state, ''), 'exact')
+        END AS source_amount_state,
         o.confidence AS source_confidence,
         row_number() OVER (
           PARTITION BY a.tenant_key, a.contract_id, a.load_run_id

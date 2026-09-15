@@ -2111,6 +2111,14 @@ async function getPersistedContractOptimizationOpportunitySet(
     "calculation_run_id",
   );
 
+  const claims = claimRows.map(persistedClaimFromRow);
+  const sizingClaimByOpportunity = new Map(
+    claims
+      .filter((claim) => claim.role === "sizing")
+      .map((claim) => [claim.opportunityId, claim]),
+  );
+  const claimsRead = claimRows.length > 0;
+
   const opportunities = opportunityRows.map((row) =>
     persistedOpportunityFromRow({
       row,
@@ -2125,9 +2133,11 @@ async function getPersistedContractOptimizationOpportunitySet(
         null,
       calculationInputsByRun,
       calculationOutputsByRun,
+      sizingClaim: claimsRead
+        ? sizingClaimByOpportunity.get(textValue(row.opportunity_id) ?? "") ?? null
+        : undefined,
     }),
   );
-  const claims = claimRows.map(persistedClaimFromRow);
 
   const financeEvidenceByRealization = groupByString(
     financeEvidenceRows,
@@ -2446,6 +2456,8 @@ function persistedOpportunityFromRow(input: {
   readonly calculationRun: NumericRow | null;
   readonly calculationInputsByRun: Map<string, NumericRow[]>;
   readonly calculationOutputsByRun: Map<string, NumericRow[]>;
+  /** undefined means the compatibility claim table is unavailable; null is a deliberate unsized result. */
+  readonly sizingClaim?: ContractOpportunityClaim | null;
 }): ContractOptimizationOpportunity {
   const payload = jsonObject(input.row.payload);
   const opportunityId = textValue(input.row.opportunity_id) ?? "";
@@ -2466,10 +2478,26 @@ function persistedOpportunityFromRow(input: {
   const blockingRequirement = input.requirementRows.find(
     (row) => textValue(row.status) !== "met",
   );
-  const valuationAmount =
-    input.valuationRows.find(
-      (row) => textValue(row.valuation_type) === "potential",
-    )?.amount_usd ?? input.row.amount_usd;
+  const valuationAmount = input.valuationRows.find(
+    (row) => textValue(row.valuation_type) === "potential",
+  )?.amount_usd;
+  const governedSizing = input.sizingClaim;
+  const sizingIsSupported =
+    governedSizing !== undefined &&
+    governedSizing !== null &&
+    ["calculated", "benchmark"].includes(governedSizing.basis) &&
+    ["supported", "partial"].includes(governedSizing.evidenceStatus) &&
+    governedSizing.sourceRefs.length > 0 &&
+    (governedSizing.basis === "calculated"
+      ? Boolean(governedSizing.calculationRunId)
+      : Boolean(governedSizing.benchmarkId)) &&
+    (governedSizing.amountUsd != null ||
+      (governedSizing.amountLowUsd != null && governedSizing.amountHighUsd != null));
+  const governedAmount = sizingIsSupported
+    ? governedSizing.amountUsd ?? governedSizing.amountHighUsd ?? null
+    : null;
+  const compatibilityAmount =
+    input.sizingClaim === undefined ? valuationAmount ?? input.row.amount_usd : null;
 
   return {
     opportunityId,
@@ -2482,11 +2510,17 @@ function persistedOpportunityFromRow(input: {
       textValue(payload.label) ??
       opportunityId,
     valueType: readValueType(input.row.value_type),
-    amountUsd:
-      numberValue(input.row.amount_usd) ?? numberValue(valuationAmount),
+    amountUsd: numberValue(governedAmount ?? compatibilityAmount),
+    amountLowUsd: sizingIsSupported
+      ? governedSizing?.amountLowUsd ?? null
+      : null,
+    amountHighUsd: sizingIsSupported
+      ? governedSizing?.amountHighUsd ?? null
+      : null,
     amountState:
-      readLiteral(input.row.amount_state, ["exact", "range", "not_sized"]) ??
-      "not_sized",
+      governedAmount != null
+        ? readLiteral(input.row.amount_state, ["exact", "range", "not_sized"]) ?? "exact"
+        : "not_sized",
     stage: readStage(input.row.stage),
     evidenceGrade: readEvidenceGrade(input.row.evidence_grade),
     confidence: numberValue(input.row.confidence),
@@ -3028,7 +3062,10 @@ export async function listDocExtractionsForSubject(
        JOIN source.contract current_contract
          ON current_contract.tenant_key = file.tenant_key
         AND current_contract.contract_id = file.contract_ref
-        AND current_contract.load_run_id = file.load_run_id
+        AND (
+          current_contract.load_run_id = file.load_run_id
+          OR file.metadata_json ->> 'dataset_version' = current_contract.raw_payload ->> 'dataset_version'
+        )
       WHERE extraction.tenant_key = ANY($1::text[])
         AND extraction.subject_ref = $2
       ORDER BY extraction.extracted_at DESC, extraction.extraction_id`,
@@ -3050,7 +3087,10 @@ export async function listDocFilesForContract(
        JOIN source.contract current_contract
          ON current_contract.tenant_key = file.tenant_key
         AND current_contract.contract_id = file.contract_ref
-        AND current_contract.load_run_id = file.load_run_id
+        AND (
+          current_contract.load_run_id = file.load_run_id
+          OR file.metadata_json ->> 'dataset_version' = current_contract.raw_payload ->> 'dataset_version'
+        )
       WHERE file.tenant_key = ANY($1::text[]) AND file.contract_ref = $2
       ORDER BY document_role, document_type, file_name, file_id`,
     [contractId],

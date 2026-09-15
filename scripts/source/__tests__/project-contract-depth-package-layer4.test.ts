@@ -179,7 +179,7 @@ describe("contract depth package Layer 4 overlay job", () => {
       "deterministic_layer_unclaimed_credit_usd expected > 0",
     );
     expect(source).toContain(
-      "deterministic_layer_candidate_amount_usd expected > 0",
+      "deterministic_layer_candidate_amount_usd cannot be negative",
     );
     expect(source).toContain(
       "Never present this candidate as realized savings until finance confirms it.",
