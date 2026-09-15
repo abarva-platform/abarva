@@ -181,6 +181,7 @@ const REQUIRED_LAYER3_TABLES = Object.freeze([
   "optimization_case",
   "case_opportunity",
   "opportunity_evidence",
+  "opportunity_claim",
   "calculation_rule",
   "calculation_run",
   "calculation_input",
@@ -2683,6 +2684,71 @@ async function upsertOptimizationSpine(
       ],
     );
   }
+
+  // Keep claim-level provenance separate from the legacy opportunity row.
+  // Existing package amounts are candidate inputs, not reproducible sizing
+  // until the calculation rule and inputs can be independently recomputed.
+  await client.query(
+    `WITH evidence AS (
+       SELECT opportunity_id,
+         jsonb_agg(jsonb_build_object(
+           'sourceSystem', source_system,
+           'sourceTable', source_table,
+           'sourceRecordId', source_record_id,
+           'sourceFileReport', source_file_report,
+           'pageSpan', COALESCE(source_span, source_page),
+           'reviewState', review_state
+         ) ORDER BY source_record_id) AS source_refs
+       FROM source.opportunity_evidence
+       WHERE tenant_key = $1 AND dataset_version = $2
+         AND opportunity_id = ANY($3::text[])
+       GROUP BY opportunity_id
+     )
+     INSERT INTO source.opportunity_claim (
+       tenant_key, dataset_version, claim_id, opportunity_id, contract_id,
+       claim_role, statement, basis, scenario_kind, evidence_status,
+       review_status, source_refs, produced_by, load_run_id
+     )
+     SELECT $1, $2, o.opportunity_id || ':problem', o.opportunity_id, o.contract_id,
+       'problem', COALESCE(o.payload->>'label', o.opportunity_id),
+       CASE WHEN COALESCE(jsonb_array_length(e.source_refs), 0) > 0
+            THEN 'client_record' ELSE 'not_recorded' END,
+       'signed_record',
+       CASE WHEN COALESCE(jsonb_array_length(e.source_refs), 0) > 0
+            THEN 'partial' ELSE 'not_established' END,
+       'draft', COALESCE(e.source_refs, '[]'::jsonb), 'deterministic_loader', $4
+     FROM source.optimization_opportunity o
+     LEFT JOIN evidence e ON e.opportunity_id = o.opportunity_id
+     WHERE o.tenant_key = $1 AND o.dataset_version = $2
+       AND o.opportunity_id = ANY($3::text[])
+     ON CONFLICT (tenant_key, dataset_version, claim_id)
+     DO UPDATE SET statement = EXCLUDED.statement,
+       basis = EXCLUDED.basis, evidence_status = EXCLUDED.evidence_status,
+       source_refs = EXCLUDED.source_refs, load_run_id = EXCLUDED.load_run_id,
+       updated_at = now()`,
+    [args.tenantKey, args.datasetVersion, opportunityIds, args.loadRunId],
+  );
+  await client.query(
+    `INSERT INTO source.opportunity_claim (
+       tenant_key, dataset_version, claim_id, opportunity_id, contract_id,
+       claim_role, statement, basis, scenario_kind, evidence_status,
+       review_status, source_refs, produced_by, load_run_id
+     )
+     SELECT tenant_key, dataset_version, opportunity_id || ':sizing', opportunity_id,
+       contract_id, 'sizing',
+       'Sizing remains unestablished until a reproducible calculation is recorded.',
+       'not_recorded', 'signed_record', 'not_established', 'draft', '[]'::jsonb,
+       'deterministic_loader', $4
+     FROM source.optimization_opportunity
+     WHERE tenant_key = $1 AND dataset_version = $2
+       AND opportunity_id = ANY($3::text[])
+     ON CONFLICT (tenant_key, dataset_version, claim_id)
+     DO UPDATE SET statement = EXCLUDED.statement,
+       basis = EXCLUDED.basis, evidence_status = EXCLUDED.evidence_status,
+       source_refs = EXCLUDED.source_refs, load_run_id = EXCLUDED.load_run_id,
+       updated_at = now()`,
+    [args.tenantKey, args.datasetVersion, opportunityIds, args.loadRunId],
+  );
 }
 
 async function reconcileCanonicalFactsForPackage(
@@ -2912,6 +2978,7 @@ function expectedLayer3(
     ).size,
     case_opportunity: sourceFiles.optimizationOpportunities.length,
     opportunity_evidence: opportunityEvidenceRows,
+    opportunity_claim: sourceFiles.optimizationOpportunities.length * 2,
     calculation_run: sourceFiles.optimizationOpportunities.length,
     calculation_input: opportunityEvidenceRows,
     calculation_output: sourceFiles.optimizationOpportunities.length * 2,

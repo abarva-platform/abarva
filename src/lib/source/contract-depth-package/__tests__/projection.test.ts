@@ -298,7 +298,7 @@ describe("projectContractDepthPackage", () => {
     expect(projection.contractIntelligence[0]).toMatchObject({
       contractId: "MER-TECH-AMS-001",
       story: {
-        purpose: expect.stringContaining("Managed Services Vendor provides"),
+        purpose: "Contract purpose is not established from reviewed contract context.",
       },
       baseline: {
         metrics: expect.arrayContaining([

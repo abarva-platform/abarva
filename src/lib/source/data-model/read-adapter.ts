@@ -27,6 +27,7 @@ import {
   buildContractOptimizationOpportunitySet,
   type ContractOptimizationOpportunity,
   type ContractOptimizationOpportunitySet,
+  type ContractOpportunityClaim,
   type FinanceRealizationLink,
   type OptimizationApprovalDecisionRead,
   type OptimizationApprovalRequestRead,
@@ -1206,7 +1207,20 @@ export async function getContractIntelligence(
   tenantKey: string,
   contractId: string,
 ): Promise<SourceContractIntelligenceRow | null> {
-  const rows =
+  const hardenedRows =
+    await queryCanonicalSourceWithFallback<SourceContractIntelligenceRow>(
+      tenantKey,
+      `SELECT *
+       FROM source.contract_intelligence_v2
+      WHERE tenant_key = ANY($1::text[])
+        AND contract_id = $2
+      LIMIT 1`,
+      [contractId],
+    );
+  if (hardenedRows[0]) {
+    return normalizeSourceContractIntelligenceRow(hardenedRows[0]);
+  }
+  const compatibilityRows =
     await queryCanonicalSourceWithFallback<SourceContractIntelligenceRow>(
       tenantKey,
       `SELECT *
@@ -1216,7 +1230,9 @@ export async function getContractIntelligence(
       LIMIT 1`,
       [contractId],
     );
-  return rows[0] ? normalizeSourceContractIntelligenceRow(rows[0]) : null;
+  return compatibilityRows[0]
+    ? normalizeSourceContractIntelligenceRow(compatibilityRows[0])
+    : null;
 }
 
 export async function listSourceAvaGroundingBundles(
@@ -1858,6 +1874,7 @@ async function getPersistedContractOptimizationOpportunitySet(
     outcomeRows,
     financeRows,
     financeEvidenceRows,
+    claimRows,
   ] = await Promise.all([
     safeQueryForTenant<NumericRow>(
       tenantKey,
@@ -2061,6 +2078,16 @@ async function getPersistedContractOptimizationOpportunitySet(
         ORDER BY evidence.realization_id, evidence.source_table, evidence.source_record_id`,
       [datasetVersion, contractId],
     ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT claim.*
+         FROM source.opportunity_claim claim
+        WHERE claim.tenant_key = ANY($1::text[])
+          AND claim.dataset_version = $2
+          AND claim.contract_id = $3
+        ORDER BY claim.opportunity_id, claim.claim_role, claim.claim_id`,
+      [datasetVersion, contractId],
+    ),
   ]);
 
   if (opportunityRows.length === 0) return null;
@@ -2100,6 +2127,7 @@ async function getPersistedContractOptimizationOpportunitySet(
       calculationOutputsByRun,
     }),
   );
+  const claims = claimRows.map(persistedClaimFromRow);
 
   const financeEvidenceByRealization = groupByString(
     financeEvidenceRows,
@@ -2202,6 +2230,7 @@ async function getPersistedContractOptimizationOpportunitySet(
     baseline: persistedBaselineRead(baselineRow, contract),
     selectedOpportunityId,
     opportunities,
+    claims,
     optimizationCase,
     approvalRequests,
     negotiatedOutcomes,
@@ -2211,6 +2240,65 @@ async function getPersistedContractOptimizationOpportunitySet(
     potentialAvoidableUsd,
     potentialNegotiableUsd,
     financeConfirmedUsd,
+  };
+}
+
+function persistedClaimFromRow(row: NumericRow): ContractOpportunityClaim {
+  const sourceRefs = jsonObjectArray(row.source_refs)
+    .map((value) => ({
+      sourceSystem:
+        textValue(value.sourceSystem) ?? textValue(value.source_system) ?? "Contract intelligence",
+      sourceRecordId: textValue(value.sourceRecordId) ?? textValue(value.source_record_id),
+      sourceFileReport: textValue(value.sourceFileReport) ?? textValue(value.source_file_report),
+      tableName: textValue(value.sourceTable) ?? textValue(value.source_table) ?? "source.opportunity_claim",
+      pageSpan:
+        textValue(value.pageSpan) ??
+        textValue(value.page) ??
+        textValue(value.source_span),
+      reviewState: textValue(value.reviewState) ?? textValue(value.review_state),
+    }));
+  return {
+    claimId: textValue(row.claim_id) ?? "",
+    opportunityId: textValue(row.opportunity_id) ?? "",
+    contractId: textValue(row.contract_id) ?? "",
+    role: textValue(row.claim_role) ?? "",
+    statement: textValue(row.statement) ?? "",
+    basis: textValue(row.basis) ?? "not_recorded",
+    scenarioKind:
+      readLiteral(row.scenario_kind, [
+        "signed_record",
+        "proposed_target",
+        "benchmark_comparable",
+      ]) ?? "signed_record",
+    amountUsd: numberValue(row.amount_usd),
+    amountLowUsd: numberValue(row.amount_low_usd),
+    amountHighUsd: numberValue(row.amount_high_usd),
+    evidenceStatus:
+      readLiteral(row.evidence_status, [
+        "supported",
+        "partial",
+        "missing",
+        "conflicted",
+        "not_established",
+      ]) ?? "not_established",
+    reviewStatus:
+      readLiteral(row.review_status, ["draft", "reviewed", "approved", "blocked"]) ??
+      "draft",
+    sourceRefs,
+    calculationRunId: textValue(row.calculation_run_id),
+    benchmarkId: textValue(row.benchmark_id),
+    playbookRuleId: textValue(row.playbook_rule_id),
+    playbookRuleVersion: textValue(row.playbook_rule_version),
+    producedBy:
+      readLiteral(row.produced_by, [
+        "package_author",
+        "deterministic_loader",
+        "human_reviewer",
+        "claude",
+      ]) ?? "deterministic_loader",
+    generationRef: textValue(row.generation_ref),
+    reviewerRef: textValue(row.reviewer_ref),
+    reviewedAt: textValue(row.reviewed_at),
   };
 }
 
@@ -2755,6 +2843,27 @@ function jsonArray(value: unknown): string[] {
     }
   }
   return [];
+}
+
+function jsonObjectArray(value: unknown): Record<string, unknown>[] {
+  const parsed =
+    Array.isArray(value)
+      ? value
+      : typeof value === "string" && value.trim()
+        ? (() => {
+            try {
+              return JSON.parse(value) as unknown;
+            } catch {
+              return [];
+            }
+          })()
+        : [];
+  return Array.isArray(parsed)
+    ? parsed.filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item && typeof item === "object" && !Array.isArray(item)),
+      )
+    : [];
 }
 
 function jsonRecordArray(value: unknown): Record<string, unknown>[] {
