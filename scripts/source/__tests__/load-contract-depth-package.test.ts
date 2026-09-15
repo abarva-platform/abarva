@@ -9,10 +9,12 @@ describe("Source contract depth package loader", () => {
       "utf8",
     );
 
-    expect(loader).toContain(
+    const normalizedLoader = loader.replace(/\s+/g, " ");
+
+    expect(normalizedLoader).toContain(
       'stringValue(row, "period_start") || monthStart(stringValue(row, "month"))',
     );
-    expect(loader).toContain(
+    expect(normalizedLoader).toContain(
       'stringValue(row, "period_end") || monthEnd(stringValue(row, "month"))',
     );
   });
@@ -45,13 +47,11 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain(
       'stringValue(row, "opportunity_type") || stringValue(row, "value_type")',
     );
-    expect(loader).toContain(
-      'stringValue(row, "annual_value_usd") ||',
-    );
+    expect(loader).toContain('stringValue(row, "annual_value_usd") ||');
     expect(loader).toContain(
       'stringValue(row, "evidence_family") || stringValue(row, "value_type")',
     );
-    expect(loader).toContain(
+    expect(loader.replace(/\s+/g, " ")).toContain(
       'stringValue(row, "recommended_action") || stringValue(row, "next_action")',
     );
   });
@@ -66,9 +66,7 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain(
       'stringValue(row, "credit_owed_usd") ||\n        stringValue(row, "credit_amount_usd") ||',
     );
-    expect(loader).toContain(
-      'stringValue(row, "recurring") || "false"',
-    );
+    expect(loader).toContain('stringValue(row, "recurring") || "false"');
     expect(loader).toContain(
       'stringValue(row, "annualized_spend_usd") ||\n          stringValue(row, "value_impact_usd")',
     );
@@ -98,9 +96,7 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain(
       'stringValue(row, "bridge_component") || stringValue(row, "scenario")',
     );
-    expect(loader).toContain(
-      'stringValue(row, "amount_usd") ||',
-    );
+    expect(loader).toContain('stringValue(row, "amount_usd") ||');
   });
 
   it("reuses one package load run across Layer 2 and Layer 3 phases", () => {
@@ -117,8 +113,12 @@ describe("Source contract depth package loader", () => {
       "utf8",
     );
 
-    expect(migration).toContain("UNIQUE (tenant_key, dataset_version, load_run_id)");
-    expect(loader).toContain("ON CONFLICT (tenant_key, dataset_version, load_run_id)");
+    expect(migration).toContain(
+      "UNIQUE (tenant_key, dataset_version, load_run_id)",
+    );
+    expect(loader).toContain(
+      "ON CONFLICT (tenant_key, dataset_version, load_run_id)",
+    );
     expect(loader).not.toContain(
       "ON CONFLICT (tenant_key, dataset_version, idempotency_key, mode)",
     );
@@ -155,7 +155,10 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain("annual_change_order_spend");
     expect(loader).toContain("document.page_text_char_count");
     expect(loader).toContain("opportunity_evidence: opportunityEvidenceRows");
-    expect(loader).toContain("calculation_output: sourceFiles.optimizationOpportunities.length * 2");
+    expect(loader).toContain("opportunity_claim");
+    expect(loader).toContain(
+      "calculation_output: sourceFiles.optimizationOpportunities.length * 2",
+    );
   });
 
   it("promotes the contract purpose into a governed canonical fact", () => {
@@ -186,7 +189,7 @@ describe("Source contract depth package loader", () => {
     );
 
     expect(loader).toContain(
-      'const contractContextFactCount = sourceFiles.contracts.filter',
+      "const contractContextFactCount = sourceFiles.contracts.filter",
     );
     expect(loader).toContain("contractContextFactCount +");
   });
@@ -230,9 +233,15 @@ describe("Source contract depth package loader", () => {
       "utf8",
     );
 
-    expect(loader).toContain('if (args.mode === "apply-layer2") {\n      requireApplyApproval(args);');
-    expect(loader).toContain('if (args.mode === "apply-layer3") {\n      requireApplyApproval(args);');
-    expect(loader).toContain('event: "source_contract_depth_package_layer23_verified"');
+    expect(loader).toContain(
+      'if (args.mode === "apply-layer2") {\n      requireApplyApproval(args);',
+    );
+    expect(loader).toContain(
+      'if (args.mode === "apply-layer3") {\n      requireApplyApproval(args);',
+    );
+    expect(loader).toContain(
+      'event: "source_contract_depth_package_layer23_verified"',
+    );
   });
 
   it("validates the dataset version declared by each package instead of one hard-coded package", () => {
@@ -289,12 +298,8 @@ describe("Source contract depth package loader", () => {
       "utf8",
     );
 
-    expect(loader).toContain(
-      'pctValue(row, "run_percent")',
-    );
-    expect(loader).toContain(
-      'numberValue(row, "client_satisfaction_score")',
-    );
+    expect(loader).toContain('pctValue(row, "run_percent")');
+    expect(loader).toContain('numberValue(row, "client_satisfaction_score")');
     expect(loader).not.toContain(
       "const qbrFactCount = sourceFiles.qbrScorecards.length * 5",
     );
