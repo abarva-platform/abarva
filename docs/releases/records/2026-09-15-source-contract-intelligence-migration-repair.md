@@ -21,7 +21,7 @@ Repairs the SQL expression that creates the hardened Source contract-intelligenc
 
 ## Client Applicability
 
-- All clients: the additive migration and read-path repair are reusable and tenant-scoped.
+- All clients: the additive migration and read-path repair are reusable and isolated by client context.
 - Specific clients: none.
 - Internal only: migration and operator-job diagnostics.
 - Public/demo only: synthetic lab validation only; no real client data is included.
