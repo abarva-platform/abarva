@@ -40,7 +40,7 @@ function servedBundle(): HomeReviewBundle {
     {
       page_key: "applications_systems",
       row_key: "app-1",
-      row_type: "application_system",
+      row_type: "application",
       title: "Claims Administration Platform",
       summary: null,
       display_payload_json: {
@@ -150,6 +150,18 @@ describe("the served path", () => {
       );
       unmount();
     }
+  });
+
+  it("opens the Executive Brief from deterministic served-record findings when authored claims are absent", () => {
+    const { container } = open("executive_brief");
+    const text = container.textContent ?? "";
+
+    expect(container.querySelector("h1")?.textContent ?? "").toContain(
+      "100% of the estate is self-hosted.",
+    );
+    expect(text).not.toMatch(/Executive Brief is not yet answered/i);
+    expect(text).not.toMatch(/Nothing in the loaded record speaks to this question yet/i);
+    expect(text).toContain("Chief Information Officer");
   });
 });
 
