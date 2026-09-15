@@ -111,6 +111,7 @@ describe("contract depth package Layer 4 overlay job", () => {
     expect(source).toContain("consumption.sourcing_spend_monthly_v1");
     expect(source).toContain("consumption.sourcing_performance_v1");
     expect(source).toContain("finance_confirmation_required");
+    expect(source).toContain("WHEN o.value_type = 'control_action' THEN 'control_required'");
     expect(source).toContain("document_page_text_count");
     expect(source).toContain("change_order_count");
     expect(source).toContain("annual_change_order_spend");
