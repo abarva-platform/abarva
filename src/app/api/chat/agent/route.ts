@@ -1563,10 +1563,8 @@ export async function POST(request: Request) {
     activeClientKey
   ) {
     try {
-      // Resolve the value-at-stake baseline + viewing stage exactly as the canvas
-      // page does (getSourcingEvent → valueAtStakeUsd / currentStageKey). eventType
-      // is left unset so the archetype resolves the same way the canvas does (the
-      // first archetype carrying value-lever rules — today AMS).
+      // Resolve the value-at-stake baseline, viewing stage, and event archetype
+      // exactly as the canvas does. Unresolved/non-authored archetypes fail closed.
       const groundingEvent = await getSourcingEvent(
         sourceEventIdFromContext,
       ).catch(() => null);
@@ -1582,7 +1580,8 @@ export async function POST(request: Request) {
         clientKey: activeClientKey,
         stageKey: viewStageFromContext,
         baselineAmount: groundingEvent?.valueAtStakeUsd ?? null,
-        eventType: null,
+        eventType: groundingEvent?.eventType ?? null,
+        classifiedCategory: groundingEvent?.classifiedCategory ?? null,
       });
       if (grounding.block) {
         sourceAvaGroundingBlock = grounding.block;
@@ -1774,6 +1773,8 @@ export async function POST(request: Request) {
         const modeStageViewRaw = buildLiveStageView({
           inputs: modeFactInputs,
           citations: {},
+          eventType: groundingEvent.eventType,
+          classifiedCategory: groundingEvent.classifiedCategory,
           baselineLabel: "Value at stake (event estimate)",
           baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
           stageKey: modeStageKey,
@@ -1812,10 +1813,12 @@ export async function POST(request: Request) {
           factInputs: modeFactInputs,
           artifacts: modeArtifacts,
           question: message,
-          // Phase B/C inputs — eventType left unset so the archetype resolves
-          // the same way the canvas/value-grounding does (the first archetype
-          // carrying value-lever rules — today AMS).
-          archetype: needsArchetype ? resolveValueArchetype(null) : undefined,
+          archetype: needsArchetype
+            ? resolveValueArchetype(
+                groundingEvent.eventType,
+                groundingEvent.classifiedCategory,
+              ) ?? undefined
+            : undefined,
           baselineAmount: groundingEvent.valueAtStakeUsd ?? 0,
           rfpClausePresentLeverKeys: rfpClauseSignal.signalPresent
             ? rfpClauseSignal.presentLeverKeys

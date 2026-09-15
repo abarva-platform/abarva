@@ -191,6 +191,130 @@ export const transitionRiskExposure: Evaluator = (inputs) => {
   return band(expected, conservative, 'low');
 };
 
+// ── Cloud / FinOps formulas ──────────────────────────────────────────────────
+
+function annualPercentOverTerm(
+  inputs: EvaluatorInputs,
+  annualKey: string,
+  percentKey: string,
+  confidence: EvaluatorConfidence,
+): EvaluatorResult {
+  const missing = missingOf(inputs, [annualKey, percentKey]);
+  if (missing.length > 0) return { insufficientEvidence: true, missing };
+  const point = inputs[annualKey] * pct(inputs[percentKey]) * termYears(inputs);
+  return band(point, point * CONSERVATIVE_HAIRCUT, confidence);
+}
+
+export const cloudCommitmentOpportunity: Evaluator = (inputs) => {
+  const required = [
+    'annual_eligible_cloud_spend',
+    'uncovered_commitment_pct',
+    'benchmark_commitment_discount_pct',
+  ] as const;
+  const missing = missingOf(inputs, required);
+  if (missing.length > 0) return { insufficientEvidence: true, missing };
+  const point =
+    inputs.annual_eligible_cloud_spend *
+    pct(inputs.uncovered_commitment_pct) *
+    pct(inputs.benchmark_commitment_discount_pct) *
+    termYears(inputs);
+  return band(point, point * CONSERVATIVE_HAIRCUT, 'med');
+};
+
+export const cloudRightsizingOpportunity: Evaluator = (inputs) =>
+  annualPercentOverTerm(
+    inputs,
+    'annual_compute_spend',
+    'identified_idle_waste_pct',
+    'med',
+  );
+
+export const cloudStorageTieringOpportunity: Evaluator = (inputs) => {
+  const required = [
+    'annual_storage_spend',
+    'cold_data_pct',
+    'storage_rate_reduction_pct',
+  ] as const;
+  const missing = missingOf(inputs, required);
+  if (missing.length > 0) return { insufficientEvidence: true, missing };
+  const point =
+    inputs.annual_storage_spend *
+    pct(inputs.cold_data_pct) *
+    pct(inputs.storage_rate_reduction_pct) *
+    termYears(inputs);
+  return band(point, point * CONSERVATIVE_HAIRCUT, 'med');
+};
+
+export const cloudEgressAvoidance: Evaluator = (inputs) =>
+  annualPercentOverTerm(
+    inputs,
+    'annual_egress_spend',
+    'avoidable_egress_pct',
+    'low',
+  );
+
+export const cloudPassThroughMarkup: Evaluator = (inputs) =>
+  annualPercentOverTerm(
+    inputs,
+    'annual_pass_through_spend',
+    'pass_through_markup_pct',
+    'high',
+  );
+
+export const cloudStrandedCommitmentExposure: Evaluator = (inputs) =>
+  annualPercentOverTerm(
+    inputs,
+    'annual_committed_spend',
+    'forecast_shortfall_pct',
+    'low',
+  );
+
+// ── Contract renewal formulas ────────────────────────────────────────────────
+
+export const renewalUtilizationRerate: Evaluator = (inputs) =>
+  annualPercentOverTerm(
+    inputs,
+    'annual_contract_spend',
+    'unused_entitlement_pct',
+    'med',
+  );
+
+export const renewalBenchmarkGap: Evaluator = (inputs) =>
+  annualPercentOverTerm(
+    inputs,
+    'annual_benchmarkable_spend',
+    'benchmark_price_gap_pct',
+    'med',
+  );
+
+export const renewalSlaCreditRecovery: Evaluator = (inputs) => {
+  const required = ['credit_owed_usd', 'credit_claimed_usd'] as const;
+  const missing = missingOf(inputs, required);
+  if (missing.length > 0) return { insufficientEvidence: true, missing };
+  const recoverable = Math.max(
+    0,
+    inputs.credit_owed_usd - inputs.credit_claimed_usd,
+  );
+  return band(recoverable, recoverable, 'high');
+};
+
+export const renewalUpliftAvoidance: Evaluator = (inputs) =>
+  annualPercentOverTerm(
+    inputs,
+    'annual_contract_spend',
+    'proposed_renewal_uplift_pct',
+    'high',
+  );
+
+export const renewalLockInExposure: Evaluator = (inputs) => {
+  const required = ['annual_contract_spend', 'locked_renewal_years'] as const;
+  const missing = missingOf(inputs, required);
+  if (missing.length > 0) return { insufficientEvidence: true, missing };
+  const exposure =
+    inputs.annual_contract_spend * Math.max(0, inputs.locked_renewal_years);
+  return band(exposure, exposure * CONSERVATIVE_HAIRCUT, 'low');
+};
+
 // ── Registry-keyed dispatch: formulaId → evaluator ───────────────────────────
 
 /**
@@ -205,6 +329,17 @@ export const FORMULA_EVALUATORS: Readonly<Record<string, Evaluator>> = Object.fr
   RETAINED_EFFORT_DELTA: retainedEffortDelta,
   SLA_CREDIT_PROTECTION: slaCreditProtection,
   TRANSITION_RISK_EXPOSURE: transitionRiskExposure,
+  CLOUD_COMMITMENT_OPPORTUNITY: cloudCommitmentOpportunity,
+  CLOUD_RIGHTSIZING_OPPORTUNITY: cloudRightsizingOpportunity,
+  CLOUD_STORAGE_TIERING_OPPORTUNITY: cloudStorageTieringOpportunity,
+  CLOUD_EGRESS_AVOIDANCE: cloudEgressAvoidance,
+  CLOUD_PASSTHROUGH_MARKUP: cloudPassThroughMarkup,
+  CLOUD_STRANDED_COMMITMENT_EXPOSURE: cloudStrandedCommitmentExposure,
+  RENEWAL_UTILIZATION_RERATE: renewalUtilizationRerate,
+  RENEWAL_BENCHMARK_GAP: renewalBenchmarkGap,
+  RENEWAL_SLA_CREDIT_RECOVERY: renewalSlaCreditRecovery,
+  RENEWAL_UPLIFT_AVOIDANCE: renewalUpliftAvoidance,
+  RENEWAL_LOCK_IN_EXPOSURE: renewalLockInExposure,
 });
 
 /** Look up the evaluator for a formulaId. Returns undefined for unknown ids. */

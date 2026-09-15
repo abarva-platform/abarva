@@ -9,6 +9,17 @@ import {
   retainedEffortDelta,
   slaCreditProtection,
   transitionRiskExposure,
+  cloudCommitmentOpportunity,
+  cloudRightsizingOpportunity,
+  cloudStorageTieringOpportunity,
+  cloudEgressAvoidance,
+  cloudPassThroughMarkup,
+  cloudStrandedCommitmentExposure,
+  renewalUtilizationRerate,
+  renewalBenchmarkGap,
+  renewalSlaCreditRecovery,
+  renewalUpliftAvoidance,
+  renewalLockInExposure,
   runFormula,
   evaluatorFor,
   registeredFormulaIds,
@@ -187,8 +198,136 @@ describe('TRANSITION_RISK_EXPOSURE', () => {
   });
 });
 
+describe('Cloud FinOps formulas', () => {
+  it('computes commitment opportunity from eligible spend, uncovered share, and cited discount', () => {
+    const r = cloudCommitmentOpportunity({
+      annual_eligible_cloud_spend: 10_000_000,
+      uncovered_commitment_pct: 40,
+      benchmark_commitment_discount_pct: 25,
+      term_years: 2,
+    });
+    expect(isBand(r)).toBe(true);
+    if (!isBand(r)) return;
+    expect(r.high).toBeCloseTo(2_000_000, 6);
+    expect(r.low).toBeCloseTo(2_000_000 * CONSERVATIVE_HAIRCUT, 6);
+  });
+
+  it('computes evidence-bound cloud opportunities and exposures', () => {
+    const cases = [
+      [
+        cloudRightsizingOpportunity,
+        { annual_compute_spend: 4_000_000, identified_idle_waste_pct: 10 },
+        400_000,
+      ],
+      [
+        cloudStorageTieringOpportunity,
+        {
+          annual_storage_spend: 2_000_000,
+          cold_data_pct: 50,
+          storage_rate_reduction_pct: 60,
+        },
+        600_000,
+      ],
+      [
+        cloudEgressAvoidance,
+        { annual_egress_spend: 500_000, avoidable_egress_pct: 20 },
+        100_000,
+      ],
+      [
+        cloudPassThroughMarkup,
+        { annual_pass_through_spend: 8_000_000, pass_through_markup_pct: 5 },
+        400_000,
+      ],
+      [
+        cloudStrandedCommitmentExposure,
+        { annual_committed_spend: 6_000_000, forecast_shortfall_pct: 15 },
+        900_000,
+      ],
+    ] as const;
+    for (const [formula, inputs, expected] of cases) {
+      const result = formula(inputs);
+      expect(isBand(result)).toBe(true);
+      if (!isBand(result)) continue;
+      expect(result.high).toBeCloseTo(expected, 6);
+      expect(result.low).toBeLessThanOrEqual(result.high);
+    }
+  });
+
+  it('refuses to size a commitment opportunity without a cited discount input', () => {
+    const r = cloudCommitmentOpportunity({
+      annual_eligible_cloud_spend: 10_000_000,
+      uncovered_commitment_pct: 40,
+    });
+    expect(isInsufficient(r)).toBe(true);
+    if (!isInsufficient(r)) return;
+    expect(r.missing).toEqual(['benchmark_commitment_discount_pct']);
+  });
+});
+
+describe('Contract renewal formulas', () => {
+  it('keeps utilization, benchmark, uplift, credits, and lock-in calculations explicit', () => {
+    const cases = [
+      [
+        renewalUtilizationRerate,
+        { annual_contract_spend: 10_000_000, unused_entitlement_pct: 20, term_years: 2 },
+        4_000_000,
+      ],
+      [
+        renewalBenchmarkGap,
+        { annual_benchmarkable_spend: 8_000_000, benchmark_price_gap_pct: 10, term_years: 2 },
+        1_600_000,
+      ],
+      [
+        renewalUpliftAvoidance,
+        { annual_contract_spend: 10_000_000, proposed_renewal_uplift_pct: 5, term_years: 2 },
+        1_000_000,
+      ],
+      [
+        renewalLockInExposure,
+        { annual_contract_spend: 10_000_000, locked_renewal_years: 1 },
+        10_000_000,
+      ],
+    ] as const;
+    for (const [formula, inputs, expected] of cases) {
+      const result = formula(inputs);
+      expect(isBand(result)).toBe(true);
+      if (!isBand(result)) continue;
+      expect(result.high).toBeCloseTo(expected, 6);
+      expect(result.low).toBeLessThanOrEqual(result.high);
+    }
+  });
+
+  it('calculates only the unclaimed portion of earned SLA credits', () => {
+    const result = renewalSlaCreditRecovery({
+      credit_owed_usd: 100_000,
+      credit_claimed_usd: 40_000,
+    });
+    expect(isBand(result)).toBe(true);
+    if (!isBand(result)) return;
+    expect(result.low).toBe(60_000);
+    expect(result.high).toBe(60_000);
+  });
+
+  it('never produces a negative credit recovery', () => {
+    const result = renewalSlaCreditRecovery({
+      credit_owed_usd: 40_000,
+      credit_claimed_usd: 50_000,
+    });
+    expect(isBand(result)).toBe(true);
+    if (!isBand(result)) return;
+    expect(result.high).toBe(0);
+  });
+
+  it('refuses a utilization claim without governed utilization evidence', () => {
+    const result = renewalUtilizationRerate({ annual_contract_spend: 10_000_000 });
+    expect(isInsufficient(result)).toBe(true);
+    if (!isInsufficient(result)) return;
+    expect(result.missing).toEqual(['unused_entitlement_pct']);
+  });
+});
+
 describe('formula dispatch registry', () => {
-  it('registers all 6 AMS formulaIds', () => {
+  it('registers all authored AMS, Cloud, and Renewal formulaIds', () => {
     expect(registeredFormulaIds().sort()).toEqual(
       [
         'AVOIDABLE_SPEND_OVER_TERM',
@@ -197,6 +336,17 @@ describe('formula dispatch registry', () => {
         'RETAINED_EFFORT_DELTA',
         'SLA_CREDIT_PROTECTION',
         'TRANSITION_RISK_EXPOSURE',
+        'CLOUD_COMMITMENT_OPPORTUNITY',
+        'CLOUD_RIGHTSIZING_OPPORTUNITY',
+        'CLOUD_STORAGE_TIERING_OPPORTUNITY',
+        'CLOUD_EGRESS_AVOIDANCE',
+        'CLOUD_PASSTHROUGH_MARKUP',
+        'CLOUD_STRANDED_COMMITMENT_EXPOSURE',
+        'RENEWAL_UTILIZATION_RERATE',
+        'RENEWAL_BENCHMARK_GAP',
+        'RENEWAL_SLA_CREDIT_RECOVERY',
+        'RENEWAL_UPLIFT_AVOIDANCE',
+        'RENEWAL_LOCK_IN_EXPOSURE',
       ].sort(),
     );
   });

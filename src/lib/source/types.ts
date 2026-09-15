@@ -243,6 +243,8 @@ export interface SourcingEventSummary {
   accountName: string;
   leadAgent: 'Sentinel';
   archetype: string;
+  /** Raw persisted source_events.event_type used for deterministic archetype resolution. */
+  eventType?: string | null;
   rigor: SourceRigorLevel;
   status: SourceLifecycleStatus;
   statusLabel: string;

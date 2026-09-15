@@ -58,6 +58,7 @@ export type IngestTemplateUploadResult =
       /** Machine code → HTTP status: unknown_template=400, not_found=404, … */
       readonly code:
         | "unknown_template"
+        | "archetype_not_ready"
         | "lookup_failed"
         | "not_found"
         | "write_failed";
@@ -121,7 +122,7 @@ export async function ingestTemplateUpload(
   const lookupId = resolvedEventId ?? args.scope.eventId;
   const { data: persistedEvent, error: fetchError } = await supabase
     .from("source_events")
-    .select("id, client_key")
+    .select("id, client_key, event_type, classified_category")
     .eq("id", lookupId)
     .maybeSingle();
 
@@ -139,15 +140,23 @@ export async function ingestTemplateUpload(
     };
   }
 
-  // For a COMPOSITE template whose entity_ref carries a canonical lever key (e.g.
-  // RESPONSE_COVERAGE_V1's Vendor::Lever Key), resolve the archetype's lever-key
-  // set so the structured map can reject a non-canonical lever loudly. Resolved
-  // the same way the insight builder does (first archetype with value-lever rules
-  // today — AMS); a phantom lever never enters the model. Non-composite templates
-  // pass no set and are unaffected.
+  // For a COMPOSITE template whose entity_ref carries a canonical lever key,
+  // resolve this event's own archetype. Never validate one event's rows against
+  // another archetype merely because that archetype has authored rules.
   let validLeverKeys: ReadonlySet<string> | undefined;
   if ((template.entityRefColumns?.length ?? 0) > 0) {
-    const archetype = resolveValueArchetype(undefined);
+    const archetype = resolveValueArchetype(
+      persistedEvent.event_type,
+      persistedEvent.classified_category,
+    );
+    if (!archetype) {
+      return {
+        ok: false,
+        code: "archetype_not_ready",
+        detail:
+          "This event has no authored deterministic value-lever rules for its resolved archetype.",
+      };
+    }
     const keys = (archetype?.valueLeverRules ?? []).map((r) => r.key);
     validLeverKeys = new Set<string>(keys);
   }
@@ -186,6 +195,7 @@ export function ingestFailureStatus(
 ): number {
   switch (code) {
     case "unknown_template":
+    case "archetype_not_ready":
       return 400;
     case "not_found":
       return 404;
