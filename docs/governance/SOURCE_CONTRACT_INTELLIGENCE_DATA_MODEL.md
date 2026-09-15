@@ -6,12 +6,12 @@ canonical Source facts. No product surface may create a contract fact.
 
 ## Layered object model
 
-| Layer | Object | Purpose | Allowed producer |
-| --- | --- | --- | --- |
-| L1 | Contract documents, SOWs, change orders, invoices, usage, performance, ownership extracts | Client-owned intake organized by data owner | Client/operator |
-| L2 | Adapter rows and source file lineage | Preserve source grain, row identity, hashes, and load run | Deterministic adapter |
-| L3 | Contract facts, terms, scope, spend, performance, usage, evidence, opportunities, claims, playbook rules | Governed source of truth and explainable projections | Deterministic loader, approved reviewer |
-| L4 | Contract 360, portfolio command center, Optimize, Education, Source aVa, exports | Read-only product projections | Product read adapters |
+| Layer | Object                                                                                                   | Purpose                                                   | Allowed producer                        |
+| ----- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------- |
+| L1    | Contract documents, SOWs, change orders, invoices, usage, performance, ownership extracts                | Client-owned intake organized by data owner               | Client/operator                         |
+| L2    | Adapter rows and source file lineage                                                                     | Preserve source grain, row identity, hashes, and load run | Deterministic adapter                   |
+| L3    | Contract facts, terms, scope, spend, performance, usage, evidence, opportunities, claims, playbook rules | Governed source of truth and explainable projections      | Deterministic loader, approved reviewer |
+| L4    | Contract 360, portfolio command center, Optimize, Education, Source aVa, exports                         | Read-only product projections                             | Product read adapters                   |
 
 ## Contract intelligence record
 
@@ -95,6 +95,43 @@ The execution order is `resolve -> retrieve -> calculate -> synthesize ->
 validate -> answer`. Missing or conflicted evidence is carried into the answer;
 it is not replaced with generic assumptions. Cross-contract questions resolve a
 second contract explicitly and never borrow facts from the selected contract.
+
+## Content-proof contract for the redesigned detail view
+
+The supplied content-proof artifact is a reference for information architecture,
+not a source of facts. Each contract detail view must be able to answer a distinct
+question without repeating another tab's numbers. The Layer 3 record therefore
+provides these binding primitives:
+
+| View chapter        | Required governed inputs                                                                         | Reader outcome                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Story               | reviewed purpose, archetype, commercial baseline, next decision                                  | What the agreement is and why it matters                       |
+| Scope and ownership | declared scope rows, business functions, systems/workloads, owners, observed activity            | What is covered, what is being used, and who can settle intent |
+| Economics           | signed fee components, periodized spend, invoice and settlement states, calculation lineage      | What the agreement costs and which ledger is unresolved        |
+| Performance         | obligations, periods, incidents/tickets, credits, completeness and cutoff                        | Whether service delivery supports the position                 |
+| Optimize            | claim rows, current term, ask, target, vendor rationale, owner, timing, overlap and amount state | What to pursue first and what is deliberately not sized        |
+| Evidence reference  | resolvable source records, document/page spans, conflicts, missing artifacts, calculation runs   | Why a conclusion is allowed, blocked, or provisional           |
+| Playbook reference  | authored archetype rules, required inputs, thresholds, industry context and sources              | What to track, load, observe, and revisit over time            |
+
+Every chapter may carry `headline`, `narrative`, `exhibit`, `mapping`,
+`takeaway`, `ask_a_va`, and `limitations`, but each must retain its own source
+references, confidence, review state, and load-run lineage. These are not strings
+the UI may invent from a row count. A missing field renders as a named boundary
+and the artifact that would close it.
+
+The shared record now carries a `reporting` object. Its `asOfDate` is nullable by
+design: when no cutoff is declared, the record says so; it does not silently use
+the scenario date. The object also carries period bounds, excluded observations,
+completeness, and source references so every chart and table uses the same time
+boundary. Metrics carry numeric value, unit, basis, cutoff, and completeness in
+addition to their reader-facing formatted value.
+
+`education` is required on newly built records and is selected from the approved
+archetype playbook. It contains Track, Load, Observe, thresholds, required
+facets, missing evidence, and provenance. Performance can be `not_required` only
+when the selected archetype says it is inapplicable; zero rows alone never make
+that decision. Industry context can frame a question, but cannot supply a market
+rate, percentile, discount, or savings amount without a reviewed benchmark.
 
 ## Readiness and display rules
 

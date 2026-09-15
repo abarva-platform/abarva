@@ -1,3 +1,6 @@
+import type { ContractClaimBasis } from "./provenance";
+import type { ContractEducationView } from "./education";
+
 export type ContractIntelligenceReviewStatus =
   | "draft"
   | "reviewed"
@@ -10,10 +13,32 @@ export type ContractIntelligenceEvidenceState =
   | "missing"
   | "not_required";
 
+export type ContractIntelligenceCompleteness =
+  | "complete"
+  | "partial"
+  | "unknown";
+
+export interface ContractIntelligenceReportingContext {
+  /** The single cutoff used for current-state claims, if the source declares one. */
+  readonly asOfDate: string | null;
+  readonly state: "declared" | "not_declared";
+  readonly periodStart: string | null;
+  readonly periodEnd: string | null;
+  readonly excludedObservationCount: number;
+  readonly completeness: ContractIntelligenceCompleteness;
+  readonly completenessReason: string;
+  readonly sourceRefs: readonly string[];
+}
+
 export interface ContractIntelligenceMetric {
   readonly key: string;
   readonly label: string;
   readonly value: string;
+  readonly valueNumeric: number | null;
+  readonly unit: "USD" | "percent" | "count" | "text";
+  readonly basis: ContractClaimBasis;
+  readonly asOfDate: string | null;
+  readonly completeness: ContractIntelligenceCompleteness;
   readonly meaning: string;
   readonly sourceRefs: readonly string[];
 }
@@ -56,7 +81,11 @@ export interface ContractIntelligenceFinding {
   readonly implication: string;
   readonly recommendedAction: string;
   readonly annualImpact: string;
-  readonly valueType: "recoverable_leakage" | "avoided_cost" | "negotiated_improvement" | "realized_value";
+  readonly valueType:
+    | "recoverable_leakage"
+    | "avoided_cost"
+    | "negotiated_improvement"
+    | "realized_value";
   readonly amountState: "exact" | "range" | "not_sized";
   readonly evidenceState: ContractIntelligenceEvidenceState;
   readonly evidenceRefs: readonly string[];
@@ -75,7 +104,11 @@ export interface ContractIntelligenceLever {
   readonly vendorGive: string;
   readonly valueBasis: string;
   readonly candidateRange: string;
-  readonly valueType: "recoverable_leakage" | "avoided_cost" | "negotiated_improvement" | "realized_value";
+  readonly valueType:
+    | "recoverable_leakage"
+    | "avoided_cost"
+    | "negotiated_improvement"
+    | "realized_value";
   readonly amountState: "exact" | "range" | "not_sized";
   readonly evidenceState: ContractIntelligenceEvidenceState;
   readonly evidenceRefs: readonly string[];
@@ -153,7 +186,12 @@ export interface ContractIntelligenceRecord {
     readonly title: string;
     readonly archetypeKey: string | null;
     readonly archetypeLabel: string | null;
-    readonly archetypeSourceBasis: "document_declared" | "scope_and_pricing_inferred" | "vendor_category_inferred" | "unmapped" | null;
+    readonly archetypeSourceBasis:
+      | "document_declared"
+      | "scope_and_pricing_inferred"
+      | "vendor_category_inferred"
+      | "unmapped"
+      | null;
     readonly archetypeConfidence: "high" | "medium" | "low" | "unverified";
     readonly startDate: string | null;
     readonly endDate: string | null;
@@ -162,7 +200,7 @@ export interface ContractIntelligenceRecord {
   };
   readonly story: {
     readonly headline: string;
-    readonly purpose: string;
+    readonly purpose: string | null;
     readonly scope: string;
     readonly decision: string;
     readonly evidenceBoundary: string;
@@ -171,8 +209,12 @@ export interface ContractIntelligenceRecord {
     readonly metrics: readonly ContractIntelligenceMetric[];
     readonly facts: readonly ContractIntelligenceFact[];
   };
+  /** Reporting cutoff and period completeness shared by every tab and chart. */
+  readonly reporting: ContractIntelligenceReportingContext;
   readonly evidenceLanes: readonly ContractIntelligenceEvidenceLane[];
   readonly anatomy: ContractIntelligenceAnatomy;
+  /** Authored archetype guidance selected at load time, never generated per render. */
+  readonly education: ContractEducationView;
   readonly findings: readonly ContractIntelligenceFinding[];
   readonly levers: readonly ContractIntelligenceLever[];
   readonly derivedInsights: readonly ContractIntelligenceDerivedInsight[];
