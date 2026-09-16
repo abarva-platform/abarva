@@ -83,7 +83,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 
 | Audience | Route count | aVa posture |
 | --- | --- | --- |
-| client | 98 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
+| client | 99 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
 | admin | 70 | Explain setup/governance controls; avoid tenant data claims unless scoped evidence is supplied. |
 | public | 38 | Describe public/product material; never imply authenticated capability proof. |
 | internal | 8 | Treat as preview/demo/operator-only unless release evidence says otherwise. |
@@ -98,7 +98,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | Moves | 16 |
 | Platform | 5 |
 | Shared | 55 |
-| Source | 34 |
+| Source | 35 |
 | Tenant workspace | 6 |
 | Tower | 5 |
 
@@ -279,6 +279,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | /source/learn | client | Source | src/app/(maestro)/source/learn/page.tsx |
 | /source/learn/[slug] | client | Source | src/app/(maestro)/source/learn/[slug]/page.tsx |
 | /source/new | client | Source | src/app/(maestro)/source/new/page.tsx |
+| /source/new/[eventId] | client | Source | src/app/(maestro)/source/new/[eventId]/page.tsx |
 | /source/optimize | client | Source | src/app/(maestro)/source/optimize/page.tsx |
 | /source/patterns | client | Source | src/app/(maestro)/source/patterns/page.tsx |
 | /source/patterns/[patternId] | client | Source | src/app/(maestro)/source/patterns/[patternId]/page.tsx |
