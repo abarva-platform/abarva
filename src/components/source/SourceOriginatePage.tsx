@@ -1122,7 +1122,7 @@ export function SourceOriginatePage({
         : `/source/events/${sourceEventId}/approval`;
     // The guided tour stays on its existing route; regular creation opens
     // the event workspace with approval as its next governed action.
-    const finalUrl = createdEventDestination(sourceEventId, approvalUrl, tourActive);
+    const finalUrl = createdEventDestination(sourceEventId, approvalUrl, tourActive, sourcingMotion);
     router.push(finalUrl);
     window.setTimeout(() => {
       if (window.location.pathname === "/source/new") {

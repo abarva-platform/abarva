@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-After creating a sourcing event, an operator sees the recorded request, its current phase, one next action, and event files by workflow phase. The existing approval and stage pages still perform the governed decisions. The new page does not mark an item complete based on text entry or a file upload alone.
+After creating a competitive sourcing event, an operator sees the recorded request, its current phase, one next action, and event files by workflow phase. Contract optimization keeps its existing approval path. The existing approval and stage pages still perform the governed decisions. The new page does not mark an item complete based on text entry or a file upload alone.
 
 ## Layer Impact
 
@@ -30,7 +30,7 @@ After creating a sourcing event, an operator sees the recorded request, its curr
 - Event-scoped `/source/new/[eventId]` route and Source New workspace.
 - Phase-based file browser over authorized, existing artifact records.
 - Pure step-readiness contract for future workflow integration; no readiness result is asserted from unavailable authority fields.
-- Normal creation lands in the workspace; the guided tour retains its existing approval path.
+- Normal competitive-event creation lands in the workspace; contract optimization and the guided tour retain their existing approval paths.
 
 ## QA / Validation
 
@@ -41,7 +41,7 @@ After creating a sourcing event, an operator sees the recorded request, its curr
 
 ## Rollout Plan
 
-Squash-merge through a PR. The repo-owned ACA main deploy workflow builds and deploys the exact main SHA. No migration or data job is required. Verify the signed-in post-creation route and approval handoff after deployment before calling the slice live-proven.
+Squash-merge through a PR. The repo-owned ACA main deploy workflow builds and deploys the exact main SHA. No migration or data job is required. Verify the signed-in competitive-event post-creation route, contract-optimization routing, and approval handoff after deployment before calling the slice live-proven.
 
 ## Deployment Authority
 
