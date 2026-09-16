@@ -101,13 +101,20 @@ export async function GET(
 
   const eclProvider = sourceWorkspaceProvider(requestedSourceProvider);
   let projectionDetail: ProjectionContractDetail | null = null;
-  let contract = await getContract360(tenantKey, contractId).catch(() => null);
+  let readFailed = false;
+  let contract = await getContract360(tenantKey, contractId).catch(() => {
+    readFailed = true;
+    return null;
+  });
   if (!contract && eclProvider !== "legacy") {
     projectionDetail = await loadSourceWorkspaceContractDetailFallback(
       tenantKey,
       contractId,
       eclProvider,
-    ).catch(() => null);
+    ).catch(() => {
+      readFailed = true;
+      return null;
+    });
     contract = projectionDetail?.contract ?? null;
   }
   if (!contract && eclProvider !== "legacy") {
@@ -115,10 +122,19 @@ export async function GET(
       tenantKey,
       contractId,
       eclProvider,
-    );
+    ).catch(() => {
+      readFailed = true;
+      return null;
+    });
     contract = projectionDetail?.contract ?? null;
   }
   if (!contract) {
+    if (readFailed) {
+      return NextResponse.json(
+        { error: "contract_detail_unavailable" },
+        { status: 503, headers: { "cache-control": "no-store" } },
+      );
+    }
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
@@ -249,7 +265,7 @@ async function getProjectionContractDetail(
     // declared scope. Loading the full impact layer here made a direct URL
     // wait on the portfolio action fan-out before Contract 360 could start.
     { impactMode: "deferred" },
-  ).catch(() => null);
+  );
   const contract =
     (portfolio ? focusableContractRows(portfolio) : []).find(
       (row) => row.contract_id === contractId,

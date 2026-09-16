@@ -314,6 +314,45 @@ describe("GET /api/source/workspace/contract/[contractId]", () => {
     await expect(res.json()).resolves.toEqual({ error: "not_found" });
   });
 
+  it("returns a retryable error when every contract read fails, not a false 404", async () => {
+    mockGetContract360.mockRejectedValueOnce(new Error("canonical read unavailable"));
+    mockLoadSourceWorkspaceContractDetailFallback.mockRejectedValueOnce(
+      new Error("projection read unavailable"),
+    );
+    mockLoadSourceWorkspacePortfolio.mockRejectedValueOnce(
+      new Error("portfolio read unavailable"),
+    );
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian&sourceProvider=ecl_projection_db",
+      ),
+      params(),
+    );
+
+    expect(res.status).toBe(503);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    await expect(res.json()).resolves.toEqual({ error: "contract_detail_unavailable" });
+  });
+
+  it("can still use projection detail when the canonical read fails", async () => {
+    mockGetContract360.mockRejectedValueOnce(new Error("canonical read unavailable"));
+    mockLoadSourceWorkspaceContractDetailFallback.mockResolvedValueOnce({
+      contract,
+      applicationScope: [],
+      initiativeDependencies: [],
+    });
+
+    const res = await GET(
+      new Request(
+        "https://app.test/api/source/workspace/contract/CTR-0006?client=meridian&sourceProvider=ecl_projection_db",
+      ),
+      params(),
+    );
+
+    expect(res.status).toBe(200);
+  });
+
   it("hydrates detail from the active ECL projection provider when legacy detail has no row", async () => {
     mockGetContract360.mockResolvedValueOnce(null);
     const projectionScope = [

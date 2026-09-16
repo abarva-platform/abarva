@@ -146,7 +146,7 @@ function firstResolvedCandidate(
   return null;
 }
 
-async function resolveClientRow(appClientKey: ClientKey): Promise<{
+export async function resolveClientRow(appClientKey: ClientKey): Promise<{
   id: string;
   name: string | null;
   industry_code: string | null;

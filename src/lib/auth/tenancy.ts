@@ -5,7 +5,9 @@ import {
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getCurrentPerson } from "@/lib/auth/maestro";
 import { ensureOperatorPersonProvisioned } from "@/lib/auth/operator-persona-provisioning";
-import { resolveTenant } from "@/lib/tenant/resolveTenant";
+import { checkTenantAccessByKey } from "@/lib/auth/tenant-access";
+import { resolveClientRow, resolveTenant } from "@/lib/tenant/resolveTenant";
+import { getClientOption, type ClientKey } from "@/lib/client-config";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 export class TenancyError extends Error {
@@ -13,6 +15,7 @@ export class TenancyError extends Error {
     public readonly code:
       | "unauthenticated"
       | "no_client"
+      | "forbidden"
       | "tenant_lookup_unavailable",
   ) {
     super(code);
@@ -25,7 +28,9 @@ function isUuidLike(value: string | null | undefined): value is string {
   );
 }
 
-export async function requireTenancy(): Promise<TenancyCtx> {
+export async function requireTenancy(
+  input: { requestedClientKey?: ClientKey } = {},
+): Promise<TenancyCtx> {
   // Auth helpers (Clerk) can throw on missing/invalid session rather than returning null.
   const [person, user] = await Promise.all([
     getCurrentPerson().catch(() => null),
@@ -41,14 +46,32 @@ export async function requireTenancy(): Promise<TenancyCtx> {
   // a distinct 503 below rather than a misleading `no_client` 403.
   let client: Awaited<ReturnType<typeof getActiveClientRow>>;
   try {
-    client = await getActiveClientRow();
+    if (input.requestedClientKey) {
+      const access = await checkTenantAccessByKey(input.requestedClientKey);
+      if (!access.ok) {
+        throw new TenancyError(
+          access.reason === "unauthenticated" ? "unauthenticated" : "forbidden",
+        );
+      }
+      const row = await resolveClientRow(input.requestedClientKey);
+      client = row
+        ? {
+            ...row,
+            name: row.name ?? getClientOption(input.requestedClientKey).name,
+            key: input.requestedClientKey,
+          }
+        : null;
+    } else {
+      client = await getActiveClientRow();
+    }
   } catch (error) {
-    if (error instanceof TenantLookupUnavailableError) {
+    if (error instanceof TenancyError) throw error;
+    if (error instanceof TenantLookupUnavailableError || input.requestedClientKey) {
       throw new TenancyError("tenant_lookup_unavailable");
     }
     throw error;
   }
-  if (!client && user?.clerkUserId.startsWith("private-proof:")) {
+  if (!client && !input.requestedClientKey && user?.clerkUserId.startsWith("private-proof:")) {
     const tenant = await resolveTenant();
     client = {
       id: "00000000-0000-4000-8000-000000000102",
@@ -111,6 +134,9 @@ export function tenancyErrorResponse(err: unknown): Response {
         },
         { status: 503 },
       );
+    }
+    if (err.code === "forbidden") {
+      return Response.json({ error: "forbidden" }, { status: 403 });
     }
     return Response.json(
       { error: "no_client", detail: "No active client for this user" },
