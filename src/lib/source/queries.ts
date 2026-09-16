@@ -594,6 +594,11 @@ export async function getSourcingEventForResolvedClient(
     enforceSourcePolicy?: boolean;
   },
 ): Promise<SourcingEventDetail | null> {
+  if (
+    !args.tenancy ||
+    !sourceEventBelongsToClientAlias(args.tenancy.clientKey, args.activeClientKey)
+  ) return null;
+
   const persistedEvent = await getPersistedSourceEventRow(
     eventId,
     args.activeClientKey,
@@ -609,7 +614,7 @@ export async function getSourcingEventForResolvedClient(
     return null;
   }
 
-  if (args.enforceSourcePolicy !== false && args.tenancy) {
+  if (args.enforceSourcePolicy !== false) {
     const canRead = await canReadSourceEvent(
       args.tenancy,
       args.activeClientKey,
