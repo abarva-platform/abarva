@@ -68,11 +68,9 @@ describe("Source workspace explicit-client API routing", () => {
     expect(optimizationRouteSource).toContain("new URL(request.url)");
     expect(optimizationRouteSource).toContain("appClientKeyForTenant");
     expect(optimizationRouteSource).toContain(
-      "checkTenantAccessByKey(requestedClientKey)",
+      "requireTenancy({ requestedClientKey: requestedClientKey ?? undefined })",
     );
-    expect(optimizationRouteSource).toContain(
-      "requestedClientKey !== tenancy.clientKey",
-    );
+    expect(optimizationRouteSource).not.toContain("requestedClientKey !== tenancy.clientKey");
     expect(optimizationRouteSource).toContain(
       '{ ok: false, error: "unknown_client" }',
     );
