@@ -61,7 +61,7 @@ function phaseState(event: SourceNewEventView, phase: Phase): string {
   const current = currentPhase(event);
   const index = PHASES.findIndex((item) => item.key === phase);
   const currentIndex = current === null ? PHASES.length : PHASES.findIndex((item) => item.key === current);
-  if (index < currentIndex) return "Past work";
+  if (index < currentIndex) return "Earlier";
   if (index > currentIndex) return "Later";
   if (awaitsIntakeReview(event.lifecycle)) return "Review needed";
   return "Current";
@@ -69,6 +69,29 @@ function phaseState(event: SourceNewEventView, phase: Phase): string {
 
 function fact(value: string | null): string {
   return value?.trim() || "Not recorded";
+}
+
+function nextAction(event: SourceNewEventView): { label: string; detail: string } {
+  if (awaitsIntakeReview(event.lifecycle)) return {
+    label: "Review intake",
+    detail: "Review the recorded request and its approval state.",
+  };
+  if (event.lifecycle !== "active") return {
+    label: "Open event",
+    detail: `Current stage: ${event.currentStage.replaceAll("_", " ")}`,
+  };
+  if (["strategy", "scope", "sourcing_strategy", "intake"].includes(event.currentStage)) return {
+    label: "Open scope and strategy",
+    detail: "Review scope, baseline and decision requirements in the governed event.",
+  };
+  if (["rfp", "rfp_rfi_package"].includes(event.currentStage)) return {
+    label: "Open market package",
+    detail: "Review the package and its release requirements in the governed event.",
+  };
+  return {
+    label: "Open current stage",
+    detail: `Current stage: ${event.currentStage.replaceAll("_", " ")}`,
+  };
 }
 
 export function SourceNewWorkspace({
@@ -85,7 +108,8 @@ export function SourceNewWorkspace({
   const approvalHref = `/source/events/${encodeURIComponent(event.id)}/approval`;
   const eventHref = `/source/events/${encodeURIComponent(event.id)}`;
   const actionHref = reviewPending ? approvalHref : eventHref;
-  const actionLabel = reviewPending ? "Review intake" : event.lifecycle === "active" ? "Continue current stage" : "Open event";
+  const action = nextAction(event);
+  const actionLabel = action.label;
   const isCurrentPhase = phase === current;
 
   const content = (
@@ -143,17 +167,22 @@ export function SourceNewWorkspace({
                     </dl>
                   </div>
                 </>
+              ) : phaseState(event, phase) === "Later" ? (
+                <>
+                  <h2>This phase is not yet open</h2>
+                  <p className="snw-lede">The event has not reached this phase. Earlier gates must be cleared before this work can begin. Browsing here does not advance the event.</p>
+                </>
               ) : (
                 <>
-                  <h2>{phaseState(event, phase) === "Later" ? "This step is not open yet" : "Earlier work"}</h2>
-                  <p className="snw-lede">Selecting a step lets you look ahead. It does not advance the event or clear a gate.</p>
+                  <h2>Earlier in this event</h2>
+                  <p className="snw-lede">This phase can be reviewed. Viewing it does not mark it complete, approve any gate, or change the current stage.</p>
                 </>
               )}
             </section>
             <aside className="snw-next" aria-label="Next action">
               <p className="snw-eyebrow">Next action</p>
               <h2>{current === null ? actionLabel : isCurrentPhase ? actionLabel : "Return to current work"}</h2>
-              <p>{current === null ? `Current stage: ${event.currentStage.replaceAll("_", " ")}` : isCurrentPhase ? (reviewPending ? "Review the recorded request and its approval state." : "Continue in the current stage.") : "This phase is only a preview."}</p>
+              <p>{current === null || isCurrentPhase ? action.detail : phaseState(event, phase) === "Later" ? "This phase is locked. The event must advance to open it." : "You are reviewing an earlier phase. No gate is changed here."}</p>
               {current === null || isCurrentPhase
                 ? <Link className="snw-primary" href={actionHref}>{actionLabel}</Link>
                 : <button className="snw-primary" type="button" onClick={() => setPhase(current)}>Current work</button>}

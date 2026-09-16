@@ -30,6 +30,29 @@ const rows: SourceNewFileRow[] = [
 ];
 
 describe("SourceNewFiles", () => {
+  const matchMedia = window.matchMedia;
+  const scrollTo = window.scrollTo;
+  const scrollY = Object.getOwnPropertyDescriptor(window, "scrollY");
+
+  afterEach(() => {
+    window.matchMedia = matchMedia;
+    window.scrollTo = scrollTo;
+    if (scrollY) Object.defineProperty(window, "scrollY", scrollY);
+  });
+
+  function useMobileViewport() {
+    window.matchMedia = jest.fn().mockImplementation((query: string) => ({
+      matches: query === "(max-width: 760px)",
+      media: query,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+      onchange: null,
+    }));
+  }
+
   it("filters by folder and search, hiding superseded versions until requested", () => {
     render(<SourceNewFiles rows={rows} />);
     expect(screen.getByRole("option", { name: /Intake record/ })).toBeTruthy();
@@ -83,5 +106,61 @@ describe("SourceNewFiles", () => {
     render(<SourceNewFiles rows={[base, { ...base, id: "another", title: "Second strategy brief", fileName: "another.pdf" }]} initialPhase="define" />);
     expect(screen.getAllByRole("option")).toHaveLength(2);
     expect(screen.getByRole("option", { name: /Second strategy brief/ })).toBeTruthy();
+  });
+
+  it("returns from mobile details to the same filtered list and scroll position", () => {
+    useMobileViewport();
+    const restoreScroll = jest.fn();
+    window.scrollTo = restoreScroll;
+    Object.defineProperty(window, "scrollY", { configurable: true, value: 420 });
+    const onPreview = jest.fn();
+    const { container } = render(<SourceNewFiles rows={rows} onPreview={onPreview} />);
+    fireEvent.click(screen.getByRole("button", { name: "Define" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search files" }), { target: { value: "strategy" } });
+    fireEvent.click(screen.getByLabelText("Older versions"));
+    const list = screen.getByRole("listbox", { name: "Files in folder" });
+    list.scrollTop = 137;
+    const older = screen.getByRole("option", { name: /v2/ });
+    fireEvent.click(older);
+
+    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("true");
+    const details = screen.getByLabelText("Selected file details");
+    expect(within(details).getByText("strategy-brief.pdf · v2")).toBeTruthy();
+    expect(within(details).getByText("superseded")).toBeTruthy();
+    expect(within(details).getByText("Editor")).toBeTruthy();
+    expect(within(details).getByText(/Approved by Reviewer/)).toBeTruthy();
+    expect(within(details).getByText("oldhash")).toBeTruthy();
+    expect(within(details).getByRole("button", { name: "Preview" })).toBeTruthy();
+    expect(within(details).queryByRole("button", { name: "Download" })).toBeNull();
+    expect(document.activeElement).toBe(within(details).getByRole("button", { name: "Back to files" }));
+
+    fireEvent.click(within(details).getByRole("button", { name: "Preview" }));
+    expect(onPreview).toHaveBeenCalledWith(rows[1]);
+    fireEvent.click(within(details).getByRole("button", { name: "Back to files" }));
+    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("false");
+    expect(screen.getByRole("button", { name: "Define" }).getAttribute("aria-current")).toBe("true");
+    expect((screen.getByRole("searchbox", { name: "Search files" }) as HTMLInputElement).value).toBe("strategy");
+    expect((screen.getByLabelText("Older versions") as HTMLInputElement).checked).toBe(true);
+    expect(screen.getAllByRole("option")).toHaveLength(2);
+    expect(list.scrollTop).toBe(137);
+    expect(restoreScroll).toHaveBeenCalledWith(0, 420);
+    expect(document.activeElement).toBe(older);
+  });
+
+  it("opens mobile details by keyboard and returns focus with Escape", () => {
+    useMobileViewport();
+    window.scrollTo = jest.fn();
+    const { container } = render(<SourceNewFiles rows={rows} initialPhase="define" />);
+    const row = screen.getByRole("option", { name: /Strategy brief/ });
+    row.focus();
+    fireEvent.keyDown(row, { key: "Enter" });
+    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("true");
+    const back = screen.getByRole("button", { name: "Back to files" });
+    expect(document.activeElement).toBe(back);
+    fireEvent.keyDown(back, { key: "Escape" });
+    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("false");
+    expect(document.activeElement).toBe(row);
+    fireEvent.keyDown(row, { key: " " });
+    expect(container.querySelector(".source-new-files")?.getAttribute("data-mobile-detail")).toBe("true");
   });
 });

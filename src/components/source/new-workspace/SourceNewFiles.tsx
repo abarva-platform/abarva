@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { SourceArtifactRecord } from "@/lib/source/file-cabinet/types";
 
 export type SourceNewFilePhase = "request" | "define" | "suppliers" | "rfi";
@@ -66,14 +66,45 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
   const [search, setSearch] = useState("");
   const [includeHistory, setIncludeHistory] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  const backRef = useRef<HTMLButtonElement>(null);
+  const returnButtonRef = useRef<HTMLButtonElement | null>(null);
+  const returnScrollRef = useRef({ list: 0, page: 0 });
+  const restoreListRef = useRef(false);
 
   const visible = displayRows(rows, includeHistory).filter(
     (row) => row.phase === phase && `${row.title} ${row.fileName}`.toLowerCase().includes(search.trim().toLowerCase()),
   );
   const selected = visible.find((row) => row.id === selectedId) ?? visible[0] ?? null;
 
+  useLayoutEffect(() => {
+    if (mobileDetailOpen) {
+      backRef.current?.focus();
+    } else if (restoreListRef.current) {
+      restoreListRef.current = false;
+      returnButtonRef.current?.focus({ preventScroll: true });
+      if (listRef.current) listRef.current.scrollTop = returnScrollRef.current.list;
+      window.scrollTo(0, returnScrollRef.current.page);
+    }
+  }, [mobileDetailOpen]);
+
+  function openFile(row: SourceNewFileRow, button: HTMLButtonElement) {
+    setSelectedId(row.id);
+    if (typeof window.matchMedia === "function" && window.matchMedia("(max-width: 760px)").matches) {
+      returnButtonRef.current = button;
+      returnScrollRef.current = { list: listRef.current?.scrollTop ?? 0, page: window.scrollY };
+      setMobileDetailOpen(true);
+    }
+  }
+
+  function backToFiles() {
+    restoreListRef.current = true;
+    setMobileDetailOpen(false);
+  }
+
   return (
-    <section className="source-new-files" aria-label="Files">
+    <section className="source-new-files" aria-label="Files" data-mobile-detail={mobileDetailOpen}>
       <style>{`
         .source-new-files { color: #1a242b; background: #fff; border: 1px solid #d9dedc; border-radius: 6px; font-size: 13px; line-height: 1.45; min-width: 0; }
         .source-new-files * { box-sizing: border-box; }
@@ -103,13 +134,26 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
         .source-new-files__file-meta { display: block; color: #67736f; font-size: 12px; margin-top: 2px; }
         .source-new-files__file-version { color: #51615b; flex: none; font-variant-numeric: tabular-nums; }
         .source-new-files__details { padding: 16px; min-width: 0; }
+        .source-new-files__back { display: inline-flex; margin-bottom: 16px; }
         .source-new-files__details h4 { margin: 0 0 3px; font-size: 15px; overflow-wrap: anywhere; }
         .source-new-files__details dl { margin: 17px 0; display: grid; grid-template-columns: 65px minmax(0, 1fr); gap: 8px; font-size: 12px; }
         .source-new-files__details dt { color: #697671; }
         .source-new-files__details dd { margin: 0; overflow-wrap: anywhere; }
         .source-new-files__actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .source-new-files__empty { padding: 32px 16px; color: #65716c; }
-        @media (max-width: 760px) { .source-new-files__body { grid-template-columns: 1fr; } .source-new-files__folders { display: flex; gap: 4px; overflow-x: auto; border-right: 0; border-bottom: 1px solid #e5e9e7; } .source-new-files__folder { width: auto; white-space: nowrap; } .source-new-files__columns { grid-template-columns: 1fr; } .source-new-files__list { border-right: 0; } .source-new-files__details { border-top: 1px solid #e5e9e7; } }
+        @media (min-width: 761px) { .source-new-files__back { display: none; } }
+        @media (max-width: 760px) {
+          .source-new-files__body, .source-new-files__columns { grid-template-columns: 1fr; }
+          .source-new-files__folders { display: flex; gap: 4px; overflow-x: auto; border-right: 0; border-bottom: 1px solid #e5e9e7; }
+          .source-new-files__folder { width: auto; white-space: nowrap; }
+          .source-new-files__list { border-right: 0; }
+          .source-new-files__details { display: none; }
+          .source-new-files[data-mobile-detail="true"] .source-new-files__toolbar,
+          .source-new-files[data-mobile-detail="true"] .source-new-files__folders,
+          .source-new-files[data-mobile-detail="true"] .source-new-files__heading,
+          .source-new-files[data-mobile-detail="true"] .source-new-files__list { display: none; }
+          .source-new-files[data-mobile-detail="true"] .source-new-files__details { display: block; }
+        }
       `}</style>
       <div className="source-new-files__toolbar">
         <h2>Files</h2>
@@ -135,16 +179,22 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
             {onUpload && <button type="button" className="source-new-files__command" onClick={() => onUpload(phase)}>Upload</button>}
           </div>
           <div className="source-new-files__columns">
-            <div className="source-new-files__list" role="listbox" aria-label="Files in folder">
+            <div ref={listRef} className="source-new-files__list" role="listbox" aria-label="Files in folder">
               {visible.length === 0 ? <p className="source-new-files__empty">{search ? "No matching files" : "No files here yet"}</p> : visible.map((row) => (
-                <button key={row.id} type="button" role="option" aria-selected={selected?.id === row.id} className="source-new-files__file" onClick={() => setSelectedId(row.id)}>
+                <button key={row.id} type="button" role="option" aria-selected={selected?.id === row.id} className="source-new-files__file" onClick={(event) => openFile(row, event.currentTarget)} onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openFile(row, event.currentTarget);
+                  }
+                }}>
                   <span className="source-new-files__file-copy"><span className="source-new-files__file-name">{row.title}</span><span className="source-new-files__file-meta">{label(row.status)} · {row.fileFormat.toUpperCase()}{fileSize(row.fileSize) ? ` · ${fileSize(row.fileSize)}` : ""}</span></span>
                   <span className="source-new-files__file-version">v{row.version}</span>
                 </button>
               ))}
             </div>
-            <aside className="source-new-files__details" aria-label="Selected file details">
+            <aside className="source-new-files__details" aria-label="Selected file details" onKeyDown={(event) => { if (event.key === "Escape" && mobileDetailOpen) backToFiles(); }}>
               {selected ? <>
+                <button ref={backRef} type="button" className="source-new-files__command source-new-files__back" onClick={backToFiles}>Back to files</button>
                 <h4>{selected.title}</h4>
                 <span className="source-new-files__file-meta">{selected.fileName} · v{selected.version}</span>
                 <dl>
