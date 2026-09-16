@@ -100,7 +100,13 @@ export function ContractBriefingHeader({
    * Story tab carry the full text where it belongs.
    */
   const shortClause =
-    story?.headline && story.headline.length <= 60 ? story.headline : null;
+    story?.headline &&
+    story.headline.length <= 60 &&
+    !/\b(?:not (?:yet )?reviewed|not established|not loaded|unresolved)\b/i.test(
+      story.headline,
+    )
+      ? story.headline
+      : null;
   const archetype = vm.contractEducation?.archetypeLabel ?? null;
   const committed = numberFromDb(
     (contract as unknown as { committed_value?: unknown }).committed_value,
