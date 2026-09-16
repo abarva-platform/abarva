@@ -248,6 +248,122 @@ function contractIdFromQuery(query: string): string | null {
   return match ? match[0].toUpperCase() : null;
 }
 
+function namedContractsFromQuery(
+  context: AskSurfaceContext,
+  query: string,
+): SourceContractContext[] {
+  if (contractIdFromQuery(query)) return [];
+  const source = sourceV4(context);
+  const directory = Array.isArray(source?.contractDirectory)
+    ? source.contractDirectory
+    : [];
+  const words = (value: string) =>
+    ` ${value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()} `;
+  const normalizedQuery = words(query);
+  const matches = directory
+    .filter(isRecord)
+    .map(contractContextFromRecord)
+    .filter((row): row is SourceContractContext => row !== null)
+    .filter((row) => {
+      const vendor = words(row.vendorName).trim();
+      const contract = words(row.contractName).trim();
+      const firstVendorWord = vendor.split(" ")[0];
+      return (
+        normalizedQuery.includes(` ${vendor} `) ||
+        normalizedQuery.includes(` ${contract} `) ||
+        (firstVendorWord.length >= 5 &&
+          !["global", "enterprise", "example", "services", "technology"].includes(
+            firstVendorWord,
+          ) &&
+          normalizedQuery.includes(` ${firstVendorWord} `))
+      );
+    });
+  return Array.from(new Map(matches.map((row) => [row.contractId, row])).values());
+}
+
+function namedDirectoryAnswer(
+  matches: readonly SourceContractContext[],
+): SourceWorkspaceVisualAnswer {
+  const single = matches.length === 1 ? matches[0] : null;
+  const ids = matches.map((row) => row.contractId);
+  return {
+    directAnswer: single
+      ? `The current Source contract directory identifies ${single.vendorName} ${single.contractName} (${single.contractId}) with recorded annual value ${currencyLabel(single.annualValueUsd)} and end date ${single.endDate ?? "not established"}. A notice date is ${single.noticeDate ?? "not established"} in this directory. Open this Contract 360 record for its detailed evidence and optimization case; I will not use the currently selected contract's facts in its place.`
+      : `More than one contract matches the supplier name in the current Source packet (${ids.join(", ")}). Name or open the exact contract ID; I will not choose one or substitute the currently selected contract's figures.`,
+    artifacts: [],
+    citations: [
+      {
+        id: "source-named-contract-directory",
+        label: "Current Source contract directory",
+        sourceClass: "tenant-fact",
+        recordId: single?.contractId,
+        excerpt: single
+          ? "This contract header is present in the authorized Source directory; detailed evidence was not bound to this answer."
+          : "Multiple contract headers match the named supplier in the authorized Source directory.",
+        confidence: "high",
+      },
+    ],
+    factsUsed: single
+      ? [
+          {
+            id: "named-contract",
+            label: "Named contract",
+            value: `${single.contractId} ${single.vendorName}`,
+            citationIds: ["source-named-contract-directory"],
+          },
+        ]
+      : [],
+    metricsUsed: single
+      ? [
+          {
+            id: "named-contract-annual-value",
+            label: "Recorded annual contract value",
+            value: single.annualValueUsd ?? "Not established",
+            unit: single.annualValueUsd == null ? undefined : "USD",
+            citationIds: ["source-named-contract-directory"],
+          },
+        ]
+      : [],
+    relationshipsUsed: [],
+    caveats: [
+      {
+        id: "named-contract-directory-only",
+        label: "Directory scope only",
+        detail:
+          "The current page's selected-contract detail and opportunity context cannot be reused for another contract.",
+      },
+    ],
+    nextSteps: [
+      {
+        id: "open-named-contract",
+        label: "Open the exact Contract 360 record",
+        rationale:
+          "Bind contract-specific evidence and calculations before answering deeper questions.",
+        targetSurface: "source",
+      },
+    ],
+  };
+}
+
+function namedDirectoryAnswerIfNeeded(
+  context: AskSurfaceContext,
+  query: string,
+): SourceWorkspaceVisualAnswer | null {
+  const matches = namedContractsFromQuery(context, query);
+  if (matches.length === 0) return null;
+  const source = sourceV4(context);
+  const selectedRow = isRecord(source?.selectedContract)
+    ? source.selectedContract
+    : null;
+  const selected =
+    directContractContextFrom(context) ??
+    (selectedRow ? contractContextFromRecord(selectedRow) : null);
+  if (matches.length === 1 && matches[0].contractId === selected?.contractId) {
+    return null;
+  }
+  return namedDirectoryAnswer(matches);
+}
+
 function contractContextFromRecord(
   raw: Record<string, unknown>,
 ): SourceContractContext | null {
@@ -698,7 +814,8 @@ export function canBuildSourceWorkspaceVisualAnswer(input: {
     context &&
     stringValue(context.module)?.toLowerCase() === "source" &&
     wantsSourceVisualAnswer(input.query) &&
-    (selectedContractFrom(context, input.query) || requestedContractId),
+    (selectedContractFrom(context, input.query) || requestedContractId ||
+      namedContractsFromQuery(context, input.query).length > 0),
   );
 }
 
@@ -947,7 +1064,8 @@ export function canBuildSourceContractOptimizationExportAnswer(input: {
     context &&
       stringValue(context.module)?.toLowerCase() === "source" &&
       wantsContractOptimizationExport(input.query) &&
-      (selectedContractFrom(context, input.query) || requestedContractId),
+      (selectedContractFrom(context, input.query) || requestedContractId ||
+        namedContractsFromQuery(context, input.query).length > 0),
   );
 }
 
@@ -955,6 +1073,8 @@ export function buildSourceContractOptimizationExportAnswer(input: {
   query: string;
   surfaceContext: AskSurfaceContext;
 }): SourceWorkspaceVisualAnswer | null {
+  const namedAnswer = namedDirectoryAnswerIfNeeded(input.surfaceContext, input.query);
+  if (namedAnswer) return namedAnswer;
   const requestedContractId = contractIdFromQuery(input.query);
   const contract = selectedContractFrom(input.surfaceContext, input.query);
   if (!contract) {
@@ -1094,6 +1214,8 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   query: string;
   surfaceContext: AskSurfaceContext;
 }): SourceWorkspaceVisualAnswer | null {
+  const namedAnswer = namedDirectoryAnswerIfNeeded(input.surfaceContext, input.query);
+  if (namedAnswer) return namedAnswer;
   const requestedContractId = contractIdFromQuery(input.query);
   const contract = selectedContractFrom(input.surfaceContext, input.query);
   if (!contract) {

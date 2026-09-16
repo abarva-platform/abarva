@@ -894,6 +894,93 @@ describe("Source Workspace visual aVa answer", () => {
     ).toBe(true);
   });
 
+  it("resolves a uniquely named supplier without borrowing the selected contract", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.contractDirectory = [
+      {
+        contractId: "CTR-101",
+        vendorName: "Northstar Services Ltd",
+        contractName: "Application Services Agreement",
+        annualValueUsd: 7_800_000,
+        endDate: "31 Dec 2027",
+      },
+    ];
+
+    const query = "What is Northstar's annual value and renewal date?";
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query,
+      surfaceContext: context,
+    });
+
+    expect(canBuildSourceWorkspaceVisualAnswer({ query, surfaceContext: context })).toBe(true);
+    expect(answer?.directAnswer).toContain("CTR-101");
+    expect(answer?.directAnswer).toContain("Northstar Services Ltd");
+    expect(answer?.directAnswer).not.toContain("CTR-090");
+    expect(answer?.directAnswer).not.toContain("$43.5M");
+  });
+
+  it("refuses an ambiguous supplier name instead of choosing the open contract", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.contractDirectory = [
+      {
+        contractId: "CTR-101",
+        vendorName: "Northstar Services Ltd",
+        contractName: "Application Services Agreement",
+      },
+      {
+        contractId: "CTR-102",
+        vendorName: "Northstar Services Ltd",
+        contractName: "Infrastructure Services Agreement",
+      },
+    ];
+
+    const query = "What is Northstar's annual value and renewal date?";
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query,
+      surfaceContext: context,
+    });
+
+    expect(canBuildSourceWorkspaceVisualAnswer({ query, surfaceContext: context })).toBe(true);
+    expect(answer?.directAnswer).toMatch(/more than one contract/i);
+    expect(answer?.directAnswer).not.toContain("CTR-090");
+    expect(answer?.directAnswer).not.toContain("$43.5M");
+  });
+
+  it("keeps named-supplier exports directory-scoped until that contract is opened", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.contractDirectory = [
+      {
+        contractId: "CTR-101",
+        vendorName: "Northstar Services Ltd",
+        contractName: "Application Services Agreement",
+        annualValueUsd: 7_800_000,
+      },
+    ];
+
+    const query = "Export a Northstar optimization memo";
+    const answer = buildSourceContractOptimizationExportAnswer({
+      query,
+      surfaceContext: context,
+    });
+
+    expect(
+      canBuildSourceContractOptimizationExportAnswer({
+        query,
+        surfaceContext: context,
+      }),
+    ).toBe(true);
+    expect(answer?.directAnswer).toContain("CTR-101");
+    expect(answer?.directAnswer).not.toContain("CTR-090");
+    expect(answer?.directAnswer).not.toContain("$5.6M");
+    expect(answer?.artifacts).toHaveLength(0);
+  });
+
   it("renders source references as client-facing evidence basis labels", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: Record<string, unknown>;
