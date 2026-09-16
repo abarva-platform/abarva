@@ -28,6 +28,7 @@ import { buildSourceOptimizeContractHref } from "@/lib/source/optimize-routing";
 import type { SourceSourcingMotion } from "@/lib/source/sourcing-motion-journeys";
 import { parseSourceIntakeText } from "@/lib/source/intake-summary";
 import { buildAvaIntakeResponseParts } from "@/lib/source/ava-intake-response-parts";
+import { createdEventDestination } from "@/lib/source/new-workspace/navigation";
 import {
   isCapturedApprovalFact,
   isReviewableContractScope,
@@ -1119,10 +1120,9 @@ export function SourceOriginatePage({
       payload?.approvalUrl && payload.approvalUrl.includes(sourceEventId)
         ? payload.approvalUrl
         : `/source/events/${sourceEventId}/approval`;
-    // Forward the tour into approval; the canvas unlocks after approval.
-    const finalUrl = tourActive
-      ? approvalUrl + (approvalUrl.includes("?") ? "&tour=1" : "?tour=1")
-      : approvalUrl;
+    // The guided tour stays on its existing route; regular creation opens
+    // the event workspace with approval as its next governed action.
+    const finalUrl = createdEventDestination(sourceEventId, approvalUrl, tourActive, sourcingMotion);
     router.push(finalUrl);
     window.setTimeout(() => {
       if (window.location.pathname === "/source/new") {
