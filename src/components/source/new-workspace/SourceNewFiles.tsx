@@ -49,17 +49,9 @@ const PHASES: readonly { key: SourceNewFilePhase; label: string }[] = [
 const label = (value: string) => value.replaceAll("_", " ");
 
 function displayRows(rows: readonly SourceNewFileRow[], includeHistory: boolean) {
-  const sorted = [...rows].sort((a, b) => b.version - a.version);
-  if (includeHistory) return sorted;
-
-  const seen = new Set<string>();
-  return sorted.filter((row) => {
-    if (row.lifecycleState !== "current") return false;
-    const key = `${row.phase}:${row.artifactGroup}:${row.artifactType}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return rows
+    .filter((row) => includeHistory || row.lifecycleState === "current")
+    .sort((a, b) => b.generatedAt.localeCompare(a.generatedAt) || b.version - a.version);
 }
 
 function fileSize(bytes: number | null) {

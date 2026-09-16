@@ -78,4 +78,10 @@ describe("SourceNewFiles", () => {
     expect(screen.getByRole("option", { name: /Strategy brief/ })).toBeTruthy();
     expect(screen.queryByRole("option", { name: /Intake record/ })).toBeNull();
   });
+
+  it("shows distinct current documents even when they share a type", () => {
+    render(<SourceNewFiles rows={[base, { ...base, id: "another", title: "Second strategy brief", fileName: "another.pdf" }]} initialPhase="define" />);
+    expect(screen.getAllByRole("option")).toHaveLength(2);
+    expect(screen.getByRole("option", { name: /Second strategy brief/ })).toBeTruthy();
+  });
 });
