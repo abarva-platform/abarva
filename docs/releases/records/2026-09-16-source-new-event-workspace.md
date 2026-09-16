@@ -31,11 +31,13 @@ After creating a competitive sourcing event, an operator sees the recorded reque
 - Phase-based file browser over authorized, existing artifact records.
 - Pure step-readiness contract for future workflow integration; no readiness result is asserted from unavailable authority fields.
 - Normal competitive-event creation lands in the workspace; contract optimization and the guided tour retain their existing approval paths.
+- Existing Source entry links use framework navigation so the new dynamic route does not trip route-aware linting.
 
 ## QA / Validation
 
 - PASS: focused behavior tests cover next-action uniqueness, missing-fact display, later-stage status, file filtering and version history, navigation, and readiness gates.
 - PASS: TypeScript and scoped ESLint.
+- PASS: repository-wide ESLint with 0 errors; pre-existing warnings remain.
 - PASS: isolated desktop and mobile visual harness checks layout and overflow; it is not signed-in product proof.
 - NOT RUN: signed-in deployed workflow proof, pending merge and deploy.
 
