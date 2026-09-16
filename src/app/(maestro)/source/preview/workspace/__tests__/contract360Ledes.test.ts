@@ -155,8 +155,16 @@ describe("evidenceLede", () => {
     } as unknown as SourceContractEvidenceCoverageRow;
 
     const lede = evidenceLede(coverage, 1);
-    expect(lede).toContain("28 governed rows across 4 evidence lanes");
+    expect(lede).toContain("22 governed rows across 3 evidence lanes");
     expect(lede).toContain("1 further lane is not required");
+  });
+
+  it("does not count recommendation rows as evidence", () => {
+    const coverage = {
+      opportunity_rows: 6,
+    } as unknown as SourceContractEvidenceCoverageRow;
+
+    expect(evidenceLede(coverage, 0)).toBeNull();
   });
 
   it("says nothing about not-required lanes when there are none", () => {

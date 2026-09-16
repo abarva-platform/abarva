@@ -677,13 +677,6 @@ export function ContractEvidenceFamilies({
       required: true,
     },
     {
-      name: "Negotiation levers",
-      note: "Governed optimization candidates raised against this contract.",
-      count: laneCount(coverage, "opportunity_rows"),
-      system: "governed analysis",
-      required: true,
-    },
-    {
       name: "Contract document proof",
       note: "Page spans and proof text behind a clause-level claim.",
       count: laneCount(coverage, "document_page_text_rows"),
