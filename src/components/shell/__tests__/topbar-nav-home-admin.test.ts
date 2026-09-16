@@ -42,6 +42,7 @@ describe("Top-nav · Home and Admin remain separate", () => {
     expect(byKey.intelligence).toBe("/intelligence");
     expect(byKey.programs).toBe("/strategic-moves");
     expect(byKey.source).toBe("/source");
+    expect(byKey["source-new"]).toBe("/source/new");
     expect(byKey.tower).toBe("/tower");
     expect(byKey.learn).toBeUndefined();
   });
