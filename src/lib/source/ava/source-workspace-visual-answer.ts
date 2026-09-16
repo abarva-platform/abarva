@@ -626,7 +626,22 @@ function opportunityLinesFrom(
     }));
 }
 
-function connectionsFrom(context: AskSurfaceContext): SourceConnection[] {
+function selectedPacketMatchesContract(
+  context: AskSurfaceContext,
+  contractId: string,
+): boolean {
+  const selected = sourceV4(context)?.selectedContract;
+  return (
+    isRecord(selected) &&
+    stringValue(selected.contractId)?.toUpperCase() === contractId.toUpperCase()
+  );
+}
+
+function connectionsFrom(
+  context: AskSurfaceContext,
+  contractId: string,
+): SourceConnection[] {
+  if (!selectedPacketMatchesContract(context, contractId)) return [];
   const source = sourceV4(context);
   const spine = isRecord(source?.optimizationSpine)
     ? source.optimizationSpine
@@ -657,7 +672,9 @@ function connectionsFrom(context: AskSurfaceContext): SourceConnection[] {
 
 function commercialPostureLinesFrom(
   context: AskSurfaceContext,
+  contractId: string,
 ): SourceCommercialPostureLine[] {
+  if (!selectedPacketMatchesContract(context, contractId)) return [];
   const source = sourceV4(context);
   const posture = isRecord(source?.commercialPosture)
     ? source.commercialPosture
@@ -977,8 +994,13 @@ export function buildSourceContractOptimizationExportAnswer(input: {
       : "No governed optimization levers are loaded for this contract.";
   const contractCitationId = "source-contract-context";
   const opportunityCitationId = "source-contract-lever-export";
+  const executiveRead = rows.length === 0
+    ? `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) has no governed optimization levers in the current packet. Actionability and candidate value are not established.`
+    : sizedRows.length === 0
+      ? `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) has ${signalRows.length} unsized ${signalRows.length === 1 ? "lever" : "levers"}. No candidate value is sized; close the named evidence gates before making a value claim.`
+      : `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) has ${sizedRows.length} sized ${sizedRows.length === 1 ? "lever" : "levers"} (${currencyLabel(sizedTotalUsd)} candidate value) and ${signalRows.length} unsized signal-stage ${signalRows.length === 1 ? "lever" : "levers"}. Candidate value is not realized savings.`;
   const directAnswer = [
-    `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is an optimization case, not realized savings. Work the ${sizedRows.length} sized levers first (${currencyLabel(sizedTotalUsd)} candidate value) and keep ${signalRows.length} signal-stage ${signalRows.length === 1 ? "lever" : "levers"} unsized until the named evidence gates close. Finance-confirmed value remains $0 until Finance/Tower approval is loaded.`,
+    `${executiveRead} Finance-confirmed value is not established by this packet; separate Finance/Tower confirmation is required.`,
     tableMarkdown,
   ].join("\n\n");
 
@@ -1102,9 +1124,10 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       : null;
   }
   const lines = opportunityLinesFrom(input.surfaceContext, contract.contractId);
-  const connections = connectionsFrom(input.surfaceContext);
+  const connections = connectionsFrom(input.surfaceContext, contract.contractId);
   const commercialPostureLines = commercialPostureLinesFrom(
     input.surfaceContext,
+    contract.contractId,
   );
   const contractMismatch =
     requestedContractId &&
@@ -1222,10 +1245,16 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         })),
         {
           id: "opportunities",
-          label: "Commercial opportunities",
-          kind: "opportunity set",
+          label: lines.length > 0
+            ? "Commercial opportunities"
+            : "No governed opportunity rows",
+          kind: lines.length > 0 ? "opportunity set" : "evidence gap",
         },
-        { id: "door1", label: "Door 1 action", kind: "workflow" },
+        {
+          id: "door1",
+          label: lines.length > 0 ? "Door 1 action" : "Action blocked",
+          kind: "workflow",
+        },
       ],
       edges: [
         { from: "contract", to: "scope", label: "defines scope" },
@@ -1234,8 +1263,16 @@ export function buildSourceWorkspaceVisualAnswer(input: {
           to: "opportunities",
           label: connection.ledgers.join(", ") || "feeds evidence",
         })),
-        { from: "contract", to: "opportunities", label: "anchors values" },
-        { from: "opportunities", to: "door1", label: "gates action" },
+        {
+          from: "contract",
+          to: "opportunities",
+          label: lines.length > 0 ? "anchors values" : "needs evidence",
+        },
+        {
+          from: "opportunities",
+          to: "door1",
+          label: lines.length > 0 ? "gates action" : "blocks action",
+        },
       ],
       citationIds: [contractCitationId, graphCitationId],
     },
@@ -1343,7 +1380,9 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       : `${contract.performanceObservationCount} active performance observations`,
   ].join(", ");
   const candidateSummary =
-    sizedCount > 0
+    lines.length === 0
+      ? "No governed contract-specific opportunity row is loaded."
+      : sizedCount > 0
       ? `${sizedCount} sized ${sizedCount === 1 ? "line" : "lines"} of contract-specific candidate commercial opportunities total ${currencyLabel(candidateTotalUsd)}. ${signalRows.length > 0 ? `${signalStageClause(signalRows.length)} and excluded from sized totals and charts until evidence gates close. ` : ""}Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation. These amounts are candidates, not realized savings.`
       : `There are no sized contract-specific candidate commercial opportunity lines with governed numeric values. ${signalRows.length > 0 ? `${signalStageClause(signalRows.length)} and excluded from sized totals and charts until evidence gates close. ` : ""}Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation.`;
   const negotiationStance =
@@ -1353,7 +1392,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
 
   return {
     directAnswer: [
-      `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is a candidate commercial optimization case, not realized savings, unless finance-confirmed outcome rows are explicitly loaded. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question." : "It is bound from the governed Source contract context."}`,
+      `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) ${lines.length > 0 ? "has governed commercial opportunity rows, but they are not realized savings without finance-confirmed outcome evidence" : "has no governed commercial opportunity row in the current packet; actionability and value are not established"}. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question." : "It is bound from the governed Source contract context."}`,
       `Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}`,
       leverTableSummary,
       negotiationStance,
@@ -1439,13 +1478,21 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         : []),
     ],
     nextSteps: [
-      {
-        id: "door1",
-        label: "Open Door 1 with the current evidence pack",
-        rationale:
-          "Use the table and relationship graph as the starting packet for baseline, diagnosis, levers, approval, and finance proof.",
-        targetSurface: "source",
-      },
+      lines.length > 0
+        ? {
+            id: "door1",
+            label: "Open Door 1 with the current evidence pack",
+            rationale:
+              "Use the table and relationship graph as the starting packet for baseline, diagnosis, levers, approval, and finance proof.",
+            targetSurface: "source",
+          }
+        : {
+            id: "review-evidence",
+            label: "Review contract-specific opportunity evidence",
+            rationale:
+              "No governed opportunity row is loaded for this contract, so do not open a value case on inferred levers.",
+            targetSurface: "source",
+          },
     ],
   };
 }

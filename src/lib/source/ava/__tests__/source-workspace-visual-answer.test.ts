@@ -894,6 +894,57 @@ describe("Source Workspace visual aVa answer", () => {
     ).toBe(true);
   });
 
+  it("does not promote a contract without opportunity rows into an optimization case", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.selectedContract = null;
+    context.sourceV4.contractDirectory = [
+      {
+        contractId: "CTR-0002",
+        vendorName: "Optum Rx",
+        contractName: "Pharmacy Benefits Services Agreement",
+        annualValueUsd: 8_600_000,
+      },
+    ];
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "Why is CTR-0002 actionable?",
+      surfaceContext: context,
+    });
+    expect(answer?.directAnswer).toContain(
+      "actionability and value are not established",
+    );
+    expect(answer?.directAnswer).not.toContain(
+      "is a candidate commercial optimization case",
+    );
+    expect(answer?.directAnswer).not.toContain("$6.1M below committed");
+    expect(answer?.directAnswer).not.toContain("Commitment ahead of usage");
+    expect(answer?.relationshipsUsed).toHaveLength(0);
+    const graph = answer?.artifacts.find(
+      (artifact) => artifact.id === "source-contract-evidence-relationship-graph",
+    );
+    expect(graph?.artifact).toBe("graph");
+    if (graph?.artifact === "graph") {
+      expect(graph.nodes.map((node) => node.id)).not.toContain("source-clm");
+      expect(graph.nodes.map((node) => node.label)).toContain(
+        "No governed opportunity rows",
+      );
+    }
+    expect(answer?.nextSteps[0]?.id).toBe("review-evidence");
+
+    const exportAnswer = buildSourceContractOptimizationExportAnswer({
+      query: "Give me a PDF-ready table of levers to optimize CTR-0002.",
+      surfaceContext: context,
+    });
+    expect(exportAnswer?.directAnswer).toContain(
+      "No governed optimization levers are loaded",
+    );
+    expect(exportAnswer?.directAnswer).not.toContain("is an optimization case");
+    expect(exportAnswer?.directAnswer).not.toContain("Work the 0 sized levers");
+    expect(exportAnswer?.directAnswer).not.toContain("$0 candidate value");
+  });
+
   it("renders source references as client-facing evidence basis labels", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: Record<string, unknown>;
