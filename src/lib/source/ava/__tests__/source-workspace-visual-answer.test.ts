@@ -271,7 +271,22 @@ describe("Source Workspace visual aVa answer", () => {
       "lines of contract-specific candidate commercial opportunities",
     );
     expect(answer?.directAnswer).toContain("recorded annual value $43.5M");
+    expect(answer?.directAnswer).toContain("total committed contract value $173.9M");
     expect(answer?.directAnswer).toContain("actual annual spend $37.4M");
+    expect(answer?.directAnswer).toContain(
+      "Actual spend does not by itself establish that invoices were paid",
+    );
+    expect(answer?.directAnswer).toContain(
+      "Annual contract value is not the total committed value",
+    );
+    expect(answer?.metricsUsed).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "total-committed-value",
+          value: 173_900_000,
+        }),
+      ]),
+    );
     expect(answer?.directAnswer).toContain("vendor Salesforce");
     expect(answer?.directAnswer).toContain("contract ID CTR-090");
     expect(answer?.directAnswer).toContain("end date 28 Jun 2031");
