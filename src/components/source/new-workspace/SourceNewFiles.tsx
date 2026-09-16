@@ -43,7 +43,7 @@ const PHASES: readonly { key: SourceNewFilePhase; label: string }[] = [
   { key: "request", label: "Request" },
   { key: "define", label: "Define" },
   { key: "suppliers", label: "Suppliers" },
-  { key: "rfi", label: "RFI" },
+  { key: "rfi", label: "Market package" },
 ];
 
 const label = (value: string) => value.replaceAll("_", " ");

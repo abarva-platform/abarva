@@ -30,7 +30,7 @@ const PHASES: readonly { key: Phase; label: string }[] = [
   { key: "request", label: "Request" },
   { key: "define", label: "Define" },
   { key: "suppliers", label: "Suppliers & NDA" },
-  { key: "rfi", label: "RFI" },
+  { key: "rfi", label: "Market package" },
 ];
 const VIEWS: readonly { key: View; label: string }[] = [
   { key: "work", label: "Work" },

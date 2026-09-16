@@ -41,12 +41,23 @@ describe("SourceNewWorkspace", () => {
     expect(screen.getByText("Awaiting intake review")).toBeTruthy();
   });
 
-  it("does not pretend RFI remains current after the event advances", () => {
+  it("does not pretend the market package remains current after the event advances", () => {
     render(<SourceNewWorkspace event={{ ...request, currentStage: "evaluation", lifecycle: "active" }} files={[]} />);
     expect(screen.getByText("Current stage: evaluation")).toBeTruthy();
     expect(screen.queryByText("This step is not open yet")).toBeNull();
     expect(screen.getByRole("link", { name: "Continue current stage" }).getAttribute("href"))
       .toBe("/source/events/event-1");
+  });
+
+  it("does not label a competitive RFP event or its file folder as RFI", () => {
+    render(<SourceNewWorkspace event={{ ...request, eventType: "competitive_sourcing", currentStage: "rfp", lifecycle: "active" }} files={[]} />);
+    const phases = screen.getByRole("navigation", { name: "Event phases" });
+    expect(within(phases).getByRole("button", { name: /Market package/ })).toBeTruthy();
+    expect(within(phases).queryByText("RFI")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Files" }));
+    const folders = screen.getByRole("navigation", { name: "File folders" });
+    expect(within(folders).getByRole("button", { name: "Market package" })).toBeTruthy();
+    expect(within(folders).queryByText("RFI")).toBeNull();
   });
 
   it("does not send a vendor-waiting event back to intake approval", () => {
