@@ -83,4 +83,26 @@ describe("ContractLeverTable", () => {
     expect(total).toContain("Total candidate across the 1 sized lever");
     expect(total).toContain("1 further ask carries no amount");
   });
+
+  it("does not claim a sourced numeric total when every lever is unsized", () => {
+    render(
+      <ContractLeverTable
+        vm={vmFor([
+          opportunity({ amountUsd: null, amount: "Not sized" }),
+          opportunity({
+            id: "OPP-2",
+            stage: "Signal",
+            stageRaw: "signal",
+            amountUsd: null,
+            amount: "Not sized",
+          }),
+        ])}
+      />,
+    );
+
+    const total = document.querySelector(".sw-c3-lever-total-note")?.textContent;
+    expect(total).toContain("No candidate value is sized");
+    expect(total).not.toContain("numbers that each resolve");
+    expect(total).not.toContain("0 sized levers");
+  });
 });

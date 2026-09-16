@@ -162,11 +162,17 @@ export function ContractLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
           {sized.length > 0 ? view?.potential.total ?? "Not sized" : "Not sized"}
         </span>
         <span className="sw-c3-lever-total-note">
-          Total <b>candidate</b> across the {sized.length}{" "}
-          {sized.length === 1 ? "sized lever" : "sized levers"}. Not a saving
-          and not a forecast — {sized.length === 1 ? "a number" : "numbers"} that
-          each resolve to a source row, awaiting a Finance confirmation that has
-          not happened.
+          {sized.length > 0 ? (
+            <>
+              Total <b>candidate</b> across the {sized.length}{" "}
+              {sized.length === 1 ? "sized lever" : "sized levers"}. Not a
+              saving and not a forecast — {sized.length === 1 ? "a number" : "numbers"}{" "}
+              that each resolve to a source row, awaiting a Finance confirmation
+              that has not happened.
+            </>
+          ) : (
+            "No candidate value is sized. These asks are not a saving or a forecast."
+          )}
           {signalCount > 0
             ? ` ${signalCount} further ${signalCount === 1 ? "ask carries" : "asks carry"} no amount and ${signalCount === 1 ? "is" : "are"} not counted.`
             : ""}
