@@ -196,7 +196,6 @@ export function evidenceLede(
     ["performance", numberFromDb(coverage.performance_rows)],
     ["document", numberFromDb(coverage.document_page_text_rows)],
     ["change order", numberFromDb(coverage.change_order_rows)],
-    ["opportunity", numberFromDb(coverage.opportunity_rows)],
   ];
 
   const loaded = lanes.filter(([, count]) => (count ?? 0) > 0);
@@ -208,5 +207,5 @@ export function evidenceLede(
       ? ` ${notRequiredLanes} further ${plural(notRequiredLanes, "lane is", "lanes are")} not required for this contract type.`
       : "";
 
-  return `${rows} governed ${plural(rows, "row", "rows")} across ${loaded.length} evidence ${plural(loaded.length, "lane", "lanes")} back every figure on this contract.${tail}`;
+  return `${rows} governed ${plural(rows, "row", "rows")} across ${loaded.length} evidence ${plural(loaded.length, "lane", "lanes")} are available for this contract.${tail}`;
 }
