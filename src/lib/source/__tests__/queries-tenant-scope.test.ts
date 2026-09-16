@@ -1,5 +1,6 @@
 import {
   getSourcingEvent,
+  getSourcingEventForResolvedClient,
   getSourcingEventArtifact,
   listSourcingEvents,
 } from "../queries";
@@ -112,6 +113,68 @@ function mockApexPersistedGoldenEvent() {
     },
   );
 }
+
+describe("resolved Source event tenant boundary", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockEmptySourceEventsTable();
+    canReadSourceEvent.mockResolvedValue(true);
+  });
+
+  it("does not read with a missing tenancy even if the caller supplies a client key", async () => {
+    await expect(getSourcingEventForResolvedClient("event-1", {
+      activeClientKey: "tenant-a",
+      activeClientName: "Tenant A",
+    })).resolves.toBeNull();
+    expect(mockSourceEventsAdapter.getEventByCodeForClient).not.toHaveBeenCalled();
+    expect(canReadSourceEvent).not.toHaveBeenCalled();
+  });
+
+  it("does not read when the authenticated tenancy differs from the active client", async () => {
+    await expect(getSourcingEventForResolvedClient("event-1", {
+      activeClientKey: "tenant-a",
+      activeClientName: "Tenant A",
+      tenancy: { clientKey: "tenant-b" } as Awaited<ReturnType<typeof requireTenancy>>,
+      enforceSourcePolicy: false,
+    })).resolves.toBeNull();
+    expect(mockSourceEventsAdapter.getEventByCodeForClient).not.toHaveBeenCalled();
+    expect(canReadSourceEvent).not.toHaveBeenCalled();
+  });
+
+  it("returns an authorized event but rejects a foreign row returned by an adapter", async () => {
+    const row = {
+      id: "event-1",
+      client_key: "tenant-a",
+      event_code: "EVENT-1",
+      event_name: "Services request",
+      event_type: "managed_services",
+      current_stage_key: "strategy",
+      lifecycle_state: "active",
+      linked_program_id: null,
+      estimated_value_usd: null,
+      trigger_description: "Renewal",
+      scope_description: "Application support",
+      decision_owner: "Sourcing lead",
+      created_by_user_id: null,
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    };
+    mockSourceEventsAdapter.getEventByCodeForClient.mockResolvedValue(row);
+    const args = {
+      activeClientKey: "tenant-a",
+      activeClientName: "Tenant A",
+      tenancy: { clientKey: "tenant-a" } as Awaited<ReturnType<typeof requireTenancy>>,
+    };
+
+    await expect(getSourcingEventForResolvedClient("EVENT-1", args)).resolves.toMatchObject({ id: "event-1" });
+    expect(canReadSourceEvent).toHaveBeenCalledWith(args.tenancy, "tenant-a", "event-1");
+
+    mockSourceEventsAdapter.getEventByCodeForClient.mockResolvedValue({ ...row, client_key: "tenant-b" });
+    canReadSourceEvent.mockClear();
+    await expect(getSourcingEventForResolvedClient("EVENT-1", args)).resolves.toBeNull();
+    expect(canReadSourceEvent).not.toHaveBeenCalled();
+  });
+});
 
 describe("listSourcingEvents tenant scoping", () => {
   beforeEach(() => {
