@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  SPINE, DELETE_ORDER, assertNoLegacy, canonicalInventory, expected, inspectLegacy, metadata, reconstructedInventoryHash, resolveScope, selectRows,
+  SPINE, DELETE_ORDER, assertNoLegacy, canonicalInventory, expected, inspectLegacy, metadata, proofTarget, reconstructedInventoryHash, resolveScope, selectRows,
 } from "../opportunity-ownership-cutover-job.mjs";
 
 const scope = { tenantKey: "synthetic-tenant", datasetVersion: "evidence-v1", contractId: "C-1", writerDatasetVersion: "writer-v1" };
@@ -115,4 +115,14 @@ test("apply and restore require exact approval, hash, run metadata, and pinned d
   assert.deepEqual(expected(env, "apply"), { ids: ["O-1"], hash: "c".repeat(64), writerHash: "e".repeat(64) });
   assert.deepEqual(expected(env, "plan"), { ids: null, hash: null, writerHash: null });
   assert.throws(() => metadata({ ...env, SOURCE_CUTOVER_IMAGE_DIGEST: "latest", SOURCE_CUTOVER_APPROVED: "APPLY" }, "apply"), /Digest/);
+});
+
+test("private Blob target pins a user-assigned identity without credential fallback", async () => {
+  const env = { SOURCE_CUTOVER_BLOB_ACCOUNT_URL: "https://privateproof.blob.core.windows.net",
+    SOURCE_CUTOVER_BLOB_CONTAINER: "source-cutover-proof", SOURCE_CUTOVER_BLOB_PREFIX: "runs/local" };
+  await assert.rejects(proofTarget(env, "apply"), /AZURE_CLIENT_ID is required/);
+  await assert.rejects(proofTarget({ ...env, AZURE_CLIENT_ID: "not-a-uuid" }, "apply"), /approved user-assigned identity/);
+  const target = await proofTarget({ ...env, AZURE_CLIENT_ID: "00000000-0000-4000-8000-000000000001" }, "apply");
+  assert.equal(target.prefix, "runs/local");
+  assert.equal(target.client.url, "https://privateproof.blob.core.windows.net/source-cutover-proof");
 });

@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { BlobServiceClient } from "@azure/storage-blob";
-import { DefaultAzureCredential } from "@azure/identity";
+import { ManagedIdentityCredential } from "@azure/identity";
 import { readOpportunityOwnershipManifest } from "./opportunity-ownership.mjs";
 
 const SPINE = [
@@ -334,7 +334,8 @@ async function inventory(client, scope, expectedIds, retiredIds = expectedIds, r
   const writerRows = {};
   for (const table of SPINE) writerRows[table] = await loadRows(client, { ...scope, datasetVersion: scope.writerDatasetVersion }, table);
   const writerHash = canonicalInventory(writerRows, new Set()).inventoryHash;
-  return { ...selected, ...hashes, writerHash, legacy, schema, rowsByTable };
+  const writerRootCount = writerRows.optimization_opportunity.filter((row) => row.contract_id === scope.contractId).length;
+  return { ...selected, ...hashes, writerHash, writerRootCount, legacy, schema, rowsByTable };
 }
 
 function requiredEnv(env, name) { assert(env[name]?.trim(), `${name} is required`); return env[name].trim(); }
@@ -381,9 +382,12 @@ async function proofTarget(env, mode) {
   const url = requiredEnv(env, "SOURCE_CUTOVER_BLOB_ACCOUNT_URL");
   const container = requiredEnv(env, "SOURCE_CUTOVER_BLOB_CONTAINER");
   const prefix = requiredEnv(env, "SOURCE_CUTOVER_BLOB_PREFIX");
+  const clientId = requiredEnv(env, "AZURE_CLIENT_ID");
   assert(/^https:\/\/[a-z0-9-]+\.blob\.core\.windows\.net\/?$/.test(url), "Private Azure Blob account URL required");
   assert(/^[a-z0-9-]+$/.test(container) && /^[a-zA-Z0-9/_-]+$/.test(prefix), "Invalid proof location");
-  const service = new BlobServiceClient(url, new DefaultAzureCredential());
+  assert(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(clientId),
+    "AZURE_CLIENT_ID must identify the approved user-assigned identity");
+  const service = new BlobServiceClient(url, new ManagedIdentityCredential(clientId));
   return { client: service.getContainerClient(container), prefix };
 }
 
@@ -451,12 +455,17 @@ async function runJob({ mode, env = process.env, pool, targetOverride } = {}) {
   let committed = false;
   try {
     await client.query(mode === "plan" || mode === "verify" ? "BEGIN ISOLATION LEVEL SERIALIZABLE READ ONLY" : "BEGIN ISOLATION LEVEL SERIALIZABLE");
+    const tenantContext = await client.query("SELECT set_config('app.tenant_key', $1, true) AS tenant_key", [scope.tenantKey]);
+    assert(tenantContext.rows[0]?.tenant_key === scope.tenantKey, "Tenant transaction context could not be established");
     if (mode === "plan" || mode === "apply") {
       const snapshot = await inventory(client, scope, approval.ids);
+      assert(snapshot.rootCount > 0, "No evidence-only opportunity roots visible; check scope and RLS");
+      assert(snapshot.writerRootCount > 0, "No canonical-writer opportunity roots visible; check scope and RLS");
       Object.assign(proof, { inventory_sha256: snapshot.inventoryHash, archive_sha256: snapshot.archiveHash,
         archive_row_count: snapshot.archiveCount, opportunity_ids: snapshot.ids,
         table_counts: Object.fromEntries(SPINE.map((table) => [table, snapshot.selected[table].length])),
         control_sha256: snapshot.controlHash, canonical_writer_sha256: snapshot.writerHash,
+        canonical_writer_root_count: snapshot.writerRootCount,
         legacy_opportunity_blockers: snapshot.legacy,
         installed_constraints: snapshot.schema.constraints,
         quality_gate: snapshot.legacy.count === 0 ? "inventory_pass" : "BLOCKED_LEGACY_PROJECTION_ROWS" });
@@ -542,7 +551,7 @@ async function runJob({ mode, env = process.env, pool, targetOverride } = {}) {
   } finally { client.release(); }
 }
 
-export { SPINE, DELETE_ORDER, assertNoLegacy, canonicalInventory, expected, inspectLegacy, metadata, reconstructedInventoryHash, runJob };
+export { SPINE, DELETE_ORDER, assertNoLegacy, canonicalInventory, expected, inspectLegacy, metadata, proofTarget, reconstructedInventoryHash, runJob };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const mode = process.argv.find((arg) => arg.startsWith("--mode="))?.slice(7);

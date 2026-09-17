@@ -32,7 +32,7 @@ async function startLocalPostgres() {
     throw error;
   }
   const pool = new pg.Pool({ host: socket, port, user: "cutover_test", database: "postgres", max: 2 });
-  return { pool, stop: async () => {
+  return { pool, socket, port, stop: async () => {
     await pool.end();
     command("pg_ctl", ["-D", data, "-m", "immediate", "-w", "stop"]);
     fs.rmSync(temp, { recursive: true, force: true });
@@ -40,7 +40,7 @@ async function startLocalPostgres() {
 }
 
 async function installSchema(pool) {
-  await pool.query(`CREATE ROLE authenticated; CREATE ROLE service_role;
+  await pool.query(`CREATE ROLE authenticated; CREATE ROLE service_role LOGIN;
     CREATE SCHEMA auth; CREATE SCHEMA source; CREATE SCHEMA consumption;
     CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql AS $$ SELECT 'service_role'::text $$;
     CREATE FUNCTION source.can_read_sourcing_tenant(text) RETURNS boolean LANGUAGE sql AS $$ SELECT true $$;`);
@@ -65,6 +65,17 @@ async function installSchema(pool) {
       WHERE NOT EXISTS (SELECT 1 FROM source.optimization_opportunity canonical
         WHERE canonical.tenant_key=legacy.tenant_key AND canonical.opportunity_id=legacy.opportunity_id)
       UNION ALL SELECT tenant_key,opportunity_id FROM source.optimization_opportunity;`);
+  for (const table of SPINE) {
+    await pool.query(`ALTER TABLE source."${table}" ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS "service_role_all_${table}" ON source."${table}";
+      DROP POLICY IF EXISTS "authenticated_read_${table}" ON source."${table}";
+      CREATE POLICY cutover_test_tenant ON source."${table}" FOR ALL TO service_role
+        USING (tenant_key=current_setting('app.tenant_key',true))
+        WITH CHECK (tenant_key=current_setting('app.tenant_key',true));`);
+  }
+  await pool.query(`GRANT USAGE ON SCHEMA source,consumption,auth TO service_role;
+    GRANT ALL ON ALL TABLES IN SCHEMA source TO service_role;
+    GRANT SELECT ON ALL TABLES IN SCHEMA consumption TO service_role;`);
   const tables = await pool.query(`SELECT tablename FROM pg_tables WHERE schemaname='source' AND tablename=ANY($1::text[])`, [SPINE]);
   assert.equal(tables.rows.length, 21);
   const fks = await pool.query(`SELECT count(*)::int AS count FROM pg_constraint WHERE contype='f'
@@ -161,14 +172,19 @@ function environment(scope, runId) {
 
 test("local PostgreSQL plan/apply/verify/restore preserves every spine row and durable proof", { timeout: 120_000 }, async () => {
   const local = await startLocalPostgres();
+  let jobPool;
   try {
     await installSchema(local.pool);
     const scope = resolveScope(readOpportunityOwnershipManifest("plan"));
     const opportunity = await seedFixture(local.pool, scope);
+    jobPool = new pg.Pool({ host: local.socket, port: local.port, user: "service_role", database: "postgres", max: 1 });
+    const hidden = await jobPool.query("SELECT count(*)::int AS count FROM source.optimization_opportunity WHERE tenant_key=$1", [scope.tenantKey]);
+    assert.equal(hidden.rows[0].count, 0, "RLS fixture must hide rows without app.tenant_key");
     const blob = blobTarget();
     const env = environment(scope, "cutover-local-1");
-    const plan = await runJob({ mode: "plan", env, pool: local.pool, targetOverride: blob.target });
+    const plan = await runJob({ mode: "plan", env, pool: jobPool, targetOverride: blob.target });
     assert.equal(plan.archive_row_count, 21);
+    assert.equal(plan.canonical_writer_root_count, 1);
     assert(SPINE.every((table) => plan.table_counts[table] === 1), "All 21 table rows must be selected");
     assert.equal(plan.quality_gate, "inventory_pass");
     assert.equal(plan.aca_execution_id, null);
@@ -179,21 +195,21 @@ test("local PostgreSQL plan/apply/verify/restore preserves every spine row and d
 
     await insert(local.pool, "sourcing_opportunity", { tenant_key: scope.tenantKey, contract_id: scope.contractId,
       opportunity_id: opportunity });
-    const blocked = await runJob({ mode: "plan", env, pool: local.pool, targetOverride: blob.target });
+    const blocked = await runJob({ mode: "plan", env, pool: jobPool, targetOverride: blob.target });
     assert.equal(blocked.legacy_opportunity_blockers.count, 1);
     assert.equal(blocked.quality_gate, "BLOCKED_LEGACY_PROJECTION_ROWS");
     await assert.rejects(runJob({ mode: "apply", env: { ...approved, SOURCE_CUTOVER_APPROVED: "APPLY" },
-      pool: local.pool, targetOverride: blob.target }), /Legacy opportunity rows/);
+      pool: jobPool, targetOverride: blob.target }), /Legacy opportunity rows/);
     await local.pool.query("DELETE FROM source.sourcing_opportunity WHERE tenant_key=$1 AND contract_id=$2", [scope.tenantKey, scope.contractId]);
 
     blob.state.failPrepared = true;
     await assert.rejects(runJob({ mode: "apply", env: { ...approved, SOURCE_CUTOVER_APPROVED: "APPLY" },
-      pool: local.pool, targetOverride: blob.target }), /prepared Blob unavailable/);
+      pool: jobPool, targetOverride: blob.target }), /prepared Blob unavailable/);
     assert.equal((await local.pool.query("SELECT count(*)::int AS count FROM source.opportunity_cutover_run")).rows[0].count, 0);
     blob.state.failPrepared = false;
     blob.state.failFinal = true;
     await assert.rejects(runJob({ mode: "apply", env: { ...approved, SOURCE_CUTOVER_APPROVED: "APPLY" },
-      pool: local.pool, targetOverride: blob.target }), /transaction committed but final Blob proof failed/);
+      pool: jobPool, targetOverride: blob.target }), /transaction committed but final Blob proof failed/);
     assert.equal((await local.pool.query("SELECT count(*)::int AS count FROM source.opportunity_cutover_archive")).rows[0].count, 21);
     assert.equal((await local.pool.query("SELECT count(*)::int AS count FROM source.optimization_opportunity WHERE opportunity_id=$1", [opportunity])).rows[0].count, 0);
     assert.equal((await local.pool.query("SELECT state FROM source.opportunity_cutover_run WHERE run_id=$1", [env.SOURCE_CUTOVER_RUN_ID])).rows[0].state, "retired");
@@ -207,7 +223,7 @@ test("local PostgreSQL plan/apply/verify/restore preserves every spine row and d
       SET row_payload=jsonb_set(row_payload,'{narrative}','"tampered"'::jsonb)
       WHERE run_id=$1 AND source_table=$2 AND source_row_id=$3`,
     [env.SOURCE_CUTOVER_RUN_ID, archived.source_table, archived.source_row_id]);
-    await assert.rejects(runJob({ mode: "verify", env: approved, pool: local.pool, targetOverride: blob.target }), /Archived row hash mismatch/);
+    await assert.rejects(runJob({ mode: "verify", env: approved, pool: jobPool, targetOverride: blob.target }), /Archived row hash mismatch/);
     await local.pool.query(`UPDATE source.opportunity_cutover_archive SET row_payload=$4::jsonb
       WHERE run_id=$1 AND source_table=$2 AND source_row_id=$3`,
     [env.SOURCE_CUTOVER_RUN_ID, archived.source_table, archived.source_row_id, archived.payload]);
@@ -215,23 +231,29 @@ test("local PostgreSQL plan/apply/verify/restore preserves every spine row and d
     await local.pool.query(`UPDATE source.optimization_opportunity SET narrative='changed'
       WHERE tenant_key=$1 AND dataset_version=$2 AND opportunity_id='OPP-CONTROL'`,
     [scope.tenantKey, scope.datasetVersion]);
-    await assert.rejects(runJob({ mode: "verify", env: approved, pool: local.pool, targetOverride: blob.target }),
+    await assert.rejects(runJob({ mode: "verify", env: approved, pool: jobPool, targetOverride: blob.target }),
       /Unrelated or canonical writer rows changed/);
     await local.pool.query(`UPDATE source.optimization_opportunity SET narrative='Untouched control'
       WHERE tenant_key=$1 AND dataset_version=$2 AND opportunity_id='OPP-CONTROL'`,
     [scope.tenantKey, scope.datasetVersion]);
 
-    const verify = await runJob({ mode: "verify", env: approved, pool: local.pool, targetOverride: blob.target });
+    const verify = await runJob({ mode: "verify", env: approved, pool: jobPool, targetOverride: blob.target });
     assert.equal(verify.quality_gate, "PASS");
     assert.equal(verify.residual_rows, 0);
     assert([...blob.objects.keys()].some((name) => name.endsWith("-verify-final.json")));
     const restore = await runJob({ mode: "restore", env: { ...approved, SOURCE_CUTOVER_APPROVED: "RESTORE" },
-      pool: local.pool, targetOverride: blob.target });
+      pool: jobPool, targetOverride: blob.target });
     assert.equal(restore.quality_gate, "PASS");
     assert.equal((await local.pool.query("SELECT count(*)::int AS count FROM source.optimization_opportunity WHERE opportunity_id=$1", [opportunity])).rows[0].count, 1);
     assert.equal((await local.pool.query("SELECT state FROM source.opportunity_cutover_run WHERE run_id=$1", [env.SOURCE_CUTOVER_RUN_ID])).rows[0].state, "restored");
-    const afterRestore = await runJob({ mode: "plan", env, pool: local.pool, targetOverride: blob.target });
+    const afterRestore = await runJob({ mode: "plan", env, pool: jobPool, targetOverride: blob.target });
     assert.equal(afterRestore.inventory_sha256, plan.inventory_sha256);
     assert.equal(afterRestore.canonical_writer_sha256, plan.canonical_writer_sha256);
-  } finally { await local.stop(); }
+    for (const table of SPINE) {
+      await local.pool.query(`ALTER POLICY cutover_test_tenant ON source."${table}"
+        USING (false) WITH CHECK (false)`);
+    }
+    await assert.rejects(runJob({ mode: "plan", env, pool: jobPool, targetOverride: blob.target }),
+      /No evidence-only opportunity roots visible/);
+  } finally { if (jobPool) await jobPool.end(); await local.stop(); }
 });
