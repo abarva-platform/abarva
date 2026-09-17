@@ -6,6 +6,12 @@ import path from "node:path";
 describe("Source cloud consumption package loader", () => {
   const repoRoot = path.resolve(__dirname, "../../..");
 
+  it("reconciles the exact historical calculation-output shape", () => {
+    const result = spawnSync("node", ["--test", "scripts/source/__tests__/cloud-output-profile.test.mjs"],
+      { cwd: repoRoot, encoding: "utf8" });
+    expect(result.status).toBe(0);
+  });
+
   it("plans the AWS-first cloud package with dense Layer 2 and Layer 3 counts", () => {
     const proofDir = fs.mkdtempSync(path.join(os.tmpdir(), "source-cloud-consumption-plan-"));
     const result = spawnSync(

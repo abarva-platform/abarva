@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { readOpportunityOwnershipManifest, resolveOpportunityOwnership, selectedOpportunityOwnershipDeclaration } from "./opportunity-ownership.mjs";
 import { assertOpportunityRewriteSafe } from "./opportunity-rewrite-guard.mjs";
+import { reconcileCloudOutputProfile } from "./cloud-output-profile.mjs";
 
 loadDotenv(path.resolve(process.cwd(), ".env.local"));
 loadDotenv(path.resolve(process.cwd(), ".env"));
@@ -12,6 +13,7 @@ loadDotenv(path.resolve(process.cwd(), ".env"));
 const MODES = new Set(["plan", "apply-layer2", "apply-layer3", "apply-layer4", "verify", "verify-layer4"]);
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_DATASET_VERSION = "meridian-cloud-consumption-depth-v1-20260907";
+const HISTORICAL_DUAL_OUTPUT_VERSION = "meridian-databricks-consumption-commit-v1-20260908";
 const DEFAULT_PACKAGE_DIR =
   "datasets/source/cloud-consumption/meridian-cloud-consumption-depth-v1-20260907";
 const SOURCE_SYSTEM = "source_cloud_consumption_package_loader";
@@ -1854,6 +1856,20 @@ async function layer3Readback(client, args, files, ownership, loadRunId = args.l
   return Object.fromEntries(Object.entries(result.rows[0] ?? {}).map(([key, count]) => [key, Number(count)]));
 }
 
+async function scopedCalculationOutputProfile(client, args, files, ownership) {
+  if (args.datasetVersion !== HISTORICAL_DUAL_OUTPUT_VERSION) return null;
+  const runIds = ownedOpportunities(files, ownership).map((row) =>
+    `cloud-consumption:${value(row, "opportunity_id")}:calculation`);
+  const result = await client.query(
+    `SELECT calculation_run_id, output_key, amount_usd IS NOT NULL AS priced
+       FROM source.calculation_output
+      WHERE tenant_key = $1 AND dataset_version = $2
+        AND calculation_run_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, runIds],
+  );
+  return reconcileCloudOutputProfile(result.rows, runIds);
+}
+
 async function assertContractIdentityReadback(client, args, files, loadRunId) {
   const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
   const result = await client.query(
@@ -2101,17 +2117,20 @@ async function main() {
     } else if (args.mode === "verify") {
       const layer2 = await layer2Readback(client, args);
       const layer3 = await layer3Readback(client, args, sourceFiles, ownership);
+      const outputProfile = await scopedCalculationOutputProfile(client, args, sourceFiles, ownership);
       assertCounts(expectedL2, layer2, "Layer 2");
-      assertCounts(expectedL3, layer3, "Layer 3");
+      assertCounts({ ...expectedL3, source_calculation_output: outputProfile?.output_rows ?? expectedL3.source_calculation_output }, layer3, "Layer 3");
       summary.event = "source_cloud_consumption_package_layer23_verified";
       summary.layer2_readback = layer2;
       summary.layer3_readback = layer3;
+      summary.calculation_output_profile = outputProfile;
     } else if (args.mode === "apply-layer4") {
       requireApplyApproval(args);
       await resolveLayer3LoadRunId(client, args, sourceFiles);
       await assertContractIdentityReadback(client, args, sourceFiles, args.layer3LoadRunId);
       const layer3 = await layer3Readback(client, args, sourceFiles, ownership);
-      assertCounts(expectedL3, layer3, "Layer 3");
+      const outputProfile = await scopedCalculationOutputProfile(client, args, sourceFiles, ownership);
+      assertCounts({ ...expectedL3, source_calculation_output: outputProfile?.output_rows ?? expectedL3.source_calculation_output }, layer3, "Layer 3");
       await client.query("BEGIN");
       await activateLayer4Overlay(client, args);
       const layer4 = await layer4Readback(client, args, sourceFiles, ownership);
@@ -2119,11 +2138,13 @@ async function main() {
       await client.query("COMMIT");
       summary.event = "source_cloud_consumption_package_layer4_applied";
       summary.layer3_readback = layer3;
+      summary.calculation_output_profile = outputProfile;
       summary.projection_load_run_id = args.layer3LoadRunId;
       summary.layer4_readback = layer4;
     } else if (args.mode === "verify-layer4") {
       await resolveLayer3LoadRunId(client, args, sourceFiles);
       await assertContractIdentityReadback(client, args, sourceFiles, args.layer3LoadRunId);
+      summary.calculation_output_profile = await scopedCalculationOutputProfile(client, args, sourceFiles, ownership);
       const layer4 = await layer4Readback(client, args, sourceFiles, ownership);
       assertCounts(expectedL4, layer4, "Layer 4");
       summary.event = "source_cloud_consumption_package_layer4_verified";
