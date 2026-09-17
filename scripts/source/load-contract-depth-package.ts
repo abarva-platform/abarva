@@ -14,6 +14,10 @@ import {
 import { projectContractDepthPackage } from "../../src/lib/source/contract-depth-package/projection";
 import type { CsvRecord } from "../../src/lib/source/contract-depth-package/projection";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
+import {
+  readOpportunityOwnershipManifest,
+  resolveOpportunityOwnership,
+} from "./opportunity-ownership.mjs";
 
 loadEnv({ path: path.resolve(process.cwd(), ".env.local") });
 loadEnv();
@@ -29,6 +33,7 @@ interface Args {
   readonly loadRunId: string;
   readonly proofDir: string;
   readonly applyApproved: boolean;
+  readonly opportunityOwnershipManifestOverride?: string;
 }
 
 interface Layer2Row {
@@ -246,6 +251,7 @@ function parseArgs(): Args {
     applyApproved:
       process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_APPLY_APPROVED === "true" ||
       process.argv.includes("--apply-approved"),
+    opportunityOwnershipManifestOverride: argValue("opportunity-ownership-manifest"),
   };
 }
 
@@ -739,8 +745,8 @@ function readSourceFiles(
   };
 }
 
-function sourcePackageHash(sourceFiles: ContractDepthSourceFileInput): string {
-  return sha256(JSON.stringify(sourceFiles));
+function sourcePackageHash(sourceFiles: ContractDepthSourceFileInput, manifest: unknown): string {
+  return sha256(JSON.stringify({ sourceFiles, manifest }));
 }
 
 function writeJson(filePath: string, value: unknown): void {
@@ -2800,6 +2806,7 @@ async function applyLayer3(
   sourceFiles: ContractDepthSourceFileInput,
   rows: readonly Layer2Row[],
   expectedLayer2: Record<string, number>,
+  ownership: OpportunityOwnership,
 ): Promise<Record<string, number | string>> {
   await assertTables(client, [
     ...REQUIRED_LAYER2_TABLES,
@@ -2834,22 +2841,33 @@ async function applyLayer3(
     sourceFiles.batchJobVolumetrics,
   );
   await upsertQbrFacts(client, args, sourceFiles.qbrScorecards);
-  await upsertOptimizationSpine(client, args, sourceFiles);
+  if (ownership.canonical_contract_ids.length) {
+    const ownedContracts = new Set(ownership.canonical_contract_ids);
+    await upsertOptimizationSpine(client, args, {
+      ...sourceFiles,
+      contracts: sourceFiles.contracts.filter((row) => ownedContracts.has(stringValue(row, "contract_id"))),
+      optimizationOpportunities: sourceFiles.optimizationOpportunities.filter((row) => ownedContracts.has(stringValue(row, "contract_id"))),
+    });
+  }
 
-  return layer3Readback(client, args, sourceFiles);
+  return layer3Readback(client, args, sourceFiles, ownership);
 }
+
+type OpportunityOwnership = ReturnType<typeof resolveOpportunityOwnership>;
 
 async function layer3Readback(
   client: Client,
   args: Args,
   sourceFiles: ContractDepthSourceFileInput,
+  ownership: OpportunityOwnership,
 ): Promise<Record<string, number | string>> {
   const contractIds = sourceFiles.contracts.map((row) =>
     stringValue(row, "contract_id"),
   );
-  const opportunityIds = sourceFiles.optimizationOpportunities.map((row) =>
-    stringValue(row, "opportunity_id"),
-  );
+  const ownedContracts = new Set(ownership.canonical_contract_ids);
+  const opportunityIds = sourceFiles.optimizationOpportunities
+    .filter((row) => ownedContracts.has(stringValue(row, "contract_id")))
+    .map((row) => stringValue(row, "opportunity_id"));
   const result = await client.query<Record<string, string>>(
     `SELECT
        (SELECT count(*)::text FROM source.contract_depth_adapter_row WHERE tenant_key = $1 AND dataset_version = $2) AS layer2_adapter_rows,
@@ -2861,6 +2879,7 @@ async function layer3Readback(
        (SELECT count(*)::text FROM source.contract_performance_observation WHERE tenant_key = $1 AND contract_id = ANY($3::text[]) AND load_run_id = $5) AS source_contract_performance_observation,
        (SELECT count(*)::text FROM source.contract_service_credit WHERE tenant_key = $1 AND contract_id = ANY($3::text[]) AND load_run_id = $5) AS source_contract_service_credit,
        (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS optimization_opportunity,
+       (SELECT count(*)::text FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($7::text[])) AS unowned_optimization_opportunity,
        (SELECT count(*)::text FROM source.optimization_baseline WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])) AS optimization_baseline,
        (SELECT count(*)::text FROM source.optimization_case WHERE tenant_key = $1 AND dataset_version = $2 AND contract_id = ANY($3::text[])) AS optimization_case,
        (SELECT count(*)::text FROM source.case_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($4::text[])) AS case_opportunity,
@@ -2890,6 +2909,7 @@ async function layer3Readback(
       opportunityIds.map(
         (opportunityId) => `contract-depth:${opportunityId}:calculation`,
       ),
+      ownership.evidence_only_contract_ids,
     ],
   );
   const row = result.rows[0] ?? {};
@@ -2904,8 +2924,13 @@ async function layer3Readback(
 function expectedLayer3(
   sourceFiles: ContractDepthSourceFileInput,
   rows: readonly Layer2Row[],
+  ownership: OpportunityOwnership,
 ): Record<string, number> {
-  const opportunityEvidenceRows = sourceFiles.optimizationOpportunities.reduce(
+  const ownedContracts = new Set(ownership.canonical_contract_ids);
+  const ownedOpportunities = sourceFiles.optimizationOpportunities.filter(
+    (row) => ownedContracts.has(stringValue(row, "contract_id")),
+  );
+  const opportunityEvidenceRows = ownedOpportunities.reduce(
     (total, row) =>
       total +
       stringValue(row, "evidence_rows")
@@ -2997,20 +3022,21 @@ function expectedLayer3(
     source_contract_service_credit: sourceFiles.slaPerformance.filter(
       (row) => (numberValue(row, "credit_owed_usd") ?? 0) > 0,
     ).length,
-    optimization_opportunity: sourceFiles.optimizationOpportunities.length,
-    optimization_baseline: sourceFiles.contracts.length,
+    optimization_opportunity: ownedOpportunities.length,
+    unowned_optimization_opportunity: 0,
+    optimization_baseline: ownership.canonical_contract_ids.length,
     optimization_case: new Set(
-      sourceFiles.optimizationOpportunities.map((row) =>
+      ownedOpportunities.map((row) =>
         stringValue(row, "contract_id"),
       ),
     ).size,
-    case_opportunity: sourceFiles.optimizationOpportunities.length,
+    case_opportunity: ownedOpportunities.length,
     opportunity_evidence: opportunityEvidenceRows,
-    opportunity_claim: sourceFiles.optimizationOpportunities.length * 2,
-    calculation_run: sourceFiles.optimizationOpportunities.length,
+    opportunity_claim: ownedOpportunities.length * 2,
+    calculation_run: ownedOpportunities.length,
     calculation_input: opportunityEvidenceRows,
-    calculation_output: sourceFiles.optimizationOpportunities.length * 2,
-    opportunity_valuation: sourceFiles.optimizationOpportunities.length,
+    calculation_output: ownedOpportunities.length * 2,
+    opportunity_valuation: ownedOpportunities.length,
     canonical_fact_assertion:
       contractContextFactCount +
       usageFactCount +
@@ -3029,7 +3055,7 @@ function expectedLayer3(
     batch_operations_fact_assertion: batchOperationsFactCount,
     qbr_fact_assertion: qbrFactCount,
     opportunities_not_finance_confirmed:
-      sourceFiles.optimizationOpportunities.length,
+      ownedOpportunities.length,
     contracts_with_assessed_alternatives: 0,
   };
 }
@@ -3067,10 +3093,20 @@ async function main(): Promise<void> {
     args.tenantKey,
     args.datasetVersion,
   );
+  const ownershipManifest = readOpportunityOwnershipManifest(
+    args.mode,
+    args.opportunityOwnershipManifestOverride,
+  );
+  const ownership = resolveOpportunityOwnership(
+    ownershipManifest,
+    args,
+    sourceFiles.contracts.map((row) => stringValue(row, "contract_id")),
+    sourceFiles.optimizationOpportunities.map((row) => stringValue(row, "contract_id")),
+  );
   const adapted = adaptContractDepthPackage(sourceFiles);
   const projection = projectContractDepthPackage(sourceFiles);
   const rows = adapterRows(adapted);
-  const packageHash = sourcePackageHash(sourceFiles);
+  const packageHash = sourcePackageHash(sourceFiles, ownershipManifest);
   const expectedAdapterCounts = adapterCountByName(rows);
   const plan = {
     event: "source_contract_depth_package_layer23_plan",
@@ -3084,6 +3120,8 @@ async function main(): Promise<void> {
     proof_dir: args.proofDir,
     layer2_expected_rows: rows.length,
     layer2_expected_counts: expectedAdapterCounts,
+    layer3_expected: expectedLayer3(sourceFiles, rows, ownership),
+    opportunity_ownership: ownership,
     adapter_quality_gate: adapted.qualityGate,
     projection_quality_gate: projection.qualityGate,
   };
@@ -3152,8 +3190,9 @@ async function main(): Promise<void> {
           sourceFiles,
           rows,
           expectedAdapterCounts,
+          ownership,
         );
-        const expected = expectedLayer3(sourceFiles, rows);
+        const expected = expectedLayer3(sourceFiles, rows, ownership);
         const failures = layer3Failures(expected, readback);
         await writeRunStatus(
           client,
@@ -3174,22 +3213,22 @@ async function main(): Promise<void> {
       return {
         ...plan,
         event: "source_contract_depth_package_layer3_applied",
-        layer3_expected: expectedLayer3(sourceFiles, rows),
+        layer3_expected: expectedLayer3(sourceFiles, rows, ownership),
         layer3_readback: readback,
         layer3_readback_failures: [],
       };
     }
 
     const layer2 = await layer2Readback(client, args);
-    const layer3 = await layer3Readback(client, args, sourceFiles);
+    const layer3 = await layer3Readback(client, args, sourceFiles, ownership);
     return {
       ...plan,
       event: "source_contract_depth_package_layer23_verified",
       layer2_readback: layer2,
-      layer3_expected: expectedLayer3(sourceFiles, rows),
+      layer3_expected: expectedLayer3(sourceFiles, rows, ownership),
       layer3_readback: layer3,
       layer3_readback_failures: layer3Failures(
-        expectedLayer3(sourceFiles, rows),
+        expectedLayer3(sourceFiles, rows, ownership),
         layer3,
       ),
     };
