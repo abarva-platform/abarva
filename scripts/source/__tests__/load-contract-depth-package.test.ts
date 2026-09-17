@@ -1,5 +1,7 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 describe("Source contract depth package loader", () => {
   it("preserves explicit performance and ticket periods before month fallback", () => {
@@ -224,6 +226,98 @@ describe("Source contract depth package loader", () => {
     expect(loader).not.toContain(
       "ON CONFLICT (tenant_key, dataset_version, optimization_case_id, opportunity_id)",
     );
+  });
+
+  it("deletes only the requested opportunity version on a rerun", () => {
+    const repoRoot = path.resolve(__dirname, "../../..");
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
+      "utf8",
+    );
+    const match = loader.match(
+      /`(DELETE FROM source\.optimization_opportunity[\s\S]*?)`,\s*\[([^\]]+)\]/,
+    );
+    expect(match).not.toBeNull();
+    const deleteSql = match![1];
+    expect(deleteSql.replace(/\s+/g, " ").trim()).toBe(
+      "DELETE FROM source.optimization_opportunity WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($3::text[])",
+    );
+    expect(match![2].replace(/\s+/g, " ").trim()).toBe(
+      "args.tenantKey, args.datasetVersion, opportunityIds",
+    );
+
+    if (
+      ["initdb", "pg_ctl", "psql"].some(
+        (command) => spawnSync("which", [command]).status !== 0,
+      )
+    )
+      return;
+
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "source-opportunity-delete-"),
+    );
+    const dataDir = path.join(tempDir, "data");
+    const run = (command: string, args: string[]) => {
+      const result = spawnSync(command, args, { encoding: "utf8" });
+      if (result.status !== 0)
+        throw new Error(`${command}: ${result.stderr || result.stdout}`);
+      return result.stdout.trim();
+    };
+    try {
+      run("initdb", ["-D", dataDir, "-A", "trust", "--no-instructions"]);
+      run("pg_ctl", [
+        "-D",
+        dataDir,
+        "-l",
+        path.join(tempDir, "postgres.log"),
+        "-o",
+        `-c listen_addresses='' -c unix_socket_directories=${tempDir}`,
+        "-w",
+        "start",
+      ]);
+      const sql = (statement: string) =>
+        run("psql", [
+          "-h",
+          tempDir,
+          "-d",
+          "postgres",
+          "-At",
+          "-v",
+          "ON_ERROR_STOP=1",
+          "-c",
+          statement,
+        ]);
+      sql(
+        "CREATE SCHEMA source; CREATE TABLE source.optimization_opportunity (tenant_key text, dataset_version text, opportunity_id text);",
+      );
+      sql(
+        "INSERT INTO source.optimization_opportunity VALUES ('tenant-a', 'v1', 'shared-id'), ('tenant-a', 'v2', 'shared-id'), ('tenant-b', 'v1', 'shared-id');",
+      );
+      sql(
+        `PREPARE scoped_delete(text, text, text[]) AS ${deleteSql}; EXECUTE scoped_delete('tenant-a', 'v1', ARRAY['shared-id']);`,
+      );
+      expect(
+        sql(
+          "SELECT tenant_key || ':' || dataset_version FROM source.optimization_opportunity ORDER BY 1",
+        ),
+      ).toBe("tenant-a:v2\ntenant-b:v1");
+      sql(
+        "INSERT INTO source.optimization_opportunity VALUES ('tenant-a', 'v1', 'shared-id');",
+      );
+      sql(
+        `PREPARE scoped_delete(text, text, text[]) AS ${deleteSql}; EXECUTE scoped_delete('tenant-a', 'v1', ARRAY['shared-id']);`,
+      );
+      expect(
+        sql(
+          "SELECT tenant_key || ':' || dataset_version FROM source.optimization_opportunity ORDER BY 1",
+        ),
+      ).toBe("tenant-a:v2\ntenant-b:v1");
+    } finally {
+      spawnSync("pg_ctl", ["-D", dataDir, "-m", "immediate", "-w", "stop"], {
+        encoding: "utf8",
+      });
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 
   it("requires apply approval only for mutating Layer 2 and Layer 3 modes", () => {

@@ -2344,8 +2344,8 @@ async function upsertOptimizationSpine(
   );
   await client.query(
     `DELETE FROM source.optimization_opportunity
-      WHERE tenant_key = $1 AND opportunity_id = ANY($2::text[])`,
-    [args.tenantKey, opportunityIds],
+      WHERE tenant_key = $1 AND dataset_version = $2 AND opportunity_id = ANY($3::text[])`,
+    [args.tenantKey, args.datasetVersion, opportunityIds],
   );
 
   const spendByContract = groupBy(sourceFiles.monthlySpend, "contract_id");
