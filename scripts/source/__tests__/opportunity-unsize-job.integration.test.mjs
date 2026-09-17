@@ -97,7 +97,9 @@ async function fixture(db, scope) {
       opportunity_id: opportunity, rule_id: "source.cloud_consumption_package.opportunity.v1",
       rule_version: "1.0.0", run_state: "blocked" });
     await insert(db, "calculation_input", { ...common, calculation_run_id: `RUN-${i}`,
-      input_key: "pending", inclusion_state: "pending_review", inclusion_reason: "missing method" });
+      input_key: "evidence-row", source_table: "source.cloud_consumption_adapter_row",
+      source_record_id: `ROW-${i}`, inclusion_state: i === 0 ? "included" : "pending_review",
+      inclusion_reason: i === 0 ? "Cloud package opportunity cites this evidence row." : "missing method" });
     await insert(db, "calculation_output", { ...common, calculation_run_id: `RUN-${i}`,
       output_key: "candidate_amount", amount_usd: 100 + i });
     await insert(db, "opportunity_valuation", { ...common, opportunity_id: opportunity,
@@ -172,6 +174,13 @@ test("scoped unsize archives, rolls back, verifies, and restores with CAS", { ti
         targetOverride: storage.target, filesOverride: source }), /Human action exists/);
       await db.admin.query(`DELETE FROM source."${table}"`);
     }
+    await db.admin.query(`UPDATE source.calculation_input SET inclusion_reason='Human selected this row'
+      WHERE calculation_run_id='RUN-0'`);
+    await assert.rejects(runJob({ mode: "plan", env: base, pool: db.operator,
+      targetOverride: storage.target, filesOverride: source }), /Calculation input/);
+    await db.admin.query(`UPDATE source.calculation_input
+      SET inclusion_reason='Cloud package opportunity cites this evidence row.'
+      WHERE calculation_run_id='RUN-0'`);
     const plan = await runJob({ mode: "plan", env: base, pool: db.operator,
       targetOverride: storage.target, filesOverride: source });
     assert.equal(plan.table_counts.optimization_opportunity, 6);
@@ -213,6 +222,11 @@ test("scoped unsize archives, rolls back, verifies, and restores with CAS", { ti
         AND amount_usd IS NULL AND amount_state='not_sized' AND stage='signal'`,
     [source.scope.tenantKey, source.scope.datasetVersion, source.scope.contractId]);
     assert.equal(active.rows[0].count, 6);
+    const inputs = await db.admin.query(`SELECT inclusion_state,inclusion_reason FROM source.calculation_input
+      WHERE tenant_key=$1 AND dataset_version=$2 AND calculation_run_id='RUN-0'`,
+    [source.scope.tenantKey, source.scope.datasetVersion]);
+    assert.deepEqual(inputs.rows, [{ inclusion_state: "pending_review",
+      inclusion_reason: "Evidence reference only; numeric formula input is not mapped." }]);
     const untouched = await db.admin.query(`SELECT amount_usd FROM source.optimization_opportunity
       WHERE tenant_key='other-tenant'`);
     assert.equal(Number(untouched.rows[0].amount_usd), 999);
@@ -245,6 +259,11 @@ test("scoped unsize archives, rolls back, verifies, and restores with CAS", { ti
       pool: db.operator, targetOverride: storage.target, filesOverride: source });
     assert.equal(restored.status, "restored");
     assert.equal(restored.restored_sha256, plan.before_sha256);
+    const restoredInputs = await db.admin.query(`SELECT inclusion_state,inclusion_reason FROM source.calculation_input
+      WHERE tenant_key=$1 AND dataset_version=$2 AND calculation_run_id='RUN-0'`,
+    [source.scope.tenantKey, source.scope.datasetVersion]);
+    assert.deepEqual(restoredInputs.rows, [{ inclusion_state: "included",
+      inclusion_reason: "Cloud package opportunity cites this evidence row." }]);
     const claimCount = await db.admin.query(`SELECT count(*)::int AS count FROM source.opportunity_claim
       WHERE tenant_key=$1 AND dataset_version=$2`, [source.scope.tenantKey, source.scope.datasetVersion]);
     assert.equal(claimCount.rows[0].count, 12);
