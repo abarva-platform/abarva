@@ -1,6 +1,8 @@
 import {
   isPastSourceNewPhases,
+  sourceNewCategoryDisplay,
   sourceNewCurrentPhase,
+  sourceNewEventTypeLabel,
   sourceNewFilePhase,
   sourceNewPhaseState,
   sourceNewPhaseStateLabel,
@@ -94,6 +96,37 @@ describe("sourceNewPhaseState", () => {
     const event = { currentStage: "not_a_stage", lifecycle: "active" };
     expect(sourceNewPhaseState("define", event, nothingRecorded)).toBe("no_record");
     expect(sourceNewPhaseState("rfi", event, { ...nothingRecorded, rfi: true })).toBe("recorded");
+  });
+});
+
+describe("sourceNewCategoryDisplay", () => {
+  it("shows a governed category by its taxonomy label, not its id", () => {
+    expect(sourceNewCategoryDisplay("ams")).toEqual({
+      text: "Application Managed Services (AMS)",
+      note: null,
+    });
+  });
+
+  it("keeps an ungoverned recorded value visible and says it is ungoverned", () => {
+    const shown = sourceNewCategoryDisplay("application_managed_services");
+    expect(shown.text).toBe("Application Managed Services");
+    expect(shown.note).toMatch(/not one of the governed sourcing categories/);
+  });
+
+  it("does not confuse nothing recorded with a category the taxonomy does not know", () => {
+    expect(sourceNewCategoryDisplay(null)).toEqual({ text: "Not established", note: null });
+    expect(sourceNewCategoryDisplay("   ")).toEqual({ text: "Not established", note: null });
+  });
+});
+
+describe("sourceNewEventTypeLabel", () => {
+  it("title-cases the recorded event type", () => {
+    expect(sourceNewEventTypeLabel("managed_services")).toBe("Managed Services");
+    expect(sourceNewEventTypeLabel("competitive-sourcing")).toBe("Competitive Sourcing");
+  });
+
+  it("says nothing is recorded for an empty value", () => {
+    expect(sourceNewEventTypeLabel("   ")).toBe("Not recorded");
   });
 });
 
