@@ -10,14 +10,14 @@
 
 ## Plain-English Summary
 
-The Layer 4 activation preflight now recognizes one already-loaded canonical package with two calculation outputs per run: an unpriced evidence count and a historical calculated amount. It requires the exact same shape for every scoped run and rejects unknown, missing, duplicated, or partly corrected rows. The package's authored Layer 3 expectation remains unchanged for new loads.
+The Layer 4 activation preflight now recognizes one already-loaded canonical package with two calculation outputs per run: an unpriced evidence count and a historical calculated amount. It requires the exact same shape for every scoped run and rejects unknown, missing, duplicated, or partly corrected rows. The package's authored Layer 3 expectation remains unchanged for new loads. The correction operator can now prove and unsize a writer set before activating its Layer 4 overlay, preventing a brief exposure of unsupported amounts.
 
 ## Layer Impact
 
 - Release lane: `client-data-lane`.
 - Layer 1 and Layer 2: unchanged.
-- Layer 3: readback only; no loader write change.
-- Layer 4: activation and verification may proceed only after the exact output profile passes. No view or metric formula changes.
+- Layer 3: scoped correction job may clear unsupported amounts before projection; no loader write change.
+- Layer 4: activation and verification may proceed only after the exact output profile passes. No view or metric formula changes. The correction job's preactivation mode requires zero projected writer rows in both views and an exact state token.
 
 ## Client Applicability
 
@@ -30,10 +30,11 @@ The Layer 4 activation preflight now recognizes one already-loaded canonical pac
 - Per-run calculation-output profile validator and focused negative tests.
 - Package-specific readback in Layer 3 verification and Layer 4 activation/verification.
 - Proof summaries distinguish the historical priced and unpriced states.
+- Explicit preactivation plan/apply/verify state for the governed correction job, with a zero-row Layer 4 proof and a post-activation null-amount test.
 
 ## QA / Validation
 
-- PASS: focused behavior tests, TypeScript, scoped ESLint, and diff check before PR.
+- PASS: focused behavior tests including disposable PostgreSQL preactivation/activation proof, TypeScript, scoped ESLint, and diff check before PR.
 - PASS: release check after this record correction.
 - NOT RUN: Azure Layer 4 activation, readback, and signed-in proof remain required after deployment.
 

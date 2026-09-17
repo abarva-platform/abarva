@@ -180,6 +180,7 @@ test("scoped unsize archives, rolls back, verifies, and restores with CAS", { ti
       SOURCE_UNSIZE_EXPECTED_PACKAGE_SHA256: plan.package_sha256,
       SOURCE_UNSIZE_EXPECTED_BEFORE_SHA256: plan.before_sha256,
       SOURCE_UNSIZE_EXPECTED_LAYER4_SHA256: plan.layer4_definition_sha256,
+      SOURCE_UNSIZE_EXPECTED_LAYER4_STATE: plan.layer4_state,
       SOURCE_UNSIZE_EXPECTED_IDS: JSON.stringify(source.scope.ids),
       SOURCE_UNSIZE_MODE_TOKEN: "SOURCE_UNSIZE_APPLY" };
     await assert.rejects(runJob({ mode: "apply", env: { ...approved, SOURCE_UNSIZE_MODE_TOKEN: "" },
@@ -247,5 +248,47 @@ test("scoped unsize archives, rolls back, verifies, and restores with CAS", { ti
     const claimCount = await db.admin.query(`SELECT count(*)::int AS count FROM source.opportunity_claim
       WHERE tenant_key=$1 AND dataset_version=$2`, [source.scope.tenantKey, source.scope.datasetVersion]);
     assert.equal(claimCount.rows[0].count, 12);
+  } finally { await db.stop(); }
+});
+
+test("preactivation clears candidate amounts before the writer becomes visible in Layer 4", { timeout: 120_000 }, async () => {
+  const db = await postgres();
+  try {
+    await schema(db);
+    const source = files();
+    await fixture(db, source.scope);
+    await db.admin.query(`CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
+      SELECT tenant_key, contract_id, opportunity_id, amount_usd AS annual_value_exposed
+      FROM source.optimization_opportunity WHERE false`);
+    const storage = blob();
+    const base = env(source.scope, "unsize-preactivation-local-1");
+    await assert.rejects(runJob({ mode: "plan", env: base, pool: db.operator,
+      targetOverride: storage.target, filesOverride: source }), /Layer 4 opportunity set mismatch/);
+    const scoped = { ...base, SOURCE_UNSIZE_LAYER4_STATE: "PREACTIVATION" };
+    const plan = await runJob({ mode: "plan", env: scoped, pool: db.operator,
+      targetOverride: storage.target, filesOverride: source });
+    assert.equal(plan.layer4_state, "preactivation");
+    const approved = { ...scoped, SOURCE_UNSIZE_EXPECTED_MANIFEST_SHA256: plan.manifest_sha256,
+      SOURCE_UNSIZE_EXPECTED_PACKAGE_SHA256: plan.package_sha256,
+      SOURCE_UNSIZE_EXPECTED_BEFORE_SHA256: plan.before_sha256,
+      SOURCE_UNSIZE_EXPECTED_LAYER4_SHA256: plan.layer4_definition_sha256,
+      SOURCE_UNSIZE_EXPECTED_LAYER4_STATE: plan.layer4_state,
+      SOURCE_UNSIZE_EXPECTED_IDS: JSON.stringify(source.scope.ids),
+      SOURCE_UNSIZE_MODE_TOKEN: "SOURCE_UNSIZE_APPLY" };
+    const applied = await runJob({ mode: "apply", env: approved, pool: db.operator,
+      targetOverride: storage.target, filesOverride: source });
+    assert.equal(applied.status, "applied");
+    const verified = await runJob({ mode: "verify", env: approved, pool: db.operator,
+      targetOverride: storage.target, filesOverride: source });
+    assert.equal(verified.status, "verified");
+    await db.admin.query(`CREATE OR REPLACE VIEW consumption.sourcing_opportunity_v1 AS
+      SELECT tenant_key, contract_id, opportunity_id, amount_usd AS annual_value_exposed
+      FROM source.optimization_opportunity`);
+    const visible = await db.admin.query(`SELECT count(*)::int AS rows,
+      count(*) FILTER (WHERE annual_value_exposed IS NOT NULL)::int AS priced
+      FROM consumption.sourcing_opportunity_v1 WHERE tenant_key=$1 AND contract_id=$2`,
+    [source.scope.tenantKey, source.scope.contractId]);
+    assert.equal(visible.rows[0].rows, 6);
+    assert.equal(visible.rows[0].priced, 0);
   } finally { await db.stop(); }
 });

@@ -159,7 +159,7 @@ function blockers(selected) {
     "Expected opportunity or claim row count changed");
 }
 
-async function projection(client, scope, unsized) {
+async function projection(client, scope, unsized, expectedState = "active") {
   const definition = await client.query("SELECT pg_get_viewdef('consumption.sourcing_opportunity_v1'::regclass, true) AS sql");
   check(definition.rows[0]?.sql?.includes("optimization_opportunity"), "Canonical Layer 4 projection required");
   const actionDefinition = await client.query("SELECT pg_get_viewdef('source.contract_action_candidate_v1'::regclass, true) AS sql");
@@ -168,19 +168,26 @@ async function projection(client, scope, unsized) {
   const rows = await client.query(`SELECT opportunity_id,annual_value_exposed FROM consumption.sourcing_opportunity_v1
     WHERE tenant_key=$1 AND contract_id=$2 AND opportunity_id=ANY($3::text[]) ORDER BY opportunity_id`,
   [scope.tenantKey, scope.contractId, scope.ids]);
-  check(JSON.stringify(rows.rows.map((row) => row.opportunity_id)) === JSON.stringify(scope.ids),
-    "Layer 4 opportunity set mismatch");
   const actions = await client.query(`SELECT opportunity_id,candidate_amount_usd FROM source.contract_action_candidate_v1
     WHERE tenant_key=$1 AND contract_id=$2 AND opportunity_id=ANY($3::text[]) ORDER BY opportunity_id`,
   [scope.tenantKey, scope.contractId, scope.ids]);
-  check(JSON.stringify(actions.rows.map((row) => row.opportunity_id)) === JSON.stringify(scope.ids),
-    "Layer 4 action set mismatch");
+  const opportunityIds = rows.rows.map((row) => row.opportunity_id);
+  const actionIds = actions.rows.map((row) => row.opportunity_id);
+  if (expectedState === "preactivation") {
+    check(opportunityIds.length === 0 && actionIds.length === 0,
+      "Preactivation requires zero writer rows in both Layer 4 projections");
+  } else {
+    check(JSON.stringify(opportunityIds) === JSON.stringify(scope.ids),
+      "Layer 4 opportunity set mismatch");
+    check(JSON.stringify(actionIds) === JSON.stringify(scope.ids),
+      "Layer 4 action set mismatch");
+  }
   if (unsized) check(rows.rows.every((row) => row.annual_value_exposed === null),
     "Layer 4 still prices an unsized opportunity");
   if (unsized) check(actions.rows.every((row) => row.candidate_amount_usd === null),
     "Layer 4 still prices an action candidate");
   return { definition_sha256: hash(JSON.stringify([definition.rows[0].sql, actionDefinition.rows[0].sql])),
-    rows: rows.rows, actions: actions.rows };
+    state: expectedState, rows: rows.rows, actions: actions.rows };
 }
 
 async function readArchive(client, runId) {
@@ -269,6 +276,9 @@ export async function runJob({ mode, env = process.env, pool, targetOverride, fi
   check(["plan", "apply", "verify", "restore"].includes(mode), "Invalid job mode");
   const files = filesOverride ?? sourceFiles();
   const meta = metadata(env, mode);
+  const layer4State = env.SOURCE_UNSIZE_LAYER4_STATE === "PREACTIVATION" ? "preactivation" : "active";
+  check(env.SOURCE_UNSIZE_LAYER4_STATE === undefined ||
+    env.SOURCE_UNSIZE_LAYER4_STATE === "PREACTIVATION", "Invalid Layer 4 state token");
   check(meta.inputVersion === files.scope.datasetVersion, "Input version mismatch");
   expected(env, mode, files);
   const target = targetOverride ?? await blobTarget(env, mode);
@@ -291,13 +301,14 @@ export async function runJob({ mode, env = process.env, pool, targetOverride, fi
     if (mode === "plan" || mode === "apply") {
       const before = await snapshot(client, files.scope);
       blockers(before.selected);
-      const l4 = await projection(client, files.scope, false);
+      const l4 = await projection(client, files.scope, false, layer4State);
       Object.assign(proof, { before_sha256: before.sha256, row_count: before.inventory.length,
         table_counts: Object.fromEntries(SPINE.map((table) => [table, before.selected[table].length])),
-        layer4_definition_sha256: l4.definition_sha256, quality_gate: "PASS" });
+        layer4_definition_sha256: l4.definition_sha256, layer4_state: l4.state, quality_gate: "PASS" });
       if (mode === "apply") {
         check(before.sha256 === env.SOURCE_UNSIZE_EXPECTED_BEFORE_SHA256 &&
-          l4.definition_sha256 === env.SOURCE_UNSIZE_EXPECTED_LAYER4_SHA256,
+          l4.definition_sha256 === env.SOURCE_UNSIZE_EXPECTED_LAYER4_SHA256 &&
+          l4.state === env.SOURCE_UNSIZE_EXPECTED_LAYER4_STATE,
         "Exact plan hash or Layer 4 definition changed");
         const existing = await client.query("SELECT run_id FROM source.opportunity_unsize_run WHERE run_id=$1", [meta.runId]);
         check(existing.rows.length === 0, "Run ID already used");
@@ -324,7 +335,7 @@ export async function runJob({ mode, env = process.env, pool, targetOverride, fi
         await updateRows(client, before.selected);
         const after = await snapshot(client, files.scope);
         assertOnlyAllowedChanges(before, after);
-        const afterL4 = await projection(client, files.scope, true);
+        const afterL4 = await projection(client, files.scope, true, layer4State);
         check(afterL4.definition_sha256 === l4.definition_sha256, "Layer 4 definition changed during apply");
         await client.query("UPDATE source.opportunity_unsize_run SET after_sha256=$2 WHERE run_id=$1",
           [meta.runId, after.sha256]);
@@ -347,7 +358,9 @@ export async function runJob({ mode, env = process.env, pool, targetOverride, fi
       assertArchiveCoverage(now, archive);
       check(reconstructedBeforeHash(now, archive) === prior.before_sha256,
         "Archive does not reconstruct the approved before-image");
-      await projection(client, files.scope, true);
+      check(layer4State === env.SOURCE_UNSIZE_EXPECTED_LAYER4_STATE,
+        "Exact Layer 4 state confirmation required");
+      await projection(client, files.scope, true, layer4State);
       Object.assign(proof, { before_sha256: prior.before_sha256, after_sha256: now.sha256,
         archive_row_count: archive.length });
       if (mode === "restore") {
