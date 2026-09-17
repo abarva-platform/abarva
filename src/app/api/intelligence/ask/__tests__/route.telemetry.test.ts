@@ -312,7 +312,7 @@ describe("POST /api/intelligence/ask telemetry", () => {
     );
   });
 
-  it("preserves Source V4 context and emits deterministic contract visuals before generic synthesis", async () => {
+  it("does not render contract visuals from an unverified browser packet", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
     const response = await POST(
@@ -389,15 +389,13 @@ describe("POST /api/intelligence/ask telemetry", () => {
 
     expect(askIntelligence).not.toHaveBeenCalled();
     expect(text).toContain('"type":"agent-answer"');
-    expect(text).toContain("source_contract_visual");
-    expect(text).toContain("CTR-090");
-    expect(text).toContain("CTR-090 Salesforce");
-    expect(text).toContain("Contract Commercial Opportunities");
-    expect(text).toContain("Sized Commercial Opportunities");
-    expect(text).toContain("Contract Evidence Relationship");
+    expect(text).toContain("source_contract_unavailable");
+    expect(text).not.toContain("Contract Commercial Opportunities");
+    expect(text).not.toContain("Sized Commercial Opportunities");
+    expect(text).not.toContain("Contract Evidence Relationship");
   });
 
-  it("emits a crisp Source contract optimization export packet without generic synthesis", async () => {
+  it("does not export optimization values from an unverified browser packet", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
     const response = await POST(
@@ -506,29 +504,16 @@ describe("POST /api/intelligence/ask telemetry", () => {
     };
 
     expect(askIntelligence).not.toHaveBeenCalled();
-    expect(packet?.directAnswer).toContain("Executive read:");
-    expect(packet?.directAnswer).toContain(
-      "| Sequence | Lever | Action / buyer ask | Why vendor can agree | Evidence basis | Value state | Owner / timing | What not to claim yet |",
-    );
-    expect(packet?.directAnswer).toContain(
-      "Reset the commitment curve around production gates.",
-    );
-    expect(packet?.directAnswer).toContain(
-      "Databricks preserves total contract value while shifting timing.",
-    );
-    expect(packet?.directAnswer).toContain(
-      "Not sized - needs evidence before it carries a number",
-    );
+    expect(packet?.directAnswer).toContain("cannot verify");
+    expect(packet?.directAnswer).not.toContain("$620K");
     expect(packet?.directAnswer).not.toContain("VISUALS");
     expect(packet?.directAnswer).not.toContain("RELATIONSHIP MAP");
     expect(packet?.directAnswer).not.toContain("DECISION TABLE");
-    expect(packet?.artifacts?.[0]?.id).toBe(
-      "source-contract-optimization-export-table",
-    );
+    expect(packet?.artifacts ?? []).toHaveLength(0);
     expect(events.some((event) => event.type === "done")).toBe(true);
   });
 
-  it("routes direct Contract 360 value questions through the governed Source answer", async () => {
+  it("does not cite an unavailable direct Contract 360 packet", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
     const response = await POST(
@@ -564,17 +549,12 @@ describe("POST /api/intelligence/ask telemetry", () => {
 
     expect(askIntelligence).not.toHaveBeenCalled();
     expect(text).toContain('"type":"agent-answer"');
-    expect(text).toContain("source_contract_visual");
-    expect(text).toContain("MER-TECH-REQUESTED-001");
-    expect(text).toContain("Requested contract");
-    expect(text).toContain("candidate opportunity value is not established");
-    expect(text).toContain(
-      "Requested contract was not returned by the active Source provider",
-    );
+    expect(text).toContain("source_contract_unavailable");
+    expect(text).not.toContain("Requested contract was not returned by the active Source provider");
     expect(text).not.toContain("No specific contract is selected");
   });
 
-  it("does not append a generic Moves phase plan to deterministic Source contract answers", async () => {
+  it("does not fall through to generic synthesis for an unverified contract packet", async () => {
     (askIntelligence as jest.Mock).mockClear();
 
     const response = await POST(
@@ -623,9 +603,8 @@ describe("POST /api/intelligence/ask telemetry", () => {
     const text = await readResponseText(response);
 
     expect(askIntelligence).not.toHaveBeenCalled();
-    expect(text).toContain("source_contract_visual");
-    expect(text).toContain("CTR-090");
-    expect(text).toContain("SLA credits earned but not claimed");
+    expect(text).toContain("source_contract_unavailable");
+    expect(text).not.toContain("SLA credits earned but not claimed");
     expect(text).not.toContain("Moves phase plan");
     expect(text).not.toContain("P0 Originate");
   });

@@ -30,6 +30,27 @@ interface AskTurnRow {
   role: 'user' | 'assistant' | 'system';
   content: string;
   created_at: string;
+  metadata_jsonb?: unknown;
+}
+
+function hasUnverifiedContractHistory(turns: AskTurnRow[]): boolean {
+  return turns.some((turn) => {
+    const metadata = turn.metadata_jsonb;
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return false;
+    const record = metadata as Record<string, unknown>;
+    if (record.unverifiedContractContext === true) return true;
+    const surface = record.surfaceContext;
+    if (!surface || typeof surface !== 'object' || Array.isArray(surface)) return false;
+    const context = surface as Record<string, unknown>;
+    return context.module === 'Source' ||
+      context.sourceV4 !== undefined ||
+      context.sourceContract360Mode === true ||
+      context.contractId != null ||
+      context.contractName != null ||
+      context.vendorName != null ||
+      context.annualValue != null ||
+      context.actualAnnualSpend != null;
+  });
 }
 
 function cleanText(value: string, max = MAX_TURN_CHARS): string {
@@ -83,19 +104,22 @@ function formatConversationContext(summary: string | null, turns: AskTurnRow[]):
   return parts.join('\n').slice(0, MAX_CONTEXT_CHARS);
 }
 
-async function readSessionTurns(sessionId: string): Promise<AskTurnRow[]> {
-  const { data, error } = await getAzureWriteFluentClient()
-    .from('intelligence_ask_turns')
-    .select('role, content, created_at')
-    .eq('session_id', sessionId)
-    .order('created_at', { ascending: true });
-  if (error || !data) return [];
-  return data as AskTurnRow[];
+async function readSessionTurns(sessionId: string): Promise<AskTurnRow[] | null> {
+  try {
+    const { data, error } = await getAzureWriteFluentClient()
+      .from('intelligence_ask_turns')
+      .select('role, content, created_at, metadata_jsonb')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true });
+    return error || !Array.isArray(data) ? null : data as AskTurnRow[];
+  } catch {
+    return null;
+  }
 }
 
 async function maybeRefreshSummary(sessionId: string): Promise<string | null> {
   const turns = await readSessionTurns(sessionId);
-  if (turns.length <= RECENT_TURN_LIMIT) return null;
+  if (!turns || turns.length <= RECENT_TURN_LIMIT) return null;
   const older = turns.slice(0, Math.max(0, turns.length - RECENT_TURN_LIMIT));
   const summary = summarizeTurns(older);
   if (!summary) return null;
@@ -132,6 +156,7 @@ export async function prepareAskSessionMemory(input: {
 
   const session = data as AskSessionRow;
   const allTurns = await readSessionTurns(session.id);
+  if (!allTurns) return null;
   const summary = allTurns.length > RECENT_TURN_LIMIT
     ? session.summary ?? summarizeTurns(allTurns.slice(0, allTurns.length - RECENT_TURN_LIMIT))
     : session.summary;
@@ -140,7 +165,9 @@ export async function prepareAskSessionMemory(input: {
   return {
     sessionId: session.id,
     tabId,
-    contextBlock: allTurns.length > 0 || summary ? formatConversationContext(summary, recentTurns) : '',
+    contextBlock: hasUnverifiedContractHistory(allTurns)
+      ? ''
+      : allTurns.length > 0 || summary ? formatConversationContext(summary, recentTurns) : '',
     priorTurnCount: allTurns.length,
     summary: summary ?? null,
   };
@@ -231,10 +258,13 @@ export async function getAskSessionForMove(input: {
   }
 
   if (!session) return null;
-  const turns = (await readSessionTurns(session.id)).slice(-RECENT_TURN_LIMIT);
+  const allTurns = await readSessionTurns(session.id);
+  if (!allTurns) return null;
   return {
     sessionId: session.id,
-    contextBlock: formatConversationContext(session.summary, turns),
+    contextBlock: hasUnverifiedContractHistory(allTurns)
+      ? ''
+      : formatConversationContext(session.summary, allTurns.slice(-RECENT_TURN_LIMIT)),
   };
 }
 
@@ -250,9 +280,12 @@ export async function getAskSessionContextById(input: {
     .maybeSingle();
   const session = data as AskSessionRow | null;
   if (!session) return null;
-  const turns = (await readSessionTurns(session.id)).slice(-RECENT_TURN_LIMIT);
+  const allTurns = await readSessionTurns(session.id);
+  if (!allTurns) return null;
   return {
     sessionId: session.id,
-    contextBlock: formatConversationContext(session.summary, turns),
+    contextBlock: hasUnverifiedContractHistory(allTurns)
+      ? ''
+      : formatConversationContext(session.summary, allTurns.slice(-RECENT_TURN_LIMIT)),
   };
 }

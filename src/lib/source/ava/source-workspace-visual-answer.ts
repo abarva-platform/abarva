@@ -248,6 +248,87 @@ function contractIdFromQuery(query: string): string | null {
   return match ? match[0].toUpperCase() : null;
 }
 
+function nameAppearsInQuery(query: string, name: string): boolean {
+  const normalizedName = name.trim().replace(/\s+/g, " ").toLowerCase();
+  const escaped = normalizedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const normalizedQuery = query.replace(/\s+/g, " ").toLowerCase();
+  return new RegExp(`(^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`).test(
+    normalizedQuery,
+  );
+}
+
+function hasExplicitUnmatchedName(query: string): boolean {
+  const namedPhrase = query.match(
+    /\b(?:for|about|with|under|summari[sz]e)\s+([^?.!,;]+)/i,
+  )?.[1]?.trim();
+  if (!namedPhrase) return false;
+  return !/^(?:this|that|the|a|an|our|current|selected|it|renewal|comparison)\b/i.test(
+    namedPhrase,
+  );
+}
+
+function rowMatchesContextScope(
+  row: Record<string, unknown>,
+  context: AskSurfaceContext,
+): boolean {
+  const declaredKeys = [
+    ...(Object.hasOwn(row, "tenantKey") ? [row.tenantKey] : []),
+    ...(Object.hasOwn(row, "clientKey") ? [row.clientKey] : []),
+  ];
+  if (declaredKeys.length === 0) return true;
+  const contextKey = stringValue(context.clientKey)?.toLowerCase();
+  return Boolean(
+    contextKey &&
+    declaredKeys.every(
+      (key) => stringValue(key)?.toLowerCase() === contextKey,
+    ),
+  );
+}
+
+function namedContractFromQuery(
+  context: AskSurfaceContext,
+  query: string,
+): { contract: SourceContractContext | null; ambiguous: boolean } | null {
+  const source = sourceV4(context);
+  const rows: Record<string, unknown>[] = [];
+  const direct = directContractContextFrom(context);
+  if (isRecord(source?.selectedContract)) rows.push(source.selectedContract);
+  if (Array.isArray(source?.contractDirectory)) {
+    rows.push(...source.contractDirectory.filter(isRecord));
+  }
+  const candidates = [
+    ...(direct ? [{ contract: direct, inScope: true }] : []),
+    ...rows.flatMap((row) => {
+      const contract = contractContextFromRecord(row);
+      return contract
+        ? [{ contract, inScope: rowMatchesContextScope(row, context) }]
+        : [];
+    }),
+  ];
+  const agreementMatches = candidates.filter(({ contract }) =>
+    nameAppearsInQuery(query, contract.contractName),
+  );
+  const matches =
+    agreementMatches.length > 0
+      ? agreementMatches
+      : candidates.filter(({ contract }) =>
+          nameAppearsInQuery(query, contract.vendorName),
+        );
+  if (matches.length === 0) {
+    return hasExplicitUnmatchedName(query)
+      ? { contract: null, ambiguous: false }
+      : null;
+  }
+  const authorized = matches.filter(({ inScope }) => inScope);
+  const ids = new Set(
+    authorized.map(({ contract }) => contract.contractId.toUpperCase()),
+  );
+  return {
+    contract: ids.size === 1 ? authorized[0].contract : null,
+    ambiguous: ids.size > 1,
+  };
+}
+
 function contractContextFromRecord(
   raw: Record<string, unknown>,
 ): SourceContractContext | null {
@@ -313,8 +394,15 @@ function selectedContractFrom(
   const raw = isRecord(source?.selectedContract)
     ? source.selectedContract
     : null;
-  const selected = raw ? contractContextFromRecord(raw) : null;
+  const selected =
+    raw && rowMatchesContextScope(raw, context)
+      ? contractContextFromRecord(raw)
+      : null;
   const requestedContractId = query ? contractIdFromQuery(query) : null;
+  if (query && !requestedContractId) {
+    const named = namedContractFromQuery(context, query);
+    if (named) return named.contract;
+  }
   if (
     direct &&
     (!requestedContractId ||
@@ -360,21 +448,30 @@ function selectedContractFrom(
   const directoryMatch = directory.find(
     (item) =>
       isRecord(item) &&
+      rowMatchesContextScope(item, context) &&
       stringValue(item.contractId)?.toUpperCase() === requestedContractId,
   );
   if (isRecord(directoryMatch))
     return contractContextFromRecord(directoryMatch);
   const opportunityMatch = requestedContractId
-    ? contractContextFromOpportunityRows(source, requestedContractId)
+    ? contractContextFromOpportunityRows(source, requestedContractId, context)
     : null;
   if (opportunityMatch) return opportunityMatch;
   if (requestedContractId) return null;
   return selected;
 }
 
+export function resolveSourceWorkspaceContractId(input: {
+  query: string;
+  surfaceContext: AskSurfaceContext;
+}): string | null {
+  return selectedContractFrom(input.surfaceContext, input.query)?.contractId ?? null;
+}
+
 function contractContextFromOpportunityRows(
   source: Record<string, unknown> | null,
   contractId: string,
+  context: AskSurfaceContext,
 ): SourceContractContext | null {
   const opportunities = isRecord(source?.optimizationOpportunities)
     ? source.optimizationOpportunities
@@ -387,7 +484,10 @@ function contractContextFromOpportunityRows(
     : [];
   const rows = [...directoryRows, ...richRows];
   const match = rows.find(
-    (row) => isRecord(row) && lineMatchesContract(row, contractId),
+    (row) =>
+      isRecord(row) &&
+      rowMatchesContextScope(row, context) &&
+      lineMatchesContract(row, contractId),
   );
   if (!isRecord(match)) return null;
   return {
@@ -463,6 +563,23 @@ function buildMissingContractAnswer(
   };
 }
 
+function buildUnresolvedNamedContractAnswer(
+  ambiguous: boolean,
+): SourceWorkspaceVisualAnswer {
+  return {
+    directAnswer: ambiguous
+      ? "More than one contract matches that name in the current Source context. Specify the agreement name or contract ID before I use contract-specific facts."
+      : "That named contract is not available in the current Source contract packet. I cannot use the open contract's facts to answer it.",
+    artifacts: [],
+    citations: [],
+    factsUsed: [],
+    metricsUsed: [],
+    relationshipsUsed: [],
+    caveats: [],
+    nextSteps: [],
+  };
+}
+
 function ledgerLinesFrom(context: AskSurfaceContext): SourceLedgerLine[] {
   const source = sourceV4(context);
   const ledger = isRecord(source?.optimizationLedger)
@@ -508,7 +625,10 @@ function opportunityLinesFrom(
   const mapped = rawOpportunities.flatMap(
     (opportunity): SourceOpportunityLine[] => {
       if (!isRecord(opportunity)) return [];
-      if (!lineMatchesContract(opportunity, contractId)) {
+      if (
+        !rowMatchesContextScope(opportunity, context) ||
+        !lineMatchesContract(opportunity, contractId)
+      ) {
         return [];
       }
       const id = stringValue(opportunity.id);
@@ -557,7 +677,10 @@ function opportunityLinesFrom(
     : [];
   const directoryLines = directory.flatMap((line): SourceOpportunityLine[] => {
     if (!isRecord(line)) return [];
-    if (!lineMatchesContract(line, contractId)) {
+    if (
+      !rowMatchesContextScope(line, context) ||
+      !lineMatchesContract(line, contractId)
+    ) {
       return [];
     }
     const id = stringValue(line.id);
@@ -694,11 +817,14 @@ export function canBuildSourceWorkspaceVisualAnswer(input: {
 }): boolean {
   const context = input.surfaceContext;
   const requestedContractId = contractIdFromQuery(input.query);
+  const named = context && !requestedContractId
+    ? namedContractFromQuery(context, input.query)
+    : null;
   return Boolean(
     context &&
     stringValue(context.module)?.toLowerCase() === "source" &&
     wantsSourceVisualAnswer(input.query) &&
-    (selectedContractFrom(context, input.query) || requestedContractId),
+    (selectedContractFrom(context, input.query) || requestedContractId || named),
   );
 }
 
@@ -943,11 +1069,14 @@ export function canBuildSourceContractOptimizationExportAnswer(input: {
 }): boolean {
   const context = input.surfaceContext;
   const requestedContractId = contractIdFromQuery(input.query);
+  const named = context && !requestedContractId
+    ? namedContractFromQuery(context, input.query)
+    : null;
   return Boolean(
     context &&
       stringValue(context.module)?.toLowerCase() === "source" &&
       wantsContractOptimizationExport(input.query) &&
-      (selectedContractFrom(context, input.query) || requestedContractId),
+      (selectedContractFrom(context, input.query) || requestedContractId || named),
   );
 }
 
@@ -958,6 +1087,10 @@ export function buildSourceContractOptimizationExportAnswer(input: {
   const requestedContractId = contractIdFromQuery(input.query);
   const contract = selectedContractFrom(input.surfaceContext, input.query);
   if (!contract) {
+    const named = !requestedContractId
+      ? namedContractFromQuery(input.surfaceContext, input.query)
+      : null;
+    if (named) return buildUnresolvedNamedContractAnswer(named.ambiguous);
     return requestedContractId
       ? buildMissingContractAnswer(requestedContractId)
       : null;
@@ -1097,15 +1230,30 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   const requestedContractId = contractIdFromQuery(input.query);
   const contract = selectedContractFrom(input.surfaceContext, input.query);
   if (!contract) {
+    const named = !requestedContractId
+      ? namedContractFromQuery(input.surfaceContext, input.query)
+      : null;
+    if (named) return buildUnresolvedNamedContractAnswer(named.ambiguous);
     return requestedContractId
       ? buildMissingContractAnswer(requestedContractId)
       : null;
   }
   const lines = opportunityLinesFrom(input.surfaceContext, contract.contractId);
-  const connections = connectionsFrom(input.surfaceContext);
-  const commercialPostureLines = commercialPostureLinesFrom(
-    input.surfaceContext,
-  );
+  const source = sourceV4(input.surfaceContext);
+  const rawSelected = isRecord(source?.selectedContract)
+    ? source.selectedContract
+    : null;
+  const openContractId =
+    directContractContextFrom(input.surfaceContext)?.contractId ??
+    (rawSelected && rowMatchesContextScope(rawSelected, input.surfaceContext)
+      ? stringValue(rawSelected.contractId)
+      : null);
+  const isOpenContract =
+    openContractId?.toUpperCase() === contract.contractId.toUpperCase();
+  const connections = isOpenContract ? connectionsFrom(input.surfaceContext) : [];
+  const commercialPostureLines = isOpenContract
+    ? commercialPostureLinesFrom(input.surfaceContext)
+    : [];
   const contractMismatch =
     requestedContractId &&
     contract.contractId.toUpperCase() !== requestedContractId;
