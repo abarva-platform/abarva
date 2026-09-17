@@ -60,6 +60,16 @@ async function installSchema(pool) {
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_key text NOT NULL,
       dataset_version text NOT NULL, contract_id text NOT NULL, calculation_run_id text,
       payload jsonb NOT NULL DEFAULT '{}'::jsonb);
+    CREATE TABLE source.contract_depth_adapter_row (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_key text NOT NULL,
+      dataset_version text NOT NULL, adapter_name text NOT NULL, source_row_id text NOT NULL,
+      source_file_name text NOT NULL, source_hash text NOT NULL, payload jsonb NOT NULL,
+      lineage jsonb NOT NULL, quality_state text NOT NULL);
+    CREATE TABLE source.source_record_snapshot (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_key text NOT NULL,
+      dataset_version text NOT NULL, snapshot_id text NOT NULL, source_table text NOT NULL,
+      source_record_id text NOT NULL, source_record_hash text NOT NULL, contract_id text NOT NULL,
+      payload jsonb NOT NULL);
     CREATE VIEW consumption.sourcing_opportunity_v1 AS
       SELECT legacy.tenant_key,legacy.opportunity_id FROM source.sourcing_opportunity legacy
       WHERE NOT EXISTS (SELECT 1 FROM source.optimization_opportunity canonical
@@ -95,6 +105,13 @@ async function seedFixture(pool, scope) {
   const common = { tenant_key: scope.tenantKey, dataset_version: scope.datasetVersion };
   const opportunity = "OPP-LOCAL-1";
   const contract = scope.contractId;
+  const sourcePayload = { opportunity_id: opportunity, contract_id: contract };
+  await insert(pool, "contract_depth_adapter_row", { ...common, adapter_name: "optimization_opportunity_adapter",
+    source_row_id: opportunity, source_file_name: "optimization_opportunities.csv", source_hash: "source-hash-1",
+    payload: sourcePayload, lineage: { layer: 2, package_sha256: "package-hash-1" }, quality_state: "adapter_validated" });
+  await insert(pool, "source_record_snapshot", { ...common, snapshot_id: `optimization_opportunity_adapter:${opportunity}`,
+    source_table: "source.contract_depth_adapter_row.optimization_opportunity_adapter",
+    source_record_id: opportunity, source_record_hash: "source-hash-1", contract_id: contract, payload: sourcePayload });
   await insert(pool, "optimization_opportunity", { ...common, opportunity_id: opportunity, contract_id: contract,
     vendor_id: "V-1", value_type: "avoided_cost", stage: "signal", next_action: "Review",
     overlap_treatment: "none", approval_state: "requires_sizing", narrative: "Synthetic local test" });
@@ -188,6 +205,7 @@ test("local PostgreSQL plan/apply/verify/restore preserves every spine row and d
       SOURCE_CUTOVER_EXPECTED_OPPORTUNITY_IDS: JSON.stringify([opportunity]),
       SOURCE_CUTOVER_EXPECTED_HASH: held.inventory_sha256,
       SOURCE_CUTOVER_EXPECTED_WRITER_HASH: held.canonical_writer_sha256,
+      SOURCE_CUTOVER_EXPECTED_PROVENANCE_HASH: held.historical_provenance_sha256,
       SOURCE_CUTOVER_EXPECTED_MANIFEST_HASH: held.ownership_manifest_sha256 },
     pool: jobPool, targetOverride: blob.target }), /Human decision rows/);
     for (const table of ["approval_decision", "finance_realization_evidence", "finance_realization",
@@ -207,7 +225,31 @@ test("local PostgreSQL plan/apply/verify/restore preserves every spine row and d
     const approved = { ...env, SOURCE_CUTOVER_EXPECTED_OPPORTUNITY_IDS: JSON.stringify([opportunity]),
       SOURCE_CUTOVER_EXPECTED_HASH: plan.inventory_sha256,
       SOURCE_CUTOVER_EXPECTED_WRITER_HASH: plan.canonical_writer_sha256,
+      SOURCE_CUTOVER_EXPECTED_PROVENANCE_HASH: plan.historical_provenance_sha256,
       SOURCE_CUTOVER_EXPECTED_MANIFEST_HASH: plan.ownership_manifest_sha256 };
+
+    await local.pool.query(`UPDATE source.source_record_snapshot SET source_record_hash='altered'
+      WHERE tenant_key=$1 AND dataset_version=$2`, [scope.tenantKey, scope.datasetVersion]);
+    await assert.rejects(runJob({ mode: "plan", env, pool: jobPool, targetOverride: blob.target }),
+      /Historical snapshot does not match/);
+    await local.pool.query(`UPDATE source.source_record_snapshot SET source_record_hash='source-hash-1'
+      WHERE tenant_key=$1 AND dataset_version=$2`, [scope.tenantKey, scope.datasetVersion]);
+    await local.pool.query(`UPDATE source.contract_depth_adapter_row
+      SET lineage=jsonb_set(lineage,'{package_sha256}','"changed"'::jsonb)
+      WHERE tenant_key=$1 AND dataset_version=$2`, [scope.tenantKey, scope.datasetVersion]);
+    await assert.rejects(runJob({ mode: "apply", env: { ...approved, SOURCE_CUTOVER_APPROVED: "APPLY" },
+      pool: jobPool, targetOverride: blob.target }), /Historical provenance changed since approval/);
+    await local.pool.query(`UPDATE source.contract_depth_adapter_row
+      SET lineage=jsonb_set(lineage,'{package_sha256}','"package-hash-1"'::jsonb)
+      WHERE tenant_key=$1 AND dataset_version=$2`, [scope.tenantKey, scope.datasetVersion]);
+
+    await insert(local.pool, "contract_insight", { tenant_key: scope.tenantKey,
+      dataset_version: scope.datasetVersion, contract_id: scope.contractId,
+      payload: { active_reference: opportunity } });
+    await assert.rejects(runJob({ mode: "plan", env, pool: jobPool, targetOverride: blob.target }),
+      /External JSON reference contract_insight.payload/);
+    await local.pool.query(`DELETE FROM source.contract_insight WHERE tenant_key=$1 AND dataset_version=$2`,
+      [scope.tenantKey, scope.datasetVersion]);
 
     await insert(local.pool, "sourcing_opportunity", { tenant_key: scope.tenantKey, contract_id: scope.contractId,
       opportunity_id: opportunity });

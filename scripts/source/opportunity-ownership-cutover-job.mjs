@@ -267,7 +267,47 @@ async function inspectSchema(client) {
   return { constraints: constraints.rows, columns: columns.rows };
 }
 
-async function inspectExternalReferences(client, scope, selected, referenceIds = selected.ids) {
+async function historicalProvenance(client, scope, referenceIds, opportunityIds) {
+  const adapter = await client.query(`SELECT t.*, to_jsonb(t)::text AS raw
+    FROM source.contract_depth_adapter_row t
+    WHERE tenant_key=$1 AND EXISTS
+      (SELECT 1 FROM unnest($2::text[]) ref WHERE t.payload::text LIKE '%' || ref || '%')
+    ORDER BY source_row_id`, [scope.tenantKey, referenceIds]);
+  const snapshots = await client.query(`SELECT t.*, to_jsonb(t)::text AS raw
+    FROM source.source_record_snapshot t
+    WHERE tenant_key=$1 AND EXISTS
+      (SELECT 1 FROM unnest($2::text[]) ref WHERE t.payload::text LIKE '%' || ref || '%')
+    ORDER BY source_record_id`, [scope.tenantKey, referenceIds]);
+  assert(adapter.rows.length === opportunityIds.length && snapshots.rows.length === opportunityIds.length,
+    "Historical opportunity provenance is incomplete or has unexpected references");
+  const adaptersById = new Map();
+  for (const row of adapter.rows) {
+    const id = row.payload?.opportunity_id;
+    assert(row.dataset_version === scope.datasetVersion && row.adapter_name === "optimization_opportunity_adapter" &&
+      row.source_file_name === "optimization_opportunities.csv" && row.quality_state === "adapter_validated" &&
+      row.payload?.contract_id === scope.contractId && row.source_row_id === id &&
+      opportunityIds.includes(id) && row.source_hash && row.lineage?.layer === 2 && row.lineage?.package_sha256,
+    "Historical adapter reference is not an exact validated source row");
+    assert(!adaptersById.has(id), "Duplicate historical adapter reference");
+    adaptersById.set(id, row);
+  }
+  for (const row of snapshots.rows) {
+    const id = row.payload?.opportunity_id;
+    const adapterRow = adaptersById.get(id);
+    assert(adapterRow && row.dataset_version === scope.datasetVersion && row.contract_id === scope.contractId &&
+      row.source_table === "source.contract_depth_adapter_row.optimization_opportunity_adapter" &&
+      row.source_record_id === id && row.snapshot_id === `optimization_opportunity_adapter:${id}` &&
+      row.source_record_hash === adapterRow.source_hash &&
+      JSON.stringify(row.payload) === JSON.stringify(adapterRow.payload),
+    "Historical snapshot does not match its validated adapter row");
+  }
+  const rows = [...adapter.rows.map((row) => ["adapter", row.id, sha(row.raw)]),
+    ...snapshots.rows.map((row) => ["snapshot", row.id, sha(row.raw)])];
+  rows.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  return { count: rows.length, hash: sha(JSON.stringify(rows)) };
+}
+
+async function inspectExternalReferences(client, scope, selected, referenceIds = selected.ids, opportunityIds = selected.ids) {
   const ids = new Set(referenceIds);
   const caseIds = new Set(selected.selected.optimization_case.map((row) => row.optimization_case_id));
   const baselineIds = new Set(selected.selected.optimization_baseline.map((row) => row.baseline_id));
@@ -305,7 +345,10 @@ async function inspectExternalReferences(client, scope, selected, referenceIds =
       AND tenant.column_name='tenant_key'
     WHERE c.table_schema='source' AND c.data_type IN ('json','jsonb') AND c.table_name<>ALL($1::text[])`,
   [[...SPINE, ...EXPLICIT_REFERENCE_TABLES]]);
+  const provenance = await historicalProvenance(client, scope, referenceIds, opportunityIds);
   for (const column of jsonColumns.rows) {
+    if ((column.table_name === "contract_depth_adapter_row" || column.table_name === "source_record_snapshot") &&
+        column.column_name === "payload") continue;
     const result = await client.query(`SELECT count(*)::int AS count FROM source.${ident(column.table_name)}
       WHERE tenant_key=$1 AND EXISTS
       (SELECT 1 FROM unnest($2::text[]) ref WHERE ${ident(column.column_name)}::text LIKE '%' || ref || '%')`,
@@ -330,6 +373,7 @@ async function inspectExternalReferences(client, scope, selected, referenceIds =
     [scope.tenantKey, scope.datasetVersion, references]);
     assert(result.rows[0].count === 0, `Cross-version JSON reference ${column.table_name}.${column.column_name}`);
   }
+  return provenance;
 }
 
 async function inventory(client, scope, expectedIds, retiredIds = expectedIds, retiredReferences = retiredIds) {
@@ -347,14 +391,14 @@ async function inventory(client, scope, expectedIds, retiredIds = expectedIds, r
       `Residual ${table} reference to retired scope`);
     }
   }
-  await inspectExternalReferences(client, scope, selected, references);
+  const provenance = await inspectExternalReferences(client, scope, selected, references, retiredIds ?? selected.ids);
   const hashes = canonicalInventory(rowsByTable, selected.selectedIds);
   const legacy = await inspectLegacy(client, scope, retiredIds ?? selected.ids);
   const writerRows = {};
   for (const table of SPINE) writerRows[table] = await loadRows(client, { ...scope, datasetVersion: scope.writerDatasetVersion }, table);
   const writerHash = canonicalInventory(writerRows, new Set()).inventoryHash;
   const writerRootCount = writerRows.optimization_opportunity.filter((row) => row.contract_id === scope.contractId).length;
-  return { ...selected, ...hashes, writerHash, writerRootCount, legacy, schema, rowsByTable };
+  return { ...selected, ...hashes, writerHash, writerRootCount, provenance, legacy, schema, rowsByTable };
 }
 
 function requiredEnv(env, name) { assert(env[name]?.trim(), `${name} is required`); return env[name].trim(); }
@@ -375,15 +419,17 @@ function metadata(env, mode) {
 }
 
 function expected(env, mode) {
-  if (mode === "plan") return { ids: null, hash: null, writerHash: null };
+  if (mode === "plan") return { ids: null, hash: null, writerHash: null, provenanceHash: null };
   const ids = JSON.parse(requiredEnv(env, "SOURCE_CUTOVER_EXPECTED_OPPORTUNITY_IDS"));
   assert(Array.isArray(ids) && ids.length > 0 && ids.every((id) => typeof id === "string" && id.length > 0), "Invalid expected IDs");
   const hash = requiredEnv(env, "SOURCE_CUTOVER_EXPECTED_HASH");
   assert(/^[a-f0-9]{64}$/.test(hash), "Invalid expected inventory hash");
   const writerHash = requiredEnv(env, "SOURCE_CUTOVER_EXPECTED_WRITER_HASH");
   assert(/^[a-f0-9]{64}$/.test(writerHash), "Invalid expected writer hash");
+  const provenanceHash = requiredEnv(env, "SOURCE_CUTOVER_EXPECTED_PROVENANCE_HASH");
+  assert(/^[a-f0-9]{64}$/.test(provenanceHash), "Invalid expected provenance hash");
   if (mode !== "plan") assert(env.SOURCE_CUTOVER_EXPECTED_MANIFEST_HASH, "Expected manifest hash required");
-  return { ids, hash, writerHash };
+  return { ids, hash, writerHash, provenanceHash };
 }
 
 function reconstructedInventoryHash(currentRowsByTable, archiveRows) {
@@ -485,6 +531,8 @@ async function runJob({ mode, env = process.env, pool, targetOverride } = {}) {
         archive_row_count: snapshot.archiveCount, opportunity_ids: snapshot.ids,
         table_counts: Object.fromEntries(SPINE.map((table) => [table, snapshot.selected[table].length])),
         control_sha256: snapshot.controlHash, canonical_writer_sha256: snapshot.writerHash,
+        historical_provenance_sha256: snapshot.provenance.hash,
+        historical_provenance_row_count: snapshot.provenance.count,
         canonical_writer_root_count: snapshot.writerRootCount,
         legacy_opportunity_blockers: snapshot.legacy,
         human_decision_blockers: decisionBlockers,
@@ -496,6 +544,7 @@ async function runJob({ mode, env = process.env, pool, targetOverride } = {}) {
         assertNoHumanDecisions(decisionBlockers);
         assert(snapshot.inventoryHash === approval.hash, "Exact inventory hash changed since approval");
         assert(snapshot.writerHash === approval.writerHash, "Canonical writer changed since approval");
+        assert(snapshot.provenance.hash === approval.provenanceHash, "Historical provenance changed since approval");
         assert(snapshot.rootCount > 0, "No evidence-only opportunities to retire");
         const existing = await client.query("SELECT run_id FROM source.opportunity_cutover_run WHERE run_id=$1", [meta.runId]);
         assert(existing.rows.length === 0, "Run ID already used");
@@ -506,6 +555,7 @@ async function runJob({ mode, env = process.env, pool, targetOverride } = {}) {
         const after = await inventory(client, scope, [], approval.ids, referenceIdsFromRows(snapshot.selected));
         assert(after.archiveCount === 0 && after.controlHash === snapshot.controlHash &&
           after.writerHash === snapshot.writerHash && after.legacy.count === 0 &&
+          after.provenance.hash === snapshot.provenance.hash &&
           after.legacy.projection_sha256 === snapshot.legacy.projection_sha256, "Post-delete quality gate failed");
         Object.assign(proof, { status: "retired", quality_gate: "PASS", archive_readback_sha256: archive.hash,
           control_readback_sha256: after.controlHash, prepared_proof_url: preparedUrl });
@@ -529,6 +579,7 @@ async function runJob({ mode, env = process.env, pool, targetOverride } = {}) {
         assert(before.archiveCount === 0, "Restore would overwrite live opportunity rows");
         assertNoLegacy(before.legacy);
         assert(before.writerHash === approval.writerHash &&
+          before.provenance.hash === approval.provenanceHash &&
           reconstructedInventoryHash(before.rowsByTable, archive.rows) === approval.hash,
         "Unrelated or canonical writer rows changed since retirement");
         const preparedUrl = await uploadProof(target, `${meta.runId}-restore-prepared`, { ...proof, status: "restore_prepared_uncommitted" });
@@ -554,6 +605,7 @@ async function runJob({ mode, env = process.env, pool, targetOverride } = {}) {
         assert(now.archiveCount === 0, "Residual evidence-only opportunity rows");
         assertNoLegacy(now.legacy);
         assert(now.writerHash === approval.writerHash &&
+          now.provenance.hash === approval.provenanceHash &&
           reconstructedInventoryHash(now.rowsByTable, archive.rows) === approval.hash,
         "Unrelated or canonical writer rows changed since retirement");
         Object.assign(proof, { status: "verified", quality_gate: "PASS", residual_rows: 0 });
