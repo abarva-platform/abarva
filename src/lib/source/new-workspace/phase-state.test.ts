@@ -1,6 +1,7 @@
 import {
   isPastSourceNewPhases,
   sourceNewCurrentPhase,
+  sourceNewFilePhase,
   sourceNewPhaseState,
   sourceNewPhaseStateLabel,
   sourceNewStageLabel,
@@ -93,6 +94,26 @@ describe("sourceNewPhaseState", () => {
     const event = { currentStage: "not_a_stage", lifecycle: "active" };
     expect(sourceNewPhaseState("define", event, nothingRecorded)).toBe("no_record");
     expect(sourceNewPhaseState("rfi", event, { ...nothingRecorded, rfi: true })).toBe("recorded");
+  });
+});
+
+describe("sourceNewFilePhase", () => {
+  it("files an artifact from a stage outside these phases rather than dropping it", () => {
+    expect(sourceNewFilePhase({ sourcingStage: "evaluation", artifactType: "score_summary" })).toBe("other");
+    expect(sourceNewFilePhase({ sourcingStage: null, artifactType: "meeting_notes" })).toBe("other");
+    expect(sourceNewFilePhase({ sourcingStage: "not_a_stage", artifactType: "notes" })).toBe("other");
+  });
+
+  it("keeps the phase mapping it already had", () => {
+    expect(sourceNewFilePhase({ sourcingStage: "intake", artifactType: "request_form" })).toBe("request");
+    expect(sourceNewFilePhase({ sourcingStage: "scope", artifactType: "scope_note" })).toBe("define");
+    expect(sourceNewFilePhase({ sourcingStage: "sourcing_strategy", artifactType: "strategy" })).toBe("define");
+    expect(sourceNewFilePhase({ sourcingStage: "rfp_rfi_package", artifactType: "package" })).toBe("rfi");
+  });
+
+  it("files an NDA with supplier work whatever stage recorded it", () => {
+    expect(sourceNewFilePhase({ sourcingStage: "evaluation", artifactType: "nda_executed" })).toBe("suppliers");
+    expect(sourceNewFilePhase({ sourcingStage: null, artifactType: "mutual_NDA" })).toBe("suppliers");
   });
 });
 

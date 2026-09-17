@@ -4,21 +4,12 @@ import { requireTenancy } from "@/lib/auth/tenancy";
 import { getSourcingEventForResolvedClient } from "@/lib/source/queries";
 import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
-import type { SourceArtifactRecord } from "@/lib/source/file-cabinet/types";
 import { SourceNewWorkspace } from "@/components/source/new-workspace/SourceNewWorkspace";
-import type { SourceNewFileRow, SourceNewFilePhase } from "@/components/source/new-workspace/SourceNewFiles";
+import type { SourceNewFileRow } from "@/components/source/new-workspace/SourceNewFiles";
+import { sourceNewFilePhase } from "@/lib/source/new-workspace/phase-state";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Source New · AbarVa" };
-
-function filePhase(row: SourceArtifactRecord): SourceNewFilePhase | null {
-  const stage = row.sourcingStage?.toLowerCase() ?? "";
-  if (row.artifactType.toLowerCase().includes("nda")) return "suppliers";
-  if (stage === "intake") return "request";
-  if (stage === "strategy" || stage === "sourcing_strategy" || stage === "scope") return "define";
-  if (stage === "rfp" || stage === "rfp_rfi_package") return "rfi";
-  return null;
-}
 
 export default async function SourceNewEventPage({
   params,
@@ -42,8 +33,10 @@ export default async function SourceNewEventPage({
   const files: SourceNewFileRow[] = activeClient.id
     ? (await listSourceArtifacts(event.id, activeClient.id, { includeHistory: true }))
         .flatMap((artifact) => {
-          const phase = filePhase(artifact);
-          if (!phase || canonicalTenantKey(artifact.tenantKey) !== canonicalTenantKey(activeClient.key)) return [];
+          // Tenancy is the only reason to drop an artifact here. A stage this
+          // workspace has no phase for still belongs to the operator's event.
+          if (canonicalTenantKey(artifact.tenantKey) !== canonicalTenantKey(activeClient.key)) return [];
+          const phase = sourceNewFilePhase(artifact);
           return [{
             id: artifact.id,
             artifactGroup: artifact.artifactGroup,

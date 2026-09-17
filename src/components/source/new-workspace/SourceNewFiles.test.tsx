@@ -53,6 +53,28 @@ describe("SourceNewFiles", () => {
     }));
   }
 
+  it("offers the other-stages folder only when such files exist, and never hides them", () => {
+    const { unmount } = render(<SourceNewFiles rows={rows} />);
+    const folderNames = () =>
+      within(screen.getByRole("navigation", { name: "File folders" }))
+        .getAllByRole("button")
+        .map((button) => button.textContent);
+    expect(folderNames()).not.toContain("Other stages");
+    unmount();
+
+    const elsewhere: SourceNewFileRow = {
+      ...base,
+      id: "score",
+      phase: "other",
+      artifactType: "score_summary",
+      title: "Evaluation score summary",
+    };
+    render(<SourceNewFiles rows={[...rows, elsewhere]} />);
+    expect(folderNames()).toContain("Other stages");
+    fireEvent.click(screen.getByRole("button", { name: "Other stages" }));
+    expect(screen.getByRole("option", { name: /Evaluation score summary/ })).toBeTruthy();
+  });
+
   it("filters by folder and search, hiding superseded versions until requested", () => {
     render(<SourceNewFiles rows={rows} />);
     expect(screen.getByRole("option", { name: /Intake record/ })).toBeTruthy();

@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { SourceArtifactRecord } from "@/lib/source/file-cabinet/types";
 
-export type SourceNewFilePhase = "request" | "define" | "suppliers" | "rfi";
+export type SourceNewFilePhase = "request" | "define" | "suppliers" | "rfi" | "other";
 
 export type SourceNewFileRow = Pick<
   SourceArtifactRecord,
@@ -44,6 +44,10 @@ const PHASES: readonly { key: SourceNewFilePhase; label: string }[] = [
   { key: "define", label: "Define" },
   { key: "suppliers", label: "Suppliers" },
   { key: "rfi", label: "Market package" },
+  // Artifacts from the rest of the event. The folder appears only when such
+  // files exist, but they are never hidden: an empty folder beside a cabinet
+  // that holds files would read as "no files" when the truth is "not here".
+  { key: "other", label: "Other stages" },
 ];
 
 const label = (value: string) => value.replaceAll("_", " ");
@@ -73,6 +77,8 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
   const returnScrollRef = useRef({ list: 0, page: 0 });
   const restoreListRef = useRef(false);
 
+  // "Other stages" is offered only when the cabinet actually holds such files.
+  const folders = PHASES.filter((folder) => folder.key !== "other" || rows.some((row) => row.phase === "other"));
   const visible = displayRows(rows, includeHistory).filter(
     (row) => row.phase === phase && `${row.title} ${row.fileName}`.toLowerCase().includes(search.trim().toLowerCase()),
   );
@@ -167,7 +173,7 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
       </div>
       <div className="source-new-files__body">
         <nav className="source-new-files__folders" aria-label="File folders">
-          {PHASES.map((folder) => (
+          {folders.map((folder) => (
             <button key={folder.key} type="button" className="source-new-files__folder" aria-current={phase === folder.key ? "true" : undefined} onClick={() => { setPhase(folder.key); setSelectedId(null); }}>
               {folder.label}
             </button>
