@@ -33,7 +33,7 @@ The plan separately inventories legacy opportunity rows for the same tenant and 
 
 - `scripts/source/opportunity-ownership-cutover-job.mjs`: plan, apply, verify, restore and private Blob proof readback.
 - `scripts/source/__tests__/opportunity-ownership-cutover-job.test.mjs`: focused scope and fail-closed guards.
-- `package.json`: ACA operator script entry.
+- `package.json`: separate ACA operator script entries for plan, apply, verify, and restore. The operator wrapper invokes a named npm script without forwarding extra arguments, so each mode is explicit in the release image.
 - This release record. The archive-table migration is a separate prerequisite, not changed here.
 
 ## QA / Validation
