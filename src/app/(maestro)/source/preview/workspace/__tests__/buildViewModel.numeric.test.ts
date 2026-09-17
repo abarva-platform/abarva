@@ -705,6 +705,13 @@ describe("buildViewModel numeric coercion", () => {
             sourceRefs: [],
           },
         ],
+        optimizationCase: {
+          caseId: "case-1",
+          door1EventId: null,
+          caseState: "evidence_review",
+          owner: "Category Management",
+          nextAction: "Attach reviewed pricing evidence.",
+        },
         evidenceRequirements: ["No recoverable leakage evidence gap remains."],
         potentialRecoverableUsd: 365_000,
         potentialAvoidableUsd: 0,
@@ -715,6 +722,7 @@ describe("buildViewModel numeric coercion", () => {
 
     const built = buildViewModel(vm) as {
       opportunityView: {
+        caseThread: { state: string; owner: string; nextAction: string };
         selectedOpportunity: {
           label: string;
           shortLabel: string;
@@ -731,6 +739,11 @@ describe("buildViewModel numeric coercion", () => {
       };
     };
 
+    expect(built.opportunityView.caseThread).toEqual({
+      state: "Evidence Review",
+      owner: "Category Management",
+      nextAction: "Attach reviewed pricing evidence.",
+    });
     expect(built.opportunityView.selectedOpportunity).toMatchObject({
       label: "Invoice billing-rate variance",
       shortLabel: "Invoice billing-rate variance",
