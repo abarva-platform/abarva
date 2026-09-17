@@ -63,7 +63,7 @@ describe("SourceNewWorkspace", () => {
 
   it("does not send a vendor-waiting event back to intake approval", () => {
     render(<SourceNewWorkspace event={{ ...request, currentStage: "responses", lifecycle: "waiting_on_vendor" }} files={[]} />);
-    expect(screen.getByText("Waiting on vendor")).toBeTruthy();
+    expect(screen.getByText("Waiting on Vendor")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Open event" }).getAttribute("href"))
       .toBe("/source/events/event-1");
   });

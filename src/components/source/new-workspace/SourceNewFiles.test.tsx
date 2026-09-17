@@ -53,6 +53,30 @@ describe("SourceNewFiles", () => {
     }));
   }
 
+  it("does not call a folder empty when the history toggle is hiding its files", () => {
+    const supersededOnly: SourceNewFileRow = {
+      ...base,
+      id: "old-only",
+      phase: "suppliers",
+      version: 1,
+      lifecycleState: "superseded",
+      status: "superseded",
+    };
+    render(<SourceNewFiles rows={[supersededOnly]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Suppliers" }));
+    expect(screen.queryByText("No files here yet")).toBeNull();
+    expect(screen.getByText(/No current version here\. 1 older version is hidden/)).toBeTruthy();
+    // Turning history on reveals the file rather than changing the message
+    fireEvent.click(screen.getByLabelText("Older versions"));
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+  });
+
+  it("still says a genuinely empty folder is empty", () => {
+    render(<SourceNewFiles rows={rows} />);
+    fireEvent.click(screen.getByRole("button", { name: "Suppliers" }));
+    expect(screen.getByText("No files here yet")).toBeTruthy();
+  });
+
   it("offers the other-stages folder only when such files exist, and never hides them", () => {
     const { unmount } = render(<SourceNewFiles rows={rows} />);
     const folderNames = () =>

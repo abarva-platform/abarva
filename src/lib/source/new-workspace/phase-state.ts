@@ -1,4 +1,5 @@
 import {
+  SOURCE_LIFECYCLE_STATUS_LABELS,
   SOURCE_STAGE_LABELS,
   SOURCE_STAGE_ORDER,
   isSourceStageKey,
@@ -111,6 +112,20 @@ export function sourceNewPhaseState(
 
 export function sourceNewPhaseStateLabel(state: SourceNewPhaseState): string {
   return SOURCE_NEW_PHASE_STATE_LABELS[state];
+}
+
+/**
+ * Operator wording for an event's lifecycle. The two states this workspace
+ * speaks about in its own words keep those words; every other state comes from
+ * the canonical lifecycle dictionary rather than from title-casing whatever the
+ * column holds.
+ */
+export function sourceNewLifecycleLabel(lifecycle: string): string {
+  if (awaitsIntakeReview(lifecycle)) return "Awaiting intake review";
+  if (lifecycle === "active") return "Active event";
+  const key = lifecycle.trim().toLowerCase();
+  const known = (SOURCE_LIFECYCLE_STATUS_LABELS as Record<string, string | undefined>)[key];
+  return known ?? "Not recorded";
 }
 
 /**

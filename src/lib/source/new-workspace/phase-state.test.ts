@@ -4,6 +4,7 @@ import {
   sourceNewCurrentPhase,
   sourceNewEventTypeLabel,
   sourceNewFilePhase,
+  sourceNewLifecycleLabel,
   sourceNewPhaseState,
   sourceNewPhaseStateLabel,
   sourceNewStageLabel,
@@ -96,6 +97,23 @@ describe("sourceNewPhaseState", () => {
     const event = { currentStage: "not_a_stage", lifecycle: "active" };
     expect(sourceNewPhaseState("define", event, nothingRecorded)).toBe("no_record");
     expect(sourceNewPhaseState("rfi", event, { ...nothingRecorded, rfi: true })).toBe("recorded");
+  });
+});
+
+describe("sourceNewLifecycleLabel", () => {
+  it("uses the canonical dictionary for waiting states", () => {
+    expect(sourceNewLifecycleLabel("waiting_on_executive_decision")).toBe("Waiting on Executive Decision");
+    expect(sourceNewLifecycleLabel("waiting_on_vendor")).toBe("Waiting on Vendor");
+    expect(sourceNewLifecycleLabel("at_risk")).toBe("At Risk");
+  });
+
+  it("keeps the two states this workspace speaks about in its own words", () => {
+    expect(sourceNewLifecycleLabel("waiting_on_client")).toBe("Awaiting intake review");
+    expect(sourceNewLifecycleLabel("active")).toBe("Active event");
+  });
+
+  it("does not present an unrecognised lifecycle value as a state", () => {
+    expect(sourceNewLifecycleLabel("some_new_state")).toBe("Not recorded");
   });
 });
 

@@ -83,6 +83,15 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
     (row) => row.phase === phase && `${row.title} ${row.fileName}`.toLowerCase().includes(search.trim().toLowerCase()),
   );
   const selected = visible.find((row) => row.id === selectedId) ?? visible[0] ?? null;
+  // "No files here" must mean the folder is empty, not that the history toggle
+  // is hiding what it holds. Superseded rows are files; they are just not the
+  // current version.
+  const hiddenOlder = includeHistory ? 0 : rows.filter((row) => row.phase === phase && row.lifecycleState !== "current").length;
+  const emptyMessage = search
+    ? "No matching files"
+    : hiddenOlder > 0
+      ? `No current version here. ${hiddenOlder} older ${hiddenOlder === 1 ? "version is" : "versions are"} hidden — turn on Older versions to see ${hiddenOlder === 1 ? "it" : "them"}.`
+      : "No files here yet";
 
   useLayoutEffect(() => {
     if (mobileDetailOpen) {
@@ -186,7 +195,7 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
           </div>
           <div className="source-new-files__columns">
             <div ref={listRef} className="source-new-files__list" role="listbox" aria-label="Files in folder">
-              {visible.length === 0 ? <p className="source-new-files__empty">{search ? "No matching files" : "No files here yet"}</p> : visible.map((row) => (
+              {visible.length === 0 ? <p className="source-new-files__empty">{emptyMessage}</p> : visible.map((row) => (
                 <button key={row.id} type="button" role="option" aria-selected={selected?.id === row.id} className="source-new-files__file" onClick={(event) => openFile(row, event.currentTarget)} onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();

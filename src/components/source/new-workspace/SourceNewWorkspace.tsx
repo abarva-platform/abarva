@@ -13,6 +13,7 @@ import {
   sourceNewCategoryDisplay,
   sourceNewCurrentPhase,
   sourceNewEventTypeLabel,
+  sourceNewLifecycleLabel,
   sourceNewPhaseState,
   sourceNewPhaseStateLabel,
   sourceNewStageLabel,
@@ -58,13 +59,6 @@ const VIEWS: readonly { key: View; label: string }[] = [
   { key: "intelligence", label: "Intelligence" },
   { key: "approvals", label: "Approvals" },
 ];
-
-function eventStateLabel(lifecycle: string): string {
-  if (awaitsIntakeReview(lifecycle)) return "Awaiting intake review";
-  if (lifecycle === "active") return "Active event";
-  const plain = lifecycle.replaceAll("_", " ");
-  return plain.charAt(0).toUpperCase() + plain.slice(1);
-}
 
 /**
  * What each phase actually holds. A phase behind the event is only described
@@ -155,7 +149,7 @@ export function SourceNewWorkspace({
             <p>{event.clientName} · {sourceNewEventTypeLabel(event.eventType)}</p>
           </div>
           <span className={`snw-event-state ${event.lifecycle === "active" ? "is-active" : ""}`}>
-            {eventStateLabel(event.lifecycle)}
+            {sourceNewLifecycleLabel(event.lifecycle)}
           </span>
         </header>
 
@@ -247,7 +241,7 @@ export function SourceNewWorkspace({
         {view === "approvals" && (
           <section className="snw-panel snw-plain">
             <p className="snw-eyebrow">Governed decision</p>
-            <h2>{reviewPending ? "Review is still required" : eventStateLabel(event.lifecycle)}</h2>
+            <h2>{reviewPending ? "Review is still required" : sourceNewLifecycleLabel(event.lifecycle)}</h2>
             <p className="snw-lede">The approval record, actor and evidence live in the governed event flow. This overview does not approve or advance anything.</p>
             <Link className="snw-primary" href={actionHref}>{reviewPending ? "Open approval" : "Open event"}</Link>
           </section>
