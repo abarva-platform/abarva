@@ -159,3 +159,12 @@ export async function assertOpportunityRewriteSafe(client, scope) {
     }
   }
 }
+
+export async function preflightOpportunityRewrite(client, scope) {
+  await client.query("BEGIN READ ONLY");
+  try {
+    await assertOpportunityRewriteSafe(client, scope);
+  } finally {
+    await client.query("ROLLBACK");
+  }
+}

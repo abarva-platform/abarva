@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { assertOpportunityRewriteSafe } from "../opportunity-rewrite-guard.mjs";
+import { assertOpportunityRewriteSafe, preflightOpportunityRewrite } from "../opportunity-rewrite-guard.mjs";
 
 const scope = {
   tenantKey: "tenant-a",
@@ -89,12 +89,36 @@ test("refuses action rows and failed or incomplete database readback", async () 
   await assert.rejects(assertOpportunityRewriteSafe(fakeClient({ failQuery: true }), scope), /read failed/);
 });
 
+test("preflight uses a read-only transaction and rolls back on pass or refusal", async () => {
+  for (const reason of [undefined, "approval_request"]) {
+    const client = fakeClient({ reason });
+    if (reason) {
+      await assert.rejects(preflightOpportunityRewrite(client, scope), /approval_request exists/);
+    } else {
+      await preflightOpportunityRewrite(client, scope);
+    }
+    assert.equal(client.calls[0].sql, "BEGIN READ ONLY");
+    assert.equal(client.calls.at(-1).sql, "ROLLBACK");
+    assert.ok(client.calls.every(({ sql }) => !/^\s*(DELETE|INSERT|UPDATE|TRUNCATE|COMMIT)\b/i.test(sql)));
+  }
+});
+
 test("the loader checks the writer scope before its first opportunity-spine delete", () => {
   const loader = fs.readFileSync(new URL("../load-cloud-consumption-package.mjs", import.meta.url), "utf8");
   const start = loader.indexOf("async function upsertOptimizationSpine(");
-  const guard = loader.indexOf("await assertOpportunityRewriteSafe(client, {", start);
+  const guard = loader.indexOf("await assertOpportunityRewriteSafe(client, targets.scope)", start);
   const firstDelete = loader.indexOf("DELETE FROM source.calculation_output", start);
   assert.ok(start >= 0 && guard > start && firstDelete > guard);
+});
+
+test("Layer 2 checks the writer scope before any adapter write", () => {
+  const loader = fs.readFileSync(new URL("../load-cloud-consumption-package.mjs", import.meta.url), "utf8");
+  const start = loader.indexOf('} else if (args.mode === "apply-layer2")');
+  const guard = loader.indexOf("await assertOpportunityRewriteSafe(client, targets.scope)", start);
+  const write = loader.indexOf("await applyLayer2(client, args, rows, packageHash, qualityGate)", start);
+  assert.ok(start >= 0 && guard > start && write > guard);
+  assert.ok(loader.includes('args.mode === "preflight-rewrite"'));
+  assert.ok(loader.includes("await preflightOpportunityRewrite(client, targets.scope)"));
 });
 
 const TABLES = ["approval_request", "approval_decision", "negotiated_outcome", "finance_realization",
@@ -137,6 +161,7 @@ test("disposable PostgreSQL rejects scoped actions and an RLS-filtered role", as
       overlaps_opportunity_id text, optimization_state text, realized_value numeric`;
     for (const table of TABLES) await client.query(`CREATE TABLE source.${table} (${columns})`);
 
+    await preflightOpportunityRewrite(client, scope);
     await client.query("BEGIN");
     await assertOpportunityRewriteSafe(client, scope);
     await client.query("ROLLBACK");
@@ -151,6 +176,7 @@ test("disposable PostgreSQL rejects scoped actions and an RLS-filtered role", as
     await client.query(`INSERT INTO source.approval_request
       (tenant_key, dataset_version, opportunity_id, optimization_case_id, approval_request_id)
       VALUES ('tenant-a', 'writer-v1', 'OPP-1', 'CASE-1', 'APR-TARGET')`);
+    await assert.rejects(preflightOpportunityRewrite(client, scope), /approval_request exists/);
     await client.query("BEGIN");
     await assert.rejects(assertOpportunityRewriteSafe(client, scope), /approval_request exists/);
     await client.query("ROLLBACK");

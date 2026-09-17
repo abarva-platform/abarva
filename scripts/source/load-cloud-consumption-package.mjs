@@ -4,13 +4,13 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { readOpportunityOwnershipManifest, resolveOpportunityOwnership, selectedOpportunityOwnershipDeclaration } from "./opportunity-ownership.mjs";
-import { assertOpportunityRewriteSafe } from "./opportunity-rewrite-guard.mjs";
+import { assertOpportunityRewriteSafe, preflightOpportunityRewrite } from "./opportunity-rewrite-guard.mjs";
 import { reconcileCloudOutputProfile } from "./cloud-output-profile.mjs";
 
 loadDotenv(path.resolve(process.cwd(), ".env.local"));
 loadDotenv(path.resolve(process.cwd(), ".env"));
 
-const MODES = new Set(["plan", "apply-layer2", "apply-layer3", "apply-layer4", "verify", "verify-layer4"]);
+const MODES = new Set(["plan", "preflight-rewrite", "apply-layer2", "apply-layer3", "apply-layer4", "verify", "verify-layer4"]);
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_DATASET_VERSION = "meridian-cloud-consumption-depth-v1-20260907";
 const HISTORICAL_DUAL_OUTPUT_VERSION = "meridian-databricks-consumption-commit-v1-20260908";
@@ -1427,28 +1427,36 @@ async function upsertCloudPageTextFacts(client, args, pageRows) {
   }
 }
 
-async function upsertOptimizationSpine(client, args, files, ownership) {
+function opportunityRewriteTargets(args, files, ownership) {
   const opportunities = ownedOpportunities(files, ownership);
   const canonicalContracts = new Set(ownership.canonical_contract_ids);
   const contracts = files["cloud_contract_register.csv"].filter((row) => canonicalContracts.has(value(row, "contract_id")));
-  if (contracts.length === 0) return;
-  const contractsById = new Map(contracts.map((contract) => [value(contract, "contract_id"), contract]));
-  const spendByContract = groupBy(files["monthly_spend.csv"], "contract_id");
   const opportunityIds = opportunities.map((row) => value(row, "opportunity_id"));
   const contractIds = contracts.map((row) => value(row, "contract_id"));
   const calculationRunIds = opportunityIds.map((opportunityId) => `cloud-consumption:${opportunityId}:calculation`);
   const caseIds = contractIds.map((contractId) => `cloud-consumption:${contractId}:case`);
   const requirementIds = opportunityIds.map((opportunityId) => `cloud-consumption:${opportunityId}:finance-review`);
-
-  await assertOpportunityRewriteSafe(client, {
-    tenantKey: args.tenantKey,
-    datasetVersion: args.datasetVersion,
+  return {
+    opportunities,
+    contracts,
     opportunityIds,
-    caseIds,
-    calculationRunIds,
     contractIds,
+    calculationRunIds,
+    caseIds,
     requirementIds,
-  });
+    scope: { tenantKey: args.tenantKey, datasetVersion: args.datasetVersion,
+      opportunityIds, caseIds, calculationRunIds, contractIds, requirementIds },
+  };
+}
+
+async function upsertOptimizationSpine(client, args, files, ownership) {
+  const targets = opportunityRewriteTargets(args, files, ownership);
+  const { opportunities, contracts, opportunityIds, contractIds, calculationRunIds, caseIds, requirementIds } = targets;
+  if (contracts.length === 0) return;
+  const contractsById = new Map(contracts.map((contract) => [value(contract, "contract_id"), contract]));
+  const spendByContract = groupBy(files["monthly_spend.csv"], "contract_id");
+
+  await assertOpportunityRewriteSafe(client, targets.scope);
 
   await client.query(`DELETE FROM source.calculation_output WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($3::text[])`, [args.tenantKey, args.datasetVersion, calculationRunIds]);
   await client.query(`DELETE FROM source.calculation_input WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($3::text[])`, [args.tenantKey, args.datasetVersion, calculationRunIds]);
@@ -2095,9 +2103,17 @@ async function main() {
   await client.connect();
   try {
     await setTenant(client, args.tenantKey);
-    if (args.mode === "apply-layer2") {
+    if (args.mode === "preflight-rewrite") {
+      const targets = opportunityRewriteTargets(args, sourceFiles, ownership);
+      if (targets.contracts.length === 0) throw new Error("Rewrite preflight requires canonical-writer contracts");
+      await preflightOpportunityRewrite(client, targets.scope);
+      summary.event = "source_cloud_consumption_package_rewrite_preflight_passed";
+      summary.rewrite_scope = targets.scope;
+    } else if (args.mode === "apply-layer2") {
       requireApplyApproval(args);
       await client.query("BEGIN");
+      const targets = opportunityRewriteTargets(args, sourceFiles, ownership);
+      if (targets.contracts.length) await assertOpportunityRewriteSafe(client, targets.scope);
       await applyLayer2(client, args, rows, packageHash, qualityGate);
       await client.query("COMMIT");
       const readback = await layer2Readback(client, args);
@@ -2157,6 +2173,7 @@ async function main() {
     summary.event = "source_cloud_consumption_package_failed";
     summary.error = error instanceof Error ? error.message : String(error);
     writeJson(path.join(args.proofDir, "summary.json"), summary);
+    if (args.mode === "preflight-rewrite" && shouldEmitProofBundle()) emitProofBundle(args.proofDir);
     throw error;
   } finally {
     await client.end();
