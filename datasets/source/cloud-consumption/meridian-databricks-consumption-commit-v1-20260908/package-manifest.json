@@ -37,6 +37,6 @@
     "reconciliation": 8,
     "contract_page_text": 6
   },
-  "workbook_sha256": "ce570ef087dd0b9ba20623c489e17bc482aae03952306816f36555da432f388d",
-  "notes": "Each evidence document is also represented as one governed one-page contract_page_text row for searchable, citable tab context."
+  "notes": "Each evidence document is also represented as one governed one-page contract_page_text row for searchable, citable tab context.",
+  "workbook_sha256": "b2197e0651433c3e27b789bb9cd029729d108ab8ee4f09be346f7d41ed6c3236"
 }
