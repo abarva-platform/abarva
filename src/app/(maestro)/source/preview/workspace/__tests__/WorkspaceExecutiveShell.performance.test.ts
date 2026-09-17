@@ -13,6 +13,7 @@ import {
   focusedVendorSet,
   leverTableRows,
   negotiationSequenceRows,
+  orderedActionRows,
   optimizeTypeRows,
   performanceActual,
   sizedOpportunityTotalUsd,
@@ -32,6 +33,13 @@ import { focusableContractRows } from "../contractDiscovery";
 import { INITIAL_STATE, WorkspaceViewModel } from "../viewModel";
 
 describe("WorkspaceExecutiveShell performance formatting", () => {
+  it("uses recorded action priority ahead of an unsized alphabetical fallback", () => {
+    const rows = orderedActionRows([
+      { action_candidate_id: "a-marketplace", title: "Route through Marketplace", priority: "P2", candidate_amount_usd: null },
+      { action_candidate_id: "z-ramp", title: "Re-time annual commitment", priority: "P0", candidate_amount_usd: null },
+    ] as never);
+    expect(rows.map((row) => row.action_candidate_id)).toEqual(["z-ramp", "a-marketplace"]);
+  });
   it("keeps Source charts on semantic palette tokens instead of hard-black slabs", () => {
     expect(Object.values(SOURCE_CHART_PALETTE)).not.toContain("#0a0a0b");
 
@@ -225,6 +233,24 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(focus.rows[1]?.contract.vendor_name).toBe(
       "Amazon Web Services, Inc.",
     );
+
+    const unsized = focusedContractSet({
+      ...portfolio,
+      impact: {
+        ...portfolio.impact,
+        actionCandidates: portfolio.impact.actionCandidates.map((row) =>
+          row.contract_id === "MER-TECH-DBX-001"
+            ? { ...row, candidate_amount_usd: null }
+            : row,
+        ),
+        claimCards: Array.from({ length: 6 }, (_, index) => ({
+          contract_id: "MER-TECH-DBX-001",
+          claim_card_id: `claim-${index}`,
+        })),
+      },
+    } as never, 3);
+    expect(unsized.rows.find((row) => row.contract.contract_id === "MER-TECH-DBX-001")?.reason)
+      .toBe("6 claim rows · sizing not established");
   });
 
   it("sorts searched supplemental vendor contracts ahead of old register-only rows", () => {

@@ -58,6 +58,43 @@ describe("getContractOptimizationOpportunitySet", () => {
     withSessionMock.mockReset();
   });
 
+  it("leads with a recorded P0 ask and preserves the negotiation owner while refusing an unsupported size", async () => {
+    withSessionMock.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        if (sql.includes("set_config")) return [];
+        if (sql.includes("GROUP BY dataset_version")) {
+          return [{ dataset_version: "test-v1" }] as R[];
+        }
+        if (sql.includes("FROM source.optimization_opportunity") && sql.includes("ORDER BY amount_usd")) {
+          return [
+            { opportunity_id: "a-marketplace", contract_id: "CTR-090", stage: "signal", owner: "Generic owner", blocking_gap: "Finance confirmation and owner approval are required before realized value can be claimed.", payload: { label: "Marketplace route", owner_role: "Cloud FinOps", priority: "P2" } },
+            { opportunity_id: "z-ramp", contract_id: "CTR-090", stage: "signal", owner: "Generic owner", blocking_gap: "Finance confirmation and owner approval are required before realized value can be claimed.", payload: { label: "Re-time commitment", owner_role: "Strategic Sourcing", priority: "P0" } },
+          ] as R[];
+        }
+        if (sql.includes("FROM source.opportunity_claim claim")) {
+          return [{ claim_id: "nonsizing", claim_role: "timing", opportunity_id: "z-ramp", contract_id: "CTR-090" }] as R[];
+        }
+        if (sql.includes("FROM source.contract_action_candidate_v1")) {
+          return [
+            { opportunity_id: "a-marketplace", accountable_role: "Cloud FinOps", priority: "P2" },
+            { opportunity_id: "z-ramp", accountable_role: "Category Management", priority: "P0" },
+          ] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+
+    const set = await getContractOptimizationOpportunitySet("skyharbor_global", "CTR-090", contract());
+    expect(set?.opportunities.map((row) => row.opportunityId)).toEqual(["z-ramp", "a-marketplace"]);
+    expect(set?.selectedOpportunityId).toBe("z-ramp");
+    expect(set?.opportunities[0]).toMatchObject({
+      owner: "Category Management",
+      amountUsd: null,
+      blockingGap: "No supported sizing calculation or accepted benchmark is recorded.",
+    });
+  });
+
   it("does not include evidence requirements from another contract in the same dataset", async () => {
     const baselineSql: string[] = [];
     withSessionMock.mockImplementation(async (callback) => {

@@ -1,4 +1,5 @@
 import type { AskSurfaceContext } from "@/lib/intelligence/ask/types";
+import { displaySourceLeverTitle, displaySourceLeverTiming } from "@/lib/source/data-model/source-lever-order";
 import type {
   AvaArtifact,
   AvaCaveat,
@@ -632,7 +633,8 @@ function opportunityLinesFrom(
         return [];
       }
       const id = stringValue(opportunity.id);
-      const label = stringValue(opportunity.label);
+      const rawLabel = stringValue(opportunity.label);
+      const label = rawLabel ? displaySourceLeverTitle(rawLabel) : null;
       if (!id || !label) return [];
       return [
         {
@@ -883,17 +885,15 @@ function buildOpportunityRows(lines: SourceOpportunityLine[]) {
   return lines.map((line) => ({
     class: opportunityClassName(line.kind),
     opportunity: line.label,
-    value: isSignalStage(line.stage)
-      ? "Not sized"
-      : line.amountUsd == null
-        ? line.amount
-        : currencyLabel(line.amountUsd),
-    valueUsd: isSignalStage(line.stage) ? null : line.amountUsd,
+    value: isNotSizedLine(line) ? "Not sized" : currencyLabel(line.amountUsd),
+    valueUsd: isNotSizedLine(line) ? null : line.amountUsd,
     state: line.state,
     stage: line.stage,
     confidence: line.confidence,
     evidence: line.evidenceClass,
-    evidenceGrade: line.evidenceGrade,
+    evidenceGrade: isNotSizedLine(line)
+      ? `${line.evidenceGrade}; sizing not established`
+      : line.evidenceGrade,
     blockingGap: line.blockingGap,
     owner: line.owner ?? "Not established",
     sourceRefs:
@@ -951,6 +951,7 @@ function exportEvidenceBasis(line: SourceOpportunityLine): string {
   return [
     refs.join(", "),
     line.evidenceGrade,
+    isNotSizedLine(line) ? "sizing evidence not established" : null,
     line.priority ? `priority ${line.priority}` : null,
   ]
     .filter((part): part is string => Boolean(part?.trim()))
@@ -975,7 +976,7 @@ function exportValueState(line: SourceOpportunityLine): string {
 function exportOwnerTiming(line: SourceOpportunityLine): string {
   return [
     line.owner,
-    line.timingDependency,
+    line.timingDependency ? displaySourceLeverTiming(line.timingDependency) : null,
     line.nextAction && !line.timingDependency ? line.nextAction : null,
   ]
     .filter((part): part is string => Boolean(part?.trim()))
@@ -1116,7 +1117,7 @@ export function buildSourceContractOptimizationExportAnswer(input: {
       ? `All ${lines.length} ${lines.length === 1 ? "lever is" : "levers are"} unsized. Supported candidate value is not established until the named evidence gates close.`
       : "No governed optimization levers are loaded for this contract.";
   const directAnswer = [
-    `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is an optimization case, not realized savings. ${sizingPosture} Finance-confirmed realized value cannot be inferred from these candidate rows.`,
+    `${sizedRows.length === 0 && lines.length > 0 ? "No supported savings total can be added from these levers." : "Executive read:"} ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is an optimization case, not realized savings. ${sizingPosture} Finance-confirmed realized value cannot be inferred from these candidate rows.`,
     tableMarkdown,
   ].join("\n\n");
 

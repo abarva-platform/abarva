@@ -1,4 +1,5 @@
 import { COL, money, moneyPrecise, pct, fmtDate } from "./viewModel";
+import { displaySourceLeverTitle, displaySourceLeverTiming } from "@/lib/source/data-model/source-lever-order";
 import type {
   WorkspaceViewModel,
   EnrichedContract,
@@ -2771,8 +2772,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           selectedOpportunity: selected
             ? {
                 id: selected.opportunityId,
-                label: displayOpportunityLabel(selected),
-                shortLabel: displayOpportunityShortLabel(selected),
+                label: displaySourceLeverTitle(displayOpportunityLabel(selected)),
+                shortLabel: displaySourceLeverTitle(displayOpportunityShortLabel(selected)),
                 valueType: fmtStage(selected.valueType),
                 amount: amount(selected.amountUsd),
                 amountUsd: selected.amountUsd,
@@ -2827,8 +2828,8 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             : null,
           opportunities: opportunitySet.opportunities.map((opportunity) => ({
             id: opportunity.opportunityId,
-            label: displayOpportunityLabel(opportunity),
-            shortLabel: displayOpportunityShortLabel(opportunity),
+            label: displaySourceLeverTitle(displayOpportunityLabel(opportunity)),
+            shortLabel: displaySourceLeverTitle(displayOpportunityShortLabel(opportunity)),
             valueType: fmtStage(opportunity.valueType),
             amount:
               opportunity.amountLowUsd != null &&
@@ -2875,7 +2876,9 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             vendorConcession:
               opportunity.negotiationDetail?.vendorConcession ?? null,
             timingDependency:
-              opportunity.negotiationDetail?.timingDependency ?? null,
+              opportunity.negotiationDetail?.timingDependency
+                ? displaySourceLeverTiming(opportunity.negotiationDetail.timingDependency)
+                : null,
             ownerRole: opportunity.negotiationDetail?.ownerRole ?? null,
             riskIfIgnored: opportunity.negotiationDetail?.riskIfIgnored ?? null,
             priority: opportunity.negotiationDetail?.priority ?? null,
@@ -3070,6 +3073,15 @@ export function buildViewModel(vm: WorkspaceViewModel) {
               "At least one opportunity still has missing or conflicted evidence; keep blockers visible.",
             tone: COL.amber,
           }
+        : opportunitySet?.opportunities.every(
+            (opportunity) => opportunity.amountUsd == null,
+          )
+          ? {
+              value: "Loaded · sizing open",
+              detail:
+                "Source rows and documents are loaded, but no supported sizing calculation or accepted benchmark is recorded for these levers.",
+              tone: COL.amber,
+            }
         : {
             value: "Loaded",
             detail:
