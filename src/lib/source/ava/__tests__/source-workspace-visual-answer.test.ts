@@ -417,6 +417,31 @@ describe("Source Workspace visual aVa answer", () => {
       .toBe("Not established");
   });
 
+  it("does not export an action memo for a contract with no governed levers", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.optimizationOpportunities = { opportunities: [] };
+    context.sourceV4.contractOpportunityDirectory = [];
+    context.sourceV4.optimizationLedger = { lines: [] };
+
+    const answer = buildSourceContractOptimizationExportAnswer({
+      query: "For CTR-090, give me a PDF-ready table of levers to optimize this contract.",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain(
+      "actionability and candidate value are not established",
+    );
+    expect(answer?.directAnswer).not.toContain("is an optimization case");
+    expect(answer?.artifacts).toHaveLength(0);
+    expect(answer?.citations.find((citation) => citation.id === "source-contract-lever-export")?.excerpt)
+      .toContain("No governed contract-specific optimization lever");
+    expect(answer?.nextSteps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "export-client-memo" })]),
+    );
+  });
+
   it("uses rich optimization rows with opaque opportunity ids before action-directory fallbacks", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: {
