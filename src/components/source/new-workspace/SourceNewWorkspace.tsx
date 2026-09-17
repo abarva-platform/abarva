@@ -6,9 +6,21 @@ import { AppShell } from "@/components/shell/AppShell";
 import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
+import {
+  SOURCE_NEW_PHASE_ORDER,
+  awaitsIntakeReview,
+  isPastSourceNewPhases,
+  sourceNewCurrentPhase,
+  sourceNewPhaseState,
+  sourceNewPhaseStateLabel,
+  sourceNewStageLabel,
+  type SourceNewPhaseEvidence,
+  type SourceNewPhaseKey,
+  type SourceNewPhaseState,
+} from "@/lib/source/new-workspace/phase-state";
 import "./workspace.css";
 
-type Phase = "request" | "define" | "suppliers" | "rfi";
+type Phase = SourceNewPhaseKey;
 type View = "work" | "files" | "intelligence" | "approvals";
 
 export interface SourceNewEventView {
@@ -26,22 +38,24 @@ export interface SourceNewEventView {
   decisionOwner: string | null;
 }
 
-const PHASES: readonly { key: Phase; label: string }[] = [
-  { key: "request", label: "Request" },
-  { key: "define", label: "Define" },
-  { key: "suppliers", label: "Suppliers & NDA" },
-  { key: "rfi", label: "Market package" },
-];
+const PHASE_LABELS: Record<Phase, string> = {
+  request: "Request",
+  define: "Define",
+  suppliers: "Suppliers & NDA",
+  rfi: "Market package",
+};
+// The rail order is the shared one, so the rail and the state resolver can
+// never disagree about which phase is behind which.
+const PHASES: readonly { key: Phase; label: string }[] = SOURCE_NEW_PHASE_ORDER.map((key) => ({
+  key,
+  label: PHASE_LABELS[key],
+}));
 const VIEWS: readonly { key: View; label: string }[] = [
   { key: "work", label: "Work" },
   { key: "files", label: "Files" },
   { key: "intelligence", label: "Intelligence" },
   { key: "approvals", label: "Approvals" },
 ];
-
-function awaitsIntakeReview(lifecycle: string): boolean {
-  return lifecycle === "waiting_on_client";
-}
 
 function eventStateLabel(lifecycle: string): string {
   if (awaitsIntakeReview(lifecycle)) return "Awaiting intake review";
@@ -50,21 +64,24 @@ function eventStateLabel(lifecycle: string): string {
   return plain.charAt(0).toUpperCase() + plain.slice(1);
 }
 
-function currentPhase(event: SourceNewEventView): Phase | null {
-  if (awaitsIntakeReview(event.lifecycle)) return "request";
-  if (["strategy", "scope", "intake", "sourcing_strategy"].includes(event.currentStage)) return "define";
-  if (["rfp", "rfp_rfi_package"].includes(event.currentStage)) return "rfi";
-  return null;
-}
-
-function phaseState(event: SourceNewEventView, phase: Phase): string {
-  const current = currentPhase(event);
-  const index = PHASES.findIndex((item) => item.key === phase);
-  const currentIndex = current === null ? PHASES.length : PHASES.findIndex((item) => item.key === current);
-  if (index < currentIndex) return "Earlier";
-  if (index > currentIndex) return "Later";
-  if (awaitsIntakeReview(event.lifecycle)) return "Review needed";
-  return "Current";
+/**
+ * What each phase actually holds. A phase behind the event is only described
+ * in the past tense when something was recorded in it, so this reads the
+ * event's own facts and the files filed against each phase — never the
+ * position of the phase in the rail.
+ */
+function phaseEvidence(
+  event: SourceNewEventView,
+  files: readonly SourceNewFileRow[],
+): SourceNewPhaseEvidence {
+  const hasFile = (phase: Phase) => files.some((file) => file.phase === phase);
+  const recorded = (value: string | null) => Boolean(value?.trim());
+  return {
+    request: hasFile("request") || recorded(event.trigger),
+    define: hasFile("define") || recorded(event.scope) || recorded(event.decisionOwner),
+    suppliers: hasFile("suppliers"),
+    rfi: hasFile("rfi"),
+  };
 }
 
 function fact(value: string | null): string {
@@ -83,7 +100,7 @@ function nextAction(event: SourceNewEventView): { label: string; detail: string 
   };
   if (event.lifecycle !== "active") return {
     label: "Open event",
-    detail: `Current stage: ${event.currentStage.replaceAll("_", " ")}`,
+    detail: `Current stage: ${sourceNewStageLabel(event.currentStage)}`,
   };
   if (["strategy", "scope", "sourcing_strategy", "intake"].includes(event.currentStage)) return {
     label: "Open scope and strategy",
@@ -95,7 +112,7 @@ function nextAction(event: SourceNewEventView): { label: string; detail: string 
   };
   return {
     label: "Open current stage",
-    detail: `Current stage: ${event.currentStage.replaceAll("_", " ")}`,
+    detail: `Current stage: ${sourceNewStageLabel(event.currentStage)}`,
   };
 }
 
@@ -106,10 +123,18 @@ export function SourceNewWorkspace({
   event: SourceNewEventView;
   files: readonly SourceNewFileRow[];
 }) {
-  const [phase, setPhase] = useState<Phase>(() => currentPhase(event) ?? "rfi");
+  const evidence = useMemo(() => phaseEvidence(event, files), [event, files]);
+  const stateOf = (item: Phase): SourceNewPhaseState => sourceNewPhaseState(item, event, evidence);
+  const current = sourceNewCurrentPhase(event);
+  // An event past these phases opens on the last one it can show, not on a
+  // phase the rail would otherwise present as the live one.
+  const [phase, setPhase] = useState<Phase>(() => sourceNewCurrentPhase(event) ?? "rfi");
   const [view, setView] = useState<View>("work");
   const reviewPending = awaitsIntakeReview(event.lifecycle);
-  const current = currentPhase(event);
+  // With no phase current, the rail shows no live step. Say where the event
+  // actually is rather than leaving the operator to infer it.
+  const advancedBeyondPhases = current === null && isPastSourceNewPhases(event);
+  const advancedNote = `This event has moved past the phases shown here. Its current stage is ${sourceNewStageLabel(event.currentStage)}.`;
   const approvalHref = `/source/events/${encodeURIComponent(event.id)}/approval`;
   const eventHref = `/source/events/${encodeURIComponent(event.id)}`;
   const actionHref = reviewPending ? approvalHref : eventHref;
@@ -140,7 +165,7 @@ export function SourceNewWorkspace({
               onClick={() => { setPhase(item.key); setView("work"); }}
             >
               <span className="snw-phase-number">{String(index + 1).padStart(2, "0")}</span>
-              <span className="snw-phase-copy"><strong>{item.label}</strong><small>{phaseState(event, item.key)}</small></span>
+              <span className="snw-phase-copy"><strong>{item.label}</strong><small>{sourceNewPhaseStateLabel(stateOf(item.key))}</small></span>
             </button>
           ))}
         </nav>
@@ -172,22 +197,29 @@ export function SourceNewWorkspace({
                     </dl>
                   </div>
                 </>
-              ) : phaseState(event, phase) === "Later" ? (
+              ) : stateOf(phase) === "not_open" ? (
                 <>
                   <h2>This phase is not yet open</h2>
                   <p className="snw-lede">The event has not reached this phase. Earlier gates must be cleared before this work can begin. Browsing here does not advance the event.</p>
                 </>
+              ) : stateOf(phase) === "no_record" ? (
+                <>
+                  <h2>Nothing is recorded in this phase</h2>
+                  <p className="snw-lede">The event moved past this phase without recording anything here. That is a gap in the record, not completed work, and nothing on this screen changes it.</p>
+                  {advancedBeyondPhases && <p className="snw-note">{advancedNote}</p>}
+                </>
               ) : (
                 <>
-                  <h2>Earlier in this event</h2>
-                  <p className="snw-lede">This phase can be reviewed. Viewing it does not mark it complete, approve any gate, or change the current stage.</p>
+                  <h2>Recorded earlier in this event</h2>
+                  <p className="snw-lede">This phase holds recorded work. Viewing it does not mark it complete, approve any gate, or change the current stage.</p>
+                  {advancedBeyondPhases && <p className="snw-note">{advancedNote}</p>}
                 </>
               )}
             </section>
             <aside className="snw-next" aria-label="Next action">
               <p className="snw-eyebrow">Next action</p>
               <h2>{current === null ? actionLabel : isCurrentPhase ? actionLabel : "Return to current work"}</h2>
-              <p>{current === null || isCurrentPhase ? action.detail : phaseState(event, phase) === "Later" ? "This phase is locked. The event must advance to open it." : "You are reviewing an earlier phase. No gate is changed here."}</p>
+              <p>{current === null || isCurrentPhase ? action.detail : stateOf(phase) === "not_open" ? "This phase is locked. The event must advance to open it." : "You are reviewing a phase the event has moved past. No gate is changed here."}</p>
               {current === null || isCurrentPhase
                 ? <Link className="snw-primary" href={actionHref}>{actionLabel}</Link>
                 : <button className="snw-primary" type="button" onClick={() => setPhase(current)}>Current work</button>}
