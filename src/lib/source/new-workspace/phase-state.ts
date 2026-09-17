@@ -4,6 +4,7 @@ import {
   isSourceStageKey,
   normalizeSourceStageKey,
 } from "@/lib/source/constants";
+import { getSourceCategory } from "@/lib/source/taxonomy/category-taxonomy";
 
 /**
  * The four operator phases the Source New workspace can place an event in
@@ -110,6 +111,44 @@ export function sourceNewPhaseState(
 
 export function sourceNewPhaseStateLabel(state: SourceNewPhaseState): string {
   return SOURCE_NEW_PHASE_STATE_LABELS[state];
+}
+
+/**
+ * How the workspace shows a classified category.
+ *
+ * A category id from the governed taxonomy is shown by its taxonomy label. A
+ * value that is recorded but outside that taxonomy is still shown — it is what
+ * the event holds — but it is marked as ungoverned rather than presented as if
+ * it came from the dictionary. Nothing recorded stays "Not established", which
+ * is not the same as a category the taxonomy does not know.
+ */
+export interface SourceNewCategoryDisplay {
+  text: string;
+  note: string | null;
+}
+
+export function sourceNewCategoryDisplay(category: string | null): SourceNewCategoryDisplay {
+  const value = category?.trim() ?? "";
+  if (!value) return { text: "Not established", note: null };
+  const governed = getSourceCategory(value);
+  if (governed) return { text: governed.label, note: null };
+  return {
+    text: sourceNewEventTypeLabel(value),
+    note: "This category is recorded on the event but is not one of the governed sourcing categories, so no category guidance applies to it.",
+  };
+}
+
+/**
+ * Title-cased wording for an event type. `source_events.event_type` is an open
+ * text column with no closed dictionary behind it, so this only fixes the
+ * casing of the recorded value — it does not name an archetype, because more
+ * than one archetype shares an event type and picking one would assert an
+ * identity the column does not carry.
+ */
+export function sourceNewEventTypeLabel(eventType: string): string {
+  const words = eventType.trim().split(/[_\-\s]+/).filter(Boolean);
+  if (words.length === 0) return "Not recorded";
+  return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(" ");
 }
 
 /**

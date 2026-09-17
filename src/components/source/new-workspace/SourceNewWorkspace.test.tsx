@@ -69,9 +69,11 @@ describe("SourceNewWorkspace", () => {
   });
 
   it("keeps evidence separate from category classification", () => {
-    render(<SourceNewWorkspace event={{ ...request, category: "application_managed_services" }} files={[]} />);
+    render(<SourceNewWorkspace event={{ ...request, category: "ams" }} files={[]} />);
     fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
-    expect(screen.getByText("application managed services")).toBeTruthy();
+    // The governed taxonomy label, never the stored id
+    expect(screen.getByText("Application Managed Services (AMS)")).toBeTruthy();
+    expect(screen.queryByText("ams")).toBeNull();
     expect(screen.getByText("A category alone is not a benchmark, savings claim or supplier recommendation.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Files" }));
     expect(screen.getByText("No files here yet")).toBeTruthy();
@@ -129,6 +131,15 @@ describe("SourceNewWorkspace", () => {
     expect(screen.getByRole("link", { name: "Open market package" }).getAttribute("href"))
       .toBe("/source/events/event-1");
     expect(screen.getByText("Review the package and its release requirements in the governed event.")).toBeTruthy();
+  });
+
+  it("marks a recorded category the governed taxonomy does not know", () => {
+    render(<SourceNewWorkspace event={{ ...request, category: "application_managed_services" }} files={[]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
+    // The recorded value stays visible — it is what the event holds — but it is
+    // not passed off as a governed category
+    expect(screen.getByText("Application Managed Services")).toBeTruthy();
+    expect(screen.getByText(/not one of the governed sourcing categories/)).toBeTruthy();
   });
 
   it("reports supplier work as recorded when an NDA artifact is actually filed against it", () => {

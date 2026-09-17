@@ -10,7 +10,9 @@ import {
   SOURCE_NEW_PHASE_ORDER,
   awaitsIntakeReview,
   isPastSourceNewPhases,
+  sourceNewCategoryDisplay,
   sourceNewCurrentPhase,
+  sourceNewEventTypeLabel,
   sourceNewPhaseState,
   sourceNewPhaseStateLabel,
   sourceNewStageLabel,
@@ -134,6 +136,7 @@ export function SourceNewWorkspace({
   // With no phase current, the rail shows no live step. Say where the event
   // actually is rather than leaving the operator to infer it.
   const advancedBeyondPhases = current === null && isPastSourceNewPhases(event);
+  const category = sourceNewCategoryDisplay(event.category);
   const advancedNote = `This event has moved past the phases shown here. Its current stage is ${sourceNewStageLabel(event.currentStage)}.`;
   const approvalHref = `/source/events/${encodeURIComponent(event.id)}/approval`;
   const eventHref = `/source/events/${encodeURIComponent(event.id)}`;
@@ -149,7 +152,7 @@ export function SourceNewWorkspace({
         <header className="snw-heading">
           <div>
             <h1>{event.name}</h1>
-            <p>{event.clientName} · {event.eventType.replaceAll("_", " ")}</p>
+            <p>{event.clientName} · {sourceNewEventTypeLabel(event.eventType)}</p>
           </div>
           <span className={`snw-event-state ${event.lifecycle === "active" ? "is-active" : ""}`}>
             {eventStateLabel(event.lifecycle)}
@@ -233,9 +236,10 @@ export function SourceNewWorkspace({
             <p className="snw-eyebrow">Decision support</p>
             <h2>What can inform this event</h2>
             <dl className="snw-facts">
-              <div><dt>Classified category</dt><dd>{event.category?.replaceAll("_", " ") || "Not established"}</dd></div>
+              <div><dt>Classified category</dt><dd>{category.text}</dd></div>
               <div><dt>Evidence basis</dt><dd>Open the current stage for cited insights and missing-input checks.</dd></div>
             </dl>
+            {category.note && <p className="snw-note">{category.note}</p>}
             <p className="snw-note">A category alone is not a benchmark, savings claim or supplier recommendation.</p>
             <Link className="snw-text-action" href={eventHref}>View current stage</Link>
           </section>
