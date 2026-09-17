@@ -373,6 +373,34 @@ describe("Source Workspace visual aVa answer", () => {
     );
   });
 
+  it("refuses a zero-dollar candidate claim when every optimization lever is unsized", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: {
+        optimizationOpportunities: {
+          opportunities: Array<Record<string, unknown>>;
+        };
+      };
+    };
+    context.sourceV4.optimizationOpportunities.opportunities =
+      context.sourceV4.optimizationOpportunities.opportunities.map((row) => ({
+        ...row,
+        stageRaw: "signal",
+        amount: "Not sized",
+        amountUsd: null,
+      }));
+
+    const answer = buildSourceContractOptimizationExportAnswer({
+      query: "For CTR-090, what is the supported candidate value for these levers?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("Supported candidate value is not established");
+    expect(answer?.directAnswer).not.toContain("$0 candidate value");
+    expect(answer?.directAnswer).not.toContain("Finance-confirmed value remains $0");
+    expect(answer?.metricsUsed.find((metric) => metric.id === "sized-candidate-total")?.value)
+      .toBe("Not established");
+  });
+
   it("uses rich optimization rows with opaque opportunity ids before action-directory fallbacks", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: {

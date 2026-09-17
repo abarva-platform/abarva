@@ -162,17 +162,26 @@ export function ContractLeverTable({ vm }: { vm: SourceWorkspaceVM }) {
           {sized.length > 0 ? view?.potential.total ?? "Not sized" : "Not sized"}
         </span>
         <span className="sw-c3-lever-total-note">
-          Total <b>candidate</b> across the {sized.length}{" "}
-          {sized.length === 1 ? "sized lever" : "sized levers"}. Not a saving
-          and not a forecast — {sized.length === 1 ? "a number" : "numbers"} that
-          each resolve to a source row, awaiting a Finance confirmation that has
-          not happened.
-          {signalCount > 0
-            ? ` ${signalCount} further ${signalCount === 1 ? "ask carries" : "asks carry"} no amount and ${signalCount === 1 ? "is" : "are"} not counted.`
-            : ""}
-          {unsizedCount > 0
-            ? ` ${unsizedCount} ${unsizedCount === 1 ? "further ask has" : "further asks have"} no reproducible amount and ${unsizedCount === 1 ? "is" : "are"} not counted.`
-            : ""}
+          {sized.length === 0 ? (
+            <>
+              No candidate total is established. All {rows.length}{" "}
+              {rows.length === 1 ? "ask needs" : "asks need"} a supported sizing
+              basis before a dollar value can be stated.
+            </>
+          ) : (
+            <>
+              Total <b>candidate</b> across the {sized.length}{" "}
+              {sized.length === 1 ? "sized lever" : "sized levers"}. Not a saving
+              or a forecast; each amount resolves to a source row and still
+              requires Finance confirmation.
+              {signalCount > 0
+                ? ` ${signalCount} ${signalCount === 1 ? "signal-stage ask is" : "signal-stage asks are"} unsized and excluded.`
+                : ""}
+              {unsizedCount > 0
+                ? ` ${unsizedCount} ${unsizedCount === 1 ? "other ask is" : "other asks are"} unsized and excluded.`
+                : ""}
+            </>
+          )}
         </span>
       </div>
     </section>

@@ -81,6 +81,23 @@ describe("ContractLeverTable", () => {
 
     const total = document.querySelector(".sw-c3-lever-total-note")?.textContent;
     expect(total).toContain("Total candidate across the 1 sized lever");
-    expect(total).toContain("1 further ask carries no amount");
+    expect(total).toContain("1 signal-stage ask is unsized and excluded");
+  });
+
+  it("does not present an all-unsized packet as a zero-dollar candidate total", () => {
+    render(
+      <ContractLeverTable
+        vm={vmFor([
+          opportunity({ stage: "Signal", stageRaw: "signal", amountUsd: null }),
+          opportunity({ id: "OPP-2", stage: "Signal", stageRaw: "signal", amountUsd: null }),
+        ])}
+      />,
+    );
+
+    const total = document.querySelector(".sw-c3-lever-total")?.textContent;
+    expect(total).toContain("No candidate total is established");
+    expect(total).toContain("All 2 asks need a supported sizing basis");
+    expect(total).not.toContain("Total candidate across the 0 sized levers");
+    expect(total).not.toContain("$0");
   });
 });
