@@ -147,6 +147,7 @@ describe("contract depth package Layer 4 overlay job", () => {
     );
     expect(source).toContain(`SELECT * FROM sourcing
     WHERE source.can_read_sourcing_tenant(tenant_key)
+    ${"${sourcingExclusionSql(allPairs)}"}
     UNION ALL
     SELECT * FROM optimization
     WHERE source.can_read_sourcing_tenant(tenant_key)`);

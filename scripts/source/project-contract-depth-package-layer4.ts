@@ -7,6 +7,14 @@ import { config as loadEnv } from "dotenv";
 import { Client } from "pg";
 
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
+import {
+  canonicalWriterOpportunityCount,
+  evidenceOnlyPairs,
+  expectedOpportunityCounts,
+  selectedEvidenceOnlyPairs,
+  sourcingExclusionSql,
+  type EvidenceOnlyPair,
+} from "./contract-depth-projection-ownership";
 
 loadEnv({ path: path.resolve(process.cwd(), ".env.local") });
 loadEnv();
@@ -171,6 +179,18 @@ async function tableScalar(
 ): Promise<number> {
   const result = await client.query(sql, params);
   return num(result.rows[0]?.value);
+}
+
+async function readCanonicalWriterOpportunityCount(
+  client: Client,
+  selectedPairs: readonly EvidenceOnlyPair[],
+): Promise<number | null> {
+  return canonicalWriterOpportunityCount(selectedPairs, (pair) => tableScalar(
+      client,
+      `SELECT count(*) AS value FROM source.optimization_opportunity
+        WHERE tenant_key = $1 AND contract_id = $2 AND dataset_version = $3`,
+      [pair.tenantKey, pair.contractId, pair.writerDatasetVersion],
+    ));
 }
 
 async function objectKinds(client: Client) {
@@ -422,7 +442,7 @@ async function l4Readback(
   return result;
 }
 
-function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
+function baseLayer3ExpectedCounts(datasetVersion: string): Record<string, number> {
   if (
     datasetVersion === "meridian-databricks-enterprise-agreement-v1-20260908"
   ) {
@@ -502,7 +522,7 @@ function layer3ExpectedCounts(datasetVersion: string): Record<string, number> {
   };
 }
 
-function l4ExpectedCounts(datasetVersion: string): Record<string, number> {
+function baseL4ExpectedCounts(datasetVersion: string): Record<string, number> {
   if (
     datasetVersion === "meridian-databricks-enterprise-agreement-v1-20260908"
   ) {
@@ -629,11 +649,26 @@ function l4ExpectedCounts(datasetVersion: string): Record<string, number> {
   };
 }
 
+function layer3ExpectedCounts(datasetVersion: string, selectedPairs: readonly EvidenceOnlyPair[]): Record<string, number> {
+  return expectedOpportunityCounts(baseLayer3ExpectedCounts(datasetVersion), {}, selectedPairs, null).layer3;
+}
+
+function l4ExpectedCounts(
+  datasetVersion: string,
+  selectedPairs: readonly EvidenceOnlyPair[],
+  canonicalWriterCount: number | null,
+): Record<string, number> {
+  return expectedOpportunityCounts(
+    {}, baseL4ExpectedCounts(datasetVersion), selectedPairs, canonicalWriterCount,
+  ).layer4;
+}
+
 function assertLayer3Ready(
   rows: Record<string, number>,
   datasetVersion: string,
+  selectedPairs: readonly EvidenceOnlyPair[],
 ): void {
-  const expected = layer3ExpectedCounts(datasetVersion);
+  const expected = layer3ExpectedCounts(datasetVersion, selectedPairs);
   const failures = Object.entries(expected)
     .filter(([key, expectedValue]) => rows[key] !== expectedValue)
     .map(
@@ -651,9 +686,11 @@ function assertL4Ready(
   rows: Record<string, number>,
   beforeContractCount: number,
   datasetVersion: string,
+  selectedPairs: readonly EvidenceOnlyPair[],
+  canonicalWriterCount: number | null,
 ): void {
-  const expected = l4ExpectedCounts(datasetVersion);
-  const expectedLayer3 = layer3ExpectedCounts(datasetVersion);
+  const expectedLayer3 = layer3ExpectedCounts(datasetVersion, selectedPairs);
+  const expected = l4ExpectedCounts(datasetVersion, selectedPairs, canonicalWriterCount);
   const packageHasServiceCreditEvidence =
     (expectedLayer3.source_contract_service_credit ?? 0) > 0;
   const failures = Object.entries(expected)
@@ -696,10 +733,13 @@ function assertL4Ready(
 async function applyLayer4(
   client: Client,
   args: Args,
+  selectedPairs: readonly EvidenceOnlyPair[],
+  allPairs: readonly EvidenceOnlyPair[],
 ): Promise<Record<string, number>> {
   await assertReplaceableViews(client);
   const layer3 = await layer3Readback(client, args);
-  assertLayer3Ready(layer3, args.datasetVersion);
+  assertLayer3Ready(layer3, args.datasetVersion, selectedPairs);
+  const canonicalWriterCount = await readCanonicalWriterOpportunityCount(client, selectedPairs);
   await setTenant(client, args.tenantKey);
   const beforeContractCount = await tableScalar(
     client,
@@ -752,9 +792,9 @@ async function applyLayer4(
       ],
     );
 
-    await rebuildViews(client);
+    await rebuildViews(client, allPairs);
     const readback = await l4Readback(client, args, beforeContractCount);
-    assertL4Ready(readback, beforeContractCount, args.datasetVersion);
+    assertL4Ready(readback, beforeContractCount, args.datasetVersion, selectedPairs, canonicalWriterCount);
     await client.query("COMMIT");
     return readback;
   } catch (error) {
@@ -765,7 +805,7 @@ async function applyLayer4(
   }
 }
 
-async function rebuildViews(client: Client): Promise<void> {
+async function rebuildViews(client: Client, allPairs: readonly EvidenceOnlyPair[]): Promise<void> {
   const activeRuns = `
     SELECT
       tenant_key,
@@ -1645,6 +1685,7 @@ async function rebuildViews(client: Client): Promise<void> {
     )
     SELECT * FROM sourcing
     WHERE source.can_read_sourcing_tenant(tenant_key)
+    ${sourcingExclusionSql(allPairs)}
     UNION ALL
     SELECT * FROM optimization
     WHERE source.can_read_sourcing_tenant(tenant_key)`);
@@ -2430,6 +2471,11 @@ async function rebuildViews(client: Client): Promise<void> {
 
 async function main(): Promise<void> {
   const args = parseArgs();
+  const ownershipManifest = JSON.parse(fs.readFileSync(
+    path.resolve(process.cwd(), "datasets/source/opportunity-ownership-manifest.json"), "utf8",
+  )) as unknown;
+  const allPairs = evidenceOnlyPairs(ownershipManifest);
+  const selectedPairs = selectedEvidenceOnlyPairs(ownershipManifest, args.tenantKey, args.datasetVersion);
   fs.mkdirSync(args.proofDir, { recursive: true });
 
   const client = new Client(
@@ -2453,11 +2499,12 @@ async function main(): Promise<void> {
           "Refusing to mutate Azure without SOURCE_CONTRACT_DEPTH_PACKAGE_L4_APPLY_APPROVED=true.",
         );
       }
-      layer4 = await applyLayer4(client, args);
+      layer4 = await applyLayer4(client, args, selectedPairs, allPairs);
     } else if (args.mode === "verify") {
-      assertLayer3Ready(layer3, args.datasetVersion);
+      assertLayer3Ready(layer3, args.datasetVersion, selectedPairs);
+      const canonicalWriterCount = await readCanonicalWriterOpportunityCount(client, selectedPairs);
       layer4 = await l4Readback(client, args);
-      assertL4Ready(layer4, 0, args.datasetVersion);
+      assertL4Ready(layer4, 0, args.datasetVersion, selectedPairs, canonicalWriterCount);
     }
 
     const event = {
