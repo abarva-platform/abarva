@@ -848,7 +848,9 @@ async function main() {
     const parsed = Papa.parse(pageTextCsv, { header: true, skipEmptyLines: true });
     if (parsed.errors.length) throw new Error("Invalid contract page-text CSV");
     const sourceIds = new Set(csvs.evidence_manifest.map((row) => row.source_file_id));
-    if (parsed.data.length !== sourceIds.size || parsed.data.some((row) => !sourceIds.has(row.source_file_id))) {
+    const pageTextIds = new Set(parsed.data.map((row) => row.source_file_id));
+    if (parsed.data.length !== sourceIds.size || pageTextIds.size !== sourceIds.size ||
+        parsed.data.some((row) => !sourceIds.has(row.source_file_id))) {
       throw new Error("Contract page-text inventory does not match the evidence manifest");
     }
     pageTextCount = parsed.data.length;
