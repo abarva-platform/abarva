@@ -44,7 +44,7 @@ describe("SourceNewWorkspace", () => {
 
   it("does not pretend the market package remains current after the event advances", () => {
     render(<SourceNewWorkspace event={{ ...request, currentStage: "evaluation", lifecycle: "active" }} files={[]} />);
-    expect(screen.getByText("Current stage: evaluation")).toBeTruthy();
+    expect(screen.getByText("Current stage: Evaluation")).toBeTruthy();
     expect(screen.queryByText("This step is not open yet")).toBeNull();
     expect(screen.getByRole("link", { name: "Open current stage" }).getAttribute("href"))
       .toBe("/source/events/event-1");
@@ -92,12 +92,12 @@ describe("SourceNewWorkspace", () => {
     expect(buttons[3].textContent).toContain("Later");
   });
 
-  it("shows define as current and request as earlier without a completion label for active strategy", () => {
+  it("shows define as current and request as recorded without a completion label for active strategy", () => {
     render(<SourceNewWorkspace event={{ ...request, currentStage: "strategy", lifecycle: "active" }} files={[]} />);
     const phases = screen.getByRole("navigation", { name: "Event phases" });
     const buttons = within(phases).getAllByRole("button");
-    // Request is an earlier phase — must say Earlier, never Completed or Approved
-    expect(buttons[0].textContent).toContain("Earlier");
+    // Request is behind the event AND holds a recorded need, so it reads Recorded
+    expect(buttons[0].textContent).toContain("Recorded");
     expect(buttons[0].textContent).not.toMatch(/Completed|Approved/);
     // Define is the current phase
     expect(buttons[1].textContent).toContain("Current");
@@ -110,13 +110,17 @@ describe("SourceNewWorkspace", () => {
     expect(screen.getByText("Review scope, baseline and decision requirements in the governed event.")).toBeTruthy();
   });
 
-  it("shows rfi as current and all earlier phases without a completion label for active market package", () => {
+  it("does not claim supplier or define work happened just because the event reached the market package", () => {
     render(<SourceNewWorkspace event={{ ...request, currentStage: "rfp", lifecycle: "active" }} files={[]} />);
     const phases = screen.getByRole("navigation", { name: "Event phases" });
     const buttons = within(phases).getAllByRole("button");
-    // All three earlier phases say Earlier, never Completed or Approved
-    [buttons[0], buttons[1], buttons[2]].forEach((btn) => {
-      expect(btn.textContent).toContain("Earlier");
+    // Request holds a recorded need
+    expect(buttons[0].textContent).toContain("Recorded");
+    // Define and Suppliers & NDA hold nothing: no scope, no owner, no NDA, no files.
+    // Being behind the current phase is not evidence that the work happened.
+    expect(buttons[1].textContent).toContain("No record");
+    expect(buttons[2].textContent).toContain("No record");
+    buttons.forEach((btn) => {
       expect(btn.textContent).not.toMatch(/Completed|Approved/);
     });
     // Market package is the current phase
@@ -125,6 +129,53 @@ describe("SourceNewWorkspace", () => {
     expect(screen.getByRole("link", { name: "Open market package" }).getAttribute("href"))
       .toBe("/source/events/event-1");
     expect(screen.getByText("Review the package and its release requirements in the governed event.")).toBeTruthy();
+  });
+
+  it("reports supplier work as recorded when an NDA artifact is actually filed against it", () => {
+    const nda: SourceNewFileRow = {
+      id: "nda-1",
+      phase: "suppliers",
+      artifactGroup: "upload",
+      artifactType: "nda_executed",
+      title: "Mutual NDA",
+      fileName: "nda.pdf",
+      fileFormat: "pdf",
+      fileSize: 1024,
+      version: 1,
+      status: "approved",
+      lifecycleState: "current",
+      generatedAt: "2026-03-01T00:00:00Z",
+      generatedBy: "Editor",
+      sourceBasis: null,
+      blobSha256: "sha-nda",
+      approvalState: "approved",
+      approvedBy: "Reviewer",
+      approvedAt: "2026-03-02T00:00:00Z",
+    };
+    render(<SourceNewWorkspace event={{ ...request, currentStage: "rfp", lifecycle: "active" }} files={[nda]} />);
+    const buttons = within(screen.getByRole("navigation", { name: "Event phases" })).getAllByRole("button");
+    expect(buttons[2].textContent).toContain("Recorded");
+    expect(buttons[2].textContent).not.toMatch(/No record|Completed|Approved/);
+  });
+
+  it("does not lock phases behind an event that has advanced past them", () => {
+    render(<SourceNewWorkspace event={{ ...request, currentStage: "evaluation", lifecycle: "active" }} files={[]} />);
+    const buttons = within(screen.getByRole("navigation", { name: "Event phases" })).getAllByRole("button");
+    // Request and Define cannot be "not yet open" for an event already in evaluation
+    buttons.forEach((btn) => {
+      expect(btn.textContent).not.toContain("Later");
+    });
+    expect(buttons[0].textContent).toContain("Recorded");
+    expect(buttons[3].textContent).toContain("No record");
+    // The rail shows no live step, so the surface says where the event actually is
+    expect(screen.getByText("This event has moved past the phases shown here. Its current stage is Evaluation."))
+      .toBeTruthy();
+  });
+
+  it("never prints a raw stage key to an operator", () => {
+    render(<SourceNewWorkspace event={{ ...request, currentStage: "rfp_rfi_package", lifecycle: "paused" }} files={[]} />);
+    expect(screen.getByText("Current stage: Market package")).toBeTruthy();
+    expect(screen.queryByText(/rfp_rfi_package|rfp rfi package/i)).toBeNull();
   });
 
   describe("file download version pinning", () => {
@@ -171,9 +222,9 @@ describe("SourceNewWorkspace", () => {
     const getPhaseButtons = () =>
       within(screen.getByRole("navigation", { name: "Event phases" })).getAllByRole("button");
 
-    // Navigate to an earlier phase (Request is before the current Define)
+    // Navigate to a phase the event has moved past (Request is before the current Define)
     fireEvent.click(getPhaseButtons()[0]);
-    expect(screen.getByText("Earlier in this event")).toBeTruthy();
+    expect(screen.getByText("Recorded earlier in this event")).toBeTruthy();
     expect(screen.queryByText("This phase is not yet open")).toBeNull();
     // Sidebar offers one return action — no second primary link
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
@@ -182,7 +233,7 @@ describe("SourceNewWorkspace", () => {
     // Navigate to a later phase (Suppliers & NDA is after Define)
     fireEvent.click(getPhaseButtons()[2]);
     expect(screen.getByText("This phase is not yet open")).toBeTruthy();
-    expect(screen.queryByText("Earlier in this event")).toBeNull();
+    expect(screen.queryByText("Recorded earlier in this event")).toBeNull();
     // Sidebar still offers one return action
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
   });
