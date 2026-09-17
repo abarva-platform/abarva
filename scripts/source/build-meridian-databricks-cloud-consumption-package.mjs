@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import fs from "node:fs/promises";
 import path from "node:path";
+import Papa from "papaparse";
 
 const runtimeNodeModules =
   "/Users/anand/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules";
@@ -667,11 +668,11 @@ async function main() {
       amount_high_usd: 400000,
       evidence_family: "commitment_terms",
       evidence_rows: `coverage:${contractId}:2026-09;clause:${contractId}:no_carry_forward;ap_recon:${contractId}:2026-09`,
-      recommended_action: "Draft carry-forward amendment before the Year 2 payment locks.",
+      recommended_action: "Draft carry-forward amendment before the 2026-10-14 Year 1 commitment anniversary.",
       buyer_ask: "Carry forward unused Year 1 commitment into Year 2 or convert it into onboarding, migration, training, or implementation credits.",
       negotiation_language: "The contract's no-carry-forward position should not convert delayed workload adoption into lost buyer value. We are asking Databricks to preserve a negotiated portion of unused Year 1 commitment as Year 2 consumption credit or equivalent adoption services.",
       vendor_concession: "Databricks gives up forfeiture of a portion of unused Year 1 committed purchase.",
-      timing_dependency: "Resolve before year-end true-up and Year 2 payment authorization.",
+      timing_dependency: "Resolve before 2026-10-14, when unused Year 1 commitment expires at the contract-year anniversary. Confirm any separate payment milestone with Finance.",
       owner_role: "Strategic Sourcing",
       priority: "P1",
       risk_if_ignored: "Unused commitment expires and the buyer loses leverage before the next payment cycle.",
@@ -841,6 +842,22 @@ async function main() {
     `# Meridian Databricks consumption commitment package\n\nSynthetic demo evidence package for a Databricks consumption-commit contract running on AWS.\n\nThis package is Layer 1 intake evidence for governed Azure loading through scripts/source/load-cloud-consumption-package.mjs. It is not client truth, it is not a real Databricks transaction, and it does not authorize finance-confirmed savings claims.\n\n## Contract visibility\n\nSource360 should show vendor ${vendorName}, contract ${contractId}, annual platform commitment 1550000 USD, support fee 341000 USD, annual commercial value 1891000 USD, five-year committed value 7750000 USD, actual usage 66100 USD, and six candidate opportunities. Four opportunities are document-evidenced package candidates; two are intentionally low-confidence signal-stage reviews that require benchmark or per-SKU evidence before they can be upgraded. Opportunity rows preserve buyer ask, negotiation language, vendor concession, timing dependency, owner role, priority, risk-if-ignored, and native-vs-Nexus fields for Optimize and aVa grounding.\n\n## Signal-stage opportunities\n\n- \`OPT-DBX-DISCOUNT-REPRICE-001\` requires one accepted benchmark comparable for a similar multi-year consumption-platform commitment before it can become a supported discount-band ask.\n- \`OPT-DBX-SERVERLESS-PARITY-001\` requires a per-SKU serverless-versus-classic comparison for the loaded jobs-compute workload before it can become a priced migration finding.\n\n## Restricted-source boundary\n\nRaw/full Databricks contract files and pricing exhibits stay outside the public repo in local restricted storage. This repo package contains only synthetic source rows and synthetic markdown evidence summaries stamped ${syntheticPolicy}.\n\n## Non-mutating validation\n\nRun:\n\n\`\`\`bash\nnode scripts/source/load-cloud-consumption-package.mjs --mode=plan --dataset-version=${datasetVersion} --package-dir=${packageDir} --proof-dir=${packageDir}/qa/plan-proof\n\`\`\`\n\nMutating Layer 2/3/4 load requires the governed ACA data-build job path and explicit operator approval.\n`,
   );
 
+  let pageTextCount = 0;
+  try {
+    const pageTextCsv = await fs.readFile(path.join(sourceDir, "contract_page_text.csv"), "utf8");
+    const parsed = Papa.parse(pageTextCsv, { header: true, skipEmptyLines: true });
+    if (parsed.errors.length) throw new Error("Invalid contract page-text CSV");
+    const sourceIds = new Set(csvs.evidence_manifest.map((row) => row.source_file_id));
+    const pageTextIds = new Set(parsed.data.map((row) => row.source_file_id));
+    if (parsed.data.length !== sourceIds.size || pageTextIds.size !== sourceIds.size ||
+        parsed.data.some((row) => !sourceIds.has(row.source_file_id))) {
+      throw new Error("Contract page-text inventory does not match the evidence manifest");
+    }
+    pageTextCount = parsed.data.length;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+
   const manifest = {
     dataset_version: datasetVersion,
     tenant_key: tenantKey,
@@ -852,7 +869,11 @@ async function main() {
     document_directory: "synthetic-evidence-documents",
     qa_directory: "qa",
     synthetic_policy: syntheticPolicy,
-    row_counts: Object.fromEntries(Object.entries(csvs).map(([key, rows]) => [key, rows.length])),
+    row_counts: {
+      ...Object.fromEntries(Object.entries(csvs).map(([key, rows]) => [key, rows.length])),
+      ...(pageTextCount ? { contract_page_text: pageTextCount } : {}),
+    },
+    ...(pageTextCount ? { notes: "Each evidence document is also represented as one governed one-page contract_page_text row for searchable, citable tab context." } : {}),
   };
   await fs.writeFile(path.join(packageDir, "package-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   await fs.writeFile(path.join(qaDir, "row-counts.json"), `${JSON.stringify(manifest.row_counts, null, 2)}\n`);

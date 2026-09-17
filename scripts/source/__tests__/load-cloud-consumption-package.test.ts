@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import Papa from "papaparse";
 
 describe("Source cloud consumption package loader", () => {
   const repoRoot = path.resolve(__dirname, "../../..");
@@ -164,6 +165,26 @@ describe("Source cloud consumption package loader", () => {
     expect(opportunities).toContain(",signal,range,system_evidenced,");
     expect(opportunities).toContain("Benchmark comparable required");
     expect(opportunities).toContain("Per-SKU serverless versus classic comparison required");
+  });
+
+  it("anchors carry-forward action to the documented commitment anniversary", () => {
+    const sourceDir = path.join(
+      repoRoot,
+      "datasets/source/cloud-consumption/meridian-databricks-consumption-commit-v1-20260908/source-files",
+    );
+    const rows = (file: string) => Papa.parse<Record<string, string>>(
+      fs.readFileSync(path.join(sourceDir, file), "utf8"),
+      { header: true, skipEmptyLines: true },
+    ).data;
+    const commitment = rows("cloud_commitments.csv").find((row) => row.commitment_id === "DBX-COMMIT-2025-Y1");
+    const clause = rows("contract_clauses.csv").find((row) => row.concept_ref === "no_carry_forward");
+    const opportunity = rows("optimization_opportunities.csv").find((row) => row.opportunity_id === "OPT-DBX-CARRY-FORWARD-001");
+
+    expect(commitment).toBeDefined();
+    expect(clause?.value_text).toContain("contract-year anniversary");
+    expect(opportunity?.timing_dependency).toContain(commitment?.end_date);
+    expect(opportunity?.recommended_action).toContain(commitment?.end_date);
+    expect(opportunity?.timing_dependency).not.toMatch(/payment authorization|year-end true-up/i);
   });
 
   it("loads contract context as reviewed canonical facts rather than render-time prose", () => {
