@@ -15,7 +15,7 @@ Adds a private operator job to remove unsupported candidate amounts from one exp
 ## Layer Impact
 
 - Release lane: `client-data-lane`.
-- Layer 3 canonical model: only the approved opportunity amounts, valuation amounts/states, and calculation output/run states may change. Every scoped row is archived before commit.
+- Layer 3 canonical model: only the approved opportunity amounts, amount states and stage, valuation amounts/states, and calculation output/run states may change. Unsized opportunities become signals rather than remaining labeled quantified. Every scoped row is archived before commit.
 - Layer 4 products: the job checks that the installed opportunity and action-candidate projections have no exposed amount after apply. No product code changes.
 - Layer 1 intake and Layer 2 adapters: unchanged.
 

@@ -211,7 +211,7 @@ function assertArchiveCoverage(current, archive) {
 
 function assertOnlyAllowedChanges(before, after) {
   const allowed = {
-    optimization_opportunity: ["amount_usd", "amount_state"],
+    optimization_opportunity: ["amount_usd", "amount_state", "stage"],
     opportunity_valuation: ["amount_usd", "amount_low_usd", "amount_high_usd", "valuation_state"],
     calculation_output: ["amount_usd"],
     calculation_run: ["run_state"],
@@ -236,10 +236,10 @@ function assertOnlyAllowedChanges(before, after) {
 async function updateRows(client, snapshotRows, restore = false) {
   const ops = snapshotRows.optimization_opportunity;
   for (const row of ops) {
-    const result = await client.query(`UPDATE source.optimization_opportunity SET amount_usd=$4,amount_state=$5
+    const result = await client.query(`UPDATE source.optimization_opportunity SET amount_usd=$4,amount_state=$5,stage=$6
       WHERE tenant_key=$1 AND dataset_version=$2 AND id=$3`,
     [row.tenant_key, row.dataset_version, row.id, restore ? row.amount_usd : null,
-      restore ? row.amount_state : "not_sized"]);
+      restore ? row.amount_state : "not_sized", restore ? row.stage : "signal"]);
     check(result.rowCount === 1, "Opportunity update count mismatch");
   }
   for (const row of snapshotRows.opportunity_valuation) {

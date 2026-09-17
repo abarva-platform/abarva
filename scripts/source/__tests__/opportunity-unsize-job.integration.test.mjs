@@ -209,7 +209,7 @@ test("scoped unsize archives, rolls back, verifies, and restores with CAS", { ti
     assert.equal(applied.status, "applied");
     const active = await db.admin.query(`SELECT count(*)::int AS count FROM source.optimization_opportunity
       WHERE tenant_key=$1 AND dataset_version=$2 AND contract_id=$3
-        AND amount_usd IS NULL AND amount_state='not_sized'`,
+        AND amount_usd IS NULL AND amount_state='not_sized' AND stage='signal'`,
     [source.scope.tenantKey, source.scope.datasetVersion, source.scope.contractId]);
     assert.equal(active.rows[0].count, 6);
     const untouched = await db.admin.query(`SELECT amount_usd FROM source.optimization_opportunity
