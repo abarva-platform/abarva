@@ -113,6 +113,26 @@ export function sourceNewPhaseStateLabel(state: SourceNewPhaseState): string {
 }
 
 /**
+ * The folder an artifact belongs in.
+ *
+ * Every artifact the caller is authorized to see lands somewhere. An artifact
+ * whose stage belongs to the rest of the event resolves to `other` rather than
+ * to nothing: dropping it would show an operator an empty folder while the
+ * cabinet holds files, and absent is not the same as none.
+ */
+export function sourceNewFilePhase(artifact: {
+  sourcingStage: string | null;
+  artifactType: string;
+}): SourceNewPhaseKey | "other" {
+  if (artifact.artifactType.toLowerCase().includes("nda")) return "suppliers";
+  const stage = artifact.sourcingStage?.trim().toLowerCase() ?? "";
+  if (stage === "intake") return "request";
+  if (stage === "strategy" || stage === "sourcing_strategy" || stage === "scope") return "define";
+  if (stage === "rfp" || stage === "rfp_rfi_package") return "rfi";
+  return "other";
+}
+
+/**
  * Operator wording for a stage key. Raw keys are builder vocabulary and must
  * never reach this surface. `rfp` and its legacy alias resolve to the neutral
  * market-package wording: the stage key does not record whether the event is
