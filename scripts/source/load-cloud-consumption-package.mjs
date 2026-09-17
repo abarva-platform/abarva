@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { readOpportunityOwnershipManifest, resolveOpportunityOwnership, selectedOpportunityOwnershipDeclaration } from "./opportunity-ownership.mjs";
 
 loadDotenv(path.resolve(process.cwd(), ".env.local"));
 loadDotenv(path.resolve(process.cwd(), ".env"));
@@ -137,6 +138,7 @@ function parseArgs() {
     ),
     tenantKey,
     datasetVersion,
+    opportunityOwnershipManifestOverride: argValue("opportunity-ownership-manifest"),
     idempotencyKey:
       argValue("idempotency-key") ??
       process.env.SOURCE_CLOUD_CONSUMPTION_PACKAGE_IDEMPOTENCY_KEY ??
@@ -457,8 +459,14 @@ function adapterCountByName(rows) {
   }, {});
 }
 
-function sourcePackageHash(sourceFiles, syntheticDocs, companionSourceFiles) {
-  return sha256(JSON.stringify({ sourceFiles, syntheticDocs, companionSourceFiles }));
+function sourcePackageHash(sourceFiles, syntheticDocs, companionSourceFiles, ownershipDeclaration) {
+  const inputs = { sourceFiles, syntheticDocs, companionSourceFiles };
+  return sha256(JSON.stringify(ownershipDeclaration ? { ...inputs, ownershipDeclaration } : inputs));
+}
+
+function ownedOpportunities(files, ownership) {
+  const canonicalContracts = new Set(ownership.canonical_contract_ids);
+  return files["optimization_opportunities.csv"].filter((row) => canonicalContracts.has(value(row, "contract_id")));
 }
 
 function syntheticDocs(packageDir) {
@@ -1431,9 +1439,11 @@ async function upsertCloudPageTextFacts(client, args, pageRows) {
   }
 }
 
-async function upsertOptimizationSpine(client, args, files) {
-  const opportunities = files["optimization_opportunities.csv"];
-  const contracts = files["cloud_contract_register.csv"];
+async function upsertOptimizationSpine(client, args, files, ownership) {
+  const opportunities = ownedOpportunities(files, ownership);
+  const canonicalContracts = new Set(ownership.canonical_contract_ids);
+  const contracts = files["cloud_contract_register.csv"].filter((row) => canonicalContracts.has(value(row, "contract_id")));
+  if (contracts.length === 0) return;
   const contractsById = new Map(contracts.map((contract) => [value(contract, "contract_id"), contract]));
   const spendByContract = groupBy(files["monthly_spend.csv"], "contract_id");
   const opportunityIds = opportunities.map((row) => value(row, "opportunity_id"));
@@ -1730,8 +1740,8 @@ async function upsertOptimizationSpine(client, args, files) {
   );
 }
 
-function expectedLayer3(files, rows, pageRows = []) {
-  const opportunities = files["optimization_opportunities.csv"];
+function expectedLayer3(files, rows, ownership, pageRows = []) {
+  const opportunities = ownedOpportunities(files, ownership);
   const evidenceInputCount = opportunities.reduce((sum, row) => sum + value(row, "evidence_rows").split(";").map((item) => item.trim()).filter(Boolean).length, 0);
   const canonicalFactCount =
     files["cloud_contract_register.csv"].length * CONTRACT_CONTEXT_FACTS.length +
@@ -1755,8 +1765,8 @@ function expectedLayer3(files, rows, pageRows = []) {
     source_cloud_tag_quality_observation: files["cloud_tag_quality.csv"].length,
     source_cloud_ap_invoice_reconciliation: files["cloud_ap_invoice_reconciliation.csv"].length,
     source_optimization_opportunity: opportunities.length,
-    source_optimization_baseline: files["cloud_contract_register.csv"].length,
-    source_optimization_case: files["cloud_contract_register.csv"].length,
+    source_optimization_baseline: ownership.canonical_contract_ids.length,
+    source_optimization_case: ownership.canonical_contract_ids.length,
     source_case_opportunity: opportunities.length,
     source_opportunity_evidence: evidenceInputCount,
     source_opportunity_claim: opportunities.length * 2,
@@ -1771,8 +1781,8 @@ function expectedLayer3(files, rows, pageRows = []) {
   };
 }
 
-function expectedLayer4(files) {
-  const opportunities = files["optimization_opportunities.csv"];
+function expectedLayer4(files, ownership) {
+  const opportunities = ownedOpportunities(files, ownership);
   return {
     source_contract_360_cloud_contracts: files["cloud_contract_register.csv"].length,
     source_contract_360_actual_spend_ready: files["cloud_contract_register.csv"].length,
@@ -1793,7 +1803,7 @@ function expectedLayer4(files) {
   };
 }
 
-async function applyLayer3(client, args, files, rows, expectedL2, pageRows = []) {
+async function applyLayer3(client, args, files, rows, expectedL2, ownership, pageRows = []) {
   await assertTables(client, [...REQUIRED_LAYER2_TABLES, ...REQUIRED_LAYER3_TABLES]);
   assertCounts(expectedL2, await layer2Readback(client, args), "Layer 2");
   await reconcileSnapshots(client, args, rows);
@@ -1807,17 +1817,17 @@ async function applyLayer3(client, args, files, rows, expectedL2, pageRows = [])
   await reconcileCanonicalFacts(client, args, files, pageRows);
   await upsertCloudCanonicalFacts(client, args, files);
   await upsertCloudPageTextFacts(client, args, pageRows);
-  await upsertOptimizationSpine(client, args, files);
+  await upsertOptimizationSpine(client, args, files, ownership);
   await assertContractIdentityReadback(client, args, files, args.loadRunId);
-  return layer3Readback(client, args, files, args.loadRunId);
+  return layer3Readback(client, args, files, ownership, args.loadRunId);
 }
 
-async function layer3Readback(client, args, files, loadRunId = args.layer3LoadRunId) {
+async function layer3Readback(client, args, files, ownership, loadRunId = args.layer3LoadRunId) {
   const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
   const vendorIds = uniqueRows(files["cloud_contract_register.csv"], "vendor_ref").map((row) => value(row, "vendor_ref"));
-  const opportunityIds = files["optimization_opportunities.csv"].map((row) => value(row, "opportunity_id"));
+  const opportunityIds = ownedOpportunities(files, ownership).map((row) => value(row, "opportunity_id"));
   const calculationRunIds = opportunityIds.map((opportunityId) => `cloud-consumption:${opportunityId}:calculation`);
-  const caseIds = contractIds.map((contractId) => `cloud-consumption:${contractId}:case`);
+  const caseIds = ownership.canonical_contract_ids.map((contractId) => `cloud-consumption:${contractId}:case`);
   const result = await client.query(
     `SELECT
        (SELECT count(*)::text FROM source.source_record_snapshot WHERE tenant_key = $1 AND dataset_version = $2) AS source_record_snapshot,
@@ -1906,9 +1916,9 @@ async function resolveLayer3LoadRunId(client, args, files) {
   return args.layer3LoadRunId;
 }
 
-async function layer4Readback(client, args, files) {
+async function layer4Readback(client, args, files, ownership) {
   const contractIds = files["cloud_contract_register.csv"].map((row) => value(row, "contract_id"));
-  const opportunityIds = files["optimization_opportunities.csv"].map((row) => value(row, "opportunity_id"));
+  const opportunityIds = ownedOpportunities(files, ownership).map((row) => value(row, "opportunity_id"));
   const result = await client.query(
     `SELECT
        (SELECT count(*)::text
@@ -2030,11 +2040,19 @@ async function main() {
   };
   const docs = syntheticDocs(args.packageDir);
   const rows = adapterRows(sourceFiles);
-  const packageHash = sourcePackageHash(sourceFiles, docs, companionSourceFiles);
+  const ownershipManifest = readOpportunityOwnershipManifest(args.mode, args.opportunityOwnershipManifestOverride);
+  const ownership = resolveOpportunityOwnership(
+    ownershipManifest,
+    args,
+    sourceFiles["cloud_contract_register.csv"].map((row) => value(row, "contract_id")),
+    sourceFiles["optimization_opportunities.csv"].map((row) => value(row, "contract_id")),
+  );
+  const ownershipDeclaration = selectedOpportunityOwnershipDeclaration(ownershipManifest, args);
+  const packageHash = sourcePackageHash(sourceFiles, docs, companionSourceFiles, ownershipDeclaration);
   const qualityGate = qualifyPackage(args, sourceFiles, docs);
   const expectedL2 = adapterCountByName(rows);
-  const expectedL3 = expectedLayer3(sourceFiles, rows, companionSourceFiles.contract_page_text);
-  const expectedL4 = expectedLayer4(sourceFiles);
+  const expectedL3 = expectedLayer3(sourceFiles, rows, ownership, companionSourceFiles.contract_page_text);
+  const expectedL4 = expectedLayer4(sourceFiles, ownership);
   const summary = {
     event: "source_cloud_consumption_package_started",
     mode: args.mode,
@@ -2045,6 +2063,7 @@ async function main() {
     idempotency_key: args.idempotencyKey,
     package_dir: args.packageDir,
     package_sha256: packageHash,
+    opportunity_ownership: ownership,
     synthetic_evidence_documents: docs.length,
     companion_source_rows: Object.fromEntries(
       Object.entries(companionSourceFiles).map(([fileName, fileRows]) => [fileName, fileRows.length]),
@@ -2080,7 +2099,7 @@ async function main() {
     } else if (args.mode === "apply-layer3") {
       requireApplyApproval(args);
       await client.query("BEGIN");
-      const readback = await applyLayer3(client, args, sourceFiles, rows, expectedL2, companionSourceFiles.contract_page_text);
+      const readback = await applyLayer3(client, args, sourceFiles, rows, expectedL2, ownership, companionSourceFiles.contract_page_text);
       assertCounts(expectedL3, readback, "Layer 3");
       await writeRunStatus(client, args, packageHash, "completed", rows.length, qualityGate, readback);
       await client.query("COMMIT");
@@ -2089,7 +2108,7 @@ async function main() {
       summary.layer3_readback = readback;
     } else if (args.mode === "verify") {
       const layer2 = await layer2Readback(client, args);
-      const layer3 = await layer3Readback(client, args, sourceFiles);
+      const layer3 = await layer3Readback(client, args, sourceFiles, ownership);
       assertCounts(expectedL2, layer2, "Layer 2");
       assertCounts(expectedL3, layer3, "Layer 3");
       summary.event = "source_cloud_consumption_package_layer23_verified";
@@ -2099,11 +2118,11 @@ async function main() {
       requireApplyApproval(args);
       await resolveLayer3LoadRunId(client, args, sourceFiles);
       await assertContractIdentityReadback(client, args, sourceFiles, args.layer3LoadRunId);
-      const layer3 = await layer3Readback(client, args, sourceFiles);
+      const layer3 = await layer3Readback(client, args, sourceFiles, ownership);
       assertCounts(expectedL3, layer3, "Layer 3");
       await client.query("BEGIN");
       await activateLayer4Overlay(client, args);
-      const layer4 = await layer4Readback(client, args, sourceFiles);
+      const layer4 = await layer4Readback(client, args, sourceFiles, ownership);
       assertCounts(expectedL4, layer4, "Layer 4");
       await client.query("COMMIT");
       summary.event = "source_cloud_consumption_package_layer4_applied";
@@ -2113,7 +2132,7 @@ async function main() {
     } else if (args.mode === "verify-layer4") {
       await resolveLayer3LoadRunId(client, args, sourceFiles);
       await assertContractIdentityReadback(client, args, sourceFiles, args.layer3LoadRunId);
-      const layer4 = await layer4Readback(client, args, sourceFiles);
+      const layer4 = await layer4Readback(client, args, sourceFiles, ownership);
       assertCounts(expectedL4, layer4, "Layer 4");
       summary.event = "source_cloud_consumption_package_layer4_verified";
       summary.layer4_readback = layer4;

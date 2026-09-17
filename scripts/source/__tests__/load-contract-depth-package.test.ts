@@ -159,7 +159,7 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain("opportunity_evidence: opportunityEvidenceRows");
     expect(loader).toContain("opportunity_claim");
     expect(loader).toContain(
-      "calculation_output: sourceFiles.optimizationOpportunities.length * 2",
+      "calculation_output: ownedOpportunities.length * 2",
     );
   });
 
