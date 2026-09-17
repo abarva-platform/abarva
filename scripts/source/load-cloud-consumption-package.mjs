@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { readOpportunityOwnershipManifest, resolveOpportunityOwnership, selectedOpportunityOwnershipDeclaration } from "./opportunity-ownership.mjs";
+import { assertOpportunityRewriteSafe } from "./opportunity-rewrite-guard.mjs";
 
 loadDotenv(path.resolve(process.cwd(), ".env.local"));
 loadDotenv(path.resolve(process.cwd(), ".env"));
@@ -1436,6 +1437,16 @@ async function upsertOptimizationSpine(client, args, files, ownership) {
   const calculationRunIds = opportunityIds.map((opportunityId) => `cloud-consumption:${opportunityId}:calculation`);
   const caseIds = contractIds.map((contractId) => `cloud-consumption:${contractId}:case`);
   const requirementIds = opportunityIds.map((opportunityId) => `cloud-consumption:${opportunityId}:finance-review`);
+
+  await assertOpportunityRewriteSafe(client, {
+    tenantKey: args.tenantKey,
+    datasetVersion: args.datasetVersion,
+    opportunityIds,
+    caseIds,
+    calculationRunIds,
+    contractIds,
+    requirementIds,
+  });
 
   await client.query(`DELETE FROM source.calculation_output WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($3::text[])`, [args.tenantKey, args.datasetVersion, calculationRunIds]);
   await client.query(`DELETE FROM source.calculation_input WHERE tenant_key = $1 AND dataset_version = $2 AND calculation_run_id = ANY($3::text[])`, [args.tenantKey, args.datasetVersion, calculationRunIds]);
