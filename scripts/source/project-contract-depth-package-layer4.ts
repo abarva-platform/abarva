@@ -1503,18 +1503,41 @@ async function rebuildViews(client: Client): Promise<void> {
         claim.tenant_key,
         claim.dataset_version,
         claim.opportunity_id,
-        claim.amount_usd,
-        claim.amount_low_usd,
-        claim.amount_high_usd
+        MAX(claim.amount_usd) AS amount_usd,
+        MAX(claim.amount_low_usd) AS amount_low_usd,
+        MAX(claim.amount_high_usd) AS amount_high_usd
       FROM source.opportunity_claim claim
+      JOIN source.optimization_opportunity opportunity
+        ON opportunity.tenant_key = claim.tenant_key
+       AND opportunity.dataset_version = claim.dataset_version
+       AND opportunity.opportunity_id = claim.opportunity_id
       WHERE claim.claim_role = 'sizing'
         AND claim.basis IN ('calculated', 'benchmark')
+        AND (
+          (
+            claim.basis = 'calculated'
+            AND NULLIF(TRIM(claim.calculation_run_id), '') IS NOT NULL
+            AND NULLIF(TRIM(claim.calculation_rule_id), '') IS NOT NULL
+            AND NULLIF(TRIM(claim.calculation_rule_version), '') IS NOT NULL
+          )
+          OR (
+            claim.basis = 'benchmark'
+            AND NULLIF(TRIM(claim.benchmark_id), '') IS NOT NULL
+          )
+        )
         AND claim.evidence_status IN ('supported', 'partial')
         AND jsonb_array_length(claim.source_refs) > 0
+        AND opportunity.stage IN (
+          'quantified', 'validated', 'approval_required',
+          'target_position', 'agreed', 'finance_confirmed'
+        )
+        AND opportunity.amount_state IN ('exact', 'range')
         AND (
           claim.amount_usd IS NOT NULL
           OR (claim.amount_low_usd IS NOT NULL AND claim.amount_high_usd IS NOT NULL)
         )
+      GROUP BY claim.tenant_key, claim.dataset_version, claim.opportunity_id
+      HAVING COUNT(*) = 1
     ),
     sourcing AS (
       SELECT
