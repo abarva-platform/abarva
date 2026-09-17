@@ -80,6 +80,15 @@ describe("getContractOptimizationOpportunitySet", () => {
             { opportunity_id: "z-ramp", accountable_role: "Category Management", priority: "P0" },
           ] as R[];
         }
+        if (sql.includes("FROM source.optimization_case") && !sql.includes("JOIN source.optimization_case")) {
+          return [{
+            optimization_case_id: "case-unverified",
+            case_state: "unexpected_future_state",
+            owner: null,
+            next_action: null,
+            case_count: 1,
+          }] as R[];
+        }
         return [];
       };
       return callback(run);
@@ -88,6 +97,10 @@ describe("getContractOptimizationOpportunitySet", () => {
     const set = await getContractOptimizationOpportunitySet("skyharbor_global", "CTR-090", contract());
     expect(set?.opportunities.map((row) => row.opportunityId)).toEqual(["z-ramp", "a-marketplace"]);
     expect(set?.selectedOpportunityId).toBe("z-ramp");
+    expect(set?.optimizationCase).toMatchObject({
+      caseState: "unverified",
+      nextAction: "Next action not recorded.",
+    });
     expect(set?.opportunities[0]).toMatchObject({
       owner: "Category Management",
       amountUsd: null,
@@ -203,6 +216,7 @@ describe("getContractOptimizationOpportunitySet", () => {
               optimization_case_id: "CTR-090:optimize-contract",
               door1_event_id: "event-090",
               case_state: "outreach_approval",
+              case_count: 2,
               owner: "Strategic sourcing owner",
               next_action: "Route the target position for outreach approval.",
             },
@@ -273,6 +287,7 @@ describe("getContractOptimizationOpportunitySet", () => {
       caseId: "CTR-090:optimize-contract",
       door1EventId: "event-090",
       caseState: "outreach_approval",
+      caseCount: 2,
     });
     expect(set?.approvalRequests).toHaveLength(1);
     expect(set?.approvalRequests?.[0]).toMatchObject({

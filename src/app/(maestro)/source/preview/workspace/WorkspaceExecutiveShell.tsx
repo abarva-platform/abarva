@@ -29,6 +29,7 @@ import {
 } from "./Contract360Briefing";
 import {
   ContractBriefingHeader,
+  ContractCaseThreadStrip,
   ContractEvidenceFamilies,
   ContractRegisterOnly,
   ContractRelationshipBriefing,
@@ -3370,6 +3371,11 @@ function ContractPage({
 
   return (
     <div className="sw-v2-grid sw-v2-contract-detail-grid">
+      <ContractCaseThreadStrip
+        vm={vm}
+        onOpenOptimize={() => logic.select("contract", contract.contract_id, "Optimize")}
+        isOptimizeTab={tab === "Optimize"}
+      />
       <section
         className={`sw-v2-panel ${
           tab === "Optimize" ? "sw-v2-span-3" : "sw-v2-span-2"

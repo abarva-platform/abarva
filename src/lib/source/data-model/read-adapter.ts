@@ -1993,7 +1993,7 @@ async function getPersistedContractOptimizationOpportunitySet(
     ),
     safeQueryForTenant<NumericRow>(
       tenantKey,
-      `SELECT *
+      `SELECT *, COUNT(*) OVER ()::int AS case_count
          FROM source.optimization_case
         WHERE tenant_key = ANY($1::text[])
           AND dataset_version = $2
@@ -2351,11 +2351,12 @@ function optimizationCaseFromRow(row: NumericRow): OptimizationCaseRead {
         "outcome_recorded",
         "finance_handoff",
         "closed",
-      ]) ?? "intake",
+      ]) ?? "unverified",
+    caseCount: numberValue(row.case_count) ?? 1,
     owner: textValue(row.owner),
     nextAction:
       textValue(row.next_action) ??
-      "Review the optimization case before taking vendor action.",
+      "Next action not recorded.",
   };
 }
 

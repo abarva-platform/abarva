@@ -32,6 +32,37 @@ import {
 /* shared                                                                     */
 /* -------------------------------------------------------------------------- */
 
+export function ContractCaseThreadStrip({
+  vm,
+  onOpenOptimize,
+  isOptimizeTab = false,
+}: {
+  vm: SourceWorkspaceVM;
+  onOpenOptimize: () => void;
+  isOptimizeTab?: boolean;
+}) {
+  const caseThread = vm.opportunityView?.caseThread;
+  if (caseThread === undefined) return null;
+
+  return (
+    <div className="sw-c3-case-thread" role="region" aria-label="Optimization case">
+      <div>
+        <span className="sw-c3-eyebrow">
+          {caseThread && caseThread.caseCount > 1
+            ? `Latest of ${caseThread.caseCount} cases`
+            : "Optimization case"}
+        </span>
+        <strong>{caseThread === null ? "No case opened" : caseThread.state}</strong>
+        {caseThread?.owner ? <span>{caseThread.owner}</span> : null}
+      </div>
+      <p>{caseThread?.nextAction ?? "Review the contract evidence before opening a case."}</p>
+      {isOptimizeTab ? null : (
+        <button type="button" onClick={onOpenOptimize}>Open Optimize</button>
+      )}
+    </div>
+  );
+}
+
 type Coverage = SourceContractEvidenceCoverageRow | null | undefined;
 
 /** A count that was never loaded is a dash, not a zero. */

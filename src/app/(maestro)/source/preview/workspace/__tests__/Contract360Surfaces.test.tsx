@@ -1,9 +1,10 @@
 /** @jest-environment jsdom */
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 import {
   ContractBriefingHeader,
+  ContractCaseThreadStrip,
   ContractStoryBriefing,
 } from "../Contract360Surfaces";
 import type { SourceContract360Row } from "@/lib/source/data-model/types";
@@ -155,5 +156,50 @@ describe("ContractStoryBriefing", () => {
     expect(screen.getByText(/12 spend rows; Contract clauses available/)).toBeTruthy();
     expect(screen.queryByText(/SLA history not loaded/)).toBeNull();
     expect(screen.getByText("Not required")).toBeTruthy();
+  });
+});
+
+describe("ContractCaseThreadStrip", () => {
+  it("shows persisted case state and its next action, with a path to Optimize", () => {
+    const onOpenOptimize = jest.fn();
+    const vm = {
+      opportunityView: {
+        caseThread: {
+          state: "Evidence Review",
+          caseCount: 2,
+          owner: "Category Management",
+          nextAction: "Attach the reviewed pricing schedule.",
+        },
+      },
+    } as unknown as SourceWorkspaceVM;
+
+    render(<ContractCaseThreadStrip vm={vm} onOpenOptimize={onOpenOptimize} />);
+    expect(screen.getByText("Evidence Review")).toBeTruthy();
+    expect(screen.getByText("Latest of 2 cases")).toBeTruthy();
+    expect(screen.getByText("Category Management")).toBeTruthy();
+    expect(screen.getByText("Attach the reviewed pricing schedule.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Open Optimize" }));
+    expect(onOpenOptimize).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not invent an optimization case from loaded opportunities", () => {
+    const vm = { opportunityView: { caseThread: null } } as unknown as SourceWorkspaceVM;
+    render(<ContractCaseThreadStrip vm={vm} onOpenOptimize={() => undefined} />);
+    expect(screen.getByText("No case opened")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open Optimize" })).toBeTruthy();
+    expect(screen.queryByText("Evidence Review")).toBeNull();
+  });
+
+  it("does not repeat the navigation action on the Optimize tab", () => {
+    const vm = { opportunityView: { caseThread: null } } as unknown as SourceWorkspaceVM;
+    render(<ContractCaseThreadStrip vm={vm} onOpenOptimize={() => undefined} isOptimizeTab />);
+    expect(screen.queryByRole("button", { name: "Open Optimize" })).toBeNull();
+  });
+
+  it("does not render a case line without a contract opportunity read", () => {
+    const { container } = render(
+      <ContractCaseThreadStrip vm={vmWith(null)} onOpenOptimize={() => undefined} />,
+    );
+    expect(container.querySelector(".sw-c3-case-thread")).toBeNull();
   });
 });

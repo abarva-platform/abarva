@@ -164,7 +164,9 @@ export interface OptimizationCaseRead {
     | "outreach_approval"
     | "outcome_recorded"
     | "finance_handoff"
-    | "closed";
+    | "closed"
+    | "unverified";
+  readonly caseCount?: number;
   readonly owner: string | null;
   readonly nextAction: string;
 }

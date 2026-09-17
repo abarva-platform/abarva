@@ -2737,6 +2737,18 @@ export function buildViewModel(vm: WorkspaceViewModel) {
             : opportunity.shortLabel;
         return {
           contractId: opportunitySet.contractId,
+          caseThread: opportunitySet.optimizationCase
+            ? {
+                state: opportunitySet.optimizationCase.caseState === "unverified"
+                  ? "State unverified"
+                  : fmtStage(opportunitySet.optimizationCase.caseState),
+                caseCount: opportunitySet.optimizationCase.caseCount ?? 1,
+                owner: opportunitySet.optimizationCase.owner,
+                nextAction:
+                  clientFacingOpportunityText(opportunitySet.optimizationCase.nextAction) ??
+                  opportunitySet.optimizationCase.nextAction,
+              }
+            : null,
           recommendation: opportunitySet.recommendation,
           recommendationDetail: opportunitySet.recommendationDetail,
           actionState: fmtStage(opportunitySet.actionState),
