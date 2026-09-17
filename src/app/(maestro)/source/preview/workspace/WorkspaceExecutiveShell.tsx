@@ -3720,11 +3720,11 @@ export function contractPurposeSummary(
   const archetype = isDeclaredArchetype(rawArchetype)
     ? titleFromSourceKey(String(rawArchetype))
     : null;
+  const reviewedPurpose = usableScopeSummary(contract.purpose_summary);
   const scopePhrase =
-    usableScopeSummary(contract.purpose_summary) ??
+    reviewedPurpose ??
     scopeFromContractName(contractName) ??
-    usableScopeSummary(contract.scope_summary) ??
-    "the loaded commercial scope";
+    usableScopeSummary(contract.scope_summary);
   const classificationText = [
     rawArchetype,
     contract.vendor_category,
@@ -3759,8 +3759,6 @@ export function contractPurposeSummary(
       : null,
   ].filter(Boolean);
 
-  const reviewedPurpose = usableScopeSummary(contract.purpose_summary);
-
   /*
    * Say where this characterisation came from.
    *
@@ -3778,8 +3776,8 @@ export function contractPurposeSummary(
   return {
     heading: "What this contract is",
     body: reviewedPurpose
-      ? `${scopePhrase} Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`
-      : `This is ${kind.article} ${kind.label} with ${vendor} covering ${scopePhrase}. Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
+      ? `${reviewedPurpose} Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`
+      : `This is ${kind.article} ${kind.label} with ${vendor}${scopePhrase ? ` covering ${scopePhrase}` : ` under ${contractName}`}. Read it as ${kind.readAs}: Source is tying the contract document, archetype, economics, renewal timing, usage or scope evidence, and optimization rows together before naming an action.`,
     evidence: `${basis}. Loaded basis: ${evidenceParts.join("; ")}.`,
   };
 }
@@ -3796,6 +3794,7 @@ function usableText(value: string | null | undefined) {
 }
 
 function usableScopeSummary(value: string | null | undefined) {
+  if (/\s[-–—]\s(?:present|absent)(?:\b|_)/i.test(value ?? "")) return null;
   const text = withoutIdentifierTokens(usableText(value));
   if (!text) return null;
   if (
