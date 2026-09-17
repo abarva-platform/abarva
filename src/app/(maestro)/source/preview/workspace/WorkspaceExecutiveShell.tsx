@@ -58,6 +58,7 @@ import type { Contract360Response } from "./live/contractDetail";
 import { portfolioDiscountComparatorSummary } from "./contractDiscountComparator";
 import type { ContractFacetKey } from "@/lib/source/contract-intelligence/education";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
+import { displaySourceLeverTitle, leverPriorityRank, leverSequenceRank } from "@/lib/source/data-model/source-lever-order";
 import { buildCanonicalWorkspaceUrl } from "./workspaceNavigation";
 import type {
   DocExtractionRow,
@@ -450,18 +451,24 @@ function actionCardBasis(candidate: SourceContractActionCandidateRow) {
   );
 }
 
-function orderedActionRows(
+export function orderedActionRows(
   rows: readonly SourceContractActionCandidateRow[],
 ): SourceContractActionCandidateRow[] {
   return [...rows].sort(
-    (left, right) =>
-      actionSequenceRank(left) - actionSequenceRank(right) ||
+    (left, right) => {
+      const leftPriority = leverPriorityRank(left.priority);
+      const rightPriority = leverPriorityRank(right.priority);
+      return leftPriority - rightPriority ||
+      (leftPriority === Number.MAX_SAFE_INTEGER
+        ? actionSequenceRank(left) - actionSequenceRank(right)
+        : leverSequenceRank(left.title) - leverSequenceRank(right.title)) ||
       priorityRank(left.priority) - priorityRank(right.priority) ||
       sortableDate(left.decision_due_date) -
         sortableDate(right.decision_due_date) ||
       (numberFromDb(right.candidate_amount_usd) ?? 0) -
         (numberFromDb(left.candidate_amount_usd) ?? 0) ||
-      left.action_candidate_id.localeCompare(right.action_candidate_id),
+      left.action_candidate_id.localeCompare(right.action_candidate_id);
+    },
   );
 }
 
@@ -3111,13 +3118,14 @@ function ContractListTable({
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   const focus = focusedContractSet(portfolio);
+  const bookIds = new Set(portfolio.contracts.map((row) => row.contract_id));
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-contract-row">
         <span>Contract</span>
         <span>Vendor</span>
         <span>Why listed</span>
-        <span>Annual value</span>
+        <span>Book annual value</span>
         <span>Next action</span>
       </div>
       {focus.rows.map(({ contract, reason, actionRows }) => (
@@ -3133,7 +3141,11 @@ function ContractListTable({
           </span>
           <span>{safeContractVendorDisplayName(contract)}</span>
           <span>{reason}</span>
-          <span>{money(numberFromDb(contract.annual_value))}</span>
+          <span>
+            {bookIds.has(contract.contract_id)
+              ? money(numberFromDb(contract.resolved_annual_value) ?? numberFromDb(contract.annual_value))
+              : "Outside book"}
+          </span>
           <span>
             {actionRows > 0 ? "Open Optimize" : "Review Contract 360"}
           </span>
@@ -3215,11 +3227,12 @@ function ContractFinancialPostureTable({
   onOpenContract: (contractId: string, tab?: string) => void;
 }) {
   const focus = focusedContractSet(portfolio);
+  const bookIds = new Set(portfolio.contracts.map((row) => row.contract_id));
   return (
     <div className="sw-v2-table">
       <div className="sw-v2-table-head sw-v2-financial-row">
         <span>Contract</span>
-        <span>Annual value</span>
+        <span>Book annual value</span>
         <span>Actual spend</span>
         <span>Committed value</span>
         <span>Posture</span>
@@ -3235,7 +3248,11 @@ function ContractFinancialPostureTable({
             <b>{contract.contract_name}</b>
             <small>{safeContractVendorDisplayName(contract)}</small>
           </span>
-          <span>{money(numberFromDb(contract.annual_value))}</span>
+          <span>
+            {bookIds.has(contract.contract_id)
+              ? money(numberFromDb(contract.resolved_annual_value) ?? numberFromDb(contract.annual_value))
+              : "Outside book"}
+          </span>
           <span>{money(numberFromDb(contract.actual_annual_spend))}</span>
           <span>{money(numberFromDb(contract.total_committed_value))}</span>
           <span>{financialPosture(contract)}</span>
@@ -4771,7 +4788,7 @@ function SourceLeverSequence({
             >
               <span className="sw-v2-lever-sequence-index">{index + 1}</span>
               <span className="sw-v2-lever-sequence-main">
-                <b>{row.title ?? row.finding_summary ?? "Review loaded action"}</b>
+                <b>{displaySourceLeverTitle(row.title ?? row.finding_summary ?? "Review loaded action")}</b>
                 <small>{body}</small>
                 <em>
                   Backed by <strong>{basis}</strong>
@@ -6906,7 +6923,15 @@ export function focusedContractSet(
         actionRows,
         claimRows,
         depthScore,
-        reason: contractFocusReason(contract, coverage, actionRows, claimRows),
+        reason: contractFocusReason(
+          contract,
+          coverage,
+          actionRows,
+          claimRows,
+          portfolio.impact.actionCandidates.filter(
+            (row) => row.contract_id === contract.contract_id,
+          ),
+        ),
       };
     })
     .sort(
@@ -6998,10 +7023,13 @@ function contractFocusReason(
   coverage: SourceContractEvidenceCoverageRow | null,
   actionRows: number,
   claimRows: number,
+  actions: readonly SourceContractActionCandidateRow[],
 ) {
-  // "Why listed" answers a reader's question, so it names what the contract
-  // has rather than the internal artifact that holds it. A claim card is our
-  // object; an evidenced claim is what the reader gets from it.
+  if (
+    claimRows > 0 &&
+    actions.length > 0 &&
+    actions.every((row) => numberFromDb(row.candidate_amount_usd) == null)
+  ) return `${claimRows} claim rows · sizing not established`;
   if (claimRows > 0)
     return `${claimRows} evidenced claim${claimRows === 1 ? "" : "s"}`;
   if (actionRows > 0)

@@ -266,6 +266,15 @@ export function ContractStoryBriefing({
   const committed = laneCount(coverage, "committed_spend_usd");
   const actual = laneCount(coverage, "actual_spend_usd");
   const workflow = vm.optWorkflow;
+  const evidenceSummary = story?.supporting_evidence_summary
+    ?.split(";")
+    .map((part) => part.trim())
+    .filter((part) =>
+      contractFacetRequired(vm, "Performance") ||
+      !(/\b(sla|service performance)\b/i.test(part) && /missing|not loaded/i.test(part)),
+    )
+    .filter(Boolean)
+    .join("; ");
 
   const evidenceState: {
     name: string;
@@ -355,13 +364,13 @@ export function ContractStoryBriefing({
             </p>
           ) : null}
           <p className="sw-c3-prose" style={{ marginTop: 10 }}>
-            {story?.supporting_evidence_summary
-              ? `Evidence basis: ${story.supporting_evidence_summary}.`
+            {evidenceSummary
+              ? `Evidence basis: ${evidenceSummary}.`
               : "No supporting evidence summary is recorded for this contract."}
           </p>
           <div className="sw-c3-tiles">
             <div className="sw-c3-tile">
-              <div className="sw-c3-tile-label">Annual value</div>
+              <div className="sw-c3-tile-label">Contract annual value</div>
               <div className="sw-c3-tile-value">
                 {money(numberFromDb(contract.annual_value))}
               </div>

@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 
 import {
   ContractBriefingHeader,
+  ContractStoryBriefing,
 } from "../Contract360Surfaces";
 import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import type { SourceWorkspaceVM } from "../buildViewModel";
@@ -122,5 +123,37 @@ describe("ContractBriefingHeader", () => {
 
     expect(container.querySelector(".sw-c3-pill-alert")).toBeNull();
     expect(container.querySelector(".sw-c3-pill-quiet")).toBeNull();
+  });
+});
+
+describe("ContractStoryBriefing", () => {
+  it("does not call an inapplicable performance lane missing evidence", () => {
+    const vm = {
+      ...vmWith(null),
+      detail: {
+        contractTabIntelligence: [{
+          tab_key: "Story",
+          supporting_evidence_summary:
+            "12 spend rows; SLA history not loaded; Contract clauses available",
+        }],
+      },
+      contractEducation: {
+        archetypeLabel: "Cloud consumption commitment",
+        facetRequirements: { Performance: { state: "not_required" } },
+      },
+    } as unknown as SourceWorkspaceVM;
+
+    render(
+      <ContractStoryBriefing
+        contract={contract}
+        coverage={null}
+        scopeRows={[]}
+        vm={vm}
+      />,
+    );
+
+    expect(screen.getByText(/12 spend rows; Contract clauses available/)).toBeTruthy();
+    expect(screen.queryByText(/SLA history not loaded/)).toBeNull();
+    expect(screen.getByText("Not required")).toBeTruthy();
   });
 });

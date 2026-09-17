@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { leverPriorityRank, leverSequenceRank } from "./source-lever-order";
 import {
   appClientKeyForTenant,
   canonicalTenantKey,
@@ -1875,6 +1876,7 @@ async function getPersistedContractOptimizationOpportunitySet(
     financeRows,
     financeEvidenceRows,
     claimRows,
+    actionRows,
   ] = await Promise.all([
     safeQueryForTenant<NumericRow>(
       tenantKey,
@@ -2088,6 +2090,14 @@ async function getPersistedContractOptimizationOpportunitySet(
         ORDER BY claim.opportunity_id, claim.claim_role, claim.claim_id`,
       [datasetVersion, contractId],
     ),
+    safeQueryForTenant<NumericRow>(
+      tenantKey,
+      `SELECT opportunity_id, accountable_role, priority, decision_due_date
+         FROM source.contract_action_candidate_v1
+        WHERE tenant_key = ANY($1::text[])
+          AND contract_id = $2`,
+      [contractId],
+    ),
   ]);
 
   if (opportunityRows.length === 0) return null;
@@ -2118,6 +2128,9 @@ async function getPersistedContractOptimizationOpportunitySet(
       .map((claim) => [claim.opportunityId, claim]),
   );
   const claimsRead = claimRows.length > 0;
+  const actionByOpportunity = new Map(
+    actionRows.map((row) => [textValue(row.opportunity_id) ?? "", row]),
+  );
 
   const opportunities = opportunityRows.map((row) =>
     persistedOpportunityFromRow({
@@ -2136,8 +2149,19 @@ async function getPersistedContractOptimizationOpportunitySet(
       sizingClaim: claimsRead
         ? sizingClaimByOpportunity.get(textValue(row.opportunity_id) ?? "") ?? null
         : undefined,
+      actionRow: actionByOpportunity.get(textValue(row.opportunity_id) ?? "") ?? null,
     }),
-  );
+  ).sort((left, right) => {
+    const leftPriority = leverPriorityRank(
+      textValue(actionByOpportunity.get(left.opportunityId)?.priority) ?? left.negotiationDetail?.priority,
+    );
+    const rightPriority = leverPriorityRank(
+      textValue(actionByOpportunity.get(right.opportunityId)?.priority) ?? right.negotiationDetail?.priority,
+    );
+    return leftPriority - rightPriority ||
+      (leftPriority === Number.MAX_SAFE_INTEGER ? 0 :
+        leverSequenceRank(left.label) - leverSequenceRank(right.label));
+  });
 
   const financeEvidenceByRealization = groupByString(
     financeEvidenceRows,
@@ -2207,6 +2231,7 @@ async function getPersistedContractOptimizationOpportunitySet(
     opportunities,
     approvalRequests,
     negotiatedOutcomes,
+    priorityByOpportunity: actionByOpportunity,
   });
   const blockingRequirements = requirementRows
     .filter((row) => opportunityIds.has(textValue(row.opportunity_id) ?? ""))
@@ -2458,6 +2483,7 @@ function persistedOpportunityFromRow(input: {
   readonly calculationOutputsByRun: Map<string, NumericRow[]>;
   /** undefined means the compatibility claim table is unavailable; null is a deliberate unsized result. */
   readonly sizingClaim?: ContractOpportunityClaim | null;
+  readonly actionRow?: NumericRow | null;
 }): ContractOptimizationOpportunity {
   const payload = jsonObject(input.row.payload);
   const opportunityId = textValue(input.row.opportunity_id) ?? "";
@@ -2525,10 +2551,16 @@ function persistedOpportunityFromRow(input: {
     evidenceGrade: readEvidenceGrade(input.row.evidence_grade),
     confidence: numberValue(input.row.confidence),
     deadline: textValue(input.row.deadline),
-    owner: textValue(input.row.owner),
+    owner:
+      textValue(input.actionRow?.accountable_role) ??
+      negotiationDetailFromPayload(payload)?.ownerRole ??
+      textValue(input.row.owner),
     blockingGap:
-      textValue(input.row.blocking_gap) ??
-      textValue(blockingRequirement?.status_detail),
+      input.sizingClaim === null &&
+      /finance confirmation|owner approval/i.test(textValue(input.row.blocking_gap) ?? "")
+        ? "No supported sizing calculation or accepted benchmark is recorded."
+        : textValue(input.row.blocking_gap) ??
+          textValue(blockingRequirement?.status_detail),
     nextAction:
       textValue(input.row.next_action) ?? "Review the opportunity evidence.",
     sourceSystems:
@@ -2713,10 +2745,12 @@ function selectDefaultOptimizationOpportunityId({
   opportunities,
   approvalRequests,
   negotiatedOutcomes,
+  priorityByOpportunity,
 }: {
   readonly opportunities: readonly ContractOptimizationOpportunity[];
   readonly approvalRequests: readonly OptimizationApprovalRequestRead[];
   readonly negotiatedOutcomes: readonly OptimizationNegotiatedOutcomeRead[];
+  readonly priorityByOpportunity?: ReadonlyMap<string, NumericRow>;
 }): string | null {
   const opportunityIds = new Set(
     opportunities.map((opportunity) => opportunity.opportunityId),
@@ -2740,8 +2774,12 @@ function selectDefaultOptimizationOpportunityId({
   const tracedOpportunities = opportunities.filter(
     (opportunity) => classifyOpportunityTrace(opportunity).state === "traced",
   );
-  const selectFrom = (candidates: readonly ContractOptimizationOpportunity[]) =>
-    candidates.find((opportunity) => opportunity.stage === "target_position")
+  const selectFrom = (candidates: readonly ContractOptimizationOpportunity[]) => {
+    const p0 = candidates.find((opportunity) =>
+      leverPriorityRank(textValue(priorityByOpportunity?.get(opportunity.opportunityId)?.priority)) === 0,
+    );
+    if (p0) return p0.opportunityId;
+    return candidates.find((opportunity) => opportunity.stage === "target_position")
       ?.opportunityId ??
     candidates.find((opportunity) => opportunity.stage === "approval_required")
       ?.opportunityId ??
@@ -2752,6 +2790,7 @@ function selectDefaultOptimizationOpportunityId({
       ?.opportunityId ??
     candidates[0]?.opportunityId ??
     null;
+  };
 
   const tracedOpportunityId = selectFrom(tracedOpportunities);
   if (tracedOpportunityId) return tracedOpportunityId;

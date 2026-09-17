@@ -256,7 +256,7 @@ describe("Source Workspace visual aVa answer", () => {
       "| SLA credits earned but not claimed | Prepare recovery claim | $1.3M | Vendor management | Stage quantified; confidence 0.82 (82%); evidence SYSTEM EVIDENCED; gate SLA and invoice extracts reconciled |",
     );
     expect(answer?.directAnswer).toContain(
-      "| Discount band benchmark signal | Load one accepted benchmark comparable before pricing this as an executive ask | Not sized | Strategic sourcing | Signal-stage; not sized until evidence closes; confidence 0.30 (30%); evidence SYSTEM EVIDENCED; gate Benchmark comparable required before discount-band value can be treated as supported |",
+      "| Discount band benchmark signal | Load one accepted benchmark comparable before pricing this as an executive ask | Not sized | Strategic sourcing | Signal-stage; not sized until evidence closes; confidence 0.30 (30%); evidence SYSTEM EVIDENCED; sizing not established; gate Benchmark comparable required before discount-band value can be treated as supported |",
     );
     expect(answer?.directAnswer).toContain(
       "Commercial posture: Commitment posture = Commitment ahead of usage",
@@ -395,6 +395,7 @@ describe("Source Workspace visual aVa answer", () => {
     });
 
     expect(answer?.directAnswer).toContain("Supported candidate value is not established");
+    expect(answer?.directAnswer).toContain("No supported savings total can be added from these levers.");
     expect(answer?.directAnswer).not.toContain("$0 candidate value");
     expect(answer?.directAnswer).not.toContain("Finance-confirmed value remains $0");
     expect(answer?.metricsUsed.find((metric) => metric.id === "sized-candidate-total")?.value)
