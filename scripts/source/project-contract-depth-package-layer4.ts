@@ -7,6 +7,7 @@ import { config as loadEnv } from "dotenv";
 import { Client } from "pg";
 
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
+import { packageOpportunityAmountFailure } from "./contract-depth-layer4-amount-gate";
 import {
   canonicalWriterOpportunityCount,
   evidenceOnlyPairs,
@@ -713,9 +714,8 @@ function assertL4Ready(
   ) {
     failures.push("package_unclaimed_credit_usd expected > 0");
   }
-  if (rows.package_opportunity_amount_usd <= 0) {
-    failures.push("package_opportunity_amount_usd expected > 0");
-  }
+  const opportunityAmountFailure = packageOpportunityAmountFailure(rows.package_opportunity_amount_usd);
+  if (opportunityAmountFailure) failures.push(opportunityAmountFailure);
   if (
     packageHasServiceCreditEvidence &&
     rows.deterministic_layer_unclaimed_credit_usd <= 0

@@ -57,9 +57,9 @@ describe("Source opportunity action totals", () => {
         "\n    ),\n    sourcing AS (",
       ).replace(/^accepted_sizing AS \(\n/, "");
       const annualValue = between(
-        "COALESCE(accepted.amount_high_usd, accepted.amount_usd) AS annual_value_exposed",
+        "COALESCE(accepted.amount_high_usd, accepted.amount_usd)::numeric(18,2) AS annual_value_exposed",
         ",\n        COALESCE(accepted.amount_low_usd",
-      );
+      ).replace("::numeric(18,2)", "");
       const actionAmount = between(
         "o.annual_value_exposed::numeric AS candidate_amount_usd",
         ",\n      o.priority",
@@ -277,9 +277,9 @@ describe("Source opportunity action totals", () => {
         "\n    ),\n    sourcing AS (",
       ).replace(/^accepted_sizing AS \(\n/, "");
       const annualValue = between(
-        "COALESCE(accepted.amount_high_usd, accepted.amount_usd) AS annual_value_exposed",
+        "COALESCE(accepted.amount_high_usd, accepted.amount_usd)::numeric(18,2) AS annual_value_exposed",
         ",\n        COALESCE(accepted.amount_low_usd",
-      );
+      ).replace("::numeric(18,2)", "");
       const actionAmount = between(
         "o.annual_value_exposed::numeric AS candidate_amount_usd",
         ",\n      o.priority",
