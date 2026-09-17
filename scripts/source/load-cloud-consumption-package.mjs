@@ -349,23 +349,8 @@ function opportunityEvidenceGrade(row) {
   return confidence !== null && confidence < 0.5 ? "system_evidenced" : "document_evidenced";
 }
 
-function opportunityBlockingGap(row) {
-  return (
-    value(row, "blocking_gap") ||
-    "Finance confirmation and owner approval are required before realized value can be claimed."
-  );
-}
-
-function opportunityValuationBasis(row) {
-  return opportunityStage(row) === "signal"
-    ? "Cloud opportunity amount is a low-confidence signal and requires additional evidence before upgrade."
-    : "Cloud opportunity amount is evidence-backed but not finance-confirmed.";
-}
-
 function opportunityRequirementStatusDetail(row) {
-  return opportunityStage(row) === "signal"
-    ? "Candidate opportunity is signal-stage and requires supporting evidence plus finance confirmation before upgrade."
-    : "Candidate opportunity is quantified, but finance confirmation remains not_confirmed.";
+  return `Authored ${opportunityStage(row)} proposal requires an executable sizing rule and numeric input reconciliation before finance review.`;
 }
 
 function boolValue(row, key) {
@@ -1502,7 +1487,8 @@ async function upsertOptimizationSpine(client, args, files) {
     const caseId = `cloud-consumption:${value(opportunity, "contract_id")}:case`;
     const requirementId = `cloud-consumption:${opportunityId}:finance-review`;
     const evidenceRows = value(opportunity, "evidence_rows").split(";").map((item) => item.trim()).filter(Boolean);
-    const amount = requiredNumber(opportunity, "annual_value_usd");
+    // The package contains authored estimates but no executable sizing rule.
+    // Keep the proposal in payload; do not present it as a calculated amount.
 
     await client.query(
       `INSERT INTO source.optimization_opportunity (
@@ -1512,7 +1498,7 @@ async function upsertOptimizationSpine(client, args, files) {
          approval_state, narrative, payload
        )
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
-         NULL,'standalone_candidate','requires_review',$15,$16::jsonb)`,
+         NULL,'standalone_candidate','requires_sizing',$15,$16::jsonb)`,
       [
         args.tenantKey,
         args.datasetVersion,
@@ -1520,14 +1506,14 @@ async function upsertOptimizationSpine(client, args, files) {
         value(opportunity, "contract_id"),
         value(opportunity, "vendor_ref"),
         canonicalOpportunityValueType(opportunity),
-        opportunityStage(opportunity),
-        amount,
-        opportunityAmountState(opportunity),
+        "signal",
+        null,
+        "not_sized",
         opportunityEvidenceGrade(opportunity),
         numberValue(opportunity, "confidence") ?? 0.8,
         value(contract, "business_owner"),
-        value(opportunity, "recommended_action"),
-        opportunityBlockingGap(opportunity),
+        "Record the arithmetic rule and reconciled numeric inputs before submitting a value claim.",
+        "Executable sizing method and reconciled numeric inputs are not recorded; finance review follows sizing.",
         value(opportunity, "title"),
         JSON.stringify({
           ...opportunity,
@@ -1553,7 +1539,7 @@ async function upsertOptimizationSpine(client, args, files) {
                      owner = EXCLUDED.owner,
                      next_action = EXCLUDED.next_action,
                      payload = EXCLUDED.payload`,
-      [args.tenantKey, args.datasetVersion, caseId, value(opportunity, "contract_id"), value(opportunity, "vendor_ref"), `cloud-consumption:${value(opportunity, "contract_id")}:baseline`, value(contract, "business_owner"), value(opportunity, "recommended_action"), JSON.stringify({ synthetic_policy: SYNTHETIC_POLICY })],
+      [args.tenantKey, args.datasetVersion, caseId, value(opportunity, "contract_id"), value(opportunity, "vendor_ref"), `cloud-consumption:${value(opportunity, "contract_id")}:baseline`, value(contract, "business_owner"), "Record the arithmetic rule and reconciled numeric inputs before submitting a value claim.", JSON.stringify({ synthetic_policy: SYNTHETIC_POLICY })],
     );
     await client.query(`INSERT INTO source.case_opportunity (tenant_key, dataset_version, optimization_case_id, opportunity_id, selected_for_action, sequence, payload) VALUES ($1,$2,$3,$4,false,1,'{}'::jsonb)`, [args.tenantKey, args.datasetVersion, caseId, opportunityId]);
     await client.query(
@@ -1561,8 +1547,8 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, calculation_run_id, opportunity_id,
          rule_id, rule_version, run_state, run_hash, completed_at, payload
        )
-       VALUES ($1,$2,$3,$4,'source.cloud_consumption_package.opportunity.v1','1.0.0','completed',$5,now(),$6::jsonb)`,
-      [args.tenantKey, args.datasetVersion, calculationRunId, opportunityId, sha256(JSON.stringify(opportunity)), JSON.stringify({ evidence_row_count: evidenceRows.length })],
+       VALUES ($1,$2,$3,$4,'source.cloud_consumption_package.opportunity.v1','1.0.0','blocked',$5,NULL,$6::jsonb)`,
+      [args.tenantKey, args.datasetVersion, calculationRunId, opportunityId, sha256(JSON.stringify(opportunity)), JSON.stringify({ evidence_row_count: evidenceRows.length, blocked_reason: "missing_executable_sizing_rule" })],
     );
     for (const [index, evidenceRow] of evidenceRows.entries()) {
       await client.query(
@@ -1580,7 +1566,7 @@ async function upsertOptimizationSpine(client, args, files) {
            source_table, source_record_id, value_numeric, value_text, unit,
            inclusion_state, inclusion_reason, payload
          )
-         VALUES ($1,$2,$3,$4,'source.cloud_consumption_adapter_row',$5,NULL,$5,'row','included','Cloud package opportunity cites this evidence row.','{}'::jsonb)`,
+         VALUES ($1,$2,$3,$4,'source.cloud_consumption_adapter_row',$5,NULL,$5,'row','pending_review','Evidence reference only; numeric formula input is not mapped.','{}'::jsonb)`,
         [args.tenantKey, args.datasetVersion, calculationRunId, `evidence_row_${index + 1}`, evidenceRow],
       );
     }
@@ -1589,25 +1575,22 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, calculation_run_id, output_key,
          amount_usd, quantity, unit, payload
        )
-       VALUES
-         ($1,$2,$3,'calculated_amount_usd',$4,NULL,'USD','{}'::jsonb),
-         ($1,$2,$3,'evidence_row_count',NULL,$5,'row','{}'::jsonb)`,
-      [args.tenantKey, args.datasetVersion, calculationRunId, amount, evidenceRows.length],
+       VALUES ($1,$2,$3,'evidence_row_count',NULL,$4,'row','{}'::jsonb)`,
+      [args.tenantKey, args.datasetVersion, calculationRunId, evidenceRows.length],
     );
     await client.query(
       `INSERT INTO source.opportunity_valuation (
          tenant_key, dataset_version, opportunity_id, valuation_type,
          amount_usd, valuation_state, basis, source_run_id, effective_date, payload
        )
-       VALUES ($1,$2,$3,'potential',$4,'candidate_quantified',$5,$6,CURRENT_DATE,$7::jsonb)`,
+       VALUES ($1,$2,$3,'potential',NULL,'not_sized',$4,$5,NULL,$6::jsonb)`,
       [
         args.tenantKey,
         args.datasetVersion,
         opportunityId,
-        amount,
-        opportunityValuationBasis(opportunity),
+        "Authored proposal only; executable sizing inputs and rule are not recorded.",
         calculationRunId,
-        JSON.stringify({ finance_confirmation_state: "not_confirmed", stage: opportunityStage(opportunity) }),
+        JSON.stringify({ finance_confirmation_state: "not_confirmed", source_stage: opportunityStage(opportunity), source_amount_state: opportunityAmountState(opportunity) }),
       ],
     );
     await client.query(
@@ -1615,7 +1598,7 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, requirement_id, evidence_class,
          requirement_text, grain, minimum_period_months, owner_role, payload
        )
-       VALUES ($1,$2,$3,'finance_confirmation','Finance confirmation is required before this candidate amount becomes realized value.','contract_opportunity',1,$4,'{}'::jsonb)`,
+       VALUES ($1,$2,$3,'sizing_method','Record an executable formula and reconciled numeric inputs before finance reviews a candidate amount.','contract_opportunity',1,$4,'{}'::jsonb)`,
       [args.tenantKey, args.datasetVersion, requirementId, value(contract, "business_owner")],
     );
     await client.query(
@@ -1638,7 +1621,7 @@ async function upsertOptimizationSpine(client, args, files) {
          tenant_key, dataset_version, evidence_request_id, opportunity_id,
          requirement_id, request_text, owner, request_state, payload
        )
-       VALUES ($1,$2,$3,$4,$5,'Confirm finance owner acceptance before claiming realized savings.',$6,'open','{}'::jsonb)`,
+       VALUES ($1,$2,$3,$4,$5,'Provide the executable sizing rule and numeric source inputs for review.',$6,'open','{}'::jsonb)`,
       [args.tenantKey, args.datasetVersion, `cloud-consumption:${opportunityId}:finance-confirmation-request`, opportunityId, requirementId, value(contract, "business_owner")],
     );
   }
@@ -1762,7 +1745,7 @@ function expectedLayer3(files, rows, pageRows = []) {
     source_opportunity_claim: opportunities.length * 2,
     source_calculation_run: opportunities.length,
     source_calculation_input: evidenceInputCount,
-    source_calculation_output: opportunities.length * 2,
+    source_calculation_output: opportunities.length,
     source_opportunity_valuation: opportunities.length,
     source_evidence_requirement: opportunities.length,
     source_opportunity_requirement_status: opportunities.length,
@@ -1779,9 +1762,7 @@ function expectedLayer4(files) {
     source_vendor_contract_portfolio_cloud_vendors: uniqueRows(files["cloud_contract_register.csv"], "vendor_ref").length,
     consumption_sourcing_spend_monthly_v1_cloud_rows: files["monthly_spend.csv"].length,
     consumption_sourcing_opportunity_v1_cloud_rows: opportunities.length,
-    consumption_sourcing_opportunity_v1_finance_required_rows: opportunities.filter(
-      (row) => canonicalOpportunityValueType(row) !== "control_action" && requiredNumber(row, "annual_value_usd") > 0,
-    ).length,
+    consumption_sourcing_opportunity_v1_finance_required_rows: 0,
     consumption_sourcing_opportunity_v1_control_required_rows: opportunities.filter(
       (row) => canonicalOpportunityValueType(row) === "control_action",
     ).length,

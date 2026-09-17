@@ -61,7 +61,7 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain('sourceType === "governance_action" ? "control_action" : sourceType');
     expect(loader).toContain("source_opportunity_type");
     expect(loader).toContain("canonical_value_type");
-    expect(loader).toContain("Finance confirmation and owner approval are required before realized value can be claimed.");
+    expect(loader).toContain("Record the arithmetic rule and reconciled numeric inputs before submitting a value claim.");
     expect(loader).toContain('"apply-layer4"');
     expect(loader).toContain("source.l4_cube_active_load_run_overlay");
     expect(loader).toContain("'cloud_consumption_package'");
@@ -75,7 +75,7 @@ describe("Source cloud consumption package loader", () => {
     expect(loader).toContain("DELETE FROM source.cloud_consumption_adapter_row");
     expect(loader).toContain("DELETE FROM source.source_record_snapshot");
     expect(loader).toContain("DELETE FROM source.canonical_fact_assertion");
-    expect(loader).toContain("'calculated_amount_usd'");
+    expect(loader).not.toContain("'calculated_amount_usd'");
     expect(loader).not.toContain("'candidate_amount_usd',$4");
     expect(layer4RepairMigration).toContain("legacy.opportunity_id");
     expect(layer4RepairMigration).toContain("canonical.opportunity_id = legacy.opportunity_id");
@@ -110,10 +110,21 @@ describe("Source cloud consumption package loader", () => {
     expect(summary.package_sha256).not.toBe("24cd1b7921bfcbebd0599dc731703b79689ce01b1290e377ccf6cbc030a8cbd5");
     expect(summary.layer2_expected_by_adapter.optimization_opportunity_adapter).toBe(6);
     expect(summary.layer3_expected_readback.source_optimization_opportunity).toBe(6);
+    expect(summary.layer3_expected_readback.source_calculation_output).toBe(6);
     expect(summary.layer3_expected_readback.source_opportunity_evidence).toBe(20);
     expect(summary.layer3_expected_readback.source_canonical_fact_assertion).toBe(119);
     expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_cloud_rows).toBe(6);
-    expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_finance_required_rows).toBe(6);
+    expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_finance_required_rows).toBe(0);
+    expect(summary.layer4_expected_readback.consumption_sourcing_opportunity_v1_cloud_rows).toBe(6);
+
+    const loader = fs.readFileSync(
+      path.join(repoRoot, "scripts/source/load-cloud-consumption-package.mjs"),
+      "utf8",
+    );
+    expect(loader).toContain("'blocked',$5,NULL");
+    expect(loader).toContain("'not_sized',$4,$5,NULL");
+    expect(loader).toContain("'pending_review','Evidence reference only; numeric formula input is not mapped.'");
+    expect(loader).not.toContain("'candidate_quantified'");
 
     const contractRegister = fs.readFileSync(
       path.join(
