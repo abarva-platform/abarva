@@ -16,6 +16,8 @@ const check = (condition, message) => { if (!condition) throw new Error(message)
 const hex = (value) => /^[a-f0-9]{64}$/.test(value ?? "");
 const sorted = (values) => [...values].sort();
 const ident = (value) => { check(/^[a-z][a-z0-9_]*$/.test(value), "Invalid SQL identifier"); return `"${value}"`; };
+const LEGACY_INPUT_REASON = "Cloud package opportunity cites this evidence row.";
+const UNSIZED_INPUT_REASON = "Evidence reference only; numeric formula input is not mapped.";
 
 export function packageScope(manifest, csvText) {
   check(manifest?.schema_version === 1 && Array.isArray(manifest.packages), "Invalid ownership manifest");
@@ -151,8 +153,11 @@ function blockers(selected) {
   check(selected.calculation_rule.every((row) => row.rule_id === "source.cloud_consumption_package.opportunity.v1" &&
     row.formula === "Native cloud recommendations become candidate value only after CLM terms, AP-paid spend, CMDB ownership, and evidence rows reconcile."),
     "Calculation rule is not the known methodless description");
-  check(selected.calculation_input.every((row) => row.inclusion_state === "pending_review"),
-    "Calculation input has been included or excluded by review");
+  check(selected.calculation_input.every((row) => row.inclusion_state === "pending_review" ||
+    (row.inclusion_state === "included" && row.source_table === "source.cloud_consumption_adapter_row" &&
+      row.source_record_id && row.value_numeric === null && row.inclusion_reason === LEGACY_INPUT_REASON &&
+      Object.keys(row.payload ?? {}).length === 0)),
+  "Calculation input has an unrecognized inclusion or review state");
   check(selected.calculation_output.every((row) => Object.keys(row.payload ?? {}).length === 0),
     "Unrecognized calculation output payload");
   check(selected.optimization_opportunity.length === 6 && selected.opportunity_claim.length === 12,
@@ -220,6 +225,7 @@ function assertOnlyAllowedChanges(before, after) {
   const allowed = {
     optimization_opportunity: ["amount_usd", "amount_state", "stage"],
     opportunity_valuation: ["amount_usd", "amount_low_usd", "amount_high_usd", "valuation_state"],
+    calculation_input: ["inclusion_state", "inclusion_reason"],
     calculation_output: ["amount_usd"],
     calculation_run: ["run_state"],
   };
@@ -257,6 +263,15 @@ async function updateRows(client, snapshotRows, restore = false) {
       restore ? row.amount_low_usd : null, restore ? row.amount_high_usd : null,
       restore ? row.valuation_state : "not_sized"]);
     check(result.rowCount === 1, "Valuation update count mismatch");
+  }
+  for (const row of snapshotRows.calculation_input) {
+    if (row.inclusion_state !== "included") continue;
+    const result = await client.query(`UPDATE source.calculation_input
+      SET inclusion_state=$4,inclusion_reason=$5
+      WHERE tenant_key=$1 AND dataset_version=$2 AND id=$3`,
+    [row.tenant_key, row.dataset_version, row.id, restore ? row.inclusion_state : "pending_review",
+      restore ? row.inclusion_reason : UNSIZED_INPUT_REASON]);
+    check(result.rowCount === 1, "Calculation input update count mismatch");
   }
   for (const row of snapshotRows.calculation_output) {
     const result = await client.query(`UPDATE source.calculation_output SET amount_usd=$4
@@ -335,6 +350,8 @@ export async function runJob({ mode, env = process.env, pool, targetOverride, fi
         await updateRows(client, before.selected);
         const after = await snapshot(client, files.scope);
         assertOnlyAllowedChanges(before, after);
+        check(after.selected.calculation_input.every((row) => row.inclusion_state === "pending_review"),
+          "Unsized calculation input remained included");
         const afterL4 = await projection(client, files.scope, true, layer4State);
         check(afterL4.definition_sha256 === l4.definition_sha256, "Layer 4 definition changed during apply");
         await client.query("UPDATE source.opportunity_unsize_run SET after_sha256=$2 WHERE run_id=$1",
