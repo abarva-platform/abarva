@@ -25,6 +25,7 @@ All clients using governed Source contract optimization reads. No tenant-specifi
 ## Changes Included
 
 - Map the persisted case record into the Source view model.
+- Flag unknown case states as unverified and expose the number of cases when the latest case is selected.
 - Show a concise case status and next action across Contract 360 tabs with an Optimize navigation action only when relevant.
 - Keep absence of a case explicit; do not promote a candidate opportunity into an approval or opened case.
 

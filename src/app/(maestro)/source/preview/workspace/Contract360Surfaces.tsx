@@ -45,10 +45,14 @@ export function ContractCaseThreadStrip({
   if (caseThread === undefined) return null;
 
   return (
-    <div className="sw-c3-case-thread" role="status">
+    <div className="sw-c3-case-thread" role="region" aria-label="Optimization case">
       <div>
-        <span className="sw-c3-eyebrow">Optimization case</span>
-        <strong>{caseThread?.state ?? "No case opened"}</strong>
+        <span className="sw-c3-eyebrow">
+          {caseThread && caseThread.caseCount > 1
+            ? `Latest of ${caseThread.caseCount} cases`
+            : "Optimization case"}
+        </span>
+        <strong>{caseThread === null ? "No case opened" : caseThread.state}</strong>
         {caseThread?.owner ? <span>{caseThread.owner}</span> : null}
       </div>
       <p>{caseThread?.nextAction ?? "Review the contract evidence before opening a case."}</p>

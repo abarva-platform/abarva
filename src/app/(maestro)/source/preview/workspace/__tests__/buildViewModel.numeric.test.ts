@@ -741,6 +741,7 @@ describe("buildViewModel numeric coercion", () => {
 
     expect(built.opportunityView.caseThread).toEqual({
       state: "Evidence Review",
+      caseCount: 1,
       owner: "Category Management",
       nextAction: "Attach reviewed pricing evidence.",
     });

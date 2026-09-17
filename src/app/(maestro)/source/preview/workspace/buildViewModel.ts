@@ -2739,7 +2739,10 @@ export function buildViewModel(vm: WorkspaceViewModel) {
           contractId: opportunitySet.contractId,
           caseThread: opportunitySet.optimizationCase
             ? {
-                state: fmtStage(opportunitySet.optimizationCase.caseState),
+                state: opportunitySet.optimizationCase.caseState === "unverified"
+                  ? "State unverified"
+                  : fmtStage(opportunitySet.optimizationCase.caseState),
+                caseCount: opportunitySet.optimizationCase.caseCount ?? 1,
                 owner: opportunitySet.optimizationCase.owner,
                 nextAction:
                   clientFacingOpportunityText(opportunitySet.optimizationCase.nextAction) ??

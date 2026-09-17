@@ -166,6 +166,7 @@ describe("ContractCaseThreadStrip", () => {
       opportunityView: {
         caseThread: {
           state: "Evidence Review",
+          caseCount: 2,
           owner: "Category Management",
           nextAction: "Attach the reviewed pricing schedule.",
         },
@@ -174,6 +175,7 @@ describe("ContractCaseThreadStrip", () => {
 
     render(<ContractCaseThreadStrip vm={vm} onOpenOptimize={onOpenOptimize} />);
     expect(screen.getByText("Evidence Review")).toBeTruthy();
+    expect(screen.getByText("Latest of 2 cases")).toBeTruthy();
     expect(screen.getByText("Category Management")).toBeTruthy();
     expect(screen.getByText("Attach the reviewed pricing schedule.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Open Optimize" }));
@@ -184,6 +186,7 @@ describe("ContractCaseThreadStrip", () => {
     const vm = { opportunityView: { caseThread: null } } as unknown as SourceWorkspaceVM;
     render(<ContractCaseThreadStrip vm={vm} onOpenOptimize={() => undefined} />);
     expect(screen.getByText("No case opened")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open Optimize" })).toBeTruthy();
     expect(screen.queryByText("Evidence Review")).toBeNull();
   });
 
@@ -191,5 +194,12 @@ describe("ContractCaseThreadStrip", () => {
     const vm = { opportunityView: { caseThread: null } } as unknown as SourceWorkspaceVM;
     render(<ContractCaseThreadStrip vm={vm} onOpenOptimize={() => undefined} isOptimizeTab />);
     expect(screen.queryByRole("button", { name: "Open Optimize" })).toBeNull();
+  });
+
+  it("does not render a case line without a contract opportunity read", () => {
+    const { container } = render(
+      <ContractCaseThreadStrip vm={vmWith(null)} onOpenOptimize={() => undefined} />,
+    );
+    expect(container.querySelector(".sw-c3-case-thread")).toBeNull();
   });
 });
