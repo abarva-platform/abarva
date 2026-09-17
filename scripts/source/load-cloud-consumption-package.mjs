@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { readOpportunityOwnershipManifest, resolveOpportunityOwnership } from "./opportunity-ownership.mjs";
+import { readOpportunityOwnershipManifest, resolveOpportunityOwnership, selectedOpportunityOwnershipDeclaration } from "./opportunity-ownership.mjs";
 
 loadDotenv(path.resolve(process.cwd(), ".env.local"));
 loadDotenv(path.resolve(process.cwd(), ".env"));
@@ -459,8 +459,9 @@ function adapterCountByName(rows) {
   }, {});
 }
 
-function sourcePackageHash(sourceFiles, syntheticDocs, companionSourceFiles, ownershipManifest) {
-  return sha256(JSON.stringify({ sourceFiles, syntheticDocs, companionSourceFiles, ownershipManifest }));
+function sourcePackageHash(sourceFiles, syntheticDocs, companionSourceFiles, ownershipDeclaration) {
+  const inputs = { sourceFiles, syntheticDocs, companionSourceFiles };
+  return sha256(JSON.stringify(ownershipDeclaration ? { ...inputs, ownershipDeclaration } : inputs));
 }
 
 function ownedOpportunities(files, ownership) {
@@ -2046,7 +2047,8 @@ async function main() {
     sourceFiles["cloud_contract_register.csv"].map((row) => value(row, "contract_id")),
     sourceFiles["optimization_opportunities.csv"].map((row) => value(row, "contract_id")),
   );
-  const packageHash = sourcePackageHash(sourceFiles, docs, companionSourceFiles, ownershipManifest);
+  const ownershipDeclaration = selectedOpportunityOwnershipDeclaration(ownershipManifest, args);
+  const packageHash = sourcePackageHash(sourceFiles, docs, companionSourceFiles, ownershipDeclaration);
   const qualityGate = qualifyPackage(args, sourceFiles, docs);
   const expectedL2 = adapterCountByName(rows);
   const expectedL3 = expectedLayer3(sourceFiles, rows, ownership, companionSourceFiles.contract_page_text);

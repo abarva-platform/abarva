@@ -17,6 +17,7 @@ import { postgresClientOptions } from "../../src/scripts/postgres-client-options
 import {
   readOpportunityOwnershipManifest,
   resolveOpportunityOwnership,
+  selectedOpportunityOwnershipDeclaration,
 } from "./opportunity-ownership.mjs";
 
 loadEnv({ path: path.resolve(process.cwd(), ".env.local") });
@@ -745,8 +746,8 @@ function readSourceFiles(
   };
 }
 
-function sourcePackageHash(sourceFiles: ContractDepthSourceFileInput, manifest: unknown): string {
-  return sha256(JSON.stringify({ sourceFiles, manifest }));
+function sourcePackageHash(sourceFiles: ContractDepthSourceFileInput, ownershipDeclaration: unknown): string {
+  return sha256(JSON.stringify(ownershipDeclaration ? { sourceFiles, ownershipDeclaration } : sourceFiles));
 }
 
 function writeJson(filePath: string, value: unknown): void {
@@ -3106,7 +3107,8 @@ async function main(): Promise<void> {
   const adapted = adaptContractDepthPackage(sourceFiles);
   const projection = projectContractDepthPackage(sourceFiles);
   const rows = adapterRows(adapted);
-  const packageHash = sourcePackageHash(sourceFiles, ownershipManifest);
+  const ownershipDeclaration = selectedOpportunityOwnershipDeclaration(ownershipManifest, args);
+  const packageHash = sourcePackageHash(sourceFiles, ownershipDeclaration);
   const expectedAdapterCounts = adapterCountByName(rows);
   const plan = {
     event: "source_contract_depth_package_layer23_plan",

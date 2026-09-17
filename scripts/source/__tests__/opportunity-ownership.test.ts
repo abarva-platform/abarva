@@ -107,4 +107,42 @@ describe("Source package opportunity ownership", () => {
     expect(result.status).toBe(0);
     expect(result.summary.layer3_expected_readback.source_optimization_opportunity).toBe(8);
   });
+
+  it("keeps package hashes stable when only unrelated ownership entries change", () => {
+    const extra = structuredClone(manifest);
+    extra.packages.push(
+      {
+        package_dir: "datasets/source/cloud-consumption/test-unrelated-writer",
+        tenant_key: "test-tenant",
+        dataset_version: "test-unrelated-writer",
+        contracts: [{
+          contract_id: "TEST-CONTRACT",
+          role: "canonical_writer",
+          evidence_only_dataset_versions: ["test-unrelated-contributor"],
+        }],
+      },
+      {
+        package_dir: "datasets/source/contract-depth/test-unrelated-contributor",
+        tenant_key: "test-tenant",
+        dataset_version: "test-unrelated-contributor",
+        contracts: [{
+          contract_id: "TEST-CONTRACT",
+          role: "evidence_only",
+          canonical_writer_dataset_version: "test-unrelated-writer",
+        }],
+      },
+    );
+    const cloudRoot = path.join(repoRoot, "datasets/source/cloud-consumption");
+    const unrelatedDir = fs.readdirSync(cloudRoot).find((name) =>
+      name !== path.basename(writer.package_dir),
+    );
+    expect(unrelatedDir).toBeDefined();
+    const packageDir = path.join("datasets/source/cloud-consumption", unrelatedDir!);
+    const packageManifest = JSON.parse(fs.readFileSync(path.join(repoRoot, packageDir, "package-manifest.json"), "utf8"));
+    const packages = [writer, contributor, { package_dir: packageDir, dataset_version: packageManifest.dataset_version }];
+    const baseline = packages.map((entry) => plan(entry).summary.package_sha256);
+    withManifest(extra, (filePath) => {
+      expect(packages.map((entry) => plan(entry, filePath).summary.package_sha256)).toEqual(baseline);
+    });
+  });
 });

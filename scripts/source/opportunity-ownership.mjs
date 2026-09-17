@@ -24,6 +24,12 @@ export function readOpportunityOwnershipManifest(mode, overridePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
+export function selectedOpportunityOwnershipDeclaration(manifest, args) {
+  return manifest.packages.find((entry) =>
+    entry.tenant_key === args.tenantKey && entry.dataset_version === args.datasetVersion
+  ) ?? null;
+}
+
 export function resolveOpportunityOwnership(manifest, args, contractIds, opportunityContractIds) {
   if (manifest?.schema_version !== 1 || !Array.isArray(manifest.packages) || manifest.packages.length === 0) {
     throw new Error("Missing or invalid opportunity ownership manifest");
@@ -81,9 +87,7 @@ export function resolveOpportunityOwnership(manifest, args, contractIds, opportu
   if (opportunityContractIds.some((contractId) => !contractSet.has(contractId))) {
     throw new Error("Opportunity references a contract outside its package");
   }
-  const selected = manifest.packages.find((entry) =>
-    entry.tenant_key === args.tenantKey && entry.dataset_version === args.datasetVersion
-  );
+  const selected = selectedOpportunityOwnershipDeclaration(manifest, args);
   if (!selected) {
     if (contractIds.some((contractId) => assignments.has(`${args.tenantKey}\0${contractId}`))) {
       throw new Error("Missing opportunity ownership declaration for package contract");
