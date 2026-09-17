@@ -71,6 +71,11 @@ function fact(value: string | null): string {
   return value?.trim() || "Not recorded";
 }
 
+export function sourceNewFileDownloadHref(file: Pick<SourceNewFileRow, "id" | "lifecycleState">): string {
+  const base = `/api/v1/source/artifacts/${encodeURIComponent(file.id)}/download`;
+  return file.lifecycleState === "current" ? base : `${base}?includeHistory=1`;
+}
+
 function nextAction(event: SourceNewEventView): { label: string; detail: string } {
   if (awaitsIntakeReview(event.lifecycle)) return {
     label: "Review intake",
@@ -190,7 +195,7 @@ export function SourceNewWorkspace({
           </div>
         )}
 
-        {view === "files" && <section className="snw-panel"><SourceNewFiles rows={files} initialPhase={phase} onDownload={(file) => { window.location.href = `/api/v1/source/artifacts/${encodeURIComponent(file.id)}/download`; }} /></section>}
+        {view === "files" && <section className="snw-panel"><SourceNewFiles rows={files} initialPhase={phase} onDownload={(file) => { window.location.href = sourceNewFileDownloadHref(file); }} /></section>}
         {view === "intelligence" && (
           <section className="snw-panel snw-plain">
             <p className="snw-eyebrow">Decision support</p>

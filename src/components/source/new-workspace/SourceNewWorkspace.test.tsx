@@ -1,7 +1,8 @@
 /** @jest-environment jsdom */
 
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { SourceNewWorkspace, type SourceNewEventView } from "./SourceNewWorkspace";
+import { SourceNewWorkspace, sourceNewFileDownloadHref, type SourceNewEventView } from "./SourceNewWorkspace";
+import type { SourceNewFileRow } from "./SourceNewFiles";
 
 jest.mock("@/components/shell/AppShell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -124,6 +125,45 @@ describe("SourceNewWorkspace", () => {
     expect(screen.getByRole("link", { name: "Open market package" }).getAttribute("href"))
       .toBe("/source/events/event-1");
     expect(screen.getByText("Review the package and its release requirements in the governed event.")).toBeTruthy();
+  });
+
+  describe("file download version pinning", () => {
+    const baseFile: SourceNewFileRow = {
+      id: "current-id",
+      phase: "define",
+      artifactGroup: "generated",
+      artifactType: "strategy_brief",
+      title: "Strategy brief",
+      fileName: "strategy-brief.pdf",
+      fileFormat: "pdf",
+      fileSize: 2048,
+      version: 3,
+      status: "approved",
+      lifecycleState: "current",
+      generatedAt: "2026-02-01T00:00:00Z",
+      generatedBy: "Editor",
+      sourceBasis: null,
+      blobSha256: "sha-current",
+      approvalState: "approved",
+      approvedBy: "Reviewer",
+      approvedAt: "2026-02-02T00:00:00Z",
+    };
+    const olderFile: SourceNewFileRow = {
+      ...baseFile,
+      id: "older-id",
+      version: 2,
+      lifecycleState: "superseded",
+      status: "superseded",
+      generatedAt: "2026-01-01T00:00:00Z",
+      blobSha256: "sha-older",
+    };
+    it("pins historical rows to the exact selected version via includeHistory=1", () => {
+      expect(sourceNewFileDownloadHref(olderFile)).toBe(`/api/v1/source/artifacts/${encodeURIComponent(olderFile.id)}/download?includeHistory=1`);
+    });
+
+    it("lets current rows use normal authority resolution without includeHistory", () => {
+      expect(sourceNewFileDownloadHref(baseFile)).toBe(`/api/v1/source/artifacts/${encodeURIComponent(baseFile.id)}/download`);
+    });
   });
 
   it("shows distinct unambiguous work content when navigating earlier and later phases", () => {
