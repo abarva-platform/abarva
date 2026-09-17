@@ -683,6 +683,7 @@
     "source:cloud-consumption-package:projection-refresh-job": "npx tsx src/scripts/run-migrations.ts --ci --force 20260812142000_source_layer_cube_readmodel_projection.sql",
     "source:cloud-consumption-package:cloud-cubes-refresh-job": "npx tsx src/scripts/run-migrations.ts --ci --force 20260907144500_source_cloud_consumption_layer4_cubes.sql",
     "source:cloud-consumption-package:plan": "node scripts/source/load-cloud-consumption-package.mjs --mode=plan",
+    "source:cloud-consumption-package:rewrite-preflight-job": "SOURCE_CLOUD_CONSUMPTION_PACKAGE_EMIT_PROOF_BUNDLE=true node scripts/source/load-cloud-consumption-package.mjs --mode=preflight-rewrite",
     "source:opportunity-ownership:cutover-preflight": "node scripts/source/opportunity-ownership-cutover-preflight.mjs",
     "test:source-opportunity-ownership-cutover-preflight": "node --test scripts/source/__tests__/opportunity-ownership-cutover-preflight.test.mjs",
     "source:cloud-consumption-package:layer2:apply-job": "SOURCE_CLOUD_CONSUMPTION_PACKAGE_APPLY_APPROVED=true SOURCE_CLOUD_CONSUMPTION_PACKAGE_EMIT_PROOF_BUNDLE=true node scripts/source/load-cloud-consumption-package.mjs --mode=apply-layer2",
