@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds an operator job to move an explicitly approved, superseded opportunity set into a durable, restorable archive. A read-only plan inventories the installed database and publishes exact row IDs and hashes. Apply refuses changed scope, unknown references, missing approvals, or unavailable private proof storage. Verify and restore are separate modes. This candidate does not execute a cutover.
+Adds an operator job to move an explicitly approved, superseded opportunity set into a durable, restorable archive. A read-only plan inventories the installed database and publishes exact row IDs and hashes. Apply refuses changed scope, unknown references, existing human decisions, missing operator approval, or unavailable private proof storage. Verify and restore are separate modes. This candidate does not execute a cutover.
 
 The plan separately inventories legacy opportunity rows for the same tenant and contract or approved opportunity IDs. Apply blocks while any such row exists, because a legacy branch in the product projection could reappear when its canonical suppressor is retired. This job does not delete or rewrite legacy rows.
 
@@ -38,8 +38,8 @@ The plan separately inventories legacy opportunity rows for the same tenant and 
 
 ## QA / Validation
 
-- PASS: seven focused Node tests, including an explicit `AZURE_CLIENT_ID` credential-selection guard; syntax check, scoped ESLint, `npx tsc --noEmit`, and `git diff --check`.
-- PASS: socket-only disposable PostgreSQL integration test with the real optimization-spine and archive migration DDL, 21 linked spine rows, a canonical-writer control, and an unrelated same-version control. The job ran as a non-owner role under tenant-dependent RLS: rows were hidden before the transaction-local `app.tenant_key` setting and visible afterward. Plan, zero-root rejection, legacy-row block, precommit Blob failure rollback, apply with postcommit final-proof failure, archive tamper rejection, control-drift rejection, verify retry, and exact restore passed. The test used a private-target mock Blob client; no Azure connection was made.
+- PASS: eight focused Node tests, including human-decision and explicit `AZURE_CLIENT_ID` guards; syntax check, scoped ESLint, `npx tsc --noEmit`, and `git diff --check`.
+- PASS: socket-only disposable PostgreSQL integration test with the real optimization-spine and archive migration DDL, 21 linked spine rows, a canonical-writer control, and an unrelated same-version control. The job ran as a non-owner role under tenant-dependent RLS: rows were hidden before the transaction-local `app.tenant_key` setting and visible afterward. Plan blocks human-action rows, then applies to 16 unreviewed rows. Zero-root rejection, legacy-row block, precommit Blob failure rollback, postcommit final-proof failure, archive tamper rejection, control-drift rejection, verify retry, and exact restore passed. The test used a private-target mock Blob client; no Azure connection was made.
 - PASS: `npm run release:check` after this record was aligned to the release template.
 - NOT RUN: installed Azure schema and row readback, real managed-identity Blob write/read proof, ACA job, Layer 4 reconciliation, and signed-in product proof.
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  SPINE, DELETE_ORDER, assertNoLegacy, canonicalInventory, expected, inspectLegacy, metadata, proofTarget, reconstructedInventoryHash, resolveScope, selectRows,
+  SPINE, DELETE_ORDER, assertNoLegacy, canonicalInventory, expected, humanDecisionBlockers, inspectLegacy, metadata, proofTarget, reconstructedInventoryHash, resolveScope, selectRows,
 } from "../opportunity-ownership-cutover-job.mjs";
 
 const scope = { tenantKey: "synthetic-tenant", datasetVersion: "evidence-v1", contractId: "C-1", writerDatasetVersion: "writer-v1" };
@@ -95,6 +95,19 @@ test("legacy preflight catches rows that a UNION projection could resurrect", as
   assert.deepEqual(queries[1].params, ["synthetic-tenant", "C-1", ["O-1"]]);
   assert.throws(() => assertNoLegacy(legacy), /could reappear/);
   assert.doesNotThrow(() => assertNoLegacy({ count: 0 }));
+});
+
+test("human decisions and reviewed claims block retirement", () => {
+  const rows = base();
+  rows.opportunity_claim[0].review_status = "approved";
+  rows.case_opportunity[0].selected_for_action = true;
+  const counts = humanDecisionBlockers(selectRows(rows, scope, ["O-1"]).selected);
+  assert.equal(counts.approval_request, 1);
+  assert.equal(counts.approval_decision, 1);
+  assert.equal(counts.finance_realization, 1);
+  assert.equal(counts.reviewed_claims, 1);
+  assert.equal(counts.selected_case_opportunities, 1);
+  assert(Object.values(counts).some((count) => count > 0));
 });
 
 test("apply and restore require exact approval, hash, run metadata, and pinned digest", () => {

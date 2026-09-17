@@ -182,10 +182,26 @@ test("local PostgreSQL plan/apply/verify/restore preserves every spine row and d
     assert.equal(hidden.rows[0].count, 0, "RLS fixture must hide rows without app.tenant_key");
     const blob = blobTarget();
     const env = environment(scope, "cutover-local-1");
+    const held = await runJob({ mode: "plan", env, pool: jobPool, targetOverride: blob.target });
+    assert.equal(held.quality_gate, "BLOCKED_HUMAN_DECISION_ROWS");
+    await assert.rejects(runJob({ mode: "apply", env: { ...env, SOURCE_CUTOVER_APPROVED: "APPLY",
+      SOURCE_CUTOVER_EXPECTED_OPPORTUNITY_IDS: JSON.stringify([opportunity]),
+      SOURCE_CUTOVER_EXPECTED_HASH: held.inventory_sha256,
+      SOURCE_CUTOVER_EXPECTED_WRITER_HASH: held.canonical_writer_sha256,
+      SOURCE_CUTOVER_EXPECTED_MANIFEST_HASH: held.ownership_manifest_sha256 },
+    pool: jobPool, targetOverride: blob.target }), /Human decision rows/);
+    for (const table of ["approval_decision", "finance_realization_evidence", "finance_realization",
+      "negotiated_outcome", "approval_request"]) {
+      await local.pool.query(`DELETE FROM source."${table}" WHERE tenant_key=$1 AND dataset_version=$2`,
+        [scope.tenantKey, scope.datasetVersion]);
+    }
     const plan = await runJob({ mode: "plan", env, pool: jobPool, targetOverride: blob.target });
-    assert.equal(plan.archive_row_count, 21);
+    assert.equal(plan.archive_row_count, 16);
     assert.equal(plan.canonical_writer_root_count, 1);
-    assert(SPINE.every((table) => plan.table_counts[table] === 1), "All 21 table rows must be selected");
+    assert(SPINE.every((table) => plan.table_counts[table] ===
+      (["approval_decision", "finance_realization_evidence", "finance_realization",
+        "negotiated_outcome", "approval_request"].includes(table) ? 0 : 1)),
+    "Only unreviewed opportunity rows may be retired");
     assert.equal(plan.quality_gate, "inventory_pass");
     assert.equal(plan.aca_execution_id, null);
     const approved = { ...env, SOURCE_CUTOVER_EXPECTED_OPPORTUNITY_IDS: JSON.stringify([opportunity]),
@@ -210,7 +226,7 @@ test("local PostgreSQL plan/apply/verify/restore preserves every spine row and d
     blob.state.failFinal = true;
     await assert.rejects(runJob({ mode: "apply", env: { ...approved, SOURCE_CUTOVER_APPROVED: "APPLY" },
       pool: jobPool, targetOverride: blob.target }), /transaction committed but final Blob proof failed/);
-    assert.equal((await local.pool.query("SELECT count(*)::int AS count FROM source.opportunity_cutover_archive")).rows[0].count, 21);
+    assert.equal((await local.pool.query("SELECT count(*)::int AS count FROM source.opportunity_cutover_archive")).rows[0].count, 16);
     assert.equal((await local.pool.query("SELECT count(*)::int AS count FROM source.optimization_opportunity WHERE opportunity_id=$1", [opportunity])).rows[0].count, 0);
     assert.equal((await local.pool.query("SELECT state FROM source.opportunity_cutover_run WHERE run_id=$1", [env.SOURCE_CUTOVER_RUN_ID])).rows[0].state, "retired");
     assert([...blob.objects.keys()].some((name) => name.endsWith("-prepared.json")));

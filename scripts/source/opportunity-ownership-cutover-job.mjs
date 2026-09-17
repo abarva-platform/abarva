@@ -214,6 +214,25 @@ function assertNoLegacy(legacy) {
   assert(legacy.count === 0, "Legacy opportunity rows could reappear after canonical retirement");
 }
 
+const HUMAN_DECISION_TABLES = [
+  "approval_request", "approval_decision", "negotiated_outcome",
+  "finance_realization", "finance_realization_evidence",
+];
+
+export function humanDecisionBlockers(selected) {
+  const blockers = Object.fromEntries(HUMAN_DECISION_TABLES.map((table) => [table, selected[table]?.length ?? 0]));
+  blockers.reviewed_claims = (selected.opportunity_claim ?? []).filter((claim) =>
+    ["reviewed", "approved"].includes(claim.review_status) || claim.reviewer_ref || claim.reviewed_at).length;
+  blockers.selected_case_opportunities = (selected.case_opportunity ?? []).filter((row) => row.selected_for_action).length;
+  blockers.committed_opportunities = (selected.optimization_opportunity ?? []).filter((row) =>
+    ["agreed", "finance_confirmed"].includes(row.stage)).length;
+  return blockers;
+}
+
+function assertNoHumanDecisions(blockers) {
+  assert(Object.values(blockers).every((count) => count === 0), "Human decision rows require separate review and cannot be retired");
+}
+
 async function inspectSchema(client) {
   const names = await client.query("SELECT tablename FROM pg_tables WHERE schemaname='source' AND tablename=ANY($1::text[])", [SPINE]);
   assert(names.rows.length === SPINE.length, "Opportunity spine table missing");
@@ -459,6 +478,7 @@ async function runJob({ mode, env = process.env, pool, targetOverride } = {}) {
     assert(tenantContext.rows[0]?.tenant_key === scope.tenantKey, "Tenant transaction context could not be established");
     if (mode === "plan" || mode === "apply") {
       const snapshot = await inventory(client, scope, approval.ids);
+      const decisionBlockers = humanDecisionBlockers(snapshot.selected);
       assert(snapshot.rootCount > 0, "No evidence-only opportunity roots visible; check scope and RLS");
       assert(snapshot.writerRootCount > 0, "No canonical-writer opportunity roots visible; check scope and RLS");
       Object.assign(proof, { inventory_sha256: snapshot.inventoryHash, archive_sha256: snapshot.archiveHash,
@@ -467,10 +487,13 @@ async function runJob({ mode, env = process.env, pool, targetOverride } = {}) {
         control_sha256: snapshot.controlHash, canonical_writer_sha256: snapshot.writerHash,
         canonical_writer_root_count: snapshot.writerRootCount,
         legacy_opportunity_blockers: snapshot.legacy,
+        human_decision_blockers: decisionBlockers,
         installed_constraints: snapshot.schema.constraints,
-        quality_gate: snapshot.legacy.count === 0 ? "inventory_pass" : "BLOCKED_LEGACY_PROJECTION_ROWS" });
+        quality_gate: snapshot.legacy.count > 0 ? "BLOCKED_LEGACY_PROJECTION_ROWS" :
+          Object.values(decisionBlockers).some((count) => count > 0) ? "BLOCKED_HUMAN_DECISION_ROWS" : "inventory_pass" });
       if (mode === "apply") {
         assertNoLegacy(snapshot.legacy);
+        assertNoHumanDecisions(decisionBlockers);
         assert(snapshot.inventoryHash === approval.hash, "Exact inventory hash changed since approval");
         assert(snapshot.writerHash === approval.writerHash, "Canonical writer changed since approval");
         assert(snapshot.rootCount > 0, "No evidence-only opportunities to retire");
