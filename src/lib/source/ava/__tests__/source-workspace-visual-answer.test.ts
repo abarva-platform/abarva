@@ -1044,4 +1044,32 @@ describe("Source Workspace visual aVa answer", () => {
     );
     expect(answer?.directAnswer).not.toContain("confirmation..");
   });
+
+  it("does not present an empty contract opportunity packet as an actionable case", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.optimizationOpportunities = { opportunities: [] };
+    context.sourceV4.contractOpportunityDirectory = [];
+    context.sourceV4.optimizationLedger = { lines: [] };
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "Why is this contract actionable?",
+      surfaceContext: context,
+    });
+    const graph = answer?.artifacts.find(
+      (artifact) => artifact.id === "source-contract-evidence-relationship-graph",
+    );
+
+    expect(answer?.directAnswer).toContain(
+      "actionability and value are not established",
+    );
+    expect(answer?.directAnswer).not.toContain("is a candidate commercial optimization case");
+    expect(answer?.directAnswer).not.toContain("Recoverable opportunity");
+    expect(answer?.directAnswer).not.toContain("$1.3M recoverable");
+    expect(JSON.stringify(graph)).not.toContain("Door 1 action");
+    expect(answer?.nextSteps).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "door1" })]),
+    );
+  });
 });

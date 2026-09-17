@@ -1257,7 +1257,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   const isOpenContract =
     openContractId?.toUpperCase() === contract.contractId.toUpperCase();
   const connections = isOpenContract ? connectionsFrom(input.surfaceContext) : [];
-  const commercialPostureLines = isOpenContract
+  const commercialPostureLines = isOpenContract && lines.length > 0
     ? commercialPostureLinesFrom(input.surfaceContext)
     : [];
   const contractMismatch =
@@ -1376,10 +1376,14 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         })),
         {
           id: "opportunities",
-          label: "Commercial opportunities",
-          kind: "opportunity set",
+          label: lines.length > 0 ? "Commercial opportunities" : "Opportunity evidence missing",
+          kind: lines.length > 0 ? "opportunity set" : "evidence gap",
         },
-        { id: "door1", label: "Door 1 action", kind: "workflow" },
+        {
+          id: "door1",
+          label: lines.length > 0 ? "Door 1 action" : "Action blocked",
+          kind: "workflow",
+        },
       ],
       edges: [
         { from: "contract", to: "scope", label: "defines scope" },
@@ -1388,8 +1392,16 @@ export function buildSourceWorkspaceVisualAnswer(input: {
           to: "opportunities",
           label: connection.ledgers.join(", ") || "feeds evidence",
         })),
-        { from: "contract", to: "opportunities", label: "anchors values" },
-        { from: "opportunities", to: "door1", label: "gates action" },
+        {
+          from: "contract",
+          to: "opportunities",
+          label: lines.length > 0 ? "anchors values" : "needs evidence",
+        },
+        {
+          from: "opportunities",
+          to: "door1",
+          label: lines.length > 0 ? "gates action" : "blocks action",
+        },
       ],
       citationIds: [contractCitationId, graphCitationId],
     },
@@ -1507,7 +1519,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
 
   return {
     directAnswer: [
-      `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is a candidate commercial optimization case, not realized savings, unless finance-confirmed outcome rows are explicitly loaded. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question." : "It is bound from the governed Source contract context."}`,
+      `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) ${lines.length > 0 ? "has governed commercial opportunity rows, but they are not realized savings without finance-confirmed outcome evidence" : "has no governed commercial opportunity row in the current packet; actionability and value are not established"}. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question." : "It is bound from the governed Source contract context."}`,
       `Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}`,
       leverTableSummary,
       negotiationStance,
@@ -1593,13 +1605,21 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         : []),
     ],
     nextSteps: [
-      {
-        id: "door1",
-        label: "Open Door 1 with the current evidence pack",
-        rationale:
-          "Use the table and relationship graph as the starting packet for baseline, diagnosis, levers, approval, and finance proof.",
-        targetSurface: "source",
-      },
+      lines.length > 0
+        ? {
+            id: "door1",
+            label: "Open Door 1 with the current evidence pack",
+            rationale:
+              "Use the table and relationship graph as the starting packet for baseline, diagnosis, levers, approval, and finance proof.",
+            targetSurface: "source",
+          }
+        : {
+            id: "review-evidence",
+            label: "Review contract-specific opportunity evidence",
+            rationale:
+              "No governed opportunity row is loaded for this contract, so do not open a value case on inferred levers.",
+            targetSurface: "source",
+          },
     ],
   };
 }
