@@ -1110,8 +1110,13 @@ export function buildSourceContractOptimizationExportAnswer(input: {
       : "No governed optimization levers are loaded for this contract.";
   const contractCitationId = "source-contract-context";
   const opportunityCitationId = "source-contract-lever-export";
+  const sizingPosture = sizedRows.length > 0
+    ? `Work the ${sizedRows.length} sized ${sizedRows.length === 1 ? "lever" : "levers"} first (${currencyLabel(sizedTotalUsd)} candidate value). ${signalRows.length > 0 ? `${signalRows.length} ${signalRows.length === 1 ? "other lever remains" : "other levers remain"} unsized until the named evidence gates close.` : ""}`
+    : lines.length > 0
+      ? `All ${lines.length} ${lines.length === 1 ? "lever is" : "levers are"} unsized. Supported candidate value is not established until the named evidence gates close.`
+      : "No governed optimization levers are loaded for this contract.";
   const directAnswer = [
-    `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is an optimization case, not realized savings. Work the ${sizedRows.length} sized levers first (${currencyLabel(sizedTotalUsd)} candidate value) and keep ${signalRows.length} signal-stage ${signalRows.length === 1 ? "lever" : "levers"} unsized until the named evidence gates close. Finance-confirmed value remains $0 until Finance/Tower approval is loaded.`,
+    `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is an optimization case, not realized savings. ${sizingPosture} Finance-confirmed realized value cannot be inferred from these candidate rows.`,
     tableMarkdown,
   ].join("\n\n");
 

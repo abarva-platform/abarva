@@ -634,9 +634,14 @@ function commandExecutiveRead(
     };
   }
   if (actionSet.totalRows > 0) {
+    const sizedCount = portfolio.impact.actionCandidates.filter(
+      (row) => numberFromDb(row.candidate_amount_usd) != null,
+    ).length;
     return {
       title: `${actionSet.totalRows} governed actions are loaded.`,
-      body: `${money(actionSet.totalAmount)} is candidate value in the action layer. Source keeps it out of realized savings until finance confirmation and approval are recorded.`,
+      body: sizedCount > 0
+        ? `${money(actionSet.totalAmount)} across ${sizedCount} sized actions is candidate value, not realized savings. Finance confirmation and approval remain separate.`
+        : "These actions are unsized. No candidate dollar total is established until their evidence and calculation gates close.",
     };
   }
   return {
@@ -1326,8 +1331,13 @@ export function SourceCommandKpiStrip({
       `${row.readiness_state ?? ""} ${row.authority_state ?? ""}`,
     ),
   ).length;
-  const financeBlockedRows = portfolio.impact.actionCandidates.filter((row) =>
-    /not_confirmed|finance/i.test(row.finance_confirmation_state ?? ""),
+  const financeBlockedRows = portfolio.impact.actionCandidates.filter(
+    (row) =>
+      numberFromDb(row.candidate_amount_usd) != null &&
+      /not_confirmed|finance/i.test(row.finance_confirmation_state ?? ""),
+  ).length;
+  const unsizedActionRows = portfolio.impact.actionCandidates.filter(
+    (row) => numberFromDb(row.candidate_amount_usd) == null,
   ).length;
 
   return (
@@ -1368,7 +1378,7 @@ export function SourceCommandKpiStrip({
       <Metric
         label="Decision posture"
         value={`${readyRows} ready`}
-        note={`${decisionRows.totalRows} open actions · ${financeBlockedRows} finance checks`}
+        note={`${decisionRows.totalRows} open actions${unsizedActionRows > 0 ? ` · ${unsizedActionRows} unsized` : ""}${financeBlockedRows > 0 ? ` · ${financeBlockedRows} sized awaiting finance` : ""}`}
       />
     </section>
   );
@@ -1582,8 +1592,7 @@ function PortfolioPage({
             ))}
             {actionSet.remainderCount > 0 ? (
               <p className="sw-v2-muted">
-                {actionSet.remainderCount} further actions carry{" "}
-                {money(actionSet.remainderAmount)} in candidate value.
+                {remainingActionSummary(portfolio, actionSet)}
               </p>
             ) : null}
           </div>
@@ -7602,6 +7611,24 @@ function focusedActionSet(
       0,
     ),
   };
+}
+
+function remainingActionSummary(
+  portfolio: SourceWorkspacePortfolioData,
+  actionSet: FocusedActionSet,
+): string {
+  const sizedRemainder = portfolio.impact.actionCandidates.filter(
+    (row) => numberFromDb(row.candidate_amount_usd) != null,
+  ).length - actionSet.rows.filter(
+    (row) => numberFromDb(row.candidate_amount_usd) != null,
+  ).length;
+  if (sizedRemainder === 0) {
+    return `${actionSet.remainderCount} further ${actionSet.remainderCount === 1 ? "action awaits" : "actions await"} sizing.`;
+  }
+  const sizedSummary = `${actionSet.remainderCount} further ${actionSet.remainderCount === 1 ? "action includes" : "actions include"} ${sizedRemainder} sized ${sizedRemainder === 1 ? "candidate" : "candidates"} totaling ${money(actionSet.remainderAmount)}.`;
+  return sizedRemainder === actionSet.remainderCount
+    ? sizedSummary
+    : `${sizedSummary} The rest await sizing.`;
 }
 
 function formatFinanceState(state: string | null | undefined) {

@@ -769,6 +769,60 @@ describe("Source workspace ECL browser-surface proof", () => {
     ).toBeNull();
   });
 
+  it("distinguishes unsized command actions from zero-valued and finance-ready actions", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "meridian",
+      "2027-06-30T00:00:00Z",
+    );
+    const actionCandidates: SourceWorkspacePortfolioData["impact"]["actionCandidates"] =
+      Array.from({ length: 6 }, (_, index) => ({
+        tenant_key: portfolio.contracts[0].tenant_key,
+        action_candidate_id: `OPP-SIGNAL-${index + 1}`,
+        opportunity_id: `OPP-SIGNAL-${index + 1}`,
+        contract_id: portfolio.contracts[0].contract_id,
+        vendor_ref: portfolio.contracts[0].vendor_ref,
+        vendor_name: portfolio.contracts[0].vendor_name,
+        title: `Review signal ${index + 1}`,
+        action_type: "negotiated_improvement",
+        opportunity_type: "negotiated_improvement",
+        finding_summary: "Evidence required before sizing.",
+        deterministic_basis: "Loaded contract record.",
+        candidate_amount_usd: null,
+        priority: "medium",
+        readiness_state: "review_required",
+        evidence_state: "partial",
+        authority_state: "not_confirmed",
+        finance_confirmation_state: "not_confirmed",
+        next_action: "Load a calculation basis.",
+        accountable_role: "sourcing_owner",
+        decision_due_date: null,
+        coverage_state: "partial",
+        blocker_if_missing: "Do not claim a dollar amount.",
+        citation_basis_json: { source: "unit-fixture" },
+        load_run_id: "unit-proof",
+      }));
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          workspaceDiagnostics: {
+            ...portfolio.workspaceDiagnostics,
+            exploreProvider: "EclProjectionDbProvider",
+          },
+          impact: { ...portfolio.impact, actionCandidates },
+        }}
+        tenantName="Demo account"
+        sourceClientKey={portfolio.contracts[0].tenant_key}
+        impactLoadState="ready"
+      />,
+    );
+
+    expect(await screen.findByText("6 open actions · 6 unsized")).toBeTruthy();
+    expect(screen.getByText("1 further action awaits sizing.")).toBeTruthy();
+    expect(screen.getByText(/No candidate dollar total is established/)).toBeTruthy();
+    expect(screen.queryByText(/\$0 in candidate value/)).toBeNull();
+  });
+
   it("renders a sequenced lever report on the default Optimize page when action rows exist", async () => {
     const portfolio = await loadSourceWorkspacePortfolio(
       "meridian",
