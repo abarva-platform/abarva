@@ -118,15 +118,16 @@ test("apply and restore require exact approval, hash, run metadata, and pinned d
     ACA_JOB_NAME: "job-1",
     SOURCE_CUTOVER_EXPECTED_HASH: "c".repeat(64), SOURCE_CUTOVER_EXPECTED_OPPORTUNITY_IDS: '["O-1"]',
     SOURCE_CUTOVER_EXPECTED_MANIFEST_HASH: "d".repeat(64),
-    SOURCE_CUTOVER_EXPECTED_WRITER_HASH: "e".repeat(64) };
+    SOURCE_CUTOVER_EXPECTED_WRITER_HASH: "e".repeat(64),
+    SOURCE_CUTOVER_EXPECTED_PROVENANCE_HASH: "f".repeat(64) };
   assert.throws(() => metadata(env, "apply"), /approval/);
   assert.throws(() => metadata(env, "restore"), /approval/);
   assert.equal(metadata({ ...env, SOURCE_CUTOVER_APPROVED: "APPLY" }, "apply").runId, "run-1");
   assert.equal(metadata(env, "plan").executionId, null);
   assert.throws(() => metadata({ ...env, SOURCE_CUTOVER_APPROVED: "APPLY", ACA_JOB_NAME: "wrong" }, "apply"), /identity mismatch/);
   assert.throws(() => metadata({ ...env, SOURCE_CUTOVER_ACA_EXECUTION_ID: "run-1" }, "plan"), /must not be the run ID/);
-  assert.deepEqual(expected(env, "apply"), { ids: ["O-1"], hash: "c".repeat(64), writerHash: "e".repeat(64) });
-  assert.deepEqual(expected(env, "plan"), { ids: null, hash: null, writerHash: null });
+  assert.deepEqual(expected(env, "apply"), { ids: ["O-1"], hash: "c".repeat(64), writerHash: "e".repeat(64), provenanceHash: "f".repeat(64) });
+  assert.deepEqual(expected(env, "plan"), { ids: null, hash: null, writerHash: null, provenanceHash: null });
   assert.throws(() => metadata({ ...env, SOURCE_CUTOVER_IMAGE_DIGEST: "latest", SOURCE_CUTOVER_APPROVED: "APPLY" }, "apply"), /Digest/);
 });
 
