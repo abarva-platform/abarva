@@ -413,8 +413,7 @@
       "kind": "unclassified"
     },
     "audit:nexus-navigation": {
-      "kind": "quarantined",
-      "reason": "Fails on main: the canonical NexusTopNav no longer carries the approved compact mobile menu treatment the contract pins. Clears when the nav is restored or the contract is amended to the current design."
+      "kind": "pr-gate"
     },
     "audit:no-auto-action-boundary": {
       "kind": "pr-gate"

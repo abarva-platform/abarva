@@ -47,3 +47,8 @@ jobs:
 
       - name: Check agent substrate readiness
         run: npm run audit:agent-substrate
+
+      # Was quarantined: it failed on the old nav label set and a literal
+      # breakpoint, both changed on purpose by #7721. Corrected and un-quarantined.
+      - name: Check the canonical NEXUS navigation contract
+        run: npm run audit:nexus-navigation
