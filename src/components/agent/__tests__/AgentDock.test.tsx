@@ -1786,6 +1786,54 @@ describe("AgentDock · thread render", () => {
     }
   });
 
+  it("follows streaming text near the bottom without pulling a reader away from earlier turns", () => {
+    const renderDock = (body: string, nextUser = false) => (
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        thread={[
+          { id: "a1", role: "agent", body },
+          ...(nextUser
+            ? ([
+                { id: "u2", role: "user", body: "Follow up." },
+              ] as ChatMessage[])
+            : []),
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />
+    );
+
+    const { rerender } = render(renderDock("First sentence."));
+    const transcript = screen.getByTestId("agent-dock-thread");
+    Object.defineProperty(transcript, "scrollHeight", {
+      value: 1000,
+      configurable: true,
+    });
+    Object.defineProperty(transcript, "clientHeight", {
+      value: 200,
+      configurable: true,
+    });
+
+    transcript.scrollTop = 100;
+    fireEvent.scroll(transcript);
+    rerender(renderDock("First sentence. Second sentence."));
+    expect(transcript.scrollTop).toBe(100);
+
+    transcript.scrollTop = 795;
+    fireEvent.scroll(transcript);
+    rerender(renderDock("First sentence. Second sentence. Third sentence."));
+    expect(transcript.scrollTop).toBe(1000);
+
+    transcript.scrollTop = 100;
+    fireEvent.scroll(transcript);
+    rerender(
+      renderDock("First sentence. Second sentence. Third sentence.", true),
+    );
+    expect(transcript.scrollTop).toBe(1000);
+  });
+
   it("renders structured response parts with tables and charts", () => {
     render(
       <AgentDock

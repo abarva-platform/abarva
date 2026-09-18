@@ -844,6 +844,8 @@ export function AgentDock(props: AgentDockProps) {
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const threadScrollRef = useRef<HTMLDivElement | null>(null);
+  const followThreadRef = useRef(true);
+  const lastUserTurnIdRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const dropZoneRef = useRef<HTMLDivElement | null>(null);
 
@@ -907,15 +909,30 @@ export function AgentDock(props: AgentDockProps) {
     }
   }, []);
 
-  // Scroll only the dock's internal thread pane. DOM-level scrollIntoView()
-  // can move the hosting admin page when this dock is embedded in /admin.
+  const onThreadScroll = useCallback(() => {
+    const scroller = threadScrollRef.current;
+    if (!scroller) return;
+    followThreadRef.current =
+      scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= 80;
+  }, []);
+
+  // Follow streaming text only while the reader is near the end. Keep all
+  // movement inside the transcript so the hosting page never jumps.
   useEffect(() => {
-    if (thread.length === 0 && !isAgentBusy) return;
+    const lastUserTurn = [...thread]
+      .reverse()
+      .find((turn) => turn.role === "user");
+    if (lastUserTurn && lastUserTurn.id !== lastUserTurnIdRef.current) {
+      lastUserTurnIdRef.current = lastUserTurn.id;
+      followThreadRef.current = true;
+    }
+    if ((thread.length === 0 && !isAgentBusy) || !followThreadRef.current)
+      return;
     const scroller = threadScrollRef.current;
     if (scroller) {
       scroller.scrollTop = scroller.scrollHeight;
     }
-  }, [thread.length, isAgentBusy]);
+  }, [thread, isAgentBusy]);
 
   useEffect(() => {
     if (!anyUploading) return;
@@ -1218,6 +1235,7 @@ export function AgentDock(props: AgentDockProps) {
         {/* Thread */}
         <div
           ref={threadScrollRef}
+          onScroll={onThreadScroll}
           style={{
             ...(focused ? FOCUSED_THREAD_STYLE : THREAD_STYLE),
             ...(chatOnly ? CHAT_ONLY_THREAD_STYLE : null),
@@ -1536,6 +1554,7 @@ export function AgentDock(props: AgentDockProps) {
     onDragLeave,
     onDragOver,
     onDrop,
+    onThreadScroll,
     removeUpload,
     requestRawMode,
     runSessionExport,
