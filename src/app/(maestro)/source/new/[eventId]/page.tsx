@@ -8,6 +8,7 @@ import { SourceNewWorkspace } from "@/components/source/new-workspace/SourceNewW
 import type { SourceNewFileRow } from "@/components/source/new-workspace/SourceNewFiles";
 import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
 import { sourceNewFilePhase } from "@/lib/source/new-workspace/phase-state";
+import { readSourceEventAuthority } from "@/lib/source/new-workspace/event-authority";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Source New · AbarVa" };
@@ -22,7 +23,13 @@ export default async function SourceNewEventPage({
     getActiveClientRow().catch(() => null),
     requireTenancy().catch(() => null),
   ]);
-  if (!activeClient || !tenancy || canonicalTenantKey(activeClient.key) !== canonicalTenantKey(tenancy.clientKey)) notFound();
+  if (
+    !activeClient ||
+    !tenancy ||
+    canonicalTenantKey(activeClient.key) !==
+      canonicalTenantKey(tenancy.clientKey)
+  )
+    notFound();
 
   const event = await getSourcingEventForResolvedClient(eventId, {
     activeClientKey: activeClient.key,
@@ -31,14 +38,26 @@ export default async function SourceNewEventPage({
   });
   if (!event) notFound();
 
+  const [artifacts, activity, authority] = await Promise.all([
+    activeClient.id
+      ? listSourceArtifacts(event.id, activeClient.id, { includeHistory: true })
+      : Promise.resolve([]),
+    listSourceEventActivityEntries(event.id),
+    readSourceEventAuthority(event.id, activeClient.key),
+  ]);
+
   const files: SourceNewFileRow[] = activeClient.id
-    ? (await listSourceArtifacts(event.id, activeClient.id, { includeHistory: true }))
-        .flatMap((artifact) => {
-          // Tenancy is the only reason to drop an artifact here. A stage this
-          // workspace has no phase for still belongs to the operator's event.
-          if (canonicalTenantKey(artifact.tenantKey) !== canonicalTenantKey(activeClient.key)) return [];
-          const phase = sourceNewFilePhase(artifact);
-          return [{
+    ? artifacts.flatMap((artifact) => {
+        // Tenancy is the only reason to drop an artifact here. A stage this
+        // workspace has no phase for still belongs to the operator's event.
+        if (
+          canonicalTenantKey(artifact.tenantKey) !==
+          canonicalTenantKey(activeClient.key)
+        )
+          return [];
+        const phase = sourceNewFilePhase(artifact);
+        return [
+          {
             id: artifact.id,
             artifactGroup: artifact.artifactGroup,
             artifactType: artifact.artifactType,
@@ -57,14 +76,10 @@ export default async function SourceNewEventPage({
             approvedBy: artifact.approvedBy,
             approvedAt: artifact.approvedAt,
             phase,
-          }];
-        })
+          },
+        ];
+      })
     : [];
-
-  // The approvals view told the reader that "the approval record, actor and
-  // evidence live in the governed event flow" and then showed none of it.
-  // The writer has been recording this trail; nothing read it back.
-  const activity = await listSourceEventActivityEntries(event.id);
 
   return (
     <SourceNewWorkspace
@@ -82,6 +97,8 @@ export default async function SourceNewEventPage({
         trigger: event.triggerDescription ?? null,
         scope: event.scopeDescription ?? null,
         decisionOwner: event.decisionOwner ?? null,
+        solicitationMotion:
+          authority.kind === "available" ? authority.solicitationMotion : null,
       }}
       files={files}
     />

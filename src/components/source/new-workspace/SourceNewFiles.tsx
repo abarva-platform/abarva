@@ -3,7 +3,12 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { SourceArtifactRecord } from "@/lib/source/file-cabinet/types";
 
-export type SourceNewFilePhase = "request" | "define" | "suppliers" | "rfi" | "other";
+export type SourceNewFilePhase =
+  | "request"
+  | "define"
+  | "suppliers"
+  | "rfi"
+  | "other";
 
 export type SourceNewFileRow = Pick<
   SourceArtifactRecord,
@@ -33,6 +38,7 @@ export type SourceNewFileRow = Pick<
 export interface SourceNewFilesProps {
   rows: readonly SourceNewFileRow[];
   initialPhase?: SourceNewFilePhase;
+  marketPackageLabel?: string;
   onPreview?: (row: SourceNewFileRow) => void;
   onDownload?: (row: SourceNewFileRow) => void;
   onUpload?: (phase: SourceNewFilePhase) => void;
@@ -52,10 +58,16 @@ const PHASES: readonly { key: SourceNewFilePhase; label: string }[] = [
 
 const label = (value: string) => value.replaceAll("_", " ");
 
-function displayRows(rows: readonly SourceNewFileRow[], includeHistory: boolean) {
+function displayRows(
+  rows: readonly SourceNewFileRow[],
+  includeHistory: boolean,
+) {
   return rows
     .filter((row) => includeHistory || row.lifecycleState === "current")
-    .sort((a, b) => b.generatedAt.localeCompare(a.generatedAt) || b.version - a.version);
+    .sort(
+      (a, b) =>
+        b.generatedAt.localeCompare(a.generatedAt) || b.version - a.version,
+    );
 }
 
 function fileSize(bytes: number | null) {
@@ -65,7 +77,15 @@ function fileSize(bytes: number | null) {
     : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDownload, onUpload, onReview }: SourceNewFilesProps) {
+export function SourceNewFiles({
+  rows,
+  initialPhase = "request",
+  marketPackageLabel = "Market package",
+  onPreview,
+  onDownload,
+  onUpload,
+  onReview,
+}: SourceNewFilesProps) {
   const [phase, setPhase] = useState<SourceNewFilePhase>(initialPhase);
   const [search, setSearch] = useState("");
   const [includeHistory, setIncludeHistory] = useState(false);
@@ -78,15 +98,29 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
   const restoreListRef = useRef(false);
 
   // "Other stages" is offered only when the cabinet actually holds such files.
-  const folders = PHASES.filter((folder) => folder.key !== "other" || rows.some((row) => row.phase === "other"));
-  const visible = displayRows(rows, includeHistory).filter(
-    (row) => row.phase === phase && `${row.title} ${row.fileName}`.toLowerCase().includes(search.trim().toLowerCase()),
+  const folders = PHASES.filter(
+    (folder) =>
+      folder.key !== "other" || rows.some((row) => row.phase === "other"),
+  ).map((folder) =>
+    folder.key === "rfi" ? { ...folder, label: marketPackageLabel } : folder,
   );
-  const selected = visible.find((row) => row.id === selectedId) ?? visible[0] ?? null;
+  const visible = displayRows(rows, includeHistory).filter(
+    (row) =>
+      row.phase === phase &&
+      `${row.title} ${row.fileName}`
+        .toLowerCase()
+        .includes(search.trim().toLowerCase()),
+  );
+  const selected =
+    visible.find((row) => row.id === selectedId) ?? visible[0] ?? null;
   // "No files here" must mean the folder is empty, not that the history toggle
   // is hiding what it holds. Superseded rows are files; they are just not the
   // current version.
-  const hiddenOlder = includeHistory ? 0 : rows.filter((row) => row.phase === phase && row.lifecycleState !== "current").length;
+  const hiddenOlder = includeHistory
+    ? 0
+    : rows.filter(
+        (row) => row.phase === phase && row.lifecycleState !== "current",
+      ).length;
   const emptyMessage = search
     ? "No matching files"
     : hiddenOlder > 0
@@ -99,16 +133,23 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
     } else if (restoreListRef.current) {
       restoreListRef.current = false;
       returnButtonRef.current?.focus({ preventScroll: true });
-      if (listRef.current) listRef.current.scrollTop = returnScrollRef.current.list;
+      if (listRef.current)
+        listRef.current.scrollTop = returnScrollRef.current.list;
       window.scrollTo(0, returnScrollRef.current.page);
     }
   }, [mobileDetailOpen]);
 
   function openFile(row: SourceNewFileRow, button: HTMLButtonElement) {
     setSelectedId(row.id);
-    if (typeof window.matchMedia === "function" && window.matchMedia("(max-width: 760px)").matches) {
+    if (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 760px)").matches
+    ) {
       returnButtonRef.current = button;
-      returnScrollRef.current = { list: listRef.current?.scrollTop ?? 0, page: window.scrollY };
+      returnScrollRef.current = {
+        list: listRef.current?.scrollTop ?? 0,
+        page: window.scrollY,
+      };
       setMobileDetailOpen(true);
     }
   }
@@ -119,7 +160,11 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
   }
 
   return (
-    <section className="source-new-files" aria-label="Files" data-mobile-detail={mobileDetailOpen}>
+    <section
+      className="source-new-files"
+      aria-label="Files"
+      data-mobile-detail={mobileDetailOpen}
+    >
       <style>{`
         .source-new-files { color: #1a242b; background: #fff; border: 1px solid #d9dedc; border-radius: 6px; font-size: 13px; line-height: 1.45; min-width: 0; }
         .source-new-files * { box-sizing: border-box; }
@@ -173,57 +218,181 @@ export function SourceNewFiles({ rows, initialPhase = "request", onPreview, onDo
       <div className="source-new-files__toolbar">
         <h2>Files</h2>
         <label className="source-new-files__search">
-          <input aria-label="Search files" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search files" />
+          <input
+            aria-label="Search files"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search files"
+          />
         </label>
         <label className="source-new-files__history">
-          <input type="checkbox" checked={includeHistory} onChange={(event) => setIncludeHistory(event.target.checked)} />
+          <input
+            type="checkbox"
+            checked={includeHistory}
+            onChange={(event) => setIncludeHistory(event.target.checked)}
+          />
           Older versions
         </label>
       </div>
       <div className="source-new-files__body">
         <nav className="source-new-files__folders" aria-label="File folders">
           {folders.map((folder) => (
-            <button key={folder.key} type="button" className="source-new-files__folder" aria-current={phase === folder.key ? "true" : undefined} onClick={() => { setPhase(folder.key); setSelectedId(null); }}>
+            <button
+              key={folder.key}
+              type="button"
+              className="source-new-files__folder"
+              aria-current={phase === folder.key ? "true" : undefined}
+              onClick={() => {
+                setPhase(folder.key);
+                setSelectedId(null);
+              }}
+            >
               {folder.label}
             </button>
           ))}
         </nav>
         <div className="source-new-files__content">
           <div className="source-new-files__heading">
-            <h3>{PHASES.find((folder) => folder.key === phase)?.label}</h3>
-            {onUpload && <button type="button" className="source-new-files__command" onClick={() => onUpload(phase)}>Upload</button>}
+            <h3>
+              {folders.find((folder) => folder.key === phase)?.label ??
+                PHASES.find((folder) => folder.key === phase)?.label}
+            </h3>
+            {onUpload && (
+              <button
+                type="button"
+                className="source-new-files__command"
+                onClick={() => onUpload(phase)}
+              >
+                Upload
+              </button>
+            )}
           </div>
           <div className="source-new-files__columns">
-            <div ref={listRef} className="source-new-files__list" role="listbox" aria-label="Files in folder">
-              {visible.length === 0 ? <p className="source-new-files__empty">{emptyMessage}</p> : visible.map((row) => (
-                <button key={row.id} type="button" role="option" aria-selected={selected?.id === row.id} className="source-new-files__file" onClick={(event) => openFile(row, event.currentTarget)} onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    openFile(row, event.currentTarget);
-                  }
-                }}>
-                  <span className="source-new-files__file-copy"><span className="source-new-files__file-name">{row.title}</span><span className="source-new-files__file-meta">{label(row.status)} · {row.fileFormat.toUpperCase()}{fileSize(row.fileSize) ? ` · ${fileSize(row.fileSize)}` : ""}</span></span>
-                  <span className="source-new-files__file-version">v{row.version}</span>
-                </button>
-              ))}
+            <div
+              ref={listRef}
+              className="source-new-files__list"
+              role="listbox"
+              aria-label="Files in folder"
+            >
+              {visible.length === 0 ? (
+                <p className="source-new-files__empty">{emptyMessage}</p>
+              ) : (
+                visible.map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    role="option"
+                    aria-selected={selected?.id === row.id}
+                    className="source-new-files__file"
+                    onClick={(event) => openFile(row, event.currentTarget)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openFile(row, event.currentTarget);
+                      }
+                    }}
+                  >
+                    <span className="source-new-files__file-copy">
+                      <span className="source-new-files__file-name">
+                        {row.title}
+                      </span>
+                      <span className="source-new-files__file-meta">
+                        {label(row.status)} · {row.fileFormat.toUpperCase()}
+                        {fileSize(row.fileSize)
+                          ? ` · ${fileSize(row.fileSize)}`
+                          : ""}
+                      </span>
+                    </span>
+                    <span className="source-new-files__file-version">
+                      v{row.version}
+                    </span>
+                  </button>
+                ))
+              )}
             </div>
-            <aside className="source-new-files__details" aria-label="Selected file details" onKeyDown={(event) => { if (event.key === "Escape" && mobileDetailOpen) backToFiles(); }}>
-              {selected ? <>
-                <button ref={backRef} type="button" className="source-new-files__command source-new-files__back" onClick={backToFiles}>Back to files</button>
-                <h4>{selected.title}</h4>
-                <span className="source-new-files__file-meta">{selected.fileName} · v{selected.version}</span>
-                <dl>
-                  <dt>Status</dt><dd>{label(selected.status)}{selected.lifecycleState !== "current" && selected.lifecycleState !== selected.status ? ` · ${selected.lifecycleState}` : ""}</dd>
-                  <dt>Origin</dt><dd>{selected.generatedBy ?? selected.sourceBasis ?? "Not recorded"}</dd>
-                  <dt>Review</dt><dd>{selected.approvedBy ? `Approved by ${selected.approvedBy}${selected.approvedAt ? ` · ${new Date(selected.approvedAt).toLocaleDateString()}` : ""}` : selected.approvalState ? label(selected.approvalState) : "Not recorded"}</dd>
-                  <dt>SHA-256</dt><dd>{selected.blobSha256 ?? "Not recorded"}</dd>
-                </dl>
-                <div className="source-new-files__actions">
-                  {onPreview && <button type="button" className="source-new-files__command" onClick={() => onPreview(selected)}>Preview</button>}
-                  {onDownload && <button type="button" className="source-new-files__command" onClick={() => onDownload(selected)}>Download</button>}
-                  {onReview && <button type="button" className="source-new-files__command" onClick={() => onReview(selected)}>Review</button>}
-                </div>
-              </> : <p className="source-new-files__file-meta">Select a file to see its details.</p>}
+            <aside
+              className="source-new-files__details"
+              aria-label="Selected file details"
+              onKeyDown={(event) => {
+                if (event.key === "Escape" && mobileDetailOpen) backToFiles();
+              }}
+            >
+              {selected ? (
+                <>
+                  <button
+                    ref={backRef}
+                    type="button"
+                    className="source-new-files__command source-new-files__back"
+                    onClick={backToFiles}
+                  >
+                    Back to files
+                  </button>
+                  <h4>{selected.title}</h4>
+                  <span className="source-new-files__file-meta">
+                    {selected.fileName} · v{selected.version}
+                  </span>
+                  <dl>
+                    <dt>Status</dt>
+                    <dd>
+                      {label(selected.status)}
+                      {selected.lifecycleState !== "current" &&
+                      selected.lifecycleState !== selected.status
+                        ? ` · ${selected.lifecycleState}`
+                        : ""}
+                    </dd>
+                    <dt>Origin</dt>
+                    <dd>
+                      {selected.generatedBy ??
+                        selected.sourceBasis ??
+                        "Not recorded"}
+                    </dd>
+                    <dt>Review</dt>
+                    <dd>
+                      {selected.approvedBy
+                        ? `Approved by ${selected.approvedBy}${selected.approvedAt ? ` · ${new Date(selected.approvedAt).toLocaleDateString()}` : ""}`
+                        : selected.approvalState
+                          ? label(selected.approvalState)
+                          : "Not recorded"}
+                    </dd>
+                    <dt>SHA-256</dt>
+                    <dd>{selected.blobSha256 ?? "Not recorded"}</dd>
+                  </dl>
+                  <div className="source-new-files__actions">
+                    {onPreview && (
+                      <button
+                        type="button"
+                        className="source-new-files__command"
+                        onClick={() => onPreview(selected)}
+                      >
+                        Preview
+                      </button>
+                    )}
+                    {onDownload && (
+                      <button
+                        type="button"
+                        className="source-new-files__command"
+                        onClick={() => onDownload(selected)}
+                      >
+                        Download
+                      </button>
+                    )}
+                    {onReview && (
+                      <button
+                        type="button"
+                        className="source-new-files__command"
+                        onClick={() => onReview(selected)}
+                      >
+                        Review
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p className="source-new-files__file-meta">
+                  Select a file to see its details.
+                </p>
+              )}
             </aside>
           </div>
         </div>
