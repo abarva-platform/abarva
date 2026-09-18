@@ -113,6 +113,24 @@ beforeEach(() => {
 });
 
 describe("Source contract answer authority", () => {
+  it("keeps a CFO-safe summary on the selected contract", async () => {
+    (getContract360 as jest.Mock).mockResolvedValue(ownContract);
+
+    const { text, answer } = await ask("What can I safely say to a CFO?", {
+      module: "Source",
+      clientKey: "tenant-one",
+      sourceContract360Mode: true,
+      contractId: "CTR-101",
+    });
+
+    expect(answer?.intent).toBe("source_contract_visual");
+    expect(text).toContain("CTR-101");
+    expect(text).toContain("Example Alpha");
+    expect(text).not.toContain("Example Beta");
+    expect(getContract360).toHaveBeenCalledWith("tenant-one", "CTR-101");
+    expect(askIntelligence).not.toHaveBeenCalled();
+  });
+
   it("uses a server-rehydrated named contract while another contract is open", async () => {
     const { text, answer } = await ask("Summarize Example Beta Agreement.", {
       module: "Source",
