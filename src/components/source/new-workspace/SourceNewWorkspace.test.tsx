@@ -1,11 +1,17 @@
 /** @jest-environment jsdom */
 
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { SourceNewWorkspace, sourceNewFileDownloadHref, type SourceNewEventView } from "./SourceNewWorkspace";
+import {
+  SourceNewWorkspace,
+  sourceNewFileDownloadHref,
+  type SourceNewEventView,
+} from "./SourceNewWorkspace";
 import type { SourceNewFileRow } from "./SourceNewFiles";
 
 jest.mock("@/components/shell/AppShell", () => ({
-  AppShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AppShell: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 jest.mock("@/components/shell/AtlasPageStateProvider", () => ({
@@ -13,7 +19,9 @@ jest.mock("@/components/shell/AtlasPageStateProvider", () => ({
 }));
 
 jest.mock("@/components/agent/AgentDock", () => ({
-  AgentDock: ({ workspace }: { workspace: React.ReactNode }) => <div>{workspace}</div>,
+  AgentDock: ({ workspace }: { workspace: React.ReactNode }) => (
+    <div>{workspace}</div>
+  ),
 }));
 
 const request: SourceNewEventView = {
@@ -35,46 +43,185 @@ describe("SourceNewWorkspace", () => {
   it("shows one next action for a request without marking missing facts complete", () => {
     render(<SourceNewWorkspace event={request} files={[]} />);
     const action = screen.getByRole("complementary", { name: "Next action" });
-    expect(within(action).getByRole("link", { name: "Review intake" }).getAttribute("href"))
-      .toBe("/source/events/event-1/approval");
-    expect(screen.getAllByRole("link", { name: "Review intake" })).toHaveLength(1);
+    expect(
+      within(action)
+        .getByRole("link", { name: "Review intake" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-1/approval");
+    expect(screen.getAllByRole("link", { name: "Review intake" })).toHaveLength(
+      1,
+    );
     expect(screen.getAllByText("Not recorded")).toHaveLength(2);
     expect(screen.getByText("Awaiting intake review")).toBeTruthy();
   });
 
   it("does not pretend the market package remains current after the event advances", () => {
-    render(<SourceNewWorkspace event={{ ...request, currentStage: "evaluation", lifecycle: "active" }} files={[]} />);
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "evaluation", lifecycle: "active" }}
+        files={[]}
+      />,
+    );
     expect(screen.getByText("Current stage: Evaluation")).toBeTruthy();
     expect(screen.queryByText("This step is not open yet")).toBeNull();
-    expect(screen.getByRole("link", { name: "Open current stage" }).getAttribute("href"))
-      .toBe("/source/events/event-1");
+    expect(
+      screen
+        .getByRole("link", { name: "Open current stage" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-1");
   });
 
   it("does not label a competitive RFP event or its file folder as RFI", () => {
-    render(<SourceNewWorkspace event={{ ...request, eventType: "competitive_sourcing", currentStage: "rfp", lifecycle: "active" }} files={[]} />);
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          eventType: "competitive_sourcing",
+          currentStage: "rfp",
+          lifecycle: "active",
+        }}
+        files={[]}
+      />,
+    );
     const phases = screen.getByRole("navigation", { name: "Event phases" });
-    expect(within(phases).getByRole("button", { name: /Market package/ })).toBeTruthy();
+    expect(
+      within(phases).getByRole("button", { name: /Market package/ }),
+    ).toBeTruthy();
     expect(within(phases).queryByText("RFI")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Files" }));
     const folders = screen.getByRole("navigation", { name: "File folders" });
-    expect(within(folders).getByRole("button", { name: "Market package" })).toBeTruthy();
+    expect(
+      within(folders).getByRole("button", { name: "Market package" }),
+    ).toBeTruthy();
     expect(within(folders).queryByText("RFI")).toBeNull();
   });
 
+  it("renders an accepted RFP motion from authority without falling back to RFI wording", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "rfp",
+          lifecycle: "active",
+          solicitationMotion: "rfp",
+        }}
+        files={[]}
+      />,
+    );
+
+    const phases = screen.getByRole("navigation", { name: "Event phases" });
+    expect(within(phases).getByRole("button", { name: /RFP/ })).toBeTruthy();
+    expect(within(phases).queryByText("RFI")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Open RFP" }).getAttribute("href"),
+    ).toBe("/source/events/event-1");
+    expect(
+      screen.getByText(
+        "Review the RFP and its release requirements in the governed event.",
+      ),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Files" }));
+    const folders = screen.getByRole("navigation", { name: "File folders" });
+    expect(within(folders).getByRole("button", { name: "RFP" })).toBeTruthy();
+    expect(within(folders).queryByText("RFI")).toBeNull();
+  });
+
+  it("renders an accepted RFI motion only when authority explicitly supplies RFI", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "rfp",
+          lifecycle: "active",
+          solicitationMotion: "rfi",
+        }}
+        files={[]}
+      />,
+    );
+
+    const phases = screen.getByRole("navigation", { name: "Event phases" });
+    expect(within(phases).getByRole("button", { name: /RFI/ })).toBeTruthy();
+    expect(within(phases).queryByText("RFP")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Open RFI" }).getAttribute("href"),
+    ).toBe("/source/events/event-1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Files" }));
+    const folders = screen.getByRole("navigation", { name: "File folders" });
+    expect(within(folders).getByRole("button", { name: "RFI" })).toBeTruthy();
+    expect(within(folders).queryByText("RFP")).toBeNull();
+  });
+
+  it("keeps unknown or unapplied solicitation authority neutral instead of fabricating RFI or RFP", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "rfp",
+          lifecycle: "active",
+          solicitationMotion: null,
+        }}
+        files={[]}
+      />,
+    );
+
+    const phases = screen.getByRole("navigation", { name: "Event phases" });
+    expect(
+      within(phases).getByRole("button", { name: /Market package/ }),
+    ).toBeTruthy();
+    expect(within(phases).queryByText("RFI")).toBeNull();
+    expect(within(phases).queryByText("RFP")).toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: "Open market package" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-1");
+    expect(
+      screen.getByText(
+        "Review the package and its release requirements in the governed event.",
+      ),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Files" }));
+    const folders = screen.getByRole("navigation", { name: "File folders" });
+    expect(
+      within(folders).getByRole("button", { name: "Market package" }),
+    ).toBeTruthy();
+    expect(within(folders).queryByText("RFI")).toBeNull();
+    expect(within(folders).queryByText("RFP")).toBeNull();
+  });
+
   it("does not send a vendor-waiting event back to intake approval", () => {
-    render(<SourceNewWorkspace event={{ ...request, currentStage: "responses", lifecycle: "waiting_on_vendor" }} files={[]} />);
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+        }}
+        files={[]}
+      />,
+    );
     expect(screen.getByText("Waiting on Vendor")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Open event" }).getAttribute("href"))
-      .toBe("/source/events/event-1");
+    expect(
+      screen.getByRole("link", { name: "Open event" }).getAttribute("href"),
+    ).toBe("/source/events/event-1");
   });
 
   it("keeps evidence separate from category classification", () => {
-    render(<SourceNewWorkspace event={{ ...request, category: "ams" }} files={[]} />);
+    render(
+      <SourceNewWorkspace event={{ ...request, category: "ams" }} files={[]} />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
     // The governed taxonomy label, never the stored id
     expect(screen.getByText("Application Managed Services (AMS)")).toBeTruthy();
     expect(screen.queryByText("ams")).toBeNull();
-    expect(screen.getByText("A category alone is not a benchmark, savings claim or supplier recommendation.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "A category alone is not a benchmark, savings claim or supplier recommendation.",
+      ),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Files" }));
     expect(screen.getByText("No files here yet")).toBeTruthy();
   });
@@ -95,7 +242,12 @@ describe("SourceNewWorkspace", () => {
   });
 
   it("shows define as current and request as recorded without a completion label for active strategy", () => {
-    render(<SourceNewWorkspace event={{ ...request, currentStage: "strategy", lifecycle: "active" }} files={[]} />);
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "strategy", lifecycle: "active" }}
+        files={[]}
+      />,
+    );
     const phases = screen.getByRole("navigation", { name: "Event phases" });
     const buttons = within(phases).getAllByRole("button");
     // Request is behind the event AND holds a recorded need, so it reads Recorded
@@ -107,13 +259,25 @@ describe("SourceNewWorkspace", () => {
     expect(buttons[2].textContent).toContain("Later");
     expect(buttons[3].textContent).toContain("Later");
     // Single unambiguous next action for the active stage
-    expect(screen.getByRole("link", { name: "Open scope and strategy" }).getAttribute("href"))
-      .toBe("/source/events/event-1");
-    expect(screen.getByText("Review scope, baseline and decision requirements in the governed event.")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Open scope and strategy" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-1");
+    expect(
+      screen.getByText(
+        "Review scope, baseline and decision requirements in the governed event.",
+      ),
+    ).toBeTruthy();
   });
 
   it("does not claim supplier or define work happened just because the event reached the market package", () => {
-    render(<SourceNewWorkspace event={{ ...request, currentStage: "rfp", lifecycle: "active" }} files={[]} />);
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[]}
+      />,
+    );
     const phases = screen.getByRole("navigation", { name: "Event phases" });
     const buttons = within(phases).getAllByRole("button");
     // Request holds a recorded need
@@ -128,18 +292,32 @@ describe("SourceNewWorkspace", () => {
     // Market package is the current phase
     expect(buttons[3].textContent).toContain("Current");
     // Single unambiguous next action
-    expect(screen.getByRole("link", { name: "Open market package" }).getAttribute("href"))
-      .toBe("/source/events/event-1");
-    expect(screen.getByText("Review the package and its release requirements in the governed event.")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Open market package" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-1");
+    expect(
+      screen.getByText(
+        "Review the package and its release requirements in the governed event.",
+      ),
+    ).toBeTruthy();
   });
 
   it("marks a recorded category the governed taxonomy does not know", () => {
-    render(<SourceNewWorkspace event={{ ...request, category: "application_managed_services" }} files={[]} />);
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, category: "application_managed_services" }}
+        files={[]}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
     // The recorded value stays visible — it is what the event holds — but it is
     // not passed off as a governed category
     expect(screen.getByText("Application Managed Services")).toBeTruthy();
-    expect(screen.getByText(/not one of the governed sourcing categories/)).toBeTruthy();
+    expect(
+      screen.getByText(/not one of the governed sourcing categories/),
+    ).toBeTruthy();
   });
 
   it("reports supplier work as recorded when an NDA artifact is actually filed against it", () => {
@@ -163,15 +341,29 @@ describe("SourceNewWorkspace", () => {
       approvedBy: "Reviewer",
       approvedAt: "2026-03-02T00:00:00Z",
     };
-    render(<SourceNewWorkspace event={{ ...request, currentStage: "rfp", lifecycle: "active" }} files={[nda]} />);
-    const buttons = within(screen.getByRole("navigation", { name: "Event phases" })).getAllByRole("button");
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[nda]}
+      />,
+    );
+    const buttons = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
     expect(buttons[2].textContent).toContain("Recorded");
     expect(buttons[2].textContent).not.toMatch(/No record|Completed|Approved/);
   });
 
   it("does not lock phases behind an event that has advanced past them", () => {
-    render(<SourceNewWorkspace event={{ ...request, currentStage: "evaluation", lifecycle: "active" }} files={[]} />);
-    const buttons = within(screen.getByRole("navigation", { name: "Event phases" })).getAllByRole("button");
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "evaluation", lifecycle: "active" }}
+        files={[]}
+      />,
+    );
+    const buttons = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
     // Request and Define cannot be "not yet open" for an event already in evaluation
     buttons.forEach((btn) => {
       expect(btn.textContent).not.toContain("Later");
@@ -179,12 +371,24 @@ describe("SourceNewWorkspace", () => {
     expect(buttons[0].textContent).toContain("Recorded");
     expect(buttons[3].textContent).toContain("No record");
     // The rail shows no live step, so the surface says where the event actually is
-    expect(screen.getByText("This event has moved past the phases shown here. Its current stage is Evaluation."))
-      .toBeTruthy();
+    expect(
+      screen.getByText(
+        "This event has moved past the phases shown here. Its current stage is Evaluation.",
+      ),
+    ).toBeTruthy();
   });
 
   it("never prints a raw stage key to an operator", () => {
-    render(<SourceNewWorkspace event={{ ...request, currentStage: "rfp_rfi_package", lifecycle: "paused" }} files={[]} />);
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "rfp_rfi_package",
+          lifecycle: "paused",
+        }}
+        files={[]}
+      />,
+    );
     expect(screen.getByText("Current stage: Market package")).toBeTruthy();
     expect(screen.queryByText(/rfp_rfi_package|rfp rfi package/i)).toBeNull();
   });
@@ -220,18 +424,29 @@ describe("SourceNewWorkspace", () => {
       blobSha256: "sha-older",
     };
     it("pins historical rows to the exact selected version via includeHistory=1", () => {
-      expect(sourceNewFileDownloadHref(olderFile)).toBe(`/api/v1/source/artifacts/${encodeURIComponent(olderFile.id)}/download?includeHistory=1`);
+      expect(sourceNewFileDownloadHref(olderFile)).toBe(
+        `/api/v1/source/artifacts/${encodeURIComponent(olderFile.id)}/download?includeHistory=1`,
+      );
     });
 
     it("lets current rows use normal authority resolution without includeHistory", () => {
-      expect(sourceNewFileDownloadHref(baseFile)).toBe(`/api/v1/source/artifacts/${encodeURIComponent(baseFile.id)}/download`);
+      expect(sourceNewFileDownloadHref(baseFile)).toBe(
+        `/api/v1/source/artifacts/${encodeURIComponent(baseFile.id)}/download`,
+      );
     });
   });
 
   it("shows distinct unambiguous work content when navigating earlier and later phases", () => {
-    render(<SourceNewWorkspace event={{ ...request, currentStage: "strategy", lifecycle: "active" }} files={[]} />);
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "strategy", lifecycle: "active" }}
+        files={[]}
+      />,
+    );
     const getPhaseButtons = () =>
-      within(screen.getByRole("navigation", { name: "Event phases" })).getAllByRole("button");
+      within(
+        screen.getByRole("navigation", { name: "Event phases" }),
+      ).getAllByRole("button");
 
     // Navigate to a phase the event has moved past (Request is before the current Define)
     fireEvent.click(getPhaseButtons()[0]);
@@ -239,7 +454,9 @@ describe("SourceNewWorkspace", () => {
     expect(screen.queryByText("This phase is not yet open")).toBeNull();
     // Sidebar offers one return action — no second primary link
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "Open scope and strategy" })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "Open scope and strategy" }),
+    ).toBeNull();
 
     // Navigate to a later phase (Suppliers & NDA is after Define)
     fireEvent.click(getPhaseButtons()[2]);
@@ -283,11 +500,19 @@ describe("SourceNewWorkspace", () => {
 
     const trail = screen.getByRole("list", { name: "Decision trail" });
     expect(within(trail).getByText(/A\. Reviewer/)).toBeTruthy();
-    expect(within(trail).getByText(/Scope and baseline confirmed/)).toBeTruthy();
+    expect(
+      within(trail).getByText(/Scope and baseline confirmed/),
+    ).toBeTruthy();
   });
 
   it("says no decisions are recorded when the trail is genuinely empty", () => {
-    render(<SourceNewWorkspace event={request} files={[]} activity={{ ok: true, entries: [] }} />);
+    render(
+      <SourceNewWorkspace
+        event={request}
+        files={[]}
+        activity={{ ok: true, entries: [] }}
+      />,
+    );
     openApprovals();
 
     expect(screen.getByText(/No decisions have been recorded/i)).toBeTruthy();
@@ -296,7 +521,11 @@ describe("SourceNewWorkspace", () => {
 
   it("does not report an unreadable trail as an absence of decisions", () => {
     render(
-      <SourceNewWorkspace event={request} files={[]} activity={{ ok: false, reason: "connection refused" }} />,
+      <SourceNewWorkspace
+        event={request}
+        files={[]}
+        activity={{ ok: false, reason: "connection refused" }}
+      />,
     );
     openApprovals();
 
