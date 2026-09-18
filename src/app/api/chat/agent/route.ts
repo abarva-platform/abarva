@@ -186,6 +186,7 @@ import {
   buildSourcePortfolioFallbackAnswer,
 } from "@/lib/source/ava/portfolio-fallback-answer";
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
+import { resolveContractQuestionId } from "@/lib/source/ava/contract-question-identity";
 import { runSourceAnswerQualityGate } from "@/lib/source/ava/answer-quality-gate";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
 import {
@@ -1480,7 +1481,10 @@ export async function POST(request: Request) {
   // This reads the same governed builders the Optimize page renders from, so
   // aVa's numbers cannot diverge from the ones on screen. Additive: no contract
   // id, an unknown contract, or a read failure leaves the block empty.
-  const contractIdFromContext = resolveSourceContractId(surfaceContext);
+  const contractIdFromContext = resolveContractQuestionId(
+    message,
+    resolveSourceContractId(surfaceContext),
+  );
   let sourceContractGroundingBlock = "";
   let hasSourceContractGrounding = false;
   const contractGroundingTenantKeys = uniqueSourceTenantCandidates([
