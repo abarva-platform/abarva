@@ -19,7 +19,7 @@ The Tower V3 context-pack reader now opens the current spend and managed-service
 
 ## Client Applicability
 
-Shared reader for tenants with the current intake filenames. No tenant-specific exception or feature-flag change.
+All clients using the shared Tower V3 reader with current intake filenames receive this mapping when the existing feature flag is enabled. No tenant-specific exception or feature-flag change.
 
 ## Changes Included
 
