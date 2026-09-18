@@ -66,7 +66,7 @@
     },
     "audit:candidate-invisibility": {
       "kind": "quarantined",
-      "reason": "Fails on main with 2 failures. This guard exists to keep candidate-tenant data off default runtime surfaces, so a failure is a disclosure question, not a style one. Clears when both failures are triaged as real or as stale expectations."
+      "reason": "Triaged. Only 2 of its 8 checks test live code, and both are the repo-wide scans, which do work. The other 6 are per-file checks against a Home/Intelligence/Tower V7 read path that no longer exists: four files were deleted, one component is mounted by no route, and the Home route now reads an ECL projection bundle. Three of those six were passing because readRel returns an empty string for a missing file and activePointerQuery early-returns true on it. The guard now reports them as VACUOUS instead. Clears when the per-surface checks are rewritten against the current read paths, or removed in favour of the repo-wide scans."
     },
     "audit:candidate-module-derived-plan": {
       "kind": "unclassified"
