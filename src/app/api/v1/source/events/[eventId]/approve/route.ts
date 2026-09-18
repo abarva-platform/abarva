@@ -44,6 +44,20 @@ import {
 } from "@/lib/source/sourcing-motion-journeys";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 
+// Every lifecycle decision gets its own action type, so the activity table can
+// be read without inferring the decision from the reason text.
+const ACTIVITY_ACTION_TYPE = {
+  approve: "source_event_approved",
+  reject: "source_event_rejected",
+  send_back: "source_event_sent_back",
+} as const;
+
+const ACTIVITY_ACTION_LABEL = {
+  approve: "Approved the event stage gate",
+  reject: "Rejected the event",
+  send_back: "Sent the event back for changes",
+} as const;
+
 interface ApproveBody {
   action: "approve" | "reject" | "send_back";
   notes?: string;
@@ -289,6 +303,40 @@ export async function POST(
     return Response.json(
       { error: "update_failed", detail: approvalWrite.error },
       { status: 500 },
+    );
+  }
+
+  // The lifecycle decision belongs in the activity table alongside every other
+  // Source action. It is written as soon as the approval record commits, not
+  // after stage advancement: the human decided even if the advance then fails.
+  // A failed activity write cannot fail the request — the decision is already
+  // persisted — so it is logged loudly instead of swallowed.
+  const activityWrite = await selectSourceWriteAdapter(
+    undefined,
+    activeClient.key,
+  ).insertActivityLog({
+    eventId,
+    clientKey: activeClient.key,
+    actorUserId: tenancy.userId,
+    actorDisplayName: null,
+    actorRole: tenancy.role ?? null,
+    actionType: ACTIVITY_ACTION_TYPE[body.action],
+    actionLabel: ACTIVITY_ACTION_LABEL[body.action],
+    stageKey: effectiveCurrentStage ?? currentStageKey,
+    reason: body.notes?.trim() || null,
+    metadata: {
+      fromState,
+      toState,
+      approvalAction: decision.approvalAction,
+      selfApproval: isSelfApproval,
+      intendedAdvanceStageTo: decision.advanceStageTo ?? null,
+    },
+    occurredAtIso: new Date().toISOString(),
+  });
+  if (!activityWrite.ok) {
+    console.error(
+      "[POST /api/v1/source/events/:eventId/approve] activity_insert_failed",
+      { eventId, action: body.action, message: activityWrite.error },
     );
   }
 
