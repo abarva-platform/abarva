@@ -16,6 +16,7 @@ export interface SharedResponseShapeResult {
 
 export interface SharedResponseShapeInput {
   text: string;
+  preserveStructure?: boolean;
   labels?: ReadonlyArray<SharedResponseLabel>;
   targetChars?: number;
   hardMaxChars?: number;
@@ -428,7 +429,9 @@ export function shapeSharedAdvisorResponse(
   );
   const brandClean = labeled.text.replace(BANNED_BRAND_RE, "aVa");
   const idClean = stripUnmappedRawIds(brandClean);
-  const compacted = compactForChat(idClean, targetChars, maxParagraphs);
+  const compacted = input.preserveStructure
+    ? idClean
+    : compactForChat(idClean, targetChars, maxParagraphs);
   const finalText = normalizeWhitespace(
     normalizeAssemblyArtifacts(
       stripUnmappedRawIds(compacted).replace(BANNED_BRAND_RE, "aVa"),
