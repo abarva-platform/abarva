@@ -151,4 +151,55 @@ describe("source approval queue · controls", () => {
       expect(screen.getByText(/gate blocked|Approval action failed/)).toBeTruthy();
     });
   });
+
+  /**
+   * Send back and reject are lifecycle decisions with the same audit weight as
+   * approve: one archives the event, the other returns it to the creator. Both
+   * fired on a bare click with no rationale, and the route accepted it. The
+   * route now refuses; the queue states the requirement rather than letting the
+   * refusal arrive as an error after the click.
+   */
+  describe("send back and reject carry the same rationale weight", () => {
+    const decisionButton = (testId: string) =>
+      screen.getByTestId(testId) as HTMLButtonElement;
+
+    it.each([
+      ["source-event-send-back-event-1", "send_back"],
+      ["source-event-reject-event-1", "reject"],
+    ])("refuses %s with no rationale", (testId) => {
+      openRow();
+
+      expect(decisionButton(testId).disabled).toBe(true);
+      fireEvent.click(decisionButton(testId));
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["source-event-send-back-event-1", "send_back"],
+      ["source-event-reject-event-1", "reject"],
+    ])("refuses %s on a rationale shorter than the minimum", (testId) => {
+      openRow();
+      writeReason("x".repeat(SOURCE_APPROVAL_REASON_MIN_LENGTH - 1));
+
+      expect(decisionButton(testId).disabled).toBe(true);
+      fireEvent.click(decisionButton(testId));
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["source-event-send-back-event-1", "send_back"],
+      ["source-event-reject-event-1", "reject"],
+    ])("sends %s with the rationale once it meets the minimum", async (testId, action) => {
+      openRow();
+      writeReason(REASON);
+
+      expect(decisionButton(testId).disabled).toBe(false);
+      fireEvent.click(decisionButton(testId));
+
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+      const [, init] = (global.fetch as jest.Mock).mock.calls[0];
+      const body = JSON.parse(String((init as RequestInit).body));
+      expect(body).toMatchObject({ action, notes: REASON });
+    });
+  });
 });

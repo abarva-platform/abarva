@@ -110,6 +110,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { isGateApprovalStrictMode } from "@/lib/auth/gate-approval-strict-mode";
+import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
 
 const mockAfter = jest.mocked(after);
 const mockAutoDraftOnStageEntry = jest.mocked(autoDraftOnStageEntry);
@@ -518,5 +519,92 @@ describe("POST Source event approve", () => {
       }),
     );
     expect(updateStage).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Every lifecycle decision on this route is an audit record. Three sibling
+   * lifecycle routes (`request-changes`, `route-to-co-approver`, and the event
+   * PATCH) already run `validateApprovalReason` server-side; this one did not,
+   * so `reject` and `send_back` committed an archived or returned event with a
+   * null reason whenever a caller skipped the UI. The approval card and the
+   * admin queue enforce the same minimum client-side, which is not a control.
+   */
+  describe("audit rationale", () => {
+    const decideWith = (action: string, notes?: unknown) =>
+      new Request(
+        "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            action,
+            ...(notes === undefined ? {} : { notes }),
+            confirmations: {
+              evidenceComplete: true,
+              exclusionsReviewed: true,
+              stageFinal: true,
+            },
+          }),
+        },
+      );
+
+    it.each(["approve", "reject", "send_back"])(
+      "refuses %s with no rationale and writes nothing",
+      async (action) => {
+        const response = await POST(decideWith(action), {
+          params: Promise.resolve({ eventId: "event-1" }),
+        });
+        const payload = await response.json();
+
+        expect(response.status).toBe(409);
+        expect(payload.error).toBe("approval_reason_required");
+        expect(applyApproval).not.toHaveBeenCalled();
+        expect(insertActivityLog).not.toHaveBeenCalled();
+        expect(updateStage).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(["approve", "reject", "send_back"])(
+      "refuses %s with a rationale shorter than the governed minimum",
+      async (action) => {
+        const response = await POST(decideWith(action, "no"), {
+          params: Promise.resolve({ eventId: "event-1" }),
+        });
+        const payload = await response.json();
+
+        expect(response.status).toBe(409);
+        expect(payload.error).toBe("approval_reason_required");
+        expect(payload.detail).toContain(
+          String(SOURCE_APPROVAL_REASON_MIN_LENGTH),
+        );
+        expect(applyApproval).not.toHaveBeenCalled();
+      },
+    );
+
+    it("refuses whitespace padded to the minimum length", async () => {
+      const response = await POST(
+        decideWith("reject", " ".repeat(SOURCE_APPROVAL_REASON_MIN_LENGTH + 4)),
+        { params: Promise.resolve({ eventId: "event-1" }) },
+      );
+
+      expect(response.status).toBe(409);
+      expect(applyApproval).not.toHaveBeenCalled();
+    });
+
+    it.each(["reject", "send_back"])(
+      "still commits %s when the rationale meets the minimum",
+      async (action) => {
+        const response = await POST(
+          decideWith(action, "Sponsor withdrew the mandate for this cycle."),
+          { params: Promise.resolve({ eventId: "event-1" }) },
+        );
+
+        expect(response.status).toBe(200);
+        expect(applyApproval).toHaveBeenCalledWith(
+          expect.objectContaining({
+            approvalAction: action === "reject" ? "rejected" : "sent_back",
+          }),
+        );
+      },
+    );
   });
 });
