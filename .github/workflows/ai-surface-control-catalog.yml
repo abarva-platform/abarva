@@ -69,3 +69,6 @@ jobs:
 
       - name: Exercise Moves phase-advance button
         run: npx jest --runTestsByPath src/components/programs/__tests__/PhaseAdvanceButton.controls.test.tsx --runInBand
+
+      - name: Exercise Moves decision evidence packet
+        run: npx jest --runTestsByPath src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts --runInBand
