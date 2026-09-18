@@ -29,6 +29,9 @@ jobs:
       - name: Prove the tenant-narrative guard's own term derivation
         run: npm run check:release-record-tenant-narrative-guard
 
+      - name: Prove the Layer Impact lane rule can fail
+        run: npm run check:release-record-lane-guard
+
       - name: Check release record
         env:
           BASE_REF: ${{ github.base_ref || 'main' }}
