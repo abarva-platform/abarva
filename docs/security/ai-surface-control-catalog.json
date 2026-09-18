@@ -163,8 +163,7 @@
             "MOVES_HUMAN_RATIONALE_MIN_CHARS"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "No behavioral test yet. The gate modal lives inside ProgramDetailPage, which has no rendering suite; covering it needs the page mounted, not the modal alone."
+            "path": "src/components/programs/__tests__/ProgramDetailPage.gate-approval.controls.test.tsx"
           }
         }
       ]
