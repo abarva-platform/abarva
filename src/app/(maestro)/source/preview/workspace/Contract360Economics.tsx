@@ -26,6 +26,9 @@ interface SpendTotals {
   readonly invoiced: number;
   readonly paid: number;
   readonly months: number;
+  readonly billingMonths: number;
+  readonly invoiceMonths: number;
+  readonly paidMonths: number;
 }
 
 function totalsFrom(rows: SpendRows): SpendTotals {
@@ -33,13 +36,31 @@ function totalsFrom(rows: SpendRows): SpendTotals {
   let actual = 0;
   let invoiced = 0;
   let paid = 0;
+  const billingCoverage = new Map<string, { invoice: boolean; paid: boolean }>();
   for (const row of rows) {
     committed += numberFromDb(row.committed_amount) ?? 0;
     actual += numberFromDb(row.actual_spend) ?? 0;
-    invoiced += numberFromDb(row.invoice_amount) ?? 0;
-    paid += numberFromDb(row.paid_amount) ?? 0;
+    const invoice = numberFromDb(row.invoice_amount);
+    const payment = numberFromDb(row.paid_amount);
+    invoiced += invoice ?? 0;
+    paid += payment ?? 0;
+    const month = row.month || row.period_start.slice(0, 7);
+    const coverage = billingCoverage.get(month) ?? { invoice: true, paid: true };
+    coverage.invoice = coverage.invoice && invoice !== null;
+    coverage.paid = coverage.paid && payment !== null;
+    billingCoverage.set(month, coverage);
   }
-  return { committed, actual, invoiced, paid, months: rows.length };
+  const coverage = [...billingCoverage.values()];
+  return {
+    committed,
+    actual,
+    invoiced,
+    paid,
+    months: rows.length,
+    billingMonths: coverage.length,
+    invoiceMonths: coverage.filter((month) => month.invoice).length,
+    paidMonths: coverage.filter((month) => month.paid).length,
+  };
 }
 
 function byPeriod(rows: SpendRows): SpendRows {
@@ -78,6 +99,9 @@ export function ContractEconomicsBriefing({
   const rows = byPeriod(spendMonths);
   const totals = totalsFrom(rows);
   const hasCommitment = totals.committed > 0;
+  const billingComplete =
+    totals.invoiceMonths === totals.billingMonths &&
+    totals.paidMonths === totals.billingMonths;
   /*
    * One definition of utilization, shared with every other surface that
    * reports it. Recomputing the same ratio locally is how this tab came to
@@ -87,7 +111,7 @@ export function ContractEconomicsBriefing({
     totals.actual,
     totals.committed,
   );
-  const inFlight = totals.invoiced - totals.paid;
+  const inFlight = billingComplete ? totals.invoiced - totals.paid : null;
 
   return (
     <div className="sw-c3-stack">
@@ -119,17 +143,23 @@ export function ContractEconomicsBriefing({
                   Commitment pace
                 </span>
               ) : null}
-              <span className="sw-c3-legend-key">
-                <i style={{ background: "var(--sw-c3-ink)" }} />
-                Invoiced
-              </span>
+              {billingComplete ? (
+                <span className="sw-c3-legend-key">
+                  <i style={{ background: "var(--sw-c3-ink)" }} />
+                  Invoiced
+                </span>
+              ) : null}
               <span className="sw-c3-legend-key">
                 <i style={{ background: "var(--sw-c3-green)" }} />
                 Consumed
               </span>
             </span>
           </div>
-          <ConsumptionPaceChart rows={rows} totals={totals} />
+          <ConsumptionPaceChart
+            rows={rows}
+            totals={totals}
+            billingComplete={billingComplete}
+          />
           <p className="sw-c3-prose">
             {hasCommitment
               ? "The empty space is the commercial argument: what was committed, and what was drawn against it, month by month, with no period extrapolated."
@@ -166,13 +196,21 @@ export function ContractEconomicsBriefing({
               </tr>
               <tr>
                 <th scope="row">Invoiced</th>
-                <td>{money(totals.invoiced)}</td>
-                <td>Billing recorded</td>
+                <td>{billingComplete ? money(totals.invoiced) : "Incomplete"}</td>
+                <td>
+                  {billingComplete ? "Billing recorded" : "Coverage incomplete"}
+                </td>
               </tr>
               <tr>
                 <th scope="row">Paid</th>
-                <td>{money(totals.paid)}</td>
-                <td>{Math.abs(inFlight) < 1 ? "Reconciled" : `${money(inFlight)} in flight`}</td>
+                <td>{billingComplete ? money(totals.paid) : "Incomplete"}</td>
+                <td>
+                  {inFlight === null
+                    ? "Not reconciled"
+                    : Math.abs(inFlight) < 1
+                      ? "Reconciled"
+                      : `${money(inFlight)} in flight`}
+                </td>
               </tr>
               <tr>
                 <th scope="row">Unconsumed commitment</th>
@@ -181,10 +219,15 @@ export function ContractEconomicsBriefing({
               </tr>
             </tbody>
           </table>
+          <p className="sw-c3-note">
+            {`Invoice coverage: ${totals.invoiceMonths} of ${totals.billingMonths} month${totals.billingMonths === 1 ? "" : "s"} · Paid coverage: ${totals.paidMonths} of ${totals.billingMonths} month${totals.billingMonths === 1 ? "" : "s"}`}
+          </p>
           <p className="sw-c3-prose">
-            {Math.abs(inFlight) < 1
-              ? `Invoiced and paid agree across ${totals.months} reconciled month${totals.months === 1 ? "" : "s"}. There is no billing leakage to recover here.`
-              : `${money(Math.abs(inFlight))} sits between invoiced and paid across ${totals.months} month${totals.months === 1 ? "" : "s"}. That is a timing difference until an exception is raised against it.`}
+            {inFlight === null
+              ? "Billing reconciliation unavailable until invoice and paid amounts are recorded for every loaded month."
+              : Math.abs(inFlight) < 1
+                ? `Invoiced and paid agree across ${totals.billingMonths} recorded month${totals.billingMonths === 1 ? "" : "s"}. No invoice-to-payment gap is shown for this period.`
+                : `${money(Math.abs(inFlight))} sits between invoiced and paid across ${totals.billingMonths} recorded month${totals.billingMonths === 1 ? "" : "s"}. That is a timing difference until an exception is raised against it.`}
           </p>
           <p className="sw-c3-note">
             Invoice exceptions are not a loaded lane on this contract, so none is
@@ -206,9 +249,11 @@ export function ContractEconomicsBriefing({
 function ConsumptionPaceChart({
   rows,
   totals,
+  billingComplete,
 }: {
   rows: SpendRows;
   totals: SpendTotals;
+  billingComplete: boolean;
 }) {
   const W = 700;
   const H = 200;
@@ -233,7 +278,7 @@ function ConsumptionPaceChart({
   const ceiling = Math.max(
     totals.committed,
     runningActual,
-    runningInvoiced,
+    billingComplete ? runningInvoiced : 0,
     1,
   );
   const x = (i: number) =>
@@ -277,12 +322,14 @@ function ConsumptionPaceChart({
               strokeDasharray="5 4"
             />
           ) : null}
-          <polyline
-            points={line((p) => p.invoiced)}
-            fill="none"
-            stroke="var(--sw-c3-ink)"
-            strokeWidth="2"
-          />
+          {billingComplete ? (
+            <polyline
+              points={line((p) => p.invoiced)}
+              fill="none"
+              stroke="var(--sw-c3-ink)"
+              strokeWidth="2"
+            />
+          ) : null}
           <polyline
             points={line((p) => p.actual)}
             fill="none"
