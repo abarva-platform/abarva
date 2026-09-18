@@ -1,4 +1,5 @@
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
+import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import type { SourceWorkspacePortfolioData } from "./live/portfolioAdapter";
 
 /**
@@ -174,6 +175,27 @@ export function contractPopulations(
  * Annual contract value belongs to the governed contract book. Evidence and
  * action rows may carry spend or candidate amounts, but those are not annual
  * contract value and must never be substituted into this total.
+ *
+ * The workspace displays the stated Contract 360 annual value. A resolved
+ * extraction value may explain a conflict, but it does not silently replace the
+ * stated field in Story, Optimize, aVa, or export-facing read paths.
+ */
+export function contractBookAnnualValueForContract(
+  contract:
+    | Pick<SourceContract360Row, "annual_value" | "resolved_annual_value">
+    | null
+    | undefined,
+): number | null {
+  return (
+    numberFromDb(contract?.annual_value) ??
+    numberFromDb(contract?.resolved_annual_value)
+  );
+}
+
+/**
+ * Sum the governed contract-book annual value across book rows. Evidence and
+ * action rows may carry spend or candidate amounts, but those are not annual
+ * contract value and must never be substituted into this total.
  */
 export function contractBookAnnualValue(
   portfolio: SourceWorkspacePortfolioData,
@@ -181,9 +203,7 @@ export function contractBookAnnualValue(
   let total = 0;
   let sawValue = false;
   for (const contract of portfolio.contracts ?? []) {
-    const value =
-      numberFromDb(contract.resolved_annual_value) ??
-      numberFromDb(contract.annual_value);
+    const value = contractBookAnnualValueForContract(contract);
     if (value == null) continue;
     sawValue = true;
     total += value;
