@@ -6,6 +6,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceNewFiles, type SourceNewFileRow } from "./SourceNewFiles";
+import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import {
   SOURCE_NEW_PHASE_ORDER,
   awaitsIntakeReview,
@@ -115,9 +116,16 @@ function nextAction(event: SourceNewEventView): { label: string; detail: string 
 export function SourceNewWorkspace({
   event,
   files,
+  activity,
 }: {
   event: SourceNewEventView;
   files: readonly SourceNewFileRow[];
+  /**
+   * The governed decision trail. Optional so existing callers and tests that
+   * do not read it still compile; when absent the approvals view says the
+   * trail was not loaded rather than implying there is nothing to show.
+   */
+  activity?: SourceEventActivityResult;
 }) {
   const evidence = useMemo(() => phaseEvidence(event, files), [event, files]);
   const stateOf = (item: Phase): SourceNewPhaseState => sourceNewPhaseState(item, event, evidence);
@@ -242,8 +250,9 @@ export function SourceNewWorkspace({
           <section className="snw-panel snw-plain">
             <p className="snw-eyebrow">Governed decision</p>
             <h2>{reviewPending ? "Review is still required" : sourceNewLifecycleLabel(event.lifecycle)}</h2>
-            <p className="snw-lede">The approval record, actor and evidence live in the governed event flow. This overview does not approve or advance anything.</p>
+            <p className="snw-lede">This overview does not approve or advance anything. The decisions recorded against this event are below; approving happens in the governed event flow.</p>
             <Link className="snw-primary" href={actionHref}>{reviewPending ? "Open approval" : "Open event"}</Link>
+            <SourceNewDecisionTrail activity={activity} />
           </section>
         )}
       </div>
@@ -259,6 +268,54 @@ export function SourceNewWorkspace({
     >
       <SourceNewAvaDock event={event} workspace={content} />
     </AppShell>
+  );
+}
+
+/**
+ * The governed decision trail for an event.
+ *
+ * Three states, kept distinct on purpose. "No decisions recorded yet" and "we
+ * could not read the decision log" are different facts, and on an approval
+ * surface collapsing them into an empty list states the reassuring one. The
+ * reader returns a discriminated result so this component cannot guess.
+ */
+function SourceNewDecisionTrail({
+  activity,
+}: {
+  activity?: SourceEventActivityResult;
+}) {
+  if (!activity) {
+    return (
+      <p className="snw-trail-note" data-decision-trail="not-loaded">
+        The decision trail was not loaded on this view.
+      </p>
+    );
+  }
+  if (!activity.ok) {
+    return (
+      <p className="snw-trail-note snw-trail-error" data-decision-trail="unavailable">
+        The decision trail could not be read, so this is not a statement that no
+        decisions were recorded. Open the governed event to see the record.
+      </p>
+    );
+  }
+  if (activity.entries.length === 0) {
+    return (
+      <p className="snw-trail-note" data-decision-trail="empty">
+        No decisions have been recorded against this event yet.
+      </p>
+    );
+  }
+  return (
+    <ol className="snw-trail" data-decision-trail="entries" aria-label="Decision trail">
+      {activity.entries.map((entry) => (
+        <li key={entry.id}>
+          <span className="snw-trail-actor">{entry.actor ?? "Actor not recorded"}</span>
+          <span className="snw-trail-body">{entry.body}</span>
+          <time className="snw-trail-at" dateTime={entry.at}>{entry.at}</time>
+        </li>
+      ))}
+    </ol>
   );
 }
 

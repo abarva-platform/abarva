@@ -6,6 +6,7 @@ import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { SourceNewWorkspace } from "@/components/source/new-workspace/SourceNewWorkspace";
 import type { SourceNewFileRow } from "@/components/source/new-workspace/SourceNewFiles";
+import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
 import { sourceNewFilePhase } from "@/lib/source/new-workspace/phase-state";
 
 export const dynamic = "force-dynamic";
@@ -60,8 +61,14 @@ export default async function SourceNewEventPage({
         })
     : [];
 
+  // The approvals view told the reader that "the approval record, actor and
+  // evidence live in the governed event flow" and then showed none of it.
+  // The writer has been recording this trail; nothing read it back.
+  const activity = await listSourceEventActivityEntries(event.id);
+
   return (
     <SourceNewWorkspace
+      activity={activity}
       event={{
         id: event.id,
         code: event.code,
