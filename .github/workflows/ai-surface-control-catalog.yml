@@ -51,3 +51,6 @@ jobs:
         # literal brackets in [programId] are a character class that matches
         # nothing. The step passed locally and found no tests in CI.
         run: npx jest --runTestsByPath "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts" --runInBand
+
+      - name: Exercise Intelligence promotion approval gate
+        run: npx jest --runTestsByPath src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts --runInBand
