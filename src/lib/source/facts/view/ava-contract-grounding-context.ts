@@ -195,7 +195,11 @@ export async function buildAvaSourceContractGrounding(
     evidencePack: evidencePack ?? null,
   });
   const traceability = summarizeOpportunityTraceability(
-    opportunitySet?.opportunities ?? [],
+    (opportunitySet?.opportunities ?? []).map((opportunity) =>
+      opportunity.amountState === "not_sized"
+        ? { ...opportunity, amountUsd: null }
+        : opportunity,
+    ),
   );
   const position = deriveOptimizeWorkflowPosition({
     hasSelectedContract: true,
@@ -251,7 +255,9 @@ export async function buildAvaSourceContractGrounding(
         opportunity.stage === "signal" ||
         opportunity.amountState === "not_sized"
           ? "not sized"
-          : fmtUsd(opportunity.amountUsd);
+          : trace?.state === "traced"
+            ? fmtUsd(opportunity.amountUsd)
+            : `stated ${fmtUsd(opportunity.amountUsd)}; ${trace?.state === "restated" ? "calculation run disagrees" : "no reproducible calculation run"}`;
       return `- ${opportunity.shortLabel} · ${opportunity.valueType.replace(/_/g, " ")} · ${amountLabel} · stage ${opportunity.stage} · confidence ${fmtPct(opportunity.confidence)} · ${trace?.label ?? "traceability not evaluated"}${negotiation}`;
     });
   const claimLines = (opportunitySet?.claims ?? [])
@@ -270,6 +276,7 @@ export async function buildAvaSourceContractGrounding(
         index,
         opportunity,
         traceLabel: trace?.label ?? null,
+        traceState: trace?.state ?? "not_sized",
       });
     });
 
@@ -279,11 +286,14 @@ export async function buildAvaSourceContractGrounding(
   const vendorDisplayName =
     firstNonBlank(contract?.vendor_name, opportunitySet?.vendorName) ??
     "Vendor not established";
-  const annualValueUsd = contract
-    ? contract.annual_value_conflict_flag
-      ? contract.resolved_annual_value
-      : contract.annual_value
-    : opportunitySet?.baseline.annualValueUsd;
+  const baselineConflict = opportunitySet?.baseline.status === "conflict";
+  const annualValueUsd = baselineConflict
+    ? null
+    : contract
+      ? contract.annual_value_conflict_flag
+        ? contract.resolved_annual_value
+        : contract.annual_value
+      : opportunitySet?.baseline.annualValueUsd;
 
   const lines: string[] = [
     `AUTHORITATIVE SOURCE CONTRACT GROUNDING (LIVE — the same governed reads the Optimize Contract page renders, tenant "${tenantKey}", contract ${trimmedId}):`,
@@ -291,8 +301,10 @@ export async function buildAvaSourceContractGrounding(
     // `resolved_annual_value` wins whenever extraction disagreed with the
     // stated value; quoting the raw column there would repeat a known conflict.
     `Contract: ${contractDisplayName}. Vendor: ${vendorDisplayName}. Annual value: ${fmtUsd(annualValueUsd)}.${
-      contract?.annual_value_conflict_flag
-        ? " (Stated annual value and extracted value disagreed; the resolved value is quoted.)"
+      baselineConflict || contract?.annual_value_conflict_flag
+        ? annualValueUsd == null
+          ? " (The annual-value conflict remains unresolved; the stated and extracted amounts are not a reconciled baseline.)"
+          : " (Stated annual value and extracted value disagreed; the resolved Contract 360 value is quoted.)"
         : ""
     }`,
     "SEMANTIC VALUE GUARD: Annual value is the contract header value, not an annual commitment. Observed spend is consumption or spend evidence, not AP-paid cash. Never call annual value a commitment, and never say an amount was paid unless governed AP/payment evidence explicitly establishes payment status.",
@@ -376,6 +388,7 @@ function formatOpportunityExportRow(input: {
     } | null;
   };
   traceLabel: string | null;
+  traceState: "traced" | "restated" | "untraced" | "not_sized";
 }): string {
   const { opportunity } = input;
   const detail = opportunity.negotiationDetail;
@@ -413,7 +426,7 @@ function formatOpportunityExportRow(input: {
     `Action / buyer ask: ${askParts.join(" ") || opportunity.nextAction}`,
     `Why vendor can agree: ${detail?.vendorConcession ?? "not established in governed opportunity detail"}`,
     `Evidence basis: ${evidenceParts.join("; ") || "not established"}`,
-    `Value state: ${isSignal ? "Not sized - needs evidence before it carries a number" : fmtUsd(opportunity.amountUsd)}`,
+    `Value state: ${isSignal ? "Not sized - needs evidence before it carries a number" : input.traceState === "traced" ? fmtUsd(opportunity.amountUsd) : `stated ${fmtUsd(opportunity.amountUsd)}; ${input.traceState === "restated" ? "calculation run disagrees" : "no reproducible calculation run"}`}`,
     `Owner / timing: ${ownerTimingParts.join(" / ") || "not established"}`,
     `What not to claim yet: ${doNotClaimParts.join("; ")}.`,
   ].join(" | ");

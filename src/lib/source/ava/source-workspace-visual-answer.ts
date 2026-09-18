@@ -1,5 +1,8 @@
 import type { AskSurfaceContext } from "@/lib/intelligence/ask/types";
-import { displaySourceLeverTitle, displaySourceLeverTiming } from "@/lib/source/data-model/source-lever-order";
+import {
+  displaySourceLeverTitle,
+  displaySourceLeverTiming,
+} from "@/lib/source/data-model/source-lever-order";
 import type {
   AvaArtifact,
   AvaCaveat,
@@ -26,6 +29,8 @@ interface SourceContractContext {
   vendorName: string;
   contractName: string;
   annualValueUsd: number | null;
+  annualValueConflict?: boolean;
+  annualValueProvenance?: string | null;
   actualAnnualSpendUsd: number | null;
   totalCommittedValueUsd: number | null;
   contractedToActualVarianceUsd: number | null;
@@ -59,6 +64,9 @@ interface SourceOpportunityLine {
   label: string;
   amount: string;
   amountUsd: number | null;
+  statedAmountUsd?: number | null;
+  amountTraceState?: string | null;
+  amountTraceLabel?: string | null;
   state: string;
   stage: string;
   confidence: string;
@@ -259,9 +267,9 @@ function nameAppearsInQuery(query: string, name: string): boolean {
 }
 
 function hasExplicitUnmatchedName(query: string): boolean {
-  const namedPhrase = query.match(
-    /\b(?:for|about|with|under|summari[sz]e)\s+([^?.!,;]+)/i,
-  )?.[1]?.trim();
+  const namedPhrase = query
+    .match(/\b(?:for|about|with|under|summari[sz]e)\s+([^?.!,;]+)/i)?.[1]
+    ?.trim();
   if (!namedPhrase) return false;
   return !/^(?:this|that|the|a|an|our|current|selected|it|renewal|comparison)\b/i.test(
     namedPhrase,
@@ -280,9 +288,7 @@ function rowMatchesContextScope(
   const contextKey = stringValue(context.clientKey)?.toLowerCase();
   return Boolean(
     contextKey &&
-    declaredKeys.every(
-      (key) => stringValue(key)?.toLowerCase() === contextKey,
-    ),
+    declaredKeys.every((key) => stringValue(key)?.toLowerCase() === contextKey),
   );
 }
 
@@ -341,7 +347,13 @@ function contractContextFromRecord(
     contractId,
     vendorName,
     contractName,
-    annualValueUsd: numberValue(raw.annualValueUsd),
+    annualValueUsd:
+      booleanValue(raw.annualValueConflict) === true &&
+      stringValue(raw.annualValueProvenance) !== "resolved_contract_360"
+        ? null
+        : numberValue(raw.annualValueUsd),
+    annualValueConflict: booleanValue(raw.annualValueConflict) === true,
+    annualValueProvenance: stringValue(raw.annualValueProvenance),
     actualAnnualSpendUsd: numberValue(raw.actualAnnualSpendUsd),
     totalCommittedValueUsd: numberValue(raw.totalCommittedValueUsd),
     contractedToActualVarianceUsd: numberValue(
@@ -418,7 +430,11 @@ function selectedContractFrom(
         contractId: direct.contractId,
         vendorName: direct.vendorName,
         contractName: direct.contractName,
-        annualValueUsd: direct.annualValueUsd ?? selected.annualValueUsd,
+        annualValueUsd: selected.annualValueConflict
+          ? selected.annualValueUsd
+          : (direct.annualValueUsd ?? selected.annualValueUsd),
+        annualValueConflict: selected.annualValueConflict,
+        annualValueProvenance: selected.annualValueProvenance,
         actualAnnualSpendUsd:
           direct.actualAnnualSpendUsd ?? selected.actualAnnualSpendUsd,
         totalCommittedValueUsd:
@@ -466,7 +482,9 @@ export function resolveSourceWorkspaceContractId(input: {
   query: string;
   surfaceContext: AskSurfaceContext;
 }): string | null {
-  return selectedContractFrom(input.surfaceContext, input.query)?.contractId ?? null;
+  return (
+    selectedContractFrom(input.surfaceContext, input.query)?.contractId ?? null
+  );
 }
 
 function contractContextFromOpportunityRows(
@@ -505,14 +523,11 @@ function contractContextFromOpportunityRows(
     endDate: stringValue(match.endDate),
     noticeDate: stringValue(match.noticeDate),
     noticePeriodDays: numberValue(match.noticePeriodDays),
-    autoRenew:
-      typeof match.autoRenew === "boolean" ? match.autoRenew : null,
+    autoRenew: typeof match.autoRenew === "boolean" ? match.autoRenew : null,
     renewalOwnerRef: stringValue(match.renewalOwnerRef),
     scopeSummary: stringValue(match.scopeSummary),
     scopeRowCount: numberValue(match.scopeRowCount),
-    performanceObservationCount: numberValue(
-      match.performanceObservationCount,
-    ),
+    performanceObservationCount: numberValue(match.performanceObservationCount),
     documentExtractionCount: numberValue(match.documentExtractionCount),
   };
 }
@@ -636,13 +651,25 @@ function opportunityLinesFrom(
       const rawLabel = stringValue(opportunity.label);
       const label = rawLabel ? displaySourceLeverTitle(rawLabel) : null;
       if (!id || !label) return [];
+      const traceState = stringValue(opportunity.amountTraceState);
+      const unverified = traceState === "untraced" || traceState === "restated";
+      const notSized = traceState === "not_sized";
       return [
         {
           id,
           kind: stringValue(opportunity.valueType) ?? "commercial_opportunity",
           label,
           amount: stringValue(opportunity.amount) ?? "Not established",
-          amountUsd: numberValue(opportunity.amountUsd),
+          amountUsd:
+            unverified || notSized ? null : numberValue(opportunity.amountUsd),
+          statedAmountUsd: unverified
+            ? (numberValue(opportunity.statedAmountUsd) ??
+              numberValue(opportunity.amountUsd))
+            : notSized
+              ? null
+              : numberValue(opportunity.statedAmountUsd),
+          amountTraceState: traceState,
+          amountTraceLabel: stringValue(opportunity.amountTraceLabel),
           state:
             stringValue(opportunity.stageRaw) ??
             stringValue(opportunity.stage) ??
@@ -655,10 +682,14 @@ function opportunityLinesFrom(
           evidenceClass: stringValue(opportunity.grade) ?? "Not established",
           evidenceGrade: stringValue(opportunity.grade) ?? "Not established",
           evidence:
+            stringValue(opportunity.amountTraceLabel) ??
             stringValue(opportunity.blockingGap) ??
-            "Governed Source opportunity row with calculation and evidence references.",
+            "Governed Source opportunity row with evidence references.",
           blockingGap:
-            stringValue(opportunity.blockingGap) ?? "Not established",
+            [
+              unverified ? stringValue(opportunity.amountTraceLabel) : null,
+              stringValue(opportunity.blockingGap),
+            ].filter(Boolean).join("; ") || "Not established",
           nextAction:
             stringValue(opportunity.nextAction) ??
             "Confirm evidence owner and decision path.",
@@ -819,14 +850,17 @@ export function canBuildSourceWorkspaceVisualAnswer(input: {
 }): boolean {
   const context = input.surfaceContext;
   const requestedContractId = contractIdFromQuery(input.query);
-  const named = context && !requestedContractId
-    ? namedContractFromQuery(context, input.query)
-    : null;
+  const named =
+    context && !requestedContractId
+      ? namedContractFromQuery(context, input.query)
+      : null;
   return Boolean(
     context &&
     stringValue(context.module)?.toLowerCase() === "source" &&
     wantsSourceVisualAnswer(input.query) &&
-    (selectedContractFrom(context, input.query) || requestedContractId || named),
+    (selectedContractFrom(context, input.query) ||
+      requestedContractId ||
+      named),
   );
 }
 
@@ -885,7 +919,12 @@ function buildOpportunityRows(lines: SourceOpportunityLine[]) {
   return lines.map((line) => ({
     class: opportunityClassName(line.kind),
     opportunity: line.label,
-    value: isNotSizedLine(line) ? "Not sized" : currencyLabel(line.amountUsd),
+    value:
+      line.statedAmountUsd != null
+        ? `stated ${currencyLabel(line.statedAmountUsd)}; not calculation-reconciled`
+        : isNotSizedLine(line)
+          ? "Not sized"
+          : currencyLabel(line.amountUsd),
     valueUsd: isNotSizedLine(line) ? null : line.amountUsd,
     state: line.state,
     stage: line.stage,
@@ -941,8 +980,7 @@ function wantsContractOptimizationExport(query: string): boolean {
   return (
     /\b(optimi[sz]e|lever(?:s)?|negotiat(?:e|ion|ing)|client\s+sample|pdf|export|memo|report)\b/i.test(
       query,
-    ) &&
-    !/\b(chart|graph|map|visuali[sz]e|relationship\s+map)\b/i.test(query)
+    ) && !/\b(chart|graph|map|visuali[sz]e|relationship\s+map)\b/i.test(query)
   );
 }
 
@@ -967,6 +1005,9 @@ function isNotSizedLine(line: SourceOpportunityLine): boolean {
 }
 
 function exportValueState(line: SourceOpportunityLine): string {
+  if (line.statedAmountUsd != null) {
+    return `stated ${currencyLabel(line.statedAmountUsd)}; not calculation-reconciled`;
+  }
   if (isNotSizedLine(line)) {
     return "Not sized - needs evidence before it carries a number";
   }
@@ -976,7 +1017,9 @@ function exportValueState(line: SourceOpportunityLine): string {
 function exportOwnerTiming(line: SourceOpportunityLine): string {
   return [
     line.owner,
-    line.timingDependency ? displaySourceLeverTiming(line.timingDependency) : null,
+    line.timingDependency
+      ? displaySourceLeverTiming(line.timingDependency)
+      : null,
     line.nextAction && !line.timingDependency ? line.nextAction : null,
   ]
     .filter((part): part is string => Boolean(part?.trim()))
@@ -1070,14 +1113,17 @@ export function canBuildSourceContractOptimizationExportAnswer(input: {
 }): boolean {
   const context = input.surfaceContext;
   const requestedContractId = contractIdFromQuery(input.query);
-  const named = context && !requestedContractId
-    ? namedContractFromQuery(context, input.query)
-    : null;
+  const named =
+    context && !requestedContractId
+      ? namedContractFromQuery(context, input.query)
+      : null;
   return Boolean(
     context &&
-      stringValue(context.module)?.toLowerCase() === "source" &&
-      wantsContractOptimizationExport(input.query) &&
-      (selectedContractFrom(context, input.query) || requestedContractId || named),
+    stringValue(context.module)?.toLowerCase() === "source" &&
+    wantsContractOptimizationExport(input.query) &&
+    (selectedContractFrom(context, input.query) ||
+      requestedContractId ||
+      named),
   );
 }
 
@@ -1111,11 +1157,12 @@ export function buildSourceContractOptimizationExportAnswer(input: {
       : "No governed optimization levers are loaded for this contract.";
   const contractCitationId = "source-contract-context";
   const opportunityCitationId = "source-contract-lever-export";
-  const sizingPosture = sizedRows.length > 0
-    ? `Work the ${sizedRows.length} sized ${sizedRows.length === 1 ? "lever" : "levers"} first (${currencyLabel(sizedTotalUsd)} candidate value). ${signalRows.length > 0 ? `${signalRows.length} ${signalRows.length === 1 ? "other lever remains" : "other levers remain"} unsized until the named evidence gates close.` : ""}`
-    : lines.length > 0
-      ? `All ${lines.length} ${lines.length === 1 ? "lever is" : "levers are"} unsized. Supported candidate value is not established until the named evidence gates close.`
-      : "No governed optimization levers are loaded for this contract.";
+  const sizingPosture =
+    sizedRows.length > 0
+      ? `Work the ${sizedRows.length} sized ${sizedRows.length === 1 ? "lever" : "levers"} first (${currencyLabel(sizedTotalUsd)} candidate value). ${signalRows.length > 0 ? `${signalRows.length} ${signalRows.length === 1 ? "other lever remains" : "other levers remain"} unsized until the named evidence gates close.` : ""}`
+      : lines.length > 0
+        ? `All ${lines.length} ${lines.length === 1 ? "lever is" : "levers are"} unsized. Supported candidate value is not established until the named evidence gates close.`
+        : "No governed optimization levers are loaded for this contract.";
   const directAnswer = [
     lines.length === 0
       ? `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) has no governed optimization levers in this packet; actionability and candidate value are not established. Review contract-specific evidence before preparing a client action memo.`
@@ -1169,9 +1216,10 @@ export function buildSourceContractOptimizationExportAnswer(input: {
         label: "Contract optimization opportunity rows",
         sourceClass: "tenant-fact",
         recordId: contract.contractId,
-        excerpt: rows.length > 0
-          ? "Lever, ask, rationale, owner, timing, value state, and evidence gates are read from governed Source opportunity rows."
-          : "No governed contract-specific optimization lever is present in the current Source packet.",
+        excerpt:
+          rows.length > 0
+            ? "Lever, ask, rationale, owner, timing, value state, and evidence gates are read from governed Source opportunity rows."
+            : "No governed contract-specific optimization lever is present in the current Source packet.",
         confidence: rows.length > 0 ? "high" : "medium",
       },
     ],
@@ -1267,10 +1315,16 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       : null);
   const isOpenContract =
     openContractId?.toUpperCase() === contract.contractId.toUpperCase();
-  const connections = isOpenContract ? connectionsFrom(input.surfaceContext) : [];
-  const commercialPostureLines = isOpenContract && lines.length > 0
-    ? commercialPostureLinesFrom(input.surfaceContext)
+  const connections = isOpenContract
+    ? connectionsFrom(input.surfaceContext)
     : [];
+  const commercialPostureLines =
+    isOpenContract &&
+    lines.length > 0 &&
+    !contract.annualValueConflict &&
+    !lines.some((line) => line.statedAmountUsd != null)
+      ? commercialPostureLinesFrom(input.surfaceContext)
+      : [];
   const contractMismatch =
     requestedContractId &&
     contract.contractId.toUpperCase() !== requestedContractId;
@@ -1285,9 +1339,10 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       label: `${contract.vendorName} ${contract.contractName}`,
       sourceClass: "tenant-fact",
       recordId: contract.contractId,
-      excerpt:
-        "Selected contract facts come from the governed Source Contract 360 surface context.",
-      confidence: "high",
+      excerpt: contract.annualValueConflict
+        ? "Selected contract facts come from Source Contract 360; annual value is withheld while the baseline conflict remains unresolved."
+        : "Selected contract facts come from the governed Source Contract 360 surface context.",
+      confidence: contract.annualValueConflict ? "medium" : "high",
     },
     {
       id: opportunityCitationId,
@@ -1387,7 +1442,10 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         })),
         {
           id: "opportunities",
-          label: lines.length > 0 ? "Commercial opportunities" : "Opportunity evidence missing",
+          label:
+            lines.length > 0
+              ? "Commercial opportunities"
+              : "Opportunity evidence missing",
           kind: lines.length > 0 ? "opportunity set" : "evidence gap",
         },
         {
@@ -1469,7 +1527,9 @@ export function buildSourceWorkspaceVisualAnswer(input: {
     null;
   const topOpportunityValue =
     topOpportunity?.amountUsd == null
-      ? (topOpportunity?.amount ?? "Not established")
+      ? topOpportunity?.statedAmountUsd != null
+        ? `stated ${currencyLabel(topOpportunity.statedAmountUsd)}; not calculation-reconciled`
+        : (topOpportunity?.amount ?? "Not established")
       : currencyLabel(topOpportunity.amountUsd);
   const topOpportunitySummary = topOpportunity
     ? ` The top governed opportunity is ${topOpportunity.label} (${topOpportunityValue}), with evidence state ${topOpportunity.evidenceClass} and next action: ${sentenceFragment(topOpportunity.nextAction)}.`
@@ -1497,7 +1557,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   const loadedContractFacts = [
     `vendor ${contract.vendorName}`,
     `contract ID ${contract.contractId}`,
-    `recorded annual value ${currencyLabel(contract.annualValueUsd)}`,
+    `recorded annual value ${contract.annualValueConflict && contract.annualValueUsd == null ? "Not established (annual-value conflict unresolved)" : currencyLabel(contract.annualValueUsd)}${contract.annualValueProvenance === "resolved_contract_360" ? " (resolved Contract 360 value after extraction conflict)" : ""}`,
     `total committed contract value ${currencyLabel(contract.totalCommittedValueUsd)}`,
     `actual annual spend ${currencyLabel(contract.actualAnnualSpendUsd)}`,
     `end date ${contract.endDate ?? "not established"}`,
