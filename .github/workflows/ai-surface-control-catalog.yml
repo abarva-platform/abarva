@@ -45,3 +45,9 @@ jobs:
 
       - name: Exercise Source external-action gate
         run: npx jest src/app/api/v1/source/work-items/__tests__/external-action-gate.test.ts --runInBand
+
+      - name: Exercise Moves phase-advance approval gate
+        # --runTestsByPath: jest reads a bare pattern as a regex, and the
+        # literal brackets in [programId] are a character class that matches
+        # nothing. The step passed locally and found no tests in CI.
+        run: npx jest --runTestsByPath "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts" --runInBand
