@@ -8,13 +8,59 @@ import {
   parseCsvUpload,
   parseStructuredUpload,
   prepareCsvUploadForTenantContext,
+  segmentKeyForContextDimension,
 } from "../csv-upload-connector";
 import {
   getTemplateById,
   getTemplateForDimension,
   getTemplatesForTenant,
 } from "../template-registry";
-import type { ContextDimension } from "../types";
+import type { ContextDimension, ContextDimensionUniversal } from "../types";
+import type { SegmentKey } from "@/lib/ingestion/azure-landing-zone-types";
+
+const UNIVERSAL_SEGMENTS: Record<ContextDimensionUniversal, SegmentKey> = {
+  enterprise_profile: "enterprise_profile",
+  business_org_functions: "org_structure",
+  it_org_ownership: "org_structure",
+  capabilities_value_streams: "enterprise_profile",
+  applications_systems: "it_landscape",
+  system_function_mapping: "it_landscape",
+  infrastructure_cloud: "infrastructure",
+  platform_volumetrics: "infrastructure",
+  data_analytics_estate: "data_estate",
+  integrations_interfaces: "it_landscape",
+  vendors_contracts_licenses: "it_financials",
+  it_budget_financials: "it_financials",
+  initiatives_portfolio: "program_inventory",
+  operations_service_management: "it_landscape",
+  kpis_outcome_evidence: "program_inventory",
+  security_risk_compliance: "program_inventory",
+  ai_automation_footprint: "it_landscape",
+  personas_workforce: "org_structure",
+};
+
+it("routes every universal context dimension to its declared segment", () => {
+  for (const [dimension, segment] of Object.entries(UNIVERSAL_SEGMENTS)) {
+    expect(segmentKeyForContextDimension(dimension as ContextDimensionUniversal)).toBe(segment);
+  }
+});
+
+it("persists the universal application segment in prepared upload chunks", () => {
+  const prepared = prepareCsvUploadForTenantContext({
+    clientId: "client-test",
+    tenantKey: "test-tenant",
+    uploadedBy: "user-test",
+    fileName: "applications-systems.csv",
+    uploadedAt: "2026-09-18T00:00:00.000Z",
+    csvText: [
+      "app_id,name,vendor,category,criticality,it_owner_team,lifecycle_stage",
+      "app-1,Application One,Vendor One,ERP,Tier 1,IT Operations,active",
+    ].join("\n"),
+    mapping: { templateId: "applications-systems" },
+  });
+
+  expect(prepared.chunks[0]?.source_segment_id).toBe("it_landscape");
+});
 
 type MeridianCatalogTemplate = {
   id: string;
