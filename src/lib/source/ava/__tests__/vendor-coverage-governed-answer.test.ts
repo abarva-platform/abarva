@@ -52,16 +52,12 @@ describe('factConfidenceToConfidenceLevel', () => {
 });
 
 describe('governedClientKeyForSourceClientKey', () => {
-  it('maps legacy Source data-plane client keys to canonical governance tenant keys', () => {
+  it('maps active Source client keys and rejects retired tenant keys', () => {
     expect(governedClientKeyForSourceClientKey('meridian')).toBe(
       'meridian-health',
     );
-    expect(governedClientKeyForSourceClientKey('apexretail')).toBe(
-      'apex-retail',
-    );
-    expect(governedClientKeyForSourceClientKey('first-capital')).toBe(
-      'first-capital',
-    );
+    expect(governedClientKeyForSourceClientKey('apexretail')).toBeNull();
+    expect(governedClientKeyForSourceClientKey('first-capital')).toBeNull();
   });
 
   it('fails closed for unknown client keys before building governed candidates', () => {
@@ -132,10 +128,10 @@ describe('avaCitationsFromGovernedCandidates', () => {
   });
 });
 
-describe('buildValidatedAgentContextBundle over mapped candidates (the real gate, requireAgentReady: false)', () => {
+describe('buildValidatedAgentContextBundle over active-tenant candidates (the real gate, requireAgentReady: false)', () => {
   it('marks honestly-mapped, never-indexed candidates usable when requireAgentReady is false', () => {
     const candidate = governedCandidateFromVendorLeverFact(fact(), {
-      clientKey: 'apex-retail',
+      clientKey: 'meridian-health',
       tenantId: 'tenant-123',
     });
 
