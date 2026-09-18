@@ -1,0 +1,627 @@
+{
+  "note": "Every audit:/validate:/check: npm script, and whether it gates a PR. Generated skeleton by scripts/audit/ci-gate-registry-check.mjs --update; the kind and reason on each entry are human judgment, not derived. A gate that nobody runs looks exactly like a tool nobody needs to run, and this file is where that difference is written down. pr-gate must be invoked by a workflow. quarantined is a pr-gate failing on main today, recorded rather than wired. unclassified is the backlog: allowed for what was here when this file was created, refused for anything added after.",
+  "entries": {
+    "audit:active-candidate-separation": {
+      "kind": "unclassified"
+    },
+    "audit:active-module-context-promotion": {
+      "kind": "unclassified"
+    },
+    "audit:active-tenant-access-promotion": {
+      "kind": "unclassified"
+    },
+    "audit:active-tenant-access-rollback-proof": {
+      "kind": "unclassified"
+    },
+    "audit:admin-data-control-center": {
+      "kind": "unclassified"
+    },
+    "audit:admin-data-layer-explorer": {
+      "kind": "unclassified"
+    },
+    "audit:agent-2task": {
+      "kind": "unclassified"
+    },
+    "audit:agent-substrate": {
+      "kind": "pr-gate"
+    },
+    "audit:agent-substrate:strict": {
+      "kind": "unclassified"
+    },
+    "audit:ai-control-schema-drift": {
+      "kind": "unclassified"
+    },
+    "audit:ai-surface-controls": {
+      "kind": "pr-gate"
+    },
+    "audit:ai-value-realization-day1": {
+      "kind": "unclassified"
+    },
+    "audit:all-tenant-candidate-batch": {
+      "kind": "unclassified"
+    },
+    "audit:all-tenant-readiness-closure": {
+      "kind": "unclassified"
+    },
+    "audit:approved-content-path-convergence": {
+      "kind": "unclassified"
+    },
+    "audit:architecture-boundaries": {
+      "kind": "pr-gate"
+    },
+    "audit:architecture-rules": {
+      "kind": "pr-gate"
+    },
+    "audit:architecture-rules:full": {
+      "kind": "unclassified"
+    },
+    "audit:architecture-rules:self-test": {
+      "kind": "unclassified"
+    },
+    "audit:ava-readiness-ledger": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-coverage:all-tenants": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-invisibility": {
+      "kind": "quarantined",
+      "reason": "Fails on main with 2 failures. This guard exists to keep candidate-tenant data off default runtime surfaces, so a failure is a disclosure question, not a style one. Clears when both failures are triaged as real or as stale expectations."
+    },
+    "audit:candidate-module-derived-plan": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-module-graph-plan": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-module-preview": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-module-readiness-preview": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-module-workbench-preview": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-preview-enablement": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-preview-mode": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-promotion-gate": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-readiness-control": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-tenant-version": {
+      "kind": "unclassified"
+    },
+    "audit:candidate-version": {
+      "kind": "unclassified"
+    },
+    "audit:canonical-data-build": {
+      "kind": "unclassified"
+    },
+    "audit:canonical-tenant-inputs": {
+      "kind": "unclassified"
+    },
+    "audit:categories": {
+      "kind": "unclassified"
+    },
+    "audit:ci-gate-registry": {
+      "kind": "pr-gate"
+    },
+    "audit:client-pilot-runtime-profile": {
+      "kind": "unclassified"
+    },
+    "audit:control-plane-purity": {
+      "kind": "pr-gate"
+    },
+    "audit:control-plane-purity:baseline": {
+      "kind": "unclassified"
+    },
+    "audit:control-plane-purity:check": {
+      "kind": "pr-gate"
+    },
+    "audit:data-intelligence-redesign": {
+      "kind": "unclassified"
+    },
+    "audit:data-quality:all-tenants": {
+      "kind": "unclassified"
+    },
+    "audit:default-runtime-invisibility": {
+      "kind": "unclassified"
+    },
+    "audit:deprecated-pattern-table-writes": {
+      "kind": "pr-gate"
+    },
+    "audit:end-to-end-data-flow": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-data-design": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-knowledge-assembler": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-knowledge-cache": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-knowledge-layer": {
+      "kind": "unclassified"
+    },
+    "audit:enterprise-naming": {
+      "kind": "pr-gate"
+    },
+    "audit:enterprise-profile-foundation": {
+      "kind": "unclassified"
+    },
+    "audit:financial": {
+      "kind": "unclassified"
+    },
+    "audit:fs-airline-active-promotion-review": {
+      "kind": "unclassified"
+    },
+    "audit:fs-airline-azure-candidate": {
+      "kind": "unclassified"
+    },
+    "audit:graph-disposition-status": {
+      "kind": "unclassified"
+    },
+    "audit:graph-quarantine-alias-analysis": {
+      "kind": "unclassified"
+    },
+    "audit:graph-quarantine-reduction": {
+      "kind": "unclassified"
+    },
+    "audit:graph-semantic-alias-activation": {
+      "kind": "unclassified"
+    },
+    "audit:graph-source-data-gated-matrix": {
+      "kind": "unclassified"
+    },
+    "audit:home-ava-build-readiness": {
+      "kind": "unclassified"
+    },
+    "audit:home-ava-context-contract": {
+      "kind": "unclassified"
+    },
+    "audit:home-ava-representation": {
+      "kind": "unclassified"
+    },
+    "audit:home-ava-snapshot-alignment": {
+      "kind": "unclassified"
+    },
+    "audit:home-candidate-consumption": {
+      "kind": "unclassified"
+    },
+    "audit:home-cxo-story-quality": {
+      "kind": "unclassified"
+    },
+    "audit:home-data-quality": {
+      "kind": "unclassified"
+    },
+    "audit:home-dimension-data-tab": {
+      "kind": "unclassified"
+    },
+    "audit:home-dimension-evidence-tab": {
+      "kind": "unclassified"
+    },
+    "audit:home-dimension-story-claims": {
+      "kind": "unclassified"
+    },
+    "audit:home-english-summary": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-cutover": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-design-contract-ui": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-pressure": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-preview": {
+      "kind": "unclassified"
+    },
+    "audit:home-knowledge-story-quality": {
+      "kind": "unclassified"
+    },
+    "audit:home-layer4-boundary": {
+      "kind": "unclassified"
+    },
+    "audit:home-summary-snapshot": {
+      "kind": "unclassified"
+    },
+    "audit:home-v3-preview-columns": {
+      "kind": "unclassified"
+    },
+    "audit:home-v3-runtime-reachability": {
+      "kind": "unclassified"
+    },
+    "audit:home:claude-story-report": {
+      "kind": "unclassified"
+    },
+    "audit:home:content-quality": {
+      "kind": "unclassified"
+    },
+    "audit:intake-file-disposition": {
+      "kind": "unclassified"
+    },
+    "audit:intake-file-disposition:pilot-gate": {
+      "kind": "unclassified"
+    },
+    "audit:integrated-layer-refresh-inventory": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-ava-cxo-narrative": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-ava-quality": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-ava-stream-polish": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-ava-visual-contract": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-candidate-retrieval": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-context-pack-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-knowledge-pressure": {
+      "kind": "unclassified"
+    },
+    "audit:intelligence-knowledge-runtime": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-cxo-story-blocks": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-dimension-narratives": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-home-insights": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-layer-live-preview": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-layer-signed-in-preview": {
+      "kind": "unclassified"
+    },
+    "audit:knowledge-module-preview": {
+      "kind": "unclassified"
+    },
+    "audit:l1-undeclared-source-classification": {
+      "kind": "unclassified"
+    },
+    "audit:layer-boundaries": {
+      "kind": "unclassified"
+    },
+    "audit:layer-refresh-status": {
+      "kind": "unclassified"
+    },
+    "audit:layer3-canonical-write-plan": {
+      "kind": "unclassified"
+    },
+    "audit:legacy-context-retirement": {
+      "kind": "quarantined",
+      "reason": "Fails on main with 7 failures; the report lands in reports/legacy-context-retirement. Clears when each remaining legacy-context reference is retired or the audit's expectation is corrected."
+    },
+    "audit:legacy-dataset-sunset": {
+      "kind": "quarantined",
+      "reason": "Fails on main with 19 failures. Clears when each dataset named in the failure list is sunset or the sunset list is corrected to current reality."
+    },
+    "audit:loaded-datasets": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-approved-claude-content": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-candidate-ai-portfolio-boundary": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-data-state-reconciliation": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-executive-interviews": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-home-context-view": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-interview-graph-edges": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-interview-insight-projection": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-moves-context-view": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-runtime-module-access": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-sa08-benefits-posture": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-tower-dashboard-view": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-v3-cio-tower-projection": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-v3-derived-layer-build": {
+      "kind": "unclassified"
+    },
+    "audit:meridian-v3-reload-readiness": {
+      "kind": "unclassified"
+    },
+    "audit:module-context-serving": {
+      "kind": "unclassified"
+    },
+    "audit:module-readiness-proof": {
+      "kind": "unclassified"
+    },
+    "audit:moves-adaptive-depth-proof": {
+      "kind": "unclassified"
+    },
+    "audit:moves-agent-assist-blueprint": {
+      "kind": "unclassified"
+    },
+    "audit:moves-candidate-consumption": {
+      "kind": "unclassified"
+    },
+    "audit:moves-context-extract": {
+      "kind": "unclassified"
+    },
+    "audit:moves-context-pack-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:moves-evidence-lifecycle": {
+      "kind": "unclassified"
+    },
+    "audit:moves-gate-consistency": {
+      "kind": "unclassified"
+    },
+    "audit:moves-knowledge-runtime": {
+      "kind": "unclassified"
+    },
+    "audit:moves-shadow-proof": {
+      "kind": "unclassified"
+    },
+    "audit:multi-tenant-cxo-context-proof-gate": {
+      "kind": "unclassified"
+    },
+    "audit:multi-tenant-cxo-runtime-proof": {
+      "kind": "unclassified"
+    },
+    "audit:multi-tenant-cxo-story-generation": {
+      "kind": "unclassified"
+    },
+    "audit:multi-tenant-runtime-retrieval-proof": {
+      "kind": "unclassified"
+    },
+    "audit:new-client-onboarding-proof": {
+      "kind": "unclassified"
+    },
+    "audit:nexus-navigation": {
+      "kind": "quarantined",
+      "reason": "Fails on main: the canonical NexusTopNav no longer carries the approved compact mobile menu treatment the contract pins. Clears when the nav is restored or the contract is amended to the current design."
+    },
+    "audit:no-auto-action-boundary": {
+      "kind": "pr-gate"
+    },
+    "audit:no-legacy-context-language": {
+      "kind": "unclassified"
+    },
+    "audit:no-legacy-tenant-inputs": {
+      "kind": "unclassified"
+    },
+    "audit:operator-promotion-workflow": {
+      "kind": "unclassified"
+    },
+    "audit:planes": {
+      "kind": "unclassified"
+    },
+    "audit:post-promotion-module-read-proof": {
+      "kind": "unclassified"
+    },
+    "audit:promotion-execution-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:render-snapshot": {
+      "kind": "unclassified"
+    },
+    "audit:retired-tenant-inventory": {
+      "kind": "unclassified"
+    },
+    "audit:route-archive": {
+      "kind": "unclassified"
+    },
+    "audit:route-reachability": {
+      "kind": "pr-gate"
+    },
+    "audit:runtime-supabase-imports": {
+      "kind": "pr-gate"
+    },
+    "audit:runtime-supabase-imports:guard": {
+      "kind": "pr-gate"
+    },
+    "audit:sanity": {
+      "kind": "unclassified"
+    },
+    "audit:skyharbor-applications-candidate": {
+      "kind": "unclassified"
+    },
+    "audit:skyharbor-candidate-version": {
+      "kind": "unclassified"
+    },
+    "audit:skyharbor-compatibility-snapshot": {
+      "kind": "unclassified"
+    },
+    "audit:source-ava-hard-qa": {
+      "kind": "unclassified"
+    },
+    "audit:source-candidate-consumption": {
+      "kind": "unclassified"
+    },
+    "audit:source-projection:all-tenants": {
+      "kind": "unclassified"
+    },
+    "audit:source-shadow-proof": {
+      "kind": "unclassified"
+    },
+    "audit:source-substrate-lineage": {
+      "kind": "unclassified"
+    },
+    "audit:stranded-intelligence-report": {
+      "kind": "unclassified"
+    },
+    "audit:synthetic-tenant-richness": {
+      "kind": "unclassified"
+    },
+    "audit:target-writer-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-candidate-version": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-graph-reconciliation": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-input-quality": {
+      "kind": "pr-gate"
+    },
+    "audit:tenant-isolation:data-quality": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-isolation:moves": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-manifest-completeness": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-packet-contract": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-packet-dry-run": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-quality": {
+      "kind": "unclassified"
+    },
+    "audit:tenant-v3-data": {
+      "kind": "unclassified"
+    },
+    "audit:tower-active-budget-envelopes": {
+      "kind": "unclassified"
+    },
+    "audit:tower-candidate-consumption": {
+      "kind": "unclassified"
+    },
+    "audit:tower-cxo-claude-story": {
+      "kind": "unclassified"
+    },
+    "audit:tower-data-path-fix": {
+      "kind": "unclassified"
+    },
+    "audit:tower-demo-story-data": {
+      "kind": "unclassified"
+    },
+    "audit:tower-fact-lineage": {
+      "kind": "unclassified"
+    },
+    "audit:tower-governed-candidate-load": {
+      "kind": "unclassified"
+    },
+    "audit:tower-knowledge-pressure": {
+      "kind": "unclassified"
+    },
+    "audit:tower-mart-data-loading-qa": {
+      "kind": "unclassified"
+    },
+    "audit:tower-tab-data-lineage": {
+      "kind": "unclassified"
+    },
+    "audit:tower-v3-meridian-context-pack": {
+      "kind": "unclassified"
+    },
+    "audit:tower-v3-runtime-wiring": {
+      "kind": "unclassified"
+    },
+    "audit:tower-v3-source-of-truth-alignment": {
+      "kind": "unclassified"
+    },
+    "audit:v3-only-active-architecture": {
+      "kind": "unclassified"
+    },
+    "audit:v6-v7-phase1-cleanup": {
+      "kind": "unclassified"
+    },
+    "audit:v6-v7-sunset": {
+      "kind": "unclassified"
+    },
+    "audit:vercel-production-runtime": {
+      "kind": "pr-gate"
+    },
+    "audit:vercel-production-runtime:check": {
+      "kind": "pr-gate"
+    },
+    "validate:context-corpus": {
+      "kind": "pr-gate"
+    },
+    "validate:context-corpus:agent-readiness": {
+      "kind": "unclassified"
+    },
+    "validate:context-corpus:duplicates": {
+      "kind": "unclassified"
+    },
+    "validate:context-corpus:exceptions": {
+      "kind": "unclassified"
+    },
+    "validate:context-corpus:manifests": {
+      "kind": "unclassified"
+    },
+    "validate:context-corpus:tenant-coverage": {
+      "kind": "unclassified"
+    },
+    "validate:fact-basis": {
+      "kind": "unclassified"
+    },
+    "validate:fact-basis:strict": {
+      "kind": "unclassified"
+    },
+    "validate:fact-duplication": {
+      "kind": "unclassified"
+    },
+    "validate:fixture-fitness": {
+      "kind": "unclassified"
+    },
+    "validate:fixture-fitness:strict": {
+      "kind": "unclassified"
+    },
+    "validate:no-real-vendor-parties": {
+      "kind": "unclassified"
+    },
+    "validate:no-sunset-tenant-residue": {
+      "kind": "unclassified"
+    },
+    "validate:pricing-role-coverage": {
+      "kind": "unclassified"
+    },
+    "validate:spend-plausibility": {
+      "kind": "unclassified"
+    },
+    "validate:spend-plausibility:strict": {
+      "kind": "unclassified"
+    }
+  }
+}
