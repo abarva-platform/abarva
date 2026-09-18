@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source workspace navigation now uses the same quiet tab hierarchy as the Control Tower: text tabs with a teal active underline, compact segmented secondary views, lighter heading typography, and restrained control surfaces. The initial loading shell follows the same treatment, so navigation does not change appearance while data loads.
+Source workspace navigation follows the active Control Tower executive view: equally sized neutral tabs with a filled teal selected state, compact segmented secondary views, lighter heading typography, and restrained control surfaces. The Source command metrics use a flat, divided grid. The initial loading shell follows the same tab treatment, so navigation does not change appearance while data loads.
 
 ## Layer Impact
 
@@ -28,6 +28,7 @@ Source workspace navigation now uses the same quiet tab hierarchy as the Control
 
 - Source workspace CSS for primary navigation, secondary views, header type, and control surfaces.
 - Source workspace loading shell tab presentation.
+- Live executive-view alignment after comparing the deployed Source and Tower pages; the earlier underline treatment is superseded.
 
 ## QA / Validation
 
