@@ -68,14 +68,25 @@ is also returned to the caller.
   `liveTenantContext` is passed to it; `.catch(() => null)` is replaced by a
   `try/catch` that logs `[source.nexus-ask.canvas-chat-model.failed]` and
   appends a caller-visible warning naming the failure.
-- `src/lib/source/__tests__/source-canvas-chat.test.ts` — new: six behavioral
+- `src/lib/source/__tests__/source-canvas-chat.test.ts` — new: seven behavioral
   tests driving the real function the route calls.
+
+### Egress audit consequence
+
+The system prompt now carries tenant evidence excerpts, and the audit row hashes
+whatever the caller hands to the egress preflight's `prompt` field. Passing only
+the user's question would leave `ai_egress_audit.prompt_hash` understating what
+left the boundary. The preflight is therefore called with the composed system
+prompt plus the user message, matching what the sibling module already did, and
+the authenticated user id is stamped on the audit row. Neither changes whether a
+call is permitted — the policy decision does not read the prompt — only what the
+audit trail records.
 
 ## QA / Validation
 
 - **New behavioral suite** `src/lib/source/__tests__/source-canvas-chat.test.ts`
   — authored ahead of the fix. Red: **5 failed, 1 passed**. After the fix:
-  **6 passed, 0 failed**. It drives the real `callSourceCanvasChatModel` with
+  **6 passed, 0 failed**; **7 passed** once the egress-hash assertion was added. It drives the real `callSourceCanvasChatModel` with
   only the Anthropic egress client faked, and asserts on the system prompt the
   model actually receives — an assertion a composed-but-unsent rule cannot pass.
 - **Mutation checks** (the guard must be able to fail):
@@ -83,7 +94,9 @@ is also returned to the caller.
     **3 failed, 3 passed**.
   - Return `warnings: []` instead of the citation-gap/drift warnings →
     **1 failed, 5 passed**.
-  - Both reverted; suite back to 6 passed.
+  - Hand the egress preflight the bare user prompt again instead of the composed
+    payload → **1 failed, 6 passed**.
+  - All reverted; suite back to 7 passed.
 - **Regression baseline, same scope** (`src/lib/source/__tests__` and
   `src/app/api/v1/source`, excluding the new file): **16 failing before, 16
   failing after**, 826 passing in both. The 7 red suites are pre-existing and
@@ -124,6 +137,11 @@ is also returned to the caller.
 
 ## Known Gaps
 
+- The egress preflight's `prompt` field is the audit hash input, not a
+  redaction input; no scrub runs over it here. Whether confidential evidence
+  excerpts should be hashed whole, or scrubbed before hashing, is a policy
+  question this change does not settle — it only stops the hash from covering less than what
+  egressed.
 - The resolved `evidenceCitations` are returned by `callSourceCanvasChatModel`
   but are not yet attached to `sourceAnswer.evidenceCitations` on the JSON
   response; that field is still owned by the deterministic composer, and
