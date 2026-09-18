@@ -263,6 +263,7 @@ export async function POST(
         briefingContext: stubResponse.summary ?? "",
         tenantKey: activeClient?.key ?? null,
         tenantId: tenancy.clientId,
+        userId: tenancy.userId,
         liveTenantContext,
       });
       claudeSummary = modelResult.text;

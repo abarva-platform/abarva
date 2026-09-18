@@ -185,6 +185,31 @@ describe("Source canvas chat grounding", () => {
     expect(systemPrompt).toContain("MUST cite a loaded evidence ID like [E1]");
   });
 
+  it("hashes the evidence-bearing prompt at the egress boundary", async () => {
+    // The audit row hashes whatever reaches `prompt`. Sending only the user's
+    // question would leave the audit trail understating what egressed, now that
+    // the system prompt carries tenant evidence excerpts.
+    mockModelAnswer("The AMS baseline is USD 32,000,000 [E1].");
+
+    await callSourceCanvasChatModel({
+      prompt: "What is the AMS baseline?",
+      briefingContext: "Deterministic briefing.",
+      tenantKey: "apexretail",
+      tenantId: "tenant-1",
+      userId: "user-1",
+      liveTenantContext: snapshot(),
+    });
+
+    const preflightArgs = preflightAnthropicDirectClient.mock.calls[0][0];
+    expect(preflightArgs.userId).toBe("user-1");
+    expect(preflightArgs.dataClass).toBe("confidential");
+    expect(preflightArgs.prompt).toContain(
+      "Annual charge of USD 32,000,000 with a 3% uplift each year.",
+    );
+    expect(preflightArgs.prompt).toContain("MUST cite a loaded evidence ID");
+    expect(preflightArgs.prompt).toContain("What is the AMS baseline?");
+  });
+
   it("throws rather than answering when egress is denied", async () => {
     preflightAnthropicDirectClient.mockResolvedValue({
       ok: false,
