@@ -40,6 +40,7 @@ import type {
   OptimizationNegotiatedOutcomeRead,
 } from "@/lib/source/data-model/contract-optimization-opportunity";
 import {
+  classifyOpportunityTrace,
   summarizeOpportunityTraceability,
   type OpportunityTraceabilitySummary,
 } from "@/lib/source/data-model/contract-optimization-traceability";
@@ -1082,7 +1083,7 @@ function StrategyApprovalPacket({
         ) : null}
         <StrategyPacketItem
           label="Value basis"
-          value={`${labelValueType(opportunity.valueType)} · ${formatMaybeUsd(opportunity.amountUsd)} · ${labelAmountState(opportunity.amountState)}`}
+          value={`${labelValueType(opportunity.valueType)} · ${formatMaybeUsd(opportunity.amountUsd)} · ${labelOpportunityAmountBasis(opportunity)}`}
         />
         <StrategyPacketItem
           label="Evidence basis"
@@ -2050,11 +2051,16 @@ function labelValueType(value: string): string {
   return value;
 }
 
-function labelAmountState(value: string): string {
-  if (value === "exact") return "calculation run present";
-  if (value === "range") return "range estimate";
-  if (value === "not_sized") return "not sized";
-  return value;
+export function labelOpportunityAmountBasis(
+  opportunity: ContractOptimizationOpportunity,
+): string {
+  const trace = classifyOpportunityTrace(opportunity);
+  if (trace.state === "traced") return "Reproducible from calculation run";
+  if (trace.state === "restated") return "Amount disagrees with calculation run";
+  if (trace.state === "not_sized") return "Not sized";
+  return opportunity.amountState === "range"
+    ? "Range stated; calculation not verified"
+    : "Amount stated; calculation not verified";
 }
 
 function labelEvidenceGrade(value: string): string {

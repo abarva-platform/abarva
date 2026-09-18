@@ -2238,6 +2238,8 @@ async function getPersistedContractOptimizationOpportunitySet(
     .filter((row) => textValue(row.status) !== "met")
     .map((row) => textValue(row.status_detail))
     .filter((value): value is string => Boolean(value));
+  const baseline = persistedBaselineRead(baselineRow, contract);
+  const baselineConflict = baseline.status === "conflict";
 
   return {
     tenantKey,
@@ -2247,22 +2249,23 @@ async function getPersistedContractOptimizationOpportunitySet(
       textValue(opportunityRows[0]?.vendor_id) ?? contract?.vendor_ref ?? null,
     vendorName: contract?.vendor_name ?? null,
     contractName: contract?.contract_name ?? null,
-    recommendation: opportunities.some(
+    recommendation: baselineConflict || opportunities.some(
       (opportunity) => opportunity.stage === "baseline_conflict",
     )
       ? "Build evidence before optimizing."
       : "Act now on governed evidence.",
-    recommendationDetail:
-      opportunities[0]?.narrative ??
-      "Optimization opportunities are loaded from the governed opportunity spine.",
-    actionState: opportunities.some(
+    recommendationDetail: baselineConflict
+      ? baseline.detail
+      : opportunities[0]?.narrative ??
+        "Optimization opportunities are loaded from the governed opportunity spine.",
+    actionState: baselineConflict || opportunities.some(
       (opportunity) => opportunity.stage === "baseline_conflict",
     )
       ? "request_evidence"
       : selectedOpportunityId
         ? "review_calculation"
         : "request_evidence",
-    baseline: persistedBaselineRead(baselineRow, contract),
+    baseline,
     selectedOpportunityId,
     opportunities,
     claims,
@@ -2427,10 +2430,16 @@ function persistedBaselineRead(
   contract: SourceContract360Row | null,
 ): OptimizationBaselineRead {
   const hasPersistedBaseline = Object.keys(baselineRow).length > 0;
-  const annualValueUsd =
-    numberValue(baselineRow.annual_value_usd) ??
-    numberValue(contract?.resolved_annual_value) ??
-    numberValue(contract?.annual_value);
+  const contractAnnualValueUsd =
+    numberValue(contract?.annual_value) ??
+    numberValue(contract?.resolved_annual_value);
+  const persistedAnnualValueUsd = numberValue(baselineRow.annual_value_usd);
+  const annualValueUsd = contractAnnualValueUsd ?? persistedAnnualValueUsd;
+  const annualValueDriftUsd =
+    contractAnnualValueUsd != null && persistedAnnualValueUsd != null
+      ? Math.abs(contractAnnualValueUsd - persistedAnnualValueUsd)
+      : 0;
+  const annualValueConflict = annualValueDriftUsd > 1;
   const actualAnnualSpendUsd =
     numberValue(baselineRow.actual_annual_spend_usd) ??
     numberValue(contract?.actual_annual_spend);
@@ -2439,18 +2448,25 @@ function persistedBaselineRead(
     numberValue(contract?.resolved_total_committed_value) ??
     numberValue(contract?.total_committed_value);
   const status =
-    readLiteral(baselineRow.baseline_state, ["ready", "conflict", "missing"]) ??
-    "missing";
+    annualValueConflict
+      ? "conflict"
+      : readLiteral(baselineRow.baseline_state, ["ready", "conflict", "missing"]) ??
+        "missing";
   const headline =
-    textValue(jsonObject(baselineRow.payload).headline) ??
-    (hasPersistedBaseline
-      ? "Commercial baseline is incomplete."
-      : "Commercial baseline needs pricing schedule tie-out.");
+    annualValueConflict
+      ? "Contract annual value and optimization baseline disagree."
+      : textValue(jsonObject(baselineRow.payload).headline) ??
+        (hasPersistedBaseline
+          ? "Commercial baseline is incomplete."
+          : "Commercial baseline needs pricing schedule tie-out.");
   const detail =
-    textValue(baselineRow.detail) ??
-    (hasPersistedBaseline
-      ? "Contract register values are available, but baseline detail still needs review before approving a value case."
-      : "Contract register values are loaded from Contract 360; pricing schedule rows are still pending, so value approval remains blocked.");
+    annualValueConflict
+      ? "Contract 360 and the persisted optimization baseline state different annual values. Resolve the source records before approving a value case."
+      : textValue(baselineRow.detail) ??
+        (hasPersistedBaseline
+          ? "Contract register values are available, but baseline detail still needs review before approving a value case."
+          : "Contract register values are loaded from Contract 360; pricing schedule rows are still pending, so value approval remains blocked.");
+  const baselineSourceRefs = jsonArray(baselineRow.source_refs);
 
   return {
     status,
@@ -2462,15 +2478,19 @@ function persistedBaselineRead(
     ),
     actualAnnualSpendUsd,
     totalCommittedValueUsd,
-    conflictAmountUsd: numberValue(baselineRow.conflict_amount_usd),
+    conflictAmountUsd: annualValueConflict
+      ? annualValueDriftUsd
+      : numberValue(baselineRow.conflict_amount_usd),
     sourceRefs:
-      jsonArray(baselineRow.source_refs).length > 0
-        ? jsonArray(baselineRow.source_refs)
-        : [
-            "source.contract_360.annual_value",
-            "source.contract_360.actual_annual_spend",
-            "source.contract_360.total_committed_value",
-          ],
+      annualValueConflict
+        ? [...new Set([...baselineSourceRefs, "source.contract_360.annual_value"])]
+        : baselineSourceRefs.length > 0
+          ? baselineSourceRefs
+          : [
+              "source.contract_360.annual_value",
+              "source.contract_360.actual_annual_spend",
+              "source.contract_360.total_committed_value",
+            ],
   };
 }
 
@@ -2509,6 +2529,24 @@ function persistedOpportunityFromRow(input: {
     (row) => textValue(row.valuation_type) === "potential",
   )?.amount_usd;
   const governedSizing = input.sizingClaim;
+  const calculatedOutput = input.calculationRun
+    ? input.calculationOutputsByRun
+        .get(textValue(input.calculationRun.calculation_run_id) ?? "")
+        ?.find((row) => textValue(row.output_key) === "calculated_amount_usd")
+    : undefined;
+  const calculatedAmount = numberValue(calculatedOutput?.amount_usd);
+  const calculatedClaimMatches =
+    governedSizing?.basis !== "calculated" ||
+    (calculation != null &&
+      governedSizing.calculationRunId ===
+        textValue(input.calculationRun?.calculation_run_id) &&
+      calculatedAmount != null &&
+      (governedSizing.amountUsd != null
+        ? Math.abs(governedSizing.amountUsd - calculatedAmount) <= 1
+        : governedSizing.amountLowUsd != null &&
+          governedSizing.amountHighUsd != null &&
+          calculatedAmount >= governedSizing.amountLowUsd &&
+          calculatedAmount <= governedSizing.amountHighUsd));
   const sizingIsSupported =
     governedSizing !== undefined &&
     governedSizing !== null &&
@@ -2519,7 +2557,8 @@ function persistedOpportunityFromRow(input: {
       ? Boolean(governedSizing.calculationRunId)
       : Boolean(governedSizing.benchmarkId)) &&
     (governedSizing.amountUsd != null ||
-      (governedSizing.amountLowUsd != null && governedSizing.amountHighUsd != null));
+      (governedSizing.amountLowUsd != null && governedSizing.amountHighUsd != null)) &&
+    calculatedClaimMatches;
   const governedAmount = sizingIsSupported
     ? governedSizing.amountUsd ?? governedSizing.amountHighUsd ?? null
     : null;
@@ -2557,8 +2596,10 @@ function persistedOpportunityFromRow(input: {
       negotiationDetailFromPayload(payload)?.ownerRole ??
       textValue(input.row.owner),
     blockingGap:
-      input.sizingClaim === null &&
-      /finance confirmation|owner approval/i.test(textValue(input.row.blocking_gap) ?? "")
+      governedSizing?.basis === "calculated" && !calculatedClaimMatches
+        ? "The authored sizing claim disagrees with its calculation run or the run output is missing. Reconcile the claim before using an amount."
+        : input.sizingClaim === null &&
+          /finance confirmation|owner approval/i.test(textValue(input.row.blocking_gap) ?? "")
         ? "No supported sizing calculation or accepted benchmark is recorded."
         : textValue(input.row.blocking_gap) ??
           textValue(blockingRequirement?.status_detail),

@@ -12,7 +12,7 @@ import {
 } from "@testing-library/react";
 import { TextDecoder, TextEncoder } from "util";
 
-import { SourceOptimizeContractPage } from "../SourceOptimizeContractPage";
+import { labelOpportunityAmountBasis, SourceOptimizeContractPage } from "../SourceOptimizeContractPage";
 import { trimContractOptimizationOpportunitySetForClient } from "@/lib/source/data-model/contract-optimization-client-payload";
 import { summarizeOpportunityTraceability } from "@/lib/source/data-model/contract-optimization-traceability";
 import type { ContractOptimizationSpine } from "@/lib/source/data-model/contract-optimization-spine";
@@ -702,6 +702,9 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByTestId("strategy-approval-packet")).toHaveTextContent(
       "Controlled outreach only; Finance/Tower still controls realized value.",
     );
+    expect(screen.getByTestId("strategy-approval-packet")).toHaveTextContent(
+      "Reproducible from calculation run",
+    );
 
     expect(
       screen.getByTestId("create-optimize-approval-request"),
@@ -731,6 +734,14 @@ describe("SourceOptimizeContractPage", () => {
     expect(screen.getByTestId("workflow-action-message")).toHaveTextContent(
       "Strategy approval request is ready for review.",
     );
+  });
+
+  it("does not call an authored exact amount calculated without a run", () => {
+    const opportunity = makeOpportunitySet().opportunities[0];
+    expect(labelOpportunityAmountBasis({
+      ...opportunity,
+      calculation: null,
+    })).toBe("Amount stated; calculation not verified");
   });
 
   it("records an approval decision against a pending strategy request", async () => {
