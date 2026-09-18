@@ -7,6 +7,7 @@ import {
 } from "@/lib/source/data-model/read-adapter";
 import type { SourceContract360Row } from "@/lib/source/data-model/types";
 import { classifyOpportunityTrace } from "@/lib/source/data-model/contract-optimization-traceability";
+import { opportunityForAvaTrace } from "@/lib/source/facts/view/ava-contract-grounding-context";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { resolveSourceWorkspaceContractId } from "./source-workspace-visual-answer";
 
@@ -28,14 +29,10 @@ function contractForAnswer(contract: SourceContract360Row) {
     contractId: contract.contract_id,
     vendorName: contract.vendor_name,
     contractName: contract.contract_name,
-    annualValueUsd: contract.annual_value_conflict_flag
-      ? contract.resolved_annual_value
-      : contract.annual_value,
+    annualValueUsd: contract.annual_value,
     annualValueConflict: contract.annual_value_conflict_flag === true,
     annualValueProvenance: contract.annual_value_conflict_flag
-      ? contract.resolved_annual_value == null
-        ? "unresolved_conflict"
-        : "resolved_contract_360"
+      ? "contract_360_stated_conflict"
       : "contract_360",
     actualAnnualSpendUsd: contract.actual_annual_spend,
     totalCommittedValueUsd: contract.total_committed_value_conflict_flag
@@ -123,9 +120,8 @@ export async function buildServerSourceAnswerContext(input: {
           ...contractForAnswer(contract),
           ...(opportunitySet?.baseline.status === "conflict"
             ? {
-                annualValueUsd: null,
                 annualValueConflict: true,
-                annualValueProvenance: "unresolved_baseline_conflict",
+                annualValueProvenance: "contract_360_stated_conflict",
               }
             : {}),
         },
@@ -133,7 +129,9 @@ export async function buildServerSourceAnswerContext(input: {
           opportunities: (opportunitySet?.opportunities ?? [])
             .filter((opportunity) => opportunity.contractId === contractId)
             .map((opportunity) => {
-              const trace = classifyOpportunityTrace(opportunity);
+              const trace = classifyOpportunityTrace(
+                opportunityForAvaTrace(opportunity, opportunitySet?.claims),
+              );
               const calculated =
                 trace.state === "traced" &&
                 opportunity.amountState !== "not_sized";
@@ -154,9 +152,6 @@ export async function buildServerSourceAnswerContext(input: {
                     ? "not_sized"
                     : trace.state,
                 amountTraceLabel: trace.label,
-                calculationRuleId: opportunity.calculation?.ruleId ?? null,
-                calculationRuleVersion:
-                  opportunity.calculation?.ruleVersion ?? null,
                 stageRaw: opportunity.stage,
                 confidence: opportunity.confidence,
                 grade: opportunity.evidenceGrade,

@@ -35,6 +35,10 @@ import { buildContractOptimizationEvidenceReadiness } from "@/lib/source/data-mo
 import { summarizeOpportunityTraceability } from "@/lib/source/data-model/contract-optimization-traceability";
 import { deriveOptimizeWorkflowPosition } from "@/lib/source/data-model/contract-optimization-workflow-step";
 import type { OptimizationOpportunityValueType } from "@/lib/source/data-model/contract-optimization-opportunity";
+import type {
+  ContractOptimizationOpportunity,
+  ContractOpportunityClaim,
+} from "@/lib/source/data-model/contract-optimization-opportunity";
 import {
   getContract360,
   getContractIntelligence,
@@ -74,6 +78,38 @@ const VALUE_TYPE_LABEL: Record<OptimizationOpportunityValueType, string> = {
   avoided_cost: "Avoided cost",
   negotiated_improvement: "Negotiated improvement",
 };
+
+export function opportunityForAvaTrace(
+  opportunity: ContractOptimizationOpportunity,
+  claims: readonly ContractOpportunityClaim[] = [],
+): ContractOptimizationOpportunity {
+  // The persisted read adapter verifies the claim-to-run ID before emitting a
+  // sized amount. The aVa read checks the exposed claim and output as well.
+  const sizingClaim = claims.find(
+    (claim) =>
+      claim.role === "sizing" &&
+      claim.opportunityId === opportunity.opportunityId &&
+      claim.contractId === opportunity.contractId &&
+      claim.basis === "calculated" &&
+      claim.evidenceStatus === "supported" &&
+      Boolean(claim.calculationRunId?.trim()) &&
+      claim.sourceRefs.length > 0 &&
+      claim.amountUsd != null &&
+      opportunity.amountUsd != null &&
+      Math.abs(claim.amountUsd - opportunity.amountUsd) <= 1 &&
+      opportunity.calculation != null &&
+      Number.isFinite(opportunity.calculation.calculatedAmountUsd) &&
+      Math.abs(
+        claim.amountUsd - opportunity.calculation.calculatedAmountUsd,
+      ) <= 1,
+  );
+  return {
+    ...opportunity,
+    amountUsd:
+      opportunity.amountState === "not_sized" ? null : opportunity.amountUsd,
+    calculation: sizingClaim ? opportunity.calculation : null,
+  };
+}
 
 const CONTRACT_SOURCE_EVIDENCE_MAP = [
   {
@@ -196,9 +232,7 @@ export async function buildAvaSourceContractGrounding(
   });
   const traceability = summarizeOpportunityTraceability(
     (opportunitySet?.opportunities ?? []).map((opportunity) =>
-      opportunity.amountState === "not_sized"
-        ? { ...opportunity, amountUsd: null }
-        : opportunity,
+      opportunityForAvaTrace(opportunity, opportunitySet?.claims),
     ),
   );
   const position = deriveOptimizeWorkflowPosition({
@@ -230,11 +264,13 @@ export async function buildAvaSourceContractGrounding(
   const valueProofClosed =
     financeConfirmedUsd > 0 && financeRequest?.approvalState === "approved";
 
-  const ledgerTotals = buildLedgerTotals({
-    tracedByValueType: traceability.tracedByValueType,
-    financeConfirmedUsd,
-    valueProofClosed,
-  });
+  const ledgerTotals = traceability.tracedCount > 0
+    ? buildLedgerTotals({
+        tracedByValueType: traceability.tracedByValueType,
+        financeConfirmedUsd,
+        valueProofClosed,
+      })
+    : [];
   const largestLedger = ledgerTotals
     .filter((row) => row.valueType !== "realized_value")
     .reduce<
@@ -287,24 +323,18 @@ export async function buildAvaSourceContractGrounding(
     firstNonBlank(contract?.vendor_name, opportunitySet?.vendorName) ??
     "Vendor not established";
   const baselineConflict = opportunitySet?.baseline.status === "conflict";
-  const annualValueUsd = baselineConflict
-    ? null
-    : contract
-      ? contract.annual_value_conflict_flag
-        ? contract.resolved_annual_value
-        : contract.annual_value
+  const annualValueUsd = contract
+    ? contract.annual_value
+    : baselineConflict
+      ? null
       : opportunitySet?.baseline.annualValueUsd;
 
   const lines: string[] = [
     `AUTHORITATIVE SOURCE CONTRACT GROUNDING (LIVE — the same governed reads the Optimize Contract page renders, tenant "${tenantKey}", contract ${trimmedId}):`,
     `Exact contract display name: "${contractDisplayName}". Exact vendor display name: "${vendorDisplayName}". Use these exact names; do not substitute a similar name from generic context or prior examples.`,
-    // `resolved_annual_value` wins whenever extraction disagreed with the
-    // stated value; quoting the raw column there would repeat a known conflict.
     `Contract: ${contractDisplayName}. Vendor: ${vendorDisplayName}. Annual value: ${fmtUsd(annualValueUsd)}.${
       baselineConflict || contract?.annual_value_conflict_flag
-        ? annualValueUsd == null
-          ? " (The annual-value conflict remains unresolved; the stated and extracted amounts are not a reconciled baseline.)"
-          : " (Stated annual value and extracted value disagreed; the resolved Contract 360 value is quoted.)"
+        ? " (Contract 360 stated annual value; extraction or persisted baseline disagrees. The conflict is unresolved, so this is not a reconciled baseline.)"
         : ""
     }`,
     "SEMANTIC VALUE GUARD: Annual value is the contract header value, not an annual commitment. Observed spend is consumption or spend evidence, not AP-paid cash. Never call annual value a commitment, and never say an amount was paid unless governed AP/payment evidence explicitly establishes payment status.",
@@ -324,12 +354,12 @@ export async function buildAvaSourceContractGrounding(
         ? ` Missing: ${missingFamilies.join(", ")}.`
         : ""
     }`,
-    `Opportunity value that a calculation run can reproduce: ${fmtUsd(traceability.tracedAmountUsd)}. Stated value with no reproducible calculation run: ${fmtUsd(
+    `Opportunity value that a calculation run can reproduce: ${traceability.tracedCount > 0 ? fmtUsd(traceability.tracedAmountUsd) : "not established"}. Stated value with no reproducible calculation run: ${fmtUsd(
       traceability.untracedAmountUsd,
     )}.`,
-    `Chart-safe ledger totals from reproducible calculation runs: ${ledgerTotals
-      .map((row) => `${row.label} ${fmtUsd(row.amountUsd)}`)
-      .join("; ")}.`,
+    `Chart-safe ledger totals from reproducible calculation runs: ${ledgerTotals.length > 0
+      ? ledgerTotals.map((row) => `${row.label} ${fmtUsd(row.amountUsd)}`).join("; ")
+      : "not established; calculation run identity is not exposed by the current opportunity read"}.`,
     largestLedger
       ? `Largest reproducible non-realized ledger for chart narration: ${largestLedger.label} at ${fmtUsd(largestLedger.amountUsd)}. Quote this line instead of recomputing totals from the opportunity rows.`
       : "",
@@ -343,6 +373,7 @@ export async function buildAvaSourceContractGrounding(
           "CLAIM-LEVEL PROVENANCE (use this to explain why a statement may or may not be made):",
           ...claimLines,
           "A claim with basis not_recorded, evidence missing/not_established, or review draft is not a supported external fact.",
+          "A calculated sizing claim is not a reproducible amount unless it appears in the run-linked reproducible total above.",
         ].join("\n")
       : "Claim-level provenance: no claim rows are loaded for this contract; do not upgrade opportunity prose into a governed fact.",
     opportunityExportRows.length > 0

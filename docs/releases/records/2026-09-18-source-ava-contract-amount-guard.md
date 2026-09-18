@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source contract answers now withhold an annual value when its baseline conflict is unresolved. They identify opportunity amounts that lack a matching calculation run as stated, unverified amounts and exclude those amounts from calculated totals and charts.
+Source contract answers now show Contract 360's stated annual value with explicit unresolved-conflict wording when the baseline disagrees. Opportunity amounts without a supported calculated sizing claim and matching output remain stated, unverified amounts outside reproducible totals and charts.
 
 ## Layer Impact
 
@@ -26,12 +26,12 @@ Layer 4, Products: Source aVa answer context, grounding text, and deterministic 
 
 ## Changes Included
 
-The server answer context carries contract conflict status and opportunity calculation trace state. Contract grounding labels unreconciled amounts in answer and export-ready rows. Deterministic visual answers withhold unresolved annual values and keep unverified stated amounts out of sized totals and charts. Focused behavioral tests cover conflict and authored-only amount paths.
+The server answer context carries Contract 360's stated annual value, conflict status, and opportunity trace state. Contract grounding requires a supported calculated sizing claim and matching output before using the persisted read adapter's run-linked amount. It labels unreconciled amounts in answer and export-ready rows. Deterministic visual answers keep unverified stated amounts out of sized totals and charts. Focused behavioral tests cover conflicts and authored-only amount paths.
 
 ## QA / Validation
 
-- Focused Jest suites: 40 tests passed.
-- Deliberate guard mutation: disabling the opportunity trace check made the authored-only amount test fail; restoring it passed.
+- Focused Jest suites: 42 tests passed.
+- Deliberate guard mutations: disabling the visual trace check promoted an authored-only amount into a sized total; disabling the linked run-ID check promoted a descriptive fallback calculation into a reproducible total. Both tests passed after restoration.
 - Focused ESLint: passed.
 - Full TypeScript check with an 8 GB Node heap: passed.
 - `npm run release:check`: passed.
@@ -61,4 +61,4 @@ The PR diff, focused test output, mutation result, lint, TypeScript, and release
 
 ## Known Gaps
 
-The export packet serializes the already-gated answer and grounding block, so this guard is inherited by that path; signed-in export parity is unproven. Broader Source export surfaces and economics reconciliation, including benchmark-based sizing and finance-confirmed value, remain separate work. This candidate does not establish full Stage 09 parity.
+The aVa trace bucket relies on the merged persisted read adapter's claim-run ID check; `OpportunityCalculationRead` does not expose a run ID for independent verification by aVa. Fallback rows and partial claims remain untraced. The export packet serializes the already-gated answer and grounding block, so this guard is inherited by that path; signed-in export parity is unproven. Broader Source export surfaces and economics reconciliation, including benchmark-based sizing and finance-confirmed value, remain separate work. This candidate does not establish full Stage 09 parity.

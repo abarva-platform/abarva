@@ -349,7 +349,7 @@ function contractContextFromRecord(
     contractName,
     annualValueUsd:
       booleanValue(raw.annualValueConflict) === true &&
-      stringValue(raw.annualValueProvenance) !== "resolved_contract_360"
+      stringValue(raw.annualValueProvenance) !== "contract_360_stated_conflict"
         ? null
         : numberValue(raw.annualValueUsd),
     annualValueConflict: booleanValue(raw.annualValueConflict) === true,
@@ -1340,7 +1340,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       sourceClass: "tenant-fact",
       recordId: contract.contractId,
       excerpt: contract.annualValueConflict
-        ? "Selected contract facts come from Source Contract 360; annual value is withheld while the baseline conflict remains unresolved."
+        ? "Selected contract facts come from Source Contract 360; annual value is its stated field while the baseline disagreement remains unresolved."
         : "Selected contract facts come from the governed Source Contract 360 surface context.",
       confidence: contract.annualValueConflict ? "medium" : "high",
     },
@@ -1557,7 +1557,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   const loadedContractFacts = [
     `vendor ${contract.vendorName}`,
     `contract ID ${contract.contractId}`,
-    `recorded annual value ${contract.annualValueConflict && contract.annualValueUsd == null ? "Not established (annual-value conflict unresolved)" : currencyLabel(contract.annualValueUsd)}${contract.annualValueProvenance === "resolved_contract_360" ? " (resolved Contract 360 value after extraction conflict)" : ""}`,
+    `recorded annual value ${currencyLabel(contract.annualValueUsd)}${contract.annualValueConflict ? " (Contract 360 stated value; annual-value conflict unresolved, not a reconciled baseline)" : ""}`,
     `total committed contract value ${currencyLabel(contract.totalCommittedValueUsd)}`,
     `actual annual spend ${currencyLabel(contract.actualAnnualSpendUsd)}`,
     `end date ${contract.endDate ?? "not established"}`,

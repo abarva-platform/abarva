@@ -1217,28 +1217,30 @@ describe("Source Workspace visual aVa answer", () => {
     );
   });
 
-  it("withholds a conflicted selected annual value even when a direct page hint has the raw amount", () => {
+  it("uses the Contract 360 stated annual value with conflict wording over a direct page hint", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: { selectedContract: Record<string, unknown> };
     };
     context.sourceContract360Mode = true;
     context.contractId = "CTR-090";
-    context.annualValue = 43_500_000;
+    context.annualValue = 44_000_000;
     context.sourceV4.selectedContract.annualValueUsd = 43_500_000;
     context.sourceV4.selectedContract.annualValueConflict = true;
+    context.sourceV4.selectedContract.annualValueProvenance = "contract_360_stated_conflict";
 
     const answer = buildSourceWorkspaceVisualAnswer({
       query: "What is the annual value of CTR-090?",
       surfaceContext: context,
     });
     expect(answer?.directAnswer).toContain(
-      "recorded annual value Not established",
+      "recorded annual value $43.5M",
     );
     expect(answer?.directAnswer).toContain("annual-value conflict");
-    expect(answer?.directAnswer).not.toContain("$43.5M");
+    expect(answer?.directAnswer).toContain("not a reconciled baseline");
+    expect(answer?.directAnswer).not.toContain("recorded annual value $44M");
     expect(
       answer?.metricsUsed.find((metric) => metric.id === "annual-value")?.value,
-    ).toBe("Not established");
+    ).toBe(43_500_000);
   });
 
   it("keeps an authored-only opportunity amount visible as unverified but out of calculated totals", () => {
