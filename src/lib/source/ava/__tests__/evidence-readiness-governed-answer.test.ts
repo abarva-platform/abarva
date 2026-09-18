@@ -18,7 +18,7 @@ function artifact(
 ): SourceArtifactRegistryRecordWithContent {
   return {
     id: "artifact-1",
-    tenantKey: "apexretail",
+    tenantKey: "meridian",
     sourceEventId: "event-1",
     sourceEventRowId: null,
     stageKey: "scope",
@@ -151,7 +151,7 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
     const answer = await buildEvidenceReadinessGovernedAnswer({
       eventId: "event-1",
       eventAliases: ["SRC-001"],
-      clientKey: "apexretail",
+      clientKey: "meridian",
       tenantId: "tenant-1",
       question: "Which uploaded evidence is parsed and search-ready?",
     });
@@ -163,7 +163,7 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
       "SRC-001",
     );
     expect(answer).not.toBeNull();
-    expect(answer!.tenantKey).toBe("apex-retail");
+    expect(answer!.tenantKey).toBe("meridian-health");
     expect(answer!.intent).toBe("evidence_processing_readiness");
     expect(answer!.status).toBe("answered");
     expect(answer!.artifacts.map((item) => item.artifact)).toEqual([
@@ -196,7 +196,7 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
 
     const answer = await buildEvidenceReadinessGovernedAnswer({
       eventId: "event-empty",
-      clientKey: "apexretail",
+      clientKey: "meridian",
       tenantId: "tenant-1",
       question: "Show evidence readiness status",
     });
@@ -223,7 +223,7 @@ describe("buildEvidenceReadinessGovernedAnswer", () => {
 
     const answer = await buildEvidenceReadinessGovernedAnswer({
       eventId: "event-restricted",
-      clientKey: "apexretail",
+      clientKey: "meridian",
       tenantId: "tenant-1",
       question: "Which files are parsed?",
     });

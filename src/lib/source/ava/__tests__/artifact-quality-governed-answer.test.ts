@@ -21,7 +21,7 @@ function artifact(
 ): SourceArtifactRegistryRecordWithContent {
   return {
     id: "artifact-1",
-    tenantKey: "apexretail",
+    tenantKey: "meridian",
     sourceEventId: "event-1",
     sourceEventRowId: null,
     stageKey: "scope",
@@ -120,7 +120,7 @@ describe("sourceDataClassificationToClassification", () => {
 describe("governedCandidateFromSourceArtifact", () => {
   it("maps a registry row to an honest governed artifact candidate", () => {
     const candidate = governedCandidateFromSourceArtifact(artifact(), {
-      clientKey: "apex-retail",
+      clientKey: "meridian-health",
       tenantId: "tenant-1",
     });
 
@@ -140,7 +140,7 @@ describe("governedCandidateFromSourceArtifact", () => {
     const candidate = governedCandidateFromSourceArtifact(
       artifact({ dataClassification: "Restricted" }),
       {
-        clientKey: "apex-retail",
+        clientKey: "meridian-health",
         tenantId: "tenant-1",
       },
     );
@@ -174,7 +174,7 @@ describe("buildArtifactQualityGovernedAnswer", () => {
 
     const answer = await buildArtifactQualityGovernedAnswer({
       eventId: "event-1",
-      clientKey: "apexretail",
+      clientKey: "meridian",
       tenantId: "tenant-1",
       question: "How is artifact quality?",
     });
@@ -183,7 +183,7 @@ describe("buildArtifactQualityGovernedAnswer", () => {
       "event-1",
     );
     expect(answer).not.toBeNull();
-    expect(answer!.tenantKey).toBe("apex-retail");
+    expect(answer!.tenantKey).toBe("meridian-health");
     expect(answer!.intent).toBe("artifact_quality_lifecycle");
     expect(answer!.status).toBe("answered");
     expect(answer!.artifacts.map((item) => item.artifact)).toEqual([
@@ -205,7 +205,7 @@ describe("buildArtifactQualityGovernedAnswer", () => {
 
     const answer = await buildArtifactQualityGovernedAnswer({
       eventId: "event-empty",
-      clientKey: "apexretail",
+      clientKey: "meridian",
       tenantId: "tenant-1",
       question: "Which artifacts are missing?",
     });
