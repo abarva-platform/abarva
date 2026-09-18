@@ -1,15 +1,36 @@
 import {
   buildSkyHarborCtoReadinessPromptAddendum,
   buildSkyHarborCtoReadinessSource,
+  buildSkyHarborCtoReadinessNativeCanvasBlock,
   isSkyHarborCtoReadinessQuestion,
   isSkyHarborTenantKey,
 } from "../skyharbor-cto-readiness-source";
 
 describe("SkyHarbor CTO readiness ask source", () => {
+  it("provides an unavailable source without a readiness exhibit when curated IDs are absent", () => {
+    const query = "Is IROPS ready for autonomous recovery?";
+    const source = buildSkyHarborCtoReadinessSource(query, ["skyharbor-air"]);
+
+    expect(source?.detail).toMatch(/curated CTO readiness evidence is unavailable/i);
+    expect(source?.id).toBe("skyharbor-cto-readiness-unavailable");
+    expect(source?.confidence).toBe(0);
+    expect(source?.detail).not.toMatch(/IROPS-critical systems:|Recommended decision posture:/i);
+    expect(buildSkyHarborCtoReadinessNativeCanvasBlock(query, ["skyharbor-air"])).toBe("");
+    expect(buildSkyHarborCtoReadinessSource(query, ["other-tenant"])).toBeNull();
+    expect(buildSkyHarborCtoReadinessSource(query, ["other-skyharbor-tenant"])).toBeNull();
+    expect(buildSkyHarborCtoReadinessSource(query, ["meridian", "skyharbor-air"])).toBeNull();
+    expect(buildSkyHarborCtoReadinessSource(query, ["unknown-tenant", "skyharbor-air"])).toBeNull();
+    expect(buildSkyHarborCtoReadinessNativeCanvasBlock(query, ["meridian", "skyharbor-air"])).toBe("");
+    expect(buildSkyHarborCtoReadinessSource(query, ["skyharbor_global"])?.id)
+      .toBe("skyharbor-cto-readiness-unavailable");
+  });
   it("recognizes SkyHarbor tenant aliases", () => {
     expect(isSkyHarborTenantKey("skyharbor-air")).toBe(true);
-    expect(isSkyHarborTenantKey("SkyHarbor Air Group")).toBe(true);
+    expect(isSkyHarborTenantKey("skyharbor_global")).toBe(true);
+    expect(isSkyHarborTenantKey("skyharbor-global")).toBe(true);
+    expect(isSkyHarborTenantKey("SkyHarbor Air Group")).toBe(false);
     expect(isSkyHarborTenantKey("lakeshore-industries")).toBe(false);
+    expect(isSkyHarborTenantKey("other-skyharbor-tenant")).toBe(false);
   });
 
   it("recognizes CTO/IROPS readiness questions without matching unrelated prompts", () => {
@@ -35,7 +56,7 @@ describe("SkyHarbor CTO readiness ask source", () => {
     ).toBe(false);
   });
 
-  it("builds a high-priority tenant source only for SkyHarbor readiness questions", () => {
+  it("builds a refusal source only for exact SkyHarbor tenant aliases and readiness questions", () => {
     const source = buildSkyHarborCtoReadinessSource(
       "What is blocking agentic IROPS from scaling?",
       ["skyharbor-air"],
@@ -43,21 +64,11 @@ describe("SkyHarbor CTO readiness ask source", () => {
 
     expect(source).toMatchObject({
       type: "TENANT",
-      id: "skyharbor-cto-readiness",
-      name: "SkyHarbor CTO IROPS readiness context",
-      confidence: 0.92,
+      id: "skyharbor-cto-readiness-unavailable",
+      name: "SkyHarbor CTO IROPS readiness unavailable",
+      confidence: 0,
     });
-    expect(source?.detail).toContain(
-      "Recommended decision posture: fund readiness before autonomous scale.",
-    );
-    expect(source?.detail).toContain("IROPS AI recovery cockpit");
-    expect(source?.detail).toContain(
-      "datasets/tenant-inputs/active/skyharbor-air/current",
-    );
-    expect(source?.detail).not.toContain("skyharbor-air-synthetic-v6");
-    expect(source?.detail).toContain(
-      "Finance-approved disruption cost baseline",
-    );
+    expect(source?.detail).toContain("Curated CTO readiness evidence is unavailable");
     expect(source?.detail).not.toContain("lakeshore");
 
     expect(
@@ -73,17 +84,14 @@ describe("SkyHarbor CTO readiness ask source", () => {
     ).toBeNull();
   });
 
-  it("adds a prompt addendum that asks Claude to own tabs and assumptions", () => {
+  it("instructs the model to state the unavailable path", () => {
     const addendum = buildSkyHarborCtoReadinessPromptAddendum(
       "Is the IROPS AI case board-grade today?",
       ["skyharbor-air"],
     );
 
-    expect(addendum).toContain("SKYHARBOR CTO DEMO MODE");
-    expect(addendum).toContain("user-visible advisor identity is aVa");
-    expect(addendum).toContain("known SkyHarbor context");
-    expect(addendum).toContain("planning assumptions");
-    expect(addendum).toContain("client-signoff-required");
-    expect(addendum).toContain("Decision, Visual, Evidence, Assumptions");
+    expect(addendum).toContain("CTO READINESS UNAVAILABLE");
+    expect(addendum).toContain("State this refusal plainly");
+    expect(addendum).not.toContain("SKYHARBOR CTO DEMO MODE");
   });
 });

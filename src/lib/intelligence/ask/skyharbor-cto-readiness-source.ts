@@ -1,17 +1,11 @@
 import {
   buildSkyHarborCtoReadinessPacket,
+  CTO_READINESS_UNAVAILABLE,
   type ClaimMaturityEntry,
   type SkyHarborCtoReadinessPacket,
 } from "@/lib/intelligence/skyharbor-cto-readiness";
 import type { AskSource } from "./types";
-
-const SKYHARBOR_KEYS = new Set([
-  "skyharbor",
-  "skyharbor-air",
-  "skyharbor-air-group",
-  "skyharbor air",
-  "skyharbor air group",
-]);
+import { resolveTenantAlias } from "@/lib/tenant/aliases";
 
 const CTO_READINESS_TERMS = [
   /\birops\b/i,
@@ -30,17 +24,19 @@ const CTO_READINESS_TERMS = [
   /\bboard[-\s]?grade\b/i,
 ];
 
-function normalizeTenantKey(value: string | null | undefined): string {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase();
-}
-
 export function isSkyHarborTenantKey(
   value: string | null | undefined,
 ): boolean {
-  const normalized = normalizeTenantKey(value);
-  return SKYHARBOR_KEYS.has(normalized) || normalized.includes("skyharbor");
+  return resolveTenantAlias(value)?.canonicalKey === "skyharbor-air";
+}
+
+function hasSkyHarborTenantContext(
+  tenantKeys: Array<string | null | undefined>,
+): boolean {
+  const suppliedKeys = tenantKeys.filter((key): key is string => Boolean(key?.trim()));
+  return suppliedKeys.length > 0 && suppliedKeys.every(
+    (key) => resolveTenantAlias(key)?.canonicalKey === "skyharbor-air",
+  );
 }
 
 export function isSkyHarborCtoReadinessQuestion(query: string): boolean {
@@ -74,6 +70,9 @@ function formatClaimMaturity(claims: ClaimMaturityEntry[]): string {
 export function formatSkyHarborCtoReadinessSourceDetail(
   packet: SkyHarborCtoReadinessPacket,
 ): string {
+  if (packet.availability === "unavailable") {
+    return `${CTO_READINESS_UNAVAILABLE}\nDo not present broad keyword matches, readiness counts, a decision posture, or planning assumptions as curated evidence.`;
+  }
   return [
     "SkyHarbor airline CTO readiness context for IROPS, disruption recovery, and agentic AI scaling.",
     "",
@@ -105,15 +104,19 @@ export function buildSkyHarborCtoReadinessSource(
   query: string,
   tenantKeys: Array<string | null | undefined>,
 ): AskSource | null {
-  if (!tenantKeys.some(isSkyHarborTenantKey)) return null;
+  if (!hasSkyHarborTenantContext(tenantKeys)) return null;
   if (!isSkyHarborCtoReadinessQuestion(query)) return null;
   const packet = buildSkyHarborCtoReadinessPacket();
   return {
     type: "TENANT",
-    id: "skyharbor-cto-readiness",
-    name: "SkyHarbor CTO IROPS readiness context",
+    id: packet.availability === "available"
+      ? "skyharbor-cto-readiness"
+      : "skyharbor-cto-readiness-unavailable",
+    name: packet.availability === "available"
+      ? "SkyHarbor CTO IROPS readiness context"
+      : "SkyHarbor CTO IROPS readiness unavailable",
     detail: formatSkyHarborCtoReadinessSourceDetail(packet),
-    confidence: 0.92,
+    confidence: packet.availability === "available" ? 0.92 : 0,
   };
 }
 
@@ -130,12 +133,13 @@ export function buildSkyHarborCtoReadinessNativeCanvasBlock(
   tenantKeys: Array<string | null | undefined>,
 ): string {
   if (
-    !tenantKeys.some(isSkyHarborTenantKey) ||
+    !hasSkyHarborTenantContext(tenantKeys) ||
     !isSkyHarborCtoReadinessQuestion(query)
   ) {
     return "";
   }
   const packet = buildSkyHarborCtoReadinessPacket();
+  if (packet.availability === "unavailable") return "";
   const knownClaims = packet.claimMaturity
     .filter((claim) => !claim.signoffRequired)
     .slice(0, 4)
@@ -156,10 +160,13 @@ export function buildSkyHarborCtoReadinessPromptAddendum(
   tenantKeys: Array<string | null | undefined>,
 ): string {
   if (
-    !tenantKeys.some(isSkyHarborTenantKey) ||
+    !hasSkyHarborTenantContext(tenantKeys) ||
     !isSkyHarborCtoReadinessQuestion(query)
   )
     return "";
+  if (buildSkyHarborCtoReadinessPacket().availability === "unavailable") {
+    return `CTO READINESS UNAVAILABLE: ${CTO_READINESS_UNAVAILABLE} State this refusal plainly. Do not infer readiness from other sources or render a readiness exhibit.`;
+  }
   return [
     "SKYHARBOR CTO DEMO MODE:",
     "For SkyHarbor airline IROPS, disruption recovery, AI investment, autonomous recovery, data-readiness, and board-grade questions, act as a senior airline CTO advisor.",
