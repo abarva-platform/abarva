@@ -30,6 +30,7 @@ import {
   renderMetricExplanationForAtlas,
 } from "@/lib/tower/metric-explanation-view";
 import { buildAtlasGroundingDisclosure } from "@/lib/atlas/value-grounding";
+import { sanitizeAutonomousDecisionLanguage } from "@/lib/ai-liability/human-decision-controls";
 import {
   ATLAS_REASONING_MODEL,
   ATLAS_TRAINING_PACKAGE_VERSION,
@@ -129,6 +130,19 @@ function shouldLeadAtlasWithEnterpriseRead(message: string, intent: AtlasChatRes
   return /\b(context|current state|what.*telling|landscape|overall|summary|where are we|what should i know)\b/i.test(message);
 }
 
+/**
+ * Leads the answer with the derived enterprise read.
+ *
+ * The block below is authored here, not by the answer producer, and it is
+ * prepended after that producer has already run its own autonomous-decision
+ * scrub (`runAtlasLlm` sanitizes every text it returns). So this function has to
+ * run the same scrub itself, or artifact text phrased as a settled decision
+ * ("Atlas selected …", "must approve …") reaches the reader as one.
+ *
+ * It also carries the read's own `dataQualityCaution`. The artifact states what
+ * it is unsure about; leading with its headline while dropping that caution
+ * quotes the read more confidently than the read claims to be.
+ */
 function enrichWithEnterpriseRead(input: {
   message: string;
   response: AtlasChatResponse;
@@ -136,15 +150,25 @@ function enrichWithEnterpriseRead(input: {
 }): AtlasChatResponse {
   const read = input.toolResults.derivedEnterpriseRead;
   if (!read || !shouldLeadAtlasWithEnterpriseRead(input.message, input.response.intent)) return input.response;
-  if (input.response.response.includes(read.headline)) return input.response;
+  const headline = sanitizeAutonomousDecisionLanguage(read.headline);
+  if (
+    input.response.response.includes(read.headline) ||
+    input.response.response.includes(headline)
+  ) {
+    return input.response;
+  }
   const move = read.recommendedMoves[0];
+  const lead = [
+    `Enterprise read: ${read.headline}`,
+    move ? `First move: ${move.title} — ${move.decision}` : null,
+    read.dataQualityCaution ? `Data quality caution: ${read.dataQualityCaution}` : null,
+  ].filter(Boolean).join('\n\n');
   return {
     ...input.response,
     response: [
-      `Enterprise read: ${read.headline}`,
-      move ? `First move: ${move.title} — ${move.decision}` : null,
+      sanitizeAutonomousDecisionLanguage(lead),
       input.response.response,
-    ].filter(Boolean).join('\n\n'),
+    ].join('\n\n'),
   };
 }
 
