@@ -59,11 +59,12 @@ export function SourceWorkspaceLoadingShell({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(5, minmax(112px, 1fr))",
-            gap: 24,
-            borderBottom: "1px solid rgba(10,10,11,.22)",
+            gridTemplateColumns: "repeat(5, max-content)",
+            gap: 2,
+            borderBottom: "1px solid rgba(10,10,11,.24)",
             background: "#f5f1eb",
-            maxWidth: 1280,
+            maxWidth: "100%",
+            overflowX: "auto",
           }}
         >
           {["Command", "Contracts", "Levers", "Evidence", "Coverage"].map(
@@ -71,20 +72,17 @@ export function SourceWorkspaceLoadingShell({
               <div
                 key={label}
                 style={{
-                  minHeight: 48,
+                  minHeight: 44,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: "1px solid transparent",
-                  borderBottom: 0,
-                  borderRadius: "8px 8px 0 0",
-                  padding: "0 14px",
-                  background: label === "Command" ? "#e1f5ee" : "transparent",
-                  color: label === "Command" ? "#0f6e56" : "#0a0a0b",
-                  fontWeight: 800,
+                  borderBottom:
+                    label === "Command" ? "3px solid #1d9e75" : "3px solid transparent",
+                  padding: "0 16px",
+                  background: "transparent",
+                  color: label === "Command" ? "#2c2c2a" : "#5f5e5a",
+                  fontWeight: 600,
                   textAlign: "center",
-                  boxShadow:
-                    label === "Command" ? "inset 0 -3px 0 #1d9e75" : "none",
                 }}
               >
                 {label}
