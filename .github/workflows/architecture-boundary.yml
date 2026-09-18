@@ -52,3 +52,8 @@ jobs:
       # breakpoint, both changed on purpose by #7721. Corrected and un-quarantined.
       - name: Check the canonical NEXUS navigation contract
         run: npm run audit:nexus-navigation
+
+      # A QA inventory that names a component no route mounts prescribes a
+      # check nobody can perform, in a file that reads like an authority.
+      - name: Check QA inventories name reachable components
+        run: npm run audit:qa-inventory-claims
