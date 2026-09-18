@@ -264,15 +264,20 @@ function requiredReplacementRows() {
       evidence: existsSync(blocks) && existsSync(visuals) ? "approved story blocks and visual specs present" : "approved story blocks or visual specs missing",
     });
   }
-  rows.push({
-    check: "candidate-invisibility-guard",
-    status:
-      existsSync(path.join(ROOT, "scripts/audit/candidate-invisibility-guard.mjs")) &&
-      readFileSafe("src/lib/home/v7-context-browser.ts").includes("active_tenant_contract_versions")
-        ? "PASS"
-        : "FAIL",
-    evidence: "default runtime requires active pointer; candidate preview is explicit",
-  });
+  rows.push(
+    vacuousIf(
+      {
+        check: "candidate-invisibility-guard",
+        status:
+          existsSync(path.join(ROOT, "scripts/audit/candidate-invisibility-guard.mjs")) &&
+          readFileSafe("src/lib/home/v7-context-browser.ts").includes("active_tenant_contract_versions")
+            ? "PASS"
+            : "FAIL",
+        evidence: "default runtime requires active pointer; candidate preview is explicit",
+      },
+      ["src/lib/home/v7-context-browser.ts"],
+    ),
+  );
   rows.push({
     check: "local-runtime-retrieval-proof",
     status: existsSync(path.join(ROOT, "reports/multi-tenant-runtime-retrieval-proof/summary.md")) ? "PASS" : "FAIL",
@@ -284,6 +289,32 @@ function requiredReplacementRows() {
 function readFileSafe(file) {
   const absolute = path.join(ROOT, file);
   return existsSync(absolute) ? readFileSync(absolute, "utf8") : "";
+}
+
+/**
+ * "This policy is violated" and "this policy's subject no longer exists" are
+ * different findings, and only one of them is about the product.
+ *
+ * `readFileSafe` returns "" for a missing file, so a check reading a deleted
+ * module reports FAIL as though the runtime were doing something wrong. Four
+ * checks here read `v7-context-browser.ts` or the old Home route shape; the V7
+ * read path was replaced by the ECL projection bundle and `v7-context-browser`
+ * was deleted in #6514 as verified dead code. Reported as failures, they look
+ * like four regressions to fix. Reported as VACUOUS, they are one architecture
+ * change nobody updated the audit for.
+ */
+function subjectsMissing(files) {
+  return files.filter((file) => !existsSync(path.join(ROOT, file)));
+}
+
+function vacuousIf(row, files) {
+  const missing = subjectsMissing(files);
+  if (missing.length === 0) return row;
+  return {
+    ...row,
+    status: "VACUOUS",
+    evidence: `${row.evidence} — NOT PROVEN: ${missing.join(", ")} no longer exists, so this check has no subject`,
+  };
 }
 
 function activeArchitectureRows() {
@@ -302,23 +333,35 @@ function activeArchitectureRows() {
       status: packageJson.includes("audit:tenant-v3-data") || packageJson.includes("audit:standard-v3-tenant-inputs") ? "PASS" : "FAIL",
       evidence: "package exposes v3 tenant input audit",
     },
-    {
-      check: "home-approved-artifact-fallback-present",
-      status: homePage.includes("getLocalCxoRuntimeBrowser") && localRuntime.includes("approved_for_render") ? "PASS" : "FAIL",
-      evidence: "Home can render approved Claude-derived local artifacts",
-    },
-    {
-      check: "default-reader-active-pointer",
-      status: v7Browser.includes("active_tenant_contract_versions") && !/order by loaded_at desc\s+limit 1/.test(v7Browser) ? "PASS" : "FAIL",
-      evidence: "default DB reader uses active pointer instead of latest loaded row",
-    },
-    {
-      check: "candidate-preview-explicit",
-      status: homePage.includes('mode: candidatePreviewEnabled ? "candidate_preview" : "active"') ? "PASS" : "FAIL",
-      evidence: "candidate preview requires an intentional preview mode flag; default runtime uses active mode",
-    },
+    vacuousIf(
+      {
+        check: "home-approved-artifact-fallback-present",
+        status: homePage.includes("getLocalCxoRuntimeBrowser") && localRuntime.includes("approved_for_render") ? "PASS" : "FAIL",
+        evidence: "Home can render approved Claude-derived local artifacts",
+      },
+      ["src/lib/home/local-cxo-runtime.ts"],
+    ),
+    vacuousIf(
+      {
+        check: "default-reader-active-pointer",
+        status: v7Browser.includes("active_tenant_contract_versions") && !/order by loaded_at desc\s+limit 1/.test(v7Browser) ? "PASS" : "FAIL",
+        evidence: "default DB reader uses active pointer instead of latest loaded row",
+      },
+      ["src/lib/home/v7-context-browser.ts"],
+    ),
+    vacuousIf(
+      {
+        check: "candidate-preview-explicit",
+        status: homePage.includes('mode: candidatePreviewEnabled ? "candidate_preview" : "active"') ? "PASS" : "FAIL",
+        evidence: "candidate preview requires an intentional preview mode flag; default runtime uses active mode",
+      },
+      ["src/lib/home/v7-context-browser.ts"],
+    ),
   ];
-  return [...rows, ...requiredReplacementRows()];
+  // requiredReplacementRows() is appended to this section AND to the
+  // replacement-proof section, so every row in it was being counted twice. The
+  // audit reported 7 failures for 5 distinct problems.
+  return rows;
 }
 
 function languageRows() {
@@ -595,8 +638,17 @@ function main() {
         ? language
         : [...replacements, ...activeRows];
   const failures = modeRows.filter((row) => row.status === "FAIL");
-  if (failures.length) {
-    console.error(`${MODE} audit failed: ${failures.length} failure(s). See reports/legacy-context-retirement.`);
+  const vacuous = modeRows.filter((row) => row.status === "VACUOUS");
+  if (failures.length || vacuous.length) {
+    console.error(
+      `${MODE} audit failed: ${failures.length} failure(s), ${vacuous.length} check(s) with no live subject. See reports/legacy-context-retirement.`,
+    );
+    for (const row of failures) {
+      console.error(`- FAIL     ${row.check}: ${row.evidence}`);
+    }
+    for (const row of vacuous) {
+      console.error(`- VACUOUS  ${row.check}: ${row.evidence.split("NOT PROVEN: ")[1] ?? "no live subject"}`);
+    }
     process.exit(1);
   }
   console.log(`${MODE} audit passed; wrote reports/legacy-context-retirement (${inventory.length} inventory rows).`);
