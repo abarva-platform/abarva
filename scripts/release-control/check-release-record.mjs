@@ -4,6 +4,10 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
+  loadReleaseLanes,
+  validateLayerImpactLane,
+} from './release-record-lane-guard.mjs';
+import {
   loadTenantNarrativeTerms,
   validateTenantNarrativeGuard,
 } from './release-record-tenant-narrative-guard.mjs';
@@ -97,7 +101,7 @@ function sectionBody(markdown, section) {
   return body.join('\n').trim();
 }
 
-function validateRecord(file, tenantNarrativeTerms) {
+function validateRecord(file, tenantNarrativeTerms, releaseLanes) {
   const absolute = path.resolve(process.cwd(), file);
   if (!existsSync(absolute)) {
     return [`${file}: release record does not exist on disk.`];
@@ -118,10 +122,12 @@ function validateRecord(file, tenantNarrativeTerms) {
     }
   }
 
+  // `/lane\b/` used to stand in for this. It is satisfied by the substring inside
+  // `plane`, so "Data plane: no schema changes" passed a check meant to require a
+  // release lane, while `internal-admin`, `public-demo` and `experimental` — three
+  // of the five lanes AGENTS.md declares — were refused for not containing the word.
   const layerBody = sectionBody(markdown, 'Layer Impact');
-  if (!/lane\b/.test(layerBody)) {
-    errors.push(`${file}: Layer Impact must name the affected lane(s).`);
-  }
+  errors.push(...validateLayerImpactLane(file, layerBody, releaseLanes));
 
   const validationBody = sectionBody(markdown, 'QA / Validation');
   if (!/(pass|passed|green|success|not run|blocked|failed)/i.test(validationBody)) {
@@ -166,7 +172,10 @@ if (records.length === 0) {
 }
 
 const tenantNarrativeTerms = loadTenantNarrativeTerms();
-const errors = records.flatMap((file) => validateRecord(file, tenantNarrativeTerms));
+const releaseLanes = loadReleaseLanes();
+const errors = records.flatMap((file) =>
+  validateRecord(file, tenantNarrativeTerms, releaseLanes),
+);
 if (errors.length > 0) {
   console.error('Release Control Gate failed.');
   console.error('');
