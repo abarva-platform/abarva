@@ -1,15 +1,11 @@
 import type { CSSProperties } from 'react';
 import { CANVAS } from '../canvas-tokens';
 
-export interface ActivityEntry {
-  id: string;
-  /** ISO timestamp. */
-  at: string;
-  /** Short description. */
-  body: string;
-  /** Optional actor (agent name or person). */
-  actor?: string;
-}
+// Owned by the reader that produces these rows, not by a display component.
+// This component is currently mounted by no route; the same entries now render
+// in the Source New workspace's approvals view, which is.
+export type { ActivityEntry } from "@/lib/source/activity-log";
+import type { ActivityEntry } from "@/lib/source/activity-log";
 
 interface LogTabProps {
   entries: ActivityEntry[];

@@ -1,5 +1,31 @@
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
-import type { ActivityEntry } from "@/components/source/canvas/workspace-tabs/LogTab";
+
+/**
+ * One line of the governed decision trail.
+ *
+ * Defined here rather than imported from a display component: the reader is
+ * what produces these, and its previous import pointed at
+ * `workspace-tabs/LogTab`, which no route mounts.
+ */
+export interface ActivityEntry {
+  id: string;
+  /** ISO timestamp. */
+  at: string;
+  /** Short description. */
+  body: string;
+  /** Optional actor (agent name or person). */
+  actor?: string;
+}
+
+/**
+ * A trail read either succeeded or it did not, and the caller has to be able
+ * to tell. Returning `[]` on a failed read made "no decisions have been
+ * recorded" and "we could not reach the decision log" render identically — as
+ * the more reassuring of the two, on an approval surface.
+ */
+export type SourceEventActivityResult =
+  | { ok: true; entries: ActivityEntry[] }
+  | { ok: false; reason: string };
 
 export interface SourceEventActivityRow {
   id: string;
@@ -21,7 +47,7 @@ export interface SourceEventActivityRow {
 
 export async function listSourceEventActivityEntries(
   eventId: string,
-): Promise<ActivityEntry[]> {
+): Promise<SourceEventActivityResult> {
   const sb = getAzureReadFluentClient();
   const { data, error } = await sb
     .from("source_event_activity")
@@ -35,12 +61,15 @@ export async function listSourceEventActivityEntries(
       "[listSourceEventActivityEntries] read failed",
       error.message,
     );
-    return [];
+    return { ok: false, reason: error.message };
   }
 
-  return ((data as SourceEventActivityRow[] | null) ?? []).map(
-    activityRowToEntry,
-  );
+  return {
+    ok: true,
+    entries: ((data as SourceEventActivityRow[] | null) ?? []).map(
+      activityRowToEntry,
+    ),
+  };
 }
 
 function activityRowToEntry(row: SourceEventActivityRow): ActivityEntry {

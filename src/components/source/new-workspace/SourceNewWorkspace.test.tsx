@@ -248,4 +248,70 @@ describe("SourceNewWorkspace", () => {
     // Sidebar still offers one return action
     expect(screen.getByRole("button", { name: "Current work" })).toBeTruthy();
   });
+
+  /**
+   * The approvals view told the reader that "the approval record, actor and
+   * evidence live in the governed event flow" and then showed none of it —
+   * the writer had been recording a trail nothing read back.
+   *
+   * The three states below must stay distinguishable. On an approval surface,
+   * rendering a failed read as an empty list states the reassuring fact.
+   */
+  function openApprovals() {
+    fireEvent.click(screen.getByRole("button", { name: "Approvals" }));
+  }
+
+  it("shows the recorded decisions, with actor and reason", () => {
+    render(
+      <SourceNewWorkspace
+        event={request}
+        files={[]}
+        activity={{
+          ok: true,
+          entries: [
+            {
+              id: "a1",
+              at: "2026-09-18T12:00:00.000Z",
+              actor: "A. Reviewer · procurement",
+              body: "Approved intake (Stage: intake) Reason: Scope and baseline confirmed.",
+            },
+          ],
+        }}
+      />,
+    );
+    openApprovals();
+
+    const trail = screen.getByRole("list", { name: "Decision trail" });
+    expect(within(trail).getByText(/A\. Reviewer/)).toBeTruthy();
+    expect(within(trail).getByText(/Scope and baseline confirmed/)).toBeTruthy();
+  });
+
+  it("says no decisions are recorded when the trail is genuinely empty", () => {
+    render(<SourceNewWorkspace event={request} files={[]} activity={{ ok: true, entries: [] }} />);
+    openApprovals();
+
+    expect(screen.getByText(/No decisions have been recorded/i)).toBeTruthy();
+    expect(screen.queryByRole("list", { name: "Decision trail" })).toBeNull();
+  });
+
+  it("does not report an unreadable trail as an absence of decisions", () => {
+    render(
+      <SourceNewWorkspace event={request} files={[]} activity={{ ok: false, reason: "connection refused" }} />,
+    );
+    openApprovals();
+
+    // The distinction this whole change exists for.
+    expect(screen.getByText(/could not be read/i)).toBeTruthy();
+    expect(screen.queryByText(/No decisions have been recorded/i)).toBeNull();
+    // And it must not leak the underlying error to a client surface.
+    expect(document.body.textContent ?? "").not.toContain("connection refused");
+  });
+
+  it("says the trail was not loaded when a caller passes none", () => {
+    render(<SourceNewWorkspace event={request} files={[]} />);
+    openApprovals();
+
+    expect(screen.getByText(/was not loaded/i)).toBeTruthy();
+    expect(screen.queryByText(/No decisions have been recorded/i)).toBeNull();
+  });
 });
