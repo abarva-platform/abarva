@@ -42,3 +42,6 @@ jobs:
 
       - name: Exercise agent phase-advance approval gate
         run: npx jest src/lib/agent/tools/program/__tests__/advancePhase.approval-gate.test.ts --runInBand
+
+      - name: Exercise Source external-action gate
+        run: npx jest src/app/api/v1/source/work-items/__tests__/external-action-gate.test.ts --runInBand
