@@ -1,0 +1,14 @@
+stage,aca_job_name,process_name,identity,database_role,allowed_now,allowed_after_phase1_apply,prohibited_until_phase
+01_register_source,job-hcdn-source-register-lab,healthcare-demo-new-source-register-v1,mi-hcdn-source-loader-lab-001,healthcare_demo_new_source_loader,no,yes,phase3_source_landing
+03_parse_source,job-hcdn-source-parse-lab,healthcare-demo-new-source-parse-v1,mi-hcdn-parser-worker-lab-001,healthcare_demo_new_parser_worker,no,yes,phase5_parser_waves
+04_extract_evidence,job-hcdn-evidence-extract-lab,healthcare-demo-new-evidence-extract-v1,mi-hcdn-parser-worker-lab-001,healthcare_demo_new_parser_worker,no,yes,phase5_parser_waves
+05_normalize_values,job-hcdn-normalize-lab,healthcare-demo-new-knowledge-normalize-v1,mi-hcdn-knowledge-worker-lab-001,healthcare_demo_new_knowledge_worker,no,yes,phase5_parser_waves
+06_resolve_identity,job-hcdn-entity-resolve-lab,healthcare-demo-new-entity-resolve-v1,mi-hcdn-knowledge-worker-lab-001,healthcare_demo_new_knowledge_worker,no,yes,phase5_parser_waves
+07_validate_semantics,job-hcdn-knowledge-validate-lab,healthcare-demo-new-knowledge-validate-v1,mi-hcdn-knowledge-worker-lab-001,healthcare_demo_new_knowledge_worker,no,yes,phase5_parser_waves
+09_route_review_quarantine,job-hcdn-review-apply-lab,healthcare-demo-new-knowledge-review-v1,mi-hcdn-operations-admin-lab-001,healthcare_demo_new_operations_admin,no,yes,phase5_parser_waves
+11_publish_domain,job-hcdn-domain-publish-lab,healthcare-demo-new-domain-publish-v1,mi-hcdn-publisher-lab-001,healthcare_demo_new_publisher,no,yes,phase8_reconciliation_publication
+12_publish_baseline,job-hcdn-baseline-publish-lab,healthcare-demo-new-baseline-publish-v1,mi-hcdn-publisher-lab-001,healthcare_demo_new_publisher,no,yes,phase8_reconciliation_publication
+13_build_module_projections,job-hcdn-projection-build-lab,healthcare-demo-new-projection-build-v1,mi-hcdn-publisher-lab-001,healthcare_demo_new_publisher,no,yes,phase8_reconciliation_publication
+14_refresh_home_readmodel,job-hcdn-home-readmodel-lab,healthcare-demo-new-home-readmodel-v1,mi-hcdn-publisher-lab-001,healthcare_demo_new_publisher,no,yes,phase8_reconciliation_publication
+15_backfill_replay,job-hcdn-backfill-lab,healthcare-demo-new-knowledge-backfill-v1,mi-hcdn-knowledge-worker-lab-001,healthcare_demo_new_knowledge_worker,no,yes,phase5_parser_waves
+16_reconciliation_audit,job-hcdn-reconciliation-audit-lab,healthcare-demo-new-reconciliation-audit-v1,mi-hcdn-evaluator-lab-001,healthcare_demo_new_evaluator,no,yes,phase8_reconciliation_publication
