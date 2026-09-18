@@ -55,11 +55,9 @@ function sourceContext(): AskSurfaceContext {
               "The March breach is calculated from contract service levels and should be credited under the availability SLA.",
             vendorConcession:
               "The vendor avoids reopening the broader commercial schedule by applying the contractual credit formula.",
-            timingDependency:
-              "Confirm during the next invoice review cycle.",
+            timingDependency: "Confirm during the next invoice review cycle.",
             priority: "P0",
-            riskIfIgnored:
-              "The credit can age out before finance records it.",
+            riskIfIgnored: "The credit can age out before finance records it.",
           },
           {
             id: "CTR-090:shelfware",
@@ -74,16 +72,14 @@ function sourceContext(): AskSurfaceContext {
             nextAction: "Negotiate removal from renewal baseline.",
             sourceRefs: ["usage_entitlement_monthly"],
             owner: "Sourcing lead",
-            buyerAsk:
-              "Remove unused entitlements from the renewal baseline.",
+            buyerAsk: "Remove unused entitlements from the renewal baseline.",
             negotiationLanguage:
               "Renew only the capacity tied to active users and governed usage.",
             vendorConcession:
               "The vendor preserves active use while removing shelfware from the next commitment.",
             timingDependency: "Complete before renewal pricing is finalized.",
             priority: "P1",
-            riskIfIgnored:
-              "The unused baseline rolls into the next renewal.",
+            riskIfIgnored: "The unused baseline rolls into the next renewal.",
           },
           {
             id: "CTR-090:negotiated-improvement",
@@ -124,8 +120,7 @@ function sourceContext(): AskSurfaceContext {
               "Confirm no amendment approved the higher billed rates.",
             sourceRefs: ["golden_contract_rate_card_variance"],
             owner: "Procurement",
-            buyerAsk:
-              "Correct billed rates back to the governed rate card.",
+            buyerAsk: "Correct billed rates back to the governed rate card.",
             negotiationLanguage:
               "The claim is limited to reconciled line variance and does not dispute unrelated delivery scope.",
             vendorConcession:
@@ -271,7 +266,9 @@ describe("Source Workspace visual aVa answer", () => {
       "lines of contract-specific candidate commercial opportunities",
     );
     expect(answer?.directAnswer).toContain("recorded annual value $43.5M");
-    expect(answer?.directAnswer).toContain("total committed contract value $173.9M");
+    expect(answer?.directAnswer).toContain(
+      "total committed contract value $173.9M",
+    );
     expect(answer?.directAnswer).toContain("actual annual spend $37.4M");
     expect(answer?.directAnswer).toContain(
       "Actual spend does not by itself establish that invoices were paid",
@@ -405,16 +402,26 @@ describe("Source Workspace visual aVa answer", () => {
       }));
 
     const answer = buildSourceContractOptimizationExportAnswer({
-      query: "For CTR-090, what is the supported candidate value for these levers?",
+      query:
+        "For CTR-090, what is the supported candidate value for these levers?",
       surfaceContext: context,
     });
 
-    expect(answer?.directAnswer).toContain("Supported candidate value is not established");
-    expect(answer?.directAnswer).toContain("No supported savings total can be added from these levers.");
+    expect(answer?.directAnswer).toContain(
+      "Supported candidate value is not established",
+    );
+    expect(answer?.directAnswer).toContain(
+      "No supported savings total can be added from these levers.",
+    );
     expect(answer?.directAnswer).not.toContain("$0 candidate value");
-    expect(answer?.directAnswer).not.toContain("Finance-confirmed value remains $0");
-    expect(answer?.metricsUsed.find((metric) => metric.id === "sized-candidate-total")?.value)
-      .toBe("Not established");
+    expect(answer?.directAnswer).not.toContain(
+      "Finance-confirmed value remains $0",
+    );
+    expect(
+      answer?.metricsUsed.find(
+        (metric) => metric.id === "sized-candidate-total",
+      )?.value,
+    ).toBe("Not established");
   });
 
   it("does not export an action memo for a contract with no governed levers", () => {
@@ -426,7 +433,8 @@ describe("Source Workspace visual aVa answer", () => {
     context.sourceV4.optimizationLedger = { lines: [] };
 
     const answer = buildSourceContractOptimizationExportAnswer({
-      query: "For CTR-090, give me a PDF-ready table of levers to optimize this contract.",
+      query:
+        "For CTR-090, give me a PDF-ready table of levers to optimize this contract.",
       surfaceContext: context,
     });
 
@@ -435,10 +443,15 @@ describe("Source Workspace visual aVa answer", () => {
     );
     expect(answer?.directAnswer).not.toContain("is an optimization case");
     expect(answer?.artifacts).toHaveLength(0);
-    expect(answer?.citations.find((citation) => citation.id === "source-contract-lever-export")?.excerpt)
-      .toContain("No governed contract-specific optimization lever");
+    expect(
+      answer?.citations.find(
+        (citation) => citation.id === "source-contract-lever-export",
+      )?.excerpt,
+    ).toContain("No governed contract-specific optimization lever");
     expect(answer?.nextSteps).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: "export-client-memo" })]),
+      expect.arrayContaining([
+        expect.objectContaining({ id: "export-client-memo" }),
+      ]),
     );
   });
 
@@ -1097,7 +1110,8 @@ describe("Source Workspace visual aVa answer", () => {
           stageRaw: "signal",
           stage: "signal",
           grade: "Document Evidenced",
-          blockingGap: "Finance confirmation and owner approval are required before realized value can be claimed.",
+          blockingGap:
+            "Finance confirmation and owner approval are required before realized value can be claimed.",
           nextAction: "Propose a milestone-based ramp schedule.",
           sourceRefs: ["contract-schedule"],
         },
@@ -1142,7 +1156,9 @@ describe("Source Workspace visual aVa answer", () => {
       surfaceContext: context,
     });
 
-    expect(answer?.directAnswer).toContain("1 line still requires explicit workflow");
+    expect(answer?.directAnswer).toContain(
+      "1 line still requires explicit workflow",
+    );
   });
 
   it("does not present an empty contract opportunity packet as an actionable case", () => {
@@ -1158,13 +1174,16 @@ describe("Source Workspace visual aVa answer", () => {
       surfaceContext: context,
     });
     const graph = answer?.artifacts.find(
-      (artifact) => artifact.id === "source-contract-evidence-relationship-graph",
+      (artifact) =>
+        artifact.id === "source-contract-evidence-relationship-graph",
     );
 
     expect(answer?.directAnswer).toContain(
       "actionability and value are not established",
     );
-    expect(answer?.directAnswer).not.toContain("is a candidate commercial optimization case");
+    expect(answer?.directAnswer).not.toContain(
+      "is a candidate commercial optimization case",
+    );
     expect(answer?.directAnswer).not.toContain("Recoverable opportunity");
     expect(answer?.directAnswer).not.toContain("$1.3M recoverable");
     expect(JSON.stringify(graph)).not.toContain("Door 1 action");
@@ -1196,5 +1215,95 @@ describe("Source Workspace visual aVa answer", () => {
         }),
       ]),
     );
+  });
+
+  it("uses the Contract 360 stated annual value with conflict wording over a direct page hint", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: { selectedContract: Record<string, unknown> };
+    };
+    context.sourceContract360Mode = true;
+    context.contractId = "CTR-090";
+    context.annualValue = 44_000_000;
+    context.sourceV4.selectedContract.annualValueUsd = 43_500_000;
+    context.sourceV4.selectedContract.annualValueConflict = true;
+    context.sourceV4.selectedContract.annualValueProvenance = "contract_360_stated_conflict";
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "What is the annual value of CTR-090?",
+      surfaceContext: context,
+    });
+    expect(answer?.directAnswer).toContain(
+      "recorded annual value $43.5M",
+    );
+    expect(answer?.directAnswer).toContain("annual-value conflict");
+    expect(answer?.directAnswer).toContain("not a reconciled baseline");
+    expect(answer?.directAnswer).not.toContain("recorded annual value $44M");
+    expect(
+      answer?.metricsUsed.find((metric) => metric.id === "annual-value")?.value,
+    ).toBe(43_500_000);
+  });
+
+  it("keeps an authored-only opportunity amount visible as unverified but out of calculated totals", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.optimizationOpportunities = {
+      opportunities: [
+        {
+          id: "CTR-090:authored",
+          contractId: "CTR-090",
+          label: "Proposed rate reduction",
+          amountUsd: 500_000,
+          amountTraceState: "untraced",
+          amountTraceLabel: "No calculation run - amount cannot be reproduced",
+          stageRaw: "quantified",
+          grade: "DOCUMENT EVIDENCED",
+          sourceRefs: ["pricing_schedule"],
+        },
+      ],
+    };
+    context.sourceV4.contractOpportunityDirectory = [];
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "Show a chart and table of CTR-090 opportunity value",
+      surfaceContext: context,
+    });
+    expect(answer?.directAnswer).toContain(
+      "stated $500K; not calculation-reconciled",
+    );
+    expect(answer?.directAnswer).not.toContain("total $500K");
+    expect(answer?.directAnswer).not.toContain("$1.3M recoverable");
+    expect(
+      answer?.metricsUsed.find(
+        (metric) => metric.id === "candidate-opportunity-total",
+      )?.value,
+    ).toBe("Not established");
+    expect(answer?.artifacts.map((artifact) => artifact.artifact)).toEqual([
+      "table",
+      "graph",
+    ]);
+  });
+
+  it("does not size a row whose trace state is explicitly not sized", () => {
+    const context = sourceContext() as AskSurfaceContext & { sourceV4: Record<string, unknown> };
+    context.sourceV4.optimizationOpportunities = {
+      opportunities: [{
+        id: "CTR-090:unsized",
+        contractId: "CTR-090",
+        label: "Pending benchmark",
+        amountUsd: 500_000,
+        amountTraceState: "not_sized",
+        stageRaw: "signal",
+        grade: "EVIDENCE REQUIRED",
+      }],
+    };
+    context.sourceV4.contractOpportunityDirectory = [];
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "Show a chart of CTR-090 opportunity value",
+      surfaceContext: context,
+    });
+    expect(answer?.metricsUsed.find((metric) => metric.id === "candidate-opportunity-total")?.value).toBe("Not established");
+    expect(answer?.directAnswer).not.toContain("$500K");
   });
 });

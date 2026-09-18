@@ -67,13 +67,27 @@ function opportunity(overrides: Record<string, unknown> = {}) {
 }
 
 function opportunitySet(overrides: Record<string, unknown> = {}) {
+  const opportunities =
+    (overrides.opportunities as ReturnType<typeof opportunity>[] | undefined) ??
+    [opportunity()];
   return {
     tenantKey: "skyharbor-air",
     datasetVersion: "v1",
     contractId: "CTR-090",
     baseline: { status: "missing" },
     selectedOpportunityId: "CTR-090:rate-variance",
-    opportunities: [opportunity()],
+    opportunities,
+    claims: opportunities.map((row) => ({
+      claimId: `${row.opportunityId}:sizing`,
+      opportunityId: row.opportunityId,
+      contractId: row.contractId,
+      role: "sizing",
+      basis: "calculated",
+      evidenceStatus: "supported",
+      amountUsd: row.amountUsd,
+      calculationRunId: row.calculation ? `run:${row.opportunityId}` : null,
+      sourceRefs: [{ tableName: "source.calculation_input" }],
+    })),
     financeRealizations: [],
     approvalRequests: [],
     negotiatedOutcomes: [],
@@ -386,6 +400,10 @@ describe("buildAvaSourceContractGrounding", () => {
             shortLabel: "Re-time commitment",
             valueType: "negotiated_improvement",
             amountUsd: 1_480_000,
+            calculation: {
+              ...opportunity().calculation,
+              calculatedAmountUsd: 1_480_000,
+            },
             amountState: "exact",
             stage: "quantified",
             evidenceGrade: "document_evidenced",
@@ -481,6 +499,90 @@ describe("buildAvaSourceContractGrounding", () => {
       "Stated value with no reproducible calculation run: $2.4M",
     );
     expect(block).toContain("amount cannot be reproduced");
+    expect(block).toContain(
+      "Scope reduction · avoided cost · stated $2.4M; no reproducible calculation run",
+    );
+    expect(block).not.toContain("Value state: $2.4M");
+  });
+
+  it("does not treat descriptive fallback calculations as persisted runs", async () => {
+    const fallback = opportunitySet();
+    fallback.claims[0].calculationRunId = null;
+    getContractOptimizationOpportunitySet.mockResolvedValue(fallback);
+
+    const { block } = await buildAvaSourceContractGrounding("skyharbor-air", "CTR-090");
+    expect(block).toContain("Opportunity value that a calculation run can reproduce: not established");
+    expect(block).toContain("Stated value with no reproducible calculation run: $365K");
+    expect(block).toContain("Value state: stated $365K; no reproducible calculation run");
+  });
+
+  it("keeps partial and mismatched sizing claims out of the reproducible total", async () => {
+    for (const change of [
+      (set: ReturnType<typeof opportunitySet>) => { set.claims[0].evidenceStatus = "partial"; },
+      (set: ReturnType<typeof opportunitySet>) => { set.claims[0].amountUsd = 300_000; },
+      (set: ReturnType<typeof opportunitySet>) => { set.opportunities[0].calculation.calculatedAmountUsd = 300_000; },
+    ]) {
+      const set = opportunitySet();
+      change(set);
+      getContractOptimizationOpportunitySet.mockResolvedValue(set);
+      const { block } = await buildAvaSourceContractGrounding("skyharbor-air", "CTR-090");
+      expect(block).toContain("Opportunity value that a calculation run can reproduce: not established");
+      expect(block).toContain("Stated value with no reproducible calculation run: $365K");
+    }
+  });
+
+  it("quotes the Contract 360 stated value with an unresolved 43.5/44/42 conflict", async () => {
+    getContract360.mockResolvedValue(
+      contractRow({
+        annual_value: 43_500_000,
+        resolved_annual_value: 44_000_000,
+        annual_value_conflict_flag: true,
+      }),
+    );
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({
+        baseline: { status: "conflict", annualValueUsd: 42_000_000 },
+      }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+    expect(block).toContain("Annual value: $43.5M");
+    expect(block).toContain("conflict is unresolved");
+    expect(block).toContain("not a reconciled baseline");
+    expect(block).not.toContain("Annual value: $44M");
+    expect(block).not.toContain("Annual value: $42M");
+  });
+
+  it("labels a claim/output mismatch as unreconciled in answer and export rows", async () => {
+    getContractOptimizationOpportunitySet.mockResolvedValue(
+      opportunitySet({
+        opportunities: [opportunity({ amountUsd: 500_000 })],
+      }),
+    );
+
+    const { block } = await buildAvaSourceContractGrounding(
+      "skyharbor-air",
+      "CTR-090",
+    );
+    expect(block).toContain("stated $500K; no reproducible calculation run");
+    expect(block).not.toContain("Value state: $500K");
+    expect(block).toContain(
+      "Opportunity value that a calculation run can reproduce: not established",
+    );
+  });
+
+  it("does not total a numeric compatibility field marked not sized", async () => {
+    getContractOptimizationOpportunitySet.mockResolvedValue(opportunitySet({
+      opportunities: [opportunity({ amountUsd: 500_000, amountState: "not_sized" })],
+    }));
+
+    const { block } = await buildAvaSourceContractGrounding("skyharbor-air", "CTR-090");
+    expect(block).toContain("Opportunity value that a calculation run can reproduce: not established");
+    expect(block).toContain("Value state: Not sized");
+    expect(block).not.toContain("Opportunity rows:\n- Rate variance · recoverable leakage · $500K");
   });
 
   it("cancels the portfolio block's deflection for this contract", async () => {
@@ -494,7 +596,7 @@ describe("buildAvaSourceContractGrounding", () => {
     expect(block).toContain("do NOT deflect them to Contract 360");
   });
 
-  it("quotes the resolved value when the stated annual value is in conflict", async () => {
+  it("keeps the stated header value when extraction conflicts", async () => {
     getContract360.mockResolvedValue(
       contractRow({
         annual_value: 43_500_000,
@@ -507,9 +609,9 @@ describe("buildAvaSourceContractGrounding", () => {
       "skyharbor-air",
       "CTR-090",
     );
-    expect(block).toContain("$41M");
-    expect(block).not.toContain("Annual value: $43.5M");
-    expect(block).toContain("disagreed");
+    expect(block).toContain("Annual value: $43.5M");
+    expect(block).not.toContain("Annual value: $41M");
+    expect(block).toContain("not a reconciled baseline");
   });
 
   it("states approved realized value only from Finance/Tower approval", async () => {

@@ -6,6 +6,8 @@ import {
   listContract360,
 } from "@/lib/source/data-model/read-adapter";
 import type { SourceContract360Row } from "@/lib/source/data-model/types";
+import { classifyOpportunityTrace } from "@/lib/source/data-model/contract-optimization-traceability";
+import { opportunityForAvaTrace } from "@/lib/source/facts/view/ava-contract-grounding-context";
 import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { resolveSourceWorkspaceContractId } from "./source-workspace-visual-answer";
 
@@ -13,9 +15,11 @@ function readHintId(context: AskSurfaceContext): string | null {
   const direct = context.contractId?.trim();
   if (direct) return direct;
   const source = context.sourceV4;
-  if (!source || typeof source !== "object" || Array.isArray(source)) return null;
+  if (!source || typeof source !== "object" || Array.isArray(source))
+    return null;
   const selected = (source as Record<string, unknown>).selectedContract;
-  if (!selected || typeof selected !== "object" || Array.isArray(selected)) return null;
+  if (!selected || typeof selected !== "object" || Array.isArray(selected))
+    return null;
   const id = (selected as Record<string, unknown>).contractId;
   return typeof id === "string" && id.trim() ? id.trim() : null;
 }
@@ -25,15 +29,18 @@ function contractForAnswer(contract: SourceContract360Row) {
     contractId: contract.contract_id,
     vendorName: contract.vendor_name,
     contractName: contract.contract_name,
-    annualValueUsd: contract.annual_value_conflict_flag
-      ? contract.resolved_annual_value
-      : contract.annual_value,
+    annualValueUsd: contract.annual_value,
+    annualValueConflict: contract.annual_value_conflict_flag === true,
+    annualValueProvenance: contract.annual_value_conflict_flag
+      ? "contract_360_stated_conflict"
+      : "contract_360",
     actualAnnualSpendUsd: contract.actual_annual_spend,
     totalCommittedValueUsd: contract.total_committed_value_conflict_flag
       ? contract.resolved_total_committed_value
       : contract.total_committed_value,
     endDate: contract.end_date,
-    noticeDate: contract.renewal_notice_date ?? contract.notice_deadline ?? null,
+    noticeDate:
+      contract.renewal_notice_date ?? contract.notice_deadline ?? null,
     noticePeriodDays: contract.notice_period_days,
     autoRenew: contract.auto_renew,
     renewalOwnerRef: contract.renewal_owner_ref,
@@ -48,7 +55,9 @@ export async function buildServerSourceAnswerContext(input: {
   tenantKey: string;
   tenantDisplayName: string;
 }): Promise<AskSurfaceContext | null> {
-  const access = await checkTenantAccessByKey(input.tenantKey).catch(() => null);
+  const access = await checkTenantAccessByKey(input.tenantKey).catch(
+    () => null,
+  );
   if (!access?.ok) return null;
 
   const aliases = new Set(
@@ -60,7 +69,9 @@ export async function buildServerSourceAnswerContext(input: {
     );
     const hintedId = readHintId(input.requestContext);
     const selected = hintedId
-      ? directory.find((row) => row.contract_id.toUpperCase() === hintedId.toUpperCase())
+      ? directory.find(
+          (row) => row.contract_id.toUpperCase() === hintedId.toUpperCase(),
+        )
       : null;
     const selectionContext: AskSurfaceContext = {
       module: "Source",
@@ -105,33 +116,62 @@ export async function buildServerSourceAnswerContext(input: {
       clientKey: input.tenantKey,
       activeTab: input.requestContext.activeTab,
       sourceV4: {
-        selectedContract: contractForAnswer(contract),
+        selectedContract: {
+          ...contractForAnswer(contract),
+          ...(opportunitySet?.baseline.status === "conflict"
+            ? {
+                annualValueConflict: true,
+                annualValueProvenance: "contract_360_stated_conflict",
+              }
+            : {}),
+        },
         optimizationOpportunities: {
-          opportunities: (opportunitySet?.opportunities ?? []).filter(
-            (opportunity) => opportunity.contractId === contractId,
-          ).map((opportunity) => ({
-            id: opportunity.opportunityId,
-            contractId,
-            label: opportunity.label,
-            valueType: opportunity.valueType,
-            amountUsd:
-              opportunity.amountState === "not_sized"
-                ? null
-                : opportunity.amountUsd,
-            stageRaw: opportunity.stage,
-            confidence: opportunity.confidence,
-            grade: opportunity.evidenceGrade,
-            blockingGap: opportunity.blockingGap,
-            nextAction: opportunity.nextAction,
-            owner: opportunity.owner,
-            buyerAsk: opportunity.negotiationDetail?.buyerAsk,
-            negotiationLanguage: opportunity.negotiationDetail?.negotiationLanguage,
-            vendorConcession: opportunity.negotiationDetail?.vendorConcession,
-            timingDependency: opportunity.negotiationDetail?.timingDependency,
-            priority: opportunity.negotiationDetail?.priority,
-            riskIfIgnored: opportunity.negotiationDetail?.riskIfIgnored,
-            sourceRefs: opportunity.evidenceRefs.map((ref) => ref.tableName),
-          })),
+          opportunities: (opportunitySet?.opportunities ?? [])
+            .filter((opportunity) => opportunity.contractId === contractId)
+            .map((opportunity) => {
+              const trace = classifyOpportunityTrace(
+                opportunityForAvaTrace(opportunity, opportunitySet?.claims),
+              );
+              const calculated =
+                trace.state === "traced" &&
+                opportunity.amountState !== "not_sized";
+              return {
+                id: opportunity.opportunityId,
+                contractId,
+                label: opportunity.label,
+                valueType: opportunity.valueType,
+                amountUsd: calculated ? opportunity.amountUsd : null,
+                statedAmountUsd:
+                  !calculated &&
+                  opportunity.amountState !== "not_sized" &&
+                  trace.state !== "not_sized"
+                    ? opportunity.amountUsd
+                    : null,
+                amountTraceState:
+                  opportunity.amountState === "not_sized"
+                    ? "not_sized"
+                    : trace.state,
+                amountTraceLabel: trace.label,
+                stageRaw: opportunity.stage,
+                confidence: opportunity.confidence,
+                grade: opportunity.evidenceGrade,
+                blockingGap: opportunity.blockingGap,
+                nextAction: opportunity.nextAction,
+                owner: opportunity.owner,
+                buyerAsk: opportunity.negotiationDetail?.buyerAsk,
+                negotiationLanguage:
+                  opportunity.negotiationDetail?.negotiationLanguage,
+                vendorConcession:
+                  opportunity.negotiationDetail?.vendorConcession,
+                timingDependency:
+                  opportunity.negotiationDetail?.timingDependency,
+                priority: opportunity.negotiationDetail?.priority,
+                riskIfIgnored: opportunity.negotiationDetail?.riskIfIgnored,
+                sourceRefs: opportunity.evidenceRefs.map(
+                  (ref) => ref.tableName,
+                ),
+              };
+            }),
         },
       },
     };
