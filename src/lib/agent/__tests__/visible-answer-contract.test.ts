@@ -131,3 +131,55 @@ describe("visible answer contract", () => {
     );
   });
 });
+
+/**
+ * Checks restored after a July 2026 refactor narrowed this gate. Each describes
+ * output a user should never be shown: nothing at all, an internal identifier,
+ * an internal table name, or a developer artifact.
+ */
+describe("visible answer contract · restored checks", () => {
+  const ids = (text: string) =>
+    assertVisibleAnswerContract(text).violations.map(
+      (violation) => violation.id,
+    );
+
+  it("refuses a blank answer", () => {
+    expect(ids("")).toContain("blank_answer");
+    expect(ids("   \n  ")).toContain("blank_answer");
+  });
+
+  it("catches a raw UUID, which the uppercase record-id pattern cannot match", () => {
+    expect(
+      ids(
+        "The renewal owner is recorded as 3f2504e0-4f89-11d3-9a0c-0305e82c3301 in the register.",
+      ),
+    ).toContain("raw_uuid");
+  });
+
+  it("catches an internal table name", () => {
+    expect(ids("That figure comes from enterprise_context_chunks.")).toContain(
+      "internal_table_name",
+    );
+    expect(ids("Loaded via mv_tower_spend last night.")).toContain(
+      "internal_table_name",
+    );
+  });
+
+  it("catches debug markers, filesystem paths and stack traces", () => {
+    expect(ids("See /Users/someone/projects for the file.")).toContain(
+      "debug_or_path",
+    );
+    expect(ids("A stack trace was written to the log.")).toContain(
+      "debug_or_path",
+    );
+  });
+
+  it("still allows business prose that happens to discuss data formats", () => {
+    // This gate returns 422 to the caller, so a false positive costs the user
+    // their answer. Advising on a vendor integration is not a contract breach.
+    const text =
+      "The vendor delivers JSON extracts nightly, which is why the reconciliation lands a day late.";
+    expect(ids(text)).not.toContain("internal_table_name");
+    expect(assertVisibleAnswerContract(text).passed).toBe(true);
+  });
+});

@@ -44,6 +44,25 @@ const RAW_JSON_BLOB_RE = /^\s*[{[][\s\S]*[}\]]\s*$/;
 const PLACEHOLDER_SYNTAX_RE = /\{\{[^}]+\}\}|\[(?:TODO|PLACEHOLDER|FIXME)\]/i;
 
 const RAW_RECORD_ID_RE = /\b[A-Z]{2,8}-[A-Z0-9]{2,12}-\d{2,}\b/;
+// Restored from the pre-July contract. `RAW_RECORD_ID_RE` is uppercase-only, so
+// it never matched a UUID; a blank answer, a filesystem path, a stack trace and
+// an internal table name all rendered to the user unchallenged.
+const RAW_UUID_RE =
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
+// Deliberately narrower than the pre-July pattern, which also banned the bare
+// word "JSON". This product legitimately advises on data platforms and vendor
+// integrations, where "JSON" is business language, and this gate returns 422 —
+// a false positive costs the user their answer. A raw JSON blob is still caught
+// by RAW_JSON_BLOB_RE; what remains banned here is an internal table name, which
+// has no business meaning to a reader.
+const INTERNAL_TABLE_NAME_RE =
+  /\b(?:enterprise_context_[a-z0-9_]+|semantic_[a-z0-9_]+|mv_[a-z0-9_]+|home_know|tower_[a-z0-9_]+)\b/;
+// The pre-July pattern put a single `\b` in front of every alternative,
+// including the path ones. A `\b` cannot sit between a space and a `/`, so
+// `/Users/…` only matched when glued to a preceding word — the check missed
+// almost every real path. Each alternative now carries the boundary it needs.
+const DEBUG_OR_PATH_RE =
+  /\b(?:debug|localhost|route used|stack trace)\b|\.env\b|\/Users\/|\bsrc\//i;
 const SOURCE_KEY_RE = /\b[A-Z]\d{1,3}_[a-z0-9]+(?:_[a-z0-9]+)+\b/;
 const LABEL_READ_RE = /(?:^|\n)\s*Read:/;
 const LABEL_EVIDENCE_RE = /(?:^|\n)\s*Evidence:/;
@@ -74,10 +93,31 @@ export function assertVisibleAnswerContract(
     if (re.test(trimmed)) violations.push({ id, detail });
   };
 
+  if (trimmed.length === 0) {
+    violations.push({
+      id: "blank_answer",
+      detail: "Output is empty. A blank answer is not an answer.",
+    });
+  }
   check(
     RAW_RECORD_ID_RE,
     "raw_record_id",
     "Output contains a raw record ID instead of its business name.",
+  );
+  check(
+    RAW_UUID_RE,
+    "raw_uuid",
+    "Output contains a raw UUID instead of the business name of the record.",
+  );
+  check(
+    INTERNAL_TABLE_NAME_RE,
+    "internal_table_name",
+    "Output names an internal table instead of business language.",
+  );
+  check(
+    DEBUG_OR_PATH_RE,
+    "debug_or_path",
+    "Output contains a debug marker, filesystem path, or stack-trace reference.",
   );
   check(
     SOURCE_KEY_RE,
