@@ -176,16 +176,18 @@ describe("command palette destinations", () => {
     expect(pushed).toEqual(["/admin/connectors"]);
   });
 
-  it("renders every entry that matches a search, including entries sharing a destination", () => {
-    // Four Tower entries point at `/tower`, so the path was not a unique key.
-    // This case PASSES on unfixed main and fails on the destination fix alone,
-    // which is the point of it. On main the default list happened to hold only
-    // one `/tower` entry; dropping the sunset Solutions entry above shifts a
-    // second one into it, React reconciles two children with the same key, and
-    // a search for "Tower" then renders FIVE rows for four entries with the
-    // bare Tower row drawn twice. Measured in all three states. The key is now
-    // the label, which is unique. So the key change is part of this repair
-    // rather than a tidy-up beside it.
+  it("offers distinct Tower views rather than four labels for one landing", () => {
+    expect(
+      COMMAND_PALETTE_ROUTES.filter((route) => route.surface === "Tower").map(
+        ({ label, path }) => ({ label, path }),
+      ),
+    ).toEqual([
+      { label: "Tower", path: "/tower" },
+      { label: "Tower · Value", path: "/tower?tab=initiatives&view=proof" },
+      { label: "Tower · Spend", path: "/tower?tab=budget&view=shape" },
+      { label: "Tower · Actions", path: "/tower?tab=decisions&view=review" },
+    ]);
+
     search("Tower");
 
     for (const label of ["Tower · Value", "Tower · Spend", "Tower · Actions"]) {
@@ -193,6 +195,16 @@ describe("command palette destinations", () => {
     }
     // One row label plus the four surface badges. A dropped row lowers this.
     expect(screen.getAllByText("Tower").length).toBe(5);
+  });
+
+  it.each([
+    ["Tower · Value", "/tower?tab=initiatives&view=proof"],
+    ["Tower · Spend", "/tower?tab=budget&view=shape"],
+    ["Tower · Actions", "/tower?tab=decisions&view=review"],
+  ])("navigates %s to its named view", (label, path) => {
+    search(label);
+    fireEvent.click(screen.getByText(label));
+    expect(pushed).toEqual([path]);
   });
 
   it("does not revive the Setup vocabulary the rail retired", () => {
