@@ -36,3 +36,18 @@ jobs:
 
       - name: Atlas eval harness
         run: npm run atlas:eval
+
+      # The Tower grounding contract suite lives in `src/__tests__/integration`,
+      # which NO workflow runs: `coverage:behavior-gate` covers
+      # `src/__tests__/behaviors` only, and `production-readiness-gate.yml`
+      # runs a single named file from the integration tree. This workflow
+      # already triggers on `src/__tests__/integration/atlas/**` and on
+      # `src/lib/atlas/**` — the two things the suite is about — so it is the
+      # right place to actually execute it. Without this step the suite is
+      # enforced only by the local `test:before-commit` command.
+      # --runTestsByPath: jest reads a bare pattern as a regex.
+      - name: Exercise the Atlas Tower grounding contract
+        run: >-
+          npx jest --runTestsByPath
+          src/__tests__/integration/atlas/atlas-tower-grounding-contract.test.ts
+          --runInBand

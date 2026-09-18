@@ -36,6 +36,8 @@ been reporting this all along.
 - Layer 4 (products) — Tower advisor prompt assembly. No behaviour changes: the only
   non-test edit deletes an import that no code path referenced, proven by the suite
   returning byte-identical results before and after that deletion.
+- CI control surface — one step added to an existing required job. No new required
+  context, no change to any other workflow.
 - Layers 1–3 untouched. No intake, adapter, canonical-model, schema or data change.
 
 ## Client Applicability
@@ -52,6 +54,8 @@ been reporting this all along.
   source-text case over the advisor module is replaced by four cases that drive the real
   `runAtlasLlm` and assert on the assembled prompt.
 - `src/lib/atlas/llm.ts` — removes the unused `formatTowerCurrentStateForPrompt` import.
+- `.github/workflows/atlas-quality.yml` — adds one step so the suite actually runs in CI.
+  See **QA / Validation**: no workflow ran `src/__tests__/integration` at all.
 
 ## QA / Validation
 
@@ -94,9 +98,20 @@ which is the five replaced cases becoming eight.
 exit 0 on both changed files with **no output**, where before the change it reported
 `'formatTowerCurrentStateForPrompt' is defined but never used`.
 
-**Where the suite runs:** `src/__tests__/integration` is one of the three directories in
-`test:before-commit`, so this file was already routinely executed — which is why the
-defect is a test that could not fail rather than a test nobody ran.
+**Where the suite runs — and the second defect, found by checking rather than assuming.**
+`src/__tests__/integration` is one of the three directories in `test:before-commit`, and
+on this repository that has been read in several records as meaning CI-covered. It is
+not. **No workflow runs that directory.** `coverage:behavior-gate` runs
+`src/__tests__/behaviors` only; `production-readiness-gate.yml` runs one named file from
+the integration tree; `atlas-quality.yml` *triggers* on
+`src/__tests__/integration/atlas/**` but its only step was `npm run atlas:eval`. So this
+suite had been enforced by a local command and by nothing in CI — and making a check able
+to fail is worth little if it fails nowhere.
+
+This change therefore adds one step to `atlas-quality.yml`, the workflow whose path
+filter already names both `src/lib/atlas/**` and `src/__tests__/integration/atlas/**`.
+The step is inside the existing required job, so no new required context is created. The
+CI log is read after push to confirm the step **executed**, not merely that it is present.
 
 ## Rollout Plan
 
@@ -120,8 +135,9 @@ merge SHA as usual. No migration, no flag, no manual runbook, no data build.
 
 ## Rollback Plan
 
-Revert the PR. Two files, no schema, no data, no runtime configuration. Reverting
-restores the previous test and the unused import; nothing else changes.
+Revert the PR. Three files, no schema, no data, no runtime configuration. Reverting
+restores the previous test, the unused import and the workflow without the extra step;
+nothing else changes.
 
 ## Audit Evidence
 
@@ -130,6 +146,7 @@ restores the previous test and the unused import; nothing else changes.
   commands named there.
 - ESLint output on `src/lib/atlas/llm.ts` before and after, showing the unused-variable
   warning clearing.
+- The `Atlas quality` CI job log for this PR, showing the new step executing the suite.
 
 ## Known Gaps
 
