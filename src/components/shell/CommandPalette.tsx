@@ -11,9 +11,9 @@ const ROUTES = [
   { label: 'Source · Events', path: '/source', surface: 'Source', key: 'src' },
   { label: 'Intelligence · Library', path: '/intelligence', surface: 'Intelligence', key: 'int' },
   { label: 'Tower', path: '/tower', surface: 'Tower', key: 'twr' },
-  { label: 'Tower · Value', path: '/tower', surface: 'Tower', key: 'twr' },
-  { label: 'Tower · Spend', path: '/tower', surface: 'Tower', key: 'twr' },
-  { label: 'Tower · Actions', path: '/tower', surface: 'Tower', key: 'twr' },
+  { label: 'Tower · Value', path: '/tower?tab=initiatives&view=proof', surface: 'Tower', key: 'twr' },
+  { label: 'Tower · Spend', path: '/tower?tab=budget&view=shape', surface: 'Tower', key: 'twr' },
+  { label: 'Tower · Actions', path: '/tower?tab=decisions&view=review', surface: 'Tower', key: 'twr' },
   { label: 'Admin · Overview', path: '/admin', surface: 'Admin', key: 'adm' },
   { label: 'Admin · Connectors', path: '/admin/connectors', surface: 'Admin', key: 'adm' },
   { label: 'Admin · Users & Access', path: '/admin/users-access', surface: 'Admin', key: 'adm' },
@@ -198,9 +198,6 @@ export function CommandPalette() {
           ) : (
             filteredRoutes.map((route, i) => (
               <div
-                // Four Tower entries share `/tower`, so the path is not a
-                // unique key; React's duplicate-key warning showed a row
-                // rendering twice. Labels are unique.
                 key={route.label}
                 onClick={() => navigate(route.path)}
                 style={{
