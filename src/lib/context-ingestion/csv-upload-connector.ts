@@ -161,8 +161,25 @@ export interface CsvUploadLoadResult extends Omit<
 const MAX_ROWS = 50_000;
 const MAX_TEXT_COLUMNS = 12;
 
-const SEGMENT_BY_DIMENSION: Partial<Record<ContextDimension, string>> = {
+const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   enterprise_profile: "enterprise_profile",
+  business_org_functions: "org_structure",
+  it_org_ownership: "org_structure",
+  capabilities_value_streams: "enterprise_profile",
+  applications_systems: "it_landscape",
+  system_function_mapping: "it_landscape",
+  infrastructure_cloud: "infrastructure",
+  platform_volumetrics: "infrastructure",
+  data_analytics_estate: "data_estate",
+  integrations_interfaces: "it_landscape",
+  vendors_contracts_licenses: "it_financials",
+  it_budget_financials: "it_financials",
+  initiatives_portfolio: "program_inventory",
+  operations_service_management: "it_landscape",
+  kpis_outcome_evidence: "program_inventory",
+  security_risk_compliance: "program_inventory",
+  ai_automation_footprint: "it_landscape",
+  personas_workforce: "org_structure",
   financial_kpis: "it_financials",
   annual_quarterly_reports: "enterprise_profile",
   market_competitor_intel: "program_inventory",
@@ -209,7 +226,7 @@ const SEGMENT_BY_DIMENSION: Partial<Record<ContextDimension, string>> = {
 export function segmentKeyForContextDimension(
   dimension: ContextDimension,
 ): SegmentKey {
-  return (SEGMENT_BY_DIMENSION[dimension] ?? "program_inventory") as SegmentKey;
+  return SEGMENT_BY_DIMENSION[dimension];
 }
 
 function normalizeHeader(value: string): string {
@@ -590,8 +607,7 @@ export function prepareCsvUploadForTenantContext(
     fileHash.slice(0, 12),
     compactTimestamp(uploadedAt),
   ].join(":");
-  const sourceSegmentId =
-    SEGMENT_BY_DIMENSION[template.dimension] ?? "program_inventory";
+  const sourceSegmentId = segmentKeyForContextDimension(template.dimension);
   const sourceSystem = template.id;
   const sourceBase = input.sourceBlob
     ? `blob://${input.sourceBlob.bucket}/${input.sourceBlob.path}`
