@@ -55,79 +55,6 @@ interface LoadPhaseResult {
   detail: string;
 }
 
-const TOWER_SUPPLEMENT_ENTRIES: ManifestLoadEntry[] = [
-  {
-    order: 7,
-    family: "execution_operations",
-    dimension: "initiative_milestones",
-    file: "ai-control-tower/T01_initiative-milestones.csv",
-    template_id: "initiative-milestones",
-  },
-  {
-    order: 7,
-    family: "execution_operations",
-    dimension: "benefit_realization",
-    file: "ai-control-tower/T02_benefit-realization.csv",
-    template_id: "benefit-realization",
-  },
-  {
-    order: 7,
-    family: "financial_commercial",
-    dimension: "ai_spend_by_initiative",
-    file: "ai-control-tower/T08_ai-spend-by-initiative.csv",
-    template_id: "ai-spend-by-initiative",
-  },
-  {
-    order: 7,
-    family: "governance_ai_evidence",
-    dimension: "gate_approval_history",
-    file: "ai-control-tower/T10_gate-approval-history.csv",
-    template_id: "gate-approval-history",
-  },
-  {
-    order: 8,
-    family: "execution_operations",
-    dimension: "servicenow_automation_metrics",
-    file: "ai-control-tower/T05_servicenow-automation-metrics.csv",
-    template_id: "servicenow-automation-metrics",
-  },
-  {
-    order: 9,
-    family: "personas_workforce",
-    dimension: "copilot_adoption_by_function",
-    file: "ai-control-tower/T03_copilot-adoption-by-function.csv",
-    template_id: "copilot-adoption-by-function",
-  },
-  {
-    order: 9,
-    family: "technology_estate",
-    dimension: "erp_platform_agents",
-    file: "ai-control-tower/T04_erp-platform-agents.csv",
-    template_id: "erp-platform-agents",
-  },
-  {
-    order: 9,
-    family: "execution_operations",
-    dimension: "function_ai_productivity_scorecard",
-    file: "ai-control-tower/T06_function-ai-productivity-scorecard.csv",
-    template_id: "function-ai-productivity-scorecard",
-  },
-  {
-    order: 9,
-    family: "governance_ai_evidence",
-    dimension: "model_risk_inventory",
-    file: "ai-control-tower/T07_model-risk-inventory.csv",
-    template_id: "model-risk-inventory",
-  },
-  {
-    order: 9,
-    family: "governance_ai_evidence",
-    dimension: "ai_risk_register",
-    file: "ai-control-tower/T09_ai-risk-register.csv",
-    template_id: "ai-risk-register",
-  },
-];
-
 function asObject(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("manifest_load_invalid_body");
@@ -205,14 +132,10 @@ async function readManifest(datasetRoot: string): Promise<{
         typeof object.description === "string" ? object.description : undefined,
     } satisfies ManifestLoadEntry;
   });
-  const present = new Set(baseEntries.map((entry) => entry.file));
-  const supplement = TOWER_SUPPLEMENT_ENTRIES.filter(
-    (entry) => !present.has(entry.file),
-  );
   return {
     tenantKey: String(raw.tenant_key ?? ""),
     clientId: String(raw.client_id ?? ""),
-    entries: [...baseEntries, ...supplement].sort((a, b) => {
+    entries: baseEntries.sort((a, b) => {
       if (a.type === "relationship_graph") return 1;
       if (b.type === "relationship_graph") return -1;
       return a.order - b.order || a.file.localeCompare(b.file);
@@ -253,10 +176,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const datasetRoot = cleanDatasetPath(
-      body.datasetPath ?? "datasets/first-capital-financial-synthetic-v2",
-    );
+    if (typeof body.datasetPath !== "string" || !body.datasetPath.trim()) {
+      return NextResponse.json(
+        { error: "manifest_load_dataset_path_required" },
+        { status: 400 },
+      );
+    }
+    const datasetRoot = cleanDatasetPath(body.datasetPath);
     const manifest = await readManifest(datasetRoot);
+    if (canonicalTenantKey(manifest.tenantKey.trim()) !== requestedTenant) {
+      return NextResponse.json(
+        { error: "manifest_load_tenant_mismatch" },
+        { status: 403 },
+      );
+    }
     const tenantKey = requestedTenant || manifest.tenantKey;
     const clientId = tenancy.clientId ?? manifest.clientId;
     const dryRun = Boolean(body.dryRun);
