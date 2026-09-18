@@ -22,8 +22,7 @@ import {
   sourceEventRowToDetail,
 } from "@/lib/source/queries";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
-import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
-import { composeSentinelSystemPrompt } from "@/lib/agent/voice-doctrine/sentinel";
+import { callSourceCanvasChatModel } from "@/lib/source/source-canvas-chat";
 import { loadContractEvidenceRuntimeSummary } from "@/lib/source/contract-evidence/read-model";
 import type { ContractEvidenceMetricSummary } from "@/lib/source/contract-evidence/read-model";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -252,22 +251,48 @@ export async function POST(
     // Build context + deterministic briefing (always needed for fallback + suggested actions).
     const stubResponse = createSourceNexusApiStubResponse(stubInput);
 
-    // Attempt a real Claude call. Falls back to stub summary on any failure.
-    const claudeSummary = await callSentinelWithClaude({
-      prompt: normalizedBody.prompt ?? "",
-      briefingContext: stubResponse.summary ?? "",
-      tenantKey: activeClient?.key ?? null,
-      tenantId: tenancy.clientId,
-    }).catch(() => null);
+    // Attempt a real Claude call, grounded in the evidence assembled above.
+    // A failure falls back to the deterministic briefing, but it says so: the
+    // previous `.catch(() => null)` made a denied egress, a provider outage and
+    // an empty answer indistinguishable from a deliberate deterministic answer.
+    let claudeSummary: string | null = null;
+    let modelWarnings: string[] = [];
+    try {
+      const modelResult = await callSourceCanvasChatModel({
+        prompt: normalizedBody.prompt ?? "",
+        briefingContext: stubResponse.summary ?? "",
+        tenantKey: activeClient?.key ?? null,
+        tenantId: tenancy.clientId,
+        liveTenantContext,
+      });
+      claudeSummary = modelResult.text;
+      modelWarnings = modelResult.warnings;
+    } catch (error) {
+      const detail =
+        error instanceof Error ? error.message : "unknown model error";
+      console.warn(
+        "[source.nexus-ask.canvas-chat-model.failed]",
+        JSON.stringify({ eventId: eventId ?? null, detail }),
+      );
+      modelWarnings = [
+        `Sentinel canvas chat fell back to the deterministic briefing: ${detail}. No model answer was produced for this turn.`,
+      ];
+    }
 
     const guardedClaudeSummary =
       claudeSummary && eventId
         ? enforceSourceExistingEventWriteTruth(claudeSummary)
         : claudeSummary;
 
-    const response = guardedClaudeSummary
+    const baseResponse = guardedClaudeSummary
       ? { ...stubResponse, summary: guardedClaudeSummary, noModel: false }
       : stubResponse;
+    const response = modelWarnings.length
+      ? {
+          ...baseResponse,
+          warnings: [...baseResponse.warnings, ...modelWarnings],
+        }
+      : baseResponse;
 
     // Opt-in structured-answer branch (mirrors /api/intelligence/ask's
     // Accept: application/x-ndjson convention). Every existing caller sends
@@ -1685,57 +1710,6 @@ async function linkAttachmentsToEvent(args: {
     tenantId,
     eventId,
   });
-}
-
-/**
- * Call Claude with Sentinel voice for Source canvas chat.
- * Returns the answer string, or throws so the caller can fall back to stub.
- */
-async function callSentinelWithClaude(args: {
-  prompt: string;
-  briefingContext: string;
-  tenantKey: string | null;
-  tenantId: string;
-}): Promise<string> {
-  if (!args.prompt.trim()) throw new Error("empty prompt");
-
-  const preflight = await preflightAnthropicDirectClient({
-    tenantId: args.tenantId,
-    workflow: "source-canvas-chat",
-    model: "claude-sonnet-4-6",
-    prompt: args.prompt,
-    dataClass: "confidential",
-    metadata: { surface: "source", tenantKey: args.tenantKey ?? "unknown" },
-  });
-  if (!preflight.ok) throw new Error(`egress blocked: ${preflight.reason}`);
-
-  const systemPrompt = composeSentinelSystemPrompt({
-    mode: "tenant",
-    tenantKey: args.tenantKey,
-    surface: "/source",
-    vectorIndexPending: false,
-    worldviewPending: false,
-    worldviewHitsPresent: false,
-  });
-
-  const userMessage = args.briefingContext
-    ? `${args.briefingContext}\n\nUser question: ${args.prompt}`
-    : args.prompt;
-
-  const msg = await preflight.client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 512,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-  });
-
-  const text = msg.content
-    .filter((b) => b.type === "text")
-    .map((b) => (b as { type: "text"; text: string }).text)
-    .join("");
-
-  if (!text.trim()) throw new Error("empty Claude response");
-  return text;
 }
 
 async function parseSourceNexusRequestBody(request: NextRequest): Promise<

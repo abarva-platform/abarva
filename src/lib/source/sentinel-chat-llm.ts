@@ -22,9 +22,45 @@ export interface SourceSentinelChatLlmInput {
   env?: NodeJS.ProcessEnv;
 }
 
-interface PromptEvidenceItem {
+export interface SourceSentinelPromptEvidenceItem {
   label: string;
   citation: SourceAnswerEvidenceCitation;
+}
+
+type PromptEvidenceItem = SourceSentinelPromptEvidenceItem;
+
+/**
+ * The grounding posture the Source canvas answer must obey. Exported because
+ * the live `/api/v1/source/[eventId]/nexus/ask` chat path composes the same
+ * rules; keeping one definition is what stops the live path and this module
+ * from drifting apart again.
+ */
+export const SOURCE_SENTINEL_GROUNDING_POSTURE: readonly string[] = [
+  "Required posture:",
+  "1. Every material claim about vendors, numbers, dates, scope, risks, or recommendations MUST cite a loaded evidence ID like [E1].",
+  "2. If the loaded evidence cannot answer the question, say what evidence is missing. Do not fall back to a generic sourcing checklist.",
+  "3. Never fabricate vendor names, numbers, contract dates, owners, savings, or tool names.",
+  "4. Be brief and executive-readable: answer first, then evidence, then next action.",
+  "5. Keep any draft output clearly marked as a draft requiring human review before use.",
+  "6. Do NOT enumerate or repeat the open gate criteria listed above in your answers unless the user has specifically asked about gate status. Use them as background context only.",
+];
+
+export const SOURCE_SENTINEL_NO_EVIDENCE_LINE =
+  "No event evidence chunks are currently loaded. Say exactly what evidence is missing before making material claims.";
+
+/**
+ * "Active evidence chunks loaded ..." header plus one line per loaded chunk, or
+ * the explicit missing-evidence instruction when nothing is loaded.
+ */
+export function composeSourceSentinelEvidenceBlock(
+  promptEvidence: readonly SourceSentinelPromptEvidenceItem[],
+): string[] {
+  return [
+    "Active evidence chunks loaded for this event:",
+    ...(promptEvidence.length
+      ? promptEvidence.map(formatPromptEvidenceLine)
+      : [SOURCE_SENTINEL_NO_EVIDENCE_LINE]),
+  ];
 }
 
 export function shouldUseSourceSentinelChatLlm(
@@ -62,7 +98,9 @@ export async function maybeCreateSourceSentinelChatLlmResponse(
     );
   }
 
-  const promptEvidence = buildPromptEvidence(input.liveTenantContext);
+  const promptEvidence = buildSourceSentinelPromptEvidence(
+    input.liveTenantContext,
+  );
   const systemPrompt = buildSourceSentinelChatSystemPrompt({
     event: input.event,
     tenantName:
@@ -142,11 +180,7 @@ export function buildSourceSentinelChatSystemPrompt(args: {
   const event = args.event;
   const stageLabel =
     SOURCE_STAGE_LABELS[event.currentStageKey] ?? event.currentStageKey;
-  const evidenceLines = args.promptEvidence.length
-    ? args.promptEvidence.map(formatPromptEvidenceLine)
-    : [
-        "No event evidence chunks are currently loaded. Say exactly what evidence is missing before making material claims.",
-      ];
+  const evidenceBlock = composeSourceSentinelEvidenceBlock(args.promptEvidence);
   const openGates = [
     ...args.fallbackResponse.context.missingInputs,
     ...args.fallbackResponse.context.blockers,
@@ -164,29 +198,22 @@ export function buildSourceSentinelChatSystemPrompt(args: {
     `Value at stake: ${formatUsd(event.valueAtStakeUsd)}`,
     `Decision owner: ${event.scorecard.decisionOwner || event.owner || "not recorded"}`,
     "",
-    "Active evidence chunks loaded for this event:",
-    ...evidenceLines,
+    ...evidenceBlock,
     "",
     "Open gate criteria or missing inputs:",
     ...(openGates.length
       ? openGates.map((item) => `- ${item}`)
       : ["- None recorded in the current event context."]),
     "",
-    "Required posture:",
-    "1. Every material claim about vendors, numbers, dates, scope, risks, or recommendations MUST cite a loaded evidence ID like [E1].",
-    "2. If the loaded evidence cannot answer the question, say what evidence is missing. Do not fall back to a generic sourcing checklist.",
-    "3. Never fabricate vendor names, numbers, contract dates, owners, savings, or tool names.",
-    "4. Be brief and executive-readable: answer first, then evidence, then next action.",
-    "5. Keep any draft output clearly marked as a draft requiring human review before use.",
-    "6. Do NOT enumerate or repeat the open gate criteria listed above in your answers unless the user has specifically asked about gate status. Use them as background context only.",
+    ...SOURCE_SENTINEL_GROUNDING_POSTURE,
     "",
     composeRuntimeOutputDisciplineBlock("Source"),
   ].join("\n");
 }
 
-function buildPromptEvidence(
+export function buildSourceSentinelPromptEvidence(
   liveTenantContext: SourceLiveTenantContextSnapshot,
-): PromptEvidenceItem[] {
+): SourceSentinelPromptEvidenceItem[] {
   return liveTenantContext.retrievedEvidence
     .slice()
     .sort((a, b) => b.score - a.score)
@@ -221,13 +248,13 @@ function buildLlmBackedResponse(args: {
   inputTokens: number | null;
   outputTokens: number | null;
 }): SourceNexusApiStubResponse {
-  const evidenceCitations = extractEvidenceCitations(
+  const evidenceCitations = extractSourceSentinelEvidenceCitations(
     args.answerText,
     args.promptEvidence,
   );
   const warnings = [
     ...args.fallbackResponse.warnings,
-    ...createLlmWarnings(args.answerText, evidenceCitations),
+    ...buildSourceSentinelCitationWarnings(args.answerText, evidenceCitations),
   ];
   const fallbackAnswer = args.fallbackResponse.sourceAnswer;
   const sourceAnswer = fallbackAnswer
@@ -278,9 +305,9 @@ function buildLlmBackedResponse(args: {
   };
 }
 
-function extractEvidenceCitations(
+export function extractSourceSentinelEvidenceCitations(
   answerText: string,
-  promptEvidence: PromptEvidenceItem[],
+  promptEvidence: readonly SourceSentinelPromptEvidenceItem[],
 ): SourceAnswerEvidenceCitation[] {
   const byIndex = new Map<number, SourceAnswerEvidenceCitation>();
   for (const match of answerText.matchAll(CITATION_RE)) {
@@ -293,9 +320,9 @@ function extractEvidenceCitations(
     .map(([, citation]) => citation);
 }
 
-function createLlmWarnings(
+export function buildSourceSentinelCitationWarnings(
   answerText: string,
-  evidenceCitations: SourceAnswerEvidenceCitation[],
+  evidenceCitations: readonly SourceAnswerEvidenceCitation[],
 ): string[] {
   const warnings: string[] = [];
   if (evidenceCitations.length === 0) {
