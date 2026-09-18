@@ -144,9 +144,17 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
           const busy = processing[ev.id];
           const isOpen = expanded[ev.id] ?? false;
           const conf = confirmationsFor(ev.id);
+          // The server requires a rationale of this length for EVERY lifecycle
+          // decision on this event, not only for approve. Send back and reject
+          // are gated on the same minimum here so the queue states the
+          // requirement instead of letting the route refuse the click.
           const commentReady =
             (comments[ev.id]?.trim().length ?? 0) >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
           const canApprove = allConfirmed(ev.id) && commentReady && !busy;
+          const canDecide = commentReady && !busy;
+          const reasonBlocker = commentReady
+            ? undefined
+            : `Enter at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters of rationale first`;
 
           return (
             <div key={ev.id} style={{ borderBottom: '1px solid #f5efc8' }}>
@@ -294,7 +302,7 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                     value={comments[ev.id] ?? ''}
                     onChange={(e) => setComments((c) => ({ ...c, [ev.id]: e.target.value }))}
                     data-testid={`source-event-approval-reason-${ev.id}`}
-                    placeholder={`Approval reason (minimum ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters)`}
+                    placeholder={`Decision reason — approve, send back or reject (minimum ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters)`}
                     rows={2}
                     style={{
                       width: '100%',
@@ -355,7 +363,9 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                     </button>
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={!canDecide}
+                      title={reasonBlocker}
+                      data-testid={`source-event-send-back-${ev.id}`}
                       onClick={() => void handleAction(ev.id, 'send_back')}
                       style={{
                         padding: '7px 16px',
@@ -368,15 +378,17 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                         fontWeight: 700,
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        cursor: busy ? 'not-allowed' : 'pointer',
-                        opacity: busy ? 0.6 : 1,
+                        cursor: canDecide ? 'pointer' : 'not-allowed',
+                        opacity: canDecide ? 1 : 0.6,
                       }}
                     >
                       Send back
                     </button>
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={!canDecide}
+                      title={reasonBlocker}
+                      data-testid={`source-event-reject-${ev.id}`}
                       onClick={() => void handleAction(ev.id, 'reject')}
                       style={{
                         padding: '7px 14px',
@@ -389,8 +401,8 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                         fontWeight: 700,
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        cursor: busy ? 'not-allowed' : 'pointer',
-                        opacity: busy ? 0.6 : 1,
+                        cursor: canDecide ? 'pointer' : 'not-allowed',
+                        opacity: canDecide ? 1 : 0.6,
                       }}
                     >
                       Reject

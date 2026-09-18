@@ -43,6 +43,10 @@ import {
   sourceJourneyStageKeys,
 } from "@/lib/source/sourcing-motion-journeys";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
+import {
+  normalizeApprovalReason,
+  validateApprovalReason,
+} from "@/lib/source/source-governance-enforcement";
 
 // Every lifecycle decision gets its own action type, so the activity table can
 // be read without inferring the decision from the reason text.
@@ -137,6 +141,28 @@ export async function POST(
     body = (await request.json()) as ApproveBody;
   } catch {
     return Response.json({ error: "invalid_json" }, { status: 400 });
+  }
+
+  // Every decision this route commits is an audit record, so it needs the same
+  // human rationale the sibling lifecycle routes (request-changes,
+  // route-to-co-approver, the event PATCH) already require server-side. The
+  // approval card and the admin queue check the same minimum in the browser;
+  // a client-side check is not a control, and `reject` / `send_back` reached
+  // the write with a null reason whenever a caller skipped the UI. Validated
+  // before the event is read so a decision with no rationale touches nothing.
+  //
+  // The check lives here rather than in evaluateSourceApprovalDecision because
+  // that pure function is also the confirmation gate for
+  // evaluateSourceGateAdvanceContract, which answers stage readiness — a
+  // different question from whether a human wrote down why they decided.
+  const approvalReason = normalizeApprovalReason(body.notes);
+  const reasonVerdict = validateApprovalReason(approvalReason);
+  if (!reasonVerdict.ok) {
+    const blocker = reasonVerdict.blockers[0];
+    return Response.json(
+      { error: blocker.code, detail: blocker.detail },
+      { status: 409 },
+    );
   }
 
   const supabase = getAzureReadFluentClient();
