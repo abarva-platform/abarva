@@ -136,7 +136,7 @@ describe("agent route · Source aVa contract optimization authority", () => {
     expect(source).toContain("sourceV4.selectedContract");
     expect(source).toContain("selectedContract.contractId");
     expect(source).toContain(
-      "const contractIdFromContext = resolveSourceContractId(surfaceContext);",
+      "const contractIdFromContext = resolveContractQuestionId(",
     );
   });
 
