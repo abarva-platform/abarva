@@ -17,6 +17,11 @@ const updateStage = jest.fn(async () => ({ ok: true }));
 const insertActivityLog = jest.fn(
   async () => ({ ok: true }) as { ok: boolean; error?: string },
 );
+const stageSubstrate = {
+  criteria: [] as Array<Record<string, unknown>>,
+  artifacts: [],
+  evidence: [],
+};
 
 jest.mock("next/server", () => ({
   after: jest.fn((task: () => void | Promise<void>) => {
@@ -84,11 +89,7 @@ jest.mock("@/lib/source/stage-entry-autodraft", () => ({
 }));
 
 jest.mock("@/lib/source/canvas-substrate/queries", () => ({
-  getStageSubstrate: jest.fn(async () => ({
-    criteria: [],
-    artifacts: [],
-    evidence: [],
-  })),
+  getStageSubstrate: jest.fn(async () => stageSubstrate),
 }));
 
 jest.mock("@/lib/source/gate-advance-contract", () => ({
@@ -110,6 +111,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { isGateApprovalStrictMode } from "@/lib/auth/gate-approval-strict-mode";
+import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
 import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
 
 const mockAfter = jest.mocked(after);
@@ -119,6 +121,7 @@ const mockGetContractOptimizationProfile = jest.mocked(
   getContractOptimizationProfile,
 );
 const mockIsGateApprovalStrictMode = jest.mocked(isGateApprovalStrictMode);
+const mockGateAdvance = jest.mocked(evaluateSourceGateAdvanceContract);
 
 function activeClientRow(key: string) {
   return {
@@ -146,6 +149,58 @@ describe("POST Source event approve", () => {
     eventRow.sourcing_motion = null;
     eventRow.created_by_user_id = "another-user";
     mockIsGateApprovalStrictMode.mockReturnValue(false);
+    stageSubstrate.criteria = [];
+    mockGateAdvance.mockImplementation(() => ({
+      ok: true,
+      status: 200,
+      readiness: { ok: true, blockers: [] },
+      bypassedGovernanceBlockers: [],
+    }));
+  });
+
+  it("does not approve or advance past a pending strategy criterion on self-approval", async () => {
+    eventRow.current_stage_key = "strategy";
+    stageSubstrate.criteria = [
+      {
+        criterionId: "GATE-STRATEGY-01",
+        fromStage: "strategy",
+        state: "pending",
+      },
+    ];
+    mockGateAdvance.mockImplementationOnce(
+      jest.requireActual<typeof import("@/lib/source/gate-advance-contract")>(
+        "@/lib/source/gate-advance-contract",
+      ).evaluateSourceGateAdvanceContract,
+    );
+
+    const response = await POST(
+      new Request(
+        "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            action: "approve",
+            notes: "Sponsor requests an early strategy advance.",
+            selfApproveIfAuthorized: true,
+            confirmations: {
+              strategyMemoReviewed: true,
+              valueTargetConfirmed: true,
+              archetypeRigorConfirmed: true,
+            },
+          }),
+        },
+      ),
+      { params: Promise.resolve({ eventId: "event-1" }) },
+    );
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).blockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "gate_criterion_open" }),
+      ]),
+    );
+    expect(applyApproval).not.toHaveBeenCalled();
+    expect(updateStage).not.toHaveBeenCalled();
   });
 
   /**
@@ -219,7 +274,10 @@ describe("POST Source event approve", () => {
     });
 
     it("does not fail an approval that already committed when the activity write fails", async () => {
-      insertActivityLog.mockResolvedValue({ ok: false, error: "insert_failed" });
+      insertActivityLog.mockResolvedValue({
+        ok: false,
+        error: "insert_failed",
+      });
       const consoleError = jest
         .spyOn(console, "error")
         .mockImplementation(() => undefined);

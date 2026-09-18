@@ -284,8 +284,6 @@ export async function POST(
       artifacts: substrate.artifacts,
       evidence: substrate.evidence,
       reason: body.notes,
-      allowComputedReadinessBypass:
-        body.selfApproveIfAuthorized === true && !strictMode,
     });
     if (!gateContract.ok) {
       return Response.json(
