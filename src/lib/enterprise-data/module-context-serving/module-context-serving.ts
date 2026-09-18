@@ -96,9 +96,11 @@ const REQUEST_TENANT_ALIASES: Record<string, string> = {
   firstcapital: "first-capital-financial",
   lakeshore: "lakeshore-holdings",
   meridian: "meridian-health",
-  skyharbor: "skyharbor_global",
-  "skyharbor-air": "skyharbor_global",
-  skyharbor_global: "skyharbor_global",
+  meridian_health_global: "meridian-health",
+  skyharbor: "skyharbor-air",
+  "skyharbor-air": "skyharbor-air",
+  "skyharbor-global": "skyharbor-air",
+  skyharbor_global: "skyharbor-air",
 };
 
 export interface ModuleContextServingOptions {
