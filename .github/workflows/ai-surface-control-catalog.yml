@@ -63,3 +63,6 @@ jobs:
 
       - name: Exercise deliverable approval actions
         run: npx jest --runTestsByPath src/components/deliverables/__tests__/ApproveActions.controls.test.tsx --runInBand
+
+      - name: Exercise Source approval queue controls
+        run: npx jest --runTestsByPath src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx --runInBand
