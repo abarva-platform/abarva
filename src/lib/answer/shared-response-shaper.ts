@@ -221,10 +221,18 @@ function normalizeAssemblyArtifacts(text: string): string {
       .replace(/\bBreakdown\s*:\s*;\s*/gi, "Breakdown: ")
       .replace(/\s*;\s*[-–—]\s*/g, "; ")
       .replace(/\s+[-–—]\s+Breakdown\s*:\s*[-–—]?\s*/gi, "\nBreakdown: ")
-      .replace(
-        /\b(?:and|or|but|with|to|of|for|from|against|into|about|on|at|by|as|than|while|because|before|after|if|then)\.(?=\s*(?:\n|$))/gi,
-        "",
-      )
+      // A connector stranded at the end of a line used to be treated as
+      // proof that the sentence had been cut, and the connector plus its
+      // period were deleted. That is only true for a coordinating
+      // conjunction: English strands prepositions freely ("the comparison
+      // you asked for.", "the baseline we measured against.") and uses
+      // several subordinators adverbially ("paused for a while.", "nobody
+      // has raised this before."). The old list carried all of them, so
+      // finished prose was delivered with its last word missing. A
+      // sentence never legitimately ends in "and", "or" or "but", so those
+      // stay — and the cut sentence is closed with a period rather than
+      // left hanging on a comma.
+      .replace(/(?:\s*,)?\s*\b(?:and|or|but)\.(?=\s*(?:\n|$))/gi, ".")
       .replace(/\s+([,.;:!?])/g, "$1"),
   );
 }

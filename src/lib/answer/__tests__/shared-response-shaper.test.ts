@@ -117,6 +117,17 @@ describe("shapeSharedAdvisorResponse", () => {
     expect(result.text).not.toContain("Breakdown:;");
     expect(result.text).not.toContain("Next: Next");
     expect(result.text).not.toContain("supporting supporting");
-    expect(result.text).not.toMatch(/\b(before|with|and|or|to)\.$/m);
+    // Backlog item 42 — this assertion used to require that every one of
+    // `before|with|and|or|to` was stripped from the end of a line. Doing
+    // that deleted the last word of finished prose, because English
+    // strands prepositions ("the comparison you asked for.") and uses
+    // subordinators adverbially ("nobody has raised this before."). The
+    // rule now covers only the coordinating conjunctions, which never end
+    // an English sentence. The cost is stated rather than hidden: this
+    // input really is a truncated sentence, and `before.` now survives —
+    // the user sees prose that is visibly cut instead of prose that was
+    // silently shortened.
+    expect(result.text).not.toMatch(/\b(and|or|but)\.$/m);
+    expect(result.text).toMatch(/gate before\.$/m);
   });
 });
