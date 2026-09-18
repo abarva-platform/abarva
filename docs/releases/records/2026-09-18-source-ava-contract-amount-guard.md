@@ -30,7 +30,7 @@ The server answer context carries Contract 360's stated annual value, conflict s
 
 ## QA / Validation
 
-- Focused Jest suites: 42 tests passed.
+- Focused aVa and merged read-adapter Jest suites: 49 tests passed.
 - Deliberate guard mutations: disabling the visual trace check promoted an authored-only amount into a sized total; disabling the linked run-ID check promoted a descriptive fallback calculation into a reproducible total. Both tests passed after restoration.
 - Focused ESLint: passed.
 - Full TypeScript check with an 8 GB Node heap: passed.
@@ -61,4 +61,4 @@ The PR diff, focused test output, mutation result, lint, TypeScript, and release
 
 ## Known Gaps
 
-The aVa trace bucket relies on the merged persisted read adapter's claim-run ID check; `OpportunityCalculationRead` does not expose a run ID for independent verification by aVa. Fallback rows and partial claims remain untraced. The export packet serializes the already-gated answer and grounding block, so this guard is inherited by that path; signed-in export parity is unproven. Broader Source export surfaces and economics reconciliation, including benchmark-based sizing and finance-confirmed value, remain separate work. This candidate does not establish full Stage 09 parity.
+The aVa trace bucket relies on the merged persisted read adapter's claim-run ID check; `OpportunityCalculationRead` does not expose a run ID for independent verification by aVa. A direct run-identity bridge remains open. Fallback rows and partial claims remain untraced. The export packet serializes the already-gated answer and grounding block, so this guard is inherited by that path; signed-in export parity is unproven. Broader Source export surfaces and economics reconciliation, including benchmark-based sizing and finance-confirmed value, remain separate work. This candidate does not establish full Stage 09 parity.
