@@ -14,7 +14,6 @@ import {
 } from '@/lib/atlas/tool-belt';
 import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrieval-format';
-import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
 import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
 import { buildTowerFactualSpineAnswer } from '@/lib/atlas/tower-factual-spine';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
