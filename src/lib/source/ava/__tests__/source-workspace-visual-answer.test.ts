@@ -1085,6 +1085,66 @@ describe("Source Workspace visual aVa answer", () => {
     expect(answer?.directAnswer).not.toContain("confirmation..");
   });
 
+  it("counts signal-stage levers with recorded approval blockers as gated", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.optimizationOpportunities = {
+      opportunities: [
+        {
+          id: "CTR-090:commitment-ramp",
+          label: "Re-time annual commitment",
+          stageRaw: "signal",
+          stage: "signal",
+          grade: "Document Evidenced",
+          blockingGap: "Finance confirmation and owner approval are required before realized value can be claimed.",
+          nextAction: "Propose a milestone-based ramp schedule.",
+          sourceRefs: ["contract-schedule"],
+        },
+      ],
+    };
+    context.sourceV4.contractOpportunityDirectory = [];
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "What is actionable on CTR-090?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("Evidence is present for 1 line");
+    expect(answer?.directAnswer).toContain(
+      "1 line still requires explicit workflow, review, or finance confirmation",
+    );
+    expect(answer?.directAnswer).not.toContain("0 lines still require");
+  });
+
+  it("counts a sized line when its only review gate is in the blocking-gap field", () => {
+    const context = sourceContext() as AskSurfaceContext & {
+      sourceV4: Record<string, unknown>;
+    };
+    context.sourceV4.optimizationOpportunities = {
+      opportunities: [
+        {
+          id: "CTR-090:service-credit",
+          label: "Recover service credit",
+          amountUsd: 25_000,
+          stageRaw: "quantified",
+          grade: "Document Evidenced",
+          blockingGap: "Owner approval required before submitting the claim.",
+          nextAction: "Prepare the credit packet.",
+          sourceRefs: ["sla-ledger"],
+        },
+      ],
+    };
+    context.sourceV4.contractOpportunityDirectory = [];
+
+    const answer = buildSourceWorkspaceVisualAnswer({
+      query: "What can I do with CTR-090?",
+      surfaceContext: context,
+    });
+
+    expect(answer?.directAnswer).toContain("1 line still requires explicit workflow");
+  });
+
   it("does not present an empty contract opportunity packet as an actionable case", () => {
     const context = sourceContext() as AskSurfaceContext & {
       sourceV4: Record<string, unknown>;

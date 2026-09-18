@@ -1449,10 +1449,12 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       `${line.state} ${line.evidenceClass}`,
     ),
   ).length;
-  const gapCount = lines.filter((line) =>
-    /baseline_conflict|evidence_required|workflow_required|review_required|finance_confirmation_required|finance confirmation required|not_confirmed|not confirmed|missing|needs evidence|not established|requires_/i.test(
-      `${line.state} ${line.evidenceClass} ${line.nextAction}`,
-    ),
+  const gapCount = lines.filter(
+    (line) =>
+      isSignalStage(line.stage) ||
+      /baseline_conflict|evidence_required|workflow_required|review_required|finance_confirmation_required|finance confirmation required|not_confirmed|not confirmed|missing|needs evidence|not established|requires_|approval.*required|required.*approval/i.test(
+        `${line.state} ${line.evidenceClass} ${line.blockingGap} ${line.nextAction}`,
+      ),
   ).length;
   const sizedCount = sizedRows.length;
   const candidateTotalUsd = sizedRows.reduce(
