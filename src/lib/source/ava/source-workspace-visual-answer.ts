@@ -1117,7 +1117,9 @@ export function buildSourceContractOptimizationExportAnswer(input: {
       ? `All ${lines.length} ${lines.length === 1 ? "lever is" : "levers are"} unsized. Supported candidate value is not established until the named evidence gates close.`
       : "No governed optimization levers are loaded for this contract.";
   const directAnswer = [
-    `${sizedRows.length === 0 && lines.length > 0 ? "No supported savings total can be added from these levers." : "Executive read:"} ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is an optimization case, not realized savings. ${sizingPosture} Finance-confirmed realized value cannot be inferred from these candidate rows.`,
+    lines.length === 0
+      ? `Executive read: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) has no governed optimization levers in this packet; actionability and candidate value are not established. Review contract-specific evidence before preparing a client action memo.`
+      : `${sizedRows.length === 0 ? "No supported savings total can be added from these levers." : "Executive read:"} ${contract.vendorName} ${contract.contractName} (${contract.contractId}) is an optimization case, not realized savings. ${sizingPosture} Finance-confirmed realized value cannot be inferred from these candidate rows.`,
     tableMarkdown,
   ].join("\n\n");
 
@@ -1167,8 +1169,9 @@ export function buildSourceContractOptimizationExportAnswer(input: {
         label: "Contract optimization opportunity rows",
         sourceClass: "tenant-fact",
         recordId: contract.contractId,
-        excerpt:
-          "Lever, ask, rationale, owner, timing, value state, and evidence gates are read from governed Source opportunity rows.",
+        excerpt: rows.length > 0
+          ? "Lever, ask, rationale, owner, timing, value state, and evidence gates are read from governed Source opportunity rows."
+          : "No governed contract-specific optimization lever is present in the current Source packet.",
         confidence: rows.length > 0 ? "high" : "medium",
       },
     ],
@@ -1218,13 +1221,21 @@ export function buildSourceContractOptimizationExportAnswer(input: {
       },
     ],
     nextSteps: [
-      {
-        id: "export-client-memo",
-        label: "Export the governed lever table as a client memo",
-        rationale:
-          "The answer packet is structured as one table plus a short executive read so it can be rendered directly to PDF.",
-        targetSurface: "source",
-      },
+      rows.length > 0
+        ? {
+            id: "export-client-memo",
+            label: "Export the governed lever table as a client memo",
+            rationale:
+              "The answer packet is structured as one table plus a short executive read so it can be rendered directly to PDF.",
+            targetSurface: "source",
+          }
+        : {
+            id: "review-contract-evidence",
+            label: "Review contract-specific evidence",
+            rationale:
+              "A governed lever and its evidence must exist before preparing a client action memo.",
+            targetSurface: "source",
+          },
     ],
   };
 }
