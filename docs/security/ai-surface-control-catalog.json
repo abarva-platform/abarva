@@ -264,7 +264,9 @@
             "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its missing-data banner."
           }
         }
-      ]
+      ],
+      "routeReachable": false,
+      "unreachableReason": "The Tower route renders TowerCommandCenterAvaShell; nothing imports ProgramPressureCards. The brief's five controls exist in a component the Tower rebuild left behind. src/lib/qa/route-smoke-inventory.ts and src/lib/qa/founder-demo-route-checklist.ts still name it as the component /tenant/[tenantSlug]/tower renders. Fixed by mounting the accountability block in the command-center shell, or by moving these five controls to the component that now renders there and retiring this entry."
     },
     {
       "id": "source-admin-event-approval-queue",
@@ -294,7 +296,9 @@
             "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx"
           }
         }
-      ]
+      ],
+      "routeReachable": false,
+      "unreachableReason": "No route imports this component; it is already recorded in docs/architecture/source-canvas-orphans.json. The approval controls it carries are real code with a behavioral test, but no signed-in user can open the queue. Fixed by mounting it from a Source admin route, or by retiring it once the approval path that replaced it is cataloged instead."
     },
     {
       "id": "source-estimate-assumption-disclosure",
@@ -315,7 +319,9 @@
             "reason": "No behavioral test yet. The disclosure component has no rendering suite, so nothing proves the assumptions list renders rather than collapsing to an empty node."
           }
         }
-      ]
+      ],
+      "routeReachable": false,
+      "unreachableReason": "No route imports this component; it is already recorded in docs/architecture/source-canvas-orphans.json, and its only importer is its own test. Every Source savings and cost estimate a user sees today is rendered without it. Fixed by mounting it wherever Source presents an estimate, which is where the catalog claims the caveat is shown."
     },
     {
       "id": "agent-chat-route-decision-boundary",

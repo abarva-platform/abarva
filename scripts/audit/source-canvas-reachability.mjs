@@ -23,13 +23,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// The graph walk is shared with the AI surface control catalog, which asks the
+// same question of its declared surfaces. One implementation so the two audits
+// cannot disagree about what a user can reach.
+import {
+  computeRouteReachability,
+  isExcluded,
+  walk,
+} from './lib/route-reachability.mjs';
+
 const REPO_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
   '..',
 );
-const SRC = path.join(REPO_ROOT, 'src');
-const APP = path.join(SRC, 'app');
 const BASELINE = path.join(
   REPO_ROOT,
   'docs',
@@ -40,137 +47,8 @@ const BASELINE = path.join(
 /** Directories whose components must be reachable from a route. */
 const WATCHED = ['src/components/source'];
 
-const EXTENSIONS = ['.tsx', '.ts', '.jsx', '.js'];
-
-function walk(dir, out = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name === '.next') continue;
-      walk(full, out);
-    } else if (EXTENSIONS.includes(path.extname(entry.name))) {
-      out.push(full);
-    }
-  }
-  return out;
-}
-
-/** Resolve an import specifier to a file on disk, or null if it is external. */
-function resolveImport(spec, fromFile) {
-  let base;
-  if (spec.startsWith('@/')) {
-    base = path.join(SRC, spec.slice(2));
-  } else if (spec.startsWith('.')) {
-    base = path.resolve(path.dirname(fromFile), spec);
-  } else {
-    return null; // package import
-  }
-
-  for (const ext of EXTENSIONS) {
-    const candidate = `${base}${ext}`;
-    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-      return candidate;
-    }
-  }
-  for (const ext of EXTENSIONS) {
-    const candidate = path.join(base, `index${ext}`);
-    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-      return candidate;
-    }
-  }
-  if (fs.existsSync(base) && fs.statSync(base).isFile()) return base;
-  return null;
-}
-
-const IMPORT_PATTERNS = [
-  /\bfrom\s+["']([^"']+)["']/g,
-  /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
-  /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g,
-];
-
-function importsOf(file) {
-  let text;
-  try {
-    text = fs.readFileSync(file, 'utf8');
-  } catch {
-    return [];
-  }
-  const specs = new Set();
-  for (const pattern of IMPORT_PATTERNS) {
-    for (const match of text.matchAll(pattern)) specs.add(match[1]);
-  }
-  const resolved = [];
-  for (const spec of specs) {
-    const target = resolveImport(spec, file);
-    if (target) resolved.push(target);
-  }
-  return resolved;
-}
-
-/**
- * Roots are the files Next.js actually entry-points: every page, layout,
- * route handler, template, error and loading file under src/app, plus
- * middleware and instrumentation at the src root.
- */
-function collectRoots() {
-  const roots = [];
-  if (fs.existsSync(APP)) {
-    for (const file of walk(APP)) {
-      const name = path.basename(file, path.extname(file));
-      if (
-        [
-          'page',
-          'layout',
-          'route',
-          'template',
-          'error',
-          'loading',
-          'not-found',
-          'global-error',
-          'default',
-          'opengraph-image',
-          'icon',
-          'sitemap',
-          'robots',
-          'manifest',
-        ].includes(name)
-      ) {
-        roots.push(file);
-      }
-    }
-  }
-  for (const extra of ['middleware.ts', 'instrumentation.ts']) {
-    const candidate = path.join(SRC, extra);
-    if (fs.existsSync(candidate)) roots.push(candidate);
-  }
-  return roots;
-}
-
-function reachableFrom(roots) {
-  const seen = new Set();
-  const queue = [...roots];
-  while (queue.length > 0) {
-    const file = queue.pop();
-    if (seen.has(file)) continue;
-    seen.add(file);
-    for (const next of importsOf(file)) {
-      if (!seen.has(next)) queue.push(next);
-    }
-  }
-  return seen;
-}
-
 function isWatched(relative) {
   return WATCHED.some((dir) => relative.startsWith(`${dir}/`));
-}
-
-function isExcluded(relative) {
-  return (
-    relative.includes('/__tests__/') ||
-    relative.includes('/__mocks__/') ||
-    /\.(test|spec)\.[jt]sx?$/.test(relative) ||
-    /\.d\.ts$/.test(relative)
-  );
 }
 
 function main() {
@@ -178,8 +56,7 @@ function main() {
   const update = args.includes('--update');
   const asJson = args.includes('--json');
 
-  const roots = collectRoots();
-  const reachable = reachableFrom(roots);
+  const { roots, reachable } = computeRouteReachability(REPO_ROOT);
 
   const orphans = [];
   for (const dir of WATCHED) {
