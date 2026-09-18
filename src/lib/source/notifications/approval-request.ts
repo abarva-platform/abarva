@@ -4,9 +4,8 @@ import 'server-only';
 //
 // Emails a Source approver that a sourcing event is waiting for their
 // approval, so approvals can be simulated end-to-end by email during pilot
-// testing. Sender is fixed to support@abarva.ai; the default recipient is
-// admin@abarva.ai (overridable via SOURCE_APPROVAL_NOTIFY_TO, or a real
-// approver email passed by the caller).
+// testing. The caller must pass a recipient resolved from an authorized
+// event participant; the mailer never guesses or falls back to an admin.
 //
 // Delivery goes through the legacy pilot-safe email channel
 // (src/lib/email/send.ts): when RESEND_API_KEY is set it sends via Resend,
@@ -21,7 +20,6 @@ import { sendEmail } from '@/lib/email/send';
 // its Google MX and is intentionally NOT verified in Resend). Override via
 // SOURCE_APPROVAL_FROM_EMAIL only with an address on a verified domain.
 const DEFAULT_APPROVAL_FROM = 'support@send.abarva.ai';
-const APPROVAL_DEFAULT_TO = 'admin@abarva.ai';
 
 function resolveApprovalFrom(): string {
   const override = process.env.SOURCE_APPROVAL_FROM_EMAIL?.trim();
@@ -33,7 +31,7 @@ export interface ApprovalRequestInput {
   eventName: string;
   stageLabel: string;
   reviewUrl: string;
-  approverEmail?: string | null;
+  approverEmail: string;
   requestedBy?: string | null;
   tenantName?: string | null;
 }
@@ -53,14 +51,6 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-function resolveRecipient(approverEmail?: string | null): string {
-  const explicit = approverEmail?.trim();
-  if (explicit) return explicit;
-  const envTo = process.env.SOURCE_APPROVAL_NOTIFY_TO?.trim();
-  if (envTo) return envTo;
-  return APPROVAL_DEFAULT_TO;
 }
 
 function buildText(input: ApprovalRequestInput): string {
@@ -134,7 +124,10 @@ function buildHtml(input: ApprovalRequestInput): string {
 export async function sendApprovalRequestEmail(
   input: ApprovalRequestInput,
 ): Promise<ApprovalRequestResult> {
-  const recipient = resolveRecipient(input.approverEmail);
+  const recipient = input.approverEmail?.trim();
+  if (!recipient) {
+    return { delivered: false, channel: 'error', to: '', error: 'approver_email_required' };
+  }
   const subject = `Approval needed: ${input.eventName} — ${input.stageLabel}`;
 
   const result = await sendEmail({

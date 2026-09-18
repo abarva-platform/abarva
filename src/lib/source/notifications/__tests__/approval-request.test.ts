@@ -17,7 +17,6 @@ const ORIGINAL_ENV = process.env;
 beforeEach(() => {
   sendEmailMock.mockReset();
   process.env = { ...ORIGINAL_ENV };
-  delete process.env.SOURCE_APPROVAL_NOTIFY_TO;
 });
 
 afterAll(() => {
@@ -29,6 +28,7 @@ const baseInput = {
   eventName: 'Apex AMS Outsourcing 2026',
   stageLabel: '3. BAFO',
   reviewUrl: 'https://app.abarva.ai/source/events/evt-123/approval',
+  approverEmail: 'approver@client.test',
 };
 
 test('sends from the Resend-verified subdomain support@send.abarva.ai by default', async () => {
@@ -49,28 +49,18 @@ test('SOURCE_APPROVAL_FROM_EMAIL overrides the sender (must be a verified domain
   delete process.env.SOURCE_APPROVAL_FROM_EMAIL;
 });
 
-test('recipient defaults to admin@abarva.ai when no approverEmail and no env', async () => {
-  sendEmailMock.mockResolvedValue({ ok: true, id: 'resend-1' });
-  const result = await sendApprovalRequestEmail(baseInput);
-  const msg = sendEmailMock.mock.calls[0][0];
-  expect(msg.to).toBe('admin@abarva.ai');
-  expect(result.to).toBe('admin@abarva.ai');
-});
-
-test('SOURCE_APPROVAL_NOTIFY_TO overrides the default recipient', async () => {
-  process.env.SOURCE_APPROVAL_NOTIFY_TO = 'ops@abarva.ai';
-  sendEmailMock.mockResolvedValue({ ok: true, id: 'resend-1' });
-  const result = await sendApprovalRequestEmail(baseInput);
-  expect(result.to).toBe('ops@abarva.ai');
-});
-
-test('approverEmail wins when provided', async () => {
-  process.env.SOURCE_APPROVAL_NOTIFY_TO = 'ops@abarva.ai';
+test('uses only the explicitly resolved recipient', async () => {
   sendEmailMock.mockResolvedValue({ ok: true, id: 'resend-1' });
   const result = await sendApprovalRequestEmail({ ...baseInput, approverEmail: 'approver@client.test' });
   const msg = sendEmailMock.mock.calls[0][0];
   expect(msg.to).toBe('approver@client.test');
   expect(result.to).toBe('approver@client.test');
+});
+
+test('a missing recipient fails closed without invoking the email channel', async () => {
+  const result = await sendApprovalRequestEmail({ ...baseInput, approverEmail: '' });
+  expect(result).toMatchObject({ delivered: false, error: 'approver_email_required' });
+  expect(sendEmailMock).not.toHaveBeenCalled();
 });
 
 test('subject contains eventName and stageLabel', async () => {

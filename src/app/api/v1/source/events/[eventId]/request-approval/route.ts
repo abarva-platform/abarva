@@ -10,16 +10,45 @@
 // auto-fired on gate state changes.
 
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
+import { getActiveClientRow } from '@/lib/active-client';
+import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import { clerkClient } from '@clerk/nextjs/server';
+import {
+  isApprovedTestRecipient,
+  soleApprovalParticipant,
+  type ApprovalParticipant,
+} from '@/lib/source/notifications/approval-recipient-policy';
 import { sendApprovalRequestEmail } from '@/lib/source/notifications/approval-request';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 interface Body {
-  eventName?: string;
   stageLabel?: string;
   stageKey?: string;
   approverEmail?: string;
+}
+
+async function participantIdentity(userId: string): Promise<{ name: string; email: string } | null> {
+  if (userId.startsWith('user_')) {
+    const user = await (await clerkClient()).users.getUser(userId);
+    const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    const email = user.primaryEmailAddress?.emailAddress?.trim();
+    return name && email ? { name, email } : null;
+  }
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+    return null;
+  }
+  const { data, error } = await getAzureReadFluentClient()
+    .from('persons')
+    .select('name, email')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  const name = data?.name?.trim();
+  const email = data?.email?.trim();
+  return name && email ? { name, email } : null;
 }
 
 export async function POST(req: Request, ctxParam: { params: Promise<{ eventId: string }> }) {
@@ -30,6 +59,17 @@ export async function POST(req: Request, ctxParam: { params: Promise<{ eventId: 
       return Response.json({ error: 'bad_request', detail: 'eventId is required.' }, { status: 400 });
     }
 
+    const activeClient = await getActiveClientRow();
+    if (!activeClient) return Response.json({ error: 'no_client' }, { status: 403 });
+    const policy = await loadUserSourceAccessPolicy(ctx, {
+      activeClientKey: activeClient.key,
+      sourceEventId: eventId,
+    });
+    if (policy.accessLevel === 'no_source_access' || policy.accessLevel === 'source_viewer' ||
+      (policy.sourceEventIdsAllowed !== null && !policy.sourceEventIdsAllowed.includes(eventId))) {
+      return Response.json({ error: 'forbidden' }, { status: 403 });
+    }
+
     let body: Body = {};
     try {
       body = (await req.json()) as Body;
@@ -38,7 +78,45 @@ export async function POST(req: Request, ctxParam: { params: Promise<{ eventId: 
       body = {};
     }
 
-    const eventName = body.eventName?.trim() || `Sourcing event ${eventId}`;
+    if (body.approverEmail !== undefined) {
+      return Response.json({ error: 'recipient_must_be_event_participant' }, { status: 400 });
+    }
+
+    const db = getAzureReadFluentClient();
+    const { data: event, error: eventError } = await db
+      .from('source_events')
+      .select('id, event_name, client_key')
+      .eq('id', eventId)
+      .eq('client_key', activeClient.key)
+      .maybeSingle();
+    if (eventError) throw eventError;
+    if (!event) return Response.json({ error: 'not_found' }, { status: 404 });
+
+    const { data: participantRows, error: participantError } = await db
+      .from('source_event_participants')
+      .select('user_id, approval_authority, can_approve_source_stages')
+      .eq('source_event_id', eventId)
+      .eq('client_key', event.client_key);
+    if (participantError) throw participantError;
+    const participant = soleApprovalParticipant((participantRows ?? []) as ApprovalParticipant[]);
+    if (!participant?.user_id) {
+      return Response.json({ error: 'approver_assignment_required' }, { status: 409 });
+    }
+    const identity = await participantIdentity(participant.user_id);
+    if (!identity || /^(user|test|unknown)$/i.test(identity.name)) {
+      return Response.json({ error: 'named_approver_required' }, { status: 409 });
+    }
+
+    // Until tenant-level notification provenance is authoritative, the pilot
+    // lane permits only explicitly listed internal recipients for every tenant.
+    if (!isApprovedTestRecipient(
+      identity.email,
+      process.env.SOURCE_APPROVAL_TEST_RECIPIENT_ALLOWLIST,
+    )) {
+      return Response.json({ error: 'test_recipient_not_allowed' }, { status: 403 });
+    }
+
+    const eventName = event.event_name?.trim() || `Sourcing event ${eventId}`;
     const stageLabel = body.stageLabel?.trim() || 'Stage gate';
     const stageKey = body.stageKey?.trim();
 
@@ -52,9 +130,9 @@ export async function POST(req: Request, ctxParam: { params: Promise<{ eventId: 
       eventName,
       stageLabel,
       reviewUrl,
-      approverEmail: body.approverEmail ?? null,
+      approverEmail: identity.email,
       requestedBy: ctx.userId,
-      tenantName: ctx.clientKey ?? null,
+      tenantName: activeClient.key,
     });
 
     return Response.json(
