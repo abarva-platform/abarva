@@ -6,11 +6,7 @@
   margin: 0;
   background: #f5f1eb;
   color: #2c2c2a;
-  font-family:
-    Inter,
-    -apple-system,
-    system-ui,
-    sans-serif;
+  font-family: var(--abarva-sans, Inter, -apple-system, system-ui, sans-serif);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -59,7 +55,6 @@
 .sw-v2-content-canvas {
   min-height: clamp(360px, calc(100vh - 390px), 720px);
   border: 0;
-  border-top: 1px solid #b4b2a9;
   background: transparent;
   padding: 18px 0 0;
 }
@@ -122,29 +117,31 @@
   z-index: 20;
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin: 18px 0 0;
-  padding-top: 8px;
+  gap: 2px;
+  margin: 14px 0 0;
+  padding-top: 0;
   background: #f5f1eb;
-  border-bottom: 1px solid #b4b2a9;
+  border-bottom: 1px solid rgba(10, 10, 11, 0.24);
   overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .sw-v2-horizontal-tabs button,
 .sw-v2-horizontal-tabs a {
-  display: inline-grid;
-  place-items: center;
-  min-height: 48px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   min-width: 0;
-  border: 1px solid transparent;
-  border-bottom: 0;
-  border-radius: 8px 8px 0 0;
+  border: 0;
+  border-radius: 0;
   background: transparent;
-  color: #0a0a0b;
-  padding: 0 14px;
+  color: #5f5e5a;
+  padding: 0 16px;
   text-align: center;
   font-size: 14px;
-  font-weight: 760;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
@@ -152,17 +149,34 @@
 
 .sw-v2-horizontal-tabs button.is-active,
 .sw-v2-horizontal-tabs a.is-active {
-  border-color: rgba(29, 158, 117, 0.42);
-  background: #e1f5ee;
-  color: #0f6e56;
-  box-shadow: inset 0 -3px 0 #1d9e75;
+  background: transparent;
+  color: #2c2c2a;
+}
+
+.sw-v2-horizontal-tabs button.is-active::after,
+.sw-v2-horizontal-tabs a.is-active::after {
+  content: "";
+  position: absolute;
+  right: 11px;
+  bottom: 0;
+  left: 11px;
+  height: 3px;
+  border-radius: 2px;
+  background: #1d9e75;
 }
 
 .sw-v2-horizontal-tabs button:hover,
 .sw-v2-horizontal-tabs a:hover {
-  border-color: rgba(29, 158, 117, 0.28);
-  background: rgba(225, 245, 238, 0.68);
-  color: #0f6e56;
+  background: transparent;
+  color: #2c2c2a;
+}
+
+.sw-v2-horizontal-tabs button:focus-visible,
+.sw-v2-horizontal-tabs a:focus-visible,
+.sw-v2-subtabbar button:focus-visible,
+.sw-c3-tabrow button:focus-visible {
+  outline: 2px solid #2765c6;
+  outline-offset: -2px;
 }
 
 .sw-v2-contract-commandbar {
@@ -290,7 +304,7 @@
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  padding: 28px 40px 56px;
+  padding: 20px 34px 48px;
 }
 
 .sw-v2-topbar {
@@ -351,9 +365,10 @@
   margin: 6px 0 6px;
   max-width: min(100%, 1280px);
   color: #0a0a0b;
-  font-size: 28px;
-  line-height: 1.15;
-  font-weight: 820;
+  font-family: var(--abarva-serif, "Fraunces", Georgia, serif);
+  font-size: 26px;
+  line-height: 1.12;
+  font-weight: 500;
   letter-spacing: 0;
 }
 
@@ -392,7 +407,7 @@
   border-radius: 6px;
   background: #fff;
   padding: 8px 12px;
-  box-shadow: 0 6px 16px rgba(10, 10, 11, 0.05);
+  box-shadow: 0 1px 2px rgba(10, 10, 11, 0.04);
 }
 
 .sw-v2-control span {
@@ -411,7 +426,7 @@
   margin-top: 5px;
   color: #2c2c2a;
   font-size: 12px;
-  font-weight: 780;
+  font-weight: 600;
   letter-spacing: 0;
   line-height: 1.25;
 }
@@ -1144,7 +1159,9 @@
 .sw-v2-panel-head h2 {
   margin: 5px 0 0;
   color: #0a0a0b;
+  font-family: var(--abarva-serif, "Fraunces", Georgia, serif);
   font-size: 17px;
+  font-weight: 500;
   line-height: 1.25;
   letter-spacing: 0;
 }
@@ -2188,27 +2205,39 @@
 
 .sw-v2-subtabbar {
   display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-wrap: nowrap;
+  gap: 3px;
   margin-bottom: 15px;
-  padding: 4px;
-  border: 1px solid #d3d1c7;
-  border-radius: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 3px;
+  border: 0;
+  border-radius: 9px;
   background: #f1efe8;
 }
 
 .sw-v2-subtabbar button {
-  min-height: 30px;
-  border-color: transparent;
+  flex: none;
+  min-height: 34px;
+  border: 0;
   background: transparent;
-  padding: 0 11px;
+  color: #5f5e5a;
+  padding: 0 13px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.sw-v2-tabbar button.is-active,
-.sw-v2-subtabbar button.is-active {
+.sw-v2-tabbar button.is-active {
   background: #0a0a0b;
   border-color: #0a0a0b;
   color: #fff;
+}
+
+.sw-v2-subtabbar button.is-active {
+  border: 0;
+  background: #fff;
+  color: #0f6e56;
+  box-shadow: 0 0 0 1.5px #1d9e75, 0 1px 2px rgba(10, 10, 11, 0.06);
 }
 
 .sw-v2-lanes {
@@ -2518,9 +2547,9 @@
 
   .sw-v2-horizontal-tabs button,
   .sw-v2-horizontal-tabs a {
-    min-width: 126px;
+    min-width: max-content;
     min-height: 44px;
-    padding: 0 16px;
+    padding: 0 14px;
   }
 
   .sw-v2-contract-commandbar {
@@ -3754,7 +3783,7 @@
   font: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: var(--sw-c3-ink);
+  color: var(--sw-c3-muted);
   background: none;
   border: 0;
   padding: 12px 15px;
@@ -3763,7 +3792,11 @@
 }
 
 .sw-c3-tabrow button:hover {
-  color: var(--sw-c3-green-deep);
+  color: var(--sw-c3-ink);
+}
+
+.sw-c3-tabrow button[aria-selected="true"] {
+  color: var(--sw-c3-ink);
 }
 
 .sw-c3-tabrow button[aria-selected="true"]::after {
