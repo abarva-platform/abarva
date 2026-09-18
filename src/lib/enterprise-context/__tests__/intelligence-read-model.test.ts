@@ -33,6 +33,27 @@ function record(
   };
 }
 
+function summarizeAliasRows(records: EnterpriseContextRecordRow[]) {
+  return summarizeEnterpriseContextRows({
+    tenantKey: "test-tenant",
+    tenantName: "Test tenant",
+    counts: {
+      sources: 0,
+      records: records.length,
+      facts: 0,
+      relationships: 0,
+      evidence: 0,
+      qualityIssues: 0,
+      stewardshipTasks: 0,
+      chunkQueue: 0,
+    },
+    records,
+    sources: [],
+    qualityRows: [],
+    evidenceRows: [],
+  });
+}
+
 describe("enterprise context Intelligence read model", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -324,6 +345,62 @@ describe("enterprise context Intelligence read model", () => {
       spendLabel: "$1.8M",
       health: "watch",
     });
+  });
+
+  it.each([
+    ["org_decision_rights", "org_role", "org and decision rights (2)"],
+    ["org_decision_rights", "decision_right", "org and decision rights (2)"],
+    ["facilities_business_units", "facility", "facilities/business units (2)"],
+    ["facilities_business_units", "business_unit", "facilities/business units (2)"],
+    ["cmdb_applications_services", "cmdb_application", "application/service records (2)"],
+    ["cmdb_applications_services", "cmdb_service", "application/service records (2)"],
+    ["incidents", "incident", "incidents (2)"],
+    ["problems", "problem", "problems (2)"],
+    ["changes", "change", "changes (2)"],
+    ["renewal_calendar", "renewal", "renewals (2)"],
+    ["vendors_contract_inventory", "contract", "vendor/contract records (2)"],
+    ["financial_kpis", "kpi_metric", "KPIs/metrics (2)"],
+    ["policies_procedures", "policy", "policies/procedures (2)"],
+    ["policies_procedures", "procedure", "policies/procedures (2)"],
+    ["initiative_portfolio", "initiative", "initiatives (2)"],
+    ["data_domains_stewardship", "data_domain", "data-domain/stewardship records (2)"],
+    ["risk_compliance_register", "risk", "risks/compliance (2)"],
+    ["risk_compliance_register", "compliance_finding", "risks/compliance (2)"],
+  ])("counts %s and %s as recorded rows", (legacyType, promotedType, expectedFact) => {
+    const overview = summarizeAliasRows([
+      record({ record_type: legacyType, title: "Legacy row" }),
+      record({ record_type: promotedType, title: "Promoted row" }),
+    ]);
+
+    expect(overview.sentinelFacts.join("\n")).toContain(expectedFact);
+    expect(overview.recordTypeCounts).toMatchObject({
+      [legacyType]: 1,
+      [promotedType]: 1,
+    });
+  });
+
+  it("does not count a configuration item as an application or service", () => {
+    const overview = summarizeAliasRows([
+      record({ record_type: "cmdb_application", title: "Application", payload: { ci_id: "CI-1" } }),
+      record({ record_type: "configuration_item", title: "Underlying CI", payload: { ci_id: "CI-1" } }),
+    ]);
+
+    expect(overview.cards.find((card) => card.key === "platform-and-service-reliability")?.whatWeKnow)
+      .toContain("1 application/service record loaded");
+    expect(overview.sentinelFacts.join("\n")).toContain("application/service records (1)");
+  });
+
+  it("does not present vendor and data-asset rows as contracts or data domains", () => {
+    const overview = summarizeAliasRows([
+      record({ record_type: "contract", title: "Agreement" }),
+      record({ record_type: "vendor", title: "Supplier" }),
+      record({ record_type: "data_domain", title: "Finance domain" }),
+      record({ record_type: "data_asset", title: "Finance dataset" }),
+    ]);
+
+    expect(overview.sentinelFacts.join("\n")).toContain("vendor/contract records (1)");
+    expect(overview.sentinelFacts.join("\n")).toContain("Commercial posture: 1 vendor/contract record");
+    expect(overview.sentinelFacts.join("\n")).toContain("data-domain/stewardship records (1)");
   });
 
   it("loads overview tables sequentially to avoid session-mode pool bursts", async () => {
