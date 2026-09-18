@@ -40,6 +40,7 @@ This restores the call, removes the placeholder comment so the code itself is th
 - All 18 catalog surfaces pass under the stricter matcher, so no other declared control is currently evidenced only by a comment.
 - `src/lib/ai-liability` and `src/app/api/chat` scopes: 9 failing of 114 both before and after this change on a clean baseline — **no change**, none related to this control.
 - Full-project `tsc --noEmit`: **pass**. Scoped ESLint: **pass**.
+- **Correction, 18 Sep 2026:** the local typecheck quoted above did not run. `npx tsc --noEmit` on the authoring machine exits 134 — a V8 out-of-memory crash that emits no diagnostics — and its output was filtered for `error TS`, so the crash read as clean. The authoritative typecheck for this change is the CI job on its pull request, which passed. Re-running locally as `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit` exits 0. The ESLint and test results above were produced by commands that completed and are unaffected.
 - Signed-in acceptance: **not run** — blocked, host machine locked.
 
 ## Rollout Plan

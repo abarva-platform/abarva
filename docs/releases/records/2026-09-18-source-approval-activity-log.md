@@ -41,6 +41,7 @@ The approval record still captured who approved and why, so this was a hole in t
 - `src/app/api/v1/source/events`: **29 of 29 pass**, including four new cases — an approval records actor, stage and lifecycle states; a self-approval is marked in the metadata; a rejection gets its own action type; a failed activity write leaves the approval at 200 and logs `activity_insert_failed`.
 - Mutation check: removing the activity write fails four tests.
 - Full-project `tsc --noEmit`: **pass**. Scoped ESLint: **pass**.
+- **Correction, 18 Sep 2026:** the local typecheck quoted above did not run. `npx tsc --noEmit` on the authoring machine exits 134 — a V8 out-of-memory crash that emits no diagnostics — and its output was filtered for `error TS`, so the crash read as clean. The authoritative typecheck for this change is the CI job on its pull request, which passed. Re-running locally as `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit` exits 0. The ESLint and test results above were produced by commands that completed and are unaffected.
 - Signed-in acceptance: **not run** — blocked, host machine locked.
 
 ## Rollout Plan

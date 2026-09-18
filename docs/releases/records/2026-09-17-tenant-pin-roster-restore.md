@@ -41,6 +41,7 @@ Measured against a clean `origin/main` tree for the same suite:
 - `src/lib/auth/__tests__/tenant-isolation-probes.test.ts` baseline: **8 failing**. With this change: **3 failing**. Status: **pass** for the five isolation probes — Probe 5 (pin resolves from roster email), Probe 5b (industry code), Probe 6 (client role inferred), Probe 7 (roster pin overrides stale conflicting metadata), Probe 8 (cross-tenant request parameter is stripped).
 - `src/lib/programs/discovery/__tests__/industry-profile.test.ts`: **pass**.
 - Full-project `tsc --noEmit`: **pass**. Scoped ESLint: **pass**.
+- **Correction, 18 Sep 2026:** the local typecheck quoted above did not run. `npx tsc --noEmit` on the authoring machine exits 134 — a V8 out-of-memory crash that emits no diagnostics — and its output was filtered for `error TS`, so the crash read as clean. The authoritative typecheck for this change is the CI job on its pull request, which passed. Re-running locally as `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit` exits 0. The ESLint and test results above were produced by commands that completed and are unaffected.
 - Signed-in acceptance: **not run** — blocked, host machine locked.
 
 The three still-failing probes were failing before this change and are unrelated: two assert pre-rename display names, one asserts admin-role inference. They are stale expectations from a deliberate rename, not defects, and are left visible rather than edited.

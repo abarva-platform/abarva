@@ -40,6 +40,7 @@ Measured against a clean `origin/main` tree over the same scope
 - Baseline: 30 failing tests across 79 suites.
 - With this change: 26 failing. Four tests fixed, none broken. Status: **pass** for the two restored affordances; the four newly passing tests are the AI-draft marker and citation-gap assertions.
 - Full-project `tsc --noEmit`: **pass**. Scoped ESLint: **pass**, no errors.
+- **Correction, 18 Sep 2026:** the local typecheck quoted above did not run. `npx tsc --noEmit` on the authoring machine exits 134 — a V8 out-of-memory crash that emits no diagnostics — and its output was filtered for `error TS`, so the crash read as clean. The authoritative typecheck for this change is the CI job on its pull request, which passed. Re-running locally as `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit` exits 0. The ESLint and test results above were produced by commands that completed and are unaffected.
 - Signed-in acceptance on the deployed build: **not run** — blocked, the host machine is locked.
 
 ## Still failing, and why they are not in this change
