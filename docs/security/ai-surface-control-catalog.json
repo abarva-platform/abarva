@@ -29,7 +29,7 @@
           ],
           "behavioralTest": {
             "status": "none",
-            "reason": "No test renders an answer carrying citations and asserts the citation markers appear; the suite only asserts the gap notice stays quiet when citations exist."
+            "reason": "Citation substitution happens inside react-markdown's component overrides, and react-markdown is mocked repo-wide to a passthrough because its ESM breaks next/jest's transform. No jsdom suite can prove a placeholder resolves to a pill. Covering it needs a suite that unmocks react-markdown, or one against @/lib/agent/markdownTokens directly. The limit is asserted in the wired suite so it cannot be mistaken for a product defect."
           }
         },
         {
@@ -49,8 +49,7 @@
             "viewModel.confidence.tier"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "No test asserts the confidence indicator renders for a given tier; confidence is only used as an input to the citation-gap cases."
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
           }
         },
         {
@@ -480,8 +479,7 @@
             "AI Draft"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "No behavioral test yet. Nothing builds the canvas view model and asserts the draft label survives into it."
+            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
           }
         },
         {
@@ -490,18 +488,18 @@
             "evidenceCitations"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "No behavioral test yet. Nothing builds the canvas view model and asserts evidence citations survive into it."
+            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
           }
         },
         {
           "kind": "confidence",
           "evidence": [
-            "confidence"
+            "deriveReadiness",
+            "readinessLabel",
+            "Missing evidence"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "No behavioral test yet. Nothing builds the canvas view model and asserts a confidence value survives into it."
+            "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
           }
         }
       ]

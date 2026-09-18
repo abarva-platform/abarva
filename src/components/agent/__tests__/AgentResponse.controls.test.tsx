@@ -19,9 +19,31 @@
 
 import { render, screen } from "@testing-library/react";
 import { AgentResponse } from "../AgentResponse";
+import type { Citation } from "@/lib/agent/renderedResponse";
 
 const SUBSTANTIVE =
   "Denial write-offs rose to $4.2M last year, which is above the industry benchmark and is the single largest recoverable line in the portfolio.";
+
+/**
+ * The real `Citation` shape from `@/lib/agent/renderedResponse`. Typing it
+ * here rather than casting an invented object: the previous fixture carried
+ * `id`/`marker`/`source_name`/`source_type`, none of which exist on Citation.
+ * It satisfied the gap check, which only counts the array, and would have
+ * satisfied any assertion that never rendered a pill.
+ */
+function citation(extra: Partial<Citation> = {}): Citation {
+  return {
+    placeholder: "{{cite:evidence_source:denials-ledger-fy25}}",
+    target_type: "evidence_source",
+    target_id: "denials-ledger-fy25",
+    target_slug: "denials-ledger-fy25",
+    target_label: "Denials ledger FY25",
+    confidence: 0.82,
+    confidence_tier: "HIGH",
+    provenance: "measured",
+    ...extra,
+  };
+}
 
 function response(extra: Record<string, unknown> = {}) {
   return {
@@ -52,20 +74,7 @@ describe("agent response · disclosure controls", () => {
   });
 
   it("stays quiet about citation gaps when the answer is actually cited", () => {
-    render(
-      <AgentResponse
-        response={response({
-          citations: [
-            {
-              id: "c1",
-              marker: "[1]",
-              source_name: "Denials ledger FY25",
-              source_type: "tenant_document",
-            },
-          ],
-        })}
-      />,
-    );
+    render(<AgentResponse response={response({ citations: [citation()] })} />);
 
     // A notice that fires on cited answers too would train readers to ignore
     // it, which is the same defect as no notice at all.
@@ -99,5 +108,57 @@ describe("agent response · disclosure controls", () => {
     expect(document.body.textContent ?? "").toMatch(
       /review|approve|confirm|human/i,
     );
+  });
+
+  it("documents a limit: no jsdom suite can prove a citation renders", () => {
+    const cite = citation();
+    render(
+      <AgentResponse
+        response={response({
+          response_text: `Denial write-offs rose to $4.2M last year. ${cite.placeholder}`,
+          citations: [cite],
+        })}
+      />,
+    );
+
+    // Substitution happens inside react-markdown's component overrides, and
+    // react-markdown is mocked repo-wide to a passthrough (its ESM breaks
+    // next/jest's transform). So the placeholder survives as literal text
+    // here — an artifact of the mock, NOT product behavior.
+    //
+    // This is asserted rather than left implicit because the natural
+    // assertion ("the pill rendered") would fail for a reason that has
+    // nothing to do with the control, and the natural inverse ("the
+    // placeholder is visible") would look like a product defect. Covering
+    // the citation control needs a suite that unmocks react-markdown, or one
+    // against @/lib/agent/markdownTokens directly.
+    expect(document.body.textContent ?? "").toContain(cite.placeholder);
+    expect(document.querySelector('[data-mock="react-markdown"]')).toBeTruthy();
+  });
+
+  it("discloses a confidence tier when the response carries one", () => {
+    render(
+      <AgentResponse
+        response={response({
+          honest_disclosure: {
+            confidenceLevel: "MEDIUM",
+            confidenceReason: "Two of three inputs are current.",
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Medium confidence/i)).toBeTruthy();
+  });
+
+  it("documents a gap: confidence_signal alone discloses nothing", () => {
+    // `confidence_signal: "medium"` is on every response in this suite, and
+    // the indicator reads `honest_disclosure.confidenceLevel` instead. A
+    // response carrying only the signal shows the reader no confidence at
+    // all. Asserted as current behavior so a fix has to change this line
+    // rather than slip past it.
+    render(<AgentResponse response={response({ confidence_signal: "medium" })} />);
+
+    expect(screen.queryByText(/confidence/i)).toBeNull();
   });
 });

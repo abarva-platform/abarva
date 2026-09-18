@@ -86,3 +86,6 @@ jobs:
 
       - name: Exercise Atlas drawer disclosure controls
         run: npx jest --runTestsByPath src/components/shell/__tests__/AtlasDrawer.controls.test.tsx --runInBand
+
+      - name: Exercise Moves deliverable canvas disclosure controls
+        run: npx jest --runTestsByPath src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts --runInBand
