@@ -74,13 +74,23 @@ describe('agent response shape', () => {
     expect(shaped).toContain('the referenced record');
   });
 
-  it('adds an executable next action when Tower prose has no action cue', () => {
-    const shaped = shapeAgentResponseForSurface(
-      '/tower',
-      'Apex Retail has pressure in value attainment. The evidence points to adoption and gate timing.',
-    );
+  // Backlog items 41 and 43. This case used to assert the opposite — that the
+  // shaper *adds* `- Next: open the cited initiative` when Tower prose carries
+  // no action cue. #4038 deliberately removed that manufactured closing and
+  // recorded the drop in
+  // `docs/releases/records/2026-06-27-tower-stock-closing-contract.md`; the
+  // same PR made plain `Next:` scaffolding a visible-answer-contract
+  // violation. The assertion has been red ever since, pinning a behaviour the
+  // product now forbids, in a suite outside `test:before-commit` scope where
+  // nobody saw it. It is updated here rather than deleted so the reason stays
+  // attached to the case that once claimed the opposite.
+  it('manufactures no next action when Tower prose has no action cue', () => {
+    const prose =
+      'Apex Retail has pressure in value attainment. The evidence points to adoption and gate timing.';
+    const shaped = shapeAgentResponseForSurface('/tower', prose);
 
-    expect(shaped).toMatch(/^- Next: open the cited initiative/m);
+    expect(shaped).toBe(prose);
+    expect(shaped).not.toMatch(/(?:^|\n)\s*[-–—*]?\s*Next\s*:/i);
   });
 
   it('scrubs internal evidence plumbing terms from Tower copy', () => {

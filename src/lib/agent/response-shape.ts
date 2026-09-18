@@ -1019,8 +1019,9 @@ function shouldCompactSurface(surface: string): boolean {
   // surface for Atlas chat: the compactor turned real answers into
   // malformed tables, dangling numbered lists, and "Evidence: 1." stubs.
   // Tower now preserves natural Atlas output and only applies safety
-  // repairs (markup/id scrubbing, malformed-table repair, next-action
-  // fallback).
+  // repairs (markup/id scrubbing, malformed-table repair). The "next-action
+  // fallback" this comment used to name was removed by #4038 and its two
+  // vestigial options by backlog item 41; nothing here appends a closing.
   //
   // The anti-regression guard test in response-shape.test.ts asserts that
   // every expert-posture surface returns false from this function. If a
@@ -1177,8 +1178,6 @@ export interface ShapeAgentResponseOptions {
   targetChars?: number;
   hardMaxChars?: number;
   maxParagraphs?: number;
-  requireNextStep?: boolean;
-  nextStepFallback?: string;
   issues?: SharedResponseShapeIssue[];
   replacements?: Array<{ from: string; to: string }>;
 }
@@ -1224,8 +1223,6 @@ export function shapeAgentResponseForSurface(
     targetChars: options.targetChars,
     hardMaxChars: options.hardMaxChars,
     maxParagraphs: options.maxParagraphs,
-    requireNextStep: options.requireNextStep,
-    nextStepFallback: options.nextStepFallback,
   });
   if (options.issues) options.issues.push(...shared.issues);
   if (options.replacements) options.replacements.push(...shared.replacements);
