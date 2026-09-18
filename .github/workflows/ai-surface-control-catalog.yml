@@ -83,3 +83,6 @@ jobs:
       # controls.
       - name: Exercise agent dock responsibility and approval notices
         run: npx jest --runTestsByPath src/components/agent/__tests__/AgentDock.test.tsx -t "responsibility footer|human approval boundary" --runInBand
+
+      - name: Exercise Atlas drawer disclosure controls
+        run: npx jest --runTestsByPath src/components/shell/__tests__/AtlasDrawer.controls.test.tsx --runInBand
