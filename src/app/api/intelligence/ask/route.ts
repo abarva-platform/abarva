@@ -35,7 +35,6 @@ import {
   advisorRequiredArtifactForQuery,
   withAdvisorSupportSources,
 } from "@/lib/intelligence/ask/advisor-composer";
-import { buildIndustrialCioBackofficeNativeCanvasBlock } from "@/lib/intelligence/ask/industrial-cio-backoffice-source";
 import { buildSkyHarborCtoReadinessNativeCanvasBlock } from "@/lib/intelligence/ask/skyharbor-cto-readiness-source";
 import {
   buildStructuredExhibits,
@@ -2509,16 +2508,6 @@ function buildRouteNativeCanvasBlock(args: {
   tenantClientKey: string | null;
   tenantId: string | null;
 }): string {
-  if (
-    args.sources.some(
-      (source) => source.id === "industrial-cio-backoffice-readiness",
-    )
-  ) {
-    return buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
-      args.tenantClientKey,
-      args.tenantId,
-    ]);
-  }
   if (args.sources.some((source) => source.id === "skyharbor-cto-readiness")) {
     return buildSkyHarborCtoReadinessNativeCanvasBlock(args.query, [
       args.tenantClientKey,
