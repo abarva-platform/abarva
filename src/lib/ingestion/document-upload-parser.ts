@@ -14,6 +14,13 @@ export interface IngestionDocumentInput {
   cacheScope?: string;
 }
 
+export class InvalidIngestionDocumentError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidIngestionDocumentError';
+  }
+}
+
 const MAX_INPUT_BYTES = 20 * 1024 * 1024;
 const MAX_ARCHIVE_BYTES = 40 * 1024 * 1024;
 const MAX_ARCHIVE_ENTRIES = 2000;
@@ -66,16 +73,16 @@ async function checkArchiveExpansion(buffer: Buffer, expectedExt: string): Promi
   const JSZip = (await import('jszip')).default;
   const zip = await JSZip.loadAsync(buffer);
   const entries = Object.values(zip.files);
-  if (entries.length > MAX_ARCHIVE_ENTRIES) throw new Error('document_parse_too_large: archive entries');
+  if (entries.length > MAX_ARCHIVE_ENTRIES) throw new InvalidIngestionDocumentError('document_parse_too_large: archive entries');
   let expandedBytes = 0;
   for (const entry of entries) {
     if (entry.dir) continue;
     const size = (entry as typeof entry & { _data?: { uncompressedSize?: number } })._data?.uncompressedSize;
     if (!Number.isSafeInteger(size) || size === undefined || size < 0) {
-      throw new Error('document_parse_unsupported: archive size unavailable');
+      throw new InvalidIngestionDocumentError('document_parse_unsupported: archive size unavailable');
     }
     expandedBytes += size;
-    if (expandedBytes > MAX_ARCHIVE_BYTES) throw new Error('document_parse_too_large: archive content');
+    if (expandedBytes > MAX_ARCHIVE_BYTES) throw new InvalidIngestionDocumentError('document_parse_too_large: archive content');
   }
   const names = new Set(entries.map((entry) => entry.name.toLowerCase()));
   const formats = [
@@ -84,22 +91,22 @@ async function checkArchiveExpansion(buffer: Buffer, expectedExt: string): Promi
     entries.some((entry) => /^ppt\/slides\/slide\d+\.xml$/i.test(entry.name)) ? '.pptx' : null,
   ].filter(Boolean);
   if (formats.length !== 1 || formats[0] !== expectedExt) {
-    throw new Error('document_parse_mismatch: Office package type');
+    throw new InvalidIngestionDocumentError('document_parse_mismatch: Office package type');
   }
 }
 
 export async function parseIngestionDocument(input: IngestionDocumentInput): Promise<ParsedIngestionDocument> {
   const ext = documentExtension(input);
-  if (!ext) throw new Error('document_parse_unsupported: file type');
+  if (!ext) throw new InvalidIngestionDocumentError('document_parse_unsupported: file type');
   const buffer = Buffer.from(input.bytes);
-  if (buffer.byteLength > MAX_INPUT_BYTES) throw new Error('document_parse_too_large: input bytes');
+  if (buffer.byteLength > MAX_INPUT_BYTES) throw new InvalidIngestionDocumentError('document_parse_too_large: input bytes');
   const reportedMime = input.mimeType?.toLowerCase().split(';', 1)[0].trim();
   if (reportedMime && reportedMime !== 'application/octet-stream' &&
     reportedMime !== 'application/zip' &&
     Object.values(MIME_BY_EXTENSION).includes(reportedMime) &&
     reportedMime !== MIME_BY_EXTENSION[ext] &&
     !(reportedMime === 'text/plain' && ext in TEXT_METHOD_BY_EXTENSION)) {
-    throw new Error('document_parse_mismatch: declared MIME type');
+    throw new InvalidIngestionDocumentError('document_parse_mismatch: declared MIME type');
   }
   const signature = binarySignature(buffer);
   if ((signature === 'pdf' && ext !== '.pdf') ||
@@ -107,7 +114,7 @@ export async function parseIngestionDocument(input: IngestionDocumentInput): Pro
     (ext === '.pdf' && signature !== 'pdf') ||
     (ARCHIVE_EXTENSIONS.has(ext) && signature !== 'zip') ||
     (ext in TEXT_METHOD_BY_EXTENSION && buffer.includes(0))) {
-    throw new Error('document_parse_mismatch: file signature');
+    throw new InvalidIngestionDocumentError('document_parse_mismatch: file signature');
   }
   if (ARCHIVE_EXTENSIONS.has(ext)) await checkArchiveExpansion(buffer, ext);
 
@@ -120,8 +127,9 @@ export async function parseIngestionDocument(input: IngestionDocumentInput): Pro
     : null;
   const rawText = binary ? extracted?.text : buffer.toString('utf8');
   if (!rawText?.trim()) {
-    if (extracted?.method === 'unsupported') throw new Error('document_parse_unsupported: binary extractor');
-    throw new Error(`document_parse_empty: ${extracted?.method ?? 'text'} returned no readable text`);
+    if (extracted?.method === 'unsupported') throw new InvalidIngestionDocumentError('document_parse_unsupported: binary extractor');
+    if (extracted?.warnings.length) throw new Error('document_extraction_failed');
+    throw new InvalidIngestionDocumentError(`document_parse_empty: ${extracted?.method ?? 'text'} returned no readable text`);
   }
 
   const textLimit = extractor?.MAX_UPLOAD_BODY_CHARS ?? MAX_TEXT_CHARS;
