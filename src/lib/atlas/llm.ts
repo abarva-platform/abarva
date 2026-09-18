@@ -191,10 +191,41 @@ function stripInternalReferences(value: string): string {
     );
 }
 
+/**
+ * Keys whose value is a machine identifier: something that exists to address a
+ * row, a file or a retrieved chunk, and that means nothing to a reader.
+ *
+ * The prompt tells the model not to expose raw IDs, source keys or internal
+ * field names. Until this rule existed, the only thing enforcing that was
+ * `stripInternalReferences`, which rewrites two *value shapes* — a v1–v5 UUID
+ * and an `AA-BB-123` program code. Every other identifier the tool belt
+ * actually returns passed through verbatim: `programs[].id`
+ * (`prog_kq48xt2r9v`), `signals[].signalKey`
+ * (`signal:vendor-concentration:q3`), a display id like `AR-02`, a retrieved
+ * chunk's `sourceKey`, an evidence `artifactRef`. So the instruction was
+ * advisory and the identifiers were within reach.
+ *
+ * Matching by key rather than by value shape is the point: an identifier is
+ * identified by the field it sits in, not by what it happens to look like.
+ *
+ * The value is replaced rather than the key deleted, so the model can still see
+ * that a record is addressable and that the address was deliberately withheld —
+ * an absent key reads as an absent record.
+ */
+const IDENTIFIER_KEY_RE =
+  /^(?:id|ids|key|keys|uuid|guid|.+(?:Id|Ids|Key|Keys|Ref|Refs|Uuid|Guid)|.+_(?:id|ids|key|keys|ref|refs|uuid|guid))$/;
+
+const WITHHELD_IDENTIFIER = "[identifier withheld]";
+
 function sanitizeForTenantPrompt(value: unknown): unknown {
   return JSON.parse(
     JSON.stringify(value, (key, item) => {
       if (/apiKey|secret|token|password|cookie/i.test(key)) return "[redacted]";
+      if (IDENTIFIER_KEY_RE.test(key)) {
+        return item === null || item === undefined
+          ? item
+          : WITHHELD_IDENTIFIER;
+      }
       if (typeof item === "string") return stripInternalReferences(item);
       return item;
     }),
@@ -637,7 +668,7 @@ export async function runAtlasLlm(
     '',
     CITATION_INSTRUCTION,
     '',
-    'Raw tool context follows for exact IDs and auditability. Do not surface raw JSON unless asked.',
+    'Supporting tool context follows as structured detail. Identifiers are withheld by design — refer to a record by its name, never by an id. Do not surface raw JSON unless asked.',
     payload,
   ].join('\n');
   const { client } = await getAuditedAnthropicClient({
