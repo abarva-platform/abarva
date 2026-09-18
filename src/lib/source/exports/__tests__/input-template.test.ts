@@ -34,12 +34,9 @@ describe("source input template", () => {
     // The whole contract: download a template, fill it, upload it, and it
     // attaches to the SAME requirement with no manual picking. If this breaks,
     // uploads silently misattach.
-    const withTokens = SOURCE_EVIDENCE_REQUIREMENTS.filter((r) =>
-      templateFilenameTokenForRequirement(r.requirementId),
-    );
-    expect(withTokens.length).toBeGreaterThan(0);
+    expect(SOURCE_EVIDENCE_REQUIREMENTS.length).toBeGreaterThan(0);
 
-    for (const requirement of withTokens) {
+    for (const requirement of SOURCE_EVIDENCE_REQUIREMENTS) {
       const filename = inputTemplateFilename(requirement);
       const matched = matchEvidenceRequirementForUpload({
         stageKey: requirement.stage,

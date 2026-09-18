@@ -53,6 +53,13 @@ export function matchEvidenceRequirementForUpload(args: {
   const stageRequirements = SOURCE_EVIDENCE_REQUIREMENTS.filter(
     (r) => r.stage === args.stageKey,
   );
+  const templateToken = /^source-(.+)-intake\.xlsx$/.exec(name)?.[1];
+  if (templateToken) {
+    return (
+      stageRequirements.find((req) => req.filenameTokens[0] === templateToken) ??
+      null
+    );
+  }
   let best: { req: SourceEvidenceRequirement; score: number } | null = null;
   for (const req of stageRequirements) {
     const score = req.filenameTokens.reduce((total, token) => {
@@ -82,9 +89,8 @@ function normalizeFilenameToken(value: string): string {
  * The canonical filename token a downloadable input template should embed so
  * that, once the user fills it in and re-uploads it, {@link
  * matchEvidenceRequirementForUpload} reconciles it back to this exact
- * requirement with no manual picking. Drawn from the same curated keyword map,
- * so the template and the matcher can never drift apart. Returns null when a
- * requirement has no keywords (no deterministic round-trip can be promised).
+ * requirement with no manual picking. Drawn from the canonical requirement
+ * catalog, so the template and matcher share the same token.
  */
 export function templateFilenameTokenForRequirement(
   requirementId: string,
