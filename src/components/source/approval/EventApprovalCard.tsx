@@ -322,8 +322,8 @@ export function EventApprovalCard({
 
           {isSelfApproval && pilotMode ? (
             <div style={SELF_NOTICE_STYLE}>
-              Self-approval notice: you are the recorded event creator. The
-              audit log will flag this action.
+              Self-approval notice: you are the recorded event creator. This
+              decision is marked as a self-approval on the approval record.
             </div>
           ) : null}
 
