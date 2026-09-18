@@ -5,6 +5,7 @@ import path from "node:path";
 import yaml from "js-yaml";
 
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import { requireTenantAdmin } from "@/lib/auth/tenant-roles";
 import { stageFileToBlob } from "@/lib/context-ingestion/blob-stager";
 import { commitContextBatch } from "@/lib/context-ingestion/context-commit";
 import { loadCsvUploadToTenantContext } from "@/lib/context-ingestion/csv-upload-connector";
@@ -173,6 +174,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "forbidden_cross_tenant" },
         { status: 403 },
+      );
+    }
+
+    if (!tenancy.clientKey || !tenancy.clerkUserId) {
+      return NextResponse.json(
+        { error: "forbidden_tenant_admin_required" },
+        { status: 403 },
+      );
+    }
+    try {
+      await requireTenantAdmin({
+        userId: tenancy.clerkUserId,
+        tenantKey: tenancy.clientKey,
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "forbidden_tenant_admin_required" },
+        { status: 403 },
+      );
+    }
+    if (body.dryRun !== true) {
+      return NextResponse.json(
+        { error: "manifest_load_aca_job_required" },
+        { status: 409 },
       );
     }
 
