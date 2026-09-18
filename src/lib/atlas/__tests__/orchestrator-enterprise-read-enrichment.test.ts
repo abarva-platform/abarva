@@ -208,6 +208,71 @@ describe("runAtlasTurnDetailed enterprise-read lead block", () => {
 
     expect(result.response.match(/Enterprise read:/g)).toHaveLength(1);
   });
+
+  /**
+   * The de-duplication branch above exists so a headline the producer already
+   * emitted is not repeated. It used to return the answer unchanged, which
+   * dropped the read's own `dataQualityCaution` on exactly the answers that
+   * lead with the read's headline — the case the caution is most needed. The
+   * caution has to survive de-duplication; only the headline is the duplicate.
+   */
+  it("still carries the caution when the answer already leads with the headline", async () => {
+    const read = derivedEnterpriseRead();
+    runAtlasLlm.mockResolvedValue({
+      ...llmTurn(read),
+      response: `Airline Demo Enterprise read: ${read.headline}\n\nThe portfolio is grounded on 30 initiatives.`,
+    });
+    const { runAtlasTurnDetailed } = await import("@/lib/atlas/orchestrator");
+
+    const result = await runAtlasTurnDetailed({ ctx, message: LEAD_MESSAGE });
+
+    expect(result.response).toContain(CAUTION);
+    expect(result.response.match(/Enterprise read:/g)).toHaveLength(1);
+    expect(result.response.match(/Data quality caution:/g)).toHaveLength(1);
+  });
+
+  it("scrubs autonomous-decision language out of the de-duplicated caution", async () => {
+    const read = derivedEnterpriseRead({
+      dataQualityCaution:
+        "Atlas approved the application inventory attestation before close.",
+    });
+    runAtlasLlm.mockResolvedValue({
+      ...llmTurn(read),
+      response: `Airline Demo Enterprise read: ${read.headline}\n\nThe portfolio is grounded on 30 initiatives.`,
+    });
+    const { runAtlasTurnDetailed } = await import("@/lib/atlas/orchestrator");
+
+    const result = await runAtlasTurnDetailed({ ctx, message: LEAD_MESSAGE });
+
+    expect(result.response).not.toContain("Atlas approved");
+    expect(result.response).toContain(
+      "The AI advisor recommended for human review",
+    );
+  });
+
+  it("does not restate a caution the answer already carries", async () => {
+    const read = derivedEnterpriseRead();
+    runAtlasLlm.mockResolvedValue({
+      ...llmTurn(read),
+      response: `Airline Demo Enterprise read: ${read.headline}\n\nData quality caution: ${CAUTION}`,
+    });
+    const { runAtlasTurnDetailed } = await import("@/lib/atlas/orchestrator");
+
+    const result = await runAtlasTurnDetailed({ ctx, message: LEAD_MESSAGE });
+
+    expect(result.response.match(new RegExp(CAUTION.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"))).toHaveLength(1);
+  });
+
+  it("leaves a de-duplicated answer untouched when the read declares no caution", async () => {
+    const read = derivedEnterpriseRead({ dataQualityCaution: null });
+    const answer = `Airline Demo Enterprise read: ${read.headline}\n\nThe portfolio is grounded on 30 initiatives.`;
+    runAtlasLlm.mockResolvedValue({ ...llmTurn(read), response: answer });
+    const { runAtlasTurnDetailed } = await import("@/lib/atlas/orchestrator");
+
+    const result = await runAtlasTurnDetailed({ ctx, message: LEAD_MESSAGE });
+
+    expect(result.response).toBe(answer);
+  });
 });
 
 export {};

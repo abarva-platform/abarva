@@ -141,7 +141,10 @@ function shouldLeadAtlasWithEnterpriseRead(message: string, intent: AtlasChatRes
  *
  * It also carries the read's own `dataQualityCaution`. The artifact states what
  * it is unsure about; leading with its headline while dropping that caution
- * quotes the read more confidently than the read claims to be.
+ * quotes the read more confidently than the read claims to be. That holds in
+ * the de-duplication branch too: when the producer's answer already carries
+ * the headline, the headline is the duplicate — the caution is not, and an
+ * answer that leads with the read is the one that most needs it.
  */
 function enrichWithEnterpriseRead(input: {
   message: string;
@@ -151,17 +154,36 @@ function enrichWithEnterpriseRead(input: {
   const read = input.toolResults.derivedEnterpriseRead;
   if (!read || !shouldLeadAtlasWithEnterpriseRead(input.message, input.response.intent)) return input.response;
   const headline = sanitizeAutonomousDecisionLanguage(read.headline);
+  const caution = read.dataQualityCaution
+    ? sanitizeAutonomousDecisionLanguage(read.dataQualityCaution)
+    : null;
   if (
     input.response.response.includes(read.headline) ||
     input.response.response.includes(headline)
   ) {
-    return input.response;
+    // The headline is the duplicate, not the caution. Returning here unchanged
+    // dropped the caution on exactly the answers that lead with the read — the
+    // case it is most needed. Carry it unless the answer already states it.
+    if (
+      !caution ||
+      input.response.response.includes(read.dataQualityCaution as string) ||
+      input.response.response.includes(caution)
+    ) {
+      return input.response;
+    }
+    return {
+      ...input.response,
+      response: [
+        input.response.response,
+        `Data quality caution: ${caution}`,
+      ].join('\n\n'),
+    };
   }
   const move = read.recommendedMoves[0];
   const lead = [
     `Enterprise read: ${read.headline}`,
     move ? `First move: ${move.title} — ${move.decision}` : null,
-    read.dataQualityCaution ? `Data quality caution: ${read.dataQualityCaution}` : null,
+    caution ? `Data quality caution: ${caution}` : null,
   ].filter(Boolean).join('\n\n');
   return {
     ...input.response,
