@@ -59,8 +59,16 @@ function composeApprovalNotes(
   comment: string | undefined,
   action: ApproveBody["action"],
   currentStageKey: string | null,
+  isSelfApproval = false,
 ): string | null {
   const trimmed = comment?.trim();
+  // The approval screen tells a self-approving creator that this decision is
+  // flagged. The marker on the append-only record is what makes that true.
+  const selfApprovalNotice = isSelfApproval
+    ? "Self-approval notice: the approver is the recorded event creator."
+    : null;
+  const withNotice = (value: string | null) =>
+    [selfApprovalNotice, value].filter(Boolean).join("\n\n") || null;
   if (action === "approve") {
     // Strategy approval is the P0 memo/value/archetype attestation; every other
     // stage attests that stage's gate boxes.
@@ -68,9 +76,9 @@ function composeApprovalNotes(
       currentStageKey === "strategy"
         ? "Confirmed review of strategy memo, value target, and archetype + rigor."
         : "Confirmed the stage gate: evidence complete, inputs reviewed, stage final.";
-    return trimmed ? `${attest}\n${trimmed}` : attest;
+    return withNotice(trimmed ? `${attest}\n${trimmed}` : attest);
   }
-  return trimmed ? trimmed : null;
+  return withNotice(trimmed ? trimmed : null);
 }
 
 export async function POST(
@@ -123,7 +131,7 @@ export async function POST(
   const { data: event, error: fetchError } = await supabase
     .from("source_events")
     .select(
-      "id, lifecycle_state, current_stage_key, event_name, event_code, event_type, sourcing_motion, classified_category, trigger_description, client_key",
+      "id, lifecycle_state, current_stage_key, event_name, event_code, event_type, sourcing_motion, classified_category, trigger_description, client_key, created_by_user_id",
     )
     .eq("id", eventId)
     .eq("client_key", activeClient.key)
@@ -185,7 +193,15 @@ export async function POST(
   }
 
   const strictMode = isGateApprovalStrictMode();
-  if (body.selfApproveIfAuthorized && strictMode) {
+  // Whether this is a self-approval is a fact about the event and the caller,
+  // so the server derives it from the stored creator. The client flag stays
+  // honoured for callers that send it, but omitting it no longer hides a
+  // self-approval from the strict-mode gate or from the approval record.
+  const isSelfApproval = Boolean(
+    event.created_by_user_id && event.created_by_user_id === tenancy.userId,
+  );
+  const selfApprovalClaimed = body.selfApproveIfAuthorized === true;
+  if ((selfApprovalClaimed || isSelfApproval) && strictMode) {
     if (!isStrictModeApprovalRole(tenancy.role)) {
       return Response.json(
         {
@@ -264,6 +280,7 @@ export async function POST(
       body.notes,
       body.action,
       effectiveCurrentStage ?? currentStageKey,
+      isSelfApproval,
     ),
     stageKey: effectiveCurrentStage ?? currentStageKey,
   });

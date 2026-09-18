@@ -9,6 +9,7 @@ const eventRow = {
   classified_category: "ams",
   trigger_description: null,
   client_key: "skyharbor-air",
+  created_by_user_id: "another-user" as string | null,
 };
 
 const applyApproval = jest.fn(async () => ({ ok: true }));
@@ -104,6 +105,7 @@ import { after } from "next/server";
 import { getActiveClientRow } from "@/lib/active-client";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
+import { isGateApprovalStrictMode } from "@/lib/auth/gate-approval-strict-mode";
 
 const mockAfter = jest.mocked(after);
 const mockAutoDraftOnStageEntry = jest.mocked(autoDraftOnStageEntry);
@@ -111,6 +113,7 @@ const mockGetActiveClientRow = jest.mocked(getActiveClientRow);
 const mockGetContractOptimizationProfile = jest.mocked(
   getContractOptimizationProfile,
 );
+const mockIsGateApprovalStrictMode = jest.mocked(isGateApprovalStrictMode);
 
 function activeClientRow(key: string) {
   return {
@@ -134,6 +137,76 @@ describe("POST Source event approve", () => {
     eventRow.current_stage_key = "rfp";
     eventRow.client_key = "skyharbor-air";
     eventRow.sourcing_motion = null;
+    eventRow.created_by_user_id = "another-user";
+    mockIsGateApprovalStrictMode.mockReturnValue(false);
+  });
+
+  /**
+   * The approval screen tells a self-approving creator that the decision is
+   * flagged. Whether a decision is a self-approval is a fact about the stored
+   * creator and the caller, so the server derives it rather than trusting a
+   * client-supplied flag that a caller can simply omit.
+   */
+  describe("self-approval", () => {
+    const approveRequest = (body: Record<string, unknown> = {}) =>
+      new Request(
+        "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            action: "approve",
+            notes: "Sponsor confirms RFP gate is ready to advance.",
+            confirmations: {
+              evidenceComplete: true,
+              exclusionsReviewed: true,
+              stageFinal: true,
+            },
+            ...body,
+          }),
+        },
+      );
+
+    it("records the notice when the creator approves, without a client flag", async () => {
+      eventRow.created_by_user_id = "user-1";
+
+      const response = await POST(approveRequest(), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(applyApproval).toHaveBeenCalledWith(
+        expect.objectContaining({
+          notes: expect.stringContaining(
+            "Self-approval notice: the approver is the recorded event creator.",
+          ),
+        }),
+      );
+    });
+
+    it("does not mark an ordinary approval as a self-approval", async () => {
+      const response = await POST(approveRequest(), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(applyApproval).toHaveBeenCalledWith(
+        expect.objectContaining({
+          notes: expect.not.stringContaining("Self-approval notice"),
+        }),
+      );
+    });
+
+    it("refuses a strict-mode self-approval even when the client omits the flag", async () => {
+      eventRow.created_by_user_id = "user-1";
+      mockIsGateApprovalStrictMode.mockReturnValue(true);
+
+      const response = await POST(approveRequest(), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+
+      expect(response.status).toBe(403);
+      expect(applyApproval).not.toHaveBeenCalled();
+    });
   });
 
   it("auto-drafts the approved stage's gate artifacts with the signed-in request context", async () => {
