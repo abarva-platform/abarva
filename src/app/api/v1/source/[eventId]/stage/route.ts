@@ -261,7 +261,6 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         artifacts,
         evidence,
         reason,
-        allowComputedReadinessBypass: canPilotSelfApprove,
       });
       if (!gateContract.ok) {
         return Response.json(
@@ -274,15 +273,6 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           { status: gateContract.status },
         );
       }
-      if (gateContract.bypassedGovernanceBlockers.length > 0) {
-        console.warn(
-          "[source stage] pilot self-approval bypassed governance blockers:",
-          gateContract.bypassedGovernanceBlockers
-            .map((blocker) => blocker.detail)
-            .join(" | "),
-        );
-      }
-
       // DB write routed through the data-plane write seam (Slice 3b).
       const sourceWrite = selectSourceWriteAdapter(
         undefined,

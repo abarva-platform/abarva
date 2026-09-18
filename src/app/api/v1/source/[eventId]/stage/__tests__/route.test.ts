@@ -7,6 +7,7 @@ const persistedEvent = {
 
 const updateStage = jest.fn(async () => ({ ok: true }));
 const insertActivityLog = jest.fn(async () => ({ ok: true }));
+let criterionRows: Array<Record<string, unknown>> = [];
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => ({
@@ -91,10 +92,20 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
         select: jest.Mock;
         eq: jest.Mock;
         maybeSingle: jest.Mock;
+        then: jest.Mock;
       } = {
         select: jest.fn(),
         eq: jest.fn(),
         maybeSingle: jest.fn(),
+        then: jest.fn((resolve: (value: unknown) => void) =>
+          resolve({
+            data:
+              table === "source_event_gate_criterion_states"
+                ? criterionRows
+                : [],
+            error: null,
+          }),
+        ),
       };
       query.select.mockReturnValue(query);
       query.eq.mockReturnValue(query);
@@ -111,12 +122,76 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 
 import { PATCH } from "../route";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
+import { evaluateSourceGateAdvanceContract } from "@/lib/source/gate-advance-contract";
 
 const mockAutoDraftOnStageEntry = jest.mocked(autoDraftOnStageEntry);
 
 describe("PATCH /api/v1/source/[eventId]/stage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    criterionRows = [];
+    persistedEvent.current_stage_key = "rfp";
+    jest.mocked(evaluateSourceGateAdvanceContract).mockImplementation(() => ({
+      ok: true,
+      status: 200,
+      readiness: { ok: true, blockers: [] },
+      bypassedGovernanceBlockers: [],
+    }));
+  });
+
+  it("does not advance a strategy event with a pending hard criterion on self-approval", async () => {
+    persistedEvent.current_stage_key = "strategy";
+    criterionRows = [
+      {
+        id: "criterion-1",
+        source_event_id: "event-1",
+        tenant_key: "skyharbor-air",
+        criterion_id: "GATE-STRATEGY-01",
+        from_stage: "strategy",
+        to_stage: "scope",
+        state: "pending",
+        reviewer_user_id: null,
+        reviewed_at: null,
+        notes: null,
+        evidence_artifact_ids: [],
+        waiver_approval_id: null,
+        created_at: "2026-09-18T00:00:00Z",
+        updated_at: "2026-09-18T00:00:00Z",
+      },
+    ];
+    jest
+      .mocked(evaluateSourceGateAdvanceContract)
+      .mockImplementationOnce(
+        jest.requireActual<typeof import("@/lib/source/gate-advance-contract")>(
+          "@/lib/source/gate-advance-contract",
+        ).evaluateSourceGateAdvanceContract,
+      );
+
+    const response = await PATCH(
+      new Request("https://app.abarva.ai/api/v1/source/event-1/stage", {
+        method: "PATCH",
+        body: JSON.stringify({
+          stageKey: "scope",
+          reason: "Sponsor requests an early strategy advance.",
+          selfApproveIfAuthorized: true,
+          confirmations: {
+            strategyMemoReviewed: true,
+            valueTargetConfirmed: true,
+            archetypeRigorConfirmed: true,
+          },
+        }),
+      }) as never,
+      { params: Promise.resolve({ eventId: "event-1" }) },
+    );
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).blockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "gate_criterion_open" }),
+      ]),
+    );
+    expect(updateStage).not.toHaveBeenCalled();
+    expect(insertActivityLog).not.toHaveBeenCalled();
   });
 
   it("auto-drafts the approved stage, not the next stage entered", async () => {
