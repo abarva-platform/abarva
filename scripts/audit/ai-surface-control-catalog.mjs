@@ -4,6 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
+// Same graph walk the Source orphan baseline uses. A control on a component no
+// route can reach is not a control the product has, however green its evidence
+// tokens and its behavioral test are.
+import { computeRouteReachability } from './lib/route-reachability.mjs';
+
 const CATALOG_PATH = path.join(
   process.cwd(),
   'docs/security/ai-surface-control-catalog.json',
@@ -275,6 +280,50 @@ function validateBehavioralTest(control, controlLabel, workflowRuns) {
   return { problems, covered: problems.length === 0 };
 }
 
+/**
+ * A declared control has to be on a screen a user can get to.
+ *
+ * Evidence tokens prove the code exists. A behavioral test proves it renders in
+ * isolation. Neither proves a route mounts it — and two of the surfaces in this
+ * catalog were components no route could reach, already recorded as orphans by
+ * a different audit while this one counted them as controls the product has.
+ */
+function validateRouteReachability(surface, label, reachable, roots) {
+  const problems = [];
+  if (!surface.path) return { problems, reachable: false };
+
+  const absolute = path.join(process.cwd(), surface.path);
+  const isReachable = reachable.has(absolute);
+  const declaredUnreachable = surface.routeReachable === false;
+
+  if (isReachable && declaredUnreachable) {
+    problems.push(
+      `${label}: declares routeReachable false, but ${surface.path} is reachable from a route — the claim is stale`,
+    );
+    return { problems, reachable: true };
+  }
+
+  if (!isReachable && !declaredUnreachable) {
+    problems.push(
+      roots.length === 0
+        ? `${label}: route graph found no entry points, so reachability cannot be judged`
+        : `${label}: no route reaches ${surface.path} — a control on a surface no user can open is not a control the product has. Mount it, remove it, or declare routeReachable false with a reason.`,
+    );
+    return { problems, reachable: false };
+  }
+
+  if (declaredUnreachable) {
+    const reason = surface.unreachableReason;
+    if (typeof reason !== 'string' || reason.trim().length < 40) {
+      problems.push(
+        `${label}: routeReachable false needs a reason saying what is not on a screen and what would put it there`,
+      );
+    }
+  }
+
+  return { problems, reachable: isReachable };
+}
+
 function normalizeEvidence(value) {
   return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.trim()) : [];
 }
@@ -336,7 +385,7 @@ function validateCatalogClaimCoverage(catalog, surfacesById) {
   return problems;
 }
 
-function validateSurface(surface, index, workflowRuns, tally) {
+function validateSurface(surface, index, workflowRuns, tally, routeGraph) {
   const label = surface?.id ?? `surface[${index}]`;
   const problems = [];
 
@@ -362,6 +411,14 @@ function validateSurface(surface, index, workflowRuns, tally) {
     problems.push(`${label}: path does not exist (${surface.path})`);
   }
 
+  const reachability = validateRouteReachability(
+    surface,
+    label,
+    routeGraph.reachable,
+    routeGraph.roots,
+  );
+  problems.push(...reachability.problems);
+
   const seenKinds = new Set();
   for (const control of surface.requiredControls ?? []) {
     const kind = control?.kind;
@@ -378,7 +435,14 @@ function validateSurface(surface, index, workflowRuns, tally) {
     const behavioral = validateBehavioralTest(control, controlLabel, workflowRuns);
     problems.push(...behavioral.problems);
     tally.declared += 1;
-    if (behavioral.covered) tally.covered += 1;
+    if (!reachability.reachable) {
+      // A test that renders an unmounted component proves the component, not
+      // the product. Counting it as coverage is how a control nobody can see
+      // ends up reported as a control that holds.
+      tally.unreachable += 1;
+    } else if (behavioral.covered) {
+      tally.covered += 1;
+    }
 
     const evidence = normalizeEvidence(control.evidence);
     if (evidence.length === 0) {
@@ -415,7 +479,8 @@ function main() {
   const surfacesById = new Map();
   const problems = [];
   const workflowRuns = readWorkflowJestRuns();
-  const tally = { declared: 0, covered: 0 };
+  const routeGraph = computeRouteReachability(process.cwd());
+  const tally = { declared: 0, covered: 0, unreachable: 0 };
   surfaces.forEach((surface, index) => {
     if (surface?.id) {
       if (ids.has(surface.id)) {
@@ -424,7 +489,7 @@ function main() {
       ids.add(surface.id);
       surfacesById.set(surface.id, surface);
     }
-    problems.push(...validateSurface(surface, index, workflowRuns, tally));
+    problems.push(...validateSurface(surface, index, workflowRuns, tally, routeGraph));
   });
   problems.push(...validateCatalogClaimCoverage(catalog, surfacesById));
 
@@ -433,13 +498,18 @@ function main() {
   }
 
   console.log(
-    `AI surface control catalog passed (${surfaces.length} surfaces, ${tally.declared} declared controls).`,
+    `AI surface control catalog passed (${surfaces.length} surfaces, ${tally.declared} declared controls, ${routeGraph.roots.length} route entry points).`,
   );
   // Counted per control, not per surface: a surface whose four controls have one
   // behavioral test is one covered and three uncovered.
   console.log(
     `Behavioral coverage: ${tally.covered} of ${tally.declared} controls run a test that exercises them in CI.`,
   );
+  if (tally.unreachable > 0) {
+    console.log(
+      `Not on any screen: ${tally.unreachable} of ${tally.declared} controls sit on surfaces no route reaches, and are excluded from the coverage count above.`,
+    );
+  }
 }
 
 main();
