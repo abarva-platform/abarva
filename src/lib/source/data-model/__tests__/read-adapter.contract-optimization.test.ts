@@ -379,6 +379,74 @@ describe("getContractOptimizationOpportunitySet", () => {
     expect(set?.baseline.pricingScheduleAnnualValueUsd).toBeNull();
   });
 
+  it("shows the contract annual value and blocks a stale persisted baseline", async () => {
+    withSessionMock.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        if (sql.includes("set_config")) return [];
+        if (sql.includes("GROUP BY dataset_version")) return [{ dataset_version: "test-v1" }] as R[];
+        if (sql.includes("FROM source.optimization_opportunity") && sql.includes("ORDER BY amount_usd")) {
+          return [{ opportunity_id: "opp-1", contract_id: "CTR-090", stage: "signal" }] as R[];
+        }
+        if (sql.includes("FROM source.optimization_baseline")) {
+          return [{
+            baseline_state: "ready", annual_value_usd: 42_000_000,
+            actual_annual_spend_usd: 37_400_000, total_committed_value_usd: 173_900_000,
+            conflict_amount_usd: 0, payload: { headline: "Commercial baseline reconciles." },
+          }] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+
+    const set = await getContractOptimizationOpportunitySet("skyharbor_global", "CTR-090", contract({
+      resolved_annual_value: 44_000_000,
+      annual_value_conflict_flag: true,
+    }));
+    expect(set?.baseline.annualValueUsd).toBe(43_500_000);
+    expect(set?.baseline.status).toBe("conflict");
+    expect(set?.baseline.conflictAmountUsd).toBe(1_500_000);
+    expect(set?.baseline.detail).toContain("Contract 360");
+    expect(set?.actionState).toBe("request_evidence");
+    expect(set?.recommendation).toBe("Build evidence before optimizing.");
+  });
+
+  it("does not present an authored claim as calculated when its run disagrees", async () => {
+    withSessionMock.mockImplementation(async (callback) => {
+      const run = async <R>(sql: string): Promise<R[]> => {
+        if (sql.includes("set_config")) return [];
+        if (sql.includes("GROUP BY dataset_version")) return [{ dataset_version: "test-v1" }] as R[];
+        if (sql.includes("FROM source.optimization_opportunity") && sql.includes("ORDER BY amount_usd")) {
+          return [{
+            opportunity_id: "opp-1", contract_id: "CTR-090", stage: "signal",
+            amount_usd: 1_200_000, amount_state: "exact", value_type: "avoided_cost",
+          }] as R[];
+        }
+        if (sql.includes("FROM source.opportunity_claim claim")) {
+          return [{
+            claim_id: "claim-1", claim_role: "sizing", opportunity_id: "opp-1",
+            contract_id: "CTR-090", basis: "calculated", amount_usd: 1_200_000,
+            evidence_status: "supported", calculation_run_id: "run-1",
+            source_refs: [{ source_table: "source.calculation_input", source_record_id: "input-1" }],
+          }] as R[];
+        }
+        if (sql.includes("FROM source.calculation_run run")) {
+          return [{ opportunity_id: "opp-1", calculation_run_id: "run-1" }] as R[];
+        }
+        if (sql.includes("FROM source.calculation_output output")) {
+          return [{ calculation_run_id: "run-1", output_key: "calculated_amount_usd", amount_usd: 900_000 }] as R[];
+        }
+        return [];
+      };
+      return callback(run);
+    });
+
+    const set = await getContractOptimizationOpportunitySet("skyharbor_global", "CTR-090", contract());
+    expect(set?.opportunities[0]).toMatchObject({ amountUsd: null, amountState: "not_sized" });
+    expect(set?.opportunities[0]?.blockingGap).toContain("calculation run");
+    expect(set?.potentialAvoidableUsd).toBe(0);
+  });
+
   it("selects the approval-ready target position before diagnostic rate variance when no request exists", async () => {
     withSessionMock.mockImplementation(async (callback) => {
       const run = async <R>(sql: string): Promise<R[]> => {
