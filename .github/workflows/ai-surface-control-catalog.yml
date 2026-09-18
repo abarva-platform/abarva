@@ -57,3 +57,6 @@ jobs:
 
       - name: Exercise Moves phase-gate route approval
         run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts --runInBand
+
+      - name: Exercise renewal cockpit external action
+        run: npx jest --runTestsByPath src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx --runInBand
