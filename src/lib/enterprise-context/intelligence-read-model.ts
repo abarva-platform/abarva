@@ -253,20 +253,21 @@ export function summarizeEnterpriseContextRows(input: {
     recordsByType.set(row.record_type, bucket);
   }
 
-  const applications = recordsByType.get('cmdb_applications_services') ?? [];
-  const orgRows = recordsByType.get('org_decision_rights') ?? [];
-  const businessUnitRows = recordsByType.get('facilities_business_units') ?? [];
-  const incidents = recordsByType.get('incidents') ?? [];
-  const problems = recordsByType.get('problems') ?? [];
-  const changes = recordsByType.get('changes') ?? [];
-  const renewals = recordsByType.get('renewal_calendar') ?? [];
-  const contracts = recordsByType.get('vendors_contract_inventory') ?? [];
-  const spendRows = recordsByType.get('spend_baseline') ?? [];
-  const kpis = recordsByType.get('kpi_metric') ?? recordsByType.get('financial_kpis') ?? [];
-  const policies = recordsByType.get('policies_procedures') ?? [];
-  const initiatives = recordsByType.get('initiative_portfolio') ?? [];
-  const dataDomains = recordsByType.get('data_domains_stewardship') ?? [];
-  const risks = recordsByType.get('risk_compliance_register') ?? [];
+  const recordsFor = (...types: string[]) => types.flatMap((type) => recordsByType.get(type) ?? []);
+  const applications = recordsFor('cmdb_applications_services', 'cmdb_application', 'cmdb_service');
+  const orgRows = recordsFor('org_decision_rights', 'org_role', 'decision_right');
+  const businessUnitRows = recordsFor('facilities_business_units', 'facility', 'business_unit');
+  const incidents = recordsFor('incidents', 'incident');
+  const problems = recordsFor('problems', 'problem');
+  const changes = recordsFor('changes', 'change');
+  const renewals = recordsFor('renewal_calendar', 'renewal');
+  const contracts = recordsFor('vendors_contract_inventory', 'contract');
+  const spendRows = recordsFor('spend_baseline');
+  const kpis = recordsFor('kpi_metric', 'financial_kpis');
+  const policies = recordsFor('policies_procedures', 'policy', 'procedure');
+  const initiatives = recordsFor('initiative_portfolio', 'initiative');
+  const dataDomains = recordsFor('data_domains_stewardship', 'data_domain');
+  const risks = recordsFor('risk_compliance_register', 'risk', 'compliance_finding');
   const slaBreaches = incidents.filter((row) => row.payload.breach_sla === 'true' || row.payload.breach_sla === true).length;
   const tierOneApps = applications.filter((row) => String(row.payload.criticality ?? '').toLowerCase().includes('tier 1')).length;
   const highRenewals = renewals.filter((row) => String(row.payload.renewal_risk ?? '').toLowerCase() === 'high').length;
@@ -302,7 +303,7 @@ export function summarizeEnterpriseContextRows(input: {
       // CMDB/ITSM narrative; rename the card itself to match.
       key: "platform-and-service-reliability",
       title: "Platform and service reliability",
-      whatWeKnow: `${applications.length} systems/services loaded; ${tierOneApps} are Tier 1. ServiceNow contributes ${incidents.length} incidents, ${problems.length} problems, and ${changes.length} changes.`,
+      whatWeKnow: `${applications.length} application/service record${applications.length === 1 ? '' : 's'} loaded; ${tierOneApps} marked Tier 1. ServiceNow contributes ${incidents.length} incidents, ${problems.length} problems, and ${changes.length} changes.`,
       whyItMatters:
         "This turns CMDB and ITSM data into a practical dependency map before approving AI, sourcing, or platform work.",
       owner:
@@ -342,7 +343,7 @@ export function summarizeEnterpriseContextRows(input: {
     {
       key: "contract-renewal-exposure",
       title: "Contract renewal exposure",
-      whatWeKnow: `${contracts.length} vendor/contracts and ${renewals.length} renewals are loaded; ${highRenewals} renewals are high risk. Estimated renewal exposure is ${formatUsd(renewalExposure)}.`,
+      whatWeKnow: `${contracts.length} vendor/contract record${contracts.length === 1 ? '' : 's'} and ${renewals.length} renewals are loaded; ${highRenewals} renewals are high risk. Estimated renewal exposure is ${formatUsd(renewalExposure)}.`,
       whyItMatters:
         "Source can prioritize events from renewal exposure instead of waiting for a procurement escalation.",
       owner: topOwner([...contracts, ...renewals]) ?? "IT Sourcing",
@@ -392,7 +393,7 @@ export function summarizeEnterpriseContextRows(input: {
     {
       key: "initiative-dependency-map",
       title: "Initiative dependency map",
-      whatWeKnow: `${initiatives.length} initiatives and ${dataDomains.length} data-domain stewardship records are loaded against ${input.counts.relationships} CI relationships.`,
+      whatWeKnow: `${initiatives.length} initiatives and ${dataDomains.length} data-domain/stewardship records are loaded against ${input.counts.relationships} CI relationships.`,
       whyItMatters:
         "Moves and Tower can see collisions across systems, contracts, data domains, and owners before approvals proceed.",
       owner: topOwner([...initiatives, ...dataDomains]) ?? "Enterprise PMO",
@@ -420,10 +421,10 @@ export function summarizeEnterpriseContextRows(input: {
       `Sentinel rule: lead with the Derived Enterprise Read before internal substrate counts; use raw context counts only as supporting proof.`,
     ] : []),
     `${input.tenantName} Enterprise Context: ${input.counts.records} records, ${input.counts.facts} facts, ${input.counts.relationships} CI relationships, and ${input.counts.evidence} evidence rows are loaded from internal context sources.`,
-    `Enterprise Context domains include org and decision rights (${orgRows.length}), facilities/business units (${businessUnitRows.length}), systems/services (${applications.length}), vendors/contracts (${contracts.length}), renewals (${renewals.length}), spend baseline (${spendRows.length}), KPIs/metrics (${kpis.length}), incidents (${incidents.length}), problems (${problems.length}), changes (${changes.length}), policies/procedures (${policies.length}), initiatives (${initiatives.length}), data domains/capabilities (${dataDomains.length}), and risks/compliance (${risks.length}).`,
+    `Enterprise Context domains include org and decision rights (${orgRows.length}), facilities/business units (${businessUnitRows.length}), application/service records (${applications.length}), vendor/contract records (${contracts.length}), renewals (${renewals.length}), spend baseline (${spendRows.length}), KPIs/metrics (${kpis.length}), incidents (${incidents.length}), problems (${problems.length}), changes (${changes.length}), policies/procedures (${policies.length}), initiatives (${initiatives.length}), data-domain/stewardship records (${dataDomains.length}), and risks/compliance (${risks.length}).`,
     `Evidence posture: ${evidenceUsableCount}/${input.counts.evidence} evidence rows are currently usable; ${input.counts.qualityIssues} quality issues and ${input.counts.stewardshipTasks} stewardship tasks remain open.`,
     `Operational posture: ${incidents.length} incidents, ${problems.length} problems, ${changes.length} changes, and ${slaBreaches} SLA-breaching incidents are available for current-state guidance.`,
-    `Commercial posture: ${contracts.length} contracts, ${renewals.length} renewal rows, ${highRenewals} high-risk renewals, ${formatUsd(renewalExposure)} estimated renewal exposure, and ${formatUsd(annualSpend)} annualized spend baseline are available.`,
+    `Commercial posture: ${contracts.length} vendor/contract record${contracts.length === 1 ? '' : 's'}, ${renewals.length} renewal rows, ${highRenewals} high-risk renewals, ${formatUsd(renewalExposure)} estimated renewal exposure, and ${formatUsd(annualSpend)} annualized spend baseline are available.`,
     ...contextInsights.slice(0, 8).map((insight) =>
       `CIO insight ${insight.domain}: ${insight.headline}. So what: ${insight.so_what} Action: ${insight.action ?? 'review evidence'}. Evidence: ${insight.evidence ?? 'context insights'}.`,
     ),
