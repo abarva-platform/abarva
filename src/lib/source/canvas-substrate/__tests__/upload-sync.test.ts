@@ -62,6 +62,15 @@ function fakeDb(seed: {
 }
 
 describe("matchEvidenceRequirementForUpload (filename → canonical requirement)", () => {
+  it("does not attach an unknown generated-template token to the trigger requirement", () => {
+    expect(
+      matchEvidenceRequirementForUpload({
+        stageKey: "strategy",
+        filename: "source-unknown-intake.xlsx",
+      }),
+    ).toBeNull();
+  });
+
   it("matches the SkyHarbor audit files to the right Strategy requirements", () => {
     expect(
       matchEvidenceRequirementForUpload({
