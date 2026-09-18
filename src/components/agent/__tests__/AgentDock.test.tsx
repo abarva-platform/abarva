@@ -734,6 +734,23 @@ describe("AgentDock · expanded conversation", () => {
     expect(screen.queryByTestId("agent-dock-suggestion-opening")).toBeNull();
     expect(screen.getByTestId("agent-dock-form")).toBeVisible();
   });
+
+  it("reserves a wider lane for rich answers without widening prose", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        thread={[{ id: "a1", role: "agent", body: "A readable answer." }]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    const prose = screen.getByText("A readable answer.").parentElement;
+    expect(prose).toHaveStyle({ width: "min(100%, 860px)" });
+    expect(prose?.parentElement).toHaveStyle({ width: "min(100%, 1180px)" });
+  });
 });
 
 describe("AgentDock · composer", () => {
