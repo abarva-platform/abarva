@@ -7,25 +7,37 @@ ALTER TABLE public.source_events
   ADD COLUMN IF NOT EXISTS solicitation_motion_accepted_by_user_id TEXT NULL,
   ADD COLUMN IF NOT EXISTS solicitation_motion_accepted_at TIMESTAMPTZ NULL;
 
-ALTER TABLE public.source_events
-  DROP CONSTRAINT IF EXISTS source_events_activation_state_check;
-ALTER TABLE public.source_events
-  ADD CONSTRAINT source_events_activation_state_check
-  CHECK (activation_state IN ('request', 'active_event', 'closed_request'));
+DO $authority$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'public.source_events'::regclass
+      AND conname = 'source_events_activation_state_check'
+  ) THEN
+    ALTER TABLE public.source_events
+      ADD CONSTRAINT source_events_activation_state_check
+      CHECK (activation_state IN ('request', 'active_event', 'closed_request'));
+  END IF;
 
-ALTER TABLE public.source_events
-  DROP CONSTRAINT IF EXISTS source_events_solicitation_motion_acceptance_check;
-ALTER TABLE public.source_events
-  ADD CONSTRAINT source_events_solicitation_motion_acceptance_check
-  CHECK (
-    (solicitation_motion IS NULL
-      AND solicitation_motion_accepted_by_user_id IS NULL
-      AND solicitation_motion_accepted_at IS NULL)
-    OR
-    (solicitation_motion IN ('rfi', 'rfp')
-      AND NULLIF(BTRIM(solicitation_motion_accepted_by_user_id), '') IS NOT NULL
-      AND solicitation_motion_accepted_at IS NOT NULL)
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'public.source_events'::regclass
+      AND conname = 'source_events_solicitation_motion_acceptance_check'
+  ) THEN
+    ALTER TABLE public.source_events
+      ADD CONSTRAINT source_events_solicitation_motion_acceptance_check
+      CHECK (
+        (solicitation_motion IS NULL
+          AND solicitation_motion_accepted_by_user_id IS NULL
+          AND solicitation_motion_accepted_at IS NULL)
+        OR
+        (solicitation_motion IN ('rfi', 'rfp')
+          AND NULLIF(BTRIM(solicitation_motion_accepted_by_user_id), '') IS NOT NULL
+          AND solicitation_motion_accepted_at IS NOT NULL)
+      );
+  END IF;
+END;
+$authority$;
 
 COMMENT ON COLUMN public.source_events.activation_state IS
   'Request versus active-event authority. Existing rows remain active; request activation requires a separately governed transition.';
