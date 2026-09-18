@@ -33,7 +33,7 @@ This is an incremental stage-09 read-path guard, not a completed cross-surface r
 - Three guard mutations each made its focused test fail, then were restored: baseline conflict, calculated-output agreement, and amount-basis label.
 - Scoped ESLint and full TypeScript: passed locally.
 - The broader Optimize page suite has one pre-existing rail-state expectation failure; it was present before this patch and is not changed here.
-- Release check, CI, and signed-in acceptance: record exact results before release.
+- `node scripts/release-check.mjs --base origin/main --head HEAD`: passed locally. CI and signed-in acceptance remain pending.
 
 ## Rollout Plan
 
