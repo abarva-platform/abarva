@@ -35,3 +35,15 @@ jobs:
       # outside the directory it watched.
       - name: Check every component is reachable from a route
         run: npm run audit:route-reachability
+
+      # Every audit:/validate:/check: script must say whether it gates a PR.
+      - name: Check the CI gate registry
+        run: npm run audit:ci-gate-registry
+
+      # Two gates that were passing on main but invoked by nothing. Wired so
+      # they cannot rot unseen the way the reachability audit did.
+      - name: Check enterprise naming conventions
+        run: npm run audit:enterprise-naming
+
+      - name: Check agent substrate readiness
+        run: npm run audit:agent-substrate
