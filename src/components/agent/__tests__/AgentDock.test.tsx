@@ -715,6 +715,25 @@ describe("AgentDock · expanded conversation", () => {
     ).toBeVisible();
     expect(document.body.style.overflow).toBe("hidden");
   });
+
+  it("clears opening prompts after a reply in expanded mode", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        thread={[{ id: "a1", role: "agent", body: "Here is the answer." }]}
+        suggestedActions={[
+          { id: "opening", label: "What can I do?", body: "What can I do?" },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    expect(screen.queryByTestId("agent-dock-suggestion-opening")).toBeNull();
+    expect(screen.getByTestId("agent-dock-form")).toBeVisible();
+  });
 });
 
 describe("AgentDock · composer", () => {
@@ -1784,6 +1803,54 @@ describe("AgentDock · thread render", () => {
         delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
       }
     }
+  });
+
+  it("follows streaming text near the bottom without pulling a reader away from earlier turns", () => {
+    const renderDock = (body: string, nextUser = false) => (
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        thread={[
+          { id: "a1", role: "agent", body },
+          ...(nextUser
+            ? ([
+                { id: "u2", role: "user", body: "Follow up." },
+              ] as ChatMessage[])
+            : []),
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />
+    );
+
+    const { rerender } = render(renderDock("First sentence."));
+    const transcript = screen.getByTestId("agent-dock-thread");
+    Object.defineProperty(transcript, "scrollHeight", {
+      value: 1000,
+      configurable: true,
+    });
+    Object.defineProperty(transcript, "clientHeight", {
+      value: 200,
+      configurable: true,
+    });
+
+    transcript.scrollTop = 100;
+    fireEvent.scroll(transcript);
+    rerender(renderDock("First sentence. Second sentence."));
+    expect(transcript.scrollTop).toBe(100);
+
+    transcript.scrollTop = 795;
+    fireEvent.scroll(transcript);
+    rerender(renderDock("First sentence. Second sentence. Third sentence."));
+    expect(transcript.scrollTop).toBe(1000);
+
+    transcript.scrollTop = 100;
+    fireEvent.scroll(transcript);
+    rerender(
+      renderDock("First sentence. Second sentence. Third sentence.", true),
+    );
+    expect(transcript.scrollTop).toBe(1000);
   });
 
   it("renders structured response parts with tables and charts", () => {
