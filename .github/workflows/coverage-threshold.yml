@@ -29,6 +29,12 @@ jobs:
       - name: Run behavior coverage gate
         run: npm run coverage:behavior-gate
 
+      - name: Check agent answer provenance affordances
+        run: >-
+          npx jest src/components/agent/__tests__/AgentDock.test.tsx
+          --runInBand
+          -t 'marks agent turns as AI drafts|shows a citation gap for substantive uncited agent text without evidence context|does not show a citation gap when the surface carries usable evidence context'
+
       - name: Upload coverage summary
         if: always()
         uses: actions/upload-artifact@v7
