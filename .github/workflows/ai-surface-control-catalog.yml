@@ -75,3 +75,11 @@ jobs:
 
       - name: Exercise agent response disclosure controls
         run: npx jest --runTestsByPath src/components/agent/__tests__/AgentResponse.controls.test.tsx --runInBand
+
+      # Name-filtered: this suite also carries three assertions left red on
+      # purpose (a pin-top mode with no control, and structured parts the
+      # July refactor moved). Wiring the whole file would gate the catalog on
+      # unrelated open questions; wiring the two control tests gates it on the
+      # controls.
+      - name: Exercise agent dock responsibility and approval notices
+        run: npx jest --runTestsByPath src/components/agent/__tests__/AgentDock.test.tsx -t "responsibility footer|human approval boundary" --runInBand
