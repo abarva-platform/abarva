@@ -715,6 +715,25 @@ describe("AgentDock · expanded conversation", () => {
     ).toBeVisible();
     expect(document.body.style.overflow).toBe("hidden");
   });
+
+  it("clears opening prompts after a reply in expanded mode", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        defaultMode="expand"
+        thread={[{ id: "a1", role: "agent", body: "Here is the answer." }]}
+        suggestedActions={[
+          { id: "opening", label: "What can I do?", body: "What can I do?" },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    expect(screen.queryByTestId("agent-dock-suggestion-opening")).toBeNull();
+    expect(screen.getByTestId("agent-dock-form")).toBeVisible();
+  });
 });
 
 describe("AgentDock · composer", () => {

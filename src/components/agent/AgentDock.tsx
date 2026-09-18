@@ -1123,10 +1123,12 @@ export function AgentDock(props: AgentDockProps) {
     : `Restore ${collapsedSummaryLabel ?? displayAgentName} chat`;
   const visibleSuggestedActions = useMemo(
     () =>
-      focused && thread.length > 0 && !keepSuggestedActionsVisible
+      (focused || mode === "expand") &&
+      thread.length > 0 &&
+      !keepSuggestedActionsVisible
         ? []
         : suggestedActions,
-    [focused, keepSuggestedActionsVisible, suggestedActions, thread.length],
+    [focused, keepSuggestedActionsVisible, mode, suggestedActions, thread.length],
   );
 
   // Render the chat panel inner — used by every mode (side-rail, pin-*,

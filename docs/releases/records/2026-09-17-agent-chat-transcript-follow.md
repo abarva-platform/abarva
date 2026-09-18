@@ -26,8 +26,8 @@ Release lane: `global-control-lane`. Layer 4 chat presentation only. No changes 
 
 ## Changes Included
 
-- `src/components/agent/AgentDock.tsx`: near-bottom scroll tracking and streaming follow behavior inside the transcript.
-- `src/components/agent/__tests__/AgentDock.test.tsx`: behavior regressions for streaming, reading earlier turns, and sending a new message.
+- `src/components/agent/AgentDock.tsx`: near-bottom scroll tracking and streaming follow behavior inside the transcript; opening prompts clear after a reply in expanded mode unless the caller opts to keep them.
+- `src/components/agent/__tests__/AgentDock.test.tsx`: behavior regressions for streaming, reading earlier turns, sending a new message, and clearing opening prompts.
 
 ## QA / Validation
 
