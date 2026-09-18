@@ -14,6 +14,21 @@ export interface SharedResponseShapeResult {
   replacements: Array<{ from: string; to: string }>;
 }
 
+// Backlog item 41 — `requireNextStep` and `nextStepFallback` were removed from
+// this input. #4038 deleted the manufactured "- Next: …" closing they existed to
+// configure, along with `hasNextStep` and the `missing_next_step` issue code,
+// and recorded that removal in
+// `docs/releases/records/2026-06-27-tower-stock-closing-contract.md`. The two
+// options survived the deletion and read as a guarantee while doing nothing:
+// `requireNextStep` was threaded into `findSharedResponseShapeIssues`, which
+// never read it, and `nextStepFallback` was read nowhere at all. A caller
+// setting either got silence.
+//
+// Do not re-add them here. A next step belongs to whatever produced the answer
+// — see #7809, which puts an intent-specific next action in Tower's own answer
+// assembly path — not to a shaper that would have to invent one. The behaviour
+// is pinned by
+// `src/__tests__/behaviors/shared-shaper-no-manufactured-next-step.test.ts`.
 export interface SharedResponseShapeInput {
   text: string;
   preserveStructure?: boolean;
@@ -21,8 +36,6 @@ export interface SharedResponseShapeInput {
   targetChars?: number;
   hardMaxChars?: number;
   maxParagraphs?: number;
-  requireNextStep?: boolean;
-  nextStepFallback?: string;
 }
 
 const BANNED_BRAND_RE = /\b(?:Atlas|Sentinel|Nexus)\b/g;
@@ -392,7 +405,6 @@ export function findSharedResponseShapeIssues(
   args: {
     hardMaxChars?: number;
     maxParagraphs?: number;
-    requireNextStep?: boolean;
   } = {},
 ): SharedResponseShapeIssue[] {
   const issues: SharedResponseShapeIssue[] = [];
@@ -451,7 +463,6 @@ export function shapeSharedAdvisorResponse(
     issues: findSharedResponseShapeIssues(finalText, {
       hardMaxChars,
       maxParagraphs,
-      requireNextStep: input.requireNextStep,
     }),
   };
 }

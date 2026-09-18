@@ -29,7 +29,6 @@ describe("shapeSharedAdvisorResponse", () => {
         { id: "LAK-AI-004", label: "ERP modernization" },
         { id: "LAK-AI-001", label: "AI service desk rollout" },
       ],
-      requireNextStep: true,
     });
 
     expect(result.text).toContain("aVa");
@@ -59,7 +58,6 @@ describe("shapeSharedAdvisorResponse", () => {
       targetChars: 650,
       hardMaxChars: 800,
       maxParagraphs: 5,
-      requireNextStep: true,
     });
 
     expect(result.text.length).toBeLessThanOrEqual(800);
@@ -83,7 +81,6 @@ describe("shapeSharedAdvisorResponse", () => {
       targetChars: 900,
       hardMaxChars: 1100,
       maxParagraphs: 5,
-      requireNextStep: true,
     });
 
     expect(
@@ -107,7 +104,6 @@ describe("shapeSharedAdvisorResponse", () => {
       targetChars: 900,
       hardMaxChars: 1100,
       maxParagraphs: 5,
-      requireNextStep: true,
     });
 
     expect(result.text).toContain("Northline Logistics Group: $62.0M");
