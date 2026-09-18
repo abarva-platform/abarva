@@ -14,6 +14,8 @@
  */
 
 import {
+  MOVES_HUMAN_RATIONALE_MIN_CHARS,
+  buildMovesGateApprovalEvidencePacket,
   buildMovesPhaseDecisionAuditRefs,
   buildMovesPhaseDecisionEvidencePacket,
 } from "../moves-ai-liability";
@@ -119,15 +121,79 @@ describe("moves phase decision evidence packet", () => {
     expect(packet.sanitizedRecommendationText).toMatch(/Nexus executed/i);
   });
 
-  it("does NOT enforce the rationale minimum — that lives in the callers", () => {
-    // Recorded deliberately rather than asserted as a defect. The route, the
-    // button and the tool each reject a short rationale; the packet builder
-    // does not. A future caller that skips those checks would record a
-    // one-word rationale as evidence, and nothing here would stop it.
-    const packet = buildMovesPhaseDecisionEvidencePacket(
-      decision({ humanRationale: "ok" }),
+  it("refuses to build a packet whose human rationale is too short to audit", () => {
+    // Previously recorded as an accepted gap: the route, the button and the
+    // tool each reject a short rationale, and the builder did not, so a caller
+    // that skipped those checks wrote a one-word rationale into an evidence
+    // packet and nothing stopped it. The rationale is the only part of the
+    // packet a human wrote; a packet carrying "ok" is a record that a decision
+    // was made, not a record of why.
+    expect(() =>
+      buildMovesPhaseDecisionEvidencePacket(decision({ humanRationale: "ok" })),
+    ).toThrow(/rationale must be at least/i);
+  });
+
+  it("refuses a rationale that is only long enough before it is normalized", () => {
+    // Whitespace is not reasoning. The builder measures what it will store,
+    // which is the collapsed string, not what the caller typed.
+    const padded = `  ok${" ".repeat(40)}  `;
+    expect(padded.length).toBeGreaterThanOrEqual(
+      MOVES_HUMAN_RATIONALE_MIN_CHARS,
     );
-    expect(packet.humanRationale).toBe("ok");
+    expect(() =>
+      buildMovesPhaseDecisionEvidencePacket(
+        decision({ humanRationale: padded }),
+      ),
+    ).toThrow(/rationale must be at least/i);
+  });
+
+  it("refuses a missing rationale rather than recording an empty one", () => {
+    // `validateAiDecisionEvidencePacket` never reads `humanRationale`, so a
+    // null one passed packet validation and the packet reported `passed`.
+    expect(() =>
+      buildMovesPhaseDecisionEvidencePacket(
+        decision({ humanRationale: undefined }),
+      ),
+    ).toThrow(/rationale must be at least/i);
+  });
+
+  it("builds normally once the rationale meets the minimum", () => {
+    // The refusal has to be about the short rationale and nothing else, or the
+    // three tests above would pass against a builder that rejects everything.
+    const packet = buildMovesPhaseDecisionEvidencePacket(decision());
+    expect(packet.humanRationale).toBe(RATIONALE);
+    // `AiDecisionEvidencePacket.humanRationale` is `string | null` at the shared
+    // layer, and stays that way: a Tower pressure brief legitimately carries no
+    // human rationale. Moves packets cannot, which is what these cases hold.
+    expect(packet.humanRationale?.length ?? 0).toBeGreaterThanOrEqual(
+      MOVES_HUMAN_RATIONALE_MIN_CHARS,
+    );
+  });
+
+  it("holds the same minimum on the criterion-level gate approval packet", () => {
+    // Same builder file, same evidence record, a different entry point. A
+    // minimum enforced on one of the two is a minimum a caller can walk
+    // around by choosing the other.
+    expect(() =>
+      buildMovesGateApprovalEvidencePacket({
+        instanceId: "PRG-1",
+        tenantName: "Tenant A",
+        criterionId: "data-readiness",
+        action: "approve",
+        humanRationale: "ok",
+        decisionOwner: "sponsor@example.com",
+      } as never),
+    ).toThrow(/rationale must be at least/i);
+
+    const packet = buildMovesGateApprovalEvidencePacket({
+      instanceId: "PRG-1",
+      tenantName: "Tenant A",
+      criterionId: "data-readiness",
+      action: "approve",
+      humanRationale: RATIONALE,
+      decisionOwner: "sponsor@example.com",
+    } as never);
+    expect(packet.humanRationale).toBe(RATIONALE);
   });
 
   it("audit refs point back at the decision and every cited item, without duplicates", () => {

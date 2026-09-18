@@ -53,6 +53,22 @@ export function validateMovesHumanRationale(value: unknown): string | null {
   return null;
 }
 
+/**
+ * The rationale is the only part of an evidence packet a human wrote. Every UI
+ * and route that builds one already refuses a rationale too short to audit, but
+ * `validateAiDecisionEvidencePacket` never reads the field, so a packet built
+ * around a one-word or missing rationale reported `passed`. Enforce it where the
+ * packet is assembled, so a future caller cannot record one by skipping a UI.
+ */
+function requireAuditableHumanRationale(value: unknown, context: string): string {
+  const rationale = normalizeMovesHumanRationale(value);
+  const error = validateMovesHumanRationale(rationale);
+  if (error) {
+    throw new Error(`${context} failed validation: ${error}`);
+  }
+  return rationale;
+}
+
 export function coerceDecisionSupportList(value: unknown): readonly string[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -97,7 +113,10 @@ export function buildMovesPhaseDecisionEvidencePacket(
     missingInputs,
     assumptions,
     alternativesConsidered,
-    humanRationale: normalizeMovesHumanRationale(input.humanRationale),
+    humanRationale: requireAuditableHumanRationale(
+      input.humanRationale,
+      "Moves decision evidence packet",
+    ),
     overrideDisposition: input.overrideDisposition ?? "accepted",
     riskDomains: ["financial_commitment", "general_business"],
   });
@@ -142,7 +161,10 @@ export function buildMovesGateApprovalEvidencePacket(
     missingInputs,
     assumptions,
     alternativesConsidered,
-    humanRationale: normalizeMovesHumanRationale(input.humanRationale),
+    humanRationale: requireAuditableHumanRationale(
+      input.humanRationale,
+      "Moves gate approval evidence packet",
+    ),
     overrideDisposition: input.action === "approve" ? "accepted" : "rejected",
     riskDomains: ["financial_commitment", "general_business"],
   });
