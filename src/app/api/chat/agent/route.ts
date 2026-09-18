@@ -50,7 +50,7 @@ import {
 } from "@/lib/agent/restricted-output-policy";
 import {
   AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
-  sanitizeAutonomousDecisionLanguage,
+  createAutonomousDecisionTextStreamer,
 } from "@/lib/ai-liability/human-decision-controls";
 // Global aVa Product Truth + Scope Guard (all agents, all surfaces).
 // See src/lib/agent/product-truth/.
@@ -2546,7 +2546,6 @@ export async function POST(request: Request) {
   // client. Violations are logged to the in-memory ring buffer
   // (synthesis_violations recorder) for telemetry.
   let bufferedOutput = "";
-  let pendingAgentOutput = "";
   // Source aVa output discipline is prompt-first: the model receives the
   // grounding and answer contract before generation. The quality gate runs as
   // telemetry only after streaming; it must not rewrite Claude's visible text.
@@ -2556,13 +2555,6 @@ export async function POST(request: Request) {
     sourceAvaGroundingBlock !== "";
   const readable = new ReadableStream({
     async start(controller) {
-      const flushAgentOutput = () => {
-        if (!pendingAgentOutput) return;
-        const demoSafeText = demoSafeClientText(pendingAgentOutput);
-        bufferedOutput += demoSafeText;
-        controller.enqueue(encoder.encode(demoSafeText));
-        pendingAgentOutput = "";
-      };
       // Tools (commit_program) and the loop both write through this sink.
       // Tool-side writes carry surface-specific sentinels (e.g. the
       // `[[program-created:<id>]]` navigation hint emitted by
@@ -2575,6 +2567,7 @@ export async function POST(request: Request) {
       // sees the whole token; `flush()` below emits whatever it still holds.
       const restrictedFinancialStreamer =
         createRestrictedFinancialTextStreamer(userAccessPolicy);
+      const autonomousDecisionStreamer = createAutonomousDecisionTextStreamer();
       const emitAgentText = (safeText: string) => {
         if (!safeText) return;
         bufferedOutput += safeText;
@@ -2582,9 +2575,7 @@ export async function POST(request: Request) {
       };
       const flushRestrictedFinancialTail = () => {
         if (isDirectClaudeSurface(surface)) return;
-        emitAgentText(
-          sanitizeAutonomousDecisionLanguage(restrictedFinancialStreamer.flush()),
-        );
+        emitAgentText(autonomousDecisionStreamer.push(restrictedFinancialStreamer.flush()));
       };
       // Every agent text delta and every tool-side write passes through this
       // sink, on every surface. The autonomous-decision scrub belongs here and
@@ -2593,13 +2584,11 @@ export async function POST(request: Request) {
       const writer = {
         write(text: string) {
           if (isDirectClaudeSurface(surface)) {
-            emitAgentText(sanitizeAutonomousDecisionLanguage(text));
+            emitAgentText(autonomousDecisionStreamer.push(text));
             return;
           }
           emitAgentText(
-            sanitizeAutonomousDecisionLanguage(
-              restrictedFinancialStreamer.push(text),
-            ),
+            autonomousDecisionStreamer.push(restrictedFinancialStreamer.push(text)),
           );
         },
       };
@@ -2681,7 +2670,8 @@ export async function POST(request: Request) {
         const errMessage = err instanceof Error ? err.message : String(err);
         writer.write(`\n\n[stream error: ${errMessage}]`);
       } finally {
-        flushAgentOutput();
+        flushRestrictedFinancialTail();
+        emitAgentText(autonomousDecisionStreamer.flush());
         // Phase A + Phase B quality gate — telemetry-only (2026-08-04). The
         // full answer text has already streamed live to the client above;
         // this pass runs the same 12 checks purely to log what would have
@@ -2724,9 +2714,6 @@ export async function POST(request: Request) {
             // Telemetry MUST NOT raise — the answer already streamed successfully.
           }
         }
-        // Emit any money-token fragment the redaction streamer is still holding,
-        // so a value at the very end of an answer is not silently dropped.
-        flushRestrictedFinancialTail();
         controller.close();
         // F0.3 post-hoc validation — non-blocking, telemetry-only.
         // The structural mechanism for action-claim integrity is F0.4

@@ -36,3 +36,6 @@ jobs:
 
       - name: Check AI surface controls
         run: npm run audit:ai-surface-controls
+
+      - name: Exercise visible agent stream controls
+        run: npx jest src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts --runInBand

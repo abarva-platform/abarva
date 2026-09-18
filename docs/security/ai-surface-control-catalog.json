@@ -248,7 +248,9 @@
         {
           "kind": "human-approval-gate",
           "evidence": [
-            "sanitizeAutonomousDecisionLanguage",
+            "createAutonomousDecisionTextStreamer()",
+            "autonomousDecisionStreamer.push(",
+            "autonomousDecisionStreamer.flush()",
             "PHASE ADVANCE APPROVALS",
             "Do not claim the user can see, approve"
           ]

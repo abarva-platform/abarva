@@ -150,6 +150,50 @@ export function sanitizeAutonomousDecisionLanguage(text: string): string {
   );
 }
 
+export function createAutonomousDecisionTextStreamer(): {
+  push(text: string): string;
+  flush(): string;
+} {
+  let pending = "";
+  const possibleStart = /\b(?:AbarVa|Nexus|Sentinel|Atlas|Steward|the|must|automatic(?:ally)?|final)\b/i;
+
+  return {
+    push(text) {
+      pending += text;
+      const lastSentenceEnd = Math.max(
+        pending.lastIndexOf("."),
+        pending.lastIndexOf("!"),
+        pending.lastIndexOf("?"),
+        pending.lastIndexOf(";"),
+        pending.lastIndexOf(":"),
+      );
+      if (lastSentenceEnd >= 0) {
+        const ready = pending.slice(0, lastSentenceEnd + 1);
+        pending = pending.slice(lastSentenceEnd + 1);
+        return sanitizeAutonomousDecisionLanguage(ready);
+      }
+
+      const trigger = possibleStart.exec(pending);
+      if (trigger) {
+        const ready = pending.slice(0, trigger.index);
+        pending = pending.slice(trigger.index);
+        return ready;
+      }
+
+      const trailingWord = /[A-Za-z]+$/.exec(pending);
+      const readyEnd = trailingWord?.index ?? pending.length;
+      const ready = pending.slice(0, readyEnd);
+      pending = pending.slice(readyEnd);
+      return ready;
+    },
+    flush() {
+      const ready = sanitizeAutonomousDecisionLanguage(pending);
+      pending = "";
+      return ready;
+    },
+  };
+}
+
 export function classifyAiDecisionRisk(input: {
   readonly text: string;
   readonly domains?: readonly AiDecisionRiskDomain[];
