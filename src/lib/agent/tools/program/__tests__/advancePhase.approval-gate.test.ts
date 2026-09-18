@@ -44,6 +44,7 @@ jest.mock("@/lib/programs/mutations", () => ({
 
 jest.mock("@/lib/programs/governance", () => ({
   evaluateGate: jest.fn(async () => ({
+    pass: true,
     failedChecks: [],
     requiresApproval: false,
     approverRole: "sponsor",
@@ -65,8 +66,16 @@ const ctx = {
   accessPolicy: { canApproveGates: false },
 } as unknown as Parameters<typeof advancePhaseTool.handler>[1];
 
-function programAtPhase(currentPhase: number) {
-  return { id: "program-1", currentPhase };
+type GateCheckShape = Awaited<ReturnType<typeof evaluateGate>>;
+
+function gateCheck(overrides: Partial<GateCheckShape> = {}): GateCheckShape {
+  return {
+    pass: true,
+    failedChecks: [],
+    requiresApproval: false,
+    approverRole: "sponsor",
+    ...overrides,
+  } as GateCheckShape;
 }
 
 describe("advance_phase tool · human approval gate", () => {
@@ -78,11 +87,7 @@ describe("advance_phase tool · human approval gate", () => {
       id: "program-1",
       currentPhase: 1,
     } as never);
-    mockEvaluateGate.mockResolvedValue({
-      failedChecks: [],
-      requiresApproval: false,
-      approverRole: "sponsor",
-    });
+    mockEvaluateGate.mockResolvedValue(gateCheck());
   });
 
   it("refuses to advance without an explicit human rationale, and writes nothing", async () => {
@@ -91,17 +96,12 @@ describe("advance_phase tool · human approval gate", () => {
       ctx,
     );
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("human_rationale_required");
+    expect(result).toMatchObject({ success: false, error: "human_rationale_required" });
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
   it("queues an approval request instead of satisfying the gate itself", async () => {
-    mockEvaluateGate.mockResolvedValue({
-      failedChecks: [],
-      requiresApproval: true,
-      approverRole: "sponsor",
-    });
+    mockEvaluateGate.mockResolvedValue(gateCheck({ requiresApproval: true }));
 
     const result = await advancePhaseTool.handler(
       {
@@ -113,8 +113,7 @@ describe("advance_phase tool · human approval gate", () => {
       ctx,
     );
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("approval_required");
+    expect(result).toMatchObject({ success: false, error: "approval_required" });
     // The whole point of the control: a pending request, never an advance.
     expect(mockRequestFounderApproval).toHaveBeenCalledTimes(1);
     expect(mockAdvancePhase).not.toHaveBeenCalled();
@@ -132,29 +131,30 @@ describe("advance_phase tool · human approval gate", () => {
       ctx,
     );
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("approval_permission_required");
+    expect(result).toMatchObject({ success: false, error: "approval_permission_required" });
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 
   it("still blocks on an unmet hard gate before any rationale question arises", async () => {
-    mockEvaluateGate.mockResolvedValue({
-      failedChecks: [
-        { check: "privacy_attestation", reason: "not recorded", severity: "hard" },
-      ],
-      requiresApproval: false,
-      approverRole: "sponsor",
-    });
+    mockEvaluateGate.mockResolvedValue(
+      gateCheck({
+        pass: false,
+        failedChecks: [
+          {
+            check: "privacy_attestation",
+            reason: "not recorded",
+            severity: "hard",
+          },
+        ],
+      }),
+    );
 
     const result = await advancePhaseTool.handler(
       { program_id: "program-1", to_phase: 2, rationale: "Ready to move." },
       ctx,
     );
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("gate_blocked_hard");
+    expect(result).toMatchObject({ success: false, error: "gate_blocked_hard" });
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
 });
-
-export { programAtPhase };
