@@ -54,3 +54,6 @@ jobs:
 
       - name: Exercise Intelligence promotion approval gate
         run: npx jest --runTestsByPath src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts --runInBand
+
+      - name: Exercise renewal cockpit external action
+        run: npx jest --runTestsByPath src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx --runInBand
