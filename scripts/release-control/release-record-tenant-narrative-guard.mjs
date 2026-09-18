@@ -2,6 +2,16 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const DEFAULT_REGISTRY_PATH = 'datasets/tenant-inputs/tenant-input-registry.json';
+
+// Words a registry key or display name may contain that carry no tenant
+// identity on their own. A word belongs here when blocking it would refuse
+// ordinary release-record prose while protecting nothing, because the full key
+// and the full display name stay on the term list either way.
+//
+// The list is hand-maintained, so every new registry tenant needs a read: a key
+// part that is an ordinary English word and is not listed here becomes a term
+// that is refused everywhere in prose. That is how 'first' — from a key whose
+// two other parts were already listed — came to be refused.
 const GENERIC_TENANT_WORDS = new Set([
   'air',
   'airline',
@@ -9,6 +19,7 @@ const GENERIC_TENANT_WORDS = new Set([
   'clinical',
   'demo',
   'financial',
+  'first',
   'health',
   'holdings',
   'industries',

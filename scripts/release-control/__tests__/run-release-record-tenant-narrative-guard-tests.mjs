@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import {
   collectTenantNarrativeTermsFromRegistry,
   findTenantNarrativeViolations,
+  loadTenantNarrativeTerms,
   validateTenantNarrativeGuard,
 } from '../release-record-tenant-narrative-guard.mjs';
 
@@ -104,6 +107,103 @@ test('release identifiers are prose unless they are real code/path evidence', ()
     ).length,
     1,
   );
+});
+
+// ---------------------------------------------------------------------------
+// The cases above run against a synthetic registry, so none of them exercises
+// the term list the gate actually applies on a pull request. The block below
+// loads the real registry, because the defect these tests exist to prevent is a
+// term the real registry derives and the synthetic one cannot.
+//
+// No tenant name is written as a literal here: the identifiers come from the
+// registry at runtime, which is both the rule in AGENTS.md and the only way
+// these assertions keep working when the registry changes.
+// ---------------------------------------------------------------------------
+
+const registryTerms = loadTenantNarrativeTerms();
+const registryTenants = JSON.parse(
+  readFileSync(
+    path.resolve(process.cwd(), 'datasets/tenant-inputs/tenant-input-registry.json'),
+    'utf8',
+  ),
+);
+const allRegistryTenants = [
+  ...(registryTenants.activeTenants ?? []),
+  ...(registryTenants.retiredTenants ?? []),
+];
+
+// Ordinary English words that appear in release-record prose and carry no
+// tenant identity on their own. Each is a word some registry key or display
+// name happens to contain; blocking it costs an author a rewrite and protects
+// nothing, because the full key and full display name stay on the term list.
+const ORDINARY_PROSE_WORDS = [
+  'airline',
+  'capital',
+  'clinical',
+  'demo',
+  'financial',
+  'first',
+  'health',
+  'holdings',
+  'industries',
+  'new',
+  'retail',
+];
+
+test('ordinary English words are not on the real registry term list', () => {
+  const blocked = ORDINARY_PROSE_WORDS.filter((word) => registryTerms.includes(word));
+  assert.deepEqual(
+    blocked,
+    [],
+    `these ordinary words are derived as tenant terms and would be refused in prose: ${blocked.join(', ')}`,
+  );
+});
+
+test('ordinary English words survive the guard in real release-record prose', () => {
+  for (const word of ORDINARY_PROSE_WORDS) {
+    const markdown = `The ${word} path was measured before and after the change.`;
+    assert.deepEqual(
+      findTenantNarrativeViolations(markdown, registryTerms),
+      [],
+      `"${word}" was refused in ordinary prose`,
+    );
+  }
+});
+
+test('every registry tenant is still refused when its identifier is written as prose', () => {
+  assert.ok(allRegistryTenants.length > 0, 'registry lists no tenants; the guard would be inert');
+
+  for (const tenant of allRegistryTenants) {
+    const key = String(tenant.tenantKey ?? '').trim();
+    if (!key) continue;
+
+    const spaced = key.replace(/[-_]+/g, ' ');
+    assert.equal(
+      validateTenantNarrativeGuard('docs/releases/records/example.md', `The ${spaced} rollout completed.`, registryTerms)
+        .length,
+      1,
+      `a registry tenant identifier passed the guard as prose`,
+    );
+    assert.equal(
+      validateTenantNarrativeGuard('docs/releases/records/example.md', `Loaded for ${key} in this release.`, registryTerms)
+        .length,
+      1,
+      `a registry tenant key passed the guard as prose`,
+    );
+  }
+});
+
+test('a generic word is exempted from both derivation paths, not just one', () => {
+  // "capital" as a key part, "airline" as a display-name first word. If either
+  // exemption is dropped, an ordinary word re-enters the term list.
+  const derived = collectTenantNarrativeTermsFromRegistry({
+    activeTenants: [{ tenantKey: 'fixture-capital', displayName: 'Airline Fixture' }],
+    retiredTenants: [],
+  });
+
+  assert.ok(!derived.includes('capital'), 'a generic key part was derived as a tenant term');
+  assert.ok(!derived.includes('airline'), 'a generic display-name first word was derived as a tenant term');
+  assert.ok(derived.includes('fixture'), 'the distinctive token was dropped along with the generic ones');
 });
 
 let failed = 0;
