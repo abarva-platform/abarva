@@ -46,6 +46,9 @@ import { demoSafeClientText } from "@/lib/client-config";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
+import { AILabel } from "@/components/abarva/AILabel";
+import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
+import { CitationGapNotice } from "./CitationGapNotice";
 import { EvidenceBasis } from "./EvidenceBasis";
 import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
@@ -1282,7 +1285,21 @@ export function AgentDock(props: AgentDockProps) {
                 }
               >
                 {turn.role === "agent" ? (
-                  <div style={AGENT_BYLINE_STYLE}>{displayAgentName}</div>
+                  <div style={AGENT_BYLINE_STYLE}>
+                    <span>{displayAgentName}</span>
+                    {/*
+                      Every agent turn carries a visible AI-output marker. A
+                      reader must be able to tell drafted text from a recorded
+                      fact without inferring it from the byline.
+                    */}
+                    {showReviewChrome ? (
+                      <AILabel
+                        status="draft"
+                        detail="Review before acting"
+                        compact
+                      />
+                    ) : null}
+                  </div>
                 ) : null}
                 <div
                   style={
@@ -1303,6 +1320,17 @@ export function AgentDock(props: AgentDockProps) {
                   ) : (
                     turn.body
                   )}
+                  {/*
+                    Substantive agent prose with no citation says so. Silence
+                    here would let an uncited answer read exactly like an
+                    evidenced one.
+                  */}
+                  {showReviewChrome &&
+                  turn.role === "agent" &&
+                  (!turn.citations || turn.citations.length === 0) &&
+                  shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
+                    <CitationGapNotice compact />
+                  ) : null}
                 </div>
                 {showReviewChrome &&
                 turn.role === "agent" &&
