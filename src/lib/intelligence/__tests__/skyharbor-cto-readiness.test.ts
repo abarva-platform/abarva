@@ -1,3 +1,6 @@
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import {
   buildSkyHarborCtoReadinessPacket,
   composeSkyHarborCtoAnswer,
@@ -15,29 +18,92 @@ const REQUIRED_MATURITIES: ClaimMaturity[] = [
 ];
 
 describe('SkyHarbor CTO readiness packet', () => {
-  it('builds the IROPS packet from enriched V6 rows across systems, data, AI, value, risks, and gaps', () => {
+  const fixtureRoot = mkdtempSync(path.join(tmpdir(), 'cto-readiness-'));
+  const fixtureDir = path.join(fixtureRoot, 'datasets/tenant-inputs/active/skyharbor-air/current');
+  const fixtureFiles = [
+    ['04_applications_systems.csv', 'SYS'],
+    ['05_data_assets_integrations.csv', 'DATA'],
+    ['10_ai_automation_use_cases.csv', 'AI'],
+    ['09_programs_initiatives.csv', 'PROG'],
+    ['08_spend_value.csv', 'SPEND'],
+    ['11_risks_controls.csv', 'RISK'],
+    ['12_relationships.csv', 'REL'],
+    ['13_evidence_sources.csv', 'EVID'],
+    ['14_metrics_outcomes.csv', 'METRIC'],
+    ['15_industry_context_patterns.csv', 'PATTERN'],
+    ['16_expert_lenses.csv', 'LENS'],
+  ] as const;
+
+  beforeAll(() => {
+    mkdirSync(fixtureDir, { recursive: true });
+    for (const [name, kind] of fixtureFiles) {
+      writeFileSync(path.join(fixtureDir, name), [
+        'record_id,tenant_key,system_name,data_asset_name,use_case,record_name,risk_or_control',
+        `SHA-${kind}-CTO-001,skyharbor-air,Dispatch system,Flight events,Recovery AI,Recovery program,Human approval`,
+      ].join('\n'));
+    }
+  });
+
+  afterAll(() => rmSync(fixtureRoot, { recursive: true, force: true }));
+
+  it('refuses readiness when the active packet has no curated CTO IDs', () => {
     const packet = buildSkyHarborCtoReadinessPacket();
 
-    expect(packet.systems).toHaveLength(12);
-    expect(packet.dataAssets).toHaveLength(16);
-    expect(packet.aiInitiatives).toHaveLength(8);
-    expect(packet.programs).toHaveLength(8);
-    expect(packet.risksControls).toHaveLength(12);
-    expect(packet.spend).toHaveLength(8);
-    expect(packet.relationships).toHaveLength(32);
-    expect(packet.evidenceSources).toHaveLength(12);
+    expect(packet.availability).toBe('unavailable');
+    expect(packet.systems).toEqual([]);
+    expect(packet.dataAssets).toEqual([]);
+    expect(packet.claimMaturity).toEqual([]);
+    expect(packet.decision).toBe('unavailable');
+    expect(packet.branch.choices).toEqual([]);
+    expect(composeSkyHarborCtoAnswer('Is IROPS ready?', packet)).toMatch(/curated CTO readiness evidence is unavailable/i);
+    expect(composeSkyHarborCtoAnswer('Is IROPS ready?', packet)).not.toMatch(/0 IROPS-critical systems|fund readiness before autonomous scale/i);
+  });
+
+  it('returns an unavailable packet when active files are missing', () => {
+    const packet = buildSkyHarborCtoReadinessPacket(path.join(fixtureRoot, 'missing'));
+
+    expect(packet.availability).toBe('unavailable');
+    expect(packet.sourceFiles).toEqual([]);
+    expect(composeSkyHarborCtoAnswer('Is IROPS ready?', packet)).toMatch(/evidence is unavailable/i);
+  });
+  it('builds a packet only from verified curated IDs', () => {
+    const packet = buildSkyHarborCtoReadinessPacket(fixtureRoot);
+
+    expect(packet.availability).toBe('available');
+    expect(packet.systems).toHaveLength(1);
+    expect(packet.dataAssets).toHaveLength(1);
+    expect(packet.aiInitiatives).toHaveLength(1);
+    expect(packet.programs).toHaveLength(1);
+    expect(packet.risksControls).toHaveLength(1);
+    expect(packet.spend).toHaveLength(1);
+    expect(packet.relationships).toHaveLength(1);
+    expect(packet.evidenceSources).toHaveLength(1);
     expect(packet.missingEvidenceChecklist.length).toBeGreaterThanOrEqual(5);
     expect(packet.sourceFiles).toEqual(expect.arrayContaining([
-      'V6_05_applications_systems.csv',
-      'V6_06_data_assets_integrations.csv',
-      'V6_10_ai_initiatives.csv',
-      'V6_12_relationships.csv',
-      'V6_13_evidence_sources.csv',
+      expect.stringContaining('04_applications_systems.csv'),
+      expect.stringContaining('05_data_assets_integrations.csv'),
+      expect.stringContaining('10_ai_automation_use_cases.csv'),
+      expect.stringContaining('12_relationships.csv'),
+      expect.stringContaining('13_evidence_sources.csv'),
     ]));
   });
 
+  it('refuses a partially curated packet and records for another tenant', () => {
+    const file = path.join(fixtureDir, '05_data_assets_integrations.csv');
+    const original = readFileSync(file, 'utf8');
+    try {
+      writeFileSync(file, original.replace('SHA-DATA-CTO-001', 'SHA-SYS-CTO-001'));
+      expect(buildSkyHarborCtoReadinessPacket(fixtureRoot).availability).toBe('unavailable');
+
+      writeFileSync(file, original.replace('skyharbor-air', 'other-tenant'));
+      expect(buildSkyHarborCtoReadinessPacket(fixtureRoot).availability).toBe('unavailable');
+    } finally {
+      writeFileSync(file, original);
+    }
+  });
+
   it('classifies claim maturity and does not allow board-grade value without signoff evidence', () => {
-    const packet = buildSkyHarborCtoReadinessPacket();
+    const packet = buildSkyHarborCtoReadinessPacket(fixtureRoot);
     const maturities = packet.claimMaturity.map((claim) => claim.maturity);
 
     for (const maturity of REQUIRED_MATURITIES) {
@@ -49,7 +115,7 @@ describe('SkyHarbor CTO readiness packet', () => {
   });
 
   it('generates branch options when value evidence is missing', () => {
-    const packet = buildSkyHarborCtoReadinessPacket();
+    const packet = buildSkyHarborCtoReadinessPacket(fixtureRoot);
 
     expect(packet.branch.choices.map((choice) => choice.id)).toEqual([
       'use_planning_assumptions',
@@ -64,7 +130,7 @@ describe('SkyHarbor CTO readiness packet', () => {
   });
 
   it('preserves Claude-owned branch wording while exposing renderable buttons', () => {
-    const answer = composeSkyHarborCtoAnswer('What is blocking agentic IROPS from scaling?');
+    const answer = composeSkyHarborCtoAnswer('What is blocking agentic IROPS from scaling?', buildSkyHarborCtoReadinessPacket(fixtureRoot));
     const parsed = parseDecisionBranch(answer);
 
     expect(parsed.visibleText).toContain('My point of view');
@@ -76,7 +142,7 @@ describe('SkyHarbor CTO readiness packet', () => {
   });
 
   it('answers hard CTO questions with point of view and without invented value precision', () => {
-    const answer = composeSkyHarborCtoAnswer('Is the IROPS AI case board-grade today?');
+    const answer = composeSkyHarborCtoAnswer('Is the IROPS AI case board-grade today?', buildSkyHarborCtoReadinessPacket(fixtureRoot));
 
     expect(answer).toContain('planning-grade today, not board-grade');
     expect(answer).toContain('Finance signoff is required');
