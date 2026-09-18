@@ -112,6 +112,21 @@ describe("storyLede", () => {
     expect(lede).toContain("managed services agreement");
   });
 
+  it("uses the Contract 360 stated annual value when a resolved extraction value disagrees", () => {
+    const lede = storyLede(
+      {
+        ...contract,
+        annual_value: 43_500_000,
+        resolved_annual_value: 44_000_000,
+      } as unknown as SourceContract360Row,
+      null,
+      null,
+    );
+
+    expect(lede).toBe("$43.5M a year under this agreement.");
+    expect(lede).not.toContain("$44M");
+  });
+
   it("returns null when there is no figure to state", () => {
     expect(
       storyLede({} as unknown as SourceContract360Row, null, null),

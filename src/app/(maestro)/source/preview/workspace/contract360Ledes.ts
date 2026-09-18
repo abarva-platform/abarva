@@ -5,6 +5,7 @@ import type {
   SourceContractSpendMonthlyRow,
 } from "@/lib/source/data-model/types";
 import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio";
+import { contractBookAnnualValueForContract } from "./contractPopulations";
 import { money } from "./viewModel";
 
 /**
@@ -54,9 +55,7 @@ export function storyLede(
 ): string | null {
   const committed = numberFromDb(coverage?.committed_spend_usd);
   const actual = numberFromDb(coverage?.actual_spend_usd);
-  const annual =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value);
+  const annual = contractBookAnnualValueForContract(contract);
   const shape = archetypeLabel?.trim().toLowerCase() ?? null;
 
   if (committed != null && committed > 0 && actual != null) {

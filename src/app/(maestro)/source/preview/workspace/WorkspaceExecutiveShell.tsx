@@ -47,6 +47,7 @@ import { ContractOptimizeMethod } from "./ContractOptimizeMethod";
 import { asSentence, fmtDate, money, pct, type WorkspaceViewModel } from "./viewModel";
 import { focusableContractRows } from "./contractDiscovery";
 import {
+  contractBookAnnualValueForContract,
   contractBookAnnualValue,
   contractPopulations,
   countOrDash,
@@ -3144,7 +3145,7 @@ function ContractListTable({
           <span>{reason}</span>
           <span>
             {bookIds.has(contract.contract_id)
-              ? money(numberFromDb(contract.resolved_annual_value) ?? numberFromDb(contract.annual_value))
+              ? money(contractBookAnnualValueForContract(contract))
               : "Outside book"}
           </span>
           <span>
@@ -3251,7 +3252,7 @@ function ContractFinancialPostureTable({
           </span>
           <span>
             {bookIds.has(contract.contract_id)
-              ? money(numberFromDb(contract.resolved_annual_value) ?? numberFromDb(contract.annual_value))
+              ? money(contractBookAnnualValueForContract(contract))
               : "Outside book"}
           </span>
           <span>{money(numberFromDb(contract.actual_annual_spend))}</span>
@@ -3737,8 +3738,7 @@ export function contractPurposeSummary(
     .toLowerCase();
   const kind = contractPurposeKind(classificationText);
   const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
+    contractBookAnnualValueForContract(contract) ??
     numberFromDb(coverage?.committed_spend_usd);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
@@ -4339,8 +4339,7 @@ function ContractStoryContextStack({
   vm: SourceWorkspaceVM;
 }) {
   const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
+    contractBookAnnualValueForContract(contract) ??
     numberFromDb(coverage?.committed_spend_usd);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??
@@ -7267,8 +7266,7 @@ function vendorsWithImpactEvidence(
   for (const coverage of portfolio.impact?.evidenceCoverage ?? []) {
     const contract = contractsById.get(coverage.contract_id);
     const annualValue =
-      numberFromDb(contract?.resolved_annual_value) ??
-      numberFromDb(contract?.annual_value) ??
+      contractBookAnnualValueForContract(contract) ??
       numberFromDb(coverage.candidate_amount_usd) ??
       numberFromDb(coverage.actual_spend_usd);
     upsert({
@@ -7289,8 +7287,7 @@ function vendorsWithImpactEvidence(
   for (const action of portfolio.impact?.actionCandidates ?? []) {
     const contract = contractsById.get(action.contract_id);
     const annualValue =
-      numberFromDb(contract?.resolved_annual_value) ??
-      numberFromDb(contract?.annual_value) ??
+      contractBookAnnualValueForContract(contract) ??
       numberFromDb(action.candidate_amount_usd);
     upsert({
       contractId: action.contract_id,
@@ -7306,8 +7303,7 @@ function vendorsWithImpactEvidence(
   for (const claim of portfolio.impact?.claimCards ?? []) {
     const contract = contractsById.get(claim.contract_id);
     const annualValue =
-      numberFromDb(contract?.resolved_annual_value) ??
-      numberFromDb(contract?.annual_value) ??
+      contractBookAnnualValueForContract(contract) ??
       numberFromDb(claim.candidate_amount_usd);
     upsert({
       contractId: claim.contract_id,
@@ -7476,8 +7472,7 @@ export function vendorArchetypeRows(portfolio: SourceWorkspacePortfolioData) {
       vendorRef: contract.vendor_ref,
       vendorName: contract.vendor_name,
       annualValue:
-        numberFromDb(contract.resolved_annual_value) ??
-        numberFromDb(contract.annual_value),
+        contractBookAnnualValueForContract(contract),
     });
   }
 
@@ -7802,10 +7797,7 @@ function withContractBackedVendorMetrics(
   }
   const annualValue = linkedContracts.reduce(
     (sum, contract) =>
-      sum +
-      (numberFromDb(contract.resolved_annual_value) ??
-        numberFromDb(contract.annual_value) ??
-        0),
+      sum + (contractBookAnnualValueForContract(contract) ?? 0),
     0,
   );
   const totalCommittedValue = linkedContracts.reduce(
@@ -7862,12 +7854,8 @@ export function vendorLinkedContracts(
   }
   return [...rows.values()].sort(
     (a, b) =>
-      (numberFromDb(b.resolved_annual_value) ??
-        numberFromDb(b.annual_value) ??
-        0) -
-      (numberFromDb(a.resolved_annual_value) ??
-        numberFromDb(a.annual_value) ??
-        0),
+      (contractBookAnnualValueForContract(b) ?? 0) -
+      (contractBookAnnualValueForContract(a) ?? 0),
   );
 }
 
@@ -8375,8 +8363,7 @@ function contractStoryHeadline(
     numberFromDb(contract.actual_annual_spend) ??
     numberFromDb(coverage?.actual_spend_usd);
   const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
+    contractBookAnnualValueForContract(contract) ??
     numberFromDb(coverage?.committed_spend_usd);
   if (opportunityTotal > 0) {
     return `${vendor}: ${money(opportunityTotal)} of governed optimization levers are ready to work.`;
@@ -8397,8 +8384,7 @@ function contractStoryBody(
   vm: SourceWorkspaceVM,
 ) {
   const annualValue =
-    numberFromDb(contract.resolved_annual_value) ??
-    numberFromDb(contract.annual_value) ??
+    contractBookAnnualValueForContract(contract) ??
     numberFromDb(coverage?.committed_spend_usd);
   const actualSpend =
     numberFromDb(contract.actual_annual_spend) ??

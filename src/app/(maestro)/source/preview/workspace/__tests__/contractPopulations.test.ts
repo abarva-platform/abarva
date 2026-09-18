@@ -1,5 +1,6 @@
 import {
   contractBookAnnualValue,
+  contractBookAnnualValueForContract,
   contractPopulations,
   countOrDash,
   isDeclaredArchetypeKey,
@@ -175,6 +176,26 @@ describe("contractBookAnnualValue", () => {
     } as never);
 
     expect(value).toBe(1_550_000);
+  });
+
+  it("uses the stated Contract 360 value before a resolved extraction value", () => {
+    expect(
+      contractBookAnnualValueForContract({
+        annual_value: 43_500_000,
+        resolved_annual_value: 44_000_000,
+      } as never),
+    ).toBe(43_500_000);
+
+    expect(
+      contractBookAnnualValue({
+        contracts: [
+          {
+            annual_value: 43_500_000,
+            resolved_annual_value: 44_000_000,
+          },
+        ],
+      } as never),
+    ).toBe(43_500_000);
   });
 
   it("returns null when the contract book has no value", () => {
