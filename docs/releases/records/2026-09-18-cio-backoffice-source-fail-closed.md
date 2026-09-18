@@ -34,7 +34,7 @@ Layer 4 product code and obsolete local proof tooling only. No intake, adapter, 
 
 - New behavior test failed in both assertions before retirement and passed after it. The handler reaches source selection without the old source, and a forged old source ID does not yield a native exhibit.
 - A targeted mutation returning a canned exhibit for that ID failed the exhibit test; the mutation was removed.
-- Focused handler and companion-canvas suite: 17 passed on the candidate base. The independent current-readiness behavior remains covered by its own suite; this candidate does not assert a native exhibit when current curated records are unavailable. On the candidate base, a wider adjacent run had 19 passed and 1 failure in an unchanged CTO source test expecting outdated capitalization of a loaded item.
+- Focused handler and companion-canvas suite: 17 passed on the candidate base; after integrating current main, the retired-path and current-readiness suites pass 15/15. This candidate does not assert a native exhibit when current curated records are unavailable. On the candidate base, a wider adjacent run had 19 passed and 1 failure in an unchanged CTO source test expecting outdated capitalization of a loaded item.
 - Scoped ESLint, `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`, and `npm run release:check`: passed.
 - Signed-in runtime proof: not run; this candidate is not deployed.
 

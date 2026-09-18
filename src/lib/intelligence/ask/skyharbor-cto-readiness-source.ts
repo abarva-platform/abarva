@@ -125,7 +125,7 @@ function wrapSkyHarborCanvasPayload(payload: object): string {
 }
 
 // Native right-canvas exhibit for SkyHarbor CTO readiness questions, using the
-// abarva-canvas fenced JSON contract (mirrors buildIndustrialCioBackofficeNativeCanvasBlock).
+// abarva-canvas fenced JSON contract for the independent readiness exhibit.
 // Proof-boundary framing fits this packet best: it's built to separate loaded evidence
 // from planning assumptions from what's still missing before a claim is board-grade.
 export function buildSkyHarborCtoReadinessNativeCanvasBlock(
