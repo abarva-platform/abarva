@@ -723,8 +723,12 @@ export function ContractEvidenceFamilies({
       required: true,
     },
     {
-      name: "Contract document proof",
-      note: "Page spans and proof text behind a clause-level claim.",
+      // The number here counts proof rows drawn out of the contract documents,
+      // not the documents themselves. Naming it "documents" put it beside a
+      // file inventory of a different size and made two true numbers read as a
+      // contradiction.
+      name: "Contract document proof rows",
+      note: "Page spans and proof text behind a clause-level claim. Counts proof rows, not files.",
       count: laneCount(coverage, "document_page_text_rows"),
       system: "contract document · restricted",
       required: true,

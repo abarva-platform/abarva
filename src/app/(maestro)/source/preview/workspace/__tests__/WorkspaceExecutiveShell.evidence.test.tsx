@@ -109,6 +109,40 @@ describe("contractCoverageWithDetailLanes", () => {
     });
   });
 
+  it("does not zero a loaded portfolio lane when no detail payload exists", () => {
+    const contract = {
+      tenant_key: "skyharbor_global",
+      contract_id: "CONTRACT-003",
+      vendor_ref: "VENDOR-003",
+      vendor_name: "Synthetic Vendor",
+      contract_name: "Synthetic platform agreement",
+    } as unknown as SourceContract360Row;
+
+    const resolved = contractCoverageWithDetailLanes(
+      {
+        contract_id: contract.contract_id,
+        spend_rows: 12,
+        performance_rows: 4,
+        document_page_text_rows: 9,
+        opportunity_rows: 3,
+        scope_rows: 7,
+      } as never,
+      contract,
+      [],
+      { detailState: "idle", detail: null, opportunityView: null } as never,
+    );
+
+    // Absent detail is not evidence that the lanes are empty. Every loaded
+    // count must survive a page that has not fetched contract detail.
+    expect(resolved).toMatchObject({
+      spend_rows: 12,
+      performance_rows: 4,
+      document_page_text_rows: 9,
+      opportunity_rows: 3,
+      scope_rows: 7,
+    });
+  });
+
   it("uses populated detail rows during the hydration transition", () => {
     const contract = {
       tenant_key: "skyharbor_global",

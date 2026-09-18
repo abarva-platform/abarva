@@ -6801,12 +6801,22 @@ export function contractCoverageWithDetailLanes(
     detail?.optimizationOpportunitySet?.opportunities.length ??
     vm.opportunityView?.opportunities.length ??
     0;
+  // Detail is authoritative only when there is a detail payload to be
+  // authoritative with. With none loaded, `?? 0` would hand every lane a zero
+  // and a fully loaded contract would render empty — the same stale-zero
+  // failure this function exists to prevent, arriving from the other side.
   const detailCounts = {
-    scope_rows: scopeRows.length,
-    spend_rows: detail?.spendMonths.length ?? 0,
-    performance_rows: detail?.performancePeriods.length ?? 0,
-    document_page_text_rows: detail?.docExtractions.length ?? 0,
-    opportunity_rows: opportunityCount,
+    // Scope rows and opportunities arrive outside the detail payload, so they
+    // stand on their own presence rather than on the payload's.
+    ...(scopeRows.length > 0 ? { scope_rows: scopeRows.length } : {}),
+    ...(opportunityCount > 0 ? { opportunity_rows: opportunityCount } : {}),
+    ...(detail
+      ? {
+          spend_rows: detail.spendMonths.length,
+          performance_rows: detail.performancePeriods.length,
+          document_page_text_rows: detail.docExtractions.length,
+        }
+      : {}),
   };
   const detailActualSpend = (detail?.spendMonths ?? []).reduce(
     (sum, row) => sum + (numberFromDb(row.actual_spend) ?? 0),
