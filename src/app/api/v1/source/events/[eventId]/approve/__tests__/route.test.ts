@@ -14,6 +14,9 @@ const eventRow = {
 
 const applyApproval = jest.fn(async () => ({ ok: true }));
 const updateStage = jest.fn(async () => ({ ok: true }));
+const insertActivityLog = jest.fn(
+  async () => ({ ok: true }) as { ok: boolean; error?: string },
+);
 
 jest.mock("next/server", () => ({
   after: jest.fn((task: () => void | Promise<void>) => {
@@ -67,6 +70,7 @@ jest.mock("@/lib/data-plane/write-adapters/sourceWriteAdapter", () => ({
   selectSourceWriteAdapter: jest.fn(() => ({
     applyApproval,
     updateStage,
+    insertActivityLog,
   })),
 }));
 
@@ -130,6 +134,8 @@ describe("POST Source event approve", () => {
     mockAfter.mockClear();
     applyApproval.mockClear();
     updateStage.mockClear();
+    insertActivityLog.mockClear();
+    insertActivityLog.mockResolvedValue({ ok: true });
     mockGetActiveClientRow.mockResolvedValue(activeClientRow("skyharbor-air"));
     mockGetContractOptimizationProfile.mockResolvedValue(null);
     applyApproval.mockResolvedValue({ ok: true });
@@ -139,6 +145,96 @@ describe("POST Source event approve", () => {
     eventRow.sourcing_motion = null;
     eventRow.created_by_user_id = "another-user";
     mockIsGateApprovalStrictMode.mockReturnValue(false);
+  });
+
+  /**
+   * Lifecycle decisions were the one Source action missing from the activity
+   * table that sibling routes write to. The decision is logged once the
+   * approval record commits — the human decided even if stage advancement
+   * later fails — and a failed activity write never fails a committed
+   * approval.
+   */
+  describe("activity log", () => {
+    const decide = (action: string) =>
+      new Request(
+        "https://app.abarva.ai/api/v1/source/events/event-1/approve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            action,
+            notes: "Sponsor confirms RFP gate is ready to advance.",
+            confirmations: {
+              evidenceComplete: true,
+              exclusionsReviewed: true,
+              stageFinal: true,
+            },
+          }),
+        },
+      );
+
+    it("records the approval decision with actor, stage and lifecycle states", async () => {
+      const response = await POST(decide("approve"), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(insertActivityLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventId: "event-1",
+          clientKey: "skyharbor-air",
+          actorUserId: "user-1",
+          actionType: "source_event_approved",
+          stageKey: "rfp",
+          metadata: expect.objectContaining({
+            toState: "active",
+            selfApproval: false,
+          }),
+        }),
+      );
+    });
+
+    it("marks a self-approval in the activity metadata", async () => {
+      eventRow.created_by_user_id = "user-1";
+
+      await POST(decide("approve"), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+
+      expect(insertActivityLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ selfApproval: true }),
+        }),
+      );
+    });
+
+    it("gives a rejection its own action type", async () => {
+      await POST(decide("reject"), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+
+      expect(insertActivityLog).toHaveBeenCalledWith(
+        expect.objectContaining({ actionType: "source_event_rejected" }),
+      );
+    });
+
+    it("does not fail an approval that already committed when the activity write fails", async () => {
+      insertActivityLog.mockResolvedValue({ ok: false, error: "insert_failed" });
+      const consoleError = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+
+      const response = await POST(decide("approve"), {
+        params: Promise.resolve({ eventId: "event-1" }),
+      });
+
+      expect(response.status).toBe(200);
+      // Loud, not swallowed: the audit hole this closes was invisible for weeks.
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("activity_insert_failed"),
+        expect.objectContaining({ eventId: "event-1" }),
+      );
+      consoleError.mockRestore();
+    });
   });
 
   /**
