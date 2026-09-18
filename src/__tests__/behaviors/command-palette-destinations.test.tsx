@@ -122,7 +122,7 @@ describe("command palette destinations", () => {
     expect(resolvesToPageRoute("/admin/users-access")).toBe(true);
     expect(resolvesToPageRoute("/tower")).toBe(true);
     // A dynamic segment: `/strategic-moves/[moveId]`.
-    expect(resolvesToPageRoute("/strategic-moves/apx-cdp-2026")).toBe(true);
+    expect(resolvesToPageRoute("/strategic-moves/example-move-id")).toBe(true);
     // A query string is not part of the route.
     expect(resolvesToPageRoute("/admin?tab=tenant")).toBe(true);
     // And it must still be able to say no.
@@ -136,6 +136,22 @@ describe("command palette destinations", () => {
     ).map((route) => `${route.label} → ${route.path}`);
 
     expect(dead).toEqual([]);
+  });
+
+  it("offers only tenant-neutral Moves shortcuts in shared chrome", () => {
+    const moves = COMMAND_PALETTE_ROUTES.filter(
+      (route) => route.surface === "Moves",
+    ).map(({ label, path }) => ({ label, path }));
+
+    expect(moves).toEqual([
+      { label: "Moves · Portfolio", path: "/strategic-moves" },
+      { label: "New Move", path: "/strategic-moves/new" },
+    ]);
+
+    search("Moves");
+    expect(screen.getByText("Moves · Portfolio")).toBeTruthy();
+    expect(screen.getByText("New Move")).toBeTruthy();
+    expect(screen.getAllByText("Moves")).toHaveLength(2);
   });
 
   it("navigates to exactly the path it offered, so the table above is the one the user travels", () => {

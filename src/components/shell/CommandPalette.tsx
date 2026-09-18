@@ -7,7 +7,6 @@ import { SHELL } from "@/lib/shell/shell-tokens";
 const ROUTES = [
   { label: 'Knowledge', path: '/home', surface: 'Knowledge', key: 'knw' },
   { label: 'Moves · Portfolio', path: '/strategic-moves', surface: 'Moves', key: 'mov' },
-  { label: 'APX-CDP-2026 · Apex Retail CDP', path: '/strategic-moves/apx-cdp-2026', surface: 'Moves', key: 'mov' },
   { label: 'New Move', path: '/strategic-moves/new', surface: 'Moves', key: 'mov' },
   { label: 'Source · Events', path: '/source', surface: 'Source', key: 'src' },
   { label: 'Intelligence · Library', path: '/intelligence', surface: 'Intelligence', key: 'int' },
