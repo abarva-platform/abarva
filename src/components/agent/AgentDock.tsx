@@ -1305,7 +1305,13 @@ export function AgentDock(props: AgentDockProps) {
                 }
               >
                 {turn.role === "agent" ? (
-                  <div style={AGENT_BYLINE_STYLE}>
+                  <div
+                    style={
+                      expanded
+                        ? { ...AGENT_BYLINE_STYLE, ...EXPANDED_PROSE_STYLE }
+                        : AGENT_BYLINE_STYLE
+                    }
+                  >
                     <span>{displayAgentName}</span>
                     {/*
                       Every agent turn carries a visible AI-output marker. A
@@ -1325,6 +1331,8 @@ export function AgentDock(props: AgentDockProps) {
                   style={
                     turn.role === "user" && expanded
                       ? EXPANDED_USER_BUBBLE_STYLE
+                      : turn.role === "agent" && expanded
+                        ? { ...BUBBLE_STYLE, ...EXPANDED_PROSE_STYLE }
                       : BUBBLE_STYLE
                   }
                 >
@@ -1349,7 +1357,9 @@ export function AgentDock(props: AgentDockProps) {
                   turn.role === "agent" &&
                   (!turn.citations || turn.citations.length === 0) &&
                   shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
-                    <CitationGapNotice compact />
+                    <div style={expanded ? EXPANDED_PROSE_STYLE : undefined}>
+                      <CitationGapNotice compact />
+                    </div>
                   ) : null}
                 </div>
                 {showReviewChrome &&
@@ -1357,11 +1367,13 @@ export function AgentDock(props: AgentDockProps) {
                 surface !== "intelligence" &&
                 turn.citations &&
                 turn.citations.length > 0 ? (
-                  <EvidenceBasis citations={turn.citations} />
+                  <div style={expanded ? EXPANDED_PROSE_STYLE : undefined}>
+                    <EvidenceBasis citations={turn.citations} />
+                  </div>
                 ) : null}
                 {turn.role === "agent" &&
                 shouldRenderAvaArtifactsInDock(surface, turn.agentAnswer) ? (
-                  <div style={{ marginTop: 12 }}>
+                  <div data-testid="agent-dock-artifacts" style={{ marginTop: 12 }}>
                     <AgentAnswerRenderer
                       answer={turn.agentAnswer}
                       showChrome={!focused}
@@ -2404,9 +2416,14 @@ const FOCUSED_USER_TURN_STYLE: CSSProperties = {
 
 const EXPANDED_AGENT_TURN_STYLE: CSSProperties = {
   ...AGENT_TURN_STYLE,
-  width: "min(100%, 860px)",
+  width: "min(100%, 1180px)",
   margin: "0 auto",
   padding: "12px 0",
+};
+
+const EXPANDED_PROSE_STYLE: CSSProperties = {
+  width: "min(100%, 860px)",
+  margin: "0 auto",
 };
 
 const EXPANDED_USER_TURN_STYLE: CSSProperties = {
