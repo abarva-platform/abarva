@@ -33,7 +33,7 @@ Release lane: `global-control-lane`. Layer 4 chat presentation only. No changes 
 
 - Focused scroll behavior tests: pass (2 tests).
 - Scoped ESLint, TypeScript no-emit, and release gate: pass.
-- Full AgentDock suite: 56 pass, three pre-existing failures remain on the updated base commit; no additional failures after this change.
+- Full AgentDock suite: 57 pass, three pre-existing failures remain on the updated base commit; no additional failures after this change.
 - Signed-in browser proof: pending deployment.
 
 ## Rollout Plan
