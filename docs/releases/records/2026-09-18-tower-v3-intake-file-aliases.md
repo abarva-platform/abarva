@@ -30,6 +30,7 @@ All clients using the shared Tower V3 reader with current intake filenames recei
 
 - The existing real-input reader suite failed 3/3 before the fix on a missing file. It passes 3/3 after the fix, with assertions for selected filenames and a numeric service-scope fact.
 - A mutation restoring the retired spend filename must make the suite fail again.
+- Two previously baselined Tower suites now pass. The test ratchet was narrowed from 10 known-failing suites to 8; the remaining failures were not relaxed.
 - Scoped lint, TypeScript, release gate, and PR CI are required before merge.
 
 ## Rollout Plan
