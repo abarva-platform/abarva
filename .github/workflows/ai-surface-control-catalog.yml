@@ -66,3 +66,6 @@ jobs:
 
       - name: Exercise Source approval queue controls
         run: npx jest --runTestsByPath src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx --runInBand
+
+      - name: Exercise Moves phase-advance button
+        run: npx jest --runTestsByPath src/components/programs/__tests__/PhaseAdvanceButton.controls.test.tsx --runInBand
