@@ -229,7 +229,10 @@ export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
   apexretail: "RETAIL",
   northstar: "MEDTECH",
   skyharbor: "AIRLINE",
-  lakeshore: "INDUSTRIAL",
+  // A holdco, and the only profile that exists for it is DIVERSIFIED. INDUSTRIAL
+  // has no profile, so `industryProfileFor` fell back to the generic one without
+  // saying so.
+  lakeshore: "DIVERSIFIED",
 };
 
 export function industryCodeForClientName(
@@ -409,6 +412,11 @@ const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> =
     ["northstar-clinical.example.com", "northstar"],
     ["skyharbor-air.example.com", "skyharbor"],
     ["lakeshore-industries.example.com", "lakeshore"],
+    // Every Lakeshore identity in the repo uses the holdings domain. Without
+    // this entry the pin resolves to null for a session that `isLockedTenantRole`
+    // has already locked, and the tenant falls back to caller-supplied metadata —
+    // which is the input the pin exists to override.
+    ["lakeshore-holdings.example.com", "lakeshore"],
   ];
 
 const EXACT_EMAIL_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
