@@ -1,13 +1,53 @@
 {
-  "status": "passed",
+  "status": "failed",
   "storyScore": 11,
   "requiredStoryScore": 11,
-  "visualScore": 9,
+  "visualScore": 2,
   "requiredVisualScore": 9,
+  "vacuous": [
+    {
+      "criterion": "Home Knowledge design contract includes Enterprise Brief",
+      "subject": "src/components/home/HomeKnowledgeDesignContractSurface.tsx"
+    },
+    {
+      "criterion": "Home Knowledge design contract includes Enterprise at a glance",
+      "subject": "src/components/home/HomeKnowledgeDesignContractSurface.tsx"
+    },
+    {
+      "criterion": "Home Knowledge design contract includes Leadership Signals",
+      "subject": "src/components/home/HomeKnowledgeDesignContractSurface.tsx"
+    },
+    {
+      "criterion": "Home Knowledge design contract includes Use Cases",
+      "subject": "src/components/home/HomeKnowledgeDesignContractSurface.tsx"
+    },
+    {
+      "criterion": "Home Knowledge design contract includes Context Confidence",
+      "subject": "src/components/home/HomeKnowledgeDesignContractSurface.tsx"
+    },
+    {
+      "criterion": "Home Knowledge design contract includes Evidence Gaps",
+      "subject": "src/components/home/HomeKnowledgeDesignContractSurface.tsx"
+    },
+    {
+      "criterion": "Design contract keeps debug/proof internals out of the primary CXO view",
+      "subject": "src/components/home/HomeKnowledgeDesignContractSurface.tsx"
+    }
+  ],
   "generatedBy": "claude",
   "model": "claude-opus-4-8",
   "sourceContextHash": "sha256:8aff19ece549adc4268a9bdeb5625076b2fbb18314149b5c6530d57f5af014b2",
-  "failures": [],
+  "failures": [
+    "visual Enterprise Brief: Home Knowledge design contract includes Enterprise Brief",
+    "visual Enterprise at a glance: Home Knowledge design contract includes Enterprise at a glance",
+    "visual Leadership Signals: Home Knowledge design contract includes Leadership Signals",
+    "visual Use Cases: Home Knowledge design contract includes Use Cases",
+    "visual Context Confidence: Home Knowledge design contract includes Context Confidence",
+    "visual Evidence Gaps: Home Knowledge design contract includes Evidence Gaps",
+    "visual No primary technical diagnostics: Design contract keeps debug/proof internals out of the primary CXO view",
+    "visual score 2/9",
+    "7 criteria have no live subject: src/components/home/HomeKnowledgeDesignContractSurface.tsx"
+  ],
   "sourceArtifacts": {
     "claudePrompt": "reports/home-knowledge-story-quality/claude-prompts/meridian-home-story-prompt.txt",
     "rawClaudeResponse": "reports/home-knowledge-story-quality/claude-responses/meridian-home-story-response.txt",
