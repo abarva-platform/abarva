@@ -15,7 +15,10 @@
             "AILabel",
             "status=\"draft\"",
             "Review before acting"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+          }
         },
         {
           "kind": "citation",
@@ -23,28 +26,42 @@
             "AgentCitation",
             "response.citations",
             "inlineNodes"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No test renders an answer carrying citations and asserts the citation markers appear; the suite only asserts the gap notice stays quiet when citations exist."
+          }
         },
         {
           "kind": "citation-gap",
           "evidence": [
             "CitationGapNotice",
             "shouldShowRenderedResponseCitationGap"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+          }
         },
         {
           "kind": "confidence",
           "evidence": [
             "AIConfidenceIndicator",
             "viewModel.confidence.tier"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No test asserts the confidence indicator renders for a given tier; confidence is only used as an input to the citation-gap cases."
+          }
         },
         {
           "kind": "human-approval-gate",
           "evidence": [
             "AgentActionApprovalNotice",
             "follow_up_actions"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
+          }
         }
       ]
     },
@@ -60,14 +77,22 @@
           "evidence": [
             "AIResponsibilityFooter",
             "compact"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/agent/__tests__/AgentDock.test.tsx",
+            "nameFilter": "responsibility footer|human approval boundary"
+          }
         },
         {
           "kind": "human-approval-gate",
           "evidence": [
             "AgentActionApprovalNotice",
             "compact"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/agent/__tests__/AgentDock.test.tsx",
+            "nameFilter": "responsibility footer|human approval boundary"
+          }
         }
       ]
     },
@@ -84,7 +109,11 @@
             "AILabel",
             "status=\"draft\"",
             "Review before acting"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "The draft label renders per answer and needs a streamed thread; this suite mocks the stream to an empty thread, so asserting it would prove the fixture rather than the drawer."
+          }
         },
         {
           "kind": "responsibility-footer",
@@ -92,21 +121,31 @@
             "AIResponsibilityFooter",
             "tone=\"dark\"",
             "compact"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+          }
         },
         {
           "kind": "citation-gap",
           "evidence": [
             "CitationGapNotice",
             "shouldShowPlainTextCitationGap"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "The citation-gap notice renders per answer and needs a streamed thread; this suite mocks the stream to an empty thread, so asserting it would prove the fixture rather than the drawer."
+          }
         },
         {
           "kind": "human-approval-gate",
           "evidence": [
             "AgentActionApprovalNotice",
             "tone=\"dark\""
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
+          }
         }
       ]
     },
@@ -123,7 +162,11 @@
             "HumanApprovalGate",
             "canSubmitHumanApproval",
             "MOVES_HUMAN_RATIONALE_MIN_CHARS"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. The gate modal lives inside ProgramDetailPage, which has no rendering suite; covering it needs the page mounted, not the modal alone."
+          }
         }
       ]
     },
@@ -140,7 +183,10 @@
             "data-edit-before-commit=\"true\"",
             "approve-actions-editable-decision",
             "reviewedDecision"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx"
+          }
         },
         {
           "kind": "human-approval-gate",
@@ -148,7 +194,10 @@
             "canApprove",
             "Approval not available to this viewer",
             "Logs you as approver"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/deliverables/__tests__/ApproveActions.controls.test.tsx"
+          }
         }
       ]
     },
@@ -165,35 +214,55 @@
             "data-testid=\"atlas-brief-accountability\"",
             "AI-assisted decision support",
             "brief.accountability.watermark"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its accountability block."
+          }
         },
         {
           "kind": "citation",
           "evidence": [
             "Evidence basis",
             "brief.accountability.evidenceBasis"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its evidence basis line."
+          }
         },
         {
           "kind": "confidence",
           "evidence": [
             "confidence ·",
             "brief.confidenceLabel"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its confidence label."
+          }
         },
         {
           "kind": "human-approval-gate",
           "evidence": [
             "brief.accountability.humanApprovalRequired",
             "brief.accountability.sanitizedRecommendation"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its human-approval statement."
+          }
         },
         {
           "kind": "risk-caveat",
           "evidence": [
             "brief.accountability.missingDataBanner",
             "evidenceValueWarning"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its missing-data banner."
+          }
         }
       ]
     },
@@ -210,14 +279,20 @@
             "SOURCE_APPROVAL_REASON_MIN_LENGTH",
             "confirmationsFor",
             "Self-approval notice"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx"
+          }
         },
         {
           "kind": "risk-caveat",
           "evidence": [
             "Self-approval notice",
             "Approval action failed."
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/source/__tests__/AdminSourceEventApprovalQueue.controls.test.tsx"
+          }
         }
       ]
     },
@@ -234,7 +309,11 @@
             "data-source-estimate-disclosure=\"true\"",
             "Directional estimate only",
             "assumptions.map"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. The disclosure component has no rendering suite, so nothing proves the assumptions list renders rather than collapsing to an empty node."
+          }
         }
       ]
     },
@@ -253,7 +332,10 @@
             "autonomousDecisionStreamer.flush()",
             "PHASE ADVANCE APPROVALS",
             "Do not claim the user can see, approve"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts"
+          }
         }
       ]
     },
@@ -270,7 +352,10 @@
             "human_rationale_required",
             "buildMovesPhaseDecisionEvidencePacket",
             "aiDecisionEvidencePacket"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts"
+          }
         }
       ]
     },
@@ -287,7 +372,10 @@
             "human_rationale_required",
             "buildMovesPhaseDecisionEvidencePacket",
             "approval_required"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/v1/programs/[programId]/advance/__tests__/approval-gate.test.ts"
+          }
         }
       ]
     },
@@ -304,7 +392,10 @@
             "This tool never SATISFIES a gate approval",
             "human_rationale_required",
             "approval_required"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/lib/agent/tools/program/__tests__/advancePhase.approval-gate.test.ts"
+          }
         }
       ]
     },
@@ -321,7 +412,10 @@
             "Human rationale for phase advance",
             "Commit human decision",
             "MOVES_HUMAN_RATIONALE_MIN_CHARS"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/programs/__tests__/PhaseAdvanceButton.controls.test.tsx"
+          }
         }
       ]
     },
@@ -338,7 +432,10 @@
             "human_external_action_gate_required",
             "humanConfirmed",
             "externalActionGate"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/v1/source/work-items/__tests__/external-action-gate.test.ts"
+          }
         }
       ]
     },
@@ -356,7 +453,10 @@
             "intelligence_promotion_approval_required",
             "human_promotion_rationale",
             "evidence_refs"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts"
+          }
         }
       ]
     },
@@ -372,19 +472,31 @@
           "evidence": [
             "MOVES_AI_DRAFT_LABEL",
             "AI Draft"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. Nothing builds the canvas view model and asserts the draft label survives into it."
+          }
         },
         {
           "kind": "citation",
           "evidence": [
             "evidenceCitations"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. Nothing builds the canvas view model and asserts evidence citations survive into it."
+          }
         },
         {
           "kind": "confidence",
           "evidence": [
             "confidence"
-          ]
+          ],
+          "behavioralTest": {
+            "status": "none",
+            "reason": "No behavioral test yet. Nothing builds the canvas view model and asserts a confidence value survives into it."
+          }
         }
       ]
     },
@@ -400,21 +512,30 @@
           "evidence": [
             "agentName: \"Nexus\"",
             "HUMAN_DECISION_ATTESTATION_TEXT"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
+          }
         },
         {
           "kind": "citation",
           "evidence": [
             "evidenceIds",
             "buildMovesPhaseDecisionAuditRefs"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
+          }
         },
         {
           "kind": "confidence",
           "evidence": [
             "assumptions",
             "alternativesConsidered"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
+          }
         }
       ]
     },
@@ -430,7 +551,10 @@
           "evidence": [
             "Vendor email draft",
             "draft, not sent"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx"
+          }
         },
         {
           "kind": "human-approval-gate",
@@ -438,7 +562,10 @@
             "Human approval rationale",
             "humanConfirmed: true",
             "serveNoticeRationaleReady"
-          ]
+          ],
+          "behavioralTest": {
+            "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx"
+          }
         }
       ]
     }

@@ -9,6 +9,8 @@ const CATALOG_PATH = path.join(
   'docs/security/ai-surface-control-catalog.json',
 );
 
+const WORKFLOW_PATH = '.github/workflows/ai-surface-control-catalog.yml';
+
 const REQUIRED_CONTROL_KINDS = new Set([
   'ai-label',
   'citation',
@@ -173,6 +175,106 @@ function stripCommentsForEvidenceMatch(source) {
   return out;
 }
 
+/**
+ * Which test files this catalog's own CI job actually runs, and with what name
+ * filter. A behavioral test that exists on disk but is not wired into the job
+ * proves nothing: it never runs on a PR that breaks the control. Both halves of
+ * that — file present, file executed — have to be checked, because the gap
+ * between them is invisible in every other artifact.
+ */
+function readWorkflowJestRuns() {
+  const workflowPath = path.join(process.cwd(), WORKFLOW_PATH);
+  if (!fs.existsSync(workflowPath)) {
+    fail(`Control catalog workflow missing: ${WORKFLOW_PATH}`);
+  }
+
+  const runs = new Map();
+  for (const line of fs.readFileSync(workflowPath, 'utf8').split(/\r?\n/)) {
+    if (!line.includes('npx jest')) continue;
+    const nameFilter = line.match(/-t\s+"([^"]+)"/)?.[1] ?? null;
+    const byPath = line.includes('--runTestsByPath');
+    for (const match of line.matchAll(/(src\/[^\s"']+\.test\.tsx?)/g)) {
+      runs.set(match[1], { nameFilter, byPath });
+    }
+  }
+  return runs;
+}
+
+/**
+ * Behavioral coverage is declared per control kind, not per surface. A surface
+ * with four controls and a suite that exercises two of them is two covered and
+ * two uncovered — counting it as one covered surface overstates the programme
+ * by every control the suite never touched.
+ */
+function validateBehavioralTest(control, controlLabel, workflowRuns) {
+  const declared = control.behavioralTest;
+  const problems = [];
+
+  if (!declared || typeof declared !== 'object') {
+    return {
+      problems: [
+        `${controlLabel}: behavioralTest is required — declare a test path, or status "none" with a reason`,
+      ],
+      covered: false,
+    };
+  }
+
+  if (declared.status === 'none') {
+    if (declared.path) {
+      problems.push(`${controlLabel}: behavioralTest status "none" must not also name a path`);
+    }
+    if (typeof declared.reason !== 'string' || declared.reason.trim().length < 40) {
+      problems.push(
+        `${controlLabel}: an uncovered control needs a concrete reason saying what is not proven`,
+      );
+    }
+    return { problems, covered: false };
+  }
+
+  if (typeof declared.path !== 'string' || !declared.path.trim()) {
+    return {
+      problems: [`${controlLabel}: behavioralTest needs a path, or status "none"`],
+      covered: false,
+    };
+  }
+
+  if (!fs.existsSync(path.join(process.cwd(), declared.path))) {
+    problems.push(`${controlLabel}: behavioral test does not exist (${declared.path})`);
+    return { problems, covered: false };
+  }
+
+  const run = workflowRuns.get(declared.path);
+  if (!run) {
+    problems.push(
+      `${controlLabel}: behavioral test ${declared.path} is never run by ${WORKFLOW_PATH} — a test that does not run proves nothing`,
+    );
+    return { problems, covered: false };
+  }
+
+  // A name-filtered step is coupled to a test title: rename the test and it
+  // silently drops out of the gate. Declaring the filter here makes the catalog
+  // fail on that rename instead of quietly covering less.
+  const declaredFilter = typeof declared.nameFilter === 'string' ? declared.nameFilter : null;
+  if (declaredFilter !== run.nameFilter) {
+    problems.push(
+      declaredFilter
+        ? `${controlLabel}: declares name filter "${declaredFilter}" but ${WORKFLOW_PATH} runs ${declared.path} with ${run.nameFilter ? `"${run.nameFilter}"` : 'no filter'}`
+        : `${controlLabel}: ${WORKFLOW_PATH} runs ${declared.path} filtered to "${run.nameFilter}", so the catalog must declare that filter rather than imply the whole suite`,
+    );
+  }
+
+  // jest reads a bare pattern as a regex; the literal brackets in a route
+  // segment like [programId] are a character class that matches nothing, so the
+  // step passes having found no tests.
+  if (declared.path.includes('[') && !run.byPath) {
+    problems.push(
+      `${controlLabel}: ${declared.path} contains a bracketed path segment and must be run with --runTestsByPath`,
+    );
+  }
+
+  return { problems, covered: problems.length === 0 };
+}
+
 function normalizeEvidence(value) {
   return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.trim()) : [];
 }
@@ -234,7 +336,7 @@ function validateCatalogClaimCoverage(catalog, surfacesById) {
   return problems;
 }
 
-function validateSurface(surface, index) {
+function validateSurface(surface, index, workflowRuns, tally) {
   const label = surface?.id ?? `surface[${index}]`;
   const problems = [];
 
@@ -273,6 +375,11 @@ function validateSurface(surface, index) {
     }
     seenKinds.add(kind);
 
+    const behavioral = validateBehavioralTest(control, controlLabel, workflowRuns);
+    problems.push(...behavioral.problems);
+    tally.declared += 1;
+    if (behavioral.covered) tally.covered += 1;
+
     const evidence = normalizeEvidence(control.evidence);
     if (evidence.length === 0) {
       problems.push(`${controlLabel}: evidence must include at least one code token`);
@@ -307,6 +414,8 @@ function main() {
   const ids = new Set();
   const surfacesById = new Map();
   const problems = [];
+  const workflowRuns = readWorkflowJestRuns();
+  const tally = { declared: 0, covered: 0 };
   surfaces.forEach((surface, index) => {
     if (surface?.id) {
       if (ids.has(surface.id)) {
@@ -315,7 +424,7 @@ function main() {
       ids.add(surface.id);
       surfacesById.set(surface.id, surface);
     }
-    problems.push(...validateSurface(surface, index));
+    problems.push(...validateSurface(surface, index, workflowRuns, tally));
   });
   problems.push(...validateCatalogClaimCoverage(catalog, surfacesById));
 
@@ -323,7 +432,14 @@ function main() {
     fail('AI surface control catalog failed.', problems);
   }
 
-  console.log(`AI surface control catalog passed (${surfaces.length} surfaces).`);
+  console.log(
+    `AI surface control catalog passed (${surfaces.length} surfaces, ${tally.declared} declared controls).`,
+  );
+  // Counted per control, not per surface: a surface whose four controls have one
+  // behavioral test is one covered and three uncovered.
+  console.log(
+    `Behavioral coverage: ${tally.covered} of ${tally.declared} controls run a test that exercises them in CI.`,
+  );
 }
 
 main();
