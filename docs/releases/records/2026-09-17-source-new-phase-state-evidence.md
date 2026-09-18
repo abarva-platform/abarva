@@ -39,6 +39,7 @@ No product surface gained a completion or approval claim. "Recorded" states that
 - `src/lib/source/new-workspace` and `src/components/source/new-workspace`: 46 tests passed across 5 suites.
 - Mutation checks on the new guard: ignoring evidence in the behind-phase branch failed 5 tests; restoring the positional "locked" answer for unplaced events failed 3 tests.
 - Scoped ESLint: clean. Full-project `tsc --noEmit`: clean.
+- **Correction, 18 Sep 2026:** the local typecheck quoted above did not run. `npx tsc --noEmit` on the authoring machine exits 134 — a V8 out-of-memory crash that emits no diagnostics — and its output was filtered for `error TS`, so the crash read as clean. The authoritative typecheck for this change is the CI job on its pull request, which passed. Re-running locally as `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit` exits 0. The ESLint and test results above were produced by commands that completed and are unaffected.
 - `node scripts/release-check.mjs --base origin/main --head HEAD`: see PR.
 - Signed-in acceptance on the deployed build: pending.
 

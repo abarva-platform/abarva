@@ -45,6 +45,7 @@ Not restored, and deliberately left alone: the singular-`row` widening and the b
 - `visible-answer-contract`: 13 of 13 pass, including the four restored checks and a guard asserting that prose discussing vendor JSON extracts still passes.
 - Consumer scopes `src/lib/agent`, `src/lib/atlas`, `src/lib/home/know` measured against a clean `origin/main` tree: **33 failing before, 33 failing after** — unchanged, with the 5 new tests passing on top. Status: **pass**, no regression.
 - Full-project `tsc --noEmit`: **pass**. Scoped ESLint: **pass**.
+- **Correction, 18 Sep 2026:** the local typecheck quoted above did not run. `npx tsc --noEmit` on the authoring machine exits 134 — a V8 out-of-memory crash that emits no diagnostics — and its output was filtered for `error TS`, so the crash read as clean. The authoritative typecheck for this change is the CI job on its pull request, which passed. Re-running locally as `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit` exits 0. The ESLint and test results above were produced by commands that completed and are unaffected.
 - Signed-in acceptance: **not run** — blocked, host machine locked.
 
 ## Rollout Plan

@@ -40,6 +40,7 @@ Deliberately not changed: the existing behavior that a present detail payload's 
 - Contract 360 workspace suites: 97 tests passed across 9 suites.
 - Mutation check: restoring the `?? 0` fallbacks fails the new no-detail test.
 - Scoped ESLint clean; full-project `tsc --noEmit` clean.
+- **Correction, 18 Sep 2026:** the local typecheck quoted above did not run. `npx tsc --noEmit` on the authoring machine exits 134 — a V8 out-of-memory crash that emits no diagnostics — and its output was filtered for `error TS`, so the crash read as clean. The authoritative typecheck for this change is the CI job on its pull request, which passed. Re-running locally as `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit` exits 0. The ESLint and test results above were produced by commands that completed and are unaffected.
 - Signed-in acceptance on the deployed build: pending.
 
 ## Rollout Plan
