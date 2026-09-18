@@ -53,6 +53,7 @@
     "docs:nexus-manual": "npx tsx scripts/docs/build-nexus-manual.ts",
     "docs:nexus-manual:check": "npx tsx scripts/docs/build-nexus-manual.ts --check",
     "release:check": "node scripts/release-check.mjs",
+    "check:release-record-tenant-narrative-guard": "node scripts/release-control/__tests__/run-release-record-tenant-narrative-guard-tests.mjs",
     "migration:seals:check": "node scripts/release-control/check-migration-seals.mjs",
     "knowledge:hcdn-job-runner": "node scripts/knowledge/hcdn-job-runner.mjs",
     "test:hcdn-job-runner": "node scripts/knowledge/__tests__/run-hcdn-job-runner-tests.mjs",

@@ -26,6 +26,9 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Prove the tenant-narrative guard's own term derivation
+        run: npm run check:release-record-tenant-narrative-guard
+
       - name: Check release record
         env:
           BASE_REF: ${{ github.base_ref || 'main' }}

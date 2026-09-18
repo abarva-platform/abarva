@@ -574,6 +574,9 @@
     "audit:vercel-production-runtime:check": {
       "kind": "pr-gate"
     },
+    "check:release-record-tenant-narrative-guard": {
+      "kind": "pr-gate"
+    },
     "validate:context-corpus": {
       "kind": "pr-gate"
     },
