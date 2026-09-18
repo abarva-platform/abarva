@@ -111,6 +111,7 @@ export function inferSessionRoleFromEmail(
     normalized.endsWith("@northstar-clinical.example.com") ||
     normalized.endsWith("@skyharbor-air.example.com") ||
     normalized.endsWith("@lakeshore-industries.example.com") ||
+    normalized.endsWith("@lakeshore-holdings.example.com") ||
     normalized.includes("+apex@abarva.com") ||
     normalized.includes("+meridian@abarva.com") ||
     normalized.includes("+firstcapital@abarva.com") ||
