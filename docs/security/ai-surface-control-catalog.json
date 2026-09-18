@@ -298,7 +298,7 @@
         }
       ],
       "routeReachable": false,
-      "unreachableReason": "No route imports this component; it is already recorded in docs/architecture/source-canvas-orphans.json. The approval controls it carries are real code with a behavioral test, but no signed-in user can open the queue. Fixed by mounting it from a Source admin route, or by retiring it once the approval path that replaced it is cataloged instead."
+      "unreachableReason": "No route imports this component; it is already recorded in docs/architecture/unreachable-components.json. The approval controls it carries are real code with a behavioral test, but no signed-in user can open the queue. Fixed by mounting it from a Source admin route, or by retiring it once the approval path that replaced it is cataloged instead."
     },
     {
       "id": "source-estimate-assumption-disclosure",
@@ -321,7 +321,7 @@
         }
       ],
       "routeReachable": false,
-      "unreachableReason": "No route imports this component; it is already recorded in docs/architecture/source-canvas-orphans.json, and its only importer is its own test. Every Source savings and cost estimate a user sees today is rendered without it. Fixed by mounting it wherever Source presents an estimate, which is where the catalog claims the caveat is shown."
+      "unreachableReason": "No route imports this component; it is already recorded in docs/architecture/unreachable-components.json, and its only importer is its own test. Every Source savings and cost estimate a user sees today is rendered without it. Fixed by mounting it wherever Source presents an estimate, which is where the catalog claims the caveat is shown."
     },
     {
       "id": "agent-chat-route-decision-boundary",

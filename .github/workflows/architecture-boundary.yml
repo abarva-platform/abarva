@@ -29,3 +29,9 @@ jobs:
 
       - name: Check architecture boundaries
         run: npm run audit:architecture-boundaries
+
+      # This audit had an npm script and no workflow, so nothing ran it. It was
+      # failing on nine unreported orphans while three AI control surfaces sat
+      # outside the directory it watched.
+      - name: Check every component is reachable from a route
+        run: npm run audit:route-reachability
