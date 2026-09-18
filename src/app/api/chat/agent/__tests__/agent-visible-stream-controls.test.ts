@@ -32,7 +32,7 @@ function streamStartBody(): string {
   return body;
 }
 
-async function runVisibleStream(chunks: string[], direct: boolean): Promise<string> {
+async function runVisibleStream(chunks: string[]): Promise<string> {
   const output: Uint8Array[] = [];
   const controller: StreamController = {
     enqueue: (chunk) => output.push(chunk),
@@ -43,14 +43,16 @@ async function runVisibleStream(chunks: string[], direct: boolean): Promise<stri
     bufferedOutput: "",
     encoder: new TextEncoder(),
     demoSafeClientText: (text: string) => text,
+    // Pass-through: this suite asserts the autonomous-decision scrub. The
+    // restricted-financial firewall is driven with its real implementation in
+    // `restricted-financial-redaction.test.ts`.
     createRestrictedFinancialTextStreamer: () => ({
       push: (text: string) => text,
       flush: () => "",
     }),
     userAccessPolicy: null,
-    isDirectClaudeSurface: () => direct,
     createAutonomousDecisionTextStreamer,
-    surface: direct ? "/home" : "/intelligence",
+    surface: "/intelligence",
     contextBundleArtifact: "",
     shouldRunProviderOverloadDrill: () => false,
     request: {},
@@ -98,32 +100,32 @@ async function runVisibleStream(chunks: string[], direct: boolean): Promise<stri
 }
 
 describe("agent visible stream controls", () => {
-  it.each([true, false])("scrubs model and tool text on direct=%s", async (direct) => {
-    const answer = await runVisibleStream(
-      ["Nexus approved the award. ", "The model selected the vendor."],
-      direct,
-    );
+  it("scrubs model and tool text", async () => {
+    const answer = await runVisibleStream([
+      "Nexus approved the award. ",
+      "The model selected the vendor.",
+    ]);
     expect(answer).toContain("The AI advisor recommended for human review the award.");
     expect(answer).toContain("the AI-assisted workflow recommended for human review the vendor.");
     expect(answer).not.toMatch(/Nexus approved|model selected/i);
   });
 
-  it.each([true, false])("scrubs a phrase split across output chunks on direct=%s", async (direct) => {
-    const answer = await runVisibleStream(["Nexus appro", "ved the award."], direct);
+  it("scrubs a phrase split across output chunks", async () => {
+    const answer = await runVisibleStream(["Nexus appro", "ved the award."]);
     expect(answer).toBe("The AI advisor recommended for human review the award.");
     expect(answer).not.toContain("Nexus approved");
   });
 
-  it.each([true, false])("holds a split name and flushes an unfinished sentence on direct=%s", async (direct) => {
-    const answer = await runVisibleStream(["Nex", "us approved the award"], direct);
+  it("holds a split name and flushes an unfinished sentence", async () => {
+    const answer = await runVisibleStream(["Nex", "us approved the award"]);
     expect(answer).toBe("The AI advisor recommended for human review the award");
   });
 
   it("preserves ordinary text while withholding an unfinished control phrase", async () => {
-    const answer = await runVisibleStream(
-      ["The evidence is ready. AbarVa dec", "ided the outcome."],
-      true,
-    );
+    const answer = await runVisibleStream([
+      "The evidence is ready. AbarVa dec",
+      "ided the outcome.",
+    ]);
     expect(answer).toBe("The evidence is ready. The client decision owner reviewed the outcome.");
   });
 });

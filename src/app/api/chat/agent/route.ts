@@ -94,7 +94,6 @@ import {
   isStewardVoiceDoctrineEnabled,
 } from "@/lib/agent/voice-doctrine/steward";
 import { VISIBLE_MODEL_OUTPUT_CONTRACT_PROMPT } from "@/lib/agent/visible-answer-contract";
-import { isDirectClaudeSurface } from "@/lib/agent/display-text";
 // Wave 3 PR-3 · TrustSpine grounding for the Steward chat dock.
 // Pulls live tenant posture (substrate, connectors, isolation,
 // governance) and threads it into the system prompt so Steward can
@@ -2574,19 +2573,22 @@ export async function POST(request: Request) {
         controller.enqueue(encoder.encode(safeText));
       };
       const flushRestrictedFinancialTail = () => {
-        if (isDirectClaudeSurface(surface)) return;
         emitAgentText(autonomousDecisionStreamer.push(restrictedFinancialStreamer.flush()));
       };
       // Every agent text delta and every tool-side write passes through this
       // sink, on every surface. The autonomous-decision scrub belongs here and
       // nowhere narrower: an answer must not claim it decided, executed or
       // approved anything on its own.
+      // Redaction is unconditional, and entitlement is the only thing that
+      // decides what it removes. One surface used to skip it via a
+      // surface-name branch whose stated purpose was to keep a prose
+      // optimizer from rewriting model text — but no prose optimizer exists
+      // on this route, so the branch only ever skipped the restricted
+      // financial firewall and handed exact money values to a user whose
+      // access policy says they may not see them. The streamer already
+      // passes entitled users through untouched; the surface has no say.
       const writer = {
         write(text: string) {
-          if (isDirectClaudeSurface(surface)) {
-            emitAgentText(autonomousDecisionStreamer.push(text));
-            return;
-          }
           emitAgentText(
             autonomousDecisionStreamer.push(restrictedFinancialStreamer.push(text)),
           );

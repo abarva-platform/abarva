@@ -1,6 +1,23 @@
 import { shapeSharedAdvisorResponse } from "@/lib/answer/shared-response-shaper";
 
 describe("shapeSharedAdvisorResponse", () => {
+  it("preserves a structured table while still removing raw identifiers and stale brands", () => {
+    const result = shapeSharedAdvisorResponse({
+      text: [
+        "| Program | Owner |",
+        "|---|---|",
+        "| LAK-AI-004 | Atlas |",
+      ].join("\n"),
+      labels: [{ id: "LAK-AI-004", label: "ERP modernization" }],
+      preserveStructure: true,
+    });
+
+    expect(result.text).toContain("| Program | Owner |");
+    expect(result.text).toContain("| ERP modernization | aVa |");
+    expect(result.text).not.toContain("LAK-AI-004");
+    expect(result.text).not.toContain("Atlas");
+  });
+
   it("replaces raw ids with display names and blocks stale agent brands", () => {
     const result = shapeSharedAdvisorResponse({
       text: [

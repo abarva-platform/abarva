@@ -1212,12 +1212,14 @@ export function shapeAgentResponseForSurface(
   );
   // ATLAS-HI-3-2026-05-30 — bypass the compactor when the LLM already
   // returned well-formed structure. See looksAlreadyStructured() above.
+  const preserveStructure = looksAlreadyStructured(cleaned);
   const shaped =
-    shouldCompactSurface(surface) && !looksAlreadyStructured(cleaned)
+    shouldCompactSurface(surface) && !preserveStructure
       ? compactConsultantChatText(cleaned, 120)
       : cleaned;
   const shared = shapeSharedAdvisorResponse({
     text: shaped,
+    preserveStructure,
     labels: options.labels,
     targetChars: options.targetChars,
     hardMaxChars: options.hardMaxChars,
