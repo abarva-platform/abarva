@@ -23,6 +23,12 @@ describe("Tower v3 ContextPack from active tenant inputs", () => {
     expect(proof.summary.acceptance.allSixDimensionsPresent).toBe(true);
     expect(proof.summary.sourceDimensions).toHaveLength(6);
     expect(proof.summary.sourceDimensions.every((dimension) => dimension.rowCount > 0)).toBe(true);
+    expect(proof.summary.sourceDimensions.find((dimension) => dimension.dimensionKey === "08_spend_value")?.fileName)
+      .toBe("08_spend_value.csv");
+    expect(proof.summary.sourceDimensions.find((dimension) => dimension.dimensionKey === "17_service_scope_managed_services")?.fileName)
+      .toBe("17_service_scope_managed_services.csv");
+    expect(proof.contextPack.facts.some((fact) => fact.predicate === "service_scope" && fact.valueType === "currency"))
+      .toBe(true);
   });
 
   it("keeps Tower measurement/readiness safe and blocks realized-value language", () => {

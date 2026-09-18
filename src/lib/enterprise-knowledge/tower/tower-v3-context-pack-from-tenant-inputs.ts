@@ -68,10 +68,12 @@ export interface TowerV3MeridianProof {
 const TOWER_V3_DIMENSIONS: TowerV3TenantInputDimension[] = [
   {
     dimensionKey: "08_spend_value",
-    fileName: "08_it_budget_spend_value.csv",
+    fileName: "08_spend_value.csv",
     label: "IT budget, spend, and value",
     domain: "metrics_outcomes",
     primaryLabelFields: [
+      "spend_category",
+      "cost_center_or_owner",
       "business_name",
       "context_item",
       "financial_fact_type",
@@ -81,6 +83,7 @@ const TOWER_V3_DIMENSIONS: TowerV3TenantInputDimension[] = [
       "system_name",
     ],
     valueFields: [
+      "annual_spend_usd",
       "budget_amount_usd",
       "approved_budget_usd",
       "forecast_spend_usd",
@@ -124,11 +127,12 @@ const TOWER_V3_DIMENSIONS: TowerV3TenantInputDimension[] = [
   },
   {
     dimensionKey: "17_service_scope_managed_services",
-    fileName: "17_managed_services_scope.csv",
+    fileName: "17_service_scope_managed_services.csv",
     label: "Service scope and managed services",
     domain: "vendors_contracts",
-    primaryLabelFields: ["vendor_name", "service_tower", "service", "business_name", "context_item"],
+    primaryLabelFields: ["vendor_name", "service_tower", "service_name", "service", "business_name", "context_item"],
     valueFields: [
+      "run_cost_usd",
       "annual_contract_value_usd",
       "run_spend_usd",
       "change_order_spend_usd",
