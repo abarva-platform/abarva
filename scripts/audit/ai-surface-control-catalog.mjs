@@ -133,6 +133,46 @@ function normalizeCoverageEntries(catalog) {
   return entries.filter((entry) => entry && typeof entry === 'object');
 }
 
+/**
+ * Blank out comments so an evidence token is only matched against code that
+ * runs. String literals are kept: several controls are legitimately evidenced
+ * by prompt text or a rendered label. Replacing comment bodies with spaces
+ * preserves offsets, so nothing else about the match shifts.
+ */
+function stripCommentsForEvidenceMatch(source) {
+  let out = "";
+  let i = 0;
+  let mode = "code"; // code | line-comment | block-comment | single | double | backtick
+  while (i < source.length) {
+    const ch = source[i];
+    const next = source[i + 1];
+    if (mode === "code") {
+      if (ch === "/" && next === "/") { mode = "line-comment"; out += "  "; i += 2; continue; }
+      if (ch === "/" && next === "*") { mode = "block-comment"; out += "  "; i += 2; continue; }
+      if (ch === "'") mode = "single";
+      else if (ch === '"') mode = "double";
+      else if (ch === "`") mode = "backtick";
+      out += ch; i += 1; continue;
+    }
+    if (mode === "line-comment") {
+      if (ch === "\n") { mode = "code"; out += ch; } else out += " ";
+      i += 1; continue;
+    }
+    if (mode === "block-comment") {
+      if (ch === "*" && next === "/") { mode = "code"; out += "  "; i += 2; continue; }
+      out += ch === "\n" ? ch : " ";
+      i += 1; continue;
+    }
+    // inside a string literal
+    if (ch === "\\") { out += source.slice(i, i + 2); i += 2; continue; }
+    if ((mode === "single" && ch === "'") || (mode === "double" && ch === '"') || (mode === "backtick" && ch === "`")) {
+      mode = "code";
+    }
+    out += ch; i += 1;
+  }
+  return out;
+}
+
 function normalizeEvidence(value) {
   return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.trim()) : [];
 }
@@ -239,10 +279,17 @@ function validateSurface(surface, index) {
       continue;
     }
     if (source) {
+      // Evidence must be code that runs, not a comment naming the control.
+      // Matching raw source let a deleted control keep passing this gate for
+      // eleven days after a comment carrying its name was added in its place.
+      const executable = stripCommentsForEvidenceMatch(source);
       for (const token of evidence) {
-        if (!source.includes(token)) {
-          problems.push(`${controlLabel}: missing evidence token "${token}" in ${surface.path}`);
-        }
+        if (executable.includes(token)) continue;
+        problems.push(
+          source.includes(token)
+            ? `${controlLabel}: evidence token "${token}" appears only in a comment in ${surface.path} — the control must be code that runs`
+            : `${controlLabel}: missing evidence token "${token}" in ${surface.path}`,
+        );
       }
     }
   }

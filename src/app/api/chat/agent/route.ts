@@ -48,9 +48,10 @@ import {
   summarizeFinancialValueForPrompt,
   type RestrictedOutputPolicyLike,
 } from "@/lib/agent/restricted-output-policy";
-import { AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK } from "@/lib/ai-liability/human-decision-controls";
-// AI surface control catalog evidence token:
-// sanitizeAutonomousDecisionLanguage
+import {
+  AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
+  sanitizeAutonomousDecisionLanguage,
+} from "@/lib/ai-liability/human-decision-controls";
 // Global aVa Product Truth + Scope Guard (all agents, all surfaces).
 // See src/lib/agent/product-truth/.
 import { buildProductTruthSystemPromptBlock } from "@/lib/agent/product-truth";
@@ -2581,15 +2582,25 @@ export async function POST(request: Request) {
       };
       const flushRestrictedFinancialTail = () => {
         if (isDirectClaudeSurface(surface)) return;
-        emitAgentText(restrictedFinancialStreamer.flush());
+        emitAgentText(
+          sanitizeAutonomousDecisionLanguage(restrictedFinancialStreamer.flush()),
+        );
       };
+      // Every agent text delta and every tool-side write passes through this
+      // sink, on every surface. The autonomous-decision scrub belongs here and
+      // nowhere narrower: an answer must not claim it decided, executed or
+      // approved anything on its own.
       const writer = {
         write(text: string) {
           if (isDirectClaudeSurface(surface)) {
-            emitAgentText(text);
+            emitAgentText(sanitizeAutonomousDecisionLanguage(text));
             return;
           }
-          emitAgentText(restrictedFinancialStreamer.push(text));
+          emitAgentText(
+            sanitizeAutonomousDecisionLanguage(
+              restrictedFinancialStreamer.push(text),
+            ),
+          );
         },
       };
       try {
