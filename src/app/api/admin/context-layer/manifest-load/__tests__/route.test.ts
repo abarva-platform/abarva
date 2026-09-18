@@ -3,12 +3,17 @@ import { NextRequest } from "next/server";
 import { POST } from "../route";
 
 const mockRequireTenancy = jest.fn();
+const mockRequireTenantAdmin = jest.fn();
 const mockReadFile = jest.fn();
 const mockGetAzureWriteFluentClient = jest.fn(() => ({}));
+const mockStageFileToBlob = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: (...args: unknown[]) => mockRequireTenancy(...args),
   tenancyErrorResponse: () => new Response(null, { status: 401 }),
+}));
+jest.mock("@/lib/auth/tenant-roles", () => ({
+  requireTenantAdmin: (...args: unknown[]) => mockRequireTenantAdmin(...args),
 }));
 
 jest.mock("node:fs/promises", () => ({
@@ -20,7 +25,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: () => mockGetAzureWriteFluentClient(),
 }));
 
-jest.mock("@/lib/context-ingestion/blob-stager", () => ({ stageFileToBlob: jest.fn() }));
+jest.mock("@/lib/context-ingestion/blob-stager", () => ({ stageFileToBlob: (...args: unknown[]) => mockStageFileToBlob(...args) }));
 jest.mock("@/lib/context-ingestion/context-commit", () => ({ commitContextBatch: jest.fn() }));
 jest.mock("@/lib/context-ingestion/csv-upload-connector", () => ({ loadCsvUploadToTenantContext: jest.fn() }));
 jest.mock("@/lib/context-ingestion/jsonl-graph-loader", () => ({ loadJsonlGraphEdges: jest.fn() }));
@@ -41,7 +46,61 @@ describe("context manifest load", () => {
       clientKey: "test-tenant",
       clientId: "test-client",
       userId: "test-user",
+      clerkUserId: "clerk-test-user",
     });
+    mockRequireTenantAdmin.mockResolvedValue(undefined);
+  });
+
+  it("rejects a non-admin before reading an explicit manifest", async () => {
+    mockRequireTenantAdmin.mockRejectedValue(new Error("forbidden_tenant_admin_required"));
+
+    const response = await POST(request({
+      tenantKey: "test-tenant",
+      datasetPath: "datasets/test-fixture",
+      dryRun: true,
+    }));
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ error: "forbidden_tenant_admin_required" });
+    expect(mockRequireTenantAdmin).toHaveBeenCalledWith({
+      userId: "clerk-test-user",
+      tenantKey: "test-tenant",
+    });
+    expect(mockReadFile).not.toHaveBeenCalled();
+    expect(mockStageFileToBlob).not.toHaveBeenCalled();
+    expect(mockGetAzureWriteFluentClient).not.toHaveBeenCalled();
+  });
+
+  it("fails closed without a verified Clerk user id", async () => {
+    mockRequireTenancy.mockResolvedValue({
+      clientKey: "test-tenant",
+      clientId: "test-client",
+      userId: "test-user",
+    });
+
+    const response = await POST(request({
+      tenantKey: "test-tenant",
+      datasetPath: "datasets/test-fixture",
+      dryRun: true,
+    }));
+
+    expect(response.status).toBe(403);
+    expect(mockRequireTenantAdmin).not.toHaveBeenCalled();
+    expect(mockReadFile).not.toHaveBeenCalled();
+  });
+
+  it("rejects a web mutation even for an admin before any I/O", async () => {
+    const response = await POST(request({
+      tenantKey: "test-tenant",
+      datasetPath: "datasets/test-fixture",
+      dryRun: false,
+    }));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ error: "manifest_load_aca_job_required" });
+    expect(mockReadFile).not.toHaveBeenCalled();
+    expect(mockStageFileToBlob).not.toHaveBeenCalled();
+    expect(mockGetAzureWriteFluentClient).not.toHaveBeenCalled();
   });
 
   it("requires an explicit dataset path before reading files or opening a write client", async () => {
