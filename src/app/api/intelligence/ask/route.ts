@@ -17,6 +17,7 @@ import type { AskSource, AskSurfaceContext } from "@/lib/intelligence/ask";
 import {
   buildAvaTrace,
   emitAgentContextTraceAsync,
+  hashModelInput,
   type RawAskSource,
 } from "@/lib/agent-trace";
 import { randomUUID } from "node:crypto";
@@ -1144,6 +1145,9 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           activePersonGraphNodeId,
           activePersonDisplayName,
           traceEnabled: payload.traceEnabled,
+          onModelInput: (parts) => {
+            traceModelInputHash = hashModelInput(parts);
+          },
           traceSession: payload.traceEnabled
             ? {
                 tenant,
