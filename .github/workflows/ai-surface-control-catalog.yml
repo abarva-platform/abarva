@@ -54,3 +54,6 @@ jobs:
 
       - name: Exercise Intelligence promotion approval gate
         run: npx jest --runTestsByPath src/lib/programs/__tests__/origination-submit.promotion-gate.test.ts --runInBand
+
+      - name: Exercise Moves phase-gate route approval
+        run: npx jest --runTestsByPath src/app/api/programs/phase-gate/__tests__/approval-gate.test.ts --runInBand
