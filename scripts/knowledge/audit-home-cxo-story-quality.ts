@@ -13,10 +13,15 @@ type ScoreRow = {
   criterion: string;
   score: number;
   evidence: string;
+  /** Repo-relative file this criterion is asserting about. */
+  subject: string;
+  status: "pass" | "fail" | "VACUOUS";
 };
 
 const repoRoot = process.cwd();
-const outDir = path.join(repoRoot, "reports/home-cxo-story-quality");
+const outDir = process.env.HOME_CXO_STORY_QUALITY_OUT_DIR
+  ? path.resolve(process.env.HOME_CXO_STORY_QUALITY_OUT_DIR)
+  : path.join(repoRoot, "reports/home-cxo-story-quality");
 const screenshotsDir = path.join(outDir, "screenshots");
 const homeSurfacePath = path.join(repoRoot, "src/components/home/HomeSurface.tsx");
 const homeDesignContractPath = path.join(
@@ -24,14 +29,32 @@ const homeDesignContractPath = path.join(
   "src/components/home/HomeKnowledgeDesignContractSurface.tsx",
 );
 const failures: string[] = [];
+const vacuous: { criterion: string; subject: string }[] = [];
 const storyScoreRows: ScoreRow[] = [];
 const visualScoreRows: ScoreRow[] = [];
+
+const HOME_SURFACE_SUBJECT = "src/components/home/HomeSurface.tsx";
+const DESIGN_CONTRACT_SUBJECT =
+  "src/components/home/HomeKnowledgeDesignContractSurface.tsx";
+const NARRATIVE_STORE_SUBJECT =
+  "src/lib/enterprise-knowledge/narratives/knowledge-narrative-store.ts";
+
+/**
+ * A criterion whose subject file is absent has nothing to assert about. Scoring it
+ * from whatever text happened to be concatenated in its place, or from the empty
+ * string a negated regex always satisfies, reports a pass for a file that is gone.
+ * Such a criterion is VACUOUS: score 0, an explicit reason, and a failed run.
+ */
+function subjectIsLive(subject: string) {
+  return existsSync(path.join(repoRoot, subject));
+}
 
 mkdirSync(outDir, { recursive: true });
 mkdirSync(screenshotsDir, { recursive: true });
 
 function addScore(row: ScoreRow, failureWhenZero = true) {
   storyScoreRows.push(row);
+  if (row.status === "VACUOUS") vacuous.push({ criterion: row.criterion, subject: row.subject });
   if (failureWhenZero && row.score === 0) {
     failures.push(`${row.area}: ${row.criterion}`);
   }
@@ -39,6 +62,7 @@ function addScore(row: ScoreRow, failureWhenZero = true) {
 
 function addVisual(row: ScoreRow, failureWhenZero = true) {
   visualScoreRows.push(row);
+  if (row.status === "VACUOUS") vacuous.push({ criterion: row.criterion, subject: row.subject });
   if (failureWhenZero && row.score === 0) {
     failures.push(`visual ${row.area}: ${row.criterion}`);
   }
@@ -79,13 +103,41 @@ function visibleStoryTextForPositiveClaimCheck() {
   );
 }
 
+function resolve(
+  area: string,
+  criterion: string,
+  passed: boolean,
+  evidence: string,
+  subject: string,
+): ScoreRow {
+  if (!subjectIsLive(subject)) {
+    return {
+      area,
+      criterion,
+      score: 0,
+      subject,
+      status: "VACUOUS",
+      evidence: `NOT PROVEN: no live subject — ${subject} does not exist`,
+    };
+  }
+  return {
+    area,
+    criterion,
+    score: passed ? 1 : 0,
+    subject,
+    status: passed ? "pass" : "fail",
+    evidence,
+  };
+}
+
 function scoreCriterion(
   area: string,
   criterion: string,
   passed: boolean,
   evidence: string,
+  subject: string = NARRATIVE_STORE_SUBJECT,
 ) {
-  addScore({ area, criterion, score: passed ? 1 : 0, evidence });
+  addScore(resolve(area, criterion, passed, evidence, subject));
 }
 
 function visualCriterion(
@@ -93,15 +145,21 @@ function visualCriterion(
   criterion: string,
   passed: boolean,
   evidence: string,
+  subject: string = HOME_SURFACE_SUBJECT,
 ) {
-  addVisual({ area, criterion, score: passed ? 1 : 0, evidence });
+  addVisual(resolve(area, criterion, passed, evidence, subject));
 }
 
 const homeSource = existsSync(homeSurfacePath) ? readFileSync(homeSurfacePath, "utf8") : "";
 const homeDesignContractSource = existsSync(homeDesignContractPath)
   ? readFileSync(homeDesignContractPath, "utf8")
   : "";
-const renderedHomeSource = `${homeSource}\n${homeDesignContractSource}`;
+/**
+ * Previously `${homeSource}\n${homeDesignContractSource}`. Concatenating the two is
+ * what let criteria labelled "Home Knowledge design contract includes X" be
+ * satisfied by HomeSurface.tsx after the design-contract surface was deleted. Each
+ * criterion now scores against the single file it names.
+ */
 const storyText = visibleStoryText();
 const lowerStoryText = storyText.toLowerCase();
 const positiveClaimText = visibleStoryTextForPositiveClaimCheck();
@@ -226,8 +284,9 @@ for (const [label, pattern] of [
   visualCriterion(
     label,
     `Home Knowledge design contract includes ${label}`,
-    pattern.test(renderedHomeSource),
+    pattern.test(homeDesignContractSource),
     label,
+    DESIGN_CONTRACT_SUBJECT,
   );
 }
 
@@ -236,6 +295,7 @@ visualCriterion(
   "Design contract keeps debug/proof internals out of the primary CXO view",
   !/\bhx3-tech\b|\btechnical diagnostics\b|\bdebug\b/i.test(homeDesignContractSource),
   "Debug vocabulary is absent from the design-contract surface.",
+  DESIGN_CONTRACT_SUBJECT,
 );
 
 visualCriterion(
@@ -268,6 +328,12 @@ if (visualScore < requiredVisualScore) {
   failures.push(`visual score ${visualScore}/${requiredVisualScore}`);
 }
 
+if (vacuous.length) {
+  failures.push(
+    `${vacuous.length} criteria have no live subject: ${[...new Set(vacuous.map((entry) => entry.subject))].join(", ")}`,
+  );
+}
+
 const status = failures.length ? "failed" : "passed";
 
 function csv(rows: string[][]) {
@@ -287,10 +353,12 @@ function escapeHtml(value: string) {
 writeFileSync(
   path.join(outDir, "cxo-story-score.csv"),
   csv([
-    ["area", "criterion", "score", "evidence"],
+    ["area", "criterion", "subject", "status", "score", "evidence"],
     ...storyScoreRows.map((row) => [
       row.area,
       row.criterion,
+      row.subject,
+      row.status,
       String(row.score),
       row.evidence,
     ]),
@@ -300,10 +368,12 @@ writeFileSync(
 writeFileSync(
   path.join(outDir, "visual-quality-score.csv"),
   csv([
-    ["visual", "criterion", "score", "evidence"],
+    ["visual", "criterion", "subject", "status", "score", "evidence"],
     ...visualScoreRows.map((row) => [
       row.area,
       row.criterion,
+      row.subject,
+      row.status,
       String(row.score),
       row.evidence,
     ]),
@@ -337,6 +407,7 @@ writeFileSync(
       requiredStoryScore,
       visualScore,
       requiredVisualScore,
+      vacuous,
       generatedBy: MERIDIAN_KNOWLEDGE_HOME_INSIGHTS.generated_by,
       model: MERIDIAN_KNOWLEDGE_HOME_INSIGHTS.generated_model,
       sourceContextHash: MERIDIAN_KNOWLEDGE_HOME_INSIGHTS.source_context_hash,
@@ -363,6 +434,7 @@ Status: ${status}
 
 - Story score: ${storyScore}/${requiredStoryScore}
 - Visual score: ${visualScore}/${requiredVisualScore}
+- Criteria with no live subject: ${vacuous.length}${vacuous.length ? `\n${vacuous.map((entry) => `  - VACUOUS: ${entry.criterion} (${entry.subject})`).join("\n")}` : ""}
 - Claude-derived: ${MERIDIAN_KNOWLEDGE_HOME_INSIGHTS.generated_by === "claude" ? "yes" : "no"}
 - Model: ${MERIDIAN_KNOWLEDGE_HOME_INSIGHTS.generated_model}
 - Rendered text review: reports/home-knowledge-story-quality/rendered-review-table.html
@@ -403,6 +475,9 @@ body{font-family:Inter,Arial,sans-serif;background:#f7f9fc;color:#0b1736;margin:
 if (status !== "passed") {
   console.error("Home CXO story quality audit failed:");
   for (const failure of failures) console.error(`- ${failure}`);
+  for (const entry of vacuous) {
+    console.error(`- VACUOUS  ${entry.criterion}: no live subject — ${entry.subject}`);
+  }
   process.exit(1);
 }
 
