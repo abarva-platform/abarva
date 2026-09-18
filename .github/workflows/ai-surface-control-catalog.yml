@@ -39,3 +39,6 @@ jobs:
 
       - name: Exercise visible agent stream controls
         run: npx jest src/app/api/chat/agent/__tests__/agent-visible-stream-controls.test.ts --runInBand
+
+      - name: Exercise agent phase-advance approval gate
+        run: npx jest src/lib/agent/tools/program/__tests__/advancePhase.approval-gate.test.ts --runInBand
