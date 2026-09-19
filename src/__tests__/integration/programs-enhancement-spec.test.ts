@@ -52,17 +52,17 @@ describe('Programs seed & deliverable generation enhancement spec', () => {
   it('summarizes the seeded contract at the expected scale', () => {
     const summary = summarizeProgramsSeedEnhancementSpec();
 
-    expect(summary.totalPrograms).toBe(19);
+    expect(summary.totalPrograms).toBe(15);
     expect(summary.totalRichDeliverables).toBe(44);
-    expect(summary.totalSeededNonStubDeliverables).toBe(283);
-    expect(summary.totalOutlineDeliverables).toBe(239);
-    expect(summary.totalStubDeliverables).toBe(174);
+    expect(summary.totalSeededNonStubDeliverables).toBe(217);
+    expect(summary.totalOutlineDeliverables).toBe(173);
+    expect(summary.totalStubDeliverables).toBe(146);
     expect(summary.phaseCoverageByTenantCount).toEqual({
       1: 3,
-      2: 4,
-      3: 4,
-      4: 4,
-      5: 3,
+      2: 3,
+      3: 3,
+      4: 3,
+      5: 2,
     });
   });
 

@@ -21,8 +21,8 @@ const triage = JSON.parse(
 
 describe("Programs governance integration CI", () => {
   it("runs every selected governed suite through the dedicated PR workflow", () => {
-    expect(triage.selectedGate.suiteCount).toBe(20);
-    expect(triage.selectedGate.testCount).toBe(383);
+    expect(triage.selectedGate.suiteCount).toBe(21);
+    expect(triage.selectedGate.testCount).toBe(388);
     for (const suite of triage.selectedGate.suites) {
       expect(workflow).toContain(suite);
     }
@@ -34,7 +34,7 @@ describe("Programs governance integration CI", () => {
     expect(workflow).not.toMatch(
       /npx jest\s+src\/__tests__\/integration\/programs(?:\s|$)/,
     );
-    expect(triage.excludedFailures).toHaveLength(6);
+    expect(triage.excludedFailures).toHaveLength(5);
     expect(
       triage.excludedFailures.every((entry) => entry.classification.length > 0),
     ).toBe(true);
