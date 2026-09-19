@@ -1,10 +1,52 @@
 import fs from "node:fs";
 import path from "node:path";
+import ts from "typescript";
 
 const repoRoot = process.cwd();
 
 function read(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
+}
+
+function callNamesInFunction(source: string, functionName: string): string[] {
+  const sourceFile = ts.createSourceFile(
+    "route.ts",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  let target: ts.FunctionDeclaration | undefined;
+
+  sourceFile.forEachChild((node) => {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === functionName) {
+      target = node;
+    }
+  });
+
+  if (!target) return [];
+
+  const calls: string[] = [];
+  const visit = (node: ts.Node) => {
+    if (ts.isCallExpression(node)) {
+      if (ts.isIdentifier(node.expression)) {
+        calls.push(node.expression.text);
+      } else if (ts.isPropertyAccessExpression(node.expression)) {
+        calls.push(node.expression.name.text);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(target);
+  return calls;
+}
+
+function expectCallsInOrder(calls: string[], expected: string[]): void {
+  let cursor = -1;
+  for (const call of expected) {
+    cursor = calls.indexOf(call, cursor + 1);
+    expect(cursor).toBeGreaterThan(-1);
+  }
 }
 
 describe("Source access-control wiring", () => {
@@ -112,31 +154,39 @@ describe("Source access-control wiring", () => {
     expect(route).not.toContain("messages.create");
   });
 
-  it("re-applies deterministic D09 completion after quality-gate rewrite before second review", () => {
+  it("orders deterministic rewrite controls before review, claim gating, and persistence", () => {
     const route = read(
       "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts",
     );
-    const rewriteIndex = route.indexOf(
-      'let rewrittenBody = rewriteParts.join("").trim();',
+    const qualityCalls = callNamesInFunction(
+      route,
+      "runConsultingGradeQualityGate",
     );
-    const completionIndex = route.indexOf(
-      "rewrittenBody = completeD09RfpGovernanceSections",
-      rewriteIndex,
+    const secondReviewIndex = qualityCalls.lastIndexOf(
+      "runConsultingGradeReview",
     );
-    const secondReviewIndex = route.indexOf(
-      "const secondReview = await runConsultingGradeReview",
-      rewriteIndex,
+    const completionIndex = qualityCalls.lastIndexOf(
+      "completeD09RfpGovernanceSections",
+    );
+    const sanitizationIndex = qualityCalls.lastIndexOf(
+      "sanitizeClientFacingSourceDraft",
+    );
+    const claimGateIndex = qualityCalls.lastIndexOf(
+      "applyDeterministicSourceClaimGate",
     );
 
-    expect(rewriteIndex).toBeGreaterThan(-1);
-    expect(completionIndex).toBeGreaterThan(rewriteIndex);
-    expect(secondReviewIndex).toBeGreaterThan(completionIndex);
     expect(
-      route.indexOf(
-        "sanitizeClientFacingSourceDraft(rewrittenBody",
-        completionIndex,
-      ),
-    ).toBeGreaterThan(completionIndex);
+      qualityCalls.filter((call) => call === "runConsultingGradeReview"),
+    ).toHaveLength(2);
+    expect(completionIndex).toBeGreaterThan(-1);
+    expect(sanitizationIndex).toBeGreaterThan(completionIndex);
+    expect(secondReviewIndex).toBeGreaterThan(sanitizationIndex);
+    expect(claimGateIndex).toBeGreaterThan(secondReviewIndex);
+
+    expectCallsInOrder(
+      callNamesInFunction(route, "generateSourceArtifactDraft"),
+      ["runConsultingGradeQualityGate", "updateArtifactBody"],
+    );
   });
 
   it("keeps persisted Source artifacts registry-backed and archives old detail route", () => {
