@@ -815,6 +815,10 @@ export function SourceAnalyticsCanvas({
             alignItems="stretch"
             paneStyle={{ padding: "28px 28px 150px" }}
           >
+            {/* Above the workspace, not inside StageHeader: the header renders
+                only on the "steps" pane, and off-stage work happens just as
+                readily on files, approvals and intelligence. */}
+            <OffStageNotice view={shellView} />
             {contractOptimizationProfile ? (
               <div style={{ marginBottom: 28 }}>
                 <ContractOptimizationProfilePanel
@@ -1318,6 +1322,82 @@ function sourceArtifactStatusFromString(value: string): SourceArtifactStatus {
   return SOURCE_ARTIFACT_STATUSES.includes(value as SourceArtifactStatus)
     ? (value as SourceArtifactStatus)
     : "draft";
+}
+
+/**
+ * A reader can open any stage of an event by URL (`?stage=`), including one the
+ * event has not reached and one it has already left. Nothing saved there moves
+ * the event, so the canvas has to say so — an unlabelled future stage reads
+ * exactly like the live one.
+ *
+ * Direction comes from the journey's own order rather than the canonical stage
+ * order, so an event on a motion that hides stages is described in the order
+ * its reader sees. When either stage is outside that journey the notice still
+ * renders and simply drops the direction, rather than guessing one.
+ */
+function OffStageNotice({ view }: { view: SourceEventShellView }) {
+  const viewedStageKey = view.event.viewedStageKey;
+  const currentStageKey = view.event.currentStageKey;
+  if (viewedStageKey === currentStageKey) return null;
+
+  const viewedEntry = view.journey.find((stage) => stage.key === viewedStageKey);
+  const currentEntry = view.journey.find(
+    (stage) => stage.key === currentStageKey,
+  );
+  const viewedLabel =
+    view.stage.label || SOURCE_STAGE_LABELS[viewedStageKey] || viewedStageKey;
+  const currentLabel =
+    currentEntry?.label ||
+    SOURCE_STAGE_LABELS[currentStageKey] ||
+    currentStageKey;
+  const ahead =
+    viewedEntry && currentEntry ? viewedEntry.index > currentEntry.index : null;
+
+  const eyebrow =
+    ahead === null
+      ? "Off-stage"
+      : ahead
+        ? "Off-stage · not reached"
+        : "Off-stage · already passed";
+  const body =
+    ahead === null
+      ? `This event is in ${currentLabel}, not ${viewedLabel}. Nothing saved here advances it.`
+      : ahead
+        ? `Previewing ${viewedLabel}. This event is in ${currentLabel} and has not reached ${viewedLabel} — nothing saved here advances it. Clear the ${currentLabel} gate first.`
+        : `Reviewing ${viewedLabel}. This event has moved on to ${currentLabel} — nothing saved here advances it.`;
+
+  return (
+    <div
+      data-testid="source-canvas-off-stage-notice"
+      data-off-stage-direction={
+        ahead === null ? "unknown" : ahead ? "ahead" : "behind"
+      }
+      role="status"
+      style={{
+        maxWidth: 1040,
+        marginBottom: 18,
+        padding: "10px 14px",
+        background: ANALYTICS.AMBER_TINT,
+        border: `1px solid ${ANALYTICS.AMBER}`,
+        borderRadius: 8,
+        color: ANALYTICS.AMBER_TEXT,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          marginBottom: 6,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <div style={{ fontSize: 13, lineHeight: 1.5 }}>{body}</div>
+    </div>
+  );
 }
 
 function StageHeader({ view }: { view: SourceEventShellView }) {
