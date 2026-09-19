@@ -117,6 +117,62 @@ describe("SourceNewWorkspace", () => {
     ).toBe("/source/events/event-1");
   });
 
+  it("shows completed events as terminal without a pending next action", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "value", lifecycle: "completed" }}
+        files={[]}
+      />,
+    );
+
+    const phases = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    expect(phases).toHaveLength(4);
+    expect(screen.getAllByText("Completed").length).toBeGreaterThan(0);
+    expect(
+      screen.getByText("This event is completed. Final stage: Value."),
+    ).toBeTruthy();
+
+    expect(
+      screen.queryByRole("complementary", { name: "Next action" }),
+    ).toBeNull();
+    const status = screen.getByRole("complementary", { name: "Event status" });
+    expect(within(status).getByText("Event completed")).toBeTruthy();
+    expect(
+      within(status).getByText(
+        "The governed event is complete. No next action is pending in Source New.",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(status).queryByRole("link", {
+        name: /Open event|Open current stage/i,
+      }),
+    ).toBeNull();
+  });
+
+  it("keeps active events on their governed current-stage action", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[]}
+      />,
+    );
+
+    const action = screen.getByRole("complementary", { name: "Next action" });
+    expect(
+      within(action).getByRole("heading", { name: "Open market package" }),
+    ).toBeTruthy();
+    expect(
+      within(action)
+        .getByRole("link", { name: "Open market package" })
+        .getAttribute("href"),
+    ).toBe("/source/events/event-1");
+    expect(
+      screen.queryByRole("complementary", { name: "Event status" }),
+    ).toBeNull();
+  });
+
   it("does not label a competitive RFP event or its file folder as RFI", () => {
     render(
       <SourceNewWorkspace
@@ -279,7 +335,8 @@ describe("SourceNewWorkspace", () => {
         id: "AMS_MANAGED_SERVICES",
         name: "IT Outsourcing / AMS / Managed Services",
         source: "classifier_category",
-        reason: "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
+        reason:
+          "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
       },
       currentStage: "rfp",
       requiredEvidence: [
@@ -334,33 +391,47 @@ describe("SourceNewWorkspace", () => {
       ],
       allowedStatement:
         "Source can use Tower scope matrix for this IT Outsourcing / AMS / Managed Services event. It will not make claims that depend on the missing SLA baseline.",
-      gaps: ["SLA baseline is required for this stage and is not ready to use."],
+      gaps: [
+        "SLA baseline is required for this stage and is not ready to use.",
+      ],
       refusals: [
         "Unpromoted SLA schedule: review its source, confidence, citations, and retrieval status before Source can use it.",
       ],
       nextQuestion: "Can you provide Current SLA schedule (PDF/XLSX)?",
       nextAction: {
         label: "Resolve evidence gap",
-        detail: "Add or review SLA baseline before relying on this intelligence.",
+        detail:
+          "Add or review SLA baseline before relying on this intelligence.",
       },
     };
 
     render(
       <SourceNewWorkspace
-        event={{ ...request, category: "ams", lifecycle: "active", currentStage: "rfp" }}
+        event={{
+          ...request,
+          category: "ams",
+          lifecycle: "active",
+          currentStage: "rfp",
+        }}
         files={[]}
         intelligence={intelligence}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
 
-    expect(screen.getByRole("region", { name: "Event intelligence workspace" })).toBeTruthy();
-    expect(screen.getAllByText("Service tower scope").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("region", { name: "Event intelligence workspace" }),
+    ).toBeTruthy();
+    expect(screen.getAllByText("Service tower scope").length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getAllByText("SLA baseline").length).toBeGreaterThan(0);
     expect(screen.getByText("Tower scope matrix")).toBeTruthy();
     expect(screen.getByText(/Source can use Tower scope matrix/)).toBeTruthy();
     expect(screen.getByText(/Unpromoted SLA schedule/)).toBeTruthy();
-    expect(screen.getByText(/These are requirements for a fair comparison/)).toBeTruthy();
+    expect(
+      screen.getByText(/These are requirements for a fair comparison/),
+    ).toBeTruthy();
     expect(
       screen.getByRole("heading", {
         name: "Can you provide Current SLA schedule (PDF/XLSX)?",
