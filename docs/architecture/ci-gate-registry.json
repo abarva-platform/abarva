@@ -1,5 +1,5 @@
 {
-  "note": "Every audit:/validate:/check: npm script, and whether it gates a PR. Generated skeleton by scripts/audit/ci-gate-registry-check.mjs --update; the kind and reason on each entry are human judgment, not derived. A gate that nobody runs looks exactly like a tool nobody needs to run, and this file is where that difference is written down. pr-gate must be invoked by a workflow. quarantined is a pr-gate failing on main today, recorded rather than wired. unclassified is the backlog: allowed for what was here when this file was created, refused for anything added after.",
+  "note": "Every audit:/validate:/check: npm script, and whether it gates a PR. Generated skeleton by scripts/audit/ci-gate-registry-check.mjs --update; the kind and reason on each entry are human judgment, not derived. A gate that nobody runs looks exactly like a tool nobody needs to run, and this file is where that difference is written down. pr-gate must be invoked by a workflow. quarantined is a pr-gate failing on main today, recorded rather than wired. unclassified is the backlog: allowed for what was here when this file was created, refused for anything added after. Entries are sorted by key, and audit:ci-gate-registry-order enforces it: the file is appended to by nearly every change that adds a check, so a stable order keeps concurrent appends landing in their own place instead of producing phantom diffs when a tool re-serialises it.",
   "entries": {
     "audit:active-candidate-separation": {
       "kind": "unclassified"
@@ -113,6 +113,10 @@
     "audit:ci-gate-registry": {
       "kind": "pr-gate"
     },
+    "audit:ci-gate-registry-order": {
+      "kind": "pr-gate",
+      "reason": "Keeps docs/architecture/ci-gate-registry.json sorted by key. The file is appended to by nearly every change that adds a check, so it is a rebase hotspot; it was one key out of 217 away from sorted, and that single misplacement was enough for a re-serialising tool to produce a diff moving unrelated entries, which was mistaken for a real change and reverted by hand. Sorted order is checkable where an insertion-order convention is not. Invoked by architecture-boundary.yml beside the registry check itself."
+    },
     "audit:client-pilot-runtime-profile": {
       "kind": "unclassified"
     },
@@ -122,7 +126,7 @@
     },
     "audit:control-plane-purity:baseline": {
       "kind": "operator",
-      "reason": "A baseline writer. Running it rewrites scripts/audit/control-plane-tenant-purity.baseline.json, which is the standard its sibling audit:control-plane-purity:check measures against — so running it after adding debt makes that gate pass by moving the goalposts rather than by fixing anything. Never a PR gate and never invoked by a workflow; run it deliberately when paying debt down, and commit the reduced baseline as the evidence."
+      "reason": "A baseline writer. Running it rewrites scripts/audit/control-plane-tenant-purity.baseline.json, which is the standard its sibling audit:control-plane-purity:check measures against \u2014 so running it after adding debt makes that gate pass by moving the goalposts rather than by fixing anything. Never a PR gate and never invoked by a workflow; run it deliberately when paying debt down, and commit the reduced baseline as the evidence."
     },
     "audit:control-plane-purity:check": {
       "kind": "pr-gate"
@@ -445,14 +449,6 @@
     "audit:qa-inventory-claims": {
       "kind": "pr-gate"
     },
-    "audit:test-ci-coverage": {
-      "kind": "report",
-      "reason": "Census mode, and a census by design. scripts/quality/test-ci-coverage-census.mjs counts which Jest suites under src/ a workflow reaches; it has no failure path and always exits 0. It is not a pr-gate because what to do about the number — widen a jest scope, wire per directory, or accept the gap — is an open scope-policy decision, and a gate that encodes an undecided policy is worse than a measurement that informs it. The behaviour of the census is enforced by src/__tests__/behaviors/test-ci-coverage-census.test.ts, which does run on every PR."
-    },
-    "audit:test-ci-coverage:write": {
-      "kind": "operator",
-      "reason": "Refreshes the committed census at docs/architecture/test-ci-coverage-census.json. Write-if-changed, so re-running on an unchanged tree leaves the file alone, but it is a write and so belongs to whoever is re-measuring rather than to a PR check."
-    },
     "audit:render-snapshot": {
       "kind": "unclassified"
     },
@@ -537,6 +533,14 @@
     },
     "audit:tenant-v3-data": {
       "kind": "unclassified"
+    },
+    "audit:test-ci-coverage": {
+      "kind": "report",
+      "reason": "Census mode, and a census by design. scripts/quality/test-ci-coverage-census.mjs counts which Jest suites under src/ a workflow reaches; it has no failure path and always exits 0. It is not a pr-gate because what to do about the number \u2014 widen a jest scope, wire per directory, or accept the gap \u2014 is an open scope-policy decision, and a gate that encodes an undecided policy is worse than a measurement that informs it. The behaviour of the census is enforced by src/__tests__/behaviors/test-ci-coverage-census.test.ts, which does run on every PR."
+    },
+    "audit:test-ci-coverage:write": {
+      "kind": "operator",
+      "reason": "Refreshes the committed census at docs/architecture/test-ci-coverage-census.json. Write-if-changed, so re-running on an unchanged tree leaves the file alone, but it is a write and so belongs to whoever is re-measuring rather than to a PR check."
     },
     "audit:tower-active-budget-envelopes": {
       "kind": "unclassified"
