@@ -141,12 +141,12 @@ describe('patternNeighborhoodTool', () => {
     mockedGetActiveClientRow.mockResolvedValue(APEX_CLIENT);
     const { ctx, buffer } = makeCtx();
     const result = await patternNeighborhoodTool.handler(
-      { patternId: 'pattern_ai_use_case_portfolio' },
+      { patternId: 'PAT-AI-004' },
       ctx,
     );
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.root_id).toBe('pattern_ai_use_case_portfolio');
+      expect(result.data.root_id).toBe('PAT-AI-004');
       expect(result.data.tenant_key).toBe('apex-retail');
       expect(typeof result.data.neighbor_count).toBe('number');
       expect((result.data.neighbor_count as number)).toBeGreaterThan(0);
@@ -166,7 +166,7 @@ describe('patternNeighborhoodTool', () => {
     // a graph-neighborhood. The "no neighbors" branch is handled in
     // the source by guarding the writer call with `neighbors.length > 0`.
     await patternNeighborhoodTool.handler(
-      { patternId: 'pattern_ai_use_case_portfolio' },
+      { patternId: 'PAT-AI-004' },
       ctx,
     );
     // Sanity: at least one graph-neighborhood emission happened above.
@@ -177,11 +177,11 @@ describe('patternNeighborhoodTool', () => {
     mockedGetActiveClientRow.mockResolvedValue(APEX_CLIENT);
     const { ctx } = makeCtx();
     const depth1 = await patternNeighborhoodTool.handler(
-      { patternId: 'pattern_ai_use_case_portfolio', depth: 1 },
+      { patternId: 'PAT-AI-004', depth: 1 },
       ctx,
     );
     const depth2 = await patternNeighborhoodTool.handler(
-      { patternId: 'pattern_ai_use_case_portfolio', depth: 2 },
+      { patternId: 'PAT-AI-004', depth: 2 },
       ctx,
     );
     if (depth1.success && depth2.success) {

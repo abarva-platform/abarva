@@ -181,12 +181,17 @@ export function scorePatternsByKeyword(
 
   return patterns
     .map((pattern) => {
-      const haystack = patternHaystack(pattern);
+      const haystackTokens = new Set(tokenize(patternHaystack(pattern)));
+      const signatureTokens = new Set(
+        tokenize([pattern.id, pattern.slug, pattern.name].join(' ')),
+      );
       let hits = 0;
+      let signatureHits = 0;
       for (const tok of tokens) {
-        if (haystack.includes(tok)) hits += 1;
+        if (haystackTokens.has(tok)) hits += 1;
+        if (signatureTokens.has(tok)) signatureHits += 1;
       }
-      return { pattern, score: hits };
+      return { pattern, score: hits + signatureHits * 2 };
     })
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score);

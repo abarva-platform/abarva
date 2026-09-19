@@ -173,3 +173,9 @@ jobs:
       # them too. See backlog items 26 / 92.
       - name: Exercise agent program-tool control suites
         run: npx jest src/lib/agent/tools/__tests__ --runInBand
+
+      # These five suites exercise the tenant-scoped Intelligence agent tools,
+      # including pattern search, graph-neighborhood artifacts, evidence lookup,
+      # and synthesis validation. The directory previously ran in no CI job.
+      - name: Exercise Intelligence agent-tool suites
+        run: npx jest src/lib/agent/tools/intelligence/__tests__ --runInBand

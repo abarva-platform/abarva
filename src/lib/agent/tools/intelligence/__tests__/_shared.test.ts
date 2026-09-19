@@ -85,6 +85,24 @@ describe('scorePatternsByKeyword', () => {
     expect(out.find((entry) => entry.pattern.id === 'p3')).toBeUndefined();
   });
 
+  it('prefers signature-field matches over the same words appearing only in prose', () => {
+    const patterns: PatternManifestEntry[] = [
+      fakePattern({
+        id: 'body-match',
+        name: 'Analytics Modernization',
+        shortDescription: 'AI use case portfolio',
+      }),
+      fakePattern({
+        id: 'signature-match',
+        name: 'AI Use Case Portfolio',
+        shortDescription: 'Governed prioritization',
+      }),
+    ];
+
+    const ranked = scorePatternsByKeyword('AI use case portfolio', patterns);
+    expect(ranked[0].pattern.id).toBe('signature-match');
+  });
+
   it('returns empty when the query is all stopwords', () => {
     const patterns = [fakePattern({ id: 'p1' })];
     expect(scorePatternsByKeyword('show me the', patterns)).toEqual([]);
@@ -94,7 +112,7 @@ describe('scorePatternsByKeyword', () => {
     const patterns = getPatternManifestEntries();
     const ranked = scorePatternsByKeyword('AI use case portfolio', patterns);
     expect(ranked.length).toBeGreaterThan(0);
-    expect(ranked[0].pattern.id).toBe('pattern_ai_use_case_portfolio');
+    expect(ranked[0].pattern.id).toBe('PAT-AI-004');
   });
 });
 
