@@ -920,6 +920,7 @@
     "ops:purge-retired-tenant-rows:apply": "node scripts/ops/purge-retired-tenant-rows.mjs --apply",
     "audit:route-reachability": "node scripts/audit/route-reachability-check.mjs",
     "audit:ci-gate-registry": "node scripts/audit/ci-gate-registry-check.mjs",
+    "audit:qa-inventory-claims": "node scripts/audit/qa-inventory-claims-check.mjs",
     "packet:generate": "node scripts/data/contract-packet/generate-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --out .artifacts/contract-packets/staging-fixture",
     "packet:reconcile": "node scripts/data/contract-packet/reconcile-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets/staging-fixture",
     "packet:benchmark": "node scripts/data/contract-packet/benchmark-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets/staging-fixture",

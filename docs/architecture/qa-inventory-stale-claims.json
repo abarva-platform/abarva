@@ -1,0 +1,102 @@
+{
+  "note": "QA inventories that name a component no route can reach. Each entry is a check a person cannot perform, in a file that reads like an authority. This is a burn-down list, not a permission slip: resolve an entry by correcting the inventory to the component the route actually renders, or by mounting or retiring the component. The gate fails on a NEW claim; it does not fail on these.",
+  "generatedBy": "scripts/audit/qa-inventory-claims-check.mjs --update",
+  "claims": [
+    {
+      "file": "src/lib/qa/active-route-shell-verification.ts",
+      "component": "src/components/abarva/AbarVaAppShell.tsx"
+    },
+    {
+      "file": "src/lib/qa/active-route-shell-verification.ts",
+      "component": "src/components/admin/AdminRouteShell.tsx"
+    },
+    {
+      "file": "src/lib/qa/active-route-shell-verification.ts",
+      "component": "src/components/programs/ProgramFlagshipPage.tsx"
+    },
+    {
+      "file": "src/lib/qa/active-route-shell-verification.ts",
+      "component": "src/components/programs/ProgramRouteShell.tsx"
+    },
+    {
+      "file": "src/lib/qa/active-route-shell-verification.ts",
+      "component": "src/components/source/SourceCommercialEventSection.tsx"
+    },
+    {
+      "file": "src/lib/qa/active-route-shell-verification.ts",
+      "component": "src/components/tower/TowerRouteShell.tsx"
+    },
+    {
+      "file": "src/lib/qa/founder-demo-route-checklist.ts",
+      "component": "src/components/admin/ProductionReadinessLivePanel.tsx"
+    },
+    {
+      "file": "src/lib/qa/founder-demo-route-checklist.ts",
+      "component": "src/components/admin/StewardSetupControlCenter.tsx"
+    },
+    {
+      "file": "src/lib/qa/founder-demo-route-checklist.ts",
+      "component": "src/components/home/AgenticHomeEntry.tsx"
+    },
+    {
+      "file": "src/lib/qa/founder-demo-route-checklist.ts",
+      "component": "src/components/programs/ProgramCanonicalDetail.tsx"
+    },
+    {
+      "file": "src/lib/qa/founder-demo-route-checklist.ts",
+      "component": "src/components/tower/ProgramPressureCards.tsx"
+    },
+    {
+      "file": "src/lib/qa/intelligence-tower-blueprint-verification.ts",
+      "component": "src/components/tower/TowerRouteShell.tsx"
+    },
+    {
+      "file": "src/lib/qa/legacy-shell-nav-audit.ts",
+      "component": "src/components/admin/StewardAdminRail.tsx"
+    },
+    {
+      "file": "src/lib/qa/legacy-shell-nav-audit.ts",
+      "component": "src/components/home/AgenticHomeEntry.tsx"
+    },
+    {
+      "file": "src/lib/qa/logo-usage-enforcement.ts",
+      "component": "src/components/abarva/AbarVaAppShell.tsx"
+    },
+    {
+      "file": "src/lib/qa/program-flagship-verification.ts",
+      "component": "src/components/programs/NexusWorkshopCanvas.tsx"
+    },
+    {
+      "file": "src/lib/qa/program-flagship-verification.ts",
+      "component": "src/components/programs/PhaseGateCanvas.tsx"
+    },
+    {
+      "file": "src/lib/qa/program-flagship-verification.ts",
+      "component": "src/components/programs/ProgramActionMissionStrip.tsx"
+    },
+    {
+      "file": "src/lib/qa/program-flagship-verification.ts",
+      "component": "src/components/programs/ProgramDeliverablesEvidencePanel.tsx"
+    },
+    {
+      "file": "src/lib/qa/program-flagship-verification.ts",
+      "component": "src/components/programs/ProgramFlagshipPage.tsx"
+    },
+    {
+      "file": "src/lib/qa/route-smoke-inventory.ts",
+      "component": "src/components/admin/StewardSetupControlCenter.tsx"
+    },
+    {
+      "file": "src/lib/qa/route-smoke-inventory.ts",
+      "component": "src/components/home/AgenticHomeEntry.tsx"
+    },
+    {
+      "file": "src/lib/qa/route-smoke-inventory.ts",
+      "component": "src/components/programs/ProgramCanonicalDetail.tsx"
+    },
+    {
+      "file": "src/lib/qa/route-smoke-inventory.ts",
+      "component": "src/components/tower/ProgramPressureCards.tsx"
+    }
+  ]
+}
