@@ -130,7 +130,9 @@ describe("computeStageProgression", () => {
         criterion("GATE-STRATEGY-03", "met"),
       ],
       evidence: [
+        evidence("EVID-SRC-STR-TRIGGER", "Parsed"),
         evidence("EVID-SRC-STR-INCUMBENT", "Available"),
+        evidence("EVID-SRC-STR-SPEND-BASELINE", "Available"),
         evidence("EVID-SRC-STR-SPONSOR-COMMIT", "Loaded"),
       ],
       artifacts: [artifact("d01_strategy_memo", "needs_review", "draft body")],
@@ -138,8 +140,10 @@ describe("computeStageProgression", () => {
     });
 
     expect(view.allClear).toBe(false);
-    // no upload needs (evidence satisfied), no generate for d01 (drafted)
-    expect(view.needs.some((n) => n.kind === "upload")).toBe(false);
+    // no required upload needs (required evidence satisfied), no generate for d01 (drafted)
+    expect(
+      view.needs.some((n) => n.kind === "upload" && !n.optional),
+    ).toBe(false);
     expect(
       view.needs.some(
         (n) => n.kind === "generate" && n.artifactCode === "d01_strategy_memo",

@@ -35,6 +35,7 @@ describe("Source artifact upload/download binding matrix", () => {
     expect(rendererDocumentationGaps).toEqual([]);
     expect(SOURCE_ARTIFACT_RENDERABLE_FORMATS.get("d19_pricing_workbook")).toEqual([
       "docx",
+      "html",
       "pdf",
       "xlsx",
     ]);
@@ -47,8 +48,11 @@ describe("Source artifact upload/download binding matrix", () => {
 
     expect(vendorResponsePack).toBeDefined();
     expect(vendorResponsePack?.bindingStatus).toBe("partial");
-    expect(vendorResponsePack?.missingRendererForDeclaredDownloads).toEqual([
+    expect(vendorResponsePack?.missingRendererForDeclaredDownloads).toEqual([]);
+    expect(vendorResponsePack?.rendererBackedFormats).toEqual([
+      "docx",
       "html",
+      "pdf",
     ]);
     expect(vendorResponsePack?.nextGap).toContain("vendor picker");
   });
