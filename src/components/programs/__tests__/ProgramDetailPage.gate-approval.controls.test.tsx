@@ -25,12 +25,22 @@
  */
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: jest.fn(), push: jest.fn(), replace: jest.fn() }),
+  useRouter: () => ({
+    refresh: jest.fn(),
+    push: jest.fn(),
+    replace: jest.fn(),
+  }),
   usePathname: () => "/programs/APX-01",
   useSearchParams: () => new URLSearchParams(),
 }));
 
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ToastProvider } from "@/components/shell/Toast";
 import { buildProgramDetailView } from "@/lib/programs/programs-detail-view";
 import { MOVES_HUMAN_RATIONALE_MIN_CHARS } from "@/lib/programs/moves-ai-liability";
@@ -40,10 +50,9 @@ import {
 } from "@/lib/ai-liability/human-decision-controls";
 import { ProgramDetailPage } from "../ProgramDetailPage";
 
-// Hoisted, not an inline literal: `initialNexusArtifacts` is a useEffect
-// dependency, and a fresh array on every render re-fires that effect forever.
-// The route passes a value computed once per request on the server, so this
-// mirrors production identity rather than papering over a defect.
+// The route passes a value computed once per request on the server. Keep the
+// ordinary gate tests close to that production shape; a separate regression
+// case below proves the optional prop is also safe when omitted.
 const NO_ARTIFACTS: never[] = [];
 
 const RATIONALE =
@@ -90,9 +99,7 @@ function writeRationale(text: string) {
 }
 
 function acceptResponsibility() {
-  fireEvent.click(
-    screen.getByTestId("human-approval-responsibility-checkbox"),
-  );
+  fireEvent.click(screen.getByTestId("human-approval-responsibility-checkbox"));
 }
 
 describe("program gate approval · human decision control", () => {
@@ -108,7 +115,11 @@ describe("program gate approval · human decision control", () => {
       // The synthesis quote streams; hand it an empty, immediately-finished
       // reader so the page settles instead of taking its error branch.
       body: url.includes("/synthesis")
-        ? { getReader: () => ({ read: async () => ({ done: true, value: undefined }) }) }
+        ? {
+            getReader: () => ({
+              read: async () => ({ done: true, value: undefined }),
+            }),
+          }
         : null,
     })) as unknown as typeof fetch;
   });
@@ -205,7 +216,31 @@ describe("program gate approval · human decision control", () => {
 
     expect(unmet.length).toBeGreaterThan(0);
     for (const criterion of unmet) {
-      expect(screen.getAllByText(criterion.criterion).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(criterion.criterion).length).toBeGreaterThan(
+        0,
+      );
+    }
+  });
+
+  it("settles when the optional initial artifact list is omitted", async () => {
+    const consoleError = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    try {
+      const view = buildProgramDetailView("APX-01", VIEWING_PHASE);
+      render(
+        <ToastProvider>
+          <ProgramDetailPage view={view} />
+        </ToastProvider>,
+      );
+      await act(async () => {});
+
+      const errors = consoleError.mock.calls.flat().join(" ");
+      expect(errors).not.toContain("Maximum update depth exceeded");
+      expect(screen.getByTestId("program-agent-canvas")).toBeTruthy();
+    } finally {
+      consoleError.mockRestore();
     }
   });
 });
