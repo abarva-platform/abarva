@@ -8,6 +8,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import ts from 'typescript';
 import { buildWorkshopNotesActionPlanView } from '@/lib/programs/workshop-notes-action-plan-view';
 import type { ProgramDetailView } from '@/lib/programs/programs-types';
 
@@ -27,14 +28,60 @@ const LIB_PATH = join(
 const detailSrc = readFileSync(DETAIL_PATH, 'utf8');
 const panelSrc = readFileSync(PANEL_PATH, 'utf8');
 const libSrc = readFileSync(LIB_PATH, 'utf8');
+const detailAst = ts.createSourceFile(
+  DETAIL_PATH,
+  detailSrc,
+  ts.ScriptTarget.Latest,
+  true,
+  ts.ScriptKind.TSX,
+);
+
+function importedNamesFrom(modulePath: string): string[] {
+  const declaration = detailAst.statements.find(
+    (statement): statement is ts.ImportDeclaration =>
+      ts.isImportDeclaration(statement) &&
+      ts.isStringLiteral(statement.moduleSpecifier) &&
+      statement.moduleSpecifier.text === modulePath,
+  );
+  const bindings = declaration?.importClause?.namedBindings;
+  if (!bindings || !ts.isNamedImports(bindings)) return [];
+  return bindings.elements.map((element) => element.name.text);
+}
+
+function workshopPlanPanelPosition(): number {
+  let position = -1;
+  function visit(node: ts.Node): void {
+    if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(detailAst) === 'WorkshopNotesActionPlanPanel') {
+      const viewAttribute = node.attributes.properties.find(
+        (property): property is ts.JsxAttribute =>
+          ts.isJsxAttribute(property) && property.name.getText(detailAst) === 'view',
+      );
+      const initializer = viewAttribute?.initializer;
+      if (
+        initializer &&
+        ts.isJsxExpression(initializer) &&
+        initializer.expression?.getText(detailAst) === 'workshopNotesPlanView'
+      ) {
+        position = node.getStart(detailAst);
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(detailAst);
+  return position;
+}
 
 describe('PROG25 · ProgramDetailPage wiring', () => {
   it('imports buildWorkshopNotesActionPlanView', () => {
-    expect(detailSrc).toContain("from '@/lib/programs/workshop-notes-action-plan-view'");
+    expect(
+      importedNamesFrom('@/lib/programs/workshop-notes-action-plan-view'),
+    ).toContain('buildWorkshopNotesActionPlanView');
   });
 
   it('imports WorkshopNotesActionPlanPanel', () => {
-    expect(detailSrc).toContain("from '@/components/programs/WorkshopNotesActionPlanPanel'");
+    expect(
+      importedNamesFrom('@/components/programs/WorkshopNotesActionPlanPanel'),
+    ).toContain('WorkshopNotesActionPlanPanel');
   });
 
   it('derives workshopNotesPlanView from view', () => {
@@ -42,9 +89,8 @@ describe('PROG25 · ProgramDetailPage wiring', () => {
   });
 
   it('renders WorkshopNotesActionPlanPanel in workshop section', () => {
-    expect(detailSrc).toContain('<WorkshopNotesActionPlanPanel view={workshopNotesPlanView} />');
     const workshopSection = detailSrc.indexOf('data-testid="program-section-workshop"');
-    const planPanel = detailSrc.indexOf('WorkshopNotesActionPlanPanel view={workshopNotesPlanView}');
+    const planPanel = workshopPlanPanelPosition();
     expect(workshopSection).toBeGreaterThan(0);
     expect(planPanel).toBeGreaterThan(workshopSection);
   });

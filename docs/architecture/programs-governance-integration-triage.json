@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 15,
-    "testCount": 305,
+    "suiteCount": 16,
+    "testCount": 322,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -34,7 +34,8 @@
       "src/__tests__/integration/programs/programs-auth-mode-and-tenant-guards.test.ts",
       "src/__tests__/integration/programs/programs-mutation-routes-tenant-guards.test.ts",
       "src/__tests__/integration/programs/programs-detail-prog22-deliverables-canvas.test.ts",
-      "src/__tests__/integration/programs/programs-detail-prog21-gate-drawer.test.ts"
+      "src/__tests__/integration/programs/programs-detail-prog21-gate-drawer.test.ts",
+      "src/__tests__/integration/programs/programs-detail-prog25-workshop-notes-plan.test.ts"
     ]
   },
   "excludedFailures": [
@@ -62,11 +63,6 @@
       "suite": "src/__tests__/integration/programs/phase-filter-view.test.ts",
       "classification": "stale-product-language",
       "evidence": "Expects retired phase labels instead of the canonical label map."
-    },
-    {
-      "suite": "src/__tests__/integration/programs/programs-detail-prog25-workshop-notes-plan.test.ts",
-      "classification": "stale-source-location",
-      "evidence": "Reads the retired route-local page; the builder and panel are mounted in the shared ProgramDetailPage component."
     },
     {
       "suite": "src/__tests__/integration/programs/programs-catalog-lock.test.ts",
