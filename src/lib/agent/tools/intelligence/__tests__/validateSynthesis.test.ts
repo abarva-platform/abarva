@@ -168,6 +168,7 @@ describe('validateSynthesisTool', () => {
       { text, maxAlignedPatterns: 999, maxContradictions: 999 },
       ctx,
     );
+    expect(result.success).toBe(true);
     if (result.success) {
       expect((result.data.aligned_patterns as unknown[]).length).toBeLessThanOrEqual(8);
       expect((result.data.contradictions as unknown[]).length).toBeLessThanOrEqual(8);
