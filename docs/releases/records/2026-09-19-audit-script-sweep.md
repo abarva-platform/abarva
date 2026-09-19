@@ -27,8 +27,8 @@ because the environment is empty (no connection string, no model key) and 2
 because they were never given the arguments they require; those are not defects
 and are counted separately. 114 exit 0.
 
-**The second number is the more useful one: 90 of the 185 write files into the
-repository, and 73 of those exit 0 while doing it.** Half of this "audit" backlog
+**The second number is the more useful one: 89 of the 185 write files into the
+repository, and 72 of those exit 0 while doing it.** Half of this "audit" backlog
 is not auditing anything. It is generating reports, and 66 of the 185 entry
 points are named `build-*` or `promote-*`. That is a classification answer
 arrived at by observation rather than by reading names, and it is what the
@@ -118,8 +118,10 @@ failure report which merely mentions a database, or describes usage mid-sentence
 still is one.
 
 **Reproducibility.** Two full runs of the same 185 scripts agreed on the outcome
-and the writer flag for **every one of the 185**. A third and fourth run, after
-the classifier was corrected, reproduced 114 / 58 / 11 / 2 exactly.
+and the writer flag for **every one of the 185**. A third, fourth and fifth run,
+after the classifier was corrected, reproduced 114 / 58 / 11 / 2 exactly. The
+only quantity that moved across all five runs was the writer count, by one, for
+the reason given under Known Gaps.
 
 **The correction those later runs record, and why the first number was wrong.**
 The first version matched credentials against a hand-kept list of variable names
@@ -178,8 +180,15 @@ no data, no flag.
   that no longer exists, read an empty string, find nothing unsafe in it and exit
   0. That class of vacuous check is a separate open item and this sweep does not
   detect it; a script that passes here may still be proving nothing.
-- **The writer count is a floor.** A write to a gitignored path, or anywhere
-  outside the checkout, is invisible to the tree check.
+- **The writer count is a floor, in two ways.** A write to a gitignored path, or
+  anywhere outside the checkout, is invisible to the tree check. And the check
+  sees *net change*, not the act of writing: a script that regenerates a
+  committed report byte for byte reads as a non-writer. That second limit was
+  observed rather than reasoned about — one entry moved from writer to
+  non-writer between two runs, purely because the report it regenerates had been
+  committed in between, which is why the earlier runs in this record report 90
+  writers and the committed measurement reports 89. Neither number is wrong; the
+  quantity is not stable, and the report names why.
 - **One row describes the branch, not the repository.** `audit:layer-boundaries`
   runs against `origin/main..HEAD`, so its outcome depends on what the sweep was
   run on. It is the only branch-relative entry in the set and the report names it

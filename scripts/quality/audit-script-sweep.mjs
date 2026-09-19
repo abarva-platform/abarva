@@ -17,6 +17,11 @@
  *   node scripts/quality/audit-script-sweep.mjs           # run the sweep, print the summary
  *   node scripts/quality/audit-script-sweep.mjs --write   # run it and refresh the committed report
  *
+ * It exits 0 on every outcome it measures, including a sweep in which most
+ * scripts failed — the number is the product, not a verdict. It exits 2 without
+ * measuring anything if the working tree is dirty, because it restores what each
+ * script writes and cannot tell your uncommitted work from theirs.
+ *
  * WHY THE TREE IS CHECKED AFTER EVERY RUN, AND NOT THE SOURCE BEFORE IT. The
  * obvious way to keep a sweep safe is to read each entry file, skip anything
  * containing `writeFileSync`, and run the rest. That was tried first and it is
@@ -33,6 +38,11 @@
  *
  * Every run is followed by a restore, so the sweep leaves the tree as it found
  * it. The restore is scoped to the paths that changed.
+ *
+ * The flag this produces is `writesRepoFiles`, and it means *net change*, not
+ * the act of writing: a script that regenerates a committed report byte for byte
+ * is indistinguishable here from one that wrote nothing. So the writer count is
+ * a floor, and it moves when a committed report does.
  *
  * WHAT IT DELIBERATELY SEPARATES. Two kinds of non-zero exit are not defects.
  * A script that exits because `DATABASE_URL` is unset has found an empty
@@ -381,7 +391,11 @@ function main(argv) {
     console.error(
       `Working tree is not clean (${dirtyBefore.length} paths). The sweep restores what each script writes and cannot tell your changes from theirs. Commit or stash first.`,
     );
-    process.exitCode = 0;
+    // A refusal is not a measurement. The sweep exits 0 on every outcome it
+    // measures, so a refusal has to be distinguishable from one — exiting 0 here
+    // makes "it refused to start" read exactly like "it swept 185 scripts", and
+    // that misread happened while this was being written.
+    process.exitCode = 2;
     return;
   }
 
@@ -401,6 +415,7 @@ function main(argv) {
     scope: "every ci-gate-registry entry whose kind is unclassified",
     caveats: [
       "A write to a gitignored path, or to anywhere outside this checkout, is invisible to the tree check, so writesRepoFiles is a floor.",
+      "The tree check sees net change, not the act of writing. A script that rewrites a committed report with identical bytes is recorded as a non-writer, and the same script is recorded as a writer whenever that committed report has drifted. Observed once: an entry moved from writer to non-writer between two runs purely because the report it regenerates had been committed in between.",
       "audit:layer-boundaries runs --mode=changed --base=origin/main, so its row describes the branch the sweep ran on and not the repository. It is the only entry in this set whose result is branch-relative.",
       "An outcome of passed means the script exited 0, not that its subject is sound. Several of these scan a file that no longer exists and exit 0 on an empty string; that class is item 47.",
     ],
