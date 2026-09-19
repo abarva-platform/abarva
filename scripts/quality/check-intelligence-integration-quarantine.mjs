@@ -26,6 +26,15 @@
  *      check that can actually fail: create any named file and this exits 1.
  *   4. The list has grown past the size it was created at. Appending to a
  *      quarantine is how a temporary carve-out becomes the standard.
+ *
+ * `alsoIgnored` is a second, separate list: full path fragments for red files
+ * that the workflow command's path regex sweeps in from OUTSIDE the suite
+ * directory. Until backlog item T-044 it was read by the ignore-args generator
+ * and by nothing else — no shape, no reason, no owner, and no check that the
+ * file it named still existed. Two bare strings sat in it untriaged. It is
+ * empty now, and the rules below are what has to be true of anything added to
+ * it: an object naming the repo-relative path, why it is out, and the item that
+ * owns getting it back in.
  */
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import path from "node:path";
@@ -43,7 +52,11 @@ const LIST = path.join(HERE, "intelligence-integration-quarantine.json");
  */
 const CEILING = 25;
 
-const { quarantined } = JSON.parse(readFileSync(LIST, "utf8"));
+const {
+  quarantined,
+  alsoIgnored = [],
+  alsoIgnoredCeiling = 0,
+} = JSON.parse(readFileSync(LIST, "utf8"));
 const problems = [];
 
 for (const entry of quarantined) {
@@ -86,6 +99,41 @@ for (const { suite } of quarantined) {
   seen.add(suite);
 }
 
+for (const entry of alsoIgnored) {
+  if (
+    typeof entry?.path !== "string" ||
+    typeof entry?.reason !== "string" ||
+    typeof entry?.owner !== "string" ||
+    entry.reason.trim() === "" ||
+    entry.owner.trim() === ""
+  ) {
+    problems.push(
+      `Malformed alsoIgnored entry ${JSON.stringify(entry)}. Every entry needs ` +
+        'a repo-relative "path", a "reason" it is excluded, and an "owner" backlog ' +
+        "item that gets it back in. A bare string is how an exclusion loses " +
+        "the argument for its own existence.",
+    );
+    continue;
+  }
+
+  if (!existsSync(path.join(REPO, entry.path))) {
+    problems.push(
+      `alsoIgnored names ${entry.path}, which does not exist. Remove it — an ` +
+        "exclusion that excludes nothing still reads like a known problem.",
+    );
+  }
+}
+
+if (alsoIgnored.length > alsoIgnoredCeiling) {
+  problems.push(
+    `alsoIgnored holds ${alsoIgnored.length} paths; the ceiling is ` +
+      `${alsoIgnoredCeiling}. These are files OUTSIDE the suite directory that ` +
+      "the command's path regex sweeps in. Triage the file or narrow the " +
+      "command, and raise alsoIgnoredCeiling in the list with a reason if " +
+      "neither is possible — so growing this is a visible decision too.",
+  );
+}
+
 if (quarantined.length > CEILING) {
   problems.push(
     `The quarantine holds ${quarantined.length} suites; the ceiling is ${CEILING}. ` +
@@ -108,5 +156,6 @@ const watched = new Set(quarantined.flatMap((e) => e.missing));
 console.log(
   `Intelligence integration quarantine is clean: ${quarantined.length} excluded of ` +
     `${total} suites in the directory; ${total - quarantined.length} run on every PR. ` +
-    `${watched.size} retired paths are watched for return.`,
+    `${watched.size} retired paths are watched for return. ` +
+    `${alsoIgnored.length} swept-in sibling paths are excluded (ceiling ${alsoIgnoredCeiling}).`,
 );

@@ -66,12 +66,14 @@ const QUARANTINED_WIRED_DIRECTORIES = [
     directory: "intelligence",
     workflow: ".github/workflows/integration-suites.yml",
     ignoreArgsScript: "scripts/quality/intelligence-integration-ignore-args.mjs",
-    // Both are red and neither was triaged when the directory was wired, so
-    // both are named in the quarantine's `alsoIgnored` rather than running.
-    excludedRootFiles: [
-      "intelligence-chat-shape.test.ts",
-      "intelligence-pattern-manifest.test.ts",
-    ],
+    // Both were red and untriaged when the directory was wired, and both were
+    // named in the quarantine's `alsoIgnored` rather than running. Backlog item
+    // T-044 triaged them: both were stale contracts, both are repaired, and
+    // both are now named in the workflow command so they are registered with
+    // the visibility gate as well as selected by the directory pattern. That is
+    // the second of this case's two acceptable states, and the enumeration is
+    // empty because nothing is in the first.
+    excludedRootFiles: [],
   },
 ] as const;
 

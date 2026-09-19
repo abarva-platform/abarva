@@ -165,8 +165,15 @@ jobs:
       # other directory's run and make both harder to read. The runner and the
       # path are still named literally here so the visibility gate sees them,
       # and the path deliberately has no trailing slash.
+      # The two loose root files named after the directory are selected by the
+      # path pattern anyway — a jest path argument is a regex — so they are
+      # named here as well. Being selected is not the same as being registered:
+      # the visibility gate matches by ancestor directory, so without these two
+      # tokens the files would run in CI while the gate reported them as owned
+      # by nothing. That is the state the enumeration case in
+      # integration-directory-ci-coverage.test.ts refuses.
       - name: Run the Intelligence integration suites that pass on main
-        run: npx jest src/__tests__/integration/intelligence --no-coverage --ci $(node scripts/quality/intelligence-integration-ignore-args.mjs)
+        run: npx jest src/__tests__/integration/intelligence src/__tests__/integration/intelligence-chat-shape.test.ts src/__tests__/integration/intelligence-pattern-manifest.test.ts --no-coverage --ci $(node scripts/quality/intelligence-integration-ignore-args.mjs)
 
       - name: Refuse a new integration directory that no workflow reaches
         run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci
