@@ -48,7 +48,7 @@ policy is `allowClaude:true`, `kernelOnlyMode:false`, `maxDataClass:confidential
 **Converted to Anthropic in this change:**
 - `src/lib/intelligence/ask/` — Sentinel/Nexus ask: `classifier.ts`, `synthesizer.ts`,
   `followups.ts` now use Claude; `openai-runtime.ts` deleted.
-- `src/app/api/chat/route.ts` — reasons via the audited Anthropic client.
+- `src/app/api/chat/agent/route.ts` — the mounted product chat path reasons via the audited Anthropic client.
 
 **Tracked OpenAI-reasoning debt (MUST convert next):**
 - `src/lib/source/sentinel-chat-llm.ts`
