@@ -1,0 +1,49 @@
+name: Programs Governance Integration
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: programs-governance-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  programs-governance-integration:
+    name: Programs governance integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Exercise governed Programs paths
+        run: >-
+          npx jest --runTestsByPath
+          src/__tests__/integration/programs/deliverable-approval-flow.test.ts
+          src/__tests__/integration/programs/phase-gate-advancement-flow.test.ts
+          src/__tests__/integration/programs/programs-approval-flag-mutation-guards.test.ts
+          src/__tests__/integration/programs/programs-nexus-mutation-guards.test.ts
+          src/__tests__/integration/programs/programs-origination-routes-guards.test.ts
+          src/__tests__/integration/programs/programs-read-routes-tenant-guards.test.ts
+          src/__tests__/integration/programs/programs-p6-phase-constraint.test.ts
+          src/__tests__/integration/programs/programs-phase-gate-status.test.ts
+          src/__tests__/integration/programs/programs-generate-route-azure-read.test.ts
+          --runInBand
