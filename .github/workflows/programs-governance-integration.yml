@@ -59,4 +59,5 @@ jobs:
           src/__tests__/integration/programs-enhancement-seed-planner.test.ts
           src/__tests__/integration/programs-enhancement-spec.test.ts
           src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts
+          src/__tests__/integration/programs/workshop-readiness.test.ts
           --runInBand
