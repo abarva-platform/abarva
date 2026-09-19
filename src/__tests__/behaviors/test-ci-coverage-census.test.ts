@@ -355,6 +355,109 @@ describe("test CI coverage census", () => {
     expect(summary).not.toContain("src/lib/helpers/__tests__");
   });
 
+  it("does not score a governed signal from a type-only import", () => {
+    // A `import type` specifier is erased at compile time: the test never loads
+    // the module and never exercises the control declared on it. The scorer's
+    // own method note says signals come from "product modules statically
+    // imported by the tests", which a type import satisfies literally and not
+    // in substance. `board` reaches the control module only by type; `dock`
+    // reaches it by value and must keep its band.
+    const dir = fixture({
+      "src/components/agent/Control.tsx":
+        "export type Turn = { id: string };\nexport function Control() { return null; }\n",
+      "src/components/board/Board.tsx": "export function Board() { return null; }\n",
+      "src/components/board/__tests__/Board.test.tsx": [
+        'import { Board } from "../Board";',
+        'import type { Turn } from "@/components/agent/Control";',
+        'it("board", () => expect(typeof Board).toBe("function"));',
+      ].join("\n"),
+      "src/components/dock/Dock.tsx": "export function Dock() { return null; }\n",
+      "src/components/dock/__tests__/Dock.test.tsx": [
+        'import { Dock } from "../Dock";',
+        'import { Control } from "@/components/agent/Control";',
+        'it("dock", () => expect(typeof Control).toBe("function"));',
+      ].join("\n"),
+      "docs/security/ai-surface-control-catalog.json": `${JSON.stringify({
+        controls: [
+          {
+            id: "fixture-control",
+            path: "src/components/agent/Control.tsx",
+            requiredControls: [],
+          },
+        ],
+      })}\n`,
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const byDirectory = new Map(
+      census.governedRiskRanking.map((row) => [row.directory, row.governedRisk]),
+    );
+    expect(byDirectory.get("src/components/dock/__tests__")?.signals).toEqual([
+      "declared_ai_surface_control",
+    ]);
+    expect(byDirectory.get("src/components/board/__tests__")?.signals ?? []).not.toContain(
+      "declared_ai_surface_control",
+    );
+    expect(byDirectory.get("src/components/board/__tests__")?.band ?? "unclassified").toBe(
+      "unclassified",
+    );
+    const boardEvidence = census.governedRiskEvidence.find(
+      (row) => row.directory === "src/components/board/__tests__",
+    );
+    expect(boardEvidence?.governedRisk.controlIds ?? []).toEqual([]);
+  });
+
+  it("reads the other two erasable import forms the same way", () => {
+    // `export type { … } from` and a brace list whose every specifier is
+    // `type`-prefixed are both elided by TypeScript exactly as `import type` is.
+    // A brace list with one value specifier among the types is not.
+    const dir = fixture({
+      "src/components/agent/Control.tsx":
+        "export type Turn = { id: string };\nexport function Control() { return null; }\n",
+      "src/lib/reexport/Reexport.ts": "export const reexport = 1;\n",
+      "src/lib/reexport/__tests__/Reexport.test.ts": [
+        'import { reexport } from "../Reexport";',
+        'export type { Turn } from "@/components/agent/Control";',
+        'it("reexport", () => expect(reexport).toBe(1));',
+      ].join("\n"),
+      "src/lib/inline/Inline.ts": "export const inline = 1;\n",
+      "src/lib/inline/__tests__/Inline.test.ts": [
+        'import { inline } from "../Inline";',
+        'import { type Turn } from "@/components/agent/Control";',
+        'it("inline", () => expect(inline).toBe(1));',
+      ].join("\n"),
+      "src/lib/mixed/Mixed.ts": "export const mixed = 1;\n",
+      "src/lib/mixed/__tests__/Mixed.test.ts": [
+        'import { mixed } from "../Mixed";',
+        'import { type Turn, Control } from "@/components/agent/Control";',
+        'it("mixed", () => expect(typeof Control).toBe("function"));',
+      ].join("\n"),
+      "docs/security/ai-surface-control-catalog.json": `${JSON.stringify({
+        controls: [
+          {
+            id: "fixture-control",
+            path: "src/components/agent/Control.tsx",
+            requiredControls: [],
+          },
+        ],
+      })}\n`,
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const signalsFor = (directory: string) =>
+      census.governedRiskRanking.find((row) => row.directory === directory)?.governedRisk
+        .signals ?? [];
+    expect(signalsFor("src/lib/reexport/__tests__")).not.toContain(
+      "declared_ai_surface_control",
+    );
+    expect(signalsFor("src/lib/inline/__tests__")).not.toContain(
+      "declared_ai_surface_control",
+    );
+    expect(signalsFor("src/lib/mixed/__tests__")).toContain("declared_ai_surface_control");
+  });
+
   it("refreshes the committed census only when its content changes", () => {
     const dir = fixture({
       "src/lib/lambda/__tests__/lambda.test.ts": TEST_FILE,
