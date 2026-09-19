@@ -4,6 +4,8 @@ import { getSourcingEvent, isUuid } from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
+import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
+import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import {
   listArtifactStatesForEventStage,
   listEffectiveEvidenceStatesForEvent,
@@ -32,7 +34,10 @@ import {
 } from "@/lib/source/facts/event-facts-reader";
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
-import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
+import {
+  hydrateTaskEvidenceState,
+  type HydrationArtifact,
+} from "@/lib/source/facts/view/task-evidence-hydration";
 import { loadApprovalsInbox } from "@/lib/source/approvals-inbox";
 import { loadApprovalLedger } from "@/lib/source/approval-ledger";
 import {
@@ -284,7 +289,11 @@ export default async function SourceEventDetailPage({
     // 11-stage event can push the RSC payload into megabytes and freeze browser
     // verification. File cards do not render body previews, so content remains a
     // server-side artifact concern rather than default route payload.
-    const [analyticsRegistryArtifacts, currentStageArtifactStates] =
+    const [
+      analyticsRegistryArtifacts,
+      currentStageArtifactStates,
+      fileCabinetArtifacts,
+    ] =
       await Promise.all([
         listSourceArtifactsForSourceEventId(event.id).catch((error) => {
           console.error(
@@ -300,6 +309,17 @@ export default async function SourceEventDetailPage({
           );
           return [];
         }),
+        activeClient?.key
+          ? listSourceArtifacts(event.id, {
+              tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
+            }).catch((error) => {
+              console.error(
+                "[SourceEventDetailPage] source file-cabinet read failed for task hydration",
+                error instanceof Error ? error.message : String(error),
+              );
+              return [];
+            })
+          : Promise.resolve([]),
       ]);
     analyticsEvidenceStates = await listEffectiveEvidenceStatesForEvent(
       event.id,
@@ -322,22 +342,42 @@ export default async function SourceEventDetailPage({
       })),
       ...analyticsRegistryArtifacts,
     ];
-    const analyticsHydrationArtifacts = analyticsArtifacts.flatMap(
-      (artifact) =>
-        artifact.stageKey
+    const analyticsHydrationArtifacts: HydrationArtifact[] =
+      analyticsArtifacts.flatMap(
+        (artifact) =>
+          artifact.stageKey
+            ? [
+                {
+                  stageKey: artifact.stageKey,
+                  artifactKind: artifact.artifactKind,
+                  originalName:
+                    "originalName" in artifact
+                      ? artifact.originalName
+                      : undefined,
+                  sourceFormat:
+                    "sourceFormat" in artifact
+                      ? artifact.sourceFormat
+                      : undefined,
+                  sizeBytes:
+                    "sizeBytes" in artifact ? artifact.sizeBytes : undefined,
+                },
+              ]
+            : [],
+      );
+    analyticsHydrationArtifacts.push(
+      ...fileCabinetArtifacts.flatMap((artifact) =>
+        artifact.sourcingStage
           ? [
               {
-                stageKey: artifact.stageKey,
-                artifactKind: artifact.artifactKind,
-                originalName:
-                  "originalName" in artifact ? artifact.originalName : undefined,
-                sourceFormat:
-                  "sourceFormat" in artifact ? artifact.sourceFormat : undefined,
-                sizeBytes:
-                  "sizeBytes" in artifact ? artifact.sizeBytes : undefined,
+                stageKey: artifact.sourcingStage,
+                artifactKind: artifact.artifactType,
+                originalName: artifact.fileName,
+                sourceFormat: artifact.fileFormat,
+                sizeBytes: artifact.fileSize ?? undefined,
               },
             ]
           : [],
+      ),
     );
     // SOURCE-SHELL-004: real artifact ids only — synthetic pseudo-artifact
     // ids (e.g. `artifact-state:<uuid>`, used for authored bodies with no

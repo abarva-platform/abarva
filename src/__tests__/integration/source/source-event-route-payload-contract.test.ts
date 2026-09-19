@@ -26,4 +26,14 @@ describe("Source event route payload contract", () => {
       "File cards do not render body previews, so content remains a",
     );
   });
+
+  it("hydrates stage tasks from the same governed File Cabinet used by Source New", () => {
+    expect(routeSource).toContain('from "@/lib/source/file-cabinet/repository"');
+    expect(routeSource).toContain("listSourceArtifacts(event.id, {");
+    expect(routeSource).toContain(
+      "tenantKey: clientKeyToInventorySubstrateKey(activeClient.key)",
+    );
+    expect(routeSource).toContain("fileCabinetArtifacts.flatMap");
+    expect(routeSource).toContain("originalName: artifact.fileName");
+  });
 });
