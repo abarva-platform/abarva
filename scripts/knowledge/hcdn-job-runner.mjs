@@ -5,7 +5,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  InMemoryKnowledgeExecutionStore,
   KnowledgeProcessError,
   PostgresKnowledgeExecutionStore,
   buildExecutionContext,
@@ -79,6 +78,12 @@ export const PROCESS_CONTRACTS = Object.freeze([
   {
     suffix: "projection-build-v1",
     stages: ["13_build_module_projections"],
+    identityPurpose: "publish",
+    databaseRolePurpose: "publish",
+  },
+  {
+    suffix: "knowledge-narrative-generate-v1",
+    stages: ["13b_generate_knowledge_narratives"],
     identityPurpose: "publish",
     databaseRolePurpose: "publish",
   },

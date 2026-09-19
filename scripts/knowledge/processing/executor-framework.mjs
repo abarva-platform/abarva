@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -463,6 +464,41 @@ export class InMemoryKnowledgeExecutionStore {
       rowCount: rows.length,
       baseline,
       contentHash: sha256Value(rows),
+    };
+  }
+
+  async generateKnowledgeNarratives(context) {
+    const baseline = await this.activeBaseline(context);
+    const acceptedEvidenceRefs = [
+      ...this.knowledgeFacts.flatMap((row) => row.evidenceRefs ?? row.evidence_refs ?? []),
+      ...this.knowledgeRelationships.flatMap((row) => row.evidenceRefs ?? row.evidence_refs ?? []),
+    ].filter(Boolean);
+    if (!baseline) {
+      return { generatedCount: 0, refusalCount: 1, updatedBriefRows: 0, blockers: ["active_baseline_missing_for_narrative"] };
+    }
+    if (new Set(acceptedEvidenceRefs).size === 0) {
+      return {
+        knowledgeBaselineRef: baseline.knowledgeBaselineRef,
+        generatedCount: 0,
+        refusalCount: 1,
+        updatedBriefRows: 0,
+        blockers: ["accepted_evidence_missing_for_narrative"],
+      };
+    }
+    const existingLensRows = this.projections.filter((row) => row.projectionName === "enterprise_brief_v1" && /^enterprise:/.test(row.objectRef ?? ""));
+    if (existingLensRows.length === 0) {
+      this.projections.push({
+        projectionName: "enterprise_brief_v1",
+        objectRef: "enterprise:risk_resilience",
+        displayName: "Narrative enterprise brief",
+      });
+    }
+    return {
+      knowledgeBaselineRef: baseline.knowledgeBaselineRef,
+      generatedCount: 1,
+      refusalCount: 0,
+      updatedBriefRows: existingLensRows.length || 1,
+      blockers: [],
     };
   }
 
@@ -2506,6 +2542,52 @@ export class PostgresKnowledgeExecutionStore {
     );
   }
 
+  async generateKnowledgeNarratives(context) {
+    const args = [
+      "tsx",
+      "scripts/knowledge/generate-knowledge-narratives.ts",
+      "--tenant",
+      context.tenantKey,
+      "--release-id",
+      context.releaseId,
+      "--write",
+      "--json",
+    ];
+    const outDir = context.env.ABARVA_KNOWLEDGE_NARRATIVE_OUT_DIR;
+    if (outDir) args.push("--out-dir", outDir);
+    if (context.env.ABARVA_KNOWLEDGE_BASELINE_REF) args.push("--baseline-ref", context.env.ABARVA_KNOWLEDGE_BASELINE_REF);
+
+    const result = spawnSync("npx", args, {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        ...context.env,
+        NODE_OPTIONS: withReactServerCondition(context.env.NODE_OPTIONS ?? process.env.NODE_OPTIONS),
+      },
+      encoding: "utf8",
+      maxBuffer: 20 * 1024 * 1024,
+    });
+    if (result.status !== 0) {
+      return {
+        generatedCount: 0,
+        refusalCount: 1,
+        updatedBriefRows: 0,
+        blockers: ["knowledge_narrative_generator_failed"],
+        stderr: result.stderr?.slice(0, 4000) ?? "",
+      };
+    }
+    const parsed = parseLastJsonLine(result.stdout);
+    return {
+      knowledgeBaselineRef: parsed.knowledgeBaselineRef ?? null,
+      generatedCount: Number(parsed.generatedCount ?? 0),
+      refusalCount: Number(parsed.refusalCount ?? 0),
+      updatedBriefRows: parsed.writeApplied ? Number(parsed.generatedCount ?? 0) : 0,
+      benchmarkGeneratedCount: Number(parsed.benchmarkGeneratedCount ?? 0),
+      perspectiveGeneratedCount: Number(parsed.perspectiveGeneratedCount ?? 0),
+      blockers: [],
+    };
+  }
+
   async verifyHomeReadModel(context) {
     const baseline = await this.activeBaseline(context);
     if (!baseline) return { enterpriseBriefRows: 0, searchRows: 0, relationshipRows: 0 };
@@ -2808,6 +2890,25 @@ export class PostgresKnowledgeExecutionStore {
       mutatedKnowledge: false,
     };
   }
+}
+
+function parseLastJsonLine(stdout) {
+  const lines = String(stdout ?? "").trim().split(/\r?\n/).filter(Boolean);
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    try {
+      const parsed = JSON.parse(lines[index]);
+      if (parsed && typeof parsed === "object") return parsed;
+    } catch {
+      // Keep scanning; tools may emit non-JSON diagnostics before the summary.
+    }
+  }
+  throw new KnowledgeProcessError("knowledge_narrative_json_missing", "Knowledge narrative generator did not emit a JSON summary.");
+}
+
+function withReactServerCondition(nodeOptions) {
+  const current = String(nodeOptions ?? "").trim();
+  if (current.split(/\s+/).includes("--conditions=react-server")) return current;
+  return [current, "--conditions=react-server"].filter(Boolean).join(" ");
 }
 
 function summarizeRows(rows) {
