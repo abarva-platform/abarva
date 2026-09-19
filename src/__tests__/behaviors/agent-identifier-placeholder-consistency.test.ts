@@ -57,6 +57,22 @@ describe('visible-identifier placeholders agree across the streaming and settled
     expect(settled).toBe(streaming);
   });
 
+  it('does not flash a parenthesized placeholder before the settled answer removes it', () => {
+    const { settled, streaming } = bothPasses(
+      `Review the renewal record (${UUID}) before the gate meeting.`,
+    );
+
+    expect(streaming).toBe(settled);
+  });
+
+  it('does not flash an em-dash placeholder before the settled answer removes it', () => {
+    const { settled, streaming } = bothPasses(
+      `Review the renewal record — ${UUID} before the gate meeting.`,
+    );
+
+    expect(streaming).toBe(settled);
+  });
+
   it('rewrites a raw entity id to the same wording on both passes', () => {
     const { settled, streaming } = bothPasses(
       `Review ${ENTITY_ID} before the gate review.`,
