@@ -95,6 +95,68 @@ describe("audit script sweep — what the number means", () => {
     expect(result.reason).toContain("database projection audit");
   });
 
+  it("recognises a credential by its shape, not by a hand-kept list", () => {
+    const result = classify({
+      exitCode: 1,
+      stderr:
+        "Error: Missing NEXT_PUBLIC_SUPABASE_URL/SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for audit",
+      changedPaths: [],
+    });
+
+    expect(result.outcome).toBe("needs_environment");
+  });
+
+  it("separates a script that was never told what to do from one that is broken", () => {
+    const result = classify({
+      exitCode: 1,
+      stdout:
+        "Usage: npm run audit:active-module-context-promotion -- --tenant <tenant-key>",
+      changedPaths: [],
+    });
+
+    expect(result.outcome).toBe("needs_arguments");
+  });
+
+  it("does not call a failure report 'needs arguments' for describing usage", () => {
+    const result = classify({
+      exitCode: 1,
+      stdout:
+        "3 tenants failed the check. See the usage: block in the runbook for the rerun.",
+      changedPaths: [],
+    });
+
+    expect(result.outcome).toBe("failed");
+  });
+
+  it("reports the line that says what went wrong, not the first PASS above it", () => {
+    const result = classify({
+      exitCode: 1,
+      stdout: [
+        "PASS src/lib/admin/setup-control.ts exists",
+        "PASS src/lib/admin/registry.ts exists",
+        "FAIL admin data control center: 2 subjects are gone",
+      ].join("\n"),
+      changedPaths: [],
+    });
+
+    expect(result.outcome).toBe("failed");
+    expect(result.reason).toContain("2 subjects are gone");
+  });
+
+  it("reaches past an informational line to the one that states the failure", () => {
+    const result = classify({
+      exitCode: 1,
+      stdout: [
+        "PASS registry loaded",
+        "checked 12 subjects across 4 tenants",
+        "FAIL admin data control center: 2 subjects are gone",
+      ].join("\n"),
+      changedPaths: [],
+    });
+
+    expect(result.reason).toContain("2 subjects are gone");
+  });
+
   it("never reports a timeout as passed", () => {
     const result = classify({
       exitCode: null,
@@ -151,13 +213,15 @@ describe("audit script sweep — what the number means", () => {
       { outcome: "passed", writesRepoFiles: false },
       { outcome: "failed", writesRepoFiles: false },
       { outcome: "needs_environment", writesRepoFiles: false },
+      { outcome: "needs_arguments", writesRepoFiles: false },
     ]);
 
     expect(summary).toMatchObject({
-      total: 4,
+      total: 5,
       passed: 2,
       failed: 1,
       needsEnvironment: 1,
+      needsArguments: 1,
       writesRepoFiles: 1,
       passedButWrites: 1,
     });

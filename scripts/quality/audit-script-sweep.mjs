@@ -34,14 +34,25 @@
  * Every run is followed by a restore, so the sweep leaves the tree as it found
  * it. The restore is scoped to the paths that changed.
  *
- * WHAT IT DELIBERATELY SEPARATES. A script that exits non-zero because
- * `DATABASE_URL` is unset has not found a defect; it has found an empty
- * environment, and counting it as a failure would inflate the number this exists
- * to establish. Those are recorded as `needs_environment` and excluded from the
- * failure count. The distinction runs off the process output, and it is
- * deliberately narrow: a failure whose text merely mentions a database is a
- * failure. A predicate tightened until nothing is a real failure would be as
- * useless as no predicate at all.
+ * WHAT IT DELIBERATELY SEPARATES. Two kinds of non-zero exit are not defects.
+ * A script that exits because `DATABASE_URL` is unset has found an empty
+ * environment; a script that prints its own usage was never told what to do, and
+ * that second one is the strongest single signal in this whole sweep that an
+ * `audit:` entry is an operator tool rather than a gate. Both are excluded from
+ * the failure count, as `needs_environment` and `needs_arguments`.
+ *
+ * Both predicates run off the process output and both are deliberately narrow: a
+ * failure whose text merely mentions a database is a failure, and a failure
+ * report that mentions usage mid-sentence is a failure. A predicate tightened
+ * until nothing is a real failure would be as useless as no predicate at all, so
+ * each direction is pinned by its own case in
+ * `src/__tests__/behaviors/audit-script-sweep.test.ts`.
+ *
+ * The credential predicate matches a credential by *shape* —
+ * `SOMETHING_URL` / `_KEY` / `_TOKEN` / `_SECRET` — rather than by a list of
+ * names. The first version carried a hand-kept list, and it missed
+ * `SUPABASE_SERVICE_ROLE_KEY` and `READONLY_DATABASE_URL` on the first real run,
+ * counting two empty environments as defects.
  *
  * WHAT IT CANNOT SEE. A write to a gitignored path, or to anywhere outside the
  * repository, is invisible to the tree check. Nothing in the swept set shells out
@@ -79,10 +90,12 @@ const EXTERNAL_COMMAND_RE =
  * variable. "Database" on its own is not here, and must not be: several of these
  * scripts audit database projections and say so while failing for real reasons.
  */
+const CREDENTIAL_NAME = String.raw`[A-Z][A-Z0-9_]*(?:URL|KEY|TOKEN|SECRET|CONNECTION_STRING|ENDPOINT|ACCOUNT)`;
+
 const ENVIRONMENT_SIGNAL_RE = new RegExp(
   [
-    String.raw`\b(?:DATABASE_URL|POSTGRES_URL|ANTHROPIC_API_KEY|OPENAI_API_KEY|AZURE_[A-Z_]+|CLERK_[A-Z_]+|BLOB_[A-Z_]+|SERVICE_BUS_[A-Z_]+)\b[^\n]{0,80}?\b(?:not set|unset|missing|required|undefined|is empty)\b`,
-    String.raw`\b(?:missing|no|unset|absent)\b[^\n]{0,40}?\b(?:DATABASE_URL|POSTGRES_URL|ANTHROPIC_API_KEY|OPENAI_API_KEY|AZURE_[A-Z_]+|CLERK_[A-Z_]+|connection string|credentials?)\b`,
+    String.raw`\b${CREDENTIAL_NAME}\b[^\n]{0,80}?\b(?:not set|unset|missing|required|undefined|is empty)\b`,
+    String.raw`\b(?:missing|no|unset|absent|set)\b[^\n]{0,60}?\b(?:${CREDENTIAL_NAME}|connection string|credentials?)\b`,
     String.raw`\b(?:ECONNREFUSED|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|getaddrinfo)\b`,
     String.raw`\bself[- ]signed certificate\b`,
     String.raw`\bpassword authentication failed\b`,
@@ -90,12 +103,22 @@ const ENVIRONMENT_SIGNAL_RE = new RegExp(
   "i",
 );
 
+/**
+ * A script that printed its own usage was not told what to do. It has audited
+ * nothing, and it is not broken either — it takes arguments, which is itself the
+ * strongest single signal that an `audit:` entry is an operator tool rather than
+ * a gate. Anchored to the start of a line so a script merely describing usage in
+ * a failure report is unaffected.
+ */
+const USAGE_SIGNAL_RE = /^\s*usage:/im;
+
 /** Outcome of one swept script. */
 export const OUTCOMES = Object.freeze({
   PASSED: "passed",
   FAILED: "failed",
   TIMED_OUT: "timed_out",
   NEEDS_ENVIRONMENT: "needs_environment",
+  NEEDS_ARGUMENTS: "needs_arguments",
   NOT_RUNNABLE: "not_runnable",
 });
 
@@ -186,15 +209,22 @@ export function classifyRunOutcome(run) {
       writesRepoFiles,
     };
   }
+  if (USAGE_SIGNAL_RE.test(output)) {
+    return {
+      outcome: OUTCOMES.NEEDS_ARGUMENTS,
+      reason: "printed its own usage; it takes arguments",
+      writesRepoFiles,
+    };
+  }
   return {
     outcome: OUTCOMES.FAILED,
-    reason: firstMeaningfulLine(output) ?? `exit ${exitCode}`,
+    reason: failureReasonLine(output) ?? `exit ${exitCode}`,
     writesRepoFiles,
   };
 }
 
 /** The first line of output that says something, for the report's failure column. */
-export function firstMeaningfulLine(output) {
+export function failureReasonLine(output) {
   const lines = String(output ?? "")
     .split("\n")
     .map((line) => line.trim())
@@ -202,9 +232,23 @@ export function firstMeaningfulLine(output) {
       (line) =>
         line !== "" &&
         !/^npm (?:ERR!|WARN|notice)/.test(line) &&
-        !/^>/.test(line),
+        !/^>/.test(line) &&
+        // tsx announces its env loading on every run; it is never the reason.
+        !/^[\u25c7\u25c6\u25cf]/.test(line) &&
+        !/\btip:\s/.test(line),
     );
-  return lines.length > 0 ? lines[0].slice(0, 200) : null;
+  if (lines.length === 0) return null;
+  // Two shapes have to be read correctly, and the obvious rule gets one of them
+  // wrong. A checklist script prints its passes first and its verdict last, so
+  // the opening line is routinely a `PASS`; a reporting script states the
+  // problem in prose and then prints a bare `FAIL`. So: prefer a line that both
+  // marks a failure and says something, then the first line that is not a pass,
+  // then whatever it ended with.
+  const marks =
+    /\b(?:fail(?:ed|ure|s)?|error|missing|invalid|cannot|refus(?:e|ed|es)|violation)\b|[\u2717\u274c]/i;
+  const stated = lines.find((line) => marks.test(line) && line.length > 10);
+  const notAPass = lines.find((line) => !/^(?:PASS|OK|\u2713)\b/i.test(line));
+  return (stated ?? notAPass ?? lines[lines.length - 1]).slice(0, 200);
 }
 
 /** The counts the item asks for. */
@@ -215,6 +259,7 @@ export function summarizeSweep(results) {
     failed: 0,
     timedOut: 0,
     needsEnvironment: 0,
+    needsArguments: 0,
     notRunnable: 0,
     writesRepoFiles: 0,
     passedButWrites: 0,
@@ -225,6 +270,8 @@ export function summarizeSweep(results) {
     else if (result.outcome === OUTCOMES.TIMED_OUT) summary.timedOut += 1;
     else if (result.outcome === OUTCOMES.NEEDS_ENVIRONMENT)
       summary.needsEnvironment += 1;
+    else if (result.outcome === OUTCOMES.NEEDS_ARGUMENTS)
+      summary.needsArguments += 1;
     else if (result.outcome === OUTCOMES.NOT_RUNNABLE) summary.notRunnable += 1;
     if (result.writesRepoFiles) {
       summary.writesRepoFiles += 1;
@@ -369,6 +416,7 @@ function main(argv) {
       `  passed            ${summary.passed}`,
       `  failed            ${summary.failed}`,
       `  needs environment ${summary.needsEnvironment}`,
+      `  needs arguments   ${summary.needsArguments}`,
       `  timed out         ${summary.timedOut}`,
       `  not runnable      ${summary.notRunnable}`,
       `  wrote repo files  ${summary.writesRepoFiles} (of which ${summary.passedButWrites} also exited 0)`,
