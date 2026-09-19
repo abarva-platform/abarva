@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 25,
-    "testCount": 515,
+    "suiteCount": 26,
+    "testCount": 530,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -44,15 +44,10 @@
       "src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts",
       "src/__tests__/integration/programs/workshop-readiness.test.ts",
       "src/__tests__/integration/programs/program-resume-state.test.ts",
-      "src/__tests__/integration/programs/nexus-program-workbench.test.ts"
+      "src/__tests__/integration/programs/nexus-program-workbench.test.ts",
+      "src/__tests__/integration/programs/full-lifecycle-crawl.test.ts"
     ]
   },
-  "excludedFailures": [
-    {
-      "suite": "src/__tests__/integration/programs/full-lifecycle-crawl.test.ts",
-      "classification": "stale-source-inspection",
-      "evidence": "String-matches an earlier inline gate alias instead of executing the current gate behavior."
-    }
-  ],
-  "conclusion": "No excluded failure currently demonstrates a live product regression. Each remains debt and must be repaired behaviorally before the gate widens."
+  "excludedFailures": [],
+  "conclusion": "Every Programs suite cataloged as failing in the 2026-09-19 triage wave has been repaired and added to the dedicated pull-request gate."
 }
