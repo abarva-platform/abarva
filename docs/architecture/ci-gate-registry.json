@@ -533,14 +533,6 @@
     "audit:tenant-v3-data": {
       "kind": "unclassified"
     },
-    "audit:unclassified-script-sweep": {
-      "kind": "operator",
-      "reason": "Runs all 185 unclassified registry entries and records what each one did. 89 of them write to the repository, so the sweep writes and restores the working tree as it goes; that is an operator action however it exits, and it exits 0 either way. It classifies nothing and gates nothing — the number it produces is the input to item 45's classification work, not a policy. Its own behaviour is enforced by src/__tests__/behaviors/audit-script-sweep.test.ts, which does run on every PR."
-    },
-    "audit:unclassified-script-sweep:write": {
-      "kind": "operator",
-      "reason": "Same sweep, refreshing the committed measurement at docs/architecture/audit-script-sweep.json. A write, and a dated one: it belongs to whoever is re-measuring rather than to a PR check."
-    },
     "audit:tower-active-budget-envelopes": {
       "kind": "unclassified"
     },
