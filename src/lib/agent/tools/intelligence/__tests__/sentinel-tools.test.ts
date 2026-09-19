@@ -160,6 +160,7 @@ describe('searchPatternsTool', () => {
     mockedGetActiveClientRow.mockResolvedValue(APEX_CLIENT);
     const { ctx } = makeCtx();
     const result = await searchPatternsTool.handler({ query: 'pattern AI', limit: 999 }, ctx);
+    expect(result.success).toBe(true);
     if (result.success) {
       expect((result.data.results as unknown[]).length).toBeLessThanOrEqual(20);
     }
