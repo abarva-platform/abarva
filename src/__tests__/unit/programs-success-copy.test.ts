@@ -17,11 +17,11 @@ describe('program origination success copy', () => {
   });
 
   it('keeps live DB program chrome from labeling UUID records as deterministic seed', () => {
-    const detailPageSource = fs.readFileSync(path.join(repoRoot, 'src/components/programs/ProgramDetailPage.tsx'), 'utf8');
     const downloadButtonSource = fs.readFileSync(path.join(repoRoot, 'src/components/reasoning/DownloadContextButton.tsx'), 'utf8');
 
-    expect(detailPageSource).toContain("const programEyebrow = isLiveDbProgram ? 'Live program' : view.displayId");
-    expect(detailPageSource).toContain("const programSourceLabel = isLiveDbProgram ? 'Live DB record' : 'Deterministic seed'");
+    // ProgramDetailPage's visible live-record label is asserted by its
+    // rendered behavior suite. This remaining check belongs to a separate
+    // component and guards against leaking an internal id in download copy.
     expect(downloadButtonSource).not.toContain('Download synthesis context JSON for ${instanceId}');
   });
 });
