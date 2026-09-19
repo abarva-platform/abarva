@@ -1,0 +1,43 @@
+roadmap_id,phase,wave,initiative,owner_role,dependency,target_state,acceptance_signal,evidence_note
+RM-0001,P0 Originate,wave_1,quality measure reconciliation,Chief Quality Officer,clinical owner named,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0002,P1 Charter,wave_1,workflow redesign,VP Application Services,interface monitoring,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0003,P2 Discover,wave_1,governance sequencing,Data Governance Lead,benefit sign-off,blocked pending owner,no invented value,synthetic roadmap item
+RM-0004,P3 Design,wave_1,platform integration,VP Value Based Care,model monitoring plan,decision-ready,coverage readout,synthetic roadmap item
+RM-0005,P4 Mobilize,wave_1,benefit proof,Chief Quality Officer,data-quality gate,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0006,P5 Govern,wave_1,care gap closure,VP Application Services,clinical owner named,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0007,P0 Originate,wave_1,quality measure reconciliation,Data Governance Lead,interface monitoring,blocked pending owner,no invented value,synthetic roadmap item
+RM-0008,P1 Charter,wave_2,workflow redesign,VP Value Based Care,benefit sign-off,decision-ready,coverage readout,synthetic roadmap item
+RM-0009,P2 Discover,wave_2,governance sequencing,Chief Quality Officer,model monitoring plan,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0010,P3 Design,wave_2,platform integration,VP Application Services,data-quality gate,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0011,P4 Mobilize,wave_2,benefit proof,Data Governance Lead,clinical owner named,blocked pending owner,no invented value,synthetic roadmap item
+RM-0012,P5 Govern,wave_2,care gap closure,VP Value Based Care,interface monitoring,decision-ready,coverage readout,synthetic roadmap item
+RM-0013,P0 Originate,wave_2,quality measure reconciliation,Chief Quality Officer,benefit sign-off,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0014,P1 Charter,wave_2,workflow redesign,VP Application Services,model monitoring plan,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0015,P2 Discover,wave_3,governance sequencing,Data Governance Lead,data-quality gate,blocked pending owner,no invented value,synthetic roadmap item
+RM-0016,P3 Design,wave_3,platform integration,VP Value Based Care,clinical owner named,decision-ready,coverage readout,synthetic roadmap item
+RM-0017,P4 Mobilize,wave_3,benefit proof,Chief Quality Officer,interface monitoring,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0018,P5 Govern,wave_3,care gap closure,VP Application Services,benefit sign-off,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0019,P0 Originate,wave_3,quality measure reconciliation,Data Governance Lead,model monitoring plan,blocked pending owner,no invented value,synthetic roadmap item
+RM-0020,P1 Charter,wave_3,workflow redesign,VP Value Based Care,data-quality gate,decision-ready,coverage readout,synthetic roadmap item
+RM-0021,P2 Discover,wave_3,governance sequencing,Chief Quality Officer,clinical owner named,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0022,P3 Design,wave_4,platform integration,VP Application Services,interface monitoring,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0023,P4 Mobilize,wave_4,benefit proof,Data Governance Lead,benefit sign-off,blocked pending owner,no invented value,synthetic roadmap item
+RM-0024,P5 Govern,wave_4,care gap closure,VP Value Based Care,model monitoring plan,decision-ready,coverage readout,synthetic roadmap item
+RM-0025,P0 Originate,wave_4,quality measure reconciliation,Chief Quality Officer,data-quality gate,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0026,P1 Charter,wave_4,workflow redesign,VP Application Services,clinical owner named,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0027,P2 Discover,wave_4,governance sequencing,Data Governance Lead,interface monitoring,blocked pending owner,no invented value,synthetic roadmap item
+RM-0028,P3 Design,wave_4,platform integration,VP Value Based Care,benefit sign-off,decision-ready,coverage readout,synthetic roadmap item
+RM-0029,P4 Mobilize,wave_5,benefit proof,Chief Quality Officer,model monitoring plan,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0030,P5 Govern,wave_5,care gap closure,VP Application Services,data-quality gate,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0031,P0 Originate,wave_5,quality measure reconciliation,Data Governance Lead,clinical owner named,blocked pending owner,no invented value,synthetic roadmap item
+RM-0032,P1 Charter,wave_5,workflow redesign,VP Value Based Care,interface monitoring,decision-ready,coverage readout,synthetic roadmap item
+RM-0033,P2 Discover,wave_5,governance sequencing,Chief Quality Officer,benefit sign-off,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0034,P3 Design,wave_5,platform integration,VP Application Services,model monitoring plan,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0035,P4 Mobilize,wave_5,benefit proof,Data Governance Lead,data-quality gate,blocked pending owner,no invented value,synthetic roadmap item
+RM-0036,P5 Govern,wave_6,care gap closure,VP Value Based Care,clinical owner named,decision-ready,coverage readout,synthetic roadmap item
+RM-0037,P0 Originate,wave_6,quality measure reconciliation,Chief Quality Officer,interface monitoring,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0038,P1 Charter,wave_6,workflow redesign,VP Application Services,benefit sign-off,design-scope-only,gate records carry-forward,synthetic roadmap item
+RM-0039,P2 Discover,wave_6,governance sequencing,Data Governance Lead,model monitoring plan,blocked pending owner,no invented value,synthetic roadmap item
+RM-0040,P3 Design,wave_6,platform integration,VP Value Based Care,data-quality gate,decision-ready,coverage readout,synthetic roadmap item
+RM-0041,P4 Mobilize,wave_6,benefit proof,Chief Quality Officer,clinical owner named,pilot-ready,artifact cites evidence,synthetic roadmap item
+RM-0042,P5 Govern,wave_6,care gap closure,VP Application Services,interface monitoring,design-scope-only,gate records carry-forward,synthetic roadmap item

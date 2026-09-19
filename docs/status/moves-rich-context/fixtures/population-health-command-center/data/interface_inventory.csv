@@ -1,0 +1,87 @@
+interface_id,source_system_id,target_system_id,protocol,channel_count,source_control_state,monitoring_state,region_scope,phi_class,evidence_note
+INT-0001,SYS-0006,SYS-0012,FHIR,4,not_versioned,not_monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0002,SYS-0011,SYS-0023,X12,7,not_versioned,not_monitored,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0003,SYS-0016,SYS-0034,SFTP,1,not_versioned,not_monitored,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0004,SYS-0021,SYS-0045,API,4,not_versioned,not_monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0005,SYS-0026,SYS-0056,flat-file,7,not_versioned,not_monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0006,SYS-0031,SYS-0067,HL7v2,1,not_versioned,not_monitored,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0007,SYS-0036,SYS-0078,FHIR,4,not_versioned,not_monitored,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0008,SYS-0041,SYS-0089,X12,7,not_versioned,not_monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0009,SYS-0046,SYS-0100,SFTP,1,not_versioned,not_monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0010,SYS-0051,SYS-0111,API,4,not_versioned,not_monitored,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0011,SYS-0056,SYS-0002,flat-file,7,not_versioned,not_monitored,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0012,SYS-0061,SYS-0013,HL7v2,1,not_versioned,not_monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0013,SYS-0066,SYS-0024,FHIR,4,not_versioned,not_monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0014,SYS-0071,SYS-0035,X12,7,not_versioned,not_monitored,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0015,SYS-0076,SYS-0046,SFTP,1,not_versioned,not_monitored,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0016,SYS-0081,SYS-0057,API,4,not_versioned,not_monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0017,SYS-0086,SYS-0068,flat-file,7,not_versioned,not_monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0018,SYS-0091,SYS-0079,HL7v2,1,not_versioned,not_monitored,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0019,SYS-0096,SYS-0090,FHIR,4,not_versioned,not_monitored,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0020,SYS-0101,SYS-0101,X12,7,not_versioned,not_monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0021,SYS-0106,SYS-0112,SFTP,1,not_versioned,not_monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0022,SYS-0111,SYS-0003,API,4,not_versioned,not_monitored,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0023,SYS-0116,SYS-0014,flat-file,7,not_versioned,not_monitored,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0024,SYS-0001,SYS-0025,HL7v2,1,not_versioned,not_monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0025,SYS-0006,SYS-0036,FHIR,4,not_versioned,not_monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0026,SYS-0011,SYS-0047,X12,7,not_versioned,not_monitored,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0027,SYS-0016,SYS-0058,SFTP,1,not_versioned,not_monitored,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0028,SYS-0021,SYS-0069,API,4,not_versioned,not_monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0029,SYS-0026,SYS-0080,flat-file,7,not_versioned,not_monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0030,SYS-0031,SYS-0091,HL7v2,1,not_versioned,not_monitored,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0031,SYS-0036,SYS-0102,FHIR,4,not_versioned,not_monitored,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0032,SYS-0041,SYS-0113,X12,7,not_versioned,not_monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0033,SYS-0046,SYS-0004,SFTP,1,not_versioned,not_monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0034,SYS-0051,SYS-0015,API,4,not_versioned,monitored,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0035,SYS-0056,SYS-0026,flat-file,7,not_versioned,partial,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0036,SYS-0061,SYS-0037,HL7v2,1,not_versioned,monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0037,SYS-0066,SYS-0048,FHIR,4,not_versioned,monitored,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0038,SYS-0071,SYS-0059,X12,7,not_versioned,partial,enterprise,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0039,SYS-0076,SYS-0070,SFTP,1,not_versioned,monitored,design_scope,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0040,SYS-0081,SYS-0081,API,4,not_versioned,monitored,metro,operations_only,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0041,SYS-0086,SYS-0092,flat-file,7,not_versioned,partial,regional,phi,synthetic interface inventory; 41 of 86 channels are intentionally unversioned
+INT-0042,SYS-0091,SYS-0103,HL7v2,1,versioned,monitored,enterprise,phi,synthetic interface inventory
+INT-0043,SYS-0096,SYS-0114,FHIR,4,versioned,monitored,design_scope,phi,synthetic interface inventory
+INT-0044,SYS-0101,SYS-0005,X12,7,versioned,partial,metro,operations_only,synthetic interface inventory
+INT-0045,SYS-0106,SYS-0016,SFTP,1,versioned,monitored,regional,phi,synthetic interface inventory
+INT-0046,SYS-0111,SYS-0027,API,4,versioned,monitored,enterprise,phi,synthetic interface inventory
+INT-0047,SYS-0116,SYS-0038,flat-file,7,versioned,partial,design_scope,phi,synthetic interface inventory
+INT-0048,SYS-0001,SYS-0049,HL7v2,1,versioned,monitored,metro,operations_only,synthetic interface inventory
+INT-0049,SYS-0006,SYS-0060,FHIR,4,versioned,monitored,regional,phi,synthetic interface inventory
+INT-0050,SYS-0011,SYS-0071,X12,7,versioned,partial,enterprise,phi,synthetic interface inventory
+INT-0051,SYS-0016,SYS-0082,SFTP,1,versioned,monitored,design_scope,phi,synthetic interface inventory
+INT-0052,SYS-0021,SYS-0093,API,4,versioned,monitored,metro,operations_only,synthetic interface inventory
+INT-0053,SYS-0026,SYS-0104,flat-file,7,versioned,partial,regional,phi,synthetic interface inventory
+INT-0054,SYS-0031,SYS-0115,HL7v2,1,versioned,monitored,enterprise,phi,synthetic interface inventory
+INT-0055,SYS-0036,SYS-0006,FHIR,4,versioned,monitored,design_scope,phi,synthetic interface inventory
+INT-0056,SYS-0041,SYS-0017,X12,7,versioned,partial,metro,operations_only,synthetic interface inventory
+INT-0057,SYS-0046,SYS-0028,SFTP,1,versioned,monitored,regional,phi,synthetic interface inventory
+INT-0058,SYS-0051,SYS-0039,API,4,versioned,monitored,enterprise,phi,synthetic interface inventory
+INT-0059,SYS-0056,SYS-0050,flat-file,7,versioned,partial,design_scope,phi,synthetic interface inventory
+INT-0060,SYS-0061,SYS-0061,HL7v2,1,versioned,monitored,metro,operations_only,synthetic interface inventory
+INT-0061,SYS-0066,SYS-0072,FHIR,4,versioned,monitored,regional,phi,synthetic interface inventory
+INT-0062,SYS-0071,SYS-0083,X12,7,versioned,partial,enterprise,phi,synthetic interface inventory
+INT-0063,SYS-0076,SYS-0094,SFTP,1,versioned,monitored,design_scope,phi,synthetic interface inventory
+INT-0064,SYS-0081,SYS-0105,API,4,versioned,monitored,metro,operations_only,synthetic interface inventory
+INT-0065,SYS-0086,SYS-0116,flat-file,7,versioned,partial,regional,phi,synthetic interface inventory
+INT-0066,SYS-0091,SYS-0007,HL7v2,1,versioned,monitored,enterprise,phi,synthetic interface inventory
+INT-0067,SYS-0096,SYS-0018,FHIR,4,versioned,monitored,design_scope,phi,synthetic interface inventory
+INT-0068,SYS-0101,SYS-0029,X12,7,versioned,partial,metro,operations_only,synthetic interface inventory
+INT-0069,SYS-0106,SYS-0040,SFTP,1,versioned,monitored,regional,phi,synthetic interface inventory
+INT-0070,SYS-0111,SYS-0051,API,4,versioned,monitored,enterprise,phi,synthetic interface inventory
+INT-0071,SYS-0116,SYS-0062,flat-file,7,versioned,partial,design_scope,phi,synthetic interface inventory
+INT-0072,SYS-0001,SYS-0073,HL7v2,1,versioned,monitored,metro,operations_only,synthetic interface inventory
+INT-0073,SYS-0006,SYS-0084,FHIR,4,versioned,monitored,regional,phi,synthetic interface inventory
+INT-0074,SYS-0011,SYS-0095,X12,7,versioned,partial,enterprise,phi,synthetic interface inventory
+INT-0075,SYS-0016,SYS-0106,SFTP,1,versioned,monitored,design_scope,phi,synthetic interface inventory
+INT-0076,SYS-0021,SYS-0117,API,4,versioned,monitored,metro,operations_only,synthetic interface inventory
+INT-0077,SYS-0026,SYS-0008,flat-file,7,versioned,partial,regional,phi,synthetic interface inventory
+INT-0078,SYS-0031,SYS-0019,HL7v2,1,versioned,monitored,enterprise,phi,synthetic interface inventory
+INT-0079,SYS-0036,SYS-0030,FHIR,4,versioned,monitored,design_scope,phi,synthetic interface inventory
+INT-0080,SYS-0041,SYS-0041,X12,7,versioned,partial,metro,operations_only,synthetic interface inventory
+INT-0081,SYS-0046,SYS-0052,SFTP,1,versioned,monitored,regional,phi,synthetic interface inventory
+INT-0082,SYS-0051,SYS-0063,API,4,versioned,monitored,enterprise,phi,synthetic interface inventory
+INT-0083,SYS-0056,SYS-0074,flat-file,7,versioned,partial,design_scope,phi,synthetic interface inventory
+INT-0084,SYS-0061,SYS-0085,HL7v2,1,versioned,monitored,metro,operations_only,synthetic interface inventory
+INT-0085,SYS-0066,SYS-0096,FHIR,4,versioned,monitored,regional,phi,synthetic interface inventory
+INT-0086,SYS-0071,SYS-0107,X12,7,versioned,partial,enterprise,phi,synthetic interface inventory
