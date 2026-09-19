@@ -19,6 +19,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import ts from 'typescript';
 
 try {
   const env = fs.readFileSync(path.join(process.cwd(), '.env.local'), 'utf-8');
@@ -86,20 +87,28 @@ describe('Gate rule sequence · pure logic', () => {
     expect(r56HardKeys).toContain('value_measurement_contract_signed_off');
   });
 
-  it('design gate checks design_spec, design, and design_brief aliases', async () => {
-    // Validate governance.ts line 125 covers all three aliases
-    const { default: governanceSrc } = await import('fs').then((f) =>
-      Promise.resolve({
-        default: f.readFileSync(
-          path.join(process.cwd(), 'src/lib/programs/governance.ts'),
-          'utf-8',
-        ),
-      }),
+  it('design gate keeps every canonical design deliverable alias', () => {
+    const governancePath = path.join(process.cwd(), 'src/lib/programs/governance.ts');
+    const governanceSrc = fs.readFileSync(governancePath, 'utf-8');
+    const sourceFile = ts.createSourceFile(
+      governancePath,
+      governanceSrc,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
     );
+    const stringLiterals = new Set<string>();
+    const visit = (node: ts.Node): void => {
+      if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+        stringLiterals.add(node.text);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
 
-    expect(governanceSrc).toContain("'design_spec'");
-    expect(governanceSrc).toContain("'design'");
-    expect(governanceSrc).toContain("'design_brief'");
+    expect(stringLiterals.has('design_spec')).toBe(true);
+    expect(stringLiterals.has('design')).toBe(true);
+    expect(stringLiterals.has('design_brief')).toBe(true);
   });
 
   it('tool registrations include all 4 lifecycle tools', async () => {
