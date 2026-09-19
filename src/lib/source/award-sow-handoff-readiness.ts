@@ -19,8 +19,6 @@ const SOURCE_MODULES_USED = [
 const EXECUTED_AGREEMENT_OR_FINAL_SOW_PATTERNS = [
   /\bsigned (?:contract|agreement|statement of work|sow)\b/,
   /\bexecuted (?:contract|agreement|statement of work|sow)\b/,
-  /\bsignature packet\b/,
-  /\bfinal (?:statement of work|sow)\b/,
 ] as const;
 
 const NON_EXECUTED_AGREEMENT_PATTERNS = [

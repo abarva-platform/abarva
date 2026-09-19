@@ -196,6 +196,31 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
     );
   });
 
+  it.each([
+    ["Signature packet", "Signature packet prepared for routing."],
+    ["Final SOW", "Final statement of work ready for signature."],
+  ])("does not treat a locked %s as executed evidence", (title, summary) => {
+    const readiness = buildSourceAwardSowHandoffReadiness({
+      generatedAt: GENERATED_AT,
+      selectionReadiness: selectionReadiness(),
+      event: {
+        id: "event-stage08-pre-execution",
+        name: "Pre-execution Test Event",
+        currentStageKey: "transition",
+        currentStageLabel: "Transition",
+        stages: [
+          stage("executive_decision", "complete"),
+          stage("selection", "complete"),
+          stage("transition", "active", "ready"),
+        ],
+        artifacts: [artifact("d28_contract_record", title, "locked", summary)],
+      },
+    });
+
+    expect(readiness.readyForContract360Handoff).toBe(false);
+    expect(readiness.readinessStatus).toBe("blocked_executed_agreement_sow");
+  });
+
   it("does not treat stage position as approval when selection readiness is blocked", () => {
     const readiness = buildSourceAwardSowHandoffReadiness({
       generatedAt: GENERATED_AT,

@@ -265,3 +265,10 @@ jobs:
       # added here is not in the same blind spot. See backlog items 26 / 92.
       - name: Exercise Source canvas front-surface suites
         run: npx jest src/components/source/canvas/__tests__ --runInBand
+
+      - name: Exercise Source award and SOW handoff readiness
+        run: >-
+          npx jest --runTestsByPath
+          src/__tests__/integration/source/source-award-sow-handoff-readiness.test.ts
+          src/__tests__/integration/source/source-award-sow-handoff-readiness-panel.test.ts
+          --runInBand

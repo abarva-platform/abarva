@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source Stage 08 readiness now refuses to treat a generic Contract Record artifact as proof of an executed agreement or final SOW. A final artifact must carry explicit signed, executed, or final SOW evidence, and pending-signature, unsigned, blocked, missing, or gap-log language keeps Contract 360 handoff blocked.
+Source Stage 08 readiness now refuses to treat a generic Contract Record, signature packet, or unsigned final SOW as proof of execution. A final artifact must carry explicit signed or executed agreement/SOW evidence, and pending-signature, unsigned, blocked, missing, or gap-log language keeps Contract 360 handoff blocked.
 
 ## Layer Impact
 
@@ -28,9 +28,10 @@ Layer 4 Products: tightens deterministic Source readiness logic and rendered Tra
 
 ## Changes Included
 
-- Updates `src/lib/source/award-sow-handoff-readiness.ts` so executed agreement/SOW readiness requires explicit signed, executed, or final SOW evidence and fails closed on pending-signature or gap language.
+- Updates `src/lib/source/award-sow-handoff-readiness.ts` so executed agreement/SOW readiness requires explicit signed or executed evidence and fails closed on preparatory signature packets, unsigned final SOWs, pending-signature, or gap language.
 - Adds focused builder coverage in `src/__tests__/integration/source/source-award-sow-handoff-readiness.test.ts`.
 - Adds rendered workspace coverage in `src/__tests__/integration/source/source-award-sow-handoff-readiness-panel.test.ts`.
+- Registers both integration suites in the Source control workflow so changed controls have an executable CI owner.
 - Updates the local execution backlog and stage map for the verified Stage 08 award/SOW and Contract 360 handoff gaps.
 
 ## QA / Validation
@@ -39,7 +40,9 @@ Layer 4 Products: tightens deterministic Source readiness logic and rendered Tra
 - `node build-execution-queue.mjs` — passed after tracker updates; regenerated `EXECUTION_QUEUE.md`.
 - `npx jest --runTestsByPath src/__tests__/integration/source/source-award-sow-handoff-readiness.test.ts src/__tests__/integration/source/source-award-sow-handoff-readiness-panel.test.ts` — failed before the implementation on the pending-signature Contract Record case.
 - Mutation proof: temporarily disabling the negative-signal discriminator made the same focused Jest suite fail on the builder and rendered workspace tests.
-- `npx jest --runTestsByPath src/__tests__/integration/source/source-award-sow-handoff-readiness.test.ts src/__tests__/integration/source/source-award-sow-handoff-readiness-panel.test.ts` — passed after restoring the discriminator, 9 tests.
+- Mutation proof: temporarily re-allowing `signature packet` and `final SOW` as execution signals produced three focused failures across the builder and rendered workspace suites.
+- `npx jest --runTestsByPath src/__tests__/integration/source/source-award-sow-handoff-readiness.test.ts src/__tests__/integration/source/source-award-sow-handoff-readiness-panel.test.ts --runInBand` — passed after restoring the fail-closed discriminator, 12 tests.
+- `node scripts/quality/check-integration-ci-visibility.mjs --base origin/main` — passed; both changed integration suites have an executable workflow owner.
 - `npx eslint src/lib/source/award-sow-handoff-readiness.ts src/__tests__/integration/source/source-award-sow-handoff-readiness.test.ts src/__tests__/integration/source/source-award-sow-handoff-readiness-panel.test.ts` — passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 npm run typecheck` — passed.
 - `npm run release:check` — passed.

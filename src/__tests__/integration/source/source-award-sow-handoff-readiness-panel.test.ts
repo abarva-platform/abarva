@@ -248,4 +248,29 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
     );
     expect(html).toContain("Handoff ready: no");
   });
+
+  it("keeps a locked but unsigned signature packet blocked in the rendered workspace", () => {
+    const html = renderToStaticMarkup(
+      createElement(SourceActiveStageWorkspace, {
+        event: transitionEvent([
+          {
+            id: "d28_contract_record",
+            title: "Signature packet",
+            kind: "artifact_packet",
+            status: "locked",
+            summary: "Signature packet prepared for routing.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+        ]),
+        missionReport: {
+          recommendedNextAction: "Prepare handoff.",
+        } as SourceAgentMissionReport,
+        missionPreviewMissions: [],
+      }),
+    );
+
+    expect(html).toContain("Executed agreement/SOW blocked");
+    expect(html).toContain("Handoff ready: no");
+  });
 });
