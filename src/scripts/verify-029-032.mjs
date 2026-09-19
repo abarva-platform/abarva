@@ -14,6 +14,9 @@ for (const t of tables) {
 }
 console.log('\nMigration 029-032 tables: ' + ok + '/' + tables.length + ' present · ' + fail + ' missing');
 
-// Also verify 025 rename worked
+// Also verify 025 rename worked. Migration 025 renamed subject_type 'maestro'
+// to 'user' and then constrained the column so the old value cannot recur, so
+// this query is meant to be unsatisfiable and zero rows is the passing answer.
+// enum-reachability-waiver: residual check for migration 025; zero rows is the pass
 const { data, error } = await sb.from('relationship_notes').select('subject_type').eq('subject_type', 'maestro').limit(1);
 console.log('Migration 025 · residual subject_type="maestro" rows: ' + (data?.length ?? '?') + (error ? ' · ' + error.message : ''));
