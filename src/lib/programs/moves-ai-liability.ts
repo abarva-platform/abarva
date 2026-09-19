@@ -1,13 +1,18 @@
 import {
   AI_DECISION_SUPPORT_WATERMARK,
   HUMAN_DECISION_ATTESTATION_TEXT,
+  HUMAN_DECISION_RATIONALE_MIN_CHARS,
   buildAiDecisionEvidencePacket,
   validateAiDecisionEvidencePacket,
   type AiDecisionEvidencePacket,
   type AiDecisionOwner,
 } from "@/lib/ai-liability/human-decision-controls";
 
-export const MOVES_HUMAN_RATIONALE_MIN_CHARS = 20;
+/**
+ * Moves states the minimum its UI counts against; the number itself is the
+ * shared one, so the surface and the shared validator cannot drift apart.
+ */
+export const MOVES_HUMAN_RATIONALE_MIN_CHARS = HUMAN_DECISION_RATIONALE_MIN_CHARS;
 
 export interface MovesPhaseDecisionInput {
   readonly programId: string;
@@ -55,10 +60,11 @@ export function validateMovesHumanRationale(value: unknown): string | null {
 
 /**
  * The rationale is the only part of an evidence packet a human wrote. Every UI
- * and route that builds one already refuses a rationale too short to audit, but
- * `validateAiDecisionEvidencePacket` never reads the field, so a packet built
- * around a one-word or missing rationale reported `passed`. Enforce it where the
- * packet is assembled, so a future caller cannot record one by skipping a UI.
+ * and route that builds one already refuses a rationale too short to audit.
+ * `validateAiDecisionEvidencePacket` now reads the field too, for any packet
+ * that records a human decision, so this throw is the earlier and more
+ * specific of two checks rather than the only one. It is kept because it names
+ * the surface in the error and fails at assembly, before a packet exists.
  */
 function requireAuditableHumanRationale(value: unknown, context: string): string {
   const rationale = normalizeMovesHumanRationale(value);
