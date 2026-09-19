@@ -80,10 +80,27 @@ const DEBUG_OR_PATH_RE =
 // literal examples CITATION_INSTRUCTION ships, so the two cannot drift apart
 // again.
 const SOURCE_KEY_RE = /\b[A-Z]\d{1,3}_[a-z0-9]+(?:_[a-z0-9]+)+\b/;
-const LABEL_READ_RE = /(?:^|\n)\s*Read:/;
-const LABEL_EVIDENCE_RE = /(?:^|\n)\s*Evidence:/;
-const LABEL_NEXT_MOVE_RE = /(?:^|\n)\s*Next move:/i;
-const LABEL_NEXT_RE = /(?:^|\n)\s*Next:/i;
+// The four scaffolding labels were each written as `(?:^|\n)\s*Label:`.
+// `\s` matches spaces, tabs and newlines; it matches neither a list marker nor
+// an emphasis marker, so every decorated form of the same label passed the
+// gate — including `- Next:`, which is the exact form #4038 removed from the
+// product and which this check exists to stop from returning.
+//
+// Decoration is markdown dress on the same label token, so it is matched here
+// rather than four patterns being kept in step by hand. A blockquote `>` is
+// deliberately NOT decoration: a `>` line is quoted material — a clause from a
+// vendor's own document — and this gate returns 422 on four routes and forces
+// a degraded fallback on a fifth, so quoting a supplier's deadline must not
+// cost the user the whole answer. That exclusion is pinned by a case in
+// __tests__/visible-answer-contract.test.ts so it reads as a decision.
+const LINE_LABEL_DECORATION = String.raw`[ \t]*(?:[-*+]|\d{1,2}[.)])?[ \t]*(?:\*\*|__|\*|_)?[ \t]*`;
+const scaffoldingLabelPattern = (label: string, flags = "") =>
+  new RegExp(`(?:^|\\n)${LINE_LABEL_DECORATION}${label}:`, flags);
+
+const LABEL_READ_RE = scaffoldingLabelPattern("Read");
+const LABEL_EVIDENCE_RE = scaffoldingLabelPattern("Evidence");
+const LABEL_NEXT_MOVE_RE = scaffoldingLabelPattern("Next move", "i");
+const LABEL_NEXT_RE = scaffoldingLabelPattern("Next", "i");
 const TENANT_EVIDENCE_RE = /\btenant evidence\b/i;
 const SEMANTIC_PACKET_RE = /\bsemantic packet\b/i;
 const IMPLEMENTATION_ROWS_RE = /\brows\b/i;
