@@ -28,8 +28,7 @@
             "inlineNodes"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "Citation substitution happens inside react-markdown's component overrides, and react-markdown is mocked repo-wide to a passthrough because its ESM breaks next/jest's transform. No jsdom suite can prove a placeholder resolves to a pill. Covering it needs a suite that unmocks react-markdown, or one against @/lib/agent/markdownTokens directly. The limit is asserted in the wired suite so it cannot be mistaken for a product defect."
+            "path": "src/components/agent/__tests__/AgentResponse.citation-control.test.tsx"
           }
         },
         {

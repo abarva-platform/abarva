@@ -76,6 +76,14 @@ jobs:
       - name: Exercise agent response disclosure controls
         run: npx jest --runTestsByPath src/components/agent/__tests__/AgentResponse.controls.test.tsx --runInBand
 
+      # The `citation` control of the same surface. It is a separate suite
+      # because it needs `@/lib/agent/markdownRenderer` mocked, and the suite
+      # above deliberately runs with the repo-wide react-markdown passthrough
+      # so its four other controls are proven against the component as
+      # everything else renders it.
+      - name: Exercise agent response citation resolution
+        run: npx jest --runTestsByPath src/components/agent/__tests__/AgentResponse.citation-control.test.tsx --runInBand
+
       # Name-filtered: this suite also carries three assertions left red on
       # purpose (a pin-top mode with no control, and structured parts the
       # July refactor moved). Wiring the whole file would gate the catalog on

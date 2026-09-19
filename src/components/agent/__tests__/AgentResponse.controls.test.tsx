@@ -129,9 +129,14 @@ describe("agent response · disclosure controls", () => {
     // This is asserted rather than left implicit because the natural
     // assertion ("the pill rendered") would fail for a reason that has
     // nothing to do with the control, and the natural inverse ("the
-    // placeholder is visible") would look like a product defect. Covering
-    // the citation control needs a suite that unmocks react-markdown, or one
-    // against @/lib/agent/markdownTokens directly.
+    // placeholder is visible") would look like a product defect.
+    //
+    // The citation control is now covered, by the second of the two routes
+    // this comment used to name: `AgentResponse.citation-control.test.tsx`
+    // stands in for `@/lib/agent/markdownRenderer` and runs the real map
+    // builder through the real `@/lib/agent/markdownTokens` tokenizer. The
+    // assertion below still holds and is still worth keeping — it pins what
+    // THIS suite, running with the repo-wide passthrough, can and cannot say.
     expect(document.body.textContent ?? "").toContain(cite.placeholder);
     expect(document.querySelector('[data-mock="react-markdown"]')).toBeTruthy();
   });
