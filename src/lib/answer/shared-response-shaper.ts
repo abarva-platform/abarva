@@ -396,8 +396,11 @@ function replaceLabels(
  *
  * Exported because a second pass scrubs the same text: an agent answer is
  * shaped once as it streams (`shapeStreamingAgentTextForSurface`) and again
- * once it settles (`shapeAgentResponseForSurface`), and only the settled pass
- * reaches this shaper. The other pass rewrites the same identifier classes in
+ * once it settles (`shapeAgentResponseForSurface`). This shaper is authoritative
+ * for the stored/settled answer; the streaming repair is independently
+ * authoritative for transient chunks that can be visible before settlement.
+ * The redundancy is intentional because neither user-visible path can rely on
+ * the other having run. The streaming pass rewrites the same identifier classes in
  * `src/lib/agent/output-discipline/response-contract.ts`, which imports this
  * constant so the two cannot answer differently. They did: a bare UUID read as
  * "the referenced item" once settled and "the referenced record" while

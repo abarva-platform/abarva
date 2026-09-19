@@ -34,10 +34,11 @@ function stripRawEntityIds(text: string): string {
     .replace(BRACKETED_RAW_ID_REGEX, '')
     .replace(BARE_RAW_ENTITY_ID_REGEX, 'the cited pattern')
     .replace(/\bsignal\s*:\s*/gi, 'signal: ')
-    // The same wording the shared shaper uses. This pass runs on the streaming
-    // text, where the shaper has not run; on the settled text the shaper has
-    // already rewritten the UUID, so this replacement never fires there. Two
-    // literals meant a reader saw one wording arrive and the other replace it.
+    // This repair is authoritative for transient streaming chunks. The shared
+    // shaper separately owns the stored/settled answer. Their UUID scrubs are
+    // intentionally redundant because each path is independently user-visible;
+    // neither guard should be removed on the assumption that the other ran.
+    // Importing the shared wording keeps those independent passes consistent.
     .replace(BARE_UUID_REGEX, UNMAPPED_IDENTIFIER_PLACEHOLDER)
     // Match the settled shaper's punctuation cleanup. Without these rules, a
     // reader briefly sees a parenthesized or em-dash placeholder while the
