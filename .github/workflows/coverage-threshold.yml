@@ -35,6 +35,9 @@ jobs:
           --runInBand
           -t 'marks agent turns as AI drafts|shows a citation gap for substantive uncited agent text without evidence context|does not show a citation gap when the surface carries usable evidence context'
 
+      - name: Check the dock renders structured response parts
+        run: npx jest --runTestsByPath src/components/agent/__tests__/AgentDock.structured-parts.test.tsx --runInBand
+
       - name: Upload coverage summary
         if: always()
         uses: actions/upload-artifact@v7

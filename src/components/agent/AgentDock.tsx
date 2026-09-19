@@ -46,6 +46,7 @@ import { demoSafeClientText } from "@/lib/client-config";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
+import { AgentResponseParts } from "@/components/agent/AgentResponseParts";
 import { AILabel } from "@/components/abarva/AILabel";
 import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
 import { CitationGapNotice } from "./CitationGapNotice";
@@ -399,7 +400,7 @@ export interface ChatMessage {
   id: string;
   role: "agent" | "user";
   body: string;
-  /** Optional structured UI parts, used by Source/aVa for tables and charts. */
+  /** Optional structured UI parts rendered beneath the assistant prose. */
   parts?: AgentResponsePart[];
   /** Optional createdAt for byline rendering. */
   at?: string;
@@ -1337,14 +1338,18 @@ export function AgentDock(props: AgentDockProps) {
                   }
                 >
                   {turn.role === "agent" ? (
-                    <AgentMarkdown
-                      text={visibleAgentDockBody(
-                        surface,
-                        turn.body,
-                        turn.agentAnswer,
-                        preserveVisibleText,
-                      )}
-                    />
+                    turn.parts?.length ? (
+                      <AgentResponseParts parts={turn.parts} />
+                    ) : (
+                      <AgentMarkdown
+                        text={visibleAgentDockBody(
+                          surface,
+                          turn.body,
+                          turn.agentAnswer,
+                          preserveVisibleText,
+                        )}
+                      />
+                    )
                   ) : (
                     turn.body
                   )}
