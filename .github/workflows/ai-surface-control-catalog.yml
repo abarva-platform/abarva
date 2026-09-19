@@ -19,7 +19,12 @@ jobs:
   ai-surface-control-catalog:
     name: AI surface control catalog
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Raised from 5 with the Programs unit suites (T-004). The five most recent
+    # runs of this job took 135s, 138s, 147s, 218s and 281s against the old
+    # 300s ceiling, so the job was already finishing within seconds of a
+    # timeout on its slowest runs and one more step would have tipped it into
+    # failing for a reason that has nothing to do with the controls it guards.
+    timeout-minutes: 12
 
     steps:
       - name: Checkout
@@ -211,6 +216,31 @@ jobs:
           src/lib/programs/__tests__/pattern-authority.test.ts
           src/lib/programs/__tests__/program-pattern-writer-guards.test.ts
           --runInBand
+
+      # Not a catalog control. `src/lib/programs/__tests__` holds 85 suites and
+      # a workflow reached SIX of them — three catalog controls above and the
+      # three pattern-authority suites, each named one file at a time as it
+      # became somebody's item. The other 79 ran nowhere, and one of them had
+      # been red since 2026-08-06: it pinned a tenant display label that a
+      # deliberate rename changed four days later, and nothing in the
+      # repository could report it for the 44 days since. It is repaired in
+      # this change by deriving the expectation from the exported vocabulary
+      # rather than pinning the literal.
+      #
+      # Wired as a DIRECTORY, like the sibling `src/lib/agent/tools/__tests__`:
+      # a directory named once covers the suites nobody has written yet, which
+      # is the half file-by-file wiring can never cover. Measured on
+      # `fbe56c123`: 85 suites, 770 tests, 11.8s from a cleared jest cache.
+      # `src/__tests__/behaviors/programs-unit-directory-ci-coverage.test.ts`
+      # holds this step in place through the census's own resolver.
+      #
+      # The six suites above now run twice in this job. Naming them is what
+      # maps a catalog control to the step that exercises it, so the duplicate
+      # execution is the cheaper half of that trade — the same one taken for
+      # `admin-context-uploads-tabs.test.tsx` in `integration-suites.yml`.
+      # See backlog item T-004.
+      - name: Exercise the Programs unit suites
+        run: npx jest src/lib/programs/__tests__ --runInBand
 
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
