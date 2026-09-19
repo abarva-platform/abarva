@@ -73,6 +73,7 @@ function makeArtifactState(
 function makeGateCriterion(
   criterionId: string,
   state: SourceEventGateCriterion["state"] = "met",
+  overrides: Partial<SourceEventGateCriterion> = {},
 ): SourceEventGateCriterion {
   return {
     id: `gc-${criterionId}`,
@@ -89,12 +90,14 @@ function makeGateCriterion(
     waiverApprovalId: null,
     createdAt: GENERATED_AT,
     updatedAt: GENERATED_AT,
+    ...overrides,
   } as SourceEventGateCriterion;
 }
 
 function makeEvidence(
   requirementId: string,
   state: SourceEventEvidence["currentState"] = "Available",
+  overrides: Partial<SourceEventEvidence> = {},
 ): SourceEventEvidence {
   return {
     id: `ev-${requirementId}`,
@@ -108,6 +111,7 @@ function makeEvidence(
     lastSyncedAt: GENERATED_AT,
     createdAt: GENERATED_AT,
     updatedAt: GENERATED_AT,
+    ...overrides,
   } as SourceEventEvidence;
 }
 
@@ -428,6 +432,32 @@ describe("Source Deal Pack · assemble-deal-pack", () => {
       GENERATED_AT,
     );
     expect(html).toContain("Not recorded — seed gap");
+  });
+
+  it("renders Value as Stage 11 and Transition ledger rows as Stage 10", async () => {
+    const fixture = firstCapitalFixture();
+    fixture.ctx.event.currentStageKey = "value";
+    fixture.ctx.evidence = [
+      makeEvidence("value-ledger", "Available", { stage: "value" }),
+    ];
+    fixture.ctx.gateCriteria = [
+      makeGateCriterion("transition-ready", "met", {
+        fromStage: "transition",
+        toStage: "value",
+      }),
+    ];
+
+    const { html } = await assembleDealPack(fixture.ctx, GENERATED_AT);
+
+    expect(html).toContain("Recommendation pending — Stage 11");
+    expect(html).toContain("Stage 11 · Value");
+    expect(html).toMatch(
+      /<td>Stage 11<\/td><td>value-ledger<\/td><td>d05_scope_memo<\/td>/,
+    );
+    expect(html).toMatch(
+      /<td>Stage 10<\/td><td>transition-ready<\/td><td>met<\/td>/,
+    );
+    expect(html).not.toContain("Recommendation pending — Stage 7");
   });
 
   it("uses client-final File Cabinet content instead of a stale generated artifact-state body", async () => {

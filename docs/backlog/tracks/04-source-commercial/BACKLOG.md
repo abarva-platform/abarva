@@ -178,6 +178,13 @@ Proof discipline:
   surfaces.
 - Auth blockers must be reported as auth-blocked, not product-passed.
 
+Current narrow claim — 2026-09-19:
+
+- SRC80 is limited to Source export stage-order consistency: the CXO narrative
+  report and Deal Pack builders must resolve shared Source stage keys through
+  one authoritative lifecycle map. This does not decide award-language policy,
+  does not add a renderer-only award gate, and does not mutate data.
+
 Latest proof result after PR #6366:
 
 - Deployed proof SHA: `58a697259c5b28756ce51cbba3ee1c7ee7766973`.

@@ -4,6 +4,7 @@ import type {
   DealPackArtifact,
   DealPackInput,
 } from "../deal-pack/stage-sections";
+import { sourceStagePresentationFor } from "../../constants";
 import {
   getSourceArtifactStandard,
   type SourceArtifactKind,
@@ -87,7 +88,8 @@ export function buildSourceCxoNarrativeReport(
   const evidenceCount = input.evidence.length;
   const gateCount = input.gateCriteria.length;
   const valueLabel = fmtUsd(input.estimatedValueUsd);
-  const stageLabel = `Stage ${stageNumberFor(input.currentStageKey)} · ${stageTitleFor(input.currentStageKey)}`;
+  const currentStage = sourceStagePresentationFor(input.currentStageKey);
+  const stageLabel = `Stage ${currentStage.number} · ${currentStage.label}`;
   const renewal = findStructured(input, "renewal-decision");
   const tco = findStructured(input, "tco-iceberg");
   const scorecard = findStructured(input, "scorecard");
@@ -933,41 +935,6 @@ function statusMetric(
 ): SourceCxoMetric["status"] {
   if (!artifact || artifact.kind === "missing") return "bad";
   return artifact.bodyIsAuthored ? "good" : "warn";
-}
-
-function stageNumberFor(stageKey: DealPackInput["currentStageKey"]): number {
-  switch (stageKey) {
-    case "strategy":
-      return 1;
-    case "scope":
-    case "rfp":
-      return 3;
-    case "responses":
-    case "pricing":
-      return 4;
-    case "evaluation":
-    case "bafo":
-    case "executive_decision":
-    case "selection":
-      return 5;
-    case "transition":
-    case "value":
-      return 7;
-    default:
-      return 1;
-  }
-}
-
-function stageTitleFor(stageKey: DealPackInput["currentStageKey"]): string {
-  const n = stageNumberFor(stageKey);
-  const map: Record<number, string> = {
-    1: "Sourcing Strategy",
-    3: "Scope & RFP",
-    4: "Pricing & TCO",
-    5: "Evaluation / BAFO / Decision",
-    7: "SRM & Renewal",
-  };
-  return map[n] ?? "Sourcing Strategy";
 }
 
 function fmtUsd(n: number | null | undefined): string {
