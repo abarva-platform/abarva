@@ -4,7 +4,10 @@ import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceA
 import { SourceActiveStageWorkspace } from "@/components/source/SourceActiveStageWorkspace";
 import type { SourceAgentMissionReport } from "@/lib/source/agent-mission-report";
 import type { SourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness-types";
-import type { SourcingEventDetail } from "@/lib/source/types";
+import type {
+  SourceArtifactSummary,
+  SourcingEventDetail,
+} from "@/lib/source/types";
 
 jest.mock("@/components/source/SourceScopeStageWorkspace", () => ({
   SourceScopeStageWorkspace: () =>
@@ -69,7 +72,9 @@ function readiness(): SourceAwardSowHandoffReadiness {
   };
 }
 
-function transitionEvent(): SourcingEventDetail {
+function transitionEvent(
+  artifacts: SourceArtifactSummary[] = [],
+): SourcingEventDetail {
   return {
     id: "event-stage08",
     code: "SRC-08",
@@ -142,7 +147,7 @@ function transitionEvent(): SourcingEventDetail {
       },
     ],
     alerts: [],
-    artifacts: [],
+    artifacts,
     scorecard: {
       decisionOwner: "CPO",
       reviewCadence: "Weekly",
@@ -195,5 +200,52 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
     expect(html).toContain(
       "Executed agreement or SOW evidence is not approved/locked",
     );
+  });
+
+  it("keeps pending-signature contract records blocked in the rendered transition workspace", () => {
+    const html = renderToStaticMarkup(
+      createElement(SourceActiveStageWorkspace, {
+        event: transitionEvent([
+          {
+            id: "d27_selection_memo",
+            title: "Selection memo",
+            kind: "decision_memo",
+            status: "approved",
+            summary: "Selection memo.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+          {
+            id: "d24_decision_brief",
+            title: "Executive decision brief",
+            kind: "decision_memo",
+            status: "approved",
+            summary: "Executive approval.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+          {
+            id: "d28_contract_record",
+            title: "Contract record pending signature gap log",
+            kind: "artifact_packet",
+            status: "locked",
+            summary:
+              "Contract-ready pending signature; signed contract not uploaded; final SOW missing.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+        ]),
+        missionReport: {
+          recommendedNextAction: "Prepare handoff.",
+        } as SourceAgentMissionReport,
+        missionPreviewMissions: [],
+      }),
+    );
+
+    expect(html).toContain("Executed agreement/SOW blocked");
+    expect(html).toContain(
+      "Executed agreement or SOW evidence is not approved/locked",
+    );
+    expect(html).toContain("Handoff ready: no");
   });
 });

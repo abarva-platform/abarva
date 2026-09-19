@@ -51,12 +51,17 @@ function stage(key: SourceStageKey, status: string, gateStatus = "approved") {
   };
 }
 
-function artifact(id: string, title: string, status: SourceArtifactStatus) {
+function artifact(
+  id: string,
+  title: string,
+  status: SourceArtifactStatus,
+  summary = title,
+) {
   return {
     id,
     title,
     status,
-    summary: title,
+    summary,
     sourceCount: 1,
   };
 }
@@ -146,6 +151,49 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
       "Executed agreement or SOW evidence is not approved/locked in the event artifact record.",
     );
     expect(readiness.recommendedNextAction).toBe(readiness.blockers[0]);
+  });
+
+  it("does not treat a pending-signature contract record as executed agreement or SOW evidence", () => {
+    const readiness = buildSourceAwardSowHandoffReadiness({
+      generatedAt: GENERATED_AT,
+      selectionReadiness: selectionReadiness(),
+      event: {
+        id: "event-stage08-pending-signature",
+        name: "Pending Signature Test Event",
+        currentStageKey: "transition",
+        currentStageLabel: "Transition",
+        stages: [
+          stage("executive_decision", "complete"),
+          stage("selection", "complete"),
+          stage("transition", "active", "ready"),
+        ],
+        artifacts: [
+          artifact("d27_selection_memo", "Selection memo", "approved"),
+          artifact(
+            "d24_decision_brief",
+            "Executive decision brief",
+            "approved",
+          ),
+          artifact(
+            "d28_contract_record",
+            "Contract record pending signature gap log",
+            "locked",
+            "Contract-ready pending signature; signed contract not uploaded; final SOW missing.",
+          ),
+        ],
+      },
+    });
+
+    expect(readiness.readyForContract360Handoff).toBe(false);
+    expect(readiness.readinessStatus).toBe("blocked_executed_agreement_sow");
+    expect(
+      readiness.checkpoints.find(
+        (checkpoint) => checkpoint.key === "executed_agreement_sow",
+      )?.status,
+    ).toBe("blocked");
+    expect(readiness.blockers).toContain(
+      "Executed agreement or SOW evidence is not approved/locked in the event artifact record.",
+    );
   });
 
   it("does not treat stage position as approval when selection readiness is blocked", () => {

@@ -16,6 +16,26 @@ const SOURCE_MODULES_USED = [
   "artifact-status-strip",
 ] as const;
 
+const EXECUTED_AGREEMENT_OR_FINAL_SOW_PATTERNS = [
+  /\bsigned (?:contract|agreement|statement of work|sow)\b/,
+  /\bexecuted (?:contract|agreement|statement of work|sow)\b/,
+  /\bsignature packet\b/,
+  /\bfinal (?:statement of work|sow)\b/,
+] as const;
+
+const NON_EXECUTED_AGREEMENT_PATTERNS = [
+  /\bawaiting signature\b/,
+  /\bblocked\b/,
+  /\bcontract-ready pending signature\b/,
+  /\bfinal (?:statement of work|sow) missing\b/,
+  /\bgap log\b/,
+  /\bmissing final (?:statement of work|sow)\b/,
+  /\bnot signed\b/,
+  /\bpending (?:e-?signature|signature)\b/,
+  /\bsigned contract (?:has )?not (?:been )?uploaded\b/,
+  /\bunsigned\b/,
+] as const;
+
 function sortUnique(values: string[]): string[] {
   return Array.from(
     new Set(values.map((value) => value.trim()).filter(Boolean)),
@@ -48,6 +68,23 @@ function finalArtifacts(
     (artifact) =>
       artifactIsFinal(artifact.status) && artifactMatches(artifact, patterns),
   );
+}
+
+function finalExecutedAgreementOrSowArtifacts(
+  artifacts: readonly SourceAwardSowArtifactInput[],
+): SourceAwardSowArtifactInput[] {
+  return artifacts.filter((artifact) => {
+    if (!artifactIsFinal(artifact.status)) return false;
+
+    const text = artifactText(artifact);
+    if (NON_EXECUTED_AGREEMENT_PATTERNS.some((pattern) => pattern.test(text))) {
+      return false;
+    }
+
+    return EXECUTED_AGREEMENT_OR_FINAL_SOW_PATTERNS.some((pattern) =>
+      pattern.test(text),
+    );
+  });
 }
 
 function stageByKey(
@@ -135,14 +172,9 @@ export function buildSourceAwardSowHandoffReadiness(
     /\bdecision\b/,
     /\bsteward signoff\b/,
   ]);
-  const agreementArtifacts = finalArtifacts(event.artifacts, [
-    /\bd28_contract_record\b/,
-    /\bcontract record\b/,
-    /\bsigned contract\b/,
-    /\bexecuted agreement\b/,
-    /\bsow\b/,
-    /\bstatement of work\b/,
-  ]);
+  const agreementArtifacts = finalExecutedAgreementOrSowArtifacts(
+    event.artifacts,
+  );
   const handoffArtifacts = finalArtifacts(event.artifacts, [
     /\bd28_contract_record\b/,
     /\bd29_transition_plan\b/,
