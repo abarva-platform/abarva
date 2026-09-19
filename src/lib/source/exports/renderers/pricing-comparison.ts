@@ -11,9 +11,9 @@
 //   2. Submissions Index        — one row per vendor: submitted-at,
 //                                  completeness %, raw + normalized
 //                                  3-yr TCO, deviation count
-//   3. Pricing Comparison       — locked line items as rows; 3 cols per
-//                                  vendor (Unit / Extended / Δ vs
-//                                  cheapest). Annual total + delta row.
+//   3. Pricing Comparison       — locked line items as rows; 4 cols per
+//                                  vendor (Raw Unit / Normalized Unit /
+//                                  Normalized Extended / Δ vs cheapest).
 //   4. TCO Comparison           — Y1/Y2/Y3 + 3-yr cumulative per
 //                                  vendor; cheapest highlighted; range
 //                                  (max-min) row.
@@ -40,6 +40,20 @@ import type {
   PricingAssumption,
   PricingLineItem,
 } from './pricing-template';
+import {
+  evaluatePricingComparability,
+  type PricingComparabilityRecord,
+  type PricingComparabilityResult,
+  type PricingComparabilityValue,
+} from '@/lib/source/pricing-comparability-guard';
+
+export interface VendorPricingBasisValue {
+  currency?: string | null;
+  unit?: string | null;
+  period?: string | null;
+  quantity?: number | null;
+  scenario?: string | null;
+}
 
 /** A vendor's filled-in submission. Numeric fields come from parsing. */
 export interface VendorPricingSubmission {
@@ -49,6 +63,13 @@ export interface VendorPricingSubmission {
   submittedAt: string;
   /** Per-line unit prices, keyed by line item id. */
   unitPricesById: Record<string, number>;
+  /** Per-line buyer-normalized unit prices, keyed by line item id. */
+  normalizedUnitPricesById?: Record<string, number>;
+  /** Explicit pricing basis. Missing values block comparison and TCO claims. */
+  pricingBasis?: {
+    raw?: VendorPricingBasisValue;
+    normalized?: VendorPricingBasisValue;
+  };
   /** Optional per-line vendor notes, keyed by line item id. */
   vendorNotesById?: Record<string, string>;
   /** Free-form pricing notes (Sheet 5 of the template). */
@@ -146,7 +167,7 @@ export function buildPricingComparisonWorkbook(
   buildPricingComparisonSheet(workbook, payload);
   buildTcoComparisonSheet(workbook, payload);
   buildAssumptionDeviationsSheet(workbook, payload);
-  buildRecommendationSheet(workbook);
+  buildRecommendationSheet(workbook, evaluatePayloadComparability(payload));
 
   return workbook;
 }
@@ -163,28 +184,51 @@ function buildSubmissionsIndexSheet(
     { header: 'Submitted at', key: 'submittedAt', width: 22 },
     { header: 'Completeness (%)', key: 'completeness', width: 18 },
     { header: 'Raw annual total (USD)', key: 'rawAnnual', width: 24 },
-    { header: 'Raw 3-yr TCO (USD)', key: 'rawTco', width: 22 },
+    { header: 'Normalized annual total (USD)', key: 'normalizedAnnual', width: 28 },
+    { header: 'Comparable 3-yr TCO (USD)', key: 'normalizedTco', width: 28 },
     { header: 'Deviations flagged', key: 'deviations', width: 18 },
+    { header: 'Comparability', key: 'comparability', width: 18 },
+    { header: 'Blocking basis gaps', key: 'blockers', width: 56 },
   ];
   applyHeaderRow(sheet.getRow(1));
 
   const totalLineCount = payload.lineItems.length;
+  const comparability = evaluatePayloadComparability(payload);
+  const vendorBlockers = blockersByVendor(comparability);
   for (const sub of payload.submissions) {
     const filled = countFilledLines(sub, payload.lineItems);
-    const annualTotal = computeAnnualTotal(sub, payload.lineItems);
-    const tco = computeThreeYearTco(annualTotal, payload.escalator, payload.tcoYears);
+    const rawAnnualTotal = computeRawAnnualTotal(sub, payload.lineItems);
+    const normalizedAnnualTotal = computeNormalizedAnnualTotal(sub, payload.lineItems);
+    const isComparable =
+      comparability.status === 'comparable' &&
+      typeof normalizedAnnualTotal === 'number';
+    const tco = isComparable
+      ? computeThreeYearTco(normalizedAnnualTotal, payload.escalator, payload.tcoYears)
+      : null;
     const r = sheet.addRow({
       vendor: safeCell(sub.vendorName),
       submittedAt: safeCell(sub.submittedAt),
       completeness:
         totalLineCount === 0 ? 0 : Math.round((filled / totalLineCount) * 100),
-      rawAnnual: annualTotal,
-      rawTco: tco,
+      rawAnnual: rawAnnualTotal,
+      normalizedAnnual: normalizedAnnualTotal ?? '',
+      normalizedTco: tco ?? '',
       deviations: sub.assumptionDeviations.length,
+      comparability: isComparable ? 'Comparable' : 'Blocked',
+      blockers: safeCell(formatBlockerSummary(vendorBlockers.get(sub.vendorName) ?? [])),
     });
     r.getCell('rawAnnual').numFmt = '"$"#,##0';
-    r.getCell('rawTco').numFmt = '"$"#,##0';
+    r.getCell('normalizedAnnual').numFmt = '"$"#,##0';
+    r.getCell('normalizedTco').numFmt = '"$"#,##0';
     r.getCell('completeness').numFmt = '0';
+    r.getCell('blockers').alignment = { wrapText: true, vertical: 'top' };
+    if (!isComparable) {
+      r.getCell('comparability').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: SOURCE_XLSX.ERROR_FILL },
+      };
+    }
     if (sub.assumptionDeviations.length > 0) {
       r.getCell('deviations').fill = {
         type: 'pattern',
@@ -208,6 +252,7 @@ function buildPricingComparisonSheet(
   });
 
   const vendors = payload.submissions;
+  const comparability = evaluatePayloadComparability(payload);
   // Header row 1 (vendor labels) + row 2 (sub-headers).
   const headerRow1: ExcelJS.CellValue[] = ['', '', '', '', ''];
   const headerRow2: ExcelJS.CellValue[] = [
@@ -218,8 +263,8 @@ function buildPricingComparisonSheet(
     'Annual Qty',
   ];
   for (const v of vendors) {
-    headerRow1.push(v.vendorName, '', '');
-    headerRow2.push('Unit Price', 'Extended', 'Δ vs cheapest');
+    headerRow1.push(v.vendorName, '', '', '');
+    headerRow2.push('Raw Unit Price', 'Normalized Unit Price', 'Normalized Extended', 'Δ vs cheapest');
   }
   const r1 = sheet.addRow(headerRow1);
   const r2 = sheet.addRow(headerRow2);
@@ -227,8 +272,8 @@ function buildPricingComparisonSheet(
   applyHeaderRow(r2);
   // Merge each vendor's 3-cell header in row 1.
   for (let i = 0; i < vendors.length; i++) {
-    const startCol = 6 + i * 3;
-    const endCol = startCol + 2;
+    const startCol = 6 + i * 4;
+    const endCol = startCol + 3;
     const startAddr = sheet.getCell(1, startCol).address;
     const endAddr = sheet.getCell(1, endCol).address;
     sheet.mergeCells(`${startAddr}:${endAddr}`);
@@ -241,9 +286,10 @@ function buildPricingComparisonSheet(
   sheet.getColumn(4).width = 16;
   sheet.getColumn(5).width = 12;
   for (let i = 0; i < vendors.length; i++) {
-    sheet.getColumn(6 + i * 3).width = 14;
-    sheet.getColumn(7 + i * 3).width = 14;
-    sheet.getColumn(8 + i * 3).width = 14;
+    sheet.getColumn(6 + i * 4).width = 16;
+    sheet.getColumn(7 + i * 4).width = 20;
+    sheet.getColumn(8 + i * 4).width = 20;
+    sheet.getColumn(9 + i * 4).width = 18;
   }
 
   // One row per line item.
@@ -260,9 +306,11 @@ function buildPricingComparisonSheet(
     for (let v = 0; v < vendors.length; v++) {
       const sub = vendors[v]!;
       const unitPrice = sub.unitPricesById[item.id];
-      const unitColLetter = colLetter(6 + v * 3);
+      const normalizedUnitPrice = sub.normalizedUnitPricesById?.[item.id];
+      const normalizedUnitColLetter = colLetter(7 + v * 4);
       baseCells.push(typeof unitPrice === 'number' ? unitPrice : '');
-      baseCells.push({ formula: `IFERROR(E${rowNum}*${unitColLetter}${rowNum},"")` });
+      baseCells.push(typeof normalizedUnitPrice === 'number' ? normalizedUnitPrice : '');
+      baseCells.push({ formula: `IFERROR(E${rowNum}*${normalizedUnitColLetter}${rowNum},"")` });
       // Δ: percent above row-min extended price. Computed AFTER all
       // extended cells are placed; we patch the formula post-row.
       baseCells.push(''); // placeholder — patched below
@@ -280,16 +328,27 @@ function buildPricingComparisonSheet(
     r.getCell(3).alignment = { wrapText: true, vertical: 'top' };
     // Vendor cell formatting.
     for (let v = 0; v < vendors.length; v++) {
-      const unitColIndex = 6 + v * 3;
-      const extendedColIndex = 7 + v * 3;
-      const deltaColIndex = 8 + v * 3;
-      r.getCell(unitColIndex).numFmt = '"$"#,##0';
+      const rawUnitColIndex = 6 + v * 4;
+      const normalizedUnitColIndex = 7 + v * 4;
+      const extendedColIndex = 8 + v * 4;
+      const deltaColIndex = 9 + v * 4;
+      r.getCell(rawUnitColIndex).numFmt = '"$"#,##0';
+      r.getCell(normalizedUnitColIndex).numFmt = '"$"#,##0';
       r.getCell(extendedColIndex).numFmt = '"$"#,##0';
+      if (!comparability.comparisonAllowed) {
+        r.getCell(deltaColIndex).value = 'BLOCKED';
+        r.getCell(deltaColIndex).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: SOURCE_XLSX.ERROR_FILL },
+        };
+        continue;
+      }
       // Patch the delta formula now that we know the extended-cell row.
       // Build MIN() across extended cells in this row (one per vendor).
       const extendedAddrs: string[] = [];
       for (let w = 0; w < vendors.length; w++) {
-        extendedAddrs.push(`${colLetter(7 + w * 3)}${rowNum}`);
+        extendedAddrs.push(`${colLetter(8 + w * 4)}${rowNum}`);
       }
       const minRef = `MIN(${extendedAddrs.join(',')})`;
       const extendedSelf = `${colLetter(extendedColIndex)}${rowNum}`;
@@ -311,8 +370,8 @@ function buildPricingComparisonSheet(
     '',
   ];
   for (let v = 0; v < vendors.length; v++) {
-    const extendedColLetter = colLetter(7 + v * 3);
-    totalCells.push('');
+    const extendedColLetter = colLetter(8 + v * 4);
+    totalCells.push('', '');
     totalCells.push({
       formula: `SUM(${extendedColLetter}3:${extendedColLetter}${totalsRowNum - 1})`,
     });
@@ -321,18 +380,27 @@ function buildPricingComparisonSheet(
   const totalsRow = sheet.addRow(totalCells);
   totalsRow.font = { bold: true };
   for (let v = 0; v < vendors.length; v++) {
-    const extendedColIndex = 7 + v * 3;
-    const deltaColIndex = 8 + v * 3;
+    const extendedColIndex = 8 + v * 4;
+    const deltaColIndex = 9 + v * 4;
     totalsRow.getCell(extendedColIndex).numFmt = '"$"#,##0';
     totalsRow.getCell(extendedColIndex).fill = {
       type: 'pattern',
       pattern: 'solid',
       fgColor: { argb: SOURCE_XLSX.ACCENT_FILL },
     };
+    if (!comparability.comparisonAllowed) {
+      totalsRow.getCell(deltaColIndex).value = 'BLOCKED';
+      totalsRow.getCell(deltaColIndex).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: SOURCE_XLSX.ERROR_FILL },
+      };
+      continue;
+    }
     // Delta total = vendor total − MIN(vendor totals) / MIN.
     const totalAddrs: string[] = [];
     for (let w = 0; w < vendors.length; w++) {
-      totalAddrs.push(`${colLetter(7 + w * 3)}${totalsRowNum}`);
+      totalAddrs.push(`${colLetter(8 + w * 4)}${totalsRowNum}`);
     }
     const minTotalRef = `MIN(${totalAddrs.join(',')})`;
     const selfTotal = `${colLetter(extendedColIndex)}${totalsRowNum}`;
@@ -355,6 +423,25 @@ function buildTcoComparisonSheet(
   });
 
   const vendors = payload.submissions;
+  const comparability = evaluatePayloadComparability(payload);
+  if (!comparability.tcoClaimsAllowed) {
+    sheet.columns = [
+      { header: 'Status', key: 'status', width: 24 },
+      { header: 'Reason', key: 'reason', width: 96 },
+    ];
+    applyHeaderRow(sheet.getRow(1));
+    const r = sheet.addRow({
+      status: 'TCO claims blocked',
+      reason: safeCell(formatBlockerSummary(comparability.blockers)),
+    });
+    r.getCell('status').fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: SOURCE_XLSX.ERROR_FILL },
+    };
+    r.getCell('reason').alignment = { wrapText: true, vertical: 'top' };
+    return sheet;
+  }
   // Build header: Year | V1 Annual | V1 Cumulative | V2 Annual | V2 Cumulative ...
   const headerCells: ExcelJS.CellValue[] = ['Term Year'];
   for (const v of vendors) {
@@ -372,7 +459,7 @@ function buildTcoComparisonSheet(
   // TCO formulas below. Putting them as values rather than reaching
   // back into the Pricing Comparison sheet keeps formulas self-contained.
   const annualTotals = vendors.map((v) =>
-    computeAnnualTotal(v, payload.lineItems),
+    computeNormalizedAnnualTotal(v, payload.lineItems) ?? 0,
   );
 
   for (let y = 1; y <= payload.tcoYears; y++) {
@@ -504,7 +591,10 @@ function buildAssumptionDeviationsSheet(
   return sheet;
 }
 
-function buildRecommendationSheet(workbook: ExcelJS.Workbook): ExcelJS.Worksheet {
+function buildRecommendationSheet(
+  workbook: ExcelJS.Workbook,
+  comparability: PricingComparabilityResult,
+): ExcelJS.Worksheet {
   const sheet = workbook.addWorksheet('Recommendation', {
     properties: { defaultColWidth: 30 },
   });
@@ -514,15 +604,24 @@ function buildRecommendationSheet(workbook: ExcelJS.Workbook): ExcelJS.Worksheet
   ];
   applyHeaderRow(sheet.getRow(1));
 
-  const seedTopics = [
-    'Cheapest 3-year TCO — vendor and rationale',
-    'Best-value 3-year TCO — vendor and rationale (cite criteria from d16)',
-    'Outliers — line items where one vendor is materially above peers (>30% delta)',
-    'Assumption deviations — which deviations to accept vs reject (cite Sheet 5 rows)',
-    'Cross-check against d20 trap log — any priced trap that materially shifts ranking?',
-    'Risk-adjusted recommendation — preferred vendor for BAFO and why',
-    'BAFO target — what the buyer wants each vendor to revise in their next round',
-  ];
+  const seedTopics = comparability.tcoClaimsAllowed
+    ? [
+        'Cheapest 3-year TCO — vendor and rationale',
+        'Best-value 3-year TCO — vendor and rationale (cite criteria from d16)',
+        'Outliers — line items where one vendor is materially above peers (>30% delta)',
+        'Assumption deviations — which deviations to accept vs reject (cite Sheet 5 rows)',
+        'Cross-check against d20 trap log — any priced trap that materially shifts ranking?',
+        'Risk-adjusted recommendation — preferred vendor for BAFO and why',
+        'BAFO target — what the buyer wants each vendor to revise in their next round',
+      ]
+    : [
+        'Pricing comparability blocked — resolve basis gaps before naming a cheapest TCO vendor',
+        'Raw submitted prices — preserve as vendor-entered values, not normalized comparison claims',
+        'Missing normalized basis — collect currency, unit, period, quantity, and scenario before BAFO comparison',
+        'Assumption deviations — which deviations to accept vs reject (cite Sheet 5 rows)',
+        'Cross-check against d20 trap log — identify priced traps without ranking vendors on TCO',
+        'BAFO readiness — hold commercial recommendation until comparable pricing basis is complete',
+      ];
   for (const topic of seedTopics) {
     const r = sheet.addRow([safeCell(topic), '']);
     r.getCell(2).fill = {
@@ -551,7 +650,7 @@ function countFilledLines(
   return count;
 }
 
-function computeAnnualTotal(
+function computeRawAnnualTotal(
   sub: VendorPricingSubmission,
   lineItems: ReadonlyArray<PricingLineItem>,
 ): number {
@@ -559,6 +658,20 @@ function computeAnnualTotal(
   for (const item of lineItems) {
     const unit = sub.unitPricesById[item.id];
     if (typeof unit === 'number') total += unit * item.annualQuantity;
+  }
+  return total;
+}
+
+function computeNormalizedAnnualTotal(
+  sub: VendorPricingSubmission,
+  lineItems: ReadonlyArray<PricingLineItem>,
+): number | null {
+  if (!sub.normalizedUnitPricesById) return null;
+  let total = 0;
+  for (const item of lineItems) {
+    const unit = sub.normalizedUnitPricesById[item.id];
+    if (typeof unit !== 'number') return null;
+    total += unit * item.annualQuantity;
   }
   return total;
 }
@@ -585,4 +698,91 @@ function colLetter(idx: number): string {
     n = Math.floor((n - 1) / 26);
   }
   return s;
+}
+
+function evaluatePayloadComparability(
+  payload: PricingComparisonPayload,
+): PricingComparabilityResult {
+  const records: PricingComparabilityRecord[] = [];
+  for (const submission of payload.submissions) {
+    for (const item of payload.lineItems) {
+      const rawUnitPrice = submission.unitPricesById[item.id];
+      const normalizedUnitPrice = submission.normalizedUnitPricesById?.[item.id];
+      const rawAmount =
+        typeof rawUnitPrice === 'number' && Number.isFinite(item.annualQuantity)
+          ? rawUnitPrice * item.annualQuantity
+          : null;
+      const normalizedAmount =
+        typeof normalizedUnitPrice === 'number' && Number.isFinite(item.annualQuantity)
+          ? normalizedUnitPrice * item.annualQuantity
+          : null;
+      records.push({
+        recordId: `${submission.vendorName}:${item.id}`,
+        vendorId: submission.vendorName,
+        vendorName: submission.vendorName,
+        lineItemId: item.id,
+        raw: buildComparabilityValue({
+          amount: rawAmount,
+          item,
+          basis: submission.pricingBasis?.raw,
+        }),
+        normalized:
+          normalizedAmount == null
+            ? null
+            : buildComparabilityValue({
+                amount: normalizedAmount,
+                item,
+                basis: submission.pricingBasis?.normalized,
+              }),
+      });
+    }
+  }
+  return evaluatePricingComparability({
+    claimId: `${payload.eventCode}:d19c-pricing-comparison`,
+    records,
+  });
+}
+
+function buildComparabilityValue(args: {
+  amount: number | null;
+  item: PricingLineItem;
+  basis?: VendorPricingBasisValue;
+}): PricingComparabilityValue {
+  return {
+    amount: args.amount,
+    currency: args.basis?.currency,
+    unit: args.basis?.unit ?? args.item.unit,
+    period: args.basis?.period,
+    quantity: args.basis?.quantity ?? args.item.annualQuantity,
+    scenario: args.basis?.scenario,
+  };
+}
+
+function blockersByVendor(
+  result: PricingComparabilityResult,
+): Map<string, typeof result.blockers> {
+  const byVendor = new Map<string, typeof result.blockers>();
+  for (const blocker of result.blockers) {
+    const current = byVendor.get(blocker.vendorName) ?? [];
+    current.push(blocker);
+    byVendor.set(blocker.vendorName, current);
+  }
+  return byVendor;
+}
+
+function formatBlockerSummary(
+  blockers: PricingComparabilityResult['blockers'],
+): string {
+  if (blockers.length === 0) return '';
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const blocker of blockers) {
+    const key = `${blocker.vendorName}:${blocker.lineItemId ?? ''}:${blocker.valueKind}:${blocker.dimension}:${blocker.reason}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    parts.push(
+      `${blocker.vendorName} ${blocker.lineItemId ?? ''}: ${blocker.reason} (${blocker.valueKind} ${blocker.dimension})`,
+    );
+  }
+  return parts.join('; ');
 }
