@@ -105,4 +105,17 @@ describe("listSourceEventActivityEntries", () => {
 
     expect(result).toEqual({ ok: true, entries: [] });
   });
+
+  it("returns a string timestamp even when the driver hands back a Date", async () => {
+    // U-002: the column is timestamptz and the row type claimed `string`.
+    // Nothing enforced that claim, and the unconverted value reached a React
+    // child, which throws and takes the whole event workspace down.
+    state.rows = [row({ occurred_at: new Date("2026-09-18T12:00:00.000Z") })];
+
+    const result = await listSourceEventActivityEntries("event-1");
+
+    if (!result.ok) throw new Error("expected a successful read");
+    expect(typeof result.entries[0].at).toBe("string");
+    expect(result.entries[0].at).toBe("2026-09-18T12:00:00.000Z");
+  });
 });
