@@ -1,3 +1,9 @@
+import {
+  evaluateNdaCoverage,
+  type NdaCoverageInput,
+  type NdaWaiverRecord,
+} from "@/lib/source/nda/nda-scope-authority";
+
 export interface SourceNewNdaArtifact {
   id: string;
   artifactType: string;
@@ -15,6 +21,17 @@ export interface SourceNewNdaArtifact {
 
 export interface SourceNewNdaReadiness {
   posture: "ready" | "blocked";
+  /**
+   * Set only when a waiver is what cleared coverage, never when an executed
+   * NDA did. The decision requires a waiver to be displayed separately from
+   * an NDA, and a surface cannot do that if the two arrive indistinguishable.
+   */
+  waiver?: {
+    waiverId: string;
+    approvedByLegalName: string;
+    expiresAt: string;
+    reason: string;
+  };
   asOfDate: string;
   coveredSupplierLegalEntity: string | null;
   coveredScopeId: string | null;
@@ -53,10 +70,28 @@ function parseDate(value: string | null): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+/**
+ * Mount point for the stage 05 scope and waiver authority.
+ *
+ * The artifact checks below establish that a document is filed, hashed,
+ * reviewed and in date. They cannot establish the two things the owner
+ * decision added, because neither is a property of the file: whether Legal
+ * published the template version it cites, and whether a waiver standing in
+ * for an NDA meets all four of its requirements. `evaluateNdaCoverage` owns
+ * both.
+ *
+ * The parameter is optional so the one existing caller keeps working while
+ * the inputs are threaded through. **That optionality is a real gap, not a
+ * design**: where coverage is not supplied, the policy is not enforced, and
+ * the caller is the place to close it.
+ */
 export function buildSourceNewNdaReadiness(
   artifacts: readonly SourceNewNdaArtifact[],
   asOfDate: string,
+  coverage?: NdaCoverageInput,
 ): SourceNewNdaReadiness {
+  const coverageResult = coverage ? evaluateNdaCoverage(coverage) : null;
+  const coverageWaiver: NdaWaiverRecord | undefined = coverageResult?.waiver;
   const currentNdas = artifacts.filter(
     (artifact) => artifact.lifecycleState === "current" && isNdaArtifact(artifact),
   );
@@ -98,6 +133,13 @@ export function buildSourceNewNdaReadiness(
       : null,
     reviewed ? "NDA review or approval state recorded" : null,
     hashed ? "Artifact hash recorded" : null,
+    coverageResult?.state === "covered_by_nda"
+      ? "Executed NDA covers this event on a published template version"
+      : null,
+    coverageWaiver
+      ? `Covered by WAIVER ${coverageWaiver.waiverId}, not by an NDA — approved by ` +
+        `${coverageWaiver.approvedByLegalName}, expires ${coverageWaiver.expiresAt}`
+      : null,
   ].filter((item): item is string => Boolean(item));
 
   const blockers = [
@@ -130,6 +172,10 @@ export function buildSourceNewNdaReadiness(
       ? `The NDA expired before ${asOfDate}.`
       : null,
     !reviewed ? "No NDA review or approval state is recorded." : null,
+    // A registry outage reads as blocked, not clear: the contract returns
+    // not_covered with its reason, and that reason is shown rather than
+    // collapsed into a generic failure.
+    coverageResult?.state === "not_covered" ? coverageResult.reason : null,
   ].filter((item): item is string => Boolean(item));
 
   const nextAction =
@@ -169,6 +215,16 @@ export function buildSourceNewNdaReadiness(
 
   return {
     posture: blockers.length === 0 ? "ready" : "blocked",
+    ...(coverageWaiver
+      ? {
+          waiver: {
+            waiverId: coverageWaiver.waiverId,
+            approvedByLegalName: coverageWaiver.approvedByLegalName,
+            expiresAt: coverageWaiver.expiresAt,
+            reason: coverageWaiver.reason,
+          },
+        }
+      : {}),
     asOfDate,
     coveredSupplierLegalEntity,
     coveredScopeId,
