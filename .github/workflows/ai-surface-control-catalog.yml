@@ -186,3 +186,19 @@ jobs:
       # reproduce this. See backlog items 26 / 92 / 120.
       - name: Exercise Sentinel intelligence-tool suites
         run: npx jest src/lib/agent/tools/intelligence/__tests__ --runInBand
+
+      # Not a catalog control. The Programs pattern-key authority: a key
+      # written to `pattern_match_logs` beside `acted_upon: true` and
+      # `matched_by_agent: 'classifier_v1'` reads as evidence that a
+      # classification resolved, and three writers outside the classifier took
+      # that key from their caller without resolving it against anything. The
+      # first suite proves the promoted states are states the `promotion_state`
+      # column can actually hold — read from the migration that constrains it,
+      # so it moves when the constraint does. The second drives each writer and
+      # reads back the rows it hands the write client. See backlog item 126.
+      - name: Exercise the Programs pattern-key authority
+        run: >
+          npx jest --runTestsByPath
+          src/lib/programs/__tests__/pattern-key-authority.test.ts
+          src/lib/programs/__tests__/pattern-key-authority.writers.test.ts
+          --runInBand

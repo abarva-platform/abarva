@@ -3,6 +3,7 @@ import "server-only";
 import { requireTenancy, TenancyError } from "@/app/api/v1/programs/_auth";
 import { getActiveClientRow } from "@/lib/active-client";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import { resolvePromotedPatternKey } from "./pattern-key-authority";
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from "@/lib/client-config";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { submitForApproval } from "@/lib/programs/approval";
@@ -714,6 +715,25 @@ export async function submitOriginationBrief(
     );
   }
 
+  // The matched pattern key reaches the approval brief and, through the
+  // Intelligence promotion gate, the record of what a human accepted.
+  // Resolve it against the promoted catalog before anything is read or
+  // written for this program, and fail closed: an unresolved key is
+  // dropped rather than recorded as a match.
+  const patternKeyResolution = await resolvePromotedPatternKey(
+    input.matchedPatternId,
+  );
+  const acceptedPatternKey =
+    patternKeyResolution.status === "resolved"
+      ? patternKeyResolution.patternKey
+      : null;
+  if (patternKeyResolution.status === "refused") {
+    console.warn(
+      "[submitOriginationBrief] pattern key not promoted in the catalog; not recording a match",
+      { reason: patternKeyResolution.reason },
+    );
+  }
+
   const activeClient = await getActiveClientRow();
   if (!activeClient || activeClient.id !== tenancy.clientId) {
     throw new OriginationSubmitError(
@@ -981,7 +1001,10 @@ export async function submitOriginationBrief(
       objective_code: derived.objectiveCode,
       topic_code: derived.topicCode,
       classification: programArchetype,
-      matched_pattern_id: input.matchedPatternId ?? null,
+      matched_pattern_id: acceptedPatternKey,
+      ...(patternKeyResolution.status === "refused"
+        ? { pattern_key_refused: patternKeyResolution.reason }
+        : {}),
       submitted_from_surface: input.surface,
       submitted_at: new Date().toISOString(),
     };
@@ -989,7 +1012,7 @@ export async function submitOriginationBrief(
       briefSnapshot.intelligence_promotion_gate = {
         source: "intelligence_thread",
         source_thread_id: input.originatingIntelligenceSessionId,
-        selected_pattern_key: input.matchedPatternId,
+        selected_pattern_key: acceptedPatternKey,
         human_promotion_accepted: input.humanPromotionAccepted === true,
         human_promotion_rationale: promotionApproval.rationale,
         evidence_refs: promotionApproval.evidenceRefs,

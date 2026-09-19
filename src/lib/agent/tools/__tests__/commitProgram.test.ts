@@ -159,6 +159,24 @@ function makeQueryBuilder(table: string): unknown {
   return qb;
 }
 
+// The pattern-key authority reads the promoted `engagement_topics`
+// catalog before `matched_pattern_id` is allowed into a governed audit
+// row (backlog item 126). Without this the resolver would reach for a
+// real database, fail closed, and the key would be dropped — so the
+// catalog is staged here to promote the key this suite commits with.
+const catalogMaybeSingleMock = jest.fn(async () => ({
+  topic_key: 'PAT-PRG-CDP-001',
+  promotion_state: 'mature',
+}));
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  __esModule: true,
+  azureRead: {
+    maybeSingle: (...args: unknown[]) => catalogMaybeSingleMock(...(args as [])),
+    query: jest.fn(async () => []),
+    select: jest.fn(async () => []),
+  },
+}));
+
 const fromMock = jest.fn((table: string) => makeQueryBuilder(table));
 
 jest.mock('@/lib/data-plane/postgresCompat', () => ({

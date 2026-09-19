@@ -17,6 +17,7 @@ import type {
   PatternClassifierMatch,
 } from './types.db';
 import type { ArchetypeKey } from './types.ui';
+import { PROMOTED_PATTERN_STATES } from './pattern-key-authority';
 
 const CLASSIFIER_MODEL = process.env.CLASSIFIER_MODEL ?? 'claude-haiku-4-5-20251001';
 
@@ -168,7 +169,7 @@ async function vectorMatch(input: ClassifierInput, stage1: Stage1Result, topK = 
             plainto_tsquery('english', $1)
           ) AS score
         FROM engagement_topics
-        WHERE promotion_state IN ('published', 'validated', 'active')
+        WHERE promotion_state = ANY($4::text[])
           AND (
             $2::text IS NULL
             OR industries @> ARRAY[$2::text]
@@ -184,7 +185,7 @@ async function vectorMatch(input: ClassifierInput, stage1: Stage1Result, topK = 
         ORDER BY score DESC, deployment_count DESC NULLS LAST, title ASC
         LIMIT $3
       `,
-      [text, stage1.industry, Math.min(Math.max(topK, 1), 20)],
+      [text, stage1.industry, Math.min(Math.max(topK, 1), 20), [...PROMOTED_PATTERN_STATES]],
       { missingTable: 'empty' },
     );
 

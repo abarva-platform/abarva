@@ -23,6 +23,7 @@ import type {
 import type { ArchetypeKey } from "./types.ui";
 import { getProgramById } from "./queries";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
+import { resolvePromotedPatternKey } from "./pattern-key-authority";
 import {
   createSupabaseProgramsWriteAdapter,
   selectProgramsWriteAdapter,
@@ -264,6 +265,19 @@ export async function originateProgram(
   if (error) throw error;
 
   const programId = (data as { id: string }).id;
+
+  // The accepted pattern key arrives in a request body and is written to
+  // `pattern_match_logs` beside `acted_upon: true`. Resolve it against the
+  // promoted catalog first and fail closed — an unresolved key is not
+  // evidence of a match and is not cited as evidence either.
+  const patternKeyResolution = await resolvePromotedPatternKey(
+    input.acceptedPatternKey,
+  );
+  const acceptedPatternKey =
+    patternKeyResolution.status === "resolved"
+      ? patternKeyResolution.patternKey
+      : null;
+
   await writeProgramAuditLogBestEffort(ctx, {
     programId,
     engagementId: programId,
@@ -271,14 +285,14 @@ export async function originateProgram(
     fromState: null,
     toState: "phase_0_seed_created",
     rationale: input.useCase,
-    evidenceRefs: input.acceptedPatternKey ? [input.acceptedPatternKey] : [],
+    evidenceRefs: acceptedPatternKey ? [acceptedPatternKey] : [],
   });
 
-  // Record the pattern match event if a pattern was accepted
-  if (input.acceptedPatternKey) {
+  // Record the pattern match event if a promoted pattern was accepted
+  if (acceptedPatternKey) {
     const { error: pmErr } = await sb.from("pattern_match_logs").insert({
       engagement_id: programId,
-      pattern_key: input.acceptedPatternKey,
+      pattern_key: acceptedPatternKey,
       match_confidence: null,
       match_context_jsonb: {
         use_case: input.useCase,
@@ -301,7 +315,11 @@ export async function originateProgram(
     new_state: "completed",
     changed_by_user_id: ctx.userId,
     context_jsonb: {
-      pattern_key: input.acceptedPatternKey,
+      pattern_key: acceptedPatternKey,
+      // The reason, never the key — the key is what reads as evidence.
+      ...(patternKeyResolution.status === "refused"
+        ? { pattern_key_refused: patternKeyResolution.reason }
+        : {}),
       origin: input.originSource,
     },
   });

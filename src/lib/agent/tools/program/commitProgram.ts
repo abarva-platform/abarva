@@ -69,6 +69,10 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from '@/lib/client-config';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import {
+  resolvePromotedPatternKey,
+  type PatternKeyResolution,
+} from '@/lib/programs/pattern-key-authority';
 import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
 import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
 import { linkAskSessionToMove } from '@/lib/intelligence/ask/session-memory';
@@ -578,6 +582,25 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       };
     }
 
+    // The pattern key arrives from a model over chat. It is written to
+    // `pattern_match_logs` beside `acted_upon: true`, so an unresolved
+    // one records a classification that never happened. Resolve it
+    // against the promoted catalog and fail closed: on any refusal the
+    // key is dropped rather than persisted. See
+    // src/lib/programs/pattern-key-authority.ts.
+    const patternKeyResolution: PatternKeyResolution =
+      await resolvePromotedPatternKey(input.matched_pattern_id);
+    const acceptedPatternKey =
+      patternKeyResolution.status === 'resolved'
+        ? patternKeyResolution.patternKey
+        : null;
+    if (patternKeyResolution.status === 'refused') {
+      console.warn(
+        '[commit_program] pattern key not promoted in the catalog; not recording a match',
+        { reason: patternKeyResolution.reason },
+      );
+    }
+
     // Build the brief snapshot. This is the audit-quality payload
     // the tenant admin will review and that is preserved verbatim
     // even if the engagement is later edited. Normalize: strip
@@ -591,7 +614,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       objective_code: derivedClassification.objectiveCode,
       topic_code: derivedClassification.topicCode,
       classification: programArchetype,
-      matched_pattern_id: input.matched_pattern_id ?? null,
+      matched_pattern_id: acceptedPatternKey,
       submitted_from_surface: ctx.surface,
       submitted_at: new Date().toISOString(),
     };
@@ -664,10 +687,10 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
           approvalAuthority: 'contributor',
         });
       }
-      if (input.matched_pattern_id) {
+      if (acceptedPatternKey) {
         await sb.from('pattern_match_logs').insert({
           engagement_id: programId,
-          pattern_key: input.matched_pattern_id,
+          pattern_key: acceptedPatternKey,
           match_confidence: null,
           match_context_jsonb: {
             use_case: originationForm.useCase,
@@ -687,7 +710,12 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         new_state: 'submitted_for_approval',
         changed_by_user_id: tenancy.userId,
         context_jsonb: {
-          pattern_key: input.matched_pattern_id ?? null,
+          pattern_key: acceptedPatternKey,
+          // The reason, never the key: the key is what reads as
+          // evidence of a match, and this one did not resolve.
+          ...(patternKeyResolution.status === 'refused'
+            ? { pattern_key_refused: patternKeyResolution.reason }
+            : {}),
           origin: 'maestro_console',
           approval_request_id: approvalRequestId,
         },

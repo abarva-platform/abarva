@@ -138,7 +138,11 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('briefSnapshot.intelligence_promotion_gate');
     expect(source).toContain('source: "intelligence_thread"');
     expect(source).toContain('source_thread_id: input.originatingIntelligenceSessionId');
-    expect(source).toContain('selected_pattern_key: input.matchedPatternId');
+    // The gate records the key the catalog promoted, not the key the
+    // caller supplied: an unresolved key is dropped before this point
+    // (backlog item 126), so recording the raw input here would put a
+    // pattern that resolves nowhere into the evidence a human accepted.
+    expect(source).toContain('selected_pattern_key: acceptedPatternKey');
     expect(source).toContain('human_promotion_accepted: input.humanPromotionAccepted === true');
     expect(source).toContain('human_promotion_rationale: promotionApproval.rationale');
     expect(source).toContain('evidence_refs: promotionApproval.evidenceRefs');
