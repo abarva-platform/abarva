@@ -8,18 +8,89 @@
     "unverified-remainder": "The remaining `toContain` / `toBe` / `toMatch` failures have not been clustered individually. They are counted, not explained, and saying so is more useful than implying a triage that has not happened."
   },
   "quarantined": [
-    "source-event-canvas-shell.test.ts",
-    "source-executive-decision-summary-panel.test.ts",
-    "source-old-surface-archive.test.ts",
-    "source-originate-page.test.ts",
-    "source-rfp-readiness-panel.test.ts",
-    "source-scope-stage-workspace.test.ts",
-    "source-vendor-pricing-smoke.test.ts",
-    "source-vendor-response-completeness-panel.test.ts",
-    "source-vendor-selection-readiness-panel.test.ts"
+    {
+      "suite": "source-event-canvas-shell.test.ts",
+      "reason": "Still fails on the null-event route/harness cluster and the route-level navigation stub symptom.",
+      "owner": "T-016",
+      "expectedFailurePatterns": [
+        "Cannot read properties of null (reading 'id')",
+        "Cannot read properties of null (reading 'dataReadiness')",
+        "(0 , _navigation.notFound) is not a function"
+      ]
+    },
+    {
+      "suite": "source-executive-decision-summary-panel.test.ts",
+      "reason": "Still fails because the suite receives a null event before constructing the selection-stage fixture.",
+      "owner": "T-016",
+      "expectedFailurePatterns": [
+        "Cannot read properties of null (reading 'stages')"
+      ]
+    },
+    {
+      "suite": "source-originate-page.test.ts",
+      "reason": "Still fails on stale intake-copy expectations that do not match the current rendered Source intake canvas.",
+      "owner": "T-018",
+      "expectedFailurePatterns": [
+        "Expected substring: \"Intake basics\"",
+        "Captured facts checklist"
+      ]
+    },
+    {
+      "suite": "source-rfp-readiness-panel.test.ts",
+      "reason": "Still fails on the null-event route/harness cluster for RFP readiness data.",
+      "owner": "T-016",
+      "expectedFailurePatterns": [
+        "Cannot read properties of null (reading 'dataReadiness')"
+      ]
+    },
+    {
+      "suite": "source-scope-stage-workspace.test.ts",
+      "reason": "Still fails on the null-event route/harness cluster for scope-stage data readiness.",
+      "owner": "T-016",
+      "expectedFailurePatterns": [
+        "Cannot read properties of null (reading 'dataReadiness')"
+      ]
+    },
+    {
+      "suite": "source-vendor-pricing-smoke.test.ts",
+      "reason": "Still fails because the seeded vendor-response event is not returned under the current harness path.",
+      "owner": "T-016",
+      "expectedFailurePatterns": [
+        "Expected: \"responses\"",
+        "Received: undefined",
+        "Cannot read properties of null (reading 'pricingInputs')"
+      ]
+    },
+    {
+      "suite": "source-vendor-response-completeness-panel.test.ts",
+      "reason": "Still fails because the seeded vendor-response event is null before the completeness panel builds its read model.",
+      "owner": "T-016",
+      "expectedFailurePatterns": [
+        "Cannot read properties of null (reading 'name')",
+        "Received: null"
+      ]
+    },
+    {
+      "suite": "source-vendor-selection-readiness-panel.test.ts",
+      "reason": "Still fails because the selection-readiness suite receives a null event before building selection state.",
+      "owner": "T-016",
+      "expectedFailurePatterns": [
+        "Cannot read properties of null (reading 'id')",
+        "Cannot read properties of null (reading 'stages')"
+      ]
+    }
   ],
   "alsoIgnored": [
-    "integration/source-chat-shape.test.ts"
+    {
+      "path": "src/__tests__/integration/source-chat-shape.test.ts",
+      "reason": "The Source workflow path is a Jest regex and sweeps in this root-level sibling; it still fails on the Brief C vendor-shortlist shaping contract.",
+      "owner": "T-047",
+      "expectedFailurePatterns": [
+        "Expected substring: \"Daisy Intelligence is a credible second\"",
+        "Received string:    \"Three credible vendors"
+      ]
+    }
   ],
-  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/source without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command \u2014 a trailing slash makes the gate stop seeing it. Jest reads that path as a pattern rather than a directory, so it also matches sibling files at the integration root whose names start with \"source\". source-chat-shape.test.ts is one, and it is red, so it is named here. These are full path fragments, not bare filenames like the list above."
+  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/source without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command \u2014 a trailing slash makes the gate stop seeing it. Jest reads that path as a pattern rather than a directory, so it can also match sibling files at the integration root whose names start with \"source\". source-chat-shape.test.ts is one of those swept-in siblings and is owned here, with an executable failure reason, rather than as a bare string.",
+  "alsoIgnoredCeiling": 1
 }
