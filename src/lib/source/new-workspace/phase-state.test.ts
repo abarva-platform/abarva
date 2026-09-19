@@ -1,4 +1,6 @@
 import {
+  SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER,
+  SOURCE_NEW_PHASE_ORDER,
   isPastSourceNewPhases,
   sourceNewCategoryDisplay,
   sourceNewCurrentPhase,
@@ -17,6 +19,25 @@ const nothingRecorded: SourceNewPhaseEvidence = {
   suppliers: false,
   rfi: false,
 };
+
+describe("Source New external checkpoint contract", () => {
+  it("keeps the external flow to request intake plus four event phases", () => {
+    expect(SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER).toEqual([
+      "request_intake",
+      "request",
+      "define",
+      "suppliers",
+      "rfi",
+    ]);
+    expect(SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER).toHaveLength(5);
+    expect(SOURCE_NEW_PHASE_ORDER).toEqual([
+      "request",
+      "define",
+      "suppliers",
+      "rfi",
+    ]);
+  });
+});
 
 describe("sourceNewCurrentPhase", () => {
   it("places an unreviewed request in the request phase", () => {

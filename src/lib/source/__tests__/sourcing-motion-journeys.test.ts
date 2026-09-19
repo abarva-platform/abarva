@@ -125,12 +125,33 @@ describe("Source sourcing motion journeys", () => {
     const journey = SOURCE_JOURNEYS.contract_optimization;
 
     expect(coerceStageToSourceJourney(journey, "rfp", "rfp")).toBe("pricing");
+    expect(
+      coerceStageToSourceJourney(
+        journey,
+        "rfp_rfi_package",
+        "rfp_rfi_package",
+      ),
+    ).toBe("pricing");
     expect(coerceStageToSourceJourney(journey, "responses", "responses")).toBe(
       "pricing",
     );
+    expect(
+      coerceStageToSourceJourney(
+        journey,
+        "vendor_responses",
+        "vendor_responses",
+      ),
+    ).toBe("pricing");
     expect(coerceStageToSourceJourney(journey, "selection", "selection")).toBe(
       "transition",
     );
+    expect(
+      coerceStageToSourceJourney(
+        journey,
+        "contract_mobilization",
+        "contract_mobilization",
+      ),
+    ).toBe("transition");
   });
 
   it("builds journey-aware stage links for optimization events", () => {

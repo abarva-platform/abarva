@@ -8,8 +8,9 @@ import {
 import { getSourceCategory } from "@/lib/source/taxonomy/category-taxonomy";
 
 /**
- * The four operator phases the Source New workspace can place an event in
- * today. They are a product vocabulary, not the eleven internal stage keys.
+ * The four operator phases the Source New workspace can place an accepted
+ * event in today. They are product vocabulary, not the eleven internal stage
+ * keys.
  */
 export type SourceNewPhaseKey = "request" | "define" | "suppliers" | "rfi";
 
@@ -19,6 +20,19 @@ export const SOURCE_NEW_PHASE_ORDER: readonly SourceNewPhaseKey[] = [
   "suppliers",
   "rfi",
 ];
+
+/**
+ * The public Source New flow has five visible checkpoints: the request-first
+ * entry before an event exists, then the four event phases above. Internal
+ * stage keys remain governed by SOURCE_STAGE_ORDER; do not add internal stages
+ * here to make a product rail look complete.
+ */
+export type SourceNewExternalCheckpointKey =
+  | "request_intake"
+  | SourceNewPhaseKey;
+
+export const SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER: readonly SourceNewExternalCheckpointKey[] =
+  ["request_intake", ...SOURCE_NEW_PHASE_ORDER];
 
 /**
  * What the workspace may honestly say about a phase.
