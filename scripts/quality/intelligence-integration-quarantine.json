@@ -1,0 +1,181 @@
+{
+  "note": "Intelligence integration suites that are RED on clean main and are therefore excluded from the Integration suites workflow. src/__tests__/integration/intelligence held 33 suites that no workflow ran. Running the directory for the first time found 26 red and 133 failing assertions, and the triage found ONE cause, not 133 problems: 131 of the 133 are a source file read as TEXT that does not exist. Default is INCLUDED: a new suite in this directory runs unless it is added here, which is what makes the workflow cover work that has not been written yet. Removing an entry is the fix; adding one needs a reason and an owner.",
+  "howToClear": "These suites do not describe a defect in shipping code. They describe a component and route tree that was replaced. Clearing an entry means rewriting the suite against the surface that ships today (src/components/intelligence-advisory/ and src/app/(maestro)/intelligence/), or deleting it with the reason recorded — not restoring the retired tree to satisfy a text match. Delete the entry here afterwards and confirm the workflow stays green.",
+  "clusters": {
+    "retired-component-tree": "22 of the 25. Every one reads a file under src/components/intelligence/ as TEXT and asserts substrings of it. That directory does not exist, and no file it names exists anywhere else in the repository — IntelligenceLensTabs.tsx alone is read by eight suites. The Intelligence surface was rebuilt as src/components/intelligence-advisory/AdvisoryIntelligencePage, mounted at src/app/(maestro)/intelligence/page.tsx. So these suites are stale contracts for a surface that was deliberately replaced. They were never governed coverage of shipping code: even before they went red they only asserted the shape of source text.",
+    "retired-route-tree": "3 of the 25 additionally read page files under route trees that were sunset — src/app/intelligence/[patternId], /solutions, /quality, /contradictions and src/app/(maestro)/tenant/[tenantSlug]/intelligence. intelligence-route-shell-wiring.test.ts is the clearest case and it CONTRADICTS a sibling: it asserts src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx exists, while context-corpus-explorer-route.test.ts asserts the same path does NOT exist, and that assertion passes. Two suites in one directory holding opposite contracts for one route is itself the finding.",
+    "not-a-product-defect": "No failing assertion in this directory describes shipping code behaving wrongly. 107 of 133 are ENOENT from readFileSync, 24 are existsSync(...) === true on a path that is gone, and the remaining 2 were stale literals in a file that does exist — those 2 were REPAIRED rather than quarantined, and context-corpus-explorer-route.test.ts now runs."
+  },
+  "missingPathsNote": "Each entry names the paths whose absence is the reason it is quarantined. check-intelligence-integration-quarantine.mjs asserts every one of them is STILL absent. If any comes back, the check fails and says to re-run the suite and clear its entry — so this list cannot quietly outlive its reason. That is the control the list would otherwise lack: a name-in-a-file exclusion nobody re-measures is how a carve-out becomes permanent.",
+  "quarantined": [
+    {
+      "suite": "evidence-dataset-drawer.test.ts",
+      "missing": [
+        "src/components/intelligence/EvidenceDatasetDrawer.tsx"
+      ]
+    },
+    {
+      "suite": "int4-contradiction-monitor.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceLensTabs.tsx"
+      ]
+    },
+    {
+      "suite": "int5-programme-risk-summary.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceLensTabs.tsx"
+      ]
+    },
+    {
+      "suite": "int6-gate-readiness.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceLensTabs.tsx"
+      ]
+    },
+    {
+      "suite": "int7-engagement-scorecard.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceLensTabs.tsx"
+      ]
+    },
+    {
+      "suite": "int8-milestone-tracker.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceLensTabs.tsx"
+      ]
+    },
+    {
+      "suite": "intel4-lens-tabs.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceLensTabs.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-canvas-modes.test.ts",
+      "missing": [
+        "src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx",
+        "src/components/intelligence/IntelligenceCanvasModeTabs.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-i3.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceSignalDetailPage.tsx",
+        "src/components/intelligence/IntelligenceSignalDetailSentinel.tsx",
+        "src/components/intelligence/IntelligenceSignalsIndexPage.tsx",
+        "src/components/intelligence/IntelligenceSignalsSentinel.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-i4.test.ts",
+      "missing": [
+        "src/components/intelligence/PatternGraphSentinel.tsx",
+        "src/components/intelligence/PatternGraphShell.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-i5.test.ts",
+      "missing": [
+        "src/app/intelligence/contradictions/[contradictionId]/page.tsx",
+        "src/app/intelligence/solutions/page.tsx",
+        "src/components/intelligence/IntelligenceContradictionDetailPage.tsx",
+        "src/components/intelligence/IntelligenceContradictionDetailSentinel.tsx",
+        "src/components/intelligence/IntelligenceSolutionsIndexPage.tsx",
+        "src/components/intelligence/IntelligenceSolutionsSentinel.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-i7.test.ts",
+      "missing": [
+        "src/app/intelligence/quality/page.tsx",
+        "src/components/intelligence/IntelligenceQualityLensPage.tsx",
+        "src/components/intelligence/IntelligenceQualityLensSentinel.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-int1-apex-pattern-plan.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceLensTabs.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-int2-pattern-action-canvas.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligencePatternDetailPage.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-int3-evidence-gap-queue.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceLensTabs.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-library-foundation.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceIndexPage.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-pattern-detail-i2.test.ts",
+      "missing": [
+        "src/app/intelligence/[patternId]/page.tsx",
+        "src/components/intelligence/IntelligencePatternDetailPage.tsx",
+        "src/components/intelligence/IntelligencePatternDetailSentinel.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-programs-actions-modes.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceLensTabs.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-route-shell-wiring.test.ts",
+      "missing": [
+        "src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx"
+      ]
+    },
+    {
+      "suite": "intelligence-workflow-canvas.test.ts",
+      "missing": [
+        "src/components/intelligence/IntelligenceWorkflowCanvas.tsx"
+      ]
+    },
+    {
+      "suite": "sentinel-active-patterns-page.test.ts",
+      "missing": [
+        "src/components/intelligence/SentinelActivePatterns.tsx"
+      ]
+    },
+    {
+      "suite": "sentinel-evidence-brief.test.ts",
+      "missing": [
+        "src/components/intelligence/SentinelEvidenceBrief.tsx"
+      ]
+    },
+    {
+      "suite": "sentinel-interaction-rail.test.ts",
+      "missing": [
+        "src/components/intelligence/SentinelInteractionRail.tsx"
+      ]
+    },
+    {
+      "suite": "sentinel-pattern-content.test.ts",
+      "missing": [
+        "src/components/intelligence/SentinelPatternContentPanel.tsx"
+      ]
+    },
+    {
+      "suite": "sentinel-pattern-detail.test.ts",
+      "missing": [
+        "src/components/intelligence/SentinelPatternDetail.tsx"
+      ]
+    }
+  ],
+  "alsoIgnored": [
+    "integration/intelligence-chat-shape.test.ts",
+    "integration/intelligence-pattern-manifest.test.ts"
+  ],
+  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/intelligence without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command. Jest reads that path as a regex against the full path, so it also selects sibling files at the integration root whose names start with \"intelligence\". Both of them are red, so both are named here. These are full path fragments, not bare filenames like the list above. intelligence-chat-shape.test.ts fails on chat-shape assertions and intelligence-pattern-manifest.test.ts on an observationCount of 0; neither was triaged here and each needs its own item."
+}
