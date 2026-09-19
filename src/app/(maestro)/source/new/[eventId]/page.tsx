@@ -99,6 +99,10 @@ export default async function SourceNewEventPage({
         decisionOwner: event.decisionOwner ?? null,
         solicitationMotion:
           authority.kind === "available" ? authority.solicitationMotion : null,
+        solicitationMotionAcceptedAt:
+          authority.kind === "available" ? authority.acceptedAt : null,
+        solicitationMotionAcceptedByUserId:
+          authority.kind === "available" ? authority.acceptedByUserId : null,
       }}
       files={files}
     />

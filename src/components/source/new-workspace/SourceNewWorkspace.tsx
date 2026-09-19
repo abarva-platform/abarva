@@ -22,6 +22,7 @@ import {
   type SourceNewPhaseKey,
   type SourceNewPhaseState,
 } from "@/lib/source/new-workspace/phase-state";
+import { normalizeSourceStageKey } from "@/lib/source/constants";
 import "./workspace.css";
 
 type Phase = SourceNewPhaseKey;
@@ -41,6 +42,8 @@ export interface SourceNewEventView {
   scope: string | null;
   decisionOwner: string | null;
   solicitationMotion?: "rfi" | "rfp" | null;
+  solicitationMotionAcceptedAt?: string | null;
+  solicitationMotionAcceptedByUserId?: string | null;
 }
 
 const BASE_PHASE_LABELS: Record<Phase, string> = {
@@ -87,6 +90,26 @@ function marketPackageLabel(event: SourceNewEventView): string {
   if (event.solicitationMotion === "rfi") return "RFI";
   if (event.solicitationMotion === "rfp") return "RFP";
   return "Market package";
+}
+
+function isResponsesStage(event: SourceNewEventView): boolean {
+  return normalizeSourceStageKey(event.currentStage) === "responses";
+}
+
+function responseEvidenceRows(
+  files: readonly SourceNewFileRow[],
+): SourceNewFileRow[] {
+  return files.filter(
+    (file) => file.phase === "other" && /response/i.test(file.artifactType),
+  );
+}
+
+function hasAcceptedSolicitationMotion(event: SourceNewEventView): boolean {
+  return Boolean(
+    event.solicitationMotion &&
+    event.solicitationMotionAcceptedAt &&
+    event.solicitationMotionAcceptedByUserId,
+  );
 }
 
 function phasesFor(
@@ -188,6 +211,8 @@ export function SourceNewWorkspace({
   const action = nextAction(event);
   const actionLabel = action.label;
   const isCurrentPhase = phase === current;
+  const responsesStage = isResponsesStage(event);
+  const responseRows = responseEvidenceRows(files);
 
   const content = (
     <main className="snw" aria-label="Source New event workspace">
@@ -302,6 +327,12 @@ export function SourceNewWorkspace({
                   {advancedBeyondPhases && (
                     <p className="snw-note">{advancedNote}</p>
                   )}
+                  {responsesStage && (
+                    <SourceNewStage04VendorReadiness
+                      event={event}
+                      responseRows={responseRows}
+                    />
+                  )}
                 </>
               ) : (
                 <>
@@ -312,6 +343,12 @@ export function SourceNewWorkspace({
                   </p>
                   {advancedBeyondPhases && (
                     <p className="snw-note">{advancedNote}</p>
+                  )}
+                  {responsesStage && (
+                    <SourceNewStage04VendorReadiness
+                      event={event}
+                      responseRows={responseRows}
+                    />
                   )}
                 </>
               )}
@@ -429,6 +466,93 @@ export function SourceNewWorkspace({
     >
       <SourceNewAvaDock event={event} workspace={content} />
     </AppShell>
+  );
+}
+
+function SourceNewStage04VendorReadiness({
+  event,
+  responseRows,
+}: {
+  event: SourceNewEventView;
+  responseRows: readonly SourceNewFileRow[];
+}) {
+  const motionAccepted = hasAcceptedSolicitationMotion(event);
+  const motionLabel =
+    event.solicitationMotion === "rfp"
+      ? "RFP"
+      : event.solicitationMotion === "rfi"
+        ? "RFI"
+        : "Market package";
+  const blockers = [
+    !motionAccepted
+      ? "No accepted solicitation motion is recorded for this event."
+      : null,
+    responseRows.length === 0
+      ? "No tenant-scoped candidate response files are loaded in Source New."
+      : null,
+  ].filter((item): item is string => Boolean(item));
+
+  return (
+    <section
+      className="snw-vendor-readiness"
+      aria-label="Stage 04 vendor readiness"
+    >
+      <p className="snw-eyebrow">Stage 04 · Vendor responses</p>
+      <h3>Candidate response readiness</h3>
+      <p>
+        This checks whether candidate response evidence is ready for evaluation.
+        It is not award readiness, and it does not select, contact, or notify
+        any vendor.
+      </p>
+      <dl className="snw-facts">
+        <div>
+          <dt>Tenant scope</dt>
+          <dd>{event.clientName}</dd>
+        </div>
+        <div>
+          <dt>Solicitation motion</dt>
+          <dd>
+            {motionAccepted
+              ? `${motionLabel} accepted for release`
+              : "Not accepted for release"}
+          </dd>
+        </div>
+        <div>
+          <dt>Candidate response evidence</dt>
+          <dd>
+            {responseRows.length > 0
+              ? `${responseRows.length} tenant-scoped response file${
+                  responseRows.length === 1 ? "" : "s"
+                } available`
+              : "No tenant-scoped candidate response files loaded"}
+          </dd>
+        </div>
+        <div>
+          <dt>Readiness posture</dt>
+          <dd>
+            {blockers.length === 0
+              ? "Ready for evaluation intake review"
+              : "Blocked before evaluation"}
+          </dd>
+        </div>
+      </dl>
+      <div className="snw-vendor-readiness-blockers">
+        <strong>Open blockers</strong>
+        <ul>
+          {blockers.length > 0 ? (
+            blockers.map((blocker) => <li key={blocker}>{blocker}</li>)
+          ) : (
+            <li>
+              Candidate response evidence is present for evaluation review.
+            </li>
+          )}
+        </ul>
+      </div>
+      <p className="snw-note">
+        Vendor contact, send, and notification actions stay unavailable until a
+        verified participant authority record exists in the governed event.
+      </p>
+    </section>
   );
 }
 

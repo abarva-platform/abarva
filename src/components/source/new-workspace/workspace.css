@@ -36,6 +36,12 @@
 .snw-plain { max-width: 750px; }
 .snw-note { font-size: 13px; color: #925817; padding: 12px 0; }
 .snw-text-action { font-size: 13px; color: #0052a3; }
+.snw-vendor-readiness { margin-top: 24px; border-top: 1px solid #dededb; padding-top: 18px; }
+.snw-vendor-readiness h3 { font-size: 15px; font-weight: 650; margin: 8px 0; }
+.snw-vendor-readiness p { color: #5e5e5e; font-size: 13px; line-height: 1.55; max-width: 68ch; }
+.snw-vendor-readiness-blockers { margin-top: 14px; border: 1px solid #e1ded8; background: #faf9f6; padding: 12px 14px; font-size: 13px; }
+.snw-vendor-readiness-blockers strong { display: block; margin-bottom: 8px; }
+.snw-vendor-readiness-blockers ul { margin: 0; padding-left: 18px; color: #4f4b45; line-height: 1.55; }
 .snw button:focus-visible, .snw a:focus-visible { outline: 2px solid #0066cc; outline-offset: 3px; }
 @media (max-width: 850px) {
   .snw-inner { padding: 22px 18px 90px; }
