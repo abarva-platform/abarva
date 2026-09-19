@@ -50,9 +50,11 @@
  *
  * The credential predicate matches a credential by *shape* —
  * `SOMETHING_URL` / `_KEY` / `_TOKEN` / `_SECRET` — rather than by a list of
- * names. The first version carried a hand-kept list, and it missed
- * `SUPABASE_SERVICE_ROLE_KEY` and `READONLY_DATABASE_URL` on the first real run,
- * counting two empty environments as defects.
+ * names. The first version carried a hand-kept list of variable names, and on
+ * the first real run it missed a service-role key and a read-only connection
+ * string that the list had never been told about, counting two empty
+ * environments as defects. A hand-kept list of names is the same mistake as a
+ * hand-kept list of tenants.
  *
  * WHAT IT CANNOT SEE. A write to a gitignored path, or to anywhere outside the
  * repository, is invisible to the tree check. Nothing in the swept set shells out
