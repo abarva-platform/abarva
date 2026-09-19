@@ -51,9 +51,37 @@ type Census = {
     directoriesPartiallyCovered: number;
     directoriesUncovered: number;
     indeterminateInvocations: number;
+    criticalGovernedRiskDirectories: number;
+    highGovernedRiskDirectories: number;
+    unclassifiedRiskDirectories: number;
   };
   indeterminateInvocations: { source: string; invocation: string }[];
   partiallyCoveredDirectories: { directory: string; testFiles: number; coveredTestFiles: number }[];
+  governedRiskEvidence: {
+    directory: string;
+    testFiles: number;
+    governedRisk: {
+      rank: number;
+      score: number;
+      band: "critical" | "high";
+      signals: string[];
+      controlIds?: string[];
+      approvalOrLifecycleSourceCount?: number;
+      approvalOrLifecycleSources?: string[];
+      tenantScopedReadSourceCount?: number;
+      tenantScopedReadSources?: string[];
+    };
+  }[];
+  governedRiskRanking: {
+    directory: string;
+    testFiles: number;
+    governedRisk: {
+      rank: number;
+      score: number;
+      band: "critical" | "high" | "unclassified";
+      signals: string[];
+    };
+  }[];
   uncoveredDirectories: { directory: string; testFiles: number }[];
 };
 
@@ -259,6 +287,72 @@ describe("test CI coverage census", () => {
     const result = runCensus(dir);
     expect(result.status).toBe(0);
     expect(result.census.counts.uncoveredTestFiles).toBe(1);
+  });
+
+  it("ranks governed surfaces ahead of larger inert directories", () => {
+    const dir = fixture({
+      "src/components/agent/__tests__/Control.test.tsx":
+        'import "@/components/agent/Control";\nit("control", () => expect(true).toBe(true));\n',
+      "src/components/agent/Control.tsx": "export function Control() { return null; }\n",
+      "src/app/api/source/action/__tests__/route.test.ts":
+        'import "../route";\nit("approval", () => expect(true).toBe(true));\n',
+      "src/app/api/source/action/route.ts":
+        "export async function POST() { return approve({ value: true }); }\n",
+      "src/lib/data/__tests__/reader.test.ts":
+        'import "../reader";\nit("tenant", () => expect(true).toBe(true));\n',
+      "src/lib/data/reader.ts":
+        "export function read() { return requireTenancy({}); }\n",
+      "src/lib/helpers/__tests__/one.test.ts":
+        'import "../format";\nit("one", () => expect(true).toBe(true));\n',
+      "src/lib/helpers/__tests__/two.test.ts":
+        'import "../format";\nit("two", () => expect(true).toBe(true));\n',
+      "src/lib/helpers/__tests__/three.test.ts":
+        'import "../format";\nit("three", () => expect(true).toBe(true));\n',
+      "src/lib/helpers/format.ts": "export const format = (value: string) => value.trim();\n",
+      "docs/security/ai-surface-control-catalog.json": `${JSON.stringify({
+        controls: [
+          {
+            id: "fixture-control",
+            path: "src/components/agent/Control.tsx",
+            requiredControls: [],
+          },
+        ],
+      })}\n`,
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/components/agent/__tests__",
+      "src/app/api/source/action/__tests__",
+      "src/lib/data/__tests__",
+    ]);
+    expect(census.governedRiskRanking.map((row) => row.governedRisk.signals)).toEqual([
+      ["declared_ai_surface_control"],
+      ["approval_or_lifecycle_write"],
+      ["tenant_scoped_read"],
+    ]);
+    expect(census.governedRiskRanking.map((row) => row.governedRisk.rank)).toEqual([
+      1, 2, 3,
+    ]);
+    expect(census.counts).toMatchObject({
+      criticalGovernedRiskDirectories: 2,
+      highGovernedRiskDirectories: 1,
+      unclassifiedRiskDirectories: 1,
+    });
+    expect(census.governedRiskEvidence[0]).toMatchObject({
+      directory: "src/components/agent/__tests__",
+      governedRisk: { controlIds: ["fixture-control"] },
+    });
+    const summary = runSummary(dir);
+    expect(summary).toContain("top uncovered governed-risk directories:");
+    expect(summary.indexOf("src/components/agent/__tests__")).toBeLessThan(
+      summary.indexOf("src/app/api/source/action/__tests__"),
+    );
+    expect(summary.indexOf("src/app/api/source/action/__tests__")).toBeLessThan(
+      summary.indexOf("src/lib/data/__tests__"),
+    );
+    expect(summary).not.toContain("src/lib/helpers/__tests__");
   });
 
   it("refreshes the committed census only when its content changes", () => {

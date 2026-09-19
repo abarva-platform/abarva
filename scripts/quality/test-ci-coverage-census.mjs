@@ -36,7 +36,13 @@
  * in the tree it guards.
  */
 
-import { readFileSync, readdirSync, existsSync, writeFileSync } from "node:fs";
+import {
+  readFileSync,
+  readdirSync,
+  existsSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -52,9 +58,23 @@ const REPO_ROOT = path.resolve(
 );
 
 const CENSUS_RELATIVE_PATH = "docs/architecture/test-ci-coverage-census.json";
+const CONTROL_CATALOG_RELATIVE_PATH =
+  "docs/security/ai-surface-control-catalog.json";
 
 const TEST_FILE_RE = /\.(?:test|spec)\.[cm]?[jt]sx?$/;
 const SKIP_DIRECTORIES = new Set(["node_modules", "__snapshots__", "fixtures"]);
+const SOURCE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
+
+const APPROVAL_OR_LIFECYCLE_PATH_RE =
+  /(?:approval|approve|reject|send[-_]?back|lifecycle|phase[-_]?gate|advance|award|submit|transition|external[-_]?action)/i;
+const APPROVAL_OR_LIFECYCLE_SOURCE_RE =
+  /\b(?:approve|reject|sendBack|advancePhase|transition|award|submitForApproval|requestApproval|createDecision|recordDecision)\s*\(/;
+const TENANT_RESOLVER_SOURCE_RE =
+  /\b(?:requireTenancy|resolveTenant|canAccessTenant|getActiveClient|assertTenant)\s*\(/;
+const TENANT_KEY_SOURCE_RE =
+  /\b(?:tenantKey|clientKey|requestedClientKey|tenant_key|client_key)\b/;
+const TENANT_READ_PATH_RE =
+  /(?:read|query|queries|adapter|route|repository|lookup|search|fetch)/i;
 
 /** A test runner token, as it appears in a command line. */
 const RUNNER_RE = /\b(?:npx\s+)?(?:jest|vitest)\b/;
@@ -78,6 +98,139 @@ const RATCHET_SPREAD = "...paths";
 
 function normalize(value) {
   return value.replaceAll("\\", "/").replace(/\s+/g, " ").trim();
+}
+
+function resolveSourceModule(root, importer, specifier) {
+  let base;
+  if (specifier.startsWith("@/")) {
+    base = path.join(root, "src", specifier.slice(2));
+  } else if (specifier.startsWith(".")) {
+    base = path.resolve(path.dirname(path.join(root, importer)), specifier);
+  } else {
+    return null;
+  }
+
+  const candidates = [base];
+  for (const extension of SOURCE_EXTENSIONS) candidates.push(`${base}${extension}`);
+  for (const extension of SOURCE_EXTENSIONS) {
+    candidates.push(path.join(base, `index${extension}`));
+  }
+
+  for (const candidate of candidates) {
+    if (!existsSync(candidate) || !statSync(candidate).isFile()) continue;
+    const relative = normalize(path.relative(root, candidate));
+    if (!relative.startsWith("src/")) continue;
+    if (TEST_FILE_RE.test(relative)) continue;
+    return relative;
+  }
+  return null;
+}
+
+function importedProductSources(root, testFile) {
+  const source = readFileSync(path.join(root, testFile), "utf8");
+  const specifiers = [];
+  for (const match of source.matchAll(
+    /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)["']([^"']+)["']/g,
+  )) {
+    specifiers.push(match[1]);
+  }
+
+  const inferred = testFile
+    .replace("/__tests__/", "/")
+    .replace(/\.(?:test|spec)\.[cm]?[jt]sx?$/, "");
+  const sources = new Set();
+  for (const specifier of specifiers) {
+    const resolved = resolveSourceModule(root, testFile, specifier);
+    if (resolved) sources.add(resolved);
+  }
+  for (const extension of SOURCE_EXTENSIONS) {
+    const candidate = `${inferred}${extension}`;
+    if (existsSync(path.join(root, candidate))) sources.add(candidate);
+  }
+  return [...sources].sort();
+}
+
+function controlPaths(root) {
+  const absolute = path.join(root, CONTROL_CATALOG_RELATIVE_PATH);
+  if (!existsSync(absolute)) return new Map();
+  let parsed;
+  try {
+    parsed = JSON.parse(readFileSync(absolute, "utf8"));
+  } catch {
+    return new Map();
+  }
+  const byPath = new Map();
+  for (const control of parsed?.controls ?? []) {
+    if (typeof control?.path !== "string" || typeof control?.id !== "string") {
+      continue;
+    }
+    const ids = byPath.get(control.path) ?? [];
+    ids.push(control.id);
+    byPath.set(control.path, ids.sort());
+  }
+  return byPath;
+}
+
+function governedRiskForDirectory(root, testFiles, catalogPaths) {
+  const productSources = [
+    ...new Set(testFiles.flatMap((testFile) => importedProductSources(root, testFile))),
+  ].sort();
+  const controlIds = [
+    ...new Set(productSources.flatMap((sourcePath) => catalogPaths.get(sourcePath) ?? [])),
+  ].sort();
+  const approvalSources = [];
+  const tenantReadSources = [];
+
+  for (const sourcePath of productSources) {
+    const source = readFileSync(path.join(root, sourcePath), "utf8");
+    if (
+      APPROVAL_OR_LIFECYCLE_PATH_RE.test(sourcePath) ||
+      APPROVAL_OR_LIFECYCLE_SOURCE_RE.test(source)
+    ) {
+      approvalSources.push(sourcePath);
+    }
+    if (
+      TENANT_RESOLVER_SOURCE_RE.test(source) ||
+      (TENANT_READ_PATH_RE.test(sourcePath) && TENANT_KEY_SOURCE_RE.test(source))
+    ) {
+      tenantReadSources.push(sourcePath);
+    }
+  }
+
+  const signals = [];
+  if (controlIds.length > 0) signals.push("declared_ai_surface_control");
+  if (approvalSources.length > 0) signals.push("approval_or_lifecycle_write");
+  if (tenantReadSources.length > 0) signals.push("tenant_scoped_read");
+
+  const score =
+    (controlIds.length > 0 ? 1000 : 0) +
+    (approvalSources.length > 0 ? 100 : 0) +
+    (tenantReadSources.length > 0 ? 10 : 0);
+  const band =
+    controlIds.length > 0 || approvalSources.length > 0
+      ? "critical"
+      : tenantReadSources.length > 0
+        ? "high"
+        : "unclassified";
+
+  return {
+    score,
+    band,
+    signals,
+    ...(controlIds.length > 0 ? { controlIds } : {}),
+    ...(approvalSources.length > 0
+      ? {
+          approvalOrLifecycleSourceCount: approvalSources.length,
+          approvalOrLifecycleSources: approvalSources.slice(0, 5),
+        }
+      : {}),
+    ...(tenantReadSources.length > 0
+      ? {
+          tenantScopedReadSourceCount: tenantReadSources.length,
+          tenantScopedReadSources: tenantReadSources.slice(0, 5),
+        }
+      : {}),
+  };
 }
 
 /**
@@ -321,6 +474,7 @@ export function buildCensus(root) {
     packageScripts,
   );
   const testFiles = collectTestFiles(root);
+  const catalogPaths = controlPaths(root);
 
   const directories = new Map();
   let covered = 0;
@@ -333,10 +487,16 @@ export function buildCensus(root) {
 
     const directory = path.posix.dirname(testFile);
     if (!directories.has(directory)) {
-      directories.set(directory, { testFiles: 0, covered: 0, via: new Set() });
+      directories.set(directory, {
+        testFiles: 0,
+        covered: 0,
+        via: new Set(),
+        testPaths: [],
+      });
     }
     const entry = directories.get(directory);
     entry.testFiles += 1;
+    entry.testPaths.push(testFile);
     if (result.covered) entry.covered += 1;
     for (const via of result.via) entry.via.add(via);
   }
@@ -347,13 +507,50 @@ export function buildCensus(root) {
       testFiles: entry.testFiles,
       coveredTestFiles: entry.covered,
       via: [...entry.via].sort(),
+      governedRisk: governedRiskForDirectory(
+        root,
+        entry.testPaths,
+        catalogPaths,
+      ),
     }))
     .sort(
       (a, b) =>
         b.testFiles - a.testFiles || a.directory.localeCompare(b.directory),
     );
 
-  const uncoveredDirectories = rows.filter((row) => row.coveredTestFiles === 0);
+  const governedRiskRows = rows
+    .filter((row) => row.coveredTestFiles === 0)
+    .filter((row) => row.governedRisk.score > 0)
+    .sort(
+      (a, b) =>
+        b.governedRisk.score - a.governedRisk.score ||
+        b.testFiles - a.testFiles ||
+        a.directory.localeCompare(b.directory),
+    )
+    .map((row, index) => ({
+      ...row,
+      governedRisk: { ...row.governedRisk, rank: index + 1 },
+    }));
+  const governedRiskRanking = governedRiskRows.map((row) => ({
+    directory: row.directory,
+    testFiles: row.testFiles,
+    governedRisk: {
+      score: row.governedRisk.score,
+      band: row.governedRisk.band,
+      signals: row.governedRisk.signals,
+      rank: row.governedRisk.rank,
+    },
+  }));
+  const governedRiskEvidence = governedRiskRows
+    .slice(0, 25)
+    .map((row) => ({
+      directory: row.directory,
+      testFiles: row.testFiles,
+      governedRisk: row.governedRisk,
+    }));
+  const uncoveredDirectories = rows
+    .filter((row) => row.coveredTestFiles === 0)
+    .map(({ governedRisk: _governedRisk, ...row }) => row);
   const partialDirectories = rows.filter(
     (row) => row.coveredTestFiles > 0 && row.coveredTestFiles < row.testFiles,
   );
@@ -366,6 +563,9 @@ export function buildCensus(root) {
       "Four hops are followed: workflow run step, npm script (recursively), repo script file, test-ratchet baseline JSON.",
       "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
+      "Uncovered directories are ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; test count is only a tie-breaker.",
+      "Governed-risk signals come from product modules statically imported by the tests, not from directory names alone.",
+      "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
       "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op.",
     ],
     counts: {
@@ -380,9 +580,21 @@ export function buildCensus(root) {
       directoriesPartiallyCovered: partialDirectories.length,
       directoriesUncovered: uncoveredDirectories.length,
       indeterminateInvocations: indeterminate.length,
+      criticalGovernedRiskDirectories: governedRiskRanking.filter(
+        (row) => row.governedRisk.band === "critical",
+      ).length,
+      highGovernedRiskDirectories: governedRiskRanking.filter(
+        (row) => row.governedRisk.band === "high",
+      ).length,
+      unclassifiedRiskDirectories:
+        uncoveredDirectories.length - governedRiskRanking.length,
     },
     indeterminateInvocations: indeterminate,
-    partiallyCoveredDirectories: partialDirectories,
+    partiallyCoveredDirectories: partialDirectories.map(
+      ({ governedRisk: _governedRisk, ...row }) => row,
+    ),
+    governedRiskRanking,
+    governedRiskEvidence,
     uncoveredDirectories,
   };
 }
@@ -395,6 +607,7 @@ function summarize(census) {
     `  run by a pull-request workflow: ${c.pullRequestCoveredTestFiles}`,
     `  run by no workflow:             ${c.uncoveredTestFiles}`,
     `  directories with tests:         ${c.directoriesWithTests} (${c.directoriesFullyCovered} fully covered, ${c.directoriesPartiallyCovered} partial, ${c.directoriesUncovered} uncovered)`,
+    `  uncovered governed risk:         ${c.criticalGovernedRiskDirectories} critical, ${c.highGovernedRiskDirectories} high`,
   ];
   if (c.indeterminateInvocations > 0) {
     lines.push(
@@ -402,6 +615,15 @@ function summarize(census) {
     );
     for (const entry of census.indeterminateInvocations) {
       lines.push(`    ${entry.source}: ${entry.invocation}`);
+    }
+  }
+  const governedHead = census.governedRiskRanking.slice(0, 5);
+  if (governedHead.length > 0) {
+    lines.push("  top uncovered governed-risk directories:");
+    for (const row of governedHead) {
+      lines.push(
+        `    ${row.governedRisk.rank}. ${row.directory} (${row.governedRisk.band}; ${row.testFiles} tests; ${row.governedRisk.signals.join(", ")})`,
+      );
     }
   }
   return lines.join("\n");
