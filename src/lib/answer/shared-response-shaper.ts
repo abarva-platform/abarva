@@ -419,7 +419,7 @@ function stripUnmappedRawIds(text: string): string {
     .replace(new RegExp(`\\b${PLACEHOLDER_RE}\\s+—\\s+`, "gi"), "");
 }
 
-export function findSharedResponseShapeIssues(
+function findSharedResponseShapeIssues(
   text: string,
   args: {
     hardMaxChars?: number;
