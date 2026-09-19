@@ -81,17 +81,19 @@ records an AI-assisted human decision, and the change is not feature-gated.
 
 ## QA / Validation
 
-- **The new suite drives the shared validator directly, including the brief guardrail and
-  an explicit mislabeled-brief bypass case.** The brief guardrail is load-bearing,
+- **The new suite, identical either side of the fix: 7 failed / 1 passed before → 0
+  failed / 8 passed after.** The one case green before the fix is the brief guardrail,
   and it is load-bearing: it is what fails when the check is made unconditional.
-- **Six deliberate mutations, each caught** (failing cases in brackets): drop the
-  too-short branch [2]; default an undeclared packet to "not a human decision" [5];
-  remove the rationale check entirely [4]; stop normalising whitespace [1]; apply the
-  check unconditionally, refusing briefs [1]; lower the minimum to one character [2].
+- **Seven deliberate mutations, each caught** (failing cases in brackets): drop the
+  too-short branch [3]; ignore the packet's decision markers so only an explicit `true`
+  counts [6]; remove the rationale check entirely [5]; stop normalising whitespace [1];
+  apply the check unconditionally, refusing briefs [1]; lower the minimum to one
+  character [3]; let an explicit `recordsHumanDecision: false` win over a named decision
+  owner [1] — the last is what holds the mislabelled-brief case.
 - **Baseline over the same scope, same command either side**
   (`npx jest src/lib/ai-liability src/lib/programs src/lib/tower src/components/programs src/__tests__/behaviors`):
   **10 suites / 12 tests failing before → 10 / 12 after**, with a byte-identical failing
-  suite list; all pre-existing and unrelated. Passing 4491 → 4498, the seven new cases.
+  suite list; all pre-existing and unrelated. Passing 4491 → 4499, the eight new cases.
 - `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` — exit 0, no
   output, with `tsconfig.tsbuildinfo` removed first so no stale diagnostics are reused.
 - `npx eslint` over the changed files — exit 0, no output.
