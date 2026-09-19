@@ -133,17 +133,6 @@ function isPullRequestTriggered(source) {
   return /^\s{0,4}(?:pull_request|merge_group):/m.test(trigger);
 }
 
-/**
- * `- run: …` is a legal one-line step and the imported extractor only matches
- * `run:` at the start of a line, so the sequence marker is folded away first.
- * One such step exists in this repository today and it runs `npm ci`, so the
- * number does not move — but a Jest step written that way would have been
- * invisible, which is the failure mode being measured.
- */
-function foldCompactRunSteps(source) {
-  return source.replace(/^(\s*)-\s+run:/gm, "$1  run:");
-}
-
 function readWorkflows(root) {
   const directory = path.join(root, ".github", "workflows");
   if (!existsSync(directory)) return [];
@@ -155,7 +144,7 @@ function readWorkflows(root) {
       return {
         workflow: `.github/workflows/${name}`,
         pullRequest: isPullRequestTriggered(source),
-        commands: extractWorkflowRunCommands(foldCompactRunSteps(source)),
+        commands: extractWorkflowRunCommands(source),
       };
     });
 }

@@ -35,7 +35,7 @@ export function extractWorkflowRunCommands(source) {
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    const match = line.match(/^(\s*)run:\s*(.*)$/);
+    const match = line.match(/^(\s*)(?:-\s+)?run:\s*(.*)$/);
     if (!match) continue;
     const indent = match[1].length;
     const inline = match[2].trim();
