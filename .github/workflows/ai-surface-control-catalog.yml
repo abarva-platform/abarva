@@ -242,6 +242,31 @@ jobs:
       - name: Exercise the Programs unit suites
         run: npx jest src/lib/programs/__tests__ --runInBand
 
+      # Not a catalog control either. Wiring `src/lib/programs/__tests__` above
+      # left 38 directories under `src/lib/programs` — 168 test files — that a
+      # workflow reaches for none of their suites, because a jest path argument
+      # is a regex against the full path and `src/lib/programs/__tests__` does
+      # not appear anywhere in `src/lib/programs/phase-templates/__tests__/…`.
+      #
+      # This is the first of the 38, taken highest-governed-risk first: score
+      # 100, band `critical`, signal `approval_or_lifecycle_write`, rank 25 of
+      # the whole repository. It was measured before it was wired and it is
+      # GREEN — 10 suites, 63 tests, 0.5s — so unlike the directory above it,
+      # this step buys the future rather than repairing the past. That is the
+      # weaker of the two claims and it is the only one available here; a
+      # directory is worth wiring when its modules are live, not only when its
+      # suites are broken. These are live: eleven of the thirteen modules have
+      # importers outside the directory, and the barrel is imported by the
+      # `assemble-pattern` and `approved-inputs-pack` API routes.
+      #
+      # `src/__tests__/behaviors/programs-unit-directory-ci-coverage.test.ts`
+      # holds this step in place through the census's own four-hop resolver,
+      # and its dark-directory ratchet comes down 38 → 37 in the same change.
+      # Lowering it is what makes that number a measurement rather than a
+      # ceiling. See backlog item T-062.
+      - name: Exercise the Programs phase-template suites
+        run: npx jest src/lib/programs/phase-templates/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script

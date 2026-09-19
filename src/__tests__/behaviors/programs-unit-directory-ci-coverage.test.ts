@@ -33,8 +33,34 @@ import {
 const repoRoot = path.resolve(__dirname, "../../..");
 const CENSUS_SCRIPT = "scripts/quality/test-ci-coverage-census.mjs";
 const PROGRAMS_ROOT = "src/lib/programs";
-const WIRED_DIRECTORY = `${PROGRAMS_ROOT}/__tests__`;
 const WIRING_WORKFLOW = ".github/workflows/ai-surface-control-catalog.yml";
+
+/**
+ * Every directory under `src/lib/programs` a workflow names literally, with a
+ * floor under each one's suite count. The floor is what stops "absent from
+ * both of the census's gap lists" from reading as success after a rename or a
+ * deletion — an empty directory is covered in exactly the same way a wired one
+ * is.
+ *
+ * `phase-templates/__tests__` joined on 19 Sep as the first of the 38 that ran
+ * nowhere. It was the highest governed risk of them — score 100, band
+ * `critical`, signal `approval_or_lifecycle_write` — and, unlike the directory
+ * above it, it was GREEN when it was measured: 10 suites, 63 tests, 0.5s.
+ * Wiring it buys the future rather than repairing the past, which is the only
+ * honest claim available for a green directory.
+ *
+ * It is also not coverage of nothing: eleven of the thirteen modules beside
+ * those suites are imported from outside the directory, and the barrel is
+ * imported by two live API routes. A directory whose only importer is its own
+ * test file would be a reason to delete it, not to wire it.
+ */
+const WIRED_DIRECTORIES = [
+  { directory: `${PROGRAMS_ROOT}/__tests__`, minimumSuites: 80 },
+  {
+    directory: `${PROGRAMS_ROOT}/phase-templates/__tests__`,
+    minimumSuites: 10,
+  },
+] as const;
 
 /**
  * Directories under `src/lib/programs` that a workflow reaches for none of
@@ -45,7 +71,7 @@ const WIRING_WORKFLOW = ".github/workflows/ai-surface-control-catalog.yml";
  * count is exact in both directions, so wiring one of them fails this case
  * until the number comes down with it.
  */
-const DARK_DIRECTORY_COUNT = 38;
+const DARK_DIRECTORY_COUNT = 37;
 
 type Census = {
   counts: { indeterminateInvocations: number };
@@ -109,62 +135,78 @@ describe("the Programs unit suite directory a workflow actually reaches", () => 
     expect(census.counts.indeterminateInvocations).toBe(0);
   });
 
-  it("reaches every suite in the directory, not the six that were named one at a time", () => {
-    // Non-vacuous first: if the directory were renamed or emptied, being absent
-    // from both of the census's gap lists would otherwise read as success.
-    const onDisk = testFilesDirectlyIn(WIRED_DIRECTORY);
-    expect(onDisk.length).toBeGreaterThanOrEqual(80);
+  it.each(WIRED_DIRECTORIES)(
+    "reaches every suite in $directory, not the ones named individually",
+    ({ directory, minimumSuites }) => {
+      // Non-vacuous first: if the directory were renamed or emptied, being
+      // absent from both of the census's gap lists would otherwise read as
+      // success.
+      const onDisk = testFilesDirectlyIn(directory);
+      expect(onDisk.length).toBeGreaterThanOrEqual(minimumSuites);
 
-    const partial = census.partiallyCoveredDirectories.find(
-      (row) => row.directory === WIRED_DIRECTORY,
-    );
-    const uncovered = census.uncoveredDirectories.find(
-      (row) => row.directory === WIRED_DIRECTORY,
-    );
+      const partial = census.partiallyCoveredDirectories.find(
+        (row) => row.directory === directory,
+      );
+      const uncovered = census.uncoveredDirectories.find(
+        (row) => row.directory === directory,
+      );
 
-    expect({
-      partiallyCovered: partial
-        ? `${partial.coveredTestFiles} of ${partial.testFiles}`
-        : null,
-      uncovered: uncovered ? `0 of ${uncovered.testFiles}` : null,
-    }).toEqual({ partiallyCovered: null, uncovered: null });
-  });
+      expect({
+        partiallyCovered: partial
+          ? `${partial.coveredTestFiles} of ${partial.testFiles}`
+          : null,
+        uncovered: uncovered ? `0 of ${uncovered.testFiles}` : null,
+      }).toEqual({ partiallyCovered: null, uncovered: null });
+    },
+  );
 
-  it("names the directory literally in a jest command, so the CI-visibility gate can see it too", () => {
+  it.each(WIRED_DIRECTORIES)(
+    "names $directory literally in a jest command, so the CI-visibility gate can see it too",
+    ({ directory }) => {
     // The runner and the gate do not share a matching rule. Jest takes a path
     // argument as a regex; the visibility gate registers a suite by its exact
     // path or by an ancestor DIRECTORY it can see named. A command that reached
     // these suites some other way — a glob, a wrapper script, a changed-files
     // list — would run them and still leave every one of them reported as
     // having no CI owner.
-    const commands = expandedWorkflowCommands().filter((command) =>
-      /\b(?:npx\s+)?(?:jest|vitest|playwright)\b/.test(command),
-    );
-    const named = commands.filter((command) =>
-      new RegExp(
-        `(?:^|[\\s"'\`=])${WIRED_DIRECTORY.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=$|[\\s"'\`])`,
-      ).test(command),
-    );
-    expect(named.length).toBeGreaterThan(0);
+      const commands = expandedWorkflowCommands().filter((command) =>
+        /\b(?:npx\s+)?(?:jest|vitest|playwright)\b/.test(command),
+      );
+      const named = commands.filter((command) =>
+        new RegExp(
+          `(?:^|[\\s"'\`=])${directory.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=$|[\\s"'\`])`,
+        ).test(command),
+      );
+      expect(named.length).toBeGreaterThan(0);
 
-    // And it is this workflow that carries it, so the step cannot quietly move
-    // into a job that does not run on a pull request.
-    const workflow = readFileSync(path.join(repoRoot, WIRING_WORKFLOW), "utf8");
-    expect(workflow).toMatch(
-      new RegExp(`jest\\s+${WIRED_DIRECTORY.replace(/[/]/g, "\\/")}(?=\\s|$)`),
-    );
-  });
+      // And it is this workflow that carries it, so the step cannot quietly
+      // move into a job that does not run on a pull request.
+      const workflow = readFileSync(
+        path.join(repoRoot, WIRING_WORKFLOW),
+        "utf8",
+      );
+      expect(workflow).toMatch(
+        new RegExp(`jest\\s+${directory.replace(/[/]/g, "\\/")}(?=\\s|$)`),
+      );
+    },
+  );
 
-  it("records every extra path the directory pattern also selects", () => {
-    // A jest path argument is a regex tested against the full path, so naming
-    // `…/programs/__tests__` would also select a sibling whose name merely
-    // starts with it — `__tests__-legacy`, say. There is none today and this
-    // case is what keeps that true: a new one has been measured by nobody.
-    const siblings = readdirSync(path.join(repoRoot, PROGRAMS_ROOT)).filter(
-      (entry) => entry.startsWith("__tests__") && entry !== "__tests__",
-    );
-    expect(siblings).toEqual([]);
-  });
+  it.each(WIRED_DIRECTORIES)(
+    "records every extra path the $directory pattern also selects",
+    ({ directory }) => {
+      // A jest path argument is a regex tested against the full path, so
+      // naming `…/programs/__tests__` would also select a sibling whose name
+      // merely starts with it — `__tests__-legacy`, say. There is none today
+      // and this case is what keeps that true: a new one has been measured by
+      // nobody.
+      const parent = directory.slice(0, directory.lastIndexOf("/"));
+      const base = directory.slice(directory.lastIndexOf("/") + 1);
+      const siblings = readdirSync(path.join(repoRoot, parent)).filter(
+        (entry) => entry.startsWith(base) && entry !== base,
+      );
+      expect(siblings).toEqual([]);
+    },
+  );
 
   it("holds the count of directories under src/lib/programs that still run nowhere", () => {
     const dark = census.uncoveredDirectories.filter(
