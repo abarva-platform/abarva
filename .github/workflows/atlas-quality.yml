@@ -7,6 +7,7 @@ on:
     paths:
       - "src/lib/atlas/**"
       - "src/lib/agent/retrieval*.ts"
+      - "src/lib/agent/__tests__/retrieval.azure-context.test.ts"
       - "src/lib/agent/response-shape.ts"
       - "src/app/api/tower/synthesis/**"
       - "src/app/api/v1/atlas/**"
@@ -46,8 +47,9 @@ jobs:
       # right place to actually execute it. Without this step the suite is
       # enforced only by the local `test:before-commit` command.
       # --runTestsByPath: jest reads a bare pattern as a regex.
-      - name: Exercise the Atlas Tower grounding contract
+      - name: Exercise Atlas grounding and governed retrieval contracts
         run: >-
           npx jest --runTestsByPath
           src/__tests__/integration/atlas/atlas-tower-grounding-contract.test.ts
+          src/lib/agent/__tests__/retrieval.azure-context.test.ts
           --runInBand
