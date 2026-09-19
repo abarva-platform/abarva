@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 21,
-    "testCount": 388,
+    "suiteCount": 22,
+    "testCount": 397,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -40,7 +40,8 @@
       "src/__tests__/integration/programs/phase-filter-view.test.ts",
       "src/__tests__/integration/programs/programs-catalog-lock.test.ts",
       "src/__tests__/integration/programs-enhancement-seed-planner.test.ts",
-      "src/__tests__/integration/programs-enhancement-spec.test.ts"
+      "src/__tests__/integration/programs-enhancement-spec.test.ts",
+      "src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts"
     ]
   },
   "excludedFailures": [
@@ -63,11 +64,6 @@
       "suite": "src/__tests__/integration/programs/full-lifecycle-crawl.test.ts",
       "classification": "stale-source-inspection",
       "evidence": "String-matches an earlier inline gate alias instead of executing the current gate behavior."
-    },
-    {
-      "suite": "src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts",
-      "classification": "stale-source-location",
-      "evidence": "Inspects retired shell text and imports rather than rendering the current index surface."
     }
   ],
   "conclusion": "No excluded failure currently demonstrates a live product regression. Each remains debt and must be repaired behaviorally before the gate widens."
