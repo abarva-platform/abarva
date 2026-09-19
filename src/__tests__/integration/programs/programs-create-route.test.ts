@@ -13,35 +13,12 @@ const logClassifierDecision = jest.fn();
 const raiseMaestroFlag = jest.fn();
 const buildProgramSummary = jest.fn();
 const loadUserProgramAccessPolicy = jest.fn();
-
-// Captured between tests
-let participantInserts: Array<Record<string, unknown>> = [];
-
-const insertResponses: Record<string, { error: { message: string; code?: string } | null }> = {};
-
-interface FakeQueryBuilder {
-  insert: jest.Mock;
-  select: jest.Mock<FakeQueryBuilder, []>;
-  eq: jest.Mock<FakeQueryBuilder, []>;
-  in: jest.Mock<FakeQueryBuilder, []>;
-  maybeSingle: jest.Mock;
-  single: jest.Mock;
-}
-
-function makeQueryBuilder(table: string): FakeQueryBuilder {
-  const qb: FakeQueryBuilder = {
-    insert: jest.fn(async (payload: Record<string, unknown>) => {
-      if (table === 'engagement_participants') participantInserts.push(payload);
-      return { error: insertResponses[table]?.error ?? null, data: null };
-    }),
-    select: jest.fn<FakeQueryBuilder, []>(() => qb),
-    eq: jest.fn<FakeQueryBuilder, []>(() => qb),
-    in: jest.fn<FakeQueryBuilder, []>(() => qb),
-    maybeSingle: jest.fn(async () => ({ data: null, error: null })),
-    single: jest.fn(async () => ({ data: null, error: null })),
-  };
-  return qb;
-}
+const seedParticipant = jest.fn();
+const seedModules = jest.fn();
+const selectProgramsWriteAdapter = jest.fn(() => ({
+  seedParticipant,
+  seedModules,
+}));
 
 jest.mock('@/app/api/v1/programs/_auth', () => {
   class MockTenancyError extends Error {
@@ -89,10 +66,8 @@ jest.mock('@/lib/auth/program-access-policy', () => ({
   loadUserProgramAccessPolicy,
 }));
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({
-    from: (table: string) => makeQueryBuilder(table),
-  }),
+jest.mock('@/lib/data-plane/write-adapters/programsWriteAdapter', () => ({
+  selectProgramsWriteAdapter,
 }));
 
 function makeRequest(body: unknown): NextRequest {
@@ -106,10 +81,14 @@ function makeRequest(body: unknown): NextRequest {
 describe('POST /api/v1/programs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    participantInserts = [];
-    for (const k of Object.keys(insertResponses)) delete insertResponses[k];
-    requireTenancy.mockResolvedValue({ clientId: 'client_1', userId: 'person_1' });
+    requireTenancy.mockResolvedValue({
+      clientId: 'client_1',
+      clientKey: 'client_key_1',
+      userId: 'person_1',
+    });
     loadUserProgramAccessPolicy.mockResolvedValue({ canCreatePrograms: true });
+    seedParticipant.mockResolvedValue(true);
+    seedModules.mockResolvedValue(0);
     originateProgram.mockResolvedValue({
       id: 'eng_new_1',
       clientId: 'client_1',
@@ -146,12 +125,14 @@ describe('POST /api/v1/programs', () => {
     expect(input.useCase).toContain('application managed services');
     expect(input.originSource).toBe('user_initiated');
 
-    expect(participantInserts).toHaveLength(1);
-    expect(participantInserts[0]).toMatchObject({
-      engagement_id: 'eng_new_1',
-      user_id: 'cto',
+    expect(selectProgramsWriteAdapter).toHaveBeenCalledWith(undefined, 'client_key_1');
+    expect(seedParticipant).toHaveBeenCalledTimes(1);
+    expect(seedParticipant).toHaveBeenCalledWith({
+      engagementId: 'eng_new_1',
+      userId: 'cto',
+      userName: 'cto',
       role: 'sponsor',
-      approval_authority: 'sponsor',
+      approvalAuthority: 'sponsor',
     });
   });
 
@@ -220,9 +201,8 @@ describe('POST /api/v1/programs', () => {
     expect(body.detail).toMatch(/Try again or contact support/);
   });
 
-  it('still succeeds when participant insert returns an error (non-fatal warning)', async () => {
-    insertResponses.engagement_participants = { error: { message: 'fk violation', code: '23503' } };
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  it('still succeeds when the participant adapter reports a non-fatal write failure', async () => {
+    seedParticipant.mockResolvedValueOnce(false);
     const { POST } = await import('@/app/api/v1/programs/route');
     const res = await POST(
       makeRequest({
@@ -231,11 +211,9 @@ describe('POST /api/v1/programs', () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(warn).toHaveBeenCalledWith(
-      '[programsWriteAdapter] participant insert failed',
-      expect.objectContaining({ engagementId: 'eng_new_1' }),
+    expect(seedParticipant).toHaveBeenCalledWith(
+      expect.objectContaining({ engagementId: 'eng_new_1', role: 'sponsor' }),
     );
-    warn.mockRestore();
   });
 });
 

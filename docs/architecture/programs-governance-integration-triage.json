@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 10,
-    "testCount": 182,
+    "suiteCount": 11,
+    "testCount": 189,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -29,7 +29,8 @@
       "src/__tests__/integration/programs/programs-read-routes-tenant-guards.test.ts",
       "src/__tests__/integration/programs/programs-p6-phase-constraint.test.ts",
       "src/__tests__/integration/programs/programs-phase-gate-status.test.ts",
-      "src/__tests__/integration/programs/programs-generate-route-azure-read.test.ts"
+      "src/__tests__/integration/programs/programs-generate-route-azure-read.test.ts",
+      "src/__tests__/integration/programs/programs-create-route.test.ts"
     ]
   },
   "excludedFailures": [
@@ -57,11 +58,6 @@
       "suite": "src/__tests__/integration/programs/programs-mutation-routes-tenant-guards.test.ts",
       "classification": "stale-route-harness",
       "evidence": "The shared mocks no longer satisfy the guarded advance and sign-off request contracts; the failures are 400/500 harness outcomes, not a demonstrated cross-tenant success."
-    },
-    {
-      "suite": "src/__tests__/integration/programs/programs-create-route.test.ts",
-      "classification": "stale-route-harness",
-      "evidence": "The assertion watches the retired direct participant insert while the create route uses the current write adapter."
     },
     {
       "suite": "src/__tests__/integration/programs/programs-detail-prog22-deliverables-canvas.test.ts",
