@@ -89,6 +89,8 @@ jest.mock('@/lib/agent/stream', () => ({
  */
 const TOWER_INITIATIVE = 'Baggage telemetry modernisation';
 const TOWER_VENDOR = 'Northwind Handling Systems';
+const TOWER_PORTFOLIO_COMPANY = 'Terminal Operations';
+const TOWER_PRESSURE = 'Renewal window is inside 90 days';
 const RETRIEVED_CHUNK_TEXT =
   'Peers consolidated two of five baggage vendors during the 2025 renewal cycle.';
 const RETRIEVED_SOURCE_KEY =
@@ -112,15 +114,33 @@ function towerState() {
       decisions: 0,
       scenarios: 0,
       stakeholderNotes: 0,
-      pressures: 0,
+      pressures: 1,
       observations: 0,
       alignmentDots: 0,
     },
     bandMetrics: { metrics: [] },
-    pressuresView: { cards: [] },
+    pressuresView: {
+      cards: [
+        {
+          headline: TOWER_PRESSURE,
+          magnitudeLabel: '$1.2M renewal exposure',
+          magnitudeConfidence: 'high',
+          nextAction: 'Confirm commercial owner and renewal evidence.',
+        },
+      ],
+    },
     atlasObservationsView: { observations: [] },
     alignment2x2View: { dots: [], strategicBets: [], totalPlotted: 0 },
-    budgetRollups: [],
+    budgetRollups: [
+      {
+        portfolioCompany: TOWER_PORTFOLIO_COMPANY,
+        totalItBudgetUsd: 4_500_000,
+        actualSpendYtdUsd: 2_100_000,
+        runAmountUsd: 3_000_000,
+        changeAmountUsd: 1_500_000,
+        itSpendAsPctRevenue: 0.072,
+      },
+    ],
     initiatives: [
       {
         id: 'init_5m21qd',
@@ -287,6 +307,12 @@ describe('Atlas Tower grounding contract', () => {
       const prompt = await capturePrompt();
       expect(queryTowerCurrentState).toHaveBeenCalled();
       expect(prose(prompt)).toContain('TOWER BUSINESS CONTEXT');
+      expect(prose(prompt)).toContain(
+        'Read model counts: 1 initiatives, 1 vendor rows, 0 KPI snapshots, 1 pressure signals.',
+      );
+      expect(prose(prompt)).toContain(TOWER_PORTFOLIO_COMPANY);
+      expect(prose(prompt)).toContain('IT budget $4.5M');
+      expect(prose(prompt)).toContain(TOWER_PRESSURE);
       // The initiative and the vendor come from different branches of the
       // formatter, so one surviving does not imply the other did.
       expect(prose(prompt)).toContain(TOWER_INITIATIVE);
