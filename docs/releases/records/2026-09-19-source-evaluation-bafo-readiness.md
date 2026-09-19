@@ -36,6 +36,7 @@ Release lane: `global-control-lane`.
 - `src/components/source/canvas/responses/EvaluationBafoReadinessPanel.tsx` renders the compact decision-support panel.
 - `src/app/(maestro)/source/events/[eventId]/page.tsx` builds the readiness view for Evaluation and BAFO stage views.
 - `src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx` passes and renders the view.
+- The readiness archetype line uses generic governed-profile wording and does not echo internal tenant keys.
 - Focused unit/render tests cover fail-closed behavior, event-scoped profile separation, blocker-first next action, and no award/benchmark claims.
 
 ## QA / Validation

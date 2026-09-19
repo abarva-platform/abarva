@@ -26,10 +26,10 @@ describe("evaluation / BAFO readiness decision support", () => {
 
   it("summarizes received packages, comparability, blockers, and one next action without award claims", () => {
     const profileSet = buildVendorResponseMveProfiles({
-      id: "skyh-test-event",
-      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
-      name: "SkyHarbor AMS Outsourcing RFP",
-      accountName: "SkyHarbor Air",
+      id: "client-a-test-event",
+      code: "CLIENT-A-LAKE-AMS-OUTSOURCING-2026",
+      name: "Client A AMS Outsourcing RFP",
+      accountName: "Client A",
     });
     const intelligence = buildVendorChallengeIntelligence(profileSet);
     const bafoPack = buildVendorBafoInstructionPack(intelligence);
@@ -74,9 +74,9 @@ describe("evaluation / BAFO readiness decision support", () => {
   it("keeps event profile sets separate so archetype language does not bleed across events", () => {
     const profileSet = buildVendorResponseMveProfiles({
       id: "18439aee-9889-4e97-a444-4d9e43a85bd5",
-      code: "LAKE-SHARED-SERVICES-AMS-2026",
-      name: "Lakeshore Shared Services AMS",
-      accountName: "Lakeshore Holdings",
+      code: "SHARED-SERVICES-LAKE-AMS-2026",
+      name: "Client B Shared Services AMS",
+      accountName: "Client B",
     });
     const intelligence = buildVendorChallengeIntelligence(profileSet);
     const bafoPack = buildVendorBafoInstructionPack(intelligence);
@@ -94,8 +94,10 @@ describe("evaluation / BAFO readiness decision support", () => {
     });
     const text = JSON.stringify(view);
 
-    expect(view.archetypeLine).toContain("Lakeshore Shared Services AMS");
-    expect(view.archetypeLine).toContain("lakeshore");
+    expect(view.archetypeLine).toContain("Client B Shared Services AMS");
+    expect(view.archetypeLine).toBe(
+      "Client B Shared Services AMS uses the current governed response profile set; comparisons stay inside that event profile.",
+    );
     expect(text).toMatch(/Vendor A|Vendor B|Vendor C/i);
     expect(text).not.toMatch(/Airline Operations Support|IROPS|airport operations/i);
   });
