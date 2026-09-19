@@ -46,11 +46,19 @@ const SUITE_DIR = path.join(REPO, "src/__tests__/integration", "intelligence");
 const LIST = path.join(HERE, "intelligence-integration-quarantine.json");
 
 /**
- * The count when the directory was first wired, on 2026-09-19. This only ever
- * goes down. Lowering it as suites are rewritten against the surface that ships
- * is the point; raising it is a decision someone has to make here, visibly.
+ * The list length. 25 when the directory was first wired on 2026-09-19; 16 once
+ * backlog item T-043 batch 1 cleared the nine IntelligenceLensTabs suites the
+ * same day.
+ *
+ * This is a RATCHET, not headroom: the check below fails when the list is
+ * shorter than this number as well as when it is longer. A ceiling left above
+ * the list after entries are cleared hands the next nine exclusions a silent
+ * pass, which is the same carve-out-by-drift the reason-expiry control exists
+ * to stop — the size would then only be re-measured by whoever happened to
+ * exceed the old high-water mark. Moving it is the visible decision in both
+ * directions.
  */
-const CEILING = 25;
+const CEILING = 16;
 
 const {
   quarantined,
@@ -140,6 +148,15 @@ if (quarantined.length > CEILING) {
       "Rewrite the suite against the surface that ships instead of excluding it, " +
       "or raise CEILING in this file with a reason — so growing the carve-out is " +
       "a visible decision.",
+  );
+} else if (quarantined.length < CEILING) {
+  problems.push(
+    `The quarantine holds ${quarantined.length} suites but CEILING is still ` +
+      `${CEILING}, so ${CEILING - quarantined.length} slot(s) of headroom were ` +
+      "just created by clearing entries. A ceiling that stays above the list is " +
+      `not a ratchet: the next ${CEILING - quarantined.length} exclusion(s) would ` +
+      `pass this check silently. Lower CEILING to ${quarantined.length} in the ` +
+      "same change that removes the entries.",
   );
 }
 
