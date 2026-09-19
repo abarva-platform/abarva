@@ -35,6 +35,7 @@
     "coverage:behavior-gate": "node scripts/ci/check-behavior-coverage.mjs",
     "test:integration": "jest src/__tests__/integration",
     "test:integration:nexus": "jest src/__tests__/integration/nexus",
+    "test:integration:ci-visibility": "node --test scripts/quality/check-integration-ci-visibility.test.mjs && node scripts/quality/check-integration-ci-visibility.mjs",
     "test:atlas-eval": "TS_NODE_BASEURL=. TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node -r tsconfig-paths/register src/__tests__/atlas-eval/run-eval.ts",
     "atlas:eval": "jest src/__tests__/integration/atlas/atlas-invariants.test.ts src/__tests__/integration/atlas/atlas-golden.test.ts",
     "test:e2e": "playwright test",
