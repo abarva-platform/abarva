@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 9,
-    "testCount": 175,
+    "suiteCount": 10,
+    "testCount": 182,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -22,6 +22,7 @@
     "suites": [
       "src/__tests__/integration/programs/deliverable-approval-flow.test.ts",
       "src/__tests__/integration/programs/phase-gate-advancement-flow.test.ts",
+      "src/__tests__/integration/programs/phase-capture-gate-routes.test.ts",
       "src/__tests__/integration/programs/programs-approval-flag-mutation-guards.test.ts",
       "src/__tests__/integration/programs/programs-nexus-mutation-guards.test.ts",
       "src/__tests__/integration/programs/programs-origination-routes-guards.test.ts",
@@ -46,11 +47,6 @@
       "suite": "src/__tests__/integration/programs/nexus-program-workbench.test.ts",
       "classification": "stale-product-language",
       "evidence": "Expects retired phase labels while the canonical phase label map returns the current names."
-    },
-    {
-      "suite": "src/__tests__/integration/programs/phase-capture-gate-routes.test.ts",
-      "classification": "stale-route-harness",
-      "evidence": "The P0 request body omits newly required scope, outcome, and discovery fields, so the real completeness guard correctly returns 409."
     },
     {
       "suite": "src/__tests__/integration/programs/full-lifecycle-crawl.test.ts",

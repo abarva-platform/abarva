@@ -39,6 +39,7 @@ jobs:
           npx jest --runTestsByPath
           src/__tests__/integration/programs/deliverable-approval-flow.test.ts
           src/__tests__/integration/programs/phase-gate-advancement-flow.test.ts
+          src/__tests__/integration/programs/phase-capture-gate-routes.test.ts
           src/__tests__/integration/programs/programs-approval-flag-mutation-guards.test.ts
           src/__tests__/integration/programs/programs-nexus-mutation-guards.test.ts
           src/__tests__/integration/programs/programs-origination-routes-guards.test.ts
