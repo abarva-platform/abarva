@@ -1,9 +1,11 @@
 import {
   clientKeyToBrokerTenantKey,
   clientKeyToInventorySubstrateKey,
+  describeRankingTie,
   filterPatternsByScope,
   scorePatternsByKeyword,
   tokenize,
+  topScoreTieCount,
   type PatternManifestEntry,
 } from '../_shared';
 import { buildSentinelContextBundle } from '@/lib/intelligence/sentinel-broker-adapter';
@@ -152,6 +154,81 @@ describe('scorePatternsByKeyword', () => {
     const out = scorePatternsByKeyword('ai', patterns);
     expect(out).toHaveLength(1);
     expect(out[0].pattern.id).toBe('p-unrelated');
+  });
+});
+
+/**
+ * The score is a count of query tokens present, so it ties heavily at the
+ * top — 72 corpus entries for a four-token query. `.slice(0, limit)` then
+ * returns the first few of those in manifest insertion order, and the caller
+ * reads a ranking that corpus order produced.
+ *
+ * That harm survives the repair everyone reaches for first: word-boundary
+ * matching still leaves 65 tied for the same query, which is why the decision
+ * recorded on the scorer is to retire it for vector retrieval rather than
+ * narrow the match. What is in scope here is telling the caller when the list
+ * it holds cannot be a ranking.
+ */
+describe('ranking ties', () => {
+  const scored = (...scores: number[]) =>
+    scores.map((score, index) => ({
+      pattern: { id: `PAT-${index}` } as unknown as PatternManifestEntry,
+      score,
+    }));
+
+  it('counts how many entries share the top score', () => {
+    expect(topScoreTieCount(scored(4, 4, 4, 3, 1))).toBe(3);
+  });
+
+  it('counts nothing for an empty result', () => {
+    expect(topScoreTieCount([])).toBe(0);
+  });
+
+  it('says nothing when the top score separates the results', () => {
+    expect(describeRankingTie(scored(4, 3, 2), 3)).toBeNull();
+  });
+
+  it('says nothing when every tied entry is returned', () => {
+    // Three tie, three come back: the caller is holding all of them, so
+    // corpus order decided nothing.
+    expect(describeRankingTie(scored(4, 4, 4), 3)).toBeNull();
+  });
+
+  it('warns when the tie is wider than the slice returned', () => {
+    const caveat = describeRankingTie(scored(4, 4, 4, 4, 4), 2);
+
+    expect(caveat).toContain('5 corpus patterns at the same top score of 4');
+    expect(caveat).toContain('only 2 are returned');
+    expect(caveat).toContain('decided by corpus order, not by');
+  });
+
+  it('fires on the real corpus for a short multi-token query', () => {
+    // The end-to-end case. If this stops firing, either the corpus changed
+    // shape or retrieval did — both are worth a look, and neither should
+    // pass silently.
+    const patterns = getPatternManifestEntries();
+    const ranked = scorePatternsByKeyword('AI use case portfolio', patterns);
+
+    expect(topScoreTieCount(ranked)).toBeGreaterThan(10);
+    expect(describeRankingTie(ranked, 5)).not.toBeNull();
+  });
+
+  it('stays quiet for a long, specific query, so the caveat is not constant noise', () => {
+    // The mirror case. Its first draft passed `topScoreTieCount(ranked)` as
+    // the returned count, which makes `tied <= returned` true by
+    // construction — it re-proved the case above it and said nothing about
+    // separation. It also assumed a pattern's own name separates, which a
+    // measurement disproved: a two-token name ties 578 entries, and the
+    // caveat fires for 32.5% of by-own-name searches at a limit of 20.
+    // A long query does separate, and that is what is worth pinning.
+    const patterns = getPatternManifestEntries();
+    const ranked = scorePatternsByKeyword(
+      'vendor lock-in concentration risk in application managed services',
+      patterns,
+    );
+
+    expect(topScoreTieCount(ranked)).toBeLessThan(10);
+    expect(describeRankingTie(ranked, 20)).toBeNull();
   });
 });
 
