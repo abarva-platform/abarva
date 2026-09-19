@@ -421,6 +421,7 @@ function seedEventMatchesClient(
 
   if (clientKey === "apexretail") return accountName.includes("apex");
   if (clientKey === "meridian") return accountName.includes("meridian");
+  if (clientKey === "northstar") return accountName.includes("northstar");
   if (clientKey === "arcturus") {
     return (
       accountName.includes("arcturus") || accountName.includes("first capital")

@@ -8,14 +8,12 @@
     "unverified-remainder": "The remaining `toContain` / `toBe` / `toMatch` failures have not been clustered individually. They are counted, not explained, and saying so is more useful than implying a triage that has not happened."
   },
   "quarantined": [
-    "source-bafo-negotiation-panel.test.ts",
     "source-event-canvas-shell.test.ts",
     "source-executive-decision-summary-panel.test.ts",
     "source-old-surface-archive.test.ts",
     "source-originate-page.test.ts",
     "source-rfp-readiness-panel.test.ts",
     "source-scope-stage-workspace.test.ts",
-    "source-sourcing-tools.test.ts",
     "source-vendor-pricing-smoke.test.ts",
     "source-vendor-response-completeness-panel.test.ts",
     "source-vendor-selection-readiness-panel.test.ts"

@@ -1,4 +1,8 @@
 import {
+  resetSourceIntegrationTenant,
+  useSourceIntegrationTenant,
+} from '@/test/source-integration-tenant';
+import {
   advanceSourcingStageTool,
   compareVendorsTool,
   runBafoCheckTool,
@@ -9,6 +13,10 @@ const EVENT_ID = 'apex-retail-ams-outsourcing-2026';
 const BLOCKED_EVENT_ID = 'evt-source-data-ai-si-selection';
 
 describe('source sourcing tools', () => {
+  beforeEach(() => {
+    resetSourceIntegrationTenant();
+  });
+
   it('blocks advance when the target gate has hard unresolved blockers', async () => {
     const result = await advanceSourcingStageTool({ eventId: BLOCKED_EVENT_ID, toStage: 2 });
 
@@ -23,6 +31,8 @@ describe('source sourcing tools', () => {
   });
 
   it('can advance with explicit bypass and emits a refreshable stage artifact', async () => {
+    useSourceIntegrationTenant('apexretail');
+
     const result = await advanceSourcingStageTool({
       eventId: EVENT_ID,
       toStage: 10,
@@ -42,6 +52,8 @@ describe('source sourcing tools', () => {
   });
 
   it('compares vendors into vendor cards and a BAFO scoreboard', async () => {
+    useSourceIntegrationTenant('apexretail');
+
     const result = await compareVendorsTool({
       eventId: EVENT_ID,
       vendorIds: ['northstar-managed-services', 'arcvault-managed'],
@@ -53,6 +65,8 @@ describe('source sourcing tools', () => {
   });
 
   it('runs a deterministic BAFO check and emits walkaway guidance', async () => {
+    useSourceIntegrationTenant('apexretail');
+
     const result = await runBafoCheckTool({ eventId: EVENT_ID });
 
     expect(result.success).toBe(true);
