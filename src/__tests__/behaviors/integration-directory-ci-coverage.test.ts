@@ -63,6 +63,24 @@ const QUARANTINED_WIRED_DIRECTORIES = [
     excludedRootFiles: ["source-chat-shape.test.ts"],
   },
   {
+    // 2026-09-19 (T-032). 51 suites, of which one workflow reached one file by
+    // name. 12 red on first run; 22 of the 24 failing assertions were repaired
+    // and 2 suites are excluded because each found something real that needs a
+    // product decision - U-008 (palette drift) and U-009 (two merged decisions
+    // that disagree on admin chrome vocabulary).
+    //
+    // `excludedRootFiles` is empty and that is the SECOND acceptable state, not
+    // an oversight: naming this directory also selects the loose root file
+    // `admin-context-uploads-tabs.test.tsx`, which is green and is already
+    // registered by exact path in the same workflow's green command. It runs
+    // twice in that workflow as a result. Excluding it instead would take a
+    // genuinely covered file out of the run to tidy a list.
+    directory: "admin",
+    workflow: ".github/workflows/integration-suites.yml",
+    ignoreArgsScript: "scripts/quality/admin-integration-ignore-args.mjs",
+    excludedRootFiles: [],
+  },
+  {
     directory: "intelligence",
     workflow: ".github/workflows/integration-suites.yml",
     ignoreArgsScript:
@@ -187,8 +205,10 @@ const KNOWN_DARK_ROOT_FILES = new Set([
  */
 const KNOWN_DARK_DIRECTORIES = new Set([
   "",
-  "admin",
-  "admin/data",
+  // 2026-09-19 (T-032) - `admin` and `admin/data` are no longer dark. The
+  // workflow names `src/__tests__/integration/admin` without a trailing slash,
+  // which as a regex covers the `data/` subdirectory too, so wiring the parent
+  // closed both. 49 of the directory's 51 suites now run on every PR.
   "agents",
   "design",
   "ops",

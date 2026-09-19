@@ -54,17 +54,25 @@ decide:
    title accordingly. Two merged decisions contradict each other and choosing between them is a
    product vocabulary call.
 
-Because those two are still red, the directory is **not** wired into CI in this change. Wiring a
-red directory is what turns a job into noise, and both remaining failures are decisions rather
-than code.
+The directory is therefore wired **with a quarantine** naming exactly those two suites, the same
+shape `source-integration.yml` and the Intelligence step already use — 49 of its 51 suites now run
+on every PR, and the 2 excluded ones are named with a reason and an owning backlog item.
+
+The quarantine differs from the Intelligence one in the control that expires it. Those entries name
+retired files whose **absence** is the reason, so a static check can watch for their return. These
+two name **live defects**, so the honest re-measurement is to run the thing:
+`check:admin-integration-quarantine` re-runs each excluded suite and **fails if one passes**. Fix
+the palette drift or settle the vocabulary record and the gate goes red until the entry is deleted.
+The list ceiling is a ratchet in both directions, so clearing an entry cannot leave silent headroom
+for the next one.
 
 ## Layer Impact
 
 `global-control-lane`, tests and tooling only. Eleven integration test files under
-`src/__tests__/integration/admin` and one comment line in `src/lib/admin/agent-readiness-deep-drill.ts`
-whose text named a caption that had already been rewritten two hundred lines below it. No route,
-component, prompt, schema, API, data-plane path or runtime behaviour changes. No workflow file
-changes.
+`src/__tests__/integration/admin`, one comment line in `src/lib/admin/agent-readiness-deep-drill.ts`
+whose text named a caption that had already been rewritten two hundred lines below it, and the CI
+wiring for the directory: a new workflow step, a quarantine list, its generator and its checker.
+No route, component, prompt, schema, API, data-plane path or runtime behaviour changes.
 
 ## Client Applicability
 
@@ -88,6 +96,16 @@ changes.
 - `src/__tests__/integration/admin/production-readiness-tracker.test.ts`
 - `src/__tests__/integration/admin/steward-editorial.test.ts`
 - `src/lib/admin/agent-readiness-deep-drill.ts` (comment only)
+- `.github/workflows/integration-suites.yml` — new Admin step and its quarantine check
+- `scripts/quality/admin-integration-quarantine.json` — 2 entries, each with a failing case, a
+  reason and an owning backlog item
+- `scripts/quality/admin-integration-ignore-args.mjs` — generates the `--testPathIgnorePatterns`
+  flags from that list
+- `scripts/quality/check-admin-integration-quarantine.mjs` — the gate that expires the list
+- `package.json` — `check:admin-integration-quarantine`
+- `docs/architecture/ci-gate-registry.json` — the new gate, `kind: pr-gate`
+- `src/__tests__/behaviors/integration-directory-ci-coverage.test.ts` — `admin` moves from
+  `KNOWN_DARK_DIRECTORIES` to `QUARANTINED_WIRED_DIRECTORIES`, and `admin/data` with it
 
 ## QA / Validation
 
@@ -119,6 +137,24 @@ Font extractor, measured over the 423 files the sweep walks: 11 violations befor
 truncation artifacts whose full declared value is canonical, 0 after. Declaration count is
 unchanged at 123 — the fix changes the values read, not how many are found.
 
+The wired command itself, exactly as the workflow runs it —
+`npx jest src/__tests__/integration/admin --no-coverage --ci $(node scripts/quality/admin-integration-ignore-args.mjs)`
+— **50 suites passed of 50, 1,597 tests passed of 1,597, 0 failed.**
+
+The quarantine checker was mutated twice and failed both times, including the control that matters:
+
+| Mutation | Result |
+|---|---|
+| a green suite added to the quarantine list | exit 1 — "admin-shell-v2.test.ts PASSES now … its reason has expired", plus the ceiling breach |
+| an entry's `reason` emptied | exit 1 — malformed entry, every entry needs a failing case, a reason and an owner |
+
+- PASS — `node scripts/quality/check-integration-ci-visibility.mjs --base origin/main`: 11 changed
+  suites registered. This gate correctly **refused the first push of this branch**, which changed
+  eleven suites that no workflow ran; that refusal is what forced the wiring rather than leaving
+  the repairs in a dark directory.
+- PASS — `npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts`
+  — 13 of 13.
+- PASS — `npm run check:admin-integration-quarantine`, exit 0.
 - PASS — `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false`, exit 0, no output.
 - PASS — `npx eslint` over the changed files, exit 0.
 - `node scripts/release-check.mjs --base origin/main --head HEAD` — recorded on the PR.
@@ -149,11 +185,17 @@ typecheck and lint exits, and the CI run on the PR.
 
 ## Known Gaps
 
-- `src/__tests__/integration/admin` is **still not wired into any workflow** beyond the single
-  file `production-readiness-gate.yml` names. It cannot be wired while two suites are red, and
-  both remaining failures need a decision rather than code. Tracked as its own backlog item.
-- `admin/data` (5 suites) remains at zero coverage; wiring the parent directory would cover it,
-  and that wiring is blocked by the two above.
+- The 49 newly-running suites have **never executed on a CI runner**. They pass locally on one
+  machine; environment-dependent flake has had no chance to show. This is the same exposure T-021
+  and T-038 record for the Source and Intelligence wirings, and it applies here identically.
+- The CI-visibility gate counts a quarantined suite as registered, because the workflow command
+  names its containing directory even though the ignore args exclude it. So the two excluded
+  suites read as covered to that gate while running nowhere. The quarantine list and its checker
+  are what actually own them. Recorded as a backlog item.
+- `docs/architecture/test-ci-coverage-census.json` is not regenerated here. It is a committed
+  derived artifact that T-012 already records as drifting with nothing reporting it; the
+  behavioural coverage case runs the census live, so this change is measured against current
+  `main` rather than against that file.
 - The admin hex-literal drift is recorded, not fixed. `decision needed`.
 - The Admin/Setup visible-vocabulary contradiction is recorded, not resolved. `decision needed`.
 - Two dead props were found while triaging and are not touched here: `contextUsed` on
