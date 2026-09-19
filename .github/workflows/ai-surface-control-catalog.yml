@@ -158,3 +158,18 @@ jobs:
           src/components/strategic-moves/__tests__/phase-capture-autosave-lanes.test.tsx
           src/components/strategic-moves/__tests__/strategicMoveBriefToDiscoveryShape.test.ts
           --runInBand
+
+      # Not a catalog control. `src/lib/agent/tools/__tests__` is the
+      # first-ranked governed-risk directory in
+      # `docs/architecture/test-ci-coverage-census.json` — declared AI surface
+      # control, approval/lifecycle write and tenant-scoped read — and ran in no
+      # npm script and no workflow. Its ten suites drive the real tool handlers
+      # for every write an agent can make to a Program: the phase advance that
+      # must never self-approve, the program commit, the deliverable sign-off
+      # and the registry's defence-in-depth surface gate. All ten were green and
+      # reporting to nobody. Nine of ten deliberate control mutations failed
+      # them; the survivor — deleting the publish-rights gate on the
+      # single-deliverable sign-off — is covered by this change and now fails
+      # them too. See backlog items 26 / 92.
+      - name: Exercise agent program-tool control suites
+        run: npx jest src/lib/agent/tools/__tests__ --runInBand
