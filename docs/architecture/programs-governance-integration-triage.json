@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 24,
-    "testCount": 477,
+    "suiteCount": 25,
+    "testCount": 515,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -43,15 +43,11 @@
       "src/__tests__/integration/programs-enhancement-spec.test.ts",
       "src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts",
       "src/__tests__/integration/programs/workshop-readiness.test.ts",
-      "src/__tests__/integration/programs/program-resume-state.test.ts"
+      "src/__tests__/integration/programs/program-resume-state.test.ts",
+      "src/__tests__/integration/programs/nexus-program-workbench.test.ts"
     ]
   },
   "excludedFailures": [
-    {
-      "suite": "src/__tests__/integration/programs/nexus-program-workbench.test.ts",
-      "classification": "stale-product-language",
-      "evidence": "Expects retired phase labels while the canonical phase label map returns the current names."
-    },
     {
       "suite": "src/__tests__/integration/programs/full-lifecycle-crawl.test.ts",
       "classification": "stale-source-inspection",
