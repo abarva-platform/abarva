@@ -324,7 +324,10 @@ function main(argv) {
     return;
   }
 
-  const dirtyBefore = changedPathsNow();
+  // The report the sweep itself writes is not somebody's uncommitted work.
+  const dirtyBefore = changedPathsNow().filter(
+    (changed) => changed !== REPORT_RELATIVE_PATH,
+  );
   if (dirtyBefore.length > 0) {
     console.error(
       `Working tree is not clean (${dirtyBefore.length} paths). The sweep restores what each script writes and cannot tell your changes from theirs. Commit or stash first.`,
