@@ -117,7 +117,8 @@
       "kind": "unclassified"
     },
     "audit:control-plane-purity": {
-      "kind": "pr-gate"
+      "kind": "report",
+      "reason": "Report mode. scripts/audit/control-plane-tenant-purity.mjs exits non-zero only in checkMode, reached under --check; without it the script prints per-tenant counts against the baseline and exits 0. The gating mode is audit:control-plane-purity:check, which production-readiness-gate.yml runs."
     },
     "audit:control-plane-purity:baseline": {
       "kind": "unclassified"
@@ -452,7 +453,8 @@
       "kind": "pr-gate"
     },
     "audit:runtime-supabase-imports": {
-      "kind": "pr-gate"
+      "kind": "report",
+      "reason": "Census mode. Every failure path in scripts/audit/runtime-supabase-import-census.mjs is behind --fail with a threshold or allowlist argument; the bare script prints the count and exits 0. The gating mode is audit:runtime-supabase-imports:guard, which production-readiness-gate.yml runs."
     },
     "audit:runtime-supabase-imports:guard": {
       "kind": "pr-gate"
@@ -572,7 +574,8 @@
       "kind": "unclassified"
     },
     "audit:vercel-production-runtime": {
-      "kind": "pr-gate"
+      "kind": "report",
+      "reason": "Report mode. scripts/audit/vercel-production-runtime-guard.mjs exits non-zero only under --check; without it the script prints the hit count against the baseline and exits 0. The gating mode is audit:vercel-production-runtime:check, which production-readiness-gate.yml runs."
     },
     "audit:vercel-production-runtime:check": {
       "kind": "pr-gate"

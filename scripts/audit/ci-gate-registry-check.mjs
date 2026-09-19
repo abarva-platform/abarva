@@ -79,18 +79,51 @@ function entryFile(body) {
   return body.match(/(scripts\/[^\s"']+\.(mjs|cjs|js|ts|sh))/)?.[1] ?? null;
 }
 
+function escapeForRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Does `text` run the npm script `name` — the script itself, not one whose name
+ * merely starts with it?
+ *
+ * npm script names nest by colon, so `audit:foo` is a prefix of
+ * `audit:foo:guard`. A substring test therefore let a workflow that runs only
+ * the guard vouch for the bare script as well, and three scripts on main were
+ * counted as wired that way while running nowhere. What follows the name has to
+ * be something that ends it: whitespace, a shell operator, a quote, end of line.
+ */
+function endsWithScriptName(prefix, name, text) {
+  return new RegExp(`${prefix}${escapeForRegExp(name)}(?![\\w:.-])`).test(text);
+}
+
+/** A workflow step that runs the npm script itself. */
+function workflowRunsScript(workflowText, name) {
+  return endsWithScriptName('npm\\s+run\\s+', name, workflowText);
+}
+
+/** A package.json script body that runs another npm script. */
+function bodyRunsScript(body, name) {
+  return endsWithScriptName('run\\s+', name, body);
+}
+
 /**
  * A script counts as invoked when a workflow names it, names a composite script
  * that runs it, or runs its entry file directly.
+ *
+ * The composite hop is one level deep: a composite that runs a composite that
+ * runs the script is not followed. That direction is a false negative — it asks
+ * for a gate to be wired that already is — which is the safe way for this to be
+ * wrong.
  */
 function isInvokedByWorkflow(name, scripts, workflowText) {
-  if (workflowText.includes(`npm run ${name}`)) return true;
+  if (workflowRunsScript(workflowText, name)) return true;
   const file = entryFile(scripts[name] ?? '');
   if (file && workflowText.includes(file)) return true;
   for (const [other, body] of Object.entries(scripts)) {
     if (other === name) continue;
-    if (!body.includes(`run ${name}`)) continue;
-    if (workflowText.includes(`npm run ${other}`)) return true;
+    if (!bodyRunsScript(body, name)) continue;
+    if (workflowRunsScript(workflowText, other)) return true;
   }
   return false;
 }
