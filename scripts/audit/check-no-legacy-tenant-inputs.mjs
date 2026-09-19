@@ -124,6 +124,28 @@ function gitLsFiles() {
     .sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * A committed proof bundle must not name a file it has no finding about.
+ *
+ * This count feeds four committed reports: `deletedLegacyFileCount` in
+ * `summary.json`, a row per file in `deleted-legacy-files.csv`, a line in
+ * `summary.md` and the "Deleted legacy files" card in the committed HTML proof.
+ * Every one of those labels says *legacy*, and the scan applied no such test — it
+ * returned every deletion in the working tree, so deleting an ordinary source
+ * file, test or template wrote that file into the proof bundle as a deleted legacy
+ * file and rewrote all four reports. The write-if-changed guard above cannot stop
+ * that churn, because the findings really did differ between runs; they differed
+ * because they were wrong.
+ *
+ * `blockedPathPatterns` is the audit's own definition of a legacy path — the same
+ * list `blockedPathFindings` is built from — so the count is filtered through it
+ * rather than through a second list that could drift from it.
+ *
+ * The base is still `HEAD`, which means an uncommitted deletion is what this
+ * observes. That is deliberately unchanged here: choosing a different base is a
+ * decision about what the bundle is proof *of*, and it is recorded in the backlog
+ * rather than taken in a bounded repair.
+ */
 function gitDeletedFiles() {
   const raw = execFileSync("git", ["diff", "--name-status", "--diff-filter=D", "HEAD", "--"], {
     cwd: repoRoot,
@@ -138,6 +160,7 @@ function gitDeletedFiles() {
       return file;
     })
     .filter(Boolean)
+    .filter((file) => blockedPathPatterns.some((rule) => rule.pattern.test(file)))
     .sort((a, b) => a.localeCompare(b));
 }
 
