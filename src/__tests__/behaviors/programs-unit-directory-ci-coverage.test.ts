@@ -53,12 +53,27 @@ const WIRING_WORKFLOW = ".github/workflows/ai-surface-control-catalog.yml";
  * those suites are imported from outside the directory, and the barrel is
  * imported by two live API routes. A directory whose only importer is its own
  * test file would be a reason to delete it, not to wire it.
+ *
+ * `board-artifacts/__tests__` joined on 19 Sep as the second, and it is the
+ * first taken because it was RED rather than because it ranked. Two of its
+ * suites were failing where no workflow could report them, and both asserted
+ * tenancy behaviour. Neither turned out to be a product defect: each pinned a
+ * literal that a deliberate change had moved, so both are repaired by deriving
+ * the expectation from the authority the code consults. All five modules beside
+ * those suites are imported from outside the directory — the route guard by
+ * eight callers — so the same "not coverage of nothing" test is met. A suite
+ * that had been sitting loose in the parent directory moved in rather than the
+ * command widening to the parent, which is what keeps the case below honest.
  */
 const WIRED_DIRECTORIES = [
   { directory: `${PROGRAMS_ROOT}/__tests__`, minimumSuites: 80 },
   {
     directory: `${PROGRAMS_ROOT}/phase-templates/__tests__`,
     minimumSuites: 10,
+  },
+  {
+    directory: `${PROGRAMS_ROOT}/board-artifacts/__tests__`,
+    minimumSuites: 4,
   },
 ] as const;
 
@@ -70,8 +85,16 @@ const WIRED_DIRECTORIES = [
  * copies of one contract is a second place to forget (backlog T-053) — and the
  * count is exact in both directions, so wiring one of them fails this case
  * until the number comes down with it.
+ *
+ * 37 → 35 on 19 Sep for wiring ONE directory, and the discrepancy is the point.
+ * Wiring `board-artifacts/__tests__` accounts for one. The second is
+ * `board-artifacts` itself: its only test file was the loose one, so moving
+ * that file into `__tests__` left the parent holding no test file at all and it
+ * dropped off the census. One directory was covered and one stopped existing as
+ * a test directory — different things, and this case reported the difference
+ * rather than accepting the number that was expected.
  */
-const DARK_DIRECTORY_COUNT = 37;
+const DARK_DIRECTORY_COUNT = 35;
 
 type Census = {
   counts: { indeterminateInvocations: number };

@@ -267,6 +267,30 @@ jobs:
       - name: Exercise the Programs phase-template suites
         run: npx jest src/lib/programs/phase-templates/__tests__ --runInBand
 
+      # The second of the dark directories, and the first one taken because it
+      # was RED rather than because it ranked. All 37 remaining directories were
+      # run individually: 34 were green and five suites across four directories
+      # were failing, reported to nobody. Two of the five are in this directory
+      # and both asserted tenancy behaviour, which is why this pair was read
+      # first.
+      #
+      # Neither was a product defect. Both pinned a literal that a deliberate
+      # change moved — one named a tenant that had since been promoted into the
+      # foundation list, so it no longer demonstrated the denial branch it was
+      # written for; the other pinned a display label a rename had changed. Both
+      # are repaired by DERIVING the expectation from the authority the code
+      # itself consults, so the next such change travels instead of arriving as
+      # a false defect. The guard's two denial branches are both still live and
+      # each is now asserted to have a real tenant behind it.
+      #
+      # A test file also sat loose in `board-artifacts/` rather than in
+      # `__tests__`. The census models coverage per directory, so wiring the
+      # sibling would have left it dark while reading as covered; it moved into
+      # `__tests__` rather than widening this command to the parent, which would
+      # have silently adopted every future loose file. See backlog T-063/T-065.
+      - name: Exercise the Programs board-artifact suites
+        run: npx jest src/lib/programs/board-artifacts/__tests__ --runInBand
+
       # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
       # and "19 of 19 pass". Both were true locally and enforced by nothing:
       # neither file was named by any workflow, and no scoped jest script
