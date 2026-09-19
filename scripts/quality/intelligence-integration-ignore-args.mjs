@@ -30,14 +30,17 @@ function escapeRegExp(value) {
 }
 
 // `quarantined` holds objects whose `suite` is a bare filename inside the suite
-// directory. `alsoIgnored` holds full path fragments for red files the
-// command's pattern sweeps in from outside it — jest treats the directory
-// argument as a regex, so a sibling at the integration root whose name starts
-// with "intelligence" matches too, and a trailing slash cannot be used to stop
-// that because it would make the CI-visibility gate stop recognising the path.
+// directory. `alsoIgnored` holds entries whose `path` is the repo-relative path
+// of a red file the command's pattern sweeps in from outside it — jest treats
+// the directory argument as a regex, so a sibling at the integration root whose
+// name starts with "intelligence" matches too, and a trailing slash cannot be
+// used to stop that because it would make the CI-visibility gate stop
+// recognising the path. Backlog item T-044 triaged both of the entries that
+// list held and the list is empty; the entries now carry a reason and an owning
+// item, which check-intelligence-integration-quarantine.mjs enforces.
 const patterns = [
   ...quarantined.map(({ suite }) => `integration/intelligence/${escapeRegExp(suite)}$`),
-  ...alsoIgnored.map((fragment) => `${escapeRegExp(fragment)}$`),
+  ...alsoIgnored.map(({ path: fragment }) => `${escapeRegExp(fragment)}$`),
 ];
 
 process.stdout.write(["--testPathIgnorePatterns", ...patterns].join(" "));
