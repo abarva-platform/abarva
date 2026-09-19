@@ -10,7 +10,6 @@
   "quarantined": [
     "source-access-control-static.test.ts",
     "source-bafo-negotiation-panel.test.ts",
-    "source-canvas-gate-tab.test.tsx",
     "source-event-canvas-shell.test.ts",
     "source-event-route-payload-contract.test.ts",
     "source-executive-decision-summary-panel.test.ts",
