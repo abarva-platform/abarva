@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 11,
-    "testCount": 189,
+    "suiteCount": 12,
+    "testCount": 194,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -30,7 +30,8 @@
       "src/__tests__/integration/programs/programs-p6-phase-constraint.test.ts",
       "src/__tests__/integration/programs/programs-phase-gate-status.test.ts",
       "src/__tests__/integration/programs/programs-generate-route-azure-read.test.ts",
-      "src/__tests__/integration/programs/programs-create-route.test.ts"
+      "src/__tests__/integration/programs/programs-create-route.test.ts",
+      "src/__tests__/integration/programs/programs-auth-mode-and-tenant-guards.test.ts"
     ]
   },
   "excludedFailures": [
@@ -73,11 +74,6 @@
       "suite": "src/__tests__/integration/programs/phase-filter-view.test.ts",
       "classification": "stale-product-language",
       "evidence": "Expects retired phase labels instead of the canonical label map."
-    },
-    {
-      "suite": "src/__tests__/integration/programs/programs-auth-mode-and-tenant-guards.test.ts",
-      "classification": "stale-route-harness",
-      "evidence": "Asserts the retired route-family client call rather than the current tenant-scoped reader contract."
     },
     {
       "suite": "src/__tests__/integration/programs/programs-detail-prog25-workshop-notes-plan.test.ts",

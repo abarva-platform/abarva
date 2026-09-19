@@ -48,4 +48,5 @@ jobs:
           src/__tests__/integration/programs/programs-phase-gate-status.test.ts
           src/__tests__/integration/programs/programs-generate-route-azure-read.test.ts
           src/__tests__/integration/programs/programs-create-route.test.ts
+          src/__tests__/integration/programs/programs-auth-mode-and-tenant-guards.test.ts
           --runInBand
