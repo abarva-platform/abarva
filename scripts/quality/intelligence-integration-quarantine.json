@@ -2,7 +2,7 @@
   "note": "Intelligence integration suites that are RED on clean main and are therefore excluded from the Integration suites workflow. src/__tests__/integration/intelligence held 33 suites that no workflow ran. Running the directory for the first time found 26 red and 133 failing assertions, and the triage found ONE cause, not 133 problems: 131 of the 133 are a source file read as TEXT that does not exist. Default is INCLUDED: a new suite in this directory runs unless it is added here, which is what makes the workflow cover work that has not been written yet. Removing an entry is the fix; adding one needs a reason and an owner.",
   "howToClear": "These suites do not describe a defect in shipping code. They describe a component and route tree that was replaced. Clearing an entry means rewriting the suite against the surface that ships today (src/components/intelligence-advisory/ and src/app/(maestro)/intelligence/), or deleting it with the reason recorded — not restoring the retired tree to satisfy a text match. Delete the entry here afterwards and confirm the workflow stays green.",
   "clusters": {
-    "retired-component-tree": "22 of the 25. Every one reads a file under src/components/intelligence/ as TEXT and asserts substrings of it. That directory does not exist, and no file it names exists anywhere else in the repository — IntelligenceLensTabs.tsx alone is read by eight suites. The Intelligence surface was rebuilt as src/components/intelligence-advisory/AdvisoryIntelligencePage, mounted at src/app/(maestro)/intelligence/page.tsx. So these suites are stale contracts for a surface that was deliberately replaced. They were never governed coverage of shipping code: even before they went red they only asserted the shape of source text.",
+    "retired-component-tree": "13 of the 16 remaining. Every one reads a file under src/components/intelligence/ as TEXT and asserts substrings of it. That directory does not exist — 0c6a86c51 (2026-07-07, \"sunset all legacy surface versions\") deleted it, the day after 874ea46db landed the replacement. The Intelligence surface is now src/components/intelligence-advisory/AdvisoryIntelligencePage, mounted at src/app/(maestro)/intelligence/page.tsx. So these suites are stale contracts for a surface that was deliberately replaced. They were never governed coverage of shipping code: even before they went red they only asserted the shape of source text.",
     "retired-route-tree": "3 of the 25 additionally read page files under route trees that were sunset — src/app/intelligence/[patternId], /solutions, /quality, /contradictions and src/app/(maestro)/tenant/[tenantSlug]/intelligence. intelligence-route-shell-wiring.test.ts is the clearest case and it CONTRADICTS a sibling: it asserts src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx exists, while context-corpus-explorer-route.test.ts asserts the same path does NOT exist, and that assertion passes. Two suites in one directory holding opposite contracts for one route is itself the finding.",
     "not-a-product-defect": "No failing assertion in this directory describes shipping code behaving wrongly. 107 of 133 are ENOENT from readFileSync, 24 are existsSync(...) === true on a path that is gone, and the remaining 2 were stale literals in a file that does exist — those 2 were REPAIRED rather than quarantined, and context-corpus-explorer-route.test.ts now runs."
   },
@@ -12,42 +12,6 @@
       "suite": "evidence-dataset-drawer.test.ts",
       "missing": [
         "src/components/intelligence/EvidenceDatasetDrawer.tsx"
-      ]
-    },
-    {
-      "suite": "int4-contradiction-monitor.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligenceLensTabs.tsx"
-      ]
-    },
-    {
-      "suite": "int5-programme-risk-summary.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligenceLensTabs.tsx"
-      ]
-    },
-    {
-      "suite": "int6-gate-readiness.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligenceLensTabs.tsx"
-      ]
-    },
-    {
-      "suite": "int7-engagement-scorecard.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligenceLensTabs.tsx"
-      ]
-    },
-    {
-      "suite": "int8-milestone-tracker.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligenceLensTabs.tsx"
-      ]
-    },
-    {
-      "suite": "intel4-lens-tabs.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligenceLensTabs.tsx"
       ]
     },
     {
@@ -93,21 +57,9 @@
       ]
     },
     {
-      "suite": "intelligence-int1-apex-pattern-plan.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligenceLensTabs.tsx"
-      ]
-    },
-    {
       "suite": "intelligence-int2-pattern-action-canvas.test.ts",
       "missing": [
         "src/components/intelligence/IntelligencePatternDetailPage.tsx"
-      ]
-    },
-    {
-      "suite": "intelligence-int3-evidence-gap-queue.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligenceLensTabs.tsx"
       ]
     },
     {
@@ -122,12 +74,6 @@
         "src/app/intelligence/[patternId]/page.tsx",
         "src/components/intelligence/IntelligencePatternDetailPage.tsx",
         "src/components/intelligence/IntelligencePatternDetailSentinel.tsx"
-      ]
-    },
-    {
-      "suite": "intelligence-programs-actions-modes.test.ts",
-      "missing": [
-        "src/components/intelligence/IntelligenceLensTabs.tsx"
       ]
     },
     {
@@ -175,5 +121,8 @@
   ],
   "alsoIgnored": [],
   "alsoIgnoredNote": "The workflow command names src/__tests__/integration/intelligence without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command. Jest reads that path as a regex against the full path, so it also selects sibling files at the integration root whose names start with \"intelligence\". Both of those siblings were red when the directory was first wired and were named here untriaged; backlog item T-044 triaged them and both now run. intelligence-pattern-manifest.test.ts asserted observationCount >= observations.length over every entry, which was true of the 17-pattern design pack it was written against and became false when the 2026-06-20 expansion merged corpora that use `observations` for source references; the invariant is now asserted on the corpus where the two fields count the same thing. intelligence-chat-shape.test.ts asserted that Tower still compacts, which a deliberate fix had already made false, and separately caught a live rendering path that drops most of a Brief A answer — that one is an it.failing marker naming backlog item C-009, not an exclusion. This list is EMPTY and should stay empty. An entry is an object whose `path` is REPO-RELATIVE (which is also a valid ignore-pattern suffix, so the generator and the existence check agree on one spelling), plus the `reason` it is out and the `owner` item that gets it back in. check-intelligence-integration-quarantine.mjs enforces all three, that the file still exists, and that the list does not grow past alsoIgnoredCeiling.",
-  "alsoIgnoredCeiling": 2
+  "alsoIgnoredCeiling": 2,
+  "clearedBatches": {
+    "T-043-batch-1": "2026-09-19. The nine suites whose only missing path was src/components/intelligence/IntelligenceLensTabs.tsx were DELETED, not repaired, and so were the eight src/lib/intelligence/*-view.ts modules they were the last reference to. Read the reason before clearing the next batch the same way, because it is not the reason the list gives. Each of the nine was 3-5 describe blocks of which only the last was the stale component probe: 58 of their 257 assertions failed, and the other 199 were real deterministic runtime coverage of pattern-contradiction-monitor-view, programme-risk-summary-view, gate-readiness-view, engagement-scorecard-view, milestone-tracker-view, intelligence-lens-tabs-view, apex-retail-pattern-plan-view and sentinel-evidence-gap-queue-view. Deleting one describe block per suite would have turned all nine green. It was not done, because those eight modules had ZERO importers outside these suites anywhere in the repository - their only consumer was the deleted component, and the sunset left them behind. Un-quarantining would have bought 199 green assertions over code no route can reach, which is the overstatement this list exists to refuse. The modules went with the tests."
+  }
 }
