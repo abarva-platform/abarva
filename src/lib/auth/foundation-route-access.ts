@@ -1,7 +1,6 @@
-import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import {
   type FoundationTenantKey,
-  isFoundationTenantKey,
+  resolveFoundationTenantKey,
 } from "@/lib/tenant/foundation-tenants";
 
 type MetadataRecord = Record<string, unknown>;
@@ -48,21 +47,22 @@ function foundationTenantKeyFromHistoricalAlias(
 ): FoundationTenantKey | null {
   const normalized = value?.trim().toLowerCase().replace(/_/g, "-") ?? "";
   if (!normalized) return null;
-  if (isFoundationTenantKey(normalized)) return normalized;
   if (
     normalized === "airline-demo" ||
-    normalized === "airline demo" ||
-    normalized.includes("airline")
+    normalized === "airline demo"
   ) {
     return "airline-demo-new";
   }
   if (
     normalized === "healthcare-demo" ||
-    normalized === "healthcare demo" ||
-    normalized.includes("healthcare")
+    normalized === "healthcare demo"
   ) {
     return "healthcare-demo-new";
   }
+  const foundationTenantKey = resolveFoundationTenantKey(normalized);
+  if (foundationTenantKey) return foundationTenantKey;
+  if (normalized.includes("airline")) return "airline-demo-new";
+  if (normalized.includes("healthcare")) return "healthcare-demo-new";
   return null;
 }
 
@@ -83,8 +83,7 @@ export function resolveFoundationTenantKeyFromMetadata(
     metadataString(metadata, "defaultClientId");
   const foundationAlias = foundationTenantKeyFromHistoricalAlias(rawTenantKey);
   if (foundationAlias) return foundationAlias;
-  const tenantKey = canonicalTenantKey(rawTenantKey ?? "");
-  return isFoundationTenantKey(tenantKey) ? tenantKey : null;
+  return resolveFoundationTenantKey(rawTenantKey);
 }
 
 export function resolveFoundationTenantKeyFromSessionInput(input: {
@@ -102,8 +101,8 @@ export function resolveFoundationTenantKeyFromSessionInput(input: {
     const foundationAlias =
       foundationTenantKeyFromHistoricalAlias(rawTenantKey);
     if (foundationAlias) return foundationAlias;
-    const tenantKey = canonicalTenantKey(rawTenantKey ?? "");
-    if (isFoundationTenantKey(tenantKey)) return tenantKey;
+    const tenantKey = resolveFoundationTenantKey(rawTenantKey);
+    if (tenantKey) return tenantKey;
   }
   return null;
 }
