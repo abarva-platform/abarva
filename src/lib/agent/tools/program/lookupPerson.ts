@@ -46,7 +46,7 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
     'organizations, and emails. Do not mention person ids, UUIDs, or database mechanics in user-facing prose. ' +
     'CALL THIS PROACTIVELY: as soon as the user mentions a role or a person — even mid-sentence ' +
     "— look them up. Don't ask 'who is your CIO?' — call lookup_person({query:'CIO'}) and tell " +
-    "the user what you found. e.g. 'I see Martin Steward as CIO at Meridian — confirming him as " +
+    "the user what you found. For example: 'I found one CIO match. Should I use this person as " +
     "sponsor?'. Only ask the user for clarification if the lookup returns zero or ambiguous results. " +
     'If exactly one match comes back, propose using it. If multiple, ask the user to pick. ' +
     'If zero, tell the user no match was found and offer to register them as a placeholder ' +

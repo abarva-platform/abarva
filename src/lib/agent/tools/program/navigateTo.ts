@@ -41,9 +41,10 @@ export const navigateToTool: AgentTool<NavigateToInput> = {
     'the user asks a question that can be answered ' +
     'in chat (e.g. "give me the discovery brief", "walk me through what I need for phase 2", ' +
     '"what are the entry criteria" — these are informational requests, not navigation requests; ' +
-    'answer them in the conversation). ONLY use routes that are known to exist: /programs, ' +
-    '/programs/new, /programs/<id> (e.g. /programs/apx-cdp-2026), /home, /tower, /intelligence, ' +
-    '/source, /admin. Sub-routes like /programs/<id>/discovery or /programs/<id>/synthesis do ' +
+    'answer them in the conversation). ONLY use routes that are known to exist: "/programs", ' +
+    '"/programs/new", "/programs/<id>" (e.g. "/programs/apx-cdp-2026"), "/home", "/tower", ' +
+    '"/intelligence", "/source", "/admin". Sub-routes like "/programs/<id>/discovery" or ' +
+    '"/programs/<id>/synthesis" do ' +
     'NOT exist — navigating there will 404. After calling this tool, briefly tell the user where ' +
     'they are going and why. Target must be a relative path (starts with /); absolute URLs are ' +
     'rejected.',
