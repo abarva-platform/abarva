@@ -59,6 +59,43 @@ describe("Source new-event route optimization redirect", () => {
     expect(listSourcingEvents).toHaveBeenCalled();
   });
 
+  it("passes the governed request fields needed for triage readiness", async () => {
+    jest.mocked(listSourcingEvents).mockResolvedValue([
+      {
+        id: "request-1",
+        code: "SRC-001",
+        name: "Example request",
+        status: "waiting_on_client",
+        statusLabel: "Waiting on Client",
+        currentStageLabel: "Strategy",
+        triggerDescription: "A recorded business need.",
+        scopeDescription:
+          "Scope boundary: Platform operations\nValue target: Establish a baseline\nBaseline owner: Technology finance",
+        decisionOwner: "Technology sponsor",
+      } as never,
+    ]);
+
+    const result = await Page({ searchParams: Promise.resolve({}) });
+    expect(isValidElement(result)).toBe(true);
+    const props = isValidElement<{
+      eventWorkspaces: Array<Record<string, unknown>>;
+      requestQueueStatus: string;
+    }>(result)
+      ? result.props
+      : null;
+    const event = props?.eventWorkspaces[0] ?? null;
+    expect(event).toEqual(
+      expect.objectContaining({
+        lifecycle: "waiting_on_client",
+        trigger: "A recorded business need.",
+        scope:
+          "Scope boundary: Platform operations\nValue target: Establish a baseline\nBaseline owner: Technology finance",
+        decisionOwner: "Technology sponsor",
+      }),
+    );
+    expect(props?.requestQueueStatus).toBe("loaded");
+  });
+
   it("keeps the existing create intake behind an explicit route mode", async () => {
     const result = await Page({
       searchParams: Promise.resolve({ mode: "intake" }),

@@ -254,6 +254,10 @@ export interface SourcingEventSummary {
   openAlerts: number;
   owner: string;
   decisionOwner?: string | null;
+  /** Persisted request description exposed by the Source event projection. */
+  triggerDescription?: string | null;
+  /** Persisted intake summary containing the governed scope facts. */
+  scopeDescription?: string | null;
   createdByUserId?: string | null;
   agingDays: number;
   blocker: string | null;

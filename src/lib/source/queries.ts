@@ -482,6 +482,8 @@ export function sourceEventRowToSummary(
     openAlerts: waitingForApproval ? 1 : 0,
     owner: row.decision_owner || "Decision owner pending",
     decisionOwner: row.decision_owner,
+    triggerDescription: row.trigger_description,
+    scopeDescription: row.scope_description,
     createdByUserId: row.created_by_user_id,
     agingDays: daysSince(row.created_at),
     blocker: waitingForApproval ? approvalCopy : null,

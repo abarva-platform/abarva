@@ -10,11 +10,13 @@ import { AppShell } from "@/components/shell/AppShell";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SHELL } from "@/lib/shell/shell-tokens";
+import { buildSourceNewRequestTriage } from "@/lib/source/new-workspace/request-triage";
 import type { CSSProperties, ReactNode } from "react";
 import { useMemo } from "react";
 
 export type SourceNewRequestQueueStatus =
   | "loading"
+  | "loaded"
   | "empty"
   | "unauthorized"
   | "unavailable";
@@ -23,8 +25,12 @@ export interface SourceNewEventWorkspaceSummary {
   id: string;
   code: string;
   name: string;
+  lifecycle: string;
   currentStageLabel: string;
   lifecycleLabel: string;
+  trigger: string | null;
+  scope: string | null;
+  decisionOwner: string | null;
   href: string;
 }
 
@@ -41,8 +47,40 @@ export function SourceNewRequestFirstPage({
   eventWorkspaces: readonly SourceNewEventWorkspaceSummary[];
   intakeHref?: string;
 }) {
-  const canShowWorkspaces = requestQueueStatus !== "unauthorized";
+  const canShowWorkspaces =
+    requestQueueStatus === "loaded" || requestQueueStatus === "empty";
   const visibleWorkspaces = canShowWorkspaces ? eventWorkspaces : [];
+  const requests = visibleWorkspaces.filter(
+    (event) => event.lifecycle === "waiting_on_client",
+  );
+  const activeWorkspaces = visibleWorkspaces.filter(
+    (event) => event.lifecycle !== "waiting_on_client",
+  );
+  const nextAction =
+    requestQueueStatus === "unauthorized"
+      ? {
+          label: "Sign in to review requests",
+          note: "Request details remain hidden until access is confirmed.",
+        }
+      : requestQueueStatus === "unavailable"
+        ? {
+            label: "Retry the request queue",
+            note: "An unavailable queue is not treated as an empty queue.",
+          }
+        : requests.length > 0
+          ? {
+              label: "Review pending requests",
+              note: "Each request shows its missing information and next owner.",
+            }
+          : activeWorkspaces.length > 0
+            ? {
+                label: "Open accepted work",
+                note: "No request is waiting for intake review.",
+              }
+            : {
+                label: "Start a request",
+                note: "Capture the need before creating event work.",
+              };
   const workspace = (
     <main aria-label="Source New request-first workspace" style={PAGE}>
       <section style={HERO}>
@@ -50,18 +88,15 @@ export function SourceNewRequestFirstPage({
           <p style={EYEBROW}>Source New</p>
           <h1 style={TITLE}>Source requests</h1>
           <p style={LEDE}>
-            Start with the request. Accepting a request is a governed handoff
-            into an event workspace; viewing this queue does not create an
-            event, advance a stage, or send any external communication.
+            Review what was requested, close any gaps, and confirm whether the
+            request is ready for Define. This page does not approve, advance,
+            or send anything.
           </p>
         </div>
         <div style={STATUS_BOX}>
           <span style={STATUS_LABEL}>One next action</span>
-          <strong style={STATUS_VALUE}>Review the request queue</strong>
-          <span style={STATUS_NOTE}>
-            Event work opens only after the request is accepted through the
-            governed flow.
-          </span>
+          <strong style={STATUS_VALUE}>{nextAction.label}</strong>
+          <span style={STATUS_NOTE}>{nextAction.note}</span>
         </div>
       </section>
 
@@ -72,11 +107,12 @@ export function SourceNewRequestFirstPage({
               <p style={EYEBROW}>Stage 01</p>
               <h2 style={PANEL_TITLE}>Request queue</h2>
             </div>
-            <span style={CHIP}>Request first</span>
+            <span style={CHIP}>Triage</span>
           </div>
           <RequestQueueState
             status={requestQueueStatus}
             intakeHref={intakeHref}
+            requests={requests}
           />
         </section>
 
@@ -86,16 +122,14 @@ export function SourceNewRequestFirstPage({
               <p style={EYEBROW}>Accepted work</p>
               <h2 style={PANEL_TITLE}>Event workspaces</h2>
             </div>
-            <span style={CHIP}>Separated</span>
+            <span style={CHIP}>Accepted work</span>
           </div>
-          {visibleWorkspaces.length > 0 ? (
+          {activeWorkspaces.length > 0 ? (
             <ol style={EVENT_LIST}>
-              {visibleWorkspaces.slice(0, 6).map((event) => (
+              {activeWorkspaces.slice(0, 6).map((event) => (
                 <li key={event.id} style={EVENT_ROW}>
                   <div style={{ minWidth: 0 }}>
-                    <Link href={event.href} style={EVENT_LINK}>
-                      {event.name}
-                    </Link>
+                    <div style={EVENT_LINK}>{event.name}</div>
                     <div style={EVENT_META}>
                       {event.code} · {event.currentStageLabel} ·{" "}
                       {event.lifecycleLabel}
@@ -140,9 +174,11 @@ export function SourceNewRequestFirstPage({
 function RequestQueueState({
   status,
   intakeHref,
+  requests,
 }: {
   status: SourceNewRequestQueueStatus;
   intakeHref: string;
+  requests: readonly SourceNewEventWorkspaceSummary[];
 }) {
   if (status === "loading") {
     return (
@@ -165,19 +201,87 @@ function RequestQueueState({
       </div>
     );
   }
+  if (requests.length > 0) {
+    return (
+      <ol style={REQUEST_LIST}>
+        {requests.slice(0, 6).map((request) => (
+          <RequestTriageRow key={request.id} request={request} />
+        ))}
+      </ol>
+    );
+  }
   return (
     <div style={STATE_BOX}>
       <p style={EMPTY_COPY}>
-        No pending requests are loaded from an authoritative request ledger.
+        No requests are waiting for intake review.
       </p>
       <p style={NOTE_COPY}>
-        A request does not appear in event workspaces until it is accepted into
-        the governed Source event flow.
+        New requests stay here until their intake review is complete.
       </p>
       <Link href={intakeHref} style={PRIMARY_ACTION}>
-        Open governed intake
+        Start a request
       </Link>
     </div>
+  );
+}
+
+function RequestTriageRow({
+  request,
+}: {
+  request: SourceNewEventWorkspaceSummary;
+}) {
+  const triage = buildSourceNewRequestTriage(request);
+  return (
+    <li aria-label={`Request ${request.name}`} style={REQUEST_ROW}>
+      <div style={REQUEST_HEADER}>
+        <div style={{ minWidth: 0 }}>
+          <div style={REQUEST_TITLE}>{request.name}</div>
+          <div style={EVENT_META}>{request.code} · Stage 01</div>
+        </div>
+        <span style={triage.readyForDefine ? READY_BADGE : GAP_BADGE}>
+          {triage.readyForDefine
+            ? "Ready for Define review"
+            : "Not ready for Define review"}
+        </span>
+      </div>
+
+      <dl style={TRIAGE_GRID}>
+        <div style={TRIAGE_ITEM}>
+          <dt style={TRIAGE_LABEL}>What was requested</dt>
+          <dd style={TRIAGE_VALUE}>{triage.requested}</dd>
+        </div>
+        <div style={TRIAGE_ITEM}>
+          <dt style={TRIAGE_LABEL}>What is missing</dt>
+          <dd style={TRIAGE_VALUE}>
+            {triage.missing.length === 0 ? (
+              "Nothing required is missing"
+            ) : (
+              <ul style={MISSING_LIST}>
+                {triage.missing.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </dd>
+        </div>
+        <div style={TRIAGE_ITEM}>
+          <dt style={TRIAGE_LABEL}>Who acts next</dt>
+          <dd style={TRIAGE_VALUE}>{triage.nextActor}</dd>
+        </div>
+        <div style={TRIAGE_ITEM}>
+          <dt style={TRIAGE_LABEL}>Stage 02</dt>
+          <dd style={TRIAGE_VALUE}>
+            {triage.readyForDefine
+              ? "The request has the recorded facts needed for Define review."
+              : "Complete the missing request facts before Define review."}
+          </dd>
+        </div>
+      </dl>
+
+      <Link href={request.href} style={PRIMARY_ACTION}>
+        {triage.actionLabel}
+      </Link>
+    </li>
   );
 }
 
@@ -242,7 +346,7 @@ const PAGE: CSSProperties = {
 
 const HERO: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(220px, 320px)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
   gap: 18,
   alignItems: "stretch",
   marginBottom: 18,
@@ -302,7 +406,7 @@ const STATUS_NOTE: CSSProperties = {
 
 const GRID: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1.05fr) minmax(320px, 0.95fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
   gap: 14,
 };
 
@@ -383,6 +487,90 @@ const EVENT_LIST: CSSProperties = {
   padding: 0,
   display: "grid",
   gap: 8,
+};
+
+const REQUEST_LIST: CSSProperties = {
+  ...EVENT_LIST,
+  gap: 12,
+};
+
+const REQUEST_ROW: CSSProperties = {
+  display: "grid",
+  gap: 14,
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  padding: 14,
+  background: SHELL.PAPER,
+};
+
+const REQUEST_HEADER: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: 12,
+};
+
+const REQUEST_TITLE: CSSProperties = {
+  color: SHELL.INK,
+  fontSize: 15,
+  fontWeight: 700,
+  lineHeight: 1.3,
+};
+
+const BADGE: CSSProperties = {
+  flex: "0 0 auto",
+  borderRadius: 5,
+  padding: "4px 7px",
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  fontWeight: 700,
+};
+
+const READY_BADGE: CSSProperties = {
+  ...BADGE,
+  border: `1px solid ${SHELL.MINT_LINE}`,
+  background: SHELL.MINT_BG,
+  color: SHELL.MINT_TEXT,
+};
+
+const GAP_BADGE: CSSProperties = {
+  ...BADGE,
+  border: `1px solid ${SHELL.PEACH_LINE}`,
+  background: SHELL.PEACH_BG,
+  color: SHELL.PEACH_TEXT,
+};
+
+const TRIAGE_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))",
+  gap: 12,
+  margin: 0,
+};
+
+const TRIAGE_ITEM: CSSProperties = {
+  minWidth: 0,
+  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+  paddingTop: 9,
+};
+
+const TRIAGE_LABEL: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: "uppercase",
+  color: SHELL.INK_MUTED,
+};
+
+const TRIAGE_VALUE: CSSProperties = {
+  margin: "4px 0 0",
+  color: SHELL.INK_SOFT,
+  fontSize: 12,
+  lineHeight: 1.45,
+};
+
+const MISSING_LIST: CSSProperties = {
+  margin: 0,
+  paddingLeft: 16,
 };
 
 const EVENT_ROW: CSSProperties = {

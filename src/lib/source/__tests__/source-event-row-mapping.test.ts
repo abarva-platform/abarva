@@ -42,6 +42,8 @@ describe("Source persisted event row mapping", () => {
     expect(summary.currentStageLabel).toBe("Scope");
     expect(summary.status).toBe("active");
     expect(summary.valueAtStakeUsd).toBe(25_000_000);
+    expect(summary.triggerDescription).toBe(baseRow.trigger_description);
+    expect(summary.scopeDescription).toBe(baseRow.scope_description);
   });
 
   it("coerces pg NUMERIC strings before computing value fields", () => {
