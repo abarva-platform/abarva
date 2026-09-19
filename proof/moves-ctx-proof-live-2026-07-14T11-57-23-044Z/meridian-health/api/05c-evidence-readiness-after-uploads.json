@@ -1,0 +1,431 @@
+{
+  "ok": true,
+  "status": 200,
+  "url": "https://app.abarva.ai/api/programs/workspace/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/evidence-readiness",
+  "headers": {
+    "content-type": "application/json",
+    "date": "Tue, 14 Jul 2026 11:57:37 GMT",
+    "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "x-middleware-rewrite": "/api/programs/workspace/44f6f4d4-ab88-4fdf-88e8-45c26f27838c/evidence-readiness"
+  },
+  "body": {
+    "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+    "clientId": "6e419b6e-950d-4d34-a4fc-06c3e451a6c4",
+    "clientKey": "meridian",
+    "readiness": {
+      "archetypeLabel": "General (default)",
+      "requiredTotal": 4,
+      "requiredCovered": 4,
+      "requiredMissing": 0,
+      "optionalCovered": 0,
+      "readinessScore": 100,
+      "readyForP3": true,
+      "families": [
+        {
+          "familyId": "current_state_process",
+          "label": "Current-state process / operating documentation",
+          "required": true,
+          "status": "covered",
+          "evidenceIds": [
+            "f1012fc2-7cea-44a8-8c12-73095b76b51a"
+          ],
+          "evidenceTitles": [
+            "current-state-process-operating-documentation-smoke.txt"
+          ]
+        },
+        {
+          "familyId": "it_systems_landscape",
+          "label": "Systems landscape",
+          "required": true,
+          "status": "covered",
+          "evidenceIds": [
+            "c0072f48-7940-4cf7-be40-b74fa18ecda7"
+          ],
+          "evidenceTitles": [
+            "systems-landscape-application-integration-smoke.txt"
+          ]
+        },
+        {
+          "familyId": "kpi_baseline",
+          "label": "KPI / metric baseline",
+          "required": true,
+          "status": "covered",
+          "evidenceIds": [
+            "8a20da40-ca80-4979-b509-00d9ec89e3a3"
+          ],
+          "evidenceTitles": [
+            "kpi-metric-baseline-target-smoke.txt"
+          ]
+        },
+        {
+          "familyId": "cost_baseline",
+          "label": "Cost baseline",
+          "required": true,
+          "status": "covered",
+          "evidenceIds": [
+            "2bec3884-92f9-4da5-a98f-88396dc4d8a6"
+          ],
+          "evidenceTitles": [
+            "cost-finance-budget-run-rate-baseline-smoke.txt"
+          ]
+        },
+        {
+          "familyId": "org_workforce",
+          "label": "Org / workforce model",
+          "required": false,
+          "status": "missing",
+          "evidenceIds": [],
+          "evidenceTitles": []
+        }
+      ],
+      "gapRegister": []
+    },
+    "whatWeNeedNext": [
+      {
+        "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+        "phase": 1,
+        "artifactType": "discovery_report",
+        "evidenceSlot": "Current-state process / operating documentation",
+        "familyId": "current_state_process",
+        "priority": "required",
+        "ownerSource": "Client owner / evidence steward",
+        "acceptedFormats": [
+          "Doc",
+          "CSV",
+          "XLSX"
+        ],
+        "exampleTemplate": "Current-state process packet",
+        "exampleContent": [
+          "As-is workflow with handoff points, queues, exceptions, and approval rules",
+          "Three to five real examples with outcomes and timestamps",
+          "Known pain points, control checks, and owner-attested process notes"
+        ],
+        "whyItMatters": "AbarVa needs the actual work pattern before it can diagnose root causes or design a credible future-state workflow.",
+        "blockedArtifacts": [
+          {
+            "artifactType": "discovery_report",
+            "title": "Discovery & Diagnosis Report",
+            "phase": 2,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "root_cause_worksheet",
+            "title": "Root Cause Analysis Worksheet",
+            "phase": 2,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "target_state_architecture",
+            "title": "Target State Reference Architecture",
+            "phase": 3,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "solution_design",
+            "title": "Solution Design Specification",
+            "phase": 3,
+            "reason": "Evidence available for this artifact."
+          }
+        ],
+        "canDraftBoundary": {
+          "canDraft": true,
+          "canDraftLabel": "Can draft with current evidence.",
+          "cannotDraftLabel": "No current block from this evidence slot."
+        },
+        "preliminaryGenerationCaveat": null,
+        "waiverOption": "A sponsor or accountable owner may record a waiver, but final artifacts must carry the waiver caveat.",
+        "nextAction": "Upload a current-state process document, workshop notes, or a process-observation export.",
+        "status": "covered",
+        "evidenceTitles": [
+          "current-state-process-operating-documentation-smoke.txt"
+        ]
+      },
+      {
+        "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+        "phase": 1,
+        "artifactType": "discovery_report",
+        "evidenceSlot": "Systems landscape",
+        "familyId": "it_systems_landscape",
+        "priority": "required",
+        "ownerSource": "Client owner / evidence steward",
+        "acceptedFormats": [
+          "Doc",
+          "CSV",
+          "XLSX"
+        ],
+        "exampleTemplate": "Application and integration landscape",
+        "exampleContent": [
+          "System inventory with business owner, technical owner, lifecycle, and criticality",
+          "Integration map with source, target, frequency, payload, and failure handling",
+          "Relevant ERP, workflow, data, reporting, and control platforms"
+        ],
+        "whyItMatters": "Architecture and sourcing artifacts need the actual systems, interfaces, and ownership boundaries.",
+        "blockedArtifacts": [
+          {
+            "artifactType": "discovery_report",
+            "title": "Discovery & Diagnosis Report",
+            "phase": 2,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "target_state_architecture",
+            "title": "Target State Reference Architecture",
+            "phase": 3,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "solution_design",
+            "title": "Solution Design Specification",
+            "phase": 3,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "sourcing_strategy",
+            "title": "Sourcing Strategy Brief",
+            "phase": 3,
+            "reason": "Evidence available for this artifact."
+          }
+        ],
+        "canDraftBoundary": {
+          "canDraft": true,
+          "canDraftLabel": "Can draft with current evidence.",
+          "cannotDraftLabel": "No current block from this evidence slot."
+        },
+        "preliminaryGenerationCaveat": null,
+        "waiverOption": "A sponsor or accountable owner may record a waiver, but final artifacts must carry the waiver caveat.",
+        "nextAction": "Upload a CMDB export, application inventory, integration catalog, or architecture diagram.",
+        "status": "covered",
+        "evidenceTitles": [
+          "systems-landscape-application-integration-smoke.txt"
+        ]
+      },
+      {
+        "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+        "phase": 1,
+        "artifactType": "discovery_report",
+        "evidenceSlot": "KPI / metric baseline",
+        "familyId": "kpi_baseline",
+        "priority": "required",
+        "ownerSource": "Client owner / evidence steward",
+        "acceptedFormats": [
+          "Doc",
+          "CSV",
+          "XLSX"
+        ],
+        "exampleTemplate": "Outcome baseline and KPI packet",
+        "exampleContent": [
+          "Current volume, exception rate, cycle time, backlog, quality, and SLA measures",
+          "Metric definitions, calculation logic, reporting cadence, and accountable owner",
+          "Recent period baseline with source system and finance or operations attestation"
+        ],
+        "whyItMatters": "Roadmap, Tower metrics, and value realization need measured baselines, not generated assumptions.",
+        "blockedArtifacts": [
+          {
+            "artifactType": "discovery_report",
+            "title": "Discovery & Diagnosis Report",
+            "phase": 2,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "execution_roadmap",
+            "title": "Execution Roadmap",
+            "phase": 4,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "business_case",
+            "title": "Business Case",
+            "phase": 4,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "tower_metrics_plan",
+            "title": "Tower Metrics Plan",
+            "phase": 4,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "value_measurement_contract",
+            "title": "Value Measurement Contract",
+            "phase": 5,
+            "reason": "Evidence available for this artifact."
+          }
+        ],
+        "canDraftBoundary": {
+          "canDraft": true,
+          "canDraftLabel": "Can draft with current evidence.",
+          "cannotDraftLabel": "No current block from this evidence slot."
+        },
+        "preliminaryGenerationCaveat": null,
+        "waiverOption": "A sponsor or accountable owner may record a waiver, but final artifacts must carry the waiver caveat.",
+        "nextAction": "Upload baseline KPI extracts or an owner-attested measurement worksheet.",
+        "status": "covered",
+        "evidenceTitles": [
+          "kpi-metric-baseline-target-smoke.txt"
+        ]
+      },
+      {
+        "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+        "phase": 1,
+        "artifactType": "business_case",
+        "evidenceSlot": "Cost baseline",
+        "familyId": "cost_baseline",
+        "priority": "required",
+        "ownerSource": "Client owner / evidence steward",
+        "acceptedFormats": [
+          "Doc",
+          "CSV",
+          "XLSX"
+        ],
+        "exampleTemplate": "Cost and effort baseline packet",
+        "exampleContent": [
+          "Current labor effort, run cost, vendor cost, leakage, penalties, and exception cost",
+          "Rate-card or finance assumptions with confidence and validation status",
+          "Cost driver definitions and period covered"
+        ],
+        "whyItMatters": "The business case and financial model need traceable cost and value assumptions before funding-grade estimates.",
+        "blockedArtifacts": [
+          {
+            "artifactType": "business_case",
+            "title": "Business Case",
+            "phase": 4,
+            "reason": "Evidence available for this artifact."
+          },
+          {
+            "artifactType": "financial_model",
+            "title": "Financial Model",
+            "phase": 4,
+            "reason": "Evidence available for this artifact."
+          }
+        ],
+        "canDraftBoundary": {
+          "canDraft": true,
+          "canDraftLabel": "Can draft with current evidence.",
+          "cannotDraftLabel": "No current block from this evidence slot."
+        },
+        "preliminaryGenerationCaveat": null,
+        "waiverOption": "A sponsor or accountable owner may record a waiver, but final artifacts must carry the waiver caveat.",
+        "nextAction": "Upload finance baseline, AP cost model, rate-card assumptions, or value-estimate worksheet.",
+        "status": "covered",
+        "evidenceTitles": [
+          "cost-finance-budget-run-rate-baseline-smoke.txt"
+        ]
+      },
+      {
+        "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+        "phase": 1,
+        "artifactType": "operating_model_design",
+        "evidenceSlot": "Org / workforce model",
+        "familyId": "org_workforce",
+        "priority": "optional",
+        "ownerSource": "Client owner / evidence steward",
+        "acceptedFormats": [
+          "Doc",
+          "CSV",
+          "XLSX"
+        ],
+        "exampleTemplate": "Operating model and workforce packet",
+        "exampleContent": [
+          "Roles, teams, RACI, approval limits, and named accountable owners where available",
+          "Work volume by role or queue and current capacity constraints",
+          "Change readiness, training needs, and human approval boundaries"
+        ],
+        "whyItMatters": "Operating model, roadmap, and handoff artifacts need the people and decision-rights model.",
+        "blockedArtifacts": [
+          {
+            "artifactType": "operating_model_design",
+            "title": "Operating Model Design",
+            "phase": 3,
+            "reason": "Org / workforce model is needed for a final-quality Operating Model Design."
+          },
+          {
+            "artifactType": "execution_roadmap",
+            "title": "Execution Roadmap",
+            "phase": 4,
+            "reason": "Org / workforce model is needed for a final-quality Execution Roadmap."
+          },
+          {
+            "artifactType": "handoff_package",
+            "title": "Mobilization & Tower Handoff Package",
+            "phase": 5,
+            "reason": "Org / workforce model is needed for a final-quality Mobilization & Tower Handoff Package."
+          }
+        ],
+        "canDraftBoundary": {
+          "canDraft": true,
+          "canDraftLabel": "Can draft with current evidence.",
+          "cannotDraftLabel": "Do not present final or board-ready output until this evidence is covered or waived."
+        },
+        "preliminaryGenerationCaveat": "A preliminary draft lane is not active for this phase. Final generation must wait until org / workforce model is uploaded or formally waived.",
+        "waiverOption": "Optional input; waive only if the team accepts a lower-readiness artifact.",
+        "nextAction": "Upload RACI, org/workforce model, interview notes, or workshop output.",
+        "status": "partial",
+        "evidenceTitles": []
+      }
+    ],
+    "groups": {
+      "minimumRequiredForDraft": [
+        {
+          "familyId": "current_state_process",
+          "label": "Current-state process / operating documentation",
+          "required": true,
+          "status": "covered",
+          "evidenceIds": [
+            "f1012fc2-7cea-44a8-8c12-73095b76b51a"
+          ],
+          "evidenceTitles": [
+            "current-state-process-operating-documentation-smoke.txt"
+          ]
+        },
+        {
+          "familyId": "it_systems_landscape",
+          "label": "Systems landscape",
+          "required": true,
+          "status": "covered",
+          "evidenceIds": [
+            "c0072f48-7940-4cf7-be40-b74fa18ecda7"
+          ],
+          "evidenceTitles": [
+            "systems-landscape-application-integration-smoke.txt"
+          ]
+        },
+        {
+          "familyId": "kpi_baseline",
+          "label": "KPI / metric baseline",
+          "required": true,
+          "status": "covered",
+          "evidenceIds": [
+            "8a20da40-ca80-4979-b509-00d9ec89e3a3"
+          ],
+          "evidenceTitles": [
+            "kpi-metric-baseline-target-smoke.txt"
+          ]
+        },
+        {
+          "familyId": "cost_baseline",
+          "label": "Cost baseline",
+          "required": true,
+          "status": "covered",
+          "evidenceIds": [
+            "2bec3884-92f9-4da5-a98f-88396dc4d8a6"
+          ],
+          "evidenceTitles": [
+            "cost-finance-budget-run-rate-baseline-smoke.txt"
+          ]
+        }
+      ],
+      "recommendedForExecutiveReview": [],
+      "optionalForBoardReady": [
+        {
+          "familyId": "org_workforce",
+          "label": "Org / workforce model",
+          "required": false,
+          "status": "missing",
+          "evidenceIds": [],
+          "evidenceTitles": []
+        }
+      ]
+    },
+    "gapRegister": []
+  }
+}

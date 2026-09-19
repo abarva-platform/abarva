@@ -1,0 +1,47 @@
+{
+  "ok": true,
+  "status": 202,
+  "url": "https://app.abarva.ai/api/v1/deliverables/generate-phase",
+  "headers": {
+    "content-type": "application/json",
+    "date": "Tue, 14 Jul 2026 12:01:33 GMT",
+    "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "x-middleware-rewrite": "/api/v1/deliverables/generate-phase"
+  },
+  "body": {
+    "phase": 1,
+    "phaseLabel": "P1 Charter",
+    "contextExtract": {
+      "status": "skipped_existing",
+      "extractId": null,
+      "artifactId": "f41a57f0-6aab-43fd-8b5a-8a117ffd236c",
+      "evidenceId": null,
+      "moveId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+      "tenantKey": "meridian",
+      "sourceMode": "active_home_context",
+      "phase": 1,
+      "targetPhase": 1,
+      "activeTenantAccessVersionId": null,
+      "candidateVersionId": null,
+      "sourceBuildId": null,
+      "attachedEvidenceItems": [],
+      "suggestedContextItems": [],
+      "excludedContextItems": [],
+      "gapItems": [],
+      "generatedAt": "2026-07-14T12:01:33.722Z",
+      "message": "Existing current Move Context Extract found; not regenerated."
+    },
+    "queued": 1,
+    "total": 1,
+    "deliverables": [
+      {
+        "deliverableTypeKey": "charter",
+        "documentTitle": "Program Charter",
+        "deliverableType": "charter",
+        "gateArtifact": true,
+        "runId": "f25b2f63-b873-48e5-9c38-0d32607a5939",
+        "status": "queued"
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "status": 200,
+  "url": "https://app.abarva.ai/api/programs/origination-submit",
+  "headers": {
+    "content-type": "application/json",
+    "date": "Tue, 14 Jul 2026 11:57:29 GMT",
+    "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "x-middleware-rewrite": "/api/programs/origination-submit"
+  },
+  "body": {
+    "ok": true,
+    "engagementId": "44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+    "approvalRequestId": "d5dd20f9-a947-447a-8a4a-e2cf49ddab78",
+    "programName": "CTX Smoke Member Assist 2026-07-14T11-57-23-7c646661",
+    "lifecycleState": "submitted_for_approval",
+    "redirectTo": "/programs/44f6f4d4-ab88-4fdf-88e8-45c26f27838c",
+    "decisionThreadId": "f71b41de-4d7e-4206-98b4-6cf7330e9978",
+    "dossierUrl": "/dossier/f71b41de-4d7e-4206-98b4-6cf7330e9978"
+  }
+}
