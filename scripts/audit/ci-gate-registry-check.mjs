@@ -2,8 +2,8 @@
 /**
  * Every audit script is either a gate or it is not, and the repo has to say which.
  *
- * `package.json` carries 205 `audit:` / `validate:` / `check:` scripts. Fourteen
- * are invoked by a workflow. The rest are a mix of two very different things —
+ * `package.json` carries many `audit:` / `validate:` / `check:` scripts. Some
+ * are invoked by workflows. The rest are a mix of two very different things —
  * policy gates that should fail a PR, and operator tools that are meant to be
  * run by hand — and nothing distinguished them. A gate that nobody runs looks
  * exactly like a tool that nobody needs to run.
@@ -75,10 +75,6 @@ function readWorkflowText() {
     .join('\n');
 }
 
-function entryFile(body) {
-  return body.match(/(scripts\/[^\s"']+\.(mjs|cjs|js|ts|sh))/)?.[1] ?? null;
-}
-
 function escapeForRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -107,25 +103,43 @@ function bodyRunsScript(body, name) {
   return endsWithScriptName('run\\s+', name, body);
 }
 
+/** A workflow step that runs the package script body itself. */
+function workflowRunsScriptBody(workflowText, body) {
+  if (!body.trim()) return false;
+  return new RegExp(
+    `${escapeForRegExp(body.trim())}(?=\\s*(?:$|\\n|&&|\\|\\||;|#))`,
+    'm',
+  ).test(workflowText);
+}
+
 /**
- * A script counts as invoked when a workflow names it, names a composite script
- * that runs it, or runs its entry file directly.
- *
- * The composite hop is one level deep: a composite that runs a composite that
- * runs the script is not followed. That direction is a false negative — it asks
- * for a gate to be wired that already is — which is the safe way for this to be
- * wrong.
+ * A script counts as invoked when a workflow names it, runs its exact package
+ * script body, or reaches it through any number of npm-run composite hops.
+ * Matching the full body matters when sibling scripts share one entry file but
+ * select different modes with flags.
  */
-function isInvokedByWorkflow(name, scripts, workflowText) {
-  if (workflowRunsScript(workflowText, name)) return true;
-  const file = entryFile(scripts[name] ?? '');
-  if (file && workflowText.includes(file)) return true;
-  for (const [other, body] of Object.entries(scripts)) {
-    if (other === name) continue;
-    if (!bodyRunsScript(body, name)) continue;
-    if (workflowRunsScript(workflowText, other)) return true;
+function scriptsInvokedByWorkflow(scripts, workflowText) {
+  const names = Object.keys(scripts);
+  const invoked = new Set(
+    names.filter(
+      (name) =>
+        workflowRunsScript(workflowText, name) ||
+        workflowRunsScriptBody(workflowText, scripts[name] ?? ''),
+    ),
+  );
+  const queue = [...invoked];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    const body = scripts[current] ?? '';
+    for (const candidate of names) {
+      if (invoked.has(candidate) || !bodyRunsScript(body, candidate)) continue;
+      invoked.add(candidate);
+      queue.push(candidate);
+    }
   }
-  return false;
+
+  return invoked;
 }
 
 function main() {
@@ -135,6 +149,7 @@ function main() {
   );
   const scripts = pkg.scripts ?? {};
   const workflowText = readWorkflowText();
+  const invokedScripts = scriptsInvokedByWorkflow(scripts, workflowText);
   const names = Object.keys(scripts).filter((n) => SCRIPT_PREFIXES.test(n)).sort();
 
   let registry = { note: '', entries: {} };
@@ -185,7 +200,7 @@ function main() {
       continue;
     }
 
-    const invoked = isInvokedByWorkflow(name, scripts, workflowText);
+    const invoked = invokedScripts.has(name);
 
     if (entry.kind === 'pr-gate' && !invoked) {
       problems.push(

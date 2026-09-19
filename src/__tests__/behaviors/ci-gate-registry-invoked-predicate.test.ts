@@ -169,6 +169,30 @@ describe("ci gate registry: a longer script name does not vouch for a shorter on
     expect(run(dir).status).toBe(0);
   });
 
+  it("does not let one direct entry-file mode vouch for a sibling mode", () => {
+    const dir = makeTree({
+      scripts: {
+        "audit:foo:check": "node scripts/audit/foo.mjs --check",
+        "audit:foo:baseline": "node scripts/audit/foo.mjs --baseline",
+      },
+      workflow: workflowRunning("node scripts/audit/foo.mjs --check"),
+      entries: {
+        "audit:foo:check": { kind: "pr-gate" },
+        "audit:foo:baseline": { kind: "pr-gate" },
+      },
+    });
+
+    const result = run(dir);
+
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain(
+      "audit:foo:baseline: classified pr-gate but no workflow invokes it",
+    );
+    expect(result.output).not.toContain(
+      "audit:foo:check: classified pr-gate but no workflow invokes it",
+    );
+  });
+
   it("still counts a script reached through a composite the workflow runs", () => {
     const dir = makeTree({
       scripts: {
@@ -185,6 +209,49 @@ describe("ci gate registry: a longer script name does not vouch for a shorter on
     });
 
     expect(run(dir).status).toBe(0);
+  });
+
+  it("follows composite scripts to a fixed point", () => {
+    const dir = makeTree({
+      scripts: {
+        "audit:foo": "node scripts/audit/foo.mjs",
+        "audit:inner": "npm run audit:foo",
+        "audit:outer": "npm run audit:inner",
+      },
+      workflow: workflowRunning("npm run audit:outer"),
+      entries: {
+        "audit:foo": { kind: "pr-gate" },
+        "audit:inner": { kind: "pr-gate" },
+        "audit:outer": { kind: "pr-gate" },
+      },
+    });
+
+    expect(run(dir).status).toBe(0);
+  });
+
+  it("terminates composite cycles without inventing an unreachable script", () => {
+    const dir = makeTree({
+      scripts: {
+        "audit:a": "npm run audit:b",
+        "audit:b": "npm run audit:a",
+        "audit:unreachable": "node scripts/audit/unreachable.mjs",
+      },
+      workflow: workflowRunning("npm run audit:a"),
+      entries: {
+        "audit:a": { kind: "pr-gate" },
+        "audit:b": { kind: "pr-gate" },
+        "audit:unreachable": { kind: "pr-gate" },
+      },
+    });
+
+    const result = run(dir);
+
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain(
+      "audit:unreachable: classified pr-gate but no workflow invokes it",
+    );
+    expect(result.output).not.toContain("audit:a: classified pr-gate");
+    expect(result.output).not.toContain("audit:b: classified pr-gate");
   });
 
   it("does not let a composite vouch for a shorter name it never runs", () => {
