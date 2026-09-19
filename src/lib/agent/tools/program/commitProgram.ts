@@ -72,6 +72,11 @@ import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
 import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
 import { linkAskSessionToMove } from '@/lib/intelligence/ask/session-memory';
+import {
+  isProgramPatternAuthorityError,
+  programPatternLookupFromClient,
+  resolvePromotedProgramPatternKey,
+} from '@/lib/programs/pattern-authority';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
 // validation before we attempt an `engagements.insert` that would
@@ -423,7 +428,6 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       sponsorPersonId: input.sponsor_person_id,
       leadPersonId: input.lead_person_id ?? input.sponsor_person_id,
     };
-    const derivedClassification = classifyCommitProgram(input);
     const programArchetype = normalizeProgramArchetype(input.classification);
 
     // Idempotency guard: if a program with the same name was created
@@ -434,6 +438,28 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // already-pending approval request on that engagement so we don't
     // double-queue.)
     const sb = getAzureWriteFluentClient();
+    let matchedPatternId: string | null;
+    try {
+      matchedPatternId = await resolvePromotedProgramPatternKey(
+        input.matched_pattern_id,
+        programPatternLookupFromClient(sb),
+      );
+    } catch (error) {
+      if (!isProgramPatternAuthorityError(error)) throw error;
+      return {
+        success: false,
+        error: error.code,
+        recovery:
+          error.code === 'program_pattern_lookup_failed'
+            ? 'The Programs pattern catalog is unavailable, so I did not submit the brief. Try again when the catalog is reachable.'
+            : 'That pattern is not an active Programs pattern, so I did not submit the brief. Re-run classification or omit the pattern.',
+      };
+    }
+    const governedInput: CommitProgramInput = {
+      ...input,
+      matched_pattern_id: matchedPatternId ?? undefined,
+    };
+    const derivedClassification = classifyCommitProgram(governedInput);
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
       const { data: existing } = await sb
@@ -591,7 +617,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       objective_code: derivedClassification.objectiveCode,
       topic_code: derivedClassification.topicCode,
       classification: programArchetype,
-      matched_pattern_id: input.matched_pattern_id ?? null,
+      matched_pattern_id: matchedPatternId,
       submitted_from_surface: ctx.surface,
       submitted_at: new Date().toISOString(),
     };
@@ -664,10 +690,10 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
           approvalAuthority: 'contributor',
         });
       }
-      if (input.matched_pattern_id) {
+      if (matchedPatternId) {
         await sb.from('pattern_match_logs').insert({
           engagement_id: programId,
-          pattern_key: input.matched_pattern_id,
+          pattern_key: matchedPatternId,
           match_confidence: null,
           match_context_jsonb: {
             use_case: originationForm.useCase,
@@ -687,7 +713,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         new_state: 'submitted_for_approval',
         changed_by_user_id: tenancy.userId,
         context_jsonb: {
-          pattern_key: input.matched_pattern_id ?? null,
+          pattern_key: matchedPatternId,
           origin: 'maestro_console',
           approval_request_id: approvalRequestId,
         },

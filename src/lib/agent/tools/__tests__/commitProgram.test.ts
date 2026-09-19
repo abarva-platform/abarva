@@ -301,6 +301,15 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
   }
 
   it('inserts the engagement in submitted_for_approval and queues an approval request', async () => {
+    pendingResults.push({
+      maybeSingleResult: {
+        data: {
+          topic_key: 'PAT-PRG-CDP-001',
+          promotion_state: 'published',
+        },
+        error: null,
+      },
+    });
     stageHappyPath();
     submitForApprovalMock.mockResolvedValue(makeApprovalRequest());
 
@@ -383,6 +392,38 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
     // 3 · navigation sentinel still emitted for the client
     expect(writes.some((w) => w.includes('[[program-created:'))).toBe(true);
     expect(writes.some((w) => w.includes('[[artifact:brief-progress]]'))).toBe(true);
+  });
+
+  it('refuses an unpromoted pattern before writing an engagement', async () => {
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client_uuid_1',
+      userId: 'user_abc',
+      role: 'client',
+    });
+    getActiveClientRowMock.mockResolvedValue({
+      id: 'client_uuid_1',
+      name: 'Example Organization',
+      industry_code: 'general',
+      key: 'tenant-a',
+    });
+    pendingResults.push({ maybeSingleResult: { data: null, error: null } });
+
+    const result = await commitProgramTool.handler(
+      {
+        program_name: 'Test Program',
+        problem_statement: 'Improve delivery reliability.',
+        sponsor_person_id: SPONSOR_UUID,
+        matched_pattern_id: 'PAT-INVENTED-001',
+      },
+      makeCtx(),
+    );
+
+    expect(result).toMatchObject({
+      success: false,
+      error: 'program_pattern_not_promoted',
+    });
+    expect(queryLog.some((query) => query.table === 'engagements')).toBe(false);
+    expect(submitForApprovalMock).not.toHaveBeenCalled();
   });
 
   it('refuses to create a program when the user lacks canCreatePrograms', async () => {
