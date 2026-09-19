@@ -31,6 +31,45 @@ name: Integration suites
 # `…/agents`, which is red. `integration-directory-ci-coverage.test.ts` holds
 # all three of these, and refuses a new integration directory that no workflow
 # reaches.
+#
+# 2026-09-19 · five more directories wired. `architecture`, `deployment`,
+# `knowledge`, `tenants` and `demo` were each held out of CI by a handful of
+# assertions — six in total across 38 suites, against 1,105 that were passing
+# and being collected by nothing. All six were stale contracts rather than
+# product defects, and each was repaired by asserting the property the literal
+# stood for rather than by updating the literal:
+#
+#   · a module-path string that had never named a real file
+#   · `FROM node:24`, unmatchable since the base moved behind an ARG
+#   · "not imported by app routes yet" — a migration snapshot that went red
+#     when the migration it was waiting for succeeded
+#   · a hand-typed tenant count, which AGENTS.md forbids outright
+#   · a sign-in layout that had since gained a second mode
+#
+# Wiring `demo` also selects three loose `demo-*.test.ts` files at the
+# integration root, for the regex reason in the paragraph above. They are
+# enumerated in the collision case and all three pass.
+#
+# THE RUNNER AND THE GATE DO NOT AGREE, which is why the eleven loose root
+# suites below are ALSO named one by one even though the directory patterns
+# already run them:
+#
+#   · jest matches a path argument as a regex against the full path, so
+#     `…/integration/demo` SELECTS `…/integration/demo-code-sign-in-panel.test.tsx`.
+#   · the visibility gate registers a suite only by its exact path or by an
+#     ANCESTOR DIRECTORY of it. `…/integration/demo` is not an ancestor
+#     directory of that file — the only ancestor is the integration root,
+#     which no command names.
+#
+# So a loose root suite selected by a directory pattern RUNS in CI and is
+# simultaneously reported as having no CI owner. It surfaced when this change
+# edited one of them and the gate blocked the PR for a suite it was running.
+# The eight `programs-*` files were already in that state before this change:
+# running since the directories were first wired, and unregistered the whole
+# time, so anyone editing one would have been blocked by a gate that was
+# wrong. Naming them changes nothing about what executes; it makes the two
+# sets agree. `integration-directory-ci-coverage.test.ts` now asserts that
+# agreement directly, so the next one fails locally instead of in CI.
 
 on:
   merge_group:
@@ -64,7 +103,7 @@ jobs:
       # what makes this cover suites nobody has written yet: a new suite in one
       # of these directories runs the day it lands.
       - name: Run the integration directories that pass on main
-        run: npx jest src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/engagement src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/solutions src/__tests__/integration/story-pack --no-coverage --ci
+        run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants src/__tests__/integration/demo-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/integration/demo-p0-graceful-degradation.test.ts src/__tests__/integration/programs-api-contracts.test.ts src/__tests__/integration/programs-demo-beats.test.ts src/__tests__/integration/programs-enhancement-seed-planner.test.ts src/__tests__/integration/programs-enhancement-seed-writer.test.ts src/__tests__/integration/programs-enhancement-spec.test.ts src/__tests__/integration/programs-nexus-ask-route.test.ts src/__tests__/integration/programs-nexus-free-text.test.ts src/__tests__/integration/programs-quality-gates.test.ts --no-coverage --ci
 
       - name: Refuse a new integration directory that no workflow reaches
         run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci

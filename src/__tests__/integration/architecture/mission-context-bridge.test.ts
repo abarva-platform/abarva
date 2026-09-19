@@ -401,9 +401,42 @@ describe('module hygiene · mission-context-bridge.ts', () => {
     .filter((line) => !line.trim().startsWith('//'))
     .join('\n');
 
+  // Was two positive substring matches, one of which pinned
+  // '@/lib/agents/agent-mission-queue' — a path that has never existed in this
+  // repository (the module is at '@/lib/agent/...', singular). So the case
+  // could not pass, and it never checked the word its own name turns on:
+  // "only". Both halves are repaired by reading the module's actual
+  // cross-module imports and comparing the SET, which fails on a wrong path
+  // and on a third import alike.
+  const ALLOWED_CROSS_MODULES: ReadonlyArray<string> = [
+    '@/lib/agent/agent-mission-queue',
+    '@/lib/architecture/unified-context-builder',
+  ];
+
   it('imports only the two allowed cross-modules (CTX2 + AG10)', () => {
-    expect(source).toMatch(/from '@\/lib\/architecture\/unified-context-builder'/);
-    expect(source).toMatch(/from '@\/lib\/agents\/agent-mission-queue'/);
+    const imported = Array.from(
+      new Set(
+        Array.from(codeOnly.matchAll(/from\s+'(@\/[^']+)'/g)).map(
+          (match) => match[1],
+        ),
+      ),
+    ).sort();
+
+    expect(imported).toEqual([...ALLOWED_CROSS_MODULES].sort());
+  });
+
+  it('every allowed cross-module resolves to a file that exists', () => {
+    // The assertion above compares strings. This one is why the old typo was
+    // invisible: a path can be asserted for years without anything checking
+    // that it names a real module.
+    for (const specifier of ALLOWED_CROSS_MODULES) {
+      const resolved = path.resolve(
+        __dirname,
+        '../../../',
+        `${specifier.replace('@/', '')}.ts`,
+      );
+      expect(fs.existsSync(resolved)).toBe(true);
+    }
   });
 
   it('does not import from forbidden runtimes', () => {

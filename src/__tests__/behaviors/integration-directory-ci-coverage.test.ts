@@ -2,6 +2,12 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
+import {
+  expandWorkflowCommands,
+  extractWorkflowRunCommands,
+  isIntegrationTestRegistered,
+} from "../../../scripts/quality/check-integration-ci-visibility.mjs";
+
 /**
  * `src/__tests__/integration/source` held 92 suites that no workflow ran. It was
  * found by accident — a pull request added two suites there and the "changed
@@ -44,9 +50,13 @@ type Census = {
  * them needs a quarantine list the way `source` does.
  */
 const WIRED_DIRECTORIES = [
+  "architecture",
   "corpus",
   "data-trust",
+  "demo",
+  "deployment",
   "engagement",
+  "knowledge",
   "nexus",
   "observability",
   "programs",
@@ -54,6 +64,7 @@ const WIRED_DIRECTORIES = [
   "sentinel",
   "solutions",
   "story-pack",
+  "tenants",
 ] as const;
 
 /**
@@ -73,16 +84,11 @@ const KNOWN_DARK_DIRECTORIES = new Set([
   "admin/data",
   "agent",
   "agents",
-  "architecture",
-  "demo",
-  "deployment",
   "design",
   "intelligence",
-  "knowledge",
   "ops",
   "qa",
   "setup",
-  "tenants",
 ]);
 
 function runCensus(): Census {
@@ -177,6 +183,13 @@ describe("integration directories a workflow actually reaches", () => {
     // colliding entry has been measured by nobody, so it fails this case until
     // somebody runs it and decides.
     expect(collisions.sort()).toEqual([
+      // The `demo` pattern selects these three root-level suites. All three
+      // were run on `66acc1a2a` as part of the wired command and pass;
+      // `demo-code-sign-in-panel.test.ts` is one of the five this change
+      // repaired, so it is measured rather than assumed.
+      "demo-code-sign-in-panel.test.tsx",
+      "demo-code-sign-in-route.test.ts",
+      "demo-p0-graceful-degradation.test.ts",
       "programs-api-contracts.test.ts",
       "programs-demo-beats.test.ts",
       "programs-enhancement-seed-planner.test.ts",
@@ -186,6 +199,61 @@ describe("integration directories a workflow actually reaches", () => {
       "programs-nexus-free-text.test.ts",
       "programs-quality-gates.test.ts",
     ]);
+  });
+
+  it("every suite a wired pattern selects is also one the visibility gate can see", () => {
+    // The runner and the gate do not use the same matching rule, and until this
+    // case existed nothing said so.
+    //
+    //   jest  — a path argument is a regex against the full path, so
+    //           `…/integration/demo` SELECTS `…/integration/demo-…test.tsx`.
+    //   gate  — registers a suite by its exact path or by an ANCESTOR
+    //           DIRECTORY. `…/integration/demo` is not an ancestor directory of
+    //           that file; the only ancestor is the integration root, which no
+    //           command names.
+    //
+    // A loose root suite picked up by a directory pattern therefore RUNS in CI
+    // and is reported as having no CI owner at the same time. The eight
+    // `programs-*` files were in exactly that state from the day the
+    // directories were first wired: executing on every pull request, and
+    // invisible to the gate, so anyone who edited one would have been blocked
+    // by a gate that was wrong about its own repository. It stayed hidden
+    // because the gate only fires on a suite the current pull request changes.
+    //
+    // The fix is to name those files in the command as well. This case is what
+    // keeps the two sets agreeing, and it fails locally rather than in CI.
+    const workflowDir = path.join(repoRoot, ".github/workflows");
+    const commands = expandWorkflowCommands(
+      readdirSync(workflowDir)
+        .filter((name) => /\.ya?ml$/.test(name))
+        .flatMap((name) =>
+          extractWorkflowRunCommands(
+            readFileSync(path.join(workflowDir, name), "utf8"),
+          ),
+        ),
+      JSON.parse(
+        readFileSync(path.join(repoRoot, "package.json"), "utf8"),
+      ).scripts as Record<string, string>,
+    );
+
+    const entries = readdirSync(path.join(repoRoot, INTEGRATION_ROOT));
+    const selectedButInvisible: string[] = [];
+
+    for (const name of WIRED_DIRECTORIES) {
+      for (const entry of entries) {
+        // Loose root FILES the directory pattern also selects. A colliding
+        // directory is covered by the resolver cases above.
+        if (entry === name || !entry.startsWith(name)) continue;
+        if (!/\.tsx?$/.test(entry)) continue;
+
+        const testPath = `${INTEGRATION_ROOT}/${entry}`;
+        if (!isIntegrationTestRegistered(testPath, commands)) {
+          selectedButInvisible.push(entry);
+        }
+      }
+    }
+
+    expect(selectedButInvisible.sort()).toEqual([]);
   });
 
   it("admits no integration directory that is newly reached by nothing", () => {
