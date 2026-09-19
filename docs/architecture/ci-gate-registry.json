@@ -121,7 +121,8 @@
       "reason": "Report mode. scripts/audit/control-plane-tenant-purity.mjs exits non-zero only in checkMode, reached under --check; without it the script prints per-tenant counts against the baseline and exits 0. The gating mode is audit:control-plane-purity:check, which production-readiness-gate.yml runs."
     },
     "audit:control-plane-purity:baseline": {
-      "kind": "unclassified"
+      "kind": "operator",
+      "reason": "A baseline writer. Running it rewrites scripts/audit/control-plane-tenant-purity.baseline.json, which is the standard its sibling audit:control-plane-purity:check measures against — so running it after adding debt makes that gate pass by moving the goalposts rather than by fixing anything. Never a PR gate and never invoked by a workflow; run it deliberately when paying debt down, and commit the reduced baseline as the evidence."
     },
     "audit:control-plane-purity:check": {
       "kind": "pr-gate"
