@@ -148,6 +148,7 @@ export default async function SourceNewEventPage({
         trigger: event.triggerDescription ?? null,
         scope: event.scopeDescription ?? null,
         decisionOwner: event.decisionOwner ?? null,
+        asOfDate: event.valueLedger.updatedAt.slice(0, 10),
         solicitationMotion:
           authority.kind === "available" ? authority.solicitationMotion : null,
         solicitationMotionAcceptedAt:
