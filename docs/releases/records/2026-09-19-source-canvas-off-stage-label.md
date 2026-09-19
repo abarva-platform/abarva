@@ -51,6 +51,8 @@ intelligence are exactly the panes where off-stage work is most likely.
   `OffStageNotice` and renders it above the workspace pane.
 - `src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.offStage.test.tsx`
   — five cases driving the real canvas component.
+- `.github/workflows/ai-surface-control-catalog.yml` — one appended step that
+  runs the canvas analytics component suites, which ran in no CI job at all.
 
 ## QA / Validation
 
@@ -102,11 +104,22 @@ both indistinguishable from the defect in practice.
 `eslint` over both changed files exit 0 with no output; `release:check` exit 0
 against a clean tree.
 
+**The first CI run proved the suite ran nowhere, and that is the more useful
+finding.** Every check passed and the new suite executed in none of them.
+`src/components/source/canvas/analytics/__tests__` is named by no npm script and
+no workflow — that is **28 suites / 173 tests** over the component the Source
+event route mounts, reporting to nobody. A passing suite that no job runs is not
+coverage, so the change was not merged on that state: one appended step in
+`ai-surface-control-catalog.yml` now runs the directory on every pull request.
+The whole directory is wired rather than the single new file, because all 28
+were green on `main` when the step was added — so no failure is imported — and
+wiring one file would have left the other 27 in the same blind spot. This is
+another instance of the class recorded as backlog items 26 / 66 / 77.
+
 The suite is deliberately *not* placed under `src/__tests__/behaviors`: that
 directory is inside the coverage denominator the same CI job enforces, and a
 suite mounting this canvas would pull its dependency graph into that
-measurement. It runs in the AI surface control catalog job's component sweep
-instead, alongside the sibling canvas suites.
+measurement.
 
 ## Rollout Plan
 
@@ -139,7 +152,9 @@ and there is nothing to unwind.
 ## Audit Evidence
 
 - The pull request and its CI run.
-- The new suite executing in the real CI job before merge, not merely present.
+- The new suite executing in the real CI job before merge, not merely present —
+  and the first run, where it executed nowhere, which is why the workflow step
+  exists.
 - The failing-first, after, and five mutation results recorded above.
 - The three before/after baselines above, each run with the same command on
   either side.
