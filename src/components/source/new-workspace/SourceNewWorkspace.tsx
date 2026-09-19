@@ -24,6 +24,7 @@ import {
 } from "@/lib/source/new-workspace/phase-state";
 import { buildSourceNewNdaReadiness } from "@/lib/source/new-workspace/nda-readiness";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
+import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import "./workspace.css";
 
 type Phase = SourceNewPhaseKey;
@@ -178,6 +179,7 @@ export function SourceNewWorkspace({
   event,
   files,
   activity,
+  intelligence,
 }: {
   event: SourceNewEventView;
   files: readonly SourceNewFileRow[];
@@ -187,6 +189,7 @@ export function SourceNewWorkspace({
    * trail was not loaded rather than implying there is nothing to show.
    */
   activity?: SourceEventActivityResult;
+  intelligence?: SourceNewEventIntelligenceView;
 }) {
   const evidence = useMemo(() => phaseEvidence(event, files), [event, files]);
   const stateOf = (item: Phase): SourceNewPhaseState =>
@@ -431,31 +434,12 @@ export function SourceNewWorkspace({
           </section>
         )}
         {view === "intelligence" && (
-          <section className="snw-panel snw-plain">
-            <p className="snw-eyebrow">Decision support</p>
-            <h2>What can inform this event</h2>
-            <dl className="snw-facts">
-              <div>
-                <dt>Classified category</dt>
-                <dd>{category.text}</dd>
-              </div>
-              <div>
-                <dt>Evidence basis</dt>
-                <dd>
-                  Open the current stage for cited insights and missing-input
-                  checks.
-                </dd>
-              </div>
-            </dl>
-            {category.note && <p className="snw-note">{category.note}</p>}
-            <p className="snw-note">
-              A category alone is not a benchmark, savings claim or supplier
-              recommendation.
-            </p>
-            <Link className="snw-text-action" href={eventHref}>
-              View current stage
-            </Link>
-          </section>
+          <SourceNewIntelligenceWorkspace
+            categoryText={category.text}
+            categoryNote={category.note}
+            eventHref={eventHref}
+            intelligence={intelligence}
+          />
         )}
         {view === "approvals" && (
           <section className="snw-panel snw-plain">
@@ -653,6 +637,206 @@ function SourceNewStage05NdaReadiness({
           Open governed event
         </Link>
       </div>
+    </section>
+  );
+}
+
+function SourceNewIntelligenceWorkspace({
+  categoryText,
+  categoryNote,
+  eventHref,
+  intelligence,
+}: {
+  categoryText: string;
+  categoryNote?: string | null;
+  eventHref: string;
+  intelligence?: SourceNewEventIntelligenceView;
+}) {
+  const humanizeToken = (value: string): string => {
+    if (value === "pct_per_year") return "% per year";
+    return value
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/_/g, " ")
+      .toLowerCase();
+  };
+  const evidenceFamilyLabel = (family: string): string =>
+    intelligence?.requiredEvidence.find((item) => item.key === family)?.label ??
+    humanizeToken(family);
+
+  if (!intelligence) {
+    return (
+      <section className="snw-panel snw-plain">
+        <p className="snw-eyebrow">Decision support</p>
+        <h2>What can inform this event</h2>
+        <dl className="snw-facts">
+          <div>
+            <dt>Classified category</dt>
+            <dd>{categoryText}</dd>
+          </div>
+          <div>
+            <dt>Evidence basis</dt>
+            <dd>Evidence readiness is not available on this view yet.</dd>
+          </div>
+        </dl>
+        {categoryNote && <p className="snw-note">{categoryNote}</p>}
+        <p className="snw-note">
+          A category alone is not a benchmark, savings claim or supplier
+          recommendation.
+        </p>
+        <Link className="snw-text-action" href={eventHref}>
+          View current stage
+        </Link>
+      </section>
+    );
+  }
+
+  return (
+    <section className="snw-panel snw-intelligence" aria-label="Event intelligence workspace">
+      <div className="snw-intel-heading">
+        <div>
+          <p className="snw-eyebrow">Decision support</p>
+          <h2>Event intelligence workspace</h2>
+          <p className="snw-lede">
+            See what Source can use now, what evidence is still missing, and
+            the next question to resolve. This view does not estimate savings,
+            select suppliers, or contact anyone.
+          </p>
+        </div>
+        <span className={`snw-intel-posture is-${intelligence.posture}`}>
+          {intelligence.posture}
+        </span>
+      </div>
+
+      <dl className="snw-facts snw-intel-facts">
+        <div>
+          <dt>Archetype</dt>
+          <dd>{intelligence.archetype.name}</dd>
+        </div>
+        <div>
+          <dt>Why this playbook</dt>
+          <dd>Matched from the event&apos;s recorded category and sourcing motion.</dd>
+        </div>
+        <div>
+          <dt>Evidence readiness</dt>
+          <dd>
+            {intelligence.governedContext.usableCount} ready ·{" "}
+            {intelligence.governedContext.blockedCount} needs review
+          </dd>
+        </div>
+      </dl>
+
+      <div className="snw-intel-grid">
+        <section>
+          <h3>Required evidence</h3>
+          <ul className="snw-intel-list">
+            {intelligence.requiredEvidence.length > 0 ? (
+              intelligence.requiredEvidence.map((item) => (
+                <li key={item.key}>
+                  <span className={`snw-intel-state is-${item.state}`}>
+                    {item.state === "available" ? "ready" : "needed"}
+                  </span>
+                  <strong>{item.label}</strong>
+                  <small>
+                    {item.severity === "hard" ? "required" : "helpful"} ·{" "}
+                    {item.sourceDocHint}
+                  </small>
+                  <p>{item.whyNeeded}</p>
+                </li>
+              ))
+            ) : (
+              <li>
+                <strong>No stage-specific evidence contract is available.</strong>
+                <p>The event needs a resolved archetype before evidence can be scored.</p>
+              </li>
+            )}
+          </ul>
+        </section>
+
+        <section>
+          <h3>Evidence ready to use</h3>
+          <ul className="snw-intel-list">
+            {intelligence.governedContext.available.length > 0 ? (
+              intelligence.governedContext.available.map((item) => (
+                <li key={item.id}>
+                  <span className="snw-intel-state is-available">
+                    ready
+                  </span>
+                  <strong>{item.title}</strong>
+                  <small>Cited and retrievable</small>
+                  <p>
+                    {item.evidenceFamilies.length > 0
+                      ? item.evidenceFamilies.map(evidenceFamilyLabel).join(", ")
+                      : "No evidence family labels recorded."}
+                  </p>
+                </li>
+              ))
+            ) : (
+              <li>
+                <strong>No evidence is ready yet.</strong>
+                <p>Review the loaded files and complete their evidence checks.</p>
+              </li>
+            )}
+          </ul>
+        </section>
+      </div>
+
+      <div className="snw-intel-grid">
+        <section>
+          <h3>What is missing</h3>
+          <ul className="snw-intel-plain-list">
+            {intelligence.gaps.length > 0 ? (
+              intelligence.gaps.map((gap) => <li key={gap}>{gap}</li>)
+            ) : (
+              <li>No unresolved evidence gap is visible.</li>
+            )}
+          </ul>
+        </section>
+        <section>
+          <h3>What Source can say now</h3>
+          <p className="snw-intel-allowed">{intelligence.allowedStatement}</p>
+          <ul className="snw-intel-plain-list">
+            {intelligence.refusals.length > 0 ? (
+              intelligence.refusals.map((refusal) => (
+                <li key={refusal}>{refusal}</li>
+              ))
+            ) : (
+              <li>No evidence was excluded.</li>
+            )}
+          </ul>
+        </section>
+      </div>
+
+      <section className="snw-intel-next" aria-label="Intelligence next action">
+        <p className="snw-eyebrow">Next question</p>
+        <h3>{intelligence.nextQuestion}</h3>
+        <p>
+          <strong>{intelligence.nextAction.label}.</strong>{" "}
+          {intelligence.nextAction.detail}
+        </p>
+        <Link className="snw-primary" href={eventHref}>
+          {intelligence.nextAction.label}
+        </Link>
+      </section>
+
+      {intelligence.industryMetrics.length > 0 && (
+        <section className="snw-intel-market" aria-label="Industry reference requirements">
+          <h3>Industry reference requirements</h3>
+          <ul className="snw-intel-plain-list">
+            {intelligence.industryMetrics.map((metric) => (
+              <li key={metric.key}>
+                {metric.label} ({humanizeToken(metric.unit)}) requires{" "}
+                {metric.requiredComparability.map(humanizeToken).join(", ")}. Source options include{" "}
+                {metric.sourceAuthorities.map(humanizeToken).join(", ")}.
+              </li>
+            ))}
+          </ul>
+          <p className="snw-note">
+            These are requirements for a fair comparison, not benchmark
+            values. Source shows a number only when the supporting observations
+            are ready to cite.
+          </p>
+        </section>
+      )}
     </section>
   );
 }

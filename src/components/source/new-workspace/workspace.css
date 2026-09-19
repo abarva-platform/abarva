@@ -51,6 +51,33 @@
 .snw-nda-grid ul { margin: 0; padding-left: 18px; color: #4f4b45; line-height: 1.55; }
 .snw-nda-next { margin-top: 12px; }
 .snw-nda-next p { margin-bottom: 10px; }
+.snw-intelligence { max-width: 1180px; }
+.snw-intel-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 22px; border-bottom: 1px solid #dededb; padding-bottom: 20px; }
+.snw-intel-heading h2 { font: 500 25px/1.22 Fraunces, Georgia, serif; margin: 10px 0; }
+.snw-intel-posture { border: 1px solid #d8d8d5; border-radius: 4px; padding: 6px 10px; font-size: 11px; text-transform: uppercase; color: #5f5f5b; }
+.snw-intel-posture.is-ready { border-color: #9bc6b8; color: #0f6e56; }
+.snw-intel-posture.is-limited { border-color: #d8bd8d; color: #925817; }
+.snw-intel-posture.is-blocked { border-color: #d8aaa0; color: #8f2f1f; }
+.snw-intel-facts { margin-top: 4px; }
+.snw-intel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 20px; }
+.snw-intel-grid section, .snw-intel-next, .snw-intel-market { border-top: 1px solid #dededb; padding-top: 16px; }
+.snw-intel-grid h3, .snw-intel-next h3, .snw-intel-market h3 { margin: 0 0 12px; font-size: 15px; font-weight: 650; color: #1f2b25; }
+.snw-intel-list, .snw-intel-plain-list { margin: 0; padding: 0; list-style: none; }
+.snw-intel-list { display: grid; gap: 10px; }
+.snw-intel-list li { border: 1px solid #e1ded8; background: #faf9f6; padding: 12px 14px; min-width: 0; }
+.snw-intel-list strong { display: block; margin: 8px 0 4px; font-size: 13px; }
+.snw-intel-list small { display: block; color: #686868; font-size: 11px; line-height: 1.45; }
+.snw-intel-list p { margin: 8px 0 0; color: #555; font-size: 12px; line-height: 1.5; }
+.snw-intel-state { display: inline-flex; border-radius: 3px; padding: 3px 6px; background: #efefeb; color: #555; font-size: 10px; text-transform: uppercase; }
+.snw-intel-state.is-available { background: #e8f4ef; color: #0f6e56; }
+.snw-intel-state.is-gap { background: #f8eadc; color: #925817; }
+.snw-intel-plain-list { display: grid; gap: 8px; color: #4f4b45; font-size: 13px; line-height: 1.55; }
+.snw-intel-plain-list li { border-bottom: 1px solid #eeeae4; padding-bottom: 8px; }
+.snw-intel-allowed { margin: 0 0 12px; color: #3f4640; font-size: 13px; line-height: 1.55; }
+.snw-intel-next { margin-top: 22px; max-width: 680px; }
+.snw-intel-next p { color: #555; font-size: 13px; line-height: 1.55; }
+.snw-intel-next .snw-primary { margin-top: 4px; }
+.snw-intel-market { margin-top: 22px; }
 .snw button:focus-visible, .snw a:focus-visible { outline: 2px solid #0066cc; outline-offset: 3px; }
 @media (max-width: 850px) {
   .snw-inner { padding: 22px 18px 90px; }
@@ -60,6 +87,8 @@
   .snw-views { gap: 20px; overflow-x: auto; }
   .snw-work { grid-template-columns: 1fr; gap: 30px; }
   .snw-nda-grid { grid-template-columns: 1fr; }
+  .snw-intel-heading { flex-direction: column; gap: 10px; }
+  .snw-intel-grid { grid-template-columns: 1fr; }
   .snw-next { position: sticky; bottom: 0; z-index: 3; background: #fff; box-shadow: 0 -8px 18px #fff; padding: 12px 0; }
   .snw-next h2, .snw-next p:not(.snw-eyebrow) { display: none; }
   .snw-next .snw-primary { margin-top: 0; }
