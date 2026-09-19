@@ -23,6 +23,8 @@ import {
 } from "@/lib/source/queries";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { callSourceCanvasChatModel } from "@/lib/source/source-canvas-chat";
+import { applySourceSentinelModelAnswer } from "@/lib/source/sentinel-chat-llm";
+import type { SourceAnswerEvidenceCitation } from "@/lib/source/source-answer-engine";
 import { loadContractEvidenceRuntimeSummary } from "@/lib/source/contract-evidence/read-model";
 import type { ContractEvidenceMetricSummary } from "@/lib/source/contract-evidence/read-model";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -256,6 +258,7 @@ export async function POST(
     // previous `.catch(() => null)` made a denied egress, a provider outage and
     // an empty answer indistinguishable from a deliberate deterministic answer.
     let claudeSummary: string | null = null;
+    let modelCitations: SourceAnswerEvidenceCitation[] = [];
     let modelWarnings: string[] = [];
     try {
       const modelResult = await callSourceCanvasChatModel({
@@ -267,6 +270,7 @@ export async function POST(
         liveTenantContext,
       });
       claudeSummary = modelResult.text;
+      modelCitations = modelResult.evidenceCitations;
       modelWarnings = modelResult.warnings;
     } catch (error) {
       const detail =
@@ -285,8 +289,18 @@ export async function POST(
         ? enforceSourceExistingEventWriteTruth(claudeSummary)
         : claudeSummary;
 
+    // The canvas renders `agentResponseParts` instead of the prose when parts
+    // are present, so replacing only `summary` left the deterministic advisor
+    // answer and the deterministic composer's "Evidence used" card sitting
+    // under a model answer that used neither. Every field that states the
+    // answer is re-derived from the answer being shown, through the same helper
+    // the Sentinel chat path uses, so the two cannot drift apart again.
     const baseResponse = guardedClaudeSummary
-      ? { ...stubResponse, summary: guardedClaudeSummary, noModel: false }
+      ? applySourceSentinelModelAnswer({
+          fallbackResponse: stubResponse,
+          answerText: guardedClaudeSummary,
+          evidenceCitations: modelCitations,
+        })
       : stubResponse;
     const response = modelWarnings.length
       ? {
