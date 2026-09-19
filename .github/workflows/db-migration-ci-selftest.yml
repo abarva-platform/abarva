@@ -49,6 +49,8 @@ on:
       - "src/scripts/print-migration-ledger.ts"
       - "src/scripts/verify-azure-postgres-schema.ts"
       - "src/lib/source/stage-guidebooks/**"
+      - "src/__tests__/integration/source/source-event-authority-versions-migration.test.ts"
+      - "supabase/migrations/**"
       - "package.json"
 
 jobs:
@@ -102,6 +104,12 @@ jobs:
 
       - name: Install deps
         run: npm ci
+
+      - name: Verify Source event authority migration contract
+        run: >-
+          npx jest --runTestsByPath
+          src/__tests__/integration/source/source-event-authority-versions-migration.test.ts
+          --runInBand
 
       - name: Prepare evidence directory
         run: mkdir -p audit-artifacts/db-migration-ci-selftest

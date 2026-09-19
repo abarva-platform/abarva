@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source New request and strategy approval readiness now has a governed version-authority contract. Request and strategy content is hashed deterministically, material edits create a new version, and approvals count only when they name the exact current version and actor.
+Source New request and strategy approval readiness now has a governed version-authority contract. Request and strategy content is hashed deterministically, material edits create a new version, and approvals count only when they name the exact current version, event, tenant, authority kind, and actor.
 
 ## Layer Impact
 
@@ -34,12 +34,16 @@ Layer 4 Source projection: adds a pure read/projection contract that Source read
 - `src/lib/source/new-workspace/source-version-authority.test.ts`
 - `supabase/migrations/20260919152000_source_event_authority_versions.sql`
 - `src/__tests__/integration/source/source-event-authority-versions-migration.test.ts`
+- `.github/workflows/db-migration-ci-selftest.yml`
 
 ## QA / Validation
 
 - Failing-first focused suite: missing module and missing migration failed before implementation.
 - `npx jest --runTestsByPath src/lib/source/new-workspace/source-version-authority.test.ts src/__tests__/integration/source/source-event-authority-versions-migration.test.ts --runInBand` passed: 2 suites, 11 tests.
 - Mutation proof: disabling canonical key sorting failed 2 tests; reusing current versions regardless of hash failed 1 test; ignoring approval `versionId` failed 2 tests; renaming/removing the current-version index contract failed 1 migration test.
+- Scope mutation proof: removing the composite approval/version identity or the same-scope supersession trigger fails the migration contract suite.
+- The migration contract suite is registered in the disposable Postgres migration workflow. No shared database was changed.
+- Disposable Postgres 16 proof applied the migration, accepted a correctly scoped approval, rejected an approval that mixed one event/tenant with another event's version through the composite foreign key, and rejected a cross-event supersession through the lineage trigger.
 
 ## Rollout Plan
 

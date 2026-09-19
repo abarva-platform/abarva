@@ -11,7 +11,7 @@ const MIGRATION_PATH = path.join(
 );
 
 const sql = readFileSync(MIGRATION_PATH, "utf8");
-const collapsed = sql.replace(/[ \t]+/g, " ");
+const collapsed = sql.replace(/\s+/g, " ").trim();
 
 describe("source event request/strategy version authority migration", () => {
   it("creates immutable event authority versions with content hashes", () => {
@@ -19,7 +19,7 @@ describe("source event request/strategy version authority migration", () => {
       "CREATE TABLE IF NOT EXISTS source_event_authority_versions",
     );
     expect(collapsed).toContain(
-      "event_id UUID NOT NULL REFERENCES source_events(id) ON DELETE CASCADE",
+      "FOREIGN KEY (event_id, client_key) REFERENCES source_events(id, client_key) ON DELETE CASCADE",
     );
     expect(collapsed).toContain("authority_kind TEXT NOT NULL");
     expect(collapsed).toContain("content_hash TEXT NOT NULL");
@@ -42,8 +42,12 @@ describe("source event request/strategy version authority migration", () => {
     expect(sql).toContain(
       "CREATE TABLE IF NOT EXISTS source_event_authority_version_approvals",
     );
+    expect(collapsed).toContain("authority_kind TEXT NOT NULL");
     expect(collapsed).toContain(
-      "version_id UUID NOT NULL REFERENCES source_event_authority_versions(id) ON DELETE CASCADE",
+      "FOREIGN KEY (version_id, event_id, client_key, authority_kind) REFERENCES source_event_authority_versions(id, event_id, client_key, authority_kind) ON DELETE CASCADE",
+    );
+    expect(sql).toContain(
+      "source_event_authority_version_approvals_version_scope_fk",
     );
     expect(sql).toContain(
       "source_event_authority_version_approvals_role_check",
@@ -54,6 +58,24 @@ describe("source event request/strategy version authority migration", () => {
     expect(sql).toContain("actor_user_id TEXT NOT NULL");
     expect(sql).toContain(
       "CREATE UNIQUE INDEX IF NOT EXISTS source_event_authority_version_approvals_one_decision_idx",
+    );
+  });
+
+  it("binds supersession links to the same event, tenant, and authority kind", () => {
+    expect(sql).toContain(
+      "enforce_source_event_authority_version_lineage_scope",
+    );
+    expect(sql).toContain(
+      "source_event_authority_versions_lineage_scope_trigger",
+    );
+    expect(collapsed).toContain(
+      "IS DISTINCT FROM (NEW.event_id, NEW.client_key, NEW.authority_kind)",
+    );
+    expect(sql).toContain(
+      "supersedes_version_id must reference the same event, tenant, and authority kind",
+    );
+    expect(sql).toContain(
+      "superseded_by_version_id must reference the same event, tenant, and authority kind",
     );
   });
 

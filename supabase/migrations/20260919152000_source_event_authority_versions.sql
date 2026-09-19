@@ -4,9 +4,12 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+CREATE UNIQUE INDEX IF NOT EXISTS source_events_id_client_key_authority_idx
+  ON source_events(id, client_key);
+
 CREATE TABLE IF NOT EXISTS source_event_authority_versions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID NOT NULL REFERENCES source_events(id) ON DELETE CASCADE,
+  event_id UUID NOT NULL,
   client_key TEXT NOT NULL,
   authority_kind TEXT NOT NULL,
   version_number INTEGER NOT NULL,
@@ -17,6 +20,12 @@ CREATE TABLE IF NOT EXISTS source_event_authority_versions (
   supersedes_version_id UUID NULL REFERENCES source_event_authority_versions(id) ON DELETE SET NULL,
   superseded_at TIMESTAMPTZ NULL,
   superseded_by_version_id UUID NULL REFERENCES source_event_authority_versions(id) ON DELETE SET NULL,
+  CONSTRAINT source_event_authority_versions_event_client_fk
+    FOREIGN KEY (event_id, client_key)
+    REFERENCES source_events(id, client_key)
+    ON DELETE CASCADE,
+  CONSTRAINT source_event_authority_versions_scoped_identity_key
+    UNIQUE (id, event_id, client_key, authority_kind),
   CONSTRAINT source_event_authority_versions_kind_check
     CHECK (authority_kind IN ('request', 'strategy')),
   CONSTRAINT source_event_authority_versions_version_number_check
@@ -75,6 +84,62 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION enforce_source_event_authority_version_lineage_scope()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  linked_event_id UUID;
+  linked_client_key TEXT;
+  linked_authority_kind TEXT;
+BEGIN
+  IF NEW.supersedes_version_id IS NOT NULL THEN
+    IF NEW.supersedes_version_id = NEW.id THEN
+      RAISE EXCEPTION 'an authority version cannot supersede itself';
+    END IF;
+
+    SELECT event_id, client_key, authority_kind
+      INTO linked_event_id, linked_client_key, linked_authority_kind
+      FROM source_event_authority_versions
+      WHERE id = NEW.supersedes_version_id;
+
+    IF NOT FOUND OR
+      (linked_event_id, linked_client_key, linked_authority_kind)
+        IS DISTINCT FROM (NEW.event_id, NEW.client_key, NEW.authority_kind)
+    THEN
+      RAISE EXCEPTION 'supersedes_version_id must reference the same event, tenant, and authority kind';
+    END IF;
+  END IF;
+
+  IF NEW.superseded_by_version_id IS NOT NULL THEN
+    IF NEW.superseded_by_version_id = NEW.id THEN
+      RAISE EXCEPTION 'an authority version cannot be superseded by itself';
+    END IF;
+
+    SELECT event_id, client_key, authority_kind
+      INTO linked_event_id, linked_client_key, linked_authority_kind
+      FROM source_event_authority_versions
+      WHERE id = NEW.superseded_by_version_id;
+
+    IF NOT FOUND OR
+      (linked_event_id, linked_client_key, linked_authority_kind)
+        IS DISTINCT FROM (NEW.event_id, NEW.client_key, NEW.authority_kind)
+    THEN
+      RAISE EXCEPTION 'superseded_by_version_id must reference the same event, tenant, and authority kind';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS source_event_authority_versions_lineage_scope_trigger
+  ON source_event_authority_versions;
+CREATE TRIGGER source_event_authority_versions_lineage_scope_trigger
+  BEFORE INSERT OR UPDATE ON source_event_authority_versions
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_source_event_authority_version_lineage_scope();
+
 DROP TRIGGER IF EXISTS source_event_authority_versions_immutable_trigger
   ON source_event_authority_versions;
 CREATE TRIGGER source_event_authority_versions_immutable_trigger
@@ -84,14 +149,21 @@ CREATE TRIGGER source_event_authority_versions_immutable_trigger
 
 CREATE TABLE IF NOT EXISTS source_event_authority_version_approvals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID NOT NULL REFERENCES source_events(id) ON DELETE CASCADE,
+  event_id UUID NOT NULL,
   client_key TEXT NOT NULL,
-  version_id UUID NOT NULL REFERENCES source_event_authority_versions(id) ON DELETE CASCADE,
+  authority_kind TEXT NOT NULL,
+  version_id UUID NOT NULL,
   role TEXT NOT NULL,
   decision TEXT NOT NULL,
   actor_user_id TEXT NOT NULL,
   reason TEXT NULL,
   decided_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT source_event_authority_version_approvals_version_scope_fk
+    FOREIGN KEY (version_id, event_id, client_key, authority_kind)
+    REFERENCES source_event_authority_versions(id, event_id, client_key, authority_kind)
+    ON DELETE CASCADE,
+  CONSTRAINT source_event_authority_version_approvals_kind_check
+    CHECK (authority_kind IN ('request', 'strategy')),
   CONSTRAINT source_event_authority_version_approvals_role_check
     CHECK (role IN ('request_acceptor', 'business_owner', 'procurement_lead')),
   CONSTRAINT source_event_authority_version_approvals_decision_check
