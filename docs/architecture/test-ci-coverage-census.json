@@ -1,0 +1,2570 @@
+{
+  "subject": "every Jest test file under src/, against the commands GitHub workflows reach",
+  "method": [
+    "A test file counts as covered when a workflow reaches a command naming it or a directory above it.",
+    "Four hops are followed: workflow run step, npm script (recursively), repo script file, test-ratchet baseline JSON.",
+    "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
+    "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
+    "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
+  ],
+  "counts": {
+    "testFiles": 2279,
+    "coveredTestFiles": 375,
+    "pullRequestCoveredTestFiles": 372,
+    "uncoveredTestFiles": 1904,
+    "directoriesWithTests": 476,
+    "directoriesFullyCovered": 59,
+    "directoriesPartiallyCovered": 21,
+    "directoriesUncovered": 396,
+    "indeterminateInvocations": 0
+  },
+  "indeterminateInvocations": [],
+  "partiallyCoveredDirectories": [
+    {
+      "directory": "src/lib/programs/__tests__",
+      "testFiles": 82,
+      "coveredTestFiles": 3,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/__tests__/integration",
+      "testFiles": 46,
+      "coveredTestFiles": 9,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/__tests__/integration/admin",
+      "testFiles": 46,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/__tests__/integration/qa",
+      "testFiles": 37,
+      "coveredTestFiles": 1,
+      "via": [
+        "script-file"
+      ]
+    },
+    {
+      "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
+      "testFiles": 33,
+      "coveredTestFiles": 2,
+      "via": [
+        "script-file"
+      ]
+    },
+    {
+      "directory": "src/lib/agent/__tests__",
+      "testFiles": 33,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/source/exports/__tests__",
+      "testFiles": 24,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/components/source/__tests__",
+      "testFiles": 21,
+      "coveredTestFiles": 2,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/app/api/chat/agent/__tests__",
+      "testFiles": 9,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/governance/__tests__",
+      "testFiles": 8,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/components/agent/__tests__",
+      "testFiles": 7,
+      "coveredTestFiles": 3,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/components/programs/__tests__",
+      "testFiles": 7,
+      "coveredTestFiles": 2,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/ai-liability/__tests__",
+      "testFiles": 7,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/components/shell/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/eval/answer-quality/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/observability/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/app/api/programs/phase-gate/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/advance/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/nexus/ask/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/components/deliverables/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/agent/quality/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    }
+  ],
+  "uncoveredDirectories": [
+    {
+      "directory": "src/__tests__/integration/source",
+      "testFiles": 92,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/__tests__",
+      "testFiles": 69,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/programs",
+      "testFiles": 60,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/admin/__tests__",
+      "testFiles": 38,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/intelligence",
+      "testFiles": 33,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/__tests__",
+      "testFiles": 32,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/architecture",
+      "testFiles": 25,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/admin/__tests__",
+      "testFiles": 24,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/orchestrator/__tests__",
+      "testFiles": 24,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/__tests__",
+      "testFiles": 23,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testFiles": 23,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/ava/__tests__",
+      "testFiles": 23,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/expert-kernel/exports/board-grade/__tests__",
+      "testFiles": 22,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/solutions",
+      "testFiles": 20,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/data-plane/read-adapters/__tests__",
+      "testFiles": 20,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/data-model/__tests__",
+      "testFiles": 20,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/auth/__tests__",
+      "testFiles": 19,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/expert-kernel/__tests__",
+      "testFiles": 18,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/expert-kernel/domain/__tests__",
+      "testFiles": 18,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/context-ingestion/__tests__",
+      "testFiles": 17,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/admin/broker/__tests__",
+      "testFiles": 16,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/ops",
+      "testFiles": 14,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/strategic-moves/__tests__",
+      "testFiles": 14,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/pricing/effort-engine/__tests__",
+      "testFiles": 14,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/agent-generation/__tests__",
+      "testFiles": 13,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/source/canvas/responses/__tests__",
+      "testFiles": 12,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/unit",
+      "testFiles": 11,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/data-plane/write-adapters/__tests__",
+      "testFiles": 11,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/ingestion/__tests__",
+      "testFiles": 11,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/pricing/__tests__",
+      "testFiles": 11,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/pricing/governed-load/__tests__",
+      "testFiles": 11,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/agent/tools/__tests__",
+      "testFiles": 10,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/shared/__tests__",
+      "testFiles": 10,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/phase-packs/__tests__",
+      "testFiles": 10,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/phase-templates/__tests__",
+      "testFiles": 10,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/visual-system/__tests__",
+      "testFiles": 10,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/context-ingestion/loader/__tests__",
+      "testFiles": 9,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-context/__tests__",
+      "testFiles": 9,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/knowledge/__tests__",
+      "testFiles": 9,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/notifications/__tests__",
+      "testFiles": 9,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/discovery/__tests__",
+      "testFiles": 9,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/agents",
+      "testFiles": 8,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/atlas/__tests__",
+      "testFiles": 8,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/archetypes/__tests__",
+      "testFiles": 8,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/facts/__tests__",
+      "testFiles": 8,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/design",
+      "testFiles": 7,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/archetype-primers/__tests__",
+      "testFiles": 7,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/__tests__/specialists",
+      "testFiles": 7,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/canvas-substrate/__tests__",
+      "testFiles": 7,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/hygiene",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/setup/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/agent/product-truth/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/atlas/iac/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/integrations/ai-egress/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/canonical",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/pricing/moves-workflow/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/ava-chat/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/expert-kernel/rate-card/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/contracts/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/facts/view/__tests__",
+      "testFiles": 6,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/admin/data",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/abarva/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/knowledge/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/programs/origination/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/agent/tools/intelligence/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/ava-answer/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/quality/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/answer/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/ask/retrievers",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/synthesis/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/knowledge/consumption-server/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/knowledge/context-broker/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/exports/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/stage-readiness-workbooks/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/artifact-registry/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/door1/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/new-workspace",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/scripts/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/data-trust",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/deployment",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/knowledge",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/nexus",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/security",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/sentinel",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/pricing/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/intelligence-advisory/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/admin/broker/portfolio/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/agent/output-discipline",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/agent/voice-doctrine/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/azure-search/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/knowledge/tenant-data/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/archetypes/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/attachments/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/deliverables/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/expert-kernel/probabilistic/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/exports/renderers/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/security/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/contract-evidence/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/contract-intelligence/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/expert-judgment/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/reasoning/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/rfp-readiness/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/vendor-proposals/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/workspace-explorer/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/admin/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/source/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/atlas/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/admin/setup/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/agent-answer/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/context-broker/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/programs/discovery/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/source/canvas/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/source/canvas/workspace-tabs/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/source/new-workspace",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/atlas",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/atlas/composition/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/atlas/initiative-deep/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/corpus",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/knowledge/view-model/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/board-artifacts/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/expert-kernel/exports/board-pack/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/sentinel/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/shell/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/contract-optimization/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/facts/extraction/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/renewal-cockpit/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/tenant/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/scripts/tower/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/corpus",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/setup",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/admin/programs/approvals/_actions/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/connectors/[id]/test/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/programs/approvals/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/switch-tenant/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/intelligence/ask/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/programs/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/setup/initiatives/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/atlas/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/source/learn/case-study/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/strategic-moves/phase-workspace/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/admin/ai-initiatives",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/agent-grounding/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/artifact-excellence/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/artifacts/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/ava-answer/export/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/data-plane/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/planning/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/instruments/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/knowledge/consumption-client/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/knowledge/consumption-contracts/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/lakeshore/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/nexus/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/patternops",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/deliverables/orchestrated/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/expert-kernel/modernization/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/phase-success-package/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/playbook/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/source-trigger/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/suitability/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/setup/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/contract-depth-package/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/decision-queue/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/disclosure-flag/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/execution-room/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/file-cabinet/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/notifications/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/pricing-submissions/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/proposal-intelligence/__tests__",
+      "testFiles": 2,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/features",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/guardrails",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/agent",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/demo",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/engagement",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/observability",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/story-pack",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/__tests__/integration/tenants",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/admin/connectors/_actions/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/admin/context-layer/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/admin/context-layer/templates/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/admin/data-layer-explorer/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/admin/users-access/_actions/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/docs/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/source/new/[eventId]",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/(maestro)/source/optimize/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/context-layer/bulk-upload/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/context-layer/bulk-upload/status/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/context-layer/corpus-import/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/context-layer/csv-upload/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/context-layer/manifest-load/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/pricing/rate-cards/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/pricing/rate-cards/[id]/approve/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/pricing/rate-cards/import/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/programs/approvals/export/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/setup-control/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/upload-dataset/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/admin/users/provision/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/chat/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/chat/step/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/context/demo/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/cron/board-pack/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/cron/notifications-tick/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/health/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/health/postgres-disruption/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/intelligence/query/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/knowledge/chunk/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/knowledge/consumption/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/programs/[id]/deliverables/[deliverableId]/export/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/programs/expert-kernel/export/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/programs/synthesis/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/request-access/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/source/synthesis/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/source/workspace/contract/[contractId]/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/source/workspace/contract/[contractId]/optimization/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/source/workspace/portfolio/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/agent/attachments/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/artifacts/[artifactId]/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/deliverables/generate-phase/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/deliverables/generate/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/deliverables/runs/[runId]/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/moves/meridian-command-center/generate/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/artifacts/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/review-decision/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/review-regenerate/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/artifacts/upload/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/current-state/ingest/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/deliverables/complete/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/generate/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/phase-gate-approval/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/playbook/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/solution-options/approve/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/stage-readiness-workbook/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/expert-kernel/export/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/programs/originate/extract-brief",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/accept/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/client-final/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/safe-repair/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/artifacts/generate/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/artifacts/upload/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/contract-optimization/brief/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/answer/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/evidence/[requirementId]/availability-review/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/facts/ingest-file/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/facts/ingest/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/facts/parse/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/facts/parse/commit/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/stage/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/vendor-proposals/[vendorKey]/ingest/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/accept/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/artifacts/[artifactId]/download/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/events/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/events/[eventId]/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/events/[eventId]/approve/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/events/[eventId]/artifacts/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/events/[eventId]/gate-decision/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/v1/source/events/[eventId]/request-approval/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/webhooks/clerk/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/api/webhooks/resend/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/app/programs/expert-kernel/expert-review/export/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/admin/agent-readiness-redesign/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/admin/context-layer/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/admin/data-trust-redesign/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/ava-chat/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/chrome/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/evidence/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/moves/living/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/navigation/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/programs/attachments/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/setup/loader/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/source/approval/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/source/canvas/bafo/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/source/canvas/contract-optimization/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/source/setup/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/strategic-moves/cost-effort/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/strategic-moves/risk-assessment/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/strategic-moves/solutioning/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/tenant/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/components/workspace-explorer/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/config/tenants/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/data/apexretail/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/admin",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/admin/broker/sentinel/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/adversarial/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/agent",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/agent/streaming",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/agents/sentinel-reasoning/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/ai/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/answer/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/atlas/initiative-deep/joins/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/azure-connectivity/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/compliance/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/context-ingestion",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/context-trust/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/corpus/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/crawl/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/cxo-canvas/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/cxo-intel/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/decisions/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/decision-model/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/profiles/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/shared/reference-library/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/story/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/synthesis/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/deliverables/templates/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/dependencies/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/email/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-data/candidate-version-build/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-data/contracts/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-data/data-quality/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-data/enterprise-profile/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-data/module-context-serving/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-data/remediation/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-data/source-adapters/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-data/tower-candidate-load/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-knowledge/assembler/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-knowledge/narratives/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/enterprise-knowledge/tower/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/evidence/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/features/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/advisory-packet/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/analytics/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/answer/evals/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/answer/evals/live-answer/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/ask",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/binding/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/canvas/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/dossiers/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/expert-pack",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/exposure",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/insight-engine/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/intelligence/insight-engine/rules/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/knowledge/operations-lens/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/lifecycle-operating-system/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/notifications/templates/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/onboarding/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/parallel-run/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/pilot-dashboard/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/architecture/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/board-artifacts",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/controls/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/decomposition/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/evidence-readiness/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/expert-kernel/ai-ops-cost/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/expert-kernel/exports/audit-pack/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/learning-writeback/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/mobilization/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/regulatory/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/taxonomy/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/tower-trigger/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/programs/vendor-platform-intelligence/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/prompts/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/runtime/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/semantic-dossiers/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/semantic2/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/semantic2/dossiers/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/analytics/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/classifier/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/context-writeback/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/deliverables/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/delivery-model/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/documentation-standards/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/evidence-trace/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/exports/deal-pack/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/facts/ingest/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/handoff/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/industry-intelligence/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/mrm-screen/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/negotiation/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/new-workspace/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/proposal-normalization/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/queue/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/should-cost/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/sourcing/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/stage-gate/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/stage-guidebooks/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/stage-packs/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/source/taxonomy/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/telemetry/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/workforce-economics/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/lib/workshops/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/scripts/governance/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    },
+    {
+      "directory": "src/scripts/qa/__tests__",
+      "testFiles": 1,
+      "coveredTestFiles": 0,
+      "via": []
+    }
+  ]
+}

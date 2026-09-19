@@ -922,6 +922,8 @@
     "audit:route-reachability": "node scripts/audit/route-reachability-check.mjs",
     "audit:ci-gate-registry": "node scripts/audit/ci-gate-registry-check.mjs",
     "audit:qa-inventory-claims": "node scripts/audit/qa-inventory-claims-check.mjs",
+    "audit:test-ci-coverage": "node scripts/quality/test-ci-coverage-census.mjs",
+    "audit:test-ci-coverage:write": "node scripts/quality/test-ci-coverage-census.mjs --write",
     "packet:generate": "node scripts/data/contract-packet/generate-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --out .artifacts/contract-packets/staging-fixture",
     "packet:reconcile": "node scripts/data/contract-packet/reconcile-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets/staging-fixture",
     "packet:benchmark": "node scripts/data/contract-packet/benchmark-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets/staging-fixture",
