@@ -99,7 +99,6 @@ describe('Source Nexus API stub contract', () => {
 
   it('turns a concise IT sourcing intake prompt into minimum event facts', () => {
     const response = createSourceNexusApiStubResponse({
-      eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
       prompt: 'Technology application managed services outsourcing',
       tenant,
       user,
@@ -129,6 +128,21 @@ describe('Source Nexus API stub contract', () => {
     expect(response.nexusSummary?.recommendedNextAction).toBe(
       'Open Intake once the baseline/data owner and approval owner are named.',
     );
+  });
+
+  it('keeps concise prompts on the advice path when an event already exists', () => {
+    const response = createSourceNexusApiStubResponse({
+      eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
+      prompt: 'Technology application managed services outsourcing',
+      tenant,
+      user,
+    });
+
+    expect(response.ok).toBe(true);
+    expect(response.eventId).toBe(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
+    expect(response.intakeGuidance).toBeUndefined();
+    expect(response.sentinelBriefing).toBeTruthy();
+    expect(response.summary).toBe(response.sentinelBriefing?.combinedSummary);
   });
 
   it('keeps richer command-read prompts on the existing briefing path', () => {

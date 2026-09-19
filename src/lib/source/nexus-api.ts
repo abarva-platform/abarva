@@ -179,6 +179,16 @@ export function createSourceNexusApiStubResponse(
   const eventId = normalizeText(input.eventId);
 
   if (!eventId) {
+    const intakeGuidance = maybeBuildIntakeGuidance(prompt);
+    if (intakeGuidance) {
+      return createIntakeGuidanceResponse({
+        prompt,
+        mode,
+        generatedAt,
+        intakeGuidance,
+        selectedAttachmentIds: input.selectedAttachmentIds ?? [],
+      });
+    }
     return createErrorResponse({
       eventId: null,
       prompt,
@@ -324,7 +334,7 @@ export function createSourceNexusApiStubResponse(
     sourceAnswer: renderedSourceAnswer,
     agentResponseParts: intakeGuidance
       ? buildIntakeGuidanceParts(intakeGuidance)
-      : renderedSourceAnswer?.responseParts ?? [],
+      : (renderedSourceAnswer?.responseParts ?? []),
     answerQuality,
     sentinelBriefing,
     multiAgentBriefing,
@@ -551,27 +561,82 @@ function createErrorResponse(args: {
   };
 }
 
+function createIntakeGuidanceResponse(args: {
+  prompt: string;
+  mode: SourceAgentBriefingMode;
+  generatedAt: string;
+  intakeGuidance: SourceNexusIntakeGuidance;
+  selectedAttachmentIds: string[];
+}): SourceNexusApiStubResponse {
+  const summary = formatIntakeGuidanceSummary(args.intakeGuidance);
+  return {
+    ok: true,
+    httpStatus: 200,
+    requestId: createRequestId("new-intake", args.generatedAt),
+    eventId: null,
+    prompt: args.prompt,
+    mode: args.mode,
+    generatedAt: args.generatedAt,
+    noModel: true,
+    answer: summary,
+    answerStatus: "deferred",
+    contextScope: "unknown",
+    contextQuality: null,
+    context: {
+      missingInputs: args.intakeGuidance.facts.map((fact) => fact.id),
+      blockers: [],
+      selectedAttachmentIds: args.selectedAttachmentIds,
+    },
+    sourceIntelligence: null,
+    sourceAnswer: null,
+    agentResponseParts: buildIntakeGuidanceParts(args.intakeGuidance),
+    sentinelBriefing: null,
+    multiAgentBriefing: null,
+    nexusSummary: {
+      title: "Event intake facts required",
+      summary: args.intakeGuidance.opening,
+      primaryFinding:
+        "The event can be opened once the minimum facts are captured.",
+      recommendedNextAction: args.intakeGuidance.nextStep,
+      confidence: "medium",
+    },
+    suggestedActions: [],
+    contextValidationSummary: null,
+    workflowValidationSummary: null,
+    warnings: [
+      "No model was called. Response is deterministic.",
+      "No Source state was persisted or mutated.",
+    ],
+    defers: args.intakeGuidance.facts.map(
+      (fact) => `${fact.label}: ${fact.prompt}`,
+    ),
+    cannotProceedReasons: [args.intakeGuidance.nextStep],
+    summary,
+    intakeGuidance: args.intakeGuidance,
+  };
+}
+
 function buildIntakeGuidanceParts(
   guidance: SourceNexusIntakeGuidance,
 ): AgentResponsePart[] {
   return [
     {
-      type: 'text',
-      title: 'Ava intake read',
+      type: "text",
+      title: "Ava intake read",
       text: guidance.opening,
     },
     {
-      type: 'table',
-      title: 'Minimum facts before sourcing starts',
-      columns: ['Fact', 'What Ava needs'],
+      type: "table",
+      title: "Minimum facts before sourcing starts",
+      columns: ["Fact", "What Ava needs"],
       rows: guidance.facts.map((fact) => [fact.label, fact.prompt]),
-      caption: 'These are capture requirements, not optional notes.',
+      caption: "These are capture requirements, not optional notes.",
     },
     {
-      type: 'nextAction',
-      label: 'Recommended next action',
+      type: "nextAction",
+      label: "Recommended next action",
       detail: guidance.nextStep,
-      confidence: 'medium',
+      confidence: "medium",
     },
   ];
 }
