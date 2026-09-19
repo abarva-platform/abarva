@@ -37,6 +37,15 @@ import {
 const repoRoot = path.resolve(__dirname, "../../..");
 const CENSUS_SCRIPT = "scripts/quality/test-ci-coverage-census.mjs";
 const INTEGRATION_ROOT = "src/__tests__/integration";
+const SOURCE_WORKFLOW = ".github/workflows/source-integration.yml";
+const SOURCE_IGNORE_ARGS_SCRIPT = "scripts/quality/source-integration-ignore-args.mjs";
+
+/**
+ * Directories wired by `.github/workflows/source-integration.yml`, which is a
+ * separate workflow from the one WIRED_DIRECTORIES describes and carries its
+ * own exclusion list. Held to the same enumeration as its sibling below.
+ */
+const SOURCE_WIRED_DIRECTORIES = ["source"] as const;
 
 type Census = {
   counts: { indeterminateInvocations: number };
@@ -329,6 +338,97 @@ describe("integration directories a workflow actually reaches", () => {
       }
     }
     expect(colliding.sort()).toEqual([]);
+  });
+
+  it("holds the Source workflow's one wired directory to the same enumeration", () => {
+    // `source-integration.yml` is a second workflow naming a second directory,
+    // and nothing above covers it: every case in this file iterates
+    // WIRED_DIRECTORIES, which is `integration-suites.yml`'s list. The item that
+    // asked for this case said nothing under the integration root is prefixed by
+    // `source` today. That is not so — `source-chat-shape.test.ts` sits at the
+    // root and the pattern `…/integration/source` selects it, because a jest
+    // path argument is a regex against the full path.
+    //
+    // It was found when the directory was wired and handled by NAMING it in the
+    // quarantine's `alsoIgnored`, so it does not run. That is a correct
+    // resolution held in place by nothing: delete that entry and a red suite
+    // rejoins the Source lane from a path pattern nobody would think to read.
+    //
+    // A colliding root FILE has two acceptable states and this case admits
+    // both: excluded by the workflow's own ignore args (it does not run), or
+    // registered with the visibility gate (it runs AND has a CI owner). The
+    // state it refuses is the middle one — selected by the pattern, invisible
+    // to the gate — which is where the eight `programs-*` suites sat for weeks.
+    //
+    // A colliding DIRECTORY is refused outright, for the reason given in the
+    // case above: a stray file runs once and is enumerated, a stray directory
+    // silently adopts every suite written in it afterwards.
+    const workflow = readFileSync(path.join(repoRoot, SOURCE_WORKFLOW), "utf8");
+    const runLines = workflow
+      .split("\n")
+      .filter((line) => /\bjest\b/.test(line))
+      .join("\n");
+
+    for (const name of SOURCE_WIRED_DIRECTORIES) {
+      expect(runLines).toMatch(new RegExp(`${INTEGRATION_ROOT}/${name}(?=\\s|$)`));
+    }
+
+    // The real exclusion list, produced by the same script the workflow runs,
+    // not a copy of it. A rewritten generator is exercised here rather than
+    // described.
+    const ignorePatterns = execFileSync(
+      process.execPath,
+      [path.join(repoRoot, SOURCE_IGNORE_ARGS_SCRIPT)],
+      { cwd: repoRoot, encoding: "utf8" },
+    )
+      .trim()
+      .split(/\s+/)
+      .filter((token) => token !== "--testPathIgnorePatterns")
+      .map((pattern) => new RegExp(pattern));
+
+    const commands = expandWorkflowCommands(
+      readdirSync(path.join(repoRoot, ".github/workflows"))
+        .filter((name) => /\.ya?ml$/.test(name))
+        .flatMap((name) =>
+          extractWorkflowRunCommands(
+            readFileSync(path.join(repoRoot, ".github/workflows", name), "utf8"),
+          ),
+        ),
+      JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8"))
+        .scripts as Record<string, string>,
+    );
+
+    const entries = readdirSync(path.join(repoRoot, INTEGRATION_ROOT), {
+      withFileTypes: true,
+    });
+    const collidingDirectories: string[] = [];
+    const excludedFromTheRun: string[] = [];
+    const selectedButInvisible: string[] = [];
+
+    for (const name of SOURCE_WIRED_DIRECTORIES) {
+      for (const entry of entries) {
+        if (entry.name === name || !entry.name.startsWith(name)) continue;
+        if (entry.isDirectory()) {
+          collidingDirectories.push(`${name} -> ${entry.name}`);
+          continue;
+        }
+        if (!/\.(?:test|spec)\.[cm]?[jt]sx?$/.test(entry.name)) continue;
+
+        const testPath = `${INTEGRATION_ROOT}/${entry.name}`;
+        if (ignorePatterns.some((pattern) => pattern.test(testPath))) {
+          excludedFromTheRun.push(entry.name);
+        } else if (!isIntegrationTestRegistered(testPath, commands)) {
+          selectedButInvisible.push(entry.name);
+        }
+      }
+    }
+
+    expect(collidingDirectories.sort()).toEqual([]);
+    expect(selectedButInvisible.sort()).toEqual([]);
+    // Enumerated rather than counted: a NEW colliding file has been measured by
+    // nobody, so it fails here until somebody runs it and decides which of the
+    // two acceptable states it belongs in.
+    expect(excludedFromTheRun.sort()).toEqual(["source-chat-shape.test.ts"]);
   });
 
   it("admits no integration directory that is newly reached by nothing", () => {
