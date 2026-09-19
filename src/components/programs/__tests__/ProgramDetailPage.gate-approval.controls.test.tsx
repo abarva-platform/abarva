@@ -43,6 +43,7 @@ import {
 } from "@testing-library/react";
 import { ToastProvider } from "@/components/shell/Toast";
 import { buildProgramDetailView } from "@/lib/programs/programs-detail-view";
+import { buildMaestroNextActionView } from "@/lib/programs/maestro-next-action-view";
 import { MOVES_HUMAN_RATIONALE_MIN_CHARS } from "@/lib/programs/moves-ai-liability";
 import {
   AI_DECISION_SUPPORT_WATERMARK,
@@ -242,5 +243,120 @@ describe("program gate approval · human decision control", () => {
     } finally {
       consoleError.mockRestore();
     }
+  });
+
+  it("labels a UUID-backed program as a live database record", async () => {
+    const view = {
+      ...buildProgramDetailView("APX-01", VIEWING_PHASE),
+      programId: "24fc65af-8223-4884-9241-ef5736960a1b",
+    };
+
+    render(
+      <ToastProvider>
+        <ProgramDetailPage view={view} initialNexusArtifacts={NO_ARTIFACTS} />
+      </ToastProvider>,
+    );
+    await act(async () => {});
+
+    expect(screen.getByText("Live strategic move · Live DB record")).toBeTruthy();
+    expect(screen.queryByText(/Deterministic seed/)).toBeNull();
+  });
+
+  it("shows truthful upload capabilities through the rendered overlay", async () => {
+    const view = buildProgramDetailView("APX-01", VIEWING_PHASE);
+    render(
+      <ToastProvider>
+        <ProgramDetailPage view={view} initialNexusArtifacts={NO_ARTIFACTS} />
+      </ToastProvider>,
+    );
+    await act(async () => {});
+
+    fireEvent.click(screen.getByRole("button", { name: "↑ Upload document" }));
+
+    expect(
+      screen.getByText(/Text, Markdown, CSV, and JSON are parsed immediately/),
+    ).toBeTruthy();
+    expect(screen.getByRole("textbox", { name: "Paste workshop notes" })).toBeTruthy();
+    expect(screen.queryByText("Document parsed · 3 insights extracted")).toBeNull();
+  });
+
+  it("navigates the visible strategic-move record instead of only declaring tab keys", async () => {
+    const view = buildProgramDetailView("APX-01", VIEWING_PHASE);
+    render(
+      <ToastProvider>
+        <ProgramDetailPage view={view} initialNexusArtifacts={NO_ARTIFACTS} />
+      </ToastProvider>,
+    );
+    await act(async () => {});
+
+    for (const section of [
+      "overview",
+      "gate",
+      "evidence",
+      "deliverables",
+      "workshop",
+      "actions",
+      "decisions",
+    ]) {
+      fireEvent.click(screen.getByTestId(`program-phase-archive-${section}`));
+      expect(screen.getByTestId(`program-record-browser-${section}`)).toBeTruthy();
+    }
+  });
+
+  it("renders the Maestro action composer with choices and a disabled dispatch", async () => {
+    const view = buildProgramDetailView("APX-01", VIEWING_PHASE);
+    render(
+      <ToastProvider>
+        <ProgramDetailPage view={view} initialNexusArtifacts={NO_ARTIFACTS} />
+      </ToastProvider>,
+    );
+    await act(async () => {});
+
+    fireEvent.click(screen.getByTestId("program-phase-archive-workshop"));
+    fireEvent.click(screen.getByRole("button", { name: "Open detailed record below" }));
+
+    expect(screen.getByTestId("maestro-next-action-composer")).toBeTruthy();
+    for (const key of ["A", "B", "C", "custom"]) {
+      expect(screen.getByTestId(`maestro-action-choice-${key}`)).toBeTruthy();
+    }
+    expect(
+      (screen.getByTestId("maestro-action-submit") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(screen.getByTestId("maestro-action-composer-disclaimer").textContent).toContain(
+      "Deterministic seed",
+    );
+
+    const composer = buildMaestroNextActionView(view);
+    expect(composer.choices.map((choice) => choice.key)).toEqual(["A", "B", "C"]);
+    expect(composer.deterministicSeed).toBe(true);
+    expect(composer.choices.every((choice) => choice.label && choice.detail)).toBe(true);
+    expect(composer.contextLine).toContain(`P${view.viewingPhase}`);
+    expect(composer.customPlaceholder).toContain(view.name);
+    expect(composer.submitDisabledReason.toLowerCase()).toContain("deferred");
+    expect(composer.honestDisclaimer).toContain("Deterministic seed");
+  });
+
+  it("disables Phase 0 advance until signed seed artifacts exist", async () => {
+    const view = {
+      ...buildProgramDetailView("APX-01", 0),
+      lifecycleState: "approved" as const,
+      currentPhase: 0 as const,
+      viewingPhase: 0 as const,
+      gateStatus: "pending" as const,
+    };
+    render(
+      <ToastProvider>
+        <ProgramDetailPage view={view} initialNexusArtifacts={NO_ARTIFACTS} />
+      </ToastProvider>,
+    );
+    await act(async () => {});
+
+    const advance = screen.getByRole("button", {
+      name: "Complete current gate first",
+    }) as HTMLButtonElement;
+    expect(advance.disabled).toBe(true);
+    expect(advance.title).toBe(
+      "Complete and sign off the P0 seed artifacts before requesting Discovery.",
+    );
   });
 });
