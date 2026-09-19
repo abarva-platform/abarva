@@ -33,6 +33,7 @@ Keep existing Source artifact callers scoped by client ID while allowing the Sou
 ## QA / Validation
 
 - PASS: focused File Cabinet repository tests.
+- PASS: 24 existing-caller route tests across artifact listing, download, rendering, and client-finalization.
 - PASS: TypeScript with an 8 GB Node heap.
 - PASS: scoped ESLint.
 - PASS: diff whitespace check.
