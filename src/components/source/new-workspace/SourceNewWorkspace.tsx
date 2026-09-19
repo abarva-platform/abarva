@@ -22,6 +22,7 @@ import {
   type SourceNewPhaseKey,
   type SourceNewPhaseState,
 } from "@/lib/source/new-workspace/phase-state";
+import { buildSourceNewNdaReadiness } from "@/lib/source/new-workspace/nda-readiness";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import "./workspace.css";
 
@@ -213,6 +214,25 @@ export function SourceNewWorkspace({
   const isCurrentPhase = phase === current;
   const responsesStage = isResponsesStage(event);
   const responseRows = responseEvidenceRows(files);
+  const ndaReadiness = useMemo(
+    () =>
+      buildSourceNewNdaReadiness(
+        files
+          .filter((file) => file.phase === "suppliers")
+          .map((file) => ({
+            id: file.id,
+            artifactType: file.artifactType,
+            title: file.title,
+            status: file.status,
+            lifecycleState: file.lifecycleState,
+            approvalState: file.approvalState,
+            approvedAt: file.approvedAt,
+            blobSha256: file.blobSha256,
+            coveredSupplierLegalEntity: file.coveredSupplierLegalEntity,
+          })),
+      ),
+    [files],
+  );
 
   const content = (
     <main className="snw" aria-label="Source New event workspace">
@@ -333,6 +353,12 @@ export function SourceNewWorkspace({
                       responseRows={responseRows}
                     />
                   )}
+                  {phase === "suppliers" && (
+                    <SourceNewStage05NdaReadiness
+                      readiness={ndaReadiness}
+                      eventHref={eventHref}
+                    />
+                  )}
                 </>
               ) : (
                 <>
@@ -348,6 +374,12 @@ export function SourceNewWorkspace({
                     <SourceNewStage04VendorReadiness
                       event={event}
                       responseRows={responseRows}
+                    />
+                  )}
+                  {phase === "suppliers" && (
+                    <SourceNewStage05NdaReadiness
+                      readiness={ndaReadiness}
+                      eventHref={eventHref}
                     />
                   )}
                 </>
@@ -552,6 +584,75 @@ function SourceNewStage04VendorReadiness({
         Vendor contact, send, and notification actions stay unavailable until a
         verified participant authority record exists in the governed event.
       </p>
+    </section>
+  );
+}
+
+function SourceNewStage05NdaReadiness({
+  readiness,
+  eventHref,
+}: {
+  readiness: ReturnType<typeof buildSourceNewNdaReadiness>;
+  eventHref: string;
+}) {
+  return (
+    <section className="snw-nda-readiness" aria-label="Stage 05 NDA readiness">
+      <p className="snw-eyebrow">Stage 05 · NDA readiness</p>
+      <h3>Supplier NDA coverage</h3>
+      <p>
+        This read-only check summarizes existing NDA evidence. It does not send
+        supplier communications, approve legal terms, or infer supplier identity
+        from filenames.
+      </p>
+      <dl className="snw-facts">
+        <div>
+          <dt>Supplier legal entity</dt>
+          <dd>{readiness.coveredSupplierLegalEntity ?? "Not recorded"}</dd>
+        </div>
+        <div>
+          <dt>NDA artifact</dt>
+          <dd>{readiness.artifactTitle ?? "Not recorded"}</dd>
+        </div>
+        <div>
+          <dt>Readiness posture</dt>
+          <dd>
+            {readiness.posture === "ready"
+              ? "Ready for governed supplier work"
+              : "Blocked before supplier work"}
+          </dd>
+        </div>
+      </dl>
+      <div className="snw-nda-grid">
+        <div>
+          <strong>Complete</strong>
+          <ul>
+            {readiness.completeItems.length > 0 ? (
+              readiness.completeItems.map((item) => <li key={item}>{item}</li>)
+            ) : (
+              <li>No NDA readiness evidence is complete yet.</li>
+            )}
+          </ul>
+        </div>
+        <div>
+          <strong>Blocking</strong>
+          <ul>
+            {readiness.blockers.length > 0 ? (
+              readiness.blockers.map((blocker) => (
+                <li key={blocker}>{blocker}</li>
+              ))
+            ) : (
+              <li>No Stage 05 NDA blocker is visible in this read model.</li>
+            )}
+          </ul>
+        </div>
+      </div>
+      <div className="snw-nda-next">
+        <strong>{readiness.nextAction.label}</strong>
+        <p>{readiness.nextAction.detail}</p>
+        <Link className="snw-text-action" href={eventHref}>
+          Open governed event
+        </Link>
+      </div>
     </section>
   );
 }
