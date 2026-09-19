@@ -53,11 +53,17 @@ export async function listArtifactStatesForEventStage(
 ): Promise<SourceEventArtifactState[]> {
   try {
     const rows =
-      await selectSourceCanvasSubstrateReadAdapter().listArtifactStateRows(
+      await selectSourceCanvasSubstrateReadAdapter().listArtifactStateMetadataRows(
         sourceEventId,
         stageKey,
       );
-    return rows.map(artifactStateRowToView);
+    return rows.map((row) =>
+      artifactStateRowToView({
+        ...row,
+        body: null,
+        body_generation_metadata: null,
+      }),
+    );
   } catch (error) {
     console.error(
       '[listArtifactStatesForEventStage]',
