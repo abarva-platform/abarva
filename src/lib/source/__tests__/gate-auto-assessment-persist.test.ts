@@ -1,4 +1,5 @@
 import type { SourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
+import { requiredEvidenceForStage } from "@/lib/source/canonical-specs";
 import type {
   SourceEventArtifactState,
   SourceEventEvidence,
@@ -78,32 +79,15 @@ function artifact(
 function scopeEvidenceAtMinimum(
   sourceArtifactId: string | null,
 ): SourceEventEvidence[] {
-  return [
+  return requiredEvidenceForStage("scope").map((requirement) =>
     evidence({
-      id: "evidence-app-inv",
-      requirementId: "EVID-SRC-SCOPE-APP-INV",
-      currentState: "Usable Evidence",
+      id: `evidence-${requirement.requirementId.toLowerCase()}`,
+      requirementId: requirement.requirementId,
+      stage: requirement.stage,
+      currentState: requirement.minimumState,
       sourceArtifactId,
     }),
-    evidence({
-      id: "evidence-org",
-      requirementId: "EVID-SRC-SCOPE-ORG",
-      currentState: "Available",
-      sourceArtifactId,
-    }),
-    evidence({
-      id: "evidence-ticket-history",
-      requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-      currentState: "Available",
-      sourceArtifactId,
-    }),
-    evidence({
-      id: "evidence-fy-contract",
-      requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
-      currentState: "Available",
-      sourceArtifactId,
-    }),
-  ];
+  );
 }
 
 function fakeAdapter(
@@ -187,7 +171,7 @@ describe("persistAutoAssessment", () => {
         eventId: "event-1",
         clientKey: "skyharbor-air",
         fromStage: "scope",
-        criteria: [criterion({ criterionId: "GATE-SCOPE-04" })],
+        criteria: [criterion({ criterionId: "GATE-SCOPE-01" })],
         artifacts: [artifact({ artifactCode: "d05_scope_memo" })],
         evidence: scopeEvidenceAtMinimum(null),
       },
@@ -196,7 +180,7 @@ describe("persistAutoAssessment", () => {
 
     expect(result).toEqual({
       written: [],
-      skipped: ["GATE-SCOPE-04"],
+      skipped: ["GATE-SCOPE-01"],
       failed: [],
     });
     expect(updates).toHaveLength(0);

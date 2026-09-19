@@ -920,7 +920,7 @@ const ARTIFACT_GOLD_STANDARD_OVERRIDES: Record<string, ArtifactGoldStandardOverr
       "Parse/completeness status",
     ],
     approvalOwner: "Maestro or procurement owner",
-    supportedDownloads: ["html"],
+    supportedDownloads: ["docx", "html", "pdf"],
   }),
   d14_qa_log: gold({
     tableOfContents: [
@@ -991,7 +991,7 @@ const ARTIFACT_GOLD_STANDARD_OVERRIDES: Record<string, ArtifactGoldStandardOverr
       "Finance approval",
     ],
     approvalOwner: "Finance/commercial owner",
-    supportedDownloads: ["xlsx", "docx", "pdf"],
+    supportedDownloads: ["xlsx", "docx", "pdf", "html"],
   }),
   d20_trap_log: gold({
     tableOfContents: [

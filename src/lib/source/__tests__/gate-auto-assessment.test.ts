@@ -1,5 +1,6 @@
 import {
   mappedEvidenceCriterionIds,
+  requiredEvidenceForStage,
   validateEvidenceGateMap,
 } from "@/lib/source/canonical-specs";
 import type {
@@ -81,67 +82,33 @@ function artifact(
   };
 }
 
-function scopeEvidence(
+function requiredScopeEvidenceAtMinimum(
+  sourceArtifactId: string | null,
+): SourceEventEvidence[] {
+  return requiredEvidenceForStage("scope").map((requirement) =>
+    evidence({
+      id: `evidence-${requirement.requirementId.toLowerCase()}`,
+      requirementId: requirement.requirementId,
+      stage: requirement.stage,
+      currentState: requirement.minimumState,
+      sourceArtifactId,
+    }),
+  );
+}
+
+function requiredScopeEvidence(
   currentState: SourceEventEvidence["currentState"],
   sourceArtifactId: string | null,
 ): SourceEventEvidence[] {
-  return [
+  return requiredEvidenceForStage("scope").map((requirement) =>
     evidence({
-      id: "evidence-app-inv",
-      requirementId: "EVID-SRC-SCOPE-APP-INV",
+      id: `evidence-${requirement.requirementId.toLowerCase()}`,
+      requirementId: requirement.requirementId,
+      stage: requirement.stage,
       currentState,
       sourceArtifactId,
     }),
-    evidence({
-      id: "evidence-org",
-      requirementId: "EVID-SRC-SCOPE-ORG",
-      currentState,
-      sourceArtifactId,
-    }),
-    evidence({
-      id: "evidence-ticket-history",
-      requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-      currentState,
-      sourceArtifactId,
-    }),
-    evidence({
-      id: "evidence-fy-contract",
-      requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
-      currentState,
-      sourceArtifactId,
-    }),
-  ];
-}
-
-function scopeEvidenceAtMinimum(
-  sourceArtifactId: string | null,
-): SourceEventEvidence[] {
-  return [
-    evidence({
-      id: "evidence-app-inv",
-      requirementId: "EVID-SRC-SCOPE-APP-INV",
-      currentState: "Usable Evidence",
-      sourceArtifactId,
-    }),
-    evidence({
-      id: "evidence-org",
-      requirementId: "EVID-SRC-SCOPE-ORG",
-      currentState: "Available",
-      sourceArtifactId,
-    }),
-    evidence({
-      id: "evidence-ticket-history",
-      requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
-      currentState: "Available",
-      sourceArtifactId,
-    }),
-    evidence({
-      id: "evidence-fy-contract",
-      requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
-      currentState: "Available",
-      sourceArtifactId,
-    }),
-  ];
+  );
 }
 
 describe("Source gate auto assessment", () => {
@@ -150,7 +117,7 @@ describe("Source gate auto assessment", () => {
       fromStage: "scope",
       criteria: [criterion()],
       artifacts: [artifact()],
-      evidence: scopeEvidenceAtMinimum("source-artifact-1"),
+      evidence: requiredScopeEvidenceAtMinimum("source-artifact-1"),
     });
 
     expect(assessment.criteria[0]).toMatchObject({
@@ -224,7 +191,7 @@ describe("Source gate auto assessment", () => {
         }),
       ],
       artifacts: [artifact()],
-      evidence: scopeEvidenceAtMinimum("source-artifact-1"),
+      evidence: requiredScopeEvidenceAtMinimum("source-artifact-1"),
     });
 
     expect(assessment.criteria[0]).toMatchObject({
@@ -256,13 +223,13 @@ describe("Source gate auto assessment", () => {
   it("blocks hard mapped criteria when sufficient-rank evidence is client-stated only", () => {
     const assessment = assessStageGate({
       fromStage: "scope",
-      criteria: [criterion({ criterionId: "GATE-SCOPE-04" })],
-      artifacts: [artifact({ artifactCode: "d05_scope_memo" })],
-      evidence: scopeEvidenceAtMinimum(null),
+      criteria: [criterion({ criterionId: "GATE-SCOPE-01" })],
+      artifacts: [artifact()],
+      evidence: requiredScopeEvidenceAtMinimum(null),
     });
 
     expect(assessment.criteria[0]).toMatchObject({
-      criterionId: "GATE-SCOPE-04",
+      criterionId: "GATE-SCOPE-01",
       displayState: "blocked_evidence",
       provenance: "auto-evidence",
     });
@@ -280,7 +247,7 @@ describe("Source gate auto assessment", () => {
           body: "Human-reviewed ticket synthesis.",
         }),
       ],
-      evidence: scopeEvidenceAtMinimum("source-artifact-1").map((row) =>
+      evidence: requiredScopeEvidenceAtMinimum("source-artifact-1").map((row) =>
         row.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY"
           ? evidence({
               ...row,
@@ -329,36 +296,52 @@ describe("Source gate auto assessment", () => {
     expect(assessment.criteria[0]?.reason).toContain("must be at least");
   });
 
-  it("auto-meets hard mapped criteria when client-stated evidence is explicitly usable", () => {
+  it("keeps GATE-SCOPE-04 blocked while its evidence map references an unresolved requirement id", () => {
     const assessment = assessStageGate({
       fromStage: "scope",
       criteria: [criterion({ criterionId: "GATE-SCOPE-04" })],
       artifacts: [artifact({ artifactCode: "d05_scope_memo" })],
-      evidence: scopeEvidence("Usable Evidence", null),
+      evidence: [
+        ...requiredScopeEvidence("Usable Evidence", null),
+        evidence({
+          id: "evidence-org",
+          requirementId: "EVID-SRC-SCOPE-ORG",
+          currentState: "Usable Evidence",
+          sourceArtifactId: null,
+        }),
+      ],
     });
 
     expect(assessment.criteria[0]).toMatchObject({
       criterionId: "GATE-SCOPE-04",
-      displayState: "met_auto_evidence",
+      displayState: "blocked_evidence",
       provenance: "auto-evidence",
-      reason: "Auto-assessed from evidence",
     });
+    expect(assessment.criteria[0]?.reason).toContain("EVID-SRC-SCOPE-ORG");
   });
 
-  it("auto-meets hard mapped criteria when qualifying uploaded evidence is present", () => {
+  it("does not auto-meet GATE-SCOPE-04 from uploaded evidence until the dangling mapped id is resolved", () => {
     const assessment = assessStageGate({
       fromStage: "scope",
       criteria: [criterion({ criterionId: "GATE-SCOPE-04" })],
       artifacts: [artifact({ artifactCode: "d05_scope_memo" })],
-      evidence: scopeEvidenceAtMinimum("source-artifact-1"),
+      evidence: [
+        ...requiredScopeEvidenceAtMinimum("source-artifact-1"),
+        evidence({
+          id: "evidence-org",
+          requirementId: "EVID-SRC-SCOPE-ORG",
+          currentState: "Available",
+          sourceArtifactId: "source-artifact-1",
+        }),
+      ],
     });
 
     expect(assessment.criteria[0]).toMatchObject({
       criterionId: "GATE-SCOPE-04",
-      displayState: "met_auto_evidence",
+      displayState: "blocked_evidence",
       provenance: "auto-evidence",
-      reason: "Auto-assessed from evidence",
     });
+    expect(assessment.criteria[0]?.reason).toContain("EVID-SRC-SCOPE-ORG");
   });
 
   it("builds blocked, ready, and ready-with-warnings recommendations", () => {
@@ -407,11 +390,11 @@ describe("Source gate auto assessment", () => {
     expect(warnings.reasonCodes).toContain("SOFT_CRITERIA_OPEN");
   });
 
-  it("keeps the evidence-gate map pointed at real catalog IDs", () => {
+  it("reports the unresolved evidence-gate map taxonomy decision", () => {
     expect(mappedEvidenceCriterionIds().length).toBeGreaterThanOrEqual(2);
     expect(validateEvidenceGateMap()).toEqual({
       danglingCriterionIds: [],
-      danglingRequirementIds: [],
+      danglingRequirementIds: ["EVID-SRC-SCOPE-ORG"],
     });
   });
 });

@@ -230,3 +230,19 @@ jobs:
           src/lib/source/__tests__/source-governance-enforcement.test.ts
           src/lib/source/__tests__/gate-advance-contract.test.ts
           --runInBand
+
+      # Not a catalog control. These Source library suites were red on main
+      # and ran in no workflow: the stale cases hid one real dangling
+      # evidence-map identifier plus current renderer/stage-evidence behavior.
+      # The six-file scope is deliberate; the rest of src/lib/source/__tests__
+      # still contains unrelated triaged debt.
+      - name: Exercise Source library red-suite triage scope
+        run: >
+          npx jest --runTestsByPath
+          src/lib/source/__tests__/gate-auto-assessment.test.ts
+          src/lib/source/__tests__/gate-auto-assessment-persist.test.ts
+          src/lib/source/__tests__/nexus-api-live-context.test.ts
+          src/lib/source/__tests__/stage-progression.test.ts
+          src/lib/source/__tests__/artifact-binding-matrix.test.ts
+          src/lib/source/__tests__/stage-next-move.test.ts
+          --runInBand
