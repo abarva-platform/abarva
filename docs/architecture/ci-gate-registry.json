@@ -440,6 +440,14 @@
     "audit:qa-inventory-claims": {
       "kind": "pr-gate"
     },
+    "audit:test-ci-coverage": {
+      "kind": "report",
+      "reason": "Census mode, and a census by design. scripts/quality/test-ci-coverage-census.mjs counts which Jest suites under src/ a workflow reaches; it has no failure path and always exits 0. It is not a pr-gate because what to do about the number — widen a jest scope, wire per directory, or accept the gap — is an open scope-policy decision, and a gate that encodes an undecided policy is worse than a measurement that informs it. The behaviour of the census is enforced by src/__tests__/behaviors/test-ci-coverage-census.test.ts, which does run on every PR."
+    },
+    "audit:test-ci-coverage:write": {
+      "kind": "operator",
+      "reason": "Refreshes the committed census at docs/architecture/test-ci-coverage-census.json. Write-if-changed, so re-running on an unchanged tree leaves the file alone, but it is a write and so belongs to whoever is re-measuring rather than to a PR check."
+    },
     "audit:render-snapshot": {
       "kind": "unclassified"
     },
