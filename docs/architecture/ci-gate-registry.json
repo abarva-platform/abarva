@@ -591,6 +591,9 @@
     "check:release-record-lane-guard": {
       "kind": "pr-gate"
     },
+    "check:release-record-template-contract": {
+      "kind": "pr-gate"
+    },
     "check:release-record-tenant-narrative-guard": {
       "kind": "pr-gate"
     },
