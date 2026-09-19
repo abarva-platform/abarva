@@ -23,7 +23,6 @@
     "source-nexus-api-stub.test.ts",
     "source-nexus-route-tenant-scope.test.ts",
     "source-old-surface-archive.test.ts",
-    "source-originate-page.test.ts",
     "source-pricing-upload-download-routes.test.ts",
     "source-rfp-readiness-panel.test.ts",
     "source-route-shell-enforcement.test.ts",
@@ -33,8 +32,6 @@
     "source-vendor-response-completeness-panel.test.ts",
     "source-vendor-selection-readiness-panel.test.ts"
   ],
-  "alsoIgnored": [
-    "integration/source-chat-shape.test.ts"
-  ],
+  "alsoIgnored": ["integration/source-chat-shape.test.ts"],
   "alsoIgnoredNote": "The workflow command names src/__tests__/integration/source without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command \u2014 a trailing slash makes the gate stop seeing it. Jest reads that path as a pattern rather than a directory, so it also matches sibling files at the integration root whose names start with \"source\". source-chat-shape.test.ts is one, and it is red, so it is named here. These are full path fragments, not bare filenames like the list above."
 }

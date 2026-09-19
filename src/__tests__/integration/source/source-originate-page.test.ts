@@ -7,12 +7,19 @@ import { resolve } from "path";
 import { createElement } from "react";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import {
   SourceOriginatePage,
   buildEventName,
   extractEstimatedValue,
 } from "@/components/source/SourceOriginatePage";
+import { SOURCE_CATEGORIES } from "@/lib/source/taxonomy/category-taxonomy";
 
 const mockRouterPush = jest.fn();
 let mockSearchParams = new URLSearchParams();
@@ -133,24 +140,26 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     expect(html).toContain("Minimum data / baseline owner");
   });
 
-  it("renders intake basics before the optional category selector", () => {
-    expect(html).toContain("Intake basics");
-    expect(html).toContain("Category");
-    expect(html.indexOf("Intake basics")).toBeLessThan(
+  it("renders the required intake facts before the optional category selector", () => {
+    expect(html.indexOf("Why now / trigger")).toBeGreaterThanOrEqual(0);
+    expect(html.indexOf("Why now / trigger")).toBeLessThan(
       html.indexOf("Category"),
     );
   });
 
-  it("renders the optional category selector with five canonical archetypes", () => {
-    expect(html).toContain("Category");
-    expect(html).toContain(
-      "aVa can infer this after the intake facts are clear",
+  it("projects every canonical sourcing category into the optional selector", () => {
+    render(
+      createElement(SourceOriginatePage, {
+        clientName: "Apex Retail Group",
+        clientShortName: "Apex Retail",
+        clientKey: "apexretail",
+      }),
     );
-    expect(html).toContain("Application Managed Services");
-    expect(html).toContain("Cloud &amp; Infrastructure");
-    expect(html).toContain("Data, Analytics &amp; AI");
-    expect(html).toContain("Enterprise Software");
-    expect(html).toContain("Custom / Multi-tower");
+
+    expect(screen.getByText("Category")).toBeTruthy();
+    for (const category of SOURCE_CATEGORIES) {
+      expect(screen.getByText(category.label)).toBeTruthy();
+    }
   });
 
   it("renders agent guidance without generic chatbot copy", () => {
@@ -216,7 +225,11 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     expect(screen.getByTestId("source-intake-completion-footer")).toBeTruthy();
     expect(screen.getByText("5 of 5 facts captured")).toBeTruthy();
     expect(screen.getByText("Open event for approval")).toBeTruthy();
-    expect(screen.getByText("Captured facts checklist")).toBeTruthy();
+    expect(
+      within(screen.getByTestId("source-intake-completion-footer")).getByText(
+        "Minimum approval packet",
+      ),
+    ).toBeTruthy();
   });
 
   it("wires intake submission to persisted Source event creation", () => {
@@ -237,9 +250,12 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     );
 
     expect(screen.queryByTestId("source-intake-completion-footer")).toBeNull();
-    expect(
-      screen.getByText("Capture the five basics to open the approval route."),
-    ).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain(
+      "five minimum approval facts",
+    );
+    expect(screen.getByRole("status").textContent).toContain(
+      "placeholders do not count",
+    );
   });
 
   it("saves a completed intake draft without posting a lifecycle event", () => {
@@ -267,7 +283,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     ).toBeTruthy();
   });
 
-  it("opens completed intake events on the approval page, not the canvas", async () => {
+  it("opens normal completed intake events in the Source New workspace", async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -291,9 +307,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
         "/api/v1/source/events",
         expect.any(Object),
       );
-      expect(mockRouterPush).toHaveBeenCalledWith(
-        "/source/events/event-123/approval",
-      );
+      expect(mockRouterPush).toHaveBeenCalledWith("/source/new/event-123");
     });
   });
 
@@ -363,26 +377,20 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     expect(payload.eventName).not.toContain(payload.creationRequestId ?? "");
   });
 
-  it("creates Door 1 events with explicit contract-optimization motion and diagnoses after creation", async () => {
+  it("creates contract-optimization events without rerunning diagnosis for a known contract", async () => {
     mockSearchParams = new URLSearchParams({
       intent: "contract-optimization",
       contractId: "CTR-090",
       contractName: "Crestline AMS Master Services Agreement",
       vendorName: "Crestline",
     });
-    const fetchMock = jest
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          event: { id: "event-door1" },
-          eventUrl: "/source/events/event-door1?stage=Strategy",
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ ok: true }),
-      });
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        event: { id: "event-door1" },
+        eventUrl: "/source/events/event-door1?stage=Strategy",
+      }),
+    });
     global.fetch = fetchMock;
 
     render(
@@ -401,7 +409,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
       ).toBeTruthy();
     });
     expect(screen.getByText("Optimize an existing contract")).toBeTruthy();
-    expect(screen.getByLabelText("Door 1 evidence ledgers")).toBeTruthy();
+    expect(screen.getByLabelText("Contract optimization ledgers")).toBeTruthy();
     expect(screen.getByText("Recoverable leakage")).toBeTruthy();
     expect(screen.getByText("Avoided cost")).toBeTruthy();
     expect(screen.getByText("Negotiated improvement")).toBeTruthy();
@@ -410,34 +418,28 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     fireEvent.change(screen.getByLabelText(/Negotiation decision owner/i), {
       target: { value: "CIO and procurement sponsor" },
     });
+    fireEvent.change(screen.getByLabelText(/Contract scope and boundaries/i), {
+      target: { value: "AMS run support and integration fixes in scope." },
+    });
     fireEvent.change(screen.getByLabelText(/Recovery hypothesis/i), {
       target: { value: "$3M-$4M recoverable range to test" },
     });
     fireEvent.click(screen.getByTestId("source-intake-open-event"));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const createRequest = fetchMock.mock.calls[0]?.[1] as { body?: string };
-    const payload = JSON.parse(createRequest.body ?? "{}") as {
-      sourcingMotion?: string;
-      eventName?: string;
-      triggerDescription?: string;
-      scopeDescription?: string;
-      baselineOwnerDescription?: string;
-    };
-
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/v1/source/events");
-    expect(payload.sourcingMotion).toBe("contract_optimization");
-    expect(payload.eventName).toContain("Contract Optimization");
-    expect(payload.eventName).not.toContain("Sourcing Event");
-    expect(payload.triggerDescription).toContain("CTR-090");
-    expect(payload.scopeDescription).toContain(
-      "Crestline AMS Master Services Agreement",
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/source/workspace/contract/CTR-090/optimization",
+        { method: "POST" },
+      ),
     );
-    expect(payload.baselineOwnerDescription).toMatch(/Vendor management owns/i);
-    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/v1/source/events",
+      expect.anything(),
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/v1/source/event-door1/door1/diagnose",
+      expect.anything(),
     );
-    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ method: "POST" });
     expect(mockRouterPush).toHaveBeenCalledWith(
       "/source/events/event-door1/approval",
     );
@@ -520,9 +522,9 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
       ),
     ).toBeNull();
     expect(screen.queryByText("Draft restored from autosave")).toBeNull();
-    expect(
-      screen.getByText("Capture the five basics to open the approval route."),
-    ).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain(
+      "five minimum approval facts",
+    );
     expect(
       window.localStorage.getItem("abarva.source.originate.intake.meridian"),
     ).toBeNull();
@@ -571,7 +573,9 @@ describe("extractEstimatedValue (SRC-FLW-INTAKE value parsing)", () => {
   });
 
   it("rejects a bare count with no currency signal — '3 vendors' → undefined", () => {
-    expect(extractEstimatedValue("Consolidate to top 3 vendors")).toBeUndefined();
+    expect(
+      extractEstimatedValue("Consolidate to top 3 vendors"),
+    ).toBeUndefined();
     expect(extractEstimatedValue("15")).toBeUndefined();
   });
 

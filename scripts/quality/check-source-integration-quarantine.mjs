@@ -37,12 +37,14 @@ const LIST = path.join(HERE, "source-integration-quarantine.json");
  * goes down. Lowering it as suites are repaired is the point; raising it is a
  * decision someone has to make here, visibly.
  */
-const CEILING = 24;
+const CEILING = 23;
 
 const { quarantined } = JSON.parse(readFileSync(LIST, "utf8"));
 const problems = [];
 
-for (const name of quarantined.filter((n) => !existsSync(path.join(SUITE_DIR, n)))) {
+for (const name of quarantined.filter(
+  (n) => !existsSync(path.join(SUITE_DIR, n)),
+)) {
   problems.push(
     `${name} is quarantined but no longer exists. Remove it from the list — a ` +
       "stale exclusion hides that the list was never revisited.",
