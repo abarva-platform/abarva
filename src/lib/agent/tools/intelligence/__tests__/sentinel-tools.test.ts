@@ -11,6 +11,10 @@ import { searchPatternsTool } from '../searchPatterns';
 import { patternNeighborhoodTool } from '../patternNeighborhood';
 import { evidenceLookupTool } from '../evidenceLookup';
 import type { ToolContext } from '../../registry';
+import {
+  getPatternManifestEntries,
+  getPatternManifestEntry,
+} from '@/lib/intelligence/pattern-manifest';
 
 jest.mock('@/lib/active-client', () => ({
   getActiveClientRow: jest.fn(),
@@ -36,6 +40,59 @@ function makeCtx(surface = '/intelligence'): CapturedWrites {
     },
   };
   return { buffer, ctx };
+}
+
+/**
+ * Neighborhood roots are DERIVED from the live manifest, never named.
+ *
+ * Three cases in this file named `pattern_ai_use_case_portfolio`. The
+ * corpus re-keyed its entries from `pattern_*` slugs to `PAT-*` codes —
+ * that pattern is `PAT-AI-004` today — so the id stopped resolving and
+ * the cases went red, in a directory no workflow runs. Substituting
+ * `PAT-AI-004` would only move the expiry date, so the root is chosen
+ * by the property each case actually needs.
+ *
+ * Both helpers fail closed rather than skipping: a corpus with no
+ * traversable edge, or with no isolated entry, is a finding about the
+ * corpus and must not read as a passing test.
+ */
+function connectedRootId(): string {
+  const patterns = getPatternManifestEntries();
+  const byId = new Map(patterns.map((entry) => [entry.id, entry]));
+  // A self-edge is not a neighbor: the handler seeds `visited` with the
+  // root id, so an entry whose only related id is itself traverses to
+  // nothing.
+  const neighborsOf = (id: string): string[] => {
+    const entry = byId.get(id);
+    if (!entry) return [];
+    return entry.relatedPatternIds.filter((related) => related !== id && byId.has(related));
+  };
+  // Require a root that expands at TWO hops, not one. The depth case
+  // below asserts depth 2 reaches strictly more than depth 1, and a
+  // one-hop-only root would make that assertion unsatisfiable while
+  // looking like a corpus problem.
+  const root = patterns.find((entry) => {
+    const firstHop = neighborsOf(entry.id);
+    if (firstHop.length === 0) return false;
+    const reached = new Set<string>([entry.id, ...firstHop]);
+    return firstHop.some((id) => neighborsOf(id).some((next) => !reached.has(next)));
+  });
+  if (!root) {
+    throw new Error('pattern manifest has no entry whose related patterns expand at depth 2');
+  }
+  return root.id;
+}
+
+function isolatedRootId(): string {
+  const patterns = getPatternManifestEntries();
+  const byId = new Map(patterns.map((entry) => [entry.id, entry]));
+  const root = patterns.find((entry) =>
+    entry.relatedPatternIds.every((related) => related === entry.id || !byId.has(related)),
+  );
+  if (!root) {
+    throw new Error('pattern manifest has no entry without a resolvable related pattern id');
+  }
+  return root.id;
 }
 
 const APEX_CLIENT = {
@@ -140,13 +197,10 @@ describe('patternNeighborhoodTool', () => {
   it('emits pattern-match + graph-neighborhood artifacts for each neighbor (depth=1)', async () => {
     mockedGetActiveClientRow.mockResolvedValue(APEX_CLIENT);
     const { ctx, buffer } = makeCtx();
-    const result = await patternNeighborhoodTool.handler(
-      { patternId: 'pattern_ai_use_case_portfolio' },
-      ctx,
-    );
+    const result = await patternNeighborhoodTool.handler({ patternId: connectedRootId() }, ctx);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.root_id).toBe('pattern_ai_use_case_portfolio');
+      expect(result.data.root_id).toBe(connectedRootId());
       expect(result.data.tenant_key).toBe('apex-retail');
       expect(typeof result.data.neighbor_count).toBe('number');
       expect((result.data.neighbor_count as number)).toBeGreaterThan(0);
@@ -160,35 +214,62 @@ describe('patternNeighborhoodTool', () => {
   it('does not emit graph-neighborhood when there are no neighbors', async () => {
     mockedGetActiveClientRow.mockResolvedValue(APEX_CLIENT);
     const { ctx, buffer } = makeCtx();
-    // Pick an isolated pattern — pattern_responsible_ai isn't isolated;
-    // just any pattern guaranteed to have related ids will emit. We
-    // assert the contrapositive: depth=1 with neighbors > 0 does emit
-    // a graph-neighborhood. The "no neighbors" branch is handled in
-    // the source by guarding the writer call with `neighbors.length > 0`.
-    await patternNeighborhoodTool.handler(
-      { patternId: 'pattern_ai_use_case_portfolio' },
-      ctx,
-    );
-    // Sanity: at least one graph-neighborhood emission happened above.
-    expect(buffer.some((line) => line.includes('[[artifact:graph-neighborhood]]'))).toBe(true);
+    // This case previously asserted the *contrapositive* — it re-ran the
+    // connected root and checked that a graph-neighborhood WAS emitted,
+    // which is what the case above already proves. Its own comment said
+    // so. The `neighbors.length > 0` guard in the handler had therefore
+    // never been exercised. It is now: an isolated root must succeed,
+    // report zero neighbors, and emit no artifact of either kind.
+    const result = await patternNeighborhoodTool.handler({ patternId: isolatedRootId() }, ctx);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.neighbor_count).toBe(0);
+    }
+    expect(buffer.some((line) => line.includes('[[artifact:graph-neighborhood]]'))).toBe(false);
+    expect(buffer.some((line) => line.includes('[[artifact:pattern-match]]'))).toBe(false);
   });
 
   it('walks deeper than depth=1 when requested', async () => {
     mockedGetActiveClientRow.mockResolvedValue(APEX_CLIENT);
     const { ctx } = makeCtx();
-    const depth1 = await patternNeighborhoodTool.handler(
-      { patternId: 'pattern_ai_use_case_portfolio', depth: 1 },
-      ctx,
-    );
-    const depth2 = await patternNeighborhoodTool.handler(
-      { patternId: 'pattern_ai_use_case_portfolio', depth: 2 },
-      ctx,
-    );
+    const root = connectedRootId();
+    const depth1 = await patternNeighborhoodTool.handler({ patternId: root, depth: 1 }, ctx);
+    const depth2 = await patternNeighborhoodTool.handler({ patternId: root, depth: 2 }, ctx);
+    // Both calls are asserted successful BEFORE the comparison. The
+    // previous version guarded the comparison behind
+    // `if (depth1.success && depth2.success)`, so once the named root
+    // was retired from the corpus both calls failed, the branch never
+    // ran, and the case stayed green while asserting nothing.
+    expect(depth1.success).toBe(true);
+    expect(depth2.success).toBe(true);
     if (depth1.success && depth2.success) {
-      expect(depth2.data.neighbor_count as number).toBeGreaterThanOrEqual(
+      // Strictly greater, not `>=`. The root is chosen to expand at two
+      // hops, so `>=` would also hold if the handler ignored `depth`
+      // entirely — which is exactly the regression this case exists for.
+      expect(depth2.data.neighbor_count as number).toBeGreaterThan(
         depth1.data.neighbor_count as number,
       );
     }
+  });
+
+  it('offers the model a worked pattern id only if the corpus can resolve it', () => {
+    // `input_schema` is handed verbatim to the model by
+    // `toAnthropicToolDefinition`, so an example id written here is an
+    // instruction the model can act on. The schema used to name
+    // `pattern_ai_use_case_portfolio`, retired from the corpus when it
+    // was re-keyed, so following the tool's own documentation produced
+    // `pattern_not_found`. Any id-shaped literal the schema offers must
+    // resolve; naming none is also acceptable, and is what it does now.
+    const properties = (patternNeighborhoodTool.input_schema as {
+      properties?: Record<string, { description?: string }>;
+    }).properties;
+    const described = `${properties?.patternId?.description ?? ''} ${patternNeighborhoodTool.description}`;
+    const quoted = described.match(/'[^']+'/g) ?? [];
+    const unresolvable = quoted
+      .map((literal) => literal.slice(1, -1))
+      .filter((candidate) => /^(pattern_|PAT-)/.test(candidate))
+      .filter((candidate) => !getPatternManifestEntry(candidate));
+    expect(unresolvable).toEqual([]);
   });
 });
 

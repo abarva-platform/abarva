@@ -90,11 +90,68 @@ describe('scorePatternsByKeyword', () => {
     expect(scorePatternsByKeyword('show me the', patterns)).toEqual([]);
   });
 
-  it('finds at least one real corpus pattern by signature keywords', () => {
+  /**
+   * This case used to assert `ranked[0].pattern.id` was
+   * `'pattern_ai_use_case_portfolio'` for the query 'AI use case
+   * portfolio'. Two things were wrong with it and only the first made
+   * it red:
+   *
+   * 1. The corpus re-keyed `pattern_*` slugs to `PAT-*` codes, so that
+   *    id resolves to nothing. The same pattern is `PAT-AI-004` today.
+   * 2. It was never a relevance assertion. Scores are a count of query
+   *    tokens present, so this four-token query maxes out at 4 and 72
+   *    corpus entries reach it. Rank 1 among them is decided by
+   *    manifest insertion order, not by relevance — naming `PAT-AI-004`
+   *    instead would still fail, because a different entry is first.
+   *
+   * What is worth pinning is the scorer's actual contract, stated
+   * without naming any entry: a pattern searched for by its own name
+   * reaches the top score. That holds for every entry, so it is
+   * sampled across the corpus rather than asserted about a favourite.
+   */
+  it('scores a real corpus pattern at the top score when queried by its own name', () => {
     const patterns = getPatternManifestEntries();
-    const ranked = scorePatternsByKeyword('AI use case portfolio', patterns);
-    expect(ranked.length).toBeGreaterThan(0);
-    expect(ranked[0].pattern.id).toBe('pattern_ai_use_case_portfolio');
+    expect(patterns.length).toBeGreaterThan(0);
+
+    // Deterministic spread over the corpus rather than the first few,
+    // which share a source file and would prove less.
+    const sampled = patterns.filter((_entry, index) => index % 400 === 0);
+    expect(sampled.length).toBeGreaterThan(1);
+
+    for (const target of sampled) {
+      const ranked = scorePatternsByKeyword(target.name, patterns);
+      expect(ranked.length).toBeGreaterThan(0);
+      const scored = ranked.find((entry) => entry.pattern.id === target.id);
+      expect(scored).toBeDefined();
+      expect(scored?.score).toBe(ranked[0].score);
+    }
+  });
+
+  /**
+   * Documents current behaviour, deliberately — it is not a control.
+   *
+   * Matching is `haystack.includes(token)`, so a short token matches
+   * inside unrelated words: 'ai' hits 'available'. Over the real corpus
+   * the four-token query above scores 3,524 of 3,569 entries above zero.
+   * That is why the assertion this replaced could not mean what it read
+   * like. The property is asserted here rather than the counts, which
+   * would go stale with the next corpus load.
+   *
+   * When the scorer gains word-boundary matching this case must fail.
+   * That failure is the intended signal — update it then, with the
+   * reason, rather than working around it.
+   */
+  it('currently matches a short token inside an unrelated word (known weakness)', () => {
+    const patterns = [
+      fakePattern({
+        id: 'p-unrelated',
+        name: 'Warehouse Slotting',
+        shortDescription: 'Capacity is available across the network',
+      }),
+    ];
+    const out = scorePatternsByKeyword('ai', patterns);
+    expect(out).toHaveLength(1);
+    expect(out[0].pattern.id).toBe('p-unrelated');
   });
 });
 
