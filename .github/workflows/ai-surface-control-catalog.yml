@@ -92,3 +92,11 @@ jobs:
 
       - name: Exercise programs gate approval modal
         run: npx jest --runTestsByPath src/components/programs/__tests__/ProgramDetailPage.gate-approval.controls.test.tsx --runInBand
+
+      # Not a catalog control. These two suites guard the Source artifact verdict
+      # contract — that the deal pack, the CXO report and its HTML/PPTX renders
+      # all state the verdict the expert-judgment kernel returned. They ran in no
+      # CI job, and one of them sat red for weeks while a sibling expectation was
+      # rewritten to agree with the defect. See backlog items 26 / 66 / 77.
+      - name: Exercise Source artifact verdict consistency
+        run: npx jest --runTestsByPath src/lib/source/exports/__tests__/artifact-verdict-consistency.test.ts src/lib/source/exports/cxo-report/__tests__/source-cxo-narrative-report.test.ts --runInBand
