@@ -142,3 +142,24 @@ lint exit codes.
   presentation decision that belongs with whoever owns this surface's copy.
 - The view reads at most 100 entries, the reader's existing limit. An event with
   more has an older trail that is silently not shown, and nothing says so.
+
+## Correction — 2026-09-19
+
+The QA section above says `SourceNewWorkspace.test.tsx`: **19 of 19 pass** and
+`activity-log.test.ts`: **5 of 5 pass**, each `Status: pass`.
+
+Both were true of a local run and **enforced by nothing**. Neither file was
+named by any workflow, and no scoped jest script reaches
+`src/lib/**/__tests__` or `src/components/**/__tests__`. So the decision-trail
+guard — whose entire purpose is that a failed read must not render as "no
+decisions have been recorded" — could have been deleted, or the discriminated
+result reverted to a bare array, without a single CI check going red.
+
+A green PR is not evidence that a test in it ran. The record should have said
+"passes locally; not wired into CI", and the wiring should have shipped with
+the change.
+
+Both suites are now named in `.github/workflows/ai-surface-control-catalog.yml`.
+The claim that they run is verified by finding the filenames in a completed
+run's job log, not by the PR being green.
+

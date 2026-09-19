@@ -206,3 +206,16 @@ jobs:
           src/lib/programs/__tests__/pattern-authority.test.ts
           src/lib/programs/__tests__/program-pattern-writer-guards.test.ts
           --runInBand
+
+      # Two suites shipped on 18 Sep whose release records said "5 of 5 pass"
+      # and "19 of 19 pass". Both were true locally and enforced by nothing:
+      # neither file was named by any workflow, and no scoped jest script
+      # reaches src/lib/**/__tests__ or src/components/**/__tests__. The
+      # decision-trail guard — whose whole point is that a failed read must not
+      # render as "no decisions recorded" — could have been deleted without a
+      # single check going red.
+      - name: Exercise the Source event decision trail reader
+        run: npx jest --runTestsByPath src/lib/source/__tests__/activity-log.test.ts --runInBand
+
+      - name: Exercise the Source New workspace, including the decision trail
+        run: npx jest --runTestsByPath src/components/source/new-workspace/SourceNewWorkspace.test.tsx --runInBand

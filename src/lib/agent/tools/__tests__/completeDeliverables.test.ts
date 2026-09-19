@@ -36,6 +36,13 @@ function makeCtx(surface = '/programs/test-program') {
   };
 }
 
+function makeCtxWithoutPolicy(surface = '/programs/test-program') {
+  return {
+    request: new Request('http://localhost/'),
+    surface,
+  };
+}
+
 beforeEach(() => {
   requireTenancyMock.mockReset();
   completeDeliverableMock.mockReset();
@@ -144,6 +151,30 @@ describe('complete_deliverables tool', () => {
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe('forbidden:can_publish_deliverables_required');
+    expect(completeDeliverableMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks signed batch persistence when no publish policy was resolved', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+
+    const result = await completeDeliverablesTool.handler(
+      {
+        program_id: 'program-1',
+        deliverables: [
+          {
+            deliverable_type_key: 'business_case',
+            title: 'Business case',
+            content_outline: ['Accepted value case'],
+          },
+        ],
+      },
+      makeCtxWithoutPolicy('/strategic-moves/move-123/phase/5'),
+    );
+
+    expect(result).toMatchObject({
+      success: false,
+      error: 'forbidden:can_publish_deliverables_required',
+    });
     expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 
