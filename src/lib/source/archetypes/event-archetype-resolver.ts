@@ -9,10 +9,10 @@
 // As archetypes are added (4 → 12), extend CATEGORY_TO_ARCHETYPE_ID only. No
 // other runtime code changes.
 
-import type { SourceCategoryId } from '../taxonomy/category-taxonomy';
-import { SOURCE_CATEGORY_IDS } from '../taxonomy/category-taxonomy';
-import { getSourceArchetype } from './registry';
-import type { SourceEventArchetype } from './types';
+import type { SourceCategoryId } from "../taxonomy/category-taxonomy";
+import { SOURCE_CATEGORY_IDS } from "../taxonomy/category-taxonomy";
+import { getSourceArchetype } from "./registry";
+import type { SourceEventArchetype } from "./types";
 
 /**
  * Explicit category → archetype map. `null` = no shipped archetype yet (the
@@ -22,27 +22,30 @@ import type { SourceEventArchetype } from './types';
  * saas_renewal, cloud_finops, bpo_contact_centre, bpo_shared_services, cyber_grc,
  * staff_aug_vs_managed_service.
  */
-export const CATEGORY_TO_ARCHETYPE_ID: Record<SourceCategoryId, string | null> = {
-  ams: 'AMS_MANAGED_SERVICES',
-  data_ai_platform: 'AI_DATA_PLATFORM',
-  saas_renewal: 'CONTRACT_RENEWAL',
-  ai_engineering_partner: 'DIGITAL_PRODUCT_ENGINEERING',
-  cloud_finops: 'CLOUD_FINOPS',
-  bpo_contact_centre: 'CONTACT_CENTER_CX',
-  bpo_shared_services: 'BPO_SHARED_SERVICES',
-  cyber_grc: 'MSSP_CYBER',
-  staff_aug_vs_managed_service: 'STAFF_AUGMENTATION',
-};
+export const CATEGORY_TO_ARCHETYPE_ID: Record<SourceCategoryId, string | null> =
+  {
+    ams: "AMS_MANAGED_SERVICES",
+    data_ai_platform: "AI_DATA_PLATFORM",
+    saas_renewal: "CONTRACT_RENEWAL",
+    ai_engineering_partner: "DIGITAL_PRODUCT_ENGINEERING",
+    cloud_finops: "CLOUD_FINOPS",
+    bpo_contact_centre: "CONTACT_CENTER_CX",
+    bpo_shared_services: "BPO_SHARED_SERVICES",
+    cyber_grc: "MSSP_CYBER",
+    staff_aug_vs_managed_service: "STAFF_AUGMENTATION",
+  };
 
 /**
  * Some live events also carry a stored `source_events.event_type` string
  * ('managed_service', 'software', 'staffing', 'infrastructure', 'consulting',
  * 'other'). This is a coarser, legacy signal used ONLY as a fallback when no
- * classifier category is available. It maps to an archetype's own `eventType`.
+ * classifier category is available. It maps to the safest shipped archetype for
+ * that coarse event type; precise renewal routing must come from the classifier
+ * category.
  */
 export const EVENT_TYPE_TO_ARCHETYPE_ID: Record<string, string | null> = {
-  managed_service: 'CONTRACT_RENEWAL',
-  software: 'ERP_SI_IMPLEMENTATION',
+  managed_service: "AMS_MANAGED_SERVICES",
+  software: "ERP_SI_IMPLEMENTATION",
   // coarse / ambiguous legacy values — no confident archetype:
   infrastructure: null,
   staffing: null,
@@ -50,7 +53,10 @@ export const EVENT_TYPE_TO_ARCHETYPE_ID: Record<string, string | null> = {
   other: null,
 };
 
-export type ArchetypeResolutionSource = 'classifier_category' | 'event_type_fallback' | 'unresolved';
+export type ArchetypeResolutionSource =
+  | "classifier_category"
+  | "event_type_fallback"
+  | "unresolved";
 
 export interface ArchetypeResolution {
   resolved: boolean;
@@ -79,7 +85,9 @@ function isCategoryId(x: string): x is SourceCategoryId {
  * event_type is a fallback only. Returns an unresolved result (never throws,
  * never guesses) when no shipped archetype matches.
  */
-export function resolveArchetypeForEvent(input: ResolveArchetypeInput): ArchetypeResolution {
+export function resolveArchetypeForEvent(
+  input: ResolveArchetypeInput,
+): ArchetypeResolution {
   const categoryId = input.categoryId ?? null;
 
   // 1 · Preferred: classifier category.
@@ -92,7 +100,7 @@ export function resolveArchetypeForEvent(input: ResolveArchetypeInput): Archetyp
           resolved: true,
           archetype,
           archetypeId: archId,
-          source: 'classifier_category',
+          source: "classifier_category",
           categoryId,
           reason: `Resolved archetype ${archId} from classifier category '${categoryId}'.`,
         };
@@ -103,15 +111,16 @@ export function resolveArchetypeForEvent(input: ResolveArchetypeInput): Archetyp
       resolved: false,
       archetype: null,
       archetypeId: null,
-      source: 'unresolved',
+      source: "unresolved",
       categoryId,
-      reason: `Classifier category '${categoryId}' has no shipped archetype yet. ` +
+      reason:
+        `Classifier category '${categoryId}' has no shipped archetype yet. ` +
         `Refusing to run the event through a different archetype. Add it to CATEGORY_TO_ARCHETYPE_ID when shipped.`,
     };
   }
 
   // 2 · Fallback: stored event_type.
-  const eventType = (input.eventType ?? '').trim();
+  const eventType = (input.eventType ?? "").trim();
   if (eventType) {
     const archId = EVENT_TYPE_TO_ARCHETYPE_ID[eventType];
     if (archId) {
@@ -121,9 +130,10 @@ export function resolveArchetypeForEvent(input: ResolveArchetypeInput): Archetyp
           resolved: true,
           archetype,
           archetypeId: archId,
-          source: 'event_type_fallback',
+          source: "event_type_fallback",
           categoryId: null,
-          reason: `Resolved archetype ${archId} from stored event_type '${eventType}' (classifier category unavailable). ` +
+          reason:
+            `Resolved archetype ${archId} from stored event_type '${eventType}' (classifier category unavailable). ` +
             `Re-run classification for a higher-confidence resolution.`,
         };
       }
@@ -132,7 +142,7 @@ export function resolveArchetypeForEvent(input: ResolveArchetypeInput): Archetyp
       resolved: false,
       archetype: null,
       archetypeId: null,
-      source: 'unresolved',
+      source: "unresolved",
       categoryId: null,
       reason: `Stored event_type '${eventType}' does not map to a shipped archetype. Classify the event first.`,
     };
@@ -143,9 +153,10 @@ export function resolveArchetypeForEvent(input: ResolveArchetypeInput): Archetyp
     resolved: false,
     archetype: null,
     archetypeId: null,
-    source: 'unresolved',
+    source: "unresolved",
     categoryId: null,
-    reason: 'No classifier category and no event_type supplied — cannot resolve an archetype.',
+    reason:
+      "No classifier category and no event_type supplied — cannot resolve an archetype.",
   };
 }
 

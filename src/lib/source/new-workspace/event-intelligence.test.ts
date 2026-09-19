@@ -83,7 +83,9 @@ describe("buildSourceNewEventIntelligence", () => {
       expect.objectContaining({
         id: "artifact-loaded-only",
         reasons: expect.arrayContaining([
-          expect.stringContaining("agent_readiness_status is committed_not_indexed"),
+          expect.stringContaining(
+            "agent_readiness_status is committed_not_indexed",
+          ),
         ]),
       }),
     ]);
@@ -134,11 +136,81 @@ describe("buildSourceNewEventIntelligence", () => {
       expect.objectContaining({
         id: "artifact-reviewed",
         reasons: expect.arrayContaining([
-          expect.stringContaining("agent_readiness_status is committed_not_indexed"),
+          expect.stringContaining(
+            "agent_readiness_status is committed_not_indexed",
+          ),
         ]),
       }),
     ]);
     expect(view.allowedStatement).toContain("it cannot make a recommendation");
+  });
+
+  it("uses managed-services evidence requirements for a managed-services RFP when category is absent", () => {
+    const view = buildSourceNewEventIntelligence({
+      event: {
+        id: "event-managed-services",
+        clientId: "client-example",
+        clientKey: TEST_TENANT_KEY,
+        eventType: "managed_service",
+        category: null,
+        currentStage: "rfp",
+      },
+      artifacts: [],
+    });
+
+    expect(view.archetype.id).toBe("AMS_MANAGED_SERVICES");
+    expect(view.archetype.name).toBe("IT Outsourcing / AMS / Managed Services");
+    expect(view.requiredEvidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "service_tower_scope",
+          label: "Service tower scope",
+          severity: "hard",
+        }),
+        expect.objectContaining({
+          key: "sla_baseline",
+          label: "SLA baseline",
+          severity: "hard",
+        }),
+      ]),
+    );
+    expect(view.requiredEvidence.map((item) => item.key)).not.toContain(
+      "current_contract",
+    );
+  });
+
+  it("keeps renewal-category inputs on the renewal evidence contract", () => {
+    const view = buildSourceNewEventIntelligence({
+      event: {
+        id: "event-renewal",
+        clientId: "client-example",
+        clientKey: TEST_TENANT_KEY,
+        eventType: "managed_service",
+        category: "saas_renewal",
+        currentStage: "strategy",
+      },
+      artifacts: [],
+    });
+
+    expect(view.archetype.id).toBe("CONTRACT_RENEWAL");
+    expect(view.archetype.name).toBe("Contract Renewal / Renegotiation");
+    expect(view.requiredEvidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "current_contract",
+          label: "Current contract",
+          severity: "hard",
+        }),
+        expect.objectContaining({
+          key: "renewal_timeline",
+          label: "Renewal date & timeline",
+          severity: "hard",
+        }),
+      ]),
+    );
+    expect(view.requiredEvidence.map((item) => item.key)).not.toContain(
+      "service_tower_scope",
+    );
   });
 
   it("refuses when the event cannot resolve to a shipped archetype", () => {
@@ -162,9 +234,7 @@ describe("buildSourceNewEventIntelligence", () => {
     expect(view.refusals).toEqual([
       "This event does not yet map to a supported sourcing playbook.",
     ]);
-    expect(view.gaps).toContain(
-      "No current evidence is ready to cite yet.",
-    );
+    expect(view.gaps).toContain("No current evidence is ready to cite yet.");
     expect(view.nextAction.label).toBe("Review governed context");
   });
 });
