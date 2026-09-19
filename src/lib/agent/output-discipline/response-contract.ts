@@ -1,3 +1,5 @@
+import { UNMAPPED_IDENTIFIER_PLACEHOLDER } from '../../answer/shared-response-shaper';
+
 export type AgentOutputContractViolation =
   | 'raw_markdown_emphasis'
   | 'raw_visible_entity_id'
@@ -28,7 +30,11 @@ function stripRawEntityIds(text: string): string {
     .replace(BRACKETED_RAW_ID_REGEX, '')
     .replace(BARE_RAW_ENTITY_ID_REGEX, 'the cited pattern')
     .replace(/\bsignal\s*:\s*/gi, 'signal: ')
-    .replace(BARE_UUID_REGEX, 'the referenced record')
+    // The same wording the shared shaper uses. This pass runs on the streaming
+    // text, where the shaper has not run; on the settled text the shaper has
+    // already rewritten the UUID, so this replacement never fires there. Two
+    // literals meant a reader saw one wording arrive and the other replace it.
+    .replace(BARE_UUID_REGEX, UNMAPPED_IDENTIFIER_PLACEHOLDER)
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\s+([,.;:!?])/g, '$1');
 }

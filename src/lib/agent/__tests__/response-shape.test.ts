@@ -4,6 +4,7 @@ import {
   shapeStreamingAgentTextForSurface,
   stripChatMarkdownFormatting,
 } from '../response-shape';
+import { UNMAPPED_IDENTIFIER_PLACEHOLDER } from '@/lib/answer/shared-response-shaper';
 
 describe('agent response shape', () => {
   it('removes raw markdown emphasis without losing readable text', () => {
@@ -64,6 +65,18 @@ describe('agent response shape', () => {
     expect(shaped).toContain('the referenced portfolio signal');
   });
 
+  // Backlog item 43, the half left untriaged when its sibling case was updated.
+  // This asserted 'the referenced record' against
+  // `shapeAgentResponseForSurface`, and had been red on `main` ever since the
+  // shared shaper took over scrubbing on the settled path. Neither side was
+  // simply stale: two passes over the same answer carried two literals for one
+  // replacement, so a bare UUID read as 'the referenced record' while streaming
+  // and 'the referenced item' once settled. Both now use
+  // `UNMAPPED_IDENTIFIER_PLACEHOLDER`; the agreement between the passes — which
+  // is the thing that was broken — is pinned in
+  // `src/__tests__/behaviors/agent-identifier-placeholder-consistency.test.ts`,
+  // in the tree CI runs. This case keeps its original job: the settled Tower
+  // answer does not leak the id.
   it('scrubs bare UUIDs from Tower copy even without a signal prefix', () => {
     const shaped = shapeAgentResponseForSurface(
       '/tower',
@@ -71,7 +84,7 @@ describe('agent response shape', () => {
     );
 
     expect(shaped).not.toContain('39901c16-2e8b-4c8c-80aa-8a0182f26754');
-    expect(shaped).toContain('the referenced record');
+    expect(shaped).toContain(UNMAPPED_IDENTIFIER_PLACEHOLDER);
   });
 
   // Backlog items 41 and 43. This case used to assert the opposite — that the
