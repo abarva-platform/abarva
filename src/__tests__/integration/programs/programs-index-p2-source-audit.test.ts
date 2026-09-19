@@ -9,6 +9,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import ts from 'typescript';
 
 const COMPONENT_PATH = join(
   process.cwd(),
@@ -16,6 +17,25 @@ const COMPONENT_PATH = join(
 );
 
 const source = readFileSync(COMPONENT_PATH, 'utf8');
+const componentAst = ts.createSourceFile(
+  COMPONENT_PATH,
+  source,
+  ts.ScriptTarget.Latest,
+  true,
+  ts.ScriptKind.TSX,
+);
+
+function importedNamesFrom(modulePath: string): string[] {
+  const declaration = componentAst.statements.find(
+    (statement): statement is ts.ImportDeclaration =>
+      ts.isImportDeclaration(statement) &&
+      ts.isStringLiteral(statement.moduleSpecifier) &&
+      statement.moduleSpecifier.text === modulePath,
+  );
+  const bindings = declaration?.importClause?.namedBindings;
+  if (!bindings || !ts.isNamedImports(bindings)) return [];
+  return bindings.elements.map((element) => element.name.text);
+}
 
 describe('PROG-P2 · ProgramsIndexPage · testid markers', () => {
   it('has data-testid="programs-index-page" on work pane', () => {
@@ -45,14 +65,16 @@ describe('PROG-P2 · ProgramsIndexPage · flagship card copy', () => {
 describe('PROG-P2 · ProgramsIndexPage · honest disclaimer', () => {
   it('renders the honest disclaimer with data-honest-disclaimer marker', () => {
     expect(source).toContain('data-honest-disclaimer="programs-index"');
-    expect(source).toContain('Deterministic seed · Apex Retail Group');
+    expect(source).toContain('Deterministic seed · {view.tenant}');
   });
 });
 
 describe('PROG-P2 · ProgramsIndexPage · module hygiene', () => {
   it('imports canonical shell components', () => {
-    expect(source).toContain("from '@/components/shell/AppShell'");
-    expect(source).toContain("from '@/components/shell/AgentColumn'");
+    expect(importedNamesFrom('@/components/shell/AppShell')).toContain('AppShell');
+    expect(importedNamesFrom('@/components/programs/AgentCanvas')).toContain(
+      'AgentCanvas',
+    );
   });
 
   it('uses no forbidden runtime patterns', () => {
