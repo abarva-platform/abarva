@@ -598,6 +598,9 @@
     "check:release-record-tenant-narrative-guard": {
       "kind": "pr-gate"
     },
+    "check:tenant-narrative-term-drift": {
+      "kind": "pr-gate"
+    },
     "validate:context-corpus": {
       "kind": "pr-gate"
     },

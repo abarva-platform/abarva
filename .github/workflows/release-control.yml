@@ -29,6 +29,9 @@ jobs:
       - name: Prove the tenant-narrative guard's own term derivation
         run: npm run check:release-record-tenant-narrative-guard
 
+      - name: Refuse a newly derived single-word tenant term without a read
+        run: npm run check:tenant-narrative-term-drift
+
       - name: Prove the Layer Impact lane rule can fail
         run: npm run check:release-record-lane-guard
 
