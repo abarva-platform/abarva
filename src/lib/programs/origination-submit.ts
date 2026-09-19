@@ -40,6 +40,11 @@ import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture
 import { planFromShape } from "@/lib/programs/discovery/discovery-intake";
 import type { DiscoveryShape } from "@/lib/programs/discovery/discovery-intake";
 import {
+  isProgramPatternAuthorityError,
+  programPatternLookupFromClient,
+  resolvePromotedProgramPatternKey,
+} from "@/lib/programs/pattern-authority";
+import {
   parsePersonLabelForOrigination,
   parsePersonMentionsForOrigination,
   type ParsedPersonLabel,
@@ -723,6 +728,21 @@ export async function submitOriginationBrief(
     );
   }
 
+  const sb = getAzureWriteFluentClient();
+  try {
+    input.matchedPatternId = await resolvePromotedProgramPatternKey(
+      input.matchedPatternId,
+      programPatternLookupFromClient(sb),
+    );
+  } catch (error) {
+    if (!isProgramPatternAuthorityError(error)) throw error;
+    throw new OriginationSubmitError(
+      error.code,
+      error.message,
+      error.code === "program_pattern_lookup_failed" ? 503 : 400,
+    );
+  }
+
   const sponsorMentions = parsePersonMentionsForOrigination(input.sponsor);
   const sponsor = await resolvePersonByLabel({
     label: input.sponsor,
@@ -751,7 +771,6 @@ export async function submitOriginationBrief(
       })
     : sponsor;
 
-  const sb = getAzureWriteFluentClient();
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
   const { data: existing } = await sb
     .from("engagements")
