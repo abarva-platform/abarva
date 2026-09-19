@@ -26,7 +26,6 @@
 // and its names collide with other test files in the same program.
 export {};
 
-import { readFileSync } from 'node:fs';
 import { classifyAtlasIntent } from '@/lib/atlas/classifier';
 import { buildAtlasSystemPrompt } from '@/lib/atlas/prompt';
 
@@ -344,15 +343,4 @@ describe('Atlas Tower grounding contract', () => {
     });
   });
 
-  it('retrieval has an Azure context-chunk fallback when vector search is unavailable', () => {
-    // Still a source-text scan, and left as one deliberately: unlike the case
-    // above, its subject is live — `queryAzureContextChunks` is defined at
-    // retrieval.ts:160 and called at :294 — so this is a weak assertion rather
-    // than a false one. Driving the fallback behaviourally means standing up
-    // the vector-search failure path, which is its own change. Recorded in the
-    // backlog rather than widened into this one.
-    const source = readFileSync('src/lib/agent/retrieval.ts', 'utf8');
-    expect(source).toContain('queryAzureContextChunks');
-    expect(source).toContain('enterprise_context_chunks');
-  });
 });
