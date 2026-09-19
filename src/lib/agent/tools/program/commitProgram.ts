@@ -326,7 +326,8 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       },
       matched_pattern_id: {
         type: 'string',
-        description: 'Pattern key matched during classification (e.g., PAT-PRG-AMS-CONSOLIDATION-001).',
+        description:
+          'Pattern key returned by the governed classification result. Do not invent or copy an example key.',
       },
     },
     required: ['program_name', 'problem_statement', 'sponsor_person_id'],
