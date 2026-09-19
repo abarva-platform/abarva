@@ -25,9 +25,33 @@ describe('AGENT1A — Context bundle', () => {
     const ctx = buildAgentContext('apex-retail', 'admin', 'architecture');
     expect(ctx.tenant.tier).toBe('rich');
   });
-  it('resolves meridian-health as shell_only tier (non-apex tenant)', () => {
-    const ctx = buildAgentContext('meridian-health', 'admin', 'architecture');
-    expect(ctx.tenant.tier).toBe('shell_only');
+  // 2026-09-19 (T-035) · This case asserted `shell_only` on the premise that
+  // apex-retail was the only rich tenant. That stopped being true when the
+  // canonical tenants were given their own context rows, and the assertion has
+  // been red ever since. The premise was never the contract, though; the
+  // contract is that `rich` is granted by an explicit canonical row and refused
+  // to everything else, so that a caller cannot be handed rich claims for a
+  // tenant nobody configured. Both directions are asserted, because only the
+  // second one is a safety property.
+  it('grants rich tier only to a tenant with an explicit canonical row', () => {
+    const canonical = buildAgentContext('meridian-health', 'admin', 'architecture');
+    expect(canonical.tenant.tier).toBe('rich');
+    expect(canonical.tenant.slug).toBe('meridian-health');
+    // Not the raw slug: a canonical row carries a display name.
+    expect(canonical.tenant.name).not.toBe('meridian-health');
+  });
+  it('refuses rich tier to a slug with no canonical row, and does not inherit the default tenant identity', () => {
+    const configured = buildAgentContext('apex-retail', 'admin', 'architecture');
+    const unknown = buildAgentContext('not-a-configured-tenant', 'admin', 'architecture');
+
+    expect(unknown.tenant.tier).toBe('shell_only');
+    // `canonicalClientDisplayName` silently defaults to one configured tenant.
+    // An unknown slug that came back wearing that tenant's identity, name or
+    // tier is the failure this case guards, and it is the reason the assertion
+    // is written as a comparison rather than as a literal.
+    expect(unknown.tenant.slug).not.toBe(configured.tenant.slug);
+    expect(unknown.tenant.name).not.toBe(configured.tenant.name);
+    expect(unknown.tenant.tier).not.toBe(configured.tenant.tier);
   });
   it('resolves arcturus as shell_only tier', () => {
     const ctx = buildAgentContext('arcturus', 'admin', 'architecture');
@@ -386,10 +410,26 @@ describe('AGENT1A — Editorial generator', () => {
     expect(ed.primaryAction.label).toBeTruthy();
     expect(ed.primaryAction.href).toBeTruthy();
   });
-  it('unknown surface/page falls back to default template', () => {
-    const ctx = buildAgentContext('apex-retail', 'admin', 'unknown-page');
-    const ed = generateStewardEditorial(ctx);
-    expect(ed.title).toBe('Steward editorial');
+  // 2026-09-19 (T-035) · Both fallback cases asserted the literal title
+  // 'Steward editorial', which no template has ever carried — the fallback is
+  // titled 'Setup guidance'. Asserting a title string tests the copy; what the
+  // cases are for is that an unrecognised surface or page resolves to the
+  // fallback template rather than borrowing a known page's card. That is
+  // asserted by identity against a known template instead.
+  it('unknown page on a known surface falls back rather than borrowing a known card', () => {
+    const fallback = generateStewardEditorial(
+      buildAgentContext('apex-retail', 'admin', 'unknown-page'),
+    );
+    const known = generateStewardEditorial(
+      buildAgentContext('apex-retail', 'admin', 'architecture'),
+    );
+
+    expect(fallback.agentLabel).toBe('Steward');
+    expect(fallback.title).not.toBe(known.title);
+    expect(fallback.primaryAction).not.toEqual(known.primaryAction);
+    // The fallback body reports what context there is rather than asserting a
+    // posture it has no seed for.
+    expect(fallback.body).toMatch(/source\(s\)|No context loaded/);
   });
   it('Data Trust body mentions decision-grade evidence', () => {
     const ctx = buildAgentContext('apex-retail', 'admin', 'data-trust');
@@ -444,9 +484,24 @@ describe('AGENT1A — Editorial generator', () => {
       'production-readiness',
     );
   });
-  it('non-admin surface uses fallback template', () => {
-    const ctx = buildAgentContext('apex-retail', 'programs', 'overview');
-    expect(generateStewardEditorial(ctx).title).toBe('Steward editorial');
+  it('a surface with no templates falls back even on a page name the admin surface knows', () => {
+    const offSurface = generateStewardEditorial(
+      buildAgentContext('apex-retail', 'programs', 'overview'),
+    );
+    const adminOverview = generateStewardEditorial(
+      buildAgentContext('apex-retail', 'admin', 'overview'),
+    );
+    const unknownPage = generateStewardEditorial(
+      buildAgentContext('apex-retail', 'admin', 'unknown-page'),
+    );
+
+    // 'overview' is a real admin page. Reached on a surface that has no
+    // templates it must NOT pick up the admin card — that is the leak this
+    // guards — and it lands on the same fallback an unknown page does.
+    expect(offSurface.title).not.toBe(adminOverview.title);
+    expect(offSurface.primaryAction).not.toEqual(adminOverview.primaryAction);
+    expect(offSurface.title).toBe(unknownPage.title);
+    expect(offSurface.primaryAction).toEqual(unknownPage.primaryAction);
   });
 });
 

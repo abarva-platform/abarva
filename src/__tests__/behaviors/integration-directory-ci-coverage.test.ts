@@ -62,10 +62,28 @@ const WIRED_DIRECTORIES = [
   "programs",
   "security",
   "sentinel",
+  "setup",
   "solutions",
   "story-pack",
   "tenants",
 ] as const;
+
+/**
+ * Directories whose suites are wired by EXACT FILE PATH rather than by naming
+ * the directory, with the reason each one cannot be named as a directory.
+ *
+ * `src/__tests__/integration/agent` as a jest path argument is a regex against
+ * the full path, so it also selects `…/integration/agents/` — a different
+ * directory, five of whose eight suites are red — and the loose root file
+ * `agent-column-agent-answer.test.ts`. Naming the one suite it holds runs it
+ * without dragging either in. The cost is that a NEW suite added to `agent/`
+ * would not run; the ratchet at the bottom of this file is what catches that,
+ * because the directory drops back to partial coverage the moment a second
+ * suite lands.
+ */
+const DIRECTORIES_WIRED_BY_FILE: Record<string, readonly string[]> = {
+  agent: ["src/__tests__/integration/agent/agent1-foundation.test.ts"],
+};
 
 /**
  * The directories still reached by nothing, each with the reason it was not
@@ -82,13 +100,11 @@ const KNOWN_DARK_DIRECTORIES = new Set([
   "",
   "admin",
   "admin/data",
-  "agent",
   "agents",
   "design",
   "intelligence",
   "ops",
   "qa",
-  "setup",
 ]);
 
 function runCensus(): Census {
@@ -254,6 +270,65 @@ describe("integration directories a workflow actually reaches", () => {
     }
 
     expect(selectedButInvisible.sort()).toEqual([]);
+  });
+
+  it("reaches a file-wired directory in full, and names the file so the gate sees it", () => {
+    const workflow = readFileSync(
+      path.join(repoRoot, ".github/workflows/integration-suites.yml"),
+      "utf8",
+    );
+    const runLines = workflow
+      .split("\n")
+      .filter((line) => /\bjest\b/.test(line))
+      .join("\n");
+
+    for (const [name, files] of Object.entries(DIRECTORIES_WIRED_BY_FILE)) {
+      const directory = `${INTEGRATION_ROOT}/${name}`;
+      // Covered in full: naming every suite a directory holds is as good as
+      // naming the directory, and it is what lets the ratchet below drop the
+      // directory out of the dark set. If a second suite lands and is not named
+      // here, the directory falls back to partial coverage and this fails.
+      expect(zeroCoverage.has(directory) || partialCoverage.has(directory)).toBe(
+        false,
+      );
+
+      const onDisk = readdirSync(path.join(repoRoot, directory))
+        .filter((entry) => /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(entry))
+        .map((entry) => `${directory}/${entry}`)
+        .sort();
+      expect(onDisk).toEqual([...files].sort());
+
+      for (const file of files) {
+        expect(runLines).toMatch(new RegExp(`${file}(?=\\s|$)`));
+      }
+      // The directory itself must NOT be named, or the collision it was wired
+      // by file to avoid comes straight back.
+      expect(runLines).not.toMatch(new RegExp(`${directory}(?=\\s|$)`));
+    }
+  });
+
+  it("refuses a wired directory name that is a prefix of another integration directory", () => {
+    // The collision case above enumerates loose root FILES a directory pattern
+    // also selects. A colliding DIRECTORY is the dangerous half and nothing
+    // covered it, because no wired name currently prefixes one: a stray file
+    // runs once and is enumerated, while a stray directory silently adopts
+    // every suite written in it afterwards. `agent`/`agents` is the live
+    // example — five of `agents`' eight suites are red — and it is why `agent`
+    // is wired by file path instead.
+    const directories = readdirSync(path.join(repoRoot, INTEGRATION_ROOT), {
+      withFileTypes: true,
+    })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+
+    const colliding: string[] = [];
+    for (const name of WIRED_DIRECTORIES) {
+      for (const directory of directories) {
+        if (directory === name || !directory.startsWith(name)) continue;
+        colliding.push(`${name} -> ${directory}`);
+      }
+    }
+    expect(colliding.sort()).toEqual([]);
   });
 
   it("admits no integration directory that is newly reached by nothing", () => {
