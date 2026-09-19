@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 23,
-    "testCount": 437,
+    "suiteCount": 24,
+    "testCount": 477,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -42,15 +42,11 @@
       "src/__tests__/integration/programs-enhancement-seed-planner.test.ts",
       "src/__tests__/integration/programs-enhancement-spec.test.ts",
       "src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts",
-      "src/__tests__/integration/programs/workshop-readiness.test.ts"
+      "src/__tests__/integration/programs/workshop-readiness.test.ts",
+      "src/__tests__/integration/programs/program-resume-state.test.ts"
     ]
   },
   "excludedFailures": [
-    {
-      "suite": "src/__tests__/integration/programs/program-resume-state.test.ts",
-      "classification": "stale-fixture-expectation",
-      "evidence": "Assumes every historical fixture tenant has a resume state; empty route stubs are now valid."
-    },
     {
       "suite": "src/__tests__/integration/programs/nexus-program-workbench.test.ts",
       "classification": "stale-product-language",
