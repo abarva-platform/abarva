@@ -55,7 +55,14 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
     'lookup_person calls (you can issue them in parallel). Never combine multiple names with ' +
     'commas — "Sarah Chen, CIO" as a single query will not match either; split into ' +
     '{query:"Sarah Chen"} and {query:"CIO"} as separate calls.',
-  surfaces: ['/programs/new', '/demo/programs/new', '/home', '/programs'],
+  // `/programs/:id` is here because `assign_sponsor` — which is only
+  // registered on that surface — instructs the model to resolve a
+  // person through this tool, and requires a persons-table UUID it
+  // has no other way to obtain. Without it that instruction named a
+  // tool the model could not see, and `executeTool` would have
+  // refused the call. Read-only and tenant-scoped by
+  // `requireTenancy`, same as the tool that needs it.
+  surfaces: ['/programs/new', '/demo/programs/new', '/home', '/programs', '/programs/:id'],
   input_schema: {
     type: 'object',
     properties: {

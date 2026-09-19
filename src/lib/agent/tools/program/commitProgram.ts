@@ -326,7 +326,15 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       },
       matched_pattern_id: {
         type: 'string',
-        description: 'Pattern key matched during classification (e.g., PAT-PRG-AMS-CONSOLIDATION-001).',
+        // No worked id here on purpose. This description is handed to
+        // the model verbatim, so an id written here is an instruction to
+        // use it, and the value lands in `pattern_match_logs.pattern_key`
+        // unvalidated. The corpus has been re-keyed once already; the
+        // example that used to sit here no longer resolved.
+        description:
+          'Pattern key produced by classification, when classification produced one. ' +
+          'Omit it when it did not — it is written to the match log as evidence, so ' +
+          'an invented or remembered key records a match that never happened.',
       },
     },
     required: ['program_name', 'problem_statement', 'sponsor_person_id'],
