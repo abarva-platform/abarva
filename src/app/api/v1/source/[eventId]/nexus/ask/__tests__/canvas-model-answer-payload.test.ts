@@ -146,6 +146,7 @@ function deterministicStubResponse() {
 }
 
 const callSourceCanvasChatModelMock = jest.fn();
+const buildVendorCoverageGovernedAnswerMock = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => ({
@@ -255,6 +256,11 @@ jest.mock("@/lib/source/source-canvas-chat", () => ({
     callSourceCanvasChatModelMock(...args),
 }));
 
+jest.mock("@/lib/source/ava/vendor-coverage-governed-answer", () => ({
+  buildVendorCoverageGovernedAnswer: (...args: unknown[]) =>
+    buildVendorCoverageGovernedAnswerMock(...args),
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { POST } = require("@/app/api/v1/source/[eventId]/nexus/ask/route") as {
   POST: (
@@ -263,7 +269,24 @@ const { POST } = require("@/app/api/v1/source/[eventId]/nexus/ask/route") as {
   ) => Promise<Response>;
 };
 
-async function askCanvas(): Promise<{
+function canvasRequest(args: {
+  prompt: string;
+  accept?: string;
+}): NextRequest {
+  return {
+    headers: new Headers({
+      "content-type": "application/json",
+      ...(args.accept ? { accept: args.accept } : {}),
+    }),
+    text: async () =>
+      JSON.stringify({
+        prompt: args.prompt,
+        mode: "event",
+      }),
+  } as unknown as NextRequest;
+}
+
+async function askCanvas(prompt = "what is our exposure on this renewal?"): Promise<{
   agentResponseParts: AgentResponsePart[];
   sourceAnswer: {
     answerText: string;
@@ -273,20 +296,27 @@ async function askCanvas(): Promise<{
   summary: string;
   warnings: string[];
 }> {
-  const request = {
-    headers: new Headers({ "content-type": "application/json" }),
-    text: async () =>
-      JSON.stringify({
-        prompt: "what is our exposure on this renewal?",
-        mode: "event",
-      }),
-  } as unknown as NextRequest;
-
-  const response = await POST(request, {
+  const response = await POST(canvasRequest({ prompt }), {
     params: Promise.resolve({ eventId: "evt-test" }),
   });
   expect(response.status).toBe(200);
   return (await response.json()) as Awaited<ReturnType<typeof askCanvas>>;
+}
+
+async function askCanvasNdjson(prompt: string): Promise<Array<Record<string, unknown>>> {
+  const response = await POST(
+    canvasRequest({ prompt, accept: "application/x-ndjson" }),
+    { params: Promise.resolve({ eventId: "evt-test" }) },
+  );
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toContain(
+    "application/x-ndjson",
+  );
+  return (await response.text())
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
 }
 
 function citationsPart(parts: AgentResponsePart[]) {
@@ -313,6 +343,7 @@ function supportMetric(parts: AgentResponsePart[]) {
 
 beforeEach(() => {
   callSourceCanvasChatModelMock.mockReset();
+  buildVendorCoverageGovernedAnswerMock.mockReset();
 });
 
 describe("Source canvas chat · the rendered payload describes the answer that is shown", () => {
@@ -436,5 +467,79 @@ describe("Source canvas chat · the rendered payload describes the answer that i
     expect(body.warnings.join(" ")).toContain(
       "fell back to the deterministic briefing",
     );
+  });
+
+  it("repairs a model claim that the existing Source event was updated", async () => {
+    callSourceCanvasChatModelMock.mockResolvedValue({
+      text: "I saved this recommendation to the Source event record.",
+      evidenceCitations: [MODEL_CITATION_ONE],
+      warnings: [],
+    });
+
+    const body = await askCanvas();
+    const renderedAnswer = advisorAnswerPart(body.agentResponseParts)?.text;
+
+    expect(renderedAnswer).toContain(
+      "I can use that here, but it is not saved to the Source record yet.",
+    );
+    expect(renderedAnswer).not.toMatch(/I saved this recommendation/i);
+    expect(body.summary).toBe(renderedAnswer);
+  });
+});
+
+describe("Source canvas chat · governed vendor-coverage routing", () => {
+  it("routes a response-coverage question through the governed answer builder", async () => {
+    callSourceCanvasChatModelMock.mockResolvedValue({
+      text: "The event response is available for review.",
+      evidenceCitations: [],
+      warnings: [],
+    });
+    buildVendorCoverageGovernedAnswerMock.mockResolvedValue({
+      directAnswer: "Two supplier responses leave one evidence gap open.",
+      answerMode: "vendor_response_coverage",
+      confidence: "medium",
+      citations: [],
+      tables: [],
+      warnings: [],
+    });
+
+    const lines = await askCanvasNdjson(
+      "Which vendors dodged the volume-band response?",
+    );
+
+    expect(buildVendorCoverageGovernedAnswerMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventId: "evt-test",
+        clientKey: "example-tenant",
+        tenantId: "client-1",
+        question: "Which vendors dodged the volume-band response?",
+      }),
+    );
+    expect(lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "summary",
+          summary: "Two supplier responses leave one evidence gap open.",
+        }),
+        expect.objectContaining({
+          type: "agent-answer",
+          answer: expect.objectContaining({
+            directAnswer: "Two supplier responses leave one evidence gap open.",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("does not invoke vendor coverage for an unrelated NDJSON question", async () => {
+    callSourceCanvasChatModelMock.mockResolvedValue({
+      text: "No vendor-coverage question was asked.",
+      evidenceCitations: [],
+      warnings: [],
+    });
+
+    await askCanvasNdjson("Summarize the current event context.");
+
+    expect(buildVendorCoverageGovernedAnswerMock).not.toHaveBeenCalled();
   });
 });
