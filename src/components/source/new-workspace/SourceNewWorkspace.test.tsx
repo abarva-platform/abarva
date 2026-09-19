@@ -586,6 +586,9 @@ describe("SourceNewWorkspace", () => {
       approvedAt: "2026-03-02T00:00:00Z",
       blobSha256: "sha-nda-ready",
       coveredSupplierLegalEntity: "Example Supplier Legal Entity LLC",
+      coveredScopeId: "event-scope-v1",
+      effectiveFrom: "2026-03-01",
+      expiresOn: "2027-03-01",
     };
     render(
       <SourceNewWorkspace
@@ -613,6 +616,13 @@ describe("SourceNewWorkspace", () => {
         "Supplier legal entity recorded: Example Supplier Legal Entity LLC",
       ),
     ).toBeTruthy();
+    expect(within(readiness).getByText("event-scope-v1")).toBeTruthy();
+    expect(
+      within(readiness).getByText("NDA scope recorded: event-scope-v1"),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getAllByText("2026-03-01 to 2027-03-01").length,
+    ).toBeGreaterThan(0);
     expect(
       within(readiness).getByText(
         "No Stage 05 NDA blocker is visible in this read model.",
@@ -659,7 +669,9 @@ describe("SourceNewWorkspace", () => {
     const readiness = screen.getByRole("region", {
       name: "Stage 05 NDA readiness",
     });
-    expect(within(readiness).getByText("Not recorded")).toBeTruthy();
+    expect(
+      within(readiness).getAllByText("Not recorded").length,
+    ).toBeGreaterThan(0);
     expect(
       within(readiness).getByText("Blocked before supplier work"),
     ).toBeTruthy();
@@ -672,6 +684,52 @@ describe("SourceNewWorkspace", () => {
     expect(document.body.textContent ?? "").not.toContain(
       "Example Supplier Legal Entity LLC",
     );
+  });
+
+  it("blocks Stage 05 NDA readiness when scope and validity evidence is missing", () => {
+    const nda: SourceNewFileRow = {
+      ...responseFile,
+      id: "nda-missing-scope-validity-1",
+      phase: "suppliers",
+      artifactType: "nda_executed",
+      title: "Executed mutual NDA",
+      fileName: "executed-nda.pdf",
+      status: "approved",
+      lifecycleState: "current",
+      approvalState: "approved",
+      approvedAt: "2026-03-02T00:00:00Z",
+      blobSha256: "sha-nda-missing-scope-validity",
+      coveredSupplierLegalEntity: "Example Supplier Legal Entity LLC",
+    };
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[nda]}
+      />,
+    );
+
+    const buttons = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    fireEvent.click(buttons[2]);
+
+    const readiness = screen.getByRole("region", {
+      name: "Stage 05 NDA readiness",
+    });
+    expect(
+      within(readiness).getByText("Blocked before supplier work"),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getByText(
+        "No governed NDA scope is tied to the artifact.",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getByText(
+        "No NDA effective and expiration dates are recorded.",
+      ),
+    ).toBeTruthy();
+    expect(within(readiness).getByText("Record NDA scope")).toBeTruthy();
   });
 
   it("does not lock phases behind an event that has advanced past them", () => {

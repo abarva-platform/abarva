@@ -58,6 +58,9 @@ export type SourceNewFileRow = Pick<
   // is a separate, finer-grained workflow vocabulary.
   phase: SourceNewFilePhase;
   coveredSupplierLegalEntity?: string | null;
+  coveredScopeId?: string | null;
+  effectiveFrom?: string | null;
+  expiresOn?: string | null;
 };
 
 export interface SourceNewFilesProps {
