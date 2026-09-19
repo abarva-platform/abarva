@@ -49,6 +49,27 @@ name: Integration suites
 # Wiring `demo` also selects three loose `demo-*.test.ts` files at the
 # integration root, for the regex reason in the paragraph above. They are
 # enumerated in the collision case and all three pass.
+
+# 2026-09-19 · `setup` and `agent` wired, and they are wired DIFFERENTLY on
+# purpose. `setup` is named as a directory like the rest. `agent` is named as a
+# single FILE path, because `src/__tests__/integration/agent` as a jest regex
+# also selects `src/__tests__/integration/agents/` — a different directory, five
+# of whose eight suites are red — and the loose root file
+# `agent-column-agent-answer.test.ts`. The header paragraph above described that
+# collision as the shape to watch for; this is it, arriving for real.
+#
+# A colliding FILE is loud: it runs, it is enumerated, and somebody measured it.
+# A colliding DIRECTORY is silent, because it drags in every suite written there
+# afterwards as well. So the file form is used until `agents` is green, and
+# `integration-directory-ci-coverage.test.ts` now refuses any wired directory
+# name that prefixes another integration directory.
+#
+# Between them, `setup` (2 suites) and `agent` (1 suite) held 5 red test cases
+# and 122 passing ones out of CI. All five were stale contracts rather than
+# product defects: three asserted `src/proxy.ts` by reading it as TEXT and
+# matching redirect targets with their surrounding quote characters, and two
+# asserted literal copy — a tenant tier that stopped being the only rich one,
+# and an editorial title no template has ever carried.
 #
 # THE RUNNER AND THE GATE DO NOT AGREE, which is why the eleven loose root
 # suites below are ALSO named one by one even though the directory patterns
@@ -103,7 +124,7 @@ jobs:
       # what makes this cover suites nobody has written yet: a new suite in one
       # of these directories runs the day it lands.
       - name: Run the integration directories that pass on main
-        run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants src/__tests__/integration/demo-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/integration/demo-p0-graceful-degradation.test.ts src/__tests__/integration/programs-api-contracts.test.ts src/__tests__/integration/programs-demo-beats.test.ts src/__tests__/integration/programs-enhancement-seed-planner.test.ts src/__tests__/integration/programs-enhancement-seed-writer.test.ts src/__tests__/integration/programs-enhancement-spec.test.ts src/__tests__/integration/programs-nexus-ask-route.test.ts src/__tests__/integration/programs-nexus-free-text.test.ts src/__tests__/integration/programs-quality-gates.test.ts --no-coverage --ci
+        run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/setup src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants src/__tests__/integration/agent/agent1-foundation.test.ts src/__tests__/integration/demo-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/integration/demo-p0-graceful-degradation.test.ts src/__tests__/integration/programs-api-contracts.test.ts src/__tests__/integration/programs-demo-beats.test.ts src/__tests__/integration/programs-enhancement-seed-planner.test.ts src/__tests__/integration/programs-enhancement-seed-writer.test.ts src/__tests__/integration/programs-enhancement-spec.test.ts src/__tests__/integration/programs-nexus-ask-route.test.ts src/__tests__/integration/programs-nexus-free-text.test.ts src/__tests__/integration/programs-quality-gates.test.ts --no-coverage --ci
 
       - name: Refuse a new integration directory that no workflow reaches
         run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci
