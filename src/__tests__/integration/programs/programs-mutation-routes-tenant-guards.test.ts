@@ -26,6 +26,8 @@ const publishDeliverable = jest.fn();
 const signOffDeliverable = jest.fn();
 const blockWorkItem = jest.fn();
 const markWorkItemNexusDrafted = jest.fn();
+const resolvePhaseGateActorPersonId = jest.fn();
+const saveGateDecisionArtifact = jest.fn();
 
 jest.mock('@/app/api/v1/programs/_auth', () => ({
   TenancyError,
@@ -73,6 +75,14 @@ jest.mock('@/lib/programs/execute', () => ({
   markWorkItemNexusDrafted,
 }));
 
+jest.mock('@/lib/programs/phase-gate-actor', () => ({
+  resolvePhaseGateActorPersonId,
+}));
+
+jest.mock('@/lib/programs/deliverables/gate-override-artifact', () => ({
+  saveGateDecisionArtifact,
+}));
+
 const CTX = { clientId: 'client_meridian', userId: 'person_1', role: 'client_admin' };
 const OWN_PROGRAM = 'eng_own';
 const FOREIGN_PROGRAM = 'eng_foreign';
@@ -112,10 +122,37 @@ function makeRiskUpdateSupabase(result: { data: { id: string } | null; error: un
   };
 }
 
+function makeMutationSupabase() {
+  return {
+    from: (table: string) => {
+      if (table !== 'deliverables_v2') throw new Error(`unexpected table ${table}`);
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: {
+                  deliverable_type_key: 'business_case',
+                  title: 'Business case',
+                  current_version: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      };
+    },
+  };
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   requireTenancy.mockResolvedValue(CTX);
-  getProgramsRouteSupabase.mockResolvedValue({ mode: 'service_role', supabase: { mocked: true } });
+  getProgramsRouteSupabase.mockResolvedValue({
+    mode: 'service_role',
+    supabase: makeMutationSupabase(),
+  });
   getProgramById.mockImplementation((_ctx, programId) =>
     programId === OWN_PROGRAM ? Promise.resolve({ id: OWN_PROGRAM, currentPhase: 0 }) : Promise.resolve(null),
   );
@@ -143,6 +180,8 @@ beforeEach(() => {
   signOffDeliverable.mockResolvedValue(true);
   blockWorkItem.mockResolvedValue(true);
   markWorkItemNexusDrafted.mockResolvedValue(true);
+  resolvePhaseGateActorPersonId.mockResolvedValue({ ok: true, personId: 'person_1' });
+  saveGateDecisionArtifact.mockResolvedValue(null);
 });
 
 type RouteCase = {
@@ -162,7 +201,11 @@ const programScopedCases: RouteCase[] = [
     modulePath: '@/app/api/v1/programs/[programId]/advance/route',
     method: 'POST',
     params: { programId: OWN_PROGRAM },
-    body: { toPhase: 1, snapshot: { source: 'test' } },
+    body: {
+      toPhase: 1,
+      snapshot: { source: 'test' },
+      humanRationale: 'Reviewed the governing evidence for this phase transition.',
+    },
     successStatus: 200,
     assertSuccessMock: () => expect(advancePhase).toHaveBeenCalled(),
   },
