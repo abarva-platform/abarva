@@ -3,7 +3,28 @@ import {
   type PostgresCompatClient,
 } from "@/lib/data-plane/postgresCompat";
 
-const PROMOTED_PATTERN_STATES = new Set(["published", "validated", "active"]);
+/**
+ * The states `engagement_topics.promotion_state` may hold for a pattern
+ * this product will cite as a match.
+ *
+ * The column is constrained by supabase/migrations/041_programs_foundation.sql
+ * to ('draft','pilot','mature','deprecated'). `draft` is Maestro authoring
+ * and `deprecated` is retired, which leaves `pilot` and `mature` — the same
+ * pair /api/v1/programs/patterns already shows a client, so it is also the
+ * only pair a user could have chosen from.
+ *
+ * This list first read ("published", "validated", "active"), which the
+ * column cannot hold. Since every writer treats a refusal as fatal, that
+ * gate refused every key that exists. It was invisible because each test
+ * injects its own `lookup` and can hand the resolver a row the database
+ * could never produce — see pattern-authority-reachability.test.ts, which
+ * checks this list against the constraint itself.
+ */
+export const PROMOTED_PATTERN_STATES = ["pilot", "mature"] as const;
+
+const PROMOTED_PATTERN_STATE_SET: ReadonlySet<string> = new Set(
+  PROMOTED_PATTERN_STATES,
+);
 
 export interface ProgramPatternCatalogRow {
   topic_key: string;
@@ -72,7 +93,7 @@ export async function resolvePromotedProgramPatternKey(
     !row ||
     row.topic_key !== patternKey ||
     !row.promotion_state ||
-    !PROMOTED_PATTERN_STATES.has(row.promotion_state)
+    !PROMOTED_PATTERN_STATE_SET.has(row.promotion_state)
   ) {
     throw new ProgramPatternAuthorityError(
       "program_pattern_not_promoted",

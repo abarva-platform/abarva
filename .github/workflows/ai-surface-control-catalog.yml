@@ -186,3 +186,23 @@ jobs:
       # reproduce this. See backlog items 26 / 92 / 120.
       - name: Exercise Sentinel intelligence-tool suites
         run: npx jest src/lib/agent/tools/intelligence/__tests__ --runInBand
+
+      # Not a catalog control. The Programs pattern authority decides whether
+      # a pattern key may be cited as a match, and every writer treats its
+      # refusal as fatal — `commit_program` returns
+      # `program_pattern_not_promoted` instead of submitting the brief, and
+      # `originateProgram` throws before the engagement insert. So its
+      # promoted-state list is load-bearing: when it named three states
+      # `engagement_topics.promotion_state` cannot hold, the gate refused every
+      # key that exists, and every unit test stayed green because each one
+      # injects its own lookup and can return a row the database could never
+      # produce. The reachability suite checks the list against the CHECK
+      # constraint in the migration that defines the column. These suites ran
+      # in no workflow. See backlog item 126.
+      - name: Exercise the Programs pattern authority
+        run: >
+          npx jest --runTestsByPath
+          src/lib/programs/__tests__/pattern-authority-reachability.test.ts
+          src/lib/programs/__tests__/pattern-authority.test.ts
+          src/lib/programs/__tests__/program-pattern-writer-guards.test.ts
+          --runInBand

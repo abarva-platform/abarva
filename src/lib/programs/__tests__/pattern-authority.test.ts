@@ -1,10 +1,17 @@
 import {
+  PROMOTED_PATTERN_STATES,
   ProgramPatternAuthorityError,
   resolvePromotedProgramPatternKey,
 } from "../pattern-authority";
 
 describe("Programs pattern authority", () => {
-  it.each(["published", "validated", "active"] as const)(
+  // The promoted states are taken from the module, not restated here.
+  // Restating them is how this suite stayed green while the list named
+  // three states `engagement_topics.promotion_state` cannot hold: the
+  // injected lookup will return any row a test asks for, including one
+  // the database could never produce. What the column permits is checked
+  // in pattern-authority-reachability.test.ts.
+  it.each([...PROMOTED_PATTERN_STATES])(
     "accepts a key promoted as %s",
     async (promotionState) => {
       await expect(
