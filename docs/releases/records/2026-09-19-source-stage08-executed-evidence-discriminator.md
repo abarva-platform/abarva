@@ -64,7 +64,9 @@ Revert the PR or deploy the previous known-good main image through the repo-owne
 
 ## Audit Evidence
 
-PR URL, CI results, merge commit, repo-owned ACA deploy workflow run, focused Jest output, mutation-proof output, and post-deploy runtime digest invariant output.
+PR URL: https://github.com/abarva-platform/abarva/pull/7945
+
+CI results, merge commit, repo-owned ACA deploy workflow run, focused Jest output, mutation-proof output, and post-deploy runtime digest invariant output.
 
 ## Known Gaps
 
