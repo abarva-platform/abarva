@@ -11,18 +11,18 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2292,
-    "coveredTestFiles": 625,
-    "pullRequestCoveredTestFiles": 622,
-    "uncoveredTestFiles": 1667,
+    "testFiles": 2293,
+    "coveredTestFiles": 732,
+    "pullRequestCoveredTestFiles": 729,
+    "uncoveredTestFiles": 1561,
     "directoriesWithTests": 476,
-    "directoriesFullyCovered": 73,
+    "directoriesFullyCovered": 82,
     "directoriesPartiallyCovered": 24,
-    "directoriesUncovered": 379,
+    "directoriesUncovered": 370,
     "indeterminateInvocations": 0,
-    "criticalGovernedRiskDirectories": 46,
-    "highGovernedRiskDirectories": 109,
-    "unclassifiedRiskDirectories": 224
+    "criticalGovernedRiskDirectories": 45,
+    "highGovernedRiskDirectories": 107,
+    "unclassifiedRiskDirectories": 218
   },
   "indeterminateInvocations": [],
   "partiallyCoveredDirectories": [
@@ -30,193 +30,145 @@
       "directory": "src/lib/programs/__tests__",
       "testFiles": 85,
       "coveredTestFiles": 6,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/lib/source/__tests__",
       "testFiles": 69,
       "coveredTestFiles": 9,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/__tests__/integration/admin",
       "testFiles": 46,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/__tests__/integration",
       "testFiles": 45,
-      "coveredTestFiles": 11,
-      "via": [
-        "command"
-      ]
+      "coveredTestFiles": 35,
+      "via": ["command"]
     },
     {
       "directory": "src/__tests__/integration/qa",
       "testFiles": 37,
       "coveredTestFiles": 1,
-      "via": [
-        "script-file"
-      ]
+      "via": ["script-file"]
     },
     {
       "directory": "src/app/(maestro)/source/preview/workspace/__tests__",
       "testFiles": 33,
       "coveredTestFiles": 2,
-      "via": [
-        "script-file"
-      ]
+      "via": ["script-file"]
     },
     {
       "directory": "src/lib/agent/__tests__",
       "testFiles": 33,
       "coveredTestFiles": 2,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/lib/source/exports/__tests__",
       "testFiles": 24,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/components/source/__tests__",
       "testFiles": 21,
       "coveredTestFiles": 2,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/components/strategic-moves/__tests__",
       "testFiles": 14,
       "coveredTestFiles": 13,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/app/api/chat/agent/__tests__",
       "testFiles": 9,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/components/agent/__tests__",
       "testFiles": 8,
       "coveredTestFiles": 4,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/lib/governance/__tests__",
       "testFiles": 8,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/components/programs/__tests__",
       "testFiles": 7,
       "coveredTestFiles": 2,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/lib/ai-liability/__tests__",
       "testFiles": 7,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/components/shell/__tests__",
       "testFiles": 5,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/lib/eval/answer-quality/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/components/source/new-workspace",
       "testFiles": 3,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/lib/observability/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/app/api/programs/phase-gate/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/app/api/v1/programs/[programId]/advance/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/app/api/v1/source/[eventId]/nexus/ask/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/components/deliverables/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     },
     {
       "directory": "src/lib/agent/quality/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 1,
-      "via": [
-        "command"
-      ]
+      "via": ["command"]
     }
   ],
   "governedRiskRanking": [
@@ -226,23 +178,8 @@
       "governedRisk": {
         "score": 1000,
         "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
+        "signals": ["declared_ai_surface_control"],
         "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration/intelligence",
-      "testFiles": 33,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 2
       }
     },
     {
@@ -251,11 +188,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 3
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 2
       }
     },
     {
@@ -264,11 +198,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 4
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 3
       }
     },
     {
@@ -277,11 +208,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 5
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 4
       }
     },
     {
@@ -290,11 +218,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 6
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 5
       }
     },
     {
@@ -303,11 +228,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 7
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 6
       }
     },
     {
@@ -316,11 +238,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 8
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 7
       }
     },
     {
@@ -329,11 +248,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 9
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 8
       }
     },
     {
@@ -342,11 +258,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 10
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 9
       }
     },
     {
@@ -355,11 +268,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 11
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 10
       }
     },
     {
@@ -368,11 +278,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 12
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 11
       }
     },
     {
@@ -381,11 +288,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 13
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 12
       }
     },
     {
@@ -394,11 +298,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 14
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 13
       }
     },
     {
@@ -407,11 +308,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 15
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 14
       }
     },
     {
@@ -420,11 +318,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 16
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 15
       }
     },
     {
@@ -433,11 +328,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 17
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 16
       }
     },
     {
@@ -446,11 +338,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 18
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 17
       }
     },
     {
@@ -459,11 +348,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 19
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 18
       }
     },
     {
@@ -472,11 +358,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 20
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 19
       }
     },
     {
@@ -485,11 +368,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 21
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 20
       }
     },
     {
@@ -498,11 +378,8 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 22
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
+        "rank": 21
       }
     },
     {
@@ -511,10 +388,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 23
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 22
       }
     },
     {
@@ -523,10 +398,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 24
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 23
       }
     },
     {
@@ -535,10 +408,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 25
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 24
       }
     },
     {
@@ -547,10 +418,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 26
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 25
       }
     },
     {
@@ -559,10 +428,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 27
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 26
       }
     },
     {
@@ -571,10 +438,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 28
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 27
       }
     },
     {
@@ -583,10 +448,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 29
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 28
       }
     },
     {
@@ -595,10 +458,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 30
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 29
       }
     },
     {
@@ -607,10 +468,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 31
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 30
       }
     },
     {
@@ -619,10 +478,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 32
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 31
       }
     },
     {
@@ -631,10 +488,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 33
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 32
       }
     },
     {
@@ -643,10 +498,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 34
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 33
       }
     },
     {
@@ -655,10 +508,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 35
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 34
       }
     },
     {
@@ -667,10 +518,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 36
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 35
       }
     },
     {
@@ -679,10 +528,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 37
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 36
       }
     },
     {
@@ -691,10 +538,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 38
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 37
       }
     },
     {
@@ -703,10 +548,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 39
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 38
       }
     },
     {
@@ -715,10 +558,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 40
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 39
       }
     },
     {
@@ -727,10 +568,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 41
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 40
       }
     },
     {
@@ -739,10 +578,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 42
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 41
       }
     },
     {
@@ -751,10 +588,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 43
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 42
       }
     },
     {
@@ -763,10 +598,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 44
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 43
       }
     },
     {
@@ -775,10 +608,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 45
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 44
       }
     },
     {
@@ -787,10 +618,8 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
-        "rank": 46
+        "signals": ["approval_or_lifecycle_write"],
+        "rank": 45
       }
     },
     {
@@ -799,10 +628,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 47
+        "signals": ["tenant_scoped_read"],
+        "rank": 46
       }
     },
     {
@@ -811,10 +638,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 48
+        "signals": ["tenant_scoped_read"],
+        "rank": 47
       }
     },
     {
@@ -823,10 +648,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 49
+        "signals": ["tenant_scoped_read"],
+        "rank": 48
       }
     },
     {
@@ -835,10 +658,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 50
+        "signals": ["tenant_scoped_read"],
+        "rank": 49
       }
     },
     {
@@ -847,22 +668,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 51
-      }
-    },
-    {
-      "directory": "src/__tests__/unit",
-      "testFiles": 11,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 52
+        "signals": ["tenant_scoped_read"],
+        "rank": 50
       }
     },
     {
@@ -871,10 +678,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 53
+        "signals": ["tenant_scoped_read"],
+        "rank": 51
       }
     },
     {
@@ -883,10 +688,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 54
+        "signals": ["tenant_scoped_read"],
+        "rank": 52
       }
     },
     {
@@ -895,10 +698,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 55
+        "signals": ["tenant_scoped_read"],
+        "rank": 53
       }
     },
     {
@@ -907,10 +708,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 56
+        "signals": ["tenant_scoped_read"],
+        "rank": 54
       }
     },
     {
@@ -919,10 +718,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 57
+        "signals": ["tenant_scoped_read"],
+        "rank": 55
       }
     },
     {
@@ -931,10 +728,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 58
+        "signals": ["tenant_scoped_read"],
+        "rank": 56
       }
     },
     {
@@ -943,10 +738,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 59
+        "signals": ["tenant_scoped_read"],
+        "rank": 57
       }
     },
     {
@@ -955,10 +748,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 60
+        "signals": ["tenant_scoped_read"],
+        "rank": 58
       }
     },
     {
@@ -967,10 +758,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 61
+        "signals": ["tenant_scoped_read"],
+        "rank": 59
       }
     },
     {
@@ -979,10 +768,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 62
+        "signals": ["tenant_scoped_read"],
+        "rank": 60
       }
     },
     {
@@ -991,10 +778,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 63
+        "signals": ["tenant_scoped_read"],
+        "rank": 61
       }
     },
     {
@@ -1003,10 +788,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 64
+        "signals": ["tenant_scoped_read"],
+        "rank": 62
       }
     },
     {
@@ -1015,10 +798,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 65
+        "signals": ["tenant_scoped_read"],
+        "rank": 63
       }
     },
     {
@@ -1027,10 +808,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 66
+        "signals": ["tenant_scoped_read"],
+        "rank": 64
       }
     },
     {
@@ -1039,10 +818,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 67
+        "signals": ["tenant_scoped_read"],
+        "rank": 65
       }
     },
     {
@@ -1051,10 +828,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 68
+        "signals": ["tenant_scoped_read"],
+        "rank": 66
       }
     },
     {
@@ -1063,10 +838,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 69
+        "signals": ["tenant_scoped_read"],
+        "rank": 67
       }
     },
     {
@@ -1075,10 +848,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 70
+        "signals": ["tenant_scoped_read"],
+        "rank": 68
       }
     },
     {
@@ -1087,10 +858,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 71
+        "signals": ["tenant_scoped_read"],
+        "rank": 69
       }
     },
     {
@@ -1099,10 +868,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 72
+        "signals": ["tenant_scoped_read"],
+        "rank": 70
       }
     },
     {
@@ -1111,10 +878,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 73
+        "signals": ["tenant_scoped_read"],
+        "rank": 71
       }
     },
     {
@@ -1123,10 +888,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 74
+        "signals": ["tenant_scoped_read"],
+        "rank": 72
       }
     },
     {
@@ -1135,10 +898,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 75
+        "signals": ["tenant_scoped_read"],
+        "rank": 73
       }
     },
     {
@@ -1147,10 +908,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 76
+        "signals": ["tenant_scoped_read"],
+        "rank": 74
       }
     },
     {
@@ -1159,10 +918,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 77
+        "signals": ["tenant_scoped_read"],
+        "rank": 75
       }
     },
     {
@@ -1171,10 +928,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 78
+        "signals": ["tenant_scoped_read"],
+        "rank": 76
       }
     },
     {
@@ -1183,10 +938,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 79
+        "signals": ["tenant_scoped_read"],
+        "rank": 77
       }
     },
     {
@@ -1195,10 +948,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 80
+        "signals": ["tenant_scoped_read"],
+        "rank": 78
       }
     },
     {
@@ -1207,10 +958,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 81
+        "signals": ["tenant_scoped_read"],
+        "rank": 79
       }
     },
     {
@@ -1219,10 +968,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 82
+        "signals": ["tenant_scoped_read"],
+        "rank": 80
       }
     },
     {
@@ -1231,22 +978,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 83
-      }
-    },
-    {
-      "directory": "src/__tests__/integration/agent",
-      "testFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 84
+        "signals": ["tenant_scoped_read"],
+        "rank": 81
       }
     },
     {
@@ -1255,10 +988,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 85
+        "signals": ["tenant_scoped_read"],
+        "rank": 82
       }
     },
     {
@@ -1267,10 +998,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 86
+        "signals": ["tenant_scoped_read"],
+        "rank": 83
       }
     },
     {
@@ -1279,10 +1008,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 87
+        "signals": ["tenant_scoped_read"],
+        "rank": 84
       }
     },
     {
@@ -1291,10 +1018,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 88
+        "signals": ["tenant_scoped_read"],
+        "rank": 85
       }
     },
     {
@@ -1303,10 +1028,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 89
+        "signals": ["tenant_scoped_read"],
+        "rank": 86
       }
     },
     {
@@ -1315,10 +1038,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 90
+        "signals": ["tenant_scoped_read"],
+        "rank": 87
       }
     },
     {
@@ -1327,10 +1048,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 91
+        "signals": ["tenant_scoped_read"],
+        "rank": 88
       }
     },
     {
@@ -1339,10 +1058,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 92
+        "signals": ["tenant_scoped_read"],
+        "rank": 89
       }
     },
     {
@@ -1351,10 +1068,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 93
+        "signals": ["tenant_scoped_read"],
+        "rank": 90
       }
     },
     {
@@ -1363,10 +1078,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 94
+        "signals": ["tenant_scoped_read"],
+        "rank": 91
       }
     },
     {
@@ -1375,10 +1088,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 95
+        "signals": ["tenant_scoped_read"],
+        "rank": 92
       }
     },
     {
@@ -1387,10 +1098,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 96
+        "signals": ["tenant_scoped_read"],
+        "rank": 93
       }
     },
     {
@@ -1399,10 +1108,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 97
+        "signals": ["tenant_scoped_read"],
+        "rank": 94
       }
     },
     {
@@ -1411,10 +1118,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 98
+        "signals": ["tenant_scoped_read"],
+        "rank": 95
       }
     },
     {
@@ -1423,10 +1128,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 99
+        "signals": ["tenant_scoped_read"],
+        "rank": 96
       }
     },
     {
@@ -1435,10 +1138,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 100
+        "signals": ["tenant_scoped_read"],
+        "rank": 97
       }
     },
     {
@@ -1447,10 +1148,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 101
+        "signals": ["tenant_scoped_read"],
+        "rank": 98
       }
     },
     {
@@ -1459,10 +1158,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 102
+        "signals": ["tenant_scoped_read"],
+        "rank": 99
       }
     },
     {
@@ -1471,10 +1168,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 103
+        "signals": ["tenant_scoped_read"],
+        "rank": 100
       }
     },
     {
@@ -1483,10 +1178,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 104
+        "signals": ["tenant_scoped_read"],
+        "rank": 101
       }
     },
     {
@@ -1495,10 +1188,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 105
+        "signals": ["tenant_scoped_read"],
+        "rank": 102
       }
     },
     {
@@ -1507,10 +1198,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 106
+        "signals": ["tenant_scoped_read"],
+        "rank": 103
       }
     },
     {
@@ -1519,10 +1208,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 107
+        "signals": ["tenant_scoped_read"],
+        "rank": 104
       }
     },
     {
@@ -1531,10 +1218,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 108
+        "signals": ["tenant_scoped_read"],
+        "rank": 105
       }
     },
     {
@@ -1543,10 +1228,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 109
+        "signals": ["tenant_scoped_read"],
+        "rank": 106
       }
     },
     {
@@ -1555,10 +1238,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 110
+        "signals": ["tenant_scoped_read"],
+        "rank": 107
       }
     },
     {
@@ -1567,10 +1248,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 111
+        "signals": ["tenant_scoped_read"],
+        "rank": 108
       }
     },
     {
@@ -1579,10 +1258,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 112
+        "signals": ["tenant_scoped_read"],
+        "rank": 109
       }
     },
     {
@@ -1591,10 +1268,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 113
+        "signals": ["tenant_scoped_read"],
+        "rank": 110
       }
     },
     {
@@ -1603,10 +1278,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 114
+        "signals": ["tenant_scoped_read"],
+        "rank": 111
       }
     },
     {
@@ -1615,10 +1288,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 115
+        "signals": ["tenant_scoped_read"],
+        "rank": 112
       }
     },
     {
@@ -1627,10 +1298,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 116
+        "signals": ["tenant_scoped_read"],
+        "rank": 113
       }
     },
     {
@@ -1639,10 +1308,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 117
+        "signals": ["tenant_scoped_read"],
+        "rank": 114
       }
     },
     {
@@ -1651,10 +1318,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 118
+        "signals": ["tenant_scoped_read"],
+        "rank": 115
       }
     },
     {
@@ -1663,10 +1328,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 119
+        "signals": ["tenant_scoped_read"],
+        "rank": 116
       }
     },
     {
@@ -1675,10 +1338,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 120
+        "signals": ["tenant_scoped_read"],
+        "rank": 117
       }
     },
     {
@@ -1687,10 +1348,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 121
+        "signals": ["tenant_scoped_read"],
+        "rank": 118
       }
     },
     {
@@ -1699,10 +1358,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 122
+        "signals": ["tenant_scoped_read"],
+        "rank": 119
       }
     },
     {
@@ -1711,10 +1368,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 123
+        "signals": ["tenant_scoped_read"],
+        "rank": 120
       }
     },
     {
@@ -1723,10 +1378,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 124
+        "signals": ["tenant_scoped_read"],
+        "rank": 121
       }
     },
     {
@@ -1735,10 +1388,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 125
+        "signals": ["tenant_scoped_read"],
+        "rank": 122
       }
     },
     {
@@ -1747,10 +1398,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 126
+        "signals": ["tenant_scoped_read"],
+        "rank": 123
       }
     },
     {
@@ -1759,10 +1408,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 127
+        "signals": ["tenant_scoped_read"],
+        "rank": 124
       }
     },
     {
@@ -1771,10 +1418,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 128
+        "signals": ["tenant_scoped_read"],
+        "rank": 125
       }
     },
     {
@@ -1783,10 +1428,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 129
+        "signals": ["tenant_scoped_read"],
+        "rank": 126
       }
     },
     {
@@ -1795,10 +1438,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 130
+        "signals": ["tenant_scoped_read"],
+        "rank": 127
       }
     },
     {
@@ -1807,10 +1448,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 131
+        "signals": ["tenant_scoped_read"],
+        "rank": 128
       }
     },
     {
@@ -1819,10 +1458,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 132
+        "signals": ["tenant_scoped_read"],
+        "rank": 129
       }
     },
     {
@@ -1831,10 +1468,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 133
+        "signals": ["tenant_scoped_read"],
+        "rank": 130
       }
     },
     {
@@ -1843,10 +1478,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 134
+        "signals": ["tenant_scoped_read"],
+        "rank": 131
       }
     },
     {
@@ -1855,10 +1488,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 135
+        "signals": ["tenant_scoped_read"],
+        "rank": 132
       }
     },
     {
@@ -1867,10 +1498,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 136
+        "signals": ["tenant_scoped_read"],
+        "rank": 133
       }
     },
     {
@@ -1879,10 +1508,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 137
+        "signals": ["tenant_scoped_read"],
+        "rank": 134
       }
     },
     {
@@ -1891,10 +1518,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 138
+        "signals": ["tenant_scoped_read"],
+        "rank": 135
       }
     },
     {
@@ -1903,10 +1528,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 139
+        "signals": ["tenant_scoped_read"],
+        "rank": 136
       }
     },
     {
@@ -1915,10 +1538,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 140
+        "signals": ["tenant_scoped_read"],
+        "rank": 137
       }
     },
     {
@@ -1927,10 +1548,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 141
+        "signals": ["tenant_scoped_read"],
+        "rank": 138
       }
     },
     {
@@ -1939,10 +1558,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 142
+        "signals": ["tenant_scoped_read"],
+        "rank": 139
       }
     },
     {
@@ -1951,10 +1568,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 143
+        "signals": ["tenant_scoped_read"],
+        "rank": 140
       }
     },
     {
@@ -1963,10 +1578,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 144
+        "signals": ["tenant_scoped_read"],
+        "rank": 141
       }
     },
     {
@@ -1975,10 +1588,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 145
+        "signals": ["tenant_scoped_read"],
+        "rank": 142
       }
     },
     {
@@ -1987,10 +1598,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 146
+        "signals": ["tenant_scoped_read"],
+        "rank": 143
       }
     },
     {
@@ -1999,10 +1608,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 147
+        "signals": ["tenant_scoped_read"],
+        "rank": 144
       }
     },
     {
@@ -2011,10 +1618,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 148
+        "signals": ["tenant_scoped_read"],
+        "rank": 145
       }
     },
     {
@@ -2023,10 +1628,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 149
+        "signals": ["tenant_scoped_read"],
+        "rank": 146
       }
     },
     {
@@ -2035,10 +1638,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 150
+        "signals": ["tenant_scoped_read"],
+        "rank": 147
       }
     },
     {
@@ -2047,10 +1648,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 151
+        "signals": ["tenant_scoped_read"],
+        "rank": 148
       }
     },
     {
@@ -2059,10 +1658,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 152
+        "signals": ["tenant_scoped_read"],
+        "rank": 149
       }
     },
     {
@@ -2071,10 +1668,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 153
+        "signals": ["tenant_scoped_read"],
+        "rank": 150
       }
     },
     {
@@ -2083,10 +1678,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 154
+        "signals": ["tenant_scoped_read"],
+        "rank": 151
       }
     },
     {
@@ -2095,10 +1688,8 @@
       "governedRisk": {
         "score": 10,
         "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 155
+        "signals": ["tenant_scoped_read"],
+        "rank": 152
       }
     }
   ],
@@ -2109,34 +1700,9 @@
       "governedRisk": {
         "score": 1000,
         "band": "critical",
-        "signals": [
-          "declared_ai_surface_control"
-        ],
-        "controlIds": [
-          "agent-dock-chat-turns"
-        ],
+        "signals": ["declared_ai_surface_control"],
+        "controlIds": ["agent-dock-chat-turns"],
         "rank": 1
-      }
-    },
-    {
-      "directory": "src/__tests__/integration/intelligence",
-      "testFiles": 33,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "approvalOrLifecycleSourceCount": 1,
-        "approvalOrLifecycleSources": [
-          "src/lib/intelligence/sentinel-evidence-gap-queue-view.ts"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/app/api/intelligence/ask/route.ts"
-        ],
-        "rank": 2
       }
     },
     {
@@ -2145,10 +1711,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/lib/intelligence/intelligence-consultant-text-synthesis.ts"
@@ -2159,7 +1722,7 @@
           "src/lib/intelligence/sentinel-broker-adapter.ts",
           "src/lib/intelligence/skyharbor-cto-readiness.ts"
         ],
-        "rank": 3
+        "rank": 2
       }
     },
     {
@@ -2168,10 +1731,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 5,
         "approvalOrLifecycleSources": [
           "src/lib/source/archetypes/registry.ts",
@@ -2186,7 +1746,7 @@
           "src/lib/source/ava/evidence-readiness-governed-answer.ts",
           "src/lib/source/facts/event-facts-reader.ts"
         ],
-        "rank": 4
+        "rank": 3
       }
     },
     {
@@ -2195,10 +1755,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/lib/auth/gate-approval-strict-mode.ts"
@@ -2211,7 +1768,7 @@
           "src/lib/auth/tenancy.ts",
           "src/lib/deliverables/seed-route-resolver.ts"
         ],
-        "rank": 5
+        "rank": 4
       }
     },
     {
@@ -2220,10 +1777,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 2,
         "approvalOrLifecycleSources": [
           "src/lib/notifications/channels/email-resend.ts",
@@ -2233,7 +1787,7 @@
         "tenantScopedReadSources": [
           "src/lib/admin/broker/notification-dispatch-broker.ts"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -2242,10 +1796,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 2,
         "approvalOrLifecycleSources": [
           "src/lib/data-plane/write-adapters/sourceWriteAdapter.ts",
@@ -2259,7 +1810,7 @@
           "src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts",
           "src/lib/data-plane/write-adapters/sourceFactWriteAdapter.ts"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -2268,19 +1819,12 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
-        "approvalOrLifecycleSources": [
-          "src/lib/source/archetypes/registry.ts"
-        ],
+        "approvalOrLifecycleSources": ["src/lib/source/archetypes/registry.ts"],
         "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/features/is-feature-enabled.ts"
-        ],
-        "rank": 8
+        "tenantScopedReadSources": ["src/lib/features/is-feature-enabled.ts"],
+        "rank": 7
       }
     },
     {
@@ -2289,10 +1833,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/approve/route.ts"
@@ -2305,7 +1846,7 @@
           "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/route.ts",
           "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/run/route.ts"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -2314,10 +1855,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/lib/knowledge/tenant-data/stub-adapter.ts"
@@ -2326,7 +1864,7 @@
         "tenantScopedReadSources": [
           "src/lib/knowledge/tenant-data/supabase-adapter.ts"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -2335,19 +1873,12 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
-        "approvalOrLifecycleSources": [
-          "src/lib/programs/approval.ts"
-        ],
+        "approvalOrLifecycleSources": ["src/lib/programs/approval.ts"],
         "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/admin/tenant-admin-access.ts"
-        ],
-        "rank": 11
+        "tenantScopedReadSources": ["src/lib/admin/tenant-admin-access.ts"],
+        "rank": 10
       }
     },
     {
@@ -2356,10 +1887,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 3,
         "approvalOrLifecycleSources": [
           "src/app/api/admin/programs/approvals/[requestId]/route.ts",
@@ -2372,7 +1900,7 @@
           "src/app/api/admin/programs/approvals/_auth.ts",
           "src/app/api/admin/programs/approvals/route.ts"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -2381,10 +1909,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/app/api/admin/pricing/rate-cards/[id]/approve/route.ts"
@@ -2393,7 +1918,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/pricing/rate-cards/[id]/approve/route.ts"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -2402,10 +1927,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/app/api/admin/programs/approvals/export/route.ts"
@@ -2414,7 +1936,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/programs/approvals/export/route.ts"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -2423,10 +1945,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts"
@@ -2435,7 +1954,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts"
         ],
-        "rank": 15
+        "rank": 14
       }
     },
     {
@@ -2444,10 +1963,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/route.ts"
@@ -2456,7 +1972,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/route.ts"
         ],
-        "rank": 16
+        "rank": 15
       }
     },
     {
@@ -2465,10 +1981,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/app/api/v1/programs/[programId]/phase-gate-approval/route.ts"
@@ -2477,7 +1990,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/phase-gate-approval/route.ts"
         ],
-        "rank": 17
+        "rank": 16
       }
     },
     {
@@ -2486,10 +1999,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/app/api/v1/programs/[programId]/solution-options/approve/route.ts"
@@ -2498,7 +2008,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/solution-options/approve/route.ts"
         ],
-        "rank": 18
+        "rank": 17
       }
     },
     {
@@ -2507,10 +2017,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/lib/source/gate-advance-contract.ts"
@@ -2519,7 +2026,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/source/[eventId]/stage/route.ts"
         ],
-        "rank": 19
+        "rank": 18
       }
     },
     {
@@ -2528,10 +2035,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/route.ts"
@@ -2540,7 +2044,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/route.ts"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -2549,10 +2053,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 3,
         "approvalOrLifecycleSources": [
           "src/app/api/v1/source/events/[eventId]/approve/route.ts",
@@ -2565,7 +2066,7 @@
           "src/lib/active-client.ts",
           "src/lib/source/contract-optimization/read.ts"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -2574,10 +2075,7 @@
       "governedRisk": {
         "score": 110,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
+        "signals": ["approval_or_lifecycle_write", "tenant_scoped_read"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/app/api/v1/source/events/[eventId]/request-approval/route.ts"
@@ -2586,7 +2084,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/source/events/[eventId]/request-approval/route.ts"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -2595,14 +2093,12 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
+        "signals": ["approval_or_lifecycle_write"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
           "src/lib/deliverables/roadmap-lifecycle.ts"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -2611,16 +2107,14 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
+        "signals": ["approval_or_lifecycle_write"],
         "approvalOrLifecycleSourceCount": 3,
         "approvalOrLifecycleSources": [
           "src/components/admin/programs/ApprovalBriefSnapshotCard.tsx",
           "src/components/admin/programs/ApprovalDecisionPanel.tsx",
           "src/components/admin/programs/ApprovalQueueTable.tsx"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -2629,12 +2123,22 @@
       "governedRisk": {
         "score": 100,
         "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write"
-        ],
+        "signals": ["approval_or_lifecycle_write"],
+        "approvalOrLifecycleSourceCount": 1,
+        "approvalOrLifecycleSources": ["src/lib/source/archetypes/registry.ts"],
+        "rank": 24
+      }
+    },
+    {
+      "directory": "src/lib/programs/phase-templates/__tests__",
+      "testFiles": 10,
+      "governedRisk": {
+        "score": 100,
+        "band": "critical",
+        "signals": ["approval_or_lifecycle_write"],
         "approvalOrLifecycleSourceCount": 1,
         "approvalOrLifecycleSources": [
-          "src/lib/source/archetypes/registry.ts"
+          "src/lib/programs/phase-templates/approved-inputs-pack.ts"
         ],
         "rank": 25
       }
@@ -2648,20 +2152,8 @@
       "via": []
     },
     {
-      "directory": "src/__tests__/integration/intelligence",
-      "testFiles": 33,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/deliverables/__tests__",
       "testFiles": 32,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/__tests__/integration/architecture",
-      "testFiles": 25,
       "coveredTestFiles": 0,
       "via": []
     },
@@ -2764,12 +2256,6 @@
     {
       "directory": "src/components/source/canvas/responses/__tests__",
       "testFiles": 12,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/__tests__/unit",
-      "testFiles": 11,
       "coveredTestFiles": 0,
       "via": []
     },
@@ -3068,18 +2554,6 @@
       "via": []
     },
     {
-      "directory": "src/__tests__/integration/deployment",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/__tests__/integration/knowledge",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/app/api/v1/programs/[programId]/pricing/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 0,
@@ -3338,12 +2812,6 @@
       "via": []
     },
     {
-      "directory": "src/__tests__/integration/setup",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/app/(maestro)/admin/programs/approvals/_actions/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 0,
@@ -3591,24 +3059,6 @@
     },
     {
       "directory": "src/__tests__/guardrails",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/__tests__/integration/agent",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/__tests__/integration/demo",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/__tests__/integration/tenants",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []

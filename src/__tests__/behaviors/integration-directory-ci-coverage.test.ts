@@ -65,7 +65,8 @@ const QUARANTINED_WIRED_DIRECTORIES = [
   {
     directory: "intelligence",
     workflow: ".github/workflows/integration-suites.yml",
-    ignoreArgsScript: "scripts/quality/intelligence-integration-ignore-args.mjs",
+    ignoreArgsScript:
+      "scripts/quality/intelligence-integration-ignore-args.mjs",
     // Both were red and untriaged when the directory was wired, and both were
     // named in the quarantine's `alsoIgnored` rather than running. Backlog item
     // T-044 triaged them: both were stale contracts, both are repaired, and
@@ -79,8 +80,16 @@ const QUARANTINED_WIRED_DIRECTORIES = [
 
 type Census = {
   counts: { indeterminateInvocations: number };
-  partiallyCoveredDirectories: { directory: string; testFiles: number; coveredTestFiles: number }[];
-  uncoveredDirectories: { directory: string; testFiles: number; coveredTestFiles: number }[];
+  partiallyCoveredDirectories: {
+    directory: string;
+    testFiles: number;
+    coveredTestFiles: number;
+  }[];
+  uncoveredDirectories: {
+    directory: string;
+    testFiles: number;
+    coveredTestFiles: number;
+  }[];
 };
 
 /**
@@ -125,6 +134,47 @@ const DIRECTORIES_WIRED_BY_FILE: Record<string, readonly string[]> = {
 };
 
 /**
+ * Loose suites directly under `src/__tests__/integration` that were measured
+ * and explicitly named in the workflow because the integration root itself is
+ * not a safe ownership shape. Naming the root would also select every red
+ * subdirectory below it.
+ */
+const ROOT_FILES_WIRED_BY_FILE = [
+  "src/__tests__/integration/admin-context-uploads-tabs.test.tsx",
+  "src/__tests__/integration/agent-column-agent-answer.test.ts",
+  "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+  "src/__tests__/integration/atlas-page-state-timeout.test.ts",
+  "src/__tests__/integration/email-code-sign-in-panel.test.tsx",
+  "src/__tests__/integration/evidence-registry.test.ts",
+  "src/__tests__/integration/pack-j-realistic-portfolio.test.ts",
+  "src/__tests__/integration/pattern-deliverable-api.test.ts",
+  "src/__tests__/integration/sign-in-route-contract.test.ts",
+  "src/__tests__/integration/strategic-moves-chat-shape.test.ts",
+  "src/__tests__/integration/supabase.test.ts",
+  "src/__tests__/integration/tenant-empty-states.test.tsx",
+  "src/__tests__/integration/tower-p6-handoff-panel.test.ts",
+] as const;
+
+/**
+ * Loose root suites that were measured and are still red. They stay out of the
+ * green CI job until each has its own repair or quarantine item; wiring these
+ * by naming the integration root would convert a known red set into ambient CI
+ * noise.
+ */
+const KNOWN_DARK_ROOT_FILES = new Set([
+  "src/__tests__/integration/app-rail-home-nav.test.ts",
+  "src/__tests__/integration/app-topbar-prefetch-guard.test.ts",
+  "src/__tests__/integration/ask-anything-bar-agent-answer.test.ts",
+  "src/__tests__/integration/atlas-ask-route.test.ts",
+  "src/__tests__/integration/deliverable-render-contract.test.ts",
+  "src/__tests__/integration/learn-welcome-cxo-toggle.test.ts",
+  "src/__tests__/integration/marketing-nav-dropdowns.test.tsx",
+  "src/__tests__/integration/shell-topbar-auth.test.ts",
+  "src/__tests__/integration/sign-in-shell.test.tsx",
+  "src/__tests__/integration/source-chat-shape.test.ts",
+]);
+
+/**
  * The directories still reached by nothing, each with the reason it was not
  * wired in the same change. Every one of them failed when run on `2a1a87dd0`;
  * a red directory is wired by fixing it or by quarantining named suites with
@@ -149,7 +199,12 @@ function runCensus(): Census {
   const stdout = execFileSync(
     process.execPath,
     [path.join(repoRoot, CENSUS_SCRIPT), "--json"],
-    { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024 },
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 64 * 1024 * 1024,
+    },
   );
   return JSON.parse(stdout.slice(stdout.indexOf("{"))) as Census;
 }
@@ -165,7 +220,8 @@ function integrationLeafDirectories(): string[] {
     }
     for (const entry of entries) {
       if (entry === "__snapshots__" || entry === "fixtures") continue;
-      if (statSync(path.join(absolute, entry)).isDirectory()) walk(path.join(relative, entry));
+      if (statSync(path.join(absolute, entry)).isDirectory())
+        walk(path.join(relative, entry));
     }
   };
   walk(INTEGRATION_ROOT);
@@ -175,14 +231,37 @@ function integrationLeafDirectories(): string[] {
 const census = runCensus();
 const zeroCoverage = new Set(
   census.uncoveredDirectories
-    .filter((row) => row.directory === INTEGRATION_ROOT || row.directory.startsWith(`${INTEGRATION_ROOT}/`))
+    .filter(
+      (row) =>
+        row.directory === INTEGRATION_ROOT ||
+        row.directory.startsWith(`${INTEGRATION_ROOT}/`),
+    )
     .map((row) => row.directory),
 );
 const partialCoverage = new Map(
   census.partiallyCoveredDirectories
-    .filter((row) => row.directory === INTEGRATION_ROOT || row.directory.startsWith(`${INTEGRATION_ROOT}/`))
+    .filter(
+      (row) =>
+        row.directory === INTEGRATION_ROOT ||
+        row.directory.startsWith(`${INTEGRATION_ROOT}/`),
+    )
     .map((row) => [row.directory, row]),
 );
+
+function expandedWorkflowCommands(): string[] {
+  const workflowDir = path.join(repoRoot, ".github/workflows");
+  return expandWorkflowCommands(
+    readdirSync(workflowDir)
+      .filter((name) => /\.ya?ml$/.test(name))
+      .flatMap((name) =>
+        extractWorkflowRunCommands(
+          readFileSync(path.join(workflowDir, name), "utf8"),
+        ),
+      ),
+    JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8"))
+      .scripts as Record<string, string>,
+  );
+}
 
 describe("integration directories a workflow actually reaches", () => {
   it("resolves every wired directory through the real four-hop resolver, not a text search", () => {
@@ -211,8 +290,20 @@ describe("integration directories a workflow actually reaches", () => {
     for (const name of WIRED_DIRECTORIES) {
       // Followed by whitespace or end of line: the visibility gate requires the
       // path to end the token, so a trailing slash would make it stop matching.
-      expect(runLines).toMatch(new RegExp(`${INTEGRATION_ROOT}/${name}(?=\\s|$)`));
+      expect(runLines).toMatch(
+        new RegExp(`${INTEGRATION_ROOT}/${name}(?=\\s|$)`),
+      );
     }
+  });
+
+  it("does not name the integration root as an ownership shortcut", () => {
+    const commands = expandedWorkflowCommands().filter((command) =>
+      /\b(?:npx\s+)?(?:jest|vitest|playwright)\b/.test(command),
+    );
+
+    const rootPattern = new RegExp(`${INTEGRATION_ROOT}(?=\\s|$)`);
+    const rootOwners = commands.filter((command) => rootPattern.test(command));
+    expect(rootOwners).toEqual([]);
   });
 
   it("records every extra path a wired directory's jest pattern also selects", () => {
@@ -276,19 +367,7 @@ describe("integration directories a workflow actually reaches", () => {
     //
     // The fix is to name those files in the command as well. This case is what
     // keeps the two sets agreeing, and it fails locally rather than in CI.
-    const workflowDir = path.join(repoRoot, ".github/workflows");
-    const commands = expandWorkflowCommands(
-      readdirSync(workflowDir)
-        .filter((name) => /\.ya?ml$/.test(name))
-        .flatMap((name) =>
-          extractWorkflowRunCommands(
-            readFileSync(path.join(workflowDir, name), "utf8"),
-          ),
-        ),
-      JSON.parse(
-        readFileSync(path.join(repoRoot, "package.json"), "utf8"),
-      ).scripts as Record<string, string>,
-    );
+    const commands = expandedWorkflowCommands();
 
     const entries = readdirSync(path.join(repoRoot, INTEGRATION_ROOT));
     const selectedButInvisible: string[] = [];
@@ -310,6 +389,32 @@ describe("integration directories a workflow actually reaches", () => {
     expect(selectedButInvisible.sort()).toEqual([]);
   });
 
+  it("registers the measured green loose root suites by exact file path", () => {
+    const commands = expandedWorkflowCommands();
+    const missing = ROOT_FILES_WIRED_BY_FILE.filter(
+      (file) => !isIntegrationTestRegistered(file, commands),
+    );
+
+    expect(missing).toEqual([]);
+  });
+
+  it("classifies every loose root suite as registered or measured-red", () => {
+    const commands = expandedWorkflowCommands();
+    const rootFiles = readdirSync(path.join(repoRoot, INTEGRATION_ROOT))
+      .filter((entry) => /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(entry))
+      .map((entry) => `${INTEGRATION_ROOT}/${entry}`)
+      .sort();
+
+    const unclassified = rootFiles.filter(
+      (file) =>
+        !isIntegrationTestRegistered(file, commands) &&
+        !KNOWN_DARK_ROOT_FILES.has(file),
+    );
+
+    expect(rootFiles).toHaveLength(45);
+    expect(unclassified).toEqual([]);
+  });
+
   it("reaches a file-wired directory in full, and names the file so the gate sees it", () => {
     const workflow = readFileSync(
       path.join(repoRoot, ".github/workflows/integration-suites.yml"),
@@ -326,9 +431,9 @@ describe("integration directories a workflow actually reaches", () => {
       // naming the directory, and it is what lets the ratchet below drop the
       // directory out of the dark set. If a second suite lands and is not named
       // here, the directory falls back to partial coverage and this fails.
-      expect(zeroCoverage.has(directory) || partialCoverage.has(directory)).toBe(
-        false,
-      );
+      expect(
+        zeroCoverage.has(directory) || partialCoverage.has(directory),
+      ).toBe(false);
 
       const onDisk = readdirSync(path.join(repoRoot, directory))
         .filter((entry) => /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(entry))
@@ -371,7 +476,12 @@ describe("integration directories a workflow actually reaches", () => {
 
   it.each(QUARANTINED_WIRED_DIRECTORIES)(
     "holds the quarantined directory $directory to the same enumeration",
-    ({ directory: name, workflow: workflowPath, ignoreArgsScript, excludedRootFiles }) => {
+    ({
+      directory: name,
+      workflow: workflowPath,
+      ignoreArgsScript,
+      excludedRootFiles,
+    }) => {
       // A directory wired WITH a quarantine is covered by nothing above: every
       // case in this file iterates WIRED_DIRECTORIES, which is the list of
       // directories `integration-suites.yml` runs with no exclusions at all.
@@ -401,7 +511,9 @@ describe("integration directories a workflow actually reaches", () => {
         .filter((line) => /\bjest\b/.test(line))
         .join("\n");
 
-      expect(runLines).toMatch(new RegExp(`${INTEGRATION_ROOT}/${name}(?=\\s|$)`));
+      expect(runLines).toMatch(
+        new RegExp(`${INTEGRATION_ROOT}/${name}(?=\\s|$)`),
+      );
 
       // The real exclusion list, produced by the same script the workflow runs,
       // not a copy of it. A rewritten generator is exercised here rather than
@@ -421,7 +533,10 @@ describe("integration directories a workflow actually reaches", () => {
           .filter((entry) => /\.ya?ml$/.test(entry))
           .flatMap((entry) =>
             extractWorkflowRunCommands(
-              readFileSync(path.join(repoRoot, ".github/workflows", entry), "utf8"),
+              readFileSync(
+                path.join(repoRoot, ".github/workflows", entry),
+                "utf8",
+              ),
             ),
           ),
         JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8"))
@@ -462,8 +577,13 @@ describe("integration directories a workflow actually reaches", () => {
 
   it("admits no integration directory that is newly reached by nothing", () => {
     const dark = integrationLeafDirectories()
-      .filter((directory) => zeroCoverage.has(directory) || partialCoverage.has(directory))
-      .map((directory) => directory.slice(INTEGRATION_ROOT.length).replace(/^\//, ""))
+      .filter(
+        (directory) =>
+          zeroCoverage.has(directory) || partialCoverage.has(directory),
+      )
+      .map((directory) =>
+        directory.slice(INTEGRATION_ROOT.length).replace(/^\//, ""),
+      )
       .sort();
 
     const unrecorded = dark.filter((name) => !KNOWN_DARK_DIRECTORIES.has(name));
