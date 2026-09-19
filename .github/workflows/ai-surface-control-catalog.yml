@@ -100,3 +100,14 @@ jobs:
       # rewritten to agree with the defect. See backlog items 26 / 66 / 77.
       - name: Exercise Source artifact verdict consistency
         run: npx jest --runTestsByPath src/lib/source/exports/__tests__/artifact-verdict-consistency.test.ts src/lib/source/exports/cxo-report/__tests__/source-cxo-narrative-report.test.ts --runInBand
+
+      # Not a catalog control. This suite drives the real Source canvas ask
+      # handler and asserts that the payload the canvas renders describes the
+      # answer it is showing. It is deliberately NOT under
+      # `src/__tests__/behaviors`: the behavior coverage floor measures over
+      # whatever those suites load, and driving a real route pulls that route's
+      # largely unexercised dependency graph into the denominator — measured at
+      # 93.44% without this suite and 77.73% with it. Wiring it here keeps the
+      # floor honest and keeps the suite running. See backlog item 82.
+      - name: Exercise Source canvas model answer payload
+        run: npx jest --runTestsByPath "src/app/api/v1/source/[eventId]/nexus/ask/__tests__/canvas-model-answer-payload.test.ts" --runInBand
