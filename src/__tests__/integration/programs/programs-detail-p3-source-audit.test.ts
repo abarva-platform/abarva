@@ -9,6 +9,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import ts from 'typescript';
 
 const COMPONENT_PATH = join(
   process.cwd(),
@@ -16,6 +17,43 @@ const COMPONENT_PATH = join(
 );
 
 const source = readFileSync(COMPONENT_PATH, 'utf8');
+const componentAst = ts.createSourceFile(
+  COMPONENT_PATH,
+  source,
+  ts.ScriptTarget.Latest,
+  true,
+  ts.ScriptKind.TSX,
+);
+
+function importedNamesFrom(modulePath: string): string[] {
+  const declaration = componentAst.statements.find(
+    (statement): statement is ts.ImportDeclaration =>
+      ts.isImportDeclaration(statement) &&
+      ts.isStringLiteral(statement.moduleSpecifier) &&
+      statement.moduleSpecifier.text === modulePath,
+  );
+  const bindings = declaration?.importClause?.namedBindings;
+  if (!bindings || !ts.isNamedImports(bindings)) return [];
+  return bindings.elements.map((element) => element.name.text);
+}
+
+function hasPendingGateCondition(): boolean {
+  let found = false;
+  function visit(node: ts.Node): void {
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
+      node.left.getText(componentAst) === 'view.gateStatus' &&
+      ts.isStringLiteral(node.right) &&
+      node.right.text === 'pending'
+    ) {
+      found = true;
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(componentAst);
+  return found;
+}
 
 describe('PROG-P3 · ProgramDetailPage · testid markers', () => {
   it('has data-testid="program-detail-page" on work pane root', () => {
@@ -47,7 +85,7 @@ describe('PROG-P3 · ProgramDetailPage · dev annotation cleanup', () => {
 
 describe('PROG-P3 · ProgramDetailPage · P-SMOKE-CDP critical path', () => {
   it('gate ribbon is conditional on gateStatus === pending', () => {
-    expect(source).toContain("view.gateStatus === 'pending'");
+    expect(hasPendingGateCondition()).toBe(true);
   });
 
   it('linked source event renders LinkedProgramChip', () => {
@@ -67,8 +105,10 @@ describe('PROG-P3 · ProgramDetailPage · P-SMOKE-CDP critical path', () => {
 describe('PROG-P3 · ProgramDetailPage · module hygiene', () => {
   it('imports canonical shell components', () => {
     // ProgramDetailPage uses AppShell + RibbonSynthesis (not AgentColumn directly)
-    expect(source).toContain("from '@/components/shell/AppShell'");
-    expect(source).toContain("from '@/components/shell/RibbonSynthesis'");
+    expect(importedNamesFrom('@/components/shell/AppShell')).toContain('AppShell');
+    expect(importedNamesFrom('@/components/shell/RibbonSynthesis')).toContain(
+      'RibbonSynthesis',
+    );
   });
 
   it('uses no forbidden runtime patterns', () => {
