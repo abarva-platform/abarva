@@ -11,22 +11,14 @@
       "requiredControls": [
         {
           "kind": "ai-label",
-          "evidence": [
-            "AILabel",
-            "status=\"draft\"",
-            "Review before acting"
-          ],
+          "evidence": ["AILabel", "status=\"draft\"", "Review before acting"],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
           }
         },
         {
           "kind": "citation",
-          "evidence": [
-            "AgentCitation",
-            "response.citations",
-            "inlineNodes"
-          ],
+          "evidence": ["AgentCitation", "response.citations", "inlineNodes"],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentResponse.citation-control.test.tsx"
           }
@@ -43,20 +35,14 @@
         },
         {
           "kind": "confidence",
-          "evidence": [
-            "AIConfidenceIndicator",
-            "viewModel.confidence.tier"
-          ],
+          "evidence": ["AIConfidenceIndicator", "viewModel.confidence.tier"],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
           }
         },
         {
           "kind": "human-approval-gate",
-          "evidence": [
-            "AgentActionApprovalNotice",
-            "follow_up_actions"
-          ],
+          "evidence": ["AgentActionApprovalNotice", "follow_up_actions"],
           "behavioralTest": {
             "path": "src/components/agent/__tests__/AgentResponse.controls.test.tsx"
           }
@@ -72,24 +58,16 @@
       "requiredControls": [
         {
           "kind": "responsibility-footer",
-          "evidence": [
-            "AIResponsibilityFooter",
-            "compact"
-          ],
+          "evidence": ["AIResponsibilityFooter", "compact"],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentDock.test.tsx",
-            "nameFilter": "responsibility footer|human approval boundary"
+            "path": "src/components/agent/__tests__/AgentDock.test.tsx"
           }
         },
         {
           "kind": "human-approval-gate",
-          "evidence": [
-            "AgentActionApprovalNotice",
-            "compact"
-          ],
+          "evidence": ["AgentActionApprovalNotice", "compact"],
           "behavioralTest": {
-            "path": "src/components/agent/__tests__/AgentDock.test.tsx",
-            "nameFilter": "responsibility footer|human approval boundary"
+            "path": "src/components/agent/__tests__/AgentDock.test.tsx"
           }
         }
       ]
@@ -103,42 +81,28 @@
       "requiredControls": [
         {
           "kind": "ai-label",
-          "evidence": [
-            "AILabel",
-            "status=\"draft\"",
-            "Review before acting"
-          ],
+          "evidence": ["AILabel", "status=\"draft\"", "Review before acting"],
           "behavioralTest": {
             "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
         },
         {
           "kind": "responsibility-footer",
-          "evidence": [
-            "AIResponsibilityFooter",
-            "tone=\"dark\"",
-            "compact"
-          ],
+          "evidence": ["AIResponsibilityFooter", "tone=\"dark\"", "compact"],
           "behavioralTest": {
             "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
         },
         {
           "kind": "citation-gap",
-          "evidence": [
-            "CitationGapNotice",
-            "shouldShowPlainTextCitationGap"
-          ],
+          "evidence": ["CitationGapNotice", "shouldShowPlainTextCitationGap"],
           "behavioralTest": {
             "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
         },
         {
           "kind": "human-approval-gate",
-          "evidence": [
-            "AgentActionApprovalNotice",
-            "tone=\"dark\""
-          ],
+          "evidence": ["AgentActionApprovalNotice", "tone=\"dark\""],
           "behavioralTest": {
             "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
@@ -217,10 +181,7 @@
         },
         {
           "kind": "citation",
-          "evidence": [
-            "Evidence basis",
-            "brief.accountability.evidenceBasis"
-          ],
+          "evidence": ["Evidence basis", "brief.accountability.evidenceBasis"],
           "behavioralTest": {
             "status": "none",
             "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its evidence basis line."
@@ -228,10 +189,7 @@
         },
         {
           "kind": "confidence",
-          "evidence": [
-            "confidence ·",
-            "brief.confidenceLabel"
-          ],
+          "evidence": ["confidence ·", "brief.confidenceLabel"],
           "behavioralTest": {
             "status": "none",
             "reason": "No behavioral test yet. The Tower pressure brief has no rendering suite exercising its confidence label."
@@ -471,30 +429,21 @@
       "requiredControls": [
         {
           "kind": "ai-label",
-          "evidence": [
-            "MOVES_AI_DRAFT_LABEL",
-            "AI Draft"
-          ],
+          "evidence": ["MOVES_AI_DRAFT_LABEL", "AI Draft"],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
           }
         },
         {
           "kind": "citation",
-          "evidence": [
-            "evidenceCitations"
-          ],
+          "evidence": ["evidenceCitations"],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
           }
         },
         {
           "kind": "confidence",
-          "evidence": [
-            "deriveReadiness",
-            "readinessLabel",
-            "Missing evidence"
-          ],
+          "evidence": ["deriveReadiness", "readinessLabel", "Missing evidence"],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts"
           }
@@ -520,20 +469,14 @@
         },
         {
           "kind": "citation",
-          "evidence": [
-            "evidenceIds",
-            "buildMovesPhaseDecisionAuditRefs"
-          ],
+          "evidence": ["evidenceIds", "buildMovesPhaseDecisionAuditRefs"],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
           }
         },
         {
           "kind": "confidence",
-          "evidence": [
-            "assumptions",
-            "alternativesConsidered"
-          ],
+          "evidence": ["assumptions", "alternativesConsidered"],
           "behavioralTest": {
             "path": "src/lib/programs/__tests__/moves-ai-liability.decision-packet.test.ts"
           }
@@ -549,10 +492,7 @@
       "requiredControls": [
         {
           "kind": "ai-label",
-          "evidence": [
-            "Vendor email draft",
-            "draft, not sent"
-          ],
+          "evidence": ["Vendor email draft", "draft, not sent"],
           "behavioralTest": {
             "path": "src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx"
           }

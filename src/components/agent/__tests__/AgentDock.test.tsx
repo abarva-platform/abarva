@@ -1555,7 +1555,7 @@ describe("AgentDock · thread render", () => {
 
     const turn = screen.getByTestId("agent-dock-turn-agent");
     expect(turn).toHaveTextContent("Fund IROPS recovery automation");
-    expect(turn).toHaveTextContent("Airline Demo AI investment posture");
+    expect(turn).toHaveTextContent("Global AI investment posture");
     expect(turn).toHaveTextContent("IROPS agentic recovery");
   });
 
