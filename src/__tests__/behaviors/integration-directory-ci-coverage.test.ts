@@ -115,6 +115,28 @@ type Census = {
  * run in full on `2a1a87dd0` and passed with no exclusions, which is why none of
  * them needs a quarantine list the way `source` does.
  */
+/**
+ * Every directory name a workflow wires, from BOTH workflows.
+ *
+ * `WIRED_DIRECTORIES` is what `integration-suites.yml` runs with no
+ * exclusions; `QUARANTINED_WIRED_DIRECTORIES` is what a workflow runs with a
+ * quarantine, which today is its own file. The prefix case below used to
+ * iterate only the first, so a directory colliding with a quarantine-wired
+ * name was not checked for the prefix hazard at all.
+ *
+ * It was still caught — by the enumeration case, incidentally — and that is
+ * the problem worth fixing rather than the coverage. A directory swept in
+ * under a quarantine-wired name reported *"the enumeration is out of date"*,
+ * which sends the reader to update a list. The actual hazard is that a stray
+ * directory silently adopts every suite written in it afterwards, and the
+ * message has to say so or the next person fixes the symptom.
+ *
+ * Measured: creating a directory colliding with a `WIRED_DIRECTORIES` name
+ * failed three cases including the prefix one; colliding with a
+ * quarantine-wired name failed two, and the prefix case was not among them.
+ */
+const ALL_WIRED_DIRECTORY_NAMES: string[] = [];
+
 const WIRED_DIRECTORIES = [
   "architecture",
   "corpus",
@@ -282,6 +304,11 @@ function expandedWorkflowCommands(): string[] {
       .scripts as Record<string, string>,
   );
 }
+
+ALL_WIRED_DIRECTORY_NAMES.push(
+  ...WIRED_DIRECTORIES.filter((name) => !name.includes("/")),
+  ...QUARANTINED_WIRED_DIRECTORIES.map((entry) => entry.directory),
+);
 
 describe("integration directories a workflow actually reaches", () => {
   it("resolves every wired directory through the real four-hop resolver, not a text search", () => {
@@ -485,13 +512,25 @@ describe("integration directories a workflow actually reaches", () => {
       .map((entry) => entry.name);
 
     const colliding: string[] = [];
-    for (const name of WIRED_DIRECTORIES) {
+    for (const name of ALL_WIRED_DIRECTORY_NAMES) {
       for (const directory of directories) {
         if (directory === name || !directory.startsWith(name)) continue;
         colliding.push(`${name} -> ${directory}`);
       }
     }
-    expect(colliding.sort()).toEqual([]);
+
+    // Named, and named with the consequence: the failure has to say why a
+    // colliding directory is worse than a colliding file, or it reads as a
+    // list that needs updating.
+    expect({
+      hazard:
+        "a wired name prefixes a directory, which silently adopts every suite written in it afterwards",
+      colliding: colliding.sort(),
+    }).toEqual({
+      hazard:
+        "a wired name prefixes a directory, which silently adopts every suite written in it afterwards",
+      colliding: [],
+    });
   });
 
   it.each(QUARANTINED_WIRED_DIRECTORIES)(
