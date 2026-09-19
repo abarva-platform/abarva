@@ -54,4 +54,5 @@ jobs:
           src/__tests__/integration/programs/programs-detail-prog21-gate-drawer.test.ts
           src/__tests__/integration/programs/programs-detail-prog25-workshop-notes-plan.test.ts
           src/__tests__/integration/programs/programs-detail-p3-source-audit.test.ts
+          src/__tests__/integration/programs/phase-filter-view.test.ts
           --runInBand
