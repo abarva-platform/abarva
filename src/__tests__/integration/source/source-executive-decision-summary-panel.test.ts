@@ -86,9 +86,11 @@ describe('Source executive decision summary panel', () => {
   it('seeded AMS decision props reflect conditional posture and P0 open state', () => {
     const props = buildAmsDecisionSummaryProps();
 
-    // Headline references conditional recommendation
+    // The lead remains explicitly conditional on closing the open award blocker.
     expect(props.atlasHeadline).toMatch(/northstar/i);
-    expect(props.atlasHeadline).toMatch(/condition/i);
+    expect(props.atlasHeadline).toMatch(/subject to .* before award/i);
+    expect(props.kv.atlasRecommendation).toMatch(/conditional/i);
+    expect(props.kv.posture).toMatch(/with conditions/i);
 
     // Risk / transition posture are amber or red
     expect(['amber', 'red']).toContain(props.postureCards[1].tone);
