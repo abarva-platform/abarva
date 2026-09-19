@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source Stage 07 now includes a read-only pricing comparability ledger inside the Evaluation / BAFO readiness panel. It shows each vendor's five-year TCO, year-one run cost, transition cost, one-time cost, optional cost, pricing basis, and comparability posture from existing governed response-profile fields.
+Source Stage 07 now includes a read-only pricing comparability ledger inside the Evaluation / BAFO readiness panel. It shows each vendor's five-year TCO, year-one run cost, transition cost, one-time cost, pricing basis, and comparability posture from existing governed response-profile fields.
 
 The ledger fails closed when required pricing fields or pricing basis are missing. It does not normalize new data, invent benchmark ranges, select a winner, send a BAFO, lock scores, or create award recommendations.
 
@@ -42,6 +42,7 @@ Release lane: `global-control-lane`.
 - Failing-first: focused tests failed before implementation because `view.pricing` was undefined and the panel did not render `Pricing comparability`.
 - Pass: `npx jest src/lib/source/proposal-intelligence/__tests__/evaluation-bafo-readiness.test.ts src/components/source/canvas/responses/__tests__/EvaluationBafoReadinessPanel.test.tsx --runInBand` — 2 suites / 6 tests passed.
 - Mutation: temporarily removed the five-year TCO missing-field guard; `evaluation-bafo-readiness.test.ts` failed because the blocker no longer named missing five-year TCO. Guard restored and the focused suite passed again.
+- Claim-boundary coverage proves missing transition, one-time, and optional costs do not get described as validated; only five-year TCO, year-one run cost, and pricing basis are named by the comparable rationale.
 
 ## Rollout Plan
 

@@ -268,7 +268,7 @@ function buildPricingRow(
         ? `Missing ${joinList(missing)}; pricing comparison stays blocked until normalized pricing evidence is loaded.`
         : comparability === "conditional"
           ? `Pricing is present, but ${basisSentence} keeps the TCO read conditional until BAFO clarification.`
-          : "Normalized run, transition, one-time, optional, and five-year TCO fields are present for comparison.",
+          : "Five-year TCO, year-one run cost, and pricing basis are present for comparison.",
   };
 }
 

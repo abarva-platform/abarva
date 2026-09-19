@@ -161,4 +161,39 @@ describe("evaluation / BAFO readiness decision support", () => {
     );
     expect(view.state).toBe("blocked");
   });
+
+  it("does not claim optional pricing fields were validated when they are absent", () => {
+    const profileSet = buildVendorResponseMveProfiles({
+      id: "client-a-test-event",
+      code: "CLIENT-A-LAKE-AMS-OUTSOURCING-2026",
+      name: "Client A AMS Outsourcing RFP",
+      accountName: "Client A",
+    });
+    if (!profileSet) throw new Error("expected test profile set");
+    const profile = {
+      ...profileSet.profiles[0],
+      pricingSummary: {
+        ...profileSet.profiles[0].pricingSummary,
+        transitionCostUsd: null,
+        oneTimeCostUsd: null,
+        optionalCostUsd: null,
+        pricingBasis: "Complete workbook",
+      },
+    };
+
+    const view = buildEvaluationBafoReadinessView({
+      profileSet: { ...profileSet, profiles: [profile] },
+    });
+
+    expect(view.pricing).toEqual([
+      expect.objectContaining({
+        comparability: "comparable",
+        transitionCostLabel: "Not recorded",
+        oneTimeCostLabel: "Not recorded",
+        optionalCostLabel: "Not recorded",
+        rationale:
+          "Five-year TCO, year-one run cost, and pricing basis are present for comparison.",
+      }),
+    ]);
+  });
 });
