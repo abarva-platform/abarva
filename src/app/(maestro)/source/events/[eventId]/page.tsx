@@ -9,6 +9,7 @@ import {
   listEffectiveEvidenceStatesForEvent,
 } from "@/lib/source/canvas-substrate";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
+import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import {
   adaptStageViewToSourceJourney,
@@ -573,6 +574,20 @@ export default async function SourceEventDetailPage({
       }
     }
 
+    const awardSowHandoffReadiness =
+      normalizeSourceStageKey(viewStage) === "transition"
+        ? buildSourceAwardSowHandoffReadiness({
+            event: {
+              id: event.id,
+              name: event.name,
+              currentStageKey: event.currentStageKey,
+              currentStageLabel: event.currentStageLabel,
+              stages: event.stages,
+              artifacts: event.artifacts,
+            },
+          })
+        : null;
+
     return (
       <SourceAnalyticsCanvas
         event={event}
@@ -596,6 +611,7 @@ export default async function SourceEventDetailPage({
         vendorEvaluationDecisionView={vendorEvaluationDecisionView}
         vendorResponseParseReports={vendorResponseParseReports}
         normalizedResponsePackages={normalizedResponsePackages}
+        awardSowHandoffReadiness={awardSowHandoffReadiness}
       />
     );
   }

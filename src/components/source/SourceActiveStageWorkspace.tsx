@@ -2,6 +2,7 @@ import { SOURCE_ARTIFACT_STATUS_LABELS } from "@/lib/source/constants";
 import { getActiveStage, getStageStateLabel } from "@/lib/source/lifecycle";
 import { buildSourceDataReadinessProjectionFromAdminSetup } from "@/lib/source/admin-setup-readiness-contract";
 import { buildSourceBafoNegotiationPlan } from "@/lib/source/bafo-negotiation";
+import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
 import { buildPricingComparisonViewModel } from "@/lib/source/source-pricing-comparison-view";
 import { buildSourceVendorSelectionReadiness } from "@/lib/source/vendor-selection-readiness";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
@@ -15,6 +16,7 @@ import { SHELL } from "@/lib/shell/shell-tokens";
 import { SourceDataReadinessPanel } from "./SourceDataReadinessPanel";
 import { SourceScopeStageWorkspace } from "./SourceScopeStageWorkspace";
 import { SourceBafoNegotiationPanel } from "./SourceBafoNegotiationPanel";
+import { SourceAwardSowHandoffReadinessPanel } from "./SourceAwardSowHandoffReadinessPanel";
 import { SourceVendorSelectionReadinessPanel } from "./SourceVendorSelectionReadinessPanel";
 import { SourceVendorResponseCompletenessPanel } from "./SourceVendorResponseCompletenessPanel";
 import { SourcePricingComparisonPanel } from "./SourcePricingComparisonPanel";
@@ -280,6 +282,26 @@ export function SourceActiveStageWorkspace({
           dataReadinessSummary={dataReadinessSummary}
         />
       </div>
+    );
+  }
+
+  if (
+    activeStage.key === "transition" ||
+    activeStage.key === "contract_mobilization"
+  ) {
+    const awardSowReadiness = buildSourceAwardSowHandoffReadiness({
+      event: {
+        id: event.id,
+        name: event.name,
+        currentStageKey: activeStage.key,
+        currentStageLabel: activeStage.label,
+        stages: event.stages,
+        artifacts: event.artifacts,
+      },
+    });
+
+    return (
+      <SourceAwardSowHandoffReadinessPanel readiness={awardSowReadiness} />
     );
   }
 
