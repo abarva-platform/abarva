@@ -44,6 +44,112 @@ describe('complete_deliverable tool', () => {
     ).toBe(true);
   });
 
+  // The tool's own comment says a write that needs a capability MUST fail
+  // closed when that capability is false. Until these three cases existed no
+  // test in this directory supplied an `accessPolicy` at all, so the branch was
+  // unreachable from the suite and deleting the whole gate left it green. The
+  // batch sibling `complete_deliverables` already had the equivalent case.
+  it('refuses to sign off a deliverable when the session lacks publish rights', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+
+    const result = await completeDeliverableTool.handler(
+      {
+        program_id: 'program-1',
+        deliverable_type_key: 'business_case',
+        title: 'P5 Business Case',
+        content: 'Accepted value case',
+      },
+      {
+        ...makeCtx('/strategic-moves/move-123/phase/5'),
+        accessPolicy: {
+          accessLevel: 'program_user',
+          programIdsAllowed: null,
+          canPublishDeliverables: false,
+          canViewFinancialData: false,
+        },
+      },
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe('forbidden:can_publish_deliverables_required');
+    expect(completeDeliverableMock).not.toHaveBeenCalled();
+  });
+
+  // The refusal is scoped to sign-off, not to the write. A session without
+  // publish rights may still save a draft — the recovery text the tool returns
+  // offers exactly that, so a fix that refused every write would make the
+  // tool's own advice impossible to follow.
+  it('still saves a draft for a session without publish rights', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock.mockResolvedValue({
+      deliverableId: 'deliv-draft',
+      versionId: 'version-draft',
+      status: 'draft',
+    });
+
+    const result = await completeDeliverableTool.handler(
+      {
+        program_id: 'program-1',
+        deliverable_type_key: 'business_case',
+        title: 'P5 Business Case',
+        content: 'Draft value case',
+        sign_off: false,
+      },
+      {
+        ...makeCtx('/strategic-moves/move-123/phase/5'),
+        accessPolicy: {
+          accessLevel: 'program_user',
+          programIdsAllowed: null,
+          canPublishDeliverables: false,
+          canViewFinancialData: false,
+        },
+      },
+    );
+
+    expect(result.success).toBe(true);
+    expect(completeDeliverableMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({ signOff: false }),
+    );
+  });
+
+  // Passes on unfixed code by design: it is the guardrail an over-broad
+  // repair of the case above would break.
+  it('signs off for a session that does hold publish rights', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock.mockResolvedValue({
+      deliverableId: 'deliv-signed',
+      versionId: 'version-signed',
+      status: 'signed_off',
+    });
+
+    const result = await completeDeliverableTool.handler(
+      {
+        program_id: 'program-1',
+        deliverable_type_key: 'business_case',
+        title: 'P5 Business Case',
+        content: 'Accepted value case',
+      },
+      {
+        ...makeCtx('/strategic-moves/move-123/phase/5'),
+        accessPolicy: {
+          accessLevel: 'client_admin',
+          programIdsAllowed: null,
+          canPublishDeliverables: true,
+          canViewFinancialData: false,
+        },
+      },
+    );
+
+    expect(result.success).toBe(true);
+    expect(completeDeliverableMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({ signOff: true }),
+    );
+  });
+
   it('rejects unsupported deliverable types before writing', async () => {
     const result = await completeDeliverableTool.handler(
       {
