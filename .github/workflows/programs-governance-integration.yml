@@ -56,4 +56,5 @@ jobs:
           src/__tests__/integration/programs/programs-detail-p3-source-audit.test.ts
           src/__tests__/integration/programs/phase-filter-view.test.ts
           src/__tests__/integration/programs/programs-catalog-lock.test.ts
+          src/__tests__/integration/programs-enhancement-seed-planner.test.ts
           --runInBand
