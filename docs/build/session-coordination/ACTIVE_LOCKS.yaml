@@ -1,6 +1,14 @@
-updated_at: "2026-05-02T20:20:00-05:00"
+updated_at: "2026-09-19T00:00:00-05:00"
 
 locks:
+  - owner: codex-source-stage04-vendor-readiness
+    resource: source-stage04-vendor-selection-readiness
+    status: completed
+    started_at: "2026-09-19T00:00:00-05:00"
+    expires_at: "2026-09-19T06:00:00-05:00"
+    note: "Narrow Source lifecycle reachability fix for the Stage 04 vendor readiness surface. Expected files: SourceActiveStageWorkspace, SourceVendorSelectionReadinessPanel, vendor-selection-readiness model/types/tests, Source behavior tests, release record, and route-reachability/QA claim metadata only if required by the gate. No tenant data, migrations, loaders, or data-plane writes."
+    completed_at: "2026-09-19T00:00:00-05:00"
+
   - owner: codex-source-e2e-crawler
     resource: source-module-e2e-crawler
     status: completed
@@ -157,7 +165,7 @@ locks:
     status: completed
     started_at: "2026-05-02T16:45:00-05:00"
     expires_at: "2026-05-02T20:30:00-05:00"
-    note: Source event-canvas action prompt polish: Nexus labeling, disabled streaming state, accessibility, and regression tests. No Source lifecycle/data/API changes.
+    note: "Source event-canvas action prompt polish: Nexus labeling, disabled streaming state, accessibility, and regression tests. No Source lifecycle/data/API changes."
     completed_at: "2026-05-02T17:00:00-05:00"
 
   - owner: codex-home-card-polish
@@ -204,7 +212,7 @@ locks:
     status: completed
     started_at: "2026-05-02T18:45:00-05:00"
     expires_at: "2026-05-02T21:30:00-05:00"
-    note: Restores Intelligence landing hierarchy to Explore Layer front door: three substrates, two outcomes, seven submenus, Today canvas, and ambient Sentinel. Avoids Programs, Source lifecycle/data/API, and private-plane schema changes.
+    note: "Restores Intelligence landing hierarchy to Explore Layer front door: three substrates, two outcomes, seven submenus, Today canvas, and ambient Sentinel. Avoids Programs, Source lifecycle/data/API, and private-plane schema changes."
     completed_at: "2026-05-02T18:50:00-05:00"
 
   - owner: codex-tower-setup-initiatives-bridge
@@ -243,5 +251,5 @@ locks:
     status: completed
     started_at: "2026-05-02T20:16:00-05:00"
     expires_at: "2026-05-02T23:00:00-05:00"
-    note: Adds unmistakable visual feedback when the Sentinel Sessions affordance is clicked: active button state, highlighted Sessions canvas, and in-canvas status banner. Avoids Programs, Source lifecycle/data/API, Tower, and private-plane schema changes.
+    note: "Adds unmistakable visual feedback when the Sentinel Sessions affordance is clicked: active button state, highlighted Sessions canvas, and in-canvas status banner. Avoids Programs, Source lifecycle/data/API, Tower, and private-plane schema changes."
     completed_at: "2026-05-02T20:20:00-05:00"

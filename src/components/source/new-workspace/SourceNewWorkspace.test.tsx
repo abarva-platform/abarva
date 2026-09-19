@@ -39,6 +39,27 @@ const request: SourceNewEventView = {
   decisionOwner: null,
 };
 
+const responseFile: SourceNewFileRow = {
+  id: "response-1",
+  phase: "other",
+  artifactGroup: "upload",
+  artifactType: "vendor_response_pack",
+  title: "Candidate response pack",
+  fileName: "candidate-response.pdf",
+  fileFormat: "pdf",
+  fileSize: 4096,
+  version: 1,
+  status: "approved",
+  lifecycleState: "current",
+  generatedAt: "2026-03-10T00:00:00Z",
+  generatedBy: "Uploader",
+  sourceBasis: null,
+  blobSha256: "sha-response",
+  approvalState: "approved",
+  approvedBy: "Reviewer",
+  approvedAt: "2026-03-11T00:00:00Z",
+};
+
 describe("SourceNewWorkspace", () => {
   it("shows one next action for a request without marking missing facts complete", () => {
     render(<SourceNewWorkspace event={request} files={[]} />);
@@ -376,6 +397,90 @@ describe("SourceNewWorkspace", () => {
         "This event has moved past the phases shown here. Its current stage is Evaluation.",
       ),
     ).toBeTruthy();
+  });
+
+  it("mounts Stage 04 vendor readiness on the reachable Source New responses stage", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+          solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-08T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "person-1",
+        }}
+        files={[responseFile]}
+      />,
+    );
+
+    expect(
+      screen.getByRole("region", { name: "Stage 04 vendor readiness" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Candidate response readiness")).toBeTruthy();
+    expect(
+      screen.getByText("1 tenant-scoped response file available"),
+    ).toBeTruthy();
+    expect(screen.getByText("Ready for evaluation intake review")).toBeTruthy();
+  });
+
+  it("shows a tenant-scoped empty state instead of inventing candidate vendors", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+          solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-08T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "person-1",
+        }}
+        files={[]}
+      />,
+    );
+
+    expect(
+      screen.getByText("No tenant-scoped candidate response files loaded"),
+    ).toBeTruthy();
+    expect(screen.getByText("Blocked before evaluation")).toBeTruthy();
+    expect(document.body.textContent ?? "").not.toMatch(
+      /Vendor A|Northbridge|Ardent/,
+    );
+  });
+
+  it("keeps candidate readiness separate from award readiness and exposes no contact or send action", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+          solicitationMotion: "rfp",
+        }}
+        files={[responseFile]}
+      />,
+    );
+
+    const readiness = screen.getByRole("region", {
+      name: "Stage 04 vendor readiness",
+    });
+    expect(
+      within(readiness).getAllByText(/candidate response evidence/i).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/It is not award readiness/i)).toBeTruthy();
+    expect(
+      screen.getByText(/No accepted solicitation motion is recorded/i),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        /Vendor contact, send, and notification actions stay unavailable/i,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /send|contact/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /send|contact/i })).toBeNull();
+    expect(document.body.textContent ?? "").not.toMatch(
+      /award approved|selected vendor/i,
+    );
   });
 
   it("never prints a raw stage key to an operator", () => {
