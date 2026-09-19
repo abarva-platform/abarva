@@ -12,6 +12,10 @@ import {
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { ApprovalLedgerRow } from "@/lib/source/approval-ledger-model";
 import {
+  buildApprovalWorkspaceDecisions,
+  type ApprovalDecisionGroup,
+} from "@/lib/source/approval-workspace-decisions";
+import {
   SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
   SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
   SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
@@ -158,6 +162,7 @@ export interface SourceShellApprovalsWorkspace {
   items: ApprovalsInboxItem[];
   currentStageItem: ApprovalsInboxItem | null;
   readinessLine: string;
+  pendingDecisionGroups: ApprovalDecisionGroup[];
   /** Full 11-stage per-event ledger — see approval-ledger.ts. Empty when not loaded. */
   ledger: ApprovalLedgerRow[];
 }
@@ -393,14 +398,13 @@ export function buildSourceEventShellView(
         input.event.status === "completed" &&
         current &&
         approvalEvidenced === true;
-      const state: SourceShellJourneyStage["state"] =
-        completedCurrentStage
-          ? "complete"
-          : index < currentStageIndex
-            ? "past"
-            : current
-              ? "current"
-              : "future";
+      const state: SourceShellJourneyStage["state"] = completedCurrentStage
+        ? "complete"
+        : index < currentStageIndex
+          ? "past"
+          : current
+            ? "current"
+            : "future";
       const stageTotal = viewed && state !== "past" ? Math.max(total, 1) : 1;
       const stageDone = state === "past" ? stageTotal : viewed ? ready : 0;
       return {
@@ -452,10 +456,11 @@ export function buildSourceEventShellView(
   const currentStageApprovalWorkspaceHref = `/source/events/${encodeURIComponent(input.event.id)}?stage=${encodeURIComponent(visibleCurrentStageKey)}&workspace=approvals`;
   const viewedStageIsCurrent = input.viewedStageKey === visibleCurrentStageKey;
   const completedViewedStage = total > 0 && ready === total;
-  const viewedStageApprovalRecorded = approvedStageKeys.has(input.viewedStageKey);
+  const viewedStageApprovalRecorded = approvedStageKeys.has(
+    input.viewedStageKey,
+  );
   const viewedStageApproval = approvalLedger.find(
-    (row) =>
-      row.stageKey === input.viewedStageKey && row.state === "approved",
+    (row) => row.stageKey === input.viewedStageKey && row.state === "approved",
   );
   const approvalTraceState: SourceEventShellView["stage"]["approvalTraceState"] =
     !viewedStageApprovalRecorded
@@ -502,6 +507,24 @@ export function buildSourceEventShellView(
             : "Review & decide",
         }
       : normalizedCurrentStageItem;
+  const pendingDecisionGroups = viewedStageIsCurrent
+    ? buildApprovalWorkspaceDecisions({
+        eventId: input.event.id,
+        eventCode: input.event.code,
+        eventName: input.event.name,
+        currentStageKey: visibleCurrentStageKey,
+        stageLabel: sourceJourneyLabelForStage(
+          input.journey,
+          visibleCurrentStageKey,
+        ),
+        currentStageItem,
+        approvalRecorded: currentStageApprovalRecorded,
+        workflowComplete: completedViewedStage,
+        artifactsReady: artifactReadiness.ready,
+        gateActionArmed: Boolean(input.stageView.gate.action),
+        approvalRationale: input.stageView.gate.action?.rationale ?? null,
+      })
+    : [];
   // currentStageItem already renders featured above the list — exclude it
   // here so it doesn't also render a second time inside the list.
   const approvals = thisEventApprovals.filter(
@@ -543,14 +566,13 @@ export function buildSourceEventShellView(
       activeStep,
       approvalRecorded: viewedStageApprovalRecorded,
       approvalTraceState,
-      gateReadinessLine:
-        viewedStageApprovalRecorded
-          ? stageReadyWithArtifactGaps
-            ? approvalTraceState === "historical"
-              ? `${viewedStageLabel} advanced under an earlier control state. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
-              : `${viewedStageLabel} approval is recorded. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
-            : `${viewedStageLabel} approval is recorded. No further approval is required for this stage.`
-          : completedViewedStage && artifactReadiness.ready
+      gateReadinessLine: viewedStageApprovalRecorded
+        ? stageReadyWithArtifactGaps
+          ? approvalTraceState === "historical"
+            ? `${viewedStageLabel} advanced under an earlier control state. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
+            : `${viewedStageLabel} approval is recorded. ${artifactReadiness.blockerCount} current artifact review gap${artifactReadiness.blockerCount === 1 ? " remains" : "s remain"} for remediation; no duplicate approval is required.`
+          : `${viewedStageLabel} approval is recorded. No further approval is required for this stage.`
+        : completedViewedStage && artifactReadiness.ready
           ? "Stage complete - required inputs and gate artifacts are ready. Open the approval workspace to advance."
           : stageReadyWithArtifactGaps
             ? artifactReadiness.line
@@ -599,11 +621,11 @@ export function buildSourceEventShellView(
     approvals: {
       items: approvals,
       currentStageItem,
-      readinessLine:
-        viewedStageApprovalRecorded
-          ? `${viewedStageLabel} approval is recorded. No further stage decision is required.`
-          : currentStageItem?.readiness ??
-            "No approval item is currently routed for this viewed stage.",
+      readinessLine: viewedStageApprovalRecorded
+        ? `${viewedStageLabel} approval is recorded. No further stage decision is required.`
+        : (currentStageItem?.readiness ??
+          "No approval item is currently routed for this viewed stage."),
+      pendingDecisionGroups,
       ledger: Array.from(input.approvalLedger ?? []),
     },
     guidebook: {
@@ -626,6 +648,12 @@ function normalizeCurrentStageApprovalItem(
     stageLabel,
     ask: `Approve advancing out of ${stageLabel}.`,
     href,
+    versionKey: item.versionKey ?? `${item.eventId}:${stageKey}`,
+    versionLabel: item.versionLabel ?? stageLabel,
+    requiredReviewerRole:
+      item.requiredReviewerRole === undefined
+        ? "Source stage approver"
+        : item.requiredReviewerRole,
   };
 }
 

@@ -77,7 +77,78 @@ const APPROVAL: ApprovalsInboxItem = {
   estimatedValueUsd: EVENT.valueAtStakeUsd,
   href: `/source/events/${EVENT.id}?stage=scope`,
   actionLabel: "Review & decide",
+  versionKey: `${EVENT.id}:scope`,
+  versionLabel: "Scope",
+  requiredReviewerRole: "Source stage approver",
 };
+
+const COMPLETE_SCOPE_STAGE = {
+  ...SAMPLE_SCOPE_STAGE,
+  tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) => ({
+    ...task,
+    state: "done" as const,
+    evidenceComplete: true,
+  })),
+};
+
+const SCOPE_READY_ARTIFACTS = [
+  {
+    id: "scope-app-inventory",
+    artifactCode: "d04_app_inv",
+    stageKey: "scope",
+    status: "client_final",
+    title: "Application Inventory & Tiering",
+  },
+  {
+    id: "scope-memo",
+    artifactCode: "d05_scope_memo",
+    stageKey: "scope",
+    status: "client_final",
+    isClientFinal: true,
+    title: "Scope Memo with Boundaries",
+    body: `Decision requested: approve the Scope boundary for the managed-services sourcing event.
+    Executive summary: the application estate, service tower, exclusion log, ticket baseline,
+    retained responsibility model, and sponsor commitment are complete enough for a sourcing
+    owner to advance to the next gate. Scope in: Tier 1 and Tier 2 business applications,
+    L2/L3 support services, knowledge transfer, service desk escalation, incident triage,
+    and operational reporting. Scope out: end-user device support, SOC operations, business
+    process ownership, and applications already in decommission. Evidence basis: application
+    inventory, scope memo, exclusion log, ticket history, retained responsibility matrix, and
+    sponsor sign-off. Required exhibits: in scope towers, support tiers, exclusions,
+    run change boundary, open scope questions. The in scope towers are application
+    management, incident management, release support, and reporting. Support tiers are
+    Tier 1 business-critical and Tier 2 important applications. Exclusions are end-user
+    device support, SOC operations, and decommissioning apps. The run/change boundary puts
+    steady-state support in scope and project delivery out of scope. Open scope questions:
+    final vendor-facing volume bands and SLA history must be confirmed in the next gate.
+    sponsor sign-off. Remaining risk: pricing should continue to validate volumes and SLA
+    history before vendor release. Recommended action: open the Scope approval gate and
+    advance to RFP preparation.`,
+    bodyGenerationMetadata: {
+      qualityGate: {
+        passed: true,
+        overallScore: 9,
+        finalSummary: "Passed: evidence-bound scope memo.",
+        unsupportedClaims: [],
+        missingEvidence: [],
+      },
+    },
+  },
+  {
+    id: "scope-exclusions",
+    artifactCode: "d06_excl_log",
+    stageKey: "scope",
+    status: "client_final",
+    title: "Exclusion Log",
+  },
+  {
+    id: "scope-ticket-history",
+    artifactCode: "d07_ticket_synth",
+    stageKey: "scope",
+    status: "client_final",
+    title: "Ticket History Synthesis",
+  },
+];
 
 describe("SourceAnalyticsCanvas stage workflow", () => {
   beforeEach(() => {
@@ -100,9 +171,9 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
         viewStage="scope"
         tenantName="Demo Client"
         stageView={{
-          ...SAMPLE_SCOPE_STAGE,
+          ...COMPLETE_SCOPE_STAGE,
           gate: {
-            ...SAMPLE_SCOPE_STAGE.gate,
+            ...COMPLETE_SCOPE_STAGE.gate,
             action: {
               eventId: EVENT.id,
               rationale:
@@ -116,6 +187,7 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
             },
           },
         }}
+        artifacts={SCOPE_READY_ARTIFACTS}
         approvalItems={[APPROVAL]}
         initialWorkspace="approvals"
       />,
@@ -126,11 +198,11 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
       screen.getByTestId("source-stage-gate-approval-control"),
     ).toBeInTheDocument();
     expect(screen.getByTestId("source-stage-gate-approve")).toHaveTextContent(
-      "Approve exception and advance",
+      "Approve now",
     );
     expect(screen.queryByText(/Approve with gaps/)).toBeNull();
     expect(
-      screen.getByText(/Exception approval is audited/),
+      screen.getByText(/Version binding, reviewer role, readiness/),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("source-stage-gate-approve"));
