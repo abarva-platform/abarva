@@ -539,6 +539,7 @@ export function buildCensus(root) {
       directory,
       testFiles: entry.testFiles,
       coveredTestFiles: entry.covered,
+      unrunTestFiles: entry.testFiles - entry.covered,
       via: [...entry.via].sort(),
       governedRisk: governedRiskForDirectory(
         root,
@@ -551,13 +552,19 @@ export function buildCensus(root) {
         b.testFiles - a.testFiles || a.directory.localeCompare(b.directory),
     );
 
+  // Rank on files no workflow runs, not on whether the directory has any
+  // covered file at all. Filtering on `coveredTestFiles === 0` made a
+  // directory with one covered file of eighty rank below an empty one with
+  // two, and in practice excluded every partially covered directory from the
+  // queue this ranking exists to order — 257 unrun files across 22
+  // directories, none of them visible here, at the time this changed.
   const governedRiskRows = rows
-    .filter((row) => row.coveredTestFiles === 0)
+    .filter((row) => row.unrunTestFiles > 0)
     .filter((row) => row.governedRisk.score > 0)
     .sort(
       (a, b) =>
         b.governedRisk.score - a.governedRisk.score ||
-        b.testFiles - a.testFiles ||
+        b.unrunTestFiles - a.unrunTestFiles ||
         a.directory.localeCompare(b.directory),
     )
     .map((row, index) => ({
@@ -567,6 +574,7 @@ export function buildCensus(root) {
   const governedRiskRanking = governedRiskRows.map((row) => ({
     directory: row.directory,
     testFiles: row.testFiles,
+    unrunTestFiles: row.unrunTestFiles,
     governedRisk: {
       score: row.governedRisk.score,
       band: row.governedRisk.band,
@@ -579,13 +587,20 @@ export function buildCensus(root) {
     .map((row) => ({
       directory: row.directory,
       testFiles: row.testFiles,
+      unrunTestFiles: row.unrunTestFiles,
       governedRisk: row.governedRisk,
     }));
   const uncoveredDirectories = rows
     .filter((row) => row.coveredTestFiles === 0)
-    .map(({ governedRisk: _governedRisk, ...row }) => row);
+    .map(({ governedRisk: _governedRisk, unrunTestFiles: _unrun, ...row }) => row);
   const partialDirectories = rows.filter(
     (row) => row.coveredTestFiles > 0 && row.coveredTestFiles < row.testFiles,
+  );
+  // The ranking's denominator: every directory holding a file no workflow
+  // runs, partial and uncovered alike. Without it `unclassifiedRiskDirectories`
+  // is a subtraction with an unprinted minuend.
+  const directoriesWithUnrunTestFiles = rows.filter(
+    (row) => row.unrunTestFiles > 0,
   );
 
   return {
@@ -596,7 +611,7 @@ export function buildCensus(root) {
       "Four hops are followed: workflow run step, npm script (recursively), repo script file, test-ratchet baseline JSON.",
       "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
-      "Uncovered directories are ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; test count is only a tie-breaker.",
+      "Every directory holding a file no workflow runs is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker.",
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
       "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op.",
@@ -612,6 +627,7 @@ export function buildCensus(root) {
       ).length,
       directoriesPartiallyCovered: partialDirectories.length,
       directoriesUncovered: uncoveredDirectories.length,
+      directoriesWithUnrunTestFiles: directoriesWithUnrunTestFiles.length,
       indeterminateInvocations: indeterminate.length,
       criticalGovernedRiskDirectories: governedRiskRanking.filter(
         (row) => row.governedRisk.band === "critical",
@@ -620,11 +636,11 @@ export function buildCensus(root) {
         (row) => row.governedRisk.band === "high",
       ).length,
       unclassifiedRiskDirectories:
-        uncoveredDirectories.length - governedRiskRanking.length,
+        directoriesWithUnrunTestFiles.length - governedRiskRanking.length,
     },
     indeterminateInvocations: indeterminate,
     partiallyCoveredDirectories: partialDirectories.map(
-      ({ governedRisk: _governedRisk, ...row }) => row,
+      ({ governedRisk: _governedRisk, unrunTestFiles: _unrun, ...row }) => row,
     ),
     governedRiskRanking,
     governedRiskEvidence,
@@ -640,7 +656,8 @@ function summarize(census) {
     `  run by a pull-request workflow: ${c.pullRequestCoveredTestFiles}`,
     `  run by no workflow:             ${c.uncoveredTestFiles}`,
     `  directories with tests:         ${c.directoriesWithTests} (${c.directoriesFullyCovered} fully covered, ${c.directoriesPartiallyCovered} partial, ${c.directoriesUncovered} uncovered)`,
-    `  uncovered governed risk:         ${c.criticalGovernedRiskDirectories} critical, ${c.highGovernedRiskDirectories} high`,
+    `  directories with unrun tests:   ${c.directoriesWithUnrunTestFiles}`,
+    `  governed risk among them:       ${c.criticalGovernedRiskDirectories} critical, ${c.highGovernedRiskDirectories} high`,
   ];
   if (c.indeterminateInvocations > 0) {
     lines.push(
@@ -652,10 +669,10 @@ function summarize(census) {
   }
   const governedHead = census.governedRiskRanking.slice(0, 5);
   if (governedHead.length > 0) {
-    lines.push("  top uncovered governed-risk directories:");
+    lines.push("  top governed-risk directories by unrun tests:");
     for (const row of governedHead) {
       lines.push(
-        `    ${row.governedRisk.rank}. ${row.directory} (${row.governedRisk.band}; ${row.testFiles} tests; ${row.governedRisk.signals.join(", ")})`,
+        `    ${row.governedRisk.rank}. ${row.directory} (${row.governedRisk.band}; ${row.unrunTestFiles} unrun of ${row.testFiles} tests; ${row.governedRisk.signals.join(", ")})`,
       );
     }
   }
