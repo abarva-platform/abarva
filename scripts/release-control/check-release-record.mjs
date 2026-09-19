@@ -46,6 +46,10 @@ const RELEASE_RELEVANT_PATTERNS = [
 ];
 
 const RELEASE_RECORD_PATTERN = /^docs\/releases\/records\/[^/]+\.md$/;
+const RELEASE_RECORD_TEMPLATE_PATH = path.join(
+  process.cwd(),
+  'docs/releases/templates/release-record-template.md',
+);
 
 function argValue(name, fallback) {
   const index = process.argv.indexOf(name);
@@ -101,6 +105,37 @@ function sectionBody(markdown, section) {
   return body.join('\n').trim();
 }
 
+function validateReleaseRecordTemplate() {
+  if (!existsSync(RELEASE_RECORD_TEMPLATE_PATH)) {
+    return ['release record template is missing'];
+  }
+
+  const markdown = readFileSync(RELEASE_RECORD_TEMPLATE_PATH, 'utf8');
+  const headings = [...markdown.matchAll(/^## (.+)$/gm)].map((match) => match[1].trim());
+  const required = new Set(REQUIRED_SECTIONS);
+  const present = new Set(headings);
+  const problems = [];
+
+  for (const section of REQUIRED_SECTIONS) {
+    if (!present.has(section)) {
+      problems.push(`missing required section "## ${section}"`);
+    }
+  }
+  for (const section of headings) {
+    if (!required.has(section)) {
+      problems.push(`unexpected section "## ${section}"`);
+    }
+  }
+  if (
+    headings.length === REQUIRED_SECTIONS.length &&
+    headings.some((section, index) => section !== REQUIRED_SECTIONS[index])
+  ) {
+    problems.push('required section order does not match the release gate');
+  }
+
+  return problems;
+}
+
 function validateRecord(file, tenantNarrativeTerms, releaseLanes) {
   const absolute = path.resolve(process.cwd(), file);
   if (!existsSync(absolute)) {
@@ -145,6 +180,14 @@ function validateRecord(file, tenantNarrativeTerms, releaseLanes) {
 
   return errors;
 }
+
+const templateProblems = validateReleaseRecordTemplate();
+if (templateProblems.length > 0) {
+  console.error('Release record template contract failed.');
+  for (const problem of templateProblems) console.error(`- ${problem}`);
+  process.exit(1);
+}
+console.log('Release record template contract passed.');
 
 const base =
   argValue('--base', process.env.GITHUB_BASE_SHA) ||

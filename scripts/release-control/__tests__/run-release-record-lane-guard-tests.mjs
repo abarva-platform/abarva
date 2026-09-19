@@ -186,6 +186,7 @@ function runGateOn(layerImpact) {
 
     mkdirSync(path.join(dir, 'scripts', 'release-control'), { recursive: true });
     mkdirSync(path.join(dir, 'docs', 'releases', 'records'), { recursive: true });
+    mkdirSync(path.join(dir, 'docs', 'releases', 'templates'), { recursive: true });
     mkdirSync(path.join(dir, 'datasets', 'tenant-inputs'), { recursive: true });
     mkdirSync(path.join(dir, 'src'), { recursive: true });
 
@@ -200,6 +201,10 @@ function runGateOn(layerImpact) {
       );
     }
     cpSync(path.join(repoRoot, 'AGENTS.md'), path.join(dir, 'AGENTS.md'));
+    cpSync(
+      path.join(repoRoot, 'docs', 'releases', 'templates', 'release-record-template.md'),
+      path.join(dir, 'docs', 'releases', 'templates', 'release-record-template.md'),
+    );
     cpSync(
       path.join(repoRoot, 'datasets', 'tenant-inputs', 'tenant-input-registry.json'),
       path.join(dir, 'datasets', 'tenant-inputs', 'tenant-input-registry.json'),
