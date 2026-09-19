@@ -593,6 +593,10 @@
     "audit:vercel-production-runtime:check": {
       "kind": "pr-gate"
     },
+    "check:intelligence-integration-quarantine": {
+      "kind": "pr-gate",
+      "reason": "Refuses a stale, expired or growing Intelligence integration quarantine list. The list is what keeps 25 red suites out of the Integration suites workflow while the other 8 run. It also does something the Source list does not: every entry names the retired paths whose ABSENCE is its reason, and this check fails when one of them comes back. Without that, an exclusion outlives its cause silently, which is the exact failure this backlog exists to refuse. Invoked by integration-suites.yml alongside the run it protects."
+    },
     "check:release-record-lane-guard": {
       "kind": "pr-gate"
     },

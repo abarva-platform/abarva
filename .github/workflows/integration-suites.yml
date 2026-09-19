@@ -92,6 +92,36 @@ name: Integration suites
 # sets agree. `integration-directory-ci-coverage.test.ts` now asserts that
 # agreement directly, so the next one fails locally instead of in CI.
 
+# 2026-09-19 · `intelligence` wired WITH A QUARANTINE, the first directory in
+# this workflow to need one. 33 suites, 26 red, 133 failing assertions — and the
+# triage found ONE cause, not 133 problems. 131 of the 133 are a source file
+# read as TEXT that does not exist: 107 ENOENT from `readFileSync` and 24
+# `existsSync(...) === true` on a path that is gone. Every one of them points at
+# `src/components/intelligence/` or a retired `src/app/intelligence/*` route
+# tree, and no file they name exists anywhere in the repository — the surface
+# was rebuilt as `src/components/intelligence-advisory/AdvisoryIntelligencePage`
+# at `src/app/(maestro)/intelligence/page.tsx`. So those 25 suites are stale
+# contracts for a surface that was deliberately replaced, not defects in
+# shipping code, and they were never governed coverage of behaviour even when
+# they were green.
+#
+# The remaining 2 failures were in a suite that DOES describe live code, and it
+# was repaired rather than excluded: one assertion matched a source literal
+# together with its quote characters, and one named copy absent from the file it
+# read — whose five sibling NEGATIVE assertions therefore passed vacuously,
+# against copy that exists nowhere in `src/`.
+#
+# Wiring this directory adds 8 suites and 131 assertions to CI. It does NOT add
+# the 609 that "pass" inside the red suites: a quarantined suite runs nowhere,
+# and reporting its passing assertions as coverage would be the same overstating
+# this backlog exists to refuse.
+#
+# Exclusions are named, with reasons, in
+# scripts/quality/intelligence-integration-quarantine.json. That list watches
+# the retired paths for RETURN: restore any file it names and
+# check:intelligence-integration-quarantine fails, so the carve-out cannot
+# outlive its reason.
+
 on:
   merge_group:
   pull_request:
@@ -125,6 +155,18 @@ jobs:
       # of these directories runs the day it lands.
       - name: Run the integration directories that pass on main
         run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/setup src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants src/__tests__/integration/agent/agent1-foundation.test.ts src/__tests__/integration/demo-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/integration/demo-p0-graceful-degradation.test.ts src/__tests__/integration/programs-api-contracts.test.ts src/__tests__/integration/programs-demo-beats.test.ts src/__tests__/integration/programs-enhancement-seed-planner.test.ts src/__tests__/integration/programs-enhancement-seed-writer.test.ts src/__tests__/integration/programs-enhancement-spec.test.ts src/__tests__/integration/programs-nexus-ask-route.test.ts src/__tests__/integration/programs-nexus-free-text.test.ts src/__tests__/integration/programs-quality-gates.test.ts --no-coverage --ci
+
+      - name: Refuse a stale or growing Intelligence quarantine list
+        run: npm run check:intelligence-integration-quarantine
+
+      # A separate step, not an extra path on the command above, because its
+      # exclusion flags are specific to this directory: folding them into the
+      # green command would apply an Intelligence-shaped ignore list to every
+      # other directory's run and make both harder to read. The runner and the
+      # path are still named literally here so the visibility gate sees them,
+      # and the path deliberately has no trailing slash.
+      - name: Run the Intelligence integration suites that pass on main
+        run: npx jest src/__tests__/integration/intelligence --no-coverage --ci $(node scripts/quality/intelligence-integration-ignore-args.mjs)
 
       - name: Refuse a new integration directory that no workflow reaches
         run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci
