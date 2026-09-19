@@ -59,6 +59,7 @@
     "check:release-record-lane-guard": "node scripts/release-control/__tests__/run-release-record-lane-guard-tests.mjs",
     "check:release-record-template-contract": "node scripts/release-control/__tests__/run-release-record-template-contract-tests.mjs",
     "check:release-record-tenant-narrative-guard": "node scripts/release-control/__tests__/run-release-record-tenant-narrative-guard-tests.mjs",
+    "check:tenant-narrative-term-drift": "node scripts/release-control/check-tenant-narrative-term-drift.mjs",
     "migration:seals:check": "node scripts/release-control/check-migration-seals.mjs",
     "knowledge:hcdn-job-runner": "node scripts/knowledge/hcdn-job-runner.mjs",
     "test:hcdn-job-runner": "node scripts/knowledge/__tests__/run-hcdn-job-runner-tests.mjs",

@@ -12,6 +12,15 @@ const DEFAULT_REGISTRY_PATH = 'datasets/tenant-inputs/tenant-input-registry.json
 // part that is an ordinary English word and is not listed here becomes a term
 // that is refused everywhere in prose. That is how 'first' — from a key whose
 // two other parts were already listed — came to be refused.
+// check:tenant-narrative-term-drift makes that read happen: it fails when the
+// registry starts or stops deriving a single-word term, so a new tenant cannot
+// add one silently.
+//
+// 'air' and 'new' are inert. addTerm drops anything shorter than four
+// characters, so neither could ever be derived and removing them from this list
+// would change nothing. They are kept because they read as documentation of the
+// criterion, not because they are doing work — do not take their presence as
+// evidence that this list is what protects a three-letter word.
 const GENERIC_TENANT_WORDS = new Set([
   'air',
   'airline',
