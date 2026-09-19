@@ -50,4 +50,5 @@ jobs:
           src/__tests__/integration/programs/programs-create-route.test.ts
           src/__tests__/integration/programs/programs-auth-mode-and-tenant-guards.test.ts
           src/__tests__/integration/programs/programs-mutation-routes-tenant-guards.test.ts
+          src/__tests__/integration/programs/programs-detail-prog22-deliverables-canvas.test.ts
           --runInBand

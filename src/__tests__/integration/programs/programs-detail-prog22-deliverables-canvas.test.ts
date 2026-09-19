@@ -9,6 +9,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import ts from 'typescript';
 import { buildDeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-polish-view';
 import type { ProgramDetailView } from '@/lib/programs/programs-types';
 
@@ -23,12 +24,34 @@ const LIB_PATH = join(
 
 const detailSrc = readFileSync(DETAIL_PATH, 'utf8');
 const libSrc = readFileSync(LIB_PATH, 'utf8');
+const detailAst = ts.createSourceFile(
+  DETAIL_PATH,
+  detailSrc,
+  ts.ScriptTarget.Latest,
+  true,
+  ts.ScriptKind.TSX,
+);
+
+function importedNamesFrom(modulePath: string): string[] {
+  const declaration = detailAst.statements.find(
+    (statement): statement is ts.ImportDeclaration =>
+      ts.isImportDeclaration(statement) &&
+      ts.isStringLiteral(statement.moduleSpecifier) &&
+      statement.moduleSpecifier.text === modulePath,
+  );
+
+  const bindings = declaration?.importClause?.namedBindings;
+  if (!bindings || !ts.isNamedImports(bindings)) return [];
+  return bindings.elements.map((element) => element.name.text);
+}
 
 // ─── ProgramDetailPage · imports ─────────────────────────────────────────────
 
 describe('PROG22 · ProgramDetailPage · deliverables canvas imports', () => {
   it('imports buildDeliverablesCanvasView', () => {
-    expect(detailSrc).toContain("from '@/lib/programs/deliverable-canvas-polish-view'");
+    expect(
+      importedNamesFrom('@/lib/programs/deliverable-canvas-polish-view'),
+    ).toContain('buildDeliverablesCanvasView');
   });
 
   it('imports DeliverablesCanvasView type', () => {
