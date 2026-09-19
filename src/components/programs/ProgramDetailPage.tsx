@@ -158,6 +158,8 @@ export interface ProgramDetailPageProps {
   hasTenantKey?: boolean;
 }
 
+const EMPTY_NEXUS_ARTIFACTS: NexusArtifact[] = [];
+
 type SectionKey =
   | "overview"
   | "gate"
@@ -5121,7 +5123,7 @@ export function ProgramDetailPage({
   timelineFilters,
   preservedSearchParams,
   phase0Primer,
-  initialNexusArtifacts = [],
+  initialNexusArtifacts = EMPTY_NEXUS_ARTIFACTS,
   hasTenantKey = false,
 }: ProgramDetailPageProps) {
   const router = useRouter();
