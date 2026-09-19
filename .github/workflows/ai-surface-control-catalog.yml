@@ -89,3 +89,6 @@ jobs:
 
       - name: Exercise Moves deliverable canvas disclosure controls
         run: npx jest --runTestsByPath src/lib/programs/__tests__/deliverable-canvas-polish-view.controls.test.ts --runInBand
+
+      - name: Exercise programs gate approval modal
+        run: npx jest --runTestsByPath src/components/programs/__tests__/ProgramDetailPage.gate-approval.controls.test.tsx --runInBand
