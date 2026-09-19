@@ -44,6 +44,10 @@ type Finding = {
   waived: string | null;
 };
 
+type UnresolvedComparison = {
+  bucket: "ambiguous" | "not-a-subject" | "resolvable-with-work";
+};
+
 type Run = {
   status: number;
   stdout: string;
@@ -51,6 +55,7 @@ type Run = {
     domains: number;
     counts: { considered: number; resolved: number; unresolved: number };
     findings: Finding[];
+    unresolvedComparisons?: UnresolvedComparison[];
   } | null;
 };
 
@@ -61,6 +66,7 @@ function run(args: string[]): Run {
     stdout = execFileSync("node", [script, ...args], {
       encoding: "utf8",
       cwd: repoRoot,
+      maxBuffer: 1024 * 1024 * 8,
     });
   } catch (error) {
     const e = error as { status?: number; stdout?: string };
@@ -68,9 +74,19 @@ function run(args: string[]): Run {
     stdout = e.stdout ?? "";
   }
   const start = stdout.indexOf("{");
-  const end = stdout.lastIndexOf("}");
-  const report =
-    start >= 0 && end > start ? JSON.parse(stdout.slice(start, end + 1)) : null;
+  let report = null;
+  for (
+    let rootClose = stdout.lastIndexOf("\n}\n");
+    start >= 0 && rootClose > start;
+    rootClose = stdout.lastIndexOf("\n}\n", rootClose - 1)
+  ) {
+    try {
+      report = JSON.parse(stdout.slice(start, rootClose + 2));
+      break;
+    } catch {
+      // Keep walking back through nested object endings until the root object parses.
+    }
+  }
   return { status, stdout, report };
 }
 
@@ -375,6 +391,62 @@ describe("enum reachability · resolution is never guessed", () => {
     try {
       const { status, report } = run(f.args);
       expect(report?.findings).toEqual([]);
+      expect(status).toBe(0);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("judges a qualified table-name reference when the statement names that table", () => {
+    const f = fixture(
+      "CREATE TABLE source.approval_request (approval_state TEXT CHECK (approval_state IN ('pending','approved','sent_back','cancelled')));",
+      [
+        "export const q = async (db) => db.query(`",
+        "  INSERT INTO source.approval_request (approval_state)",
+        "  VALUES ('pending')",
+        "  ON CONFLICT (approval_state)",
+        "  DO UPDATE SET approval_state = CASE",
+        "    WHEN source.approval_request.approval_state = 'sent_back' THEN 'pending'",
+        "    ELSE source.approval_request.approval_state",
+        "  END",
+        "`);",
+      ].join("\n"),
+    );
+    try {
+      const { status, report } = run(f.args);
+      expect(report?.counts.resolved).toBe(1);
+      expect(report?.counts.unresolved).toBe(0);
+      expect(report?.findings).toEqual([]);
+      expect(status).toBe(0);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("does not judge a qualified table-name reference when that table does not constrain the column", () => {
+    const f = fixture(
+      [
+        "CREATE TABLE source_artifacts (approval_state TEXT CHECK (approval_state IN ('draft','approved')));",
+        "CREATE TABLE source.approval_request (approval_state TEXT);",
+      ].join("\n"),
+      [
+        "export const q = async (db) => db.query(`",
+        "  INSERT INTO source.approval_request (approval_state)",
+        "  VALUES ('pending')",
+        "  ON CONFLICT (approval_state)",
+        "  DO UPDATE SET approval_state = CASE",
+        "    WHEN source.approval_request.approval_state = 'sent_back' THEN 'pending'",
+        "    ELSE source.approval_request.approval_state",
+        "  END",
+        "`);",
+      ].join("\n"),
+    );
+    try {
+      const { status, report } = run([...f.args, "--include-unresolved"]);
+      expect(report?.counts.resolved).toBe(0);
+      expect(report?.counts.unresolved).toBe(1);
+      expect(report?.unresolvedComparisons).toHaveLength(1);
+      expect(report!.unresolvedComparisons![0].bucket).toBe("not-a-subject");
       expect(status).toBe(0);
     } finally {
       f.cleanup();

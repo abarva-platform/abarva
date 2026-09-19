@@ -43,8 +43,9 @@
  *                 left behind by a vocabulary change.
  */
 
-import { readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { createHash } from 'node:crypto';
+import { mkdirSync, readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // ─────────────────────────────────────────────────────────────────────
@@ -393,25 +394,219 @@ function judge({ file, text, line, form, domain, values, resolution, findings, s
  * only accepted when exactly one table in the statement constrains that
  * column. Ambiguity is never resolved by guessing.
  */
-function resolveDomain(candidates, qualifier, tables, aliases) {
-  if (!candidates) return null;
+function tableMatchesQualifier(table, qualifier) {
+  return table === qualifier || table.endsWith(`.${qualifier}`);
+}
+
+function resolveDomainOrUnresolved(candidates, qualifier, tables, aliases) {
+  if (!candidates) return { resolved: null, unresolved: null };
   if (qualifier) {
-    if (!aliases.has(qualifier)) return null;
+    if (!aliases.has(qualifier)) {
+      const namedTables = [...tables].filter((table) => tableMatchesQualifier(table, qualifier));
+      const matched = candidates.filter((c) => namedTables.includes(c.table));
+      if (matched.length === 1) {
+        return {
+          resolved: {
+            domain: matched[0],
+            resolution: `table qualifier ${qualifier} -> ${matched[0].table}`,
+          },
+          unresolved: null,
+        };
+      }
+      if (namedTables.length > 0) {
+        return {
+          resolved: null,
+          unresolved: {
+            bucket: 'not-a-subject',
+            reason: 'qualified-table-not-constrained-for-column',
+            statementTables: namedTables,
+          },
+        };
+      }
+      return {
+        resolved: null,
+        unresolved: {
+          bucket: 'resolvable-with-work',
+          reason: 'unknown-qualifier',
+        },
+      };
+    }
     const table = aliases.get(qualifier);
-    if (!table) return null; // alias of a CTE — not a base column
+    if (!table) {
+      return {
+        resolved: null,
+        unresolved: {
+          bucket: 'resolvable-with-work',
+          reason: 'cte-alias',
+        },
+      };
+    }
     const domain = candidates.find((c) => c.table === table);
-    return domain ? { domain, resolution: `alias ${qualifier} -> ${table}` } : null;
+    return domain
+      ? {
+          resolved: { domain, resolution: `alias ${qualifier} -> ${table}` },
+          unresolved: null,
+        }
+      : {
+          resolved: null,
+          unresolved: {
+            bucket: 'not-a-subject',
+            reason: 'alias-table-not-constrained-for-column',
+            statementTables: [table],
+          },
+        };
   }
   const matched = candidates.filter((c) => tables.has(c.table));
-  if (matched.length !== 1) return null;
+  if (matched.length === 0) {
+    return {
+      resolved: null,
+      unresolved: {
+        bucket: 'not-a-subject',
+        reason: tables.size ? 'no-constrained-table-in-statement' : 'no-table-in-statement',
+        statementTables: [...tables],
+      },
+    };
+  }
+  if (matched.length > 1) {
+    return {
+      resolved: null,
+      unresolved: {
+        bucket: 'ambiguous',
+        reason: 'ambiguous-unqualified-column',
+        statementTables: matched.map((c) => c.table),
+      },
+    };
+  }
   return {
-    domain: matched[0],
-    resolution: `sole constrained table in statement: ${matched[0].table}`,
+    resolved: {
+      domain: matched[0],
+      resolution: `sole constrained table in statement: ${matched[0].table}`,
+    },
+    unresolved: null,
   };
 }
 
 /** `.from('table')` … `.eq('col','lit')` / `.neq(...)` / `.in('col', ['a','b'])` */
-function scanQueryBuilder(file, text, byColumn, findings, seen, counts) {
+function recordUnresolved({
+  file,
+  line,
+  form,
+  qualifier = null,
+  column,
+  values,
+  candidates,
+  resolution,
+  unresolved,
+  unresolvedComparisons,
+}) {
+  unresolvedComparisons.push({
+    file,
+    line,
+    form,
+    bucket: unresolved.bucket,
+    reason: unresolved.reason,
+    reference: qualifier ? `${qualifier}.${column}` : column,
+    compared: [...new Set(values)].sort(),
+    candidateColumns: candidates.map((c) => `${c.table}.${c.column}`).sort(),
+    statementTables: (unresolved.statementTables ?? []).sort(),
+    resolution,
+  });
+}
+
+function countBy(items, keyOf) {
+  const out = {};
+  for (const item of items) {
+    const key = keyOf(item);
+    out[key] = (out[key] ?? 0) + 1;
+  }
+  return Object.fromEntries(Object.entries(out).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+function loadReportSanitizerTerms(registryPath = 'datasets/tenant-inputs/tenant-input-registry.json') {
+  const registry = JSON.parse(readFileSync(registryPath, 'utf8'));
+  const terms = new Set();
+  const add = (value) => {
+    const normalized = String(value ?? '').trim();
+    if (normalized.length >= 4) terms.add(normalized.toLowerCase());
+  };
+  for (const collection of ['activeTenants', 'retiredTenants']) {
+    for (const tenant of registry?.[collection] ?? []) {
+      add(tenant.tenantKey);
+      add(String(tenant.tenantKey ?? '').replace(/-/g, '_'));
+      add(String(tenant.tenantKey ?? '').replace(/[-_]+/g, ' '));
+      for (const part of String(tenant.tenantKey ?? '').split(/[-_\s]+/)) add(part);
+      add(tenant.displayName);
+      add(String(tenant.displayName ?? '').replace(/\s+/g, '_'));
+      for (const part of String(tenant.displayName ?? '').split(/[-_\s]+/)) add(part);
+    }
+  }
+  return Array.from(terms).sort((a, b) => b.length - a.length || a.localeCompare(b));
+}
+
+function sanitizePublicText(value, terms = loadReportSanitizerTerms()) {
+  let out = String(value ?? '');
+  for (const term of terms) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\[-_\s]+/g, '[-_\\s]+');
+    out = out.replace(new RegExp(escaped, 'gi'), '[tenant]');
+  }
+  return out;
+}
+
+function publicLocationId(file, line) {
+  return createHash('sha256').update(`${file}:${line}`).digest('hex').slice(0, 12);
+}
+
+function sanitizeUnresolvedComparison(entry, terms) {
+  return {
+    id: `enum-unresolved-${publicLocationId(entry.file, entry.line)}`,
+    bucket: entry.bucket,
+    reason: entry.reason,
+    file: sanitizePublicText(relative(process.cwd(), entry.file), terms),
+    line: entry.line,
+    form: entry.form,
+    reference: entry.reference,
+    compared: entry.compared.map((value) => sanitizePublicText(value, terms)),
+    candidateColumns: entry.candidateColumns.map((value) => sanitizePublicText(value, terms)),
+    statementTables: entry.statementTables.map((value) => sanitizePublicText(value, terms)),
+    resolution: entry.resolution,
+  };
+}
+
+function buildUnresolvedTriageReport({ domains, files, counts, unresolvedComparisons }) {
+  const terms = loadReportSanitizerTerms();
+  const entries = unresolvedComparisons.map((entry) => sanitizeUnresolvedComparison(entry, terms));
+  return {
+    report: 'enum-reachability-unresolved-triage',
+    generatedFrom: 'scripts/quality/enum-reachability.mjs',
+    domains: domains.size,
+    files: files.length,
+    counts,
+    unresolvedBuckets: countBy(unresolvedComparisons, (entry) => entry.bucket),
+    unresolvedReasons: countBy(unresolvedComparisons, (entry) => entry.reason),
+    parserLimitations: [
+      {
+        reason: 'unknown-qualifier',
+        bucket: 'resolvable-with-work',
+        note:
+          'The comparison names a qualifier that this bounded statement parser cannot tie to a base table. This may be a missing SQL alias, a CTE-scope issue, or parser work that needs a separate focused fix.',
+      },
+      {
+        reason: 'ambiguous-unqualified-column',
+        bucket: 'ambiguous',
+        note:
+          'The statement names multiple tables with a CHECK-constrained column of the same name. The sweep refuses to choose a table without a qualifier.',
+      },
+    ],
+    entries,
+  };
+}
+
+function writeJsonFile(file, value) {
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function scanQueryBuilder(file, text, byColumn, findings, seen, counts, unresolvedComparisons) {
   const from = /\.\s*from\(\s*['"]([a-z0-9_.]+)['"]\s*\)/gi;
   let m;
   while ((m = from.exec(text))) {
@@ -432,6 +627,22 @@ function scanQueryBuilder(file, text, byColumn, findings, seen, counts) {
       const domain = candidates.find((d) => d.table === table);
       if (!domain) {
         counts.unresolved += 1;
+        recordUnresolved({
+          file,
+          text,
+          line: lineAt(text, m.index + m[0].length + c.index),
+          form: 'query-builder',
+          column: c[2].toLowerCase(),
+          values: [c[3]],
+          candidates,
+          resolution: `.from('${table}')`,
+          unresolved: {
+            bucket: 'not-a-subject',
+            reason: 'query-builder-table-not-constrained-for-column',
+            statementTables: [table],
+          },
+          unresolvedComparisons,
+        });
         continue;
       }
       counts.resolved += 1;
@@ -461,6 +672,22 @@ function scanQueryBuilder(file, text, byColumn, findings, seen, counts) {
       const domain = candidates.find((d) => d.table === table);
       if (!domain) {
         counts.unresolved += 1;
+        recordUnresolved({
+          file,
+          text,
+          line: lineAt(text, m.index + m[0].length + c.index),
+          form: 'query-builder',
+          column: c[1].toLowerCase(),
+          values,
+          candidates,
+          resolution: `.from('${table}')`,
+          unresolved: {
+            bucket: 'not-a-subject',
+            reason: 'query-builder-table-not-constrained-for-column',
+            statementTables: [table],
+          },
+          unresolvedComparisons,
+        });
         continue;
       }
       counts.resolved += 1;
@@ -495,12 +722,13 @@ export function scanComparisons(files, readFile, domains) {
   }
 
   const findings = [];
+  const unresolvedComparisons = [];
   const seen = new Set();
   const counts = { considered: 0, resolved: 0, unresolved: 0 };
 
   for (const file of files) {
     const text = readFile(file);
-    scanQueryBuilder(file, text, byColumn, findings, seen, counts);
+    scanQueryBuilder(file, text, byColumn, findings, seen, counts, unresolvedComparisons);
 
     for (const literal of sqlLiterals(text)) {
       const sql = stripSqlComments(literal.body);
@@ -519,9 +747,23 @@ export function scanComparisons(files, readFile, domains) {
         if (!values) continue;
         counts.considered += 1;
         if (!candidates) continue;
-        const hit = resolveDomain(candidates, m[1] ? m[1].toLowerCase() : null, tables, aliases);
-        if (!hit) {
+        const qualifier = m[1] ? m[1].toLowerCase() : null;
+        const hit = resolveDomainOrUnresolved(candidates, qualifier, tables, aliases);
+        if (!hit.resolved) {
           counts.unresolved += 1;
+          recordUnresolved({
+            file,
+            text,
+            line: lineOfMatch(m.index),
+            form: 'sql-in',
+            qualifier,
+            column: m[2].toLowerCase(),
+            values,
+            candidates,
+            resolution: qualifier ? `qualifier ${qualifier}` : 'unqualified',
+            unresolved: hit.unresolved,
+            unresolvedComparisons,
+          });
           continue;
         }
         counts.resolved += 1;
@@ -530,9 +772,9 @@ export function scanComparisons(files, readFile, domains) {
           text,
           line: lineOfMatch(m.index),
           form: 'sql-in',
-          domain: hit.domain,
+          domain: hit.resolved.domain,
           values,
-          resolution: hit.resolution,
+          resolution: hit.resolved.resolution,
           findings,
           seen,
         });
@@ -544,9 +786,23 @@ export function scanComparisons(files, readFile, domains) {
         counts.considered += 1;
         const candidates = byColumn.get(m[2].toLowerCase());
         if (!candidates) continue;
-        const hit = resolveDomain(candidates, m[1] ? m[1].toLowerCase() : null, tables, aliases);
-        if (!hit) {
+        const qualifier = m[1] ? m[1].toLowerCase() : null;
+        const hit = resolveDomainOrUnresolved(candidates, qualifier, tables, aliases);
+        if (!hit.resolved) {
           counts.unresolved += 1;
+          recordUnresolved({
+            file,
+            text,
+            line: lineOfMatch(m.index),
+            form: 'sql-equality',
+            qualifier,
+            column: m[2].toLowerCase(),
+            values: [m[3].replace(/''/g, "'")],
+            candidates,
+            resolution: qualifier ? `qualifier ${qualifier}` : 'unqualified',
+            unresolved: hit.unresolved,
+            unresolvedComparisons,
+          });
           continue;
         }
         counts.resolved += 1;
@@ -555,16 +811,16 @@ export function scanComparisons(files, readFile, domains) {
           text,
           line: lineOfMatch(m.index),
           form: 'sql-equality',
-          domain: hit.domain,
+          domain: hit.resolved.domain,
           values: [m[3].replace(/''/g, "'")],
-          resolution: hit.resolution,
+          resolution: hit.resolved.resolution,
           findings,
           seen,
         });
       }
     }
   }
-  return { findings, counts };
+  return { findings, unresolvedComparisons, counts };
 }
 
 export { COMPARISON_FORMS };
@@ -614,8 +870,8 @@ export function runEnumReachabilitySweep({
 } = {}) {
   const domains = extractColumnDomains(migrationsDir);
   const files = collectSourceFiles(srcDir, { includeTests });
-  const { findings, counts } = scanComparisons(files, readFile, domains);
-  return { domains, files, findings, counts };
+  const { findings, unresolvedComparisons, counts } = scanComparisons(files, readFile, domains);
+  return { domains, files, findings, unresolvedComparisons, counts };
 }
 
 function parseArgs(argv) {
@@ -628,6 +884,8 @@ function parseArgs(argv) {
     else if (m[1] === 'floor') opts.floor = Number(m[2]);
     else if (m[1] === 'include-tests') opts.includeTests = true;
     else if (m[1] === 'json') opts.json = true;
+    else if (m[1] === 'include-unresolved') opts.includeUnresolved = true;
+    else if (m[1] === 'unresolved-report') opts.unresolvedReport = m[2];
   }
   return opts;
 }
@@ -635,7 +893,8 @@ function parseArgs(argv) {
 function main(argv = process.argv.slice(2)) {
   const opts = parseArgs(argv);
   const floor = Number.isFinite(opts.floor) ? opts.floor : RESOLUTION_FLOOR;
-  const { domains, files, findings, counts } = runEnumReachabilitySweep(opts);
+  const { domains, files, findings, unresolvedComparisons, counts } =
+    runEnumReachabilitySweep(opts);
   const unreachable = findings.filter((f) => f.verdict === 'UNREACHABLE');
   const partial = findings.filter((f) => f.verdict === 'PARTIAL');
   const waived = findings.filter((f) => f.verdict === 'WAIVED');
@@ -648,13 +907,26 @@ function main(argv = process.argv.slice(2)) {
   );
 
   if (opts.json) {
+    const report = { domains: domains.size, files: files.length, counts, findings };
+    if (opts.includeUnresolved) report.unresolvedComparisons = unresolvedComparisons;
     console.log(
       JSON.stringify(
-        { domains: domains.size, files: files.length, counts, findings },
+        report,
         null,
         2,
       ),
     );
+  }
+
+  if (opts.unresolvedReport) {
+    const report = buildUnresolvedTriageReport({
+      domains,
+      files,
+      counts,
+      unresolvedComparisons,
+    });
+    writeJsonFile(opts.unresolvedReport, report);
+    console.log(`enum-reachability: wrote unresolved triage report to ${opts.unresolvedReport}.`);
   }
 
   for (const f of findings) {
