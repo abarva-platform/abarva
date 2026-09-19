@@ -159,22 +159,30 @@ describe("the shared shaper manufactures no closing (backlog item 41)", () => {
     expect(shaped).toContain("The next renewal lands in March");
   });
 
-  it("the visible-answer contract is not the backstop here, and this states why", () => {
-    // Measured on the real contract, not assumed. A bare `Next:` closing is
-    // refused; the bulleted form #4038 actually removed is not. This case
-    // exists so that a future reader does not delete the cases above on the
-    // belief that the contract already covers them — and so that if the
-    // contract is ever widened to cover the bulleted form, this case fails
-    // and is updated deliberately rather than silently drifting.
+  it("the visible-answer contract is a backstop of last resort, and this states why", () => {
+    // UPDATED (backlog item 59). This case previously recorded that the
+    // contract refused a bare `Next:` closing but let the bulleted form
+    // #4038 removed pass — and asked to be updated deliberately if the
+    // contract were ever widened. It has been: both forms are now refused,
+    // measured on the real contract rather than assumed.
+    //
+    // The cases above still carry the weight, and the reason is sharper than
+    // before rather than weaker. The contract is not a safety net that makes
+    // a manufactured closing harmless: it runs after the answer is built and
+    // returns 422 on four routes, so a shaper that manufactures a closing
+    // costs the user their whole answer instead of giving them a clean one.
+    // Catching it late is not the same as not producing it.
     const body = "The portfolio has pressure in value attainment.";
+    const labelIds = (text: string) =>
+      assertVisibleAnswerContract(text).violations.map(
+        (violation) => violation.id,
+      );
+
     expect(
-      assertVisibleAnswerContract(`${body}\n\nNext: open the cited initiative.`)
-        .violations.map((violation) => violation.id),
+      labelIds(`${body}\n\nNext: open the cited initiative.`),
     ).toContain("scaffolding_label_next");
     expect(
-      assertVisibleAnswerContract(
-        `${body}\n\n- Next: open the cited initiative.`,
-      ).passed,
-    ).toBe(true);
+      labelIds(`${body}\n\n- Next: open the cited initiative.`),
+    ).toContain("scaffolding_label_next");
   });
 });

@@ -234,3 +234,112 @@ describe("visible answer contract · restored checks", () => {
     });
   });
 });
+
+/**
+ * The four scaffolding-label patterns were written as `(?:^|\n)\s*Label:`.
+ * `\s` matches spaces, tabs and newlines — it does NOT match a list marker or
+ * an emphasis marker. So every decorated form of the same label passed:
+ * `- Next:`, `* Next:`, `1. Next:`, `**Next:**`.
+ *
+ * That matters more than a general widening would, because the bulleted form
+ * is the one #4038 actually removed from the product. The gate written to stop
+ * it from coming back could not see it. The four labels share one literal
+ * shape, so all four had the same hole and are fixed together rather than one
+ * being fixed and three left.
+ *
+ * This gate returns 422 on four routes and forces a degraded fallback on a
+ * fifth, so a false positive costs the user their answer. The reach is
+ * therefore widened only across decoration of the same label token — the
+ * cases below pin both what that now catches and what it deliberately does
+ * not.
+ */
+describe("visible answer contract · a scaffolding label is still a label when it is decorated", () => {
+  const ids = (text: string) =>
+    assertVisibleAnswerContract(text).violations.map(
+      (violation) => violation.id,
+    );
+
+  const BODY = "The portfolio has pressure in value attainment.";
+
+  const DECORATIONS = [
+    ["unordered dash", "- "],
+    ["unordered asterisk", "* "],
+    ["unordered plus", "+ "],
+    ["ordered with a period", "1. "],
+    ["ordered with a parenthesis", "2) "],
+    ["indented under a parent bullet", "  - "],
+    ["bold", "**"],
+    ["italic underscore", "_"],
+  ] as const;
+
+  describe.each(DECORATIONS)("%s", (_name, decoration) => {
+    it.each([
+      ["Next:", "scaffolding_label_next"],
+      ["Next move:", "scaffolding_label_next_move"],
+      ["Read:", "scaffolding_label_read"],
+      ["Evidence:", "scaffolding_label_evidence"],
+    ])("catches %s", (label, violationId) => {
+      expect(
+        ids(`${BODY}\n\n${decoration}${label} open the cited initiative.`),
+      ).toContain(violationId);
+    });
+  });
+
+  it("catches the bulleted closing that #4038 removed from the product", () => {
+    // The concrete regression this gate exists to stop, in the exact shape the
+    // shared shaper used to append.
+    expect(
+      ids(`${BODY}\n\n- Next: open the value-attainment review with the owner.`),
+    ).toContain("scaffolding_label_next");
+  });
+
+  it("does not fire on a blockquote, and that is a decision rather than an oversight", () => {
+    // A `>` line is quoted material — a clause from a vendor's own document,
+    // not the model's scaffolding. This gate returns 422, so quoting a
+    // supplier deadline must not cost the user the whole answer. If a future
+    // reader wants blockquotes covered, the cost to weigh is that one.
+    expect(
+      ids(`${BODY}\n\n> Next: submit the renewal notice by 30 June.`),
+    ).not.toContain("scaffolding_label_next");
+  });
+
+  it("leaves the label words alone inside ordinary advisor prose", () => {
+    // Each of these contains a label word and must still pass: position and
+    // decoration are the signal, not the word.
+    const clean = [
+      "The next renewal lands in March, and the next review after it is unscheduled.",
+      "- The next contract to open is the managed-services renewal.",
+      "Read the vendor's own SOC 2 report before you sign anything.",
+      "- Evidence of the overrun is in the invoices the CFO already has.",
+      "**Next year** the same clause auto-renews unless someone acts.",
+      "The board asked what the evidence was; it is thinner than the paper suggests.",
+    ];
+    for (const text of clean) {
+      expect(assertVisibleAnswerContract(text).passed).toBe(true);
+    }
+  });
+
+  it("requires the label to lead the line, not merely appear on it", () => {
+    // Position is half the signal. A label word with a colon after it in the
+    // middle of a sentence is ordinary English, and this gate returns 422 —
+    // so a widening that dropped the line-start anchor would cost the user
+    // their answer for writing a normal sentence.
+    const midLine = [
+      "He asked me to read: the contract, the invoices, and the statement of work.",
+      "There is one thing to do next: name an owner for the integration risk.",
+      "The question the board will ask is about evidence: whether any of it is current.",
+    ];
+    for (const text of midLine) {
+      expect(assertVisibleAnswerContract(text).passed).toBe(true);
+    }
+  });
+
+  it("still catches the undecorated form it always caught", () => {
+    expect(ids(`${BODY}\n\nNext: open the cited initiative.`)).toContain(
+      "scaffolding_label_next",
+    );
+    expect(ids(`${BODY}\n\n   Read: the renewal file.`)).toContain(
+      "scaffolding_label_read",
+    );
+  });
+});
