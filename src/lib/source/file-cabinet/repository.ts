@@ -344,15 +344,17 @@ export async function supersedePriorVersions(
 /** All artifacts for an event (File Cabinet). Current-only unless includeHistory. */
 export async function listSourceArtifacts(
   sourceEventId: string,
-  tenantKey: string,
+  scope: string | { tenantKey: string },
   filter: ListArtifactsFilter = {},
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<SourceArtifactRecord[]> {
+  const scopeColumn = typeof scope === "string" ? "client_id" : "tenant_key";
+  const scopeValue = typeof scope === "string" ? scope : scope.tenantKey;
   let q = db
     .from("source_artifacts")
     .select("*")
     .eq("source_event_id", sourceEventId)
-    .eq("tenant_key", tenantKey);
+    .eq(scopeColumn, scopeValue);
   if (!filter.includeHistory) q = q.eq("lifecycle_state", "current");
   if (filter.artifactGroup) q = q.eq("artifact_group", filter.artifactGroup);
   if (filter.status) q = q.eq("status", filter.status);
