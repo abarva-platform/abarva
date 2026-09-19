@@ -59,6 +59,21 @@ const KINDS = new Set([
   'unclassified',
 ]);
 
+/**
+ * An npm entry whose command passes a write flag rewrites the standard some
+ * sibling gate measures against. Running it in CI would make that gate pass by
+ * moving the goalposts, which is indistinguishable from the gate working.
+ *
+ * Referencing a baseline path is not enough to qualify — the `:check` gates do
+ * that too, and they are the things being protected. Only invoking a write
+ * counts, which is why this tests the command rather than the script body.
+ */
+const WRITE_FLAG = /(^|\s)--(baseline|update|write|refresh)(\s|$)/;
+
+function isBaselineWriter(command) {
+  return WRITE_FLAG.test(command ?? '');
+}
+
 function fail(message, details = []) {
   console.error(message);
   for (const detail of details) console.error(`- ${detail}`);
@@ -201,6 +216,24 @@ function main() {
     }
 
     const invoked = invokedScripts.has(name);
+
+    if (isBaselineWriter(scripts[name])) {
+      if (entry.kind === 'pr-gate') {
+        problems.push(
+          `${name}: passes a write flag, so it rewrites the standard a sibling gate measures against — it cannot be a pr-gate`,
+        );
+      }
+      if (invoked) {
+        problems.push(
+          `${name}: passes a write flag and is invoked by a workflow — running it in CI makes the sibling gate pass by moving the goalposts, which looks exactly like the gate working`,
+        );
+      }
+      if (entry.kind === 'unclassified') {
+        problems.push(
+          `${name}: passes a write flag and is unclassified — classify it operator, with the reason that it rewrites a gate's baseline`,
+        );
+      }
+    }
 
     if (entry.kind === 'pr-gate' && !invoked) {
       problems.push(

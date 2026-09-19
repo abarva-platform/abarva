@@ -276,6 +276,120 @@ describe("ci gate registry: a longer script name does not vouch for a shorter on
   });
 });
 
+/**
+ * The second consequence the registry now enforces. An npm entry whose command
+ * passes a write flag rewrites the standard some sibling gate measures against:
+ * `audit:control-plane-purity:baseline` rewrites the file
+ * `audit:control-plane-purity:check` compares today's tenant counts to. Running
+ * the writer after adding debt therefore makes the check pass — by moving the
+ * goalposts, not by paying anything down, and the passing check looks exactly
+ * like a gate doing its job.
+ *
+ * So a writer may never be a pr-gate and may never be reached from a workflow,
+ * and leaving one unclassified is how it slips into either. The negative case
+ * matters as much: the `:check` sibling names the same baseline file, and a rule
+ * that flagged it would be condemning the thing being protected.
+ */
+describe("ci gate registry: an entry that writes the baseline cannot also be a gate", () => {
+  it("refuses a write-flag entry classified as a pr-gate", () => {
+    const dir = makeTree({
+      scripts: {
+        "audit:foo:check": "node scripts/audit/foo.mjs --check",
+        "audit:foo:baseline": "node scripts/audit/foo.mjs --baseline",
+      },
+      workflow: workflowRunning("npm run audit:foo:check", "npm run audit:foo:baseline"),
+      entries: {
+        "audit:foo:check": { kind: "pr-gate" },
+        "audit:foo:baseline": { kind: "pr-gate" },
+      },
+    });
+
+    const result = run(dir);
+
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain("audit:foo:baseline: passes a write flag");
+    expect(result.output).toContain("it cannot be a pr-gate");
+  });
+
+  it("refuses a write-flag entry that a workflow invokes, whatever it is classified as", () => {
+    const dir = makeTree({
+      scripts: {
+        "audit:foo:check": "node scripts/audit/foo.mjs --check",
+        "audit:foo:baseline": "node scripts/audit/foo.mjs --baseline",
+      },
+      workflow: workflowRunning("npm run audit:foo:check", "npm run audit:foo:baseline"),
+      entries: {
+        "audit:foo:check": { kind: "pr-gate" },
+        "audit:foo:baseline": {
+          kind: "operator",
+          reason: "rewrites the baseline audit:foo:check measures against",
+        },
+      },
+    });
+
+    const result = run(dir);
+
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain("audit:foo:baseline: passes a write flag and is invoked");
+  });
+
+  it("refuses to let a write-flag entry sit unclassified", () => {
+    const dir = makeTree({
+      scripts: {
+        "audit:foo:check": "node scripts/audit/foo.mjs --check",
+        "audit:foo:baseline": "node scripts/audit/foo.mjs --baseline",
+      },
+      workflow: workflowRunning("npm run audit:foo:check"),
+      entries: {
+        "audit:foo:check": { kind: "pr-gate" },
+        "audit:foo:baseline": { kind: "unclassified" },
+      },
+    });
+
+    const result = run(dir);
+
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain("audit:foo:baseline: passes a write flag and is unclassified");
+  });
+
+  it("accepts the writer once it is an operator that no workflow reaches", () => {
+    const dir = makeTree({
+      scripts: {
+        "audit:foo:check": "node scripts/audit/foo.mjs --check",
+        "audit:foo:baseline": "node scripts/audit/foo.mjs --baseline",
+      },
+      workflow: workflowRunning("npm run audit:foo:check"),
+      entries: {
+        "audit:foo:check": { kind: "pr-gate" },
+        "audit:foo:baseline": {
+          kind: "operator",
+          reason: "rewrites the baseline audit:foo:check measures against",
+        },
+      },
+    });
+
+    expect(run(dir).status).toBe(0);
+  });
+
+  it("does not flag the checking sibling, which reads the same baseline it protects", () => {
+    // The rule tests the command for a write flag, not the script for a baseline
+    // path. `--check` reads that file; flagging it would condemn the gate itself.
+    const dir = makeTree({
+      scripts: {
+        "audit:foo:check":
+          "node scripts/audit/foo.mjs --check --input scripts/audit/foo.baseline.json",
+      },
+      workflow: workflowRunning("npm run audit:foo:check"),
+      entries: { "audit:foo:check": { kind: "pr-gate" } },
+    });
+
+    const result = run(dir);
+
+    expect(result.status).toBe(0);
+    expect(result.output).not.toContain("audit:foo:check: passes a write flag");
+  });
+});
+
 describe("ci gate registry: the real repository", () => {
   it("has no pr-gate that only a prefix vouches for", () => {
     // The end-to-end case. It fails on the unfixed checker only after the three
