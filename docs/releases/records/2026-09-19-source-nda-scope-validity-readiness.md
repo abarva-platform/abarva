@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source Stage 05 NDA readiness now stays blocked unless the current NDA artifact carries the supplier legal entity, the governed scope it covers, effective and expiration dates in valid order, a review or approval state, and an artifact hash. The workspace card also exposes the scope and validity evidence instead of treating a current approved file as sufficient by itself.
+Source Stage 05 NDA readiness now stays blocked unless the current NDA artifact carries the supplier legal entity, the governed scope it covers, an effective validity window on the event's persisted readiness date, a review or approval state, and an artifact hash. The workspace card exposes the scope, validity evidence, and deterministic as-of date instead of treating a current approved file as sufficient by itself.
 
 ## Layer Impact
 
@@ -34,12 +34,14 @@ Canonical model: no schema, migration, tenant data write, supplier communication
 - `src/components/source/new-workspace/SourceNewFiles.tsx`
 - `src/components/source/new-workspace/SourceNewWorkspace.tsx`
 - `src/components/source/new-workspace/SourceNewWorkspace.test.tsx`
+- `src/app/(maestro)/source/new/[eventId]/page.tsx`
 
 ## QA / Validation
 
 - Failing-first focused Jest run: the added Stage 05 case failed because an NDA artifact with legal entity, approval, and hash but no scope or validity dates was incorrectly marked ready.
 - Final focused Jest run: `npx jest --runTestsByPath src/components/source/new-workspace/SourceNewWorkspace.test.tsx --runInBand` passed 34 tests.
 - Mutation check: removing the new scope and validity blockers made the focused suite fail on the added case; the blockers were restored and the focused suite passed again.
+- Validity mutation check: allowing an expired or not-yet-effective window on the persisted event as-of date fails the focused rendered workspace cases.
 - Signed-in acceptance was not performed and is still owed after deployment for product-visible proof.
 
 ## Rollout Plan

@@ -43,6 +43,8 @@ export interface SourceNewEventView {
   trigger: string | null;
   scope: string | null;
   decisionOwner: string | null;
+  /** Persisted event snapshot date used for deterministic readiness checks. */
+  asOfDate: string;
   solicitationMotion?: "rfi" | "rfp" | null;
   solicitationMotionAcceptedAt?: string | null;
   solicitationMotionAcceptedByUserId?: string | null;
@@ -242,8 +244,9 @@ export function SourceNewWorkspace({
             effectiveFrom: file.effectiveFrom,
             expiresOn: file.expiresOn,
           })),
+        event.asOfDate,
       ),
-    [files],
+    [event.asOfDate, files],
   );
 
   const content = (
@@ -630,6 +633,10 @@ function SourceNewStage05NdaReadiness({
               ? `${readiness.effectiveFrom} to ${readiness.expiresOn}`
               : "Not recorded"}
           </dd>
+        </div>
+        <div>
+          <dt>Readiness as of</dt>
+          <dd>{readiness.asOfDate}</dd>
         </div>
         <div>
           <dt>Readiness posture</dt>

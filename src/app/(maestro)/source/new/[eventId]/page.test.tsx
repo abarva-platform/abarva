@@ -58,6 +58,11 @@ describe("Source New event route authorization", () => {
       triggerDescription: null,
       scopeDescription: null,
       decisionOwner: null,
+      valueLedger: {
+        updatedAt: "2026-03-10T00:00:00Z",
+        projected: [],
+        realized: [],
+      },
     } as never);
     await SourceNewEventPage(params);
     expect(listSourceArtifacts).toHaveBeenCalledWith("event-1", "client-id", { includeHistory: true });
@@ -76,6 +81,11 @@ describe("Source New event route authorization", () => {
       triggerDescription: null,
       scopeDescription: null,
       decisionOwner: null,
+      valueLedger: {
+        updatedAt: "2026-03-10T00:00:00Z",
+        projected: [],
+        realized: [],
+      },
     } as never);
     jest.mocked(listSourceArtifacts).mockRejectedValue(new Error("artifact_read_failed"));
     await expect(SourceNewEventPage(params)).rejects.toThrow("artifact_read_failed");

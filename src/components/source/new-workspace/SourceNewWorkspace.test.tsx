@@ -39,6 +39,7 @@ const request: SourceNewEventView = {
   trigger: "A contract is nearing renewal.",
   scope: null,
   decisionOwner: null,
+  asOfDate: "2026-03-10",
 };
 
 const responseFile: SourceNewFileRow = {
@@ -730,6 +731,61 @@ describe("SourceNewWorkspace", () => {
       ),
     ).toBeTruthy();
     expect(within(readiness).getByText("Record NDA scope")).toBeTruthy();
+  });
+
+  it.each([
+    {
+      label: "expired",
+      effectiveFrom: "2025-01-01",
+      expiresOn: "2026-03-09",
+      blocker: "The NDA expired before 2026-03-10.",
+    },
+    {
+      label: "not yet effective",
+      effectiveFrom: "2026-03-11",
+      expiresOn: "2027-03-11",
+      blocker: "The NDA is not effective as of 2026-03-10.",
+    },
+  ])("blocks Stage 05 when an NDA is $label on the governed as-of date", ({
+    effectiveFrom,
+    expiresOn,
+    blocker,
+  }) => {
+    const nda: SourceNewFileRow = {
+      ...responseFile,
+      id: `nda-${effectiveFrom}`,
+      phase: "suppliers",
+      artifactType: "nda_executed",
+      title: "Executed mutual NDA",
+      fileName: "executed-nda.pdf",
+      status: "approved",
+      lifecycleState: "current",
+      approvalState: "approved",
+      approvedAt: "2026-03-02T00:00:00Z",
+      blobSha256: "sha-nda-validity",
+      coveredSupplierLegalEntity: "Example Supplier Legal Entity LLC",
+      coveredScopeId: "event-scope-v1",
+      effectiveFrom,
+      expiresOn,
+    };
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[nda]}
+      />,
+    );
+
+    const buttons = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    fireEvent.click(buttons[2]);
+
+    const readiness = screen.getByRole("region", {
+      name: "Stage 05 NDA readiness",
+    });
+    expect(within(readiness).getByText("Blocked before supplier work")).toBeTruthy();
+    expect(within(readiness).getByText(blocker)).toBeTruthy();
+    expect(within(readiness).getByText("2026-03-10")).toBeTruthy();
   });
 
   it("does not lock phases behind an event that has advanced past them", () => {

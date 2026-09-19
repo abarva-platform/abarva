@@ -15,6 +15,7 @@ export interface SourceNewNdaArtifact {
 
 export interface SourceNewNdaReadiness {
   posture: "ready" | "blocked";
+  asOfDate: string;
   coveredSupplierLegalEntity: string | null;
   coveredScopeId: string | null;
   effectiveFrom: string | null;
@@ -54,6 +55,7 @@ function parseDate(value: string | null): number | null {
 
 export function buildSourceNewNdaReadiness(
   artifacts: readonly SourceNewNdaArtifact[],
+  asOfDate: string,
 ): SourceNewNdaReadiness {
   const currentNdas = artifacts.filter(
     (artifact) => artifact.lifecycleState === "current" && isNdaArtifact(artifact),
@@ -70,11 +72,20 @@ export function buildSourceNewNdaReadiness(
   const expiresOn = authority?.expiresOn?.trim() ?? null;
   const effectiveTime = parseDate(effectiveFrom);
   const expiresTime = parseDate(expiresOn);
+  const asOfTime = parseDate(asOfDate);
   const validityRecorded = effectiveTime !== null && expiresTime !== null;
   const validityOrdered =
     !validityRecorded || expiresTime === null || effectiveTime === null
       ? true
       : expiresTime >= effectiveTime;
+  const effectiveAsOf =
+    validityRecorded &&
+    validityOrdered &&
+    asOfTime !== null &&
+    effectiveTime !== null &&
+    expiresTime !== null &&
+    effectiveTime <= asOfTime &&
+    expiresTime >= asOfTime;
 
   const completeItems = [
     currentNdas.length > 0 ? "Current NDA artifact filed" : null,
@@ -82,8 +93,8 @@ export function buildSourceNewNdaReadiness(
       ? `Supplier legal entity recorded: ${coveredSupplierLegalEntity}`
       : null,
     coveredScopeId ? `NDA scope recorded: ${coveredScopeId}` : null,
-    validityRecorded && validityOrdered
-      ? `NDA validity recorded: ${effectiveFrom} to ${expiresOn}`
+    effectiveAsOf
+      ? `NDA effective as of ${asOfDate}: ${effectiveFrom} to ${expiresOn}`
       : null,
     reviewed ? "NDA review or approval state recorded" : null,
     hashed ? "Artifact hash recorded" : null,
@@ -100,6 +111,23 @@ export function buildSourceNewNdaReadiness(
       : null,
     validityRecorded && !validityOrdered
       ? "The NDA expiration date is before its effective date."
+      : null,
+    asOfTime === null
+      ? "No governed NDA readiness as-of date is recorded."
+      : null,
+    validityRecorded &&
+    validityOrdered &&
+    asOfTime !== null &&
+    effectiveTime !== null &&
+    effectiveTime > asOfTime
+      ? `The NDA is not effective as of ${asOfDate}.`
+      : null,
+    validityRecorded &&
+    validityOrdered &&
+    asOfTime !== null &&
+    expiresTime !== null &&
+    expiresTime < asOfTime
+      ? `The NDA expired before ${asOfDate}.`
       : null,
     !reviewed ? "No NDA review or approval state is recorded." : null,
   ].filter((item): item is string => Boolean(item));
@@ -121,11 +149,11 @@ export function buildSourceNewNdaReadiness(
               label: "Record NDA scope",
               detail: "Tie the NDA artifact to the event scope it actually covers.",
             }
-          : !validityRecorded || !validityOrdered
+          : !validityRecorded || !validityOrdered || !effectiveAsOf
             ? {
                 label: "Record NDA validity",
                 detail:
-                  "Capture effective and expiration dates before supplier work proceeds.",
+                  "Capture a validity window that covers the governed readiness date before supplier work proceeds.",
               }
             : !reviewed
               ? {
@@ -141,6 +169,7 @@ export function buildSourceNewNdaReadiness(
 
   return {
     posture: blockers.length === 0 ? "ready" : "blocked",
+    asOfDate,
     coveredSupplierLegalEntity,
     coveredScopeId,
     effectiveFrom,
