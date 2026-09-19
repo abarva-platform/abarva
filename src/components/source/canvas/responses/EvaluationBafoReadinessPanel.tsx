@@ -137,6 +137,54 @@ export function EvaluationBafoReadinessPanel({
         </div>
       </div>
 
+      <div style={PRICING_PANEL}>
+        <div style={PANEL_HEAD}>
+          <span style={EYEBROW}>Pricing comparability</span>
+          <strong>{view.pricing.length} vendor TCO read</strong>
+        </div>
+        <div style={PRICING_GRID}>
+          {view.pricing.length > 0 ? (
+            view.pricing.map((row) => (
+              <article key={row.vendorId} style={PRICING_CARD}>
+                <div style={COMPARABLE_HEAD}>
+                  <strong>{row.vendorName}</strong>
+                  <span
+                    style={{
+                      ...PILL_SMALL,
+                      ...comparabilityStyle(row.comparability),
+                    }}
+                  >
+                    {row.comparability}
+                  </span>
+                </div>
+                <div style={METRIC_GRID}>
+                  <span>
+                    <strong>{row.fiveYearTcoLabel}</strong>
+                    <small>Five-year TCO</small>
+                  </span>
+                  <span>
+                    <strong>{row.yearOneRunCostLabel}</strong>
+                    <small>Year-one run</small>
+                  </span>
+                  <span>
+                    <strong>{row.transitionCostLabel}</strong>
+                    <small>Transition</small>
+                  </span>
+                  <span>
+                    <strong>{row.oneTimeCostLabel}</strong>
+                    <small>One-time</small>
+                  </span>
+                </div>
+                <p style={ROW_NOTE}>{row.pricingBasis}</p>
+                <p style={NEXT_ACTION}>{row.rationale}</p>
+              </article>
+            ))
+          ) : (
+            <p style={EMPTY_COPY}>No pricing records available for comparison.</p>
+          )}
+        </div>
+      </div>
+
       <div style={BLOCKER_PANEL}>
         <div style={PANEL_HEAD}>
           <span style={EYEBROW}>Blockers and evidence gaps</span>
@@ -253,6 +301,11 @@ const PANEL: CSSProperties = {
   minWidth: 0,
 };
 
+const PRICING_PANEL: CSSProperties = {
+  ...PANEL,
+  marginTop: 14,
+};
+
 const PANEL_HEAD: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
@@ -283,6 +336,29 @@ const COMPARABLE_ROW: CSSProperties = {
   gap: 5,
   color: CANVAS.INK,
   fontSize: 13,
+};
+
+const PRICING_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+  gap: 10,
+  marginTop: 12,
+};
+
+const PRICING_CARD: CSSProperties = {
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 8,
+  background: "#FBFCFE",
+  padding: 12,
+  display: "grid",
+  gap: 8,
+  minWidth: 0,
+};
+
+const METRIC_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 8,
 };
 
 const COMPARABLE_HEAD: CSSProperties = {

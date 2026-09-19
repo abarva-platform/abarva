@@ -63,6 +63,22 @@ describe("evaluation / BAFO readiness decision support", () => {
         }),
       ]),
     );
+    expect(view.pricing).toHaveLength(3);
+    expect(view.pricing).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          vendorName: expect.stringContaining("Vendor A"),
+          comparability: "comparable",
+          fiveYearTcoLabel: "$96.4M",
+          pricingBasis: expect.stringContaining("Complete workbook"),
+        }),
+        expect.objectContaining({
+          vendorName: expect.stringContaining("Vendor B"),
+          comparability: "conditional",
+          rationale: expect.stringContaining("assumptions"),
+        }),
+      ]),
+    );
     expect(view.blockers.length).toBeGreaterThan(0);
     expect(view.singleNextAction).toMatch(/baseline|pricing|staffing|coverage|SLA|evidence|score/i);
     expect(view.guardrail).toMatch(/does not select a winner/i);
@@ -100,5 +116,49 @@ describe("evaluation / BAFO readiness decision support", () => {
     );
     expect(text).toMatch(/Vendor A|Vendor B|Vendor C/i);
     expect(text).not.toMatch(/Airline Operations Support|IROPS|airport operations/i);
+  });
+
+  it("blocks pricing comparability when governed TCO or pricing basis is missing", () => {
+    const profileSet = buildVendorResponseMveProfiles({
+      id: "client-a-test-event",
+      code: "CLIENT-A-LAKE-AMS-OUTSOURCING-2026",
+      name: "Client A AMS Outsourcing RFP",
+      accountName: "Client A",
+    });
+    if (!profileSet) throw new Error("expected test profile set");
+    const profileWithMissingPricing = {
+      ...profileSet.profiles[0],
+      pricingSummary: {
+        ...profileSet.profiles[0].pricingSummary,
+        fiveYearTcoUsd: null,
+        pricingBasis: "",
+      },
+    };
+
+    const view = buildEvaluationBafoReadinessView({
+      profileSet: {
+        ...profileSet,
+        profiles: [profileWithMissingPricing],
+      },
+    });
+
+    expect(view.pricing).toEqual([
+      expect.objectContaining({
+        vendorName: profileWithMissingPricing.vendorName,
+        comparability: "blocked",
+        fiveYearTcoLabel: "Not recorded",
+        pricingBasis: "Not recorded",
+        rationale: expect.stringContaining("five-year TCO"),
+      }),
+    ]);
+    expect(view.blockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Pricing comparison blocked",
+          nextAction: expect.stringContaining("normalized pricing workbook"),
+        }),
+      ]),
+    );
+    expect(view.state).toBe("blocked");
   });
 });
