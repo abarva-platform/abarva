@@ -502,12 +502,37 @@ function main() {
   );
   // Counted per control, not per surface: a surface whose four controls have one
   // behavioral test is one covered and three uncovered.
+  //
+  // Two denominators, printed separately on purpose. A single `covered of
+  // declared` figure conflates two problems with different owners — controls
+  // that are reachable and untested, and controls nobody can open — and it
+  // hides which one the number is actually about. Today it reports 29 of 37,
+  // which reads as 78% tested with 8 controls lacking tests. The truth is that
+  // every reachable control is tested and the whole gap is unreachability.
+  //
+  // The incentive note belongs on the second figure and only the second. A
+  // control on an unmounted surface can never count as covered, so mounting
+  // one moves it into the reachable denominator and, until it has a test,
+  // lowers covered-of-reachable. `covered of declared` does not fall — its
+  // numerator can only rise — which is why stating one figure without the
+  // other makes the same action look good or bad depending on which is quoted.
+  const reachable = tally.declared - tally.unreachable;
+  const pct = (n, d) => (d === 0 ? "n/a" : `${Math.round((n / d) * 1000) / 10}%`);
+
   console.log(
-    `Behavioral coverage: ${tally.covered} of ${tally.declared} controls run a test that exercises them in CI.`,
+    `Behavioral coverage of reachable controls: ${tally.covered} of ${reachable} (${pct(tally.covered, reachable)}).`,
+  );
+  console.log(
+    `Reachable share of declared controls: ${reachable} of ${tally.declared} (${pct(reachable, tally.declared)}).`,
   );
   if (tally.unreachable > 0) {
     console.log(
-      `Not on any screen: ${tally.unreachable} of ${tally.declared} controls sit on surfaces no route reaches, and are excluded from the coverage count above.`,
+      `Not on any screen: ${tally.unreachable} of ${tally.declared} controls sit on surfaces no route reaches. ` +
+        "They can never be counted as covered, so they are outside the first figure and inside the second.",
+    );
+    console.log(
+      `  Mounting one lowers the first figure until it has a test — ${tally.covered} of ${reachable + 1} ` +
+        `(${pct(tally.covered, reachable + 1)}) for the next one mounted. That is the arithmetic working, not a regression.`,
     );
   }
 }
