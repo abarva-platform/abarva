@@ -119,3 +119,14 @@ jobs:
       # See backlog item 63.
       - name: Exercise shared evidence packet human rationale
         run: npx jest --runTestsByPath src/lib/ai-liability/__tests__/human-decision-controls.human-rationale.test.ts --runInBand
+
+      # Not a catalog control. `src/components/source/canvas/analytics/__tests__`
+      # runs in no npm script and no workflow — 28 suites / 173 tests over the
+      # component the Source event route mounts, reporting to nobody. Found
+      # while wiring the off-stage notice below, whose own first CI run
+      # executed it nowhere. The whole directory is wired rather than the one
+      # new file: all 28 were green on `main` when this step was added, so no
+      # failure is imported, and wiring one file would leave the other 27 in
+      # the same blind spot. See backlog items 26 / 66 / 77.
+      - name: Exercise Source canvas analytics component suites
+        run: npx jest src/components/source/canvas/analytics --runInBand
