@@ -173,3 +173,16 @@ jobs:
       # them too. See backlog items 26 / 92.
       - name: Exercise agent program-tool control suites
         run: npx jest src/lib/agent/tools/__tests__ --runInBand
+
+      # Not a catalog control. `src/lib/agent/tools/intelligence/__tests__` is
+      # the Sentinel half of the directory above and ran in no npm script and
+      # no workflow either. It was red the whole time: three cases named a
+      # pattern id the corpus retired when it re-keyed `pattern_*` slugs to
+      # `PAT-*` codes. A fourth case guarded its assertions behind
+      # `if (depth1.success && depth2.success)`, so it stayed green while
+      # asserting nothing, and the tool's own input schema — handed verbatim to
+      # the model — still offered the retired id as its worked example. Roots
+      # are now derived from the live manifest so a future re-key cannot
+      # reproduce this. See backlog items 26 / 92 / 120.
+      - name: Exercise Sentinel intelligence-tool suites
+        run: npx jest src/lib/agent/tools/intelligence/__tests__ --runInBand
