@@ -57,6 +57,7 @@ export type SourceNewFileRow = Pick<
   // The authorized caller assigns the product phase; the cabinet's sourcingStage
   // is a separate, finer-grained workflow vocabulary.
   phase: SourceNewFilePhase;
+  coveredSupplierLegalEntity?: string | null;
 };
 
 export interface SourceNewFilesProps {

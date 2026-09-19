@@ -400,6 +400,108 @@ describe("SourceNewWorkspace", () => {
     expect(buttons[2].textContent).not.toMatch(/No record|Completed|Approved/);
   });
 
+  it("shows Stage 05 NDA readiness from a governed supplier legal entity", () => {
+    const nda: SourceNewFileRow = {
+      ...responseFile,
+      id: "nda-ready-1",
+      phase: "suppliers",
+      artifactType: "nda_executed",
+      title: "Executed mutual NDA",
+      fileName: "executed-nda.pdf",
+      status: "approved",
+      lifecycleState: "current",
+      approvalState: "approved",
+      approvedAt: "2026-03-02T00:00:00Z",
+      blobSha256: "sha-nda-ready",
+      coveredSupplierLegalEntity: "Example Supplier Legal Entity LLC",
+    };
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[nda]}
+      />,
+    );
+
+    const buttons = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    fireEvent.click(buttons[2]);
+
+    const readiness = screen.getByRole("region", {
+      name: "Stage 05 NDA readiness",
+    });
+    expect(
+      within(readiness).getByText("Example Supplier Legal Entity LLC"),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getByText("Ready for governed supplier work"),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getByText(
+        "Supplier legal entity recorded: Example Supplier Legal Entity LLC",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getByText(
+        "No Stage 05 NDA blocker is visible in this read model.",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getByText("Open market package gate"),
+    ).toBeTruthy();
+    expect(
+      within(readiness).queryByRole("button", { name: /send|contact/i }),
+    ).toBeNull();
+    expect(
+      within(readiness).queryByRole("link", { name: /send|contact/i }),
+    ).toBeNull();
+  });
+
+  it("blocks Stage 05 NDA readiness when a file exists without a supplier legal entity", () => {
+    const nda: SourceNewFileRow = {
+      ...responseFile,
+      id: "nda-blocked-1",
+      phase: "suppliers",
+      artifactType: "nda_executed",
+      title: "Mutual NDA",
+      fileName: "supplier-nda.pdf",
+      status: "approved",
+      lifecycleState: "current",
+      approvalState: "approved",
+      approvedAt: "2026-03-02T00:00:00Z",
+      blobSha256: "sha-nda-blocked",
+      coveredSupplierLegalEntity: null,
+    };
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[nda]}
+      />,
+    );
+
+    const buttons = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    fireEvent.click(buttons[2]);
+
+    const readiness = screen.getByRole("region", {
+      name: "Stage 05 NDA readiness",
+    });
+    expect(within(readiness).getByText("Not recorded")).toBeTruthy();
+    expect(
+      within(readiness).getByText("Blocked before supplier work"),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getByText(
+        "No governed supplier legal entity is tied to the NDA artifact.",
+      ),
+    ).toBeTruthy();
+    expect(within(readiness).getByText("Record legal entity")).toBeTruthy();
+    expect(document.body.textContent ?? "").not.toContain(
+      "Example Supplier Legal Entity LLC",
+    );
+  });
+
   it("does not lock phases behind an event that has advanced past them", () => {
     render(
       <SourceNewWorkspace
