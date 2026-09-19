@@ -26,6 +26,13 @@ import { EvaluationBafoReadinessPanel } from "@/components/source/canvas/respons
 import { VendorEvaluationScorecardPanel } from "@/components/source/canvas/responses/VendorEvaluationScorecardPanel";
 import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tabs/StageDecisionLensPanel";
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
+import { SourceAwardSowHandoffReadinessPanel } from "@/components/source/SourceAwardSowHandoffReadinessPanel";
+import { buildSourceAwardSowHandoffReadiness } from "@/lib/source/award-sow-handoff-readiness";
+import type {
+  SourceAwardSowArtifactInput,
+  SourceAwardSowHandoffReadiness,
+  SourceAwardSowStageInput,
+} from "@/lib/source/award-sow-handoff-readiness-types";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
 import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-response-matrix";
 import type {
@@ -91,7 +98,12 @@ import {
   sourceJourneyLabelForStage,
   type SourceJourneyDefinition,
 } from "@/lib/source/sourcing-motion-journeys";
-import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
+import type {
+  SourceArtifactStatus,
+  SourceStageKey,
+  SourcingEventSummary,
+  WorkflowStage,
+} from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
 import type {
@@ -220,6 +232,8 @@ interface SourceAnalyticsCanvasProps {
   evaluationBafoReadinessView?: EvaluationBafoReadinessView | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
+  /** Optional deterministic Stage 08 readiness override for tests or server-built callers. */
+  awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -697,6 +711,7 @@ export function SourceAnalyticsCanvas({
   evaluationBafoReadinessView = null,
   vendorResponseParseReports = [],
   normalizedResponsePackages = [],
+  awardSowHandoffReadiness = null,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const resolvedInitialWorkspace = initialWorkspace ?? "steps";
@@ -760,6 +775,10 @@ export function SourceAnalyticsCanvas({
       workspace,
     ],
   );
+  const computedAwardSowHandoffReadiness = useMemo(
+    () => buildAwardSowHandoffReadinessForCanvas(event, shellView),
+    [event, shellView],
+  );
 
   const stageLabel =
     sourceJourneyLabelForStage(journey, viewStage) ??
@@ -815,6 +834,9 @@ export function SourceAnalyticsCanvas({
               evaluationBafoReadinessView={evaluationBafoReadinessView}
               vendorResponseParseReports={vendorResponseParseReports}
               normalizedResponsePackages={normalizedResponsePackages}
+              awardSowHandoffReadiness={
+                awardSowHandoffReadiness ?? computedAwardSowHandoffReadiness
+              }
               evidenceStates={evidenceStates}
               eventDisplayName={event.name}
               contractOptimizationProfile={contractOptimizationProfile}
@@ -1069,6 +1091,7 @@ function SourceWorkspace({
   evaluationBafoReadinessView,
   vendorResponseParseReports,
   normalizedResponsePackages,
+  awardSowHandoffReadiness,
   evidenceStates,
   eventDisplayName,
   contractOptimizationProfile,
@@ -1086,6 +1109,7 @@ function SourceWorkspace({
   evaluationBafoReadinessView?: EvaluationBafoReadinessView | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
+  awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
   evidenceStates?: readonly SourceEventEvidence[];
   eventDisplayName?: string;
   contractOptimizationProfile?: ContractOptimizationMveProfile | null;
@@ -1137,6 +1161,13 @@ function SourceWorkspace({
         evidenceStates={evidenceStates ?? []}
         onWorkspaceChange={onWorkspaceChange}
       />
+      {view.stage.key === "transition" && awardSowHandoffReadiness ? (
+        <div style={{ marginTop: 16, maxWidth: 1120 }}>
+          <SourceAwardSowHandoffReadinessPanel
+            readiness={awardSowHandoffReadiness}
+          />
+        </div>
+      ) : null}
       {view.stage.key === "responses" ? (
         <div style={{ marginTop: 16, maxWidth: 1040 }}>
           <ResponsesStageView
@@ -1179,6 +1210,114 @@ function SourceWorkspace({
       ) : null}
     </section>
   );
+}
+
+type SourceAnalyticsEventWithDetail = SourcingEventSummary & {
+  stages?: readonly WorkflowStage[];
+  artifacts?: readonly SourceAwardSowArtifactInput[];
+};
+
+const SOURCE_ARTIFACT_STATUSES: readonly SourceArtifactStatus[] = [
+  "not_started",
+  "draft",
+  "needs_inputs",
+  "needs_review",
+  "approved",
+  "locked",
+  "superseded",
+  "archived",
+];
+
+function buildAwardSowHandoffReadinessForCanvas(
+  event: SourcingEventSummary,
+  view: SourceEventShellView,
+): SourceAwardSowHandoffReadiness | null {
+  if (
+    view.stage.key !== "transition" &&
+    view.stage.key !== "contract_mobilization"
+  ) {
+    return null;
+  }
+
+  return buildSourceAwardSowHandoffReadiness({
+    event: {
+      id: event.id,
+      name: event.name,
+      currentStageKey: event.currentStageKey,
+      currentStageLabel: event.currentStageLabel,
+      stages: stageInputsForAwardSow(event, view),
+      artifacts: artifactInputsForAwardSow(event, view),
+    },
+  });
+}
+
+function stageInputsForAwardSow(
+  event: SourcingEventSummary,
+  view: SourceEventShellView,
+): SourceAwardSowStageInput[] {
+  const detailedEvent = event as SourceAnalyticsEventWithDetail;
+  if (Array.isArray(detailedEvent.stages) && detailedEvent.stages.length > 0) {
+    return detailedEvent.stages.map((stage) => ({
+      key: stage.key,
+      label: stage.label,
+      status: stage.status,
+      gate: {
+        status: stage.gate.status,
+        requiredArtifacts: stage.gate.requiredArtifacts,
+        blocker: stage.gate.blocker,
+      },
+    }));
+  }
+
+  return view.journey.map((stage) => ({
+    key: stage.key,
+    label: stage.label,
+    status:
+      stage.approvalEvidenced === true || stage.state === "complete"
+        ? "complete"
+        : stage.current
+          ? "active"
+          : "not_started",
+    gate: {
+      status: stage.approvalEvidenced === true ? "approved" : "not_started",
+      requiredArtifacts: [],
+      blocker: null,
+    },
+  }));
+}
+
+function artifactInputsForAwardSow(
+  event: SourcingEventSummary,
+  view: SourceEventShellView,
+): SourceAwardSowArtifactInput[] {
+  const detailedEvent = event as SourceAnalyticsEventWithDetail;
+  const eventArtifacts = Array.isArray(detailedEvent.artifacts)
+    ? detailedEvent.artifacts
+    : [];
+  const shellArtifacts = view.files.items.map((file) => ({
+    id: file.artifactCode || file.id,
+    title: file.name || file.artifactCode,
+    status:
+      file.latestAcceptance || file.state === "locked"
+        ? ("locked" as const)
+        : sourceArtifactStatusFromString(file.state),
+    summary: [file.artifactCode, file.stageLabel, file.governanceLabel]
+      .filter(Boolean)
+      .join(" · "),
+    sourceCount: 1,
+  }));
+
+  const byId = new Map<string, SourceAwardSowArtifactInput>();
+  for (const artifact of [...eventArtifacts, ...shellArtifacts]) {
+    byId.set(artifact.id, artifact);
+  }
+  return [...byId.values()];
+}
+
+function sourceArtifactStatusFromString(value: string): SourceArtifactStatus {
+  return SOURCE_ARTIFACT_STATUSES.includes(value as SourceArtifactStatus)
+    ? (value as SourceArtifactStatus)
+    : "draft";
 }
 
 function StageHeader({ view }: { view: SourceEventShellView }) {
