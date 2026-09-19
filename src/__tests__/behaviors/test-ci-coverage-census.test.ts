@@ -75,6 +75,7 @@ type Census = {
   governedRiskRanking: {
     directory: string;
     testFiles: number;
+    unrunTestFiles: number;
     governedRisk: {
       rank: number;
       score: number;
@@ -345,7 +346,9 @@ describe("test CI coverage census", () => {
       governedRisk: { controlIds: ["fixture-control"] },
     });
     const summary = runSummary(dir);
-    expect(summary).toContain("top uncovered governed-risk directories:");
+    // Heading changed with the ranking it labels: partially covered
+    // directories now appear, so "uncovered" would misdescribe the list.
+    expect(summary).toContain("top governed-risk directories by unrun tests:");
     expect(summary.indexOf("src/components/agent/__tests__")).toBeLessThan(
       summary.indexOf("src/app/api/source/action/__tests__"),
     );
@@ -355,6 +358,114 @@ describe("test CI coverage census", () => {
     expect(summary).not.toContain("src/lib/helpers/__tests__");
   });
 
+  /**
+   * A directory with one covered file out of eighty is not less urgent than an
+   * empty one with two — it is 79 unrun files, and the ranking could not see
+   * it. `governedRiskRows` filtered on `coveredTestFiles === 0`, so every
+   * partially covered directory was excluded from the queue that decides what
+   * gets wired next. Measured on `49cca7400` when this case was written: 22
+   * partial directories holding 257 unrun test files, and not one of them
+   * appeared anywhere in the 151-entry ranking. The largest had to be found by
+   * hand.
+   *
+   * Ranking on unrun files puts partial and uncovered directories on one
+   * scale. The case that keeps that honest is the third directory below: fully
+   * covered, same governed signal, larger than the uncovered one, and it must
+   * stay out. "Include partials" and "include everything" differ only there.
+   */
+  it("ranks a partially covered directory on its unrun files, and still drops a fully covered one", () => {
+    const approvalRoute =
+      "export async function POST() { return approve({ value: true }); }\n";
+    // A `from` specifier, because the scorer reads edges from `from` /
+    // `require` / dynamic-import specifiers and an inferred sibling module —
+    // a bare side-effect import is not one of them.
+    const suite =
+      'import { POST } from "../route";\nit("case", () => expect(typeof POST).toBe("function"));\n';
+    const dir = fixture({
+      // 3 unrun of 4.
+      "src/lib/partial/route.ts": approvalRoute,
+      "src/lib/partial/__tests__/a.test.ts": suite,
+      "src/lib/partial/__tests__/b.test.ts": suite,
+      "src/lib/partial/__tests__/c.test.ts": suite,
+      "src/lib/partial/__tests__/d.test.ts": suite,
+      // 2 unrun of 4 — the same size as `partial`, so ranking by directory
+      // size would sort these two alphabetically and put this one first. Only
+      // the unrun count separates them, which is what makes the tie-breaker
+      // load-bearing rather than decorative.
+      "src/lib/big/route.ts": approvalRoute,
+      "src/lib/big/__tests__/b1.test.ts": suite,
+      "src/lib/big/__tests__/b2.test.ts": suite,
+      "src/lib/big/__tests__/b3.test.ts": suite,
+      "src/lib/big/__tests__/b4.test.ts": suite,
+      // 1 unrun of 1 — uncovered, same signal, so the scores tie throughout.
+      "src/lib/small/route.ts": approvalRoute,
+      "src/lib/small/__tests__/only.test.ts": suite,
+      // 0 unrun of 2 — same signal, larger than `small`. Must not rank.
+      "src/lib/full/route.ts": approvalRoute,
+      "src/lib/full/__tests__/one.test.ts": suite,
+      "src/lib/full/__tests__/two.test.ts": suite,
+      ".github/workflows/gate.yml": [
+        "name: gate",
+        "on:",
+        "  pull_request:",
+        "jobs:",
+        "  verify:",
+        "    steps:",
+        "      - run: npx jest src/lib/partial/__tests__/a.test.ts",
+        "      - run: npx jest src/lib/big/__tests__/b1.test.ts",
+        "      - run: npx jest src/lib/big/__tests__/b2.test.ts",
+        "      - run: npx jest src/lib/full/__tests__",
+      ].join("\n"),
+    });
+
+    const { census } = runCensus(dir);
+
+    expect(census.counts).toMatchObject({
+      directoriesFullyCovered: 1,
+      directoriesPartiallyCovered: 2,
+      directoriesUncovered: 1,
+      directoriesWithUnrunTestFiles: 3,
+      // 3 directories hold unrun files and all 3 are ranked. Computed against
+      // the uncovered count instead, this reads -2, which is what a revert of
+      // the denominator produces.
+      unclassifiedRiskDirectories: 0,
+    });
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/lib/partial/__tests__",
+      "src/lib/big/__tests__",
+      "src/lib/small/__tests__",
+    ]);
+    expect(census.governedRiskRanking.map((row) => row.unrunTestFiles)).toEqual([
+      3, 2, 1,
+    ]);
+    // Ranking on directory size would order these big(4), partial(4), small(1)
+    // — a different sequence from the one asserted above. The two orderings
+    // disagree on purpose, so a revert to `testFiles` cannot pass this case.
+    expect(census.governedRiskRanking.map((row) => row.testFiles)).toEqual([
+      4, 4, 1,
+    ]);
+    expect(census.governedRiskRanking.map((row) => row.governedRisk.rank)).toEqual(
+      [1, 2, 3],
+    );
+    // Every score is equal, so the order above is the tie-breaker's doing and
+    // nothing else. If this ever stops tying, the case stops proving it.
+    expect(
+      new Set(census.governedRiskRanking.map((row) => row.governedRisk.score)),
+    ).toEqual(new Set([100]));
+
+    const summary = runSummary(dir);
+    // The negative control. A fully covered directory with the same governed
+    // signal, larger than the uncovered one, has nothing left to wire — and
+    // "rank the partials too" differs from "rank everything" only here.
+    expect(summary).not.toContain("src/lib/full/__tests__");
+    expect(summary).toContain("3 unrun of 4 tests");
+    expect(summary.indexOf("src/lib/partial/__tests__")).toBeLessThan(
+      summary.indexOf("src/lib/big/__tests__"),
+    );
+    expect(summary.indexOf("src/lib/big/__tests__")).toBeLessThan(
+      summary.indexOf("src/lib/small/__tests__"),
+    );
+  });
   it("does not score a governed signal from a type-only import", () => {
     // A `import type` specifier is erased at compile time: the test never loads
     // the module and never exercises the control declared on it. The scorer's
