@@ -39,6 +39,9 @@ describe("EvaluationBafoReadinessPanel", () => {
     expect(html).toContain("Next action");
     expect(html).toContain("Received");
     expect(html).toContain("Comparable");
+    expect(html).toContain("Pricing comparability");
+    expect(html).toContain("$96.4M");
+    expect(html).toContain("$91.8M");
     expect(html).toContain("Blockers and evidence gaps");
     expect(html).toContain("Vendor A");
     expect(html).toContain("Vendor B");

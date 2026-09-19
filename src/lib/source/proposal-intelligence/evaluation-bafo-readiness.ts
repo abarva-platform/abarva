@@ -39,6 +39,19 @@ export interface EvaluationBafoComparableRow {
   evidenceBasis: string[];
 }
 
+export interface EvaluationBafoPricingRow {
+  vendorId: string;
+  vendorName: string;
+  comparability: EvaluationBafoVendorComparability;
+  fiveYearTcoLabel: string;
+  yearOneRunCostLabel: string;
+  transitionCostLabel: string;
+  oneTimeCostLabel: string;
+  optionalCostLabel: string;
+  pricingBasis: string;
+  rationale: string;
+}
+
 export interface EvaluationBafoBlocker {
   blockerId: string;
   vendorId: string | null;
@@ -56,6 +69,7 @@ export interface EvaluationBafoReadinessView {
   archetypeLine: string;
   received: EvaluationBafoReceivedRow[];
   comparable: EvaluationBafoComparableRow[];
+  pricing: EvaluationBafoPricingRow[];
   blockers: EvaluationBafoBlocker[];
   singleNextAction: string;
   guardrail: string;
@@ -77,6 +91,7 @@ export function buildEvaluationBafoReadinessView(args: {
       archetypeLine: "No archetype-specific response profile is available yet.",
       received: [],
       comparable: [],
+      pricing: [],
       blockers: [
         {
           blockerId: "no-vendor-response-profiles",
@@ -115,6 +130,7 @@ export function buildEvaluationBafoReadinessView(args: {
   );
 
   const received = profiles.map((profile) => buildReceivedRow(profile));
+  const pricing = profiles.map((profile) => buildPricingRow(profile));
   const comparable = profiles.map((profile) => {
     const summary = summariesByVendor.get(profile.vendorId);
     const scoreEvidence = scoreRows
@@ -139,14 +155,29 @@ export function buildEvaluationBafoReadinessView(args: {
       scoreRows,
     }),
   );
+  const pricingBlockers = pricing
+    .filter((row) => row.comparability === "blocked")
+    .map((row) => ({
+      blockerId: `${row.vendorId}:pricing-comparability`,
+      vendorId: row.vendorId,
+      vendorName: row.vendorName,
+      severity: "blocker" as const,
+      label: "Pricing comparison blocked",
+      detail: row.rationale,
+      nextAction: `Load a normalized pricing workbook for ${row.vendorName} with five-year TCO, year-one run cost, and pricing basis before comparison.`,
+    }));
+  const allBlockers = dedupeBlockers([...blockers, ...pricingBlockers]);
 
   const state = deriveState({
-    blockers,
+    blockers: allBlockers,
     comparable,
     hasDecisionView: Boolean(args.decisionView),
   });
   const vendorCount = profiles.length;
   const comparableCount = comparable.filter(
+    (row) => row.comparability === "comparable",
+  ).length;
+  const pricingComparableCount = pricing.filter(
     (row) => row.comparability === "comparable",
   ).length;
   const blockedCount = comparable.filter(
@@ -158,14 +189,16 @@ export function buildEvaluationBafoReadinessView(args: {
     headline: headlineForState(state, comparableCount, vendorCount),
     contextLine:
       `${vendorCount} vendor package${vendorCount === 1 ? "" : "s"} received; ` +
-      `${comparableCount} comparable without caveat; ${blockedCount} held from BAFO-ready scoring.`,
+      `${comparableCount} comparable without caveat; ${pricingComparableCount} pricing reads comparable; ` +
+      `${blockedCount} held from BAFO-ready scoring.`,
     archetypeLine: archetypeLine(args.profileSet),
     received,
     comparable,
-    blockers,
-    singleNextAction: nextActionFor({ blockers, state }),
+    pricing,
+    blockers: allBlockers,
+    singleNextAction: nextActionFor({ blockers: allBlockers, state }),
     guardrail:
-      "Deterministic read: this panel only summarizes governed response, evidence, scorecard, and BAFO-instruction records. It does not select a winner or create benchmark claims.",
+      "Deterministic read: this panel only summarizes governed response, pricing, evidence, scorecard, and BAFO-instruction records. It does not select a winner or create benchmark claims.",
   };
 }
 
@@ -197,6 +230,45 @@ function buildReceivedRow(
     extractionCardCount: profile.extractionCards.length,
     readyForEvaluation: profile.readyForEvaluation,
     readyReason: profile.readyReason,
+  };
+}
+
+function buildPricingRow(
+  profile: VendorResponseProfile,
+): EvaluationBafoPricingRow {
+  const summary = profile.pricingSummary;
+  const pricingBasis = summary.pricingBasis.trim() || "Not recorded";
+  const missing: string[] = [];
+  if (summary.fiveYearTcoUsd === null) missing.push("five-year TCO");
+  if (summary.yearOneRunCostUsd === null) missing.push("year-one run cost");
+  if (!summary.pricingBasis.trim()) missing.push("pricing basis");
+
+  const comparability: EvaluationBafoVendorComparability =
+    missing.length > 0
+      ? "blocked"
+      : /assumption|uncapped|indicative|unconfirmed|items are optional|optional items/i.test(
+            pricingBasis,
+          )
+        ? "conditional"
+        : "comparable";
+  const basisSentence = stripTerminalPunctuation(pricingBasis).toLowerCase();
+
+  return {
+    vendorId: profile.vendorId,
+    vendorName: profile.vendorName,
+    comparability,
+    fiveYearTcoLabel: moneyLabel(summary.fiveYearTcoUsd),
+    yearOneRunCostLabel: moneyLabel(summary.yearOneRunCostUsd),
+    transitionCostLabel: moneyLabel(summary.transitionCostUsd),
+    oneTimeCostLabel: moneyLabel(summary.oneTimeCostUsd),
+    optionalCostLabel: moneyLabel(summary.optionalCostUsd),
+    pricingBasis,
+    rationale:
+      missing.length > 0
+        ? `Missing ${joinList(missing)}; pricing comparison stays blocked until normalized pricing evidence is loaded.`
+        : comparability === "conditional"
+          ? `Pricing is present, but ${basisSentence} keeps the TCO read conditional until BAFO clarification.`
+          : "Five-year TCO, year-one run cost, and pricing basis are present for comparison.",
   };
 }
 
@@ -450,4 +522,24 @@ function dedupeBlockers(
 
 function unique<T>(value: T, index: number, array: T[]): boolean {
   return array.indexOf(value) === index;
+}
+
+function moneyLabel(value: number | null): string {
+  if (value === null) return "Not recorded";
+  const millions = value / 1_000_000;
+  const formatted =
+    Math.abs(millions) >= 10
+      ? millions.toFixed(1)
+      : millions.toFixed(1);
+  return `$${formatted}M`;
+}
+
+function joinList(values: string[]): string {
+  if (values.length <= 1) return values[0] ?? "";
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1]}`;
+}
+
+function stripTerminalPunctuation(value: string): string {
+  return value.replace(/[.!?]+$/g, "");
 }
