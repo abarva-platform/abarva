@@ -6,9 +6,16 @@
 
 ## Status
 
-`candidate`
+`reverted`
 
 ## Plain-English Summary
+
+**This release was reverted by `2026-09-19-unbounded-audit-sweep-revert`.** The
+measurement published fixture-specific repository details, and the execution
+boundary could not account for transitive writes outside tracked paths. The
+remaining content records the original release claim for audit history; the
+instrument and generated measurement are no longer present on the current
+branch.
 
 The repository has 185 npm scripts named `audit:`, `validate:` or `check:` that
 no workflow runs and nobody has classified. Six of them had ever been executed
