@@ -22,6 +22,7 @@ import { ContractOptimizationProfilePanel } from "@/components/source/canvas/con
 import { ResponsesStageView } from "@/components/source/canvas/responses/ResponsesStageView";
 import { VendorBafoInstructionPackPanel } from "@/components/source/canvas/responses/VendorBafoInstructionPackPanel";
 import { VendorChallengeLeveragePanel } from "@/components/source/canvas/responses/VendorChallengeLeveragePanel";
+import { EvaluationBafoReadinessPanel } from "@/components/source/canvas/responses/EvaluationBafoReadinessPanel";
 import { VendorEvaluationScorecardPanel } from "@/components/source/canvas/responses/VendorEvaluationScorecardPanel";
 import { StageDecisionLensPanel } from "@/components/source/canvas/workspace-tabs/StageDecisionLensPanel";
 import { SourceWorkflowFrame } from "@/components/source/SourceWorkflowFrame";
@@ -30,6 +31,7 @@ import type { NormalizedVendorResponsePackage } from "@/lib/source/vendor-respon
 import type {
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
+  EvaluationBafoReadinessView,
   VendorEvaluationDecisionView,
   VendorResponseParseReport,
   VendorResponseProfileSet,
@@ -215,6 +217,7 @@ interface SourceAnalyticsCanvasProps {
   vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  evaluationBafoReadinessView?: EvaluationBafoReadinessView | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
 }
@@ -691,6 +694,7 @@ export function SourceAnalyticsCanvas({
   vendorChallengeIntelligence = null,
   vendorBafoInstructionPack = null,
   vendorEvaluationDecisionView = null,
+  evaluationBafoReadinessView = null,
   vendorResponseParseReports = [],
   normalizedResponsePackages = [],
 }: SourceAnalyticsCanvasProps) {
@@ -808,6 +812,7 @@ export function SourceAnalyticsCanvas({
               vendorChallengeIntelligence={vendorChallengeIntelligence}
               vendorBafoInstructionPack={vendorBafoInstructionPack}
               vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+              evaluationBafoReadinessView={evaluationBafoReadinessView}
               vendorResponseParseReports={vendorResponseParseReports}
               normalizedResponsePackages={normalizedResponsePackages}
               evidenceStates={evidenceStates}
@@ -1061,6 +1066,7 @@ function SourceWorkspace({
   vendorChallengeIntelligence,
   vendorBafoInstructionPack,
   vendorEvaluationDecisionView,
+  evaluationBafoReadinessView,
   vendorResponseParseReports,
   normalizedResponsePackages,
   evidenceStates,
@@ -1077,6 +1083,7 @@ function SourceWorkspace({
   vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  evaluationBafoReadinessView?: EvaluationBafoReadinessView | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
   evidenceStates?: readonly SourceEventEvidence[];
@@ -1148,6 +1155,11 @@ function SourceWorkspace({
       ) : null}
       {view.stage.key === "evaluation" ? (
         <div style={{ marginTop: 16, maxWidth: 1120 }}>
+          <EvaluationBafoReadinessPanel view={evaluationBafoReadinessView} />
+        </div>
+      ) : null}
+      {view.stage.key === "evaluation" ? (
+        <div style={{ marginTop: 16, maxWidth: 1120 }}>
           <VendorEvaluationScorecardPanel
             decisionView={vendorEvaluationDecisionView}
             eventDisplayName={eventDisplayName}
@@ -1158,6 +1170,7 @@ function SourceWorkspace({
         <div
           style={{ display: "grid", gap: 16, marginTop: 16, maxWidth: 1120 }}
         >
+          <EvaluationBafoReadinessPanel view={evaluationBafoReadinessView} />
           <VendorChallengeLeveragePanel
             intelligence={vendorChallengeIntelligence}
           />
