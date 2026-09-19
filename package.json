@@ -14,6 +14,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "node scripts/quality/typecheck.mjs",
     "moves:scan-artifacts": "npx tsx scripts/moves/scan-artifacts.ts",
     "moves:refresh-artifact-cleanliness": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/moves/refresh-persisted-artifact-cleanliness.ts",
     "lint:depth": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/lint/depth-lint.ts",
