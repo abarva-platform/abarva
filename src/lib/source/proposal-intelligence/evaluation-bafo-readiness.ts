@@ -408,7 +408,7 @@ function archetypeLine(
   profileSet?: VendorResponseProfileSet | null,
 ): string {
   if (!profileSet) return "No archetype-specific response profile is available yet.";
-  return `${profileSet.eventName} uses the ${profileSet.tenantKey} response profile set; comparisons stay inside that governed event profile.`;
+  return `${profileSet.eventName} uses the current governed response profile set; comparisons stay inside that event profile.`;
 }
 
 function labelRecommendation(

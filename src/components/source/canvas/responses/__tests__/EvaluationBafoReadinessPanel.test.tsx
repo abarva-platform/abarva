@@ -12,10 +12,10 @@ import { EvaluationBafoReadinessPanel } from "../EvaluationBafoReadinessPanel";
 describe("EvaluationBafoReadinessPanel", () => {
   it("renders received/comparable/blocker posture and the deterministic guardrail", () => {
     const profileSet = buildVendorResponseMveProfiles({
-      id: "skyh-test-event",
-      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
-      name: "SkyHarbor AMS Outsourcing RFP",
-      accountName: "SkyHarbor Air",
+      id: "client-a-test-event",
+      code: "CLIENT-A-LAKE-AMS-OUTSOURCING-2026",
+      name: "Client A AMS Outsourcing RFP",
+      accountName: "Client A",
     });
     const intelligence = buildVendorChallengeIntelligence(profileSet);
     const bafoPack = buildVendorBafoInstructionPack(intelligence);
