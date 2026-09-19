@@ -84,13 +84,10 @@ jobs:
       - name: Exercise agent response citation resolution
         run: npx jest --runTestsByPath src/components/agent/__tests__/AgentResponse.citation-control.test.tsx --runInBand
 
-      # Name-filtered: this suite also carries three assertions left red on
-      # purpose (a pin-top mode with no control, and structured parts the
-      # July refactor moved). Wiring the whole file would gate the catalog on
-      # unrelated open questions; wiring the two control tests gates it on the
-      # controls.
+      # Full suite: backlog T-015 closed the former pin-top and structured
+      # artifact exemptions, so the catalog can now gate the whole dock file.
       - name: Exercise agent dock responsibility and approval notices
-        run: npx jest --runTestsByPath src/components/agent/__tests__/AgentDock.test.tsx -t "responsibility footer|human approval boundary" --runInBand
+        run: npx jest --runTestsByPath src/components/agent/__tests__/AgentDock.test.tsx --runInBand
 
       - name: Exercise Atlas drawer disclosure controls
         run: npx jest --runTestsByPath src/components/shell/__tests__/AtlasDrawer.controls.test.tsx --runInBand

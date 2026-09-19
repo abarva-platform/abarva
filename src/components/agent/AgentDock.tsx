@@ -1129,7 +1129,13 @@ export function AgentDock(props: AgentDockProps) {
       !keepSuggestedActionsVisible
         ? []
         : suggestedActions,
-    [focused, keepSuggestedActionsVisible, mode, suggestedActions, thread.length],
+    [
+      focused,
+      keepSuggestedActionsVisible,
+      mode,
+      suggestedActions,
+      thread.length,
+    ],
   );
 
   // Render the chat panel inner — used by every mode (side-rail, pin-*,
@@ -1334,7 +1340,7 @@ export function AgentDock(props: AgentDockProps) {
                       ? EXPANDED_USER_BUBBLE_STYLE
                       : turn.role === "agent" && expanded
                         ? { ...BUBBLE_STYLE, ...EXPANDED_PROSE_STYLE }
-                      : BUBBLE_STYLE
+                        : BUBBLE_STYLE
                   }
                 >
                   {turn.role === "agent" ? (
@@ -1378,7 +1384,10 @@ export function AgentDock(props: AgentDockProps) {
                 ) : null}
                 {turn.role === "agent" &&
                 shouldRenderAvaArtifactsInDock(surface, turn.agentAnswer) ? (
-                  <div data-testid="agent-dock-artifacts" style={{ marginTop: 12 }}>
+                  <div
+                    data-testid="agent-dock-artifacts"
+                    style={{ marginTop: 12 }}
+                  >
                     <AgentAnswerRenderer
                       answer={turn.agentAnswer}
                       showChrome={!focused}
@@ -1802,6 +1811,17 @@ function ModePicker({ mode, onChange, dockId }: ModePickerProps) {
       >
         <PinBottomIcon />
       </ModeButton>
+      {/* Pin-top */}
+      <ModeButton
+        mode="pin-top"
+        active={mode === "pin-top"}
+        onClick={() => onChange(mode === "pin-top" ? "side-rail" : "pin-top")}
+        aria-label="Pin top"
+        title="Pin top"
+        dockId={dockId}
+      >
+        <PinTopIcon />
+      </ModeButton>
       {/* Expand / restore */}
       {mode === "expand" ? (
         <ModeButton
@@ -2063,6 +2083,25 @@ function PinBottomIcon() {
       <rect x="3" y="14" width="18" height="7" rx="2" />
       <line x1="3" y1="10" x2="21" y2="10" />
       <line x1="12" y1="3" x2="12" y2="10" />
+    </svg>
+  );
+}
+function PinTopIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="7" rx="2" />
+      <line x1="3" y1="14" x2="21" y2="14" />
+      <line x1="12" y1="14" x2="12" y2="21" />
     </svg>
   );
 }
