@@ -14,11 +14,13 @@ jest.mock('@/lib/auth/tenancy', () => ({
   requireTenancy: () => mockRequireTenancy(),
 }));
 
-jest.mock('../queries', () => ({
+jest.mock('../../queries', () => ({
   getProgramById: (...args: unknown[]) => mockGetProgramById(...args),
 }));
 
-import { loadMoveBusinessCaseInput } from './load-move-business-case-input';
+import { canonicalClientDisplayName } from '@/lib/client-config';
+
+import { loadMoveBusinessCaseInput } from '../load-move-business-case-input';
 
 describe('loadMoveBusinessCaseInput', () => {
   beforeEach(() => {
@@ -82,9 +84,26 @@ describe('loadMoveBusinessCaseInput', () => {
   });
 
   it('uses the tenancy client key for deck labels when the client row lookup misses', async () => {
+    // The fallback's contract is WHERE the label comes from, not what it says
+    // today. This case used to pin the display string itself and went red the
+    // day a deliberate rename moved it — a label change reported as a defect,
+    // while the wiring it exists to protect was never in question. The
+    // expectation is now taken from the same display-name authority the loader
+    // consults, so a rename travels and a rewiring still fails.
+    const tenantKey = 'skyharbor-air';
+    const expectedName = canonicalClientDisplayName({
+      key: tenantKey,
+      name: null,
+    });
+
+    // Non-vacuous: if the authority ever returned the key unchanged or an empty
+    // string, the assertion below would pass while the loader did nothing.
+    expect(expectedName).toBeTruthy();
+    expect(expectedName).not.toBe(tenantKey);
+
     mockRequireTenancy.mockResolvedValue({
       clientId: 'client-1',
-      clientKey: 'skyharbor-air',
+      clientKey: tenantKey,
       userId: 'user-1',
     });
     mockAzureMaybeSingle
@@ -96,8 +115,8 @@ describe('loadMoveBusinessCaseInput', () => {
 
     await expect(loadMoveBusinessCaseInput('move-1')).resolves.toMatchObject({
       industry_code: 'GLOBAL_NETWORK_AIRLINE',
-      tenant_key: 'skyharbor-air',
-      tenant_name: 'SkyHarbor Air',
+      tenant_key: tenantKey,
+      tenant_name: expectedName,
       baseline_metrics: [{ metric: 'misconnect_rate', value: 0.18 }],
     });
   });
