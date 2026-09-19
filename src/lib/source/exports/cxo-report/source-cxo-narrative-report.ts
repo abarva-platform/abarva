@@ -449,6 +449,28 @@ function findStructured(
   );
 }
 
+/**
+ * Stage keys at which the event has made, or passed, its award decision — the
+ * only stages at which this report will state "Award / proceed".
+ *
+ * Award authority follows the lifecycle position, never the spelling. The
+ * product uses `selection` and `executive_decision` as two names for the same
+ * position — `stageNumberFor` below maps both to stage 5 — so a check written
+ * against one spelling gave two identical events opposite award authority
+ * depending on which name happened to be stored.
+ *
+ * `evaluation` and `bafo` also sit at stage 5, so the stage number alone cannot
+ * answer this: they name an event that is still evaluating and are deliberately
+ * excluded. Add a key here only if it means the decision has been made.
+ */
+export const AWARD_DECISION_STAGE_KEYS: ReadonlySet<DealPackInput["currentStageKey"]> =
+  new Set<DealPackInput["currentStageKey"]>([
+    "executive_decision",
+    "selection",
+    "transition",
+    "value",
+  ]);
+
 function synthesizeDecision(
   input: DealPackInput,
   judgment: SourceJudgment,
@@ -489,10 +511,7 @@ function synthesizeDecision(
     };
   }
   if (selection) {
-    const awardStageReached =
-      input.currentStageKey === "executive_decision" ||
-      input.currentStageKey === "transition" ||
-      input.currentStageKey === "value";
+    const awardStageReached = AWARD_DECISION_STAGE_KEYS.has(input.currentStageKey);
     if (awardStageReached) {
       return {
         verdict: "Award / proceed",

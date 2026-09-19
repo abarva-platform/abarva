@@ -16,7 +16,12 @@ describe('Source CXO narrative report', () => {
     expect(report.tenantName).toBe('Apex Retail');
     expect(report.eventCode).toBe('APX-CC-2026');
     expect(report.audience).toContain('VP Sourcing');
-    expect(report.verdict).toBe('Pending — Evaluation / BAFO / Decision');
+    // Restored from 'Pending — Evaluation / BAFO / Decision'. This fixture sits
+    // at the `selection` stage, which is the same lifecycle position as
+    // `executive_decision`; the expectation had been rewritten to match a
+    // spelling-sensitive award-stage check rather than the behaviour the
+    // fixture describes. See AWARD_DECISION_STAGE_KEYS.
+    expect(report.verdict).toBe('Award / proceed');
     expect(report.slides.map((slide) => slide.kind)).toEqual([
       'cover',
       'answer',

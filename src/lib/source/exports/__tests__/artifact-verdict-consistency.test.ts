@@ -19,7 +19,10 @@ import {
 } from '../../expert-judgment/source-judgment-kernel';
 import { sourceJudgmentVerdictLabel } from '../../expert-judgment/source-judgment-rules';
 import { assembleDealPackHtml, type DealPackInput, type DealPackStage } from '../deal-pack/stage-sections';
-import { buildSourceCxoNarrativeReport } from '../cxo-report/source-cxo-narrative-report';
+import {
+  AWARD_DECISION_STAGE_KEYS,
+  buildSourceCxoNarrativeReport,
+} from '../cxo-report/source-cxo-narrative-report';
 import { renderSourceCxoNarrativeHtml } from '../cxo-report/source-cxo-narrative-html';
 import { renderSourceCxoNarrativePptx } from '../cxo-report/source-cxo-narrative-pptx';
 
@@ -179,6 +182,68 @@ describe('Source artifact verdict consistency · kernel hold', () => {
     for (const artifact of [dealPackHtml, cxoHtml, JSON.stringify(report)]) {
       expect(artifact).not.toContain('Award / proceed');
     }
+  });
+});
+
+describe('Source artifact verdict consistency · award authority follows the stage, not its spelling', () => {
+  // `selection` and `executive_decision` are two names the product uses for the
+  // same lifecycle position — `stageNumberFor` in the report module maps both to
+  // stage 5. An event must not gain or lose award authority because of which
+  // name happens to be stored on it.
+  it('the same award-ready event reads the same under either spelling of the decision stage', () => {
+    const asSelection = buildSourceCxoNarrativeReport({
+      ...makeAwardReadyInput(),
+      currentStageKey: 'selection',
+    });
+    const asExecutiveDecision = buildSourceCxoNarrativeReport({
+      ...makeAwardReadyInput(),
+      currentStageKey: 'executive_decision',
+    });
+
+    expect(asSelection.verdict).toBe(asExecutiveDecision.verdict);
+    expect(asSelection.verdictDetail).toBe(asExecutiveDecision.verdictDetail);
+  });
+
+  it('the deal pack and the CXO report state one verdict for one award-ready event', () => {
+    const input = makeAwardReadyInput();
+    const judgment = buildSourceJudgmentFromDealPack(input);
+    const verdictLabel = sourceJudgmentVerdictLabel(judgment.verdict);
+
+    const report = buildSourceCxoNarrativeReport(input);
+    const dealPackHtml = assembleDealPackHtml(input);
+
+    expect(dealPackHtml).toContain(verdictLabel);
+    expect(report.verdict).toBe(verdictLabel);
+  });
+
+  it('an award-ready event that has not reached the decision stage still refuses Award / proceed', () => {
+    // The gate is not being removed — an event still sitting in pricing has not
+    // made a decision, whatever the evidence supports.
+    const report = buildSourceCxoNarrativeReport({
+      ...makeAwardReadyInput(),
+      currentStageKey: 'pricing',
+    });
+
+    expect(report.verdict).not.toBe('Award / proceed');
+    expect(report.verdict).toMatch(/^Pending — /);
+  });
+
+  it('every stage key that carries award authority sits at the decision stage or later', () => {
+    // A structural guard: adding a pre-decision key to the set would hand award
+    // authority to an event that has not made a decision.
+    for (const stageKey of AWARD_DECISION_STAGE_KEYS) {
+      const report = buildSourceCxoNarrativeReport({
+        ...makeAwardReadyInput(),
+        currentStageKey: stageKey,
+      });
+      expect(report.verdict).toBe('Award / proceed');
+    }
+    expect(AWARD_DECISION_STAGE_KEYS.has('selection')).toBe(true);
+    expect(AWARD_DECISION_STAGE_KEYS.has('executive_decision')).toBe(true);
+    // Evaluation and BAFO share stage 5 with the decision keys but name an event
+    // that is still evaluating, so they deliberately carry no award authority.
+    expect(AWARD_DECISION_STAGE_KEYS.has('evaluation')).toBe(false);
+    expect(AWARD_DECISION_STAGE_KEYS.has('bafo')).toBe(false);
   });
 });
 
