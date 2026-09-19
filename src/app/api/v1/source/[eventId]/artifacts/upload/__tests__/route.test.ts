@@ -171,6 +171,15 @@ jest.mock('@/lib/source/canvas-substrate/upload-sync', () => ({
     syncUploadToCanvasSubstrateMock(args),
 }));
 
+// This suite owns upload/registry wiring, not normalized proposal parsing.
+// Keep an arbitrary byte buffer from being treated as a real XLSX ZIP.
+jest.mock('@/lib/source/vendor-response-workbook', () => ({
+  parseNormalizedVendorResponseWorkbook: async () => null,
+}));
+jest.mock('@/lib/source/vendor-response-persistence', () => ({
+  persistNormalizedVendorResponsePackage: async () => undefined,
+}));
+
 // Import AFTER all mocks are registered.
 import { POST } from '@/app/api/v1/source/[eventId]/artifacts/upload/route';
 
@@ -273,6 +282,19 @@ describe('POST /api/v1/source/[eventId]/artifacts/upload', () => {
     expect(registered.sourceEventId).toBe(EVENT_ID);
     expect(registered.sourceOrigin).toBe('uploaded');
     expect(registered.originalName).toBe('apex-svc-baseline-18mo.csv');
+    expect(registered.fileCabinet).toMatchObject({
+      clientId: 'c-1',
+      sourcingStage: 'scope',
+      artifactGroup: 'upload',
+      artifactType: 'uploaded_source_artifact',
+      title: 'apex-svc-baseline-18mo.csv',
+      fileName: 'apex-svc-baseline-18mo.csv',
+      fileFormat: 'csv',
+      blobContainer: 'source-artifacts',
+      fileSize: 512,
+      version: 1,
+      status: 'draft',
+    });
   });
 
   it('accepts an XLSX file', async () => {

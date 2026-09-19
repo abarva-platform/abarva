@@ -10,7 +10,10 @@ import "server-only";
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type {
+  ArtifactFileFormat,
   ArtifactGroup,
+  ArtifactLifecycle,
+  ArtifactStatus,
   ListArtifactsFilter,
   SourceArtifactRecord,
 } from "./types";
@@ -19,6 +22,85 @@ type DbClient = ReturnType<typeof getAzureWriteFluentClient>;
 
 function arr(v: unknown): string[] {
   return Array.isArray(v) ? v.map(String) : [];
+}
+
+function firstString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function artifactGroup(row: Record<string, unknown>): ArtifactGroup {
+  const group = firstString(row.artifact_group);
+  if (
+    group === "generated" ||
+    group === "upload" ||
+    group === "template" ||
+    group === "session" ||
+    group === "approval"
+  ) {
+    return group;
+  }
+  return row.source_origin === "uploaded" || row.source_origin === "reuploaded"
+    ? "upload"
+    : "generated";
+}
+
+function artifactStatus(row: Record<string, unknown>): ArtifactStatus {
+  const status = firstString(row.status);
+  if (
+    status === "draft" ||
+    status === "preliminary" ||
+    status === "issue_ready" ||
+    status === "client_to_complete" ||
+    status === "legal_review_required" ||
+    status === "procurement_review_required" ||
+    status === "approved" ||
+    status === "client_final" ||
+    status === "superseded" ||
+    status === "retired" ||
+    status === "blocked"
+  ) {
+    return status;
+  }
+  if (row.approval_state === "approved") return "approved";
+  if (row.approval_state === "rejected") return "blocked";
+  if (row.approval_state === "in_review") return "preliminary";
+  return "draft";
+}
+
+function artifactLifecycle(row: Record<string, unknown>): ArtifactLifecycle {
+  if (
+    row.lifecycle_state === "current" ||
+    row.lifecycle_state === "superseded" ||
+    row.lifecycle_state === "retired"
+  ) {
+    return row.lifecycle_state;
+  }
+  return row.deleted_at ? "retired" : "current";
+}
+
+function artifactFormat(row: Record<string, unknown>): ArtifactFileFormat {
+  const format = firstString(row.file_format, row.source_format)?.toLowerCase();
+  if (format === "markdown") return "md";
+  if (
+    format === "docx" ||
+    format === "xlsx" ||
+    format === "pptx" ||
+    format === "pdf" ||
+    format === "html" ||
+    format === "md" ||
+    format === "csv" ||
+    format === "json" ||
+    format === "txt" ||
+    format === "image" ||
+    format === "audio" ||
+    format === "video"
+  ) {
+    return format;
+  }
+  return "unknown";
 }
 
 function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
@@ -44,29 +126,41 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
   };
   return {
     id: String(row.id),
-    clientId: String(row.client_id),
-    tenantKey: String(row.tenant_key),
-    sourceEventId: String(row.source_event_id),
-    sourcingStage: strOrNull(row.sourcing_stage),
-    artifactGroup: row.artifact_group as ArtifactGroup,
-    artifactType: String(row.artifact_type),
+    clientId: firstString(row.client_id) ?? "",
+    tenantKey: firstString(row.tenant_key) ?? "",
+    sourceEventId: firstString(row.source_event_id) ?? "",
+    sourcingStage: firstString(row.sourcing_stage, row.stage_key),
+    artifactGroup: artifactGroup(row),
+    artifactType:
+      firstString(row.artifact_type, row.artifact_kind, row.artifact_family) ??
+      "source_artifact",
     artifactFamily: strOrNull(row.artifact_family),
-    title: String(row.title),
+    title:
+      firstString(row.title, row.original_name, row.artifact_kind) ??
+      "Source artifact",
     description: strOrNull(row.description),
-    fileName: String(row.file_name),
-    fileFormat: row.file_format as SourceArtifactRecord["fileFormat"],
-    blobContainer: String(row.blob_container),
-    blobPath: String(row.blob_path),
-    fileSize: numOrNull(row.file_size),
+    fileName:
+      firstString(row.file_name, row.original_name) ?? "source-artifact",
+    fileFormat: artifactFormat(row),
+    blobContainer: firstString(row.blob_container) ?? "source-artifacts",
+    blobPath: firstString(row.blob_path, row.blob_uri) ?? "",
+    fileSize: numOrNull(row.file_size ?? row.size_bytes),
     version: Number(row.version ?? 1),
-    status: row.status as SourceArtifactRecord["status"],
-    generatedBy: strOrNull(row.generated_by),
-    generatedAt: String(row.generated_at),
-    sourceBasis: strOrNull(row.source_basis),
+    status: artifactStatus(row),
+    generatedBy: firstString(row.generated_by, row.uploader_user_id),
+    generatedAt:
+      firstString(row.generated_at, row.created_at, row.updated_at) ?? "",
+    sourceBasis: firstString(row.source_basis, row.source_origin),
     confidence: strOrNull(row.confidence),
-    citationReady: row.citation_ready === true,
-    evidenceFamiliesUsed: arr(row.evidence_families_used),
-    sourceRegisterId: strOrNull(row.source_register_id),
+    citationReady:
+      row.citation_ready === true || row.evidence_state === "cited",
+    evidenceFamiliesUsed:
+      arr(row.evidence_families_used).length > 0
+        ? arr(row.evidence_families_used)
+        : firstString(row.artifact_family)
+          ? [String(row.artifact_family)]
+          : [],
+    sourceRegisterId: firstString(row.source_register_id, row.id),
     contextBundleTraceId: strOrNull(row.context_bundle_trace_id),
     approvalState: strOrNull(row.approval_state),
     approvedBy: strOrNull(row.approved_by),
@@ -75,11 +169,13 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
     missingInputs: arr(row.missing_inputs),
     clientCompleteItems: arr(row.client_complete_items),
     assumptions: arr(row.assumptions),
-    supersedesArtifactId: strOrNull(row.supersedes_artifact_id),
+    supersedesArtifactId: firstString(
+      row.supersedes_artifact_id,
+      row.supersedes_artifact_version_id,
+    ),
     supersededByArtifactId: strOrNull(row.superseded_by_artifact_id),
-    lifecycleState:
-      row.lifecycle_state as SourceArtifactRecord["lifecycleState"],
-    blobSha256: strOrNull(row.blob_sha256),
+    lifecycleState: artifactLifecycle(row),
+    blobSha256: firstString(row.blob_sha256, row.sha256),
     isClientFinal: row.is_client_final === true,
     isCurrentAuthoritative: row.is_current_authoritative === true,
     sourceGeneratedArtifactId: strOrNull(row.source_generated_artifact_id),
@@ -93,8 +189,9 @@ function rowToRecord(row: Record<string, unknown>): SourceArtifactRecord {
     ),
     clientFinalStakeholderGroup: strOrNull(row.client_final_stakeholder_group),
     clientFinalChangeSummary: jsonObjOrEmpty(row.client_final_change_summary),
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at),
+    createdAt: firstString(row.created_at, row.generated_at) ?? "",
+    updatedAt:
+      firstString(row.updated_at, row.created_at, row.generated_at) ?? "",
   };
 }
 
@@ -247,7 +344,7 @@ export async function supersedePriorVersions(
 /** All artifacts for an event (File Cabinet). Current-only unless includeHistory. */
 export async function listSourceArtifacts(
   sourceEventId: string,
-  clientId: string,
+  tenantKey: string,
   filter: ListArtifactsFilter = {},
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<SourceArtifactRecord[]> {
@@ -255,7 +352,7 @@ export async function listSourceArtifacts(
     .from("source_artifacts")
     .select("*")
     .eq("source_event_id", sourceEventId)
-    .eq("client_id", clientId);
+    .eq("tenant_key", tenantKey);
   if (!filter.includeHistory) q = q.eq("lifecycle_state", "current");
   if (filter.artifactGroup) q = q.eq("artifact_group", filter.artifactGroup);
   if (filter.status) q = q.eq("status", filter.status);

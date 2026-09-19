@@ -4,6 +4,7 @@ import { requireTenancy } from "@/lib/auth/tenancy";
 import { getSourcingEventForResolvedClient } from "@/lib/source/queries";
 import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { SourceNewWorkspace } from "@/components/source/new-workspace/SourceNewWorkspace";
 import type { SourceNewFileRow } from "@/components/source/new-workspace/SourceNewFiles";
 import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
@@ -40,15 +41,16 @@ export default async function SourceNewEventPage({
   if (!event) notFound();
 
   const [artifacts, activity, authority] = await Promise.all([
-    activeClient.id
-      ? listSourceArtifacts(event.id, activeClient.id, { includeHistory: true })
-      : Promise.resolve([]),
+    listSourceArtifacts(
+      event.id,
+      clientKeyToInventorySubstrateKey(activeClient.key),
+      { includeHistory: true },
+    ),
     listSourceEventActivityEntries(event.id),
     readSourceEventAuthority(event.id, activeClient.key),
   ]);
 
-  const files: SourceNewFileRow[] = activeClient.id
-    ? artifacts.flatMap((artifact) => {
+  const files: SourceNewFileRow[] = artifacts.flatMap((artifact) => {
         // Tenancy is the only reason to drop an artifact here. A stage this
         // workspace has no phase for still belongs to the operator's event.
         if (
@@ -103,8 +105,7 @@ export default async function SourceNewEventPage({
             phase,
           },
         ];
-      })
-    : [];
+      });
   const intelligence = buildSourceNewEventIntelligence({
     event: {
       id: event.id,

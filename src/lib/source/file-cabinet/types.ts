@@ -30,7 +30,12 @@ export type ArtifactFileFormat =
   | "html"
   | "md"
   | "csv"
-  | "json";
+  | "json"
+  | "txt"
+  | "image"
+  | "audio"
+  | "video"
+  | "unknown";
 
 export interface SourceArtifactRecord {
   id: string;
@@ -138,6 +143,11 @@ const CONTENT_TYPES: Record<ArtifactFileFormat, string> = {
   md: "text/markdown; charset=utf-8",
   csv: "text/csv; charset=utf-8",
   json: "application/json",
+  txt: "text/plain; charset=utf-8",
+  image: "application/octet-stream",
+  audio: "application/octet-stream",
+  video: "application/octet-stream",
+  unknown: "application/octet-stream",
 };
 
 export function contentTypeFor(format: ArtifactFileFormat): string {

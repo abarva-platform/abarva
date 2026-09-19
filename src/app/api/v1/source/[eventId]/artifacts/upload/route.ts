@@ -425,22 +425,26 @@ export async function POST(
   }
 
   try {
+    const artifactFamily = inferSourceArtifactFamily({
+      stageKey: scope.stageKey,
+      filename,
+      requestedFamily: parseOptionalString(formData.get("artifactFamily")),
+    });
+    const artifactKind =
+      parseOptionalString(formData.get("artifactKind")) ??
+      "uploaded_source_artifact";
+    const sourceFormat = sourceArtifactFormatFromMime(mimeType);
+    const fileFormat = sourceFormat === "markdown" ? "md" : sourceFormat;
     let artifact = await registerSourceArtifactUpload({
       artifactId,
       tenantKey,
       sourceEventId: scope.eventId,
       sourceEventRowId: scope.sourceEventRowId,
       stageKey: scope.stageKey,
-      artifactFamily: inferSourceArtifactFamily({
-        stageKey: scope.stageKey,
-        filename,
-        requestedFamily: parseOptionalString(formData.get("artifactFamily")),
-      }),
-      artifactKind:
-        parseOptionalString(formData.get("artifactKind")) ??
-        "uploaded_source_artifact",
+      artifactFamily,
+      artifactKind,
       sourceOrigin: "uploaded",
-      sourceFormat: sourceArtifactFormatFromMime(mimeType),
+      sourceFormat,
       originalName: filename,
       blobUri,
       uploaderUserId: tenancy.userId,
@@ -449,6 +453,28 @@ export async function POST(
       sha256,
       dataClassification,
       createdBy: tenancy.userId,
+      fileCabinet: {
+        clientId: client.id,
+        sourcingStage: scope.stageKey,
+        artifactGroup: "upload",
+        artifactType: artifactKind,
+        artifactFamily,
+        title: filename,
+        description: null,
+        fileName: filename,
+        fileFormat,
+        blobContainer: STORAGE_BUCKET,
+        blobPath: blobUri,
+        fileSize: file.size,
+        version: 1,
+        status: "draft",
+        generatedBy: tenancy.userId,
+        sourceBasis: "uploaded source document",
+        citationReady: false,
+        evidenceFamiliesUsed: [artifactFamily],
+        sourceRegisterId: artifactId,
+        blobSha256: sha256,
+      },
     });
 
     const extracted = await extractSourceUploadText({
