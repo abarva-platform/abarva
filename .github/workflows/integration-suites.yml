@@ -31,6 +31,24 @@ name: Integration suites
 # `…/agents`, which is red. `integration-directory-ci-coverage.test.ts` holds
 # all three of these, and refuses a new integration directory that no workflow
 # reaches.
+#
+# 2026-09-19 · five more directories wired. `architecture`, `deployment`,
+# `knowledge`, `tenants` and `demo` were each held out of CI by a handful of
+# assertions — six in total across 38 suites, against 1,105 that were passing
+# and being collected by nothing. All six were stale contracts rather than
+# product defects, and each was repaired by asserting the property the literal
+# stood for rather than by updating the literal:
+#
+#   · a module-path string that had never named a real file
+#   · `FROM node:24`, unmatchable since the base moved behind an ARG
+#   · "not imported by app routes yet" — a migration snapshot that went red
+#     when the migration it was waiting for succeeded
+#   · a hand-typed tenant count, which AGENTS.md forbids outright
+#   · a sign-in layout that had since gained a second mode
+#
+# Wiring `demo` also selects three loose `demo-*.test.ts` files at the
+# integration root, for the regex reason in the paragraph above. They are
+# enumerated in the collision case and all three pass.
 
 on:
   merge_group:
@@ -64,7 +82,7 @@ jobs:
       # what makes this cover suites nobody has written yet: a new suite in one
       # of these directories runs the day it lands.
       - name: Run the integration directories that pass on main
-        run: npx jest src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/engagement src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/solutions src/__tests__/integration/story-pack --no-coverage --ci
+        run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants --no-coverage --ci
 
       - name: Refuse a new integration directory that no workflow reaches
         run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci

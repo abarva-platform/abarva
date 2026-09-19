@@ -44,9 +44,13 @@ type Census = {
  * them needs a quarantine list the way `source` does.
  */
 const WIRED_DIRECTORIES = [
+  "architecture",
   "corpus",
   "data-trust",
+  "demo",
+  "deployment",
   "engagement",
+  "knowledge",
   "nexus",
   "observability",
   "programs",
@@ -54,6 +58,7 @@ const WIRED_DIRECTORIES = [
   "sentinel",
   "solutions",
   "story-pack",
+  "tenants",
 ] as const;
 
 /**
@@ -73,16 +78,11 @@ const KNOWN_DARK_DIRECTORIES = new Set([
   "admin/data",
   "agent",
   "agents",
-  "architecture",
-  "demo",
-  "deployment",
   "design",
   "intelligence",
-  "knowledge",
   "ops",
   "qa",
   "setup",
-  "tenants",
 ]);
 
 function runCensus(): Census {
@@ -177,6 +177,13 @@ describe("integration directories a workflow actually reaches", () => {
     // colliding entry has been measured by nobody, so it fails this case until
     // somebody runs it and decides.
     expect(collisions.sort()).toEqual([
+      // The `demo` pattern selects these three root-level suites. All three
+      // were run on `66acc1a2a` as part of the wired command and pass;
+      // `demo-code-sign-in-panel.test.ts` is one of the five this change
+      // repaired, so it is measured rather than assumed.
+      "demo-code-sign-in-panel.test.tsx",
+      "demo-code-sign-in-route.test.ts",
+      "demo-p0-graceful-degradation.test.ts",
       "programs-api-contracts.test.ts",
       "programs-demo-beats.test.ts",
       "programs-enhancement-seed-planner.test.ts",

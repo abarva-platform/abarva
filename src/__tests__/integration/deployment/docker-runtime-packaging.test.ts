@@ -27,8 +27,32 @@ describe('CLOUD3 · Docker runtime packaging artifacts', () => {
     })
 
     it('uses a current Node 24 LTS base image', () => {
-      // Accept any node:24* base (e.g. node:24-bookworm-slim, node:24-alpine).
-      expect(dockerfile).toMatch(/FROM\s+node:24/)
+      // Was pinned to the literal `FROM node:24`. The Dockerfile now resolves
+      // its base through `ARG BASE_NODE_IMAGE` so the registry can be
+      // redirected at build time, which made that literal unmatchable while
+      // the property it stood for — the runtime is Node 24 — stayed true.
+      // Assert the property instead: the default the build uses when nobody
+      // overrides the ARG is a node:24 image, and no stage escapes it.
+      const argDefault = dockerfile.match(
+        /^ARG\s+BASE_NODE_IMAGE=(\S+)/m,
+      )?.[1]
+
+      expect(argDefault).toBeDefined()
+      // Tolerates a registry prefix and any node:24 variant
+      // (24-bookworm-slim, 24-alpine, 24.6.0-slim), rejects node:22 etc.
+      expect(argDefault).toMatch(/(?:^|\/)node:24(?:[.-]|$)/)
+
+      // Every build stage must come from that one ARG. A stage added with a
+      // hardcoded base would leave the runtime on an unreviewed image while
+      // the assertion above still passed.
+      const fromBases = Array.from(
+        dockerfile.matchAll(/^FROM\s+(\S+)/gm),
+      ).map((match) => match[1])
+
+      expect(fromBases.length).toBeGreaterThan(0)
+      for (const base of fromBases) {
+        expect(base).toBe('${BASE_NODE_IMAGE}')
+      }
     })
 
     it('declares a non-root USER directive', () => {

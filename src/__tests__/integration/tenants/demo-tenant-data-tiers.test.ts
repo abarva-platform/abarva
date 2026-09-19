@@ -10,9 +10,35 @@ import {
 } from '@/lib/tenants/demo-tenant-data-tiers';
 
 describe('listDemoTenantDataTiers', () => {
-  it('returns exactly 3 tenants', () => {
+  // Was `toHaveLength(3)`. A fourth demo tenant was added and this went red,
+  // which is the hand-typed tenant list AGENTS.md forbids in any test: the
+  // count protected nothing, and re-typing it as 4 only re-arms the same trap
+  // for whoever adds the fifth. The invariants a count was standing in for are
+  // that the list is populated, that no tenant is listed twice, and that every
+  // listed tenant is resolvable through the module's own lookup — all of which
+  // survive a new tenant, and none of which a length check ever tested.
+  it('lists every demo tenant exactly once, each resolvable by slug', () => {
     const tiers = listDemoTenantDataTiers();
-    expect(tiers).toHaveLength(3);
+    const slugs = tiers.map((tier) => tier.tenantSlug);
+
+    expect(slugs.length).toBeGreaterThan(0);
+    expect(new Set(slugs).size).toBe(slugs.length);
+
+    for (const slug of slugs) {
+      expect(getDemoTenantDataTier(slug)).not.toBeNull();
+    }
+  });
+
+  it('describes every surface for every tenant, with no silent gap', () => {
+    // A tenant added with a missing surface would render an unexplained blank
+    // rather than a stated "not seeded" — the honesty property the caveats
+    // exist for. Derived from the listing itself, so it holds for tenant N+1.
+    const tiers = listDemoTenantDataTiers();
+    const surfaceSets = tiers.map((tier) =>
+      tier.surfaces.map((surface) => surface.surface).sort().join(','),
+    );
+
+    expect(new Set(surfaceSets).size).toBe(1);
   });
 
   it('apex-retail richness is rich', () => {
