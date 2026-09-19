@@ -602,6 +602,10 @@
     "check:release-record-tenant-narrative-guard": {
       "kind": "pr-gate"
     },
+    "check:source-integration-quarantine": {
+      "kind": "pr-gate",
+      "reason": "Refuses a stale or growing Source integration quarantine list. The list is what keeps 24 red suites out of the Source integration workflow while the other 68 run; without this, an entry naming a deleted suite would keep excluding nothing and the list could grow by quiet append until the carve-out became the standard. Invoked by source-integration.yml alongside the run it protects."
+    },
     "check:tenant-narrative-term-drift": {
       "kind": "pr-gate"
     },
