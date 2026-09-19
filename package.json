@@ -36,6 +36,7 @@
     "test:behaviors": "jest src/__tests__/behaviors",
     "coverage:behavior-gate": "node scripts/ci/check-behavior-coverage.mjs",
     "test:integration": "jest src/__tests__/integration",
+    "check:source-integration-quarantine": "node scripts/quality/check-source-integration-quarantine.mjs",
     "test:integration:nexus": "jest src/__tests__/integration/nexus",
     "test:integration:ci-visibility": "node --test scripts/quality/check-integration-ci-visibility.test.mjs && node scripts/quality/check-integration-ci-visibility.mjs",
     "test:atlas-eval": "TS_NODE_BASEURL=. TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node -r tsconfig-paths/register src/__tests__/atlas-eval/run-eval.ts",

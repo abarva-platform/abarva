@@ -1,0 +1,55 @@
+name: Source integration suites
+
+# src/__tests__/integration/source/ held 92 suites that no workflow ran. The
+# "Changed integration suites have a CI owner" gate only fires on a suite a PR
+# changes, so the rest sat unexecuted — 591 passing assertions nobody collected
+# and 68 failures nobody could see until the directory was run for the first
+# time.
+#
+# The jest command below names the runner and the directory literally, on
+# purpose: that gate counts a suite as registered only when a workflow command
+# mentions a test runner AND names the suite or a containing directory. A
+# wrapper script that shells out to jest satisfies neither, so wrapping the run
+# would have registered nothing while looking correct.
+#
+# Naming the directory rather than 68 file paths is also what makes this cover
+# suites nobody has written yet: a new Source integration suite runs the day it
+# lands. Exclusions are named, with reasons, in
+# scripts/quality/source-integration-quarantine.json.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  source-integration:
+    name: Source integration suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refuse a stale or growing quarantine list
+        run: npm run check:source-integration-quarantine
+
+      # The runner and the directory are named literally here, and only the
+      # exclusion flags are generated. The path deliberately has no trailing
+      # slash: the visibility gate requires it to be followed by whitespace or
+      # end-of-command, so a trailing slash would make the gate stop seeing it.
+      - name: Run the Source integration suites that pass on main
+        run: npx jest src/__tests__/integration/source --no-coverage --ci $(node scripts/quality/source-integration-ignore-args.mjs)

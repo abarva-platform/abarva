@@ -1,0 +1,40 @@
+{
+  "note": "Source integration suites that are RED on clean main and are therefore excluded from the Source integration workflow. This directory held 92 suites that no workflow ran; running it for the first time found 24 red. Wiring all 92 would have made every PR red on day one and the workflow would have been switched off within a day, so the green 68 run now and these are named here instead of being silently dropped. Default is INCLUDED: a new suite in this directory runs unless it is added to this list, which is what makes the workflow cover work that has not been written yet. Removing an entry is the fix; adding one needs a reason and an owner.",
+  "howToClear": "Run the suite locally, fix it, delete its entry here, and confirm the Source integration workflow stays green.",
+  "clusters": {
+    "null-event-object": "The largest cluster, roughly 40 of the 68 failing tests. Product components read properties off an event object the harness supplies as null \u2014 SourceScopeStageWorkspace.tsx:365 reading `dataReadiness`, and the same shape reading `stages`, `id`, `vendorResponses` and `name`. This is product code throwing, not only a stale assertion, so it is a defect to triage rather than a fixture to patch.",
+    "next-navigation-stub": "`(0, _navigation.notFound) is not a function` \u2014 the Next.js navigation module is not stubbed for these route-level suites.",
+    "stale-copy-assertions": "Suites asserting literal on-screen copy that has since changed, e.g. 'Capture the five basics' and 'Captured facts checklist'.",
+    "unverified-remainder": "The remaining `toContain` / `toBe` / `toMatch` failures have not been clustered individually. They are counted, not explained, and saying so is more useful than implying a triage that has not happened."
+  },
+  "quarantined": [
+    "source-access-control-static.test.ts",
+    "source-authenticated-route-smoke.test.ts",
+    "source-bafo-negotiation-panel.test.ts",
+    "source-canvas-gate-tab.test.tsx",
+    "source-context-action-enforcement.test.ts",
+    "source-dashboard-route-smoke.test.ts",
+    "source-decision-queue-triage.test.tsx",
+    "source-empty-state.test.ts",
+    "source-event-canvas-shell.test.ts",
+    "source-event-route-payload-contract.test.ts",
+    "source-executive-decision-summary-panel.test.ts",
+    "source-legacy-route-archive.test.ts",
+    "source-nexus-api-stub.test.ts",
+    "source-nexus-route-tenant-scope.test.ts",
+    "source-old-surface-archive.test.ts",
+    "source-originate-page.test.ts",
+    "source-pricing-upload-download-routes.test.ts",
+    "source-rfp-readiness-panel.test.ts",
+    "source-route-shell-enforcement.test.ts",
+    "source-scope-stage-workspace.test.ts",
+    "source-sourcing-tools.test.ts",
+    "source-vendor-pricing-smoke.test.ts",
+    "source-vendor-response-completeness-panel.test.ts",
+    "source-vendor-selection-readiness-panel.test.ts"
+  ],
+  "alsoIgnored": [
+    "integration/source-chat-shape.test.ts"
+  ],
+  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/source without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command \u2014 a trailing slash makes the gate stop seeing it. Jest reads that path as a pattern rather than a directory, so it also matches sibling files at the integration root whose names start with \"source\". source-chat-shape.test.ts is one, and it is red, so it is named here. These are full path fragments, not bare filenames like the list above."
+}
