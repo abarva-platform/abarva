@@ -12,6 +12,7 @@ import type {
 
 const mockAdapter = {
   listArtifactStateRows: jest.fn(),
+  listArtifactStateMetadataRows: jest.fn(),
   listGateCriterionStateRows: jest.fn(),
   listEvidenceStateRows: jest.fn(),
   listEventFactRows: jest.fn(),
@@ -28,23 +29,26 @@ describe("canvas substrate queries", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAdapter.listArtifactStateRows.mockResolvedValue([]);
+    mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([]);
     mockAdapter.listGateCriterionStateRows.mockResolvedValue([]);
     mockAdapter.listEvidenceStateRows.mockResolvedValue([]);
     mockAdapter.listEventFactRows.mockResolvedValue([]);
   });
 
   it("scopes artifact-state body hydration to the viewed stage", async () => {
-    mockAdapter.listArtifactStateRows.mockResolvedValue([
+    mockAdapter.listArtifactStateMetadataRows.mockResolvedValue([
       artifactRow({ artifact_code: "d09_rfp_pack", stage_key: "rfp" }),
     ]);
 
     const rows = await listArtifactStatesForEventStage("event-1", "rfp");
 
-    expect(mockAdapter.listArtifactStateRows).toHaveBeenCalledWith(
+    expect(mockAdapter.listArtifactStateMetadataRows).toHaveBeenCalledWith(
       "event-1",
       "rfp",
     );
     expect(rows[0]?.artifactCode).toBe("d09_rfp_pack");
+    expect(rows[0]?.body).toBeNull();
+    expect(rows[0]?.bodyGenerationMetadata).toBeNull();
   });
 
   it("merges cited source_event_facts into effective evidence", async () => {

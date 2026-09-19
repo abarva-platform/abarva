@@ -10,7 +10,6 @@
   "quarantined": [
     "source-bafo-negotiation-panel.test.ts",
     "source-event-canvas-shell.test.ts",
-    "source-event-route-payload-contract.test.ts",
     "source-executive-decision-summary-panel.test.ts",
     "source-nexus-route-tenant-scope.test.ts",
     "source-old-surface-archive.test.ts",
