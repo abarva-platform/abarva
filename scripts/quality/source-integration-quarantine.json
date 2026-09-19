@@ -17,7 +17,6 @@
     "source-nexus-route-tenant-scope.test.ts",
     "source-old-surface-archive.test.ts",
     "source-originate-page.test.ts",
-    "source-pricing-upload-download-routes.test.ts",
     "source-rfp-readiness-panel.test.ts",
     "source-scope-stage-workspace.test.ts",
     "source-sourcing-tools.test.ts",
