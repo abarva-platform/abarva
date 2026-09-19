@@ -48,6 +48,7 @@ import {
   deriveVendorResponseProfilesFromNormalized,
   deriveVendorResponseSeedInputsFromNormalized,
 } from "@/lib/source/vendor-response-completeness-from-normalized";
+import { buildSourceResponseCoverageReadModel } from "@/lib/source/response-coverage-read-model";
 import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
 import {
   buildVendorBafoInstructionPack,
@@ -181,8 +182,34 @@ export default async function SourceEventDetailPage({
       ? (normalizedVendorResponseProfiles ??
         (viewStage === "responses" ? seededVendorResponseProfiles : null))
       : null;
-    const normalizedResponseSeeds =
-      deriveVendorResponseSeedInputsFromNormalized(normalizedResponsePackages);
+    const responseCoverageReadModel = buildSourceResponseCoverageReadModel({
+      packages: normalizedResponsePackages,
+      requiredFields: normalizedResponsePackages.flatMap((responsePackage) =>
+        responsePackage.rows.map((row) => row.requirementId),
+      ),
+      criticalRequiredFields: normalizedResponsePackages.flatMap(
+        (responsePackage) =>
+          responsePackage.rows
+            .filter((row) => row.requirementLevel === "Mandatory")
+            .map((row) => row.requirementId),
+      ),
+    });
+    const productionResponseVendorIds = new Set(
+      responseCoverageReadModel.production.vendors.map(
+        (vendor) => vendor.vendorId,
+      ),
+    );
+    const normalizedProductionResponsePackages =
+      productionResponseVendorIds.size > 0
+        ? normalizedResponsePackages.filter((responsePackage) =>
+            productionResponseVendorIds.has(responsePackage.vendorId),
+          )
+        : normalizedResponsePackages.filter(
+            (responsePackage) => responsePackage.syntheticDemo !== true,
+          );
+    const normalizedResponseSeeds = deriveVendorResponseSeedInputsFromNormalized(
+      normalizedProductionResponsePackages,
+    );
     // Events outside the vendor-response seed table take their vendor
     // population from the same parsed profiles the rest of the stage renders,
     // so the cockpit and the file-readiness ledger cannot report an empty
