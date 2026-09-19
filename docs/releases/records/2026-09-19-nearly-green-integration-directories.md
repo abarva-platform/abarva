@@ -65,7 +65,35 @@ The six:
    guards the accounts somebody remembered to type. Replaced with the property
    it approximated: the panel renders no address at all, in either mode.
 
-A seventh repair was needed as a consequence. A negative control in the Source
+**The CI run then found something the local run could not.** The repository's
+"changed integration suites have a CI owner" gate blocked this pull request for
+a suite the same pull request was running. The runner and the gate do not use
+the same matching rule:
+
+- **jest** treats a path argument as a regular expression against the full path,
+  so `src/__tests__/integration/demo` *selects*
+  `src/__tests__/integration/demo-code-sign-in-panel.test.tsx`.
+- **the gate** registers a suite only by its exact path or by an **ancestor
+  directory** of it. `…/integration/demo` is not an ancestor directory of that
+  file; the only ancestor is the integration root, which no command names.
+
+So a loose root suite picked up by a directory pattern runs in CI and is
+reported as having no CI owner at the same time. This is not confined to this
+change: the **eight `programs-*` root files** wired previously have been in that
+state since the day they were wired — executing on every pull request, and
+invisible to the gate the whole time, so anyone who edited one of the eight
+would have been blocked by a gate that was wrong about its own repository. It
+stayed hidden because the gate only fires on a suite the current pull request
+changes, and nobody had changed one.
+
+The fix is to name all eleven loose root files in the command as well. That
+changes nothing about what executes — the wired command runs the identical 145
+suites and 4,162 tests before and after, which was verified rather than assumed
+— it makes the runner's set and the gate's set agree. A new behavioral case
+asserts that agreement directly, so the next occurrence fails locally instead of
+in CI.
+
+A further repair was needed as a consequence. A negative control in the Source
 CI-registration suite used one of these five folders as its example of "a folder
 no workflow names" — true when written, false once that folder was wired. The
 control was correct and its example had expired; it now uses a folder name no
@@ -134,7 +162,7 @@ exactly the figure the backlog item predicted. Suites run by no workflow
 Uncovered governed-risk directories unchanged at 46 critical / 109 high, as
 expected: none of these five carries a governed-risk signal.
 
-**Sixteen mutations, sixteen caught.** Each fix was broken deliberately and the
+**Eighteen mutations, eighteen caught.** Each fix was broken deliberately and the
 test confirmed red, then reverted:
 
 | # | Mutation | Caught by |
@@ -156,6 +184,7 @@ test confirmed red, then reverted:
 | 15 | A trailing slash added to a wired path | three coverage cases |
 | 16 | A new colliding root file nobody has measured | collision case |
 | 17 | The CI command broadened to the integration root | repaired negative control |
+| 18 | The eleven loose root files un-named — the exact state this PR's first CI run was blocked by | new runner/gate agreement case, **and** the real gate reproduced it locally |
 
 One mutation attempt (an early form of #12) reported `Tests: 0 total` — the
 suite had not run at all. It was rerun against the gate predicate rather than
@@ -207,6 +236,12 @@ defect, because none was fixed here.
 
 ## Known Gaps
 
+- **The runner/gate mismatch is fixed by enumeration, not by construction.** The
+  eleven loose root files are named explicitly and a behavioral case holds the
+  two sets in agreement, but the underlying asymmetry between a jest regex and
+  the gate's ancestor-directory rule is still there. A colliding *directory*
+  would be worse than a colliding file: a red directory arrives silently where a
+  red root file arrives loudly. Filed as its own item.
 - **Eleven integration directories are still reached by nothing**, because they
   are red. They are recorded as their own items with measured failure counts and
   are deliberately not wired here — wiring a red directory into a green job
