@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 18,
-    "testCount": 369,
+    "suiteCount": 19,
+    "testCount": 377,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -37,7 +37,8 @@
       "src/__tests__/integration/programs/programs-detail-prog21-gate-drawer.test.ts",
       "src/__tests__/integration/programs/programs-detail-prog25-workshop-notes-plan.test.ts",
       "src/__tests__/integration/programs/programs-detail-p3-source-audit.test.ts",
-      "src/__tests__/integration/programs/phase-filter-view.test.ts"
+      "src/__tests__/integration/programs/phase-filter-view.test.ts",
+      "src/__tests__/integration/programs/programs-catalog-lock.test.ts"
     ]
   },
   "excludedFailures": [
@@ -60,11 +61,6 @@
       "suite": "src/__tests__/integration/programs/full-lifecycle-crawl.test.ts",
       "classification": "stale-source-inspection",
       "evidence": "String-matches an earlier inline gate alias instead of executing the current gate behavior."
-    },
-    {
-      "suite": "src/__tests__/integration/programs/programs-catalog-lock.test.ts",
-      "classification": "stale-fixture-expectation",
-      "evidence": "Locks an older tenant and route-stub count rather than the current seed contract."
     },
     {
       "suite": "src/__tests__/integration/programs/programs-enhancement-seed-planner.test.ts",
