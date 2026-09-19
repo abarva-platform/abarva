@@ -143,6 +143,31 @@ describe("hydrateTaskEvidenceState", () => {
     expect(hydrated[0].evidenceComplete).toBeUndefined();
   });
 
+  it("attaches a matching stored template file without marking typed facts complete", () => {
+    const hydrated = hydrateTaskEvidenceState({
+      tasks: [VOLUMETRICS_TASK, APP_INVENTORY_TASK],
+      factInputs: {},
+      artifacts: [
+        {
+          stageKey: "intake",
+          artifactKind: "intake_attachment",
+          originalName: "client-volumetrics-VOLUMETRICS_V1.csv",
+          sourceFormat: "csv",
+          sizeBytes: 2048,
+        },
+      ],
+      stageKey: "scope",
+    });
+
+    expect(hydrated[0].file).toEqual({
+      format: "CSV",
+      name: "client-volumetrics-VOLUMETRICS_V1.csv",
+      meta: "2 KB · uploaded · awaiting extraction",
+    });
+    expect(hydrated[0].evidenceComplete).toBeUndefined();
+    expect(hydrated[1].file).toBeUndefined();
+  });
+
   it("marks a template-less provide task complete from a stored artifact", () => {
     const hydrated = hydrateTaskEvidenceState({
       tasks: [SPONSOR_LETTER_TASK],

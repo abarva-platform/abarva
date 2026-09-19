@@ -2581,7 +2581,9 @@ function EvidenceAskTable({
                     : "Continue"
                   : active
                     ? step.type === "provide"
-                      ? "Upload below"
+                      ? uploaded
+                        ? "Review existing file"
+                        : "Upload below"
                       : step.cta
                     : "Select when ready"
               }
