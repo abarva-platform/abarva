@@ -74,13 +74,19 @@ async function loadRequestFirstWorkspace(hasTenant: boolean): Promise<{
     return { status: "unavailable", eventWorkspaces: [] };
   }
   return {
-    status: "empty",
+    status: events.some((event) => event.status === "waiting_on_client")
+      ? "loaded"
+      : "empty",
     eventWorkspaces: events.map((event) => ({
       id: event.id,
       code: event.code,
       name: event.name,
       currentStageLabel: event.currentStageLabel,
       lifecycleLabel: event.statusLabel,
+      lifecycle: event.status,
+      trigger: event.triggerDescription ?? null,
+      scope: event.scopeDescription ?? null,
+      decisionOwner: event.decisionOwner ?? null,
       href: `/source/new/${encodeURIComponent(event.id)}`,
     })),
   };
