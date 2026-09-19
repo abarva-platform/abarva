@@ -219,3 +219,14 @@ jobs:
 
       - name: Exercise the Source New workspace, including the decision trail
         run: npx jest --runTestsByPath src/components/source/new-workspace/SourceNewWorkspace.test.tsx --runInBand
+
+      # The Source stage gate decides whether an event may move past a stage
+      # whose criteria are still open. It ran in no workflow, so the branch
+      # that treated a criterion the canonical catalog cannot resolve as
+      # non-blocking could not be caught by any check.
+      - name: Exercise the Source stage promotion gate
+        run: >
+          npx jest --runTestsByPath
+          src/lib/source/__tests__/source-governance-enforcement.test.ts
+          src/lib/source/__tests__/gate-advance-contract.test.ts
+          --runInBand

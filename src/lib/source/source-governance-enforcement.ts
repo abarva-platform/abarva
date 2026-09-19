@@ -175,6 +175,24 @@ export function evaluateStagePromotionReadiness(input: {
   );
   for (const criterion of stageCriteria) {
     const definition = criterionById(criterion.criterionId);
+    // An unresolvable criterion id is catalog drift, not an informational
+    // criterion. Deriving `blocksPromotion` from `definition?.severity` alone
+    // made a row the catalog cannot resolve silently non-blocking, so the
+    // stage advanced with that criterion still pending and nothing said so.
+    // `evaluateCriterionMetReadiness` already refuses to let a human mark such
+    // a criterion met; the stage gate applies the same rule. `waived` still
+    // clears it, and that waiver carries actor, time and reason.
+    if (
+      !definition &&
+      criterion.state !== "met" &&
+      criterion.state !== "waived"
+    ) {
+      blockers.push({
+        code: "criterion_definition_missing",
+        detail: `No canonical definition exists for ${criterion.criterionId}; it is ${criterion.state} and cannot be assessed.`,
+      });
+      continue;
+    }
     const blocksPromotion =
       definition?.required !== false &&
       (definition?.severity === "hard" || definition?.severity === "soft");

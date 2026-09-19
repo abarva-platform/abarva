@@ -333,6 +333,74 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
+  // A criterion row whose id the canonical catalog cannot resolve is drift, not
+  // an informational criterion. `evaluateCriterionMetReadiness` already refuses
+  // to let a human mark such a criterion met (`criterion_definition_missing`),
+  // so the stage gate must not let the event walk past it either. The ids in
+  // `artifact-gate-map.ts` are the live example: none of the twenty resolve in
+  // SOURCE_GATE_CRITERIA, and a row carrying one used to leave the gate empty.
+  it("blocks adjacent promotion while a criterion the catalog cannot resolve is still open", () => {
+    const verdict = evaluateStagePromotionReadiness({
+      currentStage: "strategy",
+      targetStage: "scope",
+      criteria: [
+        criterion({ criterionId: "GATE-STRATEGY-01", state: "met" }),
+        criterion({ criterionId: "GATE-STRATEGY-02", state: "met" }),
+        criterion({ criterionId: "GATE-STRATEGY-03", state: "met" }),
+        criterion({ criterionId: "ART-AMS-PLAN-01", state: "pending" }),
+      ],
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers.map((blocker) => blocker.code)).toContain(
+      "criterion_definition_missing",
+    );
+  });
+
+  it("names the unresolvable criterion so the drifted row can be found", () => {
+    const verdict = evaluateStagePromotionReadiness({
+      currentStage: "strategy",
+      targetStage: "scope",
+      criteria: [
+        criterion({ criterionId: "GATE-STRATEGY-01", state: "met" }),
+        criterion({ criterionId: "GATE-STRATEGY-02", state: "met" }),
+        criterion({ criterionId: "GATE-STRATEGY-03", state: "met" }),
+        criterion({ criterionId: "ART-AMS-PLAN-01", state: "pending" }),
+      ],
+      reason: REVIEW_REASON,
+    });
+
+    const blocker = verdict.blockers.find(
+      (row) => row.code === "criterion_definition_missing",
+    );
+    expect(blocker?.detail).toContain("ART-AMS-PLAN-01");
+  });
+
+  // The recovery path stays open: a waiver is recorded with actor, time and
+  // reason by the criterion-state route, and a waived criterion has always
+  // cleared the gate. Failing closed on drift must not close that door, or an
+  // event carrying a drifted row could never advance again.
+  it("allows adjacent promotion when the unresolvable criterion has been waived", () => {
+    const verdict = evaluateStagePromotionReadiness({
+      currentStage: "strategy",
+      targetStage: "scope",
+      criteria: [
+        criterion({ criterionId: "GATE-STRATEGY-01", state: "met" }),
+        criterion({ criterionId: "GATE-STRATEGY-02", state: "met" }),
+        criterion({ criterionId: "GATE-STRATEGY-03", state: "met" }),
+        criterion({
+          criterionId: "ART-AMS-PLAN-01",
+          state: "waived",
+          waiverApprovalId: "approval-1",
+        }),
+      ],
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(true);
+  });
+
   it("allows adjacency against a journey-specific stage order", () => {
     const verdict = evaluateStagePromotionReadiness({
       currentStage: "scope",
