@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 22,
-    "testCount": 397,
+    "suiteCount": 23,
+    "testCount": 437,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -41,15 +41,11 @@
       "src/__tests__/integration/programs/programs-catalog-lock.test.ts",
       "src/__tests__/integration/programs-enhancement-seed-planner.test.ts",
       "src/__tests__/integration/programs-enhancement-spec.test.ts",
-      "src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts"
+      "src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts",
+      "src/__tests__/integration/programs/workshop-readiness.test.ts"
     ]
   },
   "excludedFailures": [
-    {
-      "suite": "src/__tests__/integration/programs/workshop-readiness.test.ts",
-      "classification": "stale-fixture-expectation",
-      "evidence": "Assumes every historical fixture tenant has workshop rows; the current seed deliberately includes empty route stubs."
-    },
     {
       "suite": "src/__tests__/integration/programs/program-resume-state.test.ts",
       "classification": "stale-fixture-expectation",
