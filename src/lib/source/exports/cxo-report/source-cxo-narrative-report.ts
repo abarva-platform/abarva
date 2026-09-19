@@ -489,41 +489,22 @@ function synthesizeDecision(
     };
   }
   if (selection) {
-    const awardStageReached =
-      input.currentStageKey === "executive_decision" ||
-      input.currentStageKey === "transition" ||
-      input.currentStageKey === "value";
-    if (awardStageReached) {
-      return {
-        verdict: "Award / proceed",
-        answer: firstDecisionSentence(
-          selection,
-          "Selection memo is authored; proceed with controlled award path.",
-        ),
-        detail:
-          "Selection memo is the strongest decision artifact in the Source lifecycle.",
-        confidence: "High — selection memo authored",
-        nextStep: "Mobilize transition, contract controls and SRM commitments.",
-        changeTrigger:
-          "Material legal, pricing or transition exception before signature.",
-        status: "good",
-      };
-    }
     return {
-      verdict: `Pending — ${stageTitleFor(input.currentStageKey)}`,
+      verdict: sourceJudgmentVerdictLabel(judgment.verdict),
       answer: firstDecisionSentence(
         selection,
-        "Selection memo is authored but the event has not reached the executive decision gate; treat as provisional.",
+        "Selection memo is authored; proceed with controlled award path.",
       ),
       detail:
-        "Selection memo is authored, but the stage gate for award has not been reached; verdict must match evidence depth.",
-      confidence:
-        "Medium — selection memo authored, executive decision gate not reached",
+        "Selection memo is authored and the Source expert-judgment kernel found no critical blockers, pricing gaps, or decision-blocking evidence gaps.",
+      confidence: `${capitalize(judgment.confidence)} — Source expert judgment kernel`,
       nextStep:
-        "Advance the event through the remaining stage gates before committing to award.",
+        judgment.nextActions[0]?.action ??
+        "Proceed with controlled award path and preserve risk controls through signature.",
       changeTrigger:
-        "Reaching the executive decision gate without material legal, pricing or transition exceptions.",
-      status: "warn",
+        judgment.whatWouldChangeTheVerdict.join(" ") ||
+        "Material legal, pricing or transition exception before signature.",
+      status: "good",
     };
   }
   if (renewal) {

@@ -16,7 +16,7 @@ describe('Source CXO narrative report', () => {
     expect(report.tenantName).toBe('Apex Retail');
     expect(report.eventCode).toBe('APX-CC-2026');
     expect(report.audience).toContain('VP Sourcing');
-    expect(report.verdict).toBe('Pending — Evaluation / BAFO / Decision');
+    expect(report.verdict).toBe('Award / proceed');
     expect(report.slides.map((slide) => slide.kind)).toEqual([
       'cover',
       'answer',
