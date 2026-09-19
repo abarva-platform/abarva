@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 14,
-    "testCount": 269,
+    "suiteCount": 15,
+    "testCount": 305,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -33,7 +33,8 @@
       "src/__tests__/integration/programs/programs-create-route.test.ts",
       "src/__tests__/integration/programs/programs-auth-mode-and-tenant-guards.test.ts",
       "src/__tests__/integration/programs/programs-mutation-routes-tenant-guards.test.ts",
-      "src/__tests__/integration/programs/programs-detail-prog22-deliverables-canvas.test.ts"
+      "src/__tests__/integration/programs/programs-detail-prog22-deliverables-canvas.test.ts",
+      "src/__tests__/integration/programs/programs-detail-prog21-gate-drawer.test.ts"
     ]
   },
   "excludedFailures": [
@@ -56,11 +57,6 @@
       "suite": "src/__tests__/integration/programs/full-lifecycle-crawl.test.ts",
       "classification": "stale-source-inspection",
       "evidence": "String-matches an earlier inline gate alias instead of executing the current gate behavior."
-    },
-    {
-      "suite": "src/__tests__/integration/programs/programs-detail-prog21-gate-drawer.test.ts",
-      "classification": "stale-source-location",
-      "evidence": "Reads the retired route-local page while the mounted implementation and builder now live in the shared ProgramDetailPage component."
     },
     {
       "suite": "src/__tests__/integration/programs/phase-filter-view.test.ts",
