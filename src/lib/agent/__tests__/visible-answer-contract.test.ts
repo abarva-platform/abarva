@@ -182,4 +182,55 @@ describe("visible answer contract · restored checks", () => {
     expect(ids(text)).not.toContain("internal_table_name");
     expect(assertVisibleAnswerContract(text).passed).toBe(true);
   });
+
+  /**
+   * The prompt used to ban "source keys" flatly while CITATION_INSTRUCTION,
+   * in the same prompt, required the model to quote "the exact source_key
+   * shown with the chunk" and gave worked examples. Two mutually exclusive
+   * instructions, with nothing saying which governed.
+   *
+   * The enforcement below was never actually in conflict — SOURCE_KEY_RE
+   * matches a storage-shaped key (uppercase letter, digits, snake_case) and
+   * has never matched a citation key. So the prose was corrected to match the
+   * enforcement rather than the enforcement widened to match the prose, and
+   * nothing a reader sees changed.
+   *
+   * These cases pin both sides of that line against the literal examples
+   * CITATION_INSTRUCTION ships, so the prompt and the regex cannot drift apart
+   * again without one of them going red.
+   */
+  describe("a citation key is not a leaked source key", () => {
+    // Copied from the Examples block of CITATION_INSTRUCTION in
+    // src/lib/agent/retrieval-format.ts. If that block changes, these should
+    // be re-checked against it — that is the point of using its own examples.
+    const CITED = [
+      "NIST AI RMF [nist_ai_rmf_1_0 § 3.2.1] requires continuous monitoring of deployed models.",
+      "The HIPAA Security Rule [hhs_hipaa_security_rule § 164.308] requires a documented risk analysis.",
+      "CMS national median readmission is 21.8% [cms_hospital_compare].",
+    ];
+
+    it.each(CITED)("passes an answer citing a public source: %s", (text) => {
+      expect(ids(text)).not.toContain("source_key");
+      expect(assertVisibleAnswerContract(text).passed).toBe(true);
+    });
+
+    it("still catches a storage-shaped key", () => {
+      expect(
+        ids("The figure comes from A12_tenant_evidence_rows for this quarter."),
+      ).toContain("source_key");
+      expect(
+        ids("It landed in S3_raw_landing_zone before the nightly build."),
+      ).toContain("source_key");
+    });
+
+    it("no longer tells the model to suppress the citations it is also told to emit", () => {
+      // The contradiction itself. The prohibition must not ban the general
+      // category the citation contract requires.
+      expect(VISIBLE_ANSWER_CONTRACT_PROMPT).not.toContain("source keys,");
+      expect(VISIBLE_ANSWER_CONTRACT_PROMPT).toContain("storage-shaped keys");
+      expect(VISIBLE_ANSWER_CONTRACT_PROMPT).toContain(
+        "Citing a source document is the exception",
+      );
+    });
+  });
 });

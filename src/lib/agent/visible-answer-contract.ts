@@ -18,7 +18,8 @@ export const VISIBLE_ANSWER_CONTRACT_PROMPT = [
   "AbarVa owns context, safety, routing, artifacts, and rendering. Never narrate that machinery — the user should only ever see the advisor voice.",
   "",
   'No visible scaffolding labels. Do not prefix sentences with "Read:", "Evidence:", "Next:", or "Next move:" — write connected advisor prose instead.',
-  "No raw record IDs, source keys, tenant evidence rows, semantic packets, read-models, or other implementation vocabulary. Translate every internal reference into the business fact it represents.",
+  "No raw record IDs, storage-shaped keys, tenant evidence rows, semantic packets, read-models, or other implementation vocabulary. Translate every internal reference into the business fact it represents.",
+  "Citing a source document is the exception, and it is required: the citation key of a public source — e.g. [nist_ai_rmf_1_0 § 3.2.1] — is a bibliographic reference a reader can check, not implementation vocabulary. Follow the CITATION FORMAT instruction exactly where one applies.",
   'No session-history phrases. Never say the answer is "the same as last time," reference how many turns have passed, or claim the answer "hasn\'t moved this session" — answer fresh, on the merits, every time.',
   'No stock generic closings that just list "inspect / compare / benchmark / challenge / shape" as an offer without a real point of view.',
   'No legacy internal agent branding (e.g. "Atlas") in the visible answer — the user-facing identity is aVa.',
@@ -63,6 +64,21 @@ const INTERNAL_TABLE_NAME_RE =
 // almost every real path. Each alternative now carries the boundary it needs.
 const DEBUG_OR_PATH_RE =
   /\b(?:debug|localhost|route used|stack trace)\b|\.env\b|\/Users\/|\bsrc\//i;
+// Storage-shaped key: an uppercase letter, one to three digits, then
+// snake_case — `A12_tenant_evidence_rows`, `S3_raw_landing_zone`. It does NOT
+// match a citation key for a public source document (`nist_ai_rmf_1_0`,
+// `hhs_hipaa_security_rule`, `cms_hospital_compare`), and that distinction is
+// deliberate: CITATION_INSTRUCTION in retrieval-format.ts requires those
+// inline, and a citation a reader can check is the opposite of leaked
+// implementation vocabulary.
+//
+// The prompt above used to say "no source keys" flatly, which contradicted the
+// citation contract sitting in the same prompt. The enforcement here was always
+// the narrower rule; the prose has been corrected to match it rather than the
+// enforcement widened to match the prose. See the cases in
+// __tests__/visible-answer-contract.test.ts that pin both sides against the
+// literal examples CITATION_INSTRUCTION ships, so the two cannot drift apart
+// again.
 const SOURCE_KEY_RE = /\b[A-Z]\d{1,3}_[a-z0-9]+(?:_[a-z0-9]+)+\b/;
 const LABEL_READ_RE = /(?:^|\n)\s*Read:/;
 const LABEL_EVIDENCE_RE = /(?:^|\n)\s*Evidence:/;
