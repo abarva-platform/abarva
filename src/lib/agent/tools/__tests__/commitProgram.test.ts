@@ -26,6 +26,10 @@
  */
 
 import type { ApprovalRequest } from '@/lib/programs/approval';
+// A state the catalog can actually hold. Naming a literal here is how a
+// gate on three unreachable states passed this suite; see
+// src/lib/programs/__tests__/pattern-authority-reachability.test.ts.
+import { PROMOTED_PATTERN_STATES } from '@/lib/programs/pattern-authority';
 
 // ── Mocks (declared before importing the module under test) ─────────
 
@@ -305,7 +309,7 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
       maybeSingleResult: {
         data: {
           topic_key: 'PAT-PRG-CDP-001',
-          promotion_state: 'published',
+          promotion_state: PROMOTED_PATTERN_STATES[0],
         },
         error: null,
       },
