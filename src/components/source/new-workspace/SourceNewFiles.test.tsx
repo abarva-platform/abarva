@@ -7,6 +7,8 @@ const base: SourceNewFileRow = {
   phase: "define",
   artifactGroup: "generated",
   artifactType: "strategy_brief",
+  artifactFamily: "strategy",
+  description: "CIO strategy package preview",
   title: "Strategy brief",
   fileName: "strategy-brief.pdf",
   fileFormat: "pdf",
@@ -16,11 +18,33 @@ const base: SourceNewFileRow = {
   lifecycleState: "current",
   generatedAt: "2026-01-01T00:00:00Z",
   generatedBy: "Editor",
-  sourceBasis: null,
+  sourceBasis: "Recorded request and scope notes",
+  confidence: "reviewed",
+  citationReady: true,
+  evidenceFamiliesUsed: ["intake", "scope"],
+  sourceRegisterId: "SRC-REG-1",
+  contextBundleTraceId: "CTX-TRACE-1",
+  missingInputs: ["validated baseline"],
+  clientCompleteItems: ["scope owner"],
+  assumptions: ["budget holder remains unchanged"],
+  supersedesArtifactId: "previous-file",
+  supersededByArtifactId: null,
   blobSha256: "abc123",
   approvalState: "approved",
   approvedBy: "Reviewer",
   approvedAt: "2026-01-02T00:00:00Z",
+  isClientFinal: true,
+  isCurrentAuthoritative: true,
+  sourceGeneratedArtifactId: "GEN-1",
+  clientFinalUploadedBy: "Uploader",
+  clientFinalUploadedAt: "2026-01-03T00:00:00Z",
+  clientFinalAcceptedBy: "Sponsor",
+  clientFinalAcceptedAt: "2026-01-04T00:00:00Z",
+  clientFinalNote: "Accepted for sourcing kickoff.",
+  clientFinalReviewMeetingDate: "2026-01-05",
+  clientFinalStakeholderGroup: "Procurement council",
+  createdAt: "2026-01-01T00:00:00Z",
+  updatedAt: "2026-01-06T00:00:00Z",
 };
 
 const rows: SourceNewFileRow[] = [
@@ -130,6 +154,70 @@ describe("SourceNewFiles", () => {
     expect(onReview).toHaveBeenCalledWith(rows[1]);
     fireEvent.click(screen.getByLabelText("Older versions"));
     expect(within(details).getByText("abc123")).toBeTruthy();
+  });
+
+  it("renders a defined detail view from existing file metadata without inventing missing fields", () => {
+    const sparse: SourceNewFileRow = {
+      ...base,
+      id: "sparse",
+      title: "Sparse intake note",
+      fileName: "sparse.md",
+      fileFormat: "md",
+      fileSize: null,
+      artifactFamily: null,
+      description: null,
+      generatedBy: null,
+      sourceBasis: null,
+      confidence: null,
+      citationReady: false,
+      evidenceFamiliesUsed: [],
+      sourceRegisterId: null,
+      contextBundleTraceId: null,
+      missingInputs: [],
+      clientCompleteItems: [],
+      assumptions: [],
+      supersedesArtifactId: null,
+      supersededByArtifactId: null,
+      blobSha256: null,
+      approvalState: null,
+      approvedBy: null,
+      approvedAt: null,
+      isClientFinal: false,
+      isCurrentAuthoritative: false,
+      sourceGeneratedArtifactId: null,
+      clientFinalUploadedBy: null,
+      clientFinalUploadedAt: null,
+      clientFinalAcceptedBy: null,
+      clientFinalAcceptedAt: null,
+      clientFinalNote: null,
+      clientFinalReviewMeetingDate: null,
+      clientFinalStakeholderGroup: null,
+    };
+
+    render(<SourceNewFiles rows={[base, sparse]} initialPhase="define" />);
+    fireEvent.click(screen.getByRole("option", { name: /Strategy brief/ }));
+    const details = screen.getByLabelText("Selected file details");
+    expect(within(details).getByText("Preview metadata")).toBeTruthy();
+    expect(within(details).getByText("Version")).toBeTruthy();
+    expect(within(details).getByText("Evidence links")).toBeTruthy();
+    expect(within(details).getByText("Approvals and comments")).toBeTruthy();
+    expect(within(details).getByText("Authenticity state")).toBeTruthy();
+    expect(within(details).getByText("CIO strategy package preview")).toBeTruthy();
+    expect(within(details).getByText("Recorded request and scope notes")).toBeTruthy();
+    expect(within(details).getByText("SRC-REG-1")).toBeTruthy();
+    expect(within(details).getByText("CTX-TRACE-1")).toBeTruthy();
+    expect(within(details).getByText("intake, scope")).toBeTruthy();
+    expect(within(details).getByText(/Accepted by Sponsor/)).toBeTruthy();
+    expect(within(details).getByText("Accepted for sourcing kickoff.")).toBeTruthy();
+    expect(within(details).getByText("GEN-1")).toBeTruthy();
+    expect(within(details).getByText("validated baseline")).toBeTruthy();
+    expect(within(details).queryByRole("button", { name: "Download" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("option", { name: /Sparse intake note/ }));
+    const sparseDetails = screen.getByLabelText("Selected file details");
+    expect(within(sparseDetails).getAllByText("Not recorded").length).toBeGreaterThan(8);
+    expect(within(sparseDetails).getAllByText("No").length).toBeGreaterThanOrEqual(3);
+    expect(within(sparseDetails).queryByRole("button", { name: "Download" })).toBeNull();
   });
 
   it("shows a quiet empty state and delegates upload for the selected phase", () => {

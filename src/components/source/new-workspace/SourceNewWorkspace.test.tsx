@@ -44,6 +44,8 @@ const responseFile: SourceNewFileRow = {
   phase: "other",
   artifactGroup: "upload",
   artifactType: "vendor_response_pack",
+  artifactFamily: "vendor_response",
+  description: "Candidate response package",
   title: "Candidate response pack",
   fileName: "candidate-response.pdf",
   fileFormat: "pdf",
@@ -54,10 +56,32 @@ const responseFile: SourceNewFileRow = {
   generatedAt: "2026-03-10T00:00:00Z",
   generatedBy: "Uploader",
   sourceBasis: null,
+  confidence: null,
+  citationReady: false,
+  evidenceFamiliesUsed: [],
+  sourceRegisterId: null,
+  contextBundleTraceId: null,
+  missingInputs: [],
+  clientCompleteItems: [],
+  assumptions: [],
+  supersedesArtifactId: null,
+  supersededByArtifactId: null,
   blobSha256: "sha-response",
   approvalState: "approved",
   approvedBy: "Reviewer",
   approvedAt: "2026-03-11T00:00:00Z",
+  isClientFinal: false,
+  isCurrentAuthoritative: false,
+  sourceGeneratedArtifactId: null,
+  clientFinalUploadedBy: null,
+  clientFinalUploadedAt: null,
+  clientFinalAcceptedBy: null,
+  clientFinalAcceptedAt: null,
+  clientFinalNote: null,
+  clientFinalReviewMeetingDate: null,
+  clientFinalStakeholderGroup: null,
+  createdAt: "2026-03-10T00:00:00Z",
+  updatedAt: "2026-03-10T00:00:00Z",
 };
 
 describe("SourceNewWorkspace", () => {
@@ -343,6 +367,7 @@ describe("SourceNewWorkspace", () => {
 
   it("reports supplier work as recorded when an NDA artifact is actually filed against it", () => {
     const nda: SourceNewFileRow = {
+      ...responseFile,
       id: "nda-1",
       phase: "suppliers",
       artifactGroup: "upload",
@@ -500,6 +525,7 @@ describe("SourceNewWorkspace", () => {
 
   describe("file download version pinning", () => {
     const baseFile: SourceNewFileRow = {
+      ...responseFile,
       id: "current-id",
       phase: "define",
       artifactGroup: "generated",

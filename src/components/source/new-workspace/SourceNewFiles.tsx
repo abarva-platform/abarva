@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { SourceArtifactRecord } from "@/lib/source/file-cabinet/types";
 
 export type SourceNewFilePhase =
@@ -15,6 +15,8 @@ export type SourceNewFileRow = Pick<
   | "id"
   | "artifactGroup"
   | "artifactType"
+  | "artifactFamily"
+  | "description"
   | "title"
   | "fileName"
   | "fileFormat"
@@ -25,10 +27,32 @@ export type SourceNewFileRow = Pick<
   | "generatedAt"
   | "generatedBy"
   | "sourceBasis"
+  | "confidence"
+  | "citationReady"
+  | "evidenceFamiliesUsed"
+  | "sourceRegisterId"
+  | "contextBundleTraceId"
+  | "missingInputs"
+  | "clientCompleteItems"
+  | "assumptions"
+  | "supersedesArtifactId"
+  | "supersededByArtifactId"
   | "blobSha256"
   | "approvalState"
   | "approvedBy"
   | "approvedAt"
+  | "isClientFinal"
+  | "isCurrentAuthoritative"
+  | "sourceGeneratedArtifactId"
+  | "clientFinalUploadedBy"
+  | "clientFinalUploadedAt"
+  | "clientFinalAcceptedBy"
+  | "clientFinalAcceptedAt"
+  | "clientFinalNote"
+  | "clientFinalReviewMeetingDate"
+  | "clientFinalStakeholderGroup"
+  | "createdAt"
+  | "updatedAt"
 > & {
   // The authorized caller assigns the product phase; the cabinet's sourcingStage
   // is a separate, finer-grained workflow vocabulary.
@@ -75,6 +99,40 @@ function fileSize(bytes: number | null) {
   return bytes < 1024 * 1024
     ? `${Math.max(1, Math.round(bytes / 1024))} KB`
     : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function recorded(value: string | null | undefined) {
+  return value?.trim() || "Not recorded";
+}
+
+function boolState(value: boolean) {
+  return value ? "Yes" : "No";
+}
+
+function dateTime(value: string | null | undefined) {
+  if (!value) return "Not recorded";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
+function listValue(values: readonly string[]) {
+  return values.length > 0 ? values.join(", ") : "Not recorded";
+}
+
+function DetailRow({
+  term,
+  children,
+}: {
+  term: string;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <dt>{term}</dt>
+      <dd>{children}</dd>
+    </>
+  );
 }
 
 export function SourceNewFiles({
@@ -193,12 +251,15 @@ export function SourceNewFiles({
         .source-new-files__file-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
         .source-new-files__file-meta { display: block; color: #67736f; font-size: 12px; margin-top: 2px; }
         .source-new-files__file-version { color: #51615b; flex: none; font-variant-numeric: tabular-nums; }
-        .source-new-files__details { padding: 16px; min-width: 0; }
+        .source-new-files__details { padding: 16px; min-width: 0; max-height: 68vh; overflow: auto; }
         .source-new-files__back { display: inline-flex; margin-bottom: 16px; }
         .source-new-files__details h4 { margin: 0 0 3px; font-size: 15px; overflow-wrap: anywhere; }
-        .source-new-files__details dl { margin: 17px 0; display: grid; grid-template-columns: 65px minmax(0, 1fr); gap: 8px; font-size: 12px; }
+        .source-new-files__detail-section { margin-top: 16px; padding-top: 13px; border-top: 1px solid #e8ecea; }
+        .source-new-files__detail-section h5 { margin: 0 0 9px; color: #30413c; font-size: 12px; letter-spacing: 0; font-weight: 700; }
+        .source-new-files__details dl { margin: 0; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; font-size: 12px; }
         .source-new-files__details dt { color: #697671; }
         .source-new-files__details dd { margin: 0; overflow-wrap: anywhere; }
+        .source-new-files__details code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 11px; color: #35423f; }
         .source-new-files__actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .source-new-files__empty { padding: 32px 16px; color: #65716c; }
         @media (min-width: 761px) { .source-new-files__back { display: none; } }
@@ -332,32 +393,160 @@ export function SourceNewFiles({
                   <span className="source-new-files__file-meta">
                     {selected.fileName} · v{selected.version}
                   </span>
-                  <dl>
-                    <dt>Status</dt>
-                    <dd>
-                      {label(selected.status)}
-                      {selected.lifecycleState !== "current" &&
-                      selected.lifecycleState !== selected.status
-                        ? ` · ${selected.lifecycleState}`
-                        : ""}
-                    </dd>
-                    <dt>Origin</dt>
-                    <dd>
-                      {selected.generatedBy ??
-                        selected.sourceBasis ??
-                        "Not recorded"}
-                    </dd>
-                    <dt>Review</dt>
-                    <dd>
-                      {selected.approvedBy
-                        ? `Approved by ${selected.approvedBy}${selected.approvedAt ? ` · ${new Date(selected.approvedAt).toLocaleDateString()}` : ""}`
-                        : selected.approvalState
-                          ? label(selected.approvalState)
+                  <div className="source-new-files__detail-section">
+                    <h5>Preview metadata</h5>
+                    <dl>
+                      <DetailRow term="File name">{selected.fileName}</DetailRow>
+                      <DetailRow term="Format">
+                        {selected.fileFormat.toUpperCase()}
+                        {fileSize(selected.fileSize)
+                          ? ` · ${fileSize(selected.fileSize)}`
+                          : ""}
+                      </DetailRow>
+                      <DetailRow term="Type">
+                        {label(selected.artifactType)}
+                      </DetailRow>
+                      <DetailRow term="Group">
+                        {label(selected.artifactGroup)}
+                        {selected.artifactFamily
+                          ? ` · ${label(selected.artifactFamily)}`
+                          : ""}
+                      </DetailRow>
+                      <DetailRow term="Description">
+                        {recorded(selected.description)}
+                      </DetailRow>
+                      <DetailRow term="Generated">
+                        {dateTime(selected.generatedAt)}
+                      </DetailRow>
+                      <DetailRow term="Origin">
+                        {selected.generatedBy ??
+                          selected.sourceBasis ??
+                          "Not recorded"}
+                      </DetailRow>
+                    </dl>
+                  </div>
+                  <div className="source-new-files__detail-section">
+                    <h5>Version</h5>
+                    <dl>
+                      <DetailRow term="Current">
+                        {`v${selected.version}`}
+                      </DetailRow>
+                      <DetailRow term="Status">
+                        {label(selected.status)}
+                        {selected.lifecycleState !== "current" &&
+                        selected.lifecycleState !== selected.status
+                          ? ` · ${selected.lifecycleState}`
+                          : ""}
+                      </DetailRow>
+                      <DetailRow term="Supersedes">
+                        {recorded(selected.supersedesArtifactId)}
+                      </DetailRow>
+                      <DetailRow term="Superseded by">
+                        {recorded(selected.supersededByArtifactId)}
+                      </DetailRow>
+                      <DetailRow term="Updated">
+                        {dateTime(selected.updatedAt)}
+                      </DetailRow>
+                    </dl>
+                  </div>
+                  <div className="source-new-files__detail-section">
+                    <h5>Evidence links</h5>
+                    <dl>
+                      <DetailRow term="Source basis">
+                        {recorded(selected.sourceBasis)}
+                      </DetailRow>
+                      <DetailRow term="Register ID">
+                        {selected.sourceRegisterId ? (
+                          <code>{selected.sourceRegisterId}</code>
+                        ) : (
+                          "Not recorded"
+                        )}
+                      </DetailRow>
+                      <DetailRow term="Context trace">
+                        {selected.contextBundleTraceId ? (
+                          <code>{selected.contextBundleTraceId}</code>
+                        ) : (
+                          "Not recorded"
+                        )}
+                      </DetailRow>
+                      <DetailRow term="Families">
+                        {listValue(selected.evidenceFamiliesUsed)}
+                      </DetailRow>
+                      <DetailRow term="Citation ready">
+                        {boolState(selected.citationReady)}
+                      </DetailRow>
+                      <DetailRow term="Confidence">
+                        {recorded(selected.confidence)}
+                      </DetailRow>
+                    </dl>
+                  </div>
+                  <div className="source-new-files__detail-section">
+                    <h5>Approvals and comments</h5>
+                    <dl>
+                      <DetailRow term="Approval">
+                        {selected.approvedBy
+                          ? `Approved by ${selected.approvedBy}${selected.approvedAt ? ` · ${new Date(selected.approvedAt).toLocaleDateString()}` : ""}`
+                          : selected.approvalState
+                            ? label(selected.approvalState)
+                            : "Not recorded"}
+                      </DetailRow>
+                      <DetailRow term="Client final">
+                        {selected.clientFinalAcceptedBy
+                          ? `Accepted by ${selected.clientFinalAcceptedBy}${selected.clientFinalAcceptedAt ? ` · ${new Date(selected.clientFinalAcceptedAt).toLocaleDateString()}` : ""}`
+                          : selected.isClientFinal
+                            ? "Uploaded, not accepted"
+                            : "No"}
+                      </DetailRow>
+                      <DetailRow term="Final upload">
+                        {selected.clientFinalUploadedBy
+                          ? `Uploaded by ${selected.clientFinalUploadedBy}${selected.clientFinalUploadedAt ? ` · ${new Date(selected.clientFinalUploadedAt).toLocaleDateString()}` : ""}`
                           : "Not recorded"}
-                    </dd>
-                    <dt>SHA-256</dt>
-                    <dd>{selected.blobSha256 ?? "Not recorded"}</dd>
-                  </dl>
+                      </DetailRow>
+                      <DetailRow term="Review group">
+                        {recorded(selected.clientFinalStakeholderGroup)}
+                      </DetailRow>
+                      <DetailRow term="Meeting">
+                        {recorded(selected.clientFinalReviewMeetingDate)}
+                      </DetailRow>
+                      <DetailRow term="Comment">
+                        {recorded(selected.clientFinalNote)}
+                      </DetailRow>
+                    </dl>
+                  </div>
+                  <div className="source-new-files__detail-section">
+                    <h5>Authenticity state</h5>
+                    <dl>
+                      <DetailRow term="SHA-256">
+                        {selected.blobSha256 ? (
+                          <code>{selected.blobSha256}</code>
+                        ) : (
+                          "Not recorded"
+                        )}
+                      </DetailRow>
+                      <DetailRow term="Authoritative">
+                        {boolState(selected.isCurrentAuthoritative)}
+                      </DetailRow>
+                      <DetailRow term="Client final">
+                        {boolState(selected.isClientFinal)}
+                      </DetailRow>
+                      <DetailRow term="Generated ID">
+                        {selected.sourceGeneratedArtifactId ? (
+                          <code>{selected.sourceGeneratedArtifactId}</code>
+                        ) : (
+                          "Not recorded"
+                        )}
+                      </DetailRow>
+                      <DetailRow term="Missing inputs">
+                        {listValue(selected.missingInputs)}
+                      </DetailRow>
+                      <DetailRow term="Complete items">
+                        {listValue(selected.clientCompleteItems)}
+                      </DetailRow>
+                      <DetailRow term="Assumptions">
+                        {listValue(selected.assumptions)}
+                      </DetailRow>
+                    </dl>
+                  </div>
                   <div className="source-new-files__actions">
                     {onPreview && (
                       <button
