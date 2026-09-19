@@ -44,6 +44,17 @@ export type SourceAnswerMode =
   | "missing_data"
   | "expert_sourcing";
 
+/**
+ * Titles of the three response parts that describe *the answer* rather than the
+ * event. Exported because a surface that substitutes a different answer for the
+ * deterministic one has to re-derive exactly these — see
+ * `applySourceSentinelModelAnswer` in ./sentinel-chat-llm.ts. Matching them by
+ * a copied string literal is how the two sides drift.
+ */
+export const SOURCE_ADVISOR_ANSWER_PART_TITLE = "Advisor answer";
+export const SOURCE_EVIDENCE_USED_PART_TITLE = "Evidence used";
+export const SOURCE_SUPPORT_METRIC_LABEL = "Support";
+
 export interface SourceAnswerEvidenceCitation {
   id: string;
   label: string;
@@ -2951,7 +2962,7 @@ function buildAvaResponseParts(args: {
           tone: confidenceTone(args.confidence),
         },
         {
-          label: "Support",
+          label: SOURCE_SUPPORT_METRIC_LABEL,
           value: String(args.evidenceCitations.length),
           tone: args.evidenceCitations.length > 0 ? "good" : "warning",
         },
@@ -2964,7 +2975,7 @@ function buildAvaResponseParts(args: {
     },
     {
       type: "text",
-      title: "Advisor answer",
+      title: SOURCE_ADVISOR_ANSWER_PART_TITLE,
       text: args.answerText,
     },
   ];
@@ -3064,7 +3075,7 @@ function buildAvaResponseParts(args: {
   if (args.evidenceCitations.length > 0) {
     parts.push({
       type: "citations",
-      title: "Evidence used",
+      title: SOURCE_EVIDENCE_USED_PART_TITLE,
       citations: args.evidenceCitations.slice(0, 5).map((citation) => ({
         label: citation.label,
         excerpt: citation.excerpt,

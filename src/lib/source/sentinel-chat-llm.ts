@@ -2,8 +2,14 @@ import { composeRuntimeOutputDisciplineBlock } from "@/lib/agent/output-discipli
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { SOURCE_STAGE_LABELS } from "./constants";
 import type { SourceLiveTenantContextSnapshot } from "./agent-context";
+import type { AgentResponsePart } from "@/lib/agent/response-parts";
 import type { SourceNexusApiStubResponse } from "./nexus-api";
-import type { SourceAnswerEvidenceCitation } from "./source-answer-engine";
+import {
+  SOURCE_ADVISOR_ANSWER_PART_TITLE,
+  SOURCE_EVIDENCE_USED_PART_TITLE,
+  SOURCE_SUPPORT_METRIC_LABEL,
+  type SourceAnswerEvidenceCitation,
+} from "./source-answer-engine";
 import type { SourcingEventDetail } from "./types";
 
 export const SOURCE_SENTINEL_CHAT_DEFAULT_MODEL = "claude-sonnet-4-6";
@@ -240,41 +246,140 @@ function formatPromptEvidenceLine(item: PromptEvidenceItem): string {
   return `[${item.label}] ${item.citation.label}${source} · confidence: ${item.citation.confidence}\n${item.citation.excerpt}`;
 }
 
-function buildLlmBackedResponse(args: {
+const MAX_RENDERED_CITATIONS = 5;
+
+/**
+ * Re-derive the response parts that describe *the answer* from the model answer
+ * that is actually going to be shown.
+ *
+ * This is not cosmetic. `AgentResponseBody` in
+ * `src/components/shell/AgentColumn.tsx` renders `AgentResponseParts` **instead
+ * of** the prose whenever parts are present, so substituting a model answer into
+ * the prose fields while leaving the deterministic composer's parts in place
+ * puts the deterministic advisor answer, and the citations the deterministic
+ * composer chose, under an answer that used neither.
+ *
+ * Three parts describe the answer: the advisor-answer text, the evidence-used
+ * citations, and the support metric that counts those citations. Everything
+ * else — the decision-signal table, the open inputs, the recommended next
+ * action — describes the *event*, is read off the same context either way, and
+ * is kept.
+ */
+export function rewriteSourceAnswerPartsForModelAnswer(args: {
+  parts: readonly AgentResponsePart[];
+  answerText: string;
+  evidenceCitations: readonly SourceAnswerEvidenceCitation[];
+}): AgentResponsePart[] {
+  const renderedCitations = args.evidenceCitations
+    .slice(0, MAX_RENDERED_CITATIONS)
+    .map((citation) => ({
+      label: citation.label,
+      excerpt: citation.excerpt,
+      confidence: citation.confidence,
+      ...(citation.sourceDoc ? { sourceDoc: citation.sourceDoc } : {}),
+    }));
+  const citationsPart: AgentResponsePart = {
+    type: "citations",
+    title: SOURCE_EVIDENCE_USED_PART_TITLE,
+    citations: renderedCitations,
+  };
+
+  let sawCitationsPart = false;
+  const rewritten: AgentResponsePart[] = [];
+
+  for (const part of args.parts) {
+    if (
+      part.type === "text" &&
+      part.title === SOURCE_ADVISOR_ANSWER_PART_TITLE
+    ) {
+      rewritten.push({ ...part, text: args.answerText });
+      continue;
+    }
+
+    if (part.type === "citations") {
+      sawCitationsPart = true;
+      // The model cited nothing. The deterministic card is dropped rather than
+      // shown under an answer that did not use it — an empty card would still
+      // read as "this is the evidence behind what you just read".
+      if (renderedCitations.length > 0) rewritten.push(citationsPart);
+      continue;
+    }
+
+    if (part.type === "metricStrip") {
+      rewritten.push({
+        ...part,
+        metrics: part.metrics.map((metric) =>
+          metric.label === SOURCE_SUPPORT_METRIC_LABEL
+            ? {
+                ...metric,
+                value: String(args.evidenceCitations.length),
+                tone: args.evidenceCitations.length > 0 ? "good" : "warning",
+              }
+            : metric,
+        ),
+      });
+      continue;
+    }
+
+    rewritten.push(part);
+  }
+
+  // The deterministic answer cited nothing and the model cited something: the
+  // card has to be added, not merely rewritten. It goes where the composer puts
+  // it, immediately before the recommended next action.
+  if (!sawCitationsPart && renderedCitations.length > 0) {
+    const nextActionIndex = rewritten.findIndex(
+      (part) => part.type === "nextAction",
+    );
+    if (nextActionIndex === -1) rewritten.push(citationsPart);
+    else rewritten.splice(nextActionIndex, 0, citationsPart);
+  }
+
+  return rewritten;
+}
+
+/**
+ * Apply a model answer to the deterministic response so that every field which
+ * states the answer states *this* answer: the prose the reader is shown, the
+ * citations it used, and the structured parts the canvas renders.
+ *
+ * Both the live canvas route and `buildLlmBackedResponse` go through here, so
+ * the two cannot answer this question differently.
+ */
+export function applySourceSentinelModelAnswer(args: {
   fallbackResponse: SourceNexusApiStubResponse;
   answerText: string;
-  promptEvidence: PromptEvidenceItem[];
-  model: string;
-  inputTokens: number | null;
-  outputTokens: number | null;
+  evidenceCitations: readonly SourceAnswerEvidenceCitation[];
+  extraLimits?: readonly string[];
+  confidence?: "high" | "medium" | "low";
 }): SourceNexusApiStubResponse {
-  const evidenceCitations = extractSourceSentinelEvidenceCitations(
-    args.answerText,
-    args.promptEvidence,
-  );
-  const warnings = [
-    ...args.fallbackResponse.warnings,
-    ...buildSourceSentinelCitationWarnings(args.answerText, evidenceCitations),
-  ];
+  const citations = [...args.evidenceCitations];
   const fallbackAnswer = args.fallbackResponse.sourceAnswer;
+  const responseParts = rewriteSourceAnswerPartsForModelAnswer({
+    parts: args.fallbackResponse.agentResponseParts,
+    answerText: args.answerText,
+    evidenceCitations: citations,
+  });
+  const confidence: "high" | "medium" | "low" =
+    args.confidence ?? (citations.length >= 2 ? "high" : "medium");
+
   const sourceAnswer = fallbackAnswer
     ? {
         ...fallbackAnswer,
         answerText: args.answerText,
         title: fallbackAnswer.title || "Sentinel event answer",
-        evidenceCitations,
-        confidence:
-          evidenceCitations.length >= 2
-            ? ("high" as const)
-            : ("medium" as const),
+        evidenceCitations: citations,
+        confidence,
+        responseParts: rewriteSourceAnswerPartsForModelAnswer({
+          parts: fallbackAnswer.responseParts,
+          answerText: args.answerText,
+          evidenceCitations: citations,
+        }),
         limits: [
           ...fallbackAnswer.limits.filter(
             (limit) => !/deterministic/i.test(limit),
           ),
-          `Generated by ${args.model}; human review required before external use.`,
-          args.inputTokens !== null || args.outputTokens !== null
-            ? `Model usage: ${args.inputTokens ?? "unknown"} input tokens, ${args.outputTokens ?? "unknown"} output tokens.`
-            : "Model usage was not returned by the provider.",
+          ...(args.extraLimits ?? []),
         ],
       }
     : null;
@@ -283,6 +388,7 @@ function buildLlmBackedResponse(args: {
     ...args.fallbackResponse,
     noModel: false,
     sourceAnswer,
+    agentResponseParts: responseParts,
     answerQuality: undefined,
     answer: args.answerText,
     summary: args.answerText,
@@ -296,12 +402,45 @@ function buildLlmBackedResponse(args: {
           recommendedNextAction:
             sourceAnswer?.recommendedNextAction ??
             args.fallbackResponse.nexusSummary.recommendedNextAction,
-          confidence:
-            sourceAnswer?.confidence ??
-            args.fallbackResponse.nexusSummary.confidence,
+          confidence,
         }
       : null,
-    warnings,
+  };
+}
+
+function buildLlmBackedResponse(args: {
+  fallbackResponse: SourceNexusApiStubResponse;
+  answerText: string;
+  promptEvidence: PromptEvidenceItem[];
+  model: string;
+  inputTokens: number | null;
+  outputTokens: number | null;
+}): SourceNexusApiStubResponse {
+  const evidenceCitations = extractSourceSentinelEvidenceCitations(
+    args.answerText,
+    args.promptEvidence,
+  );
+  const applied = applySourceSentinelModelAnswer({
+    fallbackResponse: args.fallbackResponse,
+    answerText: args.answerText,
+    evidenceCitations,
+    extraLimits: [
+      `Generated by ${args.model}; human review required before external use.`,
+      args.inputTokens !== null || args.outputTokens !== null
+        ? `Model usage: ${args.inputTokens ?? "unknown"} input tokens, ${args.outputTokens ?? "unknown"} output tokens.`
+        : "Model usage was not returned by the provider.",
+    ],
+  });
+
+  return {
+    ...applied,
+    warnings: [
+      ...args.fallbackResponse.warnings,
+      ...buildSourceSentinelCitationWarnings(
+        args.answerText,
+        evidenceCitations,
+      ),
+    ],
   };
 }
 
