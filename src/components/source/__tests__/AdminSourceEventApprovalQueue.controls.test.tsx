@@ -42,8 +42,10 @@ const events = [
   },
 ] as never;
 
-function openRow() {
-  render(<AdminSourceEventApprovalQueue events={events} />);
+function openRow(currentUserId?: string | null) {
+  render(
+    <AdminSourceEventApprovalQueue events={events} currentUserId={currentUserId} />,
+  );
   // The row collapses by default; the summary opens it.
   const toggles = screen.getAllByRole("button");
   fireEvent.click(toggles[0]);
@@ -128,10 +130,55 @@ describe("source approval queue · controls", () => {
     });
   });
 
+  /**
+   * Updated, not deleted. This case was written to assert the risk caveat and
+   * pinned the self-approval wording instead, because one unconditional string
+   * carried both meanings. The caveat every approver must see is that the
+   * decision is recorded against them; whether it is additionally a
+   * self-approval is a different statement and is covered below.
+   */
   it("tells the approver this is their accountable decision", () => {
-    openRow();
+    openRow("reviewer-2");
 
-    expect(screen.getByText(/Self-approval notice/)).toBeTruthy();
+    expect(screen.getByText(/Accountable decision/)).toBeTruthy();
+  });
+
+  /**
+   * The route derives self-approval from the stored creator and writes
+   * "Self-approval notice: the approver is the recorded event creator." onto
+   * the append-only record, and its own comment says the approval screen tells
+   * a self-approving creator that the decision is flagged.
+   *
+   * It did not. `currentUserId` was declared in Props and never read, and the
+   * notice rendered for everyone — so a peer reviewer was told a self-approval
+   * notice and a genuine self-approver was told nothing the record says. A
+   * caveat shown to every reader carries no information about any of them.
+   */
+  describe("the self-approval notice states what the record will say", () => {
+    it("names the self-approval when the approver created the event", () => {
+      openRow("user-1"); // events[0].created_by_user_id
+
+      expect(screen.getByText(/Self-approval notice/)).toBeTruthy();
+      expect(screen.getByText(/recorded creator of this event/)).toBeTruthy();
+    });
+
+    it("does not claim a self-approval when someone else created the event", () => {
+      openRow("reviewer-2");
+
+      expect(screen.queryByText(/Self-approval notice/)).toBeNull();
+    });
+
+    /**
+     * Fail-safe rather than fail-quiet. With no viewer identity the screen
+     * cannot know which case it is in, so it must not assert the absence of a
+     * self-approval — the server still marks the record either way.
+     */
+    it("states the condition rather than asserting either way when the viewer is unknown", () => {
+      openRow();
+
+      expect(screen.getByText(/Self-approval notice/)).toBeTruthy();
+      expect(screen.getByText(/if you created this event/i)).toBeTruthy();
+    });
   });
 
   it("surfaces a failed approval instead of implying it succeeded", async () => {

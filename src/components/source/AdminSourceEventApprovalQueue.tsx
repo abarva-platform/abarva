@@ -43,7 +43,30 @@ const CONFIRMATION_LABELS: { key: keyof Confirmations; label: string }[] = [
 
 type ActionResult = 'approved' | 'rejected' | 'sent back';
 
-export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) {
+/**
+ * Whether the person reading this row is the person who created the event.
+ *
+ * The approve route derives the same fact from the stored creator and marks the
+ * append-only record with "Self-approval notice: the approver is the recorded
+ * event creator." The screen cannot be the authority on it — it states what the
+ * record will say. `unknown` is a real third case rather than a default: with no
+ * viewer identity the screen must not assert the absence of a self-approval,
+ * because the server will still mark one.
+ */
+type ApproverRelationship = 'self' | 'peer' | 'unknown';
+
+function approverRelationship(
+  creatorUserId: string | null | undefined,
+  viewerUserId: string | null | undefined,
+): ApproverRelationship {
+  if (!creatorUserId || !viewerUserId) return 'unknown';
+  return creatorUserId === viewerUserId ? 'self' : 'peer';
+}
+
+export function AdminSourceEventApprovalQueue({
+  events: initialEvents,
+  currentUserId,
+}: Props) {
   const [events, setEvents] = useState(initialEvents);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [confirmations, setConfirmations] = useState<Record<string, Confirmations>>({});
@@ -255,7 +278,23 @@ export function AdminSourceEventApprovalQueue({ events: initialEvents }: Props) 
                   >
                     Approving confirms your review of the strategy memo, value target, and archetype +
                     rigor. On approval the event moves to Scope.{' '}
-                    <strong>Self-approval notice:</strong> this is your accountable human approval decision.{' '}
+                    <strong>Accountable decision:</strong> this approval is recorded against you as the
+                    accountable human decision.{' '}
+                    {(() => {
+                      const relationship = approverRelationship(
+                        ev.created_by_user_id,
+                        currentUserId,
+                      );
+                      if (relationship === 'peer') return null;
+                      return (
+                        <>
+                          <strong>Self-approval notice:</strong>{' '}
+                          {relationship === 'self'
+                            ? 'you are the recorded creator of this event, so the approval record is marked as a self-approval.'
+                            : 'the approver on this screen is not identified; if you created this event, the approval record is marked as a self-approval.'}{' '}
+                        </>
+                      );
+                    })()}
                     <a
                       href={`/source/events/${ev.id}?stage=Strategy`}
                       target="_blank"
