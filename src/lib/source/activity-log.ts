@@ -116,5 +116,10 @@ function actorLabel(row: SourceEventActivityRow): string | undefined {
   const name = row.actor_display_name?.trim();
   const role = row.actor_role?.trim();
   if (name && role) return `${name} · ${role}`;
-  return name || role || row.actor_user_id || undefined;
+  if (name || role) return name || role;
+
+  // actor_user_id is an internal identity key, not reader-facing evidence.
+  // Older activity rows may have the key without the display-name snapshot;
+  // acknowledge that an actor was recorded without exposing the identifier.
+  return row.actor_user_id?.trim() ? "Recorded user" : undefined;
 }

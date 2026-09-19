@@ -98,6 +98,22 @@ describe("listSourceEventActivityEntries", () => {
     expect(result.entries[0].actor).toBeUndefined();
   });
 
+  it("does not expose an internal person UUID when no display identity was recorded", async () => {
+    state.rows = [
+      row({
+        actor_display_name: null,
+        actor_role: null,
+        actor_user_id: "11111111-2222-4333-8444-555555555555",
+      }),
+    ];
+
+    const result = await listSourceEventActivityEntries("event-1");
+
+    if (!result.ok) throw new Error("expected a successful read");
+    expect(result.entries[0].actor).toBe("Recorded user");
+    expect(result.entries[0].actor).not.toContain("11111111");
+  });
+
   it("treats a null payload as empty rather than throwing", async () => {
     state.rows = null;
 
