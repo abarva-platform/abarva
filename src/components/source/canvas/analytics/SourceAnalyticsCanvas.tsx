@@ -6358,10 +6358,12 @@ function ApprovalsWorkspace({
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
       <ApprovalReadinessBrief view={view} />
+      <PendingDecisionGroups view={view} />
       {view.approvals.currentStageItem ? (
         <ApprovalCard
           item={view.approvals.currentStageItem}
           gateAction={gateAction}
+          decision={currentApprovalDecision(view)}
           featured
           onGoToSteps={onGoToSteps}
         />
@@ -6381,6 +6383,113 @@ function ApprovalsWorkspace({
       {view.approvals.ledger.length > 0 ? (
         <ApprovalLedgerTable ledger={view.approvals.ledger} />
       ) : null}
+    </section>
+  );
+}
+
+type ApprovalDecisionForCard =
+  SourceEventShellView["approvals"]["pendingDecisionGroups"][number]["decisions"][number];
+
+function currentApprovalDecision(
+  view: SourceEventShellView,
+): ApprovalDecisionForCard | null {
+  return view.approvals.pendingDecisionGroups[0]?.decisions[0] ?? null;
+}
+
+function PendingDecisionGroups({ view }: { view: SourceEventShellView }) {
+  if (view.approvals.pendingDecisionGroups.length === 0) return null;
+
+  return (
+    <section
+      data-testid="source-approval-pending-decisions"
+      style={{ display: "grid", gap: 10, marginBottom: 14 }}
+    >
+      {view.approvals.pendingDecisionGroups.map((group) => (
+        <div key={group.key} style={{ ...CARD_STYLE, padding: 16 }}>
+          <div style={WORKSPACE_EYEBROW}>Pending decision</div>
+          <h3
+            style={{
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 18,
+              lineHeight: 1.2,
+              margin: "5px 0 10px",
+            }}
+          >
+            {group.eventCode} · {group.versionLabel}
+          </h3>
+          <div style={{ display: "grid", gap: 10 }}>
+            {group.decisions.map((decision) => (
+              <div
+                key={decision.id}
+                data-testid="source-approval-pending-decision"
+                style={{
+                  borderTop: `1px solid ${ANALYTICS.LINE}`,
+                  display: "grid",
+                  gap: 8,
+                  paddingTop: 10,
+                }}
+              >
+                <div
+                  style={{
+                    alignItems: "center",
+                    display: "flex",
+                    gap: 10,
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ fontWeight: 800 }}>
+                    {decision.stageLabel} gate ·{" "}
+                    {decision.reviewerRole ?? "reviewer role missing"}
+                  </div>
+                  <span
+                    style={{
+                      ...SMALL_STATUS_PILL,
+                      color:
+                        decision.status === "ready"
+                          ? ANALYTICS.GREEN_TEXT
+                          : decision.status === "recorded"
+                            ? ANALYTICS.BLUE
+                            : ANALYTICS.AMBER_TEXT,
+                    }}
+                  >
+                    {decision.status === "ready"
+                      ? "Ready"
+                      : decision.status === "recorded"
+                        ? "Recorded"
+                        : "Blocked"}
+                  </span>
+                </div>
+                {decision.blockers.length > 0 ? (
+                  <ul
+                    style={{
+                      color: ANALYTICS.MUTED,
+                      fontSize: 12.5,
+                      lineHeight: 1.45,
+                      margin: 0,
+                      paddingLeft: 18,
+                    }}
+                  >
+                    {decision.blockers.map((blocker) => (
+                      <li key={blocker.code}>{blocker.detail}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p
+                    style={{
+                      color: ANALYTICS.GREEN_TEXT,
+                      fontSize: 12.5,
+                      margin: 0,
+                    }}
+                  >
+                    Version binding, reviewer role, readiness, entitlement, and
+                    rationale are satisfied.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </section>
   );
 }
@@ -7616,11 +7725,13 @@ function ProcessingReadinessBadge({ item }: { item: SourceShellFileItem }) {
 function ApprovalCard({
   item,
   gateAction,
+  decision,
   featured = false,
   onGoToSteps,
 }: {
   item: ApprovalsInboxItem;
   gateAction?: StageGateActionView;
+  decision?: ApprovalDecisionForCard | null;
   featured?: boolean;
   onGoToSteps?: () => void;
 }) {
@@ -7667,12 +7778,27 @@ function ApprovalCard({
             {item.readiness}
           </div>
         </div>
-        {gateAction ? (
+        {gateAction && (decision?.primaryAction.enabled ?? true) ? (
           <StageGateApprovalButton
             action={gateAction}
             status={item.status}
             stageLabel={item.stageLabel}
           />
+        ) : gateAction && decision ? (
+          <button
+            type="button"
+            data-testid="source-stage-gate-blocked"
+            disabled
+            title={decision.primaryAction.disabledReason ?? undefined}
+            style={{
+              ...buttonStyle,
+              background: "rgba(10,10,11,0.14)",
+              color: ANALYTICS.FAINT,
+              cursor: "not-allowed",
+            }}
+          >
+            {decision.primaryAction.label}
+          </button>
         ) : goToStepsInstead ? (
           <button
             type="button"

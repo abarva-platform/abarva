@@ -42,6 +42,12 @@ Status: Active execution backlog. Nothing below is considered QA-passed until si
 4. Re-run the full signed-in 11-stage journey and score every artifact against the ideal.
 5. Run New Event aVa hard QA with tables/charts/citations.
 
+## F6 Approval Workspace Slice Claim
+
+- 2026-09-19: A bounded read-only approvals-workspace slice now renders pending stage decisions grouped by event/version, names the reviewer role when the routed decision supplies one, and lists explicit blockers for stale or missing version binding, missing reviewer role, open workflow inputs, open artifact review, missing server-armed approval authority, and insufficient rationale. The existing approve control is shown only when the server-built stage gate action is armed and the decision model has no blockers.
+- Local acceptance evidence: focused unit/component tests cover stale version, missing authoritative version binding, missing reviewer role, insufficient rationale, unauthorized viewer, and ready state with exactly one enabled primary action.
+- Not claimed: no approval was submitted, no tenant data was written, no migration was applied, and signed-in live acceptance remains separate.
+
 ## Existing Evidence Files
 
 The live QA evidence and screenshots are currently in:

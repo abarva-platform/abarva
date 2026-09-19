@@ -30,6 +30,16 @@ export interface ApprovalsInboxItem {
   /** the ONE place to go. */
   href: string;
   actionLabel: string;
+  /**
+   * Authoritative decision version binding. Stage gates use the current
+   * event+stage pair; future artifact-specific gates can use an accepted
+   * artifact/version id. Missing/blank means the approval surface must fail
+   * closed rather than treat a stale card as current.
+   */
+  versionKey?: string | null;
+  versionLabel?: string | null;
+  /** Human-readable role that may review this pending decision. */
+  requiredReviewerRole?: string | null;
 }
 
 export interface ApprovalsInbox {
@@ -76,6 +86,9 @@ export function buildApprovalsInbox(args: {
       estimatedValueUsd: e.estimated_value_usd,
       href: `/source/events/${e.id}/approval`,
       actionLabel: "Review & approve",
+      versionKey: `${e.id}:intake`,
+      versionLabel: "Intake",
+      requiredReviewerRole: "Source stage approver",
     });
   }
 
@@ -117,6 +130,9 @@ export function buildApprovalsInbox(args: {
       estimatedValueUsd: e.estimated_value_usd,
       href: `/source/events/${e.id}?stage=${encodeURIComponent(e.current_stage_key)}&workspace=approvals`,
       actionLabel: met === total ? "Approve now" : "Review & decide",
+      versionKey: `${e.id}:${e.current_stage_key}`,
+      versionLabel: stageLabel,
+      requiredReviewerRole: "Source stage approver",
     });
   }
 
