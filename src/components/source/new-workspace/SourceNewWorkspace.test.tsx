@@ -975,4 +975,50 @@ describe("SourceNewWorkspace", () => {
     expect(screen.getByText(/was not loaded/i)).toBeTruthy();
     expect(screen.queryByText(/No decisions have been recorded/i)).toBeNull();
   });
+
+  /**
+   * U-002: on a real signed-in event, selecting Approvals replaced the whole
+   * workspace with the global unhandled-error surface. No write was
+   * attempted; the view switch alone failed.
+   *
+   * The trail's timestamp is typed `string` and assigned straight from
+   * `occurred_at` with no coercion. A timestamptz column does not have to
+   * arrive as a string, and a non-string rendered as a React child throws —
+   * taking the whole page to the error boundary, not just the panel.
+   *
+   * The original tests for this view used ISO string fixtures, so they proved
+   * the component against a world the database does not have to produce.
+   */
+  it("does not crash the workspace when a trail timestamp is not a string", () => {
+    const stamp = new Date("2026-09-18T12:00:00.000Z");
+    render(
+      <SourceNewWorkspace
+        event={request}
+        files={[]}
+        activity={{
+          ok: true,
+          entries: [
+            {
+              id: "a1",
+              at: stamp as unknown as string,
+              actor: "A. Reviewer",
+              body: "Approved intake",
+            },
+          ],
+        }}
+      />,
+    );
+
+    // The panel only mounts on the view switch. A first draft of this test
+    // asserted on render alone and passed without ever mounting it.
+    expect(() => openApprovals()).not.toThrow();
+  });
+
+  it("does not crash when the trail result is missing its entries array", () => {
+    render(
+      <SourceNewWorkspace event={request} files={[]} activity={{ ok: true } as never} />,
+    );
+
+    expect(() => openApprovals()).not.toThrow();
+  });
 });

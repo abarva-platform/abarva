@@ -72,6 +72,23 @@ export async function listSourceEventActivityEntries(
   };
 }
 
+
+/**
+ * Coerce a timestamp column to an ISO string.
+ *
+ * `occurred_at` is typed `string` here, but it is a timestamptz and a driver
+ * may return a Date. That value was handed straight to the view, which
+ * rendered it as a React child — and a Date as a child throws, taking the
+ * whole event workspace to the error boundary rather than just the panel.
+ * The type was a claim, not a guarantee.
+ */
+function isoTimestamp(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "number") return new Date(value).toISOString();
+  return "";
+}
+
 function activityRowToEntry(row: SourceEventActivityRow): ActivityEntry {
   const subject = [
     row.stage_key ? `Stage: ${row.stage_key}` : null,
@@ -89,7 +106,7 @@ function activityRowToEntry(row: SourceEventActivityRow): ActivityEntry {
 
   return {
     id: row.id,
-    at: row.occurred_at,
+    at: isoTimestamp(row.occurred_at),
     actor: actorLabel(row),
     body,
   };

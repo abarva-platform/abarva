@@ -938,8 +938,8 @@ function SourceNewDecisionTrail({
             {entry.actor ?? "Actor not recorded"}
           </span>
           <span className="snw-trail-body">{entry.body}</span>
-          <time className="snw-trail-at" dateTime={entry.at}>
-            {entry.at}
+          <time className="snw-trail-at" dateTime={String(entry.at ?? "")}>
+            {String(entry.at ?? "")}
           </time>
         </li>
       ))}
