@@ -47,6 +47,17 @@ jobs:
   assert.doesNotMatch(commands[0], /source\/example\.test\.ts/);
 });
 
+test("extracts a one-line run command from a YAML sequence step", () => {
+  const commands = extractWorkflowRunCommands(`
+jobs:
+  test:
+    steps:
+      - run: npx jest ${TEST_PATH} --runInBand
+`);
+
+  assert.deepEqual(commands, [`npx jest ${TEST_PATH} --runInBand`]);
+});
+
 test("accepts an exact suite or a containing directory in a CI test command", () => {
   assert.equal(
     isIntegrationTestRegistered(TEST_PATH, [
