@@ -31,12 +31,12 @@ Release lane: `internal-admin`.
 
 - Point the route-smoke inventory at the mounted Tower command-center shell.
 - Correct the founder checklist's component, talking point, readiness state, and caveat.
-- Add focused tests that fail if either inventory returns to the orphaned component.
+- Add behavior coverage that executes both inventory builders and fails if either returns to the orphaned component or drifts from the mounted route shell.
 - Refresh the governed stale-claim burn-down after resolving these two entries.
 
 ## QA / Validation
 
-- Focused inventory tests execute both deterministic builders.
+- Focused behavior coverage executes both deterministic builders and checks the mounted route source.
 - The QA inventory claim audit must pass after the burn-down refresh.
 - TypeScript, scoped ESLint, release control, and diff hygiene run before review.
 

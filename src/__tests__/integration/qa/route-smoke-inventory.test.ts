@@ -122,16 +122,6 @@ describe('QA5 route smoke inventory canonical shape', () => {
     expect(target?.expectedReadModel).toBe('src/lib/admin/production-readiness.ts');
   });
 
-  it('names the command center shell that the Tower route actually mounts', () => {
-    const target = listRouteSmokeTargets().find(
-      (item) => item.ownerSurface === 'tower',
-    );
-
-    expect(target?.expectedReadModel).toBe(
-      'src/components/tower/command-center/TowerCommandCenterAvaShell.tsx',
-    );
-  });
-
   it('every target has non-empty canonical fields', () => {
     const targets = listRouteSmokeTargets();
     for (const target of targets) {

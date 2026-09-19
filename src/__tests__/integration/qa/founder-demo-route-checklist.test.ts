@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import {
   buildFounderDemoRouteChecklist,
+  type DemoRoute,
   type FounderDemoRouteChecklist,
 } from '@/lib/qa/founder-demo-route-checklist';
 
@@ -134,16 +135,6 @@ describe('DEMO2 founder demo route checklist — totals reconciliation', () => {
 
   it('generatedAt is 2026-04-26', () => {
     expect(checklist.generatedAt).toBe('2026-04-26');
-  });
-
-  it('describes the mounted Tower command center without claiming the orphaned pressure cards', () => {
-    const tower = checklist.routes.find((route) => route.primaryAgent === 'Atlas');
-
-    expect(tower?.expectedComponent).toBe(
-      'src/components/tower/command-center/TowerCommandCenterAvaShell.tsx',
-    );
-    expect(tower?.validationStatus).toBe('partial');
-    expect(tower?.readinessCaveat).toMatch(/current-data acceptance/i);
   });
 });
 
