@@ -42,6 +42,10 @@ import {
   type AuthoritativeVersion,
   type ReviewerRoleCode,
 } from "@/lib/programs/deliverable-lifecycle";
+import {
+  programPatternLookupFromClient,
+  resolvePromotedProgramPatternKey,
+} from "@/lib/programs/pattern-authority";
 
 /**
  * Resolve the programs write adapter, threading any route-scoped Supabase
@@ -220,6 +224,10 @@ export async function originateProgram(
 ): Promise<ProgramCore> {
   assertTenancy(ctx);
   const sb = opts.supabase ?? getAzureWriteFluentClient();
+  const acceptedPatternKey = await resolvePromotedProgramPatternKey(
+    input.acceptedPatternKey,
+    programPatternLookupFromClient(sb),
+  );
   const industryCode = await resolveClientIndustryCode(
     ctx.clientId,
     input.industryHint,
@@ -229,7 +237,7 @@ export async function originateProgram(
     name: input.name,
     useCase: input.useCase,
     archetype: input.archetype,
-    acceptedPatternKey: input.acceptedPatternKey,
+    acceptedPatternKey,
   });
   // NOTE: engagements has no `created_by` column on the current schema —
   // creator attribution is captured in module_state_log (changed_by_user_id)
@@ -271,14 +279,14 @@ export async function originateProgram(
     fromState: null,
     toState: "phase_0_seed_created",
     rationale: input.useCase,
-    evidenceRefs: input.acceptedPatternKey ? [input.acceptedPatternKey] : [],
+    evidenceRefs: acceptedPatternKey ? [acceptedPatternKey] : [],
   });
 
   // Record the pattern match event if a pattern was accepted
-  if (input.acceptedPatternKey) {
+  if (acceptedPatternKey) {
     const { error: pmErr } = await sb.from("pattern_match_logs").insert({
       engagement_id: programId,
-      pattern_key: input.acceptedPatternKey,
+      pattern_key: acceptedPatternKey,
       match_confidence: null,
       match_context_jsonb: {
         use_case: input.useCase,
@@ -301,7 +309,7 @@ export async function originateProgram(
     new_state: "completed",
     changed_by_user_id: ctx.userId,
     context_jsonb: {
-      pattern_key: input.acceptedPatternKey,
+      pattern_key: acceptedPatternKey,
       origin: input.originSource,
     },
   });
