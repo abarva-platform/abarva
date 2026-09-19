@@ -1,0 +1,70 @@
+name: Integration suites
+
+# `src/__tests__/integration/source` held 92 suites no workflow ran. Wiring it
+# left the obvious question unanswered, so the whole tree was measured through
+# the census resolver rather than by reading YAML. On `2a1a87dd0`:
+#
+#   467 integration suites exist · 172 were reached by a workflow · 295 by
+#   nothing, across 21 leaf directories with zero coverage.
+#
+# Each dark directory was then run once. The ten named below passed in full,
+# with no exclusions — 99 suites, 2,969 assertions, of which 75 suites ran in no
+# workflow before this file existed. They are wired here.
+#
+# The rest failed and are deliberately NOT wired: a red directory is wired by
+# fixing it, or by quarantining named suites with named reasons the way
+# `source-integration.yml` does. Adding it to a green command would turn this
+# job red on arrival and teach everyone to ignore it. Their measured failures
+# are recorded as their own backlog items.
+#
+# TWO THINGS THAT LOOK RIGHT AND REGISTER NOTHING, both already paid for here:
+#
+#   1. A wrapper script that shells out to jest. The repository's
+#      "changed integration suites have a CI owner" gate counts a suite as
+#      registered only when a workflow command mentions a test runner AND names
+#      the suite or a containing directory. A wrapper satisfies neither.
+#   2. A trailing slash on the path. The gate requires the path to be followed
+#      by whitespace or end-of-command, so `…/nexus/` stops matching.
+#
+# A jest path argument is a regex tested against the full path, so naming a
+# directory also runs every directory whose name it prefixes — `…/agent` runs
+# `…/agents`, which is red. `integration-directory-ci-coverage.test.ts` holds
+# all three of these, and refuses a new integration directory that no workflow
+# reaches.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  integration-suites:
+    name: Integration suites that pass on main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Directories are named literally and without a trailing slash, for the
+      # two reasons in the header. Naming directories rather than file paths is
+      # what makes this cover suites nobody has written yet: a new suite in one
+      # of these directories runs the day it lands.
+      - name: Run the integration directories that pass on main
+        run: npx jest src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/engagement src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/solutions src/__tests__/integration/story-pack --no-coverage --ci
+
+      - name: Refuse a new integration directory that no workflow reaches
+        run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci
