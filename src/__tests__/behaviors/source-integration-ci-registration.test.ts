@@ -70,9 +70,18 @@ describe("Source integration suites are registered with CI", () => {
     // The negative control. A command broad enough to cover everything would
     // make this gate meaningless for every other product area, and the failure
     // would look like success.
+    //
+    // The stand-in used to be `…/integration/knowledge`, chosen because no
+    // workflow named it. That made the control go red the day `knowledge` was
+    // legitimately wired into `integration-suites.yml` — the control was right
+    // and its example had simply expired, which is the same shape as the five
+    // stale assertions that wiring repaired. A directory no workflow will ever
+    // name keeps the control exact and stops it expiring again: an over-broad
+    // command (naming the integration root, say) still registers this path and
+    // still fails the case.
     expect(
       isIntegrationTestRegistered(
-        "src/__tests__/integration/knowledge/some-unregistered-suite.test.ts",
+        "src/__tests__/integration/__not-a-registered-directory__/some-suite.test.ts",
         registeredCommands(),
       ),
     ).toBe(false);
