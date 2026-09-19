@@ -64,7 +64,14 @@ describe('ADMIN3 — Steward Editorial Component', () => {
     it('declares evidenceStrength prop', () => expect(src()).toMatch(/evidenceStrength:\s*EvidenceStrength/));
     it('declares optional blocker prop', () => expect(src()).toMatch(/blocker\?:\s*string/));
     it('declares primaryAction prop', () => expect(src()).toMatch(/primaryAction:\s*{\s*label:\s*string;\s*href:\s*string\s*}/));
-    it('renders Context used label', () => expect(src()).toContain('Context used'));
+    // 2026-09-19 (T-032) - e49e6d5f2 ("hide internal provenance chips", #2653)
+    // deliberately removed the visible "Context used" row. The prop survived
+    // the removal and is now declared but never destructured, which is a
+    // separate finding recorded in the backlog, not something to assert here.
+    // What the case can still hold is that the component does not quietly grow
+    // a provenance chip back without the decision being revisited.
+    it('does not render an internal provenance chip', () =>
+      expect(src()).not.toContain('Context used'));
     it('uses EvidenceStrengthPill', () => expect(src()).toContain('<EvidenceStrengthPill'));
     it('uses BlockerPill conditionally', () => expect(src()).toContain('blocker ? <BlockerPill'));
     it('uses serif typography for title', () => expect(src()).toContain('TYPOGRAPHY.serif'));
@@ -78,15 +85,22 @@ describe('ADMIN3 — Steward Editorial Component', () => {
   describe('ContextBar component', () => {
     const src = () => readSource('src/components/admin/ContextBar.tsx');
     it('exports ContextBar', () => expect(src()).toContain('export function ContextBar'));
-    it('renders 5 cells: tenant, mode, agent, data, liveStatus', () => {
-      expect(src()).toContain('Tenant');
-      expect(src()).toContain('Mode');
-      expect(src()).toContain('Agent');
-      expect(src()).toContain('Data');
-      expect(src()).toContain('Live status');
+    // 2026-09-19 (T-032) - the bar was reduced from five cells to three and
+    // relabelled in the same pass that hid the provenance chips: Tenant became
+    // Client, Data became Evidence source, Live status became Status, and Mode
+    // and Agent were dropped as builder vocabulary on a surface a Maestro
+    // reads. Both of these cases locked the retired five. The cell count and
+    // the grid have to agree with each other, so that is what is asserted -
+    // a fourth cell added without widening the grid fails.
+    it('renders the three client-facing cells: client, evidence source, status', () => {
+      expect(src()).toContain("label: 'Client'");
+      expect(src()).toContain("label: 'Evidence source'");
+      expect(src()).toContain("label: 'Status'");
+      expect(src()).not.toContain("label: 'Mode'");
+      expect(src()).not.toContain("label: 'Agent'");
     });
-    it('uses 5-column grid template', () =>
-      expect(src()).toContain("gridTemplateColumns: 'repeat(5, 1fr)'"));
+    it('uses a grid whose column count matches the number of cells', () =>
+      expect(src()).toContain("gridTemplateColumns: 'repeat(3, minmax(0, 1fr))'"));
     it('declares ContextLiveStatus type with live/partial/deferred', () => {
       const s = src();
       expect(s).toContain("'live'");

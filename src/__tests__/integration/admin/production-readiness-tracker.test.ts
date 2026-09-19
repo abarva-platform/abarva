@@ -1,5 +1,6 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { ADMIN_SUB_SECTIONS } from "@/lib/admin/admin-shell-config";
 import {
   buildProductionReadinessView,
   computeOverallReadinessPercent,
@@ -634,12 +635,22 @@ describe("module hygiene", () => {
     // is no longer mounted on the route — that mount is intentionally retired.
     expect(routeSource).toMatch(/AdminCanonShellV2/);
     expect(routeSource).toMatch(/buildProductionReadinessPageView/);
-    // HOME-NATIVE — /admin is a native Maestro home canvas. Production
-    // readiness keeps its own canonical shell and remains linked from the
-    // top action.
-    expect(adminPageSource).toMatch(/data-admin-home-native/);
-    expect(adminPageSource).toMatch(/\/admin\/production-readiness/);
+    // 2026-09-19 (T-032) — both of the /admin assertions here were stale, and
+    // the second one is the interesting half. fb561b85e re-pointed /admin at
+    // AdminSetupExperience rendered through AppShell: the
+    // `data-admin-home-native` marker went with the old markup (it now appears
+    // nowhere in `src/` outside test files), and the route file no longer
+    // contains the string `/admin/production-readiness` at all. Matching a
+    // route file's SOURCE TEXT for a link is what made that invisible — the
+    // link did not disappear, it moved into the admin sub-section nav. Assert
+    // the navigation contract where it actually lives, so this fails if the
+    // Production Readiness surface stops being reachable rather than when a
+    // component is refactored.
+    expect(adminPageSource).toContain("AdminSetupExperience");
     expect(adminPageSource).not.toMatch(/iframe/);
+    expect(
+      ADMIN_SUB_SECTIONS.find((s) => s.id === "production-readiness")?.href,
+    ).toBe("/admin/production-readiness");
   });
 });
 

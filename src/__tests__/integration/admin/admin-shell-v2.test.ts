@@ -99,14 +99,27 @@ describe('ADMIN2 — Admin Shell 3-Zone canonical layout', () => {
     });
 
     it('ADMIN_SUB_SECTIONS lists canonical ids in order', () => {
+      // 2026-09-19 (T-032) - four ids were missing from this list, all four
+      // shipped by named feature commits after the list was written, and each
+      // has a real route under src/app/(maestro)/admin/:
+      //   templates + outputs  a9233b0d2 "surface templates and outputs in sidebar"
+      //   data-layer-explorer  6a4915cdc "add data layer explorer"
+      //   ops                  90c70448f "add governed ops console" (#2889)
+      // An exact-list lock is the right shape here - it is what stops a panel
+      // appearing in the nav without anyone deciding where it goes - so the
+      // list is corrected rather than loosened.
       expect(ADMIN_SUB_SECTIONS.map((s) => s.id)).toEqual([
         'overview',
         'data-loads',
+        'templates',
+        'data-layer-explorer',
         'data-trust',
         'connectors',
+        'outputs',
         'users-access',
         'inbox',
         'customer-admin',
+        'ops',
         'agent-readiness',
         'patternops',
         'production-readiness',

@@ -21,10 +21,19 @@ describe('DESROUTE3 admin shell enforcement', () => {
   const legacyAdminRoute = 'src/app/(maestro)/platform/admin/page.tsx';
   const legacyProductionRoute = 'src/app/(maestro)/platform/admin/production-readiness/page.tsx';
 
+  // 2026-09-19 (T-032) - `data-admin-home-native` and `AdminCanonShellV2` were
+  // both stale here, the same way T-035 found them stale in
+  // setup-w6-policies-governance.test.ts. fb561b85e rebuilt /admin as a server
+  // component that renders AdminSetupExperience through AppShell, and the
+  // marker attribute went with the old markup: `data-admin-home-native` now
+  // appears nowhere in `src/` outside test files. What this case protects is
+  // unchanged - /admin renders its own surface, resolves its own tenant, and is
+  // neither an iframe nor the Home overview - so that is what is asserted.
   it('admin home renders natively while production keeps the canonical shell', () => {
     const adminSource = read(adminRoute);
-    expect(adminSource).toContain('data-admin-home-native');
-    expect(adminSource).toContain('AdminCanonShellV2');
+    expect(adminSource).toContain('AppShell');
+    expect(adminSource).toContain('surface="setup"');
+    expect(adminSource).toContain('AdminSetupExperience');
     expect(adminSource).toContain('resolveAdminTenant');
     expect(adminSource).not.toContain('iframe');
     expect(adminSource).not.toContain('HomeOverviewV2');
