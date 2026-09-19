@@ -1,0 +1,11 @@
+id,question,audit_answer
+Q1,"For Meridian Agent Assist, what metrics can Tower track today versus what remains a measurement gap?","Tower can track AHT/FCR/CSAT/cost/contact/adoption/safety metrics as concepts, but most should render as measurement gaps until baselines, source, owner, and as-of are loaded."
+Q2,What value claims are safe versus unsafe for Meridian Agent Assist?,"Safe: measurement plan, readiness gaps, baseline needed. Unsafe: AHT reduced, ROI realized, CSAT improved, or cost savings without measured evidence."
+Q3,How should Tower represent AWS/Databricks data foundation readiness?,"As readiness gates: certified data products, lineage, semantic layer, PHI controls, freshness, and owner signoff. Not realized value."
+Q4,"How does Tower distinguish value hypothesis, promised value, measured value, and realized value?",Partially: promised_value_fy26 and measured_value_ytd exist; outcome ledger has projected/tracked/verified. Needs one TowerValueClaim contract.
+Q5,What evidence is missing before Tower can show ROI?,"Baseline, target, calculation method, actual measured value, owner, source evidence, as-of date, and confidence/caveat."
+Q6,How should Moves P1/P5 hand off measurement plans to Tower?,P1 should create baseline/method/owner/cadence; P5 should hand off commitments and measurement plan as TowerMetricRecord candidates.
+Q7,How should Source hand off contract/savings opportunities to Tower?,"As Source commercial value hypotheses with baseline, contract event, BAFO lever, owner, and post-award measurement plan; not realized savings."
+Q8,What should the CFO see in Tower?,"Promised vs measured value, budget/spend burn, unsupported value claims, evidence confidence, measurement gaps, and decisions requiring finance signoff."
+Q9,What should the CDAO see in Tower?,"Data-product readiness, lineage/freshness gaps, semantic ownership, controls, AI readiness gates, and value blocked by data gaps."
+Q10,What should the CIO see in Tower?,"Portfolio budget, run/change mix, vendor exposure, initiatives at risk, value proof, execution handoffs, and what to inspect this week."

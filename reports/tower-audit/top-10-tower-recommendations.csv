@@ -1,0 +1,11 @@
+rank,recommendation,problem,product_impact,data_dependency,module_dependency,implementation_complexity,demo_priority
+1,Formalize TowerContextPack,Tower has several valid read paths but no single named context pack boundary.,Prevents drift and makes audit proof simple.,Knowledge/Tower context contracts,"Knowledge, Intelligence, Moves, Source, Tower",Medium,High
+2,Create TowerValueClaim gate,ROI/realized value needs a hard status gate.,Prevents unsafe CFO-facing claims.,measure_results + evidence,"Knowledge, Intelligence, Moves, Source, Tower",Medium,High
+3,Add measurement-plan first view,Many Meridian metrics are trackable but not validated.,Makes gaps productive instead of embarrassing.,Moves P1/P5 handoff,"Knowledge, Intelligence, Moves, Source, Tower",Medium,High
+4,Make baseline/target/promised/measured/realized visible,The data model separates states but UI can still compress them.,Improves CFO trust.,Tower measure metadata,"Knowledge, Intelligence, Moves, Source, Tower",Medium,High
+5,Persist context gaps as IDs,Current gaps are derived strings in places.,Enables evidence-request workflow.,Knowledge gaps,"Knowledge, Intelligence, Moves, Source, Tower",Medium,High
+6,Integrate Source handoff,Savings/commercial value should flow as hypotheses.,Connects sourcing wins to value realization.,Source event/value ledger,"Knowledge, Intelligence, Moves, Source, Tower",Medium,Medium
+7,Integrate Moves handoff,Move charters and phase success metrics should seed Tower.,Closes strategy-to-execution loop.,Moves measurement plan,"Knowledge, Intelligence, Moves, Source, Tower",Medium,High
+8,Add control dimension,"CDAO/CFO trust requires controls, not just risks.",Board-grade value governance.,Risk/control records,"Knowledge, Intelligence, Moves, Source, Tower",Medium,Medium
+9,Role-based Tower views,"CFO, CIO, CDAO, CPO need different slices.",Improves demo relevance.,Same value ledger,"Knowledge, Intelligence, Moves, Source, Tower",High,Medium
+10,Retire old V-language from visible contracts,Internal V6/V7 terms remain in code headers/internal labels.,Avoids confusing buyers and operators.,API headers/release naming,"Knowledge, Intelligence, Moves, Source, Tower",Low,Medium

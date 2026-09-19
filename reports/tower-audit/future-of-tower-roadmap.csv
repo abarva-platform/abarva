@@ -1,0 +1,7 @@
+phase,name,description,priority
+P0,Safety foundation,Block unsupported realized value/ROI phrasing; require value claim status and caveat.,High
+P1,Measurement plan,"Represent baseline, target, owner, method, cadence, and missing evidence before any value claim.",High
+P2,Value ledger,Create TowerValueRecord/TowerMetricRecord/TowerValueClaim as the formal contract.,High
+P3,Source commercial value,Bring BAFO/savings opportunities into Tower as hypotheses until measured post-award.,Medium
+P4,Executive cockpit,"Role-based CFO/CIO/CDAO/CPO views with value, readiness, risk, and evidence.",Medium
+P5,Continuous value intelligence,Close the loop from measured outcomes back to Knowledge/Intelligence/Moves/Source.,Medium
