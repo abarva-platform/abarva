@@ -97,20 +97,25 @@ describe("shared evidence packet — human rationale", () => {
       humanRationale: "fine",
     });
 
+    expect(packet.declaredRecordsHumanDecision).toBeNull();
     expect(packet.recordsHumanDecision).toBe(true);
     expect(validateAiDecisionEvidencePacket(packet).failures).toContain(
       "insufficient_human_rationale",
     );
   });
 
-  it("does not let an explicit brief declaration bypass decision markers", () => {
+  it("reports an explicit brief declaration that contradicts decision markers", () => {
     const packet = buildDecisionPacket({
       recordsHumanDecision: false,
       humanRationale: "fine",
     });
 
+    expect(packet.declaredRecordsHumanDecision).toBe(false);
     expect(packet.recordsHumanDecision).toBe(true);
-    expect(validateAiDecisionEvidencePacket(packet).failures).toContain(
+    const validation = validateAiDecisionEvidencePacket(packet);
+
+    expect(validation.failures).toContain("mislabeled_brief_declaration");
+    expect(validation.failures).toContain(
       "insufficient_human_rationale",
     );
   });
@@ -143,6 +148,7 @@ describe("shared evidence packet — human rationale", () => {
       riskDomains: ["general_business"],
     });
 
+    expect(brief.declaredRecordsHumanDecision).toBe(false);
     expect(brief.recordsHumanDecision).toBe(false);
     expect(brief.humanRationale).toBeNull();
     expect(validateAiDecisionEvidencePacket(brief).failures).not.toContain(

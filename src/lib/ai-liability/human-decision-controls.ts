@@ -101,6 +101,7 @@ export interface AiDecisionEvidencePacket {
   readonly assumptions: readonly string[];
   readonly alternativesConsidered: readonly string[];
   readonly humanRationale: string | null;
+  readonly declaredRecordsHumanDecision: boolean | null;
   readonly recordsHumanDecision: boolean;
   readonly overrideDisposition: AiDecisionEvidencePacketInput['overrideDisposition'];
   readonly riskDomains: readonly AiDecisionRiskDomain[];
@@ -297,6 +298,7 @@ export function buildAiDecisionEvidencePacket(
     assumptions: input.assumptions,
     alternativesConsidered: input.alternativesConsidered,
     humanRationale: input.humanRationale ?? null,
+    declaredRecordsHumanDecision: input.recordsHumanDecision ?? null,
     recordsHumanDecision: packetRecordsHumanDecision(input),
     overrideDisposition: input.overrideDisposition ?? null,
     riskDomains: risk.domains,
@@ -325,6 +327,9 @@ export function validateAiDecisionEvidencePacket(
   if (packet.assumptions.length === 0) failures.push('missing_assumptions');
   if (packet.missingInputs.length === 0) failures.push('missing_missing_inputs_record');
   if (policy.requireOverrideCapture && !packet.overrideDisposition) failures.push('missing_human_override_or_acceptance');
+  if (packet.declaredRecordsHumanDecision === false && packet.recordsHumanDecision) {
+    failures.push('mislabeled_brief_declaration');
+  }
   // The rationale is the only part of a packet a human writes, and it was the
   // only required field this validator did not read: every surface recording a
   // human decision had to remember its own minimum, and nothing said so.
