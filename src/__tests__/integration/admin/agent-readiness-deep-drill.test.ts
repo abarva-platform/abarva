@@ -117,10 +117,17 @@ describe('buildAgentReadinessDeepDrill()', () => {
 
   // ── Top-level fields ───────────────────────────────────────────────────
 
-  test('deterministicSourceCaption is exactly the canonical string', () => {
-    expect(drill.deterministicSourceCaption).toBe(
-      'Static manifest — not live agent execution'
-    )
+  // 2026-09-19 (T-032) - the caption was rewritten to 'Prepared readiness
+  // review — not live assistant execution'. Locking the exact sentence made
+  // this a copy test: it fails on a rewording that keeps the disclosure and it
+  // would pass on any rewording that kept the words. The disclosure is what
+  // matters, so it is the disclosure that is asserted - the caption must deny
+  // live execution, and the negation must be intact.
+  test('deterministicSourceCaption denies live execution', () => {
+    const caption = drill.deterministicSourceCaption
+    expect(caption).toBeTruthy()
+    expect(caption.toLowerCase()).toContain('not live')
+    expect(caption.toLowerCase()).toContain('execution')
   })
 
   test('overallReadiness is one of the allowed levels', () => {
@@ -231,7 +238,11 @@ describe('buildAgentReadinessDeepDrill()', () => {
 
   test('serialized output contains deterministicSourceCaption', () => {
     const serialized = JSON.stringify(drill)
-    expect(serialized).toContain('Static manifest')
+    // 2026-09-19 (T-032) - was `toContain('Static manifest')`, half of the
+    // retired caption. Assert the caption the model actually carries, so this
+    // fails if the disclosure is dropped from the serialized payload rather
+    // than when it is reworded.
+    expect(serialized).toContain(drill.deterministicSourceCaption)
   })
 
   test('serialized output does not contain an affirmative live-execution claim', () => {

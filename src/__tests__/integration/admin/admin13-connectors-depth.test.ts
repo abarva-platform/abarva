@@ -83,8 +83,18 @@ describe('ADMIN13 — buildConnectorsPageView contract', () => {
     expect(view.defaultTab).toBe('health');
   });
 
-  it('hardGateReason mentions Setup W4', () => {
-    expect(view.hardGateReason).toMatch(/Setup W4/);
+  // 2026-09-19 (T-032) - was `toMatch(/Setup W4/)`. Same defect as the three
+  // "Wave 27" assertions in admin11: the case matched an internal release label
+  // inside copy a person reads, so rewriting the sentence into plain English
+  // turned it red while the gate itself never moved. The reason is shared by
+  // the page view and both blocked actions (HARD_GATE_REASON in
+  // connectors-page-view.ts), and that sharing is the property worth holding.
+  it('hardGateReason is a stated reason shared by every blocked action', () => {
+    expect(view.hardGateReason).toBeTruthy();
+    expect(view.hardGateReason.length).toBeGreaterThan(20);
+    for (const action of view.actions.filter((a) => a.status === 'blocked')) {
+      expect(action.reason).toBe(view.hardGateReason);
+    }
   });
 
   it('total connectors in categories equals view.connectors.length', () => {
@@ -250,7 +260,8 @@ describe('ADMIN13 — action strip', () => {
     const add = view.actions.find((a) => a.id === 'add-connector') as ConnectorAction;
     expect(add).toBeDefined();
     expect(add.status).toBe('blocked');
-    expect(add.reason).toMatch(/Setup W4/);
+    // 2026-09-19 (T-032) - see the note on hardGateReason above.
+    expect(add.reason).toBe(view.hardGateReason);
   });
 
   it('Test all connections is blocked', () => {

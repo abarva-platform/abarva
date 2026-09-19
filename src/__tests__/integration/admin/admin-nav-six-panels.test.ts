@@ -17,14 +17,24 @@ const ROUTE_BASE = path.join(REPO_ROOT, 'src', 'app', '(maestro)', 'admin');
 
 describe('Setup left-nav after PR 1 (4 panels removed)', () => {
   it('contains the documented core panels in order', () => {
+    // 2026-09-19 (T-032) - see the identical list in admin-shell-v2.test.ts.
+    // Four ids were missing here too: templates and outputs (a9233b0d2),
+    // data-layer-explorer (6a4915cdc) and ops (90c70448f, #2889). Each has a
+    // real route under src/app/(maestro)/admin/. Two suites holding the same
+    // exact-list lock is itself worth an item - both had to be corrected by
+    // hand, and nothing holds them to each other.
     expect(ADMIN_SUB_SECTIONS.map((s) => s.id)).toEqual([
       'overview',
       'data-loads',
+      'templates',
+      'data-layer-explorer',
       'data-trust',
       'connectors',
+      'outputs',
       'users-access',
       'inbox',
       'customer-admin',
+      'ops',
       'agent-readiness',
       'patternops',
       'production-readiness',

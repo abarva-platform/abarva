@@ -122,6 +122,43 @@ name: Integration suites
 # check:intelligence-integration-quarantine fails, so the carve-out cannot
 # outlive its reason.
 #
+# 2026-09-19 · `admin` wired WITH A QUARANTINE, the second directory here to
+# need one. 51 suites (46 plus a `data/` subdirectory of 5), of which exactly
+# one file was reached by any workflow: production-readiness-gate.yml names
+# production-readiness-validator.test.ts. Running the directory found 12 red
+# and 24 failing assertions, and backlog item T-032 found two causes rather
+# than 24 problems.
+#
+# 21 of the 24 asserted on copy a person reads, or on a marker inside a source
+# file, and all of it had been rewritten on purpose while the contract
+# underneath did not move: a route re-pointed at another surface (its marker
+# attribute now appears nowhere in `src/` outside test files), four navigation
+# panels that shipped with real routes, and internal release labels taken out
+# of the sentences shown beside disabled controls. Matching a release label
+# inside user copy tests the wording and not the gate - it fails on a rewrite
+# that keeps the control and passes on any rewrite that keeps the words - so
+# each of those now asserts an id, a status or a navigation entry instead. The
+# 22nd cluster was a defect in a check rather than in the code it checks: the
+# font-family sweep read the fragment before a stack's first inner quote, so
+# all 11 violations it reported were truncation artifacts and every verdict it
+# gave was about a fragment. All 22 were repaired, not excluded.
+#
+# The 2 that remain are excluded, and neither is a stale contract. Each found
+# something real and each needs a product decision: 643 non-canonical hex
+# literals in the admin tree (U-008), and two merged decisions that disagree on
+# whether admin chrome says Admin or Setup (U-009).
+#
+# Wiring this directory adds 49 suites to CI. It does NOT add the assertions
+# that pass inside the 2 excluded suites: a quarantined suite runs nowhere, and
+# reporting its passing assertions as coverage would be the same overstating
+# this backlog exists to refuse.
+#
+# Exclusions are named, with reasons and owners, in
+# scripts/quality/admin-integration-quarantine.json. Unlike the Intelligence
+# list, these reasons are live defects rather than absent files, so
+# check:admin-integration-quarantine RE-RUNS each excluded suite and fails if
+# one passes. The carve-out cannot outlive its reason.
+
 # 2026-09-19 · the loose integration-root suites were measured directly instead
 # of naming `src/__tests__/integration`, because that root path would also run
 # every red subdirectory under it. Current measurement: 45 root files exist; 22
@@ -184,6 +221,22 @@ jobs:
       # integration-directory-ci-coverage.test.ts refuses.
       - name: Run the Intelligence integration suites that pass on main
         run: npx jest src/__tests__/integration/intelligence src/__tests__/integration/intelligence-chat-shape.test.ts src/__tests__/integration/intelligence-pattern-manifest.test.ts --no-coverage --ci $(node scripts/quality/intelligence-integration-ignore-args.mjs)
+
+      - name: Refuse a stale or growing Admin quarantine list
+        run: npm run check:admin-integration-quarantine
+
+      # A separate step for the same reason the Intelligence one is separate:
+      # its exclusion flags name Admin suites, and folding them into the green
+      # command above would apply an Admin-shaped ignore list to every other
+      # directory's run. The runner and the path are named literally here so the
+      # visibility gate sees them, and the path deliberately has no trailing
+      # slash. Naming the directory also selects the loose root file
+      # `admin-context-uploads-tabs.test.tsx`, which is already registered by
+      # exact path in the green command above; it is green, so it needs no
+      # exclusion and none is added. It does run twice in this workflow as a
+      # result - the cost of the enumeration being honest rather than clever.
+      - name: Run the Admin integration suites that pass on main
+        run: npx jest src/__tests__/integration/admin --no-coverage --ci $(node scripts/quality/admin-integration-ignore-args.mjs)
 
       - name: Refuse a new integration directory that no workflow reaches
         run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci

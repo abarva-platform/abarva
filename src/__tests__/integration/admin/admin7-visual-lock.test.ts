@@ -274,12 +274,28 @@ function findHexLiteralsIn(src: string): string[] {
   return src.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
 }
 
+/**
+ * 2026-09-19 (T-032) - the previous pattern was
+ * `/font[Ff]amily\s*:\s*['"`]([^'"`]+)['"`]/g`, whose character class
+ * excluded ALL THREE quote characters rather than the one that opened the
+ * string. So a perfectly canonical stack truncated at its first inner quote:
+ * `'var(--font-inter), "DM Sans", system-ui, sans-serif'` was read as
+ * `var(--font-inter), ` and reported as a violation because the fragment no
+ * longer contained `sans-serif`, and `"\"JetBrains Mono\", ui-monospace,
+ * monospace"` was read as a single backslash. Measured over the 423 files this
+ * sweep walks: 11 violations before, all 11 truncation artifacts whose full
+ * declared value is canonical, 0 after. The deeper point is that its verdicts
+ * were about a FRAGMENT rather than the declared stack, so the sweep was
+ * neither trustworthy when it fired nor meaningful when it stayed quiet. Match
+ * to the quote that opened the literal, and undo the escaping before testing
+ * the value.
+ */
 function findFontFamilyDeclarations(src: string): string[] {
   const out: string[] = [];
-  const re = /font[Ff]amily\s*:\s*['"`]([^'"`]+)['"`]/g;
+  const re = /font[Ff]amily\s*:\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g;
   let m;
   while ((m = re.exec(src)) !== null) {
-    out.push(m[1]);
+    out.push(m[2].replace(/\\(.)/g, '$1'));
   }
   return out;
 }
@@ -318,12 +334,20 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
       });
     });
 
-    it('/admin home renders a native Maestro canvas instead of the legacy setup dashboard', () => {
+    // 2026-09-19 (T-032) - four of these six assertions were stale, and the
+    // title of the case was the fifth. fb561b85e re-pointed /admin at
+    // AdminSetupExperience through AppShell, so `data-admin-home-native`,
+    // `AdminCanonShellV2` and the copy string 'Loaded data by dimension' all
+    // left the route file - the first of those now appears nowhere in `src/`
+    // outside test files. T-035 reached the same conclusion about the same two
+    // markers from setup-w6-policies-governance.test.ts. The two assertions
+    // that still describe something true are kept, and the surface the route
+    // actually renders is named.
+    it('/admin home renders the setup experience rather than an iframe or the Home overview', () => {
       const src = readFileSync(resolve(root, 'src/app/(maestro)/admin/page.tsx'), 'utf8');
-      expect(src).toContain('data-admin-home-native');
-      expect(src).toContain('AdminCanonShellV2');
+      expect(src).toContain('AdminSetupExperience');
+      expect(src).toContain('AppShell');
       expect(src).toContain('resolveAdminTenant');
-      expect(src).toContain('Loaded data by dimension');
       expect(src).not.toContain('iframe');
       expect(src).not.toContain('HomeOverviewV2');
     });

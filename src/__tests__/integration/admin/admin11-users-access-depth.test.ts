@@ -145,17 +145,33 @@ describe('ADMIN11 — Users & Access page-view depth', () => {
     expect(ids).toContain('export_users');
   });
 
+  // 2026-09-19 (T-032) - three assertions in this suite matched the internal
+  // release label "Wave 27" inside copy a person reads. That tests the wording,
+  // not the gate: rewriting the reason into plain English turns the case red
+  // while the control is untouched, and deleting the reason entirely would
+  // leave it green as long as the words survived somewhere. The gate is
+  // `status`, so the gate is what is asserted, plus a reason that actually says
+  // something rather than repeating the button label.
   it('invite_user action is hard_gated with a reason', () => {
     const a = view.actionStrip.find((x) => x.id === 'invite_user');
     expect(a?.status).toBe('hard_gated');
     expect(a?.reason).toBeTruthy();
-    expect(a?.reason).toMatch(/Wave 27/);
+    expect(a?.reason).not.toBe(a?.label);
+    expect((a?.reason ?? '').length).toBeGreaterThan(20);
   });
 
-  it('configure_sso action is hard_gated with a reason', () => {
+  // 2026-09-19 (T-032) - this one was NOT just wording. configure_sso is
+  // `safe` today, and that is correct rather than a lifted gate: the action no
+  // longer performs an SSO write, it navigates to
+  // /admin/users-access/sso-configuration, which e49e6d5f2 built as a
+  // documentation page describing the request flow AbarVa runs by hand. The
+  // live write it used to gate does not exist in-product at all. So the case is
+  // rewritten to hold the thing that matters - a `safe` SSO action must be
+  // navigation to that documented flow, never an in-product configure.
+  it('configure_sso action is navigation to the documented request flow', () => {
     const a = view.actionStrip.find((x) => x.id === 'configure_sso');
-    expect(a?.status).toBe('hard_gated');
-    expect(a?.reason).toMatch(/Wave 27/);
+    expect(a?.status).toBe('safe');
+    expect(a?.href).toBe('/admin/users-access/sso-configuration');
   });
 
   it('export_users action is safe and has an href', () => {
@@ -270,7 +286,11 @@ describe('ADMIN11 — Action strip + invite list hard-gated affordances', () => 
     expect(src).toContain('disabled');
     expect(src).toContain('aria-disabled="true"');
     expect(src).toContain('hard_gated');
-    expect(src).toMatch(/Wave 27/);
+    // 2026-09-19 (T-032) - was `expect(src).toMatch(/Wave 27/)`. The strip
+    // renders the reason it is given rather than restating a release label, so
+    // the label is no longer in the component source. What has to be true is
+    // that a hard-gated affordance shows its reason.
+    expect(src).toMatch(/reason/);
   });
 
   it('InviteList renders disabled Resend / Revoke buttons', () => {

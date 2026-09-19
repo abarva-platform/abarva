@@ -23,7 +23,10 @@ export interface AgentReadinessRecord {
 
 export interface AgentReadinessDeepDrill {
   generatedAt: string                    // hardcoded '2026-04-26'
-  deterministicSourceCaption: string     // always 'Static manifest — not live agent execution'
+  // 2026-09-19 (T-032) - this comment named the retired caption and had done
+  // since the string was rewritten below. A comment that contradicts the value
+  // two hundred lines under it is how a stale contract survives a read.
+  deterministicSourceCaption: string     // a disclosure that this is not live execution
   agents: AgentReadinessRecord[]
   missionQueueReadiness: AgentReadinessLevel
   contextReadiness: AgentReadinessLevel

@@ -110,12 +110,17 @@ describe('ADMIN16 — Production Readiness page-view depth', () => {
     }
   });
 
+  // 2026-09-19 (T-032) - this matched the words "seed" and "route shell" in the
+  // criterion LABELS, which is builder vocabulary in copy a Maestro reads, and
+  // it was rewritten out ("Demo evidence available", "Admin experience
+  // verified"). The criterion IDS did not move: demo-seed and demo-route-shell
+  // are the contract, the labels are the copy. Assert the ids.
   it('demo gate criteria contain deterministic seed + route shell checks', () => {
     const demo = view.gateCriteria.find((g) => g.gateId === 'demo');
     expect(demo).toBeTruthy();
-    const labels = (demo?.criteria ?? []).map((c) => c.label.toLowerCase()).join(' ');
-    expect(labels).toMatch(/seed/);
-    expect(labels).toMatch(/route shell/);
+    const ids = (demo?.criteria ?? []).map((c) => c.id);
+    expect(ids).toContain('demo-seed');
+    expect(ids).toContain('demo-route-shell');
   });
 
   it('pilot gate criteria contain connectors / evidence / users checks', () => {
@@ -173,16 +178,23 @@ describe('ADMIN16 — Production Readiness page-view depth', () => {
     expect(a?.href).toBeTruthy();
   });
 
-  it('run_readiness_check is hard_gated with Wave 27 reason', () => {
+  // 2026-09-19 (T-032) - both of these matched the internal release label
+  // "Wave 27" inside the reason a person reads. That is the wording, not the
+  // gate. `status` is the gate; a reason that says something is the disclosure.
+  it('run_readiness_check is hard_gated with a stated reason', () => {
     const a = view.actionStrip.find((x) => x.id === 'run_readiness_check');
     expect(a?.status).toBe('hard_gated');
-    expect(a?.reason).toMatch(/Wave 27/);
+    expect(a?.reason).toBeTruthy();
+    expect((a?.reason ?? '').length).toBeGreaterThan(20);
+    expect(a?.href).toBeFalsy();
   });
 
-  it('approve_gate is hard_gated with Wave 27 reason', () => {
+  it('approve_gate is hard_gated with a stated reason', () => {
     const a = view.actionStrip.find((x) => x.id === 'approve_gate');
     expect(a?.status).toBe('hard_gated');
-    expect(a?.reason).toMatch(/Wave 27/);
+    expect(a?.reason).toBeTruthy();
+    expect((a?.reason ?? '').length).toBeGreaterThan(20);
+    expect(a?.href).toBeFalsy();
   });
 
   it('export_readiness_report is safe with href', () => {
@@ -324,7 +336,9 @@ describe('ADMIN16 — Hard-gated affordances are disabled', () => {
     expect(src).toContain('disabled');
     expect(src).toContain('aria-disabled="true"');
     expect(src).toContain('hard_gated');
-    expect(src).toMatch(/Wave 27/);
+    // 2026-09-19 (T-032) - the strip renders the reason it is handed rather
+    // than restating a release label. Assert that it renders one.
+    expect(src).toMatch(/action\.reason/);
   });
 
   it('BlockerDetailDrawer renders disabled Mark resolved button', () => {
@@ -335,7 +349,10 @@ describe('ADMIN16 — Hard-gated affordances are disabled', () => {
     expect(src).toContain('disabled');
     expect(src).toContain('aria-disabled="true"');
     expect(src).toContain('Mark resolved');
-    expect(src).toMatch(/Wave 27/);
+    // 2026-09-19 (T-032) - the disabled button still carries its reason, as a
+    // title and as a visible chip beside it. The release label it used to name
+    // is gone; the disclosure is not.
+    expect(src).toMatch(/title="[^"]{20,}"/);
   });
 
   it('ProductionReadinessActionStrip never wires onClick handlers', () => {
