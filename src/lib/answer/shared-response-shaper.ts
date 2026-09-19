@@ -391,13 +391,32 @@ function replaceLabels(
   return { text: output, replacements };
 }
 
+/**
+ * What a visible identifier is replaced with when no label maps it.
+ *
+ * Exported because a second pass scrubs the same text: an agent answer is
+ * shaped once as it streams (`shapeStreamingAgentTextForSurface`) and again
+ * once it settles (`shapeAgentResponseForSurface`), and only the settled pass
+ * reaches this shaper. The other pass rewrites the same identifier classes in
+ * `src/lib/agent/output-discipline/response-contract.ts`, which imports this
+ * constant so the two cannot answer differently. They did: a bare UUID read as
+ * "the referenced item" once settled and "the referenced record" while
+ * streaming, so the sentence a reader watched arrive was not the sentence they
+ * were left with. Pinned by
+ * `src/__tests__/behaviors/agent-identifier-placeholder-consistency.test.ts`,
+ * which compares the two passes rather than either literal.
+ */
+export const UNMAPPED_IDENTIFIER_PLACEHOLDER = "the referenced item";
+
+const PLACEHOLDER_RE = escapeRegExp(UNMAPPED_IDENTIFIER_PLACEHOLDER);
+
 function stripUnmappedRawIds(text: string): string {
   return text
-    .replace(UUID_RE, "the referenced item")
-    .replace(RAW_ID_RE, "the referenced item")
-    .replace(/\((?:\s*the referenced item\s*)\)/gi, "")
-    .replace(/\s+—\s+the referenced item\b/gi, "")
-    .replace(/\bthe referenced item\s+—\s+/gi, "");
+    .replace(UUID_RE, UNMAPPED_IDENTIFIER_PLACEHOLDER)
+    .replace(RAW_ID_RE, UNMAPPED_IDENTIFIER_PLACEHOLDER)
+    .replace(new RegExp(`\\((?:\\s*${PLACEHOLDER_RE}\\s*)\\)`, "gi"), "")
+    .replace(new RegExp(`\\s+—\\s+${PLACEHOLDER_RE}\\b`, "gi"), "")
+    .replace(new RegExp(`\\b${PLACEHOLDER_RE}\\s+—\\s+`, "gi"), "");
 }
 
 export function findSharedResponseShapeIssues(
