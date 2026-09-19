@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 17,
-    "testCount": 334,
+    "suiteCount": 18,
+    "testCount": 369,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -36,7 +36,8 @@
       "src/__tests__/integration/programs/programs-detail-prog22-deliverables-canvas.test.ts",
       "src/__tests__/integration/programs/programs-detail-prog21-gate-drawer.test.ts",
       "src/__tests__/integration/programs/programs-detail-prog25-workshop-notes-plan.test.ts",
-      "src/__tests__/integration/programs/programs-detail-p3-source-audit.test.ts"
+      "src/__tests__/integration/programs/programs-detail-p3-source-audit.test.ts",
+      "src/__tests__/integration/programs/phase-filter-view.test.ts"
     ]
   },
   "excludedFailures": [
@@ -59,11 +60,6 @@
       "suite": "src/__tests__/integration/programs/full-lifecycle-crawl.test.ts",
       "classification": "stale-source-inspection",
       "evidence": "String-matches an earlier inline gate alias instead of executing the current gate behavior."
-    },
-    {
-      "suite": "src/__tests__/integration/programs/phase-filter-view.test.ts",
-      "classification": "stale-product-language",
-      "evidence": "Expects retired phase labels instead of the canonical label map."
     },
     {
       "suite": "src/__tests__/integration/programs/programs-catalog-lock.test.ts",
