@@ -130,3 +130,31 @@ jobs:
       # the same blind spot. See backlog items 26 / 66 / 77.
       - name: Exercise Source canvas analytics component suites
         run: npx jest src/components/source/canvas/analytics --runInBand
+
+      # Not a catalog control. `src/components/strategic-moves/__tests__` is the
+      # second-ranked governed-risk directory in
+      # `docs/architecture/test-ci-coverage-census.json` — declared AI surface
+      # control, approval/lifecycle write and tenant-scoped read — and ran in no
+      # npm script and no workflow. Its AI-liability suite could not run at all:
+      # importing the documents panel under jsdom reached `@clerk/backend`'s bare
+      # ESM, so the suite failed to parse and the three failures underneath it
+      # were invisible. The 13 green suites are listed rather than the directory
+      # because `MovesPhaseStandaloneClient.test.tsx` carries 4 triaged-red cases
+      # that are not this change's to fix. See backlog items 26 / 92 / 102.
+      - name: Exercise Moves visible AI liability controls
+        run: >-
+          npx jest --runTestsByPath
+          src/components/strategic-moves/__tests__/moves-liability-visible-controls.test.tsx
+          src/components/strategic-moves/__tests__/BoardArtifactsPanel.test.tsx
+          src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts
+          src/components/strategic-moves/__tests__/MovePhaseExplorer.finder-shell.test.tsx
+          src/components/strategic-moves/__tests__/PhaseRoleApprovalsSummary.test.tsx
+          src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.ts
+          src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx
+          src/components/strategic-moves/__tests__/composeOriginateFirstMessage.grounding.test.ts
+          src/components/strategic-moves/__tests__/move-list-format.test.ts
+          src/components/strategic-moves/__tests__/moves-detail-route-sunset.test.ts
+          src/components/strategic-moves/__tests__/phase-approve-and-build-settle.test.tsx
+          src/components/strategic-moves/__tests__/phase-capture-autosave-lanes.test.tsx
+          src/components/strategic-moves/__tests__/strategicMoveBriefToDiscoveryShape.test.ts
+          --runInBand
