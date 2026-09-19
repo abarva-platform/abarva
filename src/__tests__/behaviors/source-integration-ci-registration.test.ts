@@ -99,22 +99,47 @@ describe("Source integration suites are registered with CI", () => {
     expect(covering.length).toBeGreaterThan(0);
   });
 
-  it("quarantines only suites that exist, and only a minority of the directory", () => {
-    const { quarantined } = JSON.parse(
+  it("quarantines only shaped exclusions with live files, and only a minority of the directory", () => {
+    const { quarantined, alsoIgnored = [] } = JSON.parse(
       readFileSync(
         path.join(repoRoot, "scripts/quality/source-integration-quarantine.json"),
         "utf8",
       ),
-    ) as { quarantined: string[] };
+    ) as {
+      quarantined: Array<{
+        suite: string;
+        reason: string;
+        owner: string;
+        expectedFailurePatterns: string[];
+      }>;
+      alsoIgnored?: Array<{
+        path: string;
+        reason: string;
+        owner: string;
+        expectedFailurePatterns: string[];
+      }>;
+    };
 
     const present = readdirSync(path.join(repoRoot, SUITE_DIR)).filter((name) =>
       /\.(test|spec)\.[cm]?[jt]sx?$/.test(name),
     );
 
-    // A stale exclusion is how a carve-out quietly becomes permanent.
-    for (const name of quarantined) {
-      expect(present).toContain(name);
+    // A stale or reasonless exclusion is how a carve-out quietly becomes permanent.
+    for (const entry of quarantined) {
+      expect(present).toContain(entry.suite);
+      expect(entry.reason.trim()).not.toBe("");
+      expect(entry.owner.trim()).not.toBe("");
+      expect(entry.expectedFailurePatterns.length).toBeGreaterThan(0);
     }
+
+    for (const entry of alsoIgnored) {
+      expect(entry.path).toMatch(/^src\/__tests__\/integration\//);
+      expect(readFileSync(path.join(repoRoot, entry.path), "utf8").length).toBeGreaterThan(0);
+      expect(entry.reason.trim()).not.toBe("");
+      expect(entry.owner.trim()).not.toBe("");
+      expect(entry.expectedFailurePatterns.length).toBeGreaterThan(0);
+    }
+
     // And the carve-out stays the exception, not the norm.
     expect(quarantined.length).toBeLessThan(present.length / 2);
   });

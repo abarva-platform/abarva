@@ -31,15 +31,16 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// `quarantined` holds bare filenames inside the suite directory. `alsoIgnored`
-// holds full path fragments for red files the command's pattern sweeps in from
-// outside it — jest treats the directory argument as a pattern, so a sibling at
-// the integration root whose name starts with "source" matches too, and a
-// trailing slash cannot be used to stop that because it would make the
-// CI-visibility gate stop recognising the path.
+// `quarantined` holds objects whose `suite` is a bare filename inside the
+// suite directory. `alsoIgnored` holds entries whose `path` is the repo-relative
+// path of a red file the command's pattern sweeps in from outside it — jest
+// treats the directory argument as a pattern, so a sibling at the integration
+// root whose name starts with "source" matches too, and a trailing slash cannot
+// be used to stop that because it would make the CI-visibility gate stop
+// recognising the path.
 const patterns = [
-  ...quarantined.map((name) => `integration/source/${escapeRegExp(name)}$`),
-  ...alsoIgnored.map((fragment) => `${escapeRegExp(fragment)}$`),
+  ...quarantined.map(({ suite }) => `integration/source/${escapeRegExp(suite)}$`),
+  ...alsoIgnored.map(({ path: fragment }) => `${escapeRegExp(fragment)}$`),
 ];
 
 // One flag with all patterns after it: jest accepts the rest as a list, and a
