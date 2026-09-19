@@ -691,14 +691,17 @@ function SourceNewIntelligenceWorkspace({
   }
 
   return (
-    <section className="snw-panel snw-intelligence" aria-label="Event intelligence workspace">
+    <section
+      className="snw-panel snw-intelligence"
+      aria-label="Event intelligence workspace"
+    >
       <div className="snw-intel-heading">
         <div>
           <p className="snw-eyebrow">Decision support</p>
           <h2>Event intelligence workspace</h2>
           <p className="snw-lede">
-            See what Source can use now, what evidence is still missing, and
-            the next question to resolve. This view does not estimate savings,
+            See what Source can use now, what evidence is still missing, and the
+            next question to resolve. This view does not estimate savings,
             select suppliers, or contact anyone.
           </p>
         </div>
@@ -714,7 +717,9 @@ function SourceNewIntelligenceWorkspace({
         </div>
         <div>
           <dt>Why this playbook</dt>
-          <dd>Matched from the event&apos;s recorded category and sourcing motion.</dd>
+          <dd>
+            Matched from the event&apos;s recorded category and sourcing motion.
+          </dd>
         </div>
         <div>
           <dt>Evidence readiness</dt>
@@ -745,8 +750,13 @@ function SourceNewIntelligenceWorkspace({
               ))
             ) : (
               <li>
-                <strong>No stage-specific evidence contract is available.</strong>
-                <p>The event needs a resolved archetype before evidence can be scored.</p>
+                <strong>
+                  No stage-specific evidence contract is available.
+                </strong>
+                <p>
+                  The event needs a resolved archetype before evidence can be
+                  scored.
+                </p>
               </li>
             )}
           </ul>
@@ -758,14 +768,14 @@ function SourceNewIntelligenceWorkspace({
             {intelligence.governedContext.available.length > 0 ? (
               intelligence.governedContext.available.map((item) => (
                 <li key={item.id}>
-                  <span className="snw-intel-state is-available">
-                    ready
-                  </span>
+                  <span className="snw-intel-state is-available">ready</span>
                   <strong>{item.title}</strong>
                   <small>Cited and retrievable</small>
                   <p>
                     {item.evidenceFamilies.length > 0
-                      ? item.evidenceFamilies.map(evidenceFamilyLabel).join(", ")
+                      ? item.evidenceFamilies
+                          .map(evidenceFamilyLabel)
+                          .join(", ")
                       : "No evidence family labels recorded."}
                   </p>
                 </li>
@@ -773,7 +783,9 @@ function SourceNewIntelligenceWorkspace({
             ) : (
               <li>
                 <strong>No evidence is ready yet.</strong>
-                <p>Review the loaded files and complete their evidence checks.</p>
+                <p>
+                  Review the loaded files and complete their evidence checks.
+                </p>
               </li>
             )}
           </ul>
@@ -819,21 +831,25 @@ function SourceNewIntelligenceWorkspace({
       </section>
 
       {intelligence.industryMetrics.length > 0 && (
-        <section className="snw-intel-market" aria-label="Industry reference requirements">
+        <section
+          className="snw-intel-market"
+          aria-label="Industry reference requirements"
+        >
           <h3>Industry reference requirements</h3>
           <ul className="snw-intel-plain-list">
             {intelligence.industryMetrics.map((metric) => (
               <li key={metric.key}>
                 {metric.label} ({humanizeToken(metric.unit)}) requires{" "}
-                {metric.requiredComparability.map(humanizeToken).join(", ")}. Source options include{" "}
+                {metric.requiredComparability.map(humanizeToken).join(", ")}.
+                Source options include{" "}
                 {metric.sourceAuthorities.map(humanizeToken).join(", ")}.
               </li>
             ))}
           </ul>
           <p className="snw-note">
-            These are requirements for a fair comparison, not benchmark
-            values. Source shows a number only when the supporting observations
-            are ready to cite.
+            These are requirements for a fair comparison, not benchmark values.
+            Source shows a number only when the supporting observations are
+            ready to cite.
           </p>
         </section>
       )}
@@ -872,7 +888,19 @@ function SourceNewDecisionTrail({
       </p>
     );
   }
-  if (activity.entries.length === 0) {
+  const entries = Array.isArray(activity.entries) ? activity.entries : null;
+  if (!entries) {
+    return (
+      <p
+        className="snw-trail-note snw-trail-error"
+        data-decision-trail="unavailable"
+      >
+        The decision trail could not be read, so this is not a statement that no
+        decisions were recorded. Open the governed event to see the record.
+      </p>
+    );
+  }
+  if (entries.length === 0) {
     return (
       <p className="snw-trail-note" data-decision-trail="empty">
         No decisions have been recorded against this event yet.
@@ -885,7 +913,7 @@ function SourceNewDecisionTrail({
       data-decision-trail="entries"
       aria-label="Decision trail"
     >
-      {activity.entries.map((entry) => (
+      {entries.map((entry) => (
         <li key={entry.id}>
           <span className="snw-trail-actor">
             {entry.actor ?? "Actor not recorded"}

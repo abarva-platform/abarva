@@ -7,6 +7,7 @@ import {
   type SourceNewEventView,
 } from "./SourceNewWorkspace";
 import type { SourceNewFileRow } from "./SourceNewFiles";
+import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 
 jest.mock("@/components/shell/AppShell", () => ({
@@ -279,7 +280,8 @@ describe("SourceNewWorkspace", () => {
         id: "AMS_MANAGED_SERVICES",
         name: "IT Outsourcing / AMS / Managed Services",
         source: "classifier_category",
-        reason: "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
+        reason:
+          "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
       },
       currentStage: "rfp",
       requiredEvidence: [
@@ -334,33 +336,47 @@ describe("SourceNewWorkspace", () => {
       ],
       allowedStatement:
         "Source can use Tower scope matrix for this IT Outsourcing / AMS / Managed Services event. It will not make claims that depend on the missing SLA baseline.",
-      gaps: ["SLA baseline is required for this stage and is not ready to use."],
+      gaps: [
+        "SLA baseline is required for this stage and is not ready to use.",
+      ],
       refusals: [
         "Unpromoted SLA schedule: review its source, confidence, citations, and retrieval status before Source can use it.",
       ],
       nextQuestion: "Can you provide Current SLA schedule (PDF/XLSX)?",
       nextAction: {
         label: "Resolve evidence gap",
-        detail: "Add or review SLA baseline before relying on this intelligence.",
+        detail:
+          "Add or review SLA baseline before relying on this intelligence.",
       },
     };
 
     render(
       <SourceNewWorkspace
-        event={{ ...request, category: "ams", lifecycle: "active", currentStage: "rfp" }}
+        event={{
+          ...request,
+          category: "ams",
+          lifecycle: "active",
+          currentStage: "rfp",
+        }}
         files={[]}
         intelligence={intelligence}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
 
-    expect(screen.getByRole("region", { name: "Event intelligence workspace" })).toBeTruthy();
-    expect(screen.getAllByText("Service tower scope").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("region", { name: "Event intelligence workspace" }),
+    ).toBeTruthy();
+    expect(screen.getAllByText("Service tower scope").length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getAllByText("SLA baseline").length).toBeGreaterThan(0);
     expect(screen.getByText("Tower scope matrix")).toBeTruthy();
     expect(screen.getByText(/Source can use Tower scope matrix/)).toBeTruthy();
     expect(screen.getByText(/Unpromoted SLA schedule/)).toBeTruthy();
-    expect(screen.getByText(/These are requirements for a fair comparison/)).toBeTruthy();
+    expect(
+      screen.getByText(/These are requirements for a fair comparison/),
+    ).toBeTruthy();
     expect(
       screen.getByRole("heading", {
         name: "Can you provide Current SLA schedule (PDF/XLSX)?",
@@ -867,6 +883,33 @@ describe("SourceNewWorkspace", () => {
     expect(screen.queryByText(/No decisions have been recorded/i)).toBeNull();
     // And it must not leak the underlying error to a client surface.
     expect(document.body.textContent ?? "").not.toContain("connection refused");
+  });
+
+  it("renders an active event when the activity read-model shape is missing entries", () => {
+    const originalFetch = global.fetch;
+    const fetchSpy = jest.fn();
+    global.fetch = fetchSpy as typeof fetch;
+    try {
+      render(
+        <SourceNewWorkspace
+          event={{
+            ...request,
+            currentStage: "responses",
+            lifecycle: "active",
+          }}
+          files={[responseFile]}
+          activity={{ ok: true } as unknown as SourceEventActivityResult}
+        />,
+      );
+      openApprovals();
+
+      expect(screen.getByText(/could not be read/i)).toBeTruthy();
+      expect(screen.queryByText(/No decisions have been recorded/i)).toBeNull();
+      expect(screen.queryByRole("list", { name: "Decision trail" })).toBeNull();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 
   it("says the trail was not loaded when a caller passes none", () => {
