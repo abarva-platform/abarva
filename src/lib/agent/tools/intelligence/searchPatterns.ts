@@ -17,6 +17,7 @@
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import {
+  describeRankingTie,
   filterPatternsByScope,
   getPatternManifestEntries,
   resolveSentinelTenant,
@@ -124,7 +125,14 @@ export const searchPatternsTool: AgentTool<SearchPatternsInput> = {
     }
 
     const candidatePool = filterPatternsByScope(getPatternManifestEntries(), scope);
-    const ranked = scorePatternsByKeyword(query, candidatePool).slice(0, limit);
+    const scored = scorePatternsByKeyword(query, candidatePool);
+    const ranked = scored.slice(0, limit);
+    // The score is a count of query tokens present, so ties at the top are
+    // common and large — 72 entries for a four-token query on the real
+    // corpus. The slice then returns the first few in corpus order, which
+    // reads as a ranking and is not one. Say so rather than let the advisor
+    // present corpus order as relevance.
+    const rankingCaveat = describeRankingTie(scored, ranked.length);
 
     if (ranked.length === 0) {
       return {
@@ -189,6 +197,7 @@ export const searchPatternsTool: AgentTool<SearchPatternsInput> = {
         retrieval_note:
           'Keyword-overlap fallback in use until the broker exposes vector retrieval ' +
           '(see SESSION_BRIEF_INTELLIGENCE.md Open Decision #2).',
+        ...(rankingCaveat ? { ranking_caveat: rankingCaveat } : {}),
       },
     };
   },

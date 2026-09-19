@@ -165,6 +165,62 @@ describe('searchPatternsTool', () => {
       expect((result.data.results as unknown[]).length).toBeLessThanOrEqual(20);
     }
   });
+
+  /**
+   * Keyword scores are a count of query tokens present, so they tie heavily
+   * at the top: a four-token query puts 72 corpus entries at the maximum.
+   * The handler then slices, and which few come back is decided by corpus
+   * insertion order, not relevance — stably enough across calls to look
+   * deliberate. These two cases pin that the handler says so when the slice
+   * cannot be a ranking, and stays quiet when it can.
+   */
+  it('warns that the returned slice is corpus order when the top score ties wider than the slice', async () => {
+    mockedGetActiveClientRow.mockResolvedValue(APEX_CLIENT);
+    const { ctx } = makeCtx();
+    const result = await searchPatternsTool.handler(
+      { query: 'AI use case portfolio', limit: 3 },
+      ctx,
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(typeof result.data.ranking_caveat).toBe('string');
+      expect(result.data.ranking_caveat).toContain('decided by corpus order');
+      // The caveat must be computed over the FULL scored list, not the
+      // slice — computed over the slice it could never fire, which is the
+      // way this wiring would most plausibly be got wrong.
+      const tied = Number(
+        /(\d+) corpus patterns at the same top score/.exec(
+          String(result.data.ranking_caveat),
+        )?.[1],
+      );
+      expect(tied).toBeGreaterThan(3);
+    }
+  });
+
+  it('does not warn when a long, specific query separates its results', async () => {
+    // The negative control, and it took a measurement to write honestly. The
+    // first draft used a pattern's own name on the assumption that searching
+    // for a thing by its name must separate. It does not: a two-token name
+    // like "Analytics Modernization" ties 578 entries at the top, and over a
+    // sample of the corpus the caveat fires for 32.5% of by-own-name
+    // searches at limit 20. A long query does separate — this one ties 3 —
+    // which is what makes the caveat discriminating rather than constant.
+    mockedGetActiveClientRow.mockResolvedValue(APEX_CLIENT);
+    const { ctx } = makeCtx();
+    const result = await searchPatternsTool.handler(
+      {
+        query: 'vendor lock-in concentration risk in application managed services',
+        limit: 20,
+      },
+      ctx,
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.ranking_caveat).toBeUndefined();
+    }
+  });
 });
 
 describe('patternNeighborhoodTool', () => {
