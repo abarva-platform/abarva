@@ -66,6 +66,9 @@ Release lane: `global-control-lane`.
   — one expectation restored, with the reason recorded inline. It had been
   rewritten in #4360 to agree with the defect rather than with the fixture it
   describes.
+- `.github/workflows/ai-surface-control-catalog.yml` — one appended step, so both
+  suites actually run on every pull request. Neither ran in any CI job before this
+  change, which is why the red sat unseen for weeks.
 
 ## QA / Validation
 
@@ -90,6 +93,9 @@ Release lane: `global-control-lane`.
 - `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` exit
   **0**, with `tsconfig.tsbuildinfo` removed first.
 - `npx eslint` over the three changed files: exit **0**, no output.
+- `npm run audit:ai-surface-controls` exit **0** with the appended step in place
+  (18 surfaces, 37 declared controls, 26 of 37 covered) — the step does not
+  disturb the catalog's own accounting.
 - `node scripts/release-check.mjs --base origin/main --head HEAD`: recorded on the
   pull request.
 
@@ -137,6 +143,11 @@ digest-pinned revision. No data written, so rollback carries no data constraint.
 - **Two `stageNumberFor` implementations disagree.** The report module places
   `transition`/`value` at stage 7; the deal pack module places them at 10 and 11.
   Out of scope and recorded in the backlog.
+- **Nothing enforces that the new CI step stays.** The catalog audit proves a
+  *declared control's* test runs; these two suites are not declared controls, so
+  deleting the step would be silent. The structural fix — an inventory of
+  `src/lib/**/__tests__` against CI coverage — is backlog item 77 and is not
+  attempted here.
 - The stage set remains hand-maintained. The stage number alone cannot decide
   award authority, because the evaluation, BAFO and decision stages share one
   number. The test pins both directions so a future addition has to be deliberate.

@@ -92,3 +92,6 @@ jobs:
 
       - name: Exercise programs gate approval modal
         run: npx jest --runTestsByPath src/components/programs/__tests__/ProgramDetailPage.gate-approval.controls.test.tsx --runInBand
+
+      - name: Exercise Source award-authority stage gate
+        run: npx jest --runTestsByPath src/lib/source/exports/__tests__/artifact-verdict-consistency.test.ts src/lib/source/exports/cxo-report/__tests__/source-cxo-narrative-report.test.ts --runInBand
