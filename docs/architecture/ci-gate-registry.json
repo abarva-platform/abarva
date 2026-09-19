@@ -507,6 +507,10 @@
     "audit:tenant-candidate-version": {
       "kind": "unclassified"
     },
+    "audit:tenant-display-name-authority": {
+      "kind": "pr-gate",
+      "reason": "The tenant registry is the authority for a display name \u2014 the data operating model says identity is declared, never inferred, and names datasets/tenant-inputs/tenant-input-registry.json as the source. Two other vocabularies disagree with it and with each other; 64 non-test files carry a name it does not declare. This holds that count from rising while the rename is scheduled separately. Invoked by architecture-boundary.yml."
+    },
     "audit:tenant-graph-reconciliation": {
       "kind": "unclassified"
     },

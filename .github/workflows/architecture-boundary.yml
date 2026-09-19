@@ -46,6 +46,9 @@ jobs:
       - name: Keep the gate registry sorted
         run: npm run audit:ci-gate-registry-order
 
+      - name: Tenant display names derive from the registry
+        run: npm run audit:tenant-display-name-authority
+
       # Two gates that were passing on main but invoked by nothing. Wired so
       # they cannot rot unseen the way the reachability audit did.
       - name: Check enterprise naming conventions
