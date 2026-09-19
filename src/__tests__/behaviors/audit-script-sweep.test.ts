@@ -29,7 +29,21 @@ import path from "node:path";
 const repoRoot = path.resolve(__dirname, "../../..");
 const SWEEP_SCRIPT = path.join(repoRoot, "scripts/quality/audit-script-sweep.mjs");
 
-function callSweep(fn: string, ...args: unknown[]): any {
+type Classification = {
+  outcome: string;
+  reason: string | null;
+  writesRepoFiles: boolean;
+};
+
+type Target = {
+  script: string;
+  runnable: boolean;
+  refusal: string | null;
+};
+
+type Summary = Record<string, number>;
+
+function callSweep<T>(fn: string, ...args: unknown[]): T {
   const source = `
     import { ${fn} } from ${JSON.stringify(SWEEP_SCRIPT)};
     const args = ${JSON.stringify(args)};
@@ -39,11 +53,11 @@ function callSweep(fn: string, ...args: unknown[]): any {
     encoding: "utf8",
     cwd: repoRoot,
   });
-  return JSON.parse(out);
+  return JSON.parse(out) as T;
 }
 
 const classify = (run: Record<string, unknown>) =>
-  callSweep("classifyRunOutcome", run);
+  callSweep<Classification>("classifyRunOutcome", run);
 
 describe("audit script sweep — what the number means", () => {
   it("calls a script that dirtied the tree a writer even when it exited 0", () => {
@@ -168,7 +182,7 @@ describe("audit script sweep — what the number means", () => {
   });
 
   it("reports a registry entry with no npm script instead of dropping it", () => {
-    const targets = callSweep(
+    const targets = callSweep<Target[]>(
       "selectSweepTargets",
       { "audit:ghost": { kind: "unclassified" } },
       {},
@@ -180,7 +194,7 @@ describe("audit script sweep — what the number means", () => {
   });
 
   it("refuses to execute a swept script that reaches outside this checkout", () => {
-    const targets = callSweep(
+    const targets = callSweep<Target[]>(
       "selectSweepTargets",
       { "audit:deploys": { kind: "unclassified" } },
       { "audit:deploys": "az containerapp update --name web" },
@@ -200,15 +214,15 @@ describe("audit script sweep — what the number means", () => {
       "audit:wired-one": "node scripts/audit/two.mjs",
     };
 
-    const targets = callSweep("selectSweepTargets", entries, scripts);
+    const targets = callSweep<Target[]>("selectSweepTargets", entries, scripts);
 
-    expect(targets.map((t: { script: string }) => t.script)).toEqual([
+    expect(targets.map((target) => target.script)).toEqual([
       "audit:unclassified-one",
     ]);
   });
 
   it("counts a passing writer in both columns, because it is both", () => {
-    const summary = callSweep("summarizeSweep", [
+    const summary = callSweep<Summary>("summarizeSweep", [
       { outcome: "passed", writesRepoFiles: true },
       { outcome: "passed", writesRepoFiles: false },
       { outcome: "failed", writesRepoFiles: false },
