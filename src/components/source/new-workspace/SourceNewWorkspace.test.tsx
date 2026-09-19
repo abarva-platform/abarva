@@ -7,6 +7,7 @@ import {
   type SourceNewEventView,
 } from "./SourceNewWorkspace";
 import type { SourceNewFileRow } from "./SourceNewFiles";
+import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 
 jest.mock("@/components/shell/AppShell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
@@ -269,6 +270,105 @@ describe("SourceNewWorkspace", () => {
     ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Files" }));
     expect(screen.getByText("No files here yet")).toBeTruthy();
+  });
+
+  it("renders the event intelligence workspace with governed context, gaps, refusals and one action", () => {
+    const intelligence: SourceNewEventIntelligenceView = {
+      posture: "limited",
+      archetype: {
+        id: "AMS_MANAGED_SERVICES",
+        name: "IT Outsourcing / AMS / Managed Services",
+        source: "classifier_category",
+        reason: "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
+      },
+      currentStage: "rfp",
+      requiredEvidence: [
+        {
+          key: "service_tower_scope",
+          label: "Service tower scope",
+          severity: "hard",
+          whyNeeded: "Towers define the unit of service, SLA, and pricing.",
+          sourceDocHint: "Tower scope matrix (XLSX)",
+          state: "available",
+        },
+        {
+          key: "sla_baseline",
+          label: "SLA baseline",
+          severity: "hard",
+          whyNeeded: "Sets the service bar the partner must beat.",
+          sourceDocHint: "Current SLA schedule (PDF/XLSX)",
+          state: "gap",
+        },
+      ],
+      governedContext: {
+        policyVersion: "1.0.0",
+        decision: "warn",
+        usableCount: 1,
+        blockedCount: 1,
+        agentReadyCount: 1,
+        citationsCount: 2,
+        available: [
+          {
+            id: "artifact-ready",
+            title: "Tower scope matrix",
+            evidenceFamilies: ["service_tower_scope"],
+            contextBundleTraceId: "ctx-trace-1",
+          },
+        ],
+        blocked: [
+          {
+            id: "artifact-blocked",
+            title: "Unpromoted SLA schedule",
+            reasons: ["agent_readiness_status is committed_not_indexed"],
+          },
+        ],
+      },
+      industryMetrics: [
+        {
+          key: "ams_productivity_glidepath",
+          label: "Committed annual productivity glide path",
+          unit: "pct_per_year",
+          requiredComparability: ["serviceScope", "scaleBand"],
+          sourceAuthorities: ["licensed_research"],
+        },
+      ],
+      allowedStatement:
+        "Source can use Tower scope matrix for this IT Outsourcing / AMS / Managed Services event. It will not make claims that depend on the missing SLA baseline.",
+      gaps: ["SLA baseline is required for this stage and is not ready to use."],
+      refusals: [
+        "Unpromoted SLA schedule: review its source, confidence, citations, and retrieval status before Source can use it.",
+      ],
+      nextQuestion: "Can you provide Current SLA schedule (PDF/XLSX)?",
+      nextAction: {
+        label: "Resolve evidence gap",
+        detail: "Add or review SLA baseline before relying on this intelligence.",
+      },
+    };
+
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, category: "ams", lifecycle: "active", currentStage: "rfp" }}
+        files={[]}
+        intelligence={intelligence}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
+
+    expect(screen.getByRole("region", { name: "Event intelligence workspace" })).toBeTruthy();
+    expect(screen.getAllByText("Service tower scope").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("SLA baseline").length).toBeGreaterThan(0);
+    expect(screen.getByText("Tower scope matrix")).toBeTruthy();
+    expect(screen.getByText(/Source can use Tower scope matrix/)).toBeTruthy();
+    expect(screen.getByText(/Unpromoted SLA schedule/)).toBeTruthy();
+    expect(screen.getByText(/These are requirements for a fair comparison/)).toBeTruthy();
+    expect(
+      screen.getByRole("heading", {
+        name: "Can you provide Current SLA schedule (PDF/XLSX)?",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByRole("link", { name: "Resolve evidence gap" }),
+    ).toHaveLength(1);
   });
 
   it("labels intake phase as review-needed not completed for waiting_on_client", () => {

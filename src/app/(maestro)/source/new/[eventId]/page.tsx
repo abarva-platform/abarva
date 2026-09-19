@@ -9,6 +9,7 @@ import type { SourceNewFileRow } from "@/components/source/new-workspace/SourceN
 import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
 import { sourceNewFilePhase } from "@/lib/source/new-workspace/phase-state";
 import { readSourceEventAuthority } from "@/lib/source/new-workspace/event-authority";
+import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/event-intelligence";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Source New · AbarVa" };
@@ -104,10 +105,36 @@ export default async function SourceNewEventPage({
         ];
       })
     : [];
+  const intelligence = buildSourceNewEventIntelligence({
+    event: {
+      id: event.id,
+      clientId: activeClient.id ?? activeClient.key,
+      clientKey: activeClient.key,
+      eventType: event.eventType ?? event.archetype ?? null,
+      category: event.classifiedCategory ?? null,
+      currentStage: event.currentStageKey,
+    },
+    artifacts: artifacts.map((artifact) => ({
+      id: artifact.id,
+      title: artifact.title,
+      artifactType: artifact.artifactType,
+      artifactFamily: artifact.artifactFamily,
+      lifecycleState: artifact.lifecycleState,
+      sourceBasis: artifact.sourceBasis,
+      confidence: artifact.confidence,
+      citationReady: artifact.citationReady,
+      evidenceFamiliesUsed: artifact.evidenceFamiliesUsed,
+      sourceRegisterId: artifact.sourceRegisterId,
+      contextBundleTraceId: artifact.contextBundleTraceId,
+      missingInputs: artifact.missingInputs,
+      generatedAt: artifact.generatedAt,
+    })),
+  });
 
   return (
     <SourceNewWorkspace
       activity={activity}
+      intelligence={intelligence}
       event={{
         id: event.id,
         code: event.code,

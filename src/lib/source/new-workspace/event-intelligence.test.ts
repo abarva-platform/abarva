@@ -1,0 +1,170 @@
+import { buildSourceNewEventIntelligence } from "./event-intelligence";
+import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
+
+const TEST_TENANT_KEY = CANONICAL_TENANT_KEYS[0]!;
+
+describe("buildSourceNewEventIntelligence", () => {
+  it("uses the registered archetype, industry metrics, and governed bundle instead of raw context", () => {
+    const view = buildSourceNewEventIntelligence({
+      event: {
+        id: "event-1",
+        clientId: "client-example",
+        clientKey: TEST_TENANT_KEY,
+        eventType: "managed_service",
+        category: "ams",
+        currentStage: "rfp",
+      },
+      artifacts: [
+        {
+          id: "artifact-ready",
+          title: "Tower scope matrix",
+          artifactType: "scope_matrix",
+          artifactFamily: "service_tower_scope",
+          lifecycleState: "current",
+          sourceBasis: "source_artifacts:artifact-ready",
+          confidence: "high",
+          citationReady: true,
+          evidenceFamiliesUsed: ["service_tower_scope"],
+          sourceRegisterId: "source-register-1",
+          contextBundleTraceId: "ctx-trace-1",
+          missingInputs: [],
+          generatedAt: "2026-09-01T00:00:00Z",
+        },
+        {
+          id: "artifact-loaded-only",
+          title: "Unpromoted SLA schedule",
+          artifactType: "sla_schedule",
+          artifactFamily: "sla_baseline",
+          lifecycleState: "current",
+          sourceBasis: "source_artifacts:artifact-loaded-only",
+          confidence: "medium",
+          citationReady: false,
+          evidenceFamiliesUsed: ["sla_baseline"],
+          sourceRegisterId: null,
+          contextBundleTraceId: null,
+          missingInputs: ["SLA schedule needs citation-render verification."],
+          generatedAt: "2026-09-01T00:00:00Z",
+        },
+      ],
+    });
+
+    expect(view.archetype.id).toBe("AMS_MANAGED_SERVICES");
+    expect(view.currentStage).toBe("rfp");
+    expect(view.requiredEvidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "service_tower_scope",
+          state: "available",
+        }),
+        expect.objectContaining({
+          key: "sla_baseline",
+          state: "gap",
+        }),
+        expect.objectContaining({
+          key: "transition_constraints",
+          state: "gap",
+        }),
+      ]),
+    );
+    expect(view.industryMetrics.map((metric) => metric.key)).toContain(
+      "ams_productivity_glidepath",
+    );
+    expect(view.governedContext.available).toEqual([
+      expect.objectContaining({
+        id: "artifact-ready",
+        contextBundleTraceId: "ctx-trace-1",
+      }),
+    ]);
+    expect(view.allowedStatement).toContain(
+      "Source can use Tower scope matrix",
+    );
+    expect(view.allowedStatement).toContain("SLA baseline");
+    expect(view.governedContext.blocked).toEqual([
+      expect.objectContaining({
+        id: "artifact-loaded-only",
+        reasons: expect.arrayContaining([
+          expect.stringContaining("agent_readiness_status is committed_not_indexed"),
+        ]),
+      }),
+    ]);
+    expect(view.gaps).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("SLA baseline"),
+        "SLA schedule needs citation-render verification.",
+      ]),
+    );
+    expect(view.refusals.join(" ")).toContain("Unpromoted SLA schedule");
+    expect(view.refusals.join(" ")).not.toContain("agent_readiness_status");
+    expect(view.nextQuestion).toContain("Current SLA schedule");
+    expect(view.nextAction.label).toBe("Resolve evidence gap");
+  });
+
+  it("does not convert reviewed artifact metadata into governed confidence", () => {
+    const view = buildSourceNewEventIntelligence({
+      event: {
+        id: "event-3",
+        clientId: "client-example",
+        clientKey: TEST_TENANT_KEY,
+        eventType: "managed_service",
+        category: "ams",
+        currentStage: "strategy",
+      },
+      artifacts: [
+        {
+          id: "artifact-reviewed",
+          title: "Reviewed strategy memo",
+          artifactType: "strategy_memo",
+          artifactFamily: "run_cost_baseline",
+          lifecycleState: "current",
+          sourceBasis: "source_artifacts:artifact-reviewed",
+          confidence: "reviewed",
+          citationReady: true,
+          evidenceFamiliesUsed: ["run_cost_baseline"],
+          sourceRegisterId: "source-register-2",
+          contextBundleTraceId: "ctx-trace-2",
+          missingInputs: [],
+          generatedAt: "2026-09-01T00:00:00Z",
+        },
+      ],
+    });
+
+    expect(view.posture).toBe("blocked");
+    expect(view.governedContext.available).toEqual([]);
+    expect(view.governedContext.blocked).toEqual([
+      expect.objectContaining({
+        id: "artifact-reviewed",
+        reasons: expect.arrayContaining([
+          expect.stringContaining("agent_readiness_status is committed_not_indexed"),
+        ]),
+      }),
+    ]);
+    expect(view.allowedStatement).toContain("it cannot make a recommendation");
+  });
+
+  it("refuses when the event cannot resolve to a shipped archetype", () => {
+    const view = buildSourceNewEventIntelligence({
+      event: {
+        id: "event-2",
+        clientId: "client-example",
+        clientKey: TEST_TENANT_KEY,
+        eventType: "other",
+        category: null,
+        currentStage: "strategy",
+      },
+      artifacts: [],
+    });
+
+    expect(view.posture).toBe("blocked");
+    expect(view.archetype.id).toBeNull();
+    expect(view.allowedStatement).toContain(
+      "does not yet map to a supported sourcing playbook",
+    );
+    expect(view.refusals).toEqual([
+      "This event does not yet map to a supported sourcing playbook.",
+    ]);
+    expect(view.gaps).toContain(
+      "No current evidence is ready to cite yet.",
+    );
+    expect(view.nextAction.label).toBe("Review governed context");
+  });
+});
