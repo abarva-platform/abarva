@@ -1,0 +1,76 @@
+name: Unit suites
+
+# `src/__tests__/unit` is 11 suites that no workflow and no npm script ran.
+# Measured through the census resolver on `6166725d0`, not by reading YAML:
+# 11 test files, 0 covered.
+#
+# It stayed dark for a structural reason worth stating. The repository's
+# "changed integration suites have a CI owner" gate is hard-scoped to
+# `src/__tests__/integration/` (`INTEGRATION_ROOT` in
+# `scripts/quality/check-integration-ci-visibility.mjs`), so a suite in any
+# other `src/__tests__` tree is not merely unwired — nothing ever asks whether
+# it has an owner, not even when a pull request edits it.
+#
+# What that cost here: `proxy-session-identity.test.ts` asserted that an
+# ordinary tenant on an ordinary route does not trigger an identity-provider
+# fetch, and went red on 2026-08-27 when the tenant key it had hard-coded to
+# mean "ordinary" joined `FOUNDATION_TENANT_KEYS`, in a commit about Moves data
+# reads. The predicate it tests had not changed since the day the case was
+# written; only the set it consults had. Three weeks red, in four proxy/auth
+# suites nobody was running.
+#
+# The three sibling trees that are still dark are deliberately NOT wired here.
+# Run on `6166725d0`: `features` (1 suite), `guardrails` (1) and `hygiene` (6)
+# are 4 failed / 4 passed of 8 suites, 4 failing cases. A red directory is wired
+# by fixing it, never by adding it to a green command. They are filed as their
+# own backlog item with those numbers.
+#
+# The two mechanics this repository has already paid for twice, both of which
+# apply here:
+#
+#   1. A wrapper script that shells out to jest registers nothing. The gate
+#      counts a suite as registered only when a workflow command mentions a test
+#      runner AND names the suite or a containing directory.
+#   2. A trailing slash stops the gate matching, because it requires the path to
+#      be followed by whitespace or end-of-command.
+#
+# A jest path argument is a regex against the full path, so naming a directory
+# also selects every sibling whose name it prefixes. Nothing under
+# `src/__tests__` is prefixed by `unit` today; `unit-directory-ci-coverage.test.ts`
+# is what refuses the day one arrives.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  unit-suites:
+    name: Unit suites that pass on main
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Named as a directory, without a trailing slash, for the two reasons in
+      # the header. Naming the directory rather than the files is what makes a
+      # suite written here tomorrow run the day it lands.
+      - name: Run the unit suites
+        run: npx jest src/__tests__/unit --no-coverage --ci
+
+      - name: Refuse a new dark tree under src/__tests__
+        run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
