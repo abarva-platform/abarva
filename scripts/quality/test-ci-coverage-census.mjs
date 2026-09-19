@@ -675,6 +675,77 @@ function writeIfChanged(absolutePath, contents) {
   return true;
 }
 
+/**
+ * How far the committed census has drifted from what this run measures.
+ *
+ * Refreshing the census is manual by a recorded decision: it is a measurement
+ * with no failure path, and `--write` belongs to whoever is re-measuring
+ * rather than to a PR check. The cost of that choice was invisible, and it
+ * compounds — the committed file is the input to which directory gets wired
+ * next, so a lag mis-ranks that queue, and nobody sees the lag until someone
+ * regenerates and finds the rank-1 entry inside an 800-line diff.
+ *
+ * Printing the drift costs nothing and does not enforce anything. It also
+ * answers the question that has to come before enforcement: whether a check
+ * that fails on disagreement would fire on every unrelated PR that adds a
+ * test, or only when the file is genuinely stale. Enforce first and you learn
+ * that by being wrong in public.
+ */
+function describeDrift(measured, committedPath) {
+  if (!existsSync(committedPath)) {
+    return { state: "absent", line: `no committed census at ${CENSUS_RELATIVE_PATH}` };
+  }
+
+  let committed;
+  try {
+    committed = JSON.parse(readFileSync(committedPath, "utf8"));
+  } catch (error) {
+    return {
+      state: "unreadable",
+      line: `committed census could not be parsed: ${error.message}`,
+    };
+  }
+
+  // The counts live under `counts`, not at the top level. The first draft of
+  // this compared `committed.coveredTestFiles` against the same name on the
+  // measured object — both `undefined` — found no difference, and printed
+  // "committed census matches this run" against a file that was 75 files
+  // stale. A drift report that cannot fail is worse than none, because it is
+  // read as assurance. So the fields are resolved explicitly and a missing one
+  // is reported rather than skipped.
+  const FIELDS = ["testFiles", "coveredTestFiles", "uncoveredTestFiles"];
+  const before = committed?.counts ?? {};
+  const after = measured?.counts ?? {};
+
+  const unreadable = FIELDS.filter(
+    (f) => typeof before[f] !== "number" || typeof after[f] !== "number",
+  );
+  if (unreadable.length > 0) {
+    return {
+      state: "unreadable",
+      line:
+        `cannot compare ${unreadable.join(", ")} — the census shape changed, so this report ` +
+        "is not telling you whether the file is stale. Fix describeDrift before trusting it.",
+    };
+  }
+
+  const deltas = [];
+  for (const field of FIELDS) {
+    if (before[field] !== after[field]) {
+      const d = after[field] - before[field];
+      deltas.push(`${field} ${before[field]} -> ${after[field]} (${d >= 0 ? "+" : ""}${d})`);
+    }
+  }
+
+  if (deltas.length === 0) {
+    return { state: "current", line: "committed census matches this run" };
+  }
+  return {
+    state: "drifted",
+    line: `committed census is STALE: ${deltas.join("; ")}`,
+  };
+}
+
 function main() {
   const argv = process.argv.slice(2);
   const census = buildCensus(REPO_ROOT);
@@ -690,6 +761,20 @@ function main() {
   }
 
   console.log(argv.includes("--json") ? JSON.stringify(census, null, 2) : summarize(census));
+
+  // Always reported, never enforced. `--write` has just made them agree, so
+  // after a write this says so rather than repeating a stale number.
+  const drift = describeDrift(census, path.join(REPO_ROOT, CENSUS_RELATIVE_PATH));
+  if (!argv.includes("--json")) {
+    console.log(`\ncensus drift: ${drift.line}`);
+    if (drift.state === "drifted") {
+      console.log(
+        "  Refresh with: npm run audit:test-ci-coverage:write\n" +
+          "  This is a report, not a gate. The committed file is the input to which\n" +
+          "  directory gets wired next, so a stale one mis-ranks that queue.",
+      );
+    }
+  }
 }
 
 const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : "";
