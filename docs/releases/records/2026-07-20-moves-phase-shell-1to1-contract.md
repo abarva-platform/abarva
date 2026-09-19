@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -40,7 +40,10 @@ This release tightens the deployed Moves phase shell to the attached `Moves Phas
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
 - Pass: `npm run release:check`
 - Pass: `git diff --check`
-- Pending: signed-in browser proof after ACA deploy.
+- Pass: PR #5081 merged into `main` at `88316a171181c842a31ef319e925f756de4a3faa`.
+- Pass: ACA runtime invariant captured with `ca-abarva-web-lab-eastus--m88316a17` serving 100% traffic from digest `sha256:d9a30e8f24a8db60cc99bd3c98831cb50f9d38133cef2a98231c86101eb771ef`.
+- Pass: signed-in Meridian Moves phase route rendered the protected app shell with the reference `Steps / Files / Intelligence` strip, left phase rail, centered 1120px canvas, light context strip, and P0 stage tabs.
+- Proof bundle: `/Users/anand/Downloads/moves-shell-1to1-live-proof-2026-07-20`
 
 ## Rollout Plan
 
@@ -50,11 +53,12 @@ Open a PR against `abarva-platform/abarva`, merge through the protected PR flow,
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: none in this PR
-- Approved image digest: pending ACA deploy
-- ACA runtime invariant: pending ACA deploy
+- Approved image digest: `sha256:d9a30e8f24a8db60cc99bd3c98831cb50f9d38133cef2a98231c86101eb771ef`
+- ACA runtime invariant: pass; template image and 100% traffic revision image match.
+- ACA revision: `ca-abarva-web-lab-eastus--m88316a17`
 - Worker image invariant: no worker image changes expected
 - Feature/env flag update path: none
-- Live signed-in proof required: yes
+- Live signed-in proof required: completed
 
 ## Rollback Plan
 
@@ -62,10 +66,13 @@ Revert this PR or deploy the prior ACA digest through the approved main deploy w
 
 ## Audit Evidence
 
-- PR URL: pending
-- CI/check output: pending
-- ACA revision/image digest: pending
-- Signed-in browser screenshot: pending
+- PR URL: https://github.com/abarva-platform/abarva/pull/5081
+- Merge SHA: `88316a171181c842a31ef319e925f756de4a3faa`
+- ACA revision: `ca-abarva-web-lab-eastus--m88316a17`
+- ACA image digest: `sha256:d9a30e8f24a8db60cc99bd3c98831cb50f9d38133cef2a98231c86101eb771ef`
+- Runtime invariant proof: `/Users/anand/Downloads/moves-shell-1to1-live-proof-2026-07-20/runtime-invariant/runtime-invariant-proof.json`
+- Signed-in browser proof: `/Users/anand/Downloads/moves-shell-1to1-live-proof-2026-07-20/proof.json`
+- Signed-in browser screenshot: `/Users/anand/Downloads/moves-shell-1to1-live-proof-2026-07-20/moves-shell-live.png`
 
 ## Known Gaps
 
