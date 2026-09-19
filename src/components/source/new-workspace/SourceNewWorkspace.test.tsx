@@ -7,6 +7,7 @@ import {
   type SourceNewEventView,
 } from "./SourceNewWorkspace";
 import type { SourceNewFileRow } from "./SourceNewFiles";
+import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 
 jest.mock("@/components/shell/AppShell", () => ({
@@ -938,6 +939,33 @@ describe("SourceNewWorkspace", () => {
     expect(screen.queryByText(/No decisions have been recorded/i)).toBeNull();
     // And it must not leak the underlying error to a client surface.
     expect(document.body.textContent ?? "").not.toContain("connection refused");
+  });
+
+  it("renders an active event when the activity read-model shape is missing entries", () => {
+    const originalFetch = global.fetch;
+    const fetchSpy = jest.fn();
+    global.fetch = fetchSpy as typeof fetch;
+    try {
+      render(
+        <SourceNewWorkspace
+          event={{
+            ...request,
+            currentStage: "responses",
+            lifecycle: "active",
+          }}
+          files={[responseFile]}
+          activity={{ ok: true } as unknown as SourceEventActivityResult}
+        />,
+      );
+      openApprovals();
+
+      expect(screen.getByText(/could not be read/i)).toBeTruthy();
+      expect(screen.queryByText(/No decisions have been recorded/i)).toBeNull();
+      expect(screen.queryByRole("list", { name: "Decision trail" })).toBeNull();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 
   it("says the trail was not loaded when a caller passes none", () => {

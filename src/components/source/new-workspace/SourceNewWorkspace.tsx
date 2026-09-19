@@ -907,7 +907,19 @@ function SourceNewDecisionTrail({
       </p>
     );
   }
-  if (activity.entries.length === 0) {
+  const entries = Array.isArray(activity.entries) ? activity.entries : null;
+  if (!entries) {
+    return (
+      <p
+        className="snw-trail-note snw-trail-error"
+        data-decision-trail="unavailable"
+      >
+        The decision trail could not be read, so this is not a statement that no
+        decisions were recorded. Open the governed event to see the record.
+      </p>
+    );
+  }
+  if (entries.length === 0) {
     return (
       <p className="snw-trail-note" data-decision-trail="empty">
         No decisions have been recorded against this event yet.
@@ -920,7 +932,7 @@ function SourceNewDecisionTrail({
       data-decision-trail="entries"
       aria-label="Decision trail"
     >
-      {activity.entries.map((entry) => (
+      {entries.map((entry) => (
         <li key={entry.id}>
           <span className="snw-trail-actor">
             {entry.actor ?? "Actor not recorded"}
