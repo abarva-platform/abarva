@@ -40,6 +40,12 @@ jobs:
       - name: Check the CI gate registry
         run: npm run audit:ci-gate-registry
 
+      # Beside the registry check, not inside it: an unsorted file is a
+      # diff-hygiene problem, not a classification problem, and folding it in
+      # would make one failure message answer two different questions.
+      - name: Keep the gate registry sorted
+        run: npm run audit:ci-gate-registry-order
+
       # Two gates that were passing on main but invoked by nothing. Wired so
       # they cannot rot unseen the way the reachability audit did.
       - name: Check enterprise naming conventions
