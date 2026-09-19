@@ -6,7 +6,6 @@ function read(filePath: string): string {
 }
 
 describe("DESROUTE4 source route shell enforcement (analytics shell)", () => {
-  const sourceDashboardRoute = "src/app/(maestro)/source/page.tsx";
   const sourceEventsRoute = "src/app/(maestro)/source/events/page.tsx";
   const sourceEventDetailRoute =
     "src/app/(maestro)/source/events/[eventId]/page.tsx";
@@ -15,9 +14,8 @@ describe("DESROUTE4 source route shell enforcement (analytics shell)", () => {
   const sentinelAgentColumn = "src/components/source/SentinelAgentColumn.tsx";
   const chatAgentRoute = "src/app/api/chat/agent/route.ts";
 
-  it("target source routes use the supported shell or archive redirect", () => {
+  it("keeps retired and detail routes free of competing shells", () => {
     const events = read(sourceEventsRoute);
-    expect(events).toContain('redirect("/source/workspace")');
     expect(events).not.toContain("AppShell");
 
     // Detail route mounts the redesigned analytics canvas for every tenant.
@@ -26,10 +24,6 @@ describe("DESROUTE4 source route shell enforcement (analytics shell)", () => {
     expect(detail).not.toContain("UniversalCanvasShell");
     expect(detail).not.toContain("workspaceExplorerEnabled");
     expect(detail).not.toContain("simpleFrontEnabled");
-
-    // Landing redirects to the governed workspace.
-    const dashboard = read(sourceDashboardRoute);
-    expect(dashboard).toMatch(/redirect\(["\x27]\/source\/workspace["\x27]\)/);
   });
 
   it("event detail route reads analytics facts and registry evidence", () => {
@@ -49,7 +43,7 @@ describe("DESROUTE4 source route shell enforcement (analytics shell)", () => {
 
   it("labels the event return link for its real Source 360 destination", () => {
     const source = read(sourceAnalyticsCanvas);
-    expect(source).toContain('href="/source/workspace"');
+    expect(source).toContain('href="/source"');
     expect(source).toContain("← Source 360");
     expect(source).not.toContain("← All Source events");
   });

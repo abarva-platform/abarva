@@ -76,10 +76,6 @@ describe("Source dashboard route smoke", () => {
   });
 
   it("keeps the Source route module wired to deterministic seed-only content", () => {
-    const routeSource = readFileSync(
-      join(process.cwd(), "src/app/(maestro)/source/page.tsx"),
-      "utf8",
-    );
     const eventsRouteSource = readFileSync(
       join(process.cwd(), "src/app/(maestro)/source/events/page.tsx"),
       "utf8",
@@ -93,10 +89,6 @@ describe("Source dashboard route smoke", () => {
       "utf8",
     );
 
-    expect(routeSource).toMatch(
-      /redirect\(["\x27]\/source\/workspace["\x27]\)/,
-    );
-    expect(eventsRouteSource).toContain('redirect("/source/workspace")');
     expect(eventsRouteSource).not.toContain("SourceEventsPortfolio");
     // Compact-header portfolio surface — KPI strip + attention banners removed.
     // Portfolio totals and mix now live in a thin Scorecard above the table;

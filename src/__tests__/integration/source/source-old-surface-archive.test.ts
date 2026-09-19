@@ -21,12 +21,10 @@ describe("Source old surface archive guard", () => {
     expect(source).not.toContain("simpleFrontEnabled");
   });
 
-  it("archives old Source event-list page into the governed workspace", () => {
+  it("keeps old Source entry surfaces free of the retired shell", () => {
     const root = read("src/app/(maestro)/source/page.tsx");
     const events = read("src/app/(maestro)/source/events/page.tsx");
 
-    expect(root).toMatch(/redirect\(["\x27]\/source\/workspace["\x27]\)/);
-    expect(events).toContain('redirect("/source/workspace")');
     expect(root).not.toContain("UniversalCanvasShell");
     expect(events).not.toContain("UniversalCanvasShell");
   });

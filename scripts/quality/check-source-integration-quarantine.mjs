@@ -37,7 +37,7 @@ const LIST = path.join(HERE, "source-integration-quarantine.json");
  * goes down. Lowering it as suites are repaired is the point; raising it is a
  * decision someone has to make here, visibly.
  */
-const CEILING = 24;
+const CEILING = 18;
 
 const { quarantined } = JSON.parse(readFileSync(LIST, "utf8"));
 const problems = [];
