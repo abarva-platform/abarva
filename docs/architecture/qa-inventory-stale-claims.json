@@ -43,10 +43,6 @@
       "component": "src/components/programs/ProgramCanonicalDetail.tsx"
     },
     {
-      "file": "src/lib/qa/founder-demo-route-checklist.ts",
-      "component": "src/components/tower/ProgramPressureCards.tsx"
-    },
-    {
       "file": "src/lib/qa/intelligence-tower-blueprint-verification.ts",
       "component": "src/components/tower/TowerRouteShell.tsx"
     },
@@ -93,10 +89,6 @@
     {
       "file": "src/lib/qa/route-smoke-inventory.ts",
       "component": "src/components/programs/ProgramCanonicalDetail.tsx"
-    },
-    {
-      "file": "src/lib/qa/route-smoke-inventory.ts",
-      "component": "src/components/tower/ProgramPressureCards.tsx"
     }
   ]
 }

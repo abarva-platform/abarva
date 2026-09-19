@@ -129,13 +129,14 @@ const DEMO_ROUTES: readonly DemoRoute[] = Object.freeze([
       "AI Control Tower — Atlas's portfolio-level view showing adoption, value, risk, cost-consumption, and DORA dimensions across all active programs.",
     primaryAgent: "Atlas",
     demoTalkingPoint:
-      "This is Atlas's command center. In a single glance the CTO or COO can see where AI investment is generating value, where adoption is lagging, and which programs are carrying the most technical risk. Pressure cards surface the most urgent signals automatically.",
-    expectedComponent: "src/components/tower/ProgramPressureCards.tsx",
+      "This is Atlas's command center. In a single glance the CTO or COO can see where AI investment is generating value, where adoption is lagging, and which programs carry the most important evidence gaps.",
+    expectedComponent:
+      "src/components/tower/command-center/TowerCommandCenterAvaShell.tsx",
     readinessCaveat:
-      "None — Tower renders with the full deterministic read model including proactive pressure-card surfacing from the Atlas FM-10 slice.",
+      "The current Command Center is mounted. The legacy pressure-card component is not part of this route, and authenticated current-data acceptance remains a separate gate.",
     fallbackIfBlocked:
       "Describe the five Tower dimensions (portfolio inventory, adoption, value, risk, DORA) using the ACT slice documentation in docs/build/slices/.",
-    validationStatus: "ready",
+    validationStatus: "partial",
   },
   {
     route: "/tenant/apex-retail/intelligence",
