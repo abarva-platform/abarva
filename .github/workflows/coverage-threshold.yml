@@ -38,6 +38,12 @@ jobs:
       - name: Check the dock renders structured response parts
         run: npx jest --runTestsByPath src/components/agent/__tests__/AgentDock.structured-parts.test.tsx --runInBand
 
+      # Backlog item T-003. The behaviour suite above already drives this
+      # sweep, but it fails as one jest case among many. Running it as its
+      # own step means an unreachable comparison names itself in the job log.
+      - name: Check enum comparisons against their CHECK constraints
+        run: npm run audit:enum-reachability
+
       - name: Upload coverage summary
         if: always()
         uses: actions/upload-artifact@v7

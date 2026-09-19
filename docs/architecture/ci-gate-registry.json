@@ -160,6 +160,10 @@
     "audit:enterprise-profile-foundation": {
       "kind": "unclassified"
     },
+    "audit:enum-reachability": {
+      "kind": "pr-gate",
+      "reason": "Compares every literal value set in src/ SQL against the CHECK constraint on the column it reads, and refuses a comparison no row can satisfy. Backlog item T-003, after a shipped gate named three promotion states the column could not hold and therefore refused every row that existed. Invoked by coverage-threshold.yml; its behaviour is enforced by src/__tests__/behaviors/enum-reachability.test.ts."
+    },
     "audit:financial": {
       "kind": "unclassified"
     },
