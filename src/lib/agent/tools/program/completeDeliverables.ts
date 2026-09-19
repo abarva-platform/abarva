@@ -127,7 +127,7 @@ export const completeDeliverablesTool: AgentTool<CompleteDeliverablesToolInput> 
     }
 
     const wantsAnySignOff = input.deliverables.some((deliverable) => deliverable.sign_off !== false);
-    if (wantsAnySignOff && ctx.accessPolicy && ctx.accessPolicy.canPublishDeliverables !== true) {
+    if (wantsAnySignOff && ctx.accessPolicy?.canPublishDeliverables !== true) {
       return {
         success: false,
         error: 'forbidden:can_publish_deliverables_required',

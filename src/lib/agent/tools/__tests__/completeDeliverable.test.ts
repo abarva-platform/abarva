@@ -27,6 +27,19 @@ function makeCtx(surface = '/programs/test-program') {
   return {
     request: new Request('http://localhost/'),
     surface,
+    accessPolicy: {
+      accessLevel: 'program_user',
+      programIdsAllowed: null,
+      canPublishDeliverables: true,
+      canViewFinancialData: false,
+    },
+  };
+}
+
+function makeCtxWithoutPolicy(surface = '/programs/test-program') {
+  return {
+    request: new Request('http://localhost/'),
+    surface,
   };
 }
 
@@ -72,6 +85,26 @@ describe('complete_deliverable tool', () => {
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe('forbidden:can_publish_deliverables_required');
+    expect(completeDeliverableMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses to sign off when no publish policy was resolved', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+
+    const result = await completeDeliverableTool.handler(
+      {
+        program_id: 'program-1',
+        deliverable_type_key: 'business_case',
+        title: 'P5 Business Case',
+        content: 'Accepted value case',
+      },
+      makeCtxWithoutPolicy('/strategic-moves/move-123/phase/5'),
+    );
+
+    expect(result).toMatchObject({
+      success: false,
+      error: 'forbidden:can_publish_deliverables_required',
+    });
     expect(completeDeliverableMock).not.toHaveBeenCalled();
   });
 

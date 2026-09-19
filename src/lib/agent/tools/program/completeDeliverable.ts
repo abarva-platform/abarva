@@ -182,7 +182,7 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
     // off a deliverable requires canPublishDeliverables; never let an
     // unauthorized session sign off via the agent.
     const wantsSignOff = input.sign_off !== false;
-    if (wantsSignOff && ctx.accessPolicy && ctx.accessPolicy.canPublishDeliverables !== true) {
+    if (wantsSignOff && ctx.accessPolicy?.canPublishDeliverables !== true) {
       return {
         success: false,
         error: 'forbidden:can_publish_deliverables_required',
