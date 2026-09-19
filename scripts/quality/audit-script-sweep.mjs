@@ -399,6 +399,11 @@ function main(argv) {
     generatedAt: new Date().toISOString(),
     measuredAgainst: git(["rev-parse", "HEAD"]).stdout.trim(),
     scope: "every ci-gate-registry entry whose kind is unclassified",
+    caveats: [
+      "A write to a gitignored path, or to anywhere outside this checkout, is invisible to the tree check, so writesRepoFiles is a floor.",
+      "audit:layer-boundaries runs --mode=changed --base=origin/main, so its row describes the branch the sweep ran on and not the repository. It is the only entry in this set whose result is branch-relative.",
+      "An outcome of passed means the script exited 0, not that its subject is sound. Several of these scan a file that no longer exists and exit 0 on an empty string; that class is item 47.",
+    ],
     summary,
     results: results.map(({ command, ...rest }) => ({ command, ...rest })),
   };
