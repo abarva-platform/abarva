@@ -45,6 +45,11 @@ import {
 export interface HydrationArtifact {
   /** The canonical stage the artifact was uploaded under. */
   stageKey: string;
+  /** Registry kind and filename let intake uploads bind to their later task. */
+  artifactKind?: string;
+  originalName?: string;
+  sourceFormat?: string;
+  sizeBytes?: number;
 }
 
 export interface HydrateTaskEvidenceInput {
@@ -152,6 +157,19 @@ export function hydrateTaskEvidenceState(
       if (templateFactsPresent(taskFactTemplateCode, factInputs)) {
         return { ...task, evidenceComplete: true };
       }
+      const storedArtifact = artifacts.find((artifact) =>
+        artifactMatchesTemplate(artifact, taskFactTemplateCode),
+      );
+      if (storedArtifact?.originalName) {
+        return {
+          ...task,
+          file: task.file ?? {
+            format: (storedArtifact.sourceFormat ?? "file").toUpperCase(),
+            name: storedArtifact.originalName,
+            meta: `${formatArtifactSize(storedArtifact.sizeBytes)} · uploaded · awaiting extraction`,
+          },
+        };
+      }
       return task;
     }
 
@@ -163,6 +181,25 @@ export function hydrateTaskEvidenceState(
     }
     return task;
   });
+}
+
+function artifactMatchesTemplate(
+  artifact: HydrationArtifact,
+  templateCode: string,
+): boolean {
+  const templateToken = templateCode.toUpperCase();
+  return [artifact.artifactKind, artifact.originalName].some((value) =>
+    value?.toUpperCase().includes(templateToken),
+  );
+}
+
+function formatArtifactSize(sizeBytes: number | undefined): string {
+  if (!Number.isFinite(sizeBytes) || (sizeBytes ?? 0) <= 0) return "Stored file";
+  if ((sizeBytes ?? 0) < 1024) return `${sizeBytes} B`;
+  if ((sizeBytes ?? 0) < 1024 * 1024) {
+    return `${Math.round((sizeBytes ?? 0) / 1024)} KB`;
+  }
+  return `${((sizeBytes ?? 0) / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 const READINESS_RANK: Record<SourceEventEvidenceCurrentState, number> = {

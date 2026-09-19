@@ -324,7 +324,20 @@ export default async function SourceEventDetailPage({
     ];
     const analyticsHydrationArtifacts = analyticsArtifacts.flatMap(
       (artifact) =>
-        artifact.stageKey ? [{ stageKey: artifact.stageKey }] : [],
+        artifact.stageKey
+          ? [
+              {
+                stageKey: artifact.stageKey,
+                artifactKind: artifact.artifactKind,
+                originalName:
+                  "originalName" in artifact ? artifact.originalName : undefined,
+                sourceFormat:
+                  "sourceFormat" in artifact ? artifact.sourceFormat : undefined,
+                sizeBytes:
+                  "sizeBytes" in artifact ? artifact.sizeBytes : undefined,
+              },
+            ]
+          : [],
     );
     // SOURCE-SHELL-004: real artifact ids only — synthetic pseudo-artifact
     // ids (e.g. `artifact-state:<uuid>`, used for authored bodies with no

@@ -318,6 +318,45 @@ describe("SourceAnalyticsCanvas stage workflow", () => {
     expect(screen.getByRole("button", { name: /Continue/ })).toBeEnabled();
   });
 
+  it("shows a stored template file as awaiting extraction without unlocking Continue", () => {
+    const storedFileStage = {
+      ...SAMPLE_SCOPE_STAGE,
+      tasks: SAMPLE_SCOPE_STAGE.tasks.map((task) =>
+        task.id === "scope.volumetrics"
+          ? {
+              ...task,
+              file: {
+                format: "CSV",
+                name: "client-volumetrics-VOLUMETRICS_V1.csv",
+                meta: "2 KB · uploaded · awaiting extraction",
+              },
+            }
+          : task,
+      ),
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={EVENT}
+        viewStage="scope"
+        tenantName="Demo Client"
+        stageView={storedFileStage}
+        initialWorkspace="steps"
+      />,
+    );
+
+    const evidenceRow = screen.getByTestId(
+      "source-shell-evidence-ask-row-scope.volumetrics",
+    );
+    expect(evidenceRow).toHaveTextContent("Uploaded");
+    expect(evidenceRow).toHaveTextContent("Review existing file");
+    expect(evidenceRow).not.toHaveTextContent("Upload below");
+    expect(
+      screen.getByTestId("source-shell-active-step-needs"),
+    ).toHaveTextContent("Readback: file stored; typed facts still pending.");
+    expect(screen.getByRole("button", { name: /Continue/ })).toBeDisabled();
+  });
+
   it("resets the upload pane when Continue advances between provide steps", async () => {
     const provideSteps = SAMPLE_SCOPE_STAGE.tasks.filter((task) =>
       ["scope.volumetrics", "scope.app-inventory"].includes(task.id),
