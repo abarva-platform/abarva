@@ -65,7 +65,11 @@ describe("Source New event route authorization", () => {
       },
     } as never);
     await SourceNewEventPage(params);
-    expect(listSourceArtifacts).toHaveBeenCalledWith("event-1", "tenant-a", { includeHistory: true });
+    expect(listSourceArtifacts).toHaveBeenCalledWith(
+      "event-1",
+      { tenantKey: "tenant-a" },
+      { includeHistory: true },
+    );
   });
 
   it("does not turn an artifact read failure into an empty folder", async () => {

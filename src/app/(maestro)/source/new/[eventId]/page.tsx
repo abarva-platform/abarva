@@ -43,7 +43,9 @@ export default async function SourceNewEventPage({
   const [artifacts, activity, authority] = await Promise.all([
     listSourceArtifacts(
       event.id,
-      clientKeyToInventorySubstrateKey(activeClient.key),
+      {
+        tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
+      },
       { includeHistory: true },
     ),
     listSourceEventActivityEntries(event.id),

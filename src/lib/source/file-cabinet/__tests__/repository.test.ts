@@ -190,14 +190,21 @@ describe("insertSourceArtifact", () => {
 });
 
 describe("listSourceArtifacts", () => {
-  it("scopes to event + governed tenant key and current-only by default", async () => {
+  it("preserves client-id scoping for existing callers", async () => {
     const { db, cap } = fakeDb([row]);
     const out = await listSourceArtifacts("evt-1", "c1", {}, db);
     expect(out).toHaveLength(1);
     expect(cap.filters).toContainEqual(["source_event_id", "=", "evt-1"]);
-    expect(cap.filters).toContainEqual(["tenant_key", "=", "c1"]);
+    expect(cap.filters).toContainEqual(["client_id", "=", "c1"]);
     expect(cap.filters).toContainEqual(["lifecycle_state", "=", "current"]);
     expect(cap.ordered).toBe("created_at");
+  });
+
+  it("supports explicit governed tenant-key scoping for registry-only uploads", async () => {
+    const { db, cap } = fakeDb([row]);
+    await listSourceArtifacts("evt-1", { tenantKey: "tenant-1" }, {}, db);
+    expect(cap.filters).toContainEqual(["source_event_id", "=", "evt-1"]);
+    expect(cap.filters).toContainEqual(["tenant_key", "=", "tenant-1"]);
   });
   it("includes history when requested (no lifecycle filter)", async () => {
     const { db, cap } = fakeDb([row]);
@@ -232,7 +239,7 @@ describe("listSourceArtifacts", () => {
 
     const [mapped] = await listSourceArtifacts(
       "evt-1",
-      "c1",
+      { tenantKey: "c1" },
       { includeHistory: true },
       db,
     );
