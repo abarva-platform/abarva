@@ -111,3 +111,11 @@ jobs:
       # floor honest and keeps the suite running. See backlog item 82.
       - name: Exercise Source canvas model answer payload
         run: npx jest --runTestsByPath "src/app/api/v1/source/[eventId]/nexus/ask/__tests__/canvas-model-answer-payload.test.ts" --runInBand
+
+      # Not a catalog control. This suite drives the shared evidence-packet
+      # validator, which checked every field the product writes and not the one
+      # field a human writes: the rationale minimum was enforced per-surface at
+      # the two Moves builders, so a new decision surface had to remember it.
+      # See backlog item 63.
+      - name: Exercise shared evidence packet human rationale
+        run: npx jest --runTestsByPath src/lib/ai-liability/__tests__/human-decision-controls.human-rationale.test.ts --runInBand
