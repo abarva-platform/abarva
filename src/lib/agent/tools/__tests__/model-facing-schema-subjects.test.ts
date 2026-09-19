@@ -46,6 +46,7 @@ import {
   type AgentTool,
   type ToolContext,
 } from '../registry';
+import { CANONICAL_TENANTS } from '@/config/tenants/CANONICAL_TENANTS';
 import { getPatternManifestEntry } from '@/lib/intelligence/pattern-manifest';
 
 const TOOLS_DIR = path.join(process.cwd(), 'src/lib/agent/tools');
@@ -179,6 +180,30 @@ describe('model-facing tool schema subjects', () => {
     expect(unresolvable).toEqual([]);
   });
 
+  it('uses no active tenant identity as a worked example in model-facing prose', () => {
+    const identities = new Set(
+      CANONICAL_TENANTS.flatMap((tenant) => [
+        tenant.key,
+        tenant.name,
+        tenant.key.split('-')[0],
+      ])
+        .map((identity) => identity.toLowerCase())
+        .filter((identity) => identity.length >= 6),
+    );
+    const exposed: string[] = [];
+
+    for (const field of modelFacingProse()) {
+      const prose = field.text.toLowerCase();
+      for (const identity of identities) {
+        if (prose.includes(identity)) {
+          exposed.push(`${field.tool} @ ${field.path} -> ${identity}`);
+        }
+      }
+    }
+
+    expect(exposed).toEqual([]);
+  });
+
   it('names no enum member that its own property does not declare', () => {
     // Where a property declares an `enum`, the schema already carries the
     // accepted set; prose that names a value alongside it is a second,
@@ -246,6 +271,19 @@ describe('model-facing tool schema subjects', () => {
       return claims;
     }
 
+    it('requires route claims to be double-quoted so every claim reaches the resolver checks', () => {
+      const unquoted: string[] = [];
+      for (const field of modelFacingProse()) {
+        const outsideQuotes = field.text.replace(/"[^"\n]*"/g, '');
+        const claims = outsideQuotes.match(/(?<![a-z0-9_>])\/[a-z][a-z0-9_-]*(?:\/(?:<[a-z][a-z0-9_-]*>|[a-z0-9_-]+))*/gi) ?? [];
+        for (const route of claims) {
+          unquoted.push(`${field.tool} @ ${field.path} -> ${route}`);
+        }
+      }
+
+      expect(unquoted).toEqual([]);
+    });
+
     /** Route strings the App Router actually serves, dynamic segments as `:dyn`. */
     function routableePaths(): Set<string> {
       const routes = new Set<string>();
@@ -292,7 +330,10 @@ describe('model-facing tool schema subjects', () => {
       // The prose names one route in order to say it does NOT exist. It
       // has to keep being refused, or the warning is stale in the
       // direction that 404s the user.
-      expect([...new Set(refused)]).toEqual(['/programs/<id>/discovery']);
+      expect([...new Set(refused)]).toEqual([
+        '/programs/<id>/discovery',
+        '/programs/<id>/synthesis',
+      ]);
       expect(accepted.length).toBeGreaterThan(0);
     });
 
