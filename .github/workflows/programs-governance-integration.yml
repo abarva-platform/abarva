@@ -61,4 +61,5 @@ jobs:
           src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts
           src/__tests__/integration/programs/workshop-readiness.test.ts
           src/__tests__/integration/programs/program-resume-state.test.ts
+          src/__tests__/integration/programs/nexus-program-workbench.test.ts
           --runInBand
