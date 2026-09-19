@@ -11,8 +11,8 @@
     "testsSkipped": 20
   },
   "selectedGate": {
-    "suiteCount": 16,
-    "testCount": 322,
+    "suiteCount": 17,
+    "testCount": 334,
     "selectionBasis": [
       "tenant-scoped read enforcement",
       "tenant-scoped mutation enforcement",
@@ -35,7 +35,8 @@
       "src/__tests__/integration/programs/programs-mutation-routes-tenant-guards.test.ts",
       "src/__tests__/integration/programs/programs-detail-prog22-deliverables-canvas.test.ts",
       "src/__tests__/integration/programs/programs-detail-prog21-gate-drawer.test.ts",
-      "src/__tests__/integration/programs/programs-detail-prog25-workshop-notes-plan.test.ts"
+      "src/__tests__/integration/programs/programs-detail-prog25-workshop-notes-plan.test.ts",
+      "src/__tests__/integration/programs/programs-detail-p3-source-audit.test.ts"
     ]
   },
   "excludedFailures": [
@@ -73,11 +74,6 @@
       "suite": "src/__tests__/integration/programs/programs-enhancement-seed-planner.test.ts",
       "classification": "stale-fixture-expectation",
       "evidence": "Locks an older route-stub count and display label."
-    },
-    {
-      "suite": "src/__tests__/integration/programs/programs-detail-p3-source-audit.test.ts",
-      "classification": "stale-source-location",
-      "evidence": "Inspects the retired route-local page instead of the shared component that now owns the behavior."
     },
     {
       "suite": "src/__tests__/integration/programs-enhancement-spec.test.ts",
