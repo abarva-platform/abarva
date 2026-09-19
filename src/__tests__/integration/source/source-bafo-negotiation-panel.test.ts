@@ -1,3 +1,4 @@
+import '@/test/source-integration-tenant';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';

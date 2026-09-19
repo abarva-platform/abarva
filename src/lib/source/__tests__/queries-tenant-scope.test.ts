@@ -220,6 +220,25 @@ describe("listSourcingEvents tenant scoping", () => {
     expect(events).toEqual([]);
   });
 
+  it("only returns Northstar seed events for a Northstar active client", async () => {
+    getActiveClientRow.mockResolvedValue({
+      id: "client-northstar",
+      name: "Clinical Technology Demo",
+      industry_code: "CLINICAL_TECHNOLOGY",
+      key: "northstar",
+    });
+
+    const events = await listSourcingEvents();
+
+    expect(events).toHaveLength(3);
+    expect(events.every((event) => event.accountName.includes("Northstar"))).toBe(
+      true,
+    );
+    expect(events.map((event) => event.accountName)).not.toContain(
+      "Apex Retail",
+    );
+  });
+
   it("returns no shared Apex seed events for a Lakeshore active client", async () => {
     getActiveClientRow.mockResolvedValue({
       id: "client-lakeshore",
@@ -416,6 +435,32 @@ describe("getSourcingEvent tenant scoping", () => {
       expect.objectContaining({ clientKey: "apexretail" }),
       "apexretail",
       "apex-retail-ams-outsourcing-2026",
+    );
+  });
+
+  it("returns a Northstar seed event for a Northstar active client when policy allows it", async () => {
+    getActiveClientRow.mockResolvedValue({
+      id: "client-northstar",
+      name: "Clinical Technology Demo",
+      industry_code: "CLINICAL_TECHNOLOGY",
+      key: "northstar",
+    });
+    requireTenancy.mockResolvedValue({
+      clientId: "client-northstar",
+      clientKey: "northstar",
+      userId: "clerk:northstar-cio",
+      role: "client_admin",
+      email: "cio@northstar.example.com",
+    });
+
+    const event = await getSourcingEvent("evt-source-data-ai-si-selection");
+
+    expect(event?.name).toBe("Data & AI Modernization SI Selection");
+    expect(event?.accountName).toBe("Northstar Holdings");
+    expect(canReadSourceEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ clientKey: "northstar" }),
+      "northstar",
+      "evt-source-data-ai-si-selection",
     );
   });
 
