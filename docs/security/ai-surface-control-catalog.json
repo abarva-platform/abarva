@@ -110,8 +110,7 @@
             "Review before acting"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "The draft label renders per answer and needs a streamed thread; this suite mocks the stream to an empty thread, so asserting it would prove the fixture rather than the drawer."
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
         },
         {
@@ -132,8 +131,7 @@
             "shouldShowPlainTextCitationGap"
           ],
           "behavioralTest": {
-            "status": "none",
-            "reason": "The citation-gap notice renders per answer and needs a streamed thread; this suite mocks the stream to an empty thread, so asserting it would prove the fixture rather than the drawer."
+            "path": "src/components/shell/__tests__/AtlasDrawer.controls.test.tsx"
           }
         },
         {
