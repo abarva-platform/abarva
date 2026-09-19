@@ -929,6 +929,7 @@
     "audit:route-reachability": "node scripts/audit/route-reachability-check.mjs",
     "audit:ci-gate-registry": "node scripts/audit/ci-gate-registry-check.mjs",
     "audit:ci-gate-registry-order": "node scripts/audit/ci-gate-registry-order-check.mjs",
+    "audit:tenant-display-name-authority": "node scripts/audit/tenant-display-name-authority.mjs",
     "audit:qa-inventory-claims": "node scripts/audit/qa-inventory-claims-check.mjs",
     "audit:test-ci-coverage": "node scripts/quality/test-ci-coverage-census.mjs",
     "audit:test-ci-coverage:write": "node scripts/quality/test-ci-coverage-census.mjs --write",
