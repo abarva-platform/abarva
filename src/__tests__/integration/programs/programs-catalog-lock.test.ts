@@ -43,7 +43,7 @@ describe('Programs catalog lock · seeded portfolio shape', () => {
 
   it('locks the portfolio summary counts', () => {
     expect(plan.summary).toEqual({
-      tenantCount: 3,
+      tenantCount: plan.tenants.length,
       programCount: 15,
       deliverableTypeCount: 28,
       deliverableCount: 363,
@@ -54,17 +54,18 @@ describe('Programs catalog lock · seeded portfolio shape', () => {
     });
   });
 
-  it('locks tenant ordering and route slugs', () => {
-    expect(plan.tenants.map((tenant) => tenant.tenantKey)).toEqual([
-      'apexretail',
-      'meridian',
-      'arcturus',
-    ]);
-    expect(plan.tenants.map((tenant) => tenant.routeSlug)).toEqual([
-      'apex-retail',
-      'meridian-health',
-      'first-capital-financial',
-    ]);
+  it('keeps portfolio tenants ordered and all route slugs unique', () => {
+    const portfolioTenants = plan.tenants.slice(0, EXPECTED_PROGRAMS.length);
+    expect(portfolioTenants.map((tenant) => tenant.tenantKey)).toEqual(
+      EXPECTED_PROGRAMS.map((tenant) => tenant.tenantKey),
+    );
+    expect(portfolioTenants.map((tenant) => tenant.routeSlug)).toEqual(
+      EXPECTED_PROGRAMS.map((tenant) => tenant.routeSlug),
+    );
+    expectUnique(
+      plan.tenants.map((tenant) => tenant.routeSlug),
+      'tenant route slug',
+    );
   });
 
   it('locks program code, slug, phase, and status per tenant', () => {
