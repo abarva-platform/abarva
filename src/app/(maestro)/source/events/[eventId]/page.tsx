@@ -50,6 +50,7 @@ import {
 import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-response-persistence";
 import {
   buildVendorBafoInstructionPack,
+  buildEvaluationBafoReadinessView,
   buildVendorChallengeIntelligence,
   compactVendorResponseParseReportsForRoute,
   buildVendorEvaluationDecisionView,
@@ -214,6 +215,16 @@ export default async function SourceEventDetailPage({
           vendorChallengeIntelligence,
           vendorBafoInstructionPack,
         )
+      : null;
+    const evaluationBafoReadinessView = ["evaluation", "bafo"].includes(
+      viewStage,
+    )
+      ? buildEvaluationBafoReadinessView({
+          profileSet: vendorResponseProfiles,
+          challengeIntelligence: vendorChallengeIntelligence,
+          bafoInstructionPack: vendorBafoInstructionPack,
+          decisionView: vendorEvaluationDecisionView,
+        })
       : null;
     const vendorResponseParseReports =
       viewStage === "responses"
@@ -594,6 +605,7 @@ export default async function SourceEventDetailPage({
         vendorChallengeIntelligence={vendorChallengeIntelligence}
         vendorBafoInstructionPack={vendorBafoInstructionPack}
         vendorEvaluationDecisionView={vendorEvaluationDecisionView}
+        evaluationBafoReadinessView={evaluationBafoReadinessView}
         vendorResponseParseReports={vendorResponseParseReports}
         normalizedResponsePackages={normalizedResponsePackages}
       />
