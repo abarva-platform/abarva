@@ -126,8 +126,41 @@ function resolveSourceModule(root, importer, specifier) {
   return null;
 }
 
+/**
+ * A type-only import is erased before the test runs, so the test never loads the
+ * module and never exercises anything declared on it. Counting one as a product
+ * edge is how `src/components/source/canvas/__tests__` came to carry the control
+ * id `agent-dock-chat-turns`: the only thing joining it to `AgentDock.tsx` was
+ * `import type { ChatMessage }`. The conclusion happened to be right there, but
+ * a risk ranking that a borrowed type name can inflate will eventually send
+ * someone to the wrong directory first.
+ *
+ * Three forms are erasable and are stripped before specifiers are read:
+ * `import type … from "m"`, `export type … from "m"`, and a brace list whose
+ * every specifier carries the inline `type` keyword. A brace list with one value
+ * specifier among the types is NOT erasable — the module is loaded for that one
+ * binding — so it is left in place.
+ */
+const TYPE_ONLY_STATEMENT_RE =
+  /\b(?:import|export)\s+type\s[^;'"]*?\bfrom\s*["'][^"']+["']/g;
+const BRACED_IMPORT_RE =
+  /\b(?:import|export)\s*\{([^}]*)\}\s*from\s*["'][^"']+["']/g;
+
+function stripErasableImports(source) {
+  return source
+    .replace(TYPE_ONLY_STATEMENT_RE, " ")
+    .replace(BRACED_IMPORT_RE, (statement, specifierList) => {
+      const specifiers = specifierList
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0);
+      if (specifiers.length === 0) return statement;
+      return specifiers.every((entry) => /^type\s+\S/.test(entry)) ? " " : statement;
+    });
+}
+
 function importedProductSources(root, testFile) {
-  const source = readFileSync(path.join(root, testFile), "utf8");
+  const source = stripErasableImports(readFileSync(path.join(root, testFile), "utf8"));
   const specifiers = [];
   for (const match of source.matchAll(
     /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)["']([^"']+)["']/g,
@@ -564,7 +597,7 @@ export function buildCensus(root) {
       "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
       "Uncovered directories are ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; test count is only a tie-breaker.",
-      "Governed-risk signals come from product modules statically imported by the tests, not from directory names alone.",
+      "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
       "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op.",
     ],
