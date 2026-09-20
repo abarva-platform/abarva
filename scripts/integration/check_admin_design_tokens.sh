@@ -37,6 +37,8 @@ for dir in "${ADMIN_TREE[@]}"; do
     HITS=$(grep -ril "$token" "$dir" 2>/dev/null || true)
     if [ -n "$HITS" ]; then
       echo "[FAIL] Banned token $token found in:"
+      # shellcheck disable=SC2001  # prefixing every line of a multi-line
+      # string is what sed is for; ${v//s/r} cannot anchor per line.
       echo "$HITS" | sed 's/^/  /'
       VIOLATIONS=$((VIOLATIONS + 1))
     fi

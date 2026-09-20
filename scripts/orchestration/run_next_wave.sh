@@ -37,7 +37,6 @@ fi
 # Extract next wave info
 NEXT_WAVE=$(grep "^\- waveId:" "$STATE_FILE" | tail -1 | sed 's/.*waveId: //')
 NEXT_TITLE=$(grep "^\- waveTitle:" "$STATE_FILE" | tail -1 | sed 's/.*waveTitle: //')
-BLOCKERS=$(grep -A5 "## Blocker conditions" "$STATE_FILE" | grep -v "^#" | grep -v "^$" | head -3)
 AUTO_LOOP=$(grep "autoLoopEnabled:" "$STATE_FILE" | tail -1 | sed 's/.*autoLoopEnabled: //' | awk '{print $1}')
 
 # Enable loop mode if requested
