@@ -402,6 +402,22 @@ jobs:
           src/components/atlas/__tests__
           --runInBand
 
+      # Shared AI-disclosure primitives and the phase-workspace controls were
+      # catalog-adjacent but ran in no workflow. The route-group action files
+      # are exact paths because unescaped parentheses are a Jest regex group.
+      - name: Exercise shared rendered AI controls
+        run: npx jest src/components/abarva/__tests__ --runInBand
+
+      - name: Exercise phase-workspace controls
+        run: npx jest src/components/strategic-moves/phase-workspace/__tests__ --runInBand
+
+      - name: Exercise program approval action controls
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/admin/programs/approvals/_actions/__tests__/escalate-approval.test.ts"
+          "src/app/(maestro)/admin/programs/approvals/_actions/__tests__/notify-sponsor.test.ts"
+          --runInBand
+
       - name: Exercise Source award and SOW handoff readiness
         run: >-
           npx jest --runTestsByPath
