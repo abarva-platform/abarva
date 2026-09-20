@@ -16,7 +16,7 @@ export type AbarVaLogoVariant = 'wordmark' | 'lockup'
 export type AbarVaLogoSize = 'sm' | 'md' | 'lg'
 
 interface AbarVaLogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  /** Visual variant — 'wordmark' (default, canonical /brand/abarva-logo.svg)
+  /** Visual variant — 'wordmark' (default, canonical Option 2 compact asset)
    *  or 'lockup' (standard Option 2 symbol + wordmark asset) */
   variant?: AbarVaLogoVariant
   /** Optional semantic size */
