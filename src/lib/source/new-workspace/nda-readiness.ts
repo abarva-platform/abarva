@@ -51,7 +51,7 @@ function hasText(value: string | null | undefined): value is string {
 }
 
 function isNdaArtifact(artifact: SourceNewNdaArtifact): boolean {
-  return artifact.artifactType.toLowerCase().includes("nda");
+  return artifact.artifactType.trim().toLowerCase() === "nda_executed";
 }
 
 function isApprovalRecorded(artifact: SourceNewNdaArtifact): boolean {
@@ -93,7 +93,8 @@ export function buildSourceNewNdaReadiness(
   const coverageResult = coverage ? evaluateNdaCoverage(coverage) : null;
   const coverageWaiver: NdaWaiverRecord | undefined = coverageResult?.waiver;
   const currentNdas = artifacts.filter(
-    (artifact) => artifact.lifecycleState === "current" && isNdaArtifact(artifact),
+    (artifact) =>
+      artifact.lifecycleState === "current" && isNdaArtifact(artifact),
   );
   const authority = currentNdas.find((artifact) =>
     hasText(artifact.coveredSupplierLegalEntity),
@@ -193,7 +194,8 @@ export function buildSourceNewNdaReadiness(
         : !coveredScopeId
           ? {
               label: "Record NDA scope",
-              detail: "Tie the NDA artifact to the event scope it actually covers.",
+              detail:
+                "Tie the NDA artifact to the event scope it actually covers.",
             }
           : !validityRecorded || !validityOrdered || !effectiveAsOf
             ? {

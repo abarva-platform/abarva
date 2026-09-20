@@ -74,6 +74,20 @@ const GOOD_WAIVER = {
 };
 
 describe("stage 05 readiness consumes the NDA coverage authority", () => {
+  it("does not treat an artifact type that merely contains the letters nda as an NDA", () => {
+    const lookalike = {
+      ...COMPLETE_ARTIFACT,
+      artifactType: "foundational_assessment",
+      title: "Foundational assessment",
+    };
+
+    const result = buildSourceNewNdaReadiness([lookalike], AS_OF);
+
+    expect(result.posture).toBe("blocked");
+    expect(result.blockers).toContain("No current NDA artifact is filed.");
+    expect(result.artifactTitle).toBeNull();
+  });
+
   it("is ready when the file checks pass and an executed NDA covers the event", () => {
     const result = buildSourceNewNdaReadiness(
       [COMPLETE_ARTIFACT],
@@ -93,12 +107,21 @@ describe("stage 05 readiness consumes the NDA coverage authority", () => {
   it("blocks a document that passes every file-level check when nothing covers the event", () => {
     // The case that makes the mount worth making. Before this, an artifact
     // this complete read as ready on its own properties alone.
-    const withoutCoverage = buildSourceNewNdaReadiness([COMPLETE_ARTIFACT], AS_OF);
+    const withoutCoverage = buildSourceNewNdaReadiness(
+      [COMPLETE_ARTIFACT],
+      AS_OF,
+    );
     expect(withoutCoverage.posture).toBe("ready");
 
-    const withCoverage = buildSourceNewNdaReadiness([COMPLETE_ARTIFACT], AS_OF, coverage());
+    const withCoverage = buildSourceNewNdaReadiness(
+      [COMPLETE_ARTIFACT],
+      AS_OF,
+      coverage(),
+    );
     expect(withCoverage.posture).toBe("blocked");
-    expect(withCoverage.blockers.join(" ")).toContain("No executed NDA covers this event");
+    expect(withCoverage.blockers.join(" ")).toContain(
+      "No executed NDA covers this event",
+    );
   });
 
   it("reads a registry outage as blocked rather than clear, and says why", () => {
@@ -129,7 +152,9 @@ describe("stage 05 readiness consumes the NDA coverage authority", () => {
       expiresAt: "2026-12-31T00:00:00Z",
       reason: GOOD_WAIVER.reason,
     });
-    expect(result.completeItems.join(" ")).toContain("Covered by WAIVER wv-1, not by an NDA");
+    expect(result.completeItems.join(" ")).toContain(
+      "Covered by WAIVER wv-1, not by an NDA",
+    );
   });
 
   it("does not present a waiver when an executed NDA is what covered it", () => {
