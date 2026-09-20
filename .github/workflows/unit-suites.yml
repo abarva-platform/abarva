@@ -255,5 +255,14 @@ jobs:
       - name: Run the admin AI-initiatives suites
         run: npx jest src/lib/admin/ai-initiatives --no-coverage --ci
 
+      # The data-plane write-adapter tree is 11 suites / 169 tests. Ten suites
+      # were green on the first measured run; the remaining three failures in
+      # one suite came from a stale Supabase read mock after the production
+      # parent lookup moved to the Azure/Postgres compatibility client. The
+      # repaired directory is named literally so new write-adapter suites join
+      # CI on the commit that adds them.
+      - name: Run the data-plane write-adapter suites
+        run: npx jest src/lib/data-plane/write-adapters/__tests__ --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
