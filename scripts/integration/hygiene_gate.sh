@@ -25,12 +25,35 @@ done
 
 cd "$REPO_ROOT"
 
+# Where a finding goes once this gate has made it. Sourced rather than inlined
+# so the reporting can be exercised by running it, instead of by reading this
+# file's source text.
+#
+# Missing is fatal. There is no `set -e` here, so a failed `.` would print an
+# error and carry on -- and the gate would then run every check, find things,
+# and report none of them, while still exiting 0. A gate that cannot report
+# is worse than a gate that did not run, because its exit status still reads
+# as assurance.
+HYGIENE_REPORT="$REPO_ROOT/scripts/integration/hygiene_gate_report.sh"
+if [ ! -f "$HYGIENE_REPORT" ]; then
+  echo "[FAIL] hygiene_gate_report.sh not found at $HYGIENE_REPORT"
+  echo "HYGIENE GATE: FAIL"
+  exit 1
+fi
+# shellcheck source=scripts/integration/hygiene_gate_report.sh
+. "$HYGIENE_REPORT"
+
 pass() { echo "[PASS] $1"; PASS=$((PASS+1)); }
 fail() { echo "[FAIL] $1"; FAIL=$((FAIL+1)); }
 # A finding that is real but must not block the gate still has to be reported as
 # a finding. Before T-071 the only alternative to fail() was pass(), so a check
 # that found something printed the same line as a check that found nothing.
-warn() { echo "[WARN] $1"; WARN=$((WARN+1)); }
+#
+# Printing it was not enough: the workflow read only the exit status, so the
+# verdict reached the raw log and nowhere a person looks. hygiene_warn also
+# annotates the pull request under Actions, and the summary lists every
+# finding. Warnings are still not failures -- the exit status is unchanged.
+warn() { hygiene_warn "$1"; WARN=$((WARN+1)); }
 section() { echo ""; echo "=== $1 ==="; }
 
 # Section 1: Git hygiene
@@ -250,10 +273,9 @@ fi
 # Summary
 section "Summary"
 echo "PASS: $PASS  WARN: $WARN  FAIL: $FAIL"
+hygiene_write_step_summary "$PASS" "$WARN" "$FAIL"
+hygiene_verdict_line "$FAIL" "$WARN"
 if [ "$FAIL" -gt 0 ]; then
-  echo "HYGIENE GATE: FAIL"
   exit 1
-else
-  echo "HYGIENE GATE: PASS"
-  exit 0
 fi
+exit 0
