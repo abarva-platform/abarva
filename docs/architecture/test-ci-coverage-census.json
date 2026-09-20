@@ -12,19 +12,19 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2325,
-    "coveredTestFiles": 1303,
-    "pullRequestCoveredTestFiles": 1300,
-    "uncoveredTestFiles": 1022,
+    "testFiles": 2326,
+    "coveredTestFiles": 1331,
+    "pullRequestCoveredTestFiles": 1328,
+    "uncoveredTestFiles": 995,
     "directoriesWithTests": 476,
-    "directoriesFullyCovered": 138,
+    "directoriesFullyCovered": 141,
     "directoriesPartiallyCovered": 21,
-    "directoriesUncovered": 317,
-    "directoriesWithUnrunTestFiles": 338,
+    "directoriesUncovered": 314,
+    "directoriesWithUnrunTestFiles": 335,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 35,
-    "highGovernedRiskDirectories": 99,
+    "highGovernedRiskDirectories": 96,
     "unclassifiedRiskDirectories": 204
   },
   "indeterminateInvocations": [],
@@ -721,19 +721,6 @@
       }
     },
     {
-      "directory": "src/lib/context-ingestion/__tests__",
-      "testFiles": 17,
-      "unrunTestFiles": 17,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 39
-      }
-    },
-    {
       "directory": "src/__tests__/integration/intelligence",
       "testFiles": 24,
       "unrunTestFiles": 16,
@@ -743,7 +730,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 40
+        "rank": 39
       }
     },
     {
@@ -756,7 +743,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 41
+        "rank": 40
       }
     },
     {
@@ -769,20 +756,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 42
-      }
-    },
-    {
-      "directory": "src/lib/context-ingestion/loader/__tests__",
-      "testFiles": 9,
-      "unrunTestFiles": 9,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 43
+        "rank": 41
       }
     },
     {
@@ -795,7 +769,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 44
+        "rank": 42
       }
     },
     {
@@ -808,7 +782,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 45
+        "rank": 43
       }
     },
     {
@@ -821,7 +795,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 46
+        "rank": 44
       }
     },
     {
@@ -834,7 +808,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 47
+        "rank": 45
       }
     },
     {
@@ -847,7 +821,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 48
+        "rank": 46
       }
     },
     {
@@ -860,7 +834,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 49
+        "rank": 47
       }
     },
     {
@@ -873,7 +847,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 50
+        "rank": 48
       }
     },
     {
@@ -886,7 +860,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 51
+        "rank": 49
       }
     },
     {
@@ -899,7 +873,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 52
+        "rank": 50
       }
     },
     {
@@ -912,7 +886,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 53
+        "rank": 51
       }
     },
     {
@@ -925,7 +899,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 54
+        "rank": 52
       }
     },
     {
@@ -938,7 +912,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 55
+        "rank": 53
       }
     },
     {
@@ -951,7 +925,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 56
+        "rank": 54
       }
     },
     {
@@ -964,7 +938,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 57
+        "rank": 55
       }
     },
     {
@@ -977,7 +951,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 58
+        "rank": 56
       }
     },
     {
@@ -990,7 +964,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 59
+        "rank": 57
       }
     },
     {
@@ -1003,7 +977,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 60
+        "rank": 58
       }
     },
     {
@@ -1016,7 +990,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 61
+        "rank": 59
       }
     },
     {
@@ -1029,7 +1003,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 62
+        "rank": 60
       }
     },
     {
@@ -1042,7 +1016,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 63
+        "rank": 61
       }
     },
     {
@@ -1055,7 +1029,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 64
+        "rank": 62
       }
     },
     {
@@ -1068,7 +1042,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 65
+        "rank": 63
       }
     },
     {
@@ -1081,7 +1055,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 66
+        "rank": 64
       }
     },
     {
@@ -1094,7 +1068,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 67
+        "rank": 65
       }
     },
     {
@@ -1107,7 +1081,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 68
+        "rank": 66
       }
     },
     {
@@ -1120,7 +1094,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 69
+        "rank": 67
       }
     },
     {
@@ -1133,7 +1107,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 70
+        "rank": 68
       }
     },
     {
@@ -1146,7 +1120,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 71
+        "rank": 69
       }
     },
     {
@@ -1159,7 +1133,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 72
+        "rank": 70
       }
     },
     {
@@ -1172,7 +1146,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 73
+        "rank": 71
       }
     },
     {
@@ -1185,7 +1159,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 74
+        "rank": 72
       }
     },
     {
@@ -1198,7 +1172,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 75
+        "rank": 73
       }
     },
     {
@@ -1211,7 +1185,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 76
+        "rank": 74
       }
     },
     {
@@ -1224,7 +1198,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 77
+        "rank": 75
       }
     },
     {
@@ -1237,7 +1211,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 78
+        "rank": 76
       }
     },
     {
@@ -1250,7 +1224,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 79
+        "rank": 77
       }
     },
     {
@@ -1263,7 +1237,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 80
+        "rank": 78
       }
     },
     {
@@ -1276,7 +1250,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 81
+        "rank": 79
       }
     },
     {
@@ -1289,7 +1263,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 82
+        "rank": 80
       }
     },
     {
@@ -1302,7 +1276,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 83
+        "rank": 81
       }
     },
     {
@@ -1315,7 +1289,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 84
+        "rank": 82
       }
     },
     {
@@ -1328,7 +1302,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 85
+        "rank": 83
       }
     },
     {
@@ -1341,7 +1315,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 86
+        "rank": 84
       }
     },
     {
@@ -1354,7 +1328,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 87
+        "rank": 85
       }
     },
     {
@@ -1367,7 +1341,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 88
+        "rank": 86
       }
     },
     {
@@ -1380,7 +1354,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 89
+        "rank": 87
       }
     },
     {
@@ -1393,7 +1367,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 90
+        "rank": 88
       }
     },
     {
@@ -1406,7 +1380,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 91
+        "rank": 89
       }
     },
     {
@@ -1419,7 +1393,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 92
+        "rank": 90
       }
     },
     {
@@ -1432,7 +1406,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 93
+        "rank": 91
       }
     },
     {
@@ -1445,7 +1419,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 94
+        "rank": 92
       }
     },
     {
@@ -1458,7 +1432,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 95
+        "rank": 93
       }
     },
     {
@@ -1471,7 +1445,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 96
+        "rank": 94
       }
     },
     {
@@ -1484,7 +1458,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 97
+        "rank": 95
       }
     },
     {
@@ -1497,7 +1471,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 98
+        "rank": 96
       }
     },
     {
@@ -1510,7 +1484,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 99
+        "rank": 97
       }
     },
     {
@@ -1523,7 +1497,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 100
+        "rank": 98
       }
     },
     {
@@ -1536,7 +1510,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 101
+        "rank": 99
       }
     },
     {
@@ -1549,7 +1523,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 102
+        "rank": 100
       }
     },
     {
@@ -1562,7 +1536,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 103
+        "rank": 101
       }
     },
     {
@@ -1575,7 +1549,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 104
+        "rank": 102
       }
     },
     {
@@ -1588,7 +1562,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 105
+        "rank": 103
       }
     },
     {
@@ -1601,7 +1575,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 106
+        "rank": 104
       }
     },
     {
@@ -1614,7 +1588,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 107
+        "rank": 105
       }
     },
     {
@@ -1627,7 +1601,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 108
+        "rank": 106
       }
     },
     {
@@ -1640,7 +1614,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 109
+        "rank": 107
       }
     },
     {
@@ -1653,7 +1627,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 110
+        "rank": 108
       }
     },
     {
@@ -1666,7 +1640,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 111
+        "rank": 109
       }
     },
     {
@@ -1679,7 +1653,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 112
+        "rank": 110
       }
     },
     {
@@ -1692,7 +1666,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 113
+        "rank": 111
       }
     },
     {
@@ -1705,7 +1679,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 114
+        "rank": 112
       }
     },
     {
@@ -1718,7 +1692,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 115
+        "rank": 113
       }
     },
     {
@@ -1731,7 +1705,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 116
+        "rank": 114
       }
     },
     {
@@ -1744,7 +1718,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 117
+        "rank": 115
       }
     },
     {
@@ -1757,7 +1731,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 118
+        "rank": 116
       }
     },
     {
@@ -1770,7 +1744,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 119
+        "rank": 117
       }
     },
     {
@@ -1783,7 +1757,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 120
+        "rank": 118
       }
     },
     {
@@ -1796,7 +1770,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 121
+        "rank": 119
       }
     },
     {
@@ -1809,7 +1783,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 122
+        "rank": 120
       }
     },
     {
@@ -1822,7 +1796,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 123
+        "rank": 121
       }
     },
     {
@@ -1835,7 +1809,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 124
+        "rank": 122
       }
     },
     {
@@ -1848,7 +1822,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 125
+        "rank": 123
       }
     },
     {
@@ -1861,7 +1835,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 126
+        "rank": 124
       }
     },
     {
@@ -1874,7 +1848,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 127
+        "rank": 125
       }
     },
     {
@@ -1887,20 +1861,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 128
-      }
-    },
-    {
-      "directory": "src/lib/context-ingestion",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 129
+        "rank": 126
       }
     },
     {
@@ -1913,7 +1874,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 130
+        "rank": 127
       }
     },
     {
@@ -1926,7 +1887,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 131
+        "rank": 128
       }
     },
     {
@@ -1939,7 +1900,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 132
+        "rank": 129
       }
     },
     {
@@ -1952,7 +1913,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 133
+        "rank": 130
       }
     },
     {
@@ -1965,7 +1926,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 134
+        "rank": 131
       }
     }
   ],
@@ -2586,12 +2547,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/context-ingestion/__tests__",
-      "testFiles": 17,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/__tests__/integration/ops",
       "testFiles": 14,
       "coveredTestFiles": 0,
@@ -2624,12 +2579,6 @@
     {
       "directory": "src/lib/visual-system/__tests__",
       "testFiles": 10,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/context-ingestion/loader/__tests__",
-      "testFiles": 9,
       "coveredTestFiles": 0,
       "via": []
     },
@@ -3955,12 +3904,6 @@
     },
     {
       "directory": "src/lib/compliance/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/context-ingestion",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []
