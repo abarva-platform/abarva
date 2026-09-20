@@ -606,23 +606,26 @@ function readWorkflows(root) {
  * verifier asserts on — as a run of that suite, which would *under*-state the
  * gap. And a literal of `'npx jest'` with no argument, which one audit compares
  * workflow lines against, cannot run anything.
+ *
+ * Extraction collapses whitespace but preserves backslashes. Path matching is
+ * normalized later; regex ignore arguments are read from this raw command text.
  */
 function jestInvocationsInScript(source, scriptPath) {
   const invocations = [];
 
   for (const match of source.matchAll(/\[([^[\]]*)\]/g)) {
-    const inner = normalize(match[1]);
+    const inner = collapseWhitespace(match[1]);
     if (/(?:^|[\s"'`,])jest(?:$|[\s"'`,])/.test(inner)) invocations.push(inner);
   }
 
   for (const match of source.matchAll(/(["'`])([^"'`\n]*)\1/g)) {
-    const literal = normalize(match[2]);
+    const literal = collapseWhitespace(match[2]);
     if (/^(?:npx\s+)?jest\s+\S/.test(literal)) invocations.push(literal);
   }
 
   if (scriptPath.endsWith(".sh")) {
     for (const line of source.split(/\r?\n/)) {
-      const normalized = normalize(line);
+      const normalized = collapseWhitespace(line);
       if (
         /(?:^|[;&|(]|\bif\s|\bthen\s|\belif\s|\bdo\s|&&|\|\|)\s*(?:npx\s+)?jest\s+\S/.test(
           normalized,
@@ -722,20 +725,19 @@ export function collectReachableCommands(root, packageScripts) {
         scriptsSeen.add(key);
 
         const source = readFileSync(absolute, "utf8");
-        for (const invocation of jestInvocationsInScript(source, scriptPath)) {
+        for (const rawInvocation of jestInvocationsInScript(source, scriptPath)) {
+          const invocation = normalize(rawInvocation);
           const namesAPath = /(?:^|[\s"'`,[(])src\//.test(invocation);
           if (namesAPath) {
-            // A script's Jest lines reach here already normalized, so any regex
-            // escape inside them has been rewritten and their ignore patterns
-            // cannot be read correctly. No script in this repository passes the
-            // flag today; if one starts to, this records it rather than reading
-            // a mangled pattern and reporting a subtraction that did not happen.
-            if (invocation.includes(IGNORE_FLAG)) {
+            const scriptIgnorePatterns = ignorePatterns(rawInvocation);
+            if (
+              rawInvocation.includes(IGNORE_FLAG) &&
+              scriptIgnorePatterns.length === 0
+            ) {
               unresolvedIgnoreArguments.push({
                 script: scriptPath,
-                source: invocation,
-                reason:
-                  "ignore patterns inside a script file are normalized before they are read",
+                source: rawInvocation,
+                reason: "ignore patterns inside this script invocation could not be parsed",
               });
             }
             reachable.push({
@@ -743,7 +745,9 @@ export function collectReachableCommands(root, packageScripts) {
               source: scriptPath,
               pullRequest,
               command: invocation,
-              ignorePatterns: [],
+              // Paths use the normalized command; regular expressions must
+              // retain their escapes, so the ignore reader receives raw text.
+              ignorePatterns: scriptIgnorePatterns,
             });
             continue;
           }
