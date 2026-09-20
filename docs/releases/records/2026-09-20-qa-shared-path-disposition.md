@@ -45,6 +45,7 @@ Release lane: `global-control-lane` — a shared CI/quality control, identical f
 - `src/lib/qa/active-route-shell-verification.ts` — gains `ROUTE_SHELL_PATH_REGISTER`; the two `*OrDeferred` helpers that accepted a free-text deferral sentence are replaced by `checkRouteDeclared` / `checkComponentDeclared`, which consult the register. Adds the `removed` status and `removedCount`; a removal holds `overallStatus` at `partial`, matching the blueprint report.
 - `src/__tests__/integration/qa/path-disposition.test.ts` (new) — 11 cases.
 - `src/__tests__/integration/qa/active-route-shell-verification.test.ts` — stale assertions updated with the reason; adds a structural guard that every absent path is register-backed.
+- `docs/architecture/orphaned-lib-modules.json` — one added entry for the new module, via the report's own `--update`. See QA / Validation.
 
 ## QA / Validation
 
@@ -78,6 +79,8 @@ The same 4 failures stand before and after. They are `logo-usage-enforcement.tes
 | route-shell keeps its own drifted copy instead of the shared entry | **2 failed** / 87 passed |
 | `undecided` resolves as a pending claim again | **1 failed** / 88 passed |
 | restored | 89 passed / 89 |
+
+**The orphan gate caught this change, and the catch is recorded rather than quietly absorbed.** `audit:lib-orphans` failed the first CI run with `NEW orphaned module(s): + src/lib/qa/path-disposition.ts (testOnly)`. That gate is correct: no product entry point reaches the new module. It is also not new debt in substance — the module is an extraction from `active-route-shell-verification.ts` and `intelligence-tower-blueprint-verification.ts`, **both already on that baseline as `testOnly`**, alongside 30 other `src/lib/qa/` modules. The same unreached code now lives in three files instead of two. The baseline was updated through the script's own documented `--update` path, and the diff is exactly one added entry with `testOnly` moving 432 -> 433 and `scanned` 2927 -> 2928. Nothing was excluded, silenced, or allowlisted: the gate runs and still fails in both directions.
 
 **Other checks.** `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` — **exit 0**, 0 errors (exit code judged, not grep output). `npx eslint` over the five changed files — exit 0. `node scripts/quality/check-qa-integration-quarantine.mjs` — exit 0, clean; it now re-runs 5 excluded of 38 suites, the new suite being included by default.
 
@@ -115,4 +118,5 @@ Revert the merge commit. No migration, no data change, no flag, so the revert is
 - **Not decided here, deliberately.** Whether `src/app/(maestro)/platform/admin/architecture/page.tsx` should exist is an open product call owned by another backlog item; this change records the question honestly instead of answering it. The route's disposition is `undecided`, which keeps the report green while stating that nothing is pending.
 - **Not cleared here.** The canonical-logo decision and its three real brand-asset enforcement failures are owned by a separate item. `logo-usage-enforcement.ts` is untouched, and its two suites remain quarantined for that reason.
 - The seven paths deleted by `f1d8bc95c` (five brand assets, two top-bar components) were **re-measured and found already correct**: they sit in retired lists where absence is the expected state and each reports as correctly absent. They do not name the commit that removed them, which is a smaller gap than the one fixed here and is left open rather than bundled in.
+- The new module is reachable only from tests, like the two it was extracted from. Making `src/lib/qa/` reachable from a product or operator entry point is a much larger question about what these reports are for, and it is not opened here.
 - A third verifier, `apex-source-program-storyline-verification.ts`, carries four "Deferred pending <SLICE>" strings of the same shape. It was not re-measured in this change and is left for a separate, bounded pass.
