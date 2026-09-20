@@ -13,19 +13,19 @@
   ],
   "counts": {
     "testFiles": 2339,
-    "coveredTestFiles": 1640,
-    "pullRequestCoveredTestFiles": 1637,
-    "uncoveredTestFiles": 699,
+    "coveredTestFiles": 1668,
+    "pullRequestCoveredTestFiles": 1665,
+    "uncoveredTestFiles": 671,
     "directoriesWithTests": 477,
-    "directoriesFullyCovered": 224,
-    "directoriesPartiallyCovered": 16,
-    "directoriesUncovered": 237,
-    "directoriesWithUnrunTestFiles": 253,
+    "directoriesFullyCovered": 229,
+    "directoriesPartiallyCovered": 19,
+    "directoriesUncovered": 229,
+    "directoriesWithUnrunTestFiles": 248,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 12,
-    "highGovernedRiskDirectories": 49,
-    "unclassifiedRiskDirectories": 192
+    "highGovernedRiskDirectories": 48,
+    "unclassifiedRiskDirectories": 188
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -120,6 +120,14 @@
       ]
     },
     {
+      "directory": "src/lib/knowledge/__tests__",
+      "testFiles": 9,
+      "coveredTestFiles": 8,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/lib/governance/__tests__",
       "testFiles": 8,
       "coveredTestFiles": 1,
@@ -128,9 +136,25 @@
       ]
     },
     {
+      "directory": "src/lib/knowledge/context-broker/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 4,
+      "via": [
+        "command"
+      ]
+    },
+    {
       "directory": "src/lib/eval/answer-quality/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/knowledge/tenant-data/__tests__",
+      "testFiles": 4,
+      "coveredTestFiles": 3,
       "via": [
         "command"
       ]
@@ -416,19 +440,6 @@
       }
     },
     {
-      "directory": "src/lib/knowledge/consumption-server/__tests__",
-      "testFiles": 5,
-      "unrunTestFiles": 5,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 20
-      }
-    },
-    {
       "directory": "src/lib/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 4,
@@ -438,7 +449,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -451,20 +462,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 22
-      }
-    },
-    {
-      "directory": "src/lib/knowledge/tenant-data/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 4,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 23
+        "rank": 21
       }
     },
     {
@@ -477,7 +475,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 24
+        "rank": 22
       }
     },
     {
@@ -490,7 +488,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 25
+        "rank": 23
       }
     },
     {
@@ -503,7 +501,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 26
+        "rank": 24
       }
     },
     {
@@ -516,7 +514,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 27
+        "rank": 25
       }
     },
     {
@@ -529,7 +527,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 28
+        "rank": 26
       }
     },
     {
@@ -542,7 +540,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 29
+        "rank": 27
       }
     },
     {
@@ -555,7 +553,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 30
+        "rank": 28
       }
     },
     {
@@ -568,7 +566,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 31
+        "rank": 29
       }
     },
     {
@@ -581,7 +579,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 32
+        "rank": 30
       }
     },
     {
@@ -594,7 +592,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 33
+        "rank": 31
       }
     },
     {
@@ -607,7 +605,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 34
+        "rank": 32
       }
     },
     {
@@ -620,7 +618,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 35
+        "rank": 33
       }
     },
     {
@@ -633,7 +631,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 36
+        "rank": 34
       }
     },
     {
@@ -646,7 +644,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 37
+        "rank": 35
       }
     },
     {
@@ -659,7 +657,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 38
+        "rank": 36
       }
     },
     {
@@ -672,7 +670,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 39
+        "rank": 37
       }
     },
     {
@@ -685,7 +683,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 40
+        "rank": 38
       }
     },
     {
@@ -698,7 +696,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 41
+        "rank": 39
       }
     },
     {
@@ -711,7 +709,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 42
+        "rank": 40
       }
     },
     {
@@ -724,7 +722,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 43
+        "rank": 41
       }
     },
     {
@@ -737,7 +735,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 44
+        "rank": 42
       }
     },
     {
@@ -750,7 +748,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 45
+        "rank": 43
       }
     },
     {
@@ -763,7 +761,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 46
+        "rank": 44
       }
     },
     {
@@ -776,7 +774,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 47
+        "rank": 45
       }
     },
     {
@@ -789,7 +787,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 48
+        "rank": 46
       }
     },
     {
@@ -802,7 +800,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 49
+        "rank": 47
       }
     },
     {
@@ -815,7 +813,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 50
+        "rank": 48
       }
     },
     {
@@ -828,7 +826,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 51
+        "rank": 49
       }
     },
     {
@@ -841,7 +839,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 52
+        "rank": 50
       }
     },
     {
@@ -854,7 +852,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 53
+        "rank": 51
       }
     },
     {
@@ -867,7 +865,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 54
+        "rank": 52
       }
     },
     {
@@ -880,7 +878,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 55
+        "rank": 53
       }
     },
     {
@@ -893,7 +891,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 56
+        "rank": 54
       }
     },
     {
@@ -906,7 +904,20 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 57
+        "rank": 55
+      }
+    },
+    {
+      "directory": "src/lib/knowledge/tenant-data/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "rank": 56
       }
     },
     {
@@ -919,7 +930,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 58
+        "rank": 57
       }
     },
     {
@@ -932,7 +943,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 59
+        "rank": 58
       }
     },
     {
@@ -945,7 +956,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 60
+        "rank": 59
       }
     },
     {
@@ -958,7 +969,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 61
+        "rank": 60
       }
     }
   ],
@@ -1350,23 +1361,6 @@
       }
     },
     {
-      "directory": "src/lib/knowledge/consumption-server/__tests__",
-      "testFiles": 5,
-      "unrunTestFiles": 5,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/knowledge/consumption-server/reader.ts"
-        ],
-        "rank": 20
-      }
-    },
-    {
       "directory": "src/lib/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 4,
@@ -1380,7 +1374,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -1398,24 +1392,7 @@
           "src/lib/azure-search/tenant-context-backfill.ts",
           "src/lib/azure-search/tenant-context-retriever.ts"
         ],
-        "rank": 22
-      }
-    },
-    {
-      "directory": "src/lib/knowledge/tenant-data/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 4,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/knowledge/tenant-data/supabase-adapter.ts"
-        ],
-        "rank": 23
+        "rank": 21
       }
     },
     {
@@ -1432,7 +1409,7 @@
         "tenantScopedReadSources": [
           "src/lib/programs/current-state-readiness.ts"
         ],
-        "rank": 24
+        "rank": 22
       }
     },
     {
@@ -1448,6 +1425,41 @@
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/source/contract-evidence/read-model.ts"
+        ],
+        "rank": 23
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-intelligence/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 1,
+        "tenantScopedReadSources": [
+          "src/lib/source/contract-intelligence/cloud-adapter.ts"
+        ],
+        "rank": 24
+      }
+    },
+    {
+      "directory": "src/lib/source/rfp-readiness/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 2,
+        "tenantScopedReadSources": [
+          "src/lib/source/rfp-readiness/intake-capture.ts",
+          "src/lib/source/rfp-readiness/section-trace.ts"
         ],
         "rank": 25
       }
@@ -1480,12 +1492,6 @@
     },
     {
       "directory": "src/lib/enterprise-context/__tests__",
-      "testFiles": 9,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/knowledge/__tests__",
       "testFiles": 9,
       "coveredTestFiles": 0,
       "via": []
@@ -1605,18 +1611,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/knowledge/consumption-server/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/knowledge/context-broker/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/programs/stage-readiness-workbooks/__tests__",
       "testFiles": 5,
       "coveredTestFiles": 0,
@@ -1666,12 +1660,6 @@
     },
     {
       "directory": "src/lib/azure-search/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/knowledge/tenant-data/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 0,
       "via": []
@@ -1803,12 +1791,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/knowledge/view-model/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/sentinel/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 0,
@@ -1912,18 +1894,6 @@
     },
     {
       "directory": "src/lib/instruments/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/knowledge/consumption-client/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/knowledge/consumption-contracts/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 0,
       "via": []
@@ -2584,12 +2554,6 @@
     },
     {
       "directory": "src/lib/intelligence/insight-engine/rules/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/knowledge/operations-lens/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []

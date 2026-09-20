@@ -514,5 +514,35 @@ jobs:
           src/lib/programs/exports
           --no-coverage --ci
 
+      # src/lib/knowledge: 28 suites / 339 tests / ~0.9s, measured on
+      # `216228cde`. 81 non-test files import this tree.
+      #
+      # Three files are quarantined, and they are named as FILES rather than
+      # as the directories holding them, which is the whole point. Each of the
+      # three red suites sits in a directory of mostly-green ones -- 9, 5 and 4
+      # test files respectively -- so excluding the directories would have
+      # dropped fifteen passing files to quarantine three.
+      #
+      # Naming the five green subtrees instead reaches only 13 suites, because
+      # it abandons those fifteen. The parent plus three file exclusions
+      # reaches 28. Measured both ways before choosing.
+      #
+      # This is a quarantine: nothing forces the list to shrink when those
+      # three are fixed.
+      #
+      # Two neighbours measured alongside are NOT here, and cannot be split the
+      # same way: `visual-system` (1 failed of 10) and `enterprise-context`
+      # (2 failed of 9) each have a single flat test directory, so there is no
+      # green subtree to name and no directory boundary to quarantine along.
+      - name: Run the knowledge suites
+        run: >-
+          npx jest
+          src/lib/knowledge
+          --testPathIgnorePatterns /node_modules/
+          src/lib/knowledge/__tests__/tenant-enterprise-context
+          src/lib/knowledge/context-broker/__tests__/pinecone-client
+          src/lib/knowledge/tenant-data/__tests__/stub-adapter
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
