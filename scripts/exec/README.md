@@ -42,6 +42,14 @@ copies in the operator root when convenient; nothing here depends on them.
 
 An explicit `--operator-root <dir>` takes precedence over the environment variable. Use `--map <file>` only for a controlled alternate structure map, such as the synthetic CI fixture.
 
+New claim records should use the canonical, non-bulleted form:
+
+```text
+YYYY-MM-DDTHH:MMZ <agent> item <id> <branch> — claimed
+```
+
+The queue remains backward-compatible with the established timestamped `item`, `CLAIM`, and `CLAIMED` forms already present in the append-only claim log. Text above the `## Claim log` marker is never authoritative.
+
 ## Verify
 
 ```bash
