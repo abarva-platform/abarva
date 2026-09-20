@@ -1,7 +1,10 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
-import { buildIntelligenceDeterministicJourneyManifest } from '@/lib/qa/intelligence-deterministic-journey';
+import {
+  buildIntelligenceDeterministicJourneyManifest,
+  describeJourneyEvidenceDefects,
+} from '@/lib/qa/intelligence-deterministic-journey';
 
 describe('QA33 Intelligence deterministic journey manifest', () => {
   it('declares canonical Sentinel landing and pattern-detail routes', () => {
@@ -9,8 +12,9 @@ describe('QA33 Intelligence deterministic journey manifest', () => {
 
     expect(manifest.id).toBe('qa33-intelligence-deterministic-journey');
     expect(manifest.agent).toBe('Sentinel');
-    expect(manifest.landingRoute).toBe('/tenant/apex-retail/intelligence');
-    expect(manifest.patternDetailRoute).toBe('/tenant/apex-retail/intelligence/patterns/[patternKey]');
+    expect(manifest.landingRoute).toBe('/intelligence');
+    // There is no pattern-detail route to declare. Null is the claim.
+    expect(manifest.patternDetailRoute).toBeNull();
     expect(manifest.createdFrom).toBe('deterministic_seed_manifest');
   });
 
@@ -29,25 +33,36 @@ describe('QA33 Intelligence deterministic journey manifest', () => {
   });
 
   it('matches the existing route and component wiring on disk', () => {
-    const landingRoute = readWorkspaceFile('src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx');
-    const detailRoute = readWorkspaceFile(
-      'src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx',
+    // This case used to hold its own hardcoded copy of the evidence paths,
+    // so the manifest and the test could each drift from the repository
+    // independently — and both did, for the same four files. Driving it from
+    // the manifest's own evidence removes the second copy, so there is one
+    // list and it is the one the product claims.
+    const manifest = buildIntelligenceDeterministicJourneyManifest();
+    const defects = describeJourneyEvidenceDefects(manifest, (relativePath) =>
+      existsSync(join(process.cwd(), relativePath)),
     );
-    const detailComponent = readWorkspaceFile('src/components/intelligence/SentinelPatternDetail.tsx');
-    const canvasHelper = readWorkspaceFile('src/lib/intelligence/intelligence-canvas-modes.ts');
 
-    // I1: IntelligenceRouteShell retired — route directly renders IntelligenceLensTabs.
-    expect(landingRoute).not.toContain('IntelligenceRouteShell');
-    expect(landingRoute).toContain('IntelligenceLensTabs');
-    expect(detailRoute).toContain('SentinelPatternDetail');
-    expect(detailRoute).toContain('IntelligenceCanvasModeTabs');
-    for (const mode of ['summary', 'evidence', 'programs', 'actions']) {
-      expect(canvasHelper).toContain(`'${mode}'`);
+    expect(defects).toEqual([]);
+
+    const landingRoute = readWorkspaceFile('src/app/(maestro)/intelligence/page.tsx');
+    expect(landingRoute).toContain('AdvisoryIntelligencePage');
+  });
+
+  it('does not claim coverage of the journey the sunset removed', () => {
+    // The assertions this case replaces were not weakened — they were
+    // pointing at files deleted in July, and had been failing unseen because
+    // no workflow runs this directory. What they asserted is now recorded as
+    // an explicit loss rather than an unexamined red.
+    const manifest = buildIntelligenceDeterministicJourneyManifest();
+    const removed = manifest.checkpoints.filter((c) => c.subjectState === 'removed');
+
+    expect(removed).toHaveLength(9);
+    expect(removed.map((c) => c.id)).toContain('qa33-route-pattern-detail');
+    for (const checkpoint of removed) {
+      expect(checkpoint.removedNote?.trim()).toBeTruthy();
+      expect(checkpoint.evidence.some((e) => e.startsWith('src/'))).toBe(false);
     }
-    expect(detailComponent).toContain('IntelligenceProvenanceRibbon');
-    expect(detailComponent).toContain('IntelligenceSourceBasisPanel');
-    expect(detailComponent).toContain('EvidenceDatasetDrawer');
-    expect(detailComponent).toContain('SentinelInteractionRail');
   });
 
   it('does not claim real browser smoke, live retrieval, model invocation, or migrations', () => {
