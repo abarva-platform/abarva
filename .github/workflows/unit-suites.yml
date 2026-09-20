@@ -142,5 +142,33 @@ jobs:
       - name: Run the pricing effort-engine suites
         run: npx jest src/lib/pricing/effort-engine --no-coverage --ci
 
+      # Two Source library trees that no workflow and no npm script reached.
+      # Measured on `0b80d8c7a` by running them:
+      #
+      #   source/facts            18 suites / 264 tests / 24 importers
+      #   source/agent-generation 13 suites / 132 tests / 46 importers
+      #
+      # Both are cleanly unwired, which was checked rather than assumed: each
+      # tree's suite count equals the number of test files the census lists as
+      # uncovered beneath it, so naming the parent adds no suite that some other
+      # workflow already runs.
+      #
+      # That check is why `src/components/source/canvas` is NOT here. Its tree
+      # is 48 suites but only 17 files across four rows are uncovered, because
+      # ai-surface-control-catalog.yml already runs `canvas/__tests__` and
+      # `canvas/analytics`. Naming that parent would run 31 already-covered
+      # suites a second time. It needs a decision between a four-directory list
+      # and an accepted overlap, so it is filed separately rather than folded in
+      # here.
+      #
+      # `src/lib/intelligence/ask` is also excluded: 3 failed of 29 suites on
+      # `0b80d8c7a`. A red directory is wired by fixing it, never by adding it
+      # to a green command.
+      - name: Run the Source facts suites
+        run: npx jest src/lib/source/facts --no-coverage --ci
+
+      - name: Run the Source agent-generation suites
+        run: npx jest src/lib/source/agent-generation --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
