@@ -22,9 +22,9 @@ import {
   type SourceNewPhaseKey,
   type SourceNewPhaseState,
 } from "@/lib/source/new-workspace/phase-state";
-import { buildSourceNewNdaReadiness } from "@/lib/source/new-workspace/nda-readiness";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
+import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import "./workspace.css";
 
 type Phase = SourceNewPhaseKey;
@@ -72,6 +72,7 @@ const VIEWS: readonly { key: View; label: string }[] = [
 function phaseEvidence(
   event: SourceNewEventView,
   files: readonly SourceNewFileRow[],
+  stage05NdaCoverage: SourceNewStage05NdaCoverage,
 ): SourceNewPhaseEvidence {
   const hasFile = (phase: Phase) => files.some((file) => file.phase === phase);
   const recorded = (value: string | null) => Boolean(value?.trim());
@@ -81,7 +82,7 @@ function phaseEvidence(
       hasFile("define") ||
       recorded(event.scope) ||
       recorded(event.decisionOwner),
-    suppliers: hasFile("suppliers"),
+    suppliers: hasFile("suppliers") || stage05NdaCoverage.suppliers.length > 0,
     rfi: hasFile("rfi"),
   };
 }
@@ -181,12 +182,7 @@ function nextAction(event: SourceNewEventView): {
   };
 }
 
-export function SourceNewWorkspace({
-  event,
-  files,
-  activity,
-  intelligence,
-}: {
+export type SourceNewWorkspaceProps = {
   event: SourceNewEventView;
   files: readonly SourceNewFileRow[];
   /**
@@ -196,8 +192,21 @@ export function SourceNewWorkspace({
    */
   activity?: SourceEventActivityResult;
   intelligence?: SourceNewEventIntelligenceView;
-}) {
-  const evidence = useMemo(() => phaseEvidence(event, files), [event, files]);
+  /** Required server projection; an unreadable registry is data, not absence. */
+  stage05NdaCoverage: SourceNewStage05NdaCoverage;
+};
+
+export function SourceNewWorkspace({
+  event,
+  files,
+  activity,
+  intelligence,
+  stage05NdaCoverage,
+}: SourceNewWorkspaceProps) {
+  const evidence = useMemo(
+    () => phaseEvidence(event, files, stage05NdaCoverage),
+    [event, files, stage05NdaCoverage],
+  );
   const stateOf = (item: Phase): SourceNewPhaseState =>
     sourceNewPhaseState(item, event, evidence);
   const current = sourceNewCurrentPhase(event);
@@ -225,30 +234,6 @@ export function SourceNewWorkspace({
   const isCurrentPhase = phase === current;
   const responsesStage = isResponsesStage(event);
   const responseRows = responseEvidenceRows(files);
-  const ndaReadiness = useMemo(
-    () =>
-      buildSourceNewNdaReadiness(
-        files
-          .filter((file) => file.phase === "suppliers")
-          .map((file) => ({
-            id: file.id,
-            artifactType: file.artifactType,
-            title: file.title,
-            status: file.status,
-            lifecycleState: file.lifecycleState,
-            approvalState: file.approvalState,
-            approvedAt: file.approvedAt,
-            blobSha256: file.blobSha256,
-            coveredSupplierLegalEntity: file.coveredSupplierLegalEntity,
-            coveredScopeId: file.coveredScopeId,
-            effectiveFrom: file.effectiveFrom,
-            expiresOn: file.expiresOn,
-          })),
-        event.asOfDate,
-      ),
-    [event.asOfDate, files],
-  );
-
   const content = (
     <main className="snw" aria-label="Source New event workspace">
       <div className="snw-inner">
@@ -372,7 +357,7 @@ export function SourceNewWorkspace({
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
-                      readiness={ndaReadiness}
+                      coverage={stage05NdaCoverage}
                       eventHref={eventHref}
                     />
                   )}
@@ -397,7 +382,7 @@ export function SourceNewWorkspace({
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
-                      readiness={ndaReadiness}
+                      coverage={stage05NdaCoverage}
                       eventHref={eventHref}
                     />
                   )}
@@ -598,12 +583,18 @@ function SourceNewStage04VendorReadiness({
 }
 
 function SourceNewStage05NdaReadiness({
-  readiness,
+  coverage,
   eventHref,
 }: {
-  readiness: ReturnType<typeof buildSourceNewNdaReadiness>;
+  coverage: SourceNewStage05NdaCoverage;
   eventHref: string;
 }) {
+  const posture =
+    coverage.status === "ready"
+      ? "Ready for governed supplier work"
+      : coverage.status === "empty"
+        ? "No accepted supplier panel"
+        : "Blocked before supplier work";
   return (
     <section className="snw-nda-readiness" aria-label="Stage 05 NDA readiness">
       <p className="snw-eyebrow">Stage 05 · NDA readiness</p>
@@ -615,65 +606,73 @@ function SourceNewStage05NdaReadiness({
       </p>
       <dl className="snw-facts">
         <div>
-          <dt>Supplier legal entity</dt>
-          <dd>{readiness.coveredSupplierLegalEntity ?? "Not recorded"}</dd>
+          <dt>Accepted suppliers</dt>
+          <dd>{coverage.suppliers.length}</dd>
         </div>
         <div>
-          <dt>NDA artifact</dt>
-          <dd>{readiness.artifactTitle ?? "Not recorded"}</dd>
+          <dt>Covered</dt>
+          <dd>{coverage.suppliers.filter((supplier) =>
+            supplier.state === "covered_by_nda" || supplier.state === "covered_by_waiver"
+          ).length}</dd>
         </div>
         <div>
-          <dt>NDA scope</dt>
-          <dd>{readiness.coveredScopeId ?? "Not recorded"}</dd>
-        </div>
-        <div>
-          <dt>Validity</dt>
-          <dd>
-            {readiness.effectiveFrom && readiness.expiresOn
-              ? `${readiness.effectiveFrom} to ${readiness.expiresOn}`
-              : "Not recorded"}
-          </dd>
+          <dt>Blocked or unknown</dt>
+          <dd>{coverage.suppliers.filter((supplier) =>
+            supplier.state === "not_covered" || supplier.state === "unavailable"
+          ).length}</dd>
         </div>
         <div>
           <dt>Readiness as of</dt>
-          <dd>{readiness.asOfDate}</dd>
+          <dd>{coverage.asOf}</dd>
         </div>
         <div>
           <dt>Readiness posture</dt>
-          <dd>
-            {readiness.posture === "ready"
-              ? "Ready for governed supplier work"
-              : "Blocked before supplier work"}
-          </dd>
+          <dd>{posture}</dd>
         </div>
       </dl>
-      <div className="snw-nda-grid">
-        <div>
-          <strong>Complete</strong>
-          <ul>
-            {readiness.completeItems.length > 0 ? (
-              readiness.completeItems.map((item) => <li key={item}>{item}</li>)
-            ) : (
-              <li>No NDA readiness evidence is complete yet.</li>
-            )}
-          </ul>
+      {coverage.suppliers.length > 0 ? (
+        <div className="snw-nda-suppliers" role="list" aria-label="Supplier NDA coverage">
+          {coverage.suppliers.map((supplier) => (
+            <article key={supplier.legalEntityId} role="listitem">
+              <div className="snw-nda-supplier-heading">
+                <strong>{supplier.legalName}</strong>
+                <span data-state={supplier.state}>
+                  {supplier.state === "covered_by_nda"
+                    ? "Executed NDA"
+                    : supplier.state === "covered_by_waiver"
+                      ? "Legal waiver"
+                      : supplier.state === "unavailable"
+                        ? "Authority unavailable"
+                        : "Not covered"}
+                </span>
+              </div>
+              <p>{supplier.reason}</p>
+              <dl>
+                <div>
+                  <dt>Candidate evidence</dt>
+                  <dd>{supplier.evidenceReference}</dd>
+                </div>
+                <div>
+                  <dt>NDA authority</dt>
+                  <dd>{supplier.authorityReference ?? "Not recorded"}</dd>
+                </div>
+              </dl>
+              {supplier.evidenceCaveats.map((caveat) => (
+                <p className="snw-note" key={caveat}>{caveat}</p>
+              ))}
+            </article>
+          ))}
         </div>
-        <div>
-          <strong>Blocking</strong>
-          <ul>
-            {readiness.blockers.length > 0 ? (
-              readiness.blockers.map((blocker) => (
-                <li key={blocker}>{blocker}</li>
-              ))
-            ) : (
-              <li>No Stage 05 NDA blocker is visible in this read model.</li>
-            )}
-          </ul>
-        </div>
-      </div>
+      ) : (
+        <p className="snw-note">
+          {coverage.status === "unavailable"
+            ? "Candidate-panel authority is unavailable; an empty result is not assumed."
+            : "No supplier has explicit candidate-panel acceptance for this event."}
+        </p>
+      )}
       <div className="snw-nda-next">
-        <strong>{readiness.nextAction.label}</strong>
-        <p>{readiness.nextAction.detail}</p>
+        <strong>{coverage.nextAction.label}</strong>
+        <p>{coverage.nextAction.detail}</p>
         <Link className="snw-text-action" href={eventHref}>
           Open governed event
         </Link>

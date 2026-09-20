@@ -3,6 +3,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { getSourcingEventForResolvedClient } from "@/lib/source/queries";
 import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
+import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 
 jest.mock("next/navigation", () => ({
   notFound: () => { throw new Error("not_found"); },
@@ -11,6 +12,9 @@ jest.mock("@/lib/active-client", () => ({ getActiveClientRow: jest.fn() }));
 jest.mock("@/lib/auth/tenancy", () => ({ requireTenancy: jest.fn() }));
 jest.mock("@/lib/source/queries", () => ({ getSourcingEventForResolvedClient: jest.fn() }));
 jest.mock("@/lib/source/file-cabinet/repository", () => ({ listSourceArtifacts: jest.fn() }));
+jest.mock("@/lib/source/new-workspace/stage05-nda-coverage", () => ({
+  readSourceNewStage05NdaCoverage: jest.fn(),
+}));
 jest.mock("@/components/source/new-workspace/SourceNewWorkspace", () => ({
   SourceNewWorkspace: () => null,
 }));
@@ -25,6 +29,15 @@ beforeEach(() => {
   jest.mocked(requireTenancy).mockResolvedValue(tenancy as never);
   jest.mocked(getSourcingEventForResolvedClient).mockResolvedValue(null);
   jest.mocked(listSourceArtifacts).mockResolvedValue([]);
+  jest.mocked(readSourceNewStage05NdaCoverage).mockResolvedValue({
+    status: "empty",
+    asOf: "2026-03-10",
+    suppliers: [],
+    nextAction: {
+      label: "Accept candidate panel",
+      detail: "No accepted suppliers.",
+    },
+  });
 });
 
 describe("Source New event route authorization", () => {
@@ -33,6 +46,7 @@ describe("Source New event route authorization", () => {
     await expect(SourceNewEventPage(params)).rejects.toThrow("not_found");
     expect(getSourcingEventForResolvedClient).not.toHaveBeenCalled();
     expect(listSourceArtifacts).not.toHaveBeenCalled();
+    expect(readSourceNewStage05NdaCoverage).not.toHaveBeenCalled();
   });
 
   it("does not read files when the event policy declines the record", async () => {
@@ -43,6 +57,7 @@ describe("Source New event route authorization", () => {
       tenancy,
     });
     expect(listSourceArtifacts).not.toHaveBeenCalled();
+    expect(readSourceNewStage05NdaCoverage).not.toHaveBeenCalled();
   });
 
   it("reads only the authorized event file cabinet", async () => {
@@ -70,6 +85,11 @@ describe("Source New event route authorization", () => {
       { tenantKey: "tenant-a" },
       { includeHistory: true },
     );
+    expect(readSourceNewStage05NdaCoverage).toHaveBeenCalledWith({
+      clientKey: "tenant-a",
+      eventId: "event-1",
+      asOf: "2026-03-10",
+    });
   });
 
   it("does not turn an artifact read failure into an empty folder", async () => {
