@@ -2,35 +2,42 @@
  * @jest-environment jsdom
  */
 
-import fs from "node:fs";
-import path from "node:path";
-
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { CsvUploadConnector } from "../CsvUploadConnector";
 
-function skyharborDoraFile(): File {
-  const csv = fs.readFileSync(
-    path.join(
-      process.cwd(),
-      "datasets/skyharbor-air-synthetic-v1/source_uploads/dora_productivity_baseline.csv",
-    ),
-    "utf8",
+function enterpriseProfileFile(): File {
+  const header = [
+    "tenant_key",
+    "company_name",
+    "revenue_usd",
+    "employees",
+    "fiscal_year_end",
+  ].join(",");
+  const rows = Array.from({ length: 42 }, (_, index) =>
+    [
+      `tenant-${index + 1}`,
+      `Company ${index + 1}`,
+      "1000000",
+      "100",
+      "2026-12-31",
+    ].join(","),
   );
-  return new File([csv], "dora_productivity_baseline.csv", {
+  const csv = [header, ...rows].join("\n");
+  return new File([csv], "enterprise_profile.csv", {
     type: "text/csv",
   });
 }
 
 describe("CsvUploadConnector", () => {
-  it("auto-proposes a plain-English DORA mapping and keeps advanced chunk controls hidden", async () => {
+  it("auto-proposes a plain-English enterprise mapping and keeps advanced chunk controls hidden", async () => {
     render(
       <CsvUploadConnector
-        clientId="client-skyharbor"
-        tenantKey="skyharbor-air"
-        tenantName="Skyharbor Air"
-        initialTemplateId="dora-baseline"
+        clientId="client-test"
+        tenantKey="test-tenant"
+        tenantName="Test tenant"
+        initialTemplateId="enterprise-profile"
         mode="package"
       />,
     );
@@ -38,62 +45,67 @@ describe("CsvUploadConnector", () => {
     expect(screen.queryByText("Chunk text columns")).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Data area"), {
-      target: { value: "dora-baseline" },
+      target: { value: "enterprise-profile" },
     });
     fireEvent.change(screen.getByLabelText(/Choose file/i), {
-      target: { files: [skyharborDoraFile()] },
+      target: { files: [enterpriseProfileFile()] },
     });
 
     expect(
-      await screen.findByText(/Selected: dora_productivity_baseline.csv/),
+      await screen.findByText(/Selected: enterprise_profile.csv/),
     ).toBeTruthy();
     expect(
-      await screen.findByText(
-        /I read 42 rows and matched your columns to Delivery \/ DORA \/ DevEx\./,
-      ),
-    ).toBeTruthy();
+      await screen.findByRole("region", { name: "Column mapping confirmation" }),
+    ).toHaveTextContent(
+      /I read 42 rows and matched your columns to Enterprise profile\./,
+    );
 
     await waitFor(() =>
-      expect(screen.getByLabelText("Team source column")).toHaveValue(
-        "scorecard_id",
+      expect(screen.getByLabelText("Tenant Key source column")).toHaveValue(
+        "tenant_key",
       ),
     );
-    expect(screen.getByLabelText("Measurement date source column")).toHaveValue(
-      "last_updated",
+    expect(screen.getByLabelText("Company Name source column")).toHaveValue(
+      "company_name",
     );
-    expect(
-      screen.getByLabelText("Deployment frequency source column"),
-    ).toHaveValue("deploy_frequency_per_week");
-    expect(screen.getByLabelText("Lead time source column")).toHaveValue(
-      "lead_time_for_change_hours",
+    expect(screen.getByLabelText("Revenue Usd source column")).toHaveValue(
+      "revenue_usd",
     );
-    expect(screen.getByLabelText("Record id")).toHaveValue("scorecard_id");
-    expect(screen.getByLabelText("Title")).toHaveValue("metric");
+    expect(screen.getByLabelText("Employees source column")).toHaveValue("employees");
+    expect(screen.getByLabelText("Fiscal Year End source column")).toHaveValue(
+      "fiscal_year_end",
+    );
+    expect(screen.getByLabelText("Record id")).toHaveValue("");
+    expect(screen.getByLabelText("Title")).toHaveValue("company_name");
     expect(screen.queryByText(/Supply or map the required field/i)).toBeNull();
 
-    fireEvent.change(screen.getByLabelText("Lead time source column"), {
-      target: { value: "MTTR_hours" },
+    fireEvent.change(screen.getByLabelText("Employees source column"), {
+      target: { value: "revenue_usd" },
     });
-    expect(screen.getByLabelText("Lead time source column")).toHaveValue(
-      "MTTR_hours",
+    expect(screen.getByLabelText("Employees source column")).toHaveValue(
+      "revenue_usd",
     );
 
     fireEvent.click(screen.getByText("Advanced"));
     await waitFor(() =>
       expect(screen.getByText("Chunk text columns")).toBeTruthy(),
     );
-    expect(screen.getByLabelText("lead_time_for_change_hours")).toBeChecked();
+    expect(screen.getByLabelText("tenant_key")).toBeChecked();
   });
 
   it("marks unresolved CSV headers as review-required in plain language", async () => {
     render(
       <CsvUploadConnector
-        clientId="client-skyharbor"
-        tenantKey="skyharbor-air"
-        tenantName="Skyharbor Air"
-        initialTemplateId="dora-baseline"
+        clientId="client-test"
+        tenantKey="test-tenant"
+        tenantName="Test tenant"
+        initialTemplateId="enterprise-profile"
       />,
     );
+
+    fireEvent.change(screen.getByLabelText("Data area"), {
+      target: { value: "enterprise-profile" },
+    });
 
     const file = new File(["mystery,unknown\none,two\n"], "unknown.csv", {
       type: "text/csv",
@@ -103,13 +115,13 @@ describe("CsvUploadConnector", () => {
     });
 
     expect(
-      await screen.findByText(
-        /I read 1 rows and matched your columns to Delivery \/ DORA \/ DevEx\./,
-      ),
-    ).toBeTruthy();
+      await screen.findByRole("region", { name: "Column mapping confirmation" }),
+    ).toHaveTextContent(
+      /I read 1 rows and matched your columns to Enterprise profile\./,
+    );
     expect(
       screen.getAllByText(/Needs a matching source column before commit/),
-    ).toHaveLength(4);
+    ).toHaveLength(5);
     expect(
       screen.getByRole("button", { name: "Needs review before commit" }),
     ).toBeDisabled();
