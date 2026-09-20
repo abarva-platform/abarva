@@ -1173,6 +1173,20 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
           ),
         ),
     ).toBe(true);
+    const actionSql = runCalls.find((call) =>
+      isDirectActionCandidateSql(call.sql),
+    )?.sql;
+    expect(actionSql).toBeDefined();
+    expect(normalizedSql(actionSql ?? "")).toContain(
+      "WITH current_action_contracts AS MATERIALIZED",
+    );
+    expect(normalizedSql(actionSql ?? "")).toContain(
+      "LEFT JOIN current_action_contracts current_action",
+    );
+    expect(normalizedSql(actionSql ?? "")).toContain(
+      "WHERE current_contract.tenant_key = ANY($1::text[])",
+    );
+    expect(normalizedSql(actionSql ?? "")).not.toContain("AND NOT EXISTS (");
   });
 
   it("does not call heavy impact views when direct impact rows are complete", async () => {
