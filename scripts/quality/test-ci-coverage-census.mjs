@@ -1031,6 +1031,65 @@ function writeIfChanged(absolutePath, contents) {
  * would have passed that guard: it was a real comparison of the wrong two
  * fields, and it said all the right things while doing it.
  */
+/**
+ * Drift in the COVERAGE SHAPE — which directories are uncovered or partially
+ * covered — as distinct from drift in the counts.
+ *
+ * This exists because of the question the comment above `describeDrift` left
+ * open: would a check that fails on disagreement fire on every unrelated pull
+ * request that adds a test, or only when the file is genuinely stale? It was
+ * measured rather than argued. Adding one ordinary test to an already-covered
+ * directory moves three counts — `testFiles`, `coveredTestFiles` and
+ * `pullRequestCoveredTestFiles` — and moves these sets by exactly zero.
+ *
+ * So a gate on the counts would fire on nearly every pull request and teach
+ * people to regenerate a two-thousand-line file to get green. A gate on the
+ * sets fires only when the wiring itself changed, which is the thing the
+ * committed census is consulted for. That is what `--check` enforces; the
+ * counts stay a report.
+ */
+export function describeShapeDrift(measured, committedPath) {
+  if (!existsSync(committedPath)) {
+    return { state: "absent", line: `no committed census at ${CENSUS_RELATIVE_PATH}` };
+  }
+
+  let committed;
+  try {
+    committed = JSON.parse(readFileSync(committedPath, "utf8"));
+  } catch (error) {
+    return {
+      state: "unreadable",
+      line: `committed census could not be parsed: ${error.message}`,
+    };
+  }
+
+  const shape = (census) => ({
+    uncovered: new Set((census.uncoveredDirectories ?? []).map((r) => r.directory)),
+    partial: new Set(
+      (census.partiallyCoveredDirectories ?? []).map((r) => r.directory),
+    ),
+  });
+  const was = shape(committed);
+  const now = shape(measured);
+  const missing = (a, b) => [...a].filter((d) => !b.has(d)).sort();
+
+  const changes = [
+    ...missing(now.uncovered, was.uncovered).map((d) => `+uncovered ${d}`),
+    ...missing(was.uncovered, now.uncovered).map((d) => `-uncovered ${d}`),
+    ...missing(now.partial, was.partial).map((d) => `+partial ${d}`),
+    ...missing(was.partial, now.partial).map((d) => `-partial ${d}`),
+  ];
+
+  if (changes.length === 0) {
+    return { state: "current", line: "coverage shape matches the committed census", changes };
+  }
+  return {
+    state: "drifted",
+    line: `coverage shape has drifted in ${changes.length} director${changes.length === 1 ? "y" : "ies"}`,
+    changes,
+  };
+}
+
 export function describeDrift(measured, committedPath) {
   if (!existsSync(committedPath)) {
     return { state: "absent", line: `no committed census at ${CENSUS_RELATIVE_PATH}` };
@@ -1104,15 +1163,35 @@ function main() {
 
   // Always reported, never enforced. `--write` has just made them agree, so
   // after a write this says so rather than repeating a stale number.
-  const drift = describeDrift(census, path.join(REPO_ROOT, CENSUS_RELATIVE_PATH));
+  const committedPath = path.join(REPO_ROOT, CENSUS_RELATIVE_PATH);
+  const drift = describeDrift(census, committedPath);
   if (!argv.includes("--json")) {
     console.log(`\ncensus drift: ${drift.line}`);
     if (drift.state === "drifted") {
       console.log(
         "  Refresh with: npm run audit:test-ci-coverage:write\n" +
-          "  This is a report, not a gate. The committed file is the input to which\n" +
-          "  directory gets wired next, so a stale one mis-ranks that queue.",
+          "  Counts alone are a report, not a gate. The committed file is the input\n" +
+          "  to which directory gets wired next, so a stale one mis-ranks that queue.",
       );
+    }
+  }
+
+  // `--check` gates the coverage SHAPE only. See describeShapeDrift for why
+  // the counts are deliberately not gated: they move on any pull request that
+  // adds a test, and the sets do not.
+  if (argv.includes("--check")) {
+    const shape = describeShapeDrift(census, committedPath);
+    if (!argv.includes("--json")) {
+      console.log(`census shape: ${shape.line}`);
+      for (const change of shape.changes ?? []) console.log(`  ${change}`);
+    }
+    if (shape.state !== "current") {
+      console.error(
+        "\ncensus shape drift: a directory changed coverage state without the " +
+          "committed census being refreshed.\n" +
+          "Refresh with: npm run audit:test-ci-coverage:write",
+      );
+      process.exitCode = 1;
     }
   }
 }

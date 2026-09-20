@@ -128,6 +128,25 @@ function makeFixture(files: Record<string, string>, scripts: Record<string, stri
   return dir;
 }
 
+/**
+ * The `--check` gate, run as the shell runs it. Returns the exit status,
+ * which is the whole point: the counts report has always printed its finding
+ * and exited 0, and a gate that did the same would be decoration.
+ */
+function runCensusCheck(cwd: string): { status: number; output: string } {
+  try {
+    const stdout = execFileSync(
+      process.execPath,
+      [path.join(cwd, CENSUS_SCRIPT), "--check"],
+      { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    );
+    return { status: 0, output: stdout };
+  } catch (error) {
+    const err = error as { status?: number; stdout?: string; stderr?: string };
+    return { status: err.status ?? 1, output: `${err.stdout ?? ""}${err.stderr ?? ""}` };
+  }
+}
+
 function runCensus(cwd: string): { status: number; stdout: string; census: Census } {
   let status = 0;
   let stdout = "";
@@ -969,5 +988,66 @@ describe("test CI coverage census", () => {
     expect(Object.keys(committed.counts).sort()).toEqual(Object.keys(census.counts).sort());
     expect(Array.isArray(committed.uncoveredDirectories)).toBe(true);
     expect(committed.counts.testFiles).toBeGreaterThan(0);
+  });
+
+  it("--check fails when a directory changes coverage state", () => {
+    // The gate's subject: the committed file omits a directory the
+    // measurement finds uncovered. That is the state in which the census
+    // mis-ranks the queue of what to wire next, which is what it is read for.
+    const dir = fixture({
+      "src/lib/nu/__tests__/kept.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/xi"),
+      "docs/architecture/test-ci-coverage-census.json": JSON.stringify(
+        { counts: {}, partiallyCoveredDirectories: [], uncoveredDirectories: [] },
+        null,
+        2,
+      ),
+    });
+    const { status, output } = runCensusCheck(dir);
+    expect(status).toBe(1);
+    expect(output).toContain("src/lib/nu/__tests__");
+  });
+
+  it("--check passes when only the counts moved, which is every PR that adds a test", () => {
+    // The negative control, and the reason this gate is on the shape rather
+    // than on the counts. Adding a test to an already-covered directory moves
+    // `testFiles` and `coveredTestFiles` and moves the directory sets by
+    // nothing. A gate on the counts would fire here -- on an ordinary pull
+    // request that did nothing wrong -- and teach people to regenerate a large
+    // generated file to get green.
+    const dir = fixture({
+      "src/lib/omicron/__tests__/kept.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/omicron"),
+      "docs/architecture/test-ci-coverage-census.json": JSON.stringify(
+        {
+          counts: { testFiles: 999, coveredTestFiles: 999 },
+          partiallyCoveredDirectories: [],
+          uncoveredDirectories: [],
+        },
+        null,
+        2,
+      ),
+    });
+    const { status, output } = runCensusCheck(dir);
+    expect(status).toBe(0);
+    expect(output).toContain("coverage shape matches");
+  });
+
+  it("the committed census still describes this repository's coverage shape", () => {
+    // The enforcement, run here rather than as a workflow step invoking the
+    // script. A step would put `scripts/quality/test-ci-coverage-census.mjs`
+    // into the set of commands a workflow reaches, and the census would then
+    // scan its own source for Jest invocations and find one it cannot resolve
+    // to literal paths -- `["jest", ...paths, …]`, quoted in its own
+    // documentation of the ratchet hop. That single unresolved invocation
+    // makes the census's covered count an upper bound, and three sibling
+    // guards correctly refuse to read a guess. Measured, not guessed at: the
+    // step took `indeterminateInvocations` from 0 to 1.
+    //
+    // So the gate lives where it does not perturb what it measures. `--check`
+    // remains for anyone running it by hand.
+    const { status, output } = runCensusCheck(repoRoot);
+    expect(output).toContain("coverage shape");
+    expect(status).toBe(0);
   });
 });
