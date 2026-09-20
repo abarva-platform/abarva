@@ -1,3 +1,10 @@
+import * as nodeFs from 'fs';
+import * as nodePath from 'path';
+
+import {
+  resolvePathStatus,
+  SHARED_PATH_DISPOSITIONS,
+} from '@/lib/qa/path-disposition';
 // I6 · Evidence Dataset Drawer tests.
 //
 // Pure deterministic tests over the I6 view helper plus a static-source
@@ -319,80 +326,88 @@ describe('module hygiene · evidence-dataset-drawer-view.ts', () => {
 // Module hygiene · component
 // ---------------------------------------------------------------------
 
-describe('module hygiene · EvidenceDatasetDrawer.tsx', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require('path') as typeof import('path');
+// Retired · EvidenceDatasetDrawer.tsx
+//
+// A describe block here read src/components/intelligence/EvidenceDatasetDrawer.tsx with
+// fs.readFileSync in its body. The legacy surface sunset at 0c6a86c51 deleted
+// that file, so the read threw during COLLECTION -- and a throw there takes
+// the whole file with it. Every block above this point stopped running too,
+// and jest reported "0 tests", which does not read as a failure the way a red
+// count does.
+//
+// Recorded as retired rather than deleted, and checked against the register,
+// so what the sunset cost stays visible and the claim cannot rot unnoticed.
+describe('retired · EvidenceDatasetDrawer.tsx (module hygiene · EvidenceDatasetDrawer.tsx)', () => {
+  const REGISTER_NAME = 'SHARED_PATH_DISPOSITIONS in src/lib/qa/path-disposition.ts';
+  const RETIRED_PATH = 'src/components/intelligence/EvidenceDatasetDrawer.tsx';
 
-  const sourcePath = path.resolve(
-    __dirname,
-    '../../../components/intelligence/EvidenceDatasetDrawer.tsx',
-  );
-  const source = fs.readFileSync(sourcePath, 'utf8');
-  const codeOnly = stripComments(source);
+  it('is absent, and the register names the commit that removed it', () => {
+    const abs = nodePath.resolve(__dirname, '../../../../', RETIRED_PATH);
+    expect(nodeFs.existsSync(abs)).toBe(false);
 
-  it('is a server component (no use client / hooks)', () => {
-    expect(source).not.toMatch(/'use client'/);
-    expect(codeOnly).not.toMatch(/\buseState\(/);
-    expect(codeOnly).not.toMatch(/\buseEffect\(/);
-  });
-
-  it('imports the I6 view helper and the AbarVa design tokens', () => {
-    expect(codeOnly).toMatch(
-      /from '@\/lib\/intelligence\/evidence-dataset-drawer-view'/,
+    const resolved = resolvePathStatus(
+      RETIRED_PATH,
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
     );
-    expect(codeOnly).toMatch(/from '@\/lib\/design\/abarva-theme'/);
+    expect(resolved.status).toBe('removed');
+    expect(resolved.detail).toContain('0c6a86c51');
   });
 
-  it('does not import Sentinel runtime, Atlas, Nexus, or agent runtime', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/sentinel\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/atlas\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/nexus\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\//);
-    expect(codeOnly).not.toMatch(/from '@\/components\/agent\//);
-  });
-
-  it('does not import Source UI, legacy /programs, mock.ts, auth, or supabase', () => {
-    expect(codeOnly).not.toMatch(/from '@\/lib\/source\//);
-    expect(codeOnly).not.toMatch(/from '@\/app\/\(maestro\)\/source\//);
-    expect(codeOnly).not.toMatch(/from '@\/app\/programs\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/programs\/mock'/);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/auth\//);
-    expect(codeOnly).not.toMatch(/from 'supabase/);
-  });
-
-  it('carries the data-evidence-dataset-drawer="i6" root attribute', () => {
-    expect(source).toMatch(/data-evidence-dataset-drawer="i6"/);
+  it('does not accept an absence nobody declared', () => {
+    const resolved = resolvePathStatus(
+      'src/components/intelligence/NeverExisted.tsx',
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('fail');
   });
 });
-
 // ---------------------------------------------------------------------
 // Mount · the I6 drawer is integrated in the canonical pattern detail
 // ---------------------------------------------------------------------
 
-describe('SentinelPatternDetail.tsx mounts the I6 drawer', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require('path') as typeof import('path');
+// Retired · SentinelPatternDetail.tsx
+//
+// A describe block here read src/components/intelligence/SentinelPatternDetail.tsx with
+// fs.readFileSync in its body. The legacy surface sunset at 0c6a86c51 deleted
+// that file, so the read threw during COLLECTION -- and a throw there takes
+// the whole file with it. Every block above this point stopped running too,
+// and jest reported "0 tests", which does not read as a failure the way a red
+// count does.
+//
+// Recorded as retired rather than deleted, and checked against the register,
+// so what the sunset cost stays visible and the claim cannot rot unnoticed.
+describe('retired · SentinelPatternDetail.tsx (SentinelPatternDetail.tsx mounts the I6 drawer)', () => {
+  const REGISTER_NAME = 'SHARED_PATH_DISPOSITIONS in src/lib/qa/path-disposition.ts';
+  const RETIRED_PATH = 'src/components/intelligence/SentinelPatternDetail.tsx';
 
-  const sourcePath = path.resolve(
-    __dirname,
-    '../../../components/intelligence/SentinelPatternDetail.tsx',
-  );
-  const source = fs.readFileSync(sourcePath, 'utf8');
+  it('is absent, and the register names the commit that removed it', () => {
+    const abs = nodePath.resolve(__dirname, '../../../../', RETIRED_PATH);
+    expect(nodeFs.existsSync(abs)).toBe(false);
 
-  it('imports EvidenceDatasetDrawer and the I6 view helper', () => {
-    expect(source).toMatch(/EvidenceDatasetDrawer/);
-    expect(source).toMatch(/buildEvidenceDatasetDrawerView/);
+    const resolved = resolvePathStatus(
+      RETIRED_PATH,
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('removed');
+    expect(resolved.detail).toContain('0c6a86c51');
   });
 
-  it('renders the drawer via EvidenceDatasetDrawerSection', () => {
-    expect(source).toMatch(/EvidenceDatasetDrawerSection/);
+  it('does not accept an absence nobody declared', () => {
+    const resolved = resolvePathStatus(
+      'src/components/intelligence/NeverExisted.tsx',
+      false,
+      SHARED_PATH_DISPOSITIONS,
+      REGISTER_NAME,
+    );
+    expect(resolved.status).toBe('fail');
   });
 });
-
 // ---------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------

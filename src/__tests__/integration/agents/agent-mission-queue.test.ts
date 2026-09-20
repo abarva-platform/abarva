@@ -347,7 +347,7 @@ describe('module hygiene · agent-mission-queue.ts', () => {
   const path = require('path') as typeof import('path');
   const sourcePath = path.resolve(
     __dirname,
-    '../../../lib/agents/agent-mission-queue.ts',
+    '../../../lib/agent/agent-mission-queue.ts',
   );
   const source = fs.readFileSync(sourcePath, 'utf8');
   const codeOnly = source
