@@ -495,13 +495,24 @@ const THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
  * from the production pilot so the main line carries the same access.
  * (fix/pilot-email-access-on-main)
  */
+/**
+ * No names, titles or employers here, deliberately. This repository is public,
+ * and a person's name and role written beside their address turns an access
+ * list into a published profile of who is piloting what — a disclosure about
+ * those people and their organisations, not about this code.
+ *
+ * The addresses stay because they ARE the grant: each key is what grants
+ * access, so removing or altering one would change who can reach a tenant, and
+ * nothing here touches that. Who each address belongs to is ops-only
+ * information and belongs wherever the engagement records live.
+ */
 const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
-  "kmysore@gmail.com": "meridian", // Kiran Mysore · CDAO / pilot sponsor
-  "surekha.durvasula@gmail.com": "lakeshore", // Surekha Durvasula · VP Innovation / Delivery
+  "kmysore@gmail.com": "meridian",
+  "surekha.durvasula@gmail.com": "lakeshore",
   "anandshp@gmail.com": "lakeshore",
   "admin@abarva.ai": "meridian",
   "anand@abarva.ai": "meridian",
-  "mreddy@republicebank.com": "arcturus", // Madhu Reddy · Republic E Bank / Financial Services pilot
+  "mreddy@republicebank.com": "arcturus",
 };
 
 const AGENT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> =
