@@ -64,9 +64,16 @@ const CLEAN_PLAN: ShimPlan = {
 };
 
 /** A scratch repository the gate can run against, plus the shims it will see. */
+interface ScratchOptions {
+  /** Paths the scratch repo must NOT contain, to exercise the missing-subject branches. */
+  omit?: ReadonlyArray<string>;
+  /** Raw file bodies that replace a manifest's default, keyed by repo-relative path. */
+  manifests?: Readonly<Record<string, string>>;
+}
+
 function makeScratchRepo(
   plan: Partial<ShimPlan> = {},
-  options: { omit?: ReadonlyArray<string> } = {},
+  options: ScratchOptions = {},
 ): string {
   const full: ShimPlan = { ...CLEAN_PLAN, ...plan };
   const omit = new Set(options.omit ?? []);
@@ -80,9 +87,14 @@ function makeScratchRepo(
   };
 
   // The three manifests section 2 reads. Shapes are the minimum the gate parses.
-  write('docs/build/build-slices.json', JSON.stringify({ slices: [{ id: 'A-1' }] }));
-  write('docs/build/production-readiness.json', JSON.stringify({ components: [] }));
-  write('docs/build/build-waves.json', JSON.stringify({ waves: [] }));
+  // A case may replace any of them outright, including with text that is not JSON.
+  const manifests = options.manifests ?? {};
+  const manifest = (rel: string, fallback: string) =>
+    write(rel, Object.prototype.hasOwnProperty.call(manifests, rel) ? manifests[rel] : fallback);
+
+  manifest('docs/build/build-slices.json', JSON.stringify({ slices: [{ id: 'A-1' }] }));
+  manifest('docs/build/production-readiness.json', JSON.stringify({ components: [] }));
+  manifest('docs/build/build-waves.json', JSON.stringify({ waves: [] }));
   write(SECRET_HYGIENE_TEST, '// scratch subject; the shimmed jest decides the result\n');
 
   // The real script, at the path it derives its repo root from.
@@ -173,7 +185,7 @@ function verdictFor(run: GateRun, needle: string): string {
 }
 
 const scratchRoots: string[] = [];
-function scratch(plan?: Partial<ShimPlan>, options?: { omit?: ReadonlyArray<string> }): string {
+function scratch(plan?: Partial<ShimPlan>, options?: ScratchOptions): string {
   const root = makeScratchRepo(plan, options);
   scratchRoots.push(root);
   return root;
@@ -312,6 +324,90 @@ describe('hygiene gate · the stash contract names fields the real script emits'
     for (const field of new Set(readFields)) {
       expect(Object.keys(parsed)).toContain(field);
     }
+  });
+});
+
+// T-072 — the four remaining checks built on `<command> | grep -q ok`.
+//
+// The item recorded them as unmeasured rather than as wrong, and the measurement
+// splits them. The three JSON-validity checks send stderr to /dev/null, so the
+// only thing that can reach the pipe is the literal `ok` the success path prints
+// — a closed set of two outcomes, and the idiom is correct there by direction.
+//
+// The duplicate-slice check is not. It captures stderr with `2>&1`, discards the
+// `process.exit(1)` its own node program uses to signal duplicates, and then
+// searches the combined output for the substring `ok`. Any duplicated slice id
+// that happens to CONTAIN those two letters is printed in the failure message
+// and read back as the success token: measured on `1074721679`, a manifest with
+// `booking-flow` twice makes the gate print `[PASS] No duplicate slice IDs`.
+//
+// Today every id in `docs/build/build-slices.json` is `S<n>`, so the defect is
+// latent rather than live. A check that is correct only because no subject has
+// yet been named with the wrong letters is the same vacuity class as T-071.
+const SLICES = 'docs/build/build-slices.json';
+
+describe('hygiene gate · the duplicate-slice check judges the result, not the letters in it', () => {
+  it('reports a duplicate whose id contains the success token', () => {
+    const run = runGate(
+      scratch(undefined, {
+        manifests: {
+          [SLICES]: JSON.stringify({ slices: [{ id: 'booking-flow' }, { id: 'booking-flow' }] }),
+        },
+      }),
+    );
+    expect(verdictFor(run, 'duplicate slice')).toBe('FAIL');
+  });
+
+  it('reports a duplicate whose id does not contain it', () => {
+    const run = runGate(
+      scratch(undefined, {
+        manifests: { [SLICES]: JSON.stringify({ slices: [{ id: 'A-1' }, { id: 'A-1' }] }) },
+      }),
+    );
+    expect(verdictFor(run, 'duplicate slice')).toBe('FAIL');
+  });
+
+  // The negative control. Without it, "fail whenever the output mentions ok"
+  // would pass both cases above, and the check would be vacuous in the other
+  // direction — a gate that cannot pass is no more useful than one that cannot
+  // fail. A unique id carrying the same two letters must still pass.
+  it('passes a manifest whose ids contain the success token but do not repeat', () => {
+    const run = runGate(
+      scratch(undefined, {
+        manifests: {
+          [SLICES]: JSON.stringify({ slices: [{ id: 'booking-flow' }, { id: 'booking-search' }] }),
+        },
+      }),
+    );
+    expect(verdictFor(run, 'duplicate slice')).toBe('PASS');
+  });
+
+  it('fails rather than passes when the manifest has no slices to check', () => {
+    const run = runGate(
+      scratch(undefined, { manifests: { [SLICES]: JSON.stringify({ notSlices: [] }) } }),
+    );
+    expect(verdictFor(run, 'duplicate slice')).toBe('FAIL');
+  });
+});
+
+// These three were measured correct before this change and are pinned so the
+// conversion to exit status is provably behaviour-identical rather than assumed
+// to be. Each manifest is its own check, so each gets its own invalid case.
+describe('hygiene gate · the JSON-validity checks keep their verdicts', () => {
+  it.each([
+    ['build-slices.json', SLICES, 'build-slices'],
+    ['production-readiness.json', 'docs/build/production-readiness.json', 'production-readiness'],
+    ['build-waves.json', 'docs/build/build-waves.json', 'build-waves'],
+  ])('fails on %s when it is not parseable', (_label, path, needle) => {
+    const run = runGate(scratch(undefined, { manifests: { [path]: '{"slices":[' } }));
+    expect(verdictFor(run, needle)).toBe('FAIL');
+  });
+
+  it('passes all three when every manifest parses', () => {
+    const run = runGate(scratch());
+    expect(verdictFor(run, 'build-slices')).toBe('PASS');
+    expect(verdictFor(run, 'production-readiness')).toBe('PASS');
+    expect(verdictFor(run, 'build-waves')).toBe('PASS');
   });
 });
 
