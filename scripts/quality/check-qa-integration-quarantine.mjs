@@ -46,7 +46,7 @@ const LIST = path.join(HERE, "qa-integration-quarantine.json");
  * than this number as well as longer, so a cleared entry cannot leave silent
  * headroom for the next one.
  */
-const CEILING = 4;
+const CEILING = 3;
 
 const { quarantined } = JSON.parse(readFileSync(LIST, "utf8"));
 const problems = [];

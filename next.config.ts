@@ -43,8 +43,15 @@ const nextConfig: NextConfig = {
   // ADMIN8 — /admin is now the canonical admin tree. The previous
   // /admin → /platform and /admin/:path* → /platform/admin/:path*
   // redirects have been retired so /admin/* pages can render directly.
-  // Legacy /platform/admin{,/architecture,/production-readiness} pages
-  // perform their own App-Router-level `redirect()` to /admin/...
+  // Legacy /platform/admin{,/production-readiness} pages perform their own
+  // App-Router-level `redirect()` to /admin/...
+  //
+  // /platform/admin/architecture was listed here and never existed: no commit
+  // on this history has added or removed that page, so there has never been
+  // anything at that path to perform a redirect. The Architecture panel went
+  // with the ADMIN8 consolidation and there is no /admin/architecture either.
+  // Naming a redirect that does not exist is how a canon regression came to
+  // require the route for months.
   // No blanket /platform/admin/:path* redirect is added because many
   // legacy /platform/admin/* sub-routes (approvals, audit, brief,
   // connectors, context, data, data-governance, data-guide,
