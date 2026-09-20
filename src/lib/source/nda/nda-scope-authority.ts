@@ -29,6 +29,8 @@ export type NdaCoverageState =
   | "covered_by_waiver"
   | "not_covered";
 
+import type { ExecutedDocumentEvidence } from "./executed-document-evidence";
+
 export type NdaScopeLevel = "supplier_entity" | "supplier_and_affiliates" | "event_only";
 
 /** An executed NDA document, uploaded under control. */
@@ -46,6 +48,14 @@ export type ExecutedNdaRecord = {
   effectiveFrom: string;
   effectiveTo?: string;
   uploadedBy: string;
+  /**
+   * What was captured about the signing itself, where anything was.
+   *
+   * Absent on every record written before the capture columns existed, which
+   * is why coverage treats absence and incompleteness differently — see
+   * `stage05-nda-coverage.ts`.
+   */
+  signatureEvidence?: ExecutedDocumentEvidence;
 };
 
 /**

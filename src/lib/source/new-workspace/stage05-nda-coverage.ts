@@ -7,6 +7,7 @@ import {
   type NdaAuthorityRead,
 } from "@/lib/source/nda/nda-authority-repository";
 import { evaluateNdaCoverage } from "@/lib/source/nda/nda-scope-authority";
+import { evaluateExecutedDocumentEvidence } from "@/lib/source/nda/executed-document-evidence";
 
 export type Stage05SupplierAuthoritySlice = {
   candidate: AcceptedEventCandidate;
@@ -51,6 +52,26 @@ const unavailableProjection = (asOf: string): SourceNewStage05NdaCoverage => ({
       "The governed candidate-panel registry could not be read. Supplier NDA coverage stays blocked until authority is available.",
   },
 });
+
+
+/**
+ * The signature verdict for the executed NDA that granted coverage.
+ *
+ * Returns null when the granting record cannot be found, which is not a
+ * silent pass: coverage was granted by `evaluateNdaCoverage` against that
+ * same list, so a miss here means the two disagree, and the caller treats a
+ * null as "nothing to add" rather than as evidence.
+ */
+function signatureVerdictFor(
+  ndaId: string | undefined,
+  ndaAuthority: NdaAuthorityRead,
+  asOf: string,
+) {
+  if (!ndaId) return null;
+  const record = ndaAuthority.executedNdas.find((nda) => nda.ndaId === ndaId);
+  if (!record?.signatureEvidence) return { state: "absent" as const, defects: [] };
+  return evaluateExecutedDocumentEvidence(record.signatureEvidence, asOf);
+}
 
 export function buildSourceNewStage05NdaCoverage(
   input: SourceNewStage05CoverageInput,
@@ -98,6 +119,47 @@ export function buildSourceNewStage05NdaCoverage(
         asOf: input.asOf,
       });
 
+      // Coverage by an executed document is only as good as the evidence
+      // that it was executed. A hash proves the bytes did not change; it
+      // says nothing about whose signature is on them.
+      //
+      // Absence and incompleteness are treated differently, and that is a
+      // decision rather than caution. No row carried signature evidence
+      // before the capture columns existed, so refusing on absence would
+      // turn every covered supplier red the day this lands — a gate that
+      // fails on arrival is a gate somebody switches off. Refusing on
+      // *incompleteness* costs nothing today and bites the moment anyone
+      // starts recording evidence badly, which is when it should.
+      // Keyed on the granting document, not on the coverage state. A
+      // waiver grants no `ndaId`, so the verdict is null for it — which is
+      // right, since a waiver is a different instrument and asserting
+      // document evidence against it would refuse a correct record.
+      //
+      // An earlier version also tested `state === "covered_by_nda"`. That
+      // branch was unreachable: `evaluateNdaCoverage` sets `ndaId` on no
+      // other state, so no input could tell the two conditions apart, and a
+      // mutation removing it survived every case. A guard nothing can
+      // exercise is not a safeguard.
+      const signature = signatureVerdictFor(
+        result.ndaId,
+        ndaAuthority,
+        input.asOf,
+      );
+
+      if (signature?.state === "incomplete") {
+        return {
+          legalEntityId: candidate.legalEntityId,
+          legalName: candidate.legalName,
+          state: "not_covered",
+          reason:
+            `Executed NDA ${result.ndaId} is on file, but its signature evidence is ` +
+            `incomplete: ${signature.defects.join(" ")}`,
+          authorityReference: result.ndaId ?? null,
+          evidenceReference: candidate.evidenceReference,
+          evidenceCaveats: result.evidenceCaveats,
+        };
+      }
+
       return {
         legalEntityId: candidate.legalEntityId,
         legalName: candidate.legalName,
@@ -105,7 +167,14 @@ export function buildSourceNewStage05NdaCoverage(
         reason: result.reason,
         authorityReference: result.ndaId ?? result.waiver?.waiverId ?? null,
         evidenceReference: candidate.evidenceReference,
-        evidenceCaveats: result.evidenceCaveats,
+        evidenceCaveats:
+          signature?.state === "absent"
+            ? [
+                ...result.evidenceCaveats,
+                "No signature evidence is recorded for this document, so nothing "
+                  + "shows who signed it or when. The file is on record; the signing is not.",
+              ]
+            : result.evidenceCaveats,
       };
     },
   );
