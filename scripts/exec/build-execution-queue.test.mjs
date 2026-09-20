@@ -433,6 +433,45 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* A duplicate structural reference used to render the same claimable item  */
+/* twice. That defeats the queue's collision-prevention contract even though */
+/* the backlog itself contains only one definition.                          */
+{
+  const dir = freshFixture();
+  const mapPath = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(mapPath, "utf8"));
+  map.platformTrack.items.push(map.platformTrack.items[0]);
+  fs.writeFileSync(mapPath, `${JSON.stringify(map, null, 2)}\n`);
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  check(
+    "a structural item list cannot repeat the same item reference",
+    board.status !== 0 && /repeats item/i.test(board.stderr) && /platformTrack\.items/.test(board.stderr),
+    `board exit=${board.status}\nstderr=${board.stderr.trim()}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* A capability is a second view over stage work, not a second structural    */
+/* placement. The guard must not reject the intended stage/capability reuse. */
+{
+  const dir = freshFixture();
+  const mapPath = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(mapPath, "utf8"));
+  const stage = map.stages.find((candidate) =>
+    Array.isArray(candidate.items) && candidate.items.length > 0 && Array.isArray(candidate.capabilities),
+  );
+  if (!stage) throw new Error("fixture map has no stage with items and capabilities");
+  stage.capabilities.push({ capability: "Intentional reuse fixture", items: [stage.items[0]] });
+  fs.writeFileSync(mapPath, `${JSON.stringify(map, null, 2)}\n`);
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  check(
+    "the same item may support both a stage and one of its capabilities",
+    board.status === 0,
+    `board exit=${board.status}\nstderr=${board.stderr.trim()}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 /* ------------------------------------------------------------------------ */
 /* 9. Every established append-only claim grammar holds the item. T-600.   */
 /* ------------------------------------------------------------------------ */
