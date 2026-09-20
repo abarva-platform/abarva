@@ -27,6 +27,7 @@ env:
   AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
   AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
   AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
 
 jobs:
   deploy:
@@ -87,6 +88,19 @@ jobs:
           if (( ${#missing[@]} > 0 )); then
             printf 'Missing Azure deploy configuration:\n' >&2
             printf -- '- %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+
+      - name: Assert live Clerk browser configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}" ]]; then
+            echo "The production environment variable NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing." >&2
+            exit 1
+          fi
+          if [[ "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" != pk_live_* ]]; then
+            echo "Shared app.abarva.ai releases require a Clerk live publishable key." >&2
             exit 1
           fi
 
@@ -330,6 +344,8 @@ jobs:
               --image "$IMAGE" \
               --revision-suffix "$revision_suffix" \
               --set-env-vars \
+                "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" \
+                "CLERK_SECRET_KEY=secretref:clerk-secret-key" \
                 "ABARVA_PRIVATE_BROWSER_PROOF_ENABLED=1" \
                 "ABARVA_PRIVATE_BROWSER_PROOF_TOKEN=secretref:parallel-run-token" \
               --output json | tee audit-artifacts/aca-main-deploy/containerapp-update.json; then
