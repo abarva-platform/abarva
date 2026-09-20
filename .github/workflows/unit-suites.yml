@@ -267,6 +267,34 @@ jobs:
       - name: Run the Source core suites
         run: npx jest src/lib/source/__tests__ --no-coverage --ci
 
+      # Nineteen approval and approval-adjacent route suites across thirteen
+      # directories were not reached by a pull-request workflow. The narrow
+      # list is deliberate: their common parents also contain unrelated route
+      # trees, so naming a broad parent would hide which governed gate failed.
+      - name: Run governed approval route suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/approve-route.test.ts"
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/estimates-route.test.ts"
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/config-route.test.ts"
+          "src/app/api/v1/programs/[programId]/pricing/__tests__/estimate-detail-routes.test.ts"
+          "src/app/(maestro)/admin/__tests__/page-source.test.ts"
+          "src/app/(maestro)/admin/__tests__/cached-helpers-log-errors.test.ts"
+          "src/app/(maestro)/admin/__tests__/layout-access.test.ts"
+          "src/app/api/admin/programs/approvals/__tests__/_auth.test.ts"
+          "src/app/api/admin/programs/approvals/__tests__/route.test.ts"
+          "src/app/api/admin/pricing/rate-cards/[id]/approve/__tests__/route.test.ts"
+          "src/app/api/admin/programs/approvals/export/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/phase-gate-approval/__tests__/route.test.ts"
+          "src/app/api/v1/programs/[programId]/solution-options/approve/__tests__/route.test.ts"
+          "src/app/api/v1/source/[eventId]/stage/__tests__/route.test.ts"
+          "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/__tests__/route.test.ts"
+          "src/app/api/v1/source/events/[eventId]/approve/__tests__/route.test.ts"
+          "src/app/api/v1/source/events/[eventId]/request-approval/__tests__/route.test.ts"
+          --no-coverage --ci
+
       # These three steps name SUBDIRECTORIES rather than a parent, which is the
       # opposite of every step above, and the reason matters: each of these
       # parents contains red suites. Naming the parent here would wire a known
