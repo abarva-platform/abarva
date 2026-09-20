@@ -47,7 +47,11 @@ const APEX_CLIENT = {
   id: 'apex-uuid',
   name: 'Apex Retail Group',
   industry_code: 'retail',
-  key: 'apex-retail' as const,
+  // The app-tier ClientKey, which is what `getActiveClientRow` returns.
+  // This fixture used to carry 'apex-retail' — the BROKER key — so the
+  // `tenant_key` assertions below passed by identity rather than by
+  // exercising the app-key -> broker-key mapping they are there to prove.
+  key: 'apexretail' as const,
 };
 
 describe('validateSynthesisTool', () => {

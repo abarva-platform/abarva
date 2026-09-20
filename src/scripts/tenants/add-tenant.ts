@@ -234,8 +234,11 @@ export function patchClientConfig(
       `    color: '${input.color ?? DEFAULT_NEW_TENANT_COLOR}',\n` +
       `    vertical: '${INDUSTRY_VERTICAL[input.industry]}',\n` +
       `  },\n`;
-    const ALL_CLIENTS_CLOSE = "] as const;";
-    const ALL_CLIENTS_START = "export const ALL_CLIENTS:";
+    // Anchors track the declaration in client-config.ts. The array closes
+    // with `satisfies` rather than a bare `as const;` so that the ids stay
+    // literal and `ClientKey` is a union rather than `string`.
+    const ALL_CLIENTS_CLOSE = "] as const satisfies readonly ClientOption[];";
+    const ALL_CLIENTS_START = "export const ALL_CLIENTS =";
     const startIdx = source.indexOf(ALL_CLIENTS_START);
     if (startIdx === -1)
       throw new Error("ALL_CLIENTS array not found in client-config.ts");

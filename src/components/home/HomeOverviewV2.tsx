@@ -84,7 +84,12 @@ interface TenantBrand {
   tagline: string;
 }
 
-const TENANT_BRAND: Record<ClientKey, TenantBrand> = {
+// Not every tenant has authored branding, and the reader below already has a
+// fallback for the ones that do not — `lakeshore` has never had an entry here.
+// `Partial<Record<ClientKey, …>>` says that truthfully: a key that is not a
+// tenant is still rejected, a missing tenant is still visible to the reader as
+// `undefined`, and nothing here pretends the map is complete when it is not.
+const TENANT_BRAND: Partial<Record<ClientKey, TenantBrand>> = {
   meridian: {
     initials: "MH",
     bgColor: "#0F766E",
