@@ -88,7 +88,31 @@ export type NdaCoverageResult = {
   /** Set only when a waiver is what cleared it, so a surface can display it separately. */
   waiver?: NdaWaiverRecord;
   ndaId?: string;
+  /**
+   * Where this answer rested on something asserted rather than derived.
+   *
+   * Two inputs are taken on trust. The published template versions are
+   * whatever the caller hands over, not a Legal-owned register; the covered
+   * affiliate entity ids are whatever the NDA record claims, not a corporate
+   * tree. Deriving either is blocked on register tables that do not exist
+   * yet, so until then the honest thing is to say, beside the answer, that
+   * the confidence exceeds the evidence.
+   *
+   * A caveat appears only when the answer actually depended on that input.
+   * Attaching both to every result would train a reader to skip them, which
+   * is the same as not stating them.
+   */
+  evidenceCaveats: readonly string[];
 };
+
+const TEMPLATE_CAVEAT =
+  "The published template versions were supplied by the caller, not verified " +
+  "against a Legal-owned register. A wrong list changes this answer.";
+
+const AFFILIATE_CAVEAT =
+  "This entity is covered as an affiliate, and the affiliate list was asserted " +
+  "by the NDA record rather than derived from the corporate tree. A wrong list " +
+  "changes this answer.";
 
 function withinWindow(asOf: string, from: string, to?: string): boolean {
   const at = Date.parse(asOf);
@@ -162,6 +186,8 @@ export function evaluateNdaCoverage(input: NdaCoverageInput): NdaCoverageResult 
       state: "not_covered",
       reason:
         "The NDA registry slice is unavailable. Coverage is unknown, and unknown is not covered.",
+      // Nothing was consulted, so nothing was taken on trust.
+      evidenceCaveats: [],
     };
   }
 
@@ -170,15 +196,21 @@ export function evaluateNdaCoverage(input: NdaCoverageInput): NdaCoverageResult 
       state: "not_covered",
       reason:
         "Legal has published no NDA template versions, so no executed document can be checked against one.",
+      evidenceCaveats: [TEMPLATE_CAVEAT],
     };
   }
 
   const match = input.executedNdas.find((nda) => ndaCovers(nda, input));
   if (match) {
+    const viaAffiliateList =
+      match.supplierLegalEntityId !== input.supplierLegalEntityId;
     return {
       state: "covered_by_nda",
       ndaId: match.ndaId,
       reason: `Executed NDA ${match.ndaId} on template ${match.templateVersion} covers this event and entity.`,
+      evidenceCaveats: viaAffiliateList
+        ? [TEMPLATE_CAVEAT, AFFILIATE_CAVEAT]
+        : [TEMPLATE_CAVEAT],
     };
   }
 
@@ -197,6 +229,9 @@ export function evaluateNdaCoverage(input: NdaCoverageInput): NdaCoverageResult 
         `No executed NDA covers this event. Waiver ${usable.waiver.waiverId} applies, approved by ` +
         `${usable.waiver.approvedByLegalName} until ${usable.waiver.expiresAt}: ${usable.waiver.reason}. ` +
         "Display it as a waiver, not as an NDA.",
+      // A waiver cites no template and no affiliate list. Nothing asserted
+      // stood behind this answer.
+      evidenceCaveats: [],
     };
   }
 
@@ -204,11 +239,31 @@ export function evaluateNdaCoverage(input: NdaCoverageInput): NdaCoverageResult 
     .filter((candidate) => candidate.defects.length > 0)
     .map((candidate) => `${candidate.waiver.waiverId} (${candidate.defects.join("; ")})`);
 
+  // A refusal rests on the asserted template list only when some executed
+  // NDA would otherwise have covered this event and was turned away for its
+  // template alone. Any other refusal stands on its own facts, and saying
+  // "the list might be wrong" there would be noise.
+  const turnedAwayOnTemplateAlone = input.executedNdas.some(
+    (nda) =>
+      !input.publishedTemplateVersions.includes(nda.templateVersion) &&
+      ndaCovers(
+        nda,
+        {
+          ...input,
+          publishedTemplateVersions: [
+            ...input.publishedTemplateVersions,
+            nda.templateVersion,
+          ],
+        },
+      ),
+  );
+
   return {
     state: "not_covered",
     reason:
       rejected.length > 0
         ? `No executed NDA covers this event, and no waiver is usable: ${rejected.join(", ")}.`
         : "No executed NDA covers this event and no waiver has been granted.",
+    evidenceCaveats: turnedAwayOnTemplateAlone ? [TEMPLATE_CAVEAT] : [],
   };
 }
