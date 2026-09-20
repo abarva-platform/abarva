@@ -185,8 +185,17 @@ jobs:
       - name: Run the Source data-model suites
         run: npx jest src/lib/source/data-model --no-coverage --ci
 
-      - name: Run the pricing effort-engine suites
-        run: npx jest src/lib/pricing/effort-engine --no-coverage --ci
+      # Widened from `pricing/effort-engine` to the whole `pricing` tree on
+      # `7ff4759ff`: 42 suites / 384 tests, of which effort-engine's 14 were
+      # already running here. Replacing the narrower path rather than adding
+      # beside it is what keeps those 14 from running twice.
+      - name: Run the pricing suites
+        run: npx jest src/lib/pricing --no-coverage --ci
+
+      # src/lib/ingestion: 11 suites / 76 tests / 13 importers, reached by no
+      # workflow and no npm script.
+      - name: Run the ingestion suites
+        run: npx jest src/lib/ingestion --no-coverage --ci
 
       # Two Source library trees that no workflow and no npm script reached.
       # Measured on `0b80d8c7a` by running them:

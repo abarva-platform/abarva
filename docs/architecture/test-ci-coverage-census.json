@@ -13,19 +13,19 @@
   ],
   "counts": {
     "testFiles": 2328,
-    "coveredTestFiles": 1425,
-    "pullRequestCoveredTestFiles": 1422,
-    "uncoveredTestFiles": 903,
+    "coveredTestFiles": 1464,
+    "pullRequestCoveredTestFiles": 1461,
+    "uncoveredTestFiles": 864,
     "directoriesWithTests": 476,
-    "directoriesFullyCovered": 145,
+    "directoriesFullyCovered": 149,
     "directoriesPartiallyCovered": 20,
-    "directoriesUncovered": 311,
-    "directoriesWithUnrunTestFiles": 331,
+    "directoriesUncovered": 307,
+    "directoriesWithUnrunTestFiles": 327,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 33,
-    "highGovernedRiskDirectories": 96,
-    "unclassifiedRiskDirectories": 202
+    "highGovernedRiskDirectories": 93,
+    "unclassifiedRiskDirectories": 201
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -699,32 +699,6 @@
       }
     },
     {
-      "directory": "src/lib/pricing/__tests__",
-      "testFiles": 11,
-      "unrunTestFiles": 11,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 38
-      }
-    },
-    {
-      "directory": "src/lib/pricing/governed-load/__tests__",
-      "testFiles": 11,
-      "unrunTestFiles": 11,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 39
-      }
-    },
-    {
       "directory": "src/lib/enterprise-context/__tests__",
       "testFiles": 9,
       "unrunTestFiles": 9,
@@ -734,7 +708,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 40
+        "rank": 38
       }
     },
     {
@@ -747,7 +721,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 41
+        "rank": 39
       }
     },
     {
@@ -760,20 +734,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 42
-      }
-    },
-    {
-      "directory": "src/lib/pricing/moves-workflow/__tests__",
-      "testFiles": 6,
-      "unrunTestFiles": 6,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 43
+        "rank": 40
       }
     },
     {
@@ -786,7 +747,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 44
+        "rank": 41
       }
     },
     {
@@ -799,7 +760,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 45
+        "rank": 42
       }
     },
     {
@@ -812,7 +773,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 46
+        "rank": 43
       }
     },
     {
@@ -825,7 +786,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 47
+        "rank": 44
       }
     },
     {
@@ -838,7 +799,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 48
+        "rank": 45
       }
     },
     {
@@ -851,7 +812,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 49
+        "rank": 46
       }
     },
     {
@@ -864,7 +825,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 50
+        "rank": 47
       }
     },
     {
@@ -877,7 +838,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 51
+        "rank": 48
       }
     },
     {
@@ -890,7 +851,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 52
+        "rank": 49
       }
     },
     {
@@ -903,7 +864,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 53
+        "rank": 50
       }
     },
     {
@@ -916,7 +877,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 54
+        "rank": 51
       }
     },
     {
@@ -929,7 +890,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 55
+        "rank": 52
       }
     },
     {
@@ -942,7 +903,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 56
+        "rank": 53
       }
     },
     {
@@ -955,7 +916,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 57
+        "rank": 54
       }
     },
     {
@@ -968,7 +929,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 58
+        "rank": 55
       }
     },
     {
@@ -981,7 +942,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 59
+        "rank": 56
       }
     },
     {
@@ -994,7 +955,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 60
+        "rank": 57
       }
     },
     {
@@ -1007,7 +968,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 61
+        "rank": 58
       }
     },
     {
@@ -1020,7 +981,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 62
+        "rank": 59
       }
     },
     {
@@ -1033,7 +994,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 63
+        "rank": 60
       }
     },
     {
@@ -1046,7 +1007,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 64
+        "rank": 61
       }
     },
     {
@@ -1059,7 +1020,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 65
+        "rank": 62
       }
     },
     {
@@ -1072,7 +1033,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 66
+        "rank": 63
       }
     },
     {
@@ -1085,7 +1046,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 67
+        "rank": 64
       }
     },
     {
@@ -1098,7 +1059,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 68
+        "rank": 65
       }
     },
     {
@@ -1111,7 +1072,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 69
+        "rank": 66
       }
     },
     {
@@ -1124,7 +1085,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 70
+        "rank": 67
       }
     },
     {
@@ -1137,7 +1098,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 71
+        "rank": 68
       }
     },
     {
@@ -1150,7 +1111,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 72
+        "rank": 69
       }
     },
     {
@@ -1163,7 +1124,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 73
+        "rank": 70
       }
     },
     {
@@ -1176,7 +1137,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 74
+        "rank": 71
       }
     },
     {
@@ -1189,7 +1150,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 75
+        "rank": 72
       }
     },
     {
@@ -1202,7 +1163,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 76
+        "rank": 73
       }
     },
     {
@@ -1215,7 +1176,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 77
+        "rank": 74
       }
     },
     {
@@ -1228,7 +1189,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 78
+        "rank": 75
       }
     },
     {
@@ -1241,7 +1202,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 79
+        "rank": 76
       }
     },
     {
@@ -1254,7 +1215,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 80
+        "rank": 77
       }
     },
     {
@@ -1267,7 +1228,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 81
+        "rank": 78
       }
     },
     {
@@ -1280,7 +1241,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 82
+        "rank": 79
       }
     },
     {
@@ -1293,7 +1254,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 83
+        "rank": 80
       }
     },
     {
@@ -1306,7 +1267,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 84
+        "rank": 81
       }
     },
     {
@@ -1319,7 +1280,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 85
+        "rank": 82
       }
     },
     {
@@ -1332,7 +1293,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 86
+        "rank": 83
       }
     },
     {
@@ -1345,7 +1306,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 87
+        "rank": 84
       }
     },
     {
@@ -1358,7 +1319,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 88
+        "rank": 85
       }
     },
     {
@@ -1371,7 +1332,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 89
+        "rank": 86
       }
     },
     {
@@ -1384,7 +1345,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 90
+        "rank": 87
       }
     },
     {
@@ -1397,7 +1358,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 91
+        "rank": 88
       }
     },
     {
@@ -1410,7 +1371,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 92
+        "rank": 89
       }
     },
     {
@@ -1423,7 +1384,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 93
+        "rank": 90
       }
     },
     {
@@ -1436,7 +1397,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 94
+        "rank": 91
       }
     },
     {
@@ -1449,7 +1410,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 95
+        "rank": 92
       }
     },
     {
@@ -1462,7 +1423,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 96
+        "rank": 93
       }
     },
     {
@@ -1475,7 +1436,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 97
+        "rank": 94
       }
     },
     {
@@ -1488,7 +1449,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 98
+        "rank": 95
       }
     },
     {
@@ -1501,7 +1462,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 99
+        "rank": 96
       }
     },
     {
@@ -1514,7 +1475,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 100
+        "rank": 97
       }
     },
     {
@@ -1527,7 +1488,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 101
+        "rank": 98
       }
     },
     {
@@ -1540,7 +1501,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 102
+        "rank": 99
       }
     },
     {
@@ -1553,7 +1514,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 103
+        "rank": 100
       }
     },
     {
@@ -1566,7 +1527,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 104
+        "rank": 101
       }
     },
     {
@@ -1579,7 +1540,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 105
+        "rank": 102
       }
     },
     {
@@ -1592,7 +1553,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 106
+        "rank": 103
       }
     },
     {
@@ -1605,7 +1566,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 107
+        "rank": 104
       }
     },
     {
@@ -1618,7 +1579,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 108
+        "rank": 105
       }
     },
     {
@@ -1631,7 +1592,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 109
+        "rank": 106
       }
     },
     {
@@ -1644,7 +1605,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 110
+        "rank": 107
       }
     },
     {
@@ -1657,7 +1618,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 111
+        "rank": 108
       }
     },
     {
@@ -1670,7 +1631,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 112
+        "rank": 109
       }
     },
     {
@@ -1683,7 +1644,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 113
+        "rank": 110
       }
     },
     {
@@ -1696,7 +1657,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 114
+        "rank": 111
       }
     },
     {
@@ -1709,7 +1670,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 115
+        "rank": 112
       }
     },
     {
@@ -1722,7 +1683,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 116
+        "rank": 113
       }
     },
     {
@@ -1735,7 +1696,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 117
+        "rank": 114
       }
     },
     {
@@ -1748,7 +1709,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 118
+        "rank": 115
       }
     },
     {
@@ -1761,7 +1722,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 119
+        "rank": 116
       }
     },
     {
@@ -1774,7 +1735,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 120
+        "rank": 117
       }
     },
     {
@@ -1787,7 +1748,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 121
+        "rank": 118
       }
     },
     {
@@ -1800,7 +1761,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 122
+        "rank": 119
       }
     },
     {
@@ -1813,7 +1774,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 123
+        "rank": 120
       }
     },
     {
@@ -1826,7 +1787,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 124
+        "rank": 121
       }
     },
     {
@@ -1839,7 +1800,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 125
+        "rank": 122
       }
     },
     {
@@ -1852,7 +1813,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 126
+        "rank": 123
       }
     },
     {
@@ -1865,7 +1826,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 127
+        "rank": 124
       }
     },
     {
@@ -1878,7 +1839,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 128
+        "rank": 125
       }
     },
     {
@@ -1891,7 +1852,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 129
+        "rank": 126
       }
     }
   ],
@@ -2501,24 +2462,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/ingestion/__tests__",
-      "testFiles": 11,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/pricing/__tests__",
-      "testFiles": 11,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/pricing/governed-load/__tests__",
-      "testFiles": 11,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/programs/phase-packs/__tests__",
       "testFiles": 10,
       "coveredTestFiles": 0,
@@ -2616,12 +2559,6 @@
     },
     {
       "directory": "src/lib/intelligence/canonical",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/pricing/moves-workflow/__tests__",
       "testFiles": 6,
       "coveredTestFiles": 0,
       "via": []
