@@ -131,6 +131,57 @@ export type PathDispositionRegister = Record<string, PathDisposition>;
  * so the two reports cannot drift apart the way they had by T-524.
  */
 export const SHARED_PATH_DISPOSITIONS: PathDispositionRegister = {
+  'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: 'src/app/(maestro)/intelligence/page.tsx',
+      note:
+        'The tenant-scoped Intelligence route was sunset with the other legacy ' +
+        'surface versions. The surviving /intelligence route renders ' +
+        'AdvisoryIntelligencePage. Added by 5d795a397, deleted by 0c6a86c51, ' +
+        'both confirmed ancestors of main.',
+    },
+  },
+  'src/components/intelligence/IntelligenceLensTabs.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'The tab strip of the tenant-scoped Intelligence surface, removed with ' +
+        'the route that rendered it. Nothing replaced it: the surviving ' +
+        '/intelligence route is not tab-based. The name survives only in test ' +
+        'files, which is how four suites came to assert that a deleted route ' +
+        'imports a component that no longer exists.',
+    },
+  },
+  'src/components/intelligence/SentinelActivePatterns.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. Its suite read ' +
+        'this file at module scope, so its absence threw during collection and ' +
+        'the suite reported zero tests rather than a failure.',
+    },
+  },
+  'src/components/intelligence/decision/IntelligenceEmptyState.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. It was the ' +
+        'first entry in the legacy-setup-links surface list, so the read threw ' +
+        'on iteration one and the surviving surface after it was never checked.',
+    },
+  },
   'src/components/intelligence/IntelligenceRouteShell.tsx': {
     retired: {
       scope: 'containing-directory',
