@@ -143,6 +143,22 @@ function resolveSourceModule(root, importer, specifier) {
  */
 const TYPE_ONLY_STATEMENT_RE =
   /\b(?:import|export)\s+type\s[^;'"]*?\bfrom\s*["'][^"']+["']/g;
+/**
+ * A bare side-effect import — `import "../route";` — loads the module and runs
+ * it, so it is a product edge in exactly the way a named import is. It carries
+ * no `from`, so the specifier pattern below never saw it: a directory whose
+ * only edge to a governed module took that form scored zero and banded
+ * `unclassified`. That under-states governed risk, which is the dangerous
+ * direction for a ranking whose job is to say where to look first.
+ *
+ * Anchored to the start of a line deliberately. This file's own header records
+ * why the census refuses to credit a path a reachable script merely mentions,
+ * and an unanchored `import\s*["']` would credit the word `import` followed by
+ * a quoted path anywhere in the file — prose in a comment included. A statement
+ * that does not begin its line is missed instead, which is the safe direction.
+ */
+const SIDE_EFFECT_IMPORT_RE = /^[ \t]*import\s*["']([^"']+)["']/gm;
+
 const BRACED_IMPORT_RE =
   /\b(?:import|export)\s*\{([^}]*)\}\s*from\s*["'][^"']+["']/g;
 
@@ -165,6 +181,9 @@ function importedProductSources(root, testFile) {
   for (const match of source.matchAll(
     /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)["']([^"']+)["']/g,
   )) {
+    specifiers.push(match[1]);
+  }
+  for (const match of source.matchAll(SIDE_EFFECT_IMPORT_RE)) {
     specifiers.push(match[1]);
   }
 
