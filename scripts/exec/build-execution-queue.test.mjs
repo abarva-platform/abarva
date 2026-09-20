@@ -104,6 +104,23 @@ function run(dir, script, args = []) {
   }
 }
 
+/**
+ * Add an id to the fixture's structure map.
+ *
+ * The map is repo-owned, so the fixture carries its own copy; a case that
+ * injects a backlog id has to place it or the board refuses the run.
+ */
+function mapFixtureId(dir, id) {
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  const stages = map.stages ?? map;
+  const firstList = Object.values(stages).find((v) => Array.isArray(v))
+    ?? Object.values(stages).flatMap((v) => Object.values(v ?? {})).find((v) => Array.isArray(v));
+  if (!firstList) throw new Error("fixture map has no id list to extend");
+  firstList.push(id);
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+}
+
 function buildBoardAndQueue(dir) {
   const board = run(dir, "build-source-board.mjs", ["--json"]);
   if (board.status !== 0) throw new Error(`fixture board build failed:\n${board.stderr}`);
@@ -243,6 +260,10 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
     path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
     "\n| T-997 | **Injected by the T-076 test, second form.** | T | Be visible |\n",
   );
+  // Map the injected id. An unmapped id now fails the board on its own, and
+  // this case is measuring the staleness trap -- leaving T-997 unmapped would
+  // make the board fail first and the case would stop testing its subject.
+  mapFixtureId(dir, "T-997");
   const board = run(dir, "build-source-board.mjs"); // note: no --json
   const q = run(dir, "build-execution-queue.mjs");
   check(
@@ -324,6 +345,57 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
   );
   fs.rmSync(operatorRoot, { recursive: true, force: true });
 }
+
+
+/* ------------------------------------------------------------------------ */
+/* An unmapped backlog id is invisible to the queue. It used to print a line */
+/* and exit 0, so the item silently never reached anyone -- two ids reached  */
+/* that state in one afternoon. It now fails the run, and the board is still */
+/* written so the output is there to read.                                   */
+/* ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| T-996 | **Injected unmapped, on purpose.** | T | Be refused |\n",
+  );
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  check(
+    "an unmapped backlog id fails the board run",
+    board.status !== 0,
+    `board exit=${board.status}; an unmapped id must not pass silently`,
+  );
+  check(
+    "the failure names the id and the file to edit",
+    board.stderr.includes("T-996") && board.stderr.includes("source-stage-map.json"),
+    `stderr=${board.stderr.trim()}`,
+  );
+  check(
+    "the board is still written, so the run reports rather than refusing",
+    fs.existsSync(path.join(dir, "source-board-summary.json")),
+    "no summary was written; a gate that produces nothing stops being run",
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* The other direction: mapping the same id must clear it. Without this the  */
+/* case above is satisfied by a board that always fails.                     */
+{
+  const dir = freshFixture();
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    "\n| T-996 | **Injected and mapped.** | T | Be offered |\n",
+  );
+  mapFixtureId(dir, "T-996");
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  check(
+    "mapping the id clears the failure",
+    board.status === 0,
+    `board exit=${board.status}\nstderr=${board.stderr.trim()}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
