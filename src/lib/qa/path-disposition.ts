@@ -66,6 +66,31 @@ export interface RetiredPath {
   replacement: string | null;
   /** Why it went, in the words of the change that removed it. */
   note: string;
+  /**
+   * The commit that brought the file BACK, when one did.
+   *
+   * A retirement that was undone is still a fail — the register and the tree
+   * disagree and somebody has to decide which is right. What changes is what
+   * the reader is handed. Three of the ten paths T-528 measured are back on
+   * the tree, two of them restored by one squashed merge, and the report said
+   * only "still exists": the right verdict with none of the evidence,
+   * which is the same defect one level up from the one this module was built
+   * to stop.
+   *
+   * This is a claim about history, and the only observation available to a
+   * filesystem verifier is presence — so the resolver reports it ONLY on the
+   * present branch, where presence is exactly what a restoration asserts. An
+   * absent path never repeats the claim, because there the tree contradicts
+   * it. And an entry that omits this field while the file is present is told
+   * so out loud rather than passed over, or the evidence-free verdict returns
+   * for free in the next entry somebody writes.
+   */
+  restoredAt?: {
+    /** Short SHA of the restoring commit, on this branch's own history. */
+    commit: string;
+    /** What the restoring change was doing when it brought the file back. */
+    note: string;
+  };
 }
 
 /** A path that has not been built yet, under a named slice. */
@@ -186,14 +211,20 @@ export function resolvePathStatus(
       };
     }
     if (disposition?.retired) {
-      const { commit, slice } = disposition.retired;
+      const { commit, slice, restoredAt } = disposition.retired;
+      const account = restoredAt
+        ? `It came back at ${restoredAt.commit}: ${restoredAt.note}`
+        : 'The return is unaccounted for — no commit is named for it. Measure ' +
+          `it with git log on this branch and record it on the ${registerName} ` +
+          'entry, so the next reader is not left to find it again';
       return {
         status: 'fail',
         detail:
           `${rel} is declared retired by ${commit} (${slice}) but the file is ` +
-          'present. Either the retirement was reverted, in which case remove ' +
-          `the ${registerName} entry, or this is an unintended restoration. A ` +
-          'register that disagrees with the tree is no better than a guess.',
+          `present. ${account}. Either the retirement was reverted, in which ` +
+          `case remove the ${registerName} entry, or this is an unintended ` +
+          'restoration. A register that disagrees with the tree is no better ' +
+          'than a guess.',
       };
     }
     return { status: 'pass', detail: `Found: ${rel}` };

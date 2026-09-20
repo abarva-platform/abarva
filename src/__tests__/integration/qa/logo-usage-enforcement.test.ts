@@ -24,7 +24,11 @@ describe('BRAND2 Logo Usage Enforcement', () => {
       expect(check.targetFile.length).toBeGreaterThan(0);
       expect(typeof check.description).toBe('string');
       expect(check.description.length).toBeGreaterThan(0);
-      expect(['pass', 'fail', 'deferred', 'not_applicable']).toContain(check.status);
+      // 'removed' added under T-528: the retired-path checks now resolve
+      // through BRAND_PATH_REGISTER, which distinguishes an absence with a
+      // named commit behind it from a plain pass. Same vocabulary the two
+      // repaired sibling verifiers use.
+      expect(['pass', 'fail', 'deferred', 'removed', 'not_applicable']).toContain(check.status);
       expect(typeof check.detail).toBe('string');
       expect(check.deterministicSeed).toBe(true);
     }
@@ -70,7 +74,14 @@ describe('BRAND2 Logo Usage Enforcement', () => {
       check.checkId.startsWith('BRAND2-C9-') || check.checkId.startsWith('BRAND2-C10-'),
     );
     expect(retiredChecks.length).toBeGreaterThanOrEqual(10);
-    expect(retiredChecks.every((check) => check.status === 'pass')).toBe(true);
+    // Was `=== 'pass'`. Under T-528 an absence that names the commit which
+    // removed it reports 'removed', so the old literal no longer describes the
+    // state this case is guarding. The guard itself is unchanged and still
+    // RED on purpose: three of the ten assets are back on the tree and
+    // resolve to 'fail'. Relaxing this to "removed or fail" would let the
+    // returning assets satisfy the very case that exists to catch them —
+    // T-504 owns which of them is canonical, and it is not cleared here.
+    expect(retiredChecks.every((check) => check.status === 'removed')).toBe(true);
   });
 
   it('getBannedLogoPatterns() returns non-empty array', () => {
