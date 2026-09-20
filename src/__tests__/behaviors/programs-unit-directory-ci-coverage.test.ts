@@ -100,8 +100,15 @@ const WIRED_DIRECTORIES = [
  * `expert-kernel` rows — the tree's own `__tests__` plus eight nested ones —
  * and none of them stopped existing. One command reaches all nine because it
  * names the parent; the count moved by nine because nine rows were covered.
+ *
+ * 26 → 22 on 20 Sep for wiring `phase-packs`, `discovery` and `exports`.
+ * Three tree names, four directories: `exports` carries a nested
+ * `renderers/__tests__`, which is the same "the tree is bigger than the row"
+ * shape as the entry above. Checked, not inferred — the four were read off the
+ * set of directories that left the uncovered set, and each is a descendant of
+ * one of the three names.
  */
-const DARK_DIRECTORY_COUNT = 26;
+const DARK_DIRECTORY_COUNT = 22;
 
 type Census = {
   counts: { indeterminateInvocations: number };

@@ -12,20 +12,20 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2336,
-    "coveredTestFiles": 1599,
-    "pullRequestCoveredTestFiles": 1596,
-    "uncoveredTestFiles": 737,
+    "testFiles": 2338,
+    "coveredTestFiles": 1639,
+    "pullRequestCoveredTestFiles": 1636,
+    "uncoveredTestFiles": 699,
     "directoriesWithTests": 477,
-    "directoriesFullyCovered": 218,
+    "directoriesFullyCovered": 224,
     "directoriesPartiallyCovered": 16,
-    "directoriesUncovered": 243,
-    "directoriesWithUnrunTestFiles": 259,
+    "directoriesUncovered": 237,
+    "directoriesWithUnrunTestFiles": 253,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 12,
-    "highGovernedRiskDirectories": 50,
-    "unclassifiedRiskDirectories": 197
+    "highGovernedRiskDirectories": 49,
+    "unclassifiedRiskDirectories": 192
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -390,19 +390,6 @@
       }
     },
     {
-      "directory": "src/lib/programs/discovery/__tests__",
-      "testFiles": 9,
-      "unrunTestFiles": 9,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 18
-      }
-    },
-    {
       "directory": "src/lib/governance/__tests__",
       "testFiles": 8,
       "unrunTestFiles": 7,
@@ -412,7 +399,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 19
+        "rank": 18
       }
     },
     {
@@ -425,7 +412,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -438,7 +425,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -451,7 +438,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -464,7 +451,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -477,7 +464,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -490,7 +477,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 25
+        "rank": 24
       }
     },
     {
@@ -503,7 +490,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 26
+        "rank": 25
       }
     },
     {
@@ -516,7 +503,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 27
+        "rank": 26
       }
     },
     {
@@ -529,7 +516,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 28
+        "rank": 27
       }
     },
     {
@@ -542,7 +529,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 29
+        "rank": 28
       }
     },
     {
@@ -555,7 +542,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 30
+        "rank": 29
       }
     },
     {
@@ -568,7 +555,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 31
+        "rank": 30
       }
     },
     {
@@ -581,7 +568,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 32
+        "rank": 31
       }
     },
     {
@@ -594,7 +581,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 33
+        "rank": 32
       }
     },
     {
@@ -607,7 +594,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 34
+        "rank": 33
       }
     },
     {
@@ -620,7 +607,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 35
+        "rank": 34
       }
     },
     {
@@ -633,7 +620,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 36
+        "rank": 35
       }
     },
     {
@@ -646,7 +633,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 37
+        "rank": 36
       }
     },
     {
@@ -659,7 +646,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 38
+        "rank": 37
       }
     },
     {
@@ -672,7 +659,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 39
+        "rank": 38
       }
     },
     {
@@ -685,7 +672,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 40
+        "rank": 39
       }
     },
     {
@@ -698,7 +685,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 41
+        "rank": 40
       }
     },
     {
@@ -711,7 +698,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 42
+        "rank": 41
       }
     },
     {
@@ -724,7 +711,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 43
+        "rank": 42
       }
     },
     {
@@ -737,7 +724,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 44
+        "rank": 43
       }
     },
     {
@@ -750,7 +737,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 45
+        "rank": 44
       }
     },
     {
@@ -763,7 +750,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 46
+        "rank": 45
       }
     },
     {
@@ -776,7 +763,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 47
+        "rank": 46
       }
     },
     {
@@ -789,7 +776,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 48
+        "rank": 47
       }
     },
     {
@@ -802,7 +789,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 49
+        "rank": 48
       }
     },
     {
@@ -815,7 +802,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 50
+        "rank": 49
       }
     },
     {
@@ -828,7 +815,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 51
+        "rank": 50
       }
     },
     {
@@ -841,7 +828,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 52
+        "rank": 51
       }
     },
     {
@@ -854,7 +841,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 53
+        "rank": 52
       }
     },
     {
@@ -867,7 +854,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 54
+        "rank": 53
       }
     },
     {
@@ -880,7 +867,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 55
+        "rank": 54
       }
     },
     {
@@ -893,7 +880,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 56
+        "rank": 55
       }
     },
     {
@@ -906,7 +893,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 57
+        "rank": 56
       }
     },
     {
@@ -919,7 +906,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 58
+        "rank": 57
       }
     },
     {
@@ -932,7 +919,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 59
+        "rank": 58
       }
     },
     {
@@ -945,7 +932,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 60
+        "rank": 59
       }
     },
     {
@@ -958,7 +945,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 61
+        "rank": 60
       }
     },
     {
@@ -971,7 +958,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 62
+        "rank": 61
       }
     }
   ],
@@ -1326,23 +1313,6 @@
       }
     },
     {
-      "directory": "src/lib/programs/discovery/__tests__",
-      "testFiles": 9,
-      "unrunTestFiles": 9,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/programs/discovery/evidence-readiness.ts"
-        ],
-        "rank": 18
-      }
-    },
-    {
       "directory": "src/lib/governance/__tests__",
       "testFiles": 8,
       "unrunTestFiles": 7,
@@ -1357,7 +1327,7 @@
           "src/lib/governance/context-bundle-adapters.ts",
           "src/lib/governance/readiness-backfill.ts"
         ],
-        "rank": 19
+        "rank": 18
       }
     },
     {
@@ -1376,7 +1346,7 @@
           "src/lib/intelligence/sentinel-broker-adapter.ts",
           "src/lib/intelligence/skyharbor-cto-readiness.ts"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -1393,7 +1363,7 @@
         "tenantScopedReadSources": [
           "src/lib/knowledge/consumption-server/reader.ts"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -1410,7 +1380,7 @@
         "tenantScopedReadSources": [
           "src/lib/active-client.ts"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -1428,7 +1398,7 @@
           "src/lib/azure-search/tenant-context-backfill.ts",
           "src/lib/azure-search/tenant-context-retriever.ts"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -1445,7 +1415,7 @@
         "tenantScopedReadSources": [
           "src/lib/knowledge/tenant-data/supabase-adapter.ts"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -1461,6 +1431,23 @@
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/lib/programs/current-state-readiness.ts"
+        ],
+        "rank": 24
+      }
+    },
+    {
+      "directory": "src/lib/source/contract-evidence/__tests__",
+      "testFiles": 4,
+      "unrunTestFiles": 4,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 1,
+        "tenantScopedReadSources": [
+          "src/lib/source/contract-evidence/read-model.ts"
         ],
         "rank": 25
       }
@@ -1486,12 +1473,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/programs/phase-packs/__tests__",
-      "testFiles": 10,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/visual-system/__tests__",
       "testFiles": 10,
       "coveredTestFiles": 0,
@@ -1505,18 +1486,6 @@
     },
     {
       "directory": "src/lib/knowledge/__tests__",
-      "testFiles": 9,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/notifications/__tests__",
-      "testFiles": 9,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/discovery/__tests__",
       "testFiles": 9,
       "coveredTestFiles": 0,
       "via": []
@@ -1648,12 +1617,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/programs/exports/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/programs/stage-readiness-workbooks/__tests__",
       "testFiles": 5,
       "coveredTestFiles": 0,
@@ -1727,12 +1690,6 @@
     },
     {
       "directory": "src/lib/programs/deliverables/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/programs/exports/renderers/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 0,
       "via": []
@@ -2639,12 +2596,6 @@
     },
     {
       "directory": "src/lib/lifecycle-operating-system/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/notifications/templates/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []
