@@ -72,5 +72,32 @@ jobs:
       - name: Run the unit suites
         run: npx jest src/__tests__/unit --no-coverage --ci
 
+      # `src/lib/admin/broker` is 21 suites / 211 tests that no workflow and no
+      # npm script reached. Measured through the census resolver on `b061a6819`,
+      # not by reading YAML: three directories, 16 + 4 + 1 test files, 0 covered.
+      #
+      # The backlog item that asked for this named 16, which is the top-level
+      # `__tests__` only. `broker/portfolio/__tests__` and
+      # `broker/sentinel/__tests__` are separate census rows and were missing
+      # from the count; naming the parent directory here covers all three and
+      # is why the number in this comment is 21 rather than 16.
+      #
+      # These are not dead modules. 40 non-test files import `admin/broker`,
+      # including webhook routes, cron routes, server actions and admin pages,
+      # so the suites cover code that runs.
+      #
+      # The sibling tree `src/lib/admin/__tests__` (38 files) is deliberately
+      # NOT wired here: run on `b061a6819` it is 5 failed of 62 suites, 9
+      # failing cases. A red directory is wired by fixing it, never by adding
+      # it to a green command. `src/lib/admin/ai-initiatives` (2 files, 8
+      # tests) is green and still unwired -- left for its own item rather than
+      # widened into this one.
+      #
+      # Named as a directory, without a trailing slash, for the two reasons in
+      # the header, so a suite added under `broker` tomorrow runs the day it
+      # lands.
+      - name: Run the admin broker suites
+        run: npx jest src/lib/admin/broker --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci

@@ -13,19 +13,19 @@
   ],
   "counts": {
     "testFiles": 2323,
-    "coveredTestFiles": 999,
-    "pullRequestCoveredTestFiles": 996,
-    "uncoveredTestFiles": 1324,
+    "coveredTestFiles": 1020,
+    "pullRequestCoveredTestFiles": 1017,
+    "uncoveredTestFiles": 1303,
     "directoriesWithTests": 476,
-    "directoriesFullyCovered": 91,
+    "directoriesFullyCovered": 94,
     "directoriesPartiallyCovered": 22,
-    "directoriesUncovered": 363,
-    "directoriesWithUnrunTestFiles": 385,
+    "directoriesUncovered": 360,
+    "directoriesWithUnrunTestFiles": 382,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
-    "criticalGovernedRiskDirectories": 55,
+    "criticalGovernedRiskDirectories": 54,
     "highGovernedRiskDirectories": 110,
-    "unclassifiedRiskDirectories": 220
+    "unclassifiedRiskDirectories": 218
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -325,20 +325,6 @@
       }
     },
     {
-      "directory": "src/lib/admin/broker/__tests__",
-      "testFiles": 16,
-      "unrunTestFiles": 16,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 9
-      }
-    },
-    {
       "directory": "src/lib/data-plane/write-adapters/__tests__",
       "testFiles": 11,
       "unrunTestFiles": 11,
@@ -349,7 +335,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -363,7 +349,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -377,7 +363,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -391,7 +377,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -405,7 +391,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -419,7 +405,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 15
+        "rank": 14
       }
     },
     {
@@ -433,7 +419,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 16
+        "rank": 15
       }
     },
     {
@@ -447,7 +433,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 17
+        "rank": 16
       }
     },
     {
@@ -461,7 +447,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 18
+        "rank": 17
       }
     },
     {
@@ -475,7 +461,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 19
+        "rank": 18
       }
     },
     {
@@ -489,7 +475,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -503,7 +489,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -517,7 +503,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -531,7 +517,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -545,7 +531,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -559,7 +545,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 25
+        "rank": 24
       }
     },
     {
@@ -573,7 +559,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 26
+        "rank": 25
       }
     },
     {
@@ -587,7 +573,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 27
+        "rank": 26
       }
     },
     {
@@ -601,7 +587,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 28
+        "rank": 27
       }
     },
     {
@@ -615,7 +601,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 29
+        "rank": 28
       }
     },
     {
@@ -629,7 +615,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 30
+        "rank": 29
       }
     },
     {
@@ -642,7 +628,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 31
+        "rank": 30
       }
     },
     {
@@ -655,7 +641,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 32
+        "rank": 31
       }
     },
     {
@@ -668,7 +654,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 33
+        "rank": 32
       }
     },
     {
@@ -681,7 +667,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 34
+        "rank": 33
       }
     },
     {
@@ -694,7 +680,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 35
+        "rank": 34
       }
     },
     {
@@ -707,7 +693,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 36
+        "rank": 35
       }
     },
     {
@@ -720,7 +706,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 37
+        "rank": 36
       }
     },
     {
@@ -733,7 +719,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 38
+        "rank": 37
       }
     },
     {
@@ -746,7 +732,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 39
+        "rank": 38
       }
     },
     {
@@ -759,7 +745,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 40
+        "rank": 39
       }
     },
     {
@@ -772,7 +758,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 41
+        "rank": 40
       }
     },
     {
@@ -785,7 +771,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 42
+        "rank": 41
       }
     },
     {
@@ -798,7 +784,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 43
+        "rank": 42
       }
     },
     {
@@ -811,7 +797,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 44
+        "rank": 43
       }
     },
     {
@@ -824,7 +810,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 45
+        "rank": 44
       }
     },
     {
@@ -837,7 +823,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 46
+        "rank": 45
       }
     },
     {
@@ -850,7 +836,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 47
+        "rank": 46
       }
     },
     {
@@ -863,7 +849,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 48
+        "rank": 47
       }
     },
     {
@@ -876,7 +862,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 49
+        "rank": 48
       }
     },
     {
@@ -889,7 +875,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 50
+        "rank": 49
       }
     },
     {
@@ -902,7 +888,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 51
+        "rank": 50
       }
     },
     {
@@ -915,7 +901,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 52
+        "rank": 51
       }
     },
     {
@@ -928,7 +914,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 53
+        "rank": 52
       }
     },
     {
@@ -941,7 +927,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 54
+        "rank": 53
       }
     },
     {
@@ -954,7 +940,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 55
+        "rank": 54
       }
     },
     {
@@ -967,7 +953,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 56
+        "rank": 55
       }
     },
     {
@@ -980,7 +966,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 57
+        "rank": 56
       }
     },
     {
@@ -993,7 +979,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 58
+        "rank": 57
       }
     },
     {
@@ -1006,7 +992,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 59
+        "rank": 58
       }
     },
     {
@@ -1019,7 +1005,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 60
+        "rank": 59
       }
     },
     {
@@ -1032,7 +1018,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 61
+        "rank": 60
       }
     },
     {
@@ -1045,7 +1031,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 62
+        "rank": 61
       }
     },
     {
@@ -1058,7 +1044,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 63
+        "rank": 62
       }
     },
     {
@@ -1071,7 +1057,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 64
+        "rank": 63
       }
     },
     {
@@ -1084,7 +1070,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 65
+        "rank": 64
       }
     },
     {
@@ -1097,7 +1083,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 66
+        "rank": 65
       }
     },
     {
@@ -1110,7 +1096,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 67
+        "rank": 66
       }
     },
     {
@@ -1123,7 +1109,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 68
+        "rank": 67
       }
     },
     {
@@ -1136,7 +1122,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 69
+        "rank": 68
       }
     },
     {
@@ -1149,7 +1135,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 70
+        "rank": 69
       }
     },
     {
@@ -1162,7 +1148,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 71
+        "rank": 70
       }
     },
     {
@@ -1175,7 +1161,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 72
+        "rank": 71
       }
     },
     {
@@ -1188,7 +1174,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 73
+        "rank": 72
       }
     },
     {
@@ -1201,7 +1187,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 74
+        "rank": 73
       }
     },
     {
@@ -1214,7 +1200,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 75
+        "rank": 74
       }
     },
     {
@@ -1227,7 +1213,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 76
+        "rank": 75
       }
     },
     {
@@ -1240,7 +1226,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 77
+        "rank": 76
       }
     },
     {
@@ -1253,7 +1239,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 78
+        "rank": 77
       }
     },
     {
@@ -1266,7 +1252,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 79
+        "rank": 78
       }
     },
     {
@@ -1279,7 +1265,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 80
+        "rank": 79
       }
     },
     {
@@ -1292,7 +1278,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 81
+        "rank": 80
       }
     },
     {
@@ -1305,7 +1291,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 82
+        "rank": 81
       }
     },
     {
@@ -1318,7 +1304,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 83
+        "rank": 82
       }
     },
     {
@@ -1331,7 +1317,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 84
+        "rank": 83
       }
     },
     {
@@ -1344,7 +1330,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 85
+        "rank": 84
       }
     },
     {
@@ -1357,7 +1343,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 86
+        "rank": 85
       }
     },
     {
@@ -1370,7 +1356,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 87
+        "rank": 86
       }
     },
     {
@@ -1383,7 +1369,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 88
+        "rank": 87
       }
     },
     {
@@ -1396,7 +1382,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 89
+        "rank": 88
       }
     },
     {
@@ -1409,7 +1395,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 90
+        "rank": 89
       }
     },
     {
@@ -1422,7 +1408,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 91
+        "rank": 90
       }
     },
     {
@@ -1435,7 +1421,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 92
+        "rank": 91
       }
     },
     {
@@ -1448,7 +1434,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 93
+        "rank": 92
       }
     },
     {
@@ -1461,7 +1447,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 94
+        "rank": 93
       }
     },
     {
@@ -1474,7 +1460,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 95
+        "rank": 94
       }
     },
     {
@@ -1487,7 +1473,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 96
+        "rank": 95
       }
     },
     {
@@ -1500,7 +1486,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 97
+        "rank": 96
       }
     },
     {
@@ -1513,7 +1499,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 98
+        "rank": 97
       }
     },
     {
@@ -1526,7 +1512,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 99
+        "rank": 98
       }
     },
     {
@@ -1539,7 +1525,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 100
+        "rank": 99
       }
     },
     {
@@ -1552,7 +1538,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 101
+        "rank": 100
       }
     },
     {
@@ -1565,7 +1551,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 102
+        "rank": 101
       }
     },
     {
@@ -1578,7 +1564,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 103
+        "rank": 102
       }
     },
     {
@@ -1591,7 +1577,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 104
+        "rank": 103
       }
     },
     {
@@ -1604,7 +1590,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 105
+        "rank": 104
       }
     },
     {
@@ -1617,7 +1603,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 106
+        "rank": 105
       }
     },
     {
@@ -1630,7 +1616,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 107
+        "rank": 106
       }
     },
     {
@@ -1643,7 +1629,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 108
+        "rank": 107
       }
     },
     {
@@ -1656,7 +1642,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 109
+        "rank": 108
       }
     },
     {
@@ -1669,7 +1655,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 110
+        "rank": 109
       }
     },
     {
@@ -1682,7 +1668,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 111
+        "rank": 110
       }
     },
     {
@@ -1695,7 +1681,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 112
+        "rank": 111
       }
     },
     {
@@ -1708,7 +1694,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 113
+        "rank": 112
       }
     },
     {
@@ -1721,7 +1707,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 114
+        "rank": 113
       }
     },
     {
@@ -1734,7 +1720,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 115
+        "rank": 114
       }
     },
     {
@@ -1747,7 +1733,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 116
+        "rank": 115
       }
     },
     {
@@ -1760,7 +1746,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 117
+        "rank": 116
       }
     },
     {
@@ -1773,7 +1759,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 118
+        "rank": 117
       }
     },
     {
@@ -1786,7 +1772,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 119
+        "rank": 118
       }
     },
     {
@@ -1799,7 +1785,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 120
+        "rank": 119
       }
     },
     {
@@ -1812,7 +1798,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 121
+        "rank": 120
       }
     },
     {
@@ -1825,7 +1811,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 122
+        "rank": 121
       }
     },
     {
@@ -1838,7 +1824,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 123
+        "rank": 122
       }
     },
     {
@@ -1851,7 +1837,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 124
+        "rank": 123
       }
     },
     {
@@ -1864,7 +1850,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 125
+        "rank": 124
       }
     },
     {
@@ -1877,7 +1863,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 126
+        "rank": 125
       }
     },
     {
@@ -1890,7 +1876,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 127
+        "rank": 126
       }
     },
     {
@@ -1903,7 +1889,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 128
+        "rank": 127
       }
     },
     {
@@ -1916,7 +1902,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 129
+        "rank": 128
       }
     },
     {
@@ -1929,7 +1915,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 130
+        "rank": 129
       }
     },
     {
@@ -1942,7 +1928,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 131
+        "rank": 130
       }
     },
     {
@@ -1955,7 +1941,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 132
+        "rank": 131
       }
     },
     {
@@ -1968,7 +1954,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 133
+        "rank": 132
       }
     },
     {
@@ -1981,7 +1967,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 134
+        "rank": 133
       }
     },
     {
@@ -1994,7 +1980,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 135
+        "rank": 134
       }
     },
     {
@@ -2007,7 +1993,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 136
+        "rank": 135
       }
     },
     {
@@ -2020,7 +2006,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 137
+        "rank": 136
       }
     },
     {
@@ -2033,7 +2019,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 138
+        "rank": 137
       }
     },
     {
@@ -2046,7 +2032,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 139
+        "rank": 138
       }
     },
     {
@@ -2059,7 +2045,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 140
+        "rank": 139
       }
     },
     {
@@ -2072,7 +2058,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 141
+        "rank": 140
       }
     },
     {
@@ -2085,7 +2071,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 142
+        "rank": 141
       }
     },
     {
@@ -2098,7 +2084,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 143
+        "rank": 142
       }
     },
     {
@@ -2111,7 +2097,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 144
+        "rank": 143
       }
     },
     {
@@ -2124,7 +2110,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 145
+        "rank": 144
       }
     },
     {
@@ -2137,7 +2123,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 146
+        "rank": 145
       }
     },
     {
@@ -2150,7 +2136,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 147
+        "rank": 146
       }
     },
     {
@@ -2163,7 +2149,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 148
+        "rank": 147
       }
     },
     {
@@ -2176,7 +2162,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 149
+        "rank": 148
       }
     },
     {
@@ -2189,7 +2175,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 150
+        "rank": 149
       }
     },
     {
@@ -2202,7 +2188,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 151
+        "rank": 150
       }
     },
     {
@@ -2215,7 +2201,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 152
+        "rank": 151
       }
     },
     {
@@ -2228,7 +2214,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 153
+        "rank": 152
       }
     },
     {
@@ -2241,7 +2227,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 154
+        "rank": 153
       }
     },
     {
@@ -2254,7 +2240,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 155
+        "rank": 154
       }
     },
     {
@@ -2267,7 +2253,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 156
+        "rank": 155
       }
     },
     {
@@ -2280,7 +2266,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 157
+        "rank": 156
       }
     },
     {
@@ -2293,7 +2279,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 158
+        "rank": 157
       }
     },
     {
@@ -2306,7 +2292,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 159
+        "rank": 158
       }
     },
     {
@@ -2319,7 +2305,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 160
+        "rank": 159
       }
     },
     {
@@ -2332,7 +2318,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 161
+        "rank": 160
       }
     },
     {
@@ -2345,7 +2331,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 162
+        "rank": 161
       }
     },
     {
@@ -2358,7 +2344,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 163
+        "rank": 162
       }
     },
     {
@@ -2371,7 +2357,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 164
+        "rank": 163
       }
     },
     {
@@ -2384,7 +2370,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 165
+        "rank": 164
       }
     }
   ],
@@ -2597,28 +2583,6 @@
       }
     },
     {
-      "directory": "src/lib/admin/broker/__tests__",
-      "testFiles": 16,
-      "unrunTestFiles": 16,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "approvalOrLifecycleSourceCount": 1,
-        "approvalOrLifecycleSources": [
-          "src/lib/programs/approval.ts"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/admin/broker/notification-dispatch-broker.ts"
-        ],
-        "rank": 9
-      }
-    },
-    {
       "directory": "src/lib/data-plane/write-adapters/__tests__",
       "testFiles": 11,
       "unrunTestFiles": 11,
@@ -2642,7 +2606,7 @@
           "src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts",
           "src/lib/data-plane/write-adapters/sourceFactWriteAdapter.ts"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -2670,7 +2634,7 @@
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts",
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submission/route.ts"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -2693,7 +2657,7 @@
           "src/lib/governance/context-bundle-adapters.ts",
           "src/lib/governance/readiness-backfill.ts"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -2717,7 +2681,7 @@
           "src/lib/intelligence/sentinel-broker-adapter.ts",
           "src/lib/intelligence/skyharbor-cto-readiness.ts"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -2739,7 +2703,7 @@
         "tenantScopedReadSources": [
           "src/lib/features/is-feature-enabled.ts"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -2765,7 +2729,7 @@
           "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/route.ts",
           "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/run/route.ts"
         ],
-        "rank": 15
+        "rank": 14
       }
     },
     {
@@ -2787,7 +2751,7 @@
         "tenantScopedReadSources": [
           "src/lib/knowledge/tenant-data/supabase-adapter.ts"
         ],
-        "rank": 16
+        "rank": 15
       }
     },
     {
@@ -2809,7 +2773,7 @@
         "tenantScopedReadSources": [
           "src/lib/admin/tenant-admin-access.ts"
         ],
-        "rank": 17
+        "rank": 16
       }
     },
     {
@@ -2832,7 +2796,7 @@
           "src/lib/admin/data-lineage-read-model.ts",
           "src/lib/agent/context-bundle.ts"
         ],
-        "rank": 18
+        "rank": 17
       }
     },
     {
@@ -2858,7 +2822,7 @@
           "src/app/api/admin/programs/approvals/_auth.ts",
           "src/app/api/admin/programs/approvals/route.ts"
         ],
-        "rank": 19
+        "rank": 18
       }
     },
     {
@@ -2880,7 +2844,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/pricing/rate-cards/[id]/approve/route.ts"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -2902,7 +2866,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/programs/approvals/export/route.ts"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -2924,7 +2888,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -2946,7 +2910,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/route.ts"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -2968,7 +2932,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/phase-gate-approval/route.ts"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -2989,6 +2953,28 @@
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/solution-options/approve/route.ts"
+        ],
+        "rank": 24
+      }
+    },
+    {
+      "directory": "src/app/api/v1/source/[eventId]/stage/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "approvalOrLifecycleSourceCount": 1,
+        "approvalOrLifecycleSources": [
+          "src/lib/source/gate-advance-contract.ts"
+        ],
+        "tenantScopedReadSourceCount": 1,
+        "tenantScopedReadSources": [
+          "src/app/api/v1/source/[eventId]/stage/route.ts"
         ],
         "rank": 25
       }
@@ -3064,12 +3050,6 @@
     {
       "directory": "src/lib/context-ingestion/__tests__",
       "testFiles": 17,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/admin/broker/__tests__",
-      "testFiles": 16,
       "coveredTestFiles": 0,
       "via": []
     },
@@ -3387,12 +3367,6 @@
     },
     {
       "directory": "src/lib/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/admin/broker/portfolio/__tests__",
       "testFiles": 4,
       "coveredTestFiles": 0,
       "via": []
@@ -4557,12 +4531,6 @@
     },
     {
       "directory": "src/lib/admin",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/admin/broker/sentinel/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []
