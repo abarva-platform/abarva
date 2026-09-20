@@ -380,5 +380,44 @@ jobs:
       - name: Run the data-plane write-adapter suites
         run: npx jest src/lib/data-plane/write-adapters/__tests__ --no-coverage --ci
 
+      # src/app/api/admin: 16 suites / 74 tests / ~0.4s, measured on
+      # `4735d934f`. Twelve of its directories were reached by no workflow.
+      #
+      # The two files named in --testPathIgnorePatterns are a QUARANTINE, not
+      # a cleanup: both are red (5 failing tests between them) and this step
+      # would fail on arrival without them. Nothing forces that list to shrink
+      # when they are fixed -- it is two lines with the reason beside them,
+      # which is the best available here and not a guarantee.
+      #
+      # Naming the parent with two exclusions rather than listing ten green
+      # subdirectories is the same trade made elsewhere in this file: a list
+      # of directories goes stale the day an eleventh appears and nothing
+      # notices, while the parent runs it on arrival. The cost is that this
+      # step re-runs the four governed approval suites another step already
+      # owns -- measured at 4 suites / 20 tests / 0.17s, the same order as the
+      # overlaps already accepted in docs/ci/README-suite-wiring.md. Count is
+      # not cost.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces jest's default rather than adding to it.
+      #
+      # The patterns are unquoted. Quoting them is honoured by jest and, since
+      # `4735d934f`, by the coverage census too -- but unquoted stays the
+      # clearer form, and it is what the census's own quarantine generators
+      # emit.
+      #
+      # No path here contains a bracketed route segment. One that did would
+      # need --runTestsByPath, because `[id]` is a character class to a jest
+      # path argument -- the reason the governed approval suites are named by
+      # exact path rather than swept.
+      - name: Run the admin API route suites
+        run: >-
+          npx jest
+          src/app/api/admin
+          --testPathIgnorePatterns /node_modules/
+          src/app/api/admin/context-layer/csv-upload
+          src/app/api/admin/users/provision
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
