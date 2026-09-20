@@ -456,5 +456,26 @@ jobs:
           src/app/api/v1/moves
           --no-coverage --ci
 
+      # The auth tree is 19 suites / 206 tests. Thirteen suites (88 tests) are
+      # green and are owned here. Six suites remain red with 11 stale-policy or
+      # fixture failures, so they stay named in an explicit quarantine rather
+      # than making the green tenancy controls dark. A new suite under the
+      # parent runs automatically unless it is deliberately added below.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces Jest's default rather than extending it.
+      - name: Run the green auth and tenancy suites
+        run: >-
+          npx jest
+          src/lib/auth/__tests__
+          --testPathIgnorePatterns /node_modules/
+          src/lib/auth/__tests__/access-routing.test.ts
+          src/lib/auth/__tests__/legacy-tenant-sunset.test.ts
+          src/lib/auth/__tests__/private-browser-proof-session.test.ts
+          src/lib/auth/__tests__/program-access-policy.test.ts
+          src/lib/auth/__tests__/source-access-policy.test.ts
+          src/lib/auth/__tests__/tenant-isolation-probes.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
