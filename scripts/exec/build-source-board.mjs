@@ -875,6 +875,28 @@ fs.writeFileSync(
 );
 console.log(`  numbers with status notes: ${updatedNums.length} (same item, appended updates \u2014 not ambiguous)`);
 console.log(`  not placed on the map:    ${unmapped.length}${unmapped.length ? " -> " + unmapped.join(", ") : ""}`);
+
+// An unmapped id is invisible to the queue: it is not offered to any agent,
+// and the only sign was this line in a wall of output that nothing required
+// anyone to read. Two ids reached that state in one afternoon, and the agent
+// who filed one of them mapped it in the superseded copy of the structure
+// map and never learned the edit did nothing.
+//
+// So it fails the run. The board is still written first, because a report
+// that refuses to produce output teaches people to stop running it -- the
+// file is there to read, and the status says it is incomplete.
+//
+// This starts clean: 0 unmapped at the time it was added. A gate that
+// arrives already failing is the pattern this repository keeps removing.
+if (unmapped.length > 0) {
+  console.error(
+    `\nunmapped: ${unmapped.length} backlog id(s) are not in the structure map, ` +
+      `so the queue cannot offer them: ${unmapped.join(", ")}.\n` +
+      "Add them to scripts/exec/source-stage-map.json -- the map is repo-owned, " +
+      "so editing a copy in the operator root changes nothing.",
+  );
+  process.exitCode = 1;
+}
 console.log(`  stage rungs:              ${JSON.stringify(report.rungCounts)}`);
 /*
  * An ambiguous id the map cites is silently suppressed: it cannot promote a
