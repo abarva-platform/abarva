@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState, type CSSProperties } from "react";
+import { presentOverlapTreatment } from "@/lib/source/data-model/overlap-treatment-narrative";
 import { DataTable } from "../DataTable";
 import { EvidenceLineageGraph } from "./EvidenceLineageGraph";
 import type { SourceWorkspaceVM } from "../buildViewModel";
@@ -1801,8 +1802,7 @@ function OpportunityCockpit({ vm }: { vm: SourceWorkspaceVM }) {
         </div>
         <div style={{ fontSize: 12.2, color: "#5f5e5a", lineHeight: 1.45 }}>
           <b style={{ color: "#0a0a0b" }}>Overlap:</b>{" "}
-          {selected?.overlapTreatment ??
-            "No opportunity value is approved until evidence is resolved."}
+          {presentOverlapTreatment(selected?.overlapTreatment).text}
         </div>
       </div>
     </section>
