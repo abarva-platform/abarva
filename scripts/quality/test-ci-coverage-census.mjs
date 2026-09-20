@@ -36,6 +36,7 @@
  * in the tree it guards.
  */
 
+import { execFileSync } from "node:child_process";
 import {
   readFileSync,
   readdirSync,
@@ -95,6 +96,106 @@ const SCRIPT_REFERENCE_RE =
  */
 const RATCHET_SCRIPT = "scripts/ci/test-ratchet.mjs";
 const RATCHET_SPREAD = "...paths";
+
+/**
+ * A command that names a directory and then excludes a file inside it by name
+ * does not run that file. Reading the directory and stopping there counts the
+ * exclusion as covered — the over-stating direction, which is the one that
+ * matters here: a quarantined suite then reads as run, and the queue this
+ * census orders sends nobody to it.
+ *
+ * Every quarantine in this repository is held in JSON and turned into flags by
+ * a small script the workflow calls inside `$( )`, so the patterns are never in
+ * the command text. Re-deriving them from the JSON here would put a second copy
+ * of that derivation in a second file, which is precisely how one contract ends
+ * up with two readings that drift; the script is executed instead, which is the
+ * same hop the shell takes when the workflow runs.
+ *
+ * Executing anything at all is a capability this file did not have, so it is
+ * fenced: only a `$(node <path>)` substitution, only a path under `scripts/`,
+ * only with no arguments of its own, only from a command a workflow already
+ * reaches — the exact set a CI runner would execute anyway — and never through
+ * a shell.
+ */
+const IGNORE_FLAG = "--testPathIgnorePatterns";
+const IGNORE_SUBSTITUTION_RE =
+  /\$\(\s*node\s+((?:src\/)?scripts\/[\w./-]+\.[cm]?js)\s*\)/g;
+const IGNORE_SCRIPT_TIMEOUT_MS = 30_000;
+
+/**
+ * Whitespace only. `normalize` also rewrites `\` to `/`, which is right for a
+ * path and destroys a regular expression: `excluded\.test\.ts$` becomes
+ * `excluded/.test/.ts$`, matches nothing, and the subtraction silently does not
+ * happen. Ignore patterns are therefore read from the raw command text.
+ */
+function collapseWhitespace(value) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * The patterns a command passes to `--testPathIgnorePatterns`, with any
+ * `$(node scripts/…)` substitution resolved by running it.
+ *
+ * A substitution that cannot be resolved is recorded rather than guessed at, on
+ * the same rule as `indeterminateInvocations`: the command keeps the reading it
+ * had before — covered — so a missing or failing script cannot quietly delete a
+ * suite from the run set, and the recorded entry is what makes that
+ * over-statement visible instead of silent.
+ */
+function ignorePatternsFor(root, command, unresolved) {
+  let expanded = collapseWhitespace(command);
+  for (const match of command.matchAll(IGNORE_SUBSTITUTION_RE)) {
+    const [substitution, scriptPath] = match;
+    const absolute = path.join(root, scriptPath);
+    let output = null;
+    let reason = "script not found";
+    if (existsSync(absolute)) {
+      try {
+        output = execFileSync(process.execPath, [absolute], {
+          cwd: root,
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "ignore"],
+          timeout: IGNORE_SCRIPT_TIMEOUT_MS,
+        });
+      } catch (error) {
+        reason = `script failed: ${error?.message ?? "unknown error"}`;
+      }
+    }
+    if (output === null) {
+      unresolved.push({ script: scriptPath, source: command, reason });
+      continue;
+    }
+    expanded = expanded.replace(substitution, collapseWhitespace(output));
+  }
+
+  const tokens = expanded.split(" ");
+  const patterns = [];
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (tokens[index] !== IGNORE_FLAG) continue;
+    // Jest reads every following token as a pattern until the next flag.
+    for (let next = index + 1; next < tokens.length; next += 1) {
+      if (tokens[next].startsWith("-")) break;
+      if (tokens[next].length > 0) patterns.push(tokens[next]);
+    }
+  }
+  return patterns;
+}
+
+/**
+ * Jest matches these patterns against an absolute test path. The patterns this
+ * repository generates are suffix-anchored on a repo-relative fragment, so
+ * matching them against the repo-relative path is the same decision; a pattern
+ * that is not a valid regular expression is skipped rather than thrown on,
+ * because the census is a measurement and a malformed quarantine entry is its
+ * sibling checker's finding to report, not this one's to crash on.
+ */
+function ignoreMatches(pattern, testPath) {
+  try {
+    return new RegExp(pattern).test(testPath);
+  } catch {
+    return false;
+  }
+}
 
 function normalize(value) {
   return value.replaceAll("\\", "/").replace(/\s+/g, " ").trim();
@@ -349,7 +450,11 @@ function readWorkflows(root) {
       return {
         workflow: `.github/workflows/${name}`,
         pullRequest: isPullRequestTriggered(source),
-        commands: extractWorkflowRunCommands(source),
+        // Escapes intact: a `--testPathIgnorePatterns foo\.test\.ts$`
+        // argument is a regular expression, and the path-normalising form turns
+        // it into `foo/.test/.ts$`. Every path comparison below still runs on
+        // the normalised form; only the ignore reader sees the raw text.
+        commands: extractWorkflowRunCommands(source, { preserveEscapes: true }),
       };
     });
 }
@@ -430,14 +535,37 @@ function jsonPathArguments(root, command) {
 export function collectReachableCommands(root, packageScripts) {
   const reachable = [];
   const indeterminate = [];
+  const unresolvedIgnoreArguments = [];
   const scriptsSeen = new Set();
+  const ignoreCache = new Map();
+
+  // One command can be reached from several workflows; its ignore scripts are
+  // the same each time, so they are run once per distinct command line.
+  const ignorePatterns = (command) => {
+    if (!ignoreCache.has(command)) {
+      ignoreCache.set(
+        command,
+        ignorePatternsFor(root, command, unresolvedIgnoreArguments),
+      );
+    }
+    return ignoreCache.get(command);
+  };
 
   for (const { workflow, pullRequest, commands } of readWorkflows(root)) {
-    const expanded = expandWorkflowCommands(commands, packageScripts).map(normalize);
+    const expanded = expandWorkflowCommands(commands, packageScripts, {
+      preserveEscapes: true,
+    });
 
-    for (const command of expanded) {
+    for (const raw of expanded) {
+      const command = normalize(raw);
       if (RUNNER_RE.test(command)) {
-        reachable.push({ via: "command", source: workflow, pullRequest, command });
+        reachable.push({
+          via: "command",
+          source: workflow,
+          pullRequest,
+          command,
+          ignorePatterns: ignorePatterns(raw),
+        });
       }
 
       for (const reference of command.matchAll(SCRIPT_REFERENCE_RE)) {
@@ -467,11 +595,25 @@ export function collectReachableCommands(root, packageScripts) {
         for (const invocation of jestInvocationsInScript(source, scriptPath)) {
           const namesAPath = /(?:^|[\s"'`,[(])src\//.test(invocation);
           if (namesAPath) {
+            // A script's Jest lines reach here already normalized, so any regex
+            // escape inside them has been rewritten and their ignore patterns
+            // cannot be read correctly. No script in this repository passes the
+            // flag today; if one starts to, this records it rather than reading
+            // a mangled pattern and reporting a subtraction that did not happen.
+            if (invocation.includes(IGNORE_FLAG)) {
+              unresolvedIgnoreArguments.push({
+                script: scriptPath,
+                source: invocation,
+                reason:
+                  "ignore patterns inside a script file are normalized before they are read",
+              });
+            }
             reachable.push({
               via: "script-file",
               source: scriptPath,
               pullRequest,
               command: invocation,
+              ignorePatterns: [],
             });
             continue;
           }
@@ -492,6 +634,14 @@ export function collectReachableCommands(root, packageScripts) {
 
   return {
     reachable,
+    unresolvedIgnoreArguments: [
+      ...new Map(
+        unresolvedIgnoreArguments.map((entry) => [
+          `${entry.script}::${entry.source}`,
+          entry,
+        ]),
+      ).values(),
+    ].sort((a, b) => `${a.script}${a.source}`.localeCompare(`${b.script}${b.source}`)),
     indeterminate: [
       ...new Map(
         indeterminate.map((entry) => [
@@ -507,8 +657,16 @@ export function collectReachableCommands(root, packageScripts) {
 
 function coverageFor(testPath, reachable) {
   const candidates = registrationCandidates(testPath);
-  const hits = reachable.filter((entry) =>
-    candidates.some((candidate) => commandNamesPath(entry.command, candidate)),
+  const hits = reachable.filter(
+    (entry) =>
+      candidates.some((candidate) => commandNamesPath(entry.command, candidate)) &&
+      // Scoped to the command that passes them. A file one workflow excludes
+      // and another runs in full is covered, and subtracting globally would
+      // under-state the run set — the error this change exists to remove,
+      // pointing the other way.
+      !(entry.ignorePatterns ?? []).some((pattern) =>
+        ignoreMatches(pattern, testPath),
+      ),
   );
   return {
     covered: hits.length > 0,
@@ -521,10 +679,8 @@ export function buildCensus(root) {
   const packageScripts =
     JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).scripts ??
     {};
-  const { reachable, indeterminate } = collectReachableCommands(
-    root,
-    packageScripts,
-  );
+  const { reachable, indeterminate, unresolvedIgnoreArguments } =
+    collectReachableCommands(root, packageScripts);
   const testFiles = collectTestFiles(root);
   const catalogPaths = controlPaths(root);
 
@@ -626,7 +782,8 @@ export function buildCensus(root) {
     subject:
       "every Jest test file under src/, against the commands GitHub workflows reach",
     method: [
-      "A test file counts as covered when a workflow reaches a command naming it or a directory above it.",
+      "A test file counts as covered when a workflow reaches a command naming it or a directory above it, and that same command does not exclude it through --testPathIgnorePatterns.",
+      "Ignore patterns are scoped to the command that passes them, and a $(node scripts/…) substitution is resolved by running that script rather than by re-deriving its list here.",
       "Four hops are followed: workflow run step, npm script (recursively), repo script file, test-ratchet baseline JSON.",
       "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
@@ -648,6 +805,7 @@ export function buildCensus(root) {
       directoriesUncovered: uncoveredDirectories.length,
       directoriesWithUnrunTestFiles: directoriesWithUnrunTestFiles.length,
       indeterminateInvocations: indeterminate.length,
+      unresolvedIgnoreArguments: unresolvedIgnoreArguments.length,
       criticalGovernedRiskDirectories: governedRiskRanking.filter(
         (row) => row.governedRisk.band === "critical",
       ).length,
@@ -658,6 +816,7 @@ export function buildCensus(root) {
         directoriesWithUnrunTestFiles.length - governedRiskRanking.length,
     },
     indeterminateInvocations: indeterminate,
+    unresolvedIgnoreArguments,
     partiallyCoveredDirectories: partialDirectories.map(
       ({ governedRisk: _governedRisk, unrunTestFiles: _unrun, ...row }) => row,
     ),
@@ -684,6 +843,14 @@ function summarize(census) {
     );
     for (const entry of census.indeterminateInvocations) {
       lines.push(`    ${entry.source}: ${entry.invocation}`);
+    }
+  }
+  if (c.unresolvedIgnoreArguments > 0) {
+    lines.push(
+      `  unresolved ignore arguments:    ${c.unresolvedIgnoreArguments} — covered count is an upper bound for those commands`,
+    );
+    for (const entry of census.unresolvedIgnoreArguments) {
+      lines.push(`    ${entry.script}: ${entry.reason}`);
     }
   }
   const governedHead = census.governedRiskRanking.slice(0, 5);

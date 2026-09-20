@@ -4,6 +4,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   realpathSync,
   rmSync,
   writeFileSync,
@@ -56,6 +57,7 @@ type Census = {
     unclassifiedRiskDirectories: number;
   };
   indeterminateInvocations: { source: string; invocation: string }[];
+  unresolvedIgnoreArguments: { script: string; source: string; reason: string }[];
   partiallyCoveredDirectories: { directory: string; testFiles: number; coveredTestFiles: number }[];
   governedRiskEvidence: {
     directory: string;
@@ -90,6 +92,18 @@ function write(root: string, relative: string, contents: string): void {
   const target = path.join(root, relative);
   mkdirSync(path.dirname(target), { recursive: true });
   writeFileSync(target, contents);
+}
+
+/**
+ * The Jest suites directly inside one directory, repo-relative. Not recursive:
+ * the census keys a directory row on each test file's immediate parent, so a
+ * recursive count would compare a subtree against a single row.
+ */
+function collectTestFilesIn(absolute: string, relative: string): string[] {
+  return readdirSync(absolute, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(entry.name))
+    .map((entry) => `${relative}/${entry.name}`)
+    .sort();
 }
 
 /** A fixture repository carrying the real census script and its real import. */
@@ -647,6 +661,147 @@ describe("test CI coverage census", () => {
       "unclassified",
     );
     expect(riskFor("src/app/api/epsilon/__tests__")?.signals ?? []).toEqual([]);
+  });
+
+  it("subtracts a command's own --testPathIgnorePatterns from what it selects", () => {
+    // The census answers "does a workflow reach a command that names this
+    // file". A command that names a directory and then excludes a file inside
+    // it by name does not run that file, and counting it over-states coverage —
+    // the dangerous direction, because a quarantined suite then reads as run.
+    const dir = fixture({
+      "src/lib/theta/__tests__/kept.test.ts": TEST_FILE,
+      "src/lib/theta/__tests__/excluded.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/lib/theta --testPathIgnorePatterns theta/__tests__/excluded\\.test\\.ts$",
+      ),
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts).toMatchObject({
+      testFiles: 2,
+      coveredTestFiles: 1,
+      pullRequestCoveredTestFiles: 1,
+      uncoveredTestFiles: 1,
+    });
+    expect(
+      census.partiallyCoveredDirectories.find(
+        (row) => row.directory === "src/lib/theta/__tests__",
+      ),
+    ).toMatchObject({ testFiles: 2, coveredTestFiles: 1 });
+  });
+
+  it("resolves the ignore patterns a command takes from a $(node …) substitution", () => {
+    // The real shape. Every quarantine in this repository is held in JSON and
+    // turned into flags by a small script the workflow calls inside `$( )`, so
+    // the patterns are never in the command text. Re-deriving them from the
+    // JSON here would be a second copy of that derivation, which is how two
+    // readings of one contract drift apart; the script is run instead, which is
+    // the same hop the shell takes.
+    const dir = fixture({
+      "src/lib/iota/__tests__/kept.test.ts": TEST_FILE,
+      "src/lib/iota/__tests__/quarantined.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/lib/iota --ci $(node scripts/quality/iota-ignore-args.mjs)",
+      ),
+      "scripts/quality/iota-ignore-args.mjs": [
+        'import { readFileSync } from "node:fs";',
+        'import path from "node:path";',
+        'import { fileURLToPath } from "node:url";',
+        'const here = path.dirname(fileURLToPath(import.meta.url));',
+        'const { quarantined } = JSON.parse(',
+        '  readFileSync(path.join(here, "iota-quarantine.json"), "utf8"),',
+        ');',
+        'process.stdout.write(',
+        '  ["--testPathIgnorePatterns", ...quarantined.map((s) => `iota/__tests__/${s}$`)].join(" "),',
+        ');',
+      ].join("\n"),
+      "scripts/quality/iota-quarantine.json": `${JSON.stringify({
+        quarantined: ["quarantined\\.test\\.ts"],
+      })}\n`,
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts).toMatchObject({
+      testFiles: 2,
+      coveredTestFiles: 1,
+      uncoveredTestFiles: 1,
+    });
+    expect(census.unresolvedIgnoreArguments).toEqual([]);
+  });
+
+  it("scopes an ignore pattern to the command that passes it", () => {
+    // The guardrail an over-broad fix breaks. A file excluded by one workflow
+    // and run in full by another is covered, and a reading that subtracted
+    // ignore patterns globally would report it unrun — under-stating coverage
+    // and sending someone to wire a directory that is already wired.
+    const dir = fixture({
+      "src/lib/kappa/__tests__/shared.test.ts": TEST_FILE,
+      ".github/workflows/narrow.yml": PR_WORKFLOW(
+        "npx jest src/lib/kappa --testPathIgnorePatterns kappa/__tests__/shared\\.test\\.ts$",
+      ),
+      ".github/workflows/wide.yml": PR_WORKFLOW("npx jest src/lib/kappa"),
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts).toMatchObject({ testFiles: 1, coveredTestFiles: 1 });
+  });
+
+  it("reports an ignore substitution it cannot resolve instead of silently crediting the suite", () => {
+    // Same rule as `indeterminateInvocations`: when a hop cannot be followed the
+    // census says so rather than picking an answer. The coverage number keeps
+    // the pre-existing reading — covered — so the failure cannot quietly delete
+    // a suite from the run set; the entry is what makes that over-statement
+    // visible.
+    const dir = fixture({
+      "src/lib/mu/__tests__/mu.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/lib/mu $(node scripts/quality/absent-ignore-args.mjs)",
+      ),
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts.coveredTestFiles).toBe(1);
+    expect(census.unresolvedIgnoreArguments).toEqual([
+      expect.objectContaining({ script: "scripts/quality/absent-ignore-args.mjs" }),
+    ]);
+  });
+
+  it("subtracts every quarantined suite this repository excludes by name", () => {
+    // The repository case the fixtures abstract. Each quarantine script is the
+    // authority on its own list, so both sides of the comparison are derived
+    // from the repository rather than from counts written here that would rot
+    // the first time an entry is cleared.
+    const { census } = runCensus(repoRoot);
+    const rows = new Map(
+      [...census.partiallyCoveredDirectories, ...census.uncoveredDirectories].map((row) => [
+        row.directory,
+        row,
+      ]),
+    );
+
+    for (const area of ["source", "qa", "intelligence", "admin"]) {
+      const directory = `src/__tests__/integration/${area}`;
+      const patterns = execFileSync(
+        process.execPath,
+        [path.join(repoRoot, `scripts/quality/${area}-integration-ignore-args.mjs`)],
+        { cwd: repoRoot, encoding: "utf8" },
+      )
+        .trim()
+        .split(/\s+/)
+        .slice(1)
+        .map((pattern) => new RegExp(pattern));
+      expect(patterns.length).toBeGreaterThan(0);
+
+      const files = collectTestFilesIn(path.join(repoRoot, directory), directory);
+      const excluded = files.filter((file) => patterns.some((pattern) => pattern.test(file)));
+      expect(excluded.length).toBeGreaterThan(0);
+
+      // A directory whose every suite runs is absent from both published lists;
+      // one holding an excluded suite must appear, with exactly the excluded
+      // files missing from its covered count.
+      const row = rows.get(directory);
+      expect(row).toBeDefined();
+      expect(row).toMatchObject({
+        testFiles: files.length,
+        coveredTestFiles: files.length - excluded.length,
+      });
+    }
   });
 
   it("refreshes the committed census only when its content changes", () => {
