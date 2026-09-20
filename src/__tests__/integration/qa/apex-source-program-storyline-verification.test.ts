@@ -7,7 +7,10 @@
 // final state, so the suite PASSES now and will continue to pass after integration
 // (promoting deferred → pass).
 
-import { runApexStorylineVerification } from '@/lib/qa/apex-source-program-storyline-verification';
+import {
+  resolveSliceCheck,
+  runApexStorylineVerification,
+} from '@/lib/qa/apex-source-program-storyline-verification';
 
 describe('QA27 · Apex Retail Source → Program Storyline Verification', () => {
   // Run once and share the report across all tests.
@@ -153,29 +156,61 @@ describe('QA27 · Apex Retail Source → Program Storyline Verification', () => 
     expect(ch08?.status).toBe('pass');
   });
 
-  it('CH-09 (LINK1 contract) is deferred pre-integration', () => {
+  // -------------------------------------------------------------------------
+  // CH-09 .. CH-12 — the slice-integration checks.
+  //
+  // These four asserted `['pass', 'deferred']`, which is not an assertion: a
+  // check has only three statuses, and accepting two of them while the third
+  // is the failure the suite exists to catch means no behaviour of the subject
+  // can turn this suite red. Measured against `origin/main` on 2026-09-20, all
+  // four slices are `code_complete` in docs/build/build-slices.json and every
+  // module is on disk — under the name the slice actually used, not the name
+  // the check guessed. The three deferrals were false. Each test below now
+  // pins one measured fact and names the module, so a real regression — the
+  // slice module being deleted or renamed — turns it red.
+  // -------------------------------------------------------------------------
+
+  it('CH-09 passes: LINK1 landed at src/lib/source/source-program-link.ts', () => {
     const ch09 = report.checks.find((c) => c.checkId === 'CH-09');
     expect(ch09).toBeDefined();
-    // Either deferred (expected) or pass (if somehow LINK1 is already present).
-    expect(['pass', 'deferred']).toContain(ch09?.status);
+    expect(ch09?.status).toBe('pass');
+    expect(ch09?.detail).toContain('src/lib/source/source-program-link.ts');
   });
 
-  it('CH-10 (SRC33 Apex source route) is deferred pre-integration', () => {
+  it('CH-10 passes: SRC33 landed at src/lib/source/linked-program-badge-view.ts', () => {
     const ch10 = report.checks.find((c) => c.checkId === 'CH-10');
     expect(ch10).toBeDefined();
-    expect(['pass', 'deferred']).toContain(ch10?.status);
+    expect(ch10?.status).toBe('pass');
+    expect(ch10?.detail).toContain(
+      'src/lib/source/linked-program-badge-view.ts',
+    );
   });
 
-  it('CH-11 (PROG15 Apex CDP seed) is deferred pre-integration', () => {
+  it('CH-11 passes: PROG15 landed at src/lib/programs/program-future-phase-deliverables.ts', () => {
     const ch11 = report.checks.find((c) => c.checkId === 'CH-11');
     expect(ch11).toBeDefined();
-    expect(['pass', 'deferred']).toContain(ch11?.status);
+    expect(ch11?.status).toBe('pass');
+    expect(ch11?.detail).toContain(
+      'src/lib/programs/program-future-phase-deliverables.ts',
+    );
   });
 
-  it('CH-12 (PROG16 Apex program-source link view) is deferred pre-integration', () => {
+  it('CH-12 passes: PROG16 landed at src/lib/programs/program-source-link-view.ts', () => {
     const ch12 = report.checks.find((c) => c.checkId === 'CH-12');
     expect(ch12).toBeDefined();
-    expect(['pass', 'deferred']).toContain(ch12?.status);
+    expect(ch12?.status).toBe('pass');
+    expect(ch12?.detail).toContain(
+      'src/lib/programs/program-source-link-view.ts',
+    );
+  });
+
+  it('no check still claims a slice is pending integration', () => {
+    const stale = report.checks.filter((c) =>
+      /Deferred pending|pre-integration|not yet (present|integrated)/i.test(
+        c.detail,
+      ),
+    );
+    expect(stale.map((c) => `${c.checkId}: ${c.detail}`)).toEqual([]);
   });
 
   it('CH-13 (deliverable export contract has apex-retail) passes pre-integration', () => {
@@ -194,11 +229,37 @@ describe('QA27 · Apex Retail Source → Program Storyline Verification', () => 
   // Aggregate: pre-integration overallStatus must be "partial" (some deferred)
   // -------------------------------------------------------------------------
 
-  it('overallStatus is "partial" pre-integration (some checks deferred pending SRC32/LINK1/SRC33/PROG15/PROG16/MW9)', () => {
-    // After full integration overallStatus should become 'pass'.
-    // Pre-integration it must be 'partial' (deferred > 0, fail === 0).
-    // We tolerate 'pass' in case somehow all slices are present (no hard failure).
-    expect(['pass', 'partial']).toContain(report.overallStatus);
+  it('overallStatus is "pass": every slice this report tracks has integrated', () => {
     expect(report.failCount).toBe(0);
+    expect(report.deferredCount).toBe(0);
+    expect(report.overallStatus).toBe('pass');
+  });
+
+  // -------------------------------------------------------------------------
+  // The branch no passing report reaches.
+  //
+  // Every path this report looks for is now declared, so the resolver's
+  // "undeclared absence" verdict is unreachable through runApexStorylineVerification()
+  // — and an unreached branch is an unprotected one. A mutation that mapped
+  // that verdict back onto 'deferred' survived the rest of this suite, which
+  // is precisely the wording the item was filed about coming back for free.
+  // -------------------------------------------------------------------------
+
+  it('an undeclared absence is a fail, never a deferral', () => {
+    const r = resolveSliceCheck('CH-XX', 'a slice nobody declared', [
+      'src/lib/nothing/declared-nowhere.ts',
+    ]);
+    expect(r.status).toBe('fail');
+    expect(r.detail).toContain('STORYLINE_PATH_REGISTER');
+  });
+
+  it('a candidate that IS present still passes without a register entry', () => {
+    // The register is for misses. A slice that lands at a searched-for name
+    // must not need an entry, or the register becomes a second thing to keep
+    // in step with the tree.
+    const r = resolveSliceCheck('CH-XX', 'a slice that landed where expected', [
+      'src/lib/qa/path-disposition.ts',
+    ]);
+    expect(r.status).toBe('pass');
   });
 });
