@@ -222,7 +222,8 @@
         },
         "D-001",
         "C-007",
-        "D-024"
+        "D-024",
+        "T-438"
       ],
       "capabilities": [
         {
@@ -231,7 +232,8 @@
             {
               "num": 89,
               "definedIn": "Lifecycle reconciliation"
-            }
+            },
+            "T-438"
           ]
         },
         {
@@ -653,16 +655,21 @@
       "T-431",
       "T-432",
       "T-433",
+      "T-434",
+      "T-435",
+      "T-436",
+      "T-437",
       "T-564",
       "T-565",
       "T-567",
-      "T-610"
+      "T-610",
+      "T-611"
     ]
   },
   "outsideLifecycle": {
     "name": "Outside the Source lifecycle",
     "why": "Ingestion, context-layer, Intelligence and Tower data-plane work. Real, owned, and on no lifecycle stage. Separated so the nine-stage view is not padded with work that cannot move it.",
-    "items": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 19, 31, 35, 36, 37, 38, 67, 69]
+    "items": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 19, 31, 35, 36, 37, 38, 67, 69, "T-613"]
   },
   "crossCutting": {
     "name": "Cross-cutting \u2014 belongs to no single stage",
