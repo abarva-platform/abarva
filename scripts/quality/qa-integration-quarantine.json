@@ -4,12 +4,6 @@
   "reasonShape": "Every entry names the ONE case that fails, the measured values behind it, and the item that owns it. check-qa-integration-quarantine.mjs re-runs each quarantined suite and fails if it PASSES, so an exclusion whose reason has been fixed cannot sit here quietly.",
   "quarantined": [
     {
-      "suite": "intelligence-tower-shell-control.test.ts",
-      "failingCase": "SHELL7: Intelligence Tower Shell Control > Intelligence route imports IntelligenceLensTabs (I1 — no shell wrapper)",
-      "reason": "IntelligenceLensTabs does not exist. The July retirement removed it along with the whole of src/components/intelligence/, and the surviving /intelligence route renders AdvisoryIntelligencePage instead. The suite asserts a wiring that was deliberately replaced, so it is a stale contract rather than a defect.",
-      "owner": "T-502"
-    },
-    {
       "suite": "wireframe-compliance-audit.test.ts",
       "failingCase": "wireframe-compliance-audit > getPageComplianceResults > Intelligence page held at 84 after Wave 32",
       "reason": "Asserts the Intelligence page scores exactly 84; it scores 86. A second case then expects every page it returns as needing Wave 32 to carry at least one remaining deviation, and the list comes back empty. Both are the audit measuring a page the retirement rebuilt. Raising 84 to 86 would be the wrong repair — the number is a lock, and moving a lock to wherever the code landed is how a lock stops meaning anything.",
