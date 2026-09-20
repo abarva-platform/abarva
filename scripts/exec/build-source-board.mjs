@@ -517,6 +517,41 @@ function resolveItemRef(ref) {
   return { num: ref, definedIn: null };
 }
 
+/**
+ * Reject duplicate structural references before they become duplicate queue
+ * rows. Capability lists may intentionally cite the same item as their parent
+ * stage, so uniqueness is enforced inside each list rather than globally.
+ */
+function assertUniqueMappedRefs(refs, trail) {
+  const firstIndexByKey = new Map();
+  for (const [index, ref] of (refs ?? []).entries()) {
+    const { num, definedIn } = resolveItemRef(ref);
+    const key = JSON.stringify([num, definedIn]);
+    if (firstIndexByKey.has(key)) {
+      console.error(
+        `source-stage-map.json repeats item ${String(num)} in ${trail} at indexes ${firstIndexByKey.get(key)} and ${index}. Each structural list must contain an item reference once.`,
+      );
+      process.exit(1);
+    }
+    firstIndexByKey.set(key, index);
+  }
+}
+
+for (const [index, stage] of (map.stages ?? []).entries()) {
+  assertUniqueMappedRefs(stage.items, `map.stages[${index}].items`);
+  for (const [capabilityIndex, capability] of (stage.capabilities ?? []).entries()) {
+    assertUniqueMappedRefs(
+      capability.items,
+      `map.stages[${index}].capabilities[${capabilityIndex}].items`,
+    );
+  }
+}
+assertUniqueMappedRefs(map.platformTrack?.items, "map.platformTrack.items");
+assertUniqueMappedRefs(map.outsideLifecycle?.items, "map.outsideLifecycle.items");
+for (const [index, capability] of (map.crossCutting?.capabilities ?? []).entries()) {
+  assertUniqueMappedRefs(capability.items, `map.crossCutting.capabilities[${index}].items`);
+}
+
 function buildItem(ref) {
   const { num, definedIn } = resolveItemRef(ref);
   const all = byNum.get(num) ?? [];
