@@ -44,6 +44,16 @@ export interface SourceNewNdaReadiness {
     detail: string;
   };
   artifactTitle: string | null;
+  /**
+   * Where the coverage answer rested on something asserted rather than
+   * derived — an unverified template list, or an affiliate list the NDA
+   * record claimed. Empty when nothing was taken on trust, and empty when
+   * no coverage was evaluated at all.
+   *
+   * This sits beside the posture deliberately. A caveat filed somewhere a
+   * reader has to go looking for is not stated.
+   */
+  evidenceCaveats: string[];
 }
 
 function hasText(value: string | null | undefined): value is string {
@@ -236,5 +246,6 @@ export function buildSourceNewNdaReadiness(
     blockers,
     nextAction,
     artifactTitle: authority?.title ?? currentNdas[0]?.title ?? null,
+    evidenceCaveats: [...(coverageResult?.evidenceCaveats ?? [])],
   };
 }
