@@ -99,6 +99,34 @@ jobs:
       - name: Run the admin broker suites
         run: npx jest src/lib/admin/broker --no-coverage --ci
 
+      # Deliverables was measured before wiring: 86 of 88 suites passed. The
+      # two red suites were stale assertions from source-label normalization
+      # and the document-final renderer release. The green sibling subtrees are
+      # owned below by their measured subdirectory list; this step owns only the
+      # two repaired directories. The synthesis subtree stays unwired because
+      # no product path reaches it.
+      - name: Run the repaired deliverables suites
+        run: >-
+          npx jest
+          src/lib/deliverables/__tests__
+          src/lib/deliverables/orchestrator/__tests__
+          --no-coverage --ci
+
+      - name: Run the uncovered deliverables component suite
+        run: npx jest --runTestsByPath src/components/deliverables/__tests__/ApproveActions.test.tsx --no-coverage --ci
+
+      - name: Run the deliverables route suites
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/__tests__/route.test.ts
+          src/app/api/programs/[id]/deliverables/[deliverableId]/export/__tests__/route.test.ts
+          src/app/api/v1/deliverables/generate-phase/__tests__/route.test.ts
+          src/app/api/v1/deliverables/generate/__tests__/route.test.ts
+          src/app/api/v1/deliverables/runs/[runId]/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/__tests__/route.test.ts
+          src/app/api/v1/programs/[programId]/deliverables/complete/__tests__/route.test.ts
+          --no-coverage --ci
+
       # Four more library trees that no workflow and no npm script reached.
       # Measured on `ced75d7c3` by running them, not by reading YAML:
       #
