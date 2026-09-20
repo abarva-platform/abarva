@@ -79,6 +79,84 @@ const TENANT_KEY_SOURCE_RE =
 const TENANT_READ_PATH_RE =
   /(?:read|query|queries|adapter|route|repository|lookup|search|fetch)/i;
 
+function sourceWithoutNonExecutableSignalText(source, fileName) {
+  const lowerFileName = fileName.toLowerCase();
+  const scriptKind = lowerFileName.endsWith(".tsx")
+    ? ts.ScriptKind.TSX
+    : lowerFileName.endsWith(".jsx")
+      ? ts.ScriptKind.JSX
+      : /\.[cm]?ts$/.test(lowerFileName)
+        ? ts.ScriptKind.TS
+        : ts.ScriptKind.JS;
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    scriptKind,
+  );
+  const spans = [];
+
+  const addCommentsAt = (position) => {
+    for (const range of ts.getLeadingCommentRanges(source, position) ?? []) {
+      spans.push([range.pos, range.end]);
+    }
+    for (const range of ts.getTrailingCommentRanges(source, position) ?? []) {
+      spans.push([range.pos, range.end]);
+    }
+  };
+
+  const visit = (node) => {
+    addCommentsAt(node.getFullStart());
+    addCommentsAt(node.getEnd());
+    if (
+      ts.isStringLiteralLike(node) ||
+      ts.isTemplateLiteralToken(node) ||
+      ts.isRegularExpressionLiteral(node) ||
+      ts.isJsxText(node) ||
+      ts.isInterfaceDeclaration(node) ||
+      ts.isTypeAliasDeclaration(node)
+    ) {
+      spans.push([node.getStart(sourceFile), node.getEnd()]);
+    }
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression;
+      const isPromiseReject =
+        ts.isPropertyAccessExpression(callee) &&
+        ts.isIdentifier(callee.expression) &&
+        callee.expression.text === "Promise" &&
+        callee.name.text === "reject";
+      let isRejectCallback = false;
+      if (ts.isIdentifier(callee) && callee.text === "reject") {
+        for (let parent = node.parent; parent; parent = parent.parent) {
+          if (ts.isFunctionLike(parent)) {
+            isRejectCallback = parent.parameters.some(
+              (parameter) =>
+                ts.isIdentifier(parameter.name) && parameter.name.text === "reject",
+            );
+            if (isRejectCallback) break;
+          }
+        }
+      }
+      if (isPromiseReject || isRejectCallback) {
+        spans.push([callee.getStart(sourceFile), callee.getEnd()]);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  const characters = [...source];
+  for (const [start, end] of spans) {
+    for (let index = start; index < end; index += 1) {
+      if (characters[index] !== "\n" && characters[index] !== "\r") {
+        characters[index] = " ";
+      }
+    }
+  }
+  return characters.join("");
+}
+
 /** A test runner token, as it appears in a command line. */
 const RUNNER_RE = /\b(?:npx\s+)?(?:jest|vitest)\b/;
 
@@ -365,15 +443,17 @@ function governedRiskForDirectory(root, testFiles, catalogPaths) {
 
   for (const sourcePath of productSources) {
     const source = readFileSync(path.join(root, sourcePath), "utf8");
+    const executableSource = sourceWithoutNonExecutableSignalText(source, sourcePath);
     if (
       APPROVAL_OR_LIFECYCLE_PATH_RE.test(sourcePath) ||
-      APPROVAL_OR_LIFECYCLE_SOURCE_RE.test(source)
+      APPROVAL_OR_LIFECYCLE_SOURCE_RE.test(executableSource)
     ) {
       approvalSources.push(sourcePath);
     }
     if (
-      TENANT_RESOLVER_SOURCE_RE.test(source) ||
-      (TENANT_READ_PATH_RE.test(sourcePath) && TENANT_KEY_SOURCE_RE.test(source))
+      TENANT_RESOLVER_SOURCE_RE.test(executableSource) ||
+      (TENANT_READ_PATH_RE.test(sourcePath) &&
+        TENANT_KEY_SOURCE_RE.test(executableSource))
     ) {
       tenantReadSources.push(sourcePath);
     }
