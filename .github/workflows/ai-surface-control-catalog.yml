@@ -133,6 +133,22 @@ jobs:
       - name: Exercise shared evidence packet human rationale
         run: npx jest --runTestsByPath src/lib/ai-liability/__tests__/human-decision-controls.human-rationale.test.ts --runInBand
 
+      # The shared rationale validator above already owns one file in this
+      # directory. Run the remaining liability controls as a parent so new
+      # audit/export, acknowledgment, training, and policy tests cannot land
+      # outside CI without running the rationale suite twice.
+      - name: Exercise remaining AI liability library controls
+        run: >-
+          npx jest src/lib/ai-liability/__tests__
+          --testPathIgnorePatterns src/lib/ai-liability/__tests__/human-decision-controls.human-rationale.test.ts
+          --runInBand
+
+      # These guards are imported by the production answer routes and decide
+      # whether product capability, tenant evidence, and third-party claims
+      # may reach a client-visible answer.
+      - name: Exercise product truth library controls
+        run: npx jest src/lib/agent/product-truth/__tests__ --runInBand
+
       # Not a catalog control. `src/components/source/canvas/analytics/__tests__`
       # runs in no npm script and no workflow — 28 suites / 173 tests over the
       # component the Source event route mounts, reporting to nobody. Found
