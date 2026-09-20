@@ -6,15 +6,36 @@
  * correctly deferred pre-integration). Every result is deterministic: the same
  * filesystem state always produces the same report.
  *
- * Wave-20 shell components (SHELL1–7, DEMODATA1) do NOT exist in pre-integration
- * branches. Checks for those items return status: 'deferred' so the overall test
- * suite passes now and will fully pass after integration.
+ * An absent path is DECLARED, never inferred. Until T-524 every absent path
+ * here resolved to 'deferred' with wording that asserted a Wave-20 slice was
+ * going to add it. Two of those assertions were untrue on this history:
+ * IntelligenceRouteShell.tsx was declared RETIRED by the blueprint report in
+ * the same tree (its containing directory removed by 0c6a86c51), and no commit
+ * on origin/main has ever added or removed platform/admin/architecture/page.tsx
+ * at all. One path carrying two dispositions in two reports is what moved the
+ * mechanism into src/lib/qa/path-disposition.ts.
+ *
+ * Wave-20 shell components that are genuinely present pass; an absent path
+ * resolves through ROUTE_SHELL_PATH_REGISTER, and an absence that nothing
+ * declares is a FAILURE asking for the declaration rather than a silent
+ * 'deferred'.
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type ShellCheckStatus = 'pass' | 'fail' | 'deferred' | 'not_applicable';
+import {
+  resolvePathStatus,
+  SHARED_PATH_DISPOSITIONS,
+  type PathDispositionRegister,
+} from './path-disposition';
+
+export type ShellCheckStatus =
+  | 'pass'
+  | 'fail'
+  | 'deferred'
+  | 'removed'
+  | 'not_applicable';
 
 export interface ShellVerificationCheck {
   checkId: string;
@@ -31,6 +52,7 @@ export interface ShellVerificationReport {
   passCount: number;
   failCount: number;
   deferredCount: number;
+  removedCount: number;
   notApplicableCount: number;
   overallStatus: 'pass' | 'fail' | 'partial';
   caveat: string;
@@ -75,6 +97,35 @@ function fileImportsFrom(filePath: string, importSubstring: string): boolean {
   }
 }
 
+/**
+ * Every path this report reads that may legitimately be absent.
+ *
+ * Nothing here is inferred from the tree: a path is absent because a named
+ * commit removed it, because a named slice has not added it yet, or because
+ * the call is genuinely open and an item owns it. An absence matching none of
+ * those is a failure asking for this entry.
+ */
+export const ROUTE_SHELL_PATH_REGISTER: PathDispositionRegister = {
+  // Declared retired by the blueprint report since T-521. Taken from the
+  // shared register so the two reports cannot answer differently again.
+  'src/components/intelligence/IntelligenceRouteShell.tsx':
+    SHARED_PATH_DISPOSITIONS[
+      'src/components/intelligence/IntelligenceRouteShell.tsx'
+    ],
+  'src/app/(maestro)/platform/admin/architecture/page.tsx': {
+    undecided: {
+      owner: 'T-503',
+      note:
+        'This check read "deferred pending Wave-20 admin shell integration". ' +
+        'git log origin/main finds no commit that ever added or removed this ' +
+        'route, so no wave was measurably building it and the pending claim ' +
+        'was unearned. design-workflow-canon-regression asserts the same route ' +
+        'and is quarantined for the same reason. Whether the route should ' +
+        'exist is a product question neither suite can answer.',
+    },
+  },
+};
+
 // ---------------------------------------------------------------------------
 // Individual check builders
 // ---------------------------------------------------------------------------
@@ -97,29 +148,28 @@ function checkRouteExists(
   };
 }
 
-function checkRouteExistsOrDeferred(
+/**
+ * A route that may be absent. The disposition comes from the register, not
+ * from a sentence written at the call site — the call-site sentence is how
+ * "pending Wave-20" outlived the wave.
+ */
+function checkRouteDeclared(
   checkId: string,
   routeRelPath: string,
   description: string,
-  deferredReason: string,
 ): ShellVerificationCheck {
-  const exists = fileExists(routeRelPath);
-  if (exists) {
-    return {
-      checkId,
-      route: routeRelPath,
-      description,
-      status: 'pass',
-      detail: `Route file found: ${routeRelPath}`,
-      deterministicSeed: true,
-    };
-  }
+  const { status, detail } = resolvePathStatus(
+    routeRelPath,
+    fileExists(routeRelPath),
+    ROUTE_SHELL_PATH_REGISTER,
+    'ROUTE_SHELL_PATH_REGISTER',
+  );
   return {
     checkId,
     route: routeRelPath,
     description,
-    status: 'deferred',
-    detail: deferredReason,
+    status,
+    detail,
     deterministicSeed: true,
   };
 }
@@ -142,29 +192,24 @@ function checkComponentExists(
   };
 }
 
-function checkComponentExistsOrDeferred(
+/** A component that may be absent. Same rule as checkRouteDeclared. */
+function checkComponentDeclared(
   checkId: string,
   componentRelPath: string,
   description: string,
-  deferredReason: string,
 ): ShellVerificationCheck {
-  const exists = fileExists(componentRelPath);
-  if (exists) {
-    return {
-      checkId,
-      route: componentRelPath,
-      description,
-      status: 'pass',
-      detail: `Component found: ${componentRelPath}`,
-      deterministicSeed: true,
-    };
-  }
+  const { status, detail } = resolvePathStatus(
+    componentRelPath,
+    fileExists(componentRelPath),
+    ROUTE_SHELL_PATH_REGISTER,
+    'ROUTE_SHELL_PATH_REGISTER',
+  );
   return {
     checkId,
     route: componentRelPath,
     description,
-    status: 'deferred',
-    detail: deferredReason,
+    status,
+    detail,
     deterministicSeed: true,
   };
 }
@@ -214,21 +259,19 @@ export function runActiveRouteShellVerification(): ShellVerificationReport {
 
   // ---- Check 5: Platform admin architecture route (or deferred) -----------
   checks.push(
-    checkRouteExistsOrDeferred(
+    checkRouteDeclared(
       'QA28-C05',
       'src/app/(maestro)/platform/admin/architecture/page.tsx',
       'Platform admin architecture route page.tsx exists (or deferred)',
-      'platform/admin/architecture/page.tsx not yet present — deferred pending Wave-20 admin shell integration',
     ),
   );
 
   // ---- Check 6: Platform admin production-readiness route (or deferred) ---
   checks.push(
-    checkRouteExistsOrDeferred(
+    checkRouteDeclared(
       'QA28-C06',
       'src/app/(maestro)/platform/admin/production-readiness/page.tsx',
       'Platform admin production-readiness route page.tsx exists (or deferred)',
-      'platform/admin/production-readiness/page.tsx not yet present — deferred pending Wave-20 admin shell integration',
     ),
   );
 
@@ -252,61 +295,55 @@ export function runActiveRouteShellVerification(): ShellVerificationReport {
 
   // ---- Check 9: AbarVaAppShell (Wave-20 SHELL1 — deferred) ---------------
   checks.push(
-    checkComponentExistsOrDeferred(
+    checkComponentDeclared(
       'QA28-C09',
       'src/components/abarva/AbarVaAppShell.tsx',
       'AbarVaAppShell.tsx exists (Wave-20 SHELL1)',
-      'AbarVaAppShell.tsx is a Wave-20 SHELL1 component — not yet integrated into this branch. Deferred pending Wave-20 integration.',
     ),
   );
 
   // ---- Check 10: ProgramRouteShell (Wave-20 SHELL4 — deferred) -----------
   checks.push(
-    checkComponentExistsOrDeferred(
+    checkComponentDeclared(
       'QA28-C10',
       'src/components/programs/ProgramRouteShell.tsx',
       'ProgramRouteShell.tsx exists (Wave-20 SHELL4)',
-      'ProgramRouteShell.tsx is a Wave-20 SHELL4 component — not yet integrated into this branch. Deferred pending Wave-20 integration.',
     ),
   );
 
   // ---- Check 11: SentinelAgentColumn (Wave-S1 — shipped) -----------------
   checks.push(
-    checkComponentExistsOrDeferred(
+    checkComponentDeclared(
       'QA28-C11',
       'src/components/source/SentinelAgentColumn.tsx',
       'SentinelAgentColumn.tsx exists (Wave-S1 shell convergence)',
-      'SentinelAgentColumn.tsx not found — source shell migration to AppShell + SentinelAgentColumn incomplete.',
     ),
   );
 
   // ---- Check 12: AdminRouteShell (Wave-20 SHELL6 — deferred) -------------
   checks.push(
-    checkComponentExistsOrDeferred(
+    checkComponentDeclared(
       'QA28-C12',
       'src/components/admin/AdminRouteShell.tsx',
       'AdminRouteShell.tsx exists (Wave-20 SHELL6)',
-      'AdminRouteShell.tsx is a Wave-20 SHELL6 component — not yet integrated into this branch. Deferred pending Wave-20 integration.',
     ),
   );
 
   // ---- Check 13: IntelligenceRouteShell (Wave-20 SHELL7 — deferred) ------
   checks.push(
-    checkComponentExistsOrDeferred(
+    checkComponentDeclared(
       'QA28-C13',
       'src/components/intelligence/IntelligenceRouteShell.tsx',
       'IntelligenceRouteShell.tsx exists (Wave-20 SHELL7)',
-      'IntelligenceRouteShell.tsx is a Wave-20 SHELL7 component — not yet integrated into this branch. Deferred pending Wave-20 integration.',
     ),
   );
 
   // ---- Check 14: TowerRouteShell (Wave-20 SHELL7 — deferred) -------------
   checks.push(
-    checkComponentExistsOrDeferred(
+    checkComponentDeclared(
       'QA28-C14',
       'src/components/tower/TowerRouteShell.tsx',
       'TowerRouteShell.tsx exists (Wave-20 SHELL7)',
-      'TowerRouteShell.tsx is a Wave-20 SHELL7 component — not yet integrated into this branch. Deferred pending Wave-20 integration.',
     ),
   );
 
@@ -431,12 +468,16 @@ export function runActiveRouteShellVerification(): ShellVerificationReport {
   const passCount = checks.filter((c) => c.status === 'pass').length;
   const failCount = checks.filter((c) => c.status === 'fail').length;
   const deferredCount = checks.filter((c) => c.status === 'deferred').length;
+  const removedCount = checks.filter((c) => c.status === 'removed').length;
   const notApplicableCount = checks.filter((c) => c.status === 'not_applicable').length;
 
+  // A removal keeps overallStatus at 'partial' rather than 'pass', the same
+  // way the blueprint report treats one: the check still describes something
+  // the tree no longer has, and that loss stays visible at the top line.
   let overallStatus: 'pass' | 'fail' | 'partial';
   if (failCount > 0) {
-    overallStatus = deferredCount > 0 ? 'partial' : 'fail';
-  } else if (deferredCount > 0) {
+    overallStatus = deferredCount > 0 || removedCount > 0 ? 'partial' : 'fail';
+  } else if (deferredCount > 0 || removedCount > 0) {
     overallStatus = 'partial';
   } else {
     overallStatus = 'pass';
@@ -448,6 +489,7 @@ export function runActiveRouteShellVerification(): ShellVerificationReport {
     passCount,
     failCount,
     deferredCount,
+    removedCount,
     notApplicableCount,
     overallStatus,
     caveat:

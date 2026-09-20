@@ -3,14 +3,14 @@
   "watched": "src/lib",
   "entryPointCounts": {
     "product": 635,
-    "tooling": 1977,
-    "test": 2478
+    "tooling": 1978,
+    "test": 2480
   },
   "counts": {
-    "scanned": 2927,
+    "scanned": 2928,
     "product": 2132,
     "tooling": 230,
-    "testOnly": 432,
+    "testOnly": 433,
     "unreferenced": 133
   },
   "testOnly": [
@@ -308,6 +308,7 @@
     "src/lib/qa/main-route-ownership.ts",
     "src/lib/qa/page-blueprint-authority.ts",
     "src/lib/qa/page-blueprint-compliance.ts",
+    "src/lib/qa/path-disposition.ts",
     "src/lib/qa/persona-walk-results.ts",
     "src/lib/qa/production-readiness-page-verification.ts",
     "src/lib/qa/production-readiness-promotion-gate.ts",
