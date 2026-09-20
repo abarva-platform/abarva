@@ -93,8 +93,15 @@ const WIRED_DIRECTORIES = [
  * dropped off the census. One directory was covered and one stopped existing as
  * a test directory — different things, and this case reported the difference
  * rather than accepting the number that was expected.
+ *
+ * 35 → 26 on 20 Sep for wiring `src/lib/programs/expert-kernel`. Here the
+ * arithmetic does reconcile exactly, and it was checked rather than assumed:
+ * all nine directories that left the uncovered set under this root are
+ * `expert-kernel` rows — the tree's own `__tests__` plus eight nested ones —
+ * and none of them stopped existing. One command reaches all nine because it
+ * names the parent; the count moved by nine because nine rows were covered.
  */
-const DARK_DIRECTORY_COUNT = 35;
+const DARK_DIRECTORY_COUNT = 26;
 
 type Census = {
   counts: { indeterminateInvocations: number };

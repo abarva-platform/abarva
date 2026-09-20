@@ -99,5 +99,48 @@ jobs:
       - name: Run the admin broker suites
         run: npx jest src/lib/admin/broker --no-coverage --ci
 
+      # Four more library trees that no workflow and no npm script reached.
+      # Measured on `ced75d7c3` by running them, not by reading YAML:
+      #
+      #   expert-kernel            75 suites / 1662 tests / 43 importers
+      #   data-plane/read-adapters 20 suites /  193 tests / 43 importers
+      #   source/data-model        20 suites /  145 tests / 33 importers
+      #   pricing/effort-engine    14 suites /  140 tests /  5 importers
+      #
+      # "importers" counts non-test files outside each tree that import it, so
+      # none of these is coverage over dead code.
+      #
+      # They are four steps rather than one command so that a failure names the
+      # family it came from in the checks list. Pattern choice is measured in
+      # docs/ci/README-suite-wiring.md: queue time is zero either way and a
+      # dedicated workflow pays its own checkout and install, so a step in a job
+      # that already installed is the cheaper half of the trade.
+      #
+      # Three larger trees were measured at the same time and are deliberately
+      # NOT here, because they are red on `ced75d7c3`:
+      #
+      #   src/lib/deliverables     2 failed of 79 suites
+      #   src/lib/context-ingestion 3 failed of 27 suites
+      #   src/components/admin     3 failed of 31 suites
+      #
+      # A red directory is wired by fixing it, never by adding it to a green
+      # command. They are left for their own items with those numbers.
+      #
+      # Each path is named as a directory without a trailing slash, for the two
+      # reasons in the header. None of the four has a sibling sharing its name
+      # as a prefix today, and no other workflow names any of them, so nothing
+      # here runs twice.
+      - name: Run the expert-kernel suites
+        run: npx jest src/lib/programs/expert-kernel --no-coverage --ci
+
+      - name: Run the data-plane read-adapter suites
+        run: npx jest src/lib/data-plane/read-adapters --no-coverage --ci
+
+      - name: Run the Source data-model suites
+        run: npx jest src/lib/source/data-model --no-coverage --ci
+
+      - name: Run the pricing effort-engine suites
+        run: npx jest src/lib/pricing/effort-engine --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
