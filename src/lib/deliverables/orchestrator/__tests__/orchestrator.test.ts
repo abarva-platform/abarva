@@ -49,7 +49,7 @@ describe("source register + citation discipline", () => {
     ).toBe(false);
     const internal = buildSourceRegister(candidates);
     expect(
-      internal.evidence.some((e) => e.evidenceFamily === "contract_baseline"),
+      internal.evidence.some((e) => e.evidenceFamily === "Contract Baseline"),
     ).toBe(true);
   });
 
