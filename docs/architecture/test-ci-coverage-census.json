@@ -12,14 +12,14 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2332,
-    "coveredTestFiles": 1560,
-    "pullRequestCoveredTestFiles": 1557,
-    "uncoveredTestFiles": 772,
+    "testFiles": 2333,
+    "coveredTestFiles": 1574,
+    "pullRequestCoveredTestFiles": 1571,
+    "uncoveredTestFiles": 759,
     "directoriesWithTests": 477,
     "directoriesFullyCovered": 212,
-    "directoriesPartiallyCovered": 17,
-    "directoriesUncovered": 248,
+    "directoriesPartiallyCovered": 18,
+    "directoriesUncovered": 247,
     "directoriesWithUnrunTestFiles": 265,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
@@ -99,6 +99,14 @@
       "directory": "src/lib/source/ava/__tests__",
       "testFiles": 23,
       "coveredTestFiles": 22,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/auth/__tests__",
+      "testFiles": 19,
+      "coveredTestFiles": 13,
       "via": [
         "command"
       ]
@@ -214,9 +222,9 @@
       }
     },
     {
-      "directory": "src/lib/auth/__tests__",
-      "testFiles": 19,
-      "unrunTestFiles": 19,
+      "directory": "src/__tests__/integration/source",
+      "testFiles": 97,
+      "unrunTestFiles": 8,
       "governedRisk": {
         "score": 110,
         "band": "critical",
@@ -228,9 +236,9 @@
       }
     },
     {
-      "directory": "src/__tests__/integration/source",
-      "testFiles": 97,
-      "unrunTestFiles": 8,
+      "directory": "src/lib/auth/__tests__",
+      "testFiles": 19,
+      "unrunTestFiles": 6,
       "governedRisk": {
         "score": 110,
         "band": "critical",
@@ -1148,32 +1156,6 @@
       }
     },
     {
-      "directory": "src/lib/auth/__tests__",
-      "testFiles": 19,
-      "unrunTestFiles": 19,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "approvalOrLifecycleSourceCount": 1,
-        "approvalOrLifecycleSources": [
-          "src/lib/auth/gate-approval-strict-mode.ts"
-        ],
-        "tenantScopedReadSourceCount": 5,
-        "tenantScopedReadSources": [
-          "src/lib/active-client.ts",
-          "src/lib/auth/foundation-route-access.ts",
-          "src/lib/auth/tenancy.ts",
-          "src/lib/deliverables/seed-route-resolver.ts",
-          "src/lib/tenant/resolveTenant.ts"
-        ],
-        "rank": 4
-      }
-    },
-    {
       "directory": "src/__tests__/integration/source",
       "testFiles": 97,
       "unrunTestFiles": 8,
@@ -1197,6 +1179,32 @@
           "src/app/(maestro)/source/workspace/page.tsx",
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts",
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submission/route.ts"
+        ],
+        "rank": 4
+      }
+    },
+    {
+      "directory": "src/lib/auth/__tests__",
+      "testFiles": 19,
+      "unrunTestFiles": 6,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "approvalOrLifecycleSourceCount": 1,
+        "approvalOrLifecycleSources": [
+          "src/lib/auth/gate-approval-strict-mode.ts"
+        ],
+        "tenantScopedReadSourceCount": 5,
+        "tenantScopedReadSources": [
+          "src/lib/active-client.ts",
+          "src/lib/auth/foundation-route-access.ts",
+          "src/lib/auth/tenancy.ts",
+          "src/lib/deliverables/seed-route-resolver.ts",
+          "src/lib/tenant/resolveTenant.ts"
         ],
         "rank": 5
       }
@@ -1574,12 +1582,6 @@
     {
       "directory": "src/lib/intelligence/ask/__tests__",
       "testFiles": 23,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/auth/__tests__",
-      "testFiles": 19,
       "coveredTestFiles": 0,
       "via": []
     },
