@@ -107,6 +107,16 @@ jobs:
       - name: Run the context-ingestion suites
         run: npx jest src/lib/context-ingestion --no-coverage --ci
 
+      # `src/components/admin` is 31 suites / 171 tests. The first measured
+      # parent run found three stale harness failures: a missing Next router
+      # mock, copy that predated the queued connector-health state, and a
+      # deleted external CSV fixture. After repairing those contracts, the
+      # full parent is green. Naming the parent keeps future nested admin
+      # suites from becoming dark; the small overlap with already-owned
+      # redesign suites is deliberate and keeps this ownership automatic.
+      - name: Run the admin component suites
+        run: npx jest src/components/admin --no-coverage --ci
+
       # Deliverables was measured before wiring: 86 of 88 suites passed. The
       # two red suites were stale assertions from source-label normalization
       # and the document-final renderer release. The green sibling subtrees are
