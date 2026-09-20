@@ -99,6 +99,14 @@ jobs:
       - name: Run the admin broker suites
         run: npx jest src/lib/admin/broker --no-coverage --ci
 
+      # The context-ingestion tree was 24 of 27 suites green before repair.
+      # Triage found one optional-parser assumption, one retired external fixture
+      # dependency, and one document-metadata policy regression. The repaired
+      # tree is 27 suites / 161 tests and is named as a parent so new loader and
+      # intake suites join CI on the commit that adds them.
+      - name: Run the context-ingestion suites
+        run: npx jest src/lib/context-ingestion --no-coverage --ci
+
       # Deliverables was measured before wiring: 86 of 88 suites passed. The
       # two red suites were stale assertions from source-label normalization
       # and the document-final renderer release. The green sibling subtrees are
