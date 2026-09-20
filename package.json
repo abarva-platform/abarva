@@ -38,6 +38,7 @@
     "test:integration": "jest src/__tests__/integration",
     "check:source-integration-quarantine": "node scripts/quality/check-source-integration-quarantine.mjs",
     "check:admin-integration-quarantine": "node scripts/quality/check-admin-integration-quarantine.mjs",
+    "check:qa-integration-quarantine": "node scripts/quality/check-qa-integration-quarantine.mjs",
     "check:intelligence-integration-quarantine": "node scripts/quality/check-intelligence-integration-quarantine.mjs",
     "test:integration:nexus": "jest src/__tests__/integration/nexus",
     "test:integration:ci-visibility": "node --test scripts/quality/check-integration-ci-visibility.test.mjs && node scripts/quality/check-integration-ci-visibility.mjs",

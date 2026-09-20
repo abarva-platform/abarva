@@ -231,10 +231,18 @@ const KNOWN_DARK_DIRECTORIES = new Set([
   // workflow names `src/__tests__/integration/admin` without a trailing slash,
   // which as a regex covers the `data/` subdirectory too, so wiring the parent
   // closed both. 49 of the directory's 51 suites now run on every PR.
+  // 2026-09-19 (T-500) - `qa` is no longer dark. 37 suites and 915
+  // assertions ran nowhere; the directory is now wired with 6 red suites
+  // quarantined by name, and 31 suites run on every PR. Cleared here in the
+  // same change that wired it, which the two-directional check below now
+  // requires rather than merely hopes for.
   "agents",
-  "design",
+  // 2026-09-19 (T-501) - `design` was already stale when the check below was
+  // made two-directional: the workflow names src/__tests__/integration/design
+  // in its green command and has for some time, while the entry sat here. It
+  // was the first thing the new direction found, on its first run, which is
+  // the argument for the change better than any reasoning about it.
   "ops",
-  "qa",
 ]);
 
 function runCensus(): Census {
@@ -646,9 +654,30 @@ describe("integration directories a workflow actually reaches", () => {
       .sort();
 
     const unrecorded = dark.filter((name) => !KNOWN_DARK_DIRECTORIES.has(name));
-    // A ratchet: the set may shrink without editing this file. It may not grow.
     // A new integration directory belongs in a workflow command on the day it
     // lands, not on the day somebody trips over it.
     expect(unrecorded).toEqual([]);
+
+    // And the other direction, which this check used to leave open.
+    //
+    // The list was allowed to shrink without being edited, so wiring a
+    // directory left its name sitting here meaning nothing, and the suite
+    // stayed green. `qa` sat in it while 915 assertions ran nowhere: the
+    // entry was correct, nobody was ever made to revisit it, and the list
+    // slowly stopped describing the repository.
+    //
+    // The repository's own quarantine checks already refuse exactly this —
+    // a list BELOW its ceiling fails there, because silent headroom is how a
+    // carve-out becomes permanent. Two controls with opposite rules is one
+    // control too many.
+    //
+    // The trade-off is real and worth naming: the one-way version is lower
+    // friction, because wiring a directory needs no edit here. The two-way
+    // version is the one that stays true. Truth wins, and the friction is one
+    // line in the same change that did the wiring.
+    const stale = [...KNOWN_DARK_DIRECTORIES].filter(
+      (name) => !dark.includes(name),
+    );
+    expect(stale).toEqual([]);
   });
 });

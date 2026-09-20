@@ -238,5 +238,24 @@ jobs:
       - name: Run the Admin integration suites that pass on main
         run: npx jest src/__tests__/integration/admin --no-coverage --ci $(node scripts/quality/admin-integration-ignore-args.mjs)
 
+      - name: Refuse a stale or growing QA quarantine list
+        run: npm run check:qa-integration-quarantine
+
+      # A separate step for the same reason the Admin and Intelligence ones
+      # are separate: its exclusion flags name QA suites, and folding them
+      # into the green command would apply a QA-shaped ignore list to every
+      # other directory's run. The runner and the path are named literally so
+      # the visibility gate sees them, and the path deliberately has no
+      # trailing slash. `integration/qa` has no sibling directory it can also
+      # select, unlike `integration/agent` — checked, not assumed.
+      #
+      # Wiring this adds 31 suites and 763 assertions that no workflow ran.
+      # It does NOT add the assertions that pass inside the 6 excluded
+      # suites: a quarantined suite runs nowhere, and reporting its passing
+      # assertions as coverage would be the overstating this backlog exists
+      # to refuse.
+      - name: Run the QA integration suites that pass on main
+        run: npx jest src/__tests__/integration/qa --no-coverage --ci $(node scripts/quality/qa-integration-ignore-args.mjs)
+
       - name: Refuse a new integration directory that no workflow reaches
         run: npx jest --runTestsByPath src/__tests__/behaviors/integration-directory-ci-coverage.test.ts --no-coverage --ci
