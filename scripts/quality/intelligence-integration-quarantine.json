@@ -1,17 +1,27 @@
 {
   "note": "Intelligence integration suites that are RED on clean main and are therefore excluded from the Integration suites workflow. src/__tests__/integration/intelligence held 33 suites that no workflow ran. Running the directory for the first time found 26 red and 133 failing assertions, and the triage found ONE cause, not 133 problems: 131 of the 133 are a source file read as TEXT that does not exist. Default is INCLUDED: a new suite in this directory runs unless it is added here, which is what makes the workflow cover work that has not been written yet. Removing an entry is the fix; adding one needs a reason and an owner.",
-  "howToClear": "These suites do not describe a defect in shipping code. They describe a component and route tree that was replaced. Clearing an entry means rewriting the suite against the surface that ships today (src/components/intelligence-advisory/ and src/app/(maestro)/intelligence/), or deleting it with the reason recorded — not restoring the retired tree to satisfy a text match. Delete the entry here afterwards and confirm the workflow stays green.",
+  "howToClear": "These suites do not describe a defect in shipping code. They describe a component and route tree that was replaced. Clearing an entry means rewriting the suite against the surface that ships today (src/components/intelligence-advisory/ and src/app/(maestro)/intelligence/), or deleting it with the reason recorded \u2014 not restoring the retired tree to satisfy a text match. Delete the entry here afterwards and confirm the workflow stays green.",
   "clusters": {
-    "retired-component-tree": "13 of the 16 remaining. Every one reads a file under src/components/intelligence/ as TEXT and asserts substrings of it. That directory does not exist — 0c6a86c51 (2026-07-07, \"sunset all legacy surface versions\") deleted it, the day after 874ea46db landed the replacement. The Intelligence surface is now src/components/intelligence-advisory/AdvisoryIntelligencePage, mounted at src/app/(maestro)/intelligence/page.tsx. So these suites are stale contracts for a surface that was deliberately replaced. They were never governed coverage of shipping code: even before they went red they only asserted the shape of source text.",
-    "retired-route-tree": "3 of the 25 additionally read page files under route trees that were sunset — src/app/intelligence/[patternId], /solutions, /quality, /contradictions and src/app/(maestro)/tenant/[tenantSlug]/intelligence. intelligence-route-shell-wiring.test.ts is the clearest case and it CONTRADICTS a sibling: it asserts src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx exists, while context-corpus-explorer-route.test.ts asserts the same path does NOT exist, and that assertion passes. Two suites in one directory holding opposite contracts for one route is itself the finding.",
-    "not-a-product-defect": "No failing assertion in this directory describes shipping code behaving wrongly. 107 of 133 are ENOENT from readFileSync, 24 are existsSync(...) === true on a path that is gone, and the remaining 2 were stale literals in a file that does exist — those 2 were REPAIRED rather than quarantined, and context-corpus-explorer-route.test.ts now runs."
+    "retired-component-tree": "13 of the 16 remaining. Every one reads a file under src/components/intelligence/ as TEXT and asserts substrings of it. That directory does not exist \u2014 0c6a86c51 (2026-07-07, \"sunset all legacy surface versions\") deleted it, the day after 874ea46db landed the replacement. The Intelligence surface is now src/components/intelligence-advisory/AdvisoryIntelligencePage, mounted at src/app/(maestro)/intelligence/page.tsx. So these suites are stale contracts for a surface that was deliberately replaced. They were never governed coverage of shipping code: even before they went red they only asserted the shape of source text.",
+    "retired-route-tree": "3 of the 25 additionally read page files under route trees that were sunset \u2014 src/app/intelligence/[patternId], /solutions, /quality, /contradictions and src/app/(maestro)/tenant/[tenantSlug]/intelligence. intelligence-route-shell-wiring.test.ts is the clearest case and it CONTRADICTS a sibling: it asserts src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx exists, while context-corpus-explorer-route.test.ts asserts the same path does NOT exist, and that assertion passes. Two suites in one directory holding opposite contracts for one route is itself the finding.",
+    "not-a-product-defect": "No failing assertion in this directory describes shipping code behaving wrongly. 107 of 133 are ENOENT from readFileSync, 24 are existsSync(...) === true on a path that is gone, and the remaining 2 were stale literals in a file that does exist \u2014 those 2 were REPAIRED rather than quarantined, and context-corpus-explorer-route.test.ts now runs."
   },
-  "missingPathsNote": "Each entry names the paths whose absence is the reason it is quarantined. check-intelligence-integration-quarantine.mjs asserts every one of them is STILL absent. If any comes back, the check fails and says to re-run the suite and clear its entry — so this list cannot quietly outlive its reason. That is the control the list would otherwise lack: a name-in-a-file exclusion nobody re-measures is how a carve-out becomes permanent.",
+  "missingPathsNote": "Each entry names the paths whose absence is the reason it is quarantined. check-intelligence-integration-quarantine.mjs asserts every one of them is STILL absent. If any comes back, the check fails and says to re-run the suite and clear its entry \u2014 so this list cannot quietly outlive its reason. That is the control the list would otherwise lack: a name-in-a-file exclusion nobody re-measures is how a carve-out becomes permanent.",
   "quarantined": [
     {
       "suite": "evidence-dataset-drawer.test.ts",
       "missing": [
         "src/components/intelligence/EvidenceDatasetDrawer.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/evidence-dataset-drawer-view.ts",
+          "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/intelligence/sentinel-pattern-detections.ts",
+          "status": "kept-other-importer"
+        }
       ]
     },
     {
@@ -19,6 +29,20 @@
       "missing": [
         "src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx",
         "src/components/intelligence/IntelligenceCanvasModeTabs.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/intelligence-canvas-modes.ts",
+          "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/intelligence/intelligence-actions-mode-view.ts",
+          "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/intelligence/intelligence-programs-mode-view.ts",
+          "status": "goes-with-the-suite"
+        }
       ]
     },
     {
@@ -28,6 +52,20 @@
         "src/components/intelligence/IntelligenceSignalDetailSentinel.tsx",
         "src/components/intelligence/IntelligenceSignalsIndexPage.tsx",
         "src/components/intelligence/IntelligenceSignalsSentinel.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/intelligence-signals-index-view.ts",
+          "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/intelligence/intelligence-signal-detail-view.ts",
+          "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/intelligence/seed-signals-manual.ts",
+          "status": "kept-other-importer"
+        }
       ]
     },
     {
@@ -35,6 +73,16 @@
       "missing": [
         "src/components/intelligence/PatternGraphSentinel.tsx",
         "src/components/intelligence/PatternGraphShell.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/sentinel/pattern-graph-shell-view.ts",
+          "status": "kept-live-test"
+        },
+        {
+          "module": "src/lib/sentinel/pattern-graph-read-model.ts",
+          "status": "kept-other-importer"
+        }
       ]
     },
     {
@@ -46,6 +94,20 @@
         "src/components/intelligence/IntelligenceContradictionDetailSentinel.tsx",
         "src/components/intelligence/IntelligenceSolutionsIndexPage.tsx",
         "src/components/intelligence/IntelligenceSolutionsSentinel.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/intelligence-solutions-index-view.ts",
+          "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/intelligence/intelligence-solution-detail-view.ts",
+          "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/intelligence/intelligence-contradiction-detail-view.ts",
+          "status": "goes-with-the-suite"
+        }
       ]
     },
     {
@@ -54,18 +116,40 @@
         "src/app/intelligence/quality/page.tsx",
         "src/components/intelligence/IntelligenceQualityLensPage.tsx",
         "src/components/intelligence/IntelligenceQualityLensSentinel.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/intelligence-quality-lens-view.ts",
+          "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/intelligence/seed-contradictions.ts",
+          "status": "kept-other-importer"
+        }
       ]
     },
     {
       "suite": "intelligence-int2-pattern-action-canvas.test.ts",
       "missing": [
         "src/components/intelligence/IntelligencePatternDetailPage.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/pattern-action-canvas-view.ts",
+          "status": "goes-with-the-suite"
+        }
       ]
     },
     {
       "suite": "intelligence-library-foundation.test.ts",
       "missing": [
         "src/components/intelligence/IntelligenceIndexPage.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/shell-intelligence-fixture.ts",
+          "status": "goes-with-the-suite"
+        }
       ]
     },
     {
@@ -74,55 +158,120 @@
         "src/app/intelligence/[patternId]/page.tsx",
         "src/components/intelligence/IntelligencePatternDetailPage.tsx",
         "src/components/intelligence/IntelligencePatternDetailSentinel.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/intelligence-pattern-detail-view.ts",
+          "status": "goes-with-the-suite"
+        }
       ]
     },
     {
       "suite": "intelligence-route-shell-wiring.test.ts",
       "missing": [
         "src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx"
-      ]
+      ],
+      "covers": []
     },
     {
       "suite": "intelligence-workflow-canvas.test.ts",
       "missing": [
         "src/components/intelligence/IntelligenceWorkflowCanvas.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/intelligence-workflow-canvas-view.ts",
+          "status": "goes-with-the-suite"
+        }
       ]
     },
     {
       "suite": "sentinel-active-patterns-page.test.ts",
       "missing": [
         "src/components/intelligence/SentinelActivePatterns.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/sentinel-pattern-view.ts",
+          "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/intelligence/sentinel-pattern-detections.ts",
+          "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/programs/enhancement-seed-planner.ts",
+          "status": "kept-other-importer"
+        }
       ]
     },
     {
       "suite": "sentinel-evidence-brief.test.ts",
       "missing": [
         "src/components/intelligence/SentinelEvidenceBrief.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/sentinel-brief-evidence-view.ts",
+          "status": "goes-with-the-suite"
+        }
       ]
     },
     {
       "suite": "sentinel-interaction-rail.test.ts",
       "missing": [
         "src/components/intelligence/SentinelInteractionRail.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/sentinel-interaction-rail-view.ts",
+          "status": "goes-with-the-suite"
+        }
       ]
     },
     {
       "suite": "sentinel-pattern-content.test.ts",
       "missing": [
         "src/components/intelligence/SentinelPatternContentPanel.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/sentinel-pattern-content.ts",
+          "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/intelligence/sentinel-pattern-detections.ts",
+          "status": "kept-other-importer"
+        }
       ]
     },
     {
       "suite": "sentinel-pattern-detail.test.ts",
       "missing": [
         "src/components/intelligence/SentinelPatternDetail.tsx"
+      ],
+      "covers": [
+        {
+          "module": "src/lib/intelligence/sentinel-pattern-view.ts",
+          "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/intelligence/sentinel-pattern-detections.ts",
+          "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/programs/enhancement-seed-planner.ts",
+          "status": "kept-other-importer"
+        }
       ]
     }
   ],
   "alsoIgnored": [],
-  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/intelligence without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command. Jest reads that path as a regex against the full path, so it also selects sibling files at the integration root whose names start with \"intelligence\". Both of those siblings were red when the directory was first wired and were named here untriaged; backlog item T-044 triaged them and both now run. intelligence-pattern-manifest.test.ts asserted observationCount >= observations.length over every entry, which was true of the 17-pattern design pack it was written against and became false when the 2026-06-20 expansion merged corpora that use `observations` for source references; the invariant is now asserted on the corpus where the two fields count the same thing. intelligence-chat-shape.test.ts asserted that Tower still compacts, which a deliberate fix had already made false, and separately caught a live rendering path that drops most of a Brief A answer — that one is an it.failing marker naming backlog item C-009, not an exclusion. This list is EMPTY and should stay empty. An entry is an object whose `path` is REPO-RELATIVE (which is also a valid ignore-pattern suffix, so the generator and the existence check agree on one spelling), plus the `reason` it is out and the `owner` item that gets it back in. check-intelligence-integration-quarantine.mjs enforces all three, that the file still exists, and that the list does not grow past alsoIgnoredCeiling.",
+  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/intelligence without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command. Jest reads that path as a regex against the full path, so it also selects sibling files at the integration root whose names start with \"intelligence\". Both of those siblings were red when the directory was first wired and were named here untriaged; backlog item T-044 triaged them and both now run. intelligence-pattern-manifest.test.ts asserted observationCount >= observations.length over every entry, which was true of the 17-pattern design pack it was written against and became false when the 2026-06-20 expansion merged corpora that use `observations` for source references; the invariant is now asserted on the corpus where the two fields count the same thing. intelligence-chat-shape.test.ts asserted that Tower still compacts, which a deliberate fix had already made false, and separately caught a live rendering path that drops most of a Brief A answer \u2014 that one is an it.failing marker naming backlog item C-009, not an exclusion. This list is EMPTY and should stay empty. An entry is an object whose `path` is REPO-RELATIVE (which is also a valid ignore-pattern suffix, so the generator and the existence check agree on one spelling), plus the `reason` it is out and the `owner` item that gets it back in. check-intelligence-integration-quarantine.mjs enforces all three, that the file still exists, and that the list does not grow past alsoIgnoredCeiling.",
   "alsoIgnoredCeiling": 2,
   "clearedBatches": {
     "T-043-batch-1": "2026-09-19. The nine suites whose only missing path was src/components/intelligence/IntelligenceLensTabs.tsx were DELETED, not repaired, and so were the eight src/lib/intelligence/*-view.ts modules they were the last reference to. Read the reason before clearing the next batch the same way, because it is not the reason the list gives. Each of the nine was 3-5 describe blocks of which only the last was the stale component probe: 58 of their 257 assertions failed, and the other 199 were real deterministic runtime coverage of pattern-contradiction-monitor-view, programme-risk-summary-view, gate-readiness-view, engagement-scorecard-view, milestone-tracker-view, intelligence-lens-tabs-view, apex-retail-pattern-plan-view and sentinel-evidence-gap-queue-view. Deleting one describe block per suite would have turned all nine green. It was not done, because those eight modules had ZERO importers outside these suites anywhere in the repository - their only consumer was the deleted component, and the sunset left them behind. Un-quarantining would have bought 199 green assertions over code no route can reach, which is the overstatement this list exists to refuse. The modules went with the tests."
-  }
+  },
+  "coversNote": "Every entry declares the modules it IMPORTS and what happens to each when the suite is cleared. check-intelligence-integration-quarantine.mjs recomputes all of it on every run, so a wrong classification fails CI rather than sitting here as an opinion. Statuses: goes-with-the-suite (nothing else reaches it), kept-live-test (a NON-quarantined suite imports it, so deleting it would delete assertions that run today), kept-other-importer (a non-test file that is not itself going imports it). kept-other-importer is deliberately not a claim of product reachability - it is a one-hop fact about who imports the file, and the safe direction, because it refuses a deletion rather than waving one through. docs/architecture/orphaned-lib-modules.json is the reachability answer; this is the narrower question of what clearing an entry would cost.",
+  "batch2Triage": "2026-09-20 (T-050). The sixteen were measured before repairing, as the acceptance required, and the answer is NOT uniform - which is the finding. Baseline over the sixteen: 16 suites failed, 73 assertions failed, 283 passed. SIX of them run no test at all (evidence-dataset-drawer, intelligence-int2-pattern-action-canvas, sentinel-active-patterns-page, sentinel-interaction-rail, sentinel-pattern-content, sentinel-pattern-detail): a top-level readFileSync of a deleted component throws at module load, so jest reports the suite failed with zero assertions either way. intelligence-route-shell-wiring runs 10 and passes none, and it holds a contract a green sibling contradicts. The remaining NINE hold all 283 passing assertions, in the batch-1 shape: several describes of real deterministic coverage of a *-view.ts module, plus one stale describe probing a component's source text. Of the 24 modules the sixteen import, 17 go with their suite and 7 are kept. THE EXCEPTION THAT MATTERS: intelligence-i4's two modules, src/lib/sentinel/pattern-graph-read-model.ts and pattern-graph-shell-view.ts, are also covered by src/__tests__/integration/sentinel/, which the Integration suites workflow RUNS and which is green at 102 passing. Batch 1's rule - the modules go with the tests - would have deleted live, CI-executed coverage here. That is why the classification is now declared and recomputed instead of re-derived by hand each time. Four more are kept because surviving files import them: sentinel-pattern-detections, sentinel-pattern-view, seed-signals-manual, seed-contradictions, and programs/enhancement-seed-planner. The deletions themselves are NOT in this change: this one records the measurement and makes it fail when it stops being true. Clearing the entries is the next batch, and it can now be done a few at a time against a check that argues back."
 }
