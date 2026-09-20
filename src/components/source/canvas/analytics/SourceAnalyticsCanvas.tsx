@@ -39,6 +39,7 @@ import type {
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
   EvaluationBafoReadinessView,
+  Stage07NegotiationBriefCandidate,
   VendorEvaluationDecisionView,
   VendorResponseParseReport,
   VendorResponseProfileSet,
@@ -230,6 +231,7 @@ interface SourceAnalyticsCanvasProps {
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
   evaluationBafoReadinessView?: EvaluationBafoReadinessView | null;
+  negotiationBriefCandidate?: Stage07NegotiationBriefCandidate | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
   /** Optional deterministic Stage 08 readiness override for tests or server-built callers. */
@@ -709,6 +711,7 @@ export function SourceAnalyticsCanvas({
   vendorBafoInstructionPack = null,
   vendorEvaluationDecisionView = null,
   evaluationBafoReadinessView = null,
+  negotiationBriefCandidate = null,
   vendorResponseParseReports = [],
   normalizedResponsePackages = [],
   awardSowHandoffReadiness = null,
@@ -836,6 +839,7 @@ export function SourceAnalyticsCanvas({
               vendorBafoInstructionPack={vendorBafoInstructionPack}
               vendorEvaluationDecisionView={vendorEvaluationDecisionView}
               evaluationBafoReadinessView={evaluationBafoReadinessView}
+              negotiationBriefCandidate={negotiationBriefCandidate}
               vendorResponseParseReports={vendorResponseParseReports}
               normalizedResponsePackages={normalizedResponsePackages}
               awardSowHandoffReadiness={
@@ -1093,6 +1097,7 @@ function SourceWorkspace({
   vendorBafoInstructionPack,
   vendorEvaluationDecisionView,
   evaluationBafoReadinessView,
+  negotiationBriefCandidate,
   vendorResponseParseReports,
   normalizedResponsePackages,
   awardSowHandoffReadiness,
@@ -1111,6 +1116,7 @@ function SourceWorkspace({
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
   evaluationBafoReadinessView?: EvaluationBafoReadinessView | null;
+  negotiationBriefCandidate?: Stage07NegotiationBriefCandidate | null;
   vendorResponseParseReports?: VendorResponseParseReport[];
   normalizedResponsePackages?: readonly NormalizedVendorResponsePackage[];
   awardSowHandoffReadiness?: SourceAwardSowHandoffReadiness | null;
@@ -1190,7 +1196,10 @@ function SourceWorkspace({
       ) : null}
       {view.stage.key === "evaluation" ? (
         <div style={{ marginTop: 16, maxWidth: 1120 }}>
-          <EvaluationBafoReadinessPanel view={evaluationBafoReadinessView} />
+          <EvaluationBafoReadinessPanel
+            view={evaluationBafoReadinessView}
+            negotiationBriefCandidate={negotiationBriefCandidate}
+          />
         </div>
       ) : null}
       {view.stage.key === "evaluation" ? (
@@ -1205,7 +1214,10 @@ function SourceWorkspace({
         <div
           style={{ display: "grid", gap: 16, marginTop: 16, maxWidth: 1120 }}
         >
-          <EvaluationBafoReadinessPanel view={evaluationBafoReadinessView} />
+          <EvaluationBafoReadinessPanel
+            view={evaluationBafoReadinessView}
+            negotiationBriefCandidate={negotiationBriefCandidate}
+          />
           <VendorChallengeLeveragePanel
             intelligence={vendorChallengeIntelligence}
           />
@@ -1340,7 +1352,9 @@ function OffStageNotice({ view }: { view: SourceEventShellView }) {
   const currentStageKey = view.event.currentStageKey;
   if (viewedStageKey === currentStageKey) return null;
 
-  const viewedEntry = view.journey.find((stage) => stage.key === viewedStageKey);
+  const viewedEntry = view.journey.find(
+    (stage) => stage.key === viewedStageKey,
+  );
   const currentEntry = view.journey.find(
     (stage) => stage.key === currentStageKey,
   );

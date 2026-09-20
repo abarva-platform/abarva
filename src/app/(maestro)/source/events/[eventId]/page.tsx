@@ -58,6 +58,7 @@ import { readNormalizedVendorResponsePackages } from "@/lib/source/vendor-respon
 import {
   buildVendorBafoInstructionPack,
   buildEvaluationBafoReadinessView,
+  buildStage07NegotiationBriefCandidate,
   buildVendorChallengeIntelligence,
   compactVendorResponseParseReportsForRoute,
   buildVendorEvaluationDecisionView,
@@ -212,9 +213,10 @@ export default async function SourceEventDetailPage({
         : normalizedResponsePackages.filter(
             (responsePackage) => responsePackage.syntheticDemo !== true,
           );
-    const normalizedResponseSeeds = deriveVendorResponseSeedInputsFromNormalized(
-      normalizedProductionResponsePackages,
-    );
+    const normalizedResponseSeeds =
+      deriveVendorResponseSeedInputsFromNormalized(
+        normalizedProductionResponsePackages,
+      );
     // Events outside the vendor-response seed table take their vendor
     // population from the same parsed profiles the rest of the stage renders,
     // so the cockpit and the file-readiness ledger cannot report an empty
@@ -259,6 +261,13 @@ export default async function SourceEventDetailPage({
           decisionView: vendorEvaluationDecisionView,
         })
       : null;
+    const negotiationBriefCandidate = evaluationBafoReadinessView
+      ? buildStage07NegotiationBriefCandidate({
+          readinessView: evaluationBafoReadinessView,
+          bafoInstructionPack: vendorBafoInstructionPack,
+          decisionView: vendorEvaluationDecisionView,
+        })
+      : null;
     const vendorResponseParseReports =
       viewStage === "responses"
         ? compactVendorResponseParseReportsForRoute(
@@ -293,34 +302,33 @@ export default async function SourceEventDetailPage({
       analyticsRegistryArtifacts,
       currentStageArtifactStates,
       fileCabinetArtifacts,
-    ] =
-      await Promise.all([
-        listSourceArtifactsForSourceEventId(event.id).catch((error) => {
-          console.error(
-            "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
-            error instanceof Error ? error.message : String(error),
-          );
-          return [];
-        }),
-        listArtifactStatesForEventStage(event.id, viewStage).catch((error) => {
-          console.error(
-            "[SourceEventDetailPage] current-stage artifact state read failed for analytics shell",
-            error instanceof Error ? error.message : String(error),
-          );
-          return [];
-        }),
-        activeClient?.key
-          ? listSourceArtifacts(event.id, {
-              tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
-            }).catch((error) => {
-              console.error(
-                "[SourceEventDetailPage] source file-cabinet read failed for task hydration",
-                error instanceof Error ? error.message : String(error),
-              );
-              return [];
-            })
-          : Promise.resolve([]),
-      ]);
+    ] = await Promise.all([
+      listSourceArtifactsForSourceEventId(event.id).catch((error) => {
+        console.error(
+          "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      }),
+      listArtifactStatesForEventStage(event.id, viewStage).catch((error) => {
+        console.error(
+          "[SourceEventDetailPage] current-stage artifact state read failed for analytics shell",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      }),
+      activeClient?.key
+        ? listSourceArtifacts(event.id, {
+            tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
+          }).catch((error) => {
+            console.error(
+              "[SourceEventDetailPage] source file-cabinet read failed for task hydration",
+              error instanceof Error ? error.message : String(error),
+            );
+            return [];
+          })
+        : Promise.resolve([]),
+    ]);
     analyticsEvidenceStates = await listEffectiveEvidenceStatesForEvent(
       event.id,
     ).catch((error) => {
@@ -343,26 +351,25 @@ export default async function SourceEventDetailPage({
       ...analyticsRegistryArtifacts,
     ];
     const analyticsHydrationArtifacts: HydrationArtifact[] =
-      analyticsArtifacts.flatMap(
-        (artifact) =>
-          artifact.stageKey
-            ? [
-                {
-                  stageKey: artifact.stageKey,
-                  artifactKind: artifact.artifactKind,
-                  originalName:
-                    "originalName" in artifact
-                      ? artifact.originalName
-                      : undefined,
-                  sourceFormat:
-                    "sourceFormat" in artifact
-                      ? artifact.sourceFormat
-                      : undefined,
-                  sizeBytes:
-                    "sizeBytes" in artifact ? artifact.sizeBytes : undefined,
-                },
-              ]
-            : [],
+      analyticsArtifacts.flatMap((artifact) =>
+        artifact.stageKey
+          ? [
+              {
+                stageKey: artifact.stageKey,
+                artifactKind: artifact.artifactKind,
+                originalName:
+                  "originalName" in artifact
+                    ? artifact.originalName
+                    : undefined,
+                sourceFormat:
+                  "sourceFormat" in artifact
+                    ? artifact.sourceFormat
+                    : undefined,
+                sizeBytes:
+                  "sizeBytes" in artifact ? artifact.sizeBytes : undefined,
+              },
+            ]
+          : [],
       );
     analyticsHydrationArtifacts.push(
       ...fileCabinetArtifacts.flatMap((artifact) =>
@@ -701,6 +708,7 @@ export default async function SourceEventDetailPage({
         vendorBafoInstructionPack={vendorBafoInstructionPack}
         vendorEvaluationDecisionView={vendorEvaluationDecisionView}
         evaluationBafoReadinessView={evaluationBafoReadinessView}
+        negotiationBriefCandidate={negotiationBriefCandidate}
         vendorResponseParseReports={vendorResponseParseReports}
         normalizedResponsePackages={normalizedResponsePackages}
         awardSowHandoffReadiness={awardSowHandoffReadiness}

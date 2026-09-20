@@ -1,7 +1,10 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import type { EvaluationBafoReadinessView } from "@/lib/source/proposal-intelligence";
+import type {
+  EvaluationBafoReadinessView,
+  Stage07NegotiationBriefCandidate,
+} from "@/lib/source/proposal-intelligence";
 import { CANVAS } from "../canvas-tokens";
 
 function stateLabel(state: EvaluationBafoReadinessView["state"]): string {
@@ -11,7 +14,9 @@ function stateLabel(state: EvaluationBafoReadinessView["state"]): string {
   return "No records";
 }
 
-function stateStyle(state: EvaluationBafoReadinessView["state"]): CSSProperties {
+function stateStyle(
+  state: EvaluationBafoReadinessView["state"],
+): CSSProperties {
   if (state === "ready_for_evaluator_review") return GOOD;
   if (state === "blocked" || state === "no_records") return BAD;
   return WARN;
@@ -35,11 +40,17 @@ function packageLabel(
 
 export function EvaluationBafoReadinessPanel({
   view,
+  negotiationBriefCandidate,
 }: {
   view?: EvaluationBafoReadinessView | null;
+  negotiationBriefCandidate?: Stage07NegotiationBriefCandidate | null;
 }) {
   if (!view) return null;
   const visibleBlockers = view.blockers.slice(0, 5);
+  const visibleFacts =
+    negotiationBriefCandidate?.acceptedFacts.slice(0, 4) ?? [];
+  const visibleAsks = negotiationBriefCandidate?.proposedAsks.slice(0, 4) ?? [];
+  const visibleRefusals = negotiationBriefCandidate?.refusals.slice(0, 3) ?? [];
 
   return (
     <section
@@ -131,7 +142,9 @@ export function EvaluationBafoReadinessPanel({
                 </div>
               ))
             ) : (
-              <p style={EMPTY_COPY}>No scorecard or response evidence to compare.</p>
+              <p style={EMPTY_COPY}>
+                No scorecard or response evidence to compare.
+              </p>
             )}
           </div>
         </div>
@@ -180,7 +193,9 @@ export function EvaluationBafoReadinessPanel({
               </article>
             ))
           ) : (
-            <p style={EMPTY_COPY}>No pricing records available for comparison.</p>
+            <p style={EMPTY_COPY}>
+              No pricing records available for comparison.
+            </p>
           )}
         </div>
       </div>
@@ -218,6 +233,69 @@ export function EvaluationBafoReadinessPanel({
           </p>
         )}
       </div>
+
+      {negotiationBriefCandidate ? (
+        <div style={NEGOTIATION_PANEL}>
+          <div style={PANEL_HEAD}>
+            <span style={EYEBROW}>Negotiation brief candidate</span>
+            <span
+              style={{
+                ...PILL_SMALL,
+                ...(negotiationBriefCandidate.state === "candidate"
+                  ? GOOD
+                  : BAD),
+              }}
+            >
+              {negotiationBriefCandidate.state === "candidate"
+                ? "Candidate"
+                : "Refused"}
+            </span>
+          </div>
+          <p style={ROW_NOTE}>{negotiationBriefCandidate.headline}</p>
+          {visibleRefusals.length > 0 ? (
+            <div style={BRIEF_LIST}>
+              {visibleRefusals.map((refusal) => (
+                <article
+                  key={`${refusal.evidenceFamily}:${refusal.vendorId ?? "all"}`}
+                  style={BRIEF_ITEM}
+                >
+                  <strong>{refusal.vendorName}</strong>
+                  <span style={ROW_NOTE}>{refusal.reason}</span>
+                  <span style={NEXT_ACTION}>{refusal.nextAction}</span>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div style={BRIEF_COLUMNS}>
+              <div>
+                <strong style={BRIEF_LABEL}>Accepted facts</strong>
+                <div style={BRIEF_LIST}>
+                  {visibleFacts.map((fact) => (
+                    <article key={fact.factId} style={BRIEF_ITEM}>
+                      <strong>{fact.vendorName}</strong>
+                      <span style={ROW_NOTE}>{fact.statement}</span>
+                    </article>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <strong style={BRIEF_LABEL}>Proposed asks</strong>
+                <div style={BRIEF_LIST}>
+                  {visibleAsks.map((ask) => (
+                    <article key={ask.askId} style={BRIEF_ITEM}>
+                      <strong>{ask.vendorName}</strong>
+                      <span style={ROW_NOTE}>{ask.ask}</span>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <div style={GUARDRAIL}>
+            {negotiationBriefCandidate.guardrails.join(" ")}
+          </div>
+        </div>
+      ) : null}
 
       <div style={GUARDRAIL}>{view.guardrail}</div>
     </section>
@@ -385,6 +463,40 @@ const EVIDENCE_NOTE: CSSProperties = {
 const BLOCKER_PANEL: CSSProperties = {
   ...PANEL,
   marginTop: 14,
+};
+
+const NEGOTIATION_PANEL: CSSProperties = {
+  ...PANEL,
+  marginTop: 14,
+  background: "#F8FAFC",
+};
+
+const BRIEF_COLUMNS: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 12,
+  marginTop: 12,
+};
+
+const BRIEF_LIST: CSSProperties = {
+  display: "grid",
+  gap: 8,
+  marginTop: 8,
+};
+
+const BRIEF_ITEM: CSSProperties = {
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 8,
+  background: "#FFFFFF",
+  padding: 10,
+  display: "grid",
+  gap: 4,
+  minWidth: 0,
+};
+
+const BRIEF_LABEL: CSSProperties = {
+  color: CANVAS.INK,
+  fontSize: 12,
 };
 
 const BLOCKER_GRID: CSSProperties = {
