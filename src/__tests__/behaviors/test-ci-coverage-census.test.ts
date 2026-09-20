@@ -237,6 +237,41 @@ describe("test CI coverage census", () => {
     expect(runCensus(dir).census.counts.coveredTestFiles).toBe(1);
   });
 
+  it("preserves regex escapes in a workflow-reachable script's Jest ignore patterns", () => {
+    const dir = fixture({
+      "src/lib/script-ignore/__tests__/kept.test.ts": TEST_FILE,
+      "src/lib/script-ignore/__tests__/excluded.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("bash scripts/ci/run-script-ignore.sh"),
+      "scripts/ci/run-script-ignore.sh": String.raw`npx jest src/lib/script-ignore --testPathIgnorePatterns 'script-ignore/__tests__/excluded\.test\.ts$'`,
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts).toMatchObject({
+      testFiles: 2,
+      coveredTestFiles: 1,
+      uncoveredTestFiles: 1,
+    });
+    expect(census.unresolvedIgnoreArguments).toEqual([]);
+  });
+
+  it("reports a script invocation whose structured ignore arguments cannot be parsed", () => {
+    const dir = fixture({
+      "src/lib/structured-ignore/__tests__/kept.test.ts": TEST_FILE,
+      "src/lib/structured-ignore/__tests__/excluded.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "node scripts/ci/run-structured-ignore.mjs",
+      ),
+      "scripts/ci/run-structured-ignore.mjs": String.raw`spawnSync("npx", ["jest", "src/lib/structured-ignore", "--testPathIgnorePatterns", "structured-ignore/__tests__/excluded\\.test\\.ts$"]);`,
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts.coveredTestFiles).toBe(2);
+    expect(census.unresolvedIgnoreArguments).toEqual([
+      expect.objectContaining({
+        script: "scripts/ci/run-structured-ignore.mjs",
+        reason: "ignore patterns inside this script invocation could not be parsed",
+      }),
+    ]);
+  });
+
   it("follows a ratchet baseline's declared paths", () => {
     const dir = fixture({
       "src/lib/delta/__tests__/delta.test.ts": TEST_FILE,
