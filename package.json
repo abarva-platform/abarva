@@ -926,6 +926,7 @@
     "ops:purge-retired-tenant-residue:apply": "node scripts/ops/purge-retired-tenant-residue.mjs --apply",
     "ops:purge-retired-tenant-rows": "node scripts/ops/purge-retired-tenant-rows.mjs",
     "ops:purge-retired-tenant-rows:apply": "node scripts/ops/purge-retired-tenant-rows.mjs --apply",
+    "audit:lib-orphans": "node scripts/audit/lib-orphan-report.mjs",
     "audit:route-reachability": "node scripts/audit/route-reachability-check.mjs",
     "audit:ci-gate-registry": "node scripts/audit/ci-gate-registry-check.mjs",
     "audit:ci-gate-registry-order": "node scripts/audit/ci-gate-registry-order-check.mjs",

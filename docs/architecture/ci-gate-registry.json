@@ -329,6 +329,10 @@
       "kind": "quarantined",
       "reason": "Fails on main with 19 failures. Clears when each dataset named in the failure list is sunset or the sunset list is corrected to current reality."
     },
+    "audit:lib-orphans": {
+      "kind": "pr-gate",
+      "reason": "Reports modules under src/lib that no product or operator entry point reaches, separating the ones only a test reaches from the ones nothing reaches. Gates on a change against the baseline in both directions. audit:route-reachability answers the same question for src/components and cannot answer it for src/lib, where an operator script or an ACA job is a legitimate entry point and a test is not."
+    },
     "audit:loaded-datasets": {
       "kind": "unclassified"
     },

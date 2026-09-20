@@ -115,7 +115,13 @@ export function collectRoots(repoRoot) {
       }
     }
   }
-  for (const extra of ['middleware.ts', 'instrumentation.ts']) {
+  // Runtime entry points that are not routes. `proxy.ts` is what Next.js 16
+  // renamed middleware to, and this tree has only the new name — so the list
+  // was naming a file that does not exist while missing the one that does.
+  // Exactly one src/lib module is reachable only from it, and it is a route
+  // tenancy guard: left out, an orphan report scores a wired control as dead.
+  // `middleware.ts` stays listed so the walk is correct on either name.
+  for (const extra of ['proxy.ts', 'middleware.ts', 'instrumentation.ts']) {
     const candidate = path.join(srcDir, extra);
     if (fs.existsSync(candidate)) roots.push(candidate);
   }
