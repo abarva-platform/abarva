@@ -575,12 +575,6 @@
       "controlKind": "human-approval-gate"
     },
     {
-      "key": "consequential|Tower|Portfolio data upload/ingest|human-approval-gate",
-      "status": "deferred",
-      "controlKind": "human-approval-gate",
-      "reason": "Catalog claim is access/quarantine coverage, not a completed human decision gate for AI-derived action."
-    },
-    {
       "key": "consequential|Intelligence|Gate waiver / approval|human-approval-gate",
       "status": "covered",
       "surfaceId": "intelligence-gate-waiver-route",
