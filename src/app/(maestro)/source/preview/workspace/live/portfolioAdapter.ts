@@ -1109,7 +1109,18 @@ async function loadDirectSourceWorkspaceImpactRows(
         "impact.action_candidates_direct",
         () =>
           run<SourceContractActionCandidateRow>(
-            `WITH raw_actions AS (
+            `WITH current_action_contracts AS MATERIALIZED (
+               SELECT DISTINCT
+                 current_contract.tenant_key,
+                 current_contract.contract_id
+                FROM source.contract current_contract
+                JOIN source.optimization_opportunity current_opportunity
+                  ON current_opportunity.tenant_key = current_contract.tenant_key
+                 AND current_opportunity.contract_id = current_contract.contract_id
+                 AND current_opportunity.dataset_version = current_contract.raw_payload->>'dataset_version'
+               WHERE current_contract.tenant_key = ANY($1::text[])
+             ),
+             raw_actions AS (
                SELECT
                  o.tenant_key,
                  o.opportunity_id AS action_candidate_id,
@@ -1157,17 +1168,11 @@ async function loadDirectSourceWorkspaceImpactRows(
                 LEFT JOIN source.contract_360 c
                   ON c.tenant_key = o.tenant_key
                  AND c.contract_id = o.contract_id
+                LEFT JOIN current_action_contracts current_action
+                  ON current_action.tenant_key = o.tenant_key
+                 AND current_action.contract_id = o.contract_id
                WHERE o.tenant_key = ANY($1::text[])
-                 AND NOT EXISTS (
-                   SELECT 1
-                     FROM source.contract current_contract
-                     JOIN source.optimization_opportunity current_opportunity
-                       ON current_opportunity.tenant_key = current_contract.tenant_key
-                      AND current_opportunity.contract_id = current_contract.contract_id
-                      AND current_opportunity.dataset_version = current_contract.raw_payload->>'dataset_version'
-                    WHERE current_contract.tenant_key = o.tenant_key
-                      AND current_contract.contract_id = o.contract_id
-                 )
+                 AND current_action.contract_id IS NULL
                UNION ALL
                SELECT
                  o.tenant_key,
@@ -1820,7 +1825,18 @@ async function loadDerivedSourceWorkspaceImpactLayer(
         [acceptedTenantKeys],
       );
       const actionCandidates = await run<SourceContractActionCandidateRow>(
-        `WITH raw_actions AS (
+        `WITH current_action_contracts AS MATERIALIZED (
+           SELECT DISTINCT
+             current_contract.tenant_key,
+             current_contract.contract_id
+            FROM source.contract current_contract
+            JOIN source.optimization_opportunity current_opportunity
+              ON current_opportunity.tenant_key = current_contract.tenant_key
+             AND current_opportunity.contract_id = current_contract.contract_id
+             AND current_opportunity.dataset_version = current_contract.raw_payload->>'dataset_version'
+           WHERE current_contract.tenant_key = ANY($1::text[])
+         ),
+         raw_actions AS (
            SELECT
              o.tenant_key,
              o.opportunity_id AS action_candidate_id,
@@ -1868,17 +1884,11 @@ async function loadDerivedSourceWorkspaceImpactLayer(
             LEFT JOIN source.contract_360 c
               ON c.tenant_key = o.tenant_key
              AND c.contract_id = o.contract_id
+            LEFT JOIN current_action_contracts current_action
+              ON current_action.tenant_key = o.tenant_key
+             AND current_action.contract_id = o.contract_id
            WHERE o.tenant_key = ANY($1::text[])
-             AND NOT EXISTS (
-               SELECT 1
-                 FROM source.contract current_contract
-                 JOIN source.optimization_opportunity current_opportunity
-                   ON current_opportunity.tenant_key = current_contract.tenant_key
-                  AND current_opportunity.contract_id = current_contract.contract_id
-                  AND current_opportunity.dataset_version = current_contract.raw_payload->>'dataset_version'
-                WHERE current_contract.tenant_key = o.tenant_key
-                  AND current_contract.contract_id = o.contract_id
-             )
+             AND current_action.contract_id IS NULL
            UNION ALL
            SELECT
              o.tenant_key,
