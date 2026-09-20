@@ -6,6 +6,7 @@
 SKIP_BUILD=0
 PASS=0
 FAIL=0
+WARN=0
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Parse args
@@ -26,6 +27,10 @@ cd "$REPO_ROOT"
 
 pass() { echo "[PASS] $1"; PASS=$((PASS+1)); }
 fail() { echo "[FAIL] $1"; FAIL=$((FAIL+1)); }
+# A finding that is real but must not block the gate still has to be reported as
+# a finding. Before T-071 the only alternative to fail() was pass(), so a check
+# that found something printed the same line as a check that found nothing.
+warn() { echo "[WARN] $1"; WARN=$((WARN+1)); }
 section() { echo ""; echo "=== $1 ==="; }
 
 # Section 1: Git hygiene
@@ -67,6 +72,9 @@ else
   fail "production-readiness.json invalid JSON"
 fi
 
+# A declared subject that is absent is an unanswered question, not a satisfied
+# one. The previous "not present (skipped)" branch printed pass(), so deleting
+# the manifest made this check green - the vacuity class recorded in item 47.
 if [ -f docs/build/build-waves.json ]; then
   if node -e "JSON.parse(require('fs').readFileSync('docs/build/build-waves.json','utf8')); console.log('ok')" 2>/dev/null | grep -q ok; then
     pass "build-waves.json valid JSON"
@@ -74,7 +82,7 @@ if [ -f docs/build/build-waves.json ]; then
     fail "build-waves.json invalid JSON"
   fi
 else
-  pass "build-waves.json not present (skipped)"
+  fail "build-waves.json not present (declared subject is missing)"
 fi
 
 # Duplicate slice check
@@ -94,23 +102,52 @@ fi
 
 # Section 3: Secret hygiene
 section "3. Secret hygiene"
+# Judged by jest's exit status. The previous grep for "Tests:.*passed" is
+# satisfied by "Tests: 8 failed, 53 passed, 61 total", so a partially failing
+# secret-hygiene run reported [PASS]. A disclosure check is the last one that
+# should be able to pass while red.
+#
+# The suite path stays a literal on the invocation line. Holding it in a shell
+# variable reads identically to a human and is opaque to the repository's
+# coverage resolver, which reports an invocation it cannot resolve as an upper
+# bound on uncovered tests - so tidying this into a variable silently degrades
+# the answer to "which directory gets wired next". Measured: it moved
+# `unresolved Jest invocations` from 0 to 2.
 if [ -f src/__tests__/integration/qa/secret-hygiene-patterns.test.ts ]; then
-  if npx jest src/__tests__/integration/qa/secret-hygiene-patterns.test.ts --no-coverage --silent 2>&1 | grep -q "Tests:.*passed"; then
+  SECRET_LOG="$(mktemp)"
+  if npx jest src/__tests__/integration/qa/secret-hygiene-patterns.test.ts --no-coverage --silent >"$SECRET_LOG" 2>&1; then
     pass "Secret hygiene tests passed"
   else
-    fail "Secret hygiene tests failed or errored"
+    SECRET_EXIT=$?
+    fail "Secret hygiene tests did not succeed (exit $SECRET_EXIT)"
+    tail -40 "$SECRET_LOG"
   fi
+  rm -f "$SECRET_LOG"
 else
-  pass "Secret hygiene test not present (skipped)"
+  fail "Secret hygiene test not present (declared subject is missing)"
 fi
 
 # Section 4: TypeScript
 section "4. TypeScript"
-if npx tsc --noEmit --pretty false 2>&1 | grep -q "error TS"; then
-  fail "TypeScript errors found (npx tsc --noEmit)"
-else
+# Judged by exit status, at the documented heap. Greping the output for
+# "error TS" reported [PASS] on a crash: `npx tsc --noEmit` exits 134 with a V8
+# out-of-memory trace and emits no diagnostic at all, so the grep found nothing
+# and the gate called it clean. The heap option is what stops the crash; the
+# exit-code check is what stops a crash from reading as success if it returns.
+TSC_LOG="$(mktemp)"
+TSC_NODE_OPTIONS="${NODE_OPTIONS:-}"
+case " $TSC_NODE_OPTIONS " in
+  *" --max-old-space-size="* | *" --max_old_space_size="*) ;;
+  *) TSC_NODE_OPTIONS="${TSC_NODE_OPTIONS:+$TSC_NODE_OPTIONS }--max-old-space-size=6144" ;;
+esac
+if NODE_OPTIONS="$TSC_NODE_OPTIONS" npx tsc --noEmit --pretty false >"$TSC_LOG" 2>&1; then
   pass "TypeScript clean"
+else
+  TSC_EXIT=$?
+  fail "TypeScript check did not succeed (npx tsc --noEmit exit $TSC_EXIT)"
+  tail -60 "$TSC_LOG"
 fi
+rm -f "$TSC_LOG"
 
 # Section 5: Build
 section "5. Build"
@@ -140,20 +177,59 @@ fi
 
 # Section 6: Stash hygiene
 section "6. Stash hygiene"
+# Three outcomes, because the two this had were both passes: a risky stash and
+# an unreadable report each printed pass(), so the gate claimed "No risky
+# stashes" in the two cases where it had not established that.
+#
+# A finding warns rather than fails on purpose: the stash stack is machine-local
+# and shared between worktrees, so another agent's entry must not block this
+# repository's pull requests, and it is always empty on a CI runner. Being
+# unable to read the report is different - that is an unanswered question and it
+# fails, the same rule the manifest and secret-hygiene subjects follow above.
+# Three outcomes, because the two this had were both passes: a risky stash and
+# an unreadable report each printed pass(), so the gate claimed "No risky
+# stashes" in the two cases where it had not established that.
+#
+# It also read a field name stash_safety_check.py has never emitted, so the
+# emptiness test on it was always false and this check printed "No risky
+# stashes" unconditionally - measured on a tree where the script reported 92
+# stashes from other branches and isSafeToIntegrate: false. The contract below
+# names the fields the script actually produces, and an absent field fails
+# rather than reading as clean. A behavioural case runs the real script and
+# holds every field this section reads to the report's actual keys.
+#
+# A finding warns rather than fails on purpose: the stash stack is machine-local
+# and shared between worktrees, so another agent's entry must not block this
+# repository's pull requests, and it is empty on a CI runner. Being unable to
+# read the report is different - that is an unanswered question and it fails,
+# the same rule the manifest and secret-hygiene subjects follow above.
 if [ -f scripts/integration/stash_safety_check.py ]; then
-  STASH_OUT=$(python3 scripts/integration/stash_safety_check.py --json 2>/dev/null || echo '{"error":"failed"}')
-  if echo "$STASH_OUT" | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));if(d.riskyStashes&&d.riskyStashes.length>0){console.log('RISKY:'+d.riskyStashes.length);process.exit(1);}console.log('ok');" 2>/dev/null | grep -q ok; then
-    pass "No risky stashes"
-  else
-    pass "Stash check complete (review output manually)"
-  fi
+  STASH_OUT=$(python3 scripts/integration/stash_safety_check.py --json 2>/dev/null || echo 'STASH_SCRIPT_FAILED')
+  STASH_VERDICT=$(echo "$STASH_OUT" | node -e "
+let raw = '';
+try { raw = require('fs').readFileSync('/dev/stdin', 'utf8'); } catch { console.log('unreadable'); process.exit(0); }
+let d;
+try { d = JSON.parse(raw); } catch { console.log('unreadable'); process.exit(0); }
+if (!d || typeof d !== 'object' || typeof d.isSafeToIntegrate !== 'boolean') {
+  console.log('unreadable');
+  process.exit(0);
+}
+if (d.isSafeToIntegrate) { console.log('clean'); process.exit(0); }
+const n = typeof d.stashesFromOtherBranches === 'number' ? d.stashesFromOtherBranches : '?';
+console.log('risky:' + n);
+" 2>/dev/null || echo 'unreadable')
+  case "$STASH_VERDICT" in
+    clean) pass "No risky stashes" ;;
+    risky:*) warn "Stash stack is not safe to integrate (${STASH_VERDICT#risky:} from other branches) - do not run git stash pop" ;;
+    *) fail "Stash safety report unreadable (could not establish stash state)" ;;
+  esac
 else
-  pass "stash_safety_check.py not present (skipped)"
+  fail "stash_safety_check.py not present (declared subject is missing)"
 fi
 
 # Summary
 section "Summary"
-echo "PASS: $PASS  FAIL: $FAIL"
+echo "PASS: $PASS  WARN: $WARN  FAIL: $FAIL"
 if [ "$FAIL" -gt 0 ]; then
   echo "HYGIENE GATE: FAIL"
   exit 1
