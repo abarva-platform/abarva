@@ -12,6 +12,10 @@ import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import {
+  buildScorecardAuthorityView,
+  type ScorecardAuthorityView,
+} from "@/lib/source/proposal-intelligence";
 
 jest.mock("@/components/shell/AppShell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
@@ -99,6 +103,12 @@ const unavailableStage05: SourceNewStage05NdaCoverage = {
     detail: "The governed candidate-panel registry could not be read.",
   },
 };
+const unavailableScorecardAuthority = buildScorecardAuthorityView({
+  tenantKey: request.clientKey,
+  sourceEventId: request.id,
+  criteria: [],
+  scores: [],
+});
 
 // Blocked rather than empty: these cases are about other parts of the
 // workspace, and a panel defaulted to "available with nothing in it" would
@@ -119,16 +129,22 @@ const blockedStage04: SourceNewStage04VendorPanel = {
 function SourceNewWorkspace({
   stage04VendorPanel = blockedStage04,
   stage05NdaCoverage = unavailableStage05,
+  scorecardAuthority = unavailableScorecardAuthority,
   ...props
-}: Omit<SourceNewWorkspaceProps, "stage04VendorPanel" | "stage05NdaCoverage"> & {
+}: Omit<
+  SourceNewWorkspaceProps,
+  "stage04VendorPanel" | "stage05NdaCoverage" | "scorecardAuthority"
+> & {
   stage04VendorPanel?: SourceNewStage04VendorPanel;
   stage05NdaCoverage?: SourceNewStage05NdaCoverage;
+  scorecardAuthority?: ScorecardAuthorityView;
 }) {
   return (
     <SourceNewWorkspaceImplementation
       {...props}
       stage04VendorPanel={stage04VendorPanel}
       stage05NdaCoverage={stage05NdaCoverage}
+      scorecardAuthority={scorecardAuthority}
     />
   );
 }
@@ -163,6 +179,97 @@ describe("SourceNewWorkspace", () => {
         .getByRole("link", { name: "Open current stage" })
         .getAttribute("href"),
     ).toBe("/source/events/event-1");
+  });
+
+  it("mounts Stage 07 scorecard authority as blocked when no frozen named evaluator authority is loaded", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "evaluation", lifecycle: "active" }}
+        files={[]}
+      />,
+    );
+
+    const authority = screen.getByRole("region", {
+      name: "Stage 07 scorecard authority",
+    });
+    expect(within(authority).getByText("Blocked before ranking")).toBeTruthy();
+    expect(
+      within(authority).getByText(
+        "No tenant-scoped scorecard authority is loaded for this event.",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(authority).getByText(
+        "No named evaluator score authority is loaded.",
+      ),
+    ).toBeTruthy();
+    expect(document.body.textContent ?? "").not.toMatch(
+      /BAFO ready|selected vendor|award approved/i,
+    );
+  });
+
+  it("keeps opposite-tenant scorecard authority from clearing Stage 07 readiness", () => {
+    const authority = buildScorecardAuthorityView({
+      tenantKey: "example-client",
+      sourceEventId: "event-1",
+      criteria: [
+        {
+          tenantKey: "other-client",
+          sourceEventId: "event-1",
+          criterionId: "transition",
+          criterionVersion: "crit-v1",
+          label: "Transition certainty",
+          weight: 40,
+          weightsFrozen: true,
+          approvedCriterionVersion: "crit-v1",
+          approvedBy: "procurement-lead",
+          approvedAt: "2026-09-19T12:00:00Z",
+        },
+      ],
+      scores: [
+        {
+          tenantKey: "other-client",
+          sourceEventId: "event-1",
+          vendorId: "vendor-a",
+          vendorName: "Vendor A",
+          criterionId: "transition",
+          criterionVersion: "crit-v1",
+          evaluatorId: "eval-1",
+          evaluatorName: "A. Evaluator",
+          evaluatorScore: 8,
+          evidenceReference: "EVID-TRANSITION-01",
+          overrideReason: null,
+          overrideReasonRequired: false,
+          lockState: "locked",
+          lockedBy: "eval-1",
+          lockedAt: "2026-09-19T12:30:00Z",
+        },
+      ],
+    });
+
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "bafo",
+          lifecycle: "active",
+        }}
+        files={[]}
+        scorecardAuthority={authority}
+      />,
+    );
+
+    const panel = screen.getByRole("region", {
+      name: "Stage 07 scorecard authority",
+    });
+    expect(within(panel).getByText("Blocked before ranking")).toBeTruthy();
+    expect(
+      within(panel).getByText(
+        "No tenant-scoped scorecard authority is loaded for this event.",
+      ),
+    ).toBeTruthy();
+    expect(within(panel).queryByText("Vendor A")).toBeNull();
+    expect(document.body.textContent ?? "").not.toMatch(/BAFO ready/i);
   });
 
   it("shows completed events as terminal without a pending next action", () => {
@@ -623,15 +730,17 @@ describe("SourceNewWorkspace", () => {
     const coverage: SourceNewStage05NdaCoverage = {
       status: "ready",
       asOf: "2026-03-10",
-      suppliers: [{
-        legalEntityId: "vendor-1",
-        legalName: "Example Supplier Legal Entity LLC",
-        state: "covered_by_nda",
-        reason: "Executed NDA nda-1 covers this event and entity.",
-        authorityReference: "nda-1",
-        evidenceReference: "EVID-CANDIDATE-1",
-        evidenceCaveats: [],
-      }],
+      suppliers: [
+        {
+          legalEntityId: "vendor-1",
+          legalName: "Example Supplier Legal Entity LLC",
+          state: "covered_by_nda",
+          reason: "Executed NDA nda-1 covers this event and entity.",
+          authorityReference: "nda-1",
+          evidenceReference: "EVID-CANDIDATE-1",
+          evidenceCaveats: [],
+        },
+      ],
       nextAction: {
         label: "Open market package gate",
         detail: "Every accepted supplier has governed coverage.",
@@ -654,14 +763,24 @@ describe("SourceNewWorkspace", () => {
     const readiness = screen.getByRole("region", {
       name: "Stage 05 NDA readiness",
     });
-    expect(within(readiness).getByText("Example Supplier Legal Entity LLC")).toBeTruthy();
-    expect(within(readiness).getByText("Ready for governed supplier work")).toBeTruthy();
+    expect(
+      within(readiness).getByText("Example Supplier Legal Entity LLC"),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getByText("Ready for governed supplier work"),
+    ).toBeTruthy();
     expect(within(readiness).getByText("Executed NDA")).toBeTruthy();
     expect(within(readiness).getByText("nda-1")).toBeTruthy();
     expect(within(readiness).getByText("EVID-CANDIDATE-1")).toBeTruthy();
-    expect(within(readiness).getByText("Open market package gate")).toBeTruthy();
-    expect(within(readiness).queryByRole("button", { name: /send|contact/i })).toBeNull();
-    expect(within(readiness).queryByRole("link", { name: /send|contact/i })).toBeNull();
+    expect(
+      within(readiness).getByText("Open market package gate"),
+    ).toBeTruthy();
+    expect(
+      within(readiness).queryByRole("button", { name: /send|contact/i }),
+    ).toBeNull();
+    expect(
+      within(readiness).queryByRole("link", { name: /send|contact/i }),
+    ).toBeNull();
   });
 
   it("renders the stage 04 panel, separating incumbents from new candidates", () => {
@@ -805,7 +924,8 @@ describe("SourceNewWorkspace", () => {
           legalEntityId: "vendor-2",
           legalName: "Uncovered Supplier Inc.",
           state: "not_covered",
-          reason: "No executed NDA covers this event and no waiver has been granted.",
+          reason:
+            "No executed NDA covers this event and no waiver has been granted.",
           authorityReference: null,
           evidenceReference: "EVID-CANDIDATE-2",
           evidenceCaveats: [],
@@ -854,10 +974,14 @@ describe("SourceNewWorkspace", () => {
     const readiness = screen.getByRole("region", {
       name: "Stage 05 NDA readiness",
     });
-    expect(within(readiness).getByText(
-      "Candidate-panel authority is unavailable; an empty result is not assumed.",
-    )).toBeTruthy();
-    expect(within(readiness).getByText("Restore candidate authority")).toBeTruthy();
+    expect(
+      within(readiness).getByText(
+        "Candidate-panel authority is unavailable; an empty result is not assumed.",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(readiness).getByText("Restore candidate authority"),
+    ).toBeTruthy();
   });
 
   it("does not lock phases behind an event that has advanced past them", () => {
@@ -1202,7 +1326,11 @@ describe("SourceNewWorkspace", () => {
 
   it("does not crash when the trail result is missing its entries array", () => {
     render(
-      <SourceNewWorkspace event={request} files={[]} activity={{ ok: true } as never} />,
+      <SourceNewWorkspace
+        event={request}
+        files={[]}
+        activity={{ ok: true } as never}
+      />,
     );
 
     expect(() => openApprovals()).not.toThrow();

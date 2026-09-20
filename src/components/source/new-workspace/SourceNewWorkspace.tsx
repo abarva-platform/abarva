@@ -26,6 +26,7 @@ import { normalizeSourceStageKey } from "@/lib/source/constants";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
 import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import type { ScorecardAuthorityView } from "@/lib/source/proposal-intelligence";
 import "./workspace.css";
 
 type Phase = SourceNewPhaseKey;
@@ -100,6 +101,11 @@ function marketPackageLabel(event: SourceNewEventView): string {
 
 function isResponsesStage(event: SourceNewEventView): boolean {
   return normalizeSourceStageKey(event.currentStage) === "responses";
+}
+
+function isScorecardAuthorityStage(event: SourceNewEventView): boolean {
+  const stage = normalizeSourceStageKey(event.currentStage);
+  return stage === "evaluation" || stage === "bafo";
 }
 
 function responseEvidenceRows(
@@ -196,6 +202,8 @@ export type SourceNewWorkspaceProps = {
   /** Required server projection; an unreadable registry is data, not absence. */
   stage04VendorPanel: SourceNewStage04VendorPanel;
   stage05NdaCoverage: SourceNewStage05NdaCoverage;
+  /** Required server projection; missing scorecard authority must fail closed. */
+  scorecardAuthority: ScorecardAuthorityView;
 };
 
 export function SourceNewWorkspace({
@@ -205,6 +213,7 @@ export function SourceNewWorkspace({
   intelligence,
   stage04VendorPanel,
   stage05NdaCoverage,
+  scorecardAuthority,
 }: SourceNewWorkspaceProps) {
   const evidence = useMemo(
     () => phaseEvidence(event, files, stage05NdaCoverage),
@@ -236,6 +245,7 @@ export function SourceNewWorkspace({
   const actionLabel = action.label;
   const isCurrentPhase = phase === current;
   const responsesStage = isResponsesStage(event);
+  const scorecardAuthorityStage = isScorecardAuthorityStage(event);
   const responseRows = responseEvidenceRows(files);
   const content = (
     <main className="snw" aria-label="Source New event workspace">
@@ -367,6 +377,11 @@ export function SourceNewWorkspace({
                       eventHref={eventHref}
                     />
                   )}
+                  {scorecardAuthorityStage && (
+                    <SourceNewStage07ScorecardAuthority
+                      authority={scorecardAuthority}
+                    />
+                  )}
                 </>
               ) : (
                 <>
@@ -393,6 +408,11 @@ export function SourceNewWorkspace({
                     <SourceNewStage05NdaReadiness
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
+                    />
+                  )}
+                  {scorecardAuthorityStage && (
+                    <SourceNewStage07ScorecardAuthority
+                      authority={scorecardAuthority}
                     />
                   )}
                 </>
@@ -691,15 +711,27 @@ function SourceNewStage05NdaReadiness({
         </div>
         <div>
           <dt>Covered</dt>
-          <dd>{coverage.suppliers.filter((supplier) =>
-            supplier.state === "covered_by_nda" || supplier.state === "covered_by_waiver"
-          ).length}</dd>
+          <dd>
+            {
+              coverage.suppliers.filter(
+                (supplier) =>
+                  supplier.state === "covered_by_nda" ||
+                  supplier.state === "covered_by_waiver",
+              ).length
+            }
+          </dd>
         </div>
         <div>
           <dt>Blocked or unknown</dt>
-          <dd>{coverage.suppliers.filter((supplier) =>
-            supplier.state === "not_covered" || supplier.state === "unavailable"
-          ).length}</dd>
+          <dd>
+            {
+              coverage.suppliers.filter(
+                (supplier) =>
+                  supplier.state === "not_covered" ||
+                  supplier.state === "unavailable",
+              ).length
+            }
+          </dd>
         </div>
         <div>
           <dt>Readiness as of</dt>
@@ -711,7 +743,11 @@ function SourceNewStage05NdaReadiness({
         </div>
       </dl>
       {coverage.suppliers.length > 0 ? (
-        <div className="snw-nda-suppliers" role="list" aria-label="Supplier NDA coverage">
+        <div
+          className="snw-nda-suppliers"
+          role="list"
+          aria-label="Supplier NDA coverage"
+        >
           {coverage.suppliers.map((supplier) => (
             <article key={supplier.legalEntityId} role="listitem">
               <div className="snw-nda-supplier-heading">
@@ -738,7 +774,9 @@ function SourceNewStage05NdaReadiness({
                 </div>
               </dl>
               {supplier.evidenceCaveats.map((caveat) => (
-                <p className="snw-note" key={caveat}>{caveat}</p>
+                <p className="snw-note" key={caveat}>
+                  {caveat}
+                </p>
               ))}
             </article>
           ))}
@@ -757,6 +795,131 @@ function SourceNewStage05NdaReadiness({
           Open governed event
         </Link>
       </div>
+    </section>
+  );
+}
+
+function SourceNewStage07ScorecardAuthority({
+  authority,
+}: {
+  authority: ScorecardAuthorityView;
+}) {
+  const lockedScoreCount = authority.vendorRows.reduce(
+    (total, row) => total + row.lockedScoreCount,
+    0,
+  );
+  return (
+    <section
+      className="snw-nda-readiness"
+      aria-label="Stage 07 scorecard authority"
+    >
+      <p className="snw-eyebrow">Stage 07 · Scorecard authority</p>
+      <h3>Frozen evaluator scorecard</h3>
+      <p>
+        This read-only check summarizes whether scorecard authority is ready for
+        ranking, advancement and BAFO readiness review. It does not rank
+        vendors, send BAFOs, approve an award or turn an AI suggestion into a
+        final score.
+      </p>
+      <dl className="snw-facts">
+        <div>
+          <dt>Readiness posture</dt>
+          <dd>
+            {authority.state === "ready"
+              ? "Ready for governed scorecard review"
+              : "Blocked before ranking"}
+          </dd>
+        </div>
+        <div>
+          <dt>Approved criteria</dt>
+          <dd>{authority.criteria.length}</dd>
+        </div>
+        <div>
+          <dt>Frozen weight total</dt>
+          <dd>{authority.weightTotal}</dd>
+        </div>
+        <div>
+          <dt>Locked evaluator scores</dt>
+          <dd>
+            {lockedScoreCount > 0
+              ? `${lockedScoreCount} score${lockedScoreCount === 1 ? "" : "s"}`
+              : "None ready for ranking"}
+          </dd>
+        </div>
+      </dl>
+      <div className="snw-nda-grid">
+        <div>
+          <strong>Criterion authority</strong>
+          <ul>
+            {authority.criteria.length > 0 ? (
+              authority.criteria.map((criterion) => (
+                <li key={criterion.criterionId}>
+                  {criterion.label}: version {criterion.criterionVersion};
+                  approved version{" "}
+                  {criterion.approvedCriterionVersion ?? "not recorded"}; weight{" "}
+                  {criterion.weight};{" "}
+                  {criterion.weightsFrozen
+                    ? "weights frozen"
+                    : "weights not frozen"}
+                </li>
+              ))
+            ) : (
+              <li>No approved scorecard criteria are loaded.</li>
+            )}
+          </ul>
+        </div>
+        <div>
+          <strong>Open blockers</strong>
+          <ul>
+            {authority.blockers.length > 0 ? (
+              authority.blockers.map((blocker) => (
+                <li key={blocker.blockerId}>{blocker.detail}</li>
+              ))
+            ) : (
+              <li>
+                Frozen criteria and named evaluator score authority are
+                available for review.
+              </li>
+            )}
+          </ul>
+        </div>
+      </div>
+      <div className="snw-nda-next">
+        <strong>Evaluator authority</strong>
+        <ul>
+          {authority.scoreRows.length > 0 ? (
+            authority.scoreRows.map((row) => (
+              <li key={row.scoreId}>
+                {row.vendorName} / {row.criterionId}: evaluator{" "}
+                {row.evaluatorName ?? "not recorded"}; evidence{" "}
+                {row.evidenceReference ?? "not recorded"}; override{" "}
+                {row.overrideReasonRequired
+                  ? (row.overrideReason ?? "not recorded")
+                  : (row.overrideReason ?? "not required")}
+                ; lock {row.lockState}
+              </li>
+            ))
+          ) : (
+            <li>No named evaluator score authority is loaded.</li>
+          )}
+        </ul>
+      </div>
+      {authority.vendorRows.length > 0 && (
+        <div className="snw-nda-next">
+          <strong>Locked score totals</strong>
+          <ul>
+            {authority.vendorRows.map((row) => (
+              <li key={row.vendorId}>
+                {row.vendorName}:{" "}
+                {row.weightedScore === null
+                  ? "No weighted total"
+                  : `${row.weightedScore}/10`}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <p className="snw-note">{authority.guardrail}</p>
     </section>
   );
 }
