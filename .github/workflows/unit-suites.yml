@@ -419,5 +419,42 @@ jobs:
           src/app/api/admin/users/provision
           --no-coverage --ci
 
+      # Five subtrees under src/app/api/v1 that no workflow reached: 55 suites
+      # / 328 tests, measured on `e0362a92e`.
+      #
+      #   v1/source     28 suites / 166 tests   21 files newly covered
+      #   v1/programs   24 suites / 128 tests   12 files newly covered
+      #   v1/agent       1 suite  /  20 tests    1
+      #   v1/artifacts   1 suite  /  10 tests    1
+      #   v1/moves       1 suite  /   4 tests    1
+      #
+      # The suite counts exceed the newly-covered counts because other steps
+      # already own some of these files -- notably the governed approval
+      # routes. That overlap is deliberate and cheap: the two large subtrees
+      # run in about 0.74s and 0.72s in total, so the duplicated portion is a
+      # fraction of a second, against a directory list that would need editing
+      # every time a route is added.
+      #
+      # v1/atlas is NOT here: 3 suites, all three failing, 4 of 8 tests red on
+      # `e0362a92e`. A red directory is wired by fixing it, never by adding it
+      # to a green command.
+      #
+      # Every path named here is bracket-free. The directories BELOW them are
+      # full of `[eventId]`, `[programId]` and the like, which is fine -- those
+      # are matched as descendants of a literal prefix. Naming one of them
+      # directly would not be: a jest path argument is a regex, so `[id]` is a
+      # character class. That is why the governed approval routes are run by
+      # exact path with --runTestsByPath, and any future addition naming a
+      # bracketed segment must do the same.
+      - name: Run the v1 API route suites
+        run: >-
+          npx jest
+          src/app/api/v1/source
+          src/app/api/v1/programs
+          src/app/api/v1/agent
+          src/app/api/v1/artifacts
+          src/app/api/v1/moves
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
