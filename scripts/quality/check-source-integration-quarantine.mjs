@@ -22,7 +22,14 @@
  *   2. THE REASON EXPIRED. Every entry names the failure evidence that still
  *      justifies the exclusion. If the suite passes, or if it fails for a
  *      different reason, this exits 1 and forces the list to be re-measured.
- *   3. Swept-in sibling files in `alsoIgnored` need the same shape. A bare
+ *   3. BOTH ceilings are ratchets in both directions. Being UNDER one fails
+ *      as surely as being over it, because clearing an entry without lowering
+ *      the ceiling leaves silent headroom, and the next exclusion then passes
+ *      unexamined. This was the fourth list in the repository found turning
+ *      one way only — the dark-directory list, the npm-script reconciliation
+ *      baseline, and the quarantine comparison were the others — which makes
+ *      it a habit rather than an oversight.
+ *   4. Swept-in sibling files in `alsoIgnored` need the same shape. A bare
  *      path fragment is not a control.
  *   4. The list has grown past the size it was created at. Appending to a
  *      quarantine is how a temporary carve-out becomes the standard; growing it
@@ -160,6 +167,15 @@ if (alsoIgnored.length > alsoIgnoredCeiling) {
       "Triage the file or narrow the command, and raise alsoIgnoredCeiling with a reason if " +
       "neither is possible.",
   );
+} else if (alsoIgnored.length < alsoIgnoredCeiling) {
+  problems.push(
+    `alsoIgnored holds ${alsoIgnored.length} path(s) but alsoIgnoredCeiling is still ` +
+      `${alsoIgnoredCeiling}, so ${alsoIgnoredCeiling - alsoIgnored.length} slot(s) of ` +
+      "headroom were created by clearing entries. A ceiling that stays above the list is " +
+      `not a ratchet: the next ${alsoIgnoredCeiling - alsoIgnored.length} exclusion(s) would ` +
+      `pass silently. Lower alsoIgnoredCeiling to ${alsoIgnored.length} in the same change ` +
+      "that removed them.",
+  );
 }
 
 if (quarantined.length > CEILING) {
@@ -167,6 +183,14 @@ if (quarantined.length > CEILING) {
     `The quarantine holds ${quarantined.length} suites; the ceiling is ${CEILING}. ` +
       "Repair the suite instead of excluding it, or raise CEILING in this file " +
       "with a reason — so growing the carve-out is a visible decision.",
+  );
+} else if (quarantined.length < CEILING) {
+  problems.push(
+    `The quarantine holds ${quarantined.length} suites but CEILING is still ${CEILING}, ` +
+      `so ${CEILING - quarantined.length} slot(s) of headroom were created by clearing ` +
+      "entries. A ceiling that stays above the list is not a ratchet: the next " +
+      `${CEILING - quarantined.length} exclusion(s) would pass silently. Lower CEILING to ` +
+      `${quarantined.length} in the same change that removed them.`,
   );
 }
 
