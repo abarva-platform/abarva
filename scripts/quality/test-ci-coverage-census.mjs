@@ -47,6 +47,8 @@ import {
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import ts from "typescript";
+
 import {
   extractWorkflowRunCommands,
   expandWorkflowCommands,
@@ -228,65 +230,92 @@ function resolveSourceModule(root, importer, specifier) {
 }
 
 /**
- * A type-only import is erased before the test runs, so the test never loads the
- * module and never exercises anything declared on it. Counting one as a product
- * edge is how `src/components/source/canvas/__tests__` came to carry the control
- * id `agent-dock-chat-turns`: the only thing joining it to `AgentDock.tsx` was
- * `import type { ChatMessage }`. The conclusion happened to be right there, but
- * a risk ranking that a borrowed type name can inflate will eventually send
- * someone to the wrong directory first.
+ * Every module specifier a test file loads at runtime.
  *
- * Three forms are erasable and are stripped before specifiers are read:
- * `import type … from "m"`, `export type … from "m"`, and a brace list whose
- * every specifier carries the inline `type` keyword. A brace list with one value
- * specifier among the types is NOT erasable — the module is loaded for that one
- * binding — so it is left in place.
- */
-const TYPE_ONLY_STATEMENT_RE =
-  /\b(?:import|export)\s+type\s[^;'"]*?\bfrom\s*["'][^"']+["']/g;
-/**
- * A bare side-effect import — `import "../route";` — loads the module and runs
- * it, so it is a product edge in exactly the way a named import is. It carries
- * no `from`, so the specifier pattern below never saw it: a directory whose
- * only edge to a governed module took that form scored zero and banded
- * `unclassified`. That under-states governed risk, which is the dangerous
- * direction for a ranking whose job is to say where to look first.
+ * This was three regular expressions over source text, grown one branch at a
+ * time as somebody noticed a form the previous branches missed. T-075 asked
+ * for the gap to be bounded rather than enumerated, so the whole tree was
+ * parsed with TypeScript's own scanner and the two readers compared over
+ * 2,321 test files and 5,705 runtime edges.
  *
- * Anchored to the start of a line deliberately. This file's own header records
- * why the census refuses to credit a path a reachable script merely mentions,
- * and an unanchored `import\s*["']` would credit the word `import` followed by
- * a quoted path anywhere in the file — prose in a comment included. A statement
- * that does not begin its line is missed instead, which is the safe direction.
+ * The result inverted the worry. The regexes missed **zero** runtime edges.
+ * What they did instead was credit **608** specifiers that are not edges at
+ * all, because a quoted module path inside an assertion looks exactly like a
+ * quoted module path inside an import:
+ *
+ *     expect(pageSource).not.toContain('from "@/lib/active-client"');
+ *
+ * The census read that as the test importing `@/lib/active-client` -- from a
+ * line asserting that the page must NOT import it. Over-crediting is the
+ * dangerous direction here: this file ranks which directory to wire next, and
+ * a directory looks covered when nothing actually imports the module. It also
+ * contradicts this file's own rule, recorded in its header, that a path a
+ * script merely mentions is not an edge.
+ *
+ * So the reader is the parser. An assertion string is not an import node, and
+ * no fourth branch has to be invented the next time somebody writes a form
+ * nobody anticipated.
+ *
+ * What is deliberately NOT counted:
+ *
+ *   type-only imports        erased at compile time, so nothing is loaded --
+ *                            the same rule the regexes implemented, now
+ *                            decided by the parser's own isTypeOnly flags
+ *                            rather than by matching `type` in a brace list.
+ *   jest.mock("m") targets   a mock loads nothing. It does name a module the
+ *                            suite is exercising, and whether that should
+ *                            count is a real question with 1,199 instances --
+ *                            but it is a change in what the census MEANS, not
+ *                            a reader fix, so it is left as it was and filed
+ *                            rather than decided here.
  */
-const SIDE_EFFECT_IMPORT_RE = /^[ \t]*import\s*["']([^"']+)["']/gm;
+export function runtimeModuleSpecifiers(source, fileName) {
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    /* setParentNodes */ true,
+  );
+  const specifiers = [];
 
-const BRACED_IMPORT_RE =
-  /\b(?:import|export)\s*\{([^}]*)\}\s*from\s*["'][^"']+["']/g;
+  const visit = (node) => {
+    if (ts.isImportDeclaration(node)) {
+      const clause = node.importClause;
+      // No clause at all is a bare side-effect import: it loads and runs.
+      const named = clause?.namedBindings;
+      const erased =
+        clause?.isTypeOnly === true ||
+        (named !== undefined &&
+          ts.isNamedImports(named) &&
+          named.elements.length > 0 &&
+          named.elements.every((element) => element.isTypeOnly));
+      if (!erased && ts.isStringLiteral(node.moduleSpecifier)) {
+        specifiers.push(node.moduleSpecifier.text);
+      }
+    } else if (ts.isExportDeclaration(node) && node.moduleSpecifier) {
+      if (!node.isTypeOnly && ts.isStringLiteral(node.moduleSpecifier)) {
+        specifiers.push(node.moduleSpecifier.text);
+      }
+    } else if (ts.isCallExpression(node)) {
+      const argument = node.arguments[0];
+      if (argument && ts.isStringLiteral(argument)) {
+        const callee = node.expression;
+        const isDynamicImport = callee.kind === ts.SyntaxKind.ImportKeyword;
+        const isRequire =
+          ts.isIdentifier(callee) && callee.escapedText === "require";
+        if (isDynamicImport || isRequire) specifiers.push(argument.text);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
 
-function stripErasableImports(source) {
-  return source
-    .replace(TYPE_ONLY_STATEMENT_RE, " ")
-    .replace(BRACED_IMPORT_RE, (statement, specifierList) => {
-      const specifiers = specifierList
-        .split(",")
-        .map((entry) => entry.trim())
-        .filter((entry) => entry.length > 0);
-      if (specifiers.length === 0) return statement;
-      return specifiers.every((entry) => /^type\s+\S/.test(entry)) ? " " : statement;
-    });
+  visit(sourceFile);
+  return specifiers;
 }
 
 function importedProductSources(root, testFile) {
-  const source = stripErasableImports(readFileSync(path.join(root, testFile), "utf8"));
-  const specifiers = [];
-  for (const match of source.matchAll(
-    /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)["']([^"']+)["']/g,
-  )) {
-    specifiers.push(match[1]);
-  }
-  for (const match of source.matchAll(SIDE_EFFECT_IMPORT_RE)) {
-    specifiers.push(match[1]);
-  }
+  const source = readFileSync(path.join(root, testFile), "utf8");
+  const specifiers = runtimeModuleSpecifiers(source, testFile);
 
   const inferred = testFile
     .replace("/__tests__/", "/")

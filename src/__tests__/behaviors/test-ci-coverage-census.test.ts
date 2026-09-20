@@ -3,6 +3,7 @@ import {
   copyFileSync,
   mkdirSync,
   mkdtempSync,
+  symlinkSync,
   readFileSync,
   readdirSync,
   realpathSync,
@@ -116,6 +117,13 @@ function makeFixture(files: Record<string, string>, scripts: Record<string, stri
     copyFileSync(path.join(repoRoot, script), path.join(dir, script));
   }
   write(dir, "package.json", `${JSON.stringify({ name: "fixture", scripts }, null, 2)}\n`);
+  // The census resolves imports with TypeScript's scanner rather than with
+  // regular expressions, so the script now has a real dependency. The fixture
+  // copied two files because the script used to need nothing but Node; it
+  // gets the repository's node_modules by symlink so the copy can actually
+  // run. Without it every case in this file fails at module resolution,
+  // which is a fixture gap and not a finding about the census.
+  symlinkSync(path.join(repoRoot, "node_modules"), path.join(dir, "node_modules"), "dir");
   for (const [relative, contents] of Object.entries(files)) write(dir, relative, contents);
   return dir;
 }
