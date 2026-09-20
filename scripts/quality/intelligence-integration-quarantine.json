@@ -21,6 +21,10 @@
         {
           "module": "src/lib/intelligence/sentinel-pattern-detections.ts",
           "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
+          "status": "kept-other-importer"
         }
       ]
     },
@@ -235,6 +239,10 @@
         {
           "module": "src/lib/intelligence/sentinel-interaction-rail-view.ts",
           "status": "goes-with-the-suite"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
+          "status": "kept-other-importer"
         }
       ]
     },
@@ -250,6 +258,10 @@
         },
         {
           "module": "src/lib/intelligence/sentinel-pattern-detections.ts",
+          "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
           "status": "kept-other-importer"
         }
       ]
@@ -270,6 +282,10 @@
         },
         {
           "module": "src/lib/programs/enhancement-seed-planner.ts",
+          "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
           "status": "kept-other-importer"
         }
       ]
