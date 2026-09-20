@@ -960,6 +960,81 @@ export function collectSourceFiles(root, { includeTests = false } = {}) {
  */
 export const RESOLUTION_FLOOR = 60;
 
+// ─────────────────────────────────────────────────────────────────────
+// Fixture domain signal — backlog item T-007
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Is this file one of the sweep's own demonstrations?
+ *
+ * Its fixtures are deliberately impossible — that is how they prove the
+ * sweep catches an impossible value. Reporting them would be the sweep
+ * flagging its own evidence, and a check whose only findings are its own
+ * test data is a check nobody reads twice.
+ *
+ * Derived from the reference rather than a hand-kept list of paths. A list
+ * would need updating by whoever adds the next suite for this script, which
+ * is exactly the "somebody remembers" failure the rest of this work has been
+ * removing.
+ *
+ * It matches the module PATH, not an import statement. The first version of
+ * this looked for an import and missed the suite that matters most: that one
+ * does not import the sweep, it spawns it by path. Both forms name
+ * `enum-reachability.mjs`, and a file naming this script's path is a file
+ * working on this script.
+ */
+export function demonstratesTheSweep(text) {
+  return /enum-reachability\.mjs/.test(text);
+}
+
+/**
+ * How many test fixtures assert a value its column cannot hold.
+ *
+ * Item 126 stayed invisible partly because every unit test injected its own
+ * row source and asserted `promotion_state: "published"` resolves — true
+ * about the function, false about the product. Excluding tests from the
+ * sweep was the bounded choice and is a stated limit rather than an
+ * oversight, but a limit nobody measures is indistinguishable from a limit
+ * that has started costing something.
+ *
+ * So this measures it. **It reports and does not gate**, for a reason the
+ * measurement settles: a fixture outside its column's domain is a real
+ * signal but not automatically a defect — a test may legitimately construct
+ * an invalid row to prove it is rejected. Failing on that would make the
+ * honest test the broken one.
+ *
+ * Today the count outside the sweep's own suites is zero, so there is no
+ * population to design a "deliberately invalid" declaration for. When the
+ * count first rises, that is when the convention is worth inventing, and it
+ * should follow the one already in use: an explicit annotation, never an
+ * inference from a name.
+ */
+export function runFixtureDomainSignal({
+  migrationsDir = 'supabase/migrations',
+  srcDir = 'src',
+  readFile = (f) => readFileSync(f, 'utf8'),
+} = {}) {
+  const domains = extractColumnDomains(migrationsDir);
+  const withTests = collectSourceFiles(srcDir, { includeTests: true });
+  const withoutTests = new Set(collectSourceFiles(srcDir, { includeTests: false }));
+
+  const testFiles = withTests.filter((f) => !withoutTests.has(f));
+  const considered = testFiles.filter((f) => !demonstratesTheSweep(readFile(f)));
+  const selfDemonstrating = testFiles.length - considered.length;
+
+  const { findings } = scanComparisons(considered, readFile, domains);
+  const annotated = scanAnnotatedConstants(considered, readFile, domains);
+
+  return {
+    testFiles: testFiles.length,
+    selfDemonstrating,
+    considered: considered.length,
+    findings: [...findings, ...annotated.findings].filter(
+      (f) => f.verdict !== 'WAIVED',
+    ),
+  };
+}
+
 export function runEnumReachabilitySweep({
   migrationsDir = 'supabase/migrations',
   srcDir = 'src',
@@ -994,12 +1069,36 @@ function parseArgs(argv) {
     else if (m[1] === 'json') opts.json = true;
     else if (m[1] === 'include-unresolved') opts.includeUnresolved = true;
     else if (m[1] === 'unresolved-report') opts.unresolvedReport = m[2];
+    else if (m[1] === 'fixture-signal') opts.fixtureSignal = true;
   }
   return opts;
 }
 
 function main(argv = process.argv.slice(2)) {
   const opts = parseArgs(argv);
+
+  if (opts.fixtureSignal) {
+    // Reports; never gates. See runFixtureDomainSignal for why.
+    const signal = runFixtureDomainSignal(opts);
+    console.log(
+      `enum-reachability fixture signal: ${signal.findings.length} test fixture(s) ` +
+        `assert a value their column cannot hold, across ${signal.considered} test ` +
+        `file(s) (${signal.selfDemonstrating} of ${signal.testFiles} skipped as the ` +
+        `sweep's own demonstrations).`,
+    );
+    for (const f of signal.findings) {
+      console.log(`  ${f.verdict}  ${f.file}:${f.line}  ${f.column}`);
+      console.log(`    impossible ${f.impossible.join(', ')}`);
+    }
+    if (signal.findings.length > 0) {
+      console.log(
+        '\nA fixture outside its column domain is a signal, not automatically a ' +
+          'defect: a test may construct an invalid row to prove it is rejected. ' +
+          'Read each one before changing it.',
+      );
+    }
+    return 0;
+  }
   const floor = Number.isFinite(opts.floor) ? opts.floor : RESOLUTION_FLOOR;
   const { domains, files, findings, unresolvedComparisons, counts } =
     runEnumReachabilitySweep(opts);
