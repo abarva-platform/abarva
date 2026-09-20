@@ -255,10 +255,31 @@ function ignorePatternsFor(root, command, unresolved) {
     // Jest reads every following token as a pattern until the next flag.
     for (let next = index + 1; next < tokens.length; next += 1) {
       if (tokens[next].startsWith("-")) break;
-      if (tokens[next].length > 0) patterns.push(tokens[next]);
+      const pattern = unquote(tokens[next]);
+      if (pattern.length > 0) patterns.push(pattern);
     }
   }
   return patterns;
+}
+
+/**
+ * Shell quoting removed, because this file reads command TEXT where the shell
+ * reads command ARGUMENTS. `--testPathIgnorePatterns "foo$"` excludes `foo` at
+ * run time — the shell strips the quotes before jest ever sees them — so a
+ * census that keeps them compares a pattern that cannot match and reports the
+ * excluded file as covered. That is the over-stating direction: a quarantined
+ * suite reads as run, and the directory holding it drops out of the queue of
+ * work this file exists to rank.
+ *
+ * Only a matched pair wrapping the WHOLE token is shell quoting. A quote in
+ * the middle belongs to the regex, and stripping that would break patterns
+ * that work today.
+ */
+function unquote(token) {
+  if (token.length < 2) return token;
+  const first = token[0];
+  if (first !== '"' && first !== "'") return token;
+  return token.endsWith(first) ? token.slice(1, -1) : token;
 }
 
 /**
