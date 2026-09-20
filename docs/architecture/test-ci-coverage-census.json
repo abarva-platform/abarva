@@ -13,19 +13,19 @@
   ],
   "counts": {
     "testFiles": 2323,
-    "coveredTestFiles": 1149,
-    "pullRequestCoveredTestFiles": 1146,
-    "uncoveredTestFiles": 1174,
+    "coveredTestFiles": 1180,
+    "pullRequestCoveredTestFiles": 1177,
+    "uncoveredTestFiles": 1143,
     "directoriesWithTests": 476,
-    "directoriesFullyCovered": 106,
+    "directoriesFullyCovered": 111,
     "directoriesPartiallyCovered": 22,
-    "directoriesUncovered": 348,
-    "directoriesWithUnrunTestFiles": 370,
+    "directoriesUncovered": 343,
+    "directoriesWithUnrunTestFiles": 365,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 37,
     "highGovernedRiskDirectories": 108,
-    "unclassifiedRiskDirectories": 225
+    "unclassifiedRiskDirectories": 220
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -2766,12 +2766,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/source/agent-generation/__tests__",
-      "testFiles": 13,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/components/source/canvas/responses/__tests__",
       "testFiles": 12,
       "coveredTestFiles": 0,
@@ -2868,12 +2862,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/source/facts/__tests__",
-      "testFiles": 8,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/programs/archetype-primers/__tests__",
       "testFiles": 7,
       "coveredTestFiles": 0,
@@ -2941,12 +2929,6 @@
     },
     {
       "directory": "src/lib/source/contracts/__tests__",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/facts/view/__tests__",
       "testFiles": 6,
       "coveredTestFiles": 0,
       "via": []
@@ -3259,12 +3241,6 @@
     },
     {
       "directory": "src/lib/source/contract-optimization/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/facts/extraction/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 0,
       "via": []
@@ -4687,12 +4663,6 @@
     },
     {
       "directory": "src/lib/source/exports/deal-pack/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/facts/ingest/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []
