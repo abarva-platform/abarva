@@ -43,10 +43,6 @@ const mockLoadV7TowerProjection = jest.fn(async (_arg: unknown) => ({
   metricPackets: [],
 }));
 
-jest.mock("@/lib/tower/v7-tower-projection", () => ({
-  loadV7TowerProjection: (arg: unknown) => mockLoadV7TowerProjection(arg),
-}));
-
 import { buildAtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
 
 describe("buildAtlasTowerCurrentState client labels", () => {
