@@ -350,6 +350,34 @@ jobs:
       - name: Exercise Source canvas front-surface suites
         run: npx jest src/components/source/canvas/__tests__ --runInBand
 
+      # Four component directories this workflow already reached into, and
+      # left dark. It named only the `*.controls.test.tsx` suites the control
+      # catalog required, so it pulled exactly its own evidence into CI: of
+      # the 22 suites across these directories, 15 ran nowhere.
+      #
+      # Measured before wiring rather than after: all 15 pass, 99 tests, and
+      # none fails to collect -- they are healthy suites that nothing ran, not
+      # a red directory being quietly admitted. The four directories together
+      # are 22 suites and 211 tests in about four seconds locally, against a
+      # job whose recent runs sit near 281s under a 720s ceiling.
+      #
+      # Directories rather than the fifteen filenames, for the same reason
+      # the canvas step above gives: a file list is a blind spot that reopens
+      # the day someone adds a suite.
+      #
+      # One suite inside them, ProbabilisticForecastCard, covers a component
+      # nothing reaches -- see the release record. It is run anyway because
+      # excluding one file would reintroduce the hand-maintained list, and
+      # what it does and does not prove is written down instead.
+      - name: Exercise unwired component suites (programs, agent, shell, atlas)
+        run: >-
+          npx jest
+          src/components/programs/__tests__
+          src/components/agent/__tests__
+          src/components/shell/__tests__
+          src/components/atlas/__tests__
+          --runInBand
+
       - name: Exercise Source award and SOW handoff readiness
         run: >-
           npx jest --runTestsByPath
