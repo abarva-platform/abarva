@@ -19,6 +19,13 @@ import {
  * injects its own `lookup` and can hand the resolver a row the database
  * could never produce — see pattern-authority-reachability.test.ts, which
  * checks this list against the constraint itself.
+ *
+ * The annotation below declares which column this vocabulary belongs to, so
+ * the enum-reachability sweep can judge it. The sweep reads only declared
+ * mappings and never guesses one from a constant's name: a wrong mapping
+ * fails a correct list, which is worse than not checking it.
+ *
+ * @column engagement_topics.promotion_state
  */
 export const PROMOTED_PATTERN_STATES = ["pilot", "mature"] as const;
 
