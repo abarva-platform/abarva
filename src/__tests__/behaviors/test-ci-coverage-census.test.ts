@@ -569,6 +569,86 @@ describe("test CI coverage census", () => {
     expect(signalsFor("src/lib/mixed/__tests__")).toContain("declared_ai_surface_control");
   });
 
+  it("reads a bare side-effect import as a product edge, and still refuses a mention", () => {
+    // `import "../route";` loads the module and runs it. It is a product edge in
+    // exactly the way `import { POST } from "../route";` is — but it carries no
+    // `from`, so the specifier pattern never saw it and the directory scored
+    // zero. The two arms here hold the same module through both forms, so the
+    // only thing that can differ between them is the shape of the import.
+    //
+    // `mention` is the control that keeps this narrow. The census already
+    // refuses to credit a path a reachable script merely names; reading the
+    // side-effect form must not re-introduce that error on the import side, so
+    // a file that holds the same specifier in a string and in a comment — and
+    // never imports it — must stay unclassified.
+    const governed =
+      "export async function POST() { return approve({ value: true }); }\n";
+    const catalogFor = (...paths: string[]) =>
+      `${JSON.stringify({
+        controls: paths.map((controlPath, index) => ({
+          id: `fixture-control-${index + 1}`,
+          path: controlPath,
+          requiredControls: [],
+        })),
+      })}\n`;
+
+    const dir = fixture({
+      // Side-effect form. The test file is named so that the inferred sibling
+      // (`.../side-effect.*`) does not exist: without the import there is no
+      // edge at all, which is the condition the gap hid behind.
+      "src/app/api/gamma/route.ts": governed,
+      "src/app/api/gamma/__tests__/side-effect.test.ts": [
+        'import "../route";',
+        'it("side effect", () => expect(true).toBe(true));',
+      ].join("\n"),
+      // Named form over an identical module, same naming discipline.
+      "src/app/api/delta/route.ts": governed,
+      "src/app/api/delta/__tests__/named.test.ts": [
+        'import { POST } from "../route";',
+        'it("named", () => expect(typeof POST).toBe("function"));',
+      ].join("\n"),
+      // The control: the specifier appears twice and is imported zero times.
+      "src/app/api/epsilon/route.ts": governed,
+      "src/app/api/epsilon/__tests__/mention.test.ts": [
+        'const target = "../route";',
+        '// import "../route" would be an edge; this line only talks about one',
+        'it("mention", () => expect(target).toBe("../route"));',
+      ].join("\n"),
+      "docs/security/ai-surface-control-catalog.json": catalogFor(
+        "src/app/api/gamma/route.ts",
+        "src/app/api/delta/route.ts",
+        "src/app/api/epsilon/route.ts",
+      ),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const riskFor = (directory: string) =>
+      census.governedRiskRanking.find((row) => row.directory === directory)?.governedRisk;
+
+    expect(riskFor("src/app/api/delta/__tests__")?.signals).toEqual([
+      "declared_ai_surface_control",
+      "approval_or_lifecycle_write",
+    ]);
+    expect(riskFor("src/app/api/gamma/__tests__")?.signals).toEqual(
+      riskFor("src/app/api/delta/__tests__")?.signals,
+    );
+    expect(riskFor("src/app/api/gamma/__tests__")?.score).toBe(
+      riskFor("src/app/api/delta/__tests__")?.score,
+    );
+    expect(riskFor("src/app/api/gamma/__tests__")?.band).toBe("critical");
+
+    const gammaEvidence = census.governedRiskEvidence.find(
+      (row) => row.directory === "src/app/api/gamma/__tests__",
+    );
+    expect(gammaEvidence?.governedRisk.controlIds).toEqual(["fixture-control-1"]);
+
+    expect(riskFor("src/app/api/epsilon/__tests__")?.band ?? "unclassified").toBe(
+      "unclassified",
+    );
+    expect(riskFor("src/app/api/epsilon/__tests__")?.signals ?? []).toEqual([]);
+  });
+
   it("refreshes the committed census only when its content changes", () => {
     const dir = fixture({
       "src/lib/lambda/__tests__/lambda.test.ts": TEST_FILE,
