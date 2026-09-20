@@ -417,6 +417,22 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* Structural placement must not smuggle execution state into the map.       */
+{
+  const dir = freshFixture();
+  const mapPath = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(mapPath, "utf8"));
+  map.platformTrack.status = "merged";
+  fs.writeFileSync(mapPath, `${JSON.stringify(map, null, 2)}\n`);
+  const board = run(dir, "build-source-board.mjs", ["--json"]);
+  check(
+    "a mapped item cannot encode status in the structure map",
+    board.status !== 0 && /status key/i.test(board.stderr),
+    `board exit=${board.status}\nstderr=${board.stderr.trim()}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 /* ------------------------------------------------------------------------ */
 /* 9. Every established append-only claim grammar holds the item. T-600.   */
 /* ------------------------------------------------------------------------ */
