@@ -604,5 +604,29 @@ jobs:
           src/lib/enterprise-context/__tests__/template-schema.test.ts
           --no-coverage --ci
 
+      # Sixteen tenant/governance suites were measured before wiring: 11 green
+      # and 5 red. One green policy-exceptions suite is already owned by the
+      # context-corpus workflow. The database compatibility suite is also left
+      # out because newly owning its legacy client import violates the
+      # architecture gate. This step adds the remaining 9. The green subjects
+      # have live non-test importer counts of 1, 4, 1, 1, 125, 1, 1, 4, and 1
+      # respectively. Red files remain exact quarantines: three governance
+      # fixtures, active-client display-name drift, and a tenant purity scan
+      # with current findings. Loaded 16; collected 16; run 16; green 11;
+      # newly owned 9.
+      - name: Run the green governance and tenant library suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/governance/__tests__/inventory.test.ts
+          src/lib/governance/__tests__/promotion-evaluator.test.ts
+          src/lib/governance/__tests__/readiness-backfill.test.ts
+          src/lib/governance/__tests__/tenant-coverage.test.ts
+          src/lib/__tests__/client-config-canonical.test.ts
+          src/lib/azure-search/__tests__/index-contracts.test.ts
+          src/lib/azure-search/__tests__/index-results.test.ts
+          src/lib/azure-search/__tests__/retriever-parity.test.ts
+          src/lib/azure-search/__tests__/tenant-context-backfill.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
