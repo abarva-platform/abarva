@@ -671,6 +671,55 @@ describe("test CI coverage census", () => {
     expect(riskFor("src/app/api/epsilon/__tests__")?.signals ?? []).toEqual([]);
   });
 
+  it("does not promote comments and literals into governed source signals", () => {
+    const dir = fixture({
+      "src/lib/false-positive/query-reader.ts": [
+        'export interface Row { tenantKey: string }',
+        'const note = "transition (one-time) and tenant_key";',
+        '// approve({ value: true }); clientKey',
+        'export function load() { return Promise.reject(new Error(note)); }',
+      ].join("\n"),
+      "src/lib/false-positive/__tests__/query-reader.test.ts": [
+        'import { load } from "../query-reader";',
+        'it("loads", () => expect(typeof load).toBe("function"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const risk = census.governedRiskEvidence.find(
+      (row) => row.directory === "src/lib/false-positive/__tests__",
+    )?.governedRisk;
+    expect(risk?.signals ?? []).not.toContain("approval_or_lifecycle_write");
+    expect(risk?.signals ?? []).not.toContain("tenant_scoped_read");
+  });
+
+  it("keeps executable governance calls and tenant keys as governed signals", () => {
+    const dir = fixture({
+      "src/lib/governed/query-reader.ts": [
+        "declare function approve(value: unknown): void;",
+        "export function load(tenantKey: string) {",
+        "  approve({ tenantKey });",
+        "  return tenantKey;",
+        "}",
+      ].join("\n"),
+      "src/lib/governed/__tests__/query-reader.test.ts": [
+        'import { load } from "../query-reader";',
+        'it("loads", () => expect(load("tenant-a")).toBe("tenant-a"));',
+      ].join("\n"),
+      ".github/workflows/gate.yml": PR_WORKFLOW("echo nothing"),
+    });
+
+    const { census } = runCensus(dir);
+    const risk = census.governedRiskEvidence.find(
+      (row) => row.directory === "src/lib/governed/__tests__",
+    )?.governedRisk;
+    expect(risk?.signals).toEqual([
+      "approval_or_lifecycle_write",
+      "tenant_scoped_read",
+    ]);
+  });
+
   it("subtracts a command's own --testPathIgnorePatterns from what it selects", () => {
     // The census answers "does a workflow reach a command that names this
     // file". A command that names a directory and then excludes a file inside
