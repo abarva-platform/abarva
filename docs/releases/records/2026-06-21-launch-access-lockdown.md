@@ -84,4 +84,6 @@ Not applicable.
 
 ## Known Gaps
 
-The exact real emails for Kiran Mysore, Surekha, and KK are not present in the repository. The code supports them through runtime allowlist env vars; production must set those exact email values before launch.
+The remaining runtime allowlist entries are intentionally externalized; production
+must set the approved exact email values before launch. No domain-level fallback is
+allowed.

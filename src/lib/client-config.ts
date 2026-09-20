@@ -488,24 +488,7 @@ const THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
   ["anand.sundaram+lakeshore", "lakeshore"],
 ];
 
-/**
- * Real external pilot users, each pinned to exactly one client. These are live
- * people (pilot sponsors / evaluators), NOT synthetic demo personas — keep the
- * list tiny, explicit, and reviewed: every entry is an access grant. Ported
- * from the production pilot so the main line carries the same access.
- * (fix/pilot-email-access-on-main)
- */
-/**
- * No names, titles or employers here, deliberately. This repository is public,
- * and a person's name and role written beside their address turns an access
- * list into a published profile of who is piloting what — a disclosure about
- * those people and their organisations, not about this code.
- *
- * The addresses stay because they ARE the grant: each key is what grants
- * access, so removing or altering one would change who can reach a tenant, and
- * nothing here touches that. Who each address belongs to is ops-only
- * information and belongs wherever the engagement records live.
- */
+/** Exact pilot access grants, each pinned to one client; never broaden to a domain grant. */
 const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
   "kmysore@gmail.com": "meridian",
   "surekha.durvasula@gmail.com": "lakeshore",
