@@ -4,13 +4,13 @@
   "entryPointCounts": {
     "product": 635,
     "tooling": 1977,
-    "test": 2476
+    "test": 2478
   },
   "counts": {
-    "scanned": 2925,
-    "product": 2131,
+    "scanned": 2927,
+    "product": 2132,
     "tooling": 230,
-    "testOnly": 431,
+    "testOnly": 432,
     "unreferenced": 133
   },
   "testOnly": [
@@ -378,6 +378,7 @@
     "src/lib/source/archetypes/readiness.ts",
     "src/lib/source/archetypes/rfp-canon.ts",
     "src/lib/source/archetypes/scenarios/skyharbor-ams.ts",
+    "src/lib/source/artifact-scan-gate.ts",
     "src/lib/source/ava/export-answer-packet.ts",
     "src/lib/source/cdp-source-reverse-link-view.ts",
     "src/lib/source/chat-sizing-policy.ts",
