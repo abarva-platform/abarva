@@ -16,7 +16,24 @@ import {
   type VerificationStatus,
 } from '../../../lib/qa/intelligence-tower-blueprint-verification';
 
-const VALID_STATUSES: VerificationStatus[] = ['pass', 'fail', 'deferred', 'not_applicable'];
+/**
+ * Every status the type can express, listed exhaustively.
+ *
+ * Written as a Record keyed on the union rather than a hand-typed array:
+ * `retired` was added to the union and this list did not learn about it, so
+ * the checks producing it read as invalid. Keyed this way, the next status
+ * added to the union fails the build here instead of being discovered by a
+ * confusing assertion failure downstream.
+ */
+const STATUS_COVERAGE: Record<VerificationStatus, true> = {
+  pass: true,
+  fail: true,
+  deferred: true,
+  retired: true,
+  not_applicable: true,
+};
+
+const VALID_STATUSES = Object.keys(STATUS_COVERAGE) as VerificationStatus[];
 const VALID_SURFACES = ['intelligence', 'tower', 'shared'] as const;
 
 describe('QA29: Intelligence Tower Blueprint Verification', () => {
@@ -71,9 +88,15 @@ describe('QA29: Intelligence Tower Blueprint Verification', () => {
 
   // ── Count reconciliation ──────────────────────────────────────────────────
 
-  it('passCount + failCount + deferredCount === checks.length', () => {
-    const sum = report.passCount + report.failCount + report.deferredCount;
+  it('passCount + failCount + deferredCount + retiredCount === checks.length', () => {
+    const sum =
+      report.passCount + report.failCount + report.deferredCount + report.retiredCount;
     expect(sum).toBe(report.checks.length);
+  });
+
+  it('retiredCount matches actual retired statuses', () => {
+    const actual = report.checks.filter((c) => c.status === 'retired').length;
+    expect(report.retiredCount).toBe(actual);
   });
 
   it('passCount matches actual pass statuses', () => {
@@ -151,13 +174,19 @@ describe('QA29: Intelligence Tower Blueprint Verification', () => {
   it('IntelligenceRouteShell check is present', () => {
     const check = report.checks.find((c) => c.checkId === 'INTEL1-SHELL-01');
     expect(check).toBeDefined();
-    expect(check?.status === 'pass' || check?.status === 'deferred').toBe(true);
+    // `retired` joined the vocabulary: the shell was removed on purpose, so
+    // the honest absent answer here is no longer "deferred pending merge".
+    expect(
+      check?.status === 'pass' || check?.status === 'deferred' || check?.status === 'retired',
+    ).toBe(true);
   });
 
   it('TowerRouteShell check is present', () => {
     const check = report.checks.find((c) => c.checkId === 'TOWER1-SHELL-01');
     expect(check).toBeDefined();
-    expect(check?.status === 'pass' || check?.status === 'deferred').toBe(true);
+    expect(
+      check?.status === 'pass' || check?.status === 'deferred' || check?.status === 'retired',
+    ).toBe(true);
   });
 
   it('build-slices.json validity check is present', () => {

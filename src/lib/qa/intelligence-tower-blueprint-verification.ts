@@ -17,7 +17,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type VerificationStatus = 'pass' | 'fail' | 'deferred' | 'not_applicable';
+export type VerificationStatus =
+  | 'pass'
+  | 'fail'
+  | 'deferred'
+  | 'retired'
+  | 'not_applicable';
 
 export interface IntelTowerCheck {
   checkId: string;
@@ -34,6 +39,8 @@ export interface IntelTowerBlueprintVerificationReport {
   passCount: number;
   failCount: number;
   deferredCount: number;
+  /** Absent because it was removed on purpose — see `KNOWN_RETIREMENTS`. */
+  retiredCount: number;
   overallStatus: 'pass' | 'fail' | 'partial';
   caveat: string;
   deterministicSeed: true;
@@ -44,6 +51,149 @@ export interface IntelTowerBlueprintVerificationReport {
 // ---------------------------------------------------------------------------
 
 const ROOT = process.cwd();
+
+/**
+ * Paths that are absent because something removed them, not because
+ * something has not built them yet.
+ *
+ * These checks read a path off disk and, finding nothing, reported
+ * `deferred`: "not yet present … Deferred pending INTEL1 merge". For a
+ * component that was retired months ago that is the opposite of true, and
+ * it reads as a promise that the work is still coming.
+ *
+ * A check that cannot tell "not built yet" from "deliberately deleted"
+ * reports the wrong state in whichever direction the tree moves — so the
+ * absent case is split, and the evidence for each retirement is recorded
+ * beside it rather than assumed.
+ *
+ * Adding an entry is a claim that something was removed on purpose. An
+ * absent path that is NOT listed here still reports `deferred`, which keeps
+ * today's behaviour for everything nobody has established a reason for.
+ */
+const KNOWN_RETIREMENTS: Readonly<
+  Record<string, { readonly retiredBy: string; readonly evidence: string }>
+> = {
+  'src/components/intelligence/IntelligenceRouteShell.tsx': {
+    retiredBy: 'I1',
+    evidence:
+      'The July shell retirement removed it; the route renders AdvisoryIntelligencePage '
+      + 'directly, and src/components/intelligence/ no longer exists.',
+  },
+};
+
+/**
+ * What an absent path means: removed on purpose, or not built yet.
+ *
+ * This is the only lookup: both the presence check and the caveat check call
+ * it, so a test that drives it is guarding the code that runs rather than a
+ * parallel copy of the rule.
+ *
+ * Exported because with every other blueprint path now present in the tree,
+ * the real report exercises only the retired arm. A branch no run can reach
+ * is not a safeguard, so the unexplained-absence arm is driven directly
+ * instead of being shipped unexercised.
+ */
+export function retirementFor(
+  rel: string,
+): { readonly retiredBy: string; readonly evidence: string } | undefined {
+  return Object.prototype.hasOwnProperty.call(KNOWN_RETIREMENTS, rel)
+    ? KNOWN_RETIREMENTS[rel]
+    : undefined;
+}
+
+/**
+ * The verdict for a check whose whole question is "is this file here".
+ *
+ * Present is a pass. Absent-and-known-retired says so and names what
+ * removed it. Absent and unexplained stays `deferred`, unchanged.
+ */
+function checkPathPresence(
+  checkId: string,
+  surface: IntelTowerCheck['surface'],
+  description: string,
+  rel: string,
+  pendingItem: string,
+  noun: string = 'Component',
+): IntelTowerCheck {
+  if (exists(rel)) {
+    return makeCheck(checkId, surface, description, 'pass', `${noun} found: ${rel}`);
+  }
+
+  const retirement = retirementFor(rel);
+  if (retirement) {
+    return makeCheck(
+      checkId,
+      surface,
+      description,
+      'retired',
+      `Removed on purpose by ${retirement.retiredBy}, not pending: ${rel} is absent because `
+        + `${retirement.evidence} Reporting this as pre-integration would promise work that is `
+        + 'not coming.',
+    );
+  }
+
+  const basename = rel.slice(rel.lastIndexOf('/') + 1);
+  return makeCheck(
+    checkId,
+    surface,
+    description,
+    'deferred',
+    `${pendingItem} pre-integration: ${basename} not yet present at ${rel}. `
+      + `Deferred pending ${pendingItem} merge.`,
+  );
+}
+
+/**
+ * The verdict for a check that reads a file's CONTENT for a marker.
+ *
+ * The presence checks were not the only place the absent case was answered.
+ * The caveat checks read the same retired shell, found nothing, and repeated
+ * the same "deferred pending INTEL1 merge" — so fixing only the presence
+ * check would have left the report making the identical wrong promise from
+ * the other seam.
+ */
+function checkFileContains(
+  checkId: string,
+  surface: IntelTowerCheck['surface'],
+  description: string,
+  rel: string,
+  pendingItem: string,
+  marker: string,
+  label: string,
+): IntelTowerCheck {
+  const content = readIfExists(rel);
+  if (content === null) {
+    const retirement = retirementFor(rel);
+    if (retirement) {
+      return makeCheck(
+        checkId,
+        surface,
+        description,
+        'retired',
+        `Removed on purpose by ${retirement.retiredBy}, not pending: there is no ${rel} to read a `
+          + `'${marker}' caveat out of, because ${retirement.evidence} Reporting this as `
+          + 'pre-integration would promise work that is not coming.',
+      );
+    }
+    return makeCheck(
+      checkId,
+      surface,
+      description,
+      'deferred',
+      `${pendingItem} pre-integration: file absent at ${rel}. Deferred pending ${pendingItem} merge.`,
+    );
+  }
+  const hasMarker = content.includes(marker);
+  return makeCheck(
+    checkId,
+    surface,
+    description,
+    hasMarker ? 'pass' : 'fail',
+    hasMarker
+      ? `${label} contains required ${marker} caveat string`
+      : `${label} found but missing required '${marker}' caveat string`,
+  );
+}
 
 function exists(rel: string): boolean {
   return fs.existsSync(path.join(ROOT, rel));
@@ -144,183 +294,97 @@ function checkTowerRouteExists(): IntelTowerCheck {
 
 /** Check 5: IntelligenceRouteShell.tsx exists (INTEL1 — deferred if absent) */
 function checkIntelligenceRouteShellExists(): IntelTowerCheck {
-  const rel = 'src/components/intelligence/IntelligenceRouteShell.tsx';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'INTEL1-SHELL-01',
-      'intelligence',
-      'IntelligenceRouteShell.tsx component exists',
-      'pass',
-      `Component found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return checkPathPresence(
     'INTEL1-SHELL-01',
     'intelligence',
     'IntelligenceRouteShell.tsx component exists',
-    'deferred',
-    `INTEL1 pre-integration: IntelligenceRouteShell.tsx not yet present at ${rel}. Deferred pending INTEL1 merge.`,
+    'src/components/intelligence/IntelligenceRouteShell.tsx',
+    'INTEL1',
   );
 }
 
 /** Check 6: TowerRouteShell.tsx exists (TOWER1 — deferred if absent) */
 function checkTowerRouteShellExists(): IntelTowerCheck {
-  const rel = 'src/components/tower/TowerRouteShell.tsx';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'TOWER1-SHELL-01',
-      'tower',
-      'TowerRouteShell.tsx component exists',
-      'pass',
-      `Component found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return checkPathPresence(
     'TOWER1-SHELL-01',
     'tower',
     'TowerRouteShell.tsx component exists',
-    'deferred',
-    `TOWER1 pre-integration: TowerRouteShell.tsx not yet present at ${rel}. Deferred pending TOWER1 merge.`,
+    'src/components/tower/TowerRouteShell.tsx',
+    'TOWER1',
   );
 }
 
 /** Check 7: Intelligence workflow canvas view exists (INTEL2 — deferred if absent) */
 function checkIntelligenceWorkflowCanvasView(): IntelTowerCheck {
-  const rel = 'src/lib/intelligence/intelligence-workflow-canvas-view.ts';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'INTEL2-CANVAS-01',
-      'intelligence',
-      'Intelligence workflow canvas view model exists',
-      'pass',
-      `View model found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return checkPathPresence(
     'INTEL2-CANVAS-01',
     'intelligence',
     'Intelligence workflow canvas view model exists',
-    'deferred',
-    `INTEL2 pre-integration: intelligence-workflow-canvas-view.ts not yet present at ${rel}. Deferred pending INTEL2 merge.`,
+    'src/lib/intelligence/intelligence-workflow-canvas-view.ts',
+    'INTEL2',
+    'View model',
   );
 }
 
 /** Check 8: Sentinel evidence brief view exists (INTEL3 — deferred if absent) */
 function checkSentinelEvidenceBriefView(): IntelTowerCheck {
-  const rel = 'src/lib/intelligence/sentinel-brief-evidence-view.ts';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'INTEL3-EVID-01',
-      'intelligence',
-      'Sentinel evidence brief view model exists',
-      'pass',
-      `View model found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return checkPathPresence(
     'INTEL3-EVID-01',
     'intelligence',
     'Sentinel evidence brief view model exists',
-    'deferred',
-    `INTEL3 pre-integration: sentinel-brief-evidence-view.ts not yet present at ${rel}. Deferred pending INTEL3 merge.`,
+    'src/lib/intelligence/sentinel-brief-evidence-view.ts',
+    'INTEL3',
+    'View model',
   );
 }
 
 /** Check 9: Atlas executive brief canvas exists (TOWER2 — deferred if absent) */
 function checkAtlasExecutiveBriefCanvas(): IntelTowerCheck {
-  const rel = 'src/lib/tower/atlas-executive-brief-canvas.ts';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'TOWER2-CANVAS-01',
-      'tower',
-      'Atlas executive brief canvas model exists',
-      'pass',
-      `Canvas model found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return checkPathPresence(
     'TOWER2-CANVAS-01',
     'tower',
     'Atlas executive brief canvas model exists',
-    'deferred',
-    `TOWER2 pre-integration: atlas-executive-brief-canvas.ts not yet present at ${rel}. Deferred pending TOWER2 merge.`,
+    'src/lib/tower/atlas-executive-brief-canvas.ts',
+    'TOWER2',
+    'Canvas model',
   );
 }
 
 /** Check 10: Active lens view exists (TOWER3 — deferred if absent) */
 function checkActiveLensView(): IntelTowerCheck {
-  const rel = 'src/lib/tower/control-tower-active-lens-view.ts';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'TOWER3-LENS-01',
-      'tower',
-      'Control Tower active lens view model exists',
-      'pass',
-      `View model found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return checkPathPresence(
     'TOWER3-LENS-01',
     'tower',
     'Control Tower active lens view model exists',
-    'deferred',
-    `TOWER3 pre-integration: control-tower-active-lens-view.ts not yet present at ${rel}. Deferred pending TOWER3 merge.`,
+    'src/lib/tower/control-tower-active-lens-view.ts',
+    'TOWER3',
+    'View model',
   );
 }
 
 /** Check 11: IntelligenceRouteShell contains 'Deterministic' caveat */
 function checkIntelligenceShellDeterministicCaveat(): IntelTowerCheck {
-  const rel = 'src/components/intelligence/IntelligenceRouteShell.tsx';
-  const content = readIfExists(rel);
-  if (content === null) {
-    return makeCheck(
-      'INTEL1-CAVEAT-01',
-      'intelligence',
-      'IntelligenceRouteShell contains Deterministic caveat',
-      'deferred',
-      `INTEL1 pre-integration: file absent at ${rel}. Deferred pending INTEL1 merge.`,
-    );
-  }
-  const hasCaveat = content.includes('Deterministic');
-  return makeCheck(
+  return checkFileContains(
     'INTEL1-CAVEAT-01',
     'intelligence',
     'IntelligenceRouteShell contains Deterministic caveat',
-    hasCaveat ? 'pass' : 'fail',
-    hasCaveat
-      ? 'IntelligenceRouteShell.tsx contains required Deterministic caveat string'
-      : `IntelligenceRouteShell.tsx found but missing required 'Deterministic' caveat string`,
+    'src/components/intelligence/IntelligenceRouteShell.tsx',
+    'INTEL1',
+    'Deterministic',
+    'IntelligenceRouteShell.tsx',
   );
 }
 
 /** Check 12: TowerRouteShell contains 'Deterministic' caveat */
 function checkTowerShellDeterministicCaveat(): IntelTowerCheck {
-  const rel = 'src/components/tower/TowerRouteShell.tsx';
-  const content = readIfExists(rel);
-  if (content === null) {
-    return makeCheck(
-      'TOWER1-CAVEAT-01',
-      'tower',
-      'TowerRouteShell contains Deterministic caveat',
-      'deferred',
-      `TOWER1 pre-integration: file absent at ${rel}. Deferred pending TOWER1 merge.`,
-    );
-  }
-  const hasCaveat = content.includes('Deterministic');
-  return makeCheck(
+  return checkFileContains(
     'TOWER1-CAVEAT-01',
     'tower',
     'TowerRouteShell contains Deterministic caveat',
-    hasCaveat ? 'pass' : 'fail',
-    hasCaveat
-      ? 'TowerRouteShell.tsx contains required Deterministic caveat string'
-      : `TowerRouteShell.tsx found but missing required 'Deterministic' caveat string`,
+    'src/components/tower/TowerRouteShell.tsx',
+    'TOWER1',
+    'Deterministic',
+    'TowerRouteShell.tsx',
   );
 }
 
@@ -438,6 +502,7 @@ export function runIntelTowerBlueprintVerification(): IntelTowerBlueprintVerific
   const passCount = checks.filter((c) => c.status === 'pass').length;
   const failCount = checks.filter((c) => c.status === 'fail').length;
   const deferredCount = checks.filter((c) => c.status === 'deferred').length;
+  const retiredCount = checks.filter((c) => c.status === 'retired').length;
 
   let overallStatus: 'pass' | 'fail' | 'partial';
   if (failCount > 0) {
@@ -454,11 +519,13 @@ export function runIntelTowerBlueprintVerification(): IntelTowerBlueprintVerific
     passCount,
     failCount,
     deferredCount,
+    retiredCount,
     overallStatus,
     caveat:
       'Deterministic filesystem verification only. No live signals, no model calls, no network calls. ' +
       'INTEL1-3 and TOWER1-3 are pre-integration components deferred until their respective slices merge. ' +
-      'All deferred checks will resolve to pass after integration.',
+      'Deferred checks resolve to pass after integration. Retired checks will not: they name a component ' +
+      'that was removed on purpose, and no merge is coming for them.',
     deterministicSeed: true,
   };
 }
