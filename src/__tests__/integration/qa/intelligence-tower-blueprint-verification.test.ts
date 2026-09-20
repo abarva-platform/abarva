@@ -15,18 +15,43 @@ import {
   resolvePathStatus,
   BLUEPRINT_PATH_REGISTER,
   type IntelTowerBlueprintVerificationReport,
+  type IntelTowerCheck,
   type PathDispositionRegister,
   type VerificationStatus,
 } from '../../../lib/qa/intelligence-tower-blueprint-verification';
 
-const VALID_STATUSES: VerificationStatus[] = [
-  'pass',
-  'fail',
-  'deferred',
-  'removed',
-  'not_applicable',
-];
-const VALID_SURFACES = ['intelligence', 'tower', 'shared'] as const;
+/**
+ * The vocabularies, keyed on the unions rather than hand-typed beside them.
+ *
+ * A `VerificationStatus[]` annotation cannot catch an omission: leaving a
+ * member out is perfectly legal, so the list silently goes stale while the
+ * union grows. That is not hypothetical here — `removed` was added to the
+ * union and this list did not learn about it, so the checks producing it
+ * read as an invalid status until the list was edited by hand.
+ *
+ * Written as a Record keyed on the union, the next member added fails the
+ * typecheck at this line, naming the member it is missing, instead of
+ * surfacing as a confusing assertion failure somewhere downstream. Same
+ * shape as a CHECK constraint that cannot store a value the code produces.
+ */
+const STATUS_VOCABULARY: Record<VerificationStatus, true> = {
+  pass: true,
+  fail: true,
+  deferred: true,
+  removed: true,
+  not_applicable: true,
+};
+
+const SURFACE_VOCABULARY: Record<IntelTowerCheck['surface'], true> = {
+  intelligence: true,
+  tower: true,
+  shared: true,
+};
+
+const VALID_STATUSES = Object.keys(STATUS_VOCABULARY) as VerificationStatus[];
+const VALID_SURFACES = Object.keys(
+  SURFACE_VOCABULARY,
+) as ReadonlyArray<IntelTowerCheck['surface']>;
 
 describe('QA29: Intelligence Tower Blueprint Verification', () => {
   let report: IntelTowerBlueprintVerificationReport;
