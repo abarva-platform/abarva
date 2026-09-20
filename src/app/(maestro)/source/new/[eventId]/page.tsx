@@ -13,6 +13,7 @@ import { readSourceEventAuthority } from "@/lib/source/new-workspace/event-autho
 import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/event-intelligence";
 import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
+import { buildScorecardAuthorityView } from "@/lib/source/proposal-intelligence";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Source New · AbarVa" };
@@ -45,83 +46,83 @@ export default async function SourceNewEventPage({
   const asOfDate = event.valueLedger.updatedAt.slice(0, 10);
   const [artifacts, activity, authority, stage04VendorPanel, stage05NdaCoverage] =
     await Promise.all([
-    listSourceArtifacts(
-      event.id,
-      {
-        tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
-      },
-      { includeHistory: true },
-    ),
-    listSourceEventActivityEntries(event.id),
-    readSourceEventAuthority(event.id, activeClient.key),
-    readSourceNewStage04VendorPanel({
-      clientKey: activeClient.key,
-      eventId: event.id,
-      asOf: asOfDate,
-    }),
-    readSourceNewStage05NdaCoverage({
-      clientKey: activeClient.key,
-      eventId: event.id,
-      asOf: asOfDate,
-    }),
-  ]);
+      listSourceArtifacts(
+        event.id,
+        {
+          tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
+        },
+        { includeHistory: true },
+      ),
+      listSourceEventActivityEntries(event.id),
+      readSourceEventAuthority(event.id, activeClient.key),
+      readSourceNewStage04VendorPanel({
+        clientKey: activeClient.key,
+        eventId: event.id,
+        asOf: asOfDate,
+      }),
+      readSourceNewStage05NdaCoverage({
+        clientKey: activeClient.key,
+        eventId: event.id,
+        asOf: asOfDate,
+      }),
+    ]);
 
   const files: SourceNewFileRow[] = artifacts.flatMap((artifact) => {
-        // Tenancy is the only reason to drop an artifact here. A stage this
-        // workspace has no phase for still belongs to the operator's event.
-        if (
-          canonicalTenantKey(artifact.tenantKey) !==
-          canonicalTenantKey(activeClient.key)
-        )
-          return [];
-        const phase = sourceNewFilePhase(artifact);
-        return [
-          {
-            id: artifact.id,
-            artifactGroup: artifact.artifactGroup,
-            artifactType: artifact.artifactType,
-            artifactFamily: artifact.artifactFamily,
-            description: artifact.description,
-            title: artifact.title,
-            fileName: artifact.fileName,
-            fileFormat: artifact.fileFormat,
-            fileSize: artifact.fileSize,
-            version: artifact.version,
-            status: artifact.status,
-            lifecycleState: artifact.lifecycleState,
-            generatedAt: artifact.generatedAt,
-            generatedBy: artifact.generatedBy,
-            sourceBasis: artifact.sourceBasis,
-            confidence: artifact.confidence,
-            citationReady: artifact.citationReady,
-            evidenceFamiliesUsed: artifact.evidenceFamiliesUsed,
-            sourceRegisterId: artifact.sourceRegisterId,
-            contextBundleTraceId: artifact.contextBundleTraceId,
-            missingInputs: artifact.missingInputs,
-            clientCompleteItems: artifact.clientCompleteItems,
-            assumptions: artifact.assumptions,
-            supersedesArtifactId: artifact.supersedesArtifactId,
-            supersededByArtifactId: artifact.supersededByArtifactId,
-            blobSha256: artifact.blobSha256,
-            approvalState: artifact.approvalState,
-            approvedBy: artifact.approvedBy,
-            approvedAt: artifact.approvedAt,
-            isClientFinal: artifact.isClientFinal,
-            isCurrentAuthoritative: artifact.isCurrentAuthoritative,
-            sourceGeneratedArtifactId: artifact.sourceGeneratedArtifactId,
-            clientFinalUploadedBy: artifact.clientFinalUploadedBy,
-            clientFinalUploadedAt: artifact.clientFinalUploadedAt,
-            clientFinalAcceptedBy: artifact.clientFinalAcceptedBy,
-            clientFinalAcceptedAt: artifact.clientFinalAcceptedAt,
-            clientFinalNote: artifact.clientFinalNote,
-            clientFinalReviewMeetingDate: artifact.clientFinalReviewMeetingDate,
-            clientFinalStakeholderGroup: artifact.clientFinalStakeholderGroup,
-            createdAt: artifact.createdAt,
-            updatedAt: artifact.updatedAt,
-            phase,
-          },
-        ];
-      });
+    // Tenancy is the only reason to drop an artifact here. A stage this
+    // workspace has no phase for still belongs to the operator's event.
+    if (
+      canonicalTenantKey(artifact.tenantKey) !==
+      canonicalTenantKey(activeClient.key)
+    )
+      return [];
+    const phase = sourceNewFilePhase(artifact);
+    return [
+      {
+        id: artifact.id,
+        artifactGroup: artifact.artifactGroup,
+        artifactType: artifact.artifactType,
+        artifactFamily: artifact.artifactFamily,
+        description: artifact.description,
+        title: artifact.title,
+        fileName: artifact.fileName,
+        fileFormat: artifact.fileFormat,
+        fileSize: artifact.fileSize,
+        version: artifact.version,
+        status: artifact.status,
+        lifecycleState: artifact.lifecycleState,
+        generatedAt: artifact.generatedAt,
+        generatedBy: artifact.generatedBy,
+        sourceBasis: artifact.sourceBasis,
+        confidence: artifact.confidence,
+        citationReady: artifact.citationReady,
+        evidenceFamiliesUsed: artifact.evidenceFamiliesUsed,
+        sourceRegisterId: artifact.sourceRegisterId,
+        contextBundleTraceId: artifact.contextBundleTraceId,
+        missingInputs: artifact.missingInputs,
+        clientCompleteItems: artifact.clientCompleteItems,
+        assumptions: artifact.assumptions,
+        supersedesArtifactId: artifact.supersedesArtifactId,
+        supersededByArtifactId: artifact.supersededByArtifactId,
+        blobSha256: artifact.blobSha256,
+        approvalState: artifact.approvalState,
+        approvedBy: artifact.approvedBy,
+        approvedAt: artifact.approvedAt,
+        isClientFinal: artifact.isClientFinal,
+        isCurrentAuthoritative: artifact.isCurrentAuthoritative,
+        sourceGeneratedArtifactId: artifact.sourceGeneratedArtifactId,
+        clientFinalUploadedBy: artifact.clientFinalUploadedBy,
+        clientFinalUploadedAt: artifact.clientFinalUploadedAt,
+        clientFinalAcceptedBy: artifact.clientFinalAcceptedBy,
+        clientFinalAcceptedAt: artifact.clientFinalAcceptedAt,
+        clientFinalNote: artifact.clientFinalNote,
+        clientFinalReviewMeetingDate: artifact.clientFinalReviewMeetingDate,
+        clientFinalStakeholderGroup: artifact.clientFinalStakeholderGroup,
+        createdAt: artifact.createdAt,
+        updatedAt: artifact.updatedAt,
+        phase,
+      },
+    ];
+  });
   const intelligence = buildSourceNewEventIntelligence({
     event: {
       id: event.id,
@@ -146,6 +147,12 @@ export default async function SourceNewEventPage({
       missingInputs: artifact.missingInputs,
       generatedAt: artifact.generatedAt,
     })),
+  });
+  const scorecardAuthority = buildScorecardAuthorityView({
+    tenantKey: activeClient.key,
+    sourceEventId: event.id,
+    criteria: [],
+    scores: [],
   });
 
   return (
@@ -176,6 +183,7 @@ export default async function SourceNewEventPage({
       files={files}
       stage04VendorPanel={stage04VendorPanel}
       stage05NdaCoverage={stage05NdaCoverage}
+      scorecardAuthority={scorecardAuthority}
     />
   );
 }
