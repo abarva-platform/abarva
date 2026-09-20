@@ -207,6 +207,66 @@ export const SHARED_PATH_DISPOSITIONS: PathDispositionRegister = {
         'on iteration one and the surviving surface after it was never checked.',
     },
   },
+  'src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'A nested route under the tenant-scoped Intelligence tree, added by 5d795a397 and '
+        + 'removed by the same sunset that took its parent. Verified with --diff-filter=A '
+        + 'and D on this branch, not inferred from the parent.',
+    },
+  },
+  'src/components/intelligence/EvidenceDatasetDrawer.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. Its suite read this file '
+        + 'at describe-body scope, so the absence threw during collection and took every '
+        + 'healthy case in the same file down with it.',
+    },
+  },
+  'src/components/intelligence/SentinelInteractionRail.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. Its suite read this file '
+        + 'at describe-body scope, so the absence threw during collection and took every '
+        + 'healthy case in the same file down with it.',
+    },
+  },
+  'src/components/intelligence/SentinelPatternContentPanel.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. Its suite read this file '
+        + 'at describe-body scope, so the absence threw during collection and took every '
+        + 'healthy case in the same file down with it.',
+    },
+  },
+  'src/components/intelligence/SentinelPatternDetail.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'Removed with the rest of src/components/intelligence/. Its suite read this file '
+        + 'at describe-body scope, so the absence threw during collection and took every '
+        + 'healthy case in the same file down with it.',
+    },
+  },
   'src/components/intelligence/IntelligenceRouteShell.tsx': {
     retired: {
       scope: 'containing-directory',
