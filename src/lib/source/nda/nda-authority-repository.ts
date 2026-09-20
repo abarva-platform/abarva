@@ -1,4 +1,5 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
+import type { ExecutedDocumentEvidence } from "./executed-document-evidence";
 import type {
   ExecutedNdaRecord,
   NdaScopeLevel,
@@ -31,6 +32,12 @@ type ExecutedNdaRow = {
   effective_from: string | Date;
   effective_to: string | Date | null;
   uploaded_by_user_id: string;
+  signature_method: string | null;
+  supplier_signatory_name: string | null;
+  buyer_signatory_name: string | null;
+  certificate_sha256: string | null;
+  private_evidence_ref: string | null;
+  document_sha256: string | null;
 };
 
 export type NdaAuthorityRead = {
@@ -95,7 +102,14 @@ export async function readNdaAuthorityForEvent(
                 authority.template_version, authority.scope_level,
                 authority.covered_affiliate_entity_ids,
                 authority.effective_from, authority.effective_to,
-                authority.uploaded_by_user_id
+                authority.uploaded_by_user_id,
+                authority.signature_method,
+                authority.supplier_signatory_name,
+                authority.buyer_signatory_name,
+                authority.certificate_sha256,
+                authority.private_evidence_ref,
+                NULLIF(BTRIM(COALESCE(artifact.blob_sha256, artifact.sha256)), '')
+                  AS document_sha256
          FROM source_executed_nda_authority authority
          JOIN source_artifacts artifact
            ON artifact.id = authority.artifact_id
@@ -145,6 +159,20 @@ export async function readNdaAuthorityForEvent(
             ? {}
             : { effectiveTo: iso(row.effective_to) }),
           uploadedBy: row.uploaded_by_user_id,
+          // The document hash comes from the artifact this authority row
+          // points at, not from a second copy on the row. `executed_at` is
+          // the signature date; there is no separate signed_at column.
+          signatureEvidence: {
+            documentSha256: row.document_sha256,
+            signatureMethod:
+              (row.signature_method as ExecutedDocumentEvidence["signatureMethod"]) ??
+              null,
+            signedAt: iso(row.effective_from),
+            supplierSignatoryName: row.supplier_signatory_name,
+            buyerSignatoryName: row.buyer_signatory_name,
+            certificateSha256: row.certificate_sha256,
+            privateEvidenceRef: row.private_evidence_ref,
+          },
         })),
         waivers: waiverRows.map((row) => ({
           waiverId: row.waiver_id,
