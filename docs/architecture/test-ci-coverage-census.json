@@ -12,20 +12,20 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2327,
-    "coveredTestFiles": 1357,
-    "pullRequestCoveredTestFiles": 1354,
-    "uncoveredTestFiles": 970,
+    "testFiles": 2328,
+    "coveredTestFiles": 1425,
+    "pullRequestCoveredTestFiles": 1422,
+    "uncoveredTestFiles": 903,
     "directoriesWithTests": 476,
-    "directoriesFullyCovered": 143,
-    "directoriesPartiallyCovered": 21,
-    "directoriesUncovered": 312,
-    "directoriesWithUnrunTestFiles": 333,
+    "directoriesFullyCovered": 145,
+    "directoriesPartiallyCovered": 20,
+    "directoriesUncovered": 311,
+    "directoriesWithUnrunTestFiles": 331,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
-    "criticalGovernedRiskDirectories": 34,
+    "criticalGovernedRiskDirectories": 33,
     "highGovernedRiskDirectories": 96,
-    "unclassifiedRiskDirectories": 203
+    "unclassifiedRiskDirectories": 202
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -34,14 +34,6 @@
       "directory": "src/__tests__/integration/source",
       "testFiles": 97,
       "coveredTestFiles": 89,
-      "via": [
-        "command"
-      ]
-    },
-    {
-      "directory": "src/lib/source/__tests__",
-      "testFiles": 69,
-      "coveredTestFiles": 9,
       "via": [
         "command"
       ]
@@ -261,20 +253,6 @@
       }
     },
     {
-      "directory": "src/lib/source/__tests__",
-      "testFiles": 69,
-      "unrunTestFiles": 60,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 5
-      }
-    },
-    {
       "directory": "src/lib/auth/__tests__",
       "testFiles": 19,
       "unrunTestFiles": 19,
@@ -285,7 +263,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -299,7 +277,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -313,7 +291,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -327,7 +305,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -341,7 +319,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -355,7 +333,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -369,7 +347,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -383,7 +361,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -397,7 +375,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -411,7 +389,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 15
+        "rank": 14
       }
     },
     {
@@ -425,7 +403,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 16
+        "rank": 15
       }
     },
     {
@@ -439,7 +417,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 17
+        "rank": 16
       }
     },
     {
@@ -453,7 +431,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 18
+        "rank": 17
       }
     },
     {
@@ -467,7 +445,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 19
+        "rank": 18
       }
     },
     {
@@ -481,7 +459,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -495,7 +473,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -509,7 +487,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -522,7 +500,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -535,7 +513,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -548,7 +526,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 25
+        "rank": 24
       }
     },
     {
@@ -561,7 +539,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 26
+        "rank": 25
       }
     },
     {
@@ -574,7 +552,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 27
+        "rank": 26
       }
     },
     {
@@ -587,7 +565,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 28
+        "rank": 27
       }
     },
     {
@@ -600,7 +578,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 29
+        "rank": 28
       }
     },
     {
@@ -613,7 +591,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 30
+        "rank": 29
       }
     },
     {
@@ -626,7 +604,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 31
+        "rank": 30
       }
     },
     {
@@ -639,7 +617,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 32
+        "rank": 31
       }
     },
     {
@@ -652,7 +630,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 33
+        "rank": 32
       }
     },
     {
@@ -665,7 +643,7 @@
         "signals": [
           "approval_or_lifecycle_write"
         ],
-        "rank": 34
+        "rank": 33
       }
     },
     {
@@ -678,7 +656,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 35
+        "rank": 34
       }
     },
     {
@@ -691,7 +669,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 36
+        "rank": 35
       }
     },
     {
@@ -704,7 +682,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 37
+        "rank": 36
       }
     },
     {
@@ -717,7 +695,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 38
+        "rank": 37
       }
     },
     {
@@ -730,7 +708,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 39
+        "rank": 38
       }
     },
     {
@@ -743,7 +721,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 40
+        "rank": 39
       }
     },
     {
@@ -756,7 +734,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 41
+        "rank": 40
       }
     },
     {
@@ -769,7 +747,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 42
+        "rank": 41
       }
     },
     {
@@ -782,7 +760,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 43
+        "rank": 42
       }
     },
     {
@@ -795,7 +773,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 44
+        "rank": 43
       }
     },
     {
@@ -808,7 +786,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 45
+        "rank": 44
       }
     },
     {
@@ -821,7 +799,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 46
+        "rank": 45
       }
     },
     {
@@ -834,7 +812,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 47
+        "rank": 46
       }
     },
     {
@@ -847,7 +825,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 48
+        "rank": 47
       }
     },
     {
@@ -860,7 +838,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 49
+        "rank": 48
       }
     },
     {
@@ -873,7 +851,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 50
+        "rank": 49
       }
     },
     {
@@ -886,7 +864,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 51
+        "rank": 50
       }
     },
     {
@@ -899,7 +877,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 52
+        "rank": 51
       }
     },
     {
@@ -912,7 +890,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 53
+        "rank": 52
       }
     },
     {
@@ -925,7 +903,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 54
+        "rank": 53
       }
     },
     {
@@ -938,7 +916,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 55
+        "rank": 54
       }
     },
     {
@@ -951,7 +929,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 56
+        "rank": 55
       }
     },
     {
@@ -964,7 +942,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 57
+        "rank": 56
       }
     },
     {
@@ -977,7 +955,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 58
+        "rank": 57
       }
     },
     {
@@ -990,7 +968,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 59
+        "rank": 58
       }
     },
     {
@@ -1003,7 +981,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 60
+        "rank": 59
       }
     },
     {
@@ -1016,7 +994,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 61
+        "rank": 60
       }
     },
     {
@@ -1029,7 +1007,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 62
+        "rank": 61
       }
     },
     {
@@ -1042,7 +1020,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 63
+        "rank": 62
       }
     },
     {
@@ -1055,7 +1033,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 64
+        "rank": 63
       }
     },
     {
@@ -1068,7 +1046,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 65
+        "rank": 64
       }
     },
     {
@@ -1081,7 +1059,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 66
+        "rank": 65
       }
     },
     {
@@ -1094,7 +1072,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 67
+        "rank": 66
       }
     },
     {
@@ -1107,7 +1085,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 68
+        "rank": 67
       }
     },
     {
@@ -1120,7 +1098,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 69
+        "rank": 68
       }
     },
     {
@@ -1133,7 +1111,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 70
+        "rank": 69
       }
     },
     {
@@ -1146,7 +1124,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 71
+        "rank": 70
       }
     },
     {
@@ -1159,7 +1137,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 72
+        "rank": 71
       }
     },
     {
@@ -1172,7 +1150,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 73
+        "rank": 72
       }
     },
     {
@@ -1185,7 +1163,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 74
+        "rank": 73
       }
     },
     {
@@ -1198,7 +1176,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 75
+        "rank": 74
       }
     },
     {
@@ -1211,7 +1189,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 76
+        "rank": 75
       }
     },
     {
@@ -1224,7 +1202,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 77
+        "rank": 76
       }
     },
     {
@@ -1237,7 +1215,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 78
+        "rank": 77
       }
     },
     {
@@ -1250,7 +1228,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 79
+        "rank": 78
       }
     },
     {
@@ -1263,7 +1241,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 80
+        "rank": 79
       }
     },
     {
@@ -1276,7 +1254,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 81
+        "rank": 80
       }
     },
     {
@@ -1289,7 +1267,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 82
+        "rank": 81
       }
     },
     {
@@ -1302,7 +1280,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 83
+        "rank": 82
       }
     },
     {
@@ -1315,7 +1293,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 84
+        "rank": 83
       }
     },
     {
@@ -1328,7 +1306,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 85
+        "rank": 84
       }
     },
     {
@@ -1341,7 +1319,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 86
+        "rank": 85
       }
     },
     {
@@ -1354,7 +1332,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 87
+        "rank": 86
       }
     },
     {
@@ -1367,7 +1345,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 88
+        "rank": 87
       }
     },
     {
@@ -1380,7 +1358,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 89
+        "rank": 88
       }
     },
     {
@@ -1393,7 +1371,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 90
+        "rank": 89
       }
     },
     {
@@ -1406,7 +1384,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 91
+        "rank": 90
       }
     },
     {
@@ -1419,7 +1397,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 92
+        "rank": 91
       }
     },
     {
@@ -1432,7 +1410,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 93
+        "rank": 92
       }
     },
     {
@@ -1445,7 +1423,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 94
+        "rank": 93
       }
     },
     {
@@ -1458,7 +1436,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 95
+        "rank": 94
       }
     },
     {
@@ -1471,7 +1449,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 96
+        "rank": 95
       }
     },
     {
@@ -1484,7 +1462,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 97
+        "rank": 96
       }
     },
     {
@@ -1497,7 +1475,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 98
+        "rank": 97
       }
     },
     {
@@ -1510,7 +1488,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 99
+        "rank": 98
       }
     },
     {
@@ -1523,7 +1501,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 100
+        "rank": 99
       }
     },
     {
@@ -1536,7 +1514,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 101
+        "rank": 100
       }
     },
     {
@@ -1549,7 +1527,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 102
+        "rank": 101
       }
     },
     {
@@ -1562,7 +1540,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 103
+        "rank": 102
       }
     },
     {
@@ -1575,7 +1553,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 104
+        "rank": 103
       }
     },
     {
@@ -1588,7 +1566,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 105
+        "rank": 104
       }
     },
     {
@@ -1601,7 +1579,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 106
+        "rank": 105
       }
     },
     {
@@ -1614,7 +1592,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 107
+        "rank": 106
       }
     },
     {
@@ -1627,7 +1605,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 108
+        "rank": 107
       }
     },
     {
@@ -1640,7 +1618,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 109
+        "rank": 108
       }
     },
     {
@@ -1653,7 +1631,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 110
+        "rank": 109
       }
     },
     {
@@ -1666,7 +1644,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 111
+        "rank": 110
       }
     },
     {
@@ -1679,7 +1657,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 112
+        "rank": 111
       }
     },
     {
@@ -1692,7 +1670,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 113
+        "rank": 112
       }
     },
     {
@@ -1705,7 +1683,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 114
+        "rank": 113
       }
     },
     {
@@ -1718,7 +1696,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 115
+        "rank": 114
       }
     },
     {
@@ -1731,7 +1709,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 116
+        "rank": 115
       }
     },
     {
@@ -1744,7 +1722,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 117
+        "rank": 116
       }
     },
     {
@@ -1757,7 +1735,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 118
+        "rank": 117
       }
     },
     {
@@ -1770,7 +1748,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 119
+        "rank": 118
       }
     },
     {
@@ -1783,7 +1761,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 120
+        "rank": 119
       }
     },
     {
@@ -1796,7 +1774,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 121
+        "rank": 120
       }
     },
     {
@@ -1809,7 +1787,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 122
+        "rank": 121
       }
     },
     {
@@ -1822,7 +1800,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 123
+        "rank": 122
       }
     },
     {
@@ -1835,7 +1813,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 124
+        "rank": 123
       }
     },
     {
@@ -1848,7 +1826,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 125
+        "rank": 124
       }
     },
     {
@@ -1861,7 +1839,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 126
+        "rank": 125
       }
     },
     {
@@ -1874,7 +1852,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 127
+        "rank": 126
       }
     },
     {
@@ -1887,7 +1865,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 128
+        "rank": 127
       }
     },
     {
@@ -1900,7 +1878,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 129
+        "rank": 128
       }
     },
     {
@@ -1913,7 +1891,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 130
+        "rank": 129
       }
     }
   ],
@@ -2029,33 +2007,6 @@
       }
     },
     {
-      "directory": "src/lib/source/__tests__",
-      "testFiles": 69,
-      "unrunTestFiles": 60,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "approvalOrLifecycleSourceCount": 12,
-        "approvalOrLifecycleSources": [
-          "src/lib/intelligence/source-lifecycle-patterns.ts",
-          "src/lib/source/approval-decision.ts",
-          "src/lib/source/approval-ledger-model.ts",
-          "src/lib/source/approval-ledger.ts",
-          "src/lib/source/approval-routing.ts"
-        ],
-        "tenantScopedReadSourceCount": 2,
-        "tenantScopedReadSources": [
-          "src/lib/source/adapters/apex-retail-adapter.ts",
-          "src/lib/source/queries.ts"
-        ],
-        "rank": 5
-      }
-    },
-    {
       "directory": "src/lib/auth/__tests__",
       "testFiles": 19,
       "unrunTestFiles": 19,
@@ -2078,7 +2029,7 @@
           "src/lib/deliverables/seed-route-resolver.ts",
           "src/lib/tenant/resolveTenant.ts"
         ],
-        "rank": 6
+        "rank": 5
       }
     },
     {
@@ -2106,7 +2057,7 @@
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts",
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submission/route.ts"
         ],
-        "rank": 7
+        "rank": 6
       }
     },
     {
@@ -2132,7 +2083,7 @@
           "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/route.ts",
           "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/run/route.ts"
         ],
-        "rank": 8
+        "rank": 7
       }
     },
     {
@@ -2154,7 +2105,7 @@
         "tenantScopedReadSources": [
           "src/lib/admin/tenant-admin-access.ts"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -2177,7 +2128,7 @@
           "src/lib/admin/data-lineage-read-model.ts",
           "src/lib/agent/context-bundle.ts"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -2203,7 +2154,7 @@
           "src/app/api/admin/programs/approvals/_auth.ts",
           "src/app/api/admin/programs/approvals/route.ts"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -2225,7 +2176,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/pricing/rate-cards/[id]/approve/route.ts"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -2247,7 +2198,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/programs/approvals/export/route.ts"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -2269,7 +2220,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -2291,7 +2242,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/route.ts"
         ],
-        "rank": 15
+        "rank": 14
       }
     },
     {
@@ -2313,7 +2264,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/phase-gate-approval/route.ts"
         ],
-        "rank": 16
+        "rank": 15
       }
     },
     {
@@ -2335,7 +2286,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/solution-options/approve/route.ts"
         ],
-        "rank": 17
+        "rank": 16
       }
     },
     {
@@ -2357,7 +2308,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/source/[eventId]/stage/route.ts"
         ],
-        "rank": 18
+        "rank": 17
       }
     },
     {
@@ -2379,7 +2330,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/source/[eventId]/vendor-proposals/facts/[factId]/reject/route.ts"
         ],
-        "rank": 19
+        "rank": 18
       }
     },
     {
@@ -2405,7 +2356,7 @@
           "src/lib/active-client.ts",
           "src/lib/source/contract-optimization/read.ts"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -2427,7 +2378,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/source/events/[eventId]/request-approval/route.ts"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -2451,7 +2402,7 @@
           "src/lib/source/ava/evidence-readiness-governed-answer.ts",
           "src/lib/source/facts/event-facts-reader.ts"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -2468,7 +2419,7 @@
         "approvalOrLifecycleSources": [
           "src/lib/source/exports/payloads/lifecycle-bodies.ts"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -2485,7 +2436,7 @@
         "approvalOrLifecycleSources": [
           "src/components/strategic-moves/MovesPhaseStandaloneClient.tsx"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -2502,6 +2453,23 @@
         "approvalOrLifecycleSources": [
           "src/lib/ai-liability/approval-audit-export.ts",
           "src/lib/ai-liability/approval-pattern-review.ts"
+        ],
+        "rank": 24
+      }
+    },
+    {
+      "directory": "src/components/abarva/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 5,
+      "governedRisk": {
+        "score": 100,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write"
+        ],
+        "approvalOrLifecycleSourceCount": 1,
+        "approvalOrLifecycleSources": [
+          "src/components/abarva/HumanApprovalGate.tsx"
         ],
         "rank": 25
       }
@@ -2606,12 +2574,6 @@
     },
     {
       "directory": "src/lib/programs/archetype-primers/__tests__",
-      "testFiles": 7,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/__tests__/specialists",
       "testFiles": 7,
       "coveredTestFiles": 0,
       "via": []

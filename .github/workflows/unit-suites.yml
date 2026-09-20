@@ -245,6 +245,19 @@ jobs:
       - name: Run the Source canvas component suites
         run: npx jest src/components/source/canvas --no-coverage --ci
 
+      # The direct Source core row contains 69 suites: 9 are already owned by
+      # ai-surface-control-catalog.yml and 60 were not reached by any workflow.
+      # The parent also contains 8 nested files, so the actual Jest command is
+      # 77 suites / 736 tests. All pass unchanged.
+      #
+      # Naming the parent deliberately repeats the 9 owned suites. Their
+      # measured cost is ~1 second (9 suites / 71 tests), while the full parent
+      # is ~2.6 seconds. That bounded overlap buys automatic ownership for new
+      # core and specialist tests instead of pinning a 60-file list that would
+      # become stale on the next addition.
+      - name: Run the Source core suites
+        run: npx jest src/lib/source/__tests__ --no-coverage --ci
+
       # These three steps name SUBDIRECTORIES rather than a parent, which is the
       # opposite of every step above, and the reason matters: each of these
       # parents contains red suites. Naming the parent here would wire a known
