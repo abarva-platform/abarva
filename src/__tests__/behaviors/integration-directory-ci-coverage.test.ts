@@ -612,6 +612,41 @@ describe("integration directories a workflow actually reaches", () => {
     });
   });
 
+  it("has an entry for every quarantine that exists on disk", () => {
+    // T-500 wired a directory with a quarantine and did not add it here, so
+    // every case that iterates this list skipped it from the day it landed.
+    // Nothing said so, because the list is hand-maintained and nothing
+    // derives it: the only thing standing between a wired quarantine and an
+    // unchecked one was somebody remembering.
+    //
+    // Both directions. A quarantine with no entry means cases silently skip
+    // a directory; an entry naming a script that does not exist means the
+    // list describes a quarantine that was removed, and the cases iterating
+    // it are asserting against nothing.
+    const onDisk = readdirSync(path.join(repoRoot, "scripts/quality"))
+      .filter((file) => file.endsWith("-integration-ignore-args.mjs"))
+      .map((file) => `scripts/quality/${file}`)
+      .sort();
+
+    // The control: if this listing came back empty, the comparison below
+    // would pass against a list that also happens to be empty.
+    expect(onDisk.length).toBeGreaterThan(0);
+
+    const listed = QUARANTINED_WIRED_DIRECTORIES.map(
+      (entry) => entry.ignoreArgsScript,
+    ).sort();
+
+    expect({
+      hazard:
+        "a quarantine with no entry here is a directory every case in this file skips",
+      scripts: listed,
+    }).toEqual({
+      hazard:
+        "a quarantine with no entry here is a directory every case in this file skips",
+      scripts: onDisk,
+    });
+  });
+
   it.each(QUARANTINED_WIRED_DIRECTORIES)(
     "holds the quarantined directory $directory to the same enumeration",
     ({
