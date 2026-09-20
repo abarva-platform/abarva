@@ -13,19 +13,19 @@
   ],
   "counts": {
     "testFiles": 2323,
-    "coveredTestFiles": 1180,
-    "pullRequestCoveredTestFiles": 1177,
-    "uncoveredTestFiles": 1143,
+    "coveredTestFiles": 1197,
+    "pullRequestCoveredTestFiles": 1194,
+    "uncoveredTestFiles": 1126,
     "directoriesWithTests": 476,
-    "directoriesFullyCovered": 111,
+    "directoriesFullyCovered": 115,
     "directoriesPartiallyCovered": 22,
-    "directoriesUncovered": 343,
-    "directoriesWithUnrunTestFiles": 365,
+    "directoriesUncovered": 339,
+    "directoriesWithUnrunTestFiles": 361,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 37,
     "highGovernedRiskDirectories": 108,
-    "unclassifiedRiskDirectories": 220
+    "unclassifiedRiskDirectories": 216
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -2766,12 +2766,6 @@
       "via": []
     },
     {
-      "directory": "src/components/source/canvas/responses/__tests__",
-      "testFiles": 12,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/data-plane/write-adapters/__tests__",
       "testFiles": 11,
       "coveredTestFiles": 0,
@@ -3187,12 +3181,6 @@
     },
     {
       "directory": "src/components/programs/discovery/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/components/source/canvas/workspace-tabs/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 0,
       "via": []
@@ -4117,18 +4105,6 @@
     },
     {
       "directory": "src/components/source/approval/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/components/source/canvas/bafo/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/components/source/canvas/contract-optimization/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []

@@ -170,5 +170,34 @@ jobs:
       - name: Run the Source agent-generation suites
         run: npx jest src/lib/source/agent-generation --no-coverage --ci
 
+      # `src/components/source/canvas` is 48 suites / 227 tests, of which only
+      # 17 files across four census rows were unreached. The rest is already run
+      # by ai-surface-control-catalog.yml, which names `canvas/__tests__` and
+      # `canvas/analytics` individually.
+      #
+      # So this step deliberately runs 31 suites that another workflow already
+      # runs. The alternative was naming the four uncovered subdirectories,
+      # which is the hand-maintained list this repository keeps removing: it
+      # goes stale the day someone adds a fifth, and nothing would notice.
+      #
+      # The choice was made on the duplicated COST, measured on `0dbb766b2`:
+      #
+      #   already-covered portion   31 suites / 183 tests / 2.577s
+      #   the whole tree            48 suites / 227 tests / 2.639s
+      #
+      # ~2.5 seconds per pull request, which is the same order as the 1.8s
+      # AgentDock overlap this repository measured and deliberately kept (see
+      # docs/ci/README-suite-wiring.md). A correction is owed here and is
+      # recorded in the release record: the change that deferred this one
+      # (PR#8074) asserted the overlap was "a different order of magnitude"
+      # before the number existed. It is not. That aside conflated suite COUNT
+      # with COST, and cost is what the decision turns on.
+      #
+      # Naming the parent is also what makes a suite added under `canvas`
+      # tomorrow run the day it lands, which four pinned subdirectories would
+      # not.
+      - name: Run the Source canvas component suites
+        run: npx jest src/components/source/canvas --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
