@@ -494,6 +494,7 @@ describe("SourceNewWorkspace", () => {
           "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
       },
       currentStage: "rfp",
+      stageEvidenceContract: "available",
       requiredEvidence: [
         {
           key: "service_tower_scope",
@@ -595,6 +596,80 @@ describe("SourceNewWorkspace", () => {
     expect(
       screen.getAllByRole("link", { name: "Resolve evidence gap" }),
     ).toHaveLength(1);
+  });
+
+  it("explains a resolved final stage without calling the archetype unresolved", () => {
+    const intelligence: SourceNewEventIntelligenceView = {
+      posture: "blocked",
+      archetype: {
+        id: "AMS_MANAGED_SERVICES",
+        name: "IT Outsourcing / AMS / Managed Services",
+        source: "classifier_category",
+        reason:
+          "Resolved archetype AMS_MANAGED_SERVICES from classifier category 'ams'.",
+      },
+      currentStage: "value",
+      stageEvidenceContract: "not_defined",
+      requiredEvidence: [],
+      governedContext: {
+        policyVersion: "1.0.0",
+        decision: "block",
+        usableCount: 0,
+        blockedCount: 1,
+        agentReadyCount: 0,
+        citationsCount: 0,
+        available: [],
+        blocked: [
+          {
+            id: "artifact-blocked",
+            title: "Unreviewed value record",
+            reasons: ["agent_readiness_status is not_reviewed"],
+          },
+        ],
+      },
+      industryMetrics: [],
+      allowedStatement:
+        "Source resolves this event to the IT Outsourcing / AMS / Managed Services playbook. That playbook does not define a separate evidence contract for the final Value stage, so final value claims must be supported by governed evidence from the completed lifecycle.",
+      gaps: ["No current evidence is ready to cite yet."],
+      refusals: [
+        "Unreviewed value record: review its source, confidence, citations, and retrieval status before Source can use it.",
+      ],
+      nextQuestion:
+        "Which governed evidence supports the recorded final value outcome?",
+      nextAction: {
+        label: "Review lifecycle evidence",
+        detail:
+          "Review the governed evidence and unresolved gaps from the completed lifecycle before relying on a final value claim.",
+      },
+    };
+
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          category: "ams",
+          lifecycle: "completed",
+          currentStage: "value",
+        }}
+        files={[]}
+        intelligence={intelligence}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Intelligence" }));
+
+    expect(
+      screen.getByText("No separate evidence contract for this stage."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "The archetype is resolved. Review governed evidence from the completed lifecycle before relying on a final-stage claim.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(
+        "The event needs a resolved archetype before evidence can be scored.",
+      ),
+    ).toBeNull();
   });
 
   it("labels intake phase as review-needed not completed for waiting_on_client", () => {

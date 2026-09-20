@@ -1034,11 +1034,16 @@ function SourceNewIntelligenceWorkspace({
             ) : (
               <li>
                 <strong>
-                  No stage-specific evidence contract is available.
+                  {intelligence.stageEvidenceContract === "not_defined"
+                    ? "No separate evidence contract for this stage."
+                    : "No stage-specific evidence contract is available."}
                 </strong>
                 <p>
-                  The event needs a resolved archetype before evidence can be
-                  scored.
+                  {intelligence.stageEvidenceContract === "not_defined"
+                    ? intelligence.currentStage === "value"
+                      ? "The archetype is resolved. Review governed evidence from the completed lifecycle before relying on a final-stage claim."
+                      : "The archetype is resolved, but this stage has no declared evidence contract. Source will not infer requirements."
+                    : "The event needs a resolved archetype before evidence can be scored."}
                 </p>
               </li>
             )}

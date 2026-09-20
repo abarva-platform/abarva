@@ -237,4 +237,36 @@ describe("buildSourceNewEventIntelligence", () => {
     expect(view.gaps).toContain("No current evidence is ready to cite yet.");
     expect(view.nextAction.label).toBe("Review governed context");
   });
+
+  it("keeps a resolved completed event distinct from an unresolved archetype", () => {
+    const view = buildSourceNewEventIntelligence({
+      event: {
+        id: "event-completed",
+        clientId: "client-example",
+        clientKey: TEST_TENANT_KEY,
+        eventType: "managed_service",
+        category: "ams",
+        currentStage: "value",
+      },
+      artifacts: [],
+    });
+
+    expect(view.archetype.id).toBe("AMS_MANAGED_SERVICES");
+    expect(view.stageEvidenceContract).toBe("not_defined");
+    expect(view.requiredEvidence).toEqual([]);
+    expect(view.allowedStatement).toContain(
+      "does not define a separate evidence contract for the final Value stage",
+    );
+    expect(view.nextQuestion).toBe(
+      "Which governed evidence supports the recorded final value outcome?",
+    );
+    expect(view.nextAction).toEqual({
+      label: "Review lifecycle evidence",
+      detail:
+        "Review the governed evidence and unresolved gaps from the completed lifecycle before relying on a final value claim.",
+    });
+    expect(view.refusals).not.toContain(
+      "This event does not yet map to a supported sourcing playbook.",
+    );
+  });
 });
