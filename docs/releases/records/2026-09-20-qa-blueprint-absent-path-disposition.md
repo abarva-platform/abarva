@@ -64,7 +64,7 @@ is not `client-data-lane`.
     present/absent ternary
   - `overallStatus` is `partial` when removals are present
 - `src/__tests__/integration/qa/intelligence-tower-blueprint-verification.test.ts`
-  - 14 new cases; two existing cases updated in place with the reason beside them
+  - 15 new cases; two existing cases updated in place with the reason beside them
     (the status vocabulary gained a member, and the count reconciliation gained a term)
 - `scripts/quality/qa-integration-quarantine.json` — the entry for this suite is removed, because
   the artifact was repaired rather than the assertion relaxed
@@ -73,10 +73,32 @@ is not `client-data-lane`.
 
 ### Register entries, and the evidence for each
 
-| path | removed by | evidence |
-|---|---|---|
-| `src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx` | `0c6a86c51` | `git log --diff-filter=AD` shows `D` at that commit, the legacy v1–v4 surface sunset. The surviving route is `src/app/(maestro)/intelligence/page.tsx`. |
-| `src/components/intelligence/IntelligenceRouteShell.tsx` | `7c6d894e9` (INT-I1) | Added by `b26927adc`, deleted by `7c6d894e9`, whose own commit body reads "Delete IntelligenceRouteShell.tsx (G4 …)" and "Update 4 QA/design tests to reflect IntelligenceRouteShell retirement". This report was a fifth it did not update. |
+Every SHA below was checked with `git merge-base --is-ancestor <sha> origin/main` before it was
+written down. See *A correction made inside this change* for why that sentence is here.
+
+| path | scope | commit | evidence, on `main`'s own history |
+|---|---|---|---|
+| `src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx` | `path` | `0c6a86c51` | `git log origin/main --diff-filter=AD` shows `A` at `5d795a397` and `D` at `0c6a86c51`, the legacy v1–v4 surface sunset. The surviving route is `src/app/(maestro)/intelligence/page.tsx`. |
+| `src/components/intelligence/IntelligenceRouteShell.tsx` | `containing-directory` | `0c6a86c51` | **No commit on `main` ever added this file.** What existed is `src/components/intelligence/`, removed across `0c6a86c51` (twenty-odd components) and `d5e0ef495` (the last two). The check was written against a shell component that never landed here. |
+
+### A correction made inside this change
+
+The first commit on this branch declared the shell component "removed by `7c6d894e9` (INT-I1)",
+quoting that commit's own body. That attribution was **wrong**, and wrong in the same way the
+defect being fixed is wrong.
+
+`7c6d894e9` and the commit that added the file, `b26927adc`, are **not ancestors of `origin/main`**
+— they sit on unmerged refs that a `git log --all` in a shared clone happily returns. The file has
+never existed on `main`. Writing "removed by `<sha>`" for a commit that never held the file would
+have replaced one false claim with another, one level up, and pinned it in a register that the rest
+of the repository is meant to trust.
+
+Two things changed as a result, and both are load-bearing rather than cosmetic:
+
+- `RetiredPath` gained `scope: 'path' | 'containing-directory'`, so the detail text cannot claim a
+  commit deleted a file it never held. Mutation 7 below is the specific guard.
+- Every SHA cited here and in the register was re-derived with `git log origin/main` and confirmed
+  with `git merge-base --is-ancestor`. `--all` is not evidence about this branch.
 
 ## QA / Validation
 
@@ -95,27 +117,29 @@ After:
 ```
 overall=partial  pass=12  fail=0  deferred=0  removed=3
 REMOVED   INTEL-ROUTE-01    Removed by 0c6a86c51 (legacy surface sunset (v1/v2/v3/v4)) … Replacement: src/app/(maestro)/intelligence/page.tsx.
-REMOVED   INTEL1-SHELL-01   Removed by 7c6d894e9 (INT-I1) … Replacement: none.
-REMOVED   INTEL1-CAVEAT-01  Removed by 7c6d894e9 (INT-I1) … Replacement: none.
+REMOVED   INTEL1-SHELL-01   Absent … The path itself never appeared on this history; the directory that would hold it was removed by 0c6a86c51 …
+REMOVED   INTEL1-CAVEAT-01  Absent … The path itself never appeared on this history; the directory that would hold it was removed by 0c6a86c51 …
 ```
 
-**Suite, identical file, before and after the fix: 13 failed / 26 passed → 0 failed / 39 passed
-(39 total).**
+**Suite, identical file, before and after the fix: 14 failed / 26 passed → 0 failed / 40 passed
+(40 total).** "Before" is the suite as it stands in this change run against `origin/main`'s copy of
+the module, so the two runs differ only in the module.
 
-**Mutation check — nine deliberate breaks, nine caught.** Each was applied to the fixed code and
-the suite re-run:
+**Mutation check — ten deliberate breaks, ten caught.** Each was applied to the fixed code and the
+suite re-run:
 
 | # | mutation | result |
 |---|---|---|
-| 1 | absent + retired returns `deferred` again (the original defect) | 4 failed |
+| 1 | absent + retired returns `deferred` again (the original defect) | 5 failed |
 | 2 | present + retired returns `pass`, so the register may go stale the other way | 1 failed |
 | 3 | an undeclared absence returns `deferred` instead of `fail` | 1 failed |
-| 4 | the register entry for the retired shell is deleted | 4 failed |
+| 4 | the register entry for the never-landed shell is deleted | 4 failed |
 | 5 | removals no longer make the report `partial` — a loss reads as a clean pass | 1 failed |
 | 6 | `removedCount` hard-wired to zero | 2 failed |
-| 7 | the removal detail stops naming the commit, slice and replacement | 4 failed |
-| 8 | `CEILING` left at 6 after clearing an entry | `check:qa-integration-quarantine` fails: "1 slot(s) of headroom were just created" |
-| 9 | the quarantine entry restored while the suite is green | `check:qa-integration-quarantine` fails: "PASSES now … Its reason has expired" |
+| 7 | the `containing-directory` case reuses the `path` wording — the false attribution corrected above | 2 failed |
+| 8 | the `path` removal detail stops naming the commit and slice | 2 failed |
+| 9 | `CEILING` left at 6 after clearing an entry | `check:qa-integration-quarantine` fails: "1 slot(s) of headroom were just created" |
+| 10 | the quarantine entry restored while the suite is green | `check:qa-integration-quarantine` fails: "PASSES now … Its reason has expired" |
 
 **Scope baseline, same scope, same command as CI runs it**
 (`npx jest src/__tests__/integration/qa --no-coverage --ci $(node scripts/quality/qa-integration-ignore-args.mjs)`):
@@ -123,9 +147,9 @@ the suite re-run:
 | | suites | assertions | failing |
 |---|---|---|---|
 | before (clean `main`) | 31 | 765 | 0 |
-| after | 32 | 804 | 0 |
+| after | 32 | 805 | 0 |
 
-One suite and 39 assertions join the per-PR CI run. They are not new coverage of product code —
+One suite and 40 assertions join the per-PR CI run. They are not new coverage of product code —
 they are a QA report that was excluded because it was wrong about the tree.
 
 **Other gates**
@@ -177,6 +201,15 @@ quarantine checker requires to agree.
   this change does not answer: whether the Intelligence page should score 84 in the wireframe audit.
   That number is a lock and moving it to wherever the code landed is the wrong repair. Untouched
   here.
+- **The same defect is live in at least two sibling QA verifiers, and is not fixed here.**
+  Measured over the absent path literals in `src/lib/qa/active-route-shell-verification.ts` and
+  `src/lib/qa/logo-usage-enforcement.ts`, against `main`'s own history: **seven absent paths are
+  reported as "not yet integrated … deferred pending Wave-20 integration" when a single commit on
+  `main`, `f1d8bc95c`, deleted them** — five brand assets and two top-bar components. Eleven more
+  absent paths across those files and
+  `src/lib/qa/apex-source-program-storyline-verification.ts` never existed on `main` either.
+  Deliberately out of scope: it is a second change with its own measurement, and one of the two
+  files is already owned by another open backlog item. Filed rather than folded in.
 - **The item that prompted this was narrower than what was found.** It described the defect as
   prospective — that a later deletion of two `src/lib/intelligence/` modules *would* read as
   pre-integration. Those two modules are present today; three other paths were already being

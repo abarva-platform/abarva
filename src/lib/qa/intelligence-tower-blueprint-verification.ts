@@ -8,9 +8,11 @@
  *
  * An absent path is DECLARED, never inferred. Until T-521 every absent path
  * resolved to 'deferred' with the words "not yet present ... Deferred pending
- * <SLICE> merge", which reports a deliberate deletion as work that has not
- * landed yet. Three of the paths read here were removed on purpose, and the
- * oldest had been reported as pending for five months.
+ * <SLICE> merge" - that is, work that has not been built yet. Three of the
+ * paths read here are not pending anything: the legacy surface sunset took the
+ * tenant Intelligence route and the whole of src/components/intelligence/ with
+ * it, and the shell component two of these checks name never landed on this
+ * history at all.
  *
  * BLUEPRINT_PATH_REGISTER carries the disposition of every path that may be
  * absent, and resolvePathStatus refuses to guess:
@@ -42,7 +44,18 @@ export type VerificationStatus =
 
 /** A path that is gone on purpose, with the commit that removed it. */
 export interface RetiredPath {
-  /** Short SHA of the commit that deleted the path. */
+  /**
+   * What the commit actually deleted.
+   *
+   * 'path' — the commit deleted this file.
+   * 'containing-directory' — the file never appeared on this history at all,
+   *   and the directory that would hold it was deleted by this commit. The
+   *   distinction is not cosmetic: attributing a deletion to a commit that
+   *   never held the file is the same class of false claim this register
+   *   exists to stop, one level up.
+   */
+  scope: 'path' | 'containing-directory';
+  /** Short SHA of the commit, on this branch's own history. */
   commit: string;
   /** The slice or change the deletion belongs to. */
   slice: string;
@@ -125,6 +138,7 @@ function isValidJson(content: string): boolean {
 export const BLUEPRINT_PATH_REGISTER: PathDispositionRegister = {
   'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx': {
     retired: {
+      scope: 'path',
       commit: '0c6a86c51',
       slice: 'legacy surface sunset (v1/v2/v3/v4)',
       replacement: 'src/app/(maestro)/intelligence/page.tsx',
@@ -136,15 +150,17 @@ export const BLUEPRINT_PATH_REGISTER: PathDispositionRegister = {
   },
   'src/components/intelligence/IntelligenceRouteShell.tsx': {
     retired: {
-      commit: '7c6d894e9',
-      slice: 'INT-I1',
+      scope: 'containing-directory',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
       replacement: null,
       note:
-        'Deleted by the INT-I1 shell retirement, whose own commit body reads ' +
-        '"Delete IntelligenceRouteShell.tsx (G4 ...)" and "Update 4 QA/design ' +
-        'tests to reflect IntelligenceRouteShell retirement" - this report was ' +
-        'a fifth it did not update. src/components/intelligence/ has since gone ' +
-        'entirely; nothing wraps the route in a shell component.',
+        'git log over this branch history finds no commit that added this file, ' +
+        'so the check was written against a shell component that never landed ' +
+        'here. What did exist is src/components/intelligence/, and the sunset ' +
+        'removed it: twenty-odd components at 0c6a86c51 and the last two at ' +
+        'd5e0ef495. Nothing wraps the surviving /intelligence route in a shell ' +
+        'component.',
     },
   },
 };
@@ -177,12 +193,15 @@ export function resolvePathStatus(
   }
 
   if (disposition?.retired) {
-    const { commit, slice, replacement, note } = disposition.retired;
+    const { scope, commit, slice, replacement, note } = disposition.retired;
+    const lead =
+      scope === 'path'
+        ? `Removed by ${commit} (${slice}): ${rel}.`
+        : `Absent: ${rel}. The path itself never appeared on this history; the ` +
+          `directory that would hold it was removed by ${commit} (${slice}).`;
     return {
       status: 'removed',
-      detail:
-        `Removed by ${commit} (${slice}): ${rel}. ${note} Replacement: ` +
-        `${replacement ?? 'none'}.`,
+      detail: `${lead} ${note} Replacement: ${replacement ?? 'none'}.`,
     };
   }
 

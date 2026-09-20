@@ -254,10 +254,23 @@ describe('QA29: absent paths are declared, not inferred', () => {
   const RETIRED_FIXTURE: PathDispositionRegister = {
     'src/fixture/Gone.tsx': {
       retired: {
+        scope: 'path',
         commit: 'abc1234',
         slice: 'FIX-1',
         replacement: 'src/fixture/Replacement.tsx',
         note: 'Retired when the fixture slice landed.',
+      },
+    },
+  };
+
+  const DIRECTORY_FIXTURE: PathDispositionRegister = {
+    'src/fixture/dir/NeverLanded.tsx': {
+      retired: {
+        scope: 'containing-directory',
+        commit: 'def5678',
+        slice: 'FIX-3',
+        replacement: null,
+        note: 'The directory went with the fixture sunset.',
       },
     },
   };
@@ -283,6 +296,19 @@ describe('QA29: absent paths are declared, not inferred', () => {
     const resolved = resolvePathStatus('src/fixture/Gone.tsx', true, RETIRED_FIXTURE);
     expect(resolved.status).toBe('fail');
     expect(resolved.detail).toContain('abc1234');
+  });
+
+  it('a containing-directory removal does not claim the commit deleted the file itself', () => {
+    const resolved = resolvePathStatus(
+      'src/fixture/dir/NeverLanded.tsx',
+      false,
+      DIRECTORY_FIXTURE,
+    );
+    expect(resolved.status).toBe('removed');
+    expect(resolved.detail).toContain('never appeared on this history');
+    expect(resolved.detail).toContain('def5678');
+    // The 'path' wording would be a false attribution here.
+    expect(resolved.detail).not.toContain('Removed by def5678');
   });
 
   it('an absent path declared pending resolves to deferred', () => {
@@ -312,17 +338,18 @@ describe('QA29: absent paths are declared, not inferred', () => {
 
   // ── the real tree ───────────────────────────────────────────────────────
 
-  it('IntelligenceRouteShell is reported as removed by INT-I1, not as pending INTEL1', () => {
+  it('IntelligenceRouteShell is reported as gone with its directory, not as pending INTEL1', () => {
     const check = report.checks.find((c) => c.checkId === 'INTEL1-SHELL-01');
     expect(check?.status).toBe('removed');
-    expect(check?.detail).toContain('7c6d894e9');
-    expect(check?.detail).toContain('INT-I1');
+    expect(check?.detail).toContain('0c6a86c51');
+    expect(check?.detail).toContain('never appeared on this history');
+    expect(check?.detail.toLowerCase()).not.toContain('pending intel1');
   });
 
-  it('the IntelligenceRouteShell caveat check reports the same removal, not a deferral', () => {
+  it('the IntelligenceRouteShell caveat check reports the same state, not a deferral', () => {
     const check = report.checks.find((c) => c.checkId === 'INTEL1-CAVEAT-01');
     expect(check?.status).toBe('removed');
-    expect(check?.detail).toContain('7c6d894e9');
+    expect(check?.detail).toContain('0c6a86c51');
   });
 
   it('the sunset tenant Intelligence route is reported as removed, and names what replaced it', () => {
