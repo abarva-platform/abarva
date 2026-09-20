@@ -9,6 +9,8 @@ import {
   SPACING,
   TYPOGRAPHY,
 } from '@/lib/design/design-tokens';
+import { FONT } from '@/lib/design/abarva-theme';
+import { CANONICAL_LOGO_COMPONENT } from '@/lib/qa/logo-usage-enforcement';
 
 describe('ADMIN1 — Foundation: Logo + Tokens', () => {
   describe('design tokens', () => {
@@ -85,20 +87,20 @@ describe('ADMIN1 — Foundation: Logo + Tokens', () => {
 
   describe('AbarVaLogo component', () => {
     it('source file imports design tokens', () => {
-      const path = resolve(process.cwd(), 'src/components/brand/AbarVaLogo.tsx');
+      const path = resolve(process.cwd(), CANONICAL_LOGO_COMPONENT);
       const content = readFileSync(path, 'utf8');
       expect(content).toContain("from '@/lib/design/design-tokens'");
     });
 
     it('source file declares variant prop with wordmark and lockup', () => {
-      const path = resolve(process.cwd(), 'src/components/brand/AbarVaLogo.tsx');
+      const path = resolve(process.cwd(), CANONICAL_LOGO_COMPONENT);
       const content = readFileSync(path, 'utf8');
       expect(content).toMatch(/variant.*['"]wordmark['"]/);
       expect(content).toMatch(/variant.*['"]lockup['"]/);
     });
 
     it('does not hand-code banned hex tokens', () => {
-      const path = resolve(process.cwd(), 'src/components/brand/AbarVaLogo.tsx');
+      const path = resolve(process.cwd(), CANONICAL_LOGO_COMPONENT);
       const content = readFileSync(path, 'utf8').toLowerCase();
       expect(content).not.toContain('#14b8a6');
       expect(content).not.toContain('#7c3aed');
@@ -106,11 +108,23 @@ describe('ADMIN1 — Foundation: Logo + Tokens', () => {
   });
 
   describe('layout font integration', () => {
-    it('app layout imports Cormorant_Garamond from next/font/google', () => {
-      const path = resolve(process.cwd(), 'src/app/layout.tsx');
-      const content = readFileSync(path, 'utf8');
-      expect(content).toContain('Cormorant_Garamond');
-      expect(content).toContain("from 'next/font/google'");
+    // The retired assertion required src/app/layout.tsx to import
+    // Cormorant_Garamond from next/font/google. Two deliberate changes moved
+    // it: the v3 canon replaced Cormorant with Fraunces, and font loading
+    // moved out of the layout module into CSS custom properties in
+    // globals.css, which imports no next/font at all. The case was therefore
+    // failing on a font that had been superseded *and* on a mechanism that no
+    // longer exists. Naming the replacement face would repeat the mistake, so
+    // the family is read from the theme — the module product code consults —
+    // and the assertion is that the stylesheet actually declares it.
+    it('the global stylesheet declares the display face the theme names', () => {
+      const primaryFamily = FONT.display.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+      expect(primaryFamily.length).toBeGreaterThan(0);
+      const css = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
+      expect({ primaryFamily, declared: css.includes(primaryFamily) }).toEqual({
+        primaryFamily,
+        declared: true,
+      });
     });
   });
 });

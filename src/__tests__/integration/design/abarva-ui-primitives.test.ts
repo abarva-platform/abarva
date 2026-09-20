@@ -22,6 +22,7 @@ import {
   statusAccent,
 } from '@/lib/design/abarva-theme';
 import { ABARVA_TOP_NAV_SURFACES } from '@/components/abarva/AbarVaTopNav';
+import { CANONICAL_LOGO_COMPONENT } from '@/lib/qa/logo-usage-enforcement';
 
 // ---------------------------------------------------------------------
 // Theme tokens
@@ -53,13 +54,43 @@ describe('abarva-theme · color palette', () => {
 });
 
 describe('abarva-theme · typography', () => {
-  it('body font is DM Sans (no serif body)', () => {
-    expect(FONT.body).toMatch(/DM Sans/);
+  // The retired assertion pinned "DM Sans", the v2 body face. abarva-theme.ts
+  // records that DM Sans was retired on 2026-05-07 in favour of Inter, so the
+  // case was failing on a deliberate change rather than on a defect. Pinning
+  // the *next* face by name would fail the same way at the next canon change.
+  // What is worth guarding is the property (the body face is a sans, not a
+  // serif) and the agreement between the theme and the stylesheet that has to
+  // load it — drift between those two is invisible until someone looks at a
+  // rendered page.
+  it('body font declares a sans face, not a serif one', () => {
     expect(FONT.body).not.toMatch(/Georgia/);
     expect(FONT.body).not.toMatch(/Times/);
     // The fallback chain may include the generic CSS "sans-serif" family, but
     // it must not declare an actual serif body face.
     expect(FONT.body).not.toMatch(/(?<![a-z-])serif(?![a-z-])/);
+  });
+
+  it('the global stylesheet loads the body and display faces the theme declares', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs') as typeof import('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('path') as typeof import('path');
+    const css = fs.readFileSync(
+      path.resolve(__dirname, '../../../app/globals.css'),
+      'utf8',
+    );
+    const primaryFamily = (declared: string) => {
+      const first = declared.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+      expect(first.length).toBeGreaterThan(0);
+      return first;
+    };
+    for (const declared of [FONT.body, FONT.display]) {
+      const family = primaryFamily(declared);
+      expect({ family, loadedByStylesheet: css.includes(family) }).toEqual({
+        family,
+        loadedByStylesheet: true,
+      });
+    }
   });
 
   it('mono font is JetBrains Mono', () => {
@@ -106,13 +137,29 @@ describe('abarva-theme · spacing / radius / border', () => {
 // ---------------------------------------------------------------------
 
 describe('abarva-theme · agent partition', () => {
-  it('exposes exactly four canonical agents', () => {
-    expect([...ABARVA_AGENT_NAMES]).toEqual([
-      'nexus',
-      'sentinel',
-      'atlas',
-      'steward',
-    ]);
+  // The retired assertion pinned the list to exactly four names. A fifth,
+  // 'ava', was added to the theme by a later change, so the case failed on a
+  // list that had moved rather than on a broken one. Whether 'ava' is a
+  // canonical agent is a product question — the theme names five and
+  // src/lib/qa/cross-surface-consistency.ts names four — and it is recorded
+  // for the owner rather than answered here by editing one list to match the
+  // other. What this suite can hold without deciding it: the four
+  // surface-owning agents are present, and the accent table covers exactly
+  // the names that are declared, so a name can never be added without a
+  // colour or a colour orphaned without a name.
+  it('every surface-owning agent is declared', () => {
+    for (const agent of ['nexus', 'sentinel', 'atlas', 'steward']) {
+      expect({ agent, declared: ([...ABARVA_AGENT_NAMES] as string[]).includes(agent) }).toEqual({
+        agent,
+        declared: true,
+      });
+    }
+  });
+
+  it('the accent table covers exactly the declared agent names', () => {
+    const declared = [...ABARVA_AGENT_NAMES].sort();
+    expect(declared.length).toBeGreaterThan(0);
+    expect(Object.keys(AGENT_ACCENT).sort()).toEqual(declared);
   });
 
   it('Nexus is NAVY', () => {
@@ -346,9 +393,20 @@ describe('NAV1B · canonical nav primitives wire to canonical brand', () => {
     );
   }
 
+  // These two cases pinned '@/components/brand/AbarVaLogo' as the canonical
+  // import path. Product code declares otherwise: CANONICAL_LOGO_COMPONENT in
+  // src/lib/qa/logo-usage-enforcement.ts names src/components/abarva/AbarVaLogo.tsx,
+  // and that is the module all seven product importers use. The
+  // components/brand copy has no product importer at all. Deriving the path
+  // from the declaration means a future move travels into these cases; the
+  // orphan module is recorded for the owner rather than deleted here.
+  const canonicalLogoImport = CANONICAL_LOGO_COMPONENT
+    .replace(/^src\//, '@/')
+    .replace(/\.tsx$/, '');
+
   it('AbarVaWordmark.tsx delegates to the canonical brand component', () => {
     const src = readAbarva('AbarVaWordmark.tsx');
-    expect(src).toMatch(/from\s+['"]@\/components\/brand['"]/);
+    expect(src).toContain(canonicalLogoImport);
     expect(src).toMatch(/AbarVaLogo/);
   });
 
@@ -364,7 +422,7 @@ describe('NAV1B · canonical nav primitives wire to canonical brand', () => {
 
   it('AbarVaAppShell.tsx imports AbarVaLogo from the canonical brand path', () => {
     const src = readAbarva('AbarVaAppShell.tsx');
-    expect(src).toMatch(/from\s+['"]@\/components\/brand\/AbarVaLogo['"]/);
+    expect(src).toContain(canonicalLogoImport);
   });
 
   it('canonical nav primitives carry no banned tokens', () => {
