@@ -36,6 +36,13 @@ jobs:
       - name: Check every component is reachable from a route
         run: npm run audit:route-reachability
 
+      # The step above watches src/components only, which is how eight modules
+      # under src/lib outlived the sunset that removed their only consumer with
+      # nothing but their own tests pointing at them. A test is not an entry
+      # point, and this is the step that says so.
+      - name: Check no src/lib module is reached only by its own test
+        run: npm run audit:lib-orphans
+
       # Every audit:/validate:/check: script must say whether it gates a PR.
       - name: Check the CI gate registry
         run: npm run audit:ci-gate-registry
