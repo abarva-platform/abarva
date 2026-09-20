@@ -829,6 +829,104 @@ export { COMPARISON_FORMS };
 // Driver
 // ─────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────
+// Vocabularies held in TypeScript, declared with @column
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * A vocabulary can live in a constant instead of in SQL.
+ *
+ * The item-126 defect, after its repair, lives in
+ * `PROMOTED_PATTERN_STATES = ['pilot','mature'] as const` and reaches the
+ * database as `= ANY($4::text[])` — a parameterised comparison with no
+ * literal for the SQL sweep to judge. So the sweep that exists would not
+ * catch the original defect in its current form.
+ *
+ * Matching a constant to a column needs a convention, and the only safe one
+ * is an explicit declaration. **The mapping is never guessed from the
+ * constant's name.** A wrong mapping fails a correct list, which is worse
+ * than not checking it at all: it teaches people the check is noise, and the
+ * fix they reach for is deleting the annotation.
+ *
+ * The convention is a JSDoc tag immediately above the constant:
+ *
+ *   \/**
+ *    * @column engagement_topics.promotion_state
+ *    *\/
+ *   export const PROMOTED_PATTERN_STATES = ["pilot", "mature"] as const;
+ *
+ * An annotation naming a column with no CHECK is reported as UNCHECKABLE
+ * and does **not** fail. An unconstrained column is a legitimate thing to
+ * point at, and failing there would push people to delete the annotation —
+ * which is the outcome the whole convention exists to avoid. It is counted,
+ * so a rising number is visible.
+ */
+export function scanAnnotatedConstants(files, readFile, domains) {
+  const findings = [];
+  const uncheckable = [];
+  const counts = { annotated: 0, resolved: 0, uncheckable: 0 };
+
+  // A JSDoc block ending just above an exported string-array constant.
+  const pattern =
+    /\/\*\*([\s\S]*?)\*\/\s*export\s+const\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*\[([^\]]*)\]\s*as\s+const\s*;/g;
+
+  for (const file of files) {
+    const text = readFile(file);
+    let m;
+    pattern.lastIndex = 0;
+    while ((m = pattern.exec(text)) !== null) {
+      const [, doc, constName, body] = m;
+      const tag = /@column\s+([a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)?)\.([a-z_][a-z0-9_]*)\b/i.exec(doc);
+      if (!tag) continue;
+
+      counts.annotated += 1;
+      const table = tag[1];
+      const column = tag[2];
+      const line = lineAt(text, m.index);
+
+      const values = [...body.matchAll(/['"]([^'"]*)['"]/g)].map((v) => v[1]);
+      if (values.length === 0) continue;
+
+      // Resolve against the migration-derived domains. A bare table name is
+      // accepted as well as a schema-qualified one, because migrations use
+      // both and the annotation should not have to know which.
+      const domain =
+        domains.get(`${table}.${column}`) ??
+        [...domains.values()].find(
+          (d) =>
+            d.column === column &&
+            (d.table === table || d.table.endsWith(`.${table}`)),
+        );
+
+      if (!domain) {
+        counts.uncheckable += 1;
+        uncheckable.push({ file, line, constName, annotated: `${table}.${column}` });
+        continue;
+      }
+
+      counts.resolved += 1;
+      const impossible = values.filter((v) => !domain.values.includes(v));
+      if (impossible.length === 0) continue;
+
+      findings.push({
+        file,
+        line,
+        form: `const ${constName}`,
+        waived: false,
+        column: `${domain.table}.${domain.column}`,
+        migration: domain.migration,
+        resolution: 'annotated',
+        compared: [...new Set(values)].sort(),
+        permitted: domain.values,
+        impossible: [...new Set(impossible)].sort(),
+        verdict: impossible.length === values.length ? 'UNREACHABLE' : 'PARTIAL',
+      });
+    }
+  }
+
+  return { findings, uncheckable, counts };
+}
+
 export function collectSourceFiles(root, { includeTests = false } = {}) {
   const out = [];
   const walk = (dir) => {
@@ -871,7 +969,17 @@ export function runEnumReachabilitySweep({
   const domains = extractColumnDomains(migrationsDir);
   const files = collectSourceFiles(srcDir, { includeTests });
   const { findings, unresolvedComparisons, counts } = scanComparisons(files, readFile, domains);
-  return { domains, files, findings, unresolvedComparisons, counts };
+  const annotated = scanAnnotatedConstants(files, readFile, domains);
+  return {
+    domains,
+    files,
+    // A vocabulary in a constant is the same defect as one in SQL, so the
+    // findings join the same list rather than being reported separately.
+    findings: [...findings, ...annotated.findings],
+    unresolvedComparisons,
+    counts,
+    annotatedConstants: annotated,
+  };
 }
 
 function parseArgs(argv) {
