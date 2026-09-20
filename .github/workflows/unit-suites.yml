@@ -295,6 +295,20 @@ jobs:
           "src/app/api/v1/source/events/[eventId]/request-approval/__tests__/route.test.ts"
           --no-coverage --ci
 
+      # Source export code produces the files a user can download, so this tree
+      # is a control boundary rather than a formatting convenience. Measured on
+      # `4758bb8aa`: 24 suites / 250 tests pass. One suite,
+      # `artifact-verdict-consistency`, is already run by the AI surface control
+      # workflow; naming the parent deliberately duplicates that single suite
+      # so every new export suite is owned on the day it lands.
+      #
+      # Two suites are called out in the release record because they govern
+      # client-facing truth: the narrative quality gate blocks an unreviewed
+      # RFP body, and artifact verdict consistency keeps downloadable outputs
+      # aligned with the Source judgment kernel.
+      - name: Run the Source export suites
+        run: npx jest src/lib/source/exports/__tests__ --no-coverage --ci
+
       # These three steps name SUBDIRECTORIES rather than a parent, which is the
       # opposite of every step above, and the reason matters: each of these
       # parents contains red suites. Naming the parent here would wire a known
