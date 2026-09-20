@@ -1,0 +1,11 @@
+{
+  "ceiling": 1,
+  "quarantined": [
+    {
+      "suite": "export-answer-packet.test.ts",
+      "owner": "T-407",
+      "reason": "Its export helper is not reachable from any product entry point.",
+      "subjects": ["src/lib/source/ava/export-answer-packet.ts"]
+    }
+  ]
+}

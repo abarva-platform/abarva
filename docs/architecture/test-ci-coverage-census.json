@@ -13,13 +13,13 @@
   ],
   "counts": {
     "testFiles": 2323,
-    "coveredTestFiles": 977,
-    "pullRequestCoveredTestFiles": 974,
-    "uncoveredTestFiles": 1346,
+    "coveredTestFiles": 999,
+    "pullRequestCoveredTestFiles": 996,
+    "uncoveredTestFiles": 1324,
     "directoriesWithTests": 476,
     "directoriesFullyCovered": 91,
-    "directoriesPartiallyCovered": 21,
-    "directoriesUncovered": 364,
+    "directoriesPartiallyCovered": 22,
+    "directoriesUncovered": 363,
     "directoriesWithUnrunTestFiles": 385,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
@@ -107,6 +107,14 @@
       "directory": "src/lib/intelligence/__tests__",
       "testFiles": 23,
       "coveredTestFiles": 18,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/source/ava/__tests__",
+      "testFiles": 23,
+      "coveredTestFiles": 22,
       "via": [
         "command"
       ]
@@ -303,20 +311,6 @@
       }
     },
     {
-      "directory": "src/lib/source/ava/__tests__",
-      "testFiles": 23,
-      "unrunTestFiles": 23,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 8
-      }
-    },
-    {
       "directory": "src/lib/auth/__tests__",
       "testFiles": 19,
       "unrunTestFiles": 19,
@@ -327,7 +321,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -341,7 +335,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -355,7 +349,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -369,7 +363,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -383,7 +377,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -397,7 +391,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -411,7 +405,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 15
+        "rank": 14
       }
     },
     {
@@ -425,7 +419,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 16
+        "rank": 15
       }
     },
     {
@@ -439,7 +433,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 17
+        "rank": 16
       }
     },
     {
@@ -453,7 +447,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 18
+        "rank": 17
       }
     },
     {
@@ -467,7 +461,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 19
+        "rank": 18
       }
     },
     {
@@ -481,7 +475,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -495,7 +489,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -509,7 +503,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -523,7 +517,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -537,7 +531,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -551,7 +545,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 25
+        "rank": 24
       }
     },
     {
@@ -565,7 +559,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 26
+        "rank": 25
       }
     },
     {
@@ -579,7 +573,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 27
+        "rank": 26
       }
     },
     {
@@ -593,7 +587,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 28
+        "rank": 27
       }
     },
     {
@@ -607,12 +601,26 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 29
+        "rank": 28
       }
     },
     {
       "directory": "src/app/api/v1/source/events/[eventId]/request-approval/__tests__",
       "testFiles": 1,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 29
+      }
+    },
+    {
+      "directory": "src/lib/source/ava/__tests__",
+      "testFiles": 23,
       "unrunTestFiles": 1,
       "governedRisk": {
         "score": 110,
@@ -2563,34 +2571,6 @@
       }
     },
     {
-      "directory": "src/lib/source/ava/__tests__",
-      "testFiles": 23,
-      "unrunTestFiles": 23,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "approvalOrLifecycleSourceCount": 5,
-        "approvalOrLifecycleSources": [
-          "src/lib/source/archetypes/registry.ts",
-          "src/lib/source/ava/answer-mode.ts",
-          "src/lib/source/ava/award-readiness-governed-answer.ts",
-          "src/lib/source/ava/mode-grounding.ts",
-          "src/lib/source/ava/selection-decision-governed-answer.ts"
-        ],
-        "tenantScopedReadSourceCount": 3,
-        "tenantScopedReadSources": [
-          "src/lib/source/ava/award-readiness-governed-answer.ts",
-          "src/lib/source/ava/evidence-readiness-governed-answer.ts",
-          "src/lib/source/facts/event-facts-reader.ts"
-        ],
-        "rank": 8
-      }
-    },
-    {
       "directory": "src/lib/auth/__tests__",
       "testFiles": 19,
       "unrunTestFiles": 19,
@@ -2613,7 +2593,7 @@
           "src/lib/auth/tenancy.ts",
           "src/lib/deliverables/seed-route-resolver.ts"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -2635,7 +2615,7 @@
         "tenantScopedReadSources": [
           "src/lib/admin/broker/notification-dispatch-broker.ts"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -2662,7 +2642,7 @@
           "src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts",
           "src/lib/data-plane/write-adapters/sourceFactWriteAdapter.ts"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -2690,7 +2670,7 @@
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts",
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submission/route.ts"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -2713,7 +2693,7 @@
           "src/lib/governance/context-bundle-adapters.ts",
           "src/lib/governance/readiness-backfill.ts"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -2737,7 +2717,7 @@
           "src/lib/intelligence/sentinel-broker-adapter.ts",
           "src/lib/intelligence/skyharbor-cto-readiness.ts"
         ],
-        "rank": 14
+        "rank": 13
       }
     },
     {
@@ -2759,7 +2739,7 @@
         "tenantScopedReadSources": [
           "src/lib/features/is-feature-enabled.ts"
         ],
-        "rank": 15
+        "rank": 14
       }
     },
     {
@@ -2785,7 +2765,7 @@
           "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/route.ts",
           "src/app/api/v1/programs/[programId]/pricing/estimates/[estimateId]/run/route.ts"
         ],
-        "rank": 16
+        "rank": 15
       }
     },
     {
@@ -2807,7 +2787,7 @@
         "tenantScopedReadSources": [
           "src/lib/knowledge/tenant-data/supabase-adapter.ts"
         ],
-        "rank": 17
+        "rank": 16
       }
     },
     {
@@ -2829,7 +2809,7 @@
         "tenantScopedReadSources": [
           "src/lib/admin/tenant-admin-access.ts"
         ],
-        "rank": 18
+        "rank": 17
       }
     },
     {
@@ -2852,7 +2832,7 @@
           "src/lib/admin/data-lineage-read-model.ts",
           "src/lib/agent/context-bundle.ts"
         ],
-        "rank": 19
+        "rank": 18
       }
     },
     {
@@ -2878,7 +2858,7 @@
           "src/app/api/admin/programs/approvals/_auth.ts",
           "src/app/api/admin/programs/approvals/route.ts"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -2900,7 +2880,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/pricing/rate-cards/[id]/approve/route.ts"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -2922,7 +2902,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/programs/approvals/export/route.ts"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -2944,7 +2924,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -2966,7 +2946,7 @@
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/current-state/evidence/[evidenceId]/approve/route.ts"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -2987,6 +2967,28 @@
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/app/api/v1/programs/[programId]/phase-gate-approval/route.ts"
+        ],
+        "rank": 24
+      }
+    },
+    {
+      "directory": "src/app/api/v1/programs/[programId]/solution-options/approve/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "approvalOrLifecycleSourceCount": 1,
+        "approvalOrLifecycleSources": [
+          "src/app/api/v1/programs/[programId]/solution-options/approve/route.ts"
+        ],
+        "tenantScopedReadSourceCount": 1,
+        "tenantScopedReadSources": [
+          "src/app/api/v1/programs/[programId]/solution-options/approve/route.ts"
         ],
         "rank": 25
       }
@@ -3019,12 +3021,6 @@
     },
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 23,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/ava/__tests__",
       "testFiles": 23,
       "coveredTestFiles": 0,
       "via": []
