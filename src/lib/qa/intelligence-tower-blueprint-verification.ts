@@ -118,18 +118,13 @@ function isValidJson(content: string): boolean {
  * absence that matches neither is a failure asking for this entry.
  */
 export const BLUEPRINT_PATH_REGISTER: PathDispositionRegister = {
-  'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx': {
-    retired: {
-      scope: 'path',
-      commit: '0c6a86c51',
-      slice: 'legacy surface sunset (v1/v2/v3/v4)',
-      replacement: 'src/app/(maestro)/intelligence/page.tsx',
-      note:
-        'The tenant-scoped Intelligence route was sunset with the other legacy ' +
-        'surface versions. The surviving /intelligence route renders ' +
-        'AdvisoryIntelligencePage.',
-    },
-  },
+  // Three more suites read this path as well, so it moved to the shared
+  // register for the same reason IntelligenceRouteShell did: two files
+  // carrying their own answer for one path is how they came to disagree.
+  'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx':
+    SHARED_PATH_DISPOSITIONS[
+      'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx'
+    ],
   // Read by the route-shell verifier too, so it is taken from the shared
   // register rather than restated. Until T-524 both files carried their own
   // answer for this path and the answers disagreed.
