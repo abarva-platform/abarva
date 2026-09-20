@@ -24,6 +24,7 @@ import {
 } from "@/lib/source/new-workspace/phase-state";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
+import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 import "./workspace.css";
 
@@ -193,6 +194,7 @@ export type SourceNewWorkspaceProps = {
   activity?: SourceEventActivityResult;
   intelligence?: SourceNewEventIntelligenceView;
   /** Required server projection; an unreadable registry is data, not absence. */
+  stage04VendorPanel: SourceNewStage04VendorPanel;
   stage05NdaCoverage: SourceNewStage05NdaCoverage;
 };
 
@@ -201,6 +203,7 @@ export function SourceNewWorkspace({
   files,
   activity,
   intelligence,
+  stage04VendorPanel,
   stage05NdaCoverage,
 }: SourceNewWorkspaceProps) {
   const evidence = useMemo(
@@ -356,6 +359,9 @@ export function SourceNewWorkspace({
                     />
                   )}
                   {phase === "suppliers" && (
+                    <SourceNewStage04VendorPanelView panel={stage04VendorPanel} />
+                  )}
+                  {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
                       coverage={stage05NdaCoverage}
                       eventHref={eventHref}
@@ -379,6 +385,9 @@ export function SourceNewWorkspace({
                       event={event}
                       responseRows={responseRows}
                     />
+                  )}
+                  {phase === "suppliers" && (
+                    <SourceNewStage04VendorPanelView panel={stage04VendorPanel} />
                   )}
                   {phase === "suppliers" && (
                     <SourceNewStage05NdaReadiness
@@ -578,6 +587,77 @@ function SourceNewStage04VendorReadiness({
         Vendor contact, send, and notification actions stay unavailable until a
         verified participant authority record exists in the governed event.
       </p>
+    </section>
+  );
+}
+
+
+function SourceNewStage04VendorPanelView({
+  panel,
+}: {
+  panel: SourceNewStage04VendorPanel;
+}) {
+  const posture =
+    panel.status === "available"
+      ? "Accepted candidate panel"
+      : panel.status === "empty"
+        ? "No accepted candidates yet"
+        : "Panel withheld";
+  return (
+    <section className="snw-nda-readiness" aria-label="Stage 04 vendor panel">
+      <p className="snw-eyebrow">Stage 04 · Vendor panel</p>
+      <h3>{posture}</h3>
+      <p>
+        This read-only panel separates accepted candidates the organization is
+        already under contract with from those it is not. It sends nothing,
+        contacts nobody, and selects no respondent.
+      </p>
+      <dl className="snw-facts">
+        <div>
+          <dt>Accepted, not under contract</dt>
+          <dd>{panel.counts.eligible_candidate}</dd>
+        </div>
+        <div>
+          <dt>Already under contract</dt>
+          <dd>{panel.counts.existing_contract_vendor}</dd>
+        </div>
+        <div>
+          <dt>Panel as of</dt>
+          <dd>{panel.asOf}</dd>
+        </div>
+      </dl>
+      {panel.status === "blocked" ? (
+        <ul className="snw-blockers">
+          {panel.blockers.map((blocker) => (
+            <li key={blocker}>{blocker}</li>
+          ))}
+        </ul>
+      ) : (
+        <ul className="snw-panel-rows">
+          {panel.rows.map((row) => (
+            <li key={row.authorityId}>
+              <strong>{row.legalName}</strong>
+              {" — "}
+              {row.group === "existing_contract_vendor"
+                ? "already under contract"
+                : "not under contract"}
+              {". Accepted by "}
+              {row.acceptedByName}
+              {" on "}
+              {row.acceptedAt.slice(0, 10)}
+              {"."}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="snw-caveat">
+        <strong>Not recorded:</strong>
+      </p>
+      <ul className="snw-caveats">
+        {panel.notRecorded.map((note) => (
+          <li key={note}>{note}</li>
+        ))}
+      </ul>
     </section>
   );
 }

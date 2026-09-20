@@ -11,6 +11,7 @@ import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
 import { sourceNewFilePhase } from "@/lib/source/new-workspace/phase-state";
 import { readSourceEventAuthority } from "@/lib/source/new-workspace/event-authority";
 import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/event-intelligence";
+import { readSourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +43,8 @@ export default async function SourceNewEventPage({
   if (!event) notFound();
 
   const asOfDate = event.valueLedger.updatedAt.slice(0, 10);
-  const [artifacts, activity, authority, stage05NdaCoverage] = await Promise.all([
+  const [artifacts, activity, authority, stage04VendorPanel, stage05NdaCoverage] =
+    await Promise.all([
     listSourceArtifacts(
       event.id,
       {
@@ -52,6 +54,11 @@ export default async function SourceNewEventPage({
     ),
     listSourceEventActivityEntries(event.id),
     readSourceEventAuthority(event.id, activeClient.key),
+    readSourceNewStage04VendorPanel({
+      clientKey: activeClient.key,
+      eventId: event.id,
+      asOf: asOfDate,
+    }),
     readSourceNewStage05NdaCoverage({
       clientKey: activeClient.key,
       eventId: event.id,
@@ -167,6 +174,7 @@ export default async function SourceNewEventPage({
           authority.kind === "available" ? authority.acceptedByUserId : null,
       }}
       files={files}
+      stage04VendorPanel={stage04VendorPanel}
       stage05NdaCoverage={stage05NdaCoverage}
     />
   );
