@@ -107,6 +107,25 @@ function retiredByBrand1(
  * widening the allowed set.
  */
 export const BRAND_PATH_REGISTER: PathDispositionRegister = {
+  // Absent, and no commit on this history has ever added or removed it —
+  // re-measured with `git log origin/main --diff-filter=AD` rather than
+  // trusting the row that reported it. So nothing retired it, and the
+  // "retired in Wave 29 SHELL8" sentence this check used to print was an
+  // attribution with nothing behind it.
+  //
+  // `undecided` rather than `retired` for exactly that reason: the honest
+  // statement is that the path is absent and nobody has ruled on whether it
+  // should exist. Naming a wave that cannot be shown to have done it is the
+  // defect, not the fix for it.
+  'src/components/chrome/TopBar.tsx': {
+    undecided: {
+      owner: 'T-532',
+      note:
+        'It sits in neither RETIRED_ROOT_LOGO_ASSETS nor RETIRED_TOPBAR_VARIANTS, so no '
+        + 'brand decision covers it either. Whether a chrome TopBar should exist is a '
+        + 'shell question, not a brand one.',
+    },
+  },
   'public/brand/abarva-logo-inverse.svg': retiredByBrand1(
     'Root-level inverse mark from the pre-option-2 brand.',
     {
@@ -208,16 +227,26 @@ export function runLogoUsageEnforcement(): LogoUsageEnforcementReport {
     });
   }
 
-  // Check 4: legacy TopBar.tsx retired (SHELL8) — absence is the expected state
-  const topBarContent = readFileIfExists('src/components/chrome/TopBar.tsx');
+  // Check 4: the disposition of the legacy chrome TopBar.
+  //
+  // This printed "correctly absent — retired in Wave 29 SHELL8" and reported
+  // `pass`. Re-measured, no commit on this history has ever added or removed
+  // the path, so no wave retired it and the attribution was invented. The
+  // answer now comes from BRAND_PATH_REGISTER like the ten paths beside it,
+  // which is what stops a call-site sentence from standing in for evidence.
+  const topBarPath = 'src/components/chrome/TopBar.tsx';
+  const topBar = resolvePathStatus(
+    topBarPath,
+    checkFileExists(topBarPath),
+    BRAND_PATH_REGISTER,
+    'BRAND_PATH_REGISTER',
+  );
   checks.push({
     checkId: 'BRAND2-C4',
-    targetFile: 'src/components/chrome/TopBar.tsx',
-    description: 'Legacy TopBar.tsx retired in SHELL8 — should be absent',
-    status: topBarContent ? 'fail' : 'pass',
-    detail: topBarContent
-      ? 'TopBar.tsx still exists — expected to be absent after SHELL8 cleanup. Remove the file.'
-      : 'TopBar.tsx correctly absent — retired in Wave 29 SHELL8.',
+    targetFile: topBarPath,
+    description: 'Legacy chrome TopBar disposition is declared, not asserted',
+    status: topBar.status,
+    detail: topBar.detail,
     deterministicSeed: true,
   });
 
