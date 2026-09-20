@@ -10,6 +10,7 @@ import {
 import type { SourceNewFileRow } from "./SourceNewFiles";
 import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
+import type { SourceNewStage04VendorPanel } from "@/lib/source/new-workspace/stage04-vendor-panel";
 import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 
 jest.mock("@/components/shell/AppShell", () => ({
@@ -99,15 +100,34 @@ const unavailableStage05: SourceNewStage05NdaCoverage = {
   },
 };
 
+// Blocked rather than empty: these cases are about other parts of the
+// workspace, and a panel defaulted to "available with nothing in it" would
+// quietly assert that the candidate authority was read and came back empty.
+const blockedStage04: SourceNewStage04VendorPanel = {
+  status: "blocked",
+  blockers: ["The candidate authority could not be read."],
+  rows: [],
+  counts: {
+    eligible_candidate: 0,
+    selected_respondent: 0,
+    existing_contract_vendor: 0,
+  },
+  notRecorded: [],
+  asOf: "2026-03-10",
+};
+
 function SourceNewWorkspace({
+  stage04VendorPanel = blockedStage04,
   stage05NdaCoverage = unavailableStage05,
   ...props
-}: Omit<SourceNewWorkspaceProps, "stage05NdaCoverage"> & {
+}: Omit<SourceNewWorkspaceProps, "stage04VendorPanel" | "stage05NdaCoverage"> & {
+  stage04VendorPanel?: SourceNewStage04VendorPanel;
   stage05NdaCoverage?: SourceNewStage05NdaCoverage;
 }) {
   return (
     <SourceNewWorkspaceImplementation
       {...props}
+      stage04VendorPanel={stage04VendorPanel}
       stage05NdaCoverage={stage05NdaCoverage}
     />
   );
@@ -642,6 +662,129 @@ describe("SourceNewWorkspace", () => {
     expect(within(readiness).getByText("Open market package gate")).toBeTruthy();
     expect(within(readiness).queryByRole("button", { name: /send|contact/i })).toBeNull();
     expect(within(readiness).queryByRole("link", { name: /send|contact/i })).toBeNull();
+  });
+
+  it("renders the stage 04 panel, separating incumbents from new candidates", () => {
+    // The mount, proven. The composer is covered on its own; this is the
+    // seam — a panel nothing renders is the orphan this item exists to fix.
+    const panel: SourceNewStage04VendorPanel = {
+      status: "available",
+      blockers: [],
+      rows: [
+        {
+          authorityId: "auth-1",
+          legalEntityId: "v-inc",
+          legalName: "Incumbent Supplier LLC",
+          group: "existing_contract_vendor",
+          acceptedByName: "A. Buyer",
+          acceptedAt: "2026-09-01T00:00:00Z",
+          evidenceReference: "EVID-PANEL-1",
+        },
+        {
+          authorityId: "auth-2",
+          legalEntityId: "v-new",
+          legalName: "New Supplier LLC",
+          group: "eligible_candidate",
+          acceptedByName: "A. Buyer",
+          acceptedAt: "2026-09-02T00:00:00Z",
+          evidenceReference: "EVID-PANEL-2",
+        },
+      ],
+      counts: {
+        eligible_candidate: 1,
+        selected_respondent: 0,
+        existing_contract_vendor: 1,
+      },
+      notRecorded: [
+        "Contact policy is not recorded for accepted candidates, so this panel makes no claim about who may be contacted.",
+      ],
+      asOf: "2026-09-19",
+    };
+
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[]}
+        stage04VendorPanel={panel}
+      />,
+    );
+
+    const buttons = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    fireEvent.click(buttons[2]);
+
+    const region = screen.getByRole("region", { name: "Stage 04 vendor panel" });
+    expect(within(region).getByText("Incumbent Supplier LLC")).toBeTruthy();
+    expect(within(region).getByText("New Supplier LLC")).toBeTruthy();
+
+    // The distinction itself, not just the names. Read off the rows so the
+    // assertion is about which supplier got which label, not about a phrase
+    // appearing somewhere on the page.
+    const rowText = within(region)
+      .getAllByRole("listitem")
+      .map((li) => li.textContent ?? "");
+    expect(
+      rowText.find((t) => t.includes("Incumbent Supplier LLC")),
+    ).toContain("already under contract");
+    expect(rowText.find((t) => t.includes("New Supplier LLC"))).toContain(
+      "not under contract",
+    );
+
+    // Who accepted it, on the screen and not only in the data. A panel row
+    // without its provenance is an assertion the reader cannot check.
+    expect(
+      rowText.find((t) => t.includes("Incumbent Supplier LLC")),
+    ).toContain("Accepted by A. Buyer");
+
+    // What the panel does not know, on the surface rather than buried.
+    expect(
+      within(region).getAllByText(/makes no claim about who may be contacted/)
+        .length,
+    ).toBeGreaterThan(0);
+
+    // No send, contact or select affordance reaches the reader.
+    expect(within(region).queryByRole("button", { name: /send|contact|select/i })).toBeNull();
+    expect(within(region).queryByRole("link", { name: /send|contact|select/i })).toBeNull();
+  });
+
+  it("shows the stage 04 blocker instead of a panel when a read failed", () => {
+    // A blocked panel must not render rows at all. Showing a partial panel
+    // is how every incumbent ends up looking like a new candidate.
+    const panel: SourceNewStage04VendorPanel = {
+      status: "blocked",
+      blockers: [
+        "The contract register could not be read, so an existing-contract vendor cannot be told from a new candidate.",
+      ],
+      rows: [],
+      counts: {
+        eligible_candidate: 0,
+        selected_respondent: 0,
+        existing_contract_vendor: 0,
+      },
+      notRecorded: [],
+      asOf: "2026-09-19",
+    };
+
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
+        files={[]}
+        stage04VendorPanel={panel}
+      />,
+    );
+
+    const buttons = within(
+      screen.getByRole("navigation", { name: "Event phases" }),
+    ).getAllByRole("button");
+    fireEvent.click(buttons[2]);
+
+    const region = screen.getByRole("region", { name: "Stage 04 vendor panel" });
+    expect(within(region).getByText("Panel withheld")).toBeTruthy();
+    expect(
+      within(region).getByText(/cannot be told from a new candidate/),
+    ).toBeTruthy();
+    expect(within(region).queryByText(/under contract\./)).toBeNull();
   });
 
   it("keeps covered and uncovered accepted suppliers visible together", () => {
