@@ -893,8 +893,15 @@ function writeIfChanged(absolutePath, contents) {
  * that fails on disagreement would fire on every unrelated PR that adds a
  * test, or only when the file is genuinely stale. Enforce first and you learn
  * that by being wrong in public.
+ *
+ * Exported so the report can be driven with a known-stale committed census
+ * and a known-current one. Its guard could previously only read this file's
+ * source text and assert that certain strings appeared in it, which is a
+ * check on the prose rather than on the comparison. The bug described below
+ * would have passed that guard: it was a real comparison of the wrong two
+ * fields, and it said all the right things while doing it.
  */
-function describeDrift(measured, committedPath) {
+export function describeDrift(measured, committedPath) {
   if (!existsSync(committedPath)) {
     return { state: "absent", line: `no committed census at ${CENSUS_RELATIVE_PATH}` };
   }
