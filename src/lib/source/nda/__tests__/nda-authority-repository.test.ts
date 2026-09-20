@@ -21,6 +21,20 @@ describe("readNdaAuthorityForEvent", () => {
       .mockResolvedValueOnce([{ template_version: "standard-mutual-v3" }])
       .mockResolvedValueOnce([
         {
+          nda_id: "nda-1",
+          client_key: "example-tenant",
+          source_event_id: "11111111-1111-4111-8111-111111111111",
+          supplier_legal_entity_id: "VEN-001",
+          template_version: "standard-mutual-v3",
+          scope_level: "event_only",
+          covered_affiliate_entity_ids: [],
+          effective_from: "2026-01-01",
+          effective_to: "2027-01-01",
+          uploaded_by_user_id: "user-1",
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
           waiver_id: "waiver-1",
           client_key: "example-tenant",
           supplier_legal_entity_id: "VEN-001",
@@ -41,6 +55,20 @@ describe("readNdaAuthorityForEvent", () => {
     expect(result).toEqual({
       registryAvailable: true,
       publishedTemplateVersions: ["standard-mutual-v3"],
+      executedNdas: [
+        {
+          ndaId: "nda-1",
+          tenantKey: "example-tenant",
+          supplierLegalEntityId: "VEN-001",
+          templateVersion: "standard-mutual-v3",
+          scopeLevel: "event_only",
+          coveredEventIds: ["11111111-1111-4111-8111-111111111111"],
+          coveredAffiliateEntityIds: [],
+          effectiveFrom: "2026-01-01",
+          effectiveTo: "2027-01-01",
+          uploadedBy: "user-1",
+        },
+      ],
       waivers: [
         {
           waiverId: "waiver-1",
@@ -68,7 +96,17 @@ describe("readNdaAuthorityForEvent", () => {
     expect(run.mock.calls[2][0]).toContain("client_key = $1");
     expect(run.mock.calls[2][0]).toContain("source_event_id = $2::uuid");
     expect(run.mock.calls[2][0]).toContain("supplier_legal_entity_id = $3");
-    expect(run.mock.calls[2][0]).toContain("revoked_at IS NULL");
+    expect(run.mock.calls[2][0]).toContain("artifact_type = 'nda_executed'");
+    expect(run.mock.calls[2][0]).toContain("lifecycle_state = 'current'");
+    expect(run.mock.calls[2][0]).toContain(
+      "COALESCE(artifact.blob_sha256, artifact.sha256)",
+    );
+    expect(run.mock.calls[3][1]).toEqual([
+      "example-tenant",
+      "11111111-1111-4111-8111-111111111111",
+      "VEN-001",
+    ]);
+    expect(run.mock.calls[3][0]).toContain("revoked_at IS NULL");
   });
 
   it("distinguishes a modelled empty register from an unavailable registry", async () => {
@@ -83,11 +121,12 @@ describe("readNdaAuthorityForEvent", () => {
     ).resolves.toEqual({
       registryAvailable: true,
       publishedTemplateVersions: [],
+      executedNdas: [],
       waivers: [],
     });
   });
 
-  it("fails closed when either governed relation is unavailable", async () => {
+  it("fails closed when the template register is unavailable", async () => {
     run
       .mockResolvedValueOnce([])
       .mockRejectedValueOnce(
@@ -103,6 +142,29 @@ describe("readNdaAuthorityForEvent", () => {
     ).resolves.toEqual({
       registryAvailable: false,
       publishedTemplateVersions: [],
+      executedNdas: [],
+      waivers: [],
+    });
+  });
+
+  it("fails closed when executed NDA authority is unavailable", async () => {
+    run
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ template_version: "standard-mutual-v3" }])
+      .mockRejectedValueOnce(
+        Object.assign(new Error("relation does not exist"), { code: "42P01" }),
+      );
+
+    await expect(
+      readNdaAuthorityForEvent({
+        clientKey: "example-tenant",
+        eventId: "11111111-1111-4111-8111-111111111111",
+        supplierLegalEntityId: "VEN-001",
+      }),
+    ).resolves.toEqual({
+      registryAvailable: false,
+      publishedTemplateVersions: [],
+      executedNdas: [],
       waivers: [],
     });
   });

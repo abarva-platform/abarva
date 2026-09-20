@@ -1,5 +1,9 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
-import type { NdaWaiverRecord } from "./nda-scope-authority";
+import type {
+  ExecutedNdaRecord,
+  NdaScopeLevel,
+  NdaWaiverRecord,
+} from "./nda-scope-authority";
 
 type TemplateVersionRow = {
   template_version: string;
@@ -16,9 +20,23 @@ type WaiverRow = {
   approved_at: string | Date;
 };
 
+type ExecutedNdaRow = {
+  nda_id: string;
+  client_key: string;
+  source_event_id: string;
+  supplier_legal_entity_id: string;
+  template_version: string;
+  scope_level: NdaScopeLevel;
+  covered_affiliate_entity_ids: string[] | null;
+  effective_from: string | Date;
+  effective_to: string | Date | null;
+  uploaded_by_user_id: string;
+};
+
 export type NdaAuthorityRead = {
   registryAvailable: boolean;
   publishedTemplateVersions: string[];
+  executedNdas: ExecutedNdaRecord[];
   waivers: NdaWaiverRecord[];
 };
 
@@ -31,6 +49,7 @@ export type NdaAuthorityReadInput = {
 const UNAVAILABLE: NdaAuthorityRead = {
   registryAvailable: false,
   publishedTemplateVersions: [],
+  executedNdas: [],
   waivers: [],
 };
 
@@ -70,6 +89,27 @@ export async function readNdaAuthorityForEvent(
          ORDER BY published_at DESC, template_version ASC`,
         [input.clientKey],
       );
+      const executedNdaRows = await run<ExecutedNdaRow>(
+        `SELECT authority.nda_id, authority.client_key,
+                authority.source_event_id, authority.supplier_legal_entity_id,
+                authority.template_version, authority.scope_level,
+                authority.covered_affiliate_entity_ids,
+                authority.effective_from, authority.effective_to,
+                authority.uploaded_by_user_id
+         FROM source_executed_nda_authority authority
+         JOIN source_artifacts artifact
+           ON artifact.id = authority.artifact_id
+          AND artifact.tenant_key = authority.client_key
+         WHERE authority.client_key = $1
+           AND authority.source_event_id = $2::uuid
+           AND authority.supplier_legal_entity_id = $3
+           AND authority.authority_state = 'recorded'
+           AND artifact.artifact_type = 'nda_executed'
+           AND artifact.lifecycle_state = 'current'
+           AND NULLIF(BTRIM(COALESCE(artifact.blob_sha256, artifact.sha256)), '') IS NOT NULL
+         ORDER BY authority.executed_at DESC, authority.nda_id ASC`,
+        [input.clientKey, input.eventId, input.supplierLegalEntityId],
+      );
       const waiverRows = await run<WaiverRow>(
         `SELECT waiver_id, client_key, supplier_legal_entity_id,
                 source_event_id, reason, expires_at,
@@ -91,6 +131,21 @@ export async function readNdaAuthorityForEvent(
         publishedTemplateVersions: templateRows.map(
           (row) => row.template_version,
         ),
+        executedNdas: executedNdaRows.map((row) => ({
+          ndaId: row.nda_id,
+          tenantKey: row.client_key,
+          supplierLegalEntityId: row.supplier_legal_entity_id,
+          templateVersion: row.template_version,
+          scopeLevel: row.scope_level,
+          coveredEventIds: [row.source_event_id],
+          coveredAffiliateEntityIds:
+            row.covered_affiliate_entity_ids ?? [],
+          effectiveFrom: iso(row.effective_from),
+          ...(row.effective_to === null
+            ? {}
+            : { effectiveTo: iso(row.effective_to) }),
+          uploadedBy: row.uploaded_by_user_id,
+        })),
         waivers: waiverRows.map((row) => ({
           waiverId: row.waiver_id,
           tenantKey: row.client_key,
