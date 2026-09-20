@@ -35,48 +35,30 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type VerificationStatus =
-  | 'pass'
-  | 'fail'
-  | 'deferred'
-  | 'removed'
-  | 'not_applicable';
+import {
+  resolvePathStatus as sharedResolvePathStatus,
+  SHARED_PATH_DISPOSITIONS,
+  type PathStatus,
+  type RetiredPath,
+  type PendingPath,
+  type UndecidedPath,
+  type PathDisposition,
+  type PathDispositionRegister,
+} from './path-disposition';
 
-/** A path that is gone on purpose, with the commit that removed it. */
-export interface RetiredPath {
-  /**
-   * What the commit actually deleted.
-   *
-   * 'path' — the commit deleted this file.
-   * 'containing-directory' — the file never appeared on this history at all,
-   *   and the directory that would hold it was deleted by this commit. The
-   *   distinction is not cosmetic: attributing a deletion to a commit that
-   *   never held the file is the same class of false claim this register
-   *   exists to stop, one level up.
-   */
-  scope: 'path' | 'containing-directory';
-  /** Short SHA of the commit, on this branch's own history. */
-  commit: string;
-  /** The slice or change the deletion belongs to. */
-  slice: string;
-  /** What serves this purpose now, or null when nothing replaced it. */
-  replacement: string | null;
-  /** Why it went, in the words of the change that removed it. */
-  note: string;
-}
-
-/** A path that has not been built yet, under a named slice. */
-export interface PendingPath {
-  slice: string;
-  note: string;
-}
-
-export interface PathDisposition {
-  retired?: RetiredPath;
-  pending?: PendingPath;
-}
-
-export type PathDispositionRegister = Record<string, PathDisposition>;
+/**
+ * The disposition vocabulary lives in src/lib/qa/path-disposition.ts and is
+ * re-exported here so this module's existing importers keep working.
+ * VerificationStatus is the local name for the shared PathStatus.
+ */
+export type VerificationStatus = PathStatus;
+export type {
+  RetiredPath,
+  PendingPath,
+  UndecidedPath,
+  PathDisposition,
+  PathDispositionRegister,
+};
 
 export interface IntelTowerCheck {
   checkId: string;
@@ -148,82 +130,34 @@ export const BLUEPRINT_PATH_REGISTER: PathDispositionRegister = {
         'AdvisoryIntelligencePage.',
     },
   },
-  'src/components/intelligence/IntelligenceRouteShell.tsx': {
-    retired: {
-      scope: 'containing-directory',
-      commit: '0c6a86c51',
-      slice: 'legacy surface sunset (v1/v2/v3/v4)',
-      replacement: null,
-      note:
-        'git log over this branch history finds no commit that added this file, ' +
-        'so the check was written against a shell component that never landed ' +
-        'here. What did exist is src/components/intelligence/, and the sunset ' +
-        'removed it: twenty-odd components at 0c6a86c51 and the last two at ' +
-        'd5e0ef495. Nothing wraps the surviving /intelligence route in a shell ' +
-        'component.',
-    },
-  },
+  // Read by the route-shell verifier too, so it is taken from the shared
+  // register rather than restated. Until T-524 both files carried their own
+  // answer for this path and the answers disagreed.
+  'src/components/intelligence/IntelligenceRouteShell.tsx':
+    SHARED_PATH_DISPOSITIONS[
+      'src/components/intelligence/IntelligenceRouteShell.tsx'
+    ],
 };
 
 /**
  * Resolve one path to a status. Pure: the caller observes the filesystem, this
  * decides what the observation means.
  */
+/**
+ * Resolve one path to a status against this report's own register.
+ *
+ * The mechanism moved to src/lib/qa/path-disposition.ts under T-524, when a
+ * second verifier turned out to need it and the two disagreed about a path
+ * they both read. This wrapper keeps the register default so existing callers
+ * and tests are unaffected.
+ */
 export function resolvePathStatus(
   rel: string,
   present: boolean,
   register: PathDispositionRegister = BLUEPRINT_PATH_REGISTER,
 ): { status: VerificationStatus; detail: string } {
-  const disposition = register[rel];
-
-  if (present) {
-    if (disposition?.retired) {
-      const { commit, slice } = disposition.retired;
-      return {
-        status: 'fail',
-        detail:
-          `${rel} is declared retired by ${commit} (${slice}) but the file is ` +
-          'present. Either the retirement was reverted, in which case remove ' +
-          'the BLUEPRINT_PATH_REGISTER entry, or this is an unintended ' +
-          'restoration. A register that disagrees with the tree is no better ' +
-          'than a guess.',
-      };
-    }
-    return { status: 'pass', detail: `Found: ${rel}` };
-  }
-
-  if (disposition?.retired) {
-    const { scope, commit, slice, replacement, note } = disposition.retired;
-    const lead =
-      scope === 'path'
-        ? `Removed by ${commit} (${slice}): ${rel}.`
-        : `Absent: ${rel}. The path itself never appeared on this history; the ` +
-          `directory that would hold it was removed by ${commit} (${slice}).`;
-    return {
-      status: 'removed',
-      detail: `${lead} ${note} Replacement: ${replacement ?? 'none'}.`,
-    };
-  }
-
-  if (disposition?.pending) {
-    const { slice, note } = disposition.pending;
-    return {
-      status: 'deferred',
-      detail: `${slice} pre-integration: not yet present at ${rel}. ${note}`,
-    };
-  }
-
-  return {
-    status: 'fail',
-    detail:
-      `Absent at ${rel}, and nothing declares why. Declare it in ` +
-      'BLUEPRINT_PATH_REGISTER as retired (with the commit that removed it) ' +
-      'or pending (with the slice that adds it). An undeclared absence cannot ' +
-      'be told apart from a deletion, and this report spent five months ' +
-      'calling one deletion "not yet present".',
-  };
+  return sharedResolvePathStatus(rel, present, register, 'BLUEPRINT_PATH_REGISTER');
 }
-
 function pathCheck(
   checkId: string,
   surface: IntelTowerCheck['surface'],
