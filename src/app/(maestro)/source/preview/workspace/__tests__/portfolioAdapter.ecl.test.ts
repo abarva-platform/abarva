@@ -59,9 +59,10 @@ function isDirectEvidenceCoverageSql(sql: string): boolean {
 
 function isDirectActionCandidateSql(sql: string): boolean {
   return (
-    sql.includes("FROM consumption.sourcing_opportunity_v1 o") &&
+    sql.includes("FROM source.sourcing_opportunity legacy") &&
     sql.includes("FROM source.optimization_opportunity o") &&
-    sql.includes("o.opportunity_id AS action_candidate_id")
+    sql.includes("legacy.opportunity_id AS action_candidate_id") &&
+    !sql.includes("FROM consumption.sourcing_opportunity_v1")
   );
 }
 
@@ -1073,7 +1074,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
             },
           ] as R[];
         }
-        if (sql.includes("FROM consumption.sourcing_opportunity_v1 o")) {
+        if (isDirectActionCandidateSql(sql)) {
           return [
             {
               tenant_key: "meridian-health",
@@ -1156,12 +1157,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toBe(true);
     expect(
       runCalls.some((call) =>
-        call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
-      ),
-    ).toBe(true);
-    expect(
-      runCalls.some((call) =>
-        call.sql.includes("FROM source.optimization_opportunity o"),
+        call.sql.includes("FROM source.sourcing_opportunity legacy"),
       ),
     ).toBe(true);
     expect(
@@ -1169,7 +1165,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
         .filter((call) => isDirectActionCandidateSql(call.sql))
         .some((call) =>
           normalizedSql(call.sql).includes(
-            "o.decision_due_date::text AS decision_due_date",
+            "o.deadline::text AS decision_due_date",
           ),
         ),
     ).toBe(true);
@@ -1177,11 +1173,14 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
       isDirectActionCandidateSql(call.sql),
     )?.sql;
     expect(actionSql).toBeDefined();
-    expect(normalizedSql(actionSql ?? "")).toContain(
-      "WITH current_action_contracts AS MATERIALIZED",
+    expect(actionSql).not.toContain(
+      "FROM consumption.sourcing_opportunity_v1",
     );
     expect(normalizedSql(actionSql ?? "")).toContain(
-      "LEFT JOIN current_action_contracts current_action",
+      "WITH current_action_opportunities AS MATERIALIZED",
+    );
+    expect(normalizedSql(actionSql ?? "")).toContain(
+      "LEFT JOIN current_action_opportunities current_action",
     );
     expect(normalizedSql(actionSql ?? "")).toContain(
       "WHERE current_contract.tenant_key = ANY($1::text[])",
@@ -1376,7 +1375,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toBe(true);
     expect(
       runCalls.some((call) =>
-        call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
+        call.sql.includes("FROM source.sourcing_opportunity legacy"),
       ),
     ).toBe(true);
     expect(
@@ -1655,7 +1654,7 @@ describe("loadSourceWorkspacePortfolio ECL projection adapter", () => {
     ).toBe(false);
     expect(
       runCalls.some((call) =>
-        call.sql.includes("FROM consumption.sourcing_opportunity_v1 o"),
+        call.sql.includes("FROM source.sourcing_opportunity legacy"),
       ),
     ).toBe(true);
   });

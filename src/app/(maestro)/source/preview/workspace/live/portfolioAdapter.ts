@@ -1109,12 +1109,12 @@ async function loadDirectSourceWorkspaceImpactRows(
         "impact.action_candidates_direct",
         () =>
           run<SourceContractActionCandidateRow>(
-            `WITH current_action_contracts AS MATERIALIZED (
+            `WITH current_action_opportunities AS MATERIALIZED (
                SELECT DISTINCT
-                 current_contract.tenant_key,
-                 current_contract.contract_id
-                FROM source.contract current_contract
-                JOIN source.optimization_opportunity current_opportunity
+                 current_opportunity.tenant_key,
+                 current_opportunity.opportunity_id
+                FROM source.optimization_opportunity current_opportunity
+                JOIN source.contract current_contract
                   ON current_opportunity.tenant_key = current_contract.tenant_key
                  AND current_opportunity.contract_id = current_contract.contract_id
                  AND current_opportunity.dataset_version = current_contract.raw_payload->>'dataset_version'
@@ -1122,57 +1122,62 @@ async function loadDirectSourceWorkspaceImpactRows(
              ),
              raw_actions AS (
                SELECT
-                 o.tenant_key,
-                 o.opportunity_id AS action_candidate_id,
-                 o.opportunity_id,
-                 o.contract_id,
-                 o.vendor_ref,
+                 legacy.tenant_key,
+                 legacy.opportunity_id AS action_candidate_id,
+                 legacy.opportunity_id,
+                 legacy.contract_id,
+                 legacy.vendor_id AS vendor_ref,
                  COALESCE(NULLIF(c.vendor_name, ''), 'Vendor name not resolved') AS vendor_name,
-                 o.title,
-                 o.action_type,
-                 o.opportunity_type,
-                 o.finding_summary,
-                 o.deterministic_basis,
-                 o.annual_value_exposed::numeric AS candidate_amount_usd,
-                 o.priority,
-                 o.readiness_state,
-                 o.evidence_state,
-                 o.authority_state,
+                 legacy.title,
+                 legacy.opportunity_type AS action_type,
+                 legacy.opportunity_type,
+                 legacy.finding_summary,
+                 legacy.deterministic_basis,
+                 COALESCE(legacy.value_high, legacy.value_low)::numeric AS candidate_amount_usd,
                  CASE
-                   WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
-                   WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+                   WHEN COALESCE(legacy.value_high, legacy.value_low, 0) >= 10000000 THEN 'high'
+                   WHEN COALESCE(legacy.value_high, legacy.value_low, 0) >= 1000000 THEN 'medium'
+                   ELSE 'low'
+                 END AS priority,
+                 CASE
+                   WHEN legacy.quality_state = 'accepted' AND legacy.confidence >= 0.75 THEN 'ready_to_act'
+                   WHEN legacy.quality_state IN ('missing_evidence', 'blocked') THEN 'evidence_blocked'
+                   ELSE 'review_required'
+                 END AS readiness_state,
+                 CASE
+                   WHEN legacy.evidence_reference IS NULL OR legacy.evidence_reference = '' THEN 'missing'
+                   ELSE 'present'
+                 END AS evidence_state,
+                 legacy.quality_state AS authority_state,
+                 CASE
+                   WHEN legacy.quality_state IN ('accepted', 'approved') THEN 'confirmed'
                    ELSE 'not_confirmed'
                  END AS finance_confirmation_state,
-                 o.recommended_action AS next_action,
-                 o.accountable_role,
-                 o.decision_due_date::text AS decision_due_date,
+                 legacy.recommended_action AS next_action,
+                 legacy.accountable_role,
+                 NULL::text AS decision_due_date,
                  NULL::text AS coverage_state,
-                 CASE
-                   WHEN o.readiness_state = 'finance_confirmation_required'
-                     THEN 'Never present this candidate as realized savings until finance confirms it.'
-                   ELSE NULL::text
-                 END AS blocker_if_missing,
+                 NULL::text AS blocker_if_missing,
                  jsonb_build_object(
-                   'opportunity_ref', o.opportunity_id,
-                   'contract_ref', o.contract_id,
+                   'opportunity_ref', legacy.opportunity_id,
+                   'contract_ref', legacy.contract_id,
                    'finance_confirmation_state',
                      CASE
-                       WHEN o.readiness_state = 'finance_confirmation_required' THEN 'not_confirmed'
-                       WHEN o.authority_state IN ('accepted', 'approved') THEN 'confirmed'
+                       WHEN legacy.quality_state IN ('accepted', 'approved') THEN 'confirmed'
                        ELSE 'not_confirmed'
                      END
                  ) AS citation_basis_json,
-                 o.load_run_id,
+                 legacy.load_run_id,
                  1 AS source_rank
-                FROM consumption.sourcing_opportunity_v1 o
+                FROM source.sourcing_opportunity legacy
                 LEFT JOIN source.contract_360 c
-                  ON c.tenant_key = o.tenant_key
-                 AND c.contract_id = o.contract_id
-                LEFT JOIN current_action_contracts current_action
-                  ON current_action.tenant_key = o.tenant_key
-                 AND current_action.contract_id = o.contract_id
-               WHERE o.tenant_key = ANY($1::text[])
-                 AND current_action.contract_id IS NULL
+                  ON c.tenant_key = legacy.tenant_key
+                 AND c.contract_id = legacy.contract_id
+                LEFT JOIN current_action_opportunities current_action
+                  ON current_action.tenant_key = legacy.tenant_key
+                 AND current_action.opportunity_id = legacy.opportunity_id
+               WHERE legacy.tenant_key = ANY($1::text[])
+                 AND current_action.opportunity_id IS NULL
                UNION ALL
                SELECT
                  o.tenant_key,
