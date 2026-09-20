@@ -13,19 +13,19 @@
   ],
   "counts": {
     "testFiles": 2323,
-    "coveredTestFiles": 1197,
-    "pullRequestCoveredTestFiles": 1194,
-    "uncoveredTestFiles": 1126,
+    "coveredTestFiles": 1226,
+    "pullRequestCoveredTestFiles": 1223,
+    "uncoveredTestFiles": 1097,
     "directoriesWithTests": 476,
-    "directoriesFullyCovered": 115,
+    "directoriesFullyCovered": 127,
     "directoriesPartiallyCovered": 22,
-    "directoriesUncovered": 339,
-    "directoriesWithUnrunTestFiles": 361,
+    "directoriesUncovered": 327,
+    "directoriesWithUnrunTestFiles": 349,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 37,
     "highGovernedRiskDirectories": 108,
-    "unclassifiedRiskDirectories": 216
+    "unclassifiedRiskDirectories": 204
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -2790,12 +2790,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/deliverables/shared/__tests__",
-      "testFiles": 10,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/programs/phase-packs/__tests__",
       "testFiles": 10,
       "coveredTestFiles": 0,
@@ -2953,12 +2947,6 @@
     },
     {
       "directory": "src/lib/ava-answer/__tests__",
-      "testFiles": 5,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/deliverables/quality/__tests__",
       "testFiles": 5,
       "coveredTestFiles": 0,
       "via": []
@@ -3162,12 +3150,6 @@
       "via": []
     },
     {
-      "directory": "src/components/admin/setup/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/components/agent-answer/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 0,
@@ -3318,12 +3300,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/admin/ai-initiatives",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/agent-grounding/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 0,
@@ -3349,12 +3325,6 @@
     },
     {
       "directory": "src/lib/data-plane/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/deliverables/planning/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 0,
       "via": []
@@ -4044,19 +4014,7 @@
       "via": []
     },
     {
-      "directory": "src/components/admin/agent-readiness-redesign/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/components/admin/context-layer/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/components/admin/data-trust-redesign/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []
@@ -4260,37 +4218,7 @@
       "via": []
     },
     {
-      "directory": "src/lib/deliverables/decision-model/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/deliverables/profiles/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/deliverables/shared/reference-library/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/deliverables/story/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/lib/deliverables/synthesis/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/deliverables/templates/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []
