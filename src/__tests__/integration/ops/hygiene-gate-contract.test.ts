@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
@@ -47,10 +48,26 @@ describe('hygiene_gate.sh - contract', () => {
     expect(hasDupCheck).toBe(true);
   });
 
-  it('script has PASS/FAIL summary', () => {
-    const content = fs.readFileSync(scriptPath, 'utf8');
-    expect(content).toContain('HYGIENE GATE: PASS');
-    expect(content).toContain('HYGIENE GATE: FAIL');
+  it('script produces a PASS/FAIL verdict', () => {
+    // This used to grep the gate for the literal strings 'HYGIENE GATE: PASS'
+    // and 'HYGIENE GATE: FAIL'. The verdict moved into a sourced reporting
+    // unit so it could be tested by running it, and the grep went red while
+    // the behaviour was intact -- which is the tell that it was measuring the
+    // text rather than the gate.
+    //
+    // Run instead. Three arguments, three verdicts, and each one has to be
+    // the verdict for that state rather than merely a non-empty string.
+    const report = path.join(repoRoot, 'scripts/integration/hygiene_gate_report.sh');
+    const verdict = (fails: number, warns: number): string =>
+      execFileSync('bash', ['-c', `. "${report}"; hygiene_verdict_line ${fails} ${warns}`], {
+        encoding: 'utf8',
+      }).trim();
+
+    expect(verdict(0, 0)).toBe('HYGIENE GATE: PASS');
+    expect(verdict(1, 0)).toBe('HYGIENE GATE: FAIL');
+    // And a run with findings must not be reported as a clean pass.
+    expect(verdict(0, 2)).not.toBe('HYGIENE GATE: PASS');
+    expect(verdict(0, 2)).toContain('WARNINGS');
   });
 
   it('script does NOT contain destructive commands', () => {

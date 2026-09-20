@@ -37,6 +37,7 @@ import { tmpdir } from 'os';
 import { join, dirname } from 'path';
 
 const GATE_SOURCE = join(process.cwd(), 'scripts/integration/hygiene_gate.sh');
+const REPORT_SOURCE = join(process.cwd(), 'scripts/integration/hygiene_gate_report.sh');
 const SECRET_HYGIENE_TEST = 'src/__tests__/integration/qa/secret-hygiene-patterns.test.ts';
 
 interface ShimPlan {
@@ -100,6 +101,11 @@ function makeScratchRepo(
   // The real script, at the path it derives its repo root from.
   mkdirSync(join(root, 'scripts/integration'), { recursive: true });
   copyFileSync(GATE_SOURCE, join(root, 'scripts/integration/hygiene_gate.sh'));
+  // The gate sources its reporting from a sibling file. The fixture copied
+  // one file because the gate used to be one file; without this the gate
+  // refuses to run, which is the behaviour it should have -- but it is not
+  // the behaviour these cases are here to measure.
+  copyFileSync(REPORT_SOURCE, join(root, 'scripts/integration/hygiene_gate_report.sh'));
 
   if (!omit.has('stash')) {
     const stash = join(root, 'scripts/integration/stash_safety_check.py');
