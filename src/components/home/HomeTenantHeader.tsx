@@ -21,11 +21,8 @@ interface TenantBrand {
 // Per-tenant brand map. Color drawn from industry archetype.
 // When clients.logo_url + clients.brand_color land, this map collapses
 // to a fallback only.
-// Not every tenant has authored branding, and the reader below already has a
-// fallback for the ones that do not — `lakeshore` has never had an entry here.
-// `Partial<Record<ClientKey, …>>` says that truthfully: a key that is not a
-// tenant is still rejected, a missing tenant is still visible to the reader as
-// `undefined`, and nothing here pretends the map is complete when it is not.
+// This remains Partial intentionally: an onboarded tenant without authored
+// identity must use the visible fallback rather than inheriting another brand.
 const TENANT_BRAND: Partial<Record<ClientKey, TenantBrand>> = {
   meridian: {
     initials: 'MH',
@@ -51,6 +48,11 @@ const TENANT_BRAND: Partial<Record<ClientKey, TenantBrand>> = {
     initials: 'SH',
     bgColor: '#075985',
     tagline: 'Global airline · $52.1B revenue · IBM Z to AWS modernization',
+  },
+  lakeshore: {
+    initials: 'LH',
+    bgColor: '#2563EB', // blue — diversified holding company
+    tagline: 'Diversified holding company · 4 operating companies · shared services',
   },
 };
 
