@@ -24,6 +24,10 @@ import * as path from "path";
 
 import {
   executeAddTenant,
+  resolveRegistryPaths,
+  verifyRegistryAnchors,
+  REGISTRY_ANCHORS,
+  REGISTRY_RELATIVE_PATHS,
   patchActiveClient,
   patchCanonicalAuthRoster,
   patchClientConfig,
@@ -439,5 +443,197 @@ describe("add-tenant — sandbox sanity", () => {
     for (const rel of Object.values(REGISTRY_FILES)) {
       expect(existsSync(path.join(sandbox, rel))).toBe(true);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T-511 — the anchors the patcher navigates by
+//
+// `add-tenant.ts` finds its insertion points by searching the registry files
+// for literal strings. Nothing in the compiler connects an anchor to the
+// declaration it names, so a type-level repair to a registry can break the
+// patcher and only a run will say so. These cases pin the three behaviours
+// that make that survivable: every anchor is checked before anything is
+// written, a failure names the file it is about, and an anchor resolves to a
+// declaration rather than to the first place the name happens to appear.
+// ---------------------------------------------------------------------------
+
+function makeDriftedSandbox(
+  drift: (relativePath: string, source: string) => string,
+): string {
+  const root = mkdtempSync(path.join(tmpdir(), "add-tenant-drift-"));
+  for (const [k, rel] of Object.entries(REGISTRY_FILES)) {
+    const full = path.join(root, rel);
+    mkdirSync(path.dirname(full), { recursive: true });
+    writeFileSync(full, drift(rel, ORIGINALS[k]), "utf8");
+  }
+  writeFileSync(path.join(root, "package.json"), "{}", "utf8");
+  return root;
+}
+
+const DRIFT_INPUT = {
+  key: "driftco",
+  name: "Drift Co",
+  industry: "RETAIL" as const,
+  adminEmail: "cdo@drift-co",
+};
+
+describe("add-tenant — registry anchors (T-511)", () => {
+  it("writes no registry at all when a later registry's anchor has drifted", () => {
+    // The alias registry is patched second. Before this case, client-config
+    // was already on disk by the time the run threw, leaving a tenant
+    // registered in one registry and absent from three.
+    const root = makeDriftedSandbox((rel, source) =>
+      rel === REGISTRY_FILES.activeClient
+        ? source.replace("] as const;", "] as const /* drifted */;")
+        : source,
+    );
+    const before = Object.fromEntries(
+      Object.values(REGISTRY_FILES).map((rel) => [
+        rel,
+        readFileSync(path.join(root, rel), "utf8"),
+      ]),
+    );
+
+    expect(() => executeAddTenant(DRIFT_INPUT, { repoRoot: root })).toThrow();
+
+    for (const rel of Object.values(REGISTRY_FILES)) {
+      expect(readFileSync(path.join(root, rel), "utf8")).toBe(before[rel]);
+    }
+  });
+
+  it("names the registry file and the missing anchor when ALL_CLIENTS is closed differently", () => {
+    // The exact type-level repair this item was filed about: the array closes
+    // with `satisfies` so the ids stay literal. Reverting that to a bare
+    // `as const;` breaks the patcher.
+    const root = makeDriftedSandbox((rel, source) =>
+      rel === REGISTRY_FILES.clientConfig
+        ? source.replace(
+            "] as const satisfies readonly ClientOption[];",
+            "] as const;",
+          )
+        : source,
+    );
+
+    let message = "";
+    try {
+      executeAddTenant(DRIFT_INPUT, { repoRoot: root });
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+
+    expect(message).toContain("src/lib/client-config.ts");
+    expect(message).toContain("ALL_CLIENTS");
+    expect(message).toContain("] as const satisfies readonly ClientOption[];");
+  });
+
+  it("anchors on the declaration, not on the first textual mention of the name", () => {
+    // A mention of the registry name in an object literal above its own
+    // declaration used to capture the search: the entry was inserted into
+    // that earlier object and the run reported success.
+    const root = makeDriftedSandbox((rel, source) =>
+      rel === REGISTRY_FILES.clientConfig
+        ? source.replace(
+            "export const CLIENT_KEY_TO_DB_NAME",
+            "const LEGACY_DB_NAME_NOTE = {\n  note: 'superseded by CLIENT_KEY_TO_DB_NAME',\n};\n\nexport const CLIENT_KEY_TO_DB_NAME",
+          )
+        : source,
+    );
+
+    executeAddTenant(DRIFT_INPUT, { repoRoot: root });
+
+    const patched = readFileSync(
+      path.join(root, REGISTRY_FILES.clientConfig),
+      "utf8",
+    );
+    const declarationIdx = patched.indexOf(
+      "export const CLIENT_KEY_TO_DB_NAME",
+    );
+    const entryIdx = patched.indexOf("driftco: ['Drift Co']");
+    expect(declarationIdx).toBeGreaterThan(-1);
+    expect(entryIdx).toBeGreaterThan(declarationIdx);
+    expect(patched).toContain(
+      "note: 'superseded by CLIENT_KEY_TO_DB_NAME',\n};",
+    );
+  });
+});
+
+describe("add-tenant — anchors against this repository's registries (T-511)", () => {
+  it("every declared anchor resolves against the real registry files", () => {
+    // Not a temp copy. If a type-level repair moves a close marker or renames
+    // a binding in src/lib, this is the case that goes red — the patcher is
+    // otherwise only exercised against sandboxes it built itself.
+    expect(verifyRegistryAnchors(resolveRegistryPaths(REPO_ROOT))).toEqual([]);
+  });
+
+  it("reports the registry and the anchor when a close marker moves", () => {
+    // Negative control for the case above: it has to be able to fail.
+    //
+    // Only the first `] as const;` is rewritten, so CANONICAL_AUTH_EMAILS
+    // drifts and CANONICAL_CLIENT_ADMIN_EMAILS below it does not. That the
+    // report names one and not both is the point: the close marker is
+    // resolved per declaration, and a drifted array cannot quietly adopt the
+    // close marker of the next one.
+    const root = makeDriftedSandbox((rel, source) =>
+      rel === REGISTRY_FILES.canonicalAuthRoster
+        ? source.replace(
+            "] as const;",
+            "] as const satisfies readonly string[];",
+          )
+        : source,
+    );
+
+    const failures = verifyRegistryAnchors(resolveRegistryPaths(root));
+
+    expect(failures.map((f) => f.declaration)).toEqual([
+      "CANONICAL_AUTH_EMAILS",
+    ]);
+    expect(failures[0].registry).toBe("canonicalAuthRoster");
+    expect(failures[0].message).toContain(
+      "src/lib/auth/canonical-auth-roster.ts",
+    );
+    expect(failures[0].message).toContain("] as const;");
+  });
+
+  it("refuses to write when an anchor drifts, naming the file, and leaves the tenant out of every registry", () => {
+    const root = makeDriftedSandbox((rel, source) =>
+      rel === REGISTRY_FILES.canonicalAuthRoster
+        ? source.replace(
+            "] as const;",
+            "] as const satisfies readonly string[];",
+          )
+        : source,
+    );
+    const before = Object.fromEntries(
+      Object.values(REGISTRY_FILES).map((rel) => [
+        rel,
+        readFileSync(path.join(root, rel), "utf8"),
+      ]),
+    );
+
+    expect(() => executeAddTenant(DRIFT_INPUT, { repoRoot: root })).toThrow(
+      /canonical-auth-roster\.ts/,
+    );
+
+    for (const rel of Object.values(REGISTRY_FILES)) {
+      expect(readFileSync(path.join(root, rel), "utf8")).toBe(before[rel]);
+    }
+  });
+
+  it("declares at least one anchor for every registry the script writes", () => {
+    // A fifth registry added without an anchor would be patched by literals
+    // again, which is the shape this item was filed about.
+    for (const registry of Object.keys(REGISTRY_RELATIVE_PATHS)) {
+      expect(
+        REGISTRY_ANCHORS[registry as keyof typeof REGISTRY_RELATIVE_PATHS]
+          .length,
+      ).toBeGreaterThan(0);
+    }
+    expect(Object.keys(REGISTRY_ANCHORS).sort()).toEqual(
+      Object.keys(REGISTRY_RELATIVE_PATHS).sort(),
+    );
+    expect(Object.keys(REGISTRY_RELATIVE_PATHS).sort()).toEqual(
+      Object.keys(REGISTRY_FILES).sort(),
+    );
   });
 });
