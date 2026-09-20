@@ -105,20 +105,13 @@ function assertSummaryIsCurrent(summary) {
 
 assertSummaryIsCurrent(s);
 
-/** Blockers only the user can clear. An agent must never pick these up. */
-// Phrases that hand an item to the owner. Deliberately narrow.
-//
-// C-002 ends "This is a product call ... not a refactor" and was offered as
-// claimable because none of the original phrases matched. The tempting fix was
-// to add the bare word "decide" — measured, that would have moved 7 more items
-// out of the queue, and every one of them is a technical fork an agent should
-// settle: T-040 literally says "either is defensible". Starving the queue is
-// the worse failure, because it idles agents on choices that were never the
-// owner's. So this matches an explicit hand-off, not the presence of a choice.
-const USER_BLOCKER = /signed-in|decision needed|approval to apply|blocked on .*policy|\bproduct call\b|\bowner'?s call\b/i;
-
 function userBlockerText(item) {
-  return [item.blocker, item.acceptance].filter(Boolean).join(" · ");
+  // The board already derives a semantic blocker from the full item corpus.
+  // Re-scanning raw acceptance prose here made any descriptive use of the
+  // phrase "signed-in" an owner gate, even when the sentence explicitly said
+  // to quarantine such a fixture rather than run a product session.
+  const blocker = typeof item.blocker === "string" ? item.blocker : item.blocker?.say ?? "";
+  return blocker === "Unclaimed" ? "" : blocker;
 }
 
 const all = [
@@ -239,7 +232,7 @@ const claimable = all
   .filter((i) => i.rung === 0)
   // Closed is rung 0 because it proves nothing, but it is not work.
   .filter((i) => i.rungLabel !== "Closed")
-  .filter((i) => !USER_BLOCKER.test(userBlockerText(i)))
+  .filter((i) => !userBlockerText(i))
   // An entry with no acceptance criterion states no demonstrable outcome, so
   // there is nothing for an agent to finish or for anyone to check. Item 49 was
   // a rationale note — written to stop someone re-deriving a wrong answer — and
@@ -281,7 +274,7 @@ for (const i of claimable) {
 const isFinished = (i) => i.rung === 7 || i.rungLabel === "Closed";
 
 const blockedOnUser = all.filter(
-  (i) => !isFinished(i) && USER_BLOCKER.test(userBlockerText(i)),
+  (i) => !isFinished(i) && Boolean(userBlockerText(i)),
 );
 const blockedCounts = blockedOnUser.reduce((a, i) => {
   const label = i.acceptance?.match(/(Blocked on [^.]+|Awaiting approval to apply)/i)?.[1]
@@ -367,20 +360,13 @@ would break every citation to save a cosmetic tidiness. The board reports the
 collision rate each run so the trend in the legacy range stays visible; pin an
 old id with \`definedIn\` when you touch it.
 
-### Writing an acceptance: the phrase carries meaning
+### Writing an acceptance: the blocker carries meaning
 
-Whether an item lands in *Blocked on Anand* is decided by **matching phrases**
-in its blocker and acceptance text — \`signed-in\`, \`decision needed\`,
-\`approval to apply\`, \`product call\`, \`owner's call\`. There is no separate
-field for it. Two consequences, both measured rather than assumed:
-
-- An acceptance whose *outcome* is that signed-in proof becomes owed reads the
-  same as one that *awaits* it. Write the outcome some other way, or the item
-  disappears from the queue.
-- The match cannot read a negation. "No signed-in proof is required here" is
-  currently counted as requiring it. Two items are affected; if that number
-  grows, the fix is an explicit field, not a cleverer pattern — intent is not
-  a pattern, and widening this one has already proved costly.
+Whether an item lands in *Blocked on Anand* is decided from the board's
+**derived blocker**, not by scanning its raw acceptance text a second time.
+The board recognizes explicit owed/pending proof and decision language while
+leaving descriptive or negated uses alone. This keeps a sentence about a
+signed-in-shaped fixture from silently hiding executable test work.
 
 An item that is finished is excluded from this bucket regardless of phrasing,
 because proof that already happened is not proof that is owed.

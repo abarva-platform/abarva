@@ -539,5 +539,66 @@ claimGrammarCase(
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* ------------------------------------------------------------------------ */
+/* 12. Context about another PR is not status for the current item. T-608. */
+/* ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  const id = "T-608";
+  mapFixtureId(dir, id);
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| ${id} | **Re-check the gap left by PR #8084.** The cited PR belongs to a predecessor item. | T | Measure the current tree and record the result. |\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  check(
+    "a predecessor PR reference does not promote an open item to PR/CI",
+    q.status === 0 && rendered.includes(`| ${id} |`),
+    `exit=${q.status}\nqueue=${rendered}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ */
+/* 13. Describing a fixture is not a request for owner acceptance. T-608.  */
+/* ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  const id = "T-609";
+  mapFixtureId(dir, id);
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| ${id} | **Triage an unowned test directory.** | T | If a suite only resembles a signed-in browser fixture, quarantine it with a reason; do not perform product-session proof. |\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  check(
+    "descriptive signed-in prose does not hide executable work",
+    q.status === 0 && rendered.includes(`| ${id} |`),
+    `exit=${q.status}\nqueue=${rendered}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* A genuine owner gate must remain blocked after the false positives move. */
+{
+  const dir = freshFixture();
+  const id = "T-610";
+  mapFixtureId(dir, id);
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| ${id} | **Verify the deployed surface.** | U | Signed-in acceptance owed. |\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  check(
+    "an explicit signed-in acceptance remains blocked on the owner",
+    q.status === 0 && !rendered.includes(`| ${id} |`) && /Signed-in acceptance owed/.test(rendered),
+    `exit=${q.status}\nqueue=${rendered}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

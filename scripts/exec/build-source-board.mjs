@@ -342,9 +342,9 @@ function firstMatchingSentence(text, rule) {
 }
 
 const BLOCKER_RULES = [
-  { re: /\bnot\s+signed-in\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i, say: "Signed-in acceptance owed" },
+  { re: /\bnot\s+signed-in\b|(?:^|[.!?]\s+)signed-in\s+check\b|signed-in[^.]{0,80}\b(pending|owed|not proven|not performed|not claimed|remains? (?:open|unproven))\b/i, say: "Signed-in acceptance owed" },
   { re: /\brequires? separate approval\b|\bApply requires\b/i, say: "Awaiting approval to apply" },
-  { re: /decision needed|Decide first|decision required|Content decision/i, say: "Decision needed" },
+  { re: /decision needed|Decide first|decision required|Content decision|\bproduct call\b|\bowner'?s call\b|blocked on owner policy/i, say: "Decision needed" },
   { re: /\bblocked\b/i, say: "Blocked (see source)" },
   { re: /\bunclaimed\b/i, say: "Unclaimed" },
 ];
@@ -421,12 +421,26 @@ for (const it of items) {
  * Reporting the raw repeat count conflates them and overstates the problem,
  * which is the same counting error this page exists to stop.
  */
-const UPDATE_TITLE = /^(closed\b|confirmed\b|deploy verified\b|re-?verified\b|verified\b|misdescribed\b|resolved\b|superseded\b|[-\u2014\s]*closed\b)/i;
+const UPDATE_TITLE = /^(closed\b|confirmed\b|deploy verified\b|deployed\b|shipped\b|(?:squash-)?merged\b|pr(?:\s*\/\s*ci)?\b|pr\s*#?\d+\b|live-proven\b|signed-in\b|re-?verified\b|verified\b|misdescribed\b|resolved\b|superseded\b|[-\u2014\s]*closed\b)/i;
 // Classified by what the entry SAYS, not where it sits: a "CLOSED — fixed
 // by #7800" verdict row is an update whether it lands in prose or in a table.
 const isUpdateNote = (d) =>
-  /^Item\s+(?:\d+|[DUCT]-\d{3})\s+[—-]\s+(?:verdict|correction|closed|deploy verified|re-verified)\b/i.test(d.section ?? "") ||
+  /^Item\s+(?:\d+|[DUCT]-\d{3})\s+[—-]\s+(?:verdict|correction|closed|pr(?:\s*\/\s*ci)?|merged|deployed|deploy verified|re-verified|signed-in|live-proven)\b/i.test(d.section ?? "") ||
   UPDATE_TITLE.test(stripMd(d.title || d.raw?.split("\n")[0] || ""));
+
+function attributableStatusText(definition) {
+  if (isUpdateNote(definition)) {
+    return `${definition.section} ${definition.title} ${definition.acceptance} ${definition.raw}`;
+  }
+
+  // Many older table rows were updated in place by putting the verdict at the
+  // start of the Acceptance cell. Preserve that explicit convention without
+  // treating a predecessor PR cited later in the problem statement as status.
+  return [definition.title, definition.acceptance]
+    .map((value) => stripMd(value ?? "").trim())
+    .filter((value) => UPDATE_TITLE.test(value) || /(?:^|[.!?]\s+)CLOSED\b/i.test(value))
+    .join("\n");
+}
 
 const repeatedNums = [...byNum.entries()].filter(([, v]) => v.length > 1).map(([n, v]) => {
   const defs = v.map((x) => ({
@@ -567,7 +581,16 @@ function buildItem(ref) {
   const pinnedCleanly = Boolean(definedIn) && substantive.length === 1;
 
   const claims = claimTextForItem(num);
-  const corpus = [...defs.map((d) => `${d.title} ${d.acceptance} ${d.raw}`), ...claims.map((c) => c.status)].join("\n");
+  // Status is attributable only when the item owns an explicit update/verdict
+  // or an exact claim-log/board record. The substantive problem statement is
+  // context: it routinely cites predecessor PRs, deploys, and proof gaps. Using
+  // that prose as status promoted untouched follow-up work merely because it
+  // named the earlier change that exposed the gap.
+  const statusCorpus = [
+    ...defs.map(attributableStatusText).filter(Boolean),
+    ...claims.map((c) => c.status),
+  ].join("\n");
+  const blockerCorpus = [...defs.map((d) => `${d.title} ${d.acceptance} ${d.raw}`), ...claims.map((c) => c.status)].join("\n");
   return {
     num,
     definedIn,
@@ -589,8 +612,8 @@ function buildItem(ref) {
       [...substantive, ...defs].map((d) => d.acceptance).find(Boolean) ?? "",
     ),
     owner: claims.map((c) => c.owner).find(Boolean) ?? "",
-    rung: deriveRung(corpus),
-    blocker: deriveBlocker(corpus),
+    rung: deriveRung(statusCorpus),
+    blocker: deriveBlocker(blockerCorpus),
   };
 }
 
