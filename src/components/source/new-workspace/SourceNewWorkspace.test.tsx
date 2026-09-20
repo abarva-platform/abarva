@@ -2,13 +2,15 @@
 
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import {
-  SourceNewWorkspace,
+  SourceNewWorkspace as SourceNewWorkspaceImplementation,
   sourceNewFileDownloadHref,
   type SourceNewEventView,
+  type SourceNewWorkspaceProps,
 } from "./SourceNewWorkspace";
 import type { SourceNewFileRow } from "./SourceNewFiles";
 import type { SourceEventActivityResult } from "@/lib/source/activity-log";
 import type { SourceNewEventIntelligenceView } from "@/lib/source/new-workspace/event-intelligence";
+import type { SourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 
 jest.mock("@/components/shell/AppShell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
@@ -86,6 +88,30 @@ const responseFile: SourceNewFileRow = {
   createdAt: "2026-03-10T00:00:00Z",
   updatedAt: "2026-03-10T00:00:00Z",
 };
+
+const unavailableStage05: SourceNewStage05NdaCoverage = {
+  status: "unavailable",
+  asOf: "2026-03-10",
+  suppliers: [],
+  nextAction: {
+    label: "Restore candidate authority",
+    detail: "The governed candidate-panel registry could not be read.",
+  },
+};
+
+function SourceNewWorkspace({
+  stage05NdaCoverage = unavailableStage05,
+  ...props
+}: Omit<SourceNewWorkspaceProps, "stage05NdaCoverage"> & {
+  stage05NdaCoverage?: SourceNewStage05NdaCoverage;
+}) {
+  return (
+    <SourceNewWorkspaceImplementation
+      {...props}
+      stage05NdaCoverage={stage05NdaCoverage}
+    />
+  );
+}
 
 describe("SourceNewWorkspace", () => {
   it("shows one next action for a request without marking missing facts complete", () => {
@@ -573,92 +599,85 @@ describe("SourceNewWorkspace", () => {
     expect(buttons[2].textContent).not.toMatch(/No record|Completed|Approved/);
   });
 
-  it("shows Stage 05 NDA readiness from a governed supplier legal entity", () => {
-    const nda: SourceNewFileRow = {
-      ...responseFile,
-      id: "nda-ready-1",
-      phase: "suppliers",
-      artifactType: "nda_executed",
-      title: "Executed mutual NDA",
-      fileName: "executed-nda.pdf",
-      status: "approved",
-      lifecycleState: "current",
-      approvalState: "approved",
-      approvedAt: "2026-03-02T00:00:00Z",
-      blobSha256: "sha-nda-ready",
-      coveredSupplierLegalEntity: "Example Supplier Legal Entity LLC",
-      coveredScopeId: "event-scope-v1",
-      effectiveFrom: "2026-03-01",
-      expiresOn: "2027-03-01",
+  it("shows one governed Stage 05 result for every accepted supplier", () => {
+    const coverage: SourceNewStage05NdaCoverage = {
+      status: "ready",
+      asOf: "2026-03-10",
+      suppliers: [{
+        legalEntityId: "vendor-1",
+        legalName: "Example Supplier Legal Entity LLC",
+        state: "covered_by_nda",
+        reason: "Executed NDA nda-1 covers this event and entity.",
+        authorityReference: "nda-1",
+        evidenceReference: "EVID-CANDIDATE-1",
+        evidenceCaveats: [],
+      }],
+      nextAction: {
+        label: "Open market package gate",
+        detail: "Every accepted supplier has governed coverage.",
+      },
     };
     render(
       <SourceNewWorkspace
         event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
-        files={[nda]}
+        files={[]}
+        stage05NdaCoverage={coverage}
       />,
     );
 
     const buttons = within(
       screen.getByRole("navigation", { name: "Event phases" }),
     ).getAllByRole("button");
+    expect(buttons[2].textContent).toContain("Recorded");
     fireEvent.click(buttons[2]);
 
     const readiness = screen.getByRole("region", {
       name: "Stage 05 NDA readiness",
     });
-    expect(
-      within(readiness).getByText("Example Supplier Legal Entity LLC"),
-    ).toBeTruthy();
-    expect(
-      within(readiness).getByText("Ready for governed supplier work"),
-    ).toBeTruthy();
-    expect(
-      within(readiness).getByText(
-        "Supplier legal entity recorded: Example Supplier Legal Entity LLC",
-      ),
-    ).toBeTruthy();
-    expect(within(readiness).getByText("event-scope-v1")).toBeTruthy();
-    expect(
-      within(readiness).getByText("NDA scope recorded: event-scope-v1"),
-    ).toBeTruthy();
-    expect(
-      within(readiness).getAllByText("2026-03-01 to 2027-03-01").length,
-    ).toBeGreaterThan(0);
-    expect(
-      within(readiness).getByText(
-        "No Stage 05 NDA blocker is visible in this read model.",
-      ),
-    ).toBeTruthy();
-    expect(
-      within(readiness).getByText("Open market package gate"),
-    ).toBeTruthy();
-    expect(
-      within(readiness).queryByRole("button", { name: /send|contact/i }),
-    ).toBeNull();
-    expect(
-      within(readiness).queryByRole("link", { name: /send|contact/i }),
-    ).toBeNull();
+    expect(within(readiness).getByText("Example Supplier Legal Entity LLC")).toBeTruthy();
+    expect(within(readiness).getByText("Ready for governed supplier work")).toBeTruthy();
+    expect(within(readiness).getByText("Executed NDA")).toBeTruthy();
+    expect(within(readiness).getByText("nda-1")).toBeTruthy();
+    expect(within(readiness).getByText("EVID-CANDIDATE-1")).toBeTruthy();
+    expect(within(readiness).getByText("Open market package gate")).toBeTruthy();
+    expect(within(readiness).queryByRole("button", { name: /send|contact/i })).toBeNull();
+    expect(within(readiness).queryByRole("link", { name: /send|contact/i })).toBeNull();
   });
 
-  it("blocks Stage 05 NDA readiness when a file exists without a supplier legal entity", () => {
-    const nda: SourceNewFileRow = {
-      ...responseFile,
-      id: "nda-blocked-1",
-      phase: "suppliers",
-      artifactType: "nda_executed",
-      title: "Mutual NDA",
-      fileName: "supplier-nda.pdf",
-      status: "approved",
-      lifecycleState: "current",
-      approvalState: "approved",
-      approvedAt: "2026-03-02T00:00:00Z",
-      blobSha256: "sha-nda-blocked",
-      coveredSupplierLegalEntity: null,
+  it("keeps covered and uncovered accepted suppliers visible together", () => {
+    const coverage: SourceNewStage05NdaCoverage = {
+      status: "blocked",
+      asOf: "2026-03-10",
+      suppliers: [
+        {
+          legalEntityId: "vendor-1",
+          legalName: "Covered Supplier LLC",
+          state: "covered_by_nda",
+          reason: "Executed NDA nda-1 covers this event and entity.",
+          authorityReference: "nda-1",
+          evidenceReference: "EVID-CANDIDATE-1",
+          evidenceCaveats: [],
+        },
+        {
+          legalEntityId: "vendor-2",
+          legalName: "Uncovered Supplier Inc.",
+          state: "not_covered",
+          reason: "No executed NDA covers this event and no waiver has been granted.",
+          authorityReference: null,
+          evidenceReference: "EVID-CANDIDATE-2",
+          evidenceCaveats: [],
+        },
+      ],
+      nextAction: {
+        label: "Resolve NDA coverage",
+        detail: "Resolve every uncovered supplier.",
+      },
     };
     render(
       <SourceNewWorkspace
         event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
-        files={[nda]}
+        files={[]}
+        stage05NdaCoverage={coverage}
       />,
     );
 
@@ -670,42 +689,17 @@ describe("SourceNewWorkspace", () => {
     const readiness = screen.getByRole("region", {
       name: "Stage 05 NDA readiness",
     });
-    expect(
-      within(readiness).getAllByText("Not recorded").length,
-    ).toBeGreaterThan(0);
-    expect(
-      within(readiness).getByText("Blocked before supplier work"),
-    ).toBeTruthy();
-    expect(
-      within(readiness).getByText(
-        "No governed supplier legal entity is tied to the NDA artifact.",
-      ),
-    ).toBeTruthy();
-    expect(within(readiness).getByText("Record legal entity")).toBeTruthy();
-    expect(document.body.textContent ?? "").not.toContain(
-      "Example Supplier Legal Entity LLC",
-    );
+    expect(within(readiness).getByText("Covered Supplier LLC")).toBeTruthy();
+    expect(within(readiness).getByText("Uncovered Supplier Inc.")).toBeTruthy();
+    expect(within(readiness).getByText("Not covered")).toBeTruthy();
+    expect(within(readiness).getByText("Resolve NDA coverage")).toBeTruthy();
   });
 
-  it("blocks Stage 05 NDA readiness when scope and validity evidence is missing", () => {
-    const nda: SourceNewFileRow = {
-      ...responseFile,
-      id: "nda-missing-scope-validity-1",
-      phase: "suppliers",
-      artifactType: "nda_executed",
-      title: "Executed mutual NDA",
-      fileName: "executed-nda.pdf",
-      status: "approved",
-      lifecycleState: "current",
-      approvalState: "approved",
-      approvedAt: "2026-03-02T00:00:00Z",
-      blobSha256: "sha-nda-missing-scope-validity",
-      coveredSupplierLegalEntity: "Example Supplier Legal Entity LLC",
-    };
+  it("distinguishes an unavailable authority registry from no accepted suppliers", () => {
     render(
       <SourceNewWorkspace
         event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
-        files={[nda]}
+        files={[]}
       />,
     );
 
@@ -717,75 +711,10 @@ describe("SourceNewWorkspace", () => {
     const readiness = screen.getByRole("region", {
       name: "Stage 05 NDA readiness",
     });
-    expect(
-      within(readiness).getByText("Blocked before supplier work"),
-    ).toBeTruthy();
-    expect(
-      within(readiness).getByText(
-        "No governed NDA scope is tied to the artifact.",
-      ),
-    ).toBeTruthy();
-    expect(
-      within(readiness).getByText(
-        "No NDA effective and expiration dates are recorded.",
-      ),
-    ).toBeTruthy();
-    expect(within(readiness).getByText("Record NDA scope")).toBeTruthy();
-  });
-
-  it.each([
-    {
-      label: "expired",
-      effectiveFrom: "2025-01-01",
-      expiresOn: "2026-03-09",
-      blocker: "The NDA expired before 2026-03-10.",
-    },
-    {
-      label: "not yet effective",
-      effectiveFrom: "2026-03-11",
-      expiresOn: "2027-03-11",
-      blocker: "The NDA is not effective as of 2026-03-10.",
-    },
-  ])("blocks Stage 05 when an NDA is $label on the governed as-of date", ({
-    effectiveFrom,
-    expiresOn,
-    blocker,
-  }) => {
-    const nda: SourceNewFileRow = {
-      ...responseFile,
-      id: `nda-${effectiveFrom}`,
-      phase: "suppliers",
-      artifactType: "nda_executed",
-      title: "Executed mutual NDA",
-      fileName: "executed-nda.pdf",
-      status: "approved",
-      lifecycleState: "current",
-      approvalState: "approved",
-      approvedAt: "2026-03-02T00:00:00Z",
-      blobSha256: "sha-nda-validity",
-      coveredSupplierLegalEntity: "Example Supplier Legal Entity LLC",
-      coveredScopeId: "event-scope-v1",
-      effectiveFrom,
-      expiresOn,
-    };
-    render(
-      <SourceNewWorkspace
-        event={{ ...request, currentStage: "rfp", lifecycle: "active" }}
-        files={[nda]}
-      />,
-    );
-
-    const buttons = within(
-      screen.getByRole("navigation", { name: "Event phases" }),
-    ).getAllByRole("button");
-    fireEvent.click(buttons[2]);
-
-    const readiness = screen.getByRole("region", {
-      name: "Stage 05 NDA readiness",
-    });
-    expect(within(readiness).getByText("Blocked before supplier work")).toBeTruthy();
-    expect(within(readiness).getByText(blocker)).toBeTruthy();
-    expect(within(readiness).getByText("2026-03-10")).toBeTruthy();
+    expect(within(readiness).getByText(
+      "Candidate-panel authority is unavailable; an empty result is not assumed.",
+    )).toBeTruthy();
+    expect(within(readiness).getByText("Restore candidate authority")).toBeTruthy();
   });
 
   it("does not lock phases behind an event that has advanced past them", () => {

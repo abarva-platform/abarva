@@ -11,6 +11,7 @@ import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
 import { sourceNewFilePhase } from "@/lib/source/new-workspace/phase-state";
 import { readSourceEventAuthority } from "@/lib/source/new-workspace/event-authority";
 import { buildSourceNewEventIntelligence } from "@/lib/source/new-workspace/event-intelligence";
+import { readSourceNewStage05NdaCoverage } from "@/lib/source/new-workspace/stage05-nda-coverage";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Source New · AbarVa" };
@@ -40,7 +41,8 @@ export default async function SourceNewEventPage({
   });
   if (!event) notFound();
 
-  const [artifacts, activity, authority] = await Promise.all([
+  const asOfDate = event.valueLedger.updatedAt.slice(0, 10);
+  const [artifacts, activity, authority, stage05NdaCoverage] = await Promise.all([
     listSourceArtifacts(
       event.id,
       {
@@ -50,6 +52,11 @@ export default async function SourceNewEventPage({
     ),
     listSourceEventActivityEntries(event.id),
     readSourceEventAuthority(event.id, activeClient.key),
+    readSourceNewStage05NdaCoverage({
+      clientKey: activeClient.key,
+      eventId: event.id,
+      asOf: asOfDate,
+    }),
   ]);
 
   const files: SourceNewFileRow[] = artifacts.flatMap((artifact) => {
@@ -151,7 +158,7 @@ export default async function SourceNewEventPage({
         trigger: event.triggerDescription ?? null,
         scope: event.scopeDescription ?? null,
         decisionOwner: event.decisionOwner ?? null,
-        asOfDate: event.valueLedger.updatedAt.slice(0, 10),
+        asOfDate,
         solicitationMotion:
           authority.kind === "available" ? authority.solicitationMotion : null,
         solicitationMotionAcceptedAt:
@@ -160,6 +167,7 @@ export default async function SourceNewEventPage({
           authority.kind === "available" ? authority.acceptedByUserId : null,
       }}
       files={files}
+      stage05NdaCoverage={stage05NdaCoverage}
     />
   );
 }
