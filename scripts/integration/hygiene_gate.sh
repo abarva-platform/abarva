@@ -59,14 +59,22 @@ else
 fi
 
 # Section 2: JSON manifest hygiene
+#
+# T-072: these three are judged by node's exit status. The previous form printed
+# `ok` on success and piped it into `grep -q ok` with stderr discarded, which was
+# correct by direction rather than by construction - the only thing that could
+# reach the pipe was the literal the success path printed. Nothing was wrong with
+# them; the idiom is gone because the same construction below WAS wrong, and one
+# reading rule for the file is worth more than four checks each needing an
+# argument for why its own version is safe.
 section "2. JSON manifest hygiene"
-if node -e "JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); console.log('ok')" 2>/dev/null | grep -q ok; then
+if node -e "JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8'))" 2>/dev/null; then
   pass "build-slices.json valid JSON"
 else
   fail "build-slices.json invalid JSON"
 fi
 
-if node -e "JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('ok')" 2>/dev/null | grep -q ok; then
+if node -e "JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8'))" 2>/dev/null; then
   pass "production-readiness.json valid JSON"
 else
   fail "production-readiness.json invalid JSON"
@@ -76,7 +84,7 @@ fi
 # one. The previous "not present (skipped)" branch printed pass(), so deleting
 # the manifest made this check green - the vacuity class recorded in item 47.
 if [ -f docs/build/build-waves.json ]; then
-  if node -e "JSON.parse(require('fs').readFileSync('docs/build/build-waves.json','utf8')); console.log('ok')" 2>/dev/null | grep -q ok; then
+  if node -e "JSON.parse(require('fs').readFileSync('docs/build/build-waves.json','utf8'))" 2>/dev/null; then
     pass "build-waves.json valid JSON"
   else
     fail "build-waves.json invalid JSON"
@@ -86,15 +94,27 @@ else
 fi
 
 # Duplicate slice check
-DUP_SLICES=$(node -e "
+#
+# T-072: this one could not fail for a whole class of subject. It captured stderr
+# with 2>&1, threw away the process.exit(1) its own program uses to report
+# duplicates, and searched the combined output for the substring `ok` - so a
+# duplicated slice id containing those two letters was printed in the failure
+# message and read straight back as the success token. Measured: two slices both
+# named `booking-flow` printed "[PASS] No duplicate slice IDs".
+#
+# Every id in the manifest today is `S<n>`, so nothing was being missed yet. A
+# check that is correct only because no subject has been named with the wrong
+# letters is not a check, which is the same finding as T-071.
+#
+# The verdict is now the exit status, which no slice id can spell. The program
+# reports on stderr so its diagnosis is still captured for the failure line.
+if DUP_SLICES=$(node -e "
 const s=JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8'));
 const ids=s.slices.map(x=>x.id);
 const seen=new Set();const dups=[];
 for(const id of ids){if(seen.has(id))dups.push(id);seen.add(id);}
-if(dups.length>0){console.log('DUPLICATES:'+dups.join(','));process.exit(1);}
-console.log('ok');
-" 2>&1)
-if echo "$DUP_SLICES" | grep -q ok; then
+if(dups.length>0){console.error('DUPLICATES:'+dups.join(','));process.exit(1);}
+" 2>&1); then
   pass "No duplicate slice IDs"
 else
   fail "Duplicate slice IDs: $DUP_SLICES"
