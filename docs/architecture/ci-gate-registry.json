@@ -544,11 +544,15 @@
     },
     "audit:test-ci-coverage": {
       "kind": "report",
-      "reason": "Census mode, and a census by design. scripts/quality/test-ci-coverage-census.mjs counts which Jest suites under src/ a workflow reaches; it has no failure path and always exits 0. It is not a pr-gate because what to do about the number \u2014 widen a jest scope, wire per directory, or accept the gap \u2014 is an open scope-policy decision, and a gate that encodes an undecided policy is worse than a measurement that informs it. The behaviour of the census is enforced by src/__tests__/behaviors/test-ci-coverage-census.test.ts, which does run on every PR."
+      "reason": "Default census mode measures which Jest suites under src/ a workflow reaches and reports count drift without failing. Coverage-shape drift is enforced by the behavior suite because invoking this self-scanning script directly from a workflow changes the measurement it is taking."
+    },
+    "audit:test-ci-coverage:check": {
+      "kind": "operator",
+      "reason": "Operator mirror of the behavior-suite gate. It fails when a directory changes uncovered or partial coverage state without a census refresh, while count-only drift remains a report. The command is not invoked directly by CI because that would make the self-scanning census alter its own reachable-command set."
     },
     "audit:test-ci-coverage:write": {
       "kind": "operator",
-      "reason": "Refreshes the committed census at docs/architecture/test-ci-coverage-census.json. Write-if-changed, so re-running on an unchanged tree leaves the file alone, but it is a write and so belongs to whoever is re-measuring rather than to a PR check."
+      "reason": "Refreshes docs/architecture/test-ci-coverage-census.json after a directory changes uncovered or partial coverage state, or after census semantics change. Write-if-changed keeps unchanged trees clean; the author of the shape-changing PR owns the refresh and review."
     },
     "audit:tower-active-budget-envelopes": {
       "kind": "unclassified"
