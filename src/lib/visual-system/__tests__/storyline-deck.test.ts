@@ -30,7 +30,7 @@ describe("storyline deck (W3)", () => {
     );
   });
 
-  it("passes the handoff profile gates (exhibits present, evidence off-slide)", () => {
+  it("blocks the handoff until the placeholder exhibits become real visuals", () => {
     const deck = buildHandoffDeck(FC_HANDOFF);
     const narrative = deck.slides
       .map((s) => [s.governingMessage, ...(s.points ?? [])].join(" "))
@@ -41,7 +41,12 @@ describe("storyline deck (W3)", () => {
       renderedExhibits: deckExhibits(deck),
       sourceRegisterInBody: false,
     });
-    expect(a.clientReady).toBe(true);
+    expect(a.state).toBe("blocked_missing_visuals");
+    expect(a.clientReady).toBe(false);
+    expect(
+      a.quality.findings.find((f) => f.dimension === "visual_exhibit_quality")
+        ?.detail,
+    ).toContain("One-page executive storyline");
   });
 
   it("renders a self-contained HTML deck with speaker notes off the slide body", () => {

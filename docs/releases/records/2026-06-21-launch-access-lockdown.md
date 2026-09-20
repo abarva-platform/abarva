@@ -19,7 +19,7 @@ The public app entry now behaves like a request-access-only surface, while the a
 ## Client Applicability
 
 - All clients: protected by the same launch access gate.
-- Specific clients: current static test mappings cover Apex, First Capital, Meridian, SkyHarbor, and Lakeshore.
+- Specific clients: current static test mappings cover the declared demo client keys.
 - Internal only: admin access is limited to the approved AbarVa admin identities plus runtime env-provisioned admin emails.
 - Public/demo only: `/` remains public marketing/request-access; `/sign-in` redirects back to public marketing for signed-out users.
 - Feature flag: none.
@@ -51,7 +51,9 @@ The public app entry now behaves like a request-access-only surface, while the a
 
 ## Rollout Plan
 
-Merge to the controlled release branch, build the production container, deploy the app runtime, and set runtime allowlist env vars for the real Kiran/Surekha/KK emails:
+Merge to the controlled release branch, build the production container, deploy the
+app runtime, and set runtime allowlist environment variables for the approved
+exact email entries:
 
 - `ABARVA_LAUNCH_MERIDIAN_EMAILS`
 - `ABARVA_LAUNCH_LAKESHORE_EMAILS`

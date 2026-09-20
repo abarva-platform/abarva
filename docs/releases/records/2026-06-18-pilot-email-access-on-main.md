@@ -36,11 +36,11 @@ access; Source/admin rights still flow from the separate role policy.
 
 | Email | Client | Role |
 |---|---|---|
-| `kmysore@gmail.com` | meridian | client |
-| `surekha.durvasula@gmail.com` | lakeshore | client |
-| `anandshp@gmail.com` | lakeshore | client |
-| `admin@abarva.ai` | arcturus (First Capital) | client |
-| `anand@abarva.ai` | skyharbor | client |
+| `kmysore@gmail.com` | mapped client key | client |
+| `surekha.durvasula@gmail.com` | mapped client key | client |
+| `anandshp@gmail.com` | mapped client key | client |
+| `admin@abarva.ai` | mapped client key | client |
+| `anand@abarva.ai` | mapped client key | client |
 
 These mirror the production pilot's `PILOT_PASSCODE_EMAILS` exactly (mapping +
 role), minus admin — the branch did not place them in its client-admin roster
@@ -75,6 +75,14 @@ image build/deploy → then production traffic is cut over to the main revision
 Revert the commit / redeploy prior `main-<sha>`. Removing an entry from either
 list immediately revokes that user's pinned access on next sign-in.
 
+## Deployment Authority
+
+- Repo-owned deploy workflow: Azure Container Apps main lane.
+- Shared runtime mutators: none in this release record.
+- ACA runtime invariant: required before claiming the change is live.
+- Live signed-in client proof required: yes, for the approved exact allowlist
+  entries after deployment.
+
 ## Audit Evidence
 
 - PR: (filled on open) `fix/pilot-email-access-on-main`
@@ -84,7 +92,5 @@ list immediately revokes that user's pinned access on next sign-in.
 
 ## Known Gaps
 
-The branch's synthetic Lakeshore CXO demo emails
-(`cio@lakeshore-holdings.example.com`, `cfo@…`) are NOT ported here — they are
-demo personas, not pilot users, and out of scope for "don't break pilot access."
-Port separately if the Lakeshore demo roster is needed on main.
+Synthetic demo personas are NOT ported here — they are separate from pilot
+access and out of scope for preserving the exact allowlist.
