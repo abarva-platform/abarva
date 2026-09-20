@@ -38,7 +38,7 @@ jest.mock("@/lib/auth/tenancy", () => ({
 }));
 
 jest.mock("@/lib/active-client", () => ({
-  getActiveClientRow: jest.fn(async () => ({ key: "skyharbor-air" })),
+  getActiveClientRow: jest.fn(async () => ({ key: "skyharbor" })),
 }));
 
 jest.mock("@/lib/auth/source-access-policy", () => ({
@@ -108,6 +108,7 @@ jest.mock("@/lib/source/contract-optimization/read", () => ({
 import { POST } from "../route";
 import { after } from "next/server";
 import { getActiveClientRow } from "@/lib/active-client";
+import type { ClientKey } from "@/lib/client-config";
 import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 import { getContractOptimizationProfile } from "@/lib/source/contract-optimization/read";
 import { isGateApprovalStrictMode } from "@/lib/auth/gate-approval-strict-mode";
@@ -123,7 +124,10 @@ const mockGetContractOptimizationProfile = jest.mocked(
 const mockIsGateApprovalStrictMode = jest.mocked(isGateApprovalStrictMode);
 const mockGateAdvance = jest.mocked(evaluateSourceGateAdvanceContract);
 
-function activeClientRow(key: string) {
+// `key` is what `getActiveClientRow` returns, which is `tenant.appClientKey` —
+// the app-tier ClientKey, not the canonical key. This helper used to take a
+// bare `string`, and every caller passed a value that is not a tenant key.
+function activeClientRow(key: ClientKey) {
   return {
     id: `client-${key}`,
     key,
@@ -140,7 +144,7 @@ describe("POST Source event approve", () => {
     updateStage.mockClear();
     insertActivityLog.mockClear();
     insertActivityLog.mockResolvedValue({ ok: true });
-    mockGetActiveClientRow.mockResolvedValue(activeClientRow("skyharbor-air"));
+    mockGetActiveClientRow.mockResolvedValue(activeClientRow("skyharbor"));
     mockGetContractOptimizationProfile.mockResolvedValue(null);
     applyApproval.mockResolvedValue({ ok: true });
     updateStage.mockResolvedValue({ ok: true });
@@ -237,7 +241,11 @@ describe("POST Source event approve", () => {
       expect(insertActivityLog).toHaveBeenCalledWith(
         expect.objectContaining({
           eventId: "event-1",
-          clientKey: "skyharbor-air",
+          // The route forwards `activeClient.key`, which is the app-tier
+          // ClientKey. This expectation read "skyharbor-air" — the canonical
+          // key — only because the fixture supplied one. Both sides of this
+          // boundary are typed `string`, so nothing distinguished them.
+          clientKey: "skyharbor",
           actorUserId: "user-1",
           actionType: "source_event_approved",
           stageKey: "rfp",
@@ -390,7 +398,7 @@ describe("POST Source event approve", () => {
     expect(mockAutoDraftOnStageEntry).toHaveBeenCalledWith(
       {
         eventId: "event-1",
-        clientKey: "skyharbor-air",
+        clientKey: "skyharbor",
         enteredStage: "rfp",
       },
       { request },
@@ -508,7 +516,7 @@ describe("POST Source event approve", () => {
     eventRow.current_stage_key = "scope";
     eventRow.client_key = "client-a";
     eventRow.sourcing_motion = "competitive_rfp";
-    mockGetActiveClientRow.mockResolvedValueOnce(activeClientRow("client-a"));
+    mockGetActiveClientRow.mockResolvedValueOnce(activeClientRow("arcturus"));
     mockGetContractOptimizationProfile.mockResolvedValueOnce({
       eventId: "event-1",
     } as never);

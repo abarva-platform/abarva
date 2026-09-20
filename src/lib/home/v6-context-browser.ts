@@ -123,8 +123,11 @@ const LINEAGE_COLUMNS: HomeV6BrowserColumn[] = [
 
 const V6_DATASET_BY_CLIENT: Record<ClientKey, string> = {
   apexretail: "apex-retail-synthetic-v6",
+  // `firstcapital` had an entry here too. It was unreachable: the only reader
+  // indexes this map with `appClientKeyForTenant`, which returns either an
+  // alias profile's `appClientKey` or a value `isClientKey` accepted — and
+  // `firstcapital` is neither, it is an alias that resolves to `arcturus`.
   arcturus: "first-capital-financial-synthetic-v6",
-  firstcapital: "first-capital-financial-synthetic-v6",
   meridian: "meridian-health-synthetic-v6",
   northstar: "northstar-clinical-tech-synthetic-v1",
   skyharbor: "skyharbor-air-synthetic-v6",

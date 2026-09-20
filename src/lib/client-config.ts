@@ -143,7 +143,13 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export const ALL_CLIENTS: ClientOption[] = [
+// The ids have to stay literal here: `ClientKey` is derived from them
+// immediately below. An explicit `: ClientOption[]` annotation would widen
+// `id` to `string` before that derivation ran, which made `ClientKey` equal
+// to `string` and left every `Record<ClientKey, …>` unchecked — any key
+// accepted, no key required. `satisfies` gets the same shape checking without
+// the widening.
+export const ALL_CLIENTS = [
   {
     id: "apexretail",
     name: DEMO_SAFE_CLIENT_NAMES.apexretail,
@@ -186,9 +192,16 @@ export const ALL_CLIENTS: ClientOption[] = [
     color: "#2563EB",
     vertical: "Diversified Holdco",
   },
-] as const;
+] as const satisfies readonly ClientOption[];
 
-export type ClientKey = (typeof ALL_CLIENTS)[number]["id"];
+/**
+ * A registry entry with its id still narrowed to the tenant it names.
+ * `ClientOption` widens `id` to `string` for callers that build one; this is
+ * what the registry actually holds.
+ */
+export type RegisteredClientOption = (typeof ALL_CLIENTS)[number];
+
+export type ClientKey = RegisteredClientOption["id"];
 
 export const DEFAULT_CLIENT_KEY: ClientKey = "apexretail";
 
@@ -259,7 +272,9 @@ export function isClientKey(
   return !!value && ALL_CLIENTS.some((client) => client.id === value);
 }
 
-export function getClientOption(id: string | null | undefined): ClientOption {
+export function getClientOption(
+  id: string | null | undefined,
+): RegisteredClientOption {
   return (
     ALL_CLIENTS.find((client) => client.id === id) ??
     ALL_CLIENTS.find((client) => client.id === DEFAULT_CLIENT_KEY) ??

@@ -1646,6 +1646,7 @@ const TENANT_DISPLAY_NAMES: Record<ClientKey, string> = {
   apexretail: "Apex Retail Group",
   northstar: getClientOption("northstar").name,
   skyharbor: "Airline Demo",
+  lakeshore: getClientOption("lakeshore").name,
 };
 
 /**
