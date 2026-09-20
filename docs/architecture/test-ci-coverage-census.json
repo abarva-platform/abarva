@@ -13,18 +13,18 @@
   ],
   "counts": {
     "testFiles": 2330,
-    "coveredTestFiles": 1508,
-    "pullRequestCoveredTestFiles": 1505,
-    "uncoveredTestFiles": 822,
+    "coveredTestFiles": 1520,
+    "pullRequestCoveredTestFiles": 1517,
+    "uncoveredTestFiles": 810,
     "directoriesWithTests": 476,
-    "directoriesFullyCovered": 163,
+    "directoriesFullyCovered": 173,
     "directoriesPartiallyCovered": 19,
-    "directoriesUncovered": 294,
-    "directoriesWithUnrunTestFiles": 313,
+    "directoriesUncovered": 284,
+    "directoriesWithUnrunTestFiles": 303,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 19,
-    "highGovernedRiskDirectories": 93,
+    "highGovernedRiskDirectories": 83,
     "unclassifiedRiskDirectories": 201
   },
   "indeterminateInvocations": [],
@@ -743,7 +743,7 @@
       }
     },
     {
-      "directory": "src/app/api/admin/connectors/[id]/test/__tests__",
+      "directory": "src/app/api/intelligence/ask/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
       "governedRisk": {
@@ -756,7 +756,7 @@
       }
     },
     {
-      "directory": "src/app/api/admin/switch-tenant/__tests__",
+      "directory": "src/app/api/programs/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
       "governedRisk": {
@@ -769,7 +769,7 @@
       }
     },
     {
-      "directory": "src/app/api/intelligence/ask/__tests__",
+      "directory": "src/app/api/setup/initiatives/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
       "governedRisk": {
@@ -782,7 +782,7 @@
       }
     },
     {
-      "directory": "src/app/api/programs/__tests__",
+      "directory": "src/lib/source/contract-depth-package/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
       "governedRisk": {
@@ -795,7 +795,7 @@
       }
     },
     {
-      "directory": "src/app/api/setup/initiatives/__tests__",
+      "directory": "src/lib/source/file-cabinet/__tests__",
       "testFiles": 2,
       "unrunTestFiles": 2,
       "governedRisk": {
@@ -808,32 +808,6 @@
       }
     },
     {
-      "directory": "src/lib/source/contract-depth-package/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 48
-      }
-    },
-    {
-      "directory": "src/lib/source/file-cabinet/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 49
-      }
-    },
-    {
       "directory": "src/app/(maestro)/admin/connectors/_actions/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -843,7 +817,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 50
+        "rank": 48
       }
     },
     {
@@ -856,7 +830,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 51
+        "rank": 49
       }
     },
     {
@@ -869,7 +843,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 52
+        "rank": 50
       }
     },
     {
@@ -882,46 +856,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 53
-      }
-    },
-    {
-      "directory": "src/app/api/admin/context-layer/bulk-upload/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 54
-      }
-    },
-    {
-      "directory": "src/app/api/admin/context-layer/bulk-upload/status/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 55
-      }
-    },
-    {
-      "directory": "src/app/api/admin/context-layer/corpus-import/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 56
+        "rank": 51
       }
     },
     {
@@ -934,72 +869,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 57
-      }
-    },
-    {
-      "directory": "src/app/api/admin/context-layer/manifest-load/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 58
-      }
-    },
-    {
-      "directory": "src/app/api/admin/pricing/rate-cards/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 59
-      }
-    },
-    {
-      "directory": "src/app/api/admin/pricing/rate-cards/import/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 60
-      }
-    },
-    {
-      "directory": "src/app/api/admin/setup-control/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 61
-      }
-    },
-    {
-      "directory": "src/app/api/admin/upload-dataset/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 62
+        "rank": 52
       }
     },
     {
@@ -1012,7 +882,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 63
+        "rank": 53
       }
     },
     {
@@ -1025,7 +895,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 64
+        "rank": 54
       }
     },
     {
@@ -1038,7 +908,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 65
+        "rank": 55
       }
     },
     {
@@ -1051,7 +921,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 66
+        "rank": 56
       }
     },
     {
@@ -1064,7 +934,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 67
+        "rank": 57
       }
     },
     {
@@ -1077,7 +947,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 68
+        "rank": 58
       }
     },
     {
@@ -1090,7 +960,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 69
+        "rank": 59
       }
     },
     {
@@ -1103,7 +973,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 70
+        "rank": 60
       }
     },
     {
@@ -1116,7 +986,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 71
+        "rank": 61
       }
     },
     {
@@ -1129,7 +999,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 72
+        "rank": 62
       }
     },
     {
@@ -1142,7 +1012,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 73
+        "rank": 63
       }
     },
     {
@@ -1155,7 +1025,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 74
+        "rank": 64
       }
     },
     {
@@ -1168,7 +1038,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 75
+        "rank": 65
       }
     },
     {
@@ -1181,7 +1051,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 76
+        "rank": 66
       }
     },
     {
@@ -1194,7 +1064,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 77
+        "rank": 67
       }
     },
     {
@@ -1207,7 +1077,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 78
+        "rank": 68
       }
     },
     {
@@ -1220,7 +1090,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 79
+        "rank": 69
       }
     },
     {
@@ -1233,7 +1103,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 80
+        "rank": 70
       }
     },
     {
@@ -1246,7 +1116,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 81
+        "rank": 71
       }
     },
     {
@@ -1259,7 +1129,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 82
+        "rank": 72
       }
     },
     {
@@ -1272,7 +1142,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 83
+        "rank": 73
       }
     },
     {
@@ -1285,7 +1155,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 84
+        "rank": 74
       }
     },
     {
@@ -1298,7 +1168,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 85
+        "rank": 75
       }
     },
     {
@@ -1311,7 +1181,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 86
+        "rank": 76
       }
     },
     {
@@ -1324,7 +1194,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 87
+        "rank": 77
       }
     },
     {
@@ -1337,7 +1207,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 88
+        "rank": 78
       }
     },
     {
@@ -1350,7 +1220,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 89
+        "rank": 79
       }
     },
     {
@@ -1363,7 +1233,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 90
+        "rank": 80
       }
     },
     {
@@ -1376,7 +1246,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 91
+        "rank": 81
       }
     },
     {
@@ -1389,7 +1259,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 92
+        "rank": 82
       }
     },
     {
@@ -1402,7 +1272,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 93
+        "rank": 83
       }
     },
     {
@@ -1415,7 +1285,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 94
+        "rank": 84
       }
     },
     {
@@ -1428,7 +1298,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 95
+        "rank": 85
       }
     },
     {
@@ -1441,7 +1311,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 96
+        "rank": 86
       }
     },
     {
@@ -1454,7 +1324,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 97
+        "rank": 87
       }
     },
     {
@@ -1467,7 +1337,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 98
+        "rank": 88
       }
     },
     {
@@ -1480,7 +1350,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 99
+        "rank": 89
       }
     },
     {
@@ -1493,7 +1363,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 100
+        "rank": 90
       }
     },
     {
@@ -1506,7 +1376,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 101
+        "rank": 91
       }
     },
     {
@@ -1519,7 +1389,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 102
+        "rank": 92
       }
     },
     {
@@ -1532,7 +1402,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 103
+        "rank": 93
       }
     },
     {
@@ -1545,7 +1415,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 104
+        "rank": 94
       }
     },
     {
@@ -1558,7 +1428,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 105
+        "rank": 95
       }
     },
     {
@@ -1571,7 +1441,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 106
+        "rank": 96
       }
     },
     {
@@ -1584,7 +1454,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 107
+        "rank": 97
       }
     },
     {
@@ -1597,7 +1467,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 108
+        "rank": 98
       }
     },
     {
@@ -1610,7 +1480,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 109
+        "rank": 99
       }
     },
     {
@@ -1623,7 +1493,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 110
+        "rank": 100
       }
     },
     {
@@ -1636,7 +1506,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 111
+        "rank": 101
       }
     },
     {
@@ -1649,7 +1519,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 112
+        "rank": 102
       }
     }
   ],
@@ -2615,18 +2485,6 @@
       "via": []
     },
     {
-      "directory": "src/app/api/admin/connectors/[id]/test/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/admin/switch-tenant/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/app/api/intelligence/ask/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 0,
@@ -2873,55 +2731,7 @@
       "via": []
     },
     {
-      "directory": "src/app/api/admin/context-layer/bulk-upload/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/admin/context-layer/bulk-upload/status/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/admin/context-layer/corpus-import/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/app/api/admin/context-layer/csv-upload/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/admin/context-layer/manifest-load/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/admin/pricing/rate-cards/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/admin/pricing/rate-cards/import/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/admin/setup-control/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/admin/upload-dataset/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []
