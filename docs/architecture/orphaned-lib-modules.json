@@ -4,13 +4,13 @@
   "entryPointCounts": {
     "product": 635,
     "tooling": 1977,
-    "test": 2474
+    "test": 2476
   },
   "counts": {
-    "scanned": 2924,
-    "product": 2129,
+    "scanned": 2925,
+    "product": 2131,
     "tooling": 230,
-    "testOnly": 432,
+    "testOnly": 431,
     "unreferenced": 133
   },
   "testOnly": [
@@ -390,7 +390,6 @@
     "src/lib/source/handoff/source-to-move-handoff-fixtures.ts",
     "src/lib/source/handoff/source-to-move-handoff-types.ts",
     "src/lib/source/handoff/source-to-move-handoff.ts",
-    "src/lib/source/nda/executed-document-evidence.ts",
     "src/lib/source/negotiation/negotiation-posture-fixtures.ts",
     "src/lib/source/negotiation/negotiation-posture-types.ts",
     "src/lib/source/negotiation/negotiation-posture.ts",

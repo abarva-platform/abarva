@@ -30,8 +30,8 @@ test, reached by nothing. The middle two are the finding, and they carry differe
 test-only module cannot be deleted without deciding what to do with its suite, while an
 unreferenced one can just go.
 
-Today's population, recorded as a baseline rather than asserted as a target: of 2,924 non-test
-modules under `src/lib`, 2,129 are reached by product code, 230 only by operator tooling, **432
+Today's population, recorded as a baseline rather than asserted as a target: of 2,925 non-test
+modules under `src/lib`, 2,131 are reached by product code, 230 only by operator tooling, **431
 only by a test**, and **133 by nothing at all**.
 
 The change also repairs a real gap in the shared reachability walk that the new report exposed.
@@ -69,10 +69,10 @@ change despite touching a shared script.
   can be exercised against a fixture tree rather than only against the real tree.
 - `scripts/audit/lib-orphan-report.mjs` (new) — the check and its baseline comparison. Refuses to
   report anything if the walk found zero product entry points, because that is a tooling failure and
-  reporting it as 2,924 findings would be the most confident wrong answer available.
+  reporting it as 2,925 findings would be the most confident wrong answer available.
 - `scripts/audit/lib/route-reachability.mjs` — accepts `proxy.ts` as a non-route runtime entry
   point alongside `middleware.ts`.
-- `docs/architecture/orphaned-lib-modules.json` (new) — the baseline: 432 test-only, 133
+- `docs/architecture/orphaned-lib-modules.json` (new) — the baseline: 431 test-only, 133
   unreferenced.
 - `src/__tests__/behaviors/lib-orphan-report.test.ts` (new) — 12 cases over a fixture tree.
 - `.github/workflows/architecture-boundary.yml` — one step, beside the component reachability step.
@@ -115,6 +115,13 @@ ran a non-zero number of tests before any verdict was trusted.
 The second direction is deliberate. Three other lists in this repository went stale without a red
 build because their ratchet only turned one way; this one fails on a stale entry too, and reports a
 state change (`testOnly -> unreferenced`) separately from a new entry, because the repair differs.
+
+**The stale direction then fired on a real change, in CI, within minutes of being wired.** The first
+pull-request run failed with `Baseline is stale — these are reached again: src/lib/source/nda/executed-document-evidence.ts
+(was testOnly)`. That is not a false positive: `main` had advanced while this branch was open, and a
+merge on it gave that module a product caller for the first time. The branch was rebased and the
+baseline regenerated — 432 test-only became 431. A one-way ratchet would have stayed green and left
+the list quietly wrong, which is the failure mode this direction exists to prevent.
 
 **Same-scope regression baseline**, `npm run test:behaviors`:
 
@@ -175,7 +182,7 @@ by itself. To disable the check without reverting the report, remove the single 
 
 ## Known Gaps
 
-- **The 565 orphans are recorded, not repaired.** This release makes the population visible and
+- **The 564 orphans are recorded, not repaired.** This release makes the population visible and
   stops it growing silently; deciding each module's fate is separate work, and the two buckets need
   different handling. A test-only module must not be cleared by repairing its suite in place —
   that manufactures coverage for code nothing calls.
