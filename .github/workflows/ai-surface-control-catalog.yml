@@ -66,6 +66,9 @@ jobs:
       - name: Exercise Intelligence gate-waiver decision controls
         run: npx jest --runTestsByPath src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts --runInBand
 
+      - name: Exercise Tower portfolio upload non-approval boundary
+        run: npx jest --runTestsByPath src/app/api/tower/upload/__tests__/route.test.ts --runInBand
+
       - name: Exercise renewal cockpit external action
         run: npx jest --runTestsByPath src/components/source/__tests__/RenewalCockpitActionBar.external-action.test.tsx --runInBand
 

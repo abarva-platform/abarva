@@ -94,27 +94,43 @@ function parseMarkdownTableClaims(catalog) {
     fail(`Legal catalog missing: ${catalog.path}`);
   }
 
+  const expectedHeader = parseMarkdownTableColumns(catalog.header);
   const lines = fs.readFileSync(catalogPath, 'utf8').split(/\r?\n/);
   const claims = [];
   let inTable = false;
 
   for (const line of lines) {
-    if (line.trim() === catalog.header) {
+    const columns = parseMarkdownTableColumns(line);
+    if (!inTable && sameColumns(columns, expectedHeader)) {
       inTable = true;
       continue;
     }
     if (!inTable) continue;
-    if (line.startsWith('| ---')) continue;
-    if (!line.startsWith('|')) break;
+    if (isMarkdownDivider(columns)) continue;
+    if (columns.length === 0) break;
 
-    const columns = line
-      .slice(1, -1)
-      .split('|')
-      .map((column) => column.trim());
     claims.push(...catalog.parseClaims(columns));
   }
 
   return claims;
+}
+
+function parseMarkdownTableColumns(line) {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('|')) return [];
+  return trimmed
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((column) => column.trim());
+}
+
+function sameColumns(left, right) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function isMarkdownDivider(columns) {
+  return columns.length > 0 && columns.every((column) => /^:?-{3,}:?$/.test(column));
 }
 
 function collectLegalCatalogClaims() {
