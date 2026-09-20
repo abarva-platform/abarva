@@ -320,6 +320,26 @@
       ]
     },
     {
+      "id": "intelligence-gate-waiver-route",
+      "surface": "Intelligence gate waiver route",
+      "lane": "global-control-lane",
+      "owner": "AbarVa",
+      "path": "src/app/api/reasoning/gate-waiver/route.ts",
+      "requiredControls": [
+        {
+          "kind": "human-approval-gate",
+          "evidence": [
+            "human_rationale_required",
+            "buildMovesGateWaiverEvidencePacket",
+            "aiDecisionEvidencePacket"
+          ],
+          "behavioralTest": {
+            "path": "src/app/api/reasoning/gate-waiver/__tests__/route.controls.test.ts"
+          }
+        }
+      ]
+    },
+    {
       "id": "moves-phase-advance-route",
       "surface": "Moves phase advance route",
       "lane": "global-control-lane",
@@ -562,9 +582,9 @@
     },
     {
       "key": "consequential|Intelligence|Gate waiver / approval|human-approval-gate",
-      "status": "deferred",
-      "controlKind": "human-approval-gate",
-      "reason": "Approval rationale is covered, but waiver remains lighter and needs separate evidence-packet parity before covered status."
+      "status": "covered",
+      "surfaceId": "intelligence-gate-waiver-route",
+      "controlKind": "human-approval-gate"
     },
     {
       "key": "consequential|Intelligence|Pattern to Move promotion|human-approval-gate",
