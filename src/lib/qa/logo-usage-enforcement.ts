@@ -99,12 +99,12 @@ function retiredByBrand1(
  * Every commit here was derived with `git log origin/main` and confirmed with
  * `git merge-base --is-ancestor`. All ten paths were added by `5d795a397`
  * (2026-05-30) and deleted by `f1d8bc95c` (2026-06-05). Seven stayed gone.
- * Three came back and are on the tree today, so they resolve to `fail` and
- * carry the restoring commit with them.
+ * Three came back later; their restoration commits remain recorded here even
+ * after T-504 removes those aliases again.
  *
- * Those three failures belong to T-504, which owns which brand assets are
- * canonical. This register names the evidence; it does not decide, and it
- * must not be cleared by widening the allowed set.
+ * T-504 follows the canonical decision already encoded above: Option 2 compact
+ * assets are authoritative. The aliases clear only by being absent, never by
+ * widening the allowed set.
  */
 export const BRAND_PATH_REGISTER: PathDispositionRegister = {
   'public/brand/abarva-logo-inverse.svg': retiredByBrand1(

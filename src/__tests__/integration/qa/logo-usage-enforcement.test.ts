@@ -77,10 +77,9 @@ describe('BRAND2 Logo Usage Enforcement', () => {
     // Was `=== 'pass'`. Under T-528 an absence that names the commit which
     // removed it reports 'removed', so the old literal no longer describes the
     // state this case is guarding. The guard itself is unchanged and still
-    // RED on purpose: three of the ten assets are back on the tree and
-    // resolve to 'fail'. Relaxing this to "removed or fail" would let the
-    // returning assets satisfy the very case that exists to catch them —
-    // T-504 owns which of them is canonical, and it is not cleared here.
+    // Any returning alias resolves to `fail`. Do not relax this to
+    // "removed or fail": that would let a retired asset satisfy the very case
+    // that exists to catch its return.
     expect(retiredChecks.every((check) => check.status === 'removed')).toBe(true);
   });
 

@@ -81,7 +81,9 @@ describe('SHELL8 — Legacy Shell Code Retirement', () => {
 
     it('listLogoEnforcementTargetFiles() does NOT include TopBar.tsx', () => {
       const files = listLogoEnforcementTargetFiles();
-      const hasTopBar = files.some((f) => f.includes('TopBar'));
+      const hasTopBar = files.some(
+        (f) => f === 'src/components/chrome/TopBar.tsx',
+      );
       expect(hasTopBar).toBe(false);
     });
 

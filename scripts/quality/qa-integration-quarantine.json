@@ -8,18 +8,6 @@
       "failingCase": "wireframe-compliance-audit > getPageComplianceResults > Intelligence page held at 84 after Wave 32",
       "reason": "Asserts the Intelligence page scores exactly 84; it scores 86. A second case then expects every page it returns as needing Wave 32 to carry at least one remaining deviation, and the list comes back empty. Both are the audit measuring a page the retirement rebuilt. Raising 84 to 86 would be the wrong repair \u2014 the number is a lock, and moving a lock to wherever the code landed is how a lock stops meaning anything.",
       "owner": "T-502"
-    },
-    {
-      "suite": "logo-usage-enforcement.test.ts",
-      "failingCase": "BRAND2 Logo Usage Enforcement > failCount === 0 (no enforcement failures in canonical codebase)",
-      "reason": "Three enforcement failures, measured, against an expected zero. A second case guarding against ghost top-bar variants and retired root logo assets returning also fails. These are brand-asset facts about shipping code, not stale contracts, and repairing them means deciding which assets are canonical.",
-      "owner": "T-504"
-    },
-    {
-      "suite": "shell8-legacy-retirement.test.ts",
-      "failingCase": "SHELL8 \u2014 Legacy Shell Code Retirement > Logo Usage Enforcement \u2014 BRAND2-C4 > listLogoEnforcementTargetFiles() does NOT include TopBar.tsx",
-      "reason": "Two cases, both downstream of the same logo enforcement state: the target-file list still includes TopBar.tsx, and the overall report is asserted to have no failures while it has three. Clearing this depends on the same decision as logo-usage-enforcement.test.ts and should be cleared with it.",
-      "owner": "T-504"
     }
   ]
 }

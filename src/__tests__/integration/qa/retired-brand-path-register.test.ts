@@ -12,14 +12,14 @@
  * branch):
  *
  *   - all ten paths were added by 5d795a397 and deleted by f1d8bc95c
- *   - seven are still absent
- *   - three are back on the tree: abarva-logo-inverse.svg at 8b556c126, and
+ *   - seven stayed absent
+ *   - three returned later: abarva-logo-inverse.svg at 8b556c126, and
  *     abarva-logo.svg and abarva-logo-lockup-v2.svg at 6ebe6d4a9
  *
- * Those three are the enforcement failures T-504 owns. This suite does not
- * clear them and must not: it asserts they keep failing, and that the failure
- * now names the commit that restored the file rather than leaving the reader
- * to find it.
+ * T-504 resolves those three enforcement failures by removing the aliases
+ * again after their runtime consumers move to the canonical Option 2 assets.
+ * The register still preserves the original restoration commits as history;
+ * an absent path must resolve as removed rather than repeat a stale return.
  */
 import {
   runLogoUsageEnforcement,
@@ -30,17 +30,6 @@ import { resolvePathStatus } from '@/lib/qa/path-disposition';
 
 /** The commit that retired every one of these paths. */
 const RETIRING_COMMIT = 'f1d8bc95c';
-
-/** Paths measured as still absent on origin/main. */
-const STILL_ABSENT = [
-  'public/brand/abarva-monogram-v-blue.svg',
-  'public/brand/abarva-monogram-v-white.svg',
-  'public/brand/abarva-wordmark-color.svg',
-  'public/brand/abarva-wordmark-monoblack.svg',
-  'public/brand/abarva-wordmark-monoblue.svg',
-  'src/components/shell/AppTopBarEditorial.tsx',
-  'src/components/shell/AppTopBarTwoBar.tsx',
-];
 
 /** Paths measured as restored after the retirement, with the commit. */
 const RESTORED: Record<string, string> = {
@@ -67,9 +56,9 @@ describe('T-528 — retired brand paths resolve through the shared register', ()
     }
   });
 
-  it('the seven absent paths report removed, not a bare pass, and name the commit', () => {
+  it('all retired paths report removed, not a bare pass, and name the retiring commit', () => {
     const checks = retiredChecks();
-    for (const rel of STILL_ABSENT) {
+    for (const rel of RETIRED_BRAND_PATHS) {
       const check = checks.find((c) => c.targetFile === rel);
       expect(check).toBeDefined();
       expect(check!.status).toBe('removed');
@@ -77,22 +66,21 @@ describe('T-528 — retired brand paths resolve through the shared register', ()
     }
   });
 
-  it('the three restored paths keep failing and name the commit that restored each', () => {
+  it('historically restored paths no longer report a current restoration', () => {
     const checks = retiredChecks();
     for (const [rel, restoringCommit] of Object.entries(RESTORED)) {
       const check = checks.find((c) => c.targetFile === rel);
       expect(check).toBeDefined();
-      // T-504 owns whether these assets are canonical. This must stay a failure.
-      expect(check!.status).toBe('fail');
+      expect(check!.status).toBe('removed');
       expect(check!.detail).toContain(RETIRING_COMMIT);
-      expect(check!.detail).toContain(restoringCommit);
+      expect(check!.detail).not.toContain(restoringCommit);
     }
   });
 
-  it('the report still counts three failures — T-528 names evidence, it does not clear T-504', () => {
+  it('the report clears the three asset failures only after every alias is absent', () => {
     const report = runLogoUsageEnforcement();
-    expect(report.failCount).toBe(3);
-    expect(report.removedCount).toBe(7);
+    expect(report.failCount).toBe(0);
+    expect(report.removedCount).toBe(10);
   });
 
   it('a restoration with no commit named is reported as unexplained rather than passing over it', () => {

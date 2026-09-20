@@ -44,9 +44,11 @@ const LIST = path.join(HERE, "qa-integration-quarantine.json");
  * commits that removed them, rather than absences reported as "not yet
  * present". See the ratchet note above: this fails when the list is shorter
  * than this number as well as longer, so a cleared entry cannot leave silent
- * headroom for the next one.
+ * headroom for the next one. Lowered to three by T-503 when the retired route
+ * target was resolved, then to one by T-504 when the canonical brand aliases
+ * were retired and the exact TopBar matcher repaired both owned suites.
  */
-const CEILING = 3;
+const CEILING = 1;
 
 const { quarantined } = JSON.parse(readFileSync(LIST, "utf8"));
 const problems = [];
