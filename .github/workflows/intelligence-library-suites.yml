@@ -1,0 +1,38 @@
+name: Intelligence library suites
+
+# These libraries carry tenant isolation, event isolation, and private-plane
+# controls. Run every reachable suite by default. A small named quarantine is
+# allowed only while its primary subject remains unreachable from the product.
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  intelligence-library-suites:
+    name: Intelligence library suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refuse a stale or growing quarantine
+        run: node --test scripts/quality/check-intelligence-library-quarantine.test.mjs && node scripts/quality/check-intelligence-library-quarantine.mjs
+
+      - name: Run reachable Intelligence library suites
+        run: npx jest src/lib/intelligence/__tests__ --no-coverage --ci $(node scripts/quality/intelligence-library-ignore-args.mjs)

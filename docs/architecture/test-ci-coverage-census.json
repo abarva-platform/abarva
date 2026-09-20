@@ -13,13 +13,13 @@
   ],
   "counts": {
     "testFiles": 2323,
-    "coveredTestFiles": 959,
-    "pullRequestCoveredTestFiles": 956,
-    "uncoveredTestFiles": 1364,
+    "coveredTestFiles": 977,
+    "pullRequestCoveredTestFiles": 974,
+    "uncoveredTestFiles": 1346,
     "directoriesWithTests": 476,
     "directoriesFullyCovered": 91,
-    "directoriesPartiallyCovered": 20,
-    "directoriesUncovered": 365,
+    "directoriesPartiallyCovered": 21,
+    "directoriesUncovered": 364,
     "directoriesWithUnrunTestFiles": 385,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
@@ -99,6 +99,14 @@
       "directory": "src/lib/source/exports/__tests__",
       "testFiles": 24,
       "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/intelligence/__tests__",
+      "testFiles": 23,
+      "coveredTestFiles": 18,
       "via": [
         "command"
       ]
@@ -295,7 +303,7 @@
       }
     },
     {
-      "directory": "src/lib/intelligence/__tests__",
+      "directory": "src/lib/source/ava/__tests__",
       "testFiles": 23,
       "unrunTestFiles": 23,
       "governedRisk": {
@@ -309,20 +317,6 @@
       }
     },
     {
-      "directory": "src/lib/source/ava/__tests__",
-      "testFiles": 23,
-      "unrunTestFiles": 23,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "rank": 9
-      }
-    },
-    {
       "directory": "src/lib/auth/__tests__",
       "testFiles": 19,
       "unrunTestFiles": 19,
@@ -333,7 +327,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -347,7 +341,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -361,7 +355,7 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -375,13 +369,27 @@
           "approval_or_lifecycle_write",
           "tenant_scoped_read"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
       "directory": "src/lib/governance/__tests__",
       "testFiles": 8,
       "unrunTestFiles": 7,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "rank": 13
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/__tests__",
+      "testFiles": 23,
+      "unrunTestFiles": 5,
       "governedRisk": {
         "score": 110,
         "band": "critical",
@@ -2555,30 +2563,6 @@
       }
     },
     {
-      "directory": "src/lib/intelligence/__tests__",
-      "testFiles": 23,
-      "unrunTestFiles": 23,
-      "governedRisk": {
-        "score": 110,
-        "band": "critical",
-        "signals": [
-          "approval_or_lifecycle_write",
-          "tenant_scoped_read"
-        ],
-        "approvalOrLifecycleSourceCount": 1,
-        "approvalOrLifecycleSources": [
-          "src/lib/intelligence/intelligence-consultant-text-synthesis.ts"
-        ],
-        "tenantScopedReadSourceCount": 3,
-        "tenantScopedReadSources": [
-          "src/lib/intelligence/genome-query-broker.ts",
-          "src/lib/intelligence/sentinel-broker-adapter.ts",
-          "src/lib/intelligence/skyharbor-cto-readiness.ts"
-        ],
-        "rank": 8
-      }
-    },
-    {
       "directory": "src/lib/source/ava/__tests__",
       "testFiles": 23,
       "unrunTestFiles": 23,
@@ -2603,7 +2587,7 @@
           "src/lib/source/ava/evidence-readiness-governed-answer.ts",
           "src/lib/source/facts/event-facts-reader.ts"
         ],
-        "rank": 9
+        "rank": 8
       }
     },
     {
@@ -2629,7 +2613,7 @@
           "src/lib/auth/tenancy.ts",
           "src/lib/deliverables/seed-route-resolver.ts"
         ],
-        "rank": 10
+        "rank": 9
       }
     },
     {
@@ -2651,7 +2635,7 @@
         "tenantScopedReadSources": [
           "src/lib/admin/broker/notification-dispatch-broker.ts"
         ],
-        "rank": 11
+        "rank": 10
       }
     },
     {
@@ -2678,7 +2662,7 @@
           "src/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter.ts",
           "src/lib/data-plane/write-adapters/sourceFactWriteAdapter.ts"
         ],
-        "rank": 12
+        "rank": 11
       }
     },
     {
@@ -2706,7 +2690,7 @@
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render/route.ts",
           "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/vendor-submission/route.ts"
         ],
-        "rank": 13
+        "rank": 12
       }
     },
     {
@@ -2728,6 +2712,30 @@
         "tenantScopedReadSources": [
           "src/lib/governance/context-bundle-adapters.ts",
           "src/lib/governance/readiness-backfill.ts"
+        ],
+        "rank": 13
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/__tests__",
+      "testFiles": 23,
+      "unrunTestFiles": 5,
+      "governedRisk": {
+        "score": 110,
+        "band": "critical",
+        "signals": [
+          "approval_or_lifecycle_write",
+          "tenant_scoped_read"
+        ],
+        "approvalOrLifecycleSourceCount": 1,
+        "approvalOrLifecycleSources": [
+          "src/lib/intelligence/intelligence-consultant-text-synthesis.ts"
+        ],
+        "tenantScopedReadSourceCount": 3,
+        "tenantScopedReadSources": [
+          "src/lib/intelligence/genome-query-broker.ts",
+          "src/lib/intelligence/sentinel-broker-adapter.ts",
+          "src/lib/intelligence/skyharbor-cto-readiness.ts"
         ],
         "rank": 14
       }
@@ -3006,12 +3014,6 @@
     {
       "directory": "src/lib/deliverables/orchestrator/__tests__",
       "testFiles": 24,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/intelligence/__tests__",
-      "testFiles": 23,
       "coveredTestFiles": 0,
       "via": []
     },
