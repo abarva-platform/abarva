@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   buildEvaluationBafoReadinessView,
+  buildStage07NegotiationBriefCandidate,
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
   buildVendorEvaluationDecisionView,
@@ -30,9 +31,17 @@ describe("EvaluationBafoReadinessPanel", () => {
       bafoInstructionPack: bafoPack,
       decisionView,
     });
+    const negotiationBriefCandidate = buildStage07NegotiationBriefCandidate({
+      readinessView: view,
+      bafoInstructionPack: bafoPack,
+      decisionView,
+    });
 
     const html = renderToStaticMarkup(
-      createElement(EvaluationBafoReadinessPanel, { view }),
+      createElement(EvaluationBafoReadinessPanel, {
+        view,
+        negotiationBriefCandidate,
+      }),
     );
 
     expect(html).toContain("Stage 07 decision support");
@@ -43,12 +52,18 @@ describe("EvaluationBafoReadinessPanel", () => {
     expect(html).toContain("$96.4M");
     expect(html).toContain("$91.8M");
     expect(html).toContain("Blockers and evidence gaps");
+    expect(html).toContain("Negotiation brief candidate");
+    expect(html).toContain("Accepted facts");
+    expect(html).toContain("Proposed asks");
     expect(html).toContain("Vendor A");
     expect(html).toContain("Vendor B");
     expect(html).toContain("Vendor C");
     expect(html).toContain("Deterministic read");
     expect(html).toContain("does not select a winner");
-    expect(html).not.toMatch(/award approved|guaranteed savings|industry benchmark/i);
+    expect(html).toContain("does not dispatch");
+    expect(html).not.toMatch(
+      /award approved|guaranteed savings|industry benchmark/i,
+    );
   });
 
   it("renders an honest empty state when no records exist", () => {
@@ -63,5 +78,39 @@ describe("EvaluationBafoReadinessPanel", () => {
     expect(html).toContain(
       "Load normalized vendor response packages before comparing vendors.",
     );
+  });
+
+  it("renders planner refusal when scorecard evidence is absent", () => {
+    const profileSet = buildVendorResponseMveProfiles({
+      id: "client-a-test-event",
+      code: "CLIENT-A-LAKE-AMS-OUTSOURCING-2026",
+      name: "Client A AMS Outsourcing RFP",
+      accountName: "Client A",
+    });
+    const intelligence = buildVendorChallengeIntelligence(profileSet);
+    const bafoPack = buildVendorBafoInstructionPack(intelligence);
+    const view = buildEvaluationBafoReadinessView({
+      profileSet,
+      challengeIntelligence: intelligence,
+      bafoInstructionPack: bafoPack,
+      decisionView: null,
+    });
+    const negotiationBriefCandidate = buildStage07NegotiationBriefCandidate({
+      readinessView: view,
+      bafoInstructionPack: bafoPack,
+      decisionView: null,
+    });
+
+    const html = renderToStaticMarkup(
+      createElement(EvaluationBafoReadinessPanel, {
+        view,
+        negotiationBriefCandidate,
+      }),
+    );
+
+    expect(html).toContain("Negotiation brief candidate");
+    expect(html).toContain("Refused");
+    expect(html).toContain("No scorecard evidence rows are available");
+    expect(html).not.toContain("Proposed asks");
   });
 });
