@@ -1389,18 +1389,23 @@ describe("SourceOptimizeContractPage", () => {
       />,
     );
 
-    // No evidence pack supplied, so required evidence is missing and the case
-    // must hold at the evidence step — not sit on a hardcoded step 2.
+    // The selected opportunity reproduces from a calculation run. With no
+    // archetype-governed pack, the generic evidence list cannot contradict
+    // that trace and block the case; diagnosis is the next real gate.
     expect(screen.getByTestId("optimize-step-select")).toHaveAttribute(
       "data-state",
       "complete",
     );
     expect(screen.getByTestId("optimize-step-evidence")).toHaveAttribute(
       "data-state",
-      "blocked",
+      "complete",
     );
     // Nothing downstream of the current step may look done.
-    for (const key of ["diagnose", "plan", "approve", "prove_value"]) {
+    expect(screen.getByTestId("optimize-step-diagnose")).toHaveAttribute(
+      "data-state",
+      "blocked",
+    );
+    for (const key of ["plan", "approve", "prove_value"]) {
       expect(screen.getByTestId(`optimize-step-${key}`)).toHaveAttribute(
         "data-state",
         "future",
@@ -1408,10 +1413,10 @@ describe("SourceOptimizeContractPage", () => {
     }
 
     const next = screen.getByTestId("optimize-next-decision");
-    expect(next).toHaveTextContent("Step 3 of 7");
-    expect(next).toHaveTextContent("Collect 8 missing evidence families");
+    expect(next).toHaveTextContent("Step 4 of 7");
+    expect(next).toHaveTextContent("Validate the diagnosed opportunities");
     expect(screen.getByTestId("optimize-next-blocker")).toHaveTextContent(
-      "8 required evidence families have no governed evidence.",
+      "No opportunity has been validated yet.",
     );
   });
 
