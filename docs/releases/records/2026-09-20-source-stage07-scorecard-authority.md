@@ -37,7 +37,7 @@ Source Stage 07 now has a read-only scorecard authority contract and a mounted S
 ## QA / Validation
 
 - Pass: `npx jest src/lib/source/proposal-intelligence/__tests__/scorecard-authority.test.ts --runInBand` — 5/5 passing.
-- Pass: `npx jest src/components/source/new-workspace/SourceNewWorkspace.test.tsx --runInBand` — 43/43 passing.
+- Pass: `npx jest src/components/source/new-workspace/SourceNewWorkspace.test.tsx --runInBand` — 38/38 passing.
 - Pass: `npx eslint 'src/lib/source/proposal-intelligence/scorecard-authority.ts' 'src/lib/source/proposal-intelligence/__tests__/scorecard-authority.test.ts' 'src/components/source/new-workspace/SourceNewWorkspace.tsx' 'src/components/source/new-workspace/SourceNewWorkspace.test.tsx' 'src/app/(maestro)/source/new/[eventId]/page.tsx'`
 - Pass: `git diff --check`
 - Pass: `npm run typecheck`
