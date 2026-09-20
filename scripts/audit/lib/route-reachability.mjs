@@ -143,6 +143,39 @@ export function isExcluded(relative) {
  * that found no roots would call everything unreachable, which is a tooling
  * failure and not a product finding.
  */
+/**
+ * Every file reachable from ONE entry point, by following imports.
+ *
+ * `computeRouteReachability` answers "can any route reach this file", which
+ * is the right question for finding orphans and the wrong one for checking a
+ * claim about a particular route. The route ownership map claims that a
+ * named route imports a named component, and a global reachable set cannot
+ * tell that claim from a component some other route happens to mount.
+ *
+ * Shared here rather than reimplemented beside the map, for the reason the
+ * graph walk itself is shared: two audits asking the same question must not
+ * be able to disagree about the answer.
+ */
+export function reachableFrom(repoRoot, entryFile) {
+  const srcDir = path.join(repoRoot, 'src');
+  const absolute = path.isAbsolute(entryFile)
+    ? entryFile
+    : path.join(repoRoot, entryFile);
+  if (!fs.existsSync(absolute)) return new Set();
+
+  const reachable = new Set();
+  const queue = [absolute];
+  while (queue.length > 0) {
+    const file = queue.pop();
+    if (reachable.has(file)) continue;
+    reachable.add(file);
+    for (const next of importsOf(file, srcDir)) {
+      if (!reachable.has(next)) queue.push(next);
+    }
+  }
+  return reachable;
+}
+
 export function computeRouteReachability(repoRoot) {
   const srcDir = path.join(repoRoot, 'src');
   const roots = collectRoots(repoRoot);

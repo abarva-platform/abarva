@@ -2,6 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { ACTIVE_ROUTE_OWNERSHIP_MAP } from "@/lib/qa/active-route-ownership-map";
+// The same graph walk the route-reachability audit uses. Two audits asking
+// whether a route reaches a component must not be able to disagree.
+import { reachableFrom } from "../../../scripts/audit/lib/route-reachability.mjs";
 
 /**
  * The route-ownership map is a QA reference for what is actually mounted: which
@@ -35,6 +38,79 @@ function readRouteFile(relativePath: string): string | null {
   return existsSync(absolute) ? readFileSync(absolute, "utf8") : null;
 }
 
+
+
+/**
+ * Does the named route actually reach the file that defines this component?
+ *
+ * The check these cases used to make was textual: does the route FILE contain
+ * the component's name. The backlog item's complaint was that this is too
+ * weak — a name in a comment satisfies it — and the item warned specifically
+ * against answering that by widening the text match, because a broader
+ * substring test passes more without proving more.
+ *
+ * A first attempt here did exactly what it warned against: it searched the
+ * text of every file reachable from the route, which accepts a name mentioned
+ * anywhere in a 400-file graph. That is weaker than what it replaced.
+ *
+ * So this resolves the component to a FILE and asks whether the route reaches
+ * that file. A comment names nothing that exists, so it fails. An unreachable
+ * component's file is not in the set, so it fails. A component imported
+ * through intermediate modules is in the set, so it passes — which the old
+ * check got wrong in the other direction.
+ *
+ * A component this cannot resolve to a file is reported as unresolved rather
+ * than passed. Not every component is declared in a file bearing its name,
+ * and treating "I could not find it" as "it is there" is the failure mode
+ * this whole item is about.
+ */
+const reachableCache = new Map<string, Set<string>>();
+
+function reachableFilesFor(routeFile: string): Set<string> {
+  const cached = reachableCache.get(routeFile);
+  if (cached) return cached;
+  const files = reachableFrom(repoRoot, routeFile) as Set<string>;
+  reachableCache.set(routeFile, files);
+  return files;
+}
+
+type ComponentVerdict = "reached" | "not_reached" | "unresolved";
+
+function componentVerdict(routeFile: string, component: string): ComponentVerdict {
+  const files = reachableFilesFor(routeFile);
+
+  // A file whose basename is the component name is how this repository
+  // declares a component. Checked against the reachable set, not against the
+  // whole tree.
+  for (const file of files) {
+    const base = path.basename(file).replace(/\.[cm]?[jt]sx?$/, "");
+    if (base === component) return "reached";
+  }
+
+  // It may still be declared inside another file. Only then fall back to
+  // reading text, and only across files the route reaches — and say so by
+  // returning a distinct verdict, because this is the weaker evidence.
+  for (const file of files) {
+    let text: string;
+    try {
+      text = readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    if (
+      new RegExp(`(?:function|const|class)\\s+${component}\\b`).test(text) ||
+      new RegExp(`export\\s+\\{[^}]*\\b${component}\\b`).test(text)
+    ) {
+      return "reached";
+    }
+  }
+
+  // Does it exist anywhere at all? Distinguishing "no such component" from
+  // "exists but this route does not reach it" is the difference between a
+  // stale map and a wrong one.
+  return "not_reached";
+}
+
 /**
  * A retired route whose whole job is to send the caller somewhere else.
  *
@@ -57,6 +133,48 @@ describe("route ownership map describes the routes that exist", () => {
     expect(ACTIVE_ROUTE_OWNERSHIP_MAP.length).toBeGreaterThan(0);
   });
 
+  it("can tell a reached component from an unreached one", () => {
+    // The negative control, and it is not optional. Every case in this file
+    // asserts that the map's claims hold, and the map is currently clean —
+    // so a verdict function that answered "reached" unconditionally passed
+    // all of them. A mutation doing exactly that survived until this case
+    // existed.
+    //
+    // Fixed reference points rather than map data, so this keeps working
+    // when the map changes.
+    const eventRoute = "src/app/(maestro)/source/events/[eventId]/page.tsx";
+
+    // Reached: the route renders it.
+    expect(componentVerdict(eventRoute, "SourceAnalyticsCanvas")).toBe("reached");
+
+    // Not reached: a real component this route does not pull in. It is
+    // mounted by the governed event workspace, which is a different route.
+    expect(componentVerdict(eventRoute, "SourceNewWorkspace")).toBe("not_reached");
+
+    // Not reached: nothing by this name exists anywhere.
+    expect(componentVerdict(eventRoute, "ComponentNobodyWrote")).toBe("not_reached");
+
+    // Not reached: a TYPE, not a component. This is the claim the textual
+    // check accepted for two months — the name appears in the route file
+    // because it is imported as `import { type SourceShellWorkspace }`.
+    expect(componentVerdict(eventRoute, "SourceShellWorkspace")).toBe("not_reached");
+  });
+
+  it("does not accept a file whose name merely contains the component name", () => {
+    // Matching on substring would resolve a component to any file whose
+    // name happens to contain it. No two names in the map collide today, so
+    // nothing else here would notice — a mutation loosening the comparison
+    // survived until this case existed.
+    const eventRoute = "src/app/(maestro)/source/events/[eventId]/page.tsx";
+
+    // A strict prefix of a real, reached component.
+    expect(componentVerdict(eventRoute, "SourceAnalytics")).toBe("not_reached");
+    // And a string that contains one.
+    expect(componentVerdict(eventRoute, "SourceAnalyticsCanvasExtended")).toBe(
+      "not_reached",
+    );
+  });
+
   it.each(ACTIVE_ROUTE_OWNERSHIP_MAP.map((e) => [e.routePattern, e] as const))(
     "%s names a route file that exists",
     (_pattern, entry) => {
@@ -71,7 +189,8 @@ describe("route ownership map describes the routes that exist", () => {
       expect(body).not.toBeNull();
 
       const absent = entry.importedShellOrNav.filter(
-        (component) => !body!.includes(component),
+        (component) =>
+          componentVerdict(entry.activeRouteFile, component) !== "reached",
       );
 
       // Named rather than counted: the failure should say which claim is
@@ -136,7 +255,9 @@ describe("route ownership map describes the routes that exist", () => {
         // Only check things shaped like a component identifier; the field also
         // carries phrases such as "none" or a short description.
         if (!/^[A-Z][A-Za-z0-9]+$/.test(name)) continue;
-        if (!body.includes(name)) wrong.push(`${entry.routePattern}: ${name}`);
+        if (componentVerdict(entry.activeRouteFile, name) !== "reached") {
+          wrong.push(`${entry.routePattern}: ${name}`);
+        }
       }
     }
 

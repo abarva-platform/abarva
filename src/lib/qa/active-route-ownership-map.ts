@@ -103,12 +103,18 @@ export const ACTIVE_ROUTE_OWNERSHIP_MAP: ActiveRouteOwnershipEntry[] = [
     routePattern: '/source/events/[eventId]',
     activeRouteFile: 'src/app/(maestro)/source/events/[eventId]/page.tsx',
     activePageComponent: 'SourceEventDetailPage',
-    importedShellOrNav: ['SourceShellWorkspace', 'SourceAnalyticsCanvas'],
+    // 2026-09-19 (T-051): `SourceShellWorkspace` was listed here and is not a
+    // component — it is a type union in source-event-shell-v2.ts, imported as
+    // `import { type SourceShellWorkspace }`. The textual check that guarded
+    // this field could not tell a type import from a mounted component,
+    // because the name does appear in the route file. Resolving the claim
+    // against the import graph found it.
+    importedShellOrNav: ['SourceAnalyticsCanvas'],
     currentPrimaryVisibleComponent: 'SourceAnalyticsCanvas',
     expectedCanonicalShell: 'SourceCanonShell or SourceFoundationShell (canon-compliant)',
     expectedCanonicalWordmark: 'AbarvaWordmark',
     compliance: 'partial',
-    requiredRemediation: 'Enforce canon shell on SourceShellWorkspace. Note that SentinelEngagementCanvas, which this entry named until 2026-09-19, is imported by no route; the components reached only from it are unmounted, and suites written against them prove nothing about this route.',
+    requiredRemediation: 'Enforce canon shell on the workspace this route renders. Note that SentinelEngagementCanvas, which this entry named until 2026-09-19, is imported by no route; the components reached only from it are unmounted, and suites written against them prove nothing about this route.',
     ownerSurface: 'source',
     primaryAgent: 'Nexus',
     riskLevel: 'medium',
