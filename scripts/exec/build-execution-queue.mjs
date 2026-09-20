@@ -140,6 +140,24 @@ const all = [
  */
 const CLAIM_TTL_MS = 3 * 60 * 60 * 1000;
 
+/**
+ * Parse only timestamped claim-log records, while accepting the append-only
+ * grammars already present in the operator log. The timestamp is the record
+ * boundary: prose above the log and prose that merely mentions an item remain
+ * non-authoritative.
+ */
+function parseClaimRecord(line) {
+  const at = line.match(/(?:^|\s)(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z)(?:\s|$)/)?.[1];
+  if (!at) return null;
+
+  const rawId =
+    line.match(/\bitem\s*#?([A-Z]-\d{3}|\d+)\b/i)?.[1] ??
+    line.match(/\bCLAIM(?:ED)?\s+#?([A-Z]-\d{3}|\d+)\b/i)?.[1];
+  if (!rawId) return null;
+
+  return { at, rawId };
+}
+
 function readClaims() {
   if (!fs.existsSync(CLAIMS)) return { held: new Set(), expired: [], released: [] };
   const text = fs.readFileSync(CLAIMS, "utf8");
@@ -152,10 +170,9 @@ function readClaims() {
 
   const latest = new Map(); // item id -> { at, released, inFlight }
   for (const line of text.slice(start).split(/\r?\n/)) {
-    if (!line.trim().startsWith("-")) continue;
-    const at = line.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z)/)?.[1];
-    const rawId = line.match(/\bitem\s*#?([A-Z]-\d{3}|\d+)\b/i)?.[1];
-    if (!at || !rawId) continue;
+    const record = parseClaimRecord(line);
+    if (!record) continue;
+    const { at, rawId } = record;
     const when = Date.parse(at);
     const key = /^\d+$/.test(rawId) ? Number(rawId) : rawId.toUpperCase();
     const prev = latest.get(key);

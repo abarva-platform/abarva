@@ -60,6 +60,7 @@ const FIXTURE_DOCUMENTS = {
 
 /** The line the queue prints when it accepted the summary and rendered. */
 const COUNTS_LINE = /Wrote EXECUTION_QUEUE\.md: \d+ claimable/;
+const NOW = new Date().toISOString().replace(/:\d{2}\.\d{3}Z$/, "Z");
 
 let failures = 0;
 let passes = 0;
@@ -125,6 +126,27 @@ function buildBoardAndQueue(dir) {
   const board = run(dir, "build-source-board.mjs", ["--json"]);
   if (board.status !== 0) throw new Error(`fixture board build failed:\n${board.stderr}`);
   return run(dir, "build-execution-queue.mjs");
+}
+
+function addBacklogItem(dir, id) {
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `\n| ${id} | **Synthetic claim grammar fixture.** | T | Stay out of the claimable table while held. |\n`,
+  );
+}
+
+function claimGrammarCase(name, id, line) {
+  const dir = freshFixture();
+  addBacklogItem(dir, id);
+  fs.appendFileSync(path.join(dir, "EXECUTION_CLAIMS.md"), `\n${line}\n`);
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  check(
+    name,
+    q.status === 0 && !rendered.includes(`| ${id} |`) && rendered.includes(id),
+    `exit=${q.status}\nstdout=${q.stdout.trim()}\nqueue=${rendered}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
 }
 
 console.log("build-execution-queue — staleness guard (T-076)\n");
@@ -346,7 +368,6 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
   fs.rmSync(operatorRoot, { recursive: true, force: true });
 }
 
-
 /* ------------------------------------------------------------------------ */
 /* An unmapped backlog id is invisible to the queue. It used to print a line */
 /* and exit 0, so the item silently never reached anyone -- two ids reached  */
@@ -396,6 +417,72 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* ------------------------------------------------------------------------ */
+/* 9. Every established append-only claim grammar holds the item. T-600.   */
+/* ------------------------------------------------------------------------ */
+claimGrammarCase(
+  "canonical non-bulleted item claim is honoured",
+  "T-530",
+  `${NOW} cx-a item T-530 codex/test-branch — claimed`,
+);
+claimGrammarCase(
+  "pipe-delimited item claim is honoured",
+  "T-531",
+  `- ${NOW} | test-agent | item T-531 · CLAIMED | branch codex/test-branch`,
+);
+claimGrammarCase(
+  "pipe-delimited CLAIM record is honoured",
+  "T-532",
+  `- ${NOW} | test-agent | CLAIM T-532 | measuring current behavior`,
+);
+claimGrammarCase(
+  "pipe-delimited CLAIMED record is honoured",
+  "T-533",
+  `- ${NOW} | test-agent | CLAIMED T-533 | measuring current behavior`,
+);
+
+/* ------------------------------------------------------------------------ */
+/* 10. A later explicit release wins for the same item.                    */
+/* ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-530");
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    `\n- ${NOW} | test-agent | CLAIM T-530 | measuring\n` +
+      `- ${NOW} | test-agent | RELEASED item T-530 | no branch remains\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  check(
+    "a later RELEASED item record makes the row claimable again",
+    q.status === 0 && rendered.includes("| T-530 |") && /Explicitly released[\s\S]*T-530/.test(rendered),
+    `exit=${q.status}\nqueue=${rendered}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ */
+/* 11. Claim-like prose before the append-only log is never authoritative. */
+/* ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  addBacklogItem(dir, "T-530");
+  const claimsPath = path.join(dir, "EXECUTION_CLAIMS.md");
+  const claims = fs.readFileSync(claimsPath, "utf8");
+  fs.writeFileSync(
+    claimsPath,
+    `- ${NOW} | summary prose | CLAIM T-530 | this is above the log\n\n${claims}`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  check(
+    "claim-like prose above the claim log does not hold an item",
+    q.status === 0 && rendered.includes("| T-530 |"),
+    `exit=${q.status}\nqueue=${rendered}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
 
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
