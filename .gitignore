@@ -77,6 +77,12 @@ supabase/.branches/
 parallel-run-diff-results.json
 parallel-run-diff-results.md
 
+# Local execution-board outputs (repo owns generators, not operator state)
+/source-board.html
+/source-board-summary.json
+/EXECUTION_QUEUE.md
+/id-collision-history.json
+
 # Playwright auth state (Source E2E)
 .auth/
 out/
