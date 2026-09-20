@@ -369,6 +369,11 @@ jobs:
       # nothing reaches -- see the release record. It is run anyway because
       # excluding one file would reintroduce the hand-maintained list, and
       # what it does and does not prove is written down instead.
+      # Pattern choice for a step here versus a dedicated workflow is
+      # measured in docs/ci/README-suite-wiring.md. Short version: queue
+      # time is zero either way, this job has 66% headroom, and a dedicated
+      # workflow pays its own setup — so pick on failure attribution, and do
+      # not convert an existing one for consistency alone.
       - name: Exercise unwired component suites (programs, agent, shell, atlas)
         run: >-
           npx jest
