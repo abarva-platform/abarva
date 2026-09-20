@@ -117,17 +117,39 @@ jobs:
       - name: Run the admin component suites
         run: npx jest src/components/admin --no-coverage --ci
 
-      # Deliverables was measured before wiring: 86 of 88 suites passed. The
-      # two red suites were stale assertions from source-label normalization
-      # and the document-final renderer release. The green sibling subtrees are
-      # owned below by their measured subdirectory list; this step owns only the
-      # two repaired directories. The synthesis subtree stays unwired because
-      # no product path reaches it.
-      - name: Run the repaired deliverables suites
+      # One step for the whole deliverables tree: 78 suites / 867 tests.
+      #
+      # It replaces two hand-maintained lists that between them named nine
+      # directories -- the two repaired ones, and the seven green siblings that
+      # were wired separately while those two were still red. The split existed
+      # only because the parent could not be named while it contained failures.
+      # It can now, so the lists are gone, and a directory added under
+      # `deliverables` tomorrow runs the day it lands rather than the day
+      # someone remembers to extend a list.
+      #
+      # `synthesis` is still excluded, by ignore pattern rather than by
+      # omission. Two separate changes reached that conclusion independently:
+      # nothing outside its own tree imports its single file except a suite
+      # that was failing at the time. One ignore entry preserves that decision
+      # where a nine-directory list was preserving it by accident, and it
+      # disappears the day something reaches that code.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces jest's default rather than adding to it.
+      #
+      # The patterns are UNQUOTED deliberately. Quoting them works for jest --
+      # the shell strips the quotes -- but the coverage census reads the raw
+      # command text, so a quoted pattern reaches its matcher with the quote
+      # characters still attached and matches nothing. The census then reports
+      # this directory as covered while this step actually skips it. Measured
+      # both ways before choosing: quoted, jest ran 78 suites and the census
+      # moved synthesis to covered; unquoted, both agree. Filed separately as a
+      # census defect.
+      - name: Run the deliverables suites
         run: >-
           npx jest
-          src/lib/deliverables/__tests__
-          src/lib/deliverables/orchestrator/__tests__
+          src/lib/deliverables
+          --testPathIgnorePatterns /node_modules/ src/lib/deliverables/synthesis
           --no-coverage --ci
 
       - name: Run the uncovered deliverables component suite
@@ -306,18 +328,6 @@ jobs:
       # any of these parents will not run here. That is the cost of the parents
       # being red, and it goes away when they are fixed: the right repair is to
       # fix those suites and collapse these lists into their parents.
-      - name: Run the green deliverables subtrees
-        run: >-
-          npx jest
-          src/lib/deliverables/decision-model
-          src/lib/deliverables/planning
-          src/lib/deliverables/profiles
-          src/lib/deliverables/quality
-          src/lib/deliverables/shared
-          src/lib/deliverables/story
-          src/lib/deliverables/templates
-          --no-coverage --ci
-
       - name: Run the green admin component subtrees
         run: >-
           npx jest
