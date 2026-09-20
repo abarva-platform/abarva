@@ -17,7 +17,7 @@ suites and 348 tests that nothing ran, and this change runs them.
 | tree | red directories | green behind them |
 |---|---|---|
 | `lib/deliverables` | 2 of 10 | **7 subtrees, 22 suites** |
-| `components/admin` | 2 of 6 | **4 subtrees, 6 suites** |
+| `components/admin` | 2 of 6 | **4 subtrees, 6 suites** (one later removed as already covered — see below) |
 | `lib/admin` | all 5 failures in 1 | `ai-initiatives`, **2 suites** |
 
 ### The mistake this corrects
@@ -98,6 +98,19 @@ Set diff: **twelve directories left the uncovered set, none entered, the partial
 set did not move.** The programs dark-directory ratchet is not in scope for these
 trees; checked rather than assumed, **26 before and 26 after**.
 
+> **RESOLVED, and this section was wrong.** The census was right; the check that
+> doubted it was at fault. `src/components/admin/tower` is named in
+> `docs/ci/tower-test-baseline.json`, which `scripts/ci/test-ratchet.mjs` runs as
+> `jest <paths>`, driven by `home-surface-guard.yml` on `pull_request`. The
+> probe below searched workflow YAML and npm scripts for literal jest paths and
+> missed the third hop — workflow → repo script → ratchet baseline JSON — which
+> the census implements deliberately and documents in a comment above the code.
+> No census defect exists. The follow-up item is closed as not-a-defect, and the
+> duplicate step this change added for that directory has been removed. The
+> section is kept rather than deleted because the reasoning error is the useful
+> part: an instrument was accused on the strength of a probe that modelled less
+> of the system than the instrument did.
+
 ### 30 suites run, 29 files newly covered — and the one that does not reconcile
 
 The arithmetic is one short, and chasing it found something worth filing rather
@@ -154,6 +167,7 @@ directories to the uncovered set.
   `lib/admin/__tests__`.
 - **It proves the suites run, not that they are good.** 348 cases were run
   unchanged and not reviewed.
-- **The census discrepancy above is unexplained**, not resolved. Until it is, the
-  covered/uncovered split this lane has been ranking against should be treated as
-  approximately right rather than exact.
+- **The census discrepancy above is resolved**, and the census was correct: the
+  directory is covered by the tower test-ratchet baseline. The covered/uncovered
+  split this lane ranks against stands. The duplicate step for that one directory
+  was removed in the follow-up change.
