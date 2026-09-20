@@ -11,6 +11,20 @@ function normalize(value) {
   return value.replaceAll("\\", "/").replace(/\s+/g, " ").trim();
 }
 
+/**
+ * Whitespace only, for a caller that needs the command's escapes intact.
+ *
+ * `normalize` rewrites `\` to `/` so a Windows-style path in a command matches
+ * a repo-relative one. That is right for a path and wrong for a regular
+ * expression: a `--testPathIgnorePatterns foo\.test\.ts$` argument comes back
+ * as `foo/.test/.ts$`, which matches nothing. Callers that read such an
+ * argument pass `{ preserveEscapes: true }`; every existing caller is unchanged
+ * and still gets the path-normalised form.
+ */
+function collapseWhitespace(value) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
 export function parseChangedIntegrationTests(nameStatus) {
   const changed = [];
   for (const line of nameStatus.split(/\r?\n/)) {
@@ -29,7 +43,7 @@ export function parseChangedIntegrationTests(nameStatus) {
   return [...new Set(changed)].sort();
 }
 
-export function extractWorkflowRunCommands(source) {
+export function extractWorkflowRunCommands(source, { preserveEscapes = false } = {}) {
   const lines = source.split(/\r?\n/);
   const commands = [];
 
@@ -60,7 +74,8 @@ export function extractWorkflowRunCommands(source) {
     commands.push(block.join(" "));
   }
 
-  return commands.map(normalize).filter(Boolean);
+  const shape = preserveEscapes ? collapseWhitespace : normalize;
+  return commands.map(shape).filter(Boolean);
 }
 
 function npmScriptsInvoked(command) {
@@ -72,7 +87,12 @@ function npmScriptsInvoked(command) {
   return names;
 }
 
-export function expandWorkflowCommands(workflowCommands, packageScripts) {
+export function expandWorkflowCommands(
+  workflowCommands,
+  packageScripts,
+  { preserveEscapes = false } = {},
+) {
+  const shape = preserveEscapes ? collapseWhitespace : normalize;
   const expanded = [...workflowCommands];
   const queue = workflowCommands.flatMap(npmScriptsInvoked);
   const visited = new Set();
@@ -83,7 +103,7 @@ export function expandWorkflowCommands(workflowCommands, packageScripts) {
     visited.add(name);
     const command = packageScripts[name];
     if (typeof command !== "string") continue;
-    expanded.push(normalize(command));
+    expanded.push(shape(command));
     queue.push(...npmScriptsInvoked(command));
   }
 

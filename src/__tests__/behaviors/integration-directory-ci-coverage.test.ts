@@ -81,6 +81,20 @@ const QUARANTINED_WIRED_DIRECTORIES = [
     excludedRootFiles: [],
   },
   {
+    // 2026-09-19 (T-500) wired this directory with a six-suite quarantine but
+    // did not list it here, so every case in this file that iterates the
+    // quarantine-wired directories skipped it. It was invisible while the
+    // census counted an excluded suite as covered; correcting that (T-045,
+    // coverage-census section) made the omission observable.
+    //
+    // `excludedRootFiles` is empty because no loose root file begins with
+    // `qa` — checked by listing the integration root, not assumed.
+    directory: "qa",
+    workflow: ".github/workflows/integration-suites.yml",
+    ignoreArgsScript: "scripts/quality/qa-integration-ignore-args.mjs",
+    excludedRootFiles: [],
+  },
+  {
     directory: "intelligence",
     workflow: ".github/workflows/integration-suites.yml",
     ignoreArgsScript:
@@ -297,6 +311,63 @@ const partialCoverage = new Map(
     )
     .map((row) => [row.directory, row]),
 );
+
+/**
+ * Per quarantine-wired directory: how many of its suites its own ignore
+ * patterns exclude, and how many the census says no workflow runs.
+ *
+ * A directory wired WITH a quarantine is partially covered by construction —
+ * its named exclusions do not run, on purpose, with an owner and a reason each,
+ * and the quarantine checker refuses an entry whose cause has been fixed. That
+ * is not the state this file's dark-directory case is about, which is a
+ * directory no workflow reaches at all. Until the census subtracted a command's
+ * own `--testPathIgnorePatterns` these directories read as fully covered, so
+ * the two states were never distinguishable here; now they are, and conflating
+ * them would report four correctly-wired directories as dark.
+ *
+ * The exemption is earned rather than granted: the case below requires the two
+ * numbers to agree, so a suite that stops running in one of these directories
+ * for any reason other than its own quarantine entry still fails.
+ */
+function quarantineAccounting(): {
+  directory: string;
+  excludedBySelf: string[];
+  unrun: number;
+  testFiles: number;
+}[] {
+  return QUARANTINED_WIRED_DIRECTORIES.map(({ directory, ignoreArgsScript }) => {
+    const relative = `${INTEGRATION_ROOT}/${directory}`;
+    const patterns = execFileSync(
+      process.execPath,
+      [path.join(repoRoot, ignoreArgsScript)],
+      { cwd: repoRoot, encoding: "utf8" },
+    )
+      .trim()
+      .split(/\s+/)
+      .filter((token) => token !== "--testPathIgnorePatterns")
+      .map((pattern) => new RegExp(pattern));
+
+    const files = readdirSync(path.join(repoRoot, relative), {
+      withFileTypes: true,
+    })
+      .filter(
+        (entry) =>
+          entry.isFile() && /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(entry.name),
+      )
+      .map((entry) => `${relative}/${entry.name}`)
+      .sort();
+
+    const row = partialCoverage.get(relative);
+    return {
+      directory,
+      excludedBySelf: files.filter((file) =>
+        patterns.some((pattern) => pattern.test(file)),
+      ),
+      unrun: row ? row.testFiles - row.coveredTestFiles : 0,
+      testFiles: row?.testFiles ?? files.length,
+    };
+  });
+}
 
 function expandedWorkflowCommands(): string[] {
   const workflowDir = path.join(repoRoot, ".github/workflows");
@@ -642,7 +713,39 @@ describe("integration directories a workflow actually reaches", () => {
     },
   );
 
+  it("accounts for every unrun suite in a quarantine-wired directory by its own quarantine", () => {
+    // What earns those directories their exemption from the dark-directory
+    // case below. Each is partially covered on purpose; this asserts that the
+    // purpose is the whole of it. The two sides are derived independently — the
+    // exclusion list from the generator the workflow itself runs, the unrun
+    // count from the census — so a suite that stops running for any other
+    // reason is a disagreement rather than a silence.
+    const accounting = quarantineAccounting();
+    expect(accounting).not.toHaveLength(0);
+
+    for (const entry of accounting) {
+      expect({
+        directory: entry.directory,
+        unrun: entry.unrun,
+      }).toEqual({
+        directory: entry.directory,
+        unrun: entry.excludedBySelf.length,
+      });
+      // And the quarantine must be doing something: an empty list here means
+      // the directory belongs in the unquarantined set, not this one.
+      expect(entry.excludedBySelf.length).toBeGreaterThan(0);
+      expect(entry.testFiles).toBeGreaterThan(entry.excludedBySelf.length);
+    }
+  });
+
   it("admits no integration directory that is newly reached by nothing", () => {
+    // A quarantine-wired directory is partially covered by construction, and
+    // the case above proves its unrun suites are exactly the ones it excludes
+    // by name. Reading that as darkness would report four correctly-wired
+    // directories as reached by nothing.
+    const accounted = new Set(
+      quarantineAccounting().map((entry) => entry.directory),
+    );
     const dark = integrationLeafDirectories()
       .filter(
         (directory) =>
@@ -651,6 +754,7 @@ describe("integration directories a workflow actually reaches", () => {
       .map((directory) =>
         directory.slice(INTEGRATION_ROOT.length).replace(/^\//, ""),
       )
+      .filter((name) => !accounted.has(name))
       .sort();
 
     const unrecorded = dark.filter((name) => !KNOWN_DARK_DIRECTORIES.has(name));
