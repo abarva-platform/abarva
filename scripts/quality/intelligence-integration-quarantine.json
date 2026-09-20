@@ -171,7 +171,12 @@
       "missing": [
         "src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx"
       ],
-      "covers": []
+      "covers": [
+        {
+          "module": "src/lib/qa/path-disposition.ts",
+          "status": "kept-other-importer"
+        }
+      ]
     },
     {
       "suite": "intelligence-workflow-canvas.test.ts",
@@ -201,6 +206,10 @@
         },
         {
           "module": "src/lib/programs/enhancement-seed-planner.ts",
+          "status": "kept-other-importer"
+        },
+        {
+          "module": "src/lib/qa/path-disposition.ts",
           "status": "kept-other-importer"
         }
       ]
