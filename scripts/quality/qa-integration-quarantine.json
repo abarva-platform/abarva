@@ -1,19 +1,13 @@
 {
   "note": "QA integration suites that are RED on clean main and are therefore excluded from the Integration suites workflow. src/__tests__/integration/qa held 37 suites and 915 assertions that no workflow ran. Running the directory for the first time found 6 red suites and 9 failing assertions, every one tracing to work that shipped without re-measuring a QA artifact: the July Intelligence shell retirement, and brand-asset enforcement. Default is INCLUDED: a new suite in this directory runs unless it is added here, which is what makes the workflow cover work that has not been written yet. Removing an entry is the fix; adding one needs a reason and an owner.",
-  "howToClear": "Every entry here is a QA artifact asserting a state the product left behind, not a defect in shipping code. Clearing one means re-measuring what the artifact claims against what exists, and repairing the artifact — the way the journey manifest was repaired under T-049, where nine checkpoints were marked as removed rather than deleted so the loss stayed visible. Do NOT clear an entry by relaxing the number it asserts until it matches today; that turns a lock into a mirror. Delete the entry, re-run the directory, and confirm the workflow stays green.",
+  "howToClear": "Every entry here is a QA artifact asserting a state the product left behind, not a defect in shipping code. Clearing one means re-measuring what the artifact claims against what exists, and repairing the artifact \u2014 the way the journey manifest was repaired under T-049, where nine checkpoints were marked as removed rather than deleted so the loss stayed visible. Do NOT clear an entry by relaxing the number it asserts until it matches today; that turns a lock into a mirror. Delete the entry, re-run the directory, and confirm the workflow stays green.",
   "reasonShape": "Every entry names the ONE case that fails, the measured values behind it, and the item that owns it. check-qa-integration-quarantine.mjs re-runs each quarantined suite and fails if it PASSES, so an exclusion whose reason has been fixed cannot sit here quietly.",
   "quarantined": [
     {
       "suite": "wireframe-compliance-audit.test.ts",
       "failingCase": "wireframe-compliance-audit > getPageComplianceResults > Intelligence page held at 84 after Wave 32",
-      "reason": "Asserts the Intelligence page scores exactly 84; it scores 86. A second case then expects every page it returns as needing Wave 32 to carry at least one remaining deviation, and the list comes back empty. Both are the audit measuring a page the retirement rebuilt. Raising 84 to 86 would be the wrong repair — the number is a lock, and moving a lock to wherever the code landed is how a lock stops meaning anything.",
+      "reason": "Asserts the Intelligence page scores exactly 84; it scores 86. A second case then expects every page it returns as needing Wave 32 to carry at least one remaining deviation, and the list comes back empty. Both are the audit measuring a page the retirement rebuilt. Raising 84 to 86 would be the wrong repair \u2014 the number is a lock, and moving a lock to wherever the code landed is how a lock stops meaning anything.",
       "owner": "T-502"
-    },
-    {
-      "suite": "design-workflow-canon-regression.test.ts",
-      "failingCase": "QA24 — Suite D: target page existence (Wave-15/16 routes) > Target page exists: /platform/admin/architecture",
-      "reason": "The route src/app/(maestro)/platform/admin/architecture does not exist. Confirmed by directory listing, not inferred from the failure. Whether it should exist is a product question the suite cannot answer on its own.",
-      "owner": "T-503"
     },
     {
       "suite": "logo-usage-enforcement.test.ts",
@@ -23,7 +17,7 @@
     },
     {
       "suite": "shell8-legacy-retirement.test.ts",
-      "failingCase": "SHELL8 — Legacy Shell Code Retirement > Logo Usage Enforcement — BRAND2-C4 > listLogoEnforcementTargetFiles() does NOT include TopBar.tsx",
+      "failingCase": "SHELL8 \u2014 Legacy Shell Code Retirement > Logo Usage Enforcement \u2014 BRAND2-C4 > listLogoEnforcementTargetFiles() does NOT include TopBar.tsx",
       "reason": "Two cases, both downstream of the same logo enforcement state: the target-file list still includes TopBar.tsx, and the overall report is asserted to have no failures while it has three. Clearing this depends on the same decision as logo-usage-enforcement.test.ts and should be cleared with it.",
       "owner": "T-504"
     }

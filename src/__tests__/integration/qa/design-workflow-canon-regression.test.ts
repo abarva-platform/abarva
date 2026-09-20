@@ -13,6 +13,7 @@ import {
   REQUIRED_CANON,
   WORKFLOW_CONTRACT,
   TARGET_PAGES,
+  RETIRED_TARGET_PAGES,
   buildDesignWorkflowCanonReport,
 } from '../../../lib/qa/design-workflow-canon-regression';
 
@@ -61,8 +62,19 @@ describe('QA24 — Design + Workflow Canon Regression — Suite A: static manife
     expect(WORKFLOW_CONTRACT.length).toBeGreaterThanOrEqual(8);
   });
 
-  it('TARGET_PAGES has exactly 4 items', () => {
-    expect(TARGET_PAGES).toHaveLength(4);
+  it('the canon still accounts for 4 pages, one of them answered', () => {
+    // This was `toHaveLength(4)` against TARGET_PAGES alone, and it broke the
+    // moment a target was answered rather than required -- which is the tell
+    // that the number was pinned to the wrong set. The lock that matters is
+    // the canon's total surface: four pages, and every one of them either
+    // required to exist or recorded as not going to.
+    //
+    // Deliberately not `TARGET_PAGES.length + RETIRED_TARGET_PAGES.length`
+    // compared against itself. 4 is still a literal, so adding a fifth page
+    // to either list is a visible decision.
+    expect(TARGET_PAGES).toHaveLength(3);
+    expect(RETIRED_TARGET_PAGES).toHaveLength(1);
+    expect(TARGET_PAGES.length + RETIRED_TARGET_PAGES.length).toBe(4);
   });
 
   it("all target pages have primaryAgent in ['nexus','sentinel','atlas','steward']", () => {
@@ -82,9 +94,13 @@ describe('QA24 — Design + Workflow Canon Regression — Suite A: static manife
     expect(report.bannedTokens.length).toBe(BANNED_TOKENS.length);
   });
 
-  it('report.targetPages.length === 4', () => {
+  it('report.targetPages carries the pages still required', () => {
+    // The report is built from TARGET_PAGES, so it carries the required set
+    // and not the answered one. Pinned to a literal for the same reason as
+    // above, and cross-checked against the list so the two cannot drift.
     const report = buildDesignWorkflowCanonReport();
-    expect(report.targetPages).toHaveLength(4);
+    expect(report.targetPages).toHaveLength(3);
+    expect(report.targetPages).toHaveLength(TARGET_PAGES.length);
   });
 
   it("BANNED_TOKENS includes a sparkle rule ('sparkle' or '✨')", () => {
@@ -164,5 +180,41 @@ describe('QA24 — Suite D: target page existence (Wave-15/16 routes)', () => {
       const fullPath = path.join(repoRoot, page.filePath);
       expect(fs.existsSync(fullPath)).toBe(true);
     });
+  });
+});
+
+describe('QA24 — Suite D2: targets that were answered, not deleted', () => {
+  // This list used to require /platform/admin/architecture, the suite was
+  // excluded over it, and the exclusion outlived the question. Removing the
+  // entry would have made the suite green and taken the answer with it, so
+  // the answer lives in RETIRED_TARGET_PAGES and is checked here.
+
+  it('records at least one answered target', () => {
+    // Without this the cases below are satisfied by an empty list, which is
+    // what "delete the assertion" would have produced.
+    expect(RETIRED_TARGET_PAGES.length).toBeGreaterThan(0);
+  });
+
+  it.each(RETIRED_TARGET_PAGES)(
+    'retired target is absent: $routePath',
+    ({ filePath }) => {
+      expect(fs.existsSync(path.join(repoRoot, filePath))).toBe(false);
+    },
+  );
+
+  it.each(RETIRED_TARGET_PAGES)(
+    'retired target says what was measured: $routePath',
+    ({ basis }) => {
+      // A retirement without a basis is an assertion nobody can check later.
+      expect(basis.length).toBeGreaterThan(80);
+      expect(basis).toMatch(/never existed|removed|consolidat/i);
+    },
+  );
+
+  it('does not let a target be both required and retired', () => {
+    const required = new Set(TARGET_PAGES.map((p) => p.routePath));
+    for (const retired of RETIRED_TARGET_PAGES) {
+      expect(required.has(retired.routePath)).toBe(false);
+    }
   });
 });
