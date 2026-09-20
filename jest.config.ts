@@ -7,6 +7,29 @@ const config: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'node',
   modulePathIgnorePatterns: ['<rootDir>/.claude/'],
+  // next/jest's default testMatch includes `**/__tests__/**/*`, so every file
+  // under a `__tests__` directory is collected as a suite -- including files
+  // that are not suites. Those then fail with "Your test suite must contain at
+  // least one test", and there are enough of them to drown the real collection
+  // failures: of 14 such failures measured across `src/`, ELEVEN were these.
+  //
+  // Only these three locations are excluded, and each was already failing with
+  // "no tests", so this removes noise rather than coverage:
+  //   • the ESM shims wired up through moduleNameMapper above,
+  //   • the Atlas eval harness (probes plus its runner), which is a script,
+  //   • one standalone helper named `spec.ts`, which the default pattern also
+  //     matches by suffix.
+  //
+  // Deliberately NOT done: narrowing testMatch to require a `.test.`/`.spec.`
+  // suffix. `src/lib/source/__tests__/specialists/specialist-test-utils.ts`
+  // carries no suffix but does contain a real `describe`, so that change would
+  // silently stop running a live suite -- checked before choosing this.
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '<rootDir>/src/__tests__/__mocks__/',
+    '<rootDir>/src/__tests__/atlas-eval/',
+    '<rootDir>/src/testing/test-users/spec\\.ts$',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     // react-markdown and its remark/rehype plugins ship ESM that
