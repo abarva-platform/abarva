@@ -21,7 +21,6 @@ import {
   AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
   sanitizeAutonomousDecisionLanguage,
 } from "@/lib/ai-liability/human-decision-controls";
-import { getDerivedEnterpriseReadForTenant } from '@/lib/enterprise-context/derived-enterprise-read';
 import type {
   AtlasDebugTrace,
   AtlasExecutionMode,
@@ -29,6 +28,7 @@ import type {
   AtlasTenancyCtx,
   AtlasToolResultMap,
 } from '@/lib/atlas/types';
+import type { DerivedEnterpriseReadSummary } from '@/lib/enterprise-context/derived-enterprise-read';
 import {
   loadCuratedSemanticDossier,
   type CuratedDossierLoadResult,
@@ -448,7 +448,10 @@ export async function runAtlasLlm(
       topKTopic: 3,
       atlasTenancy: ctx,
     }),
-    getDerivedEnterpriseReadForTenant(towerState.client.tenantKey ?? towerState.client.clientName),
+    // RETIRED from live composition (backlog T-613) -- see the note at the
+    // Intelligence read model call site. Measured `null` for every configured
+    // tenant before removal, so this is behaviour-preserving.
+    Promise.resolve<DerivedEnterpriseReadSummary | null>(null),
   ]);
 
   const toolResults: AtlasToolResultMap = {

@@ -20,7 +20,6 @@ import type {
 } from '@/lib/atlas/types';
 import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
-import { getDerivedEnterpriseReadForTenant } from '@/lib/enterprise-context/derived-enterprise-read';
 import { formatPercentile } from '@/lib/agent/response-shape';
 import { getArchetype } from '@/lib/atlas/iac/retrieval';
 import type { AIInitiative } from '@/lib/admin/ai-initiatives/queries';
@@ -665,9 +664,10 @@ export async function runScriptedAtlasIntent(
   const toolResults: AtlasToolResultMap = {};
   const towerState = await query_tower_current_state(ctx, surfaceContext);
   toolResults.towerState = towerState;
-  toolResults.derivedEnterpriseRead = await getDerivedEnterpriseReadForTenant(
-    towerState.client.tenantKey ?? towerState.client.clientName,
-  );
+  // RETIRED from live composition (backlog T-613) -- see the note at the
+  // Intelligence read model call site. Measured `null` for every configured
+  // tenant before removal, so this is behaviour-preserving.
+  toolResults.derivedEnterpriseRead = null;
 
   if (intent === 'morning_summary' || intent === 'portfolio_status') {
     const [opening, portfolio] = await Promise.all([get_scripted_opening(ctx), query_portfolio_aggregates(ctx)]);
