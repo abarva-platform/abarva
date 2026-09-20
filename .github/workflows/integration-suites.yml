@@ -120,7 +120,12 @@ name: Integration suites
 # scripts/quality/intelligence-integration-quarantine.json. That list watches
 # the retired paths for RETURN: restore any file it names and
 # check:intelligence-integration-quarantine fails, so the carve-out cannot
-# outlive its reason.
+# outlive its reason. Each entry also DECLARES the modules it imports and what
+# happens to each when it is cleared; the check recomputes that against the
+# tree, so a module that gains a product importer or a live sibling test flips
+# class and fails. Batch 1 deleted eight modules with their tests because
+# nothing else reached them; batch 2's measurement found two that ARE reached,
+# by suites this same workflow runs.
 #
 # 2026-09-19 · `admin` wired WITH A QUARANTINE, the second directory here to
 # need one. 51 suites (46 plus a `data/` subdirectory of 5), of which exactly
@@ -203,7 +208,11 @@ jobs:
       - name: Run the integration directories that pass on main
         run: npx jest src/__tests__/integration/architecture src/__tests__/integration/corpus src/__tests__/integration/data-trust src/__tests__/integration/design src/__tests__/integration/demo src/__tests__/integration/deployment src/__tests__/integration/engagement src/__tests__/integration/knowledge src/__tests__/integration/nexus src/__tests__/integration/observability src/__tests__/integration/programs src/__tests__/integration/security src/__tests__/integration/sentinel src/__tests__/integration/setup src/__tests__/integration/solutions src/__tests__/integration/story-pack src/__tests__/integration/tenants src/__tests__/integration/agent/agent1-foundation.test.ts src/__tests__/integration/admin-context-uploads-tabs.test.tsx src/__tests__/integration/agent-column-agent-answer.test.ts src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts src/__tests__/integration/atlas-page-state-timeout.test.ts src/__tests__/integration/email-code-sign-in-panel.test.tsx src/__tests__/integration/evidence-registry.test.ts src/__tests__/integration/pack-j-realistic-portfolio.test.ts src/__tests__/integration/pattern-deliverable-api.test.ts src/__tests__/integration/sign-in-route-contract.test.ts src/__tests__/integration/strategic-moves-chat-shape.test.ts src/__tests__/integration/supabase.test.ts src/__tests__/integration/tenant-empty-states.test.tsx src/__tests__/integration/tower-p6-handoff-panel.test.ts src/__tests__/integration/demo-code-sign-in-panel.test.tsx src/__tests__/integration/demo-code-sign-in-route.test.ts src/__tests__/integration/demo-p0-graceful-degradation.test.ts src/__tests__/integration/programs-api-contracts.test.ts src/__tests__/integration/programs-demo-beats.test.ts src/__tests__/integration/programs-enhancement-seed-planner.test.ts src/__tests__/integration/programs-enhancement-seed-writer.test.ts src/__tests__/integration/programs-enhancement-spec.test.ts src/__tests__/integration/programs-nexus-ask-route.test.ts src/__tests__/integration/programs-nexus-free-text.test.ts src/__tests__/integration/programs-quality-gates.test.ts --no-coverage --ci
 
-      - name: Refuse a stale or growing Intelligence quarantine list
+      - name: Refuse a stale, growing or mis-classified Intelligence quarantine list
+        # Runs the check's own unit cases first, then the check. The cases pin
+        # what clearing an entry would cost — a `covers` classification that no
+        # longer matches the tree fails here, which is what stops the next batch
+        # being cleared the cheap way.
         run: npm run check:intelligence-integration-quarantine
 
       # A separate step, not an extra path on the command above, because its
