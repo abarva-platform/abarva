@@ -584,5 +584,25 @@ jobs:
           src/lib/knowledge/tenant-data/__tests__/stub-adapter
           --no-coverage --ci
 
+      # The flat enterprise-context tree contains nine suites. Seven are green
+      # and exercise modules or generated packages consumed outside tests:
+      # chunking (3 importers), the intake loader (7), refresh simulation (1),
+      # schema composition (1), template schema (7), and generated package
+      # inputs consumed by seven loader/generator scripts. Two files stay in an
+      # exact quarantine: derived-enterprise-read currently fails because its
+      # retired local inputs are absent, and intelligence-read-model has two
+      # stale aggregation expectations. Loaded 9; collected 9; run 9; green 7.
+      - name: Run the green enterprise context suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/enterprise-context/__tests__/chunking.test.ts
+          src/lib/enterprise-context/__tests__/client-enterprise-context-datasets.test.ts
+          src/lib/enterprise-context/__tests__/meridian-ingestion-plan.test.ts
+          src/lib/enterprise-context/__tests__/meridian-refresh-simulator.test.ts
+          src/lib/enterprise-context/__tests__/meridian-synthetic-dataset.test.ts
+          src/lib/enterprise-context/__tests__/schema.test.ts
+          src/lib/enterprise-context/__tests__/template-schema.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
