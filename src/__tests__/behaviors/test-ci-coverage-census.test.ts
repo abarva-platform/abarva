@@ -746,6 +746,58 @@ describe("test CI coverage census", () => {
     ).toMatchObject({ testFiles: 2, coveredTestFiles: 1 });
   });
 
+  it.each([
+    ["double", '"'],
+    ["single", "'"],
+  ])(
+    "subtracts an ignore pattern the workflow wrote in %s quotes",
+    (_label, quote) => {
+      // The shell strips these quotes before jest sees the argument, so jest
+      // excludes the file either way. The census reads the raw command text,
+      // so without stripping them itself its matcher receives a pattern with
+      // quote characters attached and matches nothing — and it then reports
+      // the file as covered by a command that is explicitly skipping it.
+      //
+      // That is the over-stating direction: a quarantined suite reads as run.
+      // Quoting is the natural way to write an argument in YAML, so this is a
+      // trap laid for whoever writes the next quarantine, not a hypothetical.
+      const pattern = `${quote}lambda/__tests__/excluded\\.test\\.ts$${quote}`;
+      const dir = fixture({
+        "src/lib/lambda/__tests__/kept.test.ts": TEST_FILE,
+        "src/lib/lambda/__tests__/excluded.test.ts": TEST_FILE,
+        ".github/workflows/gate.yml": PR_WORKFLOW(
+          `npx jest src/lib/lambda --testPathIgnorePatterns ${pattern}`,
+        ),
+      });
+      const { census } = runCensus(dir);
+      expect(census.counts).toMatchObject({
+        testFiles: 2,
+        coveredTestFiles: 1,
+        uncoveredTestFiles: 1,
+      });
+    },
+  );
+
+  it("leaves a quote inside a pattern alone", () => {
+    // Only a matched pair wrapping the whole token is shell quoting. A quote
+    // character in the middle is part of the regex, and stripping it would
+    // break a pattern that works today — the repair turning into its own
+    // defect, pointing the other way.
+    const dir = fixture({
+      "src/lib/mu/__tests__/kept.test.ts": TEST_FILE,
+      'src/lib/mu/__tests__/od"d.test.ts': TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        'npx jest src/lib/mu --testPathIgnorePatterns mu/__tests__/od"d\\.test\\.ts$',
+      ),
+    });
+    const { census } = runCensus(dir);
+    expect(census.counts).toMatchObject({
+      testFiles: 2,
+      coveredTestFiles: 1,
+      uncoveredTestFiles: 1,
+    });
+  });
+
   it("resolves the ignore patterns a command takes from a $(node …) substitution", () => {
     // The real shape. Every quarantine in this repository is held in JSON and
     // turned into flags by a small script the workflow calls inside `$( )`, so
