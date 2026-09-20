@@ -210,8 +210,15 @@ jobs:
       # directories in each case, with green siblings behind them:
       #
       #   src/lib/deliverables   2 red dirs of 10; 7 green subtrees, 22 suites
-      #   src/components/admin   2 red dirs of  6; 4 green subtrees,  6 suites
+      #   src/components/admin   2 red dirs of  6; 3 green subtrees,  5 suites
       #   src/lib/admin          all 5 failures in one dir; ai-initiatives green
+      #
+      # `components/admin/tower` was in this list for one commit and has been
+      # removed: the tower test-ratchet baseline (docs/ci/tower-test-baseline.json,
+      # run by home-surface-guard.yml on pull_request) already names it, so
+      # running it here was a duplicate. See the release record for how that was
+      # missed -- the coverage census had it right and the check that doubted it
+      # was the thing at fault.
       #
       # 30 suites / 348 tests, measured on `3720e95eb`, hidden behind a label
       # applied one level too high.
@@ -249,7 +256,6 @@ jobs:
           src/components/admin/agent-readiness-redesign
           src/components/admin/data-trust-redesign
           src/components/admin/setup
-          src/components/admin/tower
           --no-coverage --ci
 
       - name: Run the admin AI-initiatives suites
