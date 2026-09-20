@@ -1,3 +1,25 @@
+/**
+ * The pattern manifest is a FROZEN artifact. There is no way to regenerate it.
+ *
+ * `generated/pattern-manifest.json` is 19 MB, holds 3,569 patterns, and
+ * records `generatedAt: 2026-06-20` and `sourceDir: "repo-authored-corpus"`.
+ * It does not record what generated it, and the generator is gone:
+ * `src/scripts/intelligence/generate-pattern-manifest.ts` does not exist and
+ * the npm script that named it has been removed, because a script promising
+ * a repair path that cannot run is worse than no script.
+ *
+ * Neither of the two obvious labels is true. It is **not hand-maintained** —
+ * nobody edits 19 MB and 3,569 entries by hand. It is **not regenerable** —
+ * rebuilding a generator would mean guessing at a corpus read three months
+ * ago and hoping the output matched. It is frozen, and that is the honest
+ * word for it.
+ *
+ * What that means in practice: a defect found in this file's *contents* has
+ * no repair path through regeneration. Fixing one means editing the
+ * generated JSON directly and saying so, or rebuilding the generator as its
+ * own piece of work with its own proof that the output is equivalent.
+ * Neither should happen by accident while fixing something else.
+ */
 import manifestJson from "./generated/pattern-manifest.json";
 import { buildAllProgramsSeedPlan } from "@/lib/programs/enhancement-seed-planner";
 import type {
