@@ -41,6 +41,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # shellcheck is preinstalled on ubuntu-latest. `bash -n` catches syntax
+      # and nothing else, and three of the last four defects in this script
+      # family were shell semantics: a pipe swallowing an exit status, a
+      # substring test standing in for a comparison, a variable hiding a path
+      # from a resolver. Every one was found by a person noticing a
+      # construction.
+      #
+      # This starts clean rather than with a waiver list. Measured before it
+      # was proposed: 15 shell files under scripts/, 0 errors, 2 warnings, 6
+      # findings in total, and all six were fixed or answered rather than
+      # baselined. A gate that arrives already failing teaches people to
+      # ignore it.
+      #
+      # -x so a sourced sibling is followed instead of reported as unreadable.
+      - name: Shellcheck scripts/
+        run: |
+          shellcheck --version
+          find scripts -name '*.sh' -type f -print0 | xargs -0 shellcheck -x
+
       - name: Make hygiene gate executable
         run: chmod +x scripts/integration/hygiene_gate.sh
 
