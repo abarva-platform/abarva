@@ -12,11 +12,20 @@
 
 import {
   runIntelTowerBlueprintVerification,
+  resolvePathStatus,
+  BLUEPRINT_PATH_REGISTER,
   type IntelTowerBlueprintVerificationReport,
+  type PathDispositionRegister,
   type VerificationStatus,
 } from '../../../lib/qa/intelligence-tower-blueprint-verification';
 
-const VALID_STATUSES: VerificationStatus[] = ['pass', 'fail', 'deferred', 'not_applicable'];
+const VALID_STATUSES: VerificationStatus[] = [
+  'pass',
+  'fail',
+  'deferred',
+  'removed',
+  'not_applicable',
+];
 const VALID_SURFACES = ['intelligence', 'tower', 'shared'] as const;
 
 describe('QA29: Intelligence Tower Blueprint Verification', () => {
@@ -71,8 +80,9 @@ describe('QA29: Intelligence Tower Blueprint Verification', () => {
 
   // ── Count reconciliation ──────────────────────────────────────────────────
 
-  it('passCount + failCount + deferredCount === checks.length', () => {
-    const sum = report.passCount + report.failCount + report.deferredCount;
+  it('passCount + failCount + deferredCount + removedCount === checks.length', () => {
+    const sum =
+      report.passCount + report.failCount + report.deferredCount + report.removedCount;
     expect(sum).toBe(report.checks.length);
   });
 
@@ -149,9 +159,13 @@ describe('QA29: Intelligence Tower Blueprint Verification', () => {
   });
 
   it('IntelligenceRouteShell check is present', () => {
+    // Updated under T-521: `removed` is a legitimate outcome for this path.
+    // INT-I1 (7c6d894e9) deleted IntelligenceRouteShell.tsx deliberately, and
+    // the check reported that deletion as `deferred` — "not yet present …
+    // Deferred pending INTEL1 merge" — for the five months since.
     const check = report.checks.find((c) => c.checkId === 'INTEL1-SHELL-01');
     expect(check).toBeDefined();
-    expect(check?.status === 'pass' || check?.status === 'deferred').toBe(true);
+    expect(['pass', 'deferred', 'removed']).toContain(check?.status);
   });
 
   it('TowerRouteShell check is present', () => {
@@ -209,5 +223,139 @@ describe('QA29: Intelligence Tower Blueprint Verification', () => {
     expect(surfaces.has('intelligence')).toBe(true);
     expect(surfaces.has('tower')).toBe(true);
     expect(surfaces.has('shared')).toBe(true);
+  });
+});
+
+// ── T-521: an absent path is declared, never inferred ──────────────────────
+//
+// Before this, every absent path resolved to `deferred` with the words "not
+// yet present … Deferred pending <SLICE> merge". Three of the paths this
+// report reads were not unbuilt — they were deliberately removed:
+//
+//   src/components/intelligence/IntelligenceRouteShell.tsx
+//     added by b26927adc (#378), deleted by 7c6d894e9 (INT-I1), whose own
+//     commit body reads "Delete IntelligenceRouteShell.tsx (G4 …)".
+//   src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx
+//     deleted by 0c6a86c51, the legacy v1–v4 surface sunset.
+//
+// A check that cannot tell "not built yet" from "deliberately deleted"
+// reports the wrong state in whichever direction the tree moves, so the
+// disposition is declared in BLUEPRINT_PATH_REGISTER and the resolver refuses
+// to guess: an undeclared absence is a `fail` that asks for the declaration,
+// and a declared retirement whose file came back is a `fail` too.
+
+describe('QA29: absent paths are declared, not inferred', () => {
+  let report: IntelTowerBlueprintVerificationReport;
+
+  beforeAll(() => {
+    report = runIntelTowerBlueprintVerification();
+  });
+
+  const RETIRED_FIXTURE: PathDispositionRegister = {
+    'src/fixture/Gone.tsx': {
+      retired: {
+        commit: 'abc1234',
+        slice: 'FIX-1',
+        replacement: 'src/fixture/Replacement.tsx',
+        note: 'Retired when the fixture slice landed.',
+      },
+    },
+  };
+
+  const PENDING_FIXTURE: PathDispositionRegister = {
+    'src/fixture/NotYet.tsx': {
+      pending: { slice: 'FIX-2', note: 'Lands with the fixture slice.' },
+    },
+  };
+
+  it('an absent path declared retired resolves to removed, naming the commit and the slice', () => {
+    const resolved = resolvePathStatus('src/fixture/Gone.tsx', false, RETIRED_FIXTURE);
+    expect(resolved.status).toBe('removed');
+    expect(resolved.detail).toContain('abc1234');
+    expect(resolved.detail).toContain('FIX-1');
+    expect(resolved.detail).toContain('src/fixture/Replacement.tsx');
+    // The old vocabulary must not come back for a deletion.
+    expect(resolved.detail.toLowerCase()).not.toContain('not yet present');
+    expect(resolved.detail.toLowerCase()).not.toContain('pre-integration');
+  });
+
+  it('a path declared retired but PRESENT is a failure, so the register cannot go stale the other way', () => {
+    const resolved = resolvePathStatus('src/fixture/Gone.tsx', true, RETIRED_FIXTURE);
+    expect(resolved.status).toBe('fail');
+    expect(resolved.detail).toContain('abc1234');
+  });
+
+  it('an absent path declared pending resolves to deferred', () => {
+    const resolved = resolvePathStatus('src/fixture/NotYet.tsx', false, PENDING_FIXTURE);
+    expect(resolved.status).toBe('deferred');
+    expect(resolved.detail).toContain('FIX-2');
+  });
+
+  it('an absent path that nothing declares is a failure, not a deferral', () => {
+    const resolved = resolvePathStatus('src/fixture/Undeclared.tsx', false, {});
+    expect(resolved.status).toBe('fail');
+    expect(resolved.status).not.toBe('deferred');
+    expect(resolved.detail).toContain('BLUEPRINT_PATH_REGISTER');
+  });
+
+  it('a present path that nothing declares passes', () => {
+    const resolved = resolvePathStatus('src/fixture/Here.tsx', true, {});
+    expect(resolved.status).toBe('pass');
+  });
+
+  it('no register entry declares a path both retired and pending', () => {
+    for (const [rel, disposition] of Object.entries(BLUEPRINT_PATH_REGISTER)) {
+      const declared = [disposition.retired, disposition.pending].filter(Boolean).length;
+      expect(`${rel}: ${declared}`).toBe(`${rel}: 1`);
+    }
+  });
+
+  // ── the real tree ───────────────────────────────────────────────────────
+
+  it('IntelligenceRouteShell is reported as removed by INT-I1, not as pending INTEL1', () => {
+    const check = report.checks.find((c) => c.checkId === 'INTEL1-SHELL-01');
+    expect(check?.status).toBe('removed');
+    expect(check?.detail).toContain('7c6d894e9');
+    expect(check?.detail).toContain('INT-I1');
+  });
+
+  it('the IntelligenceRouteShell caveat check reports the same removal, not a deferral', () => {
+    const check = report.checks.find((c) => c.checkId === 'INTEL1-CAVEAT-01');
+    expect(check?.status).toBe('removed');
+    expect(check?.detail).toContain('7c6d894e9');
+  });
+
+  it('the sunset tenant Intelligence route is reported as removed, and names what replaced it', () => {
+    const check = report.checks.find((c) => c.checkId === 'INTEL-ROUTE-01');
+    expect(check?.status).toBe('removed');
+    expect(check?.detail).toContain('0c6a86c51');
+    expect(check?.detail).toContain('src/app/(maestro)/intelligence/page.tsx');
+  });
+
+  it('every path the register declares retired is genuinely absent from the tree', () => {
+    const stillPresent = report.checks
+      .filter((c) => c.status === 'fail' && c.detail.includes('declared retired'))
+      .map((c) => c.checkId);
+    expect(stillPresent).toEqual([]);
+  });
+
+  // ── counts and the top-line verdict ─────────────────────────────────────
+
+  it('removedCount matches actual removed statuses and joins the reconciliation', () => {
+    const actual = report.checks.filter((c) => c.status === 'removed').length;
+    expect(report.removedCount).toBe(actual);
+    expect(report.passCount + report.failCount + report.deferredCount + report.removedCount).toBe(
+      report.checks.length,
+    );
+  });
+
+  it('a report carrying removals is partial, never a clean pass', () => {
+    if (report.removedCount > 0 && report.failCount === 0) {
+      expect(report.overallStatus).toBe('partial');
+    }
+  });
+
+  it('the caveat states that removals are recorded rather than deferred', () => {
+    expect(report.caveat.toLowerCase()).toContain('removed');
   });
 });

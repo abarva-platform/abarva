@@ -37,11 +37,16 @@ const SUITE_DIR = path.join(REPO, "src/__tests__/integration", "qa");
 const LIST = path.join(HERE, "qa-integration-quarantine.json");
 
 /**
- * The list length when the directory was first wired on 2026-09-19 (T-500).
- * Six. See the ratchet note above: this fails when the list is shorter than
- * this number as well as longer.
+ * The list length when the directory was first wired on 2026-09-19 (T-500) was
+ * six. Lowered to five on 2026-09-20 by T-521, which cleared
+ * intelligence-tower-blueprint-verification.test.ts by repairing the artifact:
+ * the three absent paths it reads are now declared retirements naming the
+ * commits that removed them, rather than absences reported as "not yet
+ * present". See the ratchet note above: this fails when the list is shorter
+ * than this number as well as longer, so a cleared entry cannot leave silent
+ * headroom for the next one.
  */
-const CEILING = 6;
+const CEILING = 5;
 
 const { quarantined } = JSON.parse(readFileSync(LIST, "utf8"));
 const problems = [];

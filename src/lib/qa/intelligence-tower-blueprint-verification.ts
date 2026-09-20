@@ -6,9 +6,25 @@
  * contracts, and supporting manifest entries are all present and correctly
  * formed.
  *
- * INTEL1-3 and TOWER1-3 are pre-integration components that may not yet exist
- * on this branch. Checks for those items return status: 'deferred' so the
- * overall suite passes now and will fully pass after integration.
+ * An absent path is DECLARED, never inferred. Until T-521 every absent path
+ * resolved to 'deferred' with the words "not yet present ... Deferred pending
+ * <SLICE> merge", which reports a deliberate deletion as work that has not
+ * landed yet. Three of the paths read here were removed on purpose, and the
+ * oldest had been reported as pending for five months.
+ *
+ * BLUEPRINT_PATH_REGISTER carries the disposition of every path that may be
+ * absent, and resolvePathStatus refuses to guess:
+ *
+ *   absent  + declared retired -> 'removed', naming the commit that removed it
+ *   absent  + declared pending -> 'deferred', naming the slice that adds it
+ *   absent  + nothing declared -> 'fail', asking for the declaration
+ *   present + declared retired -> 'fail', because the register went stale the
+ *                                 other way and the file came back
+ *   present + nothing declared -> 'pass'
+ *
+ * A removal keeps overallStatus at 'partial' rather than 'pass': the blueprint
+ * still describes something the tree no longer has, and that loss stays
+ * visible at the top line.
  *
  * Every result is deterministic: the same filesystem state always produces the
  * same report. No model calls, no network calls, no Date.now, no Math.random.
@@ -17,7 +33,37 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type VerificationStatus = 'pass' | 'fail' | 'deferred' | 'not_applicable';
+export type VerificationStatus =
+  | 'pass'
+  | 'fail'
+  | 'deferred'
+  | 'removed'
+  | 'not_applicable';
+
+/** A path that is gone on purpose, with the commit that removed it. */
+export interface RetiredPath {
+  /** Short SHA of the commit that deleted the path. */
+  commit: string;
+  /** The slice or change the deletion belongs to. */
+  slice: string;
+  /** What serves this purpose now, or null when nothing replaced it. */
+  replacement: string | null;
+  /** Why it went, in the words of the change that removed it. */
+  note: string;
+}
+
+/** A path that has not been built yet, under a named slice. */
+export interface PendingPath {
+  slice: string;
+  note: string;
+}
+
+export interface PathDisposition {
+  retired?: RetiredPath;
+  pending?: PendingPath;
+}
+
+export type PathDispositionRegister = Record<string, PathDisposition>;
 
 export interface IntelTowerCheck {
   checkId: string;
@@ -34,6 +80,7 @@ export interface IntelTowerBlueprintVerificationReport {
   passCount: number;
   failCount: number;
   deferredCount: number;
+  removedCount: number;
   overallStatus: 'pass' | 'fail' | 'partial';
   caveat: string;
   deterministicSeed: true;
@@ -68,6 +115,106 @@ function isValidJson(content: string): boolean {
   }
 }
 
+/**
+ * Every path this report reads that may legitimately be absent.
+ *
+ * Nothing here is inferred from the tree: a path is absent because a named
+ * commit removed it, or because a named slice has not added it yet, and an
+ * absence that matches neither is a failure asking for this entry.
+ */
+export const BLUEPRINT_PATH_REGISTER: PathDispositionRegister = {
+  'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx': {
+    retired: {
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: 'src/app/(maestro)/intelligence/page.tsx',
+      note:
+        'The tenant-scoped Intelligence route was sunset with the other legacy ' +
+        'surface versions. The surviving /intelligence route renders ' +
+        'AdvisoryIntelligencePage.',
+    },
+  },
+  'src/components/intelligence/IntelligenceRouteShell.tsx': {
+    retired: {
+      commit: '7c6d894e9',
+      slice: 'INT-I1',
+      replacement: null,
+      note:
+        'Deleted by the INT-I1 shell retirement, whose own commit body reads ' +
+        '"Delete IntelligenceRouteShell.tsx (G4 ...)" and "Update 4 QA/design ' +
+        'tests to reflect IntelligenceRouteShell retirement" - this report was ' +
+        'a fifth it did not update. src/components/intelligence/ has since gone ' +
+        'entirely; nothing wraps the route in a shell component.',
+    },
+  },
+};
+
+/**
+ * Resolve one path to a status. Pure: the caller observes the filesystem, this
+ * decides what the observation means.
+ */
+export function resolvePathStatus(
+  rel: string,
+  present: boolean,
+  register: PathDispositionRegister = BLUEPRINT_PATH_REGISTER,
+): { status: VerificationStatus; detail: string } {
+  const disposition = register[rel];
+
+  if (present) {
+    if (disposition?.retired) {
+      const { commit, slice } = disposition.retired;
+      return {
+        status: 'fail',
+        detail:
+          `${rel} is declared retired by ${commit} (${slice}) but the file is ` +
+          'present. Either the retirement was reverted, in which case remove ' +
+          'the BLUEPRINT_PATH_REGISTER entry, or this is an unintended ' +
+          'restoration. A register that disagrees with the tree is no better ' +
+          'than a guess.',
+      };
+    }
+    return { status: 'pass', detail: `Found: ${rel}` };
+  }
+
+  if (disposition?.retired) {
+    const { commit, slice, replacement, note } = disposition.retired;
+    return {
+      status: 'removed',
+      detail:
+        `Removed by ${commit} (${slice}): ${rel}. ${note} Replacement: ` +
+        `${replacement ?? 'none'}.`,
+    };
+  }
+
+  if (disposition?.pending) {
+    const { slice, note } = disposition.pending;
+    return {
+      status: 'deferred',
+      detail: `${slice} pre-integration: not yet present at ${rel}. ${note}`,
+    };
+  }
+
+  return {
+    status: 'fail',
+    detail:
+      `Absent at ${rel}, and nothing declares why. Declare it in ` +
+      'BLUEPRINT_PATH_REGISTER as retired (with the commit that removed it) ' +
+      'or pending (with the slice that adds it). An undeclared absence cannot ' +
+      'be told apart from a deletion, and this report spent five months ' +
+      'calling one deletion "not yet present".',
+  };
+}
+
+function pathCheck(
+  checkId: string,
+  surface: IntelTowerCheck['surface'],
+  description: string,
+  rel: string,
+): IntelTowerCheck {
+  const { status, detail } = resolvePathStatus(rel, exists(rel));
+  return makeCheck(checkId, surface, description, status, detail);
+}
+
 function makeCheck(
   checkId: string,
   surface: IntelTowerCheck['surface'],
@@ -84,193 +231,101 @@ function makeCheck(
 
 /** Check 1: Intelligence blueprint exists */
 function checkIntelligenceBlueprintExists(): IntelTowerCheck {
-  const rel = 'docs/platform-design/page-blueprints/INTELLIGENCE_PAGE_BLUEPRINT.md';
-  const found = exists(rel);
-  return makeCheck(
+  return pathCheck(
     'INTEL-BP-01',
     'intelligence',
     'Intelligence page blueprint file exists',
-    found ? 'pass' : 'fail',
-    found
-      ? `Blueprint found: ${rel}`
-      : `Blueprint MISSING: ${rel}`,
+    'docs/platform-design/page-blueprints/INTELLIGENCE_PAGE_BLUEPRINT.md',
   );
 }
 
 /** Check 2: Control Tower blueprint exists */
 function checkTowerBlueprintExists(): IntelTowerCheck {
-  const rel = 'docs/platform-design/page-blueprints/CONTROL_TOWER_PAGE_BLUEPRINT.md';
-  const found = exists(rel);
-  return makeCheck(
+  return pathCheck(
     'TOWER-BP-01',
     'tower',
     'Control Tower page blueprint file exists',
-    found ? 'pass' : 'fail',
-    found
-      ? `Blueprint found: ${rel}`
-      : `Blueprint MISSING: ${rel}`,
+    'docs/platform-design/page-blueprints/CONTROL_TOWER_PAGE_BLUEPRINT.md',
   );
 }
 
 /** Check 3: Intelligence route file exists */
 function checkIntelligenceRouteExists(): IntelTowerCheck {
-  const rel = 'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx';
-  const found = exists(rel);
-  return makeCheck(
+  return pathCheck(
     'INTEL-ROUTE-01',
     'intelligence',
     'Intelligence route page.tsx exists',
-    found ? 'pass' : 'fail',
-    found
-      ? `Route file found: ${rel}`
-      : `Route file MISSING: ${rel}`,
+    'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx',
   );
 }
 
 /** Check 4: Tower route file exists */
 function checkTowerRouteExists(): IntelTowerCheck {
-  const rel = 'src/app/(maestro)/tenant/[tenantSlug]/tower/page.tsx';
-  const found = exists(rel);
-  return makeCheck(
+  return pathCheck(
     'TOWER-ROUTE-01',
     'tower',
     'Tower route page.tsx exists',
-    found ? 'pass' : 'fail',
-    found
-      ? `Route file found: ${rel}`
-      : `Route file MISSING: ${rel}`,
+    'src/app/(maestro)/tenant/[tenantSlug]/tower/page.tsx',
   );
 }
 
 /** Check 5: IntelligenceRouteShell.tsx exists (INTEL1 — deferred if absent) */
 function checkIntelligenceRouteShellExists(): IntelTowerCheck {
-  const rel = 'src/components/intelligence/IntelligenceRouteShell.tsx';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'INTEL1-SHELL-01',
-      'intelligence',
-      'IntelligenceRouteShell.tsx component exists',
-      'pass',
-      `Component found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return pathCheck(
     'INTEL1-SHELL-01',
     'intelligence',
     'IntelligenceRouteShell.tsx component exists',
-    'deferred',
-    `INTEL1 pre-integration: IntelligenceRouteShell.tsx not yet present at ${rel}. Deferred pending INTEL1 merge.`,
+    'src/components/intelligence/IntelligenceRouteShell.tsx',
   );
 }
 
 /** Check 6: TowerRouteShell.tsx exists (TOWER1 — deferred if absent) */
 function checkTowerRouteShellExists(): IntelTowerCheck {
-  const rel = 'src/components/tower/TowerRouteShell.tsx';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'TOWER1-SHELL-01',
-      'tower',
-      'TowerRouteShell.tsx component exists',
-      'pass',
-      `Component found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return pathCheck(
     'TOWER1-SHELL-01',
     'tower',
     'TowerRouteShell.tsx component exists',
-    'deferred',
-    `TOWER1 pre-integration: TowerRouteShell.tsx not yet present at ${rel}. Deferred pending TOWER1 merge.`,
+    'src/components/tower/TowerRouteShell.tsx',
   );
 }
 
 /** Check 7: Intelligence workflow canvas view exists (INTEL2 — deferred if absent) */
 function checkIntelligenceWorkflowCanvasView(): IntelTowerCheck {
-  const rel = 'src/lib/intelligence/intelligence-workflow-canvas-view.ts';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'INTEL2-CANVAS-01',
-      'intelligence',
-      'Intelligence workflow canvas view model exists',
-      'pass',
-      `View model found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return pathCheck(
     'INTEL2-CANVAS-01',
     'intelligence',
     'Intelligence workflow canvas view model exists',
-    'deferred',
-    `INTEL2 pre-integration: intelligence-workflow-canvas-view.ts not yet present at ${rel}. Deferred pending INTEL2 merge.`,
+    'src/lib/intelligence/intelligence-workflow-canvas-view.ts',
   );
 }
 
 /** Check 8: Sentinel evidence brief view exists (INTEL3 — deferred if absent) */
 function checkSentinelEvidenceBriefView(): IntelTowerCheck {
-  const rel = 'src/lib/intelligence/sentinel-brief-evidence-view.ts';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'INTEL3-EVID-01',
-      'intelligence',
-      'Sentinel evidence brief view model exists',
-      'pass',
-      `View model found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return pathCheck(
     'INTEL3-EVID-01',
     'intelligence',
     'Sentinel evidence brief view model exists',
-    'deferred',
-    `INTEL3 pre-integration: sentinel-brief-evidence-view.ts not yet present at ${rel}. Deferred pending INTEL3 merge.`,
+    'src/lib/intelligence/sentinel-brief-evidence-view.ts',
   );
 }
 
 /** Check 9: Atlas executive brief canvas exists (TOWER2 — deferred if absent) */
 function checkAtlasExecutiveBriefCanvas(): IntelTowerCheck {
-  const rel = 'src/lib/tower/atlas-executive-brief-canvas.ts';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'TOWER2-CANVAS-01',
-      'tower',
-      'Atlas executive brief canvas model exists',
-      'pass',
-      `Canvas model found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return pathCheck(
     'TOWER2-CANVAS-01',
     'tower',
     'Atlas executive brief canvas model exists',
-    'deferred',
-    `TOWER2 pre-integration: atlas-executive-brief-canvas.ts not yet present at ${rel}. Deferred pending TOWER2 merge.`,
+    'src/lib/tower/atlas-executive-brief-canvas.ts',
   );
 }
 
 /** Check 10: Active lens view exists (TOWER3 — deferred if absent) */
 function checkActiveLensView(): IntelTowerCheck {
-  const rel = 'src/lib/tower/control-tower-active-lens-view.ts';
-  const found = exists(rel);
-  if (found) {
-    return makeCheck(
-      'TOWER3-LENS-01',
-      'tower',
-      'Control Tower active lens view model exists',
-      'pass',
-      `View model found: ${rel}`,
-    );
-  }
-  return makeCheck(
+  return pathCheck(
     'TOWER3-LENS-01',
     'tower',
     'Control Tower active lens view model exists',
-    'deferred',
-    `TOWER3 pre-integration: control-tower-active-lens-view.ts not yet present at ${rel}. Deferred pending TOWER3 merge.`,
+    'src/lib/tower/control-tower-active-lens-view.ts',
   );
 }
 
@@ -279,13 +334,10 @@ function checkIntelligenceShellDeterministicCaveat(): IntelTowerCheck {
   const rel = 'src/components/intelligence/IntelligenceRouteShell.tsx';
   const content = readIfExists(rel);
   if (content === null) {
-    return makeCheck(
-      'INTEL1-CAVEAT-01',
-      'intelligence',
-      'IntelligenceRouteShell contains Deterministic caveat',
-      'deferred',
-      `INTEL1 pre-integration: file absent at ${rel}. Deferred pending INTEL1 merge.`,
-    );
+    // Absence is the register's question, not this check's: a caveat
+    // cannot be missing from a file that was deliberately removed.
+    const { status, detail } = resolvePathStatus(rel, false);
+    return makeCheck('INTEL1-CAVEAT-01', 'intelligence', 'IntelligenceRouteShell contains Deterministic caveat', status, detail);
   }
   const hasCaveat = content.includes('Deterministic');
   return makeCheck(
@@ -304,13 +356,10 @@ function checkTowerShellDeterministicCaveat(): IntelTowerCheck {
   const rel = 'src/components/tower/TowerRouteShell.tsx';
   const content = readIfExists(rel);
   if (content === null) {
-    return makeCheck(
-      'TOWER1-CAVEAT-01',
-      'tower',
-      'TowerRouteShell contains Deterministic caveat',
-      'deferred',
-      `TOWER1 pre-integration: file absent at ${rel}. Deferred pending TOWER1 merge.`,
-    );
+    // Absence is the register's question, not this check's: a caveat
+    // cannot be missing from a file that was deliberately removed.
+    const { status, detail } = resolvePathStatus(rel, false);
+    return makeCheck('TOWER1-CAVEAT-01', 'tower', 'TowerRouteShell contains Deterministic caveat', status, detail);
   }
   const hasCaveat = content.includes('Deterministic');
   return makeCheck(
@@ -326,16 +375,11 @@ function checkTowerShellDeterministicCaveat(): IntelTowerCheck {
 
 /** Check 13: AGENTX enforcement review doc exists */
 function checkAgentxEnforcementDocExists(): IntelTowerCheck {
-  const rel = 'docs/build/slices/AGENTX_AGENT_CENTRIC_ENFORCEMENT_REVIEW.md';
-  const found = exists(rel);
-  return makeCheck(
+  return pathCheck(
     'SHARED-AGENTX-01',
     'shared',
     'AGENTX enforcement review slice doc exists',
-    found ? 'pass' : 'fail',
-    found
-      ? `AGENTX doc found: ${rel}`
-      : `AGENTX doc MISSING: ${rel}`,
+    'docs/build/slices/AGENTX_AGENT_CENTRIC_ENFORCEMENT_REVIEW.md',
   );
 }
 
@@ -438,11 +482,14 @@ export function runIntelTowerBlueprintVerification(): IntelTowerBlueprintVerific
   const passCount = checks.filter((c) => c.status === 'pass').length;
   const failCount = checks.filter((c) => c.status === 'fail').length;
   const deferredCount = checks.filter((c) => c.status === 'deferred').length;
+  const removedCount = checks.filter((c) => c.status === 'removed').length;
 
+  // A removal is not a pass. The blueprint still describes something the tree
+  // no longer has, so the loss stays visible on the top line.
   let overallStatus: 'pass' | 'fail' | 'partial';
   if (failCount > 0) {
     overallStatus = 'fail';
-  } else if (deferredCount > 0) {
+  } else if (deferredCount > 0 || removedCount > 0) {
     overallStatus = 'partial';
   } else {
     overallStatus = 'pass';
@@ -454,11 +501,14 @@ export function runIntelTowerBlueprintVerification(): IntelTowerBlueprintVerific
     passCount,
     failCount,
     deferredCount,
+    removedCount,
     overallStatus,
     caveat:
       'Deterministic filesystem verification only. No live signals, no model calls, no network calls. ' +
-      'INTEL1-3 and TOWER1-3 are pre-integration components deferred until their respective slices merge. ' +
-      'All deferred checks will resolve to pass after integration.',
+      'An absent path is declared, never inferred: a path a named commit removed is reported as ' +
+      'removed with that commit, a path a named slice has not added yet is deferred, and an ' +
+      'undeclared absence fails rather than passing itself off as pre-integration work. A report ' +
+      'carrying removals is partial, not a clean pass.',
     deterministicSeed: true,
   };
 }
