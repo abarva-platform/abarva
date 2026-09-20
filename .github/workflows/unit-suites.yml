@@ -381,6 +381,46 @@ jobs:
       - name: Run the admin AI-initiatives suites
         run: npx jest src/lib/admin/ai-initiatives --no-coverage --ci
 
+      # Eight approval/lifecycle-adjacent suites across six small trees were
+      # measured first. Seven are green and import live code; the lifecycle
+      # operating-system suite is red on an authored-contract expectation and
+      # stays unwired as an exact file-level quarantine.
+      - name: Run small approval and lifecycle suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/nexus/__tests__/context-adapter.test.ts
+          src/lib/nexus/__tests__/gateLifecycle-pack-bound.test.ts
+          src/lib/source/notifications/__tests__/approval-recipient-policy.test.ts
+          src/lib/source/notifications/__tests__/approval-request.test.ts
+          src/components/source/approval/__tests__/EventApprovalCard.test.tsx
+          src/lib/enterprise-knowledge/narratives/__tests__/knowledge-narrative-store.test.ts
+          src/lib/intelligence/insight-engine/rules/__tests__/context-record-rules.test.ts
+          --no-coverage --ci
+
+      # `src/lib/admin/__tests__` was measured as 33 green files and 5 red
+      # files. Four additional green files exercise policy/runbook modules that
+      # no non-test code imports, so they are not counted as live-code CI
+      # coverage here. The red files are quarantined individually so healthy
+      # siblings in the same directory still run.
+      #
+      # `/node_modules/` is restated because passing --testPathIgnorePatterns
+      # replaces Jest's default ignore list.
+      - name: Run live admin library suites
+        run: >-
+          npx jest
+          src/lib/admin/__tests__
+          --testPathIgnorePatterns /node_modules/
+          src/lib/admin/__tests__/setup-acts-registry.test.ts
+          src/lib/admin/__tests__/setup-data-load-center.test.ts
+          src/lib/admin/__tests__/admin-tenant.test.ts
+          src/lib/admin/__tests__/data-layer-explorer.test.ts
+          src/lib/admin/__tests__/agent-readiness-composer.test.ts
+          src/lib/admin/__tests__/pilot-data-plane-security-policy.test.ts
+          src/lib/admin/__tests__/pilot-observability-isolation-smoke.test.ts
+          src/lib/admin/__tests__/setup-ai-governance.test.ts
+          src/lib/admin/__tests__/pilot-private-data-plane-runbook.test.ts
+          --no-coverage --ci
+
       # The data-plane write-adapter tree is 11 suites / 169 tests. Ten suites
       # were green on the first measured run; the remaining three failures in
       # one suite came from a stale Supabase read mock after the production
