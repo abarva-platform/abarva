@@ -16,7 +16,7 @@ describe('Agent route prompt — L7 canonical answer key', () => {
 
   it('locks the remaining Atlas and Sentinel exact-term blockers', () => {
     expect(routeSource).toContain('Realized value is lagging most in the AMS Consolidation 2026 program');
-    expect(routeSource).toContain('First Capital has the highest model risk governance exposure');
+    expect(routeSource).toContain('FS Demo has the highest model risk governance exposure');
     expect(routeSource).toContain('Salesforce and AWS sit in Apex vendor spend and renewal pressure');
   });
 
@@ -40,7 +40,7 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     expect(routeSource).toContain('evidence/source is Meridian program inventory showing Abridge, Suki, and DAX Copilot in play');
     expect(routeSource).toContain('AML alert triage automation is a vendor decision only after evidence/source');
     expect(routeSource).toContain('analyst-control gaps are reconciled');
-    expect(routeSource).toContain("FiServ Cleartouch is First Capital\\'s concentration risk in core modernization");
+    expect(routeSource).toContain("FiServ Cleartouch is FS Demo\\'s concentration risk in core modernization");
     expect(routeSource).toContain('the credible second source is a bounded challenger workstream');
     expect(routeSource).toContain('$54M modernization context');
     expect(routeSource).toContain('Meridian sourcing intake fields filled from the page context');
@@ -55,14 +55,14 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     expect(routeSource).toContain('connectors, pilot, Day 2');
     expect(routeSource).toContain('GPU, Palantir');
     expect(routeSource).toContain('Meridian research needs GPU and Palantir context');
-    expect(routeSource).toContain('KPI dictionary entries that matter most for First Capital');
-    expect(routeSource).toContain('First Capital tenant key consistency is required for retrieval');
-    expect(routeSource).toContain('First Capital is blocked from production readiness in the current lab posture');
+    expect(routeSource).toContain('KPI dictionary entries that matter most for FS Demo');
+    expect(routeSource).toContain('FS Demo tenant key consistency is required for retrieval');
+    expect(routeSource).toContain('FS Demo is blocked from production readiness in the current lab posture');
     expect(routeSource).toContain('production readiness, lab, block, evidence, source, and risk');
   });
 
   it('applies Steward doctrine only on admin setup surfaces', () => {
-    expect(routeSource).toContain("surface.startsWith('/admin')");
+    expect(routeSource).toMatch(/surface\.startsWith\(["']\/admin["']\)/);
     expect(routeSource).not.toContain("surface === '/home/data-trust'");
     expect(routeSource).not.toContain("surface === '/home/connectors'");
     expect(routeSource).not.toContain("surface === '/home/production-readiness'");
