@@ -176,32 +176,202 @@ export function normalizeAdminEmail(adminEmail: string): {
 // File path resolution
 // ---------------------------------------------------------------------------
 
-interface RegistryPaths {
-  clientConfig: string;
-  activeClient: string;
-  demoTenantDataTiers: string;
-  canonicalAuthRoster: string;
-}
+export const REGISTRY_RELATIVE_PATHS = {
+  clientConfig: "src/lib/client-config.ts",
+  activeClient: "src/lib/tenant/aliases.ts",
+  demoTenantDataTiers: "src/lib/tenants/demo-tenant-data-tiers.ts",
+  canonicalAuthRoster: "src/lib/auth/canonical-auth-roster.ts",
+} as const;
+
+export type RegistryName = keyof typeof REGISTRY_RELATIVE_PATHS;
+
+type RegistryPaths = Record<RegistryName, string>;
 
 export function resolveRegistryPaths(repoRoot: string): RegistryPaths {
-  const paths: RegistryPaths = {
-    clientConfig: path.join(repoRoot, "src/lib/client-config.ts"),
-    activeClient: path.join(repoRoot, "src/lib/tenant/aliases.ts"),
-    demoTenantDataTiers: path.join(
-      repoRoot,
-      "src/lib/tenants/demo-tenant-data-tiers.ts",
-    ),
-    canonicalAuthRoster: path.join(
-      repoRoot,
-      "src/lib/auth/canonical-auth-roster.ts",
-    ),
-  };
+  const paths = Object.fromEntries(
+    Object.entries(REGISTRY_RELATIVE_PATHS).map(([name, rel]) => [
+      name,
+      path.join(repoRoot, rel),
+    ]),
+  ) as RegistryPaths;
   for (const [name, p] of Object.entries(paths)) {
     if (!existsSync(p)) {
       throw new Error(`Registry file not found: ${name} → ${p}`);
     }
   }
   return paths;
+}
+
+// ---------------------------------------------------------------------------
+// Registry anchors
+//
+// This script patches TypeScript source by string surgery, so every insertion
+// point is a literal that has to keep matching a declaration nobody is
+// obliged to leave alone. Two rules keep that survivable:
+//
+//   1. Every anchor is declared here once. The patch functions navigate by
+//      these entries and `verifyRegistryAnchors` checks these entries, so an
+//      anchor cannot be repaired in the patcher and forgotten in the check.
+//   2. An anchor resolves to a *declaration*, not to the first place the name
+//      appears. A name mentioned in a comment or an object literal above its
+//      own declaration used to capture the search, and the entry was then
+//      inserted into that earlier block with no error raised.
+//
+// `verifyRegistryAnchors` runs against the real files before anything is
+// written, so a drifted anchor is reported for every registry at once rather
+// than discovered halfway through, and `tenant-onboarding.test.ts` runs it
+// against this repository's own registries so a type-level repair that moves
+// a close marker turns that suite red.
+// ---------------------------------------------------------------------------
+
+export interface RegistryAnchor {
+  /** The binding the patcher navigates to, e.g. `ALL_CLIENTS`. */
+  readonly declaration: string;
+  /** The literal that closes it, searched only after the declaration. */
+  readonly close: string;
+}
+
+export const REGISTRY_ANCHORS: Record<RegistryName, readonly RegistryAnchor[]> =
+  {
+    clientConfig: [
+      // Closes with `satisfies` rather than a bare `as const;` so the ids stay
+      // literal and `ClientKey` is a union rather than `string`.
+      {
+        declaration: "ALL_CLIENTS",
+        close: "] as const satisfies readonly ClientOption[];",
+      },
+      { declaration: "CLIENT_KEY_TO_DB_NAME", close: "};" },
+      { declaration: "CLIENT_KEY_TO_INDUSTRY_CODE", close: "};" },
+      { declaration: "EMAIL_DOMAIN_TO_CLIENT_KEY", close: "];" },
+    ],
+    activeClient: [
+      { declaration: "TENANT_ALIAS_PROFILES", close: "] as const;" },
+    ],
+    demoTenantDataTiers: [
+      { declaration: "DEMO_TENANT_DATA_TIERS", close: "];" },
+    ],
+    canonicalAuthRoster: [
+      { declaration: "CANONICAL_AUTH_EMAILS", close: "] as const;" },
+      { declaration: "CANONICAL_CLIENT_ADMIN_EMAILS", close: "] as const;" },
+    ],
+  } as const;
+
+export interface ResolvedAnchor {
+  /** Offset of the `const` keyword that declares the binding. */
+  readonly declarationIdx: number;
+  /** Offset of the close literal that ends it. */
+  readonly closeIdx: number;
+}
+
+function anchorFor(
+  registry: RegistryName,
+  declaration: string,
+): RegistryAnchor {
+  const anchor = REGISTRY_ANCHORS[registry].find(
+    (candidate) => candidate.declaration === declaration,
+  );
+  if (!anchor) {
+    throw new Error(
+      `No anchor declared for ${declaration} in ${REGISTRY_RELATIVE_PATHS[registry]}. ` +
+        `Add it to REGISTRY_ANCHORS rather than searching for a literal inline.`,
+    );
+  }
+  return anchor;
+}
+
+/**
+ * Locate one anchor in one registry source. Throws with the registry file and
+ * the literal that failed, so an operator reading the error knows which file
+ * to open.
+ */
+export function resolveAnchor(
+  source: string,
+  registry: RegistryName,
+  declaration: string,
+): ResolvedAnchor {
+  const anchor = anchorFor(registry, declaration);
+  const file = REGISTRY_RELATIVE_PATHS[registry];
+  // Horizontal whitespace only, and `m` so `^` is a line start. `\\s*` would
+  // span blank lines and pull the match back onto the line before, which put
+  // the declaration's own line inside the region searched for its close.
+  const declarationPattern = new RegExp(
+    `^[ \\t]*(?:export[ \\t]+)?const[ \\t]+${escapeRegex(anchor.declaration)}\\b`,
+    "m",
+  );
+  const match = declarationPattern.exec(source);
+  if (!match) {
+    throw new Error(
+      `${file}: no declaration of ${anchor.declaration} found. ` +
+        `add-tenant.ts patches this registry by locating \`const ${anchor.declaration}\`; ` +
+        `if the binding was renamed or moved, update REGISTRY_ANCHORS to match.`,
+    );
+  }
+  const declarationIdx = match.index;
+  // The close literal has to belong to *this* declaration. Searching to the
+  // end of the file lets a drifted declaration borrow the close marker of the
+  // next one: two `] as const;` arrays in a row, the first one changed, and
+  // the anchor silently resolves into the second — which is where the entry
+  // would then be inserted. Stop at the next top-level declaration.
+  const afterDeclarationLine = declarationIdx + match[0].length;
+  const nextDeclaration =
+    /^[ \t]*(?:export[ \t]+)?(?:const|let|var|function|type|interface|class|enum)[ \t]/m.exec(
+      source.slice(afterDeclarationLine),
+    );
+  const regionEnd =
+    nextDeclaration === null
+      ? source.length
+      : afterDeclarationLine + nextDeclaration.index;
+  const closeIdx = source.indexOf(anchor.close, declarationIdx);
+  if (closeIdx === -1 || closeIdx >= regionEnd) {
+    throw new Error(
+      `${file}: ${anchor.declaration} is not closed by ${anchor.close} — ` +
+        `add-tenant.ts inserts immediately before that literal. ` +
+        `If the declaration now closes differently, update REGISTRY_ANCHORS to match.`,
+    );
+  }
+  return { declarationIdx, closeIdx };
+}
+
+export interface AnchorVerificationFailure {
+  readonly registry: RegistryName;
+  readonly declaration: string;
+  readonly message: string;
+}
+
+/**
+ * Check every declared anchor against the registry files on disk. Reports all
+ * failures together — an operator fixing a drifted registry should not have to
+ * rerun to discover the next one.
+ */
+export function verifyRegistryAnchors(
+  paths: RegistryPaths,
+): AnchorVerificationFailure[] {
+  const failures: AnchorVerificationFailure[] = [];
+  for (const registry of Object.keys(REGISTRY_ANCHORS) as RegistryName[]) {
+    const source = readFileSync(paths[registry], "utf8");
+    for (const anchor of REGISTRY_ANCHORS[registry]) {
+      try {
+        resolveAnchor(source, registry, anchor.declaration);
+      } catch (error) {
+        failures.push({
+          registry,
+          declaration: anchor.declaration,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  }
+  return failures;
+}
+
+export function assertRegistryAnchors(paths: RegistryPaths): void {
+  const failures = verifyRegistryAnchors(paths);
+  if (failures.length === 0) return;
+  throw new Error(
+    `add-tenant.ts cannot patch the tenant registries — ` +
+      `${failures.length} anchor(s) no longer resolve. Nothing was written.\n` +
+      failures.map((f) => `  - ${f.message}`).join("\n"),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -234,16 +404,7 @@ export function patchClientConfig(
       `    color: '${input.color ?? DEFAULT_NEW_TENANT_COLOR}',\n` +
       `    vertical: '${INDUSTRY_VERTICAL[input.industry]}',\n` +
       `  },\n`;
-    // Anchors track the declaration in client-config.ts. The array closes
-    // with `satisfies` rather than a bare `as const;` so that the ids stay
-    // literal and `ClientKey` is a union rather than `string`.
-    const ALL_CLIENTS_CLOSE = "] as const satisfies readonly ClientOption[];";
-    const ALL_CLIENTS_START = "export const ALL_CLIENTS =";
-    const startIdx = source.indexOf(ALL_CLIENTS_START);
-    if (startIdx === -1)
-      throw new Error("ALL_CLIENTS array not found in client-config.ts");
-    const closeIdx = source.indexOf(ALL_CLIENTS_CLOSE, startIdx);
-    if (closeIdx === -1) throw new Error("ALL_CLIENTS close marker not found");
+    const { closeIdx } = resolveAnchor(source, "clientConfig", "ALL_CLIENTS");
     content = content.slice(0, closeIdx) + block + content.slice(closeIdx);
     anyChange = true;
     reasons.push("added ClientOption to ALL_CLIENTS");
@@ -253,11 +414,17 @@ export function patchClientConfig(
   const dbNameToken = `\n  ${input.key}:`;
   if (
     !content.includes(dbNameToken) ||
-    !insertedInBlock(content, "CLIENT_KEY_TO_DB_NAME", dbNameToken)
+    !insertedInBlock(
+      content,
+      "clientConfig",
+      "CLIENT_KEY_TO_DB_NAME",
+      dbNameToken,
+    )
   ) {
     const dbNamesBlock = `  ${input.key}: ['${escapeSingleQuote(input.name)}'],\n`;
     const r = insertAtEndOfRecord(
       content,
+      "clientConfig",
       "CLIENT_KEY_TO_DB_NAME",
       input.key,
       dbNamesBlock,
@@ -274,6 +441,7 @@ export function patchClientConfig(
     const industryBlock = `  ${input.key}: '${input.industry}',\n`;
     const r = insertAtEndOfRecord(
       content,
+      "clientConfig",
       "CLIENT_KEY_TO_INDUSTRY_CODE",
       input.key,
       industryBlock,
@@ -291,6 +459,7 @@ export function patchClientConfig(
     const domainEntry = `  ['${domain}', '${input.key}'],\n`;
     const r = insertAtEndOfTupleArray(
       content,
+      "clientConfig",
       "EMAIL_DOMAIN_TO_CLIENT_KEY",
       domain,
       domainEntry,
@@ -311,28 +480,31 @@ export function patchClientConfig(
 
 function insertedInBlock(
   source: string,
+  registry: RegistryName,
   blockName: string,
   token: string,
 ): boolean {
-  const startIdx = source.indexOf(blockName);
-  if (startIdx === -1) return false;
-  const closeIdx = source.indexOf("};", startIdx);
-  if (closeIdx === -1) return false;
-  return source.slice(startIdx, closeIdx).includes(token);
+  const { declarationIdx, closeIdx } = resolveAnchor(
+    source,
+    registry,
+    blockName,
+  );
+  return source.slice(declarationIdx, closeIdx).includes(token);
 }
 
 function insertAtEndOfRecord(
   source: string,
+  registry: RegistryName,
   recordName: string,
   key: string,
   block: string,
 ): { content: string; changed: boolean } {
-  const startIdx = source.indexOf(recordName);
-  if (startIdx === -1) throw new Error(`Record ${recordName} not found`);
-  const closeIdx = source.indexOf("};", startIdx);
-  if (closeIdx === -1)
-    throw new Error(`Record ${recordName} close marker not found`);
-  const section = source.slice(startIdx, closeIdx);
+  const { declarationIdx, closeIdx } = resolveAnchor(
+    source,
+    registry,
+    recordName,
+  );
+  const section = source.slice(declarationIdx, closeIdx);
   // Idempotency: a line beginning with `<key>:` already present.
   const keyPattern = new RegExp(`\\n\\s*${escapeRegex(key)}\\s*:`);
   if (keyPattern.test(section)) {
@@ -344,20 +516,17 @@ function insertAtEndOfRecord(
 
 function insertAtEndOfTupleArray(
   source: string,
+  registry: RegistryName,
   arrayName: string,
   uniqueToken: string,
   block: string,
 ): { content: string; changed: boolean } {
-  const startIdx = source.indexOf(arrayName);
-  if (startIdx === -1) throw new Error(`Array ${arrayName} not found`);
-  // Tuple arrays in this codebase close with `];` after a leading `[`.
-  const openIdx = source.indexOf("[", startIdx);
-  if (openIdx === -1)
-    throw new Error(`Array ${arrayName} open marker not found`);
-  const closeIdx = source.indexOf("];", openIdx);
-  if (closeIdx === -1)
-    throw new Error(`Array ${arrayName} close marker not found`);
-  const section = source.slice(openIdx, closeIdx);
+  const { declarationIdx, closeIdx } = resolveAnchor(
+    source,
+    registry,
+    arrayName,
+  );
+  const section = source.slice(declarationIdx, closeIdx);
   if (section.includes(`'${uniqueToken}'`)) {
     return { content: source, changed: false };
   }
@@ -388,11 +557,11 @@ export function patchActiveClient(
   if (source.includes(`appClientKey: '${input.key}'`)) {
     return { content: source, changed: false, reason: "already registered" };
   }
-  const arrayName = "TENANT_ALIAS_PROFILES";
-  const startIdx = source.indexOf(arrayName);
-  if (startIdx === -1) throw new Error(`${arrayName} not found`);
-  const closeIdx = source.indexOf("] as const;", startIdx);
-  if (closeIdx === -1) throw new Error(`${arrayName} close marker not found`);
+  const { closeIdx } = resolveAnchor(
+    source,
+    "activeClient",
+    "TENANT_ALIAS_PROFILES",
+  );
   const block =
     `  {\n` +
     `    appClientKey: '${input.key}',\n` +
@@ -474,12 +643,11 @@ export function patchDemoTenantDataTiers(
     `  },\n`;
 
   // Insert before the closing `];` of DEMO_TENANT_DATA_TIERS.
-  const arrayName = "DEMO_TENANT_DATA_TIERS";
-  const startIdx = source.indexOf(arrayName);
-  if (startIdx === -1) throw new Error("DEMO_TENANT_DATA_TIERS not found");
-  const closeIdx = source.indexOf("];", startIdx);
-  if (closeIdx === -1)
-    throw new Error("DEMO_TENANT_DATA_TIERS close marker not found");
+  const { closeIdx } = resolveAnchor(
+    source,
+    "demoTenantDataTiers",
+    "DEMO_TENANT_DATA_TIERS",
+  );
   const content = source.slice(0, closeIdx) + block + source.slice(closeIdx);
   return {
     content,
@@ -507,6 +675,7 @@ export function patchCanonicalAuthRoster(
   {
     const r = insertAtEndOfTupleConstArray(
       content,
+      "canonicalAuthRoster",
       "CANONICAL_AUTH_EMAILS",
       email,
       `  '${email}', // admin · ${escapeSingleQuote(input.name)}\n`,
@@ -519,6 +688,7 @@ export function patchCanonicalAuthRoster(
   {
     const r = insertAtEndOfTupleConstArray(
       content,
+      "canonicalAuthRoster",
       "CANONICAL_CLIENT_ADMIN_EMAILS",
       email,
       `  '${email}',\n`,
@@ -536,16 +706,17 @@ export function patchCanonicalAuthRoster(
 
 function insertAtEndOfTupleConstArray(
   source: string,
+  registry: RegistryName,
   arrayName: string,
   uniqueToken: string,
   block: string,
 ): { content: string; changed: boolean } {
-  const startIdx = source.indexOf(arrayName);
-  if (startIdx === -1) throw new Error(`Array ${arrayName} not found`);
-  const closeIdx = source.indexOf("] as const;", startIdx);
-  if (closeIdx === -1)
-    throw new Error(`Array ${arrayName} close marker not found`);
-  const section = source.slice(startIdx, closeIdx);
+  const { declarationIdx, closeIdx } = resolveAnchor(
+    source,
+    registry,
+    arrayName,
+  );
+  const section = source.slice(declarationIdx, closeIdx);
   if (section.includes(`'${uniqueToken}'`)) {
     return { content: source, changed: false };
   }
@@ -567,6 +738,11 @@ export function executeAddTenant(
   opts: ExecuteOptions,
 ): AddTenantResult {
   const paths = resolveRegistryPaths(opts.repoRoot);
+  // Every anchor, for every registry, before the first write. Registries are
+  // patched one at a time, so an anchor that fails on the third one used to
+  // leave the first two already on disk — a tenant registered in one registry
+  // and absent from three.
+  assertRegistryAnchors(paths);
   const patches: RegistryPatchResult[] = [];
 
   // 1 — client-config
