@@ -83,8 +83,6 @@ export default async function CandidatePreviewPage({
       >
         <ContextBar
           tenant={selectedCandidate?.tenantDisplayName ?? requestedTenantKey}
-          mode="Explicit candidate preview"
-          agent="Steward"
           data={
             candidateBuild
               ? candidateBuildState.source === "report_artifact"

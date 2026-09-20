@@ -27,8 +27,6 @@ export default async function AdminCorpusPage() {
       >
         <ContextBar
           tenant={tenant.tenantName}
-          mode="Authoring"
-          agent="Steward"
           data={`${patterns.length} records`}
           liveStatus="Live"
           liveStatusKind="live"

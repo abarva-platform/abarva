@@ -59,17 +59,14 @@ describe('ADMIN3 — Steward Editorial Component', () => {
     it('exports StewardEditorial', () => expect(src()).toContain('export function StewardEditorial'));
     it('declares title prop', () => expect(src()).toMatch(/title:\s*string/));
     it('declares body prop', () => expect(src()).toMatch(/body:\s*string/));
-    it('declares contextUsed prop as ReadonlyArray<string>', () =>
-      expect(src()).toMatch(/contextUsed:\s*ReadonlyArray<string>/));
+    it('does not retain the retired contextUsed prop', () =>
+      expect(src()).not.toMatch(/contextUsed:\s*ReadonlyArray<string>/));
     it('declares evidenceStrength prop', () => expect(src()).toMatch(/evidenceStrength:\s*EvidenceStrength/));
     it('declares optional blocker prop', () => expect(src()).toMatch(/blocker\?:\s*string/));
     it('declares primaryAction prop', () => expect(src()).toMatch(/primaryAction:\s*{\s*label:\s*string;\s*href:\s*string\s*}/));
     // 2026-09-19 (T-032) - e49e6d5f2 ("hide internal provenance chips", #2653)
-    // deliberately removed the visible "Context used" row. The prop survived
-    // the removal and is now declared but never destructured, which is a
-    // separate finding recorded in the backlog, not something to assert here.
-    // What the case can still hold is that the component does not quietly grow
-    // a provenance chip back without the decision being revisited.
+    // deliberately removed the visible "Context used" row. The component
+    // contract must not retain a dead input for that retired UI.
     it('does not render an internal provenance chip', () =>
       expect(src()).not.toContain('Context used'));
     it('uses EvidenceStrengthPill', () => expect(src()).toContain('<EvidenceStrengthPill'));
@@ -85,6 +82,10 @@ describe('ADMIN3 — Steward Editorial Component', () => {
   describe('ContextBar component', () => {
     const src = () => readSource('src/components/admin/ContextBar.tsx');
     it('exports ContextBar', () => expect(src()).toContain('export function ContextBar'));
+    it('does not retain the retired mode or agent props', () => {
+      expect(src()).not.toMatch(/\bmode:\s*string/);
+      expect(src()).not.toMatch(/\bagent:\s*string/);
+    });
     // 2026-09-19 (T-032) - the bar was reduced from five cells to three and
     // relabelled in the same pass that hid the provenance chips: Tenant became
     // Client, Data became Evidence source, Live status became Status, and Mode
