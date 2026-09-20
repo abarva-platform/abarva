@@ -487,5 +487,32 @@ jobs:
           src/lib/auth/__tests__/tenant-isolation-probes.test.ts
           --no-coverage --ci
 
+      # Four more library trees no workflow reached: 38 suites / 487 tests,
+      # measured on `024adb43f`.
+      #
+      #   lib/notifications          10 suites / 127 tests /  9 importers
+      #   programs/phase-packs       10 suites / 187 tests / 11 importers
+      #   programs/discovery          9 suites /  56 tests / 23 importers
+      #   programs/exports            9 suites / 117 tests /  7 importers
+      #
+      # Three neighbours were measured at the same time and are NOT here,
+      # because each is partly red on `024adb43f`:
+      #
+      #   lib/visual-system          1 failed of 10 suites
+      #   lib/enterprise-context     2 failed of  9
+      #   lib/knowledge              3 failed of 31
+      #
+      # A red directory is wired by fixing it, never by adding it to a green
+      # command. Whether each has green subtrees worth naming separately is a
+      # live question, not a settled one.
+      - name: Run the notifications and programs library suites
+        run: >-
+          npx jest
+          src/lib/notifications
+          src/lib/programs/phase-packs
+          src/lib/programs/discovery
+          src/lib/programs/exports
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
