@@ -934,6 +934,7 @@
     "audit:tenant-display-name-authority": "node scripts/audit/tenant-display-name-authority.mjs",
     "audit:qa-inventory-claims": "node scripts/audit/qa-inventory-claims-check.mjs",
     "audit:test-ci-coverage": "node scripts/quality/test-ci-coverage-census.mjs",
+    "audit:test-ci-coverage:check": "node scripts/quality/test-ci-coverage-census.mjs --check",
     "audit:test-ci-coverage:write": "node scripts/quality/test-ci-coverage-census.mjs --write",
     "packet:generate": "node scripts/data/contract-packet/generate-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --out .artifacts/contract-packets/staging-fixture",
     "packet:reconcile": "node scripts/data/contract-packet/reconcile-contract-packet.mjs --in datasets/source/contract-intelligence/_staging-fixture --packets .artifacts/contract-packets/staging-fixture",
