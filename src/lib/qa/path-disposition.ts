@@ -169,6 +169,24 @@ export const SHARED_PATH_DISPOSITIONS: PathDispositionRegister = {
         'both confirmed ancestors of main.',
     },
   },
+  'src/components/intelligence/IntelligencePatternDetailPage.tsx': {
+    retired: {
+      scope: 'path',
+      commit: '0c6a86c51',
+      slice: 'legacy surface sunset (v1/v2/v3/v4)',
+      replacement: null,
+      note:
+        'The INT2 pattern action canvas went with the legacy Intelligence ' +
+        'surfaces and nothing replaced it: no component renders ' +
+        'ActionCanvasSection and no intelligence pattern route exists. Its ' +
+        'view library and its integration suite were left behind and outlived ' +
+        'it by months -- the suite read this path at module scope, so it ' +
+        'failed to COLLECT rather than failing a case, and ran zero ' +
+        'assertions while presenting as red. Both are removed in the change ' +
+        'that added this entry; registering the path is what stops the next ' +
+        'reader concluding the page was deleted by accident.',
+    },
+  },
   'src/components/intelligence/IntelligenceLensTabs.tsx': {
     retired: {
       scope: 'path',
