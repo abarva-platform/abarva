@@ -963,3 +963,14 @@ jobs:
           npx jest --runTestsByPath
           src/lib/data-plane/__tests__/test-boundary.test.ts
           --no-coverage --ci
+
+      # Last, because it asks what the steps above left behind: did any suite
+      # write to committed client input data? One did. A parallel run executed
+      # a data build and rewrote seven tracked files across four tenants; six
+      # produced identical bytes and only the seventh was visible to
+      # `git status`, so the other six would have surfaced whenever their
+      # content next changed. The writer is fixed in this same change, so this
+      # step is green on arrival — it is a tripwire for the next one.
+      - name: Refuse a test run that modified committed input data
+        if: always()
+        run: node scripts/ci/assert-datasets-unmodified.mjs
