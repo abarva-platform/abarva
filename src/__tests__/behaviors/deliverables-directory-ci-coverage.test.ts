@@ -13,6 +13,8 @@ type CensusRow = {
   directory: string;
   testFiles?: number;
   coveredTestFiles?: number;
+  declaredQuarantineTestFiles?: number;
+  untriagedUnrunTestFiles?: number;
   via?: string[];
 };
 type Census = {
@@ -80,11 +82,19 @@ describe("deliverables CI ownership", () => {
         row.directory.includes("/deliverables/"));
 
     expect(census.counts.indeterminateInvocations).toBe(0);
+    // Exact shape, deliberately: an extra field on a census row is how an
+    // unintended addition reaches the committed artifact. The two counts below
+    // joined the row under T-471, which split the uncovered set into files a
+    // command names and then excludes (triaged) and files nothing names at
+    // all. This suite is the second kind — dark, not quarantined — so its
+    // single unrun file is untriaged.
     expect(census.uncoveredDirectories.filter(isDeliverables)).toEqual([
       {
         directory: "src/lib/deliverables/synthesis/__tests__",
         testFiles: 1,
         coveredTestFiles: 0,
+        declaredQuarantineTestFiles: 0,
+        untriagedUnrunTestFiles: 1,
         via: [],
       },
     ]);

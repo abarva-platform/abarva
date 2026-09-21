@@ -791,9 +791,11 @@ export function collectReachableCommands(root, packageScripts) {
 
 function coverageFor(testPath, reachable) {
   const candidates = registrationCandidates(testPath);
-  const hits = reachable.filter(
+  const named = reachable.filter((entry) =>
+    candidates.some((candidate) => commandNamesPath(entry.command, candidate)),
+  );
+  const hits = named.filter(
     (entry) =>
-      candidates.some((candidate) => commandNamesPath(entry.command, candidate)) &&
       // Scoped to the command that passes them. A file one workflow excludes
       // and another runs in full is covered, and subtracting globally would
       // under-state the run set — the error this change exists to remove,
@@ -802,9 +804,17 @@ function coverageFor(testPath, reachable) {
         ignoreMatches(pattern, testPath),
       ),
   );
+  // A file some command names and that same command then excludes by name has
+  // been looked at: somebody wrote it into a quarantine list with a reason. A
+  // file no command names at all has not. Both are equally "uncovered", and
+  // reporting only that conflates triaged work with untriaged work — which is
+  // how a draw from this census's own risk ranking came back with eleven of
+  // twenty files already quarantined.
+  const excludedByNamingCommand = hits.length === 0 && named.length > 0;
   return {
     covered: hits.length > 0,
     pullRequestCovered: hits.some((entry) => entry.pullRequest),
+    declaredQuarantine: excludedByNamingCommand,
     via: [...new Set(hits.map((entry) => entry.via))].sort(),
   };
 }
@@ -831,6 +841,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
   const directories = new Map();
   let covered = 0;
   let pullRequestCovered = 0;
+  let declaredQuarantine = 0;
 
   for (const testFile of testFiles) {
     const result = coverageFor(testFile, reachable);
@@ -842,6 +853,7 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       directories.set(directory, {
         testFiles: 0,
         covered: 0,
+        declaredQuarantine: 0,
         via: new Set(),
         testPaths: [],
         unrunPaths: [],
@@ -852,6 +864,10 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
     entry.testPaths.push(testFile);
     if (result.covered) entry.covered += 1;
     else entry.unrunPaths.push(testFile);
+    if (result.declaredQuarantine) {
+      entry.declaredQuarantine += 1;
+      declaredQuarantine += 1;
+    }
     for (const via of result.via) entry.via.add(via);
   }
 
@@ -861,6 +877,9 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       testFiles: entry.testFiles,
       coveredTestFiles: entry.covered,
       unrunTestFiles: entry.testFiles - entry.covered,
+      declaredQuarantineTestFiles: entry.declaredQuarantine,
+      untriagedUnrunTestFiles:
+        entry.testFiles - entry.covered - entry.declaredQuarantine,
       unrunTestPaths: [...entry.unrunPaths].sort(),
       via: [...entry.via].sort(),
       governedRisk: governedRiskForDirectory(
@@ -880,8 +899,14 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
   // two, and in practice excluded every partially covered directory from the
   // queue this ranking exists to order — 257 unrun files across 22
   // directories, none of them visible here, at the time this changed.
+  // Ranked on files that are unrun AND not already in a quarantine somebody
+  // wrote with a reason. Before this filter, ranks 2 and 3 of the critical
+  // band were directories whose entire unrun set was declared quarantine, so
+  // the ordering that exists to say "triage this next" was offering work that
+  // had already been triaged. The full `unrunTestFiles` stays on every row, so
+  // nothing is hidden — only the ordering stops repeating itself.
   const governedRiskRows = rows
-    .filter((row) => row.unrunTestFiles > 0)
+    .filter((row) => row.untriagedUnrunTestFiles > 0)
     .filter((row) => row.governedRisk.score > 0)
     .sort(
       (a, b) =>
@@ -897,6 +922,8 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
     directory: row.directory,
     testFiles: row.testFiles,
     unrunTestFiles: row.unrunTestFiles,
+    declaredQuarantineTestFiles: row.declaredQuarantineTestFiles,
+    untriagedUnrunTestFiles: row.untriagedUnrunTestFiles,
     governedRisk: {
       score: row.governedRisk.score,
       band: row.governedRisk.band,
@@ -931,6 +958,13 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
   const directoriesWithUnrunTestFiles = rows.filter(
     (row) => row.unrunTestFiles > 0,
   );
+  // The ranking's own denominator moved with its filter. Subtracting the
+  // ranking from the wider set would have recounted every fully quarantined
+  // governed directory as "unclassified", which is the opposite of what that
+  // number means.
+  const directoriesWithUntriagedUnrunTestFiles = rows.filter(
+    (row) => row.untriagedUnrunTestFiles > 0,
+  );
 
   return {
     subject:
@@ -941,7 +975,8 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       "Four hops are followed: workflow run step, npm script (recursively), repo script file, test-ratchet baseline JSON.",
       "pullRequestCovered counts only workflows triggered by pull_request or merge_group, i.e. the set that can block a merge.",
       "While indeterminateInvocations is non-empty, uncoveredTestFiles is an upper bound.",
-      "Every directory holding a file no workflow runs is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker.",
+      "An unrun file a naming command excludes through its own --testPathIgnorePatterns is a declared quarantine: triaged, with a reason recorded somewhere. An unrun file no command names is untriaged. Both stay in uncoveredTestFiles; only untriagedUnrunTestFiles separates them.",
+      "Every directory holding an UNTRIAGED unrun file is ranked by governed-surface risk: declared AI controls, approval or lifecycle writes, then tenant-scoped reads; the count of unrun files is only a tie-breaker. A directory whose unrun set is entirely declared quarantine is not ranked, because it has already been triaged.",
       "Governed-risk signals come from product modules a test loads at runtime, not from directory names alone; type-only imports are erased before the test runs and are not counted as edges.",
       "Evidence source lists for the top 25 governed-risk directories are sorted and capped at five paths per signal; companion counts preserve the full match cardinality.",
       "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op.",
@@ -958,6 +993,10 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
       directoriesPartiallyCovered: partialDirectories.length,
       directoriesUncovered: uncoveredDirectories.length,
       directoriesWithUnrunTestFiles: directoriesWithUnrunTestFiles.length,
+      directoriesWithUntriagedUnrunTestFiles:
+        directoriesWithUntriagedUnrunTestFiles.length,
+      declaredQuarantineTestFiles: declaredQuarantine,
+      untriagedUnrunTestFiles: testFiles.length - covered - declaredQuarantine,
       indeterminateInvocations: indeterminate.length,
       unresolvedIgnoreArguments: unresolvedIgnoreArguments.length,
       criticalGovernedRiskDirectories: governedRiskRanking.filter(
@@ -967,7 +1006,8 @@ export function buildCensus(root, { includeUnrunPaths = false } = {}) {
         (row) => row.governedRisk.band === "high",
       ).length,
       unclassifiedRiskDirectories:
-        directoriesWithUnrunTestFiles.length - governedRiskRanking.length,
+        directoriesWithUntriagedUnrunTestFiles.length -
+        governedRiskRanking.length,
     },
     indeterminateInvocations: indeterminate,
     unresolvedIgnoreArguments,
@@ -1004,7 +1044,8 @@ function summarize(census) {
     `  run by a pull-request workflow: ${c.pullRequestCoveredTestFiles}`,
     `  run by no workflow:             ${c.uncoveredTestFiles}`,
     `  directories with tests:         ${c.directoriesWithTests} (${c.directoriesFullyCovered} fully covered, ${c.directoriesPartiallyCovered} partial, ${c.directoriesUncovered} uncovered)`,
-    `  directories with unrun tests:   ${c.directoriesWithUnrunTestFiles}`,
+    `  run by no workflow, untriaged: ${c.untriagedUnrunTestFiles} (${c.declaredQuarantineTestFiles} are declared quarantines)`,
+    `  directories with unrun tests:   ${c.directoriesWithUnrunTestFiles} (${c.directoriesWithUntriagedUnrunTestFiles} hold an untriaged file)`,
     `  governed risk among them:       ${c.criticalGovernedRiskDirectories} critical, ${c.highGovernedRiskDirectories} high`,
   ];
   if (c.indeterminateInvocations > 0) {
@@ -1025,10 +1066,10 @@ function summarize(census) {
   }
   const governedHead = census.governedRiskRanking.slice(0, 5);
   if (governedHead.length > 0) {
-    lines.push("  top governed-risk directories by unrun tests:");
+    lines.push("  top governed-risk directories by untriaged unrun tests:");
     for (const row of governedHead) {
       lines.push(
-        `    ${row.governedRisk.rank}. ${row.directory} (${row.governedRisk.band}; ${row.unrunTestFiles} unrun of ${row.testFiles} tests; ${row.governedRisk.signals.join(", ")})`,
+        `    ${row.governedRisk.rank}. ${row.directory} (${row.governedRisk.band}; ${row.untriagedUnrunTestFiles} untriaged of ${row.unrunTestFiles} unrun of ${row.testFiles} tests; ${row.governedRisk.signals.join(", ")})`,
       );
     }
   }
