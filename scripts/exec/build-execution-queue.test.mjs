@@ -733,5 +733,128 @@ claimGrammarCase(
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/* ------------------------------------------------------------------------ */
+/* 16-19. WHICH LINE IS "THE NEWEST LINE FOR AN ITEM" (item T-530, the      */
+/*        2026-09-21 filing).                                              */
+/*                                                                          */
+/* The register is append-only, so a line's POSITION is the order it was    */
+/* actually written. Its STAMP is self-reported, and T-457 measured that    */
+/* drift on the live file: 26 merge announcements resolved to an            */
+/* authoritative `mergedAt`, 17 of them outside +/-300s, and six lines      */
+/* stamped in the future of the clock that read them. So the two orders are */
+/* genuinely different authorities and the resolver has to pick one.        */
+/*                                                                          */
+/* Every fixture below is built so the two orders DISAGREE — the later      */
+/* -appended line carries the earlier stamp. A fixture where they agree     */
+/* cannot fail whichever authority the resolver uses, which is the T-460    */
+/* shape this suite exists to avoid.                                        */
+/* ------------------------------------------------------------------------ */
+
+/** A stamp `minutesAgo` before now, in the minute-precision register form. */
+function registerStamp(minutesAgo) {
+  return new Date(Date.now() - minutesAgo * 60_000)
+    .toISOString()
+    .replace(/:\d{2}\.\d{3}Z$/, "Z");
+}
+
+/** The ids the queue renders under "Already claimed or in flight". */
+function heldSection(rendered) {
+  return rendered.match(/## Already claimed or in flight\n\n(.*)\n/)?.[1] ?? "";
+}
+
+/** The ids the queue renders on the "Explicitly released" line. */
+function releasedSection(rendered) {
+  return rendered.match(/\*\*Explicitly released \(\d+\):\*\*(.*)/)?.[1] ?? "";
+}
+
+/**
+ * Two claim lines for one id, appended in the order given, and the rendered
+ * queue they produce.
+ */
+function twoLineClaimFixture(id, firstLine, secondLine) {
+  const dir = freshFixture();
+  addBacklogItem(dir, id);
+  mapFixtureId(dir, id);
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_CLAIMS.md"),
+    `\n${firstLine}\n${secondLine}\n`,
+  );
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  fs.rmSync(dir, { recursive: true, force: true });
+  return { q, rendered };
+}
+
+/* 16. THE PRIMARY AUTHORITY IS THE STAMP.                                  */
+{
+  const id = "T-591";
+  // Appended FIRST but stamped LATER — the stamp authority must pick this one.
+  const first = `${registerStamp(0)} | lane-a | item ${id} · PR/CI opened | branch codex/${id}-fixture`;
+  // Appended SECOND but stamped TEN MINUTES EARLIER.
+  const second = `${registerStamp(10)} | lane-b | RELEASED item ${id} — nothing held`;
+  const { q, rendered } = twoLineClaimFixture(id, first, second);
+  check(
+    "the newest line for an item is chosen by STAMP, not by append position",
+    q.status === 0 &&
+      heldSection(rendered).includes(id) &&
+      !releasedSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* 17. APPEND ORDER BREAKS AN EQUAL STAMP.                                  */
+{
+  const id = "T-592";
+  const stamp = registerStamp(0);
+  const first = `${stamp} | lane-a | item ${id} · PR/CI opened | branch codex/${id}-fixture`;
+  const second = `${stamp} | lane-b | RELEASED item ${id} — nothing held`;
+  const { q, rendered } = twoLineClaimFixture(id, first, second);
+  check(
+    "two lines sharing one minute-precision stamp resolve to the later-APPENDED line",
+    q.status === 0 &&
+      releasedSection(rendered).includes(id) &&
+      !heldSection(rendered).includes(id),
+    `exit=${q.status}\nheld=${heldSection(rendered)}\nreleased=${releasedSection(rendered)}`,
+  );
+}
+
+/* 18. THE DISAGREEMENT IS REPORTED — this is the defect T-530 names.       */
+/*     The resolver picking the stamp is defensible; picking it SILENTLY    */
+/*     is not, because the bucket then contradicts the register's last      */
+/*     written word with nothing downstream saying so.                      */
+{
+  const id = "T-593";
+  const first = `${registerStamp(0)} | lane-a | item ${id} · PR/CI opened | branch codex/${id}-fixture`;
+  const second = `${registerStamp(10)} | lane-b | RELEASED item ${id} — nothing held`;
+  const { q, rendered } = twoLineClaimFixture(id, first, second);
+  check(
+    "an id whose append order and stamp order disagree is named in the queue",
+    q.status === 0 &&
+      /Append order and stamp order disagree/.test(rendered) &&
+      new RegExp(`disagree[^]*\\b${id}\\b`).test(rendered) &&
+      /disagree on 1 id/.test(rendered),
+    `exit=${q.status}\nqueue=${rendered}`,
+  );
+}
+
+/* 19. AND IT IS NOT REPORTED WHEN THE TWO ORDERS AGREE.                    */
+/*     Without this, case 18 passes for a queue that prints the warning     */
+/*     unconditionally, which is the string-literal gate this backlog       */
+/*     exists to stop.                                                      */
+{
+  const id = "T-594";
+  // Appended in stamp order: the two authorities pick the same line.
+  const first = `${registerStamp(10)} | lane-a | item ${id} · PR/CI opened | branch codex/${id}-fixture`;
+  const second = `${registerStamp(0)} | lane-b | RELEASED item ${id} — nothing held`;
+  const { q, rendered } = twoLineClaimFixture(id, first, second);
+  check(
+    "no disagreement is reported when append order and stamp order agree",
+    q.status === 0 &&
+      !/Append order and stamp order disagree/.test(rendered) &&
+      releasedSection(rendered).includes(id),
+    `exit=${q.status}\nqueue=${rendered}`,
+  );
+}
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

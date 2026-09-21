@@ -210,11 +210,42 @@ function executionClaimEntries(text) {
   }
 }
 
-function latestClaim(entries) {
+/*
+ * "The newest line for an item wins" — and the authority for *newest* is named
+ * here rather than left to be inferred from the comparison (item T-530, whose
+ * filer read this very function as resolving by file order).
+ *
+ *   PRIMARY:   the STAMP on the line.
+ *   TIE-BREAK: APPEND POSITION, via `>=` — entries arrive in file order, and
+ *              register stamps are minute-precision, so same-minute ties are
+ *              ordinary rather than exotic.
+ *
+ * Both authorities are imperfect and they disagree on the live register: 14 of
+ * 283 ids resolve to a different line, 5 of those to a different verdict. The
+ * queue generator reports that disagreement; this function only promises which
+ * authority it used. Do not "fix" a disagreement by restamping the register —
+ * it is audit history and the correction pattern is append-only.
+ */
+function latestClaimByStampThenAppend(entries) {
   return entries.reduce((latest, entry) => {
     if (!latest) return entry;
     return entry.timestamp >= latest.timestamp ? entry : latest;
   }, null);
+}
+
+{
+  // A fixture where the two orders AGREE cannot fail whichever authority the
+  // function uses, so both cases below are built to disagree.
+  const later = { timestamp: "2026-09-21T17:30Z", text: "appended first, stamped later" };
+  const earlier = { timestamp: "2026-09-21T17:20Z", text: "appended second, stamped earlier" };
+  if (latestClaimByStampThenAppend([later, earlier]) !== later) {
+    throw new Error("Claim resolver must pick the later STAMP, not the later append position");
+  }
+  const tieFirst = { timestamp: "2026-09-21T17:30Z", text: "same stamp, appended first" };
+  const tieSecond = { timestamp: "2026-09-21T17:30Z", text: "same stamp, appended second" };
+  if (latestClaimByStampThenAppend([tieFirst, tieSecond]) !== tieSecond) {
+    throw new Error("Claim resolver must break an equal stamp by append position");
+  }
 }
 
 /** Every `### Item NN [P?] — title` prose item in the backlog. */
@@ -639,7 +670,7 @@ const stages = map.stages.map((s) => {
   const stageClaims = executionClaims.filter((entry) =>
     stageClaimRe.test(entry.text) || stageClaimOwners.has(entry.text.split("|")[0].trim()),
   );
-  const latestStageClaim = latestClaim(stageClaims);
+  const latestStageClaim = latestClaimByStampThenAppend(stageClaims);
   const claimRung = stageClaims
     .map((entry) => deriveRung(entry.text))
     .reduce(
