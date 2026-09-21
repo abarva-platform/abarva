@@ -332,9 +332,22 @@ An earlier revision of this document reported "no mobile project exists", having
 default is the smallest. The error surfaced only when a CI check named `Chrome Firefox Safari mobile
 smoke` went green on this document's own pull request — that is, from the runtime contradicting the
 document, which is exactly the direction of evidence this matrix exists to privilege. A claim of the
-form "no X exists" is the easiest kind to get wrong by reading one file, and the two in this table
-that still take that form (`0 matches`, `0` screenshots) are stated as command output for that
-reason.
+form "no X exists" is the easiest kind to get wrong by reading one file, and the ones in this table
+that still take that form are stated as command output for that reason.
+
+**After that error, every remaining negative claim was re-checked across the whole repository rather
+than from the file that motivated it.** The scope of that check, not just its verdict:
+
+- **Three** Playwright configs exist and no more (`find . -maxdepth 2 -name "playwright*.config.*"`),
+  with `testDir` values `./tests/e2e`, `./tests/browser-matrix` and `./tests/accessibility`. All
+  three are enumerated above; the mobile error came from having read only the first.
+- `source/new` appears in `tests/` only in `cxo-bible-acceptance.spec.ts`, three lines, all against
+  the list route `/source/new`. **Zero** references to `/source/new/{eventId}` in any config's test
+  directory.
+- Axe appears in exactly one spec repository-wide; the other matches are `package.json` and release
+  records.
+- Screenshot capture appears in three files, all under `tests/e2e`, none of which reaches this
+  surface.
 
 The `.jsonl` exclusion in the first command is deliberate and is not hiding a match: the two files it
 drops are agent-quality golden prompt corpora (`tests/agent-quality/golden/`), which contain the
