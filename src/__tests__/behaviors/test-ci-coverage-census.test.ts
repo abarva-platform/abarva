@@ -97,6 +97,17 @@ type Census = {
       signals: string[];
     };
   }[];
+  governedRiskFiles: {
+    directory: string;
+    testPath: string;
+    loaded: boolean;
+    collected: boolean;
+    run: boolean;
+    green: boolean;
+    covered: boolean;
+    declaredQuarantine: boolean;
+    untriaged: boolean;
+  }[];
   uncoveredDirectories: {
     directory: string;
     testFiles: number;
@@ -821,6 +832,67 @@ describe("test CI coverage census", () => {
         (row) => row.directory === "src/lib/theta/__tests__",
       ),
     ).toMatchObject({ testFiles: 2, coveredTestFiles: 1 });
+  });
+
+  it("reports loaded, collected, run, and green status per governed-risk file", () => {
+    const route =
+      "export async function POST() { return approve({ value: true }); }\n";
+    const suite =
+      'import { POST } from "../route";\nit("approval", () => expect(typeof POST).toBe("function"));\n';
+    const dir = fixture({
+      "src/app/api/source/action/route.ts": route,
+      "src/app/api/source/action/__tests__/run.test.ts": suite,
+      "src/app/api/source/action/__tests__/quarantined.test.ts": suite,
+      "src/app/api/source/action/__tests__/dark.test.ts": suite,
+      ".github/workflows/gate.yml": [
+        "name: gate",
+        "on:",
+        "  pull_request:",
+        "jobs:",
+        "  verify:",
+        "    steps:",
+        "      - run: npx jest src/app/api/source/action/__tests__/run.test.ts",
+        "      - run: npx jest src/app/api/source/action/__tests__/quarantined.test.ts --testPathIgnorePatterns action/__tests__/quarantined\\.test\\.ts$",
+      ].join("\n"),
+    });
+
+    const { census } = runCensus(dir);
+    const files = new Map(
+      census.governedRiskFiles.map((row) => [row.testPath, row]),
+    );
+
+    expect(census.governedRiskRanking.map((row) => row.directory)).toEqual([
+      "src/app/api/source/action/__tests__",
+    ]);
+    expect(files.get("src/app/api/source/action/__tests__/run.test.ts")).toMatchObject({
+      loaded: true,
+      collected: true,
+      run: true,
+      green: true,
+      covered: true,
+      declaredQuarantine: false,
+      untriaged: false,
+    });
+    expect(
+      files.get("src/app/api/source/action/__tests__/quarantined.test.ts"),
+    ).toMatchObject({
+      loaded: true,
+      collected: true,
+      run: false,
+      green: false,
+      covered: false,
+      declaredQuarantine: true,
+      untriaged: false,
+    });
+    expect(files.get("src/app/api/source/action/__tests__/dark.test.ts")).toMatchObject({
+      loaded: true,
+      collected: false,
+      run: false,
+      green: false,
+      covered: false,
+      declaredQuarantine: false,
+      untriaged: true,
+    });
   });
 
   it.each([
