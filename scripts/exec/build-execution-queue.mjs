@@ -143,12 +143,106 @@ function parseClaimRecord(line) {
   const at = line.match(/(?:^|\s)(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z)(?:\s|$)/)?.[1];
   if (!at) return null;
 
-  const rawId =
-    line.match(/\bitem\s*#?([A-Z]-\d{3}|\d+)\b/i)?.[1] ??
-    line.match(/\bCLAIM(?:ED)?\s+#?([A-Z]-\d{3}|\d+)\b/i)?.[1];
-  if (!rawId) return null;
+  const idMatch =
+    line.match(/\bitem\s*#?([A-Z]-\d{3}|\d+)\b/i) ??
+    line.match(/\bCLAIM(?:ED)?\s+#?([A-Z]-\d{3}|\d+)\b/i);
+  if (!idMatch) return null;
+  const rawId = idMatch[1];
 
-  return { at, rawId };
+  // Where on the line the id is actually written, so a verdict can be
+  // attributed to it rather than to the line as a whole (item T-545).
+  const idIndex = idMatch.index + idMatch[0].indexOf(rawId);
+
+  return { at, rawId, idIndex };
+}
+
+/* ------------------------------------------------------------------------ *
+ * ATTRIBUTING A RELEASE — item T-545.
+ *
+ * The verdict used to be `/\bRELEASED\b/.test(line)` over the whole line,
+ * with the id matched separately and never related to it. Register lines are
+ * long and discursive: one line routinely claims item A while narrating that
+ * item B's files were released, or closes by releasing a FILE claim while the
+ * item itself is still at PR/CI. Every one of those read as a release of the
+ * item the line claims, and the next queue regeneration offered actively-held
+ * work under "Explicitly released" — an invitation straight into a collision.
+ *
+ * Measured on the live register at 2026-09-21T21:05Z, over the 107 lines that
+ * parse as a release under the whole-line rule:
+ *
+ *   - 100 have the token within 40 characters of the id reference;
+ *   - the furthest GENUINE release is 54 (`- item <id> | agent | <stamp> |
+ *     RELEASED — merged, deployed`, where the agent and stamp sit between);
+ *   - the five false ones are 251, 457, 631, 793 and 908 characters away.
+ *
+ * The band from 54 to 251 is empty, so RELEASE_REACH below is measured rather
+ * than chosen. Two rules apply, and the second is the structural one:
+ *
+ *   1. NEAREST TOKEN, not any token — the shape `register-time-authority.mjs`
+ *      already uses for merge attribution, and proven there.
+ *   2. NO INTERVENING ID REFERENCE. A token separated from this id by another
+ *      item id belongs to that other id, whatever the distance. This catches
+ *      the case a reach alone cannot: `RELEASED T-005 | ... | item 126`.
+ *
+ * Both errors are deliberately on the `held` side. Reading a real release as
+ * a hold hides finished work until the next line is appended; reading a
+ * mention as a release sends a second agent into a file another lane owns,
+ * which is the failure this register exists to prevent.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * A token that reports a claim as released. Deliberately the EXACT token the
+ * register's established grammar writes — uppercase `RELEASED` — and nothing
+ * more. This item is about attributing that verdict to the right id, not
+ * about detecting more of them: widening the token set here would change what
+ * counts as a release at the same time as changing who it belongs to, and
+ * neither change could then be measured on its own. Measured at
+ * 2026-09-21T21:05Z, matching case-insensitively and adding `RELEASING` moved
+ * six further ids into `released` on the live register, all of them from
+ * lower-case prose, none of them announcements.
+ */
+const RELEASE_TOKEN = /\bRELEASED\b/g;
+
+/**
+ * The register says "NOT RELEASED, still holding" as readily as it says
+ * "RELEASED". A negator within a short reach before the token disqualifies
+ * it — the same false positive T-457 measured for merge tokens.
+ */
+const RELEASE_NEGATOR = /\b(?:not|never|un|pending|awaiting|before|until|if|yet to be)\b[^.]{0,24}$/i;
+
+/** Any other item id written on the line: `T-411`, `item 126`, `#97`. */
+const ID_REFERENCE = /\b(?:[A-Z]-\d{3}|[Ii]tem\s*#?\d+)\b/g;
+
+/**
+ * The furthest a release token may sit from the id it releases. See the
+ * measurement above: the furthest genuine release observed is 54 and the
+ * nearest false one is 251, so this sits inside an empty band with better
+ * than 2x margin on each side.
+ */
+const RELEASE_REACH = 120;
+
+/** Whether the line releases the id written at `idIndex`, and only that id. */
+function announcesReleaseOf(line, idIndex, idLength) {
+  RELEASE_TOKEN.lastIndex = 0;
+  const tokens = [...line.matchAll(RELEASE_TOKEN)];
+  if (tokens.length === 0) return false;
+
+  let nearest = tokens[0];
+  for (const token of tokens) {
+    if (Math.abs(token.index - idIndex) < Math.abs(nearest.index - idIndex)) nearest = token;
+  }
+
+  const negated = RELEASE_NEGATOR.test(line.slice(Math.max(0, nearest.index - 28), nearest.index));
+  if (negated) return false;
+
+  if (Math.abs(nearest.index - idIndex) > RELEASE_REACH) return false;
+
+  // Anything between the id and the token that is itself an id reference
+  // means the token is speaking about that one instead.
+  const from = Math.min(idIndex + idLength, nearest.index);
+  const to = Math.max(idIndex, nearest.index + nearest[0].length);
+  ID_REFERENCE.lastIndex = 0;
+  return [...line.slice(from, to).matchAll(ID_REFERENCE)].length === 0;
 }
 
 function readClaims() {
@@ -204,7 +298,7 @@ function readClaims() {
     const resolved = {
       at: when,
       stamp: at,
-      released: /\bRELEASED\b/.test(line),
+      released: announcesReleaseOf(line, record.idIndex, rawId.length),
       inFlight: IN_FLIGHT.test(line),
     };
     byAppendOrder.set(key, resolved);
