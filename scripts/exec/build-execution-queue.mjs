@@ -161,20 +161,69 @@ function readClaims() {
   // somewhere other than in the log. That is the signal the TTL cannot carry.
   const IN_FLIGHT = /\b(?:codex|claude)\/[\w./-]+|\bPR\s*#?\d{4}\b|#\d{4}\b/;
 
+  /*
+   * WHICH LINE IS "THE NEWEST LINE FOR AN ITEM" — the authority is named here
+   * because it is a choice between two real ones, and naming it is item T-530.
+   *
+   *   PRIMARY:   the STAMP the line carries.
+   *   TIE-BREAK: APPEND POSITION, for lines sharing one stamp. Register
+   *              stamps are minute-precision, so same-minute ties are common
+   *              rather than exotic; `>=` below is what implements this.
+   *
+   * Neither authority is clean and the resolver cannot make them agree:
+   *
+   *   - An append position is the order the line was really written, because
+   *     the register is append-only. But it says nothing about when the event
+   *     it reports happened, and a line reconciling a four-hour-old merge is
+   *     correct and normal.
+   *   - A stamp is about the event, but it is self-reported. T-457 measured
+   *     the live register: 26 merge announcements resolved to an authoritative
+   *     `mergedAt`, 17 outside +/-300s, drift from -44s to +48,077s, and six
+   *     lines stamped in the future of the clock that read them.
+   *
+   * So the two orders genuinely disagree, and on the live register they do:
+   * 14 of 283 ids resolve to a different line, and on 5 of those the BUCKET
+   * differs — three of them the difference between `released` and
+   * `expired-in-flight`, which is the difference between work this queue
+   * offers and work it hides.
+   *
+   * This does NOT switch authority, because which one is right for a
+   * cross-lane pair is an owner call and not a resolver detail. What it stops
+   * is the silence: every id where the two orders pick different lines is
+   * collected and reported, so a bucket that contradicts the register's last
+   * written word says so rather than being taken on trust.
+   */
   const latest = new Map(); // item id -> { at, released, inFlight }
+  const byAppendOrder = new Map(); // item id -> the LAST line appended for it
   for (const line of text.slice(start).split(/\r?\n/)) {
     const record = parseClaimRecord(line);
     if (!record) continue;
     const { at, rawId } = record;
     const when = Date.parse(at);
     const key = /^\d+$/.test(rawId) ? Number(rawId) : rawId.toUpperCase();
+    const resolved = {
+      at: when,
+      stamp: at,
+      released: /\bRELEASED\b/.test(line),
+      inFlight: IN_FLIGHT.test(line),
+    };
+    byAppendOrder.set(key, resolved);
     const prev = latest.get(key);
-    if (!prev || when >= prev.at) {
-      latest.set(key, {
-        at: when,
-        released: /\bRELEASED\b/.test(line),
-        inFlight: IN_FLIGHT.test(line),
-      });
+    if (!prev || when >= prev.at) latest.set(key, resolved);
+  }
+
+  /*
+   * An id disagrees when the stamp authority and the append authority select
+   * different LINE OBJECTS. Identity is the test rather than a field
+   * comparison: two lines can carry the same stamp and the same verdict and
+   * still be different lines, and that case is agreement for every purpose
+   * downstream.
+   */
+  const disagreements = [];
+  for (const [key, stampWinner] of latest) {
+    const appendWinner = byAppendOrder.get(key);
+    if (appendWinner && appendWinner !== stampWinner) {
+      disagreements.push({ num: key, stampWinner, appendWinner });
     }
   }
 
@@ -183,6 +232,14 @@ function readClaims() {
   const expiredIdle = [];
   const expiredInFlight = [];
   const released = [];
+
+  /** The bucket a single resolved line would put its item in. */
+  const bucketOf = (v) => {
+    if (v.released) return "released";
+    if (now - v.at > CLAIM_TTL_MS) return v.inFlight ? "expired-in-flight" : "expired-idle";
+    return "held";
+  };
+
   for (const [num, v] of latest) {
     if (v.released) { released.push(num); continue; }
     if (now - v.at > CLAIM_TTL_MS) {
@@ -204,10 +261,25 @@ function readClaims() {
     expired: expiredIdle.sort(compareItemIds),
     expiredInFlight: expiredInFlight.sort(compareItemIds),
     released: released.sort(compareItemIds),
+    orderDisagreements: disagreements
+      .map((d) => ({
+        num: d.num,
+        stampAt: d.stampWinner.stamp,
+        appendAt: d.appendWinner.stamp,
+        stampBucket: bucketOf(d.stampWinner),
+        appendBucket: bucketOf(d.appendWinner),
+      }))
+      .sort((a, b) => compareItemIds(a.num, b.num)),
   };
 }
 
-const { held: claimed, expired: expiredClaims, expiredInFlight, released: releasedClaims } = readClaims();
+const {
+  held: claimed,
+  expired: expiredClaims,
+  expiredInFlight,
+  released: releasedClaims,
+  orderDisagreements,
+} = readClaims();
 const inFlightSet = new Set(expiredInFlight);
 
 function normalizeItemId(value) {
@@ -311,6 +383,47 @@ ${items.length ? `| # | Track | Item | Acceptance |\n|---|---|---|---|\n${items.
 `;
 };
 
+/*
+ * Report every id where the register's two orders pick different lines.
+ *
+ * The resolver above chooses the stamp. That is defensible; choosing it
+ * SILENTLY is not, because the bucket an id lands in can then contradict the
+ * register's last written word with nothing downstream saying so — which is
+ * exactly the defect item T-530 names.
+ *
+ * Nothing is printed when the orders agree on every id. A warning that always
+ * appears is a string literal, not a signal, and this backlog exists because
+ * one CI gate proved a control existed by finding its name in a file.
+ */
+function renderOrderDisagreements() {
+  if (!orderDisagreements.length) return "";
+  const n = orderDisagreements.length;
+  const changesBucket = orderDisagreements.filter((d) => d.stampBucket !== d.appendBucket);
+  return `
+## Append order and stamp order disagree on ${n} id${n === 1 ? "" : "s"}
+
+The register is append-only, so a line's **position** is the order it was
+written; its **stamp** is self-reported, and T-457 measured that drift. This
+queue resolves "the newest line for an item" by **stamp**, with append
+position breaking an equal stamp. Where the two disagree, the bucket below is
+the stamp's answer and may not be the register's last written word.
+
+${changesBucket.length
+  ? `**${changesBucket.length} of them land in a different bucket**, which is the part that changes what this queue offers:\n\n`
+    + changesBucket
+        .map((d) => `- **${formatItemId(d.num)}** — stamp picks \`${d.stampAt}\` → \`${d.stampBucket}\`; append order picks \`${d.appendAt}\` → \`${d.appendBucket}\``)
+        .join("\n")
+  : "None of them lands in a different bucket, so nothing this queue offers changes."}
+
+${n > changesBucket.length
+  ? `The remaining ${n - changesBucket.length} resolve to a different line with the same verdict: ${orderDisagreements.filter((d) => d.stampBucket === d.appendBucket).map((d) => formatItemId(d.num)).join(" ")}.`
+  : ""}
+
+Do not repair this by restamping the register — it is audit history, and the
+correction pattern is append-only.
+`;
+}
+
 const out = `# Execution queue — generated
 
 Generated ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC from \`source-board-summary.json\`.
@@ -386,7 +499,7 @@ ${claimed.size ? [...claimed].sort(compareItemIds).map(formatItemId).join(" ") :
 
 ${expiredInFlight.length ? `**Expired but WORK IN FLIGHT — do not take (${expiredInFlight.length}):** ${expiredInFlight.map(formatItemId).join(" ")} — the 3-hour rule lapsed, but each of these names a branch or an open PR, so its owner is still on it. Measured over 48 completed cycles the median hold is 21 minutes and the p90 is 362, so the TTL cannot tell a slow claim from an abandoned one. Take one only after checking its branch and PR are genuinely dead.`+"\n" : ""}${expiredClaims.length ? `\n**Expired with no branch or PR, free to take (${expiredClaims.length}):** ${expiredClaims.map(formatItemId).join(" ")} — re-claim with a fresh line.` : ""}
 ${releasedClaims.length ? `\n**Explicitly released (${releasedClaims.length}):** ${releasedClaims.map(formatItemId).join(" ")}` : ""}
-`;
+${renderOrderDisagreements()}`;
 
 fs.writeFileSync(OUT, out);
 console.log(`Wrote ${path.basename(OUT)}: ${claimable.length} claimable, ${blockedOnUser.length} blocked on Anand, ${claimed.size} held, ${expiredClaims.length} expired-idle, ${expiredInFlight.length} expired-in-flight, ${releasedClaims.length} released.`);
