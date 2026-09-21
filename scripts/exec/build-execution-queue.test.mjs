@@ -511,7 +511,9 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
     path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
     "\n| T-468 | **Tenant scoping input decision fixture.** | C | Decision needed before product code. |\n" +
       "| T-469 | **Data-plane safety artifact fixture.** | T | Produce the per-client answer as tooling evidence. |\n" +
-      "| T-508 | **Dataset-write guard fixture.** | T | Add the dataset-diff failure; do not weaken the write-safety requirement. |\n",
+      "| T-508 | **Dataset-write guard fixture.** | T | Add the dataset-diff failure; do not weaken the write-safety requirement. |\n" +
+      "| T-470 | **Deployment-register reconciliation fixture.** | T | Record exact immutable deploy proof. |\n" +
+      "| T-471 | **Stale-suite triage fixture.** | T | Measure each named suite before wiring it. |\n",
   );
   const map = JSON.parse(fs.readFileSync(path.join(dir, "source-stage-map.json"), "utf8"));
   check(
@@ -535,10 +537,19 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
       !JSON.stringify(map.stages).includes('"T-508"'),
     JSON.stringify(map.platformTrack.items.slice(-24)),
   );
+  for (const id of ["T-470", "T-471"]) {
+    check(
+      `${id} is mapped to platform integrity`,
+      map.platformTrack.items.includes(id) &&
+        !map.outsideLifecycle.items.includes(id) &&
+        !JSON.stringify(map.stages).includes(`"${id}"`),
+      JSON.stringify(map.platformTrack.items.slice(-24)),
+    );
+  }
   const board = run(dir, "build-source-board.mjs", ["--json"]);
   const q = board.status === 0 ? run(dir, "build-execution-queue.mjs") : { status: 1, stdout: "", stderr: "" };
   check(
-    "T-468, T-469, and T-508 regenerate with zero unmapped ids",
+    "T-468, T-469, T-508, T-470, and T-471 regenerate with zero unmapped ids",
     board.status === 0 &&
       q.status === 0 &&
       /not placed on the map:\s*0/.test(board.stdout + board.stderr),
@@ -547,7 +558,7 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
-for (const id of ["T-468", "T-469", "T-508"]) {
+for (const id of ["T-468", "T-469", "T-508", "T-470", "T-471"]) {
   const dir = freshFixture();
   fs.appendFileSync(
     path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
