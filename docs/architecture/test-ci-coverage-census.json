@@ -12,20 +12,20 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2349,
+    "testFiles": 2350,
     "coveredTestFiles": 1783,
     "pullRequestCoveredTestFiles": 1780,
-    "uncoveredTestFiles": 566,
+    "uncoveredTestFiles": 567,
     "directoriesWithTests": 478,
-    "directoriesFullyCovered": 255,
-    "directoriesPartiallyCovered": 28,
+    "directoriesFullyCovered": 254,
+    "directoriesPartiallyCovered": 29,
     "directoriesUncovered": 195,
-    "directoriesWithUnrunTestFiles": 223,
+    "directoriesWithUnrunTestFiles": 224,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 6,
     "highGovernedRiskDirectories": 30,
-    "unclassifiedRiskDirectories": 187
+    "unclassifiedRiskDirectories": 188
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -155,6 +155,14 @@
       "directory": "src/lib/governance/__tests__",
       "testFiles": 8,
       "coveredTestFiles": 5,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/source/new-workspace",
+      "testFiles": 7,
+      "coveredTestFiles": 6,
       "via": [
         "command"
       ]

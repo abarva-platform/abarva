@@ -32,6 +32,7 @@ Control tooling: the board and queue generators now receive the full current bac
 
 - `scripts/exec/source-stage-map.json` maps the current previously-unmapped backlog IDs.
 - `scripts/exec/build-execution-queue.test.mjs` adds a fixture proving duplicate IDs can be placed with `definedIn` without becoming ambiguous or invisible.
+- `docs/architecture/test-ci-coverage-census.json` is refreshed to the current `main` test shape so the behavior coverage floor remains current.
 
 ## QA / Validation
 
@@ -40,6 +41,7 @@ Control tooling: the board and queue generators now receive the full current bac
 - PASS: `node scripts/exec/build-execution-queue.test.mjs` reports `30 passed, 0 failed`.
 - PASS: `npx eslint scripts/exec/build-source-board.mjs scripts/exec/build-execution-queue.mjs scripts/exec/build-execution-queue.test.mjs`.
 - PASS: `npm run typecheck` reports `typecheck: clean`.
+- PASS: `npm run audit:test-ci-coverage:check`.
 - PASS: `npm run release:check`. The command regenerates unrelated legacy-purge report drift; that drift is not included in this release.
 - PASS: `git diff --check`.
 
