@@ -196,12 +196,17 @@ const DIRECTORIES_WIRED_BY_FILE: Record<string, readonly string[]> = {
 const ROOT_FILES_WIRED_BY_FILE = [
   "src/__tests__/integration/admin-context-uploads-tabs.test.tsx",
   "src/__tests__/integration/agent-column-agent-answer.test.ts",
+  "src/__tests__/integration/app-rail-home-nav.test.tsx",
+  "src/__tests__/integration/app-topbar-prefetch-guard.test.tsx",
   "src/__tests__/integration/app-topbar-preserve-tenant-name.test.ts",
+  "src/__tests__/integration/ask-anything-bar-agent-answer.test.tsx",
   "src/__tests__/integration/atlas-page-state-timeout.test.ts",
   "src/__tests__/integration/email-code-sign-in-panel.test.tsx",
   "src/__tests__/integration/evidence-registry.test.ts",
+  "src/__tests__/integration/learn-welcome-cxo-toggle.test.tsx",
   "src/__tests__/integration/pack-j-realistic-portfolio.test.ts",
   "src/__tests__/integration/pattern-deliverable-api.test.ts",
+  "src/__tests__/integration/shell-topbar-auth.test.tsx",
   "src/__tests__/integration/sign-in-route-contract.test.ts",
   "src/__tests__/integration/strategic-moves-chat-shape.test.ts",
   "src/__tests__/integration/supabase.test.ts",
@@ -216,14 +221,9 @@ const ROOT_FILES_WIRED_BY_FILE = [
  * noise.
  */
 const KNOWN_DARK_ROOT_FILES = new Set([
-  "src/__tests__/integration/app-rail-home-nav.test.ts",
-  "src/__tests__/integration/app-topbar-prefetch-guard.test.ts",
-  "src/__tests__/integration/ask-anything-bar-agent-answer.test.ts",
   "src/__tests__/integration/atlas-ask-route.test.ts",
   "src/__tests__/integration/deliverable-render-contract.test.ts",
-  "src/__tests__/integration/learn-welcome-cxo-toggle.test.ts",
   "src/__tests__/integration/marketing-nav-dropdowns.test.tsx",
-  "src/__tests__/integration/shell-topbar-auth.test.ts",
   "src/__tests__/integration/sign-in-shell.test.tsx",
   "src/__tests__/integration/source-chat-shape.test.ts",
 ]);
@@ -335,38 +335,40 @@ function quarantineAccounting(): {
   unrun: number;
   testFiles: number;
 }[] {
-  return QUARANTINED_WIRED_DIRECTORIES.map(({ directory, ignoreArgsScript }) => {
-    const relative = `${INTEGRATION_ROOT}/${directory}`;
-    const patterns = execFileSync(
-      process.execPath,
-      [path.join(repoRoot, ignoreArgsScript)],
-      { cwd: repoRoot, encoding: "utf8" },
-    )
-      .trim()
-      .split(/\s+/)
-      .filter((token) => token !== "--testPathIgnorePatterns")
-      .map((pattern) => new RegExp(pattern));
-
-    const files = readdirSync(path.join(repoRoot, relative), {
-      withFileTypes: true,
-    })
-      .filter(
-        (entry) =>
-          entry.isFile() && /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(entry.name),
+  return QUARANTINED_WIRED_DIRECTORIES.map(
+    ({ directory, ignoreArgsScript }) => {
+      const relative = `${INTEGRATION_ROOT}/${directory}`;
+      const patterns = execFileSync(
+        process.execPath,
+        [path.join(repoRoot, ignoreArgsScript)],
+        { cwd: repoRoot, encoding: "utf8" },
       )
-      .map((entry) => `${relative}/${entry.name}`)
-      .sort();
+        .trim()
+        .split(/\s+/)
+        .filter((token) => token !== "--testPathIgnorePatterns")
+        .map((pattern) => new RegExp(pattern));
 
-    const row = partialCoverage.get(relative);
-    return {
-      directory,
-      excludedBySelf: files.filter((file) =>
-        patterns.some((pattern) => pattern.test(file)),
-      ),
-      unrun: row ? row.testFiles - row.coveredTestFiles : 0,
-      testFiles: row?.testFiles ?? files.length,
-    };
-  });
+      const files = readdirSync(path.join(repoRoot, relative), {
+        withFileTypes: true,
+      })
+        .filter(
+          (entry) =>
+            entry.isFile() && /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(entry.name),
+        )
+        .map((entry) => `${relative}/${entry.name}`)
+        .sort();
+
+      const row = partialCoverage.get(relative);
+      return {
+        directory,
+        excludedBySelf: files.filter((file) =>
+          patterns.some((pattern) => pattern.test(file)),
+        ),
+        unrun: row ? row.testFiles - row.coveredTestFiles : 0,
+        testFiles: row?.testFiles ?? files.length,
+      };
+    },
+  );
 }
 
 function expandedWorkflowCommands(): string[] {
