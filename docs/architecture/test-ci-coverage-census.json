@@ -13,18 +13,18 @@
   ],
   "counts": {
     "testFiles": 2350,
-    "coveredTestFiles": 1784,
-    "pullRequestCoveredTestFiles": 1781,
-    "uncoveredTestFiles": 566,
+    "coveredTestFiles": 1785,
+    "pullRequestCoveredTestFiles": 1782,
+    "uncoveredTestFiles": 565,
     "directoriesWithTests": 478,
-    "directoriesFullyCovered": 254,
+    "directoriesFullyCovered": 255,
     "directoriesPartiallyCovered": 29,
-    "directoriesUncovered": 195,
-    "directoriesWithUnrunTestFiles": 224,
+    "directoriesUncovered": 194,
+    "directoriesWithUnrunTestFiles": 223,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 6,
-    "highGovernedRiskDirectories": 31,
+    "highGovernedRiskDirectories": 30,
     "unclassifiedRiskDirectories": 187
   },
   "indeterminateInvocations": [],
@@ -508,7 +508,7 @@
       }
     },
     {
-      "directory": "src/app/api/admin/context-layer/csv-upload/__tests__",
+      "directory": "src/app/api/admin/users/provision/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -521,7 +521,7 @@
       }
     },
     {
-      "directory": "src/app/api/admin/users/provision/__tests__",
+      "directory": "src/app/api/knowledge/consumption/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -534,7 +534,7 @@
       }
     },
     {
-      "directory": "src/app/api/knowledge/consumption/__tests__",
+      "directory": "src/app/api/programs/synthesis/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -547,7 +547,7 @@
       }
     },
     {
-      "directory": "src/app/api/programs/synthesis/__tests__",
+      "directory": "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -560,7 +560,7 @@
       }
     },
     {
-      "directory": "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__",
+      "directory": "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -573,7 +573,7 @@
       }
     },
     {
-      "directory": "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__",
+      "directory": "src/app/api/source/synthesis/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -586,7 +586,7 @@
       }
     },
     {
-      "directory": "src/app/api/source/synthesis/__tests__",
+      "directory": "src/app/api/source/workspace/contract/[contractId]/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -599,7 +599,7 @@
       }
     },
     {
-      "directory": "src/app/api/source/workspace/contract/[contractId]/__tests__",
+      "directory": "src/app/api/source/workspace/contract/[contractId]/optimization/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -612,7 +612,7 @@
       }
     },
     {
-      "directory": "src/app/api/source/workspace/contract/[contractId]/optimization/__tests__",
+      "directory": "src/app/api/source/workspace/portfolio/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -625,7 +625,7 @@
       }
     },
     {
-      "directory": "src/app/api/source/workspace/portfolio/__tests__",
+      "directory": "src/app/api/webhooks/clerk/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -638,7 +638,7 @@
       }
     },
     {
-      "directory": "src/app/api/webhooks/clerk/__tests__",
+      "directory": "src/app/programs/expert-kernel/expert-review/export/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -651,7 +651,7 @@
       }
     },
     {
-      "directory": "src/app/programs/expert-kernel/expert-review/export/__tests__",
+      "directory": "src/lib/enterprise-data/source-adapters/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -664,19 +664,6 @@
       }
     },
     {
-      "directory": "src/lib/enterprise-data/source-adapters/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 31
-      }
-    },
-    {
       "directory": "src/lib/knowledge/tenant-data/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 1,
@@ -686,7 +673,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 32
+        "rank": 31
       }
     },
     {
@@ -699,7 +686,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 33
+        "rank": 32
       }
     },
     {
@@ -712,7 +699,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 34
+        "rank": 33
       }
     },
     {
@@ -725,7 +712,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 35
+        "rank": 34
       }
     },
     {
@@ -738,7 +725,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 36
+        "rank": 35
       }
     },
     {
@@ -751,7 +738,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 37
+        "rank": 36
       }
     }
   ],
@@ -1130,23 +1117,6 @@
       }
     },
     {
-      "directory": "src/app/api/admin/context-layer/csv-upload/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/app/api/admin/context-layer/csv-upload/route.ts"
-        ],
-        "rank": 19
-      }
-    },
-    {
       "directory": "src/app/api/admin/users/provision/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -1160,7 +1130,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/users/provision/route.ts"
         ],
-        "rank": 20
+        "rank": 19
       }
     },
     {
@@ -1177,7 +1147,7 @@
         "tenantScopedReadSources": [
           "src/app/api/knowledge/consumption/_shared.ts"
         ],
-        "rank": 21
+        "rank": 20
       }
     },
     {
@@ -1194,7 +1164,7 @@
         "tenantScopedReadSources": [
           "src/app/api/programs/synthesis/route.ts"
         ],
-        "rank": 22
+        "rank": 21
       }
     },
     {
@@ -1211,7 +1181,7 @@
         "tenantScopedReadSources": [
           "src/app/api/setup/files/[scope]/[artifactId]/download/route.ts"
         ],
-        "rank": 23
+        "rank": 22
       }
     },
     {
@@ -1230,7 +1200,7 @@
           "src/lib/active-client.ts",
           "src/lib/auth/tenancy.ts"
         ],
-        "rank": 24
+        "rank": 23
       }
     },
     {
@@ -1246,6 +1216,27 @@
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/app/api/source/synthesis/route.ts"
+        ],
+        "rank": 24
+      }
+    },
+    {
+      "directory": "src/app/api/source/workspace/contract/[contractId]/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 5,
+        "tenantScopedReadSources": [
+          "src/app/(maestro)/source/preview/workspace/live/portfolioAdapter.ts",
+          "src/app/api/source/workspace/contract/[contractId]/route.ts",
+          "src/lib/active-client.ts",
+          "src/lib/auth/tenancy.ts",
+          "src/lib/source/data-model/read-adapter.ts"
         ],
         "rank": 25
       }
@@ -1668,12 +1659,6 @@
     },
     {
       "directory": "src/app/(maestro)/docs/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/admin/context-layer/csv-upload/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []
