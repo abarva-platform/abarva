@@ -969,6 +969,16 @@ jobs:
       # a data build and rewrote seven tracked files across four tenants; six
       # produced identical bytes and only the seventh was visible to
       # `git status`, so the other six would have surfaced whenever their
+      # The workspace loader's own suite. Added with the impact-read fix and
+      # caught by `--explain` as unrun before it was wired: a new test
+      # directory is dark by default, so a suite that proves a live surface
+      # fails closed would itself have run nowhere.
+      - name: Run the Source workspace loader suite
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/source/workspace/__tests__/workspace-impact-read-resilience.test.tsx"
+          --no-coverage --ci
+
       # content next changed. The writer is fixed in this same change, so this
       # step is green on arrival — it is a tripwire for the next one.
       - name: Refuse a test run that modified committed input data

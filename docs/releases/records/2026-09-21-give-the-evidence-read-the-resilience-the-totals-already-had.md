@@ -54,6 +54,38 @@ environment; this is a code-level fix with component-level tests. Whether the
 live surface now populates has to be confirmed in that environment by someone
 who can sign in, and is not claimed here.
 
+
+## The suite was dark, and the census said so
+
+CI's behaviour-coverage gate failed this PR on `census --check`: adding a test
+file created a new test directory that **no workflow ran**, so the coverage
+shape changed and the committed census had not been refreshed. The gate was
+right — a suite proving a live surface fails closed would itself have run
+nowhere.
+
+It was found by `--explain`, the flag added earlier today for exactly this: it
+named `workspace-impact-read-resilience.test.tsx` as unrun before it was wired.
+
+The directory is now wired by exact file path and is green on arrival (3 of 3).
+
+### Census delta, attributed
+
+| | before | after | whose |
+|---|---|---|---|
+| Test files under `src/` | 2353 | 2357 | **+1 mine**, +3 drift |
+| Covered | 1801 | 1806 | **+1 mine**, +4 drift |
+| Unrun | 552 | 551 | **0 mine**, −1 drift |
+
+This change is net-zero on unrun: it adds one test file and covers that same
+file. The remaining movement is the committed census having fallen behind
+merges on `main`, absorbed by this regeneration rather than caused by it. Set
+diff is empty in both directions — no directory left or joined the uncovered
+set.
+
+**That drift is worth noting on its own:** the committed census is the input to
+which directory gets wired next, so a stale one mis-ranks that queue, and
+nothing fails when it goes stale.
+
 ## Layer Impact
 
 - `global-control-lane`. One client component and one new suite. No tenant
@@ -73,6 +105,8 @@ who can sign in, and is not claimed here.
   badge state on portfolio failure.
 - `src/app/(maestro)/source/workspace/__tests__/workspace-impact-read-resilience.test.tsx`
   — 3 cases.
+- `.github/workflows/unit-suites.yml` — one step, so the suite above runs.
+- `docs/architecture/test-ci-coverage-census.json` — regenerated.
 
 ## QA / Validation
 
