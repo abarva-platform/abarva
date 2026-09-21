@@ -792,5 +792,26 @@ jobs:
           src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts
           --no-coverage --ci
 
+      # Four previously dark suites. Measured before any edit: the Atlas
+      # /api/v1 trio was red (4 of 8 cases failing) and the context demo route
+      # was green at 24 of 24. Two of the three Atlas suites asserted their
+      # control by reading route source as text, and both failed on a quote
+      # style while the control they named was intact — so they are rewritten
+      # to invoke the handler rather than requoted. Deleting the header and
+      # leaving its name in a comment now fails three cases; the text version
+      # passed that same mutation. Boundaries: the Atlas suites replace the
+      # tenancy resolver and the orchestrator, the demo route replaces tenancy,
+      # active client and the broker. No suite here can reach Postgres, a
+      # model, or an outbound send. Exact files are named so a later addition
+      # to either directory is not adopted without the same review.
+      - name: Run Atlas v1 auth and context demo route suites
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/v1/atlas/__tests__/auth-boundary.test.ts
+          src/app/api/v1/atlas/__tests__/auth-user-id-normalization.test.ts
+          src/app/api/v1/atlas/__tests__/mode-visibility.test.ts
+          src/app/api/context/demo/__tests__/route.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
