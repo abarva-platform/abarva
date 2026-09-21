@@ -25,6 +25,8 @@ function readHintId(context: AskSurfaceContext): string | null {
 }
 
 function contractForAnswer(contract: SourceContract360Row) {
+  const committedAnnualSpendUsd = contract.committed_annual_spend;
+  const actualAnnualSpendUsd = contract.actual_annual_spend;
   return {
     contractId: contract.contract_id,
     vendorName: contract.vendor_name,
@@ -34,7 +36,12 @@ function contractForAnswer(contract: SourceContract360Row) {
     annualValueProvenance: contract.annual_value_conflict_flag
       ? "contract_360_stated_conflict"
       : "contract_360",
-    actualAnnualSpendUsd: contract.actual_annual_spend,
+    committedAnnualSpendUsd,
+    actualAnnualSpendUsd,
+    contractedToActualVarianceUsd:
+      committedAnnualSpendUsd != null && actualAnnualSpendUsd != null
+        ? Math.max(0, committedAnnualSpendUsd - actualAnnualSpendUsd)
+        : null,
     totalCommittedValueUsd: contract.total_committed_value_conflict_flag
       ? contract.resolved_total_committed_value
       : contract.total_committed_value,
@@ -118,7 +125,7 @@ export async function buildServerSourceAnswerContext(input: {
       sourceV4: {
         selectedContract: {
           ...contractForAnswer(contract),
-          ...(opportunitySet?.baseline.status === "conflict"
+          ...(opportunitySet?.baseline?.status === "conflict"
             ? {
                 annualValueConflict: true,
                 annualValueProvenance: "contract_360_stated_conflict",

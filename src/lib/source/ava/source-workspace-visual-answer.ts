@@ -31,6 +31,7 @@ interface SourceContractContext {
   annualValueUsd: number | null;
   annualValueConflict?: boolean;
   annualValueProvenance?: string | null;
+  committedAnnualSpendUsd: number | null;
   actualAnnualSpendUsd: number | null;
   totalCommittedValueUsd: number | null;
   contractedToActualVarianceUsd: number | null;
@@ -354,6 +355,7 @@ function contractContextFromRecord(
         : numberValue(raw.annualValueUsd),
     annualValueConflict: booleanValue(raw.annualValueConflict) === true,
     annualValueProvenance: stringValue(raw.annualValueProvenance),
+    committedAnnualSpendUsd: numberValue(raw.committedAnnualSpendUsd),
     actualAnnualSpendUsd: numberValue(raw.actualAnnualSpendUsd),
     totalCommittedValueUsd: numberValue(raw.totalCommittedValueUsd),
     contractedToActualVarianceUsd: numberValue(
@@ -383,6 +385,7 @@ function directContractContextFrom(
     vendorName: stringValue(context.vendorName) ?? "Requested contract",
     contractName: stringValue(context.contractName) ?? "Contract 360 record",
     annualValueUsd: numberValue(context.annualValue),
+    committedAnnualSpendUsd: null,
     actualAnnualSpendUsd: numberValue(context.actualAnnualSpend),
     totalCommittedValueUsd: null,
     contractedToActualVarianceUsd: null,
@@ -435,6 +438,8 @@ function selectedContractFrom(
           : (direct.annualValueUsd ?? selected.annualValueUsd),
         annualValueConflict: selected.annualValueConflict,
         annualValueProvenance: selected.annualValueProvenance,
+        committedAnnualSpendUsd:
+          selected.committedAnnualSpendUsd ?? direct.committedAnnualSpendUsd,
         actualAnnualSpendUsd:
           direct.actualAnnualSpendUsd ?? selected.actualAnnualSpendUsd,
         totalCommittedValueUsd:
@@ -515,6 +520,7 @@ function contractContextFromOpportunityRows(
     contractName:
       stringValue(match.contractName) ?? "Contract optimization case",
     annualValueUsd: numberValue(match.annualValueUsd),
+    committedAnnualSpendUsd: numberValue(match.committedAnnualSpendUsd),
     actualAnnualSpendUsd: numberValue(match.actualAnnualSpendUsd),
     totalCommittedValueUsd: numberValue(match.totalCommittedValueUsd),
     contractedToActualVarianceUsd: numberValue(
@@ -839,7 +845,7 @@ function commercialPostureLinesFrom(
 }
 
 function wantsSourceVisualAnswer(query: string): boolean {
-  return /\b(chart|visual|graph|relationship|table|tabular|ledger|evidence|source systems?|where.*data|contract context|contract details?|contract facts?|summari[sz]e|summary|safely say|tell me about.*contract|what(?:'s| is).*contract|renewal|notice period|auto[-\s]?renew|annual value|actual spend|vendor|lever(?:s)?|outside[-\s]?in|industry|actionable|actionability|why.*action|optimi[sz]e|opportunit(?:y|ies)|claim value|claim savings|realized? value|what.*missing|missing.*before|before.*claim)\b/i.test(
+  return /\b(chart|visual|graph|relationship|table|tabular|ledger|evidence|source systems?|where.*data|contract context|contract details?|contract facts?|summari[sz]e|summary|safely say|what can (?:we|i) say|tell me about.*contract|what(?:'s| is).*contract|what (?:are|did) we buy(?:ing)?|agreement|paid|payment|invoice(?:d|s)?|commitment|committed|unused|drawn on|support(?: fee| rate| target)?|renewal|notice period|auto[-\s]?renew|annual value|actual spend|vendor|lever(?:s)?|outside[-\s]?in|industry|actionable|actionability|why.*action|optimi[sz]e|opportunit(?:y|ies)|claim value|claim savings|realized? value|what.*missing|missing.*before|before.*claim)\b/i.test(
     query,
   );
 }
@@ -928,7 +934,6 @@ function buildOpportunityRows(lines: SourceOpportunityLine[]) {
     valueUsd: isNotSizedLine(line) ? null : line.amountUsd,
     state: line.state,
     stage: line.stage,
-    confidence: line.confidence,
     evidence: line.evidenceClass,
     evidenceGrade: isNotSizedLine(line)
       ? `${line.evidenceGrade}; sizing not established`
@@ -954,7 +959,7 @@ function opportunityEvidenceGate(
   const status = isSignalStage(row.stage)
     ? "Signal-stage; not sized until evidence closes"
     : `Stage ${row.stage}`;
-  return `${status}; confidence ${row.confidence}; evidence ${row.evidenceGrade}; gate ${sentenceFragment(row.blockingGap)}`;
+  return `${status}; evidence ${row.evidenceGrade}; gate ${sentenceFragment(row.blockingGap)}`;
 }
 
 function buildExecutiveLeverTable(
@@ -1395,7 +1400,6 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         { key: "value", label: "Value", format: "currency", align: "right" },
         { key: "state", label: "State" },
         { key: "stage", label: "Stage" },
-        { key: "confidence", label: "Confidence" },
         { key: "evidence", label: "Evidence" },
         { key: "evidenceGrade", label: "Evidence grade" },
         { key: "blockingGap", label: "Blocking gap" },
@@ -1409,7 +1413,6 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         value: row.value,
         state: row.state,
         stage: row.stage,
-        confidence: row.confidence,
         evidence: row.evidence,
         evidenceGrade: row.evidenceGrade,
         blockingGap: row.blockingGap,
@@ -1558,8 +1561,12 @@ export function buildSourceWorkspaceVisualAnswer(input: {
     `vendor ${contract.vendorName}`,
     `contract ID ${contract.contractId}`,
     `recorded annual value ${currencyLabel(contract.annualValueUsd)}${contract.annualValueConflict ? " (Contract 360 stated value; annual-value conflict unresolved, not a reconciled baseline)" : ""}`,
-    `total committed contract value ${currencyLabel(contract.totalCommittedValueUsd)}`,
+    `annual committed spend ${currencyLabel(contract.committedAnnualSpendUsd)}`,
+    `full-term committed value ${currencyLabel(contract.totalCommittedValueUsd)}`,
     `actual annual spend ${currencyLabel(contract.actualAnnualSpendUsd)}`,
+    contract.contractedToActualVarianceUsd == null
+      ? "annual committed capacity not drawn on not established"
+      : `${currencyLabel(contract.contractedToActualVarianceUsd)} of annual committed capacity not drawn on`,
     `end date ${contract.endDate ?? "not established"}`,
     `notice date ${contract.noticeDate ?? "not established"}`,
     `notice period ${
@@ -1624,10 +1631,25 @@ export function buildSourceWorkspaceVisualAnswer(input: {
         citationIds: [contractCitationId],
       },
       {
+        id: "committed-annual-spend",
+        label: "Annual committed spend",
+        value: contract.committedAnnualSpendUsd ?? "Not established",
+        unit: contract.committedAnnualSpendUsd == null ? undefined : "USD",
+        citationIds: [contractCitationId],
+      },
+      {
         id: "total-committed-value",
-        label: "Total committed contract value",
+        label: "Full-term committed value",
         value: contract.totalCommittedValueUsd ?? "Not established",
         unit: contract.totalCommittedValueUsd == null ? undefined : "USD",
+        citationIds: [contractCitationId],
+      },
+      {
+        id: "undrawn-annual-commitment",
+        label: "Annual committed capacity not drawn on",
+        value: contract.contractedToActualVarianceUsd ?? "Not established",
+        unit:
+          contract.contractedToActualVarianceUsd == null ? undefined : "USD",
         citationIds: [contractCitationId],
       },
       {
