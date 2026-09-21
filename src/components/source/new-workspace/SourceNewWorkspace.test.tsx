@@ -1108,6 +1108,81 @@ describe("SourceNewWorkspace", () => {
     expect(screen.getByText("Ready for evaluation intake review")).toBeTruthy();
   });
 
+  it("reports request authority as unread rather than unaccepted when the store cannot answer", () => {
+    // The authority tables are behind the separate migration apply gate, so
+    // the store returns nothing today. A surface that renders that as "not
+    // accepted" tells the client a decision nobody made.
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+          solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-08T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "person-1",
+          requestVersionApproval: null,
+        }}
+        files={[responseFile]}
+      />,
+    );
+
+    const readiness = screen.getByRole("region", {
+      name: "Stage 04 vendor readiness",
+    });
+    expect(within(readiness).getByText("Not recorded")).toBeTruthy();
+    // The negative half, and the point of the case: absence is not a blocker.
+    expect(document.body.textContent ?? "").not.toMatch(
+      /Changes are requested on the current Request version/,
+    );
+  });
+
+  it("blocks on an explicit changes-requested decision on the Request version", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+          solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-08T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "person-1",
+          requestVersionApproval: "changes_requested",
+        }}
+        files={[responseFile]}
+      />,
+    );
+
+    expect(
+      screen.getByText(/Changes are requested on the current Request version/),
+    ).toBeTruthy();
+  });
+
+  it("does not block when the Request version is accepted", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "responses",
+          lifecycle: "waiting_on_vendor",
+          solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-08T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "person-1",
+          requestVersionApproval: "accepted",
+        }}
+        files={[responseFile]}
+      />,
+    );
+
+    const readiness = screen.getByRole("region", {
+      name: "Stage 04 vendor readiness",
+    });
+    expect(within(readiness).getByText("Request version accepted")).toBeTruthy();
+    expect(document.body.textContent ?? "").not.toMatch(
+      /Changes are requested on the current Request version/,
+    );
+  });
+
   it("shows a tenant-scoped empty state instead of inventing candidate vendors", () => {
     render(
       <SourceNewWorkspace

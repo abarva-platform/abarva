@@ -50,6 +50,12 @@ export interface SourceNewEventView {
   solicitationMotion?: "rfi" | "rfp" | null;
   solicitationMotionAcceptedAt?: string | null;
   solicitationMotionAcceptedByUserId?: string | null;
+  /**
+   * Request-version authority from the persisted store. `null`/absent means
+   * the authority could not be read — not that no acceptance exists. The two
+   * render differently and only one of them is a blocker.
+   */
+  requestVersionApproval?: "accepted" | "pending" | "changes_requested" | null;
 }
 
 const BASE_PHASE_LABELS: Record<Phase, string> = {
@@ -557,7 +563,23 @@ function SourceNewStage04VendorReadiness({
     responseRows.length === 0
       ? "No tenant-scoped candidate response files are loaded in Source New."
       : null,
+    // Only an explicit negative becomes a blocker. An unreadable authority
+    // (null) is reported as unread, never as a refusal: absence is not a
+    // decision, and a surface that turns "cannot read" into "changes
+    // requested" tells the client something nobody decided.
+    event.requestVersionApproval === "changes_requested"
+      ? "Changes are requested on the current Request version."
+      : null,
   ].filter((item): item is string => Boolean(item));
+
+  const requestAuthorityLabel =
+    event.requestVersionApproval === "accepted"
+      ? "Request version accepted"
+      : event.requestVersionApproval === "pending"
+        ? "Request acceptance pending"
+        : event.requestVersionApproval === "changes_requested"
+          ? "Changes requested on the Request version"
+          : "Not recorded";
 
   return (
     <section
@@ -575,6 +597,10 @@ function SourceNewStage04VendorReadiness({
         <div>
           <dt>Tenant scope</dt>
           <dd>{event.clientName}</dd>
+        </div>
+        <div>
+          <dt>Request authority</dt>
+          <dd>{requestAuthorityLabel}</dd>
         </div>
         <div>
           <dt>Solicitation motion</dt>

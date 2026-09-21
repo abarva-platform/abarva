@@ -22,8 +22,10 @@ CI — both halves were dark at once.
 
 | | before | after |
 |---|---|---|
-| Consumers of the version contract | **0** | 1 (this store) |
+| Consumers of the version contract | **0** | 1 (the page) |
 | Runtime references to the tables | **0** | 1 |
+| `src/lib` modules reached by product | 2133 | **2135** |
+| `src/lib` modules reached by a test only | 433 | **431** |
 | `new-workspace` suites run by a workflow | **0 of 8** | **8 of 8** |
 | Directories in the census's uncovered set | 200 | **198** |
 
@@ -39,6 +41,22 @@ approvals are not authority for the current one; the contract's own
 `approvalsForCurrentVersion` filters on this, and returning them here would
 leave that filter as the only thing between a stale acceptance and a surface
 reporting the request as accepted.
+
+## The orphan gate refused the first version of this, correctly
+
+The store initially had no product caller, so `audit:lib-orphans` failed CI with
+`+ src/lib/source/new-workspace/authority-version-store.ts (testOnly)` and the
+instruction *"Reach it from product code, or remove it."*
+
+It was right, and it named the same defect this change exists to fix: a module
+reached only by its own test. Registering an exception would have moved the
+orphan one layer up and called it progress. So the store is reached from the
+Source New event page instead, and the gate now reports the opposite —
+`source-version-authority.ts` is **"reached again (was testOnly)"**, because the
+page imports its evaluator. The contract that had no caller has one.
+
+Chaining through `step-readiness.ts` was considered and rejected: that module is
+itself reached only by its own test, so it would have joined orphan to orphan.
 
 ## Why it fails closed, for two different reasons
 
@@ -77,6 +95,25 @@ its first Request draft — and is not an error.
 - `src/lib/source/new-workspace/__tests__/authority-version-store.test.ts` — 12 cases.
 - `.github/workflows/unit-suites.yml` — one step running all eight suites in the module.
 - `docs/architecture/test-ci-coverage-census.json` — regenerated.
+- `src/app/(maestro)/source/new/[eventId]/page.tsx` — reads the request version
+  authority and derives its approval status.
+- `src/components/source/new-workspace/SourceNewWorkspace.tsx` — a Stage 04
+  "Request authority" fact, and a blocker on an explicit changes-requested
+  decision only.
+- `src/components/source/new-workspace/SourceNewWorkspace.test.tsx` — 3 cases.
+- `docs/architecture/orphaned-lib-modules.json` — refreshed; two modules left
+  the test-only set.
+
+## Absence is not a decision
+
+The status is `null` when the store cannot answer, and that renders as **"Not
+recorded"**, never as "not accepted". Only an explicit `changes_requested`
+becomes a blocker on the Stage 04 panel.
+
+This matters today and not only in principle: the authority tables are behind
+the migration apply gate, so the store answers `unavailable` for every tenant
+right now. A surface that turned "cannot read" into a refusal would show every
+client a decision nobody made, on every event, the moment this merged.
 
 ## QA / Validation
 
@@ -111,6 +148,7 @@ test file this change adds, minus the eight now covered.
 | tenant re-check removed from the version row | **1 case fails** |
 | `.is("superseded_at", null)` removed | **1 case fails** |
 | unreadable approval row skipped instead of failing the read | **2 cases fail** |
+| blocker widened from `=== "changes_requested"` to `!== "accepted"`, so absence blocks | **2 cases fail** |
 
 ### A type error the suite could not see
 
@@ -146,10 +184,12 @@ module's suites return to the dark set.
 
 ## Known Gaps
 
-- **No product surface consumes this yet.** Wiring it into the Source New
-  workspace changes what a client sees, and until the migration is applied it
-  would render `unavailable` in production. That is a surface decision and is
-  not taken here.
+- **The Stage 04 fact reads "Not recorded" for every tenant today**, because
+  the authority tables are unapplied. That is the honest render of an
+  unreadable authority, but it is a new row on a live panel that says nothing
+  useful until the migration lands.
+- **No signed-in proof.** The panel change was verified by component tests, not
+  by a signed-in run, so this is `merged`/`deployed` at most.
 - **This is the read half only.** Writing versions and recording approvals —
   the path that would actually call `planSourceAuthorityVersion` — is not
   built.
