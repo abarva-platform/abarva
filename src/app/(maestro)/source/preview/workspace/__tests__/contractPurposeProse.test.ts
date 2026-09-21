@@ -87,14 +87,15 @@ describe("contractPurposeSummary", () => {
     expect(purpose.body).not.toContain("present_with_annual_right");
   });
 
-  it("marks a characterisation as derived when no purpose is reviewed", () => {
-    // The card still says what the header establishes — withholding that would
-    // lose real information. What it must not do is speak in the same voice as
-    // a reviewed extraction, directly above a line saying none exists.
+  it("renders an explicit review state when no purpose is reviewed", () => {
     const purpose = contractPurposeSummary(contractWith({}), coverage, []);
 
-    expect(purpose.evidence).toContain("Derived from the contract header");
-    expect(purpose.evidence).toContain("no reviewed purpose extraction yet");
+    expect(purpose.heading).toBe("Purpose review needed");
+    expect(purpose.body).toBe(
+      "No reviewed contract-purpose extraction is available.",
+    );
+    expect(purpose.body).not.toContain("Test Vendor Ltd");
+    expect(purpose.evidence).toContain("Loaded basis");
   });
 
   it("names the reviewed extraction as the basis when one exists", () => {
@@ -108,6 +109,6 @@ describe("contractPurposeSummary", () => {
     );
 
     expect(purpose.evidence).toContain("Reviewed purpose extraction");
-    expect(purpose.evidence).not.toContain("Derived from the contract header");
+    expect(purpose.heading).toBe("What this contract is");
   });
 });
