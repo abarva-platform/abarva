@@ -22,6 +22,29 @@ const sourceContracts = listAuthoredStages().map((stage) => {
 const allContracts: LifecycleCompletionContract[] = [...programContracts, ...sourceContracts];
 
 describe('lifecycle operating system contracts', () => {
+  // The Programs list is six, not seven, and the seventh was never reachable.
+  //
+  // This expectation asked for `programs:P6` from the day the suite landed, and
+  // the suite has therefore never passed on `main`. It arrived inside the same
+  // squash commit as the phase-pack registry it asserts against, and that
+  // registry already held six packs: `PhaseNumber` is `0 | 1 | 2 | 3 | 4 | 5`
+  // in both `phase-packs/types.ts` and `phase-packs/types.v2.ts`, `getPhasePack`
+  // rejects anything above 5, and P6 had been retired from phase packs and
+  // failure modes before the suite was written. A seventh contract is not
+  // missing data — the authored model cannot express it, so no change to the
+  // builders could have turned this case green.
+  //
+  // The list stays hand-typed rather than derived from `listAuthoredPhases()`,
+  // which is where `programContracts` already comes from: a list read back from
+  // the thing under test cannot fail. Typed out, it still fails if a pack is
+  // added or silently dropped, which is the regression worth holding.
+  //
+  // What is NOT settled here: the product surface still speaks a seven-phase
+  // P0-P6 lifecycle and renders a "P6 Tower Handoff" workbench and gate panel
+  // (`src/lib/programs/programs-detail-view.ts`). So a phase the product
+  // displays has no lifecycle completion contract behind it. Whether P6 earns
+  // one or is deliberately outside the Programs lifecycle is an owner decision,
+  // filed as backlog item T-452; it is not resolved by correcting this list.
   it('covers every authored Programs phase and Source stage', () => {
     expect(programContracts.map((contract) => contract.id)).toEqual([
       'programs:P0',
@@ -30,7 +53,6 @@ describe('lifecycle operating system contracts', () => {
       'programs:P3',
       'programs:P4',
       'programs:P5',
-      'programs:P6',
     ]);
     expect(sourceContracts.map((contract) => contract.id)).toEqual([
       'source:S0',
