@@ -1,5 +1,8 @@
 # Execution Status
 
+## Source lifecycle Stage 04 — governed candidate registry surface · @codex · branch: codex/source-stage04-candidate-registry
+- 2026-09-21 14:58 CDT CLAIM — Starting from fresh `origin/main` in an isolated worktree. Current overlap check: merged PRs #7998 and #8019 already separate accepted candidates from existing-contract vendors and mount the Stage 04 panel; current main also wires request-version authority readback into that panel. This slice will not duplicate that work. Scope is narrow: extend the existing read-only Stage 04 panel so explicitly recorded supplier-registry fields can render category/function/archetype eligibility, contact-policy honesty, active-contact count, and source/audit references while keeping missing/unreadable registry fields as not recorded or blocked. No migration, tenant-data write, supplier contact, invitation, NDA dispatch, selection action, data-plane build, or inferred contactability is part of this slice.
+
 ## Source lifecycle D-008 — event-owned stage-plan snapshot · @codex · branch: codex/source-stage-plan-snapshot-D008
 - 2026-09-21 09:40 CDT CLAIM — D-006 remains gated in this checkout: the authority-state and version-authority files do not define a request-activation transition that records both a named actor and an accepted request version, and no local database credentials are available to prove those migrations applied live. Took D-008 instead. Added a read-only Source event stage-plan snapshot projection owned by `{sourceEventId, clientKey}` with a deterministic content hash, no migration, no tenant-data write, and an opposite-tenant fail-closed guard. Focused red-first and mutation checks are recorded in the release record; no signed-in or live runtime proof is claimed.
 

@@ -26,6 +26,27 @@ describe("event candidate authority repository", () => {
           authority_id: "candidate-authority-1",
           vendor_id: "vendor-1",
           legal_name: "Example Services LLC",
+          supplier_category: "managed-services",
+          vendor_source_system: "supplier-master-template",
+          vendor_source_record_id: "supplier-master-template.xlsx#row-2",
+          vendor_as_of_date: "2026-09-19",
+          vendor_evidence_reference: "EVID-SUPPLIER-1",
+          vendor_raw_payload: {
+            candidate_supplier_registry: {
+              categoryKeys: ["managed-services"],
+              functionKeys: ["technology"],
+              archetypeKeys: ["application-managed-services"],
+              contactPolicy: "contact_allowed",
+              contacts: [
+                {
+                  contactId: "contact-1",
+                  role: "account_executive",
+                  email: "contact@example.invalid",
+                  state: "active",
+                },
+              ],
+            },
+          },
           accepted_by_name: "Sourcing Owner",
           accepted_at: new Date("2026-09-20T02:00:00.000Z"),
           acceptance_rationale: "Meets the declared event eligibility criteria",
@@ -49,6 +70,19 @@ describe("event candidate authority repository", () => {
           legalName: "Example Services LLC",
           acceptedByName: "Sourcing Owner",
           acceptedAt: "2026-09-20T02:00:00.000Z",
+          eligibility: {
+            categoryKeys: ["managed-services"],
+            functionKeys: ["technology"],
+            archetypeKeys: ["application-managed-services"],
+          },
+          contactPolicy: "contact_allowed",
+          activeContactCount: 1,
+          registrySource: {
+            system: "supplier-master-template",
+            reference: "EVID-SUPPLIER-1",
+            recordedAt: "2026-09-19",
+            recordedBy: "supplier-master-template.xlsx#row-2",
+          },
         }),
       ],
     });
@@ -59,6 +93,7 @@ describe("event candidate authority repository", () => {
     expect(runMock.mock.calls[1]?.[0]).toContain(
       "INNER JOIN source.vendor vendor",
     );
+    expect(runMock.mock.calls[1]?.[0]).toContain("vendor.raw_payload");
     expect(runMock.mock.calls[1]?.[0]).toContain(
       "authority.authority_state = 'accepted'",
     );

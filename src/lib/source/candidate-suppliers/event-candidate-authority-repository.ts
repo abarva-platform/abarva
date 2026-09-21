@@ -1,9 +1,20 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
+import type {
+  CandidateSupplierContact,
+  CandidateSupplierContactPolicy,
+  CandidateSupplierEligibility,
+} from "./candidate-supplier-authority";
 
 type CandidateAuthorityRow = {
   authority_id: string;
   vendor_id: string;
   legal_name: string;
+  supplier_category: string | null;
+  vendor_source_system: string | null;
+  vendor_source_record_id: string | null;
+  vendor_as_of_date: string | Date | null;
+  vendor_evidence_reference: string | null;
+  vendor_raw_payload: unknown;
   accepted_by_name: string;
   accepted_at: string | Date;
   acceptance_rationale: string;
@@ -19,6 +30,16 @@ export type AcceptedEventCandidate = {
   acceptedAt: string;
   acceptanceRationale: string;
   evidenceReference: string;
+  eligibility?: CandidateSupplierEligibility | null;
+  contactPolicy?: CandidateSupplierContactPolicy | null;
+  contacts?: readonly CandidateSupplierContact[];
+  activeContactCount?: number;
+  registrySource?: {
+    system: string;
+    reference: string;
+    recordedAt: string;
+    recordedBy: string;
+  } | null;
 };
 
 export type EventCandidateAuthorityRead = {
@@ -34,8 +55,100 @@ const UNAVAILABLE: EventCandidateAuthorityRead = {
 };
 
 const nonempty = (value: string): boolean => value.trim().length > 0;
+const optionalText = (value: unknown): string | null =>
+  typeof value === "string" && value.trim() ? value.trim() : null;
 const iso = (value: string | Date): string =>
   value instanceof Date ? value.toISOString() : value;
+const optionalIso = (value: string | Date | null): string | null =>
+  value ? iso(value) : null;
+
+function objectRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function textArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.flatMap((item) => {
+        const text = optionalText(item);
+        return text ? [text] : [];
+      })
+    : [];
+}
+
+function contactPolicy(value: unknown): CandidateSupplierContactPolicy | null {
+  const text = optionalText(value);
+  return text === "contact_allowed" ||
+    text === "review_required" ||
+    text === "do_not_contact"
+    ? text
+    : null;
+}
+
+function contacts(value: unknown): CandidateSupplierContact[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const record = objectRecord(item);
+    const contactId = optionalText(record.contactId ?? record.contact_id);
+    const role = optionalText(record.role);
+    const state = optionalText(record.state);
+    if (!contactId || !role || (state !== "active" && state !== "inactive")) {
+      return [];
+    }
+    return [
+      {
+        contactId,
+        role,
+        displayName: optionalText(record.displayName ?? record.display_name) ?? undefined,
+        email: optionalText(record.email) ?? undefined,
+        state,
+      },
+    ];
+  });
+}
+
+function registryPayload(row: CandidateAuthorityRow): Record<string, unknown> {
+  const raw = objectRecord(row.vendor_raw_payload);
+  return objectRecord(
+    raw.candidate_supplier_registry ?? raw.candidateSupplierRegistry,
+  );
+}
+
+function eligibility(row: CandidateAuthorityRow): CandidateSupplierEligibility | null {
+  const registry = registryPayload(row);
+  const categoryKeys = [
+    ...textArray(registry.categoryKeys ?? registry.category_keys),
+    ...(optionalText(row.supplier_category) ? [optionalText(row.supplier_category)!] : []),
+  ];
+  const functionKeys = textArray(registry.functionKeys ?? registry.function_keys);
+  const archetypeKeys = textArray(registry.archetypeKeys ?? registry.archetype_keys);
+  const unique = (items: string[]) => [...new Set(items)];
+  const result = {
+    categoryKeys: unique(categoryKeys),
+    functionKeys: unique(functionKeys),
+    archetypeKeys: unique(archetypeKeys),
+  };
+  return result.categoryKeys.length ||
+    result.functionKeys.length ||
+    result.archetypeKeys.length
+    ? result
+    : null;
+}
+
+function registrySource(
+  row: CandidateAuthorityRow,
+): AcceptedEventCandidate["registrySource"] {
+  const system = optionalText(row.vendor_source_system);
+  const reference =
+    optionalText(row.vendor_evidence_reference) ??
+    optionalText(row.vendor_source_record_id);
+  const recordedAt = optionalIso(row.vendor_as_of_date);
+  const recordedBy = optionalText(row.vendor_source_record_id);
+  return system && reference && recordedAt && recordedBy
+    ? { system, reference, recordedAt, recordedBy }
+    : null;
+}
 
 /**
  * Read only explicitly accepted candidate-panel authority for one governed
@@ -59,6 +172,12 @@ export async function readAcceptedCandidatesForEvent(input: {
         `SELECT authority.authority_id,
                 authority.vendor_id,
                 vendor.legal_name,
+                vendor.supplier_category,
+                vendor.source_system AS vendor_source_system,
+                vendor.source_record_id AS vendor_source_record_id,
+                vendor.as_of_date AS vendor_as_of_date,
+                vendor.evidence_reference AS vendor_evidence_reference,
+                vendor.raw_payload AS vendor_raw_payload,
                 authority.accepted_by_name,
                 authority.accepted_at,
                 authority.acceptance_rationale,
@@ -84,6 +203,16 @@ export async function readAcceptedCandidatesForEvent(input: {
         acceptedAt: iso(row.accepted_at),
         acceptanceRationale: row.acceptance_rationale,
         evidenceReference: row.evidence_reference,
+        eligibility: eligibility(row),
+        contactPolicy: contactPolicy(
+          registryPayload(row).contactPolicy ??
+            registryPayload(row).contact_policy,
+        ),
+        contacts: contacts(registryPayload(row).contacts),
+        activeContactCount: contacts(registryPayload(row).contacts).filter(
+          (contact) => contact.state === "active",
+        ).length,
+        registrySource: registrySource(row),
       }));
 
       return {

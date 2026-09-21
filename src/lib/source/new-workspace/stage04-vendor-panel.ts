@@ -11,6 +11,9 @@ import {
   type VendorPanelGroup,
 } from "@/lib/source/candidate-suppliers/vendor-panel-projection";
 import type {
+  CandidateSupplierContact,
+  CandidateSupplierContactPolicy,
+  CandidateSupplierEligibility,
   CandidateSupplierProjectionRow,
   CandidateSupplierRegistrySlice,
 } from "@/lib/source/candidate-suppliers/candidate-supplier-authority";
@@ -52,6 +55,11 @@ export type SourceNewStage04PanelRow = {
   acceptedByName: string;
   acceptedAt: string;
   evidenceReference: string;
+  eligibility?: CandidateSupplierEligibility | null;
+  contactPolicy?: CandidateSupplierContactPolicy | null;
+  contactBlocker?: string | null;
+  activeContactCount?: number;
+  sourceReferences?: readonly string[];
 };
 
 export type SourceNewStage04VendorPanel = {
@@ -76,6 +84,53 @@ const NOT_RECORDED = [
   "Respondent selection happens after this stage, so the selected group is empty by design rather than by outcome.",
 ] as const;
 
+const RESPONDENT_SELECTION_NOTE =
+  "Respondent selection happens after this stage, so the selected group is empty by design rather than by outcome.";
+
+function hasEligibility(
+  eligibility: CandidateSupplierEligibility | null | undefined,
+): boolean {
+  return Boolean(
+    eligibility &&
+      (eligibility.categoryKeys.length > 0 ||
+        eligibility.functionKeys.length > 0 ||
+        eligibility.archetypeKeys.length > 0),
+  );
+}
+
+function activeContacts(
+  contacts: readonly CandidateSupplierContact[],
+): readonly CandidateSupplierContact[] {
+  return contacts.filter((contact) => contact.state === "active");
+}
+
+function contactReadiness(
+  candidate: AcceptedEventCandidate,
+): CandidateSupplierProjectionRow["contactReadiness"] {
+  if (!candidate.contactPolicy) return "review_required";
+  if (candidate.contactPolicy === "do_not_contact") return "prohibited";
+  if (candidate.contactPolicy === "review_required") return "review_required";
+  return activeContacts(candidate.contacts ?? []).some((contact) =>
+    Boolean(contact.email?.trim()),
+  )
+    ? "ready"
+    : "missing_contact";
+}
+
+function notRecordedNotes(
+  candidates: readonly AcceptedEventCandidate[],
+): readonly string[] {
+  return [
+    candidates.some((candidate) => !candidate.contactPolicy)
+      ? NOT_RECORDED[0]
+      : null,
+    candidates.some((candidate) => !hasEligibility(candidate.eligibility))
+      ? NOT_RECORDED[1]
+      : null,
+    RESPONDENT_SELECTION_NOTE,
+  ].filter((note): note is string => Boolean(note));
+}
+
 /**
  * Turn an accepted candidate into the projection's row shape.
  *
@@ -91,10 +146,14 @@ export function asProjectionRow(
     supplierId: candidate.supplierId,
     legalEntityId: candidate.legalEntityId,
     legalName: candidate.legalName,
-    eligibility: { categoryKeys: [], functionKeys: [], archetypeKeys: [] },
-    contactPolicy: "review_required",
-    contactReadiness: "review_required",
-    activeContacts: [],
+    eligibility: candidate.eligibility ?? {
+      categoryKeys: [],
+      functionKeys: [],
+      archetypeKeys: [],
+    },
+    contactPolicy: candidate.contactPolicy ?? "review_required",
+    contactReadiness: contactReadiness(candidate),
+    activeContacts: activeContacts(candidate.contacts ?? []),
     // Acceptance onto the panel is not selection as a respondent.
     selectedForEvent: false,
     source: {
@@ -159,11 +218,19 @@ export async function readSourceNewStage04VendorPanel(
           acceptedByName: candidate.acceptedByName,
           acceptedAt: candidate.acceptedAt,
           evidenceReference: candidate.evidenceReference,
+          eligibility: candidate.eligibility ?? null,
+          contactPolicy: candidate.contactPolicy ?? null,
+          contactBlocker: row.contactBlocker,
+          activeContactCount: candidate.activeContactCount ?? 0,
+          sourceReferences: [
+            candidate.evidenceReference,
+            candidate.registrySource?.reference,
+          ].filter((item): item is string => Boolean(item)),
         },
       ];
     }),
     counts: projection.counts,
-    notRecorded: NOT_RECORDED,
+    notRecorded: notRecordedNotes(authority.acceptedCandidates),
     asOf: input.asOf,
   };
 }
