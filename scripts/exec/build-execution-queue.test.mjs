@@ -122,6 +122,17 @@ function mapFixtureId(dir, id) {
   fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
 }
 
+function mapFixtureRef(dir, ref, track = "platformTrack") {
+  const file = path.join(dir, "source-stage-map.json");
+  const map = JSON.parse(fs.readFileSync(file, "utf8"));
+  const list = track === "outsideLifecycle"
+    ? map.outsideLifecycle.items
+    : map.platformTrack.items;
+  if (!Array.isArray(list)) throw new Error(`fixture map has no ${track}.items list`);
+  list.push(ref);
+  fs.writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`);
+}
+
 function buildBoardAndQueue(dir) {
   const board = run(dir, "build-source-board.mjs", ["--json"]);
   if (board.status !== 0) throw new Error(`fixture board build failed:\n${board.stderr}`);
@@ -596,6 +607,45 @@ claimGrammarCase(
     "an explicit signed-in acceptance remains blocked on the owner",
     q.status === 0 && !rendered.includes(`| ${id} |`) && /Signed-in acceptance owed/.test(rendered),
     `exit=${q.status}\nqueue=${rendered}`,
+  );
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+/* ------------------------------------------------------------------------ */
+/* 14. A genuine duplicate id is placed by definition, not force-fit.       */
+/* ------------------------------------------------------------------------ */
+{
+  const dir = freshFixture();
+  const id = "T-888";
+  fs.appendFileSync(
+    path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
+    `
+## Platform duplicate fixture
+
+| # | Item | Lane | Acceptance |
+|---|---|---|---|
+| ${id} | **Record deployment bookkeeping.** | T | Append the proof line. |
+
+## Outside duplicate fixture
+
+| # | Item | Lane | Acceptance |
+|---|---|---|---|
+| ${id} | **Decide the non-Source product scope.** | C | Decide before coding. |
+`,
+  );
+  mapFixtureRef(dir, { num: id, definedIn: "Platform duplicate fixture" });
+  mapFixtureRef(dir, { num: id, definedIn: "Outside duplicate fixture" }, "outsideLifecycle");
+
+  const q = buildBoardAndQueue(dir);
+  const rendered = fs.readFileSync(path.join(dir, "EXECUTION_QUEUE.md"), "utf8");
+  const rowCount = (rendered.match(new RegExp(`\\| ${id} \\|`, "g")) ?? []).length;
+  check(
+    "definedIn lets two real definitions of one id stay distinct",
+    q.status === 0 &&
+      rowCount === 2 &&
+      !/not placed on the map:\s*[1-9]/.test(q.stdout + q.stderr) &&
+      !rendered.includes("AMBIGUOUS"),
+    `exit=${q.status}\nstdout=${q.stdout.trim()}\nstderr=${q.stderr.trim()}\nqueue=${rendered}`,
   );
   fs.rmSync(dir, { recursive: true, force: true });
 }
