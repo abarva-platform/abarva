@@ -51,6 +51,7 @@ import type {
   SourceVendorContractPortfolioRow,
   SourceVendorPositionRow,
 } from "@/lib/source/data-model/types";
+import { UUID_VALUE_PATTERN } from "@/lib/source/display-identifiers";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Portfolio-wide read for the Source Workspace. One fetch, on the server,
@@ -1417,9 +1418,6 @@ type VendorNamedRow = {
   readonly vendor_ref: string;
   readonly vendor_name: string;
 };
-
-const UUID_VALUE_PATTERN =
-  /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;
 
 export function resolveImpactVendorNames(
   impact: SourceWorkspaceImpactLayer,
