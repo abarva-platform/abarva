@@ -748,5 +748,23 @@ jobs:
           src/lib/source/file-cabinet/__tests__
           --no-coverage --ci
 
+      # Four admin and Source route/action suites were measured unchanged:
+      # loaded 4, collected 4, run 4, green 4 (21 tests). The connector suite
+      # replaces its broker write with a mock. The invitation suite replaces
+      # both the Clerk transport and audit writer with mocks. The financial
+      # access suite proves that a caller without financial visibility cannot
+      # invoke or serialize financial reads. The Source New route suite proves
+      # tenant and event refusal; it does not claim phase-completeness or
+      # rendered-identifier coverage. Action subjects have one non-test
+      # importer each; both page subjects are framework-owned route entries.
+      - name: Run admin and Source action/route control suites
+        run: >-
+          npx jest --runTestsByPath
+          "src/app/(maestro)/admin/connectors/_actions/__tests__/create-pending-connector.test.ts"
+          "src/app/(maestro)/admin/users-access/_actions/__tests__/send-invite.test.ts"
+          "src/app/(maestro)/source/new/[eventId]/page.test.tsx"
+          "src/app/(maestro)/source/optimize/__tests__/page.financial-access.test.tsx"
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci

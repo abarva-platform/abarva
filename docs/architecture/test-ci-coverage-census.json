@@ -12,19 +12,19 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2345,
-    "coveredTestFiles": 1753,
-    "pullRequestCoveredTestFiles": 1750,
-    "uncoveredTestFiles": 592,
+    "testFiles": 2346,
+    "coveredTestFiles": 1758,
+    "pullRequestCoveredTestFiles": 1755,
+    "uncoveredTestFiles": 588,
     "directoriesWithTests": 478,
-    "directoriesFullyCovered": 244,
+    "directoriesFullyCovered": 248,
     "directoriesPartiallyCovered": 26,
-    "directoriesUncovered": 208,
-    "directoriesWithUnrunTestFiles": 234,
+    "directoriesUncovered": 204,
+    "directoriesWithUnrunTestFiles": 230,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 6,
-    "highGovernedRiskDirectories": 40,
+    "highGovernedRiskDirectories": 36,
     "unclassifiedRiskDirectories": 188
   },
   "indeterminateInvocations": [],
@@ -536,7 +536,7 @@
       }
     },
     {
-      "directory": "src/app/(maestro)/admin/connectors/_actions/__tests__",
+      "directory": "src/app/api/admin/context-layer/csv-upload/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -549,7 +549,7 @@
       }
     },
     {
-      "directory": "src/app/(maestro)/admin/users-access/_actions/__tests__",
+      "directory": "src/app/api/admin/users/provision/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -562,7 +562,7 @@
       }
     },
     {
-      "directory": "src/app/(maestro)/source/new/[eventId]",
+      "directory": "src/app/api/context/demo/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -575,7 +575,7 @@
       }
     },
     {
-      "directory": "src/app/(maestro)/source/optimize/__tests__",
+      "directory": "src/app/api/knowledge/consumption/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -588,7 +588,7 @@
       }
     },
     {
-      "directory": "src/app/api/admin/context-layer/csv-upload/__tests__",
+      "directory": "src/app/api/programs/synthesis/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -601,7 +601,7 @@
       }
     },
     {
-      "directory": "src/app/api/admin/users/provision/__tests__",
+      "directory": "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -614,7 +614,7 @@
       }
     },
     {
-      "directory": "src/app/api/context/demo/__tests__",
+      "directory": "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -627,7 +627,7 @@
       }
     },
     {
-      "directory": "src/app/api/knowledge/consumption/__tests__",
+      "directory": "src/app/api/source/synthesis/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -640,7 +640,7 @@
       }
     },
     {
-      "directory": "src/app/api/programs/synthesis/__tests__",
+      "directory": "src/app/api/source/workspace/contract/[contractId]/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -653,7 +653,7 @@
       }
     },
     {
-      "directory": "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__",
+      "directory": "src/app/api/source/workspace/contract/[contractId]/optimization/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -666,7 +666,7 @@
       }
     },
     {
-      "directory": "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__",
+      "directory": "src/app/api/source/workspace/portfolio/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -679,7 +679,7 @@
       }
     },
     {
-      "directory": "src/app/api/source/synthesis/__tests__",
+      "directory": "src/app/api/webhooks/clerk/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -692,7 +692,7 @@
       }
     },
     {
-      "directory": "src/app/api/source/workspace/contract/[contractId]/__tests__",
+      "directory": "src/app/programs/expert-kernel/expert-review/export/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -705,7 +705,7 @@
       }
     },
     {
-      "directory": "src/app/api/source/workspace/contract/[contractId]/optimization/__tests__",
+      "directory": "src/lib/enterprise-data/source-adapters/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -718,58 +718,6 @@
       }
     },
     {
-      "directory": "src/app/api/source/workspace/portfolio/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 37
-      }
-    },
-    {
-      "directory": "src/app/api/webhooks/clerk/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 38
-      }
-    },
-    {
-      "directory": "src/app/programs/expert-kernel/expert-review/export/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 39
-      }
-    },
-    {
-      "directory": "src/lib/enterprise-data/source-adapters/__tests__",
-      "testFiles": 1,
-      "unrunTestFiles": 1,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 40
-      }
-    },
-    {
       "directory": "src/lib/knowledge/tenant-data/__tests__",
       "testFiles": 4,
       "unrunTestFiles": 1,
@@ -779,7 +727,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 41
+        "rank": 37
       }
     },
     {
@@ -792,7 +740,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 42
+        "rank": 38
       }
     },
     {
@@ -805,7 +753,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 43
+        "rank": 39
       }
     },
     {
@@ -818,7 +766,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 44
+        "rank": 40
       }
     },
     {
@@ -831,7 +779,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 45
+        "rank": 41
       }
     },
     {
@@ -844,7 +792,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 46
+        "rank": 42
       }
     }
   ],
@@ -1296,7 +1244,7 @@
       }
     },
     {
-      "directory": "src/app/(maestro)/admin/connectors/_actions/__tests__",
+      "directory": "src/app/api/admin/context-layer/csv-upload/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -1305,16 +1253,15 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "tenantScopedReadSourceCount": 2,
+        "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
-          "src/app/(maestro)/admin/connectors/_actions/create-pending-connector.ts",
-          "src/lib/auth/tenancy.ts"
+          "src/app/api/admin/context-layer/csv-upload/route.ts"
         ],
         "rank": 23
       }
     },
     {
-      "directory": "src/app/(maestro)/admin/users-access/_actions/__tests__",
+      "directory": "src/app/api/admin/users/provision/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -1323,16 +1270,15 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "tenantScopedReadSourceCount": 2,
+        "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
-          "src/app/(maestro)/admin/users-access/_actions/send-invite.ts",
-          "src/lib/auth/tenancy.ts"
+          "src/app/api/admin/users/provision/route.ts"
         ],
         "rank": 24
       }
     },
     {
-      "directory": "src/app/(maestro)/source/new/[eventId]",
+      "directory": "src/app/api/context/demo/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
       "governedRisk": {
@@ -1341,13 +1287,9 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "tenantScopedReadSourceCount": 5,
+        "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
-          "src/app/(maestro)/source/new/[eventId]/page.tsx",
-          "src/lib/active-client.ts",
-          "src/lib/auth/tenancy.ts",
-          "src/lib/source/file-cabinet/repository.ts",
-          "src/lib/source/queries.ts"
+          "src/app/api/context/demo/route.ts"
         ],
         "rank": 25
       }
@@ -1799,12 +1741,6 @@
       "via": []
     },
     {
-      "directory": "src/app/(maestro)/admin/connectors/_actions/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/app/(maestro)/admin/context-layer/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
@@ -1823,25 +1759,7 @@
       "via": []
     },
     {
-      "directory": "src/app/(maestro)/admin/users-access/_actions/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/app/(maestro)/docs/__tests__",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/(maestro)/source/new/[eventId]",
-      "testFiles": 1,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/(maestro)/source/optimize/__tests__",
       "testFiles": 1,
       "coveredTestFiles": 0,
       "via": []
