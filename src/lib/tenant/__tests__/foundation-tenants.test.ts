@@ -1,9 +1,25 @@
 import {
+  FOUNDATION_TENANT_KEYS,
   isFoundationTenantKey,
   resolveFoundationTenantKey,
 } from "@/lib/tenant/foundation-tenants";
+import { CANONICAL_TENANT_KEYS } from "@/lib/tenant/aliases";
 
 describe("foundation tenant keys", () => {
+  it.each(CANONICAL_TENANT_KEYS)(
+    "classifies canonical tenant key %s against the foundation registry",
+    (tenantKey) => {
+      const isFoundation = FOUNDATION_TENANT_KEYS.some(
+        (foundationKey) => foundationKey === tenantKey,
+      );
+
+      expect(isFoundationTenantKey(tenantKey)).toBe(isFoundation);
+      expect(resolveFoundationTenantKey(tenantKey)).toBe(
+        isFoundation ? tenantKey : null,
+      );
+    },
+  );
+
   it("returns a canonical foundation key for a registered alias", () => {
     expect(resolveFoundationTenantKey("skyharbor")).toBe("skyharbor-air");
     expect(isFoundationTenantKey("skyharbor")).toBe(true);

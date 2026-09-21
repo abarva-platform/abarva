@@ -12,19 +12,19 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2346,
-    "coveredTestFiles": 1758,
-    "pullRequestCoveredTestFiles": 1755,
-    "uncoveredTestFiles": 588,
+    "testFiles": 2347,
+    "coveredTestFiles": 1769,
+    "pullRequestCoveredTestFiles": 1766,
+    "uncoveredTestFiles": 578,
     "directoriesWithTests": 478,
-    "directoriesFullyCovered": 248,
+    "directoriesFullyCovered": 252,
     "directoriesPartiallyCovered": 26,
-    "directoriesUncovered": 204,
-    "directoriesWithUnrunTestFiles": 230,
+    "directoriesUncovered": 200,
+    "directoriesWithUnrunTestFiles": 226,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 6,
-    "highGovernedRiskDirectories": 36,
+    "highGovernedRiskDirectories": 32,
     "unclassifiedRiskDirectories": 188
   },
   "indeterminateInvocations": [],
@@ -445,45 +445,6 @@
       }
     },
     {
-      "directory": "src/lib/tenant/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 16
-      }
-    },
-    {
-      "directory": "src/scripts/tower/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 17
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 18
-      }
-    },
-    {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 2,
@@ -493,20 +454,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 19
-      }
-    },
-    {
-      "directory": "src/app/api/intelligence/ask/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "rank": 20
+        "rank": 16
       }
     },
     {
@@ -519,7 +467,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 21
+        "rank": 17
       }
     },
     {
@@ -532,7 +480,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 22
+        "rank": 18
       }
     },
     {
@@ -545,7 +493,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 23
+        "rank": 19
       }
     },
     {
@@ -558,7 +506,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 24
+        "rank": 20
       }
     },
     {
@@ -571,7 +519,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 25
+        "rank": 21
       }
     },
     {
@@ -584,7 +532,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 26
+        "rank": 22
       }
     },
     {
@@ -597,7 +545,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 27
+        "rank": 23
       }
     },
     {
@@ -610,7 +558,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 28
+        "rank": 24
       }
     },
     {
@@ -623,7 +571,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 29
+        "rank": 25
       }
     },
     {
@@ -636,7 +584,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 30
+        "rank": 26
       }
     },
     {
@@ -649,7 +597,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 31
+        "rank": 27
       }
     },
     {
@@ -662,7 +610,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 32
+        "rank": 28
       }
     },
     {
@@ -675,7 +623,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 33
+        "rank": 29
       }
     },
     {
@@ -688,7 +636,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 34
+        "rank": 30
       }
     },
     {
@@ -701,7 +649,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 35
+        "rank": 31
       }
     },
     {
@@ -714,7 +662,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 36
+        "rank": 32
       }
     },
     {
@@ -727,7 +675,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 37
+        "rank": 33
       }
     },
     {
@@ -740,7 +688,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 38
+        "rank": 34
       }
     },
     {
@@ -753,7 +701,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 39
+        "rank": 35
       }
     },
     {
@@ -766,7 +714,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 40
+        "rank": 36
       }
     },
     {
@@ -779,7 +727,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 41
+        "rank": 37
       }
     },
     {
@@ -792,7 +740,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "rank": 42
+        "rank": 38
       }
     }
   ],
@@ -1118,59 +1066,6 @@
       }
     },
     {
-      "directory": "src/lib/tenant/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/lib/tenant/resolveTenant.ts"
-        ],
-        "rank": 16
-      }
-    },
-    {
-      "directory": "src/scripts/tower/__tests__",
-      "testFiles": 3,
-      "unrunTestFiles": 3,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 1,
-        "tenantScopedReadSources": [
-          "src/scripts/tower/project-tower-mart.ts"
-        ],
-        "rank": 17
-      }
-    },
-    {
-      "directory": "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 3,
-        "tenantScopedReadSources": [
-          "src/app/(maestro)/admin/users-access/notifications/_actions/save-preferences.ts",
-          "src/app/(maestro)/admin/users-access/notifications/_actions/send-test.ts",
-          "src/lib/auth/tenancy.ts"
-        ],
-        "rank": 18
-      }
-    },
-    {
       "directory": "src/app/(maestro)/source/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 2,
@@ -1186,26 +1081,7 @@
           "src/lib/source/queries.ts",
           "src/lib/tenant/resolveTenant.ts"
         ],
-        "rank": 19
-      }
-    },
-    {
-      "directory": "src/app/api/intelligence/ask/__tests__",
-      "testFiles": 2,
-      "unrunTestFiles": 2,
-      "governedRisk": {
-        "score": 10,
-        "band": "high",
-        "signals": [
-          "tenant_scoped_read"
-        ],
-        "tenantScopedReadSourceCount": 3,
-        "tenantScopedReadSources": [
-          "src/app/api/intelligence/ask/route.ts",
-          "src/lib/source/data-model/read-adapter.ts",
-          "src/lib/tenant/resolveTenant.ts"
-        ],
-        "rank": 20
+        "rank": 16
       }
     },
     {
@@ -1223,7 +1099,7 @@
           "src/lib/enterprise-context/derived-enterprise-read.ts",
           "src/lib/enterprise-context/intelligence-read-model.ts"
         ],
-        "rank": 21
+        "rank": 17
       }
     },
     {
@@ -1240,7 +1116,7 @@
         "tenantScopedReadSources": [
           "src/lib/source/contract-intelligence/cloud-adapter.ts"
         ],
-        "rank": 22
+        "rank": 18
       }
     },
     {
@@ -1257,7 +1133,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/context-layer/csv-upload/route.ts"
         ],
-        "rank": 23
+        "rank": 19
       }
     },
     {
@@ -1274,7 +1150,7 @@
         "tenantScopedReadSources": [
           "src/app/api/admin/users/provision/route.ts"
         ],
-        "rank": 24
+        "rank": 20
       }
     },
     {
@@ -1290,6 +1166,76 @@
         "tenantScopedReadSourceCount": 1,
         "tenantScopedReadSources": [
           "src/app/api/context/demo/route.ts"
+        ],
+        "rank": 21
+      }
+    },
+    {
+      "directory": "src/app/api/knowledge/consumption/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 1,
+        "tenantScopedReadSources": [
+          "src/app/api/knowledge/consumption/_shared.ts"
+        ],
+        "rank": 22
+      }
+    },
+    {
+      "directory": "src/app/api/programs/synthesis/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 1,
+        "tenantScopedReadSources": [
+          "src/app/api/programs/synthesis/route.ts"
+        ],
+        "rank": 23
+      }
+    },
+    {
+      "directory": "src/app/api/setup/files/[scope]/[artifactId]/download/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 1,
+        "tenantScopedReadSources": [
+          "src/app/api/setup/files/[scope]/[artifactId]/download/route.ts"
+        ],
+        "rank": 24
+      }
+    },
+    {
+      "directory": "src/app/api/source/optimize/contract/[contractId]/workflow/__tests__",
+      "testFiles": 1,
+      "unrunTestFiles": 1,
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "tenantScopedReadSourceCount": 3,
+        "tenantScopedReadSources": [
+          "src/app/api/source/optimize/contract/[contractId]/workflow/route.ts",
+          "src/lib/active-client.ts",
+          "src/lib/auth/tenancy.ts"
         ],
         "rank": 25
       }
@@ -1575,30 +1521,6 @@
     {
       "directory": "src/lib/source/renewal-cockpit/__tests__",
       "testFiles": 3,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/tenant/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/scripts/tower/__tests__",
-      "testFiles": 3,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/(maestro)/admin/users-access/notifications/_actions/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/app/api/intelligence/ask/__tests__",
-      "testFiles": 2,
       "coveredTestFiles": 0,
       "via": []
     },
