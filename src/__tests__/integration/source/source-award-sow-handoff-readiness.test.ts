@@ -66,6 +66,29 @@ function artifact(
   };
 }
 
+function formationProvenanceArtifacts() {
+  return [
+    artifact(
+      "sla_provenance",
+      "SLA and service-credit provenance",
+      "approved",
+      "SLA targets, service credits, and measurement basis traced to source evidence.",
+    ),
+    artifact(
+      "exit_provenance",
+      "Exit rights and termination provenance",
+      "approved",
+      "Exit assistance, termination, data return, and renewal notice provenance.",
+    ),
+    artifact(
+      "change_control_provenance",
+      "Change-control provenance",
+      "approved",
+      "Change-control and change order provenance.",
+    ),
+  ];
+}
+
 describe("Source Stage 08 Award & SOW handoff readiness", () => {
   it("distinguishes candidate selection, approval, agreement/SOW, and Contract 360 handoff", () => {
     const readiness = buildSourceAwardSowHandoffReadiness({
@@ -102,6 +125,7 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
             "SOW scope and service boundary",
             "approved",
           ),
+          ...formationProvenanceArtifacts(),
           artifact(
             "d24_decision_brief",
             "Executive decision brief naming approval authority",
@@ -137,6 +161,9 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
       "approved_pricing",
       "governed_clause_library",
       "sow_scope",
+      "sla_service_level_provenance",
+      "exit_rights_provenance",
+      "change_control_provenance",
       "named_approval_authority",
       "evidence_lineage",
       "executed_signature_authority",
@@ -178,6 +205,7 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
             "approved",
           ),
           artifact("sow_scope", "SOW scope", "approved"),
+          ...formationProvenanceArtifacts(),
           artifact(
             "d24_decision_brief",
             "Executive decision brief naming approval authority",
@@ -231,6 +259,9 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
       "approved_pricing",
       "governed_clause_library",
       "sow_scope",
+      "sla_service_level_provenance",
+      "exit_rights_provenance",
+      "change_control_provenance",
       "named_approval_authority",
       "evidence_lineage",
     ]);
@@ -239,6 +270,9 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
         "Approved pricing is missing from the governed contract-formation package.",
         "Governed clause/library references are missing from the contract-formation package.",
         "SOW scope is missing from the governed contract-formation package.",
+        "SLA/service-level provenance is missing from the contract-formation package.",
+        "Exit-rights provenance is missing from the contract-formation package.",
+        "Change-control provenance is missing from the contract-formation package.",
         "Named approval authority is missing from the contract-formation package.",
         "Evidence lineage is missing from the contract-formation package.",
       ]),
@@ -272,6 +306,7 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
             "approved",
           ),
           artifact("sow_scope", "SOW scope", "approved"),
+          ...formationProvenanceArtifacts(),
           artifact(
             "d24_decision_brief",
             "Executive decision brief naming approval authority",
@@ -323,6 +358,7 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
             "approved",
           ),
           artifact("sow_scope", "SOW scope", "approved"),
+          ...formationProvenanceArtifacts(),
           artifact(
             "d24_decision_brief",
             "Executive decision brief naming approval authority",
@@ -487,6 +523,7 @@ describe("Source Stage 08 Award & SOW handoff readiness", () => {
             "approved",
           ),
           artifact("sow_scope", "SOW scope", "approved"),
+          ...formationProvenanceArtifacts(),
           artifact(
             "d24_decision_brief",
             "Executive decision brief naming approval authority",
