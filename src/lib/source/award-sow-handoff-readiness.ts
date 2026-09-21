@@ -1,6 +1,7 @@
 import { SOURCE_STAGE_ORDER, normalizeSourceStageKey } from "./constants";
 import type {
   SourceAwardSowArtifactInput,
+  SourceContract360PublicationPlanner,
   SourceContractFormationComponent,
   SourceContractFormationPackageReadiness,
   SourceContractFormationState,
@@ -17,6 +18,13 @@ const DEFAULT_GENERATED_AT = "2026-04-26T00:00:00.000Z";
 const SOURCE_MODULES_USED = [
   "event-stage-gate-status",
   "artifact-status-strip",
+  "award-sow-publication-planner",
+] as const;
+
+const CONTRACT360_PUBLICATION_REVIEW_STEPS = [
+  "Map accepted executed evidence to the existing canonical contract identity.",
+  "Review clause, SOW, pricing, SLA, exit, and change-control provenance before publication.",
+  "Require a human-approved canonical writer or data-build job before any Contract 360 row is created.",
 ] as const;
 
 const EXECUTED_AGREEMENT_OR_FINAL_SOW_PATTERNS = [
@@ -43,6 +51,9 @@ const CONTRACT_FORMATION_COMPONENTS = [
   "approved_pricing",
   "governed_clause_library",
   "sow_scope",
+  "sla_service_level_provenance",
+  "exit_rights_provenance",
+  "change_control_provenance",
   "named_approval_authority",
   "evidence_lineage",
 ] as const satisfies readonly SourceContractFormationComponent[];
@@ -56,6 +67,12 @@ const CONTRACT_FORMATION_BLOCKERS = {
     "Governed clause/library references are missing from the contract-formation package.",
   sow_scope:
     "SOW scope is missing from the governed contract-formation package.",
+  sla_service_level_provenance:
+    "SLA/service-level provenance is missing from the contract-formation package.",
+  exit_rights_provenance:
+    "Exit-rights provenance is missing from the contract-formation package.",
+  change_control_provenance:
+    "Change-control provenance is missing from the contract-formation package.",
   named_approval_authority:
     "Named approval authority is missing from the contract-formation package.",
   evidence_lineage:
@@ -89,6 +106,29 @@ const SOW_SCOPE_PATTERNS = [
   /\bscope boundary\b/,
   /\bservice boundary\b/,
   /\bstatement of work scope\b/,
+] as const;
+
+const SLA_SERVICE_LEVEL_PROVENANCE_PATTERNS = [
+  /\bsla\b/,
+  /\bservice level\b/,
+  /\bservice-credit\b/,
+  /\bservice credit\b/,
+] as const;
+
+const EXIT_RIGHTS_PROVENANCE_PATTERNS = [
+  /\bdata return\b/,
+  /\bexit\b/,
+  /\btermination\b/,
+  /\btermination for convenience\b/,
+  /\brenewal notice\b/,
+] as const;
+
+const CHANGE_CONTROL_PROVENANCE_PATTERNS = [
+  /\bchange-control\b/,
+  /\bchange control\b/,
+  /\bchange order\b/,
+  /\bscope-change\b/,
+  /\bscope change\b/,
 ] as const;
 
 const NAMED_APPROVAL_AUTHORITY_PATTERNS = [
@@ -212,6 +252,18 @@ function buildContractFormationPackageReadiness(
   selectedEvidence.sow_scope = finalArtifactsMatching(
     artifacts,
     SOW_SCOPE_PATTERNS,
+  );
+  selectedEvidence.sla_service_level_provenance = finalArtifactsMatching(
+    artifacts,
+    SLA_SERVICE_LEVEL_PROVENANCE_PATTERNS,
+  );
+  selectedEvidence.exit_rights_provenance = finalArtifactsMatching(
+    artifacts,
+    EXIT_RIGHTS_PROVENANCE_PATTERNS,
+  );
+  selectedEvidence.change_control_provenance = finalArtifactsMatching(
+    artifacts,
+    CHANGE_CONTROL_PROVENANCE_PATTERNS,
   );
   selectedEvidence.named_approval_authority = finalArtifactsMatching(
     artifacts,
@@ -358,6 +410,56 @@ function nextActionFor(
   );
 }
 
+function buildContract360PublicationPlanner({
+  contractFormationPackage,
+  currentStageKey,
+  acceptedExecutedEvidence,
+}: {
+  contractFormationPackage: SourceContractFormationPackageReadiness;
+  currentStageKey: SourceStageKey;
+  acceptedExecutedEvidence: readonly SourceAwardSowArtifactInput[];
+}): SourceContract360PublicationPlanner {
+  const stageOpen = stageIsOpen(currentStageKey, "transition");
+  const acceptedEvidence = acceptedExecutedEvidence.map(
+    (artifact) => `${artifact.title} (${artifact.status})`,
+  );
+
+  let state: SourceContract360PublicationPlanner["state"] =
+    "ready_for_publication_review";
+  const blockers: string[] = [];
+
+  if (contractFormationPackage.missingComponents.length > 0) {
+    state = "blocked_contract_formation_package";
+    blockers.push(
+      "Contract formation provenance is incomplete; canonical publication review is blocked.",
+    );
+  } else if (acceptedExecutedEvidence.length === 0) {
+    state = "blocked_no_accepted_executed_evidence";
+    blockers.push(
+      "No accepted executed agreement or SOW evidence with named signature authority is present.",
+    );
+  } else if (!stageOpen) {
+    state = "blocked_stage_not_transition";
+    blockers.push(
+      "Event has not reached Transition, so Contract 360 publication review is not open.",
+    );
+  }
+
+  return {
+    state,
+    target: "canonical_contract_and_contract360",
+    publicationAllowed: false,
+    acceptedExecutedEvidence: checkpointEvidence(acceptedEvidence),
+    plannedReviewSteps: [...CONTRACT360_PUBLICATION_REVIEW_STEPS],
+    blockedWrites: [
+      "canonical_contract_row",
+      "contract360_projection_row",
+      "supplier_notification",
+    ],
+    blockers: checkpointEvidence(blockers),
+  };
+}
+
 export function buildSourceAwardSowHandoffReadiness(
   input: SourceAwardSowHandoffReadinessInput,
 ): SourceAwardSowHandoffReadiness {
@@ -382,6 +484,8 @@ export function buildSourceAwardSowHandoffReadiness(
   const agreementArtifacts = finalExecutedAgreementOrSowArtifacts(
     event.artifacts,
   );
+  const acceptedExecutedEvidence =
+    finalExecutedAgreementOrSowArtifactsWithSignatureAuthority(event.artifacts);
   const handoffArtifacts = finalArtifacts(event.artifacts, [
     /\bd28_contract_record\b/,
     /\bd29_transition_plan\b/,
@@ -418,6 +522,11 @@ export function buildSourceAwardSowHandoffReadiness(
   const contractFormationPackage = buildContractFormationPackageReadiness(
     event.artifacts,
   );
+  const publicationPlanner = buildContract360PublicationPlanner({
+    contractFormationPackage,
+    currentStageKey: event.currentStageKey,
+    acceptedExecutedEvidence,
+  });
   const contractFormationBlockers =
     contractFormationPackage.missingComponents.map(
       (component) => CONTRACT_FORMATION_BLOCKERS[component],
@@ -529,6 +638,7 @@ export function buildSourceAwardSowHandoffReadiness(
     readinessStatus,
     contractFormationState: contractFormationPackage.state,
     contractFormationPackage,
+    publicationPlanner,
     readyForContract360Handoff:
       readinessStatus === "ready_for_contract360_handoff",
     checkpoints,
@@ -560,6 +670,14 @@ export function formatSourceAwardSowHandoffReadinessAsMarkdown(
       `  - Completed evidence: ${checkpoint.completedEvidence.join("; ") || "none"}`,
       `  - Blockers: ${checkpoint.blockers.join("; ") || "none"}`,
     ]),
+    "",
+    "## Contract 360 Publication Planner",
+    `- State: ${readiness.publicationPlanner.state}`,
+    `- Target: ${readiness.publicationPlanner.target}`,
+    `- Publication writes allowed: ${readiness.publicationPlanner.publicationAllowed ? "Yes" : "No"}`,
+    `- Accepted executed evidence: ${readiness.publicationPlanner.acceptedExecutedEvidence.join("; ") || "none"}`,
+    `- Blocked writes: ${readiness.publicationPlanner.blockedWrites.join("; ")}`,
+    `- Planner blockers: ${readiness.publicationPlanner.blockers.join("; ") || "none"}`,
     "",
     `- Recommended next action: ${readiness.recommendedNextAction}`,
     `- Source modules used: ${readiness.sourceModulesUsed.join(", ")}`,
