@@ -348,6 +348,35 @@ describe("Source workspace ECL browser-surface proof", () => {
     await rm(dir, { force: true, recursive: true });
   });
 
+  it("renders the populated dataset version as a separate header control", async () => {
+    const portfolio = await loadSourceWorkspacePortfolio(
+      "synthetic-organization",
+      "2027-06-30T00:00:00Z",
+    );
+    const datasetVersion = "source-build-2026.09.21";
+
+    render(
+      <WorkspaceClient
+        portfolio={{
+          ...portfolio,
+          workspaceDiagnostics: {
+            ...portfolio.workspaceDiagnostics,
+            datasetVersion,
+          },
+        }}
+        tenantName="Synthetic Organization"
+        sourceClientKey="synthetic-organization"
+      />,
+    );
+
+    expect(screen.getByLabelText("Dataset build").textContent).toContain(
+      datasetVersion,
+    );
+    expect(
+      screen.getByLabelText("Source scenario date").textContent,
+    ).toContain("30 Jun 2027");
+  });
+
   it("renders the real workspace component from flagged ECL projection rows", async () => {
     const portfolio = await loadSourceWorkspacePortfolio(
       "meridian",

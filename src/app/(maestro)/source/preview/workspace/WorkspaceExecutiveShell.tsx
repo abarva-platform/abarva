@@ -999,6 +999,7 @@ export function WorkspaceExecutiveShell({
       : currentPage;
   const isCommandCenter = !selectedContractId;
   const dateControl = sourceDateControl(portfolio);
+  const datasetVersion = portfolio.workspaceDiagnostics.datasetVersion.trim();
 
   // Keep the canonical /source URL as the single source of navigation truth.
   // The workspace deliberately stays client-side so tab changes do not swap
@@ -1126,6 +1127,12 @@ export function WorkspaceExecutiveShell({
               <span>Scope</span>
               <b>All loaded contracts</b>
             </div>
+            {datasetVersion ? (
+              <div className="sw-v2-control" aria-label="Dataset build">
+                <span>Dataset build</span>
+                <b>{datasetVersion}</b>
+              </div>
+            ) : null}
             <div className="sw-v2-control" aria-label={dateControl.ariaLabel}>
               <span>{dateControl.label}</span>
               <b>{dateControl.value}</b>
