@@ -524,7 +524,9 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
       "| T-518 | **Strategic Moves render expectation fixture.** | T | Update measured expectations without loosening render proof. |\n" +
       "| T-519 | **NDA signature-evidence fixture.** | T | Assert the new signature evidence exhaustively. |\n" +
       "| T-584 | **Register outcome integrity fixture.** | T | Append exact deploy outcome lines without batch proof. |\n" +
-      "| T-585 | **Contract 360 field-fidelity fixture.** | C | Keep the C7 vendor concession spelling defect under Contract 360 truth. |\n",
+      "| T-585 | **Contract 360 field-fidelity fixture.** | C | Keep the C7 vendor concession spelling defect under Contract 360 truth. |\n" +
+      "| T-586 | **Per-PR outcome registration fixture.** | T | Keep merge and carrier-deploy evidence attributable per release. |\n" +
+      "| T-587 | **Coverage-census drift fixture.** | T | Keep generated coverage evidence synchronized with its generator. |\n",
   );
   const map = JSON.parse(fs.readFileSync(path.join(dir, "source-stage-map.json"), "utf8"));
   const stage9 = map.stages.find((stage) => stage.id === 9);
@@ -559,7 +561,7 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
       JSON.stringify(map.platformTrack.items.slice(-24)),
     );
   }
-  for (const id of ["T-516", "T-517", "T-518", "T-519", "T-584"]) {
+  for (const id of ["T-516", "T-517", "T-518", "T-519", "T-584", "T-586", "T-587"]) {
     check(
       `${id} is mapped to platform/test-execution integrity without advancing a lifecycle stage`,
       map.platformTrack.items.includes(id) &&
@@ -619,6 +621,8 @@ for (const [id, expectedRemoved] of [
   ["T-519", 1],
   ["T-584", 1],
   ["T-585", 2],
+  ["T-586", 1],
+  ["T-587", 1],
 ]) {
   const dir = freshFixture();
   fs.appendFileSync(
