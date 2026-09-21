@@ -13,13 +13,13 @@
   ],
   "counts": {
     "testFiles": 2349,
-    "coveredTestFiles": 1782,
-    "pullRequestCoveredTestFiles": 1779,
-    "uncoveredTestFiles": 567,
+    "coveredTestFiles": 1783,
+    "pullRequestCoveredTestFiles": 1780,
+    "uncoveredTestFiles": 566,
     "directoriesWithTests": 478,
     "directoriesFullyCovered": 255,
-    "directoriesPartiallyCovered": 27,
-    "directoriesUncovered": 196,
+    "directoriesPartiallyCovered": 28,
+    "directoriesUncovered": 195,
     "directoriesWithUnrunTestFiles": 223,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
@@ -139,6 +139,14 @@
       "directory": "src/lib/knowledge/__tests__",
       "testFiles": 9,
       "coveredTestFiles": 8,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/atlas/__tests__",
+      "testFiles": 8,
+      "coveredTestFiles": 1,
       "via": [
         "command"
       ]
@@ -1247,12 +1255,6 @@
     },
     {
       "directory": "src/__tests__/integration/agents",
-      "testFiles": 8,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/atlas/__tests__",
       "testFiles": 8,
       "coveredTestFiles": 0,
       "via": []
