@@ -646,5 +646,22 @@ jobs:
           src/lib/source/contract-optimization/__tests__/read.test.ts
           --no-coverage --ci
 
+      # Seven previously dark Source suites were measured unchanged: all seven
+      # load, collect, and run; six are green. This step owns the five green,
+      # behavior-bearing files. The four readiness files exercise modules with
+      # direct non-test importer counts from 1 to 3. The route file executes a
+      # Next.js page entry point, which is framework-owned and therefore has no
+      # ordinary importer. The green source-text-only not-found suite and the
+      # red tenant-named source scanner remain exact file-level quarantines.
+      - name: Run Source readiness and route suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/rfp-readiness/__tests__/ams-section-map.test.ts
+          src/lib/source/rfp-readiness/__tests__/intake.test.ts
+          src/lib/source/rfp-readiness/__tests__/resolver.test.ts
+          src/lib/source/rfp-readiness/__tests__/section-trace.test.ts
+          "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts"
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
