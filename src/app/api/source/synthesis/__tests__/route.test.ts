@@ -1,5 +1,8 @@
+import { MODULE_V6_ANSWER_CONTRACT_VERSION } from "@/lib/agent/module-v6-answer-contract";
+
 const mockAnthropicStream = jest.fn();
 const mockGetActiveClientRow = jest.fn();
+const mockBuildV6SourceEventInstanceForTenant = jest.fn();
 
 jest.mock("@/lib/integrations/ai-egress", () => ({
   preflightAnthropicDirectClient: jest.fn(() => ({
@@ -23,7 +26,7 @@ jest.mock("@/lib/module-v6/demo-tenant-packs", () => {
 
   return {
     ...actual,
-    buildV6SourceEventInstanceForTenant: jest.fn(
+    buildV6SourceEventInstanceForTenant: mockBuildV6SourceEventInstanceForTenant.mockImplementation(
       (tenantKeyInput: string, requestedInstanceId?: string | null) => {
         const tenantKey = actual.canonicalV6DemoTenantKey(tenantKeyInput);
         if (!["skyharbor-air", "lakeshore-holdings"].includes(tenantKey)) {
@@ -133,6 +136,18 @@ describe("POST /api/source/synthesis", () => {
     // egress call, and must not have its context sent out on the way to being
     // refused.
     expect(mockAnthropicStream).not.toHaveBeenCalled();
+    // Refused before the PACK is reached, which is the part "expect a 403"
+    // cannot prove on its own. skyharbor-air is a key for which a pack would
+    // resolve, so moving the refusal to run after the pack is built leaves this
+    // status and body byte-identical — and fails here, and only here.
+    expect(mockBuildV6SourceEventInstanceForTenant).not.toHaveBeenCalled();
+    // The error response carries the rest of the surface attribution too, not
+    // just the layer: an error path that quietly stops emitting the contract
+    // version is how a surface loses its attribution without any case noticing.
+    expect(res.headers.get("x-abarva-v6-contract")).toBe(
+      MODULE_V6_ANSWER_CONTRACT_VERSION,
+    );
+    expect(res.headers.get("x-abarva-renderer-policy")).toBe("placement-only");
   });
 
   it("uses the active Lakeshore Holdings V6 Source pack with loaded commercial facts", async () => {
@@ -163,6 +178,18 @@ describe("POST /api/source/synthesis", () => {
     );
     expect(streamArgs.messages[0].content).toContain(
       "vendor-commercial-packet",
+    );
+    // Re-homed from the refused skyharbor-air case. The comment above that case
+    // says this proof "now lives only in the Lakeshore case below" — it did not:
+    // both guards were dropped with the case and landed nowhere, so nothing
+    // asserted the data-thin instruction or the no-Apex-fallback contract at
+    // all. This is now the only 200 on this route, so it is the only place
+    // either can be proved, and the comment above is true as written.
+    expect(streamArgs.messages[0].content).toContain(
+      'include the exact phrase "commercial evidence is DATA-THIN"',
+    );
+    expect(streamArgs.messages[0].content).not.toContain(
+      "apex-retail-ams-outsourcing-2026",
     );
   });
 
