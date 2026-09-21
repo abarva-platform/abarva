@@ -94,6 +94,23 @@ const responseFile: SourceNewFileRow = {
   updatedAt: "2026-03-10T00:00:00Z",
 };
 
+// A market package filed against the event. `rfp_package` is the artifact type
+// the file cabinet actually records, and `sourceNewFilePhase` files it in the
+// market-package folder — so this is the artifact an operator opens when they
+// click through Files, not a shape invented for the test.
+const marketPackageFile: SourceNewFileRow = {
+  ...responseFile,
+  id: "market-package-1",
+  phase: "rfi",
+  artifactGroup: "generated",
+  artifactType: "rfp_package",
+  artifactFamily: "solicitation",
+  description: "Market package issued to the candidate panel",
+  title: "Sourcing package draft",
+  fileName: "sourcing-package-draft.pdf",
+  blobSha256: "sha-market-package",
+};
+
 const unavailableStage05: SourceNewStage05NdaCoverage = {
   status: "unavailable",
   asOf: "2026-03-10",
@@ -451,6 +468,87 @@ describe("SourceNewWorkspace", () => {
     ).toBeTruthy();
     expect(within(folders).queryByText("RFI")).toBeNull();
     expect(within(folders).queryByText("RFP")).toBeNull();
+  });
+
+  // F4's residual: the phase rail and the folder rail were corrected, but every
+  // label case was rendered with an empty cabinet, so nothing exercised what an
+  // operator reads after clicking through Files into the package itself.
+  function openMarketPackageArtifact(folderLabel: string) {
+    fireEvent.click(screen.getByRole("button", { name: "Files" }));
+    const folders = screen.getByRole("navigation", { name: "File folders" });
+    fireEvent.click(within(folders).getByRole("button", { name: folderLabel }));
+    const list = screen.getByRole("listbox", { name: "Files in folder" });
+    fireEvent.click(
+      within(list).getByRole("option", { name: /Sourcing package draft/ }),
+    );
+    return screen.getByRole("complementary", { name: "Selected file details" });
+  }
+
+  it("never says RFI anywhere an RFP event's package is opened", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          eventType: "competitive_sourcing",
+          currentStage: "rfp",
+          lifecycle: "active",
+          solicitationMotion: "rfp",
+          solicitationMotionAcceptedAt: "2026-03-12T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "user-1",
+        }}
+        files={[marketPackageFile]}
+      />,
+    );
+
+    const detail = openMarketPackageArtifact("RFP");
+    expect(within(detail).getByText("RFP package")).toBeTruthy();
+    expect(within(detail).queryByText(/rfi/i)).toBeNull();
+    expect(screen.queryByText(/\bRFI\b/)).toBeNull();
+  });
+
+  // The stage key says `rfp` while the accepted motion says `rfi`. Inferring
+  // the displayed motion from the reused key is the exact defect F4 forbids,
+  // so the fixture makes the two disagree on purpose.
+  it("never says RFP anywhere an RFI event's package is opened, though its stage key still reads rfp", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "rfp",
+          lifecycle: "active",
+          solicitationMotion: "rfi",
+          solicitationMotionAcceptedAt: "2026-03-12T00:00:00Z",
+          solicitationMotionAcceptedByUserId: "user-1",
+        }}
+        files={[marketPackageFile]}
+      />,
+    );
+
+    const detail = openMarketPackageArtifact("RFI");
+    expect(within(detail).getByText("RFI package")).toBeTruthy();
+    expect(within(detail).queryByText(/rfp/i)).toBeNull();
+    expect(screen.queryByText(/\bRFP\b/)).toBeNull();
+  });
+
+  it("keeps an opened package neutral while no motion has been accepted", () => {
+    render(
+      <SourceNewWorkspace
+        event={{
+          ...request,
+          currentStage: "rfp",
+          lifecycle: "active",
+          solicitationMotion: null,
+        }}
+        files={[marketPackageFile]}
+      />,
+    );
+
+    const detail = openMarketPackageArtifact("Market package");
+    expect(within(detail).getByText("Market package")).toBeTruthy();
+    expect(within(detail).queryByText(/rfi/i)).toBeNull();
+    expect(within(detail).queryByText(/rfp/i)).toBeNull();
+    expect(screen.queryByText(/\bRFI\b/)).toBeNull();
+    expect(screen.queryByText(/\bRFP\b/)).toBeNull();
   });
 
   it("does not send a vendor-waiting event back to intake approval", () => {
