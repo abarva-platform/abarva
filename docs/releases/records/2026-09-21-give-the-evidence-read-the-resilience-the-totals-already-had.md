@@ -132,6 +132,14 @@ to a state machine with an unreachable exit.
 - **The underlying slowness or failure is not diagnosed.** This change surfaces
   it; it does not explain it. If "retry needed" appears in the signed-in
   environment, the impact endpoint itself is the next thing to look at.
-- **20 seconds is a chosen number, not a measured one.** No latency
-  distribution for that endpoint was available to set it from.
+- **The timeout is now measured, and the merge order mattered.** When this was
+  written no latency figure was available and 20s was a guess. It is not a
+  guess any more: `#8173` (Reduce Source action candidate read latency) took the
+  signed-in load from **~54s to ~6.5s**, so 20s is roughly three times the
+  observed load.
+
+  **Had this merged before `#8173`, it would have caused a regression** — a 20s
+  abort against a 54s load turns a slow-but-working surface into "retry
+  needed". It is safe only because the latency fix landed first. A timeout
+  chosen without a latency distribution is a hazard, and this one was.
 - **Two workspace suites remain red** and were red before this change.
