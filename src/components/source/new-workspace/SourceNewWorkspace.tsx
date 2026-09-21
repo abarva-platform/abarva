@@ -65,6 +65,14 @@ const VIEWS: readonly { key: View; label: string }[] = [
   { key: "approvals", label: "Approvals" },
 ];
 
+const PREVIEW_UNMET_CONDITIONS: Record<Phase, string> = {
+  request: "the request must be recorded and accepted for review.",
+  define: "intake approval must be recorded.",
+  suppliers:
+    "scope and strategy must advance, then supplier eligibility and required NDA coverage must be recorded.",
+  rfi: "scope, supplier eligibility, and required NDA coverage must be ready.",
+};
+
 /**
  * What each phase actually holds. A phase behind the event is only described
  * in the past tense when something was recorded in it, so this reads the
@@ -347,6 +355,10 @@ export function SourceNewWorkspace({
                     The event has not reached this phase. Earlier gates must be
                     cleared before this work can begin. Browsing here does not
                     advance the event.
+                  </p>
+                  <p className="snw-note">
+                    Before this phase can open:{" "}
+                    {PREVIEW_UNMET_CONDITIONS[phase]}
                   </p>
                 </>
               ) : stateOf(phase) === "no_record" ? (
