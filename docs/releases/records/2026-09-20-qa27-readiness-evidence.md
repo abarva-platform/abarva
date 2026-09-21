@@ -89,6 +89,52 @@ M4 matters most: it proves the branch that caught the uncovered slice is reachab
 branch the defect actually lived in. M6 proves the check cannot be satisfied by deleting the
 sentences — a manifest that stops lying by saying nothing would otherwise read as health.
 
+### Re-verification on 2026-09-21 before merge
+
+This branch sat open for a day. Its single red check was
+`Integration suites that pass on main` -> `check:intelligence-integration-quarantine`, which was a
+condition of `main` at the time, not of this branch; it was repaired by a separate merge that landed
+**after** this branch's checks last ran, so the red result on the PR was stale rather than caused
+here. Current `origin/main` `56286b266aca8b83ffad82b2cb0b9a9cfb98e19a` was merged into the branch and
+everything below was measured again on the merged tree. The 2026-09-20 figures above are left exactly
+as they were recorded; these are a second measurement at a different base, not a correction of them.
+
+**The premise still holds on current `main`.** Both false statements are still present, at
+`.components[13].testingGates.integration_tests.evidence` and `.components[13].nextAction`, and the
+verifier still runs 14 checks (`CH-01`..`CH-14`).
+
+**Red-first, re-proved on the merged tree.** Restoring the manifest to the `main` text and running the
+new suite: **1 failed / 3 passed**. With the correction in place: **4 passed / 0 failed**. The failure
+listed all twelve contradictions by key path, six per statement.
+
+**Directory CI scope** `npx jest src/__tests__/integration/qa --no-coverage`, measured on both sides at
+this base -- clean `origin/main` `56286b266` in a separate worktree, and the merged branch:
+
+| | suites | tests | failing |
+|---|---|---|---|
+| clean `origin/main` `56286b266` | 39 | 961 | 2, in `wireframe-compliance-audit` |
+| merged branch | 40 | 965 | 2, in `wireframe-compliance-audit` |
+
+Same suite, same two assertions, pre-existing and untouched. The four added tests are the whole
+difference. The directory is in better shape than it was on 2026-09-20, when the same command
+reported 7 failing across 4 suites; that improvement is other people's merges, not this change, and is
+recorded here only so the two baselines in this record are not read as disagreeing.
+
+`NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit --pretty false` after deleting
+`tsconfig.tsbuildinfo` -- **exit 0**, zero diagnostic lines, exit code judged rather than grepped.
+`npx eslint` on the new file -- **exit 0**.
+
+**Four mutations re-run on the merged tree, four caught** -- M1 (the `main` text restored), M6 (every
+claim about the suite deleted from the manifest), M3 (a stale quoted count), and M5 (a verifier check
+begins deferring while the manifest claims a clean bill). M5 is worth its own line: the first attempt
+at it **escaped**, and the escape was the mutation's fault rather than the test's. It assigned the
+deferred status after the report's counts had already been computed, so the report still said zero
+deferred and there was nothing for the assertion to catch. Moved ahead of the count computation, the
+same mutation fails the clean-bill assertion with
+`claims a clean bill, verifier reports 13 pass / 0 fail / 1 deferred`. A mutation that does not change
+the value under test proves nothing about the test, and is recorded here rather than quietly dropped
+from the tally.
+
 ## Rollout Plan
 
 Merge to `main`. No migration, no flag, no data build. The repo-owned ACA main deploy workflow
