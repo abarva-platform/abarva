@@ -36,7 +36,9 @@ function registeredCommands(): string[] {
   const commands = readdirSync(workflowDir)
     .filter((name) => /\.ya?ml$/.test(name))
     .flatMap((name) =>
-      extractWorkflowRunCommands(readFileSync(path.join(workflowDir, name), "utf8")),
+      extractWorkflowRunCommands(
+        readFileSync(path.join(workflowDir, name), "utf8"),
+      ),
     );
   const scripts = JSON.parse(
     readFileSync(path.join(repoRoot, "package.json"), "utf8"),
@@ -61,6 +63,20 @@ describe("Source integration suites are registered with CI", () => {
     expect(
       isIntegrationTestRegistered(
         `${SUITE_DIR}/a-suite-nobody-has-written-yet.test.ts`,
+        registeredCommands(),
+      ),
+    ).toBe(true);
+  });
+
+  it("registers the root-level Source chat shape suite by exact path", () => {
+    // The Source directory command is intentionally spelled without a trailing
+    // slash, so Jest's path-pattern matching can sweep in this sibling file.
+    // C-500 made the suite green and gave it its own exact workflow step so the
+    // visibility gate sees the owner directly instead of relying on that regex
+    // side effect.
+    expect(
+      isIntegrationTestRegistered(
+        "src/__tests__/integration/source-chat-shape.test.ts",
         registeredCommands(),
       ),
     ).toBe(true);
@@ -102,7 +118,10 @@ describe("Source integration suites are registered with CI", () => {
   it("quarantines only shaped exclusions with live files, and only a minority of the directory", () => {
     const { quarantined, alsoIgnored = [] } = JSON.parse(
       readFileSync(
-        path.join(repoRoot, "scripts/quality/source-integration-quarantine.json"),
+        path.join(
+          repoRoot,
+          "scripts/quality/source-integration-quarantine.json",
+        ),
         "utf8",
       ),
     ) as {
@@ -134,7 +153,9 @@ describe("Source integration suites are registered with CI", () => {
 
     for (const entry of alsoIgnored) {
       expect(entry.path).toMatch(/^src\/__tests__\/integration\//);
-      expect(readFileSync(path.join(repoRoot, entry.path), "utf8").length).toBeGreaterThan(0);
+      expect(
+        readFileSync(path.join(repoRoot, entry.path), "utf8").length,
+      ).toBeGreaterThan(0);
       expect(entry.reason.trim()).not.toBe("");
       expect(entry.owner.trim()).not.toBe("");
       expect(entry.expectedFailurePatterns.length).toBeGreaterThan(0);
