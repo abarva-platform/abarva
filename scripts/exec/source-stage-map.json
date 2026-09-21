@@ -214,6 +214,7 @@
       "vision": "An RFI that can close the event or proceed to RFP; documents, responses, rounds.",
       "boardOutcomeMatch": "Source New is a simple five-phase journey",
       "items": [
+        "T-473",
         4,
         20,
         {
@@ -700,7 +701,8 @@
       "T-509",
       "T-513",
       "T-514",
-      "T-515"
+      "T-515",
+      "T-472"
     ]
   },
   "outsideLifecycle": {
