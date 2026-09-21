@@ -1,0 +1,98 @@
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
+import {
+  expandWorkflowCommands,
+  extractWorkflowRunCommands,
+} from "../../../scripts/quality/check-integration-ci-visibility.mjs";
+
+const repoRoot = path.resolve(__dirname, "../../..");
+
+const ownedFiles = [
+  "src/lib/source/rfp-readiness/__tests__/ams-section-map.test.ts",
+  "src/lib/source/rfp-readiness/__tests__/intake.test.ts",
+  "src/lib/source/rfp-readiness/__tests__/resolver.test.ts",
+  "src/lib/source/rfp-readiness/__tests__/section-trace.test.ts",
+  "src/app/(maestro)/source/__tests__/new-route-optimization-redirect.test.ts",
+] as const;
+
+const quarantinedFiles = [
+  "src/app/(maestro)/source/__tests__/not-found-source.test.ts",
+  "src/app/(maestro)/source/__tests__/tenant-resolution-source-contract.test.ts",
+] as const;
+
+type CensusRow = {
+  directory: string;
+  testFiles: number;
+  coveredTestFiles: number;
+};
+
+type Census = {
+  counts: { indeterminateInvocations: number };
+  partiallyCoveredDirectories: CensusRow[];
+  uncoveredDirectories: CensusRow[];
+};
+
+function jestCommands(): string[] {
+  const workflow = readFileSync(
+    path.join(repoRoot, ".github/workflows/unit-suites.yml"),
+    "utf8",
+  );
+  const scripts = JSON.parse(
+    readFileSync(path.join(repoRoot, "package.json"), "utf8"),
+  ).scripts as Record<string, string>;
+
+  return expandWorkflowCommands(
+    extractWorkflowRunCommands(workflow),
+    scripts,
+  ).filter((command) => /\b(?:npx\s+)?jest\b/.test(command));
+}
+
+function runCensus(): Census {
+  const output = execFileSync(
+    process.execPath,
+    [path.join(repoRoot, "scripts/quality/test-ci-coverage-census.mjs"), "--json"],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 64 * 1024 * 1024,
+    },
+  );
+  return JSON.parse(output.slice(output.indexOf("{"))) as Census;
+}
+
+describe("Source readiness and route suite CI ownership", () => {
+  it("runs the five behavior-bearing suites and leaves both exact quarantines out", () => {
+    const commands = jestCommands();
+    const command = commands.find((candidate) =>
+      candidate.includes(ownedFiles[0]),
+    );
+
+    expect(command).toBeDefined();
+    expect(command).toContain("--runTestsByPath");
+    for (const file of ownedFiles) expect(command).toContain(file);
+    for (const file of quarantinedFiles) {
+      expect(commands.every((candidate) => !candidate.includes(file))).toBe(true);
+    }
+  });
+
+  it("owns the readiness tree and keeps the route-tree quarantine visible", () => {
+    const census = runCensus();
+    const partial = (directory: string) =>
+      census.partiallyCoveredDirectories.find(
+        (row) => row.directory === directory,
+      );
+    const uncovered = (directory: string) =>
+      census.uncoveredDirectories.some((row) => row.directory === directory);
+
+    expect(census.counts.indeterminateInvocations).toBe(0);
+    expect(uncovered("src/lib/source/rfp-readiness/__tests__")).toBe(false);
+    expect(partial("src/lib/source/rfp-readiness/__tests__")).toBeUndefined();
+    expect(partial("src/app/(maestro)/source/__tests__")).toMatchObject({
+      testFiles: 3,
+      coveredTestFiles: 1,
+    });
+  });
+});
