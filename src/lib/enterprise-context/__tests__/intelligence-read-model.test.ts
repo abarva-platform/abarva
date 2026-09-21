@@ -576,6 +576,11 @@ describe("enterprise context Intelligence read model", () => {
       "enterprise_context_sources:rows",
       "enterprise_context_quality_issues:rows",
       "enterprise_context_evidence:rows",
+      // Added by the Intelligence executive briefing surface (6ebe6d4a9),
+      // which introduced the context_insights read. The expected sequence was
+      // not updated with it, so this case has been red ever since -- unseen,
+      // because no workflow reaches this directory.
+      "context_insights:rows",
     ]);
 
     async function runQuery(
