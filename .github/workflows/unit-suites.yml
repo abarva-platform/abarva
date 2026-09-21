@@ -813,5 +813,23 @@ jobs:
           src/app/api/context/demo/__tests__/route.test.ts
           --no-coverage --ci
 
+      # The request and strategy authority module. Its logic had no caller and
+      # its own suites ran in no workflow, so both halves of the version
+      # authority were dark at once. Every suite in the module is listed and
+      # every one is green on arrival; the census recorded both directories as
+      # zero-covered before this step.
+      - name: Run the Source New workspace authority suites
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/source/new-workspace/__tests__/authority-version-store.test.ts
+          src/lib/source/new-workspace/__tests__/event-authority.test.ts
+          src/lib/source/new-workspace/source-version-authority.test.ts
+          src/lib/source/new-workspace/request-triage.test.ts
+          src/lib/source/new-workspace/phase-state.test.ts
+          src/lib/source/new-workspace/step-readiness.test.ts
+          src/lib/source/new-workspace/navigation.test.ts
+          src/lib/source/new-workspace/event-intelligence.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
