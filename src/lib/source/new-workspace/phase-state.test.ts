@@ -87,7 +87,9 @@ describe("sourceNewPhaseState", () => {
   });
 
   it("never reports a behind phase as complete or approved", () => {
-    const labels = (["recorded", "no_record"] as const).map(sourceNewPhaseStateLabel);
+    const labels = (["recorded", "historical_gap", "no_record"] as const).map(
+      sourceNewPhaseStateLabel,
+    );
     for (const label of labels) {
       expect(label).not.toMatch(/complete|approved|done/i);
     }
@@ -112,6 +114,20 @@ describe("sourceNewPhaseState", () => {
     expect(sourceNewPhaseState("define", event, evidence)).toBe("recorded");
     expect(sourceNewPhaseState("suppliers", event, evidence)).toBe("no_record");
     expect(sourceNewPhaseState("rfi", event, evidence)).toBe("recorded");
+  });
+
+  it("calls a missing phase on a completed event a historical gap", () => {
+    const event = { currentStage: "value", lifecycle: "completed" };
+    const evidence: SourceNewPhaseEvidence = {
+      request: true,
+      define: true,
+      suppliers: false,
+      rfi: true,
+    };
+
+    expect(sourceNewPhaseState("suppliers", event, evidence)).toBe(
+      "historical_gap",
+    );
   });
 
   it("does not lock a phase for an unrecognised stage either", () => {

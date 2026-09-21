@@ -327,6 +327,33 @@ describe("SourceNewWorkspace", () => {
     ).toBeNull();
   });
 
+  it("labels a missing completed-event phase as a historical gap", () => {
+    render(
+      <SourceNewWorkspace
+        event={{ ...request, currentStage: "value", lifecycle: "completed" }}
+        files={[]}
+      />,
+    );
+
+    const phases = screen.getByRole("navigation", { name: "Event phases" });
+    const supplierPhase = within(phases).getByRole("button", {
+      name: /03 Suppliers & NDA/i,
+    });
+    expect(supplierPhase.textContent).toContain("Historical gap");
+
+    fireEvent.click(supplierPhase);
+    expect(
+      screen.getByRole("heading", {
+        name: "Governed history is missing for this phase",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "The completed event has no governed evidence recorded for this phase. Record the missing evidence or a named waiver before treating this history as complete.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("keeps active events on their governed current-stage action", () => {
     render(
       <SourceNewWorkspace

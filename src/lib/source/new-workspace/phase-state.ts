@@ -37,15 +37,16 @@ export const SOURCE_NEW_EXTERNAL_CHECKPOINT_ORDER: readonly SourceNewExternalChe
 /**
  * What the workspace may honestly say about a phase.
  *
- * `recorded` and `no_record` both mean "the event is past this phase"; they
- * differ only in whether anything was actually recorded there. Neither means
- * complete or approved — a completion claim needs an approval record, which
- * this surface does not read.
+ * `recorded`, `historical_gap`, and `no_record` all mean "the event is past
+ * this phase"; they differ in whether evidence exists and whether the event
+ * itself is terminal. None means approved — that needs authority this surface
+ * does not create.
  */
 export type SourceNewPhaseState =
   | "current"
   | "review_needed"
   | "recorded"
+  | "historical_gap"
   | "no_record"
   | "not_open";
 
@@ -53,6 +54,7 @@ export const SOURCE_NEW_PHASE_STATE_LABELS: Record<SourceNewPhaseState, string> 
   current: "Current",
   review_needed: "Review needed",
   recorded: "Recorded",
+  historical_gap: "Historical gap",
   no_record: "No record",
   not_open: "Later",
 };
@@ -113,7 +115,10 @@ export function sourceNewPhaseState(
   if (current !== null && phase === current) {
     return awaitsIntakeReview(event.lifecycle) ? "review_needed" : "current";
   }
-  const behind = (): SourceNewPhaseState => (evidence[phase] ? "recorded" : "no_record");
+  const behind = (): SourceNewPhaseState => {
+    if (evidence[phase]) return "recorded";
+    return event.lifecycle === "completed" ? "historical_gap" : "no_record";
+  };
   if (current === null) {
     // Past the four phases, or an unplaceable stage. Either way we cannot
     // claim a phase is locked ahead of the event, so we report what exists.
