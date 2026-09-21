@@ -62,13 +62,13 @@ describe("buildScorecardAuthorityView", () => {
     );
   });
 
-  it("allows readiness only from approved frozen criteria and locked named evaluator scores", () => {
+  it("marks the read contract ready only from approved frozen criteria and locked named evaluator scores", () => {
     const result = view({});
 
     expect(result.state).toBe("ready");
-    expect(result.rankAllowed).toBe(true);
-    expect(result.advanceAllowed).toBe(true);
-    expect(result.bafoReady).toBe(true);
+    expect(result.rankAllowed).toBe(false);
+    expect(result.advanceAllowed).toBe(false);
+    expect(result.bafoReady).toBe(false);
     expect(result.weightTotal).toBe(40);
     expect(result.criteria[0]).toEqual(
       expect.objectContaining({
@@ -89,10 +89,54 @@ describe("buildScorecardAuthorityView", () => {
         vendorId: "vendor-a",
         vendorName: "Vendor A",
         lockedScoreCount: 1,
-        weightedScore: 8,
+        requiredScoreCount: 1,
+        completenessState: "complete",
+        conflictState: "none",
       },
     ]);
     expect(result.blockers).toEqual([]);
+  });
+
+  it("does not rank suppliers or expose weighted totals when score authority is complete", () => {
+    const result = view({
+      scores: [
+        {
+          ...baseScore,
+          vendorId: "vendor-a",
+          vendorName: "Vendor A",
+          evaluatorScore: 6,
+        },
+        {
+          ...baseScore,
+          vendorId: "vendor-b",
+          vendorName: "Vendor B",
+          evaluatorScore: 9,
+        },
+      ],
+    });
+
+    expect(result.state).toBe("ready");
+    expect(result.vendorRows).toEqual([
+      expect.objectContaining({
+        vendorId: "vendor-a",
+        vendorName: "Vendor A",
+        lockedScoreCount: 1,
+        requiredScoreCount: 1,
+        completenessState: "complete",
+        conflictState: "none",
+      }),
+      expect.objectContaining({
+        vendorId: "vendor-b",
+        vendorName: "Vendor B",
+        lockedScoreCount: 1,
+        requiredScoreCount: 1,
+        completenessState: "complete",
+        conflictState: "none",
+      }),
+    ]);
+    expect(JSON.stringify(result.vendorRows)).not.toMatch(
+      /weightedScore|rank/i,
+    );
   });
 
   it("refuses criteria whose weights are not frozen or approved at the same version", () => {
