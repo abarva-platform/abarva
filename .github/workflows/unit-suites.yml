@@ -433,7 +433,7 @@ jobs:
       # define, so the registry references guidance the method library cannot
       # resolve. Which side is wrong — author the two methods, or withdraw them
       # from the archetype — is authored-content authority, so it is filed as
-      # backlog item T-453 rather than guessed at inside a wiring change.
+      # backlog item T-456 rather than guessed at inside a wiring change.
       # Loaded 4; collected 4; run 4; green 3; newly owned 3.
       - name: Run the green Program archetype suites
         run: >-

@@ -44,7 +44,7 @@ describe('lifecycle operating system contracts', () => {
   // (`src/lib/programs/programs-detail-view.ts`). So a phase the product
   // displays has no lifecycle completion contract behind it. Whether P6 earns
   // one or is deliberately outside the Programs lifecycle is an owner decision,
-  // filed as backlog item T-452; it is not resolved by correcting this list.
+  // filed as backlog item T-455; it is not resolved by correcting this list.
   it('covers every authored Programs phase and Source stage', () => {
     expect(programContracts.map((contract) => contract.id)).toEqual([
       'programs:P0',

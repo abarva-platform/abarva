@@ -117,7 +117,7 @@ const WIRED_DIRECTORIES = [
  * diffing the two dark lists, not inferred — but a reader comparing this
  * number against "directories now fully wired" would be off by this row.
  * Finishing it means repairing the red, not renaming it; that repair is
- * backlog item T-453.
+ * backlog item T-456.
  */
 const DARK_DIRECTORY_COUNT = 21;
 

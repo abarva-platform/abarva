@@ -176,14 +176,14 @@ suites return to running nowhere, which is the state this change found them in.
 
 ## Known Gaps
 
-- **A displayed phase with no lifecycle contract — owner decision, filed as item T-452.**
+- **A displayed phase with no lifecycle contract — owner decision, filed as item T-455.**
   The product surface still speaks a seven-phase lifecycle and renders a handoff workbench and
   gate panel for the seventh, while the phase-pack registry authors six and the phase-number
   type admits six. Correcting the test expectation records that gap; it does not close it.
   Whether the seventh phase earns a lifecycle completion contract, or is deliberately outside
   the Programs lifecycle, is not a call this change makes.
 - **A registry that references guidance the method library cannot resolve — filed as item
-  T-453.** One archetype declares two analysis-method keys that the method library does not
+  T-456.** One archetype declares two analysis-method keys that the method library does not
   define. `src/lib/programs/archetypes/__tests__/resolver.test.ts` catches it and remains an
   exact, file-level quarantine named in the workflow comment. The directory is therefore
   partially covered, not fully wired, and the ratchet note says so.
