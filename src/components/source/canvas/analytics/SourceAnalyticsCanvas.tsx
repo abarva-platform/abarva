@@ -890,14 +890,14 @@ function SourceShellRail({
       }}
     >
       <Link
-        href="/source"
+        href="/source/new"
         style={{
           color: ANALYTICS.MUTED,
           fontSize: 12,
           textDecoration: "none",
         }}
       >
-        ← Source 360
+        ← Source New
       </Link>
       <div style={{ marginTop: 16, marginBottom: 22 }}>
         <div
