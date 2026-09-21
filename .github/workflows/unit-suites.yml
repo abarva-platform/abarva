@@ -527,6 +527,15 @@ jobs:
           src/app/api/admin/context-layer/csv-upload/__tests__/route.test.ts
           --no-coverage --ci
 
+      # T-463 replaces the route's actual read and write boundaries and keeps
+      # the Clerk invitation transport inert. The suite pins the tenant key on
+      # every person upsert and fails when that scope is removed.
+      - name: Run user provisioning boundary suite
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/admin/users/provision/__tests__/route.test.ts
+          --no-coverage --ci
+
       # Five subtrees under src/app/api/v1 that no workflow reached: 55 suites
       # / 328 tests, measured on `e0362a92e`.
       #
