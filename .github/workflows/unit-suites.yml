@@ -515,6 +515,18 @@ jobs:
           src/app/api/admin/users/provision
           --no-coverage --ci
 
+      # T-464 repairs the stale row-shape expectation in the structured context
+      # CSV upload route suite and proves both write boundaries are mocked:
+      # postgresCompat is strict to expected tables, object storage is replaced,
+      # and the exact pending chunk row must keep tenant identifiers. Keep this
+      # exact while the sibling user-provisioning suite remains a separate
+      # safety item.
+      - name: Run context CSV upload boundary suite
+        run: >-
+          npx jest --runTestsByPath
+          src/app/api/admin/context-layer/csv-upload/__tests__/route.test.ts
+          --no-coverage --ci
+
       # Five subtrees under src/app/api/v1 that no workflow reached: 55 suites
       # / 328 tests, measured on `e0362a92e`.
       #
