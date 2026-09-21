@@ -809,7 +809,17 @@ function coverageFor(testPath, reachable) {
   };
 }
 
-export function buildCensus(root) {
+/**
+ * `includeUnrunPaths` adds `unrunTestPathsByDirectory` to the returned object.
+ * It is OFF by default and the CLI turns it on only for `--explain`, which
+ * never writes: the committed artifact must stay byte-identical, or `--check`
+ * and the drift line fire on a change that measured nothing.
+ *
+ * The same reason is why the per-directory rows below strip the field back out
+ * before they are published. Those two maps spread `...row`, so a field added
+ * to a row reaches the artifact whether or not anyone intended it to.
+ */
+export function buildCensus(root, { includeUnrunPaths = false } = {}) {
   const packageScripts =
     JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).scripts ??
     {};
@@ -834,12 +844,14 @@ export function buildCensus(root) {
         covered: 0,
         via: new Set(),
         testPaths: [],
+        unrunPaths: [],
       });
     }
     const entry = directories.get(directory);
     entry.testFiles += 1;
     entry.testPaths.push(testFile);
     if (result.covered) entry.covered += 1;
+    else entry.unrunPaths.push(testFile);
     for (const via of result.via) entry.via.add(via);
   }
 
@@ -849,6 +861,7 @@ export function buildCensus(root) {
       testFiles: entry.testFiles,
       coveredTestFiles: entry.covered,
       unrunTestFiles: entry.testFiles - entry.covered,
+      unrunTestPaths: [...entry.unrunPaths].sort(),
       via: [...entry.via].sort(),
       governedRisk: governedRiskForDirectory(
         root,
@@ -901,7 +914,14 @@ export function buildCensus(root) {
     }));
   const uncoveredDirectories = rows
     .filter((row) => row.coveredTestFiles === 0)
-    .map(({ governedRisk: _governedRisk, unrunTestFiles: _unrun, ...row }) => row);
+    .map(
+      ({
+        governedRisk: _governedRisk,
+        unrunTestFiles: _unrun,
+        unrunTestPaths: _unrunPaths,
+        ...row
+      }) => row,
+    );
   const partialDirectories = rows.filter(
     (row) => row.coveredTestFiles > 0 && row.coveredTestFiles < row.testFiles,
   );
@@ -952,11 +972,27 @@ export function buildCensus(root) {
     indeterminateInvocations: indeterminate,
     unresolvedIgnoreArguments,
     partiallyCoveredDirectories: partialDirectories.map(
-      ({ governedRisk: _governedRisk, unrunTestFiles: _unrun, ...row }) => row,
+      ({
+        governedRisk: _governedRisk,
+        unrunTestFiles: _unrun,
+        unrunTestPaths: _unrunPaths,
+        ...row
+      }) => row,
     ),
     governedRiskRanking,
     governedRiskEvidence,
     uncoveredDirectories,
+    ...(includeUnrunPaths
+      ? {
+          unrunTestPathsByDirectory: directoriesWithUnrunTestFiles.map(
+            (row) => ({
+              directory: row.directory,
+              unrunTestFiles: row.unrunTestFiles,
+              unrunTestPaths: row.unrunTestPaths,
+            }),
+          ),
+        }
+      : {}),
   };
 }
 
@@ -1151,6 +1187,38 @@ export function describeDrift(measured, committedPath) {
 
 function main() {
   const argv = process.argv.slice(2);
+
+  // `--explain` answers the question the summary cannot: WHICH files are the
+  // unrun ones. Every consumer that needed that has so far re-derived it with
+  // a grep over the workflow file, which resolves one of the four hops and
+  // silently disagrees with the census it is meant to be reading.
+  //
+  // It returns before the write and drift blocks on purpose. This is a query,
+  // and a query that rewrites the artifact it is interrogating is the defect
+  // `writeIfChanged` and the `--check` placement already exist to avoid.
+  if (argv.includes("--explain")) {
+    const detailed = buildCensus(REPO_ROOT, { includeUnrunPaths: true });
+    const groups = detailed.unrunTestPathsByDirectory;
+    if (argv.includes("--json")) {
+      console.log(JSON.stringify(groups, null, 2));
+      return;
+    }
+    // Derived from the paths themselves, not from `unrunTestFiles`. Those are
+    // two independent computations, and a header that reads the count while
+    // the body lists the paths can disagree with its own output without
+    // anything failing.
+    const files = groups.reduce((sum, row) => sum + row.unrunTestPaths.length, 0);
+    console.log(
+      `test-ci-coverage-census --explain: ${files} test files no workflow runs, ` +
+        `across ${groups.length} directories`,
+    );
+    for (const row of groups) {
+      console.log(`\n  ${row.directory}  (${row.unrunTestFiles} unrun)`);
+      for (const testPath of row.unrunTestPaths) console.log(`    ${testPath}`);
+    }
+    return;
+  }
+
   const census = buildCensus(REPO_ROOT);
 
   if (argv.includes("--write")) {

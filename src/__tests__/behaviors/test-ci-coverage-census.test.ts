@@ -52,6 +52,7 @@ type Census = {
     directoriesFullyCovered: number;
     directoriesPartiallyCovered: number;
     directoriesUncovered: number;
+    directoriesWithUnrunTestFiles: number;
     indeterminateInvocations: number;
     criticalGovernedRiskDirectories: number;
     highGovernedRiskDirectories: number;
@@ -1084,5 +1085,122 @@ describe("test CI coverage census", () => {
     const { status, output } = runCensusCheck(repoRoot);
     expect(output).toContain("coverage shape");
     expect(status).toBe(0);
+  });
+});
+
+/**
+ * `--explain` names the files behind the counts.
+ *
+ * The summary says a directory holds "10 unrun of 45" and stops there, so
+ * every consumer that needed the actual ten re-derived them by grepping the
+ * workflow file. That reads one of the four hops and disagrees with the census
+ * it is meant to be reading — a mistake already made against this very script,
+ * where a two-hop probe produced a false accusation of a defect.
+ *
+ * These cases hold two things:
+ *
+ *   1. the explained set is exactly the unrun set, proved against a fixture
+ *      whose coverage is decided by the fixture rather than read back from the
+ *      census; and
+ *   2. the query does not perturb what it measures — no field reaches the
+ *      committed artifact, and `--explain` never writes.
+ */
+function runExplain(cwd: string): string {
+  return execFileSync(process.execPath, [path.join(cwd, CENSUS_SCRIPT), "--explain"], {
+    cwd,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+}
+
+describe("test CI coverage census --explain", () => {
+  it("names the unrun file and not the covered one beside it", () => {
+    // Ground truth is the ignore pattern, not anything the census reports:
+    // `kept` is run, `excluded` is not, and they sit in the same directory so
+    // a directory-level answer cannot pass this.
+    const dir = fixture({
+      "src/lib/explain/__tests__/kept.test.ts": TEST_FILE,
+      "src/lib/explain/__tests__/excluded.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("bash scripts/ci/run-explain.sh"),
+      "scripts/ci/run-explain.sh": String.raw`npx jest src/lib/explain --testPathIgnorePatterns 'explain/__tests__/excluded\.test\.ts$'`,
+    });
+
+    const output = runExplain(dir);
+
+    expect(output).toContain("src/lib/explain/__tests__/excluded.test.ts");
+    // The negative half. Listing every file would satisfy the line above.
+    expect(output).not.toContain("src/lib/explain/__tests__/kept.test.ts");
+    expect(output).toContain("1 test files no workflow runs");
+  });
+
+  it("reports nothing to explain when every suite is reached", () => {
+    // Guards against an implementation that always prints something.
+    const dir = fixture({
+      "src/lib/allcovered/__tests__/a.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW("npx jest src/lib/allcovered"),
+    });
+    expect(runExplain(dir)).toContain("0 test files no workflow runs, across 0 directories");
+  });
+
+  it("agrees with the counts the census already publishes", () => {
+    // `one` deliberately holds a covered file AND an unrun one. With a single
+    // file per directory, "every file" and "the unrun files" are the same set
+    // everywhere this can look, and the path assertion below cannot fail.
+    const dir = fixture({
+      "src/lib/one/__tests__/a.test.ts": TEST_FILE,
+      "src/lib/one/__tests__/b.test.ts": TEST_FILE,
+      "src/lib/two/__tests__/c.test.ts": TEST_FILE,
+      "src/lib/three/__tests__/d.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/lib/one/__tests__/a.test.ts",
+      ),
+    });
+    const { census } = runCensus(dir);
+    const output = runExplain(dir);
+
+    // The detail and the published totals are two renderings of one
+    // computation; if they can disagree, one of them is lying.
+    expect(output).toContain(
+      `${census.counts.uncoveredTestFiles} test files no workflow runs, ` +
+        `across ${census.counts.directoriesWithUnrunTestFiles} directories`,
+    );
+
+    // The header alone is not enough: it once read a count derived separately
+    // from the paths, so listing every file in the repository still printed
+    // the right number. Count the paths actually listed.
+    const listed = output
+      .split("\n")
+      .filter((line) => /^ {4}\S+\.test\.tsx?$/.test(line));
+    expect(listed).toHaveLength(census.counts.uncoveredTestFiles);
+  });
+
+  it("adds no field to the published artifact and writes nothing", () => {
+    const dir = fixture({
+      "src/lib/artifact/__tests__/a.test.ts": TEST_FILE,
+      "src/lib/artifact/__tests__/b.test.ts": TEST_FILE,
+      ".github/workflows/gate.yml": PR_WORKFLOW(
+        "npx jest src/lib/artifact/__tests__/a.test.ts",
+      ),
+    });
+    const censusPath = path.join(dir, "docs/architecture/test-ci-coverage-census.json");
+    mkdirSync(path.dirname(censusPath), { recursive: true });
+
+    execFileSync(process.execPath, [path.join(dir, CENSUS_SCRIPT), "--write"], {
+      cwd: dir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const before = readFileSync(censusPath, "utf8");
+
+    runExplain(dir);
+
+    // A query that rewrites the artifact it interrogates would send churn into
+    // whatever pull request happened to be open, which is the defect
+    // `writeIfChanged` already exists to prevent.
+    expect(readFileSync(censusPath, "utf8")).toBe(before);
+    expect(before).not.toContain("unrunTestPathsByDirectory");
+    // The per-directory rows spread `...row`, so a field added to a row reaches
+    // the artifact unless it is explicitly stripped back out.
+    expect(before).not.toContain("unrunTestPaths");
   });
 });
