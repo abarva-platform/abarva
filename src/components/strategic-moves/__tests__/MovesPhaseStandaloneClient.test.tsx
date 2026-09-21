@@ -2091,7 +2091,11 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(contractStepButton(/Approve & Build/i));
 
-    expect(screen.getByText("7 inputs available")).toBeInTheDocument();
+    // Copy drift: the gate attestation row states completeness per phase
+    // (`${phase.code} inputs complete`) instead of counting inputs. The count
+    // this used to assert no longer renders anywhere, so it is replaced by
+    // the row that does — not by a looser matcher.
+    expect(screen.getByText("P3 inputs complete")).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
         name: /Approve & Build P3 Choose the Approach/i,
@@ -2915,6 +2919,18 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByRole("heading", { name: "Gate approval" }),
     ).toBeInTheDocument();
     expect(
+      // LEFT RED DELIBERATELY, and it is not the copy drift it was filed as.
+      //
+      // The next-phase readiness block does not render in this state at all:
+      // the DOM for this case contains no prep-item text, no "readiness"
+      // label and no "carried forward" line. So there is no current wording
+      // to re-point this at, and every candidate matcher tried here was
+      // satisfied only by jest echoing this file's own source back in the
+      // failure output — not by anything the component rendered.
+      //
+      // Whether the block was deliberately removed from this state or stopped
+      // rendering by regression is not established, and guessing a matcher to
+      // make the case green would assert something no one has decided.
       screen.getByText(/1 required next-phase prep item/i),
     ).toBeInTheDocument();
     expect(
@@ -2996,7 +3012,10 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Open$/i }));
     await waitFor(() => {
       expect(window.open).toHaveBeenCalledWith(
-        "/api/v1/artifacts/d74ed94a-a600-46ee-ad5d-a505556c4cac?inline=1",
+        // The product moved and the test was left behind: the artifact link
+        // now requests an explicit render format. Asserted in full, including
+        // `format=html`, so a silent change back to a bare inline link fails.
+        "/api/v1/artifacts/d74ed94a-a600-46ee-ad5d-a505556c4cac?format=html&inline=1",
         "moves-artifact-d74ed94a-a600-46ee-ad5d-a505556c4cac",
         "noopener,noreferrer",
       );
@@ -3867,9 +3886,15 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toContain(move.name);
       expect(screen.queryByText("Provide")).not.toBeInTheDocument();
       expect(document.querySelector(".mxw-contract-captured")).toBeNull();
+      // `getAllByText` throws when nothing matches, so this negative
+      // assertion failed for the wrong reason once the move name stopped
+      // rendering as its own text node. `queryAllByText` returns [] instead.
+      // The weight of the check sits in the `.mxw-contract-captured` null
+      // assertion directly above, which is strictly stronger; this one is
+      // kept as the name-specific form of it rather than deleted.
       expect(
         screen
-          .getAllByText(move.name)
+          .queryAllByText(move.name)
           .filter((node) => node.classList.contains("mxw-contract-captured")),
       ).toHaveLength(0);
       expect(
