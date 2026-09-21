@@ -854,5 +854,35 @@ jobs:
           src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts
           --no-coverage --ci
 
+      # T-466. Was 2 collected / 2 FAILED on main: it declared a
+      # `mockLoadV7TowerProjection` spy and asserted against it without ever
+      # calling `jest.mock`, so one case could not pass however correct the
+      # code was. Not repaired by installing that spy -- `loadV7TowerProjection`
+      # does not exist anywhere in src/, `buildAtlasTowerCurrentState` imports
+      # no V7 projection, and its `tenantKeyCandidates` input is read by
+      # nothing and passed by nobody at its only call site. That case is
+      # replaced by the tenant-scoping contract that does exist, asserted
+      # through the two projection loaders the function actually imports.
+      # BOUNDARY PROVEN BEFORE WIRING, and the answer differs from the one
+      # assumed for the suite above: an unmocked read here cannot reach
+      # Postgres under jest at all, because postgresCompat loads its driver via
+      # `new Function('specifier','return import(specifier)')`, which the jest
+      # VM refuses without --experimental-vm-modules. Probed against a closed
+      # port with DATABASE_URL set: `{data:null, error:"...
+      # ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG"}` in 0 ms, no socket. The
+      # hazard is the SWALLOW, not the read -- an unmocked read is
+      # indistinguishable from an empty one -- so the mock is strict and a case
+      # asserts `clients` is the only table touched. Mutation-proved, comment
+      # decoy included: bypassing canonicalization fails 2 of 5; leaving
+      # `canonicalCioTowerTenantDisplayName` in a COMMENT while deleting the
+      # call still fails 2 of 5; scoping by the caller's clientKey instead of
+      # the row's tenant key fails 2 of 5; adding a second data-plane read
+      # fails all 5.
+      - name: Run the Tower grounding cover-name and tenant-scoping suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/atlas/__tests__/tower-grounding-client-name.test.ts
+          --no-coverage --ci
+
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
