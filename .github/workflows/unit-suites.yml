@@ -898,3 +898,35 @@ jobs:
 
       - name: Refuse a new dark tree under src/__tests__
         run: npx jest --runTestsByPath src/__tests__/behaviors/unit-directory-ci-coverage.test.ts --no-coverage --ci
+
+      # T-469. The per-client test-time data-plane boundary. Two clients, two
+      # opposite failure modes, both invisible from the test file: the static-pg
+      # clients open a real socket on an unstubbed read (proved here by
+      # ECONNREFUSED against a closed port — a live tenant read anywhere a real
+      # connection string is in the environment), while postgresCompat swallows
+      # its own driver-load refusal into `{data: null}` that a caller reads back
+      # as "no rows". Before this, the answer was re-probed by hand per backlog
+      # item and produced two correct-looking conclusions that contradicted each
+      # other. The verdicts now live in
+      # docs/architecture/data-plane-test-boundary.json and this suite re-proves
+      # every one of them BY EXECUTION on each run, so the artifact cannot
+      # become a document that used to be true.
+      #
+      # Enforcement, not advice: jest maps `^pg$` to src/testing/pg-test-boundary.ts,
+      # so a connecting client with no stand-in throws by name instead of
+      # reading. Blast radius measured over the WHOLE collection rather than
+      # reasoned about — 2,635 suites run twice, 330 failed / 441 tests failed
+      # both before and after, identical failing-suite sets, zero newly failing
+      # and zero newly passing.
+      #
+      # Mutation-proved, comment decoy included: deleting the `^pg$` mapping
+      # fails 3 of 12; gutting the guard while leaving
+      # ABARVA_TEST_DATA_PLANE_CONNECT_BLOCKED in a COMMENT fails 3 of 12;
+      # making the guard always allow fails 3 of 12; relabelling one verdict in
+      # the artifact fails 2; adding a client to the artifact with no probe
+      # fails 3.
+      - name: Run the data-plane test-boundary suite
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/data-plane/__tests__/test-boundary.test.ts
+          --no-coverage --ci
