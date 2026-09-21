@@ -516,7 +516,8 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
       "| T-471 | **Stale-suite triage fixture.** | T | Measure each named suite before wiring it. |\n" +
       "| T-509 | **Measured stale-suite follow-on fixture.** | T | Record a per-file verdict before wiring. |\n" +
       "| T-513 | **Behavioral rewrite follow-on fixture.** | T | Replace source-text scanners with behavior. |\n" +
-      "| T-514 | **Generated-count authority decision fixture.** | T | Decide the authoritative count before changing it. |\n",
+      "| T-514 | **Generated-count authority decision fixture.** | T | Decide the authoritative count before changing it. |\n" +
+      "| T-515 | **Uncovered-control validator fixture.** | T | Reconcile declared coverage with known suites. |\n",
   );
   const map = JSON.parse(fs.readFileSync(path.join(dir, "source-stage-map.json"), "utf8"));
   check(
@@ -540,7 +541,7 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
       !JSON.stringify(map.stages).includes('"T-508"'),
     JSON.stringify(map.platformTrack.items.slice(-24)),
   );
-  for (const id of ["T-470", "T-471", "T-509", "T-513", "T-514"]) {
+  for (const id of ["T-470", "T-471", "T-509", "T-513", "T-514", "T-515"]) {
     check(
       `${id} is mapped to platform integrity`,
       map.platformTrack.items.includes(id) &&
@@ -561,7 +562,7 @@ console.log("build-execution-queue — staleness guard (T-076)\n");
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
-for (const id of ["T-468", "T-469", "T-508", "T-470", "T-471", "T-509", "T-513", "T-514"]) {
+for (const id of ["T-468", "T-469", "T-508", "T-470", "T-471", "T-509", "T-513", "T-514", "T-515"]) {
   const dir = freshFixture();
   fs.appendFileSync(
     path.join(dir, "EXECUTION_BACKLOG_20260918.md"),
