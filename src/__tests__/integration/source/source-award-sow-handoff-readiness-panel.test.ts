@@ -25,6 +25,23 @@ function readiness(): SourceAwardSowHandoffReadiness {
     eventName: "Stage 08 Test Event",
     generatedAt: "2026-04-26T00:00:00.000Z",
     readinessStatus: "blocked_executed_agreement_sow",
+    contractFormationState: "pending_signature",
+    contractFormationPackage: {
+      state: "pending_signature",
+      includedComponents: [
+        "reviewed_selection_memo",
+        "approved_pricing",
+        "governed_clause_library",
+        "sow_scope",
+        "named_approval_authority",
+        "evidence_lineage",
+      ],
+      missingComponents: [],
+      evidence: [
+        "reviewed selection memo: Selection gate is approved.",
+        "approved pricing: Approved pricing workbook is approved.",
+      ],
+    },
     readyForContract360Handoff: false,
     authority: "source-award-sow-handoff-readiness",
     sourceModulesUsed: ["vendor-selection-readiness", "source-stage-gates"],
@@ -48,6 +65,15 @@ function readiness(): SourceAwardSowHandoffReadiness {
         label: "Approval readiness",
         status: "completed",
         completedEvidence: ["Executive decision stage or gate is approved."],
+        blockers: [],
+      },
+      {
+        key: "contract_formation_package",
+        label: "Contract formation package",
+        status: "completed",
+        completedEvidence: [
+          "approved pricing: Approved pricing workbook is approved.",
+        ],
         blockers: [],
       },
       {
@@ -174,6 +200,7 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
     expect(html).toContain("Stage 08 · Award &amp; SOW handoff");
     expect(html).toContain("Candidate selection");
     expect(html).toContain("Approval readiness");
+    expect(html).toContain("Contract formation package");
     expect(html).toContain("Executed agreement / SOW");
     expect(html).toContain("Contract 360 handoff");
     expect(html).toContain("Completed evidence");
@@ -198,7 +225,7 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
     expect(html).toContain("Stage 08 · Award &amp; SOW handoff");
     expect(html).toContain("Ready for canonical Contract 360 handoff?");
     expect(html).toContain(
-      "Executed agreement or SOW evidence is not approved/locked",
+      "Approved pricing is missing from the governed contract-formation package",
     );
   });
 
@@ -208,19 +235,46 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
         event: transitionEvent([
           {
             id: "d27_selection_memo",
-            title: "Selection memo",
+            title: "Reviewed selection memo with evidence lineage",
             kind: "decision_memo",
             status: "approved",
-            summary: "Selection memo.",
+            summary: "Reviewed selection memo with evidence lineage.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+          {
+            id: "approved_pricing",
+            title: "Approved pricing workbook",
+            kind: "artifact_packet",
+            status: "approved",
+            summary: "Approved pricing workbook.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+          {
+            id: "governed_clause_library",
+            title: "Governed clause library references",
+            kind: "artifact_packet",
+            status: "approved",
+            summary: "Governed clause library references.",
+            sourceCount: 1,
+            updatedAt: "2026-04-26T00:00:00.000Z",
+          },
+          {
+            id: "sow_scope",
+            title: "SOW scope and service boundary",
+            kind: "artifact_packet",
+            status: "approved",
+            summary: "SOW scope and service boundary.",
             sourceCount: 1,
             updatedAt: "2026-04-26T00:00:00.000Z",
           },
           {
             id: "d24_decision_brief",
-            title: "Executive decision brief",
+            title: "Executive decision brief naming approval authority",
             kind: "decision_memo",
             status: "approved",
-            summary: "Executive approval.",
+            summary: "Named approval authority approved the package.",
             sourceCount: 1,
             updatedAt: "2026-04-26T00:00:00.000Z",
           },
@@ -243,8 +297,9 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
     );
 
     expect(html).toContain("Executed agreement/SOW blocked");
+    expect(html).toContain("Contract formation: pending signature");
     expect(html).toContain(
-      "Executed agreement or SOW evidence is not approved/locked",
+      "Executed agreement or SOW evidence with named signature authority is not approved/locked",
     );
     expect(html).toContain("Handoff ready: no");
   });
@@ -270,7 +325,7 @@ describe("Source Stage 08 Award & SOW handoff readiness panel", () => {
       }),
     );
 
-    expect(html).toContain("Executed agreement/SOW blocked");
+    expect(html).toContain("Contract formation package blocked");
     expect(html).toContain("Handoff ready: no");
   });
 });
