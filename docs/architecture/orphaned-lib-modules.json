@@ -4,13 +4,13 @@
   "entryPointCounts": {
     "product": 635,
     "tooling": 1989,
-    "test": 2502
+    "test": 2509
   },
   "counts": {
-    "scanned": 2928,
-    "product": 2132,
+    "scanned": 2930,
+    "product": 2135,
     "tooling": 231,
-    "testOnly": 432,
+    "testOnly": 431,
     "unreferenced": 133
   },
   "testOnly": [
@@ -395,7 +395,6 @@
     "src/lib/source/negotiation/negotiation-posture-types.ts",
     "src/lib/source/negotiation/negotiation-posture.ts",
     "src/lib/source/new-workspace/nda-readiness.ts",
-    "src/lib/source/new-workspace/source-version-authority.ts",
     "src/lib/source/new-workspace/step-readiness.ts",
     "src/lib/source/next-step-needs.ts",
     "src/lib/source/portfolio-book-view.ts",
