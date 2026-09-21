@@ -12,20 +12,20 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 2348,
-    "coveredTestFiles": 1774,
-    "pullRequestCoveredTestFiles": 1771,
-    "uncoveredTestFiles": 574,
+    "testFiles": 2349,
+    "coveredTestFiles": 1782,
+    "pullRequestCoveredTestFiles": 1779,
+    "uncoveredTestFiles": 567,
     "directoriesWithTests": 478,
-    "directoriesFullyCovered": 254,
-    "directoriesPartiallyCovered": 26,
-    "directoriesUncovered": 198,
-    "directoriesWithUnrunTestFiles": 224,
+    "directoriesFullyCovered": 255,
+    "directoriesPartiallyCovered": 27,
+    "directoriesUncovered": 196,
+    "directoriesWithUnrunTestFiles": 223,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 6,
     "highGovernedRiskDirectories": 30,
-    "unclassifiedRiskDirectories": 188
+    "unclassifiedRiskDirectories": 187
   },
   "indeterminateInvocations": [],
   "unresolvedIgnoreArguments": [],
@@ -227,6 +227,14 @@
       "directory": "src/lib/observability/__tests__",
       "testFiles": 3,
       "coveredTestFiles": 1,
+      "via": [
+        "command"
+      ]
+    },
+    {
+      "directory": "src/lib/source/new-workspace/__tests__",
+      "testFiles": 3,
+      "coveredTestFiles": 2,
       "via": [
         "command"
       ]
@@ -1310,12 +1318,6 @@
       "via": []
     },
     {
-      "directory": "src/lib/source/new-workspace",
-      "testFiles": 6,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
       "directory": "src/components/knowledge/__tests__",
       "testFiles": 5,
       "coveredTestFiles": 0,
@@ -1605,12 +1607,6 @@
     },
     {
       "directory": "src/lib/source/execution-room/__tests__",
-      "testFiles": 2,
-      "coveredTestFiles": 0,
-      "via": []
-    },
-    {
-      "directory": "src/lib/source/new-workspace/__tests__",
       "testFiles": 2,
       "coveredTestFiles": 0,
       "via": []
