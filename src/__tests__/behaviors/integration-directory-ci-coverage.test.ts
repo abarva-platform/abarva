@@ -60,7 +60,11 @@ const QUARANTINED_WIRED_DIRECTORIES = [
     directory: "source",
     workflow: ".github/workflows/source-integration.yml",
     ignoreArgsScript: "scripts/quality/source-integration-ignore-args.mjs",
-    excludedRootFiles: ["source-chat-shape.test.ts"],
+    // C-500 repaired the root-level `source-chat-shape.test.ts` sibling and
+    // names it by exact path in source-integration.yml. It is now in the
+    // second acceptable state: selected by the directory pattern and registered
+    // with the visibility gate, not excluded by ignore args.
+    excludedRootFiles: [],
   },
   {
     // 2026-09-19 (T-032). 51 suites, of which one workflow reached one file by

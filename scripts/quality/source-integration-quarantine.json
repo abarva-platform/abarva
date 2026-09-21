@@ -80,17 +80,7 @@
       ]
     }
   ],
-  "alsoIgnored": [
-    {
-      "path": "src/__tests__/integration/source-chat-shape.test.ts",
-      "reason": "The Source workflow path is a Jest regex and sweeps in this root-level sibling; it still fails on the Brief C vendor-shortlist shaping contract.",
-      "owner": "T-047",
-      "expectedFailurePatterns": [
-        "Expected substring: \"Daisy Intelligence is a credible second\"",
-        "Received string:    \"Three credible vendors"
-      ]
-    }
-  ],
-  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/source without a trailing slash, because the CI-visibility gate requires the path to be followed by whitespace or end-of-command \u2014 a trailing slash makes the gate stop seeing it. Jest reads that path as a pattern rather than a directory, so it can also match sibling files at the integration root whose names start with \"source\". source-chat-shape.test.ts is one of those swept-in siblings and is owned here, with an executable failure reason, rather than as a bare string.",
-  "alsoIgnoredCeiling": 1
+  "alsoIgnored": [],
+  "alsoIgnoredNote": "The workflow command names src/__tests__/integration/source without a trailing slash, because the CI-visibility gate requires it to be followed by whitespace or end-of-command \u2014 a trailing slash makes the gate stop seeing it. Jest reads that path as a pattern rather than a directory, so it can also match sibling files at the integration root whose names start with \"source\". C-500 repaired source-chat-shape.test.ts and names it by exact path in the workflow, so no swept-in sibling is currently excluded.",
+  "alsoIgnoredCeiling": 0
 }

@@ -474,12 +474,11 @@ function isRunOnPipeTableLine(line: string): boolean {
 function reflowRunOnPipeTableLine(line: string): string {
   const trimmed = line.trim();
   const firstPipe = trimmed.indexOf("|");
-  const beforeFirstPipe = firstPipe > 0 ? trimmed.slice(0, firstPipe).trim() : "";
+  const beforeFirstPipe =
+    firstPipe > 0 ? trimmed.slice(0, firstPipe).trim() : "";
   const hasNarrativeLeadIn = /:\s*$/.test(beforeFirstPipe);
   const lead = hasNarrativeLeadIn ? beforeFirstPipe : "";
-  const cellsPart = hasNarrativeLeadIn
-    ? trimmed.slice(firstPipe)
-    : trimmed;
+  const cellsPart = hasNarrativeLeadIn ? trimmed.slice(firstPipe) : trimmed;
   const cells = cellsPart
     .split("|")
     .map((cell) => normalizeCompactLine(cell))
@@ -1036,6 +1035,15 @@ function shouldCompactSurface(surface: string): boolean {
   );
 }
 
+function isBriefCSourceAdvisorSurface(surface: string): boolean {
+  const semanticSurface = surface.replace(/^\/+/, "");
+  return (
+    semanticSurface === "source" ||
+    semanticSurface.startsWith("source/") ||
+    semanticSurface === "source-detail"
+  );
+}
+
 // ATLAS-CXO-QUALITY-AUDIT-2026-05-30 fix B (percentile labeling):
 // Every percentile rendered to a user MUST include the metric, the cohort
 // definition, and the sample size. If any of those is missing, do NOT
@@ -1212,13 +1220,19 @@ export function shapeAgentResponseForSurface(
   // ATLAS-HI-3-2026-05-30 — bypass the compactor when the LLM already
   // returned well-formed structure. See looksAlreadyStructured() above.
   const preserveStructure = looksAlreadyStructured(cleaned);
+  // C-500 — Source is the Brief C governed advisor surface. It must still run
+  // shared markup/id/brand cleanup, but the shared paragraph/character budget
+  // cannot be allowed to remove an interior vendor recommendation and change
+  // the advice a reader sees.
+  const preserveSharedAdvisorProse =
+    preserveStructure || isBriefCSourceAdvisorSurface(surface);
   const shaped =
     shouldCompactSurface(surface) && !preserveStructure
       ? compactConsultantChatText(cleaned, 120)
       : cleaned;
   const shared = shapeSharedAdvisorResponse({
     text: shaped,
-    preserveStructure,
+    preserveStructure: preserveSharedAdvisorProse,
     labels: options.labels,
     targetChars: options.targetChars,
     hardMaxChars: options.hardMaxChars,
