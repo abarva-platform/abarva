@@ -1,0 +1,205 @@
+{
+  "item": "T-509",
+  "recordedAt": "2026-09-21T19:29:00Z",
+  "base": {
+    "branch": "codex/t509-stale-suite-triage",
+    "originMainSha": "633377745b2dc174b1bc0a2481b50c23605a280c",
+    "currentMainChecked": true
+  },
+  "scope": {
+    "intent": "Machine-readable verdict record for the nine root integration suites named by T-509.",
+    "runtimeChange": false,
+    "deploymentClaim": false,
+    "signedInAcceptanceClaim": false,
+    "dataPlaneMutation": false
+  },
+  "jestEvidence": {
+    "command": "npx jest src/__tests__/integration/app-rail-home-nav.test.ts src/__tests__/integration/app-topbar-prefetch-guard.test.ts src/__tests__/integration/ask-anything-bar-agent-answer.test.ts src/__tests__/integration/atlas-ask-route.test.ts src/__tests__/integration/deliverable-render-contract.test.ts src/__tests__/integration/learn-welcome-cxo-toggle.test.ts src/__tests__/integration/marketing-nav-dropdowns.test.tsx src/__tests__/integration/shell-topbar-auth.test.ts src/__tests__/integration/sign-in-shell.test.tsx --runInBand --no-coverage --ci --json --outputFile=/tmp/t509-jest-current.json",
+    "outputFile": "/tmp/t509-jest-current.json",
+    "totalSuites": 9,
+    "failedSuites": 9,
+    "totalTests": 34,
+    "failedTests": 22,
+    "passedTests": 12
+  },
+  "suites": [
+    {
+      "path": "src/__tests__/integration/app-rail-home-nav.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 4,
+      "failedTests": 2,
+      "passedTests": 2,
+      "verdict": "rewrite_as_behavior",
+      "ownerItem": "T-513",
+      "evidence": [
+        "Fails while reading the AppTopBar compatibility shim as text.",
+        "The current navigation implementation lives in the canonical navigation component, not in the shim."
+      ],
+      "rationale": "The failing assertions prove strings moved, not that rendered navigation behavior regressed.",
+      "currentAction": "Leave untouched for T-513 to replace or retire as a rendered behavior control."
+    },
+    {
+      "path": "src/__tests__/integration/app-topbar-prefetch-guard.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 1,
+      "failedTests": 1,
+      "passedTests": 0,
+      "verdict": "rewrite_as_behavior",
+      "ownerItem": "T-513",
+      "evidence": [
+        "Fails while matching source text in the AppTopBar compatibility shim.",
+        "A comment or re-export text change could satisfy or break the current assertion without exercising navigation."
+      ],
+      "rationale": "The suite is a source-text scanner over a shim and cannot prove the prefetch/navigation behavior it names.",
+      "currentAction": "Leave untouched for T-513 to replace with rendered navigation behavior."
+    },
+    {
+      "path": "src/__tests__/integration/ask-anything-bar-agent-answer.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 1,
+      "failedTests": 1,
+      "passedTests": 0,
+      "verdict": "rewrite_as_behavior",
+      "ownerItem": "T-513",
+      "evidence": [
+        "Fails on a literal AgentAnswerRenderer JSX substring.",
+        "The rendered component path now uses a different prop shape while still rendering through AgentAnswerRenderer."
+      ],
+      "rationale": "The test should mount behavior or be retired; literal JSX text is not a durable agent-answer control.",
+      "currentAction": "Leave untouched for T-513 to rewrite as behavior."
+    },
+    {
+      "path": "src/__tests__/integration/atlas-ask-route.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 1,
+      "failedTests": 1,
+      "passedTests": 0,
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-509",
+      "evidence": [
+        "The route suite is mocked and does not call a real model in this run.",
+        "It fails because the response text is plain prose with handoff metadata rather than legacy bullet labels."
+      ],
+      "rationale": "The contract is behavior-bearing, but the exact prose-shape expectation is stale against the current route response.",
+      "currentAction": "Record the stale expectation; a future suite update should assert the handoff object and model mock boundary."
+    },
+    {
+      "path": "src/__tests__/integration/deliverable-render-contract.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 5,
+      "failedTests": 1,
+      "passedTests": 4,
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-514",
+      "evidence": [
+        "The only failing assertion is the generated deliverable route count.",
+        "Current measured count is 363 while the stale assertion expects 457."
+      ],
+      "rationale": "This is a count-authority question, not a T-509 source-text repair.",
+      "currentAction": "Leave the count decision to T-514; do not change generated-count authority here."
+    },
+    {
+      "path": "src/__tests__/integration/learn-welcome-cxo-toggle.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 3,
+      "failedTests": 2,
+      "passedTests": 1,
+      "verdict": "rewrite_as_behavior",
+      "ownerItem": "T-513",
+      "evidence": [
+        "Fails on source text and imported literal expectations rather than rendered tabs or navigation.",
+        "The suite names page-level behavior but does not render the page."
+      ],
+      "rationale": "The current form can be satisfied by source literals and should be replaced by rendered behavior or retired.",
+      "currentAction": "Leave untouched for T-513 to rewrite or retire."
+    },
+    {
+      "path": "src/__tests__/integration/marketing-nav-dropdowns.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 11,
+      "failedTests": 9,
+      "passedTests": 2,
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-509",
+      "evidence": [
+        "The component renders a primary nav and request-access link, with no grouped buttons in the default mode.",
+        "The component source declares the launch default intentionally narrow and gates grouped menus behind showMenuItems."
+      ],
+      "rationale": "This rendered suite is valuable, but its default-nav expectation is stale against deliberate launch behavior.",
+      "currentAction": "Future update should assert the narrow default and separately exercise showMenuItems when that mode is intended."
+    },
+    {
+      "path": "src/__tests__/integration/shell-topbar-auth.test.ts",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 4,
+      "failedTests": 4,
+      "passedTests": 0,
+      "verdict": "rewrite_as_behavior",
+      "ownerItem": "T-513",
+      "evidence": [
+        "Fails while reading AppTopBar source text from a compatibility shim.",
+        "The sign-out affordance is a real control candidate, but this suite does not render it."
+      ],
+      "rationale": "The suite names an auth affordance but proves only source substrings.",
+      "currentAction": "Leave untouched for T-513 to mount the canonical navigation and mutation-prove the sign-out behavior."
+    },
+    {
+      "path": "src/__tests__/integration/sign-in-shell.test.tsx",
+      "loaded": true,
+      "collected": true,
+      "run": true,
+      "green": false,
+      "totalTests": 4,
+      "failedTests": 1,
+      "passedTests": 3,
+      "verdict": "update_with_reason_recorded",
+      "ownerItem": "T-509",
+      "evidence": [
+        "The default email-code, Clerk, and accessibility assertions pass.",
+        "The legacy demo-code assertion fails because the nested legacy form starts in email-code mode and no password label is rendered initially."
+      ],
+      "rationale": "The suite renders real behavior; one assertion is stale against the narrowed legacy sign-in flow.",
+      "currentAction": "Future update should assert the explicit mode switch instead of assuming password fields are initially visible."
+    }
+  ],
+  "forbiddenEdits": [
+    "src/__tests__/integration/app-rail-home-nav.test.ts",
+    "src/__tests__/integration/app-topbar-prefetch-guard.test.ts",
+    "src/__tests__/integration/ask-anything-bar-agent-answer.test.ts",
+    "src/__tests__/integration/learn-welcome-cxo-toggle.test.ts",
+    "src/__tests__/integration/shell-topbar-auth.test.ts",
+    ".github/workflows/integration-suites.yml",
+    "docs/architecture/test-ci-coverage-census.json"
+  ],
+  "claimedWriteFiles": [
+    "docs/architecture/t509-stale-suite-triage.json",
+    "src/__tests__/behaviors/t509-stale-suite-triage-record.test.ts",
+    "docs/releases/records/2026-09-21-t509-stale-suite-triage.md",
+    "/Users/anand/Downloads/EXECUTION_CLAIMS.md",
+    "/Users/anand/Downloads/EXECUTION_BACKLOG_20260918.md"
+  ]
+}
